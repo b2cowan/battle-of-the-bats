@@ -8731,6 +8731,16 @@
   },
   {
     "table_name": "rep_roster_players",
+    "constraint_name": "rep_roster_players_health_confirmed_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "health_confirmed_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_roster_players",
     "constraint_name": "rep_roster_players_id_team_uniq",
     "constraint_type": "UNIQUE",
     "column_name": "id",

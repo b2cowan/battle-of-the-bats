@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useId } from 'react';
+import { useState, useEffect, useId, useRef } from 'react';
 import { Upload, Download, Trash2 } from 'lucide-react';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
@@ -7,13 +7,13 @@ import CoachPageSection from '@/components/coaches/CoachPageSection';
 import QuestionShell, { QuestionCancel, QuestionReason } from '@/components/coaches/QuestionShell';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import type { RepDocumentType } from '@/lib/types';
+import { DOCUMENT_TYPE_LABEL, DOCUMENT_TYPE_ORDER, type DocumentStateRow } from '@/lib/document-state';
+import { formatStoredDate } from '@/lib/timezone';
 
-const DOC_TYPE_LABELS: Record<RepDocumentType, string> = {
-  waiver:           'Waiver',
-  medical_consent:  'Medical Consent',
-  code_of_conduct:  'Code of Conduct',
-  other:            'Other',
-};
+/* ⚖ Club Tier Stage 14 S4 (owner 2026-11-04, Ask 10 A; drawings tab 3 + 5B): the section lists the child's papers on
+   THIS team, every season. Above the files, one row per form the team asks for (or the child signed before here):
+   "Needs signing" / "On file" for the working season, with an Upload on a row that needs one. An earlier season's copy
+   is listed with its season and can be downloaded, never deleted (a record). Labels are sentence case in both portals. */
 
 interface DocRow {
   id: string;
@@ -23,6 +23,9 @@ interface DocRow {
   templateId: string | null;
   uploadedBy: string | null;
   createdAt: string;
+  seasonName: string;
+  /** On THIS season's entry — the only copies Delete is offered on. */
+  thisSeason: boolean;
 }
 
 interface Props {
@@ -43,10 +46,14 @@ export default function PlayerDocumentsSection({ orgSlug, teamId, playerId, canM
   const base = `/api/coaches/${orgSlug}/teams/${teamId}/roster/${playerId}/documents`;
 
   const [docs, setDocs] = useState<DocRow[]>([]);
+  const [rows, setRows] = useState<DocumentStateRow[]>([]);
+  const [toSign, setToSign] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploadType, setUploadType] = useState<RepDocumentType>('other');
+  // The template a row's Upload answers (the server keeps it only when it applies to this team and matches the type).
+  const [uploadTemplateId, setUploadTemplateId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -55,14 +62,21 @@ export default function PlayerDocumentsSection({ orgSlug, teamId, playerId, canM
   const ids = useId();
   const isPhone = useIsPhone();
 
+  // A slow read for the player just left must not overwrite the one now open.
+  const latestLoad = useRef(0);
   async function load() {
+    const mine = ++latestLoad.current;
     setLoading(true);
     try {
       const res = await fetch(base);
       const data = await res.json();
-      if (res.ok) setDocs(data.documents ?? []);
+      if (res.ok && mine === latestLoad.current) {
+        setDocs(data.documents ?? []);
+        setRows(data.rows ?? []);
+        setToSign(data.toSign ?? null);
+      }
     } finally {
-      setLoading(false);
+      if (mine === latestLoad.current) setLoading(false);
     }
   }
 
@@ -76,12 +90,14 @@ export default function PlayerDocumentsSection({ orgSlug, teamId, playerId, canM
       const form = new FormData();
       form.append('file', uploadFile);
       form.append('documentType', uploadType);
+      if (uploadTemplateId) form.append('templateId', uploadTemplateId);
       const res = await fetch(base, { method: 'POST', body: form });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Upload failed');
-      setDocs(prev => [data.document, ...prev]);
       setUploadOpen(false);
       setUploadFile(null);
+      // Re-read: the rows' state ("Needs signing" → "On file") is the server's rule, not recomputed here.
+      await load();
     } catch (e: any) {
       setUploadError(e.message ?? 'Upload failed');
     } finally {
@@ -95,6 +111,14 @@ export default function PlayerDocumentsSection({ orgSlug, teamId, playerId, canM
     setUploadOpen(false);
     setUploadFile(null);
     setUploadError('');
+  }
+
+  /** Opens the upload window — from the head (any type) or from a row (that form, already chosen). */
+  function openUpload(row?: DocumentStateRow) {
+    setUploadType(row?.documentType ?? 'other');
+    setUploadTemplateId(row?.templateId ?? null);
+    setUploadError('');
+    setUploadOpen(true);
   }
 
   async function handleDownload(docId: string, fileName: string) {
@@ -126,7 +150,7 @@ export default function PlayerDocumentsSection({ orgSlug, teamId, playerId, canM
     try {
       const res = await fetch(`${base}/${doc.id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error();
-      setDocs(prev => prev.filter(d => d.id !== doc.id));
+      await load();
     } catch {
       setDeleteError(`Couldn’t delete “${doc.fileName}” — try again.`);
     } finally {
@@ -151,7 +175,7 @@ export default function PlayerDocumentsSection({ orgSlug, teamId, playerId, canM
       type="button"
       className={isPhone ? `${styles.footerIconBtn} ${styles.sectionEditBtn}` : 'btn btn-ghost'}
       style={isPhone ? undefined : { fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
-      onClick={() => { setUploadOpen(true); setUploadError(''); }}
+      onClick={() => openUpload()}
       aria-label="Upload document"
       title={isPhone ? 'Upload' : undefined}
     >
@@ -159,16 +183,47 @@ export default function PlayerDocumentsSection({ orgSlug, teamId, playerId, canM
     </button>
   ) : undefined;
 
+  // "2 to sign" — the section head's count (drawing 5A/5B), the same amber chip as the rows'.
+  const toSignChip = toSign ? <span className={`${styles.pastChip} ${styles.pastChipWarn}`}>{toSign}</span> : undefined;
+
   return (
     <>
-    <CoachPageSection sectionId="documents" title="Documents" action={uploadButton}>
+    <CoachPageSection sectionId="documents" title="Documents" meta={toSignChip} action={uploadButton}>
 
       {loading ? (
         <div className={styles.loadingState} style={{ padding: '0.5rem 0' }}>Loading documents…</div>
-      ) : docs.length === 0 ? (
+      ) : docs.length === 0 && rows.length === 0 ? (
         <p className={styles.detailPlaceholder}>No documents uploaded yet.</p>
       ) : (
         <>
+        {rows.length > 0 && (
+          <ul className={styles.docStateList}>
+            {rows.map(row => (
+              <li key={row.documentType} className={styles.docStateRow}>
+                <span className={styles.docStateWhat}>
+                  <span className={styles.docStateName}>
+                    {row.label}
+                    <span className={`${styles.pastChip} ${row.state === 'on_file' ? styles.pastChipGood : styles.pastChipWarn}`}>{row.chip}</span>
+                  </span>
+                  <span className={styles.docStateLine}>{row.line}</span>
+                </span>
+                {canManage && row.state === 'needs_signing' && (
+                  <button
+                    type="button"
+                    className={isPhone ? styles.docStateUploadIcon : `btn btn-ghost ${styles.docStateUploadText}`}
+                    style={isPhone ? undefined : { fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+                    onClick={() => openUpload(row)}
+                    aria-label={`Upload ${row.label.toLowerCase()}`}
+                    title={isPhone ? 'Upload' : undefined}
+                  >
+                    {isPhone ? <Upload size={18} aria-hidden /> : <><Upload size={13} aria-hidden /> Upload</>}
+                  </button>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+        {docs.length > 0 && (<>
         {deleteError && <p className={styles.errorText} role="alert">{deleteError}</p>}
         <div className={styles.tableWrap}>
           <table className={styles.table}>
@@ -176,6 +231,7 @@ export default function PlayerDocumentsSection({ orgSlug, teamId, playerId, canM
               <tr>
                 <th className={styles.th}>File</th>
                 <th className={styles.th}>Type</th>
+                <th className={styles.th}>Season</th>
                 <th className={styles.th}>Size</th>
                 <th className={styles.th}>Uploaded</th>
                 <th className={styles.th}></th>
@@ -188,15 +244,18 @@ export default function PlayerDocumentsSection({ orgSlug, teamId, playerId, canM
                     {doc.fileName}
                   </td>
                   <td className={styles.td}>
-                    <span className={`${styles.badge} ${styles.badgeTryout}`}>
-                      {DOC_TYPE_LABELS[doc.documentType] ?? doc.documentType}
+                    <span className={styles.chipQuiet}>
+                      {DOCUMENT_TYPE_LABEL[doc.documentType] ?? doc.documentType}
                     </span>
+                  </td>
+                  <td className={styles.td} style={{ color: 'var(--home-dim, rgba(255,255,255,0.5))', fontSize: '0.82rem', whiteSpace: 'nowrap' }}>
+                    {doc.seasonName}
                   </td>
                   <td className={styles.td} style={{ color: 'var(--home-dim, rgba(255,255,255,0.5))', fontSize: '0.82rem' }}>
                     {formatBytes(doc.fileSize)}
                   </td>
                   <td className={styles.td} style={{ color: 'var(--home-dim, rgba(255,255,255,0.5))', fontSize: '0.82rem', whiteSpace: 'nowrap' }}>
-                    {new Date(doc.createdAt).toLocaleDateString()}
+                    {formatStoredDate(doc.createdAt)}
                   </td>
                   <td className={styles.td} style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
                     {/* The shared row icon button: named for a screen reader, 44px under a finger. */}
@@ -210,7 +269,7 @@ export default function PlayerDocumentsSection({ orgSlug, teamId, playerId, canM
                       >
                         <Download size={14} aria-hidden />
                       </button>
-                      {canManage && (
+                      {canManage && doc.thisSeason && (
                       <button
                         type="button"
                         className={`${styles.rowIconBtn} ${styles.rowIconBtnDanger}`}
@@ -229,6 +288,7 @@ export default function PlayerDocumentsSection({ orgSlug, teamId, playerId, canM
             </tbody>
           </table>
         </div>
+        </>)}
         </>
       )}
     </CoachPageSection>
@@ -257,10 +317,10 @@ export default function PlayerDocumentsSection({ orgSlug, teamId, playerId, canM
               id={`${ids}-type`}
               className={styles.select}
               value={uploadType}
-              onChange={e => setUploadType(e.target.value as RepDocumentType)}
+              onChange={e => { setUploadType(e.target.value as RepDocumentType); setUploadTemplateId(null); }}
             >
-              {(Object.entries(DOC_TYPE_LABELS) as [RepDocumentType, string][]).map(([v, l]) => (
-                <option key={v} value={v}>{l}</option>
+              {DOCUMENT_TYPE_ORDER.map(v => (
+                <option key={v} value={v}>{DOCUMENT_TYPE_LABEL[v]}</option>
               ))}
             </select>
           </div>

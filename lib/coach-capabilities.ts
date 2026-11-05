@@ -985,6 +985,7 @@ const PII_FIELDS = [
   'medicalNotes',
   'emergencyContactName',
   'emergencyContactPhone',
+  'healthConfirmedAt', // that someone checked the hidden values is itself a fact about them
 ] as const;
 
 const NOTES_FIELDS = ['notes', 'adminNotes'] as const;

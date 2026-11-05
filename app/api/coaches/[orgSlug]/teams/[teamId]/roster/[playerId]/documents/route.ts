@@ -2,9 +2,12 @@ import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
 import {
   getRepRosterPlayer,
-  getRepPlayerDocuments,
+  getRepDocumentTemplates,
   createRepPlayerDocument,
 } from '@/lib/db';
+import { readChildTeamDocuments } from '@/lib/child-documents';
+import { documentStateRows, toSignLabel } from '@/lib/document-state';
+import { DOCUMENT_TYPE_ORDER } from '@/lib/forms-coverage';
 import {
   getEntitledTeamMembership,
   resolveMembershipCapabilities,
@@ -22,7 +25,6 @@ const ALLOWED_TYPES = [
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 ];
 const MAX_SIZE = 10 * 1024 * 1024;
-const VALID_DOC_TYPES: RepDocumentType[] = ['waiver', 'medical_consent', 'code_of_conduct', 'other'];
 
 async function resolveContext(orgSlug: string, teamId: string, playerId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -50,12 +52,17 @@ async function resolveContext(orgSlug: string, teamId: string, playerId: string)
    * linked here, but the route was reachable by id. Signed forms are a live instrument
    * ("collect fresh ones for the new season" is the rollover's own rule), so a past season's
    * roster row answers 404 — the same as a row that never existed, never a hint.
+   *
+   * ⚖ Club Tier Stage 14 S4 (owner 2026-11-04): the WORKING season's entry is still the only door, but what it lists
+   * is the child's papers on this team, every season — an earlier season's signed copy decides whether this season
+   * still needs one ("Needs signing for {season}" / "On file", `lib/document-state.ts`), and can be downloaded. The
+   * look-back's three answers are in `lib/child-documents.ts`; this route is in `CROSS_SEASON_READERS`.
    */
   if (!workingYear || player.programYearId !== workingYear.id) {
     return { error: NextResponse.json({ error: 'Player not found' }, { status: 404 }) };
   }
 
-  return { ctx, player, assignment };
+  return { ctx, player, assignment, workingYear };
 }
 
 function stripStoragePath<T extends { storagePath: string }>(doc: T): Omit<T, 'storagePath'> {
@@ -73,8 +80,24 @@ export const GET = withObservability(async (_req: Request,
   const denied = denyUnless(canViewPlayerDocuments(resolved.assignment.capabilities), 'You do not have access to this player’s documents.');
   if (denied) return denied;
 
-  const docs = await getRepPlayerDocuments(playerId);
-  return NextResponse.json({ documents: docs.map(stripStoragePath) });
+  const { player, workingYear } = resolved;
+  const [docs, templates] = await Promise.all([
+    readChildTeamDocuments(player),
+    getRepDocumentTemplates(player.orgId, teamId),
+  ]);
+  const active = templates.filter(t => t.isActive);
+  const rows = documentStateRows({
+    templates: active.map(t => ({ id: t.id, name: t.name, document_type: t.documentType, validity: t.validity })),
+    documents: docs,
+    season: { id: workingYear!.id, name: workingYear!.name },
+  });
+  return NextResponse.json({
+    // Newest first; each names its season, and only this season's copies may be deleted here.
+    documents: docs.map(d => ({ ...d, thisSeason: d.playerId === player.id })),
+    rows,
+    toSign: toSignLabel(rows),
+    seasonName: workingYear!.name,
+  });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/roster/[playerId]/documents' });
 
 export const POST = withObservability(async (req: Request,
@@ -98,7 +121,7 @@ export const POST = withObservability(async (req: Request,
   const templateId = formData.get('templateId') as string | null;
 
   if (!file) return NextResponse.json({ error: 'file is required' }, { status: 400 });
-  if (!documentType || !VALID_DOC_TYPES.includes(documentType as RepDocumentType)) {
+  if (!documentType || !DOCUMENT_TYPE_ORDER.includes(documentType as RepDocumentType)) {
     return NextResponse.json({ error: 'Invalid documentType' }, { status: 400 });
   }
   if (!ALLOWED_TYPES.includes(file.type)) {
@@ -106,6 +129,14 @@ export const POST = withObservability(async (req: Request,
   }
   if (file.size > MAX_SIZE) {
     return NextResponse.json({ error: 'File exceeds 10 MB limit' }, { status: 400 });
+  }
+  // A row's Upload names the template it answers. Kept only when it is an active template that applies to this team and
+  // is of the chosen type — never a form-supplied id taken on trust (it was unvalidated before Stage 14 S4).
+  let answersTemplateId: string | null = null;
+  if (templateId) {
+    const applies = await getRepDocumentTemplates(player.orgId, teamId);
+    const t = applies.find(x => x.id === templateId);
+    if (t && t.isActive && t.documentType === documentType) answersTemplateId = t.id;
   }
 
   const bytes = await file.arrayBuffer();
@@ -127,7 +158,7 @@ export const POST = withObservability(async (req: Request,
     storagePath,
     fileName: file.name,
     fileSize: file.size,
-    templateId: templateId || null,
+    templateId: answersTemplateId,
     uploadedBy: ctx.user.id,
   });
 

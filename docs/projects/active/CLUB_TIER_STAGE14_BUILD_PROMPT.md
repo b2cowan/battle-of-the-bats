@@ -179,10 +179,11 @@
   - **For S3:** `child_id` is on every entry; the picker reads `rep_roster_players.child_id` of this team's earlier seasons and
     creates working-season entries WITH that `child_id` (and mints the history link as the roll does — the link trigger is then a
     no-op). A stored "no" (S3's migration) is separate from `rep_player_continuity_links`' rejected tombstones.
-- **S3 · Bring back a past player + "Same child?" (14b screens)** — **BUILT 2026-11-04 (Parts 0–4), UNCOMMITTED; `/simplify`,
-  `/review` (high) and `/docs` DONE 2026-11-04; the owner walk §455 is written and owed (artifact
-  https://claude.ai/artifact/EPuHScE2jnYLfNxdzpzxKB, fixture `.probe/s3-walk/`); then the commit; prod mig 438 owed
-  (MANUAL_PROD_STEPS, `pending`).** One more fix found while writing the walk: the stored "no" was only read at tryout
+- **S3 · Bring back a past player + "Same child?" (14b screens)** — **BUILT 2026-11-04 (Parts 0–4), committed `54e3458f1`; `/simplify`,
+  `/review` (high) and `/docs` DONE 2026-11-04; owner walk §455 PASSED 40/40 2026-11-04 (artifact
+  https://claude.ai/artifact/EPuHScE2jnYLfNxdzpzxKB, fixture `.probe/s3-walk/`), calls J1–J3 and J5 kept as built, J4 fixed
+  (the shared disclosure toggle has a 44 px floor, in the same commit); prod mig 438 owed (MANUAL_PROD_STEPS, `pending`).
+  Next: S4.** One more fix found while writing the walk: the stored "no" was only read at tryout
   accept, so Add Player and paste asked again after a No — the add doors now read it (`answeredNo` rides the picker GET). Owner rulings at Part 0
   (2026-11-04): **"yes on the lock"** (the one-child-per-season index) and **"go ahead with your recommendations"** (the
   calls listed below). What landed:
@@ -251,7 +252,177 @@
     so rewording (or naming the collided season) is the owner's call; the accept route reuses them. (b) Add Player's "Bring
     back a past player" door line closes the window without the unsaved-changes ask, exactly as the existing "Paste a list"
     door does — change both or neither.
-- **S4 · documents and the health check (14c)** — Not started. Needs S2.
+- **S4 · documents and the health check (14c)** — **IN PROGRESS 2026-11-04.** Part 0 presented; owner "go ahead" with all
+  eight recommendations: (1) documents do NOT move — they stay on the season's entry; the child's papers are read through
+  its entries (entry = whose + which season), so no backfill, no join/split step, no retention change (an entry holding a
+  document already cannot be removed); (2) rows = the club's templates for the team + any type the child signed before on
+  this team; validity = the template's, else the type default (a standalone coach gets defaults, no editor — a coach
+  template editor is owed if wanted); (3) a coach sees their own team's papers only (Ask 9 narrowest; a child moving teams
+  re-signs the medical consent for the new coach; the medical NOTE crosses); (4) the medical note stays where it is (Family
+  & paperwork › Safety — the drawing's "Details" was wrong); (5) the child holds ONE current health value, each entry keeps
+  its season's copy, live entries kept equal by trigger; (6) one wording "Still right for the {season}?", shown on a
+  returning child's live entry with something on file, needs rosterWrite + rosterPii, saving Safety confirms; club's
+  Confirm with S5; (7) the roll's documents line is composed from the team's real settings and shows only when the team has
+  a template or a document; the club window gets the same line; (8) the validity choice is a plain two-option field in the
+  shipped template windows (not drawn).
+  - **Part 1 DONE:** mig **441** `papers_and_health_follow_the_child` (440 was taken by the bank session minutes earlier),
+    applied to DEV; fixture `tests/sql/child-health-fixture.sql` 9/9, S2's 15/15 + S3's 4/4 re-run; dictionary +
+    snapshots + MANUAL_PROD_STEPS (`pending`, with a pre-check).
+  - **Part 2 DONE (2026-11-04/05):** the shared rule `lib/forms-coverage.ts` (`FormsHeld` = this season's types + the
+    child's other entries on the SAME team; `validityOf`/`defaultValidity`); words + rows `lib/document-state.ts`
+    (`documentStateRows`, `toSignLabel`, `healthAsk*`, `DOCUMENT_TYPE_LABEL` sentence case — the club's dialog label now
+    re-exports it); server reads `lib/child-documents.ts` (`readHeldForms` paged, `readChildTeamDocuments`,
+    `documentIsTheChilds`, `readHealthCheck`). Coach documents GET lists the child's own-team papers every season +
+    rows + "N to sign"; POST keeps a row's `templateId` only when it is an active applicable template of that type (was
+    unvalidated); the single-doc GET downloads a history copy, DELETE refuses an earlier season's (409). Player GET has
+    `healthCheck` (rosterPii, working season); PATCH `confirmHealth` (needs rosterPii) or a CHANGED Safety value stamps
+    `health_confirmed_*` (⚠ the page autosaves the whole form, so "sent" ≠ "changed"). Player page: the amber "Still
+    right for the {season}?" + Confirm on Safety; the documents section's state rows, per-row Upload (icon-only 44×44
+    on a phone), Season column, Delete on this season's copies only. Club template windows: "Signed" select (follows
+    the type until changed; edit window PATCHes it), status line + page lede by validity; both template routes accept
+    `validity`. Coach templates page: sentence-case labels + a "Signed" column. Rep Teams board + Families book read
+    `readHeldForms` (the board's "13 of 14", the worklist's Missing forms, the family page's forms). The roll's note and
+    both windows' papers line come from `rollDocuments` (the team's templates, else this season's types at their
+    defaults; nothing when neither); the club's staff note no longer says documents start fresh. Look-back guard:
+    three routes added to `CROSS_SEASON_ROSTER_READERS` with the answers. `.badgeTryout` deleted (its last users left).
+  - **Part 3 (in progress):** `tests/unit/child-documents.test.ts` (new) + 17 affected suites 446/446; typecheck clean;
+    lint 0 errors on touched files; spelling, dates, CSS purity/selectors (one other session's `statItem`), contrast OK.
+    Layout (after two dev-server restarts — the first sweep aborted on the memory floor with the server at 4.9 GB):
+    coach-player-family(-edit), coach-documents, admin-rep-documents(-upload), admin-rep-team-start-season(-players)
+    at 361/390/768/1440 — **no new findings**; the one new one (the row Upload 38 px at 768) was fixed with a tablet tap
+    floor. ⚠ Unmeasured: the upload window AFTER a type is picked (the "Signed" field), and the player page WITH the
+    health ask (the fixture child has no earlier season) — measure them by eye at the walk. 3 baseline entries on
+    admin-rep-documents ("Public site" link) no longer reproduce — not this work; left for whoever prunes.
+  - **Defaults taken while building (raise at the walk):** (a) the history copy line reads "Uploaded {date} for the
+    {season}." for an each-season form on file (not drawn); (b) the health line reads "Confirm the medical note and
+    emergency contact once a season, or change them." (the drawing said "The coach or a parent confirms it" — the
+    parent tier is off); (c) the ask shows only for a child with an entry on an EARLIER season and something on file;
+    (d) the window's papers line names the team's each-season forms first, then "… carry"; (e) the type chip in the files
+    table is the quiet chip (was the blue badge); (f) a row Upload on a tablet keeps its word.
+  - **Finish run, step 1 · `/simplify` (2026-11-05):** "stricter wins" is now ONE helper (`validityForType`, used by the
+    player-page rows AND the roll); `DOCUMENT_TYPE_ORDER` has one home (`lib/forms-coverage.ts`; the roll's copy, the two
+    routes' `VALID_DOC_TYPES` and the template dialogs' `DOC_TYPES`/`DOC_TYPE_LABEL` aliases are gone); the child's-entries
+    lookup is shared by the list and the history-download check. **Skipped on purpose:** the third `VALID_DOC_TYPES` copy
+    (the admin per-player documents route — not S4's file); the `.pastChip*` rename (the picker is S3's, it would touch its
+    layout baseline). Typecheck clean; 480 tests green.
+  - **Finish run, step 2 · `/review` high (2026-11-05) — fixed:** (1) **the "Still right for the {season}?" ask never
+    showed on a laptop** (it was hidden whenever the Safety form was open, which on a laptop is always) — now hidden only
+    while a PHONE is editing Safety; (2) **mig 441 F1** an entry copied from a team's older record overwrote the child's
+    newer medical note (and spread it to the other team's live entry) — the child's value now wins on insert; (3) **F2** a
+    join where the kept child won left the absorbed side's live entries stale — the join now syncs them; (4) **F3** an
+    entry made live again by a Reopen pushed all three of its (older) values to the child on a one-field edit — only the
+    changed column travels now. Fixture is **12/12** (rules 10–12 are the three above; the old fill rule was put back as a
+    mutant and rule 10 failed); S2's 15/15 and S3's 4/4 still hold. Also: the roll's documents read is org-scoped; a
+    slow documents read for the player just left can't overwrite the open one; `healthConfirmedAt` is redacted with the
+    other health fields for staff without roster details; "Last signed for …" is dropped when the season name is missing.
+    **Counts (lens c):** on dev the board's Documents column and the Families book's Missing forms do NOT move — no
+    good-until-replaced copy sits on an earlier entry yet (e.g. 15U AAA 9 of 12 and 4 missing, before and after).
+    **Not fixed — owner questions:** (a) a paper the child signed before for a type the team NO LONGER asks for (template
+    off, or none) still shows "Needs signing" on the player page (and in the roll's words) while the board and the Families
+    book call the child complete — S4 Part 0 call 2 ruled the rows that way; say whether a no-template type should show
+    only "On file". (b) The "Still right?" ask appears for a child whose only earlier entry is on ANOTHER team (the medical
+    note crosses, "last checked" names nothing) — one bit of cross-team history; keep or own-team only. (c) A coach's edit
+    on one team rewrites the child's other-team live entry with no confirm stamp, so the other coach's "Still right?" stays up
+    over a value they did not enter. **Known, not changed:** two concurrent health saves for one child (or a save beside a
+    join) can deadlock — Postgres aborts one, the coach sees an error and saves again (the same shape 435 already had for
+    name edits); a cleared note can come back from a CLOSED entry on a split or a picker copy; the admin per-player
+    documents route (not S4's) still stores an unchecked `templateId`.
+  - **Finish run, step 3 · `/docs` (2026-11-05):** updated — the Rep Teams board's Documents description and the
+    document-templates article (the new "Signed" choice; last season's copies stay on the player), the Families book's
+    "Missing forms" line, the coach guides' Safety line ("Still right for the 2027 Season?"), the Player documents article
+    (Needs signing / On file rows, "2 to sign", earlier copies download but don't delete) and Start next season (papers stay
+    with the season; the closing summary no longer says to "re-collect waivers"). No S5 promise anywhere. Not touched:
+    `premium-season-end` (it names documents only in passing — still true). **Demos:** `lib/demo-coach.ts`'s "1 unsigned
+    waiver" (Riverdale Ridge 12U) is still true under the new rule (dev read: 11 of 12 on file before and after) — no
+    `/demos` item. Spelling check clean; lint 0 errors.
+  - **Finish run, step 4 · the walk (2026-11-05):** `OWNER_QA_LEDGER.md` **§458** — [interactive walk](https://claude.ai/artifact/ARfwd2i3rPuMHXEQkzM19c)
+    · repository HTML `CLUB_TIER_STAGE14_S4_WALK.html`. One purpose, 8 parts (A–H) of 36 steps + I, nine owner calls
+    ("Keep as built" first; I-7…I-9 are the review's three open questions). Dev fixture `.probe/s4-walk/` (a standalone
+    team and a club-owned team, four sign-ins; `fixture.mjs --reset|--destroy`, `verify.mjs`). `verify.mjs` signed in
+    without a browser and read the real routes: Liam "2 to sign" + the ask, Ella "1 to sign", Noah/Owen nothing, Mason the
+    ask, the assistant refused (403) — ALL CHECKS PASSED. ⚠ Not seen on screen by me: the club-side pages (the club
+    fixture's counts were computed in SQL), and the layout of the player page WITH the ask and the club's upload window
+    with a type picked — part B asks the owner to look.
+  - **Next: S5 (the child's page, the household list, the club's doors). Owed from S4: prod migration 441 (pre-check in
+    `MANUAL_PROD_STEPS.json`), the §458 walk, and the three owner questions above.**
+
+## ▶ S4 finish run (owner asked 2026-11-05 for all five steps in one session, in this order)
+
+> **Paste:** `execute the "S4 finish run" in @docs/projects/active/CLUB_TIER_STAGE14_BUILD_PROMPT.md` into a new chat on `dev`.
+> Read the S4 Progress entry above first (what landed, the Part 0 calls, the defaults taken). This run builds NO new
+> feature: it cleans, reviews, documents, writes the walk and commits. A PM summary is not owed again (it was presented and
+> ruled); do give the owner a short product-owner note at each step boundary. Recommended model: Opus 5.5; reading goes to
+> helpers. Update the S4 Progress entry after each step. The dev server is shared — check `localhost:3000` answers before
+> any layout run; never start a second one; restart only if a sweep aborts or memory is near the floor (AGENTS.md).
+
+**S4's files (re-verify with `git diff` — several are SHARED with other sessions' uncommitted hunks):** new —
+`supabase/migrations/441_papers_and_health_follow_the_child.sql`, `tests/sql/child-health-fixture.sql`,
+`lib/document-state.ts`, `lib/child-documents.ts`, `tests/unit/child-documents.test.ts`; changed (S4 hunks only) —
+`lib/forms-coverage.ts`, `lib/db.ts` (template mapper/create/update `validity`, roster mapper `healthConfirmedAt`,
+`updateRepRosterPlayer` `healthConfirmedBy`), `lib/types.ts` (two fields), `lib/families-read.ts`, `lib/club-team-board.ts`,
+`lib/rep-season-rollover.ts`, `lib/season-roll-path.ts`, `lib/club-season-words.ts`, `components/coaches/PlayerDocumentsSection.tsx`,
+`components/coaches/StartNextSeasonModal.tsx`, `components/admin/kit/club/TemplateDialogs.tsx`,
+`components/admin/kit/club/SeasonDialogs.tsx`, `app/[orgSlug]/coaches/teams/[teamId]/roster/[playerId]/page.tsx`,
+`app/[orgSlug]/coaches/teams/[teamId]/documents/page.tsx`, `app/[orgSlug]/admin/rep-teams/documents/page.tsx`,
+`app/[orgSlug]/coaches/coaches.module.css` (the `.docState*` + `.healthAsk` block, the `.badgeTryout` removal), the coach
+player route + its `documents/` and `documents/[docId]/` routes, both `app/api/admin/rep-teams/document-templates` routes,
+`tests/unit/{club-stage2-server-guard,coach-history-endpoint-guard,coach-people-phone-guard}.test.ts`,
+`docs/agents/db/DATA_DICTIONARY.md`, `supabase/migrations/MANUAL_PROD_STEPS.json` (the 441 entry only), this file, the plan's
+14c line, the TODO line. NOT S4's (leave alone): `app/[orgSlug]/coaches/teams/[teamId]/roster/page.tsx`,
+`lib/help-content/coaches.tsx`'s existing hunks, migrations 440/442, everything billing / bank / public-page.
+
+**1 · `/simplify`** on S4's files only. Candidates seen at build time (verify, don't trust): the "stricter wins" rule is
+written twice (`documentStateRows` and `rollDocuments`) — one helper; `readChildTeamDocuments` and `documentIsTheChilds`
+both resolve "the child's entries on this team" — share it; `VALID_DOC_TYPES` is copied in three routes (pre-existing — fold
+into one export only if cheap); `TemplateDialogs`' `DOC_TYPE_LABEL`/`DOC_TYPES` re-exports (keep or inline the import); the
+reuse of the picker's `.pastChip*` classes for document chips (rename to a neutral chip only if no layout baseline moves).
+Skip anything that changes what a screen shows. Re-run the affected unit suites after.
+
+**2 · `/review` at high** (migration + triggers on the roster write path + a route that widened its read). Lenses to give
+the reviewers: (a) **trigger safety** — the four health triggers on `rep_roster_players` / `org_children` fire on the roll's
+inserts, bulk add, the picker, `accept_tryout_and_create_dues`; recursion stops after one hop; lock order vs
+`org_children_join` (which locks children first) — can a roll + a confirm deadlock?; the join's health carry runs BEFORE the
+absorbed record's delete; the split re-reads BOTH sides; (b) **privacy** — Ask 9 own-team only (`readChildTeamDocuments`,
+`readHeldForms`, `documentIsTheChilds` all scoped to team + non-call-up), `rosterPii` still gates every documents read and
+the health ask/confirm, a history download cannot reach another team's or child's file by id; (c) **the counts move** — on
+dev, compare the Rep Teams board's Documents column and the Families book's Missing forms before/after (stash-free: run the
+old rule in a probe) and state the numbers; (d) **the autosave** — the health stamp fires only on a CHANGED Safety value or
+Confirm, never on an unrelated field save; (e) the upload's `templateId` check; the DELETE 409 on an earlier season's copy;
+(f) the roll's note and both windows' papers line on a team with no templates, only templates, and templates + papers.
+Fixes to the migration go in the 441 file AND dev (its statements are re-runnable: `add column if not exists`, constraint
+drop-if-exists, `create or replace`, the backfill loop) — then re-run all three SQL fixtures
+(`node .probe/s2-child/q.mjs --file tests/sql/{child-health,org-children,child-match-rejections}-fixture.sql`, expect 9/9,
+15/15, 4/4) and a deliberate mutant that must fail.
+
+**3 · `/docs`.** Known stale: `lib/help-content/rep-teams.tsx` ~338–351 ("Families sign again each season, which is why the
+board's Documents count starts at zero on a new season") and the templates article; `lib/help-content/coaches.tsx`
+`recipe-track-documents` (~6371), `recipe-start-next-season`, `premium-season-end`, the Family & paperwork / Safety lines
+(~1396); the Families help that names "Missing forms". Say what S4 does, never promise S5's child page. Demos: do NOT
+hand-edit; check whether `lib/demo-coach.ts` ~805 ("1 unsigned waiver") is still true under the new rule and record it as a
+`/demos` item if not (the cycle's curation runs once at the end of Stage 14). `lib/walkthrough-content.ts` stays
+`/marketing`'s.
+
+**4 · The walk** — next free `OWNER_QA_LEDGER.md` § (§457 was the highest on 2026-11-05; check), ONE purpose: **"papers
+follow the child"**, as a checkable Artifact with paste-back (memory: QA walks). Build a dev-only fixture in
+`.probe/s4-walk/` modelled on `.probe/s3-walk/` (`--reset`, `--destroy`): a team with a closed 2025/2026 season and a live
+one; a returning child whose earlier entry holds a waiver, a code of conduct and a medical consent, plus a medical note and
+emergency contact; a club template set; an assistant without the roster-details grant. Outline: A the coach's Family tab
+rows (Needs signing / On file, "Last signed for…", "2 to sign"); B a row's Upload → On file, the count drops; C an earlier
+season's copy downloads and has no Delete; D "Still right for the {season}?" → Confirm → gone; a jersey-number edit does NOT
+clear it, an allergy edit does; E the club's "Signed" choice — defaults by type in the upload window, changing the waiver to
+"Good until replaced" flips the coach's row to On file; F the Rep Teams board count and the Families book's Missing forms
+agree with the player page; G Start next season, both portals: the papers line, and the success bullet; H a phone (Upload
+icon 44 × 44, Confirm full width) — and measure by eye the two screens the sweep could not (the upload window with a type
+picked; the player page with the ask); I the assistant without roster details sees no documents and no ask. Put the six
+"Defaults taken while building" (a)–(f) as calls with "Keep as built" first. Publish, add the ledger §, link it here.
+
+**5 · Commit** (the owner authorized it in this request — the walk's results are not a gate; anything the walk finds goes in a
+later commit). On `dev`. Stage explicit paths only; for a SHARED file take only S4's hunks (memory: "Partial commit out of
+shared files" — temp index, exact hunks); `git diff --cached --name-only` before committing and `git show --stat HEAD`
+after. `npm run refresh:snapshots` first; include the snapshot files only if their diff holds nothing but 441's objects
+(other sessions' 440/442 are on dev too) — otherwise leave them and say so. One commit for the feature (+ its records) is
+fine; message says what changes for the coach and the club. Then record the hash in the S4 Progress entry, the TODO line and
+the plan's 14c line, and hand off with: the walk link, prod mig 441 owed (with its pre-check), and S5 next.
 - **S5 · the child's page, the household list, the club's doors (14d part 1)** — Not started. Needs S2 (S4 for the documents block).
 - **S6 · joining records + the parent link (14d part 2, Ask 13)** — Not started. Needs S5.
 

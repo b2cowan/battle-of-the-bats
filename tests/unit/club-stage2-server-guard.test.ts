@@ -513,9 +513,18 @@ describe('B08 — one roster rule and one record rule, and every club surface ca
   it('the Documents column uses the Families book\'s forms rule', () => {
     const t = [{ team_id: null, document_type: 'waiver' }, { team_id: 't1', document_type: 'medical_consent' }, { team_id: 't2', document_type: 'other' }];
     assert.deepEqual(templatesForTeam(t, 't1').map(x => x.document_type), ['waiver', 'medical_consent']);
-    assert.equal(hasEveryForm(new Set(['waiver', 'medical_consent']), templatesForTeam(t, 't1')), true);
-    assert.equal(hasEveryForm(new Set(['waiver']), templatesForTeam(t, 't1')), false);
-    assert.equal(formOnFile(new Set(['waiver']), { document_type: 'waiver' }), true);
+    const held = (thisSeason: string[], earlier: string[] = []) => ({ thisSeason: new Set(thisSeason), earlier: new Set(earlier) });
+    assert.equal(hasEveryForm(held(['waiver', 'medical_consent']), templatesForTeam(t, 't1')), true);
+    assert.equal(hasEveryForm(held(['waiver']), templatesForTeam(t, 't1')), false);
+    assert.equal(formOnFile(held(['waiver']), { document_type: 'waiver' }), true);
+    // Club Tier Stage 14 S4: a form good until replaced counts from the child's earlier entry; one signed each season does not.
+    assert.equal(formOnFile(held([], ['medical_consent']), { document_type: 'medical_consent' }), true, 'medical consent defaults to until replaced');
+    assert.equal(formOnFile(held([], ['waiver']), { document_type: 'waiver' }), false, 'a waiver defaults to each season');
+    assert.equal(formOnFile(held([], ['waiver']), { document_type: 'waiver', validity: 'good_until_replaced' }), true, 'the club’s setting wins');
+    assert.equal(formOnFile(held([], ['medical_consent']), { document_type: 'medical_consent', validity: 'signed_each_season' }), false);
+    assert.equal(hasEveryForm(held(['waiver'], ['medical_consent']), templatesForTeam(t, 't1')), true);
+    assert.match(readCode('lib/club-team-board.ts'), /readHeldForms\(/, 'the board reads the child’s earlier papers on the team');
+    assert.match(readCode('lib/families-read.ts'), /readHeldForms\(/, 'so does the Families book');
     assert.match(readCode('lib/families-read.ts'), /templatesForTeamRule\(/, 'the Families book reads the same rule');
     assert.match(readCode('lib/club-team-board.ts'), /hasEveryForm\(/);
   });

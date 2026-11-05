@@ -7,6 +7,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { RepDocumentType } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 import { refuseTeamOutsideClub, teamIdsInScope } from '@/lib/club-team-route';
+import { DOCUMENT_TYPE_ORDER, isDocumentValidity } from '@/lib/forms-coverage';
 
 const ALLOWED_TYPES = [
   'application/pdf',
@@ -15,7 +16,6 @@ const ALLOWED_TYPES = [
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 ];
 const MAX_SIZE = 10 * 1024 * 1024;
-const VALID_DOC_TYPES: RepDocumentType[] = ['waiver', 'medical_consent', 'code_of_conduct', 'other'];
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -58,10 +58,15 @@ export const POST = withObservability(async (req: Request,) => {
   const name = (formData.get('name') as string | null)?.trim();
   const documentType = formData.get('documentType') as string | null;
   const teamId = (formData.get('teamId') as string | null) || null;
+  // Club Tier Stage 14 S4 (Ask 10 A): signed each season, or good until replaced. Absent = the type's default.
+  const validityRaw = (formData.get('validity') as string | null) || null;
+  if (validityRaw !== null && !isDocumentValidity(validityRaw)) {
+    return NextResponse.json({ error: 'Choose whether it is signed each season or good until replaced.' }, { status: 400 });
+  }
 
   if (!file) return NextResponse.json({ error: 'file is required' }, { status: 400 });
   if (!name) return NextResponse.json({ error: 'name is required' }, { status: 400 });
-  if (!documentType || !VALID_DOC_TYPES.includes(documentType as RepDocumentType)) {
+  if (!documentType || !DOCUMENT_TYPE_ORDER.includes(documentType as RepDocumentType)) {
     return NextResponse.json({ error: 'Invalid documentType' }, { status: 400 });
   }
   if (!ALLOWED_TYPES.includes(file.type)) {
@@ -100,6 +105,7 @@ export const POST = withObservability(async (req: Request,) => {
     storagePath,
     fileName: file.name,
     fileSize: file.size,
+    validity: validityRaw ?? undefined,
     publishedBy: ctx!.user.id,
   });
 

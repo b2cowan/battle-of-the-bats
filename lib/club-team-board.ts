@@ -6,7 +6,8 @@ import { WRAPPED_RECORD_EVENT_TYPES } from './season-wrapped';
 import { isLiveSeasonStatus, latestClosedSeasonOf, liveSeasonOf } from './season-live';
 import { countsOnRoster, hasDecidedGames, rosterCountOf, seasonRecordOf } from './team-season-figures';
 import { formatRecord, type WltTally } from './coach-season-record';
-import { hasEveryForm, templatesForTeam } from './forms-coverage';
+import { hasEveryForm, NOTHING_HELD, templatesForTeam } from './forms-coverage';
+import { readHeldForms } from './child-documents';
 import type { RepProgramYearStatus } from './types';
 
 /**
@@ -219,39 +220,27 @@ async function loadDocuments(
   const [templatesRes, rosterRes] = await Promise.all([
     supabaseAdmin
       .from('rep_document_templates')
-      .select('team_id, document_type')
+      .select('team_id, document_type, validity')
       .eq('org_id', orgId)
       .eq('is_active', true),
     supabaseAdmin
       .from('rep_roster_players')
-      .select('id, program_year_id, status')
+      .select('id, child_id, team_id, program_year_id, status')
       .in('program_year_id', liveIds),
   ]);
   if (templatesRes.error) throw templatesRes.error;
   if (rosterRes.error) throw rosterRes.error;
-  const templates = (templatesRes.data ?? []) as { team_id: string | null; document_type: string }[];
+  const templates = (templatesRes.data ?? []) as { team_id: string | null; document_type: string; validity: string }[];
   // The roster rule decides who is on the team (never a call-up or an inactive player).
-  const players = ((rosterRes.data ?? []) as { id: string; program_year_id: string; status: string }[])
+  const players = ((rosterRes.data ?? []) as { id: string; child_id: string; team_id: string; program_year_id: string; status: string }[])
     .filter(countsOnRoster);
-  const docTypes = new Map<string, Set<string>>();
-  if (players.length > 0) {
-    const { data: docs, error } = await supabaseAdmin
-      .from('rep_player_documents')
-      .select('player_id, document_type')
-      .eq('org_id', orgId)
-      .in('player_id', players.map(p => p.id));
-    if (error) throw error;
-    for (const d of (docs ?? []) as { player_id: string; document_type: string }[]) {
-      const set = docTypes.get(d.player_id) ?? new Set<string>();
-      set.add(d.document_type);
-      docTypes.set(d.player_id, set);
-    }
-  }
+  // Club Tier Stage 14 S4: a good-until-replaced form signed on the child's earlier entry on this team counts.
+  const held = await readHeldForms(orgId, players);
   for (const [teamId, yearId] of liveByTeam) {
     const applies = templatesForTeam(templates, teamId);
     const onTeam = players.filter(p => p.program_year_id === yearId);
     if (applies.length === 0 || onTeam.length === 0) { out.set(teamId, null); continue; }
-    const signed = onTeam.filter(p => hasEveryForm(docTypes.get(p.id) ?? new Set(), applies)).length;
+    const signed = onTeam.filter(p => hasEveryForm(held.get(p.id) ?? NOTHING_HELD, applies)).length;
     out.set(teamId, { signed, of: onTeam.length });
   }
   return out;

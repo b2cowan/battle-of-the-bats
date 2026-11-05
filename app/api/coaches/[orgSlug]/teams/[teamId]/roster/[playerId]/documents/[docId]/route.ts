@@ -8,6 +8,8 @@ import {
   deleteRepPlayerDocument,
 } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { documentIsTheChilds } from '@/lib/child-documents';
+import { resolveWorkingProgramYear } from '@/lib/coach-membership';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canViewPlayerDocuments, canManagePlayerDocuments } from '@/lib/coach-capabilities';
 
@@ -25,8 +27,10 @@ async function resolveContext(orgSlug: string, teamId: string, playerId: string,
     return { error: NextResponse.json({ error: 'Player not found' }, { status: 404 }) };
   }
 
+  // Club Tier Stage 14 S4: the player page lists the child's papers on this team, every season, so a download may be
+  // a copy signed on one of the child's EARLIER entries here — never another team's, never another child's.
   const doc = await getRepPlayerDocumentById(docId);
-  if (!doc || doc.playerId !== playerId || doc.teamId !== teamId) {
+  if (!doc || doc.teamId !== teamId || !(await documentIsTheChilds(doc, player))) {
     return { error: NextResponse.json({ error: 'Document not found' }, { status: 404 }) };
   }
 
@@ -64,6 +68,11 @@ export const DELETE = withObservability(async (_req: Request,
   const { doc, assignment } = resolved;
   const denied = denyUnless(canManagePlayerDocuments(assignment.capabilities), 'You do not have permission to manage this player’s documents.');
   if (denied) return denied;
+  // Only this season's copy, on this season's entry: an earlier season's signed copy is a record (Stage 14 S4).
+  const workingYear = await resolveWorkingProgramYear(teamId);
+  if (doc.playerId !== playerId || !workingYear || resolved.player.programYearId !== workingYear.id) {
+    return NextResponse.json({ error: 'An earlier season’s signed copy stays on file. It can be downloaded, not deleted.' }, { status: 409 });
+  }
 
   await supabaseAdmin.storage.from('rep-team-documents').remove([doc.storagePath]);
   await deleteRepPlayerDocument(docId);

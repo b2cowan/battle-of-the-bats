@@ -1,0 +1,694 @@
+<title>Stage 14 S4 Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Public+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: sticky tab bar (Start · A–I · Calls · Paste back), one part on screen at a time; each step is Do → You should see. */
+:root {
+  --bg: #f6f5f2;
+  --surface: #ffffff;
+  --ink: #1d2327;
+  --muted: #5d676d;
+  --line: #d9d8d2;
+  --accent: #1f5f7a;
+  --accent-ink: #ffffff;
+  --accent-soft: #e3eef3;
+  --pass: #2a7a4b;
+  --pass-soft: #e2f1e8;
+  --issue: #b3402f;
+  --issue-soft: #f8e6e2;
+  --call: #946200;
+  --call-soft: #fbf0d8;
+  --font-body: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14181b; --surface: #1c2226; --ink: #e8ebec; --muted: #9aa5ab; --line: #333c41;
+    --accent: #6fb4d0; --accent-ink: #0d1a20; --accent-soft: #1b2e37;
+    --pass: #5cc088; --pass-soft: #17301f; --issue: #f08a78; --issue-soft: #3a1f1a;
+    --call: #e8b650; --call-soft: #3a2e12; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #14181b; --surface: #1c2226; --ink: #e8ebec; --muted: #9aa5ab; --line: #333c41;
+  --accent: #6fb4d0; --accent-ink: #0d1a20; --accent-soft: #1b2e37;
+  --pass: #5cc088; --pass-soft: #17301f; --issue: #f08a78; --issue-soft: #3a1f1a;
+  --call: #e8b650; --call-soft: #3a2e12; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.5; margin: 0; }
+.wrap { max-width: 860px; margin: 0 auto; padding-block: 0 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 9; background: var(--bg); border-bottom: 1px solid var(--line); padding-block: 10px 0; }
+.bar-top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.bar h1 { font-size: 15px; font-weight: 700; margin: 0; letter-spacing: 0.01em; }
+.count { font-family: var(--font-mono); font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.tabs { display: flex; gap: 2px; overflow-x: auto; padding-top: 8px; scrollbar-width: thin; }
+.tab { flex: 0 0 auto; border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 13px; font-weight: 600; padding: 8px 12px; border-bottom: 3px solid transparent; cursor: pointer; min-height: 40px; white-space: nowrap; }
+.tab:hover { color: var(--ink); }
+.tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+.tab .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-left: 6px; background: var(--line); vertical-align: 1px; }
+.tab .dot.pass { background: var(--pass); } .tab .dot.issue { background: var(--issue); } .tab .dot.call { background: var(--call); } .tab .dot.part { background: var(--accent); opacity: 0.55; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+main { padding-top: 22px; display: grid; gap: 18px; }
+h2 { font-size: 21px; line-height: 1.25; margin: 0; text-wrap: balance; }
+h3 { font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px; }
+p { margin: 0; max-width: 68ch; }
+.lede { color: var(--muted); }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; display: grid; gap: 8px; min-width: 0; }
+.grid2 { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.mono { font-family: var(--font-mono); font-size: 13px; }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th, td { text-align: left; padding: 6px 10px 6px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.scroll { overflow-x: auto; }
+.cred { display: grid; grid-template-columns: auto 1fr auto; gap: 4px 12px; align-items: center; font-size: 14px; }
+.cred .k { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+.cred .v { font-family: var(--font-mono); font-size: 13px; word-break: break-all; min-width: 0; }
+button.copy { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 6px; font: inherit; font-size: 12px; padding: 4px 9px; cursor: pointer; min-height: 30px; }
+button.copy:hover { border-color: var(--accent); }
+.callout { border-left: 4px solid var(--call); background: var(--call-soft); padding: 10px 14px; border-radius: 0 6px 6px 0; max-width: 72ch; }
+.callout.stop { border-left-color: var(--issue); background: var(--issue-soft); }
+.steps { display: grid; gap: 10px; padding: 0; margin: 0; list-style: none; }
+.step { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; min-width: 0; }
+.step.done { border-color: var(--pass); background: linear-gradient(0deg, var(--pass-soft), var(--pass-soft)); }
+.step input[type="checkbox"] { width: 22px; height: 22px; margin: 2px 0 0; accent-color: var(--accent); cursor: pointer; flex: none; }
+.step .body { display: grid; gap: 6px; min-width: 0; }
+.step .id { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+.who { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 1px 7px; border-radius: 4px; background: var(--accent-soft); color: var(--accent); margin-right: 6px; }
+.do b.lbl, .see b.lbl { font-family: var(--font-mono); font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-right: 6px; }
+.see { color: var(--ink); }
+.writes { font-size: 12.5px; color: var(--muted); }
+.opts { display: grid; gap: 6px; margin-top: 4px; }
+.opt { display: flex; gap: 10px; align-items: flex-start; }
+.opt input { width: 20px; height: 20px; margin-top: 2px; accent-color: var(--accent); flex: none; }
+code { font-family: var(--font-mono); font-size: 12.5px; background: var(--accent-soft); padding: 1px 5px; border-radius: 4px; word-break: break-word; }
+.verdict { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.vbtn { border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; font-size: 13px; font-weight: 600; padding: 7px 14px; border-radius: 6px; cursor: pointer; min-height: 38px; }
+.vbtn[aria-pressed="true"].pass { background: var(--pass); border-color: var(--pass); color: #fff; }
+.vbtn[aria-pressed="true"].issue { background: var(--issue); border-color: var(--issue); color: #fff; }
+.vbtn[aria-pressed="true"].call { background: var(--call); border-color: var(--call); color: #fff; }
+textarea { width: 100%; min-height: 70px; font: inherit; font-size: 14px; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; resize: vertical; }
+.primary { border: 0; background: var(--accent); color: var(--accent-ink); font: inherit; font-weight: 700; padding: 10px 18px; border-radius: 6px; cursor: pointer; min-height: 42px; }
+.pb { width: 100%; min-height: 260px; font-family: var(--font-mono); font-size: 12.5px; }
+.nav { display: flex; justify-content: space-between; gap: 10px; }
+.small { font-size: 13px; color: var(--muted); }
+ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+@media (max-width: 520px) { .cred { grid-template-columns: 1fr; } .step { grid-template-columns: auto 1fr; padding: 10px 12px; } }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <div class="bar">
+    <div class="bar-top">
+      <h1>§458 · Stage 14 S4 owner walk · papers follow the child</h1>
+      <span class="count" id="count">0 of 0 ticked</span>
+    </div>
+    <div class="tabs" id="tabs" role="tablist" aria-label="Walk parts"></div>
+  </div>
+  <main id="main"></main>
+</div>
+
+<script type="application/json" id="walk-data">
+{
+ "asOf": "2026-11-05",
+ "parts": [
+  {
+   "id": "A",
+   "title": "The coach’s rows",
+   "who": "Head coach",
+   "intro": "What a returning player’s Family & paperwork tab says on a laptop. Sign in as the head coach of S4 Walk Hawks (Start tab). Nothing is written in this part.",
+   "steps": [
+    {
+     "who": "Head coach",
+     "do": "Open Liam Tremblay’s player page (link on the Start tab) and choose the Family & paperwork tab.",
+     "see": "The Documents section header counts “2 to sign”. Three rows: Waiver and Code of conduct are marked “Needs signing” with a line like “Needs signing for the 2027 Season. Last signed for the 2026 Season, (an April 2026 date).” Medical consent is marked “On file” with “Uploaded (an April 2026 date). Good until it’s replaced.”",
+     "stop": "If you see a plain list of files and no “Needs signing”, the dev server is serving old code. Stop here and tell me."
+    },
+    {
+     "who": "Head coach",
+     "do": "On the same tab, look at the Safety section (laptop width).",
+     "see": "Above the medical note, an amber box titled “Still right for the 2027 Season?” with the line “Confirm the medical note and emergency contact once a season, or change them.” and a Confirm button. The note reads “Peanut allergy - EpiPen in the red bag”, the contact Marie Tremblay.",
+     "stop": "If the box is missing on a laptop, tell me: that was a defect fixed in this session."
+    },
+    {
+     "who": "Head coach",
+     "do": "Open Ella Brooks, tab Family & paperwork.",
+     "see": "“1 to sign”. One row only: Waiver, “Needs signing” with “Last signed for the 2026 Season”. No Code of conduct or Medical consent row (nothing asks for them and she never signed them). No “Still right?” box (nothing on file in Safety)."
+    },
+    {
+     "who": "Head coach",
+     "do": "Open Noah Okafor, tab Family & paperwork.",
+     "see": "No “to sign” count. Waiver and Code of conduct are “On file” with “Uploaded (a date) for the 2027 Season.”; Medical consent is “On file” with “Good until it’s replaced.” No “Still right?” box."
+    },
+    {
+     "who": "Head coach",
+     "do": "Open Mason Patel, then Owen Fischer (tab Family & paperwork).",
+     "see": "Mason: no document rows, but the “Still right for the 2027 Season?” box (his asthma note is on file). Owen: no rows and no box (new this season)."
+    }
+   ]
+  },
+  {
+   "id": "B",
+   "title": "A phone look",
+   "who": "Head coach",
+   "intro": "The same screens at phone width (about 390 px: a narrow browser window or your phone on the dev site). Do this before part D, which uses up the “Still right?” boxes. Nothing is written.",
+   "steps": [
+    {
+     "who": "Head coach",
+     "do": "Liam’s Family & paperwork tab at phone width.",
+     "see": "Each “Needs signing” row has an icon-only Upload button (a clear 44 × 44 touch target) and the page does not scroll sideways. The header still counts “2 to sign”."
+    },
+    {
+     "who": "Head coach",
+     "do": "Scroll to Safety on Liam’s page. Do not press anything.",
+     "see": "The “Still right for the 2027 Season?” box is there and its Confirm button spans the full width of the box."
+    },
+    {
+     "who": "Head coach",
+     "do": "Press Upload on the Waiver row. Look at the window, then close it with ×.",
+     "see": "A window titled for the upload with Waiver already chosen as the type; the buttons are full-size and nothing is clipped. Closing without a file asks nothing."
+    },
+    {
+     "who": "Club admin",
+     "do": "Sign in as the club admin. Open Rep teams › Document templates and press Upload template at phone width. Choose the type Waiver.",
+     "see": "The new Signed field shows “Signed each season” with its one-line hint; the window fits, nothing is cut off and the buttons are full-size. This is a screen the automatic layout check could not reach, so please look closely. Close without uploading."
+    },
+    {
+     "who": "Head coach",
+     "do": "Back as the head coach: widen the window to about 768 px (a tablet) and look at Liam’s rows.",
+     "see": "The row Upload buttons keep the word “Upload” beside the icon and are easy to hit."
+    }
+   ]
+  },
+  {
+   "id": "C",
+   "title": "Upload from a row, and the old copies",
+   "who": "Head coach",
+   "intro": "Signing Liam’s waiver for this season, then looking at last season’s copies. This part writes, and puts itself back at the end.",
+   "steps": [
+    {
+     "who": "Head coach",
+     "do": "Back at laptop width: Liam › Family & paperwork. Press Upload on the Waiver row.",
+     "see": "The upload window opens with the type already set to Waiver. Choose any small PDF or picture and press Upload.",
+     "writes": "Writes one waiver on Liam’s 2027 entry."
+    },
+    {
+     "who": "Head coach",
+     "do": "Look at the Waiver row and the header.",
+     "see": "The Waiver row is “On file” with “Uploaded (today) for the 2027 Season.” The header now counts “1 to sign”."
+    },
+    {
+     "who": "Head coach",
+     "do": "Look at the list of files under the rows.",
+     "see": "A Season column. The new waiver reads “2027 Season” and has a Delete. The 2026 Season copies (waiver, code of conduct, medical consent) are listed with Download only: no Delete on them."
+    },
+    {
+     "who": "Head coach",
+     "do": "Press Download on a 2026 Season copy.",
+     "see": "A one-page sample PDF opens or downloads."
+    },
+    {
+     "who": "Head coach",
+     "do": "Delete the new 2027 waiver (confirm when asked).",
+     "see": "The Waiver row returns to “Needs signing … Last signed for the 2026 Season” and the header counts “2 to sign” again.",
+     "writes": "Puts Liam back as he was."
+    }
+   ]
+  },
+  {
+   "id": "D",
+   "title": "“Still right for the 2027 Season?”",
+   "who": "Head coach",
+   "intro": "The once-a-season check on a returning player’s medical note and emergency contact. This part writes to Liam and Mason.",
+   "steps": [
+    {
+     "who": "Head coach",
+     "do": "Liam › Family & paperwork › Safety: press Confirm.",
+     "see": "The box goes away at once. Reload the page: it stays away, and the medical note and contact are unchanged.",
+     "writes": "Marks Liam’s Safety as checked for the 2027 Season."
+    },
+    {
+     "who": "Head coach",
+     "do": "Open Mason › Details. Change the jersey number from 7 to 17 and wait a few seconds for it to save. Then open Family & paperwork.",
+     "see": "The “Still right?” box is STILL there: changing something unrelated does not count as checking the medical note.",
+     "writes": "Changes Mason’s number (change it back to 7 afterwards)."
+    },
+    {
+     "who": "Head coach",
+     "do": "Change the number back to 7. In Safety add the words “ (updated)” to the end of the allergy note and wait for it to save.",
+     "see": "The “Still right?” box goes away on its own: changing the medical note counts as checking it.",
+     "writes": "Changes Mason’s medical note."
+    },
+    {
+     "who": "Head coach",
+     "do": "Reload Mason’s page and look at Safety.",
+     "see": "No box, and the note reads “Asthma - inhaler in the bag (updated)”. Open Liam again: still no box."
+    }
+   ]
+  },
+  {
+   "id": "E",
+   "title": "The club’s numbers agree",
+   "who": "Club admin",
+   "intro": "S4 Club Hawks (club-owned). Four players, two club forms: Club waiver (signed each season) and Medical consent (good until replaced). Sign in as the club admin; nothing is written.",
+   "steps": [
+    {
+     "who": "Club admin",
+     "do": "Open Rep teams (the board).",
+     "see": "On the S4 Club Hawks row the Documents column reads “1 of 4”."
+    },
+    {
+     "who": "Club admin",
+     "do": "Open the Families book and show Missing forms (link on the Start tab).",
+     "see": "Three families are listed: Singh (Ava), Cho (Ben) and Dunn (Cleo). Dev Rao’s family is not."
+    },
+    {
+     "who": "Club coach",
+     "do": "Sign in as the club coach and open each player’s Family & paperwork tab: Ava, Ben, Cleo, Dev.",
+     "see": "Ava: Waiver “Needs signing”, Medical consent “On file” → “1 to sign”. Ben: both rows “Needs signing” (he never signed a consent) → “2 to sign”. Cleo: Waiver “Needs signing”, Medical consent “On file” → “1 to sign”. Dev: both “On file”, nothing to sign."
+    },
+    {
+     "who": "Club coach",
+     "do": "Add the four counts: 1 + 2 + 1 + 0.",
+     "see": "Four forms to sign across three players. This is the same four the Families book shows, and the board’s “1 of 4” is the one player with every form. The three screens agree."
+    }
+   ]
+  },
+  {
+   "id": "F",
+   "title": "The club’s “Signed” choice",
+   "who": "Club admin",
+   "intro": "The club decides, per form, whether families sign it every season or once until replaced. This part writes, and puts the waiver back at the end.",
+   "steps": [
+    {
+     "who": "Club admin",
+     "do": "Rep teams › Document templates: look at the table.",
+     "see": "A “Signed” column. Club waiver reads “Signed each season”; Medical consent reads “Good until replaced”."
+    },
+    {
+     "who": "Club admin",
+     "do": "Press Upload template. Choose the type Waiver, then Medical consent, then Waiver again. Do not choose a file.",
+     "see": "The Signed field starts at the usual answer for the type: waiver → Signed each season (“Every player signs it again each season.”), medical consent → Good until replaced (“A signed copy stays on file until a newer one replaces it.”). Close the window without uploading."
+    },
+    {
+     "who": "Club admin",
+     "do": "Open Club waiver and change Signed to “Good until replaced”. Save.",
+     "see": "The window’s status line and the table now say the signed copy stays on file until replaced.",
+     "writes": "Changes the Club waiver’s setting."
+    },
+    {
+     "who": "Club coach",
+     "do": "As the club coach open Ava’s Family & paperwork tab.",
+     "see": "Her Waiver is now “On file” with “Uploaded (an April 2026 date). Good until it’s replaced.” and nothing is left to sign. Cleo, who never signed a waiver, still shows it as “Needs signing”."
+    },
+    {
+     "who": "Club admin",
+     "do": "Back on the Rep teams board.",
+     "see": "The Documents column now reads “2 of 4” (Ava and Dev have every form)."
+    },
+    {
+     "who": "Club admin",
+     "do": "Put it back: open Club waiver and change Signed to “Signed each season”.",
+     "see": "The board returns to “1 of 4” and Ava’s waiver is “Needs signing” again.",
+     "writes": "Restores the setting."
+    }
+   ]
+  },
+  {
+   "id": "G",
+   "title": "The assistant’s view",
+   "who": "Assistant",
+   "intro": "The assistant on S4 Walk Hawks has no roster-details grant, so paperwork and medical notes are not theirs to see. Sign in as the assistant (Start tab).",
+   "steps": [
+    {
+     "who": "Assistant",
+     "do": "Open Liam’s player page.",
+     "see": "No Documents section, no “2 to sign” and no “Still right for the 2027 Season?” box. The medical note and emergency contact are not shown."
+    },
+    {
+     "who": "Assistant",
+     "do": "Open the team’s Documents page.",
+     "see": "Nothing about Liam’s signed copies appears anywhere, and the assistant has no way to upload one."
+    }
+   ]
+  },
+  {
+   "id": "H",
+   "title": "Start next season, then put back",
+   "who": "Head coach",
+   "intro": "The roll states what happens to papers. This part is destructive (it closes the 2027 Season), so do it last, then put the fixture back.",
+   "steps": [
+    {
+     "who": "Head coach",
+     "do": "S4 Walk Hawks › Settings › Start next season. Choose “The same players, moving up an age group”. Read the list of what comes across, then press Start.",
+     "see": "A line in the window names the papers: “Waivers and the code of conduct need signing again for the 2028 Season. Medical forms carry.” (or the new season’s name if you changed it).",
+     "writes": "Closes the 2027 Season and starts the next."
+    },
+    {
+     "who": "Head coach",
+     "do": "Read the summary shown after Start.",
+     "see": "A bullet says Waivers and the code of conduct need signing for the new season and each player shows “Needs signing”. The old sentence “Player waivers and documents are not carried — collect fresh ones” is gone."
+    },
+    {
+     "who": "Head coach",
+     "do": "Open Noah in the new season › Family & paperwork.",
+     "see": "Waiver and Code of conduct are “Needs signing … Last signed for the 2027 Season”; Medical consent is still “On file”."
+    },
+    {
+     "who": "Club admin",
+     "do": "As the club admin open Rep teams › S4 Club Hawks (the team page) and press Start next season. Read the window and close it WITHOUT starting.",
+     "see": "The same kind of line, built from the club’s forms: “Waivers need signing again for the 2028 Season. Medical forms carry.”"
+    },
+    {
+     "who": "Head coach",
+     "do": "Put it all back: run the reset command on the Start tab, then the verify command.",
+     "see": "Verify ends with “ALL CHECKS PASSED”. The reset gives both teams new ids; use the links it prints in the CREDENTIALS file.",
+     "writes": "Rebuilds both teams as they were."
+    }
+   ]
+  },
+  {
+   "id": "I",
+   "title": "Calls for you",
+   "who": "You",
+   "intro": "One box per option, so the tick is the answer. The first six are defaults I took while building; the last three came out of the review.",
+   "calls": [
+    {
+     "q": "An earlier season’s signed copy reads “Uploaded (date) for the (season).” on a form that is signed each season.",
+     "opts": [
+      "Keep as built",
+      "Change it (say how in the notes)"
+     ]
+    },
+    {
+     "q": "The Safety line reads “Confirm the medical note and emergency contact once a season, or change them.” (the drawing said a parent can confirm it too, but the parent tier is off).",
+     "opts": [
+      "Keep as built",
+      "Change it (say how in the notes)"
+     ]
+    },
+    {
+     "q": "The “Still right?” box shows only for a player who has an entry on an earlier season and something on file in Safety.",
+     "opts": [
+      "Keep as built",
+      "Change it (say how in the notes)"
+     ]
+    },
+    {
+     "q": "The window’s papers line names the forms signed each season first, then “… carry”.",
+     "opts": [
+      "Keep as built",
+      "Change it (say how in the notes)"
+     ]
+    },
+    {
+     "q": "The form-type chip in the files table is the quiet chip, not the old blue badge.",
+     "opts": [
+      "Keep as built",
+      "Change it (say how in the notes)"
+     ]
+    },
+    {
+     "q": "On a tablet the row Upload keeps its word beside the icon.",
+     "opts": [
+      "Keep as built",
+      "Change it (say how in the notes)"
+     ]
+    },
+    {
+     "q": "A form a player signed before that the team no longer asks for (the club switched the template off, or never had one) shows “Needs signing” on the coach’s page while the board and Families book call the player complete.",
+     "opts": [
+      "Keep as built",
+      "Show it only as “On file”, never “Needs signing”"
+     ]
+    },
+    {
+     "q": "The “Still right?” box also appears for a player whose only earlier entry is on another team in the club (the note crosses teams; “last checked” says nothing).",
+     "opts": [
+      "Keep as built",
+      "Only for this team’s own earlier seasons"
+     ]
+    },
+    {
+     "q": "When one coach changes a medical note, the player’s entry on a second team gets the new note straight away without being checked there, so that coach’s “Still right?” box stays up over a note they did not enter.",
+     "opts": [
+      "Keep as built",
+      "Show the box as checked on the other team too"
+     ]
+    }
+   ]
+  }
+ ]
+}
+</script>
+
+<script>
+(function () {
+  var KEY = "s4walk-2026-11-05-v1";
+  var data = JSON.parse(document.getElementById("walk-data").textContent);
+  var state = { ticks: {}, verdict: {}, notes: {}, tab: "start" };
+  try { var saved = JSON.parse(localStorage.getItem(KEY) || "null"); if (saved) { state.ticks = saved.ticks || {}; state.verdict = saved.verdict || {}; state.notes = saved.notes || {}; state.tab = saved.tab || "start"; } } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var parts = data.parts;
+  var tabsEl = document.getElementById("tabs");
+  var mainEl = document.getElementById("main");
+  var countEl = document.getElementById("count");
+
+  function el(tag, attrs, kids) {
+    var n = document.createElement(tag);
+    if (attrs) Object.keys(attrs).forEach(function (k) {
+      if (k === "class") n.className = attrs[k];
+      else if (k === "text") n.textContent = attrs[k];
+      else if (k === "html") n.innerHTML = attrs[k];
+      else if (k.indexOf("on") === 0) n.addEventListener(k.slice(2), attrs[k]);
+      else n.setAttribute(k, attrs[k]);
+    });
+    (kids || []).forEach(function (c) { if (c) n.appendChild(typeof c === "string" ? document.createTextNode(c) : c); });
+    return n;
+  }
+  function boxesOf(p) {
+    var out = [];
+    (p.steps || []).forEach(function (s, i) { out.push(p.id + (i + 1)); });
+    (p.calls || []).forEach(function (c, i) { c.opts.forEach(function (o, j) { out.push(p.id + (i + 1) + "." + (j + 1)); }); });
+    return out;
+  }
+  function partCount(p) { var b = boxesOf(p); var n = 0; b.forEach(function (id) { if (state.ticks[id]) n++; }); return { n: n, of: b.length }; }
+  function totals() {
+    var n = 0, of = 0;
+    parts.forEach(function (p) { if (p.calls) return; var c = partCount(p); n += c.n; of += c.of; });
+    return { n: n, of: of };
+  }
+  function renderCount() { var t = totals(); countEl.textContent = t.n + " of " + t.of + " steps ticked"; }
+
+  var order = ["start"].concat(parts.map(function (p) { return p.id; })).concat(["paste"]);
+  function renderTabs() {
+    tabsEl.innerHTML = "";
+    order.forEach(function (id) {
+      var label, dot = "";
+      if (id === "start") label = "Start";
+      else if (id === "paste") label = "Paste back";
+      else { var p = parts.filter(function (x) { return x.id === id; })[0]; label = p.id + " · " + p.title; var v = state.verdict[id]; var c = partCount(p); dot = v ? v : (c.n > 0 ? "part" : ""); }
+      var b = el("button", { "class": "tab", role: "tab", "aria-selected": String(state.tab === id), text: label, onclick: function () { go(id); } });
+      if (dot !== "" || (id !== "start" && id !== "paste")) b.appendChild(el("span", { "class": "dot " + dot }));
+      tabsEl.appendChild(b);
+    });
+  }
+  function go(id) { state.tab = id; save(); render(); window.scrollTo(0, 0); }
+
+  function cred(label, value) {
+    var b = el("button", { "class": "copy", type: "button", text: "Copy", onclick: function () {
+      var done = function () { b.textContent = "Copied"; setTimeout(function () { b.textContent = "Copy"; }, 1200); };
+      try { navigator.clipboard.writeText(value).then(done, function () { b.textContent = "Select it"; }); } catch (e) { b.textContent = "Select it"; }
+    } });
+    return [el("span", { "class": "k", text: label }), el("span", { "class": "v", text: value }), b];
+  }
+
+  function renderStart() {
+    var B = "http://localhost:3000";
+    function box(rows) { var d = el("div", { "class": "cred" }); rows.forEach(function (r) { cred(r[0], r[1]).forEach(function (n) { d.appendChild(n); }); }); return d; }
+    var c1 = box([["Site", B], ["Head coach", "s4-walk-coach@dev.local"], ["Password", "devpass123"],
+      ["Roster", B + "/s4-walk-coach/coaches/teams/d8ed4519-3f40-460c-af15-24c544abc316/roster"], ["Documents", B + "/s4-walk-coach/coaches/teams/d8ed4519-3f40-460c-af15-24c544abc316/documents"], ["Settings", B + "/s4-walk-coach/coaches/teams/d8ed4519-3f40-460c-af15-24c544abc316/settings"],
+      ["Liam Tremblay", B + "/s4-walk-coach/coaches/teams/d8ed4519-3f40-460c-af15-24c544abc316/roster/6d22dd6e-9ae3-4970-b895-f3f330badbf5"],
+      ["Ella Brooks", B + "/s4-walk-coach/coaches/teams/d8ed4519-3f40-460c-af15-24c544abc316/roster/613ff832-b3bf-4fb5-ae3a-c9ad86be4288"],
+      ["Noah Okafor", B + "/s4-walk-coach/coaches/teams/d8ed4519-3f40-460c-af15-24c544abc316/roster/7de7c50a-36a7-4d6c-98da-2eac6d7bbb8d"],
+      ["Mason Patel", B + "/s4-walk-coach/coaches/teams/d8ed4519-3f40-460c-af15-24c544abc316/roster/2b89e15c-468b-4fc6-897c-10983c6ec141"],
+      ["Owen Fischer", B + "/s4-walk-coach/coaches/teams/d8ed4519-3f40-460c-af15-24c544abc316/roster/2b1be3e7-f169-454d-90d2-40f19779fdc6"]]);
+    var c2 = box([["Assistant", "s4-walk-assistant@dev.local"], ["Password", "devpass123"], ["Liam", B + "/s4-walk-coach/coaches/teams/d8ed4519-3f40-460c-af15-24c544abc316/roster/6d22dd6e-9ae3-4970-b895-f3f330badbf5"], ["Documents", B + "/s4-walk-coach/coaches/teams/d8ed4519-3f40-460c-af15-24c544abc316/documents"]]);
+    var c3 = box([["Club admin", "s4-walk-admin@dev.local"], ["Password", "devpass123"],
+      ["Team page", B + "/s4-walk-club/admin/rep-teams/teams/160943d0-5c7b-4bd8-abbe-603febb3bd36"], ["Rep teams board", B + "/s4-walk-club/admin/rep-teams"], ["Document templates", B + "/s4-walk-club/admin/rep-teams/documents"], ["Families book", B + "/s4-walk-club/admin/families"], ["Missing forms", B + "/s4-walk-club/admin/families?show=forms"]]);
+    var c4 = box([["Club coach", "s4-walk-clubcoach@dev.local"], ["Password", "devpass123"],
+      ["Settings", B + "/s4-walk-club/coaches/teams/160943d0-5c7b-4bd8-abbe-603febb3bd36/settings"],
+      ["Ava Singh", B + "/s4-walk-club/coaches/teams/160943d0-5c7b-4bd8-abbe-603febb3bd36/roster/8edbdf33-d61a-4646-8214-ea652dcf2c39"],
+      ["Ben Cho", B + "/s4-walk-club/coaches/teams/160943d0-5c7b-4bd8-abbe-603febb3bd36/roster/67ee29ab-263d-4817-abfa-c75e8285ada2"],
+      ["Cleo Dunn", B + "/s4-walk-club/coaches/teams/160943d0-5c7b-4bd8-abbe-603febb3bd36/roster/84d3c052-abe6-419b-8700-62654aca91f5"],
+      ["Dev Rao", B + "/s4-walk-club/coaches/teams/160943d0-5c7b-4bd8-abbe-603febb3bd36/roster/0f44cb54-94bb-4007-94e1-34823f6e9c80"]]);
+    var c5 = box([["Reset (part H)", "node --env-file=.env.local .probe/s4-walk/fixture.mjs --reset"], ["Verify", "node --env-file=.env.local .probe/s4-walk/verify.mjs"]]);
+    function row(a, b, c) { return el("tr", null, [el("td", { text: a }), el("td", { text: b }), el("td", { text: c })]); }
+    var who = el("div", { "class": "scroll" }, [el("table", null, [
+      el("thead", null, [el("tr", null, [el("th", { text: "Player" }), el("th", { text: "What is on file" }), el("th", { text: "What it shows on the 2027 Season" })])]),
+      el("tbody", null, [
+        row("S4 Walk Hawks · Liam #2", "2025 waiver · 2026 waiver, code of conduct, medical consent · peanut allergy and Marie Tremblay", "2 to sign · Still right? box"),
+        row("Ella #3", "2026 waiver only", "1 to sign · no box"),
+        row("Noah #4", "all three signed this season", "nothing to sign · no box"),
+        row("Mason #7", "2026 asthma note, no papers", "no rows · Still right? box"),
+        row("Owen #15", "new this season", "nothing"),
+        row("S4 Club Hawks · Ava #5", "2026 waiver + medical consent", "1 to sign (waiver)"),
+        row("Ben #9", "2026 waiver", "2 to sign (waiver, consent)"),
+        row("Cleo #11", "2026 medical consent", "1 to sign (waiver)"),
+        row("Dev #14", "2027 waiver + medical consent", "nothing to sign")
+      ])
+    ])]);
+    return [
+      el("h2", { text: "Papers follow the child" }),
+      el("p", { "class": "lede", text: "As of " + data.asOf + ". Dev site only; keep this page private (it carries a dev password). Two teams: S4 Walk Hawks (a standalone coach team) and S4 Club Hawks (club-owned)." }),
+      el("div", { "class": "panel" }, [el("h3", { text: "What this walk is for" }), el("p", { text: "To check that a returning player’s signed papers and medical note are read through the player, not lost at the season change: forms signed each season show “Needs signing” until this season’s copy is in, forms good until replaced stay on file, last season’s copies can be downloaded but not deleted, the once-a-season “Still right?” check works, and the board, the Families book and the player page agree. One job, 9 parts, about 40 steps." })]),
+      el("div", { "class": "panel" }, [el("h3", { text: "It passes when" }), el("ul", { "class": "plain" }, [
+        el("li", { text: "A returning player’s rows say Needs signing or On file correctly for the club’s Signed choice." }),
+        el("li", { text: "Last season’s copies are listed and download, and cannot be deleted from this season." }),
+        el("li", { text: "“Still right?” clears on Confirm or a real change to the medical note, never on an unrelated edit." }),
+        el("li", { text: "The board, the Families book and the player pages give the same counts; the assistant sees none of it." })
+      ])]),
+      el("div", { "class": "panel" }, [el("h3", { text: "Not in this walk" }), el("ul", { "class": "plain" }, [
+        el("li", { text: "The child’s own page and the club’s Confirm for a child (a later stage)." }),
+        el("li", { text: "Two coaches saving the same child at the same moment (database test only)." })
+      ])]),
+      el("div", { "class": "panel" }, [el("h3", { text: "Sign in as: head coach, S4 Walk Hawks (parts A–D, H)" }), c1]),
+      el("div", { "class": "panel" }, [el("h3", { text: "Sign in as: assistant coach (part G)" }), c2]),
+      el("div", { "class": "panel" }, [el("h3", { text: "Sign in as: club admin (parts B, E, F, H)" }), c3]),
+      el("div", { "class": "panel" }, [el("h3", { text: "Sign in as: club coach, S4 Club Hawks (parts E, F)" }), c4]),
+      el("div", { "class": "panel" }, [el("h3", { text: "Who is where" }), who]),
+      el("div", { "class": "panel" }, [el("h3", { text: "Commands (part H only)" }), c5,
+        el("p", { "class": "small", text: "Run them from the repository folder in a terminal. A reset gives both teams new ids, so the links above stop working; the reset prints the new ones and saves them in the CREDENTIALS file in the fixture folder." })]),
+      el("div", { "class": "callout", html: "<b>Writing parts.</b> C, D, F and H change the fixture. Walk in order: B comes before D because D uses up the “Still right?” boxes. You can stop after part G without any harm." }),
+      el("div", { "class": "nav" }, [el("span"), el("button", { "class": "primary", type: "button", text: "Start with part A", onclick: function () { go("A"); } })])
+    ];
+  }
+
+  function renderPart(p) {
+    var out = [];
+    out.push(el("h2", { text: p.id + " · " + p.title }));
+    out.push(el("p", { "class": "lede", text: p.intro }));
+    if (p.steps) {
+      var ol = el("ol", { "class": "steps" });
+      p.steps.forEach(function (s, i) {
+        var id = p.id + (i + 1);
+        var cb = el("input", { type: "checkbox", id: "cb-" + id, "aria-label": "Step " + id + " done", onchange: function (e) { state.ticks[id] = e.target.checked; save(); render(true); } });
+        cb.checked = !!state.ticks[id];
+        var body = el("div", { "class": "body" }, [
+          el("div", { "class": "id" }, [el("span", { "class": "who", text: s.who }), id]),
+          doEl(s.do),
+          el("div", { "class": "see" }, [el("b", { "class": "lbl", text: "You should see" }), document.createTextNode(s.see)])
+        ]);
+        if (s.writes) body.appendChild(el("div", { "class": "writes", text: s.writes }));
+        if (s.stop) body.appendChild(el("div", { "class": "callout stop", text: s.stop }));
+        ol.appendChild(el("li", { "class": "step" + (state.ticks[id] ? " done" : "") }, [cb, body]));
+      });
+      out.push(ol);
+    }
+    if (p.calls) {
+      p.calls.forEach(function (c, i) {
+        var box = el("div", { "class": "panel" }, [el("p", { text: c.q })]);
+        var opts = el("div", { "class": "opts" });
+        c.opts.forEach(function (o, j) {
+          var id = p.id + (i + 1) + "." + (j + 1);
+          var cb = el("input", { type: "checkbox", id: "cb-" + id, onchange: function (e) { state.ticks[id] = e.target.checked; save(); render(true); } });
+          cb.checked = !!state.ticks[id];
+          opts.appendChild(el("label", { "class": "opt", "for": "cb-" + id }, [cb, el("span", { text: o })]));
+        });
+        box.appendChild(opts);
+        out.push(box);
+      });
+    }
+    out.push(signoff(p));
+    var idx = order.indexOf(p.id);
+    out.push(el("div", { "class": "nav" }, [
+      el("button", { "class": "vbtn", type: "button", text: "← Back", onclick: function () { go(order[idx - 1]); } }),
+      el("button", { "class": "primary", type: "button", text: idx === order.length - 2 ? "To the paste-back →" : "Next part →", onclick: function () { go(order[idx + 1]); } })
+    ]));
+    return out;
+  }
+  function doEl(text) {
+    var d = el("div", { "class": "do" }, [el("b", { "class": "lbl", text: "Do" })]);
+    String(text).split("\n").forEach(function (line, i) {
+      if (i > 0) d.appendChild(el("br"));
+      if (i > 0) d.appendChild(el("code", { text: line })); else d.appendChild(document.createTextNode(line));
+    });
+    return d;
+  }
+  function signoff(p) {
+    var c = partCount(p);
+    var v = el("div", { "class": "verdict" });
+    [["pass", "Pass"], ["issue", "Issue"], ["call", "Needs a call"]].forEach(function (pair) {
+      v.appendChild(el("button", { "class": "vbtn " + pair[0], type: "button", "aria-pressed": String(state.verdict[p.id] === pair[0]), text: pair[1], onclick: function () {
+        state.verdict[p.id] = state.verdict[p.id] === pair[0] ? "" : pair[0]; save(); render(true);
+      } }));
+    });
+    var ta = el("textarea", { id: "notes-" + p.id, "aria-label": "Notes for part " + p.id, placeholder: "Notes: what you saw, what looked wrong, the why behind a call." });
+    ta.value = state.notes[p.id] || "";
+    ta.addEventListener("input", function () { state.notes[p.id] = ta.value; save(); });
+    return el("div", { "class": "panel" }, [el("h3", { text: "Part " + p.id + " · " + c.n + " of " + c.of + " ticked" }), v, ta]);
+  }
+
+  function buildPasteBack() {
+    var t = totals();
+    var lines = ["§458 Stage 14 S4 walk · " + data.asOf + " · ticked " + t.n + " of " + t.of + " steps"];
+    parts.forEach(function (p) {
+      var c = partCount(p);
+      var v = (state.verdict[p.id] || "no verdict").toUpperCase();
+      if (p.calls) {
+        lines.push("");
+        lines.push(p.id + " · " + p.title + " [" + v + "]");
+        p.calls.forEach(function (call, i) {
+          var picked = call.opts.filter(function (o, j) { return state.ticks[p.id + (i + 1) + "." + (j + 1)]; });
+          lines.push("  " + p.id + (i + 1) + ": " + (picked.length ? picked.join(" + ") : "NOT ANSWERED") + "  (" + call.q.slice(0, 70) + "…)");
+        });
+      } else {
+        lines.push("");
+        lines.push(p.id + " · " + p.title + " [" + v + "] " + c.n + "/" + c.of);
+        var missed = [];
+        (p.steps || []).forEach(function (s, i) { if (!state.ticks[p.id + (i + 1)]) missed.push(p.id + (i + 1)); });
+        if (missed.length) lines.push("  not ticked: " + missed.join(", "));
+      }
+      if ((state.notes[p.id] || "").trim()) lines.push("  notes: " + state.notes[p.id].trim().replace(/\n/g, " / "));
+    });
+    lines.push("");
+    lines.push("Reminder: the fraction is the evidence; a verdict is an opinion.");
+    return lines.join("\n");
+  }
+  function renderPaste() {
+    var ta = el("textarea", { "class": "pb", id: "pb-out", readonly: "readonly", "aria-label": "Paste-back text" });
+    ta.value = buildPasteBack();
+    var msg = el("span", { "class": "small", id: "pb-msg" });
+    var copyBtn = el("button", { "class": "primary", type: "button", text: "Copy the paste-back", onclick: function () {
+      ta.value = buildPasteBack();
+      var fail = function () { ta.focus(); ta.select(); msg.textContent = "Select and copy it by hand."; };
+      try { navigator.clipboard.writeText(ta.value).then(function () { msg.textContent = "Copied. Paste it into the chat."; }, fail); } catch (e) { fail(); }
+    } });
+    var reset = el("button", { "class": "vbtn", type: "button", text: "Clear every tick and note", onclick: function () {
+      if (!state._confirm) { state._confirm = true; reset.textContent = "Press again to clear everything"; return; }
+      state.ticks = {}; state.verdict = {}; state.notes = {}; state._confirm = false; save(); render();
+    } });
+    return [
+      el("h2", { text: "Paste back" }),
+      el("p", { "class": "lede", text: "Copy this into the chat when you finish, or when you stop. It carries the count per part, the verdicts, your notes and your answers to the calls." }),
+      ta,
+      el("div", { "class": "nav" }, [el("div", { "class": "verdict" }, [copyBtn, msg]), reset])
+    ];
+  }
+
+  function render(keepScroll) {
+    var y = window.scrollY;
+    renderTabs(); renderCount();
+    mainEl.innerHTML = "";
+    var nodes;
+    if (state.tab === "start") nodes = renderStart();
+    else if (state.tab === "paste") nodes = renderPaste();
+    else { var p = parts.filter(function (x) { return x.id === state.tab; })[0]; nodes = p ? renderPart(p) : renderStart(); }
+    nodes.forEach(function (n) { mainEl.appendChild(n); });
+    if (keepScroll === true) window.scrollTo(0, y);
+  }
+  render();
+})();
+</script>

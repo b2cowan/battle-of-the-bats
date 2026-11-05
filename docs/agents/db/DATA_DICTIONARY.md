@@ -2882,11 +2882,18 @@ roster.") and the continuity decide route to Ask 11's words.
 **`source_basic_player_id`** (uuid, nullable; mig 143) — provenance tag: the `basic_coach_team_players.id` this row was copied from during a free→Premium upgrade (Phase 4). Written ONLY by the upgrade migration/retry path; coach-created rows leave it NULL. Backs **idempotent retry** of a partial upgrade — a partial-unique index `(program_year_id, source_basic_player_id) WHERE source_basic_player_id IS NOT NULL` guarantees a given Basic player can only be copied once (a re-run / concurrent retry skips it). Not a FK (loose tag; the Basic row may be edited/removed independently).
 
 <!-- dict:col:rep_roster_players.medical_notes -->
-**`medical_notes`** (text, nullable; mig 157) — Wave B safety field: allergies / medical conditions / medication, coach-staff-visible. Presence drives a "Medical info" flag on the player profile. Free text.
+**`medical_notes`** (text, nullable; mig 157) — Wave B safety field: allergies / medical conditions / medication, coach-staff-visible. Presence drives a "Medical info" flag on the player profile. Free text. **Since mig 441 this is the SEASON's copy of the child's value** (`org_children` gotcha 9): on a live entry it is kept equal to the child by trigger; a closed entry keeps what it held.
 
 <!-- dict:col:rep_roster_players.emergency_contact_name -->
 <!-- dict:col:rep_roster_players.emergency_contact_phone -->
-**`emergency_contact_name`** / **`emergency_contact_phone`** (text, nullable; mig 157) — Wave B emergency contact for game-day. Free text; phone is tap-to-call in the UI. Distinct from the guardian contact.
+**`emergency_contact_name`** / **`emergency_contact_phone`** (text, nullable; mig 157) — Wave B emergency contact for game-day. Free text; phone is tap-to-call in the UI. Distinct from the guardian contact. The season's copy of the child's value since mig 441 (as `medical_notes`).
+
+<!-- dict:col:rep_roster_players.health_confirmed_at -->
+<!-- dict:col:rep_roster_players.health_confirmed_by -->
+**`health_confirmed_at`** (timestamptz, nullable) / **`health_confirmed_by`** (FK → `auth.users.id` ON DELETE SET NULL, nullable) —
+**mig 441**, the once-a-season "Still right for the {season}?": set when a coach presses Confirm, or saves the Safety
+section, on THIS season's entry. Per entry because an entry is a season; the roll and the picker never copy it (they
+copy `carriedEntryFields` only). NULL on a returning child's live entry with a value on file = the question shows.
 
 <!-- dict:col:rep_roster_players.bats -->
 <!-- dict:col:rep_roster_players.throws -->
@@ -4557,7 +4564,7 @@ See `org_children` for the rules (confirm joins, undo splits, live name edits wr
 1. **Single private Supabase Storage bucket `rep-team-documents`** (`public:false`, 10 MB, MIME allow-list; created in the dashboard, not a migration) — the bucket name is a **literal hard-coded across ~6 routes** (no shared constant). All DB access is `supabaseAdmin`; **RLS = defense-in-depth only** (the policies are dead in the request path). Downloads are short-lived **signed URLs** (`createSignedUrl`, 3600 s). `storage_path` is **never returned to clients** (stripped).
 2. **`team_id` NULL = org-wide template; set = team-specific.** `getRepDocumentTemplates` returns org-wide **plus** team-specific via `.or('team_id.is.null,team_id.eq.<id>')` ([lib/db.ts:4885](../../../lib/db.ts#L4885)).
 3. **`is_active` is the unpublish/soft-delete flag but is filtered ONLY on the coaches list** — the admin list returns inactive templates too. A separate hard `DELETE` removes the row + storage object.
-4. **No `program_year_id`** — templates are org/team-scoped, persisting across seasons.
+4. **No `program_year_id`** — templates are org/team-scoped, persisting across seasons. Whether a SIGNED copy carries to the next season is `validity` (mig 441).
 5. **`ON DELETE CASCADE` on `org_id`/`team_id` drops the row but NOT the storage object** — cascade orphans the file in the bucket (only the explicit DELETE route cleans storage).
 
 **Fields** (boilerplate `id`, `created_at` omitted; no `updated_at`):
@@ -4587,6 +4594,15 @@ See `org_children` for the rules (confirm joins, undo splits, live name edits wr
 <!-- dict:col:rep_document_templates.published_by -->
 **`published_by`** (FK → `auth.users.id`, nullable) — uploader (auth-schema introspection gap).
 
+<!-- dict:col:rep_document_templates.validity -->
+**`validity`** (text, NOT NULL; CHECK `signed_each_season|good_until_replaced`; **mig 441**, Club Tier Stage 14 S4, Ask 10 A) —
+whether a signed copy answers only the season it was signed for (`signed_each_season`: "Needs signing for {season}" until a
+copy is on THAT season's entry) or stays on file until replaced (`good_until_replaced`: a copy on any of the child's entries
+on the same team counts). Backfilled and defaulted by type — waiver + code of conduct each season, medical consent + other
+until replaced — by the BEFORE INSERT trigger `rep_document_template_default_validity` when a writer omits it. The club sets
+it in the template windows; a coach never edits templates. With no template, the same type default applies
+(`lib/forms-coverage.ts`, the one rule the coach's Family tab, the Rep Teams board and the Families book read).
+
 ### `rep_player_documents`
 <!-- dict:table:rep_player_documents -->
 
@@ -4595,7 +4611,7 @@ See `org_children` for the rules (confirm joins, undo splits, live name edits wr
 **Gotchas (read first):**
 1. **Same bucket / signed-URL / `supabaseAdmin` pattern** as `rep_document_templates`; `storage_path` never exposed; **no guardian self-serve path exists** — uploaders are coaches/admins (`uploaded_by` is always the acting staff user).
 2. **`template_id` links a completed upload to the blank template it fulfills** (ON DELETE SET NULL; NULL = ad-hoc) — but it is **unvalidated** (accepts any form-supplied string).
-3. **No `program_year_id`** — docs are player/team-scoped. Because `rep_roster_players` rows ARE per-program-year and `player_id` is `ON DELETE CASCADE`, a player's docs **follow `player_id` and cascade away on roster teardown** — they do not survive being re-rostered under a new `player_id`.
+3. **No `program_year_id` and no `child_id` — on purpose (Stage 14 S4, owner 2026-11-04).** A document sits on the season's roster entry it was signed on; that entry's `program_year_id` IS "signed for which season", and its `child_id` IS whose. "The child's documents" = the documents on that child's entries (read through the entry; a coach reads only their own team's entries, Ask 9), so a join or split needs no document step and nothing can drift. A roster entry holding a document cannot be removed (`ROSTER_PLAYER_DEPENDENTS`), so papers do not cascade away in the product; a team or organization delete still takes them.
 4. **`org_id`/`team_id` are denormalized from the player row** (`createRepPlayerDocument` reads `player.teamId/orgId`), not the request; no trigger re-syncs them if a player is moved.
 5. **No soft-delete — hard `DELETE` only**; cascade orphans the storage object (only the DELETE route cleans storage).
 
@@ -6293,8 +6309,24 @@ RLS on, no policies, **service role only**. Plan of record: `CLUB_TIER_PRODUCTIO
    INITIALLY DEFERRED (checked at commit): an organization delete cascades to the entries and to this table in separate
    nested statements, fired in trigger-name order.
 6. **A removed entry leaves its child behind**, unreferenced and invisible (every read goes entry → child); S4-1 rules a
-   child with no entries is kept. Only a JOIN deletes a record — S4, once the child holds health facts, must carry them
-   across before that delete.
+   child with no entries is kept. Only a JOIN deletes a record — since mig 441 it carries the health facts across first
+   (gotcha 9).
+9. **Health lives on the child (mig 441, Ask 10).** `medical_notes` / `emergency_contact_name` / `emergency_contact_phone`
+   are the child's ONE current value; each roster entry keeps its own columns as that season's copy. Triggers keep every
+   LIVE entry (rep season `draft`/`active`) and the child equal: a live entry inserted writes the child, one edited writes
+   only the columns that CHANGED (`org_child_health_follows_entry`, blanks stored as NULL — an entry a Reopen made live
+   again can hold older values in its other columns); the child written reaches every live entry
+   (`org_child_health_reaches_entries`); a live entry inserted for a child that already holds a value takes the CHILD'S
+   value per column even over one it carries (`org_child_health_fills_entry`, BEFORE INSERT, after
+   `rep_roster_players_child` by name order) — the picker and the roll copy from a team's own latest entry, which can be
+   older than what another team confirmed on the child. Closed entries stay as
+   recorded. The backfill, a split (both sides) and `org_child_health_from_entries(child)` take each column from the
+   child's NEWEST entry that has a value, so a blank newer entry never wipes an older allergy; a join keeps the newer
+   child's value per column and the other's where that is blank, then brings the kept child's live entries to that value
+   (when the kept side wins the child's value does not change, so the reach alone would never fire). House-league
+   sign-ups carry no medical columns. Known: two concurrent health saves for one child (or a save beside a join) can
+   deadlock — Postgres aborts one; a cleared note can return from a CLOSED entry on a split or a picker copy.
+   Fixture: `tests/sql/child-health-fixture.sql` (12 rules).
 7. **The team move** (`move_team_into_club`, re-created by mig 435 from 351 with this table in `c_moves`) moves a
    standalone coach's children into the club with the team (Ask 7). The club's queue proposes matches (S6); nothing joins
    on the way in.
@@ -6313,6 +6345,12 @@ RLS on, no policies, **service role only**. Plan of record: `CLUB_TIER_PRODUCTIO
 **`first_name`** (text NOT NULL) / **`last_name`** (text, nullable — a roster row's may be blank) / **`date_of_birth`**
 (date, nullable) — the child's name and birth date: from the newest season's entry at the backfill, the entry that minted
 it, or the latest edit on a live entry (gotcha 5). The season entries keep their own copies.
+
+<!-- dict:col:org_children.medical_notes -->
+<!-- dict:col:org_children.emergency_contact_name -->
+<!-- dict:col:org_children.emergency_contact_phone -->
+**`medical_notes`** / **`emergency_contact_name`** / **`emergency_contact_phone`** (text, nullable; **mig 441**) — the
+child's current medical note and emergency contact (gotcha 9). Redacted like the entry's under `rosterPii`.
 
 <!-- dict:col:org_children.created_at -->
 <!-- dict:col:org_children.updated_at -->

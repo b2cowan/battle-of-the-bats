@@ -8,13 +8,8 @@ import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { canViewDocuments } from '@/lib/coach-capabilities';
 import styles from '../../../coaches.module.css';
 import type { RepDocumentType } from '@/lib/types';
-
-const DOC_TYPE_LABELS: Record<RepDocumentType, string> = {
-  waiver:           'Waiver',
-  medical_consent:  'Medical Consent',
-  code_of_conduct:  'Code of Conduct',
-  other:            'Other',
-};
+// Sentence case in both portals (Club Tier Stage 14 S4 — the coach's labels were Title Case).
+import { DOCUMENT_TYPE_LABEL, VALIDITY_LABEL } from '@/lib/document-state';
 
 interface TemplateRow {
   id: string;
@@ -24,6 +19,8 @@ interface TemplateRow {
   fileName: string;
   fileSize: number;
   isActive: boolean;
+  /** The club's choice (Stage 14 S4, Ask 10 A): a coach reads it here and never edits it. */
+  validity: 'signed_each_season' | 'good_until_replaced';
   publishedBy: string | null;
   createdAt: string;
   downloadUrl: string | null;
@@ -111,6 +108,7 @@ export default function TeamDocumentsPage({
             <tr>
               <th className={styles.th}>Name</th>
               <th className={styles.th}>Type</th>
+              <th className={styles.th}>Signed</th>
               <th className={styles.th}>File</th>
               <th className={styles.th}>Size</th>
               <th className={styles.th}></th>
@@ -121,9 +119,12 @@ export default function TeamDocumentsPage({
               <tr key={t.id} className={styles.tr}>
                 <td className={styles.td} style={{ fontWeight: 600 }}>{t.name}</td>
                 <td className={styles.td}>
-                  <span className={`${styles.badge} ${styles.badgeTryout}`}>
-                    {DOC_TYPE_LABELS[t.documentType] ?? t.documentType}
+                  <span className={styles.chipQuiet}>
+                    {DOCUMENT_TYPE_LABEL[t.documentType] ?? t.documentType}
                   </span>
+                </td>
+                <td className={styles.td} style={{ color: 'var(--home-dim, rgba(255,255,255,0.6))', fontSize: '0.82rem', whiteSpace: 'nowrap' }}>
+                  {VALIDITY_LABEL[t.validity] ?? ''}
                 </td>
                 <td className={styles.td} style={{ color: 'var(--home-dim, rgba(255,255,255,0.6))', fontSize: '0.82rem' }}>
                   {t.fileName}

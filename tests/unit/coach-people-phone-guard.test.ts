@@ -244,7 +244,8 @@ describe('§228 walk rulings, 2026-09-24 — the Season figures (F5), the emerge
   });
   it('Upload sits in the Documents section head, as the pencils do', () => {
     const docs = readCode('components/coaches/PlayerDocumentsSection.tsx');
-    assert.match(docs, /<CoachPageSection sectionId="documents" title="Documents" action=\{uploadButton\}>/);
+    // Club Tier Stage 14 S4: the "2 to sign" chip rides the head's meta slot; Upload is still the head's action.
+    assert.match(docs, /<CoachPageSection sectionId="documents" title="Documents" meta=\{toSignChip\} action=\{uploadButton\}>/);
     assert.match(docs, /isPhone \? `\$\{styles\.footerIconBtn\} \$\{styles\.sectionEditBtn\}`/);
     assert.doesNotMatch(page, /<CoachPageSection sectionId="documents"/, 'the page no longer wraps it');
   });

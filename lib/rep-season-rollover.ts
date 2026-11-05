@@ -24,7 +24,10 @@ import {
 import { playerName } from './coach-roster-name';
 import { cutoffFor } from './born-years';
 import { carriedEntryFields } from './past-player-rules';
-import type { RepProgramYear, RepRosterPlayer } from './types';
+import type { RepDocumentType, RepProgramYear, RepRosterPlayer } from './types';
+import { getRepDocumentTemplates } from './db';
+import { validityForType } from './forms-coverage';
+import { documentsSignedLine, type RollDocuments } from './season-roll-path';
 
 /**
  * Coach Premium — Phase 5: "Start next season" for a standalone Premium coach.
@@ -381,8 +384,15 @@ export async function startNextRepSeason(params: {
     summary.warnings.push('The roster import hit a problem; some players may be missing from the new season.');
     console.error('[rep-season-rollover] roster carry pass failed:', e);
   }
+  // Club Tier Stage 14 S4: the papers stay on last season's entries; what is signed each season shows "Needs signing" on
+  // the new one, and what is good until replaced stays on file. The note names the team's own forms (drawing 2B).
   if (summary.roster.copied > 0) {
-    summary.notes.push('Player waivers and documents are not carried — collect fresh ones for the new season.');
+    try {
+      const line = documentsSignedLine(await rollDocuments(currentSeason), newName);
+      if (line) summary.notes.push(line);
+    } catch (e) {
+      console.error('[rep-season-rollover] documents note failed:', e);
+    }
   }
 
   // ── Continuity links (Player Development 3D): the roll copied each row itself, so the
@@ -564,11 +574,43 @@ export async function startNextRepSeason(params: {
  * ⚠ Names and numbers only — the people who open this window (a standalone head coach, the club's owner or
  * admin) see the roster already, and nothing private (dates of birth, families) is sent.
  */
+/**
+ * Which of the team's forms the roll asks to sign again and which carry (Club Tier Stage 14 S4): its active templates
+ * by their setting (two of one type set differently: the stricter wins, as on the player page), plus any type on file
+ * this season with no template (the type's default). Null when there is neither — the window then says nothing.
+ */
+export async function rollDocuments(season: RepProgramYear): Promise<RollDocuments | null> {
+  const [templates, docsRes] = await Promise.all([
+    getRepDocumentTemplates(season.orgId, season.teamId),
+    supabaseAdmin
+      .from('rep_player_documents')
+      .select('document_type, rep_roster_players!inner(program_year_id)')
+      .eq('org_id', season.orgId)
+      .eq('team_id', season.teamId)
+      .eq('rep_roster_players.program_year_id', season.id)
+      .limit(1000),
+  ]);
+  if (docsRes.error) throw docsRes.error;
+  const asked = templates.filter(x => x.isActive).map(t => ({ document_type: t.documentType, validity: t.validity }));
+  const types = new Set<RepDocumentType>(asked.map(t => t.document_type as RepDocumentType));
+  for (const d of (docsRes.data ?? []) as { document_type: RepDocumentType }[]) types.add(d.document_type);
+  if (types.size === 0) return null;
+  const validity = (t: RepDocumentType) => validityForType(asked, t);
+  return {
+    eachSeason: [...types].filter(t => validity(t) === 'signed_each_season'),
+    untilReplaced: [...types].filter(t => validity(t) === 'good_until_replaced'),
+  };
+}
+
 export async function seasonWindowFacts(p: {
   season: RepProgramYear;
   team: { division: string | null; sport: string | null };
   cutoffs: unknown;
 }): Promise<SeasonWindowFacts> {
+  const documents = await rollDocuments(p.season).catch(e => {
+    console.error('[rep-season-rollover] window documents read failed:', e);
+    return null;
+  });
   const players = rollPlayerChoices(await getRepRosterPlayers(p.season.id)).map(r => ({
     id: r.id,
     name: playerName(r),
@@ -580,6 +622,7 @@ export async function seasonWindowFacts(p: {
     division: p.team.division ?? null,
     born: { from: p.season.bornFromYear ?? null, to: p.season.bornToYear ?? null },
     cutoff: cutoffFor(p.cutoffs, p.team.sport),
+    documents,
   };
 }
 

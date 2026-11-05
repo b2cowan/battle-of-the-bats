@@ -10,6 +10,7 @@ import {
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { refuseTeamOutsideClub, teamIdsInScope } from '@/lib/club-team-route';
+import { isDocumentValidity, type DocumentValidity } from '@/lib/forms-coverage';
 import type { AuthContextWithRole } from '@/lib/api-auth';
 
 /** A group-limited member reaches a club-wide template or one of their groups' teams' — no other. */
@@ -77,8 +78,15 @@ export const PATCH = withObservability(async (req: Request,
   if (outOfScope) return outOfScope;
 
   const body = await req.json();
-  const fields: { isActive?: boolean; teamId?: string | null } = {};
+  const fields: { isActive?: boolean; teamId?: string | null; validity?: DocumentValidity } = {};
   if (typeof body.isActive === 'boolean') fields.isActive = body.isActive;
+  // Club Tier Stage 14 S4 (Ask 10 A): the club decides, per document, whether it is signed each season.
+  if ('validity' in body) {
+    if (!isDocumentValidity(body.validity)) {
+      return NextResponse.json({ error: 'Choose whether it is signed each season or good until replaced.' }, { status: 400 });
+    }
+    fields.validity = body.validity;
+  }
   // "Applies to" (Club Tier Stage 2, specimen 8's team picker): a team of THIS club, or null for
   // every team — checked exactly as the create checks it (B11 / J4-009).
   if ('teamId' in body) {
@@ -94,7 +102,7 @@ export const PATCH = withObservability(async (req: Request,
     fields.teamId = teamId;
   }
   if (Object.keys(fields).length === 0) {
-    return NextResponse.json({ error: 'isActive (boolean) or teamId is required' }, { status: 400 });
+    return NextResponse.json({ error: 'isActive (boolean), teamId or validity is required' }, { status: 400 });
   }
 
   const updated = await updateRepDocumentTemplate(templateId, fields);

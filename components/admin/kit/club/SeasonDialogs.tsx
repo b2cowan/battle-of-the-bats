@@ -28,7 +28,7 @@ import {
   startToldLine, startWarningTail, unsettledIntro, unsettledLines, type OwedToClub, type UnsettledCounts,
 } from '@/lib/club-season-words';
 import {
-  BRING_ANYWAY_LABEL, DIVISION_MAX, ROLL_CHOICE_TITLE, ROLL_LIST_EMPTY, ROLL_LIST_HINT,
+  BRING_ANYWAY_LABEL, DIVISION_MAX, ROLL_CHOICE_TITLE, documentsWindowLine, ROLL_LIST_EMPTY, ROLL_LIST_HINT,
   ROLL_LIST_LABEL, ROLL_QUESTION, bringAnywayNote, comingCount, defaultTicked, divisionForMovingUp, divisionHint,
   rollChoiceLine, rollRequestFields, rollWaitReason, type SeasonRollPath, type SeasonWindowFacts,
 } from '@/lib/season-roll-path';
@@ -99,6 +99,7 @@ export function StartSeasonDialog({
   const ready = name.trim().length > 0 && Number.isInteger(yearNum) && yearNum > from.year;
   const waitReason = rollWaitReason(path, roll, !roll);
   const showsDivision = !!roll?.division?.trim();
+  const papersLine = documentsWindowLine(roll?.documents, name.trim() || `${from.year + 1} Season`);
   const hasActive = !!roll?.players.some(p => p.status === 'active');
   const nobodyComes = path === 'moving_up' ? ticked.length === 0 : path === 'new_group' ? !bringAnyway : false;
   const choiceFacts = {
@@ -236,6 +237,8 @@ export function StartSeasonDialog({
         )}
       </div>
       <p className={repKit.windowNote}>{START_STAFF_NOTE}</p>
+      {/* Club Tier Stage 14 S4: the coach window's papers line, same words (both portals). */}
+      {papersLine && <p className={repKit.windowNote}><b>{papersLine.title}</b>{papersLine.rest}</p>}
 
       {from.isLive && hasUnsettled(preflight.unsettled, preflight.owedToClub) && (
         <div className={repKit.windowWarn}>

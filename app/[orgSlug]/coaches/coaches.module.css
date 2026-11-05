@@ -3240,7 +3240,8 @@ a.oneChip:hover { border-color: currentColor; }
 .badgeActive    { background: rgba(var(--success-rgb), 0.12); color: var(--badge-success-ink); border: 1px solid rgba(var(--success-rgb), 0.25); }
 .badgeCompleted { background: rgba(var(--warning-rgb), 0.12); color: var(--badge-warning-ink); border: 1px solid rgba(var(--warning-rgb), 0.25); }
 .badgeArchived  { background: var(--white-05); color: var(--text-tertiary); border: 1px solid var(--border-2); }
-.badgeTryout    { background: rgba(var(--blueprint-blue-rgb),0.15); color: var(--blueprint-light); border: 1px solid rgba(var(--blueprint-blue-rgb),0.3); }
+/* (.badgeTryout, the blue type badge the documents tables wore, left with Club Tier Stage 14 S4: their type is a quiet
+   sentence-case chip now. The notes below still name it for the history of .badgeSponsor.) */
 /* A SPONSOR, in the Fundraising list. Blue against the drives' green, because the split the tab
    exists to show is fundraiser-vs-sponsor and colour is the fastest way to read a mixed list.
    ⚠ Its own class rather than reusing `.badgeTryout`, which happens to be the same blue: a
@@ -16506,6 +16507,69 @@ button.lineupRulesToggle {
 .pastChipGood { background: rgba(var(--success-rgb), 0.12); color: var(--badge-success-ink); border: 1px solid rgba(var(--success-rgb), 0.25); }
 .pastChipWarn { background: rgba(var(--warning-rgb), 0.12); color: var(--badge-warning-ink); border: 1px solid rgba(var(--warning-rgb), 0.25); }
 .pastChips { display: inline-flex; flex-direction: column; align-items: flex-end; gap: 0.25rem; }
+
+/* A child's papers for the working season (Club Tier Stage 14 S4, drawings tab 3 + 5B): one row per form, the state chip
+   beside its name (the picker's sentence-case mono chips above), the line under it, and an Upload on a row that needs one.
+   On a phone the Upload is the glyph alone at the 44px tap floor. */
+.docStateList {
+  list-style: none;
+  margin: 0 0 0.75rem;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--bg-card);
+}
+.docStateRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.7rem;
+  min-height: 44px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.docStateRow:last-child { border-bottom: 0; }
+.docStateWhat { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 0.15rem; }
+.docStateName { display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap; font-weight: 600; }
+.docStateLine { font-size: var(--type-support); color: var(--text-secondary); }
+.docStateUploadIcon {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--tap-min, 44px);
+  height: var(--tap-min, 44px);
+  padding: 0;
+  border: 1px solid var(--home-line-strong, rgba(255,255,255,0.14));
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.docStateUploadIcon:hover { color: var(--home-olive, var(--success-light)); border-color: var(--home-olive, var(--success-light)); }
+/* The word-and-glyph Upload above a phone: a finger still taps it on a tablet (the layout check measures 768). */
+.docStateUploadText { flex: none; }
+@media (max-width: 1024px) { .docStateUploadText { min-height: var(--tap-min, 44px); } }
+
+/* The once-a-season health check on the player page's Safety section (Stage 14 S4, drawing 5A/5B): the amber of the
+   "Same child?" question, its words on the left, Confirm on the right; on a phone Confirm takes the row at the tap floor. */
+.healthAsk {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0 0 0.75rem;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid var(--badge-warning-border);
+  border-radius: 7px;
+  background: var(--badge-warning-bg);
+  color: var(--badge-warning-ink);
+}
+.healthAskText { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 0.15rem; font-size: var(--type-support); }
+.healthAskText b { font-size: var(--type-body); font-weight: 650; }
+@media (max-width: 640px) {
+  .healthAsk { flex-wrap: wrap; }
+  .healthAsk > button { flex: 1 1 100%; min-height: var(--tap-min, 44px); }
+}
 /* ⚠ Every rule below is written `.debtWhat .x` on purpose. `.debtWhat span { display: block }` (specificity 0,1,1)
    out-ranks a bare `.pastLineShort { display: none }` (0,1,0), so for a while BOTH the desk line and the phone line
    showed on every row (the "repeating text"), the amber warning line showed beside its chip, and the Inactive /

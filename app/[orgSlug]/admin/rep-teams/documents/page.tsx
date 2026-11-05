@@ -23,7 +23,8 @@ import { CoachListToolbar } from '@/components/coaches/kit';
 import {
   EmptyCard, LoadFailed, PageLoading, RepChip, repKit, useDeferredLoad, useLatestRead,
 } from '@/components/admin/kit/club/RepKit';
-import { DOC_TYPE_LABEL, type PickerTeam, type TemplateRow } from '@/components/admin/kit/club/TemplateDialogs';
+import { type PickerTeam, type TemplateRow } from '@/components/admin/kit/club/TemplateDialogs';
+import { DOCUMENT_TYPE_LABEL } from '@/lib/document-state';
 import { formatStoredDate } from '@/lib/timezone';
 
 const TemplateDialog = dynamic(() => import('@/components/admin/kit/club/TemplateDialogs').then(m => m.TemplateDialog));
@@ -92,7 +93,7 @@ export default function DocumentTemplatesPage() {
     a.click();
   }
 
-  async function patch(t: TemplateRow, body: { isActive?: boolean; teamId?: string | null }) {
+  async function patch(t: TemplateRow, body: { isActive?: boolean; teamId?: string | null; validity?: TemplateRow['validity'] }) {
     // The Applies-to select fires on every change: one write at a time (/review).
     if (busy) return;
     setBusy(true);
@@ -105,7 +106,11 @@ export default function DocumentTemplatesPage() {
       setTemplates(prev => prev.map(r => (r.id === t.id ? { ...r, ...data.template } : r)));
       setNotice({
         tone: 'good',
-        text: body.isActive === undefined
+        text: body.validity !== undefined
+          ? (body.validity === 'signed_each_season'
+            ? `${t.name} is signed each season.`
+            : `${t.name} stays on file until it’s replaced.`)
+          : body.isActive === undefined
           ? `${t.name} now applies to ${body.teamId ? teamName.get(body.teamId) ?? 'that team' : 'every team'}.`
           : body.isActive ? `${t.name} is on. Families see it.` : `${t.name} is off. Families no longer see it.`,
       });
@@ -152,7 +157,7 @@ export default function DocumentTemplatesPage() {
         <LoadFailed title="We couldn’t load the templates." onRetry={() => { setLoading(true); void load(); }} />
       ) : (
         <>
-          <CoachListToolbar lede="A template belongs to the club. It applies to every team or to one team until you switch it off, whatever the season. Families sign again each season." />
+          <CoachListToolbar lede="A template belongs to the club. It applies to every team or to one team until you switch it off, whatever the season. You decide whether families sign it each season or once, until it’s replaced." />
           {rows.length === 0 ? (
             <EmptyCard
               icon={<FileText size={20} aria-hidden />}
@@ -182,7 +187,7 @@ export default function DocumentTemplatesPage() {
                         <button type="button" className={`${repKit.nameLink} ${repKit.nameButton}`} onClick={e => { e.stopPropagation(); setOpenId(t.id); }} aria-haspopup="dialog">{t.name}</button>
                       </td>
                       <td>{t.teamId ? teamName.get(t.teamId) ?? 'A team' : 'Every team'}</td>
-                      <td><RepChip tone="info">{DOC_TYPE_LABEL[t.documentType] ?? t.documentType}</RepChip></td>
+                      <td><RepChip tone="info">{DOCUMENT_TYPE_LABEL[t.documentType] ?? t.documentType}</RepChip></td>
                       <td>{t.isActive ? <RepChip tone="good">Active</RepChip> : <RepChip>Off</RepChip>}</td>
                       <td className={repKit.dim}>{formatStoredDate(t.createdAt, { withYear: false })}</td>
                       <td className={repKit.go}>

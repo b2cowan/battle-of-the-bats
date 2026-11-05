@@ -14,6 +14,7 @@ import CoachPageSection from '@/components/coaches/CoachPageSection';
 import HubTabBar from '@/components/shared/HubTabBar';
 import KitDialog from '@/components/shared/KitDialog';
 import PlayerDocumentsSection from '@/components/coaches/PlayerDocumentsSection';
+import { healthAskTitle, healthAskLine } from '@/lib/document-state';
 import PlayerGuardiansCard from '@/components/coaches/PlayerGuardiansCard';
 import PlayerDevelopmentSection from '@/components/coaches/PlayerDevelopmentSection';
 import PlayerRecapPreview from '@/components/coaches/PlayerRecapPreview';
@@ -259,6 +260,10 @@ export default function PlayerDetailPage({
   const [attendance, setAttendance] = useState<RepPlayerAttendanceSummary | null>(null);
   const [dues, setDues] = useState<RepPlayerDuesSummary | null>(null);
   const [awards, setAwards] = useState<RepPlayerAwardsSummary | null>(null);
+  /** The once-a-season "Still right for the {season}?" (Club Tier Stage 14 S4) — the server decides when to ask. */
+  const [healthCheck, setHealthCheck] = useState<{ ask: boolean; lastCheckedSeasonName: string | null; seasonName: string } | null>(null);
+  const [confirmingHealth, setConfirmingHealth] = useState(false);
+  const [healthError, setHealthError] = useState('');
   const [playingTime, setPlayingTime] = useState<PlayingTime | null>(null);
   /** The roster, for the Switch player dropdown and the phone's roster sheet — the coach's own
    *  order, active players only. */
@@ -299,6 +304,8 @@ export default function PlayerDetailPage({
        since it reads as holding unsaved work for ever. So when nothing was typed while the save was
        out, each field whose STORED value differs takes the server's; a field that differs only by
        trimming (a trailing space mid-word) is left exactly as the coach has it. */
+    // Changing a Safety value IS this season's check (the server stamps it); the question goes.
+    if (data.player?.healthConfirmedAt) setHealthCheck(h => (h ? { ...h, ask: false } : h));
     const saved = playerToForm(data.player, pitcherPos);
     setForm(f => {
       if (!f || JSON.stringify(formToPayload(f, pitcherPos)) !== sig) return f;
@@ -334,6 +341,7 @@ export default function PlayerDetailPage({
       setAttendance(data.attendance ?? null);
       setDues(data.dues ?? null);
       setAwards(data.awards ?? null);
+      setHealthCheck(data.healthCheck ?? null);
       setRoster(data.roster ?? []);
       settle();
     } catch (e: unknown) {
@@ -468,6 +476,28 @@ export default function PlayerDetailPage({
       showFeedback('danger', errorMessage(e, 'Failed to update status.'));
     } finally {
       setTogglingStatus(false);
+    }
+  }
+
+  /** "Still right for the {season}?" → Confirm: marks this season's entry checked. Nothing else is written. */
+  async function confirmHealth() {
+    if (confirmingHealth) return;
+    setConfirmingHealth(true);
+    setHealthError('');
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/roster/${playerId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ confirmHealth: true }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error ?? 'Couldn’t confirm. Try again.');
+      setPlayer(data.player);
+      setHealthCheck(h => (h ? { ...h, ask: false } : h));
+    } catch (e: unknown) {
+      setHealthError(errorMessage(e, 'Couldn’t confirm. Try again.'));
+    } finally {
+      setConfirmingHealth(false);
     }
   }
 
@@ -1223,6 +1253,20 @@ export default function PlayerDetailPage({
 
       {/* Safety — open, not folded: allergies and the emergency contact are what a coach opens it for. */}
       <CoachPageSection sectionId="safety" title="Safety" action={editAction('safety')}>
+        {/* ⚖ Club Tier Stage 14 S4 (Ask 10 A): the medical note and emergency contact come back with a returning child,
+            so once a season someone who may edit them says they are still right. Changing them counts. */}
+        {healthCheck?.ask && canWriteRoster && pii && !(isPhone && isEditing('safety')) && (
+          <div className={styles.healthAsk} role="group" aria-label={healthAskTitle(healthCheck.seasonName)}>
+            <span className={styles.healthAskText}>
+              <b>{healthAskTitle(healthCheck.seasonName)}</b>
+              <span>{healthAskLine(healthCheck.lastCheckedSeasonName)}</span>
+              {healthError && <span role="alert">{healthError}</span>}
+            </span>
+            <button type="button" className="btn btn-ghost" disabled={confirmingHealth} onClick={confirmHealth}>
+              {confirmingHealth ? 'Confirming…' : 'Confirm'}
+            </button>
+          </div>
+        )}
         {showForm('safety') ? (
         <div className={styles.formGrid}>
           <div className={`${styles.field} ${styles.formGridFull}`}>

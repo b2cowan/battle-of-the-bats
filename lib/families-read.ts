@@ -1,5 +1,6 @@
 import 'server-only';
-import { formOnFile, templatesForTeam as templatesForTeamRule } from './forms-coverage';
+import { formOnFile, NOTHING_HELD, templatesForTeam as templatesForTeamRule } from './forms-coverage';
+import { readHeldForms } from './child-documents';
 import { supabaseAdmin } from './supabase-admin';
 import { attachPeopleForOrg } from './org-people';
 import { fetchAll, fetchAllIn } from './supabase-paging';
@@ -393,22 +394,18 @@ function latestReminderStamp(i: any): string | null {
 }
 
 /** Forms coverage for a set of roster rows — the one home for the
- *  "org-wide OR this team's templates, minus documents on file" rule. */
-async function loadFormsData(orgId: string, rosterIds: string[]) {
-  const [templates, docs] = await Promise.all([
-    orgRows<any>('rep_document_templates', 'id, team_id, name, document_type, is_active', orgId, q => q.eq('is_active', true)),
-    fetchAllIn<any>(rosterIds, (chunk, from, to) => supabaseAdmin.from('rep_player_documents')
-      .select('id, player_id, document_type').eq('org_id', orgId).in('player_id', chunk).order('id').range(from, to)),
+ *  "org-wide OR this team's templates, minus documents on file" rule.
+ *  Since Club Tier Stage 14 S4 a good-until-replaced form signed on the child's earlier entry on the same team counts
+ *  (`readHeldForms`; the coach's player page and the Rep Teams board read the same). */
+async function loadFormsData(orgId: string, rows: readonly { id: string; child_id: string; team_id: string }[]) {
+  const [templates, held] = await Promise.all([
+    orgRows<any>('rep_document_templates', 'id, team_id, name, document_type, validity, is_active', orgId, q => q.eq('is_active', true)),
+    readHeldForms(orgId, rows),
   ]);
-  const docTypesByPlayer = new Map<string, Set<string>>();
-  for (const d of docs) {
-    const set = docTypesByPlayer.get(d.player_id) ?? new Set<string>();
-    set.add(d.document_type); docTypesByPlayer.set(d.player_id, set);
-  }
   return {
     // The applies-to rule is shared with the club's Rep Teams board (lib/forms-coverage.ts).
     templatesForTeam: (teamId: string) => templatesForTeamRule(templates, teamId),
-    docTypesByPlayer,
+    heldByPlayer: held,
   };
 }
 
@@ -535,12 +532,11 @@ async function worklistFamilies(orgId: string, world: Awaited<ReturnType<typeof 
 
   // Dues + forms for current rep years — independent reads, one batch.
   const currentRoster = rosterRows.filter(isCurrentRepYear);
-  const currentRosterIds = currentRoster.map(r => r.id);
   const [money, formsData] = await Promise.all([
     readRepMoney(orgId, currentRoster),
-    loadFormsData(orgId, currentRosterIds),
+    loadFormsData(orgId, currentRoster),
   ]);
-  const { templatesForTeam, docTypesByPlayer } = formsData;
+  const { templatesForTeam, heldByPlayer } = formsData;
 
   const chasedByPlayer = new Map<string, string>();
   for (const i of money.installments) {
@@ -572,7 +568,7 @@ async function worklistFamilies(orgId: string, world: Awaited<ReturnType<typeof 
 
     let missingFormsCount = 0;
     for (const r of myCurrentRoster) {
-      const have = docTypesByPlayer.get(r.id) ?? new Set();
+      const have = heldByPlayer.get(r.id) ?? NOTHING_HELD;
       for (const t of templatesForTeam(r.team_id)) {
         if (!formOnFile(have, t)) missingFormsCount++;
       }
@@ -764,7 +760,7 @@ export async function buildFamilyPage(orgId: string, personId: string): Promise<
   const currentRoster = myRoster.filter(isCurrentRepYear);
   const [money, formsData, suppressed, log] = await Promise.all([
     readRepMoney(orgId, currentRoster),
-    loadFormsData(orgId, currentRoster.map(r => r.id)),
+    loadFormsData(orgId, currentRoster),
     getFamilySuppressionList(orgId),
     readMessageLog(orgId, p.id),
   ]);
@@ -775,7 +771,7 @@ export async function buildFamilyPage(orgId: string, personId: string): Promise<
   const myOptouts = world.optouts.filter((o: any) => addressSet.has(o.email));
   const forms: FamilyPagePayload['forms'] = [];
   for (const r of currentRoster) {
-    const have = formsData.docTypesByPlayer.get(r.id) ?? new Set<string>();
+    const have = formsData.heldByPlayer.get(r.id) ?? NOTHING_HELD;
     for (const t of formsData.templatesForTeam(r.team_id)) {
       forms.push({
         childName: fullName(r.player_first_name, r.player_last_name),

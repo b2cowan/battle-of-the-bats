@@ -73,7 +73,7 @@ const repTeamsHelp: HelpPageContent = {
             <li><strong>Head coach</strong> — who is in place. A red <strong>No head coach</strong> means nobody is; an amber <strong>Invited</strong> means an invitation is waiting for an answer.</li>
             <li><strong>Roster</strong> — the players on the live season. A live season with nobody on it shows a red <strong>No players</strong>.</li>
             <li><strong>Next event</strong> — the next thing on the coach&apos;s schedule.</li>
-            <li><strong>Documents</strong> — how many players on the live season have signed every club template that applies to the team. A new season starts at zero, because families sign again each season.</li>
+            <li><strong>Documents</strong> — how many players on the live season have every form the team asks for on file. Waivers and the code of conduct are signed again each season, so a new season starts with those showing as needing a signature; a form set to <strong>Good until replaced</strong> (a medical consent, by default) stays on file from an earlier season on the same team.</li>
             <li><strong>Outstanding</strong> — what the team owes the club, with any late amount in red under it. It shows on a computer, and only for someone who can open Accounting.</li>
           </ul>
           <p>Click anywhere on a team&apos;s row to open its page. Use the filter to see one group, <strong>Ungrouped</strong>, or <strong>Archived</strong> teams.</p>
@@ -340,7 +340,7 @@ const repTeamsHelp: HelpPageContent = {
       heading: 'How to publish document templates for coaches',
       summary: 'Upload a form once and say which teams it applies to — every team, or one. It stays in force, season after season, until you switch it off.',
       keywords: ['document templates', 'waiver', 'medical form', 'medical consent', 'code of conduct', 'coach documents', 'publish template', 'applies to', 'switch off', 'every team'],
-      searchText: 'publish document templates upload template waiver medical consent code of conduct applies to every team one team switch off switch on download delete families sign again each season documents column board signed',
+      searchText: 'publish document templates upload template waiver medical consent code of conduct applies to every team one team switch off switch on download delete families sign again each season documents column board signed signed each season good until replaced validity how long a signed form lasts needs signing on file earlier season carries',
       content: (
         <>
           <ol>
@@ -348,7 +348,8 @@ const repTeamsHelp: HelpPageContent = {
             <li>Give it a name and a type, choose <strong>Applies to</strong> — <strong>Every team</strong>, or one of your teams — and pick the file (PDF, JPG, PNG or Word, up to 10 MB). Press <strong>Upload</strong>.</li>
             <li>The coaches of every team it applies to see it in their team&apos;s Documents area, to share with families.</li>
           </ol>
-          <p>A template isn&apos;t tied to a season: it applies until you switch it off. Families sign again each season, which is why the board&apos;s Documents count starts at zero on a new season. Open a template to <strong>Download</strong> it, change who it applies to, <strong>Switch off</strong> or on, or <strong>Delete</strong> it (which asks first).</p>
+          <p>Each template also has a <strong>Signed</strong> choice: <strong>Signed each season</strong> (every player signs it again each season) or <strong>Good until replaced</strong> (a signed copy stays on file until a newer one replaces it). It starts at the usual choice for the type &mdash; waivers and the code of conduct each season, medical consents until replaced &mdash; and you can change it when you upload or later. The board&apos;s Documents count, the Families book&apos;s <em>Missing forms</em> and each coach&apos;s player page all follow it. Last season&apos;s signed copies stay on the player they were signed on, and the coach can still download them.</p>
+          <p>A template isn&apos;t tied to a season: it applies until you switch it off. Open a template to <strong>Download</strong> it, change who it applies to, <strong>Switch off</strong> or on, or <strong>Delete</strong> it (which asks first).</p>
         </>
       ),
     },

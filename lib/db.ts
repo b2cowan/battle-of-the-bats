@@ -5208,6 +5208,7 @@ function mapRepRosterPlayer(r: any): RepRosterPlayer {
     notes: r.notes,
     adminNotes: r.admin_notes,
     medicalNotes: r.medical_notes ?? null,
+    healthConfirmedAt: r.health_confirmed_at ?? null,
     emergencyContactName: r.emergency_contact_name ?? null,
     emergencyContactPhone: r.emergency_contact_phone ?? null,
     bats: r.bats ?? null,
@@ -5413,12 +5414,18 @@ export async function updateRepRosterPlayer(playerId: string, fields: {
   medicalNotes?: string | null;
   emergencyContactName?: string | null;
   emergencyContactPhone?: string | null;
+  /** The once-a-season health check (mig 441): the user who confirmed, now. Only for THIS season's entry. */
+  healthConfirmedBy?: string;
   bats?: string | null;
   throws?: string | null;
   jerseySize?: string | null;
   lineupProfile?: LineupProfile | null;
 }): Promise<RepRosterPlayer> {
   const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if (fields.healthConfirmedBy !== undefined) {
+    patch.health_confirmed_at = new Date().toISOString();
+    patch.health_confirmed_by = fields.healthConfirmedBy;
+  }
   if (fields.playerFirstName !== undefined) patch.player_first_name = fields.playerFirstName;
   if (fields.playerLastName !== undefined) patch.player_last_name = fields.playerLastName;
   if (fields.playerDateOfBirth !== undefined) patch.player_date_of_birth = fields.playerDateOfBirth;
@@ -10511,6 +10518,7 @@ function mapRepDocumentTemplate(r: any): RepDocumentTemplate {
     fileName: r.file_name,
     fileSize: r.file_size,
     isActive: r.is_active,
+    validity: r.validity === 'signed_each_season' ? 'signed_each_season' : 'good_until_replaced',
     publishedBy: r.published_by,
     createdAt: r.created_at,
   };
@@ -10552,6 +10560,8 @@ export async function createRepDocumentTemplate(fields: {
   storagePath: string;
   fileName: string;
   fileSize: number;
+  /** Absent = the type's default (the database sets it - mig 441). */
+  validity?: 'signed_each_season' | 'good_until_replaced';
   publishedBy?: string | null;
 }): Promise<RepDocumentTemplate> {
   const { data, error } = await supabaseAdmin
@@ -10564,6 +10574,7 @@ export async function createRepDocumentTemplate(fields: {
       storage_path: fields.storagePath,
       file_name: fields.fileName,
       file_size: fields.fileSize,
+      ...(fields.validity ? { validity: fields.validity } : {}),
       published_by: fields.publishedBy ?? null,
     })
     .select()
@@ -10574,10 +10585,11 @@ export async function createRepDocumentTemplate(fields: {
 
 export async function updateRepDocumentTemplate(
   templateId: string,
-  fields: { isActive?: boolean; teamId?: string | null },
+  fields: { isActive?: boolean; teamId?: string | null; validity?: 'signed_each_season' | 'good_until_replaced' },
 ): Promise<RepDocumentTemplate> {
   const patch: Record<string, unknown> = {};
   if (fields.isActive !== undefined) patch.is_active = fields.isActive;
+  if (fields.validity !== undefined) patch.validity = fields.validity;
   // Which team it applies to (null = every team). The caller has checked the team is the org's.
   if (fields.teamId !== undefined) patch.team_id = fields.teamId;
   const { data, error } = await supabaseAdmin

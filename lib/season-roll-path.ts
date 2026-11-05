@@ -22,6 +22,8 @@
  */
 import { bornMeta, rollBornYears, type BornYears, type Cutoff } from './born-years';
 import { joinWithAnd, pluralize } from './utils';
+import type { RepDocumentType } from './types';
+import { DOCUMENT_TYPE_ORDER } from './forms-coverage';
 
 export type SeasonRollPath = 'moving_up' | 'new_group';
 
@@ -46,6 +48,59 @@ export interface SeasonWindowFacts {
   division: string | null;
   born: BornYears;
   cutoff: Cutoff;
+  /** Club Tier Stage 14 S4: which of the team's forms are signed again next season and which carry. Null = the team has
+   *  no templates and no documents this season, so the window says nothing about papers. */
+  documents?: RollDocuments | null;
+}
+
+// ── Papers across the roll (Club Tier Stage 14 S4, drawing 2A/2B; owner 2026-11-04, Ask 10 A) ──────────────────────
+
+/** The team's forms by what the roll does with them — from its templates' setting (else the type's default). */
+export interface RollDocuments {
+  eachSeason: RepDocumentType[];
+  untilReplaced: RepDocumentType[];
+}
+
+const PAPER_PHRASE: Record<RepDocumentType, string> = {
+  waiver: 'waivers',
+  code_of_conduct: 'the code of conduct',
+  medical_consent: 'medical forms',
+  other: 'other forms',
+};
+
+function paperList(types: readonly RepDocumentType[]): string {
+  const ordered = DOCUMENT_TYPE_ORDER.filter(t => types.includes(t));
+  const s = joinWithAnd(ordered.map(t => PAPER_PHRASE[t]));
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+/** "the code of conduct" alone is singular; every other list is plural. */
+function paperVerb(types: readonly RepDocumentType[], plural: string, singular: string): string {
+  return types.length === 1 && types[0] === 'code_of_conduct' ? singular : plural;
+}
+
+/** The window's bullet: "**Waivers and the code of conduct** need signing again for the 2027 Season. Medical forms carry." */
+export function documentsWindowLine(
+  d: RollDocuments | null | undefined,
+  newSeasonName: string,
+): { title: string; rest: string } | null {
+  if (!d || (d.eachSeason.length === 0 && d.untilReplaced.length === 0)) return null;
+  const carry = d.untilReplaced.length > 0
+    ? `${paperList(d.untilReplaced)} ${paperVerb(d.untilReplaced, 'carry', 'carries')}`
+    : '';
+  if (d.eachSeason.length === 0) {
+    return { title: paperList(d.untilReplaced), rest: ` ${paperVerb(d.untilReplaced, 'carry', 'carries')} into ${theSeason(newSeasonName)}.` };
+  }
+  return {
+    title: paperList(d.eachSeason),
+    rest: ` ${paperVerb(d.eachSeason, 'need', 'needs')} signing again for ${theSeason(newSeasonName)}.` + (carry ? ` ${carry}.` : ''),
+  };
+}
+
+/** The success view's bullet (the roll's note): "Waivers and the code of conduct need signing for the 2027 Season. Each
+ *  player shows “Needs signing”." Null when nothing is signed each season. */
+export function documentsSignedLine(d: RollDocuments | null | undefined, newSeasonName: string): string | null {
+  if (!d || d.eachSeason.length === 0) return null;
+  return `${paperList(d.eachSeason)} ${paperVerb(d.eachSeason, 'need', 'needs')} signing for ${theSeason(newSeasonName)}. Each player shows “Needs signing”.`;
 }
 
 // ── The age group moves up ─────────────────────────────────────────────────────────────────────

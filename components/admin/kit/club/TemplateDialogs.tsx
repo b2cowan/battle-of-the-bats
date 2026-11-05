@@ -10,6 +10,12 @@
  *   UploadTemplateDialog — Name, Type, "Applies to" (a dropdown of the club's teams, grouped as on
  *                      Rep Teams, with "Every team" first — no more raw team-id box), and the file.
  *                      Creating asks: an explicit Upload.
+ *
+ *   ⚖ Club Tier Stage 14 S4 (Ask 10 A, owner 2026-11-04; S4 Part 0 call 8 — not drawn, built as a plain field): both
+ *   windows carry "Signed" — "Signed each season" or "Good until replaced". It starts at the type's default (waiver and
+ *   code of conduct each season, medical consent and other until replaced) and follows the type until the admin
+ *   changes it. It decides "Needs signing for {season}" / "On file" on the coach's player page, the Rep Teams board
+ *   and the Families book (lib/forms-coverage.ts).
  */
 import { useRef, useState } from 'react';
 import { Download } from 'lucide-react';
@@ -19,15 +25,29 @@ import { repKit } from './RepKit';
 import { formatStoredDate } from '@/lib/timezone';
 import type { RepDocumentType } from '@/lib/types';
 import { possessive } from '@/lib/utils';
+import { DOCUMENT_TYPE_LABEL, DOCUMENT_TYPE_ORDER, VALIDITY_LABEL, VALIDITY_HINT } from '@/lib/document-state';
+import { DOCUMENT_VALIDITIES, defaultValidity, type DocumentValidity } from '@/lib/forms-coverage';
 
-export const DOC_TYPE_LABEL: Record<RepDocumentType, string> = {
-  waiver: 'Waiver', medical_consent: 'Medical consent', code_of_conduct: 'Code of conduct', other: 'Other',
-};
-export const DOC_TYPES = Object.keys(DOC_TYPE_LABEL) as RepDocumentType[];
 
 export interface TemplateRow {
   id: string; teamId: string | null; name: string; documentType: RepDocumentType;
   fileName: string; fileSize: number; isActive: boolean; createdAt: string;
+  validity: DocumentValidity;
+}
+
+/** "Signed": each season, or until replaced. */
+function ValiditySelect({ value, onChange, disabled }: {
+  value: DocumentValidity; onChange: (v: DocumentValidity) => void; disabled?: boolean;
+}) {
+  return (
+    <label className={ck.field}>
+      <span className={ck.label}>Signed</span>
+      <select className={ck.select} value={value} onChange={e => onChange(e.target.value as DocumentValidity)} disabled={disabled}>
+        {DOCUMENT_VALIDITIES.map(v => <option key={v} value={v}>{VALIDITY_LABEL[v]}</option>)}
+      </select>
+      <span className={ck.hint}>{VALIDITY_HINT[value]}</span>
+    </label>
+  );
 }
 export interface PickerTeam { id: string; name: string; groupId: string | null; groupName: string | null; isArchived?: boolean }
 
@@ -82,7 +102,7 @@ export function TemplateDialog({
   busy: boolean;
   onClose: () => void;
   onDownload: () => void;
-  onPatch: (body: { isActive?: boolean; teamId?: string | null }) => Promise<void>;
+  onPatch: (body: { isActive?: boolean; teamId?: string | null; validity?: DocumentValidity }) => Promise<void>;
   onDelete: () => Promise<void>;
 }) {
   const [asking, setAsking] = useState(false);
@@ -111,7 +131,7 @@ export function TemplateDialog({
       kind="form"
       eyebrow="Document template"
       title={template.name}
-      identity={`${DOC_TYPE_LABEL[template.documentType] ?? template.documentType} · added ${formatStoredDate(template.createdAt)}`}
+      identity={`${DOCUMENT_TYPE_LABEL[template.documentType] ?? template.documentType} · added ${formatStoredDate(template.createdAt)}`}
       onClose={onClose}
       busy={busy}
       footerStart={canWrite ? <button type="button" className="btn btn-danger" onClick={() => setAsking(true)} disabled={busy}>Delete</button> : undefined}
@@ -138,15 +158,22 @@ export function TemplateDialog({
         />
         <span className={ck.hint}>{appliesHint(template.teamId ?? '', teams)}</span>
       </label>
+      <ValiditySelect
+        value={template.validity ?? defaultValidity(template.documentType)}
+        disabled={!canWrite || busy}
+        onChange={v => void onPatch({ validity: v })}
+      />
       <div className={repKit.facts}>
         <span className={repKit.factsLabel}>File</span>
         {template.fileName} · {bytes(template.fileSize)}
       </div>
       <div className={`${repKit.facts} ${repKit.factsNext}`}>
         <span className={repKit.factsLabel}>Status</span>
-        {template.isActive
-          ? 'On — families see it and sign it each season.'
-          : 'Off — families don’t see it, and it doesn’t count on the Rep teams board.'}
+        {!template.isActive
+          ? 'Off — families don’t see it, and it doesn’t count on the Rep teams board.'
+          : (template.validity ?? defaultValidity(template.documentType)) === 'signed_each_season'
+            ? 'On — families see it and sign it each season.'
+            : 'On — families see it. A signed copy stays on file until it’s replaced.'}
       </div>
     </KitDialog>
   );
@@ -162,6 +189,9 @@ export function UploadTemplateDialog({
 }) {
   const [name, setName] = useState('');
   const [type, setType] = useState<RepDocumentType | ''>('');
+  // Follows the type's default until the admin picks one.
+  const [validity, setValidity] = useState<DocumentValidity | null>(null);
+  const shownValidity: DocumentValidity = validity ?? (type ? defaultValidity(type) : 'signed_each_season');
   const [teamId, setTeamId] = useState(EVERY_TEAM);
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
@@ -178,6 +208,7 @@ export function UploadTemplateDialog({
       form.append('file', file);
       form.append('name', name.trim());
       form.append('documentType', type);
+      form.append('validity', shownValidity);
       if (teamId) form.append('teamId', teamId);
       const res = await fetch(`/api/admin/rep-teams/document-templates?orgSlug=${encodeURIComponent(orgSlug)}`, { method: 'POST', body: form });
       const data = await res.json().catch(() => ({}));
@@ -212,9 +243,10 @@ export function UploadTemplateDialog({
         <span className={ck.label}>Type<span className={repKit.req} aria-hidden>*</span></span>
         <select className={ck.select} value={type} onChange={e => setType(e.target.value as RepDocumentType)}>
           <option value="">Choose a type</option>
-          {DOC_TYPES.map(t => <option key={t} value={t}>{DOC_TYPE_LABEL[t]}</option>)}
+          {DOCUMENT_TYPE_ORDER.map(t => <option key={t} value={t}>{DOCUMENT_TYPE_LABEL[t]}</option>)}
         </select>
       </label>
+      {type && <ValiditySelect value={shownValidity} onChange={setValidity} disabled={busy} />}
       <label className={ck.field}>
         <span className={ck.label}>Applies to<span className={repKit.req} aria-hidden>*</span></span>
         <AppliesToSelect value={teamId} teams={teams} onChange={setTeamId} />

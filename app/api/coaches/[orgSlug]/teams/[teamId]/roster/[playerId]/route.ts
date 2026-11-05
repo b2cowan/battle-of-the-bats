@@ -19,6 +19,7 @@ import { getSportPack } from '@/lib/sports';
 import { buildLineupProfileWrite } from '@/lib/lineup-profile';
 import { withObservability } from '@/lib/observability';
 import { resolveCoachTeamRead } from '@/lib/coach-team-read';
+import { readHealthCheck } from '@/lib/child-documents';
 import {
   denyUnless, canViewMoney, hasRecordAccess, redactRosterPlayer,
 } from '@/lib/coach-capabilities';
@@ -93,11 +94,14 @@ export const GET = withObservability(async (_req: Request,
    * The ROSTER NAMES (the Switch player dropdown) ride here instead — one narrow map the page
    * would otherwise fetch as a second full roster request per player opened.
    */
-  const [attendance, dues, awards, rosterRows] = await Promise.all([
+  // The once-a-season health check (Club Tier Stage 14 S4): only for someone who sees the values (`rosterPii`), only
+  // on the working season.
+  const [attendance, dues, awards, rosterRows, healthCheck] = await Promise.all([
     getRepPlayerAttendanceSummary(playerId, programYear.id),
     getRepPlayerDuesSummary(playerId, programYear.id),
     getRepPlayerAwardsSummary(playerId),
     getRepRosterPlayers(programYear.id),
+    capabilities.rosterPii && !isReadOnly ? readHealthCheck(player, programYear) : Promise.resolve(null),
   ]);
 
   return NextResponse.json({
@@ -106,6 +110,7 @@ export const GET = withObservability(async (_req: Request,
     attendance,
     dues: canViewMoney(capabilities) ? dues : null,
     awards,
+    healthCheck,
     // Active players in the coach's own (display) order — name and jersey number, nothing to redact.
     // The number is the phone roster sheet's quiet trailing qualifier (stage 5 · F2, 2026-09-23).
     roster: rosterRows.filter(p => p.status === 'active').map(p => ({
@@ -139,6 +144,17 @@ export const PATCH = withObservability(async (req: Request,
   }
 
   const body = await req.json();
+
+  // The once-a-season health check (Stage 14 S4): Confirm, or CHANGING a Safety value, marks THIS season's entry checked.
+  // ⚠ "Changing", not "sending": the player page autosaves the whole form, so every save carries the three fields.
+  // Confirm needs the grant that shows the values — nobody confirms what they cannot see.
+  const changes = (k: 'medicalNotes' | 'emergencyContactName' | 'emergencyContactPhone') =>
+    body[k] !== undefined && trimmedOrNull(body[k]) !== trimmedOrNull(player[k]);
+  const savesSafety = changes('medicalNotes') || changes('emergencyContactName') || changes('emergencyContactPhone');
+  if (body.confirmHealth === true && !assignment.capabilities.rosterPii) {
+    return NextResponse.json({ error: 'You do not have access to this player’s medical note and emergency contact.' }, { status: 403 });
+  }
+  const healthConfirmedBy = body.confirmHealth === true || savesSafety ? ctx.user.id : undefined;
 
   // Lineup Intelligence: the Best/Never picker sends a `lineupProfile` payload; derive the
   // primary/secondary columns + the stored profile from it server-side so they can't drift. Falls
@@ -183,6 +199,7 @@ export const PATCH = withObservability(async (req: Request,
     bats:        body.bats        !== undefined ? normalizeOption(body.bats, BATS_OPTIONS)               : undefined,
     throws:      body.throws      !== undefined ? normalizeOption(body.throws, THROWS_OPTIONS)           : undefined,
     jerseySize:  body.jerseySize  !== undefined ? normalizeOption(body.jerseySize, JERSEY_SIZE_OPTIONS)  : undefined,
+    healthConfirmedBy,
   });
 
   return NextResponse.json({ player: updated });

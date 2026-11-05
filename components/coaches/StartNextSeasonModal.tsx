@@ -6,7 +6,7 @@ import QuestionShell, { QuestionCancel, QuestionReason } from '@/components/coac
 import { useCoaches } from '@/lib/coaches-context';
 import { possessive } from '@/lib/utils';
 import {
-  BRING_ANYWAY_LABEL, DEVELOPMENT_HISTORY_BULLET, ROLL_CHOICE_TITLE, ROLL_LIST_EMPTY, ROLL_LIST_HINT,
+  BRING_ANYWAY_LABEL, DEVELOPMENT_HISTORY_BULLET, documentsWindowLine, ROLL_CHOICE_TITLE, ROLL_LIST_EMPTY, ROLL_LIST_HINT,
   ROLL_LIST_LABEL, ROLL_QUESTION, bornBoxLabel, bornMovedLine, bringAnywayNote, closesLine, comingCount, defaultTicked,
   divisionForMovingUp, divisionHint, rollChoiceLine, rollRequestFields, rollWaitReason, rosterOutcomeLine, DIVISION_MAX,
   type SeasonRollPath, type SeasonWindowFacts,
@@ -178,6 +178,7 @@ export default function StartNextSeasonModal({
   }, [orgSlug, teamId]);
 
   const showsDivision = !!facts?.division?.trim();
+  const papersLine = documentsWindowLine(facts?.documents, name.trim() || `${defaultNextYear} Season`);
   const bornMoved = facts ? bornMovedLine(facts.born, facts.cutoff) : null;
   const choiceFacts = { portal: 'coach' as const, division: facts?.division ?? null, born: facts?.born ?? { from: null, to: null }, cutoff: facts?.cutoff ?? { m: 1, d: 1 } };
   const waitReason = rollWaitReason(path, facts, factsFailed);
@@ -519,6 +520,12 @@ export default function StartNextSeasonModal({
             <li>
               <strong>{DEVELOPMENT_HISTORY_BULLET.title}</strong>{DEVELOPMENT_HISTORY_BULLET.rest}
             </li>
+            {/* Club Tier Stage 14 S4 (drawing 2A): the papers, from the team's own settings — only when it has any. */}
+            {papersLine && (
+              <li>
+                <strong>{papersLine.title}</strong>{papersLine.rest}
+              </li>
+            )}
             <li>
               <strong>Awards</strong> stay on the team&apos;s all-time record — nothing to carry.
             </li>

@@ -12177,6 +12177,33 @@
     "ordinal_position": 7
   },
   {
+    "table_name": "org_children",
+    "column_name": "medical_notes",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "org_children",
+    "column_name": "emergency_contact_name",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "org_children",
+    "column_name": "emergency_contact_phone",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 10
+  },
+  {
     "table_name": "org_custom_domains",
     "column_name": "id",
     "data_type": "uuid",
@@ -18711,6 +18738,15 @@
     "ordinal_position": 11
   },
   {
+    "table_name": "rep_document_templates",
+    "column_name": "validity",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 12
+  },
+  {
     "table_name": "rep_dues_credits",
     "column_name": "id",
     "data_type": "uuid",
@@ -21472,6 +21508,24 @@
     "is_nullable": "NO",
     "column_default": null,
     "ordinal_position": 32
+  },
+  {
+    "table_name": "rep_roster_players",
+    "column_name": "health_confirmed_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 33
+  },
+  {
+    "table_name": "rep_roster_players",
+    "column_name": "health_confirmed_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 34
   },
   {
     "table_name": "rep_season_refund_adjustments",

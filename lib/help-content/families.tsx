@@ -72,7 +72,7 @@ const familiesHelp: HelpPageContent = {
               <ul>
                 <li><strong>No family on file</strong> &mdash; children whose roster row or registration names no guardian, or an address that can&rsquo;t be emailed. See the next topic.</li>
                 <li><strong>Owes money</strong> &mdash; families whose rep dues this season aren&rsquo;t paid, and house-league families with an accepted child whose fee is still owing.</li>
-                <li><strong>Missing forms</strong> &mdash; rep children missing a required team document.</li>
+                <li><strong>Missing forms</strong> &mdash; rep children missing a form their team asks for this season. A form set to <em>Signed each season</em> needs a new copy every season; one set to <em>Good until replaced</em> stays on file from an earlier season on the same team.</li>
                 <li><strong>No consent on file</strong> &mdash; families the club holds no recorded consent for.</li>
                 <li><strong>Not back this season</strong> &mdash; families with history but nothing this season: your retention list.</li>
                 <li><strong>All families</strong> &mdash; the whole book.</li>

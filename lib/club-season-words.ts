@@ -60,7 +60,7 @@ export const START_CARRIES = {
 } as const;
 
 export const START_STAFF_NOTE =
-  'The coaching staff stays, because coaches belong to the team. Starting fresh: the schedule, tryouts (closed until you open them) and player documents.';
+  'The coaching staff stays, because coaches belong to the team. Starting fresh: the schedule and tryouts (closed until you open them).';
 
 /** The warning's lines, as counts — only the ones that are outstanding. */
 export function unsettledLines(u: UnsettledCounts | null | undefined, owed?: OwedToClub | null): string[] {

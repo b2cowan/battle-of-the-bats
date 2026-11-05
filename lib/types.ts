@@ -1527,6 +1527,9 @@ export interface RepRosterPlayer {
   medicalNotes: string | null;
   emergencyContactName: string | null;
   emergencyContactPhone: string | null;
+  /** The once-a-season health check (mig 441, Club Tier Stage 14 S4): when someone confirmed - or saved - the medical note
+   *  and emergency contact on THIS season's entry. Never copied by the roll or the picker. */
+  healthConfirmedAt: string | null;
   bats: string | null;        // 'L' | 'R' | 'S'
   throws: string | null;      // 'L' | 'R'
   jerseySize: string | null;  // YS|YM|YL|AS|AM|AL|AXL
@@ -2783,6 +2786,8 @@ export interface RepDocumentTemplate {
   fileName: string;
   fileSize: number;
   isActive: boolean;
+  /** Mig 441 (Stage 14 S4, Ask 10 A): whether a signed copy answers one season or stays on file until replaced. */
+  validity: 'signed_each_season' | 'good_until_replaced';
   publishedBy: string | null;
   createdAt: string;
 }

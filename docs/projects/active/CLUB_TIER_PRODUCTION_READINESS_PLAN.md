@@ -3230,7 +3230,7 @@ between the coach's idea of a team (kids who age up) and the club's (a slot that
   child record** under the family library that every team's roster entry points at, which is what makes a **cross-team** picker
   (a 11U kid joining a different 12U team) possible. **The recommendation to test at the session: build (i) first on the shape
   that (ii) will grow into, and hold the cross-team picker until the privacy question below is ruled.**
-- [ ] **14c · Documents and waivers across seasons:** a document belongs to the child's record and reads on every season's
+- [ ] **14c · Documents and waivers across seasons** — ⚙ BUILT 2026-11-05 (S4, mig 441 on dev; documents stay on the season's entry and are read through the child, so no retention change — progress in the build prompt). Original item: a document belongs to the child's record and reads on every season's
   entry, so a signed medical form is not re-uploaded. **The honest limit to rule at the session:** a waiver is usually valid for
   one season, so the win is **one record with a document history and a "needs re-signing this season" state**, not skipping the
   re-sign. Which documents are per-season and which carry (a medical note, an emergency contact, a photo consent) is the owner's
