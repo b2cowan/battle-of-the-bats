@@ -14,7 +14,7 @@
 > **R1 built and committed `502a69d39` 2026-11-04** (migs 436 + 437 applied to dev; prod owed before the promote that
 > ships R2, recorded in `MANUAL_PROD_STEPS.json`; engine `lib/bank-check.ts` + 26 tests; P4 measured; /simplify and
 > /review done and fixed in that commit; schema snapshots left out of it, they also carry other sessions' tables).
-> **R2a built 2026-11-04** (the club's reader, server only; commit pending the owner's word; record under §7 R2). P4
+> **R2a built and committed `af458c945` 2026-11-04** (the club's reader, server only; /simplify + /review done; record under §7 R2). P4
 > club-pays measured on Stripe's side (holds). **Next:** R2b (the routes).
 
 ## Goal
@@ -501,7 +501,7 @@ Every stage: migration first where there is one, then the `DATA_DICTIONARY.md` u
 - [ ] The grouped Stripe payout reuses `lib/online-payouts.ts` (no second Stripe reader). *(Reader half done in R2a:
   `readPayouts({ withEntries })`; the screen is R2c.)*
 
-> **R2a — the club's reader ✅ built 2026-11-04** (no routes, no screens; commit pending the owner's word):
+> **R2a — the club's reader ✅ built and committed `af458c945` 2026-11-04** (no routes, no screens):
 > - **`lib/bank-club-read.ts`** (server): `readClubBankAccounts(orgId)` lists the live **club** accounts oldest first
 >   (rule 1: `owner_kind='club'`), which books each holds (`bank_account_books`, else the first account), and the "never
 >   done this" state (no account: every club book unplaced, C1). `readClubBankAccount(orgId, accountId, { today })`
@@ -551,6 +551,19 @@ Every stage: migration first where there is one, then the `DATA_DICTIONARY.md` u
 >   throw: 41 outstanding (4 as payout rows), 10 left out automatically (7 void, 2 same-account transfer halves, 1
 >   pending). Two payouts sum to the cent; po_1UX9RW… gap +$281.50 = all "not ours" (the 12d probe charges);
 >   po_1UVKmq… gap +$193.25 = dispute held −$171.75 + not ours +$370.00 + Stripe fee −$5.00, remainder $0.00.
+> - **/simplify + /review (high) done 2026-11-04, applied in `af458c945`.** /simplify: one `toCents` (the codebase's), the new
+>   Payouts-side lookups paged and in parallel (a plain `.in()` read stops silently at 1,000 rows), the identity
+>   `lineFloor`, `firstClubAccount` and the `'another account'` sentinel removed, the window read and the Stripe read
+>   started in the first batch, one "ticked on another account" helper. /review: **a bank read no longer serves the book
+>   lines from the 3-minute Stripe hold** (only Stripe's half is held; our side is read fresh); a registration paid twice
+>   and returned is matched to a payment only when unambiguous; stable tiebreakers on every paged read; `today` documented
+>   as server-derived. **Left for R2b, deliberately:** (1) `nameGap` treats a Stripe line with book lines as booked even if
+>   those lines are void or sit in a moved book, so "Add as payment processing" could be offered for a voided lost
+>   dispute: decide the offer in R2b against the engine's own book side; (2) a held dispute is named from OUR stored amount
+>   and fee as the P4 ruling says, not from the line's `net`: R2b compares the two and refuses the offer if they differ;
+>   (3) a transfer half whose partner is dated before the starting date is not fetched by id (not checked whether a
+>   hand-edit can split the two halves' dates; the engine's own transfer tests assume they sit together); (4) the team-side reversal line is found by its fixed wording (migs 387/388), as the
+>   12c SQL check does; (5) no test fakes the database for `entryIndex`: the dev probe is its only end-to-end check.
 
 ### R3 — Club: the touchpoints
 - [ ] Matched-line warning on the club entry edit/void routes and windows (C6); changed-since stamp.
