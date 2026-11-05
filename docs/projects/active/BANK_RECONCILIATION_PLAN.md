@@ -20,6 +20,9 @@
 > /simplify then /review (high tier) offered before the commit. **Next:** R2c (the Bank tab, desk).
 > **R2b-3 built and committed 2026-11-05** (a book move can't race a tick, a keep-out or a fee; mig 442 applied to dev,
 > prod owed with 436 + 437 + 439 + 440; /simplify + /review (high) done; record under §7 R2).
+> **R2c (desk) committed `7d7b79cdb` 2026-11-05; R2d (the phone, R2's close) built 2026-11-05, /simplify + /review (high)
+> done; R2 COMPLETE at R2d's commit** (record under §7 R2; owed before the promote: migs 436/437/439/440/442 to prod).
+> **Next:** R3 (club touchpoints).
 
 ## Goal
 
@@ -342,6 +345,9 @@ Ordered so the ones that decide the others come first.
   "Name and books", "Keep it checked" / "Undo the check", "Ticked now", "Look again", "Mark checked again", "Not from
   FieldLogicHQ", "Dispute held", "Add it as payment processing", "Left out automatically", "Put it back". R3's `/marketing`
   pass settles them all.
+- **As built for the club phone (R2d, 2026-11-05):** same home, `lib/bank-tab-words.ts`, under its phone keys
+  (`markCheckedShort` "Mark checked", the pinned strip's count, the signed amount, the statement card's title and lines,
+  and the list hint for a treasurer and for a reader). R3's `/marketing` pass settles them with the rest.
 - [ ] Help search words must carry **reconcile / reconciliation** even if the screens say "check", because that is what
   a treasurer types.
 - [ ] **Collision:** the coach Budget vs. Actual export header "RECONCILIATION — SPENDING TO CASH" and the Budget panel's
@@ -507,10 +513,10 @@ Every stage: migration first where there is one, then the `DATA_DICTIONARY.md` u
 ### R2 — Club: the Bank tab (desk + phone) (prompt `BANK_RECONCILIATION_R2_BUILD_PROMPT.md`, written 2026-11-04; one-session chunks: R2a reader + P4 club-pays, R2b routes + atomic functions, R2b-2 the tick lock (added 11-04), R2b-3 the book-move lock (added 11-05; may run beside R2c), R2c the tab on desk, R2d phone + close)
 - [x] Routes under `app/api/admin/accounting/bank/**` via `resolveClubMoney({write})`; lines from posted club-book
   entries (`isClubBook`) in the account's books, minus same-account transfer pairs, void and pending. *(R2b, 2026-11-04.)*
-- [ ] `accountingTabs` gains "Bank" (B8); page `app/[orgSlug]/admin/accounting/bank/page.tsx`; C1–C5, C10. *(Desk built
-  in R2c 2026-11-05; the phone is R2d.)*
-- [ ] The grouped Stripe payout reuses `lib/online-payouts.ts` (no second Stripe reader). *(Reader half done in R2a:
-  `readPayouts({ withEntries })`; the screen is R2c.)*
+- [x] `accountingTabs` gains "Bank" (B8); page `app/[orgSlug]/admin/accounting/bank/page.tsx`; C1–C5, C10. *(Desk built
+  in R2c, committed `7d7b79cdb` 2026-11-05; the phone built in R2d 2026-11-05.)*
+- [x] The grouped Stripe payout reuses `lib/online-payouts.ts` (no second Stripe reader). *(Reader half in R2a:
+  `readPayouts({ withEntries })`; the grouped row on desk R2c, on a phone R2d.)*
 
 > **R2a — the club's reader ✅ built and committed `af458c945` 2026-11-04** (no routes, no screens):
 > - **`lib/bank-club-read.ts`** (server): `readClubBankAccounts(orgId)` lists the live **club** accounts oldest first
@@ -934,6 +940,79 @@ Every stage: migration first where there is one, then the `DATA_DICTIONARY.md` u
 >   yet (`/docs`); the layout sweep covers only the treasurer, not a read-only member; a write's answer and a refused-write
 >   re-read are not ordered against each other across an account switch (narrow). One page error on the walk right after the
 >   dev server was restarted (`No link element found for chunk …css`) is a hot-reload artifact of the restart.
+
+> **R2d — the Bank tab on a phone, and R2's close ✅ built 2026-11-05; /simplify + /review (high) done 2026-11-05;
+> commit hash: owed at the owner's "commit"** (screens only; no server file touched):
+> - **Built (390; `useIsPhone` picks the phone form where the structure differs, the hook's own rule):**
+>   - **C2:** a one-line strip (Difference + "n of N ticked") pins under the club header (`top: var(--admin-header-h)`;
+>     `aria-hidden`, it restates the band), painted with an upward reach that covers the gap the condensing header leaves.
+>     A **dock** (sticky above the phone bar) holds Finish later + "Mark checked" (shortened), with "The difference must be
+>     $0.00 first." under it while the Difference isn't $0.00; on C5 it holds Close + Mark checked again. Each lime is built
+>     once and placed at the desk's top line / under the list, or in the dock. The list is **`PhoneRow`**
+>     (`components/admin/kit/club/money/bank/BankPhone.tsx`) inside the kit's `ClubRowList`: the whole row ticks, a 44px
+>     tick cell, the direction as a sign on the amount, "Didn't go through the bank" under each unticked line. A payout is
+>     one row with a 44px named opener; its lines and gap open full width below the row. The payout's parts (members,
+>     total, gap line, the payment-processing offer) are one build shared by desk and phone.
+>   - **C3:** the helpers stack full width; Finish later is left out of the callout (the dock carries it).
+>   - **C4:** statements are kit `ClubRow as="button"` cards with a chevron (no label override, so the chips are read).
+>     **Undo moved to the foot of the latest checked statement** on a phone (`BankCheck` gained `onUndo` from `BankTab`).
+>   - **C1:** the starting-point picker is phone rows; a typed line keeps its 44px named remove.
+>   - **C10:** the Account pill's shipped phone sheet and the full-screen `KitDialog`, as they ship.
+>   - **Desk unchanged** (desk walk re-run passed) except one thing: "Close" in the dock is outlined; it stays ghost at a desk.
+> - **⚖ Where the build went past the drawing (said to the owner before building; none reopens a ruling):**
+>   1. "Didn't go through the bank" shows under **every** unticked line, not only cash ones: the routes carry no payment
+>      method (R2c deviation 2). On a phone it is always visible, so it is louder and easier to mis-tap than at a desk.
+>      The fix is R2c's logged server follow-up (the method on the tick list's lines).
+>   2. C3's Finish later is not drawn in the callout on a phone (the dock has it).
+>   3. The books stay a short list in C1 and Add an account, not the drawn pick-many dropdown: a first account's books
+>      can't be chosen (rule 1), and a moving book's row says "moves from …".
+> - **Words:** the phone's strings are in `lib/bank-tab-words.ts` (`markCheckedShort`, `pinTicked`, `tickedShort`,
+>   `signed`, `cardTitle`, `cardLines`, `cardOutstanding`, `cardNothingOut`, `phoneListHint`, `phoneListHintRead`).
+>   Recorded under §5 by pointer.
+> - **Findings, recorded, not fixed here (none are the Bank tab's to fix):**
+>   1. **Every club admin page on a phone is 72px taller than the screen:** the root `<main>` has 72px of bottom padding
+>      under the 100dvh shell, so the whole document can be nudged up 72px. The shell's, not the Bank tab's.
+>   2. **The admin header re-publishes `--admin-header-h` only when its content box resizes** (`AdminEventHeader`'s
+>      ResizeObserver; the figure is `offsetHeight`), so after it condenses the published height can stay taller than the
+>      painted header. The Bank strip covers the gap with its own paint; any other sticky layer on that variable shows it.
+>   3. **Fixed chrome while ticking on a phone** is header + strip + dock + bottom bar, roughly 280px of 844. The drawing
+>      warned about this; Ask 5 A was ruled anyway.
+>   4. `joinSub` (`lib/club-born-public.ts`) duplicates `subLine`; hoisting one into `lib/utils.ts` is a follow-up.
+>   5. The layout sweep measures only the first-visit state, as the treasurer (R2c's finding, unchanged).
+>   6. The dock's full-bleed margin (`-1rem`) matches the admin shell's phone side padding by number; a shell with less
+>      padding would scroll sideways. Fine where the tab lives today.
+> - **Carried from R2c, owner calls (proposed, not shipped):**
+>   - **The "Stripe didn’t answer" callout's words are stale for ticked payouts.** Proposed: "Stripe didn't answer, so new
+>     payouts can't be grouped right now: their lines show one by one until it does. A payout you already ticked stays as
+>     you ticked it." Not changed without the owner's yes.
+>   - **Marking while Stripe is down with a ticked payout (R2c finding a): the phone makes it LESS visible.** The Stripe
+>     callout scrolls away under the pinned strip while the dock's Mark checked stays in reach. The rule is unchanged.
+> - **/simplify (2026-11-05, before /review):** the two limes and C5's pair built once and placed by width (no second
+>   copy of either), the payout's parts shared by desk and phone, one phone row (`PhoneRow` + `subLine`) for C1, C2 and the
+>   payout's lines.
+> - **/review (high) 2026-11-05** (R2d's files only; three lenses: correctness, client state and B7, regression and
+>   layout; no Critical or High, no desk regression, every write control absent for a reader). *Fixed:* the dock's "must be
+>   $0.00" showed under a green $0.00 when the lime was held for an earlier open statement (two Undos), now only while the
+>   Difference isn't $0.00; a keep-out or the payment-processing offer tapped while Mark checked is in flight now waits as
+>   a tick does (on a phone the dock and every row's keep-out share the screen); the phone's Undo (beside Mark checked
+>   again on a changed latest statement) waits for a mark in flight; a reader's phone list hint no longer points at an
+>   Undo they never get; an opened payout's book total carries its sign like its lines; long unbroken bank descriptions
+>   wrap instead of pushing the amount; an empty top-right box no longer leaves a blank row over the strip; the screens
+>   guard now pins each lime to exactly two gated placements. *Left as findings:* the whole-row tick is a pointer extra
+>   (the named checkbox is the keyboard path, as the desk row); the pinned count follows the server's answer, not the
+>   tap (as the desk band); a refused write's re-read is not ordered against a later write's answer (R2c's finding, more
+>   reachable with fast phone ticking); no tick-all on a phone (none drawn); a starting balance shows unsigned (a balance,
+>   not a movement).
+> - **Checks (after the review fixes):** `.probe/bank-r2d/walk.mjs` (not committed; as the treasurer at 390, every row
+>   deleted) **`BANK_R2D_WALK_PASSED`**, no page errors; desk `.probe/bank-r2c/walk.mjs` **`BANK_R2C_WALK_PASSED`**;
+>   `check:layout --only=admin-accounting-bank` at 361 and at 1440: no new findings; typecheck and `check:spelling` clean;
+>   eslint clean on R2d's files; bank-r2c-screens-guard, bank-check, bank-club-routes, bank-club-read, bank-r2-server-guard,
+>   admin-kit-nav, loading-state, table-recipe, phone-secondary-actions, one-definition **430/430**.
+> - **R2 COMPLETE** at R2d's commit (R2a `af458c945`, R2b `01c533436`, R2b-2 `9a25464ea`, R2b-3 `c99e8e764`, R2c
+>   `7d7b79cdb`, the payout fix `aa106bac8`, R2d: hash owed). **Owed before R2 is promoted:** migrations 436, 437, 439,
+>   440, 442 applied to prod (`MANUAL_PROD_STEPS.json`; applied to dev); a club-pays payout seen in a browser; Stage 13
+>   re-checks the Accounting tab row now that Bank sits in it (B8); R2b-3's three route proofs
+>   (`.probe/bank-r2b3-all.mjs`) re-run.
 
 ### R3 — Club: the touchpoints
 - [ ] Matched-line warning on the club entry edit/void routes and windows (C6); changed-since stamp.

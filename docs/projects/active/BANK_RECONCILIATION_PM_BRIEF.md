@@ -2,7 +2,13 @@
 
 **Plan:** `BANK_RECONCILIATION_PLAN.md` · **Priority:** High (inside the Club release, owner 2026-10-12; planned and
 drawn before Stage 8) · **Status:** planned; all twelve asks (B1–B12) ruled A by the owner 2026-11-04, as recommended.
-Drawings approved 2026-11-04. **R1 built 2026-11-04** (behind the scenes, nothing a customer sees yet): the bank account, the statement and the tick are stored; the arithmetic is proven against both example statements; a Stripe payout was measured to add up to the cent when the family pays the fee (the club-pays case still needs one test payment). Next: R2, the club's Bank tab.
+Drawings approved 2026-11-04. **R1 built 2026-11-04** (behind the scenes, nothing a customer sees yet): the bank account, the statement and the tick are stored; the arithmetic is proven against both example statements; a Stripe payout was measured to add up to the cent when the family pays the fee (the club-pays case still needs one test payment). **R2, the club's Bank tab, built 2026-11-04 to 2026-11-05 (complete
+at its last commit)**: under Accounting → Bank a club treasurer names the bank account, enters where the books stood, then
+checks statements to a $0.00 difference, with a Stripe payout ticked as one line, bank fees added from the check, Undo
+with a reason, a second account and books moved between accounts. It works at a desk and on a phone (the difference
+stays pinned at the top and the main button stays in reach at the bottom). Members who can open Accounting but not move
+money read the same tab with no buttons. Before it reaches customers: the database changes go to production, and one
+club-pays payout is seen in a browser. Next: R3, where the bank check shows elsewhere in the club's money screens.
 
 ---
 

@@ -256,4 +256,22 @@ export const BANK_WORDS = {
   save: 'Save',
   added: (name: string) => `${name} is added. Say where it starts.`,
   saved: 'Saved.',
+
+  // ── the phone (R2d, 390; drawings C1–C5 and C10 at phone width, Ask 5) ─────────────────────
+  /** The dock's lime, shortened so two 44px buttons fit side by side (drawing C2 · phone). */
+  markCheckedShort: 'Mark checked',
+  /** The pinned strip: "18 of 25 ticked" beside the Difference. */
+  pinTicked: (ticked: number, total: number) => `${ticked} of ${total} ticked`,
+  /** The band's Ticked caption on a phone (drawing C2 · phone: "18 of 25 lines"). */
+  tickedShort: (ticked: number, total: number) => `${ticked} of ${plural(total, 'line')}`,
+  /** A line's amount in the phone list: one column, the direction as a sign (drawing C2 · phone). */
+  signed: (direction: 'in' | 'out', amount: string) => `${direction === 'out' ? '−' : '+'}${amount}`,
+  /** A checked statement as a card (drawing C4 · phone). */
+  cardTitle: (date: string, balance: string) => `${date} · ${balance}`,
+  cardLines: (ticked: number, outstanding: string) => `${plural(ticked, 'line')} · ${outstanding}`,
+  cardOutstanding: (n: number, amount: string) => `${n} outstanding (${amount})`,
+  cardNothingOut: 'nothing outstanding',
+  phoneListHint: 'Tap a statement to open it. Undo is at the foot of the latest check.',
+  /** A reader never gets Undo (B7), so their hint doesn't point at it. */
+  phoneListHintRead: 'Tap a statement to open it.',
 } as const;

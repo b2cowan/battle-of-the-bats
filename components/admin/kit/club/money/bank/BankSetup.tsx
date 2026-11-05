@@ -14,7 +14,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Check, X } from 'lucide-react';
 import ck from '../../ClubKit.module.css';
-import { repKit, useDeferredLoad, useLatestRead } from '../../RepKit';
+import { ClubRowList, repKit, useDeferredLoad, useLatestRead } from '../../RepKit';
 import { DayField, FormError, TextField, day, moneyFetch } from '../MoneyKit';
 import SearchField from '@/components/shared/SearchField';
 import LoadingState from '@/components/shared/LoadingState';
@@ -23,6 +23,8 @@ import { BANK_WORDS as W } from '@/lib/bank-tab-words';
 import type { BankDirection } from '@/lib/bank-check';
 import { bankUrl, bankWrite, cents, dayYear, parseCents, type AccountView, type Overview } from './BankShared';
 import { MoneyField } from './BankWindows';
+import { PhoneRow, subLine } from './BankPhone';
+import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import s from './Bank.module.css';
 
 type PickLine = { key: string; date: string; description: string | null; bookName: string | null; direction: BankDirection; amountCents: number };
@@ -131,6 +133,7 @@ function Outstanding({ orgSlug, accountId, startDate, picked, setPicked, typed, 
   typed: Typed[];
   setTyped: (f: (t: Typed[]) => Typed[]) => void;
 }) {
+  const isPhone = useIsPhone();
   const [query, setQuery] = useState('');
   const [q, setQ] = useState('');
   /** What was read, and for which question (a different date, search or account is still loading). */
@@ -192,6 +195,26 @@ function Outstanding({ orgSlug, accountId, startDate, picked, setPicked, typed, 
             </p>
           ) : lines === null ? (
             <LoadingState label={W.loadingLines} inline />
+          ) : isPhone ? (
+            // R2d · drawing C1 · phone: one column of rows, the whole row the tick.
+            <ClubRowList label={label}>
+              {shown.length === 0 && typed.length === 0 && <li className={s.pEmpty}>{q ? W.noMatch : W.outstandingNone}</li>}
+              {shown.map(l => (
+                <PhoneRow key={l.key} ticked={picked.has(l.key)} tickable label={W.tickAria(l.description || W.noLine, cents(l.amountCents))}
+                  onTick={() => toggle(l)} what={l.description || W.noLine} sub={subLine(day(l.date), l.bookName)}
+                  amount={W.signed(l.direction, cents(l.amountCents))} moneyIn={l.direction === 'in'} />
+              ))}
+              {typed.map(t => (
+                <PhoneRow key={`typed-${t.id}`} ticked tickable={false} what={t.description}
+                  sub={subLine(day(t.date), W.typedBook)} amount={W.signed(t.direction, cents(t.amountCents))} moneyIn={t.direction === 'in'}
+                  lead={
+                    <button type="button" className={s.removeTyped} aria-label={W.typedRemove(t.description)}
+                      onClick={() => setTyped(list => list.filter(x => x.id !== t.id))}>
+                      <X size={15} aria-hidden />
+                    </button>
+                  } />
+              ))}
+            </ClubRowList>
           ) : (
             <div className={repKit.tableFrame}>
               <table className={repKit.table}>

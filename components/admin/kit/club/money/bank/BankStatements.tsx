@@ -7,9 +7,12 @@
  * since wears the amber chip on its row and on the account line — the only colour change (C5) — and opens to the line
  * as checked and as now; "Look again" opens it.
  * ⚖ Every write control is ABSENT for a reader (B7). The Report link is R3 (C9), not drawn here yet.
+ * ON A PHONE (R2d; drawing C4 · phone): the list is cards — "{date} · {balance}", then the lines and what is still
+ * outstanding, then who checked it — the whole card opens the check, and Undo moves inside the latest one, at its foot.
  */
 import { Fragment, type ReactNode } from 'react';
-import { RepChip, repKit } from '../../RepKit';
+import { useIsPhone } from '@/lib/hooks/useIsPhone';
+import { ClubRow, ClubRowList, RepChip, repKit } from '../../RepKit';
 import ck from '../../ClubKit.module.css';
 import { day } from '../MoneyKit';
 import { BANK_WORDS as W } from '@/lib/bank-tab-words';
@@ -27,6 +30,7 @@ export default function BankStatements({ view, canMove, accountLine, tools, onOp
   onStart: () => void;
   onUndo: (summary: Summary) => void;
 }) {
+  const isPhone = useIsPhone();
   const latestChecked = view.checks.find(c => c.status === 'checked') ?? null;
   const through = view.checkedThrough;
   const setup = view.account.setup;
@@ -63,6 +67,44 @@ export default function BankStatements({ view, canMove, accountLine, tools, onOp
         )}
       </div>
 
+      {isPhone ? (
+        <ClubRowList label={W.listCol.ends}>
+          {view.checks.map(c => {
+            const isOpen = c.status === 'open';
+            const changed = !isOpen && c.changedSinceCount > 0;
+            const out = c.outstandingCount
+              ? W.cardOutstanding(c.outstandingCount, bothSides(c.outstandingInCents, c.outstandingOutCents)) : W.cardNothingOut;
+            const who = isOpen
+              ? c.undone && W.undoneCell(c.undone.byName, stamp(c.undone.at), c.undone.reason)
+              : c.checked && W.checkedCell(c.checked.byName, dayYear(c.checked.at));
+            const ends = dayYear(c.statementEndDate);
+            return (
+              // The card's own words name it (its date, balance and chip), so no label overrides them.
+              <ClubRow key={c.id} as="button" chevron onClick={() => onOpen(c.id)}
+                title={<>
+                  {W.cardTitle(ends, cents(c.statementEndingBalanceCents))}
+                  {isOpen && <> <RepChip tone="info">{W.checkingChip}</RepChip></>}
+                  {changed && <> <RepChip tone="warn">{W.changedChip}</RepChip></>}
+                </>}
+                caption={<>
+                  <span className={s.cardLine}>{W.cardLines(c.tickedCount, out)}</span>
+                  {who && <span className={s.cardLine}>{who}</span>}
+                  {changed && changedRow?.checkId === c.id && changedRow.changedSince.map(ch => (
+                    <span key={ch.key} className={s.cardLine}>
+                      <b>{rowWhat(ch.was)}</b> · {W.changedWhen(cents(ch.was.amountCents))} · {ch.now ? W.changedNow(cents(ch.now.amountCents)) : W.changedGone}
+                    </span>
+                  ))}
+                </>} />
+            );
+          })}
+          {setup && (
+            <li className={s.pHead}>
+              <span>{W.cardTitle(W.started(dayYear(setup.openingDate)), cents(setup.openingBalanceCents))}</span>
+              {opening.length > 0 && <span>{W.outstandingCell(opening.length, bothSides(openingIn, openingOut))}</span>}
+            </li>
+          )}
+        </ClubRowList>
+      ) : (
       <div className={repKit.tableFrame}>
         <table className={repKit.table}>
           <thead>
@@ -139,7 +181,10 @@ export default function BankStatements({ view, canMove, accountLine, tools, onOp
           </tbody>
         </table>
       </div>
-      {view.checks.length > 0 && <p className={`${ck.hint} ${s.listHint}`}>{anyOpen ? W.listHintOpen : W.listHint}</p>}
+      )}
+      {view.checks.length > 0 && (
+        <p className={`${ck.hint} ${s.listHint}`}>{isPhone ? (canMove ? W.phoneListHint : W.phoneListHintRead) : anyOpen ? W.listHintOpen : W.listHint}</p>
+      )}
     </>
   );
 }

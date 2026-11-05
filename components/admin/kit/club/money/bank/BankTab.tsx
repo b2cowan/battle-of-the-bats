@@ -154,7 +154,8 @@ export default function BankTab({ orgSlug }: { orgSlug: string }) {
         onRefused={refused}
         onFinishLater={() => setCheckId(null)}
         onEdit={() => setWin({ kind: 'edit' })}
-        onFee={() => setWin({ kind: 'fee' })} />
+        onFee={() => setWin({ kind: 'fee' })}
+        onUndo={() => setWin({ kind: 'undo', summary })} />
     );
   } else {
     body = (

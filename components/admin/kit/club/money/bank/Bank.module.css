@@ -238,10 +238,186 @@ tr:focus-within .rowAction,
 /* ── C5 · Look again ── */
 .againFoot { display: flex; justify-content: flex-end; gap: 0.5rem; margin: 1rem 0 0; }
 
+/* ══ THE PHONE (R2d, 390; drawings C1–C5, C10 at phone width, Ask 5 A) ══════════════════════════════════════════════
+   The parts below render only where `useIsPhone` chose them (a list whose structure differs from the table); the
+   ≤640 block at the end retunes the shared parts for a finger. */
+
+/* ── the phone list: one column of rows (the drawn "phone tick rows") inside the kit's own row list (ClubRowList) ── */
+.pRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.5rem;
+  min-height: 56px;
+  padding: 0.35rem 0.75rem 0.35rem 0.25rem;
+  border-top: 1px solid var(--home-line);
+}
+.pRow:first-child, .pHead:first-child, .pEmpty:first-child { border-top: 0; }
+/* After a kit row (a statement card), its own bottom rule already draws the line. */
+[data-row-list-row] + .pHead { border-top: 0; }
+/* A statement card's caption lines, one under another (drawing C4 · phone). */
+.cardLine { display: block; }
+.pTicks { cursor: pointer; }
+.pTicked { background: rgba(var(--home-olive-rgb), 0.05); }
+/* The tick: a 44px target at the row's left (the whole row ticks too). */
+.pTick { display: grid; place-items: center; flex-shrink: 0; width: var(--tap-min, 44px); min-height: var(--tap-min, 44px); }
+.pTick input { width: 18px; height: 18px; margin: 0; accent-color: var(--home-olive); cursor: pointer; }
+.pText { display: flex; flex-direction: column; align-items: flex-start; gap: 0.15rem; flex: 1; min-width: 0; padding: 0.45rem 0 0.3rem; }
+/* A bank's description can be one unbroken token ("POS-PURCHASE-REF8237462398ABCD"): it wraps, never pushes the amount. */
+.pWhat { font-size: var(--type-body); font-weight: 600; color: var(--text-primary); line-height: 1.3; overflow-wrap: anywhere; }
+.pSub { font-size: var(--type-support); color: var(--text-tertiary); line-height: 1.35; overflow-wrap: anywhere; }
+.pAmount {
+  flex-shrink: 0;
+  padding: 0.45rem 0 0;
+  font-size: var(--type-body);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  text-align: right;
+  color: var(--text-primary);
+}
+.pAmount.moneyIn { color: var(--success-light); }
+/* The payout's opener: symbol-only, named by its aria-label, 44px. */
+.pOpener {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: var(--tap-min, 44px);
+  height: var(--tap-min, 44px);
+  margin-right: -0.5rem;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+}
+.pOpener:focus-visible { outline: 2px solid var(--home-olive); outline-offset: -2px; }
+/* Under the whole row (an opened payout): its full width, from the words' edge to the row's. */
+.pBelow { flex: 1 0 100%; padding: 0 0 0.4rem calc(var(--tap-min, 44px) + 0.5rem); cursor: default; }
+.pInside {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin: 0 0 0.2rem;
+  padding: 0.5rem 0 0;
+  border-top: 1px dashed var(--home-line);
+  font-size: var(--type-support);
+  color: var(--text-secondary);
+}
+.pMember { display: flex; justify-content: space-between; gap: 0.75rem; }
+.pMember > :first-child { min-width: 0; overflow-wrap: anywhere; }
+.pMemberAmount { flex-shrink: 0; font-variant-numeric: tabular-nums; }
+.pMemberTotal { font-weight: 600; color: var(--text-primary); }
+.pGap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.45rem 0.6rem;
+  border-radius: 6px;
+  background: rgba(var(--warning-rgb), 0.07);
+  color: var(--badge-warning-ink);
+}
+/* The starting balance, and a card list's starting point: a quiet head row (drawn "phd"). */
+.pHead {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.25rem 0.75rem;
+  min-height: var(--tap-min, 44px);
+  padding: 0.4rem 0.75rem;
+  border-top: 1px solid var(--home-line);
+  background: var(--surface-2);
+  font-size: var(--type-support);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.pHead .pAmount { padding: 0; font-size: var(--type-support); }
+.pEmpty { padding: 1.25rem 0.75rem; text-align: center; font-size: var(--type-support); color: var(--text-tertiary); }
+
+/* ── Ask 5 A · the pinned strip: the Difference and the count, ~44px, while the full band scrolls away ── */
+.pinWrap {
+  position: sticky;
+  /* Under the club's own header, which pins too on a phone (it publishes its height for exactly this). */
+  top: var(--admin-header-h, 0px);
+  z-index: 35;
+  /* Painted, so a scrolled row never shows through the gap above the strip — and a rem further up: the header condenses
+     on scroll, but it re-publishes its height only when its CONTENT box resizes, so the published figure can stay taller
+     than the painted header and the strip pins a little below its edge. The header sits over this paint (40 > 35), so
+     the reach shows only in that gap. */
+  background: var(--home-paper, var(--bg));
+  box-shadow: 0 -1rem 0 var(--home-paper, var(--bg));
+  padding: 0.4rem 0;
+  margin: -0.4rem 0 0.35rem;
+}
+.pin {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: var(--tap-min, 44px);
+  padding: 0 0.75rem;
+  border: 1px solid var(--home-line);
+  border-radius: 10px;
+  background: var(--home-card);
+  font-size: var(--type-support);
+}
+.pinLabel {
+  font-size: var(--type-label);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase; /* type-ok: band label */
+  color: var(--text-tertiary);
+}
+.pinFigure { font-size: var(--type-body); font-variant-numeric: tabular-nums; color: var(--text-primary); }
+.pinFigure[data-tone='good'] { color: var(--success-light); }
+.pinFigure[data-tone='warn'] { color: var(--badge-warning-ink); }
+.pinCount { color: var(--text-tertiary); }
+
+/* ── Ask 5 A · the dock: Finish later · Mark checked, above the phone bar (`--coach-foot-clear`, the admin shell's) ── */
+.dock {
+  position: sticky;
+  bottom: var(--coach-foot-clear, 0px);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin: 1rem -1rem 0;
+  padding: 0.6rem 1rem 0.75rem;
+  border-top: 1px solid var(--home-line);
+  background: var(--home-card);
+}
+.dockRow { display: flex; gap: 0.5rem; }
+/* The kit gives every button on the page its 44px floor (RepKit `.page .btn`, ≤768); the dock only shares the row out. */
+.dockRow > :global(.btn) { flex: 1 1 0; justify-content: center; }
+.dockRow > :global(.btn-lime) { flex-grow: 1.6; }
+.dockHint { font-size: var(--type-support); color: var(--text-tertiary); text-align: right; }
+
+/* C3's helpers: side by side at a desk, full width and stacked on a phone (drawing C3 · phone). */
+.helpers { display: inline-flex; flex-wrap: wrap; gap: 0.5rem; }
+
 @media (max-width: 640px) {
   .pair { grid-template-columns: 1fr; }
   .typedForm { grid-template-columns: 1fr 1fr; }
   .rowAction { opacity: 1; }
   /* The one symbol-only action: the 44px tap floor on a phone (its `aria-label` names it). */
   .removeTyped { width: 44px; height: 44px; }
+  /* A text button is a finger's target: 44px (Edit, Show / Hide, Add an account, Name and books, Show more, Put it back). */
+  .link { display: inline-flex; align-items: center; justify-content: center; min-height: var(--tap-min, 44px); min-width: var(--tap-min, 44px); }
+  .top { margin-bottom: 0.75rem; }
+  .topTitle { font-size: var(--type-body); flex-wrap: wrap; }
+  /* The one primary in the top line (Check a statement, All statements) takes the row. */
+  .topRight { width: 100%; margin-left: 0; }
+  .topRight > :global(.btn) { flex: 1; justify-content: center; }
+  .helpers { display: flex; flex-direction: column; align-items: stretch; width: 100%; }
+  .helpers > :global(.btn) { justify-content: center; }
+  .card { padding: 1rem; }
+  .cardFoot > :global(.btn) { flex: 1; justify-content: center; }
+  .bookRow { min-height: var(--tap-min, 44px); }
+  .bookRow label { flex: 1; align-self: stretch; display: flex; align-items: center; }
+  .shelfRow { grid-template-columns: minmax(0, 1fr) auto; gap: 0.15rem 0.75rem; padding: 0.5rem 0.75rem; }
+  .shelfRow > :first-child { grid-column: 1 / -1; color: var(--text-tertiary); }
+  .shelfRow > :last-child { grid-column: 1 / -1; }
+  .shelfRow > :last-child:empty { display: none; }
+  .againFoot > :global(.btn) { flex: 1; justify-content: center; }
 }
