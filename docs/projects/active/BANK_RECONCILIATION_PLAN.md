@@ -878,7 +878,7 @@ Every stage: migration first where there is one, then the `DATA_DICTIONARY.md` u
 >   payout's tick is not a line the engine can read alone, so the checked Oct 31 statement on dev read **$193.25 off**
 >   with the payout gone (probe: `difference=19325 payoutTicked=false`). On screen that is the C5 band ("Ticked now")
 >   and, worse, **"Mark checked again" can never reach $0.00** on a statement holding a payout.
-> - **✅ The payout fix, 2026-11-05 (said out loud):** the cause was wider than the reader's start date. A book line carries no
+> - **✅ The payout fix, 2026-11-05, committed `aa106bac8` 2026-11-05 (said out loud):** the cause was wider than the reader's start date. A book line carries no
 >   payout link for a payout Stripe was not asked about, so a ticked payout's members counted as plain lines and its gap
 >   (deposit minus book side) fell out of the Difference; the same happened on ANY statement while Stripe's read failed. Fix
 >   in the engine, not the reader: `evaluateCheck` rebuilds a ticked payout from its own tick (the deposit and day it was
