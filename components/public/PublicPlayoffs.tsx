@@ -59,7 +59,7 @@ export default function PublicPlayoffs({ orgSlug, tournamentSlug, initialData, i
 
   const tournament = data.tournament;
   if (!tournament || !data.pageEnabled) return <PublicPage data-public-playoffs="unavailable">
-    <PublicTournamentState title="Playoff Picture unavailable" description="The organizer has hidden results and standings for this tournament." />
+    <PublicTournamentState title="Playoffs unavailable" description="The organizer has hidden results and standings for this tournament." />
   </PublicPage>;
 
   const requireFinalization = data.organization.requireScoreFinalization ?? tournament.requireScoreFinalization ?? true;

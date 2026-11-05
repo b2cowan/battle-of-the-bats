@@ -92,7 +92,10 @@ describe('Stage 5 Part 2: the approved Teams list', () => {
     assert.doesNotMatch(body, /Following \$\{|YearSelector|TeamAvatar|\bteamColor\b/);
   });
   it('uses the approved division headings, wraps full names and stays one column at every width', () => {
-    assert.match(css, /\.heading h2 \{[^}]*1\.125rem/);
+    // The division heading is the shared part at 18 px (ruled 2026-10-30; standard R4), pools are bands in one list.
+    assert.match(body, /<PublicSectionHead division /);
+    assert.match(readSource('components/public/PublicParts.module.css'), /\.headTitle\.divisionTitle \{[^}]*1\.125rem/);
+    assert.match(body, /className=\{`\$\{kit\.listBand\} /);
     assert.match(css, /\.teamLink strong \{[^}]*overflow-wrap: anywhere/);
     assert.doesNotMatch(css, /text-overflow|line-clamp|nowrap/);
     assert.match(css, /@media \(min-width: 1024px\)/);

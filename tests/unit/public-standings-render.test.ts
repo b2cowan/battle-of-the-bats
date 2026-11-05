@@ -57,8 +57,10 @@ describe('the real Standings body’s initial render', () => {
     ] }];
     data.standingsByDivision.d = [row('a1', 'Pool A team', 'a'), row('b1', 'Pool B team', 'b')];
     const html = render(data);
-    assert.match(html, /Standings · A Pool/);
-    assert.match(html, /Standings · B Pool/);
+    // The visible heading is the pool alone (Public page layout standard R4); the section's name still says what it is.
+    assert.match(html, /<h2[^>]*>A Pool<\/h2>/);
+    assert.match(html, /<h2[^>]*>B Pool<\/h2>/);
+    assert.match(html, /aria-label="Standings · A Pool"/);
     assert.equal((html.match(/<table\b/g) ?? []).length, 2);
     assert.equal((html.match(/How the table is ranked/g) ?? []).length, 1);
   });

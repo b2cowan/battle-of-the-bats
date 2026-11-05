@@ -48,7 +48,8 @@ describe('the real preview Teams body', () => {
     const html = render();
     assert.match(html, /data-public-teams="ready"/);
     assert.match(html, /<option value="" selected="">All divisions<\/option>/);
-    assert.match(html, /<h2[^>]*>U11<\/h2><span>3 teams<\/span>/);
+    // The division heading is the shared section heading at 18 px with its count pill (Public page layout standard R4).
+    assert.match(html, /<h2 class="headTitle divisionTitle"[^>]*>U11<span class="count">3<\/span><\/h2>/);
     assert.deepEqual([...html.matchAll(/data-public-team-row="([^"]+)"/g)].map(m => m[1]), ['a', 'b', 'c']);
     assert.equal((html.match(/href="\/club\/cup\/teams\//g) ?? []).length, 3);
     assert.match(html, /2-0-0 · 1st · <span[^>]*>Live now<\/span> vs Beta Sharks/);

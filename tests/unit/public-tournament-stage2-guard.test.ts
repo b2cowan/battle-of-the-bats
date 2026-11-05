@@ -48,7 +48,10 @@ describe('the shared parts render only inside the new frame', () => {
       assert.match(css, new RegExp(`\\${sel} \\{[^}]*font-variant-numeric: tabular-nums`), sel);
     }
     assert.match(css, /\.headLink \{[^}]*min-height: 44px/);
-    assert.match(css, /\.door \{[^}]*min-height: 56px/);
+    // The link row is the club kit's 60 px list row (Public page layout standard R7, 2026-11-04), not a copy of it.
+    assert.match(readSource('components/public/ClubKit.module.css'), /\n\.row \{[^}]*min-height: 60px/);
+    assert.match(readCode('components/public/PublicDoorRow.tsx'), /className=\{kit\.row\}/);
+    assert.doesNotMatch(css, /\n\.door \{/, 'the old door look is gone');
     assert.match(readCode('components/public/PublicLiveCard.tsx'), /<DirectionsLink /, 'the club pages\' one Directions control');
   });
 });

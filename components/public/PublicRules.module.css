@@ -14,7 +14,7 @@
 .items li + li { margin-top: 12px; }
 .copy {
   display: flex; align-items: center; justify-content: center; flex: none; width: 44px; height: 44px;
-  border: 0; border-radius: 6px; padding: 0; background: transparent; color: var(--club-ink); cursor: pointer;
+  border: 0; border-radius: 8px; padding: 0; background: transparent; color: var(--club-ink); cursor: pointer;
 }
 .copy:focus-visible, .resource:focus-visible, .note a:focus-visible {
   outline: 2px solid var(--club-edge); outline-offset: 2px;

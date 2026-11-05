@@ -1,31 +1,32 @@
+/* The row is the club kit's list row (ClubKit.module.css `.list` + `.row`, the link row — Public page layout standard
+   R7, owner ruling 2026-11-04): a framed list of one, 60 px, a 16/600 name, a 12 px dim line, the drawn chevron. Only a
+   button's own defaults are reset here. A row that opens a window keeps the kit's right-pointing chevron, like a link;
+   a row that drops open in place points it down, and up while open. */
 .disclosure { min-width: 0; }
 .toggle {
-  display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  width: 100%; min-height: 52px; padding: 8px 14px; text-align: left;
-  border: 1px solid var(--club-line); border-radius: 8px; cursor: pointer;
-  background: var(--club-card); color: var(--club-text); font: 600 1rem/1.3 var(--club-text-face);
+  width: 100%; margin: 0; border: 0; background: var(--club-card); text-align: left; cursor: pointer;
+  font: inherit;
 }
-.toggle small { display: block; color: var(--club-dim); font-size: 0.875rem; font-weight: 400; }
-.toggle[aria-expanded='true'] .chevron { transform: rotate(180deg); }
+.toggle:hover { background: var(--club-ground); }
+.toggle:focus-visible { outline: 2px solid var(--club-ink); outline-offset: -2px; }
+.toggle:not([data-modal])::after { transform: translateY(-75%) rotate(135deg); }
+.toggle[aria-expanded='true']::after { transform: translateY(-25%) rotate(-45deg); }
 .icon { display: grid; place-items: center; flex: none; color: var(--club-ink); }
-.label { flex: 1; min-width: 0; }
-.toggle:focus-visible { outline: 2px solid var(--club-edge); outline-offset: 2px; }
 .content { display: none; margin-top: 8px; }
 .content[data-open='true'] { display: block; }
 .contentAction { display: flex; justify-content: flex-end; padding: 0 14px 8px; }
 .desktopTitle { display: none; }
 @media (min-width: 1024px) {
-  .disclosure[data-desktop-open] .toggle { display: none; }
+  .disclosure[data-desktop-open] .rowFrame { display: none; }
   .disclosure[data-desktop-open] .content { display: block; }
   .disclosure[data-desktop-open] .desktopTitle { display: block; color: var(--club-text); font: 600 1rem/1.3 var(--club-text-face); }
 }
-/* A desk's window (modalOnDesktop): the row stays where it is, its content opens over the page. */
-.toggle[data-modal] .chevron { transform: rotate(-90deg); }
+/* A desk's window (modalOnDesktop): the row stays where it is, its content opens over the page. 8 px corners (R10). */
 .modal {
   /* `margin: auto` is what centres a modal dialog; a global reset had zeroed it, which left the window in the top-left corner. */
   inset: 0; margin: auto;
   width: min(640px, calc(100vw - 48px)); max-height: min(80vh, 720px); padding: 0; overflow: hidden;
-  border: 1px solid var(--club-line); border-radius: 12px; background: var(--club-ground); color: var(--club-text);
+  border: 1px solid var(--club-line); border-radius: 8px; background: var(--club-ground); color: var(--club-text);
 }
 .modal[open] { display: flex; flex-direction: column; }
 .modal::backdrop { background: rgb(0 0 0 / 0.45); }

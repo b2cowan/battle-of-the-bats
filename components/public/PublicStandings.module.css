@@ -2,7 +2,7 @@
    (PublicPage, PublicParts.module.css `.page`; Public page layout standard R1–R3). */
 .division { display: block; }
 .division select {
-  width: 100%; min-height: 44px; padding: 8px 12px; border: 1px solid var(--club-field); border-radius: 6px;
+  width: 100%; min-height: 44px; padding: 8px 12px; border: 1px solid var(--club-field); border-radius: 8px;
   background: var(--club-card); color: var(--club-text); color-scheme: light; font: 400 1rem/1.4 var(--club-text-face);
 }
 .division select:focus-visible, .tableFrame:focus-visible { outline: 2px solid var(--club-edge); outline-offset: 2px; }
@@ -42,7 +42,7 @@
 .differential > span { white-space: nowrap; }
 .capped { color: var(--club-dim); font-size: 0.75rem; }
 .deskOnly { display: none; }
-.explainer { border: 1px solid var(--club-line-2); border-radius: 8px; padding: 14px; background: var(--club-card); color: var(--club-soft); font: 400 0.875rem/1.5 var(--club-text-face); }
+.explainer { border: 1px solid var(--club-line); border-radius: 8px; padding: 14px; background: var(--club-card); color: var(--club-soft); font: 400 0.875rem/1.5 var(--club-text-face); }
 .explainer p { margin: 0 0 12px; }
 .explainer p:last-child { margin-bottom: 0; }
 .explainer strong { color: var(--club-text); }
@@ -58,7 +58,8 @@
 @media (min-width: 1024px) {
   /* The tables take the page's 960 column (R1 replaced the old 720 cap). The division picker is a control, not the
      page's width; the toolbar pass sets it to 200 (R8). */
-  .division { max-width: 360px; }
+  /* The toolbar (standard R8): Division 200 · Pool 160 · view switch · Search (fills, max 320) · calendar; 44 tall, 8 px corners. */
+  .division { max-width: 200px; }
   .table { width: 100%; }
   .runsCol { width: auto; }
   .table .teamCol { width: 240px; min-width: 240px; max-width: 240px; }

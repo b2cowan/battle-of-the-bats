@@ -59,6 +59,8 @@ A pool with its own table takes a section heading. Registered exception: a team�
 the title face.
 Same on a phone.
 *Keeps:* division headings 18 px (ruled 10-30).
+*Built (Part 2b, 2026-11-05):* every section heading is `PublicSectionHead`; `division` makes it the 18 px division
+heading. A pool band is the club kit's `.listBand` inside the kit's `.list` (Teams). Standings' pools read "A Pool".
 
 ### R5 · Same kind, one list
 Rows of the same kind are **one framed list** with hairlines between them. Separate boxes only for different kinds of
@@ -90,6 +92,9 @@ row that opens a window (a rule, "How seeding works") looks the same. One name p
 Same on a phone.
 *Keeps:* nothing earlier — new with this standard (A5, A8, 2026-11-04). Named "link row" because the club kit's `.door`
 is a different part.
+*Built (Part 2b, 2026-11-05):* `PublicDoorRow` renders the club kit's own `.row` (imported from `ClubKit.module.css`,
+not copied), inside `PublicLinkList` (the kit's `.list`). `PublicDisclosure`'s row is the same row; a row that drops
+open in place points its chevron down, up while open.
 
 ### R8 · One toolbar
 One row, always in this order: **Division** (200) · **Pool** (160) · view switch · **Search** (fills what is left, up to
@@ -97,6 +102,8 @@ One row, always in this order: **Division** (200) · **Pool** (160) · view swit
 Search says "Search teams", or "Search teams or coaches" where coaches are searchable.
 Phone: as shipped (Division and the switch share a row, Search gets its own).
 *Keeps:* nothing earlier — new with this standard (2026-11-04).
+*Built (Part 2b, 2026-11-05):* Schedule, Standings, Playoffs and Teams at a desk; the words follow what the search
+matches (coaches only where a team carries one).
 
 ### R9 · One look for "live"
 A game row shows live with the green **Live now** pill and a **3 px green edge**. Said once: under a "Live now" heading
@@ -116,6 +123,8 @@ score.
 The band, the menu and the today’s-games line are the frame and keep their own sizes.
 *Keeps:* the table standard's darker table frame and the shipped 52 px Standings rows (Stage 4; `TABLE_EXCEPTION_REGISTER.md`
 K-16).
+*Built (Part 2b, 2026-11-05):* the tournament sheets' corners, hairlines and text sizes swept; the desk band's 88 px
+override removed. Still off the scale on purpose until Part 4: a game page's 32 px time.
 
 ### R11 · Weight follows purpose
 A filled button only for the page’s main job (Register, Pay). A choice inside a control (the chosen day, the chosen side

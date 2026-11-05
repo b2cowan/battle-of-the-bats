@@ -15,7 +15,7 @@ import type { Division, Game, PublicTeam } from '@/lib/types';
 import PublicTournamentState from './PublicTournamentState';
 import PublicLiveCard from './PublicLiveCard';
 import { PublicGameRow } from './PublicGameRow';
-import PublicDoorRow from './PublicDoorRow';
+import PublicDoorRow, { PublicLinkList } from './PublicDoorRow';
 import UnfollowConfirmSheet from './UnfollowConfirmSheet';
 import PublicPage from './PublicPage';
 import parts from './PublicParts.module.css';
@@ -107,7 +107,7 @@ export function PublicTeamBody({ data, now, orgSlug, tournamentSlug }: {
           <div><dt>Points</dt><dd>{standings.pts}</dd></div>
           <div><dt>Run difference</dt><dd>{standings.rd >= 0 ? '+' : ''}{standings.rd}</dd></div>
         </dl>
-        <PublicDoorRow href={`${base}/standings`} label={view.standingsLabel} />
+        <PublicLinkList><PublicDoorRow href={`${base}/standings`} label={view.standingsLabel} /></PublicLinkList>
       </div>}
     </div>}
     <UnfollowConfirmSheet open={confirm} teamName={team.name} onCancel={() => setConfirm(false)}

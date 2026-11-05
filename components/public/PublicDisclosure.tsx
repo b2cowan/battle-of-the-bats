@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useId, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
-import { ChevronDown, X } from 'lucide-react';
+import { X } from 'lucide-react';
+import kit from './ClubKit.module.css';
 import styles from './PublicDisclosure.module.css';
 
 /** The frame's desktop breakpoint (the sidebar layout). */
@@ -13,8 +14,10 @@ const subscribeDesktop = (notify: () => void) => {
 const isDesktop = () => window.matchMedia(DESKTOP).matches;
 
 /**
- * Shared tap-open row; Schedule finals stay open at the frame's desktop breakpoint. `modalOnDesktop` keeps the row a
- * dropdown on a phone but opens its content in a window on a desk, so reading it never pushes the page below it down.
+ * Shared tap-open row, wearing the link row's look (the club kit's list row — Public page layout standard R7): a framed
+ * list of one, the name, an optional dim line, the drawn chevron. Only the look is shared; it still opens in place or in
+ * a window. Schedule finals stay open at the frame's desktop breakpoint. `modalOnDesktop` keeps the row a dropdown on a
+ * phone but opens its content in a window on a desk, so reading it never pushes the page below it down.
  */
 export default function PublicDisclosure({ title, sub, icon, action, children, desktopOpen = false, reveal = false, modalOnDesktop = false, open: controlledOpen, onOpenChange }: {
   title: string; sub?: string; children: ReactNode; desktopOpen?: boolean; reveal?: boolean; modalOnDesktop?: boolean;
@@ -50,11 +53,13 @@ export default function PublicDisclosure({ title, sub, icon, action, children, d
   }, [open, modal]);
 
   return <section className={styles.disclosure} data-desktop-open={desktopOpen || undefined}>
-    <button className={styles.toggle} type="button" data-modal={modal || undefined}
-      aria-expanded={modal ? undefined : open} aria-controls={id} aria-haspopup={modal ? 'dialog' : undefined} onClick={() => setOpen(!open)}>
-      {icon && <span className={styles.icon} aria-hidden>{icon}</span>}
-      <span className={styles.label}>{title}{sub && <small>{sub}</small>}</span><ChevronDown className={styles.chevron} size={20} aria-hidden />
-    </button>
+    <div className={`${kit.list} ${styles.rowFrame}`}>
+      <button className={`${kit.row} ${styles.toggle}`} type="button" data-modal={modal || undefined}
+        aria-expanded={modal ? undefined : open} aria-controls={id} aria-haspopup={modal ? 'dialog' : undefined} onClick={() => setOpen(!open)}>
+        {icon && <span className={styles.icon} aria-hidden>{icon}</span>}
+        <span className={kit.rowMain}><span className={kit.rowName}>{title}</span>{sub && <span className={kit.rowSub}>{sub}</span>}</span>
+      </button>
+    </div>
     {desktopOpen && <div className={styles.desktopTitle}>{title} · all final</div>}
     {modal
       ? <dialog ref={dialogRef} id={id} className={styles.modal} aria-labelledby={`${id}-title`}

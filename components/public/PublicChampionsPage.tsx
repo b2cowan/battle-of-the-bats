@@ -18,7 +18,7 @@ import type { ChampionCardView } from '@/lib/public-host-card';
 import PublicTournamentState from './PublicTournamentState';
 import PublicPage from './PublicPage';
 import PublicChampions from './PublicChampions';
-import PublicDoorRow from './PublicDoorRow';
+import PublicDoorRow, { PublicLinkList } from './PublicDoorRow';
 import styles from './PublicChampionsPage.module.css';
 
 export default function PublicChampionsPage({
@@ -62,7 +62,7 @@ export default function PublicChampionsPage({
               title="No champions crowned yet"
               description="Once the playoff finals are decided, the champion(s) and final results will appear here."
               actions={isPreview ? [] : [
-                ...(showPlayoffs ? [{ href: `${homeHref}/playoffs`, label: 'Playoff Picture', variant: 'ghost' as const }] : []),
+                ...(showPlayoffs ? [{ href: `${homeHref}/playoffs`, label: 'The playoff bracket', variant: 'ghost' as const }] : []),
                 { href: homeHref, label: 'Tournament Home', variant: 'ghost' as const },
               ]}
             />
@@ -74,10 +74,10 @@ export default function PublicChampionsPage({
   return <PublicPage className={styles.champions}>
     <h1 className="sr-only">Champions</h1>
     <PublicChampions cards={cards} />
-    <div className={styles.doors}>
+    <PublicLinkList>
       {showPlayoffs && <PublicDoorRow href={isPreview ? null : `${homeHref}/playoffs`}
         label="The playoff bracket" sub="Every playoff game and score" />}
       <PublicDoorRow href={isPreview ? null : `${homeHref}/standings`} label="Final standings" />
-    </div>
+    </PublicLinkList>
   </PublicPage>;
 }

@@ -56,7 +56,7 @@ describe('Stage 4 Part 1: Standings and Playoffs each have one body (Stage 8 Par
     assert.equal(standings.size, 0);
     assert.deepEqual([...playoffs], ['components/public/PublicPlayoffs.tsx']);
     assert.doesNotMatch(readCode(PLAYOFFS_PAGE), /<TieredBracket\b/);
-    assert.match(readCode('lib/public-schedule.ts'), /SCHEDULE_BRACKET_DOOR = \{ path: 'playoffs', label: 'The playoff bracket' \}/);
+    assert.match(readCode('lib/public-schedule.ts'), /SCHEDULE_BRACKET_DOOR = \{ path: 'playoffs', label: 'The playoff bracket', line: 'See who plays who' \}/);
     assert.match(readCode('components/public/PublicSchedule.tsx'), /hasPublicPlayoffBracket\(tournament, divisions, games\)/);
   });
   it('admin preview renders the new Standings body without adding a Playoffs section', () => {

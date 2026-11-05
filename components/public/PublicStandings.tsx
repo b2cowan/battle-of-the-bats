@@ -9,6 +9,7 @@ import { usePublicTournamentLive } from '@/lib/hooks/usePublicTournamentLive';
 import { getDivisionPref, setDivisionPref } from '@/lib/division-cookie';
 import { isTournamentInProgress, useFollowedTeam } from '@/lib/follow';
 import { competitionShellSignature, hasPublicPlayoffBracket, playoffDoorSub } from '@/lib/public-playoffs';
+import { SCHEDULE_BRACKET_DOOR } from '@/lib/public-schedule';
 import { standingsAdvancing, standingsCounts, standingsDivision, standingsRanking, standingsRankChanges } from '@/lib/public-standings';
 import { formatPoolName, splitTeamQualifier } from '@/lib/utils';
 import { useOrgHref } from '@/lib/use-public-pathname';
@@ -16,7 +17,7 @@ import { useStandalonePWA } from '@/lib/device';
 import PublicDisclosure from './PublicDisclosure';
 import PublicSectionHead from './PublicSectionHead';
 import PublicTournamentState from './PublicTournamentState';
-import PublicDoorRow from './PublicDoorRow';
+import PublicDoorRow, { PublicLinkList } from './PublicDoorRow';
 import PublicPage from './PublicPage';
 import parts from './PublicParts.module.css';
 import styles from './PublicStandings.module.css';
@@ -135,7 +136,7 @@ export default function PublicStandings({ orgSlug, tournamentSlug, isPreview = f
       {groups.filter(group => group.rows.length > 0).map(group => {
         const started = group.rows.some(row => row.gp > 0);
         return <section key={group.id} className={styles.pool} aria-label={group.name ? `Standings · ${formatPoolName(group.name)}` : `${division?.name} standings`}>
-          {group.name && <PublicSectionHead title={`Standings · ${formatPoolName(group.name)}`} />}
+          {group.name && <PublicSectionHead title={formatPoolName(group.name)} />}
           <div className={styles.tableFrame} role="region" aria-label="Standings table. Swipe to see more columns." tabIndex={0}>
             <table className={styles.table}>
               <caption className={styles.srOnly}>{division?.name}{group.name ? ` · ${formatPoolName(group.name)}` : ''} standings</caption>
@@ -193,7 +194,7 @@ export default function PublicStandings({ orgSlug, tournamentSlug, isPreview = f
     </> : <PublicTournamentState title="No standings yet" description={division
       ? 'This division has teams, but standings will start once scoreable games are posted.'
       : 'Standings will appear when the organizer publishes the schedule.'} compact />}
-    {showPlayoffsDoor && <PublicDoorRow href={orgHref(`/${tournamentSlug}/playoffs`)} label="The playoff bracket"
-      sub={division ? playoffDoorSub({ ...data, tournament, requireFinalization }, division.id, clock ?? new Date(0)) : null} />}
+    {showPlayoffsDoor && <PublicLinkList><PublicDoorRow href={orgHref(`/${tournamentSlug}/playoffs`)} label={SCHEDULE_BRACKET_DOOR.label}
+      sub={(division ? playoffDoorSub({ ...data, tournament, requireFinalization }, division.id, clock ?? new Date(0)) : null) ?? SCHEDULE_BRACKET_DOOR.line} /></PublicLinkList>}
   </PublicPage>;
 }

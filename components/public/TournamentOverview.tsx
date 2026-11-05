@@ -3,6 +3,7 @@ import { fanRoundLabel } from '@/lib/playoff-bracket';
 import { resolveGameVenueLabel } from '@/lib/venue-label';
 import { directionsHref } from '@/lib/family-schedule-format';
 import { gameDayLists } from '@/lib/public-overview';
+import { SCHEDULE_BRACKET_DOOR } from '@/lib/public-schedule';
 import { fanPlaceholder, gameRowView, gameSideNames, liveCardView } from '@/lib/public-game-row';
 import type { TournamentMoment } from '@/lib/tournament-moment';
 import type { FactRow, RegisterCardView } from '@/lib/public-pre-event';
@@ -11,7 +12,7 @@ import type { Announcement, Division, Game, Tournament, Venue } from '@/lib/type
 import PublicSectionHead from './PublicSectionHead';
 import PublicLiveCard from './PublicLiveCard';
 import { PublicGameRows } from './PublicGameRow';
-import PublicDoorRow from './PublicDoorRow';
+import PublicDoorRow, { PublicLinkList } from './PublicDoorRow';
 import PublicPostList from './PublicPostList';
 import PublicRegisterCard from './PublicRegisterCard';
 import PublicFactsList from './PublicFactsList';
@@ -37,7 +38,7 @@ import styles from './PublicParts.module.css';
  *
  * ONE ORDER, TWO LAYOUTS. The parts are listed in reading order, split into a main column and a side column; a phone
  * stacks them (main, then side — so each moment's phone order is exactly the plan's), a desk puts them side by side
- * (the hub's "Desktop, game day · 1280px"). During the playoffs a "Playoff picture" door stands in for today's "The
+ * (the hub's "Desktop, game day · 1280px"). During the playoffs a "The playoff bracket" link row stands in for today's "The
  * Bracket Is Set" hero (not drawn; the bracket's own move is Stage 4) — only where the Playoffs page is where it lands.
  */
 export default function TournamentOverview({
@@ -129,7 +130,7 @@ export default function TournamentOverview({
     </section>
   ) : null;
   const playoffDoorEl = gameDay && playoffPictureHref
-    ? <PublicDoorRow href={playoffPictureHref} label="Playoff picture" sub="The bracket is set: see who plays who" />
+    ? <PublicLinkList><PublicDoorRow href={playoffPictureHref} label={SCHEDULE_BRACKET_DOOR.label} sub={SCHEDULE_BRACKET_DOOR.line} /></PublicLinkList>
     : null;
   const upNextEl = upNextViews.length > 0 ? (
     <section className={styles.section} aria-labelledby="overview-next">
@@ -159,9 +160,9 @@ export default function TournamentOverview({
 
   const championsEl = champions.length > 0 ? <PublicChampions cards={champions} /> : null;
   const afterDoorsEl = afterDoors.length > 0 ? (
-    <div className={styles.doorList}>
+    <PublicLinkList>
       {afterDoors.map(d => <PublicDoorRow key={d.href} href={d.href} label={d.label} sub={d.sub} />)}
-    </div>
+    </PublicLinkList>
   ) : null;
   const hostEl = host ? <PublicHostCard view={host} colours={hostColours} /> : null;
 

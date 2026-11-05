@@ -62,7 +62,6 @@ const PAGE_SHEETS = [...reachableFrom(...PAGES.map(p => p.component))]
 /** A fixed `max-width` of 600 px or more is a page-level cap unless it is one of these, each with its reason. */
 const WIDE_CAP_EXCEPTIONS: Record<string, string> = {
   'app/[orgSlug]/register/register.module.css .formWrap 680': 'the register form\'s own reading column (a sheet club forms share); `.leftEdge` puts it on the page\'s left edge',
-  'components/public/PublicTeams.module.css .filters 640': 'the Teams toolbar; the toolbar pass (R8, Part 2b) gives each control its own width',
   'components/public/PublicTournamentState.module.css .state 620': 'the shared state card (unavailable, not found); the state cards are restyled in Part 4',
 };
 

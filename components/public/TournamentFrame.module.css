@@ -111,9 +111,9 @@
   .main { grid-area: main; min-width: 0; }
 
   /* The band at a desk: its own 32 px edge over the rail and the page (not the club pages' centred column — there is a
-     rail here), 88 px tall over the accent rule, the drawing's size. */
+     rail here). Its height is the club band's own 72 px over the accent rule (club round C1, owner ruling 2026-11-05 —
+     one band height on both sites; it was 88 here). A minimum: a two-line name and its dates line grow it. */
   .frame :global([data-public-frame-band]) {
-    --club-band-h: 88px;
     padding: 0 32px;
     /* The tab row's column folds to nothing (the rail navigates), and a long name gives way: two lines, then the
        ellipsis, never pushing the doors off the band. */

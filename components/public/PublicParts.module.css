@@ -20,6 +20,7 @@
   font: 700 1rem/1.25 var(--club-text-face);
   color: var(--club-text);
 }
+.headTitle.divisionTitle { font: 600 1.125rem/1.25 var(--club-text-face); }
 .count {
   display: inline-flex;
   align-items: center;
@@ -153,39 +154,10 @@ a.row:hover .teams { text-decoration: underline; }
 .gameLink { display: block; color: inherit; text-decoration: none; }
 .gameLink:hover { text-decoration: underline; }
 
-/* ── The door row: a label, an optional sub-line, a chevron (hub "Every page" `.door`) ───────── */
-.door {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  column-gap: 12px;
-  align-items: center;
-  min-height: 56px;
-  padding: 8px 14px;
-  background: var(--club-card);
-  border: 1px solid var(--club-line);
-  border-radius: 8px;
-  font: 600 1rem/1.3 var(--club-text-face);
-  color: var(--club-text);
-  text-decoration: none;
-}
-.door:hover { border-color: var(--club-line-2); }
-/* The label (and its sub-line) is one cell centred on the chevron's two rows, so a door with no sub-line does not sit high. */
-.door > span:first-child { grid-row: 1 / 3; align-self: center; }
-.door:focus-visible, .row:focus-visible, .headLink:focus-visible, .gameLink:focus-visible {
+/* The link row is the club kit's list row (PublicDoorRow → ClubKit.module.css .row; standard R7). */
+.row:focus-visible, .headLink:focus-visible, .gameLink:focus-visible {
   outline: 2px solid var(--club-edge);
   outline-offset: 2px;
-}
-.doorSub {
-  display: block;
-  font: 400 0.875rem/1.3 var(--club-text-face);
-  color: var(--club-dim);
-}
-.chevron {
-  grid-column: 2;
-  grid-row: 1 / 3;
-  font-size: 1.375rem;
-  line-height: 1;
-  color: var(--club-dim);
 }
 
 /* ── The page: every public tournament page's body (PublicPage.tsx; Public page layout standard R1–R3, owner ruling
@@ -394,8 +366,8 @@ a.row:hover .teams { text-decoration: underline; }
 }
 .regCount {
   /* A line tall before the browser fills it in (the countdown is browser-only, components/public/Countdown.tsx). */
-  min-height: 2rem;
-  font: 700 2rem/1 var(--club-title-face);
+  min-height: 1.5rem;
+  font: 700 1.5rem/1 var(--club-title-face);
   font-variant-numeric: tabular-nums;
 }
 .regSpots {
@@ -590,4 +562,3 @@ a.row:hover .teams { text-decoration: underline; }
   font: 400 0.875rem/1.45 var(--club-text-face);
   color: var(--club-soft);
 }
-.doorList { display: flex; flex-direction: column; gap: 8px; }

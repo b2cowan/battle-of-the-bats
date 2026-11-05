@@ -98,7 +98,7 @@ describe('the real Playoffs body and preview bracket', () => {
     assert.match(html, /The bracket isn&#x27;t set yet/);
     assert.doesNotMatch(html, /Alpha Rapids|U11|data-bracket-game|data-public-playoff-game/);
     data.pageEnabled = false;
-    assert.match(render(data), /Playoff Picture unavailable/);
+    assert.match(render(data), /Playoffs unavailable/);
     assert.doesNotMatch(render(data), /Alpha Rapids|U11|data-bracket-game/);
   });
 });

@@ -21,7 +21,7 @@ import { downloadTeamScheduleICS } from '@/lib/team-calendar';
 import { useOrgHref } from '@/lib/use-public-pathname';
 import { formatTime } from '@/lib/utils';
 import { isStandalonePWA, useStandalonePWA } from '@/lib/device';
-import PublicDoorRow from './PublicDoorRow';
+import PublicDoorRow, { PublicLinkList } from './PublicDoorRow';
 import { PublicGameRow } from './PublicGameRow';
 import PublicLiveCard from './PublicLiveCard';
 import PublicSectionHead from './PublicSectionHead';
@@ -219,10 +219,10 @@ export default function PublicSchedule({ orgSlug, tournamentSlug, isPreview = fa
   // The door's sub-line is one division's: the picked one, or the only one; "All divisions" with several says nothing.
   const doorDivision = division || (activeDivisions.length === 1 ? activeDivisions[0].id : '');
   const notices = isTournamentInProgress(tournament) ? (data.announcements ?? []).filter(a => a.pinned && !dismissed.has(a.id)) : [];
-  const heldBackDoors = !isPreview && <>
+  const heldBackDoors = !isPreview && (isPublicPageEnabled(tournament, 'teams') || canRegister) && <PublicLinkList>
     {isPublicPageEnabled(tournament, 'teams') && <PublicDoorRow href={orgHref(`${basePath}/teams`)} label="Teams" />}
     {canRegister && <PublicDoorRow href={orgHref(`${basePath}/register`)} label="Register" />}
-  </>;
+  </PublicLinkList>;
 
   return <PublicPage className={styles.schedule} data-public-schedule-ready>
     {notices.map(a => <aside key={a.id} className={styles.notice} aria-label="Tournament notice"><div><strong>{a.title}</strong><p>{a.body}</p></div>
@@ -248,7 +248,7 @@ export default function PublicSchedule({ orgSlug, tournamentSlug, isPreview = fa
           }}><Star size={22} aria-hidden /><span className={styles.desktopLabel}>My games</span></button></span>}
           {followed && <span className={`${parts.appOnly} ${styles.calendarSlot}`}><button type="button" className={`${styles.symbol} ${styles.calendarButton}`} aria-label="Add my team's schedule to my calendar" onClick={() => void downloadTeamScheduleICS({ team: followed, games, teams, divisions, tournamentName: tournament.name, orgSlug, tournamentSlug })}><CalendarPlus size={22} aria-hidden /><span className={styles.desktopLabel}>Calendar</span></button></span>}
         </div>}
-        <input id="public-schedule-search" className={styles.search} data-open={searchOpen || undefined} type="search" aria-label={teams.some(t => t.coach) ? 'Search team or coach' : 'Search team'} placeholder={teams.some(t => t.coach) ? 'Search team or coach…' : 'Search team…'} value={query} onChange={e => { setQuery(e.target.value); setMyGames(false); }} />
+        <input id="public-schedule-search" className={styles.search} data-open={searchOpen || undefined} type="search" aria-label={teams.some(t => t.coach) ? 'Search teams or coaches' : 'Search teams'} placeholder={teams.some(t => t.coach) ? 'Search teams or coaches' : 'Search teams'} value={query} onChange={e => { setQuery(e.target.value); setMyGames(false); }} />
       </div>
       {!divisionWithheld && datesVisible && <div className={styles.days} data-rail={selection.dates.length > 5 || undefined} role="group" aria-label="Game day" ref={rail}>
         <button type="button" aria-pressed={effectiveDay === 'all'} onClick={() => setDay('all')}>All</button>
@@ -269,8 +269,8 @@ export default function PublicSchedule({ orgSlug, tournamentSlug, isPreview = fa
           </section>;
         })}
         {dayGames.length === 0 && <div className={styles.state}><h2>{query.trim() || myGames ? 'No matching games' : 'No games scheduled'}</h2><p>{query.trim() || myGames ? 'Try another team or clear the search.' : 'Games will appear here once the organizer posts them.'}</p></div>}
-        {effectiveStage === 'playoff' && !isPreview && hasPublicPlayoffBracket(tournament, divisions, games) && <PublicDoorRow href={orgHref(`${basePath}/${SCHEDULE_BRACKET_DOOR.path}`)} label={SCHEDULE_BRACKET_DOOR.label}
-          sub={doorDivision ? playoffDoorSub({ tournament, divisions, games, teams, requireFinalization }, doorDivision, clock) : null} />}
+        {effectiveStage === 'playoff' && !isPreview && hasPublicPlayoffBracket(tournament, divisions, games) && <PublicLinkList><PublicDoorRow href={orgHref(`${basePath}/${SCHEDULE_BRACKET_DOOR.path}`)} label={SCHEDULE_BRACKET_DOOR.label}
+          sub={(doorDivision ? playoffDoorSub({ tournament, divisions, games, teams, requireFinalization }, doorDivision, clock) : null) ?? SCHEDULE_BRACKET_DOOR.line} /></PublicLinkList>}
       </>}
     </>}
   </PublicPage>;

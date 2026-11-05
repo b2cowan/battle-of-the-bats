@@ -444,7 +444,7 @@ describe('Part 4: the readable baseline, B', () => {
   it('the public bracket carries no inline wash of the organizer\'s colour; its own sheet paints it with the frame\'s tokens', () => {
     const bracket = readCode('components/bracket/PublicBracket.tsx');
     assert.doesNotMatch(bracket, /primary-rgb|drop-shadow|fill=|stroke=/, 'no inline organizer colour or SVG paint');
-    assert.match(readCode('components/bracket/PublicBracket.module.css'), /^\.bracket \{[^}]*border: 1px solid var\(--club-line-2\);[^}]*background: var\(--club-card\);/m);
+    assert.match(readCode('components/bracket/PublicBracket.module.css'), /^\.bracket \{[^}]*border: 1px solid var\(--club-line\);[^}]*background: var\(--club-card\);/m);
   });
 
   it('the Teams monogram and its readable ink left with the old Teams pages (Stage 8 Part 3a)', () => {

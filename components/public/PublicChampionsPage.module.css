@@ -1,6 +1,5 @@
 /* The Champions page. Its edges, column and rhythm are the shared page's (PublicPage, PublicParts.module.css `.page`;
    Public page layout standard R1–R3); figures are tabular frame-wide (TournamentFrame.module.css `.frame .main`). */
 .champions p { overflow-wrap: anywhere; }
-.doors { display: flex; flex-direction: column; gap: 8px; }
 .state > div { width: 100%; padding: 28px 16px; }
 .state a { min-height: 44px; }

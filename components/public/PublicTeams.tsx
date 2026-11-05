@@ -17,6 +17,8 @@ import type { PublicTeam } from '@/lib/types';
 import PublicTournamentState from './PublicTournamentState';
 import UnfollowConfirmSheet from './UnfollowConfirmSheet';
 import PublicPage from './PublicPage';
+import PublicSectionHead from './PublicSectionHead';
+import kit from './ClubKit.module.css';
 import parts from './PublicParts.module.css';
 import styles from './PublicTeams.module.css';
 
@@ -83,6 +85,8 @@ export default function PublicTeams({ orgSlug, tournamentSlug, isPreview = false
   // Each team's moment reads the whole schedule, so it is built once per feed, not per keystroke or filter change.
   const moments = useMemo(() => new Map((data?.teams ?? []).map(team => [team.id, teamMoment({ ...data!, teamId: team.id,
     requireFinalization: data!.organization.requireScoreFinalization ?? data!.tournament?.requireScoreFinalization ?? true, now })])), [data, now]);
+  // Standard R8: name what the box matches — coaches only where the club shows them (lib/public-teams matches t.coach).
+  const searchWords = data?.teams.some(t => t.coach) ? 'Search teams or coaches' : 'Search teams';
   const groups = data ? teamsGroups({ ...data, divisionId: selectedDivision, query }) : [];  const state = failed ? 'failed' : !data ? 'loading' : !data.pageEnabled || !data.tournament ? 'unavailable'
     : !data.teams.length ? data.teamsWithheld && !data.divisions.length ? 'withheld' : 'empty' : 'ready';
   return <PublicPage data-public-teams={state} data-public-teams-ready={data ? true : undefined}>
@@ -103,15 +107,16 @@ export default function PublicTeams({ orgSlug, tournamentSlug, isPreview = false
           </select>
           <button type="button" className={styles.searchToggle} aria-label={searchOpen ? 'Close search' : 'Search teams'} aria-expanded={searchOpen}
             aria-controls="public-teams-search" onClick={() => { setSearchOpen(!searchOpen); setQuery(''); }}><Search size={22} aria-hidden="true" /></button>
-          <input id="public-teams-search" className={styles.search} data-open={searchOpen || undefined} type="search" aria-label="Search teams"
-            placeholder="Search teams" value={query} onChange={event => setQuery(event.target.value)} />
+          <input id="public-teams-search" className={styles.search} data-open={searchOpen || undefined} type="search" aria-label={searchWords}
+            placeholder={searchWords} value={query} onChange={event => setQuery(event.target.value)} />
         </div>
         {groups.length ? <div className={styles.groups}>
           {groups.map(({ division, groups: pools, count }) => <section key={division.id} className={styles.division} aria-labelledby={`teams-${division.id}`}>
-            <div className={styles.heading}><h2 id={`teams-${division.id}`}>{division.name}</h2><span>{count} {count === 1 ? 'team' : 'teams'}</span></div>
-            {pools.map(pool => <div key={pool.id} className={styles.pool}>
-              {pool.name && <h3 className={styles.poolName}>{pool.name}</h3>}
-              <div className={styles.rows}>{pool.teams.map(team => {
+            {/* Standard R4: the division heading (18 px, count pill); the division is ONE framed list, each pool a band in it. */}
+            <PublicSectionHead division id={`teams-${division.id}`} title={division.name} count={count} />
+            <div className={kit.list}>{pools.map(pool => <div key={pool.id} className={styles.pool}>
+              {pool.name && <h3 className={`${kit.listBand} ${styles.band}`}>{pool.name}</h3>}
+              {pool.teams.map(team => {
                 const name = splitTeamQualifier(team.name);
                 const standings = data.standingsByDivision[division.id] ?? [];
                 const record = standings.find(row => row.teamId === team.id);
@@ -130,8 +135,8 @@ export default function PublicTeams({ orgSlug, tournamentSlug, isPreview = false
                       onClick={() => toggleFollow(team)}><Star size={22} aria-hidden="true" /></button>
                   </span>}
                 </div>;
-              })}</div>
-            </div>)}
+              })}
+            </div>)}</div>
           </section>)}
         </div> : <TeamsState title="No teams match"
           description="Try another team name or choose All divisions. Teams appear once their division's schedule is published." />}
