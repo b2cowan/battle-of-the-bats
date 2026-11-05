@@ -33,7 +33,7 @@ const familiesHelp: HelpPageContent = {
             everything your club holds about their children across rep teams and house league.
           </p>
           <p>
-            Because it puts contact details, consent and balances for every family in one searchable
+            Because it puts contact details, consent, balances and each child&rsquo;s medical note and emergency contact for every family in one searchable
             place, it is <strong>off for everyone by default</strong> &mdash; admins included. Owners
             always have it. Anyone else needs a deliberate, per-person grant:
           </p>
@@ -106,6 +106,9 @@ const familiesHelp: HelpPageContent = {
                 parent who changed addresses is still found by the old one.
               </p>
               <p>
+                A search for a child&rsquo;s name finds the family, and the record opens on the family. The child&rsquo;s own page is one click further: select the child&rsquo;s name in the record&rsquo;s Children list.
+              </p>
+              <p>
                 To look across the whole book, pick <strong>All families</strong> first. When a search finds
                 nothing in a narrower list, the page offers <strong>Search all families</strong>.
               </p>
@@ -120,7 +123,7 @@ const familiesHelp: HelpPageContent = {
       heading: 'No family on file, and asking the coaches',
       summary: 'Who can add a guardian to a rep roster, and how the club asks them.',
       keywords: ['no family on file', 'no guardian', 'missing guardian', 'ask the coaches', 'head coach', 'roster', 'guardian email'],
-      searchText: 'children with no family no guardian named guardian address unusable rep roster coach adds guardian club cannot edit roster ask the coaches email head coach players with no guardian on file your club notice last sent house league registration open registrations',
+      searchText: 'row opens the child page children with no family no guardian named guardian address unusable rep roster coach adds guardian club cannot edit roster ask the coaches email head coach players with no guardian on file your club notice last sent house league registration open registrations',
       content: (
         <>
           <p>
@@ -129,7 +132,7 @@ const familiesHelp: HelpPageContent = {
             biggest list, and clearing it is what fills the book.
           </p>
           <ul>
-            <li><strong>A rep child</strong>: only the team&rsquo;s coaches can add a guardian, on their Roster. The club can&rsquo;t edit a rep roster, so these rows don&rsquo;t open.</li>
+            <li><strong>A rep child</strong>: only the team&rsquo;s coaches can add a guardian, on their Roster. The club can&rsquo;t edit a rep roster, so the row opens the child&rsquo;s page (there is no family to open), where you can see the child&rsquo;s seasons, papers and the parents the team has typed.</li>
             <li><strong>A house-league child</strong>: the registration is the club&rsquo;s own. The row opens the season&rsquo;s registrations, where you fix it.</li>
           </ul>
           <p>
@@ -150,11 +153,11 @@ const familiesHelp: HelpPageContent = {
             <p>
               Their roster row or registration names no guardian email, or the address on it can&rsquo;t be
               used. For a rep child, the team&rsquo;s coaches add it on their Roster &mdash; use <strong>Ask the
-              coaches</strong> to ask them. For a house-league child, fix it in the season&rsquo;s registrations.
+              coaches</strong> to ask them. The child&rsquo;s row opens their page. For a house-league child, fix it in the season&rsquo;s registrations.
             </p>
           ),
           answerText:
-            'The child’s roster row or registration names no guardian email, or the address is unusable. For a rep child the team’s coaches add it on their Roster — use Ask the coaches. For a house-league child fix it in the season’s registrations.',
+            'The child’s roster row or registration names no guardian email, or the address is unusable. For a rep child the team’s coaches add it on their Roster — use Ask the coaches. The child’s row opens their page. For a house-league child fix it in the season’s registrations.',
           keywords: ['no family', 'missing guardian', 'no guardian', 'fix', 'ask the coaches'],
           popular: true,
         },
@@ -189,7 +192,7 @@ const familiesHelp: HelpPageContent = {
               </p>
               <p>
                 <strong>Children</strong> lists each child once, with their team or season and their own Dues,
-                Paid and Balance. Fundraising, other credits and money handed back appear under a child only when
+                Paid and Balance. Select a child&rsquo;s name to open the child&rsquo;s page. Under the name, a line such as <em>3 seasons &middot; 2 documents to sign</em> says how many seasons the child has been with the club and how many papers are waiting. Fundraising, other credits and money handed back appear under a child only when
                 they aren&rsquo;t zero. A child who isn&rsquo;t back this season shows the season they were last in.
               </p>
               <p>
@@ -365,6 +368,32 @@ const familiesHelp: HelpPageContent = {
           popular: true,
         },
       ],
+    },
+    {
+      id: 'families-child-page',
+      group: 'Working the book',
+      heading: 'One page per child',
+      summary: 'A child’s seasons with the club, their papers, their health check and their parents, on one page.',
+      keywords: ['child page', 'child', 'player page', 'seasons', 'fees by season', 'documents', 'waiver', 'medical consent', 'code of conduct', 'health check', 'still right', 'confirm', 'medical note', 'emergency contact', 'parents', 'no family on file', 'roster name'],
+      searchText: 'one page per child open a child select the name in a family record children list roster name no family on file row seasons newest first rep house league fees paid in full no dues documents per team needs signing on file waiver code of conduct medical consent history earlier season health medical note emergency contact still right for the season confirm clears the coach question parents open the household typed guardian no door read only no add player',
+      content: (
+        <>
+          <p>
+            A child&rsquo;s page shows everything the club holds about one child, across rep teams and house league. Open it
+            by selecting the child&rsquo;s name in a family&rsquo;s <strong>Children</strong> list, on a rep roster or a past
+            season&rsquo;s roster, or in a <strong>No family on file</strong> row. You need the Families permission.
+          </p>
+          <ul>
+            <li><strong>Seasons</strong> &mdash; newest first, each with where the child played and what the season&rsquo;s own books show for fees: <em>Paid in full</em>, an amount with how much is paid, <em>No dues</em> or <em>Not owed yet</em>. A rep season reads the team&rsquo;s Player dues; a house-league sign-up reads that season&rsquo;s book.</li>
+            <li><strong>Documents</strong> &mdash; for each team the child is on this season, the same rows the coach sees: <em>Needs signing</em> or <em>On file</em>, with earlier copies listed by season. Teams are never added together. A house-league waiver accepted at sign-up shows in the Waiver history. Papers are read-only here: they are uploaded by the club or the coach, on the team.</li>
+            <li><strong>Health</strong> &mdash; the child&rsquo;s medical note and emergency contact. Once a season it asks <em>Still right for the 2027 Season?</em> Press <strong>Confirm</strong> and the question is cleared for every team the child is on, so no coach is asked again. Confirm changes nothing in the note; it is changed where it is typed, on the coach&rsquo;s player page.</li>
+            <li><strong>Parents</strong> &mdash; each opens that family&rsquo;s record. If the team has only typed a guardian&rsquo;s name and nobody has a family record yet, the name is shown with no link.</li>
+          </ul>
+          <HelpNote variant="info" title="A child’s page is read-only, apart from Confirm">
+            There is no way to add a player or change a record here. Players are added by the team&rsquo;s coaches or from tryouts, and members who hold Families can read each child&rsquo;s medical note and emergency contact.
+          </HelpNote>
+        </>
+      ),
     },
     {
       id: 'families-duplicates',

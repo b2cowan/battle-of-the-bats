@@ -18,6 +18,8 @@ import { registrationOwes } from './league-price';
 import { loadOrgLeagueReceivedCents } from './league-money-read';
 import { orgDayKey } from './timezone';
 import { secondParentsOf, SECOND_PARENT_WORDS } from './league-second-parent';
+import { householdChildSub } from './child-page-words';
+import { familiesChildHref } from './admin-kit-nav';
 
 /**
  * lib/families-read.ts — server-side assembly for the Families area (P2 chunks C–E; Club Tier Stage 5a).
@@ -88,9 +90,10 @@ export interface WorklistFamily {
 
 /**
  * A child whose row names no family (Stage 5b, Ask 4): grouped under its team (a rep roster) or its season (house
- * league). ⚠ Since Club Stage 2 a rep roster is the COACH's: nothing on the club side can add a rep child's guardian, so a
- * rep row has no door (`href` null) and the list's "Ask the coaches" is the club's move. A house-league registration is
- * the club's own, so its row opens the season's registrations.
+ * league). ⚠ Since Club Stage 2 a rep roster is the COACH's: nothing on the club side can add a rep child's guardian, so
+ * the list's "Ask the coaches" is the club's move — and a rep row opens the child's page (Club Tier Stage 14 S5: with no
+ * family, it is the club's only door to that child; it reads, it adds nothing). A house-league registration is the club's
+ * own, so its row opens the season's registrations.
  */
 export interface NoFamilyChild {
   source: 'rep_roster' | 'league';
@@ -100,7 +103,8 @@ export interface NoFamilyChild {
   /** The team's name, or the season's ("Summer 2026"). */
   groupName: string;
   reason: 'no_email' | 'unattached';
-  /** Where the club fixes it, or null where only the team's coaches can (every rep row). */
+  /** Where the row opens: a house-league row the season's registrations (where the club fixes it), a rep row the child's
+   *  page (Stage 14 S5). Null only for a row with no child record (cannot happen after mig 435). */
   href: string | null;
 }
 
@@ -146,6 +150,10 @@ export interface FamilyMessageState {
  */
 export interface FamilyChildLine {
   key: string;
+  /** The child's record (`org_children`) — the line's name opens the child's page (Club Tier Stage 14 S5). */
+  childId: string;
+  /** "3 seasons · 2 documents to sign" under the name, or null (S5, drawings tab 8). */
+  sub: string | null;
   childName: string;
   source: 'rep_roster' | 'league';
   /** The team (rep) or "Season · Division" (league). */
@@ -381,6 +389,24 @@ function buildChildRows(roster: any[], league: any[]): FamilyChildRow[] {
   ].sort((a, b) => a.childName.localeCompare(b.childName) || (b.year ?? 0) - (a.year ?? 0));
 }
 
+/** A line's or row's child record, from its key (`child:{id}` or a money line's `child:{id}|{season}`). */
+export const childIdOfKey = (key: string) => key.split('|')[0].replace(/^child:/, '');
+
+/** The household line's "3 seasons · 2 documents to sign" for each child (Club Tier Stage 14 S5, tab 8). */
+function childSubLines(world: World, missing: readonly { childId: string; missing: number }[]): (childId: string) => string | null {
+  const seasons = new Map<string, Set<string>>();
+  const add = (childId: string | null | undefined, season: string) => {
+    if (!childId) return;
+    const s = seasons.get(childId) ?? new Set<string>();
+    s.add(season); seasons.set(childId, s);
+  };
+  for (const r of world.rosterRows) add(r.child_id, `rep:${r.program_year_id}`);
+  for (const r of world.leagueRegs) if (r.status !== 'declined') add(r.child_id, `league:${r.season_id}`);
+  const toSign = new Map<string, number>();
+  for (const m of missing) toSign.set(m.childId, (toSign.get(m.childId) ?? 0) + m.missing);
+  return childId => householdChildSub(seasons.get(childId)?.size ?? 0, toSign.get(childId) ?? 0);
+}
+
 /** Distinct children among a family's rows (E08). */
 export const countChildren = (rows: readonly FamilyChildRow[]) => new Set(rows.map(r => r.childKey)).size;
 
@@ -610,7 +636,8 @@ function childrenWithNoFamily(rosterRows: readonly any[], leagueRegs: readonly a
     if (r.person_id || !isCurrentRepYear(r) || !isLiveRegStatus(r.status ?? 'active')) continue;
     out.push({
       source: 'rep_roster', childName: fullName(r.player_first_name, r.player_last_name),
-      groupId: r.team_id, groupName: r.rep_teams?.name ?? 'Rep team', reason: reason(r), href: null,
+      groupId: r.team_id, groupName: r.rep_teams?.name ?? 'Rep team', reason: reason(r),
+      href: r.child_id ? familiesChildHref(`/${orgSlug}/admin`, r.child_id) : null,
     });
   }
   for (const r of leagueRegs) {
@@ -802,26 +829,38 @@ export async function buildFamilyPage(orgId: string, personId: string): Promise<
 
   const sum = (f: (m: FamilyChildMoney) => number) => moneyChildren.reduce((s, m) => s + f(m), 0);
 
+  // Each line's door and its sub-line (Club Tier Stage 14 S5, tab 8): the child's seasons across the WHOLE club (every
+  // non-call-up rep entry and every house-league sign-up that was not declined — the child page's Seasons table) and this
+  // season's missing forms (the Forms table's own rule, so the line and the record agree).
+  const childSub = childSubLines(world, currentRoster.map(r => ({
+    childId: r.child_id as string,
+    missing: formsData.templatesForTeam(r.team_id).filter(t => !formOnFile(formsData.heldByPlayer.get(r.id) ?? NOTHING_HELD, t)).length,
+  })));
+  const line = (l: Omit<FamilyChildLine, 'childId' | 'sub'>): FamilyChildLine => {
+    const childId = childIdOfKey(l.key);
+    return { ...l, childId, sub: childSub(childId) };
+  };
+
   // The record's Children table: each child once (E08), this season's line first.
   const childLines: FamilyChildLine[] = [];
   const shown = new Set<string>();
   const childKeyOfLine = (k: string) => k.split('|')[0];
   for (const m of moneyChildren) {
-    childLines.push({ key: m.childKey, childName: m.childName, source: 'rep_roster', where: m.where, year: m.year, current: true, money: m, league: null, leagueReg: null });
+    childLines.push(line({ key: m.childKey, childName: m.childName, source: 'rep_roster', where: m.where, year: m.year, current: true, money: m, league: null, leagueReg: null }));
     shown.add(childKeyOfLine(m.childKey));
   }
   for (const c of children.filter(x => x.current && x.source === 'rep_roster')) {
     if (shown.has(c.childKey)) continue;
     shown.add(c.childKey);
-    childLines.push({ key: c.childKey, childName: c.childName, source: 'rep_roster', where: c.where, year: c.year, current: true, money: null, league: null, leagueReg: null });
+    childLines.push(line({ key: c.childKey, childName: c.childName, source: 'rep_roster', where: c.where, year: c.year, current: true, money: null, league: null, leagueReg: null }));
   }
   for (const r of myLeague.filter(isCurrentLeagueSeason)) {
     const c = childRowFromLeague(r);
     shown.add(c.childKey);
-    childLines.push({
+    childLines.push(line({
       key: c.childKey, childName: c.childName, source: 'league', where: c.where, year: null, current: true, money: null,
       league: leagueFeeLine(r), leagueReg: { id: r.id, seasonId: r.season_id },
-    });
+    }));
   }
   // 12c Part 7 (12b's b4): each house-league child's latest online payment, for "Paid online Oct 24 · card · receipt 1043".
   const onlineOf = await leagueOnlinePaid(childLines.filter(l => l.leagueReg).map(l => l.leagueReg!.id));
@@ -838,7 +877,7 @@ export async function buildFamilyPage(orgId: string, personId: string): Promise<
   for (const c of children) {
     if (c.current || shown.has(c.childKey) || currentNames.has(c.childName.trim().toLowerCase())) continue;
     shown.add(c.childKey);
-    childLines.push({ key: c.childKey, childName: c.childName, source: c.source, where: c.where, year: c.year, current: false, money: null, league: null, leagueReg: null });
+    childLines.push(line({ key: c.childKey, childName: c.childName, source: c.source, where: c.where, year: c.year, current: false, money: null, league: null, leagueReg: null }));
   }
   childLines.sort((a, b) => Number(b.current) - Number(a.current) || a.childName.localeCompare(b.childName));
 

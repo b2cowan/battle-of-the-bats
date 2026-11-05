@@ -505,7 +505,10 @@ export async function resolveAdminContext() {
     .eq('org_id', club.id).eq('name', '2026 Fall House League').maybeSingle());
   // The Okafor household has a child on two teams — the family page's fullest shape.
   const person = await need('family "Chidi Okafor"', db.from('org_people').select('id')
-    .eq('org_id', club.id).eq('last_name', 'Okafor').eq('first_name', 'Chidi').maybeSingle());
+    .eq('org_id', club.id).eq('last_name', 'Okafor').eq('first_name', 'Chidi').eq('email_normalized', 'okafor.family@example.test').maybeSingle());
+  // A child of that household (Club Tier Stage 14 S5): the child's page, opened from the family.
+  const childRow = await need('a rep child of the Okafor household', db.from('rep_roster_players').select('child_id')
+    .eq('org_id', club.id).eq('person_id', person.id).neq('status', 'callup').order('created_at', { ascending: false }).limit(1).maybeSingle());
   const ledger = await need('the club\'s General ledger', db.from('accounting_ledgers').select('id')
     .eq('org_id', club.id).eq('entity_type', 'org').eq('is_archived', false).limit(1).maybeSingle());
   // The payee the club SHARES with its teams (Ledger Parity D7) — its report is Club Tier 3b's.
@@ -556,6 +559,7 @@ export async function resolveAdminContext() {
     clubClosedTeamId: closedTeam.id,
     clubSeasonId: season.id,
     clubPersonId: person.id,
+    clubChildId: childRow.child_id,
     clubLedgerId: ledger.id,
     clubSharedPayeeId: sharedPayee.id,
     clubBudgetLineId: line.id,

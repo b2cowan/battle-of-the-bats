@@ -263,6 +263,8 @@ export default function PlayerDetailPage({
   /** The once-a-season "Still right for the {season}?" (Club Tier Stage 14 S4) — the server decides when to ask. */
   const [healthCheck, setHealthCheck] = useState<{ ask: boolean; lastCheckedSeasonName: string | null; seasonName: string } | null>(null);
   const [confirmingHealth, setConfirmingHealth] = useState(false);
+  /** "With the Lynx 2026 · 2027" — this team's seasons only, shown for a returning child (Club Tier Stage 14 S5). */
+  const [withTeam, setWithTeam] = useState<string | null>(null);
   const [healthError, setHealthError] = useState('');
   const [playingTime, setPlayingTime] = useState<PlayingTime | null>(null);
   /** The roster, for the Switch player dropdown and the phone's roster sheet — the coach's own
@@ -342,6 +344,7 @@ export default function PlayerDetailPage({
       setDues(data.dues ?? null);
       setAwards(data.awards ?? null);
       setHealthCheck(data.healthCheck ?? null);
+      setWithTeam(data.withTeam ?? null);
       setRoster(data.roster ?? []);
       settle();
     } catch (e: unknown) {
@@ -683,6 +686,8 @@ export default function PlayerDetailPage({
           ⚠ Off the roster is the ONE state worth stating, so it is the only badge here. */}
       <div className={styles.playerGlance}>
         <div className={styles.playerGlanceChips}>
+          {/* A returning child's years with THIS team (Stage 14 S5, Ask 9: never another team's, never the house league). */}
+          {withTeam && <span className={styles.chipQuiet}>{withTeam}</span>}
           {player.status !== 'active' && (
             <span className={`${styles.badge} ${styles.badgeDraft}`}>Off the roster</span>
           )}

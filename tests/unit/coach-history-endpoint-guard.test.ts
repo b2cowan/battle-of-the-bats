@@ -274,7 +274,10 @@ const CROSS_SEASON_ROSTER_READERS = [
      the working season's entry only: (1) RECORD feeding the working season — an earlier season's signed copy decides
      "Needs signing" / "On file" now, and is downloadable, never deletable; an earlier entry says whether to ask "Still
      right for the {season}?". (2) NO SUBTREE. (3) Every copy names its season; "Last signed for the 2025 Season". */
-  'roster/[playerId]',            // GET: the health check (readHealthCheck — whether the child came from an earlier season)
+  /* Stage 14 S5 (owner 2026-11-05, call E): the player page's "With the {team} {years}" (readYearsWithTeam) — THIS team's
+     seasons only (Ask 9). (1) RECORD: a line of years on the working season's page, nothing written. (2) NO SUBTREE: the
+     line opens nothing. (3) It names its seasons — the years are the line. */
+  'roster/[playerId]',            // GET: the health check (readHealthCheck) and the years with this team (readYearsWithTeam)
   'roster/[playerId]/documents',  // GET: the child's papers on this team, every season (readChildTeamDocuments)
   'roster/[playerId]/documents/[docId]', // GET: a history download (documentIsTheChilds); DELETE this season's only
 ];
@@ -388,7 +391,7 @@ function routeName(file: string): string {
 const READS_A_YEAR = /searchParams\.get\(\s*['"]year['"]\s*\)|resolveCoachHistoryRead(?:FromRequest)?\s*\(/;
 
 /** Reads this team's earlier roster entries — see CROSS_SEASON_ROSTER_READERS. */
-const READS_EARLIER_ROSTERS = /\b(?:readPastPlayers|returningCaptions|getRepTeamRosterEntriesAllSeasons|readChildTeamDocuments|readHealthCheck|documentIsTheChilds)\s*\(/;
+const READS_EARLIER_ROSTERS = /\b(?:readPastPlayers|returningCaptions|getRepTeamRosterEntriesAllSeasons|readChildTeamDocuments|readHealthCheck|documentIsTheChilds|readYearsWithTeam)\s*\(/;
 
 /** Reads across seasons without being handed one — see CROSS_SEASON_READERS. */
 const READS_ACROSS_SEASONS = /resolveCoachTeamCapabilities\s*\(/;

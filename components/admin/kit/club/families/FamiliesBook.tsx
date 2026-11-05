@@ -23,7 +23,7 @@
  *                     fee not paid is FEE NOT PAID on the child's line and counts in Balance (owner 2026-10-18). On a
  *                     phone, one framed row a family.
  *   No family on file — CHILDREN, grouped under their team (Ask 4). Since Club Stage 2 only a team's coaches can add a
- *                     guardian to a rep roster: one line says so, a rep row opens nothing, and "Ask the coaches" emails
+ *                     guardian to a rep roster: one line says so, a rep row opens the child's page (not a household), and "Ask the coaches" emails
  *                     each head coach their players. A house-league registration is the club's own and opens.
  *   a family        — a record OVER this list (`FamilyRecordWindow`, Ask 5), with Previous · Next through the list it
  *                     was opened from. Its address is `/families/{personId}`; that address lands here with `?family=`
@@ -362,7 +362,7 @@ function ShowMore({ shown, of, onMore }: { shown: number; of: number; onMore: ()
   );
 }
 
-/** No family on file: children grouped under their team or season. A rep row opens nothing (only the team's coaches can
+/** No family on file: children grouped under their team or season. A rep row opens the child's page (only the team's coaches can
  *  add a guardian); a house-league row opens the season's registrations. No action in a cell. */
 function NoFamilyList({ rows, isPhone }: { rows: readonly NoFamilyChild[]; isPhone: boolean }) {
   const router = useRouter();

@@ -177,3 +177,19 @@ export async function readHealthCheck(
   const last = earlier.find(r => r.teamId === entry.teamId && r.confirmedAt) ?? null;
   return { ask: true, lastCheckedSeasonName: last?.name ?? null, seasonName: season.name };
 }
+
+// ── "With the {team} {years}" (the coach's player page, Club Tier Stage 14 S5) ────────────────────────────────────────
+
+/**
+ * The years this child played for THIS team (Ask 9: a coach reads their own team's seasons only — never another team's,
+ * never the house league). The same scope as the papers above.
+ * ⚖ The look-back's three answers: 1. a RECORD read (a line of years) on the working season's player page — it writes
+ * nothing; 2. NO SUBTREE — the line opens nothing; 3. it NAMES its seasons (the years themselves).
+ */
+export async function readYearsWithTeam(entry: ChildEntry): Promise<number[]> {
+  const { data, error } = await childEntriesOnTeam(entry, 'id, rep_program_years(year)');
+  if (error) throw error;
+  return ((data ?? []) as unknown as { rep_program_years: { year: number } | { year: number }[] | null }[])
+    .map(r => Number((Array.isArray(r.rep_program_years) ? r.rep_program_years[0] : r.rep_program_years)?.year ?? 0))
+    .filter(y => y > 0);
+}

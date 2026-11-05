@@ -19,7 +19,8 @@ import { getSportPack } from '@/lib/sports';
 import { buildLineupProfileWrite } from '@/lib/lineup-profile';
 import { withObservability } from '@/lib/observability';
 import { resolveCoachTeamRead } from '@/lib/coach-team-read';
-import { readHealthCheck } from '@/lib/child-documents';
+import { readHealthCheck, readYearsWithTeam } from '@/lib/child-documents';
+import { withTeamLine } from '@/lib/child-page-words';
 import {
   denyUnless, canViewMoney, hasRecordAccess, redactRosterPlayer,
 } from '@/lib/coach-capabilities';
@@ -61,7 +62,7 @@ export const GET = withObservability(async (_req: Request,
   const { orgSlug, teamId, playerId } = await params;
   const resolved = await resolveCoachTeamRead(orgSlug, teamId);
   if ('error' in resolved) return resolved.error;
-  const { ctx, capabilities, programYear, isReadOnly } = resolved;
+  const { ctx, team, capabilities, programYear, isReadOnly } = resolved;
   // A1 (2026-08-03): a player's own page is a record surface — see the roster list route.
   // `redactRosterPlayer` below is untouched and still strips PII and notes.
   const denied = denyUnless(hasRecordAccess(capabilities), 'You do not have access to the roster.');
@@ -96,12 +97,14 @@ export const GET = withObservability(async (_req: Request,
    */
   // The once-a-season health check (Club Tier Stage 14 S4): only for someone who sees the values (`rosterPii`), only
   // on the working season.
-  const [attendance, dues, awards, rosterRows, healthCheck] = await Promise.all([
+  // "With the {team} {years}" (Stage 14 S5): THIS team's seasons only (Ask 9) — no other team, never the house league.
+  const [attendance, dues, awards, rosterRows, healthCheck, yearsWithTeam] = await Promise.all([
     getRepPlayerAttendanceSummary(playerId, programYear.id),
     getRepPlayerDuesSummary(playerId, programYear.id),
     getRepPlayerAwardsSummary(playerId),
     getRepRosterPlayers(programYear.id),
     capabilities.rosterPii && !isReadOnly ? readHealthCheck(player, programYear) : Promise.resolve(null),
+    readYearsWithTeam(player),
   ]);
 
   return NextResponse.json({
@@ -111,6 +114,7 @@ export const GET = withObservability(async (_req: Request,
     dues: canViewMoney(capabilities) ? dues : null,
     awards,
     healthCheck,
+    withTeam: withTeamLine(team.name, yearsWithTeam),
     // Active players in the coach's own (display) order — name and jersey number, nothing to redact.
     // The number is the phone roster sheet's quiet trailing qualifier (stage 5 · F2, 2026-09-23).
     roster: rosterRows.filter(p => p.status === 'active').map(p => ({

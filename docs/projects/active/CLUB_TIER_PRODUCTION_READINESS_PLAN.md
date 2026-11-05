@@ -3237,7 +3237,10 @@ between the coach's idea of a team (kids who age up) and the club's (a slot that
   one season, so the win is **one record with a document history and a "needs re-signing this season" state**, not skipping the
   re-sign. Which documents are per-season and which carry (a medical note, an emergency contact, a photo consent) is the owner's
   call, with counsel's read where it touches consent.
-- [ ] **14d · Existing data (the migration question):** every club already has years of duplicate players. A **review-and-merge**
+- [ ] **14d · Existing data (the migration question):** — **part 1 (S5: the club's child page, the household's line per
+  child, the club's doors, the coach's "With the {team} {years}") BUILT + committed 2026-11-05, no migration; /simplify,
+  /review (high) and /docs done; walk §462 owed; part 2 (S6: the Children queue, split, the parent link) next (build prompt Progress block).**
+  every club already has years of duplicate players. A **review-and-merge**
   pass (the matcher's existing high / possible tiers, the Families book's duplicate-guardian logic as the model) before any
   forced merge; a merge never deletes a season's entry, and a roster's history links survive it. Standalone coaches with no club
   sit on the same data: **open — does a standalone coach's team get the same record, or does 14b stay a club feature?**

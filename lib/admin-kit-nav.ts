@@ -438,3 +438,15 @@ export function familiesTabs(base: string): FamiliesTab[] {
 export function familiesTabFor(pathname: string, base: string): FamiliesTabId | null {
   return litTab(familiesTabs(base), pathname);
 }
+
+/**
+ * A CHILD'S PAGE (Club Tier Stage 14 S5, drawings tab 5): a page of its own under Families, two segments down — so it is
+ * no tab (`familiesTabFor` answers null) and the Families frame draws no title or tab row over it; the page wears its own
+ * header, back to the household it was opened from (`from`) or to Families.
+ */
+export function familiesChildHref(base: string, childId: string, fromPersonId?: string | null): string {
+  return `${base}/families/children/${encodeURIComponent(childId)}${fromPersonId ? `?from=${encodeURIComponent(fromPersonId)}` : ''}`;
+}
+export function isFamiliesChildPage(pathname: string, base: string): boolean {
+  return /^[^/]+$/.test(pathname.startsWith(`${base}/families/children/`) ? pathname.slice(`${base}/families/children/`.length) : '');
+}

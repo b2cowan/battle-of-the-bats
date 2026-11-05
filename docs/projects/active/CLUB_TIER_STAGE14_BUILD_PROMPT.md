@@ -423,8 +423,150 @@ after. `npm run refresh:snapshots` first; include the snapshot files only if the
 (other sessions' 440/442 are on dev too) — otherwise leave them and say so. One commit for the feature (+ its records) is
 fine; message says what changes for the coach and the club. Then record the hash in the S4 Progress entry, the TODO line and
 the plan's 14c line, and hand off with: the walk link, prod mig 441 owed (with its pre-check), and S5 next.
-- **S5 · the child's page, the household list, the club's doors (14d part 1)** — Not started. Needs S2 (S4 for the documents block).
+- **S5 · the child's page, the household list, the club's doors (14d part 1)** — **BUILT + finished 2026-11-05 (committed; hash in the finish-run entry below).** Part 0 presented;
+  owner "agree as recommended, go ahead" on all eight calls: (A) the household's Children list is ALREADY one line per child
+  for nearly every family (E08: each child once, older same-name lines hidden) — the drawing's "Today" frame overstated it; a
+  child with two CURRENT seasons (rep + house league) keeps two money lines because "Record a payment" works per line — S5 adds
+  the door (the name opens the child's page) and the sub-line ("3 seasons · 2 documents to sign"), nothing else; (B) "Split
+  records" is NOT shown until S6 builds it (no dead button); (C) the club's health Confirm stamps every LIVE entry of the child
+  (clears every coach's ask — the value is the child's); (D) documents per TEAM, never pooled (same rule and count as the coach
+  page, board and Families book); read-only on the child page (no upload/download); a house-league "waiver accepted at
+  sign-up" shows in the Waiver row's history; (E) the coach's "With the {team} {years}" line only for a child with ≥2 seasons
+  on this team, runs compressed ("2022–2025 · 2027"); (F) search keeps opening the household (it already matches child names) —
+  no child-level result list; (G) no door on the house-league registrations list / teams board in S5; (H) Ask 9's widening
+  switch is OWED, not built (nothing to widen yet — a coach sees only their own team). Doors: a household's child name, a name
+  on any rep roster (live roster + the past-season record; a link only for an admin with Families access), the "No family on
+  file" rows. No migration. Walk = §462 ("one page per child").
+  - **BUILT 2026-11-05 (Parts 1–4), uncommitted.** What landed:
+    - **Words + pure rules** `lib/child-page-words.ts` (season statuses, `repFeesLine`/`leagueFeesLine` — "$1,450.00 · $725.00
+      paid" / "Paid in full" / "No dues" / "No fee" / "Not owed yet", `sortSeasonRows`, `currentChip`, the phone row lines,
+      `yearsLine`/`withTeamLine` ("2022–2025 · 2027"), `householdChildSub`, `documentRows`/`historyOnlyRows`/`documentsSentence`).
+    - **Server read** `lib/child-page.ts`: `buildChildPage` (child record; non-call-up rep entries; sign-ups not declined;
+      rep fees via `readRepMoney`; a sign-up's fee via the new `loadRegistrationsReceivedCents` in `lib/league-money-read.ts`;
+      documents per team with a LIVE entry by `readChildTeamDocuments` + `documentStateRows`, else the newest team's history;
+      a sign-up's accepted waiver joins the Waiver history; the ask = the coach's `readHealthCheck` on the newest live entry;
+      parents = people on the entries + a co-guardian whose newest link is verified, else the newest typed guardian with no
+      door) and `confirmChildHealth` (stamps every live, unstamped entry of the child; writes no value).
+    - **Routes** `GET /api/admin/families/children/[childId]` and `POST …/[childId]/health` (409 nothing to confirm) — both
+      `requireFamiliesAccess`, org-scoped, a malformed id = 404.
+    - **Page** `/admin/families/children/[childId]` (`ChildPage.tsx` + `ChildPage.module.css`): header back to the household
+      (`?from=` when that person is a parent) else Families; Born + now chips; Seasons (table / phone rows); Documents and
+      Health side by side ≥1024px; Parents (each opens the household). `FamiliesFrame` draws no title or tab row over it
+      (`isFamiliesChildPage`); `usePageTitle(null)` sets nothing (a parent's effect runs after its child's).
+    - **Doors:** the household window's child name (`FamilyChildLine.childId` + `sub`), the rep roster and the past-season
+      record names (only with `canOpen('module_families')`, never a call-up), the "No family on file" rep rows (`href`).
+    - **Coach:** the player GET returns `withTeam` from `readYearsWithTeam` (same-team scope as the papers); the glance row
+      shows it as a quiet chip. Registered in `coach-history-endpoint-guard` (`READS_EARLIER_ROSTERS` + the comment).
+    - **Checks:** typecheck clean (needs `NODE_OPTIONS=--max-old-space-size=8192` — the default 4 GB ran out); new
+      `tests/unit/child-page.test.ts` 20/20; the neighbouring suites 841 + 679 green; eslint 0 errors; spelling OK.
+      **Dev proof** `.probe/s5-walk/` (fixture `--reset|--destroy`, `verify.mjs` 21/21: Maya's three seasons and fees, the
+      drawn document rows, the ask, Grace with a door, Jonah's typed guardian and his no-family door, the household line
+      "3 seasons · 2 documents to sign", the coach line, the coach refused the club page, the club Confirm clears the coach's
+      ask and keeps the closed entry's stamp, a second Confirm 409); `look.mjs` read the S4 club too. ⚠ The fixture JOINS
+      Maya's Summer 2025 sign-up to her record BY HAND (S6 builds the join).
+    - **Layout:** new screen `admin-family-child` (+ `clubChildId` in the fixture context). `coach-player` clean at all four
+      widths; `admin-family`, `admin-rep-team-roster` clean at 361; `admin-family-child` @361 had 4 findings — the rest of
+      the run was cut short when the shared UAT club (`uat-rep-club`) was deleted mid-run by another session (signed out,
+      then gone). **Re-run owed:** `node scripts/check-layout-invariants.mjs --only=admin-family-child,admin-family,admin-rep-team-roster`
+      once the club fixture is back.
+    - **Defaults taken while building (raise at the walk):** (a) the household line's "documents to sign" uses the Families
+      book's forms rule (templates only), the page uses the coach's rule — they differ only for a type signed before that
+      the team no longer asks for (S4 owner question (a)); (b) a team-limited member with Families sees the roster link
+      and the layout refuses them (the client has no group list); (c) the house league's own screens get no door (call G);
+      (d) a finished house-league sign-up that was waitlisted/in review reads "Finished"; (e) the club Confirm stamps live
+      entries even where that entry's own coach was not asked (a first-season entry) — harmless, it is the child's value.
+    - **`/legal` (2026-11-05, helper):** no admin surface read the medical note before; our draft privacy policy promises
+      health info is sensitive and limited to whom the CLUB authorizes — still true, so not a FieldLogicHQ-promise defect.
+      The real exposure is PIPEDA need-to-know (Families also goes to finance/registrar roles) and two gaps the draft already
+      names (no MFA for accounts that can open children's medical notes; no breach register; L11). **Fixed now:** the
+      Families grant's words in Manage member (`member-summary.ts` gains/loses) now say "…and each child's medical note and
+      emergency contact". **Owner question (open):** B a separate "health details" grant (like the coach's roster
+      details) · C keep Families-only and log each read · D the note collapsed behind "Show health details", the open
+      logged. Lawyer, later (not a gate): health data under the club-controller / FieldLogicHQ-provider split.
+  - **Finish run DONE 2026-11-05** (simplify, review high, docs, layout re-measure, walk, commit):
+    - **/simplify:** dead `seasonsCount` removed; the two row shapes typed (`RepRow`, `LeagueRow`) and the repeated sort/year/team reads gathered; the posted-cents fold shared (`sumPostedCents` in `lib/league-money-read.ts`, used by the org read and the one-child read); the parents' display name reused from the household's; the page loads parents and templates with its other reads; Confirm reads only the child and its rep entries; document counts read each row's `state`, not the chip's words; the parents block hoists its two helpers. Skipped on purpose (noted): the co-guardian rule shared with `householdOf` (shared file, no behaviour change), a `ChildNameLink` for the two roster pages (5 lines each), per-team document reads re-using the entries already loaded, the route-group move for the frame (medium, dirty tree).
+    - **/review (high), four lenses:** access — clean (`requireFamiliesAccess` on both routes and the layout, org-scoped, malformed id 404, mig 441 triggers do not fire on the Confirm's UPDATE, no double-stamp against a coach's save); money/counts — fixed the house-league fee cell (a not-active sign-up with money received now reads "$X paid" or "Nothing owed", never a figure that reads as owing; a $0 fee reads "No fee"); regression — stale comments in `FamiliesBook` corrected; coach `withTeam` — clean. **Fixed from the gate:** a type field tripped the house-league money guard (`registration_fee_paid?`); two hand-built possessives now use `possessive()`. **Added:** the Confirm writes `families_child_health_confirmed` to the club's activity log (child id + count, no values). **Carried to the walk as calls:** (a) now wider than first written (draft-season teams count on the page not the household line; two templates of one type count 2 vs 1; a waiver no longer asked for), (b) a team-limited member with Families sees a link that bounces, (g) the rep fee cell vs the balance when a credit covers part, (h) browser Back from the family window, and the Confirm asserts "right" without proving which value the club saw (Low-Medium; the same model as the coach's own Confirm).
+    - **/docs:** Families help — new article "One page per child" (`families-child-page`), the Children list, the search article, "No family on file" and its FAQ; Rep Teams help — roster and past-season names open the child's page (accept-a-player recipe, past seasons); Coaches help — the player page's "With the {team} {years}" line (profile FAQ). Nothing promises S6. **Demos:** no tour stop touches Families, so no `/demos` item.
+    - **Layout:** the shared test club was present again (another session's second "Chidi Okafor" with five house-league sign-ups broke the sweep's lookup; the sweep now picks the seeded one by email — the other session's data untouched). `admin-family-child` had the back link's path text under the 44 px floor and two phone lists painted twice; the header now holds only the back link, the lists pass `inset`. `admin-family-child`, `admin-family`, `admin-rep-team-roster`, `coach-player` clean at 361 / 390 / 768 / 1440.
+    - **Walk:** §462 — https://claude.ai/artifact/5kvoxyHeMkZymmSSarzD2v. The dev server was restarted (new files) before the hand-over.
 - **S6 · joining records + the parent link (14d part 2, Ask 13)** — Not started. Needs S5.
+
+## ▶ S5 finish run (owner asked 2026-11-05 for simplify, review, docs, walk and commit in one session, in this order)
+
+> **Paste:** `execute the "S5 finish run" in @docs/projects/active/CLUB_TIER_STAGE14_BUILD_PROMPT.md` into a new chat on `dev`.
+> Read the S5 Progress entry first (what landed, the eight Part 0 calls A–H, the defaults (a)–(e), the `/legal` outcome). This
+> run builds NO new feature: it cleans, reviews, documents, re-measures, writes the walk and commits. A PM summary is not owed
+> again; give the owner a short product-owner note at each step boundary. Recommended model: Opus 5.5; reading goes to helpers.
+> Update the S5 Progress entry after each step. The dev server is shared — check `localhost:3000` answers; never start a
+> second one; it needs ONE restart before the owner browses the walk (S5 added files) — do it at step 5, not mid-sweep.
+> Typecheck needs `NODE_OPTIONS=--max-old-space-size=8192` (the default 4 GB runs out).
+
+**S5's files (re-verify with `git diff` — several are SHARED with other sessions' uncommitted hunks; take only S5's):** new —
+`lib/child-page-words.ts`, `lib/child-page.ts`, `components/admin/kit/club/families/ChildPage.tsx` + `ChildPage.module.css`,
+`app/[orgSlug]/admin/families/children/[childId]/page.tsx`, `app/api/admin/families/children/[childId]/route.ts` and
+`…/[childId]/health/route.ts`, `tests/unit/child-page.test.ts`; changed (S5 hunks only) — `lib/families-read.ts` (the line's
+`childId` + `sub`, `childIdOfKey`, `childSubLines`, the no-family rep `href`), `lib/league-money-read.ts`
+(`loadRegistrationsReceivedCents`), `lib/admin-kit-nav.ts` (`familiesChildHref`, `isFamiliesChildPage`), `lib/usePageTitle.ts`
+(accepts null), `lib/child-documents.ts` (`readYearsWithTeam`), `components/admin/kit/club/families/FamiliesFrame.tsx`,
+`components/admin/kit/club/families/FamilyRecordWindow.tsx`, `components/admin/kit/club/member-summary.ts` (the Families grant
+words), `app/[orgSlug]/admin/rep-teams/teams/[teamId]/roster/page.tsx`, `app/[orgSlug]/admin/rep-teams/teams/[teamId]/history/[yearId]/page.tsx`,
+the coach player route + page (`app/api/coaches/[orgSlug]/teams/[teamId]/roster/[playerId]/route.ts`,
+`app/[orgSlug]/coaches/teams/[teamId]/roster/[playerId]/page.tsx` — the `withTeam` hunks), `tests/unit/admin-kit-nav.test.ts`,
+`tests/unit/coach-history-endpoint-guard.test.ts`, `scripts/layout-screens.mjs` (`admin-family-child`),
+`scripts/uat-fixture-context.mjs` (`clubChildId`), `scripts/check-layout-invariants.mjs` (the `__CHILD__` placeholder), this
+file, the plan's 14d line, the TODO line. Dev-only, untracked: `.probe/s5-walk/` (`fixture.mjs --reset|--destroy`,
+`verify.mjs` 21/21, `look.mjs`, `okafor.mjs`).
+
+**1 · `/simplify`** on S5's files only. Candidates (verify, don't trust): `lib/child-page.ts` is loosely typed (`any` rows, 26
+lint warnings) — type the two row shapes if cheap; the "newest live entry" sort is written twice in `buildChildPage`; the
+typed-guardian parent and the household's typed guardian may share a rule with `families-read`; `householdOf`'s verified-link
+rule is restated in `readParents` — one helper if it stays readable; `seasonsCount` in the words module may be unused; the
+two roster pages repeat the name-link JSX. Skip anything that changes what a screen shows. Re-run `child-page`, `admin-kit-nav`,
+`coach-history-endpoint-guard`, `member-summary`, the `families-*`/`club-stage5*` suites, and `verify.mjs`.
+
+**2 · `/review` at high** (a new read across rep + house league + money, a new write on roster entries, a new gate). Lenses:
+(a) **access** — both routes behind `requireFamiliesAccess`; every read org-scoped (`league_teams` has no `org_id` — scoped by
+the child's own sign-ups); a team-limited member; a coach; another org's child id; (b) **the Confirm write** — stamps only LIVE,
+unstamped entries of THIS child, writes no value, never a closed entry; a race with a coach's Safety save; what the 441
+triggers do on that UPDATE; (c) **money parity** — a season's fees equal the team's Money hub / the house league's book for
+the same child (compare on dev); a negative balance; a withdrawn sign-up with a refund; (d) **counts parity** — the household
+line's "documents to sign" vs the page's (default (a) — state when they differ), the "seasons" count vs the page's rows
+(declined, call-up, withdrawn); (e) **the household window** — `FamilyChildLine.childId` on every line kind (money line keys
+`child:{id}|{season}`), Record a payment and the hand-off chips unchanged; (f) **nav** — the frame skips its title/tabs only on
+the child page; the page title not overwritten; `?from=` of a person who is not a parent; (g) the coach's `withTeam` — own
+team only, call-ups excluded, the look-back guard registration.
+
+**3 · `/docs`.** Families help (`lib/help-content/families.tsx`): `families-family-page-money` ("Children lists each child
+once…" — now each name opens the child's page, and the sub-line), `families-no-family` / `faq-no-family-on-file` (a rep row now
+opens the child's page), a NEW short article for the child's page (seasons, documents per team, the health check and Confirm
+clearing the coach's question, parents; no add-player door), the search article (search opens the household — say the child
+is one click further). Rep Teams help: a roster name opens the child's page for someone with Families. Coaches help: the
+player page's "With the {team} {years}" line (`premium` player-page article — find it). Never promise S6 (joining, split, the
+parent link). Demos: do NOT hand-edit; note whether any demo tour stop needs the new door (record a `/demos` item if so).
+
+**4 · Re-measure, then the walk.** First the layout re-run S5 could not finish (the shared `uat-rep-club` fixture was deleted
+mid-run by another session): `node scripts/check-layout-invariants.mjs --only=admin-family-child,admin-family,admin-rep-team-roster,coach-player`
+— if the club fixture is still missing, ask the owner before reseeding it (a reseed signs everyone out). Fix any new finding on
+the child page (4 were seen @361, unread). Then the walk: `OWNER_QA_LEDGER.md` **§462** (check it is still free), ONE purpose:
+**"one page per child"**, a checkable Artifact with paste-back (memory: QA walks). Fixture `.probe/s5-walk/` (`--reset` first;
+sign-ins `s5-walk-admin@dev.local`, `s5-walk-clubcoach@dev.local`, password in its CREDENTIALS.md; say on the page that Maya's
+Summer 2025 house-league season is joined to her record by hand — S6 builds that join). Outline: A the household (Grace Chen):
+Maya's line "3 seasons · 2 documents to sign", Leo's line with no sub-line, each name opens the page and Back returns to the
+family; B Maya's page — the chips, three seasons newest first with their fees, the house-league row; C Documents — Waiver and
+Code of conduct "Needs signing" with their history (incl. "Summer 2025 waiver"), Medical consent "On file" by its date, "2 to
+sign"; D Health — the note, the contact, "Still right for the 2027 Season?" → Confirm → gone; then sign in as the coach: Maya's
+page no longer asks; E Parents — Grace opens her household; Jonah's page shows the typed "Ana Ruiz" with no door; F the doors —
+the S5 Lynx roster name, a past season's record name, the "No family on file" row for Jonah; G the coach's player page "With
+the S5 Lynx 2026 · 2027"; H a phone (Seasons as rows, documents as one sentence, Confirm full width); I who is refused (the coach
+opening the club page's address). Calls ("Keep as built" first): the five defaults (a)–(e) and **the health-details question
+from `/legal` — B a separate permission (recommended) · C a read log · D collapsed + logged**. Publish, add the ledger §, link it
+in the Progress entry. Restart the dev server (AGENTS.md sequence) before handing the walk over.
+
+**5 · Commit** (the owner authorized it in this request; the walk's results are not a gate — what it finds goes in a later
+commit). On `dev`. Explicit paths only; for a SHARED file take only S5's hunks (memory: "Partial commit out of shared files" —
+temp index, exact hunks); `git diff --cached --name-only` before, `git show --stat HEAD` after. No migration, so no snapshot or
+`MANUAL_PROD_STEPS` change. Message says what changes for the club admin and the coach. Then record the hash in the S5 Progress
+entry, the TODO line and the plan's 14d line; hand off with the walk link, the health-details owner question, and S6 next.
 
 ## What the owner gets (the PM summary, in this shape, per session)
 

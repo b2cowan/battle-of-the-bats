@@ -1,0 +1,18 @@
+/* A CHILD'S PAGE (Club Tier Stage 14 S5, drawings tab 5): Documents and Health side by side on a desk, stacked below. */
+.pair { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0 1.25rem; }
+@media (min-width: 1024px) {
+  .pair { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); align-items: start; }
+}
+.blocks { display: flex; flex-direction: column; gap: 0.9rem; }
+/* Which team's papers a block is, when the child has more than one (never pooled — S5 call D). */
+.blockLabel { margin: 0 0 0.4rem; font-size: var(--type-support); font-weight: 650; color: var(--text-secondary); }
+/* The phone's one sentence per team. */
+.sentence { margin: 0; font-size: var(--type-body); color: var(--text-secondary); line-height: 1.45; }
+.ask { margin-top: 0.9rem; }
+.askLine { display: block; margin-top: 0.15rem; font-size: var(--type-support); color: var(--text-secondary); }
+.askError { margin: 0.5rem 0 0; font-size: var(--type-support); color: var(--danger); }
+
+@media (max-width: 640px) {
+  /* Confirm full width at the phone's tap floor (the coach's Family tab, as drawn). */
+  .confirm { width: 100%; min-height: var(--tap-min, 44px); }
+}

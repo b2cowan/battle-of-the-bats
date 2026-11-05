@@ -5,7 +5,7 @@ import path from 'node:path';
 import {
   kitPrograms, kitOrgLinks, kitBillingLink, isKitLinkActive, isKitLinkActiveAmong, activeKitSection,
   clubProgramOrder, INTERIM_PROGRAM_ORDER, PROGRAM_CAPABILITY, accountingTabs, accountingTabFor, tournamentBarKeys,
-  familiesTabs, familiesTabFor,
+  familiesTabs, familiesTabFor, familiesChildHref, isFamiliesChildPage,
 } from '../../lib/admin-kit-nav.ts';
 import { TOUR_GROUPS } from '../../components/admin/admin-nav-config.ts';
 import { kitTournamentGroups } from '../../components/admin/kit/kit-tournament-groups.ts';
@@ -266,6 +266,16 @@ describe('the admin kit nav — where you are', () => {
     assert.equal(familiesTabFor(`${BASE}/families/p1`, BASE), 'families');
     assert.equal(familiesTabFor(`${BASE}/families/p1/x`, BASE), null);
     for (const t of familiesTabs(BASE)) assert.ok(routeExists(t.href), `${t.label} → ${t.href}`);
+    // A child's page (Club Tier Stage 14 S5) is a page of its own, two segments down: no tab, and the frame draws none.
+    const child = familiesChildHref(BASE, 'c1', 'p1');
+    assert.equal(child, `${BASE}/families/children/c1?from=p1`);
+    assert.equal(familiesChildHref(BASE, 'c1'), `${BASE}/families/children/c1`);
+    assert.equal(familiesTabFor(`${BASE}/families/children/c1`, BASE), null);
+    assert.equal(isFamiliesChildPage(`${BASE}/families/children/c1`, BASE), true);
+    assert.equal(isFamiliesChildPage(`${BASE}/families/children`, BASE), false);
+    assert.equal(isFamiliesChildPage(`${BASE}/families/p1`, BASE), false);
+    assert.equal(isFamiliesChildPage(`${BASE}/families/children/c1/x`, BASE), false);
+    assert.ok(existsSync('app/[orgSlug]/admin/families/children/[childId]/page.tsx'), 'the child page is a real route');
   });
 
   it('knows which group to open', () => {

@@ -224,7 +224,7 @@ const repTeamsHelp: HelpPageContent = {
       group: 'How-to recipes',
       heading: 'How to accept a player onto a rep roster',
       summary: 'Add to roster in the applicant’s window puts the player on the live season’s roster in one step. Fees are set later, from Money.',
-      keywords: ['accept player', 'already on the roster', 'add to roster', 'roster', 'offer extended', 'coach portal', 'tryout applicant', 'fees', 'dues'],
+      keywords: ['accept player', 'already on the roster', 'add to roster', 'roster', 'offer extended', 'coach portal', 'tryout applicant', 'fees', 'dues', 'child page', 'open a player', 'roster name'],
       searchText: 'accept player already on the roster one child once a season add to roster tryout applicant offered coach portal missing player pending review roster visibility one step no fees at accept fees are set later dues from money depends on roster size live season',
       content: (
         <>
@@ -234,6 +234,7 @@ const repTeamsHelp: HelpPageContent = {
             <li>Press <strong>Add to roster</strong> once the family says yes. The player is on the live season&apos;s roster at once, and the coach sees them.</li>
           </ol>
           <p><strong>No fees are set here</strong> — what a family owes usually depends on the final roster size, so dues are set afterwards from the team&apos;s Money screens, for everyone at once. Declined and offered players don&apos;t appear on the roster.</p>
+          <p>Once a player is on a roster, their name opens the child&rsquo;s page for anyone who can open Families (see <em>One page per child</em> in the Families guide). Without Families the name is plain text.</p>
           <p><strong>A child is on a season&apos;s roster once.</strong> If the applicant is already on that roster, <strong>Add to roster</strong> says so (<em>Ella is already on the 2027 roster.</em>) and adds no one. The club&apos;s accept doesn&apos;t ask <em>Same child?</em> &mdash; the team&apos;s coach does that from the Coaches Portal.</p>
         </>
       ),
@@ -539,7 +540,7 @@ const repTeamsHelp: HelpPageContent = {
           <p>Two housekeeping tools live alongside the team list:</p>
           <ul>
             <li><strong>Rename Team URLs</strong> — update team URL slugs (in bulk) when names or branding change, so public links stay tidy.</li>
-            <li><strong>Past program years</strong> — review archived seasons. Completed and archived program years keep their rosters, schedules, and finances as history.</li>
+            <li><strong>Past program years</strong> — review archived seasons. Completed and archived program years keep their rosters, schedules, and finances as history. On a past season&rsquo;s roster, a player&rsquo;s name opens the child&rsquo;s page for anyone who can open Families.</li>
           </ul>
         </>
       ),

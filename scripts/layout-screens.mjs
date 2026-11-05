@@ -1682,6 +1682,9 @@ export const SCREENS = [
     scope: pickList('Show') },
   { id: 'admin-family',                area: 'families', session: 'repClubOwner', ready: '[data-kit-dialog][data-record]', scope: '[data-kit-dialog][data-record]',
     path: (c) => `/${c.clubSlug}/admin/families/${c.clubPersonId}?show=all` },
+  // Club Tier Stage 14 S5: a child's page, opened from that family (its own header, no tab row).
+  { id: 'admin-family-child',          area: 'families', session: 'repClubOwner', ready: 'h1',
+    path: (c) => `/${c.clubSlug}/admin/families/children/${c.clubChildId}?from=${c.clubPersonId}` },
   { id: 'admin-families-duplicates',   area: 'families', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/families/duplicates` },
   // Club Tier Stage 7c: the Emails tab, and the Email families window open over it — its one door (Send is never pressed).
   { id: 'admin-families-emails',       area: 'families', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/families/emails` },

@@ -70,6 +70,16 @@ export async function loadSeasonMoneyLines(orgId: string, seasonId: string): Pro
     .order('entry_date', { ascending: true }).order('created_at', { ascending: true }).order('id').range(from, to))));
 }
 
+/** Posted income minus posted expense, in cents, summed per registration. */
+function sumPostedCents(rows: readonly Record<string, unknown>[]): Map<string, number> {
+  const out = new Map<string, number>();
+  for (const r of rows) {
+    const c = Math.round(Number(r.amount) * 100) * (r.entry_type === 'income' ? 1 : -1);
+    out.set(r.source_entity_id as string, (out.get(r.source_entity_id as string) ?? 0) + c);
+  }
+  return out;
+}
+
 /** What each of an org's house-league registrations has received (posted in − posted out), in cents — for readers that
  *  show a balance without the lines (the Families book). Read from the org's own season books, paged. */
 export async function loadOrgLeagueReceivedCents(orgId: string): Promise<Map<string, number>> {
@@ -80,12 +90,18 @@ export async function loadOrgLeagueReceivedCents(orgId: string): Promise<Map<str
     supabaseAdmin.from('accounting_entries').select('id, source_entity_id, entry_type, amount')
       .in('ledger_id', chunk).eq('source_module', 'league_registration').eq('status', 'posted')
       .in('entry_type', ['income', 'expense']).order('id').range(from, to));
-  const out = new Map<string, number>();
-  for (const r of rows) {
-    const c = Math.round(Number(r.amount) * 100) * (r.entry_type === 'income' ? 1 : -1);
-    out.set(r.source_entity_id as string, (out.get(r.source_entity_id as string) ?? 0) + c);
-  }
-  return out;
+  return sumPostedCents(rows);
+}
+
+/** What some registrations (any seasons) have received (posted in − posted out), in cents — the one-child read of
+ *  `loadOrgLeagueReceivedCents` (Club Tier Stage 14 S5, the child's page). The ids are the caller's org's own rows. */
+export async function loadRegistrationsReceivedCents(regIds: readonly string[]): Promise<Map<string, number>> {
+  if (regIds.length === 0) return new Map();
+  const rows = await fetchAllIn<Record<string, unknown>>(regIds, (chunk, from, to) =>
+    supabaseAdmin.from('accounting_entries').select('id, source_entity_id, entry_type, amount')
+      .eq('source_module', 'league_registration').in('source_entity_id', chunk).eq('status', 'posted')
+      .in('entry_type', ['income', 'expense']).order('id').range(from, to));
+  return sumPostedCents(rows);
 }
 
 /** The lines of some registrations (any seasons), by registration. A registration's lines all ride in one chunk, so each

@@ -11,7 +11,7 @@
 import type { ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import { usePageTitle } from '@/lib/usePageTitle';
-import { familiesTabFor, familiesTabs } from '@/lib/admin-kit-nav';
+import { familiesTabFor, familiesTabs, isFamiliesChildPage } from '@/lib/admin-kit-nav';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import HubTabBar from '@/components/shared/HubTabBar';
 import { FAMILY_EMAILS_TAB_WORDS as EW, FAMILY_LIST_WORDS as W } from '@/lib/families-words';
@@ -26,9 +26,13 @@ export default function FamiliesFrame({ orgSlug, children }: { orgSlug: string; 
   const tab = familiesTabFor(pathname, base) ?? 'families';
   const waiting = brief?.counts.familyDuplicates ?? 0;
   const tabs = familiesTabs(base).map(t => (t.id === 'duplicates' && waiting > 0 ? { ...t, mark: <WaitingCount n={waiting} /> } : t));
+  // A child's page (Stage 14 S5) is a page of its own: its own header and title, no tab row over it.
+  const childPage = isFamiliesChildPage(pathname, base);
 
-  // The browser tab names the tab on its own address.
-  usePageTitle(tab === 'duplicates' ? `${W.tabDuplicates} · ${W.title}` : tab === 'emails' ? `${EW.tab} · ${W.title}` : W.title);
+  // The browser tab names the tab on its own address (a child's page names the child itself).
+  usePageTitle(childPage ? null : tab === 'duplicates' ? `${W.tabDuplicates} · ${W.title}` : tab === 'emails' ? `${EW.tab} · ${W.title}` : W.title);
+
+  if (childPage) return <>{children}</>;
 
   return (
     <div className={`${repKit.page} ${repKit.moneyFrame}`}>

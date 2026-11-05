@@ -72,15 +72,17 @@ export function overrideChips(access: ProgramAccess[]): OverrideChip[] {
 const LOSES: Partial<Record<Capability, (org: string) => string>> = {
   module_rep_teams: org => `the ${possessive(org)} teams, tryouts, rosters or allocations`,
   module_accounting: org => `the ${possessive(org)} ledgers, budget or allocations`,
-  module_families: () => 'any household’s contact details, consent or balances',
+  module_families: () => 'any household’s contact details, consent, balances or children’s health notes',
   module_public_site: org => `the ${possessive(org)} public page editor`,
   module_house_league: () => 'the house league',
   module_tournaments: () => 'any tournament',
   module_members: () => 'the member list',
 };
 const GAINS: Partial<Record<Capability, (org: string) => string>> = {
-  // Families concentrates every household's personal information (plan §5.3) — say so, every time.
-  module_families: () => 'every household’s contact details, consent and balances',
+  // Families concentrates every household's personal information (plan §5.3) — say so, every time. Since Club Tier Stage 14
+  // S5 that includes each child's medical note and emergency contact (the child's page) — /legal 2026-11-05: the grant
+  // must say so to be an informed grant.
+  module_families: () => 'every household’s contact details, consent and balances, and each child’s medical note and emergency contact',
   module_rep_teams: org => `the ${possessive(org)} teams, tryouts, rosters and allocations`,
   module_accounting: org => `the ${possessive(org)} ledgers, budget and allocations`,
   module_public_site: org => `the ${possessive(org)} public page editor`,

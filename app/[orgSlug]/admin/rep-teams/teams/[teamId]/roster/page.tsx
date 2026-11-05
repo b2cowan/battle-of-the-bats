@@ -11,6 +11,7 @@
  * number column right and tabular). Three columns fit a phone, so it stays a table there (§3.8).
  */
 import { use, useCallback, useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
@@ -25,6 +26,8 @@ import {
   downloadPDF, fetchResolvedPdfSettings, DEFAULT_PDF_SETTINGS, type OrgPdfSettings,
 } from '@/lib/export';
 import { latestClosedSeasonOf, liveSeasonOf } from '@/lib/season-live';
+import { familiesChildHref } from '@/lib/admin-kit-nav';
+import { CHILD_PAGE_WORDS as CW } from '@/lib/child-page-words';
 import { pluralize, possessive } from '@/lib/utils';
 import type { RepProgramYear, RepRosterPlayer, RepRosterStatus, RepTeam } from '@/lib/types';
 
@@ -42,7 +45,9 @@ interface TeamRead { team: RepTeam; programYears: RepProgramYear[] }
 
 export default function TeamRosterPage({ params }: { params: Promise<{ orgSlug: string; teamId: string }> }) {
   const { orgSlug, teamId } = use(params);
-  const { currentOrg, loading: orgLoading } = useOrg();
+  const { currentOrg, loading: orgLoading, canOpen } = useOrg();
+  // A name opens the child's page (Club Tier Stage 14 S5) for someone who can open Families; plain words for the rest.
+  const childDoor = canOpen('module_families');
   const q = `orgSlug=${encodeURIComponent(orgSlug)}`;
   const teamBase = `/${orgSlug}/admin/rep-teams/teams/${teamId}`;
 
@@ -179,7 +184,11 @@ export default function TeamRosterPage({ params }: { params: Promise<{ orgSlug: 
               {players.map(p => (
                 <tr key={p.id}>
                   <td className={`${repKit.num}${p.playerNumber ? '' : ` ${repKit.dim}`}`}>{p.playerNumber ?? '—'}</td>
-                  <td>{p.playerFirstName} {p.playerLastName}</td>
+                  <td>
+                    {childDoor && p.childId && p.status !== 'callup'
+                      ? <Link className={repKit.nameLink} href={familiesChildHref(`/${orgSlug}/admin`, p.childId)} aria-label={CW.openChild(`${p.playerFirstName} ${p.playerLastName}`.trim())}>{p.playerFirstName} {p.playerLastName}</Link>
+                      : <>{p.playerFirstName} {p.playerLastName}</>}
+                  </td>
                   <td><RepChip tone={p.status === 'active' ? 'good' : 'neutral'}>{STANDING[p.status] ?? p.status}</RepChip></td>
                 </tr>
               ))}

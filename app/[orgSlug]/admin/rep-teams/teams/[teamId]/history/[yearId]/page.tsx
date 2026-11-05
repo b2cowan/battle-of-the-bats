@@ -11,6 +11,9 @@ import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import styles from '../../../../rep-teams.module.css';
 import type { RepTeam, RepProgramYear, RepRosterPlayer, RepTeamEvent } from '@/lib/types';
 import LoadingState from '@/components/shared/LoadingState';
+import { repKit } from '@/components/admin/kit/club/RepKit';
+import { familiesChildHref } from '@/lib/admin-kit-nav';
+import { CHILD_PAGE_WORDS as CW } from '@/lib/child-page-words';
 
 interface EnrichedCoach {
   id: string;
@@ -62,7 +65,9 @@ export default function PastYearDetailPage({
   params: Promise<{ orgSlug: string; teamId: string; yearId: string }>;
 }) {
   const params = use(paramsPromise);
-  const { currentOrg, userRole, userCapabilities, loading } = useOrg();
+  const { currentOrg, userRole, userCapabilities, loading, canOpen } = useOrg();
+  // A name opens the child's page (Club Tier Stage 14 S5) for someone who can open Families; plain words for the rest.
+  const childDoor = canOpen('module_families') && !!currentOrg?.slug;
   const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
   const orgParam = currentOrg?.slug ? `&orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
   const base = `/${currentOrg?.slug ?? ''}/admin`;
@@ -225,7 +230,9 @@ export default function PastYearDetailPage({
                       {p.playerNumber ?? '—'}
                     </td>
                     <td className={styles.td}>
-                      {p.playerFirstName} {p.playerLastName}
+                      {childDoor && p.childId && p.status !== 'callup'
+                        ? <Link className={repKit.nameLink} href={familiesChildHref(`/${currentOrg!.slug}/admin`, p.childId)} aria-label={CW.openChild(`${p.playerFirstName} ${p.playerLastName}`.trim())}>{p.playerFirstName} {p.playerLastName}</Link>
+                        : <>{p.playerFirstName} {p.playerLastName}</>}
                     </td>
                     <td className={styles.td} style={{ color: 'var(--white-50)' }}>
                       {p.guardianFirstName || p.guardianLastName

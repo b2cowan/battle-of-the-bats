@@ -1,0 +1,660 @@
+<title>One Page Per Child</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Public+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: sticky tab bar (Start · A–J · Paste back), one part on screen at a time; each step is Do → You should see. */
+:root {
+  --bg: #f6f5f2;
+  --surface: #ffffff;
+  --ink: #1d2327;
+  --muted: #5d676d;
+  --line: #d9d8d2;
+  --accent: #1f5f7a;
+  --accent-ink: #ffffff;
+  --accent-soft: #e3eef3;
+  --pass: #2a7a4b;
+  --pass-soft: #e2f1e8;
+  --issue: #b3402f;
+  --issue-soft: #f8e6e2;
+  --call: #946200;
+  --call-soft: #fbf0d8;
+  --font-body: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14181b; --surface: #1c2226; --ink: #e8ebec; --muted: #9aa5ab; --line: #333c41;
+    --accent: #6fb4d0; --accent-ink: #0d1a20; --accent-soft: #1b2e37;
+    --pass: #5cc088; --pass-soft: #17301f; --issue: #f08a78; --issue-soft: #3a1f1a;
+    --call: #e8b650; --call-soft: #3a2e12; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #14181b; --surface: #1c2226; --ink: #e8ebec; --muted: #9aa5ab; --line: #333c41;
+  --accent: #6fb4d0; --accent-ink: #0d1a20; --accent-soft: #1b2e37;
+  --pass: #5cc088; --pass-soft: #17301f; --issue: #f08a78; --issue-soft: #3a1f1a;
+  --call: #e8b650; --call-soft: #3a2e12; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.5; margin: 0; }
+.wrap { max-width: 860px; margin: 0 auto; padding-block: 0 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 9; background: var(--bg); border-bottom: 1px solid var(--line); padding-block: 10px 0; }
+.bar-top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.bar h1 { font-size: 15px; font-weight: 700; margin: 0; letter-spacing: 0.01em; }
+.count { font-family: var(--font-mono); font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.tabs { display: flex; gap: 2px; overflow-x: auto; padding-top: 8px; scrollbar-width: thin; }
+.tab { flex: 0 0 auto; border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 13px; font-weight: 600; padding: 8px 12px; border-bottom: 3px solid transparent; cursor: pointer; min-height: 40px; white-space: nowrap; }
+.tab:hover { color: var(--ink); }
+.tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+.tab .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-left: 6px; background: var(--line); vertical-align: 1px; }
+.tab .dot.pass { background: var(--pass); } .tab .dot.issue { background: var(--issue); } .tab .dot.call { background: var(--call); } .tab .dot.part { background: var(--accent); opacity: 0.55; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+main { padding-top: 22px; display: grid; gap: 18px; }
+h2 { font-size: 21px; line-height: 1.25; margin: 0; text-wrap: balance; }
+h3 { font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px; }
+p { margin: 0; max-width: 68ch; }
+.lede { color: var(--muted); }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; display: grid; gap: 8px; min-width: 0; }
+.grid2 { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.mono { font-family: var(--font-mono); font-size: 13px; }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th, td { text-align: left; padding: 6px 10px 6px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.scroll { overflow-x: auto; }
+.cred { display: grid; grid-template-columns: auto 1fr auto; gap: 4px 12px; align-items: center; font-size: 14px; }
+.cred .k { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+.cred .v { font-family: var(--font-mono); font-size: 13px; word-break: break-all; min-width: 0; }
+button.copy { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 6px; font: inherit; font-size: 12px; padding: 4px 9px; cursor: pointer; min-height: 30px; }
+button.copy:hover { border-color: var(--accent); }
+.callout { border-left: 4px solid var(--call); background: var(--call-soft); padding: 10px 14px; border-radius: 0 6px 6px 0; max-width: 72ch; }
+.callout.stop { border-left-color: var(--issue); background: var(--issue-soft); }
+.steps { display: grid; gap: 10px; padding: 0; margin: 0; list-style: none; }
+.step { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; min-width: 0; }
+.step.done { border-color: var(--pass); background: linear-gradient(0deg, var(--pass-soft), var(--pass-soft)); }
+.step input[type="checkbox"] { width: 22px; height: 22px; margin: 2px 0 0; accent-color: var(--accent); cursor: pointer; flex: none; }
+.step .body { display: grid; gap: 6px; min-width: 0; }
+.step .id { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+.who { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 1px 7px; border-radius: 4px; background: var(--accent-soft); color: var(--accent); margin-right: 6px; }
+.do b.lbl, .see b.lbl { font-family: var(--font-mono); font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-right: 6px; }
+.see { color: var(--ink); }
+.writes { font-size: 12.5px; color: var(--muted); }
+.opts { display: grid; gap: 6px; margin-top: 4px; }
+.opt { display: flex; gap: 10px; align-items: flex-start; }
+.opt input { width: 20px; height: 20px; margin-top: 2px; accent-color: var(--accent); flex: none; }
+code { font-family: var(--font-mono); font-size: 12.5px; background: var(--accent-soft); padding: 1px 5px; border-radius: 4px; word-break: break-word; }
+.verdict { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.vbtn { border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; font-size: 13px; font-weight: 600; padding: 7px 14px; border-radius: 6px; cursor: pointer; min-height: 38px; }
+.vbtn[aria-pressed="true"].pass { background: var(--pass); border-color: var(--pass); color: #fff; }
+.vbtn[aria-pressed="true"].issue { background: var(--issue); border-color: var(--issue); color: #fff; }
+.vbtn[aria-pressed="true"].call { background: var(--call); border-color: var(--call); color: #fff; }
+textarea { width: 100%; min-height: 70px; font: inherit; font-size: 14px; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; resize: vertical; }
+.primary { border: 0; background: var(--accent); color: var(--accent-ink); font: inherit; font-weight: 700; padding: 10px 18px; border-radius: 6px; cursor: pointer; min-height: 42px; }
+.pb { width: 100%; min-height: 260px; font-family: var(--font-mono); font-size: 12.5px; }
+.nav { display: flex; justify-content: space-between; gap: 10px; }
+.small { font-size: 13px; color: var(--muted); }
+ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+@media (max-width: 520px) { .cred { grid-template-columns: 1fr; } .step { grid-template-columns: auto 1fr; padding: 10px 12px; } }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <div class="bar">
+    <div class="bar-top">
+      <h1>§462 · Stage 14 S5 owner walk · one page per child</h1>
+      <span class="count" id="count">0 of 0 ticked</span>
+    </div>
+    <div class="tabs" id="tabs" role="tablist" aria-label="Walk parts"></div>
+  </div>
+  <main id="main"></main>
+</div>
+
+
+<script type="application/json" id="walk-data">
+{
+ "asOf": "2026-11-05",
+ "parts": [
+  {
+   "id": "A",
+   "title": "The household",
+   "who": "Owner",
+   "intro": "Grace Chen’s household in the Families book, and the way from there to a child’s page. Sign in as the owner (Start tab). Nothing is written in this part.",
+   "steps": [
+    {
+     "who": "Owner",
+     "do": "Open Grace Chen’s household (link on the Start tab).",
+     "see": "Grace Chen’s household window or page, with two children listed: Maya Chen and Leo Chen."
+    },
+    {
+     "who": "Owner",
+     "do": "Look at Maya’s line.",
+     "see": "Under her name a short line reading “3 seasons · 2 documents to sign”."
+    },
+    {
+     "who": "Owner",
+     "do": "Look at Leo’s line.",
+     "see": "His name and his one season, and nothing under it: no “documents to sign” line, because nothing is owed on the forms."
+    },
+    {
+     "who": "Owner",
+     "do": "Press Maya’s name. Then press the back link at the top of her page.",
+     "see": "Maya’s own page opens. The back link returns you to Grace Chen’s household, not to some other screen.",
+     "stop": "If the name is plain text and not a link, the dev server is serving old code. Stop here and tell me."
+    }
+   ]
+  },
+  {
+   "id": "B",
+   "title": "Maya’s page",
+   "who": "Owner",
+   "intro": "The top of Maya’s page and her seasons. Remember: her Summer 2025 house-league season was joined to her record by hand in this fixture, so it shows here. That is on purpose. Nothing is written in this part.",
+   "steps": [
+    {
+     "who": "Owner",
+     "do": "Open Maya’s page (link on the Start tab) and look at the top.",
+     "see": "Her name, and quiet chips under it: her birth date (March 8, 2015, in the product’s date style) and where she plays now: “S5 Lynx · 2027”. The header holds a back link and nothing else small."
+    },
+    {
+     "who": "Owner",
+     "do": "Find the Seasons section.",
+     "see": "Three seasons, newest first: 2027 Season, 2026 Season, Summer 2025. The 2027 Season reads as live; the other two read “Finished”."
+    },
+    {
+     "who": "Owner",
+     "do": "Read the fee on each season.",
+     "see": "2027 Season: “$1,450.00 · $725.00 paid”. 2026 Season: “Paid in full”. Summer 2025: “No fee”. Leo’s $150 house-league fee is not on her page (he is another child)."
+    },
+    {
+     "who": "Owner",
+     "do": "Look at the Summer 2025 row for where she played.",
+     "see": "“U10 Rookie · Blue Jays” (the division and the team). The two rep seasons name the S5 Lynx."
+    }
+   ]
+  },
+  {
+   "id": "C",
+   "title": "Her documents",
+   "who": "Owner",
+   "intro": "The papers on Maya’s page. The club’s three forms are Waiver and Code of conduct (signed each season) and Medical consent (good until replaced). Nothing is written in this part.",
+   "steps": [
+    {
+     "who": "Owner",
+     "do": "Find the Documents section and look at its header and its three rows.",
+     "see": "The header counts “2 to sign”. Waiver and Code of conduct are marked “Needs signing”. Medical consent is marked “On file”."
+    },
+    {
+     "who": "Owner",
+     "do": "Read the history line under each row.",
+     "see": "Waiver: the 2026 Season and the Summer 2025 waiver (she accepted a waiver at the house-league sign-up). Code of conduct: the 2026 Season. Medical consent: an April 12, 2026 date, which is when it went on file."
+    },
+    {
+     "who": "Owner",
+     "do": "Look for any Upload, Download or Delete button on this section.",
+     "see": "There is none. Here the documents are read only; uploading stays on the coach’s player page.",
+     "stop": "If you find a button that changes a document, tell me. That is a defect."
+    }
+   ]
+  },
+  {
+   "id": "D",
+   "title": "Her health note",
+   "who": "Owner",
+   "intro": "The once-a-season question “Still right?”, from the club’s side. WARNING: pressing Confirm uses the question up for this fixture. To walk it again, reset the fixture or run the verify command (Start tab: verify presses Confirm and puts the question back, a reset gives new links). To see Confirm on a phone (part H), look at it before you press it here.",
+   "steps": [
+    {
+     "who": "Owner",
+     "do": "On Maya’s page find the health section.",
+     "see": "The medical note “Peanut allergy. EpiPen in her bag.” and the emergency contact Wei Chen, (416) 555-0181."
+    },
+    {
+     "who": "Owner",
+     "do": "Look just above the note.",
+     "see": "A box titled “Still right for the 2027 Season?” with a line saying it was last checked for the 2026 Season, and a Confirm button."
+    },
+    {
+     "who": "Owner",
+     "do": "Press Confirm.",
+     "see": "The box goes away at once. Reload the page: it stays away, and the note and the contact are exactly as before.",
+     "writes": "Marks Maya’s health as checked for the 2027 Season, and the club’s activity log records who did it."
+    },
+    {
+     "who": "Club coach",
+     "do": "Sign in as the club coach (a second browser window is easiest). Open Maya’s player page (link on the Start tab) and look at the health section.",
+     "see": "The coach’s “Still right for the 2027 Season?” question is gone too: the club’s Confirm counted for the team."
+    }
+   ]
+  },
+  {
+   "id": "E",
+   "title": "The parents",
+   "who": "Owner",
+   "intro": "Who the grown-ups are on a child’s page. Nothing is written in this part.",
+   "steps": [
+    {
+     "who": "Owner",
+     "do": "On Maya’s page find the Parents section and press Grace Chen.",
+     "see": "Grace’s household opens: the same household as in part A."
+    },
+    {
+     "who": "Owner",
+     "do": "Open Jonah’s page (link on the Start tab) and look at Parents.",
+     "see": "One name, Ana Ruiz, as plain text with no link. She was typed in by a coach with no email, so there is no household to open. That is correct."
+    }
+   ]
+  },
+  {
+   "id": "F",
+   "title": "The doors in",
+   "who": "Owner",
+   "intro": "Other screens where a child’s name now opens the child’s page. You sign in as the owner, who holds the Families permission. Nothing is written in this part.",
+   "steps": [
+    {
+     "who": "Owner",
+     "do": "Open the S5 Lynx roster on the club side (link on the Start tab). Press Maya’s name.",
+     "see": "Maya’s page opens. Jonah’s name there opens his page too."
+    },
+    {
+     "who": "Owner",
+     "do": "Go to Rep teams › S5 Lynx and open the 2026 Season from the team’s past seasons. Press Maya’s name in that season’s roster.",
+     "see": "The same Maya page, so a closed season’s record leads to the one page for the child."
+    },
+    {
+     "who": "Owner",
+     "do": "Open the Families book. Find the “No family on file” row for Jonah Ruiz and press it.",
+     "see": "Jonah’s page opens (the same page as the Jonah link on the Start tab)."
+    }
+   ]
+  },
+  {
+   "id": "G",
+   "title": "The coach’s side",
+   "who": "Club coach",
+   "intro": "What the coach sees of the same child. Sign in as the club coach. Nothing is written in this part.",
+   "steps": [
+    {
+     "who": "Club coach",
+     "do": "Open Maya’s player page on the coach’s side (link on the Start tab).",
+     "see": "A quiet line (small text, not a banner and not a button) reading “With the S5 Lynx 2026 · 2027”."
+    },
+    {
+     "who": "Club coach",
+     "do": "Look at the rest of the player page.",
+     "see": "It is the coach’s usual page. The line is the only new thing, and it does not push the page’s main content down."
+    }
+   ]
+  },
+  {
+   "id": "H",
+   "title": "A phone",
+   "who": "Owner",
+   "intro": "The child’s page at phone width (about 390 px: a narrow browser window or your phone on the dev site), then a quick look at a tablet. Sign in as the owner. If you have pressed Confirm in part D, the Confirm button is gone until you run the verify command. Nothing is written here.",
+   "steps": [
+    {
+     "who": "Owner",
+     "do": "Open Maya’s page at phone width and look at Seasons.",
+     "see": "Each season is a row you can read straight down (name, state, fee), not a wide table. The page does not scroll sideways."
+    },
+    {
+     "who": "Owner",
+     "do": "Look at Documents.",
+     "see": "The documents read as one plain sentence (for example, which forms need signing and which are on file), not as a wide table."
+    },
+    {
+     "who": "Owner",
+     "do": "Look at the “Still right?” box (only while Confirm is still unused).",
+     "see": "The Confirm button spans the full width of the box."
+    },
+    {
+     "who": "Owner",
+     "do": "Look at the back link at the top of the page, then press it with your thumb (or a finger on a touch screen).",
+     "see": "It is one big, easy target (at least the size of a normal button), and it is the only thing in the header: there is no small path text beside it. It takes you back."
+    },
+    {
+     "who": "Owner",
+     "do": "Widen the window to about 768 px (a tablet).",
+     "see": "Nothing is clipped or squeezed. The page looks like the laptop page, only narrower."
+    }
+   ]
+  },
+  {
+   "id": "I",
+   "title": "Who is refused",
+   "who": "Club coach",
+   "intro": "A coach holds no Families permission, so the club’s child page is not theirs. Sign in as the club coach. Nothing is written in this part.",
+   "steps": [
+    {
+     "who": "Club coach",
+     "do": "While signed in as the coach, type Maya’s club page address into the browser: http://localhost:3000/s5-walk-club/admin/families/children/0cf405ff-31de-4c3e-9eb0-3ecbdeb89278",
+     "see": "You do not get Maya’s page. You are sent away or told you do not have access."
+    },
+    {
+     "who": "Club coach",
+     "do": "Look at whatever you did get.",
+     "see": "None of Maya’s health note, contact or fees show, not even for a moment.",
+     "stop": "If any of Maya’s details show to the coach, stop and tell me. That is a privacy defect."
+    }
+   ]
+  },
+  {
+   "id": "J",
+   "title": "Calls for you",
+   "who": "You",
+   "intro": "One box per option, so the tick is the answer. “Keep as built” is first every time, so ticking it means nothing needs to change.",
+   "calls": [
+    {
+     "q": "(a) “Documents to sign”. The household line counts only what the team’s forms ask for (the Families book’s rule). Maya’s page uses the coach’s rule. They can differ in three ways. (i) A team in a season not started yet counts on the page but not on the household line. (ii) A team with two forms of one type: the household line counts 2, the page counts 1. (iii) A waiver signed last season that the team no longer asks for: the page says Needs signing, the household line counts nothing. I would decide this after you have walked it.",
+     "opts": [
+      "Keep as built",
+      "Make the household line use the coach’s rule everywhere"
+     ]
+    },
+    {
+     "q": "(b) A member limited to some teams who also holds Families sees the name link on the roster, but the page sends them to the admin home, because the roster screen cannot tell. Nobody sees anything they should not.",
+     "opts": [
+      "Keep as built",
+      "Hide the link for them in a later pass"
+     ]
+    },
+    {
+     "q": "(c) The house league’s own screens (the registrations list and the teams board) get no door to the child’s page in this stage. You reach the page from Families, the roster and past seasons.",
+     "opts": [
+      "Keep as built",
+      "Add a door there"
+     ]
+    },
+    {
+     "q": "(d) A finished house-league sign-up that was waitlisted or still in review reads “Finished” on the child’s page, and its fee reads “Nothing owed”.",
+     "opts": [
+      "Keep as built",
+      "Change it (say how in the notes)"
+     ]
+    },
+    {
+     "q": "(e) The club’s Confirm also stamps a live entry whose own coach was not asked yet (a first-season entry), so that coach never sees a question for a note the club already checked.",
+     "opts": [
+      "Keep as built",
+      "Change it (say how in the notes)"
+     ]
+    },
+    {
+     "q": "(f) HEALTH DETAILS: a privacy call. The child’s page now shows the medical note and emergency contact to anyone with the Families permission, which includes finance and registrar roles. A lawyer review comes later and does not hold this up.",
+     "opts": [
+      "Keep as built",
+      "B: a separate “health details” permission, like the coach’s roster-details grant (recommended)",
+      "C: keep it Families-only and log each read",
+      "D: fold the note behind “Show health details” and log the open"
+     ]
+    },
+    {
+     "q": "(g) The fee on a rep season shows “dues · paid” and can read like money still owing when a credit covers part of it. The balance in the team’s books is the truth.",
+     "opts": [
+      "Keep as built",
+      "Show the balance instead"
+     ]
+    },
+    {
+     "q": "(h) Coming from the family window, browser Back from the child’s page may need two presses, because the family window puts itself in the address.",
+     "opts": [
+      "Keep as built",
+      "Fix it later"
+     ]
+    },
+    {
+     "q": "(i) Anything else you noticed.",
+     "opts": [
+      "Nothing else",
+      "Something else (say what in the notes)"
+     ]
+    }
+   ]
+  }
+ ]
+}
+</script>
+
+<script>
+(function () {
+  var KEY = "s5walk-2026-11-05-v1";
+  var data = JSON.parse(document.getElementById("walk-data").textContent);
+  var state = { ticks: {}, verdict: {}, notes: {}, tab: "start" };
+  try { var saved = JSON.parse(localStorage.getItem(KEY) || "null"); if (saved) { state.ticks = saved.ticks || {}; state.verdict = saved.verdict || {}; state.notes = saved.notes || {}; state.tab = saved.tab || "start"; } } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var parts = data.parts;
+  var tabsEl = document.getElementById("tabs");
+  var mainEl = document.getElementById("main");
+  var countEl = document.getElementById("count");
+
+  function el(tag, attrs, kids) {
+    var n = document.createElement(tag);
+    if (attrs) Object.keys(attrs).forEach(function (k) {
+      if (k === "class") n.className = attrs[k];
+      else if (k === "text") n.textContent = attrs[k];
+      else if (k === "html") n.innerHTML = attrs[k];
+      else if (k.indexOf("on") === 0) n.addEventListener(k.slice(2), attrs[k]);
+      else n.setAttribute(k, attrs[k]);
+    });
+    (kids || []).forEach(function (c) { if (c) n.appendChild(typeof c === "string" ? document.createTextNode(c) : c); });
+    return n;
+  }
+  function boxesOf(p) {
+    var out = [];
+    (p.steps || []).forEach(function (s, i) { out.push(p.id + (i + 1)); });
+    (p.calls || []).forEach(function (c, i) { c.opts.forEach(function (o, j) { out.push(p.id + (i + 1) + "." + (j + 1)); }); });
+    return out;
+  }
+  function partCount(p) { var b = boxesOf(p); var n = 0; b.forEach(function (id) { if (state.ticks[id]) n++; }); return { n: n, of: b.length }; }
+  function totals() {
+    var n = 0, of = 0;
+    parts.forEach(function (p) { if (p.calls) return; var c = partCount(p); n += c.n; of += c.of; });
+    return { n: n, of: of };
+  }
+  function renderCount() { var t = totals(); countEl.textContent = t.n + " of " + t.of + " steps ticked"; }
+
+  var order = ["start"].concat(parts.map(function (p) { return p.id; })).concat(["paste"]);
+  function renderTabs() {
+    tabsEl.innerHTML = "";
+    order.forEach(function (id) {
+      var label, dot = "";
+      if (id === "start") label = "Start";
+      else if (id === "paste") label = "Paste back";
+      else { var p = parts.filter(function (x) { return x.id === id; })[0]; label = p.id + " · " + p.title; var v = state.verdict[id]; var c = partCount(p); dot = v ? v : (c.n > 0 ? "part" : ""); }
+      var b = el("button", { "class": "tab", role: "tab", "aria-selected": String(state.tab === id), text: label, onclick: function () { go(id); } });
+      if (dot !== "" || (id !== "start" && id !== "paste")) b.appendChild(el("span", { "class": "dot " + dot }));
+      tabsEl.appendChild(b);
+    });
+  }
+  function go(id) { state.tab = id; save(); render(); window.scrollTo(0, 0); }
+
+  function cred(label, value) {
+    var b = el("button", { "class": "copy", type: "button", text: "Copy", onclick: function () {
+      var done = function () { b.textContent = "Copied"; setTimeout(function () { b.textContent = "Copy"; }, 1200); };
+      try { navigator.clipboard.writeText(value).then(done, function () { b.textContent = "Select it"; }); } catch (e) { b.textContent = "Select it"; }
+    } });
+    return [el("span", { "class": "k", text: label }), el("span", { "class": "v", text: value }), b];
+  }
+
+  function renderStart() {
+    var B = "http://localhost:3000";
+    var T = "ea252fce-6565-46bc-b25f-bbe96bcd91cc";
+    function box(rows) { var d = el("div", { "class": "cred" }); rows.forEach(function (r) { cred(r[0], r[1]).forEach(function (n) { d.appendChild(n); }); }); return d; }
+    var c1 = box([["Site", B], ["Owner", "s5-walk-admin@dev.local"], ["Password", "devpass123"],
+      ["Families", B + "/s5-walk-club/admin/families"],
+      ["Grace Chen household", B + "/s5-walk-club/admin/families/ff7d4add-7b59-49e9-93a9-f600d5ec1a11"],
+      ["Maya’s page", B + "/s5-walk-club/admin/families/children/0cf405ff-31de-4c3e-9eb0-3ecbdeb89278"],
+      ["Jonah’s page", B + "/s5-walk-club/admin/families/children/f2905655-f96d-47a5-b065-1e6dba973d0e"],
+      ["S5 Lynx roster", B + "/s5-walk-club/admin/rep-teams/teams/" + T + "/roster"]]);
+    var c2 = box([["Club coach", "s5-walk-clubcoach@dev.local"], ["Password", "devpass123"],
+      ["Maya, player page", B + "/s5-walk-club/coaches/teams/" + T + "/roster/448f8ab7-3be2-4fcf-9e8e-3579a4faf528"],
+      ["Maya, club page (part I)", B + "/s5-walk-club/admin/families/children/0cf405ff-31de-4c3e-9eb0-3ecbdeb89278"]]);
+    var c5 = box([["Verify (puts the question back)", "node --env-file=.env.local .probe/s5-walk/verify.mjs"], ["Reset (new links)", "node --env-file=.env.local .probe/s5-walk/fixture.mjs --reset"]]);
+    function row(a, b, c) { return el("tr", null, [el("td", { text: a }), el("td", { text: b }), el("td", { text: c })]); }
+    var who = el("div", { "class": "scroll" }, [el("table", null, [
+      el("thead", null, [el("tr", null, [el("th", { text: "Child" }), el("th", { text: "What is on record" }), el("th", { text: "What the page shows" })])]),
+      el("tbody", null, [
+        row("Maya Chen (Grace is her parent)", "2026 Season (finished, paid in full) · 2027 Season (live, $1,450 with $725 paid) · Summer 2025 house league, U10 Rookie · Blue Jays, no fee", "3 seasons · 2 documents to sign · health question open"),
+        row("Jonah Ruiz", "2027 Season only; the guardian Ana Ruiz was typed in with no email", "No family on file; Ana Ruiz as plain text"),
+        row("Leo Chen (Grace is his parent)", "Summer 2027 house league, U8, $150 fee unpaid", "Household line with no sub-line")
+      ])
+    ])]);
+    return [
+      el("h2", { text: "One page per child" }),
+      el("p", { "class": "lede", text: "As of " + data.asOf + ". Dev site only; keep this page private (it carries a dev password). One club, “S5 Walk Club”, and one rep team, “S5 Lynx” (12U AAA)." }),
+      el("div", { "class": "callout stop", html: "<b>Read this first.</b> Maya’s Summer 2025 house-league season is joined to her record <b>by hand</b> in this fixture. A later stage builds that join for real. Please do not report the hand-join as a defect." }),
+      el("div", { "class": "panel" }, [el("h3", { text: "Before you start" }), el("ul", { "class": "plain" }, [
+        el("li", { text: "The dev server must be running at localhost:3000." }),
+        el("li", { text: "The fixture was just reset, so every question and count starts as written here." }),
+        el("li", { text: "Sign in as the owner first. Parts A to F and H use the owner; D4, G and I use the club coach (a second browser window saves signing in and out)." })
+      ])]),
+      el("div", { "class": "panel" }, [el("h3", { text: "What changed since the build" }), el("ul", { "class": "plain" }, [
+        el("li", { text: "The child page’s header now holds only a back link. The small path text beside it is gone." }),
+        el("li", { text: "The club’s Confirm on a child’s health is now recorded in the club’s activity log." })
+      ])]),
+      el("div", { "class": "panel" }, [el("h3", { text: "What this walk is for" }), el("p", { text: "To check that every child has one page a club admin can reach from everywhere a child’s name appears: the household, the team roster, a past season and the Families book. The page shows the child’s seasons with fees, their papers, their health note with the once-a-season “Still right?” question, and their parents. One job, 10 parts, about 30 steps, then nine calls for you." })]),
+      el("div", { "class": "panel" }, [el("h3", { text: "It passes when" }), el("ul", { "class": "plain" }, [
+        el("li", { text: "The household line and the child’s page tell the same story: 3 seasons, 2 documents to sign." }),
+        el("li", { text: "Seasons, fees, papers, health and parents read as drawn, on a laptop and on a phone." }),
+        el("li", { text: "“Confirm” clears the question for both the club and the coach." }),
+        el("li", { text: "Every name door opens the right child, and a coach cannot open the club page." })
+      ])]),
+      el("div", { "class": "panel" }, [el("h3", { text: "Not in this walk" }), el("ul", { "class": "plain" }, [
+        el("li", { text: "Joining a house-league season to the child’s record (a later stage; it is hand-made here)." }),
+        el("li", { text: "The house league’s own screens, which have no door yet (call c)." })
+      ])]),
+      el("div", { "class": "panel" }, [el("h3", { text: "Sign in as: owner (parts A–F, H)" }), c1]),
+      el("div", { "class": "panel" }, [el("h3", { text: "Sign in as: club coach (parts D4, G, I)" }), c2]),
+      el("div", { "class": "panel" }, [el("h3", { text: "Who is where" }), who]),
+      el("div", { "class": "panel" }, [el("h3", { text: "Commands (only to repeat part D)" }), c5,
+        el("p", { "class": "small", text: "Run them from the repository folder in a terminal. Verify checks the pages, presses Confirm and then undoes it, so Maya’s question is back afterwards. A reset rebuilds the club with new ids: the links above stop working, and the reset prints the new ones and saves them in the CREDENTIALS file in the fixture folder." })]),
+      el("div", { "class": "callout", html: "<b>One writing step.</b> Only D3 changes the fixture (Confirm). Everything else is read-only, so you can stop at any point without harm." }),
+      el("div", { "class": "nav" }, [el("span"), el("button", { "class": "primary", type: "button", text: "Start with part A", onclick: function () { go("A"); } })])
+    ];
+  }
+
+
+  function renderPart(p) {
+    var out = [];
+    out.push(el("h2", { text: p.id + " · " + p.title }));
+    out.push(el("p", { "class": "lede", text: p.intro }));
+    if (p.steps) {
+      var ol = el("ol", { "class": "steps" });
+      p.steps.forEach(function (s, i) {
+        var id = p.id + (i + 1);
+        var cb = el("input", { type: "checkbox", id: "cb-" + id, "aria-label": "Step " + id + " done", onchange: function (e) { state.ticks[id] = e.target.checked; save(); render(true); } });
+        cb.checked = !!state.ticks[id];
+        var body = el("div", { "class": "body" }, [
+          el("div", { "class": "id" }, [el("span", { "class": "who", text: s.who }), id]),
+          doEl(s.do),
+          el("div", { "class": "see" }, [el("b", { "class": "lbl", text: "You should see" }), document.createTextNode(s.see)])
+        ]);
+        if (s.writes) body.appendChild(el("div", { "class": "writes", text: s.writes }));
+        if (s.stop) body.appendChild(el("div", { "class": "callout stop", text: s.stop }));
+        ol.appendChild(el("li", { "class": "step" + (state.ticks[id] ? " done" : "") }, [cb, body]));
+      });
+      out.push(ol);
+    }
+    if (p.calls) {
+      p.calls.forEach(function (c, i) {
+        var box = el("div", { "class": "panel" }, [el("p", { text: c.q })]);
+        var opts = el("div", { "class": "opts" });
+        c.opts.forEach(function (o, j) {
+          var id = p.id + (i + 1) + "." + (j + 1);
+          var cb = el("input", { type: "checkbox", id: "cb-" + id, onchange: function (e) { state.ticks[id] = e.target.checked; save(); render(true); } });
+          cb.checked = !!state.ticks[id];
+          opts.appendChild(el("label", { "class": "opt", "for": "cb-" + id }, [cb, el("span", { text: o })]));
+        });
+        box.appendChild(opts);
+        out.push(box);
+      });
+    }
+    out.push(signoff(p));
+    var idx = order.indexOf(p.id);
+    out.push(el("div", { "class": "nav" }, [
+      el("button", { "class": "vbtn", type: "button", text: "← Back", onclick: function () { go(order[idx - 1]); } }),
+      el("button", { "class": "primary", type: "button", text: idx === order.length - 2 ? "To the paste-back →" : "Next part →", onclick: function () { go(order[idx + 1]); } })
+    ]));
+    return out;
+  }
+  function doEl(text) {
+    var d = el("div", { "class": "do" }, [el("b", { "class": "lbl", text: "Do" })]);
+    String(text).split("\n").forEach(function (line, i) {
+      if (i > 0) d.appendChild(el("br"));
+      if (i > 0) d.appendChild(el("code", { text: line })); else d.appendChild(document.createTextNode(line));
+    });
+    return d;
+  }
+  function signoff(p) {
+    var c = partCount(p);
+    var v = el("div", { "class": "verdict" });
+    [["pass", "Pass"], ["issue", "Issue"], ["call", "Needs a call"]].forEach(function (pair) {
+      v.appendChild(el("button", { "class": "vbtn " + pair[0], type: "button", "aria-pressed": String(state.verdict[p.id] === pair[0]), text: pair[1], onclick: function () {
+        state.verdict[p.id] = state.verdict[p.id] === pair[0] ? "" : pair[0]; save(); render(true);
+      } }));
+    });
+    var ta = el("textarea", { id: "notes-" + p.id, "aria-label": "Notes for part " + p.id, placeholder: "Notes: what you saw, what looked wrong, the why behind a call." });
+    ta.value = state.notes[p.id] || "";
+    ta.addEventListener("input", function () { state.notes[p.id] = ta.value; save(); });
+    return el("div", { "class": "panel" }, [el("h3", { text: "Part " + p.id + " · " + c.n + " of " + c.of + " ticked" }), v, ta]);
+  }
+
+  function buildPasteBack() {
+    var t = totals();
+    var lines = ["Stage 14 S5 walk · one page per child · " + data.asOf + " · ticked " + t.n + " of " + t.of + " steps"];
+    parts.forEach(function (p) {
+      var c = partCount(p);
+      var v = (state.verdict[p.id] || "no verdict").toUpperCase();
+      if (p.calls) {
+        lines.push("");
+        lines.push(p.id + " · " + p.title + " [" + v + "]");
+        p.calls.forEach(function (call, i) {
+          var picked = call.opts.filter(function (o, j) { return state.ticks[p.id + (i + 1) + "." + (j + 1)]; });
+          lines.push("  " + p.id + (i + 1) + ": " + (picked.length ? picked.join(" + ") : "NOT ANSWERED") + "  (" + call.q.slice(0, 70) + "…)");
+        });
+      } else {
+        lines.push("");
+        lines.push(p.id + " · " + p.title + " [" + v + "] " + c.n + "/" + c.of);
+        var missed = [];
+        (p.steps || []).forEach(function (s, i) { if (!state.ticks[p.id + (i + 1)]) missed.push(p.id + (i + 1)); });
+        if (missed.length) lines.push("  not ticked: " + missed.join(", "));
+      }
+      if ((state.notes[p.id] || "").trim()) lines.push("  notes: " + state.notes[p.id].trim().replace(/\n/g, " / "));
+    });
+    lines.push("");
+    lines.push("Reminder: the fraction is the evidence; a verdict is an opinion.");
+    return lines.join("\n");
+  }
+  function renderPaste() {
+    var ta = el("textarea", { "class": "pb", id: "pb-out", readonly: "readonly", "aria-label": "Paste-back text" });
+    ta.value = buildPasteBack();
+    var msg = el("span", { "class": "small", id: "pb-msg" });
+    var copyBtn = el("button", { "class": "primary", type: "button", text: "Copy the paste-back", onclick: function () {
+      ta.value = buildPasteBack();
+      var fail = function () { ta.focus(); ta.select(); msg.textContent = "Select and copy it by hand."; };
+      try { navigator.clipboard.writeText(ta.value).then(function () { msg.textContent = "Copied. Paste it into the chat."; }, fail); } catch (e) { fail(); }
+    } });
+    var reset = el("button", { "class": "vbtn", type: "button", text: "Clear every tick and note", onclick: function () {
+      if (!state._confirm) { state._confirm = true; reset.textContent = "Press again to clear everything"; return; }
+      state.ticks = {}; state.verdict = {}; state.notes = {}; state._confirm = false; save(); render();
+    } });
+    return [
+      el("h2", { text: "Paste back" }),
+      el("p", { "class": "lede", text: "Copy this into the chat when you finish, or when you stop. It carries the count per part, the verdicts, your notes and your answers to the calls." }),
+      ta,
+      el("div", { "class": "nav" }, [el("div", { "class": "verdict" }, [copyBtn, msg]), reset])
+    ];
+  }
+
+  function render(keepScroll) {
+    var y = window.scrollY;
+    renderTabs(); renderCount();
+    mainEl.innerHTML = "";
+    var nodes;
+    if (state.tab === "start") nodes = renderStart();
+    else if (state.tab === "paste") nodes = renderPaste();
+    else { var p = parts.filter(function (x) { return x.id === state.tab; })[0]; nodes = p ? renderPart(p) : renderStart(); }
+    nodes.forEach(function (n) { mainEl.appendChild(n); });
+    if (keepScroll === true) window.scrollTo(0, y);
+  }
+  render();
+})();
+</script>

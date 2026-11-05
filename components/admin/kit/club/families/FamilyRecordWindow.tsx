@@ -54,6 +54,9 @@ import {
   FAMILY_RECORD_WORDS as W,
 } from '@/lib/families-words';
 import { planOpens, type FamilyRecordPayload } from '@/lib/families-payment-plan';
+import { familiesChildHref } from '@/lib/admin-kit-nav';
+import { CHILD_PAGE_WORDS as CW } from '@/lib/child-page-words';
+import Link from 'next/link';
 import type { FamilyFile } from '@/lib/family-file';
 import type { FamilyChildLine } from '@/lib/families-read';
 import { fetchResolvedPdfSettings, DEFAULT_PDF_SETTINGS, downloadFamilyFile } from '@/lib/export/pdf';
@@ -168,6 +171,8 @@ export default function FamilyRecordWindow({ q, personId, listName, list, addres
   const hasMoney = m.children.length > 0 || m.leagueFeeCount > 0;
   const canPay = planOpens(read.payment);
   const openNote = noteOpen ? read.notes.find(n => n.id === noteOpen) ?? null : null;
+  // Each child's name opens the child's page (Club Tier Stage 14 S5, tab 8), which comes back to this family.
+  const childHref = (childId: string) => familiesChildHref(`/${currentOrg?.slug ?? ''}/admin`, childId, person.id);
 
   const exportMenu = (
     <ExportMenu
@@ -222,7 +227,7 @@ export default function FamilyRecordWindow({ q, personId, listName, list, addres
         <h3 className={fam.h}>{W.children}</h3>
         {read.childLines.length === 0
           ? <p className={repKit.dim}>{W.historyNone}</p>
-          : isPhone ? <ChildCards lines={read.childLines} chips={read.handoffChips} /> : <ChildTable lines={read.childLines} chips={read.handoffChips} />}
+          : isPhone ? <ChildCards lines={read.childLines} chips={read.handoffChips} childHref={childHref} /> : <ChildTable lines={read.childLines} chips={read.handoffChips} childHref={childHref} />}
 
         <NotesSection notes={read.notes} onAdd={() => { setSaid(null); setAddingNote(true); }} onOpen={id => { setSaid(null); setNoteOpen(id); }} />
 
@@ -392,7 +397,7 @@ function HandoffChip({ state }: { state: 'sent' | 'not_received' | undefined }) 
 
 type Chips = FamilyRecordPayload['handoffChips'];
 
-function ChildTable({ lines, chips }: { lines: readonly FamilyChildLine[]; chips: Chips }) {
+function ChildTable({ lines, chips, childHref }: { lines: readonly FamilyChildLine[]; chips: Chips; childHref: (childId: string) => string }) {
   return (
     <div className={repKit.tableFrame}>
       <table className={repKit.table}>
@@ -410,7 +415,14 @@ function ChildTable({ lines, chips }: { lines: readonly FamilyChildLine[]; chips
             const f = figuresOf(l);
             return (
               <tr key={l.key}>
-                <td><span className={fam.nameRow}><span className={fam.childName}>{l.childName}</span><HandoffChip state={chips[l.key]} /></span><LadderLines line={l} /></td>
+                <td>
+                  <span className={fam.nameRow}>
+                    <Link className={repKit.nameLink} href={childHref(l.childId)} aria-label={CW.openChild(l.childName)}>{l.childName}</Link>
+                    <HandoffChip state={chips[l.key]} />
+                  </span>
+                  {l.sub && <span className={fam.ladder}>{l.sub}</span>}
+                  <LadderLines line={l} />
+                </td>
                 <td className={l.current ? undefined : repKit.dim}>
                   {whereOf(l)}
                   {/* 9b-2 (copy §13): a house-league fee is the price fixed when the family signed up. */}
@@ -442,7 +454,7 @@ function ChildTable({ lines, chips }: { lines: readonly FamilyChildLine[]; chips
   );
 }
 
-function ChildCards({ lines, chips }: { lines: readonly FamilyChildLine[]; chips: Chips }) {
+function ChildCards({ lines, chips, childHref }: { lines: readonly FamilyChildLine[]; chips: Chips; childHref: (childId: string) => string }) {
   return (
     <ClubRowFrame><ClubRowList inset label={W.children}>
       {lines.map(l => {
@@ -450,6 +462,9 @@ function ChildCards({ lines, chips }: { lines: readonly FamilyChildLine[]; chips
         return (
           <ClubRow
             key={l.key}
+            as="link"
+            href={childHref(l.childId)}
+            chevron
             title={(
               <span className={fam.cardTitle}>
                 <span>{l.childName}<HandoffChip state={chips[l.key]} /></span>
@@ -460,6 +475,7 @@ function ChildCards({ lines, chips }: { lines: readonly FamilyChildLine[]; chips
               <>
                 {whereOf(l)}
                 {f && ` · ${W.colDues} ${cents(f.dues)} · ${W.colPaid} ${cents(f.paid)}`}
+                {l.sub && <span className={fam.ladder}>{l.sub}</span>}
                 <LadderLines line={l} />
               </>
             )}
