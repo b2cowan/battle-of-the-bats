@@ -24,11 +24,13 @@ import { OFFERED_SPORT_OPTIONS, DEFAULT_SPORT } from '@/lib/sports';
 import PricingSection from '@/components/PricingSection';
 import { parseStartBilling, parseStartPricing } from '@/lib/start-door';
 import PlanStep from './PlanStep';
+import AddressStep from './AddressStep';
 import styles from './onboarding.module.css';
 import { tournamentToday } from '@/lib/timezone';
 import DateInput from '@/components/shared/DateInput';
 import DateTimeInput from '@/components/shared/DateTimeInput';
-import { isAddressRefusal, useBillingAddressGate } from '@/components/billing/BillingAddressDialog';
+import { isAddressRefusal, saveBillingAddress, useBillingAddressGate } from '@/components/billing/BillingAddressDialog';
+import { useAddressDraft } from '@/components/billing/BillingAddressFields';
 
 /*
  * THE FIRST RUN (Tournament admin redesign Stage 5, E1 and A47 — ruled 2026-10-10). Plan selection is a standalone gate
@@ -285,6 +287,19 @@ function OnboardingPageLegacy() {
   const [planError, setPlanError] = useState('');
   // GST/HST Stage 1: a paid plan choice with no billing address on file opens the Billing address window, then goes on.
   const address = useBillingAddressGate(currentOrg ? { orgSlug: currentOrg.slug } : null);
+  // The first-time plan screen asks in a screen of its own, not the window (owner 2026-11-04, PLAN_STEP_ADDRESS_DRAWINGS
+  // Ask 1 A): `addressAsk` is the paid pick waiting on an address; the draft lives here so Back keeps what was typed.
+  const addressForm = useAddressDraft(null, address.info?.usSalesOpen ?? false);
+  const [addressPrefilled, setAddressPrefilled] = useState(false);
+  if (!addressPrefilled && address.info) {
+    setAddressPrefilled(true);
+    addressForm.reset(address.info.location);
+  }
+  const [addressAsk, setAddressAsk] = useState<{ planKey: OrgPlan; cycle: 'monthly' | 'annual' } | null>(null);
+  const [lastCycle, setLastCycle] = useState<'monthly' | 'annual' | null>(null);
+  const [addressSaving, setAddressSaving] = useState(false);
+  const [addressFailed, setAddressFailed] = useState(false);
+  const addressBusy = useRef(false);
   const [leagueDraftSkipped, setLeagueDraftSkipped] = useState<LeagueDraftSkippedState>(getDefaultLeagueDraftSkipped);
   const [leagueSeasonForm, setLeagueSeasonForm] = useState<LeagueSeasonForm>(getDefaultLeagueSeasonForm);
   const [leagueDivisionPreset, setLeagueDivisionPreset] = useState<LeagueDivisionPreset>('youth');
@@ -566,7 +581,12 @@ function OnboardingPageLegacy() {
         }),
       });
       const data = await res.json();
-      if (!res.ok && isAddressRefusal(data)) { address.refused(() => void choosePlan(planKey, selectedBillingCycle)); return; }
+      if (!res.ok && isAddressRefusal(data)) {
+        // The first-time plan screen is a page of steps: it asks on its own screen. Anywhere else this is the window.
+        if (planChoiceRequired) { setLastCycle(selectedBillingCycle); setAddressAsk({ planKey, cycle: selectedBillingCycle }); return; }
+        address.refused(() => void choosePlan(planKey, selectedBillingCycle));
+        return;
+      }
       if (!res.ok) throw new Error(data.error ?? 'Plan selection failed');
       if (data.applied === true) {
         await refreshOrgContext();
@@ -589,6 +609,28 @@ function OnboardingPageLegacy() {
     }
   }
 
+
+  /** The address screen's Continue to checkout: check, save the address, then run the paid pick again (it now passes). */
+  async function continueFromAddress() {
+    if (!currentOrg || !addressAsk || addressBusy.current) return;
+    setAddressFailed(false);
+    if (!addressForm.check().ok) return;
+    addressBusy.current = true;
+    setAddressSaving(true);
+    try {
+      const saved = await saveBillingAddress({ orgSlug: currentOrg.slug }, addressForm.body);
+      if (!saved.ok) {
+        if (saved.errors) addressForm.setErrors(saved.errors);
+        else setAddressFailed(true);
+        return;
+      }
+      address.remember(saved.location);
+      await choosePlan(addressAsk.planKey, addressAsk.cycle);
+    } finally {
+      addressBusy.current = false;
+      setAddressSaving(false);
+    }
+  }
 
   function resetWorkflowDraftState() {
     resetLeagueSetupDraft();
@@ -1403,19 +1445,31 @@ function OnboardingPageLegacy() {
 
   if (planChoiceRequired) {
     return (
-      <>
+      // GST/HST Stage 1: a paid choice with no billing address on file is refused (choosePlan → addressAsk). This page is a
+      // walk through numbered steps, so it asks on a screen of its own instead of the window (owner 2026-11-04).
+      addressAsk ? (
+        <AddressStep
+          orgName={currentOrg.name}
+          plan={addressAsk.planKey}
+          billing={addressAsk.cycle}
+          form={addressForm}
+          saving={addressSaving}
+          failed={addressFailed}
+          error={planError}
+          onContinue={() => void continueFromAddress()}
+          onBack={() => { setPlanError(''); setAddressFailed(false); setAddressAsk(null); }}
+        />
+      ) : (
         <PlanStep
           orgName={currentOrg.name}
           pricing={pricing}
           foundingOfferHeld={foundingOfferHeld}
+          initialBilling={lastCycle}
           loading={planLoading}
           error={planError}
           onChoose={choosePlan}
         />
-        {/* GST/HST Stage 1 Part 5: a paid choice with no billing address on file is refused (choosePlan →
-            address.refused); the Billing address window must render here too or the button dead-ends. */}
-        {address.dialog}
-      </>
+      )
     );
   }
 

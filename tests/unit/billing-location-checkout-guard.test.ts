@@ -143,3 +143,22 @@ describe('the words', () => {
     assert.equal(F.personTitle, 'Your home address');
   });
 });
+
+describe('first-time setup asks for the address on its own screen, not the window (owner 2026-11-04, PLAN_STEP_ADDRESS_DRAWINGS)', () => {
+  const page = readCode('app/[orgSlug]/admin/onboarding/page.tsx');
+  const step = readCode('app/[orgSlug]/admin/onboarding/AddressStep.tsx');
+
+  it('a refused paid pick on the plan screen opens the screen; every other page keeps the window', () => {
+    assert.match(page, /if \(planChoiceRequired\) \{[^}]*setAddressAsk\(\{ planKey, cycle: selectedBillingCycle \}\)/);
+    assert.match(page, /address\.refused\(\(\) => void choosePlan\(planKey, selectedBillingCycle\)\)/);
+  });
+  it('the screen is the coach sign-up\'s fields and the shipped step line, left at three labels (Ask 2 C)', () => {
+    assert.match(step, /variant="start"/);
+    assert.match(step, /<StartSteps current=\{3\} labels=\{RUN_A_TOURNAMENT_STEPS\} \/>/);
+    assert.doesNotMatch(step, /Address'/, 'the step line gains no fourth label');
+  });
+  it('a US hold removes the button and Back keeps the draft (the draft lives in the page)', () => {
+    assert.match(step, /\{!form\.usClosed && \(/);
+    assert.match(page, /const addressForm = useAddressDraft\(/);
+  });
+});

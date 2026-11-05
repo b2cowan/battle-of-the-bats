@@ -240,6 +240,19 @@ Part 0 findings (2026-11-03):
   "setOrgNav is not a function" seen once during the UAT runs (another session's uncommitted nav work, cleared on rerun).
   ⚠ Commit note: another session committed `5b0d27fc0` five seconds before this part's first commit, which was built on the
   older base and reverted theirs; it was replaced (CAS) by `1ab0bfb6f` on top of `5b0d27fc0` before any push.
+  **Part 6 · the first-time plan screen asks on its own screen (owner 2026-11-04, drawings
+  `PLAN_STEP_ADDRESS_DRAWINGS.html`, https://claude.ai/artifact/VZPfo6JhC9BxDVMDpncxvY).** Raised by the owner while walking §454
+  Part B: the window over the plan screen looked different from the coach sign-up's Address step, and no ruling said why.
+  **Rulings (all as recommended):** (Ask 1 A) a page that runs in steps asks in a step; a screen you are working on asks in a
+  window — only this one screen changes. (Ask 2 C) the step line stays Account · Organization · Plan, Plan current; the address
+  screen is the second half of step 3 (the shipped three-label line already fills a 390 phone; four labels would wrap).
+  (Ask 3 A) the button below the fold is accepted on both Address screens (this one and the coach sign-up's).
+  **Built 2026-11-04:** `AddressStep.tsx` (the coach sign-up's fields, `variant="start"`, the window's words, Back keeps
+  the draft and the monthly or yearly pick); `page.tsx` shows it, on a refused paid pick, in place of `PlanStep` when
+  `?choosePlan=1`; every other page keeps the window; `PlanStep` takes `initialBilling`; guard added to
+  `billing-location-checkout-guard.test.ts`. Typecheck clean; lint clean on touched files; spelling OK; 78 tests pass.
+  **Owed:** walk §454 Part B steps 2–3 still describe the window (rewrite once this is on the dev site, then republish the
+  walk); `/review`; `/docs` (no help article names the window on this screen: checked); commit.
 
 ## What the owner sees after this build (PM summary: present this BEFORE any code)
 

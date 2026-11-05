@@ -35,10 +35,12 @@ const FREE_POINTS = [
   `${FREE.tournamentLimit} tournament at a time · ${FREE.seatLimit} staff seats`,
 ];
 
-export default function PlanStep({ orgName, pricing, foundingOfferHeld, loading, error, onChoose }: {
+export default function PlanStep({ orgName, pricing, initialBilling, foundingOfferHeld, loading, error, onChoose }: {
   orgName: string;
   /** The pricing page's pick (A6, G4). A pick this step does not offer reads as none. */
   pricing: StartPricing | null;
+  /** Coming Back from the billing address screen: the monthly or yearly choice already made there wins over the pricing pick. */
+  initialBilling?: StartBilling | null;
   /** The server's answer for the offer after the sign-up window closes (`foundingSeasonOfferOnPlanChoice`). */
   foundingOfferHeld: boolean;
   /** The plan whose start is under way (the page's own plan-loading state). */
@@ -48,7 +50,7 @@ export default function PlanStep({ orgName, pricing, foundingOfferHeld, loading,
 }) {
   const pick = runATournamentPick(pricing);
   const first: PlanStepChoice = pick?.plan === 'tournament' ? 'tournament' : 'tournament_plus';
-  const [billing, setBilling] = useState<StartBilling>(pick?.billing ?? 'monthly');
+  const [billing, setBilling] = useState<StartBilling>(initialBilling ?? pick?.billing ?? 'monthly');
   const busy = loading !== null;
 
   const zero = showsFoundingZero('tournament_plus', foundingOfferHeld);
