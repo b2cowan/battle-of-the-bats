@@ -131,7 +131,7 @@ clean):
   none). A "Keep {Plan}" restore of a down move (plan-ending, no route check) for a legacy customer with no address
   is expected to be refused by Stripe and read as `moveNotRestored` — not verified (prod has no such customer).
 
-**Part 2b (Ask 8) BUILT 2026-11-05, committed `947fd8192` 2026-11-05 after /review high; owner walk §463 owed:** a club turning on online payments is asked for its billing address in the shipped Billing address
+**Part 2b (Ask 8) BUILT 2026-11-05, committed `947fd8192` 2026-11-05 after /review high; owner walk §463 PASSED 2026-11-05 (A–F, all steps):** a club turning on online payments is asked for its billing address in the shipped Billing address
 window before it can take payments; the fee invoice's wait (above) stays as the safety net. This is plan §4 Stage 5's address
 step ("asks the club for its billing address when it sets up payouts"), brought FORWARD into Stage 2 because Part 2 already taxes
 the recovered fees; Stage 5 then finds it done. The build session finds the
@@ -239,7 +239,51 @@ orphans in platform-admin files this part did not touch.
   copy canon in `PRICING_PAGE_COPY.md`). `/strategy` committed `8ff6e7e1b` (Facts doc note + a progress line on the 2026-10-31 log
   entry; T2 + T4 were already logged). **The public words must reach production WITH this Stage 2 promote, not before.**
 
-Next: Part 5 (the guard on charging calls) may run now; Part 6 waits for 5; ONE Stage 2 walk at Part 7 (2b has its own). **Owner step before Part 6:** our GST/HST number on TEST-mode invoices (Settings → Invoices → Tax → add, Set as default) — read 2026-11-05: test account has no account tax ID.
+**Part 5 BUILT 2026-11-05** ([GST_HST_STAGE2_PART5_BUILD_PROMPT.md](GST_HST_STAGE2_PART5_BUILD_PROMPT.md); test-only, no product
+change, no Stripe calls). **Owner 2026-11-05: ONE list, not a second file.** Stage 1 Part 4 had already built the census of every
+Stripe charging call (`tests/unit/billing-location-every-path-guard.test.ts`, the same matcher, stale-entry and dead-helper rules the
+Part 5 prompt asked for), so Part 5 gives each `CHARGING_CALLS` entry a second answer, `tax`, beside its address answer: `taxed`
+(every call's OWN arguments carry the named setting, so one fee line of three without it fails as "call 2 of 3"), `inherits` (takes
+its tax from a listed taxed call, may write only the keys named), or `untaxed` with its reason.
+- Corrected the parent's exemption list (below): the recovered-fee calls are TAXED (Ask 3), not exempt — three `invoiceItems.create`
+  need `...RECOVERED_FEE_TAX`, the club's own `invoices.create` needs `automatic_tax: AUTOMATIC_TAX`, its `finalizeInvoice` inherits.
+  The stale Stage 1 reason on the fee entries ("the ONE charge that can go out with no address") rewritten for Part 2b.
+- Quotes joined the list (the matcher now finds `invoices.createPreview`, and `subscriptionItems.create/update`): the move-up quote and
+  the Premium → Club quote are `taxed` (with the pin that a "wait" quote shows no figure). **Found, not a defect:** platform admin's
+  next-charge read (`lib/console-money-stripe.ts`) was on no list; it is `untaxed` on purpose (Stripe's own figure for the live
+  subscription; setting tax there would show a figure Stripe will not charge), keys pinned to `customer` + `subscription`.
+- The next-season checkout is followed to `buildNextSeasonCheckoutParams` (the route must hand it `params` from that builder).
+  Cancel / Keep updates may write only `cancel_at_period_end` / `cancel_at`. Nothing may set `automatic_tax: { enabled: false }`, and
+  no file but `lib/billing-tax.ts` may define the shared settings; their values are pinned.
+- **Mutate-and-fail on disk [V 2026-11-05], each one failure with a sentence naming the file, each restored:** (a) `...TAXED_CHECKOUT`
+  deleted from `create-team-checkout` → fails naming it; (b) `automatic_tax` deleted from the move-up update → fails naming
+  `lib/plan-move.ts`; (c) `...RECOVERED_FEE_TAX` deleted from the second fee line → fails "(call 2 of 3)"; (d) a throwaway
+  `checkout.sessions.create({ mode: 'subscription' })` in a new `lib/` file → "isn't on the charging list"; (e) the dead add-on
+  made reachable from a new `lib/` file → fails naming it ("no billing-address check and no tax"); plus (f) `...TAXED_CHECKOUT`
+  deleted from the next-season builder → fails naming `lib/next-season-choice.ts`; (g) `items: []` added to the cancel update →
+  fails on both the address reason and the tax reason. Restored: 43/43 pass.
+- Checks: ESLint clean on the two files; spelling gate clean; `npm test` 14376: 14369 pass / 7 fail, none in a file this part touched
+  (practice-plan phone N1, `plan-billing-usage` free-time, Stage 6 public walk ×3, `series-date-groups`, support-console foot).
+- **/review standard 2026-11-05** (2 lenses: false passes; coverage + truth of reasons). No Critical/High. Fixed in the guard: (M) an
+  `onlyKeys` entry passed a shorthand `{ items }`, a quoted or computed key, or arguments built in a variable — every top-level part
+  must now read `key: value`, and no object literal fails; (M) `builtBy` read the builder's text on into the next exported function —
+  it now reads the builder's ONE returned object, and `params` must be assigned once; (L) `needs` matched text inside a string or a
+  longer name, and a later `automatic_tax` / `tax_behavior` / `tax_code` beside the shared setting could undo it — matched as code now,
+  and each tax key written exactly as often as the setting writes it; (L) the argument scan now steps over regex literals; the matcher
+  adds `invoices.update` / `addLines` / `updateLines` and `invoiceItems.update` (no caller today). Re-mutated (a)–(g) plus (h) a
+  shorthand `items` on the cancel update, (i) `automatic_tax: undefined` beside the move-up's, (j) the builder's tax moved to a new
+  function after it: each fails naming the file; restored, 46/46.
+- **Found by the review, NOT built (product code, outside this test-only part) — owner questions:**
+  1. A recovered fee riding a club's live subscription (`subscriptionToRide`, `lib/platform-stripe-fees.ts`) is taxed only if THAT
+     subscription has tax on; the code never checks. A subscription made before Stage 2 would carry an untaxed fee line. Production has
+     none, and the promote re-counts subscribers and stops if any exist (Ask 7), so it cannot happen on today's path. *Recommendation:
+     one line in `subscriptionToRide` — no ride unless `automatic_tax.enabled`, so such a club's fees go on its own (taxed) invoice;
+     belt and braces after the promote. (Another session had uncommitted edits in that file on 2026-11-05.)*
+  2. Platform admin's refund of a subscription charge (`lib/console-money-stripe.ts` `refunds.create`) makes no credit note.
+     The `/accounting` review (item 6c) said a refund of a taxed subscription invoice goes through a credit note (the s.232 document
+     and the tax reduction Stripe Tax keeps). Part 6's matrix row for refunds must test this path; a fix routes to `/plan`.
+
+Next: Part 6 (the Stripe test matrix) may run now; ONE Stage 2 walk at Part 7 (2b has its own). **Owner step before Part 6:** our GST/HST number on TEST-mode invoices (Settings → Invoices → Tax → add, Set as default) — read 2026-11-05: test account has no account tax ID.
 
 **Rulings (owner, 2026-11-05, all as recommended):**
 - **Ask 1:** one helper decides tax: taxes by the stored address; a US address with disagreeing card/payout evidence
@@ -501,8 +545,10 @@ the shipped strings, do not invent them). Do not ask for a mockup session unless
 A unit test (house style: reads source text, like `tests/unit/billing-location-checkout-guard.test.ts`) that fails the build with a
 sentence naming the file when any code under `app/` or `lib/` creates a Stripe Checkout session in subscription mode, creates or
 updates a subscription / schedule, or creates an invoice or invoice item **without** enabling automatic tax — except an explicit,
-commented, short list of deliberately untaxed calls (the card-setup session, the Connect payment, the dead add-on, the fee invoices
-per Ask 3). A new charging path then cannot ship untaxed by accident. Mutate-and-fail it as Stage 1's guard was.
+commented, short list of deliberately untaxed calls (the card-setup session, the Connect payment, the dead add-on, the cancel and
+Keep toggles, platform admin's next-charge read). **The recovered-fee calls are NOT exempt** (corrected 2026-11-05: Ask 3 was ruled
+taxed on top, Part 2 built it) — the guard requires their tax. A new charging path then cannot ship untaxed by accident.
+Mutate-and-fail it as Stage 1's guard was. (Built as a second answer on Stage 1's census, owner 2026-11-05; see ▶ Progress.)
 
 ## Part 6 · The test matrix (Stripe test mode, scripted where possible)
 

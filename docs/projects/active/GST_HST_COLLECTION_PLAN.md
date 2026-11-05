@@ -27,7 +27,7 @@ Every outstanding piece of work in this plan has a home in one of these stages. 
   committed `32d466e59` 2026-11-04, Part 4 (the guard) committed `95dbdcbec` 2026-11-04, Part 5 (closeout: `/accounting` review, help, the first-time plan screen
   fix, US wording v2) committed `1ab0bfb6f` 2026-11-04; owner walk §454 PASSED 34/34 2026-11-04, Part B re-walked on Part 6 (`e8e37a408`) and passed 2026-11-05; **Stage 1 CLOSED 2026-11-05** — country, province/state, address and US declaration on our own
   records. Needs T1 (ruled).
-- **Stage 2 — Subscriptions charge the right tax:** NOT STARTED (build prompt written 2026-11-05: `GST_HST_STAGE2_BUILD_PROMPT.md`) — Stripe Tax registration, tax on every checkout path and
+- **Stage 2 — Subscriptions charge the right tax:** IN PROGRESS (build prompt `GST_HST_STAGE2_BUILD_PROMPT.md`; its ▶ Progress block holds each part's commit) — Parts 0–4 and 2b committed 2026-11-05 (walk §463 passed); Part 5 (the guard: every Stripe charge and quote carries tax or is on a short untaxed list with its reason) built 2026-11-05; Part 6 (the Stripe test matrix) next — Stripe Tax registration, tax on every checkout path and
   preview, "plus applicable taxes", province test matrix; exit step re-runs the Stripe audit. Needs Stage 1, T4, T5.
 - **Stage 3 — Every tax result has a reason, and staff can see it:** NOT STARTED — charge-level tax record and the Money
   tab. Needs Stage 2.

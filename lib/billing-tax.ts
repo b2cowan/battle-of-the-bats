@@ -26,7 +26,7 @@ import { PLATFORM_CONTACT_EMAIL } from './online-payment-words';
  *     never shown (`taxWasWorkedOut`).
  */
 
-/** The one setting every taxed Stripe call spreads. tests/unit/billing-tax-guard.test.ts fails the build on a charging call without it. */
+/** The one setting every taxed Stripe call spreads. tests/unit/billing-location-every-path-guard.test.ts fails the build on a charging call without it. */
 export const AUTOMATIC_TAX = { enabled: true } as const;
 
 /**
