@@ -348,9 +348,9 @@ describe('every reader of the feed goes through the shape (source sweep)', () =>
     }
     assert.match(readCode('app/[orgSlug]/[tournamentSlug]/opengraph-image.tsx'), /getPublicTournamentPageData\(orgSlug, tournamentSlug, 'teams-preview', \{ look: true \}\)/);
   });
-  it('the tournament share image shows no count tiles while every division is held back, rather than dashes', () => {
+  it('the tournament share image shows no count tiles while every division is held back or the Teams page is off, rather than zeros', () => {
     const image = readCode('app/[orgSlug]/[tournamentSlug]/opengraph-image.tsx');
-    assert.match(image, /showCounts: !\(data\.teamsWithheld && teams\.length === 0 && divisions\.length === 0\)/);
+    assert.match(image, /showCounts: data\.pageEnabled !== false && !\(data\.teamsWithheld && teams\.length === 0 && divisions\.length === 0\)/);
     assert.match(image, /\{c\.showCounts && stat\(c\.teamCount, 'TEAMS'\)\}/);
   });
   it('the tournament share image\'s live line follows the Schedule switch', () => {

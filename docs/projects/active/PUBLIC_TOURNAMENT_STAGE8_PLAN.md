@@ -9,7 +9,9 @@ the pay page, the admin preview's old chrome, the old tab row and rail, the Rule
 2026-11-04** (record §17; releases with the flip). **Part 4b (the admin side, then the switch itself — deleted) committed
 `72cd94a46` 2026-11-04** (record §18; releases with the flip). **Part 4 committed.** **Part 5 (the data and the wording
 around it: no second `theme_font` empty, 426's prod timing note; the dictionary and the dead fields un-mapped; the help;
-the drift check; the demos) committed `393b78045` 2026-11-04** (record §19; releases with the flip). **Part 5 committed.** Next: Part 6 (verify, walk, release). Brief: `PUBLIC_TOURNAMENT_STAGE8_PM_BRIEF.md`.
+the drift check; the demos) committed `393b78045` 2026-11-04** (record §19; releases with the flip). **Part 5 committed.** **Part 6 split (owner 2026-11-04): 6a (the whole-stage review, the layout sweep, the walk) built 2026-11-04** (record §20;
+owner walk §456 owed); **6b is the promote**, its own `/release` session when the owner calls the release — Stage 8 waits on
+`dev`, ready to ship. Brief: `PUBLIC_TOURNAMENT_STAGE8_PM_BRIEF.md`.
 **Parent plan:** `PUBLIC_TOURNAMENT_SITE_REVIEW_PLAN.md` §9 (the ladder). Stages 0–7 and Stage 1a are built and walked; Stage 8 is the one stage that
 changes what a customer sees.
 **Sequencing rule (standing):** by dependency and rework risk, never by date. One part per session, `/clear` between.
@@ -1357,3 +1359,137 @@ as null; a stale tab re-writes its pick), and the two copy precisions.
   preview" search words. A help-wide rename to the menu's "Public site" is a later `/docs` call.
 - The dev rows of `branded-light` / `branded-dark` still hold their old Dark/Light and card-style values. They are
   inert, and go with the drop.
+
+## 20. Part 6a record (verify and walk; built 2026-11-04; releases with the flip)
+
+**What a customer sees:** nothing (nothing promoted). **On dev:** a public tournament page's buttons and highlights now
+always wear the band's colour; a tournament's share picture shows no count tiles (not "0 TEAMS · 0 DIVISIONS") while its
+Teams page is off; two help answers say what the product does.
+
+**Owner ruling (2026-11-04): Part 6 splits.** 6a = this session (review, sweep, walk). 6b = the promote, with `/release`,
+when the owner calls the release: a promote ships all of `dev` (132 commits ahead of `origin/master` on 2026-11-04, many
+projects, several with walks and prod steps owed), which is the owner's release decision, not this stage's.
+
+**Where the build prompt was wrong (re-opened against the code):**
+- **The cache bump is already in this release.** Prod's `public/sw.js` is `v12` (`git show origin/master:public/sw.js`);
+  `dev` is `v13` (Stage 7 step 0, `22c07497a`, never promoted). The release therefore already moves every installed device
+  to new cache names, and `activate()` deletes every cache not in `CURRENT_CACHES`: the old public payloads (raw tournament,
+  notes) and the old-look pages go with it. Not bumped again here (one bump per release); **6b does not bump**. The guard
+  that pins it is `sw-pay-page-never-cached` (`v >= 13`). A recommendation; the owner's call at hand-off.
+- **The feed fix's production port is moot.** Prod still has the legacy pages that poll the plain sections
+  (`components/public/ScheduleContent.tsx`, `RulesContent.tsx` exist on `origin/master`, not on `dev`); promoting `dev`
+  ships the narrowed feed together with the pages that read it. Only a release of the feed fix ALONE would need §16's port.
+- **A local production build reads the production environment.** `next build` / `next start` load `.env.production.local`
+  (the production Supabase project); the build baked its URL in and the proxy refused every request
+  (`lib/supabase-safety.ts`). The sweep's build ran with `.env.local` pre-loaded through `@next/env` (Next never overrides
+  a variable already set; every key of the prod file is also in the dev file), asserted to be the dev project. The prod
+  ref left in the chunks is `supabase-safety.ts`'s deny-list. Recorded in the Claude memory
+  (`reference_local_prod_build_reads_prod_env.md`).
+
+**`/review` on the whole stage** (high-risk tier; the ten commits read one by one, never a range; four Sonnet lenses:
+orphans across parts, vacuous guards, cross-part runtime, security and gating; Stage 0: typecheck clean, ESLint 0 errors
+on the 134 live Stage 8 code files). No Critical, no High. The switch is gone: no `flhq_public_frame`, `PUBLIC_FRAME_COOKIE`,
+`isPublicFrameOn`, `frameOn` or `/api/public-frame` outside the guards that pin their absence (and one comment); `proxy.ts`
+has no frame logic; `data-public-frame="light"` is set by the live layout, the admin preview and `LookCard`, and no
+selector keys on another value. Every `styles.X` resolves; no `.module.css` is importer-less.
+
+*Applied (Confirmed, each with a test that fails without it):*
+- **The page's accents disagreed with the band (Medium).** `lib/public-tournament-theme.ts` had its own rule ("own colours,
+  else the org's") beside the band's `resolveTournamentLook`. Both were fine until Stage 1a's club rule and plain look; with
+  the frame the only look, a club on *Always* wore its colours on the band and the tournament's on every `var(--primary)`
+  (Register steps, follow line, share button, dock), and Tournament Plus with nothing saved wore the org's leftover colours
+  on the buttons against a plain band (contrary to the 2026-11-02 ruling "the leftover org look kept, not read").
+  `resolvePublicTournamentTheme` now reads the look; the live layout always emits the accents (the `hasOwnTournamentTheme`
+  gate is gone); the admin preview follows (`buildPublicThemeCssVars`, same helper); the setup wizard's `PreviewOrg` widens
+  to `LookOrg` and its "which swatch is chosen" label reads the same rule. Test: `tournament-look` "the page accents wear
+  the band colour (one rule)", 5 cases; the old rule put back fails exactly the two that were wrong (Always, Plus plain).
+- **The share picture printed zero counts with the Teams page off (Low–Medium).** The image reads `teams-preview`, which
+  sends nothing while Teams is off, and `teamsWithheld` stays unset. `showCounts` now also needs `data.pageEnabled !== false`.
+  Test: `public-feed-privacy` (the anchor regex). Its live line and champions card still need the Teams page on: the
+  coupling predates the stage (handed on).
+- **Two help answers described retired screens (Medium).** `faq-wizard-theme-swatches` said banners stay in Branding and a
+  colour-less event follows the organization's colours; it now says the plain FieldLogicHQ look, or on a plan with a club
+  website the club's look, and that colours, type and logo live on the Public site page. `faq-follow-tournament-org` said
+  a follow strip sits under the event header; it now says the line sits at the top of the Overview in the app, and that
+  following happens in the installed app. Spelling passes.
+- **The home-screen icon guard checked five names at one depth (Low).** `public-face-s4-identity` now sweeps every
+  file-convention icon under the tournament at any depth and any extension, pins the layout's `manifest: '/manifest.json'`
+  with no `icons:` key, and pins the old manifest address's 308 to the shared one. Mutation: a nested `teams/icon.png` fails
+  it; removed.
+- **The demo-anchor guard could pass on a tour with no anchored step (Low).** `demo-destinations-guard` counts anchored
+  steps per kind (`>= 1`); its stale comment about the old Overview's early return is corrected. 10/10.
+
+*Refuted:* `TodaysResultsLine` reading scores without `hasNoScoreYet`: it derives `scored` from both scores itself, the
+same rule.
+
+*Recorded, not applied (Stage 8's tail or older; none blocks the release):*
+- **426's UPDATE is destructive on a second run (Medium, 6b):** after the flip it would erase real Serif / Clean picks. Run
+  it **exactly once**, in the promote window. It also holds the `organizations` lock through the `tournaments` UPDATE (small
+  tables, a brief stall) and sends no `NOTIFY pgrst, 'reload schema'`; the org-settings reads that name
+  `tournament_look_policy` would 500 until PostgREST reloads. 6b: run at a quiet moment and confirm the column is visible
+  to the API before the push.
+- **A hidden Schedule page still sends games through `standings-preview`, `teams-preview` and `playoffs`** (Low–Medium,
+  owner question): the team profile honours the Schedule switch, the feed's other sections do not. "Standings and the
+  bracket need games" may be the accepted answer.
+- **The fan app's follow cards show a tournament's stored logo whatever the plan** (`lib/scores-feed.ts`, since 2026-07-19;
+  Low): it bypasses `resolveTournamentLook`'s plan gate.
+- The logo POST uploads before checking the tournament is the org's (orphan objects; a foreign id gets a silent no-op);
+  `rules` / `register` send every division with `contactMemberId`; Register sends two coach-email switches; org-settings
+  gates colours on `planId` rather than the feature key. All Low or informational, all older than the stage.
+- Dead weight left by 3d: ~50 classes of `app/[orgSlug]/Home.module.css` (the old Overview's) with no TSX user;
+  `publicGameStatusLabel` is test-only; unused `export`s in `LookControls.tsx`, `tournament-schedule-status.ts`,
+  `playoff-picture.ts`, `color-contrast.ts`. A cleanup pass.
+- Guards that could be wider: the switch census matches by name (a new cookie under another name is not caught); the
+  "one live-score rule" guard is a hand list rather than a sweep; two test titles are stale.
+- **The layout screens `pubt-schedule-playoffs` and `pubt-schedule-bracket-only` wait for a link named /The bracket/**;
+  the door has read "The playoff bracket" since `f2e208cb9` (2026-10-31), so neither has measured since. Not edited here:
+  `scripts/layout-screens.mjs` carries another session's working edit. Its comment for `admin-t-branding-look*` still says
+  "the new frame (on in dev)".
+
+**The layout sweep** (local production build of the working tree incl. these fixes, `next start -p 3100`, `UAT_BASE_URL`;
+37 screens: the 25 `pubt-*`, the 5 `admin-public-site*`, the 3 `admin-t-branding*`, `admin-t-dashboard`, the 2
+`admin-t-preview*`, `mkt-demos`; 4 widths = 148 pairs). The first run **aborted** on the memory guard (a typecheck ran
+beside it: a failure, re-run) and showed the date-relative fixtures were stale (dated 2026-10-29): re-dated on dev with
+`seed-public-stage3-fixtures.mjs prepare` and `seed-public-stage4-fixtures.mjs undo` + `prepare`. Second run: **140 pairs
+measured, 0 new findings**; 8 unmeasured (the two screens above, a stale wait, not a page). The owed rows: the admin
+strip's 34 px "Dismiss" **still present** (`admin-t-branding`, `-look`, `admin-t-dashboard`; owner call owed since
+Part 2); the club editor's unlabelled 18 px input **still present** (`admin-public-site-look`, `-look-ask`); the demo
+chrome's tap floors **still present** (`pubt-overview` on the demo: "Start your own — free", the moment buttons, the
+tour steps); the old Register / News 36 px doors **still present** (Register "Tournament Home", "View Schedule",
+"Standings"; News "View Schedule", "View Standings"); the admin preview's 38 px "Exit preview" (baselined). None is a
+Stage 8 change; all stay recorded. Low-water 5,595 MB free. The production server was stopped after the sweep.
+
+**The walk:** §456, [interactive](https://claude.ai/artifact/B8gpjeyoZd6Va7RuxxXrWq), source
+`PUBLIC_TOURNAMENT_STAGE8_WALK.html` (parses; 11 parts, 41 steps). Part D needs a free-plan organizer with a sign-in;
+none exists on dev, so `.probe/s8p6-free-plan.mjs free | back` moves UAT Test Org to the free plan for that part and
+restores the plan it recorded. `/design` not run: the walk draws nothing new.
+
+**Checks run:** typecheck clean (`NODE_OPTIONS=--max-old-space-size=6144`); ESLint 0 errors on every changed file;
+`check:spelling` passes; touched unit files green (tournament-look + public-feed-privacy 108/108, s4-identity 14/14,
+demo-destinations 10/10). Full `npm test`, 14,086 tests: **7 failures, all other sessions'**: the Stage 6 walk HTML ×3,
+the support console foot, billing's ended state, the coach practice-plans phone guard (N1), series date groups (remove
+taps); none reads a file of this part. `verify:changed` stops at `npm test` on them; its ratchets, run one by one, name no
+file of this part: the reds are the foreign ones §19 lists (admin old look and type, schema parity, index coverage,
+org-slug callers, CSS selectors, export catalog, root files; its focused ESLint step crashes on the react-hooks plugin
+config). `check:demos` not run (the tournament-seed import fault, §19). The dev server was restarted (a shared module
+changed) through `scripts/dev.mjs`'s own recovery: login 200, a public page 200.
+
+**`/simplify`:** not run. No new abstraction (one rule replaced by a call to the existing one).
+
+**Handed on to 6b (the release's checklist; do not run in 6a):**
+- Migration 426 on prod **in the promote window, immediately before the push**, blanket, never filtered, **exactly once**
+  (its MANUAL_PROD_STEPS note): verify 0 just before; re-check once live (`barlow` = old, set NULL; any other value → look
+  at that tournament's Public site page with the owner first). It adds `organizations.tournament_look_policy`, which the
+  new code reads: prod 500s without it. Confirm PostgREST sees the column before the push.
+- **No `CACHE_VERSION` bump** in 6b: this release already moves `v12` → `v13`.
+- `check:demos:prod` the next morning; the tournament demo's seed import fault (10-27) checked fixed before trusting the
+  reseed.
+- The post-release truth-up (`/release` Phase 2b): this TODO line, the plan header, the memory files that say "releases
+  with the flip", the release-history record.
+- Release-note material (words via `/marketing`): the new look on every public tournament page; the installed icon is
+  always FieldLogicHQ's; the Branding page is now Pages, Look and Logo.
+
+**Still owed, not Stage 8:** as the build prompt lists (the retired-branding-columns drop pass; the News page / Overview
+showing a post aimed at a held-back division; `getDivisions`' empty `settings`; the bracket and live-score marketing
+shots; a help-wide "Branding" → "Public site" rename; the org-settings PATCH accepting `themeCardStyle`), plus the
+recorded rows above.

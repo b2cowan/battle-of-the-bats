@@ -110,7 +110,7 @@ describe('every tour anchor names a marker the page it lands on writes', () => {
   });
 
   test('the import walk reaches a page\'s body (else the page check below would pass vacuously)', () => {
-    // The tournament Overview page reaches its body through the old Overview component's early return.
+    // The tournament Overview page renders its body straight from the page (the old early return went in Stage 8 Part 3d).
     assert.ok(reachableFrom(...routeFilesFor('/an-org/a-tournament')).has('components/public/TournamentOverview.tsx'),
       'the Overview page\'s import walk did not reach components/public/TournamentOverview.tsx');
   });
@@ -118,8 +118,10 @@ describe('every tour anchor names a marker the page it lands on writes', () => {
   for (const kind of kinds) {
     test(`${kind}: each step's anchor is a marker, written in its destination page's source`, () => {
       const demo = getDemoOrgByKind(kind)!;
+      let anchored = 0; // a tour whose steps all lost their anchors would otherwise pass with nothing checked
       for (const step of sandboxTourSteps(kind, { slug: demo.slug, landingPath: demo.landingPath })) {
         if (!step.anchor) continue;
+        anchored += 1;
         const m = step.anchor.match(ANCHOR);
         // ⚠ Markers only. A bare `#id` used to be allowed and was never checked: the tournament tour's first step rang
         // `#today`, which only the switch-off Overview wrote, so deleting that page would have passed in silence
@@ -136,6 +138,7 @@ describe('every tour anchor names a marker the page it lands on writes', () => {
           `step ${step.n} "${step.label}" lands on ${step.href}, but nothing that page renders writes `
           + `data-sandbox-tour="${m[1]}" — the step narrates on a page where its ring cannot appear`);
       }
+      assert.ok(anchored >= 1, `${kind}: no tour step rings an anchor, so nothing above was checked`);
     });
   }
 });

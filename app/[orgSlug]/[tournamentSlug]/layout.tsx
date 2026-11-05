@@ -15,7 +15,7 @@ import { tournamentToday } from '@/lib/timezone';
 import { hasPlanFeature } from '@/lib/plan-features';
 import { runsInviteOnlyEvents } from '@/lib/invite-only-event';
 import { showsFreeCredit } from '@/lib/plan-config';
-import { hasOwnTournamentTheme, resolvePublicTournamentTheme } from '@/lib/public-tournament-theme';
+import { resolvePublicTournamentTheme } from '@/lib/public-tournament-theme';
 import TournamentNavSync from '@/components/TournamentNavSync';
 import PoweredByBadge from '@/components/marketing/PoweredByBadge';
 import TournamentAcquisitionBanner from '@/components/marketing/TournamentAcquisitionBanner';
@@ -137,25 +137,22 @@ export default async function TournamentLayout({
   // offline-caches this page's HTML as anonymous content, so the pill fetches its identity
   // client-side via /api/public/tournament-viewer instead (see TournamentFlipPill /
   // lib/use-public-flip). Do not thread per-user data into this layout.
-  // Free public tournament pages always use the FieldLogicHQ default theme, even if old branding
-  // values exist. Nothing is emitted when the tournament has no theme of its own — the org
-  // layout's vars then stand. (The rule itself lives in lib/public-tournament-theme.ts, shared
-  // with the admin preview layout and the setup wizard's live preview.)
-  let tournamentCssVars: string | null = null;
-  if (hasOwnTournamentTheme(org, tournament)) {
-    const t = resolvePublicTournamentTheme(org, tournament);
-    tournamentCssVars = [
-      `--primary:       ${t.primary}`,
-      `--primary-light: ${t.primaryLight}`,
-      `--primary-rgb:   ${t.primaryRgb}`,
-      `--primary-glow:  rgba(${t.primaryRgb}, 0.35)`,
-      `--primary-faint: rgba(${t.primaryRgb}, 0.08)`,
-      `--border:        rgba(${t.primaryRgb}, 0.25)`,
-      `--glow:          0 0 32px rgba(${t.primaryRgb}, 0.4)`,
-      `--glow-sm:       0 0 16px rgba(${t.primaryRgb}, 0.25)`,
-      `--on-primary:    ${t.onPrimary}`,
-    ].join('; ');
-  }
+  // The page's accents wear the band's colour, always emitted: the org layout's vars are the org's own colours, which a
+  // Tournament Plus event with nothing saved does not wear (it is the plain look), and a club on *Always* overrides a
+  // tournament's own. (The rule lives in lib/public-tournament-theme.ts, shared with the admin preview layout and the
+  // setup wizard's live preview.)
+  const t = resolvePublicTournamentTheme(org, tournament);
+  const tournamentCssVars = [
+    `--primary:       ${t.primary}`,
+    `--primary-light: ${t.primaryLight}`,
+    `--primary-rgb:   ${t.primaryRgb}`,
+    `--primary-glow:  rgba(${t.primaryRgb}, 0.35)`,
+    `--primary-faint: rgba(${t.primaryRgb}, 0.08)`,
+    `--border:        rgba(${t.primaryRgb}, 0.25)`,
+    `--glow:          0 0 32px rgba(${t.primaryRgb}, 0.4)`,
+    `--glow-sm:       0 0 16px rgba(${t.primaryRgb}, 0.25)`,
+    `--on-primary:    ${t.onPrimary}`,
+  ].join('; ');
 
   // Game-day window — gates the My-Team dock (mirrors lib/follow isTournamentInProgress
   // without importing the client module into this server component). Tournament-local
@@ -313,9 +310,7 @@ export default async function TournamentLayout({
           endDate={tournament.endDate ?? null}
           status={tournament.status ?? null}
         />
-        {tournamentCssVars && (
-          <style dangerouslySetInnerHTML={{ __html: `:root { ${tournamentCssVars} }` }} />
-        )}
+        <style dangerouslySetInnerHTML={{ __html: `:root { ${tournamentCssVars} }` }} />
         {/* Chrome vars. Desktop: --desktop-strip-h → the global desktop STRIP's height (top-anchored toasts and page
             top-padding offset by it). ≤900px (no strip, a bottom bar instead): --desktop-strip-h → 0, zeroed at the SAME
             900px boundary that hides the strip (ConsumerShell .topbarStrip); --bottom-nav-height → 4.5rem, the global

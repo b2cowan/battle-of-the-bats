@@ -36,6 +36,7 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Copy, Plus } from 'lucide-react';
 import type { Tournament, TournamentFormat } from '@/lib/types';
+import { resolveTournamentLook } from '@/lib/tournament-look';
 import TournamentStyleCards from './TournamentStyleCards';
 import DateInput from '@/components/shared/DateInput';
 import TournamentCreationPreview, {
@@ -219,11 +220,12 @@ function sourceRank(status?: string | null) {
 }
 
 /** Which swatch reads as chosen — it must name the colours the phone beside it is ACTUALLY rendering. */
+// The same rule the phone uses (lib/tournament-look.ts): Tournament Plus with nothing chosen is the plain look, not the
+// org's leftover colours; a club on *Always* is the club's (Stage 8 Part 6).
 function resolveSelectedPreset(org: PreviewOrg, tournamentTheme: PreviewTournamentTheme | null): string | null {
-  const ownTheme = tournamentTheme && (tournamentTheme.themePreset || tournamentTheme.themePrimary) ? tournamentTheme : null;
-  const primary = ownTheme ? ownTheme.themePrimary : org.themePrimary;
-  if (primary) return null;
-  const preset = (ownTheme ? ownTheme.themePreset : org.themePreset) ?? 'platform';
+  const look = resolveTournamentLook(org, tournamentTheme ? { ...tournamentTheme, themeFont: null, logoUrl: null } : null);
+  if (look.primary) return null;
+  const preset = look.preset ?? 'platform';
   return isThemePresetKey(preset) ? preset : 'platform';
 }
 

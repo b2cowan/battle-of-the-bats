@@ -1,0 +1,276 @@
+<title>New Look Release Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Same instrument as the Stage 1a / Stage 7 walks: one narrow column, parts as folds, steps, a verdict row and a notes box per part. */
+:root {
+  --bg: #f6f5f1; --panel: #ffffff; --fg: #23251f; --muted: #666a5d; --line: #dcdacf;
+  --accent: #4d5c1a; --accent-fg: #ffffff; --good: #2f6b2f; --warn: #8a5a00; --bad: #a3321f; --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+a { color: var(--accent); overflow-wrap: anywhere; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .facts { grid-template-columns: 1fr; } .facts dd { margin-bottom: 6px; } }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+.step.opt { flex-direction: column; gap: 4px; }
+.step .optrow { display: flex; gap: 10px; align-items: flex-start; }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · Public tournament pages · Stage 8 Part 6 · §456</span>
+    <h1>The new look, as a customer meets it once the switch is gone</h1>
+    <p class="sub">Written 2026-11-04. Test data only, on the dev database. About 45 minutes. One purpose: every public tournament page shows only the new look, with nothing to switch, and the Public site page that sets it is right on each plan.</p>
+  </header>
+
+  <section class="card">
+    <h2>What this walk is for</h2>
+    <p>Stage 8 removed the preview switch. There is no old look to fall back to and no link to turn anything on: a family, a fan and an organizer all see the new pages. This is the last look before the stage waits to ship. Two things changed in this session that the walk also checks: a tournament page's buttons and highlights now always wear the same colour as its band (they used to follow an older rule and could disagree), and a tournament’s share picture no longer prints zero teams when the Teams page is off.</p>
+  </section>
+
+  <section class="card">
+    <h2>It passes when</h2>
+    <ul>
+      <li>A and B: every public tournament page, on a computer and a phone, opens in the new look, with no preview link, no old tab row and no sideways scroll. The band, the buttons and the highlights on a page share one colour.</li>
+      <li>C: on Tournament Plus the Public site page is Pages, Look and Logo, and a colour chosen there reaches the band and the buttons.</li>
+      <li>D: on the free plan the same page shows Pages and one lock line, and the public page wears the plain FieldLogicHQ look.</li>
+      <li>E: a club on “Always the club’s look” has every tournament in the club’s colour, buttons included.</li>
+      <li>F to I: the dashboard’s Public site row ticks once a colour is set, the home-screen icon is FieldLogicHQ’s, the demo tour lands on every step, and the help says all of this.</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>Before you start</h2>
+    <p>Setup, not checked. Keep this page private: it holds dev passwords.</p>
+    <dl class="facts">
+      <dt>Where</dt><dd><strong>http://localhost:3000</strong> on your computer, with the dev server running (ask Claude first: step S1). Test data only.</dd>
+      <dt>The test events</dt><dd>Claude moved them to today’s dates for this walk. <strong>Fall Classic</strong> (Lakeshore Lightning, a club in yellow) is on now with games today. <strong>Spring Showcase</strong> and <strong>Stage4 Live</strong> (Metro Sports, Tournament Plus, the event’s own pink) are on now, Stage4 Live in its playoffs. <strong>Fall Ball</strong> (Northfield, the free plan) is finished with champions. <strong>Spring Invitational</strong> (Hamilton-Wentworth, a club in green) is open for registration.</dd>
+      <dt>The preview switch</dt><dd>Gone. If an old bookmark to “turn the preview on or off” is still around, it should lead nowhere (step A12).</dd>
+      <dt>Leaves behind</dt><dd>Part C gives UAT Import Smoke Tournament a colour and takes it away again. Part D puts UAT Test Org on the free plan for a few minutes and Claude puts it back (D1 and D4). Part F creates a draft called <strong>Stage 8 walk draft</strong>; delete it at the end from its Settings, or leave it (test data).</dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <h2>Sign in as</h2>
+    <dl class="facts">
+      <dt>Anyone (A, B, E1, G, H)</dt><dd>No sign-in. Use a private window so an admin sign-in does not change what you see.</dd>
+      <dt>Tournament Plus owner (C, D, F, I)</dt><dd><code>uat-owner@uat-test-org.local</code> · <code>UATPassword2026!</code> · <code>http://localhost:3000/auth/login</code> · org UAT Test Org, tournament <strong>UAT Import Smoke Tournament</strong>.</dd>
+      <dt>Club owner (E2)</dt><dd><code>uat-club-owner@uat-rep-club.local</code> · <code>UATPassword2026!</code> · club UAT Rep Club, set to “Always the club’s look” in purple.</dd>
+      <dt>Picking a tournament</dt><dd>In the admin, the tournament picker at the top chooses which tournament the Public site page edits.</dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+
+  <section class="card">
+    <h2>Not in this walk</h2>
+    <ul>
+      <li><strong>The release itself.</strong> Nothing here touches production. The promote is its own session (Part 6b), with the migration that adds the club’s rule run immediately before it.</li>
+      <li><strong>Small tap targets already on record.</strong> The layout check found nothing new. Four known items are still there and stay recorded: the admin strip’s small “Dismiss”, a small field in the club’s colour editor, the demo bar’s buttons, and the Register and News pages’ short links. You do not need to note them.</li>
+      <li><strong>The schedule’s “Playoffs” view in the layout check.</strong> The check waits for an old wording of the bracket link and could not measure it. A2 covers that view by eye instead.</li>
+      <li><strong>A league’s words.</strong> No dev League sign-in has tournaments; the wording is checked automatically.</li>
+    </ul>
+  </section>
+</main>
+
+<script>
+(function () {
+  var DATA = {"key":"public-tournament-stage8-part6-walk-v1","title":"Public tournament pages Stage 8 Part 6 walk (§456): the new look with the switch gone","written":"2026-11-04","parts":[
+{"id":"S","title":"Start: the build is running","steps":[
+{"who":"You · ask Claude","do":"Ask Claude whether the dev server was restarted on the Part 6 build and the test events are on today’s dates.","see":"Claude says yes to both. If not, STOP.","options":["Yes to both","Not yet: STOP"]},
+{"who":"Anyone · private window · /stage1-lakeshore-lightning/fall-classic","do":"Open Fall Classic’s public page in a private window on your computer.","see":"The page opens. Nothing on it offers a preview, a switch or an “old look”."}]},
+{"id":"A","title":"Every public page on a computer","steps":[
+{"who":"Anyone · Overview · /stage1-lakeshore-lightning/fall-classic","do":"Read the Overview.","see":"The band at the top in the club’s yellow, with the event name and where the event stands (for example “Live now”). Below it, today’s games: Live now, Up next, then Latest results. The side rail on the right lists the pages. No old tab row under the band."},
+{"who":"Anyone · Schedule · /stage1-lakeshore-lightning/fall-classic/schedule","do":"Open the Schedule. Then press “Playoffs” in the Pool play / Playoffs switch.","see":"The day opens on today with a live game card. Under Playoffs, the semifinals and the final, and a link “The playoff bracket” that opens the Playoffs page.","options":["Both views right; the bracket link opens Playoffs","Something missing: write it in the notes"]},
+{"who":"Anyone · a game","do":"From the Schedule, open any game.","see":"The game’s page opens with when and where first, the two teams and the score or the start time. The back link returns to the Schedule."},
+{"who":"Anyone · Standings · /stage1-metro-sports/spring-showcase/standings","do":"Open Spring Showcase’s Standings.","see":"The band in the event’s own pink. Each pool’s table, with the tie-breaker line under it."},
+{"who":"Anyone · Teams · /stage1-metro-sports/spring-showcase/teams","do":"Open Teams, then open any team.","see":"The teams by division. The team’s page shows its games and where it stands."},
+{"who":"Anyone · Playoffs · /stage1-metro-sports/stage4-live/playoffs","do":"Open Stage4 Live’s Playoffs.","see":"The bracket, with the semifinals decided and the final to come."},
+{"who":"Anyone · Champions · /stage1-northfield/fall-ball/champions","do":"Open Fall Ball’s Champions.","see":"The champions, one per division. Fall Ball is on the free plan, so the band is the plain FieldLogicHQ look, not the pink stored on the event."},
+{"who":"Anyone · Rules · /stage1-lakeshore-lightning/fall-classic/rules","do":"Open Fall Classic’s Rules.","see":"The rules in sections, in the new look. No “layout” choice anywhere."},
+{"who":"Anyone · Register · /stage1-hamilton-wentworth/spring-invitational/register","do":"Open Spring Invitational’s Register page and start the form.","see":"The band in the club’s green. The steps of the form and the progress bar are green too, the same colour as the band, not a different blue or pink.","options":["Band and form are one colour","They differ: write the two colours in the notes"]},
+{"who":"Anyone · the pay page","do":"Open this team’s pay link: http://localhost:3000/stage1-northfield/fall-ball/pay/P08mcc0LTS-wKQp25c6VEQ.pswOns8_UHzmhGjDaY0Hqw","see":"A slim band with the event’s name and “Team payment”, then how to pay the organizer. No side rail, no tabs, no ticker: the page has one job."},
+{"who":"Anyone · Share · Spring Showcase’s Overview","do":"On Spring Showcase’s Overview, find the share button and look at its colour.","see":"The share button and the page’s highlights are in the event’s pink, matching the band."},
+{"who":"Anyone · an old preview link · /api/public-frame?frame=off&to=/stage1-lakeshore-lightning/fall-classic","do":"Open that address (the old “turn the preview off” link).","see":"It does not switch anything: a “page not found”, or the plain new-look page. There is no way back to the old look.","options":["Nothing to switch","The old look came back: STOP and tell Claude"]}]},
+{"id":"B","title":"The same pages on a phone","steps":[
+{"who":"Anyone · phone (or the window narrowed to 390 px)","do":"Open Fall Classic’s Overview, then its Schedule and one game.","see":"The band fits, the app’s bar sits at the bottom, nothing scrolls sideways, and the game card is easy to tap."},
+{"who":"Anyone · phone","do":"Open Spring Showcase’s Standings and Teams.","see":"The tables fit or scroll inside themselves; the page itself never scrolls sideways."},
+{"who":"Anyone · phone","do":"Open Spring Invitational’s Register page.","see":"The form fits the screen and its buttons are easy to tap. The form’s colour matches the band (green)."},
+{"who":"Anyone · phone","do":"Open the pay link from A10.","see":"The slim band and the pay block fit the screen. Nothing else from the event’s pages is on it."},
+{"who":"Anyone · phone","do":"Open Fall Ball’s Champions.","see":"The champions fit the screen, in the plain FieldLogicHQ look."}]},
+{"id":"C","title":"Tournament Plus: the Public site page","steps":[
+{"who":"Tournament Plus owner · admin · Public site","do":"Sign in as uat-owner@uat-test-org.local. Pick UAT Import Smoke Tournament and open its Public site page from the tournament menu.","see":"Top to bottom: the door “See your public site”, Pages, Look, Logo. NO App icon, Theme, Hero banner, Font or Card style cards, and no App name field."},
+{"who":"Tournament Plus owner · the Look card","do":"Open the Look card.","see":"The FieldLogicHQ swatch is chosen, with the line “FieldLogicHQ, the plain look. Pick a colour to make it yours.” No mention of a club. A band preview under “On a phone” in the plain colour."},
+{"who":"Tournament Plus owner · the Look card","do":"Pick the green swatch and Save. Open the tournament’s public page and its Register page.","see":"The band is green. The Register page’s form steps are green too.","options":["Band and buttons are green","Only the band changed: write it in the notes"]},
+{"who":"Tournament Plus owner · the Logo card","do":"Open the Logo card.","see":"An upload area for the event’s logo. Nothing about the app icon."},
+{"who":"Tournament Plus owner · the Look card","do":"Put it back: choose FieldLogicHQ and Save. Reload the public page.","see":"The plain FieldLogicHQ look again, buttons included."},
+{"who":"Tournament Plus owner · Settings · Pages","do":"In the Pages card, turn the Teams page off (it saves by itself). Open http://localhost:3000/uat-test-org/uat-import-smoke/opengraph-image (the share picture), then turn Teams back on and reload the picture.","see":"With Teams off, the share picture shows the name and the dates but NO team and division counts (it used to print 0 TEAMS · 0 DIVISIONS). With Teams on again, the counts are back (the event has 3 teams).","options":["No zeros while Teams is off","It printed zeros: write it in the notes"]}]},
+{"id":"D","title":"The free plan: one lock line","steps":[
+{"who":"You · ask Claude","do":"Ask Claude to put UAT Test Org on the free plan for part D.","see":"Claude confirms “uat-test-org: tournament_plus → tournament (free)”.","options":["Done","Not yet: ask again"]},
+{"who":"Tournament Plus owner (now free) · Public site page","do":"Reload UAT Import Smoke Tournament’s Public site page.","see":"The door and Pages, then ONE line with a lock: “Your logo, colours and type on this site”, which leads to the plan panel. No Look card, no Logo card."},
+{"who":"Anyone · the public page · /uat-test-org/uat-import-smoke","do":"Open the tournament’s public page.","see":"The plain FieldLogicHQ look, with no logo."},
+{"who":"You · ask Claude","do":"Ask Claude to put UAT Test Org back.","see":"Claude confirms “uat-test-org: back on tournament_plus”. The Public site page shows Look and Logo again.","options":["Back on Tournament Plus","Not yet: ask again"]}]},
+{"id":"E","title":"A club’s tournaments follow the club","steps":[
+{"who":"Anyone · /uat-rep-club/uat-rep-club-invitational-2026","do":"Open UAT Rep Club Invitational 2026’s public page, then its Register page if it has one.","see":"The band is the club’s purple. The page’s buttons and highlights are purple too, not the tournament’s own colour and not FieldLogicHQ blue.","options":["All purple","The buttons are another colour: write it in the notes"]},
+{"who":"Club owner · the Invitational’s Public site page","do":"Sign in as uat-club-owner@uat-rep-club.local, pick UAT Rep Club Invitational 2026 and open its Look card.","see":"No colour choices. A plain line: “The club uses its look on every tournament: colours and type.” and a button “Change the club’s look”. The preview shows the purple band."}]},
+{"id":"F","title":"“Branding done” on the dashboard","steps":[
+{"who":"Tournament Plus owner · New tournament","do":"Start a new tournament named Stage 8 walk draft. Fill only what the wizard asks for to create it (name, dates, one division); leave its colours alone.","see":"Beside the colour presets the wizard reads “Theme: FieldLogicHQ”, and its phone preview is the plain FieldLogicHQ colour (not a leftover organization colour)."},
+{"who":"Tournament Plus owner · the draft’s dashboard","do":"Open the new draft’s dashboard.","see":"The setup checklist has a “Public site” row, not ticked yet."},
+{"who":"Tournament Plus owner · the draft’s Public site page","do":"From that row, open the Public site page, pick any colour in the Look card and Save. Go back to the dashboard.","see":"The “Public site” row is now ticked. (A logo or a type look would tick it too; a banner no longer exists.)","options":["Ticked","Still unticked: write it in the notes"]}]},
+{"id":"G","title":"The home-screen icon is FieldLogicHQ’s","steps":[
+{"who":"Anyone · iPhone, Safari, same Wi-Fi","do":"Optional: on your iPhone open http://192.168.2.200:3000/stage1-metro-sports/spring-showcase (your computer’s address on the network), then Share, Add to Home Screen.","see":"The icon offered is the FieldLogicHQ mark and the name is FieldLogicHQ, not the event’s logo or name.","options":["Did it: FieldLogicHQ icon and name","Did it: the event’s icon or name (write it in the notes)","Skipped: check on staging after the release"]}]},
+{"id":"H","title":"The demo tour lands on every step","steps":[
+{"who":"Anyone · /demos","do":"Open the demos page and start the tournament demo’s tour.","see":"The tour’s first step rings something on the page it opens."},
+{"who":"Anyone · the tour","do":"Walk every step to the end.","see":"Each step opens its page and rings a real part of it (a highlighted card or area). No step lands on a blank page or rings nothing.","options":["Every step rings","A step rang nothing: write which in the notes"]}]},
+{"id":"I","title":"The help says the same","steps":[
+{"who":"Tournament Plus owner · Public site page · the help","do":"On the Public site page, open the help.","see":"The guide “Public site: the door to your site, and changes that save themselves” opens. It names Look, Logo and the lock line, and offers no retired control (no Theme, Font, Card style, Hero banner or App icon)."},
+{"who":"Tournament Plus owner · help search","do":"Search the help for “app icon”.","see":"“Can I give my event its own app icon and name?” answers No: the icon fans add and the app they install are always FieldLogicHQ’s."},
+{"who":"Tournament Plus owner · help search","do":"Search the help for “follow a tournament”.","see":"The answer says the “Follow this tournament” line sits at the top of a tournament’s Overview in the FieldLogicHQ app, and that following happens in the installed app, not in a browser."}]},
+{"id":"Z","title":"Put back","steps":[
+{"who":"You · ask Claude","do":"If part D was not put back, ask Claude to run the free-plan switch’s “back”. Delete Stage 8 walk draft from its Settings if you want it gone.","see":"Claude confirms UAT Test Org is on Tournament Plus.","options":["Put back","Not needed"]}]}
+]};
+  var KEY = DATA.key, PARTS = DATA.parts;
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  function txt(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; n.textContent = text; return n; }
+  function box(id, partId, label) {
+    var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+    cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+    boxes.push({ part: partId, id: id, cb: cb, label: label });
+    return cb;
+  }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(txt('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(txt('span', 'who', id + ' · ' + s.who));
+      t.appendChild(txt('span', null, s['do']));
+      t.appendChild(txt('span', 'see', 'You should see: ' + s.see));
+      if (s.options && s.options.length) {
+        var wrap = el('div', 'step opt'); wrap.appendChild(t);
+        s.options.forEach(function (o, k) {
+          var row = el('label', 'optrow'); var cb = box(id + '-' + (k + 1), p.id, id + ' = ' + o);
+          row.appendChild(cb); row.appendChild(txt('span', null, o)); wrap.appendChild(row);
+        });
+        body.appendChild(wrap);
+      } else {
+        var row2 = el('label', 'step'); var cb2 = box(id, p.id, id);
+        row2.appendChild(cb2); row2.appendChild(t); body.appendChild(row2);
+      }
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function refresh() {
+    var done = 0;
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var n = mine.filter(function (b) { return b.cb.checked; }).length;
+      done += n;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + mine.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    document.getElementById('total').textContent = done + ' of ' + boxes.length + ' checked';
+    document.getElementById('barfill').style.width = (boxes.length ? Math.round(done * 100 / boxes.length) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [DATA.title + ' (written ' + DATA.written + ')'];
+    var done = boxes.filter(function (b) { return b.cb.checked; }).length;
+    lines.push('Checked ' + done + ' of ' + boxes.length + ' (a step with options counts one box per option)');
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var ticked = mine.filter(function (b) { return b.cb.checked; }).map(function (b) { return b.label; });
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + mine.length + (ticked.length ? ' (' + ticked.join('; ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

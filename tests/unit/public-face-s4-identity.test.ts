@@ -141,9 +141,16 @@ describe('S4 Part B — icons, manifest and launch colours', () => {
   it('the home-screen icon is always FieldLogicHQ\'s: no per-tournament icon, the root layout\'s applies (Stage 8 Part 1)', () => {
     // Owner ruling 2026-11-03: one branded ecosystem, so a tournament page never offers its own Add to Home Screen icon.
     // A file-convention apple-icon (or icon) under a tournament would override the root layout's link on every page there.
-    for (const f of ['apple-icon.tsx', 'apple-icon.png', 'icon.tsx', 'icon.png', 'icon-maskable/route.tsx']) {
-      assert.ok(!existsSync(path.join(REPO, 'app/[orgSlug]/[tournamentSlug]', f)), `${f} is back under the tournament`);
-    }
+    // Any extension, any depth: a nested `teams/icon.png` would override the root icon on the team pages (Stage 8 Part 6).
+    const icons = filesUnder('app/[orgSlug]/[tournamentSlug]', '').filter((f) => /\/(apple-)?icon[\w-]*(\.\w+|\/route\.tsx?)$/.test(f));
+    assert.deepEqual(icons, [], 'a file-convention icon is back under the tournament');
+    // The tournament's metadata points at the one FieldLogicHQ manifest and names no icons of its own.
+    const layout = readCode('app/[orgSlug]/[tournamentSlug]/layout.tsx');
+    assert.match(layout, /manifest: '\/manifest\.json'/);
+    assert.doesNotMatch(layout, /\bicons\s*:/);
+    // The old per-tournament manifest address redirects to the shared one, permanently.
+    assert.match(readCode('app/[orgSlug]/[tournamentSlug]/manifest.webmanifest/route.ts'),
+      /Response\.redirect\(new URL\('\/manifest\.json', req\.url\), 308\)/);
     assert.ok(!existsSync(path.join(REPO, 'lib/pwa-icon.tsx')), 'the logo-to-icon helper is gone');
     assert.match(readCode('app/layout.tsx'), /<link rel="apple-touch-icon" href="\/icons\/fl-apple-180\.png" \/>/);
     assert.ok(onDisk('/icons/fl-apple-180.png'));

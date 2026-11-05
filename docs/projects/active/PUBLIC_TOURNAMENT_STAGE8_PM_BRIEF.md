@@ -1,6 +1,8 @@
 # Stage 8 — the new look on for everyone (PM brief)
 
-**Status:** draft 2026-11-03, for the owner's rulings. Plan: `PUBLIC_TOURNAMENT_STAGE8_PLAN.md`.
+**Status:** asks A–D ruled 2026-11-03; Parts 1–5 committed on `dev` (2026-11-03 to 11-04); Part 6a (the whole-stage review,
+the layout check, the owner walk §456) built 2026-11-04. **Stage 8 is ready to ship; the promote is 6b**, its own release
+session when the owner calls the release. Nothing has reached customers yet. Plan: `PUBLIC_TOURNAMENT_STAGE8_PLAN.md` (§20).
 
 ## What it is
 Every public tournament page has been rebuilt in the new look (light, the venue's colours on the club's ground, pinned tabs, the readable

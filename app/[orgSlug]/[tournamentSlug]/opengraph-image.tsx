@@ -101,7 +101,9 @@ async function loadCard(params: Promise<{ orgSlug: string; tournamentSlug: strin
       dateLabel: fmtRange(t.startDate, t.endDate),
       teamCount: teams.length,
       divisionCount: divisions.length,
-      showCounts: !(data.teamsWithheld && teams.length === 0 && divisions.length === 0),
+      // No count tiles rather than zeros: while every division is held back, and while the Teams page is off (the section
+      // then sends nothing, so the counts would read 0 TEAMS · 0 DIVISIONS — Stage 8 Part 6 review).
+      showCounts: data.pageEnabled !== false && !(data.teamsWithheld && teams.length === 0 && divisions.length === 0),
       primary: theme.primary,
       rgb: theme.primaryRgb,
       champions,

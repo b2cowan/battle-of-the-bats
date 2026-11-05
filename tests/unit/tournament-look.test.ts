@@ -509,3 +509,35 @@ describe('Part 3: the Branding page and its route (source guards)', () => {
     assert.equal(tabs.match(/prefetch=\{prefetch\}/g)?.length ?? 0, linkCount);
   });
 });
+
+// Stage 8 Part 6 review: the page's accents (`--primary`: the Register steps, the follow line, the share button, the dock)
+// had their own rule (own colours, else the org's) and disagreed with the band under the club's *Always* and on a
+// Tournament Plus event with nothing saved. They now read the one look rule.
+describe('the page accents wear the band colour (one rule)', async () => {
+  const { resolvePublicTournamentTheme } = await import('../../lib/public-tournament-theme.ts');
+  const { resolveTheme } = await import('../../lib/themes.ts');
+  const forest = resolveTheme('forest', null, null).primary;
+  const platform = resolveTheme('platform', null, null).primary;
+
+  it('a club on Always: the club colour even over a tournament that has its own', () => {
+    const always = { ...club, tournamentLookPolicy: 'always_club' } as LookOrg;
+    assert.equal(resolvePublicTournamentTheme(always, pink).primary, forest);
+  });
+  it('a club by default: the tournament keeps its own colour; without one, the club colour', () => {
+    assert.equal(resolvePublicTournamentTheme(club, pink).primary, '#E0457B');
+    assert.equal(resolvePublicTournamentTheme(club, bare).primary, forest);
+  });
+  it('Tournament Plus with nothing saved: the plain FieldLogicHQ colour, not the leftover org look', () => {
+    assert.equal(resolvePublicTournamentTheme(plus, bare).primary, platform);
+    assert.equal(resolvePublicTournamentTheme(plus, null).primary, platform);
+    assert.equal(resolvePublicTournamentTheme(plus, pink).primary, '#E0457B');
+  });
+  it('no tournament branding on the plan: FieldLogicHQ, whatever is saved', () => {
+    assert.equal(resolvePublicTournamentTheme(free, pink).primary, platform);
+  });
+  it('the live layout always emits the accents (no own-theme gate left to let the org layout\'s colours stand)', () => {
+    const layout = readCode('app/[orgSlug]/[tournamentSlug]/layout.tsx');
+    assert.match(layout, /const t = resolvePublicTournamentTheme\(org, tournament\);/);
+    assert.doesNotMatch(layout, /hasOwnTournamentTheme|tournamentCssVars &&/);
+  });
+});

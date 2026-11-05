@@ -19,6 +19,7 @@
 import { Star } from 'lucide-react';
 import { useMemo, useSyncExternalStore } from 'react';
 import type { Organization } from '@/lib/types';
+import type { LookOrg } from '@/lib/tournament-look';
 import { resolvePublicTournamentTheme } from '@/lib/public-tournament-theme';
 import { PRESETS } from '@/lib/themes';
 import { tournamentToday } from '@/lib/timezone';
@@ -33,11 +34,8 @@ import Countdown from '@/components/public/Countdown';
 import { runsInviteOnlyEvents } from '@/lib/invite-only-event';
 import styles from './TournamentCreationPreview.module.css';
 
-/** The org fields the preview needs: identity + the theme its public pages resolve to. */
-export type PreviewOrg = Pick<
-  Organization,
-  'name' | 'slug' | 'planId' | 'themePreset' | 'themePrimary' | 'themeAccent'
->;
+/** The org fields the preview needs: identity + what the one look rule reads (lib/tournament-look.ts). */
+export type PreviewOrg = Pick<Organization, 'name' | 'slug'> & LookOrg;
 
 /** The host never changes within a session — nothing to subscribe to, just a stable no-op. */
 const subscribeToNothing = () => () => {};
