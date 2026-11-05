@@ -147,8 +147,8 @@ p.checkError {
   cursor: pointer;
 }
 .linkButton:focus-visible { outline: 2px solid var(--club-ink); outline-offset: 2px; border-radius: 4px; }
-.fit { margin: 0.25rem 0 0.5rem; padding: 0.6rem 0.8rem; border-left: 3px solid var(--club-fill); background: var(--club-card); border-radius: 0 6px 6px 0; }
-.fitLine { margin: 0; font-size: 0.9rem; font-weight: 600; color: var(--club-text); }
+.fit { margin: 0.25rem 0 0.5rem; padding: 0.6rem 0.8rem; border-left: 3px solid var(--club-fill); background: var(--club-card); border-radius: 0 8px 8px 0; }
+.fitLine { margin: 0; font-size: 0.875rem; font-weight: 600; color: var(--club-text); }
 .fitDim { margin: 0.25rem 0 0; font-size: 0.875rem; color: var(--club-soft); }
 .pick { border: none; margin: 0.25rem 0 0.5rem; padding: 0; min-width: 0; }
 .nofit { padding: 0.9rem 1rem; margin: 0.25rem 0 0.5rem; }

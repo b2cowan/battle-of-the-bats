@@ -430,3 +430,33 @@ applied in v2; C3 split into C3 + C4.
   only other sessions' classes. **Layout check** (dev server, 14 club screens at 361 / 390 / 768 / 1,440, then eight at
   1,024 / 1,280 / 1,536): no new findings. The season page, both forms and Your sign-up are not in the screen list; each
   renders 200 with its 24 px name. No help or demo-tour anchor sits on these pages.
+- **2026-11-05 · Club build Part 3 (the sweep, R10 / R11, and the pay block) — built 2026-11-05.** Product-owner summary
+  presented before the code. **The pay block (shared: Your sign-up, the house-league sign-up's confirmation and the
+  tournament's team pay page — all three move, said in the summary; not forked):** every heading inside it (the states,
+  the receipts, the owing block — "To pay now" in the form's centred card, the tournament's balance heading) is one
+  section-heading rule, 16/700 in the text face, where it fell to the global 800-weight condensed title face; the clearing
+  blue kept (registered exception). The receipt-email field takes the darker field edge (new `--pay-field`: the club's
+  `--club-field`, which the tournament frame also defines) at 8 px; a receipt card is 8 px on its hairline; the pay
+  buttons are 44 (was 48) at 8 px on both sites (`.payRow > .payButton`, so it outranks the tournament's global `.btn`
+  at 6 without depending on sheet order), full width under 640. "Email me my link" goes full width at 640 too (was 480).
+  **R11:** Subscribe at a desk IS the kit's small outlined button (`kit.btn btnSecondary btnSm`; its sheet keeps only the
+  symbol's gap and colour, hover and focus; the phone's bare symbol now outranks the kit as `.wrap > .button`); its
+  popover on the scale (doors 15/650 → 16/600 at 8 px, note 13 → 12, panel 12 → 8 px, the sheet's title 19 → 18 and its
+  context 11 → 12; the panel's shadow and the phone sheet's 16 px top corners kept — a floating panel and a sheet, not page
+  parts). Follow is the kit's small buttons (secondary; "Following" the primary) — its sheet's copy of them deleted, the
+  look unchanged. "Sign up for tryouts" takes its own width at a desk and the full width on a phone (new kit
+  `.btnPhoneFull`; `.btnFull` kept — the team page's tryout door sits in the narrow side column). **R10 strays:** the
+  season page's early-bird price 16; the sign-up form's fit line 14 at 0 8 8 0; Your sign-up's Team value 600 and an
+  owing Fee 700 (both were 650); its fallback "To pay" total 20 px in the club's title face and weight. **Tournaments:**
+  both tables' cells in the text ink (the champion cell's own ink rule deleted with it). A sweep of the club sheets for
+  other off-scale sizes, weights and corners found none left on a page part (the checkboxes' 4 px is a checkbox).
+  **Guards:** `public-page-layout-guard` gained a "club round Part 3" block (the pay block, the buttons, the strays).
+  **Checks:** typecheck clean except another session's untracked `lib/child-page.ts`; focused lint clean; the guards
+  that read these files green (layout, phone secondary actions, club frame, Stage 1 / 2 frame, house-league sign-up,
+  focused page, 4a / 4b-2a / 4b-2b / 4c-2b, share census, sign-up link); `check:css-selectors` reports only other
+  sessions' classes. **Layout check** (dev server: club home, team, tryout, Tournaments ×2, About and the tournament's
+  focused pay page at 361 / 390 / 768 / 1,440, then 1,024 / 1,280 / 1,536): no new findings. `pubt-pay-focused` loads a
+  not-a-real-link address, so it measures the error state, not the pay block; no fixture has an owing pay link, so the
+  pay block's look is pinned by the guard, not measured. A probe on `uat-rep-only` 15U AAA (the club fixture's teams have
+  no schedule or open tryout): Subscribe at 1,536 is 44 tall, 8 px, 14/600, the field edge on white; at 390 the bare 44
+  symbol; "Sign up for tryouts" 183 px wide at 1,536, the full width at 390.

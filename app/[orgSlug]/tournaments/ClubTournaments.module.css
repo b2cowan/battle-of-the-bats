@@ -39,22 +39,18 @@
   position: relative;
 }
 
+/* Every cell in the text ink, both tables (club build Part 3, 2026-11-05: they were soft, the champion alone in ink). */
 .tableRow td {
   padding: 12px 16px;
   border-top: 1px solid var(--club-line);
   vertical-align: middle;
   font: 400 0.875rem var(--club-text-face);
-  color: var(--club-soft);
+  color: var(--club-text);
   font-variant-numeric: tabular-nums;
 }
 
 .tableRow:hover td {
   background: var(--club-ground);
-}
-
-/* At a desk the champion is the one cell in the text ink, at the row's weight. */
-.championCell {
-  color: var(--club-text);
 }
 
 .nameLink {

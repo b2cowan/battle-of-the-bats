@@ -305,7 +305,7 @@ export default async function LeagueSeasonPage({
                     {d.note && <span className={kit.rowSub}>{d.note}</span>}
                     {offer && cardPrice && (
                       <div style={{ marginTop: '0.4rem' }}>
-                        <div style={{ fontSize: '0.9375rem', fontWeight: 700, color: cardSave > 0 ? 'var(--club-ok)' : 'var(--club-text)' }}>
+                        <div style={{ fontSize: '1rem', fontWeight: 700, color: cardSave > 0 ? 'var(--club-ok)' : 'var(--club-text)' }}>
                           {dollarsLine(cardPrice.amount)}{cardSave > 0 && ` · Save ${dollarsLine(cardSave)}`}
                         </div>
                         {cardSave > 0 && <span className={kit.rowSub}>Early bird through {clubDay(offer.until)}, then {dollarsLine(cardPrice.regular)}</span>}

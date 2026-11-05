@@ -1,16 +1,18 @@
 /* THE ONE PAY BLOCK (Club Tier Stage 12b, owner §0e d): the pieces a team's pay page and a family's status page share.
    Its colours are its own three custom properties, so it reads true on the tournament's theme (the default) and inside a
    club's frame (`.inClub`), without a second copy of any rule. */
-.block { --pay-ink: var(--text-primary); --pay-soft: var(--text-secondary); --pay-dim: var(--text-tertiary); --pay-line: var(--border-2); }
+.block { --pay-ink: var(--text-primary); --pay-soft: var(--text-secondary); --pay-dim: var(--text-tertiary); --pay-line: var(--border-2); --pay-field: var(--club-field, var(--border-2)); }
 .inClub { --pay-ink: var(--club-text); --pay-soft: var(--club-soft); --pay-dim: var(--club-soft); --pay-line: var(--club-line); }
 
 .test { margin: 0 0 0.75rem; font-family: var(--font-data); font-size: var(--type-support); color: var(--pay-dim); }
 .state { margin: 0 0 1rem; }
-.state h2, .receipt h2 { margin: 0 0 0.35rem; font-size: var(--type-heading); color: var(--pay-ink); }
+/* Every heading inside the block is a section heading (standard R4/R10, club build Part 3, 2026-11-05): 16/700 in the text
+   face, on both sites — it fell to the global 800-weight condensed title face before. The clearing blue below still wins. */
+.state h2, .receipt h2, .owing h2 { margin: 0 0 0.35rem; font: 700 var(--type-heading)/1.25 var(--club-text-face, inherit); letter-spacing: normal; color: var(--pay-ink); }
 .state p { margin: 0; color: var(--pay-soft); }
 .note { margin: 0.2rem 0 0; font-size: var(--type-support); color: var(--pay-dim); line-height: 1.45; }
 .receipts { margin: 0 0 1.25rem; display: flex; flex-direction: column; gap: 1rem; }
-.receipt { padding: 0.9rem 1rem; border: 1px solid var(--pay-line); border-radius: var(--radius-sm); }
+.receipt { padding: 0.9rem 1rem; border: 1px solid var(--pay-line); border-radius: var(--radius-md); }
 .receiptTo { margin: 0; color: var(--pay-ink); font-weight: 600; }
 .lines { margin: 0.75rem 0 0; }
 .lines > div { display: flex; justify-content: space-between; gap: 1rem; padding: 0.2rem 0; color: var(--pay-soft); }
@@ -18,13 +20,17 @@
 .total { border-top: 1px solid var(--pay-line); margin-top: 0.3rem; padding-top: 0.4rem !important; color: var(--pay-ink) !important; font-weight: 700; }
 .field { display: flex; flex-direction: column; gap: 0.3rem; }
 .label { font-size: var(--type-support); font-weight: 600; color: var(--pay-soft); }
-.input { height: 44px; padding: 0 0.75rem; border: 1px solid var(--pay-line); border-radius: var(--radius-sm); background: transparent; color: var(--pay-ink); font: inherit; }
+/* A field wears the darker field edge, not the hairline (standard R10). */
+.input { height: 44px; padding: 0 0.75rem; border: 1px solid var(--pay-field); border-radius: var(--radius-md); background: transparent; color: var(--pay-ink); font: inherit; }
 .payButtons { display: flex; flex-direction: column; gap: 0.75rem; }
 .payRow { display: flex; flex-direction: column; align-items: flex-start; gap: 0.25rem; }
 /* 12c: a bank debit on its way — the state's heading in the info colour (words §2.2). */
 .clearing h2 { color: rgb(var(--info-rgb)); }
 .clearing p + p { margin-top: 0.35rem; }
-.payButton { min-height: 48px; display: inline-flex; align-items: center; gap: 0.5rem; }
+/* 44 like every button (standard R11, club build Part 3; was 48). 8 px corners on both sites (the
+   tournament's global .btn is 6). Full width on a phone at the club frame's 640. */
+.payButton { min-height: 44px; display: inline-flex; align-items: center; gap: 0.5rem; }
+.payRow > .payButton { border-radius: var(--radius-md); }
 .error { margin: 0; color: rgb(var(--danger-rgb)); }
 .link { align-self: flex-start; padding: 0; border: 0; background: none; color: inherit; text-decoration: underline; cursor: pointer; font: inherit; font-size: var(--type-support); }
 /* Public tournament pages Stage 7, A8: on the focused team pay page (TeamPayContent marks it; frame-only) the link gets a
@@ -34,6 +40,5 @@
 .centered .payRow { align-items: center; }
 .centered .link { align-self: center; }
 .owing { display: flex; flex-direction: column; gap: 0.9rem; }
-.owing h2 { margin: 0 0 0.35rem; font-size: var(--type-heading); color: var(--pay-ink); }
 .owingLines { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 0.2rem; color: var(--pay-soft); font-size: var(--type-support); }
 @media (max-width: 640px) { .payButton { width: 100%; justify-content: center; } }

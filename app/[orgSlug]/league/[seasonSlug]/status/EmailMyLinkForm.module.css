@@ -28,7 +28,8 @@
 
 .button { white-space: nowrap; }
 
-/* On a phone the one button is full width (drawing tab 6). */
-@media (max-width: 480px) {
+/* On a phone the one button is full width (drawing tab 6), at the club frame's 640 — the pay buttons' width (club build
+   Part 3, 2026-11-05: was 480, so the two disagreed between 481 and 640). */
+@media (max-width: 640px) {
   .button { width: 100%; }
 }

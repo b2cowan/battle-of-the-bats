@@ -104,7 +104,7 @@ export default function TryoutLandingView({
 
       {state === 'open' ? (
         <>
-          <Link href={registerHref} className={`${kit.btn} ${kit.btnPrimary} ${kit.btnFull}`}>Sign up for tryouts</Link>
+          <Link href={registerHref} className={`${kit.btn} ${kit.btnPrimary} ${kit.btnPhoneFull}`}>Sign up for tryouts</Link>
           <TryoutQuestionsLine {...(coachAsk ?? { email: contactEmail, lead: 'Questions? Email the club at', copyLabel: COPY_CLUB_EMAIL })} />
         </>
       ) : (

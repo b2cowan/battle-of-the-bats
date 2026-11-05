@@ -163,7 +163,7 @@ export default async function ClubTournamentsPage({ params }: { params: Promise<
                     <td>{r.season}</td>
                     <td><Link href={r.href} className={styles.nameLink}>{r.name}</Link></td>
                     <td>{r.division ?? '—'}</td>
-                    <td className={r.champion ? styles.championCell : undefined}>{r.champion ?? '—'}</td>
+                    <td>{r.champion ?? '—'}</td>
                     <td className={styles.num}>{r.teams ?? '—'}</td>
                     <td className={styles.num}>{r.games ?? '—'}</td>
                     <td className={styles.chev} aria-hidden="true" />

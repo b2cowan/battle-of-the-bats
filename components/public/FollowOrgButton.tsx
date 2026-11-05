@@ -17,6 +17,7 @@ import { Star } from 'lucide-react';
 import { useFollowedOrg } from '@/lib/follow';
 import { getSession } from '@/lib/auth';
 import { fireConsumerEvent } from '@/lib/consumer-events-client';
+import kit from './ClubKit.module.css';
 import styles from './FollowOrgButton.module.css';
 
 import { hideOnClubOwnHost } from '@/components/public/hideOnClubOwnHost';
@@ -71,7 +72,7 @@ function FollowOrgButton({ orgSlug, orgName }: Props) {
   return (
     <button
       type="button"
-      className={`${styles.btn} ${following ? styles.btnOn : ''} ${saving ? styles.saving : ''}`}
+      className={`${kit.btn} ${kit.btnSm} ${following ? `${kit.btnPrimary} ${styles.on}` : kit.btnSecondary} ${styles.follow} ${saving ? styles.saving : ''}`}
       aria-pressed={following}
       onClick={toggle}
     >

@@ -1,43 +1,27 @@
 /* components/public/FollowOrgButton.module.css — Phase 6 (F1/F3); on the club's own site since Club Tier Stage 4b-2a.
    The button renders only on an org's home — a club's (the end of About the club, owner 2026-10-20) or a
    tournament-only org's hero — and every org home wears the club's light frame (ClubFrame.module.css `.site` supplies
-   the --club-* tokens): so it wears the club kit's buttons — "Follow" the secondary one, "Following" the club's fill —
-   in the club's text face, sentence case. No lime, no typewriter capitals (DC-03). */
+   the --club-* tokens). Its look IS the club kit's small buttons (set in the component since the club build's Part 3,
+   2026-11-05, which deleted this sheet's copy of them): "Follow" the secondary one, "Following" the club's fill.
+   This sheet adds only the star's gap, the hover, the focus ring and the brief saving fade. No lime, no capitals (DC-03). */
 
-.btn {
-  display: inline-flex;
-  align-items: center;
+.follow {
   gap: 0.45rem;
-  min-height: 44px;
-  border: 1px solid var(--club-field);
-  border-radius: 8px;
-  padding: 0 1rem;
-  background: var(--club-card);
-  color: var(--club-text);
-  font: 600 0.875rem/1 var(--club-text-face);
-  cursor: pointer;
   transition: background 0.12s, border-color 0.12s, opacity 0.12s;
 }
 
-.btn:hover {
+.follow:hover {
   background: var(--club-ground);
 }
 
-.btn:focus-visible {
-  outline: 2px solid var(--club-ink);
-  outline-offset: 2px;
-}
-
-/* "Following" — the club's own fill (the kit's primary button). */
-.btnOn {
-  border: 1.5px solid var(--club-edge);
-  background: var(--club-fill);
-  color: var(--club-on-fill);
-}
-
-.btnOn:hover {
+.follow.on:hover {
   background: var(--club-fill);
   opacity: 0.9;
+}
+
+.follow:focus-visible {
+  outline: 2px solid var(--club-ink);
+  outline-offset: 2px;
 }
 
 .saving {

@@ -180,7 +180,7 @@ export default function YourSignup({
                 {r.team && (
                   <div style={row}>
                     <span style={{ color: 'var(--club-soft)' }}>Team</span>
-                    <span style={{ color: 'var(--club-text)', fontWeight: r.team.name ? 650 : 400 }}>{r.team.name ?? 'Not set yet'}</span>
+                    <span style={{ color: 'var(--club-text)', fontWeight: r.team.name ? 600 : 400 }}>{r.team.name ?? 'Not set yet'}</span>
                   </div>
                 )}
                 {r.team?.name && (
@@ -191,7 +191,7 @@ export default function YourSignup({
                 )}
                 <div style={row}>
                   <span style={{ color: 'var(--club-soft)' }}>Fee</span>
-                  <span style={{ color: 'var(--club-text)', fontWeight: fee.owing ? 650 : 400, textAlign: 'right' }}>{fee.text}</span>
+                  <span style={{ color: 'var(--club-text)', fontWeight: fee.owing ? 700 : 400, textAlign: 'right' }}>{fee.text}</span>
                 </div>
                 {fee.sub && <p style={{ ...soft, textAlign: 'right' }}>{fee.sub}</p>}
                 {(r.withdrawRequestedAt || asked === r.child) && !ended(r) && (
@@ -214,7 +214,8 @@ export default function YourSignup({
             <div className={kit.card}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '1rem' }}>
                 <span style={{ fontWeight: 700, color: 'var(--club-text)' }}>To pay</span>
-                <span style={{ fontWeight: 750, fontSize: '1.15rem', color: 'var(--club-text)' }}>{dollarsLine(toPay)}</span>
+                {/* The total is 20 px in the club's title face (standard R10, club build Part 3, 2026-11-05: was 18.4 at weight 750). */}
+                <span style={{ fontFamily: 'var(--club-title-face)', fontWeight: 'var(--club-title-weight)', fontSize: '1.25rem', lineHeight: 1.15, color: 'var(--club-text)' }}>{dollarsLine(toPay)}</span>
               </div>
               <p style={{ ...soft, marginTop: '0.35rem' }}>
                 {owed.map(r => `${r.playerFirstName} · ${r.divisionName}`).join('; ')}.

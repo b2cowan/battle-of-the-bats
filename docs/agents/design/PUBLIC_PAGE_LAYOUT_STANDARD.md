@@ -169,6 +169,10 @@ override removed. Still off the scale on purpose until Part 4: a game page's 32 
 *Built (Part 3, 2026-11-05):* the empty-state card (`PublicTournamentState`) under the frame is the Schedule's own
 empty state: a white card, light hairline, 8 px corners, left-aligned, a 20 px title, the line in dim ink, the symbol
 plain — no glow, shadow, medallion or sliding title. Every public tournament page that shows it takes the one look.
+*Built (club build Part 3, 2026-11-05):* the club pages' strays on the scale (early-bird price 16, the fit line 14 at 8 px,
+Your sign-up's weights 600 / 700 and its total 20 in the title face, Subscribe's popover); the shared pay block's headings
+are section headings (16/700, text face) on both sites, its field takes the field edge at 8 px, its receipts 8 px;
+Tournaments' table cells in the text ink.
 
 ### R11 · Weight follows purpose
 A filled button only for the page’s main job (Register, Pay). A choice inside a control (the chosen day, the chosen side
@@ -178,6 +182,9 @@ Same on a phone.
 *Built (Part 3, 2026-11-05):* "Visit the club" is outlined, and the host card renders only when the club has something
 open now (A10: `hostCardView` returns no card for an empty open-now list).
 *Built (Part 4, 2026-11-05):* a team's page's "Try again" is the outlined button inside the shared empty card.
+*Built (club build Part 3, 2026-11-05):* the pay buttons are 44 at 8 px on both sites, full width on a phone at 640 (and
+"Email me my link" with them); Subscribe at a desk and Follow are the club kit's small buttons; "Sign up for tryouts" takes
+its own width at a desk, the full width on a phone.
 
 ---
 

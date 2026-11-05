@@ -383,3 +383,45 @@ describe('Public page layout standard, club round Part 2 — one title rule, one
     assert.match(readSource('components/public/ClubKit.module.css'), /\.rowExternal::after \{ display: none; \}/, 'the symbol stands where the chevron would');
   });
 });
+
+/** Club round Part 3 (2026-11-05): the sweep (R10 type and corners, R11 buttons) and the shared pay block. The pay block is
+ *  also the tournament's team pay page and the house-league sign-up's confirmation, so what it pins holds on both sites. */
+describe('Public page layout standard, club round Part 3 — one type scale, one corner, one button', () => {
+  const noComments = (css: string) => css.replace(/\/\*[\s\S]*?\*\//g, '');
+  it('the pay block: every heading a 16/700 section heading in the text face, the field on the field edge, buttons 44 at 8', () => {
+    const pay = noComments(readSource('components/public/PayBlock.module.css'));
+    assert.match(cssRule(pay, '.state h2, .receipt h2, .owing h2'), /font: 700 var\(--type-heading\)\/1\.25 var\(--club-text-face, inherit\);/,
+      'one heading rule for every state, the receipts and the owing block — never the global 800-weight title face');
+    assert.match(cssRule(pay, '.clearing h2'), /color: rgb\(var\(--info-rgb\)\);/, 'the clearing heading keeps its blue (registered exception)');
+    assert.match(cssRule(pay, '.input'), /border: 1px solid var\(--pay-field\);[\s\S]*border-radius: var\(--radius-md\);/, 'the field edge, 8 px');
+    assert.match(cssRule(pay, '.block'), /--pay-field: var\(--club-field, var\(--border-2\)\);/);
+    assert.match(cssRule(pay, '.receipt'), /border: 1px solid var\(--pay-line\);[\s\S]*border-radius: var\(--radius-md\);/, 'a receipt is a box: hairline, 8 px');
+    assert.match(cssRule(pay, '.payButton'), /min-height: 44px;/, 'R11: 44 like every button (was 48)');
+    assert.match(cssRule(pay, '.payRow > .payButton'), /border-radius: var\(--radius-md\);/, '8 px on the tournament too (its global .btn is 6)');
+    assert.doesNotMatch(pay, /48px|radius-sm/);
+    assert.match(pay, /@media \(max-width: 640px\) \{ \.payButton \{ width: 100%;/, 'full width on a phone at the club frame\'s 640');
+    assert.match(readSource(`${CLUB}/league/[seasonSlug]/status/EmailMyLinkForm.module.css`), /@media \(max-width: 640px\) \{\s*\.button \{ width: 100%; \}/,
+      '"Email me my link" goes full width at the same 640 as the pay buttons');
+  });
+  it('R11: Subscribe and Follow are the kit\'s small buttons; "Sign up for tryouts" takes its own width at a desk', () => {
+    assert.match(readCode('components/public/TeamSubscribeButton.tsx'), /className=\{`\$\{kit\.btn\} \$\{kit\.btnSecondary\} \$\{kit\.btnSm\} \$\{styles\.button\}`\}/);
+    const sub = noComments(readSource('components/public/TeamSubscribeButton.module.css'));
+    assert.doesNotMatch(cssRule(sub, '.button'), /border|radius|font|padding|min-height/, 'Subscribe keeps no button recipe of its own');
+    assert.doesNotMatch(sub, /font-weight: 650|border-radius: (9|12)px|font-size: 0\.(9375|8125|6875)rem|font-size: 1\.1875rem/, 'the popover on the scale');
+    assert.match(readCode('components/public/FollowOrgButton.tsx'), /\$\{kit\.btn\} \$\{kit\.btnSm\} \$\{following \? `\$\{kit\.btnPrimary\} \$\{styles\.on\}` : kit\.btnSecondary\}/);
+    assert.doesNotMatch(noComments(readSource('components/public/FollowOrgButton.module.css')), /min-height|border-radius|border:/, 'Follow keeps no copy of the kit\'s buttons');
+    assert.match(readCode('components/rep-teams/TryoutLandingView.tsx'), /\$\{kit\.btnPrimary\} \$\{kit\.btnPhoneFull\}`\}>Sign up for tryouts/);
+    assert.match(readSource('components/public/ClubKit.module.css'), /@media \(max-width: 640px\) \{\s*\.btnPhoneFull \{ align-self: stretch; width: 100%; \}/);
+  });
+  it('R10: the strays on the scale — early-bird price, the fit line, Your sign-up\'s weights and total; Tournaments in text ink', () => {
+    assert.match(readCode(`${CLUB}/league/[seasonSlug]/page.tsx`), /fontSize: '1rem', fontWeight: 700, color: cardSave > 0/, 'the early-bird price 16 (was 15)');
+    assert.match(cssRule(readSource('components/league/register.module.css'), '.fit'), /border-radius: 0 8px 8px 0;/);
+    assert.match(cssRule(readSource('components/league/register.module.css'), '.fitLine'), /font-size: 0\.875rem;/);
+    const signup = readCode(`${CLUB}/league/[seasonSlug]/status/YourSignup.tsx`);
+    assert.doesNotMatch(signup, /fontWeight: (650|750|800)|fontSize: '1\.15rem'/);
+    assert.match(signup, /fontFamily: 'var\(--club-title-face\)', fontWeight: 'var\(--club-title-weight\)', fontSize: '1\.25rem'/, 'the total: 20 px title face');
+    const t = noComments(readSource(`${CLUB}/tournaments/ClubTournaments.module.css`));
+    assert.match(cssRule(t, '.tableRow td'), /color: var\(--club-text\);/, 'both tables\' cells in text ink');
+    assert.doesNotMatch(t, /\.championCell/);
+  });
+});

@@ -298,6 +298,13 @@ a.row:focus-visible {
   color: var(--club-text);
 }
 .btnFull { width: 100%; }
+/* A page's one filled action that runs across a phone but takes its own width at a desk ("Sign up for tryouts": a
+   full-width filled button across the 960 column reads as a banner — standard R11, club build Part 3, 2026-11-05). The
+   phone width is the club frame's 640, the same one the pay buttons and "Email me my link" use. */
+.btnPhoneFull { align-self: flex-start; }
+@media (max-width: 640px) {
+  .btnPhoneFull { align-self: stretch; width: 100%; }
+}
 
 /* A card's own heading and words at the list's padding ("Tryouts" on a quiet team, About). */
 .cardHead {

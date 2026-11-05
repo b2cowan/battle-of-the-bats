@@ -11,6 +11,7 @@ import { SUBSCRIBE_WORDS as W } from '@/lib/calendar-subscribe-words';
 import { useCopyToClipboard } from '@/lib/hooks/useCopyToClipboard';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { useDismissable } from '@/lib/overlay-hooks';
+import kit from './ClubKit.module.css';
 import styles from './TeamSubscribeButton.module.css';
 
 /**
@@ -45,7 +46,7 @@ export default function TeamSubscribeButton({ feedPath, calendarName }: {
       <button
         ref={buttonRef}
         type="button"
-        className={styles.button}
+        className={`${kit.btn} ${kit.btnSecondary} ${kit.btnSm} ${styles.button}`}
         aria-label={W.publicButton}
         aria-expanded={open !== null}
         onClick={() => {
