@@ -467,7 +467,7 @@ its first gate is the words' acceptance).
 **BUILT 2026-11-04** (Parts 1–5, `/review`, `/docs`; no migration; Progress block in the build prompt has every detail). Owner
 walk **§451** written 2026-11-04 (§450 is the 9f-2 walk's): https://claude.ai/artifact/XBVRrJDBkK7uksrfX6CyS1 (source
 `HOUSE_LEAGUE_PUBLIC_SEASON_PAGE_WALK.html`, fixture `.probe/season-page-walk/fixture.mjs`, three throwaway clubs, all public
-pages). **Walk §451 PASSED 20/20 2026-11-04** (A 2/2 · B 3/3 · C 5/5 · D 3/3 · E 4/4 · F 3/3). **The three open owner calls were closed 2026-11-04, all left as built.** Committed `aa6d1e72c` 2026-11-04.
+pages). **Walk §451 PASSED 20/20 2026-11-04** (A 2/2 · B 3/3 · C 5/5 · D 3/3 · E 4/4 · F 3/3). **The three open owner calls were closed 2026-11-04, all left as built.** Committed `aa6d1e72c` 2026-11-04. ⚠ That commit left two files unparseable on dev (a split doc comment in lib/house-league-season.ts and a bracket in the help article); fixed in `d9140209f` 2026-11-04 (Amplify jobs 370–372 had failed).
 
 ## 1 · Scope (binding, from the Club plan and the kickoff)
 

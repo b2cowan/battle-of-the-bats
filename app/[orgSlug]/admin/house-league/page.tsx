@@ -168,6 +168,7 @@ export default function HouseLeagueHome() {
       {creating && (
         <CreateLeagueSeasonDialog
           orgSlug={orgSlug}
+          knownSeasons={summaries}
           onClose={() => setCreating(false)}
           onCapHit={(kind, holder) => { setCreating(false); setCapHit({ kind, holder }); }}
           onCreated={season => {

@@ -64,6 +64,10 @@ the Overview) through the Year pill, locked, every write absent — not as one p
 to "correct" back to the season rule above: a club book runs across years, and only those tabs read a year (they
 already did). It never reaches the coaches portal, which keeps everything above unchanged.
 
+**⚖ A HOUSE-LEAGUE season is read IN PLACE too** (owner ruling 2026-11-04, House League 9f·17). House-league seasons
+read in place under Q16 (locked, Money and Email families open). The one-page closed season is the Coaches Portal's
+rule. This is deliberate, not drift. Plan of record: `docs/projects/active/HOUSE_LEAGUE_STAGE9_PLAN.md` §0j.
+
 # Broad reading and searching go to a helper agent (owner 2026-10-17)
 
 Helpers already run on Sonnet (`CLAUDE_CODE_SUBAGENT_MODEL` in `.claude/settings.local.json`); this rule

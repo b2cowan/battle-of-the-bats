@@ -7,6 +7,7 @@ import css from './CreateLeagueSeasonDialog.module.css';
 import ls from './league/LeagueSeason.module.css';
 import shared from '@/app/[orgSlug]/coaches/coaches.module.css';
 import DateInput from '@/components/shared/DateInput';
+import LoadingState from '@/components/shared/LoadingState';
 import SublinedChoice, { type SublinedOption } from '@/components/coaches/SublinedChoice';
 import SheetFrame from '@/components/coaches/SheetFrame';
 import { repKit } from './RepKit';
@@ -51,10 +52,29 @@ const asSource = (s: LeagueSeasonSummary['season']): StartSource => ({
   earlyBirdUntil: s.earlyBirdUntil ?? null,
 });
 
-export default function CreateLeagueSeasonDialog({ orgSlug, startFromId, onClose, onCreated, onCapHit }: {
+/** The club's seasons, newest first, each carrying its season's own fields beside the summary (what the picker reads). */
+const sortSeasons = (raw: LeagueSeasonSummary[]) =>
+  newestFirstSeasons<LeagueSeasonSummary & LeagueSeasonSummary['season']>(raw.map(s => ({ ...s.season, ...s })));
+
+/** The name, sport and moved dates a picked season puts in the window (9f·13). */
+const formFromSeason = (summary: LeagueSeasonSummary): Form => {
+  const src = asSource(summary.season);
+  const dates = movedDates(src, dateShiftDays(src));
+  return {
+    name: startName(src), sport: summary.season.sport || DEFAULT_SPORT,
+    seasonStartDate: dates.seasonStartDate ?? '', seasonEndDate: dates.seasonEndDate ?? '',
+  };
+};
+
+export default function CreateLeagueSeasonDialog({ orgSlug, startFromId, knownSeasons, onClose, onCreated, onCapHit }: {
   orgSlug: string;
   /** Open with Start from on this season (the Overview's "Start next season from this one…"). */
   startFromId?: string;
+  /**
+   * The club's seasons, when the page that opens this window already holds them. The window then opens at its final size on
+   * the first frame; without them it waits for its own read, so it never shows the small blank window and then grows.
+   */
+  knownSeasons?: LeagueSeasonSummary[];
   onClose: () => void;
   onCreated: (season: { id: string; name: string }) => void;
   /** The free League plan refused it; the season holding the slot comes with the refusal so the window can name it (9f·5). */
@@ -65,19 +85,29 @@ export default function CreateLeagueSeasonDialog({ orgSlug, startFromId, onClose
   const offered = !!currentOrg && !isFreeFloorLeague(currentOrg);
   const fieldId = useId();
 
-  const [form, setForm] = useState<Form>(BLANK);
-  const [baseline, setBaseline] = useState<Form>(BLANK);
+  // Seeded from the page's own list: the first frame is already the Start from window (no small window that then grows).
+  const [initial] = useState(() => {
+    if (!offered || !knownSeasons) return null;
+    const list = sortSeasons(knownSeasons);
+    const first = (startFromId && list.some(s => s.season.id === startFromId)) ? startFromId : list[0]?.season.id ?? null;
+    const summary = first ? list.find(s => s.season.id === first) ?? null : null;
+    return { list, first, form: summary ? formFromSeason(summary) : BLANK };
+  });
+  // Until the club's seasons are known the window shows its loading line, not the blank form that then becomes the larger Start from one.
+  const [listed, setListed] = useState(!offered || !!initial);
+  const [form, setForm] = useState<Form>(initial?.form ?? BLANK);
+  const [baseline, setBaseline] = useState<Form>(initial?.form ?? BLANK);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [seasons, setSeasons] = useState<LeagueSeasonSummary[]>([]);
-  const [pick, setPick] = useState<string>(BLANK_PICK);
+  const [seasons, setSeasons] = useState<LeagueSeasonSummary[]>(initial?.list ?? []);
+  const [pick, setPick] = useState<string>(initial?.first ?? BLANK_PICK);
   const [detail, setDetail] = useState<SourceDetail | null>(null);
   const [bring, setBring] = useState<Bring>(DEFAULT_BRING);
   const [chosen, setChosen] = useState<Set<string>>(new Set());
   const [endTouched, setEndTouched] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const opener = useRef<HTMLButtonElement>(null);
-  const pickRef = useRef(pick);
+  const pickRef = useRef(initial?.first ?? BLANK_PICK);
   // What the person has typed, for the list's late arrival: it never overwrites a window already filled in.
   const formRef = useRef(form);
   useEffect(() => { formRef.current = form; }, [form]);
@@ -91,6 +121,24 @@ export default function CreateLeagueSeasonDialog({ orgSlug, startFromId, onClose
 
   // Pick a season (or the blank one): the name, the sport and the two dates the window shows arrive moved (9f·13), the ticks
   // go back to their defaults, and the source's age groups load for their counts, chips and owing figure.
+  const loadDetail = useCallback(async (id: string) => {
+    try {
+      const res = await fetch(`/api/admin/house-league/seasons/${id}?orgSlug=${encodeURIComponent(orgSlug)}`);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error ?? 'load failed');
+      if (pickRef.current !== id) return;
+      const divisions: SourceDetail['divisions'] = Array.isArray(data.divisions) ? data.divisions : [];
+      const money = data.money as { owing?: number; owingPlayers?: number } | undefined;
+      setDetail({
+        id, divisions,
+        owing: money && (money.owing ?? 0) > 0 && (money.owingPlayers ?? 0) > 0 ? { amount: money.owing!, players: money.owingPlayers! } : null,
+      });
+      setChosen(new Set(divisions.map(d => d.id)));
+    } catch {
+      if (pickRef.current === id) setError('We couldn’t load the season.');
+    }
+  }, [orgSlug]);
+
   const choose = useCallback((id: string, list: LeagueSeasonSummary[]) => {
     pickRef.current = id;
     setPick(id);
@@ -100,36 +148,21 @@ export default function CreateLeagueSeasonDialog({ orgSlug, startFromId, onClose
     setError(null);
     const summary = id === BLANK_PICK ? null : list.find(s => s.season.id === id) ?? null;
     if (!summary) { setForm(BLANK); setBaseline(BLANK); return; }
-    const src = asSource(summary.season);
-    const dates = movedDates(src, dateShiftDays(src));
-    const next: Form = {
-      name: startName(src), sport: summary.season.sport || DEFAULT_SPORT,
-      seasonStartDate: dates.seasonStartDate ?? '', seasonEndDate: dates.seasonEndDate ?? '',
-    };
+    const next = formFromSeason(summary);
     setForm(next);
     setBaseline(next);
-    void (async () => {
-      try {
-        const res = await fetch(`/api/admin/house-league/seasons/${id}?orgSlug=${encodeURIComponent(orgSlug)}`);
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.error ?? 'load failed');
-        if (pickRef.current !== id) return;
-        const divisions: SourceDetail['divisions'] = Array.isArray(data.divisions) ? data.divisions : [];
-        const money = data.money as { owing?: number; owingPlayers?: number } | undefined;
-        setDetail({
-          id, divisions,
-          owing: money && (money.owing ?? 0) > 0 && (money.owingPlayers ?? 0) > 0 ? { amount: money.owing!, players: money.owingPlayers! } : null,
-        });
-        setChosen(new Set(divisions.map(d => d.id)));
-      } catch {
-        if (pickRef.current === id) setError('We couldn’t load the season.');
-      }
-    })();
-  }, [orgSlug]);
+    void loadDetail(id);
+  }, [loadDetail]);
 
   // The club's seasons, newest first. Opens on the preset or the most recent, unless the person has already typed.
   useEffect(() => {
     if (!offered) return;
+    // The page already handed the list over: the window is drawn from it, only the picked season's detail is still to read.
+    if (initial) {
+      const first = initial.first;
+      if (first) void (async () => { await loadDetail(first); })();
+      return;
+    }
     let gone = false;
     void (async () => {
       try {
@@ -141,19 +174,19 @@ export default function CreateLeagueSeasonDialog({ orgSlug, startFromId, onClose
           if (startFromId) setError('We couldn’t load the season.');
           return;
         }
-        const list = newestFirstSeasons<LeagueSeasonSummary & LeagueSeasonSummary['season']>(
-          (Array.isArray(data.seasons) ? data.seasons as LeagueSeasonSummary[] : []).map(s => ({ ...s.season, ...s })),
-        );
+        const list = sortSeasons(Array.isArray(data.seasons) ? data.seasons as LeagueSeasonSummary[] : []);
         setSeasons(list);
         const first = (startFromId && list.some(s => s.season.id === startFromId)) ? startFromId : list[0]?.season.id;
         if (first && JSON.stringify(formRef.current) === JSON.stringify(BLANK)) choose(first, list);
       } catch {
         // No list, no field: the window is today's (but see above: a season's own door says it could not load).
         if (startFromId && !gone) setError('We couldn’t load the season.');
+      } finally {
+        if (!gone) setListed(true);
       }
     })();
     return () => { gone = true; };
-  }, [offered, orgSlug, startFromId, choose]);
+  }, [offered, orgSlug, startFromId, choose, initial, loadDetail]);
 
   // The first day moves the other dates by the same gap (s15); the last day follows until the person sets it.
   const setStart = (v: string) => {
@@ -270,6 +303,26 @@ export default function CreateLeagueSeasonDialog({ orgSlug, startFromId, onClose
     : live ? SF.datesLive(source.name)
     : shift != null && datesMoved(source, shift) ? SF.dates(source.name, shift, phone)
     : null;
+
+  // The window answers the click at once, as every window here does: its title and Cancel, and the product's loading line.
+  if (!listed) {
+    return (
+      <KitDialog
+        kind="form"
+        size="medium"
+        title="Create a house-league season"
+        onClose={onClose}
+        footer={
+          <>
+            <button type="button" className="btn btn-outline" onClick={onClose}>Cancel</button>
+            <button type="button" className="btn btn-lime" disabled>Create season</button>
+          </>
+        }
+      >
+        <LoadingState inline label="Loading your seasons…" />
+      </KitDialog>
+    );
+  }
 
   return (
     <KitDialog
