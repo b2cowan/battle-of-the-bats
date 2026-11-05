@@ -270,7 +270,10 @@ HANDOFF → /plan: STRIPE_FROM_OUR_OWN_ADMIN_PLAN.md records the rulings and the
 **Status:** **Decided** (owner, 2026-10-31). Rulings T1–T7 by paste-back from the decision page
 https://claude.ai/artifact/Si21JDJNyhQLFjmaS9Wy3t (7/7); rulings U1–U5 and the US follow-up in chat the same day ("I agree
 with all of your recommendations"; U4 and U5 as below). Plan: `docs/projects/active/GST_HST_COLLECTION_PLAN.md` §3 and §4
-Stage 8a; research `docs/agents/accounting/` (index `ACCOUNTING_INDEX.md`). **Planned, nothing built.** Starting fact:
+Stage 8a; research `docs/agents/accounting/` (index `ACCOUNTING_INDEX.md`). **Progress 2026-11-05:** T4's words are built — in the product (`2cbfac7f6`) and on the public pages (`0dca09019`), so the
+HANDOFF → /marketing first bullet below is done; they must reach production with the Stage 2 promote, not before. Tax on every
+charging path is committed (`0e5aef0d1`). Facts doc updated the same day; T2 + T4 are THIS entry (already logged, not owed).
+Starting fact:
 FieldLogicHQ is **registered for GST/HST** (number received the week of 2026-10-24) and has never sold anything.
 **Decision:**
 1. **Prices are tax-exclusive — "plus applicable taxes" (T4).** Every list price in the Facts doc stays as it is; sales
