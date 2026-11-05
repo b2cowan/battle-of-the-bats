@@ -131,7 +131,7 @@ clean):
   none). A "Keep {Plan}" restore of a down move (plan-ending, no route check) for a legacy customer with no address
   is expected to be refused by Stripe and read as `moveNotRestored` — not verified (prod has no such customer).
 
-**Part 2b (to build, Ask 8):** a club turning on online payments is asked for its billing address in the shipped Billing address
+**Part 2b (Ask 8) BUILT 2026-11-05, committed `947fd8192` 2026-11-05 after /review high; owner walk §463 owed:** a club turning on online payments is asked for its billing address in the shipped Billing address
 window before it can take payments; the fee invoice's wait (above) stays as the safety net. This is plan §4 Stage 5's address
 step ("asks the club for its billing address when it sets up payouts"), brought FORWARD into Stage 2 because Part 2 already taxes
 the recovered fees; Stage 5 then finds it done. The build session finds the

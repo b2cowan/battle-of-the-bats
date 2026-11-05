@@ -1,5 +1,10 @@
 # GST/HST · Stage 2 Part 2b: a club gives its billing address when it turns on online payments (build prompt)
 
+> **▶ BUILT 2026-11-05, committed `947fd8192` 2026-11-05 after /review high.** Part 0 counted 0 payout accounts on
+> production and 1 on dev (connected, no address). Found and owner-ruled: Plan & billing shows its Billing address button
+> only once an address exists, so `NO_ADDRESS` names ONLY the Payouts card (not "Plan & billing or…" as Part 3 below said).
+> Demo seeds create no payout accounts (Part 3's demo item moot). Owner walk §463 owed.
+
 > Written 2026-11-05. Parent: [GST_HST_STAGE2_BUILD_PROMPT.md](GST_HST_STAGE2_BUILD_PROMPT.md) (read its ▶ Progress block first:
 > Part 2's "Ask 8" bullet and the "Part 2b (to build, Ask 8)" paragraph are this part's whole reason). Plan of record:
 > [GST_HST_COLLECTION_PLAN.md](GST_HST_COLLECTION_PLAN.md) §4 Stage 5 ("asks the club for its billing address when it sets up

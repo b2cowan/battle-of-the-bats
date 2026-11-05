@@ -33,7 +33,8 @@ Every outstanding piece of work in this plan has a home in one of these stages. 
   tab. Needs Stage 2.
 - **Stage 4 — The books carry the sales side of GST/HST:** NOT STARTED — built in the Bookkeeping ladder; can run beside
   Stages 1–3; must exist before the first return with sales on it.
-- **Stage 5 — The online-payment fee:** NOT STARTED — tax on the fee, monthly statement per club. Depends on Club Stage 12,
+- **Stage 5 — The online-payment fee:** NOT STARTED — tax on the fee, monthly statement per club. (Its address step is
+  done: brought forward as Stage 2 Part 2b, committed `947fd8192` 2026-11-05.) Depends on Club Stage 12,
   T2/T3, and **closes with Club Stage 12** (a required stage, not a trigger).
 - **Stage 6 — Terms:** NOT STARTED — Terms of Service, signup acceptance, payments terms, Québec review, privacy policy.
   `/legal` drafts it, the owner approves it (no lawyer gate, owner 2026-11-04); gates the first paid subscription of any plan not yet on sale.
