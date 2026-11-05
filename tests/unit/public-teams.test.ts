@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { publicTeamsData, publicVenue, teamMoment, teamPlace, teamRowLine, teamsGroups, withheldTeamProfile } from '../../lib/public-teams.ts';
+import { publicTeamsData, publicVenue, teamMoment, teamPlace, teamRowLine, teamSearchWords, teamsGroups, withheldTeamProfile } from '../../lib/public-teams.ts';
 import { readCode } from './_source-code.ts';
 import { zonedWallClockToUtc } from '../../lib/timezone.ts';
 import type { Division, Game, PublicTeam, Tournament, Venue } from '../../lib/types.ts';
@@ -151,6 +151,14 @@ describe('server hand-offs for the Stage 5 bodies', () => {
     assert.deepEqual(withheldTeamProfile(privateTeam, 'U11'), {
       scheduleWithheld: true, team: { id: 'a', name: 'A', divisionId: 'd' }, divisionName: 'U11',
     });
+  });
+});
+
+describe('the search box names what it matches (R8)', () => {
+  it('says coaches only where a team carries one', () => {
+    assert.equal(teamSearchWords([]), 'Search teams');
+    assert.equal(teamSearchWords([{ coach: '' }, { coach: null }, {}]), 'Search teams');
+    assert.equal(teamSearchWords([{ coach: '' }, { coach: 'Dana Lee' }]), 'Search teams or coaches');
   });
 });
 

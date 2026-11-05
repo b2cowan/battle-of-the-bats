@@ -160,6 +160,9 @@ describe('Public page layout standard Part 1 — every public tournament page is
     // A game's page places its two cards inside the shared rule (score card main, when-and-where side: A11).
     assert.match(readCode('components/public/PublicGameDetails.tsx'), /<div className=\{`\$\{parts\.cols\} \$\{styles\.cards\}`\}>/);
     assert.match(readCode('components/public/PublicTeamPage.tsx'), /<div className=\{parts\.cols\}>/);
+    // Its two columns are the shared column parts (24 gap, min-width 0); the side one carries the record card's padding.
+    assert.match(readCode('components/public/PublicTeamPage.tsx'), /<div className=\{parts\.colMain\}>/);
+    assert.match(readCode('components/public/PublicTeamPage.tsx'), /parts\.colSide\} \$\{mainLeadsWithHeading \? styles\.sideBelowHeading/);
     // The record card's alignment pad only means something where the columns stand side by side.
     assert.match(readSource('components/public/PublicTeamPage.module.css'), /@media \(min-width: 1200px\) \{[^}]*\.sideBelowHeading \{/);
   });

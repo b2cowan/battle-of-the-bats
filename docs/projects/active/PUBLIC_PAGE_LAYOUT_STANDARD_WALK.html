@@ -1,0 +1,287 @@
+<title>Public Pages Layout Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Same instrument as the Stage 8 walk: one narrow column, parts as folds, steps, a verdict row and a notes box per part. */
+:root {
+  --bg: #f6f5f1; --panel: #ffffff; --fg: #23251f; --muted: #666a5d; --line: #dcdacf;
+  --accent: #4d5c1a; --accent-fg: #ffffff; --good: #2f6b2f; --warn: #8a5a00; --bad: #a3321f; --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+a { color: var(--accent); overflow-wrap: anywhere; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .facts { grid-template-columns: 1fr; } .facts dd { margin-bottom: 6px; } }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.cmd { font-family: var(--font-mono); font-size: 12px; background: var(--chip); padding: 6px 8px; border-radius: 6px; overflow-wrap: anywhere; color: var(--fg); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+.step.opt { flex-direction: column; gap: 4px; }
+.step .optrow { display: flex; gap: 10px; align-items: flex-start; }
+.warn { color: var(--warn); font-weight: 600; }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · Public page layout standard · tournament side · §460</span>
+    <h1>Every public tournament page, one layout</h1>
+    <p class="sub">Written 2026-11-05. Test data only, on the dev database. About 70 minutes. One purpose: clicking through every public tournament page on a desk, the content starts, stops and spaces itself the same way, and a game, a list, a link, a heading and “live” look the same on every page; a phone keeps its ruled layouts.</p>
+  </header>
+
+  <section class="card">
+    <h2>What this walk is for</h2>
+    <p>The layout standard (Parts 1 to 4) put every public tournament page on one 960 px column, with one game card, one link row, three heading sizes, one toolbar and one green “live”. This is the first look at all of it together, including every state of a game’s page and a team’s page, News and Register, on a computer and on a phone.</p>
+    <p>Three calls you made are in this build and are not re-asked here: a team’s own name stays bold on its page even while its game is live; the record card starts level with the first game card; News headings are sentence case with no icons. One more you made on 2026-11-05: Playoffs’ “Live now” game has no pill under its heading (the green edge says it).</p>
+  </section>
+
+  <section class="card">
+    <h2>It passes when</h2>
+    <ul>
+      <li>A and B: on a computer, every page’s content starts at the same left edge, stops at the same width, sits the same distance under the band and spaces its sections the same way. A game, a list row, a link row, a heading and “live” look the same wherever they appear. No page has a back link.</li>
+      <li>C and D: every state of a game’s page and a team’s page reads correctly, on a computer and on a phone.</li>
+      <li>E: News and Register sit on the same column, with the same headings.</li>
+      <li>F and G: on a phone every page keeps its ruled layout with nothing scrolling sideways; between 1,024 and 1,199 px wide the two-column pages stack.</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>Before you start</h2>
+    <p>Setup, not checked. Some steps change the test game; they say when to ask Claude. You can also paste the command shown under a step into a terminal in the project folder.</p>
+    <dl class="facts">
+      <dt>Where</dt><dd><strong>http://localhost:3000</strong> on your computer, dev server running (ask Claude first: step S1). Use a <strong>private window</strong> so a sign-in does not change what you see. No sign-in is needed anywhere in this walk.</dd>
+      <dt>On a phone</dt><dd>Either your phone on the same Wi-Fi, at your computer’s address on the network (last walk: <code>http://192.168.2.200:3000</code>), or the browser window narrowed to about 390 px wide. Where a step names a long name, use 397 px.</dd>
+      <dt>Window sizes</dt><dd>“On a desk” means a window at least 1,200 px wide (the two columns sit side by side from there). Part G uses about 1,100 px.</dd>
+      <dt>The test events</dt><dd><strong>Fall Classic</strong> (Lakeshore Lightning, yellow, <code>/stage1-lakeshore-lightning/fall-classic</code>): today’s games, one semifinal live. Claude changes that one game between live, unofficial, final, upcoming, cancelled and time not set. <strong>Stage 5 teams</strong> (Metro Sports): <code>stage5-live</code>, <code>stage5-between</code>, <code>stage5-champion</code>, <code>stage5-empty</code>, each a different state of a team. <strong>Cedar Valley</strong> (before the event, something open) and <strong>Pinecrest</strong> (crowned, nothing open) for the host card. <strong>Spring Invitational</strong> (Hamilton-Wentworth) for Register. <strong>Stage 6 sample event</strong> for News.</dd>
+      <dt>The layout check</dt><dd>Claude ran it on a production build of this code before the walk, on the 25 public tournament screens at phone, tablet and desk widths. 17 were measured. They are clean apart from two known things: the demo tour bar’s own small buttons on the Overview, and the nine short links on News and Register at tablet width. 8 could not be measured: six wait on test events that have aged (a live game, a live playoff, the Stage 4 events) or on the old name “The bracket”, and two more (a seeded bracket and a bracket-only Schedule) were added to that list this time. <strong>So the live game, the live playoff card and the bracket were not measured; this walk covers them by eye</strong> (parts B, C and the bracket link).</dd>
+      <dt>Leaves behind</dt><dd>Nothing, once Part Z is done: the game goes back to live, the sample post comes off, the time comes back.</dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <p class="warn" id="verdictWarn" hidden></p>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy summary</button><button id="reset" type="button">Reset</button></div>
+    <p class="sub">Set Pass, Issue or Needs a call on every part. The summary says INCOMPLETE while any part has no verdict.</p>
+    <pre id="out" hidden></pre>
+  </section>
+
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+
+  <section class="card">
+    <h2>Not in this walk</h2>
+    <ul>
+      <li><strong>The club’s public pages.</strong> They are the next build; nothing on a club page should have moved, and the layout check found nothing that did.</li>
+      <li><strong>Known and recorded, not new:</strong> Register’s success heading is larger than the standard (the club’s sheet); a Teams preview row still draws a small arrow; News and Register have short links under the tap size at tablet width; the help article that still names “the Playoff Picture page” (the help pass owns it). You do not need to note these.</li>
+      <li><strong>Held-back divisions on News.</strong> The News page is known to read every division, held back or not; it is recorded as its own fix, so do not walk it here.</li>
+      <li><strong>The installed app’s own pages</strong> (Discover, Scores, Following, Account) and following or alerts in a browser.</li>
+      <li><strong>The release.</strong> Nothing here touches production.</li>
+    </ul>
+  </section>
+</main>
+
+<script>
+(function () {
+  var DATA = {"key":"public-page-layout-standard-tournament-walk-v1","title":"Public page layout standard, tournament side, owner walk (§460)","written":"2026-11-05","parts":[
+{"id":"S","title":"Start: the build is running and the test data is ready","steps":[
+{"who":"You · ask Claude","do":"Ask Claude to confirm the dev server is on the current build and to set the test events up right now, so the live games are live when you start (the live game in Fall Classic, the Stage 5 teams moved to today, the sample post on).","cmd":"node --env-file=.env.local scripts/seed-public-stage3-fixtures.mjs prepare; node --env-file=.env.local scripts/seed-public-stage5-fixtures.mjs refresh","see":"Claude says yes to all three. If you started the walk more than an hour ago, ask again: a game stays live only for a while.","options":["Yes to all three","Not yet: STOP"]},
+{"who":"Anyone · private window · /stage1-lakeshore-lightning/fall-classic","do":"Open Fall Classic’s public page in a private window, on a window at least 1,200 px wide.","see":"The page opens in the club’s yellow. A game is live today. No sign-in asked."}]},
+{"id":"A","title":"One column on a desk: every page starts, stops and spaces the same way","steps":[
+{"who":"Anyone · Overview · /stage1-lakeshore-lightning/fall-classic","do":"Open the Overview. Note where the page’s content starts on the left (a fixed gap right of the menu), where it stops on the right, and the gap between the band and the first thing.","see":"Content in ONE column no wider than about 960 px, left-aligned beside the menu, a small fixed gap under the band. Two columns inside it: games on the left, the pages and links on the right. Sections 24 px apart. Keep this edge in mind for every step below."},
+{"who":"Anyone · host card · /stage2-cedar-valley/winter-warmup and /stage2-pinecrest/harvest-cup","do":"Open Cedar Valley’s Overview, then Pinecrest’s.","see":"Cedar Valley (something is open to register for) shows a card for the host club with a plain outlined “Visit the club” button. Pinecrest (crowned, nothing open) shows NO host card at all: no empty card and no “runs programs all year” line.","options":["Card with something open; none with nothing open","A card shows with nothing open: write it in the notes"]},
+{"who":"Anyone · Schedule · /stage1-lakeshore-lightning/fall-classic/schedule","do":"Open the Schedule.","see":"Same left edge, same width, same gap under the band as the Overview. Each game is ONE line on a desk: time, the two teams with scores, and the status, on a grid that does not shift when a game is live. No field or address on these rows."},
+{"who":"Anyone · Standings · /stage1-metro-sports/spring-showcase/standings","do":"Open Spring Showcase’s Standings.","see":"Same left edge, width and top gap. Each pool is a table under a small “A Pool” heading. The explainer “How the table is ranked” and the bracket link sit together as link rows."},
+{"who":"Anyone · Playoffs · /stage1-metro-sports/stage4-live/playoffs","do":"Open Stage4 Live’s Playoffs.","see":"Same edge, width and gap. The bracket’s matches are compact game cards in a thin frame; the Division and Pool boxes on the toolbar are the same width as on the Schedule."},
+{"who":"Anyone · Teams · /stage1-metro-sports/spring-showcase/teams","do":"Open Teams.","see":"Same edge, width and gap. Each division is one framed list of rows (name, then a line with the record or the next game); pools are small band rows inside the list."},
+{"who":"Anyone · Rules · /stage1-lakeshore-lightning/fall-classic/rules","do":"Open Rules. Open one rule.","see":"Same edge, width and gap. The rules are ONE framed list; a rule opens in place, under its row, between hairlines."},
+{"who":"Anyone · Champions · /stage1-northfield/fall-ball/champions","do":"Open Fall Ball’s Champions.","see":"Same edge, width and gap. Champions per division, in the plain FieldLogicHQ look (free plan)."},
+{"who":"Anyone · News · /stage1-metro-sports/stage6-register-open/news","do":"Open News.","see":"Same edge, width and gap as the rest. The screen reader’s page title is not drawn; the first thing visible is the filter or the first heading."},
+{"who":"Anyone · Register · /stage1-hamilton-wentworth/spring-invitational/register","do":"Open Spring Invitational’s Register page.","see":"Same left edge as every other page, not centred on the screen. The form is about 640 px wide, on the left of the column, in the club’s green."},
+{"who":"Anyone · a team’s page · from Teams","do":"From any Teams list, open a team.","see":"Same edge, width and gap. NO “‹ All Teams” link above the name; the browser’s Back is the way back."},
+{"who":"Anyone · a game’s page · from the Schedule","do":"From the Schedule, open any game.","see":"Same edge, width and gap. NO “‹ Schedule” link above the game; the browser’s Back is the way back."}]},
+{"id":"B","title":"A game, a list, a link, a heading and “live” look the same everywhere","steps":[
+{"who":"Anyone · live game · Overview, Schedule, Playoffs","do":"Look at the live game in Fall Classic on its Overview (Live now), on the Schedule, and on Schedule → Playoffs.","see":"Everywhere: a green “Live now” and a thin green edge on the game; neither team bold nor faded. Under a “Live now” heading (Overview, Playoffs) there is NO pill, because the heading and the green edge already say it. On the Schedule’s live card, which has no heading, the pill shows.","options":["Live looks the same on all three","One differs: write which in the notes"]},
+{"who":"Anyone · finished games","do":"Look at a finished game on the Overview’s Latest results and on the Schedule.","see":"A neutral “Final” pill; the winner bold and the loser faded; the score on each team’s own line. The same on both pages."},
+{"who":"Anyone · the Schedule on a desk","do":"Open the Schedule and look at the row of any game.","see":"One line, with the time at the left, the teams in the middle and the status at the right. It is not stacked, even when a team name is long."},
+{"who":"Anyone · link rows","do":"Look at a link on each: Overview’s right column, Schedule’s Teams and Register, Standings’ “How the table is ranked”, a Teams row, a Rules row.","see":"One look everywhere: a row in a framed list with a hairline between rows, a small arrow at the right (down for a rule that opens in place, right for a link or a window). No big old door card anywhere."},
+{"who":"Anyone · headings","do":"Compare a division heading (Teams, Schedule), a section heading (Live now, Up next, Pinned announcements) and a pool band (Standings “A Pool”, a Teams pool).","see":"Three sizes only: division largest, section smaller and bold, pool band smallest. Each sits directly on what it heads."},
+{"who":"Anyone · toolbars","do":"Compare the toolbar on the Schedule, Standings, Playoffs and Teams.","see":"Division first, on the left, at the same width on each; Pool next where there is one. Search on the Schedule and Teams reads “Search teams” (or “Search teams or coaches” where a team has a coach)."},
+{"who":"Anyone · the bracket link","do":"Find the bracket link on the Overview, on the Schedule’s Playoffs view and on Standings. Open it.","see":"It reads “The playoff bracket” with “See who plays who” (or the news line) under it, on all three, and opens the Playoffs page."},
+{"who":"Anyone · corners and frames","do":"Look at the cards, lists and buttons across the pages you have opened.","see":"The same softly rounded corners everywhere and the same thin hairline; a filled button only for a page’s main job (Register, pay), outlined for the rest."}]},
+{"id":"C","title":"A game’s page, every state, on a desk and a phone","steps":[
+{"who":"You · ask Claude · Fall Classic’s live semifinal","do":"Ask Claude to put the semifinal back to live (or run it yourself). Then open it: Schedule → the Playoffs view → the live card.","cmd":"node --env-file=.env.local scripts/seed-public-stage3-fixtures.mjs prepare","see":"On a desk: the SCORE card on the left (“Semifinal · U11” with a green “Live now”, both teams on their own lines with large scores, neither bold nor faded, a green edge), the WHEN-AND-WHERE card on the right (the start time large as the page title, “date · field”, the address, Directions at the right of the title line, “Game length N min”). No back link, no facts list.","phone":"The WHEN-AND-WHERE card comes FIRST (time as the title, Directions beside it), then the score card; a Share link at the foot of the score card. Nothing scrolls sideways.","options":["Desk and phone right","Desk differs","Phone differs"]},
+{"who":"You · ask Claude · same game","do":"Ask Claude to set the game to unofficial. Reload the game’s page.","cmd":"node --env-file=.env.local scripts/seed-public-stage3-fixtures.mjs unofficial","see":"An amber “Unofficial” pill; the leader bold and the other team faded; the foot reads “Not yet confirmed by the organizer”.","phone":"The same, under the when-and-where card.","options":["Right on both","Wrong: write which in the notes"]},
+{"who":"You · ask Claude · same game","do":"Ask Claude to set the game to final. Reload.","cmd":"node --env-file=.env.local scripts/seed-public-stage3-fixtures.mjs final","see":"A neutral “Final” pill; the 4 to 2 score; winner bold, loser faded; no countdown and no “not yet confirmed” line.","phone":"The same.","options":["Right on both","Wrong: write which in the notes"]},
+{"who":"You · ask Claude · same game","do":"Ask Claude to set the game to start in a few minutes. Reload.","cmd":"node --env-file=.env.local scripts/seed-public-stage3-fixtures.mjs soon","see":"No pill and no score; both team names in normal weight; the foot counts down to the start (or “No score yet”). Directions still on the title line.","phone":"The same; the when-and-where card first.","options":["Right on both","Wrong: write which in the notes"]},
+{"who":"You · ask Claude · same game","do":"Ask Claude to cancel the game. Reload.","cmd":"node --env-file=.env.local scripts/seed-public-stage3-fixtures.mjs cancelled","see":"A red “Cancelled” pill where Directions was, on the title line; NO score even though the game had one; no countdown; the foot reads “This game will not be played.”.","phone":"The same.","options":["Right on both","A score or countdown shows: write it in the notes"]},
+{"who":"You · ask Claude · same game","do":"Ask Claude to clear this game’s start time (Claude runs a small script and puts it back in Part Z). Reload.","cmd":"node --env-file=.env.local .probe/walk-time-tbd.mjs clear","see":"The title reads “Time TBD” (and “Date TBD” or “Location TBD” where those are missing), with NO address and NO Directions. Nothing says “undefined” or shows a blank.","phone":"The same.","options":["Right on both","Something blank or odd: write what in the notes"]},
+{"who":"Anyone · the two teams","do":"On the game’s page, click each team’s name.","see":"Each name is a link to that team’s page. (They are links only on the game’s page, not on the Schedule, Playoffs or the bracket.)","options":["Both link","A name is not a link"]}]},
+{"id":"D","title":"A team’s page, every state, on a desk and a phone","steps":[
+{"who":"Anyone · a team in a live game · /stage1-metro-sports/stage5-live/teams/05b9fe07-2d9f-4d6b-9955-a4198f096ea0","do":"Open this team’s page (or open the Teams page and pick a team in the live game).","see":"The name large at the top with its division and chips; NO back link. Under “Live now”, ONE game card with this team first and BOLD, even while live, and a green edge, with no pill. Then Next games and Results sections; each heading is the small section heading, Results with its count. The record card on the right has NO heading and its top lines up with the first game card.","phone":"One column: the name, then the games, then the record. Cards are stacked: each team on its own line with its score.","options":["Desk and phone right","Desk differs","Phone differs"]},
+{"who":"Anyone · a team with a game coming · /stage1-metro-sports/stage5-between/teams/25c27e68-e784-472f-9fab-96114634781f","do":"Open this team’s page (its game is next).","see":"“Up next” with that game, this team first and bold, no pill. “Next games” under it: each card starts with the day and time, for example “Thu, Nov 5 · 6:00 p.m.”, then “{division} · {round or pool}”. A game today shows the time alone.","phone":"The same, stacked.","options":["Right on both","Wrong: write which in the notes"]},
+{"who":"Anyone · the champion · /stage1-metro-sports/stage5-champion/teams/0683fd3b-14d5-497b-be60-604e25a33774","do":"Open this team’s page (the champion; the Champions page names it too).","see":"A gold “Champion” banner for the division; the “Division Champion” chip by the name; its finished games under Results. The other finalist’s page shows “Runner-up” and no banner.","phone":"The banner fits the width.","options":["Right on both","Wrong: write which in the notes"]},
+{"who":"Anyone · a team with no games · /stage1-metro-sports/stage5-empty/teams/f351b737-2678-4296-bed8-0aaf2e511ffc","do":"Open this team’s page.","see":"The name, then one quiet card “No games scheduled yet”. No back link, no empty section headings.","phone":"The same.","options":["Right on both","Wrong: write which in the notes"]},
+{"who":"Anyone · a finished team · /stage1-metro-sports/stage5-results/teams/0a8913e4-cf8e-49e5-8146-f8b41b7c9b3c","do":"Open this team’s page (it has no more games).","see":"“No more games” instead of an Up next card; its Results below.","options":["Right","Wrong: write it in the notes"]},
+{"who":"Anyone · the standings link","do":"On any team page that has a place in its pool, look for the link under the record.","see":"A link row such as “{team} is 1st of 3” that opens Standings."}]},
+{"id":"E","title":"News and Register on a desk and a phone","steps":[
+{"who":"Anyone · News · /stage1-metro-sports/stage6-register-open/news","do":"Open News on a desk, then on a phone.","see":"A section heading “Pinned announcements” with the pinned sample post (sentence case, no icon). A “Recent announcements” heading only when there are other posts under it. The division filter above, on the same left edge as every other page.","phone":"The same, one column, nothing sideways.","options":["Right on both","Wrong: write which in the notes"]},
+{"who":"Anyone · Register · /stage1-hamilton-wentworth/spring-invitational/register","do":"Open Register on a desk, then on a phone.","see":"The form column about 640 px, on the left edge of the page column, the same left edge as News; the form steps and button in the club’s green, matching the band.","phone":"The form fits the screen and its buttons are easy to tap.","options":["Right on both","Wrong: write which in the notes"]},
+{"who":"Anyone · the pay page · http://localhost:3000/stage1-northfield/fall-ball/pay/P08mcc0LTS-wKQp25c6VEQ.pswOns8_UHzmhGjDaY0Hqw","do":"Open this team’s pay link on a desk and a phone.","see":"Unchanged: a slim band with the event name and “Team payment”, then how to pay. No tabs and no side rail.","options":["Unchanged","Changed: write how in the notes"]}]},
+{"id":"F","title":"A phone keeps its ruled layouts","steps":[
+{"who":"Anyone · phone · Overview","do":"Open Fall Classic’s Overview on a phone.","see":"One column. Live now, Up next and Latest results are lists of stacked game cards: the head line with the time and context, each team on its own line owning its score. The links come after the games."},
+{"who":"Anyone · phone · Schedule","do":"Open the Schedule, then the Playoffs view.","see":"The same phone rows as before this build: stacked, each team on its own line. Toolbar: Division, then Pool, then the switch."},
+{"who":"Anyone · phone · Standings, Teams, Rules","do":"Open Standings, Teams and Rules on a phone.","see":"Tables fit or scroll inside themselves; Teams rows are two lines; Rules open in place. The page itself never scrolls sideways."},
+{"who":"Anyone · phone · long names · 397 px","do":"With the window at 397 px, open the Schedule and the game page for the game with the longest team name (“Milton Bats U11 Purple (Jackson)”).","see":"The name wraps onto a second line inside its own space; the score stays on the right of its team’s first line; nothing is cut off or pushes the page sideways.","options":["Wraps cleanly","Cut off or pushed: write where in the notes"]},
+{"who":"Anyone · phone · the app bar","do":"On a phone, look at the bottom of any page.","see":"The app’s bar sits at the bottom as before; no page was moved by this build."}]},
+{"id":"G","title":"Between 1,024 and 1,199 px: the two-column pages stack","steps":[
+{"who":"Anyone · window about 1,100 px wide · Overview","do":"Narrow the window to about 1,100 px and open the Overview.","see":"ONE column: the games first, then the links below them. Not two cramped columns."},
+{"who":"Anyone · about 1,100 px · a game’s page","do":"Open a game’s page.","see":"The WHEN-AND-WHERE card first, then the score card, stacked. (Only from 1,200 px does the score card move to the left.)"},
+{"who":"Anyone · about 1,100 px · a team’s page","do":"Open a team’s page.","see":"The games first, then the record card below them, with no gap left over for a heading it does not have."},
+{"who":"Anyone · about 1,100 px · the Schedule","do":"Open the Schedule.","see":"Still ONE line per game, not stacked; a long name wraps to a second line inside its row."}]},
+{"id":"Z","title":"Put back","steps":[
+{"who":"You · ask Claude","do":"Ask Claude to put the semifinal back to live (or paste the command) and to restore the cleared time, and to switch the sample post off.","cmd":"node --env-file=.env.local .probe/walk-time-tbd.mjs restore, then scripts/seed-public-stage3-fixtures.mjs prepare","see":"Claude confirms the game is live again with its time, and the sample post is off.","options":["Put back","Not needed"]}]}
+]};
+  var KEY = DATA.key, PARTS = DATA.parts;
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  function txt(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; n.textContent = text; return n; }
+  function box(id, partId, label) {
+    var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+    cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+    boxes.push({ part: partId, id: id, cb: cb, label: label });
+    return cb;
+  }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(txt('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(txt('span', 'who', id + ' · ' + s.who));
+      t.appendChild(txt('span', null, s['do']));
+      if (s.cmd) t.appendChild(txt('span', 'cmd', s.cmd));
+      t.appendChild(txt('span', 'see', 'You should see: ' + s.see));
+      if (s.phone) t.appendChild(txt('span', 'see', 'On a phone: ' + s.phone));
+      if (s.options && s.options.length) {
+        var wrap = el('div', 'step opt'); wrap.appendChild(t);
+        s.options.forEach(function (o, k) {
+          var row = el('label', 'optrow'); var cb = box(id + '-' + (k + 1), p.id, id + ' = ' + o);
+          row.appendChild(cb); row.appendChild(txt('span', null, o)); wrap.appendChild(row);
+        });
+        body.appendChild(wrap);
+      } else {
+        var row2 = el('label', 'step'); var cb2 = box(id, p.id, id);
+        row2.appendChild(cb2); row2.appendChild(t); body.appendChild(row2);
+      }
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function missingVerdicts() { return PARTS.filter(function (p) { return !state.verdict[p.id]; }).map(function (p) { return p.id; }); }
+
+  function refresh() {
+    var done = 0;
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var n = mine.filter(function (b) { return b.cb.checked; }).length;
+      done += n;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + mine.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    document.getElementById('total').textContent = done + ' of ' + boxes.length + ' checked';
+    document.getElementById('barfill').style.width = (boxes.length ? Math.round(done * 100 / boxes.length) : 0) + '%';
+    var miss = missingVerdicts(), warn = document.getElementById('verdictWarn');
+    warn.hidden = !miss.length; warn.textContent = miss.length ? 'No verdict yet on part' + (miss.length > 1 ? 's' : '') + ' ' + miss.join(', ') + '.' : '';
+  }
+
+  function summary() {
+    var lines = [DATA.title + ' (written ' + DATA.written + ')'];
+    var miss = missingVerdicts();
+    if (miss.length) lines.push('INCOMPLETE: no verdict set on part' + (miss.length > 1 ? 's' : '') + ' ' + miss.join(', '));
+    var done = boxes.filter(function (b) { return b.cb.checked; }).length;
+    lines.push('Checked ' + done + ' of ' + boxes.length + ' (a step with options counts one box per option)');
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var ticked = mine.filter(function (b) { return b.cb.checked; }).map(function (b) { return b.label; });
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + mine.length + (ticked.length ? ' (' + ticked.join('; ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    document.getElementById('out').hidden = true;
+    refresh();
+  });
+  refresh();
+})();
+</script>

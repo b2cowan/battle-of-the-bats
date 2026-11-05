@@ -1,6 +1,5 @@
 /* The page's edges, column and rhythm are the shared page's (PublicPage, PublicParts.module.css `.page`), its two columns
    the shared `.cols` rule (stacked below a 1,200 px window); Public page layout standard R1–R3. */
-.main, .side { min-width: 0; }
 .identity { display: flex; align-items: flex-start; gap: 12px; }
 .initials { display: grid; place-items: center; width: 44px; height: 44px; flex: none; border: 1px solid var(--club-line); border-radius: 8px; background: var(--club-card); font: 700 1rem/1 var(--club-text-face); }
 .nameBlock { min-width: 0; flex: 1; }
@@ -15,7 +14,6 @@
 .symbol[aria-pressed='true'] svg { fill: currentColor; }
 .symbol > svg { width: 22px; height: 22px; }
 .symbol:focus-visible, .result:focus-visible, .retry:focus-visible { outline: 2px solid var(--club-edge); outline-offset: 2px; }
-.main, .side { display: flex; flex-direction: column; gap: 24px; }
 .results, .record { border: 1px solid var(--club-line); border-radius: 8px; background: var(--club-card); }
 .result { display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; align-items: baseline; gap: 8px; min-height: 60px; padding: 12px 14px; color: var(--club-text); text-decoration: none; font: 400 0.875rem/1.4 var(--club-text-face); }
 .result + .result { border-top: 1px solid var(--club-line); }

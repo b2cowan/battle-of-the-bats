@@ -43,7 +43,7 @@
 }
 .headLink:hover { text-decoration: underline; }
 
-/* ── A wide game list's frame (the Schedule's day groups, a team's page): PublicGameRow rows in it ──────────────── */
+/* ── A wide game list's frame (the Schedule's day groups): PublicGameRow rows in it ──────────────── */
 .rows {
   margin: 0;
   padding: 0;

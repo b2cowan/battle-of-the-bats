@@ -150,6 +150,8 @@ A 3 px left edge always marks a state: green is live; on club pages the club’s
 *Built (Part 2a, 2026-11-05):* one pill set, `GameStatusPill` — Live now green, Final neutral, Unofficial amber,
 Cancelled in the danger colour — on the Schedule, Playoffs and a game's page. The edge has one shape: a standalone card's
 3 px left border with square left corners (`.liveCard`), or inset on a row inside a list (`.edge`).
+*Built (Part 5, 2026-11-05):* Playoffs' "Live now" game is the standalone live card drawn without the pill (owner
+2026-11-05: "said once"; `PublicLiveCard` takes `pill`). The Schedule's live card has no heading, so it keeps the pill.
 
 ### R10 · One box, one type scale
 **8 px** corners on every box and control. Pills stay round, the logo keeps 10, and the view switch’s track is 9 (its

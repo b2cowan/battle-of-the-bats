@@ -167,13 +167,23 @@ describe('one game, two forms, and one live look (Public page layout standard Pa
     assert.match(html, /class="stakes">The winner takes the U11 title/);
     assert.match(css, /\.gameSide\[data-placeholder\] \.gameName \{ color: var\(--club-dim\); \}/);
     // Every desk one-line rule and both phone Schedule rules are scoped to the wide row, so the stacked form is one layout.
-    const desk = css.slice(css.indexOf('/* Equal outer columns'), css.indexOf('@media (prefers-reduced-motion'));
-    for (const rule of desk.split('\n').filter(l => /^ {2}\.[a-zA-Z]/.test(l))) assert.match(rule, /^ {2}\.(wideForm|liveCard \.wideForm)\b/, rule);
+    // `css` is comment-stripped (readCode), so the block starts at the first wide-row rule, not at its comment.
+    const deskStart = css.indexOf('.wideForm { display: grid');
+    assert.ok(deskStart > -1, "the wide row's grid rule exists");
+    const desk = css.slice(deskStart, css.indexOf('@media (prefers-reduced-motion'));
+    const deskRules = desk.split('\n').filter(l => /^ {2}\.[a-zA-Z]/.test(l));
+    assert.ok(deskRules.length > 10, 'the scan reaches the desk rules (it once read an empty slice and passed on nothing)');
+    for (const rule of deskRules) assert.match(rule, /^ {2}\.(wideForm|liveCard \.wideForm)\b/, rule);
     assert.doesNotMatch(css, /\.matchLink\[data-state='final'\] \.gameTime|\.matchLink:not\(:has/);
     // The wide form stays the default, so the Schedule and Playoffs rows do not change.
     const wide = renderToStaticMarkup(createElement(ScheduleMatchup, { time: '9:00 a.m.', division: 'U11', state: 'final',
       sides: [{ name: 'A', score: 2, result: 'win' }, { name: 'B', score: 1, result: 'lose' }] }));
     assert.match(wide, /class="matchLink wideForm"/);
+  });
+
+  it("a \"Live now\" heading says it once on Playoffs: its live card has no pill, the Schedule's keeps it (R9)", () => {
+    assert.match(readCode('components/public/PublicPlayoffs.tsx'), /<PublicLiveCard [^>]*pill=\{false\}/);
+    assert.doesNotMatch(readCode('components/public/PublicSchedule.tsx'), /<PublicLiveCard [^>]*pill=\{false\}/);
   });
 
   it('a live stacked row: the edge inside the row, and no pill under a "Live now" heading (said once)', () => {

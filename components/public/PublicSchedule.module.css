@@ -1,4 +1,5 @@
-/* Stage 3: only the switch-on Schedule and its explicit shared-part variants use these classes. */
+/* The Schedule's own rules, and the shared game card's (`ScheduleMatchup`, `GameStatusPill`): the Overview, the bracket, a
+   team's page and a game's page draw their games with these classes too. */
 /* The page's edges, column and rhythm are the shared page's (PublicPage, PublicParts.module.css `.page`); `.schedule`
    only scopes this page's own rules. */
 .controls { display: flex; flex-direction: column; gap: 10px; }
@@ -59,7 +60,8 @@ a.matchLink:hover .gameName { text-decoration: underline; }
   .wideForm:not(:has(.gameScore)):not(:has(.gameStatus)) .gameTeams { grid-column: 1; grid-row: 2; margin-top: 2px; }
   .wideForm:not(:has(.gameScore)):not(:has(.gameStatus)) .gameTime { grid-column: 2; grid-row: 1 / 3; align-self: center; text-align: right; white-space: nowrap; }
   .wideForm:not(:has(.gameScore)):not(:has(.gameStatus)) :is(.gameNoScore, .stakes, .gamePlace) { grid-column: 1 / -1; }
-}.gameName { min-width: 0; overflow-wrap: anywhere; font: 500 1rem/1.35 var(--club-text-face); }
+}
+.gameName { min-width: 0; overflow-wrap: anywhere; font: 500 1rem/1.35 var(--club-text-face); }
 .gameScore { min-width: 28px; text-align: right; font: 700 1.25rem/1.08 var(--club-title-face); font-variant-numeric: tabular-nums; }
 .gameSide[data-result='win'] .gameName { font-weight: 700; }
 .gameSide[data-result='lose'] { color: var(--club-soft); }

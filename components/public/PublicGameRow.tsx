@@ -60,6 +60,7 @@ export function ScheduleMatchup({ time, division, pool, round, state, sides, hre
   place?: { text: string; action?: ReactNode };
 }) {
   const stacked = form === 'stacked';
+  const tone = footTone === 'plain' ? 'plain' : undefined;
   const strip = place?.action != null;
   const body = <>
     <span className={scheduleStyles.gameHead}>
@@ -83,9 +84,9 @@ export function ScheduleMatchup({ time, division, pool, round, state, sides, hre
       </Fragment>)}
     </span>
     {noScore && <span className={scheduleStyles.gameNoScore}>{noScore}</span>}
-    {footAction ? <span className={`${scheduleStyles.stakes} ${scheduleStyles.footRow}`} data-tone={footTone === 'plain' ? 'plain' : undefined}
+    {footAction ? <span className={`${scheduleStyles.stakes} ${scheduleStyles.footRow}`} data-tone={tone}
       data-action-only={foot ? undefined : true}><span>{foot}</span>{footAction}</span>
-      : foot && <span className={scheduleStyles.stakes} data-tone={footTone === 'plain' ? 'plain' : undefined}>{foot}</span>}
+      : foot && <span className={scheduleStyles.stakes} data-tone={tone}>{foot}</span>}
     {place && !strip && <span className={scheduleStyles.gamePlace}>{place.text}</span>}
   </>;
   const edge = stacked && state === 'live' ? ` ${scheduleStyles.edge}` : '';
@@ -107,7 +108,7 @@ export function ScheduleMatchup({ time, division, pool, round, state, sides, hre
  * The Overview's and a team's page's lists are the stacked form, drawn by each page itself (standard A3, A13).
  */
 export function PublicGameRow({ view, href }: { view: GameRowView; href?: string }) {
-  return <li className={scheduleStyles.gameRow} data-face={view.face} data-cancelled={view.cancelled || undefined}>
+  return <li className={scheduleStyles.gameRow}>
     <ScheduleMatchup time={view.head} division={view.sub} pool={view.poolTag} round={view.when} state={view.status}
       sides={view.sides} href={href} />
   </li>;

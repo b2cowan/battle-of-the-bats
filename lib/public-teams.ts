@@ -71,6 +71,11 @@ export function unfilledPlayoffGame(games: Game[], divisionId: string): boolean 
     [g.homeTeamId, g.awayTeamId].some(id => !id || id === '00000000-0000-0000-0000-000000000000'));
 }
 
+/** The Schedule's and Teams' search box names what it matches (standard R8): coaches only where a team carries one. */
+export function teamSearchWords(teams: ReadonlyArray<{ coach?: string | null }>): string {
+  return teams.some(t => t.coach) ? 'Search teams or coaches' : 'Search teams';
+}
+
 /** Pool and playoff games share the existing selectors; the legacy pages keep their old rules. */
 export function teamMoment({ teamId, games, teams, divisions, tournament, requireFinalization, now, champion, playoffPending }: {
   teamId: string; games: Game[]; teams: PublicTeam[]; divisions: Division[];

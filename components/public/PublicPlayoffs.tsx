@@ -100,7 +100,7 @@ export default function PublicPlayoffs({ orgSlug, tournamentSlug, initialData, i
             : <PublicSectionHead title="Up next" />}
           {selected.kind === 'live'
             // A game in play wears the Schedule's live card, so the same game reads the same on both tabs.
-            ? <PublicLiveCard view={card} href={`${base}/schedule/${nextGame.id}`} foot={stakes?.gold ? stakes.text : undefined}
+            ? <PublicLiveCard view={card} href={`${base}/schedule/${nextGame.id}`} foot={stakes?.gold ? stakes.text : undefined} pill={false}
               schedule={{ time: nextGame.time ? formatTime(nextGame.time) : 'TBD', division: division?.name ?? '', round: publicGameRound(nextGame) }} />
             // The game still to play on the SAME one-line row (standard R6; owner 2026-11-05, Part 3): the time and round
             // left, its day right (the toolbar already names the division), the field under the teams.

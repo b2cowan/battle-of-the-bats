@@ -19,6 +19,7 @@ import { getPlayoffStakes, publicGameRound } from '@/lib/public-game-detail';
 import { changedScheduleGameIds, divisionPools, groupPoolPlayoffs, scheduleGames, scheduleInitialSelection, scheduleLandingDay, SCHEDULE_BRACKET_DOOR, visibleScheduleGames, type ScheduleStage } from '@/lib/public-schedule';
 import { downloadTeamScheduleICS } from '@/lib/team-calendar';
 import { useOrgHref } from '@/lib/use-public-pathname';
+import { teamSearchWords } from '@/lib/public-teams';
 import { formatTime } from '@/lib/utils';
 import { isStandalonePWA, useStandalonePWA } from '@/lib/device';
 import PublicDoorRow, { PublicLinkList } from './PublicDoorRow';
@@ -248,7 +249,7 @@ export default function PublicSchedule({ orgSlug, tournamentSlug, isPreview = fa
           }}><Star size={22} aria-hidden /><span className={styles.desktopLabel}>My games</span></button></span>}
           {followed && <span className={`${parts.appOnly} ${styles.calendarSlot}`}><button type="button" className={`${styles.symbol} ${styles.calendarButton}`} aria-label="Add my team's schedule to my calendar" onClick={() => void downloadTeamScheduleICS({ team: followed, games, teams, divisions, tournamentName: tournament.name, orgSlug, tournamentSlug })}><CalendarPlus size={22} aria-hidden /><span className={styles.desktopLabel}>Calendar</span></button></span>}
         </div>}
-        <input id="public-schedule-search" className={styles.search} data-open={searchOpen || undefined} type="search" aria-label={teams.some(t => t.coach) ? 'Search teams or coaches' : 'Search teams'} placeholder={teams.some(t => t.coach) ? 'Search teams or coaches' : 'Search teams'} value={query} onChange={e => { setQuery(e.target.value); setMyGames(false); }} />
+        <input id="public-schedule-search" className={styles.search} data-open={searchOpen || undefined} type="search" aria-label={teamSearchWords(teams)} placeholder={teamSearchWords(teams)} value={query} onChange={e => { setQuery(e.target.value); setMyGames(false); }} />
       </div>
       {!divisionWithheld && datesVisible && <div className={styles.days} data-rail={selection.dates.length > 5 || undefined} role="group" aria-label="Game day" ref={rail}>
         <button type="button" aria-pressed={effectiveDay === 'all'} onClick={() => setDay('all')}>All</button>

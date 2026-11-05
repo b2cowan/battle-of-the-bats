@@ -7,7 +7,7 @@ import type { PublicTournamentPageData } from '@/lib/public-tournament-data';
 import { usePublicTournamentLive } from '@/lib/hooks/usePublicTournamentLive';
 import { isTournamentInProgress, useFollowedTeam, useAccountFollowedTeamIds, unfollowTeamEverywhere } from '@/lib/follow';
 import { competitionShellSignature } from '@/lib/public-playoffs';
-import { teamMoment, teamPlace, teamRowLine, teamsGroups, TEAM_SCHEDULE_WITHHELD } from '@/lib/public-teams';
+import { teamMoment, teamPlace, teamSearchWords, teamRowLine, teamsGroups, TEAM_SCHEDULE_WITHHELD } from '@/lib/public-teams';
 import { splitTeamQualifier } from '@/lib/utils';
 import { isStandalonePWA } from '@/lib/device';
 import { isPublicPageEnabled } from '@/lib/public-pages';
@@ -86,7 +86,7 @@ export default function PublicTeams({ orgSlug, tournamentSlug, isPreview = false
   const moments = useMemo(() => new Map((data?.teams ?? []).map(team => [team.id, teamMoment({ ...data!, teamId: team.id,
     requireFinalization: data!.organization.requireScoreFinalization ?? data!.tournament?.requireScoreFinalization ?? true, now })])), [data, now]);
   // Standard R8: name what the box matches — coaches only where the club shows them (lib/public-teams matches t.coach).
-  const searchWords = data?.teams.some(t => t.coach) ? 'Search teams or coaches' : 'Search teams';
+  const searchWords = teamSearchWords(data?.teams ?? []);
   const groups = data ? teamsGroups({ ...data, divisionId: selectedDivision, query }) : [];  const state = failed ? 'failed' : !data ? 'loading' : !data.pageEnabled || !data.tournament ? 'unavailable'
     : !data.teams.length ? data.teamsWithheld && !data.divisions.length ? 'withheld' : 'empty' : 'ready';
   return <PublicPage data-public-teams={state} data-public-teams-ready={data ? true : undefined}>

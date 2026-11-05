@@ -88,7 +88,7 @@ export function PublicTeamBody({ data, now, orgSlug, tournamentSlug }: {
     {view.noMoreGames && <p className={styles.quiet}>No more games</p>}
     {!hasGames ? <PublicTournamentState title="No games scheduled yet"
       description="Check back when the organizer publishes the games." /> : <div className={parts.cols}>
-      <div className={styles.main}>
+      <div className={parts.colMain}>
         {view.moment.kind === 'champion' && <div className={styles.champion}>Champion · {data.divisionName}</div>}
         {view.focus && <section className={parts.section} aria-labelledby="team-focus">
           <PublicSectionHead id="team-focus" title={live ? 'Live now' : 'Up next'} />{gameList([view.focus], live)}
@@ -103,7 +103,7 @@ export function PublicTeamBody({ data, now, orgSlug, tournamentSlug }: {
               <small>{result.round}{result.unofficial && ' · Unofficial'}</small></span><b>{result.score}</b></Link>)}</div>
         </section>}
       </div>
-      {showRecord && <div className={`${styles.side} ${mainLeadsWithHeading ? styles.sideBelowHeading : ''}`}>
+      {showRecord && <div className={`${parts.colSide} ${mainLeadsWithHeading ? styles.sideBelowHeading : ''}`}>
         <dl className={styles.record}>
           <div><dt>Record</dt><dd>{standings.w}-{standings.l}-{standings.t}</dd></div>
           {preview.place && <div><dt>{preview.place.label}</dt><dd>{preview.place.value}</dd></div>}
