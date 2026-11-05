@@ -435,8 +435,67 @@ describe('4 · the waiting row agrees with Stripe', () => {
   it('Renew in the portal (both signals clear) withdraws it', async () => {
     const w = world({ sub: subscription({ cancel_at_period_end: true }) });
     await recordStripeSignal(account(), w.sub, w.deps);
-    assert.equal(await recordStripeSignal(account(), subscription(), w.deps), 'withdrawn');
+    w.sub = subscription(); // Stripe now says renewed
+    assert.equal(await recordStripeSignal(account(), w.sub, w.deps), 'withdrawn');
     assert.equal(w.only().status, 'canceled');
+  });
+
+  it('F1 · a STALE copy without the flag never withdraws a cancel Stripe still holds (the decisive read is taken after our row)', async () => {
+    // The rehearsal's case 7 (2026-11-05): an owner's cancel over a cheaper move releases the schedule (an event with no flag),
+    // sets the flag, then writes its row. The webhook retrieved Stripe BEFORE the flag and read our row AFTER it was written.
+    const w = world({ sub: subscription({ cancel_at_period_end: true }) });
+    await recordStripeSignal(account(), w.sub, w.deps);
+    const stale = subscription(); // retrieved before the flag was set
+    assert.equal(await recordStripeSignal(account(), stale, w.deps), 'unchanged');
+    assert.equal(w.only().status, 'pending', 'the owner’s cancel still waits');
+    assert.equal(w.mail.filter(m => m.kind === 'kept').length, 0, 'no false "kept" email');
+  });
+
+  it('F1 · the mirror race: a copy from BEFORE Keep’s clear, read after the withdraw, records no "cancel in the portal"', async () => {
+    const w = world({ sub: subscription({ cancel_at_period_end: true }) });
+    await recordStripeSignal(account(), w.sub, w.deps);
+    const stale = w.sub; // still holds the flag
+    w.sub = subscription(); // Keep cleared it in Stripe…
+    assert.equal(await recordStripeSignal(account(), w.sub, w.deps), 'withdrawn'); // …and the row is withdrawn
+    const mailBefore = w.mail.length;
+    assert.equal(await recordStripeSignal(account(), stale, w.deps), 'unchanged');
+    assert.equal(w.pending(), null, 'no second, portal-looking cancel');
+    assert.equal(w.mail.length, mailBefore, 'no false "ends on" email');
+  });
+
+  it('F1 /review · a Keep that marks its row between our row read and the Stripe read is Keep’s own, never "Renewed in Stripe"', async () => {
+    const w = world({ sub: subscription({ cancel_at_period_end: true }) });
+    await recordStripeSignal(account(), w.sub, w.deps);
+    const row = w.only();
+    w.sub = subscription(); // Keep cleared the flag in Stripe…
+    const retrieve = w.deps.retrieveSubscription;
+    w.deps.retrieveSubscription = async id => {
+      // …and marks its row (a keep putting a cheaper move back) while this event reads Stripe.
+      await w.deps.updateIntent(row.id, { log: [{ at: w.state.now.toISOString(), action: 'kept', door: 'owner', by: 'owner@example.com' }] }, ['pending']);
+      return retrieve(id);
+    };
+    assert.equal(await recordStripeSignal(account(), w.sub, w.deps), 'unchanged');
+    assert.equal(w.only().status, 'pending', 'Keep withdraws it, not this event');
+    assert.equal(w.mail.filter(m => m.kind === 'kept').length, 0, 'no "kept" email naming the higher price');
+  });
+
+  it('nothing waits and Stripe holds no cancel: no Stripe read at all (the common updated event)', async () => {
+    const w = world({ sub: subscription() });
+    let reads = 0;
+    const retrieve = w.deps.retrieveSubscription;
+    w.deps.retrieveSubscription = async id => { reads += 1; return retrieve(id); };
+    assert.equal(await recordStripeSignal(account(), w.sub, w.deps), 'unchanged');
+    assert.equal(reads, 0);
+  });
+
+  it('F1 · a stale copy whose fresh read holds a NEW date moves the row to it, never withdraws it', async () => {
+    const w = world({ sub: subscription({ cancel_at_period_end: true }) });
+    await recordStripeSignal(account(), w.sub, w.deps);
+    const later = unix('2027-01-31T05:00:00Z');
+    w.sub = subscription({ cancel_at: later });
+    assert.equal(await recordStripeSignal(account(), subscription(), w.deps), 'rescheduled');
+    assert.equal(w.only().status, 'pending');
+    assert.equal(w.only().effectiveAt, '2027-01-31T05:00:00.000Z');
   });
 
   it('G8 · a dated cancel_at alone is a waiting cancel, dated by cancel_at, and is not withdrawn by the flag being false', async () => {
@@ -874,6 +933,22 @@ describe('8d · Finish this ending now — Stripe first, then only what Stripe c
     assert.equal(w.only().status, 'pending');
   });
 
+  it('F1 /review · Stripe unreachable on the SECOND read (inside the signal) is still the clean "Stripe could not be read" refusal', async () => {
+    const w = await overdueWorld(subscription({ status: 'active' }));
+    const retrieve = w.deps.retrieveSubscription;
+    let reads = 0;
+    w.deps.retrieveSubscription = async id => { reads += 1; if (reads > 1) throw new Error('Stripe unreachable'); return retrieve(id); };
+    const result = await finishOverdueEnding(account(), OPERATOR, 'Check', w.deps);
+    assert.deepEqual(result, { outcome: 'refused', error: W.cancel.finish.stripeUnread, status: 502 });
+    assert.equal(w.only().status, 'pending', 'nothing changed');
+  });
+
+  it('F1 /review · any OTHER failure inside the signal still throws (never dressed up as "Stripe could not be read")', async () => {
+    const w = await overdueWorld(subscription({ status: 'active' }));
+    w.deps.findPending = async () => { throw new Error('database down'); };
+    await assert.rejects(finishOverdueEnding(account(), OPERATOR, 'Check', w.deps), /database down/);
+  });
+
   it('Stripe says it is still live with no cancel: the account is untouched and the waiting cancel is withdrawn (owner 2026-11-02)', async () => {
     const w = await overdueWorld(subscription({ status: 'active' }));
     const result = await finishOverdueEnding(account(), OPERATOR, 'Check', w.deps);
@@ -1075,7 +1150,8 @@ describe('8 · a move to the free plan waits for the renewal date (Stage 2)', ()
     assert.equal(w.only().intentType, 'downgrade');
     // Stripe moving the date moves the row and its data clock.
     const later = '2027-02-15T02:00:00.000Z';
-    assert.equal(await recordStripeSignal(account(), { ...w.sub, cancel_at: unix(later) } as Stripe.Subscription, w.deps), 'rescheduled');
+    w.sub = { ...w.sub, cancel_at: unix(later) } as Stripe.Subscription; // Stripe now says the later date
+    assert.equal(await recordStripeSignal(account(), w.sub, w.deps), 'rescheduled');
     assert.equal(w.only().effectiveAt, later);
     assert.equal(w.only().retentionUntil, retentionUntilFrom(later, 90));
   });
@@ -1083,6 +1159,7 @@ describe('8 · a move to the free plan waits for the renewal date (Stage 2)', ()
   it('Renew in Stripe’s portal withdraws the move — but not while our own click is still between the row and Stripe', async () => {
     const w = await waitingMove();
     const renewed = { ...w.sub, cancel_at_period_end: false, cancel_at: null } as Stripe.Subscription;
+    w.sub = renewed; // Stripe now says renewed
     assert.equal(await recordStripeSignal(account(), renewed, w.deps), 'unchanged', 'minutes after the click: the click is mid-way');
     w.state.now = new Date(NOW.getTime() + 60 * 60_000);
     assert.equal(await recordStripeSignal(account(), renewed, w.deps), 'withdrawn');
@@ -1626,7 +1703,8 @@ describe('10 · a move’s emails, the log as an append, the operator’s plan c
       // Stripe moves the date while the owner's changed pick is being saved.
       if (!raced && patch.keepTournamentIds) {
         raced = true;
-        await recordStripeSignal(account(), { ...w.sub, cancel_at: unix('2027-02-15T02:00:00.000Z') } as Stripe.Subscription, w.deps);
+        w.sub = { ...w.sub, cancel_at: unix('2027-02-15T02:00:00.000Z') } as Stripe.Subscription; // Stripe now says the later date
+        await recordStripeSignal(account(), w.sub, w.deps);
       }
       return update(id, patch, onlyIf);
     };

@@ -1236,14 +1236,26 @@ export async function applyDowngrade(
 export type SignalResult = 'recorded' | 'rescheduled' | 'withdrawn' | 'unchanged';
 
 /**
- * `customer.subscription.updated`: make the waiting row agree with Stripe. Always called with the LIVE subscription
- * (retrieved, never the event's copy — events arrive out of order: a late "true" after Keep's "false"), and keyed to the
- * subscription and its end date, so the many updates Stripe fires write once.
+ * `customer.subscription.updated`: make the waiting row agree with Stripe, keyed to the subscription and its end date, so
+ * the many updates Stripe fires write once.
+ *
+ * ⚠ OUR ROW FIRST, THEN STRIPE (F1, Stage 3 test-clock rehearsal 2026-11-05). Every writer changes Stripe first and its row
+ * second (a cancel: release a cheaper move's schedule, set the flag, write the row; Keep: clear the flag, withdraw the row),
+ * so the decisive Stripe read is taken here AFTER the row was read — never the caller's copy, retrieved before it. With the
+ * caller's copy, an owner's cancel over a cheaper move was withdrawn as "Renewed in Stripe" (the release's event has no
+ * flag) with a false "kept" email; Stripe's next event made a second cancel without the move, and Keep renewed at the higher
+ * price (Club Large $379, not Club $219). The mirror race — a copy from before Keep's clear, read after the withdraw — would
+ * record a "cancel in the portal" and send a false "ends on". Not covered (the accepted Part C race): Stripe's flag handled
+ * before the click's row is written reads as a portal cancel; `writePending` then folds the click into that row.
+ * The caller's copy only lets an account with nothing waiting and no cancel in Stripe skip the read.
  */
-export async function recordStripeSignal(account: EndingAccount, sub: Stripe.Subscription, deps: EndingDeps): Promise<SignalResult> {
+export async function recordStripeSignal(account: EndingAccount, observed: Stripe.Subscription, deps: EndingDeps): Promise<SignalResult> {
+  if (ENDED.has(observed.status)) return 'unchanged';
+  const pending = await deps.findPending(account.orgId);
+  if (!pending && !stripeCancelSignal(observed).scheduled) return 'unchanged';
+  const sub = await deps.retrieveSubscription(observed.id);
   if (ENDED.has(sub.status)) return 'unchanged';
   const signal = stripeCancelSignal(sub);
-  const pending = await deps.findPending(account.orgId);
   const now = deps.now();
   const stripe: EndingActor = { door: 'stripe_portal', userId: null, email: 'stripe-webhook' };
 
@@ -1273,12 +1285,15 @@ export async function recordStripeSignal(account: EndingAccount, sub: Stripe.Sub
 
   if (!pending || (pending.stripeSubscriptionId && pending.stripeSubscriptionId !== sub.id)) return 'unchanged';
   // Our own Keep cleared the cancel and is still putting a cheaper move back: the keep withdraws the row, not this event.
-  if (keepInProgress(pending, now)) return 'unchanged';
-  const withdrawn = await withdrawRow(pending, stripe, 'Renewed in Stripe', deps);
+  // Asked of the row as it is NOW, after the Stripe read: Keep clears the flag and only then marks its row, so the row read
+  // above can predate the mark (the "kept" email would then name the higher price while Keep puts the cheaper move back).
+  const current = await deps.findPending(account.orgId);
+  if (!current || current.id !== pending.id || keepInProgress(current, now)) return 'unchanged';
+  const withdrawn = await withdrawRow(current, stripe, 'Renewed in Stripe', deps);
   // G6 b · Renew in Stripe's portal is a keep too (owner 2026-11-02): the same email, once per row. A cheaper move the cancel
   // set aside is NOT put back on this path (see plan §4 item 1) — the email names the price it renews at, so nothing is silent.
   if (withdrawn) {
-    await sendEndingEmailOnce({ kind: 'kept', account, intent: withdrawn, door: 'stripe_portal', renewsOn: signal.endsAt, renewsAs: null }, pending.notifyOwner, deps);
+    await sendEndingEmailOnce({ kind: 'kept', account, intent: withdrawn, door: 'stripe_portal', renewsOn: signal.endsAt, renewsAs: null }, current.notifyOwner, deps);
   }
   return 'withdrawn';
 }
@@ -1397,7 +1412,17 @@ export async function finishOverdueEnding(account: EndingAccount, actor: EndingA
   }
   if (!ENDED.has(sub.status)) {
     const signal = stripeCancelSignal(sub);
-    const agreed = await recordStripeSignal(account, sub, deps);
+    // recordStripeSignal reads Stripe again (after our row — F1); an unreachable Stripe THERE is this door's refusal too.
+    // Only that read: any other failure still throws as before.
+    let unread = false;
+    const readsStripe: EndingDeps = { ...deps, retrieveSubscription: id => deps.retrieveSubscription(id).catch(error => { unread = true; throw error; }) };
+    let agreed: SignalResult;
+    try {
+      agreed = await recordStripeSignal(account, sub, readsStripe);
+    } catch (error) {
+      if (unread) return { outcome: 'refused', error: W.cancel.finish.stripeUnread, status: 502 };
+      throw error;
+    }
     const record = agreed === 'withdrawn' || agreed === 'rescheduled' ? agreed : 'unchanged';
     return { outcome: 'live', status: sub.status, nextDate: signal.endsAt, cancelScheduled: signal.scheduled, record };
   }
