@@ -16,7 +16,7 @@ export const dynamic = 'force-dynamic';
  * 2026-10-27: Super admin, Billing and Support). One list, "Needs a look", most urgent first (builder's call): open
  * disputes by answer-by, a club disconnected with a dispute open, an account Stripe closed, Stripe messages we couldn't
  * process, a Stripe fee that couldn't be billed, a club's own fee invoice unpaid, a club not on the current terms (once
- * counsel's version exists). A row leaves when it clears. Each opens the club's Online payments tab. Nothing here writes.
+ * the real dated version exists). A row leaves when it clears. Each opens the club's Online payments tab. Nothing here writes.
  */
 const H = PA_WORDS.health;
 

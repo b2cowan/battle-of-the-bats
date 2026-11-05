@@ -100,15 +100,44 @@
   }
 }
 
-/* Under the public tournament pages' frame (Stage 1 Part 3 — lib/public-frame.ts): a white
-   card with a hairline, no wash of the organizer's colour and no glow (plan §4); nothing under 12 px (Ask 2). */
+/* Under the public tournament pages' frame (lib/public-frame.ts): ON THE PUBLIC PAGE LAYOUT STANDARD (Part 3, 2026-11-05;
+   the old card's glow, shadow, medallion, centring and sliding title size were off it). One look with the Schedule's own
+   empty state: a white card with the light hairline, 8 px corners, left-aligned on the page's column (R1), 16 px in,
+   a 20 px title (R10), the line in dim ink; the symbol plain in the ink colour. The frame's club tokens, not the old
+   global ones. Outside the frame (no page uses it there today) the old look stands untouched. */
 :global([data-public-frame='light']) .state {
-  background: var(--surface);
+  align-items: flex-start;
+  gap: 8px;
+  max-width: none;
+  margin: 0;
+  padding: 16px;
+  text-align: left;
+  background: var(--club-card);
+  border: 1px solid var(--club-line);
+  border-radius: 8px;
   box-shadow: none;
 }
 :global([data-public-frame='light']) .icon {
-  background: var(--bg-inset);
-  border-color: var(--border);
+  width: auto;
+  height: auto;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
   box-shadow: none;
+  color: var(--club-ink);
 }
-:global([data-public-frame='light']) .eyebrow { font-size: 0.75rem; }
+:global([data-public-frame='light']) .eyebrow {
+  color: var(--club-soft);
+  font: 700 0.75rem/1.2 var(--club-text-face);
+  letter-spacing: 0.06em;
+}
+:global([data-public-frame='light']) .title { color: var(--club-text); font: 700 1.25rem/1.3 var(--club-title-face); }
+:global([data-public-frame='light']) .description,
+:global([data-public-frame='light']) .contact {
+  max-width: none;
+  color: var(--club-dim);
+  font: 400 1rem/1.5 var(--club-text-face);
+}
+:global([data-public-frame='light']) .contact a { color: var(--club-ink); }
+:global([data-public-frame='light']) .actions { justify-content: flex-start; margin-top: 4px; }

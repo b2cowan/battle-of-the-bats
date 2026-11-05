@@ -116,8 +116,28 @@ Stripe Tax, the owner's Bookkeeping in platform admin, CRA/IRS reporting, curren
   record it as an owner question.
 - **Not this agent:** the product's *customer* bookkeeping features (club/coach money tracking) — that is product work.
 - **No professional gate:** the owner ruled (2026-10-31, `BUSINESS_DECISIONS.md`) that neither an accountant nor a US
-  lawyer holds a launch; `/accounting` flags what a professional should look at, and the owner decides when.
+  lawyer holds a launch, and (2026-11-04) removed the two Canadian-counsel gates too — online payments in production and
+  the guardian tier. `/accounting` and `/legal` flag what a professional should look at, and the owner decides when.
 - Plan of record for our own tax: `docs/projects/active/GST_HST_COLLECTION_PLAN.md`.
+
+# Legal questions — route them to `/legal`, by default (owner 2026-11-04)
+
+Any question about **FieldLogicHQ's own** legal position goes to `/legal` (`.claude/commands/legal.md`, facts and
+research in `docs/agents/legal/`, index `LEGAL_INDEX.md`) — the same way tax goes through `/accounting`. This covers our
+Terms of Service, payments terms, privacy policy, data-processing terms for clubs, signup acceptance and terms
+versioning, privacy law (PIPEDA, Québec Law 25, children's information), anti-spam (CASL) for every email the platform
+sends, consumer protection for a coach buying as an individual, money-services rules for online payments, business-name
+registration, trademark, and incorporation as a legal question.
+
+- **A question:** answer it from `/legal` (it reads its index first and only re-researches a stale topic), never from
+  memory or a fresh web search in the main chat.
+- **Work that touches it:** a session whose change alters what the product collects about people, what it tells them
+  about that, what it emails them, what a customer agrees to, or what a policy promises, runs the `/legal` review
+  **before handing off** — not offered as an optional extra at the end. Apply what it finds, or record it as an owner
+  question. A policy that promises what the product doesn't do is a defect to route to `/plan`, not wording to soften.
+- **Not this agent:** tax (→ `/accounting`), prices and gates (→ `/strategy`), and a club's *own* legal obligations
+  (their waivers, their families' consent) except where the product's design creates FieldLogicHQ's exposure.
+- **No lawyer gate** (see the accounting section above): `/legal` flags what a lawyer should look at; the owner decides when.
 
 # Demo sandboxes — they follow the product; they never gate it
 

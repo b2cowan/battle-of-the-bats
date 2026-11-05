@@ -1,12 +1,45 @@
 {
   "generated": "2026-11-05",
-  "total": 0,
+  "total": 8,
   "counts": {
     "tables": 0,
-    "columns": 0,
+    "columns": 6,
     "indexes": 0,
-    "constraints": 0,
-    "rls": 0
+    "constraints": 1,
+    "rls": 1
   },
-  "items": []
+  "items": [
+    {
+      "key": "check:only-dev:rep_document_templates.rep_document_templates_validity_check",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_children.emergency_contact_name",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_children.emergency_contact_phone",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_children.medical_notes",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_document_templates.validity",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_roster_players.health_confirmed_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_roster_players.health_confirmed_by",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_roster_players.rep_roster_players_health_confirmed_by_fkey",
+      "sig": ""
+    }
+  ]
 }

@@ -4,6 +4,7 @@ import { Check, Copy, ExternalLink, FileText } from 'lucide-react';
 import { useCopyToClipboard } from '@/lib/hooks/useCopyToClipboard';
 import { RuleIcon } from '@/lib/rule-icons';
 import PublicDisclosure from './PublicDisclosure';
+import { PublicLinkList } from './PublicDoorRow';
 import styles from './PublicRules.module.css';
 
 type Section = { anchor: string; title: string; icon: string | null; items: string[] };
@@ -23,7 +24,9 @@ function RuleLink({ anchor, title, shareAllDivisions }: { anchor: string; title:
   </>;
 }
 
-/** Rules' private interactive list; only public titles, text and resource links cross this client boundary. */
+/** Rules' private interactive list; only public titles, text and resource links cross this client boundary. ONE framed
+ *  list of link rows (Public page layout standard A8, R5): each rule is an item of it and still opens its window on a
+ *  desk; on a phone it drops open inside the list. */
 export default function PublicRuleSections({ sections, resources, isPreview, shareAllDivisions }: {
   sections: Section[]; resources: { label: string; url: string }[]; isPreview: boolean; shareAllDivisions: boolean;
 }) {
@@ -49,19 +52,18 @@ export default function PublicRuleSections({ sections, resources, isPreview, sha
 
   const changeOpen = (anchor: string, open: boolean) => setOpenAnchor(current => open ? anchor : current === anchor ? null : current);
   return <>
-    <div className={styles.sections}>
-      {sections.map(section => <div key={section.anchor} id={section.anchor} className={styles.section}>
-        <PublicDisclosure title={section.title} modalOnDesktop open={openAnchor === section.anchor}
+    <PublicLinkList>
+      {sections.map(section =>
+        <PublicDisclosure key={section.anchor} id={section.anchor} joined title={section.title} modalOnDesktop open={openAnchor === section.anchor}
           icon={<RuleIcon name={section.icon} size={20} aria-hidden />}
           action={isPreview ? undefined : <RuleLink anchor={section.anchor} title={section.title} shareAllDivisions={shareAllDivisions} />}
           onOpenChange={open => changeOpen(section.anchor, open)}>
           <div className={styles.body}>
             <ul className={styles.items}>{section.items.map((item, index) => <li key={index}>{item}</li>)}</ul>
           </div>
-        </PublicDisclosure>
-      </div>)}
-      {resources.length > 0 && <div id={downloadsAnchor} className={styles.section}>
-        <PublicDisclosure title="Downloads & Resources" sub={`${resources.length} ${resources.length === 1 ? 'file' : 'files'}`}
+        </PublicDisclosure>)}
+      {resources.length > 0 &&
+        <PublicDisclosure id={downloadsAnchor} joined title="Downloads & Resources" sub={`${resources.length} ${resources.length === 1 ? 'file' : 'files'}`}
           icon={<FileText size={20} aria-hidden />} modalOnDesktop open={openAnchor === downloadsAnchor} onOpenChange={open => changeOpen(downloadsAnchor, open)}>
           <div className={styles.body}><div className={styles.resources}>
             {resources.map((resource, index) => isPreview
@@ -69,8 +71,7 @@ export default function PublicRuleSections({ sections, resources, isPreview, sha
               : <a key={index} className={styles.resource} href={resource.url} target="_blank" rel="noopener noreferrer">
                 <ExternalLink size={18} aria-hidden />{resource.label}</a>)}
           </div></div>
-        </PublicDisclosure>
-      </div>}
-    </div>
+        </PublicDisclosure>}
+    </PublicLinkList>
   </>;
 }

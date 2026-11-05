@@ -28,6 +28,17 @@ the lists) change there too.
 After the public tournament site's Stage 8 switch-on. It reuses every part that work built. The club's public pages
 get the same pass next, so moving between a club and its tournament feels like one site.
 
+## The club round (drawn and ruled 2026-11-05, all seven as recommended; build prompt written, builds after the tournament's shared parts)
+
+Families move between a club's own pages and its tournament, so the club's pages get the same treatment. Today each
+club page was drawn at its own width, three of them are centred instead of starting under the club's logo, and
+clicking into a tournament makes the band grow, the content widen and the page title vanish. The proposal keeps the one
+deliberate difference (the club's tabs in its band, the tournament's menu on the left, both already ruled) and matches
+everything else: one band height, one 960 px content width, the same top, spacing, headings and rows, no title where a
+tab already names the page, and a link between a team's club page and its tournament page. Success: clicking from the
+club home into its tournament and back, only the navigation changes place. Drawings:
+https://claude.ai/artifact/96Jaq1JZNr8EgGaV3dxmLt.
+
 ## Success looks like
 
 - Clicking through the six main tournament pages, the content's left edge, right edge and top never move.

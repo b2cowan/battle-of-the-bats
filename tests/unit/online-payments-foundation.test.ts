@@ -119,8 +119,8 @@ describe('the launch switch: off in production', () => {
     }
   });
 
-  it('a LIVE key keeps it off even with the env var set, until counsel signs off', () => {
-    assert.equal(LIVE_PAYMENTS_ALLOWED, false, 'turning live payments on is its own reviewed commit, after counsel');
+  it('a LIVE key keeps it off even with the env var set, until the owner switches it on', () => {
+    assert.equal(LIVE_PAYMENTS_ALLOWED, false, 'turning live payments on is its own reviewed commit, made when the owner switches it on');
     assert.equal(onlinePaymentsOn({ ONLINE_PAYMENTS_ENABLED: 'true', STRIPE_SECRET_KEY: 'sk_live_x' }), false);
   });
 

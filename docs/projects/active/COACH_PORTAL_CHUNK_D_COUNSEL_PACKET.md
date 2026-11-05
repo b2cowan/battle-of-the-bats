@@ -5,7 +5,9 @@
 > of the family layer in one pass, and to give the owner a clear list of what we are asking
 > them to sign off on.
 >
-> **Status: awaiting counsel review.**
+> **Status: not a gate since 2026-11-04 (owner); questions open as /legal backlog L5–L6.**
+>
+> **2026-11-04 (owner):** counsel no longer gates the guardian tier. Wherever this plan says counsel's sign-off gates it, read: the switch stays off until the owner turns it on, after real guardian consent wording are written (`/legal` drafts them). See BUSINESS_DECISIONS.md 2026-11-04.
 >
 > **Update 2026-08-01 (owner decision):** the guardian tier is now **BUILT AND SWITCHED OFF**
 > rather than unbuilt. It is disabled by a server-side flag (`GUARDIAN_TIER_ENABLED`, default

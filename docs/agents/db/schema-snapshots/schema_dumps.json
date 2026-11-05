@@ -12179,6 +12179,33 @@
         "column_default": "now()"
       },
       {
+        "table_name": "org_children",
+        "pos": 8,
+        "column_name": "medical_notes",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_children",
+        "pos": 9,
+        "column_name": "emergency_contact_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_children",
+        "pos": 10,
+        "column_name": "emergency_contact_phone",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "org_custom_domains",
         "pos": 1,
         "column_name": "id",
@@ -18713,6 +18740,15 @@
         "column_default": "now()"
       },
       {
+        "table_name": "rep_document_templates",
+        "pos": 12,
+        "column_name": "validity",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
         "table_name": "rep_dues_credits",
         "pos": 1,
         "column_name": "id",
@@ -21473,6 +21509,24 @@
         "data_type": "uuid",
         "udt_name": "uuid",
         "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_roster_players",
+        "pos": 33,
+        "column_name": "health_confirmed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_roster_players",
+        "pos": 34,
+        "column_name": "health_confirmed_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
         "column_default": null
       },
       {
@@ -33445,6 +33499,13 @@
       },
       {
         "table_name": "rep_roster_players",
+        "column_name": "health_confirmed_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "rep_roster_players_health_confirmed_by_fkey"
+      },
+      {
+        "table_name": "rep_roster_players",
         "column_name": "org_id",
         "foreign_table": "organizations",
         "foreign_column": "id",
@@ -44859,6 +44920,12 @@
         "table_name": "rep_document_templates",
         "detail": "rep_document_templates_document_type_check",
         "check_clause": "(document_type = ANY (ARRAY['waiver'::text, 'medical_consent'::text, 'code_of_conduct'::text, 'other'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_document_templates",
+        "detail": "rep_document_templates_validity_check",
+        "check_clause": "(validity = ANY (ARRAY['signed_each_season'::text, 'good_until_replaced'::text]))"
       },
       {
         "kind": "RLS",

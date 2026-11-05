@@ -4,8 +4,10 @@
 > chunk per session** (R2 is too big for one, and the later chunks are better for starting clean):
 >
 > - `execute @docs/projects/active/BANK_RECONCILIATION_R2_BUILD_PROMPT.md, chunk R2a only`
-> - then `… chunk R2b only`, `… chunk R2b-2 only`, `… chunk R2c only`, `… chunk R2d only`, in that order.
->   (R2b-2 was added 2026-11-04 after R2b's review: owner said yes to closing the tick race before any screen is built.)
+> - then `… chunk R2b only`, `… chunk R2b-2 only`, `… chunk R2b-3 only`, `… chunk R2c only`, `… chunk R2d only`.
+>   (R2b-2 was added 2026-11-04 after R2b's review: owner said yes to closing the tick race before any screen is built.
+>   R2b-3 was added 2026-11-05 after R2b-2's review: owner said yes to closing the book-move race before the Move a book
+>   window is built. **R2b-3 and R2c may run at the same time, in two chats** — see "Running alongside" in each.)
 >
 > Other sessions share this working copy: stage explicit paths only, never `git add -A`, commit only your own hunks
 > (temp index, HEAD guard: memory `reference_partial_commit_shared_tree`), and only when the owner says. A chunk ends
@@ -232,9 +234,100 @@ write path) before asking the owner to commit.
 
 ---
 
+## Chunk R2b-3: a book move can't race a tick or a keep-out (server only, before R2c's Move a book window)
+
+**Why (owner yes, 2026-11-05).** R2b-2's `/review` (record: plan §7 R2 under R2b-2, "LEFT OPEN, pre-existing, owner
+call") found that `bank_book_move` (mig 439) moves a book's `bank_line_exclusions` and `opening_picked` rows holding only
+the BOOK's lock (`accounting_ledgers … FOR UPDATE`), never the accounts'. So, with two people at once (the window is
+seconds, not milliseconds: the route's read includes a Stripe read before the step runs):
+- a "Didn't go through the bank" sent while someone moves that line's book can stay behind on the OLD account: the
+  keep-out is silently lost on the new one, and reappears if the book is ever moved back;
+- a "Put it back" can miss (the move already carried the row to the new account): the step deletes 0 rows, answers ok,
+  and the line stays kept out on the new account;
+- a tick planned before the move can land on the OLD account's statement for a line whose book just moved (and a key
+  ticked on the other account is then hidden there as claimed elsewhere), and a bank fee added from the old account can
+  pass its "is this book the account's?" check just before the move and book into a book that is no longer its.
+Nothing on screen can move a book yet; R2c's Move a book window (C10) makes it reachable. Close it first.
+
+**Read first:** plan §7 R2 (the R2b-2 block, its /review record and the open item); mig 439 (`bank_book_move`,
+`bank_account_add`, `bank_check_add_line`'s "the book must be THIS account's" predicate); mig 440 (the club steps and
+their owner-agnostic halves; the header's "NOT CLOSED HERE"); mig 436 (the `bank_account_books` guard trigger);
+`lib/bank-club-steps.ts` (`moveBook`, `tickRow`, `keepOut`); `tests/unit/bank-r2-server-guard.test.ts` (§0, §4, §5);
+`DATA_DICTIONARY.md` `bank_account_books`, `bank_check_marks` gotcha 5, `bank_line_exclusions` gotcha 1.
+
+**Build** (a new migration, the next free number when you start: `ls supabase/migrations`, other sessions add them;
+functions only, `CREATE OR REPLACE` with the SAME signatures so no route changes; dev only, prod owed with 436 + 437 +
+439 + 440, entry in `MANUAL_PROD_STEPS.json`; the R2b-2 house rules: plpgsql, `SET search_path = public`, no
+`SECURITY DEFINER`, revoked from PUBLIC/anon/authenticated, EXECUTE to service_role, `{ok, code}`):
+1. **One home for "this account holds this book"**: a helper (e.g. `bank_club_account_holds(p_org, p_account, p_ledger)`)
+   with exactly the predicate `bank_check_add_line` has inline today (its mapping row, or no club mapping row and this is
+   the club's first account). `bank_check_add_line` calls it instead of its inline copy (same behaviour, same refusal).
+2. **The move takes the accounts' locks FIRST**, the same lock every tick, keep-out, Mark checked, Undo and fee step takes:
+   read where the book sits now (unlocked), lock BOTH accounts (from and to) `FOR UPDATE` **in id order**, then the book
+   row, then re-read where the book sits; if it moved meanwhile, answer `changed` (the route reads again). ⚠ **Do NOT
+   simply add the account locks after the book lock:** `bank_check_add_line` holds the account and then needs the book
+   (its insert into `accounting_entries` takes a key-share on the ledger), so book→account in the move and account→book in
+   the fee step is a deadlock. Account(s)→book in both is one order. `bank_account_add` (org lock, then the move) stays
+   consistent: nothing takes the org lock after an account lock — check that, and say so in the record.
+3. **The club tick and keep-out steps refuse a line that isn't the account's any more** (`changed`): for every `entry:` key
+   a tick would write (a plain line, and each payout member) and for a keep-out's key, the entry's book must be held by this
+   account (the helper), checked under the account lock before anything is written. This goes in the CLUB wrappers
+   (`bank_check_tick`, `bank_check_keep_out`), not the owner-agnostic halves: a coach account's keys are register rows,
+   not `entry:` keys, and R4's wrapper will have its own rule. A `payout:` key is the payout's own (its members carry the
+   check); a `typed:` key is the account's own saved line.
+4. **A put-back that removes nothing is `changed`**, not ok: the route's read saw the exclusion, so if the step deletes 0
+   rows, something moved it (a book move, or a second tab). Same in the owner-agnostic half (it is owner-neutral).
+5. Keep every route's request and answer as they are (R2c builds against them, possibly at the same time). `moveBook`
+   already maps a step's `changed` to the coded refusal; confirm, no new code needed. If a new refusal code turns out to
+   be needed, it gets words in `lib/bank-check-words.ts` and a status in `STATUS_OF` (a type error otherwise) and is named
+   in the record for R2c's screens.
+
+**Check before you build, and say what you found:** whether anything else writes `bank_saved_lines`,
+`bank_line_exclusions` or `bank_check_marks` without the account lock once the move takes it (grep migrations, lib/, app/);
+and whether the 436 guard trigger on `bank_account_books` reads or locks anything that changes the lock order.
+
+**Tests.**
+- `tests/unit/bank-r2-server-guard.test.ts`: the move locks the accounts before the book (`FOR UPDATE` order in the
+  function text) and re-reads the mapping; the club tick and keep-out steps call the holds-book helper before any write;
+  `bank_check_add_line` uses the helper (no second copy of the predicate in any migration's live definition); a put-back
+  deleting nothing answers `changed`; the §0 floor covers the new migration's functions (add it to `BANK_FN_MIGS`).
+- `tests/unit/bank-club-routes.test.ts` only if a pure rule changes (it shouldn't).
+- **Dev proof** (a probe in `.probe/`, never committed, everything rolled back or deleted): a two-account club on
+  `uat-rep-club` in one rolled-back block: move a book from account A to B, then call A's tick and keep-out steps with a
+  key from that book (the stale plan the race leaves behind) → `changed`, nothing written; a put-back on A of an exclusion
+  the move carried to B → `changed`; a tick and a keep-out on B for the same key → ok; a fee on A naming the moved book →
+  `book_not_in_account`; a payout member from the moved book in a tick on A → `changed`. Then re-run R2b-2's and R2b's dev
+  probes (`.probe/bank-r2b2-steps.sql`, `bank-r2b2-routes.mjs`, `bank-r2b-routes.mjs`, `bank-r2b-processing.mjs`): all
+  green. Print a `BANK_R2B3_PASSED` line.
+
+**Running alongside R2c (owner, 2026-11-05).** This chunk owns the server: `supabase/migrations/**`,
+`lib/bank-club-steps.ts`, `lib/bank-club-rules.ts`, `lib/bank-check-fee.ts`, `lib/bank-club-read.ts`,
+`lib/bank-club-map.ts`, `tests/unit/bank-r2-server-guard.test.ts`, the dictionary's bank sections. It does not touch
+screens, `lib/admin-kit-nav.ts`, `components/**` or `app/[orgSlug]/**`. Both chunks write the plan's §7 R2 and the TODO
+bank line: commit only your own hunks (memory `reference_partial_commit_shared_tree`).
+
+**Done:** migration applied to dev; guard + bank tests + probes green; dictionary (`bank_account_books`: the move now takes
+both accounts' locks first; `bank_line_exclusions` gotcha 1: drop the "one writer NOT under the account lock" warning, say
+what replaced it) + snapshots under the "Every chunk" rule; `typecheck`, focused lint. Record under plan §7 R2 (an R2b-3
+block; mark the R2b-2 "LEFT OPEN" item built), the TODO bank line and memory. Offer `/simplify` then `/review` (**high
+tier**, money write path) before asking the owner to commit.
+
+---
+
 ## Chunk R2c: the Bank tab, desk
 
 Build to the approved drawings, desk 1440. **Accounting gains "Bank" after Ledger (B8).**
+
+**Running alongside R2b-3 (owner, 2026-11-05).** R2b-3 may be building in another chat at the same time. It owns the
+server side (`supabase/migrations/**`, `lib/bank-club-*.ts`, `lib/bank-check-fee.ts`, the bank server guard) and keeps
+every route's request and answer unchanged, so build the screens against the routes as they are. **Do not edit those
+files here**; if a screen needs a server change, stop and say so (it goes to R2b-3 or a follow-up). Adding refusal WORDS
+the screens need is fine only through the owner: ask first, since `lib/bank-check-words.ts` is shared. Both chunks write
+the plan's §7 R2 and the TODO bank line: commit only your own hunks. What the server already gives the screens (built in
+R2b-2): each payout gap's `withheld` reason (`no_processing_gap` · `payout_line_missing` · `dispute_figure_differs` ·
+`gap_not_a_fee`) to explain a missing "Add it as payment processing"; a tick or keep-out on a statement just checked is
+refused `not_open`, and a stale one `changed` — both mean "read again", and the answer already carries the fresh view
+only on success, so re-read the account on a refusal. A malformed id is a 404.
 
 - Registry: `AccountingTabId` + `accountingTabs` + the page `app/[orgSlug]/admin/accounting/bank/page.tsx`; update the
   five tests that pin the tab list (`admin-kit-nav`, `club-accounting-teams-guard`, `online-payouts-list`,

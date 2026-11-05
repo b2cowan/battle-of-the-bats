@@ -17,7 +17,7 @@ frontend:
         - echo "STRIPE_SECRET_KEY=$STRIPE_SECRET_KEY" >> .env.production
         - echo "STRIPE_WEBHOOK_SECRET=$STRIPE_WEBHOOK_SECRET" >> .env.production
         # Online payments (Club Tier Stage 12). The switch is OFF unless the console sets the literal 'true' — production
-        # does not, and a live key keeps it off regardless until counsel signs off (lib/online-payments-switch.ts). The
+        # does not, and a live key keeps it off regardless until the owner switches it on, real payments terms first (lib/online-payments-switch.ts). The
         # two Connect webhooks (payments: v1 snapshot events; the club's account: v2 thin events) each have their own
         # signing secret, separate from the billing webhook's. PAY_LINK_SECRET signs a team's pay link (at least 32
         # characters, its own per branch). Unset ⇒ every online-payments door stays shut.

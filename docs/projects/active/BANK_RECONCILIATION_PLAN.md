@@ -504,7 +504,7 @@ Every stage: migration first where there is one, then the `DATA_DICTIONARY.md` u
 - [x] Confirm the coach register row `id` is stable across reads (derived from source table + id); if not, add a stable
   source key the engine can mark. *(Answered under Open questions: stable for every settled row; no new key needed.)*
 
-### R2 — Club: the Bank tab (desk + phone) (prompt `BANK_RECONCILIATION_R2_BUILD_PROMPT.md`, written 2026-11-04; four one-session chunks: R2a reader + P4 club-pays, R2b routes + atomic functions, R2c the tab on desk, R2d phone + close)
+### R2 — Club: the Bank tab (desk + phone) (prompt `BANK_RECONCILIATION_R2_BUILD_PROMPT.md`, written 2026-11-04; one-session chunks: R2a reader + P4 club-pays, R2b routes + atomic functions, R2b-2 the tick lock (added 11-04), R2b-3 the book-move lock (added 11-05; may run beside R2c), R2c the tab on desk, R2d phone + close)
 - [x] Routes under `app/api/admin/accounting/bank/**` via `resolveClubMoney({write})`; lines from posted club-book
   entries (`isClubBook`) in the account's books, minus same-account transfer pairs, void and pending. *(R2b, 2026-11-04.)*
 - [ ] `accountingTabs` gains "Bank" (B8); page `app/[orgSlug]/admin/accounting/bank/page.tsx`; C1–C5, C10. *(Desk built
@@ -723,7 +723,9 @@ Every stage: migration first where there is one, then the `DATA_DICTIONARY.md` u
 >   (names the one writer outside the account lock). (5) The R2b processing probe's two stale checks (the reason is now the
 >   view's own; a processing line rides its payout since R2b's review fix) — probe only, not committed. Mig 440 re-applied to
 >   dev; `BANK_R2B2_SQL_PASSED`, `BANK_R2B2_PASSED`, `BANK_R2B_PROCESSING_PASSED`; bank tests 171/171; typecheck + lint clean.
->   **⚠ LEFT OPEN, pre-existing (not made by R2b-2), owner call:** **moving a book races a keep-out or a tick.**
+>   **⚠ LEFT OPEN, pre-existing (not made by R2b-2) → owner said YES 2026-11-05: chunk R2b-3 in the R2 build prompt,
+>   before R2c's Move a book window (R2b-3 and R2c may run at the same time; R2b-3 owns the server):** **moving a book
+>   races a keep-out or a tick.**
 >   `bank_book_move` (mig 439) moves a book's exclusions and opening items holding only the BOOK's lock, not the accounts'.
 >   So a "Didn't go through the bank" sent while someone else moves that line's book can stay behind on the old account (the
 >   keep-out is silently lost; it reappears if the book moves back), a "Put it back" can miss and leave the line kept out on

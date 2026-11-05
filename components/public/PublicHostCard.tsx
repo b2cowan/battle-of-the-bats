@@ -15,8 +15,8 @@ export interface HostCardColours {
 /**
  * The host card (Public tournament pages Stage 2 Part 3; plan §6, Ask 4 / Ask B, hub `.host`): the club as advertising —
  * who hosts, what is open at the club right now (its own Open now list, nothing typed for it) and a Visit the club
- * button. What goes in it is lib/public-host-card.ts's (`hostCardView`); when the organizer has no public club page there
- * is no view and nothing is drawn. In the organizer's admin preview it is plain text (no `href` anywhere), as the band is.
+ * button. What goes in it is lib/public-host-card.ts's (`hostCardView`); when the organizer has no public club page, or
+ * nothing is open there now (A10), there is no view and nothing is drawn. In the organizer's admin preview it is plain text (no `href` anywhere), as the band is.
  */
 export default function PublicHostCard({ view, colours }: { view: HostCardView; colours: HostCardColours }) {
   const vars = {
@@ -35,25 +35,20 @@ export default function PublicHostCard({ view, colours }: { view: HostCardView; 
           <b className={styles.hostName} id="overview-host">{view.name}</b>
         </div>
       </div>
-      {view.open.length > 0 ? (
-        <>
-          <h2 className={styles.openHead}>Open now</h2>
-          <ul className={styles.openList}>
-            {view.open.map(o => {
-              const body = <span>{o.title}{o.sub && <small>{o.sub}</small>}</span>;
-              return (
-                <li key={o.key}>
-                  {o.href
-                    ? <Link className={`${styles.openItem} ${styles.openLink}`} href={o.href}>{body}</Link>
-                    : <div className={styles.openItem}>{body}</div>}
-                </li>
-              );
-            })}
-          </ul>
-        </>
-      ) : (
-        <p className={styles.hostLine}>{view.name} runs teams and programs all year</p>
-      )}
+      <h2 className={styles.openHead}>Open now</h2>
+      <ul className={styles.openList}>
+        {view.open.map(o => {
+          const body = <span>{o.title}{o.sub && <small>{o.sub}</small>}</span>;
+          return (
+            <li key={o.key}>
+              {o.href
+                ? <Link className={`${styles.openItem} ${styles.openLink}`} href={o.href}>{body}</Link>
+                : <div className={styles.openItem}>{body}</div>}
+            </li>
+          );
+        })}
+      </ul>
+      {/* Outlined (standard R11, A7): the page's main job is the tournament, not the club. */}
       {view.href && <Link className={styles.hostBtn} href={view.href}>Visit the club</Link>}
     </section>
   );

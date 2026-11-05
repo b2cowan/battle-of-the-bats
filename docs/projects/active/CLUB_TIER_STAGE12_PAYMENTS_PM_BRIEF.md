@@ -13,6 +13,8 @@
 > did. Stripe now sends news about a club's account on its own channel, so testing needs two Stripe listen windows
 > locally and two webhook destinations on staging (the setup guide has the lines). The 12a test walk is next.
 
+> **2026-11-04 (owner):** counsel no longer gates online payments in production. Wherever this plan says counsel's sign-off gates it, read: the switch stays off until the owner turns it on, after real payments terms are written (`/legal` drafts them). See BUSINESS_DECISIONS.md 2026-11-04.
+
 ## What this is
 
 Today, clubs collect fees by e-Transfer, cheque or cash, and a volunteer marks each one paid by hand. Stage 12 lets a

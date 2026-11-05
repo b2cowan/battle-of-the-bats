@@ -11,8 +11,9 @@
 > pricing Stage 0, S8); **(4)** one `/marketing` call settles how a price reads with "plus applicable taxes" beside the ruled
 > "$29 CAD / month per team" form, before Plan & billing's help rewrite; **(5)** Stage 2's rework list includes the
 > Premium→Club "Due today" window (see Stage 2).
-> **Not professional advice.** Items marked **[ACCT]** need the accountant, **[LAW]** the lawyer, before they are built
-> or switched on.
+> **Not professional advice.** Items marked **[ACCT]** need the accountant, **[LAW]** legal questions (`/legal` drafts and
+> researches them). Neither is a gate: no accountant (T6), no US lawyer (U5) and, since 2026-11-04, no Canadian lawyer holds a
+> build or a switch-on (owner).
 
 ## Stage list of record (owner, 2026-10-31)
 
@@ -22,20 +23,20 @@ Every outstanding piece of work in this plan has a home in one of these stages. 
 - **Stage 0 — Admin, no code (owner):** IN PROGRESS — effective date found (2026-09-26) and production sales answered
   (owner replies, §4); still open: Stripe invoice settings, foreign-vendor number, ITC receipts, accountant package,
   counsel add-ons. Waits on nothing; gates nothing.
-- **Stage 1 — Know where every buyer is:** IN PROGRESS — Parts 1+2 committed `fd55a1df3` 2026-11-04 (mig 433 dev only), Part 3
+- **Stage 1 — Know where every buyer is:** DONE — Parts 1+2 committed `fd55a1df3` 2026-11-04 (mig 433 dev only), Part 3
   committed `32d466e59` 2026-11-04, Part 4 (the guard) committed `95dbdcbec` 2026-11-04, Part 5 (closeout: `/accounting` review, help, the first-time plan screen
-  fix, US wording v2) committed `1ab0bfb6f` 2026-11-04; owner walk §454 written, owed; closes when it passes — country, province/state, address and US declaration on our own
+  fix, US wording v2) committed `1ab0bfb6f` 2026-11-04; owner walk §454 PASSED 34/34 2026-11-04, Part B re-walked on Part 6 (`e8e37a408`) and passed 2026-11-05; **Stage 1 CLOSED 2026-11-05** — country, province/state, address and US declaration on our own
   records. Needs T1 (ruled).
-- **Stage 2 — Subscriptions charge the right tax:** NOT STARTED — Stripe Tax registration, tax on every checkout path and
+- **Stage 2 — Subscriptions charge the right tax:** NOT STARTED (build prompt written 2026-11-05: `GST_HST_STAGE2_BUILD_PROMPT.md`) — Stripe Tax registration, tax on every checkout path and
   preview, "plus applicable taxes", province test matrix; exit step re-runs the Stripe audit. Needs Stage 1, T4, T5.
 - **Stage 3 — Every tax result has a reason, and staff can see it:** NOT STARTED — charge-level tax record and the Money
   tab. Needs Stage 2.
 - **Stage 4 — The books carry the sales side of GST/HST:** NOT STARTED — built in the Bookkeeping ladder; can run beside
   Stages 1–3; must exist before the first return with sales on it.
 - **Stage 5 — The online-payment fee:** NOT STARTED — tax on the fee, monthly statement per club. Depends on Club Stage 12,
-  counsel and T2/T3, and **closes with Club Stage 12** (a required stage, not a trigger).
+  T2/T3, and **closes with Club Stage 12** (a required stage, not a trigger).
 - **Stage 6 — Terms:** NOT STARTED — Terms of Service, signup acceptance, payments terms, Québec review, privacy policy.
-  Waits on the lawyer; gates the first paid subscription of any plan not yet on sale.
+  `/legal` drafts it, the owner approves it (no lawyer gate, owner 2026-11-04); gates the first paid subscription of any plan not yet on sale.
 - **Stage 7 — Provincial registrations as they come due:** NOT STARTED — **STANDING TRIGGER** (BC $10,000, Québec $30,000,
   first Saskatchewan or Manitoba sale).
 - **Stage 8 — US clubs:** 8a DONE 2026-10-31 (review + rulings U1–U5). **8b NOT STARTED — STANDING TRIGGER** (Stripe's
@@ -111,7 +112,7 @@ Bookkeeping plan; tax stays here.
 | T3 | Who the fee is legally charged to | **A — always the club**; "family pays" = the club passes its own cost on to its families | Lawyer writes it into the payments terms |
 | T4 | Prices | **A — "plus applicable taxes"** (tax-exclusive) | → `/strategy` (Pricing Facts) + `/marketing` (copy) |
 | T5 | Tax engine | **A — Stripe Tax** | Revisit if the 0.5% becomes material |
-| T6 | Accountant | **C, with the owner's condition:** *prepare the package, but the accountant does not hold the launch.* Charge the rates we believe are right; any difference is caught at tax time. | Owner's reasoning: low early revenue makes any shortfall immaterial. **Does not change** the separate lawyer gate on online payments (Stage 12 counsel brief: RPAA, FINTRAC, payments terms) — that gate is about regulation, not tax amounts |
+| T6 | Accountant | **C, with the owner's condition:** *prepare the package, but the accountant does not hold the launch.* Charge the rates we believe are right; any difference is caught at tax time. | Owner's reasoning: low early revenue makes any shortfall immaterial. ~~Does not change the separate lawyer gate on online payments~~ — **that gate was removed too (owner 2026-11-04)**; online payments go live on the owner's decision once real payments terms exist |
 | T7 | US buyer evidence | **A — all three**: US address + declaration + one outside-Canada sign | Wording reviewed with the accountant package, not before launch |
 
 ## 4. Stages, in dependency order
@@ -235,7 +236,7 @@ that input tax credits are claimable.*
   already ruled for Bookkeeping.
 
 ### Stage 5 — The online-payment fee
-*Owner: Club Stage 12. Gated on counsel and T2/T3. Online payments stay off in production until then.
+*Owner: Club Stage 12. Gated on T2/T3 (counsel no longer a gate, owner 2026-11-04). Online payments stay off in production until the owner switches them on.
 **Depends on Club Stage 12 and closes with it (owner, 2026-10-31) — it is a required stage of this project, not a standing
 trigger:** this plan is not done until Club Stage 12's fee-tax work ships.*
 - If taxable: tax by the **club's** province, 0% for a verified US club (Stage 1 evidence applies to clubs too).
@@ -262,8 +263,8 @@ trigger:** this plan is not done until Club Stage 12's fee-tax work ships.*
   the fee, fee not refunded, who carries disputes.
 - Québec: the French-language / standard-form contract review already listed as revenue plan D20.
 - A privacy policy for FieldLogicHQ itself (today only clubs' own privacy links exist) — not tax, but the same lawyer
-  session. **(owner 2026-11-04, Stage 1 closeout):** a `/legal` agent, shaped like `/accounting`, is to be built to draft
-  these terms and policies (TODO line); the Stage 1 address window already states the purpose at collection ("We use it
+  session. **(owner 2026-11-04, Stage 1 closeout):** a `/legal` agent, shaped like `/accounting`, drafts
+  these terms and policies — **built 2026-11-04** (`docs/agents/legal/LEGAL_INDEX.md`, backlog L1–L3, L7); the Stage 1 address window already states the purpose at collection ("We use it
   only to work out sales tax…").
 
 ### Stage 7 — Provincial registrations as they come due
@@ -345,7 +346,7 @@ gate for the **first paid subscription of any plan not yet on sale**. Stage 6's 
 exception, 2026-10-31: Coaches Portal and Tournament Plus are already on sale in production and stay on sale; a sale made
 before tax is built is paid out of the owner's revenue and blocks nothing. The
 accountant is **not** a gate (T6). Stage 4 can run beside 1–3 inside the Bookkeeping ladder and must be in place before
-the first return with sales on it. Stage 5 waits on counsel (the existing lawyer gate) and gates online payments going
+the first return with sales on it. Stage 5 waits on Club Stage 12 (no lawyer gate since 2026-11-04) and gates online payments going
 live. Stage 7 is triggered, not scheduled. Stage 8 opens US clubs only when both its halves are done: Stages 1–3 for
 subscriptions, and 8a → 8b for payments. Stage 9 (release and docs) follows the build stages and closes the project; Stage 7,
 Stage 8b and the Ongoing rhythm are standing triggers that the project does not wait for (owner, 2026-10-31).

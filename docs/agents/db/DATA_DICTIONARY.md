@@ -5927,7 +5927,7 @@ adult for money, registration and the player-specific payloads.
 
 **Note on history:** mig 215 created a TWO-tier schema (guardian + a team-level **follower**
 with no child) and wired the follower path first; the guardian tier waited on counsel sign-off
-(and still does — `GUARDIAN_TIER_ENABLED`). The owner removed the follower tier and the team
+(counsel no longer gates it, owner 2026-11-04; the tier is still off — `GUARDIAN_TIER_ENABLED`). The owner removed the follower tier and the team
 family link on 2026-09-12 (mig 290); the guardian tier is what remains, with a single on-ramp:
 the coach-sent invite to the address already on the roster row.
 

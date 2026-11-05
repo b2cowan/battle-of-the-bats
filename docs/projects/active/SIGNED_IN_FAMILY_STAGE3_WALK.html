@@ -1,0 +1,320 @@
+<title>Second Parent Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box (the house walk frame). */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .facts { grid-template-columns: 1fr; } .facts dd { margin-bottom: 6px; } }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.callnote { font-size: 13px; color: var(--warn); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · Signed-in family accounts · Stage 3 · §457</span>
+    <h1>A second parent’s email on the house-league sign-up</h1>
+    <p class="sub">Written 2026-11-04 for Stage 3 (committed <code>bacf24a9b</code> and <code>7db797940</code>, with the /simplify and /review fixes). One purpose: a parent adds the other parent’s email on the sign-up, and that second parent hears what the first parent hears, the club can see and fix it, and nobody else is reached by accident.</p>
+  </header>
+  <section class="card"><h2>What this walk is for</h2><p>Before this build the club’s emails about a child reached one parent. Now the sign-up form has an always-visible box, <strong>Second parent’s email</strong>, with no name asked. That address gets the club’s emails about the sign-up, each as its own message, except payment receipts, which stay with whoever paid. The second parent’s first email says who added them and how to come off. The registrar can add, change or clear the address on the sign-up’s record, add it on <strong>Add registration</strong>, see it in the contact-details export and find it by search. The club’s <strong>Email families</strong> reaches both parents of a household and counts the household once. The coach sees it. The address is never a household key and never reaches a marketing list.</p></section>
+  <section class="card"><h2>It passes when</h2><ul>
+    <li>The sign-up form takes a second parent’s email, refuses the first parent’s own address and a malformed one in words, and with the box empty behaves exactly as before.</li>
+    <li>Both parents get the sign-up confirmation, each once, and the second parent’s opens with “Hi,” and the line saying who added them.</li>
+    <li>Approve and Decline reach both parents; a team email reaches both; “Email families” reaches both and counts one family.</li>
+    <li>A household that has a sibling sign-up without a second parent never sends that second parent a message naming the sibling.</li>
+    <li>A card payment’s receipt goes to the payer only.</li>
+    <li>The registrar’s record window, Add registration, export and search all carry the address, and the coach’s roster and Copy emails include it once.</li>
+    <li>Every screen reads well at 390 px and at a desk.</li>
+  </ul></section>
+  <section class="card"><h2>Not in this walk</h2><ul>
+    <li><strong>A parent editing the second address themselves.</strong> That waits for Stage 4 (signed-in accounts); today only the registrar changes it.</li>
+    <li><strong>A club-customised confirmation email.</strong> A customised template cannot carry the “who added you” line, so the second parent always gets the built-in email. Unit tests pin it; no dev club customises it.</li>
+    <li><strong>The first email being edited to equal the second.</strong> The refusal is worded and unit-tested; the record window’s first-email edit is not part of this stage’s drawn screens.</li>
+    <li><strong>The counsel review (PIPEDA / CASL).</strong> It gates Stage 4. Nothing here waits on it.</li>
+  </ul></section>
+  <section class="card"><h2>Before you start</h2><dl class="facts">
+    <dt>Dev server</dt><dd>Running on a build that includes the Stage 3 commits. If you started it before <code>bacf24a9b</code> landed, stop it and run <code>npm run dev</code>. Part S shows you whether it is the new build.</dd>
+    <dt>Email</dt><dd><code>RESEND_API_KEY</code> is set in <code>.env.local</code> and <code>NEXT_PUBLIC_APP_URL=http://localhost:3000</code>. Without the key a send is skipped and every “inbox” step fails.</dd>
+    <dt>Your inboxes</dt><dd>Use your own plain address with plus tags (call it <code>you@gmail.com</code>): <code>you+sp1@</code> is the first parent of Walk Alpha, <code>you+sp1b@</code> is Alpha’s second parent, <code>you+sp2@</code> is Walk Beta’s parent, <code>you+sp2b@</code> is Beta’s second parent added later, <code>you+sp3@</code> and <code>you+sp3b@</code> are Walk Gamma’s two parents, <code>you+sp4@</code> and <code>you+sp4b@</code> are Walk Delta’s, and <code>you+sp1pay@</code> pays in Part I. The dev <code>.local</code> addresses cannot receive mail.</dd>
+    <dt>Reruns</dt><dd>A child is refused as a duplicate with the same first email, and an address is limited to 8 sign-up attempts an hour. On a second run use new tags (<code>+sq1</code> …).</dd>
+    <dt>Email not there?</dt><dd>Wait 2 minutes, then look in Resend › Emails and search the address.</dd>
+    <dt>When done</dt><dd>Part Z: tell Claude “second parent walk done” and it removes the walk’s sign-ups.</dd>
+  </dl></section>
+  <section class="card"><h2>Sign in as · Where</h2><dl class="facts">
+    <dt>Club</dt><dd>UAT Rep Club (<code>uat-rep-club</code>, Club plan), season <strong>2026 Fall House League</strong>, registration open. Divisions: <strong>U9 Rookie</strong> (born 2014 to 2015, teams Reds, Blues, Greens) and R1/R2/R3 Walk.</dd>
+    <dt>Family (public)</dt><dd><code>http://localhost:3000/uat-rep-club/league/2026-fall-house-league/register</code> · a private window, nobody signed in</dd>
+    <dt>Registrar</dt><dd><code>uat-club-registrar@uat-rep-club.local</code> · <code>UATPassword2026!</code> · <code>http://localhost:3000/login</code> · House League › 2026 Fall House League › <strong>Registrations</strong></dd>
+    <dt>League admin</dt><dd><code>uat-club-league-admin@uat-rep-club.local</code> · <code>UATPassword2026!</code> · the season’s <strong>Teams</strong> and <strong>Email families</strong></dd>
+    <dt>Coach of Reds</dt><dd><code>uat-hl-coach-reds@uat-rep-club.local</code> · <code>UATPassword2026!</code> · <code>http://localhost:3000/uat-rep-club/league/2026-fall-house-league/team/708527ff-d1ac-4ae7-97b1-36aa4fd2cc5d</code></dd>
+    <dt>Keep private</dt><dd>These are dev-only accounts; the page carries the password, so do not share the link.</dd>
+  </dl></section>
+  <section class="card"><h2>Calls to make as you go</h2><ul>
+    <li><strong>The ending emails carry money to the second parent (D3).</strong> Decline, Release and Withdraw emails go to both parents as ruled, and they show the refund amount, method, the club’s “kept” reason and the registrar’s free-text note. Keep, drop the money line for the second parent, or drop only the free-text note?</li>
+    <li><strong>No stop link on the second parent’s mail (C2).</strong> Only the first email has the “tell the club” line. Add that one line to every second copy, or keep as built?</li>
+    <li><strong>A mixed household goes quiet for the second parent (G5).</strong> When two sign-ups share a first email and only one names a second parent, household-wide emails go to the first parent alone. Should the registrar be shown when a household’s sign-ups disagree?</li>
+    <li><strong>“Email me my link” for a second parent</strong> opens the same sign-up page the first parent has (status and pay). Accepted in the ruling, recorded because the link does more than the form’s “check status” hint says.</li>
+  </ul></section>
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+</main>
+
+<script>
+(function () {
+  var KEY = "sifa-stage3-walk-second-parent-v1";
+  var TITLE = "Stage 3 walk §457 · A second parent’s email on the house-league sign-up (2026-11-04)";
+  var REG = "<code>http://localhost:3000/uat-rep-club/league/2026-fall-house-league/register</code>";
+  var FAM = "Family · private window, signed out";
+  var REGR = "Registrar · uat-club-registrar@uat-rep-club.local";
+  var LA = "League admin · uat-club-league-admin@uat-rep-club.local";
+  var COACH = "Coach of Reds · uat-hl-coach-reds@uat-rep-club.local";
+  var SUBJ = "2026 Fall House League";
+  var PARTS = [
+ { id: "S", title: "Stop check: this is the new build", steps: [
+  { who: FAM + " · computer", do: "Open " + REG + ". Scroll to the <strong>Parent or guardian</strong> section.",
+    see: "Under Email and Phone there is a full-width box labelled <strong>Second parent’s email</strong> with no red asterisk, and the registration is open (no “closed” notice). <strong>If the box is missing, stop:</strong> dev is running an older build. Restart it (<code>npm run dev</code>) and reload." }
+ ]},
+ { id: "A", title: "The form on a phone, and its three answers", steps: [
+  { who: FAM + " · phone width (390 px)", do: "Open " + REG + ". Fill in the child as <strong>Walk Alpha</strong> (last name Walker, born in 2015, U9 Rookie) and the parent as <strong>Pat Walker</strong>, Email <code>you+sp1@</code>, any phone. Do not press Sign up yet. Look at the box under Email and Phone.",
+    see: "The box shows a grey <code>name@example.com</code>, and under it a hint: “Add them and they’ll get the club’s emails about this sign-up, except payment receipts. No name needed.” Further down the coach line reads “Your child’s coach will see your name, email and phone, and the second parent’s email if you add one.” Nothing runs off the side." },
+  { who: FAM + " · phone width", do: "In the second box type your first parent’s address in capitals with a space on the end (<code>YOU+SP1@gmail.com </code>, use your own address). Press <strong>Sign up</strong>.",
+    see: "Nothing is created. A red line under the second box reads “That’s the same email as yours. Leave this empty or enter the other parent’s.” Everything you typed is still there." },
+  { who: FAM + " · phone width", do: "Change the second box to <code>not-an-email</code> and press Sign up.",
+    see: "The red line reads “Enter a valid email address.”" },
+  { who: FAM + " · phone width", do: "Change the second box to <code>you+sp1b@</code> and press Sign up.",
+    see: "A finish screen with a headline such as “You’re signed up” or “We’ve received your sign-up” (the season decides which), and the sentence “We’ve emailed this to <strong>you+sp1@…</strong> and <strong>you+sp1b@…</strong>. Keep your reference to quote if you contact the club.” Below it a “Your sign-up →” link." }
+ ]},
+ { id: "B", title: "Without a second parent nothing changes", steps: [
+  { who: FAM + " · computer (1440 px)", do: "Open " + REG + ". Sign up <strong>Walk Beta</strong> (last name Walker, born 2015, U9 Rookie), parent <strong>Bo Walker</strong>, Email <code>you+sp2@</code>. Leave the second box empty.",
+    see: "The finish screen reads “We’ve emailed this to <strong>you+sp2@…</strong>. Keep your reference to quote if you contact the club.” with no “and” and no second address." },
+  { who: FAM + " · computer", do: "Sign up <strong>Walk Gamma</strong> (last name Walker, born 2015, U9 Rookie), parent <strong>Gail Walker</strong>, Email <code>you+sp3@</code>, second parent <code>you+sp3b@</code>. This one is for the Decline in Part D.",
+    see: "The finish screen names both addresses, as in A4." }
+ ]},
+ { id: "C", title: "The inboxes after sign-up", steps: [
+  { who: "Your inbox · +sp1 (first parent)", do: "Open the +sp1 messages.",
+    see: "<strong>Exactly one</strong> message about Walk Alpha, subject ending “— " + SUBJ + "” (“We’ve received your sign-up”, or “Walk is accepted” if the season accepts at once). It opens “Hi <strong>Pat</strong>,” and has a <strong>Your sign-up</strong> button and a Reference line. <strong>No</strong> “added your email” line." },
+  { who: "Your inbox · +sp1b (second parent)", do: "Open the +sp1b messages.",
+    see: "<strong>Exactly one</strong> message, the same subject. It opens with just “Hi,” (no name), then a paragraph: “Pat Walker added your email to Walk’s sign-up so you get the same updates. If you aren’t Walk’s parent or guardian, or you’d rather not get these, tell the club at <em>an address</em> and they’ll take your address off.” (With no public contact set it reads “tell UAT Rep Club”; either is right.) The rest is the same as +sp1’s, including the Your sign-up button.",
+    call: "Call: the “tell the club” line is only on this first message. Add it to every second copy, or keep as built?" },
+  { who: "Your inbox · +sp1b", do: "Press <strong>Your sign-up</strong> in that message.",
+    see: "The sign-up page for Walk Alpha opens, the same page the +sp1 message opens: status, and what is owed on the $150 fee." },
+  { who: "Your inbox · +sp2", do: "Open the +sp2 messages.",
+    see: "<strong>One</strong> message for Walk Beta, greeted “Hi <strong>Bo</strong>,”. Nothing about Beta reached +sp1, +sp1b or any other tag." },
+  { who: "Your inbox · +sp3 and +sp3b", do: "Open both.",
+    see: "<strong>One</strong> message each for Walk Gamma; +sp3b’s opens “Hi,” and has the added-your-email line." }
+ ]},
+ { id: "D", title: "Approve and Decline reach both parents", steps: [
+  { who: REGR, do: "Sign in at <code>/login</code>. Open House League › 2026 Fall House League › <strong>Registrations</strong>. On the <strong>To review</strong> tab find Walk Alpha. (If the season accepts on sign-up, Alpha is already under Active and has no Approve; say so in the notes and carry on with the Decline step, which still applies to Gamma.)",
+    see: "Walk Alpha, Walk Beta and Walk Gamma are listed (To review, or Active if the season accepts on sign-up)." },
+  { who: REGR, do: "On Walk Alpha press <strong>Approve</strong>.",
+    see: "Alpha moves to Active. <strong>+sp1 and +sp1b each get exactly one</strong> “Walk is accepted — " + SUBJ + "”; +sp1b’s begins “Hi,”. Nothing goes to +sp2, +sp3 or +sp3b." },
+  { who: REGR, do: "On Walk Gamma press <strong>Decline</strong>, then <strong>Decline and email</strong>. If you are asked for a family note, type “Walk test”.",
+    see: "<strong>+sp3 and +sp3b each get exactly one</strong> “Registration update — " + SUBJ + "”. Both show whatever money line and note the first parent’s shows.",
+    call: "Call: should the second parent see the refund amount, method, the club’s “kept” reason and your family note? Keep as ruled, drop the money line for the second parent, or drop only the note?" }
+ ]},
+ { id: "E", title: "The registrar’s record window and Add registration", steps: [
+  { who: REGR, do: "On Registrations, open Walk Alpha’s record (click the row). Look under Email.",
+    see: "A row <strong>Second parent</strong> shows <code>you+sp1b@…</code> with a <strong>Change</strong> link." },
+  { who: REGR, do: "Open Walk Beta’s record.",
+    see: "<strong>Second parent</strong> shows a dash “—” and an <strong>Add</strong> link." },
+  { who: REGR, do: "Press <strong>Add</strong>, type Beta’s own first address (<code>you+sp2@</code>), and press <strong>Save</strong>.",
+    see: "A box opens in place with Cancel and Save and the line “Applies to every child in this sign-up. Nothing is emailed when you change it.” Saving shows “That’s the same as the first email. Leave it empty or enter the other parent’s.” and writes nothing." },
+  { who: REGR, do: "Type <code>not-an-email</code> and Save, then type <code>you+sp2b@</code> and Save.",
+    see: "First “Enter a valid email address.”, then the row shows <code>you+sp2b@…</code> with Change. <strong>Wait 2 minutes: nothing arrives at +sp2b.</strong> A staff edit sends no email." },
+  { who: REGR, do: "Press <strong>Change</strong>, clear the box, Save. Then Add <code>you+sp2b@</code> again.",
+    see: "Clearing shows the dash “—” again; adding it back shows the address. Leave it set for Part F." },
+  { who: REGR, do: "Press <strong>Add registration</strong> in the header. Look at the Guardian section, then add <strong>Walk Delta</strong> (last name Walker, born 2015, U9 Rookie), guardian <strong>Dana Walker</strong>, Email <code>you+sp4@</code>, second parent <code>you+sp4b@</code>, and save.",
+    see: "The Guardian section is first name, last name, Email (required), Phone, then a box <strong>Second parent’s email</strong> with no required mark. Delta is added; opening its record shows <strong>Second parent</strong> <code>you+sp4b@…</code>." }
+ ]},
+ { id: "F", title: "Export and search", steps: [
+  { who: REGR, do: "On Registrations open the <strong>Export</strong> menu and choose <strong>Excel with contact details</strong>. Open the file.",
+    see: "A column <strong>Second Parent Email</strong> sits beside Guardian Email. Walk Alpha shows <code>you+sp1b@…</code>, Walk Beta <code>you+sp2b@…</code>, Walk Delta <code>you+sp4b@…</code>; the rows with no second parent are empty." },
+  { who: REGR, do: "Export the plain <strong>Excel</strong> (and look at the CSV or the PDF if you like).",
+    see: "<strong>No</strong> Second Parent Email column in the plain exports; it is a contact-details column only." },
+  { who: REGR, do: "In the search box (“Search players or parents”) type <code>sp1b</code>, on the tab where Alpha sits. Clear it, then type <code>sp4b</code>.",
+    see: "Each search finds only the sign-up that has that second address (Walk Alpha, then Walk Delta). Searching for a first-parent address still finds those sign-ups as before." }
+ ]},
+ { id: "G", title: "A team email reaches both, and a mixed household stays quiet", steps: [
+  { who: LA, do: "Sign in. Open the season’s <strong>Email families</strong>, choose <strong>A team</strong> › <strong>Reds</strong>. Write down the line at the foot: “N families get it (M children).” Close without sending.",
+    see: "A reach line for Reds. Write N and M here: ______ families, ______ children. (Sending comes in Part H.)" },
+  { who: REGR, do: "Add registration: <strong>Walk Epsilon</strong> (last name Walker, born 2015, U9 Rookie), guardian <strong>Pat Walker</strong>, Email <code>you+sp1@</code> (the same first parent as Alpha), <strong>second parent left empty</strong>. If it lands under To review, press Approve.",
+    see: "Epsilon is added. Alpha and Epsilon now share a first email but only Alpha names a second parent. (Approving Epsilon emails +sp1 only.)" },
+  { who: LA, do: "Open the season’s <strong>Teams</strong> (Teams &amp; draft). Move <strong>Walk Alpha</strong> to <strong>Reds</strong> (the player’s “Move to…”), then move <strong>Walk Epsilon</strong> to Reds. Each asks first and says the family will be emailed.",
+    see: "Both are on Reds. Taking a player off a team emails nobody; moving one on does." },
+  { who: "Your inbox · +sp1 (first parent)", do: "Open the newest +sp1 messages.",
+    see: "The team message or messages for Alpha and for Epsilon (“Walk is on Reds”-style wording). Epsilon’s is here." },
+  { who: "Your inbox · +sp1b (second parent)", do: "Open the newest +sp1b messages.",
+    see: "<strong>No message that names Walk Epsilon, ever.</strong> If Alpha’s team message was sent on its own, +sp1b has it (opening “Hi,”). If it lists both children, +sp1b has nothing from this step. Either is right; the failure is +sp1b reading Epsilon’s team or time.",
+    call: "Call: the second parent goes quiet on household-wide mail while a sibling sign-up has no second parent. Should the registrar see that the household disagrees?" },
+  { who: LA, do: "Open Email families › A team › Reds again and read the reach line.",
+    see: "<strong>One more family and two more children than your step-1 reading</strong>: N+1 families, M+2 children. Alpha and Epsilon are one family with two inboxes, counted once." }
+ ]},
+ { id: "H", title: "Email families reaches both parents, counted once", steps: [
+  { who: LA, do: "In that window write the subject <code>Walk test</code> and any short message, then press <strong>Send to N+1</strong> (the number is your G6 reading).",
+    see: "After sending: “Sent. Reached x of N+1 families.” The other Reds families use dev <code>.local</code> addresses that cannot receive, so x may be lower than N+1. This uses one of the club’s three Email families sends in 24 hours.",
+    call: "Call (a note, not a decision): the send also goes to the existing Reds families’ fictional addresses." },
+  { who: "Your inbox · +sp1 and +sp1b", do: "Open both.",
+    see: "<strong>Exactly one “Walk test” in each</strong>: +sp1 and +sp1b are the one family’s two inboxes. No duplicate in either." }
+ ]},
+ { id: "I", title: "Pay link reaches both; the receipt goes to the payer only (optional)", steps: [
+  { who: REGR, do: "On Walk Alpha’s row menu press <strong>Email the pay link</strong>.",
+    see: "<strong>+sp1 and +sp1b each get one pay-link message</strong> showing what is owed. The pay link is the one thing a second parent sees about money besides the sign-up page." },
+  { who: "Anyone · private window", do: "Open that pay link (or Alpha’s “Your sign-up” page) and pay by card with the Stripe test card <code>4242 4242 4242 4242</code>, any future expiry, any three digits, any postal code. If a receipt-email box is offered, type <code>you+sp1pay@</code>. <strong>Tick this box if you did it.</strong>",
+    see: "The payment completes and you land on a paid page. If this club’s pay page offers no card, tick the next box instead." },
+  { who: "Anyone", do: "<strong>Tick this box if you skipped paying</strong> (no card on the pay page, or you chose not to).",
+    see: "Recorded as skipped. Nothing in this part’s receipt checks was looked at." },
+  { who: "Your inbox · +sp1pay, +sp1, +sp1b", do: "Only if you paid: open the three inboxes.",
+    see: "A receipt arrives at <strong>+sp1pay only</strong> (the payer). <strong>Neither +sp1 nor +sp1b gets a receipt.</strong> If you tested a staff “Mark received” instead, no email goes to anyone: only online payments make a receipt." }
+ ]},
+ { id: "J", title: "The coach sees the second address", steps: [
+  { who: COACH, do: "Sign in at <code>/login</code> and open the Reds team page (the link above). Find Walk Alpha and Walk Epsilon in Players.",
+    see: "The Email column shows <code>you+sp1@…</code> on one line and <code>you+sp1b@…</code> under it for Alpha; Epsilon shows <code>you+sp1@…</code> only." },
+  { who: COACH, do: "Press <strong>Copy emails</strong> and paste into the notes box below.",
+    see: "“Copied N emails.” (or a read-only box to copy from). The pasted list holds <code>you+sp1@…</code> and <code>you+sp1b@…</code>, <strong>each once</strong>, even though two children share the first parent." }
+ ]},
+ { id: "Z", title: "Put back", steps: [
+  { who: "You → Claude", do: "Tell Claude <strong>“second parent walk done”</strong>. It removes Walk Alpha, Beta, Gamma, Delta and Epsilon from the dev season and reads back that none remain and that the other sign-ups are untouched.",
+    see: "Claude reports the rows removed and the season’s count back at 56. The Reds and Blues teams are as they were. The “Walk test” row stays in Email families history by design." }
+ ]}
+];
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+      if (s.call) t.appendChild(el('span', 'callnote', s.call));
+      var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+      cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+      boxes.push({ part: p.id, step: id, cb: cb });
+      var row = el('label', 'step'); row.appendChild(cb); row.appendChild(t); body.appendChild(row);
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function doneSteps(partId) {
+    return boxes.filter(function (b) { return (!partId || b.part === partId) && b.cb.checked; }).map(function (b) { return b.step; });
+  }
+  var totalSteps = boxes.length;
+
+  function refresh() {
+    PARTS.forEach(function (p) {
+      var n = doneSteps(p.id).length;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + p.steps.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    var done = doneSteps(null).length;
+    document.getElementById('total').textContent = done + ' of ' + totalSteps + ' checked';
+    document.getElementById('barfill').style.width = (totalSteps ? Math.round(done * 100 / totalSteps) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [TITLE, 'Checked ' + doneSteps(null).length + ' of ' + totalSteps + ' steps'];
+    PARTS.forEach(function (p) {
+      var ticked = doneSteps(p.id);
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + p.steps.length + (ticked.length ? ' (' + ticked.join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

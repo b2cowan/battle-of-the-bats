@@ -2,8 +2,6 @@ import { Fragment, type ReactNode } from 'react';
 import Link from 'next/link';
 import type { GameRowView } from '@/lib/public-game-row';
 import type { PublicGameState } from '@/lib/game-status';
-import kit from './ClubKit.module.css';
-import styles from './PublicParts.module.css';
 import scheduleStyles from './PublicSchedule.module.css';
 import RollingNumber from './RollingNumber';
 
@@ -49,6 +47,7 @@ export interface MatchupSide {
  */
 export function ScheduleMatchup({ time, division, pool, round, state, sides, href, noScore, foot, footTone = 'gold',
   form = 'wide', size, pill = true, place }: {
+  /** Empty on a stacked result that leads with its context; a wide row always has one ("TBD" at worst). */
   time: string; division: string | null; pool?: string | null; round?: string | null; state?: PublicGameState;
   sides: MatchupSide[];
   href?: string; noScore?: string | null; foot?: string; footTone?: 'gold' | 'plain';
@@ -60,8 +59,9 @@ export function ScheduleMatchup({ time, division, pool, round, state, sides, hre
   const body = <>
     <span className={scheduleStyles.gameHead}>
       <span className={scheduleStyles.gameMeta}>
-        <span className={scheduleStyles.gameTime}>{time}{round && <small className={scheduleStyles.desktopRound}>{round}</small>}</span>
-        <span className={scheduleStyles.gameContext}>{[division, pool].filter(Boolean).join(' · ')}{round && <span className={scheduleStyles.phoneRound}> · {round}</span>}</span>
+        {/* A stacked result may lead with its context alone (the Overview's Latest results: no time, the pill says Final). */}
+        {time && <span className={scheduleStyles.gameTime}>{time}{round && <small className={scheduleStyles.desktopRound}>{round}</small>}</span>}
+        <span className={scheduleStyles.gameContext}>{[division, pool].filter(Boolean).join(' · ')}{round && <span className={scheduleStyles.phoneRound}>{division || pool ? ' · ' : ''}{round}</span>}</span>
       </span>
       {pill && <GameStatusPill state={state} />}
     </span>
@@ -92,57 +92,14 @@ export function ScheduleMatchup({ time, division, pool, round, state, sides, hre
 }
 
 /**
- * The game row (Public tournament pages Stage 2; hub "The end state"): Up next and Latest results on the Overview, the
- * Schedule in Stage 3. The words are lib/public-game-row.ts's (`gameRowView`); this only draws them — the scheduled
- * face (time over day, both teams, division · field) and the finished face (Final over the date, the winner first and
- * bold, both scores). From 1,024 px a scheduled game reads on one line with its division and field on the right.
- * `href` (optional) makes the row a door to the game's page; the drawing shows no chevron, so none is drawn.
+ * A row of a wide game list — the Schedule and a team's page: the one-line row (`ScheduleMatchup`, form "wide") in the
+ * list item the Schedule's day groups and highlight read. The words are lib/public-game-row.ts's (`gameRowView`); this
+ * only draws them. `href` (optional) makes the row a door to the game's page; no chevron (R5's game-row exception).
+ * The Overview's lists are the stacked form, drawn by the Overview itself (Public page layout standard A3).
  */
-export function PublicGameRow({ view, href, schedule = false }: {
-  view: GameRowView; href?: string; schedule?: boolean;
-}) {
-  const final = view.face === 'final';
-  if (schedule) {
-    return <li className={scheduleStyles.gameRow} data-face={view.face} data-cancelled={view.cancelled || undefined}>
-      <ScheduleMatchup time={view.head} division={view.sub} pool={view.poolTag} round={view.when} state={view.status}
-        sides={view.sides} href={href} />
-    </li>;
-  }
-  const body = (
-    <>
-      <span className={styles.when}>
-        {view.head}
-        {view.when && <small>{view.when}</small>}
-      </span>
-      <span className={styles.teams}>
-        {view.sides.map((s, i) => (
-          <span key={i} className={s.result === 'win' ? styles.win : s.result === 'lose' ? styles.lose : undefined}>{s.name}</span>
-        ))}
-      </span>
-      {view.sub && <span className={styles.sub}>{view.sub}</span>}
-      {final && (
-        <span className={styles.scores}>
-          <span className={kit.srOnly}>{view.sides.map(s => `${s.name} ${s.score}`).join(', ')}</span>
-          {view.sides.map((s, i) => <span key={i} className={s.result === 'lose' ? styles.lose : undefined} aria-hidden>{s.score}</span>)}
-        </span>
-      )}
-    </>
-  );
-  return (
-    <li>
-      {href
-        ? <Link className={styles.row} data-face={view.face} href={href}>{body}</Link>
-        : <div className={styles.row} data-face={view.face}>{body}</div>}
-    </li>
-  );
-}
-
-/** The card the rows sit in. */
-export function PublicGameRows({ views, href }: { views: GameRowView[]; href?: (id: string) => string }) {
-  if (views.length === 0) return null;
-  return (
-    <ul className={styles.rows}>
-      {views.map(v => <PublicGameRow key={v.id} view={v} href={href?.(v.id)} />)}
-    </ul>
-  );
+export function PublicGameRow({ view, href }: { view: GameRowView; href?: string }) {
+  return <li className={scheduleStyles.gameRow} data-face={view.face} data-cancelled={view.cancelled || undefined}>
+    <ScheduleMatchup time={view.head} division={view.sub} pool={view.poolTag} round={view.when} state={view.status}
+      sides={view.sides} href={href} />
+  </li>;
 }

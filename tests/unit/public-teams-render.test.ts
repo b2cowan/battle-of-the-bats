@@ -55,9 +55,9 @@ describe('the real preview Teams body', () => {
     assert.match(html, /2-0-0 · 1st · <span[^>]*>Live now<\/span> vs Beta Sharks/);
     assert.match(html, /0-2-0 · 3rd · no games scheduled yet/);
   });
-  it('keeps the full base name and qualifier on separate lines without points, avatar or coach', () => {
+  it('keeps the full base name on its own line and the qualifier ahead of the summary on ONE sub line (Part 3), without points, avatar or coach', () => {
     const html = render();
-    assert.match(html, /<strong>Greater Riverdale Northern Lights Select Black<\/strong><small>Johnstone<\/small>/);
+    assert.match(html, /<span class="rowName">Greater Riverdale Northern Lights Select Black<\/span><span class="rowSub">Johnstone · /);
     assert.doesNotMatch(html, /PTS|teamAvatar|coach|Pool play complete|Following /);
   });
   it('draws the separate app-only stars with stable names and merged account/device pressed state', () => {

@@ -65,7 +65,7 @@ export function PublicTeamBody({ data, now, orgSlug, tournamentSlug }: {
     schedule={{ time: item.time, division: item.division, pool: item.pool, round: item.round }}
     foot={item.stakes?.gold ? item.stakes.text : undefined} /></div>;
   const gameRows = (items: Item[]) => <ul className={parts.rows}>{items.map(item =>
-    <PublicGameRow key={item.game.id} view={item.row} schedule href={gameHref(item)} />)}</ul>;
+    <PublicGameRow key={item.game.id} view={item.row} href={gameHref(item)} />)}</ul>;
   return <PublicPage data-public-team={view.moment.kind} data-public-team-ready>
     <Back href={`${base}/teams`} />
     <div>

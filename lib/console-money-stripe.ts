@@ -128,6 +128,23 @@ async function invoiceForIntent(stripe: Stripe, paymentIntent: string, prices: P
 
 export type ClubStripe = { customerId: string | null; customerShared: boolean };
 
+export type CustomerWorkspace = { billing_owner_org_id: string | null; billing_owner_user_id: string | null; workspace_org_id: string };
+
+/**
+ * Whether another CLUB uses this record's Stripe customer, and whether a coach's own customer also covers other portals.
+ * A Coaches Portal a club pays for is that club's (`billing_owner_org_id` = this record). A portal a coach bought as a PERSON
+ * has no club payer (`billing_owner_org_id` null, `billing_owner_user_id` set): the customer is the coach's, it is not another
+ * club's, and it covers every portal the coach pays for — so it does not make the customer shared, but a portal other than
+ * this record's is named to the reader. A workspace with NO payer at all is unknown, so it stays shared (the safe side).
+ */
+export function customerSharing(orgId: string, orgCount: number, workspaces: CustomerWorkspace[]): { shared: boolean; coversOtherPortals: boolean } {
+  const anotherClub = workspaces.some(w => w.billing_owner_org_id !== null
+    ? w.billing_owner_org_id !== orgId
+    : w.billing_owner_user_id === null);
+  const coversOtherPortals = workspaces.some(w => w.billing_owner_org_id === null && w.billing_owner_user_id !== null && w.workspace_org_id !== orgId);
+  return { shared: orgCount !== 1 || anotherClub, coversOtherPortals };
+}
+
 /**
  * A charge (or invoice, or payment) is this club's only when it belongs to EXACTLY this club's Stripe customer — the
  * club has one, no other club shares it — and it was made in the same mode as this site's key.

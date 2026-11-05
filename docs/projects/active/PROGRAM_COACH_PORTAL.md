@@ -208,6 +208,9 @@ experience) startable NOW; Slice 2 (guardian tier) waits on the PIPEDA/CASL coun
 hardening decision #9 (tryout-offer page shows a child's full name to any token holder) rides
 Slice 0.** ▶ **BUILD PROMPT READY: `COACH_PORTAL_CHUNK_D_SLICE_0_1_BUILD_PROMPT.md` — run in a
 FRESH chat (owner call 2026-08-01).**
+
+> **2026-11-04 (owner):** counsel no longer gates the guardian tier. Wherever this plan says counsel's sign-off gates it, read: the switch stays off until the owner turns it on, after real guardian consent wording are written (`/legal` drafts them). See BUSINESS_DECISIONS.md 2026-11-04.
+
 *(original entry below)*
 *Original:* — *large; the commercial upside; needs an owner decision first*
 Wow #4 (no-login "follow this game" link — the review's pick for most likely to spread), #5 (player

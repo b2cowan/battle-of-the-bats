@@ -34,7 +34,7 @@ export type MoneyResponse =
   | { state: 'no_customer' }
   | { state: 'shared' }
   | { state: 'unreachable'; readAt: string }
-  | { state: 'read'; read: MoneyRead; portalSubscriptionIds: string[]; refundGate: RefundGate | null };
+  | { state: 'read'; read: MoneyRead; portalSubscriptionIds: string[]; coversOtherPortals?: boolean; refundGate: RefundGate | null };
 
 /** Why this charge's refund door is absent, known before the click (drawing G), or null when it shows. */
 function doorRefusal(gate: RefundGate | null, c: MoneyCharge, inFlight: string | null = null): { text: string; bad: boolean } | null {
@@ -183,6 +183,9 @@ export default function MoneyTab({
     <section className={kit.section}>
       {reviewStrip}
       {head}
+      {m.state === 'read' && m.coversOtherPortals && (
+        <p className={kit.caption}>This is the coach’s own Stripe customer, so it also covers other portals they pay for. A charge below may belong to one of them.</p>
+      )}
 
       {read && (
         <div className={kit.band}>

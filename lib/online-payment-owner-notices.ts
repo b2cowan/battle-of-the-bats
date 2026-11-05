@@ -18,7 +18,7 @@ import { PLAN_CONFIG } from './plan-config';
  * rerun sends nothing twice and a run that stopped part-way finishes on the next.
  *   - THE TERMS CHANGED (words §5.2, ask 6): a club still on an older version gets the owner's item and one email the day
  *     it is found, and one reminder 14 days later while it still hasn't agreed. Payments stay on throughout. Nothing is
- *     sent while the current version is counsel's draft: there is no change to tell.
+ *     sent while the current version is the placeholder draft: there is no change to tell.
  *   - AN ENDING THE OWNER DIDN'T CHOOSE (words §4.2): free time running out onto a plan without online payments, seven
  *     days ahead; a failed subscription payment, the day it failed (owner 2026-10-27). An item and one email; the card's
  *     notice is read live. And on the day itself, the club's open pay pages close (ask 11) — an ending with no event of its

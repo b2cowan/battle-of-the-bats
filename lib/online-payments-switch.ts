@@ -1,5 +1,5 @@
 /**
- * The launch switch for online payments (Club Tier Stage 12). Counsel's sign-off is the launch gate (Decided 2026-07-28),
+ * The launch switch for online payments (Club Tier Stage 12). The owner's decision to switch it on (real payments terms first) is the launch gate (counsel no longer gates it, owner 2026-11-04),
  * so the feature has TWO locks, and both must open:
  *
  *  1. `ONLINE_PAYMENTS_ENABLED` — a server-only env var, the `GUARDIAN_TIER_ENABLED` convention: absent or anything other
@@ -7,7 +7,7 @@
  *     Production does not set it.
  *  2. `LIVE_PAYMENTS_ALLOWED` — a code constant, false. While it is false, a LIVE Stripe key turns the feature off even
  *     with the env var set, so no real money can move by a console setting alone. Turning it true is one reviewed commit,
- *     made only after counsel signs off (the `CHAT_PAUSED` reasoning: a reversal that matters is a commit, not a toggle).
+ *     made only when the owner switches live payments on, real payments terms first (the `CHAT_PAUSED` reasoning: a reversal that matters is a commit, not a toggle).
  *
  * With the switch off, no Payouts card, no Pay button and no pay link renders anywhere, and every connect, pay and refund
  * route refuses. `tests/unit/online-payments-switch.test.ts` proves production is off; the guard test proves every door

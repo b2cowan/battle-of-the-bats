@@ -12,7 +12,7 @@ import { grantMembershipsFromSeasonRows, clearMemberships } from './_coach-membe
  *  1. THE SWITCH ACTUALLY HOLDS. `GUARDIAN_TIER_ENABLED` defaults off, and while it is off
  *     NOTHING guardian-shaped may be created — not by the UI, not by a direct API call. A
  *     feature "shipped disabled" whose disable can be stepped around is not disabled, and this
- *     one is gating a consent flow that has not been through counsel yet.
+ *     one is gating a consent flow whose real consent wording is not written yet.
  *  2. THE BOUNDARY. A signed-in account with NO guardian link must fail closed on every family
  *     payload, and the database must refuse the two shapes that can no longer exist: a
  *     team-level "follower" row, and a guardian row with no child.
@@ -223,15 +223,15 @@ test.describe('guardian tier switch', () => {
   /**
    * ⚠ THIS USED TO BE `test.skip(GUARDIAN_TIER_ENABLED, ...)`, AND THAT WAS THE BUG.
    *
-   * These four probes exist for one reason: to prove the guardian tier stays shut while it waits on
-   * counsel. Skipping them when the tier is ON silenced them in exactly the state they guard
+   * These four probes exist for one reason: to prove the guardian tier stays shut until the owner
+   * switches it on (real consent wording first). Skipping them when the tier is ON silenced them in exactly the state they guard
    * against. On 2026-08-04 a dev machine was found running with the tier switched on; the suite
    * reported it as "4 skipped" — no failure, no warning, no colour — and it was caught by someone
    * asking why a number was 4, not by anything going red.
    *
    * **A guard that disables itself in the state it guards against is not a guard.** So this now
-   * FAILS instead, naming the misconfiguration. When the tier is legitimately turned on after
-   * sign-off, this block is what you delete — deliberately, as the decision point — rather than
+   * FAILS instead, naming the misconfiguration. When the tier is legitimately turned on by
+   * the owner, this block is what you delete — deliberately, as the decision point — rather than
    * something that quietly stops running on its way there.
    *
    * The tier-BOUNDARY probes further down are unaffected: they are written to hold in both states
@@ -241,7 +241,7 @@ test.describe('guardian tier switch', () => {
     expect(
       GUARDIAN_TIER_ENABLED,
       'GUARDIAN_TIER_ENABLED is ON for the app under test. These probes assert the OFF behaviour, '
-      + 'which is the state the guardian tier is meant to be in until counsel signs off. Either the '
+      + 'which is the state the guardian tier is meant to be in until the owner switches the guardian tier on (real consent wording first). Either the '
       + 'environment is misconfigured, or the tier was turned on and this block should have been '
       + 'removed as a deliberate decision.',
     ).toBe(false);

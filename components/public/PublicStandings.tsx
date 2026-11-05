@@ -180,7 +180,13 @@ export default function PublicStandings({ orgSlug, tournamentSlug, isPreview = f
           </div>
         </section>;
       })}
-      <PublicDisclosure title="How the table is ranked" sub="What each column means, and the tie-breakers">
+    </> : <PublicTournamentState title="No standings yet" description={division
+      ? 'This division has teams, but standings will start once scoreable games are posted.'
+      : 'Standings will appear when the organizer publishes the schedule.'} compact />}
+    {/* ONE list (standard R5, Part 3): how the table is ranked, then the bracket. The explainer opens a window on a desk,
+        as Rules and "How seeding works" do (its right chevron in the drawing), and drops open inside the list on a phone. */}
+    {(rows.length > 0 || showPlayoffsDoor) && <PublicLinkList>
+      {rows.length > 0 && <PublicDisclosure joined modalOnDesktop title="How the table is ranked" sub="What each column means, and the tie-breakers">
         <div className={styles.explainer}>
           <dl className={styles.legend}>{ranking.legend.map(item => <div key={item.abbr}
             className={item.vis === 'mobile' ? styles.phoneOnly : item.vis === 'desktop' ? styles.deskOnly : undefined}>
@@ -190,11 +196,9 @@ export default function PublicStandings({ orgSlug, tournamentSlug, isPreview = f
           {ranking.capNote && <p>{ranking.capNote}</p>}
           {ranking.pendingNote && <p>{ranking.pendingNote}</p>}
         </div>
-      </PublicDisclosure>
-    </> : <PublicTournamentState title="No standings yet" description={division
-      ? 'This division has teams, but standings will start once scoreable games are posted.'
-      : 'Standings will appear when the organizer publishes the schedule.'} compact />}
-    {showPlayoffsDoor && <PublicLinkList><PublicDoorRow href={orgHref(`/${tournamentSlug}/playoffs`)} label={SCHEDULE_BRACKET_DOOR.label}
-      sub={(division ? playoffDoorSub({ ...data, tournament, requireFinalization }, division.id, clock ?? new Date(0)) : null) ?? SCHEDULE_BRACKET_DOOR.line} /></PublicLinkList>}
+      </PublicDisclosure>}
+      {showPlayoffsDoor && <PublicDoorRow href={orgHref(`/${tournamentSlug}/playoffs`)} label={SCHEDULE_BRACKET_DOOR.label}
+        sub={(division ? playoffDoorSub({ ...data, tournament, requireFinalization }, division.id, clock ?? new Date(0)) : null) ?? SCHEDULE_BRACKET_DOOR.line} />}
+    </PublicLinkList>}
   </PublicPage>;
 }

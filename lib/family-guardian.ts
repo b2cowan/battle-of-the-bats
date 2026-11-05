@@ -10,14 +10,14 @@ import { FamilyLinkError, type FamilyLink } from './family-access';
  * ⚠ SHIPPED SWITCHED OFF. `GUARDIAN_TIER_ENABLED` defaults to false and every entry point in
  * this module refuses while it is off — so no guardian link and no consent record can be
  * created, by the UI or by a direct API call, until it is deliberately turned on. This is
- * built ahead of the PIPEDA/CASL counsel review so that sign-off is a copy change and a flag
- * flip rather than a build; it is NOT a decision that the review has happened.
+ * built ahead of real consent wording (counsel no longer gates it, owner 2026-11-04) so that switching on is a copy change and a flag
+ * flip rather than a build; it is NOT a decision that the tier is ready.
  *
  * The owner's reasoning for building now (2026-08-01), recorded because it is a fair
  * correction to how this was first framed: a coach INVITING the guardian address already on
  * the roster is not a new trust decision — that address is already on the player row and
  * already receives team email and tryout offers. What IS new is the standing view of a
- * child's records a connected guardian receives, and that is what the counsel questions
+ * child's records a connected guardian receives, and that is what the consent questions
  * cover, and why this stays off by default.
  *
  * ⚠ ONE DOOR SINCE 2026-09-12. A parent used to be able to ASK through the team's family
@@ -197,7 +197,7 @@ async function countLiveGuardians(playerId: string): Promise<number> {
 
 // ── Invites and approval ──────────────────────────────────────────────────────
 
-/** Write the consent evidence. Separate function so the wording that counsel returns has one
+/** Write the consent evidence. Separate function so the real consent wording has one
  *  place to land, and so a future flow can record consent without duplicating the shape. */
 export async function recordGuardianConsent(params: {
   orgId: string;

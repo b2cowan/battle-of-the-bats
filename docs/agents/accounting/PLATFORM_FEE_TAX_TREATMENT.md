@@ -1,11 +1,11 @@
 # Tax treatment of FieldLogicHQ's online-payment (platform) fee — all four cross-border scenarios
 **Last verified:** 2026-10-31
 **Re-verify by:** 2027-10-31, or when online payments are switched on in production, when counsel answers the facilitated-
-payments brief, or when the first US club connects a payout account
+payments brief (counsel no longer a gate, owner 2026-11-04), or when the first US club connects a payout account
 **Depends on facts:** registered for GST/HST (confirmed 2026-10-31 — so the 2026-10-26 "below the threshold" reason for no tax on the fee no longer holds); the payment model as built — direct charges
 on the **club's own** Stripe account (club = merchant of record), FieldLogicHQ takes the whole fee as an application fee,
 and the club chooses whether the fee is **added on top for the payer ("family", the default) or absorbed by the club**;
-online payments are switched OFF in production pending counsel (2026-10-31)
+online payments are switched OFF in production (counsel no longer a gate, owner 2026-11-04; the owner switches them on after real payments terms are written; was "pending counsel", 2026-10-31)
 
 ## Question(s) this answers
 - Is the fee taxable or an exempt financial service?

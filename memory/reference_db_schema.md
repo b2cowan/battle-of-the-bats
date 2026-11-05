@@ -216,7 +216,7 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_t
 - Indexes: rep_development_goal_reviews_goal_idx, rep_development_goal_reviews_org_idx, rep_development_goal_reviews_player_idx, rep_development_goal_reviews_team_idx
 
 ### rep_document_templates
-id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id, name NOT NULL, document_type NOT NULL, storage_path NOT NULL, file_name NOT NULL, file_size (bigint) NOT NULL, is_active (boolean), published_by (uuid), created_at
+id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id, name NOT NULL, document_type NOT NULL, storage_path NOT NULL, file_name NOT NULL, file_size (bigint) NOT NULL, is_active (boolean), published_by (uuid), created_at, validity NOT NULL
 - Indexes: rep_document_templates_org_idx, rep_document_templates_team_id_idx
 
 ### rep_dues_credits
@@ -304,7 +304,7 @@ id (uuid), team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizat
 - Indexes: rep_program_years_org_id_idx, rep_program_years_team_id_year_key
 
 ### rep_roster_players
-id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, player_first_name NOT NULL, player_last_name, player_date_of_birth, player_number, guardian_first_name, guardian_last_name, guardian_email, guardian_phone, status, source, tryout_registration_id (uuid) → rep_tryout_registrations.id, notes, admin_notes, created_at, updated_at, primary_position, secondary_position, display_order (integer), source_basic_player_id (uuid), medical_notes, emergency_contact_name, emergency_contact_phone, bats, throws, jersey_size, lineup_profile (jsonb), person_id (uuid) → org_people.id, child_id (uuid) → org_children.id NOT NULL
+id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, player_first_name NOT NULL, player_last_name, player_date_of_birth, player_number, guardian_first_name, guardian_last_name, guardian_email, guardian_phone, status, source, tryout_registration_id (uuid) → rep_tryout_registrations.id, notes, admin_notes, created_at, updated_at, primary_position, secondary_position, display_order (integer), source_basic_player_id (uuid), medical_notes, emergency_contact_name, emergency_contact_phone, bats, throws, jersey_size, lineup_profile (jsonb), person_id (uuid) → org_people.id, child_id (uuid) → org_children.id NOT NULL, health_confirmed_at, health_confirmed_by (uuid)
 - Indexes: rep_roster_players_child_idx, rep_roster_players_email_idx, rep_roster_players_id_team_uniq, rep_roster_players_one_child_per_season, rep_roster_players_org_id_idx, rep_roster_players_person_id_idx, rep_roster_players_src_basic_player_uq, rep_roster_players_team_id_idx, rep_roster_players_tryout_registration_id_idx, rep_roster_players_year_idx, rep_roster_players_year_status_idx
 
 ### rep_season_refund_adjustments
@@ -974,7 +974,7 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, online_payment_id (uuid)
 - Indexes: online_refunds_unassigned_assigned_by_idx, online_refunds_unassigned_org_idx, online_refunds_unassigned_payment_idx, online_refunds_unassigned_stripe_key
 
 ### org_children
-id (uuid), org_id (uuid) → organizations.id NOT NULL, first_name NOT NULL, last_name, date_of_birth, created_at, updated_at
+id (uuid), org_id (uuid) → organizations.id NOT NULL, first_name NOT NULL, last_name, date_of_birth, created_at, updated_at, medical_notes, emergency_contact_name, emergency_contact_phone
 - Indexes: org_children_org_idx
 
 ### org_custom_domains

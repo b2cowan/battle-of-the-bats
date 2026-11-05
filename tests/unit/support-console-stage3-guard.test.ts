@@ -26,7 +26,7 @@ import {
   type MoneyCharge, type MoneyRead, type RefundFacts,
 } from '../../lib/console-money.ts';
 import {
-  InFlightError, RECOVERY_AFTER_MS, makeRefund, ownsObject, recoverRefunds, stripeErrorFacts,
+  InFlightError, RECOVERY_AFTER_MS, customerSharing, makeRefund, ownsObject, recoverRefunds, stripeErrorFacts,
   type RefundInput, type RefundRecord, type RefundStore,
 } from '../../lib/console-money-stripe.ts';
 import { stripeStillBills } from '../../lib/stripe-billing-state.ts';
@@ -267,6 +267,21 @@ describe('2 · every refusal the server makes before Stripe is asked', () => {
       assert.match(readCode(f), /readClubCharge\(stripe, chargeId, club,/, f);
       assert.match(readCode(f), /club\.customerShared/, f);
     }
+  });
+
+  it('a customer is "shared" only when another CLUB uses it; a coach’s own (person-paid) customer is not, and names its other portals', () => {
+    const ME = '3150a614-8a71-48df-8740-5f4962795fad';
+    const personPaid = (workspaceOrg: string) => ({ billing_owner_org_id: null, billing_owner_user_id: 'user-1', workspace_org_id: workspaceOrg });
+    // The walk case: a coach bought Premium as a person; the one workspace on the customer is this record's own.
+    assert.deepEqual(customerSharing(ME, 1, [personPaid(ME)]), { shared: false, coversOtherPortals: false });
+    // The same coach's customer also pays for another portal: read it, and say so.
+    assert.deepEqual(customerSharing(ME, 1, [personPaid(ME), personPaid('other-portal')]), { shared: false, coversOtherPortals: true });
+    // A portal this club pays for is the club's own.
+    assert.equal(customerSharing(ME, 1, [{ billing_owner_org_id: ME, billing_owner_user_id: null, workspace_org_id: 'p' }]).shared, false);
+    // Another club on the customer, a second org row, or a workspace with no payer at all stays shared.
+    assert.equal(customerSharing(ME, 1, [{ billing_owner_org_id: 'other-club', billing_owner_user_id: null, workspace_org_id: 'p' }]).shared, true);
+    assert.equal(customerSharing(ME, 2, []).shared, true);
+    assert.equal(customerSharing(ME, 1, [{ billing_owner_org_id: null, billing_owner_user_id: null, workspace_org_id: ME }]).shared, true);
   });
 
   it('amounts: whole cents above zero, never above Stripe’s remainder; "all" with a changed remainder is refused', () => {

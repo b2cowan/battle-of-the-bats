@@ -349,7 +349,7 @@ export const PITCH_SLIDES = {
     // REMOVED on 2026-09-12 (owner), and the per-game shared page on 2026-09-20 (owner — not
     // production-ready); what a family can read today is the team's PUBLIC page when Schedule
     // visibility is set to Public link. The guardian/parent tier is env-gated OFF
-    // (lib/family-guardian.ts, GUARDIAN_TIER_ENABLED) pending privacy review, so this answer
+    // (lib/family-guardian.ts, GUARDIAN_TIER_ENABLED) until the owner switches it on (real consent wording first), so this answer
     // promises the public schedule and nothing more — no link, no following, no parent portal,
     // no per-game page.
     pageAnswer:

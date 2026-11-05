@@ -58,7 +58,7 @@ a.matchLink:hover .gameName { text-decoration: underline; }
   .wideForm:not(:has(.gameScore)):not(:has(.gameStatus)) .gameContext { grid-column: 1; grid-row: 1; }
   .wideForm:not(:has(.gameScore)):not(:has(.gameStatus)) .gameTeams { grid-column: 1; grid-row: 2; margin-top: 2px; }
   .wideForm:not(:has(.gameScore)):not(:has(.gameStatus)) .gameTime { grid-column: 2; grid-row: 1 / 3; align-self: center; text-align: right; white-space: nowrap; }
-  .wideForm:not(:has(.gameScore)):not(:has(.gameStatus)) .gameNoScore, .wideForm:not(:has(.gameScore)):not(:has(.gameStatus)) .stakes { grid-column: 1 / -1; }
+  .wideForm:not(:has(.gameScore)):not(:has(.gameStatus)) :is(.gameNoScore, .stakes, .gamePlace) { grid-column: 1 / -1; }
 }.gameName { min-width: 0; overflow-wrap: anywhere; font: 500 1rem/1.35 var(--club-text-face); }
 .gameScore { min-width: 28px; text-align: right; font: 700 1.25rem/1.08 var(--club-title-face); font-variant-numeric: tabular-nums; }
 .gameSide[data-result='win'] .gameName { font-weight: 700; }
@@ -83,11 +83,13 @@ a.matchLink:hover .gameName { text-decoration: underline; }
 .withPlace { min-width: 0; background: var(--club-card); }
 .placeStrip { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 56px; padding: 6px 6px 6px 16px; border-top: 1px solid var(--club-line); color: var(--club-dim); font: 400 0.875rem/1.35 var(--club-text-face); }
 .placeStrip > span { min-width: 0; overflow-wrap: anywhere; }
-/* Compact: a bracket match — 14 px names, 16 px scores. */
+/* Compact: a bracket match — 14 px names, 16 px scores. The bracket's zoom (PublicBracket, `--public-bracket-zoom`)
+   shrinks the board, not the words: each size is divided by it, as the bracket's own match did (1 everywhere else). */
 .stacked[data-size='compact'] { padding: 10px 12px; }
 .stacked[data-size='compact'] .gameTeams { margin-top: 4px; }
-.stacked[data-size='compact'] .gameName { font-size: 0.875rem; }
-.stacked[data-size='compact'] .gameScore { font-size: 1rem; }
+.stacked[data-size='compact'] :is(.gameTime, .gameContext, .gameName, .gameNoScore) { font-size: calc(0.875rem / var(--public-bracket-zoom, 1)); }
+.stacked[data-size='compact'] .gameStatus { font-size: calc(0.75rem / var(--public-bracket-zoom, 1)); }
+.stacked[data-size='compact'] .gameScore { font-size: calc(1rem / var(--public-bracket-zoom, 1)); }
 /* Large: a game's own page — 28 px scores, 44 px team lines (the names are links there), its sentences as a foot strip. */
 .stacked[data-size='large'] { padding: 16px; }
 .stacked[data-size='large'] .gameTime { font: 700 1.25rem/1.15 var(--club-title-face); }
@@ -162,5 +164,9 @@ a.matchLink:hover .gameName { text-decoration: underline; }
   /* Kickoff, nobody has scored: "No score yet" takes the empty cell under "vs" instead of a third row, and the teams sit above it. */
   .wideForm[data-state='live']:has(.gameNoScore) .gameTeams { grid-row: 1; }
   .wideForm[data-state='live'] .gameNoScore { grid-column: 2; grid-row: 2; text-align: center; }
+  /* A field on the one-line row (only Playoffs' game still to play — the all-games lists show none, ruled 2026-10-29):
+     centred under the teams, the time and the day centred on both lines. */
+  .wideForm .gamePlace { grid-column: 2; grid-row: 2; margin-top: 0; text-align: center; }
+  .wideForm:has(.gamePlace) :is(.gameTime, .gameContext) { grid-row: 1 / 3; }
 }
 @media (prefers-reduced-motion: reduce) { .gameBlock[data-flipped] { animation: none; } }

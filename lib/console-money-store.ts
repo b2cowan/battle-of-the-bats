@@ -2,7 +2,7 @@ import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
 import { isUuid } from './utils';
 import { writePlatformAuditLogStrict } from './platform-audit';
-import { InFlightError, type PriceMap, type RefundRecord, type RefundStore } from './console-money-stripe';
+import { InFlightError, customerSharing, type CustomerWorkspace, type PriceMap, type RefundRecord, type RefundStore } from './console-money-stripe';
 
 /**
  * The Money tab's database half (Support console Stage 3): our refunds record (mig 380, server-only) and the club's
@@ -47,7 +47,7 @@ export const refundStore: RefundStore = {
  * Portal the club pays for bills on the club's OWN customer, as its own subscription: those subscriptions are the club's,
  * named as such (never "two live subscriptions"), and they do not make the customer shared.
  */
-export async function clubStripeFacts(orgId: string): Promise<{ name: string; customerId: string | null; customerShared: boolean; subscriptionId: string | null; portalSubscriptionIds: string[] } | null> {
+export async function clubStripeFacts(orgId: string): Promise<{ name: string; customerId: string | null; customerShared: boolean; coversOtherPortals: boolean; subscriptionId: string | null; portalSubscriptionIds: string[] } | null> {
   if (!isUuid(orgId)) return null; // a malformed address is "not found", never a database error
   const { data: org, error } = await supabaseAdmin.from('organizations')
     .select('name, stripe_customer_id, stripe_subscription_id').eq('id', orgId).maybeSingle();
@@ -56,19 +56,20 @@ export async function clubStripeFacts(orgId: string): Promise<{ name: string; cu
   const row = org as { name: string; stripe_customer_id: string | null; stripe_subscription_id: string | null };
   const customerId = row.stripe_customer_id && !row.stripe_customer_id.startsWith('mock_') ? row.stripe_customer_id : null;
   let customerShared = false;
+  let coversOtherPortals = false;
   let portalSubscriptionIds: string[] = [];
   if (customerId) {
     const [orgs, workspaces] = await Promise.all([
       supabaseAdmin.from('organizations').select('id', { count: 'exact', head: true }).eq('stripe_customer_id', customerId),
-      supabaseAdmin.from('team_workspaces').select('billing_owner_org_id, stripe_subscription_id').eq('stripe_customer_id', customerId),
+      supabaseAdmin.from('team_workspaces').select('billing_owner_org_id, billing_owner_user_id, workspace_org_id, stripe_subscription_id').eq('stripe_customer_id', customerId),
     ]);
     if (orgs.error) throw orgs.error;
     if (workspaces.error) throw workspaces.error;
-    const ws = (workspaces.data ?? []) as Array<{ billing_owner_org_id: string | null; stripe_subscription_id: string | null }>;
-    customerShared = (orgs.count ?? 0) !== 1 || ws.some(w => w.billing_owner_org_id !== orgId);
+    const ws = (workspaces.data ?? []) as Array<CustomerWorkspace & { stripe_subscription_id: string | null }>;
+    ({ shared: customerShared, coversOtherPortals } = customerSharing(orgId, orgs.count ?? 0, ws));
     portalSubscriptionIds = ws.map(w => w.stripe_subscription_id).filter((v): v is string => !!v);
   }
-  return { name: row.name, customerId, customerShared, subscriptionId: row.stripe_subscription_id, portalSubscriptionIds };
+  return { name: row.name, customerId, customerShared, coversOtherPortals, subscriptionId: row.stripe_subscription_id, portalSubscriptionIds };
 }
 
 /**

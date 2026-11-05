@@ -42,7 +42,8 @@
 .differential > span { white-space: nowrap; }
 .capped { color: var(--club-dim); font-size: 0.75rem; }
 .deskOnly { display: none; }
-.explainer { border: 1px solid var(--club-line); border-radius: 8px; padding: 14px; background: var(--club-card); color: var(--club-soft); font: 400 0.875rem/1.5 var(--club-text-face); }
+/* Plain: the panel in the list (phone) or the window (desk) pads it (PublicDisclosure; standard Part 3). */
+.explainer { color: var(--club-soft); font: 400 0.875rem/1.5 var(--club-text-face); }
 .explainer p { margin: 0 0 12px; }
 .explainer p:last-child { margin-bottom: 0; }
 .explainer strong { color: var(--club-text); }

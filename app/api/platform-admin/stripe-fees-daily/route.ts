@@ -24,7 +24,7 @@ import { countOverdueEndings, sendEndingEmails } from '@/lib/plan-ending-server'
  *   7. the ONE reminder on an invoice past due (§7 ruling 3). Nothing switches off by itself;
  *   8. (Part 4b) a card dispute lost before its payment landed, whose booking at the landing failed;
  *   9. (12d-2, owner ruling 4) the payments terms changed: the owners' item and one email the day a club is found behind,
- *      one reminder 14 days later (nothing while the version is counsel's draft);
+ *      one reminder 14 days later (nothing while the version is the placeholder draft);
  *  10. (12d-2) an ending the owner didn't choose: the owners' item and one email (seven days before a comp runs out; the
  *      day a subscription payment fails), and the open pay pages of a club whose plan no longer offers online payments
  *      closed (free time runs out with no event of its own);

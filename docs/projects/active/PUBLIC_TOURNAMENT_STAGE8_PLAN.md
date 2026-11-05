@@ -10,7 +10,7 @@ the pay page, the admin preview's old chrome, the old tab row and rail, the Rule
 `72cd94a46` 2026-11-04** (record §18; releases with the flip). **Part 4 committed.** **Part 5 (the data and the wording
 around it: no second `theme_font` empty, 426's prod timing note; the dictionary and the dead fields un-mapped; the help;
 the drift check; the demos) committed `393b78045` 2026-11-04** (record §19; releases with the flip). **Part 5 committed.** **Part 6 split (owner 2026-11-04): 6a (the whole-stage review, the layout sweep, the walk) committed `9bf1021bb` 2026-11-04** (record §20;
-owner walk §456 owed); **6b is the promote**, its own `/release` session when the owner calls the release — Stage 8 waits on
+owner walk §456 PASSED 2026-11-04, no defect); **6b is the promote**, its own `/release` session when the owner calls the release — Stage 8 waits on
 `dev`, ready to ship. Brief: `PUBLIC_TOURNAMENT_STAGE8_PM_BRIEF.md`.
 **Parent plan:** `PUBLIC_TOURNAMENT_SITE_REVIEW_PLAN.md` §9 (the ladder). Stages 0–7 and Stage 1a are built and walked; Stage 8 is the one stage that
 changes what a customer sees.

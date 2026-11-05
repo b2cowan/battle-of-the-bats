@@ -10,7 +10,7 @@ const row = (n: number) => ({ key: `r${n}`, href: `/club/r${n}`, title: `Item ${
 const hosted = { kind: 'hosted' as const, name: 'Riverdale Minor Ball Association', href: '/riverdale' };
 const base = { host: hosted, openNow: [row(1), row(2)], logoUrl: null, isPreview: false, clubHref: '/riverdale' };
 
-describe('the host card exists only for an organizer with a public club page', () => {
+describe('the host card exists only for an organizer with a public club page that has something open', () => {
   it('hosted + an answered open-now read: the card, initials when there is no logo', () => {
     const v = hostCardView(base)!;
     assert.equal(v.name, 'Riverdale Minor Ball Association');
@@ -25,8 +25,8 @@ describe('the host card exists only for an organizer with a public club page', (
     assert.equal(hostCardView({ ...base, host: { kind: 'run', name: 'Riverdale' } }), null);
     assert.equal(hostCardView({ ...base, host: null }), null);
   });
-  it('nothing open: the card still stands (it says the club runs teams all year)', () => {
-    assert.deepEqual(hostCardView({ ...base, openNow: [] })!.open, []);
+  it('nothing open: no card (Public page layout standard A10 — the band and the footer still lead to the club)', () => {
+    assert.equal(hostCardView({ ...base, openNow: [] }), null);
   });
   it('lists at most the first few items', () => {
     const v = hostCardView({ ...base, openNow: [row(1), row(2), row(3), row(4), row(5)] })!;

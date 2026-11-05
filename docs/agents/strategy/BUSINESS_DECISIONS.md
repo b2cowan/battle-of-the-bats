@@ -8,6 +8,44 @@
 
 ---
 
+### 2026-11-04 — No lawyer is a launch gate: the two Canadian-counsel gates (online payments in production, the guardian tier) are removed (Decided)
+**Status:** **Decided** (owner, 2026-11-04, in the session that built the `/legal` agent: "you can remove the canadian lawyer
+gates as well, we can deal with that later").
+**Decision:**
+1. **Online payments in production no longer wait on counsel's sign-off** (the RPAA / FINTRAC / payments-terms brief).
+2. **The guardian tier no longer waits on the PIPEDA / CASL counsel review.**
+   The subscription Terms of Service (GST/HST plan Stage 6) no longer wait on a lawyer either: `/legal` drafts them and the
+   owner approves them.
+3. With the 2026-10-31 entry (T6 accountant, U5 US lawyer), **no professional review holds a launch.** Legal review is
+   deferred, not cancelled: the questions stay open in the `/legal` backlog (`docs/agents/legal/LEGAL_INDEX.md` L3–L6).
+**Not changed by this ruling (facts, checked 2026-11-04):** both features are still **off**. Live payments are locked in
+code and the guardian tier by a setting; nothing was switched on. Each still shows placeholder wording — the payments
+terms clubs agree to ("counsel to write") and the guardian consent text ("pending counsel review") — so each needs real
+wording (`/legal` drafts it) and an owner decision to switch on. Public copy still promises payment collection only once it
+ships (2026-10-19 "Marketing claims only what ships"), now that the counsel gate no longer supplies that reason.
+**Rationale:** owner's call — pre-revenue, nothing sold; the review can come later.
+**Exposure the owner carries (from `/legal`, not ruled):** whether FieldLogicHQ must register as a payment service provider
+under the federal retail payments law is unresearched and carries statutory penalties; `/legal` suggested researching it
+(backlog L4) before payments go live in production.
+**Supersedes:** the counsel-gate clauses only (every other part of these entries stands) in: 2026-10-31 family account at
+team placement (HANDOFF → COUNSEL); 2026-10-29 end state (P4 critical path); 2026-10-27 out-of-country card; 2026-10-26 comp
+covers subscription only; 2026-10-26 returned bank debit; 2026-10-25 who pays the processing fee; 2026-10-19 Club release
+(counsel sign-off as the release gate); 2026-09-12 family link and follower tier removed; 2026-08-01 family chat cut
+(guardian switch turned on by a counsel entry); 2026-07-28 facilitated payments (counsel as the hard launch gate). Also the
+note on 2026-10-31 T6 that "does not change the separate lawyer gate".
+**Handoff:**
+```
+HANDOFF → /plan
+- Gate statements in active plans marked superseded 2026-11-04 (GST/HST, Stage 12 payments, Club readiness, signed-in family,
+  facilitated payments scoping, Chunk D counsel packet).
+HANDOFF → /legal
+- Draft the real payments terms (L3) and guardian consent wording (L5) — each switch now waits on them, not on a lawyer.
+HANDOFF → /billing
+- Nothing to flip. The live-payments lock and the guardian setting stay off until the owner switches them on.
+```
+
+---
+
 ### 2026-11-04 — Bank reconciliation rides Accounting (Club) and the Premium Coaches Portal's Ledger (everywhere); no new key, no add-on (Decided)
 **Status:** **Decided** (owner, 2026-11-04, Bank reconciliation ask **B11 = A**, pasted back with no notes; option A was `/strategy`'s proposal the same day). **Not built:** the project is planned, drawn and its drawings approved (R0, 2026-11-04); build stages R1–R7 follow. Plan of record `docs/projects/active/BANK_RECONCILIATION_PLAN.md` §4 B11.
 **Decision:**
@@ -294,6 +332,7 @@ registered, no longer holds; point 3's separate US review is done inside the GST
 
 ### 2026-10-31 — A family gets an account when their child is PLACED ON A TEAM, not at sign-up; the emailed "Your sign-up" pay link stays as the permanent pre-team door; no other links are sent to families (Decided)
 **Status:** **Decided** (owner, 2026-10-31, answering the signed-in family census, `docs/projects/active/SIGNED_IN_FAMILY_CENSUS.md` §0, and then the journeys page `docs/projects/active/SIGNED_IN_FAMILY_JOURNEYS.html`, https://claude.ai/artifact/QmPoKvcyF3Bg1xpjCWw54C). Owner words: *"they only need the account once they are confirmed on the team, and that account is used for accessing things like schedule and team chat. registering alone shouldn't create the account"*; on paying from an emailed link, *"that would be ideal if we could keep this functionality"*; on calendar feeds, *"inside the signed in app is good, i meant we don't need to send links"*. Every recommendation was accepted in two steps: *"i agree with your recommendations"*, then *"i agree with all of your recommendations, proceed"*. **Planned, nothing built.**
+**Partly superseded 2026-11-04:** its counsel-gate clause — see "2026-11-04 — No lawyer is a launch gate". The rest stands.
 **Decision:**
 1. **No account at sign-up.** A house-league or tryout sign-up never creates an account and never asks for a password.
 2. **An account at team placement.** House league's "confirmed" means **placed on a team**, not accepted. The placement email *is* the account invitation, so there is one invitation and never a separate "create an account" email. The account is what holds the schedule (practices included), team chat, In / Out / Maybe replies and an in-app calendar feed.
@@ -483,6 +522,7 @@ HANDOFF → /marketing: none; free time is never advertised. One nit for a copy 
 
 ### 2026-10-29 — The end state is an app where everyone signs in; public means tournaments and team public pages only; no stop-gap no-login family doors (direction logged; the rest is Proposed or open)
 **Status:** **Decided — the owner's direction only** (said in the House League 9d-3 session, 2026-10-29, after the drawings were published). **Amended by 2026-10-31 "A family gets an account when their child is PLACED ON A TEAM…"** (point 4 narrowed: the emailed pay link and unsubscribe stay; no other links are sent). Everything past that direction is split below into **Proposed** (my recommendations, awaiting the owner) and **Open** (not decided at all). Nothing in the Proposed or Open lists is binding.
+**Partly superseded 2026-11-04:** its counsel-gate clause — see "2026-11-04 — No lawyer is a launch gate". The rest stands.
 **Decision (the owner's direction, as said):**
 1. The end state of the product is a **mobile app**. Parents, coaches, admins and treasurers all have **email-and-password sign-ins**.
 2. **Public means tournaments and team public pages only.** Whether a team page carries only games stays the standing games-only ruling and is not reopened here.
@@ -598,6 +638,7 @@ HANDOFF → /plan: nothing new; the plan's Stage 4b record carries the build. Wa
 ### 2026-10-27 — A card from outside the club's country: the club is billed Stripe's extra cost, never the family; comped clubs get their own invoice for Stripe fees
 **Status:** **Decided** (owner, 2026-10-27, Club Tier Stage 12d, round 3). **Decided, not built**: the 12d-1 build carries
 it. Online payments stay off in production until counsel signs off.
+**Partly superseded 2026-11-04:** its counsel-gate clause — see "2026-11-04 — No lawyer is a launch gate". The rest stands.
 **Decision:**
 1. **Stripe's extra cost on a card issued outside the club's country is billed to the club** (customer words: "outside your country", owner 2026-10-27, since clubs may be US-based later), as one more line on the same bill as the
    dispute and returned-debit fees, from Stripe's own figure, every club included. **The family is never charged more:**
@@ -631,6 +672,7 @@ more (gated)…".
 **Status:** **Decided** (owner, 2026-10-26, Club Tier Stage 12d asks 1 + the follow-up, two rounds the same day). **Decided,
 not built**: the 12d build carries it. Online payments stay off in production until counsel signs off, so no club is billed
 by it yet.
+**Partly superseded 2026-11-04:** its counsel-gate clause — see "2026-11-04 — No lawyer is a launch gate". The rest stands.
 **Decision:**
 1. **A comp (the Founding Season 2027 comp, operator free time, any free plan) covers the FieldLogicHQ subscription and
    nothing else.** Owner: *"comped clubs do not get any reprieve on Stripe fees in any capacity, we are only comping their
@@ -715,6 +757,7 @@ constant is gone; built on dev 2026-10-27, Part 5b). (owner, 2026-10-26, at the 
 the research on how Stripe charges it; the option chosen was *"Invoice line; comped clubs exempt"*). **Built on dev 2026-10-26
 (Stage 12c Part 6a)**; deployment state lives in the release-history record. Online payments stay off in production until
 counsel signs off, so no club is billed by it yet.
+**Partly superseded 2026-11-04:** its counsel-gate clause — see "2026-11-04 — No lawyer is a launch gate". The rest stands.
 **Decision:**
 1. **Stripe's CA$5.00 fee for each bank debit that fails or is disputed is the club's cost, not FieldLogicHQ's.** It covers a
    debit the bank returns while it clears and one reversed after it cleared (a dispute on a bank-debit charge).
@@ -868,6 +911,7 @@ moot until Club is on sale, decide before it is. (b) Free time for a Premium Coa
 **Status:** **Decided** (owner, 2026-10-25, Club Tier Stage 12 Ask A14, ruled as recommended in the drawing round at
 https://claude.ai/artifact/X7quYgnDpiWV9Dh76TYm57; the owner raised the question on 2026-10-24: *"is it too
 complicated to allow the club to choose where the fee comes off of?"*). Not built — Stage 12a builds it.
+**Partly superseded 2026-11-04:** its counsel-gate clause — see "2026-11-04 — No lawyer is a launch gate". The rest stands.
 **Decision:**
 1. **One club-wide choice on the Payouts card:** "Families pay it" (the default) or "The club pays it". It is not per
    program or per event.
@@ -901,6 +945,7 @@ pay).
 
 ### 2026-10-19 — The Club release has NO date and includes payments processing (house-league registration is a payments flow) and a club's own web address (Stage 4e)
 **Status:** **Decided** (owner, 2026-10-19, in the Club Tier Stage 4 session — *"I am not married to any specific dates but will release when the product is fully ready, and that includes payments processing. the release will depend on all of these being complete"*; and on the own address: *"yes include web address with your recommendation"*). **Which plans carry the own web address = Decided the same day** (owner picked "Every plan with a public site", 2026-10-19).
+**Partly superseded 2026-11-04:** its counsel-gate clause — see "2026-11-04 — No lawyer is a launch gate". The rest stands.
 **Decision:**
 1. **No date.** The first Club production release ships when every stage of the Club Tier readiness plan is complete or cancelled by the owner — nothing else sets its timing. The 2026-06-22 "target H1 2027 launch" and the 2026-07-28 "launch H1 2027, after the Jan 2027 billing cliff… launching earlier requires amending this entry" no longer govern it.
 2. **Payments processing is inside the release.** Facilitated payments (the 2026-07-28 model, unchanged: direct charges on the club's own Stripe Express account, the club nets the full fee, family-pays cards 3.5% + $1.50 / bank debit 2.5% + $1.00, all paid org tiers) must be built and live before the Club release. **House-league registration is a payments flow**, beside tournament registration (it was never named before); its flow questions sit in the Club plan's Stage 9 note. **Counsel sign-off remains the launch gate** for payments, and so now for the release.
@@ -1981,6 +2026,7 @@ HANDOFF → `/docs` — DONE the same day (staff-access answer, Staff section su
 
 ### 2026-09-12 — The team family LINK and the FOLLOWER tier are REMOVED: the family layer is one tier (guardian, coach-invited), still switched off behind counsel; Schedule visibility survives as a Team-settings setting
 **Status:** Decided (owner, 2026-09-12 — *"make dev like prod and remove any family link functionality"*; scope chosen the same day from three offered readings: the link + followers go, Schedule visibility survives, the guardian tier is untouched). **Built and committed `8971ee89` the same day; owner QA §176 ✅ 16/16; migration 290 on dev, prod-pending.**
+**Partly superseded 2026-11-04:** its counsel-gate clause — see "2026-11-04 — No lawyer is a launch gate". The rest stands.
 **Decision:** Packaging narrows; nothing is priced, keyed or gated differently.
 1. **The shareable team family link is gone, and with it the FOLLOWER tier** — the team-level "grandparents and relatives follow the team" connection, the coach's approval queue, the follower list and the follower safety ceiling. Nobody can ask to follow a team any more.
 2. **The family layer is ONE tier: the GUARDIAN** (child-linked, ≤2 per player), **and it has ONE door: the coach-sent invite** to the address already on the roster row. The parent's ask-through-the-link path (naming their child, coach attaching the roster row at approval) went with the link. A claim from a different address still lands in the coach's queue. The tier stays **switched off pending PIPEDA/CASL counsel sign-off** (2026-08-01 family-chat entry) — this ruling does not touch that switch.
@@ -2788,6 +2834,7 @@ HANDOFF → `/plan` — **this build.** `COACH_PRACTICE_PLANS_PLAN.md` §9.2 Pha
 
 ### 2026-08-01 — FAMILY CHAT IS CUT. Chat stays coaches-and-admins-only; the guardian tier ships BUILT-BUT-SWITCHED-OFF behind counsel
 **Status:** Decided (owner, 2026-08-01 — *"you can remove slice 4 from the project, I don't intend to introduce family chats any time soon, we can limit chats to coaches and admins for now"*)
+**Partly superseded 2026-11-04:** its counsel-gate clause — see "2026-11-04 — No lawyer is a launch gate". The rest stands.
 
 **Decision:** Two rulings that together close the last open questions in the Chunk D family layer.
 
@@ -3017,6 +3064,7 @@ HANDOFF → `/plan` — none (already planned + ratified inside Batch 1).
 
 ### 2026-07-28 — Facilitated payments: the Q4 scoping questions are substantially PRE-ANSWERED by the owner-commissioned investigation; take-rate model resolved (margin-on-top, expressed as a market-band all-in rate); direct-charges architecture Proposed; tier attachment = OPEN owner ruling
 **Status:** ⚠ **Family-pays amended 2026-10-25** (now the default of a club-wide choice; the club may pay the fee — "2026-10-25 — Who pays the processing fee is the club's choice…"). ⚠ **Point 6 (sequencing) superseded 2026-10-19** ("The Club release has NO date and includes payments processing…"); everything else stands, and house-league registration is now a named flow. · Mixed, deliberately: **take-rate MODEL resolution = Decided** (it executes the 2026-06-22 entry's own mandatory handoff, and the evidence leaves only one viable reading); **tier attachment = Decided** (ratified by owner 2026-07-28 via decision prompt — "tournament plus, club and league"); **money-flow architecture = Decided** (direction ratified by owner 2026-07-28 in conversation — "we go with the direct model, we never hold the funds"; counsel sign-off remains the hard launch gate confirming the regulatory reading); **rate number + rails + who-pays = Decided** (Option B rail-differentiated launch anchor, ratified by owner 2026-07-28 in conversation — "I agree with option B, log it"); **risk posture (payout holds / reserves / ToS) = Proposed** (locks at build with counsel input). Owner accepted the investigation report and directed the follow-through 2026-07-28 in conversation ("go ahead").
+**Partly superseded 2026-11-04:** its counsel-gate clause — see "2026-11-04 — No lawyer is a launch gate". The rest stands.
 **Decision:**
 1. **Take-rate model (Decided — resolves the "~2.5% + $0.30" ambiguity flagged 2026-06-22):** FieldLogicHQ's take is a **margin layered into a market-band all-in rate charged on each transaction — NOT an all-in ~2.5%**, which is underwater on every card transaction (Stripe Canada base card cost confirmed live at 2.9% + $0.30 CAD). The verified market band for youth-sports registration processing (primary-source confirmed 2026-07-28): TeamSnap 3.25% + $1.50 · SportsEngine HQ 3.25% + $2.00 (atop a $69/mo sub) · Jersey Watch 3.5% + $1 · Tourney Machine 2.9% + $1 · RAMP "under 2%" org-absorbed (corroborated, not primary-confirmed). **Rate DECIDED (ratified 2026-07-28 — Option B, rail-differentiated launch anchor, recalibratable from real conversion/rail-mix data): cards 3.5% + $1.50 all-in · bank debit (ACSS/PAD) 2.5% + $1.00 all-in · family-pays default; the organizer always nets the full team fee.** The visible bank discount steers families to the profitable rail (on an $800 fee: card nets FieldLogicHQ ≈ $3.14, bank ≈ $14.00; a single-rate 3.25% + $1.50 anchor would net a structurally flat ≈ $1.20/txn on cards — full unit-economics table in the scoping plan §1). **Open riders on the number (implementation of it, not reopening it):** (a) fee displayed "+ GST/HST" vs tax-inclusive — accountant call with real margin stakes (tax-out-of-fee turns cards negative); (b) international-card (+0.8%) surcharge-or-absorb policy for US teams; (c) whether orgs may opt to absorb the fee (org-absorb override).
 2. **Rails (Decided with the rate):** cards via Stripe (2.9% + $0.30 cost) **plus Canadian pre-authorized debit (ACSS/PAD) at 1% + $0.40 capped at $5.00** — on a $1,000 team fee that is ~$5 of cost vs ~$29 by card, so steering large fees to PAD is the margin engine at an unchanged all-in rate (trade-off: ~5-business-day settlement).

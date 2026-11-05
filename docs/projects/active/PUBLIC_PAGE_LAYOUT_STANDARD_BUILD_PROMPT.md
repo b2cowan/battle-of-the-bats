@@ -195,7 +195,13 @@ is 3 + 6 nested), 10 (logos — keep), 12 (the disclosure modal).
    the change to the tournament pages and say so.
 5. **One name (A5):** "Playoff picture" → **"The playoff bracket"**, line "See who plays who", everywhere it links the
    bracket (Overview, Schedule, Standings). Grep `lib/help-content`, the demo tour copy and tests for the old words.
-6. Checks; commit on the owner's word; records.
+6. **The band at 72 (club round C1, ruled 2026-11-05).** The tournament's desk band (≥1,024) drops from 88 to the club's
+   ruled **72 px** + its 3 px rule (`TournamentFrame.module.css` ~:113-116, `--club-band-h: 88px` → remove the override so
+   the shared 72 applies). It is a minimum: a two-line name plus the dates line grows the band rather than clipping —
+   check "Greater Hamilton-Wentworth Girls Fastpitch Spring Invitational" (`scripts/seed-public-frame-fixtures.mjs:65`)
+   at 1,024 and 1,280, the doors staying on the band. Update any test or sticky offset that reads 88 (grep `88px` and
+   `--club-band-h` under `components/public` and `tests/unit`). Plan §5b; the standard's R10 says it.
+7. Checks; commit on the owner's word; records.
 
 ## Part 3 · The page passes
 
@@ -233,7 +239,10 @@ Build each page to `BODY.next.<page>` and its `CH.<page>` list in the drawing.
   side column by one section-heading height (44 px) instead of today's 1rem×1.3+8 calc; the standings link as a link row;
   the champion banner, "No more games", "No games scheduled yet", loading / not found / couldn't load restyled to the
   standard (8 px corners, the outlined button). Following and calendar stay app-only.
-- **News and Register:** confirm Part 1 put them on the wrapper; their headings onto R4.
+- **News and Register:** confirm Part 1 put them on the wrapper; their headings onto R4. **The Register form's column
+  goes 680 → 640** (club round C2, ruled 2026-11-05: one form width on both sites; `app/[orgSlug]/register/register.module.css:2`,
+  which the team pay page also imports — check it there too) and correct the comment at `PublicParts.module.css` ~:212
+  ("which club forms share": they don't; club forms are their own 640 sheets).
 - Checks; restart the dev server if files were added or deleted; commit on the owner's word; records.
 
 ## Part 5 · Review, layout check, the walk, the records
@@ -258,13 +267,14 @@ Build each page to `BODY.next.<page>` and its `CH.<page>` list in the drawing.
 4. **Records:** plan header + §6 log, `TODO.md` line, the ledger §, the design log only if the owner rules something new,
    memory status. Offer `/docs` (the help shows these pages) and `/demos` (the shop window shows them) — run them if the
    owner says yes.
-5. Tell the owner the tournament side is done and a good place to `/clear`. **Next is the club round** (owner, 2026-11-04:
-   "once approved and implemented, you can follow up by reviewing the pages on the club public page and do a similar
-   exercise"): a census of the club's public pages against `PUBLIC_PAGE_LAYOUT_STANDARD.md`, then drawings through
-   `/design`, then asks. Its standing open questions are in plan §3 "Not asked now".
+5. Tell the owner the tournament side is done and a good place to `/clear`. **Next is the club build**
+   (`PUBLIC_CLUB_PAGE_LAYOUT_BUILD_PROMPT.md`; the club round was drawn and ruled C1–C7 on 2026-11-05, plan §5b). Its
+   Part 1 may start once this build's Parts 1, 2a and 2b are committed.
 
 ## Not in this build (say so if a step drifts toward one)
-The club's public pages (the next round). The tournament's menu moving into the band (club round). Band height. Any change
+The club's public pages (their own build: `PUBLIC_CLUB_PAGE_LAYOUT_BUILD_PROMPT.md`, which also builds C6, the link
+between a team's club page and its tournament team page — do not build it here). The tournament's menu moving into the
+band (answered in the club round: it stays). Any band change beyond Part 2b step 6 (C1). Any change
 to what a page shows (data, privacy, who sees a coach name), to standings maths, or to which pages carry the today's-games
 line. The admin's own screens. The installed app's own pages (Discover, Scores, Following, Account). Following and alerts
 in a browser.

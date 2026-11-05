@@ -528,9 +528,9 @@ export default function TeamSignupClient({
             </div>
 
             {paid && addressOnFileNow && !changingAddress && (
-              <p className={addressStyles.billedTo}>
+              <p className={addressStyles.billedToStart}>
                 <span>{BILLING_ADDRESS_FORM_WORDS.billedTo(formatBilledTo(addressOnFileNow))}</span>
-                <button type="button" className={addressStyles.change} onClick={() => setChangingAddress(true)} disabled={busy}>{BILLING_ADDRESS_FORM_WORDS.change}</button>
+                <button type="button" className={addressStyles.changeStart} onClick={() => setChangingAddress(true)} disabled={busy}>{BILLING_ADDRESS_FORM_WORDS.change}</button>
               </p>
             )}
             {paid && changingAddress && (

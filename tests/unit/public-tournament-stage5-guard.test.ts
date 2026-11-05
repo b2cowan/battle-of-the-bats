@@ -83,7 +83,9 @@ describe('Stage 5 Part 2: the approved Teams list', () => {
     assert.match(body, /teamMoment\(/); assert.match(body, /teamPlace\(/); assert.match(body, /teamRowLine\(/);
   });
   it('keeps links and stars as separate targets, the star app-only with a stable accessible name', () => {
-    assert.match(body, /<Link className=\{styles.teamLink\}[^>]+>\{content\}<\/Link>/);
+    // Part 3 (standard R7): the team is the club kit's link row (PublicDoorRow, the star its own sibling target); the row is a
+    // link (a plain row in the preview, which has no href).
+    assert.match(body, /<div key=\{team\.id\} className=\{styles\.teamRow\} data-public-team-row=\{team\.id\}>\s*<PublicDoorRow className=\{styles\.teamLink\} href=\{isPreview \? null : orgHref\(`\/\$\{tournamentSlug\}\/teams\/\$\{team\.id\}`\)\}/);
     assert.match(body, /!isPreview && <span className=\{`\$\{parts.appOnly\} \$\{styles.starWrap\}`\}/);
     assert.match(body, /aria-label=\{`Follow \$\{team.name\}`\} aria-pressed=\{isFollowed\}/);
     assert.match(body, /<UnfollowConfirmSheet/);
@@ -96,7 +98,8 @@ describe('Stage 5 Part 2: the approved Teams list', () => {
     assert.match(body, /<PublicSectionHead division /);
     assert.match(readSource('components/public/PublicParts.module.css'), /\.headTitle\.divisionTitle \{[^}]*1\.125rem/);
     assert.match(body, /className=\{`\$\{kit\.listBand\} /);
-    assert.match(css, /\.teamLink strong \{[^}]*overflow-wrap: anywhere/);
+    assert.match(readSource('components/public/ClubKit.module.css'), /\.rowName \{[^}]*overflow-wrap: anywhere/, 'the full name wraps, in the row\'s one name style');
+    assert.match(css, /\.teamRow > \.teamLink \{ flex: 1; min-width: 0;/);
     assert.doesNotMatch(css, /text-overflow|line-clamp|nowrap/);
     assert.match(css, /@media \(min-width: 1024px\)/);
     assert.doesNotMatch(css, /\.groups \{[^}]*grid-template-columns/);

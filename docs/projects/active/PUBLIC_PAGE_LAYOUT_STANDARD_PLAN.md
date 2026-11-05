@@ -1,6 +1,6 @@
 # Public page layout standard — plan
 
-**Status:** DRAWN round 1 2026-11-04; **A1–A9 RULED as recommended 2026-11-04** (owner: "I agree with your recommendations"); A10 (ways to the club) resolved the same day on the recommendation (the host card only when something is open); round 2 (game page + team page) DRAWN 2026-11-04 after /design; **A11–A14 RULED as recommended 2026-11-04** ("I agree with your recommendations, go ahead and make the build prompt"). **Build prompt written 2026-11-04:** `PUBLIC_PAGE_LAYOUT_STANDARD_BUILD_PROMPT.md` (six sessions: 1, 2a, 2b, 3, 4, 5). **Club round session prompt written 2026-11-04:** `PUBLIC_CLUB_PAGE_LAYOUT_REVIEW_PROMPT.md` (two sessions: census + drawings + asks, then the build prompt; its build waits on the tournament build's Parts 1–2b, which share the club kit). **Part 1 built 2026-11-05** — the written standard (`docs/agents/design/PUBLIC_PAGE_LAYOUT_STANDARD.md`), every page body on one wrapper (`PublicPage`), the two-column pages stacking below 1,200 px, the guard (`tests/unit/public-page-layout-guard.test.ts`), committed `20bb5db54` 2026-11-05. **Part 2a built 2026-11-05** — the game row and "live": a live game on the one 104 · rest · 104 grid, nobody bold or soft until final, one pill set (Final neutral, a game's page included), the today's-games line green, the edge one shape, the stacked form built as one shared part (sizes compact / large, place strip) for Parts 3–4. **Part 2b built 2026-11-05** — the link row (the club kit's list row, shared not copied) for every door and window row, the three heading levels, the toolbar widths, the corner/border/type sweep, "The playoff bracket" everywhere, the desk band at 72 px; next = Part 3.
+**Status:** DRAWN round 1 2026-11-04; **A1–A9 RULED as recommended 2026-11-04** (owner: "I agree with your recommendations"); A10 (ways to the club) resolved the same day on the recommendation (the host card only when something is open); round 2 (game page + team page) DRAWN 2026-11-04 after /design; **A11–A14 RULED as recommended 2026-11-04** ("I agree with your recommendations, go ahead and make the build prompt"). **Build prompt written 2026-11-04:** `PUBLIC_PAGE_LAYOUT_STANDARD_BUILD_PROMPT.md` (six sessions: 1, 2a, 2b, 3, 4, 5). **Club round session prompt written 2026-11-04:** `PUBLIC_CLUB_PAGE_LAYOUT_REVIEW_PROMPT.md` (two sessions: census + drawings + asks, then the build prompt; its build waits on the tournament build's Parts 1–2b, which share the club kit). **Part 1 built 2026-11-05** — the written standard (`docs/agents/design/PUBLIC_PAGE_LAYOUT_STANDARD.md`), every page body on one wrapper (`PublicPage`), the two-column pages stacking below 1,200 px, the guard (`tests/unit/public-page-layout-guard.test.ts`), committed `20bb5db54` 2026-11-05. **Part 2a built 2026-11-05** — the game row and "live": a live game on the one 104 · rest · 104 grid, nobody bold or soft until final, one pill set (Final neutral, a game's page included), the today's-games line green, the edge one shape, the stacked form built as one shared part (sizes compact / large, place strip) for Parts 3–4, committed `4a0c04559` 2026-11-05. **Part 2b built 2026-11-05** — the link row (the club kit's list row, shared not copied) for every door and window row, the three heading levels, the toolbar widths, the corner/border/type sweep, "The playoff bracket" everywhere, the desk band at 72 px; committed `78ac67885` 2026-11-05. **Part 3 built 2026-11-05** — the page passes: the Overview's lists on the stacked form, its bracket link in the side column, the host card only when something is open and outlined; Standings' and Rules' rows joined into one list each (a row opens in place inside the list on a phone); Playoffs' bracket matches and its game still to play on the shared game forms; Teams' rows two-line link rows; the old empty-state card on the standard; owner desk check then commit; next = Part 4. **Club round drawn 2026-11-05** (§5b; drawings https://claude.ai/artifact/96Jaq1JZNr8EgGaV3dxmLt, v2 after /design); **C1–C7 RULED as recommended 2026-11-05** ("i agree with your recommendations, go ahead and write the build prompt"); the standard amended the same day; **club build prompt written 2026-11-05:** `PUBLIC_CLUB_PAGE_LAYOUT_BUILD_PROMPT.md` (five sessions; starts after the tournament build's Parts 1, 2a, 2b; its Part 4 after the tournament Part 4). C1 and C2's Register width were added to the tournament build prompt (Part 2b step 6, Part 4).
 **Drawings:** https://claude.ai/artifact/NC6Y7ijjYtd3Kr4cGPgbep (source `PUBLIC_PAGE_LAYOUT_STANDARD_DRAWINGS.html`, same folder).
 **PM brief:** `PUBLIC_PAGE_LAYOUT_STANDARD_PM_BRIEF.md`.
 **Parent:** the public tournament site review (`PUBLIC_TOURNAMENT_SITE_REVIEW_PLAN.md`); this pass follows its Stage 8 switch-on and reuses every part it built.
@@ -109,6 +109,75 @@ club has something open now.
   data, em dash) where the table standard's C5 asks "Venue · Facility"; Standings' table cells ship 8/6 padding while
   register K-16 still says 16 px — reconcile the register.
 
+## 5b. Club round (session 1: census, drawings, asks — 2026-11-05)
+
+**Drawings:** https://claude.ai/artifact/96Jaq1JZNr8EgGaV3dxmLt (source `PUBLIC_CLUB_PAGE_LAYOUT_DRAWINGS.html`, v2 after
+`/design`). Session prompt: `PUBLIC_CLUB_PAGE_LAYOUT_REVIEW_PROMPT.md`. Measured against the written standard
+(`docs/agents/design/PUBLIC_PAGE_LAYOUT_STANDARD.md`, Part 1 landed 2026-11-05). **C1–C7 RULED as recommended
+2026-11-05**; the standard carries them (R1, R2, R4, R7, R10 *Club round* lines; club rows in Exceptions); build prompt
+`PUBLIC_CLUB_PAGE_LAYOUT_BUILD_PROMPT.md`. Nothing built.
+
+**Scope (end-state tags).** Stays public: club home, Teams, a team's page, Tryouts, a tryout page, tryout sign-up, House
+league index, a season page (§0k), league sign-up, Your sign-up (status/pay by emailed link), Tournaments, About, a past
+tournament's record, in-club not-found. Unclear: the house league's Schedule and Standings pages (C7; standard applied on
+paper, not drawn). Out: the coach's house-league team page (sign-in), tournament pages.
+
+**Census at 1,536 (CSS px; the logo's edge is 192 = `max(24, (100% − 1200)/2 + 24)`).**
+
+| Page | Left | Width | Top | Gap | Title | Source |
+|---|---|---|---|---|---|---|
+| Home | 192 | 1,152 (744 + 380) | 28 | 20 | none (sr-only) | `ClubSiteHome.module.css:15-22, 110-125` |
+| Teams | 192 | 744 | 28 | 16 | 32 + "8 teams" | `app/[orgSlug]/teams/ClubTeams.module.css:6-13, 108-115` |
+| A team | 192 | 1,152 (744 + 380) | 20 | 20 | 32 + dot | `TeamPage.module.css:5-11, 86-115` |
+| Tryouts | 192 | 1,152 | 28 | 20 | 32 "2027 tryouts" | `components/public/TryoutPage.module.css:6-20` (`.wide`) |
+| Tryouts, off-season | **464 (centred)** | 608 | 16 | 20 | 32 | `tryouts/page.tsx:93` (no `.wide`) |
+| A tryout | **464 (centred)** | 608 | 16 | 20 | 32 | `TryoutPage.module.css:6-13` |
+| Tryout sign-up | **472 (centred)** | 592 | 32 | 24 | 32 | `TryoutRegisterView.tsx:142-148` (inline) |
+| House league / a season | 192 | 760 | 32 | 32–40 | 32 | `app/[orgSlug]/league/league-column.module.css:22-33` |
+| League sign-up | 192 | 640 | 32 | 24 | 32 | `league/[seasonSlug]/register/page.tsx:78` |
+| Your sign-up | 192 | 560 | 32 | 12 | 32 | `status/[token]/page.tsx:121-124` |
+| Tournaments | 192 | 960 | 28 | 24 | 32 + count | `app/[orgSlug]/tournaments/ClubTournaments.module.css:5-12, 109-116` |
+| About | **404 (centred)** | 728 | 16 | 20 | 32 | `components/public/ClubAbout.module.css:3-10` |
+
+Phone: 16 px sides except the `.container` pages (league, archive record: 24). Type in page bodies: 11, 12, 13, 14, 14.4,
+15, 16, 18.4, 19, 20, 32; weights 650/750/800; radii 6, 8, 9, 10, 12, 20.
+
+**Findings.**
+- The 08-01 repair ruling (R6, `TOP_NAV_REPAIR_PLAN.md:219-224`, restated in `league-column.module.css:1-15`: a page's
+  measure sits left-aligned under the logo) is broken by About, a tryout page, the tryout form and off-season Tryouts.
+  Moving them is a repair, not an ask.
+- **The hop.** Same tokens, ground, band parts and footer parts on both frames. On the click at 1,536: band 75 → 91 (the
+  tournament's 88 is "the drawing's size", `TournamentFrame.module.css:113-116`, never asked), logo 192 → 32, tabs in the
+  band → the 248 px menu, content 192 → 280, club 1,152 wide vs tournament 960, 32 px titles vs none. At 1,280 the
+  content moves 216 px; at 1,024, 256 px and narrows to 712. A phone is already near-seamless (same 72 band, same white
+  tab row, same 16 edge). Menu vs tabs is answered by rulings on both sides (08-01 Stage F "never the tournament's left
+  rail"; the tournament redesign's rail), same reason: each nav lines up with its own page.
+- A club team page and its tournament team page do not link either way (`PublicTeamPage.tsx:28,70`; the club team page
+  has none) — C6.
+- Kept as ruled and registered as exceptions: Born in = the house `SingleSelectDropdown` pill (2026-10-22,
+  `BornInPill.tsx:9-15`); a phone's secondary action is its bare symbol (2026-10-20); the team page's calendar rows
+  (10-19/10-20); the pay page's information blue for "clearing" (12c).
+- Defects found, not layout: a failed Tournaments read lands on the platform error page without the club frame (no
+  `app/[orgSlug]/error.tsx`); a team with no games yet keeps the desk two-column grid with an empty 744 px column
+  (`schedule: !!publicSchedule` true while `RepTeamPublicSchedule` returns null on `entries: []`); `PublicParts.module.css:212`
+  says club forms share the 680 px register sheet — they don't (both club forms are 640); `VISUAL_IDENTITY.md:229-231`
+  still says scores keep the typewriter face on club pages (DC-03 removed it, 10-19) — for `/design`.
+
+**Asks (on the drawings' tab 5).** C1 one band height: the tournament's desk band to 72 (touches the tournament build) ·
+C2 960 for every club page, forms 640 on both sites, the two-column pages split the tournament's way (replaces the 08-01
+per-page measures; touches R1's wording and the Register form) · C3 no title where a lit tab names the page · C4 a
+one-thing page's name at 24 · C5 24 between sections (reverses the 10-20 team-page 20) · C6 link a team's two pages
+(host club's own teams; touches a tournament team page) · C7 the house league's Schedule and Standings stay public for
+this build. Recommendation on each: option 1.
+
+**`/design` (v1 → v2, 2026-11-05).** Caught: Born in redrawn as a 44 px select (reversed the 10-22 ruling unannounced);
+phone Subscribe/Directions/Copy drawn bordered (reversed 10-20); invented Teams/Tryouts headings; misdrawn Today frames
+(season page facts and states, Tournaments' six past columns and Status column, tryout page and both forms' words, the
+status page's per-child cards, About's section names, the schedule's fold labels); C2/C3 overstated that no ruling set
+the widths and titles; missing states (banner, sponsors, mixed-season Tryouts, finished tryout, closed and finished
+season, three league-form closed variants); 1,280 and 1,024 not drawn; PayBlock shared with the tournament pay page. All
+applied in v2; C3 split into C3 + C4.
+
 ## 6. Log
 
 - 2026-11-04 — census (tournament + club frames), drawings round 1 published (v1), plan + brief written.
@@ -119,6 +188,9 @@ club has something open now.
   light hairline. Also: missing states (unofficial, cancelled, no score yet, tie, stakes, long name in the 397 column,
   phone 360) now drawn; toolbar now shows Pool + calendar; link row = the club kit row; A5 split into A6 + A7.
   Net change of direction: "one game row" became "one game, two forms" built from the two ruled recipes.
+- 2026-11-05 — club round session 1: census (six helpers), drawings v1, `/design` (12 findings, v2), asks C1–C7 (§5b).
+- 2026-11-05 — C1–C7 RULED as recommended; standard amended; design log entry; tournament build prompt notes (C1 → Part 2b
+  step 6, Register 640 → Part 4); club build prompt written (five sessions).
 - 2026-11-05 — **Build Part 1.** `docs/agents/design/PUBLIC_PAGE_LAYOUT_STANDARD.md` written (R1–R11 word for word from
   tab 2, each rule's Keeps line, the Exceptions, how to check a new page), linked from `TABLE_AND_LIST_STANDARD.md` and
   §2 here. Every public tournament page body (all eleven: Overview, Schedule, Standings, Playoffs, Teams, Rules,
@@ -179,3 +251,40 @@ club has something open now.
   not this part: `public-tournament-stage6-walk.test.ts` fails ("PARTS is not defined" in the Stage 6 walk HTML, unchanged
   since 2026-11-01); `verify-changed.mjs`'s ESLint step fails on its react-hooks plugin config (direct `eslint` on this
   part's files is clean); `check-css-selectors` flags other areas' classes only.
+- 2026-11-05 — Part 2b committed `78ac67885` (a partial commit: this build's lines only out of the plan, the standard and
+  TODO, which also held the club round's uncommitted records; the payments and support-console test edits in the tree
+  were other sessions' and stayed out).
+- 2026-11-05 — **Build Part 3 (the page passes).** **Overview (A3, A6, A7, A10):** Live now / Up next / Latest results
+  are framed lists of `ScheduleMatchup form="stacked"` rows (PublicParts `.gameList` in the kit `.list`); Live now has
+  no pill (the edge says it) and keeps the field + Directions as the place strip; Up next keeps its field; a result has
+  no time, the Final pill, the winner first and bold. A game on another day leads its context with the day ("Thu, Nov 5 ·
+  U11 · Championship"); today's games don't repeat "Today" (judgement call, told the owner). The bracket link moved to
+  the side column after Latest results. `hostCardView` returns null for an empty open-now list (the "runs teams and
+  programs all year" fallback deleted, test updated); `.hostBtn` outlined. `data-sandbox-tour="latest-results"` kept.
+  **Schedule:** nothing left to change (wrapper, toolbar and the live grid were Parts 1–2b); checked against the drawing.
+  **Standings:** "How the table is ranked" + the bracket link are ONE `PublicLinkList`; the explainer now opens a window
+  on a desk (the drawing's right chevron; one rule with Rules and seeding — told the owner, his to veto). **Rules (A8):**
+  one framed list; each rule a `PublicDisclosure joined` item carrying its own anchor id (deep links still scroll and
+  open). **The owner's call left to the build — how a dropdown opens inside a joined list on a phone:** in place, inside
+  the list, under its row, between hairlines; the content is plain and the panel or the window pads it (Standings'
+  explainer and Playoffs' seeding lost their inner boxes, so no box-in-a-window on a desk either). `PublicDisclosure`'s
+  unused `desktopOpen` / `reveal` props deleted. **Playoffs:** Live now count 1; the game still to play (owner
+  2026-11-05: "go with your recommendation") is the one-line row in a list, day in the right column (the toolbar names the
+  division), the field centred under the teams (`.wideForm .gamePlace`); the bracket's matches are the compact stacked
+  form in a light-hairline 8 px frame, the zoom still shrinking the board, not the words (compact sizes divided by
+  `--public-bracket-zoom`). Playoffs' own `.gameCard` recipe, `PublicLiveCard`'s playoff and Overview variants, the old
+  Overview row (`PublicGameRows`, PublicParts `.row/.when/.teams/…/.liveMeta`) deleted; `PublicGameRow` lost its
+  `schedule` prop (always the wide row). **Teams (A8):** each team a `PublicDoorRow` (now `className` + a node `sub`) in a
+  `.teamRow` beside the app-only star; two lines: the name, then "{qualifier} · {record · place · next}", Live now green;
+  pools are band rows directly in the division's list. **Empty state (found in 2b):** `PublicTournamentState` under the
+  frame is the Schedule's empty state (white card, hairline, 8 px, left-aligned, 20 px title, dim line, plain symbol);
+  Teams' and Rules' wrappers removed. It reaches the Part 4 pages too (one shared part). Outside the frame untouched.
+  **Checks:** typecheck clean; ESLint clean on the changed files; spelling, CSS purity clean; `public-*` + demo guard
+  816/819 (the 3 = the Stage 6 walk HTML, pre-existing); 8 test files re-aimed at the new markup (a helper; no regression
+  found). **Layout check** (12 Part 3 screens, dev server): Overview's findings are the demo tour bar's buttons only
+  (as in 2b); standings-own, playoffs-seeded, teams-free, overview-long/after, rules-pale clean. Did not render:
+  `pubt-playoffs-eight` — CAUSED BY THIS PART: its interaction reads the old bracket markup
+  (`[data-bracket-game] > span:nth-child(2)`); a one-line selector change in the shared screen list, reported to the
+  owner, not changed (his call). `pubt-schedule-live`, `pubt-schedule-playoffs` (waits for the old name "The bracket"),
+  `pubt-standings-playoffs`, `pubt-playoffs-live` — the aged fixtures / stale names 2b reported. Seen, not changed: a
+  Teams PREVIEW row (no link) still draws the kit chevron (PublicDoorRow's existing behaviour).

@@ -1358,7 +1358,7 @@ function SortableRow({
           they will copy rather than read. The name leads; the address and phone stay one tap away
           beneath it.
           ⚠ AND THERE IS NO "on the family app" BADGE HERE, deliberately. The per-player guardian
-          tier is shipped SWITCHED OFF pending privacy counsel review. This cell is shaped so that
+          tier is shipped SWITCHED OFF until the owner switches it on (real consent wording first). This cell is shaped so that
           badge drops in later rather than forcing a rebuild — see the plan §2.
           ⚠ Redaction is unchanged: a coach without guardian-contact access has these fields
           stripped by the API before they reach here, so the cell simply falls to its prompt. */}

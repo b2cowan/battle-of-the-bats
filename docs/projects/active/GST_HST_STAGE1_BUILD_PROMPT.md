@@ -251,8 +251,7 @@ Part 0 findings (2026-11-03):
   the draft and the monthly or yearly pick); `page.tsx` shows it, on a refused paid pick, in place of `PlanStep` when
   `?choosePlan=1`; every other page keeps the window; `PlanStep` takes `initialBilling`; guard added to
   `billing-location-checkout-guard.test.ts`. Typecheck clean; lint clean on touched files; spelling OK; 78 tests pass.
-  **Owed:** walk §454 Part B steps 2–3 still describe the window (rewrite once this is on the dev site, then republish the
-  walk); `/review`; `/docs` (no help article names the window on this screen: checked); commit.
+  **Walk §454 PASSED 34/34 2026-11-04 (Part B walked on the old window).** **Done 2026-11-05:** committed `e8e37a408`; `/review` (standard tier, no Critical/High; advisory only: the button re-enables for a moment after the browser is sent to Stripe, the same as the other checkout buttons); walk Part B rewritten and republished (35 steps). **Part B re-walked 2026-11-05, passed; walk §454 closed.** **Owed:** `/docs` (no help article names the window on this screen: checked).
 
 ## What the owner sees after this build (PM summary: present this BEFORE any code)
 

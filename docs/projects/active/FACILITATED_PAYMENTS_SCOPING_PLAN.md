@@ -5,6 +5,8 @@
 > **Branch:** dev
 > **Source of truth:** `docs/agents/strategy/BUSINESS_DECISIONS.md` (2026-06-22 direction + sequencing ratified; 2026-07-28 investigation outcomes logged — take-rate model Decided, architecture/rails/risk posture Proposed, tier attachment OPEN)
 
+> **2026-11-04 (owner):** counsel no longer gates online payments in production. Wherever this plan says counsel's sign-off gates it, read: the switch stays off until the owner turns it on, after real payments terms are written (`/legal` drafts them). See BUSINESS_DECISIONS.md 2026-11-04.
+
 ## Goal
 
 Produce the formal scope for **facilitated payments** — participant→org money movement on which FieldLogicHQ earns — as the primary mechanism that scales revenue with club size and funds the free floors. This document is the **scoping framework and decision register**; it is NOT a build plan. Direction and sequencing are ratified (launch H1 2027, deliberately not before the Jan 2027 billing cliff).

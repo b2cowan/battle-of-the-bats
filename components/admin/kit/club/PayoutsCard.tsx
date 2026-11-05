@@ -475,8 +475,8 @@ function TermsRow({ terms, onTerms }: { terms: NonNullable<PayoutsView['terms']>
   );
 }
 
-/** "The new payments terms" (words §5.3): counsel's summary (left out while empty), the terms, the box — and Agree,
- *  ABSENT until the box is ticked (ask 6). 'read' shows the terms with no box. The text is counsel's, never ours. */
+/** "The new payments terms" (words §5.3): the terms' own summary (left out while empty), the terms, the box — and Agree,
+ *  ABSENT until the box is ticked (ask 6). 'read' shows the terms with no box. The wording is the real terms', never ours. */
 function TermsWindow({ orgSlug, clubName, mode, onClose, onAgreed }: {
   orgSlug: string; clubName: string; mode: 'agree' | 'read'; onClose: () => void; onAgreed: () => void;
 }) {

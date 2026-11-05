@@ -208,7 +208,7 @@ export async function readOnlinePaymentsHealth(now: Date = new Date()): Promise<
     if (a.disconnected_at && closedOrgs.has(a.org_id)) rows.push({ orgId: a.org_id, kind: 'closed', n: 0, due: null, since: a.disconnected_at, sortAt: a.disconnected_at });
     if (open && a.disconnected_at) rows.push({ orgId: a.org_id, kind: 'disconnected', n: open.n, due: open.due, since: a.disconnected_at, sortAt: open.due ?? a.disconnected_at });
     else if (open) rows.push({ orgId: a.org_id, kind: 'dispute', n: open.n, due: open.due, since: open.since, sortAt: open.due ?? open.since });
-    // Not on the current terms: joins once counsel's dated version exists (words §6.2).
+    // Not on the current terms: joins once the real dated version exists (words §6.2).
     if (!a.disconnected_at && termsVersionDate(PAYMENTS_TERMS_VERSION) && termsStanding(a.terms_version) === 'stale') {
       rows.push({ orgId: a.org_id, kind: 'terms', n: 0, due: null, since: `${PAYMENTS_TERMS_VERSION}T00:00:00.000Z`, sortAt: `${PAYMENTS_TERMS_VERSION}T00:00:00.000Z` });
     }

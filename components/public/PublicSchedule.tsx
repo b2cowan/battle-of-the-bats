@@ -181,7 +181,7 @@ export default function PublicSchedule({ orgSlug, tournamentSlug, isPreview = fa
     }
     return <ul className={parts.rows}><PublicGameRow view={gameRowView(g, names(g), divisionName(g), today,
       { state, round: round(g), poolTag: selection.poolTags.get(g.id), schedule: true })}
-      schedule href={gameHref(g.id)} /></ul>;
+      href={gameHref(g.id)} /></ul>;
   };
   const gameBlock = (g: Game) => <div key={g.id} id={`public-game-${g.id}`} data-game-id={g.id} data-highlighted={highlight === g.id || undefined}
     data-flipped={flipped.has(g.id) || undefined} className={styles.gameBlock}>{row(g)}</div>;

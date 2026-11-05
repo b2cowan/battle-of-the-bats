@@ -8,6 +8,8 @@
 > **Rates live only in `docs/agents/strategy/PLAN_PRICING_FACTS.md`; the build reads them from `lib/plan-config.ts`.**
 > No release timing: the Club release ships when every stage is complete and tested.
 
+> **2026-11-04 (owner):** counsel no longer gates online payments in production. Wherever this plan says counsel's sign-off gates it, read: the switch stays off until the owner turns it on, after real payments terms are written (`/legal` drafts them). See BUSINESS_DECISIONS.md 2026-11-04.
+
 ## Received from Revenue readiness (2026-10-31)
 
 Owner ruling, 2026-10-31: Revenue readiness **hands off Gate B** (registration payments). It arrives here as work with a

@@ -94,14 +94,23 @@ describe('PublicDisclosure keeps existing consumers and accepts the Rules group 
   const html = (extra: Partial<Parameters<typeof PublicDisclosure>[0]>) => renderToStaticMarkup(createElement(
     Disclosure as ComponentType<Omit<Parameters<typeof PublicDisclosure>[0], 'children'>>, { title: 'A section', ...extra }, 'Original text',
   ));
-  it('keeps the existing closed, revealed and desktop-open modes', () => {
+  it('keeps the closed and opened-in-place modes, and a deep link opens a section through the controlled `open` prop (Part 3: `reveal` and `desktopOpen` are gone)', () => {
     assert.match(html({}), /aria-expanded="false"/);
-    assert.match(html({ reveal: true }), /aria-expanded="true"/);
-    assert.match(html({ desktopOpen: true }), /data-desktop-open="true"/);
+    assert.match(html({ open: true }), /aria-expanded="true"/);
+    assert.match(html({ open: true }), /data-open="true"/);
+    const source = readCode('components/public/PublicDisclosure.tsx');
+    assert.doesNotMatch(source, /reveal|desktopOpen|data-desktop-open/);
+    // Rules opens the deep-linked section from its hash by controlling open (PublicRuleSections).
+    assert.match(readCode('components/public/PublicRuleSections.tsx'), /open=\{openAnchor === section\.anchor\}/);
+  });
+  it("is a list of one by itself, and one item of the caller's list when joined, with an optional anchor", () => {
+    assert.match(html({}), /^<div class="list"><section class="item">/);
+    assert.match(html({ joined: true, id: 'rule-x' }), /^<section id="rule-x" class="item">/);
+    assert.doesNotMatch(html({ joined: true }), /class="list"/);
   });
   it('lets a group override the internal state in either direction', () => {
     assert.match(html({ open: true }), /aria-expanded="true"/);
-    assert.match(html({ open: false, reveal: true }), /aria-expanded="false"/);
+    assert.match(html({ open: false }), /aria-expanded="false"/);
   });
 });
 

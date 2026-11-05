@@ -60,6 +60,7 @@ export const GET = withObservability(async (req: Request, { params }: { params: 
     state: 'read',
     read,
     portalSubscriptionIds: club.portalSubscriptionIds,
+    coversOtherPortals: club.coversOtherPortals,
     refundGate,
   }, { headers: noStore });
 }, { route: '/api/platform-admin/orgs/[id]/money' });

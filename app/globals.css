@@ -1566,7 +1566,18 @@ ul, ol { list-style: none; }
 /* ─── Branded Checkbox ───────────────────────────────────────────────────── */
 /* Applies platform style to all checkboxes. Override per-component only     */
 /* for dimension changes (the .selectionCheckbox 18px variant, for example). */
+/* GROUND-INDEPENDENT (owner, 2026-11-05). This box used to be drawn from the theme's accent tokens: a pale-lime edge,
+   a lime tint and a lime tick. Those tokens only turn olive inside the warm shells that remap them, so on any other
+   cream page (team signup, billing address, early access) a ticked box was lime on cream — nearly invisible — and every
+   such page grew its own override. It now reads the ground from the one thing that always contrasts with it, the
+   TEXT colour: the empty box is drawn in that ink, and the ticked box is the fixed lime fill with dark ink — the same
+   ink-on-lime call to action the buttons use, which is readable on dark and on paper alike. A page that wants a
+   deliberate look (a club's own colour) sets the four --check-* tokens on the box instead of redrawing it. */
 input[type="checkbox"] {
+  --check-edge: color-mix(in srgb, currentColor 58%, transparent);
+  --check-bg: color-mix(in srgb, currentColor 6%, transparent);
+  --check-fill: var(--logic-lime-fixed);
+  --check-ink: var(--on-lime);
   appearance: none;
   -webkit-appearance: none;
   width: 16px;
@@ -1574,9 +1585,9 @@ input[type="checkbox"] {
   display: grid;
   place-content: center;
   flex-shrink: 0;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.42);
-  border-radius: 2px;
-  background: rgba(255, 255, 255, 0.05);
+  border: 1.5px solid var(--check-edge);
+  border-radius: 3px;
+  background: var(--check-bg);
   cursor: pointer;
   transition: border-color 0.15s ease, background 0.15s ease;
 }
@@ -1585,7 +1596,7 @@ input[type="checkbox"]::before {
   content: "";
   width: 4px;
   height: 8px;
-  border: solid var(--logic-lime);
+  border: solid var(--check-ink);
   border-width: 0 2px 2px 0;
   opacity: 0;
   transform: rotate(45deg) translateY(-1px);
@@ -1593,8 +1604,8 @@ input[type="checkbox"]::before {
 }
 
 input[type="checkbox"]:checked {
-  border-color: rgba(var(--logic-lime-rgb, 217, 249, 157), 0.85);
-  background: rgba(var(--logic-lime-rgb, 217, 249, 157), 0.14);
+  border-color: var(--check-ink);
+  background: var(--check-fill);
 }
 
 input[type="checkbox"]:checked::before {
@@ -1605,8 +1616,8 @@ input[type="checkbox"]:checked::before {
    "Save to my circuits" master box): the checked look with a dash for the tick. Without it the mixed state had no look of its own and
    read as EMPTY (owner, 2026-10-11, the Divisions step build). Only a script sets it (`el.indeterminate`). */
 input[type="checkbox"]:indeterminate {
-  border-color: rgba(var(--logic-lime-rgb, 217, 249, 157), 0.85);
-  background: rgba(var(--logic-lime-rgb, 217, 249, 157), 0.14);
+  border-color: var(--check-ink);
+  background: var(--check-fill);
 }
 input[type="checkbox"]:indeterminate::before {
   opacity: 1;
@@ -1617,7 +1628,7 @@ input[type="checkbox"]:indeterminate::before {
 }
 
 input[type="checkbox"]:focus-visible {
-  outline: 2px solid rgba(var(--logic-lime-rgb, 217, 249, 157), 0.45);
+  outline: 2px solid color-mix(in srgb, currentColor 70%, transparent);
   outline-offset: 2px;
 }
 

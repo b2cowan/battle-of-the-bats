@@ -92,13 +92,16 @@ describe('Stage 4 Part 2: the table-first body follows the revised drawing', () 
     assert.match(body, /enabled: !isPreview && isTournamentInProgress/);
     assert.match(body, /setFetched\(next\)/);
   });
-  it('puts the table before the single ranking disclosure and the Playoffs door, with no bracket', () => {
+  it('puts the table before ONE link list holding the single ranking disclosure and the Playoffs door, with no bracket', () => {
     assert.ok(body.indexOf('<table ') < body.indexOf('<PublicDisclosure'));
     assert.ok(body.indexOf('<PublicDisclosure') < body.indexOf('<PublicDoorRow'));
     assert.equal((body.match(/<PublicDisclosure/g) ?? []).length, 1);
     assert.doesNotMatch(body, /Recent Scores|MyTeamCard|TieredBracket|YearSelector|<StandingsContent/);
     assert.match(body, /showPlayoffsDoor = !isPreview && hasPublicPlayoffBracket/);
-    assert.match(body, /<PublicDisclosure title="How the table is ranked"/);
+    // Part 3 (standard R5): the two rows are one framed list, after the table (and after the "No standings yet" state).
+    assert.match(body, /<PublicLinkList>\s*\{rows\.length > 0 && <PublicDisclosure joined modalOnDesktop title="How the table is ranked"/);
+    assert.ok(body.indexOf('<PublicLinkList>') > body.indexOf('<PublicTournamentState title="No standings yet"'));
+    assert.ok(body.indexOf('<PublicDoorRow') < body.indexOf('</PublicLinkList>'));
   });
   it('pins only the Team column, fixes it at 150 px on a phone, and supplies an opaque ground to every row cell', () => {
     assert.match(cssRule(css, '.table .teamCol'), /position: sticky; left: 0/);

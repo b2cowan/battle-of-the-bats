@@ -1,6 +1,5 @@
 'use client';
-import { useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search, Star } from 'lucide-react';
 import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
@@ -18,12 +17,13 @@ import PublicTournamentState from './PublicTournamentState';
 import UnfollowConfirmSheet from './UnfollowConfirmSheet';
 import PublicPage from './PublicPage';
 import PublicSectionHead from './PublicSectionHead';
+import PublicDoorRow from './PublicDoorRow';
 import kit from './ClubKit.module.css';
 import parts from './PublicParts.module.css';
 import styles from './PublicTeams.module.css';
 
 function TeamsState({ title, description }: { title: string; description: string }) {
-  return <div className={styles.stateCard}><PublicTournamentState title={title} description={description} /></div>;
+  return <PublicTournamentState title={title} description={description} />;
 }
 
 interface Props {
@@ -114,7 +114,7 @@ export default function PublicTeams({ orgSlug, tournamentSlug, isPreview = false
           {groups.map(({ division, groups: pools, count }) => <section key={division.id} className={styles.division} aria-labelledby={`teams-${division.id}`}>
             {/* Standard R4: the division heading (18 px, count pill); the division is ONE framed list, each pool a band in it. */}
             <PublicSectionHead division id={`teams-${division.id}`} title={division.name} count={count} />
-            <div className={kit.list}>{pools.map(pool => <div key={pool.id} className={styles.pool}>
+            <div className={kit.list}>{pools.map(pool => <Fragment key={pool.id}>
               {pool.name && <h3 className={`${kit.listBand} ${styles.band}`}>{pool.name}</h3>}
               {pool.teams.map(team => {
                 const name = splitTeamQualifier(team.name);
@@ -123,20 +123,22 @@ export default function PublicTeams({ orgSlug, tournamentSlug, isPreview = false
                 const moment = moments.get(team.id)!;
                 const line = teamRowLine(record, teamPlace(team, division, standings), moment, now, standingsShown);
                 const liveAt = line.indexOf('Live now');
-                const content = <><strong>{name.base}</strong>{name.qualifier && <small>{name.qualifier}</small>}
-                  <small className={styles.summary}>{moment.kind === 'live'
-                    ? <>{line.slice(0, liveAt)}<span className={styles.live}>Live now</span>{line.slice(liveAt + 'Live now'.length)}</> : line}</small></>;
+                // A8: a link row, two lines — the name, then "{coach} · {record} · {place} · {next}". The coach is the
+                // bracketed part of the team's public name, so the club's coach-names rule is already applied to it.
+                const summary = moment.kind === 'live' && liveAt >= 0
+                  ? <>{line.slice(0, liveAt)}<span className={styles.live}>Live now</span>{line.slice(liveAt + 'Live now'.length)}</> : line;
+                const sub = name.qualifier ? <>{name.qualifier}{line && ' · '}{summary}</> : summary;
                 const isFollowed = followedTeamId === team.id || accountIds.has(team.id);
-                return <div key={team.id} className={styles.row} data-public-team-row={team.id}>
-                  {isPreview ? <div className={styles.teamLink}>{content}</div>
-                    : <Link className={styles.teamLink} href={orgHref(`/${tournamentSlug}/teams/${team.id}`)}>{content}</Link>}
+                return <div key={team.id} className={styles.teamRow} data-public-team-row={team.id}>
+                  <PublicDoorRow className={styles.teamLink} href={isPreview ? null : orgHref(`/${tournamentSlug}/teams/${team.id}`)}
+                    label={name.base} sub={sub} />
                   {!isPreview && <span className={`${parts.appOnly} ${styles.starWrap}`}>
                     <button type="button" className={styles.star} aria-label={`Follow ${team.name}`} aria-pressed={isFollowed}
                       onClick={() => toggleFollow(team)}><Star size={22} aria-hidden="true" /></button>
                   </span>}
                 </div>;
               })}
-            </div>)}</div>
+            </Fragment>)}</div>
           </section>)}
         </div> : <TeamsState title="No teams match"
           description="Try another team name or choose All divisions. Teams appear once their division's schedule is published." />}

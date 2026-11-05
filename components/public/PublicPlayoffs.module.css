@@ -1,29 +1,14 @@
-/* Used only by the Playoffs body and its explicit game-card variant. Its edges, column and rhythm are the shared page's
+/* Used only by the Playoffs body. Its edges, column and rhythm are the shared page's
    (PublicPage, PublicParts.module.css `.page`; Public page layout standard R1–R3). */
 .columns > * { min-width: 0; }
 .controls { display: flex; align-items: center; gap: 8px; }
 .division { flex: 1; min-width: 0; }
 .division select { width: 100%; min-height: 44px; padding: 8px 12px; border: 1px solid var(--club-field); border-radius: 8px; background: var(--club-card); color: var(--club-text); color-scheme: light; font: 400 1rem/1.4 var(--club-text-face); }
-.division select:focus-visible, .gameLink:focus-visible { outline: 2px solid var(--club-edge); outline-offset: 2px; }
+.division select:focus-visible { outline: 2px solid var(--club-edge); outline-offset: 2px; }
 .columns { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
 .next, .bracket { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
-.gameCard { min-width: 0; padding: 12px 14px; background: var(--club-card); border: 1px solid var(--club-line); border-radius: 8px; }
-.gameCard[data-live] { border-left: 3px solid var(--club-ok); border-radius: 0 8px 8px 0; }
-.gameHead { display: flex; align-items: start; justify-content: space-between; gap: 8px; margin-bottom: 8px; font: 600 0.75rem/1.4 var(--club-text-face); color: var(--club-soft); }
-.liveWord { flex: none; color: var(--club-ok); white-space: nowrap; }
-.gameLink { display: block; min-height: 44px; color: inherit; text-decoration: none; }
-.gameLink:hover { text-decoration: underline; }
-.gameSide { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: 14px; margin-top: 6px; font: 600 1rem/1.35 var(--club-text-face); }
-.gameSide > span { min-width: 0; overflow-wrap: anywhere; }
-.gameSide > b { font: 700 1.5rem/1 var(--club-title-face); font-variant-numeric: tabular-nums; }
-.gameSide[data-trailing] { color: var(--club-soft); font-weight: 400; }
-.gameSide[data-team-side='own'] { font-weight: 700; }
-.gameSide[data-team-side='opponent'] { font-weight: 400; }
-.noScore { margin: 8px 0 0; color: var(--club-dim); font: 400 0.875rem/1.4 var(--club-text-face); }
-.gameFoot { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 6px; color: var(--club-soft); font: 400 0.75rem/1.4 var(--club-text-face); }
-.gameFoot > span { flex: 1; }
-.gameFoot [data-gold] { color: var(--club-warn); }
-.seedBody { padding: 14px; border: 1px solid var(--club-line); border-radius: 8px; background: var(--club-card); font: 400 0.875rem/1.5 var(--club-text-face); }
+/* Plain: the panel in the list (phone) or the window (desk) pads it (PublicDisclosure; standard Part 3). */
+.seedBody { font: 400 0.875rem/1.5 var(--club-text-face); }
 .seedBody > p { margin: 0 0 12px; color: var(--club-soft); }
 .callouts { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; margin-bottom: 16px; }
 .callouts article { display: flex; flex-direction: column; gap: 4px; min-width: 0; padding: 10px; border: 1px solid var(--club-line); border-radius: 8px; }

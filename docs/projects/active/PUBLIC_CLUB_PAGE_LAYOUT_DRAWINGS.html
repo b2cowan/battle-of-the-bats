@@ -1,0 +1,1133 @@
+<title>Club Page Standards</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Layout: the tournament round's house layout. Sticky numbered tabs -> one section at a time -> a View row where a
+   section compares -> the framed specimen (the owner's 1,536 px screen, or a 390 px phone, scaled to fit). */
+:root {
+  /* the drawing sheet: a cool grey ground, so the warm product frames read as specimens */
+  --doc-bg: #ECEEF1; --doc-panel: #FFFFFF; --doc-ink: #1A1E24; --doc-soft: #59616C; --doc-line: #D5DAE0;
+  --doc-accent: #2F5D8A; --doc-accent-bg: #E3ECF5; --doc-mark: #C2410C; --doc-mark-ink: #FFFFFF; --doc-bad: #B42318; --doc-good: #2C6A2A;
+  --doc-ghost: #7C3AED;
+  /* the product: the club's light set, fixed in both themes, as the product is (ClubFrame.module.css :19-29) */
+  --c-ground: #F6F5F2; --c-card: #FFFFFF; --c-text: #1F1B16; --c-soft: #4E473D; --c-dim: #6F675B; --c-line: #E4E0D8; --c-line2: #D6D0C4;
+  --c-field: #948B7D; --c-ok: #2C6A2A; --c-okbg: #E6F0E2; --c-warn: #8A5300; --c-danger: #B42318;
+  /* Lakeshore Lightning Softball's colour in its four roles */
+  --c-fill: #F2C94C; --c-onfill: #1F1B16; --c-accent: #5C4A12; --c-ink: #6B5414; --c-edge: #5C4A12; --c-mark: #1F1B16; --c-tile: #1F1B16;
+  --c-railact: #F1EEE8;
+  --f-text: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --f-title: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  --f-mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --doc-bg: #14171B; --doc-panel: #1D2126; --doc-ink: #E8EBEF; --doc-soft: #A3ABB5; --doc-line: #333A42;
+    --doc-accent: #8DB6DE; --doc-accent-bg: #22303D; --doc-mark: #F97316; --doc-mark-ink: #1A1E24; --doc-bad: #F87171; --doc-good: #86C77F;
+    --doc-ghost: #C4B5FD;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --doc-bg: #14171B; --doc-panel: #1D2126; --doc-ink: #E8EBEF; --doc-soft: #A3ABB5; --doc-line: #333A42;
+  --doc-accent: #8DB6DE; --doc-accent-bg: #22303D; --doc-mark: #F97316; --doc-mark-ink: #1A1E24; --doc-bad: #F87171; --doc-good: #86C77F;
+  --doc-ghost: #C4B5FD;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--doc-bg); color: var(--doc-ink); font: 400 15px/1.55 var(--f-text); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--doc-panel); }
+.wrap { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 64px; max-width: 1640px; margin: 0 auto; }
+
+.top { padding-block: 22px 14px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 18px; }
+.top h1 { margin: 0; font: 700 30px/1.1 var(--f-title); letter-spacing: .01em; text-wrap: balance; }
+.top p { margin: 0; color: var(--doc-soft); font-size: 14px; }
+.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; display: flex; gap: 4px; padding: 5px; overflow-x: auto; }
+.tabs button { all: unset; cursor: pointer; white-space: nowrap; padding: 9px 14px; border-radius: 7px; font: 600 14px var(--f-text); color: var(--doc-soft); }
+.tabs button[aria-selected="true"] { background: var(--doc-accent-bg); color: var(--doc-accent); }
+.tabs button:focus-visible, .seg button:focus-visible, .mk:focus-visible, .pick button:focus-visible { outline: 2px solid var(--doc-accent); outline-offset: 2px; }
+section.view { padding-top: 22px; }
+.lede { max-width: 80ch; margin: 0 0 18px; }
+.lede b { font-weight: 600; }
+h2.sec { font: 700 22px/1.2 var(--f-title); margin: 0 0 6px; letter-spacing: .01em; }
+.panel { background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; padding: 18px 20px; }
+.callout { background: var(--doc-panel); border: 1px solid var(--doc-line); border-left: 3px solid var(--doc-accent); border-radius: 0 10px 10px 0; padding: 12px 16px; margin: 0 0 18px; max-width: 110ch; font-size: 14px; }
+.callout b { font-weight: 600; }
+
+.counts { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 0 0 22px; }
+.count-t { background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; padding: 12px 14px; }
+.count-t b { display: block; font: 700 32px/1 var(--f-title); color: var(--doc-bad); }
+.count-t span { font-size: 13px; color: var(--doc-soft); }
+
+.emap { display: grid; grid-template-columns: 150px minmax(0, 1fr) 70px; gap: 6px 12px; align-items: center; font-size: 13px; }
+.emap .hd { font: 500 12px var(--f-mono); color: var(--doc-soft); }
+.emap .pn { font-weight: 600; }
+.emap .pn.tr { color: var(--doc-soft); font-weight: 500; }
+.etrack { position: relative; height: 22px; background: repeating-linear-gradient(90deg, transparent 0 calc(10% - 1px), var(--doc-line) calc(10% - 1px) 10%); border-radius: 4px; }
+.etrack .rail { position: absolute; left: 0; top: 0; bottom: 0; width: calc(248 / 1536 * 100%); background: var(--doc-line); border-radius: 4px 0 0 4px; }
+.etrack .bar { position: absolute; top: 4px; bottom: 4px; border-radius: 3px; background: var(--doc-bad); opacity: .85; }
+.etrack .bar.ok { background: var(--doc-good); }
+.etrack .bar.tr { background: var(--doc-soft); opacity: .55; }
+.etrack .logo { position: absolute; top: -2px; bottom: -2px; width: 2px; background: var(--doc-ink); }
+.emap .tp { font: 500 12px var(--f-mono); color: var(--doc-soft); }
+.emap-gap { height: 14px; grid-column: 1 / -1; }
+.emap-h { grid-column: 1 / -1; font: 700 16px var(--f-title); letter-spacing: .02em; margin-top: 4px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13px; color: var(--doc-soft); margin-top: 12px; }
+.legend i { display: inline-block; width: 18px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+
+.rules { display: flex; flex-direction: column; background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; overflow: hidden; }
+.rule { display: grid; grid-template-columns: 54px minmax(0, 1fr) minmax(0, 1.2fr) 92px minmax(0, 1.6fr); gap: 16px; padding: 14px 18px; border-top: 1px solid var(--doc-line); transition: background .4s; }
+.rule:first-child { border-top: 0; }
+.rule.hd { font: 500 12px var(--f-mono); color: var(--doc-soft); text-transform: uppercase; letter-spacing: .05em; padding-block: 10px; }
+.rule .rn { font: 700 22px/1 var(--f-title); color: var(--doc-mark); }
+.rule h3 { margin: 0 0 2px; font: 600 15px var(--f-text); }
+.rule .tsd { display: block; color: var(--doc-soft); font-size: 13px; }
+.rule .today { color: var(--doc-soft); font-size: 14px; }
+.rule .std { font-size: 14px; }
+.rule .ph { display: block; margin-top: 6px; color: var(--doc-soft); font-size: 13px; }
+.verd { align-self: start; justify-self: start; font: 600 11px/1 var(--f-mono); letter-spacing: .05em; text-transform: uppercase; padding: 5px 7px; border-radius: 4px; border: 1px solid currentColor; }
+.verd.meets { color: var(--doc-good); } .verd.breaks { color: var(--doc-bad); } .verd.amend { color: var(--doc-accent); }
+.rule.flash { background: var(--doc-accent-bg); }
+
+.viewrow { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 22px; margin: 0 0 14px; }
+.viewrow .lbl { font: 600 13px var(--f-text); color: var(--doc-soft); margin-right: 8px; }
+.seg { display: inline-flex; padding: 3px; background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 9px; }
+.seg button { all: unset; cursor: pointer; padding: 7px 14px; border-radius: 6px; font: 600 13px var(--f-text); color: var(--doc-soft); }
+.seg button[aria-pressed="true"] { background: var(--doc-accent-bg); color: var(--doc-accent); }
+.pick { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+.pick button { all: unset; cursor: pointer; padding: 7px 12px; border-radius: 7px; border: 1px solid var(--doc-line); background: var(--doc-panel); font: 600 13px var(--f-text); color: var(--doc-ink); }
+.pick button[aria-pressed="true"] { border-color: var(--doc-accent); color: var(--doc-accent); background: var(--doc-accent-bg); }
+.pick.sm button { padding: 5px 10px; font-size: 12px; }
+.chk { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--doc-soft); }
+.vstack { display: flex; flex-direction: column; gap: 8px; margin: 0 0 14px; }
+
+.changes { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 6px 22px; margin: 0 0 14px; padding: 0; list-style: none; font-size: 14px; }
+.changes li { display: flex; gap: 8px; align-items: baseline; }
+.tag { flex: none; font: 600 10px/1 var(--f-mono); letter-spacing: .05em; padding: 4px 6px; border-radius: 4px; border: 1px solid currentColor; }
+.tag.new { color: var(--doc-mark); } .tag.res { color: var(--doc-accent); } .tag.unc { color: var(--doc-soft); }
+.rref { color: var(--doc-mark); font-weight: 600; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; background: none; border: 0; padding: 0; font-size: 13px; font-family: inherit; }
+
+.stagebox { background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; padding: 10px; }
+.stagecap { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font: 500 12px var(--f-mono); color: var(--doc-soft); padding: 2px 4px 10px; text-transform: uppercase; letter-spacing: .04em; }
+.stage { position: relative; overflow: hidden; }
+.stage.actual { overflow-x: auto; }
+.stage > .fr { transform-origin: top left; }
+.stage.phone { display: flex; justify-content: center; }
+.stage.phone > .fr { transform-origin: top center; }
+
+.hop { width: 100%; border-collapse: collapse; background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; overflow: hidden; font-size: 14px; }
+.hop th, .hop td { text-align: left; padding: 9px 12px; border-top: 1px solid var(--doc-line); vertical-align: top; }
+.hop thead th { border-top: 0; font: 500 12px var(--f-mono); text-transform: uppercase; letter-spacing: .05em; color: var(--doc-soft); }
+.hop td.bad { color: var(--doc-bad); } .hop td.ok { color: var(--doc-good); }
+.hopwrap { overflow-x: auto; margin-top: 16px; }
+
+.asks { display: flex; flex-direction: column; gap: 12px; }
+.ask { background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; padding: 14px 18px; display: grid; grid-template-columns: 54px minmax(0, 1fr); gap: 6px 14px; }
+.ask .an { font: 700 22px/1 var(--f-title); color: var(--doc-accent); grid-row: span 5; }
+.ask h3 { margin: 0; font: 600 16px var(--f-text); }
+.ask .lab { font: 500 12px var(--f-mono); color: var(--doc-mark); }
+.ask p { margin: 0; font-size: 14px; color: var(--doc-soft); max-width: 100ch; }
+.ask ol { margin: 0; padding-left: 20px; font-size: 14px; max-width: 100ch; }
+.ask ol li + li { margin-top: 2px; }
+.ask .rec { color: var(--doc-ink); }
+.ask .rec b { color: var(--doc-good); }
+.ask .see { justify-self: start; }
+.paste { margin-top: 18px; font: 500 13px var(--f-mono); background: var(--doc-panel); border: 1px dashed var(--doc-line); border-radius: 8px; padding: 12px 14px; color: var(--doc-soft); user-select: all; }
+.later { margin-top: 22px; }
+.later ul { margin: 6px 0 0; padding-left: 20px; font-size: 14px; color: var(--doc-soft); max-width: 100ch; }
+.later li + li { margin-top: 6px; }
+.later b { color: var(--doc-ink); font-weight: 600; }
+
+@media (max-width: 860px) {
+  .rule { grid-template-columns: 40px minmax(0, 1fr); }
+  .rule .today, .rule .std, .rule .verd { grid-column: 2; }
+  .rule.hd { display: none; }
+  .emap { grid-template-columns: 96px minmax(0, 1fr); }
+  .emap .tp, .emap .hd.tph { display: none; }
+  .ask { grid-template-columns: 40px minmax(0, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) { .rule { transition: none; } }
+
+/* ===================== the product, drawn (.fr = a frame at 1,536 or 390 px) ===================== */
+.fr { background: var(--c-ground); color: var(--c-text); font: 400 14px/1.4 var(--f-text); position: relative; text-align: left; }
+.fr * { box-sizing: border-box; }
+.fr [data-go], .fr [data-tab-go] { cursor: pointer; }
+.fr svg { display: block; }
+.fr p { margin: 0; }
+
+/* the club bar (ClubFrame.module.css :233-534; OrgSectionTabs.module.css) */
+.cb { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; min-height: 75px; background: var(--c-fill); color: var(--c-onfill); border-bottom: 3px solid var(--c-accent); }
+.cid { display: flex; align-items: center; gap: 12px; min-height: 72px; min-width: 0; }
+.clogo { width: 44px; height: 44px; flex: none; border-radius: 10px; background: var(--c-tile); color: var(--c-fill); display: grid; place-items: center; font: 700 16px var(--f-title); }
+.cname { font: 700 24px/1.1 var(--f-title); overflow-wrap: anywhere; }
+.ctabs { display: flex; gap: 6px; margin-left: 28px; }
+.ctabs span { display: flex; align-items: center; min-height: 44px; padding: 0 10px; border-radius: 8px; font: 600 16px var(--f-text); white-space: nowrap; }
+.ctabs span.on { box-shadow: inset 0 -3px 0 var(--c-mark); }
+.ctabs span:hover { background: rgba(31, 27, 22, .08); }
+.cact { display: flex; align-items: center; gap: 16px; font: 600 14px var(--f-text); min-height: 44px; }
+.ph .cb { display: flex; justify-content: space-between; min-height: 72px; border-bottom: 0; padding: 0 8px 0 16px; }
+.ph .cname { font-size: 20px; }
+.ctr { display: flex; gap: 4px; padding: 0 8px; background: var(--c-card); border-top: 3px solid var(--c-accent); border-bottom: 1px solid var(--c-line); overflow: hidden; }
+.ctr span { display: flex; align-items: center; min-height: 44px; padding: 3px 8px 0; border-bottom: 3px solid transparent; font: 600 14px var(--f-text); color: var(--c-soft); white-space: nowrap; }
+.ctr span.on { color: var(--c-text); border-bottom-color: var(--c-ink); }
+
+/* the club footer */
+.cfo { background: var(--c-fill); color: var(--c-onfill); border-top: 3px solid var(--c-accent); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 28px; }
+.cfo .fn { font: 700 20px/1.1 var(--f-title); }
+.cfo .fq { display: flex; flex-direction: column; font: 400 12px var(--f-text); }
+.cfo .fq b { font: 600 16px var(--f-text); text-decoration: underline; text-underline-offset: 3px; }
+.cfo .soc { display: flex; gap: 8px; }
+.cfo .soc i { width: 44px; height: 44px; border: 1px solid currentColor; border-radius: 10px; display: grid; place-items: center; font: 600 12px var(--f-text); font-style: normal; }
+.cfo .fl { font: 600 14px var(--f-text); text-decoration: underline; text-underline-offset: 3px; }
+.cfo .cr { flex-basis: 100%; border-top: 1px solid rgba(31, 27, 22, .2); padding-top: 10px; font: 400 12px var(--f-text); }
+
+/* the page column */
+.cm { position: relative; }
+.cc { display: flex; flex-direction: column; gap: var(--g); min-width: 0; }
+.cc .col { display: flex; flex-direction: column; gap: var(--g); min-width: 0; }
+.two { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: var(--g) 28px; align-items: start; }
+.two.n { grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); }
+.ph .two, .ph .two.n, .two.stack { grid-template-columns: minmax(0, 1fr); }
+.banner { height: 200px; background: linear-gradient(115deg, #7A8B6F 0%, #A9B49A 38%, #D9CFA8 70%, #8E7B4E 100%); border-bottom: 1px solid var(--c-line); display: grid; place-items: center; color: rgba(255,255,255,.85); font: 600 13px var(--f-mono); letter-spacing: .04em; }
+.spons { display: flex; flex-wrap: wrap; gap: 12px; }
+.spons i { width: 184px; height: 72px; border: 1px solid var(--c-line); border-radius: 8px; background: var(--c-card); display: grid; place-items: center; font: 600 14px var(--f-text); font-style: normal; color: var(--c-soft); }
+.tsub2 { display: block; font: 400 12px/1.4 var(--f-text); color: var(--c-dim); margin-top: 2px; }
+.dw2 { font: 400 14px/1.4 var(--f-text); color: var(--c-dim); font-variant-numeric: tabular-nums; }
+.nextl { font: 700 12px/1.3 var(--f-text); color: var(--c-ink); }
+.ds12 { font: 400 12px/1.4 var(--f-text); color: var(--c-dim); }
+.fold.c { justify-content: center; }
+.qline { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; font: 400 14px/1.5 var(--f-text); color: var(--c-soft); }
+.qline b { display: block; color: var(--c-text); font-weight: 600; }
+.kr .ext { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--c-dim); }
+.kr.extl::after { display: none; }
+.ccard { padding: 48px 32px; text-align: center; background: var(--c-card); border: 1px solid var(--c-line); border-radius: 8px; display: flex; flex-direction: column; gap: 8px; align-items: center; }
+.ccard b { font: 700 16px var(--f-text); } .ccard span { font: 400 14px var(--f-text); color: var(--c-soft); }
+.okic { width: 44px; height: 44px; border-radius: 50%; background: var(--c-okbg); color: var(--c-ok); display: grid; place-items: center; }
+.okic svg { width: 22px; height: 22px; }
+.mini { width: 100%; border-collapse: collapse; font: 400 14px var(--f-text); font-variant-numeric: tabular-nums; }
+.mini th { text-align: left; font: 700 12px var(--f-text); text-transform: uppercase; letter-spacing: .06em; color: var(--c-soft); padding: 6px 0; }
+.mini td { padding: 8px 0; border-top: 1px solid var(--c-line); }
+.mini th:last-child, .mini td:last-child { text-align: right; }
+.cardv { padding: 14px 16px; background: var(--c-card); border: 1px solid var(--c-line); border-radius: 8px; display: flex; flex-direction: column; gap: 6px; }
+.cardv .rowx { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.cardv b { font: 600 16px var(--f-text); }
+.stack12 { display: flex; flex-direction: column; gap: 12px; }
+.rel { position: relative; }
+
+/* the club kit (ClubKit.module.css) */
+.h1t { margin: 0; font: 700 32px/1.1 var(--f-title); display: flex; align-items: center; gap: 10px; overflow-wrap: anywhere; }
+.h1n { margin: 0; font: 700 24px/1.15 var(--f-title); display: flex; align-items: center; gap: 10px; overflow-wrap: anywhere; }
+.dot { width: 12px; height: 12px; border-radius: 50%; background: #1E3A8A; flex: none; margin-top: 2px; }
+.thead { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.thead .sub, .sub { margin: 0; font: 400 14px/1.4 var(--f-text); color: var(--c-soft); }
+.orgline { font: 400 14px var(--f-text); color: var(--c-soft); }
+.back { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; font: 600 14px var(--f-text); color: var(--c-ink); align-self: flex-start; }
+.back.hl { align-self: stretch; border-bottom: 1px solid var(--c-line); }
+.ksec { display: flex; flex-direction: column; gap: 9.6px; min-width: 0; }
+.kst { margin: 0; font: 700 16px/1.25 var(--f-text); letter-spacing: .01em; }
+.psec { display: flex; flex-direction: column; min-width: 0; }
+.psh { display: flex; align-items: center; justify-content: space-between; min-height: 44px; gap: 12px; }
+.psh h2 { margin: 0; font: 700 16px/1.25 var(--f-text); display: flex; align-items: center; gap: 10px; }
+.cnt { font: 600 12px/1 var(--f-text); padding: 5px 9px; border-radius: 20px; background: var(--c-ground); border: 1px solid var(--c-line2); }
+.lk { font: 600 14px var(--f-text); color: var(--c-ink); }
+.kl { background: var(--c-card); border: 1px solid var(--c-line); border-radius: 8px; overflow: hidden; }
+.kl > * + * { border-top: 1px solid var(--c-line); }
+.kl.edge { border-left: 3px solid var(--c-edge); border-radius: 0 8px 8px 0; }
+.lband { padding: 8px 16px; background: var(--c-ground); font: 700 12px/1.2 var(--f-text); text-transform: uppercase; letter-spacing: .06em; color: var(--c-soft); }
+.kr { position: relative; display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 12px 40px 12px 16px; background: var(--c-card); }
+.kr::after, .chev { content: ''; position: absolute; right: 16px; top: 50%; width: 9px; height: 9px; border: solid var(--c-dim); border-width: 2px 2px 0 0; transform: translateY(-50%) rotate(45deg); }
+.kr.nochev { padding-right: 16px; } .kr.nochev::after { display: none; }
+.krm { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.krn { font: 600 16px/1.3 var(--f-text); overflow-wrap: anywhere; }
+.krs { font: 400 12px/1.4 var(--f-text); color: var(--c-dim); font-variant-numeric: tabular-nums; margin-top: 2px; }
+.kr.d48 { min-height: 48px; padding-block: 10px; } .kr.d48 .krn { font-size: 15px; }
+.chip { flex: none; padding: 6px 10px; border: 1px solid transparent; border-radius: 20px; font: 600 12px/1 var(--f-text); white-space: nowrap; color: var(--c-ok); background: var(--c-okbg); }
+.chip.neutral { color: var(--c-soft); background: var(--c-ground); border-color: var(--c-line2); }
+.chip.warn { color: var(--c-warn); background: rgba(138, 83, 0, .08); border-color: rgba(138, 83, 0, .3); }
+.chiprow { display: flex; gap: 8px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 20px; border-radius: 8px; font: 600 16px var(--f-text); white-space: nowrap; }
+.btn svg { width: 18px; height: 18px; }
+.btn.bp { background: var(--c-fill); color: var(--c-onfill); border: 1.5px solid var(--c-edge); }
+.btn.bs { background: var(--c-card); color: var(--c-text); border: 1px solid var(--c-field); }
+.btn.bo { background: transparent; color: var(--c-ink); border: 1.5px solid var(--c-ink); }
+.btn.sm { padding: 0 16px; font-size: 14px; }
+.btn.full { width: 100%; }
+/* a phone's secondary action is its symbol alone: no border, no fill, no word, a 44 px target (ruled 2026-10-20) */
+.btn.ic { width: 44px; padding: 0; border: 0 !important; background: none !important; }
+.btn.h48 { min-height: 48px; }
+.btnrow { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+.door { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; background: var(--c-card); border: 1px solid var(--c-line); border-left: 3px solid var(--c-edge); border-radius: 0 8px 8px 0; }
+.door .dt { font: 700 16px/1.25 var(--f-text); }
+.ct { padding: 14px 16px; font: 400 16px/1.5 var(--f-text); color: var(--c-soft); background: var(--c-card); }
+.ct.prose { max-width: 720px; }
+.ct a, .ct u { color: var(--c-ink); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+.follow { padding: 4px 16px 14px; border-top: 0 !important; }
+.meta { margin: 0; font: 400 14px/1.4 var(--f-text); color: var(--c-soft); }
+.already { font: 400 14px var(--f-text); color: var(--c-soft); }
+.already u { color: var(--c-ink); font-weight: 600; text-underline-offset: 2px; }
+.empty { border: 1px dashed var(--c-line2); border-radius: 8px; min-height: 160px; display: grid; place-items: center; color: var(--c-dim); font: 400 14px var(--f-text); padding: 24px; text-align: center; }
+
+/* the home's team grid (DC-01) */
+.tgrid { padding: 10px 12px 12px; }
+.tband { font: 700 12px/1.2 var(--f-text); text-transform: uppercase; letter-spacing: .06em; color: var(--c-soft); padding: 2px 2px 8px; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.ph .tiles { grid-template-columns: 1fr 1fr; }
+.tile { min-height: 52px; padding: 16px 12px; border: 1px solid var(--c-line); border-radius: 8px; background: var(--c-card); font: 600 16px/1.2 var(--f-text); display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+
+/* house-league season rows (LeagueSeasonRows.module.css) */
+.scards { display: flex; flex-direction: column; gap: 9.6px; }
+.scard { position: relative; padding: 12px 16px; border: 1px solid var(--c-line); border-radius: 8px; background: var(--c-card); display: flex; flex-direction: column; gap: 2px; }
+.srow { position: relative; padding: 8px 16px 8px; background: var(--c-card); display: flex; flex-direction: column; gap: 2px; }
+.stop { display: flex; align-items: center; gap: 10px; min-height: 44px; }
+.sname { flex: 1; font: 650 16px/1.3 var(--f-text); }
+.srow .sname { font-weight: 600; }
+.stop .chev { position: static; transform: rotate(45deg); flex: none; }
+.slinks { display: flex; flex-wrap: wrap; gap: 0 20px; }
+.slinks span { display: inline-flex; align-items: center; min-height: 44px; font: 600 14px var(--f-text); text-decoration: underline; text-underline-offset: 2px; }
+.slinks span.pr { font-weight: 700; }
+
+/* tables (Teams, Tournaments) */
+.ktab { width: 100%; border-collapse: separate; border-spacing: 0; background: var(--c-card); border: 1px solid var(--c-line); border-radius: 8px; overflow: hidden; }
+.ktab th { text-align: left; padding: 10px 16px; font: 700 12px var(--f-text); text-transform: uppercase; letter-spacing: .06em; color: var(--c-soft); border-bottom: 1px solid var(--c-line); }
+.ktab td { padding: 12px 16px; font: 400 14px var(--f-text); border-top: 1px solid var(--c-line); font-variant-numeric: tabular-nums; }
+.ktab tbody tr:first-child td { border-top: 0; }
+.ktab td.nm { font: 600 16px var(--f-text); }
+.ktab.soft td { color: var(--c-soft); } .ktab.soft td.nm { color: var(--c-text); }
+.ktab td.cv { width: 40px; position: relative; }
+.ktab tr.bandr td { padding: 8px 16px; background: var(--c-ground); font: 700 12px var(--f-text); text-transform: uppercase; letter-spacing: .06em; color: var(--c-soft); }
+
+/* the team page's calendar rows (RepTeamPublicSchedule.module.css) */
+.kick { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; }
+.drow { display: grid; grid-template-columns: 96px minmax(0, 1fr) auto; align-items: center; gap: 12px; min-height: 60px; padding: 10px 16px; background: var(--c-card); }
+.drow.up { box-shadow: inset 3px 0 0 var(--c-edge); }
+.drow .dw { display: flex; flex-direction: column; font: 600 14px/1.3 var(--f-text); font-variant-numeric: tabular-nums; }
+.drow .dw span { font-weight: 400; color: var(--c-dim); }
+.drow .dm { display: flex; flex-direction: column; min-width: 0; }
+.drow .dn { font: 600 16px/1.3 var(--f-text); overflow-wrap: anywhere; }
+.drow .ds { font: 400 14px/1.4 var(--f-text); color: var(--c-dim); }
+.drow .ds b { color: var(--c-ink); }
+.fold { display: flex; align-items: center; min-height: 48px; padding: 0 16px; font: 600 14px var(--f-text); color: var(--c-ink); background: var(--c-card); }
+.subs { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 14px; border: 1px solid var(--c-line2); border-radius: 9px; background: var(--c-ground); font: 650 14px var(--f-text); }
+.subs svg, .btn svg { width: 18px; height: 18px; color: var(--c-ink); }
+.crow { display: flex; flex-direction: column; justify-content: center; min-height: 52px; padding: 8px 16px; background: var(--c-card); }
+.crow b { font: 600 16px var(--f-text); } .crow span { font: 400 14px var(--f-text); color: var(--c-soft); }
+.contact { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 14px 16px; background: var(--c-card); }
+.contact p { font: 400 16px/1.5 var(--f-text); color: var(--c-soft); }
+.contact b { display: block; color: var(--c-text); font-weight: 600; overflow-wrap: anywhere; }
+
+/* toolbar controls */
+.fpill { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; border: 1px solid var(--c-line2); border-radius: 8px; background: var(--c-card); font: 600 12px var(--f-text); color: var(--c-text); }
+.ph .fpill { height: 44px; }
+.fpill svg { width: 14px; height: 14px; }
+.tools { display: flex; gap: 12px; align-items: center; }
+.sel { height: 44px; border: 1px solid var(--c-field); border-radius: 8px; background: var(--c-card); display: flex; align-items: center; justify-content: space-between; padding: 0 12px 0 14px; font: 400 16px var(--f-text); flex: none; }
+.sel svg { width: 18px; height: 18px; }
+
+/* forms (ClubForm.module.css) */
+.fcard { display: flex; flex-direction: column; gap: 13.6px; padding: 20px 24px; background: var(--c-card); border: 1px solid var(--c-line); border-radius: 8px; }
+.ph .fcard { padding: 16px; }
+.fst { margin: 0; font: 700 12px/1.2 var(--f-text); text-transform: uppercase; letter-spacing: .06em; color: var(--c-soft); }
+.frow { display: grid; grid-template-columns: 1fr 1fr; gap: 13.6px; }
+.frow.one { grid-template-columns: 1fr; }
+.fld { display: flex; flex-direction: column; gap: 5.6px; min-width: 0; }
+.fld label { font: 600 14px var(--f-text); }
+.inp { height: 44px; border: 1px solid var(--c-field); border-radius: 8px; background: var(--c-card); padding: 0 12px; display: flex; align-items: center; font: 400 16px var(--f-text); color: var(--c-dim); }
+.inp.r6 { border-radius: 6px; border-color: var(--c-line); }
+.ck { display: flex; gap: 10px; align-items: flex-start; font: 400 14px/1.5 var(--f-text); color: var(--c-soft); }
+.ck i { width: 22px; height: 22px; flex: none; border: 1px solid var(--c-field); border-radius: 4px; background: var(--c-card); }
+.opt { display: flex; flex-direction: column; gap: 4px; min-height: 44px; padding: 13.6px 16px; border: 2px solid var(--c-text); border-radius: 8px; background: var(--c-card); }
+.opt b { font: 600 16px var(--f-text); }
+.fit { margin-top: 6px; border-left: 3px solid var(--c-ok); border-radius: 0 6px 6px 0; background: var(--c-okbg); padding: 6px 10px; font: 400 14.4px var(--f-text); color: var(--c-ok); }
+.fit.r8 { border-radius: 0 8px 8px 0; font-size: 14px; }
+
+/* the house-league season page (league/[seasonSlug]) */
+.shead { display: flex; flex-direction: column; gap: 6px; padding-bottom: 24px; border-bottom: 1px solid var(--c-line); }
+.facts { display: flex; flex-wrap: wrap; gap: 12px 32px; }
+.facts div { display: flex; flex-direction: column; }
+.facts dt { font: 700 12px var(--f-text); text-transform: uppercase; letter-spacing: .06em; color: var(--c-soft); }
+.facts dd { margin: 0; font: 600 16px var(--f-text); }
+.kband { margin: 0; font: 700 12px var(--f-text); text-transform: uppercase; letter-spacing: .06em; color: var(--c-soft); }
+.dgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.dcard { display: flex; flex-direction: column; gap: 8px; padding: 16px 20px; border: 1px solid var(--c-line); border-radius: 8px; background: var(--c-card); }
+.dcard b { font: 700 16px var(--f-text); }
+.bar { height: 6px; border-radius: 3px; background: var(--c-line); overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--c-ok); }
+.bar.full i { background: var(--c-danger); }
+
+/* the status / pay page */
+.yrow { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 56px; padding: 8px 16px; background: var(--c-card); }
+.yrow b { font: 600 16px var(--f-text); } .yrow span.s { display: block; font: 400 14px var(--f-text); color: var(--c-soft); }
+.topay { display: flex; justify-content: space-between; align-items: baseline; padding: 14px 16px; background: var(--c-card); }
+.topay .amt750 { font: 750 18.4px var(--f-text); }
+.topay .amt { font: 700 20px var(--f-title); font-variant-numeric: tabular-nums; }
+.paybox { display: flex; flex-direction: column; gap: 12px; padding: 16px; background: var(--c-card); }
+.h2x { margin: 0; font: 800 16px var(--f-title); }
+.clearing { color: #2563EB; font: 700 14px var(--f-text); }
+
+/* About */
+.qa { padding: 12px 16px; background: var(--c-card); }
+.qa h3 { margin: 0 0 4px; font: 700 15px var(--f-text); }
+.qa.n h3 { font: 600 16px var(--f-text); }
+.qa p { font: 400 15px/1.5 var(--f-text); color: var(--c-soft); }
+.qa.n p { font-size: 16px; }
+
+/* ===================== the tournament frame (for the hop) ===================== */
+.tfr .tb { display: flex; align-items: center; justify-content: space-between; padding: 0 32px; background: var(--c-fill); color: var(--c-onfill); border-bottom: 3px solid var(--c-accent); }
+.tfr .tsub { display: block; font: 500 12px/1.3 var(--f-text); margin-top: 3px; }
+.tfr .tbr { display: flex; align-items: center; gap: 28px; font: 600 15px var(--f-text); }
+.tfr .tsh { display: grid; grid-template-columns: 248px minmax(0, 1fr); min-height: 640px; }
+.tfr .trail { background: var(--c-card); border-right: 1px solid var(--c-line); padding: 16px 10px; display: flex; flex-direction: column; gap: 2px; }
+.tfr .trail span { display: flex; align-items: center; min-height: 44px; padding: 0 14px; border-radius: 6px; font: 600 16px var(--f-text); color: var(--c-soft); }
+.tfr .trail span.on { background: var(--c-ground); color: var(--c-text); box-shadow: inset 3px 0 0 var(--c-ink); }
+.tfr .tmain { padding: 28px 32px; min-width: 0; }
+.tfr.ph .tmain { padding: 16px; }
+.tfr .tcols { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 28px; align-items: start; }
+.tfr.ph .tcols { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+.tfr .tfoot { background: var(--c-fill); color: var(--c-onfill); border-top: 3px solid var(--c-accent); padding: 28px 32px 22px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px 24px; font: 600 15px var(--f-text); }
+.tfr.ph .tfoot { padding: 22px 16px 18px; flex-direction: column; align-items: flex-start; }
+.tfr .tfoot .fn { font: 700 24px var(--f-title); }
+.tfr .tfoot nav { display: flex; gap: 22px; flex-wrap: wrap; text-decoration: underline; text-underline-offset: 3px; }
+.tfr .tfoot .hb { text-decoration: underline; text-underline-offset: 3px; }
+.gr { display: flex; flex-direction: column; padding: 12px 16px; background: var(--c-card); }
+.gr.live { box-shadow: inset 3px 0 0 var(--c-ok); }
+.gr .gm { display: flex; flex-direction: column; gap: 1px; }
+.gr .gw { font: 600 14px/1.25 var(--f-text); }
+.gr .gc { font: 400 14px/1.25 var(--f-text); color: var(--c-dim); }
+.gr .gt { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; }
+.gr .side { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 8px; align-items: first baseline; }
+.gr .nm { font: 500 16px/1.35 var(--f-text); overflow-wrap: anywhere; }
+.gr .sc { min-width: 28px; text-align: right; font: 700 20px/1.08 var(--f-title); }
+.host { display: flex; flex-direction: column; gap: 14px; padding: 16px 20px; background: var(--c-card); border: 1px solid var(--c-line); border-radius: 8px; }
+.host .hh { display: flex; gap: 14px; align-items: center; }
+.host .hk { font: 400 12px var(--f-text); color: var(--c-dim); }
+.host .hn { font: 700 20px/1.1 var(--f-title); }
+.host .open { display: flex; flex-direction: column; gap: 8px; }
+.host .open > div { border: 1px solid var(--c-line); border-left: 3px solid var(--c-edge); border-radius: 0 8px 8px 0; padding: 10px 14px; min-height: 60px; display: flex; flex-direction: column; justify-content: center; }
+.host .open b { font: 600 16px/1.3 var(--f-text); }
+.host .open span { font: 400 12px/1.4 var(--f-text); color: var(--c-dim); }
+.host .btn { align-self: flex-start; }
+
+/* markers, the differs view, the ghost lines */
+.fr .mk { position: absolute; left: -27px; top: 8px; width: 22px; height: 22px; border-radius: 50%; border: 0; background: var(--doc-mark); color: var(--doc-mark-ink); font: 700 12px/22px var(--f-text); text-align: center; cursor: pointer; z-index: 3; padding: 0; }
+.fr.ph .mk { left: auto; right: -8px; top: -8px; }
+.fr.today .mk { display: none; }
+body.only .fr .same { opacity: .18; filter: grayscale(1); }
+.gh { position: absolute; z-index: 4; pointer-events: none; }
+.gh.v { top: 0; bottom: 0; border-left: 2px dashed var(--doc-ghost); }
+.gh.h { left: 0; right: 0; border-top: 2px dashed var(--doc-ghost); }
+.gh em { position: absolute; font: 600 13px/1.2 var(--f-mono); font-style: normal; color: #FFFFFF; background: var(--doc-ghost); padding: 3px 6px; border-radius: 4px; white-space: nowrap; }
+.gh.v em { top: 6px; left: 4px; }
+.gh.h em { right: 8px; top: 4px; }
+.gh.me { border-color: var(--doc-mark); }
+.gh.me em { background: var(--doc-mark); }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <h1>Club page standards</h1>
+    <p>The club's public pages against the tournament standard (R1–R11), and the hop between a club and its tournament · drawn at your screen's width (1,536 px) and a 390 px phone</p>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button role="tab" id="t-why" data-tab="why">1 · Why it jumps</button>
+    <button role="tab" id="t-rules" data-tab="rules">2 · The standard on a club page</button>
+    <button role="tab" id="t-hop" data-tab="hop">3 · Club ↔ tournament</button>
+    <button role="tab" id="t-pages" data-tab="pages">4 · Every page</button>
+    <button role="tab" id="t-asks" data-tab="asks">5 · Asks</button>
+  </nav>
+
+  <!-- 1 -->
+  <section class="view" id="v-why" role="tabpanel" aria-labelledby="t-why">
+    <h2 class="sec">Why moving between club pages jumps</h2>
+    <p class="lede">The club's pages were built across Stages 4, 4b, 4c, 4f and 9, and each was drawn at its own width. Your August repair ruling says a club page's content starts directly under the club's logo, each page keeping its own reading width. Most pages do. <b>About, a team's tryout page and the tryout sign-up form are centred instead</b>, so on your screen their content starts 212 to 280 px to the right of the logo. Every page also stops at a different place. Measured from the code:</p>
+    <div class="counts">
+      <div class="count-t"><b>9</b><span>different right edges across twelve pages</span></div>
+      <div class="count-t"><b>4</b><span>left edges at your screen (192, 404, 464, 472 px)</span></div>
+      <div class="count-t"><b>4</b><span>distances from the band to the first line (16, 20, 28, 32)</span></div>
+      <div class="count-t"><b>6</b><span>gaps between sections (12, 16, 20, 24, 32, 40)</span></div>
+      <div class="count-t"><b>2</b><span>phone side edges (16 px; the house-league pages use 24)</span></div>
+      <div class="count-t"><b>11</b><span>text sizes in page bodies, where six would do</span></div>
+    </div>
+    <div class="panel">
+      <h2 class="sec" style="font-size:18px">Where each page's content sits on your screen</h2>
+      <p class="lede" style="font-size:14px;color:var(--doc-soft)">Each bar is a page's content, drawn to scale across a 1,536 px window. The black tick is the club's logo (192 px; a tournament's sits at 32). "Starts" is how far below the band the first thing sits. The grey rows are the tournament pages under the standard you ruled (A1), for comparison.</p>
+      <div class="emap" id="emap"></div>
+      <div class="legend"><span><i style="background:var(--doc-bad)"></i>club, today</span><span><i style="background:var(--doc-good)"></i>club, proposed</span><span><i style="background:var(--doc-soft);opacity:.55"></i>tournament (ruled)</span><span><i style="background:var(--doc-line)"></i>the tournament's left menu</span></div>
+    </div>
+  </section>
+
+  <!-- 2 -->
+  <section class="view" id="v-rules" role="tabpanel" aria-labelledby="t-rules" hidden>
+    <h2 class="sec">The eleven rules, read on a club page</h2>
+    <p class="lede">The tournament standard (R1–R11) was written for a frame with a left menu. Where a rule fits a club page, the club page follows it. Where it doesn't, the proposal is to <b>amend the rule</b> rather than bend the page. The amendments go into the standard itself, which the tournament build writes in its first part. Numbers match the orange markers on the drawings.</p>
+    <div class="rules" id="rulelist"></div>
+  </section>
+
+  <!-- 3 -->
+  <section class="view" id="v-hop" role="tabpanel" aria-labelledby="t-hop" hidden>
+    <h2 class="sec">The hop: a club home and its tournament</h2>
+    <p class="lede">A family clicks the Fall Classic on the club home, or "Hosted by Lakeshore Lightning Softball" on the tournament, and back. Flip between the two pages below. Turn on <b>the other page's lines</b> to see, in purple, where the page you just left had its band, its logo and its content.</p>
+    <div class="callout"><b>What stays different, and why.</b> The club keeps its tabs in the band, and the tournament keeps its left menu. You ruled both (08-01: "a tab row at every width, never the tournament's left rail"; the menu came with the tournament redesign), for one reason: each site's navigation lines up with its own page. So on a wide screen the logo moves to the window's edge and the content moves 88 px to the right. The proposal makes everything else match: <b>the same band height, the same content width, the same top, the same spacing, the same headings and rows</b>.</div>
+    <div class="viewrow">
+      <div><span class="lbl">Page</span><span class="seg" id="hseg"><button type="button" data-h="club" aria-pressed="true">Club home</button><button type="button" data-h="tour" aria-pressed="false">Tournament Overview</button></span></div>
+      <div><span class="lbl">Show</span><span class="seg" id="hvseg"><button type="button" data-hv="today" aria-pressed="false">Today</button><button type="button" data-hv="next" aria-pressed="true">Proposed</button></span></div>
+      <div><span class="lbl">Screen</span><span class="seg" id="hdseg"><button type="button" data-hd="1536" aria-pressed="true">1,536</button><button type="button" data-hd="1280" aria-pressed="false">1,280</button><button type="button" data-hd="1024" aria-pressed="false">1,024</button><button type="button" data-hd="390" aria-pressed="false">Phone 390</button></span></div>
+      <label class="chk"><input type="checkbox" id="ghost" checked> The other page's lines</label>
+    </div>
+    <div class="stagebox">
+      <div class="stagecap"><span id="hcap">Club home · desktop · proposed</span><span>Click the Fall Classic, or "Hosted by", inside the drawing</span></div>
+      <div class="stage" id="hstage"></div>
+    </div>
+    <div class="hopwrap">
+      <table class="hop">
+        <thead><tr><th>On the click, club home → tournament</th><th>Today</th><th>Proposed</th></tr></thead>
+        <tbody>
+          <tr><td>Band height</td><td class="bad">75 → 91 px: the whole page drops 16 px</td><td class="ok">75 → 75 (C1)</td></tr>
+          <tr><td>Logo and name</td><td>192 → 32 px from the left</td><td>Same: each band lines up with its own page (ruled)</td></tr>
+          <tr><td>Navigation</td><td>Tabs in the band → a menu on the left</td><td>Same (ruled both ways)</td></tr>
+          <tr><td>Content, left edge</td><td>192 → 280</td><td>192 → 280</td></tr>
+          <tr><td>Content, right edge</td><td class="bad">1,344 → 1,240: the club's 1,152 against the tournament's 960 (its Part 1 landed 11-05)</td><td class="ok">1,152 → 1,240: both 960 wide, the same two-column split (C2)</td></tr>
+          <tr><td>First line below the band</td><td class="bad">28 on both, but the band grew, so 103 → 119 on the screen</td><td class="ok">103 → 103</td></tr>
+          <tr><td>Page title</td><td class="bad">Teams, Tryouts, Tournaments open with a 32 px title; no tournament page has one</td><td class="ok">Neither has one where the tab or menu names the page (C3)</td></tr>
+          <tr><td>Space between sections</td><td class="bad">20 → 24</td><td class="ok">24 → 24 (C5)</td></tr>
+          <tr><td>Section headings and rows</td><td>The same type; the tournament uses a 44 px heading row and a 56 px door row</td><td class="ok">One heading row and one 60 px link row on both (the standard's R4 and R7)</td></tr>
+          <tr><td>Footer</td><td>The club's centred; the tournament's on its band's 32 px edge</td><td>Same: each follows its band</td></tr>
+          <tr><td>At 1,280 px</td><td class="bad">Content moves 64 → 280 (216 px)</td><td>The same move: the menu takes 248 px at every desk width. Flip the Screen switch above to see it</td></tr>
+          <tr><td>At 1,024 px</td><td class="bad">Content moves 24 → 280 and narrows to 712 px; the Overview stacks</td><td>The same. This is the price of the menu, and the strongest case against it; it was ruled for six to nine tabs</td></tr>
+          <tr><td>On a phone</td><td class="ok">Already almost seamless: the same 72 px band, the same white tab row, the same 16 px edge</td><td class="ok">The same, and the tab pages lose their 32 px titles on both</td></tr>
+          <tr><td>A team's two pages</td><td class="bad">The club's 15U AAA page and its tournament team page do not link to each other</td><td class="ok">They link (C6)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 4 -->
+  <section class="view" id="v-pages" role="tabpanel" aria-labelledby="t-pages" hidden>
+    <div class="vstack">
+      <div><span class="lbl" style="font:600 13px var(--f-text);color:var(--doc-soft);margin-right:8px">Page</span><span class="pick" id="pagepick"></span></div>
+      <div id="staterow"><span class="lbl" style="font:600 13px var(--f-text);color:var(--doc-soft);margin-right:8px">State</span><span class="pick sm" id="statepick"></span></div>
+    </div>
+    <div class="viewrow">
+      <div><span class="lbl">Show</span><span class="seg" id="vseg"><button type="button" data-v="today" aria-pressed="false">Today</button><button type="button" data-v="next" aria-pressed="true">Proposed</button></span></div>
+      <div><span class="lbl">View</span><span class="seg" id="dseg"><button type="button" data-d="all" aria-pressed="true">Everything</button><button type="button" data-d="only" aria-pressed="false">Show only what differs</button></span></div>
+      <div><span class="lbl">Screen</span><span class="seg" id="sseg"><button type="button" data-s="desk" aria-pressed="true">Desk 1,536</button><button type="button" data-s="phone" aria-pressed="false">Phone 390</button></span></div>
+      <label class="chk"><input type="checkbox" id="actual"> Actual size (scrolls sideways)</label>
+    </div>
+    <ul class="changes" id="changes"></ul>
+    <div class="stagebox">
+      <div class="stagecap"><span id="capL">Club · desktop</span><span>Click the tabs and rows inside the drawing to move between pages</span></div>
+      <div class="stage" id="stage"></div>
+    </div>
+    <p class="lede" style="font-size:13px;color:var(--doc-soft);margin-top:10px">Drawing content: Lakeshore Lightning Softball (the tournament round's club) carries the teams, tryouts, house league and About text of the club test fixture, because no single fixture has all of them. Dates are real days around Thu, Nov 5, 2026.</p>
+  </section>
+
+  <!-- 5 -->
+  <section class="view" id="v-asks" role="tabpanel" aria-labelledby="t-asks" hidden>
+    <h2 class="sec">Asks</h2>
+    <p class="lede"><b>All seven RULED as recommended on 2026-11-05</b> ("i agree with your recommendations, go ahead and write the build prompt"); the build follows these drawings (<code>PUBLIC_CLUB_PAGE_LAYOUT_BUILD_PROMPT.md</code>). Each ask names the ruling it changed, if any. The ones marked <b>touches the tournament build</b> change a part the tournament build is about to write (the band, the standard's own words, the pay block both sites share), so a ruling there goes into that build too, to avoid restyling the same thing twice. Paste a line like the one below back with your picks.</p>
+    <div class="asks" id="asklist"></div>
+    <div class="paste" id="paste">Ruled 2026-11-05: C1 1 · C2 1 · C3 1 · C4 1 · C5 1 · C6 1 · C7 1</div>
+    <div class="later panel">
+      <h2 class="sec" style="font-size:18px">Answered without an ask</h2>
+      <ul>
+        <li><b>Menu on the left or tabs in the band.</b> Each site keeps its own. You ruled the club's tabs on 08-01 ("a tab row at every width, never the tournament's left rail") and the tournament's menu in its redesign, and the reason is the same on both: each site's navigation lines up with its own page. Six to nine tournament tabs and a long name would not fit a band, and a club's three to five words do not need a 248 px column.</li>
+        <li><b>About, a tryout page and the tryout form move to the logo's edge.</b> That is a repair under your 08-01 repair ruling ("a heading lands directly under the club's logo"), not a new choice. It happens whatever C2 says.</li>
+        <li><b>The word "door".</b> The club's door (a card with the club's coloured edge and a button: tryouts open, the next season) keeps its name. The plain row with a chevron is the link row, as in the tournament standard.</li>
+        <li><b>Phone edge:</b> 16 px on every club page. The house-league pages and a past tournament's record use 24 today.</li>
+        <li><b>Kept as you ruled them, and registered as exceptions to the standard:</b> Born in stays the house pick-one pill (10-22, "not view pills"); on a phone, Subscribe, Directions and Copy stay bare symbols (10-20); a team's page keeps its calendar rows (10-19, 10-20); the "clearing" heading on the pay page keeps its blue information colour (Stage 12c).</li>
+        <li><b>Not drawn, standard applied on paper:</b> a past tournament's record page, the in-club "not found" page, and the house league's Schedule and Standings pages (C7).</li>
+        <li><b>Found on the way, not layout</b> (written into the plan): a failed Tournaments page shows the platform's error screen without the club's band; a team with no games yet leaves an empty 744 px column beside its tryout door (drawn fixed: one column); a code note in the shared form sheet says club forms use the tournament's 680 px form column, and they don't (they are 640); a brand note still says scores use the typewriter face on club pages, which the 10-19 ruling removed (for /design).</li>
+      </ul>
+    </div>
+  </section>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var W = 1536, PW = 390;
+  var CLUB = 'Lakeshore Lightning Softball', LONG = 'Hamilton-Wentworth Girls Fastpitch';
+  var TOUR = 'Lakeshore Lightning Fall Classic', LONGT = 'Greater Hamilton-Wentworth Girls Fastpitch Spring Invitational';
+
+  /* ---------- icons ---------- */
+  function svg(path) { return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + path + '</svg>'; }
+  var I = {
+    caret: svg('<path d="M6 9l6 6 6-6"/>'),
+    cal: svg('<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18M12 13v5M9.5 15.5h5"/>'),
+    nav: svg('<path d="M3 11l18-8-8 18-2-8-8-2z"/>'),
+    copy: svg('<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/>'),
+    ext: svg('<path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>'),
+    check: svg('<path d="M5 12l5 5L20 7"/>')
+  };
+
+  /* ---------- small parts ---------- */
+  function mk(n) { return '<button type="button" class="mk" data-rule="' + n + '" aria-label="Rule ' + n + '">' + n + '</button>'; }
+  function chip(t, tone) { return '<span class="chip' + (tone ? ' ' + tone : '') + '">' + t + '</span>'; }
+  function row(n, s, extra, go, cls) { return '<div class="kr' + (cls ? ' ' + cls : '') + '"' + (go ? ' data-go="' + go + '"' : '') + '><span class="krm"><span class="krn">' + n + '</span>' + (s ? '<span class="krs">' + s + '</span>' : '') + '</span>' + (extra || '') + '</div>'; }
+  function list(rows, cls) { return '<div class="kl' + (cls ? ' ' + cls : '') + '">' + rows.join('') + '</div>'; }
+  function same(v) { return v === 'next' ? ' same' : ''; }
+  function sec(v, t, inner, o) {
+    o = o || {};
+    var h = v === 'today' ? '<h2 class="kst">' + t + '</h2>' : '<div class="psh"><h2>' + t + (o.n != null ? ' <span class="cnt">' + o.n + '</span>' : '') + '</h2>' + (o.right || '') + '</div>';
+    if (v === 'today' && o.right) h = '<div class="kick"><h2 class="kst">' + t + '</h2>' + o.right + '</div>';
+    return '<section class="' + (v === 'today' ? 'ksec' : 'psec') + ' rel' + (o.same && v === 'next' ? ' same' : '') + '">' + (v === 'next' && o.mk ? mk(o.mk) : '') + h + inner + '</section>';
+  }
+  /* a page about one thing: today 32 px; proposed 24 px (C4) */
+  function title(v, t, o) {
+    o = o || {};
+    var cls = v === 'today' ? 'h1t' : 'h1n';
+    return '<div class="thead rel">' + (v === 'next' ? mk(2) : '') + (o.pre || '') + '<h1 class="' + cls + '">' + (o.dot ? '<i class="dot"></i>' : '') + t + '</h1>' + (o.sub ? '<p class="sub">' + o.sub + '</p>' : '') + (o.chip || '') + '</div>';
+  }
+  /* a tab page's title: today 32 px with its line; proposed none, its line kept (C3) */
+  function tabTitle(v, t, sub) {
+    if (v === 'today') return '<div class="thead"><h1 class="h1t">' + t + '</h1>' + (sub ? '<p class="sub">' + sub + '</p>' : '') + '</div>';
+    return '';
+  }
+  function btn(t, kind, cls, go) { return '<span class="btn ' + kind + (cls ? ' ' + cls : '') + '"' + (go ? ' data-go="' + go + '"' : '') + '>' + t + '</span>'; }
+  function dirBtn(ph) { return ph ? '<span class="btn bs ic" aria-label="Directions">' + I.nav + '</span>' : btn(I.nav + 'Directions', 'bs', 'sm'); }
+  function copyBtn(ph) { return ph ? '<span class="btn bs ic" aria-label="Copy">' + I.copy + '</span>' : btn(I.copy + 'Copy', 'bs', 'sm'); }
+  /* Born in: the house pick-one pill, ruled 2026-10-22; unchanged */
+  function born(picked) { return '<span class="fpill">Born in: ' + (picked ? '2008' : 'any year') + I.caret + '</span>'; }
+  function tools(v, inner, sentence) {
+    return '<div class="stack12 rel">' + (v === 'next' ? mk(2) : '') + '<div class="tools">' + inner + '</div>' + (sentence && v === 'next' ? '<p class="meta">' + sentence + '</p>' : '') + '</div>';
+  }
+
+  /* ---------- the club frame ---------- */
+  var TABS = [['home', 'Home'], ['teams', 'Teams'], ['tryouts', 'Tryouts'], ['league', 'House league'], ['tourn', 'Tournaments']];
+  function edgeOf(w) { return Math.max(24, (w - 1200) / 2 + 24); }
+  function clubBar(lit, w, o) {
+    var ph = w < 901;
+    var name = o.long ? LONG : CLUB;
+    var tabs = TABS.filter(function (t) { return !(o.noTryoutsTab && t[0] === 'tryouts'); });
+    var id = '<div class="cid" data-go="home"><span class="clogo">' + (o.long ? 'HW' : 'LL') + '</span><span class="cname">' + name + '</span></div>';
+    var tl = tabs.map(function (t) { return '<span data-go="' + t[0] + '"' + (t[0] === lit ? ' class="on"' : '') + '>' + t[1] + '</span>'; }).join('');
+    if (ph) return '<div class="same"><header class="cb">' + id + '<div class="cact">Sign in</div></header><nav class="ctr">' + tl + '</nav></div>';
+    return '<header class="cb same" style="padding:0 ' + edgeOf(w) + 'px">' + id + '<nav class="ctabs">' + tl + '</nav><div class="cact">Sign in</div></header>';
+  }
+  function clubFoot(w, o) {
+    var ph = w < 901;
+    return '<footer class="cfo same" style="padding:' + (ph ? '22px 16px 18px' : '28px ' + edgeOf(w) + 'px 22px') + '"><span class="fn">' + (o.long ? LONG : CLUB) + '</span>' +
+      '<span class="fq">Questions? Email the club<b>info@lakeshorelightning.ca</b></span>' +
+      '<span class="soc"><i>f</i><i>ig</i></span><span class="fl" data-go="about">Contacts and documents</span>' +
+      '<span class="cr">Built on FieldLogicHQ</span></footer>';
+  }
+  function clubFrame(key, v, w, st) {
+    var p = PAGES[key], ph = w < 901;
+    var g = geo(key, v, w, st);
+    var o = { long: key === 'home' && st === 'long', noTryoutsTab: key === 'tryouts' && st === 'off' };
+    var lit = (o.noTryoutsTab || key === 'about') ? '' : p.tab;
+    return '<div class="fr cf ' + v + (ph ? ' ph' : '') + '" style="width:' + w + 'px">' + clubBar(lit, w, o) +
+      (p.pre ? p.pre(v, ph, st) : '') +
+      '<main class="cm" style="padding:' + g.t + 'px 0 40px ' + g.l + 'px"><div class="cc" style="width:' + g.w + 'px;--g:' + g.g + 'px">' + p.body(v, ph, st) + '</div></main>' +
+      clubFoot(w, o) + '</div>';
+  }
+
+  /* geometry, drawn at 1,536: [left edge, width, band to first line, gap between sections] */
+  var GEO = {
+    home: { today: [192, 1152, 28, 20], next: [192, 960, 28, 24] },
+    teams: { today: [192, 744, 28, 16], next: [192, 960, 28, 24] },
+    team: { today: [192, 1152, 20, 20], next: [192, 960, 28, 24] },
+    tryouts: { today: [192, 1152, 28, 20], next: [192, 960, 28, 24] },
+    tryout: { today: [464, 608, 16, 20], next: [192, 960, 28, 24] },
+    tform: { today: [472, 592, 32, 24], next: [192, 640, 28, 24] },
+    league: { today: [192, 760, 32, 40], next: [192, 960, 28, 24] },
+    season: { today: [192, 760, 32, 32], next: [192, 960, 28, 24] },
+    lform: { today: [192, 640, 32, 24], next: [192, 640, 28, 24] },
+    status: { today: [192, 560, 32, 12], next: [192, 640, 28, 24] },
+    tourn: { today: [192, 960, 28, 24], next: [192, 960, 28, 24] },
+    about: { today: [404, 728, 16, 20], next: [192, 960, 28, 24] }
+  };
+  var PH24 = { tform: 1, league: 1, season: 1, lform: 1, status: 1 };
+  function geo(key, v, w, st) {
+    var a = GEO[key][v];
+    if (key === 'tryouts' && st === 'off' && v === 'today') a = [464, 608, 16, 20];
+    if (w < 901) {
+      var wide = v === 'today' && PH24[key];
+      return { l: wide ? 24 : 16, w: w - (wide ? 48 : 32), t: wide ? 32 : 16, g: a[3] };
+    }
+    var e = edgeOf(w);
+    if (a[0] === 192) return { l: e, w: Math.min(a[1], w - 2 * e), t: a[2], g: a[3] };
+    return { l: a[0], w: a[1], t: a[2], g: a[3] };
+  }
+
+  /* ---------- the pages ---------- */
+  var TEAMS = ['9U AA', '11U AA', '12U AA', '13U AAA', '14U AA', '15U AA', '15U AAA', '16U AA'];
+  var BORN = { '9U AA': 'Born 2017', '11U AA': 'Born 2015', '12U AA': 'Born 2014', '13U AAA': 'Born 2013', '14U AA': 'Born 2012', '15U AA': 'Born 2011', '15U AAA': 'Born 2011', '16U AA': 'Born 2010' };
+  var TRY = { '11U AA': 1, '15U AAA': 1 };
+  var ABOUT = 'Lakeshore Lightning Softball is a volunteer-run rep program: eight competitive teams, one house league, and a fall invitational.';
+  var PAGES = {};
+  function two(v, mkN, left, right) { return '<div class="two' + (v === 'next' ? ' n' : '') + ' rel">' + (v === 'next' && mkN ? mk(mkN) : '') + '<div class="col">' + left + '</div><div class="col">' + right + '</div></div>'; }
+
+  PAGES.home = { label: 'Home', tab: 'home', states: [['all', 'Something open'], ['quiet', 'Nothing open'], ['banner', 'With a banner photo'], ['long', 'A long club name']],
+    pre: function (v, ph, st) { return st === 'banner' && !ph ? '<div class="banner same">the club’s banner photo, desk only, 140–200 px</div>' : ''; },
+    body: function (v, ph, st) {
+      var open = st === 'quiet' ? '' : sec(v, 'Open now', list([
+        row('Tryouts', '2 teams · Rep Nov 14–15', '', 'tryouts'),
+        row('2026 Fall House League', 'Registration open · closes Sat, Nov 21', '', 'season')], 'edge'), { same: 1 });
+      var tiles = '<div class="kl tgrid"><div class="tband">Rep</div><div class="tiles">' + TEAMS.map(function (t) {
+        return '<div class="tile" data-go="team">' + t + (TRY[t] ? chip('Tryouts open') : '') + '</div>'; }).join('') + '</div></div>';
+      var teams = sec(v, 'Teams', tiles, { same: 1 });
+      var league = sec(v, 'House league', seasonRows(v, [{ n: '2026 Fall House League', c: chip('Registration open'), l: [['Sign up', 1]] }]), { mk: 5 });
+      var tourn = sec(v, 'Tournaments', list([
+        row(TOUR, 'Tue, Nov 3 – Thu, Nov 5', chip('Live now'), 'tourney'),
+        row('2027 Spring Invitational', 'Fri, May 14 – Sun, May 16, 2027', chip('Registration open'), 'tourn')]), { same: 1 });
+      var about = sec(v, 'About the club', '<div class="kl"><p class="ct">' + ABOUT + '</p>' + row('About the club', '', '', 'about') + '<div class="follow">' + btn('Follow', 'bs', 'sm') + '</div></div>', { same: 1 });
+      var spons = '<div class="spons same"><i>Riverside Dental</i><i>Hall Real Estate</i></div>';
+      if (ph) return open + teams + league + tourn + about + spons;
+      return two(v, 1, open + teams + league + tourn, about) + spons;
+    } };
+
+  function seasonRows(v, ss) {
+    function links(l) { return '<div class="slinks">' + l.map(function (x) { return '<span' + (x[1] ? ' class="pr"' : '') + '>' + x[0] + '</span>'; }).join('') + '</div>'; }
+    if (v === 'today') return '<div class="scards">' + ss.map(function (s) { return '<div class="scard" data-go="season"><div class="stop"><span class="sname">' + s.n + '</span>' + (s.c || '') + '<i class="chev"></i></div>' + links(s.l) + '</div>'; }).join('') + '</div>';
+    return list(ss.map(function (s) { return '<div class="srow" data-go="season"><div class="stop"><span class="sname">' + s.n + '</span>' + (s.c || '') + '<i class="chev"></i></div>' + links(s.l) + '</div>'; }));
+  }
+
+  PAGES.teams = { label: 'Teams', tab: 'teams', states: [['all', 'Every team'], ['nomatch', 'Born in: no match']],
+    body: function (v, ph, st) {
+      var nm = st === 'nomatch';
+      var sentence = nm ? 'No places for a player born in 2008. Pick another year.' : '8 teams';
+      var body;
+      if (ph) body = list(['<div class="lband">Rep</div>'].concat(TEAMS.map(function (t) { return row(t, BORN[t], TRY[t] ? chip('Tryouts open') : '', 'team'); })));
+      else body = '<table class="ktab"><thead><tr><th>Team</th><th style="width:200px">Tryouts</th><th class="cv"></th></tr></thead><tbody><tr class="bandr"><td colspan="3">Rep</td></tr>' +
+        TEAMS.map(function (t) { return '<tr data-go="team"><td class="nm">' + t + '<span class="tsub2">' + BORN[t] + '</span></td><td>' + (TRY[t] ? chip('Tryouts open') : '—') + '</td><td class="cv"><i class="chev"></i></td></tr>'; }).join('') + '</tbody></table>';
+      if (v === 'today') return tabTitle(v, 'Teams', sentence) + '<div class="tools">' + born(nm) + '</div>' + (nm ? '' : body);
+      return tools(v, born(nm), sentence) + (nm ? '' : '<div class="rel">' + mk(1) + body + '</div>');
+    } };
+
+  PAGES.team = { label: 'A team', tab: 'teams', states: [['open', 'Tryouts open'], ['closed', 'Tryouts closed'], ['done', 'Program concluded'], ['nosched', 'No games yet']],
+    body: function (v, ph, st) {
+      var head = title(v, '15U AAA', { dot: true, sub: 'Rep · Born 2011 · 2026 season' });
+      var subBtn = ph ? '<span class="btn bs ic" aria-label="Subscribe">' + I.cal + '</span>' : (v === 'today' ? '<span class="subs">' + I.cal + 'Subscribe</span>' : '<span class="rel">' + mk(10) + btn(I.cal + 'Subscribe', 'bs', 'sm') + '</span>');
+      function drow(d, tm, what, where, up) { return '<div class="drow' + (up ? ' up' : '') + '"><span class="dw2">' + d + '<br>' + tm + '</span><span class="dm">' + (up ? '<span class="nextl">Up next</span>' : '') + '<span class="dn">' + what + '</span><span class="ds12">' + where + '</span></span>' + (up ? dirBtn(ph) : '') + '</div>'; }
+      var sched = sec(v, 'Schedule', list(['<div class="fold c">Earlier this season (2)</div>',
+        drow('Sat, Nov 7', '9:00 a.m.', 'vs Guelph Royals 15U', 'Bronte Park — Field 1', true),
+        drow('Sun, Nov 8', '11:30 a.m.', 'at Milton Mustangs 15U', 'Bronte Park — Field 2'),
+        drow('Sat, Nov 14', '10:00 a.m.', 'vs Oakville Otters 15U', 'Bronte Park — Field 1'),
+        '<div class="fold c">Show the rest of the season (6 more)</div>']), { right: subBtn, same: 1 });
+      var door = '<div class="door' + same(v) + '"><span class="dt">Tryouts are open</span><span class="krs" style="font-size:14px">Sat, Nov 14 – Sun, Nov 15 · Lions Park</span>' + btn('Tryout details and sign-up', 'bp', 'full', 'tryout') + '</div>';
+      if (st === 'closed') door = sec(v, 'Tryouts', '<div class="kl"><p class="ct">15U AAA isn’t taking tryout sign-ups right now. Questions? <u>Email the club</u>.</p></div>', { same: 1 });
+      if (st === 'done') door = '<div class="kl' + same(v) + '"><p class="ct">This program has concluded.</p></div>';
+      var coaches = sec(v, 'Coaches', list(['<div class="crow"><b>Jordan Reyes</b><span>Head coach</span></div>']), { same: 1 });
+      if (st === 'done') return head + door + coaches;
+      if (st === 'nosched') {
+        if (v === 'today' && !ph) return head + '<div class="two"><div class="col"><div class="empty">An empty 744 px column: no games yet, but the desk grid still splits</div></div><div class="col">' + door + coaches + '</div></div>';
+        return head + '<div class="rel">' + (v === 'next' ? mk(1) : '') + door + '</div>' + coaches;
+      }
+      if (ph) return head + door + sched + coaches;
+      return head + two(v, 3, sched, door + coaches);
+    } };
+
+  PAGES.tryouts = { label: 'Tryouts', tab: 'tryouts', states: [['in', 'In season'], ['mixed', 'Teams for two seasons'], ['off', 'Out of season']],
+    body: function (v, ph, st) {
+      if (st === 'off') {
+        var t = v === 'today' ? '<div class="thead"><h1 class="h1t">Tryouts</h1></div>' : '<div class="thead rel">' + mk(2) + '<h1 class="h1n">Tryouts</h1></div>';
+        return t + contactCard('The club’s last tryouts were on Sun, Nov 8, 2026. Questions about next season? Email the club at', ph);
+      }
+      var mixed = st === 'mixed';
+      var rows = [['11U AA', 'Born 2015 · Sat, Nov 14 · Lions Park', chip('Tryouts open')], ['15U AAA', 'Born 2011 · Sat, Nov 14 · Lions Park', chip('Tryouts open')],
+        ['13U AAA', 'Born 2013 · Mon, Nov 16 · Kinsmen Park', chip('Not open yet', 'neutral')], ['16U AA', mixed ? 'Born 2010 · For the 2026 season' : 'Born 2010 · Sun, Nov 8', chip(mixed ? 'Not open yet' : 'Finished', 'neutral')]];
+      var l = list(['<div class="lband">Rep · Nov 7–16</div>'].concat(rows.map(function (r) { return row(r[0], r[1], r[2], 'tryout'); })));
+      var sentence = mixed ? null : 'Rep teams for the 2027 season';
+      if (v === 'today') return tabTitle(v, mixed ? 'Tryouts' : '2027 tryouts', sentence) + '<div class="tools">' + born(false) + '</div>' + l;
+      return tools(v, born(false), sentence) + '<div class="rel">' + mk(1) + l + '</div>';
+    } };
+  function contactCard(text, ph) { return '<div class="kl"><div class="contact"><p>' + text + '<b>info@lakeshorelightning.ca</b></p>' + copyBtn(ph) + '</div></div>'; }
+
+  PAGES.tryout = { label: 'A tryout', tab: 'tryouts', states: [['open', 'Open'], ['soon', 'Not open yet'], ['done', 'Finished'], ['closed', 'Closed']],
+    body: function (v, ph, st) {
+      var c = st === 'open' ? chip('Tryouts open') : st === 'soon' ? chip('Not open yet', 'neutral') : st === 'done' ? chip('Finished', 'neutral') : chip('Closed', 'neutral');
+      var back = '<span class="back hl" data-go="team">← 15U AAA</span>';
+      var head = title(v, '15U AAA tryouts', { sub: st === 'closed' ? null : 'For the 2027 season · born 2011', chip: c });
+      function day(d, tm, where) { return '<div class="drow"><span class="dw2">' + d + '</span><span class="dm"><span class="dn">' + tm + '</span><span class="ds12">' + where + '</span></span>' + dirBtn(ph) + '</div>'; }
+      var days = sec(v, 'Tryout days', list([day('Sat, Nov 14', '9:00–11:00 a.m.', 'Lions Park — Diamond 1'), day('Sun, Nov 15', '9:00–10:30 a.m.', 'Lions Park — Diamond 1')]), { same: 1 });
+      var blurb = sec(v, 'From the club', '<div class="kl"><p class="ct">Bring a glove, cleats and water.</p></div>', { same: 1 });
+      var coachEmail = 'jreyes@lakeshorelightning.ca';
+      if (st === 'open') {
+        var go = '<div class="rel">' + (v === 'next' ? mk(11) : '') + btn('Sign up for tryouts', 'bp', (v === 'today' || ph) ? 'full' : '', 'tform') + '</div>';
+        var q = '<div class="qline' + same(v) + '"><span>Questions about these tryouts? Email Jordan Reyes, head coach<b>' + coachEmail + '</b></span>' + copyBtn(ph) + '</div>';
+        return back + head + days + blurb + go + q;
+      }
+      var card = function (s, mail) { return '<div class="kl' + same(v) + '"><div class="contact"><p>' + s + '<b>' + mail + '</b></p>' + copyBtn(ph) + '</div></div>'; };
+      if (st === 'soon') return back + head + days + blurb + card('Sign-ups for 15U AAA tryouts aren’t open yet. Questions about these tryouts? Email Jordan Reyes, head coach', coachEmail);
+      if (st === 'done') return back + head + card('Tryouts for the 2027 season finished on Sun, Nov 8. Questions? Email the club at', 'info@lakeshorelightning.ca');
+      return back + head + card('15U AAA isn’t taking tryout sign-ups right now. Questions? Email the club at', 'info@lakeshorelightning.ca');
+    } };
+
+  function fcard(t, rows) {
+    return '<div class="fcard"><p class="fst">' + t + '</p>' + rows.map(function (r) {
+      if (typeof r === 'string') return r;
+      return '<div class="frow' + (r.length === 1 ? ' one' : '') + '">' + r.map(function (f) { return '<div class="fld"><label>' + f + '</label><span class="inp"' + (/notes/i.test(f) ? ' style="height:80px"' : '') + '></span></div>'; }).join('') + '</div>';
+    }).join('') + '</div>';
+  }
+  function ck(t) { return '<div class="ck"><i></i><span>' + t + '</span></div>'; }
+  PAGES.tform = { label: 'Tryout sign-up', tab: 'tryouts', states: [['form', 'The form'], ['closed', 'Not open'], ['sent', 'Sent']],
+    body: function (v, ph, st) {
+      var back = '<span class="back" data-go="tryout">← Back to 2027 Season</span>';
+      var head = title(v, 'Tryout application — 2027 Season', { pre: '<span class="orgline">' + (v === 'today' ? CLUB + ' · 15U AAA' : '15U AAA') + '</span>' });
+      if (st === 'closed') return back + head + '<div class="ccard' + same(v) + '"><b>Registration is not currently open</b><span>Sign-up for 15U AAA tryouts opens when the club posts its tryout days.</span></div>';
+      if (st === 'sent') return back + head + '<div class="ccard' + same(v) + '"><span class="okic">' + I.check + '</span><b style="font:700 20px var(--f-title)">Application received</b><span>We sent a copy to the email you gave, with your reference.</span></div>';
+      return back + head + '<div class="cc same" style="--g:24px">' +
+        fcard('Player information', [['First name', 'Last name'], ['Date of birth', 'Position'], ['Additional notes']]) +
+        fcard('Parent or guardian information', [['Full name'], ['Email', 'Phone number']]) +
+        fcard('Before you submit, please confirm', [ck('I agree to the club’s code of conduct and its tryout policy.'), ck('<b>Optional:</b> send me ' + CLUB + ' news and future-season announcements by email.')]) +
+        btn('Submit tryout application', 'bp', 'full') + '</div>';
+    } };
+
+  PAGES.league = { label: 'House league', tab: 'league', states: [['all', 'Seasons']],
+    body: function (v) {
+      var run = seasonRows(v, [{ n: '2026 Fall House League', c: chip('Registration open'), l: [['Sign up', 1]] }]);
+      var past = seasonRows(v, [{ n: '2026 Spring House League', l: [['Schedule'], ['Standings']] }, { n: '2025 Fall House League', l: [['Schedule'], ['Standings']] }]);
+      if (v === 'today') return tabTitle(v, 'House league') + sec(v, 'Running now', run) + sec(v, 'Past seasons', past);
+      return sec(v, 'Running now', run, { n: 1, mk: 2 }) + sec(v, 'Past seasons', past, { n: 2, mk: 5 });
+    } };
+
+  PAGES.season = { label: 'A season', tab: 'league', states: [['open', 'Registration open'], ['full', 'Full, waitlist open'], ['closed', 'Registration closed'], ['playing', 'Playing'], ['done', 'Finished']],
+    body: function (v, ph, st) {
+      var nx = v === 'next';
+      var h1 = '<h1 class="' + (nx ? 'h1n' : 'h1t') + '">2026 Fall House League</h1>';
+      var desc = '<p class="meta" style="font-size:16px;max-width:600px">Weeknight softball for the club’s youngest players, Thursdays at Kinsmen Park.</p>';
+      var already = '<p class="already' + same(v) + '">Already signed up? <u data-go="status">Email me my link</u></p>';
+      if (st === 'open' || st === 'full') {
+        var full = st === 'full';
+        var facts = '<dl class="facts" style="margin:6px 0 0"><div><dt>Registration</dt><dd>Mon, Nov 9 — Sat, Nov 21</dd></div><div><dt>Season dates</dt><dd>Thu, Nov 26 — Wed, Feb 3</dd></div><div><dt>Price</dt><dd>$130</dd><span class="tsub2">Early bird through Sun, Nov 15, then $150</span></div></dl>';
+        var head = '<div class="shead rel">' + (nx ? mk(2) : '') + '<div class="chiprow">' + chip('Registration open') + '</div>' + h1 + desc + facts + '</div>';
+        var dcard = '<div class="dcard"><div><b>U9 Rookie</b><span class="tsub2">Born 2017–2018</span><div style="margin-top:6px;font:700 ' + (nx ? '16' : '15') + 'px var(--f-text);color:var(--c-ok)">$130 · Save $20</div><span class="tsub2">Early bird through Sun, Nov 15, then $150</span></div>' +
+          '<div class="bar"><i style="width:' + (full ? 100 : 60) + '%;background:' + (full ? 'var(--c-danger)' : 'var(--c-fill)') + '"></i></div>' +
+          '<div class="meta" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">' + (full ? '20 / 20' : '12 / 20') + ' spots filled' + (full ? chip('Waitlist open', 'neutral') : '') + '</div></div>';
+        var divs = nx ? '<section class="psec rel">' + mk(4) + '<div class="psh"><h2>Divisions <span class="cnt">1</span></h2></div><div class="dgrid">' + dcard + '</div></section>'
+          : '<div class="ksec"><p class="kband">Divisions</p><div class="dgrid">' + dcard + '</div></div>';
+        var act = '<div class="' + (nx ? 'same' : '') + '">' + btn('Register now', 'bp', '', 'lform') + '<p class="meta" style="margin-top:12px">Registration closes Sat, Nov 21.</p></div>';
+        return head + divs + act + already;
+      }
+      var c = st === 'closed' ? chip('Registration closed', 'neutral') : st === 'playing' ? chip('Playing now') : '';
+      var door = st === 'done' ? '<div class="door' + same(v) + '"><span class="dt">2027 Spring House League · Registration open</span>' + btn('See 2027 Spring House League →', 'bs', 'sm') + '</div>' : '';
+      var head2 = door + '<div class="shead rel">' + (nx ? mk(2) : '') + (c ? '<div class="chiprow">' + c + '</div>' : '') + h1 + desc + '</div>';
+      if (st === 'closed') return head2 + '<div class="btnrow' + same(v) + '">' + btn('Schedule', 'bp') + '</div>' + already;
+      var stTitle = st === 'done' ? 'Final standings' : 'Standings';
+      var top = '<div class="cardv"><b>U9 Rookie</b><table class="mini"><thead><tr><th>#</th><th>Team</th><th>W-L-T</th><th>Pts</th></tr></thead><tbody><tr><td>1</td><td>Reds</td><td>' + (st === 'done' ? '7-3-0' : '2-1-0') + '</td><td>' + (st === 'done' ? '14' : '4') + '</td></tr><tr><td>2</td><td>Blues</td><td>' + (st === 'done' ? '3-7-0' : '1-2-0') + '</td><td>' + (st === 'done' ? '6' : '2') + '</td></tr></tbody></table><span class="lk">Full table →</span></div>';
+      var stand = nx ? '<section class="psec rel">' + mk(4) + '<div class="psh"><h2>' + stTitle + '</h2></div><div class="dgrid">' + top + '</div></section>' : '<div class="ksec"><p class="kband">' + stTitle + '</p><div class="dgrid">' + top + '</div></div>';
+      return head2 + stand + '<div class="btnrow' + same(v) + '">' + btn('Schedule', 'bs') + '</div>' + already;
+    } };
+
+  PAGES.lform = { label: 'League sign-up', tab: 'league', states: [['form', 'The form'], ['soon', 'Not open yet'], ['closed', 'Closed']],
+    body: function (v, ph, st) {
+      var back = '<span class="back" data-go="season">← Back to 2026 Fall House League</span>';
+      var head = title(v, 'Sign up — 2026 Fall House League', { pre: v === 'today' ? '<span class="orgline">' + CLUB + '</span>' : '' });
+      if (st === 'soon') return back + head + '<div class="ccard' + same(v) + '"><b>Registration isn’t open yet</b><span>Registration for 2026 Fall House League opens Mon, Nov 9.</span></div>';
+      if (st === 'closed') return back + head + '<div class="ccard' + same(v) + '"><b>Registration is closed</b><span>Registration for 2026 Fall House League closed Sat, Nov 21.</span><span>Already signed up? <u>Email me my link</u></span></div>';
+      var opt = '<div class="opt"><b>U9 Rookie</b><span class="meta">$130 · early bird</span><div class="fit' + (v === 'next' ? ' r8' : '') + '">This child gets a spot.</div></div>';
+      return back + head + '<div class="cc" style="--g:24px">' +
+        fcard('Child 1', [['First name', 'Last name'], ['Date of birth'], '<div class="rel">' + (v === 'next' ? mk(10) : '') + opt + '</div>']) +
+        btn('+ Add another child', 'bs', 'full') +
+        fcard('Parent or guardian', [['Full name'], ['Email', 'Phone']]) +
+        fcard('Waiver and agreement', [ck('I agree to the club’s code of conduct and its registration and refund policy.')]) + btn('Sign up', 'bp', 'full') + '</div>';
+    } };
+
+  PAGES.status = { label: 'Your sign-up', tab: 'league', states: [['owe', 'Owing'], ['paid', 'All paid'], ['dead', 'Link no longer works']],
+    body: function (v, ph, st) {
+      var back = '<span class="back" data-go="season">← Back to 2026 Fall House League</span>';
+      if (st === 'dead') return back + title(v, 'This link no longer works') + '<p class="meta">Each new email replaces the last link. Enter the email you signed up with and we’ll send you a new one.</p>' +
+        '<div class="fcard"><div class="fld"><label>Email</label><span class="inp"></span></div>' + btn('Email me my link', 'bp', ph ? 'full' : '') + '</div>';
+      var head = title(v, 'Your sign-up', { sub: '2026 Fall House League' });
+      var kidsToday = '<div class="stack12">' +
+        '<div class="cardv"><div class="rowx"><b>Maya</b>' + chip('Accepted') + '</div><span class="meta">U9 Rookie · $150.00</span></div>' +
+        '<div class="cardv"><div class="rowx"><b>Leo</b>' + chip('Waitlist · 2nd', 'neutral') + '</div><span class="meta">U9 Rookie</span></div></div>';
+      var kidsNext = '<div class="rel">' + mk(5) + list(['<div class="yrow"><span><b>Maya</b><span class="s">U9 Rookie · $150.00</span></span>' + chip('Accepted') + '</div>', '<div class="yrow"><span><b>Leo</b><span class="s">U9 Rookie</span></span>' + chip('Waitlist · 2nd', 'neutral') + '</div>']) + '</div>';
+      var kids = v === 'today' ? kidsToday : kidsNext;
+      var ask = '<div class="cardv' + same(v) + '"><div class="rowx"><span class="meta">Need to take a child out? The club decides; nothing changes until it does.</span>' + btn('Ask to withdraw a child', 'bs', 'sm') + '</div></div>';
+      if (st === 'paid') return back + head + kids + '<div class="kl' + same(v) + '"><p class="ct">Everything is paid.</p></div>' + ask;
+      var topay = '<div class="kl rel">' + (v === 'next' ? mk(10) : '') + '<div class="topay"><span style="font-weight:700">To pay</span><span class="' + (v === 'today' ? 'amt750' : 'amt') + '">$150.00</span></div></div>';
+      var pay = v === 'today'
+        ? '<div class="kl"><div class="paybox"><h2 class="h2x">Pay online</h2><div class="fld"><label>Email for the receipt</label><span class="inp r6"></span></div><div class="btnrow">' + btn('Pay by card', 'bp', 'h48' + (ph ? ' full' : '')) + btn('Pay by bank', 'bo', 'h48' + (ph ? ' full' : '')) + '</div></div></div>'
+        : '<section class="psec rel">' + mk(4) + '<div class="psh"><h2>Pay online</h2></div><div class="kl"><div class="paybox"><div class="fld"><label>Email for the receipt</label><span class="inp"></span></div><div class="btnrow">' + btn('Pay by card', 'bp', ph ? 'full' : '') + btn('Pay by bank', 'bo', ph ? 'full' : '') + '</div></div></div></section>';
+      return back + head + kids + topay + pay + ask;
+    } };
+
+  PAGES.tourn = { label: 'Tournaments', tab: 'tourn', states: [['both', 'Current and past'], ['past', 'Past only']],
+    body: function (v, ph, st) {
+      var cur = [[TOUR, 'Tue, Nov 3 – Thu, Nov 5', chip('Live now'), 'tourney'], ['2027 Spring Invitational', 'Fri, May 14 – Sun, May 16, 2027', chip('Registration open'), 'tourn']];
+      var past = [['2025', 'Fall Classic', 'U11', 'Halton Hawks U11 Jr', 8, 20], ['2025', 'Fall Classic', 'U13', 'Lions U13', 6, 15], ['2025', 'Spring Invitational', 'U13', 'Eagles U13', 6, 15]];
+      var a, b;
+      if (ph) {
+        a = list(cur.map(function (r) { return row(r[0], r[1], r[2], r[3]); }));
+        b = list(past.map(function (r) { return row(r[0] + ' ' + r[1] + ' · ' + r[2], 'Champion ' + r[3] + ' · ' + r[4] + ' teams · ' + r[5] + ' games', '', 'tourn'); }));
+      } else {
+        a = '<table class="ktab' + (v === 'today' ? ' soft' : '') + '"><thead><tr><th>Tournament</th><th style="width:300px">Dates</th><th style="width:180px">Status</th><th class="cv"></th></tr></thead><tbody>' +
+          cur.map(function (r) { return '<tr data-go="' + r[3] + '"><td class="nm">' + r[0] + '</td><td>' + r[1] + '</td><td>' + r[2] + '</td><td class="cv"><i class="chev"></i></td></tr>'; }).join('') + '</tbody></table>';
+        b = '<table class="ktab' + (v === 'today' ? ' soft' : '') + '"><thead><tr><th>Season</th><th>Tournament</th><th>Division</th><th>Champion</th><th style="text-align:right">Teams</th><th style="text-align:right">Games</th><th class="cv"></th></tr></thead><tbody>' +
+          past.map(function (r) { return '<tr data-go="tourn"><td>' + r[0] + '</td><td class="nm">' + r[1] + '</td><td>' + r[2] + '</td><td>' + r[3] + '</td><td style="text-align:right">' + r[4] + '</td><td style="text-align:right">' + r[5] + '</td><td class="cv"><i class="chev"></i></td></tr>'; }).join('') + '</tbody></table>';
+      }
+      var count = st === 'past' ? 3 : 5;
+      var A = st === 'past' ? '' : sec(v, 'Current and upcoming', '<div class="rel">' + (v === 'next' ? mk(10) : '') + a + '</div>', { n: 2 });
+      var B = sec(v, 'Past tournaments', b, { n: 3, same: 1 });
+      return tabTitle(v, 'Tournaments', count + ' tournaments') + (v === 'next' ? '<div class="rel">' + mk(2) + '</div>' : '') + A + B;
+    } };
+
+  PAGES.about = { label: 'About', tab: '', states: [['all', 'Everything set']],
+    body: function (v, ph) {
+      var nx = v === 'next';
+      var head = title(v, 'About the club');
+      var text = '<div class="kl' + same(v) + '"><p class="ct' + (nx ? ' prose' : '') + '">' + ABOUT + ' Every team plays out of Lions Park and Kinsmen Park, and the house league plays on Thursday evenings.</p></div>';
+      var contacts = sec(v, 'Who to contact', list(['<div class="contact"><p>President<b>president@lakeshorelightning.ca</b></p>' + copyBtn(ph) + '</div>', '<div class="contact"><p>Registrar<b>registrar@lakeshorelightning.ca</b></p>' + copyBtn(ph) + '</div>']), { same: 1 });
+      var docRow = function (t) { return '<div class="kr extl' + (nx ? '' : ' d48') + '"><span class="krm"><span class="krn">' + t + '</span></span><span class="ext">' + I.ext + '</span></div>'; };
+      var docs = sec(v, 'Documents and policies', '<div class="rel">' + (nx ? mk(7) : '') + list(['<div class="lband">Policies</div>', docRow('Code of conduct'), docRow('Registration and refund policy'), '<div class="lband">Forms</div>', docRow('Medical information form')]) + '</div>');
+      var qa = sec(v, 'Questions families ask', '<div class="rel">' + (nx ? mk(10) : '') + list(['<div class="qa' + (nx ? ' n' : '') + '"><h3>When are tryouts?</h3><p>Rep tryouts run in November for the next season. Each team’s tryout page lists its days.</p></div>']) + '</div>');
+      var spons = sec(v, 'Sponsors', list([row('Riverside Dental', '', '', '', 'nochev'), row('Hall Real Estate', '', '', '', 'nochev')]), { same: 1 });
+      return head + text + contacts + docs + qa + spons;
+    } };
+
+  /* ---------- the tournament frame (the hop) ---------- */
+  function tourFrame(v, w, st) {
+    var ph = w < 1024;
+    var bh = ph ? 72 : (v === 'today' ? 88 : 72);
+    var name = st === 'long' ? LONGT : TOUR;
+    var band = '<header class="tb" style="min-height:' + (bh + 3) + 'px' + (ph ? ';padding:0 8px 0 16px;border-bottom:0' : '') + '"><div class="cid" style="min-height:' + bh + 'px;padding-block:6px"><span class="clogo">LL</span><span style="min-width:0"><span class="cname"' + (ph ? ' style="font-size:20px"' : '') + '>' + name + '</span><span class="tsub">Tue, Nov 3 – Thu, Nov 5 · Live now</span></span></div>' +
+      '<div class="tbr">' + (ph ? '' : '<span class="hb" data-go="home" style="text-decoration:underline;text-underline-offset:3px;white-space:nowrap">Hosted by ' + CLUB + ' ›</span>') + '<span>Sign in</span></div></header>';
+    var game = function (live, tm, ctx, a, sa, b, sb) { return '<div class="gr' + (live ? ' live' : '') + '"><div class="gm"><span class="gw">' + tm + '</span><span class="gc">' + ctx + '</span></div><div class="gt"><div class="side"><span class="nm">' + a + '</span><b class="sc">' + sa + '</b></div><div class="side"><span class="nm">' + b + '</span><b class="sc">' + sb + '</b></div></div></div>'; };
+    var hd = function (t, n) { return '<div class="psh"><h2>' + t + (n ? ' <span class="cnt">' + n + '</span>' : '') + '</h2></div>'; };
+    var left = '<div class="psec">' + hd('Live now', 1) + list([game(true, '9:00 p.m.', 'U11 · Semifinal 2 · Diamond #2', 'Milton Bats U11 Purple (Jackson)', 2, 'Lions U11', 3)]) + '</div>' +
+      '<div class="psec">' + hd('Up next', 1) + list([game(false, '6:00 p.m. · Thu, Nov 5', 'U11 · Championship · Diamond #2', 'Halton Hawks U11 Jr (Johnstone)', '', 'Semifinal 2 winner', '')]) + '</div>';
+    var right = list([row('The playoff bracket', 'U11 · U13', '', '')]) +
+      '<div class="host"><div class="hh"><span class="clogo">LL</span><span><span class="hk" style="display:block">Hosted by</span><span class="hn">' + CLUB + '</span></span></div>' +
+      '<div class="open"><div><b>Tryouts</b><span>2 teams · Rep Nov 14–15</span></div><div><b>2026 Fall House League</b><span>Registration open</span></div></div>' + btn('Visit the club', 'bs', '', 'home') + '</div>';
+    var cw = ph ? w - 32 : Math.min(960, w - 312);
+    var stack = ph || w < 1200;
+    var content = '<div class="tcols" style="width:' + cw + 'px' + (stack ? ';grid-template-columns:minmax(0,1fr);gap:24px' : '') + '"><div class="cc" style="--g:24px">' + left + '</div><div class="cc" style="--g:24px">' + right + '</div></div>';
+    var menu = ['Overview', 'Schedule', 'Standings', 'Playoffs', 'Teams', 'Rules'];
+    var ml = menu.map(function (m, i) { return '<span' + (i === 0 ? ' class="on"' : '') + '>' + m + '</span>'; }).join('');
+    var shell = ph ? '<nav class="ctr">' + ml + '</nav><main class="tmain">' + content + '</main>'
+      : '<div class="tsh"><nav class="trail">' + ml + '</nav><main class="tmain">' + content + '</main></div>';
+    var foot = '<footer class="tfoot"><span class="fn">' + name + '</span><nav><span>Schedule</span><span>Standings</span><span>Playoffs</span><span>Teams</span><span>Rules</span></nav><span class="hb" data-go="home">Hosted by ' + CLUB + ' ›</span></footer>';
+    return '<div class="fr tfr ' + v + (ph ? ' ph' : '') + '" style="width:' + w + 'px">' + band + shell + foot + '</div>';
+  }
+  PAGES.tourney = { label: 'Tournament Overview (the hop)', tab: '', states: [['all', 'Live today'], ['long', 'A long tournament name']], body: null };
+
+  /* ---------- the ghost lines (tab 3) ---------- */
+  function lines(which, v, w) {
+    if (which === 'club') {
+      if (w < 901) return { band: 120, logo: 16, l: 16, r: w - 16 };
+      var g = geo('home', v, w, 'all');
+      return { band: 75, logo: edgeOf(w), l: g.l, r: g.l + g.w };
+    }
+    if (w < 1024) return { band: 120, logo: 16, l: 16, r: w - 16 };
+    return { band: v === 'today' ? 91 : 75, logo: 32, l: 280, r: 280 + Math.min(960, w - 312) };
+  }
+  function ghosts(which, v, w) {
+    var other = which === 'club' ? 'tour' : 'club';
+    var me = lines(which, v, w), o = lines(other, v, w);
+    var name = other === 'club' ? 'club' : 'tournament';
+    var h = '<i class="gh h" style="top:' + o.band + 'px"><em>' + name + ' band ends ' + o.band + '</em></i>';
+    if (o.band !== me.band) h += '<i class="gh h me" style="top:' + me.band + 'px"><em>this band ends ' + me.band + '</em></i>';
+    if (o.l !== me.l) h += '<i class="gh v" style="left:' + o.l + 'px;top:' + o.band + 'px"><em>' + name + ' content ' + o.l + '</em></i>';
+    if (o.r !== me.r) h += '<i class="gh v" style="left:' + o.r + 'px;top:' + o.band + 'px"><em>' + o.r + '</em></i>';
+    if (o.logo !== me.logo) h += '<i class="gh v" style="left:' + o.logo + 'px;bottom:auto;height:' + o.band + 'px"><em>' + name + ' logo</em></i>';
+    return h;
+  }
+
+  /* ---------- per-page change lists ---------- */
+  var CH = {
+    home: [['res', 'One 960 column on the logo’s edge, split like the tournament Overview, about 540 + 392 (was 744 + 380 in 1,152).', '1'], ['res', '24 between sections (was 20).', '3'], ['res', 'Section headings sit in the tournament’s 44 px heading row; the type is unchanged.', '4'], ['res', 'House-league seasons join one framed list (they were separate cards).', '5'], ['unc', 'Open now, the team grid (DC-01; three tiles a row at 540), the tournament rows, About and Follow, the sponsor strip, the banner strip (desk only, above the 28).'], ['unc', 'The band and footer. The band stays 72 px; the tournament comes down to it (C1).']],
+    teams: [['res', 'No "Teams" title: the lit tab names the page. Its "8 teams" line stays, under the Born in pill.', '2'], ['res', '960 wide (was 744, chosen to match the home’s left column, which also moves).', '1'], ['res', '24 between sections (was 16).', '3'], ['unc', 'Born in: the house pick-one pill you ruled on 10-22 (a registered exception to the toolbar rule).'], ['unc', 'The desk table (Team · Tryouts, each team’s Born line), the phone rows, the Rep band.']],
+    team: [['res', 'Name at 24 px (was 32), a tournament team’s size (C4).', '2'], ['res', 'The two columns split the 960 like the tournament’s (was 744 + 380 in 1,152).', '1'], ['res', '28 to the band (was 20) and 24 between sections (was 20, ruled 10-20: see C5).', '3'], ['res', 'Subscribe at a desk is the kit’s small outlined button (was its own: radius 9, weight 650); on a phone it stays the bare symbol.', '10'], ['new', 'No games yet: one column (today an empty 744 px column sits beside the door).', '1'], ['unc', 'The schedule’s calendar rows (a registered exception to R6), the tryout door and its filled button, Coaches.']],
+    tryouts: [['res', 'No title: the lit tab names it. The "Rep teams for the 2027 season" line stays, under the pill; with teams for two seasons there is no line, as today.', '2'], ['res', '960 (was 1,152).', '1'], ['res', 'Out of season the tab is gone, so the page keeps its name, at 24, on the logo’s edge (today a centred 640 column, 16 from the band).', '1'], ['unc', 'Rows, the Rep band, chips, the Born in pill.']],
+    tryout: [['res', 'On the logo’s edge at 960 (was a centred 640, 272 px in from the logo: it broke the 08-01 repair rule).', '1'], ['res', '28 to the band (was 16). Name 24 (was 32).', '2'], ['res', 'Sign up for tryouts is full width on a phone and its own width at a desk.', '11'], ['unc', '"← 15U AAA" stays: the tab row does not go to one team (10-20 rule).'], ['unc', 'Tryout days, From the club, the coach’s questions line, the contact cards, the bare phone symbols.']],
+    tform: [['res', 'On the logo’s edge (was centred); the form keeps its 640.', '1'], ['res', '28 to the band (was 32); phone edge 16 (was 24).', '2'], ['res', 'The line over the title keeps the team and drops the club’s name (the band says it). Title 24 (was 32).', '2'], ['unc', 'The form’s cards, fields, words and button; the closed and sent cards.']],
+    league: [['res', 'No title; each section heads its own list with a count.', '2'], ['res', '960 (was 760); 28 to the band (was 32); 24 between sections (was 40).', '1'], ['res', 'Season rows join one framed list per section; each keeps its links line.', '5'], ['res', 'Phone edge 16 (was 24).', '1']],
+    season: [['res', '960 (was 760): division and standings cards sit four across.', '1'], ['res', 'Season name 24 (was 32).', '2'], ['res', '"Divisions" and "Standings" become section headings (were 12 px capitals labels). The fact labels (Registration, Season dates, Price) stay labels.', '4'], ['res', 'The early-bird price is 16 (was 15).', '10'], ['res', '28 to the band (was 32); 24 between blocks (was 32); phone edge 16.', '3'], ['unc', 'Your 11-04 calls: the next season’s card above the title, two standings cards a row, "Email me my link" in every state, no chip once finished.']],
+    lform: [['res', '28 to the band (was 32); phone edge 16 (was 24).', '2'], ['res', 'Title 24 (was 32); the club-name line over it goes (the band says it).', '2'], ['res', 'The division box’s fit line: 14 px, radius 8 (was 14.4 and 6).', '10'], ['unc', 'The 640 form, its cards and fields; the three closed cards.']],
+    status: [['res', '640 like the other forms (was 560).', '1'], ['res', 'The children join one framed list (were a card each).', '5'], ['res', '"Pay online" is a section heading at 16/700 (it fell to the 800-weight title face). The total is 20 px in the title face (was 18.4 at weight 750). Receipt field and pay buttons on the kit: 44 tall, radius 8, the field border (were 48, radius 6, a hairline). Touches the tournament build: the tournament’s pay page and Register share this pay block.', '10'], ['res', '28 to the band (was 32); phone edge 16 (was 24).', '2'], ['unc', 'What the page says: first names only, the ask-to-withdraw card, the two ended screens (11-01).']],
+    tourn: [['res', 'No title; the "5 tournaments" line goes, because each section’s count says it.', '2'], ['res', 'Table cells in text ink (were soft; Teams already uses text).', '10'], ['unc', '960 (drawn for the six past columns, 10-25), 28 to the band, 24 between sections, both tables and their columns.']],
+    about: [['res', 'On the logo’s edge at 960 (was a centred 760, 212 px in from the logo: it broke the 08-01 repair rule).', '1'], ['res', '28 to the band (was 16); 24 between sections (was 20). Title 24 (was 32): About has no tab, so it keeps its name.', '2'], ['res', 'Documents are link rows, 60 tall at 16 px (were 48 at 15 px); they keep the open-in-a-new-tab symbol, not a chevron.', '7'], ['res', 'A question is 16/600 (was 15/700); prose held to 720 px inside its box.', '10'], ['unc', 'Who to contact (role, address, Copy), the club’s own document bands, Sponsors.']],
+    tourney: [['res', 'The band comes down to 72 px at a desk (was 88), the club’s ruled height (C1). A two-line name grows it, as the club band does.', '2'], ['unc', 'Everything else is the tournament standard you ruled (A1–A14). "Hosted by" in the band, the host card or the footer opens the club home.']]
+  };
+  var TAGW = { res: 'RESTYLED', new: 'NEW', unc: 'UNCHANGED' };
+
+  /* ---------- rule sheet (club column) ---------- */
+  var RULES = [
+    { n: 1, t: 'Width', s: 'One 960 column, left-aligned to the frame’s edge.', today: 'Pages are 560, 640, 744, 760, 960 or 1,152 wide, each drawn with its own page (Teams 744 to match the home’s left column; Tournaments 960 for six past columns; the home 1,200). About, a tryout page and the tryout form are centred, starting 404–472 px from the window while the logo is at 192.', v: 'amend', std: 'Club pages: one 960 column on the logo’s edge (the 08-01 repair rule: a heading lands under the logo). Forms are 640 on both sites. The home and a team’s page split the 960 like the tournament’s two-column pages (about 540 + 392), from the club’s desk width. Prose inside a box is held to 720 px. Phone: 16 px sides on every page.', ph: 'Amends R1’s club clause and corrects its form note. See C2.' },
+    { n: 2, t: 'Top', s: '28 below the band; no page title.', today: '16, 20, 28 or 32 below the band. Every page but the home opens with a 32 px title, even where the lit tab says the same word.', v: 'amend', std: '28 below the band (phone 16). No title where a lit tab names the page; its line under the title stays (Teams’ count, Tryouts’ season). A page about one thing (a team, a tryout, a season, a form, About, Tryouts out of season) keeps its name, at 24 px in the title face.', ph: 'Amends R2 for a frame whose tabs sit in the band. See C3 and C4.' },
+    { n: 3, t: 'Rhythm', s: '24 between sections.', today: '12, 16, 20, 24, 32 or 40 between sections. The team page’s 20 was ruled on 10-20, to match the home.', v: 'breaks', std: '24 between sections on every club page, the home included.', ph: 'Reverses the 10-20 team-page 20 px. See C5.' },
+    { n: 4, t: 'Headings', s: 'One heading row; bands inside lists.', today: 'Section headings are already 16/700, and bands already 12 px capitals (the club kit was the source). The season page uses capitals labels as its Divisions and Standings headings; Pay online falls to an 800-weight title face.', v: 'meets', std: 'The tournament’s heading row (the same 16/700 in a 44 px row, with a count pill and a right link) on every club section. The strays move onto it.', ph: 'Same type; one part.' },
+    { n: 5, t: 'Lists', s: 'Rows of a kind are one framed list.', today: 'Framed lists almost everywhere. Not: the house-league seasons (separate cards on the home and the House league page) and the children on Your sign-up (a card each).', v: 'breaks', std: 'Both join one list. Registered exceptions: the home’s team grid (DC-01, ruled 10-19), and a season row’s links line.', ph: '' },
+    { n: 6, t: 'One game, two forms', s: 'Stacked or one line.', today: 'A team’s page lists its season as calendar rows: the date and time in a 96 px column, then the game (ruled 10-19 and 10-20).', v: 'amend', std: 'Does not fit a club team page: it is the team’s calendar, not a tournament’s scoreboard. Registered exception: the club calendar row. Club pages that list games (the house-league schedule, C7) use the game row.', ph: 'Amends R6 with an exception.' },
+    { n: 7, t: 'Link row', s: 'The club kit’s row.', today: 'The club kit’s row is the link row; the standard took it from here. About’s documents (48 tall, 15 px) are the one list that doesn’t use it.', v: 'meets', std: 'Documents become link rows. A row that opens another site shows the open-in-a-new-tab symbol where the chevron would be. The club’s door (a card with the club edge and a button) keeps its name.', ph: 'Adds the external-link case to R7.' },
+    { n: 8, t: 'Toolbar', s: '44 tall, radius 8.', today: 'Born in (Teams, Tryouts) is the house pick-one pill you ruled on 10-22 ("not view pills").', v: 'amend', std: 'Registered exception: Born in stays the house pill. A club page has one control; the tournament toolbar’s select is for Division, Pool and Search together.', ph: 'Keeps a ruled control.' },
+    { n: 9, t: 'State', s: 'Green = live; a 3 px edge marks a state.', today: 'The club colour’s 3 px edge already marks open (Open now, the tryout door, Up next); green chips mean open or live. The pay page’s "clearing" heading uses the information blue ruled in Stage 12c.', v: 'meets', std: 'Keep, the blue included (a ruled information colour, not a state edge). The division box’s fit edge moves to radius 8.', ph: '' },
+    { n: 10, t: 'Boxes and type', s: 'Radius 8; six text sizes.', today: 'Eleven text sizes in page bodies (incl. 13, 14.4, 15, 18.4, 19), weights 650, 750 and 800, corners 6, 9 and 12, one floating menu with a shadow (the Born in pill’s, shared with the portal).', v: 'breaks', std: 'Type 12 · 14 · 16 · 18 · 20 · 24; weights 400, 600, 700; radius 8; no shadows on page parts. The club’s chosen title face stays (ruled 10-19). The band, footer and the shared pill’s menu are exempt.', ph: '' },
+    { n: 11, t: 'Weight', s: 'Filled only for the page’s main job.', today: 'Filled: Sign up for tryouts, Submit tryout application, Register now, Sign up, Pay by card, Email me my link, and the team page’s tryout door. On a phone Subscribe, Directions and Copy are bare symbols (ruled 10-20). Pay buttons are 48 tall.', v: 'meets', std: 'Keep, the bare phone symbols included. Pay buttons come to 44. A desk’s "Sign up for tryouts" takes its own width (a full-width filled button across 960 px reads as a banner).', ph: '' }
+  ];
+
+  /* ---------- asks ---------- */
+  var ASKS = [
+    { n: 'C1', t: 'One band height for the club and its tournaments', lab: 'Touches the tournament build (the band)',
+      p: 'The club band is 72 px: you ruled it on 08-01 and again on 10-19 (a branded bar with a 44 px logo). The tournament band is 88 px at a desk. That number was drawn in the Stage 1 drawings you approved on 10-27, but no ask chose it, and below 1,024 px the tournament band is already 72. So every click into a tournament drops the whole page 16 px. The tournament band always carries its dates line; the club’s second line (a tagline) is optional.',
+      o: ['The tournament’s desk band comes down to 72 px, as a minimum: a two-line name grows it, the way the club band grows.', 'The club band goes up to 88 px (reverses two rulings).', 'Leave both.'],
+      r: '<b>Recommend 1.</b> The 72 is ruled twice and the 88 is a drawing’s size. A long name (try the "A long tournament name" state on tab 4) still fits.', go: 'hop' },
+    { n: 'C2', t: 'One content width on every club page, and one form width on both sites', lab: 'Touches the tournament build (R1’s wording; the Register form)',
+      p: 'Each club page was drawn at its own width: Teams 744 to share the home’s left column (Stage 4b-2a), Tournaments 960 for its six past columns (4f, 10-25), the home at 1,200 (4b-2a), and the league pages at 760 and 640 under your 08-01 repair ruling, which said each page keeps its own reading width but starts under the logo. About, a tryout page and the tryout form also break that ruling by centring; they move to the logo’s edge whatever you rule here. Forms: the club’s are 640, the tournament’s Register is 680 and its pay page 640.',
+      o: ['960 for every club page, as on every tournament page, with the two-column pages split the tournament’s way (about 540 + 392). Forms 640 on both sites, so the tournament’s Register comes in from 680. This replaces the 08-01 per-page widths.', 'Keep each page’s own width (the 08-01 rule as it stands); fix only the centring.', 'Keep 1,152 for the home and a team’s page; 960 for the rest.'],
+      r: '<b>Recommend 1.</b> The right edge stops moving between club pages, and club content is the same width as the tournament’s, which is the hop’s biggest jump after the band. The cost: on a wide screen the home’s left column narrows from 744 to about 540, so the team grid shows three tiles a row instead of four. The 08-01 reason for narrower measures (readable lines) is kept by holding prose to 720 px inside its box.', go: 'why' },
+    { n: 'C3', t: 'No title where a lit tab names the page', lab: 'Touches the tournament build (R2’s wording)',
+      p: 'Teams, Tryouts, House league and Tournaments open with a 32 px title that repeats the lit tab in the band (or the phone tab row). The titles were drawn with their pages (Teams "with a count" in 4b-2a, the Tryouts title in Ask 14A, Tournaments in 4f). No tournament page has one: R2 dropped them because the menu names the page.',
+      o: ['Drop those four titles. The line under each stays (Teams’ count, Tryouts’ season), right under the toolbar. Tryouts out of season, when its tab is gone, keeps its title.', 'Keep them.'],
+      r: '<b>Recommend 1.</b> It matches the tournament and gives the content back about 50 px. The count and the season, which were the reason for the titles’ lines, stay.', go: 'pages' },
+    { n: 'C4', t: 'A page about one thing: its name at 24 px', lab: '',
+      p: 'A team’s page, a tryout, a season, a form and About keep their name as a title. Today it is the club kit’s 32 px step (DC-05). The tournament team page’s name is 24 px (A13), and the standard’s type scale stops at 24.',
+      o: ['24 px in the title face, on both sites.', 'Keep 32 on the club side (one more size that changes on the hop).'],
+      r: '<b>Recommend 1.</b> The club’s 15U AAA reads the same size on its club page and its tournament page.', go: 'pages' },
+    { n: 'C5', t: '24 px between sections', lab: '',
+      p: 'Club pages use 12, 16, 20, 24, 32 and 40 between sections; tournaments use 24 (R3, ruled). On 10-20 you ruled 20 for the team page, because 20 was the club home’s number.',
+      o: ['24 on every club page, the home included.', 'Keep 20 on the club side.'],
+      r: '<b>Recommend 1.</b> The 10-20 reason was "match the home"; the home moves to 24 too, so that reason still holds, and the hop into a tournament keeps one rhythm.', go: 'pages' },
+    { n: 'C6', t: 'A team’s two pages link to each other', lab: 'Touches the tournament build (a tournament team page)',
+      p: 'When the club’s own 15U AAA plays in its tournament, the team has a club page and a tournament team page, and neither links to the other. A family on one has to go back through the home to find the other.',
+      o: ['Link them, for the host club’s own teams only: the tournament team page gets a link row to the team’s club page, and the club page’s schedule rows for that tournament open the tournament team page.', 'No: this round stays on layout.'],
+      r: '<b>Recommend 1</b>, but it is a small feature rather than layout; say 2 and it leaves the round. Teams from other clubs have no club page here, so nothing changes for them.', go: 'hop' },
+    { n: 'C7', t: 'Two house-league pages under the signed-in direction', lab: '',
+      p: 'The house league’s Schedule and Standings pages are public today. Your 10-29 direction keeps public to tournaments, team pages and the doors a family needs before it has an account. The 10-31 census named the team page, its calendar and the tryout pages as staying, and you ruled the public season page on 11-04. These two weren’t named. I applied the standard to them on paper and did not draw them.',
+      o: ['Treat them as staying public for this build. The public season page links to them, and the work is small (the phone edge and the top).', 'Mark them to retire with the signed-in app and leave them untouched.'],
+      r: '<b>Recommend 1.</b> Retiring a page is its own decision, not part of a layout pass.', go: '' }
+  ];
+
+  /* ---------- edge map ---------- */
+  var EDGE_T = [['Home', 192, 1344, '28'], ['Teams', 192, 936, '28'], ['A team', 192, 1344, '20'], ['Tryouts', 192, 1344, '28'], ['Tryouts, off-season', 464, 1072, '16'], ['A tryout', 464, 1072, '16'], ['Tryout sign-up', 472, 1064, '32'], ['House league', 192, 952, '32'], ['A season', 192, 952, '32'], ['League sign-up', 192, 832, '32'], ['Your sign-up', 192, 752, '32'], ['Tournaments', 192, 1152, '28'], ['About', 404, 1132, '16']];
+  var FORMS = { 'Tryout sign-up': 1, 'League sign-up': 1, 'Your sign-up': 1 };
+  function renderEdges() {
+    var h = '<span class="hd">Page</span><span class="hd">0 — 1,536 px</span><span class="hd tph">Starts</span>';
+    h += '<div class="emap-h">Club, today</div>';
+    EDGE_T.forEach(function (r) { h += line(r, 'bar', false); });
+    h += '<div class="emap-gap"></div><div class="emap-h">Club, proposed</div>';
+    EDGE_T.forEach(function (r) { h += line([r[0], 192, FORMS[r[0]] ? 832 : 1152, '28'], 'bar ok', false); });
+    h += '<div class="emap-gap"></div><div class="emap-h">Tournament pages (ruled; Part 1 built 11-05)</div>';
+    h += line(['Every page', 280, 1240, '28'], 'bar tr', true);
+    document.getElementById('emap').innerHTML = h;
+    function line(r, cls, rail) {
+      var l = r[1] / W * 100, w = (r[2] - r[1]) / W * 100, lg = (rail ? 32 : 192) / W * 100;
+      return '<span class="pn' + (rail ? ' tr' : '') + '">' + r[0] + '</span><div class="etrack">' + (rail ? '<div class="rail"></div>' : '') + '<div class="' + cls + '" style="left:' + l + '%;width:' + w + '%"></div><i class="logo" style="left:' + lg + '%"></i></div><span class="tp">' + r[3] + '</span>';
+    }
+  }
+  function renderRules() {
+    var h = '<div class="rule hd"><span>#</span><span>Rule</span><span>Club pages today</span><span>Verdict</span><span>On a club page</span></div>';
+    RULES.forEach(function (r) {
+      h += '<div class="rule" id="rule-' + r.n + '"><span class="rn">' + r.n + '</span><div><h3>' + r.t + '</h3><span class="tsd">' + r.s + '</span></div><div class="today">' + r.today + '</div><span class="verd ' + r.v + '">' + r.v + '</span><div class="std">' + r.std + (r.ph ? '<span class="ph">' + r.ph + '</span>' : '') + '</div></div>';
+    });
+    document.getElementById('rulelist').innerHTML = h;
+  }
+  function renderAsks() {
+    document.getElementById('asklist').innerHTML = ASKS.map(function (a) {
+      return '<div class="ask"><span class="an">' + a.n + '</span><h3>' + a.t + '</h3>' + (a.lab ? '<span class="lab">' + a.lab + '</span>' : '') + '<p>' + a.p + '</p><ol>' + a.o.map(function (x) { return '<li>' + x + '</li>'; }).join('') + '</ol><p class="rec">' + a.r + '</p>' +
+        (a.go ? '<button type="button" class="rref see" data-tab="' + a.go + '">See it drawn</button>' : '') + '</div>';
+    }).join('');
+  }
+
+  /* ---------- the pages tab ---------- */
+  var ORDER = ['home', 'teams', 'team', 'tryouts', 'tryout', 'tform', 'league', 'season', 'lform', 'status', 'tourn', 'about', 'tourney'];
+  var state = { page: 'home', v: 'next', s: 'desk', st: {} };
+  function store(k, v) { try { localStorage.setItem('cps-' + k, v); } catch (e) { /* storage blocked: fine */ } }
+  function load(k) { try { return localStorage.getItem('cps-' + k); } catch (e) { return null; } }
+  function curSt() { var p = PAGES[state.page]; return state.st[state.page] || p.states[0][0]; }
+  function renderPick() {
+    document.getElementById('pagepick').innerHTML = ORDER.map(function (k) {
+      return '<button type="button" data-p="' + k + '" aria-pressed="' + (k === state.page) + '">' + PAGES[k].label + '</button>';
+    }).join('');
+    var p = PAGES[state.page], s = curSt();
+    document.getElementById('staterow').hidden = p.states.length < 2;
+    document.getElementById('statepick').innerHTML = p.states.map(function (x) { return '<button type="button" data-st="' + x[0] + '" aria-pressed="' + (x[0] === s) + '">' + x[1] + '</button>'; }).join('');
+  }
+  function renderChanges() {
+    document.getElementById('changes').innerHTML = CH[state.page].map(function (c) {
+      return '<li><span class="tag ' + c[0] + '">' + TAGW[c[0]] + '</span><span>' + c[1] + (c[2] ? ' <button type="button" class="rref" data-rule="' + c[2] + '">Rule ' + c[2] + '</button>' : '') + '</span></li>';
+    }).join('');
+  }
+  function renderStage() {
+    var st = document.getElementById('stage');
+    var w = state.s === 'phone' ? PW : W;
+    st.innerHTML = state.page === 'tourney' ? tourFrame(state.v, w, curSt()) : clubFrame(state.page, state.v, w, curSt());
+    st.classList.toggle('phone', w === PW);
+    document.getElementById('capL').textContent = (state.page === 'tourney' ? 'Tournament' : 'Club') + ' · ' + (w === PW ? 'phone 390' : 'desktop 1,536') + ' · ' + (state.v === 'next' ? 'proposed' : 'today') + ' · ' + PAGES[state.page].label;
+    fit('stage', w, document.getElementById('actual').checked);
+  }
+  function fit(id, w, actual) {
+    var st = document.getElementById(id);
+    var f = st.firstElementChild;
+    if (!f) return;
+    st.classList.toggle('actual', !!actual);
+    if (actual) { f.style.transform = 'none'; st.style.height = 'auto'; return; }
+    var s = Math.min(1, st.clientWidth / w);
+    f.style.transform = 'scale(' + s + ')';
+    st.style.height = Math.ceil(f.offsetHeight * s) + 'px';
+  }
+  function setPage(p) { if (!PAGES[p]) return; state.page = p; store('page', p); renderPick(); renderChanges(); renderStage(); }
+  function press(sel, attr, val) { Array.prototype.forEach.call(document.querySelectorAll(sel), function (b) { b.setAttribute('aria-pressed', String(b.getAttribute(attr) === val)); }); }
+
+  /* ---------- the hop tab ---------- */
+  var hop = { h: 'club', v: 'next', w: 1536 };
+  function renderHop() {
+    var st = document.getElementById('hstage');
+    st.innerHTML = hop.h === 'club' ? clubFrame('home', hop.v, hop.w, 'all') : tourFrame(hop.v, hop.w, 'all');
+    st.classList.toggle('phone', hop.w < 901);
+    if (document.getElementById('ghost').checked) st.firstElementChild.insertAdjacentHTML('beforeend', ghosts(hop.h, hop.v, hop.w));
+    document.getElementById('hcap').textContent = (hop.h === 'club' ? 'Club home' : 'Tournament Overview') + ' · ' + hop.w.toLocaleString('en-CA') + ' px · ' + (hop.v === 'next' ? 'proposed' : 'today');
+    fit('hstage', hop.w, false);
+  }
+
+  /* ---------- tabs ---------- */
+  var TABIDS = ['why', 'rules', 'hop', 'pages', 'asks'];
+  function showTab(id) {
+    if (TABIDS.indexOf(id) < 0) id = 'why';
+    TABIDS.forEach(function (t) {
+      document.getElementById('v-' + t).hidden = t !== id;
+      document.getElementById('t-' + t).setAttribute('aria-selected', String(t === id));
+    });
+    if (location.hash !== '#' + id) { try { history.replaceState(null, '', '#' + id); } catch (e) { location.hash = id; } }
+    if (id === 'pages') renderStage();
+    if (id === 'hop') renderHop();
+  }
+  function goRule(n) {
+    showTab('rules');
+    var el = document.getElementById('rule-' + n);
+    if (!el) return;
+    el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    el.classList.add('flash');
+    setTimeout(function () { el.classList.remove('flash'); }, 1600);
+  }
+
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest('[data-tab]'); if (t) { showTab(t.dataset.tab); return; }
+    var r = e.target.closest('[data-rule]'); if (r) { goRule(r.dataset.rule); return; }
+    var g = e.target.closest('[data-go]');
+    if (g && e.target.closest('#hstage')) {
+      if (g.dataset.go === 'tourney') { hop.h = 'tour'; press('#hseg button', 'data-h', 'tour'); renderHop(); }
+      else if (g.dataset.go === 'home') { hop.h = 'club'; press('#hseg button', 'data-h', 'club'); renderHop(); }
+      return;
+    }
+    if (g && g.dataset.go) { setPage(g.dataset.go); return; }
+    var p = e.target.closest('#pagepick [data-p]'); if (p) { setPage(p.dataset.p); return; }
+    var s = e.target.closest('#statepick [data-st]'); if (s) { state.st[state.page] = s.dataset.st; renderPick(); renderStage(); return; }
+    var v = e.target.closest('#vseg [data-v]'); if (v) { state.v = v.dataset.v; store('v', state.v); press('#vseg button', 'data-v', state.v); renderStage(); return; }
+    var sc = e.target.closest('#sseg [data-s]'); if (sc) { state.s = sc.dataset.s; press('#sseg button', 'data-s', state.s); renderStage(); return; }
+    var d = e.target.closest('#dseg [data-d]'); if (d) { document.body.classList.toggle('only', d.dataset.d === 'only'); press('#dseg button', 'data-d', d.dataset.d); return; }
+    var h = e.target.closest('#hseg [data-h]'); if (h) { hop.h = h.dataset.h; press('#hseg button', 'data-h', hop.h); renderHop(); return; }
+    var hv = e.target.closest('#hvseg [data-hv]'); if (hv) { hop.v = hv.dataset.hv; press('#hvseg button', 'data-hv', hop.v); renderHop(); return; }
+    var hd = e.target.closest('#hdseg [data-hd]'); if (hd) { hop.w = Number(hd.dataset.hd); press('#hdseg button', 'data-hd', hd.dataset.hd); renderHop(); return; }
+  });
+  document.getElementById('actual').addEventListener('change', renderStage);
+  document.getElementById('ghost').addEventListener('change', renderHop);
+  window.addEventListener('hashchange', function () { showTab(location.hash.slice(1)); });
+  function refit() {
+    if (!document.getElementById('v-pages').hidden) fit('stage', state.s === 'phone' ? PW : W, document.getElementById('actual').checked);
+    if (!document.getElementById('v-hop').hidden) fit('hstage', hop.w, false);
+  }
+  if (window.ResizeObserver) { new ResizeObserver(refit).observe(document.querySelector('.wrap')); }
+  else { window.addEventListener('resize', refit); }
+  if (document.fonts && document.fonts.ready) { document.fonts.ready.then(refit); }
+
+  var sp = load('page'); if (sp && PAGES[sp]) state.page = sp;
+  var sv = load('v'); if (sv === 'today' || sv === 'next') state.v = sv;
+  press('#vseg button', 'data-v', state.v);
+  renderEdges(); renderRules(); renderAsks(); renderPick(); renderChanges();
+  showTab(location.hash.slice(1) || 'why');
+})();
+</script>

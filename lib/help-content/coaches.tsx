@@ -5948,7 +5948,7 @@ const coachesHelp: HelpPageContent = {
         'what parents see', 'what the family sees', 'end of season recap', 'keepsake',
         'keepsake card', 'save keepsake', 'player card', 'share card', 'publish recap',
         'release recap', 'when do families get the recap', 'family link', 'follow the team', 'where did family access go'],
-      searchText: 'families family access parents guardians what a family sees season recap preview what the parent sees attendance worked on focus areas each test line first to latest result change in words how many results working on it got there parked stays off awards playing time typical range nothing invented absent not empty never called an improvement never compares players closing the season releases recaps no publish button keepsake card first name and jersey saved to their phone no public link guardian parent tier not open yet privacy review premium coaches portal schedule visibility moved to team settings sharing staff only families public link who can see games practices public page shows games and tournaments never practices calendar subscription ics feed family gets alerts when a game moves family link removed no longer a team link followers removed where did the family access card go roster page',
+      searchText: 'families family access parents guardians what a family sees season recap preview what the parent sees attendance worked on focus areas each test line first to latest result change in words how many results working on it got there parked stays off awards playing time typical range nothing invented absent not empty never called an improvement never compares players closing the season releases recaps no publish button keepsake card first name and jersey saved to their phone no public link guardian parent tier not switched on yet premium coaches portal schedule visibility moved to team settings sharing staff only families public link who can see games practices public page shows games and tournaments never practices calendar subscription ics feed family gets alerts when a game moves family link removed no longer a team link followers removed where did the family access card go roster page',
       content: (
         <p>What a player&rsquo;s family reads — the schedule and results during the season, and their child&rsquo;s <strong>season recap</strong> once it closes, which you can <strong>preview today</strong> from any player&rsquo;s page — and where the <strong>Schedule visibility</strong> setting now lives (<strong>Team settings → Sharing</strong>). Connecting a parent or guardian isn&rsquo;t open yet; the old <em>Team family access</em> card and its shareable link were removed.</p>
       ),
@@ -6028,13 +6028,13 @@ const coachesHelp: HelpPageContent = {
         {
           id: 'faq-family-recap-release',
           question: 'How do I publish the season recaps to families?',
-          answerText: 'There is no publish button. Closing your season is what hands recaps to connected families — the same action that produces your Season Wrapped. That is deliberate: once a season is closed nothing in it can be edited, so what you previewed during the season is exactly what families read. Preview each player while the season is still open, because that is when you can still record a last result or hand out an award. Note that recaps go to a player\'s connected parent or guardian, and that connection type is not open yet while a privacy review is finished, so nothing reaches a family until it is.',
+          answerText: 'There is no publish button. Closing your season is what hands recaps to connected families — the same action that produces your Season Wrapped. That is deliberate: once a season is closed nothing in it can be edited, so what you previewed during the season is exactly what families read. Preview each player while the season is still open, because that is when you can still record a last result or hand out an award. Note that recaps go to a player\'s connected parent or guardian, and that connection type is not switched on yet, so nothing reaches a family until it is.',
           keywords: ['publish recap', 'release recap', 'send recap', 'when do families get the recap', 'share recap', 'no publish button'],
           answer: (
             <>
               <p>There isn&apos;t one. <strong>Closing your season</strong> is what hands recaps to connected families — the same action that produces your Season Wrapped.</p>
               <p>That&apos;s deliberate: once a season is closed nothing in it can be changed, so what you previewed <em>during</em> the season is exactly what families read. Preview while the season is still open — that&apos;s when you can still record a last result or hand out an award.</p>
-              <p>Recaps go to a player&apos;s connected <strong>parent or guardian</strong>, and that connection isn&apos;t open yet while the privacy review is finished — so nothing reaches a family until it is.</p>
+              <p>Recaps go to a player&apos;s connected <strong>parent or guardian</strong>, and that connection isn&apos;t switched on yet — so nothing reaches a family until it is.</p>
             </>
           ),
         },
@@ -6053,11 +6053,11 @@ const coachesHelp: HelpPageContent = {
         {
           id: 'faq-family-guardian-tier',
           question: 'A parent asked to connect to their own child — can they?',
-          answerText: 'Not yet on your account. Connecting a parent or guardian to a specific player is built but switched off across the platform while a privacy review covering a child information is finished. There is no link a parent can use to ask in the meantime. When it opens you will see a guardians card on each player page: you invite a parent at the email address already on that player, and because you chose that address, someone signing in with it connects without needing a second approval from you. Up to two per player so a second household fits.',
+          answerText: 'Not yet on your account. Connecting a parent or guardian to a specific player is built but not switched on yet. There is no link a parent can use to ask in the meantime. When it opens you will see a guardians card on each player page: you invite a parent at the email address already on that player, and because you chose that address, someone signing in with it connects without needing a second approval from you. Up to two per player so a second household fits.',
           keywords: ['parent', 'guardian', 'my child', 'connect to player', 'season recap', 'not available', 'guardians card', 'when will guardians', 'two guardians'],
           answer: (
             <>
-              <p>Not yet. Connecting a parent or guardian to a <em>specific player</em> is built, but switched off across the platform while a privacy review covering a child&apos;s information is finished. There&apos;s no link a parent can use to ask in the meantime.</p>
+              <p>Not yet. Connecting a parent or guardian to a <em>specific player</em> is built, but it isn&apos;t switched on yet. There&apos;s no link a parent can use to ask in the meantime.</p>
               <p><strong>What it will look like when it opens:</strong> a <strong>guardians card</strong> on each player&apos;s page. You invite a parent at the email address already on that player — and because you chose that address, someone signing in with it connects without needing a second approval from you. Up to two per player, so a second household fits.</p>
             </>
           ),

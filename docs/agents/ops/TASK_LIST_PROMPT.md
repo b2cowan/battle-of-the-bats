@@ -1,14 +1,73 @@
 # The owner's task list: a prompt for a fresh session
 
-> **Run it with `/tasks`** (`.claude/commands/tasks.md` loads this file), optionally with a note: `/tasks since Monday`,
-> `/tasks with prompts`. Or paste everything below the line into a new Claude Code session on `dev`.
+> **Run it with `/tasks`** (`.claude/commands/tasks.md` loads this file). A bare `/tasks` asks narrowing questions first;
+> with a note (`/tasks since Monday`, `/tasks with prompts`, `/tasks updated list from the last one`) it skips the questions. Or paste everything below the line into a new Claude Code session on `dev`.
 > Written 2026-10-16 from the coordinating session that had been producing these lists by hand. It is a living reference
 > (`docs/agents/ops/`): when the owner changes how they want the list, update this file.
 
 ---
 
 You are producing the owner's **updated task list** for FieldLogicHQ's in-flight work. **This session reads and reports. It
-edits nothing, commits nothing and publishes nothing.** If you find a record that is wrong, say so in the list; don't fix it.
+edits nothing, commits nothing and publishes nothing** (one exception: it saves the finished list, see "The saved list"
+below). If you find a record that is wrong, say so in the list; don't fix it.
+
+## The saved list (owner, 2026-11-03: *"cache when you produce a list so I don't have to include the last one in each request"*)
+
+- **Where:** `.probe/last-task-list.md`. That folder is gitignored, so the file never dirties the tree or lands in a commit.
+  **Only the most recent list is kept**: overwrite the file every time, never append, never keep a second copy.
+- **When to save:** after you deliver any list, full or delta, with the Write tool. Do not save a partial answer to a
+  narrowed request ("club only", "walks only"): a narrowed list would replace the full baseline. Say so if you skip it.
+- **What the file holds:** a header, then the list exactly as delivered:
+  ```
+  <!-- saved: YYYY-MM-DD HH:MM · HEAD <short hash> · last ledger section §NNN · kind: full | delta · deltas since full: N -->
+  ```
+  then the list. `N` is 0 after a full rebuild and goes up by one after each delta.
+- **"From the last one" mode.** When the owner's note asks for the list updated from the last one (for example
+  "give me an updated list from the last one", "delta", "what changed"), do not rebuild. Read the file, then read **only
+  what changed since its header**:
+  - `git log <HEAD in the header>..HEAD`, `git status --short`, `origin/dev..dev`, and `origin/master`;
+  - ledger sections numbered above the header's §NNN, plus the status line of every walk the saved list shows as open
+    (look each section up by its number; never read the whole ledger);
+  - `git diff <HEAD in the header> -- TODO.md`, and any new `docs/projects/active/*PROMPT*.md` or `*_PLAN.md`
+    (`ls -t`, newer than the saved time);
+  - the status of every item the saved list shows as waiting on the owner (search the records before keeping it).
+  Carry everything else forward unchanged; move finished items out, add new ones, and open with a fresh "What moved".
+- **When "from the last one" must fall back to a full rebuild, and say so in one line:** the file is missing or
+  unreadable; its HEAD is not an ancestor of the current HEAD; it was saved more than three days ago; it records
+  `deltas since full: 4` or more; or the owner asked for a "full list", "everything" or "rebuild". A delta trusts the
+  saved list, so a full rebuild every few updates is what catches drift.
+- **A bare `/tasks` does not rebuild anything by itself:** it asks the narrowing questions first (next section).
+
+## A bare `/tasks` asks first (owner, 2026-11-03: *"if I ever write just /tasks I want you to return questions for me to narrow my search, I don't want you to default research everything from history"*)
+
+When `/tasks` arrives with no note, ask these with `AskUserQuestion` **before reading the ledger, TODO or plans**, in one
+call, then stop and wait. Read only the saved list's first line (its date and commit) so the first option can name it.
+
+1. **How far back?** (single choice)
+   - **Since the last saved list, <date from its header> (Recommended)**: a delta, per "The saved list". If the file is
+     missing, drop this option and say why.
+   - **Last 7 days**: the old plain-request window (a full rebuild of the projects touched this week).
+   - **Full list, every project**: the full rebuild; the costliest.
+2. **What kind of items?** (multi-select; none selected = all kinds)
+   - **Things to build or start now** (build prompts, prompts still to write)
+   - **Open owner walks** (the walk table and links)
+   - **Drawings and design sessions pending**
+   - **Waiting on me** (owner calls, rulings, production steps)
+3. **Which area?** (single choice; "Other" takes a named project)
+   - **Everything**
+   - **Billing, tax and pricing** (Plan & billing, Plans & pricing, renewal, GST/HST, Revenue readiness)
+   - **Club, house league and families** (Club Tier, house league, signed-in family accounts, bookkeeping)
+   - **Tournaments, coaches and the public site** (public tournament pages, Coaches Portal, support console)
+4. **How much detail?** (single choice)
+   - **Short: what to start now and what's waiting on me** (Wave 1, the walk table and the waiting list; later waves
+     named in one line)
+   - **The full wave list**
+
+How the answers shape the run: question 1 picks delta vs the seven-day vs the full rebuild; questions 2 and 3 filter the
+list and the reading (do not read a project's records when its area was excluded); question 4 sets the length. **Save the
+list to `.probe/last-task-list.md` only when the area was "Everything", every kind was selected (or none) and the detail
+was "The full wave list"**; a filtered or short list never replaces the baseline (the narrowed-list rule above). If the owner's answer to question 1
+is a delta, the delta rules apply and the filters only trim what is shown.
 
 ## What the owner wants (their rulings on the format)
 
@@ -23,9 +82,10 @@ edits nothing, commits nothing and publishes nothing.** If you find a record tha
   next message to a chat that is already open: a build after its gate, the next part of a staged build), goes in a
   **separate group below it**, headed as not yet (for example **"Later in this wave · don't start yet"**). Each item
   there says which chat it belongs in and what it waits for, and is never numbered in sequence with the run-now items.
-- **A plain request means the last seven days** (owner, 2026-10-19: *"whenever I ask for a simple updated task list,
-  only incorporate projects that have been worked on in the past 7 days"*). A plain `/tasks` (or "give me an updated
-  list") covers only projects with a commit, a ruling or a record in the last seven days; check git and the records,
+- **The seven-day window** (owner, 2026-10-19: *"whenever I ask for a simple updated task list,
+  only incorporate projects that have been worked on in the past 7 days"*). Since 2026-11-03 a bare `/tasks` asks first
+  (see "A bare `/tasks` asks first"); the window is what **"Last 7 days"** (or a typed "give me an updated list" with no
+  other instruction) means: it covers only projects with a commit, a ruling or a record in the last seven days; check git and the records,
   not memory. Their walks, owner calls, prompts and later waves come with them; everything else stays out of the
   waves, the walk table and "waiting on you". A stage of a project in scope is in scope even when it has had no work
   of its own (a Club Tier stage not yet drawn). End with **one line** naming what the rule left out that still gates a
@@ -144,6 +204,8 @@ project the owner started belongs in the list.
 8. **Housekeeping:** uncommitted records worth committing, and by whose session.
 9. Prompts: Wave 1's items carry their links and paste blocks in place (see the 2026-10-19 format ruling above). Later
    waves link their prompts at the end. Never paste a prompt's body.
+
+10. **Save it** to `.probe/last-task-list.md` with the header from "The saved list" (overwrite; skip for a narrowed list).
 
 Keep it scannable: headings, numbered waves, short bullets, one table for the walks. No file paths in the body except
 the walk and prompt links. End by asking nothing unless a decision is truly blocking.

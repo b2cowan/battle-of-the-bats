@@ -16,7 +16,7 @@
 .amberLine { margin: 0; font-size: var(--type-support); line-height: 1.45; color: var(--badge-warning-ink); }
 
 .declaration { display: flex; align-items: flex-start; gap: 0.6rem; line-height: 1.45; cursor: pointer; }
-.declaration input { flex: none; width: 18px; height: 18px; margin: 0.15rem 0 0; accent-color: var(--accent-lime, currentColor); }
+.declaration input { flex: none; width: 18px; height: 18px; margin: 0.15rem 0 0; }
 
 /* "Billed to … · Change": one bordered line above the choices, the line Stage 2 hangs the tax on. */
 .billedTo {
@@ -33,12 +33,35 @@
 }
 .change:hover { color: var(--text-primary); }
 
+/* The same line on the sign-up page's warm paper (/coaches/start). The two classes above read the billing kit's dark
+   tokens (--card-bg, --text-*), which on warm paper paint a navy bar; the sign-up page speaks --home-* like its fields
+   (a white card, hairline edge, ink text) and those tokens follow an explicit Dark choice on their own. */
+.billedToStart {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+  padding: 0.55rem 0.875rem; min-height: 44px;
+  border: 1px solid var(--home-field-edge); border-radius: 10px; background: var(--home-card);
+  font-family: var(--font-sans); font-size: var(--type-body); line-height: 1.4; color: var(--home-ink);
+}
+.billedToStart span { min-width: 0; overflow-wrap: anywhere; }
+.changeStart {
+  flex: none; padding: 0; border: 0; background: none; cursor: pointer;
+  font: inherit; font-weight: 650; color: var(--home-olive);
+  text-decoration: underline; text-underline-offset: 2px;
+}
+.changeStart:hover { filter: brightness(0.85); }
+.changeStart:disabled { opacity: 0.6; cursor: not-allowed; }
+
 /* The "Start your club" window's block under the club name. */
 .clubBlock { display: flex; flex-direction: column; gap: 0.9rem; margin-top: 1.25rem; }
+/* A window's body gives every <p> a 0.75rem foot (KitDialog `.body p`, one class + one element), which out-ranks the
+   `margin: 0` on .subhead / .hint / .intro (one class) — so these lines were spaced by the gap AND the foot, ~26px
+   apart instead of ~14 (owner screenshot, 2026-11-05). One more class in the selector wins without touching the
+   shared window; the block's own gap does the spacing. */
+.clubBlock > p:not(:last-child), .fields > p:not(:last-child) { margin-bottom: 0; }
 .subhead { margin: 0; font-weight: 700; color: var(--text-primary); }
 
 @media (max-width: 768px) {
   .postal { max-width: none; }
   .declaration { min-height: var(--tap-min, 44px); }
-  .change { min-height: var(--tap-min, 44px); }
+  .change, .changeStart { min-height: var(--tap-min, 44px); }
 }

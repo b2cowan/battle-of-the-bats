@@ -5,13 +5,15 @@ import { directionsHref } from '@/lib/family-schedule-format';
 import { gameDayLists } from '@/lib/public-overview';
 import { SCHEDULE_BRACKET_DOOR } from '@/lib/public-schedule';
 import { fanPlaceholder, gameRowView, gameSideNames, liveCardView } from '@/lib/public-game-row';
+import { formatShortWeekdayDate } from '@/lib/timezone';
+import { formatTime } from '@/lib/utils';
 import type { TournamentMoment } from '@/lib/tournament-moment';
 import type { FactRow, RegisterCardView } from '@/lib/public-pre-event';
 import type { ChampionCardView, HostCardView } from '@/lib/public-host-card';
 import type { Announcement, Division, Game, Tournament, Venue } from '@/lib/types';
 import PublicSectionHead from './PublicSectionHead';
-import PublicLiveCard from './PublicLiveCard';
-import { PublicGameRows } from './PublicGameRow';
+import { ScheduleMatchup, type MatchupSide } from './PublicGameRow';
+import DirectionsLink from './DirectionsLink';
 import PublicDoorRow, { PublicLinkList } from './PublicDoorRow';
 import PublicPostList from './PublicPostList';
 import PublicRegisterCard from './PublicRegisterCard';
@@ -20,6 +22,7 @@ import PublicChampions from './PublicChampions';
 import PublicHostCard, { type HostCardColours } from './PublicHostCard';
 import FollowTournamentLine from './FollowTournamentLine';
 import PublicPage from './PublicPage';
+import kit from './ClubKit.module.css';
 import styles from './PublicParts.module.css';
 
 /**
@@ -105,15 +108,19 @@ export default function TournamentOverview({
   const { live, upNext, latest } = gameDay && showSchedulePage ? gameDayLists(games, today, now) : { live: [], upNext: [], latest: [] };
 
   const divisionName = (id: string) => divisions.find(d => d.id === id)?.name ?? '';
-  const label = (g: Game) => (g.isPlayoff && g.bracketCode ? fanRoundLabel(g.bracketCode) : divisionName(g.divisionId));
+  const round = (g: Game) => (g.isPlayoff && g.bracketCode ? fanRoundLabel(g.bracketCode) : null);
   const field = (g: Game) => resolveGameVenueLabel(g, venues) || null;
-  const context = (g: Game) => [label(g), field(g)].filter(Boolean).join(' · ');
   const directions = (g: Game) => directionsHref(venues.find(v => v.id === g.venueId)?.address ?? null);
-
+  const startTime = (g: Game) => (g.time ? formatTime(g.time) : 'TBD');
+  // The head line's context: the day when it is not today (the drawing's "Thu, Nov 5 · U11 · Championship"), then the
+  // division; the stacked row adds the round after it.
+  const context = (g: Game) => [g.date && g.date !== today ? formatShortWeekdayDate(g.date) : null, divisionName(g.divisionId)]
+    .filter(Boolean).join(' · ') || null;
   const sides = (g: Game) => gameSideNames(g, teamName, fanPlaceholder);
-  const liveViews = live.map(g => liveCardView(g, sides(g), label(g), field(g), directions(g)));
-  const upNextViews = upNext.map(g => gameRowView(g, sides(g), context(g), today));
-  const latestViews = latest.map(g => gameRowView(g, sides(g), context(g), today));
+  const unsetSides = (g: Game): MatchupSide[] => {
+    const n = sides(g);
+    return [{ name: n.away, score: null, result: null, placeholder: !g.awayTeamId }, { name: n.home, score: null, result: null, placeholder: !g.homeTeamId }];
+  };
   const posts = showNewsPage && moment !== 'after' ? announcements : [];
 
   // The parts, each null when it has nothing to say. The page hands over register / facts / champions / afterDoors only
@@ -121,34 +128,48 @@ export default function TournamentOverview({
   const registerEl = register ? <PublicRegisterCard view={register} /> : null;
   const factsEl = facts.length > 0 ? <PublicFactsList rows={facts} /> : null;
 
-  const liveEl = liveViews.length > 0 ? (
+  // THE THREE GAME LISTS ON THE STACKED FORM (Public page layout standard A3, R6): each a framed list of stacked game
+  // rows. Live now keeps its field and Directions as a strip under the row, and says "live" with its green edge only
+  // (the heading already says it, R9); Up next keeps its field; a result says Final, the winner first and bold.
+  const gameList = (rows: ReactNode[]) => <ul className={`${kit.list} ${styles.gameList}`}>{rows}</ul>;
+  const liveEl = live.length > 0 ? (
     <section className={styles.section} aria-labelledby="overview-live">
-      <PublicSectionHead id="overview-live" title="Live now" count={liveViews.length} />
-      <div className={styles.liveList}>
-        {liveViews.map(v => <PublicLiveCard key={v.id} view={v} href={gameHref(v.id)} />)}
-      </div>
+      <PublicSectionHead id="overview-live" title="Live now" count={live.length} />
+      {gameList(live.map(g => {
+        const v = liveCardView(g, sides(g), '', field(g), directions(g));
+        return <li key={g.id}><ScheduleMatchup form="stacked" pill={false} state="live" time={startTime(g)} division={context(g)}
+          round={round(g)} href={gameHref(g.id)} noScore={v.noScore}
+          sides={v.sides.map((s, i) => ({ name: s.name, score: s.score, result: null, placeholder: !(i === 0 ? g.awayTeamId : g.homeTeamId) }))}
+          place={v.field ? { text: v.field, action: v.directionsHref ? <DirectionsLink href={v.directionsHref} name={`Directions to ${v.field}`} /> : undefined } : undefined} /></li>;
+      }))}
     </section>
   ) : null;
-  const playoffDoorEl = gameDay && playoffPictureHref
-    ? <PublicLinkList><PublicDoorRow href={playoffPictureHref} label={SCHEDULE_BRACKET_DOOR.label} sub={SCHEDULE_BRACKET_DOOR.line} /></PublicLinkList>
-    : null;
-  const upNextEl = upNextViews.length > 0 ? (
+  const upNextEl = upNext.length > 0 ? (
     <section className={styles.section} aria-labelledby="overview-next">
       <PublicSectionHead id="overview-next" title="Up next" link={{ href: scheduleHref, label: 'Full schedule' }} />
-      <PublicGameRows views={upNextViews} href={gameHref} />
+      {gameList(upNext.map(g => {
+        const f = field(g);
+        return <li key={g.id}><ScheduleMatchup form="stacked" time={startTime(g)} division={context(g)} round={round(g)}
+          href={gameHref(g.id)} sides={unsetSides(g)} place={f ? { text: f } : undefined} /></li>;
+      }))}
     </section>
   ) : null;
   // data-sandbox-tour: the demo tour's first step rings it (the finished semifinals are the newest results). Inert off a
   // demo; tests/unit/demo-destinations-guard.test.ts reads this literal.
-  const latestEl = latestViews.length > 0 ? (
+  const latestEl = latest.length > 0 ? (
     <section className={styles.section} aria-labelledby="overview-results" data-sandbox-tour="latest-results">
       <PublicSectionHead id="overview-results" title="Latest results" link={{ href: scheduleHref, label: 'All results' }} />
-      <PublicGameRows views={latestViews} href={gameHref} />
+      {gameList(latest.map(g => <li key={g.id}><ScheduleMatchup form="stacked" time="" division={context(g)} round={round(g)}
+        state="final" href={gameHref(g.id)} sides={gameRowView(g, sides(g), '', today).sides} /></li>))}
     </section>
   ) : null;
+  // A6: the bracket link sits in the side column under the results, so the main column is just the games.
+  const playoffDoorEl = gameDay && playoffPictureHref
+    ? <PublicLinkList><PublicDoorRow href={playoffPictureHref} label={SCHEDULE_BRACKET_DOOR.label} sub={SCHEDULE_BRACKET_DOOR.line} /></PublicLinkList>
+    : null;
   // A schedule still held back leaves game day with no game to list: say so once, rather than a page of nothing
   // (Stage 0 · D1's fact, in the before-the-event facts list's words).
-  const withheldEl = gameDay && showSchedulePage && scheduleWithheld && !liveViews.length && !upNextViews.length && !latestViews.length
+  const withheldEl = gameDay && showSchedulePage && scheduleWithheld && !live.length && !upNext.length && !latest.length
     ? <p className={styles.note}>The schedule is not posted yet. Games and results show here once the organizer posts it.</p>
     : null;
   const newsEl = posts.length > 0 ? (
@@ -166,8 +187,8 @@ export default function TournamentOverview({
   ) : null;
   const hostEl = host ? <PublicHostCard view={host} colours={hostColours} /> : null;
 
-  const main = moment === 'before' ? [registerEl, factsEl] : gameDay ? [liveEl, playoffDoorEl, upNextEl, withheldEl] : [championsEl, afterDoorsEl];
-  const side = moment === 'before' ? [hostEl, newsEl] : gameDay ? [latestEl, newsEl, hostEl] : [hostEl];
+  const main = moment === 'before' ? [registerEl, factsEl] : gameDay ? [liveEl, upNextEl, withheldEl] : [championsEl, afterDoorsEl];
+  const side = moment === 'before' ? [hostEl, newsEl] : gameDay ? [latestEl, playoffDoorEl, newsEl, hostEl] : [hostEl];
 
   const keyed = (parts: ReactNode[]) => parts.map((p, i) => (p ? <Fragment key={i}>{p}</Fragment> : null));
 

@@ -35,7 +35,7 @@ describe('the accepted compact Schedule (owner 2026-10-29)', () => {
     assert.doesNotMatch(css, /text-overflow: ellipsis|line-clamp/);
   });
   it('time is above division/pool, the round remains available, and status has its own header position', () => {
-    const html = renderToStaticMarkup(createElement(PublicGameRow, { schedule: true,
+    const html = renderToStaticMarkup(createElement(PublicGameRow, {
       view: gameRowView(game(), names, 'U11', '2026-10-29', { schedule: true, state: 'final', round: 'Semifinal', poolTag: 'Pool A' }),
       href: '/club/event/schedule/g1',
     }));
@@ -50,7 +50,7 @@ describe('the accepted compact Schedule (owner 2026-10-29)', () => {
     for (const [status, state, label, scored] of [
       ['submitted', 'unofficial', 'Unofficial', true], ['cancelled', 'cancelled', 'Cancelled', false], ['forfeit', 'final', 'Final', true],
     ] as const) {
-      const html = renderToStaticMarkup(createElement(PublicGameRow, { schedule: true,
+      const html = renderToStaticMarkup(createElement(PublicGameRow, {
         view: gameRowView(game({ status }), names, 'U11', '2026-10-29', { schedule: true, state }),
       }));
       assert.ok(html.includes(`>${label}</span>`));
@@ -59,7 +59,7 @@ describe('the accepted compact Schedule (owner 2026-10-29)', () => {
     }
   });
   it('an upcoming game has full names and no invented scores or finished-state chip', () => {
-    const html = renderToStaticMarkup(createElement(PublicGameRow, { schedule: true,
+    const html = renderToStaticMarkup(createElement(PublicGameRow, {
       view: gameRowView(game({ status: 'scheduled', awayScore: null, homeScore: null }), names, 'U11', '2026-10-29', { schedule: true, state: 'upcoming' }),
     }));
     assert.ok(html.includes(names.away) && html.includes(names.home));
@@ -82,16 +82,21 @@ describe('the accepted compact Schedule (owner 2026-10-29)', () => {
     assert.equal((html.match(/>No score yet</g) ?? []).length, 1);
     assert.doesNotMatch(html, /gameScore|<a\b/);
   });
-  it('the Overview keeps its own row and live-card presentation, including Directions', () => {
-    const live = renderToStaticMarkup(createElement(PublicLiveCard, {
-      view: liveCardView(game(), names, 'U11', 'Park', 'https://maps.example/park'),
-    }));
+  it('the Overview draws its three lists as the stacked form (Part 3): no second row recipe, Directions outside the link', () => {
+    const src = readCode('components/public/TournamentOverview.tsx');
+    assert.equal((src.match(/<ScheduleMatchup form="stacked"/g) ?? []).length, 3, 'Live now, Up next and Latest results');
+    assert.doesNotMatch(src, /PublicGameRows|PublicLiveCard/);
+    const live = renderToStaticMarkup(createElement(ScheduleMatchup, { form: 'stacked', pill: false, time: '9:00 a.m.', division: 'U11', state: 'live', href: '/x',
+      sides: [{ name: 'A', score: 1, result: null }, { name: 'B', score: 0, result: null }],
+      place: { text: 'Park', action: createElement('a', { href: 'https://maps.example/park' }, 'Directions to Park') } }));
     assert.match(live, /href="https:\/\/maps\.example\/park"/);
-    assert.match(live, /Directions to Park/);
-    assert.doesNotMatch(live, /gameHead|gameSide/);
-    const row = renderToStaticMarkup(createElement(PublicGameRow, { view: gameRowView(game(), names, 'U11 · Park', '2026-10-29') }));
-    assert.match(row, /class="when">Final/);
-    assert.doesNotMatch(row, /gameHead|gameSide/);
+    assert.match(live, /<\/a><div class="placeStrip">/, 'the row\'s link closes before the strip');
+    const result = renderToStaticMarkup(createElement(ScheduleMatchup, { form: 'stacked', time: '', division: 'U11 · Park', state: 'final', href: '/x',
+      sides: [{ name: 'A', score: 3, result: 'win' }, { name: 'B', score: 1, result: 'lose' }] }));
+    assert.match(result, />Final<\/span>/);
+    assert.doesNotMatch(result, /gameTime/);
+    assert.match(result, /data-result="win"/);
+    assert.doesNotMatch(readCode('components/public/PublicGameRow.tsx'), /scheduleStyles\.(when|teams)\b/);
   });
 });
 
@@ -118,8 +123,8 @@ describe('one game, two forms, and one live look (Public page layout standard Pa
     const html = renderToStaticMarkup(createElement(PublicLiveCard, { view: live(), schedule: { time: '9:00 p.m.', division: 'U11' } }));
     assert.equal((html.match(/class="gameSide"/g) ?? []).length, 2);
     assert.doesNotMatch(html, /data-result=/);
-    const overview = renderToStaticMarkup(createElement(PublicLiveCard, { view: live() }));
-    assert.doesNotMatch(overview, /trailing/);
+    const overview = renderToStaticMarkup(createElement(ScheduleMatchup, { form: 'stacked', pill: false, time: '9:00 p.m.', division: 'U11', state: 'live', sides: two(3, 2) }));
+    assert.doesNotMatch(overview, /data-result=|trailing/);
     assert.doesNotMatch(readCode('components/public/PublicParts.module.css'), /\.trailing \{/);
     // A game's page softens the side that is behind only once the game is decided.
     assert.match(readCode('components/public/PublicGameDetails.tsx'), /side\.trailing && !view\.live \? styles\.trailing/);
@@ -148,7 +153,7 @@ describe('one game, two forms, and one live look (Public page layout standard Pa
   it('the 3 px edge is one shape: a standalone card\'s left border with square left corners, a row in a list inset', () => {
     assert.match(css, /\.liveCard \{[^}]*border-left: 3px solid var\(--club-ok\); border-radius: 0 8px 8px 0;/);
     assert.match(css, /\.edge \{ box-shadow: inset 3px 0 0 var\(--club-ok\); \}/);
-    assert.match(readCode('components/public/PublicPlayoffs.module.css'), /\.gameCard\[data-live\] \{ border-left: 3px solid var\(--club-ok\); border-radius: 0 8px 8px 0; \}/);
+    assert.doesNotMatch(readCode('components/public/PublicPlayoffs.module.css'), /\.gameCard/, 'Playoffs\' own live card recipe is gone');
   });
 
   it('the stacked form at any width: its own class, never the wide row\'s desk grid or the Schedule\'s phone rules', () => {
@@ -196,8 +201,8 @@ describe('one game, two forms, and one live look (Public page layout standard Pa
       sides: [{ name: 'A', score: 6, result: 'win' }, { name: 'B', score: 5, result: 'lose' }], foot: 'Not yet confirmed by the organizer', footTone: 'plain' }));
     assert.match(large, /data-size="large"/);
     assert.match(large, /class="stakes" data-tone="plain">Not yet confirmed by the organizer/);
-    assert.match(css, /\.stacked\[data-size='compact'\] \.gameName \{ font-size: 0\.875rem; \}/);
-    assert.match(css, /\.stacked\[data-size='compact'\] \.gameScore \{ font-size: 1rem; \}/);
+    assert.match(css, /\.stacked\[data-size='compact'\] :is\(\.gameTime, \.gameContext, \.gameName, \.gameNoScore\) \{ font-size: calc\(0\.875rem \/ var\(--public-bracket-zoom, 1\)\); \}/);
+    assert.match(css, /\.stacked\[data-size='compact'\] \.gameScore \{ font-size: calc\(1rem \/ var\(--public-bracket-zoom, 1\)\); \}/);
     assert.match(css, /\.stacked\[data-size='large'\] \.gameScore \{ font-size: 1\.75rem; \}/);
     assert.match(css, /\.stakes\[data-tone='plain'\] \{ color: var\(--club-soft\); font-weight: 400; \}/);
     // A wide row never takes a size.

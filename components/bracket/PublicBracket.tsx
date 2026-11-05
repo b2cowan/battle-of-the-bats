@@ -1,12 +1,11 @@
 'use client';
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
-import Link from 'next/link';
 import { Minus, Plus, Maximize, X } from 'lucide-react';
 import { publicBracketGameLabel, publicBracketRounds } from '@/lib/public-playoffs';
 import { publicGameDetailView } from '@/lib/public-game-detail';
-import { formatShortWeekdayDate } from '@/lib/timezone';
 import { useOrgHref } from '@/lib/use-public-pathname';
 import type { Division, Game, PublicTeam, Venue } from '@/lib/types';
+import { ScheduleMatchup } from '@/components/public/PublicGameRow';
 import styles from './PublicBracket.module.css';
 
 /** The public presentation of the canonical bracket columns. It never seeds, advances or computes a bracket. */
@@ -100,18 +99,17 @@ export default function PublicBracket({ games, teams, divisions, venues, orgSlug
             {round.games.map(game => {
               const view = publicGameDetailView(game, { games, teams, divisions, venues, requireFinalization, now });
               const final = view.state === 'final' || view.state === 'unofficial';
-              return <Link key={game.id} href={orgHref(`/${tournamentSlug}/schedule/${game.id}`)} className={styles.match}
-                data-state={view.state} data-bracket-game={game.id}>
-                <span className={styles.matchHead}>{publicBracketGameLabel(game) || 'Playoff game'}
-                  {view.stateLabel && <b>{view.stateLabel}</b>}{view.cancelled && <b>Cancelled</b>}
-                </span>
-                {view.sides.map((side, i) => <span key={i} className={styles.team} data-trailing={side.trailing || undefined}
-                  data-winner={final && view.sides.some(s => s.trailing) && !side.trailing || undefined}>
-                  <span>{side.name}</span>{side.score != null && <b>{side.score}</b>}
-                </span>)}
-                {view.live && view.noScore ? <span className={styles.meta}>{view.noScore}</span>
-                  : !final && !view.cancelled && <span className={styles.meta}>{game.date ? formatShortWeekdayDate(game.date) : 'Date TBD'} · {view.time}</span>}
-              </Link>;
+              const decided = final && view.sides.some(s => s.trailing);
+              const label = publicBracketGameLabel(game) || 'Playoff game';
+              // The compact stacked game row (Public page layout standard R6, Part 3; drawing `nBracket`): a finished match
+              // leads with its day, a live one with its time and the pill, one still to play with its time, then its day.
+              return <div key={game.id} className={styles.match} data-state={view.state} data-bracket-game={game.id}>
+                <ScheduleMatchup form="stacked" size="compact" href={orgHref(`/${tournamentSlug}/schedule/${game.id}`)}
+                  time={final ? view.date : view.time} division={final || view.live ? label : `${label} · ${view.date}`}
+                  state={view.state} noScore={view.live ? view.noScore : null}
+                  sides={view.sides.map(side => ({ name: side.name, score: side.score, placeholder: !side.teamId,
+                    result: decided ? side.trailing ? 'lose' : 'win' : null }))} />
+              </div>;
             })}
           </div>
         </section>)}

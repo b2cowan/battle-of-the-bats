@@ -54,8 +54,14 @@ describe('the Schedule has one body', () => {
     const schedule = readCode('components/public/PublicSchedule.tsx');
     assert.ok(schedule.includes('PublicSchedule.module.css'));
     assert.match(schedule, /from '@\/lib\/public-schedule'/);
-    assert.match(readCode('components/public/PublicGameRow.tsx'), /if \(schedule\)/);
-    assert.match(readCode('components/public/PublicLiveCard.tsx'), /if \(schedule\) return/);
+    // Part 3: there is no Overview variant left to switch away from — the row is always the wide Schedule row and the live
+    // card always the schedule form (its `schedule` prop is required), so the two `if (schedule)` branches are gone.
+    const row = readCode('components/public/PublicGameRow.tsx');
+    assert.match(row, /export function PublicGameRow\(\{ view, href \}: \{ view: GameRowView; href\?: string \}\)/);
+    assert.doesNotMatch(row, /schedule\??:|if \(schedule\)/);
+    const liveCard = readCode('components/public/PublicLiveCard.tsx');
+    assert.match(liveCard, /schedule: \{ time: string; division: string;/);
+    assert.doesNotMatch(liveCard, /if \(schedule\)|variant/);
     assert.match(readCode('components/public/PublicSchedule.module.css'), /\.schedule/);
   });
 

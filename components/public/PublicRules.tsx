@@ -16,14 +16,14 @@ export default async function PublicRules({
   prefName: string | null; view?: string; contactEmail: string | null; isPreview?: boolean;
 }) {
   if (!pageEnabled || (rules.length === 0 && resources.length === 0)) {
-    return <PublicPage><div className={styles.state}>
-      <PublicTournamentState icon={<BookOpen size={40} />} eyebrow="Rules"
+    return <PublicPage>
+      <PublicTournamentState icon={<BookOpen size={24} />} eyebrow="Rules"
         title={pageEnabled ? 'Rules coming soon' : 'Rules unavailable'}
         description={pageEnabled
           ? 'Rules and resources have not been published yet. Check back before game day.'
           : 'The organizer has hidden public rules and resources for this tournament.'}
         contactEmail={isPreview ? null : contactEmail} />
-    </div></PublicPage>;
+    </PublicPage>;
   }
 
   // Keep the existing saved-division preference; rules remain tournament-wide, with no schedule-publish gate (D1).

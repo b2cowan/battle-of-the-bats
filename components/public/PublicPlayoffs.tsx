@@ -19,6 +19,8 @@ import { formatTime, formatPoolName } from '@/lib/utils';
 import { useOrgHref } from '@/lib/use-public-pathname';
 import { TieredBracket } from '@/components/bracket/TieredBracket';
 import PublicLiveCard from './PublicLiveCard';
+import { ScheduleMatchup } from './PublicGameRow';
+import kit from './ClubKit.module.css';
 import PublicDisclosure from './PublicDisclosure';
 import PublicSectionHead from './PublicSectionHead';
 import PublicTournamentState from './PublicTournamentState';
@@ -93,17 +95,22 @@ export default function PublicPlayoffs({ orgSlug, tournamentSlug, initialData, i
     {games.length ? <div className={styles.columns}>
       <section className={styles.next} aria-label={selected.kind === 'champion' ? 'Champion' : selected.kind === 'none' ? 'Playoff results' : 'Next playoff game'}>
         {card && nextGame ? <>
-          <PublicSectionHead title={selected.kind === 'live' ? 'Live now' : 'Up next'} />
+          {selected.kind === 'live'
+            ? <PublicSectionHead title="Live now" count={1} />
+            : <PublicSectionHead title="Up next" />}
           {selected.kind === 'live'
             // A game in play wears the Schedule's live card, so the same game reads the same on both tabs.
             ? <PublicLiveCard view={card} href={`${base}/schedule/${nextGame.id}`} foot={stakes?.gold ? stakes.text : undefined}
               schedule={{ time: nextGame.time ? formatTime(nextGame.time) : 'TBD', division: division?.name ?? '', round: publicGameRound(nextGame) }} />
-            // The foot is the venue on every game, the title game included (its round already reads "Championship").
-            : <PublicLiveCard view={card} href={`${base}/schedule/${nextGame.id}`}
-              foot={resolveGameVenueLabel(nextGame, data.venues) || 'Location TBD'}
-              playoff={{ live: false, gold: false,
-                meta: [nextGame.bracketLabel, publicGameRound(nextGame), formatShortWeekdayDate(nextGame.date),
-                  nextGame.time ? formatTime(nextGame.time) : 'Time TBD'].filter(Boolean).join(' · ') }} />}
+            // The game still to play on the SAME one-line row (standard R6; owner 2026-11-05, Part 3): the time and round
+            // left, its day right (the toolbar already names the division), the field under the teams.
+            : <div className={kit.list}><ScheduleMatchup href={`${base}/schedule/${nextGame.id}`}
+              time={nextGame.time ? formatTime(nextGame.time) : 'TBD'}
+              round={[nextGame.bracketLabel, publicGameRound(nextGame)].filter(Boolean).join(' · ') || null}
+              division={nextGame.date ? formatShortWeekdayDate(nextGame.date) : 'Date TBD'}
+              sides={card.sides.map((side, i) => ({ name: side.name, score: null, result: null,
+                placeholder: !(i === 0 ? nextGame.awayTeamId : nextGame.homeTeamId) }))}
+              place={{ text: resolveGameVenueLabel(nextGame, data.venues) || 'Location TBD' }} /></div>}
         </> : selected.kind === 'champion' ? <>
           <PublicSectionHead title="Champion" /><PublicChampions cards={champions} />
         </> : <PublicTournamentState title="No upcoming playoff games" description="The bracket below has the latest results. A champion has not been decided." compact />}

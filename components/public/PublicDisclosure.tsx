@@ -14,13 +14,23 @@ const subscribeDesktop = (notify: () => void) => {
 const isDesktop = () => window.matchMedia(DESKTOP).matches;
 
 /**
- * Shared tap-open row, wearing the link row's look (the club kit's list row — Public page layout standard R7): a framed
- * list of one, the name, an optional dim line, the drawn chevron. Only the look is shared; it still opens in place or in
- * a window. Schedule finals stay open at the frame's desktop breakpoint. `modalOnDesktop` keeps the row a dropdown on a
- * phone but opens its content in a window on a desk, so reading it never pushes the page below it down.
+ * Shared tap-open row, wearing the link row's look (the club kit's list row — Public page layout standard R7): the name,
+ * an optional dim line, the drawn chevron. Only the look is shared; it opens in place or in a window. `modalOnDesktop`
+ * keeps the row a dropdown on a phone but opens its content in a window on a desk, so reading it never pushes the page
+ * below it down.
+ *
+ * ONE LIST (R5, A8; Public page layout standard Part 3). A row is an item of a framed list: on its own it is a list of
+ * one; with `joined` it is one item of the caller's `PublicLinkList`, beside other link rows (Rules' eight, Standings'
+ * "How the table is ranked" + the bracket). Opened in place — every phone, and a desk without `modalOnDesktop` — the
+ * content drops open INSIDE the same list, directly under its row, between hairlines: the list's frame stays whole and
+ * no second box is drawn in it. The caller's content is plain; the panel (or the window) pads it.
  */
-export default function PublicDisclosure({ title, sub, icon, action, children, desktopOpen = false, reveal = false, modalOnDesktop = false, open: controlledOpen, onOpenChange }: {
-  title: string; sub?: string; children: ReactNode; desktopOpen?: boolean; reveal?: boolean; modalOnDesktop?: boolean;
+export default function PublicDisclosure({ title, sub, icon, action, children, modalOnDesktop = false, joined = false, id: anchor, open: controlledOpen, onOpenChange }: {
+  title: string; sub?: string; children: ReactNode; modalOnDesktop?: boolean;
+  /** One item of the caller's `PublicLinkList` rather than a list of one. */
+  joined?: boolean;
+  /** The item's own anchor (Rules' deep links scroll to it). */
+  id?: string;
   /** A glyph before the title, on the row and in the window's title bar. */
   icon?: ReactNode;
   /** A control that belongs to the section: in the window's title bar on a desk, after the content in a dropdown. */
@@ -28,18 +38,11 @@ export default function PublicDisclosure({ title, sub, icon, action, children, d
   /** Optional group control (Rules keeps one section open); other callers keep their own state. */
   open?: boolean; onOpenChange?: (open: boolean) => void;
 }) {
-  const [localOpen, setLocalOpen] = useState(reveal);
+  const [localOpen, setLocalOpen] = useState(false);
   const open = controlledOpen ?? localOpen;
   function setOpen(next: boolean) {
     setLocalOpen(next);
     onOpenChange?.(next);
-  }
-  // A reveal (a deep link to a game inside) opens the row and LEAVES it open: the caller's highlight lasts a couple of
-  // seconds, and a row that closed again when it ended would take the game away from the family it was opened for.
-  const [wasReveal, setWasReveal] = useState(reveal);
-  if (reveal !== wasReveal) {
-    setWasReveal(reveal);
-    if (reveal) setLocalOpen(true);
   }
   const id = useId();
   const desk = useSyncExternalStore(subscribeDesktop, isDesktop, () => false);
@@ -52,15 +55,12 @@ export default function PublicDisclosure({ title, sub, icon, action, children, d
     if (!open && dialog.open) dialog.close();
   }, [open, modal]);
 
-  return <section className={styles.disclosure} data-desktop-open={desktopOpen || undefined}>
-    <div className={`${kit.list} ${styles.rowFrame}`}>
-      <button className={`${kit.row} ${styles.toggle}`} type="button" data-modal={modal || undefined}
-        aria-expanded={modal ? undefined : open} aria-controls={id} aria-haspopup={modal ? 'dialog' : undefined} onClick={() => setOpen(!open)}>
-        {icon && <span className={styles.icon} aria-hidden>{icon}</span>}
-        <span className={kit.rowMain}><span className={kit.rowName}>{title}</span>{sub && <span className={kit.rowSub}>{sub}</span>}</span>
-      </button>
-    </div>
-    {desktopOpen && <div className={styles.desktopTitle}>{title} · all final</div>}
+  const item = <section id={anchor} className={styles.item}>
+    <button className={`${kit.row} ${styles.toggle}`} type="button" data-modal={modal || undefined}
+      aria-expanded={modal ? undefined : open} aria-controls={id} aria-haspopup={modal ? 'dialog' : undefined} onClick={() => setOpen(!open)}>
+      {icon && <span className={styles.icon} aria-hidden>{icon}</span>}
+      <span className={kit.rowMain}><span className={kit.rowName}>{title}</span>{sub && <span className={kit.rowSub}>{sub}</span>}</span>
+    </button>
     {modal
       ? <dialog ref={dialogRef} id={id} className={styles.modal} aria-labelledby={`${id}-title`}
           onClose={() => setOpen(false)} onClick={event => { if (event.target === event.currentTarget) setOpen(false); }}>
@@ -76,4 +76,5 @@ export default function PublicDisclosure({ title, sub, icon, action, children, d
         </dialog>
       : <div id={id} className={styles.content} data-open={open}>{children}{action && <div className={styles.contentAction}>{action}</div>}</div>}
   </section>;
+  return joined ? item : <div className={kit.list}>{item}</div>;
 }

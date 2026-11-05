@@ -6,6 +6,8 @@
 > their stage. The all-in-one hub https://claude.ai/artifact/K4MPu4ni53Ct7yrDcmWJd9 is the frozen archive (up to
 > 2026-10-19; not republished).
 
+> **2026-11-04 (owner):** counsel no longer gates online payments in production or the guardian tier. Wherever this plan says counsel's sign-off gates either, read: the switch stays off until the owner turns it on, after real payments terms and guardian consent wording are written (`/legal` drafts them). See BUSINESS_DECISIONS.md 2026-11-04.
+
 > **Status:** PLANNED 2026-09-25 — this is the owner-started **full Club capability evaluation** that
 > `PROGRAM_LEAGUE_AND_CLUB.md` parked on 2026-07-28 ("once the Coach Portal work is finalised").
 > **Created:** 2026-09-25 · **Branch:** dev

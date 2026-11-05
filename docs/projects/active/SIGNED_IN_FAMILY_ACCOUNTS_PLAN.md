@@ -8,6 +8,8 @@ is PLACED ON A TEAM…" (amends 2026-10-29 "The end state is an app where everyo
 https://claude.ai/artifact/89YK6LSVhBxPnzFnrRZtpo · the journeys page https://claude.ai/artifact/QmPoKvcyF3Bg1xpjCWw54C
 (source `SIGNED_IN_FAMILY_JOURNEYS.html`: who gets an account when, each journey after these fixes and in the end state).
 
+> **2026-11-04 (owner):** counsel no longer gates the guardian tier. Wherever this plan says counsel's sign-off gates it, read: the switch stays off until the owner turns it on, after real guardian consent wording are written (`/legal` drafts them). See BUSINESS_DECISIONS.md 2026-11-04.
+
 ## The rule this plan builds
 
 An account arrives when there is something in it for the person:

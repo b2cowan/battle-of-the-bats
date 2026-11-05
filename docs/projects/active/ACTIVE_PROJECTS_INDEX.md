@@ -137,7 +137,7 @@ lifted into `PROGRAM_PLATFORM_SURFACES.md` §1.1 before it moved. **Do not write
 | `COACH_PORTAL_LAUNCH_BATCH2_PLAN.md` | Built on dev; remaining = dev restart → phone QA → `/simplify` → `/review` → commit |
 | `FREE_COACH_PORTAL_EXPERIENCE_PLAN.md` | All phases built; B2.3 ships migration 205 — **apply to prod before promoting** |
 | `FACILITATED_PAYMENTS_SCOPING_PLAN.md` | Core decisions ratified; open = counsel session, tax display, intl-card policy |
-| `FACILITATED_PAYMENTS_COUNSEL_BRIEF.md` | Ready for the counsel session |
+| `FACILITATED_PAYMENTS_COUNSEL_BRIEF.md` | Ready for the counsel session (no longer a gate, 2026-11-04) |
 | `CODEBASE_CLEANUP_ANALYSIS.md` | T0–T3 executed; T4–T5 open |
 | `FREE_TIER_STRATEGY_PLAN.md` | Current free-floor strategy |
 | `DATE_CORRECTNESS_DEBT.md` | Current; guardrail at zero |

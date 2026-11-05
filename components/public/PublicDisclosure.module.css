@@ -1,26 +1,28 @@
 /* The row is the club kit's list row (ClubKit.module.css `.list` + `.row`, the link row — Public page layout standard
-   R7, owner ruling 2026-11-04): a framed list of one, 60 px, a 16/600 name, a 12 px dim line, the drawn chevron. Only a
-   button's own defaults are reset here. A row that opens a window keeps the kit's right-pointing chevron, like a link;
-   a row that drops open in place points it down, and up while open. */
-.disclosure { min-width: 0; }
-.toggle {
+   R7, owner ruling 2026-11-04): 60 px, a 16/600 name, a 12 px dim line, the drawn chevron. Only a button's own defaults
+   are reset here. A row that opens a window keeps the kit's right-pointing chevron, like a link; a row that drops open in
+   place points it down, and up while open.
+   An ITEM is one entry of a framed list (R5): a list of one, or one of the caller's `PublicLinkList` rows (`joined`).
+   The hairline above it is the item's, not the row's, so it sits right beside the kit's own rows; the first item has
+   none, as the kit's first row has none. */
+.item { min-width: 0; border-top: 1px solid var(--club-line); scroll-margin-top: calc(var(--chrome-top-h, 0px) + 16px); }
+.item:first-child { border-top: 0; }
+.item > .toggle {
   width: 100%; margin: 0; border: 0; background: var(--club-card); text-align: left; cursor: pointer;
   font: inherit;
 }
-.toggle:hover { background: var(--club-ground); }
+.item > .toggle:hover { background: var(--club-ground); }
 .toggle:focus-visible { outline: 2px solid var(--club-ink); outline-offset: -2px; }
 .toggle:not([data-modal])::after { transform: translateY(-75%) rotate(135deg); }
 .toggle[aria-expanded='true']::after { transform: translateY(-25%) rotate(-45deg); }
 .icon { display: grid; place-items: center; flex: none; color: var(--club-ink); }
-.content { display: none; margin-top: 8px; }
-.content[data-open='true'] { display: block; }
-.contentAction { display: flex; justify-content: flex-end; padding: 0 14px 8px; }
-.desktopTitle { display: none; }
-@media (min-width: 1024px) {
-  .disclosure[data-desktop-open] .rowFrame { display: none; }
-  .disclosure[data-desktop-open] .content { display: block; }
-  .disclosure[data-desktop-open] .desktopTitle { display: block; color: var(--club-text); font: 600 1rem/1.3 var(--club-text-face); }
+/* Opened in place: the content drops open inside the list, under its row, between hairlines (Part 3, owner's call left
+   to the build: the list's frame stays whole; no box inside it). The caller's content is plain; this pads it. */
+.content { display: none; }
+.content[data-open='true'] {
+  display: block; padding: 12px 16px 16px; border-top: 1px solid var(--club-line); background: var(--club-card);
 }
+.contentAction { display: flex; justify-content: flex-end; margin-top: 8px; }
 /* A desk's window (modalOnDesktop): the row stays where it is, its content opens over the page. 8 px corners (R10). */
 .modal {
   /* `margin: auto` is what centres a modal dialog; a global reset had zeroed it, which left the window in the top-left corner. */

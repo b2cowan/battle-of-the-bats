@@ -75,7 +75,7 @@ export type PlanFeature =
    * facilitated-payments line). Separate from `payment_tracking`, which is the hand-kept fees and payments. The free
    * Tournament plan and the Premium Coaches Portal (`team`, no grant) are excluded.
    * ⚠ The plan is not the whole gate: the launch switch in `lib/online-payments-switch.ts` keeps it off in production
-   * until counsel signs off.
+   * until the owner switches live payments on (real payments terms first).
    */
   | 'online_payments'
   // ── The club scheduler (Club Tier Stage 11a) ─────────────────────────────

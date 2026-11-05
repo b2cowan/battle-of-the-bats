@@ -24,7 +24,7 @@ export interface HostCardView {
   logoUrl: string | null;
   /** The club's home; null in the organizer's admin preview, where the card is plain text like the band. */
   href: string | null;
-  /** Empty: the card says the club runs teams and programs all year. */
+  /** Never empty: with nothing open there is no card (A10). */
   open: { key: string; href: string | null; title: string; sub: string | null }[];
 }
 
@@ -37,7 +37,9 @@ export function hostCardView(i: {
   /** The club's home, spelled for the address the visitor is on. */
   clubHref: string;
 }): HostCardView | null {
-  if (i.host?.kind !== 'hosted' || i.openNow === null) return null;
+  // A10 (resolved 2026-11-04, Public page layout standard): the card advertises what is open now. With nothing open it
+  // was a third way to the club with nothing to say (the band and the footer already link it), so there is no card.
+  if (i.host?.kind !== 'hosted' || !i.openNow?.length) return null;
   return {
     name: i.host.name,
     initials: clubInitials(i.host.name),

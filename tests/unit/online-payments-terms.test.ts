@@ -25,7 +25,7 @@ describe('the version', () => {
     assert.equal(termsStanding('2027-01-15', '2027-06-01'), 'stale');
     assert.equal(termsStanding(null, '2027-01-15'), 'none');
   });
-  it('the product never publishes terms: the version is still counsel’s placeholder', () => {
+  it('the product never publishes terms: the version is still the placeholder', () => {
     assert.equal(PAYMENTS_TERMS_VERSION, 'placeholder-counsel-pending');
   });
   it('the read-out words (§5.1)', () => {

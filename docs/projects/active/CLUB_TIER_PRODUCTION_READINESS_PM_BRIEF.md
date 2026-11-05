@@ -3,6 +3,8 @@
 > **Companion plan:** [CLUB_TIER_PRODUCTION_READINESS_PLAN.md](CLUB_TIER_PRODUCTION_READINESS_PLAN.md)
 > **Written:** 2026-09-25 · **Priority:** High — this is the next product programme after the Coaches Portal.
 
+> **2026-11-04 (owner):** counsel no longer gates online payments in production. Wherever this plan says counsel's sign-off gates it, read: the switch stays off until the owner turns it on, after real payments terms are written (`/legal` drafts them). See BUSINESS_DECISIONS.md 2026-11-04.
+
 ## What it is
 
 A staged programme that takes the Club plan from "built but never tested" to "a rep club can buy it,

@@ -28,7 +28,7 @@ import { PRIVATE_FEED_CACHE, refusedFeedResponse, calendarResponse } from '@/lib
  *     feeds, and trivially safe here: the token lookup still runs on every read, the counter simply stops writing a row
  *     for each of them and stops sharing one budget across every family behind a calendar company's server).
  * ⚠ What 6d does NOT touch: the family's door and its mint (`app/api/family/teams/[teamId]`), which still makes a new
- * link on every press and stops the old (S6D-02, found and not fixed) — that door waits for counsel and is rebuilt to the
+ * link on every press and stops the old (S6D-02, found and not fixed) — that door waits for the owner to switch the guardian tier on (counsel no longer a gate, 2026-11-04) and is rebuilt to the
  * hub's drawing then. A revoked family's token is nulled, so it reads as never issued: "not found", as before.
  *
  * No identity appears in the feed: team-level events only, no player names, no roster, no coach's notes.

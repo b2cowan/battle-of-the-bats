@@ -21,6 +21,9 @@ const FRAME_ONLY_USERS = ['components/public/TournamentOverview.tsx', 'component
   'components/public/PublicStandings.tsx', 'components/public/PublicPlayoffs.tsx',
   'components/public/PublicTeams.tsx', 'components/public/PublicTeamPage.tsx',
   'components/public/PublicChampionsPage.tsx', 'app/[orgSlug]/[tournamentSlug]/rules/page.tsx',
+  // Part 3: sub-bodies of guarded pages. The bracket is drawn only by Playoffs (through TieredBracket) and draws each match
+  // as the Schedule's own ScheduleMatchup; the Rules sections are only PublicRules' list of joined disclosures.
+  'components/bracket/PublicBracket.tsx', 'components/public/PublicRuleSections.tsx',
   'app/[orgSlug]/admin/tournaments/preview/[tournamentSlug]/[section]/page.tsx', HOME];
 
 describe('the shared parts render only inside the new frame', () => {
@@ -44,15 +47,19 @@ describe('the shared parts render only inside the new frame', () => {
   });
   it('a score and a time are tabular figures; the heading door, the door row and the Directions target are 44 px or more', () => {
     const css = readSource('components/public/PublicParts.module.css');
-    for (const sel of ['.when', '.scores', '.score', '.count']) {
-      assert.match(css, new RegExp(`\\${sel} \\{[^}]*font-variant-numeric: tabular-nums`), sel);
+    assert.match(css, /\.count \{[^}]*font-variant-numeric: tabular-nums/);
+    // Part 3: the Overview's own .when / .scores / .score are gone — a game's time and score are the Schedule row's.
+    const sched = readSource('components/public/PublicSchedule.module.css');
+    for (const sel of ['gameTime', 'gameScore']) {
+      assert.match(sched, new RegExp(`\\.${sel} \\{[^}]*font-variant-numeric: tabular-nums`), sel);
     }
     assert.match(css, /\.headLink \{[^}]*min-height: 44px/);
     // The link row is the club kit's 60 px list row (Public page layout standard R7, 2026-11-04), not a copy of it.
     assert.match(readSource('components/public/ClubKit.module.css'), /\n\.row \{[^}]*min-height: 60px/);
-    assert.match(readCode('components/public/PublicDoorRow.tsx'), /className=\{kit\.row\}/);
+    assert.match(readCode('components/public/PublicDoorRow.tsx'), /className \? `\$\{kit\.row\} \$\{className\}` : kit\.row/, 'the club kit row, plus a page\'s own placement class');
     assert.doesNotMatch(css, /\n\.door \{/, 'the old door look is gone');
-    assert.match(readCode('components/public/PublicLiveCard.tsx'), /<DirectionsLink /, 'the club pages\' one Directions control');
+    assert.match(readCode('components/public/TournamentOverview.tsx'), /<DirectionsLink /, 'the club pages\' one Directions control');
+    assert.match(readSource('components/public/PublicSchedule.module.css'), /\.placeStrip \{[^}]*min-height: 56px/, 'the strip that holds it');
   });
 });
 
@@ -152,7 +159,8 @@ describe('before and after the event, and the host card (Part 3)', () => {
     assert.match(b, /openNow === null \? null : hostCardView\(/);
     assert.match(b, /publicFrameHost\(org\.name, tournament\.name, await resolveOrgHomeHref\(org\)/);
     const view = readCode('lib/public-host-card.ts');
-    assert.match(view, /if \(i\.host\?\.kind !== 'hosted' \|\| i\.openNow === null\) return null;/);
+    // A10 (Part 3): nothing open → no card, so the check is "has something open", which also covers the unanswered null.
+    assert.match(view, /if \(i\.host\?\.kind !== 'hosted' \|\| !i\.openNow\?\.length\) return null;/);
     assert.match(view, /href: i\.isPreview \? null : i\.clubHref/);
   });
   it("the host card wears the club's colours as custom properties only (no colour is written in the component)", () => {
@@ -174,8 +182,8 @@ describe('before and after the event, and the host card (Part 3)', () => {
     const css = readSource('components/public/PublicParts.module.css');
     assert.match(css, /@media \(min-width: 1200px\) \{\s*\.cols \{\s*display: grid;\s*grid-template-columns: minmax\(0, 1\.35fr\) minmax\(0, 1fr\);/);
     const overview = readCode('components/public/TournamentOverview.tsx');
-    assert.match(overview, /const main = moment === 'before' \? \[registerEl, factsEl\] : gameDay \? \[liveEl, playoffDoorEl, upNextEl, withheldEl\] : \[championsEl, afterDoorsEl\];/);
-    assert.match(overview, /const side = moment === 'before' \? \[hostEl, newsEl\] : gameDay \? \[latestEl, newsEl, hostEl\] : \[hostEl\];/);
+    assert.match(overview, /const main = moment === 'before' \? \[registerEl, factsEl\] : gameDay \? \[liveEl, upNextEl, withheldEl\] : \[championsEl, afterDoorsEl\];/);
+    assert.match(overview, /const side = moment === 'before' \? \[hostEl, newsEl\] : gameDay \? \[latestEl, playoffDoorEl, newsEl, hostEl\] : \[hostEl\];/);
   });
 });
 
