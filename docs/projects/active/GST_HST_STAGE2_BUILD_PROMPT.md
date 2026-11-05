@@ -22,7 +22,7 @@ already put the address on the Stripe customer; this stage makes Stripe use it.
 **Part 0 answered 2026-11-05: owner ruled ALL ASKS AS RECOMMENDED** (wording below in "Rulings"). Sandbox Stripe Tax set up
 and verified (the Club · Association product now `txcd_10103001`, confirmed by API).
 
-**Part 1 BUILT 2026-11-05, uncommitted** (typecheck clean; 151 billing unit tests pass; `verify:changed` 14242 pass / 7 fail,
+**Part 1 BUILT 2026-11-05, committed `aafea07b9` 2026-11-05 (with Part 0's records)** (typecheck clean; 151 billing unit tests pass; `verify:changed` 14242 pass / 7 fail,
 all 7 in files this stage did not touch — support-console foot sentences, bookkeeping ExpenseFormWindow, practice-plan phone
 N1, two walk-page guards, the free-time route's 503):
 - `lib/billing-tax.ts` (new): `decideBuyerTax` (address → Stripe, flagged US held with `billing_review_hold`, no address →
