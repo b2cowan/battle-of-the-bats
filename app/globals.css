@@ -418,9 +418,18 @@
    needs color-scheme:light so the OS popup chrome matches. */
 [data-color-mode="light"] select,
 :root [data-guest-kit] select:where(:not([data-public-preview] *)),
-html[data-user-theme="warm"] [data-coach-warm-enabled] select:where(:not([data-public-preview] *)) { color-scheme: light; }
+html[data-user-theme="warm"] [data-coach-warm-enabled] select:where(:not([data-public-preview] *)),
+/* The warm sign-up JOURNEY (/coaches/start, /welcome, /join, /checkout) and the fan-app tabs paint cream but
+   carry neither marker above — ConsumerNav marks them `data-warm-base`. 'pref' follows the theme (Dark keeps
+   its dark list); 'marketing' is warm under every setting. Without this the State/Province list opened as a
+   navy slab over a cream form (owner, 2026-11-04, /coaches/start). Same two selectors as the cream <body>
+   rule above — keep them together. */
+html:not([data-user-theme="dark"]):has([data-warm-base="pref"]) select,
+html:has([data-warm-base="marketing"]) select { color-scheme: light; }
 
-[data-color-mode="light"] select option {
+[data-color-mode="light"] select option,
+html:not([data-user-theme="dark"]):has([data-warm-base="pref"]) select option,
+html:has([data-warm-base="marketing"]) select option {
   background: #FFFFFF;
   color: #0F1123;
 }
