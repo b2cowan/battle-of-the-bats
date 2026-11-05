@@ -9,6 +9,7 @@ import { fanPlaceholder, gameSideNames, liveCardView } from './public-game-row';
 import { DEFAULT_GAME_DURATION_MINUTES, LIVE_GRACE_MINUTES, gameStartMs, publicGameState, selectTeamGames, teamScoreFor } from './game-status';
 import { formatStoredDate, tournamentToday } from './timezone';
 import { formatPoolName } from './utils';
+import type { ClubTeamLink } from './team-two-pages';
 
 export interface TeamProfile {
   team: PublicTeam;
@@ -19,6 +20,8 @@ export interface TeamProfile {
   standings: { w: number; l: number; t: number; pts: number; rf: number; ra: number; rd: number; isRunnerUp: boolean };
   games: (Omit<Game, 'notes'> & { homeTeamName: string; awayTeamName: string })[];
   teamNames: Record<string, string>;
+  /** The host club's own team: its club page, when that page is public (club round C6, lib/team-two-pages.ts). */
+  clubTeam?: ClubTeamLink | null;
 }
 
 export function teamProfilePreview(profile: TeamProfile, { division, divisions, teams, games, rows,

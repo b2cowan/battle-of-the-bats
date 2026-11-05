@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import RepTeamPublicSchedule from '@/components/public/RepTeamPublicSchedule';
 import { getPublicTeamSchedule } from '@/lib/public-team-schedule';
+import { tournamentTeamPathsForSchedule } from '@/lib/team-two-pages-server';
 import { teamCalendarName } from '@/lib/export/team-feed-words';
 import kit from '@/components/public/ClubKit.module.css';
 import { liveSeasonOf, publicTryoutSeasonOf } from '@/lib/season-live';
@@ -95,6 +96,11 @@ export default async function TeamPublicPage({
     // not switch their name off, so no name stands on a page nobody is tending.
     !team.isArchived && liveSeasonOf(programYears) ? getPublicTeamCoaches(org.id, team.id, org.coachNamesPolicy).catch(() => []) : Promise.resolve([]),
   ]);
+  // The club's own tournament's games open this team's tournament page (club round C6): entry id → its address here.
+  const tournamentLinks = publicSchedule
+    ? Object.fromEntries([...(await tournamentTeamPathsForSchedule(org.id, team.id, publicSchedule.entries))]
+      .map(([id, path]) => [id, href(path)]))
+    : {};
   const daysLine = tryoutDaysLine(tryout?.standing.upcoming ?? []);
   // The season under the name is the team's live one; an archived team has none.
   const liveYear = team.isArchived ? null : liveSeasonOf(programYears);
@@ -149,6 +155,7 @@ export default async function TeamPublicPage({
         {publicSchedule && (
           <RepTeamPublicSchedule
             view={publicSchedule}
+            tournamentLinks={tournamentLinks}
             // Club Tier 6d (B3, Ask 3): the feed is this page's own address with /calendar on the end — no secret.
             subscribe={{ feedPath: href(`/teams/${team.slug}/calendar`), calendarName: teamCalendarName(team.name, org.name) }}
           />

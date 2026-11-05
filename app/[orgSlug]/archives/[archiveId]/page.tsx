@@ -9,7 +9,11 @@ import { getArchiveById } from '@/lib/db';
 import { requirePublicClubPage } from '@/lib/public-club-page';
 import { clubPageMetadata } from '@/lib/club-page-meta';
 import kit from '@/components/public/ClubKit.module.css';
+import parts from '@/components/public/PublicParts.module.css';
 import PublicPage from '@/components/public/PublicPage';
+import PublicSectionHead from '@/components/public/PublicSectionHead';
+import { ScheduleMatchup, type MatchupSide } from '@/components/public/PublicGameRow';
+import { formatShortWeekdayDate } from '@/lib/timezone';
 import { bracketRoundLabel } from '@/lib/playoff-bracket';
 import type { Game, Team } from '@/lib/types';
 
@@ -107,6 +111,8 @@ export default async function ArchiveDetailPage({
   }
 
   const sealedDate = formatDate(sealedAt);
+  // "Pool play standings" with one division; "Pool play standings · U11" with several.
+  const titled = (words: string, division: string) => divisions.length > 1 ? `${words} · ${division}` : words;
   // No tab row without the public site (a Tournament-plan org): the tab is not there to be the way back, so the page
   // keeps one, to the list this record sits on (review 2026-10-25).
   const backToList = !hasModuleEntitlement(org, 'module_public_site') ? (await orgLinks(orgSlug))('/tournaments#past') : null;
@@ -123,20 +129,11 @@ export default async function ArchiveDetailPage({
         </Link>
       )}
 
-      {/* Header */}
-      <div
-        style={{
-          borderBottom: '1px solid var(--club-line)',
-          paddingBottom: '1.25rem',
-        }}
-      >
+      {/* A page about one thing keeps its name at 24 (club round C4): the season over it, "Results final" under it. */}
+      <div className={kit.nameBlock}>
         <div className={kit.band} style={{ marginBottom: 0 }}>{season}</div>
-        <h1 className={kit.title} style={{ margin: '0.375rem 0' }}>
-          {tournamentName}
-        </h1>
-        <div style={{ fontSize: '0.875rem', color: 'var(--club-soft)' }}>
-          Results final {sealedDate}
-        </div>
+        <h1 className={kit.pageName}>{tournamentName}</h1>
+        <p className={kit.sub}>Results final {sealedDate}</p>
       </div>
 
       {/* Champion block */}
@@ -182,27 +179,15 @@ export default async function ArchiveDetailPage({
       )}
 
       {/* Standings — per division, from snapshot */}
-      {divisions.length > 0 && poolGames.length > 0 && (
-        <section>
-          <div className={kit.band} style={{ marginBottom: '1rem' }}>
-            Pool play standings
-          </div>
-          {divisions.map(ag => {
+      {/* One section per division, each with the standard heading row (R4) — "Pool play standings · U11" when there are
+          several, as the tournament's own Final standings say it. The table keeps its look (tables are a registered
+          exception, R10). */}
+      {divisions.length > 0 && poolGames.length > 0 && divisions.map(ag => {
             const standings = computeStandings(teams, games, ag.id);
             if (standings.length === 0) return null;
             return (
-              <div key={ag.id} style={{ marginBottom: '1.5rem' }}>
-                <div
-                  className={kit.band}
-                  style={{
-                    color: 'var(--club-text)',
-                    marginBottom: '0.5rem',
-                    borderBottom: '1px solid var(--club-line)',
-                    paddingBottom: '0.25rem',
-                  }}
-                >
-                  {ag.name}
-                </div>
+              <section key={ag.id} className={kit.section}>
+                <PublicSectionHead title={titled('Pool play standings', ag.name)} />
                 <div style={{ overflowX: 'auto' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
                     <thead>
@@ -238,140 +223,63 @@ export default async function ArchiveDetailPage({
                     </tbody>
                   </table>
                 </div>
-              </div>
+              </section>
             );
           })}
-        </section>
-      )}
 
-      {/* Playoff bracket results */}
+      {/* The results on the standard's game row (R6; club round Part 4, owner 2026-11-05): one line on a desk, stacked on a
+          phone — they were hand-made rows held 520–560 px wide, so a phone scrolled them sideways. Every game here is
+          sealed, so each reads Final, the away team first, the winner bold. */}
       {playoffGames.length > 0 && (
-        <section>
-          <div className={kit.band} style={{ marginBottom: '1rem' }}>
-            Playoff results
-          </div>
-          <div style={{ overflowX: 'auto' }}>
-            <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '0.5rem', minWidth: '520px' }}>
-              {playoffGames.map(g => {
-                const hScore = g.homeScore ?? 0;
-                const aScore = g.awayScore ?? 0;
-                const homeWon = hScore > aScore;
-                return (
-                  <div
-                    key={g.id}
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: '96px 1fr auto auto 1fr',
-                      gap: '0.75rem',
-                      alignItems: 'center',
-                      borderBottom: '1px solid var(--club-line)',
-                      padding: '0.5rem 0',
-                      fontSize: '0.875rem',
-                    }}
-                  >
-                    <span style={{ fontSize: '0.75rem', color: 'var(--club-soft)', fontWeight: 700 }}>
-                      {bracketRoundLabel(g.bracketCode)}
-                    </span>
-                    <span
-                      style={{
-                        color: homeWon ? 'var(--club-text)' : 'var(--club-soft)',
-                        fontWeight: homeWon ? 700 : 400,
-                        textAlign: 'right' as const,
-                      }}
-                    >
-                      {teamName(g.homeTeamId)}
-                    </span>
-                    <span
-                      style={{
-                        color: 'var(--club-text)',
-                        fontWeight: 700,
-                        minWidth: '3rem',
-                        textAlign: 'center' as const,
-                      }}
-                    >
-                      {hScore} – {aScore}
-                    </span>
-                    <span style={{ color: 'var(--club-soft)', fontSize: '0.75rem' }}>vs</span>
-                    <span
-                      style={{
-                        color: !homeWon ? 'var(--club-text)' : 'var(--club-soft)',
-                        fontWeight: !homeWon ? 700 : 400,
-                      }}
-                    >
-                      {teamName(g.awayTeamId)}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+        <section className={kit.section}>
+          <PublicSectionHead title="Playoff results" />
+          <ul className={`${kit.list} ${parts.gameList}`}>
+            {playoffGames.map(g => (
+              <ResultRow key={g.id} game={g} teamName={teamName}
+                context={divisions.length > 1 ? divisions.find(d => d.id === g.divisionId)?.name ?? null : null}
+                round={bracketRoundLabel(g.bracketCode)} />
+            ))}
+          </ul>
         </section>
       )}
 
-      {/* Pool play results */}
-      {poolGames.length > 0 && (
-        <section>
-          <div className={kit.band} style={{ marginBottom: '1rem' }}>
-            Pool play results
-          </div>
-          {divisions.map(ag => {
-            const agGames = poolGames.filter(g => g.divisionId === ag.id);
-            if (agGames.length === 0) return null;
-            return (
-              <div key={ag.id} style={{ marginBottom: '1.25rem' }}>
-                <div
-                  className={kit.band}
-                  style={{
-                    color: 'var(--club-text)',
-                    marginBottom: '0.5rem',
-                    borderBottom: '1px solid var(--club-line)',
-                    paddingBottom: '0.25rem',
-                  }}
-                >
-                  {ag.name}
-                </div>
-                <div style={{ overflowX: 'auto' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '0.375rem', minWidth: '560px' }}>
-                    {agGames.map(g => {
-                      const hScore = g.homeScore ?? 0;
-                      const aScore = g.awayScore ?? 0;
-                      const homeWon = hScore > aScore;
-                      return (
-                        <div
-                          key={g.id}
-                          style={{
-                            display: 'grid',
-                            gridTemplateColumns: '104px 1fr 60px 1fr 88px',
-                            gap: '0.5rem',
-                            alignItems: 'center',
-                            fontSize: '0.875rem',
-                            borderBottom: '1px solid var(--club-line)',
-                            padding: '0.375rem 0',
-                          }}
-                        >
-                          <span style={{ color: 'var(--club-soft)', fontSize: '0.75rem' }}>{formatDate(g.date)}</span>
-                          <span style={{ color: 'var(--club-text)', fontWeight: homeWon ? 700 : 400, textAlign: 'right' as const }}>
-                            {teamName(g.homeTeamId)}
-                          </span>
-                          <span style={{ color: 'var(--club-text)', fontWeight: 700, textAlign: 'center' as const }}>
-                            {hScore} – {aScore}
-                          </span>
-                          <span style={{ color: 'var(--club-text)', fontWeight: !homeWon ? 700 : 400 }}>
-                            {teamName(g.awayTeamId)}
-                          </span>
-                          <span style={{ color: 'var(--club-soft)', fontSize: '0.75rem', textAlign: 'right' as const }}>
-                            {formatTime(g.time)}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </section>
-      )}
+      {divisions.map(ag => {
+        const agGames = poolGames.filter(g => g.divisionId === ag.id);
+        if (agGames.length === 0) return null;
+        return (
+          <section key={ag.id} className={kit.section}>
+            <PublicSectionHead title={titled('Pool play results', ag.name)} />
+            <ul className={`${kit.list} ${parts.gameList}`}>
+              {agGames.map(g => <ResultRow key={g.id} game={g} teamName={teamName} context={null} round={null} />)}
+            </ul>
+          </section>
+        );
+      })}
     </PublicPage>
+  );
+}
+
+/** One sealed game on the standard's game row: the time, the day under it (or in the context line on a phone), the round
+ *  and division at the right, the away team first, both scores, the winner bold. */
+function ResultRow({ game: g, teamName, context, round }: {
+  game: Game; teamName: (id: string) => string; context: string | null; round: string | null;
+}) {
+  const scored = g.homeScore != null && g.awayScore != null;
+  const side = (id: string, score: number | null, other: number | null): MatchupSide => ({
+    name: teamName(id),
+    score,
+    result: scored && score != null && other != null ? (score > other ? 'win' : score < other ? 'lose' : null) : null,
+  });
+  return (
+    <li>
+      <ScheduleMatchup
+        time={g.time ? formatTime(g.time) : 'TBD'}
+        round={g.date ? formatShortWeekdayDate(g.date) : null}
+        division={context}
+        pool={round}
+        state="final"
+        sides={[side(g.awayTeamId, g.awayScore ?? null, g.homeScore ?? null), side(g.homeTeamId, g.homeScore ?? null, g.awayScore ?? null)]}
+      />
+    </li>
   );
 }

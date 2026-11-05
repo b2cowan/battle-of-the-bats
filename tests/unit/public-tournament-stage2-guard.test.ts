@@ -35,7 +35,10 @@ const FRAME_ONLY_USERS = ['components/public/TournamentOverview.tsx', 'component
   'components/public/ClubSiteHome.tsx', 'components/public/ClubSponsors.tsx', 'components/public/RepTeamPublicSchedule.tsx',
   'components/public/TryoutDays.tsx', 'components/rep-teams/TryoutLandingView.tsx', 'components/public/LeaguePayBlock.tsx',
   'app/[orgSlug]/about/page.tsx', 'app/[orgSlug]/tournaments/page.tsx', 'app/[orgSlug]/teams/[teamSlug]/page.tsx',
-  'app/[orgSlug]/league/page.tsx', 'app/[orgSlug]/league/[seasonSlug]/page.tsx'];
+  'app/[orgSlug]/league/page.tsx', 'app/[orgSlug]/league/[seasonSlug]/page.tsx',
+  // Club build Part 4 (C7, R6): the house league's Schedule and a past tournament's record draw their games on the
+  // tournament's game row (ScheduleMatchup) under the same heading row — one game part on both sites.
+  'app/[orgSlug]/league/[seasonSlug]/schedule/page.tsx', 'app/[orgSlug]/archives/[archiveId]/page.tsx'];
 
 describe('the shared parts render only inside the new frame', () => {
   it('no page or component outside the guarded frame bodies imports them', () => {

@@ -13,7 +13,7 @@ import { resolvePublicLeagueContext } from '@/lib/public-league';
 import { clubPageMetadata, getClubSeason } from '@/lib/club-page-meta';
 import { orgLinks } from '@/lib/org-links';
 import { orgDayKey, timesInZoneSentence } from '@/lib/timezone';
-import { STATE_WORDS, dayHeading, dayWords, weekRangeWords } from '@/lib/calendar-recipe';
+import { dayHeading, dayWords, weekRangeWords } from '@/lib/calendar-recipe';
 import { clockOf, whereWords } from '@/lib/club-calendar-view';
 import {
   SEASON_PUBLIC_WORDS, SEASON_SCHEDULE_WORDS, seasonCalendar, seasonWeeks, todayLineAt,
@@ -22,7 +22,10 @@ import {
 import type { LeagueDivision } from '@/lib/types';
 import column from '../../league-column.module.css';
 import PublicPage from '@/components/public/PublicPage';
+import PublicSectionHead from '@/components/public/PublicSectionHead';
+import { ScheduleMatchup, type GameRowState, type MatchupSide } from '@/components/public/PublicGameRow';
 import kit from '@/components/public/ClubKit.module.css';
+import parts from '@/components/public/PublicParts.module.css';
 
 export const dynamic = 'force-dynamic';
 
@@ -94,6 +97,8 @@ export default async function PublicSchedulePage({
   const today = orgDayKey(new Date().toISOString());
   const { earlier, ahead } = seasonWeeks(bookings, today);
   const hasGames = bookings.length + needsDate.length > 0;
+  const teamName = new Map(teams.map(t => [t.id, t.name]));
+  const nameOf = (id: string | null) => (id && teamName.get(id)) || 'A team';
 
   // The light ground, bar and footer come from the club's frame (Club Tier Stage 4b-1).
   // The club page column (club round C2 + C5): on the logo edge, 960 at most (it was 800), 24 between sections.
@@ -103,7 +108,7 @@ export default async function PublicSchedulePage({
         <Link href={href(`/league/${seasonSlug}`)} className={kit.back}>
           ← {season.name}
         </Link>
-        <h1 className={kit.title}>Schedule</h1>
+        <h1 className={kit.pageName}>Schedule</h1>
       </div>
 
       {divisions.length > 1 && (
@@ -135,17 +140,17 @@ export default async function PublicSchedulePage({
               <details className={column.earlier}>
                 <summary>{SEASON_SCHEDULE_WORDS.earlierWeeks(earlier.length)}</summary>
                 <div className={column.weeks}>
-                  {earlier.map(w => <Week key={w.monday} week={w} today={today} />)}
+                  {earlier.map(w => <Week key={w.monday} week={w} today={today} nameOf={nameOf} />)}
                 </div>
               </details>
             )}
-            {ahead.map(w => <Week key={w.monday} week={w} today={today} />)}
+            {ahead.map(w => <Week key={w.monday} week={w} today={today} nameOf={nameOf} />)}
             {needsDate.length > 0 && (
-              <section className={column.week}>
-                <h2 className={column.weekHead}>{SEASON_SCHEDULE_WORDS.needsDate}</h2>
-                <div className={kit.list}>
-                  {needsDate.map(b => <GameRow key={b.key} booking={b} />)}
-                </div>
+              <section className={kit.section}>
+                <PublicSectionHead title={SEASON_SCHEDULE_WORDS.needsDate} />
+                <ul className={`${kit.list} ${parts.gameList}`}>
+                  {needsDate.map(b => <GameRow key={b.key} booking={b} nameOf={nameOf} />)}
+                </ul>
               </section>
             )}
           </div>
@@ -155,53 +160,60 @@ export default async function PublicSchedulePage({
   );
 }
 
-/** A week: "Jun 14 – 20, 2027 · this week", its games, and the today line in this week only. */
-function Week({ week, today }: { week: SeasonWeek<SeasonBooking>; today: string }) {
+type NameOf = (teamId: string | null) => string;
+
+/** A week: "Jun 14 – 20, 2027 · this week" as the section's heading row (R4), its games, and the today line in this week only. */
+function Week({ week, today, nameOf }: { week: SeasonWeek<SeasonBooking>; today: string; nameOf: NameOf }) {
   const line = todayLineAt(week, today);
   const head = weekRangeWords(week.monday) + (line === null ? '' : ` · ${SEASON_SCHEDULE_WORDS.thisWeek}`);
-  const todayLine = <div key="today" className={column.todayLine}>{dayHeading(today, today)}</div>;
-  const rows = week.bookings.map(b => <GameRow key={b.key} booking={b} />);
+  const todayLine = <li key="today" className={column.todayLine}>{dayHeading(today, today)}</li>;
+  const rows = week.bookings.map(b => <GameRow key={b.key} booking={b} nameOf={nameOf} />);
   if (line !== null) rows.splice(line, 0, todayLine);
   return (
-    <section className={column.week}>
-      <h2 className={column.weekHead}>{head}</h2>
-      <div className={kit.list}>{rows}</div>
+    <section className={kit.section}>
+      <PublicSectionHead title={head} />
+      <ul className={`${kit.list} ${parts.gameList}`}>{rows}</ul>
     </section>
   );
 }
 
-/** One game: when · the match and its place · the result, or the state in words. */
-function GameRow({ booking: b }: { booking: SeasonBooking }) {
+/**
+ * One game on the standard's game row (Public page layout standard R6; club round C7, 2026-11-05): the one-line row on a
+ * desk, stacked on a phone, read when · who · status — the time with its day under it (the tournament Schedule's time and
+ * "when"), the away team first, then home, each owning its score once the game is final (the winner bold). The house
+ * league keeps what it showed: the place on every game (its Schedule's own ruling, C10 — the tournament's all-games list
+ * carries none), Cancelled and Postponed in the one pill set, and a game re-dated and sent "Moved" with the date families
+ * heard. The division is not repeated: the division tabs above already say it.
+ */
+function GameRow({ booking: b, nameOf }: { booking: SeasonBooking; nameOf: NameOf }) {
   const game = b.source.kind === 'game' ? b.source.game : null;
+  if (!game) return null; // a practice is never public: the page passes none
   const postponed = b.state === 'postponed';
   const cancelled = b.state === 'cancelled';
   const place = whereWords(b);
   // Moved (9d2·10): a game re-dated since families first heard, once the change was sent — the date they heard.
-  const movedFrom = game?.movedFrom && !postponed && !cancelled && !b.result ? game.movedFrom : null;
+  const movedFrom = game.movedFrom && !postponed && !cancelled && !b.result ? game.movedFrom : null;
+  // Final exactly when the house league has always said "Final h–a" (`resultWords`): completed, both scores in.
+  const final = !!b.result && game.homeScore != null && game.awayScore != null;
+  const state: GameRowState | undefined =
+    cancelled ? 'cancelled' : postponed ? 'postponed' : final ? 'final' : movedFrom ? 'moved' : undefined;
+  const side = (teamId: string | null, score: number | null, other: number | null): MatchupSide => ({
+    name: nameOf(teamId),
+    score: final ? score : null,
+    result: final && score != null && other != null ? (score > other ? 'win' : score < other ? 'lose' : null) : null,
+  });
+  const dated = !!game.scheduledAt;
   return (
-    <div className={`${column.game}${cancelled ? ` ${column.struck}` : ''}`}>
-      {game?.scheduledAt ? (
-        <time className={column.when} dateTime={game.scheduledAt}>
-          {postponed ? SEASON_PUBLIC_WORDS.was(dayWords(b.day)) : dayWords(b.day)}
-          <span>{clockOf(b.startMs)}</span>
-        </time>
-      ) : (
-        <span className={column.when}>{SEASON_PUBLIC_WORDS.dateToCome}</span>
-      )}
-      <div className={column.match}>
-        <span className={column.matchName}>{b.who}</span>
-        {place && <span className={column.place}>{place}</span>}
-        {movedFrom && <span className={column.place}>{P.movedWas(dayWords(orgDayKey(movedFrom)), clockOf(Date.parse(movedFrom)))}</span>}
-      </div>
-      {postponed ? (
-        <span className={column.state}><span className={`${kit.chip} ${kit.chipWarn}`}>{STATE_WORDS.postponed}</span></span>
-      ) : cancelled ? (
-        <span className={column.state}><span className={`${kit.chip} ${kit.chipNeutral}`}>{STATE_WORDS.cancelled}</span></span>
-      ) : b.result ? (
-        <span className={column.state}>{b.result}</span>
-      ) : movedFrom ? (
-        <span className={column.state}><span className={`${kit.chip} ${kit.chipWarn}`}>{P.moved}</span></span>
-      ) : null}
-    </div>
+    <li>
+      <ScheduleMatchup
+        time={dated ? clockOf(b.startMs) : SEASON_PUBLIC_WORDS.dateToCome}
+        round={dated ? (postponed ? SEASON_PUBLIC_WORDS.was(dayWords(b.day)) : dayWords(b.day)) : null}
+        division={null}
+        state={state}
+        sides={[side(game.awayTeamId, game.awayScore, game.homeScore), side(game.homeTeamId, game.homeScore, game.awayScore)]}
+        noScore={movedFrom ? P.movedWas(dayWords(orgDayKey(movedFrom)), clockOf(Date.parse(movedFrom))) : undefined}
+        place={place ? { text: place } : undefined}
+      />
+    </li>
   );
 }

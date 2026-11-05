@@ -54,9 +54,9 @@
 }
 
 /* ── The public schedule (House League 9d-2a, frames g1/g2) ──────────────────────────────────────────────────────────
-   The weeks open on this week; the earlier ones fold behind one door. A game row is NOT the kit's `.row` (that row is a
-   door and draws its chevron); it is when · the match and its place · the result or the state. Cancelled is struck with
-   its word; Postponed is said in the warning ink, never by colour alone. Type steps 12 · 14 · 16 only. */
+   The weeks open on this week; the earlier ones fold behind one door. Each week is a section with the standard heading
+   row, and its games are the standard's game row (club round C7, 2026-11-05: ScheduleMatchup in
+   components/public/PublicGameRow.tsx, in PublicParts' framed `.gameList`) — nothing here draws a public game any more. */
 .zone {
   margin: 0 0 1rem;
   font: 400 0.875rem/1.4 var(--club-text-face);
@@ -66,16 +66,6 @@
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-}
-.week {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-.weekHead {
-  margin: 0;
-  font: 600 0.875rem/1.3 var(--club-text-face);
-  color: var(--club-text);
 }
 .earlier > summary {
   display: inline-flex;
@@ -93,6 +83,8 @@
    a <details> puts its children inside an inner box, so flex/gap on the details itself never reached them. */
 .earlier[open] > summary { display: none; }
 
+/* THE COACH'S ROW, not a public one: the signed-in house-league team page (`team/[teamId]`, out of the club round) draws
+   its schedule with these — when · the match and its place · the result or the state; Cancelled struck with its word. */
 .game {
   display: flex;
   align-items: center;
@@ -140,6 +132,7 @@
 .struck .matchName,
 .struck .when { text-decoration: line-through; color: var(--club-dim); }
 .struck .when > span { color: var(--club-dim); }
+/* The today line between a week's games (an <li> in the game list, so the list's hairline runs above it too). */
 .todayLine {
   padding: 8px 16px;
   border-top: 1px solid var(--club-line);

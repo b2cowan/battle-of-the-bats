@@ -5,16 +5,23 @@ import type { PublicGameState } from '@/lib/game-status';
 import scheduleStyles from './PublicSchedule.module.css';
 import RollingNumber from './RollingNumber';
 
-const STATUS_WORD: Partial<Record<PublicGameState, string>> = {
-  live: 'Live now', final: 'Final', unofficial: 'Unofficial', cancelled: 'Cancelled',
+/**
+ * A row's state: a tournament game's public state, plus the two only the house league's Schedule has (club round Part 4,
+ * C7) — a game Postponed (it waits for a new date) and a game Moved (re-dated since families first heard, once the change
+ * was sent). Both are amber, the warning ink the house league said them in.
+ */
+export type GameRowState = PublicGameState | 'postponed' | 'moved';
+
+const STATUS_WORD: Partial<Record<GameRowState, string>> = {
+  live: 'Live now', final: 'Final', unofficial: 'Unofficial', cancelled: 'Cancelled', postponed: 'Postponed', moved: 'Moved',
 };
 
 /**
  * A game's status pill, the one set every public page uses (Public page layout standard R9): Live now green, Final
- * neutral, Unofficial amber, Cancelled in the danger colour. A game that has not started has none. `className` places it
- * (a game's page puts Cancelled at its card's top right); the look is always this one.
+ * neutral, Unofficial, Postponed and Moved amber, Cancelled in the danger colour. A game that has not started has none.
+ * `className` places it (a game's page puts Cancelled at its card's top right); the look is always this one.
  */
-export function GameStatusPill({ state, className }: { state?: PublicGameState; className?: string }) {
+export function GameStatusPill({ state, className }: { state?: GameRowState; className?: string }) {
   const word = state ? STATUS_WORD[state] : undefined;
   if (!word) return null;
   return <span className={className ? `${scheduleStyles.gameStatus} ${className}` : scheduleStyles.gameStatus} data-state={state}>{word}</span>;
@@ -53,7 +60,7 @@ export interface MatchupSide {
 export function ScheduleMatchup({ time, division, pool, round, state, sides, href, noScore, foot, footTone = 'gold',
   footAction, form = 'wide', size, pill = true, place }: {
   /** Empty on a stacked result that leads with its context; a wide row always has one ("TBD" at worst). */
-  time: string; division: string | null; pool?: string | null; round?: string | null; state?: PublicGameState;
+  time: string; division: string | null; pool?: string | null; round?: string | null; state?: GameRowState;
   sides: MatchupSide[];
   href?: string; noScore?: ReactNode; foot?: string | null; footTone?: 'gold' | 'plain'; footAction?: ReactNode;
   form?: 'wide' | 'stacked'; size?: 'compact' | 'large'; pill?: boolean;

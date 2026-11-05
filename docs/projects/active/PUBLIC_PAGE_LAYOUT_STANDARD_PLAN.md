@@ -460,3 +460,42 @@ applied in v2; C3 split into C3 + C4.
   pay block's look is pinned by the guard, not measured. A probe on `uat-rep-only` 15U AAA (the club fixture's teams have
   no schedule or open tryout): Subscribe at 1,536 is 44 tall, 8 px, 14/600, the field edge on white; at 390 the bare 44
   symbol; "Sign up for tryouts" 183 px wide at 1,536, the full width at 390.
+- **2026-11-05 · Club build Part 4 (C6 the two-way link, C7 the house league's Schedule and Standings, the record, the
+  not-found, the in-club error) — built 2026-11-05.** Owner yes on the product-owner summary, with three answers: the
+  in-club error page **yes**; a past tournament's results onto the game row too (**yes**, beyond the prompt's "title and
+  headings": its rows were held 520–560 px wide and scrolled sideways on a phone); the house league's games **away team
+  first** (the standard's order; it read "Home vs Away"). Disagreement said out loud before building: C7 was ruled as "small
+  (the phone edge and the top)"; converting the game rows came from the build prompt, not the ruling.
+  - **C6:** `lib/team-two-pages.ts` (pure, `tests/unit/team-two-pages.test.ts`, 11 cases: registered + public → link; not
+    public → none; another club's → none) and `lib/team-two-pages-server.ts` (the reads). Tournament → club: the team-profile
+    route carries `clubTeam` ("{team} at {club}", line "The team’s page at the club" — no existing help phrase), a link row
+    in the side column under the record (alone there with no record; under "No games scheduled yet" with no games), through
+    `useOrgHref`. The club page is linked only when `publicClubRefusal(org, 'teams')` is null — the check the club team page
+    makes. Club → tournament: a schedule entry mirrored from the club's own tournament (`source_tournament_game_id`) opens
+    the team's tournament page — the title's link stretched over the row, so Up next's Directions stays its own button;
+    only for a tournament running or finished and a registration accepted; through `orgLinks`. **"Our team" is the house's
+    one rule** (`rep_team_tournament_registrations`, all three orgs equal): a coach's own workspace registration into the
+    club's tournament, with no admin link, gets no link (the mirror reads both sources) — **for Part 5's `/review`**, with
+    the new public reads (one per 30 s profile poll; up to three on a club team page with tournament games). **No fixture:
+    dev has no registration link**, so the owner cannot see C6 on dev until one is made (Part 5's walk needs one).
+  - **C7:** the Schedule's games are `ScheduleMatchup` (wide; time with the day under it, the place kept on every game —
+    the house league's own C10 ruling, the standard's all-games list carries none — "Moved · Was …" as the line under
+    the teams); each week and "Needs a new date" a heading row; one framed `parts.gameList` per section. The pill set
+    gains **Postponed** and **Moved** (amber, `GameRowState`); a row with a field AND a pill keeps the teams on row one (a
+    shared rule that also fixes a cancelled Playoffs game with a field). Standings: "Standings"/"Final standings" at 24 with
+    the season 8 px under it (`kit.nameBlock`, new); the table unchanged (the table exception). The coach's signed-in league
+    page keeps the old row classes and the 32 px `.title` — the guard pins it as `.title`'s only user.
+  - **The record:** name at 24 (season over, "Results final" under), each standings and results section a heading row
+    ("Pool play standings · U11" with several divisions, the tournament's own Final standings precedent), the results on
+    `ScheduleMatchup` (Final, away first, the winner bold). The fixture's archive has no games in its snapshot, so the rows
+    were not seen. **The in-club not-found:** on the club column (was a centred 34 rem box), name at 24, the kit's buttons
+    (full width on a phone). **The in-club error (`app/[orgSlug]/error.tsx`, new):** the club's face only where
+    `wearsClubFrame` holds; every other page under the org renders the platform's `app/error.tsx` unchanged — but note the
+    boundary now sits inside the org layout for the admin and coach pages too (same screen, one level lower).
+  - **Guards:** a "club round Part 4" block in `public-page-layout-guard.test.ts`; the shared-parts list in
+    `public-tournament-stage2-guard.test.ts` gains the Schedule and the record; `league-standings.test.ts`'s title pin moved
+    to `kit.pageName`. Checks: typecheck clean; the guards 225/225; `npm test` 14,344 / 14,354 — the ten failures are the
+    known other-session ones plus two timing failures that pass alone (`online-payments-pay`); lint clean on the touched
+    files (one old warning); spelling clean. Dev server restarted (new files). A probe at 390 / 1,536: Schedule, Standings,
+    the record and the not-found each name themselves at 24 on the logo edge (16 / 192), no sideways scroll; the Schedule
+    reads as the tournament's row (screenshots looked at).

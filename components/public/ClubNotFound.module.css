@@ -21,27 +21,9 @@
   padding: 2rem 1rem;
 }
 
-/* ── Not found inside a live club: the club's own frame around it (Club Tier Stage 4b-1, End state 5) ──────────────
-   The club's bar and footer stay; the page says so and offers the way home, full width, in the club's type. */
-.page {
-  min-height: 60vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 32px 16px;
-}
-
-.page .title {
-  font-family: var(--club-title-face);
-  font-weight: var(--club-title-weight);
-  font-size: 32px;
-  color: var(--club-text);
-}
-
-.page .text {
-  font-size: 16px;
-  color: var(--club-soft);
-}
+/* ── Not found inside a live club ──────────────────────────────────────────────────────────────────────────────────
+   Nothing here any more: it renders in the club page column with the club kit's name, text and buttons (club round
+   Part 4, 2026-11-05 — it was a centred 34 rem box with its own 32 px title and a restyled global button). */
 
 .body {
   width: 100%;
@@ -94,26 +76,4 @@
 :global(html[data-user-theme='warm']) .refusal .club,
 :global(html[data-user-theme='warm']) .refusal .text {
   color: var(--home-ink-soft);
-}
-
-/* "{club} home" — the drawing's secondary button, full width. */
-.page :global(.btn) {
-  width: 100%;
-  min-height: 44px;
-  margin-top: 4px;
-  justify-content: center;
-  background: var(--club-card);
-  color: var(--club-text);
-  border: 1px solid var(--club-field);
-  border-radius: 8px;
-  box-shadow: none;
-  font: 600 16px/1 var(--club-text-face);
-  text-transform: none;
-  letter-spacing: 0;
-}
-
-/* "See all teams" — the drawing's primary button above "{club} home" (Stage 4b-2a), the club kit's own, full width. */
-.wide {
-  width: 100%;
-  margin-top: 4px;
 }

@@ -72,8 +72,11 @@ export default async function PublicStandingsPage({
         <Link href={href(`/league/${seasonSlug}`)} className={kit.back}>
           ← {season.name}
         </Link>
-        <h1 className={kit.title}>{standingsTitle(season.status)}</h1>
-        <p className={kit.sub}>{season.name}</p>
+        {/* A page about one thing keeps its name at 24 (club round C4); the season under it, 8 px down. */}
+        <div className={kit.nameBlock}>
+          <h1 className={kit.pageName}>{standingsTitle(season.status)}</h1>
+          <p className={kit.sub}>{season.name}</p>
+        </div>
       </div>
 
       {/* Division tabs: a division that doesn't keep standings has none; a draft one says it is coming. */}

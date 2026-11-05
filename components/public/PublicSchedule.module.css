@@ -41,7 +41,7 @@ a.matchLink:hover .gameName { text-decoration: underline; }
 .gameContext { color: var(--club-dim); font: 400 0.875rem/1.25 var(--club-text-face); overflow-wrap: anywhere; }
 .gameStatus { padding: 4px 8px; border: 1px solid var(--club-line); border-radius: 20px; background: var(--club-ground); color: var(--club-soft); white-space: nowrap; font: 600 0.75rem/1.2 var(--club-text-face); }
 .gameStatus[data-state='live'] { color: var(--club-ok); background: var(--club-ok-bg); border-color: var(--club-ok-bg); }
-.gameStatus[data-state='unofficial'] { color: var(--club-warn); }
+.gameStatus:is([data-state='unofficial'], [data-state='postponed'], [data-state='moved']) { color: var(--club-warn); }
 .gameStatus[data-state='cancelled'] { color: var(--danger); }
 .gameTeams { display: flex; flex-direction: column; gap: 4px; margin-top: 4px; min-width: 0; }
 .gameSide { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 8px; align-items: first baseline; min-width: 0; }
@@ -184,5 +184,11 @@ a.gameName:focus-visible { outline: 2px solid var(--club-edge); outline-offset: 
      centred under the teams, the time and the day centred on both lines. */
   .wideForm .gamePlace { grid-column: 2; grid-row: 2; margin-top: 0; text-align: center; }
   .wideForm:has(.gamePlace) :is(.gameTime, .gameContext) { grid-row: 1 / 3; }
+  /* A field AND a pill (the house league's Schedule keeps the field on every game, a cancelled Playoffs game has both):
+     the teams keep row one so the field has row two under them, the pill above the division at the right as on any row. */
+  .wideForm:has(.gamePlace):has(.gameStatus) .gameTeams { grid-row: 1; }
+  .wideForm:has(.gamePlace):has(.gameStatus) .gameContext { grid-row: 2; }
+  /* The house league's Moved game: the date families heard ("Was Sat, Nov 7 · 6:00 p.m.") centred under the field. */
+  .wideForm[data-state='moved'] .gameNoScore { grid-column: 2; text-align: center; }
 }
 @media (prefers-reduced-motion: reduce) { .gameBlock[data-flipped] { animation: none; } }

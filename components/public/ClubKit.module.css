@@ -40,7 +40,8 @@
 /* A page about one thing keeps its name, at 24 px in the club's title face (club round C4, ruled 2026-11-05): a team, a
    tryout, a season, a form, Your sign-up, About, Tryouts out of season — the size a tournament team page's name is (A13),
    so 15U AAA reads the same on both. A page whose lit tab names it has no visible title (C3: `.srOnly` keeps its h1).
-   `.title` (32) stays only for the pages Part 4 has not reached and the coach's signed-in league team page. */
+   `.title` (32) stays only for the coach's signed-in house-league team page (out of the club round; Part 4 reached every
+   public page, and the guard holds that list to that one page). */
 .pageName {
   margin: 0;
   font-family: var(--club-title-face);
@@ -50,6 +51,14 @@
   letter-spacing: 0;
   overflow-wrap: anywhere;
   color: var(--club-text);
+}
+/* A one-thing page's name with a line over or under it (Standings over its season, a past tournament's record under its
+   season), 8 px apart — the team page's name-to-line gap (C4, C5). */
+.nameBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
 }
 /* A tab page's line, now under its toolbar (C3: Teams' count, Tryouts' season) — the pill and its line 12 apart. */
 .toolLine {

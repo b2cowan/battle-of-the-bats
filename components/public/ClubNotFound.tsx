@@ -9,6 +9,8 @@ import warm from '@/components/consumer/warmTheme.module.css';
 import system from '@/app/system-screens.module.css';
 import styles from './ClubNotFound.module.css';
 import kit from './ClubKit.module.css';
+import parts from './PublicParts.module.css';
+import PublicPage from './PublicPage';
 
 /**
  * A club's "not found" (Club Tier Stage 4a; Ask 5 ruled 2026-10-19; words through /marketing 2026-10-20).
@@ -20,7 +22,8 @@ import kit from './ClubKit.module.css';
  *     a closed site — Stage 4b-1), on the platform's system-screen ground (owner 2026-10-20, on a screenshot of the
  *     refusal inside the club's bar).
  *   · NOT FOUND INSIDE THE CLUB — a live club's page that does not exist. It stays in the club's site (the club's frame —
- *     its bar and footer, Stage 4b-1) with a way home.
+ *     its bar and footer, Stage 4b-1) with a way home, on the club page column like every club page (club round Part 4:
+ *     on the logo edge, never centred; its name at 24, C4; the buttons full width on a phone, their own width at a desk).
  * Any other address under the org (a tournament, the signed-in tools) gets the platform's page, as it always had —
  * imported here rather than handed down as a server element, which would ride in every org page's payload.
  * Each face is a <div>: the root layout already owns the page's <main>.
@@ -57,13 +60,15 @@ export default function ClubNotFound() {
   const seeTeams = face.variant === 'teams' && club.teamsPage;
 
   return (
-    <div className={styles.page}>
-      <div className={styles.body}>
-        <h1 className={styles.title}>We couldn’t find that page</h1>
-        <p className={styles.text}>{text}</p>
-        {seeTeams && <Link href={href('/teams')} className={`${kit.btn} ${kit.btnPrimary} ${styles.wide}`}>See all teams</Link>}
-        <Link href={href()} className="btn btn-outline">{club.name} home</Link>
+    <PublicPage frame="club">
+      <div className={kit.nameBlock}>
+        <h1 className={kit.pageName}>We couldn’t find that page</h1>
+        <p className={`${kit.body} ${parts.prose}`} style={{ margin: 0 }}>{text}</p>
       </div>
-    </div>
+      <div className={kit.btnRow}>
+        {seeTeams && <Link href={href('/teams')} className={`${kit.btn} ${kit.btnPrimary} ${kit.btnPhoneFull}`}>See all teams</Link>}
+        <Link href={href()} className={`${kit.btn} ${kit.btnSecondary} ${kit.btnPhoneFull}`}>{club.name} home</Link>
+      </div>
+    </PublicPage>
   );
 }

@@ -185,7 +185,8 @@ describe('"Final" means completed (9f·3, 9f·6)', () => {
     assert.equal(standingsTitle('completed'), 'Final standings');
     assert.equal(standingsTitle('archived'), 'Final standings');
     for (const s of ['active', 'registration_closed', 'registration_open']) assert.equal(standingsTitle(s), 'Standings');
-    assert.match(readCode('app/[orgSlug]/league/[seasonSlug]/standings/page.tsx'), /<h1 className=\{kit\.title\}>\{standingsTitle\(season\.status\)\}<\/h1>/);
+    // At 24 since the club round's Part 4 (C4: a page about one thing names itself at 24 in the title face).
+    assert.match(readCode('app/[orgSlug]/league/[seasonSlug]/standings/page.tsx'), /<h1 className=\{kit\.pageName\}>\{standingsTitle\(season\.status\)\}<\/h1>/);
   });
   it('the coach: the link names the page it opens; a finished page has no Schedule section and no "nothing scored" line', () => {
     assert.equal(W.coach.finalLink, 'See the final standings');

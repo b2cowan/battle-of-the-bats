@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { Navigation } from 'lucide-react';
 import styles from './RepTeamPublicSchedule.module.css';
 import kit from './ClubKit.module.css';
@@ -38,8 +39,12 @@ const TONE_CLASS: Record<'win' | 'loss' | 'neutral', string> = {
  * One event (Club Tier Stage 4b-2a, the one calendar recipe C5/C8): the date and time lead as plain text, then what and
  * where. Up next is marked by the club's edge and its words (C7) and carries Directions as its own 44 px button; a
  * cancelled event stays, struck through, with its Cancelled chip (C9); a played game shows its score.
+ *
+ * A game in the club's own tournament opens the team's tournament page (club round C6, 2026-11-05): the whole row is the
+ * link — its title stretched over the row, so Up next's Directions stays its own button beside it (a link cannot hold a
+ * link). The calendar row keeps its look (the registered exception); only the cursor and the hover say it opens.
  */
-function Row({ entry }: { entry: FamilyScheduleEntry }) {
+function Row({ entry, link }: { entry: FamilyScheduleEntry; link?: string }) {
   const cancelled = entry.status === 'cancelled';
   const score = scheduleScoreText(entry);
   const directions = entry.isNextUp && !cancelled ? directionsHref(entry.locationAddress) : null;
@@ -51,7 +56,9 @@ function Row({ entry }: { entry: FamilyScheduleEntry }) {
       </div>
       <div className={styles.what}>
         {entry.isNextUp && <span className={styles.nextLabel}>Up next</span>}
-        <div className={styles.title}>{scheduleRowTitle(entry)}</div>
+        {link
+          ? <Link href={link} className={`${styles.title} ${styles.rowLink}`}>{scheduleRowTitle(entry)}</Link>
+          : <div className={styles.title}>{scheduleRowTitle(entry)}</div>}
         {entry.location && <div className={styles.where}>{entry.location}</div>}
       </div>
       {cancelled ? <span className={styles.cancelChip}>Cancelled</span>
@@ -67,8 +74,10 @@ function Row({ entry }: { entry: FamilyScheduleEntry }) {
   );
 }
 
-export default function RepTeamPublicSchedule({ view, subscribe }: {
+export default function RepTeamPublicSchedule({ view, subscribe, tournamentLinks = {} }: {
   view: FamilyTeamView;
+  /** Entry id → the team's tournament page, for the club's own tournament's games (club round C6, lib/team-two-pages.ts). */
+  tournamentLinks?: Record<string, string>;
   /** Club Tier 6d (B3): the Subscribe button on the heading line — passed by the page exactly when it renders the
    *  schedule, because both come from one question (getPublicTeamSchedule), which the public feed asks too. */
   subscribe?: { feedPath: string; calendarName: string };
@@ -85,17 +94,17 @@ export default function RepTeamPublicSchedule({ view, subscribe }: {
       <PublicSectionHead id="schedule" title="Schedule"
         action={subscribe && <TeamSubscribeButton feedPath={subscribe.feedPath} calendarName={subscribe.calendarName} />} />
       <div className={kit.list}>
-        {upcoming.length === 0 ? earlier.map(e => <Row key={e.id} entry={e} />) : earlier.length > 0 && (
+        {upcoming.length === 0 ? earlier.map(e => <Row key={e.id} entry={e} link={tournamentLinks[e.id]} />) : earlier.length > 0 && (
           <details className={styles.fold}>
             <summary className={styles.foldTop}>Earlier this season ({earlier.length})</summary>
-            {earlier.map(e => <Row key={e.id} entry={e} />)}
+            {earlier.map(e => <Row key={e.id} entry={e} link={tournamentLinks[e.id]} />)}
           </details>
         )}
-        {upcoming.map(e => <Row key={e.id} entry={e} />)}
+        {upcoming.map(e => <Row key={e.id} entry={e} link={tournamentLinks[e.id]} />)}
         {later.length > 0 && (
           <details className={styles.fold}>
             <summary className={styles.foldBottom}>Show the rest of the season ({later.length} more)</summary>
-            {later.map(e => <Row key={e.id} entry={e} />)}
+            {later.map(e => <Row key={e.id} entry={e} link={tournamentLinks[e.id]} />)}
           </details>
         )}
       </div>

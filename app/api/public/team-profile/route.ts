@@ -11,6 +11,7 @@ import { decidedFinalFor } from '@/lib/champions';
 import { withheldTeamProfile } from '@/lib/public-teams';
 import { teamProfilePreview } from '@/lib/public-team-profile';
 import { DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
+import { clubTeamLinkForRegistration } from '@/lib/team-two-pages-server';
 
 export const dynamic = 'force-dynamic';
 
@@ -128,6 +129,10 @@ export const GET = withObservability(async (req: Request) => {
   const shownTeamIds = new Set<string>([teamId, ...teamGames.flatMap(g => [g.homeTeamId, g.awayTeamId])].filter(Boolean) as string[]);
   const teamNames = Object.fromEntries(Object.entries(teamMap).filter(([id]) => shownTeamIds.has(id)));
 
+  // The host club's own team links to its club page, only when that page is public (club round C6). The tournament was
+  // read under this org (`getPublicTournamentBySlug`), so it is the org's own; a team from another club gets null.
+  const clubTeam = await clubTeamLinkForRegistration(org, org.id, team.id);
+
   const profile = {
     // Public-safe team only — never expose coach email / paymentStatus / adminNotes
     // on this anonymous endpoint (J6-001). Coach NAME honors the per-tournament toggle (mig 150).
@@ -141,6 +146,7 @@ export const GET = withObservability(async (req: Request) => {
       : { teamId, poolId: team.poolId ?? null, w: 0, l: 0, t: 0, pts: 0, rf: 0, ra: 0, rd: 0, isRunnerUp: false },
     games: teamGames,
     teamNames,
+    clubTeam,
   };
   // The published-only shape for everyone: a crossover game never names a held-back opponent, whoever asks.
   return NextResponse.json(teamProfilePreview(profile, {

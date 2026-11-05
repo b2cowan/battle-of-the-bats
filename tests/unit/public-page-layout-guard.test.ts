@@ -425,3 +425,62 @@ describe('Public page layout standard, club round Part 3 — one type scale, one
     assert.doesNotMatch(t, /\.championCell/);
   });
 });
+
+describe('Public page layout standard, club round Part 4 — the house league\'s Schedule and Standings, the record, the not-found', () => {
+  const noComments = (css: string) => css.replace(/\/\*[\s\S]*?\*\//g, '');
+  it('C4: Schedule, Standings, a past tournament\'s record, the in-club not-found and error name themselves at 24', () => {
+    for (const f of [`${CLUB}/league/[seasonSlug]/schedule/page.tsx`, `${CLUB}/league/[seasonSlug]/standings/page.tsx`,
+      `${CLUB}/archives/[archiveId]/page.tsx`, 'components/public/ClubNotFound.tsx', `${CLUB}/error.tsx`]) {
+      const code = readCode(f);
+      assert.match(code, /<h1 className=\{kit\.pageName\}>/, `${f}: its name is kit.pageName (24)`);
+      assert.doesNotMatch(code, /kit\.title\b/, `${f}: no 32 px title left`);
+    }
+    // The 32 px title stays for ONE page outside the club round: the coach's signed-in house-league team page.
+    const users = [...filesUnder('app/[orgSlug]', '.tsx'), ...filesUnder('components/public', '.tsx'), ...filesUnder('components/rep-teams', '.tsx')]
+      .filter(f => /kit\.title\b/.test(readCode(f)));
+    assert.deepEqual(users.map(f => f.replace(/\\/g, '/')), [`${CLUB}/league/[seasonSlug]/team/[teamId]/page.tsx`]);
+  });
+  it('C7 + R6: the house league\'s Schedule draws every game on the standard\'s game row, each week under a heading row', () => {
+    const code = readCode(`${CLUB}/league/[seasonSlug]/schedule/page.tsx`);
+    assert.match(code, /<ScheduleMatchup\b/);
+    assert.doesNotMatch(code, /column\.(game|when|match|matchName|place|state|struck|week|weekHead)\b/, 'no house-league row of its own');
+    assert.match(code, /<PublicSectionHead title=\{head\} \/>/, 'a week\'s heading is the heading row (R4)');
+    assert.match(code, /<PublicSectionHead title=\{SEASON_SCHEDULE_WORDS\.needsDate\} \/>/);
+    assert.equal((code.match(/className=\{`\$\{kit\.list\} \$\{parts\.gameList\}`\}/g) ?? []).length, 2, 'one framed game list per section');
+    // Away first (R6's "away score – score home"), and the place kept on every game (the house league's own ruling).
+    assert.match(code, /sides=\{\[side\(game\.awayTeamId, game\.awayScore, game\.homeScore\), side\(game\.homeTeamId/);
+    assert.match(code, /place=\{place \? \{ text: place \} : undefined\}/);
+    // Postponed and Moved are pills in the one set, amber like Unofficial.
+    assert.match(readCode('components/public/PublicGameRow.tsx'), /postponed: 'Postponed', moved: 'Moved'/);
+    assert.match(readSource('components/public/PublicSchedule.module.css'),
+      /\.gameStatus:is\(\[data-state='unofficial'\], \[data-state='postponed'\], \[data-state='moved'\]\) \{ color: var\(--club-warn\); \}/);
+  });
+  it('Standings: its name at 24 with the season 8 px under it; the table keeps its look (the registered table exception)', () => {
+    const code = readCode(`${CLUB}/league/[seasonSlug]/standings/page.tsx`);
+    assert.match(code, /<div className=\{kit\.nameBlock\}>\s*<h1 className=\{kit\.pageName\}>\{standingsTitle\(season\.status\)\}<\/h1>/);
+    assert.match(cssRule(noComments(readSource('components/public/ClubKit.module.css')), '.nameBlock'), /gap: 8px;/);
+  });
+  it('a past tournament\'s record: heading rows, and its results on the game row — no row held wider than a phone', () => {
+    const code = readCode(`${CLUB}/archives/[archiveId]/page.tsx`);
+    assert.match(code, /<ScheduleMatchup\b/);
+    assert.doesNotMatch(code, /minWidth: '(520|560)px'/, 'the old rows scrolled sideways on a phone');
+    assert.match(code, /<PublicSectionHead title="Playoff results" \/>/);
+    assert.match(code, /<PublicSectionHead title=\{titled\('Pool play results', ag\.name\)\} \/>/);
+    assert.match(code, /<PublicSectionHead title=\{titled\('Pool play standings', ag\.name\)\} \/>/);
+  });
+  it('the in-club not-found is on the club column, never centred; its buttons are the kit\'s', () => {
+    const code = readCode('components/public/ClubNotFound.tsx');
+    assert.match(code, /<PublicPage frame="club">/);
+    assert.match(code, /\$\{kit\.btnPrimary\} \$\{kit\.btnPhoneFull\}`\}>See all teams/);
+    assert.match(code, /\$\{kit\.btnSecondary\} \$\{kit\.btnPhoneFull\}`\}>\{club\.name\} home/);
+    const css = noComments(readSource('components/public/ClubNotFound.module.css'));
+    assert.doesNotMatch(css, /^\.page\b|:global\(\.btn\)|^\.wide\b/m, 'no centred box or restyled global button left');
+  });
+  it('the in-club error (owner yes 2026-11-05): the club\'s face only where the club frame is drawn; the platform\'s page elsewhere', () => {
+    const code = readCode(`${CLUB}/error.tsx`);
+    assert.match(code, /const clubFace = wearsClubFrame\(pathname, club\);/);
+    assert.match(code, /if \(!clubFace \|\| !club\) return <PageError error=\{error\} retry=\{retry\} \/>;/);
+    assert.match(code, /<PublicPage frame="club">/);
+    assert.match(code, /onClick=\{\(\) => retry\(\)\}/, 'Next 16: retry re-fetches the failed segment (reset only cleared the state)');
+  });
+});

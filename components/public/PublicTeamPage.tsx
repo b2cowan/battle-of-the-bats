@@ -41,6 +41,11 @@ export function PublicTeamBody({ data, now, orgSlug, tournamentSlug }: {
   const base = orgHref(`/${tournamentSlug}`);
   const hasGames = data.games.length > 0;
   const showRecord = hasGames && preview.standingsShown;
+  // The host club's own team: one link row to its club page (club round C6) — under the record, or alone in the side
+  // column when no record shows, or under "No games scheduled yet". Its address is the club's own (`useOrgHref`).
+  const club = data.clubTeam;
+  const clubRow = club && <PublicLinkList><PublicDoorRow href={orgHref(club.path)} label={`${club.name} at ${club.clubName}`}
+    sub="The team’s page at the club" /></PublicLinkList>;
   // The left column opens with a section heading (Live now / Next games / Results) unless a champion banner leads.
   const mainLeadsWithHeading = view.moment.kind !== 'champion' && Boolean(view.focus || view.next.length || view.results.length);
   function toggleFollow() {
@@ -103,17 +108,19 @@ export function PublicTeamBody({ data, now, orgSlug, tournamentSlug }: {
               <small>{result.round}{result.unofficial && ' · Unofficial'}</small></span><b>{result.score}</b></Link>)}</div>
         </section>}
       </div>
-      {showRecord && <div className={`${parts.colSide} ${mainLeadsWithHeading ? styles.sideBelowHeading : ''}`}>
-        <dl className={styles.record}>
+      {(showRecord || clubRow) && <div className={`${parts.colSide} ${mainLeadsWithHeading ? styles.sideBelowHeading : ''}`}>
+        {showRecord && <><dl className={styles.record}>
           <div><dt>Record</dt><dd>{standings.w}-{standings.l}-{standings.t}</dd></div>
           {preview.place && <div><dt>{preview.place.label}</dt><dd>{preview.place.value}</dd></div>}
           <div><dt>Points</dt><dd>{standings.pts}</dd></div>
           <div><dt>Run difference</dt><dd>{standings.rd >= 0 ? '+' : ''}{standings.rd}</dd></div>
         </dl>
         <PublicLinkList><PublicDoorRow href={`${base}/standings`} label={view.standingsLabel}
-          sub={preview.place ? `${name.base} is ${preview.place.value}` : undefined} /></PublicLinkList>
+          sub={preview.place ? `${name.base} is ${preview.place.value}` : undefined} /></PublicLinkList></>}
+        {clubRow}
       </div>}
     </div>}
+    {!hasGames && clubRow}
     <UnfollowConfirmSheet open={confirm} teamName={team.name} onCancel={() => setConfirm(false)}
       onConfirm={() => { if (isStandalonePWA()) unfollowTeamEverywhere(orgSlug, tournamentSlug, team.id); setConfirm(false); }} />
   </PublicPage>;

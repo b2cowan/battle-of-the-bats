@@ -47,6 +47,16 @@
   box-shadow: inset 3px 0 0 var(--club-edge);
 }
 
+/* A row that opens the team's tournament page (club round C6): the title's link stretched over the whole row; Directions
+   sits above it as its own button. The row's look is the calendar row's — only the hover says it opens. */
+.rowLink { display: block; color: inherit; text-decoration: none; }
+.rowLink::after { content: ''; position: absolute; inset: 0; }
+.rowLink:focus-visible { outline: none; }
+.row:has(.rowLink:focus-visible) { outline: 2px solid var(--club-ink); outline-offset: -2px; }
+.row:has(.rowLink):hover { background: var(--club-ground); }
+.row:has(.rowLink):hover .rowLink { text-decoration: underline; }
+.row:has(.rowLink) .directions { position: relative; z-index: 1; }
+
 .nextLabel {
   display: block;
   margin-bottom: 2px;
