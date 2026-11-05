@@ -220,7 +220,7 @@ const exportsHelp: HelpPageContent = {
           <ul>
             <li>
               <strong>Excel with contact details</strong> — adds guardian email and phone number
-              columns
+              columns (and, for house-league registrations, a Second Parent Email column)
             </li>
             <li>
               <strong>Excel with internal notes</strong> — adds internal admin notes that the

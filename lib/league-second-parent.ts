@@ -21,7 +21,7 @@ import { possessive } from './utils';
 
 export const SECOND_PARENT_WORDS = {
   label: 'Second parent’s email',
-  hint: 'They’ll get the same emails you do about this sign-up. We only need their email, not their name.',
+  hint: 'Add them and they’ll get the club’s emails about this sign-up, except payment receipts. No name needed.',
   /** The form's coach line (ask 5): the coach sees the second address too. */
   coachLine: 'Your child’s coach will see your name, email and phone, and the second parent’s email if you add one.',
   /** The first email's own words, so the two boxes never disagree. */
@@ -37,7 +37,7 @@ export const SECOND_PARENT_WORDS = {
     const kids = nameList(childFirstNames);
     const whose = childFirstNames.length === 1 ? possessive(kids) : 'their';
     const tell = club.contact ? `tell the club at ${club.contact}` : `tell ${club.name}`;
-    return `${firstParent} added your email to ${possessive(kids)} sign-up so you get the same updates. If you aren’t ${whose} parent or guardian, ${tell} and we’ll remove your address.`;
+    return `${firstParent} added your email to ${possessive(kids)} sign-up so you get the same updates. If you aren’t ${whose} parent or guardian, or you’d rather not get these, ${tell} and they’ll take your address off.`;
   },
   /**
    * The club's screens (Part 5, ask 6): the record window's row and its edit, and the "Add registration" window. Staff are
@@ -52,7 +52,7 @@ export const SECOND_PARENT_WORDS = {
     cancel: 'Cancel',
     sameAsFirst: 'That’s the same as the first email. Leave it empty or enter the other parent’s.',
     /** The first email changed to the second parent's: the database holds them apart, so it is said in words first. */
-    firstIsSecond: 'That’s the second parent’s email on this sign-up. Change the second parent’s email first.',
+    firstIsSecond: 'That’s already the second parent’s email on this sign-up. Change or clear the second parent first.',
     /** Under the edit box: a staff edit sends nothing (shipped behaviour, build prompt Part 5). */
     editHint: 'Applies to every child in this sign-up. Nothing is emailed when you change it.',
   },

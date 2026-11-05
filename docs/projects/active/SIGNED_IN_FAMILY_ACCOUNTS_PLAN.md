@@ -179,7 +179,7 @@ for it (decide from the snapshots, never from migration files).
 
 Draw first: the form field and how the club sees two guardians on a registration.
 
-**DRAWN + RULED 2026-11-03 (all six asks A, as recommended).** [Drawings](https://claude.ai/artifact/5NRGyGJgJU11DaVuhL9fHY) · [source](SIGNED_IN_FAMILY_STAGE3_DRAWINGS.html). **BUILT and committed 2026-11-03** (Sessions 1–3 in one commit; /simplify and /review done, the review's fixes and six owner questions are in the build prompt's Progress block; mig 430 applied to dev, prod pending; walk, /docs and /marketing owed).
+**DRAWN + RULED 2026-11-03 (all six asks A, as recommended).** [Drawings](https://claude.ai/artifact/5NRGyGJgJU11DaVuhL9fHY) · [source](SIGNED_IN_FAMILY_STAGE3_DRAWINGS.html). **BUILT and committed `bacf24a9b` 2026-11-03** (Sessions 1–3 in one commit; /simplify and /review done, the review's fixes and six owner questions are in the build prompt's Progress block; mig 430 applied to dev, prod pending; walk, /docs and /marketing owed).
 1. **Placement:** an always-visible box "Second parent's email" under Email and Phone, no name asked, no "(optional)" tag (the 2026-08-26 required-marker ruling).
 2. **Emails:** the second address gets every email about the sign-up, including the "Your sign-up" link and the pay link, with a "who added you / not you? tell the club" line on its copy. Receipts and refunds stay with whoever paid, as today. Known cost: the address is typed by the first parent and unconfirmed, so a wrong address can see the child's name and the amount owed; the added line is the only safeguard.
 3. **Marketing consent:** the tick-box covers the first parent only; the second address is never on the marketing list.
@@ -201,7 +201,12 @@ Also drawn: one address per sign-up (not per child); the same address as the fir
 
 **Blocked by:** the PIPEDA / CASL counsel review (the guardian tier, `GUARDIAN_TIER_ENABLED`, stays off until it clears) and
 **Stage 14** (one player across seasons): today the guardian link hangs on a per-season rep roster row (census §4), and house
-league has no child record at all. The parent account is a person, not an organization member (10-29 P3 — not yet ruled).
+league has no child record at all. The parent account is a person, not an organization member (10-29 P3 — ruled yes 2026-11-04, below).
+**Stage 14 DRAWN + RULED 2026-11-04, all 14 asks A** (`CLUB_TIER_PRODUCTION_READINESS_PLAN.md` Stage 14 note; page tab 7 is
+this stage's hand-off frame: the link points at the CHILD, and what a parent sees follows the child's live seasons — Ask 13).
+**10-29 P3 RULED 2026-11-04 (Stage 14 Ask 14 A): a parent account is a person, kept clear of the one-home-organization rules.**
+Stage 4 is still blocked by counsel and by Stage 14's BUILD. The code read also found the guardian link is never moved at a roll and stays live and season-blind on last
+season's row (latent: the tier is off) — Stage 4 must not ship on today's link.
 
 ### Stage 5 — Next season pre-filled for a signed-in parent · needs Stage 4
 

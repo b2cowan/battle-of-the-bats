@@ -38,7 +38,7 @@ const registrationsHelp: HelpPageContent = {
           <p>Use this routine when registrations are actively coming in. The page is a single table — actions sit right on each row, and the tabs (To review, Active, Waitlist, Ended) plus the search box are how you move through it. Tick several rows and a bar offers Approve, Promote, Waitlist, Mark received, Move division and Email for all of them at once.</p>
           <ol>
             <li>Open <strong>Registrations</strong> and start on the <strong>To review</strong> tab.</li>
-            <li>Use the <strong>search box</strong> (player name or parent email) to find a specific family or spot duplicates.</li>
+            <li>Use the <strong>search box</strong> (player name or parent email, including a second parent&apos;s) to find a specific family or spot duplicates.</li>
             <li>Check each row&apos;s player, guardian contact, and division before acting.</li>
             <li>Click <strong>Approve</strong>, <strong>Waitlist</strong>, or <strong>Decline</strong> on the row. If the division is full, Approve is refused with <em>Add to the waitlist instead</em>.</li>
             <li>When a family pays by hand, click <strong>Mark received</strong> on their Active row. A card payment records itself, and so does a bank debit once it clears (it takes up to 5 business days, and Mark received and the pay link are not offered while it does); <strong>Email the pay link</strong> in the row menu (or the bar, for several) sends owing families their link. Approving never creates a fee line; marking a fee received writes it into the season&apos;s book, and the Fee column shows what is owing and for how many days.</li>
@@ -97,13 +97,13 @@ const registrationsHelp: HelpPageContent = {
       heading: 'How to add a manual registration',
       summary: 'Enter a player who registered outside the public form.',
       keywords: ['manual registration', 'add registration', 'walk-in', 'carry-over player', 'registration night', 'division full', 'add to the waitlist instead', 'mark received'],
-      searchText: 'manual registration add registration by hand walk-in carry-over player public form offline division status active to review pending waitlisted guardian fee mark received registration night in person table one laptop too many attempts league registrar can add finished season locked no add registration',
+      searchText: 'manual registration add registration by hand walk-in carry-over player public form offline division status active to review pending waitlisted guardian second parent email second parent’s email fee mark received registration night in person table one laptop too many attempts league registrar can add finished season locked no add registration',
       content: (
         <>
           <p>Use manual registration for walk-ins, migrated records, late approvals, or players collected outside the public form. The owner, club admin, league admin and league registrar can all add one by hand, including after registration has closed.</p>
           <ol>
             <li>Click <strong>Add registration</strong>.</li>
-            <li>Enter player and guardian details exactly as you want them in exports and communications.</li>
+            <li>Enter player and guardian details exactly as you want them in exports and communications. The optional <strong>Second parent&apos;s email</strong> box adds a second address for the sign-up; it can&apos;t be the same as the first.</li>
             <li>Select the correct season division.</li>
             <li>Choose the starting status — <strong>Active</strong>, <strong>To review</strong>, or <strong>Waitlisted</strong>.</li>
             <li>Save and confirm the player appears in the expected tab.</li>
@@ -228,7 +228,7 @@ const registrationsHelp: HelpPageContent = {
             <li><strong>On Registrations, tick rows, then Email</strong> — just the families you ticked.</li>
             <li><strong>A row&apos;s &#8943; &rsaquo; Email this family</strong> — one family.</li>
           </ul>
-          <p>The window counts families, so siblings get one email. Each season can send <strong>3 emails in any 24 hours</strong>; a message to one family, and the automatic emails Publish teams sends, never count. An email goes as soon as you press Send, so check the count first. The season&apos;s <strong>Email families</strong> page, in its menu beside Money, lists what was sent. More in <em>Money and Email families</em> in the House league guide.</p>
+          <p>The window counts families, so siblings get one email. A second parent added to a sign-up gets their own copy of each of these emails when the first parent&apos;s goes, and is not counted separately. Each season can send <strong>3 emails in any 24 hours</strong>; a message to one family, and the automatic emails Publish teams sends, never count. An email goes as soon as you press Send, so check the count first. The season&apos;s <strong>Email families</strong> page, in its menu beside Money, lists what was sent. More in <em>Money and Email families</em> in the House league guide.</p>
         </>
       ),
     },

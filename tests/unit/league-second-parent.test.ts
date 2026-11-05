@@ -37,11 +37,11 @@ describe('the second parent’s words (behaviour)', () => {
   it('the "who added you" line: one child, several, and a club with no contact address', () => {
     assert.equal(
       SP.addedYou('Priya Shah', ['Aarav'], { name: 'Riverdale Minor Ball', contact: 'info@riverdale.example' }),
-      'Priya Shah added your email to Aarav’s sign-up so you get the same updates. If you aren’t Aarav’s parent or guardian, tell the club at info@riverdale.example and we’ll remove your address.',
+      'Priya Shah added your email to Aarav’s sign-up so you get the same updates. If you aren’t Aarav’s parent or guardian, or you’d rather not get these, tell the club at info@riverdale.example and they’ll take your address off.',
     );
     assert.equal(
       SP.addedYou('Priya Shah', ['Aarav', 'Maya'], { name: 'Riverdale Minor Ball', contact: null }),
-      'Priya Shah added your email to Aarav and Maya’s sign-up so you get the same updates. If you aren’t their parent or guardian, tell Riverdale Minor Ball and we’ll remove your address.',
+      'Priya Shah added your email to Aarav and Maya’s sign-up so you get the same updates. If you aren’t their parent or guardian, or you’d rather not get these, tell Riverdale Minor Ball and they’ll take your address off.',
     );
   });
 });

@@ -107,6 +107,8 @@
     mail door, the second address under the first on a desk).
   - **Not done in this session:** `/simplify`, `/review`, `/docs`, `/marketing` (offered to the owner), the owner walk, the
     plan / TODO / memory records. The "Your sign-up" toast still names the first address only.
+- **Stage 3 (Sessions 1–3) committed `bacf24a9b` 2026-11-03** (44 files; mig 430 applied to dev, prod pending; schema snapshots
+  not in it — they also hold other sessions' tables; not pushed).
 - **Session 3 (/simplify + /review, high-risk tier, 2026-11-03) — fixes landed, one commit of the stage.**
   - **/simplify applied:** the second addresses are read in chunks (`fetchAllIn`; one long read would have failed on a big
     season and been swallowed, leaving every second parent silently unreached); the sign-up confirmation's second copy now
