@@ -15,7 +15,7 @@ import { directionOfEntry, ENTRY_SELECT, type EntryRow } from './bank-club-map';
 import { toCents } from './coach-register';
 import { isUuid } from './utils';
 import {
-  bookNames, checkSummaries, checkToShow, checkedThrough, keptOutPlan, markPlan, openingPlan, payoutGapViews, readCents,
+  bookNames, checkSummaries, checkToShow, checkedThrough, keptOutPlan, markPlan, openingPlan, payoutGapViews, pickerSearch, readCents,
   readDay, readText, refusalOfDbError, refusalOfStep, statusOfRefusal, tickPlan, undoPlan, type BankCheckEvent, type Decision,
 } from './bank-club-rules';
 import { BANK_REFUSAL, type BankRefusalCode } from './bank-check-words';
@@ -23,24 +23,23 @@ import { BANK_REFUSAL, type BankRefusalCode } from './bank-check-words';
 /**
  * THE CLUB'S BANK STEPS (Bank reconciliation R2b): what each route under app/api/admin/accounting/bank/** does, once its
  * gate (`resolveClubMoney`, B7) has passed. Every step reads the account fresh (lib/bank-club-read.ts), decides with
- * the pure rules (lib/bank-club-rules.ts) and the engine, and writes through mig 439's functions or one plain row. A write
- * answers with the account's view read again, so the screen shows the server's numbers, never its own (rule 6).
+ * the pure rules (lib/bank-club-rules.ts) and the engine, and writes through mig 439's and 440's functions, or, for a
+ * rename, one plain row. A write answers with the account's view read again, so the screen shows the server's numbers,
+ * never its own (rule 6).
  * ⚖ No year, no season: nothing here reads either.
  */
 
 /** The club's day: the end of the Stripe read, the fee's "today" (rule 6: the server's, never the request's). */
 export const clubToday = () => tournamentToday();
 
-const bankRefused = (status: number, code: BankRefusalCode): Refused =>
-  refused(status, { error: BANK_REFUSAL[code], code });
+/** A coded refusal, at the one status the code has (`STATUS_OF`), with its words. */
+export const bankRefusedAs = (code: BankRefusalCode): Refused =>
+  refused(statusOfRefusal(code), { error: BANK_REFUSAL[code], code });
 
 /** A rules decision's refusal as the route's. */
-const fromDecision = (d: Extract<Decision<object>, { ok: false }>): Refused => bankRefused(d.status, d.code);
+const fromDecision = (d: Extract<Decision<object>, { ok: false }>): Refused => bankRefusedAs(d.code);
 
-/** A coded refusal at its own status. */
-export const bankRefusedAs = (code: BankRefusalCode): Refused => bankRefused(statusOfRefusal(code), code);
-
-/** One mig 439 step: its coded refusal, or its answer. */
+/** One mig 439 / 440 step: its coded refusal, or its answer. */
 async function step(fn: string, args: Record<string, unknown>): Promise<Moved<{ data: Record<string, unknown> }>> {
   const { data, error } = await supabaseAdmin.rpc(fn, args);
   if (error) {
@@ -146,7 +145,7 @@ export async function bankAnswer(ctx: AuthContextWithRole, accountId: string, ch
   r: Moved<object>, status = 200): Promise<Response> {
   if (!r.ok) return moveRefused(r);
   const view = await bankAccountView(ctx, accountId, checkId);
-  if (!view) return moveRefused(bankRefused(404, 'account_not_found'));
+  if (!view) return moveRefused(bankRefusedAs('account_not_found'));
   return NextResponse.json(view, { status });
 }
 
@@ -160,12 +159,12 @@ const PAGE = 50;
 export async function linesBefore(ctx: AuthContextWithRole, p: { accountId: string | null; date: unknown; q: string; offset: number }):
   Promise<Moved<{ lines: unknown[]; more: boolean }>> {
   const day = readDay(p.date);
-  if (!day) return bankRefused(400, 'bad_date');
+  if (!day) return bankRefusedAs('bad_date');
   const all = await readClubBankAccounts(ctx.org.id);
   let books: { id: string; name: string }[];
   if (p.accountId) {
     const a = all.accounts.find(x => x.id === p.accountId);
-    if (!a) return bankRefused(404, 'account_not_found');
+    if (!a) return bankRefusedAs('account_not_found');
     books = a.books;
   } else {
     books = all.never ? all.unplacedBooks : (all.accounts.find(a => a.isFirst)?.books ?? []);
@@ -174,10 +173,11 @@ export async function linesBefore(ctx: AuthContextWithRole, p: { accountId: stri
   const names = new Map(books.map(b => [b.id, b.name]));
   let q = supabaseAdmin.from('accounting_entries').select(ENTRY_SELECT)
     .in('ledger_id', books.map(b => b.id)).eq('status', 'posted').lte('entry_date', day);
-  const words = p.q.trim().slice(0, 80);
-  const amount = /^\$?\d{1,9}(\.\d{1,2})?$/.test(words) ? Number(words.replace('$', '')) : null;
-  if (amount !== null) q = q.eq('amount', amount);
-  else if (words) q = q.ilike('description', `%${words.replace(/[%_\\]/g, m => `\\${m}`)}%`);
+  const search = pickerSearch(p.q);
+  if (search.kind === 'amount') q = q.eq('amount', search.amount);
+  // All digits: a cheque number as much as an amount. Digits need no escaping inside the `or` filter.
+  else if (search.kind === 'either') q = q.or(`amount.eq.${search.amount},description.ilike.%${search.words}%`);
+  else if (search.kind === 'words') q = q.ilike('description', `%${search.words.replace(/[%_\\]/g, m => `\\${m}`)}%`);
   const offset = Math.max(0, Math.min(Number.isInteger(p.offset) ? p.offset : 0, 5000));
   const { data, error } = await q.order('entry_date', { ascending: false }).order('id', { ascending: false })
     .range(offset, offset + PAGE);
@@ -199,10 +199,10 @@ export async function linesBefore(ctx: AuthContextWithRole, p: { accountId: stri
 /** POST /bank — name an account; a second one takes the books it names (C10, Ask 13). */
 export async function addAccount(ctx: AuthContextWithRole, body: Record<string, unknown>): Promise<Moved<{ id: string }>> {
   const name = readText(body.name, 80);
-  if (!name) return bankRefused(400, 'bad_name');
+  if (!name) return bankRefusedAs('bad_name');
   const ledgers = Array.isArray(body.ledgerIds) ? body.ledgerIds : [];
   // A book id is a uuid, and a request names a handful: anything else is "no such book", never a database error.
-  if (ledgers.length > 200 || !ledgers.every((x): x is string => typeof x === 'string' && isUuid(x))) return bankRefused(400, 'book_not_found');
+  if (ledgers.length > 200 || !ledgers.every((x): x is string => typeof x === 'string' && isUuid(x))) return bankRefusedAs('book_not_found');
   const r = await step('bank_account_add', { p_org: ctx.org.id, p_name: name, p_ledgers: ledgers, p_actor: ctx.user.id });
   return r.ok ? { ok: true, id: r.data.id as string } : r;
 }
@@ -210,7 +210,7 @@ export async function addAccount(ctx: AuthContextWithRole, body: Record<string, 
 /** PATCH /bank/accounts/{id} — rename. */
 export async function renameAccount(ctx: AuthContextWithRole, accountId: string, body: Record<string, unknown>): Promise<Moved<object>> {
   const name = readText(body.name, 80);
-  if (!name) return bankRefused(400, 'bad_name');
+  if (!name) return bankRefusedAs('bad_name');
   const { data, error } = await supabaseAdmin.from('bank_accounts').update({ name })
     .eq('id', accountId).eq('org_id', ctx.org.id).eq('owner_kind', 'club').is('archived_at', null).select('id');
   if (error) {
@@ -218,13 +218,13 @@ export async function renameAccount(ctx: AuthContextWithRole, accountId: string,
     if (code) return bankRefusedAs(code);
     throw error;
   }
-  return (data ?? []).length ? { ok: true } : bankRefused(404, 'account_not_found');
+  return (data ?? []).length ? { ok: true } : bankRefusedAs('account_not_found');
 }
 
 /** POST /bank/accounts/{id}/books — move a club book's money into this account (Ask 13). */
 export async function moveBook(ctx: AuthContextWithRole, accountId: string, body: Record<string, unknown>): Promise<Moved<object>> {
   const ledgerId = typeof body.ledgerId === 'string' ? body.ledgerId : '';
-  if (!isUuid(ledgerId)) return bankRefused(400, 'book_not_found');
+  if (!isUuid(ledgerId)) return bankRefusedAs('book_not_found');
   const r = await step('bank_book_move', { p_org: ctx.org.id, p_ledger: ledgerId, p_to: accountId, p_actor: ctx.user.id });
   return r.ok ? { ok: true } : r;
 }
@@ -236,7 +236,7 @@ export async function moveBook(ctx: AuthContextWithRole, accountId: string, body
 export async function setUpAccount(ctx: AuthContextWithRole, accountId: string, body: Record<string, unknown>): Promise<Moved<object>> {
   const openingDate = readDay(body.openingDate);
   const balance = readCents(body.openingBalanceCents, { positive: false });
-  if (!openingDate || balance === null) return bankRefused(400, 'bad_start');
+  if (!openingDate || balance === null) return bankRefusedAs('bad_start');
   if (openingDate > clubToday()) return bankRefusedAs('starts_in_future');
   const keys = Array.isArray(body.picked) ? body.picked.filter((k): k is string => typeof k === 'string') : [];
   // Only uuids are looked up (a malformed one is simply not found, and `openingPlan` refuses it); the plan caps the count at 500.
@@ -248,7 +248,7 @@ export async function setUpAccount(ctx: AuthContextWithRole, accountId: string, 
       supabaseAdmin.from('accounting_entries').select(ENTRY_SELECT).in('id', c).order('id').range(a, b)),
   ]);
   const account = all.accounts.find(a => a.id === accountId);
-  if (!account) return bankRefused(404, 'account_not_found');
+  if (!account) return bankRefusedAs('account_not_found');
   const plan = openingPlan({ openingDate, pickedKeys: body.picked, typed: body.typed, rows, books: new Set(account.books.map(b => b.id)) });
   if (!plan.ok) return fromDecision(plan);
   const r = await step('bank_account_set_up', {
@@ -264,7 +264,7 @@ export async function setUpAccount(ctx: AuthContextWithRole, accountId: string, 
 export async function startCheck(ctx: AuthContextWithRole, accountId: string, body: Record<string, unknown>): Promise<Moved<{ id: string }>> {
   const end = readDay(body.statementEndDate);
   const balance = readCents(body.statementEndingBalanceCents, { positive: false });
-  if (!end || balance === null) return bankRefused(400, 'bad_figures');
+  if (!end || balance === null) return bankRefusedAs('bad_figures');
   // A bank can't have printed a statement that ends after today (a typo; its fee would be dated in the future too).
   if (end > clubToday()) return bankRefusedAs('ends_in_future');
   const r = await step('bank_check_start', { p_org: ctx.org.id, p_account: accountId, p_end: end, p_balance_cents: balance, p_actor: ctx.user.id });
@@ -275,7 +275,7 @@ export async function startCheck(ctx: AuthContextWithRole, accountId: string, bo
 export async function refigureCheck(ctx: AuthContextWithRole, accountId: string, checkId: string, body: Record<string, unknown>): Promise<Moved<object>> {
   const end = readDay(body.statementEndDate);
   const balance = readCents(body.statementEndingBalanceCents, { positive: false });
-  if (!end || balance === null) return bankRefused(400, 'bad_figures');
+  if (!end || balance === null) return bankRefusedAs('bad_figures');
   // A bank can't have printed a statement that ends after today (a typo; its fee would be dated in the future too).
   if (end > clubToday()) return bankRefusedAs('ends_in_future');
   const r = await step('bank_check_refigure', { p_org: ctx.org.id, p_account: accountId, p_check: checkId, p_end: end, p_balance_cents: balance });
@@ -285,8 +285,8 @@ export async function refigureCheck(ctx: AuthContextWithRole, accountId: string,
 /** The account read for a write, or its refusal. */
 export async function readFor(ctx: AuthContextWithRole, accountId: string): Promise<Moved<{ read: ClubBankRead }>> {
   const read = await readClubBankAccount(ctx.org.id, accountId, { today: clubToday() });
-  if (!read) return bankRefused(404, 'account_not_found');
-  if (!read.state.setup) return bankRefused(409, 'not_set_up');
+  if (!read) return bankRefusedAs('account_not_found');
+  if (!read.state.setup) return bankRefusedAs('not_set_up');
   return { ok: true, read };
 }
 
@@ -298,28 +298,13 @@ export async function tickRow(ctx: AuthContextWithRole, accountId: string, check
   if (!got.ok) return got;
   const plan = tickPlan(got.read.state, checkId, key, tick);
   if (!plan.ok) return fromDecision(plan);
-  if (plan.remove.length) {
-    const { error } = await supabaseAdmin.from('bank_check_marks').delete()
-      .eq('bank_account_id', accountId).eq('check_id', checkId).in('line_key', plan.remove);
-    if (error) throw error;
-  }
-  if (plan.insert.length) {
-    // One statement, so the payout and its members land together or not at all (rule 3).
-    const { error } = await supabaseAdmin.from('bank_check_marks').insert(plan.insert.map(m => ({
-      bank_account_id: accountId, check_id: checkId, line_key: m.key, line_date: m.date, direction: m.direction,
-      amount_cents: m.amountCents, payout_key: m.payoutKey ?? null, marked_by: ctx.user.id,
-    })));
-    if (error) {
-      if (error.code !== '23505') throw error;
-      // A unique clash: either a double tap raced its twin (every row of this tick is now ticked on THIS statement: fine), or
-      // one of the rows was ticked somewhere else a moment ago and the whole insert was refused. That one is not a success.
-      const { data: now, error: readError } = await supabaseAdmin.from('bank_check_marks').select('line_key')
-        .eq('bank_account_id', accountId).eq('check_id', checkId).in('line_key', plan.insert.map(m => m.key));
-      if (readError) throw readError;
-      if ((now ?? []).length !== plan.insert.length) return bankRefusedAs('changed');
-    }
-  }
-  return { ok: true };
+  if (!plan.insert.length && !plan.remove.length) return { ok: true };
+  // ONE step (mig 440), under the lock Mark checked takes: refused `not_open` once the statement is checked, the payout
+  // and its members together (rule 3), a double tap's twin a success and a row ticked elsewhere `changed`.
+  const r = await step('bank_check_tick', {
+    p_org: ctx.org.id, p_account: accountId, p_check: checkId, p_remove: plan.remove, p_insert: plan.insert, p_actor: ctx.user.id,
+  });
+  return r.ok ? { ok: true } : r;
 }
 
 /** POST /bank/accounts/{id}/checks/{checkId}/kept-out — "Didn't go through the bank" / "Put it back" (B6). */
@@ -331,14 +316,11 @@ export async function keepOut(ctx: AuthContextWithRole, accountId: string, check
   const plan = keptOutPlan(got.read.state, checkId, key, keptOut);
   if (!plan.ok) return fromDecision(plan);
   if (plan.noop) return { ok: true };
-  if (keptOut) {
-    const { error } = await supabaseAdmin.from('bank_line_exclusions').insert({ bank_account_id: accountId, line_key: key, excluded_by: ctx.user.id });
-    if (error && error.code !== '23505') throw error;
-  } else {
-    const { error } = await supabaseAdmin.from('bank_line_exclusions').delete().eq('bank_account_id', accountId).eq('line_key', key);
-    if (error) throw error;
-  }
-  return { ok: true };
+  // ONE step (mig 440), under the same lock: refused `not_open` once the statement is checked.
+  const r = await step('bank_check_keep_out', {
+    p_org: ctx.org.id, p_account: accountId, p_check: checkId, p_key: key, p_kept_out: keptOut, p_actor: ctx.user.id,
+  });
+  return r.ok ? { ok: true } : r;
 }
 
 /** POST /bank/accounts/{id}/checks/{checkId}/mark — Mark checked, or (`again`) Mark checked again. One step (mig 439). */
@@ -367,7 +349,7 @@ export async function undoCheck(ctx: AuthContextWithRole, accountId: string, che
 
 /** A path id that isn't a uuid is "not found" before the database sees it (a 22P02 would be a 500). */
 export function badBankIds(ids: { accountId?: string; checkId?: string }): Response | null {
-  if (ids.accountId !== undefined && !isUuid(ids.accountId)) return moveRefused(bankRefused(404, 'account_not_found'));
-  if (ids.checkId !== undefined && !isUuid(ids.checkId)) return moveRefused(bankRefused(404, 'check_not_found'));
+  if (ids.accountId !== undefined && !isUuid(ids.accountId)) return moveRefused(bankRefusedAs('account_not_found'));
+  if (ids.checkId !== undefined && !isUuid(ids.checkId)) return moveRefused(bankRefusedAs('check_not_found'));
   return null;
 }

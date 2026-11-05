@@ -44,6 +44,8 @@ export const BANK_REFUSAL = {
   bad_date: 'Enter the date as it reads on the statement.',
   no_processing_gap: 'This payout has no Stripe fee the books are missing.',
   gap_not_a_fee: 'This payout’s difference isn’t a fee: it’s money Stripe is holding or activity that isn’t from FieldLogicHQ.',
+  payout_line_missing: 'A line in this payout was voided or is in another account’s book, so its difference isn’t a fee.',
+  dispute_figure_differs: 'Stripe’s figure for a dispute in this payout doesn’t match FieldLogicHQ’s record of it, so its difference can’t be added as a fee.',
   payouts_unavailable: 'Stripe didn’t answer, so payouts can’t be read right now. Try again in a minute.',
 } as const;
 

@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { filesUnder, readCode, readSource } from './_source-code.ts';
+import { between, filesUnder, readCode, readSource } from './_source-code.ts';
 import { BANK_REFUSAL } from '../../lib/bank-check-words.ts';
+import { STATUS_OF } from '../../lib/bank-club-rules.ts';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -15,15 +16,58 @@ import { BANK_REFUSAL } from '../../lib/bank-check-words.ts';
  *   4. the multi-row steps are ONE database step each (mig 439), service role only, and every refusal they can answer is
  *      a code with words; rule 2 (figures fixed once statements exist / once checked) and rule 5 (a typed key is its own
  *      id) live in those functions, because the database tables do not enforce them.
+ *   5. a tick and a kept-out line are locked steps (mig 440, R2b-2): nothing in lib/ or app/ writes those rows directly;
+ *      the account, then the check, `FOR UPDATE`, and `not_open` once the statement is checked.
+ *   §0 holds BOTH migrations to the server-only floor (grants, search_path, every code with words and a status).
  * The pure decisions have their own tests (bank-club-routes); the functions are proved on dev by
- * `.probe/bank-r2b-functions.sql` (rolled back).
+ * `.probe/bank-r2b-functions.sql` and `.probe/bank-r2b2-steps.sql` (rolled back).
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 
 const ROUTES = filesUnder('app/api/admin/accounting/bank', 'route.ts');
 const BANK_LIBS = ['lib/bank-club-steps.ts', 'lib/bank-club-rules.ts', 'lib/bank-check-fee.ts', 'lib/bank-check-words.ts',
   'lib/bank-club-read.ts', 'lib/bank-club-map.ts'];
-const MIG = readCode('supabase/migrations/439_a_bank_check_moves_in_one_step.sql').split('\n').map(l => l.replace(/--.*$/, '')).join('\n');
+const sqlCode = (path: string) => readCode(path).split('\n').map(l => l.replace(/--.*$/, '')).join('\n');
+const MIG = sqlCode('supabase/migrations/439_a_bank_check_moves_in_one_step.sql');
+const MIG_440_PATH = 'supabase/migrations/440_a_tick_waits_for_mark_checked.sql';
+const MIG_440 = sqlCode(MIG_440_PATH);
+/** Mig 440's club steps (the routes call these) and their owner-agnostic halves (a coach step, R4+, wraps the same). */
+const CLUB_STEPS_440 = ['bank_check_tick', 'bank_check_keep_out'];
+const SHARED_440 = ['bank_tick_rows', 'bank_keep_out_rows'];
+/** Mig 439's nine functions. */
+const FNS = ['bank_first_club_account', 'bank_book_move', 'bank_account_add', 'bank_account_set_up', 'bank_check_start',
+  'bank_check_refigure', 'bank_check_mark', 'bank_check_undo', 'bank_check_add_line'];
+/** Every bank migration that makes functions: the server-only floor (§0) holds each one. */
+const BANK_FN_MIGS = [
+  { label: 'mig 439', sql: MIG, fns: FNS },
+  { label: 'mig 440', sql: MIG_440, fns: [...CLUB_STEPS_440, ...SHARED_440] },
+];
+/** One plpgsql function's body (throws when it is gone, never a silent -1 slice). */
+const sqlFn = (sql: string, name: string) => between(sql, `FUNCTION public.${name}(`, 'END $$;', name);
+/** Every refusal code a migration answers or raises. */
+const codesOf = (sql: string) =>
+  new Set([...sql.matchAll(/'code', '(\w+)'/g), ...sql.matchAll(/bank_step_refused:(\w+)/g)].map(m => m[1]).filter(c => c !== '%'));
+const STEPS_CODE = readCode('lib/bank-club-steps.ts');
+/** One exported bank step's body (throws when it is gone). */
+const stepBody = (name: string) => between(STEPS_CODE, `export async function ${name}(`, '\nexport ', name);
+
+describe('0. every bank migration\'s functions are the server\'s only, and every code they answer has words and a status', () => {
+  for (const m of BANK_FN_MIGS) {
+    it(m.label, () => {
+      for (const f of m.fns) {
+        assert.match(m.sql, new RegExp(`REVOKE ALL ON FUNCTION public\\.${f}\\([^)]*\\) FROM PUBLIC, anon, authenticated;`), f);
+        assert.match(m.sql, new RegExp(`GRANT EXECUTE ON FUNCTION public\\.${f}\\([^)]*\\) TO service_role;`), f);
+        assert.match(m.sql, new RegExp(`FUNCTION public\\.${f}\\([^)]*\\)[^$]*SET search_path = public AS \\$\\$`), `${f}: search_path`);
+      }
+      assert.doesNotMatch(m.sql, /SECURITY DEFINER/);
+      assert.doesNotMatch(m.sql, /TO (anon|authenticated)\b/);
+      for (const c of codesOf(m.sql)) {
+        assert.ok(c in BANK_REFUSAL, `${c} has no words`);
+        assert.ok(Number.isInteger(STATUS_OF[c as keyof typeof STATUS_OF]), `${c} has no status`);
+      }
+    });
+  }
+});
 
 /** Each route file's handlers, and whether each writes. */
 const EXPECTED: Record<string, Record<string, boolean>> = {
@@ -90,9 +134,7 @@ describe('3. the client sends intent; the server decides', () => {
   const steps = readCode('lib/bank-club-steps.ts');
   it('a tick, a kept-out line, a mark and an undo each read the account first and ask the pure rules', () => {
     for (const [fn, plan] of [['tickRow', 'tickPlan'], ['keepOut', 'keptOutPlan'], ['markCheck', 'markPlan'], ['undoCheck', 'undoPlan']]) {
-      const a = steps.indexOf(`export async function ${fn}(`);
-      assert.ok(a >= 0, fn);
-      const body = steps.slice(a, steps.indexOf('\nexport ', a + 10));
+      const body = stepBody(fn);
       assert.match(body, /await readFor\(ctx, accountId\)/, fn);
       assert.match(body, new RegExp(`${plan}\\(got\\.read\\.state`), fn);
     }
@@ -130,16 +172,9 @@ describe('3. the client sends intent; the server decides', () => {
 });
 
 describe('4. the multi-row steps are one database step each (mig 439)', () => {
-  const FNS = ['bank_first_club_account', 'bank_book_move', 'bank_account_add', 'bank_account_set_up', 'bank_check_start',
-    'bank_check_refigure', 'bank_check_mark', 'bank_check_undo', 'bank_check_add_line'];
-  it('the nine functions, each revoked from everyone and granted to the server only', () => {
+  it('the nine functions; no table change (their grants are §0)', () => {
     const made = [...MIG.matchAll(/CREATE OR REPLACE FUNCTION public\.(\w+)\(/g)].map(m => m[1]);
     assert.deepEqual(made.sort(), [...FNS].sort());
-    for (const f of FNS) {
-      assert.match(MIG, new RegExp(`REVOKE ALL ON FUNCTION public\\.${f}\\([^)]*\\) FROM PUBLIC, anon, authenticated;`), f);
-      assert.match(MIG, new RegExp(`GRANT EXECUTE ON FUNCTION public\\.${f}\\([^)]*\\) TO service_role;`), f);
-    }
-    assert.doesNotMatch(MIG, /TO (anon|authenticated)\b/);
     assert.doesNotMatch(MIG, /CREATE TABLE|ALTER TABLE|DROP (TABLE|COLUMN|INDEX|TRIGGER|CONSTRAINT|POLICY)/, 'no table change: functions only');
     // The one DROP is the first version's 12-argument add-line (replaced by the 13-argument one), so no stale overload stays callable.
     assert.deepEqual(MIG.match(/DROP [A-Z]+ IF EXISTS [^;]*;/g), [
@@ -152,22 +187,20 @@ describe('4. the multi-row steps are one database step each (mig 439)', () => {
     assert.match(add, /m\.payout_key = p_payout_key\s*\)\s*THEN\s+RETURN jsonb_build_object\('ok', false, 'code', 'no_processing_gap'\)/);
     assert.match(add, /INSERT INTO bank_check_marks \([^)]*payout_key[^)]*\)\s+VALUES \([^;]*p_payout_key/);
   });
-  it('the steps the routes call are the ones mig 439 makes', () => {
+  it('the steps the routes call are the ones mig 439 and mig 440 make', () => {
     const called = [...readCode('lib/bank-club-steps.ts').matchAll(/step\('(\w+)'/g), ...readCode('lib/bank-check-fee.ts').matchAll(/rpc\('(\w+)'/g)]
       .map(m => m[1]);
-    for (const c of called) assert.ok(FNS.includes(c), c);
-    for (const f of FNS.filter(f => f !== 'bank_first_club_account')) assert.ok(called.includes(f), `${f} is never called`);
+    for (const c of called) assert.ok(FNS.includes(c) || CLUB_STEPS_440.includes(c), c);
+    for (const f of [...FNS.filter(f => f !== 'bank_first_club_account'), ...CLUB_STEPS_440]) assert.ok(called.includes(f), `${f} is never called`);
   });
-  it('every code a function answers or raises is a refusal with words', () => {
-    const codes = new Set([...MIG.matchAll(/'code', '(\w+)'/g), ...MIG.matchAll(/bank_step_refused:(\w+)/g)].map(m => m[1]));
-    codes.delete('%');
-    for (const c of codes) assert.ok(c in BANK_REFUSAL, `${c} has no words`);
+  it('mig 439 answers the refusals the rules rely on (their words and statuses are §0)', () => {
+    const codes = codesOf(MIG);
     for (const c of ['team_book', 'name_taken', 'not_set_up', 'one_is_open', 'ends_too_early', 'statements_exist',
       'checked_figures_fixed', 'later_checked', 'not_latest', 'changed', 'earlier_open', 'book_not_in_account']) {
       assert.ok(codes.has(c), `mig 439 answers ${c}`);
     }
   });
-  const fn = (name: string) => { const a = MIG.indexOf(`FUNCTION public.${name}(`); return MIG.slice(a, MIG.indexOf('END $$;', a)); };
+  const fn = (name: string) => sqlFn(MIG, name);
   it('rule 2: the starting point is fixed once a statement exists; a checked statement\'s figures never change', () => {
     assert.match(fn('bank_account_set_up'), /IF EXISTS \(SELECT 1 FROM bank_checks WHERE bank_account_id = p_account\) THEN\s+RETURN jsonb_build_object\('ok', false, 'code', 'statements_exist'\)/);
     assert.match(fn('bank_check_refigure'), /IF v_check\.status <> 'open' THEN RETURN jsonb_build_object\('ok', false, 'code', 'checked_figures_fixed'\)/);
@@ -218,17 +251,80 @@ describe('4. the multi-row steps are one database step each (mig 439)', () => {
   });
 });
 
+describe('5. a tick and a kept-out line wait for Mark checked (mig 440, R2b-2)', () => {
+  const fn440 = (name: string) => sqlFn(MIG_440, name);
+  it('nothing in lib/ or app/ writes a tick or a kept-out row directly: only through a step (the coach side too, R4+)', () => {
+    const everywhere = [...filesUnder('lib', '.ts'), ...filesUnder('app', '.ts'), ...filesUnder('app', '.tsx')];
+    assert.ok(everywhere.includes('lib/bank-club-steps.ts'), 'the walk reaches the bank steps');
+    for (const file of everywhere) {
+      assert.doesNotMatch(readCode(file), /\.from\(['"](bank_check_marks|bank_line_exclusions)['"]\)\s*\.(insert|update|upsert|delete)\(/, file);
+    }
+  });
+  it('the owner-agnostic halves are called only by a migration\'s own wrapper, never from lib/ or app/ (they skip the org check)', () => {
+    for (const file of [...filesUnder('lib', '.ts'), ...filesUnder('app', '.ts'), ...filesUnder('app', '.tsx')]) {
+      assert.doesNotMatch(readCode(file), /['"](bank_tick_rows|bank_keep_out_rows)['"]/, file);
+    }
+  });
+  it('a tick and a keep-out refuse each other: a plain line kept out since the read is not ticked (review 2026-11-04)', () => {
+    const body = fn440('bank_tick_rows');
+    const excluded = body.search(/JOIN bank_line_exclusions x ON x\.bank_account_id = p_account AND x\.line_key = e->>'key'\s+WHERE nullif\(e->>'payoutKey', ''\) IS NULL\) THEN\s+RETURN jsonb_build_object\('ok', false, 'code', 'changed'\)/);
+    const write = body.search(/DELETE FROM bank_check_marks|INSERT INTO bank_check_marks/);
+    assert.ok(excluded > 0 && excluded < write, 'refused before anything is written');
+    assert.match(fn440('bank_keep_out_rows'), /FROM bank_check_marks WHERE bank_account_id = p_account AND line_key = p_key\) THEN\s+RETURN jsonb_build_object\('ok', false, 'code', 'changed'\)/);
+  });
+  it('tickRow and keepOut call their steps through the bank step wrapper', () => {
+    assert.match(stepBody('tickRow'), /await step\('bank_check_tick', \{[\s\S]*p_remove: plan\.remove, p_insert: plan\.insert,/);
+    assert.match(stepBody('keepOut'), /await step\('bank_check_keep_out', \{[\s\S]*p_key: key, p_kept_out: keptOut,/);
+  });
+  it('the four functions, plpgsql; no table change (their grants are §0)', () => {
+    const made = [...MIG_440.matchAll(/CREATE OR REPLACE FUNCTION public\.(\w+)\(/g)].map(m => m[1]);
+    assert.deepEqual(made.sort(), [...CLUB_STEPS_440, ...SHARED_440].sort());
+    for (const f of made) assert.match(fn440(f), /LANGUAGE plpgsql SET search_path = public AS \$\$/, f);
+    assert.doesNotMatch(MIG_440, /CREATE TABLE|ALTER TABLE|DROP /, 'functions only');
+  });
+  it('the shared halves lock the account, then the check, FOR UPDATE, and refuse unless the statement is open', () => {
+    for (const f of SHARED_440) {
+      const body = fn440(f);
+      const acct = body.search(/FROM bank_accounts WHERE id = p_account[^;]*FOR UPDATE;/);
+      const chk = body.search(/FROM bank_checks WHERE id = p_check AND bank_account_id = p_account FOR UPDATE;/);
+      const open = body.indexOf(`IF v_check.status <> 'open' THEN RETURN jsonb_build_object('ok', false, 'code', 'not_open');`);
+      const write = body.search(/(INSERT INTO|DELETE FROM) bank_(check_marks|line_exclusions)/);
+      assert.ok(acct > 0 && acct < chk && chk < open && open < write, `${f}: account lock → check lock → open → write`);
+    }
+  });
+  it('the club steps lock the org\'s own live CLUB account first, then hand to the shared half', () => {
+    for (const [club, shared] of [['bank_check_tick', 'bank_tick_rows'], ['bank_check_keep_out', 'bank_keep_out_rows']]) {
+      const body = fn440(club);
+      const lock = body.search(/WHERE id = p_account AND org_id = p_org AND owner_kind = 'club' AND archived_at IS NULL FOR UPDATE;/);
+      assert.ok(lock > 0 && lock < body.indexOf(`RETURN ${shared}(`), club);
+    }
+  });
+  it('a tick\'s unique clash is decided in the step: elsewhere is `changed`, a twin is a success', () => {
+    const body = fn440('bank_tick_rows');
+    const elsewhere = body.search(/line_key = ANY \(v_keys\) AND check_id <> p_check\) THEN\s+RETURN jsonb_build_object\('ok', false, 'code', 'changed'\)/);
+    const write = body.search(/DELETE FROM bank_check_marks|INSERT INTO bank_check_marks/);
+    assert.ok(elsewhere > 0 && elsewhere < write, 'a row ticked elsewhere is refused before anything is written');
+    assert.match(body, /ON CONFLICT \(bank_account_id, line_key\) DO NOTHING;/);
+  });
+  it('mig 440 answers the refusals the routes rely on (their words and statuses are §0)', () => {
+    const codes = codesOf(MIG_440);
+    for (const c of ['not_open', 'changed', 'account_not_found', 'check_not_found', 'not_a_line']) assert.ok(codes.has(c), `mig 440 answers ${c}`);
+  });
+});
+
 describe('the raw migration text is the one applied', () => {
   it('names itself and its prod order', () => {
     const raw = readSource('supabase/migrations/439_a_bank_check_moves_in_one_step.sql');
     assert.match(raw, /Migration 439/);
     assert.match(raw, /Needs 436/);
+    const raw440 = readSource(MIG_440_PATH);
+    assert.match(raw440, /Migration 440/);
+    assert.match(raw440, /Needs 436 \(the tables\) and 439/);
   });
 });
 
 describe('a statement and a starting point are never in the future', () => {
-  const steps = readCode('lib/bank-club-steps.ts');
-  const body = (name: string) => { const a = steps.indexOf(`export async function ${name}(`); return steps.slice(a, steps.indexOf('\nexport ', a + 10)); };
+  const body = stepBody;
   it('start and correct a statement: refused after the club\'s today', () => {
     for (const f of ['startCheck', 'refigureCheck']) assert.match(body(f), /if \(end > clubToday\(\)\) return bankRefusedAs\('ends_in_future'\)/, f);
   });

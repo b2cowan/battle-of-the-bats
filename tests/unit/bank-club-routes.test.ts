@@ -5,8 +5,8 @@ import type { EntryRow, PayoutGapFacts } from '../../lib/bank-club-map.ts';
 import { withAddedMembers } from '../../lib/bank-club-map.ts';
 import { evaluateCheck } from '../../lib/bank-check.ts';
 import {
-  checkSummaries, keptOutPlan, markPlan, openingPlan, payoutGapViews, readCents, readDay, refusalOfDbError, refusalOfStep,
-  statusOfRefusal, tickPlan, undoPlan,
+  checkSummaries, keptOutPlan, markPlan, openingPlan, payoutGapViews, pickerSearch, readCents, readDay, refusalOfDbError,
+  refusalOfStep, STATUS_OF, statusOfRefusal, tickPlan, undoPlan,
 } from '../../lib/bank-club-rules.ts';
 import { BANK_REFUSAL } from '../../lib/bank-check-words.ts';
 
@@ -242,6 +242,69 @@ describe('a payout\'s gap, named by reason, and the payment-processing offer (P4
       stripeFeeCents: -500 }));
     assert.equal(v.offerPaymentProcessing, false);
   });
+
+  describe('a withheld offer names its own reason, one of four (R2b-2)', () => {
+    it('offered: no reason', () => {
+      assert.equal(view(withDeposit(14_500), facts({ stripeFeeCents: -500 })).withheld, null);
+    });
+    it('no gap at all', () => {
+      const v = view(withDeposit(15_000), facts());
+      assert.equal(v.gapCents, 0);
+      assert.equal(v.withheld, 'no_processing_gap');
+    });
+    it('the gap is not a fee: a held dispute, or money in', () => {
+      const held = view(withDeposit(15_000 - 17_175), facts({
+        disputesHeld: [{ disputeId: 'dp_1', amountCents: 15_675, feeCents: 1_500 }], disputeHeldCents: -17_175, disputeNetCents: -17_175 }));
+      assert.equal(held.withheld, 'gap_not_a_fee');
+      assert.equal(view(withDeposit(15_300), facts()).withheld, 'gap_not_a_fee');
+    });
+    it('a payout line missing from this account\'s books (voided, or a book moved away), even when the rest looks like a fee', () => {
+      const s = withDeposit(15_000);
+      s.lines = s.lines.map(l => (l.key === 'entry:p2' ? { ...l, status: 'void' as const } : l));
+      assert.equal(view(s, facts()).withheld, 'payout_line_missing');
+      assert.equal(view(withDeposit(14_500), facts({ stripeFeeCents: -500 }), ['entry:p1', 'entry:p2', 'entry:moved-away']).withheld,
+        'payout_line_missing');
+    });
+    it('a held dispute whose stored figure disagrees with Stripe\'s net', () => {
+      const v = view(withDeposit(15_000 - 17_175 - 500), facts({
+        disputesHeld: [{ disputeId: 'dp_1', amountCents: 15_675, feeCents: 1_500 }], disputeHeldCents: -17_175, disputeNetCents: -17_000,
+        stripeFeeCents: -500 }));
+      assert.equal(v.withheld, 'dispute_figure_differs');
+    });
+    it('the order (review): a missing line is named even when the gap reads $0.00; a disagreeing dispute only when a fee would be offered', () => {
+      assert.equal(view(withDeposit(15_000), facts(), ['entry:p1', 'entry:p2', 'entry:moved-away']).withheld, 'payout_line_missing');
+      const notAFee = view(withDeposit(15_000 - 17_175), facts({
+        disputesHeld: [{ disputeId: 'dp_1', amountCents: 15_675, feeCents: 1_500 }], disputeHeldCents: -17_175, disputeNetCents: -17_000 }));
+      assert.equal(notAFee.withheld, 'gap_not_a_fee');
+    });
+    it('the offer follows the reason: offered exactly when nothing withholds it', () => {
+      for (const v of [view(withDeposit(14_500), facts({ stripeFeeCents: -500 })), view(withDeposit(15_000), facts())]) {
+        assert.equal(v.offerPaymentProcessing, v.withheld === null);
+        assert.equal(v.processingCents > 0, v.withheld === null);
+      }
+    });
+    it('each reason is a refusal with words and a conflict status', () => {
+      for (const c of ['no_processing_gap', 'gap_not_a_fee', 'payout_line_missing', 'dispute_figure_differs'] as const) {
+        assert.ok(BANK_REFUSAL[c], c);
+        assert.equal(statusOfRefusal(c), 409, c);
+      }
+    });
+  });
+});
+
+describe('the starting-point picker\'s search, by shape (R2b-2)', () => {
+  it('all digits: a cheque number or an amount, both searched', () => {
+    assert.deepEqual(pickerSearch(' 1234 '), { kind: 'either', amount: 1234, words: '1234' });
+  });
+  it('a dollar sign or a decimal: an amount only', () => {
+    assert.deepEqual(pickerSearch('$12'), { kind: 'amount', amount: 12 });
+    assert.deepEqual(pickerSearch('12.50'), { kind: 'amount', amount: 12.5 });
+    assert.deepEqual(pickerSearch('$1234.5'), { kind: 'amount', amount: 1234.5 });
+  });
+  it('words: the description; nothing typed: everything', () => {
+    assert.deepEqual(pickerSearch('Cheque 1234'), { kind: 'words', words: 'Cheque 1234' });
+    assert.deepEqual(pickerSearch('   '), { kind: 'none' });
+  });
 });
 
 describe('a payment-processing line closes its payout\'s gap; it is never counted beside it (R2b review)', () => {
@@ -303,6 +366,16 @@ describe('refusals are codes', () => {
     assert.equal(statusOfRefusal('one_is_open'), 409);
     assert.equal(refusalOfStep('ends_too_early'), 'ends_too_early');
     assert.equal(refusalOfStep('something new'), 'changed');
+    // Every code is named in the status table (no silent 409 default), and every one has words.
+    assert.deepEqual(Object.keys(STATUS_OF).sort(), Object.keys(BANK_REFUSAL).sort());
+  });
+  it('a tick or keep-out on a statement just checked: the step\'s `not_open`, at 409, with words (R2b-2)', () => {
+    assert.equal(refusalOfStep('not_open'), 'not_open');
+    assert.equal(statusOfRefusal('not_open'), 409);
+    assert.match(BANK_REFUSAL.not_open, /checked/);
+    // A row ticked on another statement a moment ago: the step answers, or raises, `changed`.
+    assert.equal(refusalOfStep('changed'), 'changed');
+    assert.equal(refusalOfDbError({ message: 'bank_step_refused:changed' }), 'changed');
   });
   it('the database\'s refusals map to codes; anything else is a real failure', () => {
     assert.equal(refusalOfDbError({ message: 'bank_book_is_team_book' }), 'team_book');

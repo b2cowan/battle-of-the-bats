@@ -9073,10 +9073,20 @@ is marked checked or checked again, so "changed since" is a comparison and a lin
 2. **One line ticks once per account** (UNIQUE `bank_account_id, line_key`). **A tick and its statement share an
    account** — composite FK `bank_check_marks_check_same_account` `(check_id, bank_account_id)` → `bank_checks (id,
    bank_account_id)`, `ON DELETE CASCADE`. A payout tick and its members' ticks (`payout_key` set) are written and
-   removed together by the route; the database does not tie them.
+   removed together in ONE step (`bank_check_tick`, gotcha 5); no constraint ties them, the step does.
 3. **A payout tick stamps its members:** the `payout:` row plus one row per member line with `payout_key` set, because
    payouts are read live and never stored.
 4. **Ticking a line in a closed fiscal year is allowed** — a mark, not money (B4).
+5. **Every write goes through a locked step; never a plain row (mig 440, R2b-2).** Club: a tick / untick is
+   `bank_check_tick` (mig 440), Mark checked (again) is `bank_check_mark` and an added line's tick is `bank_check_add_line`
+   (mig 439). Each locks the **account row, then the check, `FOR UPDATE`** and writes only while the check is `open` (Mark
+   checked: the status it expects), so a tick sent a moment after someone else's Mark checked is refused `not_open`
+   instead of landing on the checked statement. A unique clash is decided inside the step: a row already ticked on THIS
+   statement is a double tap's twin (success); one ticked on another statement of the account is `changed`, nothing
+   written; so is a plain line kept out since the route read it (a line is never both ticked and kept out). The
+   owner-agnostic half is `bank_tick_rows` (the coach portal's step, R4+, wraps it; nothing in `lib/`/`app/` calls it
+   directly). The guard `tests/unit/bank-r2-server-guard.test.ts` §5 fails any file in `lib/` or `app/` that writes
+   this table directly.
 
 <!-- dict:col:bank_check_marks.bank_account_id -->
 <!-- dict:col:bank_check_marks.check_id -->
@@ -9149,6 +9159,18 @@ back alone.
 **Purpose:** "Didn't go through the bank" (B6, Ask 6; mig 436): the line leaves the tick list and counts in "Kept out of
 the bank". **Deleting the row is "Put it back".** Lines left out *automatically* (same-account transfer pairs, a bill a
 family paid the vendor, void, pending) have no row: the engine decides them.
+
+**Gotchas (read first):**
+1. **Every write goes through a locked step; never a plain row (mig 440, R2b-2).** Club: "Didn't go through the bank" /
+   "Put it back" is `bank_check_keep_out` (mig 440), which locks the **account row, then the statement it was asked from,
+   `FOR UPDATE`** (the lock Mark checked takes) and refuses `not_open` once that statement is checked; it also refuses
+   `changed` for a line ticked since the route read it, and `not_a_line` for a payout. The owner-agnostic half is
+   `bank_keep_out_rows` (the coach step, R4+, wraps it). The guard `tests/unit/bank-r2-server-guard.test.ts` §5 fails a
+   direct write from `lib/` or `app/`. **⚠ The one writer NOT under the account lock:** `bank_book_move` (mig 439)
+   carries a moved book's unticked lines' rows to the new account holding only the BOOK's lock, so a keep-out or a
+   put-back racing a book move can land on the old account (pre-existing; recorded open in the plan §7 R2b-2).
+2. **A keep-out never moves the Difference.** The engine counts ticks only (`evaluateCheck`), and a ticked line is never
+   kept out, so Mark checked's "nothing moved since" check compares the ticks alone (R2b-2 finding, plan §7 R2).
 
 <!-- dict:col:bank_line_exclusions.bank_account_id -->
 <!-- dict:col:bank_line_exclusions.line_key -->

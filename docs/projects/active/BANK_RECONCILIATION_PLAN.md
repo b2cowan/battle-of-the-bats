@@ -634,12 +634,96 @@ Every stage: migration first where there is one, then the `DATA_DICTIONARY.md` u
 >   go through the bank" is refused for a line outside the statement's window (it vanished from every list). (3) A payout tick
 >   refused by a unique clash is `changed`, not a silent success (a twin double tap still is). (4) A body id that is not a
 >   uuid (move book, new account, fee book, setup picks) is a clean refusal, not a 500; a fee date in the future is refused.
->   **Left open (owner call, bigger change): a tick, untick or keep-out written just after Mark checked commits can land on
->   the now-checked statement** — the plain-row writes take no lock and the database has no guard (the only trigger is on the
->   book mapping). Fix = make them locked mig 439-style steps that require `status = 'open'`. Narrow (two people, a few
->   hundred ms) and visible afterwards (the statement stops summing to $0.00), but real. Also noted, not fixed: Mark checked
->   compares ticks only, not the book lines behind the $0.00 (the R3 "changed since" stamps are the backstop); a numeric
->   cheque number in the starting-point picker searches by amount; the withheld-offer refusal can name the wrong reason.
+>   **The review's owner call (a tick landing on a statement just checked): owner said YES 2026-11-04, built as R2b-2
+>   below.** Still noted, not fixed (R3): Mark checked compares the ticks only, not the book lines behind the $0.00 (R3's
+>   "changed since" stamps are the backstop).
+
+> **R2b-2 — a tick can't land on a checked statement ✅ built 2026-11-04** (server only; /simplify then /review offered before
+> the commit):
+> - **The finding it closes (R2b's /review):** a tick, an untick, a "Didn't go through the bank" or a "Put it back" sent a
+>   moment after someone else's Mark checked commits could land on the statement that is now checked (`tickRow` / `keepOut`
+>   wrote plain rows from a read taken before the write, no lock, no database guard), and the statement quietly stopped
+>   summing to $0.00.
+> - **Mig 440 `440_a_tick_waits_for_mark_checked.sql`** (functions only, service role only; dev 2026-11-04, prod owed with 436 +
+>   437 + 439 in `MANUAL_PROD_STEPS.json`): the club steps `bank_check_tick` and `bank_check_keep_out` lock the org's own live
+>   club account `FOR UPDATE` (the same lock `bank_check_mark` and `bank_check_undo` take, so a tick and a Mark checked run one
+>   after the other), then hand to owner-agnostic halves `bank_tick_rows` / `bank_keep_out_rows`, which lock the account and
+>   then the check `FOR UPDATE` and refuse `not_open` unless `status = 'open'`. **The coach portal's step (R4+) is one more
+>   wrapper over the same halves**, not a copy. A tick's unique clash is decided inside the step: a row already ticked on THIS
+>   statement is a double tap's twin (success); a row ticked on another statement of the account is `changed`, nothing
+>   written (checked under the lock before anything is written; past that, a clash can only be the twin, `ON CONFLICT DO
+>   NOTHING`). Two refusals
+>   past the prompt's letter, cheap and under the same lock: a keep-out of a line ticked since the route read it is `changed`
+>   (a ticked line went through the bank), and a payout key is `not_a_line` at the step too.
+> - **`tickRow` and `keepOut` rewired** to call the steps through the bank-step wrapper; `tickPlan` / `keptOutPlan` unchanged.
+> - **Checked before building, as the prompt asked: a keep-out CANNOT change the $0.00 Mark checked rests on.** `evaluateCheck`
+>   builds the Difference from the starting balance, the ticks and the ticked payouts' gaps only; a kept-out line moves between
+>   "outstanding" and "kept out", neither of which is in the sum, and a ticked line is never kept out (a mark wins over an
+>   exclusion, and `keptOutPlan` takes only an outstanding line). So `bank_check_mark`'s seen-set stays the ticks alone; mig
+>   439 is unchanged. (A keep-out landing between the server's evaluation and the step can leave the saved outstanding list one
+>   line stale; harmless, because the next statement re-reads the line from the book and applies the exclusion again.)
+> - **The two small leftovers, done:** (1) **the picker's search** (`pickerSearch`, pure): all digits ("1234") searches the
+>   amount OR the description, so a cheque number finds its line; `$12` and `12.50` stay amount-only. (2) **the withheld
+>   offer names its own reason:** `payoutGapViews` puts `withheld` on each view (no gap → `no_processing_gap`; a payout line
+>   missing from this account's books → `payout_line_missing`; a held dispute whose figure disagrees with Stripe's net →
+>   `dispute_figure_differs`; else `gap_not_a_fee`), and the add-line route answers that same reason. R2c's screen reads it
+>   to explain a missing button. The two new codes have draft words in `lib/bank-check-words.ts` (R3 settles them).
+>   **The status table now names every refusal code** (`STATUS_OF` is a full record, so a new code without a status is a
+>   type error, and a test pins it to the words list).
+> - **Tests:** `bank-club-routes` (+10: the four withheld reasons, the picker's three shapes, `not_open` and `changed` as
+>   codes, every code has a status); `bank-r2-server-guard` §5 (+7: no route or bank library writes `bank_check_marks` or
+>   `bank_line_exclusions` directly; `tickRow`/`keepOut` call their steps; mig 440's four functions, grants, plpgsql +
+>   `search_path`, no `SECURITY DEFINER`, no table change; the account lock → check lock → `open` → write order; the club step
+>   locks the org's own club account first; the clash decided in the step; every code has words and a status). The four bank
+>   test files (`bank-check`, `bank-club-read`, `bank-club-routes`, `bank-r2-server-guard`) 165/165 as first built (the
+>   grants and codes checks moved to a §0 over both migrations in /simplify; the final count is in the /review line).
+> - **Dev proof** (not committed; every row deleted): `.probe/bank-r2b2-steps.sql` in one rolled-back block (tick, twin double
+>   tap, keep out / put back, a ticked line and a payout refused as kept out, Mark checked, then tick / untick / keep out / put
+>   back all `not_open`, a row ticked on the checked statement refused `changed` on the next one with nothing written, another
+>   club `account_not_found`, grants) → `BANK_R2B2_SQL_PASSED`; `.probe/bank-r2b2-routes.mjs` through the real routes as
+>   `uat-rep-club`'s treasurer (tick, $0.00, Mark checked, untick / tick / keep out refused 409 `not_open`, the checked
+>   statement keeps exactly its tick, a plan read before the mark refused by the step itself, an all-digits picker search
+>   answers) → `BANK_R2B2_PASSED`. R2b's own routes probe re-run green (`BANK_R2B_ROUTES_PASSED`).
+> - **Checks:** typecheck, focused lint, spelling and dictionary coverage clean. Dictionary: the gotchas on
+>   `bank_check_marks` (5) and `bank_line_exclusions` (1, 2) now say every write goes through a locked step. Snapshots
+>   refreshed (function-only migration: no table change in them).
+> - **`/simplify` done 2026-11-04 (four lenses), applied:** (1) **a refusal's status is named once** — `no(code)` and
+>   `bankRefusedAs(code)` read `STATUS_OF`; the hand-typed statuses went, and with them a drift they had already made (a
+>   malformed book id on Add an account / Move a book answered "not found" at 400; now 404, like every other "not found");
+>   (2) **`withheld` is THE decision** and `offerPaymentProcessing` follows from it (`withheld === null`), so the two can't
+>   disagree; (3) the tick step's after-insert count went (it could not fire: under the lock, the check before the write
+>   already rules out a row ticked elsewhere); (4) **the "no direct write" guard covers all of `lib/` and `app/`**, so the
+>   coach side (R4+) is held too, not only the club's bank files; (5) the guard's slicers use the shared throwing `between`,
+>   and one §0 server-only floor (grants, `search_path`, no `SECURITY DEFINER`, every code with words and a status) now runs
+>   over BOTH mig 439 and 440. Mig 440 re-applied to dev; both dev proofs re-run green; bank tests 167/167.
+>   **Skipped, said so:** one `bank_lock_club_account` primitive shared by all nine steps (439's six repeat the same lock
+>   too) — a convention change across 439 and 440 for R4 to take whole, not half here; the account locked again inside the
+>   shared halves (kept: it keeps each half safe on its own for the coach wrapper, one index probe); the picker reading
+>   "$1,234.50" (commas) as an amount like the Payouts search does — a behaviour change, not a cleanup.
+> - **`/review` (high) done 2026-11-04** (four lenses: concurrency, correctness, security, regression; security found no
+>   cross-club path and no filter injection; the race R2b-2 closes was confirmed closed under READ COMMITTED, with no lock-order
+>   inversion). **Fixed before the commit:** (1) ⚠ **a tick could land on a line someone had just kept out** — the keep-out
+>   step refused a line ticked since its read, but the tick step never looked at exclusions, so the line ended up ticked AND
+>   kept out, and unticking it later dropped it into "kept out" instead of back to the list. `bank_tick_rows` now refuses
+>   `changed` for a plain line kept out since the read (a payout's member, which rides its payout whatever a Stripe-outage
+>   exclusion says, is not asked); the dev proof asserts both. (2) The withheld reason's order: a payout line missing is named
+>   first (even when the gap reads $0.00), and "a dispute's figures disagree" only when a fee would otherwise be offered;
+>   the two new sentences shortened (drafts for R3). (3) A guard that the owner-agnostic halves are called from no file in
+>   `lib/` or `app/` (they skip the org check; only a migration's wrapper may call them). (4) The dictionary's
+>   `bank_check_marks` gotcha 2 (a payout and its members are now tied by the step) and `bank_line_exclusions` gotcha 1
+>   (names the one writer outside the account lock). (5) The R2b processing probe's two stale checks (the reason is now the
+>   view's own; a processing line rides its payout since R2b's review fix) — probe only, not committed. Mig 440 re-applied to
+>   dev; `BANK_R2B2_SQL_PASSED`, `BANK_R2B2_PASSED`, `BANK_R2B_PROCESSING_PASSED`; bank tests 171/171; typecheck + lint clean.
+>   **⚠ LEFT OPEN, pre-existing (not made by R2b-2), owner call:** **moving a book races a keep-out or a tick.**
+>   `bank_book_move` (mig 439) moves a book's exclusions and opening items holding only the BOOK's lock, not the accounts'.
+>   So a "Didn't go through the bank" sent while someone else moves that line's book can stay behind on the old account (the
+>   keep-out is silently lost; it reappears if the book moves back), a "Put it back" can miss and leave the line kept out on
+>   the new account, and a tick can land on the old account's statement for a line whose book just moved (a bank fee added
+>   during a move: the same). Two people, one moving a book while the other works on a line in it. **Fix is not a one-liner:**
+>   making the move also lock both accounts would deadlock against a bank fee being added (that step holds the account, then
+>   needs the book); the safe shape is the move taking both accounts' locks FIRST (in id order), then the book, re-reading
+>   where the book sits, or the tick and keep-out steps checking the line's book still maps to their account. Recommended
+>   before R2c builds the Move a book window (C10), as a small step of its own.
 
 ### R3 — Club: the touchpoints
 - [ ] Matched-line warning on the club entry edit/void routes and windows (C6); changed-since stamp.

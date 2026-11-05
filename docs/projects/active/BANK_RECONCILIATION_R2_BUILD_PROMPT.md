@@ -4,7 +4,8 @@
 > chunk per session** (R2 is too big for one, and the later chunks are better for starting clean):
 >
 > - `execute @docs/projects/active/BANK_RECONCILIATION_R2_BUILD_PROMPT.md, chunk R2a only`
-> - then `… chunk R2b only`, `… chunk R2c only`, `… chunk R2d only`, in that order.
+> - then `… chunk R2b only`, `… chunk R2b-2 only`, `… chunk R2c only`, `… chunk R2d only`, in that order.
+>   (R2b-2 was added 2026-11-04 after R2b's review: owner said yes to closing the tick race before any screen is built.)
 >
 > Other sessions share this working copy: stage explicit paths only, never `git add -A`, commit only your own hunks
 > (temp index, HEAD guard: memory `reference_partial_commit_shared_tree`), and only when the owner says. A chunk ends
@@ -169,6 +170,65 @@ numbers. Refusals are coded (`refused()`), never prose-parsed.
 
 **Done:** routes + tests + guard + migration (dev) green; dictionary + snapshots refreshed (commit only the bank hunks of
 shared files); `typecheck`, focused lint. Offer `/simplify` then `/review` (it is a money write path: **high tier**).
+
+---
+
+## Chunk R2b-2: a tick can't land on a checked statement (server only, before R2c)
+
+**Why (owner yes, 2026-11-04).** R2b's `/review` (record: plan §7 R2, "Left open (owner call, bigger change)") found that a
+tick, an untick, or a "Didn't go through the bank" / "Put it back" sent a moment after someone else's **Mark checked**
+commits can still land on the statement that is now checked. `tickRow` and `keepOut` in `lib/bank-club-steps.ts` are
+plain-row writes (`bank_check_marks`, `bank_line_exclusions`): they decide "is this check open?" from a read taken
+before the write, take no lock, and the database has no guard. The statement then quietly stops summing to $0.00. Close
+it now, while nothing but the routes depend on these writes.
+
+**Build.**
+- **A new migration** (take the next free number when you start: `ls supabase/migrations`, since other sessions add them;
+  dev only, prod owed with 436 + 437 + 439, entry in `MANUAL_PROD_STEPS.json`). Add the tick and keep-out writes as
+  steps written the same way as mig 439's: plpgsql with `SET search_path = public` (no `SECURITY DEFINER`), `REVOKE … FROM PUBLIC, anon, authenticated`
+  + `GRANT EXECUTE … TO service_role`, returns `{ok, code}`. Each step **locks the account row `FOR UPDATE` first**
+  (the same lock `bank_check_mark` and `bank_check_undo` take, so a tick and a Mark checked run one after the other, not
+  together), then the check `FOR UPDATE`, and refuses with `not_open` unless `status = 'open'`.
+  - **Tick / untick:** removes and adds the rows `tickPlan` decided in one step. Keep R2b's two outcomes for a unique
+    clash: a double tap racing its own twin (every row now ticked on THIS statement) is a success; a row ticked on
+    another statement a moment ago is `changed`. Do it inside the step (`ON CONFLICT DO NOTHING` + count, then decide),
+    not by catching `23505` in TypeScript.
+  - **Kept out / put back:** the same lock and `status = 'open'` check, then the insert or delete.
+- **Rewire `tickRow` and `keepOut`** to call the steps through the existing `bankStep` wrapper. The pure planning stays
+  in `lib/bank-club-rules.ts`, unchanged; the step only adds what a read taken earlier can't promise.
+- **Check before you build, and say what you found:** whether a keep-out can change what Mark checked's $0.00 rests on
+  (read `evaluateCheck` in `lib/bank-check.ts`). If it can, `bank_check_mark`'s seen-set must include the kept-out keys as
+  well as the ticks, so a keep-out landing between the server's evaluation and the step is `changed`. That change goes in
+  the new migration (`CREATE OR REPLACE`), not by editing 439. If it can't, say so in the record.
+- **Two small leftovers from the same review, same files (do them here):**
+  1. **The starting-point picker's search** (`linesBefore`): an all-digits search ("1234") is read only as an amount, so a
+     cheque number never finds its line. All digits with no `$` and no decimal searches the amount **or** the
+     description; `$12` or `12.50` stays amount-only.
+  2. **The withheld payment-processing offer can name the wrong reason.** `payoutGapViews` withholds the offer for four
+     reasons (no gap · the gap isn't a fee · a book line of the payout is missing from this account's books · a held
+     dispute's figure disagrees with Stripe's net) but `addBankLine` can only answer two of them. Put the reason on the
+     view (R2c's screen needs it to explain a missing button anyway), give the two new reasons refusal codes and
+     sentences in `lib/bank-check-words.ts` and statuses in `STATUS_OF`, and answer the right one.
+- **Out of scope, say so if asked:** Mark checked comparing the book lines behind the $0.00, not only the ticks, is R3's
+  "changed since" stamps. The coach portal's side (R4+) will need the same steps; do not build it here, but write the steps
+  so the coach chunk can extend them rather than copy them.
+
+**Tests.**
+- Unit: the rewired `tickRow` / `keepOut` paths, each refusal (`not_open` on a checked statement, `changed` on a row
+  ticked elsewhere, the twin double tap is a success), the picker's three search shapes, all four withheld reasons.
+- Extend `tests/unit/bank-r2-server-guard.test.ts`: no route or step writes `bank_check_marks` or `bank_line_exclusions`
+  directly (only through a step); the new functions lock the account then the check `FOR UPDATE`, refuse on
+  `status <> 'open'`, and carry the grants; every new refusal code has words and a status.
+- **Dev proof (a probe in `.probe/`, never committed, every row it makes deleted):** in one rolled-back SQL block, mark a
+  statement checked and then call the tick and keep-out steps against it, which must be refused `not_open`. Then through
+  the real routes signed in as the dev club's treasurer (the R2b probe in `.probe/bank-r2b-routes.mjs` shows the
+  sign-in): tick, mark checked, try to untick, get refused. Print a `BANK_R2B2_PASSED` line.
+
+**Done:** migration applied to dev; tests + guard + probe green; dictionary (the gotchas on `bank_check_marks` and
+`bank_line_exclusions` now say every write goes through a locked step) + snapshots refreshed under the "Every chunk"
+rule; `typecheck`, focused lint. Record it under plan §7 R2 (replace "Left open (owner call…)" with what was built, and
+mark the two small leftovers done), the TODO bank line and memory. Offer `/simplify` then `/review` (**high tier**, money
+write path) before asking the owner to commit.
 
 ---
 

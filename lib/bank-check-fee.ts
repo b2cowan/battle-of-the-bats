@@ -81,9 +81,8 @@ export async function addBankLine(ctx: AuthContextWithRole, accountId: string, c
     const payoutKey = typeof body.payoutKey === 'string' ? body.payoutKey : '';
     const view = payoutGapViews(evaluateCheck(read.state, checkId), read.payoutGaps, read.payoutMembers)[payoutKey];
     if (!view) return bankRefusedAs('not_outstanding');
-    if (!view.offerPaymentProcessing) {
-      return bankRefusedAs(view.stripeFeeCents + view.otherCents < 0 ? 'gap_not_a_fee' : 'no_processing_gap');
-    }
+    // The view's own reason (the screen explains the missing button with the same one).
+    if (view.withheld) return bankRefusedAs(view.withheld);
     amountCents = view.processingCents;
     forPayout = payoutKey;
     const payout = read.state.payouts?.find(p => p.key === payoutKey);
