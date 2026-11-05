@@ -243,7 +243,10 @@ trigger:** this plan is not done until Club Stage 12's fee-tax work ships.*
   **(`/accounting` 2026-11-04, Stage 1 closeout):** Stage 1 asks for the address only at a paid plan checkout, so a club
   taking payments with no paid plan (comped, free time, Founding) has no address on file, and the payout account's verified
   country gives no province. This stage asks the club for its billing address when it sets up payouts (or before its first
-  fee or cost-recovery invoice), and the cost-recovery invoice joins the every-path guard then. The families' location is
+  fee or cost-recovery invoice), and the cost-recovery invoice joins the every-path guard then. **Brought forward into Stage 2
+  (owner Ask 8, 2026-11-05: asked when a club turns on online payments, the same Billing address window; a club without one
+  waits, fees unbilled) because Stage 2 Part 2 already taxes the recovered fees — built as Stage 2 Part 2b, see
+  [GST_HST_STAGE2_BUILD_PROMPT.md](GST_HST_STAGE2_BUILD_PROMPT.md).** The families' location is
   never needed while the fee is our charge to the club (T3).
 - A **monthly fee statement per club** — fees taken, tax on them, our GST/HST number — because Stripe's application fee
   is not a tax invoice and Stripe Tax does not tax it.

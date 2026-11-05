@@ -115,13 +115,13 @@ clean):
   tax on its own fee) are never billed on — the "net of Stripe's tax" base; a credit note's total is asked of Stripe
   (`creditNotes.preview`: a line's `amount` is before tax, the note reverses 1500 + 195) and a custom line is refused on a taxed
   invoice (Stripe refuses it too); the fee invoice email leads with the fee before tax and lists the tax by name before the Total.
-- ⚠ **Ask 8 for the owner (NEW, the fee invoice's address):** Stripe refuses to finalize a taxed invoice for a customer with no
+- **Ask 8 (the fee invoice's address) — RULED 2026-11-05 as recommended (see Rulings):** Stripe refuses to finalize a taxed invoice for a customer with no
   address (`customer_tax_location_invalid`, verified). A comped or free club taking online payments may never have given one
   (Stage 1 asks only on a paid step). Built for now: the club's own row is stamped on the customer; a club with no address
   anywhere WAITS — its fees stay unbilled with an operator sentence in platform admin, nothing is billed untaxed. *Recommendation:
   ask for the billing address when a club turns on online payments (the same Billing address window), so no club reaches its
   first fee invoice without one; the wait stays as the safety net.* Alternative: copy the payout account's business address
-  (Stripe-verified, but a new source the club never gave us for billing). Not built either way until ruled.
+  (Stripe-verified, but a new source the club never gave us for billing). Not built yet: Part 2b below.
 - ⚠ Screens: every paid screen shows the server's sentence for the new codes (helper census 2026-11-05: plan-upgrade,
   PlanPanelDrawer, TeamSignupClient, onboarding, BillingBody checkout + next-season, PlanMoveDialog). The one fix:
   `PlanMoveDialog` offered "Check again" on a held account; `billing_review_hold` is now in its no-retry list. A failed stamp
@@ -131,7 +131,14 @@ clean):
   none). A "Keep {Plan}" restore of a down move (plan-ending, no route check) for a legacy customer with no address
   is expected to be refused by Stripe and read as `moveNotRestored` — not verified (prod has no such customer).
 
-Next: Ask 8 to the owner; Part 3.
+**Part 2b (to build, Ask 8):** a club turning on online payments is asked for its billing address in the shipped Billing address
+window before it can take payments; the fee invoice's wait (above) stays as the safety net. This is plan §4 Stage 5's address
+step ("asks the club for its billing address when it sets up payouts"), brought FORWARD into Stage 2 because Part 2 already taxes
+the recovered fees; Stage 5 then finds it done. The build session finds the
+online-payments setup step, presents the PM summary, and brings back as an ASK (not ruled): what a club already connected
+without an address sees.
+
+Next: Part 2b, then Part 3.
 
 **Rulings (owner, 2026-11-05, all as recommended):**
 - **Ask 1:** one helper decides tax: taxes by the stored address; a US address with disagreeing card/payout evidence
@@ -150,6 +157,9 @@ Next: Ask 8 to the owner; Part 3.
 - **Ask 7:** the owner completes LIVE Stripe Tax (head office, "Include tax in prices: No", SaaS business use, then the Canada
   GST/HST registration) before the promote, soon; the promote's steps re-run the read-only audit and re-count production
   subscribers, and stop if either fails.
+- **Ask 8 (2026-11-05):** a club is asked for its billing address when it turns on online payments (the same Billing address
+  window), so no club reaches its first fee invoice without one; a club with no address still waits (fees unbilled, operator
+  reason in platform admin) as the safety net. Not the payout account's address.
 
 Part 0 findings so far [V 2026-11-05]:
 - **Production paid subscriptions: 0** (live Stripe not-ended 0; prod org/workspace rows following a real subscription 0;
