@@ -16,6 +16,7 @@ import { pluralize } from '@/lib/utils';
 import kit from '@/components/public/ClubKit.module.css';
 import PublicPage from '@/components/public/PublicPage';
 import styles from './ClubTournaments.module.css';
+import PublicSectionHead from '@/components/public/PublicSectionHead';
 
 export const dynamic = 'force-dynamic';
 
@@ -89,14 +90,13 @@ export default async function ClubTournamentsPage({ params }: { params: Promise<
   // The club page column (club round C2 + C5): on the logo edge, 960 at most, 24 between sections.
   return (
     <PublicPage frame="club">
-      <div className={styles.title}>
-        <h1 className={kit.title}>Tournaments</h1>
-        <p className={kit.sub}>{pluralize(count, 'tournament')}</p>
-      </div>
+      {/* C3: the lit Tournaments tab names the page, so no visible title, and the count line is gone — each section's
+          count pill says it. */}
+      <h1 className={kit.srOnly}>Tournaments</h1>
 
       {current.length > 0 && (
         <section className={kit.section} aria-labelledby="current">
-          <h2 id="current" className={kit.sectionTitle}>Current and upcoming</h2>
+          <PublicSectionHead id="current" title="Current and upcoming" count={current.length} />
           {/* Phone: the home's rows, chip and all. */}
           <div className={`${kit.list} ${styles.phone}`}>
             {current.map(t => (
@@ -132,7 +132,7 @@ export default async function ClubTournamentsPage({ params }: { params: Promise<
 
       {past.length > 0 && (
         <section className={kit.section} aria-labelledby="past">
-          <h2 id="past" className={kit.sectionTitle}>Past tournaments</h2>
+          <PublicSectionHead id="past" title="Past tournaments" count={past.length} />
           {/* Phone: one recipe — the name, then its dates (not sealed yet) or its season and division, then a sealed
               record's champion and counts on lines of their own. No chip: the heading says they are finished. */}
           <div className={`${kit.list} ${styles.phone}`}>

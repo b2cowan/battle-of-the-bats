@@ -1,6 +1,7 @@
 import kit from './ClubKit.module.css';
 import styles from './TryoutPage.module.css';
 import DirectionsLink from './DirectionsLink';
+import PublicSectionHead from './PublicSectionHead';
 import { tryoutDayParts, type TryoutDay } from '@/lib/tryout-season';
 
 /**
@@ -13,7 +14,7 @@ export default function TryoutDays({ days, sport }: { days: readonly TryoutDay[]
   if (days.length === 0) return null;
   return (
     <section className={kit.section} aria-labelledby="tryout-days">
-      <h2 id="tryout-days" className={kit.sectionTitle}>Tryout days</h2>
+      <PublicSectionHead id="tryout-days" title="Tryout days" />
       <div className={kit.list}>
         {days.map((d, i) => {
           const p = tryoutDayParts(d, sport);

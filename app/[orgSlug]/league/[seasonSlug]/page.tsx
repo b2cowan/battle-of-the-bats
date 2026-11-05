@@ -18,6 +18,7 @@ import column from '../league-column.module.css';
 import kit from '@/components/public/ClubKit.module.css';
 import parts from '@/components/public/PublicParts.module.css';
 import PublicPage from '@/components/public/PublicPage';
+import PublicSectionHead from '@/components/public/PublicSectionHead';
 
 export const dynamic = 'force-dynamic';
 
@@ -126,7 +127,7 @@ export default async function LeagueSeasonPage({
             </aside>
           )}
           {chipRow}
-          <h1 className={kit.title}>{season.name}</h1>
+          <h1 className={kit.pageName}>{season.name}</h1>
           {datesLine && <p className={kit.sub}>{datesLine}</p>}
           {season.description && (
             <p className={`${kit.body} ${parts.prose}`} style={{ marginTop: '0.5rem' }}>
@@ -137,8 +138,9 @@ export default async function LeagueSeasonPage({
 
         {/* Each age group's top three (P2, P5): "Standings" while played or ended, "Final standings" once completed. */}
         {anyScored && (
-          <div>
-            <div className={kit.band}>{standingsTitle(season.status)}</div>
+          <section className={kit.section} aria-labelledby="season-standings">
+            {/* R4: the standings are a section with the heading row (it was a 12 px capitals label). */}
+            <PublicSectionHead id="season-standings" title={standingsTitle(season.status)} />
             <div className={column.topGrid}>
               {listed.map((d, i) => {
                 const t = tables[i];
@@ -147,7 +149,7 @@ export default async function LeagueSeasonPage({
                 return (
                   <div key={d.id} className={`${kit.card} ${column.topCard}`}>
                     <div className={column.topHead}>
-                      <h2 id={headId} className={column.topName}>{d.name}</h2>
+                      <h3 id={headId} className={column.topName}>{d.name}</h3>
                       {t.scored && (
                         <Link href={href(`/league/${seasonSlug}/standings`) + `?d=${d.id}`} className={column.standLink}>
                           {W.card.link}<span className={kit.srOnly}> {W.card.linkFor(d.name)}</span> <span aria-hidden>→</span>
@@ -179,7 +181,7 @@ export default async function LeagueSeasonPage({
                 );
               })}
             </div>
-          </div>
+          </section>
         )}
 
         {/* Each card's Full table link replaces the old "Final standings →" button; Schedule stays, the lead button when
@@ -226,7 +228,7 @@ export default async function LeagueSeasonPage({
       {/* Season header */}
       <div className={column.header}>
         {chipRow}
-        <h1 className={kit.title}>{season.name}</h1>
+        <h1 className={kit.pageName}>{season.name}</h1>
         {season.description && (
           <p className={`${kit.body} ${parts.prose}`} style={{ marginTop: '0.5rem' }}>
             {season.description}
@@ -267,8 +269,10 @@ export default async function LeagueSeasonPage({
 
       {/* Divisions */}
       {divisions.length > 0 && (
-        <div>
-          <div className={kit.band}>Divisions</div>
+        <section className={kit.section} aria-labelledby="season-divisions">
+          {/* R4: Divisions is a section with the heading row and its count (it was a 12 px capitals label); the fact
+              labels above (Registration, Season dates, Price) stay labels. */}
+          <PublicSectionHead id="season-divisions" title="Divisions" count={divisions.length} />
           <div
             style={{
               display: 'grid',
@@ -342,7 +346,7 @@ export default async function LeagueSeasonPage({
               );
             })}
           </div>
-        </div>
+        </section>
       )}
 
       {/* CTA: Register now while the form takes sign-ups; before it opens, when it opens and the schedule (teams can be

@@ -160,12 +160,15 @@ export default function YourSignup({
       {regs.length > 0 && (
         <>
           {sharedRef && <p style={soft}>{SW.reference} <strong style={{ color: 'var(--club-text)' }}>{sharedRef}</strong> {SW.referenceQuote}</p>}
-          {regs.map(r => {
+          {/* R5 (club round, 2026-11-05): the children are one framed list, a row each on a hairline (they were a card
+              each). Every fact a row carried stays in it — the shipped page wins over the drawing's one-line row. */}
+          <ul className={kit.list} style={{ listStyle: 'none', margin: 0, padding: 0 }} aria-label="Your children">
+          {regs.map((r, i) => {
             const fee = feeLine(r);
             return (
-              <div key={r.child} className={kit.card}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', marginBottom: '0.5rem' }}>
-                  <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--club-text)' }}>
+              <li key={r.child} style={{ padding: '12px 16px', borderTop: i === 0 ? 0 : '1px solid var(--club-line)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', minHeight: '32px', marginBottom: '0.25rem' }}>
+                  <div style={{ fontWeight: 600, fontSize: '1rem', color: 'var(--club-text)' }}>
                     {r.playerFirstName}
                   </div>
                   <span className={`${kit.chip} ${r.status === 'active' ? kit.chipOk : kit.chipNeutral}`}>
@@ -200,9 +203,10 @@ export default function YourSignup({
                 {r.status === 'waitlisted' && <p style={{ ...soft, marginTop: '0.4rem' }}>We’ll email you if a spot opens.</p>}
                 {r.team && !r.team.name && <p style={{ ...soft, marginTop: '0.4rem' }}>We’ll email you when the teams are set.</p>}
                 {r.team?.movedFrom && <p style={{ ...soft, marginTop: '0.4rem' }}>Moved from {r.team.movedFrom.team} on {clubDay(r.team.movedFrom.day)}.</p>}
-              </div>
+              </li>
             );
           })}
+          </ul>
 
           {pay && payBlockOwns ? (
             <LeaguePayBlock pay={pay} returnedSession={returnedSession} left={left} />

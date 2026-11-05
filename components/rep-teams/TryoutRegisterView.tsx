@@ -39,13 +39,14 @@ export default function TryoutRegisterView({
             marginBottom: '0.4rem',
           }}
         >
-          {org.name} · {team.name}
+          {/* C3: the band names the club, so this line keeps only the team. */}
+          {team.name}
         </div>
-        <h1 className={kit.title}>
+        <h1 className={kit.pageName}>
           {season ? `Tryout application — ${season.name}` : 'Tryout application'}
         </h1>
         {team.division && (
-          <div style={{ font: '400 14px var(--club-text-face)', color: 'var(--club-soft)' }}>
+          <div style={{ font: '400 14px var(--club-text-face)', color: 'var(--club-soft)', marginTop: '0.35rem' }}>
             {team.division}
           </div>
         )}

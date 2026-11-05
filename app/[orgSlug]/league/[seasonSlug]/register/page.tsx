@@ -79,8 +79,8 @@ export default async function RegisterPage({
         <Link href={href(`/league/${seasonSlug}`)} className={kit.back}>
           ← Back to {season.name}
         </Link>
-        <div className={kit.sub} style={{ marginBottom: '0.4rem' }}>{org.name}</div>
-        <h1 className={kit.title}>Sign up — {season.name}</h1>
+        {/* C3: the band names the club, so the club-name line over the title is gone; the title is 24 (C4). */}
+        <h1 className={kit.pageName}>Sign up — {season.name}</h1>
       </div>
 
       {/* Closed state */}

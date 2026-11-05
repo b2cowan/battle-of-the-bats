@@ -27,7 +27,15 @@ const FRAME_ONLY_USERS = ['components/public/TournamentOverview.tsx', 'component
   // Public page layout standard Part 4: News's headings are the shared section heading (R4). News renders only inside the
   // frame — its own tournament route and the admin preview below.
   'components/public/NewsContent.tsx',
-  'app/[orgSlug]/admin/tournaments/preview/[tournamentSlug]/[section]/page.tsx', HOME];
+  'app/[orgSlug]/admin/tournaments/preview/[tournamentSlug]/[section]/page.tsx', HOME,
+  // The club round (standard R4, ruled 2026-11-05; club build Part 2): every club section heading IS the tournament's
+  // heading row, one part on both sites. The club frame sets the same --club-* tokens the parts read (held below), so the
+  // heading draws in the club's palette. These are the club public pages and the parts they draw (their admin "How
+  // families see it" previews render the same components).
+  'components/public/ClubSiteHome.tsx', 'components/public/ClubSponsors.tsx', 'components/public/RepTeamPublicSchedule.tsx',
+  'components/public/TryoutDays.tsx', 'components/rep-teams/TryoutLandingView.tsx', 'components/public/LeaguePayBlock.tsx',
+  'app/[orgSlug]/about/page.tsx', 'app/[orgSlug]/tournaments/page.tsx', 'app/[orgSlug]/teams/[teamSlug]/page.tsx',
+  'app/[orgSlug]/league/page.tsx', 'app/[orgSlug]/league/[seasonSlug]/page.tsx'];
 
 describe('the shared parts render only inside the new frame', () => {
   it('no page or component outside the guarded frame bodies imports them', () => {

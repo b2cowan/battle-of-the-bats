@@ -6,6 +6,7 @@ import ClubContactCard, { COPY_CLUB_EMAIL } from '@/components/public/ClubContac
 import TryoutQuestionsLine from '@/components/public/TryoutQuestionsLine';
 import TryoutChip from '@/components/public/TryoutChip';
 import PublicPage from '@/components/public/PublicPage';
+import PublicSectionHead from '@/components/public/PublicSectionHead';
 import {
   tryoutSeasonMeta,
   tryoutStateSentence,
@@ -67,7 +68,7 @@ export default function TryoutLandingView({
   const blurb = state === 'open' || state === 'notOpenYet' ? season?.tryoutDescription?.trim() || null : null;
   const blurbSection = blurb && (
     <section className={kit.section} aria-labelledby="from-the-club">
-      <h2 id="from-the-club" className={kit.sectionTitle}>From the club</h2>
+      <PublicSectionHead id="from-the-club" title="From the club" />
       <div className={kit.list}><p className={styles.blurb}>{blurb}</p></div>
     </section>
   );
@@ -92,7 +93,7 @@ export default function TryoutLandingView({
       )}
 
       <div className={styles.head}>
-        <h1 className={kit.title}>{team.name} tryouts</h1>
+        <h1 className={kit.pageName}>{team.name} tryouts</h1>
         {meta && <p className={styles.meta}>{meta}</p>}
         <TryoutChip state={state} className={styles.chip} />
       </div>

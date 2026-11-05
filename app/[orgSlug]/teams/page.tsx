@@ -98,12 +98,12 @@ export default async function ClubTeamsPage({
 
   return (
     <PublicPage frame="club">
-      <div className={styles.title}>
-        <h1 className={kit.title}>Teams</h1>
+      {/* C3: the lit Teams tab names the page, so no visible title; its line sits under the Born in pill. */}
+      <h1 className={kit.srOnly}>Teams</h1>
+      <div className={kit.toolLine}>
+        {menu.length > 0 && <BornInPill path={orgHref('/teams')} years={menu} picked={pick} />}
         <p className={kit.sub}>{pick == null ? pluralize(count, 'team') : bornPlacesSentence(places, pick)}</p>
       </div>
-
-      {menu.length > 0 && <BornInPill path={orgHref('/teams')} years={menu} picked={pick} />}
 
       {places > 0 && <>
       {/* Phone: the table standard's phone form — one frame, the whole row the door, the chevron last. */}

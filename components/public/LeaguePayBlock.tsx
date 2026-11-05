@@ -22,6 +22,7 @@ import {
   type PayRail,
 } from './PayBlock';
 import kit from './ClubKit.module.css';
+import PublicSectionHead from './PublicSectionHead';
 
 export default function LeaguePayBlock({ pay, returnedSession, left, centered = false }: {
   pay: LeaguePayView; returnedSession: string | null; left: boolean; centered?: boolean;
@@ -49,7 +50,7 @@ export default function LeaguePayBlock({ pay, returnedSession, left, centered = 
           {pay.kind === 'owing' && pay.returned && (
             <ReturnedNotice returnedAt={pay.returned.returnedAt} reason={pay.returned.reason} held={heldLine(pay.returned)} />
           )}
-          {pay.kind === 'owing' && <Owing pay={pay} />}
+          {pay.kind === 'owing' && <Owing pay={pay} sectionHead={!centered} />}
           {pay.kind === 'paid' && <p className={pb.note}>{LW.paidTitle}</p>}
           {pay.kind === 'refused' && pay.message && <div className={kit.card}><p style={{ margin: 0 }}>{pay.message}</p></div>}
         </>
@@ -77,8 +78,11 @@ function LeagueReceipts({ pay }: { pay: LeaguePayView }) {
   );
 }
 
-/** What is owed, child by child, then Pay. The server re-reads the amount; a changed amount reloads the page. */
-function Owing({ pay }: { pay: LeaguePayView }) {
+/** What is owed, child by child, then Pay. The server re-reads the amount; a changed amount reloads the page. On Your
+ *  sign-up the heading is the page's section heading row above the card (standard R4, club round 2026-11-05: it fell to
+ *  the 800-weight title face); the sign-up form's centred confirmation keeps it in the card until the pay block's own
+ *  pass (club build Part 3), which also owns the tournament pay page's copy of the heading. */
+function Owing({ pay, sectionHead }: { pay: LeaguePayView; sectionHead: boolean }) {
   const [email, setEmail] = useState(pay.payerEmail ?? '');
   const [opening, setOpening] = useState<PayRail | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -96,9 +100,8 @@ function Owing({ pay }: { pay: LeaguePayView }) {
     setOpening(null);
   }
 
-  return (
-    <section className={`${kit.card} ${pb.owing}`} aria-label={LW.heading}>
-      <h2>{LW.heading}</h2>
+  const body = (
+    <>
       <ul className={pb.owingLines}>
         {pay.lines.map(l => (
           <li key={l.childName}>
@@ -115,6 +118,17 @@ function Owing({ pay }: { pay: LeaguePayView }) {
         buttonClass={`${kit.btn} ${kit.btnPrimary}`} bankButtonClass={`${kit.btn} ${kit.btnOutline}`} />
       <PayError message={error} />
       <PolicyAndOtherWays refundPolicy={pay.refundPolicy} howToPay={pay.howToPay} />
+    </>
+  );
+  return sectionHead ? (
+    <section className={kit.section} aria-labelledby="pay-now">
+      <PublicSectionHead id="pay-now" title={LW.heading} />
+      <div className={`${kit.card} ${pb.owing}`}>{body}</div>
+    </section>
+  ) : (
+    <section className={`${kit.card} ${pb.owing}`} aria-label={LW.heading}>
+      <h2>{LW.heading}</h2>
+      {body}
     </section>
   );
 }

@@ -45,9 +45,9 @@ export default async function EmailMyLinkPage({
         <Link href={href(`/league/${seasonSlug}`)} className={kit.back}>
           ← Back to {season.name}
         </Link>
-        <div className={kit.sub} style={{ marginBottom: '0.4rem' }}>{org.name}</div>
-        <h1 className={kit.title}>{SW.title}</h1>
-        <p className={kit.sub}>{season.name}</p>
+        {/* C3: the band names the club, so no club-name line; the title is 24 (C4), the season under it. */}
+        <h1 className={kit.pageName}>{SW.title}</h1>
+        <p className={kit.sub} style={{ marginTop: '0.35rem' }}>{season.name}</p>
       </div>
 
       <EmailMyLinkForm orgSlug={orgSlug} seasonSlug={seasonSlug} seasonName={season.name} clubName={org.name} variant="page" />

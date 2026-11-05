@@ -9,8 +9,8 @@ import { liveLeagueSeasons, orderSeasons } from '@/lib/house-league-season';
 import { tournamentToday } from '@/lib/timezone';
 import LeagueSeasonRows from '@/components/public/LeagueSeasonRows';
 import { withEarlyBird } from '@/lib/league-early-bird';
-import column from './league-column.module.css';
 import PublicPage from '@/components/public/PublicPage';
+import PublicSectionHead from '@/components/public/PublicSectionHead';
 import kit from '@/components/public/ClubKit.module.css';
 
 export const dynamic = 'force-dynamic';
@@ -53,23 +53,22 @@ export default async function LeagueIndexPage({
   // The club page column (club round C2 + C5): on the logo edge, 960 at most, 24 between sections.
   return (
     <PublicPage frame="club">
-      <div className={column.header}>
-        <h1 className={kit.title}>House league</h1>
-        <p className={kit.sub}>{org.name}</p>
-      </div>
+      {/* C3: the lit House league tab names the page, so no visible title (the band names the club); each section heads
+          its own list with its count (R4). */}
+      <h1 className={kit.srOnly}>House league</h1>
 
       {running.length > 0 && (
-        <div>
-          <div className={kit.band}>Running now</div>
+        <section className={kit.section} aria-labelledby="league-running">
+          <PublicSectionHead id="league-running" title="Running now" count={running.length} />
           <LeagueSeasonRows seasons={running} today={today} label="Running now" />
-        </div>
+        </section>
       )}
 
       {past.length > 0 && (
-        <div>
-          <div className={kit.band}>Past seasons</div>
+        <section className={kit.section} aria-labelledby="league-past">
+          <PublicSectionHead id="league-past" title="Past seasons" count={past.length} />
           <LeagueSeasonRows seasons={past} today={today} label="Past seasons" />
-        </div>
+        </section>
       )}
     </PublicPage>
   );

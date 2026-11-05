@@ -17,6 +17,7 @@ import {
   type TournamentHomeStatus,
 } from '@/lib/club-site-home';
 import { clubHomeSectionsFor, type ClubHomeSection, type SectionCarries, type SectionPrefs } from '@/lib/club-site-sections';
+import PublicSectionHead from './PublicSectionHead';
 
 /**
  * A CLUB'S HOME (Club Tier Stage 4b-2a; End state 1, Ask 3A, ruled 2026-10-19) — the home of an org whose plan carries
@@ -94,7 +95,7 @@ export default async function ClubSiteHome(p: ClubSiteHomeProps) {
 
   const openNow = sections.includes('openNow') && (
     <section className={kit.section} aria-labelledby="open-now" {...siteEdit('home')}>
-      <h2 id="open-now" className={kit.sectionTitle}>Open now</h2>
+      <PublicSectionHead id="open-now" title="Open now" />
       {/* The heading says "open" once, so the rows carry no chip; nearest deadline first (the page orders them). */}
       <div className={`${kit.list} ${kit.edge}`}>
         {p.openNow.map(r => (
@@ -111,7 +112,7 @@ export default async function ClubSiteHome(p: ClubSiteHomeProps) {
 
   const teams = sections.includes('teams') && (
     <section className={kit.section} aria-labelledby="teams" {...siteEdit('home')}>
-      <h2 id="teams" className={kit.sectionTitle}>Teams</h2>
+      <PublicSectionHead id="teams" title="Teams" />
       {/* The home's team finder (DC-01): a grid of doors, its own treatment — no tile chevrons, no "All teams" link
           (the grid shows every team; the Teams tab is one tap away). */}
       <div className={`${kit.list} ${styles.grid}`}>
@@ -132,7 +133,7 @@ export default async function ClubSiteHome(p: ClubSiteHomeProps) {
 
   const league = sections.includes('league') && p.league && (
     <section className={kit.section} aria-labelledby="house-league" {...siteEdit('home')}>
-      <h2 id="house-league" className={kit.sectionTitle}>House league</h2>
+      <PublicSectionHead id="house-league" title="House league" />
       {p.league.seasons.length > 0 ? (
         <LeagueSeasonRows seasons={p.league.seasons} today={p.league.today} label="House league seasons" />
       ) : (
@@ -150,7 +151,7 @@ export default async function ClubSiteHome(p: ClubSiteHomeProps) {
 
   const tournaments = sections.includes('tournaments') && (
     <section className={kit.section} aria-labelledby="tournaments" {...siteEdit('home')}>
-      <h2 id="tournaments" className={kit.sectionTitle}>Tournaments</h2>
+      <PublicSectionHead id="tournaments" title="Tournaments" />
       <div className={kit.list}>
         {p.tournaments.map(t => (
           <Link key={t.id} href={t.href} className={`${kit.row} ${kit.rowStack}`}>
@@ -170,7 +171,7 @@ export default async function ClubSiteHome(p: ClubSiteHomeProps) {
 
   const about = sections.includes('about') && (
     <section className={`${kit.section} ${styles.about}`} aria-labelledby="about" {...siteEdit('about')}>
-      <h2 id="about" className={kit.sectionTitle}>About the club</h2>
+      <PublicSectionHead id="about" title="About the club" />
       <div className={kit.list}>
         {p.about && <p className={kit.cardText}>{p.about}</p>}
         {/* The About page's door (Stage 4c-1): only when the page says more than this paragraph. */}

@@ -24,6 +24,7 @@ import { firstSentence } from '@/lib/club-site';
 import { sportLabel } from '@/lib/sports';
 import { shareCardPath, sportsTeamJsonLd, teamCard, TEAM_DESCRIPTION_FALLBACK } from '@/lib/club-share';
 import { getPublicTeamCoaches } from '@/lib/club-team-coaches';
+import PublicSectionHead from '@/components/public/PublicSectionHead';
 
 /** Where the club's pages live, for the team's description to search engines (the sitemap's own base). */
 const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.fieldlogichq.ca';
@@ -134,7 +135,7 @@ export default async function TeamPublicPage({
       // its heading inside made the stacked pair read as two different idioms. The address takes its own line so it never
       // splits at a hyphen.
       <section key={part} className={`${kit.section} ${styles.tryouts}`} aria-labelledby="tryouts-quiet">
-        <h2 id="tryouts-quiet" className={kit.sectionTitle}>Tryouts</h2>
+        <PublicSectionHead id="tryouts-quiet" title="Tryouts" />
         <div className={kit.list}>
           <p className={kit.cardText}>
             {team.name} isn’t taking tryout sign-ups right now.
@@ -156,13 +157,13 @@ export default async function TeamPublicPage({
     );
     if (part === 'about') return (
       <section key={part} className={`${kit.section} ${styles.about}`} aria-labelledby="about-team">
-        <h2 id="about-team" className={kit.sectionTitle}>About the team</h2>
+        <PublicSectionHead id="about-team" title="About the team" />
         <div className={kit.list}><p className={kit.cardText}>{about}</p></div>
       </section>
     );
     if (part === 'coaches') return (
       <section key={part} className={`${kit.section} ${styles.coaches}`} aria-labelledby="team-coaches">
-        <h2 id="team-coaches" className={kit.sectionTitle}>Coaches</h2>
+        <PublicSectionHead id="team-coaches" title="Coaches" />
         <ul className={`${kit.list} ${styles.coachList}`} role="list">
           {coaches.map((c, i) => (
             <li key={`${i}-${c.name}`} className={styles.coachRow}>
@@ -193,7 +194,7 @@ export default async function TeamPublicPage({
       {/* No "← Teams" (design log 2026-10-20, amended): the Teams tab exists exactly when the Teams page does, and it is
           pinned on a phone — a back link to the same place only scrolls away above the name. */}
       <div className={styles.head}>
-        <h1 className={`${kit.title} ${styles.name}`}>
+        <h1 className={`${kit.pageName} ${styles.name}`}>
           {/* The team's own colour is a dot beside its name, never a tint or a strip: the club's colour carries the page
               (DC-02). A colour is a club's choice and may be any hue, so it never colours text. */}
           {team.color && <span className={styles.teamDot} style={{ background: team.color }} aria-hidden="true" />}

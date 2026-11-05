@@ -395,3 +395,38 @@ applied in v2; C3 split into C3 + C4.
   (`LeagueSeasonRows`, untouched) — its `::after` stretches the link over the whole card, which the tap-floor probe cannot
   see; not baselined. A probe (`.probe/club-column-probe.mjs`) measured nine pages at 390 / 1,024 / 1,536: left 16 / 24 / 192,
   960 wide (640 the form), 16 / 28 / 28 down, 24 between — the drawing's numbers.
+- **2026-11-05 · Club build Part 2 (titles, headings, lists, rows) — built.** Owner yes on the product-owner summary
+  ("go ahead"). **C3:** Teams, Tryouts (in season), House league and Tournaments have no visible title — each keeps an
+  `h1` in `kit.srOnly`; Teams' count and Tryouts' season line sit under the Born in pill (kit `.toolLine`, 12 apart; none
+  with two seasons, as before); Tournaments' "{n} tournaments" line is gone (each section's count pill says it); the House
+  league page's club-name line and hairline header went with its title. The club-name line over the tryout form, the league
+  form and both Your sign-up pages is gone (the tryout form's keeps "15U AAA"). **C4:** a new kit class `.pageName` (24 px,
+  the club's title face and weight) on a team, a tryout, a season (both shapes), both forms, Your sign-up, About and
+  off-season Tryouts. `.title` (32) was NOT changed in place: the coach's signed-in house-league team page imports it and is
+  outside the club round, and the archive record, league Schedule and Standings keep 32 until Part 4 (C7) reaches them.
+  **R4:** every club section heading is `PublicSectionHead` (it already read the `--club-*` tokens), which gained an
+  `action` slot so the team page's Schedule keeps Subscribe on the right; kit `.sectionTitle` deleted, kit `.section` gap
+  9.6 → 10 px (the tournament section's); the season page's Divisions (with its count) and Standings / Final standings are
+  sections (the age-group cards' names became `h3`); House league and Tournaments sections carry their counts; the home's
+  take none (the drawing). Your sign-up's pay heading is the heading row above its card — **the shipped word is "To pay
+  now", not the drawing's "Pay online"** (shipped strings win); the sign-up form's centred confirmation keeps the heading
+  in its card until Part 3's pay-block pass, which also owns the tournament pay page's copy. **R5:** `LeagueSeasonRows` is
+  one framed list (rows on hairlines, whole-row door and links line kept; the name link is 44 px tall in its own right —
+  the Part 1 tap-floor finding no longer shows); Your sign-up's children are one framed list (`<ul>` in `kit.list`), **every
+  fact a child's card carried kept in its row** (division, team, coach, fee, reference, the waiting/moved/asked notes) —
+  the drawing's one-line row would have hidden facts families see today, so the shipped page won (said in the owner
+  summary). **R7:** About's documents are kit link rows with a new `kit.rowExternal` (the new-tab symbol where the chevron
+  would be, bands kept; the bands are now Fragments, so the first band no longer draws a second hairline under the frame);
+  a question is 16/600, its answer 16 held to 720 by `PublicParts .prose`. **Kept, a deviation from the drawing:** the
+  replaced-link page keeps "Your sign-up" as its title and "This link no longer works" as its card's heading (the drawing
+  makes the latter the title; the words are unchanged either way) — an owner call if he wants it promoted. **Out of scope,
+  left:** the fallback home (`app/[orgSlug]/page.tsx`, clubs without the site plan, own `ClubHome.module.css` headings).
+  **Guards:** `public-page-layout-guard` gained a "club round Part 2" block (C3 / C4 / R4 / R5 / R7); the Stage 2 guard's
+  shared-parts allow-list names the club files that now draw the heading row, with the R4 reason;
+  `house-league-public-seasons` pins the new headings. **Checks:** typecheck clean; focused lint clean (two old `<img>`
+  warnings); the club/league/public unit groups 4,385 / 4,390 before the test fixes, then all green except the known
+  other-session failures (practice plans, plan-billing-usage, stage-6 walk ×3, series-date-groups, support-console-stage3)
+  plus a new one, also another session's (`possessive-guard` on `lib/child-page-words.ts`); `check:css-selectors` reports
+  only other sessions' classes. **Layout check** (dev server, 14 club screens at 361 / 390 / 768 / 1,440, then eight at
+  1,024 / 1,280 / 1,536): no new findings. The season page, both forms and Your sign-up are not in the screen list; each
+  renders 200 with its 24 px name. No help or demo-tour anchor sits on these pages.

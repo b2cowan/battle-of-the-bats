@@ -326,3 +326,60 @@ describe('Public page layout standard, club round — every club public page is 
     assert.match(readCode('components/public/RepTeamPublicSchedule.tsx'), /if \(!teamScheduleShows\(view\)\) return null;/, 'the section asks the same question');
   });
 });
+
+/**
+ * THE CLUB ROUND, PART 2 — TITLES, HEADINGS, LISTS, ROWS (C3, C4, R4, R5, R7; build prompt Part 2).
+ * A page whose lit tab names it has no visible title (a screen reader still gets its h1); a page about one thing keeps its
+ * name at 24 px (`kit.pageName`); every club section heading is the tournament's heading row; the house-league seasons and
+ * Your sign-up's children are one framed list each; About's documents are link rows with the new-tab symbol.
+ */
+describe('Public page layout standard, club round Part 2 — one title rule, one heading row', () => {
+  const TAB_PAGES = [`${CLUB}/teams/page.tsx`, `${CLUB}/league/page.tsx`, `${CLUB}/tournaments/page.tsx`];
+  const NAMED_PAGES = [
+    `${CLUB}/teams/[teamSlug]/page.tsx`, 'components/rep-teams/TryoutLandingView.tsx', 'components/rep-teams/TryoutRegisterView.tsx',
+    `${CLUB}/league/[seasonSlug]/page.tsx`, `${CLUB}/league/[seasonSlug]/register/page.tsx`, `${CLUB}/league/[seasonSlug]/status/page.tsx`,
+    `${CLUB}/league/[seasonSlug]/status/[token]/page.tsx`, `${CLUB}/about/page.tsx`,
+  ];
+  it('C3: a tab page has no visible title — its h1 is for a screen reader; Tryouts keeps 24 out of season only', () => {
+    for (const f of [...TAB_PAGES, `${CLUB}/tryouts/page.tsx`]) {
+      const code = readCode(f);
+      assert.match(code, /<h1 className=\{kit\.srOnly\}>/, `${f}: the page keeps an h1 for a screen reader`);
+      assert.doesNotMatch(code, /kit\.title\b/, `${f}: no visible 32 px title (the lit tab names the page)`);
+    }
+    const tryouts = readCode(`${CLUB}/tryouts/page.tsx`);
+    assert.equal((tryouts.match(/kit\.pageName/g) ?? []).length, 1, 'Tryouts out of season keeps its name (its tab is gone)');
+    assert.doesNotMatch(readCode(`${CLUB}/tournaments/page.tsx`), /pluralize\(count, 'tournament'\)/, 'the count line went: each section\'s pill says it');
+  });
+  it('C4: a page about one thing names itself at 24 px in the title face; the club-name line over a form title is gone', () => {
+    const kitCss = readSource('components/public/ClubKit.module.css');
+    assert.match(cssRule(kitCss, '.pageName'), /font-family: var\(--club-title-face\);[\s\S]*font-weight: var\(--club-title-weight\);[\s\S]*font-size: 1\.5rem;/);
+    for (const f of NAMED_PAGES) {
+      const code = readCode(f);
+      assert.match(code, /className=\{(`\$\{)?kit\.pageName/, `${f}: its name is kit.pageName (24)`);
+      assert.doesNotMatch(code, /kit\.title\b/, `${f}: no 32 px title left`);
+      assert.doesNotMatch(code, /\{org\.name\}<\/div>|\{org\.name\} · \{team\.name\}/, `${f}: the band names the club, not a line over the title`);
+    }
+  });
+  it('R4: every club section heading is the shared heading row — the kit has no heading of its own any more', () => {
+    assert.doesNotMatch(readSource('components/public/ClubKit.module.css'), /\.sectionTitle\b/);
+    const users = [...filesUnder('app/[orgSlug]', '.tsx'), ...filesUnder('components/public', '.tsx'), ...filesUnder('components/rep-teams', '.tsx')]
+      .filter(f => /import kit from '[^']*\/ClubKit\.module\.css'|import kit from '\.\/ClubKit\.module\.css'/.test(readSource(f)));
+    assert.deepEqual(users.filter(f => /kit\.sectionTitle/.test(readSource(f))), []);
+    const season = readCode(`${CLUB}/league/[seasonSlug]/page.tsx`);
+    assert.match(season, /<PublicSectionHead id="season-divisions" title="Divisions" count=\{divisions\.length\} \/>/, 'Divisions is a heading with its count');
+    assert.match(season, /<PublicSectionHead id="season-standings" title=\{standingsTitle\(season\.status\)\} \/>/);
+    assert.doesNotMatch(season, /<div className=\{kit\.band\}>(Divisions|\{standingsTitle)/, 'no capitals label heads a section');
+    assert.match(readCode('components/public/RepTeamPublicSchedule.tsx'), /<PublicSectionHead id="schedule" title="Schedule"\s+action=\{subscribe && <TeamSubscribeButton/, 'Subscribe keeps the right slot');
+    assert.match(readCode('components/public/LeaguePayBlock.tsx'), /<PublicSectionHead id="pay-now" title=\{LW\.heading\} \/>/, 'Your sign-up\'s pay heading is the heading row');
+  });
+  it('R5 + R7: the seasons and the children are one framed list each; About\'s documents are link rows with the new-tab symbol', () => {
+    const seasons = readSource('components/public/LeagueSeasonRows.module.css').replace(/\/\*[\s\S]*?\*\//g, '');
+    assert.match(cssRule(seasons, '.list'), /border: 1px solid var\(--club-line\);[\s\S]*overflow: hidden;/, 'one frame');
+    assert.doesNotMatch(cssRule(seasons, '.row'), /border-radius|border: 1px/, 'a row is a hairline, never a card');
+    assert.match(cssRule(seasons, '.name'), /min-height: 44px;/, 'the name link is a 44 px target in its own right');
+    assert.match(readCode(`${CLUB}/league/[seasonSlug]/status/YourSignup.tsx`), /<ul className=\{kit\.list\}[^>]*aria-label="Your children">/);
+    const about = readCode(`${CLUB}/about/page.tsx`);
+    assert.match(about, /className=\{`\$\{kit\.row\} \$\{kit\.rowExternal\}`\}/);
+    assert.match(readSource('components/public/ClubKit.module.css'), /\.rowExternal::after \{ display: none; \}/, 'the symbol stands where the chevron would');
+  });
+});

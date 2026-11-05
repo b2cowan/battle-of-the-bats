@@ -150,9 +150,8 @@
   word-break: break-all;
 }
 
-/* The club Tryouts page: the row's chip stays on the right; the title block is the Teams page's. */
+/* The club Tryouts page: the row's chip stays on the right; its season line sits under the Born in pill (C3, kit .toolLine). */
 .rowChip { flex: none; }
-.title :global(h1) { margin-bottom: 6px; }
 
 /* The OPEN tryout page's questions line (Club Tier Stage 4c-2 Part B, Ask 3 / D3): who to ask over the address, with
    Copy built like the status card's — the same mailRow, so the two line up the same way under the days. */

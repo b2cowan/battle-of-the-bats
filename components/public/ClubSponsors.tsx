@@ -5,6 +5,7 @@ import { PUBLIC_SITE_WORDS as W } from '@/lib/public-site-words';
 import type { SiteSponsor } from '@/lib/types';
 import kit from './ClubKit.module.css';
 import styles from './ClubSponsors.module.css';
+import PublicSectionHead from './PublicSectionHead';
 
 /**
  * THE CLUB'S SPONSORS, as families see them (Club Tier Stage 4d; drawings https://claude.ai/artifact/CAKV9xcGQoW4zudF5TvGcE,
@@ -38,7 +39,7 @@ export function ClubSponsorStrip({ sponsors }: { sponsors: readonly SiteSponsor[
   // The last section in the home's page column (PublicPage), so it takes the column's width and its 24 px above.
   return (
     <section className={kit.section} aria-labelledby="sponsors" {...siteEdit('lists')}>
-      <h2 id="sponsors" className={kit.sectionTitle}>{W.sponsorsHeading}</h2>
+      <PublicSectionHead id="sponsors" title={W.sponsorsHeading} />
       <div className={kit.list}>
         <div className={styles.strip}>
           {sponsors.map(s => (
@@ -57,7 +58,7 @@ export function ClubSponsorList({ sponsors }: { sponsors: readonly SiteSponsor[]
   if (sponsors.length === 0) return null;
   return (
     <section className={kit.section} aria-labelledby="sponsors">
-      <h2 id="sponsors" className={kit.sectionTitle}>{W.sponsorsHeading}</h2>
+      <PublicSectionHead id="sponsors" title={W.sponsorsHeading} />
       <div className={kit.list}>
         {sponsors.map(s => (
           <Out key={s.id} sponsor={s} className={styles.row}>

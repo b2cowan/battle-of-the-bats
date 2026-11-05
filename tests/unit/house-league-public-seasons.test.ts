@@ -52,7 +52,10 @@ describe('2 · the three public surfaces draw the one list', () => {
   it('the league page: Running now (every live season) above Past seasons', () => {
     const page = readCode('app/[orgSlug]/league/page.tsx');
     assert.match(page, /liveLeagueSeasons\(visibleSeasons\)/);
-    assert.match(page, /<div className=\{kit\.band\}>Running now<\/div>\s*<LeagueSeasonRows/);
+    // Club round (C3 + R4, 2026-11-05): no visible title; each part is a section under the shared heading row, with its count.
+    assert.match(page, /<PublicSectionHead id="league-running" title="Running now" count=\{running\.length\} \/>\s*<LeagueSeasonRows seasons=\{running\}/);
+    assert.match(page, /<PublicSectionHead id="league-past" title="Past seasons" count=\{past\.length\} \/>\s*<LeagueSeasonRows seasons=\{past\}/);
+    assert.match(page, /<h1 className=\{kit\.srOnly\}>House league<\/h1>/);
     assert.doesNotMatch(page, /\.find\(s => ACTIVE_STATUSES|Current season|Season active|Season complete/);
   });
   it('the season page: its header chip is the row’s tag, none when finished; the retired words are gone (9f·3, 9f·4)', () => {

@@ -1,32 +1,47 @@
 /* Every live house-league season on the public side, one row each (Club Tier Stage 9a, Part 5; Q14, frame E). The club
    site keeps its own look: these read the club palette (ClubFrame.module.css) only. */
 
-.list { display: flex; flex-direction: column; gap: 0.6rem; margin: 0; padding: 0; list-style: none; }
+/* One framed list of rows on hairlines (standard R5, club round 2026-11-05: they were a card each). The frame is the
+   club kit's list (ClubKit .list): white, a hairline, 8 px corners. */
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--club-line);
+  border-radius: 8px;
+  background: var(--club-card);
+  overflow: hidden;
+}
 
-/* A row is one door to the season page (its name stretches over the card); its own links sit above that door. */
+/* A row is one door to the season page (its name stretches over the row); its own links sit above that door — the links
+   line is a registered exception to the link row (Stage 9a frame E). */
 .row {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
-  padding: 0.75rem 1rem;
-  border: 1px solid var(--club-line);
-  border-radius: 8px;
-  background: var(--club-card);
+  gap: 2px;
+  padding: 8px 16px;
+  border-top: 1px solid var(--club-line);
 }
-.row:focus-within { border-color: var(--club-soft); }
-.top { display: flex; align-items: center; gap: 0.6rem; min-height: 44px; flex-wrap: wrap; }
+.row:first-child { border-top: 0; }
+.row:hover { background: var(--club-ground); }
+.top { display: flex; align-items: center; gap: 10px; min-height: 44px; flex-wrap: wrap; }
+/* The name is the link at the 44 px tap floor in its own right, as well as the door over the whole row. */
 .name {
   flex: 1 1 auto;
   min-width: 0;
-  font: 650 1rem/1.3 var(--club-text-face);
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font: 600 1rem/1.3 var(--club-text-face);
   color: var(--club-text);
   text-decoration: none;
+  overflow-wrap: anywhere;
 }
-/* The name's link covers the whole card: the row is its door. */
-.name::after { content: ''; position: absolute; inset: 0; border-radius: 8px; }
+/* The name's link covers the whole row: the row is its door. */
+.name::after { content: ''; position: absolute; inset: 0; }
 .name:focus-visible { outline: none; }
-.row:has(.name:focus-visible) { outline: 2px solid var(--club-text); outline-offset: 2px; }
+.row:has(.name:focus-visible) { outline: 2px solid var(--club-text); outline-offset: -2px; }
 .chevron { flex: none; color: var(--club-dim); }
 /* The early bird, one quiet line under the name: coloured, not a second pill (owner 2026-10-25). */
 .early { margin: 0; font: 600 0.875rem/1.4 var(--club-text-face); color: var(--club-ok); }
@@ -43,6 +58,3 @@
 }
 .linkPrimary { font-weight: 700; }
 
-@media (max-width: 640px) {
-  .top { flex-wrap: wrap; }
-}

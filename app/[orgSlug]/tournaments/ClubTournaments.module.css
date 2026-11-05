@@ -4,10 +4,6 @@
 
 /* The page column is the club page's (PublicPage frame="club"; club round C2 + C5): 960 on the logo edge, 24 between. */
 
-.title :global(h1) {
-  margin-bottom: 4px;
-}
-
 /* An archived tournament's champion, as the built Past tournaments page set it: the one figure in the text ink. */
 .champion {
   color: var(--club-text);

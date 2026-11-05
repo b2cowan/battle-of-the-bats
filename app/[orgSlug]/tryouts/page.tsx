@@ -92,7 +92,8 @@ export default async function ClubTryoutsPage({
     const last = await lastRead;
     return (
       <PublicPage frame="club">
-        <div className={styles.head}><h1 className={kit.title}>{tryoutsPageTitle(null)}</h1></div>
+        {/* C3: out of season the Tryouts tab is gone, so nothing else names the page — it keeps its name, at 24 (C4). */}
+        <div className={styles.head}><h1 className={kit.pageName}>{tryoutsPageTitle(null)}</h1></div>
         <ClubContactCard sentence={offSeasonSentence(last)} email={email} />
       </PublicPage>
     );
@@ -109,12 +110,15 @@ export default async function ClubTryoutsPage({
 
   return (
     <PublicPage frame="club">
-      <div className={styles.title}>
-        <h1 className={kit.title}>{tryoutsPageTitle(year)}</h1>
-        {sub && <p className={kit.sub}>{sub}</p>}
-      </div>
-
-      {menu.length > 0 && <BornInPill path={orgHref('/tryouts')} years={menu} picked={pick} />}
+      {/* C3: the lit Tryouts tab names the page, so no visible title; its season line sits under the Born in pill
+          (none when the teams recruit for two seasons, as before). */}
+      <h1 className={kit.srOnly}>{tryoutsPageTitle(year)}</h1>
+      {(menu.length > 0 || sub) && (
+        <div className={kit.toolLine}>
+          {menu.length > 0 && <BornInPill path={orgHref('/tryouts')} years={menu} picked={pick} />}
+          {sub && <p className={kit.sub}>{sub}</p>}
+        </div>
+      )}
 
       {kept.length > 0 && <div className={kit.list}>
         {bands.map((band, i) => (

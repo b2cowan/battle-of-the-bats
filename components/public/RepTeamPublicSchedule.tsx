@@ -12,6 +12,7 @@ import {
 import type { FamilyScheduleEntry, FamilyTeamView } from '@/lib/family-view';
 import TeamSubscribeButton from './TeamSubscribeButton';
 import { splitPublicSchedule, teamScheduleShows } from '@/lib/club-team-page';
+import PublicSectionHead from './PublicSectionHead';
 
 /**
  * The standing public team schedule (Chunk D 1.9).
@@ -80,10 +81,9 @@ export default function RepTeamPublicSchedule({ view, subscribe }: {
 
   return (
     <section className={kit.section} aria-labelledby="schedule">
-      <div className={styles.kickRow}>
-        <h2 id="schedule" className={kit.sectionTitle}>Schedule</h2>
-        {subscribe && <TeamSubscribeButton feedPath={subscribe.feedPath} calendarName={subscribe.calendarName} />}
-      </div>
+      {/* R4: the heading row; Subscribe keeps its right-hand slot (6d B3). */}
+      <PublicSectionHead id="schedule" title="Schedule"
+        action={subscribe && <TeamSubscribeButton feedPath={subscribe.feedPath} calendarName={subscribe.calendarName} />} />
       <div className={kit.list}>
         {upcoming.length === 0 ? earlier.map(e => <Row key={e.id} entry={e} />) : earlier.length > 0 && (
           <details className={styles.fold}>

@@ -1,4 +1,5 @@
 import { forwardToOwnAddress } from '@/lib/club-forward';
+import { Fragment } from 'react';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { ExternalLink } from 'lucide-react';
@@ -10,8 +11,10 @@ import ClubAboutContacts from '@/components/public/ClubAboutContacts';
 import { ClubSponsorList } from '@/components/public/ClubSponsors';
 import ClubContactLine from '@/components/public/ClubContactLine';
 import kit from '@/components/public/ClubKit.module.css';
+import parts from '@/components/public/PublicParts.module.css';
 import PublicPage from '@/components/public/PublicPage';
 import styles from '@/components/public/ClubAbout.module.css';
+import PublicSectionHead from '@/components/public/PublicSectionHead';
 
 export const dynamic = 'force-dynamic';
 
@@ -53,34 +56,35 @@ export default async function ClubAboutPage({ params }: { params: Promise<{ orgS
   // to 720 inside their box (kit.cardText).
   return (
     <PublicPage frame="club">
-      <div className={styles.head}>
-        <h1 className={kit.title}>About the club</h1>
-      </div>
+      {/* About has no tab, so it keeps its name, at 24 (C4). */}
+      <h1 className={kit.pageName}>About the club</h1>
 
       {about && <div className={kit.list}><p className={`${kit.cardText} ${styles.about}`}>{about}</p></div>}
 
       {contacts.length > 0 && (
         <section className={kit.section} aria-labelledby="who-to-contact">
-          <h2 id="who-to-contact" className={kit.sectionTitle}>Who to contact</h2>
+          <PublicSectionHead id="who-to-contact" title="Who to contact" />
           <ClubAboutContacts contacts={contacts} />
         </section>
       )}
 
       {bands.length > 0 && (
         <section className={kit.section} aria-labelledby="documents">
-          <h2 id="documents" className={kit.sectionTitle}>Documents and policies</h2>
+          <PublicSectionHead id="documents" title="Documents and policies" />
           <div className={kit.list}>
+            {/* R7: each document is a link row (60 tall, 16/600) under its band, the open-in-a-new-tab symbol where the
+                chevron would be. */}
             {bands.map(band => (
-              <div key={band.heading}>
+              <Fragment key={band.heading}>
                 <div className={kit.listBand}>{band.heading}</div>
                 {band.documents.map(d => (
-                  <a key={d.id} href={d.url} target="_blank" rel="noopener noreferrer" className={styles.doc}>
-                    <span className={styles.docTitle}>{d.title}</span>
+                  <a key={d.id} href={d.url} target="_blank" rel="noopener noreferrer" className={`${kit.row} ${kit.rowExternal}`}>
+                    <span className={kit.rowMain}><span className={kit.rowName}>{d.title}</span></span>
                     <ExternalLink size={16} aria-hidden />
                     <span className={kit.srOnly}> (opens in a new tab)</span>
                   </a>
                 ))}
-              </div>
+              </Fragment>
             ))}
           </div>
         </section>
@@ -88,12 +92,12 @@ export default async function ClubAboutPage({ params }: { params: Promise<{ orgS
 
       {questions.length > 0 && (
         <section className={kit.section} aria-labelledby="questions">
-          <h2 id="questions" className={kit.sectionTitle}>Questions families ask</h2>
+          <PublicSectionHead id="questions" title="Questions families ask" />
           <div className={kit.list}>
             {questions.map(q => (
               <div key={q.id} className={styles.qa}>
                 <h3 className={styles.question}>{q.question}</h3>
-                <p className={styles.answer}>{q.answer}</p>
+                <p className={`${styles.answer} ${parts.prose}`}>{q.answer}</p>
               </div>
             ))}
           </div>

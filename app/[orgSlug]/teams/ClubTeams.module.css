@@ -5,10 +5,6 @@
 
 /* The page column is the club page's (PublicPage frame="club"; club round C2 + C5): 960 on the logo edge, 24 between. */
 
-.title :global(h1) {
-  margin-bottom: 4px;
-}
-
 .desk {
   display: none;
 }
