@@ -138,7 +138,7 @@ the recovered fees; Stage 5 then finds it done. The build session finds the
 online-payments setup step, presents the PM summary, and brings back as an ASK (not ruled): what a club already connected
 without an address sees. **Build prompt written 2026-11-05: [GST_HST_STAGE2_PART2B_BUILD_PROMPT.md](GST_HST_STAGE2_PART2B_BUILD_PROMPT.md).**
 
-**Part 3 BUILT 2026-11-05, NOT committed yet** (owner asked to resume Part 3 ahead of Part 2b; they do not depend on each other, Part 2b
+**Part 3 BUILT 2026-11-05, committed `12e27e094` 2026-11-05 (after /review high, fixes in the same commit), not pushed** (owner asked to resume Part 3 ahead of Part 2b; they do not depend on each other, Part 2b
 is still owed). Typecheck clean (`tsc` needed `NODE_OPTIONS=--max-old-space-size=8192`: the default heap ran out at 4 GB). ESLint 0
 errors, 2 new `set-state-in-effect` warnings in `PlanMoveDialog` (the render-phase form lint prefers is not run by the real-window
 test harness in `plan-billing-actions.test.ts`; the pattern has 7 other warnings in billing/lib). Spelling gate clean.
