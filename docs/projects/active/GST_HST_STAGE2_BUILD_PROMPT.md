@@ -193,7 +193,7 @@ test harness in `plan-billing-actions.test.ts`; the pattern has 7 other warnings
   line (figures + footer) is the drawing's (tab 3 frame 2).
 - **Part 2b's one ask RULED 2026-11-05: A** (a quiet line on an already-connected club's Payouts card), recorded in its prompt.
 
-**Part 4 BUILT 2026-11-05** ([GST_HST_STAGE2_PART4_BUILD_PROMPT.md](GST_HST_STAGE2_PART4_BUILD_PROMPT.md); words only, no figures, no
+**Part 4 BUILT and COMMITTED `2cbfac7f6` 2026-11-05** ([GST_HST_STAGE2_PART4_BUILD_PROMPT.md](GST_HST_STAGE2_PART4_BUILD_PROMPT.md); words only, no figures, no
 Stripe calls). Typecheck clean; ESLint 0 errors on the 15 files; spelling gate clean; `npm test` 14334: 14326 pass / 8 fail, none in a
 file this part touched (practice-plan phone N1, `plan-billing-usage` free-time, Stage 6 public walk ×3, `series-date-groups`,
 support-console foot, and `possessive-guard` on another session's new `lib/child-page-words.ts`). `check:css-selectors` reports 4
