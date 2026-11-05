@@ -336,6 +336,12 @@ Ordered so the ones that decide the others come first.
 - [ ] "Changed since it was checked" — B4
 - [ ] "Still outstanding from your last check" — B10
 - [ ] "Add a bank fee or interest" / "Find by amount" / "Finish later" — B5
+- **As built for the club desk (R2c, 2026-11-05):** every string the Bank tab shows lives in `lib/bank-tab-words.ts`
+  (one home; its keys follow the screens C1–C5, C10), the refusals in `lib/bank-check-words.ts`. The drafts above are used
+  as written; added by the build: "Save and check a statement", "Start checking", "Add and tick", "Add and set it up",
+  "Name and books", "Keep it checked" / "Undo the check", "Ticked now", "Look again", "Mark checked again", "Not from
+  FieldLogicHQ", "Dispute held", "Add it as payment processing", "Left out automatically", "Put it back". R3's `/marketing`
+  pass settles them all.
 - [ ] Help search words must carry **reconcile / reconciliation** even if the screens say "check", because that is what
   a treasurer types.
 - [ ] **Collision:** the coach Budget vs. Actual export header "RECONCILIATION — SPENDING TO CASH" and the Budget panel's
@@ -501,7 +507,8 @@ Every stage: migration first where there is one, then the `DATA_DICTIONARY.md` u
 ### R2 — Club: the Bank tab (desk + phone) (prompt `BANK_RECONCILIATION_R2_BUILD_PROMPT.md`, written 2026-11-04; four one-session chunks: R2a reader + P4 club-pays, R2b routes + atomic functions, R2c the tab on desk, R2d phone + close)
 - [x] Routes under `app/api/admin/accounting/bank/**` via `resolveClubMoney({write})`; lines from posted club-book
   entries (`isClubBook`) in the account's books, minus same-account transfer pairs, void and pending. *(R2b, 2026-11-04.)*
-- [ ] `accountingTabs` gains "Bank" (B8); page `app/[orgSlug]/admin/accounting/bank/page.tsx`; C1–C5, C10.
+- [ ] `accountingTabs` gains "Bank" (B8); page `app/[orgSlug]/admin/accounting/bank/page.tsx`; C1–C5, C10. *(Desk built
+  in R2c 2026-11-05; the phone is R2d.)*
 - [ ] The grouped Stripe payout reuses `lib/online-payouts.ts` (no second Stripe reader). *(Reader half done in R2a:
   `readPayouts({ withEntries })`; the screen is R2c.)*
 
@@ -816,6 +823,89 @@ Every stage: migration first where there is one, then the `DATA_DICTIONARY.md` u
 >   guards); a boolean "line left this account" helper to fold the `entry:` prefix guard the two club wrappers repeat
 >   (worth it when R4 adds the coach wrapper, not before); a set-based tick check (a few ms on a 300-line payout); the
 >   header's function list (439 and 440 carry the same).
+
+> **R2c — the Bank tab, desk ✅ built 2026-11-05** (screens only, against R2b's routes as they are; no server file touched;
+> /simplify + /review (high) done 2026-11-05, last bullet):
+> - **The tab:** `accountingTabs` gains **Bank** right after Ledger (B8), for everyone who can open Accounting, always (no
+>   flag, unlike Payouts); the page `app/[orgSlug]/admin/accounting/bank/page.tsx` adds no gate (the layout's, as the Ledger
+>   tab); **the frame forces no Year pill** (checked: the pill is each tab's own), so none here, and no year anywhere.
+>   `admin-kit-nav.test.ts` pins the new row; the hub's Accounting line names Bank by itself (it reads the list).
+> - **Screens** (`components/admin/kit/club/money/bank/`): `BankTab` (which state shows), `BankSetup` (C1, and a second
+>   account's setup), `BankCheck` (C2, C3, C5's Look again; a payout as one grouped row with its gap by reason),
+>   `BankStatements` (C4, C5's list), `BankWindows` (Check a statement + correcting an open one, the bank fee and its
+>   closed-year variant, Undo's reason, Add an account / Name and books). Types are the routes' own return types; every
+>   figure is the server's answer; ticks go one write at a time so each answer holds every earlier tick.
+> - **⚖ Where the build went past the drawing, said here (none reopens a ruling):**
+>   1. **When the C3 callout and the amber appear.** The drawing says "once the treasurer has stopped ticking", but C3 itself
+>      shows a line still outstanding. Built rule: the Difference isn't $0.00 **and no unticked line would bring it
+>      closer** (matches both C2, no callout, and C3, callout). A screen decision from the server's figures, not a figure.
+>   2. **"Didn't go through the bank" shows on every unticked line, not only cash / no-method ones** (Ask 6): the routes
+>      do not carry a line's payment method. **Follow-up for the server (R3 or a small step): add the method to the tick
+>      list's lines**, then narrow the button. Until then a treasurer can keep a cheque out by mistake ("Put it back" undoes it).
+>   3. **C1's books list shows no balances** (the overview carries none) and, for the FIRST account, is a list, not
+>      checkboxes: every club book in no account belongs to the first one (rule 1), so unticking would put it nowhere.
+>   4. **C1's picker keeps Ask 3's 30 days on the screen**: the route reads every line on or before the day; the screen
+>      shows the ones in the 30 days before and stops paging there.
+>   5. **"Add an account" with one account** is a quiet link beside the list (the pill, where it is drawn, only exists from
+>      a second account). **Moving a book** is the books list in "Name and books" (and in Add an account), as drawn: there
+>      is no Move window; a book leaves an account by being ticked in the one it should be in.
+>   6. **The closed-year fee window** says "{day} is in a closed fiscal year" (the view carries no year name) and holds
+>      Add and tick until the date moves; "Use {today}" moves it.
+>   7. **The Report link** (C4) is R3's (C9); "Open the line" in Look again opens the Ledger (no line address exists).
+> - **Words:** every customer-visible string is in **`lib/bank-tab-words.ts`** (the screens' own; R2b's refusal sentences stay
+>   in `lib/bank-check-words.ts`, read, not restated). Recorded under §5 below by pointer, not by copy (one home).
+> - **Tests:** `tests/unit/bank-r2c-screens-guard.test.ts` (12: the tab's place, no gate, no year; intent-only writes and the
+>   route's own types; no sum on the screen; every write control behind `canMove`; LoadingState labels, tokens, type ladder,
+>   the symbol-only remove with its label and 44px phone floor). `admin-kit-nav`, `club-accounting-teams-guard`,
+>   `online-payouts-list`, `notification-open-in-place-guard`, loading-state, table-recipe, phone-secondary-actions,
+>   one-definition and type-scale guards green (310/310). Layout: `admin-accounting-bank` added to `scripts/layout-screens.mjs`.
+> - **⚖ One engine change, with a test (said, as the prompt allows):** a typed opening line (or any line the book no
+>   longer reads) lost its words once ticked — its mark carries figures only, and the mark wins the line's place — so
+>   "Cheque #188" read "a line". `evaluateCheck` now gives a mark-sourced line its words from the list that placed it
+>   (opening items, carried, the last check's saved list). Figures and the sum are untouched. `bank-check.test.ts` +1.
+> - **Dev proof** (`.probe/bank-r2c/walk.mjs`, not committed; as `uat-rep-club`'s treasurer at 1440, every row it made
+>   deleted; it refuses to start while another session's account is on the club): C1 empty and filled (8 lines in the 30
+>   days, a picked line, a typed line) → Save opens Check a statement → C2 open, three ticks from the screen saved → a
+>   payout opened with its gap by reason → C3 at $12.40 off (callout, Find by amount, the fee window) → Add and tick →
+>   $0.00 → Mark checked → C4 "checked through" → Undo with a reason → the list after an undo (who, when, why) → C5 with a
+>   stamped change → Look again → C10 Add an account moving a book → the second account's setup card → the Account pill
+>   → a statement in the closed 2025–26 year → the closed-year fee window offers today. **`BANK_R2C_WALK_PASSED`**, no
+>   page errors. `check:layout --only=admin-accounting-bank,admin-accounting,admin-accounting-ledger --width=1440`: no new
+>   findings (`--changed` swept 348 screens because other sessions' shared files are in the tree, which the dev server
+>   does not take; the Bank screen measured in its first-visit state).
+> - **⚠ FOUND, server side (R2b-3 owns those files; reported, not fixed):** **a ticked Stripe payout drops out of its own
+>   statement once that statement is checked.** The reader asks Stripe only from the last CHECKED statement's end, and a
+>   payout's tick is not a line the engine can read alone, so the checked Oct 31 statement on dev read **$193.25 off**
+>   with the payout gone (probe: `difference=19325 payoutTicked=false`). On screen that is the C5 band ("Ticked now")
+>   and, worse, **"Mark checked again" can never reach $0.00** on a statement holding a payout. Needs: the payouts a
+>   checked statement's marks name read (or the payout mark carry its amount and members) — an R2b-3 follow-up before
+>   R3 stamps changes for real.
+> - **Checks:** typecheck and focused lint clean; `npm test` 14,201/14,209 at first run, the one Bank failure (the
+>   possessive guard on "{account}'s checks") fixed with the shared `possessive`; the 7 left are the known ones elsewhere
+>   (coach-practice-plans-phone-guard, plan-billing-usage ×2, public-tournament-stage6-walk ×3, series-date-groups,
+>   support-console-stage3-guard ×2 — reported, not fixed). Spelling, contrast, dates, dictionary, org context,
+>   observability, demos, public tokens (one `#188` placeholder read as a hex, reworded) clean for the Bank files; the
+>   known react-hooks plugin message in `verify:changed`; old-look, admin-type, org-slug, CSS selectors and export
+>   catalog fail on other sessions' files only.
+> - **/simplify + /review (high) done 2026-11-05** (R2c's files only; walk re-run after the fixes, `BANK_R2C_WALK_PASSED`).
+>   *Simplify:* the screens' own plural helper, a money-field copy, three "a line" fallbacks and a clock built by hand now
+>   use the shared ones; the screens' last six inline sentences moved into `lib/bank-tab-words.ts` (same words, no new
+>   wording); the Bank tab no longer reads an account twice after a write or on landing with a statement open.
+>   *Review fixes:* the screen only draws a statement once it holds that statement (a late answer could leave one
+>   statement's ticks under another's click); Mark checked now blocks ticks queued behind it (a refused late tick buried
+>   the green "marked" notice in a red one) and waits for a keep-out in flight; an edit of an account that saved part of what
+>   was asked and then refused keeps the window open on the refusal (it closed on a green "Saved"); an Undo refused because
+>   the statement changed now says so and reads the account again (it closed silently); a refresh of the overview after a save
+>   that fails no longer turns the working screen into a load failure; a picked starting line that moves out of the 30-day
+>   window is dropped (it could not be unticked and was still sent); a typed line's label precedence in `evaluateCheck` now
+>   matches the order the lines are placed in. *Left as findings (none made worse by R2c):* tick-all sends one write per line
+>   (a bulk route would be R3 or later); Add an account / Start checking are two or three writes in a row (the server could
+>   take the name in the setup step and the books in the rename); the view/edit gates `canMove &&` could be folded into the
+>   server's own `can` flags; `isStuck` only sees one line at a time (two lines that together close the gap read as
+>   stuck); a typed amount "12,50" reads as $1,250.00; the in-app help (`lib/help-content/accounting.tsx`) does not name Bank
+>   yet (`/docs`); the layout sweep covers only the treasurer, not a read-only member; a write's answer and a refused-write
+>   re-read are not ordered against each other across an account switch (narrow). One page error on the walk right after the
+>   dev server was restarted (`No link element found for chunk …css`) is a hot-reload artifact of the restart.
 
 ### R3 — Club: the touchpoints
 - [ ] Matched-line warning on the club entry edit/void routes and windows (C6); changed-since stamp.

@@ -1636,6 +1636,9 @@ export const SCREENS = [
     path: (c) => `/${c.clubSlug}/admin/accounting/ledger?payees=1`, scope: '[data-kit-dialog]' },
   { id: 'admin-accounting-payee-report', area: 'accounting', session: 'repClubOwner', ready: '[data-kit-dialog][data-record]',
     path: (c) => `/${c.clubSlug}/admin/accounting/ledger?payee=${c.clubSharedPayeeId}`, scope: '[data-kit-dialog]' },
+  // Bank reconciliation R2c: the Bank tab, right after the Ledger (B8), as the treasurer — the role it is for. What it
+  // draws is the club's state: the setup card (C1) on a club that never set up, else the open statement or the list.
+  { id: 'admin-accounting-bank',       area: 'accounting', session: 'repClubTreasurer', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/bank` },
   { id: 'admin-accounting-allocations', area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/allocations` },
   { id: 'admin-accounting-coming-due', area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/allocations?view=coming-due` },
   // Stage 3d: an allocation is a WINDOW over Allocations (its page retired; `?allocation=` is its address) — the

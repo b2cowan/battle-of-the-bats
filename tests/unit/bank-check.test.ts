@@ -191,6 +191,21 @@ describe('the first check’s “still outstanding then” (Ask 3)', () => {
     assert.deepEqual(ev.outstanding.map(r => [r.key, r.kind === 'line' ? r.origin : '']),
       [['typed:t1', 'opening'], ['entry:cheque-201', 'book'], ['entry:sep-1', 'book']]);
   });
+
+  it('a typed line keeps its words once ticked (its mark carries figures only — R2c found it reading "a line")', () => {
+    const typed = { key: 'typed:t1', date: '2026-07-15', direction: 'out' as const, amountCents: 7500 };
+    const s: BankAccountState = {
+      setup: { openingDate: '2026-08-31', openingBalanceCents: 540210 },
+      lines: [],
+      openingItems: [{ kind: 'typed', ...typed, label: 'Cheque #188' }],
+      checks: [check('sep', '2026-09-30', 532710)],
+      marks: [tick(typed, 'sep')],
+    };
+    const ev = evaluateCheck(s, 'sep');
+    assert.equal(ev.ticked.length, 1);
+    assert.equal(ev.ticked[0].label, 'Cheque #188');
+    assert.equal(ev.differenceCents, 0, 'the words change nothing in the sum');
+  });
 });
 
 describe('the fiscal year (B4, Ask 8): nothing here is keyed to a year', () => {

@@ -190,8 +190,10 @@ describe('the admin kit nav — where you are', () => {
     // The tabs: the loop's three only where the club runs rep teams — Budget SECOND, Teams THIRD (one row shape with the
     // coach's Money tabs, owner 2026-10-18).
     assert.deepEqual(accountingTabs(BASE, { runsRepTeams: true }).map(t => t.label),
-      ['Overview', 'Budget', 'Teams', 'Ledger', 'Allocations', 'Payment requests', 'Budget vs. Actual']);
-    assert.deepEqual(accountingTabs(BASE, { runsRepTeams: false }).map(t => t.id), ['overview', 'budget', 'ledger', 'budget-vs-actual']);
+      ['Overview', 'Budget', 'Teams', 'Ledger', 'Bank', 'Allocations', 'Payment requests', 'Budget vs. Actual']);
+    assert.deepEqual(accountingTabs(BASE, { runsRepTeams: false }).map(t => t.id), ['overview', 'budget', 'ledger', 'bank', 'budget-vs-actual']);
+    // ⚖ Bank right after the Ledger, for everyone, always (Bank reconciliation B8) — never behind a flag like Payouts.
+    assert.equal(accountingTabFor(`${BASE}/accounting/bank`, BASE, { runsRepTeams: false }), 'bank');
     // A tab lights on its own address; a page one level down is no tab (back arrow, no tab row).
     const REP = { runsRepTeams: true };
     assert.equal(accountingTabFor(`${BASE}/accounting`, BASE, REP), 'overview');

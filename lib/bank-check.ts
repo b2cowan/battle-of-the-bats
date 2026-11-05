@@ -278,13 +278,20 @@ export function evaluateCheck(state: BankAccountState, checkId: string): CheckEv
     cands.set(line.key, { line, origin });
   };
   const fromSaved = (s: SavedLine): BankLine => ({ ...s, status: 'posted' });
+  const lastChecked = lastCheck(state, { before: endDate, checkedOnly: true });
+  /* A mark carries the line's figures, not its words: a ticked line the book no longer reads (a typed opening item, a
+     saved or carried line) takes its words from the list that placed it, so ticking it never renames it (R2c). */
+  const savedLabel = new Map<string, string>();
+  for (const s of [...(lastChecked?.outstandingSnapshot ?? []), ...(state.carried ?? []), ...(state.openingItems ?? [])]) {
+    if (s.label && !savedLabel.has(s.key)) savedLabel.set(s.key, s.label);
+  }
   for (const l of live.values()) put(l, 'book');
   for (const m of state.marks) {
     if (isPayoutKey(m.key)) continue;
+    const label = savedLabel.get(m.key);
     put({ key: m.key, date: m.date, direction: m.direction, amountCents: m.amountCents, status: 'posted',
-      payoutKey: m.payoutKey ?? null }, 'mark');
+      payoutKey: m.payoutKey ?? null, ...(label ? { label } : {}) }, 'mark');
   }
-  const lastChecked = lastCheck(state, { before: endDate, checkedOnly: true });
   for (const s of lastChecked?.outstandingSnapshot ?? []) put(fromSaved(s), 'saved');
   for (const s of state.carried ?? []) put(fromSaved(s), 'carried');
   /* Keys a list has PLACED on this account (the last check's outstanding list, the carried list, the first check's

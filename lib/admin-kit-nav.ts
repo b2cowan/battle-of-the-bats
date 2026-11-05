@@ -120,7 +120,7 @@ function programDef(key: AdminProgramKey, base: string): Omit<KitProgram, 'key'>
     }
     case 'accounting': {
       // ⚖ ONE ROW THAT NEVER OPENS (Club Tier Stage 3a, Ask 2 option B, owner 2026-09-30). Accounting is
-      // one page with tabs — Overview · Budget · Teams · Ledger · Allocations · Payment requests · Budget vs.
+      // one page with tabs — Overview · Budget · Teams · Ledger · Bank · Allocations · Payment requests · Budget vs.
       // Actual — so the rail lists no pages under it (and the phone's "In Accounting" row has nothing to
       // name): the tab row on the page is how a treasurer moves between them. The tabs' own list is
       // `accountingTabs` below; the rail row carries the waiting count while you are inside it too.
@@ -355,7 +355,7 @@ export function tournamentBarKeys(phase: TournamentPhase): readonly string[] {
  * Teams Ask 1, 2026-10-16) — one step further along, not to the back. The coach row's order is the
  * one that did not move.
  */
-export type AccountingTabId = 'overview' | 'teams' | 'ledger' | 'allocations' | 'payment-requests' | 'budget' | 'budget-vs-actual' | 'payouts';
+export type AccountingTabId = 'overview' | 'teams' | 'ledger' | 'bank' | 'allocations' | 'payment-requests' | 'budget' | 'budget-vs-actual' | 'payouts';
 
 /** `hasPayouts`: the club has connected payouts at some time (Club Tier 12d-2, words §3.1 and §7 question 6: the Payouts
  *  tab is hidden for a club that never connected). Optional: a reader that doesn't know never names the tab. */
@@ -372,6 +372,9 @@ export function accountingTabs(base: string, opts: AccountingTabOpts): Accountin
     { id: 'budget' as const, label: 'Budget', href: `${a}/budget` },
     ...(opts.runsRepTeams ? [{ id: 'teams' as const, label: 'Teams', href: `${a}/teams`, views: true as const }] : []),
     { id: 'ledger' as const, label: 'Ledger', href: `${a}/ledger` },
+    // ⚖ BANK RIGHT AFTER THE LEDGER (Bank reconciliation B8, ruled 2026-11-04): the statement is checked against the book,
+    // so the two sit together. For everyone who reads Accounting, ALWAYS — unlike Payouts it is where a club starts.
+    { id: 'bank' as const, label: 'Bank', href: `${a}/bank` },
     ...(opts.runsRepTeams ? [
       { id: 'allocations' as const, label: 'Allocations', href: `${a}/allocations` },
       { id: 'payment-requests' as const, label: 'Payment requests', href: `${a}/payment-requests` },

@@ -1,0 +1,247 @@
+/*
+ * THE BANK TAB (Bank reconciliation R2c — Accounting › Bank, desk 1440; drawings C1–C5, C10). Tokens only, the
+ * `--type-*` ladder only. The shared parts (the joined band, KitDialog, the kit's table, chips, callouts, the search
+ * field, the lead pill) are the product's own; this sheet lays the tab out and draws only what they don't.
+ */
+
+/* ── the top line: who is being checked, and the one lime ── */
+.top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  margin: 0 0 1rem;
+}
+.topLeft { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+.topEyebrow {
+  font-size: var(--type-label);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase; /* type-ok: eyebrow */
+  color: var(--text-tertiary);
+}
+.topTitle { display: flex; align-items: baseline; gap: 0.6rem; font-size: var(--type-heading); font-weight: 700; color: var(--text-primary); }
+.topRight { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; margin-left: auto; }
+.topHint { font-size: var(--type-support); color: var(--text-tertiary); }
+.statusLine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.6rem;
+  font-size: var(--type-body);
+  color: var(--text-secondary);
+  min-width: 0;
+}
+.statusLine b { color: var(--text-primary); font-weight: 600; }
+
+/* A text button: underlined, olive — "Edit", "Show", "Hide", "Add one the books don't have". */
+.link {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-size: var(--type-support);
+  color: var(--home-olive);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.link:hover { color: var(--text-primary); }
+.link:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; border-radius: 2px; }
+.linkWarn { color: var(--badge-warning-ink); }
+
+/* ── the strip between the band and the list ── */
+.strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin: 1rem 0 0.75rem;
+}
+.stripNotes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.5rem;
+  margin-left: auto;
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
+}
+.dot { color: var(--text-tertiary); }
+
+/* ── the tick list (the kit's table; these are its rows' own looks) ── */
+.tick { width: 2.75rem; }
+.tick input { width: 16px; height: 16px; margin: 0; accent-color: var(--home-olive); cursor: pointer; vertical-align: middle; }
+.tickedMark { color: var(--home-olive); vertical-align: middle; }
+.rowTicks { cursor: pointer; }
+.rowTicks:hover > td { background: var(--home-olive-soft); }
+.rowTicked > td { background: rgba(var(--home-olive-rgb), 0.05); }
+.balanceRow > td { font-weight: 600; color: var(--text-primary); }
+.why { font-weight: 400; color: var(--text-tertiary); }
+.whatName { color: var(--text-primary); }
+.whatDim { color: var(--text-tertiary); }
+.moneyIn,
+tr > td.moneyIn { color: var(--success-light); }
+tr > td.dateCell,
+tr > td.nowrap { white-space: nowrap; }
+.actionCell { width: 13rem; text-align: right; white-space: nowrap; }
+/* "Didn't go through the bank" shows on the row under the pointer or with focus (Ask 6). */
+.rowAction { opacity: 0; }
+tr:hover .rowAction,
+tr:focus-within .rowAction,
+.rowAction:focus-visible { opacity: 1; }
+.chev { display: inline-flex; vertical-align: middle; color: var(--text-tertiary); margin-left: 0.25rem; }
+.opener {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+.opener:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; border-radius: 2px; }
+.subRow > td { font-size: var(--type-support); color: var(--text-secondary); background: var(--home-card); }
+.subWhat { padding-left: 1.6rem !important; }
+.subTotal > td { font-size: var(--type-support); font-weight: 600; color: var(--text-primary); }
+.okMark { color: var(--success-light); margin-left: 0.35rem; }
+.gapRow > td { background: rgba(var(--warning-rgb), 0.07); color: var(--badge-warning-ink); font-size: var(--type-support); }
+.gapReasons { display: flex; flex-direction: column; gap: 0.2rem; }
+.gapReason { color: var(--text-secondary); }
+.empty { padding: 1.5rem 0 !important; text-align: center; color: var(--text-tertiary); }
+.listHint { margin: 0.6rem 0 0; }
+
+/* ── the two quiet shelves under the list: kept out, left out automatically ── */
+.shelf {
+  max-width: 760px;
+  margin: 1rem 0 0;
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+  background: var(--home-card);
+}
+.shelfHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.6rem 0.9rem;
+  border-bottom: 1px solid var(--home-line);
+  font-size: var(--type-body);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.shelfList { list-style: none; margin: 0; padding: 0; }
+.shelfRow {
+  display: grid;
+  grid-template-columns: 4.5rem minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.9rem;
+  font-size: var(--type-support);
+  border-top: 1px solid var(--home-line);
+}
+.shelfRow:first-child { border-top: 0; }
+.shelfAmount { font-variant-numeric: tabular-nums; text-align: right; }
+
+/* ── C1 · the setup card ── */
+.card {
+  max-width: 760px;
+  padding: 1.25rem 1.4rem 1.4rem;
+  border: 1px solid var(--home-line);
+  border-radius: 10px;
+  background: var(--home-card);
+}
+.cardTitle { margin: 0 0 0.35rem; font-size: var(--type-heading); font-weight: 700; color: var(--text-primary); }
+.cardLead { margin: 0 0 1.1rem; font-size: var(--type-body); color: var(--text-secondary); line-height: 1.5; }
+.narrow { max-width: 360px; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 0 1rem; max-width: 520px; }
+.fieldGroup { margin: 0 0 1.1rem; }
+.groupLabel { display: block; margin: 0 0 0.4rem; }
+.bookList { list-style: none; margin: 0 0 0.4rem; padding: 0; border: 1px solid var(--home-line); border-radius: 8px; }
+.bookRow {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-height: 2.5rem;
+  padding: 0.35rem 0.75rem;
+  border-top: 1px solid var(--home-line);
+  font-size: var(--type-body);
+}
+.bookRow:first-child { border-top: 0; }
+.bookRow input { width: 16px; height: 16px; margin: 0; accent-color: var(--home-olive); }
+.bookName { font-weight: 600; color: var(--text-primary); }
+.bookWhere { margin-left: auto; font-size: var(--type-support); color: var(--text-tertiary); }
+.bookMoves { margin-left: auto; font-size: var(--type-support); color: var(--badge-warning-ink); }
+.pickFind { margin: 0 0 0.5rem; }
+.removeTyped {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+}
+.removeTyped:hover { background: var(--home-olive-soft); color: var(--text-primary); }
+.removeTyped:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 1px; }
+.typedForm {
+  display: grid;
+  grid-template-columns: 9.5rem 8rem 8rem minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 0 0.75rem;
+  margin: 0.5rem 0 0;
+  padding: 0.75rem;
+  border: 1px dashed var(--home-line);
+  border-radius: 8px;
+}
+.typedForm > * { margin-bottom: 0; }
+.fieldAfter { margin: -0.6rem 0 0.9rem; }
+.typedError { grid-column: 1 / -1; margin: 0.5rem 0 0; }
+.cardFoot { display: flex; justify-content: flex-end; gap: 0.5rem; margin: 1.25rem 0 0; }
+
+/* ── windows ── */
+.windowLead { margin: 0 0 0.9rem; font-size: var(--type-body); color: var(--text-secondary); line-height: 1.5; }
+.windowLead b { color: var(--text-primary); }
+.closedNote {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin: 0 0 0.9rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid rgba(var(--warning-rgb), 0.35);
+  border-radius: 8px;
+  background: rgba(var(--warning-rgb), 0.07);
+  font-size: var(--type-support);
+  color: var(--text-primary);
+  line-height: 1.45;
+}
+.closedNote p { margin: 0; flex: 1 1 18rem; }
+.kindSwitch { margin: 0 0 0.9rem; }
+
+/* ── C4 · the statements ── */
+.endCell { font-weight: 600; color: var(--text-primary); white-space: nowrap; }
+.endCell :global(span) { margin-left: 0.5rem; }
+.rowOpens { cursor: pointer; }
+.rowOpens:hover > td { background: var(--home-olive-soft); }
+.actions { display: inline-flex; align-items: center; justify-content: flex-end; gap: 0.6rem; }
+.changeRow > td { background: rgba(var(--warning-rgb), 0.05); font-size: var(--type-support); }
+.changeLine { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem 1rem; padding-left: 1.5rem; }
+.changeNow { font-weight: 600; color: var(--text-primary); }
+.changeWho { color: var(--text-tertiary); }
+.undoneCell { color: var(--text-tertiary); }
+
+/* ── C5 · Look again ── */
+.againFoot { display: flex; justify-content: flex-end; gap: 0.5rem; margin: 1rem 0 0; }
+
+@media (max-width: 640px) {
+  .pair { grid-template-columns: 1fr; }
+  .typedForm { grid-template-columns: 1fr 1fr; }
+  .rowAction { opacity: 1; }
+  /* The one symbol-only action: the 44px tap floor on a phone (its `aria-label` names it). */
+  .removeTyped { width: 44px; height: 44px; }
+}
