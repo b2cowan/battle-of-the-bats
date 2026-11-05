@@ -73,14 +73,17 @@ export default function CoachWelcomeBanner({
         </div>
       </div>
 
-      {shareHref && (
+      {/* No share on a waitlist (owner 2026-11-03): nobody celebrates "we're on the waitlist", and it sends friends to an
+          event the team may not get into. A pending entry is "in for review", not "in", so the label no longer says
+          "We're in!" either. The permanent copy in "From the Organizer" still shares for either status. */}
+      {shareHref && !isWaitlist && (
         <div className={styles.shareRow}>
           <SharePageButton
             url={shareHref}
             club={shareHref.split('/')[1]}
             title={tournamentName ?? 'Tournament'}
-            text={`${teamName} is ${isWaitlist ? 'on the waitlist for' : 'registered for'} ${tournamentName ?? 'the tournament'}!`}
-            label="We're in! Share it"
+            text={`${teamName} is registered for ${tournamentName ?? 'the tournament'}!`}
+            label="Share the tournament"
             className={styles.shareBtn}
           />
         </div>
