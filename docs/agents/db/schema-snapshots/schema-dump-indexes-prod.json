@@ -110,6 +110,181 @@
     "indexdef": "CREATE UNIQUE INDEX assistant_invite_tokens_token_hash_uq ON public.assistant_invite_tokens USING btree (token_hash)"
   },
   {
+    "tablename": "bank_account_books",
+    "indexname": "bank_account_books_account_idx",
+    "indexdef": "CREATE INDEX bank_account_books_account_idx ON public.bank_account_books USING btree (bank_account_id)"
+  },
+  {
+    "tablename": "bank_account_books",
+    "indexname": "bank_account_books_moved_by_idx",
+    "indexdef": "CREATE INDEX bank_account_books_moved_by_idx ON public.bank_account_books USING btree (moved_by) WHERE (moved_by IS NOT NULL)"
+  },
+  {
+    "tablename": "bank_account_books",
+    "indexname": "bank_account_books_pkey",
+    "indexdef": "CREATE UNIQUE INDEX bank_account_books_pkey ON public.bank_account_books USING btree (ledger_id)"
+  },
+  {
+    "tablename": "bank_accounts",
+    "indexname": "bank_accounts_club_name",
+    "indexdef": "CREATE UNIQUE INDEX bank_accounts_club_name ON public.bank_accounts USING btree (org_id, lower(name)) WHERE ((owner_kind = 'club'::text) AND (archived_at IS NULL))"
+  },
+  {
+    "tablename": "bank_accounts",
+    "indexname": "bank_accounts_created_by_idx",
+    "indexdef": "CREATE INDEX bank_accounts_created_by_idx ON public.bank_accounts USING btree (created_by) WHERE (created_by IS NOT NULL)"
+  },
+  {
+    "tablename": "bank_accounts",
+    "indexname": "bank_accounts_one_per_team",
+    "indexdef": "CREATE UNIQUE INDEX bank_accounts_one_per_team ON public.bank_accounts USING btree (team_id) WHERE ((owner_kind = 'team'::text) AND (archived_at IS NULL))"
+  },
+  {
+    "tablename": "bank_accounts",
+    "indexname": "bank_accounts_org_idx",
+    "indexdef": "CREATE INDEX bank_accounts_org_idx ON public.bank_accounts USING btree (org_id, created_at)"
+  },
+  {
+    "tablename": "bank_accounts",
+    "indexname": "bank_accounts_pkey",
+    "indexdef": "CREATE UNIQUE INDEX bank_accounts_pkey ON public.bank_accounts USING btree (id)"
+  },
+  {
+    "tablename": "bank_accounts",
+    "indexname": "bank_accounts_set_up_by_idx",
+    "indexdef": "CREATE INDEX bank_accounts_set_up_by_idx ON public.bank_accounts USING btree (set_up_by) WHERE (set_up_by IS NOT NULL)"
+  },
+  {
+    "tablename": "bank_check_added_lines",
+    "indexname": "bank_check_added_lines_by_idx",
+    "indexdef": "CREATE INDEX bank_check_added_lines_by_idx ON public.bank_check_added_lines USING btree (added_by) WHERE (added_by IS NOT NULL)"
+  },
+  {
+    "tablename": "bank_check_added_lines",
+    "indexname": "bank_check_added_lines_once",
+    "indexdef": "CREATE UNIQUE INDEX bank_check_added_lines_once ON public.bank_check_added_lines USING btree (check_id, line_key)"
+  },
+  {
+    "tablename": "bank_check_added_lines",
+    "indexname": "bank_check_added_lines_pkey",
+    "indexdef": "CREATE UNIQUE INDEX bank_check_added_lines_pkey ON public.bank_check_added_lines USING btree (id)"
+  },
+  {
+    "tablename": "bank_check_changes",
+    "indexname": "bank_check_changes_changed_by_idx",
+    "indexdef": "CREATE INDEX bank_check_changes_changed_by_idx ON public.bank_check_changes USING btree (changed_by) WHERE (changed_by IS NOT NULL)"
+  },
+  {
+    "tablename": "bank_check_changes",
+    "indexname": "bank_check_changes_check_idx",
+    "indexdef": "CREATE INDEX bank_check_changes_check_idx ON public.bank_check_changes USING btree (check_id, changed_at)"
+  },
+  {
+    "tablename": "bank_check_changes",
+    "indexname": "bank_check_changes_cleared_by_idx",
+    "indexdef": "CREATE INDEX bank_check_changes_cleared_by_idx ON public.bank_check_changes USING btree (cleared_by) WHERE (cleared_by IS NOT NULL)"
+  },
+  {
+    "tablename": "bank_check_changes",
+    "indexname": "bank_check_changes_open_idx",
+    "indexdef": "CREATE INDEX bank_check_changes_open_idx ON public.bank_check_changes USING btree (check_id) WHERE (cleared_at IS NULL)"
+  },
+  {
+    "tablename": "bank_check_changes",
+    "indexname": "bank_check_changes_pkey",
+    "indexdef": "CREATE UNIQUE INDEX bank_check_changes_pkey ON public.bank_check_changes USING btree (id)"
+  },
+  {
+    "tablename": "bank_check_events",
+    "indexname": "bank_check_events_by_idx",
+    "indexdef": "CREATE INDEX bank_check_events_by_idx ON public.bank_check_events USING btree (by_user) WHERE (by_user IS NOT NULL)"
+  },
+  {
+    "tablename": "bank_check_events",
+    "indexname": "bank_check_events_check_idx",
+    "indexdef": "CREATE INDEX bank_check_events_check_idx ON public.bank_check_events USING btree (check_id, at)"
+  },
+  {
+    "tablename": "bank_check_events",
+    "indexname": "bank_check_events_pkey",
+    "indexdef": "CREATE UNIQUE INDEX bank_check_events_pkey ON public.bank_check_events USING btree (id)"
+  },
+  {
+    "tablename": "bank_check_marks",
+    "indexname": "bank_check_marks_by_idx",
+    "indexdef": "CREATE INDEX bank_check_marks_by_idx ON public.bank_check_marks USING btree (marked_by) WHERE (marked_by IS NOT NULL)"
+  },
+  {
+    "tablename": "bank_check_marks",
+    "indexname": "bank_check_marks_check_idx",
+    "indexdef": "CREATE INDEX bank_check_marks_check_idx ON public.bank_check_marks USING btree (check_id)"
+  },
+  {
+    "tablename": "bank_check_marks",
+    "indexname": "bank_check_marks_one_tick",
+    "indexdef": "CREATE UNIQUE INDEX bank_check_marks_one_tick ON public.bank_check_marks USING btree (bank_account_id, line_key)"
+  },
+  {
+    "tablename": "bank_check_marks",
+    "indexname": "bank_check_marks_pkey",
+    "indexdef": "CREATE UNIQUE INDEX bank_check_marks_pkey ON public.bank_check_marks USING btree (id)"
+  },
+  {
+    "tablename": "bank_checks",
+    "indexname": "bank_checks_checked_by_idx",
+    "indexdef": "CREATE INDEX bank_checks_checked_by_idx ON public.bank_checks USING btree (checked_by) WHERE (checked_by IS NOT NULL)"
+  },
+  {
+    "tablename": "bank_checks",
+    "indexname": "bank_checks_created_by_idx",
+    "indexdef": "CREATE INDEX bank_checks_created_by_idx ON public.bank_checks USING btree (created_by) WHERE (created_by IS NOT NULL)"
+  },
+  {
+    "tablename": "bank_checks",
+    "indexname": "bank_checks_id_account",
+    "indexdef": "CREATE UNIQUE INDEX bank_checks_id_account ON public.bank_checks USING btree (id, bank_account_id)"
+  },
+  {
+    "tablename": "bank_checks",
+    "indexname": "bank_checks_one_per_end_date",
+    "indexdef": "CREATE UNIQUE INDEX bank_checks_one_per_end_date ON public.bank_checks USING btree (bank_account_id, statement_end_date)"
+  },
+  {
+    "tablename": "bank_checks",
+    "indexname": "bank_checks_pkey",
+    "indexdef": "CREATE UNIQUE INDEX bank_checks_pkey ON public.bank_checks USING btree (id)"
+  },
+  {
+    "tablename": "bank_line_exclusions",
+    "indexname": "bank_line_exclusions_by_idx",
+    "indexdef": "CREATE INDEX bank_line_exclusions_by_idx ON public.bank_line_exclusions USING btree (excluded_by) WHERE (excluded_by IS NOT NULL)"
+  },
+  {
+    "tablename": "bank_line_exclusions",
+    "indexname": "bank_line_exclusions_once",
+    "indexdef": "CREATE UNIQUE INDEX bank_line_exclusions_once ON public.bank_line_exclusions USING btree (bank_account_id, line_key)"
+  },
+  {
+    "tablename": "bank_line_exclusions",
+    "indexname": "bank_line_exclusions_pkey",
+    "indexdef": "CREATE UNIQUE INDEX bank_line_exclusions_pkey ON public.bank_line_exclusions USING btree (id)"
+  },
+  {
+    "tablename": "bank_saved_lines",
+    "indexname": "bank_saved_lines_by_idx",
+    "indexdef": "CREATE INDEX bank_saved_lines_by_idx ON public.bank_saved_lines USING btree (saved_by) WHERE (saved_by IS NOT NULL)"
+  },
+  {
+    "tablename": "bank_saved_lines",
+    "indexname": "bank_saved_lines_once",
+    "indexdef": "CREATE UNIQUE INDEX bank_saved_lines_once ON public.bank_saved_lines USING btree (bank_account_id, line_key)"
+  },
+  {
+    "tablename": "bank_saved_lines",
+    "indexname": "bank_saved_lines_pkey",
+    "indexdef": "CREATE UNIQUE INDEX bank_saved_lines_pkey ON public.bank_saved_lines USING btree (id)"
+  },
+  {
     "tablename": "basic_coach_team_announcements",
     "indexname": "basic_coach_team_announcements_pkey",
     "indexdef": "CREATE UNIQUE INDEX basic_coach_team_announcements_pkey ON public.basic_coach_team_announcements USING btree (id)"
@@ -200,6 +375,21 @@
     "indexdef": "CREATE INDEX basic_coach_teams_workspace_idx ON public.basic_coach_teams USING btree (team_workspace_id)"
   },
   {
+    "tablename": "billing_locations",
+    "indexname": "billing_locations_one_per_org",
+    "indexdef": "CREATE UNIQUE INDEX billing_locations_one_per_org ON public.billing_locations USING btree (org_id) WHERE (org_id IS NOT NULL)"
+  },
+  {
+    "tablename": "billing_locations",
+    "indexname": "billing_locations_one_per_user",
+    "indexdef": "CREATE UNIQUE INDEX billing_locations_one_per_user ON public.billing_locations USING btree (user_id) WHERE (user_id IS NOT NULL)"
+  },
+  {
+    "tablename": "billing_locations",
+    "indexname": "billing_locations_pkey",
+    "indexdef": "CREATE UNIQUE INDEX billing_locations_pkey ON public.billing_locations USING btree (id)"
+  },
+  {
     "tablename": "billing_retained_records",
     "indexname": "billing_retained_records_intent_id_idx",
     "indexdef": "CREATE INDEX billing_retained_records_intent_id_idx ON public.billing_retained_records USING btree (intent_id)"
@@ -233,6 +423,11 @@
     "tablename": "billing_retained_records",
     "indexname": "idx_billing_retained_records_warning",
     "indexdef": "CREATE INDEX idx_billing_retained_records_warning ON public.billing_retained_records USING btree (retention_until, warning_sent_at) WHERE (retained_state = 'retained_inactive'::text)"
+  },
+  {
+    "tablename": "billing_retention_intents",
+    "indexname": "billing_retention_intents_one_pending_change",
+    "indexdef": "CREATE UNIQUE INDEX billing_retention_intents_one_pending_change ON public.billing_retention_intents USING btree (org_id) WHERE (status = 'pending'::text)"
   },
   {
     "tablename": "billing_retention_intents",
@@ -423,6 +618,21 @@
     "tablename": "chat_rooms",
     "indexname": "chat_rooms_surface_ref_sub_uniq",
     "indexdef": "CREATE UNIQUE INDEX chat_rooms_surface_ref_sub_uniq ON public.chat_rooms USING btree (surface, ref_id, ref_sub_id) WHERE (ref_sub_id IS NOT NULL)"
+  },
+  {
+    "tablename": "child_match_rejections",
+    "indexname": "child_match_rejections_child_b_idx",
+    "indexdef": "CREATE INDEX child_match_rejections_child_b_idx ON public.child_match_rejections USING btree (child_b_id)"
+  },
+  {
+    "tablename": "child_match_rejections",
+    "indexname": "child_match_rejections_pair_uniq",
+    "indexdef": "CREATE UNIQUE INDEX child_match_rejections_pair_uniq ON public.child_match_rejections USING btree (child_a_id, child_b_id)"
+  },
+  {
+    "tablename": "child_match_rejections",
+    "indexname": "child_match_rejections_pkey",
+    "indexdef": "CREATE UNIQUE INDEX child_match_rejections_pkey ON public.child_match_rejections USING btree (id)"
   },
   {
     "tablename": "club_schedule_hand_back_slots",
@@ -1325,6 +1535,21 @@
     "indexdef": "CREATE INDEX league_game_changes_season_idx ON public.league_game_changes USING btree (season_id) WHERE (sent_at IS NULL)"
   },
   {
+    "tablename": "league_game_scores",
+    "indexname": "league_game_scores_org_idx",
+    "indexdef": "CREATE INDEX league_game_scores_org_idx ON public.league_game_scores USING btree (org_id)"
+  },
+  {
+    "tablename": "league_game_scores",
+    "indexname": "league_game_scores_pkey",
+    "indexdef": "CREATE UNIQUE INDEX league_game_scores_pkey ON public.league_game_scores USING btree (game_id)"
+  },
+  {
+    "tablename": "league_game_scores",
+    "indexname": "league_game_scores_season_idx",
+    "indexdef": "CREATE INDEX league_game_scores_season_idx ON public.league_game_scores USING btree (season_id)"
+  },
+  {
     "tablename": "league_games",
     "indexname": "idx_league_games_org_venue",
     "indexdef": "CREATE INDEX idx_league_games_org_venue ON public.league_games USING btree (org_venue_id)"
@@ -1425,6 +1650,71 @@
     "indexdef": "CREATE INDEX league_player_ratings_season_idx ON public.league_player_ratings USING btree (season_id)"
   },
   {
+    "tablename": "league_practice_emails",
+    "indexname": "league_practice_emails_division_idx",
+    "indexdef": "CREATE INDEX league_practice_emails_division_idx ON public.league_practice_emails USING btree (division_id)"
+  },
+  {
+    "tablename": "league_practice_emails",
+    "indexname": "league_practice_emails_notice_id_guardian_email_key",
+    "indexdef": "CREATE UNIQUE INDEX league_practice_emails_notice_id_guardian_email_key ON public.league_practice_emails USING btree (notice_id, guardian_email)"
+  },
+  {
+    "tablename": "league_practice_emails",
+    "indexname": "league_practice_emails_notice_idx",
+    "indexdef": "CREATE INDEX league_practice_emails_notice_idx ON public.league_practice_emails USING btree (notice_id, status)"
+  },
+  {
+    "tablename": "league_practice_emails",
+    "indexname": "league_practice_emails_open_idx",
+    "indexdef": "CREATE INDEX league_practice_emails_open_idx ON public.league_practice_emails USING gin (team_ids) WHERE (status = ANY (ARRAY['pending'::text, 'sending'::text, 'failed'::text]))"
+  },
+  {
+    "tablename": "league_practice_emails",
+    "indexname": "league_practice_emails_org_idx",
+    "indexdef": "CREATE INDEX league_practice_emails_org_idx ON public.league_practice_emails USING btree (org_id)"
+  },
+  {
+    "tablename": "league_practice_emails",
+    "indexname": "league_practice_emails_pkey",
+    "indexdef": "CREATE UNIQUE INDEX league_practice_emails_pkey ON public.league_practice_emails USING btree (id)"
+  },
+  {
+    "tablename": "league_practice_emails",
+    "indexname": "league_practice_emails_season_idx",
+    "indexdef": "CREATE INDEX league_practice_emails_season_idx ON public.league_practice_emails USING btree (season_id)"
+  },
+  {
+    "tablename": "league_practice_tells",
+    "indexname": "league_practice_tells_division_idx",
+    "indexdef": "CREATE INDEX league_practice_tells_division_idx ON public.league_practice_tells USING btree (division_id)"
+  },
+  {
+    "tablename": "league_practice_tells",
+    "indexname": "league_practice_tells_notice_id_team_id_key",
+    "indexdef": "CREATE UNIQUE INDEX league_practice_tells_notice_id_team_id_key ON public.league_practice_tells USING btree (notice_id, team_id)"
+  },
+  {
+    "tablename": "league_practice_tells",
+    "indexname": "league_practice_tells_org_idx",
+    "indexdef": "CREATE INDEX league_practice_tells_org_idx ON public.league_practice_tells USING btree (org_id)"
+  },
+  {
+    "tablename": "league_practice_tells",
+    "indexname": "league_practice_tells_pkey",
+    "indexdef": "CREATE UNIQUE INDEX league_practice_tells_pkey ON public.league_practice_tells USING btree (id)"
+  },
+  {
+    "tablename": "league_practice_tells",
+    "indexname": "league_practice_tells_season_idx",
+    "indexdef": "CREATE INDEX league_practice_tells_season_idx ON public.league_practice_tells USING btree (season_id)"
+  },
+  {
+    "tablename": "league_practice_tells",
+    "indexname": "league_practice_tells_team_idx",
+    "indexdef": "CREATE INDEX league_practice_tells_team_idx ON public.league_practice_tells USING btree (team_id, created_at DESC)"
+  },
+  {
     "tablename": "league_practice_time",
     "indexname": "league_practice_time_division_idx",
     "indexdef": "CREATE INDEX league_practice_time_division_idx ON public.league_practice_time USING btree (division_id)"
@@ -1490,6 +1780,26 @@
     "indexdef": "CREATE INDEX league_practices_team_idx ON public.league_practices USING btree (team_id)"
   },
   {
+    "tablename": "league_rainouts",
+    "indexname": "league_rainouts_changes_idx",
+    "indexdef": "CREATE INDEX league_rainouts_changes_idx ON public.league_rainouts USING gin (change_ids)"
+  },
+  {
+    "tablename": "league_rainouts",
+    "indexname": "league_rainouts_org_idx",
+    "indexdef": "CREATE INDEX league_rainouts_org_idx ON public.league_rainouts USING btree (org_id)"
+  },
+  {
+    "tablename": "league_rainouts",
+    "indexname": "league_rainouts_pkey",
+    "indexdef": "CREATE UNIQUE INDEX league_rainouts_pkey ON public.league_rainouts USING btree (id)"
+  },
+  {
+    "tablename": "league_rainouts",
+    "indexname": "league_rainouts_season_idx",
+    "indexdef": "CREATE INDEX league_rainouts_season_idx ON public.league_rainouts USING btree (season_id) WHERE (put_back_at IS NULL)"
+  },
+  {
     "tablename": "league_registration_price_changes",
     "indexname": "league_registration_price_changes_org_idx",
     "indexdef": "CREATE INDEX league_registration_price_changes_org_idx ON public.league_registration_price_changes USING btree (org_id)"
@@ -1513,6 +1823,11 @@
     "tablename": "league_registration_price_changes",
     "indexname": "league_registration_price_changes_season_idx",
     "indexdef": "CREATE INDEX league_registration_price_changes_season_idx ON public.league_registration_price_changes USING btree (season_id, changed_at DESC)"
+  },
+  {
+    "tablename": "league_registrations",
+    "indexname": "league_registrations_child_idx",
+    "indexdef": "CREATE INDEX league_registrations_child_idx ON public.league_registrations USING btree (child_id)"
   },
   {
     "tablename": "league_registrations",
@@ -1683,6 +1998,26 @@
     "tablename": "league_team_coaches",
     "indexname": "league_team_coaches_user_idx",
     "indexdef": "CREATE INDEX league_team_coaches_user_idx ON public.league_team_coaches USING btree (user_id) WHERE (user_id IS NOT NULL)"
+  },
+  {
+    "tablename": "league_team_practices_told",
+    "indexname": "league_team_practices_told_notice_idx",
+    "indexdef": "CREATE INDEX league_team_practices_told_notice_idx ON public.league_team_practices_told USING btree (notice_id) WHERE (notice_id IS NOT NULL)"
+  },
+  {
+    "tablename": "league_team_practices_told",
+    "indexname": "league_team_practices_told_org_idx",
+    "indexdef": "CREATE INDEX league_team_practices_told_org_idx ON public.league_team_practices_told USING btree (org_id)"
+  },
+  {
+    "tablename": "league_team_practices_told",
+    "indexname": "league_team_practices_told_pkey",
+    "indexdef": "CREATE UNIQUE INDEX league_team_practices_told_pkey ON public.league_team_practices_told USING btree (team_id)"
+  },
+  {
+    "tablename": "league_team_practices_told",
+    "indexname": "league_team_practices_told_season_idx",
+    "indexdef": "CREATE INDEX league_team_practices_told_season_idx ON public.league_team_practices_told USING btree (season_id)"
   },
   {
     "tablename": "league_teams",
@@ -2028,6 +2363,16 @@
     "tablename": "org_budget_periods",
     "indexname": "org_budget_periods_pkey",
     "indexdef": "CREATE UNIQUE INDEX org_budget_periods_pkey ON public.org_budget_periods USING btree (id)"
+  },
+  {
+    "tablename": "org_children",
+    "indexname": "org_children_org_idx",
+    "indexdef": "CREATE INDEX org_children_org_idx ON public.org_children USING btree (org_id)"
+  },
+  {
+    "tablename": "org_children",
+    "indexname": "org_children_pkey",
+    "indexdef": "CREATE UNIQUE INDEX org_children_pkey ON public.org_children USING btree (id)"
   },
   {
     "tablename": "org_custom_domains",
@@ -3836,6 +4181,11 @@
   },
   {
     "tablename": "rep_roster_players",
+    "indexname": "rep_roster_players_child_idx",
+    "indexdef": "CREATE INDEX rep_roster_players_child_idx ON public.rep_roster_players USING btree (child_id)"
+  },
+  {
+    "tablename": "rep_roster_players",
     "indexname": "rep_roster_players_email_idx",
     "indexdef": "CREATE INDEX rep_roster_players_email_idx ON public.rep_roster_players USING btree (guardian_email)"
   },
@@ -3843,6 +4193,11 @@
     "tablename": "rep_roster_players",
     "indexname": "rep_roster_players_id_team_uniq",
     "indexdef": "CREATE UNIQUE INDEX rep_roster_players_id_team_uniq ON public.rep_roster_players USING btree (id, team_id)"
+  },
+  {
+    "tablename": "rep_roster_players",
+    "indexname": "rep_roster_players_one_child_per_season",
+    "indexdef": "CREATE UNIQUE INDEX rep_roster_players_one_child_per_season ON public.rep_roster_players USING btree (child_id, program_year_id)"
   },
   {
     "tablename": "rep_roster_players",
@@ -4851,6 +5206,11 @@
   },
   {
     "tablename": "rep_tryout_registrations",
+    "indexname": "rep_tryout_registrations_child_idx",
+    "indexdef": "CREATE INDEX rep_tryout_registrations_child_idx ON public.rep_tryout_registrations USING btree (child_id)"
+  },
+  {
+    "tablename": "rep_tryout_registrations",
     "indexname": "rep_tryout_registrations_email_idx",
     "indexdef": "CREATE INDEX rep_tryout_registrations_email_idx ON public.rep_tryout_registrations USING btree (guardian_email)"
   },
@@ -5100,6 +5460,36 @@
     "indexdef": "CREATE UNIQUE INDEX schedule_facility_lanes_unique_label ON public.schedule_facility_lanes USING btree (tournament_id, division_id, label)"
   },
   {
+    "tablename": "stripe_billing_drift_checks",
+    "indexname": "stripe_billing_drift_checks_checked_idx",
+    "indexdef": "CREATE INDEX stripe_billing_drift_checks_checked_idx ON public.stripe_billing_drift_checks USING btree (checked_at DESC)"
+  },
+  {
+    "tablename": "stripe_billing_drift_checks",
+    "indexname": "stripe_billing_drift_checks_pkey",
+    "indexdef": "CREATE UNIQUE INDEX stripe_billing_drift_checks_pkey ON public.stripe_billing_drift_checks USING btree (id)"
+  },
+  {
+    "tablename": "stripe_billing_events",
+    "indexname": "stripe_billing_events_customer_idx",
+    "indexdef": "CREATE INDEX stripe_billing_events_customer_idx ON public.stripe_billing_events USING btree (customer_id) WHERE (customer_id IS NOT NULL)"
+  },
+  {
+    "tablename": "stripe_billing_events",
+    "indexname": "stripe_billing_events_pkey",
+    "indexdef": "CREATE UNIQUE INDEX stripe_billing_events_pkey ON public.stripe_billing_events USING btree (id)"
+  },
+  {
+    "tablename": "stripe_billing_events",
+    "indexname": "stripe_billing_events_received_idx",
+    "indexdef": "CREATE INDEX stripe_billing_events_received_idx ON public.stripe_billing_events USING btree (received_at)"
+  },
+  {
+    "tablename": "stripe_billing_events",
+    "indexname": "stripe_billing_events_unprocessed_idx",
+    "indexdef": "CREATE INDEX stripe_billing_events_unprocessed_idx ON public.stripe_billing_events USING btree (received_at) WHERE ((processed_at IS NULL) AND (ignored_reason IS NULL))"
+  },
+  {
     "tablename": "stripe_connect_events",
     "indexname": "stripe_connect_events_org_id_idx",
     "indexdef": "CREATE INDEX stripe_connect_events_org_id_idx ON public.stripe_connect_events USING btree (org_id)"
@@ -5118,6 +5508,11 @@
     "tablename": "stripe_connect_events",
     "indexname": "stripe_connect_events_unprocessed_idx",
     "indexdef": "CREATE INDEX stripe_connect_events_unprocessed_idx ON public.stripe_connect_events USING btree (received_at) WHERE (processed_at IS NULL)"
+  },
+  {
+    "tablename": "stripe_price_ids_retired",
+    "indexname": "stripe_price_ids_retired_pkey",
+    "indexdef": "CREATE UNIQUE INDEX stripe_price_ids_retired_pkey ON public.stripe_price_ids_retired USING btree (price_id)"
   },
   {
     "tablename": "stripe_prices",

@@ -44,7 +44,7 @@ export const CATEGORY_LABELS: Record<ReleaseCategory, string> = {
  */
 export const RELEASE_ENTRIES: ReleaseEntry[] = [
   {
-    date: '2026-11-04',
+    date: '2026-11-05',
     title: "A new look for every public tournament page, rainouts, scores and practice times for house league, and plans that end on their renewal date",
     highlights: [
       {
