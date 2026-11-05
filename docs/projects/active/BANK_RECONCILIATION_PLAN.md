@@ -20,8 +20,8 @@
 > /simplify then /review (high tier) offered before the commit. **Next:** R2c (the Bank tab, desk).
 > **R2b-3 built and committed 2026-11-05** (a book move can't race a tick, a keep-out or a fee; mig 442 applied to dev,
 > prod owed with 436 + 437 + 439 + 440; /simplify + /review (high) done; record under §7 R2).
-> **R2c (desk) committed `7d7b79cdb` 2026-11-05; R2d (the phone, R2's close) built 2026-11-05, /simplify + /review (high)
-> done; R2 COMPLETE at R2d's commit** (record under §7 R2; owed before the promote: migs 436/437/439/440/442 to prod).
+> **R2c (desk) committed `7d7b79cdb` 2026-11-05; R2d (the phone, R2's close) committed `d4ca80052` 2026-11-05 after
+> /simplify + /review (high); R2 COMPLETE 2026-11-05** (record under §7 R2; owed before the promote: migs 436/437/439/440/442 to prod).
 > **Next:** R3 (club touchpoints).
 
 ## Goal
@@ -942,7 +942,7 @@ Every stage: migration first where there is one, then the `DATA_DICTIONARY.md` u
 >   dev server was restarted (`No link element found for chunk …css`) is a hot-reload artifact of the restart.
 
 > **R2d — the Bank tab on a phone, and R2's close ✅ built 2026-11-05; /simplify + /review (high) done 2026-11-05;
-> commit hash: owed at the owner's "commit"** (screens only; no server file touched):
+> committed `d4ca80052` 2026-11-05** (screens only; no server file touched):
 > - **Built (390; `useIsPhone` picks the phone form where the structure differs, the hook's own rule):**
 >   - **C2:** a one-line strip (Difference + "n of N ticked") pins under the club header (`top: var(--admin-header-h)`;
 >     `aria-hidden`, it restates the band), painted with an upward reach that covers the gap the condensing header leaves.
@@ -1008,8 +1008,8 @@ Every stage: migration first where there is one, then the `DATA_DICTIONARY.md` u
 >   `check:layout --only=admin-accounting-bank` at 361 and at 1440: no new findings; typecheck and `check:spelling` clean;
 >   eslint clean on R2d's files; bank-r2c-screens-guard, bank-check, bank-club-routes, bank-club-read, bank-r2-server-guard,
 >   admin-kit-nav, loading-state, table-recipe, phone-secondary-actions, one-definition **430/430**.
-> - **R2 COMPLETE** at R2d's commit (R2a `af458c945`, R2b `01c533436`, R2b-2 `9a25464ea`, R2b-3 `c99e8e764`, R2c
->   `7d7b79cdb`, the payout fix `aa106bac8`, R2d: hash owed). **Owed before R2 is promoted:** migrations 436, 437, 439,
+> - **R2 COMPLETE 2026-11-05** (R2a `af458c945`, R2b `01c533436`, R2b-2 `9a25464ea`, R2b-3 `c99e8e764`, R2c
+>   `7d7b79cdb`, the payout fix `aa106bac8`, R2d `d4ca80052`). **Owed before R2 is promoted:** migrations 436, 437, 439,
 >   440, 442 applied to prod (`MANUAL_PROD_STEPS.json`; applied to dev); a club-pays payout seen in a browser; Stage 13
 >   re-checks the Accounting tab row now that Bank sits in it (B8); R2b-3's three route proofs
 >   (`.probe/bank-r2b3-all.mjs`) re-run.
