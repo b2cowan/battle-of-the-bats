@@ -252,7 +252,7 @@
     so rewording (or naming the collided season) is the owner's call; the accept route reuses them. (b) Add Player's "Bring
     back a past player" door line closes the window without the unsaved-changes ask, exactly as the existing "Paste a list"
     door does — change both or neither.
-- **S4 · documents and the health check (14c)** — **IN PROGRESS 2026-11-04.** Part 0 presented; owner "go ahead" with all
+- **S4 · documents and the health check (14c)** — **COMMITTED `285f2b1d7` 2026-11-05** (built 2026-11-04/05; finish run below; walk §458 owed; prod mig 441 owed). Part 0 presented; owner "go ahead" with all
   eight recommendations: (1) documents do NOT move — they stay on the season's entry; the child's papers are read through
   its entries (entry = whose + which season), so no backfill, no join/split step, no retention change (an entry holding a
   document already cannot be removed); (2) rows = the club's templates for the team + any type the child signed before on
