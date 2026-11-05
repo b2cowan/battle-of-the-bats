@@ -208,9 +208,9 @@ const QUOTE = 'a quote: charges nothing, so it needs no address of its own. It i
 const TAXED_CHECKOUT_SPREAD = { needs: ['...TAXED_CHECKOUT'] };
 /**
  * ⚠ A fee line's setting is its OWN tax treatment (exclusive, the general-services code); whether tax is worked out at all is
- * the invoice it lands on — the club's own fee invoice (taxed, its entry below) or the live subscription's next invoice, taxed
- * only if that subscription was made or moved by a taxed path. A subscription made before Stage 2 carries an untaxed fee line
- * until a move turns its tax on (/review 2026-11-05; production had none, and the promote re-counts them and stops if any exist).
+ * the invoice it lands on — the club's own fee invoice (taxed, its entry below) or the live subscription's next invoice. A fee
+ * rides a subscription only when that subscription has tax on (`subscriptionToRide`, pinned in the fee block below), so a
+ * subscription made before Stage 2 sends its club's fees to the club's own taxed invoice (/review 2026-11-05).
  */
 const FEE_LINE: Tax = { taxed: 'a recovered Stripe fee, taxed on top at the club’s province rate (Ask 3)', needs: ['...RECOVERED_FEE_TAX'] };
 
@@ -576,5 +576,14 @@ describe('turning on online payments asks for the club’s billing address first
       `${CARD}: the line's button opens the Billing address window, and the line goes once the address is saved`);
     assert.match(CODE.get('lib/platform-stripe-fees.ts')!, /if \(!\(await placeable\(location, existingCustomer\)\)\) \{/,
       'lib/platform-stripe-fees.ts: invoiceOneClub must wait on placeable(), the same test the card reads');
+  });
+
+  it('lib/platform-stripe-fees.ts: a fee rides only a subscription that works tax out', () => {
+    const ride = between(CODE.get('lib/platform-stripe-fees.ts')!, 'async function subscriptionToRide(', 'async function lineFor(',
+      'lib/platform-stripe-fees.ts subscriptionToRide');
+    const check = ride.indexOf('if (!sub.automatic_tax?.enabled) return null;');
+    assert.ok(check >= 0 && check < ride.indexOf('return { customer:'),
+      'lib/platform-stripe-fees.ts: subscriptionToRide must send a club whose subscription has tax off to its own fee invoice — '
+      + 'a fee on that subscription’s invoice would go out without tax (Ask 3)');
   });
 });

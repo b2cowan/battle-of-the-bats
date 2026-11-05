@@ -279,11 +279,17 @@ its tax from a listed taxed call, may write only the keys named), or `untaxed` w
      none, and the promote re-counts subscribers and stops if any exist (Ask 7), so it cannot happen on today's path. *Recommendation:
      one line in `subscriptionToRide` — no ride unless `automatic_tax.enabled`, so such a club's fees go on its own (taxed) invoice;
      belt and braces after the promote. (Another session had uncommitted edits in that file on 2026-11-05.)*
+     **Owner said add it, 2026-11-05 — BUILT:** `subscriptionToRide` returns no ride unless `sub.automatic_tax?.enabled`, so a club
+     whose subscription has tax off gets its fees on its own taxed invoice. Pinned by a new guard test (47/47); mutate-and-fail on
+     disk (the line deleted → fails naming the file), restored. The six other fee test files pass (110/110).
   2. Platform admin's refund of a subscription charge (`lib/console-money-stripe.ts` `refunds.create`) makes no credit note.
      The `/accounting` review (item 6c) said a refund of a taxed subscription invoice goes through a credit note (the s.232 document
      and the tax reduction Stripe Tax keeps). Part 6's matrix row for refunds must test this path; a fix routes to `/plan`.
 
-Next: Part 6 (the Stripe test matrix) may run now; ONE Stage 2 walk at Part 7 (2b has its own). **Owner step before Part 6:** our GST/HST number on TEST-mode invoices (Settings → Invoices → Tax → add, Set as default) — read 2026-11-05: test account has no account tax ID.
+Next: Part 6 (the Stripe test matrix) may run now — **build prompt written 2026-11-05:
+[GST_HST_STAGE2_PART6_BUILD_PROMPT.md](GST_HST_STAGE2_PART6_BUILD_PROMPT.md)** (its first message lists the owner's steps); ONE
+Stage 2 walk at Part 7 (2b has its own). **Owner step before Part 6:** our GST/HST number on TEST-mode invoices — read 2026-11-05:
+test account has no account tax ID.
 
 **Rulings (owner, 2026-11-05, all as recommended):**
 - **Ask 1:** one helper decides tax: taxes by the stored address; a US address with disagreeing card/payout evidence
@@ -552,7 +558,7 @@ Mutate-and-fail it as Stage 1's guard was. (Built as a second answer on Stage 1'
 
 ## Part 6 · The test matrix (Stripe test mode, scripted where possible)
 
-One test buyer per group — ON, NS (Atlantic 15%), NB/NL/PE, AB/territories, BC, SK, MB, QC — plus a US buyer (no tax) and a
+One test buyer per group — ON, NS (14% since 2025-04-01; corrected 2026-11-05), NB/NL/PE (15%), AB/territories, BC, SK, MB, QC — plus a US buyer (no tax) and a
 mismatched buyer, across: new checkout (club and coach), Premium → Club in place, a move up with its preview, a Founding next-season
 choice, a renewal, a refund and a credit note. For each: the preview figure equals the charged figure, the invoice shows the tax by
 name, and a club's GST/HST number leaves the tax in place. Record the table in the Progress block.

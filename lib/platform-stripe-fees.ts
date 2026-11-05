@@ -202,6 +202,10 @@ async function subscriptionToRide(orgId: string): Promise<{ customer: string; su
   // FieldLogicHQ bills fees in Canadian dollars: a subscription in another currency can't carry one, so the club's own
   // invoice does (/review 4b: it was an error retried five times, then never billed).
   if (sub.currency !== 'cad') return null;
+  // A fee line is taxed only on an invoice that works tax out (Ask 3). A subscription made before GST/HST Stage 2, and never moved
+  // since, has tax off, and every line on its invoice would go out untaxed: such a club gets its own fee invoice, which is always
+  // taxed (/review 2026-11-05; tests/unit/billing-location-every-path-guard.test.ts pins it).
+  if (!sub.automatic_tax?.enabled) return null;
   return { customer: org.stripe_customer_id as string, subscription: sub.id };
 }
 
