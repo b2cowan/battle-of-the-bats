@@ -93,6 +93,20 @@ describe('the join page asks for the address instead of reading it', () => {
     assert.match(join, /if \(status\.accountExists\) setExistingAccount\(/);
   });
 
+  it('a waiting (unconfirmed) account is offered the link again, never "ready, sign in"', () => {
+    assert.match(join, /waiting: !!status\.accountWaiting/);
+    const start = join.indexOf('if (existingAccount?.waiting && registrationId)');
+    const block = join.slice(start, join.indexOf('if (existingAccount && registrationId)'));
+    assert.ok(start > -1, 'the waiting screen exists and comes before the "already set up" one');
+    assert.match(block, /title="Confirm your email"/);
+    assert.match(block, /<ResendLink/);
+    assert.doesNotMatch(block, /is ready/);
+  });
+
+  it('"Sign in" from the already-set-up screen returns to the join page (which files the registration), not the portal', () => {
+    assert.match(join, /const existingLoginHref = `\/auth\/login\?next=\$\{encodeURIComponent\(loginNext\)\}/);
+  });
+
   it('tells a coach signed in as someone else, without naming the address the registration was made with', () => {
     const start = join.indexOf('if (signedInMismatch)');
     const block = join.slice(start, join.indexOf('if (signedInEmail && registrationId)'));

@@ -50,6 +50,7 @@ export const GET = withObservability(async (req: NextRequest) => {
     return json({
       matches: true,
       accountExists: status.accountExists,
+      accountWaiting: status.accountWaiting,
       teamName: status.teamName,
     });
   } catch (error) {

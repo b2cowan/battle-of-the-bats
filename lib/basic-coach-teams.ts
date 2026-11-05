@@ -12,7 +12,7 @@ import { formatGameDateLabel, formatGameTimeLabel } from './game-clock-labels';
 import { isGameLive, DEFAULT_GAME_DURATION_MINUTES } from './game-status';
 import { getTeamWorkspaceForRepTeam } from './team-workspace-entitlements';
 import { getLinkedRegistrationIdsForRepTeam } from './rep-team-tournament-links';
-import { authAccountExistsForEmail } from './auth-account-lookup';
+import { findAuthUserByEmail } from './auth-account-lookup';
 // ⚠ A deliberate import cycle (that module reads this one's team lists): only functions cross it, and
 // only at call time, the same shape as the `coach-team-page` import above.
 import { getRegistrableTeamsForUser } from './registrable-teams-server';
@@ -282,7 +282,7 @@ async function getAuthUserEmail(userId: string): Promise<string | null> {
 export async function getRegistrationAccountStatus(params: {
   registrationId: string;
   email: string;
-}): Promise<{ accountExists: boolean; teamName: string; email: string } | null> {
+}): Promise<{ accountExists: boolean; accountWaiting: boolean; teamName: string; email: string } | null> {
   const registrationId = (params.registrationId ?? '').trim();
   const suppliedEmail = normalizeEmail(params.email);
   if (!registrationId || !suppliedEmail) return null;
@@ -296,8 +296,10 @@ export async function getRegistrationAccountStatus(params: {
   // Only answer when the link's email matches the registration's own email — no enumeration.
   if (!data || normalizeEmail(data.email) !== suppliedEmail) return null;
 
-  const accountExists = await authAccountExistsForEmail(suppliedEmail);
-  return { accountExists, teamName: data.name, email: suppliedEmail };
+  // `accountWaiting`: the account exists but its email was never confirmed, so it cannot sign in yet. Safe to say here:
+  // the address is the registration's own (checked above), so this answers nothing about any other address.
+  const account = await findAuthUserByEmail(suppliedEmail);
+  return { accountExists: !!account, accountWaiting: !!account && !account.email_confirmed_at, teamName: data.name, email: suppliedEmail };
 }
 
 export async function getBasicCoachTeamsForUser(userId: string): Promise<BasicCoachTeam[]> {

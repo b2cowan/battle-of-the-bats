@@ -13,6 +13,7 @@ import { alreadyRegisteredLine, differentTeamSentence, isChoosableTeam, whoRegis
 import { accountExistsSignInHref } from '@/lib/auth-errors';
 import joinStyles from './join.module.css';
 import VerifyEmailSent from '@/components/auth/VerifyEmailSent';
+import ResendLink from '@/components/auth/ResendLink';
 
 /** The pair on Choose a team profile: an existing Coaches Portal team, or a new team profile. */
 const LINK_MODE_OPTIONS = [
@@ -88,7 +89,9 @@ function JoinForm() {
   const [redirecting, setRedirecting] = useState(false);
   // Signed-out + an existing account for this registration's email → offer sign-in, not a
   // redundant second "create account" form (the merged register+account flow already made it).
-  const [existingAccount, setExistingAccount] = useState<{ teamName: string } | null>(null);
+  // `waiting`: the account exists but its email was never confirmed (the registration email was lost or unopened), so
+  // "sign in" would fail with "Confirm your email first" — this page offers the link again instead.
+  const [existingAccount, setExistingAccount] = useState<{ teamName: string; waiting: boolean } | null>(null);
   // Signed-out with a registration: the address the visitor typed is the one this registration was made with (checked by
   // the server). Until then the page asks for it; after it, Sign in (an account exists) or Create account (none yet).
   const [addressConfirmed, setAddressConfirmed] = useState(false);
@@ -183,7 +186,7 @@ function JoinForm() {
         `/api/coaches/registration-account-status?registrationId=${encodeURIComponent(registrationId)}&email=${encodeURIComponent(typed)}`,
         { cache: 'no-store' },
       );
-      const status = await res.json().catch(() => ({})) as { matches?: boolean; accountExists?: boolean; teamName?: string; error?: string };
+      const status = await res.json().catch(() => ({})) as { matches?: boolean; accountExists?: boolean; accountWaiting?: boolean; teamName?: string; error?: string };
       if (!res.ok) {
         setError(status.error ?? 'We couldn’t check that just now. Please try again.');
         return;
@@ -193,7 +196,7 @@ function JoinForm() {
         return;
       }
       setEmail(typed);
-      if (status.accountExists) setExistingAccount({ teamName: status.teamName ?? '' });
+      if (status.accountExists) setExistingAccount({ teamName: status.teamName ?? '', waiting: !!status.accountWaiting });
       setAddressConfirmed(true);
     } catch {
       setError('We couldn’t check that just now. Please try again.');
@@ -341,8 +344,38 @@ function JoinForm() {
   // Signed-out, but this registration's coach already has an account (merged register+account
   // flow, or a returning coach on a new device). Offer SIGN IN — don't re-collect name/password.
   // Sign-in lands straight on the team record (nextParam = /coaches/tournaments/{id}).
+  // A waiting account cannot sign in yet (it says "Confirm your email first"), so "your account is ready" would be false:
+  // one screen with the resend, which opens this page signed in and files the registration.
+  if (existingAccount?.waiting && registrationId) {
+    const waitingLoginHref = `/auth/login?next=${encodeURIComponent(loginNext)}${typedAddress ? `&email=${encodeURIComponent(typedAddress)}` : ''}`;
+    return (
+      <StartColumn>
+        <StartHead
+          title="Confirm your email"
+          sub={existingAccount.teamName
+            ? <>Your account for <strong>{existingAccount.teamName}</strong> is waiting for you to confirm your email. Send yourself the link, then open it.</>
+            : <>Your account is waiting for you to confirm your email. Send yourself the link, then open it.</>}
+        />
+        <div className={accountForm.waitBlock}>
+          <p className={accountForm.callout} role="status">For <strong>{email}</strong>.</p>
+          <ResendLink
+            email={email}
+            next={verifyReturnPath()}
+            classes={{ button: accountForm.secondary, sent: accountForm.sentAgain, error: accountForm.errorText }}
+          />
+          <StartFoot>
+            <p>Already confirmed? <Link href={waitingLoginHref} className={accountForm.footLink}>Sign in</Link></p>
+          </StartFoot>
+        </div>
+      </StartColumn>
+    );
+  }
+
   if (existingAccount && registrationId) {
-    const existingLoginHref = `/auth/login?next=${encodeURIComponent(nextParam)}${typedAddress ? `&email=${encodeURIComponent(typedAddress)}` : ''}`;
+    // Back to THIS page after sign-in (loginNext), not straight to the portal: this page is what files the registration
+    // under the coach's team. Going straight on left it unfiled, so the portal's Tournaments list read "none yet"
+    // (dev walk 2026-11-03). Already filed, this page forwards to `next` at once.
+    const existingLoginHref = `/auth/login?next=${encodeURIComponent(loginNext)}${typedAddress ? `&email=${encodeURIComponent(typedAddress)}` : ''}`;
     return (
       <StartColumn>
         <StartHead
