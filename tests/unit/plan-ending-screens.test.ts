@@ -230,7 +230,11 @@ describe('the windows over a waiting move (source)', () => {
     assert.doesNotMatch(W.downgrade.whenOn('2027-03-01T05:00:00Z', 'Tournament Plus', true), /paid for|credited/, 'a trial paid for nothing');
     assert.match(body, /W\.downgrade\.noPeriod\(org\.name\)/);
     assert.match(body, /W\.downgrade\.confirmOn\(movesOn\)/);
-    assert.match(body, /W\.downgrade\.movesFooter\(movesOn\)/);
+    // The foot no longer repeats the date the button carries: it says what the button waits for, then what was chosen.
+    assert.doesNotMatch(body, /movesFooter/);
+    assert.match(body, /W\.downgrade\.pickNeeded/);
+    assert.match(body, /W\.downgrade\.pickedFoot\(keptNames\)/);
+    assert.match(body, /W\.downgrade\.rest\(downgrade\.retentionDays, movesOn, restNames\)/, 'the sentence after the choices is dated');
     assert.match(body, /moveDateLong\(movesOn\)/, 'Online payments stop on the date, not today');
     assert.match(body, /disabled=\{busy !== null \|\| moveDateMissing/, 'a missing date offers no confirm');
   });

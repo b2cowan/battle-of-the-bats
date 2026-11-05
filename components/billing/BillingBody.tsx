@@ -1,8 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { CheckCircle2, CreditCard } from 'lucide-react';
+import { CheckCircle2, ChevronRight, CreditCard } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { ownPlanOf } from '@/lib/free-time';
 import { PLAN_BILLING_PROFILES, type PlanBillingProfile, type BillingPlanChange } from '@/lib/plan-billing-profile';
@@ -115,15 +115,29 @@ function MoveBand({ move, movesAt, retentionDays, onChange, disabled }: {
   </div>;
 }
 
-/** The downgrade's tournament checkboxes: the Downgrade window's pick and Change which tournament you keep (one list). */
-function TournamentChoices({ tournaments, ids, onToggle, note }: {
-  tournaments: BillingDowngrade['tournaments']; ids: string[]; onToggle: (id: string, on: boolean) => void;
-  note?: (tournament: BillingDowngrade['tournaments'][number]) => ReactNode;
+/**
+ * The tournaments you keep, as rows: the Downgrade window's pick and Change which tournament you keep (one control;
+ * Downgrade window redraw, owner 2026-11-05). Exactly one kept: pick-one rows, so the control says "one" without a word.
+ * More than one: the same rows as checkboxes, and once `limit` are ticked the rest wait until one is unticked (the foot
+ * counts them). Each row wears its status (the one home of status words); `extra` is a second quiet line.
+ */
+function TournamentChoices({ tournaments, ids, onChange, single, limit, label, extra }: {
+  tournaments: BillingDowngrade['tournaments']; ids: string[]; onChange: (ids: string[]) => void;
+  single: boolean; limit: number; label: string;
+  extra?: (tournament: BillingDowngrade['tournaments'][number]) => string | null;
 }) {
-  return <ul className={styles.choices}>{tournaments.map(t => <li key={t.id}><label>
-    <input type="checkbox" checked={ids.includes(t.id)} onChange={event => onToggle(t.id, event.target.checked)} />
-    {note ? <span>{t.name}<small className={`${styles.hint} ${styles.choiceNote}`}>{note(t)}</small></span> : t.name}
-  </label></li>)}</ul>;
+  const group = useId();
+  // A div of labels, not a list: a group role on a <ul> would strip the list's own meaning from its items.
+  return <div className={styles.pickList} role={single ? 'radiogroup' : 'group'} aria-label={label}>{tournaments.map(t => {
+    const on = ids.includes(t.id);
+    const note = extra?.(t);
+    return <label key={t.id} data-on={on || undefined}>
+      <input type={single ? 'radio' : 'checkbox'} name={single ? group : undefined} checked={on} disabled={!single && !on && ids.length >= limit}
+        onChange={event => onChange(single ? [t.id] : event.target.checked ? [...ids, t.id] : ids.filter(x => x !== t.id))} />
+      <span className={styles.pickName}>{t.name}{note && <small className={styles.hint}>{note}</small>}</span>
+      <span className={styles.pickStatus}>{W.downgrade.pick.status(t.status)}</span>
+    </label>;
+  })}</div>;
 }
 
 type PickState = { read: BillingRead<BillingDowngrade>; ids: string[]; stored: string[]; error: string | null };
@@ -131,19 +145,17 @@ type PickState = { read: BillingRead<BillingDowngrade>; ids: string[]; stored: s
  * Change which tournament you keep (Stage 2 Part B, G2; Stage 0 drawing): a 520px form window over a fresh read of what
  * holds a slot now. The stored pick reads "your choice so far"; one made after the move was scheduled, "added {date}".
  */
-function PickWindow({ orgName, endsAt, since, pick, busy, onToggle, onSave, onClose }: {
+function PickWindow({ orgName, endsAt, since, pick, busy, onChange, onSave, onClose }: {
   orgName: string; endsAt: string; since: string; pick: PickState; busy: boolean;
-  onToggle: (id: string, on: boolean) => void; onSave: () => void; onClose: () => void;
+  onChange: (ids: string[]) => void; onSave: () => void; onClose: () => void;
 }) {
   const P = W.downgrade.pick;
   const data = pick.read.status === 'ready' ? pick.read.data : null;
   const changed = pick.ids.length !== pick.stored.length || pick.ids.some(id => !pick.stored.includes(id));
   // Compared as instants: the database's and the change log's timestamps are written differently.
   const sinceAt = Date.parse(since);
-  const note = (t: BillingDowngrade['tournaments'][number]) => {
-    const extra = pick.stored.includes(t.id) ? P.yourChoice : t.createdAt && Date.parse(t.createdAt) > sinceAt ? P.added(t.createdAt) : null;
-    return extra ? `${P.status(t.status)} · ${extra}` : P.status(t.status);
-  };
+  const extra = (t: BillingDowngrade['tournaments'][number]) =>
+    pick.stored.includes(t.id) ? P.yourChoice : t.createdAt && Date.parse(t.createdAt) > sinceAt ? P.added(t.createdAt) : null;
   return <KitDialog kind="form" title={P.title} onClose={onClose} busy={busy} dirty={changed}
     footerStart={<span>{P.footer(endsAt)}</span>}
     footer={<><DialogCancel>{W.downgrade.close}</DialogCancel>
@@ -154,7 +166,7 @@ function PickWindow({ orgName, endsAt, since, pick, busy, onToggle, onSave, onCl
     {pick.read.status === 'error' && <PageNotice notice={{ tone: 'bad', text: pick.read.error }} />}
     {data && <>
       <p>{P.intro(orgName, data.targetPlanLabel, endsAt, data.allowedKeepCount, data.retentionDays)}</p>
-      <TournamentChoices tournaments={data.tournaments} ids={pick.ids} onToggle={onToggle} note={note} />
+      <TournamentChoices tournaments={data.tournaments} ids={pick.ids} onChange={onChange} single={data.allowedKeepCount === 1} limit={data.allowedKeepCount} label={P.title} extra={extra} />
     </>}
   </KitDialog>;
 }
@@ -542,6 +554,7 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref }: BillingOwnerP
   const [reviewError, setReviewError] = useState<string | null>(null);
   const leaving = useRef(false);
   const [keepIds, setKeepIds] = useState<string[]>([]);
+  const [toolsOpen, setToolsOpen] = useState(false);
   // Keep {Plan} (Plans end at renewal): its question window, its error, a `keep_plan` arrival, and a kept plan whose
   // cheaper move couldn't come back (said as a wait, not a failure — the plan IS kept).
   // Arriving by `keep_plan=1` starts it open; it shows once the waiting cancel has loaded (derived, never set in an effect).
@@ -676,7 +689,7 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref }: BillingOwnerP
   }
   async function openDowngrade(target: OrgPlan) {
     if (busyRef.current) return;
-    setReason(''); setReviewError(null); setKeepIds([]); setReview({ kind: 'downgrade', read: { status: 'loading' } });
+    setReason(''); setReviewError(null); setKeepIds([]); setToolsOpen(false); setReview({ kind: 'downgrade', read: { status: 'loading' } });
     await run('review', async () => {
       try {
         // org-slug-ok: post() adds orgSlug to every body
@@ -738,6 +751,15 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref }: BillingOwnerP
   // click (ruling 3). A waiting move whose date is missing says so and offers no confirm (as the Cancel section does).
   const movesOn = downgrade?.when?.waits ? downgrade.when.movesOn : null;
   const moveDateMissing = Boolean(downgrade?.when?.waits && !movesOn);
+  // Downgrade window redraw (owner 2026-11-05): the foot says what the button is waiting for, then what was chosen; the
+  // button already carries the date, so the foot no longer repeats it. The names of the rest appear once the choice is complete.
+  const choiceDone = Boolean(downgrade?.requiresTournamentChoice && keepIds.length === downgrade.allowedKeepCount);
+  const keptNames = downgrade ? downgrade.tournaments.filter(t => keepIds.includes(t.id)).map(t => t.name) : [];
+  const restNames = downgrade && choiceDone ? downgrade.tournaments.filter(t => !keepIds.includes(t.id)).map(t => t.name) : [];
+  const downgradeFoot = !downgrade ? null
+    : downgrade.requiresTournamentChoice
+      ? keepIds.length === 0 ? W.downgrade.pickNeeded(downgrade.allowedKeepCount) : choiceDone ? W.downgrade.pickedFoot(keptNames) : W.downgrade.pickedCount(keepIds.length, downgrade.allowedKeepCount)
+      : movesOn ? null : W.cancel.footer(downgrade.retentionDays);
   const period = org.subscriptionPeriod ?? 'monthly';
   const listPrice = (key: OrgPlan) => W.plan.charge(key, period);
   // The Keep window names the charge: what the subscription charges when the webhook recorded it, else the price list.
@@ -811,10 +833,10 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref }: BillingOwnerP
       </>}
     </KitDialog>}
     {pick && waitingMove && <PickWindow orgName={org.name} endsAt={waitingMove.endsAt} since={waitingMove.move.since} pick={pick} busy={busy !== null}
-      onToggle={(id, on) => setPick(p => p && { ...p, error: null, ids: on ? [...p.ids, id] : p.ids.filter(x => x !== id) })}
+      onChange={ids => setPick(p => p && { ...p, error: null, ids })}
       onSave={() => void savePick()} onClose={() => setPick(null)} />}
     {review && <KitDialog kind="form" title={review.kind === 'cancel' ? endsOn && !premium ? W.cancel.waitTitle(ownProfile.config.label) : premium ? W.cancel.premiumTitle : W.cancel.orgTitle(org.name) : target ? W.downgrade.title(target.config.label) : W.page.sections.change} onClose={closeReview} busy={busy !== null} dirty={reason.trim().length > 0 || Boolean(downgrade?.requiresTournamentChoice && keepIds.length)}
-      footerStart={cancel || downgrade ? <span>{endsOn ? W.cancel.waitFooter(endsOn) : movesOn ? W.downgrade.movesFooter(movesOn) : W.cancel.footer((cancel ?? downgrade)!.retentionDays)}</span> : undefined}
+      footerStart={cancel ? <span>{endsOn ? W.cancel.waitFooter(endsOn) : W.cancel.footer(cancel.retentionDays)}</span> : downgradeFoot ? <span>{downgradeFoot}</span> : undefined}
       footer={<><DialogCancel>{keepLabel}</DialogCancel>
         {(cancel || downgrade) && <button type="button" className={cancel ? 'btn btn-danger' : 'btn btn-lime'} onClick={() => void confirmReview()} disabled={busy !== null || moveDateMissing || Boolean(downgrade?.requiresTournamentChoice && keepIds.length !== downgrade.allowedKeepCount)}>{busy === 'confirm' ? cancel ? W.cancel.working : W.downgrade.applying : cancel ? endsOn ? W.cancel.waitConfirm(endsOn) : premium ? W.cancel.premiumConfirm : W.cancel.confirm : movesOn ? W.downgrade.confirmOn(movesOn) : W.downgrade.confirm(target!.config.label)}</button>}</>}
     >
@@ -847,10 +869,29 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref }: BillingOwnerP
           : movesOn ? <p>{W.downgrade.whenOn(movesOn, ownProfile.config.label, trialing)}</p>
           : downgrade.when ? <p className={styles.waitCallout}>{W.downgrade.noPeriod(org.name)}</p>
           : <p>{W.downgrade.when}</p>}
-        <p>{W.downgrade.capacity(downgrade.targetTournamentLimit)}</p><p>{W.downgrade.inUse(downgrade.activeTournamentCount)}</p>
-        <p>{W.downgrade.lost(target.config.label, ownProfile.config.label, ownProfile.downgradeLosses ?? [])}</p>
-        <p>{downgrade.requiresTournamentChoice ? movesOn ? W.downgrade.chooseOn(downgrade.allowedKeepCount, movesOn, downgrade.retentionDays) : W.downgrade.choose(downgrade.allowedKeepCount, downgrade.retentionDays) : W.downgrade.fits}</p>
-        {downgrade.requiresTournamentChoice && <TournamentChoices tournaments={downgrade.tournaments} ids={keepIds} onToggle={(id, on) => setKeepIds(ids => on ? [...ids, id] : ids.filter(x => x !== id))} />}
+        {/* Downgrade window redraw (owner 2026-11-05, drawing MYbuAxtXLUi7qqE16vaz34): the decision comes first, the rules that
+            explain it sit quietly under it, and the long list of lost tools opens on request. The words are the shipped ones,
+            split to fit the layout; the one-sentence "turns off these tools…" became the row's label and its list. */}
+        {downgrade.requiresTournamentChoice ? <section className={styles.reviewBlock}>
+          <h3 className={styles.label}>{W.downgrade.chooseCount(downgrade.allowedKeepCount)}</h3>
+          <p className={styles.hint}>{W.downgrade.capacity(downgrade.targetTournamentLimit)} {W.downgrade.inUse(downgrade.activeTournamentCount)}</p>
+          <TournamentChoices tournaments={downgrade.tournaments} ids={keepIds} onChange={setKeepIds} single={downgrade.allowedKeepCount === 1} limit={downgrade.allowedKeepCount} label={W.downgrade.chooseCount(downgrade.allowedKeepCount)} />
+          <p>{W.downgrade.rest(downgrade.retentionDays, movesOn, restNames)}</p>
+        </section> : <>
+          <p>{W.downgrade.capacity(downgrade.targetTournamentLimit)}</p><p>{W.downgrade.inUse(downgrade.activeTournamentCount)}</p>
+          <p>{W.downgrade.fits}</p>
+        </>}
+        <div className={styles.disclosure} data-open={toolsOpen || undefined}>
+          <button type="button" className={styles.disclosureButton} aria-expanded={toolsOpen} aria-controls={toolsOpen ? 'downgrade-tools' : undefined} onClick={() => setToolsOpen(open => !open)}>
+            <span>{W.downgrade.toolsOff(ownProfile.config.label)}</span>
+            <span className={styles.disclosureCount}>{(ownProfile.downgradeLosses ?? []).length}</span>
+            <ChevronRight size={16} aria-hidden className={styles.disclosureChevron} />
+          </button>
+          {toolsOpen && <div id="downgrade-tools" className={styles.disclosureBody}>
+            <ul className={styles.toolsList}>{(ownProfile.downgradeLosses ?? []).map(feature => <li key={feature}>{feature.charAt(0).toUpperCase() + feature.slice(1)}</li>)}</ul>
+            <p className={styles.hint}>{W.downgrade.lostKept}</p>
+          </div>}
+        </div>
         <PaymentsEndingSection section={downgrade.onlinePayments} ending={{ kind: 'move', dateLong: moveDateLong(movesOn) }} />
       </>}
       {(cancel || downgrade) && <div className={`${styles.field} ${styles.reviewField}`}>

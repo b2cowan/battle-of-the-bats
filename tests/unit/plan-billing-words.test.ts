@@ -106,8 +106,19 @@ describe('shared billing vocabulary', () => {
     assert.equal(W.downgrade.title('Target'), 'Downgrade to Target?');
     assert.equal(W.downgrade.reason, 'Why are you downgrading?');
     assert.match(W.downgrade.when, /today.*Nothing is credited/);
-    assert.match(W.downgrade.lost('Target', 'Current', ['branding', 'exports']), /branding and exports.*Saved branding is kept/);
+    assert.match(W.downgrade.lostKept, /^Saved branding is kept/);
+    assert.equal(W.downgrade.toolsOff('Tournament Plus'), 'Tournament Plus tools turn off');
     assert.match(W.downgrade.choose(1, 90), /Choose 1 tournament.*90 days/);
+    // The choice sentences keep the text they shipped with, whether or not the window names the rest.
+    assert.equal(W.downgrade.choose(1, 90), 'Choose 1 tournament to keep active. The rest move to archive retention for 90 days.');
+    assert.equal(W.downgrade.chooseOn(1, '2026-12-05T12:00:00Z', 90), 'Choose 1 tournament to keep active. On December 5 the rest move to archive retention for 90 days.');
+    assert.equal(W.downgrade.rest(90, null, ['Spring Classic', 'Summer Slam']), 'The rest move to archive retention for 90 days: Spring Classic and Summer Slam.');
+    // The foot says what the button waits for, then what was chosen.
+    assert.equal(W.downgrade.pickNeeded(1), 'Choose a tournament to continue.');
+    assert.equal(W.downgrade.pickNeeded(2), 'Choose 2 tournaments to continue.');
+    assert.equal(W.downgrade.pickedFoot(['Fall Cup']), 'Fall Cup stays active.');
+    assert.equal(W.downgrade.pickedFoot(['Fall Cup', 'Summer Slam']), 'Fall Cup and Summer Slam stay active.');
+    assert.equal(W.downgrade.pickedCount(1, 2), '1 of 2 chosen.');
     assert.equal(W.errors.read('staff seats'), 'We couldn’t load staff seats. Try again.');
     assert.equal(W.change.details('Target'), 'See what Target includes');
   });

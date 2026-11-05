@@ -30,6 +30,10 @@ const retainedUntil = (iso: string, days: number) => new Date(new Date(iso).getT
 const keepDoor = (plan: OrgPlanKey) => plan === 'team' ? 'Keep Premium' : `Keep ${PLAN_CONFIG[plan].label}`;
 /** "Choose 1 tournament to keep active." — the Downgrade window's choice, its dated form, and the server's refusal. */
 const chooseCount = (count: number) => `Choose ${pluralize(count, 'tournament')} to keep active.`;
+const LOST_KEPT = 'Saved branding is kept; public tournament pages use FieldLogicHQ defaults until you upgrade again.';
+/** "On December 5 the rest move to archive retention for 90 days." — undated, or naming the tournaments once the choice is made. */
+const W_REST = (days: number, iso: string | null = null, names: readonly string[] = []) =>
+  `${iso ? `On ${dayOnly(iso)} the rest` : 'The rest'} move to archive retention for ${days} days${names.length ? `: ${joinWithAnd(names)}` : ''}.`;
 const cycle = (value: BillingCycle) => value === 'annual' ? 'yearly' : 'monthly';
 const period = (value: BillingCycle) => value === 'annual' ? 'year' : 'month';
 const price = (amount: number, billing: BillingCycle) => amount === 0 ? formatPriceAmount(amount) : `${formatPriceAmount(amount)} CAD / ${period(billing)}`;
@@ -297,8 +301,16 @@ export const PLAN_BILLING_WORDS = {
       ? 'One tournament at a time: a draft or an active event holds the slot, and a finished one stays online.'
       : `${limit} tournaments at a time: drafts and active events hold the slots, and finished ones stay online.`,
     inUse: (count: number) => `In use now: ${count}.`,
-    lost: (target: string, current: string, features: readonly string[]) => `Moving to ${target} turns off these tools that come only with ${current}: ${joinWithAnd(features)}. Saved branding is kept; public tournament pages use FieldLogicHQ defaults until you upgrade again.`,
-    choose: (count: number, days: number) => `${chooseCount(count)} The rest move to archive retention for ${days} days.`,
+    lostKept: LOST_KEPT,
+    /** The window's openable row (Downgrade window redraw, owner 2026-11-05): the same loss, as a list you open. */
+    toolsOff: (current: string) => `${current} tools turn off`,
+    /** The sentence after the choices. `iso` dates it; `names` (once the choice is complete) says which tournaments it is. */
+    rest: W_REST,
+    /** The foot while the choice is open, and once it is made (the button's date is not repeated there). */
+    pickNeeded: (count: number) => count === 1 ? 'Choose a tournament to continue.' : `Choose ${count} tournaments to continue.`,
+    pickedFoot: (names: readonly string[]) => `${joinWithAnd(names)} ${names.length === 1 ? 'stays' : 'stay'} active.`,
+    pickedCount: (chosen: number, allowed: number) => `${chosen} of ${allowed} chosen.`,
+    choose: (count: number, days: number) => `${chooseCount(count)} ${W_REST(days)}`,
     fits: 'Your current tournament usage fits this plan. No tournaments need to move into retention.',
     reason: 'Why are you downgrading?', reasonHelp: 'For your records and ours. You can leave it empty.',
     keep: (label: string) => `Keep ${label}`, confirm: (label: string) => `Downgrade to ${label}`,
@@ -319,9 +331,8 @@ export const PLAN_BILLING_WORDS = {
     whenOn: (iso: string, current: string, trialing = false) => trialing
       ? `This takes effect on ${day(iso)}, when your trial ends. Until then you keep every ${current} tool, and your card is not charged.`
       : `This takes effect on ${day(iso)}, the end of the period you paid for. Until then you keep every ${current} tool. Nothing is credited.`,
-    chooseOn: (count: number, iso: string, days: number) => `${chooseCount(count)} On ${dayOnly(iso)} the rest move to archive retention for ${days} days.`,
+    chooseOn: (count: number, iso: string, days: number) => `${chooseCount(count)} ${W_REST(days, iso)}`,
     chooseCount,
-    movesFooter: (iso: string) => `Moves on ${day(iso)}.`,
     confirmOn: (iso: string) => `Downgrade on ${dayOnly(iso)}`,
     /** No live paid period (ruling 3): the move still happens at the click, and the window says why. */
     noPeriod: (org: string) => `${org} has no paid period to wait for, so the move happens when you confirm.`,
