@@ -430,7 +430,7 @@ applied in v2; C3 split into C3 + C4.
   only other sessions' classes. **Layout check** (dev server, 14 club screens at 361 / 390 / 768 / 1,440, then eight at
   1,024 / 1,280 / 1,536): no new findings. The season page, both forms and Your sign-up are not in the screen list; each
   renders 200 with its 24 px name. No help or demo-tour anchor sits on these pages.
-- **2026-11-05 · Club build Part 3 (the sweep, R10 / R11, and the pay block) — built 2026-11-05.** Product-owner summary
+- **2026-11-05 · Club build Part 3 (the sweep, R10 / R11, and the pay block) — committed `70d65750f`.** Owner yes after the desk check ("add the line and commit"). Product-owner summary
   presented before the code. **The pay block (shared: Your sign-up, the house-league sign-up's confirmation and the
   tournament's team pay page — all three move, said in the summary; not forked):** every heading inside it (the states,
   the receipts, the owing block — "To pay now" in the form's centred card, the tournament's balance heading) is one
