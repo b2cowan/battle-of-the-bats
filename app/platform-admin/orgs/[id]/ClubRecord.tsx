@@ -27,6 +27,7 @@ import { mergeMoneyIntoStory } from '@/lib/console-money-story';
 import type { OurMoneyRecord } from '@/lib/console-money';
 import { PAYING_CLUB_PLAN_REFUSAL } from '@/lib/stripe-billing-state';
 import MoneyTab, { useClubMoney } from './MoneyTab';
+import { reviewOf, useBillingAddress } from './BillingAddressPanel';
 import RecordWindow from '../../RecordWindow';
 import { BlockLine, ChangeEndWindow, EndNowWindow, GiveWindow, freeTimeSubject, freeTimeTitle } from './FreeTimeWindows';
 import { PortalBlockLine, PortalChangeEndWindow, PortalEndNowWindow, PortalGiveWindow } from './PortalFreeTimeWindows';
@@ -327,6 +328,9 @@ export default function ClubRecord(props: ClubRecordProps) {
   const moneyWanted = props.money.readsStripe && (tab === 'money' || tab === 'story');
   const club = useClubMoney(org.id, moneyWanted);
   const moneyRead = club.money?.state === 'read' ? club.money : null;
+  // Our own billing-address record, read on every tab so a "Needs review" shows as a dot on Money before anyone opens it.
+  const billing = useBillingAddress(org.id, props.money.readsStripe);
+  const moneyNeedsReview = !!reviewOf(billing);
   // Merging Stripe's charges needs the whole Story: it is asked for alongside the Stripe read, not after it.
   const wantsWhole = !!storyWords.trim() || !!storyKind || storyShown > STORY_PAGE || moneyWanted;
   useEffect(() => {
@@ -668,6 +672,7 @@ export default function ClubRecord(props: ClubRecordProps) {
               <button key={t.key} type="button" role="tab" aria-selected={tab === t.key}
                 className={`${kit.tab}${tab === t.key ? ` ${kit.tabOn}` : ''}`} onClick={() => setTab(t.key)}>
                 {t.label}{counts[t.key] ? <span className={kit.tabCount}>{counts[t.key]}</span> : null}
+                {t.key === 'money' && moneyNeedsReview && <span className={kit.tabDot} role="img" aria-label="Needs review" title="Needs review" />}
               </button>
             ))}
           </div>
@@ -719,6 +724,7 @@ export default function ClubRecord(props: ClubRecordProps) {
               billsClub={props.money.billsClub}
               stripeBase={props.stripeBase}
               club={club}
+              billing={billing}
               openChargeId={chargeParam}
               onChargeClosed={() => {
                 if (!chargeParam) return;

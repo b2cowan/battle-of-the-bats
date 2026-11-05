@@ -46,11 +46,16 @@ export function billingEventFacts(event: Stripe.Event): BillingEventFacts {
     subscriptionId = idOf(parent?.subscription_details?.subscription);
   } else if (event.type === 'checkout.session.completed') subscriptionId = idOf(object.subscription);
   // A dispute names no customer (its charge does); the row's object is the dispute (du_…) and Part 4 finds the club.
+  // ⚠ A DETACHED card no longer belongs to anyone: its `customer` is null and the one it left is in `previous_attributes`.
+  // Reading only the object dropped every card removal as "no customer" (found 2026-11-05: the billing-address "Needs review"
+  // never cleared after the old card was removed, and the card-on-file stamp never cleared either).
+  const previous = (event.data as { previous_attributes?: { customer?: unknown } }).previous_attributes;
+  const customerId = idOf(object.customer) ?? (event.type === 'payment_method.detached' ? idOf(previous?.customer) : null);
   return {
     id: event.id,
     type: event.type,
     livemode: event.livemode,
-    customerId: idOf(object.customer),
+    customerId,
     subscriptionId,
     objectId: idOf(object.id),
   };

@@ -25,7 +25,8 @@ import kit from '../../console.module.css';
 import styles from '../../record.module.css';
 import money from './money.module.css';
 import StripeFeesPanel from './StripeFeesPanel';
-import BillingAddressPanel from './BillingAddressPanel';
+import BillingAddressPanel, { BILLING_ADDRESS_ANCHOR, ReviewText, reviewOf, type BillingAddressRead } from './BillingAddressPanel';
+import { BILLING_LOCATION_CONSOLE_WORDS } from '@/lib/billing-location';
 
 /** What the server knows of this person and club before any click (the refund route asks the same rule with them). */
 type RefundGate = { role: string; ownClub: boolean; demoClub: boolean; refundsLast24h: number };
@@ -64,9 +65,11 @@ export function useClubMoney(orgId: string, enabled: boolean) {
 const YEAR_MS = 365 * 86_400_000;
 
 export default function MoneyTab({
-  orgId, orgName, ours, readsStripe, billsClub = false, stripeBase, club, openChargeId, onChargeClosed, onRefunded,
+  orgId, orgName, ours, readsStripe, billsClub = false, stripeBase, club, billing, openChargeId, onChargeClosed, onRefunded,
 }: {
   orgId: string;
+  /** GST/HST Stage 1 Part 3: the billing address, read once by the club record (it also drives the tab's dot). */
+  billing: BillingAddressRead;
   /** 12d-1 Part 4: may bill the club (`club_billing`), so the fees panel's Retry shows. */
   billsClub?: boolean;
   orgName: string;
@@ -118,9 +121,30 @@ export default function MoneyTab({
       </section>
     );
   }
+  // A flag that needs a person goes FIRST on the tab, above the Stripe comparison: the green "agree" line below it is about the
+  // subscription only, and must never read as an all-clear while a buyer's tax is being held at Canadian.
+  const review = reviewOf(billing);
+  // The door to the address block only shows once that block is on the page (it is not while Stripe is still being read).
+  const reviewStripWith = (door: boolean) => review && (
+    <div className={`${kit.callout} ${kit.calloutWarn}`} role="status">
+      <span>
+        <span className={`${kit.chip} ${kit.chipWarn}`}>{BILLING_LOCATION_CONSOLE_WORDS.needsReview}</span>{' '}
+        <ReviewText review={review} />
+      </span>
+      {door && (
+        <span className={kit.calloutEnd}>
+          <button type="button" className={`${kit.door} ${kit.doorSm}`}
+            onClick={() => document.getElementById(BILLING_ADDRESS_ANCHOR)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>
+            See billing address
+          </button>
+        </span>
+      )}
+    </div>
+  );
   if (!m || (club.loading && !read)) {
-    return <section className={kit.section}><p className={kit.caption}>Reading Stripe…</p></section>;
+    return <section className={kit.section}>{reviewStripWith(false)}<p className={kit.caption}>Reading Stripe…</p></section>;
   }
+  const reviewStrip = reviewStripWith(true);
 
   const testChip = read?.testMode ? <span className={`${kit.chip} ${kit.chipInfo}`}>Test mode</span> : null;
   const readAt = read ? consoleClock(read.readAt) : null;
@@ -157,6 +181,7 @@ export default function MoneyTab({
 
   return (
     <section className={kit.section}>
+      {reviewStrip}
       {head}
 
       {read && (
@@ -266,7 +291,7 @@ export default function MoneyTab({
       <StripeFeesPanel orgId={orgId} canRetry={billsClub} />
 
       {/* GST/HST Stage 1 Part 3: where the buyer is billed, and any "Needs review"; ours, read only. */}
-      <BillingAddressPanel orgId={orgId} />
+      <BillingAddressPanel answer={billing} />
 
       <p className={kit.caption}>Families’ payments to this club are the club’s own money, on its own Stripe account. They are never shown or refunded here.</p>
 

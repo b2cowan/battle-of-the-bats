@@ -299,7 +299,10 @@ describe('platform admin reads it, read only (Part 3 D)', () => {
 
   it('the block is on the Money tab, has no door of its own, and states the consequence', () => {
     const tab = readCode('app/platform-admin/orgs/[id]/MoneyTab.tsx');
-    assert.match(tab, /<BillingAddressPanel orgId=\{orgId\} \/>/);
+    assert.match(tab, /<BillingAddressPanel answer=\{billing\} \/>/);
+    // A flag that needs a person is the FIRST thing on the tab (above Stripe's "agree" line), and shows as a dot on the tab.
+    assert.match(tab, /\{reviewStrip\}\s*\{head\}/);
+    assert.match(readCode('app/platform-admin/orgs/[id]/ClubRecord.tsx'), /moneyNeedsReview[\s\S]*kit\.tabDot/);
     const panel = readCode('app/platform-admin/orgs/[id]/BillingAddressPanel.tsx');
     assert.doesNotMatch(panel, /<button|'PUT'|'POST'|'PATCH'|'DELETE'/, 'read only');
     assert.match(panel, /REVIEW_CONSEQUENCE/);

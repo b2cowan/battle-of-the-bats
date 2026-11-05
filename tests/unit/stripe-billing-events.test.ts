@@ -82,6 +82,34 @@ describe('the record of what arrived', () => {
     assert.equal(dispute.customerId, null, 'a dispute names no customer');
     assert.equal(dispute.subscriptionId, null);
   });
+
+  it('a removed card still names the customer it left (its own customer is null)', () => {
+    const detached = billingEventFacts({
+      id: 'evt_d', type: 'payment_method.detached', livemode: false,
+      data: { object: { id: 'pm_1', object: 'payment_method', type: 'card', customer: null }, previous_attributes: { customer: 'cus_7' } },
+    } as unknown as Stripe.Event);
+    assert.equal(detached.customerId, 'cus_7');
+    const attached = billingEventFacts({
+      id: 'evt_a', type: 'payment_method.attached', livemode: false,
+      data: { object: { id: 'pm_2', object: 'payment_method', type: 'card', customer: 'cus_7' } },
+    } as unknown as Stripe.Event);
+    assert.equal(attached.customerId, 'cus_7');
+    // Edges: no previous_attributes at all is still "no customer"; an expanded customer object reads; a customer on the object wins.
+    const bare = billingEventFacts({
+      id: 'evt_b', type: 'payment_method.detached', livemode: false, data: { object: { id: 'pm_3', customer: null } },
+    } as unknown as Stripe.Event);
+    assert.equal(bare.customerId, null);
+    const expanded = billingEventFacts({
+      id: 'evt_e', type: 'payment_method.detached', livemode: false,
+      data: { object: { id: 'pm_4', customer: null }, previous_attributes: { customer: { id: 'cus_8' } } },
+    } as unknown as Stripe.Event);
+    assert.equal(expanded.customerId, 'cus_8');
+    const named = billingEventFacts({
+      id: 'evt_n', type: 'payment_method.detached', livemode: false,
+      data: { object: { id: 'pm_5', customer: 'cus_9' }, previous_attributes: { customer: 'cus_other' } },
+    } as unknown as Stripe.Event);
+    assert.equal(named.customerId, 'cus_9');
+  });
 });
 
 describe('a replay does nothing', () => {
