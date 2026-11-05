@@ -110,6 +110,181 @@
     "indexdef": "CREATE UNIQUE INDEX assistant_invite_tokens_token_hash_uq ON public.assistant_invite_tokens USING btree (token_hash)"
   },
   {
+    "tablename": "bank_account_books",
+    "indexname": "bank_account_books_account_idx",
+    "indexdef": "CREATE INDEX bank_account_books_account_idx ON public.bank_account_books USING btree (bank_account_id)"
+  },
+  {
+    "tablename": "bank_account_books",
+    "indexname": "bank_account_books_moved_by_idx",
+    "indexdef": "CREATE INDEX bank_account_books_moved_by_idx ON public.bank_account_books USING btree (moved_by) WHERE (moved_by IS NOT NULL)"
+  },
+  {
+    "tablename": "bank_account_books",
+    "indexname": "bank_account_books_pkey",
+    "indexdef": "CREATE UNIQUE INDEX bank_account_books_pkey ON public.bank_account_books USING btree (ledger_id)"
+  },
+  {
+    "tablename": "bank_accounts",
+    "indexname": "bank_accounts_club_name",
+    "indexdef": "CREATE UNIQUE INDEX bank_accounts_club_name ON public.bank_accounts USING btree (org_id, lower(name)) WHERE ((owner_kind = 'club'::text) AND (archived_at IS NULL))"
+  },
+  {
+    "tablename": "bank_accounts",
+    "indexname": "bank_accounts_created_by_idx",
+    "indexdef": "CREATE INDEX bank_accounts_created_by_idx ON public.bank_accounts USING btree (created_by) WHERE (created_by IS NOT NULL)"
+  },
+  {
+    "tablename": "bank_accounts",
+    "indexname": "bank_accounts_one_per_team",
+    "indexdef": "CREATE UNIQUE INDEX bank_accounts_one_per_team ON public.bank_accounts USING btree (team_id) WHERE ((owner_kind = 'team'::text) AND (archived_at IS NULL))"
+  },
+  {
+    "tablename": "bank_accounts",
+    "indexname": "bank_accounts_org_idx",
+    "indexdef": "CREATE INDEX bank_accounts_org_idx ON public.bank_accounts USING btree (org_id, created_at)"
+  },
+  {
+    "tablename": "bank_accounts",
+    "indexname": "bank_accounts_pkey",
+    "indexdef": "CREATE UNIQUE INDEX bank_accounts_pkey ON public.bank_accounts USING btree (id)"
+  },
+  {
+    "tablename": "bank_accounts",
+    "indexname": "bank_accounts_set_up_by_idx",
+    "indexdef": "CREATE INDEX bank_accounts_set_up_by_idx ON public.bank_accounts USING btree (set_up_by) WHERE (set_up_by IS NOT NULL)"
+  },
+  {
+    "tablename": "bank_check_added_lines",
+    "indexname": "bank_check_added_lines_by_idx",
+    "indexdef": "CREATE INDEX bank_check_added_lines_by_idx ON public.bank_check_added_lines USING btree (added_by) WHERE (added_by IS NOT NULL)"
+  },
+  {
+    "tablename": "bank_check_added_lines",
+    "indexname": "bank_check_added_lines_once",
+    "indexdef": "CREATE UNIQUE INDEX bank_check_added_lines_once ON public.bank_check_added_lines USING btree (check_id, line_key)"
+  },
+  {
+    "tablename": "bank_check_added_lines",
+    "indexname": "bank_check_added_lines_pkey",
+    "indexdef": "CREATE UNIQUE INDEX bank_check_added_lines_pkey ON public.bank_check_added_lines USING btree (id)"
+  },
+  {
+    "tablename": "bank_check_changes",
+    "indexname": "bank_check_changes_changed_by_idx",
+    "indexdef": "CREATE INDEX bank_check_changes_changed_by_idx ON public.bank_check_changes USING btree (changed_by) WHERE (changed_by IS NOT NULL)"
+  },
+  {
+    "tablename": "bank_check_changes",
+    "indexname": "bank_check_changes_check_idx",
+    "indexdef": "CREATE INDEX bank_check_changes_check_idx ON public.bank_check_changes USING btree (check_id, changed_at)"
+  },
+  {
+    "tablename": "bank_check_changes",
+    "indexname": "bank_check_changes_cleared_by_idx",
+    "indexdef": "CREATE INDEX bank_check_changes_cleared_by_idx ON public.bank_check_changes USING btree (cleared_by) WHERE (cleared_by IS NOT NULL)"
+  },
+  {
+    "tablename": "bank_check_changes",
+    "indexname": "bank_check_changes_open_idx",
+    "indexdef": "CREATE INDEX bank_check_changes_open_idx ON public.bank_check_changes USING btree (check_id) WHERE (cleared_at IS NULL)"
+  },
+  {
+    "tablename": "bank_check_changes",
+    "indexname": "bank_check_changes_pkey",
+    "indexdef": "CREATE UNIQUE INDEX bank_check_changes_pkey ON public.bank_check_changes USING btree (id)"
+  },
+  {
+    "tablename": "bank_check_events",
+    "indexname": "bank_check_events_by_idx",
+    "indexdef": "CREATE INDEX bank_check_events_by_idx ON public.bank_check_events USING btree (by_user) WHERE (by_user IS NOT NULL)"
+  },
+  {
+    "tablename": "bank_check_events",
+    "indexname": "bank_check_events_check_idx",
+    "indexdef": "CREATE INDEX bank_check_events_check_idx ON public.bank_check_events USING btree (check_id, at)"
+  },
+  {
+    "tablename": "bank_check_events",
+    "indexname": "bank_check_events_pkey",
+    "indexdef": "CREATE UNIQUE INDEX bank_check_events_pkey ON public.bank_check_events USING btree (id)"
+  },
+  {
+    "tablename": "bank_check_marks",
+    "indexname": "bank_check_marks_by_idx",
+    "indexdef": "CREATE INDEX bank_check_marks_by_idx ON public.bank_check_marks USING btree (marked_by) WHERE (marked_by IS NOT NULL)"
+  },
+  {
+    "tablename": "bank_check_marks",
+    "indexname": "bank_check_marks_check_idx",
+    "indexdef": "CREATE INDEX bank_check_marks_check_idx ON public.bank_check_marks USING btree (check_id)"
+  },
+  {
+    "tablename": "bank_check_marks",
+    "indexname": "bank_check_marks_one_tick",
+    "indexdef": "CREATE UNIQUE INDEX bank_check_marks_one_tick ON public.bank_check_marks USING btree (bank_account_id, line_key)"
+  },
+  {
+    "tablename": "bank_check_marks",
+    "indexname": "bank_check_marks_pkey",
+    "indexdef": "CREATE UNIQUE INDEX bank_check_marks_pkey ON public.bank_check_marks USING btree (id)"
+  },
+  {
+    "tablename": "bank_checks",
+    "indexname": "bank_checks_checked_by_idx",
+    "indexdef": "CREATE INDEX bank_checks_checked_by_idx ON public.bank_checks USING btree (checked_by) WHERE (checked_by IS NOT NULL)"
+  },
+  {
+    "tablename": "bank_checks",
+    "indexname": "bank_checks_created_by_idx",
+    "indexdef": "CREATE INDEX bank_checks_created_by_idx ON public.bank_checks USING btree (created_by) WHERE (created_by IS NOT NULL)"
+  },
+  {
+    "tablename": "bank_checks",
+    "indexname": "bank_checks_id_account",
+    "indexdef": "CREATE UNIQUE INDEX bank_checks_id_account ON public.bank_checks USING btree (id, bank_account_id)"
+  },
+  {
+    "tablename": "bank_checks",
+    "indexname": "bank_checks_one_per_end_date",
+    "indexdef": "CREATE UNIQUE INDEX bank_checks_one_per_end_date ON public.bank_checks USING btree (bank_account_id, statement_end_date)"
+  },
+  {
+    "tablename": "bank_checks",
+    "indexname": "bank_checks_pkey",
+    "indexdef": "CREATE UNIQUE INDEX bank_checks_pkey ON public.bank_checks USING btree (id)"
+  },
+  {
+    "tablename": "bank_line_exclusions",
+    "indexname": "bank_line_exclusions_by_idx",
+    "indexdef": "CREATE INDEX bank_line_exclusions_by_idx ON public.bank_line_exclusions USING btree (excluded_by) WHERE (excluded_by IS NOT NULL)"
+  },
+  {
+    "tablename": "bank_line_exclusions",
+    "indexname": "bank_line_exclusions_once",
+    "indexdef": "CREATE UNIQUE INDEX bank_line_exclusions_once ON public.bank_line_exclusions USING btree (bank_account_id, line_key)"
+  },
+  {
+    "tablename": "bank_line_exclusions",
+    "indexname": "bank_line_exclusions_pkey",
+    "indexdef": "CREATE UNIQUE INDEX bank_line_exclusions_pkey ON public.bank_line_exclusions USING btree (id)"
+  },
+  {
+    "tablename": "bank_saved_lines",
+    "indexname": "bank_saved_lines_by_idx",
+    "indexdef": "CREATE INDEX bank_saved_lines_by_idx ON public.bank_saved_lines USING btree (saved_by) WHERE (saved_by IS NOT NULL)"
+  },
+  {
+    "tablename": "bank_saved_lines",
+    "indexname": "bank_saved_lines_once",
+    "indexdef": "CREATE UNIQUE INDEX bank_saved_lines_once ON public.bank_saved_lines USING btree (bank_account_id, line_key)"
+  },
+  {
+    "tablename": "bank_saved_lines",
+    "indexname": "bank_saved_lines_pkey",
+    "indexdef": "CREATE UNIQUE INDEX bank_saved_lines_pkey ON public.bank_saved_lines USING btree (id)"
+  },
+  {
     "tablename": "basic_coach_team_announcements",
     "indexname": "basic_coach_team_announcements_pkey",
     "indexdef": "CREATE UNIQUE INDEX basic_coach_team_announcements_pkey ON public.basic_coach_team_announcements USING btree (id)"
@@ -443,6 +618,21 @@
     "tablename": "chat_rooms",
     "indexname": "chat_rooms_surface_ref_sub_uniq",
     "indexdef": "CREATE UNIQUE INDEX chat_rooms_surface_ref_sub_uniq ON public.chat_rooms USING btree (surface, ref_id, ref_sub_id) WHERE (ref_sub_id IS NOT NULL)"
+  },
+  {
+    "tablename": "child_match_rejections",
+    "indexname": "child_match_rejections_child_b_idx",
+    "indexdef": "CREATE INDEX child_match_rejections_child_b_idx ON public.child_match_rejections USING btree (child_b_id)"
+  },
+  {
+    "tablename": "child_match_rejections",
+    "indexname": "child_match_rejections_pair_uniq",
+    "indexdef": "CREATE UNIQUE INDEX child_match_rejections_pair_uniq ON public.child_match_rejections USING btree (child_a_id, child_b_id)"
+  },
+  {
+    "tablename": "child_match_rejections",
+    "indexname": "child_match_rejections_pkey",
+    "indexdef": "CREATE UNIQUE INDEX child_match_rejections_pkey ON public.child_match_rejections USING btree (id)"
   },
   {
     "tablename": "club_schedule_hand_back_slots",
@@ -4003,6 +4193,11 @@
     "tablename": "rep_roster_players",
     "indexname": "rep_roster_players_id_team_uniq",
     "indexdef": "CREATE UNIQUE INDEX rep_roster_players_id_team_uniq ON public.rep_roster_players USING btree (id, team_id)"
+  },
+  {
+    "tablename": "rep_roster_players",
+    "indexname": "rep_roster_players_one_child_per_season",
+    "indexdef": "CREATE UNIQUE INDEX rep_roster_players_one_child_per_season ON public.rep_roster_players USING btree (child_id, program_year_id)"
   },
   {
     "tablename": "rep_roster_players",

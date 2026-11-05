@@ -4325,6 +4325,7 @@ function mapRepTryoutRegistration(r: any): RepTryoutRegistration {
     programYearId: r.program_year_id,
     teamId: r.team_id,
     orgId: r.org_id,
+    childId: r.child_id,
     playerFirstName: r.player_first_name,
     playerLastName: r.player_last_name,
     playerDateOfBirth: r.player_date_of_birth,
@@ -4492,12 +4493,16 @@ export interface TryoutAcceptDues {
   installments: Array<{ installmentNumber?: number; amount: number; dueDate: string }>;
 }
 
+/** `already_on_roster`: the sign-up's child is already on this season's roster (mig 438's one-child-per-season index —
+ *  a race past the routes' own check, Stage 14 S3). */
+type TryoutAcceptErrorCode = 'not_found' | 'not_offered' | 'dues_invalid' | 'season_not_live' | 'already_on_roster';
+
 /** Typed accept failures the routes translate to 404/409/400 (rather than a bare 500). */
 export class TryoutAcceptError extends Error {
-  code: 'not_found' | 'not_offered' | 'dues_invalid' | 'season_not_live';
+  code: TryoutAcceptErrorCode;
   /** The HTTP status every caller answers with — one mapping, not one per route. */
   httpStatus: number;
-  constructor(code: 'not_found' | 'not_offered' | 'dues_invalid' | 'season_not_live', message: string) {
+  constructor(code: TryoutAcceptErrorCode, message: string) {
     super(message);
     this.name = 'TryoutAcceptError';
     this.code = code;
@@ -4592,6 +4597,9 @@ export async function acceptTryoutAndAddToRoster(
     if (msg.includes('tryout_accept_reg_not_found')) throw new TryoutAcceptError('not_found', 'Tryout registration not found');
     if (msg.includes('tryout_accept_not_offered')) throw new TryoutAcceptError('not_offered', 'This applicant is no longer awaiting acceptance.');
     if (msg.includes('tryout_accept_dues_invalid')) throw new TryoutAcceptError('dues_invalid', 'The fee schedule is invalid — installments must sum to the total.');
+    if (error.code === '23505' && `${msg} ${error.details ?? ''}`.includes('rep_roster_players_one_child_per_season')) {
+      throw new TryoutAcceptError('already_on_roster', 'This player is already on this season’s roster.');
+    }
     throw error;
   }
 
@@ -10343,6 +10351,24 @@ export async function decideContinuityLink(
     .maybeSingle();
   if (error) throw error;
   return data ? mapRepPlayerContinuityLink(data) : null;
+}
+
+/**
+ * EVERY season's roster entries of one team, call-ups included (Club Tier Stage 14 S3). ⚠ ONE module on purpose:
+ * `lib/past-players.ts` (`readPastPlayers`, `returningCaptions`) — the past-player picker, the "Same child?" question and
+ * the roster's "Back from…" caption read the team's earlier seasons through it. It is a cross-season read; the routes
+ * that reach it are enumerated in `CROSS_SEASON_ROSTER_READERS` (tests/unit/coach-history-endpoint-guard.test.ts), and
+ * every other surface reads one season through `getRepRosterPlayers`.
+ */
+export async function getRepTeamRosterEntriesAllSeasons(teamId: string): Promise<RepRosterPlayer[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_roster_players')
+    .select('*')
+    .eq('team_id', teamId)
+    .order('created_at', { ascending: true })
+    .order('id', { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map(mapRepRosterPlayer);
 }
 
 /** Team-scoped bulk roster-row fetch (the archive chain walks prior roster ids). */

@@ -27,6 +27,12 @@ import CoachNotGranted from '@/components/coaches/CoachNotGranted';
 import { hasRecordAccess } from '@/lib/coach-capabilities';
 import { useHelpDrawer } from '@/components/help/help-drawer-context';
 import RosterBulkAddSheet from '@/components/coaches/RosterBulkAddSheet';
+import PastPlayersPicker, { usePastPlayers } from '@/components/coaches/PastPlayersPicker';
+import {
+  PICKER_DOOR, SAME_CHILD_NO, SAME_CHILD_CHANGE, SAME_CHILD_FOOT_SHORT,
+  sameNameCandidates, sameChildHead, sameChildDetail, sameChildYes, sameChildFoot, sameChildChosen,
+  bornWarning, backFromCaption, type PastPlayer,
+} from '@/lib/past-player-words';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import { pitcherRankLabel } from '@/lib/lineup-profile';
 import { cleanNamePart, playerName, telHref, isCallUp } from '@/lib/coach-roster-name';
@@ -126,6 +132,15 @@ export default function RosterPage({
   // Running count for "Save & add another", so a coach entering a few in a row can see progress
   // without the sheet closing between each one.
   const [addedInRun, setAddedInRun] = useState(0);
+  /* "Bring back a past player" + "Same child?" (Stage 14 S3, tabs 3–4). The past players are read while Add Player is
+     open, so the question can ask as the coach types; the server re-checks on add. `sameChild` is the coach's "yes";
+     `notSame` the children they said "no" to (stored on add); `serverAsk` a match only the server saw. */
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [sameChild, setSameChild] = useState<PastPlayer | null>(null);
+  const [notSame, setNotSame] = useState<string[]>([]);
+  const [serverAsk, setServerAsk] = useState<PastPlayer | null>(null);
+  /** "Back from the 2025 Season" captions by roster entry, until the first game (from the roster read). */
+  const [returning, setReturning] = useState<Record<string, string>>({});
   const [togglingId, setTogglingId] = useState<string | null>(null);
   /** Call-ups (mig 309): playerId → games they have been called up to, this season. */
   const [callUpGames, setCallUpGames] = useState<Record<string, number>>({});
@@ -172,6 +187,7 @@ export default function RosterPage({
       if (!data) throw new Error('Failed to load roster');
       setPlayers(data.players ?? []);
       setProgramYear(data.programYear ?? null);
+      setReturning(data.returning ?? {});
 
       /* Call-up games-played (mig 309). A second, tiny request rather than folding the counts into
          the roster payload: the roster read is the busiest on this page and is shared by surfaces
@@ -331,6 +347,7 @@ export default function RosterPage({
 
   async function handleAdd(keepOpen = false) {
     if (!addForm.playerFirstName.trim()) return; // first name required; last + guardian optional
+    if (asking) return; // the question waits for an answer (the buttons are disabled too)
 
     setAdding(true);
     setAddError('');
@@ -352,11 +369,20 @@ export default function RosterPage({
             guardianEmail:     addForm.guardianEmail.trim() || null,
             guardianPhone:     addForm.guardianPhone.trim() || null,
             notes:             addForm.notes.trim() || null,
+            sameChildId:       chosenChild?.childId ?? null,
+            notSameChildIds:   notSame,
           }),
         },
       );
       const data = await res.json();
+      // A match the window had not seen (a past player read after it opened): ask it now, nothing was written.
+      if (res.status === 409 && data?.code === 'needs_answer' && data.candidate) {
+        setServerAsk(data.candidate as PastPlayer);
+        return;
+      }
       if (!res.ok) throw new Error(data.error ?? 'Failed to add player');
+      resetQuestion();
+      if (data.broughtBack) pastPlayers.reload();
       const addedName = [addForm.playerFirstName.trim(), addForm.playerLastName.trim()].filter(Boolean).join(' ');
       setAddForm(BLANK);
       // Append the created player to local state (it appends server-side too) rather than refetching —
@@ -389,13 +415,48 @@ export default function RosterPage({
   const confirm = useConfirm();
 
   const addDirty = addOpen && JSON.stringify(addForm) !== JSON.stringify(BLANK);
+  function resetQuestion() {
+    setSameChild(null);
+    setNotSame([]);
+    setServerAsk(null);
+  }
   function openAdd() {
     setAddForm(BLANK);
     setAddedInRun(0);
     setAddError('');
+    resetQuestion();
     setBulkOpen(false);
     setAddOpen(true);
   }
+
+  // ── "Same child?" (tab 4) ─────────────────────────────────────────────────────────────────────────────────────────
+  const pastPlayers = usePastPlayers(orgSlug, teamId, addOpen);
+  const pastList = pastPlayers.data?.players ?? [];
+  // The coach's "yes" holds only while the typed name is still that child's.
+  const chosenChild = sameChild
+    && sameNameCandidates(addForm.playerFirstName, addForm.playerLastName, [sameChild]).length > 0 ? sameChild : null;
+  const notSameSet = new Set([...notSame, ...(pastPlayers.data?.answeredNo ?? [])]);
+  const asking: PastPlayer | null = chosenChild ? null
+    : (serverAsk && !notSameSet.has(serverAsk.childId)
+        && sameNameCandidates(addForm.playerFirstName, addForm.playerLastName, [serverAsk]).length > 0 ? serverAsk : null)
+      ?? sameNameCandidates(addForm.playerFirstName, addForm.playerLastName, pastList, notSameSet)[0] ?? null;
+  function answerYes(p: PastPlayer) {
+    setSameChild(p);
+    setServerAsk(null);
+    // "Yes, it's Jonah" fills in Jonah's saved details where a box is blank; what the coach typed stays. The server
+    // copies the rest (family, medical, emergency contact) from the child's latest entry.
+    setAddForm(f => ({
+      ...f,
+      playerNumber: f.playerNumber.trim() ? f.playerNumber : (p.number ?? ''),
+      playerDateOfBirth: f.playerDateOfBirth || (p.dateOfBirth ?? ''),
+    }));
+  }
+  function answerNo(p: PastPlayer) {
+    setNotSame(n => n.includes(p.childId) ? n : [...n, p.childId]);
+    setServerAsk(null);
+  }
+  const addBornWarning = pastPlayers.data?.rosterPii && addForm.playerDateOfBirth
+    ? bornWarning(addForm.playerDateOfBirth, pastPlayers.data.born, pastPlayers.data.cutoff) : null;
   // The window's one closer — ×, ←, Escape and the phone's Back, after the window's own ask when something is typed
   // (One Window Stage 2c, B1: the ask is in the window's foot, no second window).
   function closeAdd() {
@@ -597,7 +658,7 @@ export default function RosterPage({
   // where there is no HelpButton label to fall back to.
   const rosterHelpRequest = {
     module: 'coaches' as const,
-    sectionIds: ['recipe-add-player', 'premium-bulk-roster'],
+    sectionIds: ['recipe-add-player', 'recipe-bring-back-past-player', 'recipe-same-child-question', 'premium-bulk-roster'],
     label: 'Roster',
     fullGuideHref: `/${orgSlug}/coaches/help#recipe-add-player`,
   };
@@ -830,6 +891,7 @@ export default function RosterPage({
                         base={base}
                         dragDisabled={activePlayers.length < 2 || !canWriteRoster}
                         isDuplicateNumber={!!p.playerNumber && dupNumbers.has(p.playerNumber.trim())}
+                        returningFrom={returning[p.id] ?? null}
                       />
                     ))}
                   </SortableContext>
@@ -960,12 +1022,18 @@ export default function RosterPage({
       <QuestionShell open={addOpen} onClose={closeAdd} dirty={addDirty} busy={adding}
         ariaLabel="Add Player" title="Add Player"
         headerExtra={addedInRun > 0 ? <span className={styles.discToggleMeta}>{addedInRun} added</span> : undefined}
+        footerStart={asking ? (
+          <span className={styles.bornWarnHint}>
+            <span className={styles.sameChildLong}>{sameChildFoot(asking)}</span>
+            <span className={styles.sameChildShort}>{SAME_CHILD_FOOT_SHORT}</span>
+          </span>
+        ) : undefined}
         footer={<>
           <button
             type="button"
             className="btn btn-ghost"
             onClick={() => handleAdd(true)}
-            disabled={adding || !addForm.playerFirstName.trim()}
+            disabled={adding || !addForm.playerFirstName.trim() || !!asking}
           >
             Save &amp; add another
           </button>
@@ -973,21 +1041,28 @@ export default function RosterPage({
             type="button"
             className="btn btn-lime"
             onClick={() => handleAdd(false)}
-            disabled={adding || !addForm.playerFirstName.trim()}
+            disabled={adding || !addForm.playerFirstName.trim() || !!asking}
           >
             {adding ? 'Adding…' : 'Add Player'}
           </button>
         </>}>
 
-        {/* The bulk door, on the first line — the "* Required" legend that used to lead it came off
+        {/* The two doors, on the first lines (paste a list; bring back a past player — Stage 14 S3) — the "* Required" legend that used to lead it came off
             every form on 2026-09-21 (the asterisk on a label is the whole signal). */}
-        <p className={styles.formHint}>
+        <p className={`${styles.formHint} ${styles.addDoorLinks}`}>
           <button
             type="button"
             className={`${styles.linkBtn} ${styles.linkBtnAccent}`}
             onClick={() => { setAddOpen(false); setAddedInRun(0); setBulkOpen(true); }}
           >
             Adding several? Paste a list →
+          </button>
+          <button
+            type="button"
+            className={`${styles.linkBtn} ${styles.linkBtnAccent}`}
+            onClick={() => { setAddOpen(false); setAddedInRun(0); setPickerOpen(true); }}
+          >
+            {PICKER_DOOR}
           </button>
         </p>
 
@@ -1010,6 +1085,29 @@ export default function RosterPage({
               onChange={e => setAddForm(f => ({ ...f, playerLastName: e.target.value }))}
               maxLength={60} />
           </div>
+          {/* "Same child?" — as soon as the first and last name match a past player of THIS team (tab 4). A match
+              is always a question, never a join; both Add buttons wait while it is open. */}
+          {asking && page.teamName && (
+            <div className={`${styles.formGridFull} ${styles.sameChildAsk}`} role="group" aria-label="Is this the same child?">
+              <b>{sameChildHead(asking, page.teamName)}</b>
+              <p>
+                <span className={styles.sameChildLong}>{sameChildDetail(asking)}</span>
+                <span className={styles.sameChildShort}>{sameChildDetail(asking, true)}</span>
+              </p>
+              <div className={styles.sameChildAskButtons}>
+                <button type="button" className="btn btn-outline" onClick={() => answerYes(asking)}>{sameChildYes(asking)}</button>
+                <button type="button" className="btn btn-outline" onClick={() => answerNo(asking)}>{SAME_CHILD_NO}</button>
+              </div>
+            </div>
+          )}
+          {chosenChild && (
+            <p className={`${styles.formGridFull} ${styles.sameChildChosen}`}>
+              <span>{sameChildChosen(chosenChild)}</span>
+              <button type="button" className={`${styles.linkBtn} ${styles.linkBtnAccent}`} onClick={() => setSameChild(null)}>
+                {SAME_CHILD_CHANGE}
+              </button>
+            </p>
+          )}
           <div className={styles.field}>
             <label className={styles.label} htmlFor="add-num">Jersey #</label>
             <input id="add-num" className={styles.input} type="text"
@@ -1084,6 +1182,8 @@ export default function RosterPage({
                 <DateInput id="add-dob" className={styles.input}
                   value={addForm.playerDateOfBirth}
                   onChange={v => setAddForm(f => ({ ...f, playerDateOfBirth: v }))} />
+                {/* Ask 12: warn, never block — only when the team has birth years. */}
+                {addBornWarning && <p className={styles.bornWarnHint}>{addBornWarning}</p>}
               </div>
               <div className={styles.field}>
                 <label className={styles.label} htmlFor="add-notes">Notes</label>
@@ -1117,6 +1217,19 @@ export default function RosterPage({
         />
       )}
 
+      <PastPlayersPicker
+        open={pickerOpen}
+        orgSlug={orgSlug}
+        teamId={teamId}
+        onClose={() => setPickerOpen(false)}
+        onAdded={(created, message) => {
+          setPickerOpen(false);
+          if (created.length) setPlayers(prev => [...prev, ...created]);
+          showFeedback('success', message);
+          void load(); // the captions ("Back from the 2025 Season") come from the roster read
+        }}
+      />
+
       {errorMsg && (
         <KitDialog
           kind="question"
@@ -1137,8 +1250,11 @@ function SortableRow({
   base,
   dragDisabled,
   isDuplicateNumber,
+  returningFrom,
 }: {
   player: RepRosterPlayer;
+  /** "Back from the 2025 Season" — the season a returning child last played, until the first game (Stage 14 S3). */
+  returningFrom: string | null;
   /** Chunk F: keeps a player link inside the season the roster is showing. */
   base: string;
   dragDisabled: boolean;
@@ -1189,7 +1305,14 @@ function SortableRow({
       </td>
       <td className={styles.td} data-label="Player">
         <span className={styles.playerCell}>
-          <Link href={playerHref} className={styles.playerNameLink}>{fullName}</Link>
+          {returningFrom ? (
+            <span className={styles.playerCellStack}>
+              <Link href={playerHref} className={styles.playerNameLink}>{fullName}</Link>
+              <span className={styles.rosterReturning}>{backFromCaption(returningFrom)}</span>
+            </span>
+          ) : (
+            <Link href={playerHref} className={styles.playerNameLink}>{fullName}</Link>
+          )}
           {/* ⚠ TWO MARKERS, BOTH FROM DATA ALREADY ON THIS ROW — no extra call, nothing new for a
               coach to enter: who starts, and who the trainer needs to know about. Each carries a
               title AND an accessible label, because a coloured square is not information to a

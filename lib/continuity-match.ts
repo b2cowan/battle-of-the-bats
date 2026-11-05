@@ -71,7 +71,8 @@ function normEmail(e: string | null): string {
   return (e ?? '').trim().toLowerCase();
 }
 
-function normName(n: string | null): string {
+/** The matcher's one name rule (trim, lower case, single spaces) — also the "Same child?" question's (Stage 14 S3). */
+export function normName(n: string | null | undefined): string {
   return (n ?? '').trim().toLowerCase().replace(/\s+/g, ' ');
 }
 

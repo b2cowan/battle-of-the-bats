@@ -5061,6 +5061,7 @@ a.oneChip:hover { border-color: currentColor; }
   display: flex; align-items: center; gap: 0.45rem;
   width: 100%; text-align: left;
   padding: 0.55rem 0.7rem;
+  min-height: var(--tap-min, 44px); /* was 37px at phone width — owner call J4, walk §455 */
   background: transparent;
   border: 1px dashed var(--home-line-strong, rgba(255,255,255,0.16));
   border-radius: 8px;
@@ -16482,4 +16483,87 @@ button.lineupRulesToggle {
 }
 @media (max-width: 768px) {
   button.lineupRulesToggle { min-height: var(--tap-min, 44px); }
+}
+
+/* ── Bring back a past player · "Same child?" (Club Tier Stage 14 S3, drawn + ruled 2026-11-04, tabs 3, 4, 8) ──────
+   The picker is the 640 window (each row carries a trailing chip) and reuses the Pay out sheet's tick list above
+   (`.debtList` / `.debtRow`, the /design round's pick-many idiom). Chips are sentence-case and mono: a state ("2026
+   dues settled", "$120.00 owing from 2025", "Born 2014"), never a label. A phone row drops the born date and the
+   family, and its warning moves to an amber second line instead of a chip. The question is an amber callout under the
+   names; the window's buttons wait with the reason in the foot. ⚠ TOKENS ONLY (warm theme). */
+.pastSearch { width: 100%; margin-bottom: 0.6rem; }
+.pastHint { margin: 0 0 0.75rem; font-size: var(--type-support); line-height: 1.45; color: var(--text-tertiary); }
+.pastRowName { display: inline-flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
+.pastChip {
+  flex: none;
+  font-family: var(--font-data, monospace);
+  font-size: var(--type-support);
+  font-weight: 600;
+  white-space: nowrap;
+  border-radius: 4px;
+  padding: 0.12rem 0.45rem;
+}
+.pastChipGood { background: rgba(var(--success-rgb), 0.12); color: var(--badge-success-ink); border: 1px solid rgba(var(--success-rgb), 0.25); }
+.pastChipWarn { background: rgba(var(--warning-rgb), 0.12); color: var(--badge-warning-ink); border: 1px solid rgba(var(--warning-rgb), 0.25); }
+.pastChips { display: inline-flex; flex-direction: column; align-items: flex-end; gap: 0.25rem; }
+/* ⚠ Every rule below is written `.debtWhat .x` on purpose. `.debtWhat span { display: block }` (specificity 0,1,1)
+   out-ranks a bare `.pastLineShort { display: none }` (0,1,0), so for a while BOTH the desk line and the phone line
+   showed on every row (the "repeating text"), the amber warning line showed beside its chip, and the Inactive /
+   Call-up chip dropped under the name instead of sitting beside it. */
+.debtWhat .pastRowName { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
+.debtWhat .pastRowName .chipQuiet { display: inline-block; }
+.debtWhat .pastWarnLine { display: none; }
+.debtWhat .pastLineShort { display: none; }
+@media (max-width: 640px) {
+  .pastChips { display: none; }
+  .debtWhat .pastLineLong { display: none; }
+  .debtWhat .pastLineShort { display: block; }
+  .debtWhat .pastWarnLine { display: block; color: var(--badge-warning-ink); }
+  .pastHintDesk { display: none; }
+}
+.pastFootLine { flex: 1 1 12rem; margin-right: auto; font-size: var(--type-support); line-height: 1.4; color: var(--text-tertiary); }
+@media (max-width: 640px) { .pastFootLine { display: none; } }
+
+.sameChildAsk {
+  margin: 0.6rem 0 0.4rem;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid var(--badge-warning-border);
+  border-radius: 7px;
+  background: var(--badge-warning-bg);
+  color: var(--badge-warning-ink);
+}
+.sameChildAsk b { display: block; font-size: var(--type-body); font-weight: 650; }
+.sameChildAsk p { margin: 0.15rem 0 0.55rem; font-size: var(--type-support); line-height: 1.45; }
+.sameChildAskButtons { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.sameChildShort { display: none; }
+@media (max-width: 640px) {
+  .sameChildLong { display: none; }
+  .sameChildShort { display: inline; }
+  .sameChildAskButtons > button { flex: 1 1 100%; min-height: var(--tap-min, 44px); }
+}
+.sameChildChosen {
+  display: flex; align-items: baseline; gap: 0.5rem; flex-wrap: wrap;
+  margin: 0.6rem 0 0.4rem;
+  font-size: var(--type-support); color: var(--text-secondary);
+}
+.bornWarnHint { margin: 0.3rem 0 0; font-size: var(--type-support); color: var(--badge-warning-ink); }
+
+/* Paste a list: a matched row's own line and its two-way answer, under the row it asks about. */
+.bulkMatch {
+  /* ⚠ `grid-column: 1 / -1` — the row is a four-column grid (# · first · last · remove). Without it the question
+     lands in the 52px "#" cell and the sentence stacks one word per line (seen 2026-11-04). */
+  grid-column: 1 / -1;
+  display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;
+  margin: 0.25rem 0 0.1rem;
+  font-size: var(--type-support); color: var(--badge-warning-ink);
+}
+.bulkMatch > span { flex: 1 1 14rem; min-width: 0; }
+
+/* The roster's returning caption under a name, until the first game (tab 3). */
+.playerCellStack { display: inline-flex; flex-direction: column; align-items: flex-start; min-width: 0; }
+.rosterReturning { font-size: var(--type-support); color: var(--text-tertiary); }
+/* Add Player's two door lines, stacked; a phone gives each the tap floor (they are the window's first targets). */
+.addDoorLinks { display: flex; flex-direction: column; align-items: flex-start; gap: 0.15rem; margin: 0 0 0.875rem; }
+@media (max-width: 768px) {
+  .addDoorLinks > button { min-height: var(--tap-min, 44px); text-align: left; }
 }

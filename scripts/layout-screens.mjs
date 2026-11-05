@@ -807,6 +807,19 @@ export const SCREENS = [
   // call-ups: no shelf, nothing to open, the entry re-measures the roster.
   { id: 'coach-roster-callups', session: 'coach', path: (c) => `${team(c)}/roster`, ready: 'h1',
     interact: openCallUpShelf },
+  // Club Tier Stage 14 S3 (tabs 3–4): Add Player with its two door lines, and the past-player picker (the 640 window)
+  // opened from the second. Nothing is pressed that writes; a team with no earlier season measures the empty state.
+  { id: 'coach-roster-add-player', session: 'coach', path: (c) => `${team(c)}/roster`, ready: 'h1',
+    interact: (page) => openKitDialogBy(page, page.locator('button:has-text("Add Player"):visible')), scope: '[data-kit-dialog]' },
+  { id: 'coach-roster-past-players', session: 'coach', path: (c) => `${team(c)}/roster`, ready: 'h1',
+    interact: async (page) => {
+      await openKitDialogBy(page, page.locator('button:has-text("Add Player"):visible'));
+      const door = page.locator('[data-kit-dialog] button:has-text("Bring back a past player")').first();
+      if (await door.count() === 0) return;
+      await door.click();
+      await page.locator('[data-kit-dialog]', { hasText: 'Bring back a past player' }).first().waitFor({ state: 'attached', timeout: 15_000 });
+      await page.waitForTimeout(800);
+    }, scope: '[data-kit-dialog]' },
   { id: 'coach-lineups',     session: 'coach', path: (c) => `${team(c)}/lineups`,     ready: 'h1' },
   // The Templates tab is a real address since the hub was brought level with the Practice plans
   // room (2026-09-18); before that it was page state and was never swept at any width.

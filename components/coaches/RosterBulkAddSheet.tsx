@@ -16,6 +16,13 @@ import {
 } from '@/lib/coach-roster-bulk';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import type { RepRosterPlayer } from '@/lib/types';
+import { usePastPlayers } from '@/components/coaches/PastPlayersPicker';
+import {
+  PASTE_SAME, PASTE_NEW, pasteMatchLine, pasteNeedsAnswer, sameNameCandidates, type PastPlayer,
+} from '@/lib/past-player-words';
+
+/** One row's answer to "same child or new?" for the past player it was asked about (Stage 14 S3, tab 4). */
+type RowAnswer = { childId: string; choice: 'same' | 'new' };
 
 type Tab = 'paste' | 'file';
 
@@ -58,6 +65,11 @@ export default function RosterBulkAddSheet({
   const [error, setError] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
   const [fileName, setFileName] = useState('');
+  /* "Same child?" on the check step (Stage 14 S3, tab 4): a row whose first + last name matches a past player of THIS
+     team asks Same child | New player, and Add waits until each is answered. Keyed by the row's number (stable while the
+     coach edits). A "New player" is stored as a "no" when the row is added; the server re-checks every row. */
+  const past = usePastPlayers(orgSlug, teamId, true);
+  const [answers, setAnswers] = useState<Record<number, RowAnswer[]>>({});
 
   // Warnings are recomputed against the live roster on every edit, so fixing a clashing jersey
   // in the preview clears its flag immediately.
@@ -67,6 +79,27 @@ export default function RosterBulkAddSheet({
   );
   const ready = committableRows(rows);
   const blockedCount = rows.length - ready.length;
+
+  /** The past player a row is asking about (the first one it has not said "New player" to) and its "same" answer. */
+  const matchOf = (row: ValidatedDraftRow): { candidate: PastPlayer | null; same: PastPlayer | null; isNew: boolean } => {
+    const mine = answers[row.rowNumber] ?? [];
+    const said = (id: string) => mine.find(a => a.childId === id)?.choice ?? null;
+    const all = sameNameCandidates(row.playerFirstName, row.playerLastName, past.data?.players ?? [], new Set(past.data?.answeredNo ?? []));
+    const same = all.find(c => said(c.childId) === 'same') ?? null;
+    if (same) return { candidate: same, same, isNew: false };
+    const open = all.find(c => said(c.childId) === null);
+    if (open) return { candidate: open, same: null, isNew: false };
+    // Every match answered "New player": show the last one, with New chosen.
+    const lastNew = [...all].reverse().find(c => said(c.childId) === 'new') ?? null;
+    return { candidate: lastNew, same: null, isNew: !!lastNew };
+  };
+  const unanswered = ready.filter(row => { const m = matchOf(row); return m.candidate && !m.same && !m.isNew; }).length;
+  function answerRow(rowNumber: number, childId: string, choice: 'same' | 'new') {
+    setAnswers(prev => ({
+      ...prev,
+      [rowNumber]: [...(prev[rowNumber] ?? []).filter(a => a.childId !== childId && !(choice === 'same' && a.choice === 'same')), { childId, choice }],
+    }));
+  }
 
   // Parsed once per edit and reused by both the button label and the Preview action — parsing in
   // the render body meant re-reading the whole paste on every unrelated re-render, then again on
@@ -99,15 +132,26 @@ export default function RosterBulkAddSheet({
   }
 
   async function commit() {
-    if (ready.length === 0) return;
+    if (ready.length === 0 || unanswered > 0) return;
     setBusy(true); setError('');
     try {
       const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/roster/bulk`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ players: ready }),
+        body: JSON.stringify({
+          players: ready.map(row => {
+            const mine = answers[row.rowNumber] ?? [];
+            return {
+              ...row,
+              sameChildId: matchOf(row).same?.childId ?? null,
+              notSameChildIds: mine.filter(a => a.choice === 'new').map(a => a.childId),
+            };
+          }),
+        }),
       });
       const data = await res.json().catch(() => ({}));
+      // A past player the list had not seen (read after the sheet opened): read again, so its rows ask.
+      if (res.status === 409 && data?.code === 'needs_answer') past.reload();
       if (!res.ok) throw new Error(data.error ?? 'Those players could not be added.');
 
       const created = (data.created ?? []) as RepRosterPlayer[];
@@ -193,6 +237,8 @@ export default function RosterBulkAddSheet({
 
   return (
     <QuestionShell open onClose={onClose} dirty={dirty} busy={busy} ariaLabel="Add players" title="Add players"
+      footerStart={reviewing && unanswered > 0
+        ? <span className={styles.bornWarnHint}>{pasteNeedsAnswer(unanswered)}</span> : undefined}
       headerExtra={reviewing ? (
         <span className={styles.discToggleMeta}>
           {rows.length} read{blockedCount > 0 ? ` · ${blockedCount} to fix` : ''}
@@ -201,7 +247,7 @@ export default function RosterBulkAddSheet({
       footer={<>
         <QuestionCancel className="btn btn-ghost" />
         {reviewing ? (
-          <button type="button" className="btn btn-lime" onClick={commit} disabled={busy || ready.length === 0}>
+          <button type="button" className="btn btn-lime" onClick={commit} disabled={busy || ready.length === 0 || unanswered > 0}>
             {busy ? 'Adding…' : `Add ${ready.length} ${ready.length === 1 ? 'player' : 'players'}`}
           </button>
         ) : (
@@ -360,6 +406,24 @@ export default function RosterBulkAddSheet({
                         <TriangleAlert size={12} aria-hidden /> {message}
                       </span>
                     ))}
+                    {(() => {
+                      const m = row.errors.length === 0 ? matchOf(row) : { candidate: null, same: null, isNew: false };
+                      if (!m.candidate) return null;
+                      const c = m.candidate;
+                      return (
+                        <div className={styles.bulkMatch}>
+                          <span>{pasteMatchLine(c, teamName)}</span>
+                          <div className={styles.segChoice} role="group" aria-label={`Row ${index + 1}: same child or new player?`}>
+                            <button type="button" aria-pressed={!!m.same}
+                              className={`${styles.segBtn}${m.same ? ` ${styles.segBtnActive}` : ''}`}
+                              onClick={() => answerRow(row.rowNumber, c.childId, 'same')}>{PASTE_SAME}</button>
+                            <button type="button" aria-pressed={m.isNew}
+                              className={`${styles.segBtn}${m.isNew ? ` ${styles.segBtnActive}` : ''}`}
+                              onClick={() => answerRow(row.rowNumber, c.childId, 'new')}>{PASTE_NEW}</button>
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
                 ))}
               </div>

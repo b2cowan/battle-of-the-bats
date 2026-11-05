@@ -598,6 +598,10 @@
     "437_the_team_move_carries_its_bank_account.sql": {
       "prod": "pending",
       "note": "Bank reconciliation R1: FUNCTION-ONLY, INVISIBLE to check:migrations. move_team_into_club RE-CREATED from 435 exactly (committed 5b0d27fc0) with bank_accounts added to c_moves (a standalone team's bank account, and everything hanging off it, moves with the team into a club). No table, column or row change; re-runnable. Needs 435 and 436 first (in number order). Apply to prod before the promote that ships R2. Applied to DEV 2026-11-04. Verify on prod: SELECT position('bank_accounts' in prosrc) > 0 FROM pg_proc WHERE proname = 'move_team_into_club' -> true; routine_privileges EXECUTE = postgres + service_role only."
+    },
+    "438_a_no_is_remembered_and_a_child_plays_once_a_season.sql": {
+      "prod": "pending",
+      "note": "Club Tier Stage 14 S3 (Bring back a past player + Same child?): SCHEMA + REPLACED FUNCTION. Visible: table child_match_rejections (RLS on, no policies, grants revoked from anon and authenticated; service role only; no org_id on purpose — keyed by the two org_children, so move_team_into_club is untouched); UNIQUE index rep_roster_players_one_child_per_season (child_id, program_year_id) (owner ruling 2026-11-04 'yes on the lock'); org_children_join re-created from 435 with the stored-no carry-over. Needs 435 first. PRE-CHECK on prod, must return 0 rows or the file rolls back: select child_id, program_year_id, count(*) from public.rep_roster_players group by 1, 2 having count(*) > 1. Applied to DEV 2026-11-04 (0 such pairs). Verify on prod: select indexname from pg_indexes where indexname = 'rep_roster_players_one_child_per_season' -> 1 row; select position('child_match_rejections' in prosrc) > 0 from pg_proc where proname = 'org_children_join' -> true. Apply before the promote that ships S3."
     }
   }
 }

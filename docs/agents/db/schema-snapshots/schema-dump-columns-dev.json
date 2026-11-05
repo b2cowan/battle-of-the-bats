@@ -603,6 +603,699 @@
     "ordinal_position": 17
   },
   {
+    "table_name": "bank_account_books",
+    "column_name": "ledger_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "bank_account_books",
+    "column_name": "bank_account_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "bank_account_books",
+    "column_name": "moved_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "bank_account_books",
+    "column_name": "moved_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "bank_accounts",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "bank_accounts",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "bank_accounts",
+    "column_name": "owner_kind",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "bank_accounts",
+    "column_name": "team_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "bank_accounts",
+    "column_name": "name",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "bank_accounts",
+    "column_name": "opening_date",
+    "data_type": "date",
+    "udt_name": "date",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "bank_accounts",
+    "column_name": "opening_balance_cents",
+    "data_type": "bigint",
+    "udt_name": "int8",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "bank_accounts",
+    "column_name": "set_up_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "bank_accounts",
+    "column_name": "set_up_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "bank_accounts",
+    "column_name": "created_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 10
+  },
+  {
+    "table_name": "bank_accounts",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 11
+  },
+  {
+    "table_name": "bank_accounts",
+    "column_name": "archived_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 12
+  },
+  {
+    "table_name": "bank_check_added_lines",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "bank_check_added_lines",
+    "column_name": "check_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "bank_check_added_lines",
+    "column_name": "line_key",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "bank_check_added_lines",
+    "column_name": "kind",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "bank_check_added_lines",
+    "column_name": "added_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "bank_check_added_lines",
+    "column_name": "added_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "bank_check_changes",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "bank_check_changes",
+    "column_name": "check_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "bank_check_changes",
+    "column_name": "line_key",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "bank_check_changes",
+    "column_name": "was_date",
+    "data_type": "date",
+    "udt_name": "date",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "bank_check_changes",
+    "column_name": "was_direction",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "bank_check_changes",
+    "column_name": "was_amount_cents",
+    "data_type": "bigint",
+    "udt_name": "int8",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "bank_check_changes",
+    "column_name": "now_date",
+    "data_type": "date",
+    "udt_name": "date",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "bank_check_changes",
+    "column_name": "now_direction",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "bank_check_changes",
+    "column_name": "now_amount_cents",
+    "data_type": "bigint",
+    "udt_name": "int8",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "bank_check_changes",
+    "column_name": "removed",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": "false",
+    "ordinal_position": 10
+  },
+  {
+    "table_name": "bank_check_changes",
+    "column_name": "changed_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 11
+  },
+  {
+    "table_name": "bank_check_changes",
+    "column_name": "changed_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 12
+  },
+  {
+    "table_name": "bank_check_changes",
+    "column_name": "cleared_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 13
+  },
+  {
+    "table_name": "bank_check_changes",
+    "column_name": "cleared_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 14
+  },
+  {
+    "table_name": "bank_check_events",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "bank_check_events",
+    "column_name": "check_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "bank_check_events",
+    "column_name": "kind",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "bank_check_events",
+    "column_name": "reason",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "bank_check_events",
+    "column_name": "by_user",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "bank_check_events",
+    "column_name": "at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "bank_check_marks",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "bank_check_marks",
+    "column_name": "bank_account_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "bank_check_marks",
+    "column_name": "check_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "bank_check_marks",
+    "column_name": "line_key",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "bank_check_marks",
+    "column_name": "line_date",
+    "data_type": "date",
+    "udt_name": "date",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "bank_check_marks",
+    "column_name": "direction",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "bank_check_marks",
+    "column_name": "amount_cents",
+    "data_type": "bigint",
+    "udt_name": "int8",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "bank_check_marks",
+    "column_name": "payout_key",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "bank_check_marks",
+    "column_name": "marked_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "bank_check_marks",
+    "column_name": "marked_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 10
+  },
+  {
+    "table_name": "bank_checks",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "bank_checks",
+    "column_name": "bank_account_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "bank_checks",
+    "column_name": "statement_end_date",
+    "data_type": "date",
+    "udt_name": "date",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "bank_checks",
+    "column_name": "statement_ending_balance_cents",
+    "data_type": "bigint",
+    "udt_name": "int8",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "bank_checks",
+    "column_name": "status",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'open'::text",
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "bank_checks",
+    "column_name": "checked_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "bank_checks",
+    "column_name": "checked_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "bank_checks",
+    "column_name": "outstanding_snapshot",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "bank_checks",
+    "column_name": "created_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "bank_checks",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 10
+  },
+  {
+    "table_name": "bank_line_exclusions",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "bank_line_exclusions",
+    "column_name": "bank_account_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "bank_line_exclusions",
+    "column_name": "line_key",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "bank_line_exclusions",
+    "column_name": "excluded_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "bank_line_exclusions",
+    "column_name": "excluded_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "bank_saved_lines",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "bank_saved_lines",
+    "column_name": "bank_account_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "bank_saved_lines",
+    "column_name": "kind",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "bank_saved_lines",
+    "column_name": "line_key",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "bank_saved_lines",
+    "column_name": "line_date",
+    "data_type": "date",
+    "udt_name": "date",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "bank_saved_lines",
+    "column_name": "direction",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "bank_saved_lines",
+    "column_name": "amount_cents",
+    "data_type": "bigint",
+    "udt_name": "int8",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "bank_saved_lines",
+    "column_name": "description",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "bank_saved_lines",
+    "column_name": "saved_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "bank_saved_lines",
+    "column_name": "saved_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 10
+  },
+  {
     "table_name": "basic_coach_team_announcements",
     "column_name": "id",
     "data_type": "uuid",
@@ -2527,6 +3220,60 @@
     "is_nullable": "NO",
     "column_default": "now()",
     "ordinal_position": 10
+  },
+  {
+    "table_name": "child_match_rejections",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "child_match_rejections",
+    "column_name": "child_a_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "child_match_rejections",
+    "column_name": "child_b_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "child_match_rejections",
+    "column_name": "door",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "child_match_rejections",
+    "column_name": "rejected_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "child_match_rejections",
+    "column_name": "rejected_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 6
   },
   {
     "table_name": "club_schedule_hand_back_slots",

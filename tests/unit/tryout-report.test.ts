@@ -32,7 +32,7 @@ function mkReg(over: Partial<RepTryoutRegistration> = {}): RepTryoutRegistration
   seq += 1;
   return {
     id: over.id ?? `reg-${seq}`,
-    programYearId: 'py-1', teamId: 'team-1', orgId: 'org-1',
+    programYearId: 'py-1', teamId: 'team-1', orgId: 'org-1', childId: `child-${seq}`,
     playerFirstName: 'Player', playerLastName: `#${seq}`,
     playerDateOfBirth: null, playerNotes: null, lastSeasonTeam: null,
     guardianFirstName: 'G', guardianLastName: 'Uardian',

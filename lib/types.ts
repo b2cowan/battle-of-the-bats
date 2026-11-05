@@ -1332,6 +1332,8 @@ export interface RepTryoutRegistration {
   programYearId: string;
   teamId: string;
   orgId: string;
+  /** The child this sign-up is one season of (mig 435; Stage 14 S3 reads it at accept). */
+  childId: string;
   playerFirstName: string;
   playerLastName: string;
   playerDateOfBirth: string | null;

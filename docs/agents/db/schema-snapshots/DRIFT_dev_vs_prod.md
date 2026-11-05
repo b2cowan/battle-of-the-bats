@@ -1,20 +1,30 @@
 # Dev vs Prod — structural drift
 
-**Generated:** 2026-11-04 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
+**Generated:** 2026-11-05 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 269 divergence(s)** across dev/prod.
+**⚠️ 475 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
-| Tables | 10 | 0 | — |
-| Columns | 135 | 0 | 0 |
-| Indexes | 40 | 0 | 0 |
-| Constraints | 44 | 0 | — |
-| RLS / CHECK | 39 | 0 | 0 (RLS state) |
+| Tables | 20 | 0 | — |
+| Columns | 218 | 0 | 0 |
+| Indexes | 79 | 0 | 0 |
+| Constraints | 87 | 0 | — |
+| RLS / CHECK | 70 | 0 | 0 (RLS state) |
 
 ## Tables
-### Only in DEV (10)
+### Only in DEV (20)
+- `bank_account_books`
+- `bank_accounts`
+- `bank_check_added_lines`
+- `bank_check_changes`
+- `bank_check_events`
+- `bank_check_marks`
+- `bank_checks`
+- `bank_line_exclusions`
+- `bank_saved_lines`
 - `billing_locations`
+- `child_match_rejections`
 - `league_game_scores`
 - `league_practice_emails`
 - `league_practice_tells`
@@ -29,7 +39,84 @@
 _none_
 
 ## Columns
-### Only in DEV (135)
+### Only in DEV (218)
+- `bank_account_books.bank_account_id`
+- `bank_account_books.ledger_id`
+- `bank_account_books.moved_at`
+- `bank_account_books.moved_by`
+- `bank_accounts.archived_at`
+- `bank_accounts.created_at`
+- `bank_accounts.created_by`
+- `bank_accounts.id`
+- `bank_accounts.name`
+- `bank_accounts.opening_balance_cents`
+- `bank_accounts.opening_date`
+- `bank_accounts.org_id`
+- `bank_accounts.owner_kind`
+- `bank_accounts.set_up_at`
+- `bank_accounts.set_up_by`
+- `bank_accounts.team_id`
+- `bank_check_added_lines.added_at`
+- `bank_check_added_lines.added_by`
+- `bank_check_added_lines.check_id`
+- `bank_check_added_lines.id`
+- `bank_check_added_lines.kind`
+- `bank_check_added_lines.line_key`
+- `bank_check_changes.changed_at`
+- `bank_check_changes.changed_by`
+- `bank_check_changes.check_id`
+- `bank_check_changes.cleared_at`
+- `bank_check_changes.cleared_by`
+- `bank_check_changes.id`
+- `bank_check_changes.line_key`
+- `bank_check_changes.now_amount_cents`
+- `bank_check_changes.now_date`
+- `bank_check_changes.now_direction`
+- `bank_check_changes.removed`
+- `bank_check_changes.was_amount_cents`
+- `bank_check_changes.was_date`
+- `bank_check_changes.was_direction`
+- `bank_check_events.at`
+- `bank_check_events.by_user`
+- `bank_check_events.check_id`
+- `bank_check_events.id`
+- `bank_check_events.kind`
+- `bank_check_events.reason`
+- `bank_check_marks.amount_cents`
+- `bank_check_marks.bank_account_id`
+- `bank_check_marks.check_id`
+- `bank_check_marks.direction`
+- `bank_check_marks.id`
+- `bank_check_marks.line_date`
+- `bank_check_marks.line_key`
+- `bank_check_marks.marked_at`
+- `bank_check_marks.marked_by`
+- `bank_check_marks.payout_key`
+- `bank_checks.bank_account_id`
+- `bank_checks.checked_at`
+- `bank_checks.checked_by`
+- `bank_checks.created_at`
+- `bank_checks.created_by`
+- `bank_checks.id`
+- `bank_checks.outstanding_snapshot`
+- `bank_checks.statement_end_date`
+- `bank_checks.statement_ending_balance_cents`
+- `bank_checks.status`
+- `bank_line_exclusions.bank_account_id`
+- `bank_line_exclusions.excluded_at`
+- `bank_line_exclusions.excluded_by`
+- `bank_line_exclusions.id`
+- `bank_line_exclusions.line_key`
+- `bank_saved_lines.amount_cents`
+- `bank_saved_lines.bank_account_id`
+- `bank_saved_lines.description`
+- `bank_saved_lines.direction`
+- `bank_saved_lines.id`
+- `bank_saved_lines.kind`
+- `bank_saved_lines.line_date`
+- `bank_saved_lines.line_key`
+- `bank_saved_lines.saved_at`
+- `bank_saved_lines.saved_by`
 - `billing_locations.card_country`
 - `billing_locations.city`
 - `billing_locations.confirmed_at`
@@ -56,6 +143,12 @@ _none_
 - `billing_retention_intents.notify_owner`
 - `billing_retention_intents.reminder_email_sent_at`
 - `billing_retention_intents.stripe_subscription_id`
+- `child_match_rejections.child_a_id`
+- `child_match_rejections.child_b_id`
+- `child_match_rejections.door`
+- `child_match_rejections.id`
+- `child_match_rejections.rejected_at`
+- `child_match_rejections.rejected_by`
 - `league_divisions.show_standings`
 - `league_game_scores.checked_at`
 - `league_game_scores.checked_by`
@@ -173,11 +266,49 @@ _none_
 _none_
 
 ## Indexes
-### Only in DEV (40)
+### Only in DEV (79)
+- `bank_account_books_account_idx`
+- `bank_account_books_moved_by_idx`
+- `bank_account_books_pkey`
+- `bank_accounts_club_name`
+- `bank_accounts_created_by_idx`
+- `bank_accounts_one_per_team`
+- `bank_accounts_org_idx`
+- `bank_accounts_pkey`
+- `bank_accounts_set_up_by_idx`
+- `bank_check_added_lines_by_idx`
+- `bank_check_added_lines_once`
+- `bank_check_added_lines_pkey`
+- `bank_check_changes_changed_by_idx`
+- `bank_check_changes_check_idx`
+- `bank_check_changes_cleared_by_idx`
+- `bank_check_changes_open_idx`
+- `bank_check_changes_pkey`
+- `bank_check_events_by_idx`
+- `bank_check_events_check_idx`
+- `bank_check_events_pkey`
+- `bank_check_marks_by_idx`
+- `bank_check_marks_check_idx`
+- `bank_check_marks_one_tick`
+- `bank_check_marks_pkey`
+- `bank_checks_checked_by_idx`
+- `bank_checks_created_by_idx`
+- `bank_checks_id_account`
+- `bank_checks_one_per_end_date`
+- `bank_checks_pkey`
+- `bank_line_exclusions_by_idx`
+- `bank_line_exclusions_once`
+- `bank_line_exclusions_pkey`
+- `bank_saved_lines_by_idx`
+- `bank_saved_lines_once`
+- `bank_saved_lines_pkey`
 - `billing_locations_one_per_org`
 - `billing_locations_one_per_user`
 - `billing_locations_pkey`
 - `billing_retention_intents_one_pending_change`
+- `child_match_rejections_child_b_idx`
+- `child_match_rejections_pair_uniq`
+- `child_match_rejections_pkey`
 - `league_game_scores_org_idx`
 - `league_game_scores_pkey`
 - `league_game_scores_season_idx`
@@ -206,6 +337,7 @@ _none_
 - `org_children_org_idx`
 - `org_children_pkey`
 - `rep_roster_players_child_idx`
+- `rep_roster_players_one_child_per_season`
 - `rep_tryout_registrations_child_idx`
 - `stripe_billing_drift_checks_checked_idx`
 - `stripe_billing_drift_checks_pkey`
@@ -222,10 +354,53 @@ _none_
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (44)
+### Only in DEV (87)
+- `bank_account_books.bank_account_books_bank_account_id_fkey`
+- `bank_account_books.bank_account_books_ledger_id_fkey`
+- `bank_account_books.bank_account_books_moved_by_fkey`
+- `bank_account_books.bank_account_books_pkey`
+- `bank_accounts.bank_accounts_created_by_fkey`
+- `bank_accounts.bank_accounts_org_id_fkey`
+- `bank_accounts.bank_accounts_pkey`
+- `bank_accounts.bank_accounts_set_up_by_fkey`
+- `bank_accounts.bank_accounts_team_id_fkey`
+- `bank_check_added_lines.bank_check_added_lines_added_by_fkey`
+- `bank_check_added_lines.bank_check_added_lines_check_id_fkey`
+- `bank_check_added_lines.bank_check_added_lines_once`
+- `bank_check_added_lines.bank_check_added_lines_pkey`
+- `bank_check_changes.bank_check_changes_changed_by_fkey`
+- `bank_check_changes.bank_check_changes_check_id_fkey`
+- `bank_check_changes.bank_check_changes_cleared_by_fkey`
+- `bank_check_changes.bank_check_changes_pkey`
+- `bank_check_events.bank_check_events_by_user_fkey`
+- `bank_check_events.bank_check_events_check_id_fkey`
+- `bank_check_events.bank_check_events_pkey`
+- `bank_check_marks.bank_check_marks_bank_account_id_fkey`
+- `bank_check_marks.bank_check_marks_check_same_account`
+- `bank_check_marks.bank_check_marks_marked_by_fkey`
+- `bank_check_marks.bank_check_marks_one_tick`
+- `bank_check_marks.bank_check_marks_pkey`
+- `bank_checks.bank_checks_bank_account_id_fkey`
+- `bank_checks.bank_checks_checked_by_fkey`
+- `bank_checks.bank_checks_created_by_fkey`
+- `bank_checks.bank_checks_id_account`
+- `bank_checks.bank_checks_one_per_end_date`
+- `bank_checks.bank_checks_pkey`
+- `bank_line_exclusions.bank_line_exclusions_bank_account_id_fkey`
+- `bank_line_exclusions.bank_line_exclusions_excluded_by_fkey`
+- `bank_line_exclusions.bank_line_exclusions_once`
+- `bank_line_exclusions.bank_line_exclusions_pkey`
+- `bank_saved_lines.bank_saved_lines_bank_account_id_fkey`
+- `bank_saved_lines.bank_saved_lines_once`
+- `bank_saved_lines.bank_saved_lines_pkey`
+- `bank_saved_lines.bank_saved_lines_saved_by_fkey`
 - `billing_locations.billing_locations_org_id_fkey`
 - `billing_locations.billing_locations_pkey`
 - `billing_locations.billing_locations_user_id_fkey`
+- `child_match_rejections.child_match_rejections_child_a_id_fkey`
+- `child_match_rejections.child_match_rejections_child_b_id_fkey`
+- `child_match_rejections.child_match_rejections_pkey`
+- `child_match_rejections.child_match_rejections_rejected_by_fkey`
 - `league_game_scores.league_game_scores_checked_by_fkey`
 - `league_game_scores.league_game_scores_corrected_by_fkey`
 - `league_game_scores.league_game_scores_entered_by_fkey`
@@ -275,7 +450,36 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (39)
+### CHECK only in DEV (70)
+- `bank_accounts.bank_accounts_name_check`
+- `bank_accounts.bank_accounts_opening_pair`
+- `bank_accounts.bank_accounts_owner_kind_check`
+- `bank_accounts.bank_accounts_owner_shape`
+- `bank_check_added_lines.bank_check_added_lines_kind_check`
+- `bank_check_added_lines.bank_check_added_lines_line_key_check`
+- `bank_check_changes.bank_check_changes_line_key_check`
+- `bank_check_changes.bank_check_changes_now_amount_cents_check`
+- `bank_check_changes.bank_check_changes_now_direction_check`
+- `bank_check_changes.bank_check_changes_now_shape`
+- `bank_check_changes.bank_check_changes_was_amount_cents_check`
+- `bank_check_changes.bank_check_changes_was_direction_check`
+- `bank_check_events.bank_check_events_kind_check`
+- `bank_check_events.bank_check_events_reason_check`
+- `bank_check_events.bank_check_events_undo_has_reason`
+- `bank_check_marks.bank_check_marks_amount_cents_check`
+- `bank_check_marks.bank_check_marks_direction_check`
+- `bank_check_marks.bank_check_marks_line_key_check`
+- `bank_check_marks.bank_check_marks_payout_key_check`
+- `bank_checks.bank_checks_checked_has_when`
+- `bank_checks.bank_checks_outstanding_snapshot_check`
+- `bank_checks.bank_checks_status_check`
+- `bank_line_exclusions.bank_line_exclusions_line_key_check`
+- `bank_saved_lines.bank_saved_lines_amount_cents_check`
+- `bank_saved_lines.bank_saved_lines_description_check`
+- `bank_saved_lines.bank_saved_lines_direction_check`
+- `bank_saved_lines.bank_saved_lines_kind_check`
+- `bank_saved_lines.bank_saved_lines_line_key_check`
+- `bank_saved_lines.bank_saved_lines_typed_shape`
 - `billing_locations.billing_locations_card_country_check`
 - `billing_locations.billing_locations_city_check`
 - `billing_locations.billing_locations_country_check`
@@ -288,6 +492,8 @@ _none_
 - `billing_locations.billing_locations_review_set_check`
 - `billing_locations.billing_locations_us_declaration_check`
 - `billing_retention_intents.billing_retention_intents_change_log_check`
+- `child_match_rejections.child_match_rejections_door_check`
+- `child_match_rejections.child_match_rejections_ordered`
 - `league_game_scores.league_game_scores_entered_side_check`
 - `league_game_scores.league_game_scores_report_note_check`
 - `league_game_scores.league_game_scores_report_whole`

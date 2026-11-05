@@ -23,6 +23,7 @@ import {
 } from './season-roll-path';
 import { playerName } from './coach-roster-name';
 import { cutoffFor } from './born-years';
+import { carriedEntryFields } from './past-player-rules';
 import type { RepProgramYear, RepRosterPlayer } from './types';
 
 /**
@@ -358,34 +359,15 @@ export async function startNextRepSeason(params: {
           teamId,
           orgId,
           source: 'admin_manual', // a season roll is a coach action, not a tryout conversion
+          // ONE copy list with the past-player picker (Stage 14 S3): name, birth date, number, positions, family,
+          // notes, the player-intrinsic profile (medical, emergency contact, bats/throws, jersey size) and Best/Never +
+          // pitcher/A-squad (`p` came from getRepRosterPlayers, whose reader already strips a legacy "Okay" key).
+          // adminNotes + tryoutRegistrationId are never copied (stale staff/tryout provenance).
+          ...carriedEntryFields(p),
           // ⚠ THE SAME CHILD, a fact (Club Tier Stage 14 S2, Ask 4): the new season's entry is this player carried
           // forward, so it is that entry's child — never a new one. Set here rather than left to the confirmed link
           // minted below, because that mint is best-effort; a failed link must not split the child.
           childId: p.childId,
-          playerFirstName: p.playerFirstName,
-          playerLastName: p.playerLastName,
-          playerDateOfBirth: p.playerDateOfBirth,
-          playerNumber: p.playerNumber,
-          primaryPosition: p.primaryPosition,
-          secondaryPosition: p.secondaryPosition,
-          guardianFirstName: p.guardianFirstName,
-          guardianLastName: p.guardianLastName,
-          guardianEmail: p.guardianEmail,
-          guardianPhone: p.guardianPhone,
-          notes: p.notes,
-          // Player-intrinsic profile fields persist across seasons (safety/handedness/size)
-          medicalNotes: p.medicalNotes,
-          emergencyContactName: p.emergencyContactName,
-          emergencyContactPhone: p.emergencyContactPhone,
-          bats: p.bats,
-          throws: p.throws,
-          jerseySize: p.jerseySize,
-          // Best/Never + pitcher/A-squad persist across seasons. `p` came from getRepRosterPlayers
-          // (line 255), so a legacy row's stray "Okay" key is already stripped by the DB reader's
-          // own sanitizer (lib/lineup-profile.ts:dropLegacyLineupProfileKeys) before it ever
-          // reaches here — this copy can't perpetuate it into the new season's row.
-          lineupProfile: p.lineupProfile,
-          // adminNotes + tryoutRegistrationId intentionally dropped (stale staff/tryout provenance)
         });
         playerIdMap.set(p.id, created.id);
         summary.roster.copied++;

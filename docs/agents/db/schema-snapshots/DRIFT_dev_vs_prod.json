@@ -1,17 +1,133 @@
 {
-  "generated": "2026-11-04",
-  "total": 269,
+  "generated": "2026-11-05",
+  "total": 475,
   "counts": {
-    "tables": 10,
-    "columns": 135,
-    "indexes": 40,
-    "constraints": 44,
-    "rls": 40
+    "tables": 20,
+    "columns": 218,
+    "indexes": 79,
+    "constraints": 87,
+    "rls": 71
   },
   "items": [
     {
       "key": "check:changed:league_season_notices.league_season_notices_kind_check",
       "sig": "(kind = ANY (ARRAY['teams_published'::text, 'practices_changed'::text, 'schedule_published'::text, 'games_changed'::text, 'practices_sent'::text])) :: (kind = ANY (ARRAY['teams_published'::text, 'practices_changed'::text, 'schedule_published'::text, 'games_changed'::text]))"
+    },
+    {
+      "key": "check:only-dev:bank_accounts.bank_accounts_name_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:bank_accounts.bank_accounts_opening_pair",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:bank_accounts.bank_accounts_owner_kind_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:bank_accounts.bank_accounts_owner_shape",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:bank_check_added_lines.bank_check_added_lines_kind_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:bank_check_added_lines.bank_check_added_lines_line_key_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:bank_check_changes.bank_check_changes_line_key_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:bank_check_changes.bank_check_changes_now_amount_cents_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:bank_check_changes.bank_check_changes_now_direction_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:bank_check_changes.bank_check_changes_now_shape",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:bank_check_changes.bank_check_changes_was_amount_cents_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:bank_check_changes.bank_check_changes_was_direction_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:bank_check_events.bank_check_events_kind_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:bank_check_events.bank_check_events_reason_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:bank_check_events.bank_check_events_undo_has_reason",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:bank_check_marks.bank_check_marks_amount_cents_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:bank_check_marks.bank_check_marks_direction_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:bank_check_marks.bank_check_marks_line_key_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:bank_check_marks.bank_check_marks_payout_key_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:bank_checks.bank_checks_checked_has_when",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:bank_checks.bank_checks_outstanding_snapshot_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:bank_checks.bank_checks_status_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:bank_line_exclusions.bank_line_exclusions_line_key_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:bank_saved_lines.bank_saved_lines_amount_cents_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:bank_saved_lines.bank_saved_lines_description_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:bank_saved_lines.bank_saved_lines_direction_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:bank_saved_lines.bank_saved_lines_kind_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:bank_saved_lines.bank_saved_lines_line_key_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:bank_saved_lines.bank_saved_lines_typed_shape",
+      "sig": ""
     },
     {
       "key": "check:only-dev:billing_locations.billing_locations_card_country_check",
@@ -59,6 +175,14 @@
     },
     {
       "key": "check:only-dev:billing_retention_intents.billing_retention_intents_change_log_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:child_match_rejections.child_match_rejections_door_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:child_match_rejections.child_match_rejections_ordered",
       "sig": ""
     },
     {
@@ -170,6 +294,314 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:bank_account_books.bank_account_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_account_books.ledger_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_account_books.moved_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_account_books.moved_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_accounts.archived_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_accounts.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_accounts.created_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_accounts.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_accounts.name",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_accounts.opening_balance_cents",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_accounts.opening_date",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_accounts.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_accounts.owner_kind",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_accounts.set_up_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_accounts.set_up_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_accounts.team_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_check_added_lines.added_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_check_added_lines.added_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_check_added_lines.check_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_check_added_lines.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_check_added_lines.kind",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_check_added_lines.line_key",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_check_changes.changed_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_check_changes.changed_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_check_changes.check_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_check_changes.cleared_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_check_changes.cleared_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_check_changes.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_check_changes.line_key",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_check_changes.now_amount_cents",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_check_changes.now_date",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_check_changes.now_direction",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_check_changes.removed",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_check_changes.was_amount_cents",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_check_changes.was_date",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_check_changes.was_direction",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_check_events.at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_check_events.by_user",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_check_events.check_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_check_events.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_check_events.kind",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_check_events.reason",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_check_marks.amount_cents",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_check_marks.bank_account_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_check_marks.check_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_check_marks.direction",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_check_marks.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_check_marks.line_date",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_check_marks.line_key",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_check_marks.marked_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_check_marks.marked_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_check_marks.payout_key",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_checks.bank_account_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_checks.checked_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_checks.checked_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_checks.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_checks.created_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_checks.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_checks.outstanding_snapshot",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_checks.statement_end_date",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_checks.statement_ending_balance_cents",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_checks.status",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_line_exclusions.bank_account_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_line_exclusions.excluded_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_line_exclusions.excluded_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_line_exclusions.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_line_exclusions.line_key",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_saved_lines.amount_cents",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_saved_lines.bank_account_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_saved_lines.description",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_saved_lines.direction",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_saved_lines.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_saved_lines.kind",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_saved_lines.line_date",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_saved_lines.line_key",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_saved_lines.saved_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_saved_lines.saved_by",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:billing_locations.card_country",
       "sig": ""
     },
@@ -271,6 +703,30 @@
     },
     {
       "key": "column:only-dev:billing_retention_intents.stripe_subscription_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:child_match_rejections.child_a_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:child_match_rejections.child_b_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:child_match_rejections.door",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:child_match_rejections.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:child_match_rejections.rejected_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:child_match_rejections.rejected_by",
       "sig": ""
     },
     {
@@ -710,6 +1166,162 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:bank_account_books.bank_account_books_bank_account_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:bank_account_books.bank_account_books_ledger_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:bank_account_books.bank_account_books_moved_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:bank_account_books.bank_account_books_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:bank_accounts.bank_accounts_created_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:bank_accounts.bank_accounts_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:bank_accounts.bank_accounts_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:bank_accounts.bank_accounts_set_up_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:bank_accounts.bank_accounts_team_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:bank_check_added_lines.bank_check_added_lines_added_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:bank_check_added_lines.bank_check_added_lines_check_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:bank_check_added_lines.bank_check_added_lines_once",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:bank_check_added_lines.bank_check_added_lines_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:bank_check_changes.bank_check_changes_changed_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:bank_check_changes.bank_check_changes_check_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:bank_check_changes.bank_check_changes_cleared_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:bank_check_changes.bank_check_changes_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:bank_check_events.bank_check_events_by_user_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:bank_check_events.bank_check_events_check_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:bank_check_events.bank_check_events_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:bank_check_marks.bank_check_marks_bank_account_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:bank_check_marks.bank_check_marks_check_same_account",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:bank_check_marks.bank_check_marks_marked_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:bank_check_marks.bank_check_marks_one_tick",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:bank_check_marks.bank_check_marks_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:bank_checks.bank_checks_bank_account_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:bank_checks.bank_checks_checked_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:bank_checks.bank_checks_created_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:bank_checks.bank_checks_id_account",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:bank_checks.bank_checks_one_per_end_date",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:bank_checks.bank_checks_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:bank_line_exclusions.bank_line_exclusions_bank_account_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:bank_line_exclusions.bank_line_exclusions_excluded_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:bank_line_exclusions.bank_line_exclusions_once",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:bank_line_exclusions.bank_line_exclusions_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:bank_saved_lines.bank_saved_lines_bank_account_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:bank_saved_lines.bank_saved_lines_once",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:bank_saved_lines.bank_saved_lines_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:bank_saved_lines.bank_saved_lines_saved_by_fkey",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:billing_locations.billing_locations_org_id_fkey",
       "sig": ""
     },
@@ -719,6 +1331,22 @@
     },
     {
       "key": "constraint:only-dev:billing_locations.billing_locations_user_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:child_match_rejections.child_match_rejections_child_a_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:child_match_rejections.child_match_rejections_child_b_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:child_match_rejections.child_match_rejections_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:child_match_rejections.child_match_rejections_rejected_by_fkey",
       "sig": ""
     },
     {
@@ -886,6 +1514,146 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:bank_account_books_account_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:bank_account_books_moved_by_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:bank_account_books_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:bank_accounts_club_name",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:bank_accounts_created_by_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:bank_accounts_one_per_team",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:bank_accounts_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:bank_accounts_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:bank_accounts_set_up_by_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:bank_check_added_lines_by_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:bank_check_added_lines_once",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:bank_check_added_lines_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:bank_check_changes_changed_by_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:bank_check_changes_check_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:bank_check_changes_cleared_by_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:bank_check_changes_open_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:bank_check_changes_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:bank_check_events_by_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:bank_check_events_check_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:bank_check_events_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:bank_check_marks_by_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:bank_check_marks_check_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:bank_check_marks_one_tick",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:bank_check_marks_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:bank_checks_checked_by_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:bank_checks_created_by_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:bank_checks_id_account",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:bank_checks_one_per_end_date",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:bank_checks_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:bank_line_exclusions_by_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:bank_line_exclusions_once",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:bank_line_exclusions_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:bank_saved_lines_by_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:bank_saved_lines_once",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:bank_saved_lines_pkey",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:billing_locations_one_per_org",
       "sig": ""
     },
@@ -899,6 +1667,18 @@
     },
     {
       "key": "index:only-dev:billing_retention_intents_one_pending_change",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:child_match_rejections_child_b_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:child_match_rejections_pair_uniq",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:child_match_rejections_pkey",
       "sig": ""
     },
     {
@@ -1014,6 +1794,10 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:rep_roster_players_one_child_per_season",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:rep_tryout_registrations_child_idx",
       "sig": ""
     },
@@ -1046,7 +1830,47 @@
       "sig": ""
     },
     {
+      "key": "table:only-dev:bank_account_books",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:bank_accounts",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:bank_check_added_lines",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:bank_check_changes",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:bank_check_events",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:bank_check_marks",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:bank_checks",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:bank_line_exclusions",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:bank_saved_lines",
+      "sig": ""
+    },
+    {
       "key": "table:only-dev:billing_locations",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:child_match_rejections",
       "sig": ""
     },
     {

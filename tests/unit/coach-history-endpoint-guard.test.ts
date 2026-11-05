@@ -191,6 +191,15 @@ const HISTORY_PAGES = [
 const CROSS_SEASON_READERS = [
   'history',        // the compare list — every season at once, by definition
   'tryout-report',  // the returning-improvement aggregate (ruling R8, 2026-08-02)
+  /* "Bring back a past player" (Club Tier Stage 14 S3, owner rulings 2026-11-04). The three answers:
+     1. RECORD, feeding ONE write — this team's earlier entries (name, number, season, and with the roster-details grant
+        birth date, family and that season's dues as its own book shows them), read only to add the child to the
+        WORKING season. Nothing moves money; past dues stay on their own book.
+     2. NO SUBTREE — a row is a line in a window; nothing opens the old season.
+     3. EVERY ROW NAMES ITS SEASON ("Last played the 2025 Season").
+     The seasons it reads come from the team's own roster, never from the request. The Add Player question and the
+     paste check read the same list through this route; the add routes re-check through lib/past-players.ts. */
+  'roster/past-players',
 ];
 
 /**
@@ -240,6 +249,27 @@ const CROSS_SEASON_PLAN_READERS = [
    * are different powers and this file holds both statements about the same file on purpose.
    */
   'events/[eventId]/practice-plan',
+];
+
+/**
+ * ⚖ **THE THIRD CROSS-SEASON POWER: reading THIS TEAM'S EARLIER ROSTER ENTRIES** — enumerated from Club Tier Stage 14 S3
+ * (owner rulings 2026-11-04; found by the S3 review: the picker route was listed, its four sibling doors were not).
+ *
+ * The three answers, for every route below: (1) RECORD, feeding ONE write — an earlier entry's name, number, season
+ * (and, with the roster-details grant, birth date and family) is read only to decide whether a typed name is the same
+ * child, or to bring that child onto the WORKING season; nothing moves money or messages anyone. (2) NO SUBTREE — no
+ * old season opens from here. (3) EVERY ROW NAMES ITS SEASON, or (the roster's "Back from the 2025 Season" caption) is a
+ * caption naming it. The seasons come from the team's own data (`getRepProgramYears`), never from the request, so none
+ * of these can be pointed at a year.
+ *
+ * ⚠ Keyed on the NAMED reads (`readPastPlayers`, `returningCaptions`, `getRepTeamRosterEntriesAllSeasons`), for the
+ * reason CROSS_SEASON_READERS gives: a guard with a noisy signal gets edited until it passes.
+ */
+const CROSS_SEASON_ROSTER_READERS = [
+  'roster',                       // GET: the "Back from the …" captions (returningCaptions) · POST: the "Same child?" re-check
+  'roster/bulk',                  // paste a list: the per-row "Same child?" re-check
+  'roster/past-players',          // the picker (list + bring back)
+  'tryout-decisions/accept',      // the accept's "Same child?" / already-on-the-roster rule
 ];
 
 function routeFiles(dir: string, out: string[] = []): string[] {
@@ -350,6 +380,9 @@ function routeName(file: string): string {
  */
 const READS_A_YEAR = /searchParams\.get\(\s*['"]year['"]\s*\)|resolveCoachHistoryRead(?:FromRequest)?\s*\(/;
 
+/** Reads this team's earlier roster entries — see CROSS_SEASON_ROSTER_READERS. */
+const READS_EARLIER_ROSTERS = /\b(?:readPastPlayers|returningCaptions|getRepTeamRosterEntriesAllSeasons)\s*\(/;
+
 /** Reads across seasons without being handed one — see CROSS_SEASON_READERS. */
 const READS_ACROSS_SEASONS = /resolveCoachTeamCapabilities\s*\(/;
 
@@ -404,6 +437,18 @@ describe('a year parameter is a decision — the coach API', () => {
       + 'than a history endpoint — it derives which seasons it touches from the team\'s own data '
       + 'rather than from the request — but it is still a route reaching outside the working '
       + 'season, and it is listed on purpose. Add it to CROSS_SEASON_READERS with the reason.');
+  });
+
+  it('the routes that read the team’s earlier ROSTER entries are the ones we know about, and no more', () => {
+    const actual = files
+      .filter(f => READS_EARLIER_ROSTERS.test(readFileSync(f, 'utf8')))
+      .map(routeName)
+      .sort();
+    assert.deepEqual(actual, [...CROSS_SEASON_ROSTER_READERS].sort(),
+      'A coach route started reading the team’s EARLIER roster entries (the past-player picker’s read). '
+      + 'That is narrower than a history endpoint — it derives its seasons from the team’s own data and '
+      + 'feeds one write into the live season — but it reaches outside the working season, and it is listed '
+      + 'on purpose. Add it to CROSS_SEASON_ROSTER_READERS with the three answers.');
   });
 
   it('the cross-season PLAN readers are the ones we know about, and no more', () => {

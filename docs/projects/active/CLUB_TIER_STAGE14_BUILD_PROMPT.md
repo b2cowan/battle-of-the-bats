@@ -33,8 +33,8 @@
 - **2026-11-04 · S1 done, S2 committed `5c3acb04c`.** Facts below were read from the code on 2026-11-04 by five helpers, and each one this prompt relies on
   was opened at the cited lines by the author. Line numbers drift; re-check them.
 - **S1 · the season window (14a)** — **BUILT + committed `59722b97a` 2026-11-04** (Parts 0–4; `/simplify`, `/review` and
-  `/docs` done; **owner walk §453 WRITTEN and owed**, https://claude.ai/artifact/SbzSAt6P9RGg5ysD7jgtKm, 61 steps in eight
-  parts + the seven calls). **Next: S2 (the child record, a migration), after the walk.** What landed:
+  `/docs` done; **owner walk §453 (ledger §452) PASSED 61/61 on 2026-11-04, all seven calls "Keep as built"**,
+  https://claude.ai/artifact/SbzSAt6P9RGg5ysD7jgtKm). **Next: S2 (the child record, a migration).** What landed:
   - **Pure module `lib/season-roll-path.ts`** (client-safe; the words of BOTH windows): `nextAgeDivision` (11U, U11, U-11,
     "11 and under"; never Mosquito / a bare 11 / a birth year), `theSeason` + `closesLine` (the "2026 Season season" fix —
     the club's `startLead` now uses it too), the choice lines (coach names the division; club names the birth years),
@@ -179,7 +179,78 @@
   - **For S3:** `child_id` is on every entry; the picker reads `rep_roster_players.child_id` of this team's earlier seasons and
     creates working-season entries WITH that `child_id` (and mints the history link as the roll does — the link trigger is then a
     no-op). A stored "no" (S3's migration) is separate from `rep_player_continuity_links`' rejected tombstones.
-- **S3 · Bring back a past player + "Same child?" (14b screens)** — Not started. Needs S2.
+- **S3 · Bring back a past player + "Same child?" (14b screens)** — **BUILT 2026-11-04 (Parts 0–4), UNCOMMITTED; `/simplify`,
+  `/review` (high) and `/docs` DONE 2026-11-04; the owner walk §455 is written and owed (artifact
+  https://claude.ai/artifact/EPuHScE2jnYLfNxdzpzxKB, fixture `.probe/s3-walk/`); then the commit; prod mig 438 owed
+  (MANUAL_PROD_STEPS, `pending`).** One more fix found while writing the walk: the stored "no" was only read at tryout
+  accept, so Add Player and paste asked again after a No — the add doors now read it (`answeredNo` rides the picker GET). Owner rulings at Part 0
+  (2026-11-04): **"yes on the lock"** (the one-child-per-season index) and **"go ahead with your recommendations"** (the
+  calls listed below). What landed:
+  - **Mig 438 `a_no_is_remembered_and_a_child_plays_once_a_season`** (numbered after the bank session's uncommitted 436/437;
+    applied to DEV): `child_match_rejections` (ordered pair of `org_children`, `door`, who/when; service role only; NO
+    `org_id` on purpose — the tenancy is the children's, so `move_team_into_club` is untouched); UNIQUE
+    `rep_roster_players_one_child_per_season (child_id, program_year_id)` (dev had 0 such pairs, any status — prod
+    pre-check in the MANUAL_PROD_STEPS note); `org_children_join` re-created from 435 + the stored-"no" carry-over.
+    Fixture `tests/sql/child-match-rejections-fixture.sql` 4/4 on dev; S2's fixture re-run 15/15.
+  - **Modules:** `lib/past-player-words.ts` (every drawn string + `sameNameCandidates`, `bornWarning`); `lib/past-player-rules.ts`
+    (pure: `partitionEntries`, `toPastPlayers` with the `rosterPii` redaction, `carriedEntryFields` — now the ROLL's copy list
+    too, `decideAddDoor`, `decideAcceptWith`); `lib/past-players.ts` (server: `readPastPlayers` incl. that season's dues via
+    `readRepMoney`, `bringBackChild` — child set on the entry + the confirmed link minted as the roll does,
+    `storeNotSameChild`, `confirmReturningAtAccept`, `rejectAtAccept`, `returningCaptions`). `normName` exported from the
+    matcher; `getRepTeamRosterEntriesAllSeasons` (db, one caller); `RepTryoutRegistration.childId`.
+  - **Routes:** new `roster/past-players` (GET list, POST bring back; head coach; registered in `CROSS_SEASON_READERS` with
+    the three answers); roster POST (`needs_answer` / yes / no), roster GET (+ `returning` captions), bulk POST (any
+    unanswered row refuses the batch), coach accept (refuse same child · refuse same name with "add anyway" · ask · confirm
+    link on yes · store + reject the board suggestion on no), club accept (the index refusal in the drawn words, no
+    question), continuity decide (a confirm that would put one child on a season twice → Ask 11's words).
+  - **Screens:** `PastPlayersPicker` (640, tick list, search, chips, phone lines, empty states); Add Player's second door
+    line, the amber question, "Same child: … Change", the birth-year warning under Date of birth; paste rows' Same child |
+    New player with the foot reason; the tryout board's 520 question and 416 refusal; the roster's "Back from the {season}"
+    caption. `PAST_PLAYER_PICKER_BUILT = true` (S1's held clauses now show).
+  - **Checks:** typecheck clean; new `tests/unit/past-players.test.ts` 35/35; affected suites 300/300; the full unit run
+    13,936/13,943 — the 7 failures are other sessions' (practice plans phone, billing free time, tournament Stage 6 walk,
+    series dates, support console foot-note); lint 0 errors on every touched file (warnings all pre-existing lines);
+    `check:dictionary`, `check:spelling` OK. **Layout:** new screens `coach-roster-add-player` and `coach-roster-past-players`
+    at 361/390/768/1440 — the picker clean; Add Player's two door links got the phone tap floor (`.addDoorLinks`); its two
+    disclosure toggles ("Add parent / guardian contact", "More details", 37px, the shared `CoachFormDisclosure`) were
+    measured for the first time and are recorded in the baseline as a found-not-fixed finding. The coach fixture team has
+    no earlier season, so the sweep measures the picker's empty state — the walk measures the list by eye.
+  - **Defaults taken (owner said "go ahead with your recommendations"):** (1) a "no" is stored on all three doors; (2) two
+    past namesakes are asked newest season first; (3) "Yes" fills only blank boxes (number, birth date); the server copies
+    the rest; (4) the birth-year warning only for staff with birth dates, on the picker and single add only; (5) a child
+    inactive on this season is not in the picker (the off-roster shelf's Add back is the door); (6) a call-up who played for
+    this team is listed, as drawn; (7) the picker door shows on a phone too; a "No" at accept also rejects the board's
+    suggestion for that pair; (8) head coach only (`rosterWrite`); (9) same-NAME at accept, another record → the refusal
+    with "A different child — add anyway" (stored as a no); (10) "Back from…" only for a child who LEFT (previous entry
+    older than last season, or not active in it), team-level "until the first game"; (11) the prompt's "same-season
+    matches … left out by default" is read as "left out of the question" — a pasted name already on this season keeps
+    today's warning and is still added (the existing test pins "without blocking it"); (12) the club's accept asks
+    nothing (the Children queue is S6's) — the index refuses the provable duplicate.
+  - **Found, not fixed:** the shared disclosure toggle is 37px at touch widths everywhere it is used; a board confirm can
+    still race a second confirmed link for one sign-up (the existing one-confirmed index refuses it with the old words).
+  - **`/simplify` outcome (2026-11-04):** the name adapter (8 call sites) is now the roster's one `playerName`; one
+    `sameName` predicate serves the matcher and the accept check; `lib/past-players.ts` no longer re-exports the rules
+    (routes import `lib/past-player-rules` directly); `bringBackChild`'s override merge is a short loop (no casts); the add
+    doors no longer count call-up games (the picker's read only). **Skipped on purpose:** one add-door orchestrator and a
+    typed "already on season" error (bigger than a cleanup); dropping the roster page's `serverAsk`, one shared picker
+    fetch, parallel bring-back (each changes screen behaviour — the walk exercises them); one "latest earlier entry"
+    helper (the two loops differ at the same-year boundary on purpose).
+  - **`/review` outcome (high, 2026-11-04) — fixed:** (1) after a "yes" at accept the join DELETES the sign-up's own child,
+    so the "no"s were being stored against a dead id and the failure swallowed — they now go to the surviving child;
+    (2) a "yes" passed arbitrary ids to the stored-no write (the child just confirmed, or an id from nowhere) — a "no"
+    is now stored only against this sign-up's own namesakes, at accept AND at the single/paste add doors (so a name edited
+    after the answer drops the stale "no" too); (3) "A different child — add anyway" was forgotten on the next request and
+    the refusal looped — the window's "no" for that entry now also skips the refusal; (4) the accept's confirm raising the
+    one-confirmed or one-child-per-season index was a 500 — both are now a 409 in plain words; (5) the guard test now
+    enumerates the four routes that read the team's earlier roster entries (`CROSS_SEASON_ROSTER_READERS`, with the three
+    answers); (6) the roster's "Back from…" read fetches the small season list first and skips the all-seasons read for a
+    team with no earlier season; (7) the paste route's per-row lookup was O(n²); (8) the picker forgets its list when it
+    closes, so a child just brought back is not offered again. Unit tests added for each rule fix.
+    **Not fixed — owner questions:** (a) the continuity route's "Both are on the {team} {season} roster" words always name the
+    ACTIVE season, but the index also refuses a join whose collision is on an EARLIER season — the drawn words are Ask 11's,
+    so rewording (or naming the collided season) is the owner's call; the accept route reuses them. (b) Add Player's "Bring
+    back a past player" door line closes the window without the unsaved-changes ask, exactly as the existing "Paste a list"
+    door does — change both or neither.
 - **S4 · documents and the health check (14c)** — Not started. Needs S2.
 - **S5 · the child's page, the household list, the club's doors (14d part 1)** — Not started. Needs S2 (S4 for the documents block).
 - **S6 · joining records + the parent link (14d part 2, Ask 13)** — Not started. Needs S5.

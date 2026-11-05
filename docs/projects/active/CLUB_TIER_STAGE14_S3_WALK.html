@@ -1,0 +1,464 @@
+<title>Stage 14 S3 Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Public+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: sticky tab bar (Start · A–I · Calls · Paste back), one part on screen at a time; each step is Do → You should see. */
+:root {
+  --bg: #f6f5f2;
+  --surface: #ffffff;
+  --ink: #1d2327;
+  --muted: #5d676d;
+  --line: #d9d8d2;
+  --accent: #1f5f7a;
+  --accent-ink: #ffffff;
+  --accent-soft: #e3eef3;
+  --pass: #2a7a4b;
+  --pass-soft: #e2f1e8;
+  --issue: #b3402f;
+  --issue-soft: #f8e6e2;
+  --call: #946200;
+  --call-soft: #fbf0d8;
+  --font-body: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14181b; --surface: #1c2226; --ink: #e8ebec; --muted: #9aa5ab; --line: #333c41;
+    --accent: #6fb4d0; --accent-ink: #0d1a20; --accent-soft: #1b2e37;
+    --pass: #5cc088; --pass-soft: #17301f; --issue: #f08a78; --issue-soft: #3a1f1a;
+    --call: #e8b650; --call-soft: #3a2e12; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #14181b; --surface: #1c2226; --ink: #e8ebec; --muted: #9aa5ab; --line: #333c41;
+  --accent: #6fb4d0; --accent-ink: #0d1a20; --accent-soft: #1b2e37;
+  --pass: #5cc088; --pass-soft: #17301f; --issue: #f08a78; --issue-soft: #3a1f1a;
+  --call: #e8b650; --call-soft: #3a2e12; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.5; margin: 0; }
+.wrap { max-width: 860px; margin: 0 auto; padding-block: 0 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 9; background: var(--bg); border-bottom: 1px solid var(--line); padding-block: 10px 0; }
+.bar-top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.bar h1 { font-size: 15px; font-weight: 700; margin: 0; letter-spacing: 0.01em; }
+.count { font-family: var(--font-mono); font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.tabs { display: flex; gap: 2px; overflow-x: auto; padding-top: 8px; scrollbar-width: thin; }
+.tab { flex: 0 0 auto; border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 13px; font-weight: 600; padding: 8px 12px; border-bottom: 3px solid transparent; cursor: pointer; min-height: 40px; white-space: nowrap; }
+.tab:hover { color: var(--ink); }
+.tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+.tab .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-left: 6px; background: var(--line); vertical-align: 1px; }
+.tab .dot.pass { background: var(--pass); } .tab .dot.issue { background: var(--issue); } .tab .dot.call { background: var(--call); } .tab .dot.part { background: var(--accent); opacity: 0.55; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+main { padding-top: 22px; display: grid; gap: 18px; }
+h2 { font-size: 21px; line-height: 1.25; margin: 0; text-wrap: balance; }
+h3 { font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px; }
+p { margin: 0; max-width: 68ch; }
+.lede { color: var(--muted); }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; display: grid; gap: 8px; min-width: 0; }
+.grid2 { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.mono { font-family: var(--font-mono); font-size: 13px; }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th, td { text-align: left; padding: 6px 10px 6px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.scroll { overflow-x: auto; }
+.cred { display: grid; grid-template-columns: auto 1fr auto; gap: 4px 12px; align-items: center; font-size: 14px; }
+.cred .k { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+.cred .v { font-family: var(--font-mono); font-size: 13px; word-break: break-all; min-width: 0; }
+button.copy { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 6px; font: inherit; font-size: 12px; padding: 4px 9px; cursor: pointer; min-height: 30px; }
+button.copy:hover { border-color: var(--accent); }
+.callout { border-left: 4px solid var(--call); background: var(--call-soft); padding: 10px 14px; border-radius: 0 6px 6px 0; max-width: 72ch; }
+.callout.stop { border-left-color: var(--issue); background: var(--issue-soft); }
+.steps { display: grid; gap: 10px; padding: 0; margin: 0; list-style: none; }
+.step { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; min-width: 0; }
+.step.done { border-color: var(--pass); background: linear-gradient(0deg, var(--pass-soft), var(--pass-soft)); }
+.step input[type="checkbox"] { width: 22px; height: 22px; margin: 2px 0 0; accent-color: var(--accent); cursor: pointer; flex: none; }
+.step .body { display: grid; gap: 6px; min-width: 0; }
+.step .id { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+.who { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 1px 7px; border-radius: 4px; background: var(--accent-soft); color: var(--accent); margin-right: 6px; }
+.do b.lbl, .see b.lbl { font-family: var(--font-mono); font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-right: 6px; }
+.see { color: var(--ink); }
+.writes { font-size: 12.5px; color: var(--muted); }
+.opts { display: grid; gap: 6px; margin-top: 4px; }
+.opt { display: flex; gap: 10px; align-items: flex-start; }
+.opt input { width: 20px; height: 20px; margin-top: 2px; accent-color: var(--accent); flex: none; }
+code { font-family: var(--font-mono); font-size: 12.5px; background: var(--accent-soft); padding: 1px 5px; border-radius: 4px; word-break: break-word; }
+.verdict { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.vbtn { border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; font-size: 13px; font-weight: 600; padding: 7px 14px; border-radius: 6px; cursor: pointer; min-height: 38px; }
+.vbtn[aria-pressed="true"].pass { background: var(--pass); border-color: var(--pass); color: #fff; }
+.vbtn[aria-pressed="true"].issue { background: var(--issue); border-color: var(--issue); color: #fff; }
+.vbtn[aria-pressed="true"].call { background: var(--call); border-color: var(--call); color: #fff; }
+textarea { width: 100%; min-height: 70px; font: inherit; font-size: 14px; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; resize: vertical; }
+.primary { border: 0; background: var(--accent); color: var(--accent-ink); font: inherit; font-weight: 700; padding: 10px 18px; border-radius: 6px; cursor: pointer; min-height: 42px; }
+.pb { width: 100%; min-height: 260px; font-family: var(--font-mono); font-size: 12.5px; }
+.nav { display: flex; justify-content: space-between; gap: 10px; }
+.small { font-size: 13px; color: var(--muted); }
+ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+@media (max-width: 520px) { .cred { grid-template-columns: 1fr; } .step { grid-template-columns: auto 1fr; padding: 10px 12px; } }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <div class="bar">
+    <div class="bar-top">
+      <h1>§455 · Stage 14 S3 owner walk · a returning child is picked, never retyped</h1>
+      <span class="count" id="count">0 of 0 ticked</span>
+    </div>
+    <div class="tabs" id="tabs" role="tablist" aria-label="Walk parts"></div>
+  </div>
+  <main id="main"></main>
+</div>
+
+<script type="application/json" id="walk-data">
+{
+  "asOf": "2026-11-04",
+  "parts": [
+    {
+      "id": "A", "title": "Stop check", "who": "Head coach",
+      "intro": "Proves the right code and the right fixture before anything else. If either step fails, stop: nothing after it can play.",
+      "steps": [
+        {"who": "Head coach", "do": "Open the Roster (desktop width, signed in as the head coach).", "see": "Six players: Liam Tremblay #2, Ella Brooks #3, Noah Okafor #4, Mason Patel #7, Lucas Murphy #8, Wyatt Haddad #14. No captions under any name.", "stop": "If the roster is not exactly these six, the fixture was used before. Reset it (Start tab) and reopen the Roster."},
+        {"who": "Head coach", "do": "Press + Add Player.", "see": "Two link lines under the title: “Adding several? Paste a list →” and “Played for this team before? Bring back a past player →”.", "stop": "If the second line is missing, the dev server is serving old code. Stop here and tell me."}
+      ]
+    },
+    {
+      "id": "B", "title": "The picker list", "who": "Head coach",
+      "intro": "What the picker shows before you choose anyone: who is listed, in what order, and what each row says. Nothing is written in this part.",
+      "steps": [
+        {"who": "Head coach", "do": "In Add Player, press “Played for this team before? Bring back a past player →”.", "see": "A window titled “Bring back a past player”. The hint says these players come back with their history and their contact details come from their last season. A search box reads “Search by name”. The foot says “They join the 2026 Season as active players.”"},
+        {"who": "Head coach", "do": "Read the list top to bottom.", "see": "Five rows, newest season first: Jonah Reyes, Owen Fischer, Sam Okoye, Theo Lindqvist (all the 2025 Season), then Priya Shah (the 2024 Season). None of the six players already on the 2026 roster is listed."},
+        {"who": "Head coach", "do": "Look at Jonah Reyes.", "see": "“Last played the 2025 Season · #5”, his birth date and “Marisol Reyes”, and an Inactive chip."},
+        {"who": "Head coach", "do": "Look at Sam Okoye.", "see": "#12, a green “2025 dues settled” chip, and a “Born 2012” chip (his birth year is outside the team’s 2015–2016)."},
+        {"who": "Head coach", "do": "Look at Theo Lindqvist.", "see": "A Call-up chip and a line that starts “Called up for 3 games in the 2025 Season”."},
+        {"who": "Head coach", "do": "Look at Priya Shah.", "see": "“Last played the 2024 Season · #7” and an amber “$120.00 owing from 2024” chip."},
+        {"who": "Head coach", "do": "Type “sam” in the search box. Then type “zz”. Then clear it.", "see": "“sam” leaves only Sam Okoye. “zz” shows “No past player has that name.” Clearing brings all five back."},
+        {"who": "Head coach", "do": "Tick Owen Fischer, then tick Theo Lindqvist, then untick both.", "see": "The header counts “1 chosen”, then “2 chosen”, then “0 chosen”. The button reads “Bring back 2 players” with two ticked and “Bring back players” (disabled) with none. Close the window without bringing anyone back."}
+      ]
+    },
+    {
+      "id": "C", "title": "Bring two back", "who": "Head coach",
+      "intro": "Bringing back a player who left (Jonah) and a call-up (Theo). They return as active players with their history. This part writes.",
+      "steps": [
+        {"who": "Head coach", "do": "Reopen the picker, tick Jonah Reyes and Theo Lindqvist, and press “Bring back 2 players”.", "see": "The window closes and the Roster says “2 players are back on the roster.”", "writes": "Writes two roster entries on the 2026 Season."},
+        {"who": "Head coach", "do": "Look at the Roster.", "see": "Eight players. Jonah #5 and Theo #20 are active. Under each name: “Back from the 2025 Season”. The six who stayed have no caption."},
+        {"who": "Head coach", "do": "Open Jonah’s player page.", "see": "His birth date (January 14, 2015) and guardian Marisol Reyes are already filled in; nobody retyped them."},
+        {"who": "Head coach", "do": "Reopen Add Player → Bring back a past player.", "see": "Jonah and Theo are gone from the list at once (no flash of the old list). Owen, Sam and Priya remain."}
+      ]
+    },
+    {
+      "id": "D", "title": "Add Player: Same child?", "who": "Head coach",
+      "intro": "Typing a name that matches a past player asks once. We use Sam Okoye. This part writes one new player.",
+      "steps": [
+        {"who": "Head coach", "do": "Close the picker. In Add Player type First name Sam, Last name Okoye, Number 12.", "see": "An amber question appears: “Sam Okoye played for S3 Walk Hawks in the 2025 Season.” with “Yes, it’s Sam” and “No, a different child”. The foot says “Is this Sam Okoye from the 2025 Season? Answer above.” and the Add Player button is disabled."},
+        {"who": "Head coach", "do": "Press “Yes, it’s Sam”.", "see": "The question becomes “Same child: Sam Okoye from the 2025 Season. Their history comes with them.” with a Change link. The number you typed (12) stays; Date of birth fills with March 2, 2012. Under Date of birth an amber line reads “Born 2012. The team is 2015–2016.” and Add Player is NOT blocked."},
+        {"who": "Head coach", "do": "Press Change.", "see": "The question returns and Add Player is disabled again."},
+        {"who": "Head coach", "do": "Press “No, a different child”, then Add Player.", "see": "A second Sam Okoye (a new player) is on the Roster, with no “Back from…” caption.", "writes": "Writes one new player and remembers “not the same child”."},
+        {"who": "Head coach", "do": "Press + Add Player again and type Sam / Okoye. Do not add. Close with × and discard.", "see": "NO question this time: the app remembers your No. Add Player stays available.", "stop": "If it asks again, the remembered No is not being read. Tell me."}
+      ]
+    },
+    {
+      "id": "E", "title": "Paste a list", "who": "Head coach",
+      "intro": "A pasted list asks per row. Owen Fischer is the past player, Sam Okoye is the name you already said No to, Mia Rossi is plainly new. This part writes two players.",
+      "steps": [
+        {"who": "Head coach", "do": "On the Roster press Import → Paste a list and paste these three lines, then press “Preview 3 players”:\n15 Owen Fischer\n12 Sam Okoye\nMia Rossi", "see": "“Check before adding”. Owen’s row shows a line like “Played for S3 Walk Hawks in the 2025 Season · born April 2, 2015” with “Same child” and “New player”. Sam’s row shows the usual already-on-your-roster warning and NO question (you already said No). Mia’s row is plain."},
+        {"who": "Head coach", "do": "Look at the foot.", "see": "It says “1 player needs an answer: same child or new?” and the Add button waits."},
+        {"who": "Head coach", "do": "Remove Sam’s row, then press “Same child” on Owen’s row.", "see": "The foot reason clears and the button reads “Add 2 players”."},
+        {"who": "Head coach", "do": "Change Owen’s number from 15 to 16 in the preview and back to 15, then press “Add 2 players”.", "see": "Owen’s “Same child” answer survived the edits, and Owen Fischer and Mia Rossi are on the Roster. Owen has NO “Back from…” caption (he was active last season, so he did not leave).", "writes": "Writes Owen (the same child as 2025) and Mia (new)."}
+      ]
+    },
+    {
+      "id": "F", "title": "Tryout accept", "who": "Head coach",
+      "intro": "Accepting a sign-up never puts one child on the roster twice. Three offered sign-ups: Mia Chen, Ella Brooks, Priya Shah. This part writes.",
+      "steps": [
+        {"who": "Head coach", "do": "Open Tryouts (the Decide stage link on the Start tab). If rows show bib numbers instead of names, turn the “Names hidden” switch off.", "see": "Three offered candidates with Add to roster buttons: Priya Shah, Ella Brooks, Mia Chen."},
+        {"who": "Head coach", "do": "Press Add to roster on Mia Chen.", "see": "She is added at once, no question. Her row reads “On the roster” with Undo.", "writes": "Writes one roster entry."},
+        {"who": "Head coach", "do": "Press Add to roster on Ella Brooks.", "see": "A window: “Ella Brooks is already on the 2026 roster”, body “Accepting would add Ella twice. Open Ella’s roster entry instead.”, a button “Open Ella’s entry”, and a quiet link “A different child — add anyway”."},
+        {"who": "Head coach", "do": "Press “Open Ella’s entry”, look, and come back. Press Add to roster again and choose “A different child — add anyway”.", "see": "Ella’s existing entry opens. After add-anyway the Roster has two Ellas, and the board row reads “On the roster”.", "writes": "Writes a second Ella (a new child) and remembers “not the same child”."},
+        {"who": "Head coach", "do": "Press Add to roster on Priya Shah.", "see": "A window “Add Priya Shah to the roster?” with the amber question “Priya Shah played for S3 Walk Hawks in the 2024 Season.” and the buttons “Yes, same child” and “No, a different child”. The Add to roster button waits."},
+        {"who": "Head coach", "do": "Press “Yes, same child”, then Add to roster.", "see": "Priya is on the Roster and her board row reads “On the roster”. Open her player page: her 2024 birth date (June 9, 2015) and guardian Anita Shah are there.", "writes": "Writes Priya as the same child and confirms the returning-player link."},
+        {"who": "Head coach", "do": "Reopen Add Player → Bring back a past player.", "see": "Only Sam Okoye (the 2025 one) is left in the list."}
+      ]
+    },
+    {
+      "id": "G", "title": "The assistant's view", "who": "Assistant coach",
+      "intro": "Adding players is the head coach’s job, and the roster-details grant hides birth dates and family. Sign in as the assistant (Start tab).",
+      "steps": [
+        {"who": "Assistant", "do": "Open the Roster.", "see": "The same players, but NO Add Player button, NO Import, and no “Bring back a past player” door anywhere."},
+        {"who": "Assistant", "do": "Open any player.", "see": "No birth date and no parent contact are shown to the assistant."}
+      ]
+    },
+    {
+      "id": "H", "title": "A phone pass", "who": "Head coach",
+      "intro": "Same screens at phone width (about 390 px wide: a narrow browser window, or your phone on the dev site). Sign back in as the head coach.",
+      "steps": [
+        {"who": "Head coach", "do": "Roster → Add Player.", "see": "The two door lines are stacked and easy to tap (each is at least 44 px tall). The picker door shows on a phone too."},
+        {"who": "Head coach", "do": "Open the picker.", "see": "Each row’s second line is short: season and number only (for example “Last played the 2025 Season · #12”), no birth date and no family. Sam’s row carries the full line “Born 2012. The team is 2015–2016.” instead of the chip. The window’s buttons are full-size."},
+        {"who": "Head coach", "do": "Close it. Type Sam / Okoye in Add Player.", "see": "No question (you said No in part D). Close with × and discard."},
+        {"who": "Head coach", "do": "Type Owen / Fischer in Add Player.", "see": "The question reads short: “… Same child?” with big Yes / No buttons and the foot reason. Close with × and discard."}
+      ]
+    },
+    {
+      "id": "I", "title": "Closing the season, then put back", "who": "Head coach",
+      "intro": "The last part is destructive: it closes the 2026 Season and starts 2027. Do it last. It ends with putting the fixture back.",
+      "steps": [
+        {"who": "Head coach", "do": "Settings → Start next season. Choose “The same players, moving up an age group”. Untick Jonah Reyes and leave the others ticked.", "see": "The list says active players are ticked and inactive players sit at the bottom."},
+        {"who": "Head coach", "do": "Press Start.", "see": "The confirmation names Jonah as having stayed on the 2026 Season and says “Bring Jonah back from Roster any time.”", "writes": "Closes 2026 and creates 2027."},
+        {"who": "Head coach", "do": "Open the 2027 Roster → Add Player → Bring back a past player.", "see": "Jonah is listed (last played the 2026 Season) along with Sam Okoye (2025) and the others who are not on the new roster."},
+        {"who": "Head coach", "do": "Put it all back: run the reset command on the Start tab, then reopen the links it prints.", "see": "The command ends with “ALL CHECKS PASSED” after you also run the verify command. The Roster shows the six players again.", "writes": "The reset gives the team a NEW id; use the links it prints."}
+      ]
+    },
+    {
+      "id": "J", "title": "Calls for you", "who": "You",
+      "intro": "Each choice below is one box per option, so the tick is the answer. Use the notes box for the why.",
+      "calls": [
+        {"q": "“A different child — add anyway” on a tryout accept (you saw it with Ella). A same name already on the roster is refused, with a quiet way through that is remembered as a No.", "opts": ["Keep as built", "Change it (say how in the notes)"]},
+        {"q": "Who gets “Back from the 2025 Season”: only a child who LEFT and came back (Jonah and Theo yes; Owen and Sam no, because they were active last season).", "opts": ["Keep as built", "Change it (say how in the notes)"]},
+        {"q": "A pasted name that is already on this season’s roster is still added, with today’s warning, instead of asked about.", "opts": ["Keep as built", "Change it (say how in the notes)"]},
+        {"q": "The two “Add parent / guardian contact” and “More details” toggles are 37 px tall at phone width everywhere they are used, under the 44 px tap size.", "opts": ["Fix it once in the shared control", "Leave it"]},
+        {"q": "The other defaults taken: a No is remembered at all three doors; two same-name past players are asked newest season first; Yes fills only blank boxes; the birth-year warning shows only to people who can see birth dates, and only on the picker and single add; a child who is inactive on this season is not in the picker (use Add back on the Roster); a call-up who played for this team is listed; the picker door shows on a phone; a No at accept also rejects the board’s suggestion for that pair; only the head coach can bring a player back; the club’s own accept asks nothing and the database refuses a duplicate.", "opts": ["Keep all as built", "Change some (say which in the notes)"]}
+      ]
+    }
+  ]
+}
+</script>
+
+<script>
+(function () {
+  var KEY = "s3walk-2026-11-04-v1";
+  var data = JSON.parse(document.getElementById("walk-data").textContent);
+  var state = { ticks: {}, verdict: {}, notes: {}, tab: "start" };
+  try { var saved = JSON.parse(localStorage.getItem(KEY) || "null"); if (saved) { state.ticks = saved.ticks || {}; state.verdict = saved.verdict || {}; state.notes = saved.notes || {}; state.tab = saved.tab || "start"; } } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var parts = data.parts;
+  var tabsEl = document.getElementById("tabs");
+  var mainEl = document.getElementById("main");
+  var countEl = document.getElementById("count");
+
+  function el(tag, attrs, kids) {
+    var n = document.createElement(tag);
+    if (attrs) Object.keys(attrs).forEach(function (k) {
+      if (k === "class") n.className = attrs[k];
+      else if (k === "text") n.textContent = attrs[k];
+      else if (k === "html") n.innerHTML = attrs[k];
+      else if (k.indexOf("on") === 0) n.addEventListener(k.slice(2), attrs[k]);
+      else n.setAttribute(k, attrs[k]);
+    });
+    (kids || []).forEach(function (c) { if (c) n.appendChild(typeof c === "string" ? document.createTextNode(c) : c); });
+    return n;
+  }
+  function boxesOf(p) {
+    var out = [];
+    (p.steps || []).forEach(function (s, i) { out.push(p.id + (i + 1)); });
+    (p.calls || []).forEach(function (c, i) { c.opts.forEach(function (o, j) { out.push(p.id + (i + 1) + "." + (j + 1)); }); });
+    return out;
+  }
+  function partCount(p) { var b = boxesOf(p); var n = 0; b.forEach(function (id) { if (state.ticks[id]) n++; }); return { n: n, of: b.length }; }
+  function totals() {
+    var n = 0, of = 0;
+    parts.forEach(function (p) { if (p.calls) return; var c = partCount(p); n += c.n; of += c.of; });
+    return { n: n, of: of };
+  }
+  function renderCount() { var t = totals(); countEl.textContent = t.n + " of " + t.of + " steps ticked"; }
+
+  var order = ["start"].concat(parts.map(function (p) { return p.id; })).concat(["paste"]);
+  function renderTabs() {
+    tabsEl.innerHTML = "";
+    order.forEach(function (id) {
+      var label, dot = "";
+      if (id === "start") label = "Start";
+      else if (id === "paste") label = "Paste back";
+      else { var p = parts.filter(function (x) { return x.id === id; })[0]; label = p.id + " · " + p.title; var v = state.verdict[id]; var c = partCount(p); dot = v ? v : (c.n > 0 ? "part" : ""); }
+      var b = el("button", { "class": "tab", role: "tab", "aria-selected": String(state.tab === id), text: label, onclick: function () { go(id); } });
+      if (dot !== "" || (id !== "start" && id !== "paste")) b.appendChild(el("span", { "class": "dot " + dot }));
+      tabsEl.appendChild(b);
+    });
+  }
+  function go(id) { state.tab = id; save(); render(); window.scrollTo(0, 0); }
+
+  function cred(label, value) {
+    var b = el("button", { "class": "copy", type: "button", text: "Copy", onclick: function () {
+      var done = function () { b.textContent = "Copied"; setTimeout(function () { b.textContent = "Copy"; }, 1200); };
+      try { navigator.clipboard.writeText(value).then(done, function () { b.textContent = "Select it"; }); } catch (e) { b.textContent = "Select it"; }
+    } });
+    return [el("span", { "class": "k", text: label }), el("span", { "class": "v", text: value }), b];
+  }
+
+  function renderStart() {
+    var team = "4979621e-58a7-4859-9d9c-ee1f63580be7";
+    var base = "http://localhost:3000/s3-walk-coach/coaches/teams/" + team;
+    var c1 = el("div", { "class": "cred" });
+    [].concat(cred("Site", "http://localhost:3000"), cred("Head coach", "s3-walk-coach@dev.local"), cred("Password", "devpass123"), cred("Roster", base + "/roster"), cred("Tryouts", base + "/tryouts?stage=decide")).forEach(function (n) { c1.appendChild(n); });
+    var c2 = el("div", { "class": "cred" });
+    [].concat(cred("Assistant", "s3-walk-assistant@dev.local"), cred("Password", "devpass123")).forEach(function (n) { c2.appendChild(n); });
+    var c3 = el("div", { "class": "cred" });
+    [].concat(
+      cred("Reset (part I)", "node --env-file=.env.local .probe/s3-walk/fixture.mjs --reset"),
+      cred("Verify", "node --env-file=.env.local .probe/s3-walk/verify.mjs")
+    ).forEach(function (n) { c3.appendChild(n); });
+
+    var who = el("div", { "class": "scroll" }, [el("table", null, [
+      el("thead", null, [el("tr", null, [el("th", { text: "Player" }), el("th", { text: "Where they are" }), el("th", { text: "What it is for" })])]),
+      el("tbody", null, [
+        row("Liam #2 · Ella #3 · Noah #4 · Mason #7 · Lucas #8 · Wyatt #14", "On the 2026 roster (and last season’s)", "The six who rolled. Never listed in the picker."),
+        row("Jonah Reyes #5", "2025 only, inactive", "Left, comes back: picker + “Back from…”."),
+        row("Theo Lindqvist #20", "2025 only, call-up (3 games)", "A call-up comes back: picker + “Back from…”."),
+        row("Sam Okoye #12", "2025 only, born 2012, dues settled", "Add Player question, birth-year warning, a remembered No."),
+        row("Owen Fischer #15", "2025 only, active", "Paste a list: Same child."),
+        row("Priya Shah #7", "2024 only, $120.00 owing", "The picker’s dues chip; a tryout sign-up has her name."),
+        row("Mia Chen · Ella Brooks · Priya Shah", "Offered tryout sign-ups, 2026", "Plain accept · already on the roster by name · Same child?")
+      ])
+    ])]);
+    function row(a, b, c) { return el("tr", null, [el("td", { text: a }), el("td", { text: b }), el("td", { text: c })]); }
+
+    return [
+      el("h2", { text: "A returning child is picked, never retyped" }),
+      el("p", { "class": "lede", text: "As of " + data.asOf + ". Dev site only; keep this page private (it carries a dev password)." }),
+      el("div", { "class": "panel" }, [el("h3", { text: "What this walk is for" }), el("p", { text: "To check that a coach can bring a player from an earlier season back from one picker, that typing or pasting a name that matches a past player asks “Same child?” once, that accepting a tryout sign-up never puts one child on a roster twice, and that a No is remembered. It is one job, in nine parts, about 40 steps." })]),
+      el("div", { "class": "panel" }, [el("h3", { text: "It passes when" }), el("ul", { "class": "plain" }, [
+        el("li", { text: "A past player comes back with their history and is never retyped." }),
+        el("li", { text: "Every door asks before adding a same-name player, and a No is not asked twice." }),
+        el("li", { text: "No path puts the same child on a season’s roster twice." }),
+        el("li", { text: "An assistant sees no way to add or bring back anyone." })
+      ])]),
+      el("div", { "class": "panel" }, [el("h3", { text: "Not in this walk" }), el("ul", { "class": "plain" }, [
+        el("li", { text: "A board confirm that would join two children who are both on this season’s roster. It needs two children already on one season, which this fixture cannot make; a database test and a unit test cover it." }),
+        el("li", { text: "The club’s own accept refusing a child already on the roster (club side, covered by tests)." }),
+        el("li", { text: "Player documents (S4), the child’s own page (S5) and the club’s Children queue (S6)." })
+      ])]),
+      el("div", { "class": "panel" }, [el("h3", { text: "Sign in as (head coach)" }), c1]),
+      el("div", { "class": "panel" }, [el("h3", { text: "Sign in as (assistant, part G only)" }), c2]),
+      el("div", { "class": "panel" }, [el("h3", { text: "Who is where on this fixture" }), who]),
+      el("div", { "class": "panel" }, [el("h3", { text: "Commands (only part I needs them)" }), c3,
+        el("p", { "class": "small", text: "Run them from the repository folder in a terminal. A reset gives the team a new id, so the links above stop working; the reset prints the new ones and saves them in the CREDENTIALS file in the fixture folder." })]),
+      el("div", { "class": "callout", html: "<b>Writing parts.</b> C, D, E, F and I change the fixture and later parts depend on earlier ones (Sam, Owen and Priya are used once each). Walk them in order. The walk can be stopped after part H without any harm." }),
+      el("div", { "class": "nav" }, [el("span"), el("button", { "class": "primary", type: "button", text: "Start with part A", onclick: function () { go("A"); } })])
+    ];
+  }
+
+  function renderPart(p) {
+    var out = [];
+    out.push(el("h2", { text: p.id + " · " + p.title }));
+    out.push(el("p", { "class": "lede", text: p.intro }));
+    if (p.steps) {
+      var ol = el("ol", { "class": "steps" });
+      p.steps.forEach(function (s, i) {
+        var id = p.id + (i + 1);
+        var cb = el("input", { type: "checkbox", id: "cb-" + id, "aria-label": "Step " + id + " done", onchange: function (e) { state.ticks[id] = e.target.checked; save(); render(true); } });
+        cb.checked = !!state.ticks[id];
+        var body = el("div", { "class": "body" }, [
+          el("div", { "class": "id" }, [el("span", { "class": "who", text: s.who }), id]),
+          doEl(s.do),
+          el("div", { "class": "see" }, [el("b", { "class": "lbl", text: "You should see" }), document.createTextNode(s.see)])
+        ]);
+        if (s.writes) body.appendChild(el("div", { "class": "writes", text: s.writes }));
+        if (s.stop) body.appendChild(el("div", { "class": "callout stop", text: s.stop }));
+        ol.appendChild(el("li", { "class": "step" + (state.ticks[id] ? " done" : "") }, [cb, body]));
+      });
+      out.push(ol);
+    }
+    if (p.calls) {
+      p.calls.forEach(function (c, i) {
+        var box = el("div", { "class": "panel" }, [el("p", { text: c.q })]);
+        var opts = el("div", { "class": "opts" });
+        c.opts.forEach(function (o, j) {
+          var id = p.id + (i + 1) + "." + (j + 1);
+          var cb = el("input", { type: "checkbox", id: "cb-" + id, onchange: function (e) { state.ticks[id] = e.target.checked; save(); render(true); } });
+          cb.checked = !!state.ticks[id];
+          opts.appendChild(el("label", { "class": "opt", "for": "cb-" + id }, [cb, el("span", { text: o })]));
+        });
+        box.appendChild(opts);
+        out.push(box);
+      });
+    }
+    out.push(signoff(p));
+    var idx = order.indexOf(p.id);
+    out.push(el("div", { "class": "nav" }, [
+      el("button", { "class": "vbtn", type: "button", text: "← Back", onclick: function () { go(order[idx - 1]); } }),
+      el("button", { "class": "primary", type: "button", text: idx === order.length - 2 ? "To the paste-back →" : "Next part →", onclick: function () { go(order[idx + 1]); } })
+    ]));
+    return out;
+  }
+  function doEl(text) {
+    var d = el("div", { "class": "do" }, [el("b", { "class": "lbl", text: "Do" })]);
+    String(text).split("\n").forEach(function (line, i) {
+      if (i > 0) d.appendChild(el("br"));
+      if (i > 0) d.appendChild(el("code", { text: line })); else d.appendChild(document.createTextNode(line));
+    });
+    return d;
+  }
+  function signoff(p) {
+    var c = partCount(p);
+    var v = el("div", { "class": "verdict" });
+    [["pass", "Pass"], ["issue", "Issue"], ["call", "Needs a call"]].forEach(function (pair) {
+      v.appendChild(el("button", { "class": "vbtn " + pair[0], type: "button", "aria-pressed": String(state.verdict[p.id] === pair[0]), text: pair[1], onclick: function () {
+        state.verdict[p.id] = state.verdict[p.id] === pair[0] ? "" : pair[0]; save(); render(true);
+      } }));
+    });
+    var ta = el("textarea", { id: "notes-" + p.id, "aria-label": "Notes for part " + p.id, placeholder: "Notes: what you saw, what looked wrong, the why behind a call." });
+    ta.value = state.notes[p.id] || "";
+    ta.addEventListener("input", function () { state.notes[p.id] = ta.value; save(); });
+    return el("div", { "class": "panel" }, [el("h3", { text: "Part " + p.id + " · " + c.n + " of " + c.of + " ticked" }), v, ta]);
+  }
+
+  function buildPasteBack() {
+    var t = totals();
+    var lines = ["§455 Stage 14 S3 walk · " + data.asOf + " · ticked " + t.n + " of " + t.of + " steps"];
+    parts.forEach(function (p) {
+      var c = partCount(p);
+      var v = (state.verdict[p.id] || "no verdict").toUpperCase();
+      if (p.calls) {
+        lines.push("");
+        lines.push(p.id + " · " + p.title + " [" + v + "]");
+        p.calls.forEach(function (call, i) {
+          var picked = call.opts.filter(function (o, j) { return state.ticks[p.id + (i + 1) + "." + (j + 1)]; });
+          lines.push("  " + p.id + (i + 1) + ": " + (picked.length ? picked.join(" + ") : "NOT ANSWERED") + "  (" + call.q.slice(0, 70) + "…)");
+        });
+      } else {
+        lines.push("");
+        lines.push(p.id + " · " + p.title + " [" + v + "] " + c.n + "/" + c.of);
+        var missed = [];
+        (p.steps || []).forEach(function (s, i) { if (!state.ticks[p.id + (i + 1)]) missed.push(p.id + (i + 1)); });
+        if (missed.length) lines.push("  not ticked: " + missed.join(", "));
+      }
+      if ((state.notes[p.id] || "").trim()) lines.push("  notes: " + state.notes[p.id].trim().replace(/\n/g, " / "));
+    });
+    lines.push("");
+    lines.push("Reminder: the fraction is the evidence; a verdict is an opinion.");
+    return lines.join("\n");
+  }
+  function renderPaste() {
+    var ta = el("textarea", { "class": "pb", id: "pb-out", readonly: "readonly", "aria-label": "Paste-back text" });
+    ta.value = buildPasteBack();
+    var msg = el("span", { "class": "small", id: "pb-msg" });
+    var copyBtn = el("button", { "class": "primary", type: "button", text: "Copy the paste-back", onclick: function () {
+      ta.value = buildPasteBack();
+      var fail = function () { ta.focus(); ta.select(); msg.textContent = "Select and copy it by hand."; };
+      try { navigator.clipboard.writeText(ta.value).then(function () { msg.textContent = "Copied. Paste it into the chat."; }, fail); } catch (e) { fail(); }
+    } });
+    var reset = el("button", { "class": "vbtn", type: "button", text: "Clear every tick and note", onclick: function () {
+      if (!state._confirm) { state._confirm = true; reset.textContent = "Press again to clear everything"; return; }
+      state.ticks = {}; state.verdict = {}; state.notes = {}; state._confirm = false; save(); render();
+    } });
+    return [
+      el("h2", { text: "Paste back" }),
+      el("p", { "class": "lede", text: "Copy this into the chat when you finish, or when you stop. It carries the count per part, the verdicts, your notes and your answers to the calls." }),
+      ta,
+      el("div", { "class": "nav" }, [el("div", { "class": "verdict" }, [copyBtn, msg]), reset])
+    ];
+  }
+
+  function render(keepScroll) {
+    var y = window.scrollY;
+    renderTabs(); renderCount();
+    mainEl.innerHTML = "";
+    var nodes;
+    if (state.tab === "start") nodes = renderStart();
+    else if (state.tab === "paste") nodes = renderPaste();
+    else { var p = parts.filter(function (x) { return x.id === state.tab; })[0]; nodes = p ? renderPart(p) : renderStart(); }
+    nodes.forEach(function (n) { mainEl.appendChild(n); });
+    if (keepScroll === true) window.scrollTo(0, y);
+  }
+  render();
+})();
+</script>

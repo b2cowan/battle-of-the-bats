@@ -6,6 +6,14 @@ import ContinuityCompareCard from '@/components/coaches/ContinuityCompareCard';
 import { useContinuityLinks } from '@/lib/hooks/useContinuityLinks';
 import type { TryoutMemoryPair } from '@/lib/tryout-report';
 import styles from './TryoutDayCard.module.css';
+import cs from '@/app/[orgSlug]/coaches/coaches.module.css';
+import Link from 'next/link';
+import QuestionShell, { QuestionCancel } from '@/components/coaches/QuestionShell';
+import {
+  ACCEPT_SUBMIT, ACCEPT_DIFFERENT_ANYWAY, SAME_CHILD_YES_ACCEPT, SAME_CHILD_NO, SAME_CHILD_FOOT_SHORT,
+  acceptTitle, acceptRefusalTitle, acceptRefusalBody, acceptRefusalOpen,
+  sameChildHead, sameChildDetail, pastPlayerName, type PastPlayer, type WorkingSeason,
+} from '@/lib/past-player-words';
 
 type Status = 'pending_review' | 'offered' | 'waitlisted' | 'accepted' | 'declined' | 'withdrawn';
 type Decision = 'offer' | 'waitlist' | 'cut';
@@ -48,6 +56,10 @@ interface Board {
 interface Props {
   /** Decisions API, e.g. `/api/coaches/{orgSlug}/teams/{teamId}/tryout-decisions`. */
   apiBase: string;
+  /** The team's name ("Jonah Ruiz played for the Hawks…") and its roster page (the refusal's "Open Ella's entry"),
+   *  for the accept's "Same child?" (Stage 14 S3). */
+  teamName?: string;
+  rosterBase?: string;
   /** Returning-player continuity API (Player Development 3C), e.g.
    *  `/api/coaches/{orgSlug}/teams/{teamId}/development/continuity`. Optional — chips only
    *  render when provided AND the candidate's name is visible (never in blind mode: a
@@ -230,7 +242,15 @@ function ScoreBreakdown({ candidate, categories, scaleMax }: {
  * off-by-default is a mitigation, not the answer. Plan:
  * docs/projects/active/COACH_TRYOUT_EMAIL_REMOVAL_PLAN.md.
  */
-export default function TryoutDecisionBoard({ apiBase, continuityApiBase, memoryApiBase, active = true, canWrite = true, onError }: Props) {
+/** The accept's open question or refusal (Stage 14 S3, tab 4 + the 416). */
+type AcceptAsk = { c: Candidate; candidate: PastPlayer; answer: 'same' | 'new' | null; notSame: string[] };
+type AcceptRefusal = {
+  c: Candidate; byName: boolean; season: WorkingSeason;
+  entry: { playerId: string; childId: string; firstName: string; lastName: string | null };
+  notSame: string[];
+};
+
+export default function TryoutDecisionBoard({ apiBase, teamName = '', rosterBase, continuityApiBase, memoryApiBase, active = true, canWrite = true, onError }: Props) {
   const [board, setBoard] = useState<Board | null>(null);
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState<string | null>(null);
@@ -247,6 +267,8 @@ export default function TryoutDecisionBoard({ apiBase, continuityApiBase, memory
   /** Bumped when a continuity link is CONFIRMED — see the memory effect. */
   const [memoryEpoch, setMemoryEpoch] = useState(0);
   const [addingId, setAddingId] = useState<string | null>(null);
+  const [acceptAsk, setAcceptAsk] = useState<AcceptAsk | null>(null);
+  const [acceptRefusal, setAcceptRefusal] = useState<AcceptRefusal | null>(null);
   const [undoingId, setUndoingId] = useState<string | null>(null);
   const onErrorRef = useRef(onError);
   useEffect(() => { onErrorRef.current = onError; }, [onError]);
@@ -359,17 +381,36 @@ export default function TryoutDecisionBoard({ apiBase, continuityApiBase, memory
   // One tap → roster place. No drawer, no fees, no welcome email: the coach has had the
   // conversation already, and the amount a family owes depends on a roster size that does not
   // exist yet (owner 2026-08-26).
-  async function addToRoster(c: Candidate) {
+  // ⚖ Unless the child may already be known (Club Tier Stage 14 S3, tab 4): a sign-up the head coach confirmed as a
+  // returning player attaches at once; an unconfirmed same-name past player opens "Same child?" first; a child already
+  // on this season's roster opens the refusal. The server decides which — nothing is written until it is unambiguous.
+  async function addToRoster(
+    c: Candidate,
+    answers: { sameChildId?: string | null; notSameChildIds?: string[]; differentFromChildId?: string | null } = {},
+  ) {
     if (addingId || savingId) return;
     setAddingId(c.registrationId);
     try {
       const res = await fetch(`${apiBase}/accept`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ registrationId: c.registrationId }),
+        body: JSON.stringify({ registrationId: c.registrationId, ...answers }),
       });
       const data = await res.json().catch(() => ({}));
+      const notSame = [...(answers.notSameChildIds ?? []), ...(answers.differentFromChildId ? [answers.differentFromChildId] : [])];
+      if (res.status === 409 && data?.code === 'needs_answer' && data.candidate) {
+        setAcceptRefusal(null);
+        setAcceptAsk({ c, candidate: data.candidate as PastPlayer, answer: null, notSame });
+        return;
+      }
+      if (res.status === 409 && (data?.code === 'already_on_roster' || data?.code === 'already_on_roster_by_name') && data.entry) {
+        setAcceptAsk(null);
+        setAcceptRefusal({ c, byName: data.code === 'already_on_roster_by_name', season: data.workingSeason, entry: data.entry, notSame });
+        return;
+      }
       if (!res.ok) throw new Error(data.message ?? data.error ?? 'Failed to add the player.');
+      setAcceptAsk(null);
+      setAcceptRefusal(null);
       setBoard(b => b ? {
         ...b,
         candidates: b.candidates.map(x => x.registrationId === c.registrationId ? { ...x, status: 'accepted' } : x),
@@ -418,6 +459,69 @@ export default function TryoutDecisionBoard({ apiBase, continuityApiBase, memory
   // board a coach was just looking at on screen until the new payload lands, rather than flashing
   // the panel empty every time they tab away and back.
   if (loading && !board) return null;
+
+  // ── The accept's "Same child?" (520) and its refusal (416) — Stage 14 S3, tab 4 ──────────────────────────────────
+  const ask = acceptAsk;
+  const askName = ask ? (ask.c.name ?? pastPlayerName(ask.candidate)) : '';
+  const acceptWindows = (
+    <>
+      <QuestionShell open={!!ask} onClose={() => setAcceptAsk(null)} busy={!!addingId}
+        ariaLabel={ask ? acceptTitle(askName) : ACCEPT_SUBMIT} title={ask ? acceptTitle(askName) : ACCEPT_SUBMIT}
+        footerStart={ask && !ask.answer ? <span className={cs.bornWarnHint}>{SAME_CHILD_FOOT_SHORT}</span> : undefined}
+        footer={<>
+          <QuestionCancel className={cs.btnSecondary} />
+          <button type="button" className={cs.btnPrimary} disabled={!ask?.answer || !!addingId}
+            onClick={() => {
+              if (!ask?.answer) return;
+              void addToRoster(ask.c, ask.answer === 'same'
+                ? { sameChildId: ask.candidate.childId, notSameChildIds: ask.notSame }
+                : { notSameChildIds: [...ask.notSame, ask.candidate.childId] });
+            }}>
+            {addingId ? 'Adding…' : ACCEPT_SUBMIT}
+          </button>
+        </>}>
+        {ask && (
+          <div className={cs.sameChildAsk} role="group" aria-label="Is this the same child?">
+            <b>{sameChildHead(ask.candidate, teamName)}</b>
+            <p>
+              <span className={cs.sameChildLong}>{sameChildDetail(ask.candidate)}</span>
+              <span className={cs.sameChildShort}>{sameChildDetail(ask.candidate, true)}</span>
+            </p>
+            <div className={cs.sameChildAskButtons}>
+              <button type="button" aria-pressed={ask.answer === 'same'}
+                className={`btn ${ask.answer === 'same' ? 'btn-lime' : 'btn-outline'}`}
+                onClick={() => setAcceptAsk({ ...ask, answer: 'same' })}>{SAME_CHILD_YES_ACCEPT}</button>
+              <button type="button" aria-pressed={ask.answer === 'new'}
+                className={`btn ${ask.answer === 'new' ? 'btn-lime' : 'btn-outline'}`}
+                onClick={() => setAcceptAsk({ ...ask, answer: 'new' })}>{SAME_CHILD_NO}</button>
+            </div>
+          </div>
+        )}
+      </QuestionShell>
+      <QuestionShell kind="question" open={!!acceptRefusal} onClose={() => setAcceptRefusal(null)} busy={!!addingId}
+        ariaLabel={acceptRefusal ? acceptRefusalTitle(pastPlayerName(acceptRefusal.entry), acceptRefusal.season) : 'Already on the roster'}
+        title={acceptRefusal ? acceptRefusalTitle(pastPlayerName(acceptRefusal.entry), acceptRefusal.season) : ''}
+        footerStart={acceptRefusal?.byName ? (
+          <button type="button" className={`${cs.linkBtn} ${cs.linkBtnAccent}`} disabled={!!addingId}
+            onClick={() => {
+              const r = acceptRefusal;
+              if (r) void addToRoster(r.c, { notSameChildIds: r.notSame, differentFromChildId: r.entry.childId });
+            }}>
+            {ACCEPT_DIFFERENT_ANYWAY}
+          </button>
+        ) : undefined}
+        footer={<>
+          <QuestionCancel className={cs.btnSecondary}>Close</QuestionCancel>
+          {acceptRefusal && rosterBase && (
+            <Link className={cs.btnPrimary} href={`${rosterBase}/${acceptRefusal.entry.playerId}`}>
+              {acceptRefusalOpen(acceptRefusal.entry.firstName.trim())}
+            </Link>
+          )}
+        </>}>
+        {acceptRefusal && <p>{acceptRefusalBody(acceptRefusal.entry.firstName.trim())}</p>}
+      </QuestionShell>
+    </>
+  );
   if (!board) return null;
 
   if (board.total === 0) {
@@ -438,6 +542,7 @@ export default function TryoutDecisionBoard({ apiBase, continuityApiBase, memory
     // data-sandbox-tour: the beat the demo's "how 28 kids got ranked" step rings — the ranked
     // board, still blind. Inert off a demo org.
     <div className={styles.card} data-sandbox-tour="tryout-decisions">
+      {acceptWindows}
       <div className={styles.head}>
         <div>
           <h3 className={styles.title}><ListChecks size={16} /> Decision board</h3>

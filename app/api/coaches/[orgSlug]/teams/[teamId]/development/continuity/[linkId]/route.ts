@@ -6,7 +6,11 @@ import {
   getRepTeamContinuityLinks,
   getContinuityCurrentAlias,
   decideContinuityLink,
+  getRepTeam,
+  getActiveRepProgramYear,
 } from '@/lib/db';
+import { isChildAlreadyOnSeason } from '@/lib/past-player-rules';
+import { joinSameSeasonRefusal } from '@/lib/past-player-words';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canWriteDevelopment, DEVELOPMENT_GRANT_MESSAGE } from '@/lib/coach-capabilities';
 
@@ -74,6 +78,16 @@ export const POST = withObservability(async (req: Request,
     }
     return NextResponse.json({ link });
   } catch (error: unknown) {
+    /* A confirm joins the two children (mig 435). When BOTH are already on this season's roster, the join would put one
+       child on it twice — the one-child-per-season index refuses it (mig 438, owner ruling 2026-11-04) and the coach
+       reads Ask 11's words. The link stays suggested; nothing moved. */
+    if (isChildAlreadyOnSeason(error)) {
+      const [team, season] = await Promise.all([getRepTeam(teamId), getActiveRepProgramYear(teamId)]);
+      return NextResponse.json({
+        error: joinSameSeasonRefusal(team?.name ?? 'team', season?.name ?? 'this season'),
+        code: 'both_on_this_season',
+      }, { status: 409 });
+    }
     // One CONFIRMED identity per current entity (partial unique) — the same-id race.
     if (typeof error === 'object' && error !== null && (error as { code?: string }).code === '23505') {
       return NextResponse.json({ error: 'Another record is already confirmed for this player — unlink it first.' }, { status: 409 });

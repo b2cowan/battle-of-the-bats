@@ -14,6 +14,8 @@ import {
 import type { RepTryoutRegistrationStatus } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 import { refuseUnlessLiveSeason } from '@/lib/club-team-route';
+import { alreadyOnRoster } from '@/lib/past-player-words';
+import { playerName } from '@/lib/coach-roster-name';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -125,7 +127,13 @@ export const PATCH = withObservability(async (req: Request,
       return NextResponse.json({ registration, player });
     } catch (e) {
       if (e instanceof TryoutAcceptError) {
-        return NextResponse.json({ error: e.message, code: e.code }, { status: e.httpStatus });
+        /* A sign-up whose child is already on this season's roster (a coach confirmed it as a returning player who
+           also came with the team) is refused by the one-child-per-season index (mig 438, Stage 14 S3), in the drawn
+           words. The club asks no "Same child?" here: a same-name match across records is the Children queue's (S6). */
+        const message = e.code === 'already_on_roster'
+          ? alreadyOnRoster(playerName(reg), programYear)
+          : e.message;
+        return NextResponse.json({ error: message, code: e.code }, { status: e.httpStatus });
       }
       throw e;
     }

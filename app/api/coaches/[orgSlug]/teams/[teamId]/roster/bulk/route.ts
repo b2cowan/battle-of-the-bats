@@ -18,6 +18,14 @@ import {
   type DraftRosterPlayer,
 } from '@/lib/coach-roster-bulk';
 import type { RepRosterPlayer } from '@/lib/types';
+import {
+  readPastPlayers,
+  bringBackChild,
+  storeNotSameChild,
+} from '@/lib/past-players';
+import { decideAddDoor, parseSameChildAnswer, isChildAlreadyOnSeason, type AddDoorDecision } from '@/lib/past-player-rules';
+import { alreadyOnRoster, pasteNeedsAnswer } from '@/lib/past-player-words';
+import { playerName } from '@/lib/coach-roster-name';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -103,7 +111,8 @@ export const POST = withObservability(async (req: Request,
   // Re-validate server-side against the CURRENT roster — the client's preview may be stale if
   // another head coach added players while this sheet was open.
   const existing = await getRepRosterPlayers(programYear.id);
-  const validated = validateDraftRoster(incoming.map(toDraftRow), existing);
+  const drafts = incoming.map(toDraftRow);
+  const validated = validateDraftRoster(drafts, existing);
   const rows = committableRows(validated);
   if (rows.length === 0) {
     return NextResponse.json({ error: 'Every row is missing a first name.' }, { status: 400 });
@@ -114,6 +123,36 @@ export const POST = withObservability(async (req: Request,
   // what lets the inserts run concurrently at all. Order still follows the coach's list.
   const firstOrder = await getNextRepRosterDisplayOrder(programYear.id, team.id);
 
+  /* ⚖ "SAME CHILD?" ON PASTE A LIST (Club Tier Stage 14 S3, tab 4). The check step asked each row whose first + last
+     name matches a past player of THIS team; this re-check makes it true. Any row still unanswered refuses the WHOLE
+     batch (nothing written) — Add waits until each match is answered. "Same child" rows bring that child back; "New
+     player" rows add a new child and store the "no". A same-season name keeps today's warning (that child is on the
+     roster, so it is never a "same child?" candidate). */
+  const read = await readPastPlayers({
+    orgId: ctx!.org.id,
+    team: { id: team.id, sport: team.sport ?? null },
+    workingSeason: programYear,
+    cutoffs: ctx!.org.birthdayCutoffs,
+    access: { rosterPii: assignment.capabilities.rosterPii, money: false },
+  });
+  const rawByRow = new Map(drafts.map((d, i) => [d.rowNumber, incoming[i] as Record<string, unknown>]));
+  const decisionByRow = new Map<number, AddDoorDecision>();
+  for (const row of rows) {
+    const raw = rawByRow.get(row.rowNumber);
+    decisionByRow.set(row.rowNumber, decideAddDoor(read, row.playerFirstName, row.playerLastName, parseSameChildAnswer(raw)));
+  }
+  const unanswered = rows.filter(r => { const k = decisionByRow.get(r.rowNumber)?.kind; return k === 'ask' || k === 'unknown'; });
+  if (unanswered.length > 0) {
+    return NextResponse.json({
+      error: pasteNeedsAnswer(unanswered.length),
+      code: 'needs_answer',
+      rows: unanswered.map(r => {
+        const d = decisionByRow.get(r.rowNumber)!;
+        return { rowNumber: r.rowNumber, candidate: d.kind === 'ask' ? d.candidate : null };
+      }),
+    }, { status: 409 });
+  }
+
   const created: RepRosterPlayer[] = [];
   const failed: { rowNumber: number; name: string; error: string }[] = [];
 
@@ -123,24 +162,54 @@ export const POST = withObservability(async (req: Request,
   const CONCURRENCY = 10;
   for (let start = 0; start < rows.length; start += CONCURRENCY) {
     const chunk = rows.slice(start, start + CONCURRENCY);
-    const settled = await Promise.allSettled(chunk.map((row, i) => createRepRosterPlayer({
-      programYearId: programYear.id,
-      teamId: team.id,
-      orgId: ctx!.org.id,
-      source: 'admin_manual',
-      displayOrder:      firstOrder + start + i,
-      playerFirstName:   row.playerFirstName,
-      playerLastName:    row.playerLastName || null,
-      playerDateOfBirth: row.playerDateOfBirth || null,
-      playerNumber:      row.playerNumber || null,
-      primaryPosition:   row.primaryPosition || null,
-      secondaryPosition: null,
-      guardianFirstName: row.guardianFirstName || null,
-      guardianLastName:  row.guardianLastName || null,
-      guardianEmail:     row.guardianEmail || null,
-      guardianPhone:     row.guardianPhone || null,
-      notes:             row.notes || null,
-    })));
+    const settled = await Promise.allSettled(chunk.map(async (row, i) => {
+      const typed = {
+        playerFirstName:   row.playerFirstName,
+        playerLastName:    row.playerLastName || null,
+        playerDateOfBirth: row.playerDateOfBirth || null,
+        playerNumber:      row.playerNumber || null,
+        primaryPosition:   row.primaryPosition || null,
+        guardianFirstName: row.guardianFirstName || null,
+        guardianLastName:  row.guardianLastName || null,
+        guardianEmail:     row.guardianEmail || null,
+        guardianPhone:     row.guardianPhone || null,
+        notes:             row.notes || null,
+      };
+      const d = decisionByRow.get(row.rowNumber)!;
+      if (d.kind === 'already_here') {
+        throw new Error(alreadyOnRoster(playerName(d.entry), read.workingSeason));
+      }
+      if (d.kind === 'same') {
+        try {
+          return (await bringBackChild({
+            orgId: ctx!.org.id, teamId: team.id, workingSeasonId: programYear.id, prior: d.prior,
+            userId: ctx!.user.id, overrides: typed, displayOrder: firstOrder + start + i,
+          })).player;
+        } catch (e) {
+          if (isChildAlreadyOnSeason(e)) {
+            throw new Error(alreadyOnRoster(playerName(d.prior), read.workingSeason));
+          }
+          throw e;
+        }
+      }
+      const player = await createRepRosterPlayer({
+        programYearId: programYear.id,
+        teamId: team.id,
+        orgId: ctx!.org.id,
+        source: 'admin_manual',
+        displayOrder:      firstOrder + start + i,
+        ...typed,
+        secondaryPosition: null,
+      });
+      if (d.kind === 'new' && d.notSameChildIds.length > 0) {
+        try {
+          await storeNotSameChild(player.childId, d.notSameChildIds, 'paste_list', ctx!.user.id);
+        } catch (e) {
+          console.error('[roster bulk] storing "not the same child" failed (non-blocking):', e);
+        }
+      }
+      return player;
+    }));
 
     settled.forEach((outcome, i) => {
       const row = chunk[i];

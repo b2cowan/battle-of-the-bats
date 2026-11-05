@@ -15,10 +15,14 @@ import {
 import { denyUnless, redactRosterPlayer } from '@/lib/coach-capabilities';
 import { withObservability } from '@/lib/observability';
 import type { RepProgramYear } from '@/lib/types';
+import { readPastPlayers, decideAccept, confirmReturningAtAccept, rejectAtAccept } from '@/lib/past-players';
+import { parseAcceptAnswer, isChildAlreadyOnSeason } from '@/lib/past-player-rules';
+import { alreadyOnRoster, joinSameSeasonRefusal, SAME_CHILD_FOOT_SHORT } from '@/lib/past-player-words';
+import { playerName } from '@/lib/coach-roster-name';
 
 type Resolved =
   | { ok: false; res: Response }
-  | { ok: true; orgId: string; team: Awaited<ReturnType<typeof getRepTeam>>; programYear: RepProgramYear; assignment: Awaited<ReturnType<typeof getCoachingAssignmentsForUser>>[number] };
+  | { ok: true; orgId: string; userId: string; cutoffs: unknown; team: Awaited<ReturnType<typeof getRepTeam>>; programYear: RepProgramYear; assignment: Awaited<ReturnType<typeof getCoachingAssignmentsForUser>>[number] };
 
 // Any assigned coach with the tryouts grant can add a player to the roster (this route lives inside
 // the Premium Coaches Portal — roster is already Premium). The fee-access reasoning that used to sit
@@ -34,7 +38,7 @@ async function resolveCoach(orgSlug: string, teamId: string): Promise<Resolved> 
   if (!assignment) return { ok: false, res: await refuseWithoutLiveSeat(ctx.org, ctx.user.id, teamId) };
   const programYear = await getActiveRepProgramYear(teamId);
   if (!programYear) return { ok: false, res: NextResponse.json({ error: 'No active program year for this team' }, { status: 404 }) };
-  return { ok: true, orgId: ctx.org.id, team, programYear, assignment };
+  return { ok: true, orgId: ctx.org.id, userId: ctx.user.id, cutoffs: ctx.org.birthdayCutoffs, team, programYear, assignment };
 }
 
 /**
@@ -63,6 +67,66 @@ export const POST = withObservability(async (req: Request,
   // Fast-fail on a stale state (the RPC guards this atomically too under a row lock).
   if (reg.status !== 'offered') {
     return NextResponse.json({ error: 'not_offered', message: 'This candidate is no longer awaiting acceptance.' }, { status: 409 });
+  }
+
+  /* ⚖ "SAME CHILD?" AT ACCEPT (Club Tier Stage 14 S3, tab 4; Ask 4). A sign-up the head coach already confirmed as a
+     returning player carries that child, so it attaches at once. Otherwise the window must answer first:
+       · its child already on this season's roster → `already_on_roster` (the 416 refusal; no way through);
+       · a same-name entry on this season, a different record → `already_on_roster_by_name` (the refusal with a quiet
+         "A different child — add anyway", stored as a "no" — owner ruling 2026-11-04, S3 Part 0);
+       · a same-name player from this team's earlier seasons → `needs_answer` with that player (redacted as the roster).
+     A "yes" confirms the returning link (the board's own confirm); a "no" is stored and the board's suggestion for
+     that pair is rejected. Nothing is written until the window's answers make the accept unambiguous. */
+  const answer = parseAcceptAnswer(body);
+  const read = await readPastPlayers({
+    orgId: r.orgId,
+    team: { id: r.team!.id, sport: r.team!.sport ?? null },
+    workingSeason: r.programYear,
+    cutoffs: r.cutoffs,
+    access: { rosterPii: r.assignment.capabilities.rosterPii, money: false },
+  });
+  const decision = await decideAccept(read, reg, answer);
+  if (decision.kind === 'refuse_same' || decision.kind === 'refuse_name') {
+    const e = decision.entry;
+    return NextResponse.json({
+      error: alreadyOnRoster(playerName(e), read.workingSeason),
+      code: decision.kind === 'refuse_same' ? 'already_on_roster' : 'already_on_roster_by_name',
+      entry: { playerId: e.id, childId: e.childId, firstName: e.playerFirstName, lastName: e.playerLastName },
+      workingSeason: read.workingSeason,
+    }, { status: 409 });
+  }
+  if (decision.kind === 'ask') {
+    return NextResponse.json({ code: 'needs_answer', candidate: decision.candidate, workingSeason: read.workingSeason, error: SAME_CHILD_FOOT_SHORT }, { status: 409 });
+  }
+  if (decision.confirmPrior) {
+    try {
+      await confirmReturningAtAccept({ orgId: r.orgId, teamId: r.team!.id, registrationId: reg.id, prior: decision.confirmPrior, userId: r.userId });
+    } catch (e) {
+      // The confirm joins two children (mig 435); the database can refuse it in two ways, both a plain 409 for the coach.
+      if (isChildAlreadyOnSeason(e)) {
+        return NextResponse.json({
+          error: joinSameSeasonRefusal(r.team!.name, r.programYear.name), code: 'both_on_this_season',
+        }, { status: 409 });
+      }
+      if ((e as { code?: string } | null)?.code === '23505') {
+        return NextResponse.json({
+          error: 'Another record is already confirmed for this player — unlink it first.', code: 'already_confirmed',
+        }, { status: 409 });
+      }
+      throw e;
+    }
+  }
+  if (decision.notSameChildIds.length > 0) {
+    try {
+      // After a "yes" the sign-up's own child was joined into the past child (the join deletes the sign-up's), so the
+      // "no"s belong to the child that survived.
+      await rejectAtAccept({
+        teamId: r.team!.id, registrationId: reg.id, childId: decision.confirmPrior?.childId ?? reg.childId,
+        notSameChildIds: decision.notSameChildIds, userId: r.userId,
+      });
+    } catch (e) {
+      console.error('[tryout accept] storing "not the same child" failed (non-blocking):', e);
+    }
   }
 
   try {

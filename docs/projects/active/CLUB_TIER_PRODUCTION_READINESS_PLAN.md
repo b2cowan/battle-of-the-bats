@@ -2523,15 +2523,12 @@ club's clock. 6d designs the feed; nothing else of Stage 11 is 6d's.
 >   the calendar's clash read is built for one page view, the costliest part to serve).
 
 ### Stage 6e — The event form's last corrections (the deep dive's stage 5)
-> **✅ STAGE 6e CLOSED 2026-11-04 (owner).** Two items built (F13b, D-6 / F12), walk §452 PASSED 21 of 22; `/docs` skipped at the owner's instruction. It no longer holds the release.
 **Re-read against the product first: 2026-10-09 changed this form.** The event window reads first and its pencil opens the
 form with a held save (`0366fb04`); a change that tells families is held until ✓ and asks (Tournament Stage 3 A36, the
 edit-autosaves exception); a series edit asks its scope at the pencil (§287). So R6 ("Edit details keeps its Save") is
 likely settled. Left to check: the practice's More label still promising an address (F13); the series' per-date opponent
 boxes taking the Opponent Picker (F13); an arrival after the start flagged under the field and on the sheet (D-6, F12).
 Small; it fills any gap in the sequence. **Holds the release?** ⚖ Yes since 2026-10-12 (owner, §7). Was: No.
-
-**BUILT 2026-11-04** (`/review` done, no migration): checked against the code first, the practice's More label (F13a) and "Edit details keeps its Save" (R6) were already settled, so only two items were built: a weekly game's per-date opponent boxes now use the Opponent Picker (F13b), and an arrival later than the start is warned under the field and beside "Arrive …" on the event window, the game page and the practice sheet (D-6 / F12; a warning, never a block). Owner walk **§452 PASSED 21 of 22 2026-11-04** (A6, the practice form's warning, not ticked; the wording call is still open): https://claude.ai/artifact/7kVS5g7pYm6ZcKJMX3iyat (`COACH_EVENT_FORM_6E_WALK.html`).
 
 ### Stage 7 — Tournaments inside a club + one door to every family
 > **✅ STAGE 7 CLOSED 2026-10-22 (owner).** All four parts are built and owner-walked: 7a tournament money (§354 ✅, all seven parts), 7b Add our teams
@@ -3218,14 +3215,14 @@ between the coach's idea of a team (kids who age up) and the club's (a slot that
 > `PlayerDocumentsSection.tsx:12-13`) and the club's are sentence case, so the build fixes the coach constants; a composed label
 > says "House league", and a club's own season name stays data.
 - [ ] **14a · The season window asks what the team is doing (the ruled slice):** **BUILT + committed `59722b97a` 2026-11-04 (S1 of the build prompt;
-  `/simplify`, `/review` and `/docs` done; owner walk §453 owed — the prompt's Progress block has every call and the defaults taken).** the *Start next season* window for the coach and
+  `/simplify`, `/review` and `/docs` done; owner walk §453 PASSED 61/61 2026-11-04, all seven owner calls "Keep as built" — the prompt's Progress block has them).** the *Start next season* window for the coach and
   the club's own copy of it — the two choices above, roster as a carry choice on (a), the birth years and the age group each
   following the choice, the same words in both portals. Mockup first (the window on a phone and a computer, both paths, what the
   confirmation says about the roster). Open: what (a) does to a team's name and public listing, and whether a coach (not only the
   club) may change a team's age group, since no coach screen edits it today.
 - [ ] **14b · One child, many seasons (the design question this stage exists for):** — **the DATA (S2 of the build prompt) BUILT
   2026-11-04, committed `5c3acb04c`; mig 435 `org_children` applied to dev, prod owed (MANUAL_PROD_STEPS); the Families book read the same
-  before and after on dev (710 rows, 708 children, 249 households, 373 household children); the screens are S3.** A **player record that outlives a season**,
+  before and after on dev (710 rows, 708 children, 249 households, 373 household children); the screens (S3) BUILT 2026-11-04, uncommitted — the past-player picker, "Same child?" on single add, paste and tryout accept, the stored "no" and the one-child-per-season lock (mig 438, owner yes 2026-11-04; dev only, prod owed); /simplify, /review (high) and /docs DONE 2026-11-04; the owner walk §455 is owed, then the commit (build prompt Progress block).** A **player record that outlives a season**,
   anchored to the family library, with each season's roster entry as that season's membership of it (jersey, position, status),
   so a returning child is picked, not retyped. **The shape is not decided.** Options to draw: (i) the smallest — a **"bring back a
   past player"** picker over this team's earlier seasons (including players the roll skipped), plus a "same kid?" nudge when

@@ -353,7 +353,7 @@ const coachesHelp: HelpPageContent = {
       heading: 'How to build your roster',
       summary: 'Add players, reorder them, and store optional ages and parent contacts.',
       keywords: ['add player', 'roster', 'jersey number', 'parent contact', 'date of birth', 'reorder'],
-      searchText: 'add player roster jersey number date of birth age guardian parent contact email phone reorder drag hold the number move up move down remove player edit player walk-on positions handedness jersey size medical allergies emergency contact attendance player profile premium awards mvp best hitter hustle award give an award season awards club asked for guardians no guardian on file your club notice add a guardian',
+      searchText: 'bring back a past player played for us before same child add player roster jersey number date of birth age guardian parent contact email phone reorder drag hold the number move up move down remove player edit player walk-on positions handedness jersey size medical allergies emergency contact attendance player profile premium awards mvp best hitter hustle award give an award season awards club asked for guardians no guardian on file your club notice add a guardian',
       content: (
         <>
           <p>Turn on <strong>Roster</strong> from Explore, then click <strong>Add player</strong>.</p>
@@ -364,10 +364,79 @@ const coachesHelp: HelpPageContent = {
             <li>On the free roster, click a player to edit them; <strong>Remove player</strong> sits just above <strong>Save</strong>. To reorder, drag a row by its grip on a computer; on a phone or tablet, press and hold the player&apos;s number, then drag — or tap the number for <strong>Move up</strong> and <strong>Move down</strong>. On a Premium team&rsquo;s roster a player&rsquo;s <strong>name</strong> opens their page (the whole card does on a phone), and removal is <strong>Take off the roster</strong> at the foot of their <em>Details</em> tab.</li>
           </ol>
           <p>Your roster is yours — build it once and reuse it for every tournament you join.</p>
+          <p>Someone who played for your team in an earlier season? Don&apos;t type them in again: see <strong>How to bring back a past player</strong> below.</p>
           <p>On a club&apos;s team, the club may ask you for guardian emails it doesn&apos;t have, or can&apos;t use: you&apos;ll get an email naming the players and a notice under <em>Your club</em>. Add each guardian&apos;s name and email on the player, here on your Roster &mdash; only a team&apos;s coaches can.</p>
           <p><strong>Premium Coaches Portal adds:</strong> a full player profile (positions, handedness, jersey size, allergies/medical notes and an emergency contact), season awards like MVP given out at games and practices, attendance at every practice and game, game-day lineups and batting orders, and roster export to Excel, CSV, or PDF.</p>
         </>
       ),
+    },
+    {
+      id: 'recipe-bring-back-past-player',
+      group: 'Your team tools',
+      heading: 'How to bring back a past player',
+      summary: 'A player from an earlier season rejoins your roster from the Roster page, with their history, instead of being typed in again.',
+      keywords: ['bring back a past player', 'past player', 'returning player', 'played for us before', 'came back', 'rejoin', 'last season player', 'inactive player', 'call-up', 'back from', 'add back', 'player left and returned', 'history comes with them'],
+      searchText: 'bring back a past player played for this team before roster add player second link picker tick players search by name bring back players earlier seasons not on this roster newest season first last played the 2025 season inactive call-up called up for games dues owing from dues settled born warning the team is back from the 2025 season caption until the first game same child same player history development notes attendance carries contact details from last season head coach roster details birth date family dues money access not listed already on the roster',
+      content: (
+        <>
+          <p>When someone who played for your team in an earlier season comes back, bring them back instead of typing them in again. They rejoin as active players, they are the <strong>same child</strong> as before, and their history comes with them.</p>
+          <HelpSteps>
+            <li>Open <strong>Roster</strong> and press <strong>+ Add Player</strong>, then <strong>Played for this team before? Bring back a past player →</strong>.</li>
+            <li>Search by name if the list is long, and tick each player you want.</li>
+            <li>Press <strong>Bring back players</strong>. Under each name the roster says <strong>Back from the 2025 Season</strong> until your team&rsquo;s first game.</li>
+          </HelpSteps>
+          <p>The list shows players from your team&rsquo;s earlier seasons who aren&rsquo;t on this season&rsquo;s roster, newest season first. Each row says when they last played. A <strong>Call-up</strong> shows how many games they were called up for, and an <strong>Inactive</strong> player is listed too. Their contact details come from their last season with the team.</p>
+          <HelpDefs>
+            <HelpDef term="Birth date, family, dues">Shown only if your access includes roster details; dues also need money access. A dues chip reads <em>$120.00 owing from 2025</em> or <em>2025 dues settled</em>. Past dues stay with their own season.</HelpDef>
+            <HelpDef term="Born outside this season">A quiet line such as <em>Born 2014. The team is 2015&ndash;2016.</em> It is a warning, never a block.</HelpDef>
+            <HelpDef term="Who can">The head coach, the same people who can add a player.</HelpDef>
+          </HelpDefs>
+          <HelpNote variant="info" title="Someone already on the roster isn&rsquo;t listed">A child can be on a season&rsquo;s roster only once. If a player is missing from the list, check this season&rsquo;s roster first &mdash; including inactive players, who come back with <strong>Add back</strong> instead.</HelpNote>
+        </>
+      ),
+      faqs: [
+        {
+          id: 'faq-bring-back-past-player',
+          question: 'A player from last year is back — do I add them again?',
+          answerText: 'No. On the Roster press Add Player, then Bring back a past player, and tick them. They rejoin as an active player, as the same child, with their history, and the roster says Back from the 2025 Season under their name until your first game. Typing the name into Add Player works too: if it matches a past player you are asked Same child?',
+          keywords: ['player is back', 'add again', 'duplicate player', 'second copy of a player', 'came back this year'],
+          popular: true,
+          answer: (
+            <p>No. On the <strong>Roster</strong> press <strong>Add Player</strong>, then <strong>Bring back a past player</strong>, and tick them. They rejoin as an active player, as the same child, with their history, and the roster says <strong>Back from the 2025 Season</strong> under their name until your first game. Typing the name into <strong>Add Player</strong> works too: if it matches a past player you are asked <strong>Same child?</strong></p>
+          ),
+        },
+      ],
+    },
+    {
+      id: 'recipe-same-child-question',
+      group: 'Your team tools',
+      heading: 'What “Same child?” means',
+      summary: 'When a name you add matches a player from an earlier season, you are asked once, so one child never becomes two people.',
+      keywords: ['same child', 'same child question', 'is this the same child', 'different child', 'no a different child', 'duplicate player', 'already on the roster', 'twice', 'accepting would add twice', 'add anyway', 'new player', 'twins', 'same name'],
+      searchText: 'same child yes it is no a different child change answer above add waits until you answer paste a list same child new player needs an answer tryout accept add to roster already on the roster accepting would add twice open entry a different child add anyway same name twins different first name never asked remembered never asked again birth year warning one child once a season both are on the roster remove the extra entry first then join them',
+      content: (
+        <>
+          <p>When the name you type has the same first <em>and</em> last name as a player from an earlier season, FieldLogicHQ asks before it adds anyone. A different first name (twins, say) never asks.</p>
+          <HelpDefs>
+            <HelpDef term="Add Player">The window names who it found &mdash; <em>Jonah Ruiz played for the Hawks in the 2026 Season</em> &mdash; with their number and, if you can see roster details, birth date and family. <strong>Yes, it&rsquo;s Jonah</strong> fills only the boxes you left blank and keeps their history. <strong>No, a different child</strong> adds a new player. <strong>Change</strong> takes a Yes back. Adding waits until you answer.</HelpDef>
+            <HelpDef term="Paste a list">A matched row shows <strong>Same child</strong> and <strong>New player</strong>. Adding waits until every matched row is answered. A name already on this season&rsquo;s roster keeps the usual warning.</HelpDef>
+            <HelpDef term="Tryouts">Pressing <strong>Add to roster</strong> on a sign-up asks <strong>Yes, same child</strong> or <strong>No, a different child</strong> when it matches a past player. A sign-up you already confirmed as a returning player is added at once.</HelpDef>
+          </HelpDefs>
+          <p>A <strong>No</strong> is remembered for that pair of children: it isn&rsquo;t asked again, in any of these places.</p>
+          <HelpNote variant="warning" title="Already on the roster">A child can be on a season&rsquo;s roster once. Accepting a sign-up who is already there says <em>Accepting would add Ella twice</em> and offers <strong>Open Ella&rsquo;s entry</strong>. If it is only the same name on a different record, a quiet <strong>A different child &mdash; add anyway</strong> goes through.</HelpNote>
+        </>
+      ),
+      faqs: [
+        {
+          id: 'faq-already-on-the-roster',
+          question: 'Why does it say a player is already on the roster?',
+          answerText: 'One child can be on a season’s roster only once. If the player is already on this season’s roster, open their entry instead of adding them again. If it is only the same name on a different record, answer A different child — add anyway when a tryout accept offers it, or No, a different child on Add Player. Joining two records on the Tryouts board is refused while both are on the season’s roster; remove the extra entry first, then join them.',
+          keywords: ['already on the roster', 'added twice', 'accepting would add twice', 'cannot join', 'both are on the roster', 'remove the extra entry'],
+          answer: (
+            <p>One child can be on a season&rsquo;s roster only once. If the player is already on this season&rsquo;s roster, open their entry instead of adding them again. If it is only the same name on a different record, answer <strong>A different child &mdash; add anyway</strong> when a tryout accept offers it, or <strong>No, a different child</strong> on <strong>Add Player</strong>. Joining two records on the Tryouts board is refused while both are on the season&rsquo;s roster; remove the extra entry first, then join them.</p>
+          ),
+        },
+      ],
     },
     {
       id: 'recipe-build-coach-schedule',
@@ -517,6 +586,7 @@ const coachesHelp: HelpPageContent = {
           content: (
             <>
               <p>Once you&apos;ve spoken to the family and they&apos;re in, tap <strong>Add to roster</strong> on their row. That&apos;s the whole step — one tap, no form to fill in, and they&apos;re on your roster.</p>
+              <p><strong>One child, once.</strong> If the sign-up is already on this season&rsquo;s roster, the roster won&rsquo;t take them twice: the window says <em>Accepting would add Ella twice</em> and offers <strong>Open Ella&rsquo;s entry</strong>. If the name matches a player from an earlier season you haven&rsquo;t confirmed, it first asks <strong>Yes, same child</strong> or <strong>No, a different child</strong>; a sign-up you already confirmed as a returning player goes straight in. The same name on a different record gets a quiet <strong>A different child &mdash; add anyway</strong>.</p>
               <p><strong>Fees are not part of this.</strong> Finishing a tryout gets you a roster and nothing more — which is deliberate, because what each family owes usually depends on how many players you end up with. Once the team is settled, set everyone&apos;s dues in one go from <strong>Money → Dues → Set dues for all players</strong>. Squad numbers, positions and jersey sizes are filled in on the <strong>Roster</strong> page, where you can do the whole team in one sitting.</p>
               <p>Changed your mind, or tapped the wrong row? The player&apos;s row now reads <strong>On the roster</strong> with an <strong>Undo</strong> beside it, which takes them back off and returns them to Offering. Undo stops being offered once that player has picked anything up on the team — a payment, an attendance mark, a lineup spot — because removing them then would delete that too; it tells you what&apos;s in the way and points you at the Roster page instead.</p>
               <HelpNote variant="info" title="Nothing is sent">Adding a player to your roster emails nobody — no welcome note, no confirmation. You&apos;ve already had that conversation, in your own words.</HelpNote>
@@ -1406,12 +1476,13 @@ const coachesHelp: HelpPageContent = {
         {
           id: 'faq-premium-returning-players',
           question: 'How does the app recognize returning players?',
-          answerText: 'A player\'s history is linked to a past season in two places, and a player\'s own page is not one of them. During tryouts, when a candidate plausibly matches someone from one of your past seasons — same guardian email, matching name, and birth date all participate; a shared family email alone is never enough — the head coach sees a quiet "Possible returning player — verify" prompt on the Decision Board. It shows the past record side by side (name, birth date, guardian) and you decide: Confirm, Not the same player, or Not sure yet. A suggested match never links automatically; saying "Not the same player" is remembered, so the same wrong pairing never comes back. The other place is Start next season: the players you carry forward are linked for you, because the app copied last season\'s record itself — no guesswork involved. Only the head coach sees any of this, and prompts never appear while tryout names are hidden in blind mode. A linked player\'s Skills & goals tab gains a Previous seasons fold at its foot — see the next question.',
+          answerText: 'A player\'s history is linked to a past season in three places, and a player\'s own page is not one of them. During tryouts, when a candidate plausibly matches someone from one of your past seasons — same guardian email, matching name, and birth date all participate; a shared family email alone is never enough — the head coach sees a quiet "Possible returning player — verify" prompt on the Decision Board. It shows the past record side by side (name, birth date, guardian) and you decide: Confirm, Not the same player, or Not sure yet. A suggested match never links automatically; saying "Not the same player" is remembered, so the same wrong pairing never comes back. A second place is Bring back a past player on the Roster: ticking a player there, or answering Yes to “Same child?” when a name you add matches, brings the same child back with their history. The third place is Start next season: the players you carry forward are linked for you, because the app copied last season\'s record itself — no guesswork involved. Only the head coach sees any of this, and prompts never appear while tryout names are hidden in blind mode. A linked player\'s Skills & goals tab gains a Previous seasons fold at its foot — see the next question.',
           keywords: ['returning player', 'possible returning player', 'verify', 'link player', 'same player', 'previous season', 'played last year', 'recognize player', 'match player', 'continuity'],
           answer: (
             <>
-              <p>A player&apos;s history is linked to a past season in two places, and a player&apos;s own page is not one of them. During tryouts, when a candidate plausibly matches someone from one of your past seasons — same guardian email, matching name, and birth date all participate; <strong>a shared family email alone is never enough</strong> — the head coach sees a quiet <strong>&ldquo;Possible returning player — verify&rdquo;</strong> prompt on the <strong>Decision Board</strong>. It shows the past record side by side (name, birth date, guardian) and you decide: <strong>Confirm</strong>, <strong>Not the same player</strong>, or <strong>Not sure yet</strong>. A suggested match never links automatically; saying &ldquo;Not the same player&rdquo; is remembered, so the same wrong pairing never comes back.</p>
-              <p>The other place is <strong>Start next season</strong>: the players you carry forward are linked for you, because the app copied last season&apos;s record itself — no guesswork involved. Only the <strong>head coach</strong> sees any of this, and prompts never appear while tryout names are hidden in blind mode. A linked player&apos;s Skills &amp; goals tab gains a <strong>Previous seasons</strong> fold at its foot — see the next question.</p>
+              <p>A player&apos;s history is linked to a past season in three places, and a player&apos;s own page is not one of them. During tryouts, when a candidate plausibly matches someone from one of your past seasons — same guardian email, matching name, and birth date all participate; <strong>a shared family email alone is never enough</strong> — the head coach sees a quiet <strong>&ldquo;Possible returning player — verify&rdquo;</strong> prompt on the <strong>Decision Board</strong>. It shows the past record side by side (name, birth date, guardian) and you decide: <strong>Confirm</strong>, <strong>Not the same player</strong>, or <strong>Not sure yet</strong>. A suggested match never links automatically; saying &ldquo;Not the same player&rdquo; is remembered, so the same wrong pairing never comes back.</p>
+              <p>A second place is <strong>Bring back a past player</strong> on the Roster: ticking a player there, or answering <strong>Yes</strong> to <strong>Same child?</strong> when a name you add matches, brings the same child back with their history. Joining two records on the Tryouts board is refused while both are already on this season&apos;s roster.</p>
+              <p>The third place is <strong>Start next season</strong>: the players you carry forward are linked for you, because the app copied last season&apos;s record itself — no guesswork involved. Only the <strong>head coach</strong> sees any of this, and prompts never appear while tryout names are hidden in blind mode. A linked player&apos;s Skills &amp; goals tab gains a <strong>Previous seasons</strong> fold at its foot — see the next question.</p>
             </>
           ),
         },
@@ -1537,24 +1608,51 @@ const coachesHelp: HelpPageContent = {
       group: 'Premium Coaches Portal',
       heading: 'Adding your whole roster at once (Premium)',
       summary: 'Paste your team list or upload a spreadsheet, check the preview, and add everyone in one go.',
-      keywords: ['add whole roster', 'bulk add', 'bulk', 'add players', 'paste', 'paste a list', 'paste roster', 'import', 'import roster', 'csv', 'excel', 'xlsx', 'spreadsheet', 'upload roster', 'template', 'download template', 'many players', 'add 15 players', 'save and add another', 'duplicate jersey', 'same number twice', 'faster roster', 'where is paste your roster', 'paste your roster gone', 'import button on roster', 'where do i paste my team list', 'no import on my phone'],
+      keywords: ['same child', 'add whole roster', 'bulk add', 'bulk', 'add players', 'paste', 'paste a list', 'paste roster', 'import', 'import roster', 'csv', 'excel', 'xlsx', 'spreadsheet', 'upload roster', 'template', 'download template', 'many players', 'add 15 players', 'save and add another', 'duplicate jersey', 'same number twice', 'faster roster', 'where is paste your roster', 'paste your roster gone', 'import button on roster', 'where do i paste my team list', 'no import on my phone'],
       searchText: 'add whole roster at once bulk add players paste a list paste roster import csv excel xlsx spreadsheet upload roster download template column headings first name last name jersey number position date of birth guardian email guardian phone notes preview table fix rows remove row duplicate jersey number already worn by same number twice already on your roster first name required skipped row save and add another add one player faster way to add players 15 players quickly',
       content: (
         <>
-          <p>On Premium, <strong>Import</strong> — at the top of your <strong>Roster</strong>, beside <strong>+ Add Player</strong> — gets your whole team in at once. It opens with two ways in.</p>
-          <p><strong>Paste a list.</strong> Put one player per line — your team list probably already exists in an email or a group chat, so paste it straight in. A number before or after the name becomes their jersey:</p>
-          <ul>
-            <li><code>12 Jordan Smith</code> and <code>Jordan Smith 12</code> both read as <strong>#12 Jordan Smith</strong>.</li>
-            <li><code>Riley Novak</code> with no number is fine.</li>
-            <li>Commas and tabs work as columns, so a copied spreadsheet row pastes cleanly too.</li>
-          </ul>
-          <p><strong>Upload a file.</strong> If your club handed you a spreadsheet, upload the Excel or CSV and the columns are matched by their headings — first name, last name, jersey, position, date of birth, guardian name, email and phone, and notes. Only a first name is required; anything else missing is just left blank. No spreadsheet? <strong>Download a template</strong> that already has the right headings.</p>
-          <p>Either way you get a <strong>preview</strong> before anything is saved. Every cell is editable, you can drop a row you didn&apos;t mean to include, and problems are flagged in advance rather than after the fact: a jersey number used twice in your list, a number <em>already worn</em> by someone on your roster (it names who), and a player who&apos;s already there. A row with no first name can&apos;t be added and says so — the rest still go in, and you&apos;re told what was skipped.</p>
-          <p><strong>Adding one player?</strong> The regular <strong>Add player</strong> form is still there and now has <strong>Save &amp; add another</strong> — it saves, clears itself, and keeps a running count in the header, so a few late signings don&apos;t mean reopening the form each time.</p>
-          <p>Pasting captures names and numbers only. Positions, birthdates, and parent contacts are added per player afterwards, or come in through the spreadsheet&apos;s labelled columns — we don&apos;t guess at family contact details from typed text.</p>
-          <p><strong>On a phone, Import isn&apos;t in the header</strong> — picking a file is computer work. An empty roster still offers the paste path there at any screen size.</p>
+          <p>On Premium, <strong>Import</strong> &mdash; at the top of your <strong>Roster</strong>, beside <strong>+ Add Player</strong> &mdash; gets your whole team in at once, by pasting a list or uploading a file. Either way you check a preview before anything is saved.</p>
         </>
       ),
+      subtopics: [
+        {
+          id: 'premium-bulk-roster-paste',
+          title: 'Paste a list',
+          content: (
+            <>
+              <p><strong>Put one player per line</strong> &mdash; your team list probably already exists in an email or a group chat, so paste it straight in. A number before or after the name becomes their jersey:</p>
+              <ul>
+                <li><code>12 Jordan Smith</code> and <code>Jordan Smith 12</code> both read as <strong>#12 Jordan Smith</strong>.</li>
+                <li><code>Riley Novak</code> with no number is fine.</li>
+                <li>Commas and tabs work as columns, so a copied spreadsheet row pastes cleanly too.</li>
+              </ul>
+              <p>Pasting captures names and numbers only. Positions, birthdates, and parent contacts are added per player afterwards, or come in through the spreadsheet&apos;s labelled columns &mdash; we don&apos;t guess at family contact details from typed text.</p>
+            </>
+          ),
+        },
+        {
+          id: 'premium-bulk-roster-upload',
+          title: 'Upload a file',
+          content: (
+            <>
+              <p>If your club handed you a spreadsheet, upload the Excel or CSV and the columns are matched by their headings &mdash; first name, last name, jersey, position, date of birth, guardian name, email and phone, and notes. Only a first name is required; anything else missing is just left blank. No spreadsheet? <strong>Download a template</strong> that already has the right headings.</p>
+              <p><strong>On a phone, Import isn&apos;t in the header</strong> &mdash; picking a file is computer work. An empty roster still offers the paste path there at any screen size.</p>
+            </>
+          ),
+        },
+        {
+          id: 'premium-bulk-roster-check',
+          title: 'The preview, and what it checks',
+          content: (
+            <>
+              <p>Before anything is saved you get a <strong>preview</strong>. Every cell is editable, you can drop a row you didn&apos;t mean to include, and problems are flagged in advance rather than after the fact: a jersey number used twice in your list, a number <em>already worn</em> by someone on your roster (it names who), and a player who&apos;s already there. A row with no first name can&apos;t be added and says so &mdash; the rest still go in, and you&apos;re told what was skipped.</p>
+              <p>A row whose first and last name match a player from an earlier season shows <strong>Same child</strong> and <strong>New player</strong>, and <strong>Add</strong> waits until you have answered every such row. See <strong>What &ldquo;Same child?&rdquo; means</strong>.</p>
+              <p><strong>Adding one player?</strong> The regular <strong>Add player</strong> form is still there and now has <strong>Save &amp; add another</strong> &mdash; it saves, clears itself, and keeps a running count in the header, so a few late signings don&apos;t mean reopening the form each time.</p>
+            </>
+          ),
+        },
+      ],
     },
     {
       id: 'premium-season-end',
@@ -6159,7 +6257,7 @@ const coachesHelp: HelpPageContent = {
       group: 'Premium Coaches Portal',
       heading: 'How to start your next season & set your division (Premium)',
       summary: 'Roll your team into a new season yourself — you say who comes with you, the schedule starts fresh, and last year becomes a one-page record you can open any time.',
-      keywords: ['start next season', 'new season', 'next season', 'roll over season', 'season rollover', 'team settings', 'division', 'edit division', 'past seasons', 'premium'],
+      keywords: ['start next season', 'new season', 'next season', 'roll over season', 'season rollover', 'team settings', 'division', 'edit division', 'past seasons', 'premium', 'bring back from roster', 'bring a player back later', 'player stayed behind'],
       searchText: 'start next season new season next year roll over rollover carry roster forward what is the team doing next season same players moving up an age group new group of players same age group choose what the team is doing tick list players coming all none inactive players call-ups not listed bring last season’s players anyway division moves up 11U to 12U birth years stay birth years move one year later who stayed on last season fee plan fee template planned budget schedule starts fresh previous season read only past seasons history season review insights team settings edit change division head coach year end premium club owned admin manages seasons lineup rules innings cap rotation pitching cap minimum innings min play playing time auto-fill caps this season vs last comparison winning percentage record roster size trend up down improving better than last year are we improving dues collected expenses assistant coaches can see who is earning it awards leaderboard season awards mvp leaderboard award history development history linked bring forward focus areas carry forward development notes',
       content: (
         <>
@@ -6167,8 +6265,8 @@ const coachesHelp: HelpPageContent = {
           <p><strong>Start next season.</strong> When a season wraps, open <strong>Settings</strong> and choose <strong>Start next season</strong>. The window opens with one question and nothing chosen — <strong>Start</strong> waits until you answer it. Confirm the new season&apos;s name and year, then say what the team is doing and what to bring over:</p>
           <ul>
             <li><strong>The same players, moving up an age group.</strong> Last season&apos;s players are listed with the active ones ticked and any inactive players at the bottom, unticked. Untick anyone who isn&apos;t coming, or use <strong>All</strong> and <strong>None</strong>. Call-ups aren&apos;t listed — they play for another team. If your team&apos;s division starts with an age, the box moves it up (11U AAA becomes 12U AAA); change it if your league names it differently. Your team&apos;s name and web address don&apos;t change, and the birth years stay as they are.</li>
-            <li><strong>A new group of players, same age group.</strong> Nobody comes with the team unless you tick <strong>Bring last season&apos;s players anyway</strong>, which brings the active players. The division stays, and the team&apos;s birth years move one year later (if it has any).</li>
-            <li>Each player who comes has their <strong>development history linked</strong> to last season — it reads under <strong>Previous seasons</strong> on their Skills &amp; goals tab (nothing carries into the new season on its own). When the new season starts, the confirmation names anyone who stayed on last season.</li>
+            <li><strong>A new group of players, same age group.</strong> Nobody comes with the team unless you tick <strong>Bring last season&apos;s players anyway</strong>, which brings the active players. Leave it off and you can still bring anyone back later from the Roster. The division stays, and the team&apos;s birth years move one year later (if it has any).</li>
+            <li>Each player who comes has their <strong>development history linked</strong> to last season — it reads under <strong>Previous seasons</strong> on their Skills &amp; goals tab (nothing carries into the new season on its own). When the new season starts, the confirmation names anyone who stayed on last season, and any of them can be brought back from the Roster any time &mdash; see <strong>How to bring back a past player</strong>.</li>
             <li>Optionally bring over your <strong>fee plan</strong> (amounts and installments; due dates shift forward a year) and your <strong>planned budget</strong> (your projected buckets).</li>
             <li>The <strong>schedule starts fresh</strong>, and last season&apos;s money — payments, spending, and paid history — stays behind with that season.</li>
           </ul>

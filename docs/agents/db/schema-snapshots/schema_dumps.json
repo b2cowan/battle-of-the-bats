@@ -605,6 +605,699 @@
         "column_default": "'portal'::text"
       },
       {
+        "table_name": "bank_account_books",
+        "pos": 1,
+        "column_name": "ledger_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_account_books",
+        "pos": 2,
+        "column_name": "bank_account_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_account_books",
+        "pos": 3,
+        "column_name": "moved_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_account_books",
+        "pos": 4,
+        "column_name": "moved_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "bank_accounts",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "bank_accounts",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_accounts",
+        "pos": 3,
+        "column_name": "owner_kind",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_accounts",
+        "pos": 4,
+        "column_name": "team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_accounts",
+        "pos": 5,
+        "column_name": "name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_accounts",
+        "pos": 6,
+        "column_name": "opening_date",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_accounts",
+        "pos": 7,
+        "column_name": "opening_balance_cents",
+        "data_type": "bigint",
+        "udt_name": "int8",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_accounts",
+        "pos": 8,
+        "column_name": "set_up_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_accounts",
+        "pos": 9,
+        "column_name": "set_up_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_accounts",
+        "pos": 10,
+        "column_name": "created_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_accounts",
+        "pos": 11,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "bank_accounts",
+        "pos": 12,
+        "column_name": "archived_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_check_added_lines",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "bank_check_added_lines",
+        "pos": 2,
+        "column_name": "check_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_check_added_lines",
+        "pos": 3,
+        "column_name": "line_key",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_check_added_lines",
+        "pos": 4,
+        "column_name": "kind",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_check_added_lines",
+        "pos": 5,
+        "column_name": "added_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_check_added_lines",
+        "pos": 6,
+        "column_name": "added_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "bank_check_changes",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "bank_check_changes",
+        "pos": 2,
+        "column_name": "check_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_check_changes",
+        "pos": 3,
+        "column_name": "line_key",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_check_changes",
+        "pos": 4,
+        "column_name": "was_date",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_check_changes",
+        "pos": 5,
+        "column_name": "was_direction",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_check_changes",
+        "pos": 6,
+        "column_name": "was_amount_cents",
+        "data_type": "bigint",
+        "udt_name": "int8",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_check_changes",
+        "pos": 7,
+        "column_name": "now_date",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_check_changes",
+        "pos": 8,
+        "column_name": "now_direction",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_check_changes",
+        "pos": 9,
+        "column_name": "now_amount_cents",
+        "data_type": "bigint",
+        "udt_name": "int8",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_check_changes",
+        "pos": 10,
+        "column_name": "removed",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "table_name": "bank_check_changes",
+        "pos": 11,
+        "column_name": "changed_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_check_changes",
+        "pos": 12,
+        "column_name": "changed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "bank_check_changes",
+        "pos": 13,
+        "column_name": "cleared_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_check_changes",
+        "pos": 14,
+        "column_name": "cleared_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_check_events",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "bank_check_events",
+        "pos": 2,
+        "column_name": "check_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_check_events",
+        "pos": 3,
+        "column_name": "kind",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_check_events",
+        "pos": 4,
+        "column_name": "reason",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_check_events",
+        "pos": 5,
+        "column_name": "by_user",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_check_events",
+        "pos": 6,
+        "column_name": "at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "bank_check_marks",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "bank_check_marks",
+        "pos": 2,
+        "column_name": "bank_account_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_check_marks",
+        "pos": 3,
+        "column_name": "check_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_check_marks",
+        "pos": 4,
+        "column_name": "line_key",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_check_marks",
+        "pos": 5,
+        "column_name": "line_date",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_check_marks",
+        "pos": 6,
+        "column_name": "direction",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_check_marks",
+        "pos": 7,
+        "column_name": "amount_cents",
+        "data_type": "bigint",
+        "udt_name": "int8",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_check_marks",
+        "pos": 8,
+        "column_name": "payout_key",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_check_marks",
+        "pos": 9,
+        "column_name": "marked_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_check_marks",
+        "pos": 10,
+        "column_name": "marked_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "bank_checks",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "bank_checks",
+        "pos": 2,
+        "column_name": "bank_account_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_checks",
+        "pos": 3,
+        "column_name": "statement_end_date",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_checks",
+        "pos": 4,
+        "column_name": "statement_ending_balance_cents",
+        "data_type": "bigint",
+        "udt_name": "int8",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_checks",
+        "pos": 5,
+        "column_name": "status",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'open'::text"
+      },
+      {
+        "table_name": "bank_checks",
+        "pos": 6,
+        "column_name": "checked_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_checks",
+        "pos": 7,
+        "column_name": "checked_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_checks",
+        "pos": 8,
+        "column_name": "outstanding_snapshot",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_checks",
+        "pos": 9,
+        "column_name": "created_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_checks",
+        "pos": 10,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "bank_line_exclusions",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "bank_line_exclusions",
+        "pos": 2,
+        "column_name": "bank_account_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_line_exclusions",
+        "pos": 3,
+        "column_name": "line_key",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_line_exclusions",
+        "pos": 4,
+        "column_name": "excluded_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_line_exclusions",
+        "pos": 5,
+        "column_name": "excluded_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "bank_saved_lines",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "bank_saved_lines",
+        "pos": 2,
+        "column_name": "bank_account_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_saved_lines",
+        "pos": 3,
+        "column_name": "kind",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_saved_lines",
+        "pos": 4,
+        "column_name": "line_key",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_saved_lines",
+        "pos": 5,
+        "column_name": "line_date",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_saved_lines",
+        "pos": 6,
+        "column_name": "direction",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_saved_lines",
+        "pos": 7,
+        "column_name": "amount_cents",
+        "data_type": "bigint",
+        "udt_name": "int8",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_saved_lines",
+        "pos": 8,
+        "column_name": "description",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_saved_lines",
+        "pos": 9,
+        "column_name": "saved_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_saved_lines",
+        "pos": 10,
+        "column_name": "saved_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "basic_coach_team_announcements",
         "pos": 1,
         "column_name": "id",
@@ -2525,6 +3218,60 @@
         "table_name": "chat_rooms",
         "pos": 10,
         "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "child_match_rejections",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "child_match_rejections",
+        "pos": 2,
+        "column_name": "child_a_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "child_match_rejections",
+        "pos": 3,
+        "column_name": "child_b_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "child_match_rejections",
+        "pos": 4,
+        "column_name": "door",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "child_match_rejections",
+        "pos": 5,
+        "column_name": "rejected_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "child_match_rejections",
+        "pos": 6,
+        "column_name": "rejected_at",
         "data_type": "timestamp with time zone",
         "udt_name": "timestamptz",
         "is_nullable": "NO",
@@ -28616,6 +29363,181 @@
         "constraint_name": "assistant_invite_tokens_team_id_fkey"
       },
       {
+        "table_name": "bank_account_books",
+        "column_name": "bank_account_id",
+        "foreign_table": "bank_accounts",
+        "foreign_column": "id",
+        "constraint_name": "bank_account_books_bank_account_id_fkey"
+      },
+      {
+        "table_name": "bank_account_books",
+        "column_name": "ledger_id",
+        "foreign_table": "accounting_ledgers",
+        "foreign_column": "id",
+        "constraint_name": "bank_account_books_ledger_id_fkey"
+      },
+      {
+        "table_name": "bank_account_books",
+        "column_name": "moved_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "bank_account_books_moved_by_fkey"
+      },
+      {
+        "table_name": "bank_accounts",
+        "column_name": "created_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "bank_accounts_created_by_fkey"
+      },
+      {
+        "table_name": "bank_accounts",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "bank_accounts_org_id_fkey"
+      },
+      {
+        "table_name": "bank_accounts",
+        "column_name": "set_up_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "bank_accounts_set_up_by_fkey"
+      },
+      {
+        "table_name": "bank_accounts",
+        "column_name": "team_id",
+        "foreign_table": "rep_teams",
+        "foreign_column": "id",
+        "constraint_name": "bank_accounts_team_id_fkey"
+      },
+      {
+        "table_name": "bank_check_added_lines",
+        "column_name": "added_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "bank_check_added_lines_added_by_fkey"
+      },
+      {
+        "table_name": "bank_check_added_lines",
+        "column_name": "check_id",
+        "foreign_table": "bank_checks",
+        "foreign_column": "id",
+        "constraint_name": "bank_check_added_lines_check_id_fkey"
+      },
+      {
+        "table_name": "bank_check_changes",
+        "column_name": "changed_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "bank_check_changes_changed_by_fkey"
+      },
+      {
+        "table_name": "bank_check_changes",
+        "column_name": "check_id",
+        "foreign_table": "bank_checks",
+        "foreign_column": "id",
+        "constraint_name": "bank_check_changes_check_id_fkey"
+      },
+      {
+        "table_name": "bank_check_changes",
+        "column_name": "cleared_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "bank_check_changes_cleared_by_fkey"
+      },
+      {
+        "table_name": "bank_check_events",
+        "column_name": "by_user",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "bank_check_events_by_user_fkey"
+      },
+      {
+        "table_name": "bank_check_events",
+        "column_name": "check_id",
+        "foreign_table": "bank_checks",
+        "foreign_column": "id",
+        "constraint_name": "bank_check_events_check_id_fkey"
+      },
+      {
+        "table_name": "bank_check_marks",
+        "column_name": "bank_account_id",
+        "foreign_table": "bank_accounts",
+        "foreign_column": "id",
+        "constraint_name": "bank_check_marks_bank_account_id_fkey"
+      },
+      {
+        "table_name": "bank_check_marks",
+        "column_name": "check_id",
+        "foreign_table": "bank_checks",
+        "foreign_column": "id",
+        "constraint_name": "bank_check_marks_check_same_account"
+      },
+      {
+        "table_name": "bank_check_marks",
+        "column_name": "bank_account_id",
+        "foreign_table": "bank_checks",
+        "foreign_column": "bank_account_id",
+        "constraint_name": "bank_check_marks_check_same_account"
+      },
+      {
+        "table_name": "bank_check_marks",
+        "column_name": "marked_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "bank_check_marks_marked_by_fkey"
+      },
+      {
+        "table_name": "bank_checks",
+        "column_name": "bank_account_id",
+        "foreign_table": "bank_accounts",
+        "foreign_column": "id",
+        "constraint_name": "bank_checks_bank_account_id_fkey"
+      },
+      {
+        "table_name": "bank_checks",
+        "column_name": "checked_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "bank_checks_checked_by_fkey"
+      },
+      {
+        "table_name": "bank_checks",
+        "column_name": "created_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "bank_checks_created_by_fkey"
+      },
+      {
+        "table_name": "bank_line_exclusions",
+        "column_name": "bank_account_id",
+        "foreign_table": "bank_accounts",
+        "foreign_column": "id",
+        "constraint_name": "bank_line_exclusions_bank_account_id_fkey"
+      },
+      {
+        "table_name": "bank_line_exclusions",
+        "column_name": "excluded_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "bank_line_exclusions_excluded_by_fkey"
+      },
+      {
+        "table_name": "bank_saved_lines",
+        "column_name": "bank_account_id",
+        "foreign_table": "bank_accounts",
+        "foreign_column": "id",
+        "constraint_name": "bank_saved_lines_bank_account_id_fkey"
+      },
+      {
+        "table_name": "bank_saved_lines",
+        "column_name": "saved_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "bank_saved_lines_saved_by_fkey"
+      },
+      {
         "table_name": "basic_coach_team_announcements",
         "column_name": "basic_coach_team_id",
         "foreign_table": "basic_coach_teams",
@@ -28901,6 +29823,27 @@
         "foreign_table": "organizations",
         "foreign_column": "id",
         "constraint_name": "chat_rooms_org_id_fkey"
+      },
+      {
+        "table_name": "child_match_rejections",
+        "column_name": "child_a_id",
+        "foreign_table": "org_children",
+        "foreign_column": "id",
+        "constraint_name": "child_match_rejections_child_a_id_fkey"
+      },
+      {
+        "table_name": "child_match_rejections",
+        "column_name": "child_b_id",
+        "foreign_table": "org_children",
+        "foreign_column": "id",
+        "constraint_name": "child_match_rejections_child_b_id_fkey"
+      },
+      {
+        "table_name": "child_match_rejections",
+        "column_name": "rejected_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "child_match_rejections_rejected_by_fkey"
       },
       {
         "table_name": "club_schedule_hand_back_slots",
@@ -34468,6 +35411,181 @@
         "indexdef": "CREATE UNIQUE INDEX assistant_invite_tokens_token_hash_uq ON public.assistant_invite_tokens USING btree (token_hash)"
       },
       {
+        "tablename": "bank_account_books",
+        "indexname": "bank_account_books_account_idx",
+        "indexdef": "CREATE INDEX bank_account_books_account_idx ON public.bank_account_books USING btree (bank_account_id)"
+      },
+      {
+        "tablename": "bank_account_books",
+        "indexname": "bank_account_books_moved_by_idx",
+        "indexdef": "CREATE INDEX bank_account_books_moved_by_idx ON public.bank_account_books USING btree (moved_by) WHERE (moved_by IS NOT NULL)"
+      },
+      {
+        "tablename": "bank_account_books",
+        "indexname": "bank_account_books_pkey",
+        "indexdef": "CREATE UNIQUE INDEX bank_account_books_pkey ON public.bank_account_books USING btree (ledger_id)"
+      },
+      {
+        "tablename": "bank_accounts",
+        "indexname": "bank_accounts_club_name",
+        "indexdef": "CREATE UNIQUE INDEX bank_accounts_club_name ON public.bank_accounts USING btree (org_id, lower(name)) WHERE ((owner_kind = 'club'::text) AND (archived_at IS NULL))"
+      },
+      {
+        "tablename": "bank_accounts",
+        "indexname": "bank_accounts_created_by_idx",
+        "indexdef": "CREATE INDEX bank_accounts_created_by_idx ON public.bank_accounts USING btree (created_by) WHERE (created_by IS NOT NULL)"
+      },
+      {
+        "tablename": "bank_accounts",
+        "indexname": "bank_accounts_one_per_team",
+        "indexdef": "CREATE UNIQUE INDEX bank_accounts_one_per_team ON public.bank_accounts USING btree (team_id) WHERE ((owner_kind = 'team'::text) AND (archived_at IS NULL))"
+      },
+      {
+        "tablename": "bank_accounts",
+        "indexname": "bank_accounts_org_idx",
+        "indexdef": "CREATE INDEX bank_accounts_org_idx ON public.bank_accounts USING btree (org_id, created_at)"
+      },
+      {
+        "tablename": "bank_accounts",
+        "indexname": "bank_accounts_pkey",
+        "indexdef": "CREATE UNIQUE INDEX bank_accounts_pkey ON public.bank_accounts USING btree (id)"
+      },
+      {
+        "tablename": "bank_accounts",
+        "indexname": "bank_accounts_set_up_by_idx",
+        "indexdef": "CREATE INDEX bank_accounts_set_up_by_idx ON public.bank_accounts USING btree (set_up_by) WHERE (set_up_by IS NOT NULL)"
+      },
+      {
+        "tablename": "bank_check_added_lines",
+        "indexname": "bank_check_added_lines_by_idx",
+        "indexdef": "CREATE INDEX bank_check_added_lines_by_idx ON public.bank_check_added_lines USING btree (added_by) WHERE (added_by IS NOT NULL)"
+      },
+      {
+        "tablename": "bank_check_added_lines",
+        "indexname": "bank_check_added_lines_once",
+        "indexdef": "CREATE UNIQUE INDEX bank_check_added_lines_once ON public.bank_check_added_lines USING btree (check_id, line_key)"
+      },
+      {
+        "tablename": "bank_check_added_lines",
+        "indexname": "bank_check_added_lines_pkey",
+        "indexdef": "CREATE UNIQUE INDEX bank_check_added_lines_pkey ON public.bank_check_added_lines USING btree (id)"
+      },
+      {
+        "tablename": "bank_check_changes",
+        "indexname": "bank_check_changes_changed_by_idx",
+        "indexdef": "CREATE INDEX bank_check_changes_changed_by_idx ON public.bank_check_changes USING btree (changed_by) WHERE (changed_by IS NOT NULL)"
+      },
+      {
+        "tablename": "bank_check_changes",
+        "indexname": "bank_check_changes_check_idx",
+        "indexdef": "CREATE INDEX bank_check_changes_check_idx ON public.bank_check_changes USING btree (check_id, changed_at)"
+      },
+      {
+        "tablename": "bank_check_changes",
+        "indexname": "bank_check_changes_cleared_by_idx",
+        "indexdef": "CREATE INDEX bank_check_changes_cleared_by_idx ON public.bank_check_changes USING btree (cleared_by) WHERE (cleared_by IS NOT NULL)"
+      },
+      {
+        "tablename": "bank_check_changes",
+        "indexname": "bank_check_changes_open_idx",
+        "indexdef": "CREATE INDEX bank_check_changes_open_idx ON public.bank_check_changes USING btree (check_id) WHERE (cleared_at IS NULL)"
+      },
+      {
+        "tablename": "bank_check_changes",
+        "indexname": "bank_check_changes_pkey",
+        "indexdef": "CREATE UNIQUE INDEX bank_check_changes_pkey ON public.bank_check_changes USING btree (id)"
+      },
+      {
+        "tablename": "bank_check_events",
+        "indexname": "bank_check_events_by_idx",
+        "indexdef": "CREATE INDEX bank_check_events_by_idx ON public.bank_check_events USING btree (by_user) WHERE (by_user IS NOT NULL)"
+      },
+      {
+        "tablename": "bank_check_events",
+        "indexname": "bank_check_events_check_idx",
+        "indexdef": "CREATE INDEX bank_check_events_check_idx ON public.bank_check_events USING btree (check_id, at)"
+      },
+      {
+        "tablename": "bank_check_events",
+        "indexname": "bank_check_events_pkey",
+        "indexdef": "CREATE UNIQUE INDEX bank_check_events_pkey ON public.bank_check_events USING btree (id)"
+      },
+      {
+        "tablename": "bank_check_marks",
+        "indexname": "bank_check_marks_by_idx",
+        "indexdef": "CREATE INDEX bank_check_marks_by_idx ON public.bank_check_marks USING btree (marked_by) WHERE (marked_by IS NOT NULL)"
+      },
+      {
+        "tablename": "bank_check_marks",
+        "indexname": "bank_check_marks_check_idx",
+        "indexdef": "CREATE INDEX bank_check_marks_check_idx ON public.bank_check_marks USING btree (check_id)"
+      },
+      {
+        "tablename": "bank_check_marks",
+        "indexname": "bank_check_marks_one_tick",
+        "indexdef": "CREATE UNIQUE INDEX bank_check_marks_one_tick ON public.bank_check_marks USING btree (bank_account_id, line_key)"
+      },
+      {
+        "tablename": "bank_check_marks",
+        "indexname": "bank_check_marks_pkey",
+        "indexdef": "CREATE UNIQUE INDEX bank_check_marks_pkey ON public.bank_check_marks USING btree (id)"
+      },
+      {
+        "tablename": "bank_checks",
+        "indexname": "bank_checks_checked_by_idx",
+        "indexdef": "CREATE INDEX bank_checks_checked_by_idx ON public.bank_checks USING btree (checked_by) WHERE (checked_by IS NOT NULL)"
+      },
+      {
+        "tablename": "bank_checks",
+        "indexname": "bank_checks_created_by_idx",
+        "indexdef": "CREATE INDEX bank_checks_created_by_idx ON public.bank_checks USING btree (created_by) WHERE (created_by IS NOT NULL)"
+      },
+      {
+        "tablename": "bank_checks",
+        "indexname": "bank_checks_id_account",
+        "indexdef": "CREATE UNIQUE INDEX bank_checks_id_account ON public.bank_checks USING btree (id, bank_account_id)"
+      },
+      {
+        "tablename": "bank_checks",
+        "indexname": "bank_checks_one_per_end_date",
+        "indexdef": "CREATE UNIQUE INDEX bank_checks_one_per_end_date ON public.bank_checks USING btree (bank_account_id, statement_end_date)"
+      },
+      {
+        "tablename": "bank_checks",
+        "indexname": "bank_checks_pkey",
+        "indexdef": "CREATE UNIQUE INDEX bank_checks_pkey ON public.bank_checks USING btree (id)"
+      },
+      {
+        "tablename": "bank_line_exclusions",
+        "indexname": "bank_line_exclusions_by_idx",
+        "indexdef": "CREATE INDEX bank_line_exclusions_by_idx ON public.bank_line_exclusions USING btree (excluded_by) WHERE (excluded_by IS NOT NULL)"
+      },
+      {
+        "tablename": "bank_line_exclusions",
+        "indexname": "bank_line_exclusions_once",
+        "indexdef": "CREATE UNIQUE INDEX bank_line_exclusions_once ON public.bank_line_exclusions USING btree (bank_account_id, line_key)"
+      },
+      {
+        "tablename": "bank_line_exclusions",
+        "indexname": "bank_line_exclusions_pkey",
+        "indexdef": "CREATE UNIQUE INDEX bank_line_exclusions_pkey ON public.bank_line_exclusions USING btree (id)"
+      },
+      {
+        "tablename": "bank_saved_lines",
+        "indexname": "bank_saved_lines_by_idx",
+        "indexdef": "CREATE INDEX bank_saved_lines_by_idx ON public.bank_saved_lines USING btree (saved_by) WHERE (saved_by IS NOT NULL)"
+      },
+      {
+        "tablename": "bank_saved_lines",
+        "indexname": "bank_saved_lines_once",
+        "indexdef": "CREATE UNIQUE INDEX bank_saved_lines_once ON public.bank_saved_lines USING btree (bank_account_id, line_key)"
+      },
+      {
+        "tablename": "bank_saved_lines",
+        "indexname": "bank_saved_lines_pkey",
+        "indexdef": "CREATE UNIQUE INDEX bank_saved_lines_pkey ON public.bank_saved_lines USING btree (id)"
+      },
+      {
         "tablename": "basic_coach_team_announcements",
         "indexname": "basic_coach_team_announcements_pkey",
         "indexdef": "CREATE UNIQUE INDEX basic_coach_team_announcements_pkey ON public.basic_coach_team_announcements USING btree (id)"
@@ -34801,6 +35919,21 @@
         "tablename": "chat_rooms",
         "indexname": "chat_rooms_surface_ref_sub_uniq",
         "indexdef": "CREATE UNIQUE INDEX chat_rooms_surface_ref_sub_uniq ON public.chat_rooms USING btree (surface, ref_id, ref_sub_id) WHERE (ref_sub_id IS NOT NULL)"
+      },
+      {
+        "tablename": "child_match_rejections",
+        "indexname": "child_match_rejections_child_b_idx",
+        "indexdef": "CREATE INDEX child_match_rejections_child_b_idx ON public.child_match_rejections USING btree (child_b_id)"
+      },
+      {
+        "tablename": "child_match_rejections",
+        "indexname": "child_match_rejections_pair_uniq",
+        "indexdef": "CREATE UNIQUE INDEX child_match_rejections_pair_uniq ON public.child_match_rejections USING btree (child_a_id, child_b_id)"
+      },
+      {
+        "tablename": "child_match_rejections",
+        "indexname": "child_match_rejections_pkey",
+        "indexdef": "CREATE UNIQUE INDEX child_match_rejections_pkey ON public.child_match_rejections USING btree (id)"
       },
       {
         "tablename": "club_schedule_hand_back_slots",
@@ -38364,6 +39497,11 @@
       },
       {
         "tablename": "rep_roster_players",
+        "indexname": "rep_roster_players_one_child_per_season",
+        "indexdef": "CREATE UNIQUE INDEX rep_roster_players_one_child_per_season ON public.rep_roster_players USING btree (child_id, program_year_id)"
+      },
+      {
+        "tablename": "rep_roster_players",
         "indexname": "rep_roster_players_org_id_idx",
         "indexdef": "CREATE INDEX rep_roster_players_org_id_idx ON public.rep_roster_players USING btree (org_id)"
       },
@@ -40189,6 +41327,234 @@
         "check_clause": null
       },
       {
+        "kind": "RLS",
+        "table_name": "bank_account_books",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "bank_accounts",
+        "detail": "bank_accounts_name_check",
+        "check_clause": "((name = btrim(name)) AND ((char_length(name) >= 1) AND (char_length(name) <= 80)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "bank_accounts",
+        "detail": "bank_accounts_opening_pair",
+        "check_clause": "(((opening_date IS NULL) = (opening_balance_cents IS NULL)) AND ((opening_date IS NULL) OR (set_up_at IS NOT NULL)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "bank_accounts",
+        "detail": "bank_accounts_owner_kind_check",
+        "check_clause": "(owner_kind = ANY (ARRAY['club'::text, 'team'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "bank_accounts",
+        "detail": "bank_accounts_owner_shape",
+        "check_clause": "((owner_kind = 'team'::text) = (team_id IS NOT NULL))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "bank_accounts",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "bank_check_added_lines",
+        "detail": "bank_check_added_lines_kind_check",
+        "check_clause": "(kind = ANY (ARRAY['bank_fee'::text, 'interest'::text, 'payment_processing'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "bank_check_added_lines",
+        "detail": "bank_check_added_lines_line_key_check",
+        "check_clause": "((char_length(line_key) >= 3) AND (char_length(line_key) <= 200))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "bank_check_added_lines",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "bank_check_changes",
+        "detail": "bank_check_changes_line_key_check",
+        "check_clause": "((char_length(line_key) >= 3) AND (char_length(line_key) <= 200))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "bank_check_changes",
+        "detail": "bank_check_changes_now_amount_cents_check",
+        "check_clause": "((now_amount_cents IS NULL) OR (now_amount_cents >= 0))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "bank_check_changes",
+        "detail": "bank_check_changes_now_direction_check",
+        "check_clause": "((now_direction IS NULL) OR (now_direction = ANY (ARRAY['in'::text, 'out'::text])))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "bank_check_changes",
+        "detail": "bank_check_changes_now_shape",
+        "check_clause": "(removed OR ((now_date IS NOT NULL) AND (now_direction IS NOT NULL) AND (now_amount_cents IS NOT NULL)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "bank_check_changes",
+        "detail": "bank_check_changes_was_amount_cents_check",
+        "check_clause": "(was_amount_cents >= 0)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "bank_check_changes",
+        "detail": "bank_check_changes_was_direction_check",
+        "check_clause": "(was_direction = ANY (ARRAY['in'::text, 'out'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "bank_check_changes",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "bank_check_events",
+        "detail": "bank_check_events_kind_check",
+        "check_clause": "(kind = ANY (ARRAY['checked'::text, 'undone'::text, 'checked_again'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "bank_check_events",
+        "detail": "bank_check_events_reason_check",
+        "check_clause": "((reason IS NULL) OR ((reason = btrim(reason)) AND ((char_length(reason) >= 1) AND (char_length(reason) <= 500))))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "bank_check_events",
+        "detail": "bank_check_events_undo_has_reason",
+        "check_clause": "((kind <> 'undone'::text) OR (reason IS NOT NULL))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "bank_check_events",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "bank_check_marks",
+        "detail": "bank_check_marks_amount_cents_check",
+        "check_clause": "(amount_cents >= 0)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "bank_check_marks",
+        "detail": "bank_check_marks_direction_check",
+        "check_clause": "(direction = ANY (ARRAY['in'::text, 'out'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "bank_check_marks",
+        "detail": "bank_check_marks_line_key_check",
+        "check_clause": "((char_length(line_key) >= 3) AND (char_length(line_key) <= 200))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "bank_check_marks",
+        "detail": "bank_check_marks_payout_key_check",
+        "check_clause": "((payout_key IS NULL) OR (payout_key ~~ 'payout:%'::text))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "bank_check_marks",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "bank_checks",
+        "detail": "bank_checks_checked_has_when",
+        "check_clause": "((status = 'open'::text) OR ((checked_at IS NOT NULL) AND (outstanding_snapshot IS NOT NULL)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "bank_checks",
+        "detail": "bank_checks_outstanding_snapshot_check",
+        "check_clause": "((outstanding_snapshot IS NULL) OR (jsonb_typeof(outstanding_snapshot) = 'array'::text))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "bank_checks",
+        "detail": "bank_checks_status_check",
+        "check_clause": "(status = ANY (ARRAY['open'::text, 'checked'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "bank_checks",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "bank_line_exclusions",
+        "detail": "bank_line_exclusions_line_key_check",
+        "check_clause": "((char_length(line_key) >= 3) AND (char_length(line_key) <= 200))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "bank_line_exclusions",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "bank_saved_lines",
+        "detail": "bank_saved_lines_amount_cents_check",
+        "check_clause": "(amount_cents > 0)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "bank_saved_lines",
+        "detail": "bank_saved_lines_description_check",
+        "check_clause": "((description IS NULL) OR ((description = btrim(description)) AND ((char_length(description) >= 1) AND (char_length(description) <= 200))))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "bank_saved_lines",
+        "detail": "bank_saved_lines_direction_check",
+        "check_clause": "(direction = ANY (ARRAY['in'::text, 'out'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "bank_saved_lines",
+        "detail": "bank_saved_lines_kind_check",
+        "check_clause": "(kind = ANY (ARRAY['opening_picked'::text, 'opening_typed'::text, 'carried'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "bank_saved_lines",
+        "detail": "bank_saved_lines_line_key_check",
+        "check_clause": "((char_length(line_key) >= 3) AND (char_length(line_key) <= 200))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "bank_saved_lines",
+        "detail": "bank_saved_lines_typed_shape",
+        "check_clause": "(((kind = 'opening_typed'::text) AND (line_key = ('typed:'::text || (id)::text)) AND (description IS NOT NULL)) OR ((kind <> 'opening_typed'::text) AND (line_key !~~ 'typed:%'::text)))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "bank_saved_lines",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
         "kind": "CHECK",
         "table_name": "basic_coach_team_announcements",
         "detail": "basic_coach_team_announcements_body_check",
@@ -40539,6 +41905,24 @@
       {
         "kind": "RLS",
         "table_name": "chat_rooms",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "child_match_rejections",
+        "detail": "child_match_rejections_door_check",
+        "check_clause": "(door = ANY (ARRAY['single_add'::text, 'paste_list'::text, 'tryout_accept'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "child_match_rejections",
+        "detail": "child_match_rejections_ordered",
+        "check_clause": "(child_a_id < child_b_id)"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "child_match_rejections",
         "detail": "ENABLED",
         "check_clause": null
       },

@@ -26,12 +26,11 @@ import { joinWithAnd, pluralize } from './utils';
 export type SeasonRollPath = 'moving_up' | 'new_group';
 
 /**
- * ⏳ THE PAST-PLAYER PICKER IS STAGE 14 SESSION 3. The ruled words point a coach at it ("Bring Jonah back
- * from Roster any time"); until it exists those clauses would promise a door that is not there, so each one
- * reads this switch and the window says only what is true today. S3 flips it to `true` in the same change
- * that ships the picker — and nothing else should need to change.
+ * ✅ THE PAST-PLAYER PICKER SHIPPED IN STAGE 14 SESSION 3 (Roster → Add Player → "Played for this team before? Bring
+ * back a past player"). The ruled words point a coach at it ("Bring Jonah back from Roster any time"); each clause
+ * reads this switch, which S3 flipped to `true` in the change that shipped the picker.
  */
-export const PAST_PLAYER_PICKER_BUILT = false;
+export const PAST_PLAYER_PICKER_BUILT = true;
 
 /** A division is at most 30 characters (the coach's Team settings refuse more; the window refuses the same). */
 export const DIVISION_MAX = 30;

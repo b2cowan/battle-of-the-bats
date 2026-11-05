@@ -11,6 +11,15 @@ import {
 import { withObservability } from '@/lib/observability';
 import { denyUnless, redactRoster, hasRecordAccess } from '@/lib/coach-capabilities';
 import { resolveCoachTeamRead } from '@/lib/coach-team-read';
+import {
+  readPastPlayers,
+  bringBackChild,
+  storeNotSameChild,
+  returningCaptions,
+} from '@/lib/past-players';
+import { decideAddDoor, parseSameChildAnswer, isChildAlreadyOnSeason } from '@/lib/past-player-rules';
+import { sameChildFoot, yesAlreadyOnRoster } from '@/lib/past-player-words';
+import { playerName } from '@/lib/coach-roster-name';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -54,7 +63,15 @@ export const GET = withObservability(async (_req: Request,
      Every other caller of this read inherits the exclusion; a second `includeCallUps` should be
      read as a question about whether that surface really wants borrowed players in it. */
   const players = await getRepRosterPlayers(programYear.id, { includeCallUps: true });
-  return NextResponse.json({ players: redactRoster(players, capabilities), programYear, isReadOnly });
+  // "Back from the 2025 Season" under a returning child's name, until the team's first game (Stage 14 S3, tab 3). The
+  // caption is the extra, the roster is the point: a failed read shows no captions and the roster still loads.
+  let returning: Record<string, string> = {};
+  try {
+    returning = await returningCaptions({ teamId, workingSeason: programYear, workingEntries: players });
+  } catch (e) {
+    console.error('[roster] returning captions failed (non-blocking):', e);
+  }
+  return NextResponse.json({ players: redactRoster(players, capabilities), programYear, isReadOnly, returning });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/roster' });
 
 export const POST = withObservability(async (req: Request,
@@ -74,24 +91,73 @@ export const POST = withObservability(async (req: Request,
     return NextResponse.json({ error: 'A player first name is required.' }, { status: 400 });
   }
 
-  const player = await createRepRosterPlayer({
-    programYearId: programYear.id,
-    teamId: team.id,
+  /* ⚖ "SAME CHILD?" (Club Tier Stage 14 S3, Ask 4; the drawing's tab 4). The window asks as the coach types; this is
+     the re-check that makes it true. A first + last name matching a past player of THIS team, with no answer sent,
+     answers `needs_answer` with that player (redacted as the roster is) and writes nothing. "Yes" brings that child
+     back (typed boxes win over the saved copy); "No" adds a new child and stores the "no". */
+  const answer = parseSameChildAnswer(body);
+  const read = await readPastPlayers({
     orgId: ctx!.org.id,
-    source: 'admin_manual',
+    team: { id: team.id, sport: team.sport ?? null },
+    workingSeason: programYear,
+    cutoffs: ctx!.org.birthdayCutoffs,
+    access: { rosterPii: assignment.capabilities.rosterPii, money: false },
+  });
+  const decision = decideAddDoor(read, playerFirstName, playerLastName, answer);
+  const typed = {
     playerFirstName: playerFirstName.trim(),
     playerLastName: playerLastName?.trim() || null,
     playerDateOfBirth: body.playerDateOfBirth?.trim() || null,
     playerNumber: body.playerNumber?.trim() || null,
     primaryPosition: body.primaryPosition?.trim() || null,
-    secondaryPosition: body.secondaryPosition?.trim() || null,
     guardianFirstName: guardianFirstName?.trim() || null,
     guardianLastName: guardianLastName?.trim() || null,
     guardianEmail: guardianEmail?.trim() || null,
     guardianPhone: body.guardianPhone?.trim() || null,
     notes: body.notes?.trim() || null,
+  };
+  if (decision.kind === 'ask') {
+    return NextResponse.json({ code: 'needs_answer', candidate: decision.candidate, error: sameChildFoot(decision.candidate) }, { status: 409 });
+  }
+  if (decision.kind === 'unknown') {
+    return NextResponse.json({ error: 'That player is not one of this team’s past players.', code: 'not_past_player' }, { status: 400 });
+  }
+  const refuseHere = (entry: { playerFirstName: string; playerLastName: string | null }) => NextResponse.json({
+    error: yesAlreadyOnRoster(playerName(entry), entry.playerFirstName, read.workingSeason),
+    code: 'already_on_roster',
+  }, { status: 409 });
+  if (decision.kind === 'already_here') return refuseHere(decision.entry);
+
+  if (decision.kind === 'same') {
+    try {
+      const { player } = await bringBackChild({
+        orgId: ctx!.org.id, teamId: team.id, workingSeasonId: programYear.id, prior: decision.prior,
+        userId: ctx!.user.id, overrides: { ...typed, adminNotes: body.adminNotes ?? null },
+      });
+      return NextResponse.json({ player, broughtBack: true }, { status: 201 });
+    } catch (e) {
+      if (isChildAlreadyOnSeason(e)) return refuseHere(decision.prior);
+      throw e;
+    }
+  }
+
+  const player = await createRepRosterPlayer({
+    programYearId: programYear.id,
+    teamId: team.id,
+    orgId: ctx!.org.id,
+    source: 'admin_manual',
+    ...typed,
+    secondaryPosition: body.secondaryPosition?.trim() || null,
     adminNotes: body.adminNotes?.trim() || null,
   });
+  // The "no"s, against the new child (best-effort: the player is added either way; a lost "no" only asks again).
+  if (decision.notSameChildIds.length > 0) {
+    try {
+      await storeNotSameChild(player.childId, decision.notSameChildIds, 'single_add', ctx!.user.id);
+    } catch (e) {
+      console.error('[roster] storing "not the same child" failed (non-blocking):', e);
+    }
+  }
 
   return NextResponse.json({ player }, { status: 201 });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/roster' });

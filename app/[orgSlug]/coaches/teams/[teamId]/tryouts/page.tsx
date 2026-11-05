@@ -293,6 +293,7 @@ export default function CoachTryoutsPage({
         {/* Phase 3 (frame 06): a confirmed returning candidate's prior tryout, beside this one.
             The board only asks once names are revealed; the server only answers then too (R6). */}
         <TryoutDecisionBoard key={revealBump} apiBase={`${base}/tryout-decisions`}
+          teamName={assignment?.teamName ?? ''} rosterBase={rosterHref}
           continuityApiBase={`${base}/development/continuity`}
           memoryApiBase={`${base}/tryout-memory`} active={activeTab === 'decide'}
           canWrite onError={fail} />

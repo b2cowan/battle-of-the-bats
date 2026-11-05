@@ -2844,12 +2844,17 @@ moment it lands.
 <!-- dict:col:rep_roster_players.guardian_phone -->
 **`guardian_first_name` / `guardian_last_name` / `guardian_email` / `guardian_phone`** — guardian contact; **all nullable as of mig 139** (Coach Premium Upgrade Phase 3c — so a free team's roster carries over on upgrade without fabricating guardian data). The manual roster-add route still requires first/last/email app-side, so in practice only **migrated rows** (or edits that clear the field) are null. `guardian_email` indexed (`email_idx`, non-unique). TS types are already `string | null` and every reader is null-safe (dues reminders skip null emails; displays/exports coalesce). `guardian_phone` nullable.
 
-<!-- dict:col:rep_roster_players.person_id -->
 <!-- dict:col:rep_roster_players.child_id -->
 **`child_id`** (uuid NOT NULL, FK → `org_children`, indexed; **mig 435**) — the child this roster entry is one season of (a call-up is always its own child). The roll passes the carried entry's; an accepted tryout takes its sign-up's. Set by
 the BEFORE INSERT trigger `org_child_for_entry` when omitted (a new child; never a guessed match), or explicitly from a fact.
 See `org_children` for the rules (confirm joins, undo splits, live name edits write through).
+⚠ **Unique `(child_id, program_year_id)`** (`rep_roster_players_one_child_per_season`, **mig 438**, owner ruling 2026-11-04):
+a child is on a season's roster ONCE, every status (a call-up is its own child, so it never collides). A second entry —
+from the past-player picker, a "Same child? Yes", a tryout accept, or a board confirm that would join two children both on
+this season — fails 23505 on this index name; the writers map it to the drawn refusal ("{name} is already on the {season}
+roster.") and the continuity decide route to Ask 11's words.
 
+<!-- dict:col:rep_roster_players.person_id -->
 **`person_id`** (uuid, nullable, FK → `org_people` ON DELETE SET NULL; **mig 251**) — which adult this child's guardian actually IS, rather than which address someone typed. **Nullable forever**: 64 of 163 live roster rows name no guardian at all, and a child with no attachable guardian must stay a usable roster row. `guardian_email` is untouched beside it, as the honest record of what was entered.
 
 ⚠ **Resolve it through `org_person_emails`, never through `org_people.email_normalized`** — a row still carrying a parent's OLD address must land on the same person as one carrying their new address. ⚠ Attaching a person is **not an edit anyone made**: the backfill deliberately does not bump `updated_at`, because touching it would make whole rosters look freshly changed to every surface that reads recency (mig 214's precedent). _Read by:_ the Families area — `lib/families-read.ts` groups roster rows into households by it (and `lib/family-email.ts` resolves the household's addresses through it). (Corrected 2026-09-25; this line said "nothing reads it yet" from P1 until the Club Tier Readiness evaluation.)
@@ -4234,13 +4239,13 @@ See `org_children` for the rules (confirm joins, undo splits, live name edits wr
 ### `rep_player_continuity_links`
 <!-- dict:table:rep_player_continuity_links -->
 
-**Purpose:** coach-confirmed identity links between a CURRENT entity (roster row OR tryout registration) and a PRIOR season's entity (roster row OR registration), same team — the "possible returning player — verify" record (Player Development 3C, migration 191; design = DBA Finding #31). Mig 192 (3D) adds the carry-forward decision audit. **⚠ DEV-ONLY / PROD-PENDING — promote with migs 189+190+191+192 (192 ALTERs the table 191 creates, so 191 must apply first).**
 ⚠ **Since mig 435 (Club Tier Stage 14 S2) a status change here moves `org_children`.** The AFTER trigger
 `org_child_follows_link` JOINS the two sides' children when a link becomes `confirmed` (the prior side's record is kept) and
 SPLITS the team's entries of that child again when a confirmed link is undone. The link stays the HISTORY of the coach's yes;
 `child_id` on the entry tables is now the identity every reader uses (the Families book stopped unioning these links at read
 time). A `suggested` link — any confidence — moves nothing.
 
+**Purpose:** coach-confirmed identity links between a CURRENT entity (roster row OR tryout registration) and a PRIOR season's entity (roster row OR registration), same team — the "possible returning player — verify" record (Player Development 3C, migration 191; design = DBA Finding #31). Mig 192 (3D) adds the carry-forward decision audit. **⚠ DEV-ONLY / PROD-PENDING — promote with migs 189+190+191+192 (192 ALTERs the table 191 creates, so 191 must apply first).**
 
 **Gotchas (read first):**
 1. **One row per (current, prior) PAIR for its whole lifecycle** — `suggested → confirmed | rejected` are status transitions on that single row (pair-unique expression index on the coalesced side ids). A `rejected` row IS the never-re-suggest tombstone, by construction — do NOT delete it to "clean up". Transitions are guarded in the UPDATE itself (`decideContinuityLink`): confirm only from `suggested`, reject from `suggested|confirmed` — a tombstone can never resurrect, even from a stale-tab replay.
@@ -4326,12 +4331,12 @@ time). A `suggested` link — any confidence — moves nothing.
 <!-- dict:col:rep_tryout_registrations.guardian_phone -->
 **`guardian_first_name` / `guardian_last_name` / `guardian_email` / `guardian_phone`** — first/last/email NOT NULL; `guardian_email` targets all transactional emails + is indexed (gotcha 8); all copied to the roster on accept.
 
-<!-- dict:col:rep_tryout_registrations.person_id -->
 <!-- dict:col:rep_tryout_registrations.child_id -->
 **`child_id`** (uuid NOT NULL, FK → `org_children`, indexed; **mig 435**) — the child this tryout sign-up (a coach's confirmed returning-player link on it joins it to the prior season's child before it is accepted) is one season of. Set by
 the BEFORE INSERT trigger `org_child_for_entry` when omitted (a new child; never a guessed match), or explicitly from a fact.
 See `org_children` for the rules (confirm joins, undo splits, live name edits write through).
 
+<!-- dict:col:rep_tryout_registrations.person_id -->
 **`person_id`** (uuid, nullable, FK → `org_people` ON DELETE SET NULL; **mig 251**) — same meaning as on `rep_roster_players`. ⚠ **A candidate who never made the team still gets a person record, deliberately.** The club already holds their data, mig 214 already files a `family_consents` row for them, and "export everything you hold about me" cannot answer for a family with no record. A candidate who later makes the roster resolves to the **same** person, because the person is keyed on the address — so the only records this creates are for people who *only* ever tried out.
 
 <!-- dict:col:rep_tryout_registrations.status -->
@@ -5921,7 +5926,7 @@ the coach-sent invite to the address already on the roster row.
 **`role`** (text, NOT NULL; CHECK `guardian` only since **mig 290** — was `guardian|follower`) — kept as a column, and as a named type in `lib/family-access.ts`, so a second tier would re-enter through one CHECK rather than as a bare string. See gotcha 2.
 
 <!-- dict:col:family_links.player_id -->
-**`player_id`** (uuid → `rep_roster_players`, **NOT NULL by CHECK** since mig 290, CASCADE) — the roster row this guardian is the accountable adult for. Season-scoped by construction because roster rows are (a guardian link is re-established at continuity-confirm).
+**`player_id`** (uuid → `rep_roster_players`, **NOT NULL by CHECK** since mig 290, CASCADE) — the roster row this guardian is the accountable adult for. Season-scoped by construction because roster rows are. ⚠ **Nothing moves it to the next season** (corrected 2026-11-04 — this line used to say it "is re-established at continuity-confirm"; no code does that: neither the season roll nor the continuity decide route touches `family_links`). The link stays on last season's row and stays live, since family access has no season check, and a new invitation to the new season's row is refused by the live-unique index ("That address already has a connection to this player."). Club Tier Stage 14 (Ask 13) proposes pointing the link at a child record instead.
 
 **⚠ CAP ENFORCED BY TRIGGER (mig 217).** `family_links_guardian_cap` (`enforce_guardian_cap()`) refuses a third LIVE guardian on a player. The app also checks — that is what produces the friendly message — but the app counts then inserts in two statements, so two coaches approving different requests for the same player at the same moment both read the same count and both proceed. Owner ruling #17 is "one per household, room for a second", and a cap enforced only by a racing read is not that cap. `declined`/`revoked` never count toward it, so a mistake is recoverable rather than permanently burning a slot. ⚠ Trigger-only changes get a FALSE GREEN from `check:migrations` (mig-211 lesson) — confirm in prod via `pg_trigger` directly.
 
@@ -6239,7 +6244,6 @@ from `created_at`/`updated_at`**, which record when we wrote this row.
 <!-- dict:col:org_person_emails.updated_at -->
 **`created_at` / `updated_at`** (timestamptz, NOT NULL, default now()).
 
-## `org_person_match_rejections`
 ## `org_children`
 <!-- dict:table:org_children -->
 
@@ -6265,7 +6269,9 @@ RLS on, no policies, **service role only**. Plan of record: `CLUB_TIER_PRODUCTIO
    `rep_player_continuity_links`, each with a WHEN so a suggested or rejected link costs nothing: AFTER INSERT when
    `confirmed`; AFTER UPDATE OF status when it moves to or from `confirmed`): a link becoming `confirmed` runs `org_children_join(prior's child, current's child)`
    (every entry of the current side's child moves to the prior's; the emptied record is DELETED, the kept one re-named
-   from its newest entry); a `confirmed` link leaving `confirmed` runs
+   from its newest entry; since mig 438 its stored "no"s in `child_match_rejections` move to the kept child first, and a
+   join that would put the child on one season's roster twice fails 23505 on `rep_roster_players_one_child_per_season`);
+   a `confirmed` link leaving `confirmed` runs
    `org_children_split_team(team, child, prior entry, current entry)`: of the TEAM's entries of that child grouped by
    `rep_child_components`, ONLY the group holding the current entry moves (to a new child named from its newest entry) —
    unless another confirmed link or an accept still joins it to the prior entry. Everything else stays on the kept record,
@@ -6314,6 +6320,42 @@ it, or the latest edit on a live entry (gotcha 5). The season entries keep their
 
 ---
 
+## `child_match_rejections`
+<!-- dict:table:child_match_rejections -->
+
+**Purpose:** **"not the same child" as a durable decision** (Club Tier Stage 14 S3, **mig 438**; Ask 4: "A 'no' is stored and
+never asked again, anywhere"). One row per pair of `org_children` a person said are different: the head coach's "No, a
+different child" on single add, "New player" on paste a list, "No, a different child" on a tryout accept. Every "Same
+child?" question (`lib/past-players.ts`) leaves out a pair stored here; S6's Children queue must too. RLS on, no policies,
+**service role only**.
+
+**Gotchas (read first):**
+1. **Stored ORDERED** (`child_a_id < child_b_id`, CHECK) so one row covers both directions and the unique pair index cannot
+   be dodged by swapping (the parents' `org_person_match_rejections` discipline). Write it with `least()/greatest()`.
+2. **No `org_id`, on purpose.** The tenancy is the two children's (both FKs CASCADE): a team move moves `org_children`, and
+   the "no" follows without `move_team_into_club` listing this table (the team-move gate reads only `org_id` tables).
+3. **A join keeps the answers.** `org_children_join` (re-created by mig 438) moves the absorbed child's rows to the kept
+   child before the delete, dropping a "no" between the two being joined.
+4. **Not the development board's tombstone.** `rep_player_continuity_links.status='rejected'` is about two ENTRIES (the
+   board's suggestions). A "No" on tryout accept writes BOTH (the board's suggested link for that pair, if any, is rejected so
+   the two screens agree).
+
+<!-- dict:col:child_match_rejections.id -->
+<!-- dict:col:child_match_rejections.child_a_id -->
+<!-- dict:col:child_match_rejections.child_b_id -->
+**`id`** / **`child_a_id`** / **`child_b_id`** (uuid NOT NULL, FK → `org_children` CASCADE; unique pair, `child_b_id`
+indexed) — the two children, smaller id first.
+
+<!-- dict:col:child_match_rejections.door -->
+**`door`** (text NOT NULL; CHECK `single_add|paste_list|tryout_accept`) — where the answer was given (audit only).
+
+<!-- dict:col:child_match_rejections.rejected_by -->
+<!-- dict:col:child_match_rejections.rejected_at -->
+**`rejected_by`** (FK → `auth.users`, SET NULL) / **`rejected_at`** (timestamptz NOT NULL, default now()) — who and when.
+
+---
+
+## `org_person_match_rejections`
 <!-- dict:table:org_person_match_rejections -->
 
 **Purpose:** the duplicate queue's MEMORY — "not the same person" as a durable decision (mig 253,
@@ -7458,12 +7500,12 @@ Sent and By).
 <!-- dict:col:league_registrations.org_id -->
 **`org_id`** (uuid, **NOT NULL**, FK → `organizations` ON DELETE CASCADE, indexed `league_registrations_org_id_idx`; **mig 251**) — **denormalized tenancy, added because this was the one family-bearing table that could not name its own tenant.** It previously reached an org only 2-hop via `season_id → league_seasons.org_id`, so every tenant-scoped read of it was a join, against the standing 1-hop rule (Findings #4/#5). Backfilled from the season; verified total before the NOT NULL (all live rows reached an org), so a row that somehow could not would have failed the migration rather than silently becoming untenanted. ⚠ **Keep it in step with `season_id`** — moving a registration to a season in another org (not a flow that exists today) would have to move this too.
 
-<!-- dict:col:league_registrations.person_id -->
 <!-- dict:col:league_registrations.child_id -->
 **`child_id`** (uuid NOT NULL, FK → `org_children`, indexed; **mig 435**) — the child this house-league sign-up (one child per sign-up until a person joins two — S6's Children queue; the Families book reads it as the child key) is one season of. Set by
 the BEFORE INSERT trigger `org_child_for_entry` when omitted (a new child; never a guessed match), or explicitly from a fact.
 See `org_children` for the rules (confirm joins, undo splits, live name edits write through).
 
+<!-- dict:col:league_registrations.person_id -->
 **`person_id`** (uuid, nullable, FK → `org_people` ON DELETE SET NULL; **mig 251**) — same meaning as on `rep_roster_players`. **This column is why League was brought into the Families Book alongside Club:** a household with one child in house league and one on a rep team is invisible in *both* modules today, and a shared person is the only thing that could join them. A family is read as the union of the rep and league rows carrying the same `person_id`. ⚠ As of 2026-08-17 **no organization on either database has both** rep and league families, so that union is unexercised by real data — see `scripts/report-families-backfill.mjs`.
 
 <!-- dict:col:league_registrations.season_id -->
@@ -8933,12 +8975,15 @@ team/name uniqueness if one ever is.
 `accounting_ledgers`, so the fiscal-year lock's ledger trigger never refuses a move.
 
 **Gotchas (read first):**
-1. **No row = the club's first account.** A row exists only once a book has been moved off it.
+1. **No row = the club's first account.** A row exists once a book has been moved; a book moved BACK keeps a row naming
+   the first account (mig 439 upserts, it never deletes), which reads the same.
 2. **Trigger `bank_account_books_guard`** refuses a team book (`bank_book_is_team_book`), a team account
    (`bank_book_not_club_account`) and another club's account (`bank_book_other_club`).
 3. **A move takes the book's UNTICKED lines with it; lines already ticked stay on the old account's checks** (their
-   `bank_check_marks` rows keep the old `bank_account_id`). `bank_line_exclusions` for the moved lines must move with
-   them (the R2 move route's job).
+   `bank_check_marks` rows keep the old `bank_account_id`). **Written only by `bank_book_move` (mig 439)**, which in the
+   same step moves the old account's `bank_line_exclusions` and `opening_picked` `bank_saved_lines` rows for the book's
+   unticked lines (a row the new account already holds for the same line wins). `bank_account_add` calls it for the
+   books a new account takes (C10).
 
 <!-- dict:col:bank_account_books.ledger_id -->
 <!-- dict:col:bank_account_books.bank_account_id -->
@@ -8963,11 +9008,18 @@ team/name uniqueness if one ever is.
    when it was marked checked (B10). The next statement reads it for lines the source no longer reads (a coach season
    rolled over), so nothing ever reads another season. Required when `checked` (CHECK `bank_checks_checked_has_when`).
 4. **Checking locks nothing** (B4). "Changed since" is `bank_check_changes` plus a comparison of the marks.
-5. **The statement figures are the route's to protect, not the database's.** A later statement's start is derived from
-   the previous one's `statement_ending_balance_cents`, and the account's from `opening_*`; no trigger stops an UPDATE of
-   `statement_end_date` / `statement_ending_balance_cents` on a checked row, or of `opening_*` once statements exist.
-   R2/R4 must refuse both (Undo, then re-enter, is the way). Order ("every earlier statement checked", "ends after the
-   last") is likewise route-enforced (`canStartCheck`); the database holds only one statement per end date.
+5. **The statement figures are protected by the club's write functions, not by the table.** A later statement's start
+   is derived from the previous one's `statement_ending_balance_cents`, and the account's from `opening_*`; no trigger
+   stops an UPDATE of either. **Mig 439 (R2b) is the only club writer:** `bank_account_set_up` refuses `opening_*` once
+   any statement exists (`statements_exist`); `bank_check_refigure` changes an OPEN statement's figures only while every
+   later statement is open and the end date stays between its neighbours (`checked_figures_fixed`, `later_checked`,
+   `ends_out_of_order`) — "Undo, then re-enter". `bank_check_start` holds the order under the account's row lock
+   (`not_set_up`, `one_is_open`, `ends_too_early`). R4's coach writers must hold the same rules.
+8. **Mark checked / Mark checked again / Undo are ONE step each (mig 439):** `bank_check_mark` locks the account and the
+   statement, refuses `changed` when the ticks on it are not the set the route evaluated, replaces them with the engine's
+   complete set (`snapshotForMarking`, R1 review rule 4), writes `checked_by/at` + `outstanding_snapshot`, the event, and
+   clears the statement's open `bank_check_changes`. `bank_check_undo` takes the latest checked statement only, with a
+   reason. All are service role only; the routes under `app/api/admin/accounting/bank/**` call them.
 6. **A stale `outstanding_snapshot`/`checked_at` can remain after Undo** (the CHECK is one-way); the engine reads a
    snapshot only from a `checked` statement, so it is ignored while the row is `open`.
 7. **`UNIQUE (id, bank_account_id)`** (`bank_checks_id_account`) exists so `bank_check_marks` can hold a composite FK:
@@ -9046,7 +9098,11 @@ is marked checked or checked again, so "changed since" is a comparison and a lin
 **Purpose:** a line written into a book **from** a statement's helper (mig 436): `bank_fee`, `interest` (B5; club: the
 account's own first book, Ask 1; coach: a cost/income record with a category, Ask 2) or `payment_processing` (a payout
 gap, Ask 7). It ticks on **that** statement whatever its date: a fee re-dated to today because the statement is in a
-closed fiscal year still ticks there (Ask 8, `bankFeeDate`).
+closed fiscal year still ticks there (Ask 8, `bankFeeDate`). **Club: written only by `bank_check_add_line` (mig 439)**,
+which writes the book line, this row and its tick in ONE step (the fiscal-year lock still refuses a closed day,
+`year_closed`, and nothing is left behind); the book must be one the account holds, never a team's. A payout gap's
+`payment_processing` line is filed under the standard "Bank & payment fees" word (the club's own "Payment processing"
+words each belong to one program).
 
 <!-- dict:col:bank_check_added_lines.check_id -->
 <!-- dict:col:bank_check_added_lines.line_key -->
@@ -9104,8 +9160,10 @@ family paid the vendor, void, pending) have no row: the engine decides them.
 
 **Purpose:** lines the account holds itself, outside any book (mig 436).
 - `opening_picked` — a book line dated before the starting date that the first check said was still outstanding (Ask 3).
+  Club: `bank_account_set_up` (mig 439) replaces the whole opening list on each save, until a statement exists; the
+  route reads each picked line's figures from the book. `bank_book_move` moves a moved book's unticked ones.
 - `opening_typed` — one typed in because no book has it; `line_key` = `typed:{id}` **exactly its own `id`** (CHECK
-  `bank_saved_lines_typed_shape`; the route generates the uuid first), description required. No other kind may carry a
+  `bank_saved_lines_typed_shape`; the club's `bank_account_set_up`, mig 439, mints the uuid first), description required. No other kind may carry a
   `typed:` key. It lives **only** in the check, never in a book.
 - `carried` — at **Start next season** (Ask 12, amends B10), the closing season's unticked lines no saved list holds,
   so the new season's first check can list them under "Still outstanding from your last check" without reading last

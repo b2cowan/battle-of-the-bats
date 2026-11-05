@@ -1,6 +1,30 @@
 {
-  "generated": "2026-11-04T20:36:57.963Z",
+  "generated": "2026-11-04T21:39:10.623Z",
   "entries": {
+    "coach-roster-add-player|768|tap-floor|button·Add parent / guardian contact": {
+      "reason": "FOUND, NOT FIXED (Club Tier Stage 14 S3 measured Add Player for the first time, 2026-11-04). The shared CoachFormDisclosure toggle is 37px at touch widths on every form that uses it; the fix belongs to that shared control (one change, every form), not to this session. Raised with the owner in the S3 hand-off.",
+      "detail": "37px tall (floor 44)"
+    },
+    "coach-roster-add-player|768|tap-floor|button·More details": {
+      "reason": "FOUND, NOT FIXED (Club Tier Stage 14 S3 measured Add Player for the first time, 2026-11-04). The shared CoachFormDisclosure toggle is 37px at touch widths on every form that uses it; the fix belongs to that shared control (one change, every form), not to this session. Raised with the owner in the S3 hand-off.",
+      "detail": "37px tall (floor 44)"
+    },
+    "coach-roster-add-player|390|tap-floor|button·Add parent / guardian contact": {
+      "reason": "FOUND, NOT FIXED (Club Tier Stage 14 S3 measured Add Player for the first time, 2026-11-04). The shared CoachFormDisclosure toggle is 37px at touch widths on every form that uses it; the fix belongs to that shared control (one change, every form), not to this session. Raised with the owner in the S3 hand-off.",
+      "detail": "37px tall (floor 44)"
+    },
+    "coach-roster-add-player|390|tap-floor|button·More details": {
+      "reason": "FOUND, NOT FIXED (Club Tier Stage 14 S3 measured Add Player for the first time, 2026-11-04). The shared CoachFormDisclosure toggle is 37px at touch widths on every form that uses it; the fix belongs to that shared control (one change, every form), not to this session. Raised with the owner in the S3 hand-off.",
+      "detail": "37px tall (floor 44)"
+    },
+    "coach-roster-add-player|361|tap-floor|button·Add parent / guardian contact": {
+      "reason": "FOUND, NOT FIXED (Club Tier Stage 14 S3 measured Add Player for the first time, 2026-11-04). The shared CoachFormDisclosure toggle is 37px at touch widths on every form that uses it; the fix belongs to that shared control (one change, every form), not to this session. Raised with the owner in the S3 hand-off.",
+      "detail": "37px tall (floor 44)"
+    },
+    "coach-roster-add-player|361|tap-floor|button·More details": {
+      "reason": "FOUND, NOT FIXED (Club Tier Stage 14 S3 measured Add Player for the first time, 2026-11-04). The shared CoachFormDisclosure toggle is 37px at touch widths on every form that uses it; the fix belongs to that shared control (one change, every form), not to this session. Raised with the owner in the S3 hand-off.",
+      "detail": "37px tall (floor 44)"
+    },
     "admin-families-show|768|content-overflow|details·ShowAll families 94No family on file12Ow": {
       "reason": "Deliberate: the Show pill drawn OPEN (Club Tier Stage 5b, P1) — its list of six questions with counts hangs under the pill wider than the pill itself, as every pick-one dropdown does; it is a popover over the page, not content the page lays out (a field’s list hangs over its window, 2026-10-09).",
       "detail": "content spills 62px with overflow-x:visible — no scroller owns it"

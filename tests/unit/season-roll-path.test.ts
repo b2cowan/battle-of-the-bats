@@ -230,10 +230,10 @@ describe('the success view\'s roster line (the only bullet that changed)', () =>
     assert.equal(rosterOutcomeLine({ path: 'new_group', copied: 2, division: '11U AAA', stayed: [], fromSeasonName: '2026 Season' }),
       '2 players came with the team.');
   });
-  it('until the past-player picker ships (Stage 14 S3), no sentence points at it', () => {
-    assert.equal(PAST_PLAYER_PICKER_BUILT, false, 'S3 flips this in the change that ships the picker');
-    assert.equal(bringAnywayNote(), 'Leave this off for a new group.');
-    assert.equal(bringAnywayNote(true), 'Leave this off for a new group. You can bring anyone back from the Roster later.');
+  it('the past-player picker shipped (Stage 14 S3), so the window points at it', () => {
+    assert.equal(PAST_PLAYER_PICKER_BUILT, true, 'S3 flipped this in the change that shipped the picker');
+    assert.equal(bringAnywayNote(), 'Leave this off for a new group. You can bring anyone back from the Roster later.');
+    assert.equal(bringAnywayNote(false), 'Leave this off for a new group.');
   });
 });
 
