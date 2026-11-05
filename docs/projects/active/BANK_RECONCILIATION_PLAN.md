@@ -824,7 +824,7 @@ Every stage: migration first where there is one, then the `DATA_DICTIONARY.md` u
 >   (worth it when R4 adds the coach wrapper, not before); a set-based tick check (a few ms on a 300-line payout); the
 >   header's function list (439 and 440 carry the same).
 
-> **R2c — the Bank tab, desk ✅ built 2026-11-05** (screens only, against R2b's routes as they are; no server file touched;
+> **R2c — the Bank tab, desk ✅ built 2026-11-05, committed `7d7b79cdb` 2026-11-05** (screens only, against R2b's routes as they are; no server file touched;
 > /simplify + /review (high) done 2026-11-05, last bullet):
 > - **The tab:** `accountingTabs` gains **Bank** right after Ledger (B8), for everyone who can open Accounting, always (no
 >   flag, unlike Payouts); the page `app/[orgSlug]/admin/accounting/bank/page.tsx` adds no gate (the layout's, as the Ledger
