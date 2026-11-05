@@ -9088,7 +9088,10 @@ is marked checked or checked again, so "changed since" is a comparison and a lin
 <!-- dict:col:bank_check_marks.marked_by -->
 <!-- dict:col:bank_check_marks.marked_at -->
 **`bank_account_id`** / **`check_id`** (FK CASCADE) / **`line_key`** / **`line_date`** / **`direction`** (`in|out`) /
-**`amount_cents`** (≥ 0) / **`payout_key`** / **`marked_by`** / **`marked_at`**.
+**`amount_cents`** (≥ 0) / **`payout_key`** / **`marked_by`** / **`marked_at`**. `payout_key` (`payout:…`) is the payout a
+tick rides: a payout tick stamps its members with it, and so does a **payment-processing line added from a statement**
+(`bank_check_add_line`, mig 439): that line joins the payout's book side so the payout's gap closes instead of being counted
+beside it (the reader overlays it, `withAddedMembers`); one such line per payout per statement.
 
 ---
 

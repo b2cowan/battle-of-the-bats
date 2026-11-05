@@ -15,7 +15,9 @@
 > ships R2, recorded in `MANUAL_PROD_STEPS.json`; engine `lib/bank-check.ts` + 26 tests; P4 measured; /simplify and
 > /review done and fixed in that commit; schema snapshots left out of it, they also carry other sessions' tables).
 > **R2a built and committed `af458c945` 2026-11-04** (the club's reader, server only; /simplify + /review done; record under §7 R2). P4
-> club-pays measured on Stripe's side (holds). **Next:** R2b (the routes).
+> club-pays measured on Stripe's side (holds).
+> **R2b built 2026-11-04** (the routes, server only; mig 439 applied to dev, prod owed with 436 + 437; record under §7 R2).
+> /simplify then /review (high tier) offered before the commit. **Next:** R2c (the Bank tab, desk).
 
 ## Goal
 
@@ -495,8 +497,8 @@ Every stage: migration first where there is one, then the `DATA_DICTIONARY.md` u
   source key the engine can mark. *(Answered under Open questions: stable for every settled row; no new key needed.)*
 
 ### R2 — Club: the Bank tab (desk + phone) (prompt `BANK_RECONCILIATION_R2_BUILD_PROMPT.md`, written 2026-11-04; four one-session chunks: R2a reader + P4 club-pays, R2b routes + atomic functions, R2c the tab on desk, R2d phone + close)
-- [ ] Routes under `app/api/admin/accounting/bank/**` via `resolveClubMoney({write})`; lines from posted club-book
-  entries (`isClubBook`) in the account's books, minus same-account transfer pairs, void and pending.
+- [x] Routes under `app/api/admin/accounting/bank/**` via `resolveClubMoney({write})`; lines from posted club-book
+  entries (`isClubBook`) in the account's books, minus same-account transfer pairs, void and pending. *(R2b, 2026-11-04.)*
 - [ ] `accountingTabs` gains "Bank" (B8); page `app/[orgSlug]/admin/accounting/bank/page.tsx`; C1–C5, C10.
 - [ ] The grouped Stripe payout reuses `lib/online-payouts.ts` (no second Stripe reader). *(Reader half done in R2a:
   `readPayouts({ withEntries })`; the screen is R2c.)*
@@ -564,6 +566,80 @@ Every stage: migration first where there is one, then the `DATA_DICTIONARY.md` u
 >   (3) a transfer half whose partner is dated before the starting date is not fetched by id (not checked whether a
 >   hand-edit can split the two halves' dates; the engine's own transfer tests assume they sit together); (4) the team-side reversal line is found by its fixed wording (migs 387/388), as the
 >   12c SQL check does; (5) no test fakes the database for `entryIndex`: the dev probe is its only end-to-end check.
+
+> **R2b — the routes ✅ built 2026-11-04** (server only, no screens; /simplify then /review offered before the commit):
+> - **Twelve route files under `app/api/admin/accounting/bank/**`**, each `resolveClubMoney(req, { scope: 'books', write })`
+>   inside `withObservability` (read = whoever opens Accounting, write = `canMoveClubMoney`, B7): `GET/POST /bank` (the
+>   club's accounts, "never done this", each one's "checked through"; name an account, a later one taking the books it
+>   names), `GET /bank/lines-before` (C1's picker: posted lines on or before the starting DAY, newest first, by words or an
+>   amount, 50 a page), `GET/PATCH /bank/accounts/{id}` (one account's view; rename), `PUT …/setup`, `POST …/books`
+>   (move a book), `POST …/checks` (start), `PATCH …/checks/{checkId}` (correct an open statement's figures), and
+>   `…/ticks`, `…/kept-out`, `…/mark` (`again` for Mark checked again), `…/undo`, `…/lines` (fee, interest, payment
+>   processing). Every write answers with the account read again (the server's numbers, rule 6); every refusal is a code
+>   plus one sentence from `lib/bank-check-words.ts` (drafts for R3's `/marketing` pass).
+> - **`lib/bank-club-rules.ts`** (pure, the decisions): `tickPlan` (rule 3: a payout with its members, unticked as a group,
+>   also from a stamped member while Stripe is down), `keptOutPlan`, `markPlan` (rules 4 and 6: the Difference recomputed,
+>   the complete set of ticks, what was seen), `undoPlan`, `openingPlan` (a picked item's figures from the book; a typed
+>   item never carries a key, rule 5), `payoutGapViews`, `checkSummaries` (the list after an undo shows who and why; the one
+>   before gains the Undo). **`lib/bank-club-steps.ts`** (server) and **`lib/bank-check-fee.ts`** (thin).
+> - **Mig 439 `439_a_bank_check_moves_in_one_step.sql`** (functions only, service role only; dev 2026-11-04, prod owed with
+>   436 + 437 in `MANUAL_PROD_STEPS.json`): `bank_account_add`, `bank_book_move`, `bank_account_set_up`, `bank_check_start`,
+>   `bank_check_refigure`, `bank_check_mark`, `bank_check_undo`, `bank_check_add_line`, `bank_first_club_account`. Proved
+>   on dev by `.probe/bank-r2b-functions.sql` (rolled back, `BANK_R2B_FUNCTIONS_PASSED`).
+> - **⚖ Where this went past the prompt's letter, said before the work:**
+>   1. **"Undo, then re-enter" has a door:** an OPEN statement's end date and ending balance can be corrected while every
+>      later statement is open (`bank_check_refigure`); a checked statement's never (`checked_figures_fixed`), nor one a
+>      later checked statement starts from (`later_checked`). Nothing drawn let a treasurer re-enter a mistyped balance.
+>   2. **The payout gap's "Payment processing" line is filed under "Bank & payment fees"** (the platform word, or the
+>      club's own copy): the club's "Payment processing" words each belong to one program, so none fits a General-book line.
+>   3. **Six steps are database functions, not three:** setting up, adding an account and moving a book, starting and
+>      correcting a statement each write several rows or must hold an order under a lock. **The fee line is ONE step** (the
+>      line, its added-line row and its tick together) instead of "write it, then void it if the tick fails": no orphan can
+>      exist, and the fiscal-year lock still refuses a closed day inside it.
+>   4. **A statement can't end, and an account can't start, after the club's today** (`ends_in_future`,
+>      `starts_in_future`): found by the route probe, where a Dec 31 statement dated its fee line in the future.
+> - **R2a's items left for R2b, decided:** (1) "Add it as payment processing" is offered only when every book line Stripe
+>   names is in the engine's own book side for that payout (none void, none in another account's book): `missingMembers`;
+>   (2) a held dispute's stored amount + fee must equal Stripe's own net for it (`disputeNetCents`, added to the reader's
+>   gap facts), or nothing is offered. (3)–(5) unchanged.
+> - **A moved book** (Ask 13, and R2a's finding): `bank_book_move` moves the old account's `opening_picked` rows and
+>   `bank_line_exclusions` for the book's unticked lines; ticked lines and their decisions stay. A book moved back keeps a
+>   row naming the first account.
+> - **Tests:** `tests/unit/bank-club-routes.test.ts` (30: each refusal the prompt names — statement figures after a statement
+>   exists is SQL, held by the guard and the probe; start out of order; undo of a non-latest; mark at a non-zero Difference
+>   (422); a typed key the request tries to send — plus rule 3, rule 4, the gap offer, the codes);
+>   `tests/unit/bank-r2-server-guard.test.ts` (every route's gate and `write`, no year or season parameter, no coach reader,
+>   intent only, awaited writes, mig 439's functions, grants and refusals, never in the future). Bank tests 166/166 with R1's
+>   and R2a's; the Payouts tab's tests unchanged and green.
+> - **End to end on the dev server** as `uat-rep-club`'s treasurer (`.probe/bank-r2b-routes.mjs` and
+>   `.probe/bank-r2b-processing.mjs`, not committed; every row they made deleted after): never-done-this → name → set up (a
+>   picked and a typed item) → check a statement → tick all 7 → 422 at −$5,880.00 → a bank fee balances it → Mark checked →
+>   figures and starting point refused → Undo (who and why) → re-enter → Mark checked → next statement, kept out and put
+>   back, a payout refused as kept out → step back → a second account takes a book, a team book refused → rename; the
+>   registrar reads 403 and can't write; a fee in the closed 2025–26 year refused in words with the next open day; "payment
+>   processing" for po_1UVKmq… at the server's $5.00 (the request's 1 cent ignored), refused for a gap that is all "not
+>   ours" and for a payout that sums.
+> - **Checks:** typecheck and focused lint clean; `npm test` 14,079/14,086 (the 7 known failures elsewhere:
+>   coach-practice-plans-phone-guard, plan-billing-usage, public-tournament-stage6-walk ×3, series-date-groups,
+>   support-console-stage3-guard; reported, not fixed); spelling, dictionary coverage, date correctness, snapshot
+>   freshness, manual-prod-migrations clean; the known eslint react-hooks plugin message and other tables' index coverage.
+>   Schema snapshots refreshed by the migration hook but **left out of the commit**: they also carry other sessions' dev
+>   tables.
+> - **`/simplify` + `/review` (high) DONE 2026-11-04** (four lenses; security found no cross-club path). **Fixed before the
+>   commit:** (1) ⚠ **"Add it as payment processing" counted the fee twice** and the offer never went away — the new line was
+>   ticked beside the payout, whose gap stayed. Now the line's tick names the payout it closes (mig 439 `bank_check_add_line`
+>   takes `p_payout_key`, the 12-argument form is dropped, a second line for the same payout on a statement is refused) and
+>   the reader joins it to that payout's members (`withAddedMembers`), so the gap closes and the Difference stays $0.00
+>   (tests pin both the broken and the fixed sums; the dev proof asserts the tick, the refusal and the bad kind). (2) "Didn't
+>   go through the bank" is refused for a line outside the statement's window (it vanished from every list). (3) A payout tick
+>   refused by a unique clash is `changed`, not a silent success (a twin double tap still is). (4) A body id that is not a
+>   uuid (move book, new account, fee book, setup picks) is a clean refusal, not a 500; a fee date in the future is refused.
+>   **Left open (owner call, bigger change): a tick, untick or keep-out written just after Mark checked commits can land on
+>   the now-checked statement** — the plain-row writes take no lock and the database has no guard (the only trigger is on the
+>   book mapping). Fix = make them locked mig 439-style steps that require `status = 'open'`. Narrow (two people, a few
+>   hundred ms) and visible afterwards (the statement stops summing to $0.00), but real. Also noted, not fixed: Mark checked
+>   compares ticks only, not the book lines behind the $0.00 (the R3 "changed since" stamps are the backstop); a numeric
+>   cheque number in the starting-point picker searches by amount; the withheld-offer refusal can name the wrong reason.
 
 ### R3 — Club: the touchpoints
 - [ ] Matched-line warning on the club entry edit/void routes and windows (C6); changed-since stamp.

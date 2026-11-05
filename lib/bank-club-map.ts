@@ -77,6 +77,13 @@ export interface EntryRow {
   linked_entry_id: string | null;
 }
 
+/** The columns an `EntryRow` is read with (one copy for every bank reader). */
+export const ENTRY_SELECT = 'id, ledger_id, entry_date, description, amount, entry_type, status, linked_entry_id';
+
+/** Money in or out of the book: the one place an entry type becomes a direction (the amount is always positive). */
+export const directionOfEntry = (row: Pick<EntryRow, 'entry_type'>): BankDirection =>
+  row.entry_type === 'income' || row.entry_type === 'transfer_in' ? 'in' : 'out';
+
 export const entryKey = (id: string) => `entry:${id}`;
 export const payoutKey = (id: string) => `payout:${id}`;
 /** The entry id inside an `entry:` key, or null for any other kind of key. */
@@ -85,7 +92,7 @@ export const entryIdOf = (key: string): string | null => (key.startsWith('entry:
 /** A club-book line as the engine reads it. Direction from `entry_type` (amount is always positive); a transfer half
  *  names its other half, so both halves in this account are left out automatically (B6). */
 export function entryToBankLine(row: EntryRow, payoutOf: ReadonlyMap<string, string>): BankLine {
-  const direction: BankDirection = row.entry_type === 'income' || row.entry_type === 'transfer_in' ? 'in' : 'out';
+  const direction = directionOfEntry(row);
   const isTransfer = row.entry_type === 'transfer_in' || row.entry_type === 'transfer_out';
   return {
     key: entryKey(row.id), date: row.entry_date, direction, amountCents: toCents(row.amount), status: row.status,
@@ -195,6 +202,9 @@ export interface PayoutGapFacts {
    *  named from OUR stored amount + fee. Negative. */
   disputesHeld: { disputeId: string; amountCents: number; feeCents: number }[];
   disputeHeldCents: number;
+  /** The same held disputes as Stripe's own lines net them (signed). R2b offers "payment processing" only when this agrees
+   *  with `disputeHeldCents`: a disagreement means our stored figure is not the whole story, so nothing is guessed. */
+  disputeNetCents: number;
   /** A dispute's money Stripe gave back that no book line records (won before any loss was booked). */
   disputeReturnedCents: number;
   /** Stripe activity with no record of ours: "Not from FieldLogicHQ". */
@@ -203,6 +213,10 @@ export interface PayoutGapFacts {
    *  IS offered as a "Payment processing" line — named first as what it is. */
   stripeFeeCents: number;
 }
+
+/** A payout with nothing named against its gap yet (a fresh set of facts to add into). */
+const emptyGapFacts = (): PayoutGapFacts =>
+  ({ disputesHeld: [], disputeHeldCents: 0, disputeNetCents: 0, disputeReturnedCents: 0, notOursCents: 0, stripeFeeCents: 0 });
 
 export interface BankPayoutsRead {
   /** Automatic payouts Stripe has finished matching, that went or are going to the bank. */
@@ -229,7 +243,7 @@ export function payoutsForBank(rows: readonly PayoutRowLike[]): BankPayoutsRead 
     const key = payoutKey(r.id);
     payouts.push({ key, arrivalDate: r.arrives!, amountCents: toCents(r.amount) });
     const members: string[] = [];
-    const f: PayoutGapFacts = { disputesHeld: [], disputeHeldCents: 0, disputeReturnedCents: 0, notOursCents: 0, stripeFeeCents: 0 };
+    const f = emptyGapFacts();
     for (const l of r.lines) {
       for (const id of l.entryIds ?? []) {
         if (payoutOf.has(id)) continue;
@@ -244,12 +258,30 @@ export function payoutsForBank(rows: readonly PayoutRowLike[]): BankPayoutsRead 
         // Named from OUR stored amount and fee (P4), never "payment processing".
         f.disputesHeld.push({ disputeId: l.dispute.id, amountCents: l.dispute.amountCents, feeCents: l.dispute.feeCents });
         f.disputeHeldCents -= l.dispute.amountCents + l.dispute.feeCents;
+        f.disputeNetCents += cents;
       } else if (l.kind === 'dispute_won' && l.dispute && unbooked) f.disputeReturnedCents += cents;
     }
     membersOf.set(key, members);
     facts[key] = f;
   }
   return { payouts, payoutOf, membersOf, facts };
+}
+
+/**
+ * A payment-processing line added from a statement rides the payout it closes (mig 439 writes the payout on its tick):
+ * Stripe's own reading cannot name it (it is a line we booked after), so it joins that payout's members here. Without
+ * this the line would be counted beside the payout's gap instead of closing it, and the offer would never go away.
+ */
+export function withAddedMembers(bank: BankPayoutsRead, marks: readonly BankMark[], addedKeys: ReadonlySet<string>): BankPayoutsRead {
+  const payoutOf = new Map(bank.payoutOf);
+  const membersOf = new Map<string, string[]>([...bank.membersOf].map(([k, ids]) => [k, [...ids]]));
+  for (const m of marks) {
+    const id = m.payoutKey && addedKeys.has(m.key) ? entryIdOf(m.key) : null;
+    if (!id || !membersOf.has(m.payoutKey!) || payoutOf.has(id)) continue;
+    payoutOf.set(id, m.payoutKey!);
+    membersOf.get(m.payoutKey!)!.push(id);
+  }
+  return { ...bank, payoutOf, membersOf };
 }
 
 /**
@@ -281,7 +313,7 @@ export function nameGap(gapCents: number, facts: PayoutGapFacts | undefined): {
   disputeHeldCents: number; disputeReturnedCents: number; notOursCents: number; stripeFeeCents: number; otherCents: number;
   offerPaymentProcessing: boolean; processingCents: number;
 } {
-  const f = facts ?? { disputesHeld: [], disputeHeldCents: 0, disputeReturnedCents: 0, notOursCents: 0, stripeFeeCents: 0 };
+  const f = facts ?? emptyGapFacts();
   const otherCents = gapCents - f.disputeHeldCents - f.disputeReturnedCents - f.notOursCents - f.stripeFeeCents;
   const fee = f.stripeFeeCents + otherCents;
   return {

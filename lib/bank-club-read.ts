@@ -6,8 +6,8 @@ import { onlinePaymentsOn } from './online-payments-switch';
 import { readPayouts } from './online-payouts';
 import type { BankAccountState } from './bank-check';
 import {
-  assembleAccount, checkRecords, entryIdOf, keysNamed, liveClubAccounts, marksOf,
-  payoutFloor, payoutsForBank, placeBooks, savedOf, stampsOf,
+  ENTRY_SELECT, assembleAccount, checkRecords, entryIdOf, entryKey, keysNamed, liveClubAccounts, marksOf,
+  payoutFloor, payoutsForBank, placeBooks, savedOf, stampsOf, withAddedMembers,
   type AddedLineRow, type BankAccountRow, type BookMoveRow, type ChangeRow, type CheckRow, type ClubBook, type EntryRow,
   type MarkRow, type PayoutGapFacts, type SavedLineRow,
 } from './bank-club-map';
@@ -22,8 +22,6 @@ import {
  * change names, whatever its date; plus a payout's own book lines. Stripe is read from the last checked statement's end
  * (lib/online-payouts.ts, the Payouts reader, never a second one); a failed read is `payoutsUnavailable`, never a throw.
  */
-
-const ENTRY_SELECT = 'id, ledger_id, entry_date, description, amount, entry_type, status, linked_entry_id';
 
 export interface ClubBankAccount {
   id: string;
@@ -45,11 +43,18 @@ export interface ClubBankAccounts {
 
 export interface ClubBankRead {
   account: ClubBankAccount;
+  /** The club's accounts and books, as read for this account (the Account pill, the Book column's names). */
+  all: ClubBankAccounts;
   state: BankAccountState;
   /** Stripe did not answer: no payouts were passed, so their lines read one by one (the engine's fallback). */
   payoutsUnavailable: boolean;
   /** Per payout key passed: what its gap is made of, by reason (P4). */
   payoutGaps: Record<string, PayoutGapFacts>;
+  /** Per payout key passed: every book line (`entry:` key) Stripe says rode in it, wherever that line sits now. A member
+   *  the engine's book side lacks (void, or in a book another account holds) means the gap is not a fee (R2b). */
+  payoutMembers: Record<string, string[]>;
+  /** A book line's key → the book it is in (the tick list's Book column). */
+  lineBooks: Record<string, string>;
 }
 
 /** The club's accounts and which books each holds (rule 1: the first is the oldest live CLUB account). */
@@ -158,7 +163,7 @@ export async function readClubBankAccount(orgId: string, accountId: string, opts
     claimedElsewhere: [],
   };
   // Not set up yet (C1): no starting point means no line belongs to a check yet.
-  if (!account.setup) return { account, state: base, payoutsUnavailable: false, payoutGaps: {} };
+  if (!account.setup) return { account, all, state: base, payoutsUnavailable: false, payoutGaps: {}, payoutMembers: {}, lineBooks: {} };
 
   // 1. The window read above, and every line the account names, by id.
   const rows = new Map(windowRows.map(r => [r.id, r]));
@@ -167,7 +172,7 @@ export async function readClubBankAccount(orgId: string, accountId: string, opts
 
   // 2. Stripe (started above, from the last checked statement's end); then any payout member line not read yet, by id.
   const payoutRead = await payoutReading!;
-  const bank = payoutsForBank(payoutRead.rows);
+  const bank = withAddedMembers(payoutsForBank(payoutRead.rows), marks, new Set(addedRows.map(a => a.line_key)));
   const memberIds = [...bank.payoutOf.keys()].filter(id => !rows.has(id));
   for (const r of await entriesById([...namedIds, ...memberIds])) rows.set(r.id, r);
 
@@ -186,10 +191,18 @@ export async function readClubBankAccount(orgId: string, accountId: string, opts
   // are by construction not ticked elsewhere: `assembleAccount` dropped those.)
   const tickedElsewhere = await marksOnOthers(lines.map(l => l.key).filter(k => !markedKeys.has(k)));
 
+  const payoutMembers: Record<string, string[]> = {};
+  for (const p of payouts) payoutMembers[p.key] = (bank.membersOf.get(p.key) ?? []).map(entryKey);
+  const lineBooks: Record<string, string> = {};
+  for (const l of lines) { const r = rows.get(entryIdOf(l.key) ?? ''); if (r) lineBooks[l.key] = r.ledger_id; }
+
   return {
     account,
+    all,
     state: { ...base, lines, payouts, claimedElsewhere: [...new Set([...tickedElsewhere, ...movedAway])] },
     payoutsUnavailable: payoutRead.unavailable,
     payoutGaps,
+    payoutMembers,
+    lineBooks,
   };
 }
