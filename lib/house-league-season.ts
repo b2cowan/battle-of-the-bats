@@ -186,11 +186,6 @@ export function publicSeasonState(season: Dated, today: string = tournamentToday
   return { label: 'Playing now', tone: 'ok' };
 }
 
-export type PublicSeasonLink = { label: string; href: string; primary?: boolean };
-
-/**
- * One public row's links (copy §8), beside the row's own door to the season page: Register (and the season page) while it
- * takes sign-ups; the season page while sign-ups are closed; Schedule and Standings once it is under way or done.
 // ── The season's own page once registration closes (§0k; words HOUSE_LEAGUE_PUBLIC_SEASON_PAGE_COPY.md, accepted 2026-11-04) ──
 
 /** A day in a sentence: "October 25, 2026", or "May 2" when the year is said once at the end (copy §1 `line.fmt`). */
@@ -274,6 +269,11 @@ export function nextSeasonDoor<T extends Dated & { id: string; name: string; cre
   return { kind: 'many', head: NEXT_SEASON_WORDS.manyHead, line: names.join(' · '), button: NEXT_SEASON_WORDS.manyButton };
 }
 
+export type PublicSeasonLink = { label: string; href: string; primary?: boolean };
+
+/**
+ * One public row's links (copy §8), beside the row's own door to the season page: Register (and the season page) while it
+ * takes sign-ups; the season page while sign-ups are closed; Schedule and Standings once it is under way or done.
  * `seasonHref` is the season's public page; its sub-pages hang off it.
  */
 export function publicSeasonLinks(season: Dated, seasonHref: string, today: string = tournamentToday()): PublicSeasonLink[] {

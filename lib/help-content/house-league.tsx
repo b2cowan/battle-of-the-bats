@@ -513,12 +513,12 @@ const houseLeagueHelp: HelpPageContent = {
             <>
               <ul>
                 <li>The team&apos;s name, division and coaches.</li>
-                <li><strong>Players</strong>, each with the family&apos;s name, email and phone (a missing phone is left out), and <strong>Copy emails</strong> to copy every family&apos;s address at once.</li>
+                <li><strong>Players</strong>, each with the family&apos;s name, email and phone (a missing phone is left out). When a family added a second parent, that email shows under the first, and one click on the email opens a message to both parents. <strong>Copy emails</strong> copies every family&apos;s addresses at once, second parents included.</li>
                 <li><strong>Schedule</strong>: the team&apos;s games (once the division&apos;s schedule is published, as last sent to families) and its practices, from today on, with anything waiting for a new date after them, and a link to <strong>See the season&apos;s schedule</strong>. Below them, <strong>Scores</strong> lists the games that have started (the home team&apos;s coach can enter the score; the other coach can report it), and a line says whether families have been told the practice times (see <a href="#coach-page-told-subscribe">Whether families know the practices, and Subscribe</a>), beside <strong>Subscribe</strong>.</li>
                 <li>A coach of two teams switches between them.</li>
               </ul>
               <p>To get back to it, a coach signs in on the club&apos;s site and clicks <strong>My team</strong> at the top right. A coach of two or more teams taps the person icon and picks a team from the menu, then switches between them with the <strong>Your teams</strong> buttons at the top of each team page. On a phone, tap the person icon: the team is a row in the sheet that opens.</p>
-              <p>They never see ratings, fees or other teams, and never the Coaches Portal. The sign-up form tells families that their child&apos;s coach sees their name, email and phone.</p>
+              <p>They never see ratings, fees or other teams, and never the Coaches Portal. The sign-up form tells families that their child&apos;s coach sees their name, email and phone, and the second parent&apos;s email if one was added.</p>
               <p>The page stays for 30 days after the season finishes, then it is gone. On a finished season it has no Schedule section; the schedule stays on the public site.</p>
             </>
           ),
@@ -1101,8 +1101,8 @@ const houseLeagueHelp: HelpPageContent = {
       group: 'Running the season',
       heading: 'What families see when they sign up',
       summary: 'Families sign up one child or several in one go, see each child’s outcome before they send, get one reference and one email, and come back to their own Your sign-up page from the link in it.',
-      keywords: ['sign up several children', 'sign up more than one child', 'siblings', 'reference', 'accepted', 'received', 'waitlist', 'your sign-up', 'sign-up page', 'status page', 'check your registration', 'email me my link', 'lost the link', 'lost the email', 'link no longer works', 'link stopped working', 'link expired', 'season has finished', 'when does the link end', 'first names', 'your sign-up button', 'date of birth', 'no division fits', 'family email', 'how to pay', 'early bird', 'ask to withdraw', 'ask to withdraw a child', 'family wants to withdraw', 'refund on the status page', 'kept by the club', 'withdrawn', 'declined', 'team', 'coach', 'not set yet', 'to be announced', 'moved from', 'coach sees my phone', 'price to pay', 'pay by card', 'pay now', 'pay link', 'processing fee', 'pay online', 'card payment', 'receipt', 'one checkout', 'waitlist nothing to pay', 'pay by bank debit', 'bank debit', 'bank debit clearing', 'clearing', 'bank debit returned', 'returned by the bank', 'takes up to 5 business days'],
-      searchText: 'your sign-up page the family’s own link first names only reference to quote if you contact the club anyone with this link can open this page ask the club to send a new one email me my link already signed up lost the email enter the email you signed up with check your inbox the link goes to that inbox only a reference alone opens nothing the link ends 30 days after the season is finished unless money is owed this season has finished this link no longer works one button your sign-up in every family email confirmation always only while money is owed waitlist email has no button family sign up form sign up several children in one go siblings add another child up to eight children date of birth picks the division born in birth year club cut-off each child outcome before sign up spot and price early bird applied early bird ended waitlist nothing to pay unless a spot opens two divisions for one age group family picks note for families no division fits contact the club child left out others still sign up one reference for the sign-up one email lists every child total to pay how to pay accepted received waitlist 1st status page team row coach row not set yet to be announced moved from the coach sees your name email and phone check your registration email and reference find everything pay by card pay now pay link one checkout processing fee waitlist nothing to pay parent or guardian email waiver email consent unticked payable separately the form does not take payment approve means accepted pending review means received status page declined withdrawn spot released reads withdrawn refunded on kept by the club reason the club is keeping to pay part of the price still to pay price rose ask to withdraw a child request sent the child keeps their place until the club acts you asked to withdraw the club will confirm by email note for the club 300 characters asked once too many tries needs attention house league withdrawal request clears itself when the registration ends pay by bank debit pay by card two buttons bank debit clearing fee clearing started up to 5 business days we will email you when it clears your spot is held the bank debit did not go through nothing was taken a bank payment was returned returned by the bank receipt no longer counts refund to the bank account about 3 business days',
+      keywords: ['sign up several children', 'sign up more than one child', 'siblings', 'reference', 'accepted', 'received', 'waitlist', 'your sign-up', 'sign-up page', 'status page', 'check your registration', 'email me my link', 'lost the link', 'lost the email', 'link no longer works', 'link stopped working', 'link expired', 'season has finished', 'when does the link end', 'first names', 'your sign-up button', 'date of birth', 'no division fits', 'family email', 'how to pay', 'early bird', 'ask to withdraw', 'ask to withdraw a child', 'family wants to withdraw', 'refund on the status page', 'kept by the club', 'withdrawn', 'declined', 'team', 'coach', 'not set yet', 'to be announced', 'moved from', 'coach sees my phone', 'price to pay', 'pay by card', 'pay now', 'pay link', 'processing fee', 'pay online', 'card payment', 'receipt', 'one checkout', 'waitlist nothing to pay', 'pay by bank debit', 'bank debit', 'bank debit clearing', 'clearing', 'bank debit returned', 'returned by the bank', 'takes up to 5 business days', 'second parent', 'second parent email', 'second guardian', 'both parents', 'other parent', 'add another parent'],
+      searchText: 'second parent’s email optional box both parents get the emails no name asked hi same address as first refused over 200 characters their own copy never a cc added you line ask the club to take the address off receipts refunds bank debit stay with whoever paid team schedule practice email reaches second parent only when on every sign-up under the first email second parent never a marketing list never consent second parent line add change nothing is emailed second parent email column coach team page both parents your sign-up page the family’s own link first names only reference to quote if you contact the club anyone with this link can open this page ask the club to send a new one email me my link already signed up lost the email enter the email you signed up with check your inbox the link goes to that inbox only a reference alone opens nothing the link ends 30 days after the season is finished unless money is owed this season has finished this link no longer works one button your sign-up in every family email confirmation always only while money is owed waitlist email has no button family sign up form sign up several children in one go siblings add another child up to eight children date of birth picks the division born in birth year club cut-off each child outcome before sign up spot and price early bird applied early bird ended waitlist nothing to pay unless a spot opens two divisions for one age group family picks note for families no division fits contact the club child left out others still sign up one reference for the sign-up one email lists every child total to pay how to pay accepted received waitlist 1st status page team row coach row not set yet to be announced moved from the coach sees your name email and phone check your registration email and reference find everything pay by card pay now pay link one checkout processing fee waitlist nothing to pay parent or guardian email waiver email consent unticked payable separately the form does not take payment approve means accepted pending review means received status page declined withdrawn spot released reads withdrawn refunded on kept by the club reason the club is keeping to pay part of the price still to pay price rose ask to withdraw a child request sent the child keeps their place until the club acts you asked to withdraw the club will confirm by email note for the club 300 characters asked once too many tries needs attention house league withdrawal request clears itself when the registration ends pay by bank debit pay by card two buttons bank debit clearing fee clearing started up to 5 business days we will email you when it clears your spot is held the bank debit did not go through nothing was taken a bank payment was returned returned by the bank receipt no longer counts refund to the bank account about 3 business days',
       content: (
         <>
           <p>This is what a family sees on your season&apos;s sign-up form, after it and in their email. Knowing it helps when a parent phones to ask what a screen meant.</p>
@@ -1120,7 +1120,8 @@ const houseLeagueHelp: HelpPageContent = {
                 <li><strong>A spot one child takes counts against the next</strong> child in the same sign-up. A child never jumps an existing waitlist: if the division has a waitlist, the child joins it.</li>
                 <li><strong>Two divisions for one age group</strong> — the family picks, seeing each division&apos;s <strong>Note for families</strong> and how much room it has.</li>
                 <li><strong>A season that doesn&apos;t sort by age</strong> shows a Division list instead, with the spots left in each.</li>
-                <li>Under the parent or guardian fields, a short note tells families that their child&apos;s coach will see their name, email and phone to reach them about the team.</li>
+                <li>Under the parent or guardian fields, a short note tells families that their child&apos;s coach will see their name, email and phone to reach them about the team, and the second parent&apos;s email if one is added.</li>
+                <li><strong>Second parent&apos;s email</strong> is an optional box after the parent&apos;s own details. Leaving it empty changes nothing. See <em>A second parent&apos;s email</em>.</li>
                 <li>The waiver, if you set one, and the unticked email-consent line sit before the button. The button reads <strong>Sign up 2 children</strong> when there are several.</li>
               </ul>
             </>
@@ -1156,9 +1157,27 @@ const houseLeagueHelp: HelpPageContent = {
               <p>A family gets back to their sign-up through one link, the one behind the <strong>Your sign-up</strong> button. The reference opens nothing on its own; it is a number to quote to the club.</p>
               <HelpDefs>
                 <HelpDef term="The button in family emails">Every family email has at most one button, <strong>Your sign-up</strong>. The sign-up confirmation always has it. After that, an email has it only while money is owed: an approval, a waitlist promotion, the teams email, a team change, a pay link you send, a receipt that leaves a balance, or a bank debit that came back. A waitlist email never has one.</HelpDef>
-                <HelpDef term="Lost the email">On the season&apos;s page, <em>Already signed up?</em> leads to <strong>Email me my link</strong>. The family enters the email they signed up with; if it has a sign-up for the season, the link goes to that inbox only. The screen says <strong>Check your inbox</strong> either way, so it never tells anyone whether an email is signed up. The same form sits on a link that no longer works.</HelpDef>
+                <HelpDef term="Lost the email">On the season&apos;s page, <em>Already signed up?</em> leads to <strong>Email me my link</strong>. The family enters the email they signed up with, which can be the second parent&apos;s email as well as the first; if it has a sign-up for the season, the link goes to that inbox only. The screen says <strong>Check your inbox</strong> either way, so it never tells anyone whether an email is signed up. The same form sits on a link that no longer works.</HelpDef>
                 <HelpDef term="When it ends">The link works while the season runs and for 30 days after you mark the season finished. A family who still owes money keeps it until they have paid, including while a bank debit clears or a card payment is under way. After that the page reads <strong>This season has finished</strong>, with your club&apos;s contact, and says the receipts already emailed are theirs to keep.</HelpDef>
                 <HelpDef term="A link you replaced">The old link reads <strong>This link no longer works</strong>, with <strong>Email me my link</strong> right there. See <em>Sending a family a new link</em>.</HelpDef>
+              </HelpDefs>
+            </>
+          ),
+        },
+        {
+          id: 'family-signup-second-parent',
+          title: 'A second parent’s email',
+          content: (
+            <>
+              <p>The sign-up form has an optional <strong>Second parent&apos;s email</strong> box, so both parents get the club&apos;s emails about the same sign-up. No name is asked, so the second parent is greeted with <em>Hi,</em>.</p>
+              <HelpDefs>
+                <HelpDef term="The box">One address per sign-up, shared by every child in it. Empty changes nothing. The same address as the first parent&apos;s, or one that isn&apos;t a valid email or is over 200 characters, is refused in words and nothing is saved.</HelpDef>
+                <HelpDef term="What the second parent gets">Their own copy, never a Cc, of the emails about the sign-up: the confirmation, the <strong>Your sign-up</strong> link, accepted, waitlisted, released, declined and withdrawn, the team and the schedule, practice times and changes, the pay link, and the season&apos;s <strong>Email families</strong>. The confirmation opens with a line saying who added them, and that they can tell the club if they shouldn&apos;t be on it or would rather not get the emails. The second copy goes only when the first parent&apos;s email went.</HelpDef>
+                <HelpDef term="What stays with whoever paid">Receipts, refunds and bank-debit emails go to the first parent only.</HelpDef>
+                <HelpDef term="Households with different second parents">A team, schedule or practice email covers every child under one first email. It reaches a second parent only when that address was added on every sign-up it covers. If sign-ups under one first email disagree, only the first parent gets it, and the second parent still gets everything built from their own sign-up. Adding the address to the other sign-up fixes it.</HelpDef>
+                <HelpDef term="Not a marketing list">The second address never joins a marketing list and never counts toward email consent; consent is the first parent&apos;s tick-box.</HelpDef>
+                <HelpDef term="What the club sees">The registration shows a <strong>Second parent</strong> line, which the club can add or change (nothing is emailed when you do). The Excel export with contact details has a <strong>Second Parent Email</strong> column, and the coach&apos;s team page shows it too.</HelpDef>
+                <HelpDef term="Wrong address">Someone who got the emails by mistake can tell the club. Open the registration and change or clear the Second parent line.</HelpDef>
               </HelpDefs>
             </>
           ),
@@ -1254,10 +1273,10 @@ const houseLeagueHelp: HelpPageContent = {
         {
           id: 'faq-house-league-family-lost-reference',
           question: 'A family lost their email or their link. How do they get back to their sign-up?',
-          answerText: 'On the season’s page, Already signed up? leads to Email me my link. They enter the email they signed up with, and if it has a sign-up for the season the link goes to that inbox. The reference no longer opens anything; it is a number to quote to the club. If nothing comes, ask them to check junk mail. They may have signed up with a different email: search by player name or parent email on the Registrations page to see the address you have. If the link may have been shared, use Send a new link.',
+          answerText: 'On the season’s page, Already signed up? leads to Email me my link. They enter the email they signed up with (a second parent can use their own address), and if it has a sign-up for the season the link goes to that inbox. The reference no longer opens anything; it is a number to quote to the club. If nothing comes, ask them to check junk mail. They may have signed up with a different email: search by player name or parent email on the Registrations page to see the address you have. If the link may have been shared, use Send a new link.',
           keywords: ['lost reference', 'lost link', 'lost email', 'reference', 'check registration', 'status page', 'your sign-up', 'email me my link', 'confirmation email', 'sign up status', 'find sign-up', 'link no longer works'],
           answer: (
-            <p>On the season&apos;s page, <em>Already signed up?</em> leads to <strong>Email me my link</strong>. They enter the email they signed up with, and if it has a sign-up for the season the link goes to that inbox. The reference no longer opens anything; it is a number to quote to the club. If nothing comes, ask them to check junk mail. They may have signed up with a different email: search by player name or parent email on the Registrations page to see the address you have. If the link may have been shared, use <strong>Send a new link</strong>.</p>
+            <p>On the season&apos;s page, <em>Already signed up?</em> leads to <strong>Email me my link</strong>. They enter the email they signed up with (a second parent can use their own address), and if it has a sign-up for the season the link goes to that inbox. The reference no longer opens anything; it is a number to quote to the club. If nothing comes, ask them to check junk mail. They may have signed up with a different email: search by player name or parent email on the Registrations page to see the address you have. If the link may have been shared, use <strong>Send a new link</strong>.</p>
           ),
         },
       ],
@@ -1290,7 +1309,7 @@ const houseLeagueHelp: HelpPageContent = {
                 <li><strong>Ended</strong> — declined, withdrawn and released registrations, with what happened to any money.</li>
               </ul>
               <p>The division pill narrows the list to one division, and <strong>Search players or parents</strong> finds a child or a guardian across the tab. <strong>Filter</strong> narrows by <strong>Fee</strong>: <strong>Owing</strong> and <strong>Received</strong>, plus <strong>Refunded</strong> on the Ended tab. A season where no division has a price has no Fee column and no Fee filter. <strong>Export</strong> (Excel first) sits in the toolbar; exports are part of League Plus. <strong>Add registration</strong> enters a player by hand, outside the public form, and a full division refuses it the same way it refuses Approve.</p>
-              <p>A division cell shows the team underneath, or <strong>Not placed</strong>. A guardian cell shows the email address, or <strong>No email address</strong> in amber, so you see it before an Email press skips that family.</p>
+              <p>A division cell shows the team underneath, or <strong>Not placed</strong>. A guardian cell shows the email address, or <strong>No email address</strong> in amber, so you see it before an Email press skips that family. Opening a registration shows a <strong>Second parent</strong> line, with <strong>Add</strong> or <strong>Change</strong> for the club; nothing is emailed when you change it, and it applies to every child in that sign-up. <strong>Add registration</strong> has the same optional box, and search finds a registration by the second parent&apos;s email too.</p>
             </>
           ),
         },
@@ -1650,31 +1669,6 @@ const houseLeagueHelp: HelpPageContent = {
           <p>A season has no public page while it&apos;s <strong>Getting ready</strong>. Once you open registration, a <strong>View public page</strong> button appears at the top of the season&apos;s page; share its link directly. The page changes shape when registration closes: before, it sells the season; after, it follows it.</p>
         </>
       ),
-    },
-    {
-      id: 'closing',
-      group: 'Running the season',
-      heading: 'Closing out a season',
-      summary: 'Complete the season when games end; a finished season reads in place, locked, and can be reopened.',
-      keywords: ['close season', 'complete season', 'completed', 'archive season', 'archived', 'finished', 'reopen season', 'season end', 'locked', 'past seasons', 'ratings erased', 'refunds', 'final standings'],
-      searchText: 'closing season complete the season reopen the season archive season archived finished completed retire player ratings are erased do not come back refunds newer season is not changed final standings preserve data house league locked read only past seasons shelf money stays open fees received mark received undo correct the price email families stays open no seal step ended pill complete it',
-      content: (
-        <>
-          <p>When the games are done, click <strong>Complete the season</strong> at the end of the season&apos;s page. The window says what changes, and warns, but never blocks, if registrations are waiting, families are on the waitlist, players still owe fees, or the season&apos;s last day is still ahead. A season past its last day shows an amber <strong>Ended</strong> pill until you do. Completing moves it to <strong>Past seasons</strong>, erases player ratings, and does not email anyone. Your public site titles its standings <strong>Final standings</strong> from then on.</p>
-          <ul>
-            <li><strong>Locked</strong> — registrations, teams, the schedule and the season&apos;s settings can no longer be changed, and every edit control is gone. The pages still read, and a line at the top says the page is locked.</li>
-            <li><strong>Still open</strong> — fees and refunds on Registrations (<strong>Mark received</strong>, <strong>Undo</strong> and <strong>Correct the price</strong>), the season&apos;s <strong>Money</strong> page, and <strong>Email families</strong>.</li>
-            <li><strong>Start next season from this one&hellip;</strong> — a link at the end of the page, beside Reopen, that opens the Create season window on this season (see <em>Start next season from an earlier one</em>). The finished season is not changed.</li>
-            <li><strong>Reopen the season</strong> — a link at the end of a finished season&apos;s page. It brings the season back to <strong>Running now</strong> so you can change things again. Its window says how your public site will list it, that player ratings were erased and don&apos;t come back, and names any newer season, which is not changed.</li>
-          </ul>
-          <p>There is no seal step for house league seasons (sealing is a tournament-specific concept).</p>
-        </>
-      ),
-    },
-  ],
-};
-
-export default houseLeagueHelp;
       subtopics: [
         {
           id: 'public-page-listed',
@@ -1719,3 +1713,28 @@ export default houseLeagueHelp;
           ),
         },
       ],
+    },
+    {
+      id: 'closing',
+      group: 'Running the season',
+      heading: 'Closing out a season',
+      summary: 'Complete the season when games end; a finished season reads in place, locked, and can be reopened.',
+      keywords: ['close season', 'complete season', 'completed', 'archive season', 'archived', 'finished', 'reopen season', 'season end', 'locked', 'past seasons', 'ratings erased', 'refunds', 'final standings'],
+      searchText: 'closing season complete the season reopen the season archive season archived finished completed retire player ratings are erased do not come back refunds newer season is not changed final standings preserve data house league locked read only past seasons shelf money stays open fees received mark received undo correct the price email families stays open no seal step ended pill complete it',
+      content: (
+        <>
+          <p>When the games are done, click <strong>Complete the season</strong> at the end of the season&apos;s page. The window says what changes, and warns, but never blocks, if registrations are waiting, families are on the waitlist, players still owe fees, or the season&apos;s last day is still ahead. A season past its last day shows an amber <strong>Ended</strong> pill until you do. Completing moves it to <strong>Past seasons</strong>, erases player ratings, and does not email anyone. Your public site titles its standings <strong>Final standings</strong> from then on.</p>
+          <ul>
+            <li><strong>Locked</strong> — registrations, teams, the schedule and the season&apos;s settings can no longer be changed, and every edit control is gone. The pages still read, and a line at the top says the page is locked.</li>
+            <li><strong>Still open</strong> — fees and refunds on Registrations (<strong>Mark received</strong>, <strong>Undo</strong> and <strong>Correct the price</strong>), the season&apos;s <strong>Money</strong> page, and <strong>Email families</strong>.</li>
+            <li><strong>Start next season from this one&hellip;</strong> — a link at the end of the page, beside Reopen, that opens the Create season window on this season (see <em>Start next season from an earlier one</em>). The finished season is not changed.</li>
+            <li><strong>Reopen the season</strong> — a link at the end of a finished season&apos;s page. It brings the season back to <strong>Running now</strong> so you can change things again. Its window says how your public site will list it, that player ratings were erased and don&apos;t come back, and names any newer season, which is not changed.</li>
+          </ul>
+          <p>There is no seal step for house league seasons (sealing is a tournament-specific concept).</p>
+        </>
+      ),
+    },
+  ],
+};
+
+export default houseLeagueHelp;
