@@ -312,13 +312,14 @@ export function isKitLinkActive(pathname: string, link: KitLink): boolean {
 }
 
 /**
- * Is this door the page on screen, with Plan & billing counted as the more specific door? On the tournament tiers Plan &
- * billing's page lives UNDER Settings & access's address, so a plain prefix match lit both rows. The parent steps aside
- * while Plan & billing is the page on screen; Settings' own pages (members, payouts…) still light it.
+ * Is this door the page on screen, when the other doors on the same menu are counted? A door whose page lives UNDER
+ * another door's address (Plan & billing under Settings & access on the tournament tiers; Audit log under Members) lit
+ * both rows on a plain prefix match. The parent steps aside while a more specific door is the page on screen; the
+ * parent's own pages still light it.
  */
-export function isKitLinkActiveBesideBilling(pathname: string, link: KitLink, billing: KitLink | null): boolean {
+export function isKitLinkActiveAmong(pathname: string, link: KitLink, others: readonly (KitLink | null | undefined)[]): boolean {
   if (!isKitLinkActive(pathname, link)) return false;
-  return !(billing && billing.href !== link.href && billing.href.startsWith(`${link.href}/`) && isKitLinkActive(pathname, billing));
+  return !others.some(o => o && o.href !== link.href && o.href.startsWith(`${link.href}/`) && isKitLinkActive(pathname, o));
 }
 
 /** Which program (or the Organization group) the page on screen belongs to — the group that opens. */

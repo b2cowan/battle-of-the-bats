@@ -43,7 +43,7 @@ import { useAdminWorklist } from '@/lib/admin-worklist';
 import { useChatUnread } from '@/lib/use-chat-unread';
 import { useSidebarStrip } from '@/lib/sidebar-strip';
 import { TOUR_GROUPS } from '@/components/admin/admin-nav-config';
-import { isKitLinkActive, isKitLinkActiveBesideBilling, ORGANIZATION_ICON, type KitLink, type KitProgram } from '@/lib/admin-kit-nav';
+import { isKitLinkActive, isKitLinkActiveAmong, ORGANIZATION_ICON, type KitLink, type KitProgram } from '@/lib/admin-kit-nav';
 import { useAdminKitNav } from './useAdminKitNav';
 import { STATUS_WORD } from '@/lib/tournament-status-words';
 import { useRailTeamName } from './useRailTeam';
@@ -140,7 +140,7 @@ export default function AdminKitRail() {
       key={link.key}
       href={link.href}
       label={link.label}
-      active={isKitLinkActive(pathname, link)}
+      active={isKitLinkActiveAmong(pathname, link, orgLinks)}
       sub
       count={briefPageCount(brief, link.key)}
     />
@@ -297,7 +297,7 @@ export default function AdminKitRail() {
                   ? orgLinks.map(link => (
                       // Listed by name in the full sidebar; the strip draws the icon the phone's More menu
                       // gives each (an icon-less row would be an empty square there).
-                      <RailRow key={link.key} href={link.href} label={link.label} active={isKitLinkActive(pathname, link)} stripIcon={link.icon} />
+                      <RailRow key={link.key} href={link.href} label={link.label} active={isKitLinkActiveAmong(pathname, link, orgLinks)} stripIcon={link.icon} />
                     ))
                   : (
                     <>
@@ -495,7 +495,7 @@ function TournamentRail({ labelled }: { labelled: boolean }) {
   // steps aside while it is the page on screen.
   const itemActive = (key: string) => pathname.startsWith(`${base}/tournaments/${key}`)
     && !allKeys.some(k => k !== key && k.length > key.length && pathname.startsWith(`${base}/tournaments/${k}`))
-    && isKitLinkActiveBesideBilling(pathname, { key, label: key, href: `${base}/tournaments/${key}` }, billingLink);
+    && isKitLinkActiveAmong(pathname, { key, label: key, href: `${base}/tournaments/${key}` }, [billingLink]);
 
   // ⚰ The switcher's + and the strip's "New tournament" are gone (owner 2026-10-19): a new tournament starts on the
   // Tournaments page's own New tournament, its one door (with its slot line), and the switcher takes the full width.

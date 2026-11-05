@@ -3,7 +3,7 @@ import { describe, it } from 'node:test';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import {
-  kitPrograms, kitOrgLinks, kitBillingLink, isKitLinkActive, isKitLinkActiveBesideBilling, activeKitSection,
+  kitPrograms, kitOrgLinks, kitBillingLink, isKitLinkActive, isKitLinkActiveAmong, activeKitSection,
   clubProgramOrder, INTERIM_PROGRAM_ORDER, PROGRAM_CAPABILITY, accountingTabs, accountingTabFor, tournamentBarKeys,
   familiesTabs, familiesTabFor,
 } from '../../lib/admin-kit-nav.ts';
@@ -137,16 +137,31 @@ describe('Plan & billing under Settings & access (tournament tiers)', () => {
   it('only Plan & billing lights on its own page — Settings & access steps aside', () => {
     const page = '/demo/admin/tournaments/settings/subscription';
     assert.ok(billing);
-    assert.equal(isKitLinkActiveBesideBilling(page, settings, billing), false);
-    assert.equal(isKitLinkActiveBesideBilling(page, billing!, billing), true);
+    assert.equal(isKitLinkActiveAmong(page, settings, [billing]), false);
+    assert.equal(isKitLinkActiveAmong(page, billing!, [billing]), true);
   });
   it("Settings & access still lights on its own pages (the page itself, members, payouts)", () => {
     for (const p of ['/demo/admin/tournaments/settings', '/demo/admin/tournaments/settings/members', '/demo/admin/tournaments/settings/payouts']) {
-      assert.equal(isKitLinkActiveBesideBilling(p, settings, billing), true, p);
+      assert.equal(isKitLinkActiveAmong(p, settings, [billing]), true, p);
     }
   });
   it('with no billing door (not the owner) nothing changes', () => {
-    assert.equal(isKitLinkActiveBesideBilling('/demo/admin/tournaments/settings/subscription', settings, null), true);
+    assert.equal(isKitLinkActiveAmong('/demo/admin/tournaments/settings/subscription', settings, [null]), true);
+  });
+});
+
+describe('Audit log under Members (Organization rows)', () => {
+  const base = '/demo/admin';
+  const org = kitOrgLinks({ base, role: 'owner', isCanceled: false, canSeeMembers: true, hasVenueLibrary: true });
+  const lit = (page: string) => org.filter(l => isKitLinkActiveAmong(`${base}/org/${page}`, l, org)).map(l => l.key);
+  it('only Audit log lights on its own page — Members steps aside', () => {
+    assert.deepEqual(lit('members/audit'), ['org/audit']);
+  });
+  it('Members still lights on its own page, and every other Organization page lights exactly one row', () => {
+    assert.deepEqual(lit('members'), ['org/members']);
+    assert.deepEqual(lit('settings'), ['org/settings']);
+    assert.deepEqual(lit('venues'), ['org/venues']);
+    assert.deepEqual(lit('settings/pdf'), ['org/pdf']);
   });
 });
 
