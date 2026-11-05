@@ -54,6 +54,42 @@ export interface OurIndex {
   refunds: Readonly<Record<string, string>>;
   /** Stripe dispute id → our payment id (card disputes, 12d-1's table). */
   disputes: Readonly<Record<string, string>>;
+  /** Only for the bank check (Bank reconciliation R2a): the club-book lines behind each of our rows. Absent for the
+   *  Payouts tab, whose lines then carry no `entryIds`. */
+  entries?: PayoutEntryIndex;
+}
+
+/**
+ * THE BOOK LINES BEHIND A PAYOUT'S LINES (Bank reconciliation R2a; census of the writers 2026-11-04, latest definitions):
+ * - a payment: the tournament receipt (`tournament_team_payments.entry_id` by `online_payment_id`) or each child's
+ *   house-league receipt (`online_payment_items.entry_id`), plus a club-pays "Payment processing" cost
+ *   (`online_payments.processing_cost_entry_id`, both flows);
+ * - a refund: `online_payment_refunds.refund_entry_id` + `processing_cost_entry_id` (a fee paid back);
+ * - a card dispute lost: `online_payment_disputes.taken_back` (`entryId` for a team, `children[].entryId` for a
+ *   league); won after a loss: `won_back.back[].entryId`;
+ * - a bank debit reversed after it landed: not stored by its writer, so found by source (tournament: the payment's
+ *   "Returned by the bank" line; league: each child's `registration_returned` line).
+ * A Stripe fee, a fee given back, a refund that bounced and a failed payout carried back have NO book line.
+ */
+export interface PayoutEntryIndex {
+  /** Our payment id → its receipt line(s) and its club-pays processing cost. */
+  payments: Readonly<Record<string, readonly string[]>>;
+  /** Stripe refund id → the refund's lines. */
+  refunds: Readonly<Record<string, readonly string[]>>;
+  /** Our payment id → the lines a bank debit's reversal booked. */
+  reversals: Readonly<Record<string, readonly string[]>>;
+  /** Stripe dispute id → what our book holds for it (card disputes). */
+  disputes: Readonly<Record<string, DisputeFacts>>;
+}
+
+export interface DisputeFacts {
+  /** The disputed amount and Stripe's dispute fee, as stored (cents). */
+  amountCents: number;
+  feeCents: number;
+  /** The lines a loss booked (empty until it is lost and booked: the "held" case). */
+  lostEntryIds: readonly string[];
+  /** The lines a win after a loss booked. */
+  wonEntryIds: readonly string[];
 }
 
 export interface PayoutLine {
@@ -65,6 +101,10 @@ export interface PayoutLine {
   what: string;
   receiptNo: number | null;
   amount: number;
+  /** Bank check only (`OurIndex.entries` given): the club-book lines this Stripe line booked. */
+  entryIds?: string[];
+  /** Bank check only: the card dispute of ours a `dispute` / `dispute_won` line is, with our stored amount and fee. */
+  dispute?: { id: string; amountCents: number; feeCents: number };
 }
 
 export const PAYOUT_LINE_WORDS = {
@@ -126,12 +166,29 @@ export function mapPayoutLines(bts: readonly BtIn[], ours: OurIndex): PayoutLine
     ?? (b.sourceId ? byBankDispute.get(b.sourceId) ?? null : null)
     ?? ofCharge(b.sourceCharge);
 
+  const ent = ours.entries;
+  /** The book lines behind one Stripe line, only when the bank check asked (the Payouts tab's lines stay as they were). */
+  const booked = (kind: PayoutLineKind, b: BtIn, p: OurPayment | null): Pick<PayoutLine, 'entryIds' | 'dispute'> => {
+    if (!ent) return {};
+    const sid = b.sourceId;
+    const d = sid ? ent.disputes[sid] : undefined;
+    const reversed = p ? ent.reversals[p.id] ?? [] : [];
+    const ids: readonly string[] =
+      (kind === 'payment' ? p && ent.payments[p.id]
+        : kind === 'refund' ? sid && ent.refunds[sid]
+        : kind === 'dispute' ? (d ? d.lostEntryIds : reversed)
+        : kind === 'dispute_won' ? d?.wonEntryIds
+        : kind === 'returned' ? reversed
+        : null) || [];
+    return { entryIds: [...ids], ...(sid && d && (kind === 'dispute' || kind === 'dispute_won') ? { dispute: { id: sid, amountCents: d.amountCents, feeCents: d.feeCents } } : {}) };
+  };
+
   const lines: PayoutLine[] = [];
   for (const b of bts) {
     if (b.type === 'payout') continue;
     const at = new Date(b.created * 1000).toISOString();
     const line = (kind: PayoutLineKind, p: OurPayment | null, what: string): PayoutLine =>
-      ({ id: b.id, kind, at, who: p?.who ?? null, what, receiptNo: p?.receiptNo ?? null, amount: cents(b.net) });
+      ({ id: b.id, kind, at, who: p?.who ?? null, what, receiptNo: p?.receiptNo ?? null, amount: cents(b.net), ...booked(kind, b, p) });
     const notOurs = () => line('not_ours', null, PAYOUT_LINE_WORDS.notOurs);
 
     switch (b.type) {

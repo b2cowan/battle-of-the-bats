@@ -14,7 +14,8 @@
 > **R1 built and committed `502a69d39` 2026-11-04** (migs 436 + 437 applied to dev; prod owed before the promote that
 > ships R2, recorded in `MANUAL_PROD_STEPS.json`; engine `lib/bank-check.ts` + 26 tests; P4 measured; /simplify and
 > /review done and fixed in that commit; schema snapshots left out of it, they also carry other sessions' tables).
-> **Next:** R2 (the club's Bank tab).
+> **R2a built 2026-11-04** (the club's reader, server only; commit pending the owner's word; record under §7 R2). P4
+> club-pays measured on Stripe's side (holds). **Next:** R2b (the routes).
 
 ## Goal
 
@@ -493,11 +494,63 @@ Every stage: migration first where there is one, then the `DATA_DICTIONARY.md` u
 - [x] Confirm the coach register row `id` is stable across reads (derived from source table + id); if not, add a stable
   source key the engine can mark. *(Answered under Open questions: stable for every settled row; no new key needed.)*
 
-### R2 — Club: the Bank tab (desk + phone)
+### R2 — Club: the Bank tab (desk + phone) (prompt `BANK_RECONCILIATION_R2_BUILD_PROMPT.md`, written 2026-11-04; four one-session chunks: R2a reader + P4 club-pays, R2b routes + atomic functions, R2c the tab on desk, R2d phone + close)
 - [ ] Routes under `app/api/admin/accounting/bank/**` via `resolveClubMoney({write})`; lines from posted club-book
   entries (`isClubBook`) in the account's books, minus same-account transfer pairs, void and pending.
 - [ ] `accountingTabs` gains "Bank" (B8); page `app/[orgSlug]/admin/accounting/bank/page.tsx`; C1–C5, C10.
-- [ ] The grouped Stripe payout reuses `lib/online-payouts.ts` (no second Stripe reader).
+- [ ] The grouped Stripe payout reuses `lib/online-payouts.ts` (no second Stripe reader). *(Reader half done in R2a:
+  `readPayouts({ withEntries })`; the screen is R2c.)*
+
+> **R2a — the club's reader ✅ built 2026-11-04** (no routes, no screens; commit pending the owner's word):
+> - **`lib/bank-club-read.ts`** (server): `readClubBankAccounts(orgId)` lists the live **club** accounts oldest first
+>   (rule 1: `owner_kind='club'`), which books each holds (`bank_account_books`, else the first account), and the "never
+>   done this" state (no account: every club book unplaced, C1). `readClubBankAccount(orgId, accountId, { today })`
+>   returns the engine's whole `BankAccountState` (rule 6: every input the server's) plus `payoutsUnavailable` and the
+>   per-payout gap reasons; null for an account that is not this club's (R2b answers 404).
+> - **`lib/bank-club-map.ts`** (pure, client-safe): rows → engine types (`entry:{id}`, direction from `entry_type`,
+>   `transferPairKey`, `opening_*` → `picked`/`typed`, a snapshot read only from a CHECKED statement, open changes
+>   only), `assembleAccount` (which lines and payouts are this account's), `payoutsForBank`, `nameGap`.
+> - **⚖ Disagreed with the prompt, said before building:** the line read starts at the account's **starting date**, not
+>   "the last checked end". Reading from the last checked end would miss a line back-dated into a checked month (B4: it
+>   is outstanding on the next check) and a moved-in book's older unticked lines (Ask 13); `accounting_entries.updated_at`
+>   has no trigger, so no "changed since" stamp can find them another way. Still bounded (the account's life), never a
+>   year. Stripe is read from the last **checked** statement's end (an older unticked payout is kept line by line in that
+>   statement's saved list, `snapshotForMarking`). Plus, by id, every key a mark, a checked list, an opening item, the
+>   carried list, an added line or an open change names, and every payout member line.
+> - **Payout members (the Payouts reader extended, not forked):** `readPayouts({ withEntries: true })` names the
+>   club-book lines behind each Stripe line (`PayoutLine.entryIds`; census of the writers at their latest definitions):
+>   payment = `tournament_team_payments.entry_id` / `online_payment_items.entry_id` + `online_payments.processing_cost_entry_id`
+>   (both flows); refund = `online_payment_refunds.refund_entry_id` + `processing_cost_entry_id`; card dispute lost =
+>   `taken_back.entryId` / `children[].entryId`, won after a loss = `won_back.back[].entryId`; a **bank debit reversed
+>   after it landed is not stored by its writer** (`reverseDebit` drops the RPC's result), so it is found by source
+>   (team: `source_module='online_payment'` on the payment's id, "Returned by the bank · …"; child: `registration_returned`
+>   on the registration). Never a book line: a Stripe fee, a fee given back, a refund that bounced, a failed payout
+>   carried back. The Payouts tab's read is unchanged (no `entryIds` without the flag; its tests green). Only automatic
+>   payouts Stripe finished matching that did not fail are passed; an entry belongs to one payout.
+> - **Gap reasons (P4), per payout:** `disputesHeld` (an open card dispute, from OUR stored `amount` + `stripe_fee`),
+>   `disputeReturnedCents` (won before any loss was booked), `notOursCents`, `stripeFeeCents` (a Stripe fee from the
+>   club's balance that no line records), remainder `otherCents`. **"Add it as payment processing" is offered for the
+>   Stripe fees + remainder only, and only when that is money out** (a held dispute and "not ours" never are). *Naming a
+>   Stripe fee on its own is one step past the P4 note, said out loud: the dev probe's −$5.00 standalone `stripe_fee`
+>   would otherwise read as unexplained.*
+> - **Which account a payout is on:** the account its book lines sit in (the first account when it holds any of them,
+>   or when none is in a club book); a payout ticked on an account stays there.
+> - **A moved book (Ask 13):** a line read by id whose book now sits in another account is claimed elsewhere (no saved
+>   copy lingers); keys ticked on the club's other accounts are `claimedElsewhere` too (only those this account could
+>   show are asked for).
+> - **For R2b (found here):** the move route must also move a moved book's `opening_picked` rows, or the new account
+>   loses them (the old account drops them as claimed elsewhere, so nothing double-counts).
+> - **Tests** `tests/unit/bank-club-read.test.ts` (33): rule 1, book placement, a transfer pair (same account vs another
+>   account), a moved book on both accounts, the by-id read (every key kind) and the floors, an opening cheque, a payout
+>   with every member kind, the Payouts tab unchanged, passed vs not-passed payouts, an open dispute, a Stripe fee, a
+>   dispute won unbooked, a payout's account, end to end through the engine (a payout ticked to $0.00; a failed Stripe
+>   read falling back with a ticked member kept), and a source guard (no year, no write, `owner_kind='club'`, no second
+>   Stripe reader).
+> - **Dev probe** (`.probe/bank-r2a-reader.cjs`, not committed; a temporary account + statement on `uat-rep-club`, deleted
+>   after): 4 books, 70 lines (62 posted, 7 void, 1 pending), 4 automatic payouts, read in 3.3 s, `evaluateCheck` with no
+>   throw: 41 outstanding (4 as payout rows), 10 left out automatically (7 void, 2 same-account transfer halves, 1
+>   pending). Two payouts sum to the cent; po_1UX9RW… gap +$281.50 = all "not ours" (the 12d probe charges);
+>   po_1UVKmq… gap +$193.25 = dispute held −$171.75 + not ours +$370.00 + Stripe fee −$5.00, remainder $0.00.
 
 ### R3 — Club: the touchpoints
 - [ ] Matched-line warning on the club entry edit/void routes and windows (C6); changed-since stamp.
@@ -554,10 +607,16 @@ Every stage: migration first where there is one, then the `DATA_DICTIONARY.md` u
     (no `stripe_fee`: on these direct charges Stripe takes no processing fee from the club's balance), so its net is the
     base, which is exactly the income booked (e.g. 156.75 charged, fee 6.75, net 150.00 = income 150.00). Refunds:
     fee 0, amount = the refund's own entries (156.75 = 150 + 6.75). Book side = Σ net on all app items, every payout.
-  - **Club pays: NOT MEASURED.** All 16 `online_payments` on dev are `fee_payer='family'`. The code predicts it holds
-    (total = base, application fee = fee, income base − "Payment processing" cost fee = net), and the mechanism is the
-    one measured above, but it is a prediction. **R2 owes one club-pays test payment through to a payout** before the
-    grouped tick ships.
+  - **Club pays: Stripe's side MEASURED 2026-11-04 (R2a), holds to the cent.** One test charge on `acct_1UUWAvFuSuqPawyy`
+    with the app's club-pays parameters (`onlineFee(10000,'club')`: total 100.00 = base, application fee 5.00;
+    `.probe/bank-r2a-p4-club-pays.cjs`, charge `ch_3UYDEEFuSuqPawyy0Lvcv6DE`): its balance transaction carries only the
+    `application_fee` (no `stripe_fee`), net **95.00** = income 100.00 − "Payment processing" 5.00, the book side the
+    landings write (`online_payment_land` / `online_payment_league_land`). **Not measured: an APP-LANDED club-pays
+    payment inside a payout.** A Checkout cannot be completed without a browser, and a landing forged by hand would
+    measure the forgery. Owed once, in a browser on the dev server with the Stripe CLI forwarding (R2c's real-data pass
+    or the owner): switch `uat-rep-club` to "The club pays it", pay one, and read its payout in the Bank tab. ⚠ The probe
+    charge has no row of ours: it rides the account's next automatic payout (daily, 7-day delay) as a "Not from
+    FieldLogicHQ" line.
   - **⚠ Where a payout does NOT sum, and R2 must say so by name (not "payment processing"):**
     1. **An open dispute.** Stripe withdraws the amount + its $15.00 dispute fee at once (po_1UVKmq…: −171.75), but the
        book records a dispute only when it is lost (`online_payment_disputes.lost_booked_at`). Gap until it resolves; both
@@ -580,8 +639,11 @@ Every stage: migration first where there is one, then the `DATA_DICTIONARY.md` u
   coach `line_key` is the register row id of a settled row; no new source key. R4 must pass only `!scheduled` rows, and
   `movesCash: false` → `familyPaidVendor`. ⚠ An `allocation-{id}` row's amount is "still due after credit", so a credit
   applied after a tick shows as "changed since" (correct: the money changed).
-- [ ] Pending club lines: excluded from ticking (recommended: they haven't moved). Confirm with the 12c bank-debit
-  "still clearing" state.
+- [x] Pending club lines: excluded from ticking (recommended: they haven't moved). Confirm with the 12c bank-debit
+  "still clearing" state. **Confirmed 2026-11-04 (R2a):** the online-payment writers never write a `pending` line; a
+  bank debit that is still clearing has **no book line at all** (`online_payment_clearing` and a return before landing
+  touch only `online_payments`), and its receipt line appears, posted, when it lands. So the only pending club lines
+  are ones a person entered, and the engine leaves them out (`pending`, B6); the dev probe shows the one there left out.
 - [x] Gaming-account requirement in BC/AB: confirm before C10 is drawn (B1). **Confirmed 2026-11-04, read in the
   sources:** BC Community Gaming Grants *Conditions for a Program Grant and Capital Project Grant* (eff. 2026-02-01)
   cond. 19(a) "a separate Gaming Account … for the exclusive purpose of receiving, holding and disbursing gaming funds";
