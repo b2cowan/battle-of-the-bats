@@ -1,0 +1,295 @@
+<title>Renewal Rehearsal Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box (the house walk frame). */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .facts { grid-template-columns: 1fr; } .facts dd { margin-bottom: 6px; } }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.call { font-size: 13px; color: var(--warn); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+.opts { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; }
+.opt { display: flex; gap: 8px; align-items: flex-start; font-size: 0.95em; }
+.opt input { margin-top: 3px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · Plans end at the renewal date · Stage 3 · §459</span>
+    <h1>Stripe's own renewal, rehearsed: what each club ended up as, seen as the owner and as staff</h1>
+    <p class="sub">Written 2026-11-05 for Stage 3 (the rehearsal <code>f1225ef96</code>; the two defects it found, F1 <code>f8ff3570f</code> and F3 <code>16992dc85</code>). Fourteen clubs were run on Stripe test clocks against the dev site this morning; they are kept there for this walk.</p>
+  </header>
+  <section class="card"><h2>What this walk is for</h2><p>Every earlier test of "plans end at the renewal date" used stand-ins for Stripe. This morning a script gave fourteen clubs a real Stripe test subscription each, on a clock it could move forward, and let Stripe send its own messages to the dev site at the renewal. It found two real defects, both fixed and re-run, and one place where Stripe behaves differently from the plan (F2, already ruled). The script's report says what happened in numbers. This walk is the human half: you open the clubs it left behind and check that what an owner and an operator see matches the report.</p></section>
+  <section class="card"><h2>It passes when</h2><ul>
+    <li>A cancel ends on the renewal date, monthly, annual and during a trial, with the data kept for 90 days from that date and exactly two emails.</li>
+    <li>A trial that was cancelled never got a "trial ending, add a card" email.</li>
+    <li>A move to the free plan keeps the picked tournament, archives the others (including one made during the wait), and never suspends the club.</li>
+    <li>Keep after a cancel over a cheaper move renews as the cheaper plan, at its price (F1 and F3 fixed).</li>
+    <li>End now ends at once with its typed reason, and the past-due club shows F2 as ruled.</li>
+  </ul></section>
+  <section class="card"><h2>Not in this walk</h2><ul>
+    <li><strong>Stripe's portal page itself.</strong> The rehearsal sets what the portal does through Stripe's API; the page was proven in the Stage 1 walk (§444, C2).</li>
+    <li><strong>The seven-day reminder and Finish this ending now.</strong> They run on the real calendar, not the clock; the Stage 1 and Stage 2 walks cover them.</li>
+    <li><strong>A real bank decline, and a Coaches Portal ending.</strong> Not rehearsed; the report says so.</li>
+    <li><strong>The live Stripe account.</strong> Its portal setting is created the first time anyone opens the live portal; that read is recorded in the plan as owed.</li>
+  </ul></section>
+  <section class="card"><h2>Before you start</h2><dl class="facts">
+    <dt>Dev site</dt><dd><strong>https://dev.fieldlogichq.ca</strong>, already running both fixes (build 377). Nothing to build: the clubs exist now.</dd>
+    <dt>The report</dt><dd>In the project folder: <code>.probe/plan-ending-rehearsal/2026-11-05-final/report.md</code> (open it in the editor). Part A reads it.</dd>
+    <dt>Dates look odd, on purpose</dt><dd>Each club ran on its own Stripe clock moved past its renewal, so a club can say it ended on <strong>December 5, 2026</strong> although today is November 5. Every date below is the club's own. "+90 days" is when its data is deleted.</dd>
+    <dt>Emails</dt><dd>At your inbox with a plus part, <code>+pr2</code>, <code>+pr3</code> … The ones that count are from <strong>7:41 a.m. today</strong> on (case 7's from <strong>8:22 a.m.</strong>); earlier runs this morning sent to the same addresses, so ignore anything older. Platform admin › Sent emails lists them with times.</dd>
+    <dt>When done</dt><dd>Part J removes the clubs. Do it by <strong>November 26</strong>: Stripe deletes a test clock after 30 days.</dd>
+  </dl></section>
+  <section class="card"><h2>Sign in as</h2><dl class="facts">
+    <dt>Club owners</dt><dd>Your address with the plus part, <code>you+pr2@…</code> and so on · <code>UATPassword2026!</code> · billing page <code>https://dev.fieldlogichq.ca/&lt;slug&gt;/admin/org/billing</code> (each step gives the slug).</dd>
+    <dt>Platform admin</dt><dd><code>uat-platform@fieldlogichq.ca</code> · its password is in <code>.env.local</code> (<code>UAT_PLATFORM_ADMIN_PASSWORD</code>) · <code>https://dev.fieldlogichq.ca/platform-admin/login</code>. Each step gives the club's record link.</dd>
+    <dt>Keep it private</dt><dd>These are dev-only passwords, and this page carries one.</dd>
+  </dl></section>
+  <section class="card"><h2>Calls to make as you go</h2><ul>
+    <li><strong>F2's words (I2).</strong> The past-due club was told "ends on January 5, 2027" and Stripe ended it on December 7, 2026. You ruled that the words for a past-due club are Stage 4's; say in the notes what you want them to say.</li>
+    <li><strong>6b (G2).</strong> As the plan noted, a Renew in Stripe's portal after a cancel over a cheaper move renews at the higher price, and the email says so. Confirm you still accept that, or say it should change.</li>
+    <li><strong>Any wording</strong> is Stage 4's to polish. Note only what is wrong, not what is plain.</li>
+  </ul></section>
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+</main>
+
+<script>
+(function () {
+  var KEY = "plan-ending-stage3-walk-v1";
+  var TITLE = "Plans end at the renewal date · Stage 3 walk §459 · Stripe's own renewal, rehearsed (2026-11-05)";
+  var PA = "Platform admin";
+  var DEV = "https://dev.fieldlogichq.ca";
+  function bill(slug) { return "<code>" + DEV + "/" + slug + "/admin/org/billing</code>"; }
+  function rec(id) { return "<code>" + DEV + "/platform-admin/orgs/" + id + "</code>"; }
+  var PARTS = [
+ { id: "A", title: "The report says what you expect", steps: [
+  { who: "Editor", do: "Open <code>.probe/plan-ending-rehearsal/2026-11-05-final/report.md</code>.",
+    see: "The top line reads <strong>14 cases: 13 PASS · 1 SURPRISE</strong>. Section 0, Portal settings, is PASS on every line (cancel at period end with no proration, plan switching off, pause off)." },
+  { who: "Editor", do: "Scroll to the case headings.",
+    see: "Every case is ✅ PASS except <strong>5</strong> (⚠️ SURPRISE, the past-due club: F2) and <strong>11</strong>, which reads ✅ PASS · ✂️ half (b) cut. Case 7's classification says both fixes are on the dev site." }
+ ]},
+ { id: "B", title: "A monthly cancel ends on its renewal date (Rehearsal 2 Club, +pr2)", steps: [
+  { who: "Owner (+pr2)", do: "Sign in and open " + bill("rehearsal-2-11051241") + ".",
+    see: "The club shows as cancelled, not as a live plan: no renewal date and no Keep button (whatever page it opens on).",
+    call: "Note the words you see; a cancelled club's page is Stage 4's to polish." },
+  { who: PA, do: "Open " + rec("5c77a309-092c-4070-abd3-e339d0f7ed3a") + ".",
+    see: "The club is suspended. Its ending is dated <strong>December 5, 2026</strong> (its renewal date) and its data is kept until <strong>March 5, 2027</strong> (+90 days). One ending on the record, asked by the owner." },
+  { who: "Inbox · +pr2", do: "Look at the messages from 7:41 a.m. on.",
+    see: "<strong>Exactly two</strong>: one saying the plan ends on December 5, 2026, and one saying it has been cancelled. No third." }
+ ]},
+ { id: "C", title: "An annual cancel waits the whole year (Rehearsal 3 Club, +pr3)", steps: [
+  { who: PA, do: "Open " + rec("dc42922d-d5cd-4de8-ac9a-9733c813e1cb") + ".",
+    see: "Ended on <strong>November 5, 2027</strong>, a year after the click, with data kept until <strong>February 3, 2028</strong>. (The report's case 3 also shows that one month in nothing had ended and nothing was charged.)" },
+  { who: "Inbox · +pr3", do: "Messages from 7:41 a.m. on.",
+    see: "<strong>Exactly two</strong>: ends on November 5, 2027, then cancelled." }
+ ]},
+ { id: "D", title: "A cancel during a free trial (Rehearsal 4 Club, +pr4)", steps: [
+  { who: PA, do: "Open " + rec("c6e4f405-acaf-4f92-aa73-ba4ef11fed05") + ".",
+    see: "Ended on <strong>November 19, 2026</strong>, the trial's last day, with data kept until <strong>February 17, 2027</strong>. Nothing was ever charged." },
+  { who: "Inbox · +pr4", do: "Messages from 7:41 a.m. on.",
+    see: "Exactly two (ends on November 19, 2026; cancelled) and <strong>no “trial ending, add a card” email</strong>, although Stripe sent its trial-ending message (G5)." }
+ ]},
+ { id: "E", title: "A move to the free plan, with a tournament made during the wait (Rehearsal 8 Club, +pr8)", steps: [
+  { who: "Owner (+pr8)", do: "Sign in and open " + bill("rehearsal-8-11051241") + ", then Tournaments.",
+    see: "The plan is <strong>Tournament</strong>, and the club is open, not suspended. <strong>Kept Cup</strong> (the one picked) is active; <strong>Other Cup</strong> and <strong>Wait Cup</strong> (made during the wait) are archived." },
+  { who: PA, do: "Open " + rec("7b2316a0-b71b-428e-8eee-b5c616e50a63") + ".",
+    see: "Plan Tournament, active. The move is dated <strong>December 5, 2026</strong>; the two archived tournaments are kept until <strong>March 5, 2027</strong>, so they can come back on an upgrade." },
+  { who: "Inbox · +pr8", do: "Messages from 7:41 a.m. on.",
+    see: "<strong>Exactly two</strong>: the move is scheduled, then the club is now on Tournament (naming Kept Cup as kept and the other two as archived). No “cancelled” email." }
+ ]},
+ { id: "F", title: "Keep after a cancel over a cheaper move renews as the cheaper plan (Rehearsal 7 Club, +pr7: F1 and F3)", steps: [
+  { who: "Owner (+pr7)", do: "Sign in and open " + bill("rehearsal-7-11051322") + ".",
+    see: "The plan is <strong>Club</strong>, renewing <strong>January 5, 2027</strong>. Nothing is waiting: no Ending chip, no Keep button." },
+  { who: PA, do: "Open " + rec("e057184f-f4a4-48e4-95ea-f47b746ac129") + ".",
+    see: "Plan <strong>Club</strong>, active, renewing January 5, 2027, with no Ending or Moving callout. (The report's case 7 records the rest: one cancel row, kept by the owner, the move restored, Stripe billing Club at Club's price.)" },
+  { who: "Inbox · +pr7", do: "Messages from <strong>8:22 a.m.</strong> on.",
+    see: "<strong>Exactly two</strong>: ends on December 5, 2026, then the plan is kept, renewing as <strong>Club</strong> at Club's price. Before the fixes this club got a false “kept” email, a second “ends on”, and renewed at the Club Large price." }
+ ]},
+ { id: "G", title: "A Renew in Stripe's portal after a cancel over a cheaper move (Rehearsal 6b Club, +pr6b)", steps: [
+  { who: "Owner (+pr6b)", do: "Sign in and open " + bill("rehearsal-6b-11051241") + ".",
+    see: "The plan is <strong>Club Large</strong>, renewing January 5, 2027. The cheaper move did not come back, as the plan noted." },
+  { who: "Inbox · +pr6b", do: "Messages from 7:41 a.m. on.",
+    see: "Exactly two: ends on December 5, 2026, then kept, at the <strong>Club Large</strong> price, so nothing is silent.",
+    options: ["Still acceptable as noted", "It should put the cheaper move back (say so in the notes)"] }
+ ]},
+ { id: "H", title: "End now, at once, with its reason (Rehearsal 10 Club, +pr10)", steps: [
+  { who: PA, do: "Open " + rec("044c8e8a-8461-4acb-a5bd-5213d7b644ba") + ".",
+    see: "Suspended, ended on <strong>November 5, 2026</strong> (today: End now does not wait) with the typed reason <strong>“Rehearsal: End now”</strong>, data kept until <strong>February 3, 2027</strong>. One ending only, although Stripe's own “ended” message arrived afterwards." },
+  { who: "Inbox · +pr10", do: "Messages from 7:41 a.m. on.",
+    see: "<strong>One</strong> “cancelled” email, and no “ends on”." }
+ ]},
+ { id: "I", title: "The past-due club ended early (Rehearsal 5 Club, +pr5: F2)", steps: [
+  { who: PA, do: "Open " + rec("6e120c55-44db-4e35-b3d9-9ca0de6c1128") + ".",
+    see: "Suspended. Its ending is dated <strong>December 7, 2026</strong>, two days after its card failed at the December 5 renewal (Stripe's retries gave up), and its data is kept until <strong>March 7, 2027</strong>. One ending only." },
+  { who: "Inbox · +pr5", do: "Messages from 7:41 a.m. on.",
+    see: "Exactly two: “ends on <strong>January 5, 2027</strong>” (sent when the owner cancelled while past due), then cancelled on December 7. The first date did not hold: that is F2.",
+    call: "Say in the notes what a past-due club's “ends on” email should promise (Stage 4)." }
+ ]},
+ { id: "J", title: "Put back (by November 26)", steps: [
+  { who: "Terminal", do: "In the project folder: <code>node --env-file=.env.local scripts/rehearse-plan-ending.mjs --reset</code>.",
+    see: "It removes the rehearsal's clubs first, then its Stripe clocks, and reports how many of each. The +pr sign-ins stay." }
+ ]}
+];
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var steps = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+      if (s.call) t.appendChild(el('span', 'call', s.call));
+      var rec = { part: p.id, step: id, boxes: [], options: s.options || null };
+      if (s.options) {
+        // One box per answer: the tick IS the answer, and the summary prints which one.
+        var opts = el('span', 'opts');
+        s.options.forEach(function (label, k) {
+          var oid = id + String.fromCharCode(97 + k);
+          var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + oid; cb.checked = !!state.ticks[oid];
+          cb.addEventListener('change', function () { state.ticks[oid] = cb.checked; save(); refresh(); });
+          rec.boxes.push({ cb: cb, label: label });
+          var o = el('label', 'opt'); o.appendChild(cb); o.appendChild(el('span', null, label)); opts.appendChild(o);
+        });
+        t.appendChild(opts);
+        var row = el('div', 'step'); row.appendChild(el('span', null, '')); row.appendChild(t); body.appendChild(row);
+      } else {
+        var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+        cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+        rec.boxes.push({ cb: cb, label: null });
+        var row2 = el('label', 'step'); row2.appendChild(cb); row2.appendChild(t); body.appendChild(row2);
+      }
+      steps.push(rec);
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function isDone(r) { return r.boxes.some(function (b) { return b.cb.checked; }); }
+  function doneSteps(partId) { return steps.filter(function (r) { return (!partId || r.part === partId) && isDone(r); }); }
+  var totalSteps = steps.length;
+
+  function refresh() {
+    PARTS.forEach(function (p) {
+      var n = doneSteps(p.id).length;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + p.steps.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    var done = doneSteps(null).length;
+    document.getElementById('total').textContent = done + ' of ' + totalSteps + ' checked';
+    document.getElementById('barfill').style.width = (totalSteps ? Math.round(done * 100 / totalSteps) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [TITLE, 'Checked ' + doneSteps(null).length + ' of ' + totalSteps + ' steps'];
+    PARTS.forEach(function (p) {
+      var ticked = doneSteps(p.id);
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + p.steps.length
+        + (ticked.length ? ' (' + ticked.map(function (r) { return r.step; }).join(', ') + ')' : ''));
+      ticked.filter(function (r) { return r.options; }).forEach(function (r) {
+        lines.push('  ' + r.step + ': ' + r.boxes.filter(function (b) { return b.cb.checked; }).map(function (b) { return b.label; }).join(' + '));
+      });
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    steps.forEach(function (r) { r.boxes.forEach(function (b) { b.cb.checked = false; }); });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>
