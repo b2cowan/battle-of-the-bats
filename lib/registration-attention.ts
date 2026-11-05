@@ -2,7 +2,7 @@
 // probe/sweep scripts can import THIS module — the registration-week moment is verified with the
 // app's real attention engine, not a hand-copied rule (the same reason public-pages.ts moved).
 import { tournamentToday } from './timezone.ts';
-import { lowerEntry } from './tournament-teams';
+import { lowerEntry } from './tournament-teams.ts';
 export type RegistrationAttentionKey =
   | 'pending_review'
   | 'waitlist'

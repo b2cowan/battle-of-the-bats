@@ -44,6 +44,60 @@ export const CATEGORY_LABELS: Record<ReleaseCategory, string> = {
  */
 export const RELEASE_ENTRIES: ReleaseEntry[] = [
   {
+    date: '2026-11-04',
+    title: "A new look for every public tournament page, rainouts, scores and practice times for house league, and plans that end on their renewal date",
+    highlights: [
+      {
+        category: 'new',
+        text: "Every public tournament page (Overview, Schedule, Teams, Standings, Playoffs, Champions and Rules) now has one consistent look in your tournament's colours and logo. Each page's Share button is in the header. Playoffs holds the bracket, and Champions gives a recap once the tournament is finished.",
+      },
+      {
+        category: 'improved',
+        text: "Teams lists every team by division, with where each one stands and its next game first. A team's page answers \"when do we play next?\" and \"how have we done?\". The pictures you share follow your tournament's look and only show divisions the organizer has published.",
+      },
+      {
+        category: 'improved',
+        text: "A tournament's Branding page is simpler: Pages, Look (colours and type, with a phone preview) and Logo. A club can also decide that all its tournaments wear the club's look. The dark/light, hero banner, font and card-style settings are retired and no longer offered. The icon on a phone's home screen is always FieldLogicHQ's, so one app reaches every team and tournament you follow.",
+      },
+      {
+        category: 'new',
+        text: "A league admin can tell a division's families their practice times with Tell the families. Coaches see on their team page whether families have been told, get one copy of the first send, and can subscribe to their own private calendar of games and practices.",
+      },
+      {
+        category: 'new',
+        text: "A Rainout button on the house league schedule postpones or cancels a day's games in one step. You pick the games by division, add a short line for families, and either email them right away or hold the changes in Changes to send.",
+      },
+      {
+        category: 'new',
+        text: "In house league, the home coach enters a game's score and the away coach can report it if it looks wrong. The league admin sees who entered it and can keep or correct it. Families see the score on the public schedule and standings as soon as it is entered. Standings break ties by the game between the two teams, then run differential. A game counts only once both scores are in, each division has a Show standings switch, and coaches see their team's place on their team page.",
+      },
+      {
+        category: 'new',
+        text: "A league runner can Start next season from last year's. Name, dates, age groups, team names and settings arrive ready to check, and the old season stays as it was. Once registration closes, the public season page shows the standings for divisions that have Show standings on, instead of the sign-up, and a finished season reads as finished.",
+      },
+      {
+        category: 'new',
+        text: "A house league sign-up can include an optional second parent's email. That parent gets the club's emails about the sign-up too, except payment receipts. Families open their sign-up from \"Your sign-up\", can ask for a new link with \"Email me my link\", and the club can replace a link that was shared.",
+      },
+      {
+        category: 'new',
+        text: "On a team's roster, Add Player offers \"Bring back a past player\" from the team's earlier seasons. When the same child might be on two records, \"Same child?\" asks once and remembers a no. A child is on a season's roster only once.",
+      },
+      {
+        category: 'improved',
+        text: "In the Coaches Portal, Start next season now asks what the team is doing. If it is the same players moving up, you tick who comes along and the division moves up a level. If it is a new group, nobody comes unless you choose to bring them.",
+      },
+      {
+        category: 'improved',
+        text: "Cancelling a plan, or moving to a free plan, now takes effect on your renewal date. Plan & billing shows when it ends with a Keep button, and we email you when you schedule it, ahead of the date, and on the day. A move to a free plan also shows which tournament you keep and lets you change that choice.",
+      },
+      {
+        category: 'fixed',
+        text: "A coach who registers a team gets one email with the Confirm my email button inside it. A coach whose email was never confirmed is offered the confirmation link again instead of a sign-in that would fail. The welcome banner no longer offers Share for a team on a waitlist.",
+      },
+    ],
+  },
+  {
     date: '2026-10-30',
     title: "Game schedules for house league, Plan & billing inside the Coaches Portal, and reminders before free Premium time ends",
     highlights: [

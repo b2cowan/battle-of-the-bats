@@ -3,9 +3,9 @@
  * owes, how the list is banded, and the order the record's Previous / Next walks. No React, so the unit
  * suite holds the order the organizer steps through (tests/unit/teams-model.test.ts).
  */
-import { formatPoolName } from './utils';
+import { formatPoolName } from './utils.ts';
 import type { Division } from './types';
-import { TEAMS_WORDS, TEAM_RECORD_WORDS } from './registration-words';
+import { TEAMS_WORDS, TEAM_RECORD_WORDS } from './registration-words.ts';
 
 export type Status = 'pending' | 'accepted' | 'rejected' | 'waitlist';
 export type PaymentStatus = 'paid' | 'deposit-paid' | 'pending' | 'past-due' | 'no-schedule';
