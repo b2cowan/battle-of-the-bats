@@ -5,6 +5,7 @@ import Link from 'next/link';
 import EarlyAccessModalTrigger from './EarlyAccessModalTrigger';
 import { PLAN_CONFIG, formatPriceAmount, formatAnnualSavings, showsFoundingZero, FOUNDING_SEASON_END_LABEL, clubTrialLine, gatedPlanTag, GATED_PLAN_INTEREST_LINE } from '@/lib/plan-config';
 import { parseStartPricing, withStartPricing } from '@/lib/start-door';
+import { BILLING_TAX_WORDS } from '@/lib/billing-tax';
 import { SEE_IT_LIVE_PATH, SEE_IT_LIVE_COACHES_PATH, sandboxDoorsVisible } from '@/lib/sandbox-door';
 import type { OrgPlan } from '@/lib/types';
 import kit from './marketing/MarketingKit.module.css';
@@ -272,9 +273,15 @@ interface PricingSectionProps {
    * whoever opens a gate owns making that plan's destination page live in the same unit of work.
    */
   marketingLayout?: boolean;
+  /**
+   * GST/HST Stage 2 Part 4 (T4): a quiet "plus applicable taxes" line under each price the buyer will be charged (not a
+   * free, gated or $0 Founding price). The product's own callers turn it on; the marketing pages leave it off until
+   * /marketing rules their copy, so this switch is the one place their render changes.
+   */
+  plusTax?: boolean;
 }
 
-export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, currentPlanComped, planLoading, disabledPlans, ctaLabel, ctaHrefFor, initialBilling = 'monthly', order, featuredPlan, foundingOfferHeld = false, marketingLayout = false }: PricingSectionProps) {
+export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, currentPlanComped, planLoading, disabledPlans, ctaLabel, ctaHrefFor, initialBilling = 'monthly', order, featuredPlan, foundingOfferHeld = false, marketingLayout = false, plusTax = false }: PricingSectionProps) {
   const [billing, setBilling] = useState<Billing>(initialBilling);
 
   const orderedPlans = order
@@ -430,6 +437,8 @@ export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, c
                     </>
                   )}
                 </div>
+                {/* One line on every card while it is on, so the cards' price blocks stay level. */}
+                {plusTax && <p className={`${kit.small} ${styles.planNote}`}>{!promoActive && !isGated && plan.currency ? BILLING_TAX_WORDS.plusTax : null}</p>}
                 <p className={`${kit.small} ${styles.planNote}`}>{displayNote}</p>
               </div>
 

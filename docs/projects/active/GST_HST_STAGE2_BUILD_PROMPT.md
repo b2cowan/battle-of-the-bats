@@ -193,7 +193,50 @@ test harness in `plan-billing-actions.test.ts`; the pattern has 7 other warnings
   line (figures + footer) is the drawing's (tab 3 frame 2).
 - **Part 2b's one ask RULED 2026-11-05: A** (a quiet line on an already-connected club's Payouts card), recorded in its prompt.
 
-Next: Part 2b ([GST_HST_STAGE2_PART2B_BUILD_PROMPT.md](GST_HST_STAGE2_PART2B_BUILD_PROMPT.md)), then Part 4.
+**Part 4 BUILT 2026-11-05** ([GST_HST_STAGE2_PART4_BUILD_PROMPT.md](GST_HST_STAGE2_PART4_BUILD_PROMPT.md); words only, no figures, no
+Stripe calls). Typecheck clean; ESLint 0 errors on the 15 files; spelling gate clean; `npm test` 14334: 14326 pass / 8 fail, none in a
+file this part touched (practice-plan phone N1, `plan-billing-usage` free-time, Stage 6 public walk ×3, `series-date-groups`,
+support-console foot, and `possessive-guard` on another session's new `lib/child-page-words.ts`). `check:css-selectors` reports 4
+orphans in platform-admin files this part did not touch.
+- One source: `BILLING_TAX_WORDS.plusTax` and the new `pricesPlusTax` ("Prices are plus applicable taxes.") in `lib/billing-tax.ts`;
+  `plan-billing-words` reads both (`PLUS_TAX`, `PRICES_PLUS_TAX`).
+- Per the drawing (tabs 5, 7): monthly-or-yearly window (a quiet line under each price, phone too); Founding `chosenBody`; one quiet
+  sentence under the Founding choice buttons and under the Change plan table; plan panel price strip (a quiet `.plusTax` span, not
+  on a promo or free price); `W.plan.fromPrice`; Coach Premium sign-up (the offer sub line; on Keep / Reactivate, whose sub names no
+  price, the one sentence under the billing choice); onboarding `PlanStep` (a quiet note, not on the $0 Founding price); Billing
+  address window `taxedHere` ("Your next charge is taxed for this address.") under the fields, the window only (the shared intro is
+  also onboarding's address step and an email, so it is left alone).
+- **`PricingSection`: a `plusTax` prop, default off.** Onboarding's plan chooser (the one product caller) turns it on; the home page
+  and `/pricing` render unchanged until `/marketing` rules their copy. One line per card while on, so the price blocks stay level.
+- **Asked and RULED 2026-11-05, all as recommended** (price surfaces the drawing did not list): a cancelled club's Reactivate cycle
+  drop-down gets the one sentence under it; onboarding `AddressStep`'s head line adds the phrase (a $0 Founding choice never reaches
+  that step); the coach upsells (`coachUpsell.shelf` / `ceiling` and the Explore catalog's price) add it, their "Free through …
+  normally" versions stay bare.
+- Emails: `founding_renewal`, `founding_nudge`, `founding_final` (`lib/marketing-email-defaults.ts`) name the next-season charge
+  with the phrase. They send from the DB row, so **migration 443** (data-only campaign reseed, generated, takes over from 284 as the
+  `marketing-campaign-registry` gate; diffed against 284: only the three sentences change) — applied to DEV 2026-11-05 (read back:
+  all three rows carry the phrase), declared in `MANUAL_PROD_STEPS.json`, **prod apply owed**. Plan-ending emails other than `kept`
+  name no figure (nothing to add); `lib/email.ts`'s only plan price is a waived Founding one. Part 3's accepted gap stands: a
+  customised `plan_kept` template's `{price}` stays bare.
+- Left bare by rule: buttons (Founding choices, "Upgrade to … · $39 / month", PlanStep's billing choices), free / comped / "Free
+  through" prices (incl. the panel's promo "then $39/mo" and PlanStep's "Then $39/month" labels), `chargeChanged` (a taxed total).
+- Demos: no tour sentence quotes a plan price (helper census). Help: no article quotes a plan price (only a platform-admin one), so
+  no `/docs` run is owed.
+- Guard: `tests/unit/billing-plus-tax-words.test.ts` reads `PLAN_BILLING_WORDS` with the TypeScript parser; every leaf word that
+  builds a price carries `PLUS_TAX` or is on `BARE_ON_PURPOSE` with its reason (stale entries fail too); the phrase is never typed
+  outside `lib/billing-tax.ts` in app/components/lib. Mutate-and-fail on disk: `chosenBody` without the phrase fails it; the phrase
+  typed into `PlanCycleDialog` fails it; restored, 6/6 pass.
+- **/review standard 2026-11-05:** one defect fixed — the plan panel's price strip showed the phrase on a gated (coming-soon) plan;
+  it now stays bare there. Verified clean: `PricingSection` `plusTax` reaches only onboarding (home page, `/pricing` pass nothing), the
+  phrase is absent on free / Founding-$0 / gated cards, Coach Premium's `sub !== offer` can never show both phrases, the three founding
+  emails and migration 443 agree (only those three bodies differ from 284). Open for the owner, not changed: the Founding-season
+  "then $X" future prices (panel strip, Premium sign-up's after-Founding choices, PlanStep's "Then $X") are left bare by this part's
+  rule though they are real future charges; and "From $X … plus applicable taxes" repeats per discovery card beside the table's one
+  sentence (drawing-ruled).
+- Routed, not run: `/marketing` (the public pages and the home page's `PricingSection`: flip `plusTax` or write their own line) and
+  `/strategy` (record T4 "plus applicable taxes" in `PLAN_PRICING_FACTS.md`).
+
+Next: Part 5 (the guard on charging calls) may run now; Part 6 waits for 5; ONE Stage 2 walk at Part 7 (2b has its own). **Owner step before Part 6:** our GST/HST number on TEST-mode invoices (Settings → Invoices → Tax → add, Set as default) — read 2026-11-05: test account has no account tax ID.
 
 **Rulings (owner, 2026-11-05, all as recommended):**
 - **Ask 1:** one helper decides tax: taxes by the stored address; a US address with disagreeing card/payout evidence

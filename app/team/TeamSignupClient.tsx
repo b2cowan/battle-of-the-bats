@@ -24,6 +24,7 @@ import {
 } from '@/components/auth/AccountForm';
 import ChoicePair from '@/components/shared/ChoicePair';
 import { KEEP_PREMIUM_LINE } from '@/lib/portal-free-time';
+import { BILLING_TAX_WORDS } from '@/lib/billing-tax';
 import { BILLING_ADDRESS_FORM_WORDS, BILLING_LOCATION_WORDS, formatBilledTo } from '@/lib/billing-location';
 import BillingAddressFields, { useAddressDraft } from '@/components/billing/BillingAddressFields';
 import { addressOnFile, isAddressRefusal, saveBillingAddress, useBillingAddressGate } from '@/components/billing/BillingAddressDialog';
@@ -166,7 +167,7 @@ export default function TeamSignupClient({
   // it changes by itself when the Founding Season window closes. The upgrade and the reactivation keep their own.
   const offer = foundingPromoActive
     ? `Premium Coaches Portal. Free through ${FOUNDING_SEASON_END_LABEL}, then ${MONTHLY}.`
-    : `Premium Coaches Portal. ${MONTHLY} or ${ANNUAL}.`;
+    : `Premium Coaches Portal. ${MONTHLY} or ${ANNUAL} ${BILLING_TAX_WORDS.plusTax}.`;
   const title = isKeepPremium
     ? 'Keep Premium'
     : isReactivation
@@ -525,6 +526,9 @@ export default function TeamSignupClient({
                 disabled={busy}
               />
               {founding && <p className={accountForm.hint} id="premium-billing-hint">Change it any time before then. No card today.</p>}
+              {/* GST/HST Stage 2 Part 4: the choices keep their short price; where the sub line above names no price (Keep,
+                  Reactivate) the one sentence says it once. The offer's own sub line already carries the phrase. */}
+              {!founding && sub !== offer && <p className={accountForm.hint}>{BILLING_TAX_WORDS.pricesPlusTax}</p>}
             </div>
 
             {paid && addressOnFileNow && !changingAddress && (

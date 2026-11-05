@@ -92,6 +92,9 @@ export const BILLING_ADDRESS_FORM_WORDS = {
   personTitle: 'Your home address',
   intro: 'Where your club is billed. We use it to work out the sales tax on what we bill your club, and it prints on your invoices.',
   personIntro: 'You buy Premium as yourself, so we ask for your home address. We use it only to work out sales tax, and it prints on your receipts.',
+  /** GST/HST Stage 2 Part 4 (drawing tab 7): under the window's fields, so a buyer who moves before a trial ends knows the
+   *  address decides the tax. */
+  taxedHere: 'Your next charge is taxed for this address.',
   clubSubhead: 'Club billing address',
   clubPrefilled: 'We filled in your home address. Change it if the club has its own.',
   country: 'Country',

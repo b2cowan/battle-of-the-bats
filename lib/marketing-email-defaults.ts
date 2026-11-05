@@ -45,6 +45,7 @@ import {
   FOUNDING_SEASON_DECISION_MONTH_LABEL,
   FOUNDING_SEASON_AFTER_LINE,
 } from './plan-config';
+import { BILLING_TAX_WORDS } from './billing-tax';
 
 // ── Derived words: plan names, prices, dates ──────────────────────────────────
 // Every customer-visible number and date in the bodies below comes from one of these.
@@ -56,6 +57,8 @@ const FREE_PLAN = PLAN_CONFIG.tournament.label;
 
 const PLUS_MONTHLY = `${formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/month`;
 const PLUS_ANNUAL = `${formatPriceAmount(PLAN_CONFIG.tournament_plus.annualPrice)}/year`;
+/** GST/HST Stage 2 Part 4 (T4): a sentence that names the charge to come says it is before tax. */
+const PLUS_TAX = BILLING_TAX_WORDS.plusTax;
 const PORTAL_MONTHLY = `${formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)}/month`;
 const PORTAL_ANNUAL = `${formatPriceAmount(PLAN_CONFIG.team.annualPrice)}/year`;
 
@@ -180,7 +183,7 @@ ${PLUS} is free for **{{orgName}}** through **${FOUNDING_SEASON_END_LABEL}**. ${
 **{{orgName}}** has run on ${PLUS} at no cost since you joined. That free season ends on **${FOUNDING_SEASON_END_LABEL}** — and this is the early note, not the last one.
 
 ::callout.blue What you're choosing
-A plan for ${NEXT_SEASON} — **annual or monthly**. ${PLUS} is **${PLUS_ANNUAL}** or **${PLUS_MONTHLY}**. Annual suits most seasons: a year of tournaments paid once, in the month you're already doing the budget.
+A plan for ${NEXT_SEASON} — **annual or monthly**. ${PLUS} is **${PLUS_ANNUAL}** or **${PLUS_MONTHLY}** ${PLUS_TAX}. Annual suits most seasons: a year of tournaments paid once, in the month you're already doing the budget.
 ::end
 
 ::if hasHistory
@@ -227,7 +230,7 @@ Nothing has been charged, and nothing will be before **${FOUNDING_SEASON_FIRST_C
 ::end
 
 ::callout What it costs from ${FOUNDING_SEASON_FIRST_CHARGE_LABEL}
-${PLUS} is **${PLUS_ANNUAL}** or **${PLUS_MONTHLY}**. The year is one payment, in the month you're planning the season anyway.
+${PLUS} is **${PLUS_ANNUAL}** or **${PLUS_MONTHLY}** ${PLUS_TAX}. The year is one payment, in the month you're planning the season anyway.
 ::end
 
 If ${PLUS} isn't right for ${FOUNDING_SEASON_NEXT_YEAR_LABEL}, there is nothing to cancel. **{{orgName}}** moves to the free ${FREE_PLAN} plan and keeps everything it built.
@@ -248,7 +251,7 @@ If ${PLUS} isn't right for ${FOUNDING_SEASON_NEXT_YEAR_LABEL}, there is nothing 
 This is the last note before **{{orgName}}**'s free season ends on **${FOUNDING_SEASON_END_LABEL}**.
 
 ::if hasCard
-Your payment method is on file, so the only thing left is the choice itself: **${PLUS_ANNUAL}** or **${PLUS_MONTHLY}** from ${FOUNDING_SEASON_FIRST_CHARGE_LABEL}.
+Your payment method is on file, so the only thing left is the choice itself: **${PLUS_ANNUAL}** or **${PLUS_MONTHLY}** ${PLUS_TAX}, from ${FOUNDING_SEASON_FIRST_CHARGE_LABEL}.
 ::button Choose your ${FOUNDING_SEASON_NEXT_YEAR_LABEL} plan → | {{billingUrl}}
 ::else
 To keep ${PLUS} from ${FOUNDING_SEASON_FIRST_CHARGE_LABEL}, choose a plan for ${NEXT_SEASON}:

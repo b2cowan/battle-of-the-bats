@@ -50,6 +50,7 @@ const paidPrice = (cents: number, billing: BillingCycle) => cents % 100 === 0 ? 
 const cents = (amount: number, currency: string) =>
   `$${(amount / 100).toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currency.toUpperCase()}`;
 const PLUS_TAX = BILLING_TAX_WORDS.plusTax;
+const PRICES_PLUS_TAX = BILLING_TAX_WORDS.pricesPlusTax;
 const charge = (plan: OrgPlanKey, billing: BillingCycle, cents?: number | null, currency?: string | null) => currency === 'cad' && cents != null
   ? paidPrice(cents, billing)
   : price(billing === 'annual' ? PLAN_CONFIG[plan].annualPrice : PLAN_CONFIG[plan].monthlyPrice, billing);
@@ -65,10 +66,10 @@ export const PLAN_BILLING_WORDS = {
     normally: () => `normally ${coachMonthlyPrice()}`,
     shelf: (founding: boolean) => founding
       ? `Premium is free through ${END} — normally ${coachMonthlyPrice()}.`
-      : `Premium is ${coachMonthlyPrice()}.`,
+      : `Premium is ${coachMonthlyPrice()} ${PLUS_TAX}.`,
     ceiling: (founding: boolean) => founding
       ? `Free through ${END} — normally ${coachMonthlyPrice()}. No credit card required.`
-      : `${coachMonthlyPrice()}, cancel anytime.`,
+      : `${coachMonthlyPrice()} ${PLUS_TAX}, cancel anytime.`,
   },
   page: {
     title: PLAN_BILLING_TITLE, eyebrow: 'Organization', loading: 'Loading plan & billing…',
@@ -80,7 +81,7 @@ export const PLAN_BILLING_WORDS = {
     free: 'Free', monthly: 'Monthly', annual: 'Yearly', billing: 'Billing', unavailable: 'Billing status unavailable',
     price,
     paidPrice, charge,
-    fromPrice: (amount: number) => amount === 0 ? formatPriceAmount(amount) : `From ${formatPriceAmount(amount)} CAD / month`,
+    fromPrice: (amount: number) => amount === 0 ? formatPriceAmount(amount) : `From ${formatPriceAmount(amount)} CAD / month ${PLUS_TAX}`,
     billed: (billing: BillingCycle) => `billed ${cycle(billing)}`,
     renews: (iso: string) => `Renews ${day(iso)}`,
     trialEnds: (iso: string) => `Trial ends ${day(iso)}`,
@@ -135,6 +136,7 @@ export const PLAN_BILLING_WORDS = {
     upTo: (limit: number) => `Up to ${limit}`, range: (lower: number, upper: number) => `${lower} to ${upper}`,
     tournamentLimit: (limit: number) => limit >= NO_LIMIT ? 'Unlimited' : `${pluralize(limit, 'tournament')} at a time`,
     custom: (limit: number) => `More than ${limit} teams?`, customEnd: 'for a custom plan.',
+    pricesPlusTax: PRICES_PLUS_TAX,
     availabilityTag: gatedPlanTag, availabilityNote: gatedPlanNote,
     clubTitle: 'Part of a club?', joinClub: 'Join a club',
     clubBody: 'If your club runs on FieldLogicHQ, it can bring your team in. Everything the team built comes with it, and you won’t be charged for your own Coaches Portal again.',
@@ -252,6 +254,7 @@ export const PLAN_BILLING_WORDS = {
     basicDoor: 'Open tournament records',
     premiumHelp: "Reactivate Premium to restore your team's tools and retained data.",
     action: (label: string) => `Reactivate ${label}`, premiumAction: 'Reactivate Premium', contact: 'Contact us to reactivate',
+    pricesPlusTax: PRICES_PLUS_TAX,
   },
   founding: {
     price: `Free through ${END}`, eyebrow: 'Founding Season', endingEyebrow: `Founding Season · ends ${END}`,
@@ -264,10 +267,11 @@ export const PLAN_BILLING_WORDS = {
     coachChoiceHelp: (label: string) => `You’re on ${label} today. Keep it for ${NEXT}, or let it end on ${END} and keep your free Basic team records.`,
     choiceLabel: (label: string, billing: BillingCycle) => `${label} · ${cycle(billing)}`,
     guarantee: `First charge ${FIRST} · nothing before then`,
+    pricesPlusTax: PRICES_PLUS_TAX,
     choose: (label: string, billing: BillingCycle) => `Choose ${label} · ${cycle(billing)}`,
     decideLater: 'Prefer to decide later?', saveOnly: 'Save a card without choosing', chosen: `Your ${NEXT} season is set`,
     chosenTitle: (label: string, billing: BillingCycle) => `${label}, billed ${cycle(billing)} from ${FIRST}.`,
-    chosenBody: (amount: number, card: string | null) => `${formatPriceAmount(amount)} will be charged${card ? ` to ${card}` : ''} on ${FIRST} — your first charge, and nothing before it. Your Founding Season runs free until then.`,
+    chosenBody: (amount: number, card: string | null) => `${formatPriceAmount(amount)} ${PLUS_TAX} will be charged${card ? ` to ${card}` : ''} on ${FIRST} — your first charge, and nothing before it. Your Founding Season runs free until then.`,
     missingPrice: 'Your next-season choice is recorded. We couldn’t load its price. Try again.',
     confirming: 'Confirming your next-season choice…',
     changeUntil: `You can change this until ${END}.`, change: 'Change plan or card',

@@ -156,7 +156,7 @@ export default function CoachExploreCatalog({
               </span>
             ) : (
               <span className={styles.premiumPrice}>
-                {W.plan.price(PLAN_CONFIG.team.monthlyPrice, 'monthly')}<span className={styles.premiumPriceUnit}> {W.coachUpsell.perTeam}</span>
+                {W.plan.price(PLAN_CONFIG.team.monthlyPrice, 'monthly')}<span className={styles.premiumPriceUnit}> {W.coachUpsell.perTeam} {W.move.plusTax}</span>
               </span>
             )}
           </div>

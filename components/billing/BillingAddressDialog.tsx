@@ -133,6 +133,7 @@ export default function BillingAddressDialog({ target, info, action, onClose, on
       <form className={styles.fields} onSubmit={event => { event.preventDefault(); void save(); }}>
         <p className={styles.intro}>{person ? F.personIntro : F.intro}</p>
         <BillingAddressFields form={form} idPrefix="billing-address" subject={subject} disabled={saving} />
+        {!form.usClosed && <p className={styles.taxedHere}>{F.taxedHere}</p>}
       </form>
     </KitDialog>
   );

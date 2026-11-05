@@ -5,6 +5,7 @@ import { StartFoot, StartHead, accountForm } from '@/components/auth/AccountForm
 import BillingAddressFields, { type AddressDraftState } from '@/components/billing/BillingAddressFields';
 import { BILLING_ADDRESS_FORM_WORDS as F, BILLING_LOCATION_WORDS } from '@/lib/billing-location';
 import { PLAN_CONFIG, formatPlanPeriodPrice } from '@/lib/plan-config';
+import { BILLING_TAX_WORDS } from '@/lib/billing-tax';
 import { RUN_A_TOURNAMENT_STEPS, type StartBilling } from '@/lib/start-door';
 import type { OrgPlan } from '@/lib/types';
 import styles from './PlanStep.module.css';
@@ -54,7 +55,7 @@ export default function AddressStep({ orgName, plan, billing, form, saving, fail
       <div className={accountForm.column}>
         <StartHead
           title={F.title}
-          sub={`${orgName} · ${PLAN_CONFIG[plan].label}, ${formatPlanPeriodPrice(plan, billing)}`}
+          sub={`${orgName} · ${PLAN_CONFIG[plan].label}, ${formatPlanPeriodPrice(plan, billing)}${PLAN_CONFIG[plan].monthlyPrice > 0 ? ` ${BILLING_TAX_WORDS.plusTax}` : ''}`}
           steps={<StartSteps current={3} labels={RUN_A_TOURNAMENT_STEPS} />}
         />
         <form className={accountForm.form} onSubmit={submit}>

@@ -128,6 +128,9 @@
   color: var(--text-primary);
 }
 
+/* The tax words beside a price (T4): quiet, as on the Plan & billing card. */
+.plusTax { font-weight: 400; color: var(--text-tertiary); }
+
 /* A "savings" chip is a promo accent — olive (chips keep whatever face they already had). */
 .priceSavings {
   font-size: 0.72rem;

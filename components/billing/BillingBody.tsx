@@ -322,6 +322,8 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
               <button id="billing-reactivate-btn" type="button" className="btn btn-lime" onClick={a.reactivate} disabled={disabled}>{a.busy === 'checkout' ? W.plan.openingCheckout : W.reactivate.action(ownProfile.config.label)}</button>
             </> : <a id="billing-reactivate-btn" href={CONTACT_HREF} className="btn btn-lime">{W.reactivate.contact}</a>}
         </div>
+        {/* GST/HST Stage 2 Part 4 (owner 2026-11-05): the cycle choices keep their short price; the one sentence sits under them. */}
+        {!premium && paid && s.gating.status === 'ready' && sale(ownProfile.key) && <p className={styles.hint}>{W.reactivate.pricesPlusTax}</p>}
         <ReadFailure read={s.gating} section="plan availability" />
       </CoachCard>
       {premium && <CoachCard className={styles.section}>
@@ -426,6 +428,7 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
         <h3 className={styles.sectionTitle}>{W.founding.chooseTitle}</h3>
         <p className={styles.hint}>{premium ? W.founding.coachChoiceHelp(ownProfile.config.label) : W.founding.orgChoiceHelp(ownProfile.config.label, PLAN_CONFIG.tournament.label)}</p>
         {nextPlans.map(key => <div key={key} className={styles.planActions}>{(['annual', 'monthly'] as const).map(cycle => <button key={cycle} type="button" className={`btn ${cycle === 'annual' ? 'btn-lime' : 'btn-outline'}`} onClick={() => a.choose(key, cycle)} disabled={disabled}>{W.founding.choose(profiles[key].config.label, cycle)} · {W.plan.price(cycle === 'annual' ? profiles[key].config.annualPrice : profiles[key].config.monthlyPrice, cycle)}</button>)}</div>)}
+        <p className={styles.hint}>{W.founding.pricesPlusTax}</p>
         <p className={styles.hint}>{W.founding.guarantee}</p>
       </> : null}
       {cardWindowOpen && justChose && !choice && <p className={styles.hint}>{W.founding.confirming} {retry}</p>}
@@ -468,6 +471,7 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
             </tr>;
           })}</tbody>
         </table></div>
+        {changeKeys.some(key => profiles[key].config.monthlyPrice > 0) && <p className={`${styles.lede} ${styles.afterTable}`}>{W.change.pricesPlusTax}</p>}
         <ReadFailure read={s.gating} section="plan availability" />
         <ReadFailure read={s.move} section="scheduled plan changes" />
         {profile.usageMeters.includes('teams') && <p className={`${styles.lede} ${styles.afterTable}`}>{W.change.custom(Math.max(...changeKeys.map(key => profiles[key].config.teamLimit)))} <a href={CONTACT_HREF} className={styles.link}>{W.change.contact}</a> {W.change.customEnd}</p>}

@@ -40,6 +40,8 @@ export default function PlanCycleDialog({ label, monthlyPrice, annualPrice, savi
               <span className={styles.payName}>{option.name}</span>
             </span>
             <span className={styles.payPrice}>{W.plan.price(option.price, option.id)}</span>
+            {/* GST/HST Stage 2 Part 4 (drawing tab 5): the tax itself shows on Stripe's page, so each price says so. */}
+            {option.price > 0 && <span className={styles.hint}>{W.move.plusTax}</span>}
             <span className={styles.hint}>{option.id === 'annual' && savings ? `${savings}. ${W.pay.annualHelp}` : option.help}</span>
           </label>
         ))}

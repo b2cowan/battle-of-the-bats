@@ -5,6 +5,7 @@ import StartSteps from '@/components/auth/StartSteps';
 import { StartFoot, StartHead, accountForm } from '@/components/auth/AccountForm';
 import ChoicePair from '@/components/shared/ChoicePair';
 import { PLAN_CONFIG, formatPriceAmount, formatAnnualSavings, formatPlanPeriodPrice, pickedPlanLabel, showsFoundingZero, FOUNDING_SEASON_END_LABEL } from '@/lib/plan-config';
+import { BILLING_TAX_WORDS } from '@/lib/billing-tax';
 import { RUN_A_TOURNAMENT_STEPS, runATournamentPick, type StartBilling, type StartPricing } from '@/lib/start-door';
 import type { OrgPlan } from '@/lib/types';
 import styles from './PlanStep.module.css';
@@ -88,6 +89,8 @@ export default function PlanStep({ orgName, pricing, initialBilling, foundingOff
         <h2 id="plan-step-plus" className={styles.name}>Tournament Plus</h2>
         <span className={styles.price}>{plusPrice}</span>
       </div>
+      {/* GST/HST Stage 2 Part 4 (T4): a price the buyer will be charged says so; the $0 Founding price has nothing to tax. */}
+      {!zero && <p className={styles.note}>{BILLING_TAX_WORDS.plusTax}</p>}
       {plusNote && <p className={styles.note}>{plusNote}</p>}
       <ul className={styles.points}>{PLUS_POINTS.map(p => <li key={p}>{p}</li>)}</ul>
       <span className={`${accountForm.label} ${styles.billingLabel}`} id="plan-step-billing">Billing</span>

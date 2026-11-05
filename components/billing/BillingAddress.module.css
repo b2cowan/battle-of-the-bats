@@ -4,6 +4,8 @@
 
 .fields { display: flex; flex-direction: column; gap: 0.9rem; }
 .intro { margin: 0; }
+/* The tax sentence under the fields (GST/HST Stage 2 Part 4): quiet, a hint. */
+.taxedHere { margin: 0; font-size: var(--type-support); line-height: 1.45; color: var(--text-tertiary); }
 .postal { max-width: 160px; }
 
 /* One red line under the field that needs fixing (errors appear on press, not while typing). */

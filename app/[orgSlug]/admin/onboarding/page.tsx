@@ -1048,6 +1048,7 @@ function OnboardingPageLegacy() {
           order={['tournament_plus', 'tournament', 'league', 'club']}
           featuredPlan={pricing?.plan ?? 'tournament_plus'}
           foundingOfferHeld={foundingOfferHeld}
+          plusTax
           ctaLabel={(planKey) => planKey === 'tournament' && planKey !== activePlanId ? 'Continue free' : undefined}
         />
 

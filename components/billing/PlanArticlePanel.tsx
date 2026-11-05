@@ -12,6 +12,7 @@ import { useDialogFloor } from '@/components/coaches/useDialogFloor';
 import ViewSwitch from '@/components/coaches/kit/ViewSwitch';
 import { COACHES_START_PATH } from '@/lib/coaches-portal-routes';
 import { PLAN_ARTICLE_CONTENT } from '@/lib/plan-article-content';
+import { BILLING_TAX_WORDS } from '@/lib/billing-tax';
 import { PLAN_CONFIG, showsFoundingZero, gatedPlanSentence, FOUNDING_SEASON_END_LABEL } from '@/lib/plan-config';
 import { useFoundingOfferOnPlanChoice } from '@/lib/use-founding-season-lock';
 import type { PanelPlanKey as PlanKey } from '@/lib/plan-upgrade';
@@ -99,7 +100,8 @@ export default function PlanArticlePanel({
 
         {/* Price strip */}
         <div className={styles.priceStrip}>
-          <span className={styles.priceAmount}>{price}</span>
+          {/* GST/HST Stage 2 Part 4 (T4): a price the buyer will be charged says so, quietly; a free price has nothing to tax. */}
+          <span className={styles.priceAmount}>{price}{!promoActive && !isComingSoon && config.monthlyPrice > 0 && <> <span className={styles.plusTax}>{BILLING_TAX_WORDS.plusTax}</span></>}</span>
           {picksCycle && <ViewSwitch label="Billing" value={billingCycle} onChange={onBillingCycleChange!}
             views={[{ id: 'monthly', label: 'Monthly' }, { id: 'annual', label: 'Yearly' }]} />}
           {promoActive ? (
