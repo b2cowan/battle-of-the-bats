@@ -11,7 +11,7 @@ import { REVIEW_CONSEQUENCE } from '../../lib/billing-location.ts';
  *   · "needs review" is worked out when read: the one stored flag (a Canada↔US change after paying, which stays) or the card
  *     and payout evidence as it stands, so an evidence flag sets and clears with the facts and never goes stale (Ask 1);
  *   · a Founding next-season choice counts as paying for that flag, and only for it (Ask 3);
- *   · a "Start your club" address reaches Stripe only once the move is accepted (Ask 2);
+ *   · a "Start your club" address goes on Stripe BEFORE the move and comes off if it is refused (Stage 2 Ask 2, 2026-11-05);
  *   · platform admin reads it, read only, on the Money tab.
  */
 
@@ -67,6 +67,7 @@ let cards: Record<string, Array<{ created: number; card: { country: string } }>>
 let stamps: Array<{ id: string; address: Row }>;
 let paid: boolean;
 let customerMeta: Record<string, Record<string, string>>;
+let homes: Record<string, Row>;
 let onList: (() => void) | null;
 let lists: number;
 let db: ReturnType<typeof fakeDb>;
@@ -85,7 +86,7 @@ function server() {
       } },
       customers: {
         update: async (id: string, p: { address: Row }) => { stamps.push({ id, address: p.address }); },
-        retrieve: async (id: string) => ({ id, metadata: customerMeta[id] ?? {} }),
+        retrieve: async (id: string) => ({ id, metadata: customerMeta[id] ?? {}, address: homes[id] ?? null }),
       },
     }) },
     './plan-move': { paidOrPromisedToPay: async () => paid },
@@ -107,6 +108,7 @@ const clubRow = (extra: Row = {}): Row => ({
 
 beforeEach(() => {
   process.env.US_SALES_OPEN = 'true';
+  homes = {};
   tables = {
     billing_locations: [usRow(), clubRow()],
     team_workspaces: [
@@ -238,26 +240,56 @@ describe('the save keeps the one stored flag (Part 3 Ask 1) and counts a promise
   });
 });
 
-describe('a "Start your club" address reaches Stripe only once the move is accepted (Part 3 Ask 2)', () => {
+describe('a "Start your club" address goes on the Stripe customer BEFORE the move, and comes off if it is refused (Stage 2 Ask 2)', () => {
   const club = { kind: 'org' as const, orgId: PORTAL, name: 'Falcons Baseball Club', stripeCustomerId: 'cus_coach' };
   const address = { country: 'CA', regionCode: 'ON', line1: '9 Field Road', city: 'Guelph', postalCode: 'N1H 4H2' };
+  const home = { line1: '120 Elm Street', line2: '', city: 'Guelph', state: 'ON', postal_code: 'N1H 4H2', country: 'CA' };
 
-  it('the purchase saves the club\'s row and copies nothing; the copy after acceptance does', async () => {
-    const s = server();
-    const located = await s.requireBillingLocation(club, address);
+  it('the check saves the club\'s row and copies nothing (the move does that itself)', async () => {
+    const located = await server().requireBillingLocation(club, address);
     assert.ok(located.ok);
     assert.equal(tables.billing_locations.some(r => r.org_id === PORTAL), true, 'saved to the club\'s own row');
     assert.equal(stamps.length, 0, 'the coach\'s Premium customer still carries the coach\'s home address');
-    if (located.ok) await s.copyBillingLocationToStripe(club, located.location);
+  });
+
+  it('a move that goes through: the club address was on the customer when the move ran, and stays', async () => {
+    homes.cus_coach = home;
+    const s = server();
+    const located = await s.requireBillingLocation(club, address);
+    if (!located.ok) return assert.fail();
+    let onCustomerDuringMove: string | undefined;
+    const out = await s.withClubAddressOnStripe<{ code?: string; direction?: string }>(club, located.location, (r) => 'code' in r, async () => {
+      onCustomerDuringMove = String(stamps.at(-1)?.address.line1);
+      return { direction: 'up' };
+    });
+    assert.deepEqual(out, { ok: true, result: { direction: 'up' } });
+    assert.equal(onCustomerDuringMove, '9 Field Road', 'the prorated invoice is taxed at the club, not the coach\'s home');
     assert.deepEqual(stamps.map(x => [x.id, x.address.line1]), [['cus_coach', '9 Field Road']]);
   });
 
-  it('the move route copies after applyMove, never before; the check saves without copying', () => {
+  it('a refused move puts the coach\'s home address back', async () => {
+    homes.cus_coach = home;
+    const s = server();
+    const located = await s.requireBillingLocation(club, address);
+    if (!located.ok) return assert.fail();
+    const out = await s.withClubAddressOnStripe<{ code?: string; direction?: string }>(club, located.location, (r) => 'code' in r, async () => ({ code: 'card_declined' }));
+    assert.deepEqual(out, { ok: true, result: { code: 'card_declined' } });
+    assert.deepEqual(stamps.map(x => [x.id, x.address.line1]), [['cus_coach', '9 Field Road'], ['cus_coach', '120 Elm Street']]);
+  });
+
+  it('a move that throws puts the home address back and still throws', async () => {
+    homes.cus_coach = home;
+    const s = server();
+    const located = await s.requireBillingLocation(club, address);
+    if (!located.ok) return assert.fail();
+    await assert.rejects(s.withClubAddressOnStripe(club, located.location, () => false, async () => { throw new Error('stripe down'); }), /stripe down/);
+    assert.deepEqual(stamps.map(x => x.address.line1), ['9 Field Road', '120 Elm Street']);
+  });
+
+  it('the move route stamps through withClubAddressOnStripe and never runs the move outside it for a club address', () => {
     const move = readCode('app/api/billing/move/route.ts');
-    const applied = move.indexOf('await applyMove(');
-    const copied = move.indexOf('copyBillingLocationToStripe(');
-    assert.ok(applied > 0 && copied > applied, 'the club address is copied to Stripe only after the move is made');
-    assert.ok(move.indexOf("if ('code' in result) return refusalResponse(result);") < copied, 'a refused move returns before the copy');
+    assert.match(move, /withClubAddressOnStripe\(clubAddress\.buyer, clubAddress\.location, r => 'code' in r, runMove\)/);
+    assert.doesNotMatch(move, /copyBillingLocationToStripe\(/, 'no copy after the move any more');
     const server = readCode('lib/billing-location-server.ts');
     assert.match(server, /if \(sentAddress\) \{\s*const saved = await saveBillingLocation\(buyer, sentAddress, \{ copyToStripe: false \}\)/);
   });
@@ -271,7 +303,7 @@ describe('platform admin reads it, read only (Part 3 D)', () => {
     assert.ok(club && club.buyer === 'club' && club.location?.line1 === '120 Elm Street' && club.review === null);
     const portal = await s.readBillingLocationForConsole(PORTAL);
     assert.ok(portal && portal.buyer === 'person' && portal.location?.city === 'Buffalo');
-    assert.deepEqual(portal.review, { reason: 'card_country_mismatch', note: 'The address is in the United States, but the card was issued in Canada.', setAt: null });
+    assert.deepEqual(portal.review, { reason: 'card_country_mismatch', note: 'The address is in the United States, but the card was issued in Canada.', setAt: null, country: 'US' });
     assert.deepEqual(await s.readBillingLocationForConsole(ORPHAN), { buyer: 'none' });
     tables.team_workspaces[0].billing_mode = 'org_team_addon'; // a club pays for this portal: no coach's home address
     assert.deepEqual(await server().readBillingLocationForConsole(PORTAL), { buyer: 'none' });
@@ -294,7 +326,7 @@ describe('platform admin reads it, read only (Part 3 D)', () => {
     tables.billing_locations[1] = clubRow({ card_country: 'CA', review_reason: 'country_changed_after_paying', review_note: 'The country changed from the United States to Canada after paying.', review_set_at: '2026-11-02T00:00:00Z' });
     const club = await server().readBillingLocationForConsole(CLUB);
     assert.ok(club && club.buyer === 'club');
-    assert.deepEqual(club.review, { reason: 'country_changed_after_paying', note: 'The country changed from the United States to Canada after paying.', setAt: '2026-11-02T00:00:00Z' });
+    assert.deepEqual(club.review, { reason: 'country_changed_after_paying', note: 'The country changed from the United States to Canada after paying.', setAt: '2026-11-02T00:00:00Z', country: 'CA' });
   });
 
   it('the block is on the Money tab, has no door of its own, and states the consequence', () => {
@@ -305,8 +337,10 @@ describe('platform admin reads it, read only (Part 3 D)', () => {
     assert.match(readCode('app/platform-admin/orgs/[id]/ClubRecord.tsx'), /moneyNeedsReview[\s\S]*kit\.tabDot/);
     const panel = readCode('app/platform-admin/orgs/[id]/BillingAddressPanel.tsx');
     assert.doesNotMatch(panel, /<button|'PUT'|'POST'|'PATCH'|'DELETE'/, 'read only');
-    assert.match(panel, /REVIEW_CONSEQUENCE/);
-    assert.equal(REVIEW_CONSEQUENCE, 'Until this is looked at, the buyer is treated as Canadian.');
+    assert.match(panel, /reviewConsequence\(review\.country\)/);
+    // Stage 2 Ask 1: a Canadian address is taxed by it; a flagged US address is held before it pays.
+    assert.equal(REVIEW_CONSEQUENCE.CA, 'Until this is looked at, the buyer is treated as Canadian.');
+    assert.match(REVIEW_CONSEQUENCE.US, /can’t pay/);
     const route = readCode('app/api/platform-admin/orgs/[id]/money/billing-address/route.ts');
     assert.match(route, /requirePlatformPower\('find_stripe'\)/);
     assert.doesNotMatch(route, /export const (PUT|POST|PATCH|DELETE)/);

@@ -7,7 +7,7 @@ import { writeOrgBillingAudit } from '@/lib/billing-retention';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import type { OrgPlan } from '@/lib/types';
 import { ownPlanOf } from '@/lib/entitlement-grants';
-import { billingAddressFromBody, copyBillingLocationToStripe, requireBillingLocation, type BillingBuyer } from '@/lib/billing-location-server';
+import { billingAddressFromBody, requireBillingLocation, withClubAddressOnStripe, type BillingBuyer } from '@/lib/billing-location-server';
 import type { BillingLocation } from '@/lib/billing-location';
 
 /**
@@ -60,7 +60,7 @@ export const POST = withObservability(async (req: Request) => {
   // GST/HST Stage 1: a move UP charges today, so the buyer's billing address must be on file (a safety net: every subscription
   // started after this stage already has one). A move up from Premium makes the portal the club, so the buyer is the CLUB: the
   // "Start your club" window sends its address with the name, saved to the club's own row first. A move down charges nothing.
-  let clubAddress: { buyer: BillingBuyer; location: BillingLocation } | null = null;
+  let clubAddress: { buyer: Extract<BillingBuyer, { kind: 'org' }>; location: BillingLocation } | null = null;
   if (moveDirection(ownPlanOf(org), toPlan) === 'up') {
     const clubName = ownPlanOf(org) === 'team' && typeof body.clubName === 'string' ? body.clubName.trim() : null;
     const buyer = { kind: 'org' as const, orgId: org.id, name: clubName || org.name, stripeCustomerId: org.stripeCustomerId ?? null };
@@ -71,11 +71,19 @@ export const POST = withObservability(async (req: Request) => {
 
   const prorationDate = typeof body.prorationDate === 'number' ? Math.floor(body.prorationDate) : undefined;
   // Only a Premium coach's portal becoming the club uses the name (and is refused without one); every other move ignores it.
-  const result = await applyMove(org, toPlan, { prorationDate, actor, clubName: typeof body.clubName === 'string' ? body.clubName : null });
+  const runMove = () => applyMove(org, toPlan, { prorationDate, actor, clubName: typeof body.clubName === 'string' ? body.clubName : null });
+  // GST/HST Stage 2 Ask 2 (owner 2026-11-05): the move's prorated invoice is taxed by the Stripe customer's address, so the club's
+  // address goes on BEFORE the move, and the coach's home address is put back if the move is refused (or throws). A stamp that
+  // fails refuses the move with nothing changed.
+  let result: Awaited<ReturnType<typeof runMove>>;
+  if (clubAddress) {
+    const stamped = await withClubAddressOnStripe(clubAddress.buyer, clubAddress.location, r => 'code' in r, runMove);
+    if (!stamped.ok) return stamped.response;
+    result = stamped.result;
+  } else {
+    result = await runMove();
+  }
   if ('code' in result) return refusalResponse(result);
-  // GST/HST Part 3 Ask 2: the club's address reaches Stripe only now the move is made. Until then this Stripe customer was the
-  // coach's own Premium billing, and a refused move must leave it carrying the coach's home address.
-  if (clubAddress) await copyBillingLocationToStripe(clubAddress.buyer, clubAddress.location);
 
   await writeOrgBillingAudit(org.id, authorized.actorId,
     result.direction === 'up' ? 'plan_moved_up' : 'plan_move_scheduled',

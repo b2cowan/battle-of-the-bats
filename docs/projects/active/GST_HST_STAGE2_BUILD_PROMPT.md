@@ -19,7 +19,106 @@ already put the address on the Stripe customer; this stage makes Stripe use it.
 
 ## ▶ Progress (read first when resuming)
 
-Nothing built. Next: Part 0.
+**Part 0 answered 2026-11-05: owner ruled ALL ASKS AS RECOMMENDED** (wording below in "Rulings"). Sandbox Stripe Tax set up
+and verified (the Club · Association product now `txcd_10103001`, confirmed by API).
+
+**Part 1 BUILT 2026-11-05, uncommitted** (typecheck clean; 151 billing unit tests pass; `verify:changed` 14242 pass / 7 fail,
+all 7 in files this stage did not touch — support-console foot sentences, bookkeeping ExpenseFormWindow, practice-plan phone
+N1, two walk-page guards, the free-time route's 503):
+- `lib/billing-tax.ts` (new): `decideBuyerTax` (address → Stripe, flagged US held with `billing_review_hold`, no address →
+  `billing_address_required`), `taxWasWorkedOut` (a preview counts only when `automatic_tax.status === 'complete'`),
+  `AUTOMATIC_TAX`, `BILLING_TAX_WORDS` (held / notWorkedOut / plusTax). Tests `tests/unit/billing-tax.test.ts`.
+- `requireBillingLocation` now answers through `decideBuyerTax` (reads the row after any save; `currentReview` only for a US
+  row, with the live payout country). Every paid path already calls it, so the hold reaches every path at once.
+- Ask 4: `CA_POSTAL_FIRST_LETTERS` + the check in `checkBillingLocation` ("A postal code in Ontario starts with K, L, M, N or
+  P."). A stored row that fails it now reads as "no valid address" and the buyer is asked again before paying.
+- Ask 2: `withClubAddressOnStripe` (billing-location-server) stamps the club address before the move, restores the
+  customer's previous address on a refused or thrown move, refuses with `billing_address_stamp_failed` (503,
+  `BILLING_LOCATION_WORDS.stampFailed`) if the stamp fails. `app/api/billing/move/route.ts` uses it; the after-move copy is gone.
+- Console: `REVIEW_CONSEQUENCE` is per country (`reviewConsequence`; console review carries `country`).
+- ⚠ Part 2 must check every SCREEN shows the `billing_review_hold` and `billing_address_stamp_failed` sentences (the screens
+  know `billing_address_required` only).
+- ⚠ Another session has uncommitted edits in `components/billing/BillingBody.tsx` and `lib/plan-billing-words.ts` (Part 3/4
+  targets): read them fresh before Part 3, and commit around them.
+
+Next: the drawings (before Part 3), then the `/accounting` design review (blocking, before Part 2), then Part 2.
+
+**Rulings (owner, 2026-11-05, all as recommended):**
+- **Ask 1:** one helper decides tax: taxes by the stored address; a US address with disagreeing card/payout evidence
+  (`currentReview`) is HELD — the paid button refused with "we need to look at your account" + the existing console flag, no
+  email. Relaxing it is a Stage 8 choice.
+- **Ask 2:** Premium → Club stamps the club address on the Stripe customer BEFORE the Stripe update; the coach's home address is
+  put back if the move is refused or fails; a failed stamp refuses the move ("try again"). Amends the order of Stage 1 Part 3
+  Ask 2, keeps its reason. The window's preview quotes the typed club address.
+- **Ask 3:** recovered Stripe fees are taxed ON TOP (T2's reason), on a subscription invoice and on the club's own monthly fee
+  invoice; credit-note math updated in the same pass. `/accounting` confirms before Part 2.
+- **Ask 4:** a Canadian postal code whose first letter cannot belong to the chosen province/territory is refused with a plain
+  sentence (shared validator, every address screen). US unchanged.
+- **Ask 5:** the plan card shows the price + "plus applicable taxes", no live tax figure.
+- **Ask 6:** GST/HST number offered at Checkout for clubs AND coaches (`tax_id_collection` + `customer_update[name]=auto`,
+  accepted: Checkout may rename the Stripe customer to the business name typed); the portal already allows it (no bump).
+- **Ask 7:** the owner completes LIVE Stripe Tax (head office, "Include tax in prices: No", SaaS business use, then the Canada
+  GST/HST registration) before the promote, soon; the promote's steps re-run the read-only audit and re-count production
+  subscribers, and stop if either fails.
+
+Part 0 findings so far [V 2026-11-05]:
+- **Production paid subscriptions: 0** (live Stripe not-ended 0; prod org/workspace rows following a real subscription 0;
+  `.probe/gst2-prod-subs.mjs`, read-only). ⚠ Coaches Portal and Tournament Plus are on sale in production, so any sale before
+  this stage reaches production is untaxed and needs `automatic_tax` set by an update: re-count at the promote.
+- **Item 1 answered — the HEAD OFFICE, not the registration, is the switch.** Sandbox tax settings are `pending`
+  (missing `head_office`), no registrations. With `automatic_tax: { enabled: true }`, Checkout, `invoices.createPreview` and
+  `subscriptions.create` are all **refused** ("You must have a valid head office address to enable automatic tax
+  calculation"), not charged 0 (`.probe/gst2/tax-behaviour.mjs`, run 1). So the code must NOT reach production before the live
+  account's tax settings are complete; the live setup is a pre-promote step, not an at-promote one.
+- Sandbox prices: all 14 active are `tax_behavior: exclusive`; 13 products carry `txcd_10103001` (SaaS, business use), but
+  **"FieldLogicHQ - Club · Association" (the `club_large` sandbox slot) carries `txcd_10000000`** (general electronically
+  supplied services) — inconsistent; same GST/HST rate, owner to align.
+- Charging paths A–E confirmed at the handed-over lines (create-checkout :406, create-team-checkout :332, next-season-choice
+  :157 with `trial_end`, plan-move :387 update, :436–441 schedule rebuilt with explicit phases). F (dead add-on) confirmed. No new
+  charging path since the census. **Club and coach checkouts also carry `trial_period_days`**, so the "first charge later"
+  question is not Founding-only.
+- **Fee lines DO ride subscription invoices**: `subscriptionLine` (`lib/platform-stripe-fees.ts` ~:243) creates an invoice item
+  with `subscription:` set, and `creditAgainst` adds lines to a draft subscription invoice. These are RECOVERED STRIPE FEES
+  (returned debits, disputes, foreign-card extra), not T2's payment fee. Own monthly fee invoice (`invoices.create`, ~:448) is
+  separate and untaxed unless set.
+- **Portal tax ID is already on**: `PORTAL_FEATURES.customer_update.allowed_updates` includes `tax_id` at version 2
+  (`lib/stripe-portal-settings.ts:27`). No version bump is needed for Ask 6.
+- `currentReview` callers: `lib/billing-location-server.ts` only (console + Plan & billing reader); no checkout/move/preview
+  path. `US_SALES_OPEN` absent = closed.
+- Ask 2 confirmed: `app/api/billing/move/route.ts` runs `applyMove` (:74) then `copyBillingLocationToStripe` (:78), and the
+  copy swallows Stripe errors (reported, never fails).
+- `lib/workspace-upgrade-preview.ts`: with a trial it quotes $0 today and the pre-tax price as the first charge; with no
+  customer it previews with no address at all.
+- No postal-code/province cross-check in `lib/billing-location.ts` today (format only, :242).
+
+Sandbox setup 2026-11-05: the owner set head office (Canada, Ontario), default tax behaviour "No" (= exclusive) and the preset
+category SaaS · business use (`txcd_10103001`) — tax settings now `active`. **The dashboard offers no registration in a
+sandbox** ("switch to live mode to … register"), so the session added it by API (`.probe/gst2/add-sandbox-registration.mjs`,
+CA standard, active). ⚠ **Stripe refuses a past `active_from`**: 2026-09-26 cannot be recorded; a registration starts the day it
+is added. Live: add it before the promote (any sale made earlier is still owed, at our cost — prod has had none).
+
+Stripe test-mode answers [V 2026-11-05, `.probe/gst2/tax-behaviour-run2.txt`, `tax-behaviour-2-run1.txt`]:
+- ON 13% (377 on 2900), **NS 14%** (406 — the PM summary's "Atlantic 15%" is wrong for NS), BC and QC 5% GST only
+  (`not_collecting` the provincial part), **US 0 with `not_collecting`, not refused** — so a country with no registration
+  charges 0, which also answers item 1 once the head office exists.
+- Item 2: a customer with no address, or country only, previews with tax 0 and `automatic_tax.status: requires_location_inputs`
+  (a silent 0, not an error). Checkout with such a customer is **refused** (`customer_tax_location_invalid`) unless
+  `customer_update[address]=auto`, which we must not pass (Stage 1: the address changes only in our window). So every preview
+  must check the status and refuse on anything but `complete`; Checkout already refuses.
+- Item 3: a `trial` subscription's rate follows the address **at the charge**: made ON (13%), customer moved to AB, the first
+  invoice preview re-priced to 5%. Same for `trial_end` (Founding) and `trial_period_days`.
+- Item 4: a schedule made from a subscription carries the subscription's `automatic_tax` as `default_settings`; phases with
+  no own setting inherit it. From an UNTAXED subscription the default is off; `subscriptionSchedules.update({ default_settings:
+  { automatic_tax: { enabled: true } } })` turns it on. Path E must set it explicitly.
+- Item 5: an ON customer with a `ca_gst_hst` tax ID is still charged 13%.
+- **Province, not postal code, decides the rate**: state ON + BC postal V6C → 13%; state NS + ON postal M5H → 14%. Ask 4 is
+  load-bearing.
+- **A fee-style invoice item (amount only, no tax code, no behaviour) riding a taxed subscription is taxed 13% ON TOP** (the
+  account's preset code and default behaviour). Untreated, the recovered fees are taxed on top by default; the credit-note
+  math in `lib/platform-stripe-fees.ts` would then be wrong.
+- Checkout `tax_id_collection` with an existing customer is **refused** unless `customer_update[name]=auto` (Checkout then
+  overwrites the customer's name with the business name the buyer types).
+- A no-customer preview by `customer_details.address` works (13% for ON): the Premium → Club window can quote the typed club address.
 
 ## Facts handed to you (the 2026-11-05 code census; verify before you build on any)
 

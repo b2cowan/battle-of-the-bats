@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { readFileSync } from 'node:fs';
 import {
-  BILLING_COUNTRIES, BILLING_LOCATION_WORDS as W, REVIEW_REASONS, US_DECLARATION_TEXTS, US_DECLARATION_VERSION,
+  BILLING_COUNTRIES, BILLING_LOCATION_WORDS as W, CA_POSTAL_FIRST_LETTERS, REVIEW_REASONS, US_DECLARATION_TEXTS, US_DECLARATION_VERSION,
   checkBillingLocation, countryChangeReview, countryInfo, evidenceReview, formatBilledTo, formatBillingAddress,
   currentReview, isPoBoxOnly, normalizeCanadianPostalCode, normalizeZipCode, regionName, reviewSentence,
   toStripeAddress, usDeclarationText,
@@ -40,7 +40,11 @@ describe('the lists', () => {
     assert.equal(us.postalLabel, 'ZIP code');
   });
   it('every province and state passes the check with a valid address', () => {
-    for (const r of countryInfo('CA')!.regions) assert.equal(checkBillingLocation({ ...guelph, regionCode: r.code }, closed).ok, true, r.code);
+    // A postal code from each province's own letter (Stage 2 Ask 4), so every province passes with a code of its own.
+    for (const r of countryInfo('CA')!.regions) {
+      const postalCode = `${CA_POSTAL_FIRST_LETTERS[r.code][0]}1A 1A1`;
+      assert.equal(checkBillingLocation({ ...guelph, regionCode: r.code, postalCode }, closed).ok, true, r.code);
+    }
     for (const r of countryInfo('US')!.regions) assert.equal(checkBillingLocation({ ...buffalo, regionCode: r.code }, open).ok, true, r.code);
   });
   it('region names', () => {
@@ -105,6 +109,35 @@ describe('the check', () => {
     else assert.fail();
     const swapped = checkBillingLocation({ ...guelph, postalCode: '14202' }, closed);
     assert.equal(swapped.ok, false);
+  });
+  it('a postal code must belong to the chosen province or territory (GST/HST Stage 2 Ask 4: the province sets the tax)', () => {
+    // Canada Post's first letters, every province and territory.
+    assert.deepEqual({ ...CA_POSTAL_FIRST_LETTERS }, {
+      NL: ['A'], NS: ['B'], PE: ['C'], NB: ['E'], QC: ['G', 'H', 'J'], ON: ['K', 'L', 'M', 'N', 'P'],
+      MB: ['R'], SK: ['S'], AB: ['T'], BC: ['V'], NT: ['X'], NU: ['X'], YT: ['Y'],
+    });
+    assert.deepEqual(Object.keys(CA_POSTAL_FIRST_LETTERS).sort(), countryInfo('CA')!.regions.map((r) => r.code).sort());
+    for (const r of countryInfo('CA')!.regions) {
+      for (const letter of 'ABCEGHJKLMNPRSTVXY'.split('')) {
+        const ok = checkBillingLocation({ ...guelph, regionCode: r.code, postalCode: `${letter}1A 1A1` }, closed).ok;
+        assert.equal(ok, CA_POSTAL_FIRST_LETTERS[r.code].includes(letter), `${r.code} ${letter}`);
+      }
+    }
+    const bc = checkBillingLocation({ ...guelph, postalCode: 'V6C 1T2' }, closed);
+    if (!bc.ok) assert.deepEqual(bc.errors, { postalCode: 'A postal code in Ontario starts with K, L, M, N or P.' });
+    else assert.fail('a BC postal code passed as Ontario');
+    const nl = checkBillingLocation({ ...guelph, regionCode: 'NL' }, closed);
+    if (!nl.ok) assert.equal(nl.errors.postalCode, 'A postal code in Newfoundland and Labrador starts with A.');
+    else assert.fail();
+    const qc = checkBillingLocation({ ...guelph, regionCode: 'QC' }, closed);
+    if (!qc.ok) assert.equal(qc.errors.postalCode, 'A postal code in Quebec starts with G, H or J.');
+    else assert.fail();
+    // No province chosen: only the province is asked for, never a postal sentence about a province nobody chose.
+    const none = checkBillingLocation({ ...guelph, regionCode: '' }, closed);
+    if (!none.ok) assert.equal(none.errors.postalCode, undefined);
+    else assert.fail();
+    // US addresses are unchanged: a ZIP is never compared with its state.
+    assert.equal(checkBillingLocation({ ...buffalo, regionCode: 'CA' }, open).ok, true);
   });
   it('too long', () => {
     const r = checkBillingLocation({ ...guelph, line1: `1 ${'a'.repeat(199)}`, line2: 'b'.repeat(201), city: 'c'.repeat(101) }, closed);

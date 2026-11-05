@@ -1,19 +1,19 @@
 import 'server-only';
+import type Stripe from 'stripe';
 import { supabaseAdmin } from './supabase-admin';
+import { decideBuyerTax } from './billing-tax';
 import { getStripe } from './stripe';
 import { captureError } from './observability/capture';
 import { paidOrPromisedToPay } from './plan-move';
 import { isTeamWorkspaceOrg } from './team-workspace-kind';
 import { isUuid } from './utils';
 import {
-  BILLING_ADDRESS_REQUIRED,
   BILLING_LOCATION_WORDS,
   US_DECLARATION_VERSION,
   checkBillingLocation,
   countryChangeReview,
   currentReview,
   reviewSentence,
-  storedLocationStillValid,
   toStripeAddress,
   type BillingLocation,
   type BillingLocationField,
@@ -142,8 +142,8 @@ async function stampCustomers(customerIds: string[], location: BillingLocation):
  * 2026-11-04). A Premium coach's "Start your club" saves the CLUB's address with the move, but until the move is accepted
  * that portal's Stripe customer is still the coach's own Premium billing: copying it at save time put a club that was never
  * made onto the coach's billing (and Stage 2 taxes by the Stripe customer's address). Never fails the caller.
- * ⚠ Stage 2: a move up charges a prorated invoice inside the move, so once tax is on, this copy must land after the move's
- * checks and BEFORE its Stripe update, or that invoice is taxed at the coach's home address.
+ * Stage 2 (Ask 2, 2026-11-05): the Premium → Club move no longer copies through here; it stamps BEFORE its Stripe update with
+ * `withClubAddressOnStripe`, because the move's prorated invoice is taxed by the customer's address.
  */
 export async function copyBillingLocationToStripe(buyer: BillingBuyer, location: BillingLocation): Promise<void> {
   const ids = await buyerCustomerIds(buyer).catch((error) => {
@@ -279,23 +279,86 @@ export async function requireBillingLocation(buyer: BillingBuyer, sentAddress?: 
   // An address that came with the purchase (the "Start your club" window) is saved to the buyer's own row first, but NOT copied
   // to Stripe: the purchase is not accepted yet. The caller copies it once it is (Ask 2): the move after its move is made, a
   // checkout through the customer the checkout itself charges.
-  let stored: StoredBillingLocation | null;
   if (sentAddress) {
     const saved = await saveBillingLocation(buyer, sentAddress, { copyToStripe: false });
     if (!saved.ok) return { ok: false, response: saveRefusalResponse(saved) };
-    stored = saved.location;
-  } else {
-    stored = await readBillingLocation(buyer);
   }
-  const location = stored ? storedLocationStillValid(stored, usSalesOpen()) : null;
-  if (location) return { ok: true, location };
+  // GST/HST Stage 2: the row as it stands (after any save above), and HOW this buyer is taxed (lib/billing-tax.ts). The review
+  // is `currentReview`, worked out now, and only a US address needs it (Ask 1: a flagged Canadian address is taxed by it).
+  const row = await readRow(buyer);
+  const review = row?.country === 'US'
+    ? currentReview({
+      country: row.country, cardCountry: row.card_country, payoutCountry: await payoutCountryOf(buyer),
+      storedReason: row.review_reason, storedNote: row.review_note,
+    })
+    : null;
+  const tax = decideBuyerTax({ stored: row ? toStored(row) : null, review, usSalesOpen: usSalesOpen() });
+  if (tax.ok) return { ok: true, location: tax.location };
   return {
     ok: false,
     response: Response.json(
-      { error: BILLING_LOCATION_WORDS.required, code: BILLING_ADDRESS_REQUIRED, buyer: buyer.kind === 'org' ? 'club' : 'person' },
+      { error: tax.error, code: tax.code, buyer: buyer.kind === 'org' ? 'club' : 'person' },
       { status: 409 },
     ),
   };
+}
+
+/**
+ * Premium → Club in place (GST/HST Stage 2 Ask 2, owner 2026-11-05): the move's prorated invoice is taxed by the Stripe
+ * customer's address, so the CLUB's address goes onto that customer BEFORE the move's Stripe update, and the address the customer
+ * carried before (the coach's home address) is put back if the move is refused or throws. A refused move still leaves the coach
+ * exactly as they were (Stage 1 Part 3 Ask 2's reason; only its order changed). A stamp that fails refuses the move: charging it
+ * at the coach's home address is the one outcome this exists to stop.
+ */
+export async function withClubAddressOnStripe<T>(
+  buyer: Extract<BillingBuyer, { kind: 'org' }>,
+  location: BillingLocation,
+  isRefused: (result: T) => boolean,
+  move: () => Promise<T>,
+): Promise<{ ok: true; result: T } | { ok: false; response: Response }> {
+  const refusal = () => ({
+    ok: false as const,
+    response: Response.json({ error: BILLING_LOCATION_WORDS.stampFailed, code: 'billing_address_stamp_failed' }, { status: 503 }),
+  });
+  const ids = await buyerCustomerIds(buyer).catch((error) => { void captureError(error, { route: 'billing-location:club-stamp' }); return null; });
+  if (!ids) return refusal();
+  const stripe = getStripe();
+  const before = new Map<string, Stripe.Address | null>();
+  try {
+    for (const id of ids) {
+      const customer = await stripe.customers.retrieve(id);
+      before.set(id, 'deleted' in customer && customer.deleted ? null : (customer as Stripe.Customer).address ?? null);
+    }
+    await Promise.all(ids.map(id => stampStripeCustomerAddress(id, location)));
+  } catch (error) {
+    void captureError(error, { route: 'billing-location:club-stamp' });
+    await putBack(before);
+    return refusal();
+  }
+  let result: T;
+  try {
+    result = await move();
+  } catch (error) {
+    await putBack(before);
+    throw error;
+  }
+  if (isRefused(result)) await putBack(before);
+  return { ok: true, result };
+}
+
+/** The addresses the customers carried before, put back. Reported, never thrown: the caller's own answer is what matters. */
+async function putBack(before: Map<string, Stripe.Address | null>): Promise<void> {
+  await Promise.all([...before].map(async ([id, address]) => {
+    try {
+      await getStripe().customers.update(id, {
+        address: address
+          ? { line1: address.line1 ?? '', line2: address.line2 ?? '', city: address.city ?? '', state: address.state ?? '', postal_code: address.postal_code ?? '', country: address.country ?? '' }
+          : '',
+      });
+    } catch (error) {
+      void captureError(error, { route: 'billing-location:club-stamp-restore' });
+    }
+  }));
 }
 
 /** The address a checkout sends with it (the "Start your club" window), saved to the CLUB's own row before the check. */
@@ -424,6 +487,6 @@ export async function readBillingLocationForConsole(orgId: string): Promise<Cons
   return {
     buyer: buyer.kind === 'org' ? 'club' : 'person',
     location: row ? toStored(row) : null,
-    review: review ? { ...review, setAt: row?.review_reason ? row.review_set_at : null } : null,
+    review: review && row ? { ...review, setAt: row.review_reason ? row.review_set_at : null, country: row.country } : null,
   };
 }

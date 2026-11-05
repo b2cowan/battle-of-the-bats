@@ -11,7 +11,9 @@ import { CANADIAN_PROVINCES } from './canadian-provinces';
  *     caller passes `usSalesOpen` and a US address is refused while it is false.
  *   · A PO Box on its own is not a billing address.
  *   · A US buyer ticks a declaration (T7), saved with its wording version so later wording never loses what was agreed.
- *   · Review reasons never block a purchase; Stage 2 taxes a flagged buyer as Canadian until it clears.
+ *   · A Canadian postal code must belong to the chosen province (Stage 2 Ask 4): the province sets the tax.
+ *   · Review reasons never block a CANADIAN buyer (taxed by the Canadian address); a flagged US address is held before it pays
+ *     (Stage 2 Ask 1, lib/billing-tax.ts).
  */
 
 export type BillingCountry = 'CA' | 'US';
@@ -72,9 +74,14 @@ export const BILLING_LOCATION_WORDS = {
   poBoxHint: 'A PO Box on its own can’t be used.',
   city: 'Enter a city.',
   postal: { CA: 'Enter a postal code like N1H 4H2.', US: 'Enter a ZIP code like 14202.' } as Record<BillingCountry, string>,
+  /** GST/HST Stage 2 Ask 4: the province sets the tax, so a postal code from another province is refused. */
+  postalRegion: (region: string, letters: readonly string[]) =>
+    `A postal code in ${region} starts with ${letters.length === 1 ? letters[0] : `${letters.slice(0, -1).join(', ')} or ${letters[letters.length - 1]}`}.`,
   tooLong: 'Keep this shorter.',
   usDeclaration: 'Tick the box to confirm you’re buying from the United States.',
   saveFailed: 'We couldn’t save your address. Try again.',
+  /** Premium → Club (Stage 2 Ask 2): the club's address could not reach the payment provider before the move, so nothing moved. */
+  stampFailed: 'We couldn’t send your club’s address to our payment provider, so nothing was changed. Try again in a moment.',
   /** The server's refusal when a paid checkout is reached with no valid address on file; the screen opens the window instead. */
   required: 'Add a billing address before you pay.',
 } as const;
@@ -202,6 +209,14 @@ export function normalizeCanadianPostalCode(raw: string | null | undefined): str
   return `${s.slice(0, 3)} ${s.slice(3)}`;
 }
 
+/** Canada Post's first letter of a postal code, by province or territory (GST/HST Stage 2 Ask 4, owner 2026-11-05). Stripe Tax
+ *  taxes by the PROVINCE, not the postal code (verified in test mode 2026-11-05: "Ontario" with a V6C code was charged 13%), so a
+ *  code from another province would be taxed at the wrong rate. X is shared by the Northwest Territories and Nunavut. */
+export const CA_POSTAL_FIRST_LETTERS: Readonly<Record<string, readonly string[]>> = {
+  NL: ['A'], NS: ['B'], PE: ['C'], NB: ['E'], QC: ['G', 'H', 'J'], ON: ['K', 'L', 'M', 'N', 'P'],
+  MB: ['R'], SK: ['S'], AB: ['T'], BC: ['V'], NT: ['X'], NU: ['X'], YT: ['Y'],
+};
+
 /** "12345" or "12345-6789" (a space or no separator before the +4 is accepted and normalized). */
 export function normalizeZipCode(raw: string | null | undefined): string | null {
   const s = (raw ?? '').trim();
@@ -241,6 +256,10 @@ export function checkBillingLocation(input: BillingLocationInput, opts: BillingL
 
   const postalCode = country.code === 'CA' ? normalizeCanadianPostalCode(input.postalCode) : normalizeZipCode(input.postalCode);
   if (!postalCode) errors.postalCode = W.postal[country.code];
+  else if (country.code === 'CA' && !errors.regionCode) {
+    const letters = CA_POSTAL_FIRST_LETTERS[regionCode];
+    if (letters && !letters.includes(postalCode[0])) errors.postalCode = W.postalRegion(regionName('CA', regionCode) ?? regionCode, letters);
+  }
 
   if (country.code === 'US' && input.usDeclared !== true) errors.usDeclared = W.usDeclaration;
 
@@ -318,10 +337,17 @@ export function reviewSentence(
 
 /** What platform admin's Money tab reads (lib/billing-location-server.ts readBillingLocationForConsole). */
 export type ConsoleBillingLocation =
-  | { buyer: 'club' | 'person'; location: StoredBillingLocation | null; review: { reason: ReviewReason; note: string | null; setAt: string | null } | null }
+  | { buyer: 'club' | 'person'; location: StoredBillingLocation | null; review: { reason: ReviewReason; note: string | null; setAt: string | null; country: string } | null }
   | { buyer: 'none' };
 
-export const REVIEW_CONSEQUENCE = 'Until this is looked at, the buyer is treated as Canadian.';
+/** What a flag means for tax, by the address's country (GST/HST Stage 2 Ask 1, owner 2026-11-05): a Canadian address is taxed by
+ *  that address, as before; a US address with disagreeing evidence is held before it pays (lib/billing-tax.ts). */
+export const REVIEW_CONSEQUENCE: Record<BillingCountry, string> = {
+  CA: 'Until this is looked at, the buyer is treated as Canadian.',
+  US: 'Until this is looked at, the buyer can’t pay: a paid step asks them to contact us.',
+};
+export const reviewConsequence = (country: string | null | undefined): string =>
+  REVIEW_CONSEQUENCE[country === 'US' ? 'US' : 'CA'];
 
 /** T7's outside-Canada sign, compared: a US address wants a US card and US payouts; a Canadian address with a US card
  *  or US payouts is the reverse disagreement. A missing card or payout country is no evidence either way. The card is

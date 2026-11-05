@@ -25,6 +25,7 @@ const billingLocationOnFile = {
   billingAddressFromBody: () => null,
   stampStripeCustomerAddress: async () => {},
   copyBillingLocationToStripe: async () => {},
+  withClubAddressOnStripe: async (_b: unknown, _l: unknown, _r: unknown, move: () => Promise<unknown>) => ({ ok: true, result: await move() }),
   recordCardCountry: async () => {},
 };
 

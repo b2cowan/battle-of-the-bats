@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import {
-  BILLING_LOCATION_CONSOLE_WORDS as W, REVIEW_CONSEQUENCE, countryInfo, formatBillingAddress, type ConsoleBillingLocation,
+  BILLING_LOCATION_CONSOLE_WORDS as W, reviewConsequence, countryInfo, formatBillingAddress, type ConsoleBillingLocation,
 } from '@/lib/billing-location';
 import { consoleDate } from '@/lib/console-dates';
 import { sendJson } from '../../console-fetch';
@@ -33,7 +33,7 @@ export function reviewOf(answer: BillingAddressRead) {
 
 /** The review sentence staff read, the same words wherever it shows: the top strip and the row in the address block. */
 export function ReviewText({ review }: { review: NonNullable<ReturnType<typeof reviewOf>> }) {
-  return <>{review.note}{review.setAt ? ` (${consoleDate(review.setAt)})` : ''} {REVIEW_CONSEQUENCE}</>;
+  return <>{review.note}{review.setAt ? ` (${consoleDate(review.setAt)})` : ''} {reviewConsequence(review.country)}</>;
 }
 
 export const BILLING_ADDRESS_ANCHOR = 'billing-address';

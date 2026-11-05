@@ -68,7 +68,9 @@ describe('every paid path checks the billing address before Stripe (paths A–E)
 
   it('the check refuses with one stable code the screens open the window on', () => {
     const code = readCode('lib/billing-location-server.ts');
-    assert.match(code, /code: BILLING_ADDRESS_REQUIRED/);
+    // Stage 2: the code comes from the one tax decision (address required, or a flagged US buyer held: tests/unit/billing-tax.test.ts).
+    assert.match(code, /const tax = decideBuyerTax\(/);
+    assert.match(code, /\{ error: tax\.error, code: tax\.code,/);
     assert.match(code, /status: 409/);
     assert.equal(BILLING_ADDRESS_REQUIRED, 'billing_address_required');
     // The client learns the US switch from the GET, never from its own env.
