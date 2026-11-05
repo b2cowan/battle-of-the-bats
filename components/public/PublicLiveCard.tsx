@@ -7,10 +7,10 @@ import playoffStyles from './PublicPlayoffs.module.css';
 import { ScheduleMatchup } from './PublicGameRow';
 
 /**
- * One game in play (Public tournament pages Stage 2; hub "The end state", Live now): both teams with the score — the
- * team behind drawn soft — or "No score yet" once on the first line before anyone has entered one (Stage 0 · D2); under
- * a hairline, the division and field, and Directions (the club pages' own DirectionsLink: the word at a desk, its symbol
- * alone on a phone). Free of Overview assumptions: the Schedule's live game uses it in Stage 3. `href` (optional) makes
+ * One game in play (Public tournament pages Stage 2; hub "The end state", Live now): both teams with the score — both
+ * names in full ink, because nobody is bold or soft until the game is final (Public page layout standard R6) — or
+ * "No score yet" once on the first line before anyone has entered one (Stage 0 · D2); under a hairline, the division
+ * and field, and Directions (the club pages' own DirectionsLink: the word at a desk, its symbol alone on a phone). Free of Overview assumptions: the Schedule's live game uses it in Stage 3. `href` (optional) makes
  * the teams a door to the game's page.
  */
 export default function PublicLiveCard({ view, href, schedule, foot, playoff }: {
@@ -39,12 +39,12 @@ export default function PublicLiveCard({ view, href, schedule, foot, playoff }: 
   }
   if (schedule) return <article className={scheduleStyles.liveCard} aria-label={label} data-public-live-card>
     <ScheduleMatchup {...schedule} state="live" href={href} noScore={view.noScore} foot={foot}
-      sides={view.sides.map(s => ({ name: s.name, score: s.score, result: s.trailing ? 'lose' : view.sides.some(other => other.trailing) ? 'win' : null }))} />
+      sides={view.sides.map(s => ({ name: s.name, score: s.score, result: null }))} />
   </article>;
   const sides = (
     <>
       {view.sides.map((s, i) => (
-        <span key={i} className={`${styles.side} ${s.trailing ? styles.trailing : ''}`}>
+        <span key={i} className={styles.side}>
           <span>{s.name}</span>
           {view.noScore
             ? i === 0 && <span className={styles.noScore}>{view.noScore}</span>

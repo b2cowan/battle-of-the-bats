@@ -127,7 +127,6 @@ a.row:hover .teams { text-decoration: underline; }
 }
 .side + .side { margin-top: 6px; }
 .side > span:first-child { min-width: 0; overflow-wrap: anywhere; }
-.trailing { color: var(--club-soft); font-weight: 500; }
 .score {
   min-width: 28px;
   text-align: right;

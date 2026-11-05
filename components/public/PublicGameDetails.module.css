@@ -9,7 +9,7 @@
 .timeLine h1 { margin: 0; color: var(--club-text); font: 700 2rem/1.1 var(--club-title-face); font-variant-numeric: tabular-nums; }
 .timeLine .softTime { color: var(--club-dim); }
 /* Cancelled rides the card's top right, where the Schedule list puts a game's status (directions are absent on a cancelled game, so the corner is free). */
-.timeLine .cancelled { margin-left: auto; color: var(--danger); background: var(--club-ground); }
+.timeLine .cancelled { margin-left: auto; }
 .where { margin: 8px 0 0; font: 600 1rem/1.3 var(--club-text-face); }
 .address { margin: 6px 0 0; color: var(--club-dim); font: 400 0.875rem/1.4 var(--club-text-face); overflow-wrap: anywhere; }
 /* Directions rides the time's row at the card's top right (a desk: the small labelled button; a phone: its symbol alone). */

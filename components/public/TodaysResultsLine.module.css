@@ -50,13 +50,15 @@
   font-weight: 600;
   color: var(--club-dim);
 }
-.live { color: var(--danger); }
-/* Still — no pulse, no halo (the line is calm; the red word carries "live"). */
+/* Live is green on every public page (Public page layout standard R9, ask A4; was red). The words stay the 2026-10-28
+   ruling's: Live, Final or the start time. */
+.live { color: var(--club-ok); }
+/* Still — no pulse, no halo (the line is calm; the green word carries "live"). */
 .dot {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: var(--danger);
+  background: var(--club-ok);
 }
 
 .new {

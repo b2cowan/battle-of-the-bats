@@ -78,6 +78,11 @@ U11 · W 7–2", ruled 10-30, a registered exception). A game’s own page: its 
 scores), and its when-and-where card leads on a phone.
 *Keeps:* the phone recipe, the desktop one-line Schedule row and "no location on the all-games list" (10-29); the team
 being read first and bold (10-30). (A2, A3, A11, A13.)
+*Built (Part 2a, 2026-11-05):* both forms are ONE part, `ScheduleMatchup` in `components/public/PublicGameRow.tsx` —
+`form="wide"` (the default: the Schedule and Playoffs) or `form="stacked"`; `size="compact"` (a bracket match) or
+`"large"` (a game's page); `pill={false}` under a "Live now" heading; `place` for the field, with Directions as a strip
+outside the row's link; a side's `placeholder` draws a bracket slot dim. Its status pill is `GameStatusPill` (R9). A new
+page draws a game with these, never its own recipe.
 
 ### R7 · One link row
 One link row, the club kit’s list row: a 16 px title, an optional 12 px line under it, a drawn chevron, **60 px** tall. A
@@ -99,6 +104,9 @@ the pill is left off and the edge stays. Inside a sentence (a team’s line), "L
 own dot. The today’s-games line keeps its word "Live", in green instead of red.
 A 3 px left edge always marks a state: green is live; on club pages the club’s colour is "open".
 *Keeps:* the line’s words Live / Final / start time (10-28). (A4.)
+*Built (Part 2a, 2026-11-05):* one pill set, `GameStatusPill` — Live now green, Final neutral, Unofficial amber,
+Cancelled in the danger colour — on the Schedule, Playoffs and a game's page. The edge has one shape: a standalone card's
+3 px left border with square left corners (`.liveCard`), or inset on a row inside a list (`.edge`).
 
 ### R10 · One box, one type scale
 **8 px** corners on every box and control. Pills stay round, the logo keeps 10, and the view switch’s track is 9 (its

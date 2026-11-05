@@ -1,6 +1,6 @@
 # Public page layout standard — plan
 
-**Status:** DRAWN round 1 2026-11-04; **A1–A9 RULED as recommended 2026-11-04** (owner: "I agree with your recommendations"); A10 (ways to the club) resolved the same day on the recommendation (the host card only when something is open); round 2 (game page + team page) DRAWN 2026-11-04 after /design; **A11–A14 RULED as recommended 2026-11-04** ("I agree with your recommendations, go ahead and make the build prompt"). **Build prompt written 2026-11-04:** `PUBLIC_PAGE_LAYOUT_STANDARD_BUILD_PROMPT.md` (six sessions: 1, 2a, 2b, 3, 4, 5). **Club round session prompt written 2026-11-04:** `PUBLIC_CLUB_PAGE_LAYOUT_REVIEW_PROMPT.md` (two sessions: census + drawings + asks, then the build prompt; its build waits on the tournament build's Parts 1–2b, which share the club kit). **Part 1 built 2026-11-05** — the written standard (`docs/agents/design/PUBLIC_PAGE_LAYOUT_STANDARD.md`), every page body on one wrapper (`PublicPage`), the two-column pages stacking below 1,200 px, the guard (`tests/unit/public-page-layout-guard.test.ts`); next = Part 2a.
+**Status:** DRAWN round 1 2026-11-04; **A1–A9 RULED as recommended 2026-11-04** (owner: "I agree with your recommendations"); A10 (ways to the club) resolved the same day on the recommendation (the host card only when something is open); round 2 (game page + team page) DRAWN 2026-11-04 after /design; **A11–A14 RULED as recommended 2026-11-04** ("I agree with your recommendations, go ahead and make the build prompt"). **Build prompt written 2026-11-04:** `PUBLIC_PAGE_LAYOUT_STANDARD_BUILD_PROMPT.md` (six sessions: 1, 2a, 2b, 3, 4, 5). **Club round session prompt written 2026-11-04:** `PUBLIC_CLUB_PAGE_LAYOUT_REVIEW_PROMPT.md` (two sessions: census + drawings + asks, then the build prompt; its build waits on the tournament build's Parts 1–2b, which share the club kit). **Part 1 built 2026-11-05** — the written standard (`docs/agents/design/PUBLIC_PAGE_LAYOUT_STANDARD.md`), every page body on one wrapper (`PublicPage`), the two-column pages stacking below 1,200 px, the guard (`tests/unit/public-page-layout-guard.test.ts`), committed `20bb5db54` 2026-11-05. **Part 2a built 2026-11-05** — the game row and "live": a live game on the one 104 · rest · 104 grid, nobody bold or soft until final, one pill set (Final neutral, a game's page included), the today's-games line green, the edge one shape, the stacked form built as one shared part (sizes compact / large, place strip) for Parts 3–4; next = Part 2b.
 **Drawings:** https://claude.ai/artifact/NC6Y7ijjYtd3Kr4cGPgbep (source `PUBLIC_PAGE_LAYOUT_STANDARD_DRAWINGS.html`, same folder).
 **PM brief:** `PUBLIC_PAGE_LAYOUT_STANDARD_PM_BRIEF.md`.
 **Parent:** the public tournament site review (`PUBLIC_TOURNAMENT_SITE_REVIEW_PLAN.md`); this pass follows its Stage 8 switch-on and reuses every part it built.
@@ -133,3 +133,23 @@ club has something open now.
   prompt's "it now stops at 960" would have mis-recorded an admin page this build does not touch). Registered as held for
   later parts: the Teams toolbar's 640 cap (2b) and the state card's 620 box (4). Also registered: the team pay page
   (focused, own 640 column) — the census table had missed it.
+- 2026-11-05 — **Part 1 committed** `20bb5db54` (its own files only; the plan, brief, drawings and build prompt went in
+  with it). The club round's prompt and drawings are a separate session's and were left out.
+- 2026-11-05 — **Build Part 2a.** One part for both game forms: `ScheduleMatchup` (`components/public/PublicGameRow.tsx`)
+  takes `form="wide"` (default, the Schedule/Playoffs row) or `form="stacked"` (any width; `size` compact / large;
+  `pill={false}` under a "Live now" heading; `place` with Directions as a strip OUTSIDE the row's link; a side's
+  `placeholder` dim; `footTone="plain"` for a game page's sentences). Every desk one-line rule and both phone Schedule
+  rules are scoped to `.wideForm`, so the stacked form is the drawing's one layout at every width and the phone Schedule
+  is unchanged. **A2:** the live override's `1fr 2.2fr 1fr` grid deleted — measured on the dev server with the Stage 3
+  fixture re-anchored (`prepare`): "Milton Bats U11 Purple (Jackson)" on ONE line at the 960 column (1,280 and 1,536 px
+  windows; grid 104 · 698 · 104), the time on the rows' 15 px line; at 1,024–1,199 px (712 column) it wraps to two, as
+  any row with that name does. **R6 names:** a live game draws neither side bold nor soft (the Schedule's live card had
+  bolded the leader; the Overview's card and a game's page softened the trailer — the page now softens only once final).
+  **R9:** `GameStatusPill` is the one pill set, used on a game's page too (its Final was green; its Cancelled chip is the
+  pill). **A4:** the today's-games line's "Live" and dot `--club-ok`. **Edge:** a standalone card's border with
+  `0 8 8 0` corners (Schedule live card, Playoffs card), inset `.edge` on a stacked row in a list. Not adopted by any page
+  yet: the stacked form's sizes, place strip and placeholder — Parts 3 (Overview, bracket) and 4 (game page, team page)
+  switch onto it. Tests: 9 new in `tests/unit/public-schedule-compact.test.ts`. Layout check: Schedule live, game live,
+  team page clean at 361/390/768/1,440; the Overview's findings are the demo tour bar's own buttons (untouched here);
+  `pubt-playoffs-live` still does not render (fixture aged out; the Schedule's live screen measured the same card).
+  Standard: R6 and R9 gained a "Built" line naming the part.

@@ -9,11 +9,11 @@ import Countdown from './Countdown';
 import DirectionsLink from './DirectionsLink';
 import GameDetailLiveRefresher from './GameDetailLiveRefresher';
 import PublicFactsList from './PublicFactsList';
+import { GameStatusPill } from './PublicGameRow';
 import PublicTournamentState from './PublicTournamentState';
 import RollingNumber from './RollingNumber';
 import ShareScoreButton from './ShareScoreButton';
 import PublicPage from './PublicPage';
-import kit from './ClubKit.module.css';
 import parts from './PublicParts.module.css';
 import styles from './PublicGameDetails.module.css';
 
@@ -49,7 +49,7 @@ export default function PublicGameDetails({ game, data, orgSlug, tournamentSlug,
       <div className={styles.main}>
         <section className={styles.whenWhere} aria-label="When and where">
           <div className={styles.timeLine}><h1 className={view.cancelled ? styles.softTime : undefined}>{view.time}</h1>
-            {view.cancelled && <span className={`${kit.chip} ${styles.cancelled}`}>Cancelled</span>}
+            {view.cancelled && <GameStatusPill state="cancelled" className={styles.cancelled} />}
             {view.directions && <span className={styles.directionsSlot}><DirectionsLink href={view.directions} name={`Directions to ${view.field}`} /></span>}
           </div>
           <p className={styles.where}>{view.date} · {view.field}</p>
@@ -57,9 +57,10 @@ export default function PublicGameDetails({ game, data, orgSlug, tournamentSlug,
         </section>
         <section className={styles.scoreCard} aria-label="Game score">
           <div className={styles.scoreTop}><span>{view.round} · {view.division}</span>
-            {view.stateLabel && <span className={`${kit.chip} ${view.state === 'unofficial' ? kit.chipWarn : kit.chipOk}`}>{view.stateLabel}</span>}
+            {view.stateLabel && <GameStatusPill state={view.state} />}
           </div>
-          {view.sides.map((side, index) => <div key={index} className={`${styles.side} ${side.trailing ? styles.trailing : ''}`}>
+          {/* Soft only once the game is decided: a live game keeps both names in full ink (R6). */}
+          {view.sides.map((side, index) => <div key={index} className={`${styles.side} ${side.trailing && !view.live ? styles.trailing : ''}`}>
             {side.teamId && isPublicPageEnabled(tournament, 'teams')
               ? <Link className={styles.team} href={orgHref(`/${tournamentSlug}/teams/${side.teamId}`)}>{side.name}</Link>
               : <span className={styles.team}>{side.name}</span>}
