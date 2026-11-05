@@ -5,6 +5,7 @@ import fp from '@/components/marketing/ForPage.module.css';
 import { marketingMetadata } from '@/lib/marketing-metadata';
 import { PLAN_ARTICLE_CONTENT } from '@/lib/plan-article-content';
 import { PLAN_CONFIG, formatPriceAmount, gatedPlanTag, gatedPlanSentence } from '@/lib/plan-config';
+import { BILLING_TAX_WORDS } from '@/lib/billing-tax';
 // ⚠ 2026-08-20: this was the ONE persona page not reading the live gate, and it is the one whose
 // availability copy drifted furthest ('in final refinement', 'opening soon' — for a parked plan).
 // The other three ask the gate; now so does this one, so the sentence cannot go stale on its own.
@@ -179,7 +180,7 @@ export default async function ForLeaguesPage() {
                 when League Plus opens.
               </p>
               <div className={fp.tagRow}>
-                {[`Tournament — Free`, `Tournament Plus — ${formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/mo`].map(p => (
+                {[`Tournament — Free`, `Tournament Plus — ${formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/mo ${BILLING_TAX_WORDS.plusTax}`].map(p => (
                   <span key={p} className={kit.tag}>{p}</span>
                 ))}
               </div>

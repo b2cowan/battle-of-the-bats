@@ -5,6 +5,7 @@ import fp from '@/components/marketing/ForPage.module.css';
 import { marketingMetadata } from '@/lib/marketing-metadata';
 import { PLAN_ARTICLE_CONTENT } from '@/lib/plan-article-content';
 import { PLAN_CONFIG, formatPriceAmount } from '@/lib/plan-config';
+import { BILLING_TAX_WORDS } from '@/lib/billing-tax';
 import { getPlanGatingMap } from '@/lib/plan-gating-server';
 import { SEE_IT_LIVE_PATH, SEE_IT_LIVE_COACHES_PATH, sandboxDoorsVisible } from '@/lib/sandbox-door';
 
@@ -227,7 +228,7 @@ export default async function ForClubsPage() {
                 to migrate.
               </p>
               <div className={fp.tagRow}>
-                {[`Tournament — Free`, `Tournament Plus — ${formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/mo`].map(p => (
+                {[`Tournament — Free`, `Tournament Plus — ${formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/mo ${BILLING_TAX_WORDS.plusTax}`].map(p => (
                   <span key={p} className={kit.tag}>{p}</span>
                 ))}
               </div>

@@ -15,6 +15,18 @@
 
 ---
 
+### 🆕 "plus applicable taxes" on every public price — SETTLED 2026-11-05 (`/marketing`, GST/HST Stage 2 Part 4 follow-up; owner T4 "Prices are plus applicable taxes", 2026-10-31)
+
+One phrase, never typed: `BILLING_TAX_WORDS.plusTax` ("plus applicable taxes") beside a price, `pricesPlusTax` ("Prices are plus
+applicable taxes.") as a sentence. A build test fails on a typed copy in app/, components/ or lib/. **Where it goes:** a quiet line
+under the price on every paid, on-sale card (home page and `/pricing` cards through `PricingSection`'s `plusTax`; the Tournament Plus
+block on `/for-tournament-organizers`; the Premium Coaches Portal block and its fact list on `/for-coaches` while checkout is open); on
+the "Tournament Plus — $39/mo" chips of `/for-clubs` and `/for-leagues`; on the Premium price in the `/pricing` FAQ (the price now
+reads from the plan config, not a typed "$29"); and the one sentence in the `/pricing` "How does billing work?" answer. **Where it
+does not:** a free price, a "Free through …" / "Normally $X" price beside it (the Founding Season panel, the promo branches), and a
+gated plan (League Plus "Not open yet", Club "Coming soon") — a price that cannot be bought yet is not yet a charge. Buttons keep
+their short price. When League Plus or Club goes on sale, its block takes the line in the same unit of work.
+
 ### 🆕 The free League plan runs one season at a time — the refusal words — APPROVED 2026-11-04 (owner: *"go with your recommendations"*; `/marketing`, House League 9f words pass, per `BUSINESS_DECISIONS.md` 2026-11-04 "House League 9f·5"). No prices. **Not built** — 9f-1 (`HOUSE_LEAGUE_STAGE9F1_BUILD_PROMPT.md`); the floor is parked (flag off), so no customer reads these yet.
 
 Source of record with placements: `docs/projects/active/HOUSE_LEAGUE_STAGE9F_COPY.md` §6 and §14. The rule: a getting-ready,

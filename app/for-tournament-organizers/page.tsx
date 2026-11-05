@@ -9,6 +9,7 @@ import {
   FOUNDING_SEASON_END_LABEL, FOUNDING_SEASON_SIGNUP_CLOSE_LABEL, FOUNDING_SEASON_YEAR_LABEL,
   FOUNDING_SEASON_DECISION_MONTH_LABEL, FOUNDING_SEASON_NEXT_YEAR_LABEL,
 } from '@/lib/plan-config';
+import { BILLING_TAX_WORDS } from '@/lib/billing-tax';
 import { getPlanGatingMap } from '@/lib/plan-gating-server';
 import { SEE_IT_LIVE_PATH, sandboxDoorsVisible } from '@/lib/sandbox-door';
 
@@ -261,6 +262,7 @@ export default async function ForTournamentOrganizersPage() {
                       <span className={kit.price}>{formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}</span>
                       <span className={kit.small}>/month</span>
                     </div>
+                    <p className={kit.small}>{BILLING_TAX_WORDS.plusTax}</p>
                     <p className={kit.small}>{formatPriceAmount(PLAN_CONFIG.tournament_plus.annualPrice)}/year — save two months</p>
                   </>
                 )}

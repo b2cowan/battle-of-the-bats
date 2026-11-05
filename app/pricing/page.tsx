@@ -2,6 +2,7 @@ import Link from 'next/link';
 import ViewerAwarePlans from './ViewerAwarePlans';
 import { CHAT_PAUSED } from '@/lib/chat-pause';
 import EarlyAccessModalTrigger from '@/components/EarlyAccessModalTrigger';
+import { BILLING_TAX_WORDS } from '@/lib/billing-tax';
 import { getPlanGatingMap } from '@/lib/plan-gating-server';
 import {
   PLAN_CONFIG, formatPriceAmount, isFoundingSeasonPromoActive,
@@ -134,7 +135,7 @@ const FAQS = [
   },
   {
     q: 'How does billing work?',
-    a: 'Tournament Plus is billed monthly or annually in Canadian dollars. Monthly billing renews automatically each month. Annual billing is charged once per year — you pay for 10 months and get 12, which works out to roughly two months free. No contracts, no penalties.',
+    a: `Tournament Plus is billed monthly or annually in Canadian dollars. ${BILLING_TAX_WORDS.pricesPlusTax} Monthly billing renews automatically each month. Annual billing is charged once per year — you pay for 10 months and get 12, which works out to roughly two months free. No contracts, no penalties.`,
   },
   {
     q: 'What happens after the Founding Season offer ends?',
@@ -206,7 +207,7 @@ export default async function PricingPage() {
         if (faq.q === 'Can I buy League Plus, Club, or the Coaches Portal today?') {
           return {
             ...faq,
-            a: `The Premium Coaches Portal is available now through self-serve checkout${teamPromoActive ? ` — free through ${FOUNDING_SEASON_END_LABEL} when you sign up by ${FOUNDING_SEASON_SIGNUP_CLOSE_LABEL}, normally $29/month` : ' at $29/month'}. ${closedPlansLine ? `${closedPlansLine} They're shown here so organizations can plan ahead and express interest.` : ''}`,
+            a: `The Premium Coaches Portal is available now through self-serve checkout${teamPromoActive ? ` — free through ${FOUNDING_SEASON_END_LABEL} when you sign up by ${FOUNDING_SEASON_SIGNUP_CLOSE_LABEL}, normally $29/month` : ` at ${formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)}/month ${BILLING_TAX_WORDS.plusTax}`}. ${closedPlansLine ? `${closedPlansLine} They're shown here so organizations can plan ahead and express interest.` : ''}`,
           };
         }
         return faq;

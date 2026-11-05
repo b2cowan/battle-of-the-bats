@@ -275,8 +275,8 @@ interface PricingSectionProps {
   marketingLayout?: boolean;
   /**
    * GST/HST Stage 2 Part 4 (T4): a quiet "plus applicable taxes" line under each price the buyer will be charged (not a
-   * free, gated or $0 Founding price). The product's own callers turn it on; the marketing pages leave it off until
-   * /marketing rules their copy, so this switch is the one place their render changes.
+   * free, gated or $0 Founding price). Every caller turns it on (onboarding, the home page, /pricing — /marketing ruled
+   * the public copy 2026-11-05); the default stays off so a new caller opts in on purpose.
    */
   plusTax?: boolean;
 }

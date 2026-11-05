@@ -80,19 +80,19 @@ export default function ViewerAwarePlans({ gatingMap, marketingLayout }: { gatin
     return (
       <PricingSection
         gatingMap={gatingMap}
-        marketingLayout={marketingLayout}
+        marketingLayout={marketingLayout} plusTax
         ctaHrefFor={() => '#'}
         ctaLabel={() => '…'}
       />
     );
   }
 
-  if (!billingHref) return <PricingSection gatingMap={gatingMap} marketingLayout={marketingLayout} />;
+  if (!billingHref) return <PricingSection gatingMap={gatingMap} marketingLayout={marketingLayout} plusTax />;
 
   return (
     <PricingSection
       gatingMap={gatingMap}
-      marketingLayout={marketingLayout}
+      marketingLayout={marketingLayout} plusTax
       currentPlan={currentPlan}
       currentPlanComped={currentPlanComped}
       // Same destination for every card: the billing screen is where plan changes are made, and

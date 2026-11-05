@@ -9,6 +9,7 @@ import {
   FOUNDING_SEASON_END_LABEL, FOUNDING_SEASON_SIGNUP_CLOSE_LABEL, FOUNDING_SEASON_YEAR_LABEL,
   FOUNDING_SEASON_DECISION_MONTH_LABEL, FOUNDING_SEASON_NEXT_YEAR_LABEL,
 } from '@/lib/plan-config';
+import { BILLING_TAX_WORDS } from '@/lib/billing-tax';
 import { getPlanGatingMap } from '@/lib/plan-gating-server';
 import { SEE_IT_LIVE_COACHES_PATH, sandboxDoorsVisible } from '@/lib/sandbox-door';
 
@@ -116,7 +117,7 @@ export default async function ForCoachesPage() {
             <ul className={kit.facts}>
               {(checkoutOpen && promoActive
                 ? [`Free through ${FOUNDING_SEASON_END_LABEL}`, `Normally ${formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)}/month`, 'No org account needed']
-                : [`${formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)} CAD / month`, `${formatPriceAmount(PLAN_CONFIG.team.annualPrice)} / season — save two months`, 'No org account needed']
+                : [`${formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)} CAD / month${checkoutOpen ? ` ${BILLING_TAX_WORDS.plusTax}` : ''}`,`${formatPriceAmount(PLAN_CONFIG.team.annualPrice)} / season — save two months`, 'No org account needed']
               ).map(s => (
                 <li key={s}>{s}</li>
               ))}
@@ -207,6 +208,7 @@ export default async function ForCoachesPage() {
                       <span className={kit.price}>{formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)}</span>
                       <span className={kit.small}>/month</span>
                     </div>
+                    {checkoutOpen && <p className={kit.small}>{BILLING_TAX_WORDS.plusTax}</p>}
                     <p className={kit.small}>{formatPriceAmount(PLAN_CONFIG.team.annualPrice)}/season — save two months · Standalone, no org required</p>
                   </>
                 )}

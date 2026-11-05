@@ -511,7 +511,7 @@ export default async function HomePage({
             </p>
           )}
 
-          <PricingSection gatingMap={gatingMap} marketingLayout />
+          <PricingSection gatingMap={gatingMap} marketingLayout plusTax />
 
           <p className={styles.after}>
             <Link href="/pricing" className={`${kit.btn} ${kit.btnSecondary}`}>
