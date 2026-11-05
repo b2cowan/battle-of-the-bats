@@ -21,6 +21,7 @@ import { captureError, withObservability } from '@/lib/observability';
 import { buyerStripeCustomer } from '@/lib/team-checkout-customer';
 import { hadSubscriptionBefore } from '@/lib/plan-move';
 import { requireBillingLocation, stampStripeCustomerAddress } from '@/lib/billing-location-server';
+import { BUYER_NAME_META, TAXED_CHECKOUT } from '@/lib/billing-tax';
 import { toStripeAddress } from '@/lib/billing-location';
 
 function appendSuccess(url: string) {
@@ -298,6 +299,8 @@ export const POST = withObservability(async (req: Request) => {
     request: checkoutRequest,
   });
   const { stripe } = await import('@/lib/stripe');
+  // The buyer's name for its invoices (accounting 6b): a coach buys Premium as a person, so it is the coach's own name.
+  const buyerName = ((user.user_metadata?.full_name ?? user.user_metadata?.name) as string | undefined)?.trim() || null;
   // Stage 0 (S10): the buyer's own Stripe customer, found before one is made, so their history is in one place.
   const { customerId, source } = await buyerStripeCustomer(user.id, {
     async portalCustomerIds(userId) {
@@ -314,7 +317,8 @@ export const POST = withObservability(async (req: Request) => {
     async create() {
       const customer = await stripe.customers.create({
         email: user.email,
-        metadata: { checkoutKind: metadata.checkoutKind, ownerUserId: user.id, planKey: 'team' },
+        metadata: { checkoutKind: metadata.checkoutKind, ownerUserId: user.id, planKey: 'team', ...(buyerName ? { [BUYER_NAME_META]: buyerName } : {}) },
+        ...(buyerName ? { name: buyerName } : {}),
         address: toStripeAddress(located.location),
       });
       return customer.id;
@@ -322,7 +326,7 @@ export const POST = withObservability(async (req: Request) => {
     report: error => void captureError(error, { user: { id: user.id, email: user.email }, route: '/api/billing/create-team-checkout', method: 'POST' }),
   });
   // A customer found again (an earlier portal, or a checkout left before paying) carries the address it is charged at.
-  if (source !== 'created') await stampStripeCustomerAddress(customerId, located.location);
+  if (source !== 'created') await stampStripeCustomerAddress(customerId, located.location, buyerName);
 
   // Keep Premium is a coach who already had Premium free: a trial on top would only push the first charge out. And, as the
   // club checkout rules, no second trial for a customer that ever held a subscription (a new customer has held none).
@@ -332,6 +336,8 @@ export const POST = withObservability(async (req: Request) => {
   const session = await stripe.checkout.sessions.create({
     mode: 'subscription',
     customer: customerId,
+    // GST/HST Stage 2: taxed by the coach's own address, and a GST/HST number may be entered (owner Ask 6: coaches too).
+    ...TAXED_CHECKOUT,
     line_items: [{ price: priceId, quantity: 1 }],
     subscription_data: {
       ...(trialDays > 0 ? { trial_period_days: trialDays } : {}),

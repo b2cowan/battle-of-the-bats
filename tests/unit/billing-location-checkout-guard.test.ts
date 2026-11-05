@@ -31,7 +31,8 @@ describe('every paid path checks the billing address before Stripe (paths A–E)
     assert.ok(check < at(code, 'ensureStripeCustomer(', file), `${file}: the check must come before the Stripe customer is made`);
     // B: the club's address from "Start your club" is saved to the club's own row, then checked.
     assert.match(code, /requireBillingLocation\(buyer, inPlaceClubName \? billingAddressFromBody\(body\.billingAddress\)/, `${file}: the in-place club address is handed to the check, which saves it first`);
-    assert.match(code, /ensureStripeCustomer\(auth\.org, auth\.user\.email, billingLocation\)/, `${file}: the customer carries the address`);
+    // Stage 2 adds the buyer's name for its invoices (the club's) after the address.
+    assert.match(code, /ensureStripeCustomer\(auth\.org, auth\.user\.email, billingLocation, inPlaceClubName \?\? auth\.org\.name\)/, `${file}: the customer carries the address`);
     // The comped Founding choice charges nothing and is never asked.
     assert.match(code, /if \(!isFoundingSeasonTournamentUpgrade\) \{[\s\S]*?requireBillingLocation\(/);
   });
@@ -44,25 +45,27 @@ describe('every paid path checks the billing address before Stripe (paths A–E)
     assert.ok(check < at(code, 'if (shouldApplyDirectly) {', file), `${file}: the check must come before the dev-mock purchase`);
     assert.ok(check < at(code, 'stripe.checkout.sessions.create(', file), `${file}: the check must come before the Stripe checkout`);
     assert.match(code, /address: toStripeAddress\(located\.location\)/, `${file}: a new customer is made with the address`);
-    assert.match(code, /stampStripeCustomerAddress\(customerId, located\.location\)/, `${file}: a found customer is given the address`);
+    assert.match(code, /stampStripeCustomerAddress\(customerId, located\.location, buyerName\)/, `${file}: a found customer is given the address (and, Stage 2, the coach's name)`);
   });
 
   it('D · the Founding next-season choice', () => {
     const file = 'app/api/billing/choose-next-season/route.ts';
     const code = readCode(file);
-    const check = at(code, 'requireBillingLocation(billingBuyerOf(auth.org, auth.user))', file);
+    assert.match(code, /const buyer = billingBuyerOf\(auth\.org, auth\.user\);/);
+    const check = at(code, 'requireBillingLocation(buyer)', file);
     assert.ok(check < at(code, 'recordNextSeasonChoice(', file), `${file}: the check must come before the dev-mock choice`);
     assert.ok(check < at(code, 'stripe.checkout.sessions.create(', file), `${file}: the check must come before the Stripe checkout`);
-    assert.match(code, /ensureStripeCustomer\(auth\.org, auth\.user\.email, located\.location\)/);
+    assert.match(code, /ensureStripeCustomer\(auth\.org, auth\.user\.email, located\.location, buyer\.kind === 'org' \? auth\.org\.name : coachName\)/);
   });
 
-  it('E · a move UP on a live subscription (the safety net), saving the club address on Premium → Club', () => {
+  it('E · a move on a live subscription (up: the safety net; down: its taxed renewal), saving the club address on Premium → Club', () => {
     const file = 'app/api/billing/move/route.ts';
     const code = readCode(file);
     const post = code.slice(at(code, 'export const POST', file), at(code, 'export const DELETE', file));
     const check = at(post, 'requireBillingLocation(', file);
     assert.ok(check < at(post, 'applyMove(', file), `${file}: the check must come before the move reaches Stripe`);
-    assert.match(post, /if \(moveDirection\(ownPlanOf\(org\), toPlan\) === 'up'\) \{[\s\S]*?requireBillingLocation\(/, `${file}: only a move UP charges`);
+    // Stage 2: a move DOWN is asked too — it turns tax on for the renewal it schedules, which Stripe refuses without an address.
+    assert.match(post, /if \(moveDirection\(ownPlanOf\(org\), toPlan\) !== null\) \{[\s\S]*?requireBillingLocation\(/, `${file}: every move is asked (up charges now, down schedules a taxed renewal)`);
     assert.match(post, /requireBillingLocation\(buyer, clubName \? billingAddressFromBody\(body\.billingAddress\)/, `${file}: the in-place club address is handed to the check, which saves it first`);
   });
 

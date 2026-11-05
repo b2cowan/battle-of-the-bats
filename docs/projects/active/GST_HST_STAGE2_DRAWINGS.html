@@ -1,0 +1,724 @@
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Tax on Every Quote</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: a review document (cool grey chrome, Plex) holding true-size specimens of the Warm product kit. Sticky tabs, one
+   section at a time, an Everything / Show only what differs switch where a tab compares before and after. */
+:root{
+  --bg:#E8EBEE; --surface:#FFFFFF; --surface-2:#F3F5F7; --ink:#1A1F24; --muted:#56606B; --line:#D2D7DD;
+  --accent:#24584B; --fix:#2B672A; --fix-soft:#DFEEDB; --flag:#A8361F;
+  --t-new:#4B2E83; --t-res:#1D4A6E; --t-unc:#5E646B; --ask:#8A5A00;
+  --shadow:0 1px 2px rgba(20,30,40,.06),0 6px 20px rgba(20,30,40,.07);
+  --f-doc:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --fix:#93CF8B; --fix-soft:#1E321F; --flag:#F0907A;
+  --t-new:#BBA6EE; --t-res:#8FC2E7; --t-unc:#AAB0B7; --ask:#E8B75A;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --fix:#93CF8B; --fix-soft:#1E321F; --flag:#F0907A;
+  --t-new:#BBA6EE; --t-res:#8FC2E7; --t-unc:#AAB0B7; --ask:#E8B75A;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--f-doc);margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--bg)}
+.doc{max-width:1240px;margin:0 auto;padding-block:16px 90px}
+a{color:var(--accent)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+h1,h2,h3,h4{text-wrap:balance;line-height:1.2}
+.doc h1{font-size:30px;margin:6px 0 6px;letter-spacing:-.01em}
+.doc h2{font-size:22px;margin:6px 0 8px;letter-spacing:-.01em}
+.doc h3{font-size:17px;margin:18px 0 6px}
+.doc p,.doc li{max-width:82ch}
+.muted{color:var(--muted)}
+.eyebrow{font:600 11.5px/1.3 var(--f-mono);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.lede{font-size:16px;max-width:82ch}
+.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);display:flex;gap:4px;flex-wrap:wrap;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);margin:14px 0 8px}
+.tabs button{font:600 14px/1 var(--f-doc);min-height:40px;padding:0 14px;border-radius:8px;border:1px solid transparent;background:none;color:var(--muted);cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--surface);border-color:var(--line);color:var(--ink);box-shadow:var(--shadow)}
+section.pane[hidden]{display:none}
+.viewrow{display:flex;align-items:center;gap:10px;margin:8px 0 12px;flex-wrap:wrap}
+.viewrow .lab{font:600 11.5px/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.sw{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:3px;gap:2px}
+.sw button{font:600 13.5px/1 var(--f-doc);min-height:36px;padding:0 14px;border-radius:7px;border:0;background:none;color:var(--muted);cursor:pointer}
+.sw button[aria-pressed="true"]{background:var(--surface-2);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 18px;box-shadow:var(--shadow);margin:12px 0}
+.card h3{margin-top:0}
+.card ul{margin:6px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:10px;margin:10px 0;background:var(--surface)}
+table.t{border-collapse:collapse;width:100%;font-size:14px;min-width:760px}
+table.t th{font:600 11px/1.3 var(--f-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+table.t td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+table.t tr:last-child td{border-bottom:0}
+table.t td ins{text-decoration:none;background:var(--fix-soft);color:var(--fix);font-weight:600;padding:0 3px;border-radius:3px}
+.mk{font:700 10.5px/1 var(--f-mono);letter-spacing:.04em;border-radius:5px;padding:4px 6px;cursor:pointer;border:1.5px solid currentColor;background:var(--surface);white-space:nowrap;min-height:24px}
+.mk.new{color:var(--t-new)} .mk.res{color:var(--t-res)} .mk.unc{color:var(--t-unc)} .mk.ask{color:var(--ask)}
+.cap{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 6px;font:600 12px/1.3 var(--f-mono);color:var(--muted)}
+.cap b{color:var(--ink)}
+.pair{display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;margin:8px 0}
+.pair>div{min-width:0;max-width:100%}
+.fr{border-radius:12px;outline:1px solid var(--line);box-shadow:var(--shadow);overflow:hidden;max-width:100%}
+.w520{width:520px} .w600{width:600px} .w480{width:480px} .w390{width:390px} .w960{width:960px}
+.scroll{overflow-x:auto;max-width:100%;padding-bottom:4px}
+.flowt{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1.6fr) auto;gap:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface);margin:12px 0}
+.flowt>div{padding:10px 14px;border-bottom:1px solid var(--line);font-size:14px;min-width:0}
+.flowt>div.h{font:600 11px/1.3 var(--f-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);background:var(--surface-2)}
+.flowt>div:nth-last-child(-n+3){border-bottom:0}
+.flowt .go{font:600 13px/1.3 var(--f-doc);color:var(--accent);background:none;border:0;cursor:pointer;padding:0;text-align:left;min-height:24px}
+@media (max-width:700px){.flowt{grid-template-columns:minmax(0,1fr)}.flowt>div.h{display:none}.flowt>div{border-bottom:0}.flowt>div:nth-child(3n){border-bottom:1px solid var(--line)}}
+.samebar{display:none;border:1px dashed var(--line2,var(--line));border-radius:8px;padding:8px 12px;margin:2px 0;font:600 12px/1.4 var(--f-mono);color:var(--muted);text-align:center}
+body[data-view="diff"] .same{display:none}
+body[data-view="diff"] .samebar{display:block}
+
+/* ---------- the product kit (Warm), drawn from the shipped components ---------- */
+.ak{--paper:#F8F4ED;--card:#FFFFFF;--ink:#241E15;--soft:#4A4235;--dim:#615A54;--line:rgba(70,55,30,.12);--line2:rgba(70,55,30,.20);
+  --olive:#57651E;--olive-soft:rgba(87,101,30,.10);--edge:rgba(87,101,30,.3);--cta:#D9F99D;--cta-ink:#241E15;--red:#B03A22;--amber:#835006;
+  --scrim:rgba(36,30,21,.34);--new:rgba(75,46,131,.08);--track:#241E15;--track-ink:#FFFFFF;
+  background:var(--paper);color:var(--ink);font:14px/1.5 'Inter',system-ui,sans-serif;text-align:left}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ak{--paper:#1A1712;--card:#241F18;--ink:#F3EDE2;--soft:rgba(243,237,226,.78);--dim:rgba(243,237,226,.6);--line:rgba(255,255,255,.1);--line2:rgba(255,255,255,.2);--olive:#D9F99D;--olive-soft:rgba(217,249,157,.10);--edge:rgba(217,249,157,.25);--red:#F08A74;--amber:#E8B75A;--scrim:rgba(0,0,0,.5);--new:rgba(187,166,238,.12);--track:#F3EDE2;--track-ink:#241F18}}
+:root[data-theme="dark"] .ak{--paper:#1A1712;--card:#241F18;--ink:#F3EDE2;--soft:rgba(243,237,226,.78);--dim:rgba(243,237,226,.6);--line:rgba(255,255,255,.1);--line2:rgba(255,255,255,.2);--olive:#D9F99D;--olive-soft:rgba(217,249,157,.10);--edge:rgba(217,249,157,.25);--red:#F08A74;--amber:#E8B75A;--scrim:rgba(0,0,0,.5);--new:rgba(187,166,238,.12);--track:#F3EDE2;--track-ink:#241F18}
+.ak *{box-sizing:border-box}
+.ak .newbox{background:var(--new);outline:2px solid var(--t-new);outline-offset:2px;border-radius:4px;cursor:pointer}
+/* window (KitDialog): question 416, form 520 */
+.ak.scrimbg{background:var(--scrim);padding:28px 40px;display:flex;justify-content:center}
+.ak .win{width:520px;max-width:100%;background:var(--card);border:1px solid var(--edge);border-radius:12px;display:flex;flex-direction:column}
+.ak .win.q{width:416px}
+.ak .wh{display:flex;align-items:flex-start;gap:10px;padding:18px 24px 6px}
+.ak .wh .tb{flex:1;min-width:0}
+.ak .wh h4{margin:0;font:700 16px/1.25 'Inter';color:var(--ink)}
+.ak .wh .x{width:32px;height:32px;display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:20px;line-height:1}
+.ak .wb{padding:10px 24px 16px;color:var(--soft);display:flex;flex-direction:column;gap:14px}
+.ak .wb p{margin:0}
+.ak .wf{display:flex;align-items:center;gap:10px;padding:14px 24px;border-top:1px solid var(--line)}
+.ak .wf .fs{flex:1;font-size:12px;color:var(--dim);min-width:0}
+.ak .wf .fe{display:flex;gap:8px}
+.ak .btn{font:650 14px/1.25 'Inter';border-radius:6px;padding:7px 14px;min-height:34px;display:inline-flex;align-items:center;justify-content:center;white-space:nowrap}
+.ak .btn.lime{background:var(--cta);color:var(--cta-ink)}
+.ak .btn.out{background:var(--card);color:var(--soft);border:1px solid var(--line2)}
+.ak .btn.wait{opacity:.55}
+.ak .fld{display:flex;flex-direction:column;gap:5px}
+.ak .lb{font:650 12px/1.3 'Inter';color:var(--soft)}
+.ak .in{height:36px;border:1px solid var(--line2);background:var(--paper);border-radius:6px;padding:0 10px;font-size:14px;color:var(--ink);display:flex;align-items:center;min-width:0;white-space:nowrap;overflow:hidden}
+.ak .in.sel{justify-content:space-between}
+.ak .in.sel::after{content:"";width:7px;height:7px;border-right:1.5px solid var(--dim);border-bottom:1.5px solid var(--dim);transform:rotate(45deg) translate(-2px,-2px);flex:none;margin-left:10px}
+.ak .in.hot{border-color:var(--olive);box-shadow:0 0 0 2px var(--olive-soft)}
+.ak .hint{font-size:12px;line-height:1.45;color:var(--dim);margin:0}
+.ak .subhead{font:700 14px/1.3 'Inter';color:var(--ink);margin:4px 0 -6px}
+.ak .webaddr{display:grid;gap:5px;font-size:12px;color:var(--soft)}
+.ak .band{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--amber);border-radius:8px;padding:10px 14px;display:grid;gap:2px}
+.ak .band .e{font:700 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--amber)}
+.ak .band b{color:var(--ink);font-size:14px}
+.ak .band span{font-size:13px;color:var(--soft)}
+.ak .cyc{display:flex;gap:4px;padding:4px;border:1px solid var(--line2);border-radius:8px}
+.ak .cyc span{flex:1;min-height:36px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--soft)}
+.ak .cyc span.on{background:var(--track);color:var(--track-ink)}
+/* the move window's figures (.figures): one frame, a hairline between rows */
+.ak dl.fig{margin:0;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.ak dl.fig>div{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:9px 11px;border-bottom:1px solid var(--line);background:var(--card)}
+.ak dl.fig>div:last-child{border-bottom:0}
+.ak dl.fig dt{font-size:12px;color:var(--soft)}
+.ak dl.fig dd{margin:0;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap;text-align:right}
+.ak dl.fig dd small{display:block;font:400 12px/1.4 'Inter';color:var(--dim)}
+.ak dl.fig .cr dd{color:var(--olive)}
+/* phone (≤640): a row wraps, the figure drops under its label, left-aligned (shipped .figures > div { flex-wrap: wrap }) */
+.ak.ph dl.fig>div{flex-wrap:wrap}
+.ak.ph dl.fig dd{text-align:left}
+.ak.ph .btn{min-height:44px}
+/* LoadingState inline: a pulsing dot and a "Loading …" label, no frame */
+.ak .lds{display:flex;align-items:center;gap:8px;padding:8px 0;color:var(--dim);font-size:14px}
+.ak .lds::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--dim);flex:none}
+@media (prefers-reduced-motion:no-preference){.ak .lds::before{animation:pd 1.5s ease-in-out infinite}}
+@keyframes pd{0%,100%{opacity:.3;transform:scale(.8)}50%{opacity:1;transform:scale(1.2)}}
+/* PageNotice: icon, tinted fill, tinted border */
+.ak .pn{display:flex;gap:8px;align-items:flex-start;border:1px solid;border-radius:8px;padding:10px 12px;font-size:13.5px;color:var(--ink)}
+.ak .pn::before{content:"⚠";font-size:14px;line-height:1.3;flex:none}
+.ak .pn.bad{border-color:rgba(176,58,34,.35);background:rgba(176,58,34,.07)}
+.ak .pn.bad::before{color:var(--red)}
+.ak .pn.warn{border-color:rgba(131,80,6,.35);background:rgba(131,80,6,.08)}
+.ak .pn.warn::before{color:var(--amber)}
+.ak .ferr{font-size:12px;line-height:1.45;color:var(--red);margin:0}
+.ak .in.badin{border-color:var(--red)}
+.ak .door{color:var(--olive);font-weight:650}
+/* pay step */
+.ak .billedto{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:13px;color:var(--soft)}
+.ak .billedto b{font-weight:650;color:var(--soft)}
+.ak .pc{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ak .pc>div{border:1px solid var(--line2);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:3px;background:var(--card)}
+.ak .pc>div.on{border-color:var(--olive);background:var(--olive-soft)}
+.ak .pc b{color:var(--ink)} .ak .pc .p{font-variant-numeric:tabular-nums;color:var(--ink)}
+.ak .rad{width:14px;height:14px;border-radius:50%;border:1.5px solid var(--dim);display:inline-block;vertical-align:-2px;margin-right:6px}
+.ak .on .rad{border:4px solid var(--olive)}
+/* billing page */
+.ak.page{padding:22px 32px 26px}
+.ak .pgh .eye{font:700 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--dim)}
+.ak .pgh h4{margin:2px 0 18px;font:700 20px/1.2 'Inter'}
+.ak .kc{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:18px 20px}
+.ak .plan{display:grid;grid-template-columns:1.1fr 1fr;gap:24px;margin-bottom:28px}
+.ak .plan .eye{font:700 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--soft);display:flex;gap:8px;align-items:center}
+.ak .chip{font:700 10px/1.4 'IBM Plex Mono',monospace;letter-spacing:.05em;border-radius:999px;padding:2px 8px;border:1px solid}
+.ak .chip.ok{color:var(--olive);border-color:rgba(52,102,42,.25);background:rgba(52,102,42,.07)}
+.ak .plan h5{margin:6px 0 2px;font:750 20px/1.2 'Inter'}
+.ak .plan .price{margin:0;color:var(--soft);font-variant-numeric:tabular-nums}
+.ak .plan .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.ak .bar{height:10px;border-radius:5px;background:var(--line);overflow:hidden;margin:6px 0}
+.ak .bar i{display:block;height:100%;width:60%;background:var(--olive)}
+.ak .sect{margin-bottom:22px}
+.ak .sect h5{margin:0 0 10px;font:700 16px/1.2 'Inter'}
+.ak .ghost{border:1px dashed var(--line2);border-radius:8px;padding:12px 14px;color:var(--dim);font-size:12.5px}
+/* asks */
+.ask{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--t-res);border-radius:0 12px 12px 0;padding:14px 18px;margin:14px 0;box-shadow:var(--shadow)}
+.ask h3{margin:0 0 4px;font-size:17px}
+.ask h3 .no{font:700 13px/1 var(--f-mono);color:var(--muted);margin-right:8px}
+.ask .opts{display:flex;flex-direction:column;gap:4px;margin:10px 0}
+.ask .opts label{display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.45;padding:10px;border-radius:8px;min-height:44px;cursor:pointer}
+.ask .opts label:hover{background:var(--surface-2)}
+.ask .opts label.rec{background:var(--fix-soft)}
+.ask .opts label.rec::after{content:"Recommended";margin-left:auto;font:700 10.5px/1.6 var(--f-mono);color:var(--fix);white-space:nowrap;padding-left:8px}
+.ask .opts input{width:20px;height:20px;flex:none;margin:0;accent-color:var(--accent)}
+.ask .rides{font-size:13.5px;color:var(--muted);margin:4px 0}
+.ask textarea,.paste textarea{width:100%;box-sizing:border-box;min-height:48px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:14px/1.45 var(--f-doc);background:var(--surface);color:var(--ink);resize:vertical}
+.paste{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow);margin-top:16px;display:flex;flex-direction:column;gap:8px}
+.paste textarea{min-height:200px;font:12.5px/1.5 var(--f-mono)}
+.btn-d{font:600 14px/1 var(--f-doc);min-height:40px;padding:0 14px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.btn-d.pri{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+dialog.note{border:1px solid var(--line);border-radius:14px;padding:0;max-width:min(520px,calc(100vw - 32px));background:var(--surface);color:var(--ink);box-shadow:0 20px 60px rgba(0,0,0,.3)}
+dialog.note::backdrop{background:rgba(10,15,20,.45)}
+dialog.note .nh{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line)}
+dialog.note .nh h3{margin:0;font-size:16px;flex:1}
+dialog.note .nh button{font-size:22px;background:none;border:0;color:var(--muted);cursor:pointer;min-width:44px;min-height:44px}
+dialog.note .nb{padding:12px 16px 16px;font-size:14.5px}
+</style>
+
+<div class="doc">
+<div class="eyebrow">GST/HST · Stage 2 · drawings · 2026-11-05</div>
+<h1>Tax on every quote: what the buyer sees before paying</h1>
+<p class="lede">Turning tax on changes every price we quote. Where our own window charges a card (a plan move, a portal becoming a club), the window shows the amount, the tax by name and what is due today, using Stripe’s own figures for the buyer’s province. Where the buyer goes on to Stripe’s payment page, our screens say “plus applicable taxes” and Stripe’s page shows the tax before they pay. Every figure here is a made-up example worked out at Ontario’s 13% HST. Everything is a proposal until you rule on the asks in the last tab.</p>
+
+<div class="tabs" role="tablist" id="tabs">
+  <button role="tab" aria-selected="true" data-t="p1">1 · Where tax shows</button>
+  <button role="tab" aria-selected="false" data-t="p2">2 · Move to a bigger plan</button>
+  <button role="tab" aria-selected="false" data-t="p3">3 · Start your club, paying now</button>
+  <button role="tab" aria-selected="false" data-t="p4">4 · Start your club at checkout</button>
+  <button role="tab" aria-selected="false" data-t="p5">5 · Monthly or yearly</button>
+  <button role="tab" aria-selected="false" data-t="p6">6 · Plan &amp; billing</button>
+  <button role="tab" aria-selected="false" data-t="p7">7 · Price sentences</button>
+  <button role="tab" aria-selected="false" data-t="p8">8 · Asks</button>
+</div>
+
+<!-- ============ 1 ============ -->
+<section class="pane" id="p1">
+  <h2>One rule: a window that charges shows the tax; a price that comes before Stripe’s page says “plus applicable taxes”</h2>
+  <p>Each way of paying, what the buyer sees about tax before the money moves, and the tab that draws it.</p>
+  <div class="flowt">
+    <div class="h">Where</div><div class="h">What the buyer sees about tax</div><div class="h">Drawn</div>
+    <div><b>Move to a bigger club plan</b><br><span class="muted">our window, charged now</span></div><div>The amount, <b>HST 13%</b>, and <b>Due today</b>. The renewal price says “plus applicable taxes”.</div><div><button class="go" data-go="p2">Tab 2</button></div>
+    <div><b>Start your club</b>, Premium paying now<br><span class="muted">our window, charged now</span></div><div>The charge and the credit as today, then <b>HST 13%</b>, then <b>Due today</b>. Changing the club’s province checks the charge again.</div><div><button class="go" data-go="p3">Tab 3</button></div>
+    <div><b>Start your club</b>, through checkout<br><span class="muted">our window, then Stripe’s page</span></div><div>With the trial: $0.00 today, and the first charge says “plus applicable taxes”. With no trial: the first month, <b>HST 13%</b>, and <b>Due today</b>.</div><div><button class="go" data-go="p4">Tab 4</button></div>
+    <div><b>Upgrade</b>, Reactivate, a first plan<br><span class="muted">our question, then Stripe’s page</span></div><div>Each price says “plus applicable taxes”. Stripe’s payment page shows the HST and the total before the buyer pays.</div><div><button class="go" data-go="p5">Tab 5</button></div>
+    <div><b>Coach Premium</b> sign-up<br><span class="muted">sign-up page, then Stripe’s page</span></div><div>Same as above: the sign-up’s price line says “plus applicable taxes”, and Stripe’s page shows the tax.</div><div><button class="go" data-go="p7">Tab 7</button></div>
+    <div><b>Plan &amp; billing</b> plan card</div><div>The price, then “plus applicable taxes” (your Part 0 ruling: no tax figure on the card).</div><div><button class="go" data-go="p6">Tab 6</button></div>
+    <div><b>Founding next-season choice</b><br><span class="muted">nothing charged today</span></div><div>The sentence that names the first charge says “plus applicable taxes”.</div><div><button class="go" data-go="p7">Tab 7</button></div>
+  </div>
+  <div class="card"><h3>What every tax row follows</h3><ul>
+    <li><b>The figure is Stripe’s, never ours.</b> Stripe works the tax out for the buyer’s billing address when the window opens; the card is charged exactly what was shown.</li>
+    <li><b>The row is named the way Stripe names the tax.</b> “HST 13%” in Ontario, “HST 14%” in Nova Scotia, “HST 15%” in New Brunswick, Newfoundland and Labrador and PEI, “GST 5%” everywhere else until we register for a province’s own tax. A club that typed its GST/HST number still pays it.</li>
+    <li><b>If Stripe can’t work the tax out, the window doesn’t show a figure without it.</b> It says so in one sentence and offers Check again (tab 3, frame 5).</li>
+    <li><b>A US address</b> pays no Canadian tax. While US sales are closed it can’t reach a paid button anyway (Stage 1).</li>
+  </ul></div>
+  <div class="card"><h3>Checked against the code before drawing</h3><ul>
+    <li><b>“Tax and Total rows” would give some windows two totals.</b> “Start your club” already ends in <b>Due today</b>, which is the total. The drawing adds one tax row above it rather than a second total. <button class="mk ask" data-go-ask="1">Ask 1</button></li>
+    <li><b>The monthly-or-yearly question was missing from the list.</b> Stage 1 put the “Billed to … Change” line on it so that this stage could hang the tax there. Tab 5 draws it. <button class="mk ask" data-go-ask="3">Ask 3</button></li>
+    <li><b>“Quote the typed club address” needs a second look.</b> The figures load when the window opens, before the coach has touched the address, so a changed province has to load the charge again. And today, while the figures load, the club name and address disappear from the window. The drawing keeps them on screen. <button class="mk ask" data-go-ask="2">Ask 2</button></li>
+    <li><b>Nothing checks the charge against the quote when the button is pressed.</b> Tab 3 frame 4 adds that check: a charge that no longer matches is not made.</li>
+    <li><b>Two of Part 1’s refusals have no place on the screens yet</b> (“we need to look at your account” and “we couldn’t send your club’s address”). Tab 3 frames 6 and 7 and tab 2 draw where they show.</li>
+    <li><b>The shipped “couldn’t work out the tax” sentence named the wrong place on two screens</b> (“Check the address on Plan &amp; billing”, where there is no such page yet, or the address is in the same window). Reworded to name no place.</li>
+  </ul></div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="pane" id="p2" hidden>
+  <h2>Move to a bigger club plan: the tax by name, then what is due today</h2>
+  <p>A club on Club moves to Club · Association partway through its month. Today the window shows one figure, which is Stripe’s amount before tax. After, the same row is followed by the tax and by <b>Due today</b>, the amount the card is charged when the owner presses Move. <button class="mk ask" data-go-ask="1">Ask 1</button></p>
+  <div class="viewrow"><span class="lab">View</span>
+    <div class="sw" role="group" aria-label="View"><button data-v="all" aria-pressed="true">Everything</button><button data-v="diff" aria-pressed="false">Show only what differs</button></div></div>
+  <div class="pair">
+    <div>
+      <div class="cap"><b>Before</b> · shipped · the question window, 416 wide <button class="mk unc" data-note="UNCHANGED: the window as it ships today.">UNCHANGED</button></div>
+      <div class="fr w480"><div class="ak scrimbg" style="padding:28px 32px"><div class="win q">
+        <div class="wh"><div class="tb"><h4>Move to Club · Association?</h4></div><div class="x">×</div></div>
+        <div class="wb">
+          <p class="same">Guelph Minor Baseball moves to Club · Association today and can hold up to 30 teams.</p>
+          <div class="samebar">Same sentence</div>
+          <dl class="fig">
+            <div><dt>Today, for the rest of this billing period</dt><dd>$96.00 CAD</dd></div>
+            <div><dt>From December 3, 2026</dt><dd>$379.00 CAD / month</dd></div>
+          </dl>
+          <p class="hint">Same subscription and payment method, with no second checkout. The prorated amount comes from Stripe before you confirm.</p>
+        </div>
+        <div class="wf"><span class="fs"></span><span class="fe"><span class="btn out">Cancel</span><span class="btn lime">Move to Club · Association</span></span></div>
+      </div></div></div>
+    </div>
+    <div>
+      <div class="cap"><b>After</b> <button class="mk res" data-note="RESTYLED: two rows join the shipped figures frame (the tax, and Due today), the renewal figure gains a quiet second line, and the hint names the tax. The title, sentence and buttons are unchanged.">RESTYLED</button></div>
+      <div class="fr w480"><div class="ak scrimbg" style="padding:28px 32px"><div class="win q">
+        <div class="wh"><div class="tb"><h4>Move to Club · Association?</h4></div><div class="x">×</div></div>
+        <div class="wb">
+          <p class="same">Guelph Minor Baseball moves to Club · Association today and can hold up to 30 teams.</p>
+          <div class="samebar">Same sentence</div>
+          <dl class="fig">
+            <div><dt>Today, for the rest of this billing period</dt><dd>$96.00 CAD</dd></div>
+            <div class="newbox"><dt>HST 13%</dt><dd>$12.48 CAD</dd></div>
+            <div class="newbox"><dt>Due today</dt><dd>$108.48 CAD</dd></div>
+            <div><dt>From December 3, 2026</dt><dd>$379.00 CAD / month<small class="newbox">plus applicable taxes</small></dd></div>
+          </dl>
+          <p class="hint">Same subscription and payment method, with no second checkout. The prorated amount <span class="newbox">and its tax come</span> from Stripe before you confirm.</p>
+        </div>
+        <div class="wf"><span class="fs"></span><span class="fe"><span class="btn out">Cancel</span><span class="btn lime">Move to Club · Association</span></span></div>
+      </div></div></div>
+    </div>
+  </div>
+  <div class="pair">
+    <div>
+      <div class="cap"><b>No billing address on file</b> <button class="mk new" data-note="NEW state for this window, with UNCHANGED words. The charge can't be worked out without an address, so the window says so and offers the Billing address window (Stage 1), which comes back here with the figures once the address is saved. Today this would show a red notice and a Check again that can never succeed.">NEW</button></div>
+      <div class="fr w480"><div class="ak scrimbg" style="padding:28px 32px"><div class="win q">
+        <div class="wh"><div class="tb"><h4>Move to Club · Association?</h4></div><div class="x">×</div></div>
+        <div class="wb">
+          <div class="pn bad">Add a billing address before you pay.</div>
+        </div>
+        <div class="wf"><span class="fs"></span><span class="fe"><span class="btn out">Cancel</span><span class="btn lime newbox" data-note="Opens the Billing address window; saving returns here with the figures.">Billing address</span></span></div>
+      </div></div></div>
+    </div>
+  </div>
+  <div class="card"><h3>How it behaves</h3><ul>
+    <li>Pressing Move works the charge out once more first; if it no longer matches what was shown, nothing is charged and the new figures show (tab 3, frame 4).</li>
+    <li>The tax row’s name and rate come from Stripe’s answer for the club’s billing address. Two taxes (a province we later register for) would be two rows.</li>
+    <li><b>Due today</b> is the word “Start your club” already uses for the same thing, so a club reads one word for “what my card is charged now”.</li>
+    <li>The renewal row keeps its price and adds “plus applicable taxes” underneath. It doesn’t show a taxed renewal figure: that would be our arithmetic, and the rate can change if the address changes before the renewal.</li>
+    <li>A move <b>down</b> charges nothing today. Its sentence “From then it’s $219 CAD / month.” gains “plus applicable taxes” (tab 7).</li>
+  </ul></div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="pane" id="p3" hidden>
+  <h2>Start your club, paying now: one tax row above Due today</h2>
+  <p>A coach paying for Premium starts a club in place. The window already shows the charge and the credit as lines that add up to <b>Due today</b>. Today those lines disappear the moment an invoice carries tax. After, they stay, a tax row joins them, and <b>Due today</b> becomes the taxed total. The tax is worked out for the <b>club’s</b> address typed in this window, which is the address the club’s card is charged against (your Part 0 ruling). <button class="mk ask" data-go-ask="1">Ask 1</button> <button class="mk ask" data-go-ask="2">Ask 2</button></p>
+  <div class="viewrow"><span class="lab">View</span>
+    <div class="sw" role="group" aria-label="View"><button data-v="all" aria-pressed="true">Everything</button><button data-v="diff" aria-pressed="false">Show only what differs</button></div></div>
+  <div class="pair">
+    <div>
+      <div class="cap"><b>Before</b> · shipped · the form window, 520 wide, whole body <button class="mk unc" data-note="UNCHANGED: the window as it ships today.">UNCHANGED</button></div>
+      <div class="scroll"><div class="fr w600"><div class="ak scrimbg"><div class="win">
+        <div class="wh"><div class="tb"><h4>Start your club</h4></div><div class="x">×</div></div>
+        <div class="wb">
+          <div class="same" style="display:flex;flex-direction:column;gap:14px">
+          <p>You’ll become the owner of your club. Your team stays exactly where it is, and you stay its head coach.</p>
+          <div class="fld"><span class="lb">Club name *</span><span class="in">Guelph Royals Baseball</span><p class="hint">Shown across your club’s pages. You can change it later.</p></div>
+          <p class="subhead">Club billing address</p>
+          <p class="hint">We filled in your home address. Change it if the club has its own.</p>
+          <div class="fld"><span class="lb">Country *</span><span class="in sel">Canada</span></div>
+          <div class="fld"><span class="lb">Province or territory *</span><span class="in sel">Ontario</span></div>
+          <div class="fld"><span class="lb">Street address *</span><span class="in">18 Oak Crescent</span></div>
+          <div class="fld"><span class="lb">Apartment, suite or unit</span><span class="in"></span></div>
+          <div class="fld"><span class="lb">City *</span><span class="in">Guelph</span></div>
+          <div class="fld"><span class="lb">Postal code *</span><span class="in" style="width:160px">N1E 2K7</span></div>
+          <div class="webaddr"><span>Web address</span><span>fieldlogichq.com/guelph-royals</span><p class="hint">Stays as it is, so links you have already sent keep working. You can change it any time in club settings.</p></div>
+          </div>
+          <div class="samebar">Name, address and web address unchanged</div>
+          <dl class="fig">
+            <div><dt>Club for the rest of this period</dt><dd>$146.00 CAD</dd></div>
+            <div class="cr"><dt>Credit for unused Premium Coaches Portal time</dt><dd>−$19.33 CAD</dd></div>
+            <div><dt>Due today</dt><dd>$126.67 CAD</dd></div>
+            <div><dt>From December 3, 2026</dt><dd>$219.00 CAD / month</dd></div>
+          </dl>
+          <p class="hint">Same subscription and payment method. Your monthly billing stays monthly. No second trial.</p>
+        </div>
+        <div class="wf"><span class="fs">Charged to the payment method you already use.</span><span class="fe"><span class="btn out">Cancel</span><span class="btn lime">Start my club</span></span></div>
+      </div></div></div></div>
+    </div>
+    <div>
+      <div class="cap"><b>After</b> <button class="mk res" data-note="RESTYLED: one tax row above Due today; Due today now includes the tax; the renewal figure gains 'plus applicable taxes'. Nothing above the figures changes.">RESTYLED</button></div>
+      <div class="scroll"><div class="fr w600"><div class="ak scrimbg"><div class="win">
+        <div class="wh"><div class="tb"><h4>Start your club</h4></div><div class="x">×</div></div>
+        <div class="wb">
+          <div class="same" style="display:flex;flex-direction:column;gap:14px">
+          <p>You’ll become the owner of your club. Your team stays exactly where it is, and you stay its head coach.</p>
+          <div class="fld"><span class="lb">Club name *</span><span class="in">Guelph Royals Baseball</span><p class="hint">Shown across your club’s pages. You can change it later.</p></div>
+          <p class="subhead">Club billing address</p>
+          <p class="hint">We filled in your home address. Change it if the club has its own.</p>
+          <div class="fld"><span class="lb">Country *</span><span class="in sel">Canada</span></div>
+          <div class="fld"><span class="lb">Province or territory *</span><span class="in sel">Ontario</span></div>
+          <div class="fld"><span class="lb">Street address *</span><span class="in">18 Oak Crescent</span></div>
+          <div class="fld"><span class="lb">Apartment, suite or unit</span><span class="in"></span></div>
+          <div class="fld"><span class="lb">City *</span><span class="in">Guelph</span></div>
+          <div class="fld"><span class="lb">Postal code *</span><span class="in" style="width:160px">N1E 2K7</span></div>
+          <div class="webaddr"><span>Web address</span><span>fieldlogichq.com/guelph-royals</span><p class="hint">Stays as it is, so links you have already sent keep working. You can change it any time in club settings.</p></div>
+          </div>
+          <div class="samebar">Name, address and web address unchanged</div>
+          <dl class="fig">
+            <div><dt>Club for the rest of this period</dt><dd>$146.00 CAD</dd></div>
+            <div class="cr"><dt>Credit for unused Premium Coaches Portal time</dt><dd>−$19.33 CAD</dd></div>
+            <div class="newbox"><dt>HST 13%</dt><dd>$16.47 CAD</dd></div>
+            <div><dt>Due today</dt><dd class="newbox">$143.14 CAD</dd></div>
+            <div><dt>From December 3, 2026</dt><dd>$219.00 CAD / month<small class="newbox">plus applicable taxes</small></dd></div>
+          </dl>
+          <p class="hint">Same subscription and payment method. Your monthly billing stays monthly. No second trial.</p>
+        </div>
+        <div class="wf"><span class="fs">Charged to the payment method you already use.</span><span class="fe"><span class="btn out">Cancel</span><span class="btn lime">Start my club</span></span></div>
+      </div></div></div></div>
+    </div>
+  </div>
+
+  <h3>The coach changes the club’s province</h3>
+  <p>Only the country and the province change the rate (Stripe confirmed the postal code doesn’t). The name and address stay on screen the whole time; only the figures change. A new figure is worked out once the address is complete and valid again, and the button waits for it. <button class="mk ask" data-go-ask="2">Ask 2</button></p>
+  <div class="pair">
+    <div>
+      <div class="cap"><b>1 · Province changed, postal code not yet</b> <button class="mk new" data-note="NEW state. Choosing Alberta while the Ontario postal code is still there: the postal field shows the province check's own sentence (Stage 1 Part 1), and the figures step aside with one quiet line, because a figure for an address that will be refused would be wrong. New words: 'The charge shows once the address is complete.'">NEW</button></div>
+      <div class="fr w520"><div class="ak" style="padding:16px 24px;background:var(--card)"><div style="display:flex;flex-direction:column;gap:14px;color:var(--soft)">
+        <div class="fld"><span class="lb">Province or territory *</span><span class="in sel hot">Alberta</span></div>
+        <div class="fld"><span class="lb">City *</span><span class="in">Guelph</span></div>
+        <div class="fld"><span class="lb">Postal code *</span><span class="in badin" style="width:160px">N1E 2K7</span><p class="ferr">A postal code in Alberta starts with T.</p></div>
+        <p class="hint newbox" data-note="NEW words, in place of the figures.">The charge shows once the address is complete.</p>
+        <div class="wf" style="padding:12px 0 0;margin:0"><span class="fs">Charged to the payment method you already use.</span><span class="fe"><span class="btn out">Cancel</span><span class="btn lime">Start my club</span></span></div>
+      </div></div></div>
+    </div>
+    <div>
+      <div class="cap"><b>2 · Address complete, the charge loading</b> <button class="mk new" data-note="NEW state, drawn with the shipped loading line (a pulsing dot and a 'Loading …' label, no frame). It sits where the figures were. The same line takes the footer's place, because on a phone the figures are below the fold and the footer is always on screen. Start my club can't be pressed until the figure is in.">NEW</button></div>
+      <div class="fr w520"><div class="ak" style="padding:16px 24px;background:var(--card)"><div style="display:flex;flex-direction:column;gap:14px;color:var(--soft)">
+        <div class="fld"><span class="lb">Province or territory *</span><span class="in sel">Alberta</span></div>
+        <div class="fld"><span class="lb">City *</span><span class="in">Calgary</span></div>
+        <div class="fld"><span class="lb">Postal code *</span><span class="in hot" style="width:160px">T2P 1J9</span></div>
+        <div class="lds newbox" data-note="The shipped loading line. New label: 'Loading the charge…'.">Loading the charge…</div>
+        <div class="wf" style="padding:12px 0 0;margin:0"><span class="fs newbox" data-note="The footer's sentence becomes the loading line while the charge loads, then returns.">Loading the charge…</span><span class="fe"><span class="btn out">Cancel</span><span class="btn lime wait">Start my club</span></span></div>
+      </div></div></div>
+    </div>
+  </div>
+  <div class="pair">
+    <div>
+      <div class="cap"><b>3 · Loaded</b> · Alberta, desktop</div>
+      <div class="fr w520"><div class="ak" style="padding:16px 24px;background:var(--card)"><div style="display:flex;flex-direction:column;gap:14px">
+        <div class="fld"><span class="lb">Postal code *</span><span class="in" style="width:160px">T2P 1J9</span></div>
+        <dl class="fig">
+          <div><dt>Club for the rest of this period</dt><dd>$146.00 CAD</dd></div>
+          <div class="cr"><dt>Credit for unused Premium Coaches Portal time</dt><dd>−$19.33 CAD</dd></div>
+          <div class="newbox" data-note="The tax row, named by Stripe for Alberta."><dt>GST 5%</dt><dd>$6.33 CAD</dd></div>
+          <div><dt>Due today</dt><dd>$133.00 CAD</dd></div>
+          <div><dt>From December 3, 2026</dt><dd>$219.00 CAD / month<small>plus applicable taxes</small></dd></div>
+        </dl>
+        <div class="wf" style="padding:12px 0 0;margin:0"><span class="fs">Charged to the payment method you already use.</span><span class="fe"><span class="btn out">Cancel</span><span class="btn lime">Start my club</span></span></div>
+      </div></div></div>
+    </div>
+    <div>
+      <div class="cap"><b>3 · Loaded</b> · phone, 390, true size <button class="mk res" data-note="On a phone each figures row wraps (shipped at 640 and below): the figure drops under its label, left-aligned, and 'plus applicable taxes' sits under the figure. Cancel is hidden on a phone in this window (shipped); the window's top bar closes it.">RESTYLED</button></div>
+      <div class="fr w390"><div class="ak ph" style="padding:14px 20px;background:var(--card)"><div style="display:flex;flex-direction:column;gap:14px">
+        <dl class="fig">
+          <div><dt>Club for the rest of this period</dt><dd>$146.00 CAD</dd></div>
+          <div class="cr"><dt>Credit for unused Premium Coaches Portal time</dt><dd>−$19.33 CAD</dd></div>
+          <div><dt>GST 5%</dt><dd>$6.33 CAD</dd></div>
+          <div><dt>Due today</dt><dd>$133.00 CAD</dd></div>
+          <div><dt>From December 3, 2026</dt><dd>$219.00 CAD / month<small>plus applicable taxes</small></dd></div>
+        </dl>
+        <div class="wf" style="padding:12px 0 0;margin:0"><span class="fs">Charged to the payment method you already use.</span><span class="fe"><span class="btn lime">Start my club</span></span></div>
+      </div></div></div>
+    </div>
+  </div>
+  <div class="pair">
+    <div>
+      <div class="cap"><b>4 · The charge changed when pressed</b> <button class="mk new" data-note="NEW state, the backstop. When Start my club is pressed, the charge is worked out once more. If it no longer matches what the window showed (a rate changed, a load that was overtaken), nothing is charged: the window shows the new figures and asks for a second press. New words.">NEW</button></div>
+      <div class="fr w520"><div class="ak" style="padding:16px 24px;background:var(--card)"><div style="display:flex;flex-direction:column;gap:14px">
+        <div class="pn warn newbox" data-note="NEW words in the shipped amber notice.">The charge changed to $133.00 CAD. Nothing was charged. Check the figures, then press Start my club again.</div>
+        <dl class="fig">
+          <div><dt>GST 5%</dt><dd>$6.33 CAD</dd></div>
+          <div><dt>Due today</dt><dd>$133.00 CAD</dd></div>
+        </dl>
+        <div class="wf" style="padding:12px 0 0;margin:0"><span class="fs">Charged to the payment method you already use.</span><span class="fe"><span class="btn out">Cancel</span><span class="btn lime">Start my club</span></span></div>
+      </div></div></div>
+      <p class="muted" style="font-size:13px;max-width:520px">Drawn shortened: the charge and credit rows sit above as in frame 3.</p>
+    </div>
+    <div>
+      <div class="cap"><b>5 · Stripe can’t work the tax out</b> <button class="mk res" data-note="RESTYLED: the shipped red notice and Check again, as the window shows today when the charge can't be checked, but the name and address stay on screen above it so the coach can fix the address. The sentence no longer names a place, so it reads true on every screen that shows it.">RESTYLED</button></div>
+      <div class="fr w520"><div class="ak" style="padding:16px 24px;background:var(--card)"><div style="display:flex;flex-direction:column;gap:14px;color:var(--soft)">
+        <div class="fld"><span class="lb">Postal code *</span><span class="in" style="width:160px">T2P 1J9</span></div>
+        <div class="pn bad newbox" data-note="Shipped sentence today: 'We couldn’t work out the tax for your billing address. Check the address on Plan & billing and try again.' Changed so it names no place.">We couldn’t work out the tax for this billing address. Check the address and try again.</div>
+        <div class="wf" style="padding:12px 0 0;margin:0"><span class="fs"></span><span class="fe"><span class="btn out">Cancel</span><span class="btn lime">Check again</span></span></div>
+      </div></div></div>
+    </div>
+  </div>
+  <div class="pair">
+    <div>
+      <div class="cap"><b>6 · The club’s address didn’t reach Stripe</b> <button class="mk unc" data-note="UNCHANGED words (Part 1), now shown in this window. Press Start my club again to retry; nothing was charged.">UNCHANGED words</button></div>
+      <div class="fr w520"><div class="ak" style="padding:16px 24px;background:var(--card)"><div style="display:flex;flex-direction:column;gap:14px">
+        <div class="pn bad">We couldn’t send your club’s address to our payment provider, so nothing was changed. Try again in a moment.</div>
+        <div class="samebar" style="display:block">The figures stay as they were</div>
+        <div class="wf" style="padding:12px 0 0;margin:0"><span class="fs">Charged to the payment method you already use.</span><span class="fe"><span class="btn out">Cancel</span><span class="btn lime">Start my club</span></span></div>
+      </div></div></div>
+    </div>
+    <div>
+      <div class="cap"><b>7 · We need to look at the account</b> <button class="mk unc" data-note="UNCHANGED words (your Part 0 Ask 1 ruling), now shown in this window. No Check again: retrying can't help. Only a US address with a card from elsewhere reaches this, so it can't happen in production while US sales are closed.">UNCHANGED words</button></div>
+      <div class="fr w520"><div class="ak" style="padding:16px 24px;background:var(--card)"><div style="display:flex;flex-direction:column;gap:14px">
+        <div class="pn bad">We need to look at your account before you can pay. Email us at fieldlogichq@gmail.com and we’ll sort it out.</div>
+        <div class="wf" style="padding:12px 0 0;margin:0"><span class="fs"></span><span class="fe"><span class="btn out">Cancel</span></span></div>
+      </div></div></div>
+    </div>
+  </div>
+  <div class="card"><h3>How it behaves</h3><ul>
+    <li>Choosing the United States while US sales are closed takes the figures away too; the footer says “We’re not selling in the United States yet.” as it does today.</li>
+    <li>Typing in the street, city or postal code doesn’t reload anything by itself. A new figure loads when the country or province differs from the one last worked out, once the address passes its check (so frame 1 to frame 2 loads when the postal code is fixed).</li>
+    <li>Switching Monthly and Yearly (with the trial, tab 4) doesn’t reload the tax: nothing is taxed today.</li>
+  </ul></div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="pane" id="p4" hidden>
+  <h2>Start your club through checkout: the trial charges nothing today; no trial shows the tax</h2>
+  <p>A Premium portal with no live subscription (free time, a comp) starts its club through Stripe’s payment page. A first-time club gets the 90-day trial, so nothing is charged today and only the first charge’s words change. A coach who has had a subscription before pays today, so the window shows the first month, the tax and <b>Due today</b>, worked out for the club address typed above the figures.</p>
+  <div class="viewrow"><span class="lab">View</span>
+    <div class="sw" role="group" aria-label="View"><button data-v="all" aria-pressed="true">Everything</button><button data-v="diff" aria-pressed="false">Show only what differs</button></div></div>
+  <div class="pair">
+    <div>
+      <div class="cap"><b>With the trial</b> · after · the lower half of the window</div>
+      <div class="fr w520"><div class="ak" style="padding:16px 24px;background:var(--card)"><div style="display:flex;flex-direction:column;gap:14px;color:var(--soft)">
+        <div class="band same"><span class="e">Your plan</span><b>Your Premium Coaches Portal free time ends when your club starts</b><span>Free through December 31, 2026. The days left don’t carry over. If you leave before finishing, nothing changes and your free time keeps running.</span></div>
+        <p class="same" style="margin:0">90-day trial — you add a payment method at checkout, and you’re first charged when the trial ends.</p>
+        <div class="samebar">Free-time band, trial sentence, name and address unchanged</div>
+        <div class="cyc"><span class="on">Monthly</span><span>Yearly</span></div>
+        <dl class="fig">
+          <div><dt>Due today</dt><dd>$0.00 CAD</dd></div>
+          <div><dt>First charge, February 3, 2027</dt><dd>$219.00 CAD / month<small class="newbox">plus applicable taxes</small></dd></div>
+        </dl>
+        <div class="wf" style="padding:12px 0 0;margin:0"><span class="fs">Next, you add a payment method on our secure payment page.</span><span class="fe"><span class="btn out">Cancel</span><span class="btn lime">Continue to checkout</span></span></div>
+      </div></div></div>
+      <p class="muted" style="font-size:13px;max-width:520px">No tax row on $0.00: there is nothing to tax today. On February 3 Stripe taxes the first charge at the club’s address on that day.</p>
+    </div>
+    <div>
+      <div class="cap"><b>No trial</b> · after <button class="mk new" data-note="NEW row 'Club, first month' (or 'Club, first year'): the plan's price before tax, so the tax row has something to sit under. NEW words. The tax row and Due today are worked out for the typed club address.">NEW row</button></div>
+      <div class="fr w520"><div class="ak" style="padding:16px 24px;background:var(--card)"><div style="display:flex;flex-direction:column;gap:14px;color:var(--soft)">
+        <div class="band same"><span class="e">Your plan</span><b>Your Premium Coaches Portal free time ends when your club starts</b><span>Free through December 31, 2026. The days left don’t carry over. If you leave before finishing, nothing changes and your free time keeps running.</span></div>
+        <p class="same" style="margin:0">You’ve had a subscription before, so there’s no second trial. The full charge is due today at checkout.</p>
+        <div class="samebar">Free-time band, no-trial sentence, name and address unchanged</div>
+        <dl class="fig">
+          <div class="newbox"><dt>Club, first month</dt><dd>$219.00 CAD</dd></div>
+          <div class="newbox"><dt>HST 13%</dt><dd>$28.47 CAD</dd></div>
+          <div><dt>Due today</dt><dd class="newbox">$247.47 CAD</dd></div>
+          <div><dt>From December 5, 2026</dt><dd>$219.00 CAD / month<small class="newbox">plus applicable taxes</small></dd></div>
+        </dl>
+        <div class="wf" style="padding:12px 0 0;margin:0"><span class="fs">Next, you add a payment method on our secure payment page.</span><span class="fe"><span class="btn out">Cancel</span><span class="btn lime">Continue to checkout</span></span></div>
+      </div></div></div>
+      <p class="muted" style="font-size:13px;max-width:520px">Before: one row, “Due today $219.00 CAD”, which is the price before tax. Stripe’s payment page then charges $247.47, so this window would quote one amount while Stripe charged another.</p>
+    </div>
+  </div>
+  <div class="card"><h3>How it behaves</h3><ul>
+    <li>The province check from tab 3 applies here too, for the no-trial case. With the trial nothing is worked out, so nothing is checked.</li>
+    <li>Monthly and Yearly appear only with the trial, as today. “Club, first year” is the yearly row’s name.</li>
+    <li>Stripe’s payment page shows the same HST and total again before the card is entered.</li>
+  </ul></div>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="pane" id="p5" hidden>
+  <h2>Monthly or yearly: “plus applicable taxes” under each price, the tax itself on Stripe’s page</h2>
+  <p>The question an Upgrade opens. Stage 1 put the “Billed to … Change” line here so this stage could hang the tax on it. The question doesn’t charge anything: the next step is Stripe’s payment page, which shows the HST and the total before the buyer pays. So the drawing adds words, not figures. <button class="mk ask" data-go-ask="3">Ask 3</button></p>
+  <div class="viewrow"><span class="lab">View</span>
+    <div class="sw" role="group" aria-label="View"><button data-v="all" aria-pressed="true">Everything</button><button data-v="diff" aria-pressed="false">Show only what differs</button></div></div>
+  <div class="pair">
+    <div>
+      <div class="cap"><b>Before</b> · shipped · question window, 416 wide <button class="mk unc" data-note="UNCHANGED: the question as it ships today.">UNCHANGED</button></div>
+      <div class="fr w480"><div class="ak scrimbg" style="padding:28px 32px"><div class="win q">
+        <div class="wh"><div class="tb"><h4>How would you like to pay for Club · Association?</h4></div><div class="x">×</div></div>
+        <div class="wb">
+          <div class="billedto same"><span>Billed to 120 Elm Street, Guelph, Ontario N1H 4H2</span><b>Change</b></div>
+          <div class="samebar">Billed-to line unchanged</div>
+          <div class="pc">
+            <div class="on"><b><span class="rad"></span>Monthly</b><span class="p">$379 CAD / month</span><span class="hint">Billed every month.</span></div>
+            <div><b><span class="rad"></span>Yearly</b><span class="p">$3,790 CAD / year</span><span class="hint">Save $758 — 2 months free. Billed once a year.</span></div>
+          </div>
+        </div>
+        <div class="wf"><span class="fs"></span><span class="fe"><span class="btn out">Cancel</span><span class="btn lime">Continue to checkout</span></span></div>
+      </div></div></div>
+    </div>
+    <div>
+      <div class="cap"><b>After</b> <button class="mk res" data-note="RESTYLED words: 'plus applicable taxes' joins each price as a quiet line. No new figures, no Stripe call when the window opens.">RESTYLED</button></div>
+      <div class="fr w480"><div class="ak scrimbg" style="padding:28px 32px"><div class="win q">
+        <div class="wh"><div class="tb"><h4>How would you like to pay for Club · Association?</h4></div><div class="x">×</div></div>
+        <div class="wb">
+          <div class="billedto same"><span>Billed to 120 Elm Street, Guelph, Ontario N1H 4H2</span><b>Change</b></div>
+          <div class="samebar">Billed-to line unchanged</div>
+          <div class="pc">
+            <div class="on"><b><span class="rad"></span>Monthly</b><span class="p">$379 CAD / month</span><span class="hint newbox">plus applicable taxes</span><span class="hint">Billed every month.</span></div>
+            <div><b><span class="rad"></span>Yearly</b><span class="p">$3,790 CAD / year</span><span class="hint newbox">plus applicable taxes</span><span class="hint">Save $758 — 2 months free. Billed once a year.</span></div>
+          </div>
+        </div>
+        <div class="wf"><span class="fs"></span><span class="fe"><span class="btn out">Cancel</span><span class="btn lime">Continue to checkout</span></span></div>
+      </div></div></div>
+    </div>
+  </div>
+  <div class="cap" style="margin-top:12px"><b>After</b> · phone, 390, true size <button class="mk res" data-note="On a phone the two choices stack (shipped at 768 and below), each at the 44px tap floor. The phrase sits under each price the same way.">RESTYLED</button></div>
+  <div class="fr w390"><div class="ak ph" style="background:var(--card);min-height:0">
+    <div class="wh" style="padding:14px 20px 6px"><div class="tb"><h4>How would you like to pay for Club · Association?</h4></div><div class="x">×</div></div>
+    <div class="wb" style="padding:10px 20px 16px">
+      <div class="billedto"><span>Billed to 120 Elm Street, Guelph, Ontario N1H 4H2</span><b>Change</b></div>
+      <div class="pc" style="grid-template-columns:1fr">
+        <div class="on"><b><span class="rad"></span>Monthly</b><span class="p">$379 CAD / month</span><span class="hint">plus applicable taxes</span><span class="hint">Billed every month.</span></div>
+        <div><b><span class="rad"></span>Yearly</b><span class="p">$3,790 CAD / year</span><span class="hint">plus applicable taxes</span><span class="hint">Save $758 — 2 months free. Billed once a year.</span></div>
+      </div>
+    </div>
+    <div class="wf" style="padding:12px 20px 16px"><span class="fs"></span><span class="fe"><span class="btn out">Cancel</span><span class="btn lime">Continue to checkout</span></span></div>
+  </div></div>
+  <div class="card"><h3>Why words here and figures in tabs 2 to 4</h3><ul>
+    <li>Tabs 2 to 4 are the windows where our own button moves money (or the window is the last thing we show before Stripe’s page). This question is followed by Stripe’s page, which shows the tax and the total before anything is paid.</li>
+    <li>Showing the HST here would mean asking Stripe every time the question opens, for two prices. The Billed-to line already tells the buyer which address the tax will follow.</li>
+  </ul></div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="pane" id="p6" hidden>
+  <h2>Plan &amp; billing: the plan card’s price says “plus applicable taxes”</h2>
+  <p>Your Part 0 ruling, drawn on the whole page. One phrase after the price line, in the same quiet colour. Nothing else on the page moves. A free plan, “Free through …” and a comped plan carry no phrase: there is nothing to tax.</p>
+  <div class="viewrow"><span class="lab">View</span>
+    <div class="sw" role="group" aria-label="View"><button data-v="all" aria-pressed="true">Everything</button><button data-v="diff" aria-pressed="false">Show only what differs</button></div></div>
+  <div class="cap"><b>Before</b> · shipped · the top of the page, desktop, 960 reading column <button class="mk unc" data-note="UNCHANGED: the page as it ships today.">UNCHANGED</button></div>
+  <div class="scroll"><div class="fr w960"><div class="ak page">
+    <div class="pgh same"><div class="eye">Organization</div><h4>Plan &amp; billing</h4></div>
+    <div class="kc plan">
+      <div>
+        <div class="eye">Your plan <span class="chip ok">ACTIVE</span></div>
+        <h5>Club · Association</h5>
+        <p class="price">$379 CAD / month</p>
+        <p class="hint">Renews December 3, 2026</p>
+        <p class="hint">Billing address: 120 Elm Street, Guelph, Ontario N1H 4H2</p>
+        <div class="acts"><span class="btn out">Payment method &amp; invoices</span><span class="btn out">Billing address</span></div>
+      </div>
+      <div class="same" style="border-left:1px solid var(--line);padding-left:24px">
+        <div class="eye">What’s in use</div>
+        <p style="margin:6px 0 0;font:750 16px/1.2 Inter">18 of 30 teams</p>
+        <div class="bar"><i></i></div>
+        <p class="hint">Club · Association holds up to 30 teams. Archived teams don’t count.</p>
+      </div>
+    </div>
+  </div></div></div>
+  <div class="cap" style="margin-top:14px"><b>After</b> <button class="mk res" data-note="RESTYLED words on the shipped price line. The phrase rides the price line in the same secondary colour rather than taking a line of its own, so the card doesn't grow.">RESTYLED</button></div>
+  <div class="scroll"><div class="fr w960"><div class="ak page">
+    <div class="pgh same"><div class="eye">Organization</div><h4>Plan &amp; billing</h4></div>
+    <div class="kc plan">
+      <div>
+        <div class="eye">Your plan <span class="chip ok">ACTIVE</span></div>
+        <h5>Club · Association</h5>
+        <p class="price">$379 CAD / month <span class="newbox" style="color:var(--dim)" data-note="The phrase in the quiet (tertiary) colour the other screens use for it.">plus applicable taxes</span></p>
+        <p class="hint">Renews December 3, 2026</p>
+        <p class="hint">Billing address: 120 Elm Street, Guelph, Ontario N1H 4H2</p>
+        <div class="acts"><span class="btn out">Payment method &amp; invoices</span><span class="btn out">Billing address</span></div>
+      </div>
+      <div class="same" style="border-left:1px solid var(--line);padding-left:24px">
+        <div class="eye">What’s in use</div>
+        <p style="margin:6px 0 0;font:750 16px/1.2 Inter">18 of 30 teams</p>
+        <div class="bar"><i></i></div>
+        <p class="hint">Club · Association holds up to 30 teams. Archived teams don’t count.</p>
+      </div>
+    </div>
+    <div class="samebar">The rest of the page is unchanged</div>
+    <div class="sect same"><h5>Change plan</h5><div class="ghost">The plan table: its Monthly and Yearly prices are covered in tab 7</div></div>
+    <div class="sect same" style="margin:0"><h5>What’s included</h5><div class="ghost">Unchanged</div></div>
+  </div></div></div>
+  <p class="muted" style="font-size:13px">The same line on a coach’s own Plan &amp; billing: “$29 CAD / month plus applicable taxes”.</p>
+</section>
+
+<!-- ============ 7 ============ -->
+<section class="pane" id="p7" hidden>
+  <h2>Price sentences elsewhere: the same phrase, added where a price is quoted</h2>
+  <p>These are words only (Part 4 of the build), listed so you can see the whole reach of the change. Shipped wording on the left; the added words are highlighted. Emails follow the same rule. The public marketing pages go to <code>/marketing</code>, and the line in the pricing facts goes to <code>/strategy</code>; neither is written here.</p>
+  <div class="tw"><table class="t">
+    <thead><tr><th>Where</th><th>Today</th><th>After</th></tr></thead>
+    <tbody>
+      <tr><td>Keep {Plan} window</td><td>Guelph Minor Baseball stays on Club and renews on December 3, 2026 at $219 CAD / month.</td><td>… renews on December 3, 2026 at $219 CAD / month <ins>plus applicable taxes</ins>.</td></tr>
+      <tr><td>Keep window, then a move</td><td>Then it renews as Club, the move you chose, at $219 CAD / month.</td><td>… at $219 CAD / month <ins>plus applicable taxes</ins>.</td></tr>
+      <tr><td>Move down</td><td>You keep Club · Association until then, with no credit for the rest of this period. From then it’s $219 CAD / month.</td><td>… From then it’s $219 CAD / month <ins>plus applicable taxes</ins>.</td></tr>
+      <tr><td>No subscription yet</td><td>… This starts Club · Association ($379 CAD / month) at checkout, where you add a payment method.</td><td>… ($379 CAD / month <ins>plus applicable taxes</ins>) …</td></tr>
+      <tr><td>Founding: your choice is set</td><td>$2,190 will be charged to Visa ending 4242 on September 1, 2027 — your first charge, and nothing before it.</td><td>$2,190 <ins>plus applicable taxes</ins> will be charged …</td></tr>
+      <tr><td>Founding: choice buttons</td><td>Choose Club · yearly · $2,190 CAD / year</td><td>Buttons unchanged; one quiet line under them: <ins>Prices are plus applicable taxes.</ins></td></tr>
+      <tr><td>Change plan table</td><td>Monthly and Yearly columns of prices</td><td>One quiet line under the table: <ins>Prices are plus applicable taxes.</ins></td></tr>
+      <tr><td>Plan panel price strip</td><td>$379 CAD / month</td><td>$379 CAD / month <ins>plus applicable taxes</ins></td></tr>
+      <tr><td>Coach Premium sign-up</td><td>The plan step’s price line</td><td>… <ins>plus applicable taxes</ins></td></tr>
+      <tr><td>Billing address window</td><td>(its hint under the fields)</td><td>One added sentence: <ins>Your next charge is taxed for this address.</ins> (so a buyer who moves before a trial ends knows the address decides the tax)</td></tr>
+      <tr><td>Plan-ending and renewal emails</td><td>Each sentence that names a charge</td><td>… <ins>plus applicable taxes</ins></td></tr>
+    </tbody>
+  </table></div>
+  <p class="muted" style="font-size:13px">A button keeps its short price (“Upgrade to Club · $219 / month”): the screen around it carries the phrase. “Prices are plus applicable taxes.” is the one new sentence; everything else adds the three words. One spelling everywhere, checked by the build’s spelling gate.</p>
+</section>
+
+<!-- ============ 8 ============ -->
+<section class="pane" id="p8" hidden>
+  <h2>Asks</h2>
+  <p class="muted">Three asks. Pick one per ask; the green row is my recommendation; notes are optional. What the design and flow checks settled without needing you is listed under the asks.</p>
+  <div id="asks"></div>
+  <div class="card" id="applied"><h3>Already applied from the design and flow checks</h3><ul id="appliedList">
+    <li><b>Moving to a bigger plan keeps its one amount row</b>, then the tax, then Due today; it doesn’t gain the charge and credit lines (tab 2).</li>
+    <li><b>The renewal price says “plus applicable taxes” on a quiet line under the figure</b>, never as a taxed figure we work out ourselves. On a phone the figure and the phrase sit under the row’s label (tab 3, frame 3).</li>
+    <li><b>The “couldn’t work out the tax” sentence names no place</b>, so it reads true in every window and at sign-up (tab 3, frame 5).</li>
+    <li><b>The name and address stay on screen while the charge loads or fails</b>, so a coach mid-change never loses the field they were in.</li>
+    <li><b>A pressed button checks the charge once more</b> and charges nothing if it changed (tab 3, frame 4); the “no address”, “we need to look at your account” and “couldn’t send your club’s address” answers each have a frame (tabs 2 and 3).</li>
+    <li>Drawn with the shipped parts: the figures frame (one frame, a hairline between rows), the shipped loading line (no spinner), the shipped red and amber notices, and the windows’ amounts with cents (“$379.00 CAD / month”).</li>
+    <li>No colour or weight on the total: every figure is already bold, and colour stays on the credit only, as today.</li>
+  </ul></div>
+  <div class="paste"><div class="row"><button class="btn-d pri" id="mk">Make my answers</button><button class="btn-d" id="cp">Copy</button><span class="muted" id="cpmsg"></span></div>
+    <textarea id="out" readonly aria-label="Your answers" placeholder="Press “Make my answers”, then copy this text back into the chat."></textarea></div>
+</section>
+</div>
+
+<dialog class="note" id="nd"><div class="nh"><h3>About this</h3><button id="nx" aria-label="Close">×</button></div><div class="nb" id="nt"></div></dialog>
+
+<script>
+(function(){
+  var ASKS=[
+   {id:1,t:"Which row is the total?",
+    r:"Tabs 2, 3 and 4. The build prompt says “Tax and Total rows”, but Start your club already ends in Due today, which is the total.",
+    o:[["A","Due today is the total, with one tax row right above it. No separate “Total” row anywhere","rec"],["B","A “Total” row under the tax, as the build prompt says; Due today becomes the amount before tax",""]]},
+   {id:2,t:"Start your club: when the coach changes the club’s province",
+    r:"Tab 3, frames 1 to 4. The figures load when the window opens, before the coach has touched the address.",
+    o:[["A","The charge loads again once the address is complete with its new province; the button waits; pressing checks once more and charges nothing if it changed","rec"],["B","No reload while typing; pressing Start my club works it out, and if it changed, shows the new figures and asks for a second press",""]]},
+   {id:3,t:"The monthly-or-yearly question: words or figures?",
+    r:"Tab 5. Stripe’s payment page comes next and shows the tax and total before anything is paid.",
+    o:[["A","“plus applicable taxes” under each price; the tax itself on Stripe’s page","rec"],["B","Ask Stripe each time the question opens and show the HST and the total under each price",""]]}
+  ];
+  var host=document.getElementById('asks');
+  ASKS.forEach(function(a){
+    var d=document.createElement('div');d.className='ask';d.id='ask'+a.id;
+    var h='<h3><span class="no">Ask '+a.id+'</span>'+a.t+'</h3><p class="rides">'+a.r+'</p><div class="opts">';
+    a.o.forEach(function(o){h+='<label class="'+o[2]+'"><input type="radio" name="a'+a.id+'" value="'+o[0]+'"'+(o[2]?' checked':'')+'><span><b>'+o[0]+'.</b> '+o[1]+'</span></label>';});
+    h+='</div><textarea id="n'+a.id+'" aria-label="Note for ask '+a.id+'" placeholder="Note (optional)"></textarea>';
+    d.innerHTML=h;host.appendChild(d);
+  });
+  var tabs=document.getElementById('tabs');
+  function show(id){
+    [].forEach.call(tabs.querySelectorAll('button'),function(x){x.setAttribute('aria-selected',x.getAttribute('data-t')===id?'true':'false')});
+    [].forEach.call(document.querySelectorAll('section.pane'),function(s){s.hidden=s.id!==id});
+    window.scrollTo(0,0);
+  }
+  tabs.addEventListener('click',function(e){var b=e.target.closest('button[data-t]');if(b)show(b.getAttribute('data-t'));});
+  document.addEventListener('click',function(e){
+    var g=e.target.closest('[data-go]');
+    if(g){show(g.getAttribute('data-go'));return;}
+    var ga=e.target.closest('[data-go-ask]');
+    if(ga){show('p8');var t=document.getElementById('ask'+ga.getAttribute('data-go-ask'));if(t)t.scrollIntoView();return;}
+    var v=e.target.closest('.sw button');
+    if(v){var val=v.getAttribute('data-v');document.body.setAttribute('data-view',val);
+      [].forEach.call(document.querySelectorAll('.sw button'),function(x){x.setAttribute('aria-pressed',x.getAttribute('data-v')===val?'true':'false')});return;}
+    var m=e.target.closest('.mk[data-note]')||e.target.closest('.newbox');
+    if(m){if(!m.getAttribute('data-note'))m.setAttribute('data-note','NEW or changed in this drawing: '+m.textContent.trim().replace(/\s+/g,' ')+'. See the tag in the caption above for what it is.');document.getElementById('nt').textContent=m.getAttribute('data-note');var d=document.getElementById('nd');if(d.showModal)d.showModal();}
+  });
+  document.getElementById('nx').onclick=function(){document.getElementById('nd').close()};
+  document.getElementById('mk').onclick=function(){
+    var L=['GST/HST Stage 2 drawings, my answers:'];
+    ASKS.forEach(function(a){var c=document.querySelector('input[name=a'+a.id+']:checked');var n=document.getElementById('n'+a.id).value.trim();
+      L.push('Ask '+a.id+': '+(c?c.value:'(none)')+(n?' — '+n:''));});
+    document.getElementById('out').value=L.join('\n');};
+  document.getElementById('cp').onclick=function(){
+    var t=document.getElementById('out');var msg=document.getElementById('cpmsg');
+    function sel(){t.select();msg.textContent='Selected. Press Ctrl+C.';}
+    if(navigator.clipboard&&t.value){navigator.clipboard.writeText(t.value).then(function(){msg.textContent='Copied.'},sel);}else{sel();}};
+})();
+</script>

@@ -59,10 +59,13 @@ export const POST = withObservability(async (req: Request) => {
 
   // GST/HST Stage 1: a move UP charges today, so the buyer's billing address must be on file (a safety net: every subscription
   // started after this stage already has one). A move up from Premium makes the portal the club, so the buyer is the CLUB: the
-  // "Start your club" window sends its address with the name, saved to the club's own row first. A move down charges nothing.
+  // "Start your club" window sends its address with the name, saved to the club's own row first.
+  // Stage 2: a move DOWN charges nothing today but turns tax on for the renewal it schedules, which Stripe refuses for a customer
+  // it cannot place, so it asks the same question (the screen opens the Billing address window, not a provider error).
   let clubAddress: { buyer: Extract<BillingBuyer, { kind: 'org' }>; location: BillingLocation } | null = null;
-  if (moveDirection(ownPlanOf(org), toPlan) === 'up') {
-    const clubName = ownPlanOf(org) === 'team' && typeof body.clubName === 'string' ? body.clubName.trim() : null;
+  if (moveDirection(ownPlanOf(org), toPlan) !== null) {
+    const up = moveDirection(ownPlanOf(org), toPlan) === 'up';
+    const clubName = up && ownPlanOf(org) === 'team' && typeof body.clubName === 'string' ? body.clubName.trim() : null;
     const buyer = { kind: 'org' as const, orgId: org.id, name: clubName || org.name, stripeCustomerId: org.stripeCustomerId ?? null };
     const located = await requireBillingLocation(buyer, clubName ? billingAddressFromBody(body.billingAddress) : null);
     if (!located.ok) return located.response;

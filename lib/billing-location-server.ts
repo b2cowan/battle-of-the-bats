@@ -1,7 +1,7 @@
 import 'server-only';
 import type Stripe from 'stripe';
 import { supabaseAdmin } from './supabase-admin';
-import { decideBuyerTax } from './billing-tax';
+import { BUYER_NAME_META, buyerNameUpdate, decideBuyerTax } from './billing-tax';
 import { getStripe } from './stripe';
 import { captureError } from './observability/capture';
 import { paidOrPromisedToPay } from './plan-move';
@@ -123,10 +123,19 @@ async function buyerCustomerIds(buyer: BillingBuyer): Promise<string[]> {
   return [...new Set(((data ?? []) as unknown as Array<{ stripe_customer_id: string }>).map(r => r.stripe_customer_id).filter(real))];
 }
 
-/** The Stripe customer carries the same address we hold, so its invoices and (in Stage 2) Stripe Tax read the same place. */
-export async function stampStripeCustomerAddress(customerId: string, location: BillingLocation): Promise<void> {
+/**
+ * The Stripe customer carries the same address we hold, so its invoices and Stripe Tax read the same place. With `buyerName`
+ * (a paying path), the buyer's name too, unless the buyer typed their own on Stripe's page (`buyerNameUpdate`).
+ */
+export async function stampStripeCustomerAddress(customerId: string, location: BillingLocation, buyerName?: string | null): Promise<void> {
   if (!real(customerId)) return;
-  await getStripe().customers.update(customerId, { address: toStripeAddress(location) });
+  const stripe = getStripe();
+  let naming: ReturnType<typeof buyerNameUpdate> = null;
+  if (buyerName?.trim()) {
+    const customer = await stripe.customers.retrieve(customerId);
+    if (!('deleted' in customer && customer.deleted)) naming = buyerNameUpdate(customer as Stripe.Customer, buyerName);
+  }
+  await stripe.customers.update(customerId, { address: toStripeAddress(location), ...(naming ?? {}) });
 }
 
 async function stampCustomers(customerIds: string[], location: BillingLocation): Promise<void> {
@@ -323,13 +332,15 @@ export async function withClubAddressOnStripe<T>(
   const ids = await buyerCustomerIds(buyer).catch((error) => { void captureError(error, { route: 'billing-location:club-stamp' }); return null; });
   if (!ids) return refusal();
   const stripe = getStripe();
-  const before = new Map<string, Stripe.Address | null>();
+  const before = new Map<string, Before>();
   try {
     for (const id of ids) {
       const customer = await stripe.customers.retrieve(id);
-      before.set(id, 'deleted' in customer && customer.deleted ? null : (customer as Stripe.Customer).address ?? null);
+      const live = 'deleted' in customer && customer.deleted ? null : customer as Stripe.Customer;
+      before.set(id, { address: live?.address ?? null, name: live?.name ?? null, ourName: live?.metadata?.[BUYER_NAME_META] ?? null });
     }
-    await Promise.all(ids.map(id => stampStripeCustomerAddress(id, location)));
+    // The club's name with its address: the move's invoice is the CLUB's (accounting 6b), and both go back on a refusal.
+    await Promise.all(ids.map(id => stampStripeCustomerAddress(id, location, buyer.name)));
   } catch (error) {
     void captureError(error, { route: 'billing-location:club-stamp' });
     await putBack(before);
@@ -346,14 +357,18 @@ export async function withClubAddressOnStripe<T>(
   return { ok: true, result };
 }
 
-/** The addresses the customers carried before, put back. Reported, never thrown: the caller's own answer is what matters. */
-async function putBack(before: Map<string, Stripe.Address | null>): Promise<void> {
-  await Promise.all([...before].map(async ([id, address]) => {
+type Before = { address: Stripe.Address | null; name: string | null; ourName: string | null };
+
+/** The addresses (and names) the customers carried before, put back. Reported, never thrown: the caller's own answer is what matters. */
+async function putBack(before: Map<string, Before>): Promise<void> {
+  await Promise.all([...before].map(async ([id, { address, name, ourName }]) => {
     try {
       await getStripe().customers.update(id, {
         address: address
           ? { line1: address.line1 ?? '', line2: address.line2 ?? '', city: address.city ?? '', state: address.state ?? '', postal_code: address.postal_code ?? '', country: address.country ?? '' }
           : '',
+        name: name ?? '',
+        metadata: { [BUYER_NAME_META]: ourName ?? '' },
       });
     } catch (error) {
       void captureError(error, { route: 'billing-location:club-stamp-restore' });

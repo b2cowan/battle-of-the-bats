@@ -4,6 +4,7 @@ import type { CardDetails } from '@/lib/billing-format';
 import type Stripe from 'stripe';
 import { getBillingHref } from './billing-urls';
 import { toStripeAddress, type BillingLocation } from './billing-location';
+import { BUYER_NAME_META, buyerNameUpdate } from './billing-tax';
 
 /**
  * Org-level Stripe provisioning shared by the billing endpoints
@@ -45,16 +46,20 @@ export async function ensureStripeCustomer(
   email: string | undefined,
   /** GST/HST Stage 1: a checkout passes the buyer's billing address, so the customer it charges carries it too. */
   billingLocation?: BillingLocation | null,
+  /** GST/HST Stage 2 (accounting 6b): the buyer's name for its invoices — the club's (or the portal's) name. See `buyerNameUpdate`. */
+  buyerName?: string | null,
 ): Promise<string> {
+  const name = buyerName?.trim() || null;
   let customerId: string;
-  let createdWithAddress = false;
+  let createdHere = false;
 
   if (org.stripeCustomerId) {
     customerId = org.stripeCustomerId;
   } else {
     const customer = await stripe.customers.create({
       email,
-      metadata: { orgId: org.id },
+      ...(name ? { name } : {}),
+      metadata: { orgId: org.id, ...(name ? { [BUYER_NAME_META]: name } : {}) },
       ...(billingLocation ? { address: toStripeAddress(billingLocation) } : {}),
     });
     // First-writer-wins link: concurrent requests (e.g. two billing buttons clicked
@@ -71,7 +76,7 @@ export async function ensureStripeCustomer(
 
     if (linked?.stripe_customer_id === customer.id) {
       customerId = customer.id;
-      createdWithAddress = Boolean(billingLocation);
+      createdHere = true;
     } else {
       // Lost the race (or the caller's auth context was stale): use the customer
       // already linked and discard ours — nothing has been attached to it yet.
@@ -85,14 +90,16 @@ export async function ensureStripeCustomer(
         customerId = row.stripe_customer_id;
       } else {
         customerId = customer.id;
-        createdWithAddress = Boolean(billingLocation);
+        createdHere = true;
       }
     }
   }
 
-  // A customer made before the address existed (or by the request that won the race) is given it now.
-  if (billingLocation && !createdWithAddress && !customerId.startsWith('mock_')) {
-    await stripe.customers.update(customerId, { address: toStripeAddress(billingLocation) });
+  // A customer made before the address existed (or by the request that won the race) is given it now, and the buyer's name
+  // when it has none of ours (a name typed on Stripe's page is kept). Only on a paying path: one that passes the address.
+  if (billingLocation && !createdHere && !customerId.startsWith('mock_')) {
+    const naming = name ? buyerNameUpdate(await retrieveLiveCustomer(customerId), name) : null;
+    await stripe.customers.update(customerId, { address: toStripeAddress(billingLocation), ...(naming ?? {}) });
   }
 
   // Only a coach workspace has a row to mirror onto. Callers carry `accountKind` from their auth
@@ -102,6 +109,12 @@ export async function ensureStripeCustomer(
     await linkWorkspaceStripeCustomer(org.id, customerId);
   }
   return customerId;
+}
+
+/** The customer's name and metadata (a deleted customer reads as nameless; the update after it then fails as it did before). */
+async function retrieveLiveCustomer(customerId: string): Promise<{ name?: string | null; metadata?: Record<string, string> | null }> {
+  const customer = await stripe.customers.retrieve(customerId);
+  return 'deleted' in customer && customer.deleted ? {} : customer as Stripe.Customer;
 }
 
 /**

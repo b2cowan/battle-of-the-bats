@@ -30,6 +30,8 @@ import FreeTimeBand from './FreeTimeBand';
 import { BILLING_ADDRESS_FORM_WORDS, BILLING_LOCATION_WORDS } from '@/lib/billing-location';
 import BillingAddressFields, { useAddressDraft } from './BillingAddressFields';
 import { isAddressRefusal, useBillingAddressGate } from './BillingAddressDialog';
+// A held account (GST/HST Stage 2 Ask 1) shows the server's sentence with no "Check again": asking again cannot change it.
+import { BILLING_REVIEW_HOLD } from '@/lib/billing-tax';
 import addressStyles from './BillingAddress.module.css';
 
 /** Where "Contact us" goes until a band is on sale (the Stage 8 flip) and above the largest band.
@@ -229,7 +231,7 @@ export default function PlanMoveDialog({ org, toPlan, returnTo, teamsHref, freeT
     : <button type="button" className="btn btn-outline" onClick={onClose} disabled={working}>{W.move.cancel}</button>;
   const preview = state.status === 'preview' ? state.preview : null;
   const canCheckout = refusal?.code === 'no_live_subscription' && (!inPlace || !!quote);
-  const retryable = refusal && (refusal.code === 'no_live_subscription' ? inPlace && !quote : !['band_too_small', 'plan_not_on_sale', 'payment_failing', 'cannot_become_club', 'subscription_ending'].includes(refusal.code));
+  const retryable = refusal && (refusal.code === 'no_live_subscription' ? inPlace && !quote : !['band_too_small', 'plan_not_on_sale', 'payment_failing', 'cannot_become_club', 'subscription_ending', BILLING_REVIEW_HOLD].includes(refusal.code));
   const footer = <>
     {cancel}
     {preview && !clubHold && <button type="button" className="btn btn-lime" onClick={() => void confirm()} disabled={working} data-autofocus="">{working ? inPlace ? W.clubUpgrade.starting : W.move.moving : inPlace ? W.clubUpgrade.start : W.change.move(target.label)}</button>}

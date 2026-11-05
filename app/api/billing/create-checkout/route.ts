@@ -386,8 +386,12 @@ export const POST = withObservability(async (req: Request) => {
 
   const { stripe } = await import('@/lib/stripe');
   const { ensureStripeCustomer } = await import('@/lib/billing-setup');
+  const { TAXED_CHECKOUT } = await import('@/lib/billing-tax');
 
-  const customerId = await ensureStripeCustomer(auth.org, auth.user.email, billingLocation);
+  // The buyer's name for its invoices: the club's (a Premium portal starting its club is buying as that club).
+  // ⚠ Backing out of Stripe's page leaves the club's address and name on a Premium coach's customer (recorded, low risk: this
+  // path runs only when that customer has no live subscription to charge at them).
+  const customerId = await ensureStripeCustomer(auth.org, auth.user.email, billingLocation, inPlaceClubName ?? auth.org.name);
 
   // NO SECOND TRIAL (Ask 4, 2026-09-25). An organization that has already had a paid subscription
   // — a cancelled club coming back is the common case — pays from day one; the trial is for a
@@ -406,6 +410,8 @@ export const POST = withObservability(async (req: Request) => {
   const session = await stripe.checkout.sessions.create({
     mode: 'subscription',
     customer: customerId,
+    // GST/HST Stage 2: taxed by the club's address, and the club may enter its GST/HST number (lib/billing-tax.ts).
+    ...TAXED_CHECKOUT,
     line_items: [{ price: priceId, quantity: 1 }],
     subscription_data: {
       ...(trialDays > 0 ? { trial_period_days: trialDays } : {}),

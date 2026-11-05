@@ -41,7 +41,97 @@ N1, two walk-page guards, the free-time route's 503):
 - ⚠ Another session has uncommitted edits in `components/billing/BillingBody.tsx` and `lib/plan-billing-words.ts` (Part 3/4
   targets): read them fresh before Part 3, and commit around them.
 
-Next: the drawings (before Part 3), then the `/accounting` design review (blocking, before Part 2), then Part 2.
+**Drawings DRAWN 2026-11-05 after `/design` + `/ux`:** `GST_HST_STAGE2_DRAWINGS.html`, published
+https://claude.ai/artifact/9Sw8VvzwCk4bW5ccDVc9o3 (8 tabs; **drawing asks D1–D3 RULED 2026-11-05, all A**, logged in `memory/design_decisions.md`: D1 Due today is the total, no "Total" row;
+D2 the Start-your-club figures reload on a province change + a press-time recheck that charges nothing if it changed; D3 the
+monthly-or-yearly step gets words, not figures). Added beyond the prompt's list: the monthly-or-yearly step (Stage 1 put the
+Billed-to line there for this stage). Applied without an ask: band move keeps one amount row; renewal = "plus applicable
+taxes" under the figure (new `.figures dd small` rule, `.setupSteps small` precedent); `notWorkedOut` rewritten to name no
+place ("We couldn’t work out the tax for this billing address. Check the address and try again."); loading = shipped
+`LoadingState` "Loading the charge…" in the figures AND the footer start; new words "The charge shows once the address is
+complete.", "Club, first month"/"Club, first year", the amber "The charge changed to $X CAD. Nothing was charged. Check the
+figures, then press Start my club again.", "Prices are plus applicable taxes." (→ `/marketing` check), Billing address window
+hint "Your next charge is taxed for this address."
+Build notes from the reviews (Part 2/3, not asks): ⚠ `PlanMoveDialog` unmounts the name + address block in any `loading` /
+`refused` state (`inPlace && (preview || quote)`): split "figures loading" from "window loading" (the Monthly/Yearly toggle has
+the same flaw); reload only when the draft passes `check()` and country/province differs from the last quote; the move route
+needs the shown total (or the preview's tax) to compare at press; the preview route passes no address — a live-subscription
+preview needs a `customer_details` address override (verify `invoices.createPreview` accepts it with `subscription`), the
+checkout quote likewise (it previews the coach's HOME address today); preview refusals need doors: `billing_address_required` →
+the Billing address window (not Check again), `billing_review_hold` → no retry, `billing_address_stamp_failed` → retry by press;
+`create-checkout` stamps the club address on the coach's Stripe customer before the session (`ensureStripeCustomer`) and backing
+out of Stripe's page does not put it back — low risk (no live subscription on that customer in this path) but verify and record.
+
+**`/accounting` design review DONE 2026-11-05 (blocking gate before Part 2 passed; new topic
+`docs/agents/accounting/RECOVERED_STRIPE_FEES_TAX.md`, indexed):**
+1. Automatic tax on A–E, tax-exclusive, rate by the stored address's province, GST/HST number left on, US 0 / held — **confirmed**
+   (matches `GST_HST_ON_SUBSCRIPTIONS_CANADA.md`). Part 2: C sets it at creation; E sets the schedule's `default_settings`.
+2. Ask 3 — **confirmed**. Stripe bills these fees to OUR platform account, so re-billing them is consideration for our payment
+   service, not a disbursement (CRA agency test, P-182R / GI-012 / GI-197); they take the payment fee's tax status (T2) and must
+   never diverge from it (D1 still open, not a gate). Part 2 MUST: give each fee item `tax_behavior: 'exclusive'` + an explicit
+   general-services tax code (verify the code; not the SaaS preset); turn automatic tax on for the club's own monthly fee
+   invoice; bill the fee **net of any tax Stripe charged us**; credit against the original invoice LINE so Stripe reverses its
+   tax (the club gets fee + tax back) and update the credit-note math.
+3. Quotes (Due today = taxed total; "plus applicable taxes" elsewhere) — **confirmed**. Coaches buy as individuals: whether
+   consumer rules want the tax-in total before purchase is a `/legal` question (Stripe's page shows it before payment).
+4. No backdated registration — **confirmed, no exposure** (nothing sold). Re-count prod sales at the promote (Ask 7); an untaxed
+   sale still owes the tax, at our cost.
+5. NS 14% — **confirmed** (cut on 2025-04-01). PM summary's "Atlantic 15%" corrected below.
+6. Invoice content — **change needed**: (a) every invoice and credit note of $100+ must show our GST/HST number → **owner step**,
+   test and live: Stripe Dashboard → Settings → Invoices → Tax → add the Canadian GST/HST account tax ID → Set as default
+   (number never in the repo; `MANUAL_PROD_STEPS.json` at closeout); Part 6 checks it prints on a Checkout subscription invoice,
+   a move's proration invoice, a credit note and the club's own fee invoice. (b) $500+ (every yearly club plan) needs the
+   buyer's name: `ensureStripeCustomer` creates the customer with email only → Part 2 sets the customer's name (club or
+   workspace name; the coach's for Premium). (c) A refund of a taxed subscription invoice goes through a credit note (the s.232
+   document the club needs, and the reduction Stripe Tax keeps) — Part 6 matrix row.
+Owner check (not a decision): does Stripe charge GST/HST on its fees to our account (a Stripe tax invoice under Settings →
+Documents)? It decides the ITC and item 2's "net" base.
+
+**Part 2 BUILT 2026-11-05, uncommitted (commit asked of the owner)** (typecheck clean; ESLint clean on the 11 files; billing,
+fee, checkout and move tests 857 pass; `npm test` 14257 pass / 8 fail, none in a file this part touched — support-console foot
+sentences ×2, practice-plan phone N1, Stage 6 public walk page ×3, `plan-billing-usage` free-time ×1 (fails the same with this
+part stashed), `series-date-groups` ×1 (another session's coach series work). ⚠ the focused ESLint runner in `verify:changed`
+dies on a config error ("could not find plugin react-hooks") over another session's file set; `npx eslint` on this part's files is
+clean):
+- `lib/billing-tax.ts`: `TAXED_CHECKOUT` (automatic tax + `tax_id_collection` + `customer_update.name = 'auto'`, never `address`),
+  `RECOVERED_FEE_TAX` (`exclusive` + `txcd_20030000` "General - Services", read from Stripe), `buyerNameUpdate` +
+  `BUYER_NAME_META` (accounting 6b: our name follows our records; a name typed on Stripe's page is kept), `taxLineLabel` ("HST
+  13%") + `namedTaxLines` (Part 3 reuses them). Tests in `tests/unit/billing-tax.test.ts`.
+- A (`create-checkout`), B (`create-team-checkout`), C (`lib/next-season-choice.ts`) spread `TAXED_CHECKOUT`; D (`applyMove` up)
+  sets `automatic_tax`; E (the down schedule) sets `default_settings.automatic_tax`. Test mode `.probe/gst2/paths-de-run1.txt`: D's
+  prorated invoice 1000 + 130 tax on an untaxed subscription turned on by the update; E's renewal 2900 + 377 with phases
+  inheriting.
+- Names on the customer: `ensureStripeCustomer(…, buyerName)` (club / portal name; created with it, an existing one named when
+  ours), B the coach's own name, C the club name or the coach's, `stampStripeCustomerAddress(…, name)`. `withClubAddressOnStripe`
+  stamps the club's NAME with its address and puts the coach's name (and our marker) back on a refusal (test added).
+- The move route now asks `requireBillingLocation` on a move DOWN too: it turns tax on for the renewal it schedules, which
+  Stripe refuses for a customer it cannot place; the screen gets the Billing address window, not a provider error.
+- ⚠ **Found and fixed, pre-existing: every real Founding next-season Checkout was refused by Stripe** ("`proration_behavior` can
+  only be passed if `billing_cycle_anchor` … exist", test mode, with or without tax: `.probe/gst2/path-c.mjs`). Hidden on dev by
+  the mock; in production the choice opens 2027-06-01 and would have failed for everyone. Removed the setting (no anchor = nothing
+  to prorate; the session charges $0 at creation, verified); the invariant test now asserts it is ABSENT.
+- Recovered fees (Ask 3, `lib/platform-stripe-fees.ts`; test mode `.probe/gst2/fee-tax-run1.txt`): every fee line carries
+  `RECOVERED_FEE_TAX` (ON: 1500 + 195); the club's own monthly invoice has automatic tax; `tax_fee` balance transactions (Stripe's
+  tax on its own fee) are never billed on — the "net of Stripe's tax" base; a credit note's total is asked of Stripe
+  (`creditNotes.preview`: a line's `amount` is before tax, the note reverses 1500 + 195) and a custom line is refused on a taxed
+  invoice (Stripe refuses it too); the fee invoice email leads with the fee before tax and lists the tax by name before the Total.
+- ⚠ **Ask 8 for the owner (NEW, the fee invoice's address):** Stripe refuses to finalize a taxed invoice for a customer with no
+  address (`customer_tax_location_invalid`, verified). A comped or free club taking online payments may never have given one
+  (Stage 1 asks only on a paid step). Built for now: the club's own row is stamped on the customer; a club with no address
+  anywhere WAITS — its fees stay unbilled with an operator sentence in platform admin, nothing is billed untaxed. *Recommendation:
+  ask for the billing address when a club turns on online payments (the same Billing address window), so no club reaches its
+  first fee invoice without one; the wait stays as the safety net.* Alternative: copy the payout account's business address
+  (Stripe-verified, but a new source the club never gave us for billing). Not built either way until ruled.
+- ⚠ Screens: every paid screen shows the server's sentence for the new codes (helper census 2026-11-05: plan-upgrade,
+  PlanPanelDrawer, TeamSignupClient, onboarding, BillingBody checkout + next-season, PlanMoveDialog). The one fix:
+  `PlanMoveDialog` offered "Check again" on a held account; `billing_review_hold` is now in its no-retry list. A failed stamp
+  keeps "Check again" (it can succeed).
+- Not touched (Part 3): the move preview and the Premium → Club quote still preview without tax, so on dev the quoted figure is
+  pre-tax while the charge is taxed until Part 3 lands. Legacy dev subscriptions stay untaxed until a move turns tax on (prod has
+  none). A "Keep {Plan}" restore of a down move (plan-ending, no route check) for a legacy customer with no address
+  is expected to be refused by Stripe and read as `moveNotRestored` — not verified (prod has no such customer).
+
+Next: Ask 8 to the owner; Part 3.
 
 **Rulings (owner, 2026-11-05, all as recommended):**
 - **Ask 1:** one helper decides tax: taxes by the stored address; a US address with disagreeing card/payout evidence
@@ -185,7 +275,7 @@ Canadian") is a sentence, not behaviour.** Stage 1 left a note: this stage's dec
 - **Every price a customer is quoted says "plus applicable taxes"**, and **every paid step shows three things before the buyer
   pays: the amount, the tax by name ("HST 13%"), and the total.** Plan moves and the Premium → Club "Due today" window quote the
   same figure Stripe will charge, for the buyer's own province.
-- **The tax follows the address the buyer typed in Stage 1** — Ontario 13%, the Atlantic provinces 15%, Alberta and the territories
+- **The tax follows the address the buyer typed in Stage 1** — Ontario 13%, Nova Scotia 14%, New Brunswick, Newfoundland and Labrador and PEI 15%, Alberta and the territories
   5%, BC 5% GST, Saskatchewan 5% GST, Manitoba 5% GST, Québec 5% GST (provincial taxes only once FieldLogicHQ is registered there:
   Stage 7). A US buyer pays no Canadian tax. (Stripe Tax decides the exact rates; the walk checks them, this list is not the spec.)
 - **A club can enter its GST/HST number** at checkout and in Stripe's billing page; it prints on its invoice and never removes the

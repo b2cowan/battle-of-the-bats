@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { AUTOMATIC_TAX, BILLING_REVIEW_HOLD, BILLING_TAX_WORDS, decideBuyerTax, taxWasWorkedOut } from '../../lib/billing-tax.ts';
+import {
+  AUTOMATIC_TAX, BILLING_REVIEW_HOLD, BILLING_TAX_WORDS, BUYER_NAME_META, RECOVERED_FEE_TAX, TAXED_CHECKOUT, buyerNameUpdate, decideBuyerTax,
+  namedTaxLines, taxLineLabel, taxWasWorkedOut,
+} from '../../lib/billing-tax.ts';
 import {
   BILLING_ADDRESS_REQUIRED, BILLING_LOCATION_WORDS, CA_POSTAL_FIRST_LETTERS, countryInfo, type StoredBillingLocation,
 } from '../../lib/billing-location.ts';
@@ -71,5 +74,55 @@ describe('taxWasWorkedOut', () => {
   it('the one setting is automatic tax on, and the words are one spelling', () => {
     assert.deepEqual(AUTOMATIC_TAX, { enabled: true });
     assert.equal(BILLING_TAX_WORDS.plusTax, 'plus applicable taxes');
+  });
+});
+
+describe('Part 2 · what a taxed Stripe call carries', () => {
+  it('a subscription checkout taxes by the customer, takes a GST/HST number, and never lets Stripe change the address', () => {
+    assert.deepEqual(TAXED_CHECKOUT, { automatic_tax: { enabled: true }, tax_id_collection: { enabled: true }, customer_update: { name: 'auto' } });
+    assert.equal('address' in TAXED_CHECKOUT.customer_update, false);
+  });
+
+  it('a recovered fee is a general service, taxed on top (Ask 3), never the SaaS preset', () => {
+    assert.deepEqual(RECOVERED_FEE_TAX, { tax_behavior: 'exclusive', tax_code: 'txcd_20030000' });
+    assert.notEqual(RECOVERED_FEE_TAX.tax_code, 'txcd_10103001');
+  });
+});
+
+describe('buyerNameUpdate · the buyer’s name on the Stripe customer', () => {
+  const ours = (name: string) => ({ [BUYER_NAME_META]: name });
+  it('names a nameless customer, and remembers it is ours', () => {
+    assert.deepEqual(buyerNameUpdate({ name: null, metadata: {} }, 'Riverdale Minor Ball'), { name: 'Riverdale Minor Ball', metadata: ours('Riverdale Minor Ball') });
+  });
+  it('follows our records when the name is still the one we set (a Premium coach becoming a club)', () => {
+    assert.deepEqual(buyerNameUpdate({ name: 'Sam Coach', metadata: ours('Sam Coach') }, 'Riverdale Minor Ball'), { name: 'Riverdale Minor Ball', metadata: ours('Riverdale Minor Ball') });
+  });
+  it('keeps a name the buyer typed on Stripe’s page (the business name with a GST/HST number)', () => {
+    assert.equal(buyerNameUpdate({ name: 'Riverdale Minor Ball Assn. Inc.', metadata: ours('Riverdale Minor Ball') }, 'Riverdale Minor Ball'), null);
+    assert.equal(buyerNameUpdate({ name: 'Someone Typed This', metadata: {} }, 'Riverdale Minor Ball'), null);
+  });
+  it('changes nothing when there is nothing to say, and only marks a matching name as ours', () => {
+    assert.equal(buyerNameUpdate({ name: null }, '  '), null);
+    assert.equal(buyerNameUpdate({ name: 'Riverdale', metadata: ours('Riverdale') }, 'Riverdale'), null);
+    assert.deepEqual(buyerNameUpdate({ name: 'Riverdale', metadata: {} }, 'Riverdale'), { metadata: ours('Riverdale') });
+  });
+});
+
+describe('the tax by name', () => {
+  it('reads as a buyer does: "HST 13%"', () => {
+    assert.equal(taxLineLabel({ display_name: 'HST', percentage: 13 }), 'HST 13%');
+    assert.equal(taxLineLabel({ display_name: 'GST', percentage: 5, effective_percentage: 5 }), 'GST 5%');
+    assert.equal(taxLineLabel({ display_name: 'QST', percentage: 9.975 }), 'QST 9.975%');
+    assert.equal(taxLineLabel({ display_name: '', percentage: null }), 'Tax');
+  });
+  it('sums an invoice’s taxes per name, in Stripe’s order, and skips a zero', async () => {
+    const rates: Record<string, { display_name: string; percentage: number }> = { a: { display_name: 'HST', percentage: 13 }, b: { display_name: 'GST', percentage: 5 } };
+    const lines = await namedTaxLines([
+      { amount: 195, tax_rate_details: { tax_rate: 'a' } },
+      { amount: 0, tax_rate_details: { tax_rate: 'b' } },
+      { amount: 182, tax_rate_details: { tax_rate: { id: 'a' } } },
+    ], async id => rates[id]);
+    assert.deepEqual(lines, [{ label: 'HST 13%', cents: 377 }]);
+    assert.deepEqual(await namedTaxLines(null, async () => ({})), []);
   });
 });

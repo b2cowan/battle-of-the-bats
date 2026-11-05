@@ -13,6 +13,9 @@ import {
   FEE_INVOICE_META, ONLINE_EMAIL_WORDS as E, PLATFORM_CONTACT_EMAIL, STRIPE_FEE_WORDS as W, isFeeCredit, money, type StripeFeeKind,
 } from './online-payment-words';
 import { addCalendarMonths, formatStoredDate, orgMonthKey, zonedWallClockToUtc } from './timezone';
+import { AUTOMATIC_TAX, RECOVERED_FEE_TAX, namedTaxLines } from './billing-tax';
+import { readBillingLocation, usSalesOpen } from './billing-location-server';
+import { storedLocationStillValid, type BillingLocation } from './billing-location';
 
 /**
  * EVERY STRIPE FEE A CLUB'S ONLINE PAYMENTS CAUSE, RECOVERED FROM THE CLUB (Club Tier Stage 12c Part 6, as the returned-
@@ -30,6 +33,12 @@ import { addCalendarMonths, formatStoredDate, orgMonthKey, zonedWallClockToUtc }
  * A credit (a returned answering fee) goes back against the invoice that carried its answering fee (owner ruling 7): a
  * negative line beside it while that invoice is still to come, else a Stripe credit note on it. Never throws into a money path:
  * a failure is stored on the row (`bill_error`) and retried by the daily job and from platform admin.
+ *
+ * GST/HST Stage 2 (Ask 3, owner 2026-11-05; docs/agents/accounting/RECOVERED_STRIPE_FEES_TAX.md): a recovered fee is our own
+ * supply, so it is TAXED ON TOP at the club's province rate. Every fee line carries `RECOVERED_FEE_TAX` (lib/billing-tax.ts); on a
+ * subscription invoice it is taxed with the subscription, and the club's own invoice turns automatic tax on, so it waits for an
+ * address Stripe can place. The base is Stripe's fee before any tax Stripe charged us (we claim that back). A credit goes against
+ * the fee's own line, so Stripe reverses its tax with it.
  */
 
 /** Ours, not Stripe's: how long a club has to pay its own invoice. Printed from Stripe's due date, never typed. */
@@ -73,7 +82,8 @@ export async function recordStripeFee(p: {
 }
 
 /** A Stripe fee in a balance transaction (a charge, or a refund of one), the way the platform's balance reports it. */
-const isStripeFee = (t: Stripe.BalanceTransaction) => t.reporting_category === 'fee' || t.type === 'stripe_fee';
+// `tax_fee` is Stripe's tax on its own fee: FieldLogicHQ claims it back, so it is never billed on (we tax the fee ourselves).
+const isStripeFee = (t: Stripe.BalanceTransaction) => t.type !== 'tax_fee' && (t.reporting_category === 'fee' || t.type === 'stripe_fee');
 
 /**
  * Stripe's fee for a RETURNED bank debit (failed before it settled), at what Stripe charged FieldLogicHQ: the platform's
@@ -241,7 +251,7 @@ async function subscriptionLine(f: FeeRow, ride: { customer: string; subscriptio
   const already = (await stripe.invoiceItems.list({ customer: ride.customer, created: { gte: since }, limit: 100 }).autoPagingToArray({ limit: 1000 }))
     .find(i => i.metadata?.platform_stripe_fee_id === f.id);
   const item = already ?? await stripe.invoiceItems.create({
-    customer: ride.customer, subscription: ride.subscription, amount: signedCents(f), currency: 'cad',
+    customer: ride.customer, subscription: ride.subscription, amount: signedCents(f), currency: 'cad', ...RECOVERED_FEE_TAX,
     description: await lineFor(f), metadata: { platform_stripe_fee_id: f.id, org_id: f.org_id },
   }, { idempotencyKey: `stripe-fee:${f.id}:${ride.subscription}` });
   await stampSubscriptionLine(f.id, item.id);
@@ -313,7 +323,7 @@ async function creditAgainst(f: FeeRow, answer: FeeRow, invoiceId: string): Prom
     const already = (await stripe.invoiceItems.list({ invoice: invoiceId, limit: 100 }).autoPagingToArray({ limit: 1000 }))
       .find(i => i.metadata?.platform_stripe_fee_id === f.id);
     const item = already ?? await stripe.invoiceItems.create({
-      customer, invoice: invoiceId, amount: signedCents(f), currency: 'cad',
+      customer, invoice: invoiceId, amount: signedCents(f), currency: 'cad', ...RECOVERED_FEE_TAX,
       description: await lineFor(f), metadata: { platform_stripe_fee_id: f.id, org_id: f.org_id },
     }, { idempotencyKey: `stripe-fee:${f.id}:${invoiceId}` });
     await stampSubscriptionLine(f.id, item.id);
@@ -325,9 +335,11 @@ async function creditAgainst(f: FeeRow, answer: FeeRow, invoiceId: string): Prom
   const notes = await stripe.creditNotes.list({ invoice: invoiceId, limit: 100 }).autoPagingToArray({ limit: 1000 });
   let note = notes.find(n => n.metadata?.platform_stripe_fee_id === f.id) ?? null;
   if (!note) {
-    // Against the answering fee's own line where Stripe shows it (Stripe recommends it), else as a line of its own.
+    // Against the answering fee's own line where Stripe shows it (Stripe recommends it), else as a line of its own — but never
+    // on a taxed invoice: Stripe refuses a custom line there, and only the fee's own line reverses its tax (verified 2026-11-05).
     const lines = await stripe.invoices.listLineItems(invoiceId, { limit: 100 }).autoPagingToArray({ limit: 1000 });
     const carried = lines.find(l => l.parent?.invoice_item_details?.invoice_item === answer.stripe_invoice_item_id);
+    if (!carried && inv.automatic_tax?.enabled) throw new Error('The answering fee’s line wasn’t found on its taxed invoice, so its tax can’t be credited.');
     const params: Stripe.CreditNoteCreateParams = {
       invoice: invoiceId,
       lines: [carried
@@ -336,10 +348,12 @@ async function creditAgainst(f: FeeRow, answer: FeeRow, invoiceId: string): Prom
       email_type: 'none',
       metadata: { platform_stripe_fee_id: f.id, org_id: f.org_id },
     };
-    // No tax is set on any FieldLogicHQ invoice, so the note's total is the credit. What still is owed takes it first;
-    // the rest goes back to the card, as far as the card paid, and anything past that to the club's Stripe balance.
+    // The note's total is the credit plus the tax Stripe reverses with it (a line's `amount` is before tax), so it is asked
+    // of Stripe, never worked out here. What still is owed takes it first; the rest goes back to the card, as far as the
+    // card paid, and anything past that to the club's Stripe balance.
+    const total = inv.automatic_tax?.enabled ? (await stripe.creditNotes.preview(params)).total : cents;
     const owed = inv.status === 'paid' ? 0 : Math.max(0, inv.amount_remaining);
-    const after = Math.max(0, cents - owed);
+    const after = Math.max(0, total - owed);
     const refund = Math.min(after, Math.max(0, inv.amount_paid));
     if (refund > 0) params.refund_amount = refund;
     if (after - refund > 0) params.credit_amount = after - refund;
@@ -431,8 +445,20 @@ async function invoiceOneClub(orgId: string, candidates: FeeRow[], periodStart: 
 
   const { data: org } = await supabaseAdmin.from('organizations').select('id, name, stripe_customer_id, account_kind').eq('id', orgId).maybeSingle();
   if (!org) return false;
-  const customer = (org.stripe_customer_id as string | null)
-    ?? await ensureStripeCustomer({ id: orgId, stripeCustomerId: null, accountKind: (org.account_kind as string | null) ?? null }, await getOrgOwnerEmail(orgId));
+  // The invoice is taxed by the club's address, so the customer carries the one on our records (and the club's name); Stripe
+  // refuses to finalize a taxed invoice it cannot place. A club with no address anywhere (a comped or free club that never
+  // bought) waits: its fees stay unbilled with a plain reason platform admin shows, and go out on the first run after it has one.
+  const location = await clubBillingLocation(orgId, org.name as string);
+  const existingCustomer = (org.stripe_customer_id as string | null) ?? null;
+  if (!location && !(existingCustomer && await customerHasAddress(existingCustomer))) {
+    await supabaseAdmin.from('platform_stripe_fees').update({ bill_error: NO_ADDRESS })
+      .in('id', ours.map(f => f.id)).is('billed_at', null);
+    return false;
+  }
+  const customer = await ensureStripeCustomer(
+    { id: orgId, stripeCustomerId: existingCustomer, accountKind: (org.account_kind as string | null) ?? null },
+    await getOrgOwnerEmail(orgId), location, org.name as string,
+  );
   if (!row) {
     const { error } = await supabaseAdmin.from('platform_fee_invoices')
       .insert({ org_id: orgId, livemode: live, period_start: periodStart, stripe_customer_id: customer });
@@ -447,7 +473,7 @@ async function invoiceOneClub(orgId: string, candidates: FeeRow[], periodStart: 
       .data.find(i => i.metadata?.[FEE_INVOICE_META] === row!.id);
     const inv = found ?? await stripe.invoices.create({
       customer: row.stripe_customer_id, collection_method: 'send_invoice', days_until_due: FEE_INVOICE_DAYS_DUE, auto_advance: false,
-      pending_invoice_items_behavior: 'exclude', currency: 'cad',
+      pending_invoice_items_behavior: 'exclude', currency: 'cad', automatic_tax: AUTOMATIC_TAX,
       description: W.memo(org.name as string), footer: W.footer(PLATFORM_CONTACT_EMAIL),
       metadata: { [FEE_INVOICE_META]: row.id, org_id: orgId },
     }, { idempotencyKey: `fee-invoice:${row.id}` });
@@ -455,6 +481,20 @@ async function invoiceOneClub(orgId: string, candidates: FeeRow[], periodStart: 
     row = { ...row, stripe_invoice_id: inv.id! };
   }
   return completeInvoice(row, ours, true);
+}
+
+/** Platform admin's reason on a fee that waits for the club's address (operator words; the club is not emailed). */
+const NO_ADDRESS = 'The club has no billing address on file, so the tax on its invoice can’t be worked out. Its fees go out on the first monthly invoice after it adds one on Plan & billing.';
+
+async function clubBillingLocation(orgId: string, name: string): Promise<BillingLocation | null> {
+  const stored = await readBillingLocation({ kind: 'org', orgId, name });
+  return stored ? storedLocationStillValid(stored, usSalesOpen()) : null;
+}
+
+async function customerHasAddress(customerId: string): Promise<boolean> {
+  if (customerId.startsWith('mock_')) return false;
+  const c = await stripe.customers.retrieve(customerId);
+  return !('deleted' in c && c.deleted) && !!(c as Stripe.Customer).address?.country;
 }
 
 /**
@@ -491,7 +531,7 @@ async function completeInvoice(row: InvoiceRow, fees: FeeRow[], mayAdd: boolean)
     }
     if (!itemId) {
       itemId = (await stripe.invoiceItems.create({
-        customer: row.stripe_customer_id, invoice: invoiceId, amount: signedCents(f), currency: 'cad',
+        customer: row.stripe_customer_id, invoice: invoiceId, amount: signedCents(f), currency: 'cad', ...RECOVERED_FEE_TAX,
         description: await lineFor(f), metadata: { platform_stripe_fee_id: f.id, org_id: row.org_id },
       }, { idempotencyKey: `stripe-fee:${f.id}:${invoiceId}` })).id;
     }
@@ -566,22 +606,27 @@ async function emailFeeInvoice(rowId: string): Promise<void> {
   const row = data as InvoiceRow | null;
   if (!row || row.emailed_at || row.status !== 'open' || !row.hosted_invoice_url) return;
   try {
-    const [to, { data: org }, lines] = await Promise.all([
+    const [to, { data: org }, lines, inv] = await Promise.all([
       getOrgOwnerEmail(row.org_id),
       supabaseAdmin.from('organizations').select('name').eq('id', row.org_id).maybeSingle(),
       invoiceLines(row.id),
+      row.stripe_invoice_id ? stripe.invoices.retrieve(row.stripe_invoice_id) : Promise.resolve(null),
     ]);
     if (!to) throw new Error('The club has no owner email.');
     const club = (org?.name as string | null) ?? '';
     const amount = money(Number(row.amount_due ?? 0));
+    // Stage 2: what Stripe charged us is the invoice BEFORE tax; the tax is ours, by name, between the lines and the total.
+    const taxes = inv ? await namedTaxLines(inv.total_taxes, id => stripe.taxRates.retrieve(id)) : [];
+    const fee = inv ? money(inv.subtotal / 100) : amount;
     const dueFull = formatStoredDate(row.due_at, { withYear: true });
     const test = !row.livemode;
     const subject = `${test ? E.testPrefix : ''}${W.emailSubject(row.invoice_number ?? '', club)}`;
     const html = warmEmailDocument([
-      `<div style="display:none;max-height:0;overflow:hidden;opacity:0;">${escapeHtml(W.emailPreheader(amount, dueFull))}</div>`,
-      warmEmailParagraph(escapeHtml(W.emailLead(amount, club, lines.length === 1))),
+      `<div style="display:none;max-height:0;overflow:hidden;opacity:0;">${escapeHtml(W.emailPreheader(fee, dueFull))}</div>`,
+      warmEmailParagraph(escapeHtml(W.emailLead(fee, club, lines.length === 1))),
       emailFactsPanel([
         ...lines.map(l => [l.line, l.cents < 0 ? W.credit(money(-l.cents / 100)) : money(l.cents / 100)] as const),
+        ...taxes.map(t => [t.label, money(t.cents / 100)] as const),
         [W.total, amount] as const,
         [W.due, dueFull] as const,
       ]),

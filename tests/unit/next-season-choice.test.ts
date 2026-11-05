@@ -59,10 +59,15 @@ describe('the next-season choice cannot charge early', () => {
     );
   });
 
-  it('raises no invoice at creation time', () => {
+  it('raises no invoice at creation time, and is taxed (GST/HST Stage 2)', () => {
     const params = buildNextSeasonCheckoutParams({ ...BASE, now: INSIDE_WINDOW });
-    assert.equal(params.subscription_data?.proration_behavior, 'none');
+    // No anchor means nothing to prorate (the session charges $0 at creation, test mode 2026-11-05), and Stripe REFUSES
+    // `proration_behavior` on a Checkout session without one, so it must not be sent at all.
     assert.equal('billing_cycle_anchor' in (params.subscription_data ?? {}), false);
+    assert.equal('proration_behavior' in (params.subscription_data ?? {}), false, 'Stripe refuses proration_behavior without an anchor');
+    assert.deepEqual(params.automatic_tax, { enabled: true });
+    assert.deepEqual(params.tax_id_collection, { enabled: true });
+    assert.equal('address' in (params.customer_update ?? {}), false, 'Checkout never changes the address');
   });
 
   it('REFUSES to build when the first-charge instant is already in the past', () => {

@@ -64,7 +64,8 @@ function fakeDb(tables: Record<string, Row[]>) {
 
 let tables: Record<string, Row[]>;
 let cards: Record<string, Array<{ created: number; card: { country: string } }>>;
-let stamps: Array<{ id: string; address: Row }>;
+let stamps: Array<{ id: string; address: Row; name?: string; metadata?: Record<string, string> }>;
+let names: Record<string, string>;
 let paid: boolean;
 let customerMeta: Record<string, Record<string, string>>;
 let homes: Record<string, Row>;
@@ -85,8 +86,8 @@ function server() {
         return { data: [...(cards[customer] ?? [])].sort((a, b) => b.created - a.created).slice(0, 1) };
       } },
       customers: {
-        update: async (id: string, p: { address: Row }) => { stamps.push({ id, address: p.address }); },
-        retrieve: async (id: string) => ({ id, metadata: customerMeta[id] ?? {}, address: homes[id] ?? null }),
+        update: async (id: string, p: { address: Row; name?: string; metadata?: Record<string, string> }) => { stamps.push({ id, address: p.address, name: p.name, metadata: p.metadata }); },
+        retrieve: async (id: string) => ({ id, metadata: customerMeta[id] ?? {}, address: homes[id] ?? null, name: names[id] ?? null }),
       },
     }) },
     './plan-move': { paidOrPromisedToPay: async () => paid },
@@ -109,6 +110,7 @@ const clubRow = (extra: Row = {}): Row => ({
 beforeEach(() => {
   process.env.US_SALES_OPEN = 'true';
   homes = {};
+  names = {};
   tables = {
     billing_locations: [usRow(), clubRow()],
     team_workspaces: [
@@ -275,6 +277,17 @@ describe('a "Start your club" address goes on the Stripe customer BEFORE the mov
     const out = await s.withClubAddressOnStripe<{ code?: string; direction?: string }>(club, located.location, (r) => 'code' in r, async () => ({ code: 'card_declined' }));
     assert.deepEqual(out, { ok: true, result: { code: 'card_declined' } });
     assert.deepEqual(stamps.map(x => [x.id, x.address.line1]), [['cus_coach', '9 Field Road'], ['cus_coach', '120 Elm Street']]);
+  });
+
+  it('the club\'s name goes on with its address (its invoice is the club\'s), and the coach\'s own comes back on a refusal', async () => {
+    homes.cus_coach = home;
+    names.cus_coach = 'Sam Coach';
+    customerMeta.cus_coach = { fieldlogic_buyer_name: 'Sam Coach' };
+    const s = server();
+    const located = await s.requireBillingLocation(club, address);
+    if (!located.ok) return assert.fail();
+    await s.withClubAddressOnStripe<{ code?: string }>(club, located.location, (r) => 'code' in r, async () => ({ code: 'card_declined' }));
+    assert.deepEqual(stamps.map(x => [x.name, x.metadata?.fieldlogic_buyer_name]), [['Falcons Baseball Club', 'Falcons Baseball Club'], ['Sam Coach', 'Sam Coach']]);
   });
 
   it('a move that throws puts the home address back and still throws', async () => {

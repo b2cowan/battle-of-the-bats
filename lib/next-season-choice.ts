@@ -7,6 +7,7 @@ import {
   type BillingCycle,
 } from './plan-config';
 import type { OrgPlan } from './types';
+import { TAXED_CHECKOUT } from './billing-tax';
 
 /**
  * THE NEXT-SEASON PLAN CHOICE — "what do you want for the season after this one?"
@@ -156,12 +157,17 @@ export function buildNextSeasonCheckoutParams(input: {
   return {
     mode: 'subscription',
     customer: input.customerId,
+    // GST/HST Stage 2: tax is set NOW, on the subscription this makes; its rate follows the customer's address AT THE FIRST
+    // CHARGE (verified in test mode 2026-11-05), so a buyer who moves before October is charged at the new address.
+    ...TAXED_CHECKOUT,
     line_items: [{ price: input.priceId, quantity: 1 }],
     subscription_data: {
       // The whole promise, in one field, from one constant.
       trial_end: Math.floor(firstChargeMs / 1000),
-      // No proration can raise an invoice at creation time.
-      proration_behavior: 'none',
+      // ⚠ NO `proration_behavior` and NO `billing_cycle_anchor`. Stripe refuses `proration_behavior` on a Checkout session without
+      // an anchor ("can only be passed if billing_cycle_anchor … exist"; found in test mode 2026-11-05, GST/HST Stage 2 Part 2 —
+      // every real next-season Checkout was refused, hidden on dev by the mock). With no anchor there is nothing to prorate:
+      // the session charges $0 at creation and the first charge is trial_end (verified the same day).
       metadata,
       // NEVER trial_period_days — it counts from the moment of purchase, so a June chooser would be
       // charged in June. The invariant test asserts this key is absent.

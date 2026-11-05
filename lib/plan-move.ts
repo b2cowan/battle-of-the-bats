@@ -17,6 +17,7 @@ import { trustedPreviewLines, type MovePreviewLine } from './plan-move-preview-l
 import { inPlaceMetadata, parseClubName } from './workspace-upgrade';
 import { workspaceCannotBecomeClub } from './workspace-upgrade-status';
 import { restoreCoachesPortalRetainedRecords } from './portal-retained-restore';
+import { AUTOMATIC_TAX } from './billing-tax';
 
 /**
  * MOVING A PAYING ORGANIZATION BETWEEN PLANS — ONE SUBSCRIPTION, NEVER A SECOND CHECKOUT
@@ -391,6 +392,9 @@ export async function applyMove(
         // A declined proration charge must leave the subscription exactly as it was. Stripe's default ('allow_incomplete') swaps the
         // price anyway and marks it past due — and a Premium portal would then become the club, for good, on an unpaid subscription.
         payment_behavior: 'error_if_incomplete',
+        // GST/HST Stage 2: a subscription is taxed only once a call turns it on, so the move does, and its prorated invoice and
+        // every renewal after are taxed by the customer's address (the club's, for Premium → Club: the route stamps it first).
+        automatic_tax: AUTOMATIC_TAX,
         metadata,
       });
 
@@ -440,6 +444,9 @@ export async function applyMove(
     const periodEnd = live.item.current_period_end;
     const updated = await stripe.subscriptionSchedules.update(schedule.id, {
       end_behavior: 'release',
+      // GST/HST Stage 2: a schedule made from an untaxed subscription defaults to untaxed, and the phases below set none of their
+      // own, so they inherit this: the smaller plan's renewal is taxed (verified in test mode 2026-11-05).
+      default_settings: { automatic_tax: AUTOMATIC_TAX },
       metadata,
       phases: [
         {

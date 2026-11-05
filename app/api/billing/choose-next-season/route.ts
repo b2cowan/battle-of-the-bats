@@ -97,7 +97,8 @@ export const POST = withObservability(async (req: Request) => {
 
   // ── 5. GST/HST Stage 1: the buyer's billing address is on file ────────────
   // A choice is a subscription that will charge, so it is a purchase (the club's address, or a coach's own home address).
-  const located = await requireBillingLocation(billingBuyerOf(auth.org, auth.user));
+  const buyer = billingBuyerOf(auth.org, auth.user);
+  const located = await requireBillingLocation(buyer);
   if (!located.ok) return located.response;
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
@@ -139,7 +140,9 @@ export const POST = withObservability(async (req: Request) => {
   }
 
   const { stripe } = await import('@/lib/stripe');
-  const customerId = await ensureStripeCustomer(auth.org, auth.user.email, located.location);
+  // The buyer name for its invoices (accounting 6b): the club name, or the coach name for a Coaches Portal (a coach buys as a person).
+  const coachName = ((auth.user.user_metadata?.full_name ?? auth.user.user_metadata?.name) as string | undefined) ?? null;
+  const customerId = await ensureStripeCustomer(auth.org, auth.user.email, located.location, buyer.kind === 'org' ? auth.org.name : coachName);
 
   // ⚠⚠ CANCEL ANY PRIOR CHOICE BEFORE MAKING A NEW ONE, OR OCTOBER 1 CHARGES TWICE.
   // Every choice creates a real Stripe subscription whose first charge is the same instant. A second
