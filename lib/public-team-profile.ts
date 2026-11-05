@@ -5,7 +5,7 @@ import { gameDayWord, gameTimeWord, publicFrameGame, teamMoment, teamPlace, unfi
 import { publishedGameTeams, standingsAdvancing } from './public-standings';
 import { nextPlayoffGame } from './public-playoffs';
 import { getPlayoffStakes, publicGameRound } from './public-game-detail';
-import { fanPlaceholder, gameRowView, gameSideNames, liveCardView } from './public-game-row';
+import { fanPlaceholder, gameSideNames, liveCardView } from './public-game-row';
 import { DEFAULT_GAME_DURATION_MINUTES, LIVE_GRACE_MINUTES, gameStartMs, publicGameState, selectTeamGames, teamScoreFor } from './game-status';
 import { formatStoredDate, tournamentToday } from './timezone';
 import { formatPoolName } from './utils';
@@ -94,7 +94,7 @@ export function teamProfileView(profile: PreviewTeamProfile, now: Date) {
   const focus = moment.kind === 'live' || moment.kind === 'upcoming' ? moment.game : null;
   const today = tournamentToday(now);
   const round = (game: Game) => game.isPlayoff ? `Playoff · ${publicGameRound(game)}` : 'Pool';
-  // The same two faces as the Schedule (a live card, a game row), with the team being read listed first. Directions
+  // Each game on the stacked game card (Public page layout standard A13), the team being read listed first. Directions
   // live on the game's own page; the day leads the time because this page has no day headings.
   function card(game: Game, live = false) {
     const names = gameSideNames(game, id => profile.teamNames[id] ?? 'TBD', fanPlaceholder);
@@ -104,9 +104,7 @@ export function teamProfileView(profile: PreviewTeamProfile, now: Date) {
     if (own) view.sides.reverse();
     const time = [gameDayWord(game.date, today), gameTimeWord(game.time)].filter(Boolean).join(' · ');
     const pool = game.isPlayoff || !profile.poolName ? null : formatPoolName(profile.poolName);
-    const row = { ...gameRowView(game, own ? { away: names.home, home: names.away } : names, profile.divisionName, today,
-      { state: 'upcoming', round: game.isPlayoff ? publicGameRound(game) : null, poolTag: pool, schedule: true }), head: time };
-    return { game, view, row, time, division: profile.divisionName, pool, round: game.isPlayoff ? publicGameRound(game) : null,
+    return { game, view, time, division: profile.divisionName, pool, round: game.isPlayoff ? publicGameRound(game) : null,
       stakes: preview.stakes[game.id] ?? null };
   }
   const upcoming = games.filter(game => game.id !== focus?.id && publicGameState(game, preview.requireFinalization, now) === 'upcoming'

@@ -24,6 +24,9 @@ const FRAME_ONLY_USERS = ['components/public/TournamentOverview.tsx', 'component
   // Part 3: sub-bodies of guarded pages. The bracket is drawn only by Playoffs (through TieredBracket) and draws each match
   // as the Schedule's own ScheduleMatchup; the Rules sections are only PublicRules' list of joined disclosures.
   'components/bracket/PublicBracket.tsx', 'components/public/PublicRuleSections.tsx',
+  // Public page layout standard Part 4: News's headings are the shared section heading (R4). News renders only inside the
+  // frame — its own tournament route and the admin preview below.
+  'components/public/NewsContent.tsx',
   'app/[orgSlug]/admin/tournaments/preview/[tournamentSlug]/[section]/page.tsx', HOME];
 
 describe('the shared parts render only inside the new frame', () => {

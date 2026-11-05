@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { CalendarPlus, ChevronLeft, Star } from 'lucide-react';
+import { CalendarPlus, Star } from 'lucide-react';
 import { TEAM_SCHEDULE_WITHHELD, type WithheldTeamProfile } from '@/lib/public-teams';
 import { teamProfileNextChange, teamProfileView, type PreviewTeamProfile } from '@/lib/public-team-profile';
 import { useFollowedTeam, useAccountFollowedTeamIds, unfollowTeamEverywhere } from '@/lib/follow';
@@ -13,20 +13,17 @@ import { teamInitials } from '@/lib/team-color';
 import { formatPoolName, splitTeamQualifier } from '@/lib/utils';
 import type { Division, Game, PublicTeam } from '@/lib/types';
 import PublicTournamentState from './PublicTournamentState';
-import PublicLiveCard from './PublicLiveCard';
-import { PublicGameRow } from './PublicGameRow';
+import { ScheduleMatchup } from './PublicGameRow';
 import PublicDoorRow, { PublicLinkList } from './PublicDoorRow';
+import PublicSectionHead from './PublicSectionHead';
 import UnfollowConfirmSheet from './UnfollowConfirmSheet';
 import PublicPage from './PublicPage';
+import kit from './ClubKit.module.css';
 import parts from './PublicParts.module.css';
 import styles from './PublicTeamPage.module.css';
 
 type Profile = PreviewTeamProfile | WithheldTeamProfile;
 const withheld = (data: Profile): data is WithheldTeamProfile => 'scheduleWithheld' in data && data.scheduleWithheld === true;
-
-function Back({ href }: { href: string }) {
-  return <Link href={href} className={styles.back}><ChevronLeft size={16} aria-hidden="true" />All Teams</Link>;
-}
 
 /** The rendered page shares its moment/place rule with Teams; the network owner below is its only poll. */
 export function PublicTeamBody({ data, now, orgSlug, tournamentSlug }: {
@@ -58,16 +55,21 @@ export function PublicTeamBody({ data, now, orgSlug, tournamentSlug }: {
       divisions: [{ id: team.divisionId, name: data.divisionName }] as Division[],
       tournamentName: data.tournamentName, orgSlug, tournamentSlug });
   }
-  // The Schedule's own two faces: the live card for a game in play, the game row for one still to come.
+  // Every game on the stacked game card (Public page layout standard A13, R6): the day leading the time on the head line
+  // ("Thu, Nov 5 · 6:00 p.m."), "{division} · {round or pool}" after it, this team first and bold (ruled 2026-10-30).
+  // A game in play wears the green edge and no pill (its "Live now" heading says it, R9) and keeps a gold stakes line.
   type Item = NonNullable<typeof view.focus>;
-  const gameHref = (item: Item) => `${base}/schedule/${item.game.id}`;
-  const liveCard = (item: Item) => <div data-public-team-game={item.game.id}><PublicLiveCard view={item.view} href={gameHref(item)}
-    schedule={{ time: item.time, division: item.division, pool: item.pool, round: item.round }}
-    foot={item.stakes?.gold ? item.stakes.text : undefined} /></div>;
-  const gameRows = (items: Item[]) => <ul className={parts.rows}>{items.map(item =>
-    <PublicGameRow key={item.game.id} view={item.row} href={gameHref(item)} />)}</ul>;
+  const gameList = (items: Item[], live = false) => <ul className={`${kit.list} ${parts.gameList}`}>{items.map(item => {
+    const opponentId = item.game.homeTeamId === team.id ? item.game.awayTeamId : item.game.homeTeamId;
+    return <li key={item.game.id} data-public-team-game={item.game.id}>
+      <ScheduleMatchup form="stacked" pill={false} state={live ? 'live' : 'upcoming'} time={item.time} division={item.division}
+        pool={item.pool} round={item.round} href={`${base}/schedule/${item.game.id}`} noScore={live ? item.view.noScore : null}
+        foot={live && item.stakes?.gold ? item.stakes.text : null}
+        sides={item.view.sides.map((side, i) => ({ name: side.name, score: live ? side.score : null, result: null,
+          own: i === 0, placeholder: i === 1 && !opponentId }))} />
+    </li>;
+  })}</ul>;
   return <PublicPage data-public-team={view.moment.kind} data-public-team-ready>
-    <Back href={`${base}/teams`} />
     <div>
       <div className={styles.identity}>
         <div className={styles.initials} aria-hidden="true">{teamInitials(team.name)}</div>
@@ -84,17 +86,18 @@ export function PublicTeamBody({ data, now, orgSlug, tournamentSlug }: {
       </div>
     </div>
     {view.noMoreGames && <p className={styles.quiet}>No more games</p>}
-    {!hasGames ? <div className={styles.stateCard}><PublicTournamentState title="No games scheduled yet"
-      description="Check back when the organizer publishes the games." /></div> : <div className={parts.cols}>
+    {!hasGames ? <PublicTournamentState title="No games scheduled yet"
+      description="Check back when the organizer publishes the games." /> : <div className={parts.cols}>
       <div className={styles.main}>
         {view.moment.kind === 'champion' && <div className={styles.champion}>Champion · {data.divisionName}</div>}
-        {view.focus && <section className={styles.section} aria-label={live ? 'Live now' : 'Up next'}>
-          <h3>{live ? 'Live now' : 'Up next'}</h3>{live ? liveCard(view.focus) : gameRows([view.focus])}
+        {view.focus && <section className={parts.section} aria-labelledby="team-focus">
+          <PublicSectionHead id="team-focus" title={live ? 'Live now' : 'Up next'} />{gameList([view.focus], live)}
         </section>}
-        {view.next.length > 0 && <section className={styles.section} aria-label="Next games"><h3>Next games</h3>
-          {gameRows(view.next)}
+        {view.next.length > 0 && <section className={parts.section} aria-labelledby="team-next">
+          <PublicSectionHead id="team-next" title="Next games" />{gameList(view.next)}
         </section>}
-        {view.results.length > 0 && <section className={styles.section} aria-label="Results"><h3>Results</h3>
+        {view.results.length > 0 && <section className={parts.section} aria-labelledby="team-results">
+          <PublicSectionHead id="team-results" title="Results" count={view.results.length} />
           <div className={styles.results}>{view.results.map(result => <Link key={result.id} className={styles.result}
             href={`${base}/schedule/${result.id}`}><span>{result.date}</span><span>vs {result.opponent}
               <small>{result.round}{result.unofficial && ' · Unofficial'}</small></span><b>{result.score}</b></Link>)}</div>
@@ -107,7 +110,8 @@ export function PublicTeamBody({ data, now, orgSlug, tournamentSlug }: {
           <div><dt>Points</dt><dd>{standings.pts}</dd></div>
           <div><dt>Run difference</dt><dd>{standings.rd >= 0 ? '+' : ''}{standings.rd}</dd></div>
         </dl>
-        <PublicLinkList><PublicDoorRow href={`${base}/standings`} label={view.standingsLabel} /></PublicLinkList>
+        <PublicLinkList><PublicDoorRow href={`${base}/standings`} label={view.standingsLabel}
+          sub={preview.place ? `${name.base} is ${preview.place.value}` : undefined} /></PublicLinkList>
       </div>}
     </div>}
     <UnfollowConfirmSheet open={confirm} teamName={team.name} onCancel={() => setConfirm(false)}
@@ -119,7 +123,6 @@ export function PublicTeamBody({ data, now, orgSlug, tournamentSlug }: {
 export default function PublicTeamPage({ orgSlug, tournamentSlug, teamId }: {
   orgSlug: string; tournamentSlug: string; teamId: string;
 }) {
-  const orgHref = useOrgHref(orgSlug);
   const router = useRouter();
   const key = `${orgSlug}/${tournamentSlug}/${teamId}`;
   const [entry, setEntry] = useState<{ key: string; data: Profile | null; error: 'missing' | 'failed' | null; now: Date } | null>(null);
@@ -171,18 +174,19 @@ export default function PublicTeamPage({ orgSlug, tournamentSlug, teamId }: {
     document.addEventListener('visibilitychange', visible);
     return () => { if (timer !== null) clearTimeout(timer); document.removeEventListener('visibilitychange', visible); };
   }, [current, key]);
-  const back = orgHref(`/${tournamentSlug}/teams`);
   if (current?.data && !withheld(current.data)) return <PublicTeamBody key={key} data={current.data} now={current.now}
     orgSlug={orgSlug} tournamentSlug={tournamentSlug} />;
   if (current?.data && withheld(current.data)) return <PublicPage data-public-team="withheld" data-public-team-ready>
     <div className={styles.nameBlock}><h2>{current.data.team.name}</h2><p className={styles.subtitle}>{current.data.divisionName}</p></div>
     <p className={styles.message}>{TEAM_SCHEDULE_WITHHELD}</p>
   </PublicPage>;
-  return <PublicPage data-public-team={current?.error ?? 'loading'}><Back href={back} />
-    {!current?.error ? <p className={styles.loading}>Loading team…</p> : <div className={styles.stateCard}>
-      <PublicTournamentState title={current.error === 'missing' ? 'Team not found' : "Couldn't load this team"}
-        description={current.error === 'missing' ? "This team isn't in this tournament." : 'Check your connection and try again.'} />
-      {current.error === 'failed' && <button type="button" className={styles.retry} onClick={() => { setEntry(null); setAttempt(n => n + 1); }}>Try again</button>}
-    </div>}
+  // No back link in any state (A14: the menu's Teams goes there). The states are the shared empty card, Try again its
+  // outlined button (R11).
+  return <PublicPage data-public-team={current?.error ?? 'loading'}>
+    {!current?.error ? <p className={styles.loading}>Loading team…</p>
+      : <PublicTournamentState title={current.error === 'missing' ? 'Team not found' : "Couldn't load this team"}
+        description={current.error === 'missing' ? "This team isn't in this tournament." : 'Check your connection and try again.'}>
+        {current.error === 'failed' ? <button type="button" className={styles.retry} onClick={() => { setEntry(null); setAttempt(n => n + 1); }}>Try again</button> : null}
+      </PublicTournamentState>}
   </PublicPage>;
 }

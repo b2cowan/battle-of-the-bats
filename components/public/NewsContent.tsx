@@ -1,8 +1,10 @@
-import { Megaphone, Star, Calendar } from 'lucide-react';
+import { Megaphone, Star } from 'lucide-react';
 import type { Announcement, Division } from '@/lib/types';
 import DivisionFilterBar from '@/components/DivisionFilterBar';
 import PublicTournamentState from '@/components/public/PublicTournamentState';
 import PublicPage from '@/components/public/PublicPage';
+import PublicSectionHead from '@/components/public/PublicSectionHead';
+import parts from '@/components/public/PublicParts.module.css';
 import { orgLinks } from '@/lib/org-links';
 import styles from '@/app/[orgSlug]/news/news.module.css';
 
@@ -131,32 +133,27 @@ export default async function NewsContent({
         />
       ) : (
         <>
+          {/* The section headings are the standard's (R4: PublicSectionHead, 16 px, sentence case like every other). */}
           {pinned.length > 0 && (
-            <div className={styles.pinnedSection}>
-              <div className={styles.sectionLabel}>
-                <Star size={13} fill="currentColor" /> Pinned Announcements
-              </div>
+            <section className={parts.section} aria-labelledby="news-pinned">
+              <PublicSectionHead id="news-pinned" title="Pinned announcements" />
               <div className={styles.annList}>
                 {pinned.map(ann => (
                   <AnnouncementCard key={ann.id} ann={ann} pinned />
                 ))}
               </div>
-            </div>
+            </section>
           )}
 
           {regular.length > 0 && (
-            <div>
-              {pinned.length > 0 && (
-                <div className={styles.sectionLabel}>
-                  <Calendar size={13} /> Recent Announcements
-                </div>
-              )}
+            <section className={parts.section} aria-labelledby={pinned.length > 0 ? 'news-recent' : undefined}>
+              {pinned.length > 0 && <PublicSectionHead id="news-recent" title="Recent announcements" />}
               <div className={styles.annList}>
                 {regular.map(ann => (
                   <AnnouncementCard key={ann.id} ann={ann} pinned={false} />
                 ))}
               </div>
-            </div>
+            </section>
           )}
         </>
       )}

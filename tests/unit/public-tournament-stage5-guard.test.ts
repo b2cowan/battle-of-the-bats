@@ -135,10 +135,11 @@ describe('Stage 5 Part 3: the team page and installed-app mounts', () => {
     assert.match(readSource('components/public/PublicTeamPage.module.css'),/\.message, \.loading[^}]+1rem/);
   });
   it('uses the shared game card and a standings door, with no team Share (owner removed it 2026-10-31), bell or table', () => {
-    assert.match(body, /<PublicLiveCard/);assert.match(body, /<PublicDoorRow/);
+    // Public page layout standard A13: every game on the shared stacked card (the live card stays the Schedule's and Playoffs').
+    assert.match(body, /<ScheduleMatchup form="stacked"/);assert.doesNotMatch(body, /<PublicLiveCard/);assert.match(body, /<PublicDoorRow/);
     assert.doesNotMatch(body, /SharePageButton|Share this team/);
     assert.doesNotMatch(body, /FollowAlertsToggle|<table|<YearSelector/);
-    assert.match(body, /<h3>Results<\/h3>/);
+    assert.match(body, /<PublicSectionHead id="team-results" title="Results" count=\{view\.results\.length\} \/>/);
     assert.match(readSource('components/public/PublicTeamPage.module.css'),/grid-template-columns: 56px minmax\(0, 1fr\) auto/);
   });
   it('mounts the dock, the rail card and the prompt only inside the installed app, once each (Stage 8 Part 3d: no legacy mount)', () => {

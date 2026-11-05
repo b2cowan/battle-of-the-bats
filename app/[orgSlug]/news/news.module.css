@@ -1,22 +1,6 @@
 ﻿/* The tournament News page sits on the shared page column (PublicPage), which spaces its sections 24 px apart (R3); its
-   own margins would add to that. The filter bar sets an inline 1.5rem under itself, so its wrapper zeroes it. */
-.pinnedSection { margin-bottom: 0; }
+   own margins would add to that. Its section headings are the standard's (PublicSectionHead, R4). The filter bar sets an inline 1.5rem under itself, so its wrapper zeroes it. */
 .filter > div { margin-bottom: 0 !important; }
-
-.sectionLabel {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-family: var(--font-display);
-  font-size: 0.85rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--primary-light);
-  margin-bottom: 1.25rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid var(--border);
-}
 
 .annList { display: flex; flex-direction: column; gap: 1.25rem; }
 

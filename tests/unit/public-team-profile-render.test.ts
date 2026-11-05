@@ -27,17 +27,21 @@ describe('the real preview team page',()=>{
     assert.match(html,/<h2>Riverdale Rapids<\/h2>/);
     assert.doesNotMatch(html,/Share this team/);
     assert.match(html,/data-public-team-game="final"/);
-    assert.ok(html.indexOf('data-public-team-game')<html.indexOf('aria-label="Results"'));
-    assert.ok(html.indexOf('aria-label="Results"')<html.indexOf('Place in A Pool'));
+    assert.ok(html.indexOf('data-public-team-game')<html.indexOf('id="team-results"'));
+    assert.ok(html.indexOf('id="team-results"')<html.indexOf('Place in A Pool'));
     assert.ok(html.indexOf('Place in A Pool')<html.indexOf('U11 standings · A Pool'));
     assert.match(html,/<dt>Place in A Pool<\/dt><dd>1st of 3<\/dd>/);
     assert.doesNotMatch(html,/<table|FollowAlertsToggle|formBubbles|text-transform/);
     assert.equal((html.match(/href="\/club\/cup\/standings"/g)??[]).length,1);
+    // The standings link is a link row with its second line (Public page layout standard A13).
+    assert.match(html,/U11 standings · A Pool<\/span><span class="rowSub">Riverdale Rapids is 1st of 3<\/span>/);
   });
-  it('draws the Schedule\'s live card with the team first, no Directions, and scoreless live without zeros',()=>{
+  it('draws a game in play on the stacked card, the team first and bold, no pill, no Directions, scoreless live without zeros',()=>{
     const html=render();
-    assert.match(html,/<h3>Live now<\/h3>/);
-    assert.match(html,/data-public-live-card/);
+    assert.match(html,/<h2 class="headTitle" id="team-focus">Live now<\/h2>/);
+    assert.match(html,/class="matchLink stacked edge" data-state="live"/);
+    assert.doesNotMatch(html,/class="gameStatus"/, 'the heading says Live now; the edge, not a pill (R9)');
+    assert.match(html,/data-own="true"><span class="gameName">Riverdale Rapids<\/span>/);
     assert.ok(html.indexOf('Riverdale Rapids</span>')<html.indexOf('Cedar Hollow Cyclones</span>'));
     assert.doesNotMatch(html,/Directions/);
     assert.equal((html.match(/>No score yet</g)??[]).length,1);
@@ -63,9 +67,9 @@ describe('the real preview team page',()=>{
     assert.match(html,/aria-label="Add to calendar"/);
     assert.doesNotMatch(html,/Following Riverdale|Alerts/);
   });
-  it('the initial fetch state says Loading team with the All Teams back link',()=>{
+  it('the initial fetch state says Loading team, with no back link (A14: the menu goes to Teams)',()=>{
     const html=renderToStaticMarkup(createElement(Page,{orgSlug:'club',tournamentSlug:'cup',teamId:'me'}));
-    assert.match(html,/Loading team…/);assert.match(html,/All Teams/);
+    assert.match(html,/Loading team…/);assert.doesNotMatch(html,/All Teams|‹/);
     assert.doesNotMatch(html,/Team not found|Couldn't load/);
   });
 });

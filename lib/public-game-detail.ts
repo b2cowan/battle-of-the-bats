@@ -85,11 +85,9 @@ export function publicGameDetailView(game: Game, { games, teams, divisions, venu
       teamId: knownTeam(side),
       trailing: hasScore && (scores[side] ?? 0) < (scores[side === 'away' ? 'home' : 'away'] ?? 0),
     })),
-    facts: [
-      { key: 'division', label: 'Division', text: division },
-      { key: 'round', label: 'Round', text: round },
-      { key: 'length', label: 'Game length', text: `${game.durationMinutes ?? DEFAULT_GAME_DURATION_MINUTES} min` },
-    ],
+    // Division and round are said once, on the score card's top line; the game length joins the when-and-where card
+    // (Public page layout standard A12 — the side facts list that repeated them went).
+    length: `Game length ${game.durationMinutes ?? DEFAULT_GAME_DURATION_MINUTES} min`,
     refreshSignature: faceSignature(game, state),
   };
 }

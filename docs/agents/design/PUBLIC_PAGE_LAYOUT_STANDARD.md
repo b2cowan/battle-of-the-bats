@@ -74,6 +74,9 @@ Same on a phone.
 *Keeps:* division headings 18 px (ruled 10-30).
 *Built (Part 2b, 2026-11-05):* every section heading is `PublicSectionHead`; `division` makes it the 18 px division
 heading. A pool band is the club kit's `.listBand` inside the kit's `.list` (Teams). Standings' pools read "A Pool".
+*Built (Part 4, 2026-11-05):* a team's page (Live now / Up next / Next games / Results, with its count) and News
+("Pinned announcements", "Recent announcements" — sentence case like every other) head their sections with
+`PublicSectionHead`; the team's own name is 24 px in the title face (the registered exception).
 
 ### R5 · Same kind, one list
 Rows of the same kind are **one framed list** with hairlines between them. Separate boxes only for different kinds of
@@ -105,6 +108,12 @@ page draws a game with these, never its own recipe.
 the stacked form; Playoffs' game still to play is the one-line row with its field centred under the teams (the only
 one-line row that shows a field: it is one game, not the all-games list). The old Overview row and card, and Playoffs'
 own card, are deleted.
+*Built (Part 4, 2026-11-05):* a game's page's score card is the stacked form, large — "{round} · {division}" and the pill
+on its head line (Cancelled rides the when-and-where card instead), a side's `href` makes its name the link to its
+team's page (a row that is not itself a link), and `footAction` puts Share at the right end of the foot line (a foot
+holding only Share is a phone's alone). A team's page draws every game still to finish on the stacked form: the day
+leading the time ("Thu, Nov 5 · 6:00 p.m."), "{division} · {round or pool}", a side's `own` making that team bold in
+every state. The standalone live card is now the Schedule's and Playoffs' only.
 
 ### R7 · One link row
 One link row, the club kit’s list row: a 16 px title, an optional 12 px line under it, a drawn chevron, **60 px** tall. A
@@ -120,6 +129,8 @@ open in place points its chevron down, up while open.
 its own list, directly under the row, between hairlines — the list's frame stays whole and no second box is drawn in it;
 the content is plain and the panel (or the window) pads it. "How the table is ranked" opens a window on a desk, as Rules
 and "How seeding works" do.
+*Built (Part 4, 2026-11-05):* a team's page's standings link is a link row with its second line ("Halton Hawks U11 Jr is
+1st of 3", where the team has a place).
 
 ### R8 · One toolbar
 One row, always in this order: **Division** (200) · **Pool** (160) · view switch · **Search** (fills what is left, up to
@@ -152,6 +163,7 @@ tournament’s desk 88).
 K-16).
 *Built (Part 2b, 2026-11-05):* the tournament sheets' corners, hairlines and text sizes swept; the desk band's 88 px
 override removed. Still off the scale on purpose until Part 4: a game page's 32 px time.
+*Built (Part 4, 2026-11-05):* a game's page's time is 28 px, the same as its score (the registered exception).
 *Built (Part 3, 2026-11-05):* the empty-state card (`PublicTournamentState`) under the frame is the Schedule's own
 empty state: a white card, light hairline, 8 px corners, left-aligned, a 20 px title, the line in dim ink, the symbol
 plain — no glow, shadow, medallion or sliding title. Every public tournament page that shows it takes the one look.
@@ -163,6 +175,7 @@ Same on a phone.
 *Keeps:* nothing earlier — new with this standard (A7, 2026-11-04).
 *Built (Part 3, 2026-11-05):* "Visit the club" is outlined, and the host card renders only when the club has something
 open now (A10: `hostCardView` returns no card for an empty open-now list).
+*Built (Part 4, 2026-11-05):* a team's page's "Try again" is the outlined button inside the shared empty card.
 
 ---
 
@@ -190,8 +203,9 @@ Each is a departure on ONE named axis, for the stated reason. A page follows eve
 | R11 (outlined button) | **A phone's secondary action** (Subscribe, Directions, Copy) | the bare symbol, 44 px target, no border, no fill, no word | ruled 2026-10-20 (guard `phone-secondary-actions-guard.test.ts`) |
 
 **Held for a later part of the build** (they break a rule today and the named part fixes them; the guard lists them so
-they cannot become permanent by accident): the Teams toolbar's 640 px cap (R8, Part 2b); the shared state card's
-centred 620 px box (Part 4 restyles the loading / unavailable / not-found states).
+they cannot become permanent by accident): none left on the tournament pages. The Teams toolbar's 640 px cap went in
+Part 2b; the shared state card's centred 620 px box applies only outside the frame since Part 3, and a team's page's
+loading / not-found / couldn't-load states wear the shared card unaltered since Part 4.
 
 ---
 

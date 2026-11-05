@@ -68,7 +68,7 @@ describe('the preview game page: when, where and the score', () => {
     const g = game({ status: 'forfeit', awayScore: 7, homeScore: 0, isPlayoff: true, bracketCode: 'FIN', notes: ' Bring water. ' });
     const v = view(g);
     assert.equal(v.stateLabel, 'Final'); assert.equal(v.round, 'Championship');
-    assert.equal(v.facts.length, 3); assert.equal(v.facts.at(-1)?.label, 'Game length');
+    assert.match(v.length, /^Game length \d+ min$/);
     assert.doesNotMatch(JSON.stringify(v), /Bring water/);
     assert.equal(v.foot, null);
     assert.equal(view({ ...g, status: 'scheduled', awayScore: null, homeScore: null }).foot, 'The winner takes the title');

@@ -126,8 +126,8 @@ describe('one game, two forms, and one live look (Public page layout standard Pa
     const overview = renderToStaticMarkup(createElement(ScheduleMatchup, { form: 'stacked', pill: false, time: '9:00 p.m.', division: 'U11', state: 'live', sides: two(3, 2) }));
     assert.doesNotMatch(overview, /data-result=|trailing/);
     assert.doesNotMatch(readCode('components/public/PublicParts.module.css'), /\.trailing \{/);
-    // A game's page softens the side that is behind only once the game is decided.
-    assert.match(readCode('components/public/PublicGameDetails.tsx'), /side\.trailing && !view\.live \? styles\.trailing/);
+    // A game's page (the shared card, large, Part 4) gives a winner and a loser only once the game is decided.
+    assert.match(readCode('components/public/PublicGameDetails.tsx'), /const decided = view\.hasScore && !view\.live;/);
   });
 
   it('R9: one pill set everywhere (Live now green, Final neutral, Unofficial amber, Cancelled danger), a game\'s page included', () => {
@@ -139,7 +139,8 @@ describe('one game, two forms, and one live look (Public page layout standard Pa
     assert.match(css, /\.gameStatus\[data-state='live'\] \{ color: var\(--club-ok\);/);
     const page = readCode('components/public/PublicGameDetails.tsx');
     assert.doesNotMatch(page, /chipOk|chipWarn/, 'the page\'s Final was green like Live now');
-    assert.match(page, /<GameStatusPill state=\{view\.state\} \/>/);
+    // The score card is the shared card, which draws the one pill (Part 4); Cancelled rides the when-and-where card.
+    assert.match(page, /<ScheduleMatchup form="stacked" size="large"[^>]*state=\{view\.state\}\s+pill=\{!view\.cancelled\}/);
     assert.match(page, /<GameStatusPill state="cancelled" className=\{styles\.cancelled\} \/>/);
   });
 

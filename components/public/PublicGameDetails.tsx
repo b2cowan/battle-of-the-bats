@@ -1,5 +1,4 @@
-import Link from 'next/link';
-import { Calendar, ChevronLeft } from 'lucide-react';
+import { Calendar } from 'lucide-react';
 import type { Game } from '@/lib/types';
 import type { PublicTournamentPageData } from '@/lib/public-tournament-data';
 import { publicGameDetailView } from '@/lib/public-game-detail';
@@ -8,12 +7,11 @@ import { isWithinEventDates } from '@/lib/tournament-phase';
 import Countdown from './Countdown';
 import DirectionsLink from './DirectionsLink';
 import GameDetailLiveRefresher from './GameDetailLiveRefresher';
-import PublicFactsList from './PublicFactsList';
-import { GameStatusPill } from './PublicGameRow';
+import { GameStatusPill, ScheduleMatchup, type MatchupSide } from './PublicGameRow';
 import PublicTournamentState from './PublicTournamentState';
-import RollingNumber from './RollingNumber';
 import ShareScoreButton from './ShareScoreButton';
 import PublicPage from './PublicPage';
+import kit from './ClubKit.module.css';
 import parts from './PublicParts.module.css';
 import styles from './PublicGameDetails.module.css';
 
@@ -41,42 +39,43 @@ export default function PublicGameDetails({ game, data, orgSlug, tournamentSlug,
   const view = publicGameDetailView(game, { ...data, requireFinalization });
   const [away, home] = view.sides;
   const gameHref = orgHref(`/${tournamentSlug}/schedule/${game.id}`);
+  const teamLinks = isPublicPageEnabled(tournament, 'teams');
+  // Bold and soft only once the game is decided (final or unofficial): a live game keeps both names in full ink (R6).
+  const decided = view.hasScore && !view.live;
+  const sides: MatchupSide[] = view.sides.map((side, index) => {
+    const other = view.sides[1 - index];
+    return { name: side.name, score: side.score, placeholder: !side.teamId,
+      result: decided && side.score !== other.score ? (side.trailing ? 'lose' : 'win') : null,
+      href: side.teamId && teamLinks ? orgHref(`/${tournamentSlug}/teams/${side.teamId}`) : undefined };
+  });
+  const share = view.hasScore ? <ShareScoreButton iconOnly label={view.state === 'unofficial' ? 'Share this unofficial score' : 'Share this score'}
+    className={styles.share} tournamentName={tournament.name} awayName={away.name} homeName={home.name}
+    awayScore={away.score!} homeScore={home.score!} live={view.live} statusLabel={view.stateLabel ?? ''}
+    dateLabel={view.date} venueLabel={view.field} gameType={view.round} gameHref={gameHref} menuAlign="right" menuPlacement="up" /> : null;
+  // A GAME'S PAGE (Public page layout standard A11, A12, A14): no back link (the menu goes to the Schedule). ONE reading
+  // order, when and where first — a phone keeps the Stage 3 order, Directions near the top; from a 1,200 px window the
+  // shared columns put the score card in the main column and when-and-where beside it (placed by CSS, not re-ordered).
   return <PublicPage data-public-game data-state={view.state}>
     <GameDetailLiveRefresher orgSlug={orgSlug} tournamentSlug={tournamentSlug} gameId={game.id}
       initialSignature={view.refreshSignature} enabled={tournament.status === 'active' && isWithinEventDates(tournament.startDate, tournament.endDate)} requireFinalization={requireFinalization} />
-    <Link className={styles.back} href={orgHref(`/${tournamentSlug}/schedule`)}><ChevronLeft size={20} aria-hidden />Schedule</Link>
-    <div className={parts.cols}>
-      <div className={styles.main}>
-        <section className={styles.whenWhere} aria-label="When and where">
-          <div className={styles.timeLine}><h1 className={view.cancelled ? styles.softTime : undefined}>{view.time}</h1>
-            {view.cancelled && <GameStatusPill state="cancelled" className={styles.cancelled} />}
-            {view.directions && <span className={styles.directionsSlot}><DirectionsLink href={view.directions} name={`Directions to ${view.field}`} /></span>}
-          </div>
-          <p className={styles.where}>{view.date} · {view.field}</p>
-          {view.address && <p className={styles.address}>{view.address}</p>}
-        </section>
-        <section className={styles.scoreCard} aria-label="Game score">
-          <div className={styles.scoreTop}><span>{view.round} · {view.division}</span>
-            {view.stateLabel && <GameStatusPill state={view.state} />}
-          </div>
-          {/* Soft only once the game is decided: a live game keeps both names in full ink (R6). */}
-          {view.sides.map((side, index) => <div key={index} className={`${styles.side} ${side.trailing && !view.live ? styles.trailing : ''}`}>
-            {side.teamId && isPublicPageEnabled(tournament, 'teams')
-              ? <Link className={styles.team} href={orgHref(`/${tournamentSlug}/teams/${side.teamId}`)}>{side.name}</Link>
-              : <span className={styles.team}>{side.name}</span>}
-            {view.hasScore && <RollingNumber className={styles.score} value={side.score} />}
-          </div>)}
-          {view.countdown ? <p className={styles.pending}><Countdown target={view.countdown} prefix="Starts in " whenPast="Starting soon" /></p>
-            : view.noScore && <p className={styles.pending}>{view.noScore}</p>}
-          {(view.foot || view.hasScore) && <div className={`${styles.foot} ${view.foot ? '' : styles.footShareOnly}`}><span className={view.gold ? styles.gold : undefined}>{view.foot}</span>
-            {view.hasScore && <ShareScoreButton iconOnly label={view.state === 'unofficial' ? 'Share this unofficial score' : 'Share this score'}
-              className={styles.share} tournamentName={tournament.name} awayName={away.name} homeName={home.name}
-              awayScore={away.score!} homeScore={home.score!} live={view.live} statusLabel={view.stateLabel ?? ''}
-              dateLabel={view.date} venueLabel={view.field} gameType={view.round} gameHref={gameHref} menuAlign="right" menuPlacement="up" />}
-          </div>}
-        </section>
-      </div>
-      <div className={styles.facts}><PublicFactsList rows={view.facts} /></div>
+    <div className={`${parts.cols} ${styles.cards}`}>
+      <section className={styles.whenWhere} aria-label="When and where">
+        <div className={styles.timeLine}><h1 className={view.cancelled ? styles.softTime : undefined}>{view.time}</h1>
+          {view.cancelled && <GameStatusPill state="cancelled" className={styles.cancelled} />}
+          {view.directions && <span className={styles.directionsSlot}><DirectionsLink href={view.directions} name={`Directions to ${view.field}`} /></span>}
+        </div>
+        <p className={styles.where}>{view.date} · {view.field}</p>
+        {view.address && <p className={styles.address}>{view.address}</p>}
+        <p className={styles.address}>{view.length}</p>
+      </section>
+      {/* The score card: the shared game card, large (R6). The round and division head it, said once (A12); Cancelled
+          rides the when-and-where card instead, so the score card carries no pill then. */}
+      <section className={`${kit.list} ${styles.scoreCard}`} aria-label="Game score">
+        <ScheduleMatchup form="stacked" size="large" time="" division={`${view.round} · ${view.division}`} state={view.state}
+          pill={!view.cancelled} sides={sides}
+          noScore={view.countdown ? <Countdown target={view.countdown} prefix="Starts in " whenPast="Starting soon" /> : view.noScore}
+          foot={view.foot} footTone={view.gold ? 'gold' : 'plain'} footAction={share} />
+      </section>
     </div>
   </PublicPage>;
 }

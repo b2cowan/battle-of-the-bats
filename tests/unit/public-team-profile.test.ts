@@ -101,8 +101,7 @@ describe('preview-only team-profile metadata and the shared team view', () => {
     const view = teamProfileView(teamProfilePreview(profile, options), now);
     assert.equal(view.moment.kind, 'upcoming');
     assert.equal(view.focus!.time, 'Tomorrow · 9:00 a.m.');
-    assert.equal(view.focus!.row.when, 'Championship');
-    assert.equal(view.focus!.row.head, 'Tomorrow · 9:00 a.m.');
+    assert.equal(view.focus!.round, 'Championship');
     assert.equal(view.focus!.view.sides[1].name, 'Semifinal 1 winner');
     assert.deepEqual(view.next.map(g => g.game.id), ['later']);
     assert.match(view.next[0].time, /^Sun, Nov 1 · /);

@@ -61,8 +61,8 @@ const PAGE_SHEETS = [...reachableFrom(...PAGES.map(p => p.component))]
 
 /** A fixed `max-width` of 600 px or more is a page-level cap unless it is one of these, each with its reason. */
 const WIDE_CAP_EXCEPTIONS: Record<string, string> = {
-  'app/[orgSlug]/register/register.module.css .formWrap 680': 'the register form\'s own reading column (a sheet club forms share); `.leftEdge` puts it on the page\'s left edge',
-  'components/public/PublicTournamentState.module.css .state 620': 'the shared state card (unavailable, not found); the state cards are restyled in Part 4',
+  'app/[orgSlug]/register/register.module.css .formWrap 640': 'the tournament Register form\'s own reading column, 640 like every club form (club round C2, 2026-11-05); `.leftEdge` puts it on the page\'s left edge',
+  'components/public/PublicTournamentState.module.css .state 620': 'the old state card OUTSIDE the frame only; under the frame it fills the column (Part 3)',
 };
 
 /** Every fixed px `max-width` in a sheet, as "<sheet> <selector> <px>" (comments stripped, media blocks entered). */
@@ -157,7 +157,8 @@ describe('Public page layout standard Part 1 — every public tournament page is
     const css = readSource('components/public/PublicParts.module.css');
     assert.match(css, /@media \(min-width: 1200px\) \{\s*\.cols \{\s*display: grid;\s*grid-template-columns: minmax\(0, 1\.35fr\) minmax\(0, 1fr\);\s*gap: 28px;/);
     assert.match(readCode('components/public/TournamentOverview.tsx'), /<div className=\{styles\.cols\}>/);
-    assert.match(readCode('components/public/PublicGameDetails.tsx'), /<div className=\{parts\.cols\}>/);
+    // A game's page places its two cards inside the shared rule (score card main, when-and-where side: A11).
+    assert.match(readCode('components/public/PublicGameDetails.tsx'), /<div className=\{`\$\{parts\.cols\} \$\{styles\.cards\}`\}>/);
     assert.match(readCode('components/public/PublicTeamPage.tsx'), /<div className=\{parts\.cols\}>/);
     // The record card's alignment pad only means something where the columns stand side by side.
     assert.match(readSource('components/public/PublicTeamPage.module.css'), /@media \(min-width: 1200px\) \{[^}]*\.sideBelowHeading \{/);

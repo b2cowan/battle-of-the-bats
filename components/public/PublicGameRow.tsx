@@ -27,6 +27,10 @@ export interface MatchupSide {
   result: 'win' | 'lose' | null;
   /** A bracket slot no team fills yet ("Semifinal 2 winner"): drawn in dim ink. */
   placeholder?: boolean;
+  /** The team whose page this is: bold in every state (a team's page puts that team first and bold, ruled 2026-10-30). */
+  own?: boolean;
+  /** The team's own page, on a row that is not itself a link (a game's page): the name is the link. */
+  href?: string;
 }
 
 /**
@@ -41,16 +45,17 @@ export interface MatchupSide {
  *     the 3 px green edge inside the row.
  *
  * Optional lines under the teams: `noScore` ("No score yet", or a countdown), `foot` (the stakes, gold as shipped; a
- * game's page passes `footTone="plain"` for its sentences), and `place` — the field, with `action` (Directions) as a
+ * game's page passes `footTone="plain"` for its sentences) with `footAction` at its right end (a game's page's Share —
+ * a foot line holding only the action is a phone's alone, as Share is), and `place` — the field, with `action` (Directions) as a
  * strip under a hairline OUTSIDE the link, because a link cannot hold a link. `pill={false}` is for a row under a
  * "Live now" heading: the edge says it, the pill would say it twice.
  */
 export function ScheduleMatchup({ time, division, pool, round, state, sides, href, noScore, foot, footTone = 'gold',
-  form = 'wide', size, pill = true, place }: {
+  footAction, form = 'wide', size, pill = true, place }: {
   /** Empty on a stacked result that leads with its context; a wide row always has one ("TBD" at worst). */
   time: string; division: string | null; pool?: string | null; round?: string | null; state?: PublicGameState;
   sides: MatchupSide[];
-  href?: string; noScore?: string | null; foot?: string; footTone?: 'gold' | 'plain';
+  href?: string; noScore?: ReactNode; foot?: string | null; footTone?: 'gold' | 'plain'; footAction?: ReactNode;
   form?: 'wide' | 'stacked'; size?: 'compact' | 'large'; pill?: boolean;
   place?: { text: string; action?: ReactNode };
 }) {
@@ -69,14 +74,18 @@ export function ScheduleMatchup({ time, division, pool, round, state, sides, hre
       {sides.map((side, i) => <Fragment key={`${i}:${side.name}`}>
         {/* Desktop only: the "vs" sits between the two sides, so it is equally close to both. */}
         {i === 1 && <span className={scheduleStyles.gameVs} aria-hidden />}
-        <span className={scheduleStyles.gameSide} data-result={side.result ?? undefined} data-placeholder={side.placeholder || undefined}>
-          <span className={scheduleStyles.gameName}>{side.name}</span>
+        <span className={scheduleStyles.gameSide} data-result={side.result ?? undefined} data-placeholder={side.placeholder || undefined}
+          data-own={side.own || undefined}>
+          {side.href && !href ? <Link className={scheduleStyles.gameName} href={side.href}>{side.name}</Link>
+            : <span className={scheduleStyles.gameName}>{side.name}</span>}
           {side.score != null && <RollingNumber className={scheduleStyles.gameScore} value={side.score} />}
         </span>
       </Fragment>)}
     </span>
     {noScore && <span className={scheduleStyles.gameNoScore}>{noScore}</span>}
-    {foot && <span className={scheduleStyles.stakes} data-tone={footTone === 'plain' ? 'plain' : undefined}>{foot}</span>}
+    {footAction ? <span className={`${scheduleStyles.stakes} ${scheduleStyles.footRow}`} data-tone={footTone === 'plain' ? 'plain' : undefined}
+      data-action-only={foot ? undefined : true}><span>{foot}</span>{footAction}</span>
+      : foot && <span className={scheduleStyles.stakes} data-tone={footTone === 'plain' ? 'plain' : undefined}>{foot}</span>}
     {place && !strip && <span className={scheduleStyles.gamePlace}>{place.text}</span>}
   </>;
   const edge = stacked && state === 'live' ? ` ${scheduleStyles.edge}` : '';
@@ -92,10 +101,10 @@ export function ScheduleMatchup({ time, division, pool, round, state, sides, hre
 }
 
 /**
- * A row of a wide game list — the Schedule and a team's page: the one-line row (`ScheduleMatchup`, form "wide") in the
+ * A row of the Schedule's wide game list: the one-line row (`ScheduleMatchup`, form "wide") in the
  * list item the Schedule's day groups and highlight read. The words are lib/public-game-row.ts's (`gameRowView`); this
  * only draws them. `href` (optional) makes the row a door to the game's page; no chevron (R5's game-row exception).
- * The Overview's lists are the stacked form, drawn by the Overview itself (Public page layout standard A3).
+ * The Overview's and a team's page's lists are the stacked form, drawn by each page itself (standard A3, A13).
  */
 export function PublicGameRow({ view, href }: { view: GameRowView; href?: string }) {
   return <li className={scheduleStyles.gameRow} data-face={view.face} data-cancelled={view.cancelled || undefined}>

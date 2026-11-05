@@ -101,9 +101,11 @@ describe('a game\'s page and desktop (Part 3)', () => {
     // Directions is the small control beside the address (symbol alone on a phone), never a full-width primary button (owner 2026-10-29).
     assert.match(body, /<DirectionsLink href/);
     assert.doesNotMatch(body, /<DirectionsLink primary/);
-    assert.match(body, /<PublicFactsList/);
+    // Public page layout standard A12: the facts list went; the game length rides the when-and-where card.
+    assert.doesNotMatch(body, /<PublicFactsList/);
+    assert.match(body, /\{view\.length\}/);
     assert.doesNotMatch(body, /TeamFollowStar|from '@\/lib\/follow'/);
-    assert.match(body, /view.hasScore && <ShareScoreButton iconOnly/);
+    assert.match(body, /view.hasScore \? <ShareScoreButton iconOnly/);
   });
   it('the old game body, its helpers, its sheet and the follow star only it drew stay deleted', () => {
     const page = readCode(file);

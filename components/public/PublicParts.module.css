@@ -83,8 +83,8 @@
   font-family: var(--club-text-face);
 }
 .page > * { min-width: 0; }
-/* R1 is left-aligned: a child whose shared sheet centres it (the register form's 680 px column, which club forms share)
-   sits on the column's left edge here instead. Two classes, so it outranks that sheet's one without depending on
+/* R1 is left-aligned: a child whose own sheet centres it (the tournament Register form's 640 px column — one form width
+   on both sites, club round C2; club forms are their own 640 sheets) sits on the column's left edge here instead. Two classes, so it outranks that sheet's one without depending on
    which stylesheet loads last. */
 .page > .leftEdge { margin-inline: 0; }
 /* A page's toolbar is ONE section: its rows (the controls, Schedule's day chips, Standings' counts line) 12 px apart

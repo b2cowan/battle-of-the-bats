@@ -1,6 +1,6 @@
 # Public page layout standard — PM brief
 
-**Status:** drawn 2026-11-04; every ask ruled 2026-11-04 (A1–A14, as recommended); build Part 1 (one page column on every page, two columns only from a 1,200 px window, the written standard) built 2026-11-05; Parts 2a–5 next. Plan: `PUBLIC_PAGE_LAYOUT_STANDARD_PLAN.md`.
+**Status:** drawn 2026-11-04; every ask ruled 2026-11-04 (A1–A14, as recommended); build Part 1 (one page column on every page, two columns only from a 1,200 px window, the written standard) built 2026-11-05; Parts 2a, 2b and 3 committed 2026-11-05; Part 4 (a game's page, a team's page, News, Register) built 2026-11-05; Part 5 (review, the walk) next. Plan: `PUBLIC_PAGE_LAYOUT_STANDARD_PLAN.md`.
 
 ## What changes for a visitor
 
