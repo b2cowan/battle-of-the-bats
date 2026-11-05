@@ -113,11 +113,11 @@
 .page.club.form { max-width: calc(640px + 2 * 16px); }
 @media (min-width: 901px) {
   .page.club {
-    --club-edge: max(24px, calc((100% - 1200px) / 2 + 24px));
-    max-width: calc(960px + 2 * var(--club-edge));
-    padding: 28px var(--club-edge) 40px;
+    --club-gutter: max(24px, calc((100% - 1200px) / 2 + 24px));
+    max-width: calc(960px + 2 * var(--club-gutter));
+    padding: 28px var(--club-gutter) 40px;
   }
-  .page.club.form { max-width: calc(640px + 2 * var(--club-edge)); }
+  .page.club.form { max-width: calc(640px + 2 * var(--club-gutter)); }
 }
 /* Prose in a box (a paragraph of the club's own words) holds to 720 px inside it (R1). */
 .prose { max-width: 720px; }

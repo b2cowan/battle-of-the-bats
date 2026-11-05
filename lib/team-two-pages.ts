@@ -27,7 +27,7 @@ export interface ClubTeamLink {
   path: string;
 }
 
-type ClubOrg = PublicClubAccessOrg & { id: string; name: string };
+export type ClubOrg = PublicClubAccessOrg & { id: string; name: string };
 
 /** One registration's link to a rep team, as read: the link's club and the rep team's (with its address and name). */
 export interface RegistrationLinkFacts {

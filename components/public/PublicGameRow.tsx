@@ -58,13 +58,16 @@ export interface MatchupSide {
  * "Live now" heading: the edge says it, the pill would say it twice.
  */
 export function ScheduleMatchup({ time, division, pool, round, state, sides, href, noScore, foot, footTone = 'gold',
-  footAction, form = 'wide', size, pill = true, place }: {
+  footAction, form = 'wide', size, pill = true, place, keepTime = false }: {
   /** Empty on a stacked result that leads with its context; a wide row always has one ("TBD" at worst). */
   time: string; division: string | null; pool?: string | null; round?: string | null; state?: GameRowState;
   sides: MatchupSide[];
   href?: string; noScore?: ReactNode; foot?: string | null; footTone?: 'gold' | 'plain'; footAction?: ReactNode;
   form?: 'wide' | 'stacked'; size?: 'compact' | 'large'; pill?: boolean;
   place?: { text: string; action?: ReactNode };
+  /** A played game keeps its start time on a phone. Only for a page whose games have no page of their own (the house
+   *  league's Schedule, a past tournament's record): the tournament Schedule drops it because the game's page holds it. */
+  keepTime?: boolean;
 }) {
   const stacked = form === 'stacked';
   const tone = footTone === 'plain' ? 'plain' : undefined;
@@ -99,8 +102,8 @@ export function ScheduleMatchup({ time, division, pool, round, state, sides, hre
   const edge = stacked && state === 'live' ? ` ${scheduleStyles.edge}` : '';
   const cls = `${scheduleStyles.matchLink} ${stacked ? scheduleStyles.stacked : scheduleStyles.wideForm}${strip ? '' : edge}`;
   const row = href
-    ? <Link href={href} className={cls} data-state={state} data-size={stacked ? size : undefined}>{body}</Link>
-    : <div className={cls} data-state={state} data-size={stacked ? size : undefined}>{body}</div>;
+    ? <Link href={href} className={cls} data-state={state} data-size={stacked ? size : undefined} data-keep-time={keepTime || undefined}>{body}</Link>
+    : <div className={cls} data-state={state} data-size={stacked ? size : undefined} data-keep-time={keepTime || undefined}>{body}</div>;
   if (!strip) return row;
   return <div className={`${scheduleStyles.withPlace}${edge}`}>
     {row}

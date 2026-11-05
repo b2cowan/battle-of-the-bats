@@ -47,10 +47,12 @@ a.matchLink:hover .gameName { text-decoration: underline; }
 .gameSide { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 8px; align-items: first baseline; min-width: 0; }
 .gameVs { display: none; }
 /* Phone, finished game: the scores take the time's place; the start time lives on the game's own page. These two phone
-   rules are the Schedule's own row (`.wideForm`): the stacked form elsewhere keeps the drawing's one layout (R6). */
+   rules are the Schedule's own row (`.wideForm`): the stacked form elsewhere keeps the drawing's one layout (R6).
+   A row with `data-keep-time` (the house league's Schedule, a past tournament's record — pages that have NO game page,
+   so the time lives nowhere else; owner 2026-11-05) is exempt: its played games keep the time, as a postponed row does. */
 @media (max-width: 1023px) {
-  .wideForm[data-state='final'] .gameTime { display: none; }
-  .wideForm[data-state='final'] .gameHead { min-height: 0; align-items: center; }
+  .wideForm[data-state='final']:not([data-keep-time]) .gameTime { display: none; }
+  .wideForm[data-state='final']:not([data-keep-time]) .gameHead { min-height: 0; align-items: center; }
 }
 /* Phone, game not played yet (no score, no status pill): the time takes the right side where the scores would sit. */
 @media (max-width: 1023px) {

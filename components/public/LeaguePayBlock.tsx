@@ -80,8 +80,8 @@ function LeagueReceipts({ pay }: { pay: LeaguePayView }) {
 
 /** What is owed, child by child, then Pay. The server re-reads the amount; a changed amount reloads the page. On Your
  *  sign-up the heading is the page's section heading row above the card (standard R4, club round 2026-11-05: it fell to
- *  the 800-weight title face); the sign-up form's centred confirmation keeps it in the card until the pay block's own
- *  pass (club build Part 3), which also owns the tournament pay page's copy of the heading. */
+ *  the 800-weight title face); the sign-up form's centred confirmation keeps it in the card
+ *  (PayBlock's `.owing h2`, shared with the tournament pay page). */
 function Owing({ pay, sectionHead }: { pay: LeaguePayView; sectionHead: boolean }) {
   const [email, setEmail] = useState(pay.payerEmail ?? '');
   const [opening, setOpening] = useState<PayRail | null>(null);

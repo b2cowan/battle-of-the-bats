@@ -24,6 +24,7 @@ import column from '../../league-column.module.css';
 import PublicPage from '@/components/public/PublicPage';
 import PublicSectionHead from '@/components/public/PublicSectionHead';
 import { ScheduleMatchup, type GameRowState, type MatchupSide } from '@/components/public/PublicGameRow';
+import { sideResult } from '@/lib/public-game-row';
 import kit from '@/components/public/ClubKit.module.css';
 import parts from '@/components/public/PublicParts.module.css';
 
@@ -200,7 +201,7 @@ function GameRow({ booking: b, nameOf }: { booking: SeasonBooking; nameOf: NameO
   const side = (teamId: string | null, score: number | null, other: number | null): MatchupSide => ({
     name: nameOf(teamId),
     score: final ? score : null,
-    result: final && score != null && other != null ? (score > other ? 'win' : score < other ? 'lose' : null) : null,
+    result: final ? sideResult(score, other) : null,
   });
   const dated = !!game.scheduledAt;
   return (
@@ -210,6 +211,7 @@ function GameRow({ booking: b, nameOf }: { booking: SeasonBooking; nameOf: NameO
         round={dated ? (postponed ? SEASON_PUBLIC_WORDS.was(dayWords(b.day)) : dayWords(b.day)) : null}
         division={null}
         state={state}
+        keepTime
         sides={[side(game.awayTeamId, game.awayScore, game.homeScore), side(game.homeTeamId, game.homeScore, game.awayScore)]}
         noScore={movedFrom ? P.movedWas(dayWords(orgDayKey(movedFrom)), clockOf(Date.parse(movedFrom))) : undefined}
         place={place ? { text: place } : undefined}

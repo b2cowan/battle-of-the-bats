@@ -74,10 +74,10 @@ function Row({ entry, link }: { entry: FamilyScheduleEntry; link?: string }) {
   );
 }
 
-export default function RepTeamPublicSchedule({ view, subscribe, tournamentLinks = {} }: {
+export default function RepTeamPublicSchedule({ view, subscribe, tournamentLinks }: {
   view: FamilyTeamView;
   /** Entry id → the team's tournament page, for the club's own tournament's games (club round C6, lib/team-two-pages.ts). */
-  tournamentLinks?: Record<string, string>;
+  tournamentLinks: Record<string, string>;
   /** Club Tier 6d (B3): the Subscribe button on the heading line — passed by the page exactly when it renders the
    *  schedule, because both come from one question (getPublicTeamSchedule), which the public feed asks too. */
   subscribe?: { feedPath: string; calendarName: string };

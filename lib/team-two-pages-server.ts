@@ -1,7 +1,8 @@
 import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
-import { clubTeamLink, tournamentTeamPaths, type ClubTeamLink } from './team-two-pages';
-import type { PublicClubAccessOrg } from './public-club-access';
+import { clubTeamLink, tournamentTeamPaths, type ClubOrg, type ClubTeamLink } from './team-two-pages';
+import { publicClubRefusal } from './public-club-access';
+import { one } from './club-own-tournament-team';
 import type { FamilyScheduleEntry } from './family-view';
 
 /**
@@ -11,19 +12,27 @@ import type { FamilyScheduleEntry } from './family-view';
  */
 
 type Rel<T> = T | T[] | null;
-const one = <T,>(v: Rel<T> | undefined): T | null => (Array.isArray(v) ? v[0] ?? null : v ?? null);
 
 /** Tournament → club: the link row for one registration on the tournament team page, or null. One read. */
 export async function clubTeamLinkForRegistration(
-  club: PublicClubAccessOrg & { id: string; name: string },
+  club: ClubOrg,
   tournamentOrgId: string,
   registrationId: string,
 ): Promise<ClubTeamLink | null> {
-  const { data, error } = await supabaseAdmin.from('rep_team_tournament_registrations')
-    .select('org_id, rep_teams!inner(org_id, slug, name)')
-    .eq('tournament_team_id', registrationId)
-    .maybeSingle();
-  if (error || !data) return null; // a missing link is the common case; a failed read only loses the link
+  // The club page isn't public (site off, cancelled, plan without team pages): clubTeamLink would say no — skip the read.
+  if (publicClubRefusal(club, 'teams') !== null) return null;
+  let data: unknown;
+  try {
+    const res = await supabaseAdmin.from('rep_team_tournament_registrations')
+      .select('org_id, rep_teams!inner(org_id, slug, name)')
+      .eq('tournament_team_id', registrationId)
+      .maybeSingle();
+    if (res.error) return null;
+    data = res.data;
+  } catch {
+    return null; // the profile route is polled by every visitor: a thrown read only loses the link, never the page
+  }
+  if (!data) return null; // a missing link is the common case
   const row = data as unknown as { org_id: string; rep_teams: Rel<{ org_id: string; slug: string | null; name: string }> };
   const rep = one(row.rep_teams);
   return clubTeamLink({

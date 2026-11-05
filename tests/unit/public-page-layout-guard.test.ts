@@ -260,10 +260,16 @@ describe('Public page layout standard, club round — every club public page is 
     assert.match(css, /\.page\.club\.form \{ max-width: calc\(640px \+ 2 \* 16px\); \}/, 'C2: a form is 640 on a phone');
     const desk = /@media \(min-width: 901px\) \{\s*\.page\.club \{([^}]*)\}\s*\.page\.club\.form \{([^}]*)\}/.exec(css);
     assert.ok(desk, 'the desk rule starts where the frame\'s tabs join the band (901 px)');
-    assert.match(desk[1], /--club-edge: max\(24px, calc\(\(100% - 1200px\) \/ 2 \+ 24px\)\);/, 'the logo edge: the frame\'s centred 1,200 column, 24 in');
-    assert.match(desk[1], /max-width: calc\(960px \+ 2 \* var\(--club-edge\)\);/);
-    assert.match(desk[1], /padding: 28px var\(--club-edge\) 40px;/, 'a desk: 28 under the band, 40 at the foot');
-    assert.match(desk[2], /max-width: calc\(640px \+ 2 \* var\(--club-edge\)\);/, 'C2: a form is 640 at a desk');
+    assert.match(desk[1], /--club-gutter: max\(24px, calc\(\(100% - 1200px\) \/ 2 \+ 24px\)\);/, 'the logo edge: the frame\'s centred 1,200 column, 24 in');
+    assert.match(desk[1], /max-width: calc\(960px \+ 2 \* var\(--club-gutter\)\);/);
+    assert.match(desk[1], /padding: 28px var\(--club-gutter\) 40px;/, 'a desk: 28 under the band, 40 at the foot');
+    assert.match(desk[2], /max-width: calc\(640px \+ 2 \* var\(--club-gutter\)\);/, 'C2: a form is 640 at a desk');
+    // ⚠ `--club-edge` is the club's edge COLOUR (written by the layout and public-frame.ts). A page sheet that gave it a
+    // length at a desk (Part 1 did, found in the Part 5 review) made every border, ring and bar that reads it invalid
+    // inside the page: no focus rings, borderless filled buttons. Only those two writers may declare it.
+    for (const f of ['components/public', 'components/rep-teams', 'components/league', 'app/[orgSlug]'].flatMap(d => filesUnder(d, '.module.css'))) {
+      assert.doesNotMatch(readSource(f).replace(/\/\*[\s\S]*?\*\//g, ''), /--club-edge\s*:/, `${f} must not redefine the --club-edge colour token`);
+    }
     // The band's own edge is the same expression, so the content stands under the logo at every width.
     assert.match(readSource('components/public/ClubFrame.module.css'), /max\(24px, calc\(\(100% - 1200px\) \/ 2 \+ 24px\)\)/);
     assert.match(css, /@media \(min-width: 1024px\) \{\s*\.club \.cols \{\s*display: grid;\s*grid-template-columns: minmax\(0, 1\.35fr\) minmax\(0, 1fr\);\s*gap: 24px 28px;/,
@@ -454,6 +460,25 @@ describe('Public page layout standard, club round Part 4 — the house league\'s
     assert.match(readCode('components/public/PublicGameRow.tsx'), /postponed: 'Postponed', moved: 'Moved'/);
     assert.match(readSource('components/public/PublicSchedule.module.css'),
       /\.gameStatus:is\(\[data-state='unofficial'\], \[data-state='postponed'\], \[data-state='moved'\]\) \{ color: var\(--club-warn\); \}/);
+  });
+  it('a played game keeps its start time on a phone where the game has no page of its own (owner 2026-11-05); the tournament Schedule still drops it', () => {
+    const css = readSource('components/public/PublicSchedule.module.css');
+    // The phone rule that hides a final row's time exempts a row marked keep-time — and nothing else hides it.
+    assert.match(css, /\.wideForm\[data-state='final'\]:not\(\[data-keep-time\]\) \.gameTime \{ display: none; \}/);
+    assert.match(css, /\.wideForm\[data-state='final'\]:not\(\[data-keep-time\]\) \.gameHead \{/);
+    assert.doesNotMatch(css, /\.wideForm\[data-state='final'\] \.gameTime \{ display: none/, 'the unconditional hide is gone');
+    // The component writes the marker, and only the two pages with no game page ask for it.
+    assert.match(readCode('components/public/PublicGameRow.tsx'), /data-keep-time=\{keepTime \|\| undefined\}/);
+    assert.match(readCode(`${CLUB}/league/[seasonSlug]/schedule/page.tsx`), /<ScheduleMatchup\b[\s\S]*?\bkeepTime\b/);
+    assert.match(readCode(`${CLUB}/archives/[archiveId]/page.tsx`), /<ScheduleMatchup\b[\s\S]*?\bkeepTime\b/);
+    for (const f of ['components/public/PublicSchedule.tsx', 'components/public/PublicPlayoffs.tsx', 'components/public/PublicGameRow.tsx']) {
+      assert.doesNotMatch(readCode(f), /<(ScheduleMatchup|PublicGameRow)\b[^>]*\bkeepTime\b/, `${f}: the tournament Schedule/Playoffs keep dropping the time`);
+    }
+  });
+  it('C6: the schedule row\'s tournament link is a 44 px control that does not move the row (12 px of hit area, 12 px taken back)', () => {
+    const rule = cssRule(noComments(readSource('components/public/RepTeamPublicSchedule.module.css')), '.rowLink');
+    assert.match(rule, /padding-block: 12px;/);
+    assert.match(rule, /margin-block: -12px;/);
   });
   it('Standings: its name at 24 with the season 8 px under it; the table keeps its look (the registered table exception)', () => {
     const code = readCode(`${CLUB}/league/[seasonSlug]/standings/page.tsx`);

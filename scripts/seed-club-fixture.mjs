@@ -257,7 +257,9 @@ const GROUPS = ['Senior', 'Junior'];
 /** years: which program years exist, oldest first (creation order matters — see header). */
 const TEAMS = [
   { slug: '15u-aaa', name: '15U AAA', division: '15U', group: 'Senior', color: '#1E3A8A', years: ['completed', 'active'],
-    coach: { email: 'uat-club-coach-15aaa@uat-rep-club.local', name: 'Jordan Reyes' }, tryoutsOpen: true },
+    // schedule 'public_link' (public-page layout, club Part 5): the club's public team page shows its mirrored Invitational
+    // games and the link into the tournament (C6, club → tournament); the entry is linked to its rep team just below.
+    coach: { email: 'uat-club-coach-15aaa@uat-rep-club.local', name: 'Jordan Reyes' }, tryoutsOpen: true, schedule: 'public_link' },
   { slug: '15u-aa',  name: '15U AA',  division: '15U', group: 'Senior', color: '#0F766E', years: ['completed', 'active'],
     coach: { email: 'uat-club-coach-15aa@uat-rep-club.local', name: 'Sam Whitford' } },
   { slug: '18u-aa',  name: '18U AA',  division: '18U', group: 'Senior', color: '#6B7280', years: ['completed'], archived: true },
@@ -454,7 +456,7 @@ const team = {};   // slug → { id, years: { completed?, active?, draft? } }
 for (const t of TEAMS) {
   const row = await one(`team ${t.name}`, db.from('rep_teams').insert({
     org_id: orgId, name: t.name, slug: t.slug, sport: 'baseball', division: t.division, color: t.color,
-    group_id: groupIds[t.group], is_archived: !!t.archived,
+    group_id: groupIds[t.group], is_archived: !!t.archived, schedule_visibility: t.schedule ?? 'families',
   }).select('id').single());
   team[t.slug] = { id: row.id, years: {} };
   for (const status of t.years) {

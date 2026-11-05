@@ -21,7 +21,7 @@ type LinkRow = {
   teams: Rel<{ tournaments: Rel<Org> }>;
 };
 
-const one = <T,>(v: Rel<T> | undefined): T | null => (Array.isArray(v) ? v[0] ?? null : v ?? null);
+export const one = <T,>(v: Rel<T> | undefined): T | null => (Array.isArray(v) ? v[0] ?? null : v ?? null);
 
 /** The link, the rep team and the tournament all belong to one club. */
 function isOurs(row: LinkRow): boolean {

@@ -1,0 +1,274 @@
+<title>Club Pages Layout Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Same instrument as the tournament-side layout walk: one narrow column, parts as folds, steps, a verdict row and a notes box per part. */
+:root {
+  --bg: #f6f5f1; --panel: #ffffff; --fg: #23251f; --muted: #666a5d; --line: #dcdacf;
+  --accent: #4d5c1a; --accent-fg: #ffffff; --good: #2f6b2f; --warn: #8a5a00; --bad: #a3321f; --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+a { color: var(--accent); overflow-wrap: anywhere; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .facts { grid-template-columns: 1fr; } .facts dd { margin-bottom: 6px; } }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.cmd { font-family: var(--font-mono); font-size: 12px; background: var(--chip); padding: 6px 8px; border-radius: 6px; overflow-wrap: anywhere; color: var(--fg); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+.step.opt { flex-direction: column; gap: 4px; }
+.step .optrow { display: flex; gap: 10px; align-items: flex-start; }
+.warn { color: var(--warn); font-weight: 600; }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · Public page layout standard · club side · §464</span>
+    <h1>Every club public page, one layout</h1>
+    <p class="sub">Written 2026-11-05. Test data only, on the dev database. About 60 minutes. One purpose: clicking through every club public page and into the club’s tournament and back, on a desk and a phone, the content starts, stops and spaces itself the same way, and only the navigation changes place.</p>
+  </header>
+
+  <section class="card">
+    <h2>What this walk is for</h2>
+    <p>The club build (Parts 1 to 4) put every club public page on one column that starts on the club logo’s left edge, with one title rule, one heading row, one game row, one set of buttons, and a two-way link between a team’s club page and its tournament page. This is the first look at all of it together, including the part no automated check can see: <strong>colour</strong>. A review found that, on a desk, every focus ring and every filled button’s border in the club’s colour had been dropped by the Part 1 layout. That is fixed. Part B below is how you confirm it.</p>
+    <p>Calls you made are in this build and are not re-asked: the in-club error page (yes), the record’s results on the game row (yes), house-league games away team first (yes). One more, today: <strong>a played game keeps its start time on a phone</strong> on the house league’s Schedule and on a past tournament’s record, because those pages have no game page where the time could live. The tournament’s own Schedule still drops it.</p>
+  </section>
+
+  <section class="card">
+    <h2>It passes when</h2>
+    <ul>
+      <li>A: clicking through every club page on a desk, nothing but the navigation moves. The content starts at the same left edge (the club logo’s), stops at the same width, and sits the same distance under the band.</li>
+      <li>B: pressing Tab through a page on a desk shows a clear ring on every stop, and every filled button has its border.</li>
+      <li>C: a team’s club page and its tournament page link to each other, for the club’s own team only.</li>
+      <li>D: the house league’s Schedule and Standings and a past tournament’s record sit on the same column and the same game row, and a played game still shows its time on a phone.</li>
+      <li>E: a failed page stays inside the club’s site; a missing page reads the same way.</li>
+      <li>F and G: on a phone every page is one column with nothing scrolling sideways, and between 1,024 and 1,199 px wide the two-column pages stack.</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>Before you start</h2>
+    <p>Setup, not checked. Some steps change test data or ask Claude to break a page on purpose; they say when to ask. You can also paste the command shown under a step into a terminal in the project folder.</p>
+    <dl class="facts">
+      <dt>Where</dt><dd><strong>http://localhost:3000</strong> on your computer, dev server running. Use a <strong>private window</strong> so a sign-in does not change what you see. No sign-in is needed anywhere in this walk.</dd>
+      <dt>The club</dt><dd><strong>UAT Rep Club</strong> (purple), <code>/uat-rep-club</code>. Its tournament is <strong>UAT Rep Club Invitational 2026</strong>. The navy rep-only club <code>/uat-rep-only</code> is used once, for tryout days.</dd>
+      <dt>On a phone</dt><dd>Either your phone on the same Wi-Fi, at your computer’s address on the network (last walk: <code>http://192.168.2.200:3000</code>), or the browser window narrowed to about 390 px wide.</dd>
+      <dt>Window sizes</dt><dd>“On a desk” means a window at least 1,200 px wide. Part G uses about 1,100 px.</dd>
+      <dt>Changed for this walk</dt><dd>Three things on dev, all yours to approve and all undone in Part Z: 15U AAA’s schedule is set to public (so its tournament games show on the club page; it is also in the seed script, so a reseed keeps it); one played house-league game has a score (7 to 3); and, for Part E only, Claude makes two pages fail on purpose.</dd>
+      <dt>The layout check</dt><dd>Claude ran it on a production build of this code: the 14 club screens at 320 / 361 / 390 / 768 / 1,440 px. It found one real problem, the tournament-game links on a team’s club page measured under the 44 px tap size on a phone (fixed: the link now has a 44 px area with nothing moving), and nothing else. The house league’s Schedule and Standings, the record and the not-found page are not on that screen list, so Claude measured them separately at 390 and 1,536 px: no sideways scroll on any, names at 24 px on the logo edge. <strong>Not measured anywhere: colour.</strong> That is Part B.</dd>
+      <dt>Cannot be shown on this test data</dt><dd>(1) Game rows on a past tournament’s record: the one past record has no games saved in it, so only its heading and standings area can be seen. (2) “Up next” with its Directions button on a tournament game: all four of the club team’s Invitational games are already in the past. Both are pinned by tests, not walked.</dd>
+      <dt>Leaves behind</dt><dd>Nothing, once Part Z is done.</dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <p class="warn" id="verdictWarn" hidden></p>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy summary</button><button id="reset" type="button">Reset</button></div>
+    <p class="sub">Set Pass, Issue or Needs a call on every part. The summary says INCOMPLETE while any part has no verdict.</p>
+    <pre id="out" hidden></pre>
+  </section>
+
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+
+  <section class="card">
+    <h2>Not in this walk</h2>
+    <ul>
+      <li><strong>Known and recorded, not new:</strong> on the record, dates no longer show the year (the season is named above them) and a division name shows only when the tournament has more than one division; if you want either back, say so. A rep team linked to two registrations in the same tournament could send the club link to the wrong division’s page (rare; no one-per-tournament rule on the admin link). You do not need to note these.</li>
+      <li><strong>Parked for you:</strong> the replaced-link page still says “This link no longer works” as a card heading under “Your sign-up”; the fallback home page is outside this round.</li>
+      <li><strong>A crash on an admin or coach page.</strong> A crash there now shows the same platform page, drawn one level lower inside the organization’s layout. Claude looked at that screen on a public tournament page (Part E explains); it was not forced on a signed-in page.</li>
+      <li><strong>The release.</strong> Nothing here touches production.</li>
+    </ul>
+  </section>
+</main>
+
+<script>
+(function () {
+  var DATA = {"key":"public-club-page-layout-walk-v1","title":"Public page layout standard, club side, owner walk (§464)","written":"2026-11-05","parts":[
+{"id":"S","title":"Start: the build is running and the test data is ready","steps":[
+{"who":"You · ask Claude","do":"Ask Claude to confirm the dev server is on the current build and that the test data is as described under “Changed for this walk”: 15U AAA’s schedule public, the played house-league game scored.","cmd":"node .probe/p5-walk-fixture.cjs score","see":"Claude says yes to both. (The 15U AAA setting was already applied and is in the seed script.)","options":["Yes to both","Not yet: STOP"]},
+{"who":"Anyone · private window · /uat-rep-club","do":"Open the club’s home page in a private window on a window at least 1,200 px wide.","see":"The club’s purple band with its logo, the tabs Home · Teams · Tryouts · House league · Tournaments and Sign in. No sign-in asked."}]},
+{"id":"A","title":"One column on a desk: click through every page and watch only the navigation","steps":[
+{"who":"Anyone · desk · Home → Teams → a team","do":"Open Home. Note where the page’s content starts on the left (it lines up with the club logo’s left edge), where it stops on the right and the gap under the band. Click Teams, then click 15U AAA.","see":"The content starts at the SAME left edge on all three pages and sits the same gap under the band. Only the highlighted tab, and what is inside the column, change. No “back” link on the team page.","options":["Nothing but the content moves","Something moves: write what in the notes"]},
+{"who":"Anyone · desk · Tryouts → a tryout","do":"Click Tryouts (the tab), then click 13U AAA’s tryout. Also look at 15U AAA’s tryouts at /uat-rep-club/teams/15u-aaa/tryouts.","see":"Same left edge, same width, same gap under the band. The Tryouts list names no page title of its own (the lit tab names it); a single tryout names itself at 24 px.","options":["Same column","Differs: write what in the notes"]},
+{"who":"Anyone · desk · House league → a season","do":"Click House league, then click 2026 Fall House League. From the season’s page open Schedule, then Standings.","see":"Same left edge, width and gap on the list of seasons, the season’s page, the Schedule and Standings. Schedule and Standings name themselves at 24 px, with the season’s name 8 px under the title on Standings.","options":["Same column","Differs: write what in the notes"]},
+{"who":"Anyone · desk · Tournaments → About","do":"Click Tournaments, then open About at /uat-rep-club/about. Then Home again.","see":"Same left edge, width and gap on both. Tournaments’ tables read in the plain text ink, not the club colour. About’s documents (if any) are link rows with the new-tab symbol.","options":["Same column","Differs: write what in the notes"]},
+{"who":"Anyone · desk · the whole trip","do":"Having clicked the whole route Home → Teams → a team → Tryouts → a tryout → House league → a season → Tournaments → About, answer once: does anything but the content move?","see":"Only the navigation changes place (the lit tab; a page that names itself, such as a team, drops its own title in). The band, the left edge, the width and the gap under the band never jump. This is the desk check left open from Part 3; it has not been reported as passed before.","options":["Only the navigation changed","The content moved: write where in the notes"]},
+{"who":"Anyone · desk · the home and a team’s page","do":"On Home and on 15U AAA’s page, look at the two columns.","see":"From 1,024 px wide the home and a team that has games are two columns inside the 960 px column; the sponsors come last, the banner (if the club has one) sits above the column. A team with no games yet is one column."}]},
+{"id":"B","title":"The colour no check can see: Tab through a page on a desk","steps":[
+{"who":"Anyone · desk · Home","do":"On Home press Tab slowly, about fifteen times, and watch each stop.","see":"Every stop has a clear 2 px ring: purple on the page, white on the purple band. The lit tab keeps its underline as well as the ring. You never lose track of where you are.","options":["Every stop shows a ring","A stop shows none: write which in the notes"]},
+{"who":"Anyone · desk · a season’s page","do":"Open /uat-rep-club/league/2026-fall-house-league and look at “Register now”. Then Tab to it.","see":"A solid purple button with a thin purple border (the border is what the bug had dropped), and a ring around it when focused.","options":["Filled with border and ring","No border or no ring: write it in the notes"]},
+{"who":"Anyone · desk · navy club tryouts","do":"Open /uat-rep-only/teams/15u-aaa/tryouts. Look at “Sign up for tryouts”, then Tab to it.","see":"A solid navy button with a thin navy border; a ring when focused. On a desk it is its own width, not the whole column.","options":["Right","Wrong: write it in the notes"]},
+{"who":"Anyone · desk · a team’s club page, keyboard","do":"Open 15U AAA’s page at /uat-rep-club/teams/15u-aaa. Tab down past Subscribe to the four tournament games in its schedule.","see":"On each game’s title the WHOLE ROW gets the 2 px ring (the title’s link is stretched over the row), not just the words. The Subscribe button has its ring.","options":["Whole row rings","Only the words, or nothing: write which in the notes"]}]},
+{"id":"C","title":"Into the club’s tournament and back","steps":[
+{"who":"Anyone · desk · club team → tournament · /uat-rep-club/teams/15u-aaa","do":"On 15U AAA’s page find its schedule. The four games from UAT Rep Club Invitational 2026 (vs Guelph Royals 15U, at Milton Mustangs 15U, vs Oakville Otters 15U, at Milton Mustangs 15U) are the tournament rows. Click one.","see":"It opens 15U AAA’s page in the tournament, the same team for every one of the four. Hovering a tournament row underlines its title and tints the row; a practice or a non-tournament row does neither and is not a link.","options":["Opens the team’s tournament page","Wrong page or not a link: write which in the notes"]},
+{"who":"Anyone · desk · tournament → club","do":"On that tournament team page, look in the right column under the record.","see":"A link row “15U AAA at UAT Rep Club” with the line “The team’s page at the club”. Click it: it returns to 15U AAA’s club page. The browser’s Back does the same.","options":["Link row present and returns to the club","Missing or wrong: write which in the notes"]},
+{"who":"Anyone · desk · another entrant","do":"In the same tournament open Guelph Royals 15U’s team page (Teams, then Guelph Royals 15U).","see":"NO club link at all: only the club’s own teams link back. Nothing is empty or broken where it would have sat.","options":["No link for another club’s team","A link shows: write where in the notes"]},
+{"who":"Anyone · desk · two more of the club’s teams","do":"In the same tournament open 14U AA and 15U AA (they are also entered and linked).","see":"Each shows its own “… at UAT Rep Club” link row, and each link opens its own team’s club page, not 15U AAA’s.","options":["Each opens its own team","Wrong team: write which in the notes"]},
+{"who":"Anyone · phone · both directions","do":"On a phone, repeat: 15U AAA’s club page → a tournament row → back via the link row.","see":"Both links work with a thumb; a tournament row is easy to hit anywhere along it. Nothing scrolls sideways.","options":["Right","Wrong: write it in the notes"]}]},
+{"id":"D","title":"The house league’s Schedule and Standings and a past tournament’s record","steps":[
+{"who":"Anyone · desk · /uat-rep-club/league/2026-fall-house-league/schedule?d=dd86f376-8ecc-40e0-ad1f-323b347e5c42","do":"Open this Schedule (the “R1 Walk” division).","see":"“Schedule” at 24 px. Each week is a heading row over one framed list. Each game is ONE line: time with the day under it, the two teams (away team first) with scores, the status at the right, the field kept under it. A played game (6:00 p.m. Tue, Nov 3, 7 to 3) shows a neutral “Final”, the winner bold. A Postponed game shows an amber “Postponed” with “Was …”.","options":["Right","Wrong: write what in the notes"]},
+{"who":"Anyone · phone · same Schedule","do":"Open the same address on a phone (about 390 px).","see":"The rows stack: head line, then each team on its own line with its score. <strong>The played game still shows its start time on its head line (6:00 p.m., Tue, Nov 3), with “Final” at the right.</strong> The time sits on the left and the pill on the right, the way the Postponed game is drawn.","options":["The played game keeps its time","The time is missing: write it in the notes"]},
+{"who":"Anyone · phone · the tournament’s own Schedule (unchanged)","do":"For comparison open any public tournament’s Schedule that has a finished game, on a phone, for example Fall Classic, /stage1-lakeshore-lightning/fall-classic/schedule.","see":"There, a finished game shows only the score and “Final” (the start time lives on the game’s own page). This is the old, deliberate look and did not change. If no game there has finished, skip this step.","options":["Unchanged","Changed: write how in the notes","No finished game: skipped"]},
+{"who":"Anyone · desk and phone · Standings","do":"Open Standings: /uat-rep-club/league/2026-fall-house-league/standings.","see":"“Standings” at 24 px with the season 8 px under it. The table keeps its look (it is a registered exception to the game-row rules). On a phone it fits or scrolls inside itself; the page never scrolls sideways.","options":["Right on both","Wrong: write which in the notes"]},
+{"who":"Anyone · desk and phone · a past tournament’s record · /uat-rep-club/archives/27621c94-b6d6-481a-bdd5-33e651e5e593","do":"Open the Spring Classic’s record (also reachable from Tournaments, past tournaments).","see":"The tournament’s name at 24 px, the season above it and “Results final” under it; section headings are heading rows. This record has no games saved, so there are no game rows to see (said above).","phone":"The same, one column; nothing held wider than the phone.","options":["Right on both","Wrong: write which in the notes"]}]},
+{"id":"E","title":"A page that fails, and a page that is not there","steps":[
+{"who":"Anyone · desk · not found · /uat-rep-club/teams/no-such-team","do":"Open this address.","see":"“We couldn’t find that page” at 24 px on the club column (left edge on the logo, not centred), with the club’s band and tabs above and its footer below, and two buttons from the club’s own set.","phone":"The buttons are the full width.","options":["Right on both","Wrong: write which in the notes"]},
+{"who":"You · ask Claude · make the pages fail","do":"Ask Claude to make the club’s Tournaments page and a tournament’s Overview fail on purpose (a one-line edit, taken out again in Part Z). The dev server reloads by itself.","cmd":"node .probe/p5-walk-fixture.cjs error-on","see":"Claude says both pages now fail.","options":["Done","Not yet: STOP"]},
+{"who":"Anyone · desk · /uat-rep-club/tournaments","do":"Open the club’s Tournaments page.","see":"The club’s band, tabs and footer STAY. On the column: “Something went wrong on our side” at 24 px, a sentence “We’ve logged it automatically…”, and two buttons: a purple “Try again” and an outlined “UAT Rep Club home”. The Tournaments tab stays lit.","phone":"The same; the buttons are the full width.","options":["Right on both","Wrong: write which in the notes"]},
+{"who":"Anyone · desk · /uat-rep-club/uat-rep-club-invitational-2026","do":"Open the tournament’s Overview, which also fails.","see":"The platform’s own crash page (FieldLogicHQ look: an icon, “Something went wrong on our side”, a small box with the error text (shown on the dev server only), Try again and Go to Home), centred as before. It is deliberately NOT the club’s page. This is the screen an admin or coach crash also shows; it now draws one level lower inside the organization’s layout, so look at it once: is the font and look the platform’s?","options":["The platform’s page, looks right","Looks odd: write what in the notes"]}]},
+{"id":"F","title":"A phone: every club page is one column","steps":[
+{"who":"Anyone · phone · Home, Teams, a team","do":"On a phone open Home, Teams and 15U AAA.","see":"One column starting 16 px in. The home and a team stack. Buttons are easy to hit (Subscribe is the bare 44 px symbol). The club’s tab bar is as before.","options":["Right","Wrong: write where in the notes"]},
+{"who":"Anyone · phone · Tryouts, a tryout, the season","do":"Open Tryouts, a tryout, and the season’s page and its Register now.","see":"One column; names at 24 px; “Register now” the full width; nothing sideways.","options":["Right","Wrong: write where in the notes"]},
+{"who":"Anyone · phone · Tournaments, About","do":"Open Tournaments and About.","see":"One column; Tournaments’ tables fit or scroll inside themselves; the page never scrolls sideways.","options":["Right","Wrong: write where in the notes"]},
+{"who":"Anyone · phone · a long name","do":"Open the long-named club from the public-frame fixtures if you have its address handy; otherwise skip.","see":"The club’s name wraps inside its own space; nothing is cut off or pushes the page sideways.","options":["Wraps cleanly","Cut off or pushed: write where in the notes","Skipped"]}]},
+{"id":"G","title":"Between 1,024 and 1,199 px: the two columns","steps":[
+{"who":"Anyone · window about 1,100 px wide · Home and a team’s page","do":"Narrow the window to about 1,100 px and open Home and 15U AAA’s page.","see":"The home and a team with games are two columns (they stack below 1,024); both still start on the logo’s left edge and stop at 960 px wide.","options":["Right","Wrong: write it in the notes"]}]},
+{"id":"Z","title":"Put back","steps":[
+{"who":"You · ask Claude","do":"Ask Claude to take the two failures out and put the played game back to unscored.","cmd":"node .probe/p5-walk-fixture.cjs error-off; node .probe/p5-walk-fixture.cjs score-reset","see":"Claude confirms: Tournaments and the tournament Overview load normally again, and the R1 Walk game is scheduled with no score. (15U AAA’s public schedule stays: it is in the seed script now.)","options":["Put back","Not needed"]}]}
+]};
+  var KEY = DATA.key, PARTS = DATA.parts;
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  function txt(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; n.textContent = text; return n; }
+  function box(id, partId, label) {
+    var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+    cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+    boxes.push({ part: partId, id: id, cb: cb, label: label });
+    return cb;
+  }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(txt('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(txt('span', 'who', id + ' · ' + s.who));
+      t.appendChild(txt('span', null, s['do']));
+      if (s.cmd) t.appendChild(txt('span', 'cmd', s.cmd));
+      t.appendChild(txt('span', 'see', 'You should see: ' + s.see.replace(/<\/?strong>/g, '')));
+      if (s.phone) t.appendChild(txt('span', 'see', 'On a phone: ' + s.phone));
+      if (s.options && s.options.length) {
+        var wrap = el('div', 'step opt'); wrap.appendChild(t);
+        s.options.forEach(function (o, k) {
+          var row = el('label', 'optrow'); var cb = box(id + '-' + (k + 1), p.id, id + ' = ' + o);
+          row.appendChild(cb); row.appendChild(txt('span', null, o)); wrap.appendChild(row);
+        });
+        body.appendChild(wrap);
+      } else {
+        var row2 = el('label', 'step'); var cb2 = box(id, p.id, id);
+        row2.appendChild(cb2); row2.appendChild(t); body.appendChild(row2);
+      }
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function missingVerdicts() { return PARTS.filter(function (p) { return !state.verdict[p.id]; }).map(function (p) { return p.id; }); }
+
+  function refresh() {
+    var done = 0;
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var n = mine.filter(function (b) { return b.cb.checked; }).length;
+      done += n;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + mine.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    document.getElementById('total').textContent = done + ' of ' + boxes.length + ' checked';
+    document.getElementById('barfill').style.width = (boxes.length ? Math.round(done * 100 / boxes.length) : 0) + '%';
+    var miss = missingVerdicts(), warn = document.getElementById('verdictWarn');
+    warn.hidden = !miss.length; warn.textContent = miss.length ? 'No verdict yet on part' + (miss.length > 1 ? 's' : '') + ' ' + miss.join(', ') + '.' : '';
+  }
+
+  function summary() {
+    var lines = [DATA.title + ' (written ' + DATA.written + ')'];
+    var miss = missingVerdicts();
+    if (miss.length) lines.push('INCOMPLETE: no verdict set on part' + (miss.length > 1 ? 's' : '') + ' ' + miss.join(', '));
+    var done = boxes.filter(function (b) { return b.cb.checked; }).length;
+    lines.push('Checked ' + done + ' of ' + boxes.length + ' (a step with options counts one box per option)');
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var ticked = mine.filter(function (b) { return b.cb.checked; }).map(function (b) { return b.label; });
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + mine.length + (ticked.length ? ' (' + ticked.join('; ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    document.getElementById('out').hidden = true;
+    refresh();
+  });
+  refresh();
+})();
+</script>

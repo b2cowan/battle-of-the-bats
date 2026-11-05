@@ -13,6 +13,7 @@ import parts from '@/components/public/PublicParts.module.css';
 import PublicPage from '@/components/public/PublicPage';
 import PublicSectionHead from '@/components/public/PublicSectionHead';
 import { ScheduleMatchup, type MatchupSide } from '@/components/public/PublicGameRow';
+import { sideResult } from '@/lib/public-game-row';
 import { formatShortWeekdayDate } from '@/lib/timezone';
 import { bracketRoundLabel } from '@/lib/playoff-bracket';
 import type { Game, Team } from '@/lib/types';
@@ -178,8 +179,7 @@ export default async function ArchiveDetailPage({
         </div>
       )}
 
-      {/* Standings — per division, from snapshot */}
-      {/* One section per division, each with the standard heading row (R4) — "Pool play standings · U11" when there are
+      {/* Standings — per division, from snapshot. One section per division, each with the standard heading row (R4) — "Pool play standings · U11" when there are
           several, as the tournament's own Final standings say it. The table keeps its look (tables are a registered
           exception, R10). */}
       {divisions.length > 0 && poolGames.length > 0 && divisions.map(ag => {
@@ -264,11 +264,10 @@ export default async function ArchiveDetailPage({
 function ResultRow({ game: g, teamName, context, round }: {
   game: Game; teamName: (id: string) => string; context: string | null; round: string | null;
 }) {
-  const scored = g.homeScore != null && g.awayScore != null;
   const side = (id: string, score: number | null, other: number | null): MatchupSide => ({
     name: teamName(id),
     score,
-    result: scored && score != null && other != null ? (score > other ? 'win' : score < other ? 'lose' : null) : null,
+    result: sideResult(score, other),
   });
   return (
     <li>
@@ -278,6 +277,7 @@ function ResultRow({ game: g, teamName, context, round }: {
         division={context}
         pool={round}
         state="final"
+        keepTime
         sides={[side(g.awayTeamId, g.awayScore ?? null, g.homeScore ?? null), side(g.homeTeamId, g.homeScore ?? null, g.awayScore ?? null)]}
       />
     </li>

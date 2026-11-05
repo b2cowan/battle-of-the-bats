@@ -87,6 +87,12 @@ export interface GameRowExtra {
 
 const isFinal = (g: Pick<Game, 'status'>) => g.status === 'completed' || g.status === 'forfeit';
 
+/** The winner/loser mark for one side of a sealed game: a tie, or a side with no score, gets none. */
+export function sideResult(score: number | null | undefined, other: number | null | undefined): 'win' | 'lose' | null {
+  if (score == null || other == null || score === other) return null;
+  return score > other ? 'win' : 'lose';
+}
+
 /** A game as the row says it. `context` is the caller's "round or division · field"; `today` the club's YYYY-MM-DD. */
 export function gameRowView(
   game: RowGame,
