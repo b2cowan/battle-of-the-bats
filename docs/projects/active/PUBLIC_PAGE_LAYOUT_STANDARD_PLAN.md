@@ -395,7 +395,7 @@ applied in v2; C3 split into C3 + C4.
   (`LeagueSeasonRows`, untouched) — its `::after` stretches the link over the whole card, which the tap-floor probe cannot
   see; not baselined. A probe (`.probe/club-column-probe.mjs`) measured nine pages at 390 / 1,024 / 1,536: left 16 / 24 / 192,
   960 wide (640 the form), 16 / 28 / 28 down, 24 between — the drawing's numbers.
-- **2026-11-05 · Club build Part 2 (titles, headings, lists, rows) — built.** Owner yes on the product-owner summary
+- **2026-11-05 · Club build Part 2 (titles, headings, lists, rows) — committed `1bb01b3ee`.** Owner yes on the product-owner summary
   ("go ahead"). **C3:** Teams, Tryouts (in season), House league and Tournaments have no visible title — each keeps an
   `h1` in `kit.srOnly`; Teams' count and Tryouts' season line sit under the Born in pill (kit `.toolLine`, 12 apart; none
   with two seasons, as before); Tournaments' "{n} tournaments" line is gone (each section's count pill says it); the House
