@@ -3,7 +3,8 @@ import { use, useState, useEffect, useCallback, useRef } from 'react';
 import DateInput from '@/components/shared/DateInput';
 import Link from 'next/link';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { Users, Plus, GripVertical, AlertTriangle, ClipboardPaste, HelpCircle, Upload } from 'lucide-react';
+import { Users, Plus, GripVertical, AlertTriangle, ClipboardPaste, HelpCircle, Upload, Mail } from 'lucide-react';
+import FamilyContactWindow from './FamilyContactWindow';
 import {
   DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors, type DragEndEvent,
 } from '@dnd-kit/core';
@@ -35,7 +36,7 @@ import {
 } from '@/lib/past-player-words';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import { pitcherRankLabel } from '@/lib/lineup-profile';
-import { cleanNamePart, playerName, telHref, isCallUp } from '@/lib/coach-roster-name';
+import { cleanNamePart, playerName, isCallUp } from '@/lib/coach-roster-name';
 import { playerTabHref } from '@/lib/coach-player-tabs';
 import {
   downloadXLSX, generateCSV, downloadCSVBlob,
@@ -121,6 +122,8 @@ export default function RosterPage({
   };
 
   const [players, setPlayers] = useState<RepRosterPlayer[]>([]);
+  /** The player whose family's contact window is open — the id, so the window reads the LIVE row, never a stale copy. */
+  const [familyForId, setFamilyForId] = useState<string | null>(null);
   const [programYear, setProgramYear] = useState<RepProgramYear | null>(null);
   const [fetching, setFetching] = useState(true);
   const [addOpen, setAddOpen] = useState(false);
@@ -892,6 +895,7 @@ export default function RosterPage({
                         dragDisabled={activePlayers.length < 2 || !canWriteRoster}
                         isDuplicateNumber={!!p.playerNumber && dupNumbers.has(p.playerNumber.trim())}
                         returningFrom={returning[p.id] ?? null}
+                        onOpenFamily={setFamilyForId}
                       />
                     ))}
                   </SortableContext>
@@ -1230,6 +1234,11 @@ export default function RosterPage({
         }}
       />
 
+      {familyForId && (() => {
+        const fp = players.find(p => p.id === familyForId);
+        return fp ? <FamilyContactWindow player={fp} base={base} onClose={() => setFamilyForId(null)} /> : null;
+      })()}
+
       {errorMsg && (
         <KitDialog
           kind="question"
@@ -1251,8 +1260,11 @@ function SortableRow({
   dragDisabled,
   isDuplicateNumber,
   returningFrom,
+  onOpenFamily,
 }: {
   player: RepRosterPlayer;
+  /** Opens the family's contact window — ONE window, mounted by the page (a row carries dnd-kit's transform). */
+  onOpenFamily: (playerId: string) => void;
   /** "Back from the 2025 Season" — the season a returning child last played, until the first game (Stage 14 S3). */
   returningFrom: string | null;
   /** Chunk F: keeps a player link inside the season the roster is showing. */
@@ -1357,28 +1369,34 @@ function SortableRow({
           glanceable: at a glance a coach wants "can I reach this family", not a 40-character string
           they will copy rather than read. The name leads; the address and phone stay one tap away
           beneath it.
+          ⚠ ONE LINE, THE NAME ONLY (owner 2026-11-05). The email and phone were a three-line stack
+          that made every row ~90px and the roster a long scroll; both live on the player's Family
+          tab, one click away, and "Email families" is the bulk door. A guardian with contact details
+          but no name reads "Contact on file" rather than printing the address.
           ⚠ AND THERE IS NO "on the family app" BADGE HERE, deliberately. The per-player guardian
           tier is shipped SWITCHED OFF until the owner switches it on (real consent wording first). This cell is shaped so that
           badge drops in later rather than forcing a rebuild — see the plan §2.
           ⚠ Redaction is unchanged: a coach without guardian-contact access has these fields
           stripped by the API before they reach here, so the cell simply falls to its prompt. */}
       <td className={styles.td} data-label="Family">
-        {(guardianName || p.guardianEmail || p.guardianPhone)
-          ? <span className={styles.guardianStack}>
-              {guardianName && <span className={styles.familyName}>{guardianName}</span>}
-              {p.guardianEmail && (
-                <a href={`mailto:${p.guardianEmail}`} className={styles.guardianEmail}>{p.guardianEmail}</a>
-              )}
-              {p.guardianPhone && (
-                <a href={telHref(p.guardianPhone)} className={styles.guardianPhone}>{p.guardianPhone}</a>
-              )}
-            </span>
+        {(p.guardianEmail || p.guardianPhone)
+          /* A name with something to show opens the contact window; "Contact on file" is the same door for a guardian
+             with no name. The envelope is the cue (a control only a mouse can find is not a control), dim at rest.
+             The label CONTAINS the visible name, as label-in-name asks. */
+          ? <button type="button" className={`${styles.familyBtn} ${guardianName ? '' : styles.familyBtnNameless}`}
+              aria-haspopup="dialog" aria-label={`${guardianName || 'Contact on file'}, contact details`}
+              onClick={() => onOpenFamily(p.id)}>
+              {guardianName || 'Contact on file'}
+              <Mail size={13} aria-hidden className={styles.familyBtnMark} />
+            </button>
+          : guardianName
+            /* A name and nothing to show: not a link — a window with nothing in it is a dead end. */
+            ? <span className={styles.familyName}>{guardianName}</span>
           : <Link href={playerTabHref(playerHref, 'family', { section: 'guardian' })} className={styles.rosterAddPrompt}><span aria-hidden="true">+</span> Add a contact</Link>}
       </td>
       {/* ⚰ The phone card's Call button (hub F06, 2026-09-13) — REMOVED by owner ruling R2
           (2026-09-29): a coach opens the roster many times to record things, usually has parents'
-          numbers in their own phone, and has contacts on the player's page. The Family cell above
-          keeps its tel: link on a desktop. */}
+          numbers in their own phone, and has contacts on the player's page. */}
     </tr>
   );
 }

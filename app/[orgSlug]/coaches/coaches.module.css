@@ -2400,7 +2400,7 @@ a.insightsStat:focus-visible { outline-offset: -2px; }
    say. If it ever earns a colour, that is a different element and a different ruling. */
 /* ⚠ THE MARKER FOR "THIS ROW HOLDS A SECOND LINE" — table standard §3.1, owner A-01. Every caption
    class that renders a second line inside a list cell composes it (`.listRowSub`,
-   `.guardianStack`, `.payBillMeta`, `.payPieceMeta`), and the density rule beside `.td` reads
+   `.payBillMeta`, `.payPieceMeta`), and the density rule beside `.td` reads
    ONLY this marker. A sixth caption composes it and is comfortable without anyone touching the
    rule; a caption that forgets is the one visible mistake. The declaration is a no-op that every
    caption already holds — CSS Modules needs the class to exist. */
@@ -4372,6 +4372,56 @@ a.oneChip:hover { border-color: currentColor; }
 /* The family cell leads with the person; the address and phone follow it, quieter. */
 .familyName { font-weight: 600; color: var(--text-primary); }
 
+/* The family's name as a door to its contact window (owner 2026-11-05). NO underline — the player's name beside it is
+   the underlined door to the player's page, and one underline means one thing (table standard §3.6); this one is a
+   control, told by the envelope after it. It composes `.rowTapLink` (the table standard's tap box: 44px tall, the
+   negative vertical margin keeps the compact row compact, and the last-row rule reads the marker). ⚠ The SIDEWAYS
+   margin is deliberate and safe HERE only: this cell never card-reflows (the column is hidden at 640 and under). */
+.familyBtn {
+  composes: rowTapLink;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.7rem 0.4rem;
+  margin: -0.7rem -0.4rem;
+  border: none;
+  border-radius: 7px;
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+}
+.familyBtnNameless { font-weight: 500; color: var(--text-secondary); }
+.familyBtnMark { flex: none; color: var(--text-tertiary); }
+.familyBtn:hover { background: var(--home-olive-soft); }
+.familyBtn:hover .familyBtnMark { color: var(--home-olive); }
+.familyBtn:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 1px; }
+
+/* The contact window's two facts: the value (a link) with its copy symbol beside it. */
+.contactValue { display: inline-flex; align-items: center; justify-content: flex-end; gap: 0.25rem; min-width: 0; }
+.contactDoor { color: var(--blueprint-light); font-weight: 600; text-decoration: none; overflow-wrap: anywhere; }
+.contactDoor:hover { text-decoration: underline; }
+.contactNone { color: var(--text-tertiary); }
+/* Copy, the symbol alone (the portal's ruling for a small window): a borderless 2rem square like the window's own ×,
+   the 44 floor in the touch band. */
+.contactCopy {
+  position: relative;
+  flex: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 2rem; height: 2rem;
+  border: none; border-radius: 7px; background: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+}
+.contactCopy:hover { background: var(--home-olive-soft); color: var(--text-primary); }
+.contactCopy:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 1px; }
+@media (max-width: 768px) {
+  .contactCopy { width: var(--tap-min, 44px); height: var(--tap-min, 44px); }
+}
+
+
 /* ── Off the roster ──────────────────────────────────────────────────────────────────────
    ⚠ A SHELF, NOT ROWS (owner ruling 2026-08-26). These players used to sit INLINE among the team
    in batting order, told apart from a playing player by a grey pill in a column nobody reads —
@@ -4488,12 +4538,6 @@ a.oneChip:hover { border-color: currentColor; }
   color: var(--warning);
   font-weight: 700;
 }
-
-/* Merged guardian contact cell (email over phone) */
-.guardianStack { composes: rowCaption; display: inline-flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
-.guardianEmail { color: var(--blueprint-light); text-decoration: none; }
-.guardianEmail:hover { text-decoration: underline; }
-.guardianPhone { color: var(--text-tertiary); font-size: var(--type-support); }
 
 /* ⚰ `.rosterMoveControls` / `.rosterMoveBtn` — up/down reorder arrows, hidden at EVERY width since
    2026-08-26 (reordering is a desktop job) — deleted 2026-09-29. If a phone ever reorders the roster
@@ -16625,7 +16669,9 @@ button.lineupRulesToggle {
 
 /* The roster's returning caption under a name, until the first game (tab 3). */
 .playerCellStack { display: inline-flex; flex-direction: column; align-items: flex-start; min-width: 0; }
-.rosterReturning { font-size: var(--type-support); color: var(--text-tertiary); }
+/* ⚠ Composes `rowCaption`: a second line inside a list cell is what makes a row comfortable (table standard §3.1, A-01) —
+   it did not, so a returning player's row stayed compact with two lines squeezed into it. */
+.rosterReturning { composes: rowCaption; font-size: var(--type-support); color: var(--text-tertiary); }
 /* Add Player's two door lines, stacked; a phone gives each the tap floor (they are the window's first targets). */
 .addDoorLinks { display: flex; flex-direction: column; align-items: flex-start; gap: 0.15rem; margin: 0 0 0.875rem; }
 @media (max-width: 768px) {
