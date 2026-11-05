@@ -11,7 +11,7 @@
  * (Tournament Plus). The OWNER acts (A1); the treasurer reads the state and gets "needs attention" (`canSeePayouts`).
  * The card renders nothing while the launch switch is off or the plan lacks the feature — the API answers 404 then.
  */
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { Check, ExternalLink, Pencil, Unplug } from 'lucide-react';
 import { formatStoredDate } from '@/lib/timezone';
 import { LEAVING_WORDS, PAYMENTS_TERMS_SUMMARY, PAYMENTS_TERMS_VERSION, PAYOUTS_ADDRESS_WORDS, TERMS_PLACEHOLDER, TERMS_WORDS, money, payoutsWords, type PayoutsHome } from '@/lib/online-payment-words';
@@ -21,7 +21,7 @@ import type { PayoutsState } from '@/lib/online-payment-account';
 import type { OnlineFeePayer } from '@/lib/online-payment-fee';
 import KitDialog from './KitDialog';
 import PayoutsDisclosure from './money/PayoutsDisclosure';
-import { RecordAction, RepChip, SavePill, type ChipTone } from './RepKit';
+import { Callout, RecordAction, RepChip, SavePill, type ChipTone } from './RepKit';
 import ck from './ClubKit.module.css';
 import styles from './Settings.module.css';
 import pc from './PayoutsCard.module.css';
@@ -183,6 +183,13 @@ export default function PayoutsCard({ orgSlug, clubName, home, initial }: {
   const windLine = !!view.windDown && (state === 'needs_attention' || state === 'setting_up');
   const WD = LEAVING_WORDS.windDown;
   const showPrimary = !view.windDown || hasRecord;
+  // Payouts card redraw (drawings tabs 1-2): a taking-payments card says where payouts go and what receipts say as record rows
+  // instead of a paragraph, and while the record is being edited the Stripe door and Disconnect step aside.
+  const payoutRows = state === 'taking_payments' && !wind;
+  const editingRecord = editing && isOwner && hasRecord;
+  // The review's call: a card that is setting up or needs attention keeps its primary button while editing (it is the owner's
+  // way forward); only the taking-payments card's "Open Stripe" steps aside. Disconnect steps aside in all three.
+  const hidePrimary = editingRecord && state === 'taking_payments';
 
   return (
     <>
@@ -222,16 +229,17 @@ export default function PayoutsCard({ orgSlug, clubName, home, initial }: {
         {/* GST/HST Stage 2 Part 2b (owner ruling A): connected before payouts asked for the address. Its Stripe fees wait
             unbilled until it is saved; saving reads the card again, and the line goes. */}
         {isOwner && view.addressMissing && <AddressMissingLine orgSlug={orgSlug} />}
-        <p className={pc.body}>{wind ? `${WD.body} ${LEAVING_WORDS.move.connected}` : body}</p>
+        {!payoutRows && <p className={pc.body}>{wind ? `${WD.body} ${LEAVING_WORDS.move.connected}` : body}</p>}
         {windLine && <p className={ck.hint}>{WD.title}. {WD.body}</p>}
-        {state !== 'disconnected' && !view.windDown && <p className={ck.hint}>{W.ratesLine(view.rateLabel, view.bankRateLabel ?? null)}</p>}
+        {/* The record's fee row carries the rates, so the line shows only where there is no record yet. */}
+        {state !== 'disconnected' && !view.windDown && !hasRecord && <p className={ck.hint}>{W.ratesLine(view.rateLabel, view.bankRateLabel ?? null)}</p>}
 
         {hasRecord && (
           <PayoutsRecord orgSlug={orgSlug} home={home} view={view} editing={editing && isOwner} onSaved={next => setView(v => (v ? { ...v, ...next } : v))}
-            onTerms={setTermsWindow} />
+            onTerms={setTermsWindow} clubName={clubName} payoutRows={payoutRows} />
         )}
 
-        {isOwner ? (showPrimary && (
+        {isOwner ? (showPrimary && !hidePrimary && (
           <div className={pc.actions}>
             <button type="button" className="btn btn-lime" onClick={primary} disabled={opening}>
               {opening ? W.opening : W.button[state]}
@@ -250,7 +258,7 @@ export default function PayoutsCard({ orgSlug, clubName, home, initial }: {
             ends the card's body. */}
         {isOwner && view.everConnected && view.hasAccounting === false && <PayoutsDisclosure orgSlug={orgSlug} />}
 
-        {isOwner && (state === 'taking_payments' || state === 'needs_attention' || state === 'setting_up') && (
+        {isOwner && !editingRecord && (state === 'taking_payments' || state === 'needs_attention' || state === 'setting_up') && (
           <div className={pc.recordEnd}>
             <RecordAction icon={<Unplug size={13} aria-hidden />} onClick={() => setDisconnecting(true)}>{W.rareDisconnect}</RecordAction>
           </div>
@@ -297,21 +305,22 @@ function AddressMissingLine({ orgSlug }: { orgSlug: string }) {
   if (address.location) return null;
   return (
     <>
-      <div className={`${ck.notice} ${ck.noticeWarn}`} role="status">
-        <div className={ck.noticeBody}>
-          {PAYOUTS_ADDRESS_WORDS.missing}{' '}
-          <button type="button" className={pc.linkButton} onClick={() => address.edit()}>{BILLING_ADDRESS_FORM_WORDS.title}</button>
-        </div>
-      </div>
+      {/* The action opens a window, so it is the outlined button at the callout's right end, not an olive link. */}
+      <Callout tone="warn" role="status"
+        action={<button type="button" className="btn btn-outline" onClick={() => address.edit()}>{BILLING_ADDRESS_FORM_WORDS.title}</button>}>
+        {PAYOUTS_ADDRESS_WORDS.missing}
+      </Callout>
       {address.dialog}
     </>
   );
 }
 
 /** The record (copy §4): reads first; the card's pencil flips it whole. The fee choice and the policy autosave and tell nobody. */
-function PayoutsRecord({ orgSlug, home, view, editing, onSaved, onTerms }: {
+function PayoutsRecord({ orgSlug, home, view, editing, onSaved, onTerms, clubName, payoutRows }: {
   orgSlug: string; home: PayoutsHome; view: PayoutsView; editing: boolean; onSaved: (next: Partial<PayoutsView>) => void;
   onTerms: (mode: 'agree' | 'read') => void;
+  /** The club's name for "Receipts say", and whether this state says where payouts go as rows (taking payments). */
+  clubName: string; payoutRows: boolean;
 }) {
   const stale = view.terms?.standing === 'stale';
   const W = payoutsWords(home);
@@ -341,63 +350,101 @@ function PayoutsRecord({ orgSlug, home, view, editing, onSaved, onTerms }: {
     }
   }
 
+  // Payouts card redraw (drawings tabs 1-2): read and edit are the SAME rows in the same order, so the card keeps its shape
+  // when the pencil flips it. Rows nobody can edit stay, quieter; the other-Stripe-fees line is a footnote under the rows in both.
+  const policyId = useId();
+  const policyHintId = useId();
+  const rates = W.record.feeRates(view.rateLabel, view.bankRateLabel ?? null);
+  const whereRows = payoutRows && (
+    <>
+      <div className={pc.recordRow}>
+        <dt>{W.record.payoutsToLabel}</dt>
+        <dd>{W.record.payoutsToValue}</dd>
+      </div>
+      <div className={pc.recordRow}>
+        <dt>{W.record.receiptsLabel}</dt>
+        <dd>{W.record.receiptsValue(clubName)}</dd>
+      </div>
+    </>
+  );
+  // 12d-1 words §3.4: the footnote under the record.
+  const otherFees = <p className={`${ck.hint} ${pc.otherFees}`}>{W.record.otherFees}{view.planFree ? ` ${W.record.otherFeesPlan}` : ''}</p>;
+
   if (!editing) {
     return (
-      <dl className={pc.record}>
-        <div className={pc.recordRow}>
-          <dt>{W.record.feeLabel}</dt>
-          <dd>
-            {W.record.feeRead[view.feePayer]}<span className={ck.hint}> · {W.record.feeRates(view.rateLabel, view.bankRateLabel ?? null)}</span>
-            {/* 12d-1 words §3.4: under the rates line. */}
-            <span className={`${ck.hint} ${pc.otherFees}`}>{W.record.otherFees}{view.planFree ? ` ${W.record.otherFeesPlan}` : ''}</span>
-          </dd>
-        </div>
-        <div className={pc.recordRow}>
-          <dt>{W.record.policyLabel}</dt>
-          <dd>{view.refundPolicy ? view.refundPolicy : <span className={ck.hint}>{W.record.policyEmpty}</span>}</dd>
-        </div>
-        {view.terms && <TermsRow terms={view.terms} onTerms={onTerms} />}
-      </dl>
+      <>
+        <dl className={pc.record}>
+          {whereRows}
+          <div className={pc.recordRow}>
+            <dt>{W.record.feeLabel}</dt>
+            <dd>
+              {W.record.feeRead[view.feePayer]}
+              <span className={`${ck.hint} ${pc.otherFees}`}>{rates}</span>
+            </dd>
+          </div>
+          <div className={pc.recordRow}>
+            <dt>{W.record.policyLabel}</dt>
+            <dd>{view.refundPolicy ? view.refundPolicy : <span className={ck.hint}>{W.record.policyEmpty}</span>}</dd>
+          </div>
+          {view.terms && <TermsRow terms={view.terms} onTerms={onTerms} />}
+        </dl>
+        {otherFees}
+      </>
     );
   }
 
   return (
-    <div className={pc.record}>
-      <fieldset className={pc.choice}>
-        <legend className={ck.label}>{W.record.feeEditLabel}</legend>
-        {/* 12d-2 (words §5.2 `terms.refuse.fee`): the choice waits for the current terms — the line replaces it. */}
-        {stale && (
-          <p className={ck.hint}>
-            {TERMS_WORDS.refuseFee}{' '}
-            <button type="button" className={pc.linkButton} onClick={() => onTerms('agree')}>{TERMS_WORDS.readAndAgree}</button>
-          </p>
-        )}
-        {!stale && (['family', 'club'] as const).map(p => (
-          <label key={p} className={pc.choiceRow}>
-            <input type="radio" name="payouts-fee-payer" checked={view.feePayer === p} disabled={saving} onChange={() => void save({ feePayer: p })} />
-            <span>
-              <span className={pc.choiceName}>{W.record.choice[p]}</span>
-              <span className={ck.hint}>{W.record.choiceHint[p]}</span>
-            </span>
-          </label>
-        ))}
-        <p className={ck.hint}>{W.record.feeChangeNote}</p>
-      </fieldset>
-      <label className={ck.field}>
-        <span className={ck.label}>{W.record.policyLabel}</span>
-        <textarea
-          className={ck.textarea}
-          rows={2}
-          maxLength={300}
-          value={policy}
-          placeholder={W.record.policyPlaceholder}
-          onChange={e => { setPolicy(e.target.value); setDirty(true); }}
-          onBlur={() => { if (dirty) void save({ refundPolicy: policy }); }}
-        />
-        <span className={ck.hint}>{W.record.policyHint}</span>
-      </label>
+    <>
+      <dl className={pc.record}>
+        {whereRows}
+        <div className={pc.recordRow}>
+          <dt>{W.record.feeLabel}</dt>
+          <dd>
+            <fieldset className={pc.choice}>
+              <legend className="sr-only">{W.record.feeEditLabel}</legend>
+              {/* 12d-2 (words §5.2 `terms.refuse.fee`): the choice waits for the current terms — the line replaces it. */}
+              {stale && (
+                <p className={ck.hint}>
+                  {TERMS_WORDS.refuseFee}{' '}
+                  <button type="button" className={pc.linkButton} onClick={() => onTerms('agree')}>{TERMS_WORDS.readAndAgree}</button>
+                </p>
+              )}
+              {!stale && (['family', 'club'] as const).map(p => (
+                <label key={p} className={pc.choiceRow}>
+                  <input type="radio" name="payouts-fee-payer" checked={view.feePayer === p} disabled={saving} onChange={() => void save({ feePayer: p })} />
+                  <span>
+                    <span className={pc.choiceName}>{W.record.choice[p]}</span>
+                    <span className={ck.hint}>{W.record.choiceHint[p]}</span>
+                  </span>
+                </label>
+              ))}
+              <p className={ck.hint}>{rates}</p>
+              <p className={ck.hint}>{W.record.feeChangeNote}</p>
+            </fieldset>
+          </dd>
+        </div>
+        <div className={pc.recordRow}>
+          <dt id={policyId}>{W.record.policyLabel}</dt>
+          <dd>
+            <textarea
+              className={ck.textarea}
+              aria-labelledby={policyId}
+              aria-describedby={policyHintId}
+              rows={2}
+              maxLength={300}
+              value={policy}
+              placeholder={W.record.policyPlaceholder}
+              onChange={e => { setPolicy(e.target.value); setDirty(true); }}
+              onBlur={() => { if (dirty) void save({ refundPolicy: policy }); }}
+            />
+            <p id={policyHintId} className={`${ck.hint} ${pc.fieldHint}`}>{W.record.policyHint}</p>
+          </dd>
+        </div>
+        {view.terms && <TermsRow terms={view.terms} onTerms={onTerms} />}
+      </dl>
+      {otherFees}
       <SavePill saving={saving} dirty={dirty} error={error} onRetry={() => { if (lastSent) void save(lastSent as never); }} />
-    </div>
+    </>
   );
 }
 

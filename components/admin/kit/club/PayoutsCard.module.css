@@ -18,7 +18,7 @@
 .choiceRow input { margin-top: 0.25rem; }
 .choiceRow > span { display: flex; flex-direction: column; gap: 0.1rem; }
 .choiceName { color: var(--text-primary); font-weight: 600; }
-.recordEnd { margin-top: 0.75rem; display: flex; flex-wrap: wrap; align-items: center; gap: 0 1.5rem; }
+.recordEnd { margin-top: 0.25rem; display: flex; flex-wrap: wrap; align-items: center; gap: 0 1.5rem; }
 .before { display: flex; flex-direction: column; gap: 1rem; }
 .before section p { margin: 0.2rem 0 0; }
 .terms { display: flex; align-items: flex-start; gap: 0.6rem; cursor: pointer; color: var(--text-primary); }
@@ -33,5 +33,9 @@
 }
 .statusLine { margin: 0 0 0.75rem; display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.4rem; }
 
-/* 12d-1 words §3.4: the other-Stripe-fees line under the rates, its own line inside the fee row. */
-.otherFees { display: block; margin-top: 0.25rem; }
+/* Payouts card redraw (drawings tab 1): the other-Stripe-fees line is a footnote under the record, read and edit alike. */
+.otherFees { display: block; margin: 0.25rem 0 0; }
+/* The edit form lives in the same rows as the read record; rows nobody can edit stay as they read. */
+.recordRow textarea { width: 100%; }
+.fieldHint { display: block; margin: 0.3rem 0 0; }
+.recordRow .choice { margin: 0; }

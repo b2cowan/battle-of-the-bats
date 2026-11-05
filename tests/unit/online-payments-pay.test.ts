@@ -108,10 +108,8 @@ function payoutsHarness(t: TestContext, home: 'club' | 'tournament', state: Payo
 
 describe('Open Stripe keeps the organizer page and opens a protected tab', () => {
   for (const home of ['club', 'tournament'] as const) {
-    it(`${home}: reserves one tab before fetching, preserves edits, and enables another visit after success`, async t => {
+    it(`${home}: reserves one tab before fetching and enables another visit after success`, async t => {
       const h = payoutsHarness(t, home);
-      const pencil = h.render().find(e => e.props['aria-pressed'] === false)!;
-      (pencil.props.onClick as () => void)();
       h.click();
       assert.deepEqual(h.events, ['open', 'fetch']);
       assert.equal(h.button().props.disabled, true);
@@ -128,10 +126,24 @@ describe('Open Stripe keeps the organizer page and opens a protected tab', () =>
       assert.deepEqual(h.assigned, []);
       assert.equal(h.tab.closed, false);
       assert.equal(h.button().props.disabled, false);
-      assert.ok(h.render().some(e => e.props['aria-pressed'] === true), 'Keep record editing open');
       assert.match(JSON.stringify(h.button().props.children), /opens in a new tab/);
     });
   }
+
+  // Payouts card redraw (drawings tab 2, ask A6, owner "go ahead" 2026-11-05): while the record is being edited the form stands
+  // alone — the Stripe door and Disconnect step aside, and the pencil brings them back. Edits autosave, so nothing is lost.
+  it('steps aside while the record is edited, and comes back with the pencil', t => {
+    const h = payoutsHarness(t, 'club');
+    const stripe = () => h.render().some(e => e.type === 'button' && e.props.className === 'btn btn-lime');
+    const disconnect = () => h.render().some(e => e.props.children === 'Disconnect payouts');
+    assert.ok(stripe() && disconnect(), 'both doors show while reading');
+    (h.render().find(e => e.props['aria-pressed'] === false)!.props.onClick as () => void)();
+    assert.ok(h.render().some(e => e.props['aria-pressed'] === true), 'the pencil is now the check');
+    assert.equal(stripe(), false, 'Open Stripe is hidden while editing');
+    assert.equal(disconnect(), false, 'Disconnect is hidden while editing');
+    (h.render().find(e => e.props['aria-pressed'] === true)!.props.onClick as () => void)();
+    assert.ok(stripe() && disconnect(), 'both doors come back after Done');
+  });
 
   for (const failure of ['network', 'http', 'missing-url'] as const) {
     it(`${failure}: closes the temporary tab, retains the error, and permits retry`, async t => {

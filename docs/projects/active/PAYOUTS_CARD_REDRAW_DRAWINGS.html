@@ -1,0 +1,351 @@
+<title>Payouts Card Redraw</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout concept: sticky tab row, a View switch, then Before | After specimens at true width with numbered notes below.
+   Document chrome is cool slate; the specimens wear the product's warm portal skin so they read as specimens. */
+:root {
+  --bg: #e9edf2; --fg: #1b2330; --mute: #5a6678; --card: #ffffff; --line: #cdd5e0;
+  --accent: #2b50c8; --accent-soft: #dfe7fb; --track: #ffffff; --warn: #8a5a00;
+  --new: #1f6b3a; --new-bg: #dcf1e2; --rest: #2b50c8; --rest-bg: #dfe7fb; --same: #5a6678; --same-bg: #e3e8ef;
+  --mono: ui-monospace, "SF Mono", "Cascadia Mono", Consolas, monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #12171f; --fg: #e6ebf3; --mute: #9aa6b8; --card: #1b2230; --line: #2d384a;
+  --accent: #8fb0ff; --accent-soft: #22305a; --track: #1b2230; --warn: #f0c36a;
+  --new: #8fe0a8; --new-bg: #1c3a28; --rest: #8fb0ff; --rest-bg: #22305a; --same: #9aa6b8; --same-bg: #262f3f; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #12171f; --fg: #e6ebf3; --mute: #9aa6b8; --card: #1b2230; --line: #2d384a;
+  --accent: #8fb0ff; --accent-soft: #22305a; --track: #1b2230; --warn: #f0c36a;
+  --new: #8fe0a8; --new-bg: #1c3a28; --rest: #8fb0ff; --rest-bg: #22305a; --same: #9aa6b8; --same-bg: #262f3f; color-scheme: dark; }
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 14px; line-height: 1.5; margin: 0;
+  padding-block: 0 48px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.wrap { max-width: 1340px; margin: 0 auto; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); background: var(--bg); z-index: 10; }
+
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 9; background: var(--bg); padding-top: 14px; border-bottom: 1px solid var(--line); }
+h1 { font-size: 20px; margin: 0 0 2px; letter-spacing: -0.01em; }
+.sub { color: var(--mute); margin: 0 0 10px; max-width: 80ch; }
+.tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+.tab { font: inherit; font-weight: 600; color: var(--mute); background: none; border: 0; border-bottom: 3px solid transparent; padding: 8px 12px 9px; cursor: pointer; }
+.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); }
+.tab:focus-visible, .seg button:focus-visible, .mk:focus-visible, .copy:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.viewrow { display: flex; align-items: center; gap: 12px; padding: 12px 0 4px; flex-wrap: wrap; }
+.viewrow .lbl { font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--mute); }
+.seg { display: inline-flex; background: var(--track); border: 1px solid var(--line); border-radius: 10px; padding: 3px; gap: 2px; }
+.seg button { font: inherit; font-weight: 600; font-size: 13px; color: var(--mute); background: none; border: 0; border-radius: 7px; padding: 5px 12px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--fg); }
+.hint-v { color: var(--mute); font-size: 12px; }
+
+.panel { padding-top: 14px; }
+.panel[hidden] { display: none; }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 620px), 1fr)); gap: 18px; align-items: start; }
+.slot > .cap { display: flex; align-items: baseline; gap: 8px; margin: 0 0 6px; font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--mute); }
+.slot > .cap b { color: var(--fg); }
+.slot .scroll { overflow-x: auto; }
+
+/* ---- Specimen: the product's warm portal skin at a fixed 600px ---- */
+.fr { --p-bg: #f6f2ea; --p-card: #fff; --p-ink: #1d1912; --p-mute: #6a6354; --p-line: #e4dccd; --p-notice: #f3eee3; --p-notice-line: #d8cdb3;
+  --p-lime: #d9f99d; --p-gb: #e4efdb; --p-gt: #2b4a1c; --p-gl: #b9d2a6; --p-bb: #e6edff; --p-bt: #1c40b8; --p-bl: #aebfef;
+  width: 600px; background: var(--p-bg); padding: 14px; border-radius: 10px; border: 1px solid var(--line); color: var(--p-ink); font-size: 14px; line-height: 1.45; }
+.fr .card { background: var(--p-card); border-radius: 12px; padding: 20px 22px 18px; box-shadow: 0 1px 2px rgba(60,50,30,.08); }
+.fr .head { display: flex; align-items: center; gap: 8px; min-height: 30px; }
+.fr .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; font-weight: 700; color: var(--p-mute); }
+.fr .chip { font-family: var(--mono); font-size: 10.5px; font-weight: 700; letter-spacing: .06em; padding: 2px 9px; border-radius: 99px; border: 1px solid; }
+.fr .chip.g { background: var(--p-gb); color: var(--p-gt); border-color: var(--p-gl); }
+.fr .chip.b { background: var(--p-bb); color: var(--p-bt); border-color: var(--p-bl); }
+.fr .sp { flex: 1; }
+.fr .icon-btn { background: none; border: 0; padding: 4px; color: var(--p-ink); cursor: default; display: inline-flex; }
+.fr .lab-btn { display: inline-flex; align-items: center; gap: 6px; font: inherit; font-weight: 600; font-size: 13px; color: var(--p-ink); background: transparent; border: 1px solid var(--p-line); border-radius: 8px; padding: 4px 11px; }
+.fr h3 { margin: 10px 0 2px; font-size: 17px; line-height: 1.25; letter-spacing: -0.005em; }
+.fr .hint { color: var(--p-mute); font-size: 12.5px; margin: 0; }
+.fr p.body { font-size: 15px; margin: 14px 0 4px; }
+.fr .notice { background: var(--p-notice); border: 1px solid var(--p-notice-line); border-radius: 8px; padding: 9px 13px; font-size: 13px; margin: 8px 0 0; }
+.fr .notice a { color: #4d5a14; text-decoration: underline; }
+.fr .notice.slim { display: flex; align-items: center; gap: 10px; margin: 14px 0 0; }
+.fr .notice.slim .sp { flex: 1; }
+.fr .notice.slim .nbtn { font: inherit; font-size: 12.5px; font-weight: 600; background: #fff; border: 1px solid var(--p-notice-line); border-radius: 7px; padding: 3px 10px; color: var(--p-ink); white-space: nowrap; }
+.fr hr { border: 0; border-top: 1px solid var(--p-line); margin: 14px 0; }
+.fr .tbl { margin: 16px 0 0; display: grid; gap: 0; }
+.fr .tbl .r { display: grid; grid-template-columns: 128px 1fr; gap: 14px; padding: 9px 0; border-top: 1px solid var(--p-line); }
+.fr .tbl .r:first-child { border-top: 0; padding-top: 2px; }
+.fr .tbl .l { color: var(--p-mute); }
+.fr .tbl .v .hint { display: block; margin-top: 1px; }
+.fr .tbl.old .r { border-top: 0; grid-template-columns: 200px 1fr; padding: 7px 0; }
+.fr .foot { color: var(--p-mute); font-size: 12px; margin: 4px 0 0; }
+.fr .acts { display: flex; align-items: center; gap: 12px; margin-top: 18px; }
+.fr .acts .sp { flex: 1; }
+.fr .lime { display: inline-flex; align-items: center; gap: 7px; font: inherit; font-weight: 700; background: var(--p-lime); color: #1d1912; border: 0; border-radius: 8px; padding: 8px 15px; }
+.fr .quiet { display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 13px; color: var(--p-mute); background: none; border: 0; padding: 4px 2px; }
+.fr .quiet.big { font-size: 15px; color: var(--p-ink); }
+.fr .legend { font-size: 12.5px; font-weight: 700; margin: 0 0 6px; }
+.fr .opt { display: grid; grid-template-columns: 18px 1fr; gap: 8px; margin: 0 0 8px; align-items: start; }
+.fr .opt .rad { width: 15px; height: 15px; border-radius: 50%; border: 1.5px solid #8b8472; margin-top: 3px; background: #fff; }
+.fr .opt .rad.on { border: 4.5px solid var(--p-blue-ok, #1f6fe0); }
+.fr .opt .rad.on.lime { border-color: #3f6a12; }
+.fr .opt .name { font-size: 17px; font-weight: 500; display: block; }
+.fr .opt .name.sm { font-size: 14px; font-weight: 600; }
+.fr .opt .hint { display: block; }
+.fr .ta { border: 1px solid var(--p-line); background: #f6f2ea; border-radius: 8px; padding: 8px 10px; min-height: 50px; font-size: 14px; }
+.fr .ta.bigger { min-height: 70px; padding: 10px 12px; }
+.fr .status { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: #2b4a1c; }
+.fr .status .dot { width: 8px; height: 8px; border-radius: 50%; background: #4f8a22; }
+.fr .gone { color: #b2332b; font-size: 12px; font-family: var(--mono); border: 1px dashed #d8a5a0; border-radius: 6px; padding: 3px 8px; display: inline-block; margin-top: 6px; }
+.has { position: relative; }
+.mk { position: absolute; top: -7px; right: -9px; width: 20px; height: 20px; border-radius: 50%; background: var(--accent); color: #fff; font: 700 11px var(--sans); border: 2px solid #fff; cursor: pointer; padding: 0; display: grid; place-items: center; z-index: 2; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .mk { color: #10131a; } }
+:root[data-theme="dark"] .mk { color: #10131a; }
+.mk.on { outline: 3px solid var(--accent-soft); }
+.mk.left { right: auto; left: -9px; }
+
+/* the "Show only what differs" view: unchanged parts dim, changed parts take an outline */
+body[data-view="diff"] .fr .same { opacity: .22; }
+body[data-view="diff"] .fr .chg { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+
+/* ---- notes ---- */
+.notes { margin: 18px 0 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); gap: 10px 22px; }
+.note { display: grid; grid-template-columns: 26px 1fr; gap: 8px; padding: 10px 12px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; min-width: 0; }
+.note.hi { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.note .n { width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: #fff; font: 700 11px var(--sans); display: grid; place-items: center; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .note .n { color: #10131a; } }
+:root[data-theme="dark"] .note .n { color: #10131a; }
+.note p { margin: 2px 0 0; }
+.tag { font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: .08em; padding: 1px 7px; border-radius: 5px; margin-right: 6px; }
+.tag.new { color: var(--new); background: var(--new-bg); }
+.tag.rest { color: var(--rest); background: var(--rest-bg); }
+.tag.same { color: var(--same); background: var(--same-bg); }
+.problems { margin: 10px 0 0; padding-left: 18px; color: var(--mute); }
+.problems li { margin: 2px 0; }
+
+/* ---- words + asks ---- */
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; }
+.wtable { width: 100%; border-collapse: collapse; }
+.wtable th, .wtable td { text-align: left; vertical-align: top; padding: 10px 12px; border-top: 1px solid var(--line); }
+.wtable th { border-top: 0; font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--mute); }
+.wtable td.old { color: var(--mute); text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--mute) 55%, transparent); }
+.tscroll { overflow-x: auto; }
+.asks { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.ask { padding: 14px 16px; display: grid; grid-template-columns: 36px 1fr; gap: 12px; min-width: 0; }
+.ask .code { font-family: var(--mono); font-weight: 700; color: var(--accent); }
+.ask h4 { margin: 0 0 4px; font-size: 15px; }
+.ask p { margin: 4px 0; }
+.ask .rec { color: var(--fg); }
+.ask .rec b { color: var(--accent); }
+.callout { padding: 12px 14px; border: 1px solid var(--line); border-left: 4px solid var(--warn); border-radius: 10px; background: var(--card); margin: 0 0 14px; }
+.callout b { color: var(--warn); }
+.prose { max-width: 74ch; }
+</style>
+
+<div class="wrap">
+  <div class="top">
+    <h1>Payouts card redraw</h1>
+    <p class="sub">The Payouts card in club Settings, read and edit. Today on the left, proposed on the right, drawn at the card's real 600px content width. Click a number on the proposed card to find its note.</p>
+    <div class="tabs" role="tablist" aria-label="Sections">
+      <button class="tab" role="tab" id="t-read" data-tab="read" aria-selected="true">1 · Read mode</button>
+      <button class="tab" role="tab" id="t-edit" data-tab="edit" aria-selected="false">2 · Edit mode</button>
+      <button class="tab" role="tab" id="t-words" data-tab="words" aria-selected="false">3 · Two wording slips</button>
+      <button class="tab" role="tab" id="t-asks" data-tab="asks" aria-selected="false">4 · Asks</button>
+    </div>
+    <div class="viewrow" id="viewrow">
+      <span class="lbl">View</span>
+      <span class="seg" role="group" aria-label="View">
+        <button type="button" data-view="all" aria-pressed="true">Everything</button>
+        <button type="button" data-view="diff" aria-pressed="false">Show only what differs</button>
+      </span>
+      <span class="hint-v">Unchanged parts fade; changed parts get an outline.</span>
+    </div>
+  </div>
+
+  <!-- ===== 1 · READ ===== -->
+  <section class="panel" id="p-read" aria-labelledby="t-read">
+    <div class="pair">
+      <div class="slot">
+        <p class="cap"><b>Before</b> · today</p>
+        <div class="scroll"><div class="fr"><div class="card">
+          <div class="head"><span class="eyebrow">PAYOUTS</span><span class="chip g">TAKING PAYMENTS</span><span class="chip b">TEST MODE</span><span class="sp"></span>
+            <span class="icon-btn" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span></div>
+          <h3>Families and teams can pay online</h3>
+          <p class="hint">No real money moves while payouts are in test mode.</p>
+          <div class="notice">Add your club’s billing address so your invoice for Stripe fees can go out. <a href="#p-read" onclick="return false">Billing address</a></div>
+          <p class="body">Payouts go to your bank account on Stripe’s schedule. Receipts go out in the name “UAT Rep Club”.</p>
+          <p class="hint">Processing fee: 3.5% + $1.50 per card payment, 2.5% + $1.00 per bank debit.</p>
+          <hr>
+          <div class="tbl old">
+            <div class="r"><div class="l">Processing fee</div><div class="v">Families and teams pay it: it’s added to what they pay <span class="hint">· 3.5% + $1.50 per card payment · 2.5% + $1.00 per bank debit</span><span class="hint">Other Stripe fees, such as for disputes, returned bank debits and cards issued outside your country, are billed to the club.</span></div></div>
+            <div class="r"><div class="l">Refund policy</div><div class="v">Refunded in full until Nov 30, then not refunded.</div></div>
+            <div class="r"><div class="l">Payments terms</div><div class="v">Agreed by Morgan Ellis on October 26, 2026, to the draft. You’ll be asked again when the final terms are ready.</div></div>
+          </div>
+          <div class="acts" style="margin-top:20px"><button class="lime" type="button" tabindex="-1">Open Stripe <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg></button></div>
+          <div style="margin-top:22px"><span class="quiet big">⌁ Disconnect payouts</span></div>
+        </div></div></div>
+        <ul class="problems">
+          <li>The rates and the fee payer each appear twice.</li>
+          <li>A paragraph sits above a table: two layouts in one card.</li>
+          <li>Five text sizes before the table starts; the notice is wedged under the test line.</li>
+          <li>Disconnect floats far below everything else.</li>
+        </ul>
+      </div>
+
+      <div class="slot">
+        <p class="cap"><b>After</b> · proposed</p>
+        <div class="scroll"><div class="fr"><div class="card">
+          <div class="head same"><span class="eyebrow">PAYOUTS</span><span class="chip g">TAKING PAYMENTS</span><span class="chip b">TEST MODE</span><span class="sp"></span>
+            <span class="icon-btn has"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg><button class="mk" data-n="1" type="button" aria-label="Note 1">1</button></span></div>
+          <h3 class="same">Families and teams can pay online</h3>
+          <p class="hint same">No real money moves while payouts are in test mode.</p>
+          <div class="notice slim chg has"><span>Add your club’s billing address so your invoice for Stripe fees can go out.</span><span class="sp"></span><span class="nbtn">Billing address</span><button class="mk" data-n="2" type="button" aria-label="Note 2">2</button></div>
+          <div class="tbl">
+            <div class="r chg has"><div class="l">Payouts go to</div><div class="v">Your bank account, on Stripe’s schedule</div><button class="mk" data-n="3" type="button" aria-label="Note 3">3</button></div>
+            <div class="r chg"><div class="l">Receipts say</div><div class="v">“UAT Rep Club”</div></div>
+            <div class="r chg has"><div class="l">Processing fee</div><div class="v">Families and teams pay it: it’s added to what they pay<span class="hint">3.5% + $1.50 per card payment · 2.5% + $1.00 per bank debit</span></div><button class="mk" data-n="4" type="button" aria-label="Note 4">4</button></div>
+            <div class="r same"><div class="l">Refund policy</div><div class="v">Refunded in full until Nov 30, then not refunded.</div></div>
+            <div class="r chg has"><div class="l">Payments terms</div><div class="v">Agreed by Morgan Ellis on October 26, 2026, to the draft<span class="hint">You’ll be asked again when the final terms are ready.</span></div><button class="mk" data-n="6" type="button" aria-label="Note 6">6</button></div>
+          </div>
+          <p class="foot chg has" style="margin-top:10px">Other Stripe fees, such as for disputes, returned bank debits and cards issued outside your country, are billed to the club.<button class="mk" data-n="5" type="button" aria-label="Note 5">5</button></p>
+          <div class="acts same"><button class="lime" type="button" tabindex="-1">Open Stripe <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg></button></div>
+          <div class="chg has" style="margin-top:12px"><span class="quiet big">⌁ Disconnect payouts</span><button class="mk" data-n="7" type="button" aria-label="Note 7">7</button></div>
+        </div></div></div>
+      </div>
+    </div>
+
+    <div class="notes" aria-label="Notes on the proposed read card">
+      <div class="note" id="note-1"><span class="n">1</span><div><span class="tag same">UNCHANGED</span><b>The pencil stays a pencil.</b><p>One pencil for every record is a product-wide standard, so I am not labelling it on this card alone. If people can’t find it, that is its own change across the product (Ask A2).</p></div></div>
+      <div class="note" id="note-2"><span class="n">2</span><div><span class="tag rest">RESTYLED</span><b>The billing-address notice.</b><p>One slim line with its action on the right (the shape the product’s existing callout already has), and a proper gap above it. The action opens a window, so it is the outlined button, not an olive link. It still goes away once the address is saved.</p></div></div>
+      <div class="note" id="note-3"><span class="n">3</span><div><span class="tag rest">RESTYLED</span><b>The paragraph becomes two rows.</b><p>“Payouts go to” and “Receipts say” join the table. The words are the same; they are only split. The rates line above the table is gone, because the fee row already carries it.</p></div></div>
+      <div class="note" id="note-4"><span class="n">4</span><div><span class="tag rest">RESTYLED</span><b>The fee row answers first.</b><p>Who pays, then the rates on their own muted line. The label column is narrower, so nothing wraps to a lone word.</p></div></div>
+      <div class="note" id="note-5"><span class="n">5</span><div><span class="tag rest">RESTYLED</span><b>“Other Stripe fees” is a footnote.</b><p>It sits under the table, not inside the fee row, and shows in edit mode too (tab 2).</p></div></div>
+      <div class="note" id="note-6"><span class="n">6</span><div><span class="tag rest">RESTYLED</span><b>Terms: who and when on one line.</b><p>“You’ll be asked again when the final terms are ready” drops to a muted line beneath.</p></div></div>
+      <div class="note" id="note-7"><span class="n">7</span><div><span class="tag rest">RESTYLED</span><b>Disconnect stays the last, quiet line.</b><p>Spacing only: the gap under Open Stripe tightens so it no longer floats. It stays at the end of the card, where the product puts the “rare door” on every record (Ask A5).</p></div></div>
+      <div class="note"><span class="n" style="background:var(--same-bg);color:var(--same)">=</span><div><span class="tag same">UNCHANGED</span><b>Header chips, title, test-mode line, refund policy.</b><p>Fade them with “Show only what differs”.</p></div></div>
+    </div>
+  </section>
+
+  <!-- ===== 2 · EDIT ===== -->
+  <section class="panel" id="p-edit" aria-labelledby="t-edit" hidden>
+    <div class="callout prose"><b>Two corrections to what I said earlier.</b> (1) Edit mode already saves as you go: choosing a radio saves at once, and the refund policy saves when you click out of it. A small Saved pill appears bottom-right and fades. The check mark means “Done”, so it needs no Save. (2) I proposed a labelled Done, a Saved line and Done under the form. The design review found the product’s rules say no: one pencil-and-check for every record, and Done was taken out of record windows on purpose. So those are dropped. What remains is layout: the form comes first, the rows stay put, and the Stripe buttons step aside.</div>
+    <div class="pair">
+      <div class="slot">
+        <p class="cap"><b>Before</b> · today</p>
+        <div class="scroll"><div class="fr"><div class="card">
+          <div class="head"><span class="eyebrow">PAYOUTS</span><span class="chip g">TAKING PAYMENTS</span><span class="chip b">TEST MODE</span><span class="sp"></span>
+            <span class="icon-btn" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span></div>
+          <h3>Families and teams can pay online</h3>
+          <p class="hint">No real money moves while payouts are in test mode.</p>
+          <div class="notice">Add your club’s billing address so your invoice for Stripe fees can go out. <a href="#p-edit" onclick="return false">Billing address</a></div>
+          <p class="body">Payouts go to your bank account on Stripe’s schedule. Receipts go out in the name “UAT Rep Club”.</p>
+          <p class="hint">Processing fee: 3.5% + $1.50 per card payment, 2.5% + $1.00 per bank debit.</p>
+          <hr>
+          <p class="legend">Who pays the processing fee</p>
+          <div class="opt"><span class="rad on"></span><span><span class="name">Families and teams pay it</span><span class="hint">Added to what the family or team pays. You receive the full fee.</span></span></div>
+          <div class="opt"><span class="rad"></span><span><span class="name">The club pays it</span><span class="hint">Families and teams pay the fee alone. The processing fee comes out of each payment and shows in your books as Payment processing.</span></span></div>
+          <p class="hint">A change applies to payments started from now on. Anything already paid stays as it was.</p>
+          <p class="legend" style="margin-top:14px">Refund policy</p>
+          <div class="ta">Refunded in full until Nov 30, then not refunded.</div>
+          <p class="hint" style="margin-top:4px">One or two sentences families and teams see beside Pay.</p>
+          <div class="acts"><button class="lime" type="button" tabindex="-1">Open Stripe ↗</button></div>
+          <div style="margin-top:20px"><span class="quiet big">⌁ Disconnect payouts</span></div>
+        </div></div></div>
+        <ul class="problems">
+          <li>The form starts below the banner, the paragraph and the fee line.</li>
+          <li>The Payments terms row and the “Other Stripe fees” note vanish, so the card changes shape.</li>
+          <li>Option names are as large as the card’s title; the radio dots are the browser’s default blue.</li>
+          <li>Stripe and Disconnect sit right under the text box while you edit.</li>
+        </ul>
+      </div>
+
+      <div class="slot">
+        <p class="cap"><b>After</b> · proposed</p>
+        <div class="scroll"><div class="fr"><div class="card">
+          <div class="head same"><span class="eyebrow">PAYOUTS</span><span class="chip g">TAKING PAYMENTS</span><span class="chip b">TEST MODE</span><span class="sp"></span>
+            <span class="icon-btn has"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><button class="mk" data-n="e1" type="button" aria-label="Note 1">1</button></span></div>
+          <h3 class="same">Families and teams can pay online</h3>
+          <p class="hint same">No real money moves while payouts are in test mode.</p>
+          <div class="notice slim same"><span>Add your club’s billing address so your invoice for Stripe fees can go out.</span><span class="sp"></span><span class="nbtn">Billing address</span></div>
+          <div class="tbl">
+            <div class="r chg has"><div class="l" style="opacity:.55">Payouts go to</div><div class="v" style="opacity:.55">Your bank account, on Stripe’s schedule</div><button class="mk" data-n="e2" type="button" aria-label="Note 2">2</button></div>
+            <div class="r chg"><div class="l" style="opacity:.55">Receipts say</div><div class="v" style="opacity:.55">“UAT Rep Club”</div></div>
+            <div class="r chg has"><div class="l">Processing fee</div><div class="v">
+              <div class="opt"><span class="rad on lime"></span><span><span class="name sm">Families and teams pay it</span><span class="hint">Added to what the family or team pays. You receive the full amount.</span></span></div>
+              <div class="opt"><span class="rad"></span><span><span class="name sm">The club pays it</span><span class="hint">Families and teams pay only what they owe. The processing fee comes out of each payment and shows in your books as Payment processing.</span></span></div>
+              <p class="hint">A change applies to payments started from now on. Anything already paid stays as it was.</p>
+            </div><button class="mk" data-n="e3" type="button" aria-label="Note 3">3</button></div>
+            <div class="r chg has"><div class="l">Refund policy</div><div class="v"><div class="ta">Refunded in full until Nov 30, then not refunded.</div><span class="hint">One or two sentences families and teams see beside Pay.</span></div><button class="mk" data-n="e4" type="button" aria-label="Note 4">4</button></div>
+            <div class="r chg"><div class="l" style="opacity:.55">Payments terms</div><div class="v" style="opacity:.55">Agreed by Morgan Ellis on October 26, 2026, to the draft<span class="hint">You’ll be asked again when the final terms are ready.</span></div></div>
+          </div>
+          <p class="foot same" style="margin-top:10px">Other Stripe fees, such as for disputes, returned bank debits and cards issued outside your country, are billed to the club.</p>
+          <div class="chg has" style="margin-top:14px"><span class="gone">Open Stripe and Disconnect payouts are hidden while editing</span><button class="mk" style="top:-4px;right:-9px" data-n="e5" type="button" aria-label="Note 5">5</button></div>
+        </div></div></div>
+      </div>
+    </div>
+
+    <div class="notes" aria-label="Notes on the proposed edit card">
+      <div class="note" id="note-e1"><span class="n">1</span><div><span class="tag same">UNCHANGED</span><b>The check mark stays in the head.</b><p>Pencil to check is the product’s record pattern. Saving is unchanged too: autosave, with the small Saved pill that appears bottom-right and fades. Nothing new is added at the bottom of the form.</p></div></div>
+      <div class="note" id="note-e2"><span class="n">2</span><div><span class="tag rest">RESTYLED</span><b>Same rows, same order as read mode.</b><p>Rows you cannot edit stay, slightly faded. The card keeps its shape when you click Edit, and the form starts at the same height as the table did.</p></div></div>
+      <div class="note" id="note-e3"><span class="n">3</span><div><span class="tag rest">RESTYLED</span><b>The fee choice sits in the fee row.</b><p>Option names are regular-sized body text, with the muted explanation under each. The radio takes the product’s accent. The “starts from now on” note stays right under the options. Wording changes are on tab 3.</p></div></div>
+      <div class="note" id="note-e4"><span class="n">4</span><div><span class="tag rest">RESTYLED</span><b>The refund policy is the same row, now a text box.</b><p>The helper line stays; it says who reads the sentence and where.</p></div></div>
+      <div class="note" id="note-e5"><span class="n">5</span><div><span class="tag rest">RESTYLED</span><b>Open Stripe and Disconnect are read-mode only.</b><p>They are not part of the form, and Disconnect should never sit under a text box you are typing in.</p></div></div>
+    </div>
+  </section>
+
+  <!-- ===== 3 · WORDS ===== -->
+  <section class="panel prose" id="p-words" aria-labelledby="t-words" hidden>
+    <p>Both lines are in the club version of the words, and I checked them against the code. They look like slips, not behaviour: the tournament version of the same hints reads correctly. Neither is changed in the mockups above beyond what is shown here. They belong to <b>/marketing</b>, so I mark them <b>held</b> until you rule.</p>
+    <div class="card tscroll">
+      <table class="wtable">
+        <thead><tr><th>Where</th><th>Today</th><th>Proposed</th><th>Why</th></tr></thead>
+        <tbody>
+          <tr><td>“Families and teams pay it” hint</td><td class="old">Added to what the family or team pays. You receive the full fee.</td><td>Added to what the family or team pays. You receive the full amount.</td><td>The tournament version says “full entry fee”. The club version dropped “entry” and now says the club receives the fee, which is the opposite of the point.</td></tr>
+          <tr><td>“The club pays it” hint</td><td class="old">Families and teams pay the fee alone. The processing fee comes out of each payment…</td><td>Families and teams pay only what they owe. The processing fee comes out of each payment…</td><td>The tournament version says “teams pay the entry fee alone”, meaning only the entry fee. Without “entry”, “pay the fee alone” reads as families paying the processing fee.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="color:var(--mute)">Everything else on the card keeps its current words. The new rows reuse the existing sentences, split apart.</p>
+  </section>
+
+  <!-- ===== 4 · ASKS ===== -->
+  <section class="panel" id="p-asks" aria-labelledby="t-asks" hidden>
+    <p class="prose">Seven calls. My recommendation is first in each. Answer by letter, for example “A1 yes, A3 explicit Save”.</p>
+    <ul class="asks">
+      <li class="card ask"><span class="code">A1</span><div><h4>Turn the paragraph into table rows</h4><p>“Payouts go to” and “Receipts say” join the table; the rates line above it is removed.</p><p class="rec"><b>Recommend yes.</b> It ends the paragraph-then-table split and the duplicated rates. Alternative: leave the paragraph and only remove the duplicate.</p></div></li>
+      <li class="card ask"><span class="code">A2</span><div><h4>Is the icon-only pencil a problem across the product?</h4><p>Every record in the product opens with the same bare pencil, then a check mark. I first wanted a labelled “Edit” here. That would make this one card differ from all the others.</p><p class="rec"><b>Recommend leave it on this card.</b> If you think people miss the pencil everywhere, that is a product-wide change, its own piece of work.</p></div></li>
+      <li class="card ask"><span class="code">A3</span><div><h4>Saving stays exactly as it is</h4><p>Autosave, the check mark, and the small Saved pill all stay. No new Save, Cancel, Done or status line.</p><p class="rec"><b>Recommend yes.</b> A saved fee choice can’t be taken back by pressing Cancel, so a Cancel button would promise something untrue.</p></div></li>
+      <li class="card ask"><span class="code">A4</span><div><h4>Edit mode shows the same rows</h4><p>Editable rows turn into controls; the others stay, faded; “Other Stripe fees” stays.</p><p class="rec"><b>Recommend yes.</b> The card stops changing shape, and the form no longer starts halfway down.</p></div></li>
+      <li class="card ask"><span class="code">A5</span><div><h4>Where does Disconnect live?</h4><p>Today it is the last line of the card, the product’s “rare door” spot on every record. The only problem is the gap above it. Options: (a) keep it last and tighten the gap; (b) put it on the Open Stripe row, quiet, at the right.</p><p class="rec"><b>Recommend (a).</b> It matches every other record in the product (archive, delete, bring back), and the fix is spacing. (b) would make Payouts the one card that does it differently. Either way it is hidden in edit mode (A6).</p></div></li>
+      <li class="card ask"><span class="code">A6</span><div><h4>Hide Open Stripe and Disconnect while editing</h4><p class="rec"><b>Recommend yes.</b> They aren’t part of the form.</p></div></li>
+      <li class="card ask"><span class="code">A7</span><div><h4>The two wording slips (tab 3)</h4><p class="rec"><b>Recommend yes to both</b>, routed through /marketing before they are built.</p></div></li>
+    </ul>
+  </section>
+</div>
+
+<script>
+(function () {
+  var tabs = document.querySelectorAll('.tab');
+  var panels = { read: 'p-read', edit: 'p-edit', words: 'p-words', asks: 'p-asks' };
+  function show(name) {
+    if (!panels[name]) name = 'read';
+    tabs.forEach(function (t) { t.setAttribute('aria-selected', t.dataset.tab === name ? 'true' : 'false'); });
+    Object.keys(panels).forEach(function (k) { document.getElementById(panels[k]).hidden = (k !== name); });
+    document.getElementById('viewrow').hidden = !(name === 'read' || name === 'edit');
+    try { history.replaceState(null, '', '#tab-' + name); } catch (e) {}
+  }
+  tabs.forEach(function (t) { t.addEventListener('click', function () { show(t.dataset.tab); }); });
+  function fromHash() { var h = (location.hash || '').replace('#tab-', ''); show(panels[h] ? h : 'read'); }
+  window.addEventListener('hashchange', fromHash); fromHash();
+
+  var segs = document.querySelectorAll('.seg button');
+  segs.forEach(function (b) { b.addEventListener('click', function () {
+    document.body.setAttribute('data-view', b.dataset.view);
+    segs.forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+  }); });
+
+  document.querySelectorAll('.mk').forEach(function (m) { m.addEventListener('click', function () {
+    document.querySelectorAll('.note.hi').forEach(function (n) { n.classList.remove('hi'); });
+    document.querySelectorAll('.mk.on').forEach(function (n) { n.classList.remove('on'); });
+    var note = document.getElementById('note-' + m.dataset.n);
+    if (note) { note.classList.add('hi'); m.classList.add('on'); note.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+  }); });
+})();
+</script>

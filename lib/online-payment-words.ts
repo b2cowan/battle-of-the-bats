@@ -321,6 +321,11 @@ export const PAYOUTS_WORDS = {
     continue: 'Continue to Stripe',
   },
   record: {
+    // The two sentences of `takingBody`, split into record rows (Payouts card redraw, drawings tab 1): same facts, same words.
+    payoutsToLabel: 'Payouts go to',
+    payoutsToValue: 'Your bank account, on Stripe’s schedule',
+    receiptsLabel: 'Receipts say',
+    receiptsValue: (clubName: string) => `“${clubName}”`,
     feeLabel: 'Processing fee',
     feeRead: { family: 'Teams pay it: it’s added to what they pay', club: 'The club pays it: it comes out of each payment' },
     feeRates: (rate: string, bankRate: string | null = null) => (bankRate ? `${rate} per card payment · ${bankRate} per bank debit` : `${rate} per card payment`),
