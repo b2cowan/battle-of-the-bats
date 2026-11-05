@@ -369,7 +369,8 @@ applied in v2; C3 split into C3 + C4.
   (Fall Classic's live semifinal, the Stage 5 clones re-dated, the Stage 6 post on); a time-not-set helper in `.probe/` (scratch). The dev server was
   restarted (shared modules changed, the production build had written the cache) and answers on :3000 with no Supabase errors.
 - 2026-11-05 — Part 5 committed `513ad05a4` (a partial commit: this build's 19 files; `TODO.md` and the ledger held other sessions' lines, so only this build's TODO line and the §460 block went in, built from HEAD).
-- 2026-11-05 — **Club build Part 1 built** (`PUBLIC_CLUB_PAGE_LAYOUT_BUILD_PROMPT.md` Part 1; C2 + C5). The wrapper gained the
+- 2026-11-05 — **Club build Part 1 committed `8e24da300`** (`PUBLIC_CLUB_PAGE_LAYOUT_BUILD_PROMPT.md` Part 1; C2 + C5;
+  a partial commit: this part's 33 files, its TODO line built from HEAD, the plan log). The wrapper gained the
   club frame: `PublicPage frame="club"` (PublicParts `.page.club`: the logo edge `max(24px, (100% − 1200px)/2 + 24px)` from
   901 px, the frame's own expression; 16 on a phone; 28 / 16 down; 40 / 32 at the foot; 960 at most) and `width="form"` (640);
   `.prose` 720 (and `kit.cardText` / the tryout blurb held to 720 of words); the club's two-column split `.club .cols` from
