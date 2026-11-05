@@ -323,6 +323,14 @@
 /* Stage 2 (Stage 0 drawing "Moves to the free plan"): the band under the plan card while a move to the free plan waits is
    the wait callout above with an OLIVE edge (it says what stays, not a warning); it keeps the amber edge only when the
    kept tournament is gone and the owner is asked again. */
+/* The Cancel window's lead (redraw, owner 2026-11-05): the same callout with two lines (what stays, then the way back), olive
+   by composing `.moveBand`; red-edged when the cancel happens at the click. Doubled class: KitDialog's body paragraph rule
+   (0,1,1) would otherwise put a bottom margin on each line. */
+.calloutLines { display: grid; gap: 0.4rem; }
+.calloutLines.calloutLines > p { margin: 0; }
+.calloutDanger { border-left-color: var(--danger); }
+/* The quiet line(s) under the list of what goes offline. */
+.afterList { padding-top: 0.5rem; }
 .moveBandFrame { display: grid; gap: 0.35rem; }
 .moveBand { border-left-color: var(--home-olive); }
 .moveBandText { margin: 0; }

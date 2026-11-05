@@ -141,7 +141,6 @@ export const PLAN_BILLING_WORDS = {
     premiumBody: (days: number) => `Cancelling turns off Premium tools. Basic tournament records stay available. Premium team data is kept for ${days} days and comes back if you reactivate within that time.`,
     orgDoor: (org: string) => `Cancel and suspend ${org}…`, premiumDoor: 'Cancel Premium…',
     orgTitle: (org: string) => `Cancel and suspend ${org}?`, premiumTitle: 'Cancel Premium?',
-    orgWarning: (org: string, offline: readonly string[]) => `${org} is suspended the moment you confirm: ${joinWithAnd(offline)} go offline, and families opening your pages will see that they aren’t available.`,
     premiumWarning: (days: number) => `Premium tools stop when you confirm. Premium team data is kept for ${days} days. Basic tournament records stay available in Coaches Portal.`,
     retained: (days: number) => `Your data is kept for ${days} days. Reactivate within that time to restore the tools and records your plan allows.`,
     archived: (count: number) => count > 0 ? `${pluralize(count, 'tournament')} ${count === 1 ? 'moves' : 'move'} into the archive until then.` : 'No tournament records need to be archived.',
@@ -163,11 +162,14 @@ export const PLAN_BILLING_WORDS = {
     /** Stage 2 ruling 4: a cancel over a waiting move to the free plan replaces it — a later Keep returns the full plan. */
     replacesMove: (move: string, iso: string, current: string) => `You chose to move to ${move} on ${dayOnly(iso)}. Cancelling replaces that move. If you then keep ${current}, you stay on ${current}.`,
     moveSetAside: (move: string, iso: string | null, keep: string) => `You chose to move to ${move}${iso ? ` on ${dayOnly(iso)}` : ' at renewal'}. Cancelling sets that move aside. ${keep} before then and the move to ${move} comes back.`,
-    onDate: (org: string, offline: readonly string[], iso: string, days: number) => `On ${day(iso)} ${org} is suspended: ${joinWithAnd(offline)} go offline. Your data is kept for ${days} days after that, until ${day(retainedUntil(iso, days))}.`,
-    premiumOnDate: (iso: string, days: number) => `On ${day(iso)} Premium tools stop. Premium team data is kept for ${days} days after that, until ${day(retainedUntil(iso, days))}. Basic tournament records stay available.`,
     keepAnyTime: (name: string, iso: string) => `You can keep ${name} any time before ${dayOnly(iso)}.`,
+    /** The lines under the list of what goes offline (Cancel window redraw, owner 2026-11-05): when it is suspended and how long
+     *  the data is kept, split out of the sentence that used to name every area a second time. */
+    suspendedThen: (org: string, iso: string, days: number) => `${org} is suspended then, and your data is kept for ${days} days after that, until ${day(retainedUntil(iso, days))}.`,
+    premiumKeptThen: (iso: string, days: number) => `Basic tournament records stay available. Premium team data is kept for ${days} days after that, until ${day(retainedUntil(iso, days))}.`,
+    suspendedNow: (org: string) => `${org} is suspended the moment you confirm, and families opening your pages will see that they aren’t available.`,
     offlineOn: (iso: string) => `What goes offline on ${dayOnly(iso)}`, premiumOfflineOn: (iso: string) => `Premium tools that stop on ${dayOnly(iso)}`,
-    waitFooter: (iso: string) => `Ends ${day(iso)}.`, waitConfirm: (iso: string) => `Cancel on ${dayOnly(iso)}`,
+    waitConfirm: (iso: string) => `Cancel on ${dayOnly(iso)}`,
     noPeriod: (name: string) => `${name} has no paid period to wait for, so it ends when you confirm.`,
     // Keep {Plan}: the question window (Stage 0 ruling 4) — it names the date and the charge before a card is committed again.
     keepTitle: (plan: OrgPlanKey) => `${keepDoor(plan)}?`,

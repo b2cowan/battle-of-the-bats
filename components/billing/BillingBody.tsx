@@ -836,30 +836,47 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref }: BillingOwnerP
       onChange={ids => setPick(p => p && { ...p, error: null, ids })}
       onSave={() => void savePick()} onClose={() => setPick(null)} />}
     {review && <KitDialog kind="form" title={review.kind === 'cancel' ? endsOn && !premium ? W.cancel.waitTitle(ownProfile.config.label) : premium ? W.cancel.premiumTitle : W.cancel.orgTitle(org.name) : target ? W.downgrade.title(target.config.label) : W.page.sections.change} onClose={closeReview} busy={busy !== null} dirty={reason.trim().length > 0 || Boolean(downgrade?.requiresTournamentChoice && keepIds.length)}
-      footerStart={cancel ? <span>{endsOn ? W.cancel.waitFooter(endsOn) : W.cancel.footer(cancel.retentionDays)}</span> : downgradeFoot ? <span>{downgradeFoot}</span> : undefined}
+      footerStart={cancel ? (!endsOn && premium ? <span>{W.cancel.footer(cancel.retentionDays)}</span> : undefined) : downgradeFoot ? <span>{downgradeFoot}</span> : undefined}
       footer={<><DialogCancel>{keepLabel}</DialogCancel>
         {(cancel || downgrade) && <button type="button" className={cancel ? 'btn btn-danger' : 'btn btn-lime'} onClick={() => void confirmReview()} disabled={busy !== null || moveDateMissing || Boolean(downgrade?.requiresTournamentChoice && keepIds.length !== downgrade.allowedKeepCount)}>{busy === 'confirm' ? cancel ? W.cancel.working : W.downgrade.applying : cancel ? endsOn ? W.cancel.waitConfirm(endsOn) : premium ? W.cancel.premiumConfirm : W.cancel.confirm : movesOn ? W.downgrade.confirmOn(movesOn) : W.downgrade.confirm(target!.config.label)}</button>}</>}
     >
       <DialogReason className={styles.dangerText}>{reviewError}</DialogReason>
       {review.kind === 'downgrade' && review.read.status === 'loading' && <LoadingState inline label="Loading plan-change review…" />}
       {review.kind === 'downgrade' && review.read.status === 'error' && <PageNotice notice={{ tone: 'bad', text: review.read.error }} />}
+      {/* Cancel window redraw (owner 2026-11-05, drawing 4AER3dndYsi39C8tYQNPZt): one calm lead (what stays + the way back), the
+          list of what goes offline OPEN and said once, then when it is suspended and how long the data is kept, then the payments. */}
       {cancel && endsOn && <>
-        <p className={styles.waitCallout}>{trialing ? W.cancel.trialStays(org.name, endsOn) : premium ? W.cancel.premiumStays(endsOn) : W.cancel.stays(org.name, endsOn)}</p>
+        <div className={`${styles.waitCallout} ${styles.moveBand} ${styles.calloutLines}`}>
+          <p>{trialing ? W.cancel.trialStays(org.name, endsOn) : premium ? W.cancel.premiumStays(endsOn) : W.cancel.stays(org.name, endsOn)}</p>
+          <p>{W.cancel.keepAnyTime(premium ? 'Premium' : ownProfile.config.label, endsOn)}</p>
+        </div>
         {heldMove && <p className={styles.waitCallout}>{W.cancel.moveSetAside(PLAN_CONFIG[heldMove.toPlan].label, heldMove.effectiveAt, keepLabel)}</p>}
         {/* Stage 2 ruling 4: a cancel over a waiting move to the free plan replaces it; a later Keep returns the full plan. */}
         {waitingMove && <p className={styles.waitCallout}>{W.cancel.replacesMove(PLAN_CONFIG[waitingMove.move.targetPlan].label, waitingMove.endsAt, ownProfile.config.label)}</p>}
-        <p>{premium ? W.cancel.premiumOnDate(endsOn, cancel.retentionDays) : W.cancel.onDate(org.name, cancel.shortShutsDown, endsOn, cancel.retentionDays)}</p>
-        <p>{W.cancel.keepAnyTime(premium ? 'Premium' : ownProfile.config.label, endsOn)}</p>
         <h3 className={`${styles.sectionTitle} ${styles.reviewHeading}`}>{premium ? W.cancel.premiumOfflineOn(endsOn) : W.cancel.offlineOn(endsOn)}</h3>
         <ul className={styles.offlineList}>{cancel.shutsDown.map(line => <li key={line}>{line}</li>)}</ul>
+        <p className={`${styles.hint} ${styles.afterList}`}>{premium ? W.cancel.premiumKeptThen(endsOn, cancel.retentionDays) : W.cancel.suspendedThen(org.name, endsOn, cancel.retentionDays)}</p>
         <PaymentsEndingSection section={cancel.onlinePayments} ending={{ kind: 'cancelOn', dateLong: moveDateLong(endsOn), plan: premium ? 'Premium' : ownProfile.config.label }} />
       </>}
-      {cancel && !endsOn && <>
+      {cancel && !endsOn && !premium && <>
+        {/* No paid period to wait for (comped, Founding Season, a dev mock): the cancel happens at the click, so the lead is the one red
+            line, and says why it does not wait. */}
+        <div className={`${styles.waitCallout} ${styles.calloutDanger} ${styles.calloutLines}`}>
+          {ending && !ending.waits && <p>{W.cancel.noPeriod(org.name)}</p>}
+          <p>{W.cancel.suspendedNow(org.name)}</p>
+        </div>
+        <h3 className={`${styles.sectionTitle} ${styles.reviewHeading}`}>{W.cancel.offlineHeading}</h3>
+        <ul className={styles.offlineList}>{cancel.shutsDown.map(line => <li key={line}>{line}</li>)}</ul>
+        <p className={`${styles.hint} ${styles.afterList}`}>{W.cancel.retained(cancel.retentionDays)}{cancel.tournaments.length > 0 && ` ${W.cancel.archived(cancel.tournaments.length)}`}</p>
+        <PaymentsEndingSection section={cancel.onlinePayments} ending={{ kind: 'cancel' }} />
+      </>}
+      {/* A Coaches Portal's Premium with no paid period keeps its own wording and layout (not part of the redraw). */}
+      {cancel && !endsOn && premium && <>
         {/* No paid period to wait for (comped, Founding Season, a dev mock): today's immediate cancel, and why. */}
-        {ending && !ending.waits && <p className={styles.waitCallout}>{W.cancel.noPeriod(premium ? 'Premium' : org.name)}</p>}
-        <PageNotice notice={{ tone: 'bad', text: premium ? W.cancel.premiumWarning(cancel.retentionDays) : W.cancel.orgWarning(org.name, cancel.shortShutsDown) }} />
-        <p>{W.cancel.retained(cancel.retentionDays)}</p><p>{premium ? W.cancel.premiumRetained(cancel.retentionDays) : W.cancel.archived(cancel.tournaments.length)}</p>
-        <h3 className={`${styles.sectionTitle} ${styles.reviewHeading}`}>{premium ? W.cancel.premiumOfflineHeading : W.cancel.offlineHeading}</h3>
+        {ending && !ending.waits && <p className={styles.waitCallout}>{W.cancel.noPeriod('Premium')}</p>}
+        <PageNotice notice={{ tone: 'bad', text: W.cancel.premiumWarning(cancel.retentionDays) }} />
+        <p>{W.cancel.retained(cancel.retentionDays)}</p><p>{W.cancel.premiumRetained(cancel.retentionDays)}</p>
+        <h3 className={`${styles.sectionTitle} ${styles.reviewHeading}`}>{W.cancel.premiumOfflineHeading}</h3>
         <ul className={styles.offlineList}>{cancel.shutsDown.map(line => <li key={line}>{line}</li>)}</ul>
         <PaymentsEndingSection section={cancel.onlinePayments} ending={{ kind: 'cancel' }} />
       </>}

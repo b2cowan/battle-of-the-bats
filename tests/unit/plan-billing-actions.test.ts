@@ -643,12 +643,17 @@ describe('a waiting cancel: Keep {Plan} and the dated Cancel window', () => {
       h.view().actions.cancel(); h.render();
       const review = h.review();
       assert.equal(review.props.title, W.cancel.waitTitle(label));
-      assert.equal(elements(review.props.footerStart)[0].props.children, W.cancel.waitFooter(endsAt));
+      assert.equal(review.props.footerStart, undefined, 'the red button carries the date; the foot no longer repeats it');
       const confirm = find(review.props.footer, element => element.type === 'button' && element.props.className === 'btn btn-danger');
       assert.equal(confirm.props.children, 'Cancel on March 1');
       const body = text(review.props.children);
       assert.ok(body.includes(W.cancel.stays('Falcons', endsAt)));
-      assert.ok(body.includes(W.cancel.onDate('Falcons', cancellation.shortShutsDown, endsAt, 90)));
+      // The lead says what stays and the way back; the list says what goes offline once; the line under it says when and how long.
+      assert.ok(body.includes(W.cancel.keepAnyTime(label, endsAt)));
+      const listed = elements(review.props.children).filter(e => e.type === 'li').map(e => e.props.children);
+      assert.deepEqual(listed, cancellation.shutsDown, 'the full list is open in the window');
+      assert.ok(body.includes(W.cancel.suspendedThen('Falcons', endsAt, 90)));
+      assert.ok(!body.some(line => typeof line === 'string' && line.includes(cancellation.shortShutsDown[0] ?? '\u0000') && /go offline/.test(line)), 'the areas are not named a second time in a sentence');
       assert.ok(!body.some(line => typeof line === 'string' && /suspended the moment/.test(line)), 'the click suspends nothing');
       h.answer('/api/billing/cancel/confirm', { ok: true, outcome: 'scheduled', endsAt, recorded: true });
       click(confirm); await h.settle();
@@ -657,12 +662,20 @@ describe('a waiting cancel: Keep {Plan} and the dated Cancel window', () => {
   });
 
   it('an account with no paid period keeps today’s immediate window, and says why it does not wait', async () => {
-    const h = await ownerHarness({ cancellation: { ...cancellation, ending: { waits: false, endsOn: null, pending: null } } });
+    const tournaments = [{ id: 't1', name: 'Spring Classic', status: 'active', year: 2026, startDate: null, endDate: null }, { id: 't2', name: 'Fall Cup', status: 'draft', year: 2026, startDate: null, endDate: null }];
+    const h = await ownerHarness({ cancellation: { ...cancellation, tournaments, ending: { waits: false, endsOn: null, pending: null } } });
     try {
       h.view().actions.cancel(); h.render();
       const review = h.review();
       assert.equal(review.props.title, W.cancel.orgTitle('Falcons'));
+      // The list is open and said once; the 90 days and the archive count are one quiet line under it.
+      assert.deepEqual(elements(review.props.children).filter(e => e.type === 'li').map(e => e.props.children), cancellation.shutsDown);
+      const quiet = elements(review.props.children).filter(e => e.type === 'p' && /afterList/.test(String(e.props.className ?? ''))).map(e => [e.props.children].flat().join(''));
+      assert.deepEqual(quiet, [`${W.cancel.retained(90)} ${W.cancel.archived(2)}`]);
+      assert.ok(elements(review.props.children).some(e => /calloutDanger/.test(String(e.props.className ?? ''))), 'the lead is the one red-edged line');
       assert.ok(text(review.props.children).includes(W.cancel.noPeriod('Falcons')));
+      assert.ok(text(review.props.children).includes(W.cancel.suspendedNow('Falcons')), 'the one red lead says it is suspended at the click');
+      assert.equal(review.props.footerStart, undefined, 'the 90 days is said under the list, not again in the foot');
       assert.equal(find(review.props.footer, element => element.type === 'button' && element.props.className === 'btn btn-danger').props.children, W.cancel.confirm);
     } finally { h.dispose(); }
   });
