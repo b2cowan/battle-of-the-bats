@@ -87,7 +87,7 @@ out of Stripe's page does not put it back — low risk (no live subscription on 
 Owner check (not a decision): does Stripe charge GST/HST on its fees to our account (a Stripe tax invoice under Settings →
 Documents)? It decides the ITC and item 2's "net" base.
 
-**Part 2 BUILT 2026-11-05, uncommitted (commit asked of the owner)** (typecheck clean; ESLint clean on the 11 files; billing,
+**Part 2 BUILT 2026-11-05, committed `0e5aef0d1` 2026-11-05** (typecheck clean; ESLint clean on the 11 files; billing,
 fee, checkout and move tests 857 pass; `npm test` 14257 pass / 8 fail, none in a file this part touched — support-console foot
 sentences ×2, practice-plan phone N1, Stage 6 public walk page ×3, `plan-billing-usage` free-time ×1 (fails the same with this
 part stashed), `series-date-groups` ×1 (another session's coach series work). ⚠ the focused ESLint runner in `verify:changed`
