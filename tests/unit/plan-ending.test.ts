@@ -673,7 +673,7 @@ describe('7 · the doors', () => {
   it('while a cancel waits, a move and a downgrade are refused (decision 5); other immediate endings withdraw it', () => {
     // Stage 2: the refusal reads the waiting row to name what comes on the date (an end or a move to the free plan) — and
     // since Part B, the row alone refuses too (a click whose Stripe answer was lost has no flag yet).
-    assert.match(readCode('lib/plan-move.ts'), /const ending = stripeCancelSignal\(live\.sub\);[\s\S]{0,400}const waiting = await readPendingEnding\(org\.id\)[^;]*;\s*if \(ending\.scheduled \|\| waiting\) \{[\s\S]{0,200}const answer = futureMoveAnswer\('plan_move'/);
+    assert.match(readCode('lib/plan-move.ts'), /const ending = stripeCancelSignal\(live\.sub\);[\s\S]{0,900}const waiting = restore \? null : await readPendingEnding\(org\.id\)[^;]*;\s*if \(ending\.scheduled \|\| waiting\) \{[\s\S]{0,200}const answer = futureMoveAnswer\('plan_move'/);
     // Stage 2: the downgrade route writes nothing itself; scheduleDowngrade asks the one rule before its first write.
     const downgrade = readCode('app/api/billing/downgrade/confirm/route.ts');
     assert.doesNotMatch(downgrade, /\.from\('billing_retention_intents'\)/);
@@ -1526,7 +1526,7 @@ describe('9 · a waiting move: the band and Change which tournament you keep (St
     assert.match(review, /kind: 'downgrade', move: waitingMoveView/);
     // /billing 2026-11-04: our waiting row alone refuses a move (a click whose Stripe answer was lost has no flag yet).
     const move = readCode('lib/plan-move.ts');
-    assert.match(move, /const waiting = await readPendingEnding\(org\.id\)[^\n]*\n\s*if \(ending\.scheduled \|\| waiting\) \{/);
+    assert.match(move, /const waiting = restore \? null : await readPendingEnding\(org\.id\)[^\n]*\n\s*if \(ending\.scheduled \|\| waiting\) \{/);
     const downgradeReview = readCode('app/api/billing/downgrade/preflight/route.ts');
     assert.match(downgradeReview, /waitingDate\(account, ctx\.org\.currentPeriodEnd, new Date\(\)\)/);
   });

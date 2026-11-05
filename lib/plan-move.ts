@@ -148,7 +148,12 @@ async function activeTeamCount(orgId: string): Promise<number> {
   return count ?? 0;
 }
 
-async function validateMove(org: MoveOrg, toPlan: OrgPlan): Promise<
+/**
+ * `restore`: the plan-ending flow putting back a cheaper move IT released (Keep restoring the move its cancel set aside, or a
+ * refused cancel/move undoing its own release). Our waiting row is then that flow's own and does not refuse; Stripe's cancel
+ * signal still does (a schedule is never built on a subscription set to cancel). Never set for a move a person asks for.
+ */
+async function validateMove(org: MoveOrg, toPlan: OrgPlan, { restore = false }: { restore?: boolean } = {}): Promise<
   | { ok: true; direction: MoveDirection; live: LiveSub; priceId: string }
   | { ok: false; refusal: MoveRefusal }
 > {
@@ -167,7 +172,10 @@ async function validateMove(org: MoveOrg, toPlan: OrgPlan): Promise<
   // Stage 2: the same Stripe signal is a waiting move to the free plan when our row says so — the refusal names it. And
   // our row alone refuses too (Part B /billing, 2026-11-04): a click whose Stripe answer was lost leaves the row waiting
   // with no flag yet, and a move then would run over the waiting change.
-  const waiting = await readPendingEnding(org.id).catch(() => null);
+  // ⚠ F3 (Stage 3 test-clock rehearsal, 2026-11-05): a restore skips our row. Keep marks its row "kept" (still waiting) and
+  // then puts the move back through here; without this the row refused Keep's own restore and the club renewed at the
+  // higher price (Club Large $379, not Club $219), the owner told "Keep Club first".
+  const waiting = restore ? null : await readPendingEnding(org.id).catch(() => null);
   if (ending.scheduled || waiting) {
     const endsAt = ending.endsAt ?? waiting?.effectiveAt ?? null;
     const answer = futureMoveAnswer('plan_move', { ownPlan: ownPlanOf(org), ...waitingState(waiting), pending: true, pendingEndsAt: endsAt });
@@ -342,7 +350,7 @@ export type MoveResult =
 export async function applyMove(
   org: MoveOrg,
   toPlan: OrgPlan,
-  opts: { prorationDate?: number; actor: string; clubName?: string | null },
+  opts: { prorationDate?: number; actor: string; clubName?: string | null; restore?: boolean },
 ): Promise<MoveResult | MoveRefusal> {
   let clubName: string | null = null;
   if (ownPlanOf(org) === 'team' && moveDirection('team', toPlan)) {
@@ -350,7 +358,11 @@ export async function applyMove(
     if (!named.ok) return { code: 'club_name_invalid', error: named.error };
     clubName = named.name;
   }
-  const checked = await validateMove(org, toPlan);
+  // A restore is only ever a move DOWN (the plan-ending flow's own put-back, which never charges).
+  if (opts.restore && moveDirection(ownPlanOf(org), toPlan) !== 'down') {
+    return { code: 'not_a_move', error: 'That plan is no longer a move down from this one.' };
+  }
+  const checked = await validateMove(org, toPlan, { restore: opts.restore === true });
   if (!checked.ok) return checked.refusal;
   const { direction, live, priceId } = checked;
   const stripe = getStripe();

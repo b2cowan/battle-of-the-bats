@@ -516,7 +516,7 @@ export const endingDeps: EndingDeps = {
     const { applyMove } = await import('./plan-move');
     const result = await applyMove({
       id: account.orgId, planId: account.ownPlan, stripeSubscriptionId: account.subscriptionId, subscriptionStatus: account.subscriptionStatus,
-    }, plan, { actor });
+    }, plan, { actor, restore: true }); // the flow's own put-back: our waiting row does not refuse it (F3)
     return 'code' in result ? { ok: false, error: result.error } : { ok: true };
   },
 };

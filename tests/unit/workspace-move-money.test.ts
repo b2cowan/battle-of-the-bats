@@ -835,3 +835,55 @@ describe('8 · after the review: money, refusals and records', () => {
     });
   });
 });
+
+describe('F3 · the plan-ending flow can put back the move it released (Stage 3 test-clock rehearsal, 2026-11-05)', () => {
+  // The REAL move check, not a stand-in: the rehearsal's case 7 found Keep's own put-back refused by the waiting row.
+  const clubLarge = (over: Partial<MoveOrg> = {}): MoveOrg => ({
+    id: 'org_1', planId: 'club_large', stripeCustomerId: 'cus_1', stripeSubscriptionId: 'sub_premium', subscriptionStatus: 'active', ...over,
+  });
+  const waitingCancel = {
+    id: 'intent_1', org_id: 'org_1', intent_type: 'cancellation', status: 'pending', effective_at: new Date((NOW + 86400 * 20) * 1000).toISOString(),
+    retention_until: null, reason: null, from_plan: 'club_large', created_by: null, created_by_email: 'owner@example.com', applied_at: null,
+    stripe_subscription_id: 'sub_premium', held_move_plan: 'club', notify_owner: true, keep_tournament_ids: [], target_plan: null,
+    created_at: new Date().toISOString(), change_log: [{ at: new Date().toISOString(), action: 'kept', door: 'owner', by: 'owner@example.com' }],
+  };
+  function scheduleStubs() {
+    const s: any = getStripe();
+    const made: unknown[] = [];
+    s.subscriptionSchedules.create = async (p: unknown) => { made.push(p); return { id: 'sub_sched_1', phases: [{ start_date: NOW - 86400 * 10 }] }; };
+    s.subscriptionSchedules.update = async (id: string) => ({ id });
+    return made;
+  }
+
+  it('Keep mid-way (its row still waiting, Stripe shows no cancel): an owner’s move is refused, the flow’s put-back goes through', async () => {
+    stubDatabase({ ...PRICES, billing_retention_intents: { one: waitingCancel } });
+    stubStripe({ sub: subscription() });
+    const made = scheduleStubs();
+    const asked = await applyMove(clubLarge(), 'club', { actor: 'owner' });
+    assert.ok(isRefusal(asked) && asked.code === 'subscription_ending', 'a person’s move still waits for the change');
+    const restored = await applyMove(clubLarge(), 'club', { actor: 'plan-ending', restore: true });
+    assert.ok(!isRefusal(restored), JSON.stringify(restored));
+    assert.equal(made.length, 1, 'the schedule holding the cheaper move is built again');
+  });
+
+  it('a put-back is still refused while Stripe holds a cancel (never a schedule on a subscription set to cancel)', async () => {
+    stubDatabase({ ...PRICES, billing_retention_intents: { one: waitingCancel } });
+    stubStripe({ sub: subscription({ cancel_at_period_end: true }) });
+    const made = scheduleStubs();
+    const restored = await applyMove(clubLarge(), 'club', { actor: 'plan-ending', restore: true });
+    assert.ok(isRefusal(restored) && restored.code === 'subscription_ending');
+    assert.equal(made.length, 0);
+  });
+
+  it('a put-back is only ever a move down', async () => {
+    stubDatabase({ ...PRICES });
+    stubStripe({ sub: subscription() });
+    const up = await applyMove(clubLarge({ planId: 'club' }), 'club_large', { actor: 'plan-ending', restore: true });
+    assert.ok(isRefusal(up) && up.code === 'not_a_move');
+  });
+
+  it('only the plan-ending flow asks for a put-back: no route passes `restore`', () => {
+    for (const file of ['app/api/billing/move/route.ts']) assert.doesNotMatch(readCode(file), /restore\s*:/, file);
+    assert.match(readCode('lib/plan-ending-server.ts'), /applyMove\([\s\S]*?\{ actor, restore: true \}\)/);
+  });
+});
