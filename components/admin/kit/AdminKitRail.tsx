@@ -43,7 +43,7 @@ import { useAdminWorklist } from '@/lib/admin-worklist';
 import { useChatUnread } from '@/lib/use-chat-unread';
 import { useSidebarStrip } from '@/lib/sidebar-strip';
 import { TOUR_GROUPS } from '@/components/admin/admin-nav-config';
-import { isKitLinkActive, ORGANIZATION_ICON, type KitLink, type KitProgram } from '@/lib/admin-kit-nav';
+import { isKitLinkActive, isKitLinkActiveBesideBilling, ORGANIZATION_ICON, type KitLink, type KitProgram } from '@/lib/admin-kit-nav';
 import { useAdminKitNav } from './useAdminKitNav';
 import { STATUS_WORD } from '@/lib/tournament-status-words';
 import { useRailTeamName } from './useRailTeam';
@@ -451,7 +451,7 @@ function TournamentRail({ labelled }: { labelled: boolean }) {
   const pathname = usePathname();
   const { tournaments, currentTournament, setCurrentTournament } = useTournament();
   const worklist = useAdminWorklist();
-  const { base, tournamentGroups: groups } = useAdminKitNav();
+  const { base, tournamentGroups: groups, billingLink } = useAdminKitNav();
   // Asked only where Chat is a row (an invite-only event has no Chat, the free tournament tier, R5).
   const chatUnread = useChatUnread(groups.some(g => g.items.some(i => i.key === 'chat')));
   // Seeded with defaults rather than an empty set, as the coach rail seeds its own (CoachesSidebar): the empty set drew
@@ -491,8 +491,11 @@ function TournamentRail({ labelled }: { labelled: boolean }) {
   }
 
   const allKeys = groups.flatMap(g => g.items.map(i => i.key));
+  // Plan & billing (the footer link) sits under Settings & access's address: it is the more specific door, so Settings
+  // steps aside while it is the page on screen.
   const itemActive = (key: string) => pathname.startsWith(`${base}/tournaments/${key}`)
-    && !allKeys.some(k => k !== key && k.length > key.length && pathname.startsWith(`${base}/tournaments/${k}`));
+    && !allKeys.some(k => k !== key && k.length > key.length && pathname.startsWith(`${base}/tournaments/${k}`))
+    && isKitLinkActiveBesideBilling(pathname, { key, label: key, href: `${base}/tournaments/${key}` }, billingLink);
 
   // ⚰ The switcher's + and the strip's "New tournament" are gone (owner 2026-10-19): a new tournament starts on the
   // Tournaments page's own New tournament, its one door (with its slot line), and the switcher takes the full width.

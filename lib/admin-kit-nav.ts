@@ -311,6 +311,16 @@ export function isKitLinkActive(pathname: string, link: KitLink): boolean {
   return link.exact ? pathname === link.href : under(link.href);
 }
 
+/**
+ * Is this door the page on screen, with Plan & billing counted as the more specific door? On the tournament tiers Plan &
+ * billing's page lives UNDER Settings & access's address, so a plain prefix match lit both rows. The parent steps aside
+ * while Plan & billing is the page on screen; Settings' own pages (members, payouts…) still light it.
+ */
+export function isKitLinkActiveBesideBilling(pathname: string, link: KitLink, billing: KitLink | null): boolean {
+  if (!isKitLinkActive(pathname, link)) return false;
+  return !(billing && billing.href !== link.href && billing.href.startsWith(`${link.href}/`) && isKitLinkActive(pathname, billing));
+}
+
 /** Which program (or the Organization group) the page on screen belongs to — the group that opens. */
 export function activeKitSection(pathname: string, base: string): AdminProgramKey | 'org' | null {
   const rest = pathname.startsWith(`${base}/`) ? pathname.slice(base.length + 1) : '';

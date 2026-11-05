@@ -38,7 +38,7 @@ import FeedbackWidget from '@/components/feedback/FeedbackWidget';
 import MoreSheetTiles, { type SheetTile } from '@/components/coaches/MoreSheetTiles';
 import MoreSheetFoot from '@/components/coaches/MoreSheetFoot';
 import { clubPhoneNav, tournamentSheetTiles } from '@/lib/nav-tiles';
-import { isKitLinkActive, tournamentBarKeys, ORGANIZATION_ICON, type KitLink } from '@/lib/admin-kit-nav';
+import { isKitLinkActive, isKitLinkActiveBesideBilling, tournamentBarKeys, ORGANIZATION_ICON, type KitLink } from '@/lib/admin-kit-nav';
 import { resolveEventPhase } from '@/lib/tournament-phase';
 import { useAdminKitNav } from './useAdminKitNav';
 import { briefProgramCount } from './club/ClubBriefProvider';
@@ -168,7 +168,7 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
 
   const row = (l: KitLink, count = 0) => {
     const Icon = l.icon;
-    const active = isKitLinkActive(pathname, l);
+    const active = isKitLinkActiveBesideBilling(pathname, l, billingLink);
     return (
       <Link
         key={l.key}

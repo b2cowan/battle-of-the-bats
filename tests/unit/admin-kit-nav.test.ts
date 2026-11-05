@@ -3,7 +3,7 @@ import { describe, it } from 'node:test';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import {
-  kitPrograms, kitOrgLinks, kitBillingLink, isKitLinkActive, activeKitSection,
+  kitPrograms, kitOrgLinks, kitBillingLink, isKitLinkActive, isKitLinkActiveBesideBilling, activeKitSection,
   clubProgramOrder, INTERIM_PROGRAM_ORDER, PROGRAM_CAPABILITY, accountingTabs, accountingTabFor, tournamentBarKeys,
   familiesTabs, familiesTabFor,
 } from '../../lib/admin-kit-nav.ts';
@@ -128,6 +128,25 @@ describe('billing in the rail foot and More → You', () => {
     assert.equal(kitBillingLink({ orgSlug: 'demo-club', planId: 'club', role: null, capabilities: { billing: true } }), null);
     assert.ok(kitBillingLink({ orgSlug: 'demo-club', planId: 'club', role: 'owner', capabilities: null }));
     assert.doesNotMatch(readCode('lib/admin-kit-nav.ts').split('export function kitBillingLink')[1].split('export function kitOrgLinks')[0], /isCanceled/);
+  });
+});
+
+describe('Plan & billing under Settings & access (tournament tiers)', () => {
+  const settings = { key: 'settings', label: 'Settings & access', href: '/demo/admin/tournaments/settings' };
+  const billing = kitBillingLink({ orgSlug: 'demo', planId: 'tournament_plus', role: 'owner', capabilities: null });
+  it('only Plan & billing lights on its own page — Settings & access steps aside', () => {
+    const page = '/demo/admin/tournaments/settings/subscription';
+    assert.ok(billing);
+    assert.equal(isKitLinkActiveBesideBilling(page, settings, billing), false);
+    assert.equal(isKitLinkActiveBesideBilling(page, billing!, billing), true);
+  });
+  it("Settings & access still lights on its own pages (the page itself, members, payouts)", () => {
+    for (const p of ['/demo/admin/tournaments/settings', '/demo/admin/tournaments/settings/members', '/demo/admin/tournaments/settings/payouts']) {
+      assert.equal(isKitLinkActiveBesideBilling(p, settings, billing), true, p);
+    }
+  });
+  it('with no billing door (not the owner) nothing changes', () => {
+    assert.equal(isKitLinkActiveBesideBilling('/demo/admin/tournaments/settings/subscription', settings, null), true);
   });
 });
 
