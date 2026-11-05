@@ -122,3 +122,9 @@
     display: none;
   }
 }
+
+/* A cancelled admin account's one page keeps the strip on a phone too — it is the only chrome left (the bottom bar
+   is gone). AFTER the media block above, equal weight: the later rule wins. */
+.stripAlways {
+  display: flex;
+}

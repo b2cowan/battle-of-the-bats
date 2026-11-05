@@ -39,10 +39,14 @@ import { getNotificationSettingsHref } from '@/lib/billing-urls';
 import { WORKSPACE_KIND_LABEL } from '@/lib/workspace-labels';
 import styles from '@/components/coaches/CoachTopStrip.module.css';
 
-export default function AdminTopStrip({ notifCount, onNotifCountChange }: {
+export default function AdminTopStrip({ notifCount, onNotifCountChange, suspended = false }: {
   /** Hoisted unread count from the admin shell — see the header comment. */
   notifCount?: number;
   onNotifCountChange?: Dispatch<SetStateAction<number>>;
+  /** A cancelled account's one page (owner 2026-11-05): the strip is the ONLY chrome left, so it shows on a phone too
+   *  (the account menu and the Workspaces pill are the exits the hidden bottom bar used to carry) and drops the bell,
+   *  whose notifications open tools the account no longer has. */
+  suspended?: boolean;
 }) {
   const { currentOrg } = useOrg();
   // The admin shell only renders signed-in — the hook may run unconditionally.
@@ -58,7 +62,7 @@ export default function AdminTopStrip({ notifCount, onNotifCountChange }: {
   // toggle that visibly does nothing reads as broken" reason for hiding it no longer holds.
 
   return (
-    <header className={styles.strip}>
+    <header className={suspended ? `${styles.strip} ${styles.stripAlways}` : styles.strip}>
       <BrandLockup tone="follow" size={15} />
       {/* ⚖ The strip names its portal (the nav standard's N6, Ask A6, 2026-10-17), as the coach strip says "Coaches
           Portal": someone with both hats flips between two shells that look alike. The word is this workspace's name
@@ -66,7 +70,7 @@ export default function AdminTopStrip({ notifCount, onNotifCountChange }: {
       <span className={styles.stripDivider} aria-hidden />
       <span className={styles.stripLabel}>{WORKSPACE_KIND_LABEL.organization}</span>
       <div className={styles.doors}>
-        {currentOrg?.id && (
+        {currentOrg?.id && !suspended && (
           <NotificationBell
             bell={orgBell(currentOrg.id)!}
             portal="admin"

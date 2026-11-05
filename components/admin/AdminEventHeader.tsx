@@ -33,7 +33,11 @@ function getScrollParent(el: HTMLElement): HTMLElement | null {
   return null;
 }
 
-export default function AdminEventHeader() {
+export default function AdminEventHeader({ suspended = false }: {
+  /** A cancelled account (`AdminChrome` decides): the org's name alone — no tournament identity, no door to a public
+   *  site whose pages are suspended. */
+  suspended?: boolean;
+} = {}) {
   const pathname = usePathname();
   const { currentOrg } = useOrg();
   const { currentTournament } = useTournament();
@@ -86,6 +90,7 @@ export default function AdminEventHeader() {
   if (!flip) return null;
 
   const onTournament =
+    !suspended &&
     pathname.includes('/admin/tournaments') &&
     !pathname.includes('/admin/tournaments/preview') &&
     !!currentTournament?.slug;
@@ -163,7 +168,7 @@ export default function AdminEventHeader() {
             {chip('collapsed')}
           </div>
         </div>
-        <FlipPill resolution={flip} variant="inline" compact={collapsed} className={styles.pill} />
+        {!suspended && <FlipPill resolution={flip} variant="inline" compact={collapsed} className={styles.pill} />}
       </div>
     </header>
   );

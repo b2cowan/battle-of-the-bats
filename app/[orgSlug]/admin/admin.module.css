@@ -132,6 +132,19 @@
     padding: 0.5rem 1rem calc(80px + env(safe-area-inset-bottom) + var(--admin-strip-h, 0px));
   }
 
+  /* A cancelled account's one page keeps the top strip on a phone (it is the only chrome left — the bottom bar is
+     not drawn), so the shell makes room for it with its OWN padding. ⚠ NOT by un-zeroing --admin-topstrip-h: the
+     sticky header, the sheets and the in-page toolbars read that var as "the strip overlaps me", and on a phone the
+     scroller already starts below the padding — they would sit a strip's height too low. Compound selector: beats
+     the base rule whatever the order. */
+  .adminShell.adminShellSuspended {
+    padding-top: var(--chrome-bar-h);
+  }
+  /* …and no bottom bar to clear. */
+  .adminShellSuspended .mainPad {
+    padding-bottom: calc(1.5rem + env(safe-area-inset-bottom));
+  }
+
   /* Focused flows (onboarding/help) render no header — lighter padding, natural scroll. */
   .adminMainFocused {
     --admin-focused-pad: 1rem;

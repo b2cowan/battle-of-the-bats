@@ -57,7 +57,9 @@ export default function AdminChrome({
   // fetch + Realtime channel serves both (both are always mounted; CSS just hides one per
   // breakpoint). Skip it on focused shells that render no consumer, so we never hold a Realtime
   // channel open with nothing reading it.
-  const notif = useNotificationUnread(!isFocused ? orgBell(currentOrg?.id) : null);
+  // A cancelled account has one page and no bell (below), so nothing reads the count there either.
+  const isCanceled = currentOrg?.subscriptionStatus === 'canceled';
+  const notif = useNotificationUnread(!isFocused && !isCanceled ? orgBell(currentOrg?.id) : null);
   // Chat unread is NOT hoisted here: the strip's chat door was removed (owner ruling
   // 2026-07-31 — chat is a section of the work, not an exit), so the rail's tournament
   // Chat badge is the only consumer again and self-serves, gated to tournament routes.
@@ -66,18 +68,23 @@ export default function AdminChrome({
   // useOrg() provides the subscription status synchronously (from initialOrg set in the layout),
   // and usePathname() provides the current path on both server and client, so both agree on this
   // output — no hydration mismatch, no content flash, no loop.
-  const isCanceled = currentOrg?.subscriptionStatus === 'canceled';
   const billingPath = currentOrg ? getBillingHref(currentOrg) : null;
   if (isCanceled && billingPath && !pathname.startsWith(billingPath)) {
     return <CancellationGuard />;
   }
+  // ⚖ A CANCELLED ACCOUNT HAS ONE PAGE (owner 2026-11-05): Plan & billing, with the reactivate control. Past the
+  // guard above, a cancelled org is standing on it — so the tools' frame is not drawn at all (no rail, no phone bar,
+  // no program row, no flip to a public site whose pages are suspended), rather than drawn and bounced back. Only the
+  // strip stays, on a phone too: the account menu and Workspaces are the exits. Mirrors the Coaches Portal's one door
+  // for a team with no live season (`CoachTeamSeasonGate`). Every nav reads THIS one flag.
+  const suspended = isCanceled;
   // The kit's ground (the coach shell's page tone and grid). Not on the help guide: when the guide
   // was pinned dark (until slice 5, R4) a cream margin round it would have been a third look, and it
   // moved onto the theme on the shell's own ground — the ground walk §245 W6 passed.
   const kitGround = !isHelp;
   const shellClassName = isPreviewShell
     ? styles.adminPreviewShell
-    : `${styles.adminShell} ${isFocusedAdmin ? styles.adminShellFocused : ''}${kitGround ? ` ${styles.adminShellKit}` : ''}`;
+    : `${styles.adminShell} ${isFocusedAdmin ? styles.adminShellFocused : ''}${kitGround ? ` ${styles.adminShellKit}` : ''}${suspended ? ` ${styles.adminShellSuspended}` : ''}`;
   const mainClassName = isPreviewShell
     ? styles.adminPreviewMain
     : `${styles.adminMain} ${isFocusedAdmin ? styles.adminMainFocused : ''}${kitGround ? ` ${styles.adminMainKit}` : ''}`;
@@ -105,9 +112,10 @@ export default function AdminChrome({
           <AdminTopStrip
             notifCount={notif.count}
             onNotifCountChange={notif.setCount}
+            suspended={suspended}
           />
         )}
-        {!isFocused && <AdminKitRail />}
+        {!isFocused && !suspended && <AdminKitRail />}
         <main className={mainClassName}>
           {isFocused ? (
             // R2 — a public page previewed inside the admin is the public page: the island puts back
@@ -124,17 +132,17 @@ export default function AdminChrome({
               {/* The Flip: one persistent shell header (event/org identity + status + pill), desktop
                   and mobile. Sticky; collapses on scroll. Supersedes the old mobile top bar + the
                   floating desktop pill. */}
-              <AdminEventHeader />
+              <AdminEventHeader suspended={suspended} />
               <div className={styles.mainPad}>
-                <EnablePushBanner />
-                <AdminKitProgramRow key={pathname} />
+                {!suspended && <EnablePushBanner />}
+                {!suspended && <AdminKitProgramRow key={pathname} />}
                 {children}
               </div>
             </>
           )}
         </main>
       </div>
-      {!isFocused && <AdminKitBottomNav notifUnread={notif.count} />}
+      {!isFocused && !suspended && <AdminKitBottomNav notifUnread={notif.count} />}
     </>
   );
 
