@@ -461,7 +461,7 @@ applied in v2; C3 split into C3 + C4.
   no schedule or open tryout): Subscribe at 1,536 is 44 tall, 8 px, 14/600, the field edge on white; at 390 the bare 44
   symbol; "Sign up for tryouts" 183 px wide at 1,536, the full width at 390.
 - **2026-11-05 · Club build Part 4 (C6 the two-way link, C7 the house league's Schedule and Standings, the record, the
-  not-found, the in-club error) — built 2026-11-05.** Owner yes on the product-owner summary, with three answers: the
+  not-found, the in-club error) — committed `376378269` 2026-11-05.** Owner yes on the product-owner summary, with three answers: the
   in-club error page **yes**; a past tournament's results onto the game row too (**yes**, beyond the prompt's "title and
   headings": its rows were held 520–560 px wide and scrolled sideways on a phone); the house league's games **away team
   first** (the standard's order; it read "Home vs Away"). Disagreement said out loud before building: C7 was ruled as "small
