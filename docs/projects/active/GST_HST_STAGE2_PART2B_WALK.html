@@ -1,0 +1,173 @@
+<title>Payouts Billing Address Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one reading column; a sign-in card, then one card per part with its steps, verdict and notes; a sticky progress bar. */
+:root {
+  --bg: #f6f7f4; --panel: #ffffff; --ink: #1d2420; --muted: #5d6862; --line: #d9ded8;
+  --accent: #2f6b4f; --accent-soft: #e3efe8; --warn: #9a5b00; --warn-soft: #fbf0dc; --bad: #a3322a;
+  --font-body: "Source Sans 3", system-ui, sans-serif; --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #141816; --panel: #1c211e; --ink: #e6ebe7; --muted: #9aa69f; --line: #2f3833;
+  --accent: #7fc3a0; --accent-soft: #1f3329; --warn: #e8b766; --warn-soft: #33291a; --bad: #ef8a80; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #141816; --panel: #1c211e; --ink: #e6ebe7; --muted: #9aa69f; --line: #2f3833;
+  --accent: #7fc3a0; --accent-soft: #1f3329; --warn: #e8b766; --warn-soft: #33291a; --bad: #ef8a80; color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 48px; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.wrap { max-width: 760px; margin: 0 auto; display: grid; gap: 18px; }
+header { padding-top: 28px; display: grid; gap: 6px; }
+.eyebrow { text-transform: uppercase; letter-spacing: .08em; font-size: 12px; color: var(--muted); font-weight: 600; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; max-width: 65ch; }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding-block: 10px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; border-bottom: 1px solid var(--line); }
+.meter { flex: 1 1 200px; height: 8px; background: var(--line); border-radius: 4px; overflow: hidden; }
+.meter i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .2s; }
+.count { font-variant-numeric: tabular-nums; font-size: 13px; color: var(--muted); }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: grid; gap: 12px; min-width: 0; }
+.signin { border-color: var(--accent); }
+.signin table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.signin td { padding: 6px 8px 6px 0; vertical-align: top; border-top: 1px solid var(--line); }
+.tablebox { overflow-x: auto; }
+code { font-family: var(--font-mono); font-size: 12.5px; background: var(--accent-soft); padding: 1px 5px; border-radius: 4px; word-break: break-all; }
+.note { background: var(--warn-soft); color: var(--ink); border-left: 3px solid var(--warn); padding: 8px 12px; border-radius: 4px; font-size: 14px; }
+ol.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+ol.steps label { display: grid; grid-template-columns: 22px 1fr; gap: 8px; align-items: start; cursor: pointer; }
+ol.steps input { margin-top: 4px; width: 16px; height: 16px; accent-color: var(--accent); }
+.expect { color: var(--muted); font-size: 14px; display: block; }
+.verdict { display: flex; gap: 8px; flex-wrap: wrap; }
+.verdict button { font: inherit; font-size: 14px; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--line); background: transparent; color: var(--ink); cursor: pointer; }
+.verdict button[aria-pressed="true"][data-v="pass"] { background: var(--accent); border-color: var(--accent); color: var(--panel); }
+.verdict button[aria-pressed="true"][data-v="issue"] { background: var(--bad); border-color: var(--bad); color: var(--panel); }
+.verdict button[aria-pressed="true"][data-v="call"] { background: var(--warn); border-color: var(--warn); color: var(--panel); }
+button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+textarea { width: 100%; box-sizing: border-box; min-height: 56px; font: inherit; font-size: 14px; padding: 8px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.primary { font: inherit; font-weight: 600; padding: 8px 16px; border-radius: 6px; border: 0; background: var(--accent); color: var(--panel); cursor: pointer; }
+.ghost { font: inherit; padding: 8px 16px; border-radius: 6px; border: 1px solid var(--line); background: transparent; color: var(--ink); cursor: pointer; }
+#out { font-family: var(--font-mono); font-size: 12.5px; min-height: 160px; }
+.optional { font-size: 12px; font-weight: 600; color: var(--warn); text-transform: uppercase; letter-spacing: .06em; }
+@media (prefers-reduced-motion: reduce) { .meter i { transition: none; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow">Owner QA · §463 · GST/HST Stage 2 Part 2b</span>
+    <h1>A club turning on online payments gives its billing address first, and its fee invoice can always be made</h1>
+    <p>One purpose. Tick each step as you see it, set a verdict on every part, then press <b>Build summary</b> and paste the text back into chat.</p>
+  </header>
+
+  <div class="bar" role="status">
+    <div class="meter" aria-hidden="true"><i id="meter"></i></div>
+    <span class="count" id="count">0 of 0 steps · 0 of 0 verdicts</span>
+  </div>
+
+  <section class="card signin" aria-labelledby="signin-h">
+    <h2 id="signin-h">Sign in as</h2>
+    <p>The dev site: <code>http://localhost:3000</code> (dev server running; no restart needed for this change). Each password is in <code>.env.local</code> under the name shown. Use a private window to switch accounts.</p>
+    <div class="tablebox"><table>
+      <tr><td><b>Parts A, C</b></td><td><code>uat-club-owner@uat-rep-club.local</code> · <code>UAT_REP_CLUB_OWNER_PASSWORD</code><br>Club <b>uat-rep-club</b> (Club plan, already taking payments, <b>no billing address</b>)</td></tr>
+      <tr><td><b>Part B</b></td><td><code>uat-club-treasurer@uat-rep-club.local</code> · <code>UAT_REP_CLUB_TREASURER_PASSWORD</code><br>Same club, as the treasurer</td></tr>
+      <tr><td><b>Parts D, E</b></td><td><code>uat-owner@uat-test-org.local</code> · <code>UAT_ORG_OWNER_PASSWORD</code><br>Club <b>uat-club-org</b> (Club, never connected, no address) and <b>uat-plus-org</b> (Tournament Plus, never connected, no address)</td></tr>
+      <tr><td><b>Part F</b></td><td><code>b2cowan+gst3@gmail.com</code> · your own password<br>Club <b>gst-walk-club</b> (Club, <b>address on file</b>, never connected)</td></tr>
+    </table></div>
+    <p class="note">Not walked on screen: <b>reconnecting</b> a disconnected account (disconnecting a real test club closes its open pay pages; the unit tests prove a reconnect without an address is asked and nothing changes), and platform admin’s waiting-fee sentence (no club on dev has fees waiting for an address).</p>
+  </section>
+
+  <div id="parts"></div>
+
+  <section class="card" aria-labelledby="sum-h">
+    <h2 id="sum-h">Paste back</h2>
+    <div class="actions">
+      <button type="button" class="primary" id="build">Build summary</button>
+      <button type="button" class="ghost" id="copy">Copy</button>
+      <button type="button" class="ghost" id="reset">Clear my ticks</button>
+    </div>
+    <textarea id="out" aria-label="Summary to paste back" readonly></textarea>
+  </section>
+</div>
+
+<script>
+var PARTS = [
+  { id: 'A', title: 'A club already taking payments, with no address, sees the line', steps: [
+    ['Sign in as the uat-rep-club owner. Open <code>/uat-rep-club/admin/org/settings#payouts</code>.', 'The Payouts card reads Taking payments.'],
+    ['Look under the card title.', 'A yellow notice: “Add your club’s billing address so your invoice for Stripe fees can go out.” followed by a <b>Billing address</b> link.'],
+    ['Press <b>Billing address</b>, then <b>Cancel</b>.', 'The Billing address window opens empty; Cancel closes it and the notice is still there.']
+  ]},
+  { id: 'B', title: 'The treasurer never sees the line (do this BEFORE Part C saves the address)', steps: [
+    ['In a private window, sign in as the uat-rep-club treasurer and open the same page.', 'The treasurer sees the Payouts card’s status, but no billing-address notice and no Billing address link.']
+  ]},
+  { id: 'C', title: 'The owner adds the address and the line goes', steps: [
+    ['Back as the owner: press <b>Billing address</b>. Fill in a Canadian address (any Ontario street, city and postal code) and save.', 'The window closes, and the notice disappears from the card without reloading the page.'],
+    ['Reload the page.', 'The notice stays gone.'],
+    ['Open Settings › Plan &amp; billing.', 'The address you just saved shows as the club’s billing address, with a Billing address button to change it.']
+  ]},
+  { id: 'D', title: 'A club that never connected is asked before Stripe, and keeps its choices', steps: [
+    ['Sign in as the uat-test-org owner. Open <code>/uat-club-org/admin/org/settings#payouts</code> and press <b>Set up payouts</b>.', 'The “Before you set up payouts” window opens, the same as before.'],
+    ['Choose <b>The club pays it</b> and tick the terms box. Press <b>Continue to Stripe</b>.', 'The Billing address window takes the Before window’s place. It is empty and asks for the club’s address.'],
+    ['Press <b>Cancel</b> in the Billing address window.', 'The Before window comes back with <b>The club pays it</b> still chosen and the box still ticked.'],
+    ['Press <b>Continue to Stripe</b> again, fill in a Canadian address and press the window’s main button.', 'You go straight on to Stripe’s test sign-up page; you are not dropped back on the card.'],
+    ['Come back to the Payouts card (Stripe’s “return” or the browser back button).', 'The card reads Setting up. Press the pencil: the fee choice reads <b>The club pays it</b>.'],
+    ['Open Settings › Plan &amp; billing.', 'The address you typed is the club’s billing address.']
+  ]},
+  { id: 'E', title: 'The tournament side asks the same way', steps: [
+    ['Same account. Open <code>/uat-plus-org/admin/tournaments/settings/payouts</code> and press <b>Set up payouts</b>.', 'The Before window opens with teams wording.'],
+    ['Tick the terms box and press <b>Continue to Stripe</b>.', 'The Billing address window opens in its place.'],
+    ['Press <b>Cancel</b>, then close the Before window.', 'Nothing was set up: the card still reads Not set up.']
+  ]},
+  { id: 'F', title: 'A club that already has an address is not asked', steps: [
+    ['Sign in as <code>b2cowan+gst3@gmail.com</code>. Open <code>/gst-walk-club/admin/org/settings#payouts</code> and press <b>Set up payouts</b>.', 'The Before window opens.'],
+    ['Tick the terms box and press <b>Continue to Stripe</b>.', 'You go straight to Stripe’s test sign-up page. No Billing address window appears at any point.']
+  ]}
+];
+var KEY = 'walk-463-v1';
+function load() { try { return JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { return {}; } }
+function save(s) { try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) {} }
+var state = load(); state.ticks = state.ticks || {}; state.verdicts = state.verdicts || {}; state.notes = state.notes || {};
+var root = document.getElementById('parts');
+PARTS.forEach(function (p) {
+  var sec = document.createElement('section'); sec.className = 'card'; sec.setAttribute('aria-labelledby', 'h-' + p.id);
+  var html = '<h2 id="h-' + p.id + '">' + (p.optional ? '<span class="optional">Optional</span><br>' : '') + 'Part ' + p.id + ' · ' + p.title + '</h2><ol class="steps">';
+  p.steps.forEach(function (s, i) {
+    var id = p.id + (i + 1);
+    html += '<li><label for="c-' + id + '"><input type="checkbox" id="c-' + id + '" data-step="' + id + '"><span><b>' + id + '.</b> ' + s[0] + '<span class="expect">Expect: ' + s[1] + '</span></span></label></li>';
+  });
+  html += '</ol><div class="verdict" role="group" aria-label="Verdict for part ' + p.id + '">'
+    + ['pass:Pass', 'issue:Issue', 'call:Needs a call'].map(function (v) { var k = v.split(':'); return '<button type="button" data-part="' + p.id + '" data-v="' + k[0] + '" aria-pressed="false">' + k[1] + '</button>'; }).join('')
+    + '</div><textarea id="n-' + p.id + '" data-note="' + p.id + '" placeholder="Notes for part ' + p.id + '" aria-label="Notes for part ' + p.id + '"></textarea>';
+  sec.innerHTML = html; root.appendChild(sec);
+});
+function paint() {
+  var total = 0, done = 0, parts = 0, judged = 0;
+  document.querySelectorAll('[data-step]').forEach(function (c) { total++; c.checked = !!state.ticks[c.dataset.step]; if (c.checked) done++; });
+  PARTS.forEach(function (p) { parts++; if (state.verdicts[p.id]) judged++; });
+  document.querySelectorAll('.verdict button').forEach(function (b) { b.setAttribute('aria-pressed', String(state.verdicts[b.dataset.part] === b.dataset.v)); });
+  document.querySelectorAll('[data-note]').forEach(function (t) { if (document.activeElement !== t) t.value = state.notes[t.dataset.note] || ''; });
+  document.getElementById('meter').style.width = (total ? Math.round(100 * done / total) : 0) + '%';
+  document.getElementById('count').textContent = done + ' of ' + total + ' steps · ' + judged + ' of ' + parts + ' verdicts';
+}
+root.addEventListener('change', function (e) { var s = e.target.dataset.step; if (s) { state.ticks[s] = e.target.checked; save(state); paint(); } });
+root.addEventListener('click', function (e) { var b = e.target.closest('.verdict button'); if (b) { var p = b.dataset.part; state.verdicts[p] = state.verdicts[p] === b.dataset.v ? '' : b.dataset.v; save(state); paint(); } });
+root.addEventListener('input', function (e) { var n = e.target.dataset.note; if (n) { state.notes[n] = e.target.value; save(state); } });
+var NAMES = { pass: 'PASS', issue: 'ISSUE', call: 'NEEDS A CALL' };
+document.getElementById('build').addEventListener('click', function () {
+  var lines = ['§463 walk · GST/HST Stage 2 Part 2b · a club gives its billing address before online payments'], missing = [];
+  PARTS.forEach(function (p) {
+    var unticked = p.steps.map(function (s, i) { return p.id + (i + 1); }).filter(function (id) { return !state.ticks[id]; });
+    var v = state.verdicts[p.id];
+    if (!v && !p.optional) missing.push(p.id);
+    lines.push('Part ' + p.id + (p.optional ? ' (optional)' : '') + ': ' + (v ? NAMES[v] : 'NO VERDICT') + (unticked.length ? ' · not ticked: ' + unticked.join(', ') : ' · all steps ticked'));
+    if (state.notes[p.id]) lines.push('  notes: ' + state.notes[p.id].replace(/\n+/g, ' / '));
+  });
+  lines.splice(1, 0, missing.length ? 'INCOMPLETE: no verdict on part ' + missing.join(', ') : 'Complete: every required part has a verdict');
+  document.getElementById('out').value = lines.join('\n');
+});
+document.getElementById('copy').addEventListener('click', function () {
+  var out = document.getElementById('out');
+  try { navigator.clipboard.writeText(out.value).catch(function () { out.select(); }); } catch (e) { out.select(); }
+});
+document.getElementById('reset').addEventListener('click', function () { state = { ticks: {}, verdicts: {}, notes: {} }; save(state); paint(); });
+paint();
+</script>

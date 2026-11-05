@@ -60,6 +60,15 @@ export function termsStanding(agreedVersion: string | null | undefined, current:
   return termsVersionDate(current) ? 'agreed' : 'draft';
 }
 
+/** GST/HST Stage 2 Part 2b (owner ruling A, 2026-11-05): a club connected before payouts asked for its billing address. Its
+ *  Stripe fees wait unbilled until the address is saved; the card says so, with the Billing address window as the door. The
+ *  owner's. "Stripe fees", never "monthly fee invoice": a comped club must not read its plan as being billed. */
+export const PAYOUTS_ADDRESS_WORDS = {
+  missing: 'Add your club’s billing address so your invoice for Stripe fees can go out.',
+  /** The address couldn't be read on the way to Stripe: the Before window stays, and pressing again reads again. */
+  readFailed: 'We couldn’t check your club’s billing address. Try again.',
+} as const;
+
 /** THE PAYMENTS TERMS (words CLUB_TIER_STAGE12D_COPY.md §5): who agreed, and agreeing again. The owner's. */
 export const TERMS_WORDS = {
   rowLabel: 'Payments terms',

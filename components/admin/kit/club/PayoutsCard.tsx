@@ -11,10 +11,12 @@
  * (Tournament Plus). The OWNER acts (A1); the treasurer reads the state and gets "needs attention" (`canSeePayouts`).
  * The card renders nothing while the launch switch is off or the plan lacks the feature — the API answers 404 then.
  */
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Check, ExternalLink, Pencil, Unplug } from 'lucide-react';
 import { formatStoredDate } from '@/lib/timezone';
-import { LEAVING_WORDS, PAYMENTS_TERMS_SUMMARY, PAYMENTS_TERMS_VERSION, TERMS_PLACEHOLDER, TERMS_WORDS, money, payoutsWords, type PayoutsHome } from '@/lib/online-payment-words';
+import { LEAVING_WORDS, PAYMENTS_TERMS_SUMMARY, PAYMENTS_TERMS_VERSION, PAYOUTS_ADDRESS_WORDS, TERMS_PLACEHOLDER, TERMS_WORDS, money, payoutsWords, type PayoutsHome } from '@/lib/online-payment-words';
+import { BILLING_ADDRESS_FORM_WORDS } from '@/lib/billing-location';
+import { isAddressRefusal, useBillingAddressGate } from '@/components/billing/BillingAddressDialog';
 import type { PayoutsState } from '@/lib/online-payment-account';
 import type { OnlineFeePayer } from '@/lib/online-payment-fee';
 import KitDialog from './KitDialog';
@@ -69,6 +71,8 @@ export type PayoutsView = {
     agreedVersionDate: string | null;
     currentVersionDate: string | null;
   } | null;
+  /** GST/HST Stage 2 Part 2b (owner ruling A): connected, but no billing address the Stripe-fee invoice can use — the owner's. */
+  addressMissing?: boolean;
 };
 
 const PILL_TONE: Record<PayoutsState, ChipTone> = {
@@ -88,7 +92,8 @@ async function post(orgSlug: string, body: Record<string, unknown>): Promise<{ u
     method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ orgSlug, ...body }),
   });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error ?? 'Something went wrong. Try again.');
+  // The code rides on the error, so a caller can tell "ask for the billing address" (Part 2b) from a sentence to show.
+  if (!res.ok) throw Object.assign(new Error(data.error ?? 'Something went wrong. Try again.'), { code: data.code });
   return data;
 }
 
@@ -214,6 +219,9 @@ export default function PayoutsCard({ orgSlug, clubName, home, initial }: {
             <div className={ck.noticeBody}><b>{view.ending.title}</b> {view.ending.body}</div>
           </div>
         )}
+        {/* GST/HST Stage 2 Part 2b (owner ruling A): connected before payouts asked for the address. Its Stripe fees wait
+            unbilled until it is saved; saving reads the card again, and the line goes. */}
+        {isOwner && view.addressMissing && <AddressMissingLine orgSlug={orgSlug} />}
         <p className={pc.body}>{wind ? `${WD.body} ${LEAVING_WORDS.move.connected}` : body}</p>
         {windLine && <p className={ck.hint}>{WD.title}. {WD.body}</p>}
         {state !== 'disconnected' && !view.windDown && <p className={ck.hint}>{W.ratesLine(view.rateLabel, view.bankRateLabel ?? null)}</p>}
@@ -276,6 +284,26 @@ export default function PayoutsCard({ orgSlug, clubName, home, initial }: {
           onDone={async () => { setDisconnecting(false); setEditing(false); await reload(); }}
         />
       )}
+    </>
+  );
+}
+
+/** GST/HST Stage 2 Part 2b (owner ruling A): the line and its Billing address window. Mounted only while the address is
+ *  missing, so the card reads no address otherwise. Saving reads the card again, and the line goes. */
+function AddressMissingLine({ orgSlug }: { orgSlug: string }) {
+  const address = useBillingAddressGate({ orgSlug });
+  // Saving gives the gate the address, and the line goes at once. No card reload: Cancel then changes nothing, and a failed
+  // reload can never blank the card (/review 2026-11-05). The card's own next read agrees (addressMissing false).
+  if (address.location) return null;
+  return (
+    <>
+      <div className={`${ck.notice} ${ck.noticeWarn}`} role="status">
+        <div className={ck.noticeBody}>
+          {PAYOUTS_ADDRESS_WORDS.missing}{' '}
+          <button type="button" className={pc.linkButton} onClick={() => address.edit()}>{BILLING_ADDRESS_FORM_WORDS.title}</button>
+        </div>
+      </div>
+      {address.dialog}
     </>
   );
 }
@@ -381,8 +409,19 @@ function BeforeWindow({ orgSlug, home, clubName, view, onClose }: { orgSlug: str
   const [showTerms, setShowTerms] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // GST/HST Stage 2 Part 2b (Ask 8): the club's billing address before Stripe. The window REPLACES this one while open (as
+  // the plan move does) — this component stays mounted, so the fee choice and the terms tick survive it — and saving goes
+  // straight on into the connect.
+  const address = useBillingAddressGate({ orgSlug });
+  // /review 2026-11-05: the press waits on the address read, so `busy` comes a beat late. One connect at a time, and none
+  // once this window has closed (Cancel pressed while the read was out).
+  const inFlight = useRef(false);
+  const alive = useRef(true);
+  useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
 
   async function go() {
+    if (inFlight.current || !alive.current) return;
+    inFlight.current = true;
     setBusy(true);
     setError(null);
     try {
@@ -390,10 +429,18 @@ function BeforeWindow({ orgSlug, home, clubName, view, onClose }: { orgSlug: str
       if (url) window.location.assign(url);
       else window.location.reload();
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      inFlight.current = false;
       setBusy(false);
+      // The server's own check (an address that stopped being valid, or another tab): the window, not an error.
+      if (isAddressRefusal(e)) { address.refused(() => void go()); return; }
+      setError(e instanceof Error ? e.message : String(e));
     }
   }
+
+  // The window takes this one's place only once it can draw. A failed address read leaves the gate asking with nothing to
+  // show (/review 2026-11-05): this window stays, says so, and the next press reads again.
+  if (address.open && address.dialog) return address.dialog;
+  const readFailed = address.open && !address.dialog;
 
   return (
     <KitDialog
@@ -406,7 +453,7 @@ function BeforeWindow({ orgSlug, home, clubName, view, onClose }: { orgSlug: str
           <button type="button" className="btn btn-outline" onClick={onClose} disabled={busy}>{W.before.cancel}</button>
           {/* 12d-2 (ask 6): absent until the box is ticked, never disabled. */}
           {agreed && (
-            <button type="button" className="btn btn-lime" onClick={() => void go()} disabled={busy}>
+            <button type="button" className="btn btn-lime" onClick={() => address.ensure(() => void go())} disabled={busy}>
               {busy ? W.opening : W.before.continue}
             </button>
           )}
@@ -448,6 +495,7 @@ function BeforeWindow({ orgSlug, home, clubName, view, onClose }: { orgSlug: str
         <button type="button" className={pc.linkButton} onClick={() => setShowTerms(s => !s)} aria-expanded={showTerms}>{W.before.termsLink}</button>
         {showTerms && <p className={pc.termsText}>{TERMS_PLACEHOLDER}</p>}
         {error && <p className={`${ck.notice} ${ck.noticeBad}`} role="alert">{error}</p>}
+        {!error && readFailed && <p className={`${ck.notice} ${ck.noticeBad}`} role="alert">{PAYOUTS_ADDRESS_WORDS.readFailed}</p>}
       </div>
     </KitDialog>
   );

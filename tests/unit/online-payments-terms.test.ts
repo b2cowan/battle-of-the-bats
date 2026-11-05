@@ -60,7 +60,8 @@ describe('the current version is required (ask 6), and payments stay on', () => 
 describe('Agree is ABSENT until the box is ticked, in both windows (ask 6)', () => {
   const card = readCode(CARD);
   it('the set-up window’s Continue to Stripe', () => {
-    assert.match(card, /\{agreed && \(\s*<button type="button" className="btn btn-lime" onClick=\{\(\) => void go\(\)\} disabled=\{busy\}>/);
+    // GST/HST Stage 2 Part 2b: the press goes through the billing-address gate first (ensure → go); still absent until ticked.
+    assert.match(card, /\{agreed && \(\s*<button type="button" className="btn btn-lime" onClick=\{\(\) => address\.ensure\(\(\) => void go\(\)\)\} disabled=\{busy\}>/);
     assert.doesNotMatch(card, /disabled=\{!agreed/);
   });
   it('the new terms window’s Agree', () => {

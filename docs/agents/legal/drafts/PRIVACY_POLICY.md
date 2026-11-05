@@ -11,6 +11,8 @@
 **Change log**
 - 0.1 · 2026-11-05 · First draft by `/legal`, written from a code census of what the product collects, stores and sends
   (2026-11-05). Every statement below was checked against the code; the owner notes say where the product falls short.
+- 0.1 · 2026-11-05 (later) · §3 billing row widened: a club now gives its billing address when it turns on online payments
+  (GST/HST Stage 2 Part 2b), also for a club that pays no plan, and it is used to bill and tax the club's Stripe fees.
 
 > **How to read this draft.** `[SQUARE BRACKETS]` = a fact the owner fills in. `> NOTE` blocks are for the owner and are
 > deleted before publication. The law this is written to is **PIPEDA** (Canada's federal private-sector privacy law,
@@ -52,7 +54,7 @@ officials, treasurers), and people who buy a plan.
 |---|---|
 | Name, email address and password | To create your account, sign you in and contact you about it. Your password is stored by our sign-in provider in a protected (hashed) form; we never see it. |
 | The organizations and teams you belong to, your role and title | To show you the right screens and let the club control who sees what. |
-| For the account owner who buys a plan: billing address, and the card's brand, last four digits and country | To bill you, to work out the sales tax that applies, and to show you which card is on file. Your full card number goes to Stripe, never to us. |
+| For the account owner who buys a plan, or who turns on online payments for a club: the billing address, and (when a card is used) the card's brand, last four digits and country | To bill you — for your plan, and for the Stripe fees a club's online payments cause — to work out the sales tax that applies, and to show you which card is on file. Your full card number goes to Stripe, never to us. |
 | Purchase, plan and invoice history | To run your subscription and keep the business and tax records the law requires. |
 | Settings you choose (for example light or dark display, reminders you have dismissed) | To remember your preferences. |
 | What you send us — support emails, feedback you submit in the product, a request to delete your organization | To answer you and improve FieldLogicHQ. Feedback submitted in the product also records your internet (IP) address, your browser type and the page you were on, so we can find and fix the problem. |
@@ -135,7 +137,7 @@ needs. We do not sell personal information, and we do not share it with advertis
 | **Supabase** | Database, sign-in and file storage | Everything stored in FieldLogicHQ | **[SUPABASE REGION]** |
 | **Amazon Web Services (AWS)** | Hosts the website | Everything that passes through the website | United States (Ohio) |
 | **Resend** | Sends our emails, and the emails clubs send through FieldLogicHQ | Recipient's name and email address, and the message | United States |
-| **Stripe** | Card payments for our plans; and, when a club takes payments online, the club's own payment account | For our plans: the owner's email, billing address and card. For club payments: the payer's email, card, what is being paid for and the player names on the payment | Canada, the United States and other countries |
+| **Stripe** | Card payments for our plans and our invoices for Stripe fees; and, when a club takes payments online, the club's own payment account | For our plans and invoices: the owner's email, the club's billing address and card. For club payments: the payer's email, card, what is being paid for and the player names on the payment | Canada, the United States and other countries |
 | **Google** | Our business email inbox | Messages people send us, which can include contact details | [Google — region not chosen] |
 | **Your browser's push service** (for example Google, Apple or Mozilla) | Delivers notifications you turn on | A notification address and the alert text — no name or email | Varies |
 

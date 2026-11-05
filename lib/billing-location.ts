@@ -90,7 +90,7 @@ export const BILLING_LOCATION_WORDS = {
 export const BILLING_ADDRESS_FORM_WORDS = {
   title: 'Billing address',
   personTitle: 'Your home address',
-  intro: 'Where your club is billed. We use it to work out the sales tax on your plan, and it prints on your invoices.',
+  intro: 'Where your club is billed. We use it to work out the sales tax on what we bill your club, and it prints on your invoices.',
   personIntro: 'You buy Premium as yourself, so we ask for your home address. We use it only to work out sales tax, and it prints on your receipts.',
   clubSubhead: 'Club billing address',
   clubPrefilled: 'We filled in your home address. Change it if the club has its own.',

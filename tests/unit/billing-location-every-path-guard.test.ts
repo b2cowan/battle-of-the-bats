@@ -252,3 +252,48 @@ describe('one level down: the callers of a helper that charges', () => {
     });
   }
 });
+
+/**
+ * GST/HST Stage 2 Part 2b (Ask 8, owner 2026-11-05): turning on online payments is a door to an INVOICE, not a charge, so the
+ * census above cannot see it. The club's Stripe fees are invoiced and taxed by its billing address, and Stripe refuses a taxed
+ * invoice it cannot place. So `connect` (a new account and a reconnect alike) asks for the club's own address before any
+ * Stripe call, and the Payouts card opens the Billing address window on the refusal instead of showing an error.
+ */
+describe('turning on online payments asks for the club’s billing address first (Part 2b)', () => {
+  const ROUTE = 'app/api/admin/payouts/route.ts';
+  const CARD = 'components/admin/kit/club/PayoutsCard.tsx';
+
+  it(`${ROUTE}: connect checks the address before it touches Stripe or the payout account`, () => {
+    const connect = between(CODE.get(ROUTE)!, "case 'connect':", "case 'agree_terms':", `${ROUTE} connect`);
+    const check = connect.indexOf('requireBillingLocation(');
+    assert.ok(check >= 0, `${ROUTE}: connect must call requireBillingLocation (GST_HST_STAGE2_PART2B_BUILD_PROMPT.md Part 1)`);
+    for (const after of ['createClubAccount(', 'retrieveAccount(', "from('org_payment_accounts')", 'onboardingLink(']) {
+      const at = connect.indexOf(after);
+      assert.ok(at === -1 || check < at, `${ROUTE}: the address check must come before ${after} — a refusal creates and changes nothing`);
+    }
+    assert.match(connect, /if \(!address\.ok\) return address\.response;/, `${ROUTE}: connect must return the address refusal as is (409)`);
+    assert.match(connect, /kind: 'org'/, `${ROUTE}: connect checks the CLUB's own row, the one the fee invoice reads`);
+  });
+
+  it(`${CARD}: the Before window asks first, and opens the window on the server's refusal`, () => {
+    const before = between(CODE.get(CARD)!, 'function BeforeWindow(', 'function TermsRow(', `${CARD} BeforeWindow`);
+    assert.match(before, /useBillingAddressGate\(\{ orgSlug \}\)/, `${CARD}: the Before window needs the billing-address gate`);
+    assert.match(before, /address\.ensure\(\(\) => void go\(\)\)/, `${CARD}: the connect button must go through ensure(go)`);
+    assert.match(before, /if \(isAddressRefusal\(e\)\) \{ address\.refused\(\(\) => void go\(\)\); return; \}/,
+      `${CARD}: billing_address_required must open the window and retry the connect, not show an error`);
+    assert.match(before, /if \(address\.open && address\.dialog\) return address\.dialog;/,
+      `${CARD}: the address window replaces the Before window (which stays mounted, so the fee choice and the tick survive) — `
+      + 'only once it can draw, or a failed address read blanks the window with no way out (/review 2026-11-05)');
+  });
+
+  it(`${CARD}: a club connected without an address sees the line (owner ruling A), by the fee invoice's own test`, () => {
+    assert.match(CODE.get(ROUTE)!, /addressMissing: isOwner && facts && !facts\.disconnectedAt\s*\? !\(await clubFeeInvoicePlaceable\(ctx\.org\)/,
+      `${ROUTE}: addressMissing must use clubFeeInvoicePlaceable, the test invoiceOneClub waits on`);
+    assert.match(CODE.get(CARD)!, /isOwner && view\.addressMissing && <AddressMissingLine /, `${CARD}: the card must show the address line to the owner`);
+    assert.match(between(CODE.get(CARD)!, 'function AddressMissingLine(', 'function PayoutsRecord(', `${CARD} AddressMissingLine`),
+      /if \(address\.location\) return null;[\s\S]*onClick=\{\(\) => address\.edit\(\)\}/,
+      `${CARD}: the line's button opens the Billing address window, and the line goes once the address is saved`);
+    assert.match(CODE.get('lib/platform-stripe-fees.ts')!, /if \(!\(await placeable\(location, existingCustomer\)\)\) \{/,
+      'lib/platform-stripe-fees.ts: invoiceOneClub must wait on placeable(), the same test the card reads');
+  });
+});

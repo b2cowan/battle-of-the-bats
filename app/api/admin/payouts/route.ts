@@ -18,6 +18,8 @@ import { workspaceHoldsFoundingComp } from '@/lib/founding-season';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { endingNotice, readOutstanding, upcomingEnding } from '@/lib/online-payment-endings';
 import { closeClubPayPages } from '@/lib/online-pay-pages';
+import { requireBillingLocation } from '@/lib/billing-location-server';
+import { clubFeeInvoicePlaceable } from '@/lib/platform-stripe-fees';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -130,6 +132,11 @@ export const GET = withObservability(async (req: Request) => {
     ending: isOwner && facts && !facts.disconnectedAt && c.planOffers
       ? await upcomingEnding(ctx.org.id).then(e => (e ? endingNotice(e, ctx.org.name, out) : null)).catch(() => null)
       : null,
+    // GST/HST Stage 2 Part 2b (owner ruling A): a club connected without a billing address — its Stripe fees wait unbilled
+    // (the same test the fee invoice waits on). The owner's, while connected. A failed read leaves the line off.
+    addressMissing: isOwner && facts && !facts.disconnectedAt
+      ? !(await clubFeeInvoicePlaceable(ctx.org).catch(() => true))
+      : false,
   });
 }, { route: '/api/admin/payouts' });
 
@@ -188,6 +195,12 @@ export const POST = withObservability(async (req: Request) => {
       if (!c.planOffers) return refused();
       // "Before you set up payouts": the who-pays choice and the terms, recorded before Stripe (owner 2026-10-24).
       if (body.agreeToTerms !== true) return NextResponse.json({ error: 'Agree to the payments terms first.' }, { status: 400 });
+      // GST/HST Stage 2 Part 2b (Ask 8): the club's billing address, before ANY Stripe call — a new account and a reconnect
+      // alike. The club's Stripe fees are invoiced and taxed by it, and Stripe refuses a taxed invoice it cannot place. A
+      // refusal (`billing_address_required`, or a held US address) creates and changes nothing; the card opens the window.
+      // The club's OWN row (kind 'org'), the one the fee invoice reads (`clubBillingLocation`), never the payout account's.
+      const address = await requireBillingLocation({ kind: 'org', orgId: ctx.org.id, name: ctx.org.name, stripeCustomerId: ctx.org.stripeCustomerId ?? null });
+      if (!address.ok) return address.response;
       const feePayer: OnlineFeePayer = ONLINE_FEE_PAYERS.includes(body.feePayer) ? body.feePayer : 'family';
       const terms = { terms_version: PAYMENTS_TERMS_VERSION, terms_agreed_by: ctx.user.id, terms_agreed_by_email: ctx.user.email ?? 'unknown', terms_agreed_at: now };
       let accountId = row?.stripe_account_id ?? null;

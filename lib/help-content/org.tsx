@@ -301,7 +301,7 @@ const orgHelp: HelpPageContent = {
             <>
               <p>Before your club&rsquo;s first paid checkout, a <strong>Billing address</strong> window asks where the club is billed. You answer once: later purchases go straight through and say <strong>Billed to</strong> the address on file.</p>
               <ul>
-                <li>We use it to work out the sales tax on your plan, and it prints on your invoices. Nothing is charged differently today.</li>
+                <li>We use it to work out the sales tax on what we bill your club, and it prints on your invoices. Nothing is charged differently today.</li>
                 <li>Give the club&rsquo;s own address. When a coach turns a Coaches Portal into a club with <strong>Start your club</strong>, the <strong>Club billing address</strong> is filled in from the coach&rsquo;s home address &mdash; change it if the club has its own.</li>
                 <li>A PO Box on its own can&rsquo;t be a billing address. Enter a street address.</li>
                 <li>A free or comped plan isn&rsquo;t asked until someone presses a button that pays.</li>

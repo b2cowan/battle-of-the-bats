@@ -31,6 +31,14 @@ Club Tier 12d-1); owner ruling T2 (plan) taxes the payment fee on top; Stage 2 A
   and the document the club receives must be a credit note showing the tax adjusted (ETA s.232). In Stripe, a credit note against
   the invoice line reverses that line's tax; a refund linked to a credit note keeps the tax reduction even if the refund fails;
   an unlinked refund's reduction holds only if the refund succeeds.
+- **A fee that waits unbilled is not tax-free while it waits** (added 2026-11-05, Stage 2 Part 2b). Tax is payable when
+  consideration becomes due (ETA s.168(1)), and s.152(1) makes it due on the EARLIEST of (a) the invoice's issue date or date,
+  **(b) "the day the supplier would have, but for an undue delay, issued an invoice"**, and (c) the day a written agreement
+  requires payment. A club's fees held back because it has no billing address (the `NO_ADDRESS` wait) would have gone on that
+  month's fee invoice, so a long wait risks (b): the tax counts as owing in the period the invoice would have gone out, at a
+  province we cannot yet name. Once the payments terms say when fees are due, (c) bites the same way. Part 2b makes this an
+  edge case (every connect now needs the address; production had 0 payout accounts on 2026-11-05) — it is the reason the wait
+  must stay short, not a reason to bill untaxed.
 
 ## Recommendation (for Stage 2 Part 2)
 1. Give every recovered-fee invoice item an explicit `tax_behavior: 'exclusive'` and an explicit Stripe tax code for a general
@@ -43,6 +51,7 @@ Club Tier 12d-1); owner ruling T2 (plan) taxes the payment fee on top; Stage 2 A
 4. Keep the fee and the recoveries on one switch: if D1 is ever answered "exempt", both lose tax together.
 
 ## Sources
+- [Excise Tax Act s.152 — when consideration becomes due](https://laws-lois.justice.gc.ca/eng/acts/E-15/section-152.html) — accessed 2026-11-05
 - [CRA P-182R — Agency](https://www.canada.ca/en/revenue-agency/services/forms-publications/publications/p-182r/agency.html) — accessed 2026-11-05
 - [CRA GI-012 — Agents](https://www.canada.ca/en/revenue-agency/services/forms-publications/publications/gi-012/agents.html) — accessed 2026-11-05
 - [CRA P-209R — Lawyers' disbursements](https://www.canada.ca/en/revenue-agency/services/forms-publications/publications/p-209r/lawyers-disbursements.html) — accessed 2026-11-05

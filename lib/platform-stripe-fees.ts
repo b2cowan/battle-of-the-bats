@@ -450,7 +450,7 @@ async function invoiceOneClub(orgId: string, candidates: FeeRow[], periodStart: 
   // bought) waits: its fees stay unbilled with a plain reason platform admin shows, and go out on the first run after it has one.
   const location = await clubBillingLocation(orgId, org.name as string);
   const existingCustomer = (org.stripe_customer_id as string | null) ?? null;
-  if (!location && !(existingCustomer && await customerHasAddress(existingCustomer))) {
+  if (!(await placeable(location, existingCustomer))) {
     await supabaseAdmin.from('platform_stripe_fees').update({ bill_error: NO_ADDRESS })
       .in('id', ours.map(f => f.id)).is('billed_at', null);
     return false;
@@ -484,11 +484,26 @@ async function invoiceOneClub(orgId: string, candidates: FeeRow[], periodStart: 
 }
 
 /** Platform admin's reason on a fee that waits for the club's address (operator words; the club is not emailed). */
-const NO_ADDRESS = 'The club has no billing address on file, so the tax on its invoice can’t be worked out. Its fees go out on the first monthly invoice after it adds one on Plan & billing.';
+// Part 2b (owner, 2026-11-05): only the Payouts card is named. Plan & billing shows its Billing address button once an address
+// is on file, so a club with none cannot add one there; every club this holds is connected, and its Payouts card asks.
+const NO_ADDRESS = 'The club has no billing address on file, so the tax on its invoice can’t be worked out. Its fees go out on the first monthly invoice after it adds one on its Payouts card.';
 
 async function clubBillingLocation(orgId: string, name: string): Promise<BillingLocation | null> {
   const stored = await readBillingLocation({ kind: 'org', orgId, name });
   return stored ? storedLocationStillValid(stored, usSalesOpen()) : null;
+}
+
+/** THE test the fee invoice waits on: an address on our records, or (failing that) one on the club's Stripe customer. */
+async function placeable(location: BillingLocation | null, customerId: string | null): Promise<boolean> {
+  return !!location || (!!customerId && await customerHasAddress(customerId));
+}
+
+/**
+ * GST/HST Stage 2 Part 2b (owner ruling A): whether this club's fee invoice could be made today, by the same test
+ * `invoiceOneClub` waits on, so the Payouts card's "add your billing address" line shows exactly while the fees would wait.
+ */
+export async function clubFeeInvoicePlaceable(org: { id: string; name: string; stripeCustomerId?: string | null }): Promise<boolean> {
+  return placeable(await clubBillingLocation(org.id, org.name), org.stripeCustomerId ?? null);
 }
 
 async function customerHasAddress(customerId: string): Promise<boolean> {
