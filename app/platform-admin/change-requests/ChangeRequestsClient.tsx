@@ -519,6 +519,9 @@ export default function ChangeRequestsClient({
       } else if (status === 'implemented') {
         setNotice('Change request marked implemented.');
         setSelectedRequestId(null);
+      } else if (status === 'rejected') {
+        setNotice('Change request rejected.');
+        setSelectedRequestId(null);
       } else {
         setNotice('Change request updated.');
       }
@@ -874,7 +877,7 @@ export default function ChangeRequestsClient({
               {/* A Production price: switching it asks for the password again and emails the owner (Ask 1). */}
               {canManageProduct && selectedPriceProposal?.environment === 'live'
                 && (selectedRequest.status === 'needs_review' || selectedRequest.status === 'approved') && (
-                <p className={kit.muted}>{SIGN_IN_AGAIN_WORDS.priceWarning}</p>
+                <p className={styles.modalNote}>{SIGN_IN_AGAIN_WORDS.priceWarning}</p>
               )}
             </div>
 

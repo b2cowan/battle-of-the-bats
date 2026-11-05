@@ -1,0 +1,340 @@
+<title>Plan Move Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box (the house walk frame). */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .facts { grid-template-columns: 1fr; } .facts dd { margin-bottom: 6px; } }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.call { font-size: 13px; color: var(--warn); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+.opts { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; }
+.opt { display: flex; gap: 8px; align-items: flex-start; font-size: 0.95em; }
+.opt input { margin-top: 3px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · Plans end at the renewal date · Stage 2 · §453</span>
+    <h1>A move to the free plan waits for the renewal date: the owner, the emails, the operator</h1>
+    <p class="sub">Written 2026-11-04 for Stage 2 (Parts A, B and C: <code>155c9a615</code>, <code>bcb569bd7</code>, <code>22335eae4</code>). This is the one owner walk the plan puts at the end of Stage 2. It runs on the dev site against real Stripe test-mode subscriptions.</p>
+  </header>
+  <section class="card"><h2>What this walk is for</h2><p>Before Stage 2, moving a paid plan to the free plan happened at the click, and the club lost the rest of the period it had paid for. Now the move waits for the renewal date. Until then the club keeps every paid tool and all its tournaments. The owner chooses which tournament stays, can change that choice, and can keep the paid plan at any time. Emails tell them when the move is scheduled, seven days before, and when it has happened. Staff see the waiting move on the club record and can’t change the plan underneath it. When Stripe’s end-of-period message goes missing, Finish this ending now moves the club, never suspends it. This walk proves that whole loop from both sides.</p></section>
+  <section class="card"><h2>It passes when</h2><ul>
+    <li>Moving to Tournament leaves the club on Tournament Plus with every tournament live, and the billing page says the date and which tournament it keeps.</li>
+    <li>A tournament made during the wait is in the choice, and is archived on the date unless it was chosen.</li>
+    <li>Keep Tournament Plus calls the move off. Cancelling replaces it, and keeping after a cancel returns the full paid plan, not the move.</li>
+    <li>Each email arrives once, with the right dates and the right tournament names, even when the daily job runs twice.</li>
+    <li>On the date the club moves to Tournament: the chosen tournament stays, the rest are archived, and the club is never suspended.</li>
+    <li>Staff can’t change the plan while a move waits, and the refusal names the door that comes first.</li>
+  </ul></section>
+  <section class="card"><h2>Not in this walk</h2><ul>
+    <li><strong>A real renewal date a month away.</strong> Part I ends Move Walk Club’s Stripe subscription early, which fires the same Stripe message the date would. Stage 3’s test-clock rehearsal runs the real date.</li>
+    <li><strong>A Finish that finds Stripe still billing a move.</strong> It runs the same code the Stage 1 walk passed for a cancel (H), and unit tests cover it for a move.</li>
+    <li><strong>A club with online payments.</strong> None of the walk clubs takes payments online. Unit tests pin the dated words.</li>
+    <li><strong>A Coaches Portal.</strong> It has no move to the free plan here. <strong>The help articles</strong> are Stage 4.</li>
+  </ul></section>
+  <section class="card"><h2>Before you start</h2><dl class="facts">
+    <dt>Dev site</dt><dd><strong>https://dev.fieldlogichq.ca</strong> must be running Stage 2 Part C. I push dev when you say so; then it rebuilds (about 20 minutes). Step A2 checks it. Don’t start Part B before A2 passes.</dd>
+    <dt>Fixture</dt><dd>In the project folder: <code>node --env-file=.env.local scripts/seed-plan-move-walk.mjs --inbox &lt;your plain address&gt;</code>. It takes about a minute and builds four Tournament Plus clubs, three of them on real Stripe test subscriptions. Each club’s owner is your inbox with a plus part, <code>+pm1</code> to <code>+pm4</code>, password <code>UATPassword2026!</code>. It prints each club’s record link.</dd>
+    <dt>The clubs</dt><dd><strong>Move Walk Club</strong> (+pm1): Spring Classic, Summer Slam (draft) and Fall Cup, for Parts B to E and I. <strong>Move Spare Club</strong> (+pm4): one tournament, Only Cup, for Part F. <strong>Move Reminder Club</strong> (+pm2): a move about 6 days away whose chosen tournament has since been archived, for Part G. <strong>Move Overdue Club</strong> (+pm3): a move 5 days past its date that Stripe already ended, for Part H.</dd>
+    <dt>Dates</dt><dd>They depend on the day you build the fixture, so steps name them. <strong>“The renewal date”</strong> is Move Walk Club’s, which the fixture prints (about a month from today; Move Spare Club’s is the same day). “{Month D}” is the same date without the year. “+90 days” means 90 days after the date it follows.</dd>
+    <dt>Emails</dt><dd>They arrive in your inbox at the +pm addresses (sender FieldLogicHQ), and they are listed in platform admin › Sent emails. Allow 2 minutes before you count.</dd>
+    <dt>Two windows</dt><dd>Keep the owner and the platform admin signed in side by side: a normal window and a private window, or two browsers.</dd>
+    <dt>When done</dt><dd>Part J.</dd>
+  </dl></section>
+  <section class="card"><h2>Sign in as</h2><dl class="facts">
+    <dt>Club owners</dt><dd><code>you+pm1@…</code> to <code>you+pm4@…</code> (your address with the plus part) · <code>UATPassword2026!</code> · billing page <code>https://dev.fieldlogichq.ca/&lt;club slug&gt;/admin/org/billing</code>. The slugs are <code>move-walk-club</code>, <code>move-spare-club</code>, <code>move-reminder-club</code> and <code>move-overdue-club</code>.</dd>
+    <dt>Platform admin</dt><dd><code>uat-platform@fieldlogichq.ca</code> · <code>UATPassword2026!</code> · <code>https://dev.fieldlogichq.ca/platform-admin/login</code></dd>
+    <dt>Keep it private</dt><dd>These are dev-only passwords, and this page carries them.</dd>
+  </dl></section>
+  <section class="card"><h2>Calls to make as you go</h2><ul>
+    <li><strong>The emails’ words (B5, G3, I4).</strong> They are Stage 2’s plain words; Stage 4 polishes them. Say in the notes if one says something wrong, not just something plain.</li>
+    <li><strong>The Finish notice’s date (H3).</strong> The fixture ends Move Overdue Club’s subscription in Stripe on the day you build it, so Stripe’s own end date is today and the data is kept from today. In real life Stripe’s end date is the renewal date. Say if you want the walk to prove the other case too.</li>
+  </ul></section>
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+</main>
+
+<script>
+(function () {
+  var KEY = "plan-ending-stage2-walk-v1";
+  var TITLE = "Plans end at the renewal date · Stage 2 walk §453 · A move to the free plan waits for the renewal date (2026-11-04)";
+  var PA = "Platform admin";
+  var O1 = "Owner (+pm1)";
+  var BILL = "<code>https://dev.fieldlogichq.ca/move-walk-club/admin/org/billing</code>";
+  var FX = "<code>node --env-file=.env.local scripts/seed-plan-move-walk.mjs";
+  var WINDOW = "A window, <strong>Downgrade to Tournament?</strong>: “This takes effect on {the renewal date}, the end of the period you paid for. Until then you keep every Tournament Plus tool. Nothing is credited.”";
+  var WAITING = "the plan card keeps its green <strong>Active</strong> chip and reads “Moves to Tournament on {the renewal date}.”, with a lime <strong>Keep Tournament Plus</strong> button beside Payment method &amp; invoices. Under the card, a white callout headed “On {the renewal date}”";
+  var DOORS = "Under Change plan the buttons are gone, with one line: “Your plan moves to Tournament on {the renewal date}. Keep Tournament Plus first, then change it.” The Tournament row has an amber “From {Mon D}” chip. Reduce or cancel is still there";
+  var BACK = "“Renews {the renewal date}” is back, the callout under the card is gone, and so are the line and the From chip under Change plan; its buttons are back";
+  var PARTS = [
+ { id: "A", title: "The dev site has Stage 2 Part C (stop check), and the two new emails are registered", steps: [
+  { who: "Terminal", do: "Run " + FX + " --inbox &lt;your plain address&gt;</code>.",
+    see: "It prints four clubs with their tournaments, two “moves to Tournament …” lines (Move Reminder Club about 6 days from today, picked Old Classic; Move Overdue Club 5 days ago, picked Lakeside Open), four record links, and “Move Walk Club renews …”. Write that date down: it is <strong>the renewal date</strong>." },
+  { who: PA + " · computer", do: "Sign in and open <code>https://dev.fieldlogichq.ca/platform-admin/retention</code>.",
+    see: "The section <strong>Endings Stripe hasn’t finished</strong> lists Move Overdue Club, its Plan column reading “Tournament Plus · move to Tournament”. Its date column is headed <strong>Should have moved</strong> (or “Should have ended or moved” if another club’s cancel is listed beside it).",
+    options: ["Listed, and the heading says “moved”", "The heading still says only “Should have ended”: the dev site is on the old build. STOPPED, will wait and retry"] },
+  { who: PA, do: "Open <strong>Email templates</strong> in the left rail.",
+    see: "Two new entries, <strong>Move to the free plan scheduled</strong> and <strong>Move to the free plan reminder</strong>. <strong>Plan Downgraded</strong>’s note now reads “Sent on the date a move to the free plan happens: the renewal date of a paid plan, or at once when there is no paid period to wait for. Once per move.”" }
+ ]},
+ { id: "B", title: "The owner moves to the free plan (Move Walk Club, +pm1)", steps: [
+  { who: O1 + " · computer", do: "Sign in and open " + BILL + ".",
+    see: "Your plan: <strong>Tournament Plus</strong>, $39 CAD / month, Renews {the renewal date}. Under Change plan, the Tournament row has a <strong>Downgrade to Tournament</strong> button." },
+  { who: O1, do: "Press <strong>Downgrade to Tournament</strong>.",
+    see: WINDOW + " Then “One tournament at a time …”, “In use now: 3.”, the line listing the Tournament Plus tools that turn off, and “Choose 1 tournament to keep active. On {Month D} the rest move to archive retention for 90 days.” with three boxes: Spring Classic, Summer Slam, Fall Cup. The footer reads “Moves on {the renewal date}.” and the lime <strong>Downgrade on {Month D}</strong> stays greyed until one box is ticked." },
+  { who: O1, do: "Tick <strong>Spring Classic</strong>, type “Walk B” as the reason and press <strong>Downgrade on {Month D}</strong>.",
+    see: "A notice “Move Walk Club moves to Tournament on {the renewal date}.” Then " + WAITING + ": “You keep <strong>Spring Classic</strong>. Summer Slam and Fall Cup are archived then and kept for 90 days, so they can come back. So is any other tournament you make before then.” and a <strong>Change which tournament you keep</strong> link. " + DOORS + "." },
+  { who: O1, do: "Open <strong>Tournaments</strong> in the left rail.",
+    see: "All three tournaments are there exactly as before. Nothing is archived yet." },
+  { who: "Inbox · +pm1", do: "Open the new message.",
+    see: "<strong>One</strong> email, subject “Your move to Tournament is scheduled for {the renewal date}”, heading “Your move to Tournament is scheduled”. “You chose to move Move Walk Club from Tournament Plus to Tournament on {today}. This takes effect on {the renewal date}, the end of the period you paid for. Until then you keep every Tournament Plus tool. Nothing is credited.” A panel “On {the renewal date}”: “Move Walk Club moves to Tournament. You keep Spring Classic. Summer Slam and Fall Cup are archived then and kept until {the renewal date +90 days}, so they can come back if you upgrade before then. So is any other tournament you make before then. Tools that come only with Tournament Plus turn off.” Then “Changed your mind? You can keep Tournament Plus any time before {Month D}. To change which tournament you keep, open Plan &amp; billing.”, a <strong>Keep Tournament Plus</strong> button and “We’ll remind you seven days before the move.”" },
+  { who: PA, do: "Open Move Walk Club’s record (the first link the fixture printed).",
+    see: "An amber callout: “<strong>Moving to Tournament.</strong> Moves {the renewal date}, at the period end. Asked by the owner on {today}: “Walk B”.”, with <strong>Keep the plan</strong> and a red <strong>End now…</strong>. The top band shows <strong>Moves</strong> {the renewal date}, “to Tournament · from Stripe”." },
+  { who: O1 + " · phone width (390 px)", do: "Reload the billing page.",
+    see: "The “Moves to Tournament on …” line with Keep Tournament Plus as a full-width lime button, and the callout under it. Nothing runs off the side." }
+ ]},
+ { id: "C", title: "A tournament made during the wait, and Change which tournament you keep", steps: [
+  { who: O1 + " · computer", do: "Make a new tournament named <strong>Walk Extra</strong> (it can stay a draft).",
+    see: "It is created. Tournament Plus has no tournament limit, so nothing stops it." },
+  { who: O1, do: "Reload the billing page.",
+    see: "The callout now reads “You keep <strong>Spring Classic</strong>. Summer Slam, Fall Cup and Walk Extra are archived then …” (any order)." },
+  { who: O1, do: "Press <strong>Change which tournament you keep</strong>.",
+    see: "A window, <strong>Change which tournament you keep</strong>: “On {the renewal date}, Move Walk Club moves to Tournament, which holds 1 tournament at a time. Choose the one that stays active. The rest are archived then and kept for 90 days.” Four tournaments: Spring Classic marked “your choice so far”, Walk Extra marked “added {today, Mon D}”. The footer reads “Nothing changes until {Month D}.” and <strong>Save choice</strong> stays greyed until you change the pick." },
+  { who: O1, do: "Choose <strong>Fall Cup</strong> and press <strong>Save choice</strong>.",
+    see: "A notice “On {the renewal date} you keep Fall Cup.” The callout now names Fall Cup as kept and the other three as archived then. No email at +pm1: a changed choice sends none." }
+ ]},
+ { id: "D", title: "Keep Tournament Plus calls the move off", steps: [
+  { who: O1, do: "Press <strong>Keep Tournament Plus</strong>.",
+    see: "A window, <strong>Keep Tournament Plus?</strong>: “Move Walk Club stays on Tournament Plus and renews on {the renewal date} at $39 CAD / month.” and “The move to Tournament is called off, and no tournament is archived.”, with Not now and a lime <strong>Keep Tournament Plus</strong>." },
+  { who: O1, do: "Press <strong>Keep Tournament Plus</strong>.",
+    see: "A notice “Move Walk Club stays on Tournament Plus.” " + BACK + "." },
+  { who: "Inbox · +pm1", do: "Open the new message.",
+    see: "<strong>One</strong> email, subject “Tournament Plus will renew on {the renewal date}”, heading “Tournament Plus stays on”: “You kept Tournament Plus for Move Walk Club. It renews on {the renewal date} at $39 CAD / month. The move to Tournament is called off, and no tournament is archived.”, with an <strong>Open Plan &amp; billing</strong> button." },
+  { who: PA, do: "Reload the record.",
+    see: "The Moving to Tournament callout is gone, and the band shows the renewal date again." }
+ ]},
+ { id: "E", title: "A cancel replaces a waiting move, and Keep after it returns the full plan", steps: [
+  { who: O1, do: "Press <strong>Downgrade to Tournament</strong> again, tick Spring Classic, reason “Walk E”, and confirm.",
+    see: "The waiting state from B3 is back. At +pm1, one more “Your move to Tournament is scheduled …” email (a new move, a new email)." },
+  { who: O1, do: "At the foot, press <strong>Cancel Tournament Plus…</strong>.",
+    see: "A window, <strong>Cancel Tournament Plus?</strong>, with an extra amber-edged line: “You chose to move to Tournament on {Month D}. Cancelling replaces that move. If you then keep Tournament Plus, you stay on Tournament Plus.” The red button reads <strong>Cancel on {Month D}</strong>." },
+  { who: O1, do: "Type “Walk E3” and press <strong>Cancel on {Month D}</strong>.",
+    see: "A notice “Move Walk Club ends on {the renewal date}. You can keep it until then.” An amber <strong>Ending</strong> chip and “Ends on {the renewal date}, the last day you paid for.” The move’s callout under the card is gone, Reduce or cancel is gone, and Change plan says “Your plan ends on {the renewal date}. Keep Tournament Plus first, then change it.” At +pm1, one “Your Tournament Plus plan ends on {the renewal date}” email (a cancel’s: it says the club is suspended on that date). On the record, the amber callout reads <strong>Ending.</strong>, not Moving." },
+  { who: O1, do: "Press <strong>Keep Tournament Plus</strong>, then Keep in the window.",
+    see: "The window’s second sentence is “Nothing else changes.” (not the move’s). Afterwards " + BACK + ". <strong>The pass condition:</strong> no “Moves to Tournament” line comes back. Keeping after the cancel returns the full paid plan, not the move it replaced." },
+  { who: "Inbox · +pm1", do: "Open the new message.",
+    see: "One “Tournament Plus will renew on {the renewal date}” email ending “Nothing else changes.”" }
+ ]},
+ { id: "F", title: "A move with nothing to choose (Move Spare Club, +pm4)", steps: [
+  { who: "Owner (+pm4)", do: "Sign in, open <code>https://dev.fieldlogichq.ca/move-spare-club/admin/org/billing</code> and press <strong>Downgrade to Tournament</strong>.",
+    see: WINDOW + " In place of the boxes: “Your current tournament usage fits this plan. No tournaments need to move into retention.” <strong>Downgrade on {Month D}</strong> is ready to press." },
+  { who: "Owner (+pm4)", do: "Press <strong>Downgrade on {Month D}</strong>.",
+    see: "The waiting state, its callout reading “You keep <strong>Only Cup</strong>. Any other tournament you make before then is archived then and kept for 90 days, so it can come back.” There is no Change which tournament you keep link: there is nothing to choose." },
+  { who: "Inbox · +pm4", do: "Open the new message.",
+    see: "One “Your move to Tournament is scheduled for {the renewal date}” email. Its panel reads “Move Spare Club moves to Tournament. You keep Only Cup. Any other tournament you make before then is archived then and kept until {the renewal date +90 days}. …”, and it has no “To change which tournament you keep” sentence." }
+ ]},
+ { id: "G", title: "The reminder when the kept tournament is gone, and staff can’t change the plan (Move Reminder Club, +pm2)", steps: [
+  { who: "Owner (+pm2)", do: "Sign in and open <code>https://dev.fieldlogichq.ca/move-reminder-club/admin/org/billing</code>. Don’t press Keep: this club has no Stripe subscription.",
+    see: "“Moves to Tournament on {date}” (about 6 days from today: <strong>the reminder date</strong>). The callout under the card is amber, not white: “The tournament you chose to keep is no longer a draft or active event, so choose the one you keep. If you don’t choose by {Month D}, we keep Winter Cup, your newest.”, with a <strong>Choose the tournament you keep</strong> link." },
+  { who: "Terminal", do: "Run " + FX + " --daily</code>. It runs the daily job on the dev site, the same call the 6:15 a.m. run makes.",
+    see: "“sent.”" },
+  { who: "Inbox · +pm2", do: "Wait 2 minutes and open the new message.",
+    see: "<strong>One</strong> email, subject “Your move to Tournament is in N days”, heading “N days until your move to Tournament”: “Move Reminder Club moves from Tournament Plus to Tournament on {the reminder date}. Until then everything stays open.” A panel “On {the reminder date}”: “Move Reminder Club moves to Tournament. The tournament you chose to keep is no longer a draft or active event, so choose the one you keep. If you don’t choose by {Month D}, we keep Winter Cup, your newest. Indoor Open is archived then and kept until {the reminder date +90 days}, …” and a <strong>Keep Tournament Plus</strong> button. N is the number of days from today to that date (6, or 5 late in the evening)." },
+  { who: "Terminal", do: "Run " + FX + " --daily</code> a second time and wait 2 minutes.",
+    see: "<strong>No</strong> second reminder at +pm2, and nothing new at +pm1, +pm3 or +pm4." },
+  { who: PA, do: "Open Move Reminder Club’s record, press the <strong>Edit</strong> pencil, change Plan to <strong>Club</strong>, then save, with “Walk G5” as the Why.",
+    see: "The save window stays open with a red line under the Why: “A move to Tournament is waiting for {the reminder date}. Use Keep the plan on the club’s record first, then try again.” Close it: the record still says Tournament Plus." }
+ ]},
+ { id: "H", title: "An overdue move: staff can’t change it, Finish moves it (Move Overdue Club, +pm3)", steps: [
+  { who: PA, do: "On the retention page, press <strong>Move Overdue Club</strong>.",
+    see: "A red callout: “<strong>Overdue.</strong> This plan should have moved to Tournament on {date} and is still on its paid plan. Stripe’s end-of-period message never reached us.” and <strong>Finish this ending now</strong>. The band reads <strong>Should have moved</strong> {date}, “N days over · not confirmed”." },
+  { who: PA, do: "Open <strong>Bulk changes</strong>. Search “Move Overdue”, select only Move Overdue Club, choose <strong>Plan change</strong> with Target plan <strong>Club</strong>, Reason “Walk H2”, then <strong>Review bulk operation</strong> and <strong>Confirm bulk operation</strong> (it may ask you to sign in again).",
+    see: "Under <strong>Latest operation</strong>, Move Overdue Club: “Skipped: A move to Tournament that should have happened on {date} is still waiting. Use Finish this ending now on the club’s record first, then try again.” The result line counts 1 skipped, 0 succeeded. The record still says Tournament Plus." },
+  { who: PA, do: "Back on the record, press <strong>Finish this ending now</strong>, type “Walk H3” as the Why and press <strong>Read Stripe and finish</strong>.",
+    see: "A green notice: “Stripe ended this subscription on {today}, so Move Overdue Club moved to Tournament as it chose. It is not suspended. One tournament it did not keep is archived until {today +90 days}.” The red callout is gone and the plan reads Tournament.",
+    call: "Today, not the should-have-moved date, because the fixture ended this subscription in Stripe today (see Calls)." },
+  { who: "Inbox · +pm3", do: "Open the new message.",
+    see: "<strong>One</strong> email, subject “Move Overdue Club is now on Tournament”, heading “You’re now on Tournament”: “Move Overdue Club moved from Tournament Plus to Tournament on {today}, as you chose.” A panel “What changed”: “You kept Lakeside Open. Harbour Cup is archived and kept until {today +90 days}. Upgrade before then and it comes back. Tools that came only with Tournament Plus are off.”" },
+  { who: "Owner (+pm3)", do: "Sign in and open <code>https://dev.fieldlogichq.ca/move-overdue-club/admin/org/billing</code>, then Tournaments.",
+    see: "The plan is Tournament and the club is open, not suspended. Lakeside Open is active; Harbour Cup is archived." }
+ ]},
+ { id: "I", title: "The date itself (Move Walk Club; destructive, so it goes last)", steps: [
+  { who: O1, do: "Press <strong>Downgrade to Tournament</strong>, tick <strong>Fall Cup</strong>, reason “Walk I”, and confirm.",
+    see: "The waiting state, keeping Fall Cup; Spring Classic, Summer Slam and Walk Extra are archived then. One more “scheduled” email at +pm1." },
+  { who: "Terminal", do: "Run " + FX + " --date</code>. It ends Move Walk Club’s Stripe subscription now, which sends the dev site the same message the renewal date would.",
+    see: "“… ended in Stripe. Its message reaches the dev site within a minute.” (It refuses if no move is waiting.)" },
+  { who: O1, do: "Wait a minute, then reload the billing page and open Tournaments.",
+    see: "The plan is <strong>Tournament</strong>, with no waiting line, no Keep button and no callout. The club is open, not suspended. <strong>Fall Cup</strong> is still active; Spring Classic, Summer Slam and Walk Extra are archived." },
+  { who: "Inbox · +pm1", do: "Open the new message.",
+    see: "<strong>One</strong> email, subject “Move Walk Club is now on Tournament”: “Move Walk Club moved from Tournament Plus to Tournament on {today}, as you chose.” A panel “What changed”: “You kept Fall Cup. Spring Classic, Summer Slam and Walk Extra are archived and kept until {today +90 days} …” (any order). Nothing else arrives: no “cancelled” email." },
+  { who: PA, do: "Reload Move Walk Club’s record.",
+    see: "Plan Tournament, active, with no Moving or Ending callout." }
+ ]},
+ { id: "J", title: "Put back", steps: [
+  { who: "Terminal", do: "Run " + FX + " --reset</code>.",
+    see: "It removes the four clubs and then stops their Stripe subscriptions. The +pm sign-ins stay. If it says a club couldn’t be removed, tell me what it printed." }
+ ]}
+];
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var steps = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+      if (s.call) t.appendChild(el('span', 'call', s.call));
+      var rec = { part: p.id, step: id, boxes: [], options: s.options || null };
+      if (s.options) {
+        // One box per answer: the tick IS the answer, and the summary prints which one.
+        var opts = el('span', 'opts');
+        s.options.forEach(function (label, k) {
+          var oid = id + String.fromCharCode(97 + k);
+          var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + oid; cb.checked = !!state.ticks[oid];
+          cb.addEventListener('change', function () { state.ticks[oid] = cb.checked; save(); refresh(); });
+          rec.boxes.push({ cb: cb, label: label });
+          var o = el('label', 'opt'); o.appendChild(cb); o.appendChild(el('span', null, label)); opts.appendChild(o);
+        });
+        t.appendChild(opts);
+        var row = el('div', 'step'); row.appendChild(el('span', null, '')); row.appendChild(t); body.appendChild(row);
+      } else {
+        var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+        cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+        rec.boxes.push({ cb: cb, label: null });
+        var row2 = el('label', 'step'); row2.appendChild(cb); row2.appendChild(t); body.appendChild(row2);
+      }
+      steps.push(rec);
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function isDone(r) { return r.boxes.some(function (b) { return b.cb.checked; }); }
+  function doneSteps(partId) { return steps.filter(function (r) { return (!partId || r.part === partId) && isDone(r); }); }
+  var totalSteps = steps.length;
+
+  function refresh() {
+    PARTS.forEach(function (p) {
+      var n = doneSteps(p.id).length;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + p.steps.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    var done = doneSteps(null).length;
+    document.getElementById('total').textContent = done + ' of ' + totalSteps + ' checked';
+    document.getElementById('barfill').style.width = (totalSteps ? Math.round(done * 100 / totalSteps) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [TITLE, 'Checked ' + doneSteps(null).length + ' of ' + totalSteps + ' steps'];
+    PARTS.forEach(function (p) {
+      var ticked = doneSteps(p.id);
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + p.steps.length
+        + (ticked.length ? ' (' + ticked.map(function (r) { return r.step; }).join(', ') + ')' : ''));
+      ticked.filter(function (r) { return r.options; }).forEach(function (r) {
+        lines.push('  ' + r.step + ': ' + r.boxes.filter(function (b) { return b.cb.checked; }).map(function (b) { return b.label; }).join(' + '));
+      });
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    steps.forEach(function (r) { r.boxes.forEach(function (b) { b.cb.checked = false; }); });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

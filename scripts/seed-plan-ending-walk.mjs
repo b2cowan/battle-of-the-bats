@@ -21,6 +21,7 @@
  */
 import { createClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
+import { stripeKeyIsTest } from '../lib/stripe-mode.ts';
 
 const MARKER = 'plan-ending-walk-fixture';
 const PASSWORD = 'UATPassword2026!';
@@ -46,11 +47,11 @@ if (INBOX && !/^[^\s@+]+@[^\s@]+\.[^\s@]+$/.test(INBOX)) {
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
 if (!url.includes(DEV_REF)) { console.error('Refusing: NEXT_PUBLIC_SUPABASE_URL is not the dev project.'); process.exit(2); }
-const stripeKey = process.env.STRIPE_SECRET_KEY ?? '';
-if (!/^(sk|rk)_test_/.test(stripeKey)) { console.error('Refusing: STRIPE_SECRET_KEY is not a TEST key.'); process.exit(2); }
+// Live or test is decided in ONE place (lib/stripe-mode.ts; tests/unit/stripe-mode.test.ts holds every file to it).
+if (!stripeKeyIsTest()) { console.error('Refusing: STRIPE_SECRET_KEY is not a TEST key.'); process.exit(2); }
 
 const db = createClient(url, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
-const stripe = new Stripe(stripeKey);
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const ok = msg => console.log(`  ✓ ${msg}`);
 const head = msg => console.log(`\n${msg}`);
 function die(what, error) { if (error) { console.error(`✗ ${what}: ${error.message ?? error}`); process.exit(1); } }

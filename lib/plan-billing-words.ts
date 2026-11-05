@@ -153,8 +153,8 @@ export const PLAN_BILLING_WORDS = {
     waitBody: (org: string, offline: readonly string[], iso: string, days: number, trialing = false) => `Cancelling ends ${possessive(org)} plan on ${day(iso)}, ${trialing ? 'when your trial ends' : 'the end of the period you paid for'}. Then ${joinWithAnd(offline)} go offline. Your data is kept for ${days} days after that. Reactivate within that time to restore the tools and records your plan allows.`,
     premiumWaitBody: (iso: string, days: number, trialing = false) => `Cancelling turns off Premium tools on ${day(iso)}, ${trialing ? 'when your trial ends' : 'the end of the period you paid for'}. Basic tournament records stay available. Premium team data is kept for ${days} days after that and comes back if you reactivate within that time.`,
     waitDoor: (label: string) => `Cancel ${label}…`, waitTitle: (label: string) => `Cancel ${label}?`,
-    stays: (org: string, iso: string) => `${org} stays open until ${day(iso)}, the end of the period you paid for. Nothing more is charged and nothing is refunded.`,
-    premiumStays: (iso: string) => `Premium stays on until ${day(iso)}, the end of the period you paid for. Nothing more is charged and nothing is refunded.`,
+    stays: (org: string, iso: string) => `${org} stays open until ${day(iso)}, the end of the period you paid for. Nothing more is charged.`,
+    premiumStays: (iso: string) => `Premium stays on until ${day(iso)}, the end of the period you paid for. Nothing more is charged.`,
     trialStays: (org: string, iso: string) => `Your trial runs until ${day(iso)}. ${org} stays open until then. Your card is not charged.`,
     /** Stage 2 ruling 4: a cancel over a waiting move to the free plan replaces it — a later Keep returns the full plan. */
     replacesMove: (move: string, iso: string, current: string) => `You chose to move to ${move} on ${dayOnly(iso)}. Cancelling replaces that move. If you then keep ${current}, you stay on ${current}.`,

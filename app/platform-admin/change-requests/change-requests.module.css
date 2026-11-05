@@ -167,6 +167,14 @@
 
 .detailSection p + p { margin-top: 0.55rem; }
 
+/* The Production-price note sits under the sections, not inside one: a quiet footnote, at the same support size as the check lines. */
+.modalNote {
+  margin: 0;
+  font-size: var(--type-support);
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
 .proposalBlock {
   max-height: 220px;
   overflow: auto;

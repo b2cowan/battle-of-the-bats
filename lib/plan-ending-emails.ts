@@ -130,7 +130,7 @@ function endsOn(f: EndingEmailFacts, end: string): { subject: string; body: stri
   return {
     subject: f.portal ? `${what(f, false)} ends on ${day(end)}` : `Your ${f.planLabel} plan ends on ${day(end)}`,
     body: [
-      warmEmailHeading(f.portal ? `Premium ends on ${day(end)}` : `Your plan ends on ${day(end)}`),
+      warmEmailHeading('We’re sorry to see you go!'),
       warmEmailParagraph(`${cancelledSentence(f)} ${stays}`),
       panel(`On ${day(end)}`, onTheDay(f, true)),
       warmEmailParagraph(`Changed your mind? ${escapeHtml(W.cancel.keepAnyTime(f.planLabel, end))}`),

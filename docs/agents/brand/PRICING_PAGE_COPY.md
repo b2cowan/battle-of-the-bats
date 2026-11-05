@@ -15,6 +15,25 @@
 
 ---
 
+### 🆕 The free League plan runs one season at a time — the refusal words — APPROVED 2026-11-04 (owner: *"go with your recommendations"*; `/marketing`, House League 9f words pass, per `BUSINESS_DECISIONS.md` 2026-11-04 "House League 9f·5"). No prices. **Not built** — 9f-1 (`HOUSE_LEAGUE_STAGE9F1_BUILD_PROMPT.md`); the floor is parked (flag off), so no customer reads these yet.
+
+Source of record with placements: `docs/projects/active/HOUSE_LEAGUE_STAGE9F_COPY.md` §6 and §14. The rule: a getting-ready,
+registration-open/closed or running season holds the one season; a finished one holds nothing. Retires "Your free League plan
+includes one active season" (it counted finished seasons while saying "active"). No pricing-page line moves: the free League floor
+is not on `/pricing`, and "1 season" in `PLAN_PRICING_FACTS.md` is unchanged.
+
+| Where | Words |
+|---|---|
+| Refusal window title (Create season) | One season at a time on your free plan |
+| Body, holder running or open | Your free League plan runs one season at a time, and {Fall Ball 2027} holds it. Once you complete it, you can start the next. It stays on your site. League Plus runs several seasons and age groups side by side. |
+| Body, holder getting ready | Your free League plan runs one season at a time, and {Draft Test 2028} holds it while it’s getting ready. League Plus runs several seasons and age groups side by side. |
+| Body, fallback (no single holder) | Your free League plan runs one season at a time, and a finished one stays on your site. Complete your current season to start the next. League Plus runs several seasons and age groups side by side. |
+| Create route's error text | Your free League plan runs one season at a time, and a finished one stays on your site. Complete your current season to start the next, or upgrade to League Plus to run several seasons. |
+| Reopen window (Reopen button absent, only Close) | Your free League plan runs one season at a time, and {Fall Ball 2027} isn’t finished. Complete it first, then you can reopen this one. · (getting ready) …and {Draft Test 2028} is still getting ready. · League Plus runs several seasons and age groups side by side. |
+| Reopen route's error text | Your free League plan runs one season at a time. Complete your current season before you reopen this one. |
+
+---
+
 ### 🆕 The free Tournament plan on every page — the invite-only event, said everywhere — APPROVED 2026-10-16 (owner: all 43 as recommended, on the free tier hub's Words tab; `/marketing`, the free tournament tier's R9 repositioning after the build `d82c4118`). No prices.
 
 Written from `PLAN_PRICING_FACTS.md`'s "As built 2026-10-16" free list. Supersedes, for the free plan, Section 4's CARD 1, the
