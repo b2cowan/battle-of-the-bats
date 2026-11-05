@@ -14494,8 +14494,11 @@ div.gdRow { cursor: default; }
   gap: 0.45rem;
   font-size: var(--type-support);
   color: var(--badge-warning-ink);
-  background: var(--badge-warning-bg);
-  border: 1px solid var(--badge-warning-border);
+  /* ⚠ `--badge-warning-bg` / `-border` were never defined anywhere, so this note (and the two asks
+     below) rendered with NO tint and NO border. Derived from `--warning-rgb` like `.badge-warning`,
+     which every theme remaps. */
+  background: rgba(var(--warning-rgb), 0.12);
+  border: 1px solid rgba(var(--warning-rgb), 0.3);
   border-radius: 7px;
   padding: 0.5rem 0.7rem;
   margin: 0 0 0.7rem;
@@ -16603,16 +16606,20 @@ button.lineupRulesToggle {
   gap: 0.75rem;
   margin: 0 0 0.75rem;
   padding: 0.65rem 0.8rem;
-  border: 1px solid var(--badge-warning-border);
+  border: 1px solid rgba(var(--warning-rgb), 0.3);
   border-radius: 7px;
-  background: var(--badge-warning-bg);
+  background: rgba(var(--warning-rgb), 0.12);
   color: var(--badge-warning-ink);
 }
 .healthAskText { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 0.15rem; font-size: var(--type-support); }
 .healthAskText b { font-size: var(--type-body); font-weight: 650; }
+/* The Confirm button clears the thumb floor on every touch width (a tablet at 768 measured it 42px). */
+@media (max-width: 768px) {
+  .healthAsk > button { min-height: var(--tap-min, 44px); }
+}
 @media (max-width: 640px) {
   .healthAsk { flex-wrap: wrap; }
-  .healthAsk > button { flex: 1 1 100%; min-height: var(--tap-min, 44px); }
+  .healthAsk > button { flex: 1 1 100%; }
 }
 /* ⚠ Every rule below is written `.debtWhat .x` on purpose. `.debtWhat span { display: block }` (specificity 0,1,1)
    out-ranks a bare `.pastLineShort { display: none }` (0,1,0), so for a while BOTH the desk line and the phone line
@@ -16635,9 +16642,9 @@ button.lineupRulesToggle {
 .sameChildAsk {
   margin: 0.6rem 0 0.4rem;
   padding: 0.65rem 0.8rem;
-  border: 1px solid var(--badge-warning-border);
+  border: 1px solid rgba(var(--warning-rgb), 0.3);
   border-radius: 7px;
-  background: var(--badge-warning-bg);
+  background: rgba(var(--warning-rgb), 0.12);
   color: var(--badge-warning-ink);
 }
 .sameChildAsk b { display: block; font-size: var(--type-body); font-weight: 650; }
