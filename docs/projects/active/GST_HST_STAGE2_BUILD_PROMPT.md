@@ -233,8 +233,11 @@ orphans in platform-admin files this part did not touch.
   "then $X" future prices (panel strip, Premium sign-up's after-Founding choices, PlanStep's "Then $X") are left bare by this part's
   rule though they are real future charges; and "From $X … plus applicable taxes" repeats per discovery card beside the table's one
   sentence (drawing-ruled).
-- Routed, not run: `/marketing` (the public pages and the home page's `PricingSection`: flip `plusTax` or write their own line) and
-  `/strategy` (record T4 "plus applicable taxes" in `PLAN_PRICING_FACTS.md`).
+- Routed and DONE 2026-11-05: `/marketing` committed `0dca09019` (the home page and `/pricing` cards turn `plusTax` on; the
+  Tournament Plus and Premium price blocks, the `/for-clubs` and `/for-leagues` Tournament Plus chips, the `/pricing` FAQ's Premium
+  price and its billing answer carry the phrase; League Plus and Club stay bare while gated, as do "Free through / Normally" lines —
+  copy canon in `PRICING_PAGE_COPY.md`). `/strategy` committed `8ff6e7e1b` (Facts doc note + a progress line on the 2026-10-31 log
+  entry; T2 + T4 were already logged). **The public words must reach production WITH this Stage 2 promote, not before.**
 
 Next: Part 5 (the guard on charging calls) may run now; Part 6 waits for 5; ONE Stage 2 walk at Part 7 (2b has its own). **Owner step before Part 6:** our GST/HST number on TEST-mode invoices (Settings → Invoices → Tax → add, Set as default) — read 2026-11-05: test account has no account tax ID.
 
