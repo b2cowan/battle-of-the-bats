@@ -663,7 +663,7 @@ id (uuid), event_type NOT NULL, source, source_event_id, org_id (uuid) → organ
 - Indexes: idx_platform_events_org_time, idx_platform_events_source_event, idx_platform_events_type_time
 
 ### platform_fee_invoices
-id (uuid), org_id (uuid) → organizations.id NOT NULL, livemode (boolean), period_start NOT NULL, stripe_customer_id NOT NULL, stripe_invoice_id, invoice_number, status, amount_due (numeric), hosted_invoice_url, due_at, finalized_at, emailed_at, reminded_at, paid_at, send_error, created_at, updated_at
+id (uuid), org_id (uuid) → organizations.id NOT NULL, livemode (boolean), period_start NOT NULL, stripe_customer_id NOT NULL, stripe_invoice_id, invoice_number, status, amount_due (numeric), hosted_invoice_url, due_at, finalized_at, emailed_at, reminded_at, paid_at, send_error, created_at, updated_at, total (numeric), tax_lines (jsonb)
 - Indexes: platform_fee_invoices_period_key, platform_fee_invoices_stripe_key, platform_fee_invoices_unpaid_idx
 
 ### platform_feedback_replies

@@ -205,6 +205,34 @@ const CITY_MAX = 100;
 const UNSTORABLE = /[\u0000-\u0008\u000b-\u001f\u007f]|[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/g;
 const tidy = (v: string | null | undefined): string => (v ?? '').replace(UNSTORABLE, '').replace(/\s+/g, ' ').trim();
 
+// Words a name keeps in lower case after its first ("Niagara-on-the-Lake", "Rivière-du-Loup").
+const SMALL_NAME_WORDS = new Set(['de', 'du', 'des', 'la', 'le', 'les', 'sur', 'sous', 'on', 'the', 'of', 'and', 'by', 'au', 'aux', 'en', 'd', 'l']);
+const DIRECTIONS = /^(n|s|e|w|ne|nw|se|sw)$/;
+
+function capitalizeWord(word: string, street: boolean, first: boolean): string {
+  const lower = word.toLowerCase();
+  if (/^\d+(st|nd|rd|th)$/.test(lower)) return lower; // 1st, 22nd
+  if (/\d/.test(lower)) return lower.toUpperCase(); // 4b -> 4B, 123 stays 123
+  if (street && DIRECTIONS.test(lower)) return lower.toUpperCase(); // NW, SE
+  if (!first && SMALL_NAME_WORDS.has(lower)) return lower;
+  return lower.replace(/(^|[-'’])(\p{L})(\p{L}*)/gu, (whole, sep: string, head: string, rest: string) => {
+    if (sep === '-' && SMALL_NAME_WORDS.has(`${head}${rest}`)) return whole; // the "on" in Niagara-on-the-Lake
+    if ((sep === "'" || sep === '’') && head === 's' && !rest) return whole; // John's, not John'S
+    return `${sep}${head.toUpperCase()}${rest}`;
+  });
+}
+
+/**
+ * Owner ruling 2026-11-05 (fee-invoice alerts round): an address typed ENTIRELY in lower case or ENTIRELY in capitals is capitalised
+ * ("123 fake st" -> "123 Fake St"); anything in mixed case is the owner's own spelling and is left exactly as typed. Street lines
+ * also keep directions (NW) and unit letters (4B) in capitals. Never applied to the postal code, which has its own rule.
+ */
+export function tidyAddressCase(value: string, street: boolean): string {
+  const letters = value.replace(/[^\p{L}]/gu, '');
+  if (!letters || (letters !== letters.toLowerCase() && letters !== letters.toUpperCase())) return value;
+  return value.split(' ').map((word, i) => capitalizeWord(word, street, i === 0)).join(' ');
+}
+
 /** Canada Post: no D, F, I, O, Q or U anywhere; no W or Z as the first letter. Returns "A1A 1A1" or null. */
 export function normalizeCanadianPostalCode(raw: string | null | undefined): string | null {
   const s = (raw ?? '').toUpperCase().replace(/[\s-]/g, '');
@@ -245,15 +273,15 @@ export function checkBillingLocation(input: BillingLocationInput, opts: BillingL
   const regionCode = tidy(input.regionCode).toUpperCase();
   if (!country.regions.some((r) => r.code === regionCode)) errors.regionCode = W.region[country.code];
 
-  const line1 = tidy(input.line1);
+  const line1 = tidyAddressCase(tidy(input.line1), true);
   if (!line1) errors.line1 = W.line1;
   else if (line1.length > LINE_MAX) errors.line1 = W.tooLong;
   else if (isPoBoxOnly(line1)) errors.line1 = W.poBox;
 
-  const line2 = tidy(input.line2);
+  const line2 = tidyAddressCase(tidy(input.line2), true);
   if (line2.length > LINE_MAX) errors.line2 = W.tooLong;
 
-  const city = tidy(input.city);
+  const city = tidyAddressCase(tidy(input.city), false);
   if (!city) errors.city = W.city;
   else if (city.length > CITY_MAX) errors.city = W.tooLong;
 

@@ -16587,6 +16587,24 @@
     "ordinal_position": 18
   },
   {
+    "table_name": "platform_fee_invoices",
+    "column_name": "total",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 19
+  },
+  {
+    "table_name": "platform_fee_invoices",
+    "column_name": "tax_lines",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 20
+  },
+  {
     "table_name": "platform_feedback_replies",
     "column_name": "id",
     "data_type": "uuid",

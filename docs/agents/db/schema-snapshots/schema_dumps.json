@@ -16589,6 +16589,24 @@
         "column_default": "now()"
       },
       {
+        "table_name": "platform_fee_invoices",
+        "pos": 19,
+        "column_name": "total",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_fee_invoices",
+        "pos": 20,
+        "column_name": "tax_lines",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "platform_feedback_replies",
         "pos": 1,
         "column_name": "id",
@@ -44428,6 +44446,12 @@
         "table_name": "platform_fee_invoices",
         "detail": "platform_fee_invoices_status_check",
         "check_clause": "(status = ANY (ARRAY['draft'::text, 'open'::text, 'paid'::text, 'void'::text, 'uncollectible'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_fee_invoices",
+        "detail": "platform_fee_invoices_tax_lines_chk",
+        "check_clause": "((tax_lines IS NULL) OR (jsonb_typeof(tax_lines) = 'array'::text))"
       },
       {
         "kind": "RLS",

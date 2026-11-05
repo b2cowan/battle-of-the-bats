@@ -375,8 +375,10 @@ type InvoiceRow = {
   id: string; org_id: string; livemode: boolean; period_start: string; stripe_customer_id: string; stripe_invoice_id: string | null;
   invoice_number: string | null; status: string; amount_due: number | null; hosted_invoice_url: string | null; due_at: string | null;
   finalized_at: string | null; emailed_at: string | null; reminded_at: string | null; paid_at: string | null;
+  /** Migration 444: Stripe's invoice total (tax included) and its named tax lines [{ label, cents }]; null until first synced after it. */
+  total: number | null; tax_lines: Array<{ label: string; cents: number }> | null;
 };
-const INVOICE_COLUMNS = 'id, org_id, livemode, period_start, stripe_customer_id, stripe_invoice_id, invoice_number, status, amount_due, hosted_invoice_url, due_at, finalized_at, emailed_at, reminded_at, paid_at';
+const INVOICE_COLUMNS = 'id, org_id, livemode, period_start, stripe_customer_id, stripe_invoice_id, invoice_number, status, amount_due, hosted_invoice_url, due_at, finalized_at, emailed_at, reminded_at, paid_at, total, tax_lines';
 
 /** The 1st this month (org zone) as an instant, and the month the invoice sent on it bills. */
 export function feeInvoicePeriod(now: Date = new Date()): { cutoff: string; periodStart: string; firstOfThis: string } {
@@ -581,8 +583,13 @@ const iso = (unix: number | null | undefined) => (unix ? new Date(unix * 1000).t
 async function writeInvoiceState(rowId: string, inv: Stripe.Invoice): Promise<void> {
   const status = STRIPE_STATUS[inv.status ?? ''] ?? 'open';
   const paidAt = status === 'paid' ? (iso(inv.status_transitions?.paid_at) ?? new Date().toISOString()) : null;
+  // The named tax lines for Plan & billing's invoice row (migration 444). A failed name lookup leaves the stored lines as they were:
+  // the state write below must never fail over a label.
+  let taxLines: Array<{ label: string; cents: number }> | null = null;
+  try { taxLines = await namedTaxLines(inv.total_taxes, id => stripe.taxRates.retrieve(id)); } catch (err) { console.error('[platform-stripe-fees] the tax names failed:', rowId, errText(err)); }
   await supabaseAdmin.from('platform_fee_invoices').update({
     status, invoice_number: inv.number ?? null, amount_due: (inv.amount_due ?? 0) / 100, hosted_invoice_url: inv.hosted_invoice_url ?? null,
+    total: (inv.total ?? 0) / 100, ...(taxLines ? { tax_lines: taxLines } : {}),
     due_at: iso(inv.due_date), finalized_at: iso(inv.status_transitions?.finalized_at) ?? (status === 'draft' ? null : new Date().toISOString()),
     paid_at: paidAt, send_error: null, updated_at: new Date().toISOString(),
   }).eq('id', rowId);
@@ -809,12 +816,28 @@ export type ClubFeeView = {
  * the small table (the club's own fees) and reads at most `limit`; a failure reads as an empty list on the screen's side.
  */
 export async function readClubFees(orgId: string, opts: { limit?: number; now?: Date } = {}): Promise<ClubFeeView[]> {
+  return (await readClubFeesAndInvoices(orgId, opts)).fees;
+}
+
+/** One of the club's own fee invoices as Plan & billing's invoice row draws it (owner drawings 2026-11-05). `total` is Stripe's, tax
+ *  included; `taxLines` are Stripe's own names in dollars, so the fee lines plus these add up to `total`. */
+export type ClubFeeInvoiceView = {
+  invoiceNo: string; state: 'own_open' | 'own_overdue' | 'own_paid'; day: string | null;
+  total: number | null; taxLines: Array<{ label: string; amount: number }>; payUrl: string | null;
+};
+
+const cents = (dollars: number) => Math.round(dollars * 100);
+
+/** The fees and, beside them, the invoices they sit on. Never a total on a fee line: several fees share one invoice. */
+export async function readClubFeesAndInvoices(
+  orgId: string, opts: { limit?: number; now?: Date } = {},
+): Promise<{ fees: ClubFeeView[]; invoices: ClubFeeInvoiceView[] }> {
   const now = opts.now ?? new Date();
   const { data, error } = await supabaseAdmin.from('platform_stripe_fees').select(FEE_COLUMNS)
     .eq('org_id', orgId).order('created_at', { ascending: false }).limit(opts.limit ?? 50);
   if (error) throw error;
   const fees = (data ?? []) as FeeRow[];
-  if (!fees.length) return [];
+  if (!fees.length) return { fees: [], invoices: [] };
   const invIds = [...new Set(fees.map(f => f.fee_invoice_id).filter((x): x is string => !!x))];
   const opIds = [...new Set(fees.map(f => f.online_payment_id))];
   const [{ data: invData }, { data: opData }] = await Promise.all([
@@ -825,7 +848,7 @@ export async function readClubFees(orgId: string, opts: { limit?: number; now?: 
   // A fee still waiting goes on the invoice sent on the next 1st.
   const nextFirst = addCalendarMonths(feeInvoicePeriod(now).firstOfThis, 1);
   const receipts = new Map(((opData ?? []) as Array<{ id: string; receipt_no: number | null }>).map(o => [o.id, o.receipt_no]));
-  return fees.map(f => {
+  const views = fees.map(f => {
     const inv = f.fee_invoice_id ? invs.get(f.fee_invoice_id) : undefined;
     const receipt = receipts.get(f.online_payment_id);
     let state: ClubFeeView['state'];
@@ -845,8 +868,30 @@ export async function readClubFees(orgId: string, opts: { limit?: number; now?: 
       invoiceDay: state === 'returned' ? f.billed_at : inv ? (inv.status === 'paid' ? inv.paid_at : inv.due_at) : state === 'waiting' ? nextFirst : null,
       payUrl: inv && inv.status === 'open' ? inv.hosted_invoice_url : null,
       billError: f.bill_error, billedAt: f.billed_at,
-    };
+    } satisfies ClubFeeView;
   });
+
+  // One summary per own invoice that carries a fee in the list. A row from before migration 444 has no total of its own: it reads
+  // amount_due, and a missing tax line is the plain difference between that total and its fees (named "Tax"), until the daily
+  // re-read writes Stripe's names. Signed: a credit lowers the invoice.
+  const invoices: ClubFeeInvoiceView[] = [];
+  for (const inv of invs.values()) {
+    if (!inv.invoice_number || (inv.status !== 'open' && inv.status !== 'paid')) continue;
+    const mine = views.filter(v => v.invoiceNo === inv.invoice_number && (v.state === 'own_open' || v.state === 'own_overdue' || v.state === 'own_paid'));
+    if (!mine.length) continue;
+    const total = inv.total ?? inv.amount_due;
+    let taxLines = Array.isArray(inv.tax_lines) ? inv.tax_lines.map(t => ({ label: t.label, amount: t.cents / 100 })) : null;
+    if (!taxLines) {
+      const feeCents = mine.reduce((sum, v) => sum + (v.credit ? -cents(v.amount) : cents(v.amount)), 0);
+      const gap = total == null ? 0 : cents(total) - feeCents;
+      taxLines = gap > 0 ? [{ label: W.taxFallback, amount: gap / 100 }] : [];
+    }
+    invoices.push({
+      invoiceNo: inv.invoice_number, state: mine[0].state as ClubFeeInvoiceView['state'], day: mine[0].invoiceDay,
+      total: total ?? null, taxLines, payUrl: inv.status === 'open' ? inv.hosted_invoice_url : null,
+    });
+  }
+  return { fees: views, invoices };
 }
 
 /** `{invoiceWhere}` for one club, from Stripe's answer: its next subscription invoice, or one of its own. */

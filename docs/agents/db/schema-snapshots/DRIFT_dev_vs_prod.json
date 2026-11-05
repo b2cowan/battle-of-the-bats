@@ -1,14 +1,18 @@
 {
   "generated": "2026-11-05",
-  "total": 8,
+  "total": 11,
   "counts": {
     "tables": 0,
-    "columns": 6,
+    "columns": 8,
     "indexes": 0,
     "constraints": 1,
-    "rls": 1
+    "rls": 2
   },
   "items": [
+    {
+      "key": "check:only-dev:platform_fee_invoices.platform_fee_invoices_tax_lines_chk",
+      "sig": ""
+    },
     {
       "key": "check:only-dev:rep_document_templates.rep_document_templates_validity_check",
       "sig": ""
@@ -23,6 +27,14 @@
     },
     {
       "key": "column:only-dev:org_children.medical_notes",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_fee_invoices.tax_lines",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_fee_invoices.total",
       "sig": ""
     },
     {

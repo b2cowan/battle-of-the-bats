@@ -1,6 +1,6 @@
 import { getAuthContextWithRole, forbidden, unauthorized } from '@/lib/api-auth';
 import { withObservability } from '@/lib/observability';
-import { readClubFees } from '@/lib/platform-stripe-fees';
+import { readClubFeesAndInvoices } from '@/lib/platform-stripe-fees';
 import { effectiveOrgFactsForId } from '@/lib/entitlement-grants';
 import { workspaceHoldsFoundingComp } from '@/lib/founding-season';
 import { hasCapability } from '@/lib/roles';
@@ -11,6 +11,8 @@ import { hasCapability } from '@/lib/roles';
  *
  *   fees      — newest first, at most 50; 12c's rows that were never billed (comped, before the owner's 2026-10-26 ruling)
  *               are left out, since nothing was ever owed on them. The stored billing error never leaves the platform.
+ *   invoices  — the club's own fee invoices the fees sit on: number, state, day, Stripe's total (tax included) and named tax
+ *               lines, the pay link while open (owner drawings 2026-11-05; the list groups by invoice).
  *   planFree  — the club pays nothing for its plan (free time running, or the Founding comp): its lines add "Your plan
  *               doesn't change", so a fee is never read as the comp being withdrawn (words §3.4).
  */
@@ -22,13 +24,14 @@ export const GET = withObservability(async (req: Request) => {
   if (!ctx) return unauthorized();
   if (!hasCapability(ctx.role, ctx.capabilities, 'billing')) return forbidden();
 
-  const [fees, facts, founding] = await Promise.all([
-    readClubFees(ctx.org.id),
+  const [{ fees, invoices }, facts, founding] = await Promise.all([
+    readClubFeesAndInvoices(ctx.org.id),
     effectiveOrgFactsForId(ctx.org.id).catch(() => null),
     workspaceHoldsFoundingComp(ctx.org.id).catch(() => false),
   ]);
   return Response.json({
     fees: fees.filter(f => f.state !== 'legacy_exempt').map(({ billError: _hidden, ...f }) => f),
+    invoices,
     planFree: !!facts?.freeTime || founding,
   });
 }, { route: '/api/billing/stripe-fees' });

@@ -7,6 +7,26 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-11-05 — A FEE INVOICE THE CLUB OWES: GROUPED BY INVOICE, TOLD TO THE OWNER BY A RAIL PILL, A PAGE LINE AND, WHEN OVERDUE, A PINNED BANNER (owner, drawing asks 1–8 all A on https://claude.ai/artifact/4dmPojUsg4EspaphPVxSEc; raised from: *"is this the only way owners become aware of invoices they owe?"*)
+
+**Decision (as ruled):** (1) Plan & billing's Stripe fees list groups by invoice: one invoice row (number, due date, an Overdue chip with
+the words "Was due {day}" once past, the TOTAL and ONE lime "Pay invoice" button that opens Stripe's invoice page in a new tab) with the
+fee lines indented under it; the invoice number is no longer repeated per line. (2) The HST is its own line so the lines add up to the
+total; the figure comes from the invoice, never computed in the browser. Fees not yet on an invoice sit in a quiet "Not on an invoice
+yet" group; paid invoices fold into a closed "Paid invoices" row. (3) The Plan & billing door in the rail carries the rail's own count
+pill (invoices owed): amber while open, RED when overdue. (4) Open and not yet due: the pill plus one white callout line (amber edge) at
+the top of Plan & billing; nothing on other pages. (5) Overdue: a pinned banner under the top bar on every club admin page, one line
+(~40 px desktop, ~64 px phone), red-edged, with the words and the Pay button, no dismiss, scrolls with the page, ends when paid; on Plan
+& billing it replaces the separate line. (6) Owner only: only the owner can pay. (7) A failed plan payment joins the family: amber pill,
+and the red line on Plan & billing keeps today's sentence and gains a button; no banner elsewhere. (8) The pill's red tone is the
+design system's one extension here (the rail's count pill was amber-only).
+**Rationale:** "Pay the invoice" sat beside "$1.25", so it read as a $1.25 payment when the invoice was $4.24 with HST; overdue looked
+identical to not yet due; and the only ways an owner learned of a fee invoice were two emails and a list on a page they may never open.
+Fee invoices never suspend an account, so an in-app signal is the only lever. Quiet until due, loud only when overdue, and words carry
+the state so colour never does alone. A plain dot would be a new shape that says nothing; a count says how many.
+**Applies to:** Plan & billing (club admin), the club admin shell (rail, phone bottom nav "More" and its sheet, the banner), the
+`StripeFeesList` section. Not built at the time of this entry; plan `docs/projects/active/FEE_INVOICE_ALERTS_PLAN.md`.
+
 ### 2026-11-05 — THE CLUB'S PUBLIC PAGES JOIN THE LAYOUT STANDARD; THE HOP INTO A TOURNAMENT MOVES ONLY THE NAVIGATION (owner, "i agree with your recommendations, go ahead and write the build prompt", C1–C7 on https://claude.ai/artifact/96Jaq1JZNr8EgGaV3dxmLt)
 
 **Decision (as ruled):** C1 one band height on both sites: the tournament's desk band comes down from 88 to the club's 72 px (a minimum; a two-line name grows it). C2 every club public page is one 960 px column starting under the club's logo, never centred; forms are 640 on both sites (the tournament's Register comes in from 680); the club home and a team's page split the 960 like the tournament's two-column pages (about 540 + 392); this replaces the per-page reading widths the 2026-08-01 repair ruling allowed (prose held to 720 inside its box instead). C3 no title on a club page whose lit tab already names it (Teams, Tryouts, House league, Tournaments); the line under it (Teams' count, Tryouts' season) stays. C4 a page about one thing (a team, a tryout, a season, a form, About, Tryouts out of season) shows its name at 24 px in the title face, on both sites. C5 24 px between sections on every club page, the home included (reverses the 2026-10-20 team-page 20). C6 the host club's own team's club page and its tournament team page link to each other. C7 the house league's Schedule and Standings pages stay public for this build.

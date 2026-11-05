@@ -1272,7 +1272,7 @@ const orgHelp: HelpPageContent = {
               <HelpDefs>
                 <HelpDef term="On your next FieldLogicHQ invoice">It rides on your subscription&rsquo;s next invoice.</HelpDef>
                 <HelpDef term="On your Dec 1 invoice">It waits for the next invoice of its own.</HelpDef>
-                <HelpDef term="Invoice N &middot; due, or paid">It is on an invoice of its own. While that invoice is open, <strong>Pay the invoice</strong> is beside it.</HelpDef>
+                <HelpDef term="Invoice N &middot; due, or paid">It is on an invoice of its own. While that invoice is open, its invoice row shows the total, tax included, and a <strong>Pay invoice</strong> button.</HelpDef>
                 <HelpDef term="Credited to your account">An answering fee Stripe gave back after you won a dispute, taken off the same invoice as the fee it returns.</HelpDef>
                 <HelpDef term="Returned Nov 3">An answering fee Stripe gave back after you won, when the invoice that charged it had already gone out. It is taken off what you owe on that invoice while it is unpaid, or refunded to the card that paid it. Stripe sends no email about it; this line is the notice.</HelpDef>
                 <HelpDef term="Couldn&rsquo;t be billed yet">FieldLogicHQ sees it and bills it again. There is nothing for you to do.</HelpDef>

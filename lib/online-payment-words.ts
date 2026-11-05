@@ -1196,7 +1196,19 @@ export const STRIPE_FEE_WORDS = {
   billedReturned: (day: string) => `Returned ${day}`,
   billedTest: 'Not billed: test mode',
   billedError: 'Couldn’t be billed yet',
-  payInvoice: 'Pay the invoice',
+  // Fee invoice alerts (owner drawings 2026-11-05; wording /marketing 2026-11-05): the invoice is ONE row, its fees under it. One
+  // label for the one action, here and in the banner (the email keeps `emailButton`). The tax line's name is Stripe's own
+  // ("HST (13%)"); `taxFallback` is only for an invoice written before Stripe's names were stored, and is true in every province.
+  payInvoice: 'Pay invoice',
+  payInvoiceAria: (invoiceNo: string) => `Pay invoice ${invoiceNo} (opens in a new tab)`,
+  invoiceHeading: (invoiceNo: string) => `Invoice ${invoiceNo}`,
+  chipOverdue: 'Overdue',
+  dueSub: (day: string) => `Due ${day}`,
+  overdueSub: (day: string) => `Was due ${day}`,
+  paidSub: (day: string) => `Paid ${day}`,
+  taxFallback: 'Tax',
+  groupUnbilled: 'Not on an invoice yet',
+  groupPaid: (n: number) => `Paid invoices · ${n}`,
   // §6.1 platform admin's panel (`pa.fee.*`).
   paHeading: 'Fees billed to the club',
   paFor: 'For',

@@ -1,0 +1,404 @@
+<title>Fee invoice alerts</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: sticky section tabs + a View row, one section at a time; product frames drawn on the shipped warm-portal tokens
+   (globals.css --home-*), set on a cool document ground so they read as specimens. */
+:root {
+  --bg: #E7EAF0; --panel: #F5F6F9; --fg: #1B2430; --muted: #566274; --rule: #C6CDD9; --accent: #2F4B7C; --card: #FFFFFF;
+  --new: #2E6B3A; --restyled: #8A5A00; --same: #5F6B7C;
+  /* product frame tokens, light (the warm portal) */
+  --f-card: #FFFFFF; --f-paper: #F8F4ED; --f-line: rgba(70,55,30,.12); --f-line2: rgba(70,55,30,.20);
+  --f-ink: #241E15; --f-ink2: #4A4235; --f-dim: #615A54; --f-olive: #57651E; --f-olive-soft: rgba(87,101,30,.10);
+  --f-live: #B03A22; --f-live-rgb: 176,58,34; --f-amber: #835006; --f-amber-rgb: 131,80,6;
+  --f-lime: #D9F99D; --f-on-lime: #0f1123; --f-navbg: rgba(30,58,138,.10); --f-navfg: #1E3A8A;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12161C; --panel: #1A2028; --fg: #E6EAF0; --muted: #98A3B3; --rule: #2C3541; --accent: #8FB0E8; --card: #1F2630;
+    --new: #7CC48A; --restyled: #E0B25A; --same: #98A3B3;
+    --f-card: #111827; --f-paper: #0A0A0A; --f-line: rgba(255,255,255,.08); --f-line2: rgba(255,255,255,.20);
+    --f-ink: rgba(255,255,255,.9); --f-ink2: rgba(255,255,255,.7); --f-dim: #94A3B8; --f-olive: #D9F99D; --f-olive-soft: rgba(217,249,157,.14);
+    --f-live: #EF4444; --f-live-rgb: 239,68,68; --f-amber: #F59E0B; --f-amber-rgb: 245,158,11; --f-navbg: rgba(30,58,138,.35); --f-navfg: #93B4F5;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12161C; --panel: #1A2028; --fg: #E6EAF0; --muted: #98A3B3; --rule: #2C3541; --accent: #8FB0E8; --card: #1F2630;
+  --new: #7CC48A; --restyled: #E0B25A; --same: #98A3B3;
+  --f-card: #111827; --f-paper: #0A0A0A; --f-line: rgba(255,255,255,.08); --f-line2: rgba(255,255,255,.20);
+  --f-ink: rgba(255,255,255,.9); --f-ink2: rgba(255,255,255,.7); --f-dim: #94A3B8; --f-olive: #D9F99D; --f-olive-soft: rgba(217,249,157,.14);
+  --f-live: #EF4444; --f-live-rgb: 239,68,68; --f-amber: #F59E0B; --f-amber-rgb: 245,158,11; --f-navbg: rgba(30,58,138,.35); --f-navfg: #93B4F5;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; padding-block: 0 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.wrap { max-width: 1040px; margin: 0 auto; }
+h1 { font-size: 22px; line-height: 1.2; margin: 20px 0 4px; text-wrap: balance; }
+.sub { margin: 0 0 14px; color: var(--muted); max-width: 70ch; }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding-bottom: 8px; border-bottom: 1px solid var(--rule); }
+.tabs { display: flex; gap: 4px; overflow-x: auto; padding: 2px 0; }
+.tabs button { flex: none; border: 1px solid transparent; background: none; color: var(--muted); font: inherit; font-weight: 600; padding: 8px 12px; border-radius: 8px; cursor: pointer; }
+.tabs button[aria-selected="true"] { background: var(--card); color: var(--fg); border-color: var(--rule); }
+.tabs button:focus-visible, .seg button:focus-visible, .mk:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.viewrow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+.viewrow label, .lab { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.seg { display: inline-flex; padding: 3px; background: var(--card); border: 1px solid var(--rule); border-radius: 8px; gap: 2px; }
+.seg button { border: 0; background: none; color: var(--muted); font: inherit; font-size: 13px; padding: 5px 12px; border-radius: 6px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--fg); color: var(--card); }
+.tab { display: none; padding-top: 16px; } .tab.on { display: block; }
+.spec { margin: 0 0 28px; }
+.cap { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin: 0 0 8px; }
+.cap h2 { font-size: 16px; margin: 0; }
+.tag { font-size: 11px; font-weight: 800; letter-spacing: .08em; padding: 1px 7px; border-radius: 4px; border: 1px solid currentColor; }
+.tag.new { color: var(--new); } .tag.restyled { color: var(--restyled); } .tag.same { color: var(--same); }
+.chrome { font-size: 12px; color: var(--muted); margin: 0 0 6px; }
+.fscroll { overflow-x: auto; padding-bottom: 4px; }
+.notes { margin: 10px 0 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 8px 20px; }
+.notes li { display: flex; gap: 8px; padding: 6px 8px; border-radius: 8px; border: 1px solid transparent; font-size: 14px; cursor: pointer; }
+.notes li.on { background: var(--panel); border-color: var(--rule); }
+.mk { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; flex: none; border-radius: 50%; border: 0; background: var(--accent); color: var(--bg); font: 700 11px/1 system-ui; cursor: pointer; padding: 0; vertical-align: middle; }
+.mk.on { outline: 2px solid var(--fg); outline-offset: 1px; }
+.pair { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start; }
+.same-note { display: none; padding: 8px 14px; border: 1px dashed var(--f-line2); border-radius: 8px; color: var(--f-dim); font-size: 12px; margin-bottom: 12px; background: var(--f-card); }
+[data-view="differs"] [data-same] { display: none; } [data-view="differs"] .same-note { display: block; }
+table.st { border-collapse: collapse; width: 100%; font-size: 14px; background: var(--card); border: 1px solid var(--rule); }
+table.st th, table.st td { text-align: left; vertical-align: top; padding: 8px 12px; border-bottom: 1px solid var(--rule); }
+table.st th { font-size: 12px; color: var(--muted); }
+.ask { background: var(--card); border: 1px solid var(--rule); border-radius: 10px; padding: 12px 16px; margin: 0 0 12px; }
+.ask h3 { margin: 0 0 4px; font-size: 15px; } .ask p { margin: 4px 0; } .rec { color: var(--new); font-weight: 700; }
+
+/* ───────── PRODUCT FRAME (the warm portal) ───────── */
+.pf { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 14px; line-height: 1.45; color: var(--f-ink); background: var(--f-paper); border: 1px solid var(--f-line2); border-radius: 10px; overflow: hidden; width: 960px; }
+.pf.w720 { width: 720px; } .pf.w240 { width: 240px; } .pf.ph { width: 390px; }
+.pf-top { height: 48px; background: var(--f-card); border-bottom: 1px solid var(--f-line); display: flex; align-items: center; justify-content: space-between; padding: 0 16px; font-weight: 700; font-size: 16px; }
+.pf-pill { border: 1px solid var(--f-line2); border-radius: 999px; padding: 4px 10px; font-size: 12px; font-weight: 600; }
+.pf-body { display: flex; align-items: stretch; }
+.pf-rail { width: 240px; flex: none; background: var(--f-card); border-right: 1px solid var(--f-line); padding: 8px 0 14px; }
+.pf-lab { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--f-dim); padding: 12px 20px 6px; }
+.pf-item { display: flex; align-items: center; gap: 8px; padding: 8px 20px; color: var(--f-dim); }
+.pf-item i { width: 14px; height: 14px; border-radius: 3px; border: 1.5px solid currentColor; flex: none; opacity: .7; }
+.pf-item.on { background: var(--f-navbg); color: var(--f-navfg); font-weight: 600; }
+.pf-count { margin-left: auto; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; font: 700 10px ui-monospace, Consolas, monospace; color: var(--f-amber); background: rgba(var(--f-amber-rgb), .11); border: 1px solid rgba(var(--f-amber-rgb), .32); }
+.pf-count.red { color: var(--f-live); background: rgba(var(--f-live-rgb), .11); border-color: rgba(var(--f-live-rgb), .32); }
+.pf-main { flex: 1; min-width: 0; padding: 24px; background-image: linear-gradient(color-mix(in srgb, var(--f-line) 45%, transparent) 1px, transparent 1px), linear-gradient(90deg, color-mix(in srgb, var(--f-line) 45%, transparent) 1px, transparent 1px); background-size: 28px 28px; }
+.pf.ph .pf-main { padding: 14px 14px 18px; }
+.pf-pad { padding: 18px 24px; background: var(--f-paper); } .pf.ph .pf-pad { padding: 14px; }
+.pf-eyebrow { font: 700 11px ui-monospace, Consolas, monospace; letter-spacing: .1em; text-transform: uppercase; color: var(--f-dim); }
+.pf-h1 { font-size: 20px; font-weight: 700; margin: 2px 0 16px; }
+.pf-card { background: var(--f-card); border: 1px solid var(--f-line); border-radius: 8px; padding: 18px 20px; margin-bottom: 24px; }
+.pf-grid { display: grid; grid-template-columns: 1.1fr 1fr; gap: 24px; }
+.pf-name { font-size: 20px; font-weight: 750; margin: 4px 0 2px; } .pf-price { color: var(--f-ink2); margin: 0; } .pf-hint { font-size: 12px; color: var(--f-dim); margin: 2px 0; }
+.pf-acts { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.pf-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 38px; padding: 0 14px; border: 1px solid var(--f-line2); border-radius: 8px; background: var(--f-card); color: var(--f-ink); font: 500 14px system-ui; }
+.pf-btn.lime { background: var(--f-lime); color: var(--f-on-lime); border-color: transparent; font-weight: 650; white-space: nowrap; }
+.pf-bar { height: 10px; border-radius: 5px; background: var(--f-line); overflow: hidden; margin: 6px 0; } .pf-bar b { display: block; height: 100%; width: 66%; background: var(--f-olive); }
+.pf-fig { font-size: 16px; font-weight: 750; margin: 4px 0 0; }
+.pf-chip { display: inline-flex; align-items: center; font-size: 11px; font-weight: 700; padding: 1px 8px; border-radius: 999px; border: 1px solid; white-space: nowrap; }
+.pf-chip.good { color: var(--f-olive); background: var(--f-olive-soft); border-color: color-mix(in srgb, var(--f-olive) 35%, transparent); }
+.pf-chip.danger { color: var(--f-live); background: rgba(var(--f-live-rgb), .11); border-color: rgba(var(--f-live-rgb), .35); }
+.pf-chip.warn { color: var(--f-amber); background: rgba(var(--f-amber-rgb), .11); border-color: rgba(var(--f-amber-rgb), .35); }
+.pf-sec { font-size: 16px; font-weight: 700; margin: 0 0 6px; }
+.pf-lede { font-size: 12px; color: var(--f-dim); max-width: 64ch; margin: 0 0 12px; }
+.pf-list { margin: 0 0 12px; padding: 0; list-style: none; border: 1px solid var(--f-line); border-radius: 8px; background: var(--f-card); overflow: hidden; }
+.pf-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; padding: 10px 14px; border-bottom: 1px solid var(--f-line); }
+.pf-row:last-child { border-bottom: 0; }
+.pf-row .what { display: flex; flex-direction: column; gap: 2px; min-width: 0; } .pf-row .billed { font-size: 12px; color: var(--f-dim); }
+.pf-row .side { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; flex: none; }
+.pf-row .amt { font-variant-numeric: tabular-nums; }
+.pf-link { color: var(--f-olive); font-weight: 650; text-decoration: underline; text-underline-offset: 3px; }
+.pf-gh { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 12px 14px; border-bottom: 1px solid var(--f-line); background: color-mix(in srgb, var(--f-ink) 3%, transparent); border-left: 3px solid var(--f-line2); }
+.pf-gh .gn { font-weight: 700; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; } .pf-gh .gs { font-size: 12px; color: var(--f-dim); }
+.pf-gh .gside { display: flex; align-items: center; gap: 12px; flex: none; } .pf-gh .tot { font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.pf-list.group .pf-row { padding-left: 28px; } .pf-row.tax .line { color: var(--f-dim); }
+.pf-quiet { padding: 8px 14px; font-size: 12px; font-weight: 700; color: var(--f-dim); border-bottom: 1px solid var(--f-line); }
+.pf-disc { display: flex; align-items: center; gap: 8px; padding: 0 14px; min-height: 44px; font-weight: 600; } .pf-disc small { font-weight: 500; color: var(--f-dim); }
+.pf-call { display: flex; align-items: center; gap: 12px; padding: 10px 14px 10px 16px; background: var(--f-card); border: 1px solid var(--f-line); border-left: 3px solid var(--f-amber); border-radius: 8px; color: var(--f-ink2); margin-bottom: 14px; }
+.pf-call.red { border-left-color: var(--f-live); } .pf-call .t { flex: 1; min-width: 0; } .pf-call b { color: var(--f-ink); }
+.pf-banner { display: flex; align-items: center; gap: 14px; padding: 8px 24px; background: color-mix(in srgb, rgb(var(--f-live-rgb)) 8%, var(--f-card)); border-bottom: 1px solid rgba(var(--f-live-rgb), .35); border-left: 3px solid var(--f-live); color: var(--f-ink2); }
+.pf-banner .t { flex: 1; min-width: 0; } .pf-banner b { color: var(--f-ink); }
+.pf.ph .pf-banner { padding: 8px 12px; gap: 10px; } .pf.ph .pf-banner .pf-btn { min-height: 44px; }
+.pf-bnav { display: grid; grid-template-columns: repeat(5, 1fr); border-top: 1px solid var(--f-line); background: var(--f-card); }
+.pf-bnav span { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 0; font-size: 11px; color: var(--f-dim); position: relative; }
+.pf-bnav span i { width: 18px; height: 18px; border: 1.5px solid currentColor; border-radius: 4px; opacity: .6; }
+.pf-bnav .pf-count { position: absolute; top: 2px; left: calc(50% + 6px); margin: 0; padding: 0 5px; flex-direction: row; gap: 0; font-size: 10px; }
+.pf-stub { height: 12px; border-radius: 6px; background: var(--f-line); margin: 8px 0; }
+.both { display: contents; }
+.spec[data-state="open"] .only-over, .spec[data-state="over"] .only-open { display: none; }
+.pf-gh.is-over { border-left-color: var(--f-live); background: color-mix(in srgb, rgb(var(--f-live-rgb)) 6%, var(--f-card)); }
+.spec[data-state="open"] .pf-gh.is-over { border-left-color: var(--f-line2); background: color-mix(in srgb, var(--f-ink) 3%, transparent); }
+.ruler { display: inline-flex; align-items: center; justify-content: center; height: 44px; width: 120px; border: 1px dashed var(--accent); border-radius: 6px; font-size: 12px; color: var(--accent); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+<h1>Fee invoice alerts</h1>
+<p class="sub">Plan &amp; billing for a club owner: the Stripe fees list regrouped by invoice, and how an owner is told they owe one. Figures are examples (an Ontario club, so HST at 13% on the fees). Frames use the shipped warm-portal look; the page around them does not.</p>
+
+<div class="bar">
+  <div class="tabs" role="tablist" aria-label="Sections">
+    <button role="tab" id="t-fees" data-tab="fees" aria-selected="true">1 · Fees by invoice</button>
+    <button role="tab" id="t-alerts" data-tab="alerts" aria-selected="false">2 · The alerts</button>
+    <button role="tab" id="t-screen" data-tab="screen" aria-selected="false">3 · Whole screen</button>
+    <button role="tab" id="t-phone" data-tab="phone" aria-selected="false">4 · On a phone</button>
+    <button role="tab" id="t-asks" data-tab="asks" aria-selected="false">5 · Asks</button>
+  </div>
+  <div class="viewrow" id="viewrow">
+    <label id="view-lab">View</label>
+    <div class="seg" role="group" aria-labelledby="view-lab">
+      <button type="button" data-view="all" aria-pressed="true">Everything</button>
+      <button type="button" data-view="differs" aria-pressed="false">Show only what differs</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═════════ 1 · FEES BY INVOICE ═════════ -->
+<section class="tab on" id="tab-fees" data-tab="fees">
+  <div class="spec">
+    <div class="cap"><h2>Today</h2><span class="tag same">AS SHIPPED</span></div>
+    <p class="chrome">Plan &amp; billing · Stripe fees · desktop, 720 px content</p>
+    <div class="fscroll"><div class="pf w720"><div class="pf-pad">
+      <div data-same><h3 class="pf-sec">Stripe fees</h3><p class="pf-lede">Stripe charges these fees on your online payments, and FieldLogicHQ passes them on to every club.</p></div>
+      <div class="same-note">Heading and lede · unchanged</div>
+      <ul class="pf-list">
+        <li class="pf-row"><div class="what"><span>Extra fee for a card issued outside your country · receipt 1233 · Oct 31</span><span class="billed">Invoice APFJ8XMY-0001 · due Dec 1 <button class="mk" data-n="2" type="button" aria-label="Note 2">2</button></span></div>
+          <div class="side"><span class="amt">$1.25</span><span class="pf-link">Pay the invoice</span> <button class="mk" data-n="1" type="button" aria-label="Note 1">1</button></div></li>
+        <li class="pf-row"><div class="what"><span>Extra fee for a card issued outside your country · receipt 1231 · Oct 28</span><span class="billed">Invoice APFJ8XMY-0001 · due Dec 1</span></div><div class="side"><span class="amt">$1.25</span></div></li>
+        <li class="pf-row"><div class="what"><span>Extra fee for a card issued outside your country · receipt 1230 · Oct 27</span><span class="billed">Invoice APFJ8XMY-0001 · due Dec 1</span></div><div class="side"><span class="amt">$1.25 <button class="mk" data-n="3" type="button" aria-label="Note 3">3</button></span></div></li>
+      </ul>
+    </div></div></div>
+    <ol class="notes">
+      <li data-n="1"><span class="mk">1</span><span>“Pay the invoice” sits beside $1.25, so it reads as a $1.25 payment. The invoice is really $4.24 once HST is added.</span></li>
+      <li data-n="2"><span class="mk">2</span><span>The invoice number and due date repeat on every line. The invoice itself never gets a row.</span></li>
+      <li data-n="3"><span class="mk">3</span><span>No total anywhere, and no sign of the HST. Overdue looks identical to not yet due.</span></li>
+    </ol>
+  </div>
+
+  <div class="spec" data-state="open" id="spec-fees-after">
+    <div class="cap"><h2>Proposed</h2><span class="tag restyled">RESTYLED</span><span class="tag new">NEW: INVOICE ROW, TOTAL, BUTTON, OVERDUE</span></div>
+    <div class="viewrow" style="margin: 0 0 8px"><span class="lab">State</span>
+      <div class="seg" role="group" aria-label="Invoice state"><button type="button" data-state="open" aria-pressed="true">Open, not due</button><button type="button" data-state="over" aria-pressed="false">Overdue</button></div></div>
+    <p class="chrome">Plan &amp; billing · Stripe fees · desktop, 720 px content</p>
+    <div class="fscroll"><div class="pf w720"><div class="pf-pad">
+      <div data-same><h3 class="pf-sec">Stripe fees</h3><p class="pf-lede">Stripe charges these fees on your online payments, and FieldLogicHQ passes them on to every club.</p></div>
+      <div class="same-note">Heading and lede · unchanged</div>
+      <ul class="pf-list group">
+        <li class="pf-gh is-over">
+          <div><div class="gn">Invoice APFJ8XMY-0001 <span class="pf-chip danger only-over">Overdue</span> <button class="mk" data-n="1" type="button" aria-label="Note 1">1</button></div>
+            <div class="gs"><span class="only-open">Due Dec 1</span><span class="only-over">Was due Dec 1</span></div></div>
+          <div class="gside"><span class="tot">$4.24</span> <button class="mk" data-n="2" type="button" aria-label="Note 2">2</button><span class="pf-btn lime">Pay invoice ↗</span></div></li>
+        <li class="pf-row"><div class="what"><span class="line">Extra fee for a card issued outside your country</span><span class="billed">Receipt 1233 · Oct 31</span></div><div class="side"><span class="amt">$1.25</span></div></li>
+        <li class="pf-row"><div class="what"><span class="line">Extra fee for a card issued outside your country</span><span class="billed">Receipt 1231 · Oct 28</span></div><div class="side"><span class="amt">$1.25</span></div></li>
+        <li class="pf-row"><div class="what"><span class="line">Extra fee for a card issued outside your country</span><span class="billed">Receipt 1230 · Oct 27 <button class="mk" data-n="3" type="button" aria-label="Note 3">3</button></span></div><div class="side"><span class="amt">$1.25</span></div></li>
+        <li class="pf-row tax"><div class="what"><span class="line">HST (13%) <button class="mk" data-n="4" type="button" aria-label="Note 4">4</button></span></div><div class="side"><span class="amt">$0.49</span></div></li>
+      </ul>
+      <ul class="pf-list">
+        <li class="pf-quiet">Not on an invoice yet <button class="mk" data-n="5" type="button" aria-label="Note 5">5</button></li>
+        <li class="pf-row"><div class="what"><span class="line">Extra fee for a card issued outside your country · receipt 1240 · Dec 3</span><span class="billed">On your next FieldLogicHQ invoice</span></div><div class="side"><span class="amt">$1.25</span></div></li>
+      </ul>
+      <ul class="pf-list"><li class="pf-disc"><span>›</span> Paid invoices <small>2</small> <button class="mk" data-n="6" type="button" aria-label="Note 6">6</button></li></ul>
+    </div></div></div>
+    <ol class="notes">
+      <li data-n="1"><span class="mk">1</span><span><b>The invoice gets its own row:</b> number, due date, and an Overdue chip with the words “Was due Dec 1” once it is past. The chip carries the state in words; the red edge is only a second cue.</span></li>
+      <li data-n="2"><span class="mk">2</span><span><b>One total and one button, on the invoice.</b> The total is what Stripe will charge, tax included. The button is the shipped lime action and opens Stripe’s invoice page in a new tab, as the link does now.</span></li>
+      <li data-n="3"><span class="mk">3</span><span>The three fees sit under it, indented, without repeating the invoice number.</span></li>
+      <li data-n="4"><span class="mk">4</span><span>The HST is its own line so the lines add up to the total. The figure and rate come from the invoice, by the club’s billing address.</span></li>
+      <li data-n="5"><span class="mk">5</span><span>Fees not yet on an invoice wait in their own quiet group, with the words they have today.</span></li>
+      <li data-n="6"><span class="mk">6</span><span>Paid invoices fold away, closed by default, so the page leads with what is owed.</span></li>
+    </ol>
+  </div>
+</section>
+
+<!-- ═════════ 2 · THE ALERTS ═════════ -->
+<section class="tab" id="tab-alerts" data-tab="alerts">
+  <div class="spec">
+    <div class="cap"><h2>A · The Plan &amp; billing door in the left rail</h2><span class="tag new">NEW</span></div>
+    <p class="chrome">Rail fragment, 240 px. The neighbouring rows are schematic. The pill is the rail’s own waiting count, drawn from the shipped recipe: count of invoices owed, amber until due, red when overdue. Its spoken label says what it is.</p>
+    <div class="pair">
+      <div><div class="lab">Nothing owed</div><div class="pf w240"><div class="pf-rail" style="border:0;width:auto"><div class="pf-item"><i></i>Settings</div><div class="pf-item on"><i></i>Plan &amp; billing</div><div class="pf-item"><i></i>Help</div></div></div></div>
+      <div><div class="lab">Invoice open</div><div class="pf w240"><div class="pf-rail" style="border:0;width:auto"><div class="pf-item"><i></i>Settings</div><div class="pf-item"><i></i>Plan &amp; billing <span class="pf-count">1</span> <button class="mk" data-n="1" type="button" aria-label="Note 1" style="margin-left:6px">1</button></div><div class="pf-item"><i></i>Help</div></div></div></div>
+      <div><div class="lab">Invoice overdue</div><div class="pf w240"><div class="pf-rail" style="border:0;width:auto"><div class="pf-item"><i></i>Settings</div><div class="pf-item"><i></i>Plan &amp; billing <span class="pf-count red">1</span> <button class="mk" data-n="2" type="button" aria-label="Note 2" style="margin-left:6px">2</button></div><div class="pf-item"><i></i>Help</div></div></div></div>
+    </div>
+    <ol class="notes">
+      <li data-n="1"><span class="mk">1</span><span>Open and not yet due: a quiet amber “1”. Nothing else changes anywhere outside this page.</span></li>
+      <li data-n="2"><span class="mk">2</span><span>Overdue: the same pill turns red. It is a count, so a second unpaid invoice reads “2”. A plain dot would be a new shape and says nothing.</span></li>
+    </ol>
+  </div>
+
+  <div class="spec">
+    <div class="cap"><h2>B · One line at the top of Plan &amp; billing</h2><span class="tag new">NEW</span></div>
+    <p class="chrome">The white callout the page already uses for waits and warnings (amber edge, red when worse). It shows while an invoice is open and not yet due, and for a failed plan payment, which today only has a sentence.</p>
+    <div class="fscroll"><div class="pf w720"><div class="pf-pad">
+      <div class="pf-call"><span class="t"><b>Invoice APFJ8XMY-0001 for Stripe fees is due Dec 1.</b> Amount due $4.24.</span><span class="pf-btn lime">Pay invoice ↗</span> <button class="mk" data-n="3" type="button" aria-label="Note 3">3</button></div>
+      <div class="pf-call red"><span class="t"><b>Your last payment didn’t go through.</b> Everything stays open during the grace period. Update your card in Payment method &amp; invoices to keep it that way.</span><span class="pf-btn">Payment method &amp; invoices</span> <button class="mk" data-n="4" type="button" aria-label="Note 4">4</button></div>
+    </div></div></div>
+    <ol class="notes">
+      <li data-n="3"><span class="mk">3</span><span>Fee invoice, open. It is the only extra element on the page, so the plan card stays where it is, one line lower.</span></li>
+      <li data-n="4"><span class="mk">4</span><span>Failed plan payment. The sentence is today’s, unchanged; it gains the button to fix it. Both callouts can show together.</span></li>
+    </ol>
+  </div>
+
+  <div class="spec">
+    <div class="cap"><h2>C · The pinned banner, overdue only</h2><span class="tag new">NEW</span></div>
+    <p class="chrome">Under the top bar, across the whole club admin, on every page until the invoice is paid. Shown here over a Rep teams screen. Owner only.</p>
+    <div class="fscroll"><div class="pf"><div class="pf-top"><span>UAT Rep Club</span><span class="pf-pill">Public site</span></div>
+      <div class="pf-banner"><span class="t"><b>Invoice APFJ8XMY-0001 for Stripe fees is overdue.</b> $4.24, was due Dec 1.</span><span class="pf-btn lime">Pay invoice ↗</span> <button class="mk" data-n="5" type="button" aria-label="Note 5">5</button></div>
+      <div class="pf-body"><div class="pf-rail"><div class="pf-lab">Programs</div><div class="pf-item on"><i></i>Rep teams</div><div class="pf-item"><i></i>Accounting</div><div class="pf-lab">Organization</div><div class="pf-item"><i></i>Plan &amp; billing <span class="pf-count red">1</span></div></div>
+      <div class="pf-main"><div class="pf-eyebrow">Rep teams</div><div class="pf-h1">Teams</div><div class="pf-card"><div class="pf-stub" style="width:60%"></div><div class="pf-stub" style="width:85%"></div></div></div></div></div></div>
+    <ol class="notes">
+      <li data-n="5"><span class="mk">5</span><span>One line, about 40 px tall, red-edged, with the words and the button. It scrolls away with the page and returns on the next page, so it never costs a phone screen of height while you work. No dismiss: it ends when the invoice is paid.</span></li>
+    </ol>
+    <table class="st" style="margin-top:14px"><thead><tr><th>State</th><th>Rail pill</th><th>Plan &amp; billing page</th><th>Every other page</th></tr></thead><tbody>
+      <tr><td>Nothing owed</td><td>none</td><td>none</td><td>none</td></tr>
+      <tr><td>Invoice open, not due</td><td>amber “1”</td><td>amber line + the invoice group</td><td>nothing</td></tr>
+      <tr><td>Invoice overdue</td><td>red “1”</td><td>pinned banner + red invoice group (no separate line)</td><td>pinned banner</td></tr>
+      <tr><td>Plan payment failed</td><td>amber “1”</td><td>red line (today’s sentence + button)</td><td>nothing until the grace period ends</td></tr>
+      <tr><td>A second owner or admin</td><td colspan="3">Sees none of it. Only the owner can pay.</td></tr>
+    </tbody></table>
+  </div>
+</section>
+
+<!-- ═════════ 3 · WHOLE SCREEN ═════════ -->
+<section class="tab" id="tab-screen" data-tab="screen">
+  <p class="sub" style="margin-top:0">The whole page, overdue. This is the check for whether the plan card and the fees have been pushed down too far. In “Show only what differs” the plan card folds away in both.</p>
+  <div class="spec">
+    <div class="cap"><h2>Before</h2><span class="tag same">AS SHIPPED</span></div>
+    <div class="fscroll"><div class="pf"><div class="pf-top"><span>UAT Rep Club</span><span class="pf-pill">Public site</span></div>
+      <div class="pf-body"><div class="pf-rail"><div class="pf-lab">Programs</div><div class="pf-item"><i></i>Rep teams</div><div class="pf-item"><i></i>Accounting</div><div class="pf-lab">Organization</div><div class="pf-item on"><i></i>Plan &amp; billing</div></div>
+      <div class="pf-main"><div class="pf-eyebrow">Organization</div><div class="pf-h1">Plan &amp; billing</div>
+        <div data-same><div class="pf-card"><div class="pf-grid"><div><div class="pf-eyebrow">Your plan <span class="pf-chip good">Active</span></div><div class="pf-name">Club</div><p class="pf-price">$219 CAD / month plus applicable taxes</p><p class="pf-hint">Billing address: 123 Fake St, Mississauga, Ontario L5L 5L5</p><div class="pf-acts"><span class="pf-btn">Payment method &amp; invoices</span><span class="pf-btn">Billing address</span></div></div><div><div class="pf-eyebrow">What’s in use</div><p class="pf-fig">10 of 15 teams</p><div class="pf-bar"><b></b></div><p class="pf-hint">Club holds up to 15 teams. Archived teams don’t count.</p></div></div></div></div>
+        <div class="same-note">Plan card · unchanged</div>
+        <h3 class="pf-sec">Stripe fees</h3>
+        <ul class="pf-list">
+          <li class="pf-row"><div class="what"><span>Extra fee for a card issued outside your country · receipt 1233 · Oct 31</span><span class="billed">Invoice APFJ8XMY-0001 · due Dec 1</span></div><div class="side"><span class="amt">$1.25</span><span class="pf-link">Pay the invoice</span></div></li>
+          <li class="pf-row"><div class="what"><span>Extra fee for a card issued outside your country · receipt 1231 · Oct 28</span><span class="billed">Invoice APFJ8XMY-0001 · due Dec 1</span></div><div class="side"><span class="amt">$1.25</span></div></li>
+          <li class="pf-row"><div class="what"><span>Extra fee for a card issued outside your country · receipt 1230 · Oct 27</span><span class="billed">Invoice APFJ8XMY-0001 · due Dec 1</span></div><div class="side"><span class="amt">$1.25</span></div></li>
+        </ul>
+      </div></div></div></div>
+  </div>
+  <div class="spec">
+    <div class="cap"><h2>After, overdue</h2><span class="tag restyled">RESTYLED</span><span class="tag new">NEW: BANNER, PILL</span></div>
+    <div class="fscroll"><div class="pf"><div class="pf-top"><span>UAT Rep Club</span><span class="pf-pill">Public site</span></div>
+      <div class="pf-banner"><span class="t"><b>Invoice APFJ8XMY-0001 for Stripe fees is overdue.</b> $4.24, was due Dec 1.</span><span class="pf-btn lime">Pay invoice ↗</span> <button class="mk" data-n="1" type="button" aria-label="Note 1">1</button></div>
+      <div class="pf-body"><div class="pf-rail"><div class="pf-lab">Programs</div><div class="pf-item"><i></i>Rep teams</div><div class="pf-item"><i></i>Accounting</div><div class="pf-lab">Organization</div><div class="pf-item on"><i></i>Plan &amp; billing <span class="pf-count red">1</span> <button class="mk" data-n="2" type="button" aria-label="Note 2" style="margin-left:6px">2</button></div></div>
+      <div class="pf-main"><div class="pf-eyebrow">Organization</div><div class="pf-h1">Plan &amp; billing</div>
+        <div data-same><div class="pf-card"><div class="pf-grid"><div><div class="pf-eyebrow">Your plan <span class="pf-chip good">Active</span></div><div class="pf-name">Club</div><p class="pf-price">$219 CAD / month plus applicable taxes</p><p class="pf-hint">Billing address: 123 Fake St, Mississauga, Ontario L5L 5L5</p><div class="pf-acts"><span class="pf-btn">Payment method &amp; invoices</span><span class="pf-btn">Billing address</span></div></div><div><div class="pf-eyebrow">What’s in use</div><p class="pf-fig">10 of 15 teams</p><div class="pf-bar"><b></b></div><p class="pf-hint">Club holds up to 15 teams. Archived teams don’t count.</p></div></div></div></div>
+        <div class="same-note">Plan card · unchanged</div>
+        <h3 class="pf-sec">Stripe fees</h3>
+        <ul class="pf-list group">
+          <li class="pf-gh is-over"><div><div class="gn">Invoice APFJ8XMY-0001 <span class="pf-chip danger">Overdue</span></div><div class="gs">Was due Dec 1</div></div><div class="gside"><span class="tot">$4.24</span><span class="pf-btn lime">Pay invoice ↗</span></div></li>
+          <li class="pf-row"><div class="what"><span class="line">Extra fee for a card issued outside your country</span><span class="billed">Receipt 1233 · Oct 31</span></div><div class="side"><span class="amt">$1.25</span></div></li>
+          <li class="pf-row"><div class="what"><span class="line">Extra fee for a card issued outside your country</span><span class="billed">Receipt 1231 · Oct 28</span></div><div class="side"><span class="amt">$1.25</span></div></li>
+          <li class="pf-row"><div class="what"><span class="line">Extra fee for a card issued outside your country</span><span class="billed">Receipt 1230 · Oct 27</span></div><div class="side"><span class="amt">$1.25</span></div></li>
+          <li class="pf-row tax"><div class="what"><span class="line">HST (13%)</span></div><div class="side"><span class="amt">$0.49</span></div></li>
+        </ul>
+      </div></div></div></div>
+    <ol class="notes">
+      <li data-n="1"><span class="mk">1</span><span>The banner adds about 40 px above everything. With it, the fees list starts roughly 40 px lower than today and ends about 40 px lower (one added HST line). The plan card is untouched.</span></li>
+      <li data-n="2"><span class="mk">2</span><span>The pill follows you to every other page. The rest of the page’s fee block is the one grouped card from section 1.</span></li>
+    </ol>
+  </div>
+</section>
+
+<!-- ═════════ 4 · ON A PHONE ═════════ -->
+<section class="tab" id="tab-phone" data-tab="phone">
+  <p class="sub" style="margin-top:0">Phone frames are 390 px wide, drawn 1:1. Open this page on your phone to judge the tap size: the buttons are 44 px tall, as long as the box on the right.</p>
+  <p><span class="ruler">44 px tap floor</span></p>
+  <div class="pair">
+    <div class="spec"><div class="cap"><h2>Before</h2><span class="tag same">AS SHIPPED</span></div>
+      <div class="pf ph"><div class="pf-top"><span>UAT Rep Club</span></div>
+        <div class="pf-main"><div class="pf-eyebrow">Organization</div><div class="pf-h1">Plan &amp; billing</div>
+          <div data-same><div class="pf-card" style="padding:14px"><div class="pf-eyebrow">Your plan <span class="pf-chip good">Active</span></div><div class="pf-name">Club</div><p class="pf-price">$219 CAD / month plus applicable taxes</p></div></div>
+          <div class="same-note">Plan card · unchanged</div>
+          <h3 class="pf-sec">Stripe fees</h3>
+          <ul class="pf-list">
+            <li class="pf-row" style="flex-direction:column;gap:4px"><div class="what"><span>Extra fee for a card issued outside your country · receipt 1233 · Oct 31</span><span class="billed">Invoice APFJ8XMY-0001 · due Dec 1</span></div><div class="side" style="align-items:flex-start;width:100%"><span class="amt">$1.25</span><span class="pf-link" style="min-height:44px;display:inline-flex;align-items:center">Pay the invoice</span></div></li>
+            <li class="pf-row" style="flex-direction:column;gap:4px"><div class="what"><span>Extra fee for a card issued outside your country · receipt 1231 · Oct 28</span><span class="billed">Invoice APFJ8XMY-0001 · due Dec 1</span></div><div class="side" style="align-items:flex-start"><span class="amt">$1.25</span></div></li>
+          </ul></div>
+        <div class="pf-bnav"><span><i></i>Home</span><span><i></i>Teams</span><span><i></i>Money</span><span><i></i>Inbox</span><span><i></i>More</span></div></div></div>
+    <div class="spec"><div class="cap"><h2>After, overdue</h2><span class="tag restyled">RESTYLED</span><span class="tag new">NEW</span></div>
+      <div class="pf ph"><div class="pf-top"><span>UAT Rep Club</span></div>
+        <div class="pf-banner"><span class="t"><b>Stripe fees invoice is overdue.</b><br>$4.24, was due Dec 1.</span><span class="pf-btn lime">Pay invoice ↗</span> <button class="mk" data-n="1" type="button" aria-label="Note 1">1</button></div>
+        <div class="pf-main"><div class="pf-eyebrow">Organization</div><div class="pf-h1">Plan &amp; billing</div>
+          <div data-same><div class="pf-card" style="padding:14px"><div class="pf-eyebrow">Your plan <span class="pf-chip good">Active</span></div><div class="pf-name">Club</div><p class="pf-price">$219 CAD / month plus applicable taxes</p></div></div>
+          <div class="same-note">Plan card · unchanged</div>
+          <h3 class="pf-sec">Stripe fees</h3>
+          <ul class="pf-list group">
+            <li class="pf-gh is-over" style="flex-direction:column;align-items:stretch;gap:10px"><div><div class="gn">Invoice APFJ8XMY-0001 <span class="pf-chip danger">Overdue</span></div><div class="gs">Was due Dec 1</div></div><div class="gside" style="justify-content:space-between"><span class="tot">$4.24</span></div><span class="pf-btn lime" style="min-height:44px">Pay invoice ↗ <button class="mk" data-n="2" type="button" aria-label="Note 2">2</button></span></li>
+            <li class="pf-row" style="padding-left:20px"><div class="what"><span class="line">Extra fee for a card issued outside your country</span><span class="billed">Receipt 1233 · Oct 31</span></div><div class="side"><span class="amt">$1.25</span></div></li>
+            <li class="pf-row" style="padding-left:20px"><div class="what"><span class="line">Extra fee for a card issued outside your country</span><span class="billed">Receipt 1231 · Oct 28</span></div><div class="side"><span class="amt">$1.25</span></div></li>
+            <li class="pf-row" style="padding-left:20px"><div class="what"><span class="line">Extra fee for a card issued outside your country</span><span class="billed">Receipt 1230 · Oct 27</span></div><div class="side"><span class="amt">$1.25</span></div></li>
+            <li class="pf-row tax" style="padding-left:20px"><div class="what"><span class="line">HST (13%)</span></div><div class="side"><span class="amt">$0.49</span></div></li>
+          </ul></div>
+        <div class="pf-bnav"><span><i></i>Home</span><span><i></i>Teams</span><span><i></i>Money</span><span><i></i>Inbox</span><span><i></i>More<span class="pf-count red">1</span></span> </div></div></div>
+  </div>
+  <ol class="notes">
+    <li data-n="1"><span class="mk">1</span><span>The phone banner is one row, about 64 px: two short lines and a 44 px button. It scrolls away with the page.</span></li>
+    <li data-n="2"><span class="mk">2</span><span>The invoice header stacks: number and chip, due date, total, then a full-width 44 px button. The fee lines keep the desktop order underneath, with the HST last.</span></li>
+  </ol>
+  <div class="spec"><div class="cap"><h2>The phone “More” sheet</h2><span class="tag new">NEW</span></div>
+    <p class="chrome">The pill sits on More, and again on the Plan &amp; billing row inside the sheet. Neighbouring rows are schematic.</p>
+    <div class="pf ph"><div class="pf-rail" style="width:auto;border:0;padding:6px 0"><div class="pf-item"><i></i>Settings</div><div class="pf-item"><i></i>Plan &amp; billing <span class="pf-count red">1</span></div><div class="pf-item"><i></i>Help</div></div></div>
+  </div>
+</section>
+
+<!-- ═════════ 5 · ASKS ═════════ -->
+<section class="tab" id="tab-asks" data-tab="asks">
+  <p class="sub" style="margin-top:0">Reply with the number and letter. A letter marked “recommended” is mine.</p>
+  <div class="ask"><h3>1 · How the fees list is grouped</h3><p><b>A · By invoice, with the total and a Pay invoice button on the invoice row</b> <span class="rec">(recommended)</span></p><p>B · Keep one flat list; add the total and button under it</p></div>
+  <div class="ask"><h3>2 · The HST on an invoice</h3><p><b>A · Its own line, so the lines add up to the total</b> <span class="rec">(recommended)</span></p><p>B · Fold it into the total only</p></div>
+  <div class="ask"><h3>3 · The signal on the Plan &amp; billing door</h3><p><b>A · The rail’s count pill: amber when open, red when overdue</b> <span class="rec">(recommended)</span></p><p>B · A plain dot</p></div>
+  <div class="ask"><h3>4 · An invoice that is open but not yet due</h3><p><b>A · Pill, plus one line at the top of Plan &amp; billing; nothing on other pages</b> <span class="rec">(recommended)</span></p><p>B · Also the pinned banner from the day it is issued</p></div>
+  <div class="ask"><h3>5 · An overdue invoice</h3><p><b>A · The pinned banner on every club admin page, no dismiss, scrolls with the page</b> <span class="rec">(recommended)</span></p><p>B · The same, but stuck to the top of the screen while you scroll (costs 40 px on desktop, 64 px on a phone)</p><p>C · Banner the owner can hide for a day</p></div>
+  <div class="ask"><h3>6 · Who sees any of it</h3><p><b>A · The owner only, since only the owner can pay</b> <span class="rec">(recommended)</span></p><p>B · Every admin sees the banner, without the button</p></div>
+  <div class="ask"><h3>7 · A failed plan payment</h3><p><b>A · Same family: pill, plus the red line with a button on Plan &amp; billing; no banner elsewhere</b> <span class="rec">(recommended)</span></p><p>B · Leave it as it is today (a sentence on the page only)</p></div>
+  <div class="ask"><h3>8 · Paid invoices</h3><p><b>A · Folded into a closed “Paid invoices” row</b> <span class="rec">(recommended)</span></p><p>B · Left in the list</p></div>
+  <div class="ask"><h3>Not drawn, built as discussed</h3><p>Billing address tidy: only a field typed entirely in lowercase or entirely in capitals is fixed; mixed-case entries are left alone. Words for the banner and lines go to /marketing before the build.</p></div>
+</section>
+</div>
+
+<script>
+(function () {
+  var tabs = ['fees', 'alerts', 'screen', 'phone', 'asks'];
+  var compares = { fees: true, screen: true, phone: true };
+  function show(id) {
+    if (tabs.indexOf(id) < 0) id = 'fees';
+    tabs.forEach(function (t) {
+      var on = t === id;
+      var btn = document.getElementById('t-' + t); btn.setAttribute('aria-selected', on ? 'true' : 'false');
+      document.getElementById('tab-' + t).classList.toggle('on', on);
+    });
+    document.getElementById('viewrow').hidden = !compares[id];
+    try { history.replaceState(null, '', '#' + id); } catch (e) {}
+    window.scrollTo(0, 0);
+  }
+  document.querySelectorAll('.tabs button').forEach(function (b) { b.addEventListener('click', function () { show(b.dataset.tab); }); });
+  window.addEventListener('hashchange', function () { show(location.hash.slice(1)); });
+  show(location.hash.slice(1));
+  document.querySelectorAll('[data-view]').forEach(function (b) {
+    if (b.tagName !== 'BUTTON') return;
+    b.addEventListener('click', function () {
+      document.body.setAttribute('data-view', b.dataset.view);
+      document.querySelectorAll('button[data-view]').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+    });
+  });
+  document.querySelectorAll('button[data-state]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var spec = b.closest('.spec'); spec.setAttribute('data-state', b.dataset.state);
+      spec.querySelectorAll('button[data-state]').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+    });
+  });
+  function mark(scope, n) {
+    scope.querySelectorAll('.mk[data-n]').forEach(function (m) { m.classList.toggle('on', m.dataset.n === n && !m.classList.contains('on')); });
+    scope.querySelectorAll('.notes li').forEach(function (li) { li.classList.toggle('on', li.dataset.n === n && !li.classList.contains('on')); });
+  }
+  document.querySelectorAll('.tab').forEach(function (tab) {
+    tab.addEventListener('click', function (e) {
+      var m = e.target.closest('.mk[data-n]'); var li = e.target.closest('.notes li');
+      var n = m ? m.dataset.n : li ? li.dataset.n : null;
+      if (n) { var wasOn = (m || li).classList.contains('on'); tab.querySelectorAll('.on').forEach(function (x) { x.classList.remove('on'); }); if (!wasOn) { mark(tab, n); } }
+    });
+  });
+})();
+</script>

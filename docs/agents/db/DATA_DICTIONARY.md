@@ -8091,6 +8091,10 @@ The org's **internal double-entry bookkeeping** plus two satellites filed here b
 <!-- dict:col:platform_fee_invoices.updated_at -->
 **`emailed_at`** / **`reminded_at`** (our two emails, each once) / **`paid_at`** (set exactly when `paid`, `platform_fee_invoices_paid_chk`; from Stripe's `invoice.paid`) / **`send_error`** (text ≤ 500) / **`created_at`** / **`updated_at`**.
 
+<!-- dict:col:platform_fee_invoices.total -->
+<!-- dict:col:platform_fee_invoices.tax_lines -->
+**`total`** (numeric(12,2), nullable; migration 444, fee invoice alerts Part 1) Stripe's invoice total, **tax included**, in dollars; `amount_due` is what is *still owed* (it falls on a part payment), so Plan & billing's invoice row shows `total` and falls back to `amount_due` for a row written before 444. / **`tax_lines`** (jsonb array or null, `platform_fee_invoices_tax_lines_chk`; migration 444) Stripe's own named tax lines, `[{ "label": "HST (13%)", "cents": 49 }]`, so the page never calls Stripe. Both are written by `writeInvoiceState` (the finalize, the billing webhook and the daily re-read); a failed name lookup leaves `tax_lines` as it was. **Null until first synced after 444:** the reader then shows the plain difference between the total and the fee lines as one line named "Tax", until the daily re-read writes Stripe's names. Fees are taxed on top (`RECOVERED_FEE_TAX`), so the total is **not** the sum of the fee lines.
+
 ## `tournament_team_entry_adjustments`
 <!-- dict:table:tournament_team_entry_adjustments -->
 

@@ -139,6 +139,22 @@ describe('the check', () => {
     // US addresses are unchanged: a ZIP is never compared with its state.
     assert.equal(checkBillingLocation({ ...buffalo, regionCode: 'CA' }, open).ok, true);
   });
+  it('an address typed all in lower case or all in capitals is capitalised; mixed case is left alone (owner 2026-11-05)', () => {
+    const cased = (line1: string, city: string, line2 = '') => {
+      const r = checkBillingLocation({ ...guelph, line1, line2, city }, closed);
+      if (!r.ok) assert.fail(`${line1} / ${city} was refused`);
+      return { line1: r.value.line1, line2: r.value.line2, city: r.value.city };
+    };
+    assert.deepEqual(cased('123 fake st', 'mississauga'), { line1: '123 Fake St', line2: null, city: 'Mississauga' });
+    assert.deepEqual(cased('45 MAPLE AVE NW', 'ST. JOHN\'S', 'apt 4b'), { line1: '45 Maple Ave NW', line2: 'Apt 4B', city: 'St. John\'s' });
+    assert.equal(cased('22 2nd line', 'niagara-on-the-lake').city, 'Niagara-on-the-Lake');
+    assert.equal(cased('22 2nd line', 'niagara-on-the-lake').line1, '22 2nd Line');
+    assert.equal(cased('1 elm st', 'rivière-du-loup').city, 'Rivière-du-Loup');
+    assert.equal(cased('1 elm st', "o'brien").city, "O'Brien");
+    // Mixed case is the owner's own spelling: not touched, even when it looks wrong.
+    assert.equal(cased('120 Elm st', 'McDonald').line1, '120 Elm st');
+    assert.equal(cased('120 Elm st', 'McDonald').city, 'McDonald');
+  });
   it('too long', () => {
     const r = checkBillingLocation({ ...guelph, line1: `1 ${'a'.repeat(199)}`, line2: 'b'.repeat(201), city: 'c'.repeat(101) }, closed);
     if (!r.ok) assert.deepEqual(r.errors, { line1: W.tooLong, line2: W.tooLong, city: W.tooLong });

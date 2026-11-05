@@ -1,15 +1,19 @@
 /* ═══════════════════════════════════════════════════════════════════════════════════════════════
-   SETTINGS › PLAN & BILLING: the club's Stripe fees (Club Tier Stage 12d-1 Part 4). One row per fee: what it was and how
-   it is billed on the left, the amount (and Pay the invoice) on the right; the two stack on a phone. TOKENS ONLY.
+   SETTINGS › PLAN & BILLING: the club's Stripe fees (Club Tier Stage 12d-1 Part 4; fee invoice alerts, owner drawings 2026-11-05).
+   Fees are grouped BY INVOICE: an invoice row (name and due day on the left, total and the one Pay invoice button on the right),
+   its fee lines indented under it, the tax as the last line. Fees not on an invoice yet keep the plain row. The two sides stack on
+   a phone and the button takes the full width at the 44px tap floor. Words carry the overdue state; the red edge is a second cue
+   only. TOKENS ONLY.
    ═══════════════════════════════════════════════════════════════════════════════════════════════ */
 
 .list {
-  margin: 0;
+  margin: 0 0 0.75rem;
   padding: 0;
   list-style: none;
   border: 1px solid var(--home-line);
   border-radius: 8px;
   background: var(--card-bg);
+  overflow: hidden;
 }
 .row {
   display: flex;
@@ -27,8 +31,53 @@
 .side { display: flex; flex-direction: column; align-items: flex-end; gap: 0.15rem; flex-shrink: 0; }
 .amount { color: var(--text-primary); font-size: var(--type-body); font-variant-numeric: tabular-nums; }
 
+/* The group: the invoice row, then its fees set in from the left edge, the tax last in the quieter ink. */
+.group .head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 0.9rem;
+  border-bottom: 1px solid var(--home-line);
+  border-left: 3px solid var(--home-line-strong);
+  background: var(--home-olive-soft);
+}
+.group .headOverdue { border-left-color: var(--danger); background: var(--card-bg); }
+.invoiceName { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; color: var(--text-primary); font-size: var(--type-body); font-weight: 700; }
+.headSide { display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0; }
+.total { color: var(--text-primary); font-size: var(--type-heading); font-weight: 700; font-variant-numeric: tabular-nums; }
+.pay { display: inline-flex; align-items: center; gap: 0.35rem; white-space: nowrap; }
+.inGroup { padding-left: 1.5rem; }
+.taxRow .line { color: var(--text-tertiary); }
+
+/* Fees not on an invoice yet: a quiet heading row over the plain rows. */
+.quiet { padding: 0.5rem 0.9rem; border-bottom: 1px solid var(--home-line); color: var(--text-tertiary); font-size: var(--type-support); font-weight: 650; }
+
+/* Paid invoices: a closed row that opens in place; the rows under it are the same groups. */
+.paidFold { margin: 0 0 0.75rem; }
+.paidSummary {
+  display: flex;
+  align-items: center;
+  min-height: var(--tap-min, 44px);
+  padding: 0 0.9rem;
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+  background: var(--card-bg);
+  color: var(--text-primary);
+  font-size: var(--type-body);
+  font-weight: 600;
+  cursor: pointer;
+}
+.paidFold[open] .paidSummary { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+.paidFold[open] > ul { margin-top: 0.75rem; }
+.paidSummary:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+
 @media (max-width: 640px) {
-  .row { flex-direction: column; gap: 0.35rem; }
-  .side { align-items: flex-start; }
-  .side a { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); }
+  .row { flex-direction: row; }
+  .group .head { flex-direction: column; align-items: stretch; gap: 0.6rem; }
+  .headSide { justify-content: space-between; }
+  .pay { justify-content: center; width: 100%; min-height: var(--tap-min, 44px); }
+  .headSide:has(.pay) { flex-direction: column; align-items: stretch; }
+  .total { text-align: left; }
+  .inGroup { padding-left: 1.25rem; }
 }
