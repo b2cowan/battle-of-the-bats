@@ -14,7 +14,8 @@
 import dotenv from 'dotenv';
 import Stripe from 'stripe';
 import { stripeKeyIsLive, stripeKeyIsTest } from '../lib/stripe-mode.ts';
-import { PORTAL_CONFIG_VERSION, PORTAL_FEATURES, portalConfigVersion } from '../lib/stripe-portal-settings.ts';
+import { auditPortal, check } from './lib/stripe-portal-audit.mjs';
+import { STRIPE_API_VERSION } from '../lib/stripe.ts';
 
 const args = process.argv.slice(2);
 
@@ -68,7 +69,6 @@ const environment = requestedEnvironment ?? keyEnvironment ?? 'live';
 // 307s there, and webhook deliveries do not follow redirects, so an apex match would false-FAIL.
 const APP_URL = 'https://www.fieldlogichq.ca';
 const WEBHOOK_URL = `${APP_URL}/api/billing/webhook`;
-const STRIPE_API_VERSION = '2026-04-22.dahlia';
 
 const EXPECTED_WEBHOOK_EVENTS = [
   'checkout.session.completed',
@@ -160,10 +160,6 @@ function slot(planId, billingCycle, unitAmount, liveLookupKey, productNames) {
       : liveLookupKey.replace(/_live$/, '_sandbox'),
     productNames,
   };
-}
-
-function check(status, area, key, detail, extra = {}) {
-  return { status, area, key, detail, ...extra };
 }
 
 function sameSet(actual, expected) {
@@ -380,57 +376,8 @@ async function auditWebhook(stripe) {
   return checks;
 }
 
-// Plans & pricing Stage 0 (S8): the app pins its OWN portal configuration (lib/stripe-portal-config.ts), found by its
-// metadata; Stripe's dashboard default no longer reaches a customer. This asserts ours against the same constants, so the
-// audit and Plans end at renewal's G13 read one thing.
-async function auditPortal(stripe) {
-  const checks = [];
-  const ours = [];
-  for await (const config of stripe.billingPortal.configurations.list({ active: true, limit: 100 })) {
-    if (portalConfigVersion(config) !== null) ours.push(config);
-  }
-  const config = ours.find(item => portalConfigVersion(item) === PORTAL_CONFIG_VERSION);
-
-  if (!config) {
-    const older = ours.map(item => `${item.id} (v${portalConfigVersion(item)})`).join(', ');
-    return [check('WARN', 'portal', 'configuration', `Our portal configuration v${PORTAL_CONFIG_VERSION} does not exist in this mode yet; the app creates it the first time anyone opens the portal.${older ? ` Active older versions: ${older}.` : ''}`)];
-  }
-  checks.push(check('PASS', 'portal', 'configuration', `${config.id} is ours (v${PORTAL_CONFIG_VERSION}) and active.`));
-  const stale = ours.filter(item => item.id !== config.id);
-  if (stale.length > 0) {
-    checks.push(check('WARN', 'portal', 'old_versions', `Older configurations of ours are still active: ${stale.map(item => item.id).join(', ')}. The app deactivates them on the next portal open.`));
-  }
-
-  const features = config.features ?? {};
-  checks.push(features.payment_method_update?.enabled
-    ? check('PASS', 'portal', 'payment_method_update', 'Customers can update payment methods.')
-    : check('FAIL', 'portal', 'payment_method_update', 'Payment method updates are disabled.'));
-  checks.push(features.invoice_history?.enabled
-    ? check('PASS', 'portal', 'invoice_history', 'Invoice history is enabled.')
-    : check('FAIL', 'portal', 'invoice_history', 'Invoice history is disabled.'));
-
-  const wanted = PORTAL_FEATURES.customer_update.allowed_updates;
-  const allowed = features.customer_update?.enabled ? features.customer_update.allowed_updates ?? [] : [];
-  const missing = wanted.filter(item => !allowed.includes(item));
-  checks.push(missing.length === 0
-    ? check('PASS', 'portal', 'customer_update', `Customer updates enabled for ${allowed.join(', ')}.`)
-    : check('FAIL', 'portal', 'customer_update', `Customer updates are missing: ${missing.join(', ')} (address and tax ID are needed for GST/HST).`));
-
-  checks.push(features.subscription_update?.enabled
-    ? check('FAIL', 'portal', 'subscription_update', 'Plan switching is enabled in our portal configuration; plan moves belong to the app.')
-    : check('PASS', 'portal', 'subscription_update', 'Plan switching is off.'));
-
-  const cancel = features.subscription_cancel;
-  checks.push(cancel?.enabled && cancel.mode === 'at_period_end'
-    ? check('PASS', 'portal', 'subscription_cancel', 'Cancel is on and ends the subscription at its period end (owner ruling 2026-10-31).')
-    : check('FAIL', 'portal', 'subscription_cancel', `Cancel must be on at period end; it is ${cancel?.enabled ? `on, mode ${cancel.mode}` : 'off'}.`));
-
-  checks.push(features.subscription_pause?.enabled
-    ? check('FAIL', 'portal', 'subscription_pause', 'Subscription pause is enabled; the app does not model a paused subscription.')
-    : check('PASS', 'portal', 'subscription_pause', 'Subscription pause is off.'));
-
-  return checks;
-}
+// The portal checks (Plans & pricing S8, Plans end at renewal G13) live in scripts/lib/stripe-portal-audit.mjs, shared with
+// the test-clock rehearsal (scripts/rehearse-plan-ending.mjs), so the two read one copy.
 
 async function auditAccount(stripe) {
   const checks = [];

@@ -21,11 +21,10 @@
  */
 import { createClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
-import { stripeKeyIsTest } from '../lib/stripe-mode.ts';
+import { ensureUser as ensureSignIn, refusal } from './lib/billing-walk-fixture.mjs';
 
 const MARKER = 'plan-ending-walk-fixture';
 const PASSWORD = 'UATPassword2026!';
-const DEV_REF = 'npgnrxaitgbtbtvvykto';
 const DAY = 86_400_000;
 const RETENTION_DAYS = 90; // BILLING_RETENTION_DAYS (lib/billing-cancellation-policy.ts) — a club, not a Coaches Portal
 
@@ -46,9 +45,10 @@ if (INBOX && !/^[^\s@+]+@[^\s@]+\.[^\s@]+$/.test(INBOX)) {
 }
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
-if (!url.includes(DEV_REF)) { console.error('Refusing: NEXT_PUBLIC_SUPABASE_URL is not the dev project.'); process.exit(2); }
-// Live or test is decided in ONE place (lib/stripe-mode.ts; tests/unit/stripe-mode.test.ts holds every file to it).
-if (!stripeKeyIsTest()) { console.error('Refusing: STRIPE_SECRET_KEY is not a TEST key.'); process.exit(2); }
+// The billing walk fixtures' one guard (scripts/lib/billing-walk-fixture.mjs): a Stripe TEST key, decided only by
+// lib/stripe-mode.ts, and the dev project by its host name.
+const refused = refusal({ stripeKey: process.env.STRIPE_SECRET_KEY, supabaseUrl: url });
+if (refused) { console.error(refused); process.exit(2); }
 
 const db = createClient(url, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
@@ -112,26 +112,10 @@ if (RESET) {
 const existing = await walkOrgs();
 if (existing.length) { console.error('The walk clubs already exist. Run with --reset first.'); process.exit(1); }
 
-async function findUserByEmail(email) {
-  for (let page = 1; page <= 40; page++) {
-    const { data, error } = await db.auth.admin.listUsers({ page, perPage: 200 });
-    die('listUsers', error);
-    const hit = data.users.find(u => u.email?.toLowerCase() === email.toLowerCase());
-    if (hit) return hit;
-    if (data.users.length < 200) return null;
-  }
-  return null;
-}
 async function ensureUser(email, fullName) {
-  const found = await findUserByEmail(email);
-  if (found) {
-    die(`password ${email}`, (await db.auth.admin.updateUserById(found.id, { password: PASSWORD })).error);
-    return found;
-  }
-  const { data, error } = await db.auth.admin.createUser({ email, password: PASSWORD, email_confirm: true, user_metadata: { full_name: fullName } });
-  die(`createUser ${email}`, error);
-  ok(`sign-in created ${email}`);
-  return data.user;
+  const { user, created } = await ensureSignIn(db, { email, password: PASSWORD, fullName }).catch(error => die('sign-in', error));
+  if (created) ok(`sign-in created ${email}`);
+  return user;
 }
 
 const prices = await one('prices', db.from('stripe_prices').select('plan_id, price_id')

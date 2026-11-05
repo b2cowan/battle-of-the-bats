@@ -1,5 +1,8 @@
 import Stripe from 'stripe';
 
+/** The Stripe API version the app speaks. Scripts that talk to Stripe as the app does import it from here. */
+export const STRIPE_API_VERSION = '2026-04-22.dahlia';
+
 let _stripe: Stripe | null = null;
 
 export function getStripe(): Stripe {
@@ -8,7 +11,7 @@ export function getStripe(): Stripe {
       throw new Error('STRIPE_SECRET_KEY is not set');
     }
     _stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-      apiVersion: '2026-04-22.dahlia',
+      apiVersion: STRIPE_API_VERSION,
     });
   }
   return _stripe;
