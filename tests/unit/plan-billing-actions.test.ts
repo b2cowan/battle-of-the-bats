@@ -399,18 +399,28 @@ describe('real owner billing action request contracts', () => {
   });
 });
 
+/** Render, let the answers arrive, render again, until nothing more is asked (the window's reads land over a few ticks). */
+async function settle<T>(render: () => T): Promise<T> {
+  let out = render();
+  for (let i = 0; i < 6; i++) { await new Promise<void>(resolve => setImmediate(resolve)); out = render(); }
+  return out;
+}
+/** A quote Stripe taxed for the Ontario address on file (GST/HST Stage 2 Part 3). */
+const taxedOn = (beforeTax: number, cents: number) => ({ status: 'taxed', lines: [{ label: 'HST 13%', cents }], beforeTax, taxedFor: { country: 'CA', region: 'ON' } });
+
 describe('real move dialog request contracts', () => {
   it('Premium validates an empty name, sends its normalized name and proration date, and never retries a finishing move', async () => {
     const env = environment(), runner = hookRunner();
     try {
-      env.answer('/api/billing/move/preview', { direction: 'up', amountDueToday: 10000, currency: 'cad', prorationDate: 123, nextAmount: 21900, renewsAt: null, billingCycle: 'monthly', lines: null });
+      env.answer('/api/billing/move/preview', { direction: 'up', amountDueToday: 10000, currency: 'cad', prorationDate: 123, nextAmount: 21900, renewsAt: null, billingCycle: 'monthly', lines: null, tax: taxedOn(8850, 1150) });
       env.answer('/api/billing/move', { direction: 'up', finishing: true });
       const Dialog = (billingTestLoader({ react: runner.hooks })('components/billing/PlanMoveDialog.tsx') as { default: (p: Record<string, unknown>) => Element }).default;
       const moved: string[] = [];
       const render = () => runner.render(() => Dialog({ org: organization('team'), toPlan: 'club', returnTo: '/falcons-club/coaches/billing', teamsHref: '/teams', onClose() {}, onMoved: (text: string) => moved.push(text) }));
-      render(); await new Promise<void>(resolve => setImmediate(resolve)); let dialog = render();
+      let dialog = await settle(render);
       assert.equal(dialog.props.kind, 'form');
-      assertRequest(env.requests[0], '/api/billing/move/preview', 'POST', { orgSlug: 'falcons-club', planKey: 'club', billingCycle: 'monthly' });
+      assertRequest(env.requests[0], '/api/billing/move/preview', 'POST', { orgSlug: 'falcons-club', planKey: 'club', billingCycle: 'monthly', billingAddress: CLUB_ADDRESS_SENT });
+      assert.equal(env.requests.filter(r => r.endpoint === '/api/billing/move/preview').length, 1, 'the quote is asked once, for the prefilled address');
       click(find(dialog.props.footer, e => e.props.children === W.clubUpgrade.start));
       assert.equal(env.requests.length, 1, 'empty name makes no money request');
       dialog = render();
@@ -419,7 +429,7 @@ describe('real move dialog request contracts', () => {
       dialog = render();
       click(find(dialog.props.footer, e => e.props.children === W.clubUpgrade.start));
       await new Promise<void>(resolve => setImmediate(resolve)); dialog = render();
-      assertRequest(env.requests[1], '/api/billing/move', 'POST', { orgSlug: 'falcons-club', planKey: 'club', prorationDate: 123, clubName: 'Falcons Baseball', billingAddress: CLUB_ADDRESS_SENT });
+      assertRequest(env.requests[1], '/api/billing/move', 'POST', { orgSlug: 'falcons-club', planKey: 'club', prorationDate: 123, expectedAmountDue: 10000, clubName: 'Falcons Baseball', billingAddress: CLUB_ADDRESS_SENT });
       assert.deepEqual(moved, [W.clubUpgrade.finishing]);
       assert.equal(dialog.props.footer, null);
     } finally { runner.dispose(); env.dispose(); }
@@ -427,11 +437,11 @@ describe('real move dialog request contracts', () => {
   for (const trialDays of [90, 0]) it(`Premium checkout carries clubName and the server's trial decision (${trialDays} days)`, async () => {
     const env = environment(), runner = hookRunner();
     try {
-      env.answer('/api/billing/move/preview', { code: 'no_live_subscription', error: 'Checkout needed', checkout: { toPlan: 'club', billingCycle: 'monthly', trialDays, amountDueToday: trialDays ? 0 : 21900, nextAmount: 21900, currency: 'cad', firstChargeAt: '2027-01-29', renewsAt: null } }, false);
+      env.answer('/api/billing/move/preview', { code: 'no_live_subscription', error: 'Checkout needed', checkout: { toPlan: 'club', billingCycle: 'monthly', trialDays, amountDueToday: trialDays ? 0 : 24747, nextAmount: 21900, currency: 'cad', firstChargeAt: '2027-01-29', renewsAt: null, tax: trialDays ? null : taxedOn(21900, 2847) } }, false);
       env.answer('/api/billing/create-checkout', { url: 'https://stripe.test/club-checkout' });
       const Dialog = (billingTestLoader({ react: runner.hooks })('components/billing/PlanMoveDialog.tsx') as { default: (p: Record<string, unknown>) => Element }).default;
       const render = () => runner.render(() => Dialog({ org: organization('team'), toPlan: 'club', freeThrough: '2026-12-31', returnTo: '/falcons-club/coaches/billing', teamsHref: '/teams', onClose() {}, onMoved() {} }));
-      render(); await new Promise<void>(resolve => setImmediate(resolve)); let dialog = render();
+      let dialog = await settle(render);
       const copy = find(dialog, e => e.type === 'p' && e.props.children === (trialDays ? W.clubUpgrade.trial(trialDays) : W.clubUpgrade.noTrial));
       assert.ok(copy);
       // The Monthly/Yearly toggle (named; the club billing address block is a group of its own).
@@ -449,7 +459,7 @@ describe('real move dialog request contracts', () => {
       env.answer('/api/billing/move/preview', { code, error: 'A named refusal', endsAt: '2026-12-31' }, false);
       const Dialog = (billingTestLoader({ react: runner.hooks })('components/billing/PlanMoveDialog.tsx') as { default: (p: Record<string, unknown>) => Element }).default;
       const render = () => runner.render(() => Dialog({ org: organization('team'), toPlan: 'club', returnTo: billingBase, teamsHref: '/teams', onClose() {}, onMoved() {} }));
-      render(); await new Promise<void>(resolve => setImmediate(resolve)); const dialog = render();
+      const dialog = await settle(render);
       assert.equal(elements(dialog.props.footer).some(e => e.props.children === W.clubUpgrade.start || e.props.children === W.move.checkout), false);
       assert.ok(find(dialog, e => Object.hasOwn(e.props, 'notice')));
     } finally { runner.dispose(); env.dispose(); }
@@ -461,7 +471,7 @@ describe('real move dialog request contracts', () => {
       const moveExports = billingTestLoader({ react: runner.hooks })('components/billing/PlanMoveDialog.tsx') as { default: (props: Record<string, unknown>) => Element };
       const teamsHref = '/falcons-club/admin/rep-teams';
       const render = () => runner.render(() => moveExports.default({ org: organization('club_large'), toPlan: 'club', returnTo: billingBase, teamsHref, onClose() {}, onMoved() {} }));
-      render(); await new Promise<void>(resolve => setImmediate(resolve)); const dialog = render();
+      const dialog = await settle(render);
       const door = find(dialog.props.footer, element => element.props.children === W.move.repTeams);
       assert.equal(door.props.href, teamsHref);
     } finally { runner.dispose(); env.dispose(); }
@@ -473,16 +483,108 @@ describe('real move dialog request contracts', () => {
       const org = organization(direction === 'up' ? 'club' : 'club_large');
       const toPlan = direction === 'up' ? 'club_large' : 'club';
       env.answer('/api/billing/move/preview', direction === 'up'
-        ? { direction, amountDueToday: 14250, currency: 'cad', prorationDate: 1793188800, nextAmount: 37900, renewsAt: '2026-11-03', billingCycle: 'monthly' }
+        ? { direction, amountDueToday: 14250, currency: 'cad', prorationDate: 1793188800, nextAmount: 37900, renewsAt: '2026-11-03', billingCycle: 'monthly', lines: null, tax: taxedOn(12611, 1639) }
         : { direction, effectiveAt: '2026-11-03', nextAmount: 21900, currency: 'cad', billingCycle: 'monthly' });
       const moved: string[] = [];
       const moveExports = billingTestLoader({ react: runner.hooks })('components/billing/PlanMoveDialog.tsx') as { default: (props: Record<string, unknown>) => Element };
       const render = () => runner.render(() => moveExports.default({ org, toPlan, returnTo: billingBase, teamsHref: '/falcons-club/admin/rep-teams', onClose() {}, onMoved: (text: string) => moved.push(text) }));
-      render(); await new Promise<void>(resolve => setImmediate(resolve)); const dialog = render();
+      const dialog = await settle(render);
       assertRequest(env.requests[0], '/api/billing/move/preview', 'POST', { orgSlug: org.slug, planKey: toPlan });
       click(find(dialog.props.footer, element => element.type === 'button' && element.props.className === 'btn btn-lime'));
       await new Promise<void>(resolve => setImmediate(resolve));
-      assertRequest(env.requests[1], '/api/billing/move', 'POST', { orgSlug: org.slug, planKey: toPlan, ...(direction === 'up' ? { prorationDate: 1793188800 } : {}) });
+      assertRequest(env.requests[1], '/api/billing/move', 'POST', { orgSlug: org.slug, planKey: toPlan, ...(direction === 'up' ? { prorationDate: 1793188800, expectedAmountDue: 14250 } : {}) });
+      assert.equal(moved.length, 1);
+    } finally { runner.dispose(); env.dispose(); }
+  });
+
+  // ── GST/HST Stage 2 Part 3 (drawings tabs 2–4, ruled 2026-11-05) ──
+  const loadDialog = (runner: ReturnType<typeof hookRunner>) =>
+    (billingTestLoader({ react: runner.hooks })('components/billing/PlanMoveDialog.tsx') as { default: (p: Record<string, unknown>) => Element }).default;
+  const rowOf = (dialog: Element, label: string) => elements(dialog).find(e => e.type === 'div' && elements(e.props.children).some(c => c.type === 'dt' && c.props.children === label));
+  const text = (node: unknown): string => typeof node === 'string' || typeof node === 'number' ? String(node)
+    : Array.isArray(node) ? node.map(text).join('') : React.isValidElement(node) ? text((node as Element).props.children) : '';
+
+  it('a band move shows the amount, the tax by name and Due today; the renewal says plus applicable taxes', async () => {
+    const env = environment(), runner = hookRunner();
+    try {
+      env.answer('/api/billing/move/preview', { direction: 'up', amountDueToday: 10848, currency: 'cad', prorationDate: 5, nextAmount: 37900, renewsAt: '2026-12-03', billingCycle: 'monthly', lines: null, tax: taxedOn(9600, 1248) });
+      const Dialog = loadDialog(runner);
+      const dialog = await settle(() => runner.render(() => Dialog({ org: organization('club'), toPlan: 'club_large', returnTo: billingBase, teamsHref: '/teams', onClose() {}, onMoved() {} })));
+      assert.equal(text(rowOf(dialog, W.move.today)), W.move.today + '$96.00 CAD');
+      assert.equal(text(rowOf(dialog, 'HST 13%')), 'HST 13%$12.48 CAD');
+      assert.equal(text(rowOf(dialog, W.clubUpgrade.dueToday)), W.clubUpgrade.dueToday + '$108.48 CAD');
+      assert.ok(elements(dialog).some(e => e.type === 'small' && e.props.children === W.move.plusTax), 'the renewal figure says plus applicable taxes');
+    } finally { runner.dispose(); env.dispose(); }
+  });
+
+  it('a band move with no address on file offers the Billing address window, not a Check again that cannot work', async () => {
+    const env = environment(), runner = hookRunner();
+    try {
+      env.answer('/api/billing/move/preview', { code: 'billing_address_required', error: 'Add a billing address before you pay.', buyer: 'club' }, false);
+      const Dialog = loadDialog(runner);
+      const dialog = await settle(() => runner.render(() => Dialog({ org: organization('club'), toPlan: 'club_large', returnTo: billingBase, teamsHref: '/teams', onClose() {}, onMoved() {} })));
+      assert.ok(find(dialog.props.footer, e => e.props.children === W.move.addressDoor));
+      assert.equal(elements(dialog.props.footer).some(e => e.props.children === W.clubUpgrade.checkAgain || e.props.children === W.change.move('Club · Association')), false);
+    } finally { runner.dispose(); env.dispose(); }
+  });
+
+  it('Start your club: a new province waits for a complete address, then loads the charge for it, keeping the name and address on screen', async () => {
+    const env = environment(), runner = hookRunner();
+    try {
+      env.answer('/api/billing/move/preview', { direction: 'up', amountDueToday: 14314, currency: 'cad', prorationDate: 9, nextAmount: 21900, renewsAt: null, billingCycle: 'monthly', lines: null, tax: taxedOn(12667, 1647) });
+      const Dialog = loadDialog(runner);
+      const render = () => runner.render(() => Dialog({ org: organization('team'), toPlan: 'club', returnTo: '/falcons-club/coaches/billing', teamsHref: '/teams', onClose() {}, onMoved() {} }));
+      let dialog = await settle(render);
+      const form = () => find(dialog, e => Object.hasOwn(e.props, 'form') && Object.hasOwn(e.props, 'idPrefix')).props.form as { setField: (k: string, v: string) => void };
+      assert.ok(rowOf(dialog, 'HST 13%'));
+      // Alberta with the Ontario postal code still there: the address fails its check, so nothing is asked and the figures wait.
+      form().setField('regionCode', 'AB'); dialog = await settle(render);
+      assert.equal(env.requests.filter(r => r.endpoint === '/api/billing/move/preview').length, 1, 'an address that fails its check asks nothing');
+      assert.ok(elements(dialog).some(e => e.type === 'p' && e.props.children === W.move.chargeWaits));
+      assert.equal(rowOf(dialog, W.clubUpgrade.dueToday), undefined, 'no figure for an address that will be refused');
+      assert.ok(find(dialog, e => e.type === 'input'), 'the club name stays on screen');
+      assert.equal(find(dialog.props.footer, e => e.props.children === W.clubUpgrade.start).props.disabled, true);
+      // The postal code fixed: one new quote, for Alberta.
+      env.answer('/api/billing/move/preview', { direction: 'up', amountDueToday: 13300, currency: 'cad', prorationDate: 9, nextAmount: 21900, renewsAt: null, billingCycle: 'monthly', lines: null, tax: { status: 'taxed', lines: [{ label: 'GST 5%', cents: 633 }], beforeTax: 12667, taxedFor: { country: 'CA', region: 'AB' } } });
+      form().setField('postalCode', 'T2P 1J9'); form().setField('city', 'Calgary'); dialog = await settle(render);
+      const previews = env.requests.filter(r => r.endpoint === '/api/billing/move/preview');
+      assert.equal(previews.length, 2);
+      assert.equal(JSON.parse(String(previews[1].init?.body)).billingAddress.regionCode, 'AB');
+      assert.equal(text(rowOf(dialog, 'GST 5%')), 'GST 5%$6.33 CAD');
+      assert.equal(text(rowOf(dialog, W.clubUpgrade.dueToday)), W.clubUpgrade.dueToday + '$133.00 CAD');
+      assert.equal(find(dialog.props.footer, e => e.props.children === W.clubUpgrade.start).props.disabled, false);
+    } finally { runner.dispose(); env.dispose(); }
+  });
+
+  it('/review: a taxed quote Stripe did not say the place of still shows its figures (they are for the place asked)', async () => {
+    const env = environment(), runner = hookRunner();
+    try {
+      env.answer('/api/billing/move/preview', { direction: 'up', amountDueToday: 14314, currency: 'cad', prorationDate: 9, nextAmount: 21900, renewsAt: null, billingCycle: 'monthly', lines: null, tax: { ...taxedOn(12667, 1647), taxedFor: null } });
+      const Dialog = loadDialog(runner);
+      const dialog = await settle(() => runner.render(() => Dialog({ org: organization('team'), toPlan: 'club', returnTo: '/falcons-club/coaches/billing', teamsHref: '/teams', onClose() {}, onMoved() {} })));
+      assert.ok(rowOf(dialog, 'HST 13%'));
+      assert.equal(find(dialog.props.footer, e => e.props.children === W.clubUpgrade.start).props.disabled, false);
+    } finally { runner.dispose(); env.dispose(); }
+  });
+
+  it('a charge that changed when pressed: nothing is charged, the new figures and the amber sentence show, and the second press sends the new figure', async () => {
+    const env = environment(), runner = hookRunner();
+    try {
+      env.answer('/api/billing/move/preview', { direction: 'up', amountDueToday: 10848, currency: 'cad', prorationDate: 5, nextAmount: 37900, renewsAt: null, billingCycle: 'monthly', lines: null, tax: taxedOn(9600, 1248) });
+      const changed = { direction: 'up', amountDueToday: 11040, currency: 'cad', prorationDate: 5, nextAmount: 37900, renewsAt: null, billingCycle: 'monthly', lines: null, tax: taxedOn(9600, 1440) };
+      env.answer('/api/billing/move', { code: 'charge_changed', error: W.move.chargeChanged(11040, 'cad', W.change.move('Club · Association')), preview: changed }, false);
+      env.answer('/api/billing/move', { direction: 'up', toPlan: 'club_large', movedAt: 'now' });
+      const moved: string[] = [];
+      const Dialog = loadDialog(runner);
+      const render = () => runner.render(() => Dialog({ org: organization('club'), toPlan: 'club_large', returnTo: billingBase, teamsHref: '/teams', onClose() {}, onMoved: (t: string) => moved.push(t) }));
+      let dialog = await settle(render);
+      click(find(dialog.props.footer, e => e.props.className === 'btn btn-lime')); dialog = await settle(render);
+      assert.deepEqual(moved, [], 'nothing was moved');
+      assert.ok(elements(dialog).some(e => e.props.role === 'status' && e.props.children === W.move.chargeChanged(11040, 'cad', W.change.move('Club · Association'))));
+      assert.equal(text(rowOf(dialog, W.clubUpgrade.dueToday)), W.clubUpgrade.dueToday + '$110.40 CAD');
+      click(find(dialog.props.footer, e => e.props.className === 'btn btn-lime')); await settle(render);
+      const presses = env.requests.filter(r => r.endpoint === '/api/billing/move');
+      assert.equal(JSON.parse(String(presses[1].init?.body)).expectedAmountDue, 11040);
       assert.equal(moved.length, 1);
     } finally { runner.dispose(); env.dispose(); }
   });
@@ -495,7 +597,7 @@ describe('real move dialog request contracts', () => {
       const org = { ...organization('club'), subscriptionPeriod: 'annual' };
       const moveExports = billingTestLoader({ react: runner.hooks })('components/billing/PlanMoveDialog.tsx') as { default: (props: Record<string, unknown>) => Element };
       const render = () => runner.render(() => moveExports.default({ org, toPlan: 'club_large', returnTo: billingBase, teamsHref: '/falcons-club/admin/rep-teams', onClose() {}, onMoved() {} }));
-      render(); await new Promise<void>(resolve => setImmediate(resolve)); const dialog = render();
+      const dialog = await settle(render);
       click(find(dialog.props.footer, element => element.type === 'button' && element.props.className === 'btn btn-lime'));
       await new Promise<void>(resolve => setImmediate(resolve));
       assertRequest(env.requests[1], '/api/billing/create-checkout', 'POST', { planKey: 'club_large', billingCycle: 'annual', orgSlug: org.slug, returnTo: billingBase });

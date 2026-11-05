@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   AUTOMATIC_TAX, BILLING_REVIEW_HOLD, BILLING_TAX_WORDS, BUYER_NAME_META, RECOVERED_FEE_TAX, TAXED_CHECKOUT, buyerNameUpdate, decideBuyerTax,
-  namedTaxLines, taxLineLabel, taxWasWorkedOut,
+  namedTaxLines, quoteTax, taxLineLabel, taxWasWorkedOut,
 } from '../../lib/billing-tax.ts';
 import {
   BILLING_ADDRESS_REQUIRED, BILLING_LOCATION_WORDS, CA_POSTAL_FIRST_LETTERS, countryInfo, type StoredBillingLocation,
@@ -125,4 +125,42 @@ describe('the tax by name', () => {
     assert.deepEqual(lines, [{ label: 'HST 13%', cents: 377 }]);
     assert.deepEqual(await namedTaxLines(null, async () => ({})), []);
   });
+});
+
+describe('Part 3 · a quote’s tax, as the paying windows draw it', () => {
+  const complete = { enabled: true, status: 'complete' };
+  const rate = async () => ({ display_name: 'HST', percentage: 13 });
+  const preview = (over: Record<string, unknown> = {}) => ({
+    amount_due: 1130, total_excluding_tax: 1000, starting_balance: 0, automatic_tax: complete,
+    customer_address: { country: 'ca', state: 'on' },
+    total_taxes: [{ amount: 130, tax_behavior: 'exclusive', tax_rate_details: { tax_rate: 'txr_1' } }], ...over,
+  });
+
+  it('names the tax, keeps the amount it sits on, and says where Stripe placed the buyer', async () => {
+    assert.deepEqual(await quoteTax(preview(), rate), {
+      status: 'taxed', lines: [{ label: 'HST 13%', cents: 130 }], beforeTax: 1000, taxedFor: { country: 'CA', region: 'ON' },
+    });
+  });
+
+  it('a quote that does not add up keeps the tax and the total, never an amount before tax', async () => {
+    for (const over of [{ starting_balance: -500, amount_due: 630 }, { amount_due: 1200 },
+      { total_taxes: [{ amount: 130, tax_behavior: 'inclusive', tax_rate_details: { tax_rate: 'txr_1' } }] }]) {
+      const q = await quoteTax(preview(over), rate);
+      assert.equal(q.status === 'taxed' && q.beforeTax, null, JSON.stringify(over));
+    }
+  });
+
+  it('a buyer Stripe could not place is never a figure: the sentence names no place (drawing tab 3, frame 5)', async () => {
+    for (const status of ['requires_location_inputs', 'failed']) {
+      assert.deepEqual(await quoteTax(preview({ automatic_tax: { enabled: true, status } }), rate), { status: 'not_worked_out', error: BILLING_TAX_WORDS.notWorkedOut });
+    }
+    assert.deepEqual(await quoteTax(preview({ automatic_tax: null }), rate), { status: 'not_worked_out', error: BILLING_TAX_WORDS.notWorkedOut });
+    assert.doesNotMatch(BILLING_TAX_WORDS.notWorkedOut, /Plan & billing/);
+  });
+
+  it('a US buyer is placed with no Canadian tax: no tax row, the amount is the total', async () => {
+    const q = await quoteTax(preview({ amount_due: 1000, total_taxes: [{ amount: 0, tax_behavior: 'exclusive' }], customer_address: { country: 'US', state: 'NY' } }), rate);
+    assert.deepEqual(q, { status: 'taxed', lines: [], beforeTax: 1000, taxedFor: { country: 'US', region: 'NY' } });
+  });
+
 });

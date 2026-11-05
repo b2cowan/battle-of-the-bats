@@ -19,6 +19,7 @@ import { STRIPE_FEE_WORDS } from './online-payment-words';
 import { PLAN_BILLING_TITLE } from './plan-billing-title';
 import type { OrgPlan as OrgPlanKey } from './types';
 import { STATUS_WORD } from './tournament-status-words';
+import { BILLING_TAX_WORDS } from './billing-tax';
 
 const day = (iso: string) => formatStoredDate(iso, { longMonth: true });
 /** "November 30" — a date the sentence has already given with its year. */
@@ -45,6 +46,10 @@ const paidPrice = (cents: number, billing: BillingCycle) => cents % 100 === 0 ? 
   : `$${(cents / 100).toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CAD / ${period(billing)}`;
 /** The next charge for a plan: its subscription's own recorded charge (in CAD, the only currency these words say), else the
  *  price list. One rule for the billing page's Keep window and the Keep email (Plans end at renewal, Part C). */
+/** Cents as a charge is quoted in the windows ("$133.00 CAD"): the same figure the move window draws with Intl. */
+const cents = (amount: number, currency: string) =>
+  `$${(amount / 100).toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currency.toUpperCase()}`;
+const PLUS_TAX = BILLING_TAX_WORDS.plusTax;
 const charge = (plan: OrgPlanKey, billing: BillingCycle, cents?: number | null, currency?: string | null) => currency === 'cad' && cents != null
   ? paidPrice(cents, billing)
   : price(billing === 'annual' ? PLAN_CONFIG[plan].annualPrice : PLAN_CONFIG[plan].monthlyPrice, billing);
@@ -173,10 +178,11 @@ export const PLAN_BILLING_WORDS = {
     noPeriod: (name: string) => `${name} has no paid period to wait for, so it ends when you confirm.`,
     // Keep {Plan}: the question window (Stage 0 ruling 4) — it names the date and the charge before a card is committed again.
     keepTitle: (plan: OrgPlanKey) => `${keepDoor(plan)}?`,
-    keepRenews: (org: string, label: string, iso: string, price: string) => `${org} stays on ${label} and renews on ${day(iso)} at ${price}.`,
-    keepTrial: (org: string, label: string, iso: string, price: string) => `${org} stays on ${label}. The trial ends on ${day(iso)}, and then it’s ${price}.`,
+    // GST/HST Stage 2 Part 3: the renewal charge is the price before tax, so it says so (T4).
+    keepRenews: (org: string, label: string, iso: string, price: string) => `${org} stays on ${label} and renews on ${day(iso)} at ${price} ${PLUS_TAX}.`,
+    keepTrial: (org: string, label: string, iso: string, price: string) => `${org} stays on ${label}. The trial ends on ${day(iso)}, and then it’s ${price} ${PLUS_TAX}.`,
     keepStaysUntil: (org: string, label: string, iso: string) => `${org} stays on ${label} until ${day(iso)}.`,
-    keepThenMove: (move: string, price: string) => `Then it renews as ${move}, the move you chose, at ${price}.`,
+    keepThenMove: (move: string, price: string) => `Then it renews as ${move}, the move you chose, at ${price} ${PLUS_TAX}.`,
     keepNothingElse: 'Nothing else changes.',
     keepAndMove: (move: string) => `Keep and renew as ${move}`, notNow: 'Not now', keeping: 'Keeping…',
     // Approved replacement for the existing server wording; wire once with the shared body.
@@ -374,11 +380,20 @@ export const PLAN_BILLING_WORDS = {
     up: (org: string, label: string, limit: number) => `${org} moves to ${label} today and can hold up to ${limit} teams.`,
     today: 'Today, for the rest of this billing period',
     from: (iso: string | null) => `From ${iso ? day(iso) : 'your next renewal'}`,
-    previewHelp: 'Same subscription and payment method, with no second checkout. The prorated amount comes from Stripe before you confirm.',
+    previewHelp: 'Same subscription and payment method, with no second checkout. The prorated amount and its tax come from Stripe before you confirm.',
+    // GST/HST Stage 2 Part 3 (drawings tabs 2–4, ruled 2026-11-05).
+    loadingCharge: 'Loading the charge…',
+    chargeWaits: 'The charge shows once the address is complete.',
+    addressDoor: 'Billing address',
+    /** The press-time check found a different charge: nothing was charged (tab 3, frame 4). `button` is the window's own. */
+    chargeChanged: (amount: number, currency: string, button: string) =>
+      `The charge changed to ${cents(amount, currency)}. Nothing was charged. Check the figures, then press ${button} again.`,
+    /** Under a renewal figure, and after any price a buyer is quoted before Stripe's page (T4). */
+    plusTax: PLUS_TAX,
     down: (org: string, label: string, limit: number, iso: string | null) => `${org} moves to ${label}${iso ? ` on ${day(iso)}` : ' at your next renewal'}, and can hold up to ${limit} teams from then.`,
-    downHelp: (label: string, amount: string, billing: BillingCycle) => `You keep ${label} until then, with no credit for the rest of this period. From then it’s ${amount} CAD / ${period(billing)}.`,
+    downHelp: (label: string, amount: string, billing: BillingCycle) => `You keep ${label} until then, with no credit for the rest of this period. From then it’s ${amount} CAD / ${period(billing)} ${PLUS_TAX}.`,
     tooSmall: (label: string, limit: number, org: string, active: number) => `${label} holds ${limit} teams and ${org} has ${active} active. Archive ${pluralize(active - limit, 'team')} first, then come back.`,
-    noSubscription: (org: string, label: string, amount: number, billing: BillingCycle) => `${org} isn’t paying for a subscription yet, so there’s no subscription to change. This starts ${label} (${formatPriceAmount(amount)} CAD / ${period(billing)}) at checkout, where you add a payment method.`,
+    noSubscription: (org: string, label: string, amount: number, billing: BillingCycle) => `${org} isn’t paying for a subscription yet, so there’s no subscription to change. This starts ${label} (${formatPriceAmount(amount)} CAD / ${period(billing)} ${PLUS_TAX}) at checkout, where you add a payment method.`,
     notOnSale: (label: string, org: string) => `${label} isn’t open for purchase yet. Contact us and we’ll move ${org} for you.`,
     moved: (org: string, label: string) => `${org} is now on ${label}.`,
     scheduled: (org: string, label: string, iso: string | null) => `${org} moves to ${label}${iso ? ` on ${day(iso)}` : ' at renewal'}.`,
@@ -394,6 +409,8 @@ export const PLAN_BILLING_WORDS = {
     addressHelp: 'Stays as it is, so links you have already sent keep working. You can change it any time in club settings.',
     charge: (label: string) => `${label} for the rest of this period`,
     credit: (label: string) => `Credit for unused ${label} time`, dueToday: 'Due today',
+    /** The no-trial checkout quote's first row: the plan's price before tax, so the tax row has something to sit under. */
+    firstPeriod: (label: string, billing: BillingCycle) => `${label}, first ${billing === 'annual' ? 'year' : 'month'}`,
     amount: (amount: string, currency: string) => `${amount} ${currency.toUpperCase()}`,
     renewal: (amount: string, billing: BillingCycle, currency: string) => `${amount} ${currency.toUpperCase()} / ${period(billing)}`,
     billingKept: (billing: BillingCycle) => `Same subscription and payment method. Your ${cycle(billing)} billing stays ${cycle(billing)}. No second trial.`,

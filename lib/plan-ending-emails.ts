@@ -158,7 +158,9 @@ function reminder(f: EndingEmailFacts, end: string): { subject: string; body: st
 /** Kept: short on purpose — it confirms the charge that is coming back (Tab 7, emails C and D). */
 function kept(f: EndingEmailFacts): { subject: string; body: string[] } {
   const when = f.date ? `on ${day(f.date)}` : 'at the end of this period';
-  const at = f.price ? ` at ${escapeHtml(f.price)}` : '';
+  // GST/HST Stage 2 Part 3: the charge named is the price before tax, as the Keep window says it (T4).
+  const price = f.price ? `${escapeHtml(f.price)} ${W.move.plusTax}` : null;
+  const at = price ? ` at ${price}` : '';
   const who = f.door === 'operator' ? 'We kept' : 'You kept';
   const how = `${f.door === 'stripe_portal' ? ' in the billing portal' : ''}${f.door === 'operator' ? ', at your request' : ''}`;
   const button = warmEmailButton(escapeHtml(`Open ${W.page.title}`), f.billingUrl);
@@ -173,7 +175,7 @@ function kept(f: EndingEmailFacts): { subject: string; body: string[] } {
     };
   }
   const renews = f.trialing && f.date
-    ? `Your trial ends on ${day(f.date)}${f.price ? `, and then it’s ${escapeHtml(f.price)}` : ''}.`
+    ? `Your trial ends on ${day(f.date)}${price ? `, and then it’s ${price}` : ''}.`
     : `It renews ${when}${at}.`;
   // Over a waiting move, the Keep window's own second sentence (Stage 2 Part B ruling) in place of "Nothing else changes."
   const rest = f.move ? escapeHtml(W.downgrade.keepMoveOff(f.move.target)) : W.cancel.keepNothingElse;

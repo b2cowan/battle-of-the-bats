@@ -1,5 +1,6 @@
 import { isClubPlan } from './module-entitlements';
 import { isTeamWorkspaceOrg } from './team-workspace-kind';
+import type { QuoteTax } from './billing-tax';
 
 /**
  * A COACH'S PORTAL BECOMING THE CLUB — THE DECISIONS THE TWO ENTRY ROUTES SHARE (Plan & billing Stage 4b, Part 2).
@@ -38,6 +39,8 @@ export type ClubCheckoutPreview = {
   currency: string;
   firstChargeAt: string | null;
   renewsAt: string | null;
+  /** GST/HST Stage 2 Part 3: the tax on `amountDueToday` (included in it); null with the trial, when nothing is charged today. */
+  tax: QuoteTax | null;
 };
 
 export type ClubNameCheck =

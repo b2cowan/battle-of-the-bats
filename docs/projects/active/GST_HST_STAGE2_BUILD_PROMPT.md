@@ -136,9 +136,64 @@ window before it can take payments; the fee invoice's wait (above) stays as the 
 step ("asks the club for its billing address when it sets up payouts"), brought FORWARD into Stage 2 because Part 2 already taxes
 the recovered fees; Stage 5 then finds it done. The build session finds the
 online-payments setup step, presents the PM summary, and brings back as an ASK (not ruled): what a club already connected
-without an address sees.
+without an address sees. **Build prompt written 2026-11-05: [GST_HST_STAGE2_PART2B_BUILD_PROMPT.md](GST_HST_STAGE2_PART2B_BUILD_PROMPT.md).**
 
-Next: Part 2b, then Part 3.
+**Part 3 BUILT 2026-11-05, NOT committed yet** (owner asked to resume Part 3 ahead of Part 2b; they do not depend on each other, Part 2b
+is still owed). Typecheck clean (`tsc` needed `NODE_OPTIONS=--max-old-space-size=8192`: the default heap ran out at 4 GB). ESLint 0
+errors, 2 new `set-state-in-effect` warnings in `PlanMoveDialog` (the render-phase form lint prefers is not run by the real-window
+test harness in `plan-billing-actions.test.ts`; the pattern has 7 other warnings in billing/lib). Spelling gate clean.
+- Stripe test mode first (`.probe/gst2/part3-preview.mjs`, run `part3-preview-run1.txt`): `invoices.createPreview` takes
+  `customer` + `subscription` + `customer_details.address` TOGETHER, and the override decides the tax for the quote alone (ON 13%
+  → AB 5% on the same subscription); `customer_address` on the preview echoes the place used; a preview and the update made with
+  the same `proration_date` are the same cent (1130 = 1130); lines are before tax with their own `taxes`.
+- `lib/billing-tax.ts`: `QuoteTax` (`taxed` with named `lines`, `beforeTax` only when every tax is exclusive, no balance and
+  it adds up, `taxedFor` from `customer_address`; `needs_address`; `not_worked_out` + sentence), `quoteTax`, `taxedForAddress`.
+  `notWorkedOut` reworded per the drawing (names no place).
+- `lib/plan-move-preview-lines.ts`: a tax ADDED ON TOP keeps the breakdown (lines + tax = amount due); an inclusive or unnamed
+  tax, or one that does not add up, still falls back to the total.
+- `lib/plan-move.ts`: one builder (`previewUp`) for the quote AND the press-time check; `QuotePlace` = customer / typed / wait;
+  every up preview carries `tax`. **The press-time check (D2):** `applyMove` up re-previews with the same proration date by the
+  customer's own address (the club's, stamped first, for Premium → Club) BEFORE releasing a schedule or updating; a different
+  figure, or none sent, is refused `charge_changed` with the new `preview` (nothing in Stripe touched); a check Stripe cannot place
+  is refused with `notWorkedOut`.
+- `lib/workspace-upgrade-preview.ts`: the no-trial checkout quote is taxed for the typed club address; with the trial `tax: null`
+  (nothing charged today).
+- Preview route: in place, the typed `billingAddress` is checked (never saved) → `typed`, else `wait`; a club's own move up asks
+  `requireBillingLocation` first (no address → `billing_address_required`, the window offers the Billing address window). Move route
+  passes `expectedAmountDue`.
+- `PlanMoveDialog` per drawings tabs 2–4: amount / tax by name / Due today; renewal `<small>plus applicable taxes</small>`; in place,
+  the quote is asked once, after the prefill, for the prefilled club address; a country/province change asks again only once the
+  address passes its check ("The charge shows once the address is complete." until then); the name and address stay on screen while
+  the figures load ("Loading the charge…" in the figures and the footer); the pay button waits for figures; Check again keeps the
+  form; `charge_changed` shows the new figures + the amber `.waitCallout` sentence; a failed stamp keeps the figures and the button;
+  no address on a band move → "Billing address" door, no Check again; the cycle switch no longer blanks the window.
+- Renewal words (T4): Plan & billing card price + quiet `plus applicable taxes` (not on free time, a comp, or a free plan); Keep
+  window `keepRenews` / `keepTrial` / `keepThenMove`; the Keep email; move down `downHelp`; `noSubscription`.
+- Console: `MoneyInvoice.taxCents` (charge row period line "· includes $X tax"); Next charge note ", includes $X tax" (the value
+  was already Stripe's total). No claim about why (Stage 3).
+- Tests: `billing-tax` +5, `workspace-move-money` +7 (2b block; the Stripe stub now records previews and defaults to an empty
+  taxed preview; every `applyMove` passes `expectedAmountDue`), `plan-billing-actions` +4 real-window tests (band tax rows, no-address
+  door, province change, changed charge) and the contracts updated, `console-money-next-charge` +1, the cycle guard rewritten.
+- `npm test` 14285: 14276 pass / 9 fail, none in a file Part 3 touched — the same set Part 2 recorded (practice-plan phone N1,
+  `plan-billing-usage` free-time, Stage 6 public walk ×3, `series-date-groups`, support-console foot) plus `public-page-layout-guard`
+  ×2 (another session's uncommitted public-page work).
+- Not built (by the drawing): no press-time check on the checkout path (Stripe's page shows the total again before payment).
+- Browser checks for the walk: the four windows on dev with an ON club, an AB address typed in Start your club, a US-address
+  club (no tax row), and a club with no address (the Billing address door).
+
+- **`/review` high-risk 2026-11-05** (4 lenses: server money logic, window state, regression, security): no Critical/High. Fixed: (M) an
+  in-place figure was matched to the place Stripe ECHOED (`taxedFor`), so a quote with no echo would wait forever with no Check again;
+  now matched to the place ASKED (the request key) and `taxedForAddress` removed; (L) a new quote clears the "charge changed" sentence;
+  (Adv) a failed tax-rate read names the row "Tax" instead of failing the quote or the move. Verified in test mode, not a defect: an up
+  move over a WAITING down schedule previews 1130 with the schedule attached and charges 1130 after the release
+  (`.probe/gst2/part3-schedule-run1.txt`). Accepted, recorded: a club's band move with no live subscription AND no address now sees
+  "Add a billing address" before the checkout door (checkout needs it anyway); a bare API caller omitting `expectedAmountDue` is always
+  refused (no such caller in app/lib/scripts/UAT); the Keep sentences add the phrase even to a $0 recorded charge (only a 100% coupon
+  reaches it); a CUSTOMISED `plan_kept` email template's `{price}` var stays bare (the built-in body says it); the duplicated loading
+  line (figures + footer) is the drawing's (tab 3 frame 2).
+- **Part 2b's one ask RULED 2026-11-05: A** (a quiet line on an already-connected club's Payouts card), recorded in its prompt.
+
+Next: Part 2b ([GST_HST_STAGE2_PART2B_BUILD_PROMPT.md](GST_HST_STAGE2_PART2B_BUILD_PROMPT.md)), then Part 4.
 
 **Rulings (owner, 2026-11-05, all as recommended):**
 - **Ask 1:** one helper decides tax: taxes by the stored address; a US address with disagreeing card/payout evidence

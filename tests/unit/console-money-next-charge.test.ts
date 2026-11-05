@@ -46,7 +46,14 @@ const read = (s: Stripe) => readClubMoney(s, 'cus_1', { prices: new Map(), testM
 describe('the next charge is one of three answers', () => {
   it('Stripe previews it: the amount and the date', async () => {
     const r = await read(fakeStripe({ pages: [[sub('sub_1', 'active')]] }).stripe);
-    assert.deepEqual(r.nextCharge, { kind: 'charge', amountCents: 3900, currency: 'cad', at: '2026-12-01T13:00:00.000Z' });
+    assert.deepEqual(r.nextCharge, { kind: 'charge', amountCents: 3900, currency: 'cad', at: '2026-12-01T13:00:00.000Z', taxCents: null });
+  });
+  it('GST/HST Stage 2 Part 3: a taxed next charge is the total, and the tax inside it is named on the band', async () => {
+    const preview = () => Promise.resolve({ amount_due: 4407, currency: 'cad', next_payment_attempt: unix('2026-12-01T13:00:00.000Z'), total_taxes: [{ amount: 507 }] });
+    const r = await read(fakeStripe({ pages: [[sub('sub_1', 'active')]], preview }).stripe);
+    assert.deepEqual(r.nextCharge, { kind: 'charge', amountCents: 4407, currency: 'cad', at: '2026-12-01T13:00:00.000Z', taxCents: 507 });
+    const cell = moneyBand(r, '2025-11-01T15:00:00.000Z').find(c => c.label === 'Next charge');
+    assert.ok(cell?.note.endsWith(', includes $5.07 tax'), cell?.note);
   });
   it('no live subscription: none, and Stripe is not asked for a preview', async () => {
     let asked = false;

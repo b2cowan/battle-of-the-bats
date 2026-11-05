@@ -31,6 +31,8 @@ import { applyMove, applyPlanChangeSideEffects, hasLiveSubscription, previewMove
 import { flipWorkspaceIntoClub } from '../../lib/workspace-flip.ts';
 import { moveDirection } from '../../lib/plan-move-options.ts';
 import { trustedPreviewLines, type PreviewInvoiceLike } from '../../lib/plan-move-preview-lines.ts';
+import { PLAN_BILLING_WORDS as W } from '../../lib/plan-billing-words.ts';
+import { BILLING_TAX_WORDS } from '../../lib/billing-tax.ts';
 import {
   CLUB_NAME_MAX, CLUB_NAME_METADATA_KEY, IN_PLACE_METADATA_KEY, IN_PLACE_RETURN_PARAM,
   clubNameFromMetadata, clubUpgradeStateOf, inPlaceMetadata, inPlaceReturnPath, inPlaceUpgradeOf, parseClubName,
@@ -86,14 +88,14 @@ function stubDatabase(answers: Record<string, Answer> = {}, rpcAnswers: Record<s
 const writesTo = (table: string) => log.filter(c => c.table === table && c.verb !== 'select');
 const rpcCalls = (name: string) => log.filter(c => c.verb === `rpc:${name}`).map(c => c.args[0] as Record<string, unknown>);
 
-type StripeCalls = { retrieve: number; update: Array<Record<string, any>>; createPreview: number; release: number };
+type StripeCalls = { retrieve: number; update: Array<Record<string, any>>; createPreview: number; release: number; previews: Array<Record<string, any>> };
 const stripeOriginals: Record<string, unknown> = {};
-let stripeCalls: StripeCalls = { retrieve: 0, update: [], createPreview: 0, release: 0 };
+let stripeCalls: StripeCalls = { retrieve: 0, update: [], createPreview: 0, release: 0, previews: [] };
 
 function stubStripe(p: { sub: unknown; invoice?: unknown; newPrice?: { unit_amount: number; currency: string }; history?: { status: string; metadata?: Record<string, string> }[]; historyFails?: boolean }) {
   process.env.STRIPE_SECRET_KEY ??= 'sk_test_unit';
   const s: any = getStripe();
-  stripeCalls = { retrieve: 0, update: [], createPreview: 0, release: 0 };
+  stripeCalls = { retrieve: 0, update: [], createPreview: 0, release: 0, previews: [] };
   for (const [k, target] of [['subs', s.subscriptions], ['prices', s.prices], ['invoices', s.invoices], ['schedules', s.subscriptionSchedules]] as const) {
     stripeOriginals[k] = { ...target };
   }
@@ -104,7 +106,10 @@ function stubStripe(p: { sub: unknown; invoice?: unknown; newPrice?: { unit_amou
   })();
   s.subscriptions.update = async (_id: string, params: Record<string, any>) => { stripeCalls.update.push(params); return p.sub; };
   s.prices.retrieve = async () => p.newPrice ?? { unit_amount: 9900, currency: 'cad' };
-  s.invoices.createPreview = async () => { stripeCalls.createPreview++; return p.invoice; };
+  s.invoices.createPreview = async (params: Record<string, any>) => {
+    stripeCalls.createPreview++; stripeCalls.previews.push(params);
+    return typeof p.invoice === 'function' ? (p.invoice as (n: number) => unknown)(stripeCalls.createPreview) : p.invoice ?? invoiceOf([]);
+  };
   s.subscriptionSchedules.release = async () => { stripeCalls.release++; };
 }
 
@@ -148,10 +153,13 @@ const line = (amount: number, price: string, over: Record<string, unknown> = {})
   ...over,
 });
 
-const invoiceOf = (lines: any[], over: Record<string, unknown> = {}): PreviewInvoiceLike => ({
+const invoiceOf = (lines: any[], over: Record<string, unknown> = {}): PreviewInvoiceLike & Record<string, unknown> => ({
   amount_due: lines.reduce((n, l) => n + l.amount, 0), currency: 'cad', starting_balance: 0,
+  total_excluding_tax: lines.reduce((n, l) => n + l.amount, 0), automatic_tax: { enabled: true, status: 'complete' },
   total_taxes: [], total_discount_amounts: [], lines: { has_more: false, data: lines }, ...over,
 });
+/** What every move up below was shown: the default preview's figure (the press-time check compares the charge to it). */
+const SHOWN = 0;
 
 const PRICES = { stripe_prices: { one: (f: Record<string, unknown>) => ({ price_id: `price_${f.plan_id}_${f.billing_cycle}` }) } };
 const ends = { fromPriceId: OLD_PRICE, toPriceId: NEW_PRICE, fromPlan: 'team' as const, toPlan: 'club' as const };
@@ -161,7 +169,7 @@ describe('Part 3 · before the owner confirms money', () => {
   it('a subscription set to end is refused before preview or charge — a Premium coach, and since Plans end at renewal every plan', async () => {
     stubDatabase(PRICES);
     stubStripe({ sub: subscription({ cancel_at_period_end: true }), invoice: invoiceOf([line(9900, NEW_PRICE)]) });
-    for (const result of [await previewMove(premiumOrg(), 'club'), await applyMove(premiumOrg(), 'club', { actor: 'test', clubName: 'Falcons' })]) {
+    for (const result of [await previewMove(premiumOrg(), 'club'), await applyMove(premiumOrg(), 'club', { expectedAmountDue: SHOWN, actor: 'test', clubName: 'Falcons' })]) {
       assert.ok('code' in result && result.code === 'subscription_ending');
       assert.ok('endsAt' in result && result.endsAt);
       assert.match(result.error, /Keep Premium first, then change it\./);
@@ -307,7 +315,7 @@ describe('2 · Premium → Club: the move rules', () => {
   it('sends the swap with no second trial: a price change and a proration, never a trial, an anchor reset or a new subscription', async () => {
     stubDatabase(PRICES);
     stubStripe({ sub: subscription() });
-    const r = await applyMove(premiumOrg(), 'club', { actor: 'coach@example.com', clubName: 'Riverdale Hawks' });
+    const r = await applyMove(premiumOrg(), 'club', { expectedAmountDue: SHOWN, actor: 'coach@example.com', clubName: 'Riverdale Hawks' });
     assert.ok(!isRefusal(r), JSON.stringify(r));
     assert.equal(stripeCalls.update.length, 1);
     const sent = stripeCalls.update[0];
@@ -320,7 +328,7 @@ describe('2 · Premium → Club: the move rules', () => {
   it('a trialing Premium coach moves too — on the trial they already have', async () => {
     stubDatabase(PRICES);
     stubStripe({ sub: subscription({ status: 'trialing' }) });
-    const r = await applyMove(premiumOrg({ subscriptionStatus: 'trialing' }), 'club', { actor: 'coach@example.com', clubName: 'Hawks' });
+    const r = await applyMove(premiumOrg({ subscriptionStatus: 'trialing' }), 'club', { expectedAmountDue: SHOWN, actor: 'coach@example.com', clubName: 'Hawks' });
     assert.ok(!isRefusal(r), JSON.stringify(r));
     assert.ok(!('trial_end' in stripeCalls.update[0]));
   });
@@ -335,7 +343,7 @@ describe('2 · Premium → Club: the move rules', () => {
       assert.match(isRefusal(preview) ? preview.error : '', /payment method/);
       assert.doesNotMatch(isRefusal(preview) ? preview.error : '', /\bcard\b/i);
       assert.equal(stripeCalls.createPreview, 0, 'no preview is priced');
-      const applied = await applyMove(org, 'club', { actor: 'coach@example.com', clubName: 'Hawks' });
+      const applied = await applyMove(org, 'club', { expectedAmountDue: SHOWN, actor: 'coach@example.com', clubName: 'Hawks' });
       assert.ok(isRefusal(applied) && applied.code === 'payment_failing');
       assert.equal(stripeCalls.update.length, 0, 'nothing is charged');
       unstubStripe();
@@ -359,7 +367,7 @@ describe('2 · Premium → Club: the move rules', () => {
     ]) {
       const r = await previewMove(org, 'club');
       assert.ok(isRefusal(r) && r.code === 'no_live_subscription', JSON.stringify(r));
-      assert.equal((await applyMove(org, 'club', { actor: 'x', clubName: 'Hawks' }) as MoveRefusal).code, 'no_live_subscription');
+      assert.equal((await applyMove(org, 'club', { expectedAmountDue: SHOWN, actor: 'x', clubName: 'Hawks' }) as MoveRefusal).code, 'no_live_subscription');
     }
     assert.equal(stripeCalls.retrieve, 0, 'Stripe is not even asked');
   });
@@ -368,7 +376,7 @@ describe('2 · Premium → Club: the move rules', () => {
     stubDatabase(PRICES);
     stubStripe({ sub: subscription() });
     for (const clubName of [undefined, null, '', '   ', 'x'.repeat(41)]) {
-      const r = await applyMove(premiumOrg(), 'club', { actor: 'x', clubName });
+      const r = await applyMove(premiumOrg(), 'club', { expectedAmountDue: SHOWN, actor: 'x', clubName });
       assert.ok(isRefusal(r) && r.code === 'club_name_invalid', JSON.stringify(r));
     }
     assert.equal(stripeCalls.retrieve + stripeCalls.update.length, 0);
@@ -377,7 +385,7 @@ describe('2 · Premium → Club: the move rules', () => {
   it('puts the name and the in-place marker on the SUBSCRIPTION (a webhook retry has no request), and hands the flip the same name', async () => {
     stubDatabase(PRICES, {});
     stubStripe({ sub: subscription() });
-    await applyMove(premiumOrg(), 'club', { actor: 'coach@example.com', clubName: '  Riverdale   Hawks ' });
+    await applyMove(premiumOrg(), 'club', { expectedAmountDue: SHOWN, actor: 'coach@example.com', clubName: '  Riverdale   Hawks ' });
     const md = stripeCalls.update[0].metadata;
     assert.equal(md[CLUB_NAME_METADATA_KEY], 'Riverdale Hawks');
     assert.equal(md[IN_PLACE_METADATA_KEY], '1');
@@ -388,7 +396,7 @@ describe('2 · Premium → Club: the move rules', () => {
   it('runs the flip with the name on the way out (the plan write precedes it, as the webhook retry expects)', async () => {
     stubDatabase({ ...PRICES, team_workspaces: { one: { id: 'ws_1' } } });
     stubStripe({ sub: subscription() });
-    await applyMove(premiumOrg(), 'club', { actor: 'coach@example.com', clubName: 'Riverdale Hawks' });
+    await applyMove(premiumOrg(), 'club', { expectedAmountDue: SHOWN, actor: 'coach@example.com', clubName: 'Riverdale Hawks' });
     const planWrite = log.findIndex(c => c.table === 'organizations' && c.verb === 'update' && (c.args[0] as any)?.plan_id === 'club');
     const flip = log.findIndex(c => c.verb === 'rpc:flip_workspace_into_club');
     assert.ok(planWrite >= 0 && flip > planWrite, 'plan written, then flipped');
@@ -400,7 +408,7 @@ describe('2 · Premium → Club: the move rules', () => {
   it('a move that is not a portal becoming the club asks for no name (Tournament Plus → Club)', async () => {
     stubDatabase({ ...PRICES });
     stubStripe({ sub: subscription() });
-    const r = await applyMove(premiumOrg({ planId: 'tournament_plus' }), 'club', { actor: 'x' });
+    const r = await applyMove(premiumOrg({ planId: 'tournament_plus' }), 'club', { expectedAmountDue: SHOWN, actor: 'x' });
     assert.ok(!isRefusal(r), JSON.stringify(r));
     assert.ok(!(IN_PLACE_METADATA_KEY in stripeCalls.update[0].metadata));
     assert.equal(rpcCalls('flip_workspace_into_club').length, 0, 'no workspace row: the flip answers without calling the database function');
@@ -409,7 +417,7 @@ describe('2 · Premium → Club: the move rules', () => {
   it('an organization that carries plan team but is not a workspace is moved, and the flip answers "not a workspace" without writing', async () => {
     stubDatabase({ ...PRICES });                      // team_workspaces finds nothing
     stubStripe({ sub: subscription() });
-    const r = await applyMove(premiumOrg(), 'club', { actor: 'x', clubName: 'Hawks' });
+    const r = await applyMove(premiumOrg(), 'club', { expectedAmountDue: SHOWN, actor: 'x', clubName: 'Hawks' });
     assert.ok(!isRefusal(r), JSON.stringify(r));
     assert.equal(rpcCalls('flip_workspace_into_club').length, 0);
     assert.deepEqual(await flipWorkspaceIntoClub({ orgId: 'org_1', plan: 'club', actor: 'x', clubName: 'Hawks' }), { status: 'skipped', reason: 'not_a_workspace' });
@@ -433,6 +441,74 @@ describe('2 · Premium → Club: the move rules', () => {
 
 // ── 3 · the preview's lines ─────────────────────────────────────────────────────────────────────────
 
+describe('2b · GST/HST Stage 2 Part 3: the quote is taxed, and the charge is checked against it when pressed', () => {
+  const taxedPreview = (due: number, tax: number) => invoiceOf([line(due - tax, NEW_PRICE)], {
+    amount_due: due, total_excluding_tax: due - tax, total_taxes: [{ amount: tax, tax_behavior: 'exclusive' }],
+    customer_address: { country: 'CA', state: 'AB' },
+  });
+
+  it('the quote asks Stripe for the tax, by a typed address when there is one, and reads it back by name and place', async () => {
+    stubDatabase(PRICES);
+    stubStripe({ sub: subscription(), invoice: taxedPreview(1050, 50) });
+    const address = { line1: '200 8 Ave SW', line2: '', city: 'Calgary', state: 'AB', postal_code: 'T2P 1J9', country: 'CA' };
+    const quoted = await previewMove(premiumOrg(), 'club', { kind: 'typed', address }) as Extract<MovePreview, { direction: 'up' }>;
+    assert.deepEqual(stripeCalls.previews[0].automatic_tax, { enabled: true });
+    assert.deepEqual(stripeCalls.previews[0].customer_details, { address });
+    assert.equal(quoted.amountDueToday, 1050, 'Due today includes the tax');
+    assert.deepEqual(quoted.tax, { status: 'taxed', lines: [{ label: 'Tax', cents: 50 }], beforeTax: 1000, taxedFor: { country: 'CA', region: 'AB' } });
+  });
+
+  it('an address not complete yet asks Stripe for no tax and says the figures wait', async () => {
+    stubDatabase(PRICES);
+    stubStripe({ sub: subscription(), invoice: taxedPreview(1050, 50) });
+    const quoted = await previewMove(premiumOrg(), 'club', { kind: 'wait' }) as Extract<MovePreview, { direction: 'up' }>;
+    assert.ok(!('automatic_tax' in stripeCalls.previews[0]) && !('customer_details' in stripeCalls.previews[0]));
+    assert.deepEqual(quoted.tax, { status: 'needs_address' });
+  });
+
+  it('a quote Stripe could not place is never a figure to pay', async () => {
+    stubDatabase(PRICES);
+    stubStripe({ sub: subscription(), invoice: invoiceOf([line(1000, NEW_PRICE)], { automatic_tax: { enabled: true, status: 'requires_location_inputs' } }) });
+    const quoted = await previewMove(premiumOrg(), 'club') as Extract<MovePreview, { direction: 'up' }>;
+    assert.equal(quoted.tax.status, 'not_worked_out');
+  });
+
+  it('the charge that equals the quote is made; the check asks by the customer’s own address (the club’s, stamped first)', async () => {
+    stubDatabase(PRICES);
+    stubStripe({ sub: subscription(), invoice: taxedPreview(1050, 50) });
+    const r = await applyMove(premiumOrg(), 'club', { expectedAmountDue: 1050, prorationDate: 1, actor: 'x', clubName: 'Hawks' });
+    assert.ok(!isRefusal(r), JSON.stringify(r));
+    assert.equal(stripeCalls.update.length, 1);
+    assert.deepEqual(stripeCalls.update[0].automatic_tax, { enabled: true });
+    assert.ok(!('customer_details' in stripeCalls.previews[0]), 'the check is the charge’s own question');
+    assert.equal(stripeCalls.previews[0].subscription_details.proration_date, stripeCalls.update[0].proration_date, 'the same proration date both ways');
+  });
+
+  it('a charge that changed is NOT made: nothing in Stripe is touched, and the new quote comes back for a second press', async () => {
+    for (const expectedAmountDue of [1130, undefined]) {
+      stubDatabase(PRICES);
+      stubStripe({ sub: subscription({ schedule: { id: 'sub_sched_1' } }), invoice: taxedPreview(1050, 50) });
+      const r = await applyMove(premiumOrg(), 'club', { expectedAmountDue, actor: 'x', clubName: 'Hawks' });
+      assert.ok(isRefusal(r) && r.code === 'charge_changed', JSON.stringify(r));
+      assert.equal(stripeCalls.update.length, 0, 'nothing is charged');
+      assert.equal(stripeCalls.release, 0, 'a waiting move down is not released either');
+      if (isRefusal(r) && r.code === 'charge_changed') {
+        assert.equal(r.preview.direction === 'up' && r.preview.amountDueToday, 1050);
+        assert.equal(r.error, W.move.chargeChanged(1050, 'cad', W.clubUpgrade.start));
+      }
+      unstubStripe();
+    }
+  });
+
+  it('a check Stripe could not place refuses with the sentence, before any change', async () => {
+    stubDatabase(PRICES);
+    stubStripe({ sub: subscription(), invoice: invoiceOf([line(1000, NEW_PRICE)], { automatic_tax: { enabled: true, status: 'requires_location_inputs' } }) });
+    const r = await applyMove(premiumOrg(), 'club', { expectedAmountDue: 1000, actor: 'x', clubName: 'Hawks' });
+    assert.ok(isRefusal(r) && r.code === 'stripe_error' && r.error === BILLING_TAX_WORDS.notWorkedOut, JSON.stringify(r));
+    assert.equal(stripeCalls.update.length, 0);
+  });
+});
+
 describe('3 · the preview’s lines', () => {
   it('maps a charge on the new plan and a credit on the old, and they add up to the amount due', () => {
     const lines = trustedPreviewLines(invoiceOf([line(5000, NEW_PRICE), line(-1800, OLD_PRICE)]), ends);
@@ -451,15 +527,22 @@ describe('3 · the preview’s lines', () => {
     assert.doesNotMatch(readCode('lib/plan-move-preview-lines.ts'), /description/, 'the line text is Stripe’s, and Part 3 supplies the words');
   });
 
+  it('GST/HST Stage 2 Part 3: a tax added on top keeps the lines (they are before tax, the tax is its own row)', () => {
+    const taxed = invoiceOf([line(5000, NEW_PRICE, { taxes: [{ amount: 650 }] }), line(-2000, OLD_PRICE, { taxes: [{ amount: -260 }] })],
+      { total_taxes: [{ amount: 390, tax_behavior: 'exclusive' }], amount_due: 3390 });
+    assert.deepEqual(trustedPreviewLines(taxed, ends), [{ kind: 'charge', plan: 'club', amount: 5000 }, { kind: 'credit', plan: 'team', amount: 2000 }]);
+  });
+
   it('falls back to the total alone whenever a line cannot be trusted', () => {
     const good = () => [line(5000, NEW_PRICE), line(-2000, OLD_PRICE)];
     const cases: Record<string, PreviewInvoiceLike> = {
       'no lines': invoiceOf([]),
       'more lines than Stripe sent': invoiceOf(good(), { lines: { has_more: true, data: good() } }),
-      'tax on the invoice': invoiceOf(good(), { total_taxes: [{ amount: 100 }] }),
+      'a tax included in the price': invoiceOf(good(), { total_taxes: [{ amount: 100, tax_behavior: 'inclusive' }], amount_due: 3100 }),
+      'a tax whose kind Stripe did not say': invoiceOf(good(), { total_taxes: [{ amount: 100 }], amount_due: 3100 }),
+      'a tax on top that does not add up': invoiceOf(good(), { total_taxes: [{ amount: 390, tax_behavior: 'exclusive' }], amount_due: 3000 }),
       'a discount on the invoice': invoiceOf(good(), { total_discount_amounts: [{ amount: 100 }] }),
       'a customer balance in play': invoiceOf(good(), { starting_balance: -500 }),
-      'tax on a line': invoiceOf([line(5000, NEW_PRICE, { taxes: [{ amount: 650 }] }), line(-2000, OLD_PRICE)]),
       'a discount on a line': invoiceOf([line(5000, NEW_PRICE, { discount_amounts: [{ amount: 1 }] }), line(-2000, OLD_PRICE)]),
       'another currency': invoiceOf([line(5000, NEW_PRICE, { currency: 'usd' }), line(-2000, OLD_PRICE)]),
       'a line that is not a proration': invoiceOf([line(5000, NEW_PRICE, { parent: { type: 'subscription_item_details', subscription_item_details: { proration: false } } }), line(-2000, OLD_PRICE)]),
@@ -675,7 +758,7 @@ describe('6 · the webhook: the reactivation verdict, and the event that follows
   it('the event that follows the swap does not re-enter the Premium arm: it is entered by the PRICE, never by the old keys the move leaves on the subscription', async () => {
     stubDatabase({ ...PRICES });
     stubStripe({ sub: subscription() });
-    await applyMove(premiumOrg(), 'club', { actor: 'coach@example.com', clubName: 'Hawks' });
+    await applyMove(premiumOrg(), 'club', { expectedAmountDue: SHOWN, actor: 'coach@example.com', clubName: 'Hawks' });
     // Stripe MERGES the move's metadata onto what the Premium subscription already carried:
     const merged = { checkoutKind: 'team', teamWorkspaceId: 'ws_1', ...stripeCalls.update[0].metadata } as Record<string, string>;
     assert.equal(merged.planKey, 'club', 'the move overwrote the plan key the Premium checkout wrote');
@@ -732,7 +815,7 @@ describe('8 · after the review: money, refusals and records', () => {
   it('a DECLINED proration charge leaves the subscription as it was (fails without it: the key is absent and Stripe swaps the price anyway)', async () => {
     stubDatabase({ ...PRICES, ...ONE_TEAM });
     stubStripe({ sub: subscription() });
-    await applyMove(premiumOrg(), 'club', { actor: 'coach@example.com', clubName: 'Hawks' });
+    await applyMove(premiumOrg(), 'club', { expectedAmountDue: SHOWN, actor: 'coach@example.com', clubName: 'Hawks' });
     assert.equal(stripeCalls.update[0].payment_behavior, 'error_if_incomplete');
   });
 
@@ -742,7 +825,7 @@ describe('8 · after the review: money, refusals and records', () => {
     const preview = await previewMove(premiumOrg(), 'club');
     assert.ok(isRefusal(preview) && preview.code === 'cannot_become_club', JSON.stringify(preview));
     assert.match(isRefusal(preview) ? preview.error : '', /more than one team/);
-    const applied = await applyMove(premiumOrg(), 'club', { actor: 'x', clubName: 'Hawks' });
+    const applied = await applyMove(premiumOrg(), 'club', { expectedAmountDue: SHOWN, actor: 'x', clubName: 'Hawks' });
     assert.ok(isRefusal(applied) && applied.code === 'cannot_become_club');
     assert.equal(stripeCalls.update.length, 0, 'nothing is charged');
     assert.equal(stripeCalls.createPreview, 0, 'no price is shown for a move that cannot happen');
@@ -779,7 +862,7 @@ describe('8 · after the review: money, refusals and records', () => {
   it('money taken and a database step failing is NOT "Nothing was changed": the move is made and says it is finishing', async () => {
     stubDatabase({ ...PRICES, ...ONE_TEAM }, { flip_workspace_into_club: { error: { message: 'connection lost' } } });
     stubStripe({ sub: subscription() });
-    const r = await applyMove(premiumOrg(), 'club', { actor: 'coach@example.com', clubName: 'Hawks' });
+    const r = await applyMove(premiumOrg(), 'club', { expectedAmountDue: SHOWN, actor: 'coach@example.com', clubName: 'Hawks' });
     assert.ok(!isRefusal(r), JSON.stringify(r));
     assert.equal((r as { finishing?: boolean }).finishing, true);
     assert.equal(stripeCalls.update.length, 1, 'Stripe was asked exactly once');
@@ -788,12 +871,12 @@ describe('8 · after the review: money, refusals and records', () => {
   it('a flip that says "not settled yet" is finishing too; a flip that worked carries no flag at all', async () => {
     stubDatabase({ ...PRICES, ...ONE_TEAM }, { flip_workspace_into_club: { error: { message: 'workspace_flip_not_settled' } } });
     stubStripe({ sub: subscription() });
-    const waiting = await applyMove(premiumOrg(), 'club', { actor: 'x', clubName: 'Hawks' });
+    const waiting = await applyMove(premiumOrg(), 'club', { expectedAmountDue: SHOWN, actor: 'x', clubName: 'Hawks' });
     assert.equal((waiting as { finishing?: boolean }).finishing, true);
     unstubStripe();
     stubDatabase({ ...PRICES, ...ONE_TEAM });
     stubStripe({ sub: subscription() });
-    const done = await applyMove(premiumOrg(), 'club', { actor: 'x', clubName: 'Hawks' });
+    const done = await applyMove(premiumOrg(), 'club', { expectedAmountDue: SHOWN, actor: 'x', clubName: 'Hawks' });
     assert.ok(!isRefusal(done) && !('finishing' in done), JSON.stringify(done));
   });
 
@@ -859,9 +942,9 @@ describe('F3 · the plan-ending flow can put back the move it released (Stage 3 
     stubDatabase({ ...PRICES, billing_retention_intents: { one: waitingCancel } });
     stubStripe({ sub: subscription() });
     const made = scheduleStubs();
-    const asked = await applyMove(clubLarge(), 'club', { actor: 'owner' });
+    const asked = await applyMove(clubLarge(), 'club', { expectedAmountDue: SHOWN, actor: 'owner' });
     assert.ok(isRefusal(asked) && asked.code === 'subscription_ending', 'a person’s move still waits for the change');
-    const restored = await applyMove(clubLarge(), 'club', { actor: 'plan-ending', restore: true });
+    const restored = await applyMove(clubLarge(), 'club', { expectedAmountDue: SHOWN, actor: 'plan-ending', restore: true });
     assert.ok(!isRefusal(restored), JSON.stringify(restored));
     assert.equal(made.length, 1, 'the schedule holding the cheaper move is built again');
   });
@@ -870,7 +953,7 @@ describe('F3 · the plan-ending flow can put back the move it released (Stage 3 
     stubDatabase({ ...PRICES, billing_retention_intents: { one: waitingCancel } });
     stubStripe({ sub: subscription({ cancel_at_period_end: true }) });
     const made = scheduleStubs();
-    const restored = await applyMove(clubLarge(), 'club', { actor: 'plan-ending', restore: true });
+    const restored = await applyMove(clubLarge(), 'club', { expectedAmountDue: SHOWN, actor: 'plan-ending', restore: true });
     assert.ok(isRefusal(restored) && restored.code === 'subscription_ending');
     assert.equal(made.length, 0);
   });
@@ -878,7 +961,7 @@ describe('F3 · the plan-ending flow can put back the move it released (Stage 3 
   it('a put-back is only ever a move down', async () => {
     stubDatabase({ ...PRICES });
     stubStripe({ sub: subscription() });
-    const up = await applyMove(clubLarge({ planId: 'club' }), 'club_large', { actor: 'plan-ending', restore: true });
+    const up = await applyMove(clubLarge({ planId: 'club' }), 'club_large', { expectedAmountDue: SHOWN, actor: 'plan-ending', restore: true });
     assert.ok(isRefusal(up) && up.code === 'not_a_move');
   });
 

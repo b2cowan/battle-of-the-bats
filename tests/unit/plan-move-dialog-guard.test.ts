@@ -23,7 +23,9 @@ describe('the move window', () => {
   });
 
   it('choosing the cycle already chosen is a no-op, never a spinner with nothing to end it', () => {
-    assert.match(dialog, /if \(value === cycle\) return;\s*setState\(\{ status: 'loading' \}\)/);
+    // GST/HST Stage 2 Part 3: a new cycle only changes the question; the figures show they are loading until its answer lands.
+    assert.match(dialog, /onClick=\{\(\) => \{ if \(value !== cycle\) setCycle\(value\); \}\}/);
+    assert.doesNotMatch(dialog, /setCycle\(value\)[^\n]*setState\(\{ status: 'loading' \}\)/);
   });
 
   it('a declined or failed charge says what the server said, not that the provider was unreachable', () => {

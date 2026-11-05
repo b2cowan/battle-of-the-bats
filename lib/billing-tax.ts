@@ -104,8 +104,9 @@ export const BILLING_REVIEW_HOLD = 'billing_review_hold';
 export const BILLING_TAX_WORDS = {
   /** Ask 1's hold. No claim that anyone was told: nothing emails (Stage 1 ruling). */
   held: `We need to look at your account before you can pay. Email us at ${PLATFORM_CONTACT_EMAIL} and we’ll sort it out.`,
-  /** A quote Stripe could not place (the address did not reach it, or it could not use it). */
-  notWorkedOut: 'We couldn’t work out the tax for your billing address. Check the address on Plan & billing and try again.',
+  /** A quote Stripe could not place (the address did not reach it, or it could not use it). Names no place: it shows in the
+   *  "Start your club" window (the address is right above it) and in the move window alike (drawing tab 3, frame 5). */
+  notWorkedOut: 'We couldn’t work out the tax for this billing address. Check the address and try again.',
   /** T4: beside every quoted price. One spelling everywhere. */
   plusTax: 'plus applicable taxes',
 } as const;
@@ -132,4 +133,51 @@ export function decideBuyerTax(facts: {
 /** Stripe's tax answer on a preview, invoice or session: true only when it placed the buyer and worked the tax out. */
 export function taxWasWorkedOut(automaticTax: { enabled?: boolean | null; status?: string | null } | null | undefined): boolean {
   return automaticTax?.enabled === true && automaticTax.status === 'complete';
+}
+
+/** Where Stripe placed the buyer for a quote, spelled as our records spell it ("CA", "ON"). */
+export type TaxedFor = { country: string; region: string | null };
+
+/**
+ * A QUOTE'S TAX, as the paying windows draw it (Part 3; drawings tabs 2–4, ruled 2026-11-05):
+ *   · `taxed` — Stripe worked it out. `lines` are named ("HST 13%"); `beforeTax` is the amount the tax sits on, only when the
+ *     figures add up exactly (every tax added on top, no customer balance), else null and the window shows the tax and the total
+ *     alone; `taxedFor` is the place Stripe used, so a window whose address changes knows its figures are for another province.
+ *   · `needs_address` — a "Start your club" quote asked before the club's address was complete: the figures wait for it.
+ *   · `not_worked_out` — Stripe could not place the address. The window shows the sentence and Check again, never a figure
+ *     without its tax.
+ */
+export type QuoteTax =
+  | { status: 'taxed'; lines: Array<{ label: string; cents: number }>; beforeTax: number | null; taxedFor: TaxedFor | null }
+  | { status: 'needs_address' }
+  | { status: 'not_worked_out'; error: string };
+
+export type TaxedPreviewLike = {
+  amount_due: number;
+  total_excluding_tax?: number | null;
+  starting_balance?: number | null;
+  automatic_tax?: { enabled?: boolean | null; status?: string | null } | null;
+  customer_address?: { country?: string | null; state?: string | null } | null;
+  total_taxes?: ReadonlyArray<{ amount: number; tax_behavior?: string | null; tax_rate_details?: { tax_rate?: string | { id: string } | null } | null }> | null;
+};
+
+/** Stripe's preview, read as a `QuoteTax`. `rateOf` as for `namedTaxLines`. */
+export async function quoteTax(
+  invoice: TaxedPreviewLike,
+  rateOf: Parameters<typeof namedTaxLines>[1],
+): Promise<QuoteTax> {
+  if (!taxWasWorkedOut(invoice.automatic_tax)) return { status: 'not_worked_out', error: BILLING_TAX_WORDS.notWorkedOut };
+  const taxes = invoice.total_taxes ?? [];
+  const lines = await namedTaxLines(taxes, rateOf);
+  const taxSum = taxes.reduce((sum, t) => sum + t.amount, 0);
+  const before = invoice.total_excluding_tax;
+  const addsUp = typeof before === 'number'
+    && taxes.every(t => t.tax_behavior === 'exclusive')
+    && (invoice.starting_balance ?? 0) === 0
+    && before + taxSum === invoice.amount_due;
+  const place = invoice.customer_address;
+  return {
+    status: 'taxed', lines, beforeTax: addsUp ? before : null,
+    taxedFor: place?.country ? { country: place.country.toUpperCase(), region: place.state ? place.state.toUpperCase() : null } : null,
+  };
 }

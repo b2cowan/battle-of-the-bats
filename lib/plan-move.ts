@@ -17,7 +17,8 @@ import { trustedPreviewLines, type MovePreviewLine } from './plan-move-preview-l
 import { inPlaceMetadata, parseClubName } from './workspace-upgrade';
 import { workspaceCannotBecomeClub } from './workspace-upgrade-status';
 import { restoreCoachesPortalRetainedRecords } from './portal-retained-restore';
-import { AUTOMATIC_TAX } from './billing-tax';
+import { AUTOMATIC_TAX, quoteTax, type QuoteTax } from './billing-tax';
+import { PLAN_BILLING_WORDS } from './plan-billing-words';
 
 /**
  * MOVING A PAYING ORGANIZATION BETWEEN PLANS — ONE SUBSCRIPTION, NEVER A SECOND CHECKOUT
@@ -66,6 +67,11 @@ export type MoveRefusal =
   | { code: 'cannot_become_club'; error: string }
   /** A Coaches Portal becoming the club needs the name the coach typed (Stage 4b); `error` is a sentence the screen can show. */
   | { code: 'club_name_invalid'; error: string }
+  /**
+   * GST/HST Stage 2 Part 3 (drawing tab 3 frame 4, ruled 2026-11-05): pressing Move works the charge out once more, and a charge
+   * that no longer equals the one shown is NOT made. `preview` is the new quote, for the window to show before a second press.
+   */
+  | { code: 'charge_changed'; error: string; preview: MovePreview }
   | { code: 'stripe_error'; error: string };
 
 export type MovePreview =
@@ -88,6 +94,11 @@ export type MovePreview =
        * = amountDueToday, always.
        */
       lines: MovePreviewLine[] | null;
+      /**
+       * GST/HST Stage 2 Part 3: the tax on `amountDueToday`, as Stripe worked it out (lib/billing-tax.ts `quoteTax`).
+       * `amountDueToday` INCLUDES it. Anything but `taxed` means the window shows no figure to pay.
+       */
+      tax: QuoteTax;
     }
   | {
       direction: 'down';
@@ -235,8 +246,62 @@ export function isoFromUnix(seconds: number | null | undefined): string | null {
   return typeof seconds === 'number' ? new Date(seconds * 1000).toISOString() : null;
 }
 
-/** What a move would do, before the owner confirms it. */
-export async function previewMove(org: MoveOrg, toPlan: OrgPlan): Promise<MovePreview | MoveRefusal> {
+/**
+ * Which address a move's quote is taxed for (GST/HST Stage 2 Part 3). `customer`: the address on the Stripe customer, which the
+ * charge itself uses (a club's own; Stage 1 stamps it). `typed`: the address typed in the "Start your club" window, which goes on
+ * the customer only when Start my club is pressed (Ask 2), so the quote asks Stripe for it by override. `wait`: that window
+ * asked before its address was complete: the figures wait, and nothing is taxed.
+ */
+export type QuotePlace =
+  | { kind: 'customer' }
+  | { kind: 'typed'; address: { line1: string; line2: string; city: string; state: string; postal_code: string; country: string } }
+  | { kind: 'wait' };
+
+/** A tax's name and rate. Only the ROW'S NAME depends on it, so a failed read names the row "Tax" rather than failing a quote or
+ *  a move whose figures Stripe already gave (/review 2026-11-05). */
+export const stripeTaxRate = (id: string) => getStripe().taxRates.retrieve(id).catch((error: unknown) => {
+  console.error('[plan-move] tax rate read failed; the row reads "Tax":', error);
+  return {};
+});
+
+/**
+ * Stripe's preview of a move UP with this proration date. The ONE builder the window's quote and the press-time check both
+ * use, so a quote and the charge it is checked against are the same question asked twice.
+ */
+async function previewUp(
+  org: MoveOrg, toPlan: OrgPlan, live: LiveSub, priceId: string, prorationDate: number, place: QuotePlace,
+): Promise<Extract<MovePreview, { direction: 'up' }>> {
+  // The price lookup and the invoice preview don't depend on each other.
+  const [next, invoice] = await Promise.all([
+    unitAmount(priceId),
+    getStripe().invoices.createPreview({
+      customer: typeof live.sub.customer === 'string' ? live.sub.customer : live.sub.customer.id,
+      subscription: live.sub.id,
+      subscription_details: {
+        items: [{ id: live.item.id, price: priceId }],
+        proration_behavior: 'always_invoice',
+        proration_date: prorationDate,
+      },
+      // The move turns tax on (applyMove), so its quote asks for it too. A typed address overrides the customer's for the quote
+      // alone (verified in test mode 2026-11-05, .probe/gst2/part3-preview-run1.txt).
+      ...(place.kind === 'wait' ? {} : { automatic_tax: AUTOMATIC_TAX }),
+      ...(place.kind === 'typed' ? { customer_details: { address: place.address } } : {}),
+    }),
+  ]);
+  return {
+    direction: 'up', toPlan, billingCycle: live.billingCycle,
+    amountDueToday: invoice.amount_due,
+    currency: invoice.currency,
+    prorationDate,
+    nextAmount: next.amount,
+    renewsAt: isoFromUnix(live.item.current_period_end),
+    lines: trustedPreviewLines(invoice, { fromPriceId: live.item.price.id, toPriceId: priceId, fromPlan: ownPlanOf(org), toPlan }),
+    tax: place.kind === 'wait' ? { status: 'needs_address' } : await quoteTax(invoice, stripeTaxRate),
+  };
+}
+
+/** What a move would do, before the owner confirms it. `place`: which address an UP move's quote is taxed for. */
+export async function previewMove(org: MoveOrg, toPlan: OrgPlan, place: QuotePlace = { kind: 'customer' }): Promise<MovePreview | MoveRefusal> {
   const checked = await validateMove(org, toPlan);
   if (!checked.ok) return checked.refusal;
   const { direction, live, priceId } = checked;
@@ -249,29 +314,7 @@ export async function previewMove(org: MoveOrg, toPlan: OrgPlan): Promise<MovePr
         nextAmount: next.amount, currency: next.currency,
       };
     }
-    const prorationDate = Math.floor(Date.now() / 1000);
-    // The price lookup and the invoice preview don't depend on each other.
-    const [next, invoice] = await Promise.all([
-      unitAmount(priceId),
-      getStripe().invoices.createPreview({
-        customer: typeof live.sub.customer === 'string' ? live.sub.customer : live.sub.customer.id,
-        subscription: live.sub.id,
-        subscription_details: {
-          items: [{ id: live.item.id, price: priceId }],
-          proration_behavior: 'always_invoice',
-          proration_date: prorationDate,
-        },
-      }),
-    ]);
-    return {
-      direction, toPlan, billingCycle: live.billingCycle,
-      amountDueToday: invoice.amount_due,
-      currency: invoice.currency,
-      prorationDate,
-      nextAmount: next.amount,
-      renewsAt: isoFromUnix(live.item.current_period_end),
-      lines: trustedPreviewLines(invoice, { fromPriceId: live.item.price.id, toPriceId: priceId, fromPlan: ownPlanOf(org), toPlan }),
-    };
+    return await previewUp(org, toPlan, live, priceId, Math.floor(Date.now() / 1000), place);
   } catch (error) {
     console.error('[plan-move] preview failed:', error);
     return { code: 'stripe_error', error: 'We couldn’t get the price for this change from the payment provider. Try again in a moment.' };
@@ -344,14 +387,16 @@ export type MoveResult =
   | { direction: 'down'; toPlan: OrgPlan; scheduled: ScheduledMove };
 
 /**
- * Makes the move. For an UP move pass the preview's `prorationDate` so the charge equals it.
+ * Makes the move. For an UP move pass the preview's `prorationDate` and `amountDueToday` (as `expectedAmountDue`): the charge is
+ * worked out once more with that date, by the address now on the customer, and made only when it equals what the owner was shown
+ * (GST/HST Stage 2 Part 3). A missing figure counts as changed: the owner sees the new quote and presses again.
  * A Premium coach's portal moving onto Club (Stage 4b) also passes `clubName`: it is REQUIRED there (refused before Stripe is
  * touched), put on the subscription's metadata so a webhook retry can read it back, and handed to the flip.
  */
 export async function applyMove(
   org: MoveOrg,
   toPlan: OrgPlan,
-  opts: { prorationDate?: number; actor: string; clubName?: string | null; restore?: boolean },
+  opts: { prorationDate?: number; expectedAmountDue?: number; actor: string; clubName?: string | null; restore?: boolean },
 ): Promise<MoveResult | MoveRefusal> {
   let clubName: string | null = null;
   if (ownPlanOf(org) === 'team' && moveDirection('team', toPlan)) {
@@ -372,12 +417,6 @@ export async function applyMove(
 
   try {
     if (direction === 'up') {
-      // A move UP replaces any down-move waiting at renewal — release it first, or the schedule
-      // would take the club back down at the period's end. (The one rule for a subscription's future: this is the customer
-      // choosing a new plan, and it never meets a waiting cancel — validateMove refuses every move while one waits.)
-      const existing = scheduleOf(live.sub);
-      if (existing) await stripe.subscriptionSchedules.release(existing.id);
-
       const nowSec = Math.floor(Date.now() / 1000);
       const periodStart = live.item.current_period_start;
       const prorationDate = opts.prorationDate
@@ -385,6 +424,24 @@ export async function applyMove(
         && (!periodStart || opts.prorationDate >= periodStart)
         ? opts.prorationDate
         : nowSec;
+
+      // The press-time check, BEFORE anything changes in Stripe. Asked by the customer's own address: for Premium → Club the
+      // route has just put the club's on it (Ask 2), so this is the address the charge is taxed for.
+      const recheck = await previewUp(org, toPlan, live, priceId, prorationDate, { kind: 'customer' });
+      if (recheck.tax.status === 'not_worked_out') return { code: 'stripe_error', error: recheck.tax.error };
+      if (recheck.amountDueToday !== opts.expectedAmountDue) {
+        const button = ownPlanOf(org) === 'team' ? PLAN_BILLING_WORDS.clubUpgrade.start : PLAN_BILLING_WORDS.change.move(PLAN_CONFIG[toPlan].label);
+        return {
+          code: 'charge_changed', preview: recheck,
+          error: PLAN_BILLING_WORDS.move.chargeChanged(recheck.amountDueToday, recheck.currency, button),
+        };
+      }
+
+      // A move UP replaces any down-move waiting at renewal — release it first, or the schedule
+      // would take the club back down at the period's end. (The one rule for a subscription's future: this is the customer
+      // choosing a new plan, and it never meets a waiting cancel — validateMove refuses every move while one waits.)
+      const existing = scheduleOf(live.sub);
+      if (existing) await stripe.subscriptionSchedules.release(existing.id);
       await stripe.subscriptions.update(live.sub.id, {
         items: [{ id: live.item.id, price: priceId }],
         proration_behavior: 'always_invoice',

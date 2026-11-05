@@ -55,6 +55,12 @@ export function toMoneySubscription(s: Stripe.Subscription, prices: PriceMap): M
   };
 }
 
+/** The tax Stripe added to an invoice or preview (inside its total), or null when none (GST/HST Stage 2 Part 3). */
+const taxOf = (inv: Pick<Stripe.Invoice, 'total_taxes'>): number | null => {
+  const sum = (inv.total_taxes ?? []).reduce((total, t) => total + t.amount, 0);
+  return sum !== 0 ? sum : null;
+};
+
 export function toMoneyInvoice(inv: Stripe.Invoice, prices: PriceMap): MoneyInvoice {
   const lines = inv.lines?.data ?? [];
   const priceOf = (l: Stripe.InvoiceLineItem) => {
@@ -79,6 +85,7 @@ export function toMoneyInvoice(inv: Stripe.Invoice, prices: PriceMap): MoneyInvo
     fromPlanId: credit ? priceOf(credit)?.planId ?? null : null,
     description: subscriptionId ? null : (charged?.description ?? null),
     feeInvoice: !!inv.metadata?.[FEE_INVOICE_META],
+    taxCents: taxOf(inv),
   };
 }
 
@@ -194,7 +201,7 @@ export async function readClubMoney(stripe: Stripe, customerId: string, opts: { 
     if (!live) return list.more ? { kind: 'unread' } : { kind: 'none' };
     const preview = await stripe.invoices.createPreview({ customer: customerId, subscription: live.id }, READ_OPTS);
     const at = iso(preview.next_payment_attempt) ?? live.currentPeriodEnd;
-    return at ? { kind: 'charge', amountCents: preview.amount_due, currency: preview.currency, at } : { kind: 'none' };
+    return at ? { kind: 'charge', amountCents: preview.amount_due, currency: preview.currency, at, taxCents: taxOf(preview) } : { kind: 'none' };
   }).catch((): NextCharge => ({ kind: 'unread' }));
   const [customer, subs, subscriptions, charges, invoices, nextCharge] = await Promise.all([
     stripe.customers.retrieve(customerId, { expand: ['invoice_settings.default_payment_method'] }, READ_OPTS),

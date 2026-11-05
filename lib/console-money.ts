@@ -43,6 +43,11 @@ export type MoneyInvoice = {
   description: string | null;
   /** 12d-1 Part 4: FieldLogicHQ's own invoice of a club's Stripe fees (by its metadata), never "made in Stripe's dashboard". */
   feeInvoice?: boolean;
+  /**
+   * GST/HST Stage 2 Part 3: the tax Stripe added to this invoice, in cents (already inside the charge's amount); null when none.
+   * The amount only: WHY a charge was taxed the way it was is Stage 3's record.
+   */
+  taxCents?: number | null;
 };
 
 export type MoneyCharge = {
@@ -96,7 +101,8 @@ export type MoneyRead = {
  * could not be asked, which is never "None" (Plans & pricing Stage 0, Part 8).
  */
 export type NextCharge =
-  | { kind: 'charge'; amountCents: number; currency: string; at: string }
+  /** `amountCents` is the TOTAL Stripe will charge; `taxCents` the tax inside it (GST/HST Stage 2 Part 3), null when none. */
+  | { kind: 'charge'; amountCents: number; currency: string; at: string; taxCents?: number | null }
   | { kind: 'none' }
   | { kind: 'unread' };
 
@@ -154,6 +160,13 @@ export function periodWords(start: string | null, end: string | null, opts: { wi
 export const isLiveSubscription = (status: string) => !isEndedSubscriptionStatus(status);
 const periodNoun = (cycle: string | null) => (cycleWord(cycle) === 'yearly' ? 'year' : 'month');
 
+/** The period line with the tax inside the amount, when there is one (GST/HST Stage 2 Part 3). */
+function withTax(period: string | null, taxCents: number | null | undefined, currency: string): string | null {
+  if (!taxCents) return period;
+  const tax = `includes ${formatCents(taxCents, currency)} tax`;
+  return period ? `${period} · ${tax}` : tax;
+}
+
 /** What a charge paid for, in two lines: the main words and the period. */
 export function paidForWords(c: MoneyCharge): { main: string; period: string | null } {
   const inv = c.invoice;
@@ -165,10 +178,10 @@ export function paidForWords(c: MoneyCharge): { main: string; period: string | n
     const main = inv.fromPlanId && inv.planId
       ? `${(PLAN_RANK[inv.planId as OrgPlan] ?? 0) >= (PLAN_RANK[inv.fromPlanId as OrgPlan] ?? 0) ? 'Moved up' : 'Moved down'}: ${planLabel(inv.fromPlanId)} to ${planLabel(inv.planId)}`
       : `Plan moved${inv.planId ? ` to ${planLabel(inv.planId)}` : ''}`;
-    return { main, period: period ? `${period}, part month` : null };
+    return { main, period: withTax(period ? `${period}, part month` : null, inv.taxCents, c.currency) };
   }
   const first = inv.billingReason === 'subscription_create' ? ' · first charge' : '';
-  return { main: `${planCycleWords(inv.planId, inv.cycle)}${first}`, period };
+  return { main: `${planCycleWords(inv.planId, inv.cycle)}${first}`, period: withTax(period, inv.taxCents, c.currency) };
 }
 
 /** What Stripe says about a charge, in the console's words. */
@@ -414,7 +427,9 @@ function nextChargeCell(read: MoneyRead): ReturnType<typeof moneyBand>[number] {
   const next = read.nextCharge;
   const cell = (value: string, note: string, tone?: 'warn') => ({ label: 'Next charge', value, note, ...(tone ? { tone } : {}) });
   switch (next.kind) {
-    case 'charge': return cell(formatCents(next.amountCents, next.currency), `on ${formatStoredDate(next.at)}`);
+    // The total, tax included: the figure Stripe will charge (GST/HST Stage 2 Part 3).
+    case 'charge': return cell(formatCents(next.amountCents, next.currency),
+      `on ${formatStoredDate(next.at)}${next.taxCents ? `, includes ${formatCents(next.taxCents, next.currency)} tax` : ''}`);
     case 'unread': return cell('Not read', 'Stripe could not be asked for the next charge. Read again.', 'warn');
     case 'none': return cell('None',
       read.subscriptions.some(s => isLiveSubscription(s.status) && s.cancelAtPeriodEnd) ? 'it ends at the period end' : 'no live subscription');

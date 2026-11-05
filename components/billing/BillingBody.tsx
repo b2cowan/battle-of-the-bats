@@ -229,6 +229,8 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
   const price = freeCard?.price ?? (comp ? W.founding.price : profile.config.monthlyPrice === 0 ? W.plan.free
     : paidCents !== null ? W.plan.paidPrice(paidCents, org.subscriptionPeriod ?? 'monthly')
     : W.plan.price(org.subscriptionPeriod === 'annual' ? profile.config.annualPrice : profile.config.monthlyPrice, org.subscriptionPeriod ?? 'monthly'));
+  // GST/HST Stage 2 Part 3: a price that is charged says it is before tax; free time, a comp and a free plan have nothing to tax.
+  const taxedPrice = !freeCard && !comp && profile.config.monthlyPrice !== 0;
   const disabled = a.busy !== null;
   const premium = ownProfile.cancellationKind === 'premium';
   const keepPremium = portal ? <CoachCard className={styles.keepPremiumCard}>
@@ -350,7 +352,7 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
         <div className={styles.planSide}>
           <CoachEyebrow chip={<CoachChip tone={pendingCancel ? 'warn' : staffFree ? band?.tone === 'amber' ? 'warn' : 'good' : org.subscriptionStatus === 'canceled' ? 'danger' : org.subscriptionStatus === 'past_due' ? 'warn' : 'good'}>{pendingCancel ? W.plan.ending : portalCopy?.band.eyebrow ?? (staffFree ? freeCopy?.band.eyebrow : W.plan.status(org.subscriptionStatus))}</CoachChip>}>{W.page.sections.plan}</CoachEyebrow>
           <h2 className={styles.planName}>{profile.config.label}</h2>
-          {s.freeTime.status === 'loading' ? <LoadingState inline label={W.page.loading} /> : <p className={styles.planPrice}>{price}</p>}
+          {s.freeTime.status === 'loading' ? <LoadingState inline label={W.page.loading} /> : <p className={styles.planPrice}>{price}{taxedPrice && <> <span className={styles.plusTax}>{W.move.plusTax}</span></>}</p>}
           {freeCard && <p className={styles.hint}>{freeCard.from}</p>}
           {comp && <p className={styles.hint}>{W.founding.priceHelp(profile.config.annualPrice)}</p>}
           {controlsReady && ownBilling && !cancelled && !comp && !pending && org.currentPeriodEnd && <p className={styles.hint}>{org.subscriptionStatus === 'trialing' ? W.plan.trialEnds(org.currentPeriodEnd) : W.plan.renews(org.currentPeriodEnd)}</p>}

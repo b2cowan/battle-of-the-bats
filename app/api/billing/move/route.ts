@@ -16,7 +16,9 @@ import type { BillingLocation } from '@/lib/billing-location';
  *   GET    ?orgSlug=  → { planKey, moves: [{ planKey, label, direction, teamLimit }], scheduledMove, live }
  *                      the moves this org's plan allows, a down-move waiting at renewal, if any, and
  *                      whether it pays on a live subscription (else a band change goes to checkout).
- *   POST   { orgSlug, planKey, prorationDate?, clubName? } → up: { direction:'up', toPlan, movedAt }
+ *   POST   { orgSlug, planKey, prorationDate?, expectedAmountDue?, clubName? } → up: { direction:'up', toPlan, movedAt }
+ *                      An up move sends the preview's `prorationDate` and `amountDueToday` as `expectedAmountDue` (GST/HST Stage 2
+ *                      Part 3): a charge that no longer equals it is not made — `charge_changed` (409) with the new `preview`.
  *                      `clubName` is REQUIRED (≤ 40 characters) when a Premium coach's portal moves onto Club; the portal
  *                      then becomes the club (Stage 4b) — poll GET /api/billing/club-upgrade-status for it.
  *                      `finishing: true` (up only) = the subscription moved and the money is taken, but a database step is still
@@ -47,7 +49,7 @@ export const GET = withObservability(async (req: Request) => {
 }, { route: '/api/billing/move' });
 
 export const POST = withObservability(async (req: Request) => {
-  const body = await req.json().catch(() => ({})) as { orgSlug?: unknown; planKey?: unknown; prorationDate?: unknown; clubName?: unknown; billingAddress?: unknown };
+  const body = await req.json().catch(() => ({})) as { orgSlug?: unknown; planKey?: unknown; prorationDate?: unknown; expectedAmountDue?: unknown; clubName?: unknown; billingAddress?: unknown };
   const authorized = await authorizeMove(typeof body.orgSlug === 'string' ? body.orgSlug : undefined);
   if (!authorized.ok) return authorized.response;
   const { org, actor } = authorized;
@@ -73,8 +75,9 @@ export const POST = withObservability(async (req: Request) => {
   }
 
   const prorationDate = typeof body.prorationDate === 'number' ? Math.floor(body.prorationDate) : undefined;
+  const expectedAmountDue = typeof body.expectedAmountDue === 'number' && Number.isInteger(body.expectedAmountDue) ? body.expectedAmountDue : undefined;
   // Only a Premium coach's portal becoming the club uses the name (and is refused without one); every other move ignores it.
-  const runMove = () => applyMove(org, toPlan, { prorationDate, actor, clubName: typeof body.clubName === 'string' ? body.clubName : null });
+  const runMove = () => applyMove(org, toPlan, { prorationDate, expectedAmountDue, actor, clubName: typeof body.clubName === 'string' ? body.clubName : null });
   // GST/HST Stage 2 Ask 2 (owner 2026-11-05): the move's prorated invoice is taxed by the Stripe customer's address, so the club's
   // address goes on BEFORE the move, and the coach's home address is put back if the move is refused (or throws). A stamp that
   // fails refuses the move with nothing changed.
