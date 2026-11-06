@@ -281,9 +281,23 @@ Before the first live sale, check each of these in both modes:
 - [ ] Each site uses the key you think it does: production a live key, dev/staging a test key.
 - [ ] Run the read-only audit against production:
       `node scripts/audit-stripe-billing.mjs --env .env.production.local`.
-      ⚠ **Known gap (found 2026-11-03, not yet fixed):** the audit's own list of expected price slots still has Club at
-      its old price and has no Club · Association slot, so it will flag Club even when Plans & pricing is right. Trust
-      Plans & pricing's own check for Club until the audit is updated.
+      The audit's expected prices, product names (the plan labels in the app) and the 17 webhook events were brought to
+      the target on 2026-11-06 (decisions log, "Stripe set-up order"); it also lists leftover active prices and every
+      other webhook endpoint. For the test sandbox add `--environment sandbox --allow-test`.
+- [ ] **Product names are the plan labels, with no "FieldLogicHQ -" prefix** *(proposed 2026-11-06, owner to rule; the audit
+      accepts the prefix until then)*: Tournament Plus, Premium Coaches Portal, League Plus, Club, Club · Association.
+      Our price book's own labels match (they show on the staff Plans & pricing screen).
+- [ ] **Branding and public details (owner 2026-11-06).** The audit only checks that a logo, an icon and a brand colour
+      exist. Also set and LOOK AT: business name, support email and phone, public website, statement descriptor, and how a
+      real Checkout page, an invoice, a receipt email and the customer portal read to a buyer.
+- [ ] **Tax settings in Live: BEFORE the GST/HST Stage 2 promote, not after.** Head office, the GST/HST registration,
+      default tax behaviour exclusive, preset category SaaS · business use. The code is refused by Stripe without them
+      (`GST_HST_STAGE2_BUILD_PROMPT.md`). Every live product already carries `txcd_10103001`.
+- [ ] **No coupons or promotion codes exist in Stripe** (promotions are record-only; none is ever created there).
+- [ ] **The customer portal's settings exist in Live** (the first open creates them; Step 10 covers it).
+- [ ] **Customer emails, retry rules and invoice settings** match the accounting review (`/accounting`).
+- [ ] **Family payments (Connect):** the live Connect endpoint and platform settings are created when online payments go
+      live, using the test sandbox's 12-event endpoint as the template. Live has none today, by design.
 
 ### Step 10 — The first live purchase
 

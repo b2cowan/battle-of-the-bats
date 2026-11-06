@@ -8,6 +8,79 @@
 
 ---
 
+### 2026-11-06 — League Plus goes on sale at the same time as the Club release; whether the free League floor should exist at all is OPEN, leaning remove
+**Status:** **Decided** for the timing (owner, 2026-11-06, in the Stripe set-up session: "league plus will go on sale at the same time as the club release since all of its functionality will be available"). **Proposed / open** for the free floor (owner: "we will need to talk about the need for the free league, i am thinking we don't need it and just keep the paid offering"): not ruled; no change is made to the floor.
+**Decision:** League Plus ($89 / $890, unchanged) is purchasable from the Club release, not before and not separately from it. The free League floor (1 season / 1 division / 8 teams, internal key `league_starter`) stays as it is until its own conversation; the owner's lean is to drop it and keep the paid offering only.
+**Rationale:** The "parked pending a full capability evaluation" status of 2026-07-28 rested on League not yet being complete; the owner's view is that its functionality will all be available at the Club release, so it ships with Club.
+**Affects:** plan gating (League Plus's gate flips with the Club release runbook), pricing and persona copy, the Stripe target (League Plus's prices stay active), and, if the floor is dropped, the free-plan inclusions, the pricing page and the League signup path.
+**Handoff:**
+```
+HANDOFF → /billing: League Plus joins the Club release runbook's gate flip (Stage 8 of the Club readiness plan); nothing changes now.
+HANDOFF → /marketing: League Plus pricing and persona pages move from early-access to on-sale wording at the release, not before.
+HANDOFF → /strategy (owner conversation, not yet scheduled): the free League floor: keep or remove. If removed, a decision entry with what happens to any existing free League workspace.
+```
+**Supersedes:** **narrows** "2026-07-28 — League & Club: the managed early-access cohort is WITHDRAWN; League is parked pending a full capability evaluation" for League Plus's timing only. The floor's parking stays until ruled.
+
+---
+
+### 2026-11-06 — Stripe set-up order: write the target, clean TEST, make LIVE match, then test end to end; done before Club goes on sale, with a first-paying-customer tripwire (Decided; the target list itself is Proposed)
+**Status:** **Decided** for the order, the deadline and the tripwire (owner, 2026-11-06, in the Plans & pricing Stage 0 session, agreeing with Claude's recommendation: "agree with your recommendations"). **The target list below: CONFIRMED by the owner 2026-11-06** (prices and amounts "match"; League Plus stays active; names accepted; retired products to be deleted, see the rows; League Plus's timing is the entry just above). Still owed before the cleanup: the owner's live audit result (the Nov 5 read output is not in the repo), and a production check that nobody is on the retired products (see the retired row).
+**Decision:**
+1. **Order.** (a) Write the target down; (b) clean the Stripe TEST sandbox until it equals the target (no old plans or prices, everything named as expected, every webhook carrying the expected events); (c) confirm test with the read-only audit; (d) the owner makes LIVE match, in the Stripe dashboard (Claude never changes a Stripe setting); (e) end-to-end testing, including the first live "Payment method & invoices" press and a live purchase, then cancel and refund. This replaces handling the four live webhook events (O3), the first live portal press (O6) and the Nov 5 findings one at a time.
+2. **Deadline: all of it is done before Club goes on sale** (the owner's own 2026-11-03 line), not "when these projects are done".
+3. **Tripwire: the first real paying customer on a live subscription pulls O3 and O6 forward**, ahead of the rest. Coaches Portal and Tournament Plus already sell on production, so without it a real customer's first portal press shows "Billing portal is not configured" and a live dispute is not recorded by us (Stripe still emails the account owner).
+4. **Which side is right (Proposed): the live Stripe account is right, the audit's expected list is stale.** Read from the code: `scripts/audit-stripe-billing.mjs` still expects Club at $179 / $1,790, has no Club · Association slot, and expects "team add-on" ($29 / $290) and "Additional Rep Team" ($19 / $190) to be active. Each is superseded by a logged decision: Club repriced to $219 / $2,190 and the upper band $379 / $3,790, both bands' live Stripe prices wired 2026-06-24 (Facts doc, plans table; `lib/plan-config.ts`); the per-team meter and the org-billed team add-on are retired ("2026-06-22 — Coaches Portal: include the whole coaching staff in Club; retire the per-team meter"; the webhook keeps a legacy branch only so an existing add-on subscription still resolves). **So inactive team add-on and rep-team products are the correct live state, and live Club prices at $219 / $2,190 are correct.** The audit is what changes.
+**The target (Proposed), reconciled to the Facts doc and `lib/plan-config.ts`; amounts in CAD, tax-exclusive, one product per plan with a monthly and a yearly price:**
+
+| Plan | Monthly | Yearly | State in Stripe |
+|---|---|---|---|
+| Tournament Plus | $39 | $390 | active |
+| Premium Coaches Portal (internal key `team`) | $29 | $290 | active |
+| League Plus | $89 | $890 | active (goes on sale WITH the Club release, owner 2026-11-06; the gate stays off until then) |
+| Club | $219 | $2,190 | active |
+| Club · Association (internal key `club_large`) | $379 | $3,790 | active |
+| Org-billed team add-on ($29 / $290), Additional Rep Team ($19 / $190) | | | **gone: deleted in Stripe (test and live), their slot rows removed** (owner 2026-11-06: nobody is or ever was on them in production, and they predate the final product shelf; starting fresh is cleaner). **Condition:** a production check confirms zero use first (no workspace on the add-on billing mode, no subscription on either price); where Stripe refuses a delete because a price was used, it is archived instead. Retiring the legacy add-on code in the billing webhook is a separate, later clean-up. |
+| Free plans (Tournament, League floor) | | | **no product, no price** |
+
+   - **Names a customer reads** (on Checkout, invoices, receipts and the portal) must follow the naming canon: "Premium Coaches Portal", never "Coaches Portal Premium" (the audit's accepted-name list currently allows it), "League Plus" (the audit expects "League"), "Club · Association". The exact product names are `/marketing`'s to write. Any product still named from the old list is renamed, not recreated.
+   - **Price slots:** each plan and cycle in `stripe_prices` points at exactly one active price of that amount and interval; the test environment's slots at test prices, production's at live prices; lookup keys follow the existing pattern, with Club · Association's added (the audit script has none).
+   - **Webhooks (billing endpoint, www host):** the 17 events the audit lists (corrected 2026-11-06 from eleven; see the audit results below), one enabled endpoint, no stale or duplicate endpoints. The two Connect endpoints for family payments get their own written list in the same pass (their events are not in this record).
+   - **Rows the target OWES, filled in when their own work lands** (owner 2026-11-06: they belong in the target, and this is where they are tracked, not a separate list): tax settings and a tax code on each product (GST/HST Stage 2, `/accounting`); any USD price (none decided); the written event list for the two Connect (family payments) endpoints. The cleanup does not start until the tax rows are filled, which is why it follows the tax work.
+   - **One name everywhere (owner 2026-11-06, "the more important thing"):** a plan has one name across the portals, marketing, the help and Stripe. The plan's label in `lib/plan-config.ts` is the source, and the audit script reads the expected Stripe product name from it, so a rename there is caught in Stripe.
+**First audit results, 2026-11-06 (owner ran live; Claude ran the test sandbox, read-only):**
+   - **Live: prices are right.** All five paid plans' ten prices are active and match the target (Club $219 / $2,190, Club · Association $379 / $3,790); no stray active prices; the billing endpoint is enabled; charges, payouts and branding are fine. **Four things to fix in live:** (1) the billing endpoint lacks the four dispute and refund events (O3); (2) the Premium Coaches Portal product is named "FieldLogicHQ - Coaches Portal Premium", the name the canon forbids, and it is shown to buyers (this plan already sells); (3) our price book's own label for it reads "FieldLogicHQ - Team" and for League "FieldLogicHQ — League" (a staff-screen label, same one-name rule); (4) Club and Club · Association prices have no lookup key (a tidy-up the app does not read). Plus: the four retired prices are still active, and the portal settings do not exist in live yet (O6).
+   - **Production zero-use check: nobody is on the retired products** (0 workspaces on the add-on billing mode); the four live slot rows still point at the four retired prices. The Stripe dashboard's own subscription count on those two products is still to be eyeballed before deleting.
+   - **Webhook event list CORRECTED to 17** (the original seven, the four dispute/refund events, `payment_method.attached` / `.detached`, which keep a customer's card on file, and `invoice.paid` / `.voided` / `.marked_uncollectible` / `.finalized`, which carry a club's own Stripe-fees invoice; the first list, and the audit's, left the last six out; the setup guide's Step 5 already had them). Live therefore lacks those six as well as the four dispute/refund events: **ten events to add in live**. Test matches the 17 and also sends `invoice.payment_action_required`, which the guide does not list (harmless; the audit flags it as an extra). *(An earlier note of the same day called the invoice events unhandled; wrong, the webhook routes any invoice event carrying the fee-invoice marker.)*
+   - **Live has ONE webhook endpoint (billing).** Test also has the Connect (family payments) endpoint, with 12 events: that is the written template for the live Connect endpoint, which is created when family payments go live, not before.
+   - **Test sandbox has a real defect: the League YEARLY slot points at a MONTHLY price** (the audit's only test-side price failure); test also has the old "Team" and "League" product names, blank lookup keys on every price, and the four retired prices active.
+**Rationale:** Test and live are two separate Stripe accounts that have drifted for weeks (many changes in test only, per the owner's 2026-11-03 ask). Fixing live pieces one at a time against an audit that is itself out of date would copy the drift into live. Cleaning the cheap, reversible environment first and then mirroring it is lower risk, and doing the end-to-end tests last means they run once, against the final set-up. The deadline is tied to Club going on sale because that is when the retired products and the Club prices start to matter; the tripwire exists because the "no customers yet" assumption is the only thing making the delay safe.
+**Affects:** the Stripe test-to-live reconciliation (R) in `STRIPE_FROM_OUR_OWN_ADMIN_PLAN.md`; Stage 0's O3, O6 and O12/O13 in `PLANS_PRICING_STAGE0_BUILD_PROMPT.md`; the audit script's expected list; no price, plan name, band, gate or limit moves, and `lib/plan-config.ts` is untouched.
+**Handoff:**
+```
+HANDOFF → owner: confirm the target above (or correct it). To close the live question, run the read-only live audit (node scripts/audit-stripe-billing.mjs, live keys) and paste the result; Claude does not read live Stripe.
+DONE 2026-11-06 (owner's go, in conversation): the audit script's expected list now matches the target (Club $219/$2,190, Club · Association $379/$3,790 added, add-on and rep team checked as ARCHIVED, canon product names, the eleven events), plus two cleanup finders (active prices no slot uses; every other webhook endpoint listed) and a --webhook-url option for auditing the test sandbox. Report-only; not committed yet. Its product-name list is the one place to change when /marketing's names are final.
+HANDOFF → /marketing: nothing owed on Stripe product names: the owner accepted the plan labels (Tournament Plus, Premium Coaches Portal, League Plus, Club, Club · Association) on 2026-11-06 and wants ONE name across portals, marketing, help and Stripe. /marketing's job is to catch any surface still using another name.
+HANDOFF → /accounting: product tax codes in the target once GST/HST Stage 2 is built.
+HANDOFF → /billing: nothing now (no gate or price config moves).
+```
+**Supersedes:** nothing. **Narrows** the Stripe plan's item R (adds its order, deadline and tripwire) and Stage 0's O3 / O6 (they ride R).
+
+---
+
+### 2026-11-06 — A parent account is a person, not an organization member (Decided)
+**Status:** **Decided** (owner, 2026-11-04, Club Tier Stage 14 drawings, Ask 14, ruled A "as recommended": "Rule P3 yes: a parent account is a person, kept clear of the one-home-organization rules"; logged here 2026-11-06). Records the ruling on **P3** of "2026-10-29 — The end state is an app where everyone signs in"; nothing else in that entry is ruled by this.
+**Decision:** A parent account is a **person**, not a member of an organization. It stays clear of the one-home-organization rules, so a parent can hold children at two clubs, or at a club and a standalone team, without those rules colliding.
+**Rationale:** The child record belongs to the club; the parent does not. Raised on the Stage 14 drawings (Ask 14, `CLUB_TIER_STAGE14_DRAWINGS.html`) because the parent link now hangs on the child and would otherwise collide with the one-home rule. Built that way in Stage 14 S6 (the parent link points at the child, mig 445; owner walk §467 passed 2026-11-05); S6 does not make the link depend on an org membership.
+**Affects:** roadmap only. The guardian tier stays switched off; no plan, price, gate or capacity band moves. Signed-in family accounts Stage 4 inherits the rule.
+**Handoff:**
+```
+HANDOFF → /plan: Signed-in family accounts Stage 4 (the invitation at team placement) designs a parent sign-in as a person, with no organization membership and no one-home-organization check.
+HANDOFF → /marketing, /billing, /docs: nothing — no customer copy, gate or help article changes with this ruling.
+```
+**Supersedes:** nothing. **Narrows** "2026-10-29 — The end state is an app where everyone signs in": its **P3** moves from Proposed to Decided here. **P1, P2, P4, P5, P6 and the Open list stay as they were** (P2 is reinforced by the 11-04 entry; P4 was removed by "No lawyer is a launch gate").
+
+---
+
 ### 2026-11-04 — No lawyer is a launch gate: the two Canadian-counsel gates (online payments in production, the guardian tier) are removed (Decided)
 **Status:** **Decided** (owner, 2026-11-04, in the session that built the `/legal` agent: "you can remove the canadian lawyer
 gates as well, we can deal with that later").

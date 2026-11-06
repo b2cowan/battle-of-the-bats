@@ -70,6 +70,10 @@ R. **Stripe test ↔ live reconciliation (owner ask 2026-11-03).** Not planned y
    settings; tax settings once GST/HST Stage 2 is built; Connect platform settings; which key each site uses and what it may do;
    coupons and promotions; walk leftovers in test mode. Ends with a live purchase on production (Stage 0's O6 test, repeated).
    A good use of Stage 2's read-only views if they exist by then; it does not wait for them.
+   **Order ruled by the owner 2026-11-06 (see Stage 0 build prompt O12/O13):** write the target first (including the ruling on the Nov 5
+   live-read findings), clean the TEST sandbox until it equals the target, confirm it, make LIVE match, then end-to-end testing (the
+   first live portal press, a live purchase, cancel and refund). **Deadline: before Club goes on sale. Tripwire: the first real paying
+   customer pulls the four live webhook events and the first live portal press forward.**
 
 **Done when** Stages 0–9 are complete (R is its own owner ask).
 Open questions, not stages (to `/strategy`): pay by invoice (net 30) for Club and Association; pause billing for the off-season.

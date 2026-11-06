@@ -660,6 +660,8 @@ anchor (date, commit, walk §), never deletes it.
   **Owner 2026-11-03: done as part of the Stripe test ↔ live reconciliation before Club goes on sale** (Stripe plan,
   "Stripe test ↔ live reconciliation"), not on its own. It no longer gates the Stage 0 promote: the code works without
   the events (a live dispute is then simply not recorded by us, as today; Stripe still emails the account owner).
+  **Owner 2026-11-06: confirmed, the order is test cleanup first, then the same in live (see O12/O13).** Rides with R; tick it
+  there. Pulled forward by O13's tripwire if a real customer pays first.
 - [x] **O4 · Ruling: does a dispute on a subscription charge flag or suspend the account?** Today it records and emails only.
   **RULED 2026-11-02 (owner, agreeing with the recommendation): NO suspension and no flag. A dispute stays as built: recorded, an
   email to the owner, "disputed" on the customer's Money tab.** Nothing to build.
@@ -677,11 +679,15 @@ anchor (date, commit, walk §), never deletes it.
   & invoices", then the live audit, then cancel and refund). Not deferred to the reconciliation: Coaches Portal and Tournament
   Plus already sell on production, so after the promote the first real customer's press would otherwise be the test, and a
   failure there reads "Billing portal is not configured" to that customer. Repeated as the reconciliation's last step.
+  **Owner 2026-11-06: not a separate test; it becomes part of the end-to-end testing AFTER test is cleaned and live matches it
+  (O12). Pulled forward only by O13's tripwire.**
 - [x] **O7 · Go for Part 11's daily comparison job** (watched automation, its own commit). Given 2026-11-01 in the Session 4
   chat ("Go, schedule on dev too"; an email when Stripe cannot be read: yes, once a day). Dev cron job 15. Prod scheduling
   (mig 422) still needs its own yes after the code is serving: carried in O8.
-- [ ] **O8 · Production order** (owner 2026-11-03: done at release time, as usual; migration 429 rides with the same list): migrations 416, 417, 418 and 421 applied to production BEFORE the promote that ships the code
+- [x] **O8 · Production order** (owner 2026-11-03: done at release time, as usual; migration 429 rides with the same list): migrations 416, 417, 418 and 421 applied to production BEFORE the promote that ships the code
   (`MANUAL_PROD_STEPS.json`); migration 422 (the daily job's schedule) AFTER the code is serving, on its own yes.
+  **All applied: 416, 417, 418, 421 and 429 on 2026-11-04; 422 on 2026-11-06 (owner's yes, applied by the owner; the daily job
+  `billing-drift-daily` runs from the next morning; `MANUAL_PROD_STEPS.json` updated).**
 - [x] **O9 · Exit walks:** re-run Stripe Walk 6 (webhook hardening) and the Stage 0 walk (both test mode). Stage 0 walk §438 WALKED
   COMPLETE 2026-11-02; Walk 6 marked complete by the owner 2026-11-02 (no counts given; ledger §419).
 - [ ] **O10 · `/design` session for Part 10 (sign in again), then its own build session** (owner ruling 2026-11-01, Session 3).
@@ -701,6 +707,34 @@ anchor (date, commit, walk §), never deletes it.
   club blanks the club on its log rows, and the October lead-privacy fix rewrote old rows. Option: refuse every edit except that
   blanking, and refuse deletes (a migration; a future privacy erasure would then need the lock lifted on purpose). Recommend yes,
   low urgency.
+- [ ] **O12 · The Stripe order, ruled 2026-11-06 (owner, agreeing with Claude's recommendation): clean test first, then make live match,
+  then test end to end.** Replaces handling O3, O6 and the Nov 5 live-read findings one at a time. Sequence, all under R in
+  `STRIPE_FROM_OUR_OWN_ADMIN_PLAN.md`: (1) **write down the target** (below); (2) clean the test sandbox until it equals the target
+  (no old plans or prices, everything named as expected, every webhook carries the expected events); (3) confirm test by the read-only
+  audit; (4) make live match, by the owner in the dashboard (Claude never changes Stripe settings); (5) end-to-end testing, including
+  the first live "Payment method & invoices" press (O6) and a live purchase, then cancel and refund. Owner-run, not Claude-run.
+  - [ ] **O12a · The target, written first.** One list of what Stripe must look like: each product and price (name, amount, interval,
+    which are active), our price slots pointing at them, and each webhook's events. It carries the **Nov 5 live-read question**: live
+    Club prices and two inactive products (team add-on, rep team) that differ from what the audit expected. That is a ruling on which
+    side is right, routed to `/strategy`. **2026-11-06: ruled in `BUSINESS_DECISIONS.md` as PROPOSED (live is right, the audit's list is stale:
+    Club repriced to $219/$2,190 and Club · Association $379/$3,790 are correct; the team add-on and rep-team products are retired and
+    should be gone), with the written target table. **Owner CONFIRMED the target 2026-11-06** (retired products to be DELETED, not just
+    archived, once a production check shows nobody is on them; League Plus stays active and goes on sale with the Club release; names =
+    the plan labels, one name everywhere; tax, USD and Connect rows are owed in the target and filled when they exist).** Still owed before step (2): the owner runs the production zero-use check, runs the live
+    audit and pastes the result (Claude does not read live Stripe). The audit script's expected list was updated to the target 2026-11-06
+    (owner's go; not committed yet; also lists leftover active prices and other webhook endpoints, and takes `--webhook-url` for test).
+    The target reconciles against `PLAN_PRICING_FACTS.md`; where they disagree that is drift, flagged, not a new number.
+  - [x] **O12a-results · First audits 2026-11-06** (live by the owner, test by Claude; detail in `BUSINESS_DECISIONS.md`): live prices all match;
+    live needs ten events added: the four dispute/refund events plus `payment_method.attached`/`.detached` and four fee-invoice events (the audit's list was missing those six; it is now 17 and matches the setup guide's Step 5),
+    the Premium Coaches Portal product renamed, the four retired prices deleted (zero workspaces on them in production), and two lookup keys
+    set; test also has a League yearly slot pointing at a monthly price (and one extra, harmless invoice event).
+  - [ ] **O12b · Test cleanup done and audited**, then **live matched** (ticks O3), then **end-to-end done** (ticks O6).
+- [ ] **O13 · Deadline and tripwire for O12, ruled 2026-11-06 (owner, agreeing).** *Deadline:* all of O12 is done **before Club goes on
+  sale** (the owner's own 2026-11-03 line; not "when the projects are done", which has no date). *Tripwire:* **the first real paying
+  customer pulls O3 (the four events on the live endpoint) and O6 (the first live portal press) forward**, ahead of the rest of O12,
+  because Coaches Portal and Tournament Plus already sell on production and a real customer's first press would otherwise show
+  "Billing portal is not configured" and a live dispute would not be recorded by us. Whoever sees a first paid live
+  subscription (the daily billing check's morning email, the Money screen, a Stripe notice) acts on this line.
 
 ## Not in this stage (stay out)
 
