@@ -259,7 +259,7 @@ hashes, never “uncommitted”.
   the live form sentence client-side from the same rules. **For Part 7 `/accounting`:** the CSV credit columns' meaning (held keeps its
   figure) and the `_cad` naming are this session's calls, not drawn.
 
-### Session C (2026-11-06, Opus): Parts 4–5 (commit hash recorded in the next commit); no DDL
+### Session C (2026-11-06, Opus): Parts 4–5 committed a9a22921e 2026-11-06; no DDL
 - **Step 0 gate, drawn and RULED 2026-11-06.** Added to the same artifact (versions 3–4), end of tab 3, from the shipped record grid:
   a BC two-tax cell and a pre-4a "Type not set" record. `/design` ran first (helper pass). It changed the legacy recommendation: hide
   number + registration on a Type-not-set record (the type may be PST, the same reason "Not sure yet" hides them), and add footers and
