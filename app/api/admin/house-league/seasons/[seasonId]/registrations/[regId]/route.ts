@@ -102,7 +102,7 @@ function emailPromoted(
           online:           link.online,
         }),
         family: face ? { face, reason: `${next.playerFirstName} was signed up for ${season.name}` } : undefined,
-      });
+      }, org.id);
     } catch (e) { console.error('[email] leagueWaitlistPromotedHtml failed', e); }
   })();
 }
@@ -637,7 +637,7 @@ export const PATCH = withObservability(async (req: Request,
               signupUrl: link.owedUrl, online: link.online,
             }),
             family: familyOf(face, reg.playerFirstName),
-          });
+          }, ctx!.org.id);
         } catch (e) { console.error('[email] leagueAdminApprovedHtml failed', e); }
       })();
     }
@@ -661,7 +661,7 @@ export const PATCH = withObservability(async (req: Request,
             defaultSubject: `${reg.playerFirstName} is on the waitlist — ${season.name}`,
             defaultHtml: leagueAdminWaitlistedHtml({ ...emailBase, divisionName, waitlistPosition: newPos, face }),
             family: familyOf(face, reg.playerFirstName),
-          });
+          }, ctx!.org.id);
         } catch (e) { console.error('[email] leagueAdminWaitlistedHtml failed', e); }
       })();
     }
@@ -808,7 +808,7 @@ export const PATCH = withObservability(async (req: Request,
           // The record's "Family emailed" for the card refund this email carried — the FIRST parent's send decides it.
           await stampRefundEmailed(cardRefundIds, true);
           // Stage 3: the second parent's copy after the stamp, so its own failure can never mark the refund un-emailed.
-          if (went(firstSent)) await sendSecondParentTransactional(reg, ending);
+          if (went(firstSent)) await sendSecondParentTransactional(reg, ending, ctx!.org.id);
         } catch (e) {
           console.error('[email] house-league ending email failed', e);
           await stampRefundEmailed(cardRefundIds, false).catch(() => null);

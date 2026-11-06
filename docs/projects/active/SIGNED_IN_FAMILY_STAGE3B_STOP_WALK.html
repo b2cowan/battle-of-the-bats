@@ -1,0 +1,294 @@
+<title>Stop These Emails Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box (the house walk frame). */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .facts { grid-template-columns: 1fr; } .facts dd { margin-bottom: 6px; } }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.callnote { font-size: 13px; color: var(--warn); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+</style>
+
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · Signed-in family accounts · Stage 3b · §472</span>
+    <h1>A second parent can stop the sign-up emails</h1>
+    <p class="sub">Written 2026-11-06 for Stage 3b (built, not yet committed). One purpose: a person whose email was typed on someone else’s sign-up presses one link, the club’s sign-up emails to them stop for good, the registrar can see it, and nobody else’s mail changes.</p>
+  </header>
+  <section class="card"><h2>What this walk is for</h2><p>Before this build, a second parent’s only way off was to write to the club. Now every email the second parent gets has a quiet line at the bottom, <strong>A parent added your email to this sign-up. Don’t want these?</strong> with a <strong>Stop these emails</strong> link. The link opens a page with one button, and no sign-in. Pressing it takes the address off every sign-up the club has, for every season, and the club can no longer add it again. Nobody is emailed about it. The registrar’s record window then reads <strong>Stopped by the address owner</strong> with the date, and both the sign-up form and the registrar’s windows refuse that address in words. The first parent’s emails are unchanged.</p></section>
+  <section class="card"><h2>It passes when</h2><ul>
+    <li>A second parent’s confirmation and a later email (Approve) both carry the quiet line and the Stop link; the first parent’s emails carry neither.</li>
+    <li>Opening the link changes nothing; pressing the button stops the address on every sign-up of the club, and a second press shows the same finished page.</li>
+    <li>The registrar sees “Stopped by the address owner, {date}” on every sign-up that held the address, still sees the address on a sign-up that was not stopped, and cannot turn it back on.</li>
+    <li>The family form and both registrar windows refuse the stopped address in words, with capitals and spaces ignored, and create nothing.</li>
+    <li>After the stop, no later email reaches that address; a different address can still be added.</li>
+    <li>A link with a changed token says so and changes nothing.</li>
+  </ul></section>
+  <section class="card"><h2>Not in this walk</h2><ul>
+    <li><strong>“Email families”</strong> has its own Unsubscribe link and is not part of this stop.</li>
+    <li><strong>The same mailbox under a +tag.</strong> The stop is for the exact address; <code>you+st1b@</code> and <code>you+st1x@</code> are different addresses. Recorded as an open flag in the legal note, not a defect to find here.</li>
+    <li><strong>A club-customised confirmation email</strong> (cannot carry the line; the second parent always gets the built-in one).</li>
+    <li><strong>Production.</strong> Migration 448 is on dev only; it goes to prod before the promote that ships this.</li>
+  </ul></section>
+  <section class="card"><h2>Before you start</h2><dl class="facts">
+    <dt>Dev server</dt><dd>This build adds a new page, a new route and a database change. Stop the dev server, delete <code>.next</code>, run <code>npm run dev</code> and wait for “Ready”. Part S shows whether it is the new build.</dd>
+    <dt>Email</dt><dd><code>RESEND_API_KEY</code> and <code>UNSUBSCRIBE_SECRET</code> are set in <code>.env.local</code> and <code>NEXT_PUBLIC_APP_URL=http://localhost:3000</code>. Without the secret no Stop link is drawn at all (Part B tells you); without the key every “inbox” step fails.</dd>
+    <dt>Your inboxes</dt><dd>Use your own address with plus tags (call it <code>you@gmail.com</code>): <code>you+st1@</code> is the first parent of Walk Alpha, <code>you+st1b@</code> is the second parent on <strong>both</strong> Alpha and Beta (the one we stop), <code>you+st2@</code> is Beta’s first parent, <code>you+st3@</code> and <code>you+st3b@</code> are Walk Gamma’s two parents (Gamma is the control: its second parent is never stopped), <code>you+st1c@</code> is the “different address” in Part G. The dev <code>.local</code> addresses cannot receive mail.</dd>
+    <dt>Reruns</dt><dd>A child is refused as a duplicate with the same first email, and an address is limited to 8 sign-up attempts an hour. On a second run use new tags (<code>+su1</code> …). <strong>A stopped address stays stopped for the club</strong> until Claude removes the stop in Part Z, so a rerun with the same <code>st1b</code> would be refused.</dd>
+    <dt>Email not there?</dt><dd>Wait 2 minutes, then look in Resend › Emails and search the address.</dd>
+    <dt>When done</dt><dd>Part Z: tell Claude “stop walk done” and it removes the walk’s sign-ups and the stop.</dd>
+  </dl></section>
+  <section class="card"><h2>Sign in as · Where</h2><dl class="facts">
+    <dt>Club</dt><dd>UAT Rep Club (<code>uat-rep-club</code>, Club plan), season <strong>2026 Fall House League</strong>, registration open. Division <strong>U9 Rookie</strong> (born 2014 to 2015).</dd>
+    <dt>Family (public)</dt><dd><code>http://localhost:3000/uat-rep-club/league/2026-fall-house-league/register</code> · a private window, nobody signed in</dd>
+    <dt>Registrar</dt><dd><code>uat-club-registrar@uat-rep-club.local</code> · <code>UATPassword2026!</code> · <code>http://localhost:3000/login</code> · House League › 2026 Fall House League › <strong>Registrations</strong></dd>
+    <dt>Keep private</dt><dd>These are dev-only accounts; the page carries the password, so do not share the link.</dd>
+  </dl></section>
+  <section class="card"><h2>Calls to make as you go</h2><ul>
+    <li><strong>The error pages send people to “reply to the club” (C and H).</strong> If the Stop page can’t be used, it says to reply to any email and ask to be taken off, “within 10 business days”. A reply reaches the club only when the club has a public contact email. Keep the words, soften them, or settle who reads a reply when there is none?</li>
+    <li><strong>The quiet line and its wording (B).</strong> “A parent added your email to this sign-up. Don’t want these?” with the link. Right for a stranger, or too small to notice?</li>
+    <li><strong>The registrar cannot undo (D).</strong> Ruled; recorded here so you see how it feels on the record window.</li>
+    <li><strong>Two footnotes on the pay-link copy (J).</strong> The second parent’s pay-link email carries the “sent even if you have unsubscribed” notice and the Stop line. Fine, or tidy?</li>
+  </ul></section>
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+</main>
+
+<script>
+(function () {
+  var KEY = "sifa-stage3b-walk-stop-emails-v1";
+  var TITLE = "Stage 3b walk §472 · A second parent can stop the sign-up emails (2026-11-06)";
+  var REG = "<code>http://localhost:3000/uat-rep-club/league/2026-fall-house-league/register</code>";
+  var FAM = "Family · private window, signed out";
+  var REGR = "Registrar · uat-club-registrar@uat-rep-club.local";
+  var SUBJ = "2026 Fall House League";
+  var LINE = "A parent added your email to this sign-up. Don’t want these? <strong>Stop these emails</strong>";
+  var REFUSAL = "That address has asked not to get these emails from this club. Enter a different one, or leave it empty.";
+  var PARTS = [
+ { id: "S", title: "Stop check: this is the new build", steps: [
+  { who: FAM + " · computer", do: "Open <code>http://localhost:3000/second-parent-stop?org=x&amp;email=y&amp;token=z</code>.",
+    see: "A plain page titled <strong>We can’t use that link</strong>: “This link isn’t valid. To stop the emails, reply to any email you received from the club and ask to be taken off. Your address will come off within 10 business days.” <strong>If you get a 404 or an error screen, stop:</strong> dev is running an older build. Restart it (stop, delete <code>.next</code>, <code>npm run dev</code>) and reload." }
+ ]},
+ { id: "A", title: "Three sign-ups, one second parent on two of them", steps: [
+  { who: FAM + " · phone width (390 px)", do: "Open " + REG + ". Sign up <strong>Walk Alpha</strong> (last name Walker, born 2015, U9 Rookie), parent <strong>Pat Walker</strong>, Email <code>you+st1@</code>, any phone, second parent <code>you+st1b@</code>. Press Sign up.",
+    see: "A finish screen naming both addresses: “We’ve emailed this to you+st1@… and you+st1b@…”." },
+  { who: FAM + " · phone width", do: "Sign up <strong>Walk Beta</strong> (Walker, born 2015, U9 Rookie), parent <strong>Bo Walker</strong>, Email <code>you+st2@</code>, second parent <code>you+st1b@</code> (the <strong>same</strong> second parent as Alpha).",
+    see: "The finish screen names both addresses. Nothing refuses it: nobody has stopped anything yet." },
+  { who: FAM + " · phone width", do: "Sign up <strong>Walk Gamma</strong> (Walker, born 2015, U9 Rookie), parent <strong>Gail Walker</strong>, Email <code>you+st3@</code>, second parent <code>you+st3b@</code>. This is the control: its second parent is never stopped.",
+    see: "The finish screen names both addresses." }
+ ]},
+ { id: "B", title: "The quiet line and the Stop link in the inboxes", steps: [
+  { who: "Your inbox · +st1b (second parent)", do: "Open the +st1b messages. Do not press anything yet.",
+    see: "<strong>Two</strong> messages, one for Alpha and one for Beta, subject ending “— " + SUBJ + "”. Each opens with just “Hi,”, then a line: “Pat Walker added your email to Walk’s sign-up so you get the same updates. If you aren’t Walk’s parent or guardian, or you’d rather not get these, use “Stop these emails” at the bottom of this email, or tell the club at <em>an address</em>, and your address comes off the sign-up.” (With no public contact set the “or tell the club at …” part is missing; either is right.) At the very bottom of the card, under everything else, a small line: " + LINE + " as an olive underlined link. <strong>If there is no such line, the secret is not set on this server</strong>; set <code>UNSUBSCRIBE_SECRET</code>, restart, and sign up again with new tags.",
+    call: "Call: is the small line easy enough to find for someone who doesn’t know the club?" },
+  { who: "Your inbox · +st1 (first parent)", do: "Open the +st1 messages.",
+    see: "<strong>One</strong> message, “Hi <strong>Pat</strong>,”. It has <strong>no</strong> “added your email” line and <strong>no</strong> Stop link anywhere. Same as before this build." },
+  { who: "Your inbox · +st3b (the control)", do: "Open the +st3b message.",
+    see: "<strong>One</strong> message for Gamma, “Hi,”, with the same quiet line and Stop link at the bottom." }
+ ]},
+ { id: "C", title: "The Stop page: opening it changes nothing, pressing it does", steps: [
+  { who: FAM + " · phone width", do: "In the +st1b message about <strong>Alpha</strong>, press <strong>Stop these emails</strong> at the bottom.",
+    see: "A page titled <strong>Stop these emails?</strong> with one sentence: “UAT Rep Club has been sending sign-up emails to you+st1b@…. Press the button and UAT Rep Club will stop sending them, for every season.” and the note “The club’s sign-up record will show that these emails were stopped. Nobody is emailed about it.” One button, <strong>Stop these emails</strong>. No sign-in asked. Do not press yet." },
+  { who: REGR + " · another window", do: "Sign in at <code>/login</code>, open House League › " + SUBJ + " › <strong>Registrations</strong>, and open Walk Alpha’s record (click the row). Look at the <strong>Second parent</strong> row.",
+    see: "It still shows <code>you+st1b@…</code> with a <strong>Change</strong> link. Opening the Stop page changed nothing." },
+  { who: FAM + " · back on the Stop page", do: "Press <strong>Stop these emails</strong>.",
+    see: "A page titled <strong>These emails have stopped</strong>: “UAT Rep Club won’t send sign-up emails to you+st1b@… again.” No button." },
+  { who: FAM, do: "Go back to your inbox and press the Stop link in the <strong>Beta</strong> message as well, then reload the page.",
+    see: "The same finished page (“These emails have stopped”), no button, no error. Pressing a second time is harmless." }
+ ]},
+ { id: "D", title: "What the registrar sees", steps: [
+  { who: REGR, do: "Reload Registrations and open Walk Alpha’s record. Look at the Second parent row.",
+    see: "<strong>Stopped by the address owner, </strong> and today’s date, with an <strong>Add</strong> link and <strong>no Change</strong> link. The address is gone." },
+  { who: REGR, do: "Open Walk Beta’s record.",
+    see: "The same “Stopped by the address owner, <em>date</em>” line: the stop reached every sign-up the club had with that address." },
+  { who: REGR, do: "Open Walk Gamma’s record.",
+    see: "Still <code>you+st3b@…</code> with <strong>Change</strong>. Nothing changed for a sign-up whose second parent did not stop." }
+ ]},
+ { id: "E", title: "A stopped address is refused, in words, everywhere it can be typed", steps: [
+  { who: FAM + " · computer", do: "Open " + REG + ". Fill in <strong>Walk Delta</strong> (Walker, born 2015, U9 Rookie), parent <strong>Dana Walker</strong>, Email <code>you+st4@</code>, and in the second box type <code>YOU+ST1B@GMAIL.COM </code> in capitals with a space on the end (your own address). Press Sign up.",
+    see: "Nothing is created. A red line under the second box reads: “" + REFUSAL + "” Everything you typed is still there." },
+  { who: REGR, do: "Press <strong>Add registration</strong>. Fill in <strong>Walk Epsilon</strong> (Walker, born 2015, U9 Rookie), guardian <strong>Eve Walker</strong>, Email <code>you+st5@</code>, second parent <code>you+st1b@</code>, and save.",
+    see: "Refused with the same sentence; no sign-up is added." },
+  { who: REGR, do: "Open Walk Gamma’s record, press <strong>Change</strong>, type <code>you+st1b@</code>, press <strong>Save</strong>. Then press Cancel.",
+    see: "Refused with the same sentence; Gamma still shows <code>you+st3b@…</code>." }
+ ]},
+ { id: "F", title: "Mail after the stop: the stopped address hears nothing, the others hear everything", steps: [
+  { who: REGR, do: "On Registrations press <strong>Approve</strong> on Walk Alpha. (If the season accepts on sign-up and Alpha is already Active, press <strong>Decline</strong> then <strong>Decline and email</strong> on it instead; either email reaches the parents.)",
+    see: "<strong>+st1</strong> gets exactly one email about Alpha. Wait 2 minutes: <strong>+st1b gets nothing</strong>." },
+  { who: REGR, do: "Do the same on Walk Beta.",
+    see: "<strong>+st2</strong> gets exactly one email. Wait 2 minutes: <strong>+st1b still gets nothing</strong>." },
+  { who: REGR, do: "Do the same on Walk Gamma (the control).",
+    see: "<strong>+st3 and +st3b each get exactly one</strong> email. +st3b’s opens “Hi,” and has the quiet line and the Stop link at the bottom (a later email carries it too, not only the confirmation); +st3’s has neither." }
+ ]},
+ { id: "G", title: "A different address can still be added; the stop cannot be undone", steps: [
+  { who: REGR, do: "Open Walk Alpha’s record, press <strong>Add</strong>, type <code>you+st1c@</code>, press <strong>Save</strong>.",
+    see: "The row now shows <code>you+st1c@…</code> with Change, replacing the “Stopped” line. <strong>Wait 2 minutes: nothing arrives at +st1c.</strong> A staff edit sends no email." },
+  { who: REGR, do: "Open Walk Beta’s record again.",
+    see: "Still “Stopped by the address owner, <em>date</em>” with only an Add link. There is no way to turn the stopped address back on." }
+ ]},
+ { id: "H", title: "A link with a changed token", steps: [
+  { who: FAM + " · computer", do: "Copy the Stop link from the +st3b message (right-click, copy link). Paste it in the address bar, change one letter in the long <code>token=</code> part, and open it.",
+    see: "<strong>We can’t use that link</strong> with the “reply to any email” sentence, and no button." },
+  { who: REGR, do: "Reload Registrations and open Walk Gamma’s record.",
+    see: "Still <code>you+st3b@…</code> with Change: the bad link stopped nothing." }
+ ]},
+ { id: "I", title: "The Stop page on a phone", steps: [
+  { who: FAM + " · phone width (390 px)", do: "Open the real (unchanged) Stop link from the +st3b message. Do <strong>not</strong> press the button.",
+    see: "The sentence, the note and the one button all fit; nothing runs off the side; the button is easy to tap. Close the tab." }
+ ]},
+ { id: "J", title: "Optional: the other two places a second parent’s mail is built", steps: [
+  { who: REGR, do: "On Walk Gamma’s record press <strong>Email the pay link</strong> (only if the club takes online payments and Gamma owes; if the button is not there, leave this unticked and say so in the notes).",
+    see: "+st3b’s copy has the quiet line and Stop link at the bottom, under the “sent even if you have unsubscribed” notice; +st3’s copy has neither.",
+    call: "Call: two footnotes on the second parent’s pay-link copy. Fine, or tidy?" },
+  { who: REGR, do: "On Walk Gamma’s record choose <strong>Send a new link</strong> (the one that replaces the family’s sign-up link).",
+    see: "+st3b’s copy opens “Hi,” and has the quiet line and Stop link; +st3’s copy has neither." }
+ ]},
+ { id: "Z", title: "Put back", steps: [
+  { who: "You → Claude", do: "Tell Claude <strong>“stop walk done”</strong>. It removes Walk Alpha, Beta, Gamma (and any Delta or Epsilon that slipped in) from the dev season, removes the club’s stop for <code>you+st1b@</code> (so a rerun is not refused), and reads back that none remain and the season’s count is as before.",
+    see: "Claude reports the rows removed, the stop row gone and the season’s count back where it started." }
+ ]}
+];
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+      if (s.call) t.appendChild(el('span', 'callnote', s.call));
+      var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+      cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+      boxes.push({ part: p.id, step: id, cb: cb });
+      var row = el('label', 'step'); row.appendChild(cb); row.appendChild(t); body.appendChild(row);
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function doneSteps(partId) {
+    return boxes.filter(function (b) { return (!partId || b.part === partId) && b.cb.checked; }).map(function (b) { return b.step; });
+  }
+  var totalSteps = boxes.length;
+
+  function refresh() {
+    PARTS.forEach(function (p) {
+      var n = doneSteps(p.id).length;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + p.steps.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    var done = doneSteps(null).length;
+    document.getElementById('total').textContent = done + ' of ' + totalSteps + ' checked';
+    document.getElementById('barfill').style.width = (totalSteps ? Math.round(done * 100 / totalSteps) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [TITLE, 'Checked ' + doneSteps(null).length + ' of ' + totalSteps + ' steps'];
+    PARTS.forEach(function (p) {
+      var ticked = doneSteps(p.id);
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + p.steps.length + (ticked.length ? ' (' + ticked.join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

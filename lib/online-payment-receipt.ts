@@ -19,6 +19,7 @@ import { LEAGUE_PAY_WORDS as LW, SIGNUP_LINK_WORDS as SW, childList } from './le
 import { REGS_WORDS } from './house-league-money-words';
 import { secondParentsOf } from './league-second-parent';
 import { readSecondParents, went } from './league-second-parent-mail';
+import { withSecondParentStop } from './league-second-parent-footer';
 
 /**
  * The payer's emails (Club Tier Stage 12a, copy §14 and §17): one receipt per payment and one email per refund, from our
@@ -302,7 +303,7 @@ export async function sendLeaguePayLink(
   if (!refunded && went(result)) {
     const seconds = await readSecondParents([registrationId, ...facts.shares.map(s => s.registrationId)]).catch(() => new Map<string, string>());
     for (const to of secondParentsOf(facts.guardianEmail, [...seconds.values()].map(e => ({ guardianEmail2: e })))) {
-      await sendEmail(to, L.subject(names, facts.season.name), html, { ...face?.sendOpts, kind: 'league_pay_link' })
+      await sendEmail(to, L.subject(names, facts.season.name), withSecondParentStop(html, facts.org.id, to), { ...face?.sendOpts, kind: 'league_pay_link' })
         .catch(e => console.error('[pay-link] second parent copy failed:', e instanceof Error ? e.message : String(e)));
     }
   }

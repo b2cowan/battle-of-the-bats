@@ -19,6 +19,9 @@ import { possessive } from './utils';
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 
+/** The button's words: said once, read by the confirm page, the footer on every copy and the "who added you" line. */
+const STOP_BUTTON = 'Stop these emails';
+
 export const SECOND_PARENT_WORDS = {
   label: 'Second parent’s email',
   hint: 'Add them and they’ll get the club’s emails about this sign-up, except payment receipts. No name needed.',
@@ -31,34 +34,47 @@ export const SECOND_PARENT_WORDS = {
    * An address that asked to stop (Stage 3b, owner call O4): refused in words on the family form and on both of the club's
    * windows, never accepted silently. DRAFT words for the /marketing pass: change them here and only here.
    */
-  stoppedAddress: 'That address has asked not to get these emails from this club. Enter another or leave it empty.',
+  stoppedAddress: 'That address has asked not to get these emails from this club. Enter a different one, or leave it empty.',
   /**
    * The confirm page behind the "Stop these emails" link (/second-parent-stop; Stage 3b). The reader may not know the club
    * well and is signed out. DRAFT words for the /marketing pass: change them here and only here.
    */
   stop: {
-    button: 'Stop these emails',
+    button: STOP_BUTTON,
     title: 'Stop these emails?',
-    body: (club: string, email: string) => `${club} has been sending sign-up emails to ${email}. Press the button and they stop, for every season.`,
-    note: 'The club will see that these emails were stopped. Nobody is emailed about it.',
+    body: (club: string, email: string) => `${club} has been sending sign-up emails to ${email}. Press the button and ${club} will stop sending them, for every season.`,
+    note: 'The club’s sign-up record will show that these emails were stopped. Nobody is emailed about it.',
     doneTitle: 'These emails have stopped',
     doneBody: (club: string, email: string) => `${club} won’t send sign-up emails to ${email} again.`,
     invalidTitle: 'We can’t use that link',
-    invalidBody: 'This link isn’t valid. If you’d like the emails to stop, reply to any email you received and we’ll take your address off within 10 business days as required by CASL.',
+    invalidBody: 'This link isn’t valid. To stop the emails, reply to any email you received from the club and ask to be taken off. Your address will come off within 10 business days.',
     dbTitle: 'That didn’t go through',
-    dbBody: 'Something went wrong on our side, so the emails haven’t stopped yet. Open the link in your email again in a few minutes. If it still doesn’t work, reply to any email you received and we’ll take your address off within 10 business days as required by CASL.',
+    dbBody: 'Something went wrong on our side, so the emails haven’t stopped yet. Open the link in your email again in a few minutes. If it still doesn’t work, reply to any email you received from the club and ask to be taken off. Your address will come off within 10 business days.',
   },
   /** The second parent's greeting: no name is asked. */
   greeting: 'Hi,',
   /**
-   * The line at the top of the second parent's copy of the confirmation (ask 2): who added this address, and how a wrong
-   * one comes off. DRAFT words for the /marketing pass (build prompt Part 6): change them here and only here.
+   * The quiet line at the foot of every email a second parent gets (Stage 3b, Part 4): who put them there. The link's words
+   * are `stop.button`. DRAFT words for the /marketing pass: change them here and only here.
    */
-  addedYou(firstParent: string, childFirstNames: readonly string[], club: { name: string; contact: string | null }): string {
+  footer: { lead: 'A parent added your email to this sign-up. Don’t want these?' },
+  /**
+   * The line at the top of the second parent's copy of the confirmation (ask 2): who added this address, and how a wrong
+   * one comes off. `stop` is true when the copy carries the Stop button (it does not when no link can be signed here);
+   * `contact` is the club's public contact email, when it has a usable one. With neither, the line names the club.
+   * DRAFT words for the /marketing pass (build prompt Part 6): change them here and only here.
+   */
+  addedYou(
+    firstParent: string, childFirstNames: readonly string[],
+    club: { name: string; contact: string | null; stop: boolean },
+  ): string {
     const kids = nameList(childFirstNames);
     const whose = childFirstNames.length === 1 ? possessive(kids) : 'their';
-    const tell = club.contact ? `tell the club at ${club.contact}` : `tell ${club.name}`;
-    return `${firstParent} added your email to ${possessive(kids)} sign-up so you get the same updates. If you aren’t ${whose} parent or guardian, or you’d rather not get these, ${tell} and they’ll take your address off.`;
+    const ways = [
+      club.stop ? `use “${STOP_BUTTON}” at the bottom of this email` : null,
+      club.contact ? `tell the club at ${club.contact}` : club.stop ? null : `contact ${club.name}`,
+    ].filter(Boolean).join(', or ');
+    return `${firstParent} added your email to ${possessive(kids)} sign-up so you get the same updates. If you aren’t ${whose} parent or guardian, or you’d rather not get these, ${ways}, and your address comes off the sign-up.`;
   },
   /**
    * The club's screens (Part 5, ask 6): the record window's row and its edit, and the "Add registration" window. Staff are

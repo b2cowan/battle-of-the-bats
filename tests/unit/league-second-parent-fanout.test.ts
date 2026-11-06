@@ -5,7 +5,10 @@ import {
   SECOND_PARENT_WORDS as SP,
 } from '../../lib/league-second-parent.ts';
 import { matchesSearch } from '../../lib/house-league-registrations.ts';
-import { readCode, functionBody } from './_source-code.ts';
+import { withSecondParentStop, hasSecondParentStop } from '../../lib/league-second-parent-footer.ts';
+import { verifySecondParentStopToken } from '../../lib/unsubscribe-token.ts';
+import { warmEmailDocument } from '../../lib/email-envelope-warm.ts';
+import { readCode, functionBody, filesUnder } from './_source-code.ts';
 
 /**
  * Signed-in family accounts Stage 3, Parts 4–6 (build prompt SIGNED_IN_FAMILY_STAGE3_BUILD_PROMPT.md; asks 1–6 ruled A
@@ -114,13 +117,13 @@ const REG_ROUTE = readCode('app/api/admin/house-league/seasons/[seasonId]/regist
 describe('the sending module (source guard)', () => {
   it('the second copy is the built-in email, its own message, with its own once-only key', () => {
     const body = functionBody(MAIL, 'sendSecondParentTransactional');
-    assert.match(body, /builtInOnly: true, defaultHtml: secondCopyHtml\(opts\.defaultHtml, opts\.key\)/);
+    assert.match(body, /builtInOnly: true, defaultHtml: secondCopyHtml\(opts\.defaultHtml, opts\.key, orgId, to\)/);
     assert.match(body, /idempotencyKey: `\$\{opts\.idempotencyKey\}:second:\$\{to\}`/);
     assert.match(body, /catch \(e\)/);
     assert.ok(!/\bcc\b/i.test(MAIL), 'never a Cc');
   });
   it('it follows only a first copy that went, and sends as its own batch after the first', () => {
-    assert.match(functionBody(MAIL, 'sendTransactionalToBothParents'), /if \(went\(first\)\) await sendSecondParentTransactional/);
+    assert.match(functionBody(MAIL, 'sendTransactionalToBothParents'), /if \(went\(first\)\) await sendSecondParentTransactional\(reg, opts, orgId\)/);
     const svc = functionBody(MAIL, 'sendSecondParentServiceCopies');
     assert.match(svc, /filter\(\(\{ i \}\) => went\(params\.results\[i\]\)\)/);
     assert.match(svc, /sendFamilyServiceBatch\(/);
@@ -137,8 +140,8 @@ describe('every census sender reaches the second parent through the module (sour
     const at = REG_ROUTE.indexOf('const firstSent = await sendTransactionalEmail(ending)');
     assert.ok(at > 0);
     const after = REG_ROUTE.slice(at, at + 600);
-    assert.ok(after.indexOf('stampRefundEmailed(cardRefundIds, true)') < after.indexOf('sendSecondParentTransactional(reg, ending)'));
-    assert.match(after, /if \(went\(firstSent\)\) await sendSecondParentTransactional\(reg, ending\)/);
+    assert.ok(after.indexOf('stampRefundEmailed(cardRefundIds, true)') < after.indexOf('sendSecondParentTransactional(reg, ending, ctx!.org.id)'));
+    assert.match(after, /if \(went\(firstSent\)\) await sendSecondParentTransactional\(reg, ending, ctx!\.org\.id\)/);
   });
   it('"Your sign-up" link: a new link reaches both; "Email me my link" answers a second parent at their own address', () => {
     const L = readCode('lib/league-signup-link-mail.ts');
@@ -222,5 +225,131 @@ describe('the club screens and the coach (source guard)', () => {
     const C = readCode('app/[orgSlug]/league/[seasonSlug]/team/[teamId]/page.tsx');
     assert.match(C, /page\.players\.flatMap\(p => householdRecipients\(p\.guardianEmail, \[p\]\)\)/);
     assert.match(C, /href=\{`mailto:\$\{both\.join\(','\)\}`\}/);
+  });
+});
+
+describe('the Stop button: every second-parent send path carries it, no first-parent path does (Stage 3b, Part 4)', () => {
+  const FOOTER = readCode('lib/league-second-parent-footer.ts');
+  const REG = readCode('app/api/league/[orgSlug]/[seasonSlug]/register/route.ts');
+  const LINKS = readCode('lib/league-signup-link-mail.ts');
+  const PAY = readCode('lib/online-payment-receipt.ts');
+
+  it('ONE footer builder, whose link comes from the token and whose words come from SECOND_PARENT_WORDS', () => {
+    assert.match(FOOTER, /buildSecondParentStopUrl\(orgId, to\)/);
+    assert.match(FOOTER, /W\.footer\.lead/);
+    assert.match(FOOTER, /W\.stop\.button/);
+    assert.match(FOOTER, /if \(!url\) return '';/, 'no secret, no link, no footer');
+    assert.match(FOOTER, /insertAtWarmCardEnd\(html, footer\)/, 'inside the card, before its end');
+    // The footer only DRAWS the link; the stop is the removal, so nothing here (or in a sender) reads the stop table.
+    assert.ok(!/second_parent_stops|supabase/.test(FOOTER));
+  });
+
+  it('only these four files draw it: the shared module, the register route, the pay link and the sign-up-link notices', () => {
+    const users = [...filesUnder('lib', '.ts'), ...filesUnder('app', '.ts'), ...filesUnder('app', '.tsx'), ...filesUnder('components', '.tsx')]
+      .filter(f => f !== 'lib/league-second-parent-footer.ts')
+      .filter(f => /withSecondParentStop\(|secondParentStopFooterHtml\(/.test(readCode(f)))
+      .sort();
+    assert.deepEqual(users, [
+      'app/api/league/[orgSlug]/[seasonSlug]/register/route.ts',
+      'lib/league-second-parent-mail.ts',
+      'lib/league-signup-link-mail.ts',
+      'lib/online-payment-receipt.ts',
+    ]);
+  });
+
+  it('the shared point: both second-parent paths splice it in, per recipient, through the one copy function', () => {
+    assert.match(MAIL, /return withSecondParentStop\(copy, orgId, to\);/);
+    assert.match(functionBody(MAIL, 'sendSecondParentTransactional'), /secondCopyHtml\(opts\.defaultHtml, opts\.key, orgId, to\)/);
+    assert.match(functionBody(MAIL, 'sendSecondParentServiceCopies'), /secondCopyHtml\(h\.message\.html, params\.kind, params\.orgId, to\)/);
+    // The first parent's send in the same module is the caller's message, untouched.
+    assert.match(functionBody(MAIL, 'sendTransactionalToBothParents'), /const first = await sendTransactionalEmail\(opts\);/);
+    assert.ok(!/withSecondParentStop/.test(functionBody(MAIL, 'sendTransactionalToBothParents')));
+  });
+
+  it('every caller of the shared point names the club, so the link is signed on club + address', () => {
+    for (const f of ['lib/club-schedule-league-mail.ts', 'lib/league-practice-tell-server.ts', 'lib/house-league-placement-mail.ts', 'lib/league-schedule-mail.ts']) {
+      assert.match(readCode(f), /sendSecondParentServiceCopies\(\{\s*(?:kind: '[a-z_]+'|kind), orgId: (?:p\.)?org\.id,/, f);
+    }
+    assert.equal((REG_ROUTE.match(/\}, (?:ctx!\.)?org\.id\);/g) ?? []).length, 3, 'approve, waitlist, promote');
+    assert.match(REG_ROUTE, /sendSecondParentTransactional\(reg, ending, ctx!\.org\.id\)/);
+  });
+
+  it('bypass 1: the register route draws it on the second parent’s confirmation only, and the line knows if there is a button', () => {
+    assert.match(REG, /copy\.secondParentLine \? withSecondParentStop\(html, org\.id, copy\.to\) : html/);
+    assert.match(REG, /defaultHtml: withSecondParentCopy\(leagueSignupHtml\(/);
+    assert.match(REG, /stop: hasSecondParentStop\(org\.id, guardianEmail2\)/);
+  });
+
+  it('bypass 2: the pay link draws it on the second parents’ loop, not on the first parent’s send', () => {
+    assert.match(PAY, /await sendEmail\(to, L\.subject\(names, facts\.season\.name\), withSecondParentStop\(html, facts\.org\.id, to\),/);
+    assert.match(PAY, /await sendEmail\(facts\.guardianEmail, L\.subject\(names, facts\.season\.name\), html,/);
+  });
+
+  it('bypass 3: the sign-up-link notices draw it on the second parent’s notice only', () => {
+    assert.match(functionBody(LINKS, 'sendLinkNotice'), /const html = n\.secondParent \? withSecondParentStop\(built, org\.id, n\.to\) : built;/);
+  });
+
+  it('"Email families" keeps its own per-address unsubscribe and takes none of this', () => {
+    for (const f of ['lib/families-email.ts', 'lib/families-audience.ts']) assert.ok(!/withSecondParentStop|secondParentStopFooterHtml/.test(readCode(f)), f);
+    assert.match(readCode('lib/families-audience.ts'), /suppressed/);
+  });
+
+  it('behaviour: the footer sits inside the card before its end, once, signed on club + address; absent without the secret', () => {
+    const had = process.env.UNSUBSCRIBE_SECRET;
+    try {
+      process.env.UNSUBSCRIBE_SECRET = 'a-test-secret-of-some-length';
+      const html = '<table><tr><td><p>Hi,</p>\n<!--fl-card-end-->\n</td></tr></table>';
+      const out = withSecondParentStop(html, 'org-1', 'Dev@Example.com');
+      assert.equal((out.match(/second-parent-stop\?/g) ?? []).length, 1);
+      assert.ok(out.indexOf('second-parent-stop?') < out.indexOf('<!--fl-card-end-->'));
+      assert.ok(out.includes(`>${SP.stop.button}</a>`) && out.includes(SP.footer.lead));
+      const url = out.match(/href="([^"]+)"/)![1].replace(/&amp;/g, '&');
+      const q = new URL(url).searchParams;
+      assert.equal(q.get('org'), 'org-1');
+      assert.equal(q.get('email'), 'dev@example.com');
+      assert.equal(verifySecondParentStopToken('org-1', q.get('email')!, q.get('token')!), true);
+      assert.equal(verifySecondParentStopToken('org-2', q.get('email')!, q.get('token')!), false, 'another club’s sign-ups are out of reach');
+      assert.equal(hasSecondParentStop('org-1', 'dev@example.com'), true);
+      delete process.env.UNSUBSCRIBE_SECRET;
+      assert.equal(withSecondParentStop(html, 'org-1', 'dev@example.com'), html, 'no secret, no link, nothing changed');
+      assert.equal(hasSecondParentStop('org-1', 'dev@example.com'), false);
+    } finally {
+      if (had === undefined) delete process.env.UNSUBSCRIBE_SECRET; else process.env.UNSUBSCRIBE_SECRET = had;
+    }
+  });
+});
+
+describe('the Stop button: gaps the build can hold (review 2026-11-06)', () => {
+  it('a second parent’s link notice is the built-in email, so a stored template can never drop the greeting or the footer', () => {
+    assert.match(functionBody(readCode('lib/league-signup-link-mail.ts'), 'sendLinkNotice'), /builtInOnly: n\.secondParent === true,/);
+  });
+
+  it('CENSUS: the only files that can address a second parent are the ones the footer decision covers', () => {
+    // A NEW file that reads a second address as a recipient fails here, so its author decides: carry the Stop footer (add the
+    // file to the four above), or say why not (add it to the second list).
+    const WITH_FOOTER = ['lib/league-second-parent-mail.ts', 'lib/league-signup-link-mail.ts', 'lib/online-payment-receipt.ts'];
+    const NOT_A_SEND_OR_ITS_OWN_OUT = [
+      'app/[orgSlug]/league/[seasonSlug]/team/[teamId]/page.tsx', // a mailto: link on the coach's page; sends nothing
+      'lib/families-audience.ts', 'lib/families-email.ts', 'lib/families-read.ts', // "Email families": its own per-address unsubscribe
+      'lib/league-second-parent.ts', // the recipient rule itself
+    ];
+    const users = [...filesUnder('lib', '.ts'), ...filesUnder('app', '.ts'), ...filesUnder('app', '.tsx'), ...filesUnder('components', '.tsx')]
+      .filter(f => /secondParentsOf\(|readSecondParents\(|onEveryRegistration\(|householdRecipients\(/.test(readCode(f)))
+      .sort();
+    assert.deepEqual(users, [...WITH_FOOTER, ...NOT_A_SEND_OR_ITS_OWN_OUT].sort());
+  });
+
+  it('behaviour: over a real envelope (plain and club-banded) the footer is the last thing inside the card, once', () => {
+    const had = process.env.UNSUBSCRIBE_SECRET;
+    try {
+      process.env.UNSUBSCRIBE_SECRET = 'a-test-secret-of-some-length';
+      const doc = warmEmailDocument('<p>Hi,</p><p>Body</p>');
+      assert.ok(doc.includes('<!--fl-card-end-->'), 'the envelope still carries its card-end marker');
+      const out = withSecondParentStop(doc, 'org-1', 'dev@example.com');
+      assert.equal((out.match(/second-parent-stop\?/g) ?? []).length, 1);
+      assert.ok(out.indexOf('second-parent-stop?') > out.indexOf('Body') && out.indexOf('second-parent-stop?') < out.indexOf('<!--fl-card-end-->'));
+    } finally {
+      if (had === undefined) delete process.env.UNSUBSCRIBE_SECRET; else process.env.UNSUBSCRIBE_SECRET = had;
+    }
   });
 });

@@ -229,7 +229,7 @@ async function sendClaimed(org: MailOrg, season: MailSeason, ids: readonly strin
   }
   // After the households' rows are recorded: the second parents' copies never change an outcome or a count.
   await sendSecondParentServiceCopies({
-    kind: 'house_league_placement', fromName: face?.sendOpts.fromName ?? null, replyTo: face?.sendOpts.replyTo ?? null,
+    kind: 'house_league_placement', orgId: org.id, fromName: face?.sendOpts.fromName ?? null, replyTo: face?.sendOpts.replyTo ?? null,
     households: households.map((h, i) => ({ ...h, message: messages[i] })), results,
   });
   return outcome;

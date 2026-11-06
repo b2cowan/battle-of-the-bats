@@ -140,7 +140,7 @@ export async function sendPracticeChangeNotices(p: {
       }
       // Signed-in family accounts Stage 3: the second parents' copies, after the counts (they never change one or "told").
       await sendSecondParentServiceCopies({
-        kind: 'house_league_practice_change', fromName: face?.sendOpts.fromName ?? null, replyTo: face?.sendOpts.replyTo ?? null, results,
+        kind: 'house_league_practice_change', orgId: p.org.id, fromName: face?.sendOpts.fromName ?? null, replyTo: face?.sendOpts.replyTo ?? null, results,
         households: list.map(({ h }, i) => ({ firstEmail: h.email, registrationIds: h.children.map(c => c.registrationId), message: messages[i] })),
       });
     }

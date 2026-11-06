@@ -23,6 +23,7 @@ import { SIGNUP_LINK_WORDS as SW } from '@/lib/league-pay-words';
 import { readSecondParentEmail, secondParentRefusalWords, SECOND_PARENT_WORDS as SP } from '@/lib/league-second-parent';
 import { stoppedSecondParentRefusal } from '@/lib/league-second-parent-stop';
 import { went } from '@/lib/league-second-parent-mail';
+import { hasSecondParentStop, withSecondParentStop } from '@/lib/league-second-parent-footer';
 
 export const dynamic = 'force-dynamic';
 
@@ -241,9 +242,12 @@ export const POST = withObservability(async (req: Request,
     { to: guardianEmail!, secondParentLine: null },
     ...(guardianEmail2 ? [{
       to: guardianEmail2,
-      secondParentLine: SP.addedYou(`${guardianFirst} ${guardianLast}`, children.map(c => c.firstName), { name: org.name, contact: face?.contact ?? null }),
+      secondParentLine: SP.addedYou(`${guardianFirst} ${guardianLast}`, children.map(c => c.firstName), { name: org.name, contact: face?.contact ?? null, stop: hasSecondParentStop(org.id, guardianEmail2) }),
     }] : []),
   ];
+  // The second parent's copy carries the Stop button (Stage 3b, Part 4); the first parent's gets nothing new (O5).
+  const withSecondParentCopy = (html: string, copy: { to: string; secondParentLine: string | null }) =>
+    copy.secondParentLine ? withSecondParentStop(html, org.id, copy.to) : html;
   let firstWent = true;
   for (const copy of copies) {
     // The second parent's copy follows only a first copy that went (the rule every other sender holds).
@@ -254,11 +258,11 @@ export const POST = withObservability(async (req: Request,
         to: copy.to,
         vars: { guardianFirstName: guardianFirst!, seasonName: season.name, reference },
         defaultSubject: signupSubject(children, season.name),
-        defaultHtml: leagueSignupHtml({
+        defaultHtml: withSecondParentCopy(leagueSignupHtml({
           guardianFirstName: guardianFirst!, seasonName: season.name, clubName: org.name, reference,
           howToPay: anyAccepted ? season.howToPay : null, signupUrl, children, face,
           online, secondParentLine: copy.secondParentLine,
-        }),
+        }), copy),
         family: face ? {
           face,
           reason: children.length === 1 ? `${children[0].firstName} was signed up for ${season.name}` : `your children were signed up for ${season.name}`,

@@ -37,7 +37,8 @@ export const POST = withObservability(async (request: NextRequest) => {
 
   const { error } = await supabaseAdmin.rpc('second_parent_stop', { p_org: orgId, p_email: email, p_source: 'stop_page' });
   if (error) {
-    console.error('[second-parent-stop] stop failed:', error);
+    // Code and message only: a failed CHECK puts the whole row, address included, in `details`.
+    console.error('[second-parent-stop] stop failed:', error.code, error.message);
     return go('error=db');
   }
 

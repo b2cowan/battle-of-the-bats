@@ -11,6 +11,7 @@ import { SIGNUP_LINK_WORDS as SW, childList } from './league-pay-words';
 import { signupLinkClockRanOut } from './house-league-access';
 import { registrationReference } from './utils';
 import { secondParentsOf, SECOND_PARENT_WORDS } from './league-second-parent';
+import { withSecondParentStop } from './league-second-parent-footer';
 import { went } from './league-second-parent-mail';
 
 /**
@@ -170,13 +171,15 @@ async function sendLinkNotice(org: ClubEmailOrg, n: {
 }) {
   const face = await systemMailFace(org);
   const first = n.first?.trim();
-  const html = warmEmailDocument([
+  const built = warmEmailDocument([
     warmEmailHeading(escapeHtml(n.heading)),
     n.secondParent ? warmEmailParagraph(escapeHtml(SECOND_PARENT_WORDS.greeting))
       : first ? warmEmailParagraph(escapeHtml(SW.mail.hi(first))) : '',
     ...n.parts,
     accountNoticeFootnoteHtml({ clubName: org.name, reason: n.because, replyLine: face?.replyLine ?? null }),
   ].filter(Boolean).join('\n'), face?.club ?? null);
+  // The second parent's copy carries the Stop button (Stage 3b, Part 4); the first parent's gets nothing new (O5).
+  const html = n.secondParent ? withSecondParentStop(built, org.id, n.to) : built;
   return sendTransactionalEmail({
     key: n.key,
     to: n.to,
@@ -184,6 +187,8 @@ async function sendLinkNotice(org: ClubEmailOrg, n: {
     defaultSubject: n.subject,
     defaultHtml: html,
     family: face ? { face, reason: n.because } : undefined,
+    // A customised template would drop the "Hi," and the Stop footer, as every other second-parent copy refuses (Stage 3b).
+    builtInOnly: n.secondParent === true,
   });
 }
 

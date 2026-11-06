@@ -332,7 +332,7 @@ async function sendClaimed(p: { org: ScheduleMailOrg; season: ScheduleMailSeason
     // change an outcome or the family count). A coach who is a second parent this send reached is skipped as a parent is.
     const registrationIdsByRow = new Map(rows.map(r => [r.id, r.registration_ids]));
     const reached = await sendSecondParentServiceCopies({
-      kind, fromName: face?.sendOpts.fromName ?? null, replyTo: face?.sendOpts.replyTo ?? null, results,
+      kind, orgId: p.org.id, fromName: face?.sendOpts.fromName ?? null, replyTo: face?.sendOpts.replyTo ?? null, results,
       households: messageRows.map((m, i) => ({ firstEmail: m.email, registrationIds: registrationIdsByRow.get(m.id) ?? [], message: messages[i] })),
     });
     for (const r of reached) for (const t of messageRows[r.household].teams) {

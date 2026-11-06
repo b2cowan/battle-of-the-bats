@@ -541,7 +541,7 @@ async function sendClaimed(p: { org: TellMailOrg; season: LeagueSeason; noticeId
   if (unanswered.length) await recordOutcome(unanswered, 'failed');
   // The second parents' copies, after the households are marked (they never change "told", a count or a row's status).
   await sendSecondParentServiceCopies({
-    kind: 'house_league_practice_times', fromName: face?.sendOpts.fromName ?? null, replyTo: face?.sendOpts.replyTo ?? null, results,
+    kind: 'house_league_practice_times', orgId: p.org.id, fromName: face?.sendOpts.fromName ?? null, replyTo: face?.sendOpts.replyTo ?? null, results,
     households: households.map((h, i) => ({ ...h, message: messages[i] })),
   });
 }

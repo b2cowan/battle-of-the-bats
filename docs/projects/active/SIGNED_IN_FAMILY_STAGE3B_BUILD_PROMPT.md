@@ -36,7 +36,7 @@
 ## ▶ Progress (read first when resuming)
 
 - Fill in per Part: date, commit hash (when the owner says to commit), tests run, anything done differently and why.
-- **Session 1 · Parts 1–3 BUILT 2026-11-06, UNCOMMITTED (commit owed, owner says when).**
+- **Session 1 · Parts 1–3 BUILT 2026-11-06, committed 80c9bc430.**
   - **Part 1.** Migration `448_a_second_parent_can_stop.sql` applied to **dev only**, twice (re-run no-op); proved by a rolled-back
     probe (`.probe/stop3b/probe.sql`: clears one, leaves another org alone, repeat clears 0, ids kept). **Open question answered:**
     `org_person_emails` never takes a second address (only mig 430 mentions `guardian_email_2`; the book is fed from the first
@@ -65,7 +65,12 @@
     on this machine); `check:spelling`, `check:dictionary`, `check:date-correctness`, `check:snapshot-freshness`,
     `check:observability-coverage` pass. Not yet run: `verify:changed` (Part 6).
   - **Restart-required** (new files, new route, migration): stop the dev server, clear `.next`, `npm run dev` before the owner browses.
-  - **Session 2 next:** Part 4 (button on the five sites), Part 5 (the "who added you" line), Part 6 (closeout).
+  - **Session 2 · Parts 4–6 BUILT and committed 2026-11-06.**
+    - **Part 4.** ONE footer builder `lib/league-second-parent-footer.ts` (`withSecondParentStop`, `hasSecondParentStop`) used by the shared point (`secondCopyHtml` in `lib/league-second-parent-mail.ts`, which now takes the club id and the recipient) and the three bypasses (register route’s confirmation, the pay-link loop, `sendLinkNotice`). The club id is threaded into the 3 `sendTransactionalToBothParents` calls, the ending email’s `sendSecondParentTransactional` and the 4 `sendSecondParentServiceCopies` callers (new required `orgId`). No secret, no footer. `escText` in `email-envelope-warm.ts` is now exported (reused instead of an eighth local copy). No send path reads `second_parent_stops`.
+    - **Part 5.** `SECOND_PARENT_WORDS.addedYou` takes `{ name, contact, stop }`: four variants (button + club address; button alone; club address alone when no link can be signed; “contact {club}” with neither). `footer.lead` added.
+    - **Part 6.** typecheck clean; fan-out, second-parent and stop suites 83/83. `verify:changed`’s unit run shows 9 failures and several check scripts red, ALL in other sessions’ files (billing tax words, practice-plans phone guard, plan-billing usage, public tournament Stage 6 walk, series date groups, support console guards, admin old look/type, org-slug callers, css selectors, export catalog). `check:schema-parity` lists 448’s table as “only on dev” (clears when 448 reaches prod; NOT re-baselined, and it DID add its own lines, contrary to the prompt’s “nothing new”); `check:index-coverage` has nothing of 448’s. **Found and fixed:** the new-table grants guard failed on 448 (no `service_role` grant, prod-only failure after 2026-10-30); the grant was added to the file and re-applied to dev. /marketing (words in `SECOND_PARENT_WORDS` only), /simplify (footer function un-exported), /review security + correctness lenses (one fix: the stop route logged the whole error object; one: `builtInOnly` on the second parent’s link notice; two tests added: a census of every file that can address a second parent, and the footer over a real envelope), /docs (family + registrar articles, search terms), /legal (privacy draft §5/§12, CASL note, index). Walk §472 published.
+    - **Left as found, for the owner (five open flags, `CASL_SECOND_PARENT_EMAIL.md`):** reply path with no club contact email; exact-address match (+alias); a millisecond race between the refusal check and the insert; a mixed address using “Email me my link”; two footnotes on the pay-link copy.
+    - **Restart-required** (new file, new route, migration): stop the dev server, clear `.next`, `npm run dev` before browsing.
 
 ## Part 1 · The place to keep it (migration + dictionary) · Session 1
 

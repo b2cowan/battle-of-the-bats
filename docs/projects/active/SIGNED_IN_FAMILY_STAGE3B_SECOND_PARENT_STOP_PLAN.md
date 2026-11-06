@@ -1,6 +1,6 @@
 # A stop button for the second parent's emails — Implementation Plan (Signed-in family accounts, Stage 3b)
 
-> **Status:** Planning — owner calls O1–O5 RULED 2026-11-06 (all five as recommended); no code yet
+> **Status:** BUILT 2026-11-06 — owner calls O1–O5 RULED 2026-11-06 (all five as recommended). Session 1 (Parts 1–3) committed `80c9bc430`; Session 2 (Parts 4–6: the Stop link on every second-parent copy, the “who added you” line, /marketing + /docs + /legal + /simplify + /review) committed 2026-11-06. Migration 448 is on dev only (prod owed before the promote). Walk §472 owed. Open flags a–e for the owner: `docs/agents/legal/CASL_SECOND_PARENT_EMAIL.md`.
 > **Created:** 2026-11-06
 > **Branch:** dev
 > **Build prompt:** `SIGNED_IN_FAMILY_STAGE3B_BUILD_PROMPT.md` (written 2026-11-06, two sessions; it settles the "Stopped" line by storing the cleared sign-up ids on the stop row)

@@ -34,15 +34,28 @@ describe('the second parent’s words (behaviour)', () => {
     assert.equal(SP.greeting, 'Hi,');
     assert.match(SP.coachLine, /and the second parent’s email if you add one\.$/);
   });
-  it('the "who added you" line: one child, several, and a club with no contact address', () => {
+  it('the "who added you" line: the button AND the club’s address; the button alone when the club has no contact address', () => {
     assert.equal(
-      SP.addedYou('Priya Shah', ['Aarav'], { name: 'Riverdale Minor Ball', contact: 'info@riverdale.example' }),
-      'Priya Shah added your email to Aarav’s sign-up so you get the same updates. If you aren’t Aarav’s parent or guardian, or you’d rather not get these, tell the club at info@riverdale.example and they’ll take your address off.',
+      SP.addedYou('Priya Shah', ['Aarav'], { name: 'Riverdale Minor Ball', contact: 'info@riverdale.example', stop: true }),
+      'Priya Shah added your email to Aarav’s sign-up so you get the same updates. If you aren’t Aarav’s parent or guardian, or you’d rather not get these, use “Stop these emails” at the bottom of this email, or tell the club at info@riverdale.example, and your address comes off the sign-up.',
     );
+    // No usable contact email: the "tell the club at …" clause is dropped and the line points to the button (Stage 3b, Part 5).
+    const noContact = SP.addedYou('Priya Shah', ['Aarav', 'Maya'], { name: 'Riverdale Minor Ball', contact: null, stop: true });
     assert.equal(
-      SP.addedYou('Priya Shah', ['Aarav', 'Maya'], { name: 'Riverdale Minor Ball', contact: null }),
-      'Priya Shah added your email to Aarav and Maya’s sign-up so you get the same updates. If you aren’t their parent or guardian, or you’d rather not get these, tell Riverdale Minor Ball and they’ll take your address off.',
+      noContact,
+      'Priya Shah added your email to Aarav and Maya’s sign-up so you get the same updates. If you aren’t their parent or guardian, or you’d rather not get these, use “Stop these emails” at the bottom of this email, and your address comes off the sign-up.',
     );
+    assert.ok(!/tell /.test(noContact), 'no clause naming the club when there is no address');
+  });
+  it('the line never points to a button the email does not carry (no link can be signed here)', () => {
+    const withContact = SP.addedYou('Priya Shah', ['Aarav'], { name: 'Riverdale Minor Ball', contact: 'info@riverdale.example', stop: false });
+    assert.ok(withContact.includes('tell the club at info@riverdale.example, and your address comes off') && !withContact.includes(SP.stop.button));
+    const neither = SP.addedYou('Priya Shah', ['Aarav'], { name: 'Riverdale Minor Ball', contact: null, stop: false });
+    assert.ok(neither.includes('contact Riverdale Minor Ball, and your address comes off') && !neither.includes(SP.stop.button));
+  });
+  it('the button’s words are said once', () => {
+    assert.equal(SP.stop.button, 'Stop these emails');
+    assert.equal((readCode('lib/league-second-parent.ts').match(/'Stop these emails'/g) ?? []).length, 1);
   });
 });
 
@@ -144,7 +157,7 @@ describe('a stopped address is refused where an address can enter (Stage 3b, O4,
   const EDIT = readCode('app/api/admin/house-league/seasons/[seasonId]/registrations/[regId]/route.ts');
 
   it('the refusal sentence exists once, in the words module, and no route writes its own', () => {
-    assert.equal(SP.stoppedAddress, 'That address has asked not to get these emails from this club. Enter another or leave it empty.');
+    assert.equal(SP.stoppedAddress, 'That address has asked not to get these emails from this club. Enter a different one, or leave it empty.');
     const files = ['lib', 'app', 'components'].flatMap(d => [...filesUnder(d, '.ts'), ...filesUnder(d, '.tsx')]);
     for (const file of files) {
       if (file === 'lib/league-second-parent.ts') continue;

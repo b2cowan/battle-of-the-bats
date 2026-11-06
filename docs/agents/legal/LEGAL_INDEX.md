@@ -13,7 +13,7 @@ and a pointer here.
 |---|---|---|---|---|
 | Terms of Service (subscriptions) | `drafts/TERMS_OF_SERVICE.md` | 0.1 | draft — owner decisions O1–O6 + 4 product items before publish | 2026-11-05 |
 | Payments terms (clubs taking online payments) | product placeholder only | placeholder | not started | — |
-| Privacy policy (FieldLogicHQ's own) | `drafts/PRIVACY_POLICY.md` | 0.1 | draft — owner items P1–P6 before publish; 8 product findings | 2026-11-05 |
+| Privacy policy (FieldLogicHQ's own) | `drafts/PRIVACY_POLICY.md` | 0.1 | draft — owner items P1–P6 before publish; 8 product findings | 2026-11-06 |
 | Data-processing terms for clubs (FieldLogicHQ as service provider) | — | — | not started | — |
 | Subprocessor list | — | — | not started | — |
 | Guardian consent wording | product placeholder only | placeholder | not started | — |
@@ -23,6 +23,7 @@ and a pointer here.
 | Topic | File | Last verified | Re-verify trigger |
 |---|---|---|---|
 | Privacy policy requirements — PIPEDA openness, providers, retention, access, cross-border, breaches, children's age line | `PRIVACY_POLICY_REQUIREMENTS_PIPEDA.md` | 2026-11-05 | Bill C-36 passes; first Québec customer; guardian accounts ship |
+| A second parent's email typed by the first parent — CASL (does s.6(6) reach a non-party?), PIPEDA indirect collection, the stop link (BUILT 2026-11-06, Stage 3b; 5 open flags a–e for the owner; mig 448 prod owed) | `CASL_SECOND_PARENT_EMAIL.md` | 2026-11-06 (CASL text read; PIPEDA 4.3 text not fetched) | Québec customer; Bill C-36; family accounts Stage 4 ships |
 | Selling a plan online to an individual in Ontario (CPA 2002 internet agreements; CPA 2023 status) | `ONTARIO_CONSUMER_INTERNET_AGREEMENTS.md` | 2026-11-05 (primary text not fetched) | CPA 2023 proclaimed in force |
 
 ## Open questions — the backlog

@@ -186,7 +186,7 @@ ${WARM_CARD_END}
 </table>`;
 }
 
-const escText = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+export const escText = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 /**
  * The club's band (The public face, warm: S3b), composed natively: a table cell with `bgcolor` and `background` (Outlook's

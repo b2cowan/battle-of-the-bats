@@ -5,7 +5,7 @@
 | **Version** | 0.1 (draft) |
 | **Status** | draft — not owner-approved, not published, **not reviewed by a lawyer** |
 | **Effective date** | — (set on publication) |
-| **Last reviewed** | 2026-11-05 |
+| **Last reviewed** | 2026-11-06 |
 | **Backlog** | L2 (with L9 findings); children's consent wording (L5) and CASL lawful basis (L6) are referenced, not settled |
 
 **Change log**
@@ -13,6 +13,8 @@
   (2026-11-05). Every statement below was checked against the code; the owner notes say where the product falls short.
 - 0.1 · 2026-11-05 (later) · §3 billing row widened: a club now gives its billing address when it turns on online payments
   (GST/HST Stage 2 Part 2b), also for a club that pays no plan, and it is used to bill and tax the club's Stripe fees.
+- 0.1 · 2026-11-06 · §5 and §12: other people’s email addresses (a second parent typed on a house-league sign-up) and the
+  "Stop these emails" link (Signed-in family accounts Stage 3b). Written from the shipped behaviour, not a plan.
 
 > **How to read this draft.** `[SQUARE BRACKETS]` = a fact the owner fills in. `> NOTE` blocks are for the owner and are
 > deleted before publication. The law this is written to is **PIPEDA** (Canada's federal private-sector privacy law,
@@ -102,6 +104,20 @@ process it for them, as their service provider**, and only to provide FieldLogic
   consent records, payments and amounts owed, and messages.
 - **About registrants:** what the registration or tryout form asks for, and a record of the consents given — including
   when, and the internet (IP) address it was given from.
+
+**Other people’s email addresses.** A parent can type another person’s email address on a sign-up — for example the
+other parent’s — and that person has not given it to us or to the club themselves. Every email we send to that address
+about the sign-up carries a **Stop these emails** link at the bottom (the club’s group emails carry their own unsubscribe
+link instead), and the first email says who added them. The link opens a page with one button and needs no sign-in.
+Pressing it takes the address off every sign-up that club has, for every season, and the club can no longer add it again.
+To keep it stopped we keep that address on a short list for that club for as long as the club’s account exists. Nobody is
+emailed about the stop; the club’s registrar can see that the address was stopped and when. Receipts and refunds go to the
+person who paid, not to the second address.
+
+> NOTE — checked against the code 2026-11-06 (Stage 3b, built; migration 448 on dev, prod owed before the promote). Open
+> flags the owner decides, recorded in `CASL_SECOND_PARENT_EMAIL.md`: the "reply to the club" fallback on the stop page’s
+> error states reaches nobody when a club has no public contact email; the stop matches the exact address (a `+alias` of the
+> same mailbox is not caught). Until the first is settled, do not add a promise about how fast a reply is answered here.
 
 **What we do with it:** store it, keep it secure, display it to the people the club authorizes, send the emails the club
 asks us to send, and help the club when it asks for support. **We do not sell it, we do not use it for advertising, and
@@ -275,6 +291,8 @@ For information **a club** holds about you or your child, see §5 — contact th
 Every promotional email from us, and every non-essential email a club sends through FieldLogicHQ, has an unsubscribe
 link. You can unsubscribe from one organization's emails or from all of them. Emails needed to run your account or a
 registration you made (sign-in links, receipts, schedule changes for your team) are sent regardless.
+A second parent whose address a parent typed on a sign-up has a **Stop these emails** link at the bottom of every sign-up
+email instead; it works for that club for every season (see §5).
 
 > NOTE — finding (L6): the per-family opt-out does not cover the free Coaches Portal's emails today. Under CASL a
 > **commercial** message needs an unsubscribe; a transactional one (a game time change) does not. Whether every free-team

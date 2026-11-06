@@ -97,13 +97,13 @@ const registrationsHelp: HelpPageContent = {
       heading: 'How to add a manual registration',
       summary: 'Enter a player who registered outside the public form.',
       keywords: ['manual registration', 'add registration', 'walk-in', 'carry-over player', 'registration night', 'division full', 'add to the waitlist instead', 'mark received'],
-      searchText: 'manual registration add registration by hand walk-in carry-over player public form offline division status active to review pending waitlisted guardian second parent email second parent’s email fee mark received registration night in person table one laptop too many attempts league registrar can add finished season locked no add registration',
+      searchText: 'manual registration add registration by hand walk-in carry-over player public form offline division status active to review pending waitlisted guardian second parent email second parent’s email stopped address stop these emails refused fee mark received registration night in person table one laptop too many attempts league registrar can add finished season locked no add registration',
       content: (
         <>
           <p>Use manual registration for walk-ins, migrated records, late approvals, or players collected outside the public form. The owner, club admin, league admin and league registrar can all add one by hand, including after registration has closed.</p>
           <ol>
             <li>Click <strong>Add registration</strong>.</li>
-            <li>Enter player and guardian details exactly as you want them in exports and communications. The optional <strong>Second parent&apos;s email</strong> box adds a second address for the sign-up; it can&apos;t be the same as the first.</li>
+            <li>Enter player and guardian details exactly as you want them in exports and communications. The optional <strong>Second parent&apos;s email</strong> box adds a second address for the sign-up; it can&apos;t be the same as the first, and an address whose owner pressed <strong>Stop these emails</strong> is refused in words.</li>
             <li>Select the correct season division.</li>
             <li>Choose the starting status — <strong>Active</strong>, <strong>To review</strong>, or <strong>Waitlisted</strong>.</li>
             <li>Save and confirm the player appears in the expected tab.</li>

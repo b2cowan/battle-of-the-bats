@@ -1,6 +1,6 @@
 # Signed-in family accounts — Implementation Plan
 
-**Status:** Planned, nothing built (owner rulings 2026-10-31).
+**Status:** Stages 1–3 built and committed (owner rulings 2026-10-31); Stages 4–5 wait on Club Stage 14. Current status lives in the TODO line.
 **Decision of record:** `docs/agents/strategy/BUSINESS_DECISIONS.md` — 2026-10-31 "A family gets an account when their child
 is PLACED ON A TEAM…" (amends 2026-10-29 "The end state is an app where everyone signs in").
 **PM brief:** `SIGNED_IN_FAMILY_ACCOUNTS_PM_BRIEF.md`
@@ -190,6 +190,8 @@ Draw first: the form field and how the club sees two guardians on a registration
 6. **Club screens:** record window (view and edit), "Add registration" window, export column, and search. The Families book and its second-guardian write are untouched.
 Also drawn: one address per sign-up (not per child); the same address as the first is refused inline; the second address has its own hourly send limit; no parent-side edit until Stage 4. A migration is needed (no column exists today). The PIPEDA / CASL counsel review that gates Stage 4 should also be shown this page; nothing here waits on it. Build prompt written 2026-11-03: [SIGNED_IN_FAMILY_STAGE3_BUILD_PROMPT.md](SIGNED_IN_FAMILY_STAGE3_BUILD_PROMPT.md) (six Parts, two sessions).
 
+**Stage 3b — a stop button on the second parent’s emails (BUILT 2026-11-06).** The `/legal` review found the gap (a stranger’s address typed by someone else, with no way off but writing to the club); plan [SIGNED_IN_FAMILY_STAGE3B_SECOND_PARENT_STOP_PLAN.md](SIGNED_IN_FAMILY_STAGE3B_SECOND_PARENT_STOP_PLAN.md), owner calls O1–O5 ruled as recommended. Every second-parent copy carries a quiet “Stop these emails” link from one footer builder; the link opens a confirm page (a GET writes nothing, one POST stops), the stop clears the address from every sign-up of that club and refuses it afterwards (family form and both registrar windows), the registrar sees “Stopped by the address owner, {date}” and cannot undo it, nobody is emailed, and the first parent’s mail is untouched. Session 1 committed `80c9bc430`; Session 2 committed 2026-11-06; mig 448 dev only (prod owed before the promote); walk §472 owed. Open flags for the owner (reply path with no club contact email, exact-address match, a millisecond race, a mixed address, two footnotes on the pay-link copy) are in `docs/agents/legal/CASL_SECOND_PARENT_EMAIL.md`.
+
 ### Stage 4 — The invitation at team placement; "Your sign-up" inside the app · needs counsel AND Stage 14
 
 1. **Placing a child on a team invites the guardian(s)** — the placement email is the invitation; never a separate
@@ -207,6 +209,7 @@ league has no child record at all. The parent account is a person, not an organi
 **Stage 14 DRAWN + RULED 2026-11-04, all 14 asks A** (`CLUB_TIER_PRODUCTION_READINESS_PLAN.md` Stage 14 note; page tab 7 is
 this stage's hand-off frame: the link points at the CHILD, and what a parent sees follows the child's live seasons — Ask 13).
 **10-29 P3 RULED 2026-11-04 (Stage 14 Ask 14 A): a parent account is a person, kept clear of the one-home-organization rules.**
+**Stage 3b note (2026-11-06): a stopped address must never be invited to sign in.** Stage 3 sends the team invitation to the second guardian’s address too. The stop clears the address from every sign-up of that club, so an invitation built from the sign-up columns cannot reach it, but Stage 14 and Stage 4 add new places an address can live (the child record, the person book). Any such copy of a second address must be cleared by the stop, or the invitation must check `second_parent_stops` (`lib/league-second-parent-stop.ts`) before sending, and an address typed into any new invitation path must be refused with the same words as the form (`SECOND_PARENT_WORDS.stoppedAddress`). The invitation itself needs its own Stop line like every other second-parent copy.
 Stage 4 is still blocked by counsel and by Stage 14's BUILD. The code read also found the guardian link is never moved at a roll and stays live and season-blind on last
 season's row (latent: the tier is off) — Stage 4 must not ship on today's link.
 

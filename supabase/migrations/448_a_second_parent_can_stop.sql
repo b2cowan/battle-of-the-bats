@@ -46,6 +46,9 @@ CREATE INDEX IF NOT EXISTS second_parent_stops_registration_ids_idx
 ALTER TABLE public.second_parent_stops ENABLE ROW LEVEL SECURITY;
 -- No policies: service-role only. The stop page and the form/registrar checks run server-side; there is no
 -- browser-visible read path and there must never be one (it holds an address a person asked us to stop using).
+-- The server's own admin client needs its grant spelled out: from 2026-10-30 Supabase no longer auto-grants a new table
+-- (tests/unit/migration-table-grants-guard.test.ts). anon / authenticated are deliberately NOT granted.
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.second_parent_stops TO service_role;
 
 CREATE OR REPLACE FUNCTION public.second_parent_stop(p_org uuid, p_email text, p_source text DEFAULT 'stop_page')
  RETURNS integer

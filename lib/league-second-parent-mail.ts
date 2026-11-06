@@ -5,6 +5,7 @@ import { sendFamilyServiceBatch, type FamilyServiceMessage } from './family-emai
 import type { UnloggedEmailKind } from './email-kinds';
 import { fetchAllIn } from './supabase-paging';
 import { onEveryRegistration, secondParentCopy, secondParentsOf } from './league-second-parent';
+import { withSecondParentStop } from './league-second-parent-footer';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -22,6 +23,9 @@ import { onEveryRegistration, secondParentCopy, secondParentsOf } from './league
  *       its own failure is logged only (no retry) — it never changes the first parent's send, the row's status, a
  *       count, or a stamp.
  *   The household is keyed on the first address everywhere; nothing here writes an outbox row or a count.
+ *
+ *   · carries the Stop button (lib/league-second-parent-footer.ts, the one footer builder), which is why every send here
+ *     names the club (`orgId`): the link is signed on club + address.
  *
  *   ⚠ NOT here, on purpose: receipts, refund notices and bank-debit mail follow whoever paid (ask 2). They never call this
  *   module — tests/unit/league-second-parent.test.ts holds that.
@@ -51,9 +55,10 @@ type TransactionalOpts = Parameters<typeof sendTransactionalEmail>[0];
 export async function sendTransactionalToBothParents(
   reg: { guardianEmail: string | null; guardianEmail2?: string | null },
   opts: TransactionalOpts,
+  orgId: string,
 ): Promise<Awaited<ReturnType<typeof sendTransactionalEmail>>> {
   const first = await sendTransactionalEmail(opts);
-  if (went(first)) await sendSecondParentTransactional(reg, opts);
+  if (went(first)) await sendSecondParentTransactional(reg, opts, orgId);
   return first;
 }
 
@@ -66,11 +71,12 @@ export function went(result: { status: string } | null | undefined): boolean {
 export async function sendSecondParentTransactional(
   reg: { guardianEmail: string | null; guardianEmail2?: string | null },
   opts: TransactionalOpts,
+  orgId: string,
 ): Promise<void> {
   for (const to of secondParentsOf(reg.guardianEmail, [reg])) {
     try {
       await sendTransactionalEmail({
-        ...opts, to, builtInOnly: true, defaultHtml: secondCopyHtml(opts.defaultHtml, opts.key),
+        ...opts, to, builtInOnly: true, defaultHtml: secondCopyHtml(opts.defaultHtml, opts.key, orgId, to),
         // A once-only key is per message: the second copy must never collide with the first parent's.
         ...(opts.idempotencyKey ? { idempotencyKey: `${opts.idempotencyKey}:second:${to}` } : {}),
       });
@@ -85,10 +91,10 @@ export async function sendSecondParentTransactional(
  * changes nothing and the copy would greet the first parent by name — it still goes (the family is told), but loudly in
  * the log, so a new builder with a different greeting is found by a person rather than by a parent.
  */
-function secondCopyHtml(html: string, label: string): string {
+function secondCopyHtml(html: string, label: string, orgId: string, to: string): string {
   const copy = secondParentCopy(html);
   if (copy === html) console.error(`[second-parent] ${label}: no greeting to swap — the copy names the first parent`);
-  return copy;
+  return withSecondParentStop(copy, orgId, to);
 }
 
 
@@ -101,6 +107,8 @@ function secondCopyHtml(html: string, label: string): string {
  */
 export async function sendSecondParentServiceCopies(params: {
   kind: UnloggedEmailKind;
+  /** The club: each copy's Stop link is signed on club + address. */
+  orgId: string;
   fromName: string | null;
   replyTo?: string | null;
   households: readonly { firstEmail: string | null; registrationIds: readonly string[]; message: FamilyServiceMessage }[];
@@ -114,7 +122,7 @@ export async function sendSecondParentServiceCopies(params: {
     if (seconds.size === 0) return [];
     const copies = going.flatMap(({ h, i }) =>
       onEveryRegistration(h.firstEmail, h.registrationIds.map(id => seconds.get(id) ?? null))
-        .map(to => ({ household: i, message: { to, subject: h.message.subject, html: secondCopyHtml(h.message.html, params.kind) } })));
+        .map(to => ({ household: i, message: { to, subject: h.message.subject, html: secondCopyHtml(h.message.html, params.kind, params.orgId, to) } })));
     if (copies.length === 0) return [];
     const results = await sendFamilyServiceBatch({
       kind: params.kind, messages: copies.map(c => c.message), fromName: params.fromName, replyTo: params.replyTo ?? null,
