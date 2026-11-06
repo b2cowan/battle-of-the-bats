@@ -1,6 +1,6 @@
 # GST/HST · Stage 2 Part 6b: a refund goes through a credit note, and a checkout invoice names the club (build prompt)
 
-> **Status: BUILDING — owner ruled R1–R4; Part 0 run, Parts 1–2 committed `fcef13e3b` 2026-11-05 (mig 446 dev, prod apply owed BEFORE they ship), Part 3 (the club's name after Checkout) committed `2d2f8b7c7` 2026-11-06, Part 4 (/accounting + the matrix re-run; the discounted-invoice cap fixed) committed 2026-11-06 (hash in ▶ Progress). Owner questions Q1–Q5 open. Next: Part 7.**
+> **Status: BUILDING — owner ruled R1–R4; Part 0 run, Parts 1–2 committed `fcef13e3b` 2026-11-05 (mig 446 dev, prod apply owed BEFORE they ship), Part 3 (the club's name after Checkout) committed `2d2f8b7c7` 2026-11-06, Part 4 (/accounting + the matrix re-run; the discounted-invoice cap fixed) committed `a449eeb53` 2026-11-06. Owner questions Q1–Q5 open. Next: Part 7.**
 
 > Written 2026-11-05 by `/plan`. Parent: [GST_HST_STAGE2_BUILD_PROMPT.md](GST_HST_STAGE2_BUILD_PROMPT.md) ▶ Progress, "Part 6 RUN"
 > (Defect 2 and the "name on the invoice" observation are this part's whole reason). Plan of record:
@@ -633,3 +633,6 @@ Settle Stripe's behavior before designing against it. Write each answer into ▶
   - **Checks:** the five named guards 139/140 (the one failure is the known stage3 §12 on `ExpenseFormWindow.tsx`, another
     session's). Lint clean on the changed files; typecheck exit 0 (8 GB heap). Help: platform-admin only, no flow change → no
     `/docs`. Nothing in production needs applying for Part 4; ⚠ **migration 446 must reach prod BEFORE Parts 1–2 ship.**
+- 2026-11-06: **Part 4 COMMITTED `a449eeb53` on dev (7 files; not pushed; TODO.md took only the GST/HST line, the accounting index
+  only the credit-notes row).** Nothing in production needs applying for Part 4. ⚠ Migration 446 must reach prod BEFORE Parts 1–2
+  ship. **Next: Part 7** (the Stage 2 closeout and its ONE walk, folding in W1–W10 above), fresh session, after the owner answers Q1–Q5.
