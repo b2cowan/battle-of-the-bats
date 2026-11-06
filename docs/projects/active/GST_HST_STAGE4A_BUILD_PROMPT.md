@@ -199,3 +199,62 @@ hashes, never “uncommitted”.
 - **Session B starts here.** Its prompt is the Session B section above plus these notes.
 - **Session B needs:** a schema-ready probe for the 006 columns (like `hasExpenseTaxColumn`); the form's money formatter is duplicated
   in four files plus `bookkeeping-gst.ts` (a `/simplify` item for Part 7).
+
+### Session B (2026-11-06, Opus): Part 3 committed 7fac17654 2026-11-06; no DDL
+- **Store** (`lib/bookkeeping-store.ts`): `hasGstTaxSchema()` (the 5 columns + both tables). `listExpenseRevisions()` and
+  `latestExpenseRevision()` attach each revision's `tax_lines` (`[]` when none; absent before 006). `insertExpenseRevision()` writes the
+  revision and its lines in ONE `begin()` transaction (DML only), always names the 006 columns, and re-checks the sum rule. New:
+  `listGstRegistrationRevisions()` (newest first), `gstRegistrationDate()` (null before 006), `insertGstRegistrationRevision()`.
+  `ExpenseRevision` gained the five fields + `tax_lines`. Callers gate writes on `hasGstTaxSchema()`.
+- **Expenses API:** a post carrying `taxAnswer` is a 4a post: fields `taxAnswer`, `taxLines` (JSON `[{type, cents}]`, ≤ 10),
+  `supplierTaxNumber` (≤ 40, as printed), `supplierRegistration`, `purchaseKind`, `numberUnobtainable` ('true'/'false'). Validated by
+  `validateExpenseTaxFields()` (`lib/bookkeeping-expenses.ts`, after today's `validateExpenseFields`, which now reads the known flag
+  derived from the answer). Shown = ≥ 1 line, each > $0, summing to `taxCadAmount`; none/unknown = no lines and $0; unknown keeps
+  today's pending-only rule. Blank registration / kind / number = NULL ("not stated"); `numberUnobtainable` is stored false when a
+  number is given. `unset` lines are accepted only on a correction whose saved tax already resolves to "Type not set". A client
+  credit field is never read. **Session C must post these field names.** A post WITHOUT `taxAnswer` is the pre-4a form: it still
+  saves (4a columns NULL, legacy mapping), but gets 409 "This expense has newer tax details…" on an expense that holds 4a details.
+  GET adds `credits` (`expense_id` → `Credit | null`, current active only), `registrationDate`, `gstSchemaReady`; POST returns
+  `credit`. Saves AND voids return the storage-update 503 until 006 is applied. The page's server props (`page.tsx`) were not
+  changed: Session C adds `gstSchemaReady` there if the form needs it on first paint.
+- **Credit adapter:** `expenseCredit(row, registrationDate)` in `lib/bookkeeping-gst.ts` is the ONE place a saved row becomes a
+  `workOutCredit` input (legacy → `resolveTaxState`; registration not stated → Not checked; kind not stated →
+  `defaultPurchaseKind(category)`; receipt total = `cad_cents`; date = incurred, else expense date). Null without a date.
+- **Void** (`lib/bookkeeping-void.ts`): `taxAnswer`, `taxLines` (JSON), `supplierTaxNumber`, `supplierRegistration`, `purchaseKind`,
+  `numberUnobtainable` join the values a void must leave unchanged; the void revision is `{...previous}` so it carries the lines.
+- **CSV + package expenses.csv:** after `tax_status`: `tax_answer, gst_cad, hst_cad, hst_rate, pst_cad, qst_cad, other_cad,
+  supplier_tax_number, supplier_registration, purchase_kind, credit_cad, credit_state`. **Named `_cad` in dollars, not the prompt's
+  `_cents`**, to match every other money column in the file. `hst_rate` joins two rates as `13/15`. A legacy "Type not set" amount
+  stays only in `recorded_tax_cad` (type columns blank, state `type_not_set`). Credit only on the current active revision
+  (superseded/void blank). A held credit keeps its figure with state `held` (as the record cell shows it); Not checked reads
+  `counted_registration_unchecked`. `package-scope.txt` unchanged.
+- **Registration date API:** `app/api/platform-admin/bookkeeping/gst-registration/route.ts`. GET `{schemaReady, current, history}`.
+  POST JSON `{effectiveDate, reason, expectedRevision}`: reason required (≤ 500), real date, refuses the current date, stale
+  revision = 409, 23505 race = 409; inserts revision + 1 and stores nothing else. Same-origin check; `requireBookkeepingApi`.
+- **Backup** (`scripts/bookkeeping-backup.mjs`): format 3 adds `tax_line` and `gst_registration_revision` records + their counts in
+  `end`; formats 1–2 still verify (their rows get NULL 006 keys). Verify checks each line's revision, type, cents and the sum rule.
+  Restore and the isolated drill need 006 applied and write lines + registrations; restore-dev skips registration revisions the
+  target already holds identically (006 seeds revision 1) and refuses a differing one. **Found by the real drill and fixed:** the
+  format bump made verify reject owner-transfer records (`format === 2`); now `>=`, and a contract test forbids `meta.format ===`.
+- **Seed / restore drill / smoke:** each names the 006 columns (`?? null`) and writes lines in its transaction. The B2 QA seed rows stay
+  pre-4a on purpose (they exercise the legacy mapping); the seed verification checks the sum rule.
+- **Tests:** `bookkeeping-gst-routes.test.ts` (new: 4a save path, sum-rule refusals, no client credit, never-blocking fields, stale
+  values, "Type not set" rule, pre-4a form guard, 006-missing pause, GET credits; registration API read/save/refusals/owner-only/
+  same-origin/paused); `bookkeeping-expenses` (validator + adapter); `bookkeeping-export` (columns, held, unchecked, date change,
+  superseded/void, legacy); `bookkeeping-void-route` (carry + refuse changed 4a fields + paused); `bookkeeping-storage-contract`
+  (every `schema.sql` column is in the app insert and the restore insert, 006 additive-only, one-transaction writes, format guard).
+  Bookkeeping 114/114. Typecheck clean; lint clean on touched files.
+- **Development cluster [V 2026-11-06]:** smoke probe passed (revision + 2 lines in one transaction, rolled back). The shipped store,
+  as `bookkeeping_app`: reads 51 revisions with lines, registration rev 1, inserts a synthetic expense with 2 lines, reads them back in
+  order, credit `held` 500, void carries them, a bad sum is refused with nothing written; then removed with admin (counts 51 / 0 / 1
+  before and after). Backup create → verify → restore-drill-dev with 2 real lines: 52 revisions, 2 lines, 1 registration, 34 owner
+  transfers, 10 receipts replayed and compared; synthetic rows and archive removed, no recovery tables left. QA seed: already present,
+  verification (incl. the sum rule) passed. Evidence: `.probe/gst4a/session-b-*.log`. **Not run:** `restore-dev` into an empty store
+  and `scripts/bookkeeping-restore-drill.mjs` (both need an empty dev expense table; dev holds 51 revisions).
+- **Full suite:** 14,700 / 14,709; the 9 failures are Session A's expected set (the `footerStart` foot-sentence guard on
+  `ExpenseFormWindow.tsx`, help-content tax words, practice plans phone, plan-billing free time, public stage 6 walk, series date
+  groups, workspace status census), none in bookkeeping. verify:changed's other checks: the failing ones (admin old look, admin type,
+  schema parity bank tables, index coverage, org-slug callers, CSS selectors, export catalog) are all other sessions' files.
+- **For Session C:** post the field names above; read `credits[expense_id]` for the record; `expenseCredit()` / `workOutCredit()` give
+  the live form sentence client-side from the same rules. **For Part 7 `/accounting`:** the CSV credit columns' meaning (held keeps its
+  figure) and the `_cad` naming are this session's calls, not drawn.
