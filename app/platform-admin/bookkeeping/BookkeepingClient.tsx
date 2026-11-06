@@ -36,11 +36,11 @@ const today = () => {
 };
 const money = (cents: number) => new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD' }).format(cents / 100);
 const amount = (cents: number) => (cents / 100).toFixed(2);
-function BookkeepingOverview({ expenses, params, onOpenExpense }: {
-  expenses: ExpenseRevision[]; params: URLSearchParams; onOpenExpense: (row: ExpenseRevision, list?: ExpenseRevision[]) => void;
+function BookkeepingOverview({ expenses, params, registrationDate, onOpenExpense }: {
+  expenses: ExpenseRevision[]; params: URLSearchParams; registrationDate: string | null; onOpenExpense: (row: ExpenseRevision, list?: ExpenseRevision[]) => void;
 }) {
   const active = currentExpenses(expenses).filter(row => !row.void_reason);
-  const attention = active.filter(row => attentionReasons(row).length > 0);
+  const attention = active.filter(row => attentionReasons(row, registrationDate).length > 0);
   const recent = active.slice(0, 5);
   const month = expensePeriodRange('month', tournamentToday());
   const spend = summarizeExpenses(active.filter(row => hasConfirmedDates(row) && row.incurred_date! >= month.from! && row.incurred_date! <= month.to!)).recordedSpendCents;
@@ -64,7 +64,7 @@ function BookkeepingOverview({ expenses, params, onOpenExpense }: {
           <thead><tr><th>Supplier</th><th>Why</th><th className={kit.num}>Amount</th><th aria-label="Open expense" /></tr></thead>
           <tbody>{attention.length ? attention.slice(0, 5).map(row => <tr key={row.expense_id} className={kit.clickableRow} onClick={() => onOpenExpense(row, attention.slice(0, 5))}>
             <td className="table-cards-title">{supplier(row, attention.slice(0, 5))}</td>
-            <td data-label="Why"><div className={styles.overviewReasons}>{attentionReasons(row).map(reason => <span key={reason} className={`${kit.chip} ${kit.chipWarn}`}>{reason}</span>)}</div></td>
+            <td data-label="Why"><div className={styles.overviewReasons}>{attentionReasons(row, registrationDate).map(reason => <span key={reason} className={`${kit.chip} ${kit.chipWarn}`}>{reason}</span>)}</div></td>
             <td data-label="Amount" className={kit.num}>{money(businessCents(row))}</td><td className={kit.rowDoor} aria-hidden>›</td>
           </tr>) : <tr><td colSpan={4} className={kit.empty}>Nothing needs attention.</td></tr>}</tbody>
         </table></div>
@@ -85,8 +85,9 @@ function BookkeepingOverview({ expenses, params, onOpenExpense }: {
   </section>;
 }
 
-export default function BookkeepingClient({ initialExpenses, initialRevisions, initialDateSchemaReady, initialTaxSchemaReady, initialConversionSchemaReady, initialOwnerMovements, initialOwnerRevisions, initialOwnerSchemaReady }: {
+export default function BookkeepingClient({ initialExpenses, initialRevisions, initialDateSchemaReady, initialTaxSchemaReady, initialConversionSchemaReady, initialGstSchemaReady, initialRegistrationDate, initialOwnerMovements, initialOwnerRevisions, initialOwnerSchemaReady }: {
   initialExpenses: ExpenseRevision[]; initialRevisions: ExpenseRevision[]; initialDateSchemaReady: boolean; initialTaxSchemaReady: boolean; initialConversionSchemaReady: boolean;
+  initialGstSchemaReady: boolean; initialRegistrationDate: string | null;
   initialOwnerMovements: OwnerMovementRevision[]; initialOwnerRevisions: OwnerMovementRevision[]; initialOwnerSchemaReady: boolean;
 }) {
   const router = useRouter();
@@ -99,10 +100,15 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
   const [dateSchemaReady, setDateSchemaReady] = useState(initialDateSchemaReady);
   const [taxSchemaReady, setTaxSchemaReady] = useState(initialTaxSchemaReady);
   const [conversionSchemaReady, setConversionSchemaReady] = useState(initialConversionSchemaReady);
+  const [gstSchemaReady, setGstSchemaReady] = useState(initialGstSchemaReady);
+  // GST/HST Stage 4a: every credit, and the register's "GST/HST number missing" reason, reads this one date.
+  const [registrationDate, setRegistrationDate] = useState(initialRegistrationDate);
+  const storageReady = dateSchemaReady && taxSchemaReady && conversionSchemaReady && gstSchemaReady;
   const [selectedExpenseId, setSelectedExpenseId] = useState<string | null>(place.form === 'add' ? null : place.record);
   const [formOpen, setFormOpen] = useState(Boolean(place.form));
   const [editing, setEditing] = useState<ExpenseRevision | null>(() => place.form && place.form !== 'add' ? initialExpenses.find(row => row.expense_id === place.record) ?? null : null);
   const [voidMode, setVoidMode] = useState(place.form === 'void');
+  const [focusNumber, setFocusNumber] = useState(false);
   const [copyFrom, setCopyFrom] = useState<ExpenseRevision | null>(null);
   const [recordIds, setRecordIds] = useState<string[] | null>(null);
   const [loading, setLoading] = useState(false);
@@ -134,6 +140,8 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
       setDateSchemaReady(Boolean(body.dateSchemaReady));
       setTaxSchemaReady(Boolean(body.taxSchemaReady));
       setConversionSchemaReady(Boolean(body.conversionSchemaReady));
+      setGstSchemaReady(Boolean(body.gstSchemaReady));
+      setRegistrationDate(typeof body.registrationDate === 'string' ? body.registrationDate : null);
       setError('');
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'Unable to load expenses'); }
     finally { setLoading(false); }
@@ -141,7 +149,7 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
 
   const categories = useMemo(() => [...new Set([...STARTER_CATEGORIES, ...expenses.map(row => row.category)])].sort(), [expenses]);
   const visible = useMemo(() => expenses.filter(row => matchesExpenseFilters(row,
-    { from: from || null, to: to || null, category, query, review })), [expenses, from, to, category, query, review]);
+    { from: from || null, to: to || null, category, query, review }, registrationDate)), [expenses, from, to, category, query, review, registrationDate]);
   const datedVisible = useMemo(() => visible.filter(hasConfirmedDates), [visible]);
   const legacyVisible = useMemo(() => visible.filter(row => !hasConfirmedDates(row) && !row.void_reason), [visible]);
   const summary = useMemo(() => summarizeExpenses(datedVisible), [datedVisible]);
@@ -154,7 +162,7 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
   const selectedExpense = expenses.find(row => row.expense_id === selectedExpenseId) ?? null;
   const addressedExpenseMissing = Boolean(place.record && !expenses.some(row => row.expense_id === place.record));
   const attention = expenses.filter(row => !row.void_reason &&
-    attentionReasons(row).length > 0);
+    attentionReasons(row, registrationDate).length > 0);
   const reportPeriodLabel = reportPeriod === 'all' ? 'All confirmed dates'
     : reportPeriod === 'custom' ? `${from ? consoleDate(from) : 'Any start'} to ${to ? consoleDate(to) : 'Any end'}`
     : reportPeriodRange(reportPeriod, today()).label;
@@ -170,7 +178,7 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
   }
 
   const registerFilter = expenseRegisterSelection(params, tournamentToday()).filters;
-  const defaultRecordRows = view === 'expenses' && registerFilter ? currentExpenses(expenses).filter(row => matchesExpenseFilters(row, registerFilter))
+  const defaultRecordRows = view === 'expenses' && registerFilter ? currentExpenses(expenses).filter(row => matchesExpenseFilters(row, registerFilter, registrationDate))
     : view === 'reports' ? reportRows : currentExpenses(expenses).filter(row => !row.void_reason);
   const windowExpense = formOpen ? editing : selectedExpense;
   const recordRows = recordIds ? recordIds.flatMap(id => expenses.find(row => row.expense_id === id) ?? []) : [...defaultRecordRows];
@@ -179,10 +187,10 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
   const recordSteps = windowExpense ? { position: `${recordIndex + 1} of ${recordRows.length}`, noun: 'expense',
     prev: recordIndex > 0 ? { name: recordRows[recordIndex - 1].supplier, onStep: () => stepTo(recordRows[recordIndex - 1].expense_id) } : null,
     next: recordIndex < recordRows.length - 1 ? { name: recordRows[recordIndex + 1].supplier, onStep: () => stepTo(recordRows[recordIndex + 1].expense_id) } : null } : undefined;
-  function stepTo(id: string) { setFormOpen(false); setEditing(null); setVoidMode(false); setSelectedExpenseId(id); }
+  function stepTo(id: string) { setFormOpen(false); setEditing(null); setVoidMode(false); setFocusNumber(false); setSelectedExpenseId(id); }
   function openRecord(row: ExpenseRevision, list?: ExpenseRevision[]) { setRecordIds((list ?? defaultRecordRows).map(item => item.expense_id)); setSelectedExpenseId(row.expense_id); }
-  function openForm(row: ExpenseRevision | null = null, asVoid = false, copy: ExpenseRevision | null = null) {
-    setCopyFrom(copy); if (!row) setRecordIds(null);
+  function openForm(row: ExpenseRevision | null = null, asVoid = false, copy: ExpenseRevision | null = null, toNumber = false) {
+    setCopyFrom(copy); setFocusNumber(toNumber); if (!row) setRecordIds(null);
     setEditing(row); setVoidMode(asVoid);
     if (!row) setSelectedExpenseId(null);
     setFormOpen(true);
@@ -192,7 +200,7 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
     setNotice(saved.void_reason ? 'Expense voided; its history is retained.' : saved.revision > 1 ? 'Correction saved with history.' : 'Expense saved.');
     setExpenses(current => [saved, ...current.filter(row => row.expense_id !== saved.expense_id)]);
     setRevisions(current => [...current, saved]);
-    setSelectedExpenseId(saved.expense_id); setFormOpen(false); setEditing(null); setVoidMode(false);
+    setSelectedExpenseId(saved.expense_id); setFormOpen(false); setEditing(null); setVoidMode(false); setFocusNumber(false);
     void load();
   }
 
@@ -228,7 +236,7 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
   }
   return <div className={styles.page}>
     <AdminPageHeader eyebrow="Private finance" title="Bookkeeping" inlineActions actions={
-      <button type="button" className={`${styles.primaryAction} ${styles.phoneAdd}`} aria-label="Add expense" onClick={() => openForm()} disabled={!dateSchemaReady || !taxSchemaReady || !conversionSchemaReady}>+</button>
+      <button type="button" className={`${styles.primaryAction} ${styles.phoneAdd}`} aria-label="Add expense" onClick={() => openForm()} disabled={!storageReady}>+</button>
     } />
     <div className={styles.tabRow}>
       <nav className={`${kit.tabs} ${styles.sectionNav}`} aria-label="Bookkeeping sections">
@@ -240,18 +248,18 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
           {section === 'expenses' && attention.length > 0 && <span className={kit.tabCount}>{attention.length}</span>}
         </Link>)}
       </nav>
-      <button type="button" className={`${styles.primaryAction} ${styles.desktopAdd}`} onClick={() => openForm()} disabled={!dateSchemaReady || !taxSchemaReady || !conversionSchemaReady}>+ Add expense</button>
+      <button type="button" className={`${styles.primaryAction} ${styles.desktopAdd}`} onClick={() => openForm()} disabled={!storageReady}>+ Add expense</button>
     </div>
 
     {error && <p role="alert" className={styles.error}>{error}</p>}
     {notice && <p role="status" className={styles.notice}>{notice}</p>}
     {addressedExpenseMissing && <p role="alert" className={styles.error}>This expense is unavailable. Open an expense from the list.</p>}
-    {(!dateSchemaReady || !taxSchemaReady || !conversionSchemaReady) && <p role="status" className={styles.notice}>Expense entry is paused while bookkeeping storage is updated. Existing records and exports remain available.</p>}
+    {!storageReady && <p role="status" className={styles.notice}>Expense entry is paused while bookkeeping storage is updated. Existing records and exports remain available.</p>}
 
     {view === 'ledger' && <OwnerLedger expenses={expenses} initialMovements={initialOwnerMovements} initialRevisions={initialOwnerRevisions}
       schemaReady={initialOwnerSchemaReady} onOpenExpense={openRecord} />}
 
-    {view === 'overview' && <BookkeepingOverview expenses={expenses} params={params} onOpenExpense={openRecord} />}
+    {view === 'overview' && <BookkeepingOverview expenses={expenses} params={params} registrationDate={registrationDate} onOpenExpense={openRecord} />}
     {view === 'reports' && <section className={styles.panel} aria-labelledby="report-title">
           <div className={styles.viewHeading}><div><p className={styles.eyebrow}>Recorded expenses</p><h2 id="report-title">Expense report</h2>
             <p>{reportPeriodLabel} · Period totals use confirmed incurred dates. Older dates to review appear separately.</p></div>
@@ -293,23 +301,24 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
           <p className={styles.hint}>Paid personally: {money(summary.personallyPaidCents)} across active expenses. A later reimbursement or owner movement is a separate record and must not be entered as another expense here.</p>
           <section className={styles.reviewList} aria-labelledby="evidence-review-title">
             <div className={styles.subHeading}><h3 id="evidence-review-title">Needs attention</h3><button type="button" className={styles.textButton} onClick={() => setView('attention')}>Open worklist · {attention.length}</button></div>
-            <p className={styles.hint}>Missing receipts, unknown dates or tax amounts, and unpicked USD sources appear in one worklist. Each item opens its expense record.</p>
+            <p className={styles.hint}>Missing receipts, unknown dates or tax amounts, missing GST/HST numbers and unpicked USD sources appear in one worklist. Each item opens its expense record.</p>
           </section>
           <section className={styles.reviewList} aria-labelledby="usd-review-title">
             <h3 id="usd-review-title">USD invoices</h3>
             {visible.filter(row => !row.void_reason && row.original_currency === 'USD').length ? visible.filter(row => !row.void_reason && row.original_currency === 'USD').map(row => <p key={row.expense_id}><strong>{row.supplier}</strong> · USD {amount(row.original_cents)} → CAD {amount(row.cad_cents)} · {row.conversion_note || 'USD source not picked'}</p>) : <p>No active USD invoices in this view.</p>}
           </section>
         </section>}
-    {view === 'expenses' && <ExpensesRegister expenses={expenses} loading={loading} exporting={Boolean(exporting)}
-      onOpenExpense={openRecord} onExport={exportExpenses} />}
+    {view === 'expenses' && <ExpensesRegister expenses={expenses} registrationDate={registrationDate} loading={loading} exporting={Boolean(exporting)}
+      onOpenExpense={openRecord} onAddNumber={(row, list) => { setRecordIds(list.map(item => item.expense_id)); openForm(row, false, null, true); }} onExport={exportExpenses} />}
 
     {(formOpen || selectedExpense) && !addressedExpenseMissing && <ExpenseFormWindow key={windowExpense?.expense_id ?? `new-${copyFrom?.expense_id ?? 'blank'}`}
       expense={windowExpense} expenses={expenses} categories={categories} revisions={revisions} copyFrom={copyFrom}
       startEditing={Boolean(formOpen && editing && !voidMode)} asVoid={voidMode} steps={recordSteps}
+      registrationDate={registrationDate} focusNumber={Boolean(formOpen && editing && focusNumber)}
       address={bookkeepingAddress(params, { record: windowExpense?.expense_id ?? null, form: windowExpense ? formOpen ? voidMode ? 'void' : 'correct' : null : 'add', movement: null, transfer: null })}
       homeAddress={bookkeepingAddress(params, { record: null, form: null, movement: null, transfer: null })}
-      disabled={!dateSchemaReady || !taxSchemaReady || !conversionSchemaReady}
+      disabled={!storageReady}
       onCopy={row => openForm(null, false, row)}
-      onClose={() => { setFormOpen(false); setSelectedExpenseId(null); setEditing(null); setVoidMode(false); setCopyFrom(null); }} onSaved={expenseSaved} />}
+      onClose={() => { setFormOpen(false); setSelectedExpenseId(null); setEditing(null); setVoidMode(false); setCopyFrom(null); setFocusNumber(false); }} onSaved={expenseSaved} />}
   </div>;
 }

@@ -4,7 +4,7 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import DateInput from '@/components/shared/DateInput';
-import { attentionReasons, businessCents, currentExpenses, hasConfirmedDates, summarizeExpenses, type ExpenseRevision } from '@/lib/bookkeeping-expenses';
+import { attentionReasons, businessCents, currentExpenses, hasConfirmedDates, needsSupplierTaxNumber, summarizeExpenses, type ExpenseRevision } from '@/lib/bookkeeping-expenses';
 import { matchesExpenseFilters, type ExpenseFilters } from '@/lib/bookkeeping-filters';
 import { EXPENSE_PERIODS, expensePeriodRange, expenseRegisterSelection } from '@/lib/bookkeeping-register';
 import { bookkeepingAddress } from '@/lib/bookkeeping-navigation';
@@ -49,23 +49,26 @@ function ExpenseExportMenu({ disabled, onExport }: { disabled: boolean; onExport
   </div>;
 }
 
-export default function ExpensesRegister({ expenses, loading, exporting, onOpenExpense, onExport }: {
-  expenses: ExpenseRevision[]; loading: boolean; exporting: boolean;
+export default function ExpensesRegister({ expenses, registrationDate, loading, exporting, onOpenExpense, onAddNumber, onExport }: {
+  expenses: ExpenseRevision[]; registrationDate: string | null; loading: boolean; exporting: boolean;
   onOpenExpense: (row: ExpenseRevision, list?: ExpenseRevision[]) => void;
+  /** A Needs attention row waiting on the supplier's GST/HST number opens its correction form at that field (drawings tab 3). */
+  onAddNumber: (row: ExpenseRevision, list: ExpenseRevision[]) => void;
   onExport: (kind: 'csv' | 'package', filters: ExpenseFilters) => void;
 }) {
   const searchParams = useSearchParams();
   const params = useMemo(() => new URLSearchParams(searchParams.toString()), [searchParams]);
   const today = tournamentToday();
   const { period, filters } = expenseRegisterSelection(params, today);
-  const visible = filters ? currentExpenses(expenses).filter(row => matchesExpenseFilters(row, filters)) : [];
+  const visible = filters ? currentExpenses(expenses).filter(row => matchesExpenseFilters(row, filters, registrationDate)) : [];
   const categories = [...new Set(expenses.map(row => row.category))].sort();
   const attentionCount = filters ? currentExpenses(expenses).filter(row =>
-    matchesExpenseFilters(row, { ...filters, status: 'active', review: 'all' }) && attentionReasons(row).length > 0).length : 0;
+    matchesExpenseFilters(row, { ...filters, status: 'active', review: 'all' }, registrationDate) && attentionReasons(row, registrationDate).length > 0).length : 0;
   const legacyCount = visible.filter(row => !row.void_reason && !hasConfirmedDates(row)).length;
   const total = summarizeExpenses(visible.filter(hasConfirmedDates)).recordedSpendCents;
   const attention = filters?.review === 'attention';
   const currentCategory = params.get('category') ?? '';
+  const open = (row: ExpenseRevision) => attention && needsSupplierTaxNumber(row, registrationDate) ? onAddNumber(row, visible) : onOpenExpense(row, visible);
 
   function update(changes: Record<string, string | null>) {
     // The local list already has its data. Native history integrates with useSearchParams in Next 16,
@@ -122,16 +125,16 @@ export default function ExpensesRegister({ expenses, loading, exporting, onOpenE
       <table className={styles.expensesTable} aria-busy={loading}>
         <thead><tr><th>Date</th><th>Supplier</th><th>What for</th><th>Category</th><th>Paid from</th><th>Receipt</th><th className={kit.num}>Amount</th><th aria-label="Open expense" /></tr></thead>
         <tbody>{!visible.length && <tr><td colSpan={8} className={kit.empty}>{loading ? 'Loading expenses…' : 'No expenses match this view.'}</td></tr>}
-          {visible.map(row => <tr key={row.expense_id} className={`${kit.clickableRow} ${row.void_reason ? styles.voidedExpense : ''}`} onClick={() => onOpenExpense(row, visible)}>
+          {visible.map(row => <tr key={row.expense_id} className={`${kit.clickableRow} ${row.void_reason ? styles.voidedExpense : ''}`} onClick={() => open(row)}>
             <td data-label="Date" className={styles.registerDate}>{row.incurred_date ? consoleDay(row.incurred_date) : 'Dates to review'}</td>
             <td className={`table-cards-title ${styles.supplierCell}`}>
-              <Link className={styles.expenseName} href={bookkeepingAddress(params, { view: 'expenses', record: row.expense_id, form: null })}
-                onClick={event => { event.stopPropagation(); if (!event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey && event.button === 0) { event.preventDefault(); onOpenExpense(row, visible); } }} title={row.supplier}>{row.supplier}</Link>
+              <Link className={styles.expenseName} href={bookkeepingAddress(params, { view: 'expenses', record: row.expense_id, form: attention && needsSupplierTaxNumber(row, registrationDate) ? 'correct' : null })}
+                onClick={event => { event.stopPropagation(); if (!event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey && event.button === 0) { event.preventDefault(); open(row); } }} title={row.supplier}>{row.supplier}</Link>
               {row.void_reason && <span className={`${kit.chip} ${kit.chipQuiet}`}>Voided</span>}
             </td>
             <td data-label="What for" className={styles.registerPurpose}>
               <div className={styles.purposeLine}><span className={styles.purposeText} title={row.business_purpose}>{row.business_purpose}</span>{row.original_currency === 'USD' && <span>· USD {(row.original_cents / 100).toFixed(2)}</span>}</div>
-              {attention && <span className={styles.reasonChips}>{attentionReasons(row).map(reason => <span key={reason} className={`${kit.chip} ${kit.chipWarn}`}>{reason}</span>)}</span>}
+              {attention && <span className={styles.reasonChips}>{attentionReasons(row, registrationDate).map(reason => <span key={reason} className={`${kit.chip} ${kit.chipWarn}`}>{reason}</span>)}</span>}
             </td>
             <td data-label="Category" className={styles.registerCategory} title={row.category}>{row.category}</td>
             <td data-label="Paid from" className={styles.registerSource}>{SOURCES[row.payment_source]}</td>

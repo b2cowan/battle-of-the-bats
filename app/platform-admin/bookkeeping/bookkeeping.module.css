@@ -79,6 +79,19 @@
 .recordCard dl div { padding-top: .55rem; border-top: 1px solid var(--home-line); }
 .recordCard dt { color: var(--text-secondary); font-size: var(--type-support); }
 .recordCard dd { margin: .2rem 0 0; font-size: var(--type-body); font-weight: 700; overflow-wrap: anywhere; }
+.recordLine { display: block; }
+/* GST/HST Stage 4a: the tax section of More details (drawings tabs 2 and 9) */
+.taxLines { display: grid; gap: .5rem; }
+.taxLine { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) 44px; gap: .7rem; align-items: end; }
+.removeTax { width: 44px; height: 44px; border: 0; border-radius: 8px; background: transparent; color: var(--text-secondary); font-size: 1.25rem; line-height: 1; cursor: pointer; }
+.removeTax:focus-visible { outline: 3px solid var(--home-olive); outline-offset: 2px; }
+.taxDoors { display: flex; flex-wrap: wrap; column-gap: 1rem; }
+.taxDoors .textButton:disabled { color: var(--text-secondary); cursor: default; }
+.form .unsetType { color: var(--warning); }
+.creditNeutral { border-left-color: var(--home-line-strong); }
+.creditSentence { flex-basis: 100%; font-size: var(--type-support); }
+.warnHint { color: var(--warning); }
+.recordNote { display: block; margin-top: .1rem; color: var(--text-secondary); font-size: var(--type-support); font-weight: 400; line-height: 1.45; }
 .recordActions { margin: 1rem 0; }
 .historySection { border-top: 1px solid var(--home-line); padding-top: 1rem; }
 .historySection h3 { margin: 0; }
@@ -189,4 +202,5 @@
   .expensesTable .registerPurpose { display: block; text-align: left; }
   .expensesTable .registerPurpose::before { display: block; margin-bottom: .25rem; }
   .registerNote { padding-inline: 0; }
+  .taxLine { grid-template-columns: minmax(0, 1fr) 7rem 44px; }
 }

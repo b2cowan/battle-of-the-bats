@@ -17,8 +17,11 @@ export function matchesExpenseSearch(row: ExpenseRevision, query: string): boole
     ...(hasKnownTaxAmount(row) ? [row.tax_cad_cents] : [])].includes(cents);
 }
 
-/** One predicate for visible current entries and every revision retained in their CSV/package. */
-export function matchesExpenseFilters(row: ExpenseRevision, filters: ExpenseFilters): boolean {
+/**
+ * One predicate for visible current entries and every revision retained in their CSV/package. `registrationDate` (the
+ * current GST/HST registration date) is required so the Needs attention filter reads the same date everywhere.
+ */
+export function matchesExpenseFilters(row: ExpenseRevision, filters: ExpenseFilters, registrationDate: string | null): boolean {
   return (!row.incurred_date || ((!filters.from || row.incurred_date >= filters.from) && (!filters.to || row.incurred_date <= filters.to))) &&
     (filters.dateStatus !== 'confirmed' || hasConfirmedDates(row)) &&
     (!filters.category || row.category === filters.category) &&
@@ -26,7 +29,7 @@ export function matchesExpenseFilters(row: ExpenseRevision, filters: ExpenseFilt
     (!filters.paymentSource || row.payment_source === filters.paymentSource) &&
     (filters.status !== 'active' || !row.void_reason) &&
     (filters.status !== 'voided' || Boolean(row.void_reason)) &&
-    matchesExpenseSearch(row, filters.query) && matchesReviewFilter(row, filters.review);
+    matchesExpenseSearch(row, filters.query) && matchesReviewFilter(row, filters.review, registrationDate);
 }
 
 export function expenseFilterParams(filters: ExpenseFilters): URLSearchParams {

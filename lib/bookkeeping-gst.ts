@@ -50,6 +50,13 @@ export const REGISTRATION_HINT = 'Foreign online services are often on CRA’s s
 export const CANT_GET_NUMBER = 'I can’t get the number: don’t claim this credit';
 export const NUMBER_MISSING_REASON = 'GST/HST number missing';
 export const HELD_RECORD_NOTE = 'Held until the number is added';
+export const CREDIT_LABEL = 'Credit on your GST/HST return';
+/** The record's credit cell for a pre-4a amount whose type was never chosen (owner ruling, Ask 14 A, 2026-11-06). */
+export const CREDIT_NOT_WORKED_OUT = 'Not worked out';
+export const TYPE_NOT_SET_RECORD_NOTE = 'Choose the tax type when you correct this expense.';
+/** The record's number cell when no number was given and none is waited on. */
+export const NUMBER_NOT_RECORDED = 'Not recorded';
+export const TAX_STATUS_LABELS = { pending: 'Pending review', reviewed: 'Reviewed', none: 'No tax recorded' } as const;
 
 export const isTaxType = (value: unknown): value is TaxType => typeof value === 'string' && Object.hasOwn(TAX_TYPES, value);
 export const isTaxAnswer = (value: unknown): value is TaxAnswer => typeof value === 'string' && Object.hasOwn(TAX_ANSWERS, value);
@@ -57,7 +64,9 @@ export const isSupplierRegistration = (value: unknown): value is SupplierRegistr
   typeof value === 'string' && Object.hasOwn(SUPPLIER_REGISTRATIONS, value);
 export const isPurchaseKind = (value: unknown): value is PurchaseKind => typeof value === 'string' && Object.hasOwn(PURCHASE_KINDS, value);
 
-const formatCad = (cents: number) => new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD' }).format(cents / 100);
+export const formatCad = (cents: number) => new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD' }).format(cents / 100);
+/** True when a line is GST or HST: the only tax this return claims, and the only one a number or registration matters for. */
+export const hasGstHstLine = (lines: readonly TaxLine[]) => lines.some(line => line.cents > 0 && TAX_TYPES[line.type].gstHst);
 /** Half up, positive integers only: the one rounding step, applied to the final credit. */
 const roundHalfUp = (numerator: number, denominator: number) => Math.floor((2 * numerator + denominator) / (2 * denominator));
 
@@ -250,6 +259,33 @@ export function expenseCredit(row: CreditRow, registrationDate: string | null): 
     registrationDate,
     supplier: row.supplier,
   });
+}
+
+const shortTaxName = (type: TaxType) => TAX_TYPES[type].gstHst ?? TAX_TYPES[type].label;
+
+/**
+ * The tax part of the closed More details row (drawings tab 2): “HST $74.78 · credit $74.78”, “No tax”, “Tax unknown”.
+ * A held credit says so, because it isn't counted yet.
+ */
+export function taxSummary(answer: TaxAnswer, lines: readonly TaxLine[], credit: Credit | null): string {
+  if (answer === 'none') return 'No tax';
+  const shown = lines.filter(line => line.cents > 0);
+  if (answer === 'unknown' || !shown.length) return 'Tax unknown';
+  const taxes = shown.map(line => `${shortTaxName(line.type)} ${formatCad(line.cents)}`).join(' + ');
+  if (!credit || credit.state === 'type_not_set') return taxes;
+  if (!credit.creditCents) return `${taxes} · no credit`;
+  return `${taxes} · credit ${formatCad(credit.creditCents)}${credit.state === 'held' ? ' held' : ''}`;
+}
+
+/**
+ * The record's Purchase tax cell (drawings tab 3; Ask 13 A): one tax reads “HST 13% · $74.78 · Pending review”;
+ * two or more read one line each, then “{total} in all · {status}” as a quiet line.
+ */
+export function purchaseTaxCell(answer: TaxAnswer, lines: readonly TaxLine[], status: keyof typeof TAX_STATUS_LABELS): { lines: string[]; note: string | null } {
+  if (answer !== 'shown' || !lines.length) return { lines: [TAX_ANSWERS[answer === 'shown' ? 'unknown' : answer]], note: null };
+  const each = lines.map(line => `${TAX_TYPES[line.type].label} · ${formatCad(line.cents)}`);
+  if (each.length === 1) return { lines: [`${each[0]} · ${TAX_STATUS_LABELS[status]}`], note: null };
+  return { lines: each, note: `${formatCad(sumTaxLines(lines))} in all · ${TAX_STATUS_LABELS[status]}` };
 }
 
 /** The register's fifth reason: a credit that would count but waits on the supplier's number. */

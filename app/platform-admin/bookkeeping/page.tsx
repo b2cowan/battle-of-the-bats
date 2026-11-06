@@ -3,7 +3,7 @@ import { getPlatformAdminContext } from '@/lib/platform-auth';
 import { canAccessBookkeeping } from '@/lib/bookkeeping-access';
 import { currentExpenses, redactExpenseRevisions } from '@/lib/bookkeeping-expenses';
 import { currentOwnerMovements } from '@/lib/bookkeeping-owner-movements';
-import { hasExpenseConversionColumns, hasExpenseDateColumns, hasExpenseTaxColumn, hasOwnerMovementTable, listExpenseRevisions, listOwnerMovementRevisions } from '@/lib/bookkeeping-store';
+import { gstRegistrationDate, hasExpenseConversionColumns, hasExpenseDateColumns, hasExpenseTaxColumn, hasGstTaxSchema, hasOwnerMovementTable, listExpenseRevisions, listOwnerMovementRevisions } from '@/lib/bookkeeping-store';
 import BookkeepingClient from './BookkeepingClient';
 
 export const metadata = { title: 'Bookkeeping — FieldLogicHQ' };
@@ -20,5 +20,6 @@ export default async function BookkeepingPage() {
   return <BookkeepingClient initialExpenses={currentExpenses(revisions)} initialRevisions={revisions}
     initialDateSchemaReady={await hasExpenseDateColumns()} initialTaxSchemaReady={await hasExpenseTaxColumn()}
     initialConversionSchemaReady={await hasExpenseConversionColumns()}
+    initialGstSchemaReady={await hasGstTaxSchema()} initialRegistrationDate={await gstRegistrationDate()}
     initialOwnerMovements={currentOwnerMovements(ownerRevisions)} initialOwnerRevisions={ownerRevisions} initialOwnerSchemaReady={ownerSchemaReady} />;
 }

@@ -27,7 +27,7 @@ export const GET = withObservability(async (req: NextRequest) => {
   } catch { return NextResponse.json({ error: 'Unable to prepare accountant package' }, { status: 500 }); }
   if (revisions.length > 1000) return NextResponse.json({ error: 'Expense package needs pagination before more records can be included' }, { status: 503 });
   if (ownerRevisions.length > 1000) return NextResponse.json({ error: 'Owner transfer package needs pagination before more records can be included' }, { status: 503 });
-  const selected = selectExpenseRevisions(revisions, filters);
+  const selected = selectExpenseRevisions(revisions, filters, registrationDate);
   const selectedOwners = selectOwnerMovementRevisions(ownerRevisions, filters, selected);
   const documents = new Map<string, { filename: string; contentType: string }>();
   // Check every referenced object before starting the download. The ZIP itself fetches one file at a time.

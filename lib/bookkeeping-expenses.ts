@@ -1,5 +1,6 @@
 import {
-  isPurchaseKind, isSupplierRegistration, isTaxAnswer, isTaxType, resolveTaxState, taxLinesMatchTotal,
+  expenseCredit, isPurchaseKind, isSupplierRegistration, isTaxAnswer, isTaxType, needsSupplierNumber, NUMBER_MISSING_REASON,
+  resolveTaxState, taxLinesMatchTotal,
   type PurchaseKind, type SupplierRegistration, type TaxAnswer, type TaxLine,
 } from './bookkeeping-gst';
 
@@ -101,12 +102,23 @@ export function lastConversionSource(rows: ExpenseRevision[], paymentSource: str
   return last?.conversion_source ?? '';
 }
 
-/** The four ruled follow-ups; a void keeps its evidence but never asks for follow-up. */
-export function attentionReasons(row: ExpenseRevision): string[] {
+/** True when this revision's credit would count but waits on the supplier's number (GST/HST Stage 4a, ruling 5). */
+export function needsSupplierTaxNumber(row: ExpenseRevision, registrationDate: string | null): boolean {
+  const credit = row.void_reason ? null : expenseCredit(row, registrationDate);
+  return Boolean(credit && needsSupplierNumber(credit));
+}
+
+/**
+ * The five ruled follow-ups; a void keeps its evidence but never asks for follow-up. `registrationDate` is the current
+ * GST/HST registration effective date (null before migration 006). It is required, not optional, so the register's count,
+ * the Needs attention filter and an "attention" export are always worked out from the same date.
+ */
+export function attentionReasons(row: ExpenseRevision, registrationDate: string | null): string[] {
   if (row.void_reason) return [];
   return [
     !row.receipt_path ? 'Receipt missing' : '',
     !hasKnownTaxAmount(row) ? 'Tax amount unknown' : '',
+    needsSupplierTaxNumber(row, registrationDate) ? NUMBER_MISSING_REASON : '',
     row.original_currency === 'USD' && !isConversionSource(row.conversion_source) ? 'USD source not picked' : '',
     !hasConfirmedDates(row) ? 'Dates to review' : '',
   ].filter(Boolean);
@@ -114,10 +126,10 @@ export function attentionReasons(row: ExpenseRevision): string[] {
 
 export type ReviewFilter = 'all' | 'attention' | 'missing_receipt' | 'missing_conversion' | 'personal' | 'foreign';
 
-export function matchesReviewFilter(row: ExpenseRevision, filter: ReviewFilter): boolean {
+export function matchesReviewFilter(row: ExpenseRevision, filter: ReviewFilter, registrationDate: string | null): boolean {
   if (row.void_reason) return filter === 'all';
   switch (filter) {
-    case 'attention': return attentionReasons(row).length > 0;
+    case 'attention': return attentionReasons(row, registrationDate).length > 0;
     case 'missing_receipt': return !row.receipt_path;
     case 'missing_conversion': return row.original_currency === 'USD' && !isConversionSource(row.conversion_source);
     case 'personal': return row.payment_source === 'personal';

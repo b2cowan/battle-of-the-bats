@@ -32,7 +32,7 @@ describe('bookkeeping accountant export', () => {
   });
   it('filters by the latest revision but keeps every earlier revision and its receipt link', () => {
     const correction = { ...base, revision: 2, expense_date: '2026-06-01', supplier: 'Corrected', change_reason: 'Date and name' };
-    const selected = selectExpenseRevisions([correction, base], { from: '2026-06-01', to: null, category: '', query: '', review: 'all' });
+    const selected = selectExpenseRevisions([correction, base], { from: '2026-06-01', to: null, category: '', query: '', review: 'all' }, '2026-09-26');
     assert.deepEqual(selected.map(row => row.revision), [1, 2]);
     const csv = expenseCsv(selected);
     assert.match(csv, /receipt\/11111111-1111-4111-8111-111111111111\/1/);
@@ -89,7 +89,7 @@ describe('bookkeeping accountant export', () => {
     const voided = { ...personalUsd, expense_id: '33333333-3333-4333-8333-333333333333', void_reason: 'Duplicate' };
     const selected = selectExpenseRevisions([personalUsd, corrected, business, voided], {
       from: null, to: null, category: '', query: '', review: 'personal',
-    });
+    }, '2026-09-26');
     assert.deepEqual(selected.map(row => [row.expense_id, row.revision]), [[personalUsd.expense_id, 1], [personalUsd.expense_id, 2]]);
     assert.match(expenseCsv(selected), /"personal"/);
     assert.doesNotMatch(expenseCsv(selected), /22222222-2222/);

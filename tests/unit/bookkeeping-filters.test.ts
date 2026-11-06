@@ -5,6 +5,7 @@ import { expenseFilterParams, matchesExpenseFilters, matchesExpenseSearch, type 
 import { parseExpenseFilters, selectExpenseRevisions, selectOwnerMovementRevisions } from '../../lib/bookkeeping-export.ts';
 import { expensePeriodRange, expenseRegisterSelection } from '../../lib/bookkeeping-register.ts';
 import type { OwnerMovementRevision } from '../../lib/bookkeeping-owner-movements.ts';
+const REG = '2026-09-26';
 
 const cad: ExpenseRevision = {
   expense_id: '10000000-0000-4000-8000-000000000001', revision: 1, expense_date: '2026-10-27',
@@ -28,11 +29,11 @@ const ids = (rows: ExpenseRevision[]) => [...new Set(rows.map(row => row.expense
 
 describe('Bookkeeping shared attention and amount matching', () => {
   it('uses precisely the four ruled reasons and never includes a void or a known pending tax amount alone', () => {
-    assert.deepEqual(attentionReasons({ ...legacy, original_currency: 'USD', conversion_note: 'Card statement 2026-10-27' }),
+    assert.deepEqual(attentionReasons({ ...legacy, original_currency: 'USD', conversion_note: 'Card statement 2026-10-27' }, REG),
       ['Receipt missing', 'Tax amount unknown', 'USD source not picked', 'Dates to review']);
-    assert.deepEqual(attentionReasons(cad), []);
-    assert.deepEqual(attentionReasons(usd), []);
-    assert.deepEqual(attentionReasons({ ...legacy, void_reason: 'Duplicate' }), []);
+    assert.deepEqual(attentionReasons(cad, REG), []);
+    assert.deepEqual(attentionReasons(usd, REG), []);
+    assert.deepEqual(attentionReasons({ ...legacy, void_reason: 'Duplicate' }, REG), []);
   });
   it('matches exact business, CAD, original and known tax amounts using the shared money parser', () => {
     for (const query of ['300', '$300.00', '1,200', '$1,200.00', '13.00']) assert.equal(matchesExpenseSearch(cad, query), true, query);
@@ -45,24 +46,24 @@ describe('Bookkeeping shared attention and amount matching', () => {
   });
   it('retains legacy date rows explicitly and excludes voided rows from Active and attention', () => {
     const month = { ...all, from: '2026-10-01', to: '2026-10-31', status: 'active' as const };
-    assert.deepEqual(ids(selectExpenseRevisions(history, month)), [cad.expense_id, usd.expense_id, legacy.expense_id]);
-    assert.deepEqual(ids(selectExpenseRevisions(history, { ...month, dateStatus: 'confirmed' })), [cad.expense_id, usd.expense_id]);
-    assert.deepEqual(ids(selectExpenseRevisions(history, { ...month, review: 'attention' })), [legacy.expense_id]);
-    assert.deepEqual(ids(selectExpenseRevisions(history, { ...month, status: 'voided', review: 'attention' })), []);
-    assert.deepEqual(selectExpenseRevisions(history, { ...all, status: 'voided' }).map(row => row.revision), [1, 2]);
+    assert.deepEqual(ids(selectExpenseRevisions(history, month, REG)), [cad.expense_id, usd.expense_id, legacy.expense_id]);
+    assert.deepEqual(ids(selectExpenseRevisions(history, { ...month, dateStatus: 'confirmed' }, REG)), [cad.expense_id, usd.expense_id]);
+    assert.deepEqual(ids(selectExpenseRevisions(history, { ...month, review: 'attention' }, REG)), [legacy.expense_id]);
+    assert.deepEqual(ids(selectExpenseRevisions(history, { ...month, status: 'voided', review: 'attention' }, REG)), []);
+    assert.deepEqual(selectExpenseRevisions(history, { ...all, status: 'voided' }, REG).map(row => row.revision), [1, 2]);
   });
   it('screen and export select identical current ids and retain the selected records whole revision histories', () => {
     const filters: ExpenseFilters[] = [all, { ...all, status: 'active' }, { ...all, status: 'voided' },
       { ...all, query: '$325.00' }, { ...all, query: '45.59' }, { ...all, category: 'Other' },
       { ...all, paymentSource: 'business_card', status: 'active' }, { ...all, review: 'attention' }];
     for (const filter of filters) {
-      const screen = currentExpenses(history).filter(row => matchesExpenseFilters(row, filter));
-      const exported = selectExpenseRevisions(history, filter);
+      const screen = currentExpenses(history).filter(row => matchesExpenseFilters(row, filter, REG));
+      const exported = selectExpenseRevisions(history, filter, REG);
       assert.deepEqual(ids(exported), ids(screen), JSON.stringify(filter));
       for (const row of screen) assert.deepEqual(exported.filter(item => item.expense_id === row.expense_id).map(item => item.revision),
         history.filter(item => item.expense_id === row.expense_id).map(item => item.revision));
     }
-    assert.deepEqual(selectExpenseRevisions([cad, corrected], { ...all, query: '1,200' }), [], 'an earlier amount never selects a corrected expense');
+    assert.deepEqual(selectExpenseRevisions([cad, corrected], { ...all, query: '1,200' }, REG), [], 'an earlier amount never selects a corrected expense');
   });
   it('validates status and attention query values, preserving legacy all-status exports when status is absent', () => {
     assert.equal(parseExpenseFilters(new URLSearchParams())?.status, 'all');

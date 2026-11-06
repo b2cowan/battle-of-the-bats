@@ -50,8 +50,8 @@ export function parseExpenseFilters(params: URLSearchParams): ExpenseFilters | n
     review: attention === '1' ? 'attention' : review as ReviewFilter, status: status as ExpenseStatus };
 }
 
-export function selectExpenseRevisions(revisions: ExpenseRevision[], filters: ExpenseFilters): ExpenseRevision[] {
-  const ids = new Set(currentExpenses(revisions).filter(row => matchesExpenseFilters(row, filters)).map(row => row.expense_id));
+export function selectExpenseRevisions(revisions: ExpenseRevision[], filters: ExpenseFilters, registrationDate: string | null): ExpenseRevision[] {
+  const ids = new Set(currentExpenses(revisions).filter(row => matchesExpenseFilters(row, filters, registrationDate)).map(row => row.expense_id));
   return revisions.filter(row => ids.has(row.expense_id))
     .sort((a, b) => a.expense_id.localeCompare(b.expense_id) || a.revision - b.revision);
 }

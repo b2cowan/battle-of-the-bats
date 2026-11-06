@@ -258,3 +258,52 @@ hashes, never “uncommitted”.
 - **For Session C:** post the field names above; read `credits[expense_id]` for the record; `expenseCredit()` / `workOutCredit()` give
   the live form sentence client-side from the same rules. **For Part 7 `/accounting`:** the CSV credit columns' meaning (held keeps its
   figure) and the `_cad` naming are this session's calls, not drawn.
+
+### Session C (2026-11-06, Opus): Parts 4–5 (commit hash recorded in the next commit); no DDL
+- **Step 0 gate, drawn and RULED 2026-11-06.** Added to the same artifact (versions 3–4), end of tab 3, from the shipped record grid:
+  a BC two-tax cell and a pre-4a "Type not set" record. `/design` ran first (helper pass). It changed the legacy recommendation: hide
+  number + registration on a Type-not-set record (the type may be PST, the same reason "Not sure yet" hides them), and add footers and
+  a PST no-rate note. **Ask 13 A:** one line per tax, then "{total} in all · {status}" as a quiet line; one tax keeps its one line.
+  **Ask 14 A:** "Type not set · $74.78 · Pending review", and only the credit cell is added, plain (not amber): "Not worked out" +
+  "Choose the tax type when you correct this expense." The kind still shows under business use on that record, as drawn.
+- **Part 4, form** (`ExpenseFormWindow.tsx`): "Tax on this receipt" | status (Pending review / Reviewed) or | Business use; tax lines
+  (type from `CHOOSABLE_TAX_TYPES`, amount; a legacy line opens as "Choose a type" in amber); "Work out from the total"; "+ Add another
+  tax" (≤ 10; a new line starts as PST); Kind | Business use when a GST/HST line exists, else Business use alone; the live credit callout
+  (`workOutCredit`, today's registration date; kit callout, neutral edge, amber by the credit's own tone; only the figure bold);
+  number | registration (prefilled by `supplierPrefill`, excluding the expense itself, until either is touched; "Same as your last …";
+  `REGISTRATION_HINT`; amber `NUMBER_HINT_BLANK` when held; `NUMBER_NOT_NEEDED` under $100); `CANT_GET_NUMBER` while held or not
+  claimed. The closed row comes from `taxSummary()`. The old "does not claim a tax credit" hint is deleted (not in help content [V grep]).
+  Posts `taxAnswer`, `taxLines`, `taxCadAmount` (sum), `taxStatus` (none → `none`, unknown → `pending`), `purchaseKind`,
+  `supplierTaxNumber`, `supplierRegistration` (`not_checked` when untouched with no prefill), `numberUnobtainable`. Hidden fields go
+  blank. No `taxAmountKnown`, no credit. A `taxCadAmount` refusal is shown on the first line's amount.
+  **Calls not drawn, made here:** the × shows only with 2+ lines (removing the only line of "Shown" is meaningless); "Work out from the
+  total" shows only for one line with a rate (a two-tax total can't be split by one rate); a held credit's closed row says
+  "credit $x held"; "Copy as new" of a Type-not-set expense refuses at Save with "Choose the tax type." on the type (the server accepts
+  `unset` only on a correction).
+- **Part 5, record + register.** Record (`ExpenseRecordBody.tsx`): `purchaseTaxCell()`; Business use "{%} · {kind}"; number (as printed
+  / MISSING chip when held / `NUMBER_NOT_NEEDED` / `NUMBER_NOT_RECORDED`) and registration only with a GST/HST line; credit cell = figure +
+  one quiet line (`HELD_RECORD_NOTE` when held, else its sentence). The credit is `expenseCredit(row, registrationDate)`, the same function
+  and date the GET `credits` map uses. New sentences live in `bookkeeping-gst.ts` (`CREDIT_LABEL`, `CREDIT_NOT_WORKED_OUT`,
+  `TYPE_NOT_SET_RECORD_NOTE`, `NUMBER_NOT_RECORDED`, `TAX_STATUS_LABELS`; `formatCad` and `hasGstHstLine` exported).
+  Register: `attentionReasons(row, registrationDate)` adds `NUMBER_MISSING_REASON` via `needsSupplierTaxNumber()` (state `held`).
+  **The date is a required argument** of `attentionReasons`, `matchesReviewFilter`, `matchesExpenseFilters` and `selectExpenseRevisions`,
+  so every path passes it (Overview card, tab count, register count + filter + chips, record steps, export + package routes).
+  `page.tsx` passes `gstSchemaReady` + `registrationDate`; Add/Save also pause on `gstSchemaReady`. In the Needs attention view, a row
+  with the reason opens the correction form with More details open and the number focused (its link carries `form=correct`).
+  The Reports worklist hint now names missing GST/HST numbers.
+- **Tests:** `bookkeeping-gst-attention.test.ts` (new): the reason and its exceptions (under $100, number, can't get, simplified,
+  legacy, void, Not checked); a May 1 ↔ Sept 26 date change moving a June service in and out; the register count, the attention filter,
+  `matchesReviewFilter` and the address-parsed export agreeing for Sept 26, May 1 and no date; flagged ⇔ credit `held`; `taxSummary` and
+  `purchaseTaxCell` strings; the form posts every Session B field and never `taxAmountKnown`, a credit, or the old sentences.
+  Existing filter/expense/export tests pass the date. Bookkeeping 127/127; typecheck clean; lint clean; `check:spelling` passes.
+- **Full suite:** 14,727 / 14,736; the 9 failures are the expected set (the `footerStart` foot guard on `ExpenseFormWindow.tsx`, on
+  the foot line this session did not touch; help-content tax words, now naming `lib/help-content/coaches.tsx` and `org.tsx`; practice
+  plans phone; plan-billing; public stage 6 walk ×3; series date groups; workspace status census). verify:changed's other checks: the
+  same 7 as Session B (admin old look, admin type, schema parity, index coverage, org-slug callers, CSS selectors, export catalog),
+  none naming a bookkeeping file. Dev server restarted 2026-11-06; login 200, no `EACCES`.
+- **Browser checks owed (owner):** the tab-2 states (HST, 50% / 8% use, laptop, meal, Canva simplified, number blank ≥ $100 + can't get,
+  $42 under $100, BC two-tax, Not checked, a pre-Sept-26 service), a legacy correction saved unchanged, the record cells, and the
+  Needs attention round trip (save without the number → listed → row opens at the number → add it → gone). Phone at 390.
+- **For Session D / Part 7:** `/simplify` should take the money formatters (form, record, register, client still have their own;
+  `formatCad` is now exported from the rules module). The legacy record's kind line and the four "calls not drawn" above are for the
+  owner walk.

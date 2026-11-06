@@ -43,10 +43,10 @@ describe('proprietor expense revisions', () => {
     const usd = { ...noReceipt, expense_id: '33333333-3333-4333-8333-333333333333', original_currency: 'USD' as const, conversion_source: 'bank_of_canada' as const, conversion_note: null };
     const badUsd = { ...usd, conversion_source: null, conversion_note: 'Bank of Canada rate 2026-10-22' };
     const voided = { ...badUsd, expense_id: '33333333-3333-4333-8333-333333333333', void_reason: 'Duplicate' };
-    assert.equal(matchesReviewFilter(noReceipt, 'missing_receipt'), true);
-    assert.equal(matchesReviewFilter(usd, 'missing_conversion'), false);
-    assert.equal(matchesReviewFilter(badUsd, 'missing_conversion'), true);
-    assert.equal(matchesReviewFilter(voided, 'missing_conversion'), false);
+    assert.equal(matchesReviewFilter(noReceipt, 'missing_receipt', '2026-09-26'), true);
+    assert.equal(matchesReviewFilter(usd, 'missing_conversion', '2026-09-26'), false);
+    assert.equal(matchesReviewFilter(badUsd, 'missing_conversion', '2026-09-26'), true);
+    assert.equal(matchesReviewFilter(voided, 'missing_conversion', '2026-09-26'), false);
     assert.equal(isConversionSource('card_statement'), true);
     for (const invalid of [null, '', 'Card statement', 'anything', 'constructor', '__proto__']) assert.equal(isConversionSource(invalid), false);
     assert.equal(summarizeExpenses([noReceipt, badUsd, voided]).missingReceiptCount, 2);

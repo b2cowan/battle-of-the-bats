@@ -1,0 +1,1072 @@
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>GST/HST in the Books</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: a review document (cool grey chrome, Plex) holding true-size specimens of the platform-admin console kit
+   (Warm tokens light, the platform-admin block dark). Sticky tabs, one section at a time, an Everything / Show only
+   what differs switch where a tab compares before and after. Round 2: /design + /ux findings applied. */
+:root{
+  --bg:#E8EBEE; --surface:#FFFFFF; --surface-2:#F3F5F7; --ink:#1A1F24; --muted:#56606B; --line:#D2D7DD;
+  --accent:#24584B; --fix:#2B672A; --fix-soft:#DFEEDB; --flag:#A8361F;
+  --t-new:#4B2E83; --t-res:#1D4A6E; --t-unc:#5E646B; --ask:#8A5A00;
+  --shadow:0 1px 2px rgba(20,30,40,.06),0 6px 20px rgba(20,30,40,.07);
+  --f-doc:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --fix:#93CF8B; --fix-soft:#1E321F; --flag:#F0907A;
+  --t-new:#BBA6EE; --t-res:#8FC2E7; --t-unc:#AAB0B7; --ask:#E8B75A;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --fix:#93CF8B; --fix-soft:#1E321F; --flag:#F0907A;
+  --t-new:#BBA6EE; --t-res:#8FC2E7; --t-unc:#AAB0B7; --ask:#E8B75A;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--f-doc);margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--bg)}
+.doc{max-width:1240px;margin:0 auto;padding-block:16px 90px}
+a{color:var(--accent)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+h1,h2,h3,h4{text-wrap:balance;line-height:1.2}
+.doc h1{font-size:30px;margin:6px 0 6px;letter-spacing:-.01em}
+.doc h2{font-size:22px;margin:6px 0 8px;letter-spacing:-.01em}
+.doc h3{font-size:17px;margin:18px 0 6px}
+.doc p,.doc li{max-width:82ch}
+.muted{color:var(--muted)}
+.eyebrow{font:600 11.5px/1.3 var(--f-mono);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.lede{font-size:16px;max-width:82ch}
+.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);display:flex;gap:4px;flex-wrap:wrap;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);margin:14px 0 8px}
+.tabs button{font:600 14px/1 var(--f-doc);min-height:40px;padding:0 12px;border-radius:8px;border:1px solid transparent;background:none;color:var(--muted);cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--surface);border-color:var(--line);color:var(--ink);box-shadow:var(--shadow)}
+section.pane[hidden]{display:none}
+.viewrow{display:flex;align-items:center;gap:10px;margin:8px 0 12px;flex-wrap:wrap}
+.viewrow .lab{font:600 11.5px/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.sw{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:3px;gap:2px}
+.sw button{font:600 13.5px/1 var(--f-doc);min-height:36px;padding:0 14px;border-radius:7px;border:0;background:none;color:var(--muted);cursor:pointer}
+.sw button[aria-pressed="true"]{background:var(--surface-2);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 18px;box-shadow:var(--shadow);margin:12px 0}
+.card h3{margin-top:0}
+.card ul,.card ol{margin:6px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px}
+.cols>.card{margin:0}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:10px;margin:10px 0;background:var(--surface)}
+table.t{border-collapse:collapse;width:100%;font-size:14px;min-width:720px}
+table.t th{font:600 11px/1.3 var(--f-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+table.t td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+table.t tr:last-child td{border-bottom:0}
+table.t td ins{text-decoration:none;background:var(--fix-soft);color:var(--fix);font-weight:600;padding:0 3px;border-radius:3px}
+.mk{font:700 10.5px/1 var(--f-mono);letter-spacing:.04em;border-radius:5px;padding:4px 6px;cursor:pointer;border:1.5px solid currentColor;background:var(--surface);white-space:nowrap;min-height:24px}
+.mk.new{color:var(--t-new)} .mk.res{color:var(--t-res)} .mk.unc{color:var(--t-unc)} .mk.ask{color:var(--ask)} .mk.fl{color:var(--flag)}
+.cap{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 6px;font:600 12px/1.3 var(--f-mono);color:var(--muted)}
+.cap b{color:var(--ink)}
+.pair{display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;margin:8px 0}
+.pair>div{min-width:0;max-width:100%}
+.fr{border-radius:12px;outline:1px solid var(--line);box-shadow:var(--shadow);overflow:hidden;max-width:100%}
+.w720{width:720px} .w1200{width:1200px} .w560{width:560px}
+.scroll{overflow-x:auto;max-width:100%;padding-bottom:4px}
+.samebar{display:none;border:1px dashed var(--line);border-radius:8px;padding:8px 12px;margin:2px 0;font:600 12px/1.4 var(--f-mono);color:var(--muted);text-align:center}
+body[data-view="diff"] .same{display:none}
+body[data-view="diff"] .samebar{display:block}
+.note-s{font-size:13.5px;color:var(--muted);max-width:82ch}
+code{font:13px var(--f-mono)}
+
+/* ---------- the console kit: platform admin, drawn from the shipped Bookkeeping components ---------- */
+.ak{--paper:#F8F4ED;--card:#FFFFFF;--ink:#241E15;--soft:#4A4235;--dim:#615A54;--line:rgba(70,55,30,.12);--line2:rgba(70,55,30,.20);
+  --olive:#57651E;--olive-soft:rgba(87,101,30,.10);--edge:rgba(87,101,30,.3);--cta:#D9F99D;--cta-ink:#241E15;--red:#B03A22;--amber:#835006;--amber-soft:rgba(131,80,6,.12);
+  --scrim:rgba(36,30,21,.34);--new:rgba(75,46,131,.08);--pill:#57651E;--pill-ink:#FFFFFF;
+  background:var(--paper);color:var(--ink);font:14px/1.5 'Inter',system-ui,sans-serif;text-align:left}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ak{--paper:#0A0A0A;--card:#111827;--ink:rgba(255,255,255,.9);--soft:rgba(255,255,255,.7);--dim:#94A3B8;--line:rgba(255,255,255,.08);--line2:rgba(255,255,255,.18);--olive:#D9F99D;--olive-soft:rgba(217,249,157,.10);--edge:rgba(217,249,157,.25);--cta-ink:#0A0A0A;--red:#EF4444;--amber:#F59E0B;--amber-soft:rgba(245,158,11,.12);--scrim:rgba(0,0,0,.55);--new:rgba(187,166,238,.12);--pill:#D9F99D;--pill-ink:#0A0A0A}}
+:root[data-theme="dark"] .ak{--paper:#0A0A0A;--card:#111827;--ink:rgba(255,255,255,.9);--soft:rgba(255,255,255,.7);--dim:#94A3B8;--line:rgba(255,255,255,.08);--line2:rgba(255,255,255,.18);--olive:#D9F99D;--olive-soft:rgba(217,249,157,.10);--edge:rgba(217,249,157,.25);--cta-ink:#0A0A0A;--red:#EF4444;--amber:#F59E0B;--amber-soft:rgba(245,158,11,.12);--scrim:rgba(0,0,0,.55);--new:rgba(187,166,238,.12);--pill:#D9F99D;--pill-ink:#0A0A0A}
+.ak *{box-sizing:border-box}
+.ak .newbox{background:var(--new);outline:2px solid var(--t-new);outline-offset:2px;border-radius:4px;cursor:pointer}
+.ak .eye{font:700 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--olive)}
+/* window: KitDialog form, medium = 640 */
+.ak.scrimbg{background:var(--scrim);padding:28px 40px;display:flex;justify-content:center}
+.ak .win{width:640px;max-width:100%;background:var(--card);border:1px solid var(--edge);border-radius:12px;display:flex;flex-direction:column}
+.ak .wh{display:flex;align-items:flex-start;gap:10px;padding:18px 24px 10px}
+.ak .wh .tb{flex:1;min-width:0}
+.ak .wh h4{margin:2px 0 0;font:700 20px/1.25 'Inter';color:var(--ink)}
+.ak .wh .idl{font-size:14px;color:var(--soft);margin-top:2px}
+.ak .wh .x{width:32px;height:32px;display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:20px;line-height:1}
+.ak .wh.rec{border-bottom:1px solid var(--line)}
+.ak .wb{padding:12px 24px 16px;color:var(--soft);display:flex;flex-direction:column;gap:14px}
+.ak .wb p{margin:0}
+.ak .wf{display:flex;align-items:center;gap:10px;padding:14px 24px;border-top:1px solid var(--line)}
+.ak .wf .fs{flex:1;font-size:12px;color:var(--dim);min-width:0}
+.ak .wf .fe{display:flex;gap:8px}
+.ak .btn{font:650 14px/1.25 'Inter';border-radius:8px;padding:7px 14px;min-height:38px;display:inline-flex;align-items:center;justify-content:center;white-space:nowrap}
+.ak .btn.lime{background:var(--cta);color:var(--cta-ink)}
+.ak .btn.out{background:var(--card);color:var(--soft);border:1px solid var(--line2)}
+.ak .btn.quiet{color:var(--soft);padding-inline:6px}
+.ak .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.ak .fld{display:flex;flex-direction:column;gap:5px;min-width:0}
+.ak .lb{font:600 12px/1.3 'Inter';color:var(--soft)}
+.ak .in{height:44px;border:1px solid var(--line2);background:var(--card);border-radius:8px;padding:0 12px;font-size:14px;color:var(--ink);display:flex;align-items:center;min-width:0;white-space:nowrap;overflow:hidden}
+.ak .in.sel{justify-content:space-between}
+.ak .in.sel::after{content:"";width:7px;height:7px;border-right:1.5px solid var(--dim);border-bottom:1.5px solid var(--dim);transform:rotate(45deg) translate(-2px,-2px);flex:none;margin-left:10px}
+.ak .in.ph{color:var(--dim)}
+.ak .in.ta{height:auto;min-height:44px;padding:10px 12px;white-space:normal}
+.ak .amt{display:flex}
+.ak .amt .cur{border-radius:8px 0 0 8px;border-right:0;padding:0 10px;font-weight:650;flex:none}
+.ak .amt .in:last-child{border-radius:0 8px 8px 0;flex:1}
+.ak .hint{font-size:12px;line-height:1.45;color:var(--dim);margin:0}
+.ak .hint.warn{color:var(--amber)}
+.ak .chk{display:flex;gap:8px;align-items:center;font-size:14px;color:var(--ink)}
+.ak .chk i{width:16px;height:16px;border:1.5px solid var(--line2);border-radius:4px;display:inline-block;flex:none}
+.ak .chk i.on{background:var(--olive);border-color:var(--olive);position:relative}
+.ak .chk i.on::after{content:"";position:absolute;left:4px;top:1px;width:4px;height:8px;border:solid var(--card);border-width:0 2px 2px 0;transform:rotate(45deg)}
+.ak .drop{height:44px;border:1px dashed var(--line2);border-radius:8px;display:flex;align-items:center;padding:0 12px;font-size:14px;color:var(--soft)}
+.ak .morebtn{display:flex;justify-content:space-between;align-items:center;gap:10px;border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--card)}
+.ak .morebtn b{color:var(--ink);font-weight:650}
+.ak .morebtn span{font-size:12px;color:var(--dim);text-align:right}
+.ak .adv{border:1px solid var(--line);border-radius:8px;padding:14px;display:flex;flex-direction:column;gap:12px;margin-top:-8px}
+.ak .taxrow{display:grid;grid-template-columns:1.2fr 1fr 44px;gap:10px;align-items:end}
+.ak .taxrow .rm{height:44px;display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:18px}
+.ak .doors{display:flex;gap:16px;flex-wrap:wrap}
+.ak .door{color:var(--olive);font-weight:650;font-size:14px}
+/* white callout with a coloured edge (kit.callout); neutral by default, amber when something waits */
+.ak .co{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--line2);border-radius:8px;padding:10px 14px;display:grid;gap:2px;color:var(--soft);font-size:14px}
+.ak .co.amb{border-left-color:var(--amber)}
+.ak .co b{color:var(--ink)}
+.ak .co .fig{font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
+.ak .co span{font-size:12px;color:var(--dim)}
+/* record field grid (ERB) */
+.ak dl.rg{display:grid;grid-template-columns:1fr 1fr;column-gap:20px;margin:0}
+.ak dl.rg>div{border-top:1px solid var(--line);padding:8px 0}
+.ak dl.rg dt{font-size:12px;color:var(--soft)}
+.ak dl.rg dd{margin:2px 0 0;font-weight:700;font-size:14px;color:var(--ink);font-variant-numeric:tabular-nums}
+.ak dl.rg dd small{display:block;font-weight:400;font-size:12px;color:var(--dim)}
+/* chips */
+.ak .chip{font:700 10px/1.4 'IBM Plex Mono',monospace;letter-spacing:.04em;border-radius:999px;padding:2px 8px;border:1px solid;white-space:nowrap;display:inline-block}
+.ak .chip.amb{color:var(--amber);border-color:var(--amber);background:var(--amber-soft)}
+.ak .chip.q{color:var(--dim);border-color:var(--line2)}
+.ak .chip.ok{color:var(--olive);border-color:var(--edge);background:var(--olive-soft)}
+/* joined figure band (kit.band): one frame, hairlines; label = the 11px eyebrow */
+.ak .band{display:grid;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.ak .band>div{background:var(--card);padding:12px 14px;min-width:0}
+.ak .band .bl{font:700 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--soft)}
+.ak .band .bv{font:700 24px/1.2 'Inter';font-variant-numeric:tabular-nums;color:var(--ink);margin-top:2px}
+.ak .band .bs{font-size:12px;color:var(--dim)}
+.ak .band.c3{grid-template-columns:repeat(3,1fr)}
+/* the shipped Reports tiles (separate, a gap) */
+.ak .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:.55rem}
+.ak .tiles>div{border:1px solid var(--line);border-radius:10px;padding:.8rem;background:var(--card)}
+.ak .tiles .bl{font-size:12px;color:var(--soft)} .ak .tiles .bv{font:700 24px/1.2 'Inter';font-variant-numeric:tabular-nums}
+/* figures frame: one frame, hairlines; the total is bold over a 2px rule */
+.ak dl.fig{margin:0;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.ak dl.fig>div{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:9px 12px;border-bottom:1px solid var(--line);background:var(--card)}
+.ak dl.fig>div:last-child{border-bottom:0}
+.ak dl.fig dt{font-size:14px;color:var(--soft)}
+.ak dl.fig dd{margin:0;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap;text-align:right}
+.ak dl.fig .tot{border-top:2px solid var(--line2)}
+.ak dl.fig .tot dt{color:var(--ink);font-weight:700}
+/* console frame */
+.ak.console{display:grid;grid-template-columns:200px 1fr;grid-template-rows:52px 1fr;min-height:640px}
+.ak .ctop{grid-column:1/3;display:flex;align-items:center;gap:14px;padding:0 18px;border-bottom:1px solid var(--line);background:var(--card)}
+.ak .ctop .brand{font:700 16px 'Inter';color:var(--ink)} .ak .ctop .brand em{font-style:normal;color:var(--olive)}
+.ak .ctop .sc{font:700 10px 'IBM Plex Mono',monospace;letter-spacing:.08em;color:var(--soft);border-left:1px solid var(--line2);padding-left:12px}
+.ak .ctop .srch{margin-left:auto;margin-right:auto;width:360px;height:34px;border:1px solid var(--line2);border-radius:999px;display:flex;align-items:center;padding:0 14px;font-size:12px;color:var(--dim)}
+.ak .cside{border-right:1px solid var(--line);padding:14px 0;background:var(--card);display:flex;flex-direction:column;gap:2px}
+.ak .cside div{font:700 10px/1 'IBM Plex Mono',monospace;letter-spacing:.07em;color:var(--soft);padding:9px 16px}
+.ak .cside div.on{background:var(--olive-soft);color:var(--olive);font-family:'Inter';font-size:14px;letter-spacing:0;font-weight:650}
+.ak .cmain{padding:22px 28px 28px;min-width:0;display:flex;flex-direction:column;gap:14px}
+.ak .ph1{display:flex;align-items:flex-end;justify-content:space-between;gap:10px}
+.ak .ph1 h4{margin:2px 0 0;font:700 20px/1.2 'Inter'}
+.ak .ktabs{display:flex;gap:22px;border-bottom:1px solid var(--line);align-items:center}
+.ak .ktabs span{padding:8px 0 9px;font-weight:600;color:var(--soft);font-size:14px;border-bottom:2px solid transparent;display:inline-flex;gap:6px;align-items:center}
+.ak .ktabs span.on{color:var(--ink);border-bottom-color:var(--olive)}
+.ak .ktabs .cnt{font:700 10px/1 'IBM Plex Mono',monospace;border:1px solid var(--line2);border-radius:999px;padding:2px 6px;color:var(--soft);font-style:normal}
+.ak .ktabs .add{margin-left:auto}
+.ak .tb{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ak .pillv{background:var(--pill);color:var(--pill-ink);border-radius:999px;padding:0 14px;height:36px;display:inline-flex;align-items:center;gap:6px;font-weight:650;font-size:14px}
+.ak .pillp{border:1px solid var(--edge);background:var(--olive-soft);color:var(--olive);border-radius:999px;padding:0 14px;height:36px;display:inline-flex;align-items:center;gap:6px;font-weight:650;font-size:14px}
+.ak .fsq{border:1px solid var(--line2);background:var(--card);color:var(--soft);border-radius:8px;padding:0 12px;height:36px;display:inline-flex;align-items:center;font-weight:600;font-size:14px}
+.ak .srchp{border:1px solid var(--line2);background:var(--card);color:var(--dim);border-radius:999px;padding:0 14px;height:36px;display:inline-flex;align-items:center;font-size:14px}
+.ak .pillamb{border:1px solid var(--amber);background:var(--amber-soft);color:var(--amber);border-radius:999px;padding:0 12px;height:36px;display:inline-flex;align-items:center;font-weight:700;font-size:14px}
+.ak .panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:12px}
+.ak .panel h5{margin:0;font:700 16px/1.25 'Inter';color:var(--ink)}
+.ak .stitle{font:700 16px/1.25 'Inter';color:var(--ink);margin:4px 0 -6px}
+.ak .fgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+.ak .ghost{border:1px dashed var(--line2);border-radius:8px;padding:10px 12px;color:var(--dim);font-size:12px}
+.ak .halfgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.ak .tline{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-top:1px solid var(--line);font-size:14px;color:var(--soft)}
+.ak .tline b{color:var(--ink);font-variant-numeric:tabular-nums}
+/* tables (Table & List Standard: headings 12/700 uppercase, every cell centred, figures right + tabular) */
+.ak table.k{border-collapse:collapse;width:100%;font-size:14px;background:var(--card)}
+.ak table.k th{font:700 12px/1.3 'Inter';letter-spacing:.05em;text-transform:uppercase;color:var(--soft);text-align:left;padding:9px 12px;border-bottom:1px solid var(--line2)}
+.ak table.k td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:middle;color:var(--ink)}
+.ak table.k tr:last-child td{border-bottom:0}
+.ak table.k .r{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.ak table.k .chev{width:28px;color:var(--dim);text-align:center}
+.ak table.k .lk{color:var(--olive);font-weight:650}
+.ak table.k .sub td{color:var(--soft);padding-top:7px;padding-bottom:7px}
+.ak table.k .sub td:nth-child(2){padding-left:34px}
+.ak table.k .calc td{background:var(--paper)}
+.ak table.k .calc .lbl{color:var(--soft)}
+.ak table.k .net td{border-top:2px solid var(--line2);font-weight:700}
+.ak table.k .ln{font:700 12px/1.4 'IBM Plex Mono',monospace;color:var(--olive);width:56px}
+.ak table.k .na{color:var(--dim);font-weight:500}
+.ak .fold{display:inline-block;width:16px;color:var(--dim)}
+.ak .fb{color:var(--ink);font-weight:700;border-bottom:1.5px dotted var(--dim);font-variant-numeric:tabular-nums}
+.ak .tframe{border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.ak .lrow{display:flex;justify-content:space-between;gap:10px;padding:9px 12px;border-bottom:1px solid var(--line);font-size:14px;background:var(--card)}
+.ak .lrow:last-child{border-bottom:0}
+.ak .lrow .r{font-variant-numeric:tabular-nums;font-weight:650;white-space:nowrap}
+.ak .menu{position:absolute;top:42px;left:0;z-index:2;background:var(--card);border:1px solid var(--line2);border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.14);padding:6px;width:260px}
+.ak .menu div{padding:9px 10px;border-radius:6px;font-size:14px;color:var(--ink);display:flex;justify-content:space-between}
+.ak .menu div.on{background:var(--olive-soft);color:var(--olive);font-weight:650}
+/* phone: the shipped KitDialog at ≤640 is full screen, no rounding, ← at top left, × hidden */
+.ak.phone{width:390px;min-height:700px;display:flex;flex-direction:column}
+.ak.phone .pt{height:52px;display:flex;align-items:center;gap:10px;padding:0 16px;border-bottom:1px solid var(--line);background:var(--card);font-weight:650}
+.ak.phone.full{background:var(--card)}
+.ak.phone .wh{padding:10px 16px 10px}
+.ak.phone .back{width:44px;height:44px;display:flex;align-items:center;justify-content:flex-start;font-size:20px;color:var(--ink)}
+.ak.phone .two{grid-template-columns:1fr}
+.ak.phone .btn{min-height:44px}
+.ak.phone .taxrow{grid-template-columns:1fr 110px 44px}
+.ak .pcard{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:grid;grid-template-columns:40px 1fr auto 14px;gap:4px 10px;align-items:center}
+.ak .pcard .ln{font:700 12px 'IBM Plex Mono',monospace;color:var(--olive)}
+.ak .pcard .v{font-weight:700;font-variant-numeric:tabular-nums;text-align:right}
+.ak .pcard .s{grid-column:2/4;font-size:12px;color:var(--dim)}
+.ak .pcard .c{color:var(--dim)}
+.ak .pcard.calc{background:var(--paper)}
+.ak .pcard.net{border-top:2px solid var(--line2)}
+/* file tree */
+.tree{font:13px/1.7 var(--f-mono);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 16px;white-space:pre;overflow-x:auto}
+.tree ins{text-decoration:none;background:var(--fix-soft);color:var(--fix);font-weight:600}
+/* asks */
+.ask{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--t-res);border-radius:0 12px 12px 0;padding:14px 18px;margin:14px 0;box-shadow:var(--shadow)}
+.ask.facts{border-left-color:var(--ask)}
+.ask h3{margin:0 0 4px;font-size:17px}
+.ask h3 .no{font:700 13px/1 var(--f-mono);color:var(--muted);margin-right:8px}
+.ask .opts{display:flex;flex-direction:column;gap:4px;margin:10px 0}
+.ask .opts label{display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.45;padding:10px;border-radius:8px;min-height:44px;cursor:pointer}
+.ask .opts label:hover{background:var(--surface-2)}
+.ask .opts label.rec{background:var(--fix-soft)}
+.ask .opts label.rec::after{content:"Recommended";margin-left:auto;font:700 10.5px/1.6 var(--f-mono);color:var(--fix);white-space:nowrap;padding-left:8px}
+.ask .opts input{width:20px;height:20px;flex:none;margin:0;accent-color:var(--accent)}
+.ask .rides{font-size:13.5px;color:var(--muted);margin:4px 0}
+.ask .fl3{display:grid;gap:8px;margin-top:8px}
+.ask .fl3 label{display:grid;gap:4px;font-size:13.5px;font-weight:600}
+.ask textarea,.paste textarea,.ask input[type=text]{width:100%;box-sizing:border-box;min-height:44px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:14px/1.45 var(--f-doc);background:var(--surface);color:var(--ink);resize:vertical}
+.paste{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow);margin-top:16px;display:flex;flex-direction:column;gap:8px}
+.paste textarea{min-height:240px;font:12.5px/1.5 var(--f-mono)}
+.btn-d{font:600 14px/1 var(--f-doc);min-height:40px;padding:0 14px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.btn-d.pri{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+dialog.note{border:1px solid var(--line);border-radius:14px;padding:0;max-width:min(560px,calc(100vw - 32px));background:var(--surface);color:var(--ink);box-shadow:0 20px 60px rgba(0,0,0,.3)}
+dialog.note::backdrop{background:rgba(10,15,20,.45)}
+dialog.note .nh{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line)}
+dialog.note .nh h3{margin:0;font-size:16px;flex:1}
+dialog.note .nh button{font-size:22px;background:none;border:0;color:var(--muted);cursor:pointer;min-width:44px;min-height:44px}
+dialog.note .nb{padding:12px 16px 16px;font-size:14.5px}
+@media (max-width:640px){.doc h1{font-size:24px}.tabs button{padding:0 9px;font-size:13px}}
+</style>
+
+<div class="doc">
+<div class="eyebrow">GST/HST · Stage 4 · drawings · round 2 · 2026-11-06 · RULED 2026-11-06: every ask A · ADDED 2026-11-06: tab 3, two record cells (asks 13–14 RULED A 2026-11-06)</div>
+<h1>GST/HST in the books: what you paid, what you collected, and the worksheet for your return</h1>
+<p class="lede">Stage 4 is two jobs. <b>4a</b> records the tax on what you buy properly: tax by type, the supplier’s GST/HST number, which CRA registration the supplier holds, the kind of purchase, and in one sentence the credit you can claim. <b>4b</b> adds a worksheet for any dates you choose, set out line by line as the return asks, each figure opening to the invoices or expenses behind it. 4a can be built now. 4b reads the per-invoice tax record GST/HST Stage 3 builds, so it waits for that. Every figure is a made-up example. This round has the <code>/design</code> and <code>/ux</code> findings applied. Everything is a proposal until you rule on the asks in the last tab.</p>
+
+<div class="tabs" role="tablist" id="tabs">
+  <button role="tab" aria-selected="true" data-t="p1">1 · What changes</button>
+  <button role="tab" aria-selected="false" data-t="p2">2 · Expense form</button>
+  <button role="tab" aria-selected="false" data-t="p3">3 · Record &amp; register</button>
+  <button role="tab" aria-selected="false" data-t="p4">4 · Tax paid in Reports</button>
+  <button role="tab" aria-selected="false" data-t="p5">5 · The worksheet</button>
+  <button role="tab" aria-selected="false" data-t="p6">6 · Worksheet states</button>
+  <button role="tab" aria-selected="false" data-t="p7">7 · Where it lives</button>
+  <button role="tab" aria-selected="false" data-t="p8">8 · Accountant package</button>
+  <button role="tab" aria-selected="false" data-t="p9">9 · Phone</button>
+  <button role="tab" aria-selected="false" data-t="p10">10 · Asks</button>
+</div>
+
+<!-- ============ 1 ============ -->
+<section class="pane" id="p1">
+  <h2>Two jobs, one drawing, two builds</h2>
+  <div class="tw"><table class="t">
+    <thead><tr><th>Part</th><th>What you get</th><th>Needs</th><th>Build</th></tr></thead>
+    <tbody>
+      <tr><td><b>4a · What you pay</b></td><td>The expense form records each tax by type, the supplier’s number (asked for from $100), the supplier’s CRA registration and the kind of purchase. Then it says what credit you can claim and why. A missing number shows in Needs attention. Reports shows tax paid by type.</td><td>Nothing new. The expense form is already built.</td><td>Now <button class="mk ask" data-go-ask="1">Ask 1</button></td></tr>
+      <tr><td><b>4b · What you collect, and the worksheet</b></td><td>A worksheet for any start and end date: lines 101 to 109, sales by province and tax, US sales inside line 101, credit notes and write-offs on line 107. A period can be marked as filed so it never moves afterwards. Every figure opens to its invoices or expenses.</td><td>GST/HST Stage 3’s record of each invoice’s tax. It isn’t built; its first step puts five asks to you.</td><td>After Stage 3 <button class="mk ask" data-go-ask="2">Ask 2</button></td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="cols">
+  <div class="card"><h3>Where I disagree with the brief</h3><ul>
+    <li><b>The worksheet should be a view in Reports, not its own tab.</b> The ruled Reports redesign already has the income-tax statement (T2125) as a view. The GST/HST return is the same kind of thing: a filing aid for a period. A fifth tab for a job you do once a year makes the page busier every day. Tab 7 draws both. <button class="mk ask" data-go-ask="7">Ask 7</button></li>
+    <li><b>US sales: use the Bank of Canada rate on the invoice date, not Stripe’s figure.</b> The brief recommended Stripe’s CAD figure. <code>/accounting</code> found Stripe’s filing amounts can be blank on exactly the zero-rated rows, and couldn’t confirm that Stripe’s rate source counts with CRA. Stage 3’s record has no rate column yet, so this answer goes back into Stage 3’s first step. <button class="mk ask" data-go-ask="4">Ask 4</button></li>
+    <li><b>The credit is not always tax times business use.</b> Equipment you keep gets all of the tax back above 50% business use and none at or below 50%. Everyday costs get all of it at 90% or more and none at 10% or less. Meals get half. So the form needs one new question, “Kind of purchase”. <button class="mk ask" data-go-ask="8">Ask 8</button></li>
+    <li><b>“Foreign supplier charged tax” is really about which CRA registration the supplier holds.</b> Tax charged by a supplier on CRA’s simplified registration can never be claimed, and there is no rebate form for it. The only fix is to give that supplier your number and ask for a refund. A number printed on the invoice doesn’t tell you which registration it is. <button class="mk ask" data-go-ask="6">Ask 6</button></li>
+  </ul></div>
+  <div class="card"><h3>Found while drawing, and not in the brief</h3><ul>
+    <li><b>Sales made between the Stage 2 release and Stage 3’s first day would appear on no worksheet.</b> Stage 3’s first step currently says “no backfill”. Once Stage 2 is live, a club that pays creates a taxed invoice that nothing records. <button class="mk ask" data-go-ask="11">Ask 11</button></li>
+    <li><b>Nothing records what you filed.</b> The worksheet works its figures out live. If a supplier’s number is added after you file, line 106 of a filed period would quietly change. A filed period should freeze, and a late credit should move to your next return. <button class="mk ask" data-go-ask="12">Ask 12</button></li>
+    <li><b>Today’s form has no quick “no tax” answer.</b> Leaving More details closed saves “tax unknown”, so five quick bank charges become five items to clear before you file. Round 2 gives the tax question three answers (tab 2).</li>
+  </ul></div>
+  </div>
+
+  <div class="cols" style="margin-top:12px">
+  <div class="card"><h3>Corrections from the return-lines note, already in the drawing</h3><ul>
+    <li><b>Credit notes go on line 107</b> (adjustments that decrease net tax). They don’t reduce line 103, which stays gross on every invoice issued.</li>
+    <li><b>Bad debts written off go on line 107.</b> A debt you later recover goes on line 104.</li>
+    <li><b>Tax is owed in the period the invoice is issued</b>, paid or not. The worksheet reads the issue date.</li>
+    <li><b>Regular method only.</b> The quick method would take away the credits on your expenses. <button class="mk ask" data-go-ask="9">Facts</button></li>
+    <li><b>Services bought before your registration date aren’t claimable.</b> <button class="mk ask" data-go-ask="9">Facts</button></li>
+    <li>The short line captions are paraphrases of CRA’s instructions and haven’t been checked word for word against the live return. The 4b build checks them.</li>
+  </ul></div>
+  <div class="card"><h3>A rule this overturns, and what sits next door</h3>
+    <p style="margin-top:0">The Bookkeeping plan says Overview and Reports never show profit, cash, a bank balance <b>or recoverable tax</b>. The form says “This form does not claim a tax credit.” A return worksheet has to show credits and net tax. <b>Proposed:</b> the credit shows on the worksheet and on each expense with its reason. Reports shows tax <i>paid</i>, which is a fact. The Overview gets nothing. <button class="mk ask" data-go-ask="3">Ask 3</button></p>
+    <ul>
+      <li>Not touched here: Stage 1’s owner walk (§431) has no result, Stage 2’s redraw is owed, and the repayment race must be fixed before the books go live.</li>
+      <li>The Bookkeeping ladder gets two rows (4a, and 4b with the worksheet). Its Stripe income stage narrows to fees, payouts and bank matching. <button class="mk ask" data-go-ask="2">Ask 2</button></li>
+    </ul></div>
+  </div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="pane" id="p2" hidden>
+  <h2>The expense form: three answers to “tax?”, tax by type, and the credit right under it</h2>
+  <p>Tax stays inside <b>More details</b>, so a small receipt is still four fields and Save. Inside, business use stays visible for every expense. The tax question has three answers, and only a receipt with GST or HST grows the rest. Example: a $650.00 legal invoice from Hollis Law, HST 13% included. The window is 640 wide, as shipped.</p>
+  <div class="viewrow"><span class="lab">View</span>
+    <div class="sw" role="group" aria-label="View"><button data-v="all" aria-pressed="true">Everything</button><button data-v="diff" aria-pressed="false">Show only what differs</button></div></div>
+  <div class="pair">
+    <div>
+      <div class="cap"><b>Before</b> · shipped · More details open <button class="mk unc" data-note="UNCHANGED: the window as it ships today, with More details opened. A checkbox, one tax amount, a review status, business use and notes. The last line says the form does not claim a tax credit. Unticked means “Tax amount unknown”, which is what a quick save leaves.">UNCHANGED</button></div>
+      <div class="scroll"><div class="fr w720"><div class="ak scrimbg"><div class="win">
+        <div class="wh"><div class="tb"><div class="eye">Expenses · new</div><h4>Add an expense</h4></div><div class="x">×</div></div>
+        <div class="wb">
+          <div class="same" style="display:flex;flex-direction:column;gap:14px">
+            <div class="two"><div class="fld"><span class="lb">Supplier *</span><div class="in">Hollis Law</div></div><div class="fld"><span class="lb">Category *</span><div class="in sel">Professional services</div></div></div>
+            <div class="fld"><span class="lb">What was it for? *</span><div class="in">Terms of service review</div></div>
+            <div class="two"><div class="fld"><span class="lb">Expense date *</span><div class="in">Nov 4, 2026</div></div><div class="fld"><span class="lb">Amount *</span><div class="amt"><div class="in cur">CAD ▾</div><div class="in">650.00</div></div></div></div>
+            <div class="chk"><i></i>Paid on a different date</div>
+            <div class="two"><div class="fld"><span class="lb">How did you pay? *</span><div class="in sel">Paid personally</div></div><div class="fld"><span class="lb">Receipt</span><div class="drop">hollis-invoice-2207.pdf</div></div></div>
+          </div>
+          <div class="samebar">Supplier to Receipt: unchanged</div>
+          <div class="morebtn"><b>▾ More details</b><span>Tax $74.78 · 100% business · no notes</span></div>
+          <div class="adv">
+            <div class="chk"><i class="on"></i>I know the purchase tax amount</div>
+            <div class="two"><div class="fld"><span class="lb">Purchase tax amount · CAD</span><div class="in">74.78</div></div><div class="fld"><span class="lb">Tax review status</span><div class="in sel">Pending review</div></div></div>
+            <div class="fld"><span class="lb">Business use %</span><div class="in">100</div></div>
+            <div class="fld"><span class="lb">Notes</span><div class="in ta ph">&nbsp;</div></div>
+            <p class="hint">Purchase tax is a recorded detail. This form does not claim a tax credit.</p>
+          </div>
+        </div>
+        <div class="wf"><div class="fs">A missing receipt shows in Needs attention.</div><div class="fe"><span class="btn quiet">Cancel</span><span class="btn lime">Save expense</span></div></div>
+      </div></div></div></div>
+    </div>
+    <div>
+      <div class="cap"><b>After</b> · a receipt with HST <button class="mk res" data-note="RESTYLED: More details keeps its place. The checkbox becomes a three-answer list (so “no tax” is one pick). Business use moves up beside the kind of purchase, because together they decide the credit and it applies to every expense. The credit sentence sits right under the figures that change it. The number and registration come last. The closing hint is deleted: the credit sentence already says where the credit goes.">RESTYLED</button></div>
+      <div class="scroll"><div class="fr w720"><div class="ak scrimbg"><div class="win">
+        <div class="wh"><div class="tb"><div class="eye">Expenses · new</div><h4>Add an expense</h4></div><div class="x">×</div></div>
+        <div class="wb">
+          <div class="same" style="display:flex;flex-direction:column;gap:14px">
+            <div class="two"><div class="fld"><span class="lb">Supplier *</span><div class="in">Hollis Law</div></div><div class="fld"><span class="lb">Category *</span><div class="in sel">Professional services</div></div></div>
+            <div class="fld"><span class="lb">What was it for? *</span><div class="in">Terms of service review</div></div>
+            <div class="two"><div class="fld"><span class="lb">Expense date *</span><div class="in">Nov 4, 2026</div></div><div class="fld"><span class="lb">Amount *</span><div class="amt"><div class="in cur">CAD ▾</div><div class="in">650.00</div></div></div></div>
+            <div class="chk"><i></i>Paid on a different date</div>
+            <div class="two"><div class="fld"><span class="lb">How did you pay? *</span><div class="in sel">Paid personally</div></div><div class="fld"><span class="lb">Receipt</span><div class="drop">hollis-invoice-2207.pdf</div></div></div>
+          </div>
+          <div class="samebar">Supplier to Receipt: unchanged</div>
+          <div class="morebtn"><b>▾ More details</b><span class="newbox" data-note="The closed row’s summary names the tax by type and the credit, so you can check both without opening it. Today it reads “Tax $74.78 · 100% business · no notes”. For a no-tax receipt it reads “No tax · 100% business · no notes”.">HST $74.78 · credit $74.78 · 100% business · no notes</span></div>
+          <div class="adv">
+            <div class="two newbox" style="padding:4px" data-note="RESTYLED: the shipped checkbox “I know the purchase tax amount” becomes one list with three answers: “Not sure yet” (today’s unticked state, tax unknown), “No tax charged” (confirmed $0, which clears the item before you file), and “Shown on the receipt”. Tax review status moves up beside it, so the row it used to sit on alone is gone.">
+              <div class="fld"><span class="lb">Tax on this receipt</span><div class="in sel">Shown on the receipt</div></div>
+              <div class="fld"><span class="lb">Tax review status</span><div class="in sel">Pending review</div></div>
+            </div>
+            <div class="newbox" style="display:flex;flex-direction:column;gap:8px;padding:4px" data-note="NEW: one line per tax on the receipt. The type list carries the rate: GST 5%, HST 13%, HST 14%, HST 15%, PST, QST, Other tax. “Work out from the total” fills the amount from the receipt total and the rate (650.00 × 13 ÷ 113 = 74.78), and you can still change it. “+ Add another tax” adds a second line for a receipt from British Columbia, Saskatchewan, Manitoba or Québec. PST and QST are never claimed on this return. They stay part of the cost.">
+              <div class="taxrow"><div class="fld"><span class="lb">Tax type</span><div class="in sel">HST 13%</div></div><div class="fld"><span class="lb">Amount · CAD</span><div class="in">74.78</div></div><div class="rm">×</div></div>
+              <div class="doors"><span class="door">Work out from the total</span><span class="door">+ Add another tax</span></div>
+            </div>
+            <div class="two newbox" style="padding:4px" data-note="NEW “Kind of purchase” (shown only when there is GST or HST): Everyday cost, Equipment you keep, or Meal or entertainment. It starts from the category (Equipment &amp; supplies starts as Equipment you keep; Travel &amp; meals stays Everyday cost, because a taxi is not a meal), and you can change it. Business use % is the shipped field. It stays visible for every expense, tax or not, because the income-tax side uses it too.">
+              <div class="fld"><span class="lb">Kind of purchase</span><div class="in sel">Everyday cost</div></div>
+              <div class="fld"><span class="lb">Business use %</span><div class="in">100</div></div>
+            </div>
+            <div class="co newbox" data-note="NEW: the credit, worked out as you type, right under the figures that change it. Only the figure is bold. The edge is neutral; it turns amber only when something is waiting or not claimable (cases below). This is the figure that feeds line 106 on the worksheet. Ask 3 decides whether a credit may show here at all.">Credit on your GST/HST return: <span class="fig">$74.78</span><span>All of the HST, because business use is 90% or more.</span></div>
+            <div class="two newbox" style="padding:4px" data-note="NEW: the supplier’s number as printed, and which CRA registration they hold. Both are filled in from your last expense with exactly the same supplier name, and the hint under them says so. Registration list: Registered the usual way, Simplified (foreign online seller), Not registered, Not checked. The amber hint for a blank number is drawn in the cases below.">
+              <div class="fld"><span class="lb">Supplier’s GST/HST number</span><div class="in">81234 5678 RT0001</div><p class="hint">Same as your last Hollis Law expense.</p></div>
+              <div class="fld"><span class="lb">Supplier’s registration</span><div class="in sel">Registered the usual way</div><p class="hint">Foreign online services are often on CRA’s simplified list.</p></div>
+            </div>
+            <div class="fld same"><span class="lb">Notes</span><div class="in ta ph">&nbsp;</div></div>
+          </div>
+        </div>
+        <div class="wf"><div class="fs">A missing receipt shows in Needs attention.</div><div class="fe"><span class="btn quiet">Cancel</span><span class="btn lime">Save expense</span></div></div>
+      </div></div></div></div>
+    </div>
+  </div>
+
+  <h3>The same section in three other states <button class="mk new" data-note="NEW: the states /ux found undrawn. Each is the inside of More details only; everything above it is the same window.">NEW</button></h3>
+  <div class="pair">
+    <div>
+      <div class="cap"><b>No tax charged</b> · a $6.95 bank fee</div>
+      <div class="fr" style="width:400px"><div class="ak" style="padding:14px;background:var(--card)"><div class="adv" style="margin:0">
+        <div class="two"><div class="fld"><span class="lb">Tax on this receipt</span><div class="in sel">No tax charged</div></div><div class="fld"><span class="lb">Business use %</span><div class="in">100</div></div></div>
+        <div class="fld"><span class="lb">Notes</span><div class="in ta ph">&nbsp;</div></div>
+      </div><p class="hint" style="margin-top:8px">Closed row: “No tax · 100% business · no notes”. Nothing to clear before you file.</p></div></div>
+    </div>
+    <div>
+      <div class="cap"><b>Waiting for the number</b> · no number on hand</div>
+      <div class="fr" style="width:400px"><div class="ak" style="padding:14px;background:var(--card)"><div class="adv" style="margin:0">
+        <div class="co amb">Credit on your GST/HST return: <span class="fig">$74.78</span><span>Waiting for the supplier’s number. Receipts of $100 or more need it, so this stays off the worksheet until it’s added.</span></div>
+        <div class="fld"><span class="lb">Supplier’s GST/HST number</span><div class="in ph">&nbsp;</div><p class="hint warn">You can save without it. It shows in Needs attention.</p></div>
+        <div class="chk newbox" data-note="NEW: the way out when a number can’t be had (a lost invoice, a supplier who won’t answer). Ticking it records that you are not claiming this credit. The item leaves Needs attention and the Before you file box, and the credit reads “Not claimed”. Untick it if the number turns up."><i></i>I can’t get the number: don’t claim this credit</div>
+      </div></div></div>
+    </div>
+    <div>
+      <div class="cap"><b>Simplified registration</b> · Canva</div>
+      <div class="fr" style="width:400px"><div class="ak" style="padding:14px;background:var(--card)"><div class="adv" style="margin:0">
+        <div class="fld"><span class="lb">Supplier’s registration</span><div class="in sel">Simplified (foreign online seller)</div><p class="hint">Same as your last Canva expense.</p></div>
+        <div class="co amb">No credit<span>Canva charged HST under CRA’s simplified registration, which can’t be claimed. Give Canva your GST/HST number in its billing settings so it stops charging, and ask it to refund the $2.08. When it does, correct this expense to remove the tax line.</span></div>
+      </div></div></div>
+    </div>
+  </div>
+
+  <h3>What the credit sentence says, case by case <button class="mk new" data-note="NEW: every case the credit sentence covers. The rules are CRA’s (ITC eligibility percentage, modified 2026-02-03; the simplified registration page), from /accounting’s return-lines note.">NEW</button> <button class="mk ask" data-go-ask="8">Ask 8</button></h3>
+  <div class="tw"><table class="t">
+    <thead><tr><th>Receipt</th><th>Credit line</th><th>Second line</th></tr></thead>
+    <tbody>
+      <tr><td>Hollis Law $650.00, HST $74.78, everyday cost, 100%</td><td>Credit: <b>$74.78</b></td><td>All of the HST, because business use is 90% or more.</td></tr>
+      <tr><td>Same, 50% business use</td><td>Credit: <b>$37.39</b></td><td>50% of the HST, because business use is 50%.</td></tr>
+      <tr><td>Same, 8% business use</td><td>No credit</td><td>Business use of 10% or less gets no credit.</td></tr>
+      <tr><td>Best Buy laptop $1,694.99, HST $195.00, equipment you keep, 70%</td><td>Credit: <b>$195.00</b></td><td>All of the HST, because equipment used more than 50% for the business gets the full credit.</td></tr>
+      <tr><td>Same laptop, 50%</td><td>No credit</td><td>Equipment used 50% or less for the business gets no credit.</td></tr>
+      <tr><td>Client lunch, HST $9.10, meal or entertainment, 100%</td><td>Credit: <b>$4.55</b></td><td>Half of the HST. Meals and entertainment get half.</td></tr>
+      <tr><td>Canva $18.08, HST $2.08, registration Simplified</td><td>No credit <span class="muted">(amber)</span></td><td>Drawn above.</td></tr>
+      <tr><td>$650.00 with HST, number blank</td><td>Credit: <b>$74.78</b> <span class="muted">(amber)</span></td><td>Waiting for the supplier’s number (drawn above).</td></tr>
+      <tr><td>Same, “I can’t get the number” ticked</td><td>Not claimed</td><td>You chose not to claim this credit.</td></tr>
+      <tr><td>$42.00 with HST, number blank</td><td>Credit: <b>$4.83</b></td><td>(none: under $100 the number isn’t needed)</td></tr>
+      <tr><td>BC receipt: GST $3.00 and PST $4.20</td><td>Credit: <b>$3.00</b></td><td>The GST. PST isn’t claimed on this return; it stays part of the cost.</td></tr>
+      <tr><td>Registration Not checked, tax charged</td><td>Credit: <b>$x</b></td><td>Counted for now. Check the supplier’s registration before you file. <button class="mk ask" data-go-ask="6">Ask 6</button></td></tr>
+      <tr><td>A service dated before your registration date</td><td>No credit</td><td>Bought before your GST/HST registration began on {date}. <button class="mk ask" data-go-ask="9">Facts</button></td></tr>
+      <tr><td>Saved before this change (one tax amount, no type)</td><td>Choose the tax type <span class="muted">(amber)</span></td><td>The tax line opens with its amount and the type set to “Choose a type”. Reports counts it under “Type not set”, and the Before you file box lists all such expenses as one line. Nothing is flagged in the register, and no number is filled in unless you pick one.</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note-s">The credit is never typed by you and never shown without its reason. Nothing in this section blocks saving. The only required field is the tax amount, once “Shown on the receipt” is picked, which matches today’s rule. CRA also wants a receipt of $500 or more to show your name, a description and the terms. That is on the supplier’s invoice, so the form doesn’t ask.</p>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="pane" id="p3" hidden>
+  <h2>The record window and the register: the new facts, and what a missing number looks like</h2>
+  <p>The same Hollis Law expense, saved <b>without</b> its number. The record keeps its two-column grid: the Purchase tax cell names the type and three cells are added. The missing number is said once, as a chip in its own cell. In the register it is one more reason in the Needs attention view, never a new column.</p>
+  <div class="viewrow"><span class="lab">View</span>
+    <div class="sw" role="group" aria-label="View"><button data-v="all" aria-pressed="true">Everything</button><button data-v="diff" aria-pressed="false">Show only what differs</button></div></div>
+  <div class="pair">
+    <div>
+      <div class="cap"><b>Before</b> · shipped record window <button class="mk unc" data-note="UNCHANGED: the record window as shipped. Purchase tax reads “{amount} · {status}”.">UNCHANGED</button></div>
+      <div class="scroll"><div class="fr w720"><div class="ak scrimbg"><div class="win">
+        <div class="wh rec"><div class="tb"><div class="eye">Expense · Nov 4, 2026</div><h4>Hollis Law</h4><div class="idl">Professional services · Terms of service review</div></div><div class="x">✎</div><div class="x">×</div></div>
+        <div class="wb">
+          <dl class="rg">
+            <div class="same"><dt>Amount</dt><dd>$650.00</dd></div><div class="same"><dt>Paid from</dt><dd>Paid personally</dd></div>
+            <div class="same"><dt>Expense date</dt><dd>Nov 4, 2026</dd></div><div class="same"><dt>Payment date</dt><dd>Same day</dd></div>
+            <div><dt>Purchase tax</dt><dd>$74.78 · Pending review</dd></div><div><dt>Business use</dt><dd>100%</dd></div>
+          </dl>
+          <p class="same">hollis-invoice-2207.pdf · Attached Nov 4 · opens in a new tab</p>
+          <div class="samebar">Receipt, notes and Changes: unchanged</div>
+          <p class="same" style="font-size:14px">Changes · 1<br><span class="hint">Rev. 1 · Nov 4 · $650.00 · First entry · Receipt</span></p>
+        </div>
+        <div class="wf same"><div class="fs">‹ Previous Namecheap</div><div class="fs" style="text-align:center">3 of 12</div><div class="fs" style="text-align:right">Next › RBC</div></div>
+      </div></div></div></div>
+    </div>
+    <div>
+      <div class="cap"><b>After</b> · number missing <button class="mk res" data-note="RESTYLED: the Purchase tax cell names the type and rate; Business use names the kind. Three new cells. The status is said once: the chip in the number cell. The credit cell carries only the figure and one quiet line. The chip is not a button; the way to add the number is the shipped pencil, “Correct expense”.">RESTYLED</button></div>
+      <div class="scroll"><div class="fr w720"><div class="ak scrimbg"><div class="win">
+        <div class="wh rec"><div class="tb"><div class="eye">Expense · Nov 4, 2026</div><h4>Hollis Law</h4><div class="idl">Professional services · Terms of service review</div></div><div class="x">✎</div><div class="x">×</div></div>
+        <div class="wb">
+          <dl class="rg">
+            <div class="same"><dt>Amount</dt><dd>$650.00</dd></div><div class="same"><dt>Paid from</dt><dd>Paid personally</dd></div>
+            <div class="same"><dt>Expense date</dt><dd>Nov 4, 2026</dd></div><div class="same"><dt>Payment date</dt><dd>Same day</dd></div>
+            <div><dt>Purchase tax</dt><dd>HST 13% · $74.78 · Pending review</dd></div><div><dt>Business use</dt><dd>100% · everyday cost</dd></div>
+            <div class="newbox" data-note="NEW: the number cell. On a receipt of $100 or more with no number it shows the amber MISSING chip and nothing else. Under $100 a blank reads “Not needed under $100”. When the number is there it shows as printed."><dt>Supplier’s GST/HST number</dt><dd><span class="chip amb">MISSING</span></dd></div>
+            <div class="newbox" data-note="NEW: the supplier’s registration as chosen on the form."><dt>Supplier’s registration</dt><dd>Registered the usual way</dd></div>
+            <div class="newbox" data-note="NEW: the credit and one quiet line. While the number is missing, the worksheet leaves it out of line 106 and lists it in its Before you file box."><dt>Credit on your GST/HST return</dt><dd>$74.78<small>Held until the number is added</small></dd></div>
+          </dl>
+          <p class="same">hollis-invoice-2207.pdf · Attached Nov 4 · opens in a new tab</p>
+          <div class="samebar">Receipt, notes and Changes: unchanged</div>
+          <p class="same" style="font-size:14px">Changes · 1<br><span class="hint">Rev. 1 · Nov 4 · $650.00 · First entry · Receipt</span></p>
+        </div>
+        <div class="wf same"><div class="fs">‹ Previous Namecheap</div><div class="fs" style="text-align:center">3 of 12</div><div class="fs" style="text-align:right">Next › RBC</div></div>
+      </div></div></div></div>
+    </div>
+  </div>
+
+  <h3>The register, Needs attention pressed <button class="mk res" data-note="RESTYLED: one new reason chip, “GST/HST number missing”, beside the shipped four (Receipt missing, Tax amount unknown, USD source not picked, Dates to review). It shows only on a receipt of $100 or more with GST or HST, no number, and “I can’t get the number” not ticked. A row with this reason opens the correction form with More details open and the number field ready, instead of the record. That saves two clicks. No new column.">RESTYLED</button></h3>
+  <div class="scroll"><div class="fr w1200"><div class="ak" style="padding:18px 22px;display:flex;flex-direction:column;gap:12px">
+    <div class="tb"><span class="pillp">November 2026 ▾</span><span style="color:var(--soft);font-size:14px">4 expenses · $2,414.31</span><span class="fsq">Category ▾</span><span class="fsq">Paid from ▾</span><span class="fsq">Active ▾</span><span class="pillamb">Needs attention 4</span><span style="margin-left:auto" class="srchp">Search expenses…</span><span class="btn out">Export ▾</span></div>
+    <div class="tframe"><table class="k">
+      <thead><tr><th>Date</th><th>Supplier</th><th>What for</th><th>Category</th><th>Paid from</th><th>Receipt</th><th class="r">Amount</th><th class="chev"></th></tr></thead>
+      <tbody>
+        <tr><td>Nov 4</td><td class="lk">Hollis Law</td><td>Terms of service review<br><span class="chip amb newbox" data-note="NEW reason chip. A row with it opens the correction form with the number field ready.">GST/HST NUMBER MISSING</span></td><td>Professional services</td><td>Paid personally</td><td>✓</td><td class="r">$650.00</td><td class="chev">›</td></tr>
+        <tr><td>Nov 3</td><td class="lk">Best Buy</td><td>Laptop<br><span class="chip amb">TAX AMOUNT UNKNOWN</span></td><td>Equipment &amp; supplies</td><td>Paid personally</td><td>✓</td><td class="r">$1,694.99</td><td class="chev">›</td></tr>
+        <tr><td>Nov 2</td><td class="lk">Uber</td><td>Club visit, Oakville<br><span class="chip amb">RECEIPT MISSING</span></td><td>Travel &amp; meals</td><td>Paid personally</td><td><span class="chip amb">MISSING</span></td><td class="r">$48.30</td><td class="chev">›</td></tr>
+        <tr><td>Nov 1</td><td class="lk">Figma</td><td>Design seat · USD 15.00<br><span class="chip amb">USD SOURCE NOT PICKED</span></td><td>Software &amp; online services</td><td>Paid personally</td><td>✓</td><td class="r">$21.02</td><td class="chev">›</td></tr>
+      </tbody>
+    </table></div>
+  </div></div></div>
+  <p class="note-s">Not flagged here: a supplier whose registration is “Not checked”, or an expense saved before this change. Every older expense would carry those, so the register would light up with old rows. The worksheet lists them once, before you file (tab 5).</p>
+
+  <h3 id="p3-added">Added for the build: a receipt with two taxes, and one saved before this change <button class="mk new" data-note="NEW, added 2026-11-06 by the build (Session C). Two record cells the drawing above doesn’t show. Both are drawn from the shipped record grid: two columns, a hairline over each cell, the value bold, a quiet line under it in the small grey text the credit cell already uses. The window, its header, the receipt line and Changes are the shipped ones.">NEW</button> <button class="mk ask" data-go-ask="13">Ask 13</button> <button class="mk ask" data-go-ask="14">Ask 14</button></h3>
+  <p>Today both cells read only the amount and status, the way the Before frame at the top of this tab does: “$7.20 · Pending review” and “$74.78 · Pending review”. Left, a British Columbia receipt with GST and PST (under $100, so no number is needed). Right, an expense saved before this change, with one tax amount and no type.</p>
+  <div class="pair">
+    <div>
+      <div class="cap"><b>Two taxes</b> · London Drugs, BC · A, recommended <button class="mk res" data-note="RESTYLED, Ask 13 A: one line per tax, each “type · amount”, in the order entered. The total and the review status move to one quiet line under them, so the status is still said once. PST has no rate in the form’s type list (it differs by what was bought), so none is shown. A single-tax receipt keeps the drawn one-line form, “HST 13% · $74.78 · Pending review”. The credit’s quiet line is its sentence from the form, which for this receipt names both the GST rule and why the PST isn’t claimed.">RESTYLED</button></div>
+      <div class="scroll"><div class="fr w720"><div class="ak scrimbg"><div class="win">
+        <div class="wh rec"><div class="tb"><div class="eye">Expense · Nov 5, 2026</div><h4>London Drugs</h4><div class="idl">Equipment &amp; supplies · USB-C hub and cables</div></div><div class="x">✎</div><div class="x">×</div></div>
+        <div class="wb">
+          <dl class="rg">
+            <div class="same"><dt>Amount</dt><dd>$67.20</dd></div><div class="same"><dt>Paid from</dt><dd>Business card</dd></div>
+            <div class="same"><dt>Expense date</dt><dd>Nov 5, 2026</dd></div><div class="same"><dt>Payment date</dt><dd>Same day</dd></div>
+            <div class="newbox" data-note="Ask 13 A. Two lines, one per tax, then “$7.20 in all · Pending review”. The $7.20 is the shipped single tax amount, so every older reader of it stays right."><dt>Purchase tax</dt><dd>GST 5% · $3.00<br>PST · $4.20<small>$7.20 in all · Pending review</small></dd></div><div><dt>Business use</dt><dd>100% · equipment you keep</dd></div>
+            <div><dt>Supplier’s GST/HST number</dt><dd>Not needed under $100</dd></div>
+            <div><dt>Supplier’s registration</dt><dd>Registered the usual way</dd></div>
+            <div><dt>Credit on your GST/HST return</dt><dd>$3.00<small>All of the GST, because equipment used more than 50% for the business gets the full credit. PST isn’t claimed on this return; it stays part of the cost.</small></dd></div>
+          </dl>
+          <p class="same">london-drugs-0471.jpg · Attached Nov 5 · opens in a new tab</p>
+          <div class="samebar">Receipt, notes and Changes: unchanged</div>
+          <p class="same" style="font-size:14px">Changes · 1<br><span class="hint">Rev. 1 · Nov 5 · $67.20 · First entry · Receipt</span></p>
+        </div>
+        <div class="wf same"><div class="fs">‹ Previous Hollis Law</div><div class="fs" style="text-align:center">2 of 12</div><div class="fs" style="text-align:right">Next › Namecheap</div></div>
+      </div></div></div></div>
+    </div>
+    <div>
+      <div class="cap"><b>Saved before this change</b> · Type not set · A, recommended <button class="mk res" data-note="RESTYLED, Ask 14 A: the Purchase tax cell names the type the way Reports does, “Type not set”. One new cell shows: the credit, which isn’t worked out until the type is chosen. It is plain text, not amber, because this expense is never flagged. (The form’s callout for the same case stays amber, “Choose the tax type”, because there you can act on it.) The number and registration cells stay hidden: the type might be PST, and those only matter for GST or HST, the same reason “Not sure yet” hides them. They appear once a GST or HST type is chosen. Choosing it is a correction, through the shipped pencil.">RESTYLED</button></div>
+      <div class="scroll"><div class="fr w720"><div class="ak scrimbg"><div class="win">
+        <div class="wh rec"><div class="tb"><div class="eye">Expense · Oct 20, 2026</div><h4>Hollis Law</h4><div class="idl">Professional services · Privacy policy review</div></div><div class="x">✎</div><div class="x">×</div></div>
+        <div class="wb">
+          <dl class="rg">
+            <div class="same"><dt>Amount</dt><dd>$650.00</dd></div><div class="same"><dt>Paid from</dt><dd>Paid personally</dd></div>
+            <div class="same"><dt>Expense date</dt><dd>Oct 20, 2026</dd></div><div class="same"><dt>Payment date</dt><dd>Same day</dd></div>
+            <div><dt>Purchase tax</dt><dd>Type not set · $74.78 · Pending review</dd></div><div><dt>Business use</dt><dd>100% · everyday cost</dd></div>
+            <div class="newbox" data-note="Ask 14 A. The form’s callout for this case reads “Choose the tax type” in amber. In the record, which you only read, the cell says the credit isn’t worked out and where to fix it, in plain text."><dt>Credit on your GST/HST return</dt><dd>Not worked out<small>Choose the tax type when you correct this expense.</small></dd></div>
+          </dl>
+          <p class="same">hollis-invoice-2163.pdf · Attached Oct 20 · opens in a new tab</p>
+          <div class="samebar">Receipt, notes and Changes: unchanged</div>
+          <p class="same" style="font-size:14px">Changes · 1<br><span class="hint">Rev. 1 · Oct 20 · $650.00 · First entry · Receipt</span></p>
+        </div>
+        <div class="wf same"><div class="fs">‹ Previous Figma</div><div class="fs" style="text-align:center">7 of 12</div><div class="fs" style="text-align:right">Next › Rogers</div></div>
+      </div></div></div></div>
+    </div>
+  </div>
+  <div class="pair">
+    <div>
+      <div class="cap"><b>Ask 13 B</b> · one line, at the cell’s true width (286)</div>
+      <div class="fr" style="width:286px"><div class="ak" style="padding:0 0 8px;background:var(--card)"><dl class="rg" style="grid-template-columns:1fr"><div><dt>Purchase tax</dt><dd>GST 5% $3.00 + PST $4.20 · Pending review</dd></div></dl></div></div>
+      <p class="note-s" style="max-width:286px">It wraps in the middle, and a third tax (a receipt with GST, PST and an eco fee) makes it three lines with no order.</p>
+    </div>
+    <div>
+      <div class="cap"><b>Ask 14 B</b> · all three new cells · <b>C</b> · none</div>
+      <div class="fr" style="width:640px;max-width:100%"><div class="ak" style="padding:0 24px 8px;background:var(--card)"><dl class="rg">
+        <div><dt>Purchase tax</dt><dd>Type not set · $74.78 · Pending review</dd></div><div><dt>Business use</dt><dd>100% · everyday cost</dd></div>
+        <div><dt>Supplier’s GST/HST number</dt><dd>Not recorded</dd></div><div><dt>Supplier’s registration</dt><dd>Not checked</dd></div>
+        <div><dt>Credit on your GST/HST return</dt><dd>Not worked out<small>Choose the tax type when you correct this expense.</small></dd></div>
+      </dl></div></div>
+      <p class="note-s" style="max-width:640px"><b>B</b> says two things that may not apply: if the tax was PST, there is no number or registration to record. <b>C</b> keeps only the first two cells: quieter, but the record no longer says why there’s no credit, while Reports lists it under “Type not set”.</p>
+    </div>
+  </div>
+  <p class="note-s">Settled by tab 2’s rule, not asked: an expense with <b>No tax charged</b> or <b>Not sure yet</b> shows only the shipped cells, reading “No tax charged” or “Not sure yet” (today “Unknown”), and Business use with no kind. A receipt with only PST, QST or Other tax shows the credit cell (“No credit” and why) but no number or registration, since those only matter for GST or HST.</p>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="pane" id="p4" hidden>
+  <h2>Tax paid in Reports: by type, on the Reports page you have today</h2>
+  <p>4a builds before the Reports redesign (Bookkeeping Stage 3, drawn and ruled, not built), so this draws onto the shipped page. Its half-width “Purchase tax recorded” box becomes <b>Purchase tax paid</b>: a section title, a joined band, then one row per tax type. The by-type rows are new doors (today’s tax rows open nothing): each filters the expense list further down the page, as By category does. Reports shows tax as charged on your receipts, never a credit. The redesign carries this into its Spending view. Whole page, before and after, example period 2027. <button class="mk ask" data-go-ask="10">Ask 10</button></p>
+  <div class="viewrow"><span class="lab">View</span>
+    <div class="sw" role="group" aria-label="View"><button data-v="all" aria-pressed="true">Everything</button><button data-v="diff" aria-pressed="false">Show only what differs</button></div></div>
+  <div class="cap"><b>Before</b> · shipped Reports <button class="mk unc" data-note="UNCHANGED: the shipped Reports tab. Six filters, three separate figure tiles (drift from the joined band rule, which the Reports redesign fixes), and the tax box at half width beside By supplier, its rows plain text. Three lime buttons on one screen is shipped drift too, not touched here.">UNCHANGED</button></div>
+  <div class="scroll"><div class="fr w1200"><div class="ak console">
+    <div class="ctop"><span class="brand">FieldLogic<em>HQ</em></span><span class="sc">SUPPORT CONSOLE</span><span class="srch">⌕ Find a club, person or Stripe number</span></div>
+    <div class="cside"><div>TODAY</div><div>CUSTOMERS</div><div>HEALTH</div><div>GROWTH</div><div>PRODUCT</div><div>RECORDS</div><div>SYSTEM</div><div>PRIVATE FINANCE</div><div class="on">Bookkeeping</div></div>
+    <div class="cmain">
+      <div class="ph1"><div><div class="eye">Private finance</div><h4>Bookkeeping</h4></div></div>
+      <div class="ktabs"><span>Overview</span><span>Expenses <i class="cnt">4</i></span><span>Ledger</span><span class="on">Reports</span><span class="add btn lime">+ Add expense</span></div>
+      <div class="panel same">
+        <div class="ph1"><div><div class="eye">Recorded expenses</div><h5 style="font-size:20px">Expense report</h5><p class="hint">January 1 to December 31, 2027 · Period totals use confirmed incurred dates. Older dates to review appear separately.</p></div><div class="tb"><span class="btn lime">Export CSV</span><span class="btn lime">Accountant package</span></div></div>
+        <div class="fgrid"><div class="fld"><span class="lb">Period</span><div class="in sel">Custom dates</div></div><div class="fld"><span class="lb">From · incurred date</span><div class="in">Jan 1, 2027</div></div><div class="fld"><span class="lb">To · incurred date</span><div class="in">Dec 31, 2027</div></div><div class="fld"><span class="lb">Category</span><div class="in sel">All categories</div></div><div class="fld"><span class="lb">Find</span><div class="in ph">Supplier or purpose</div></div><div class="fld"><span class="lb">Review view</span><div class="in sel">All expenses</div></div></div>
+        <div class="tiles"><div><div class="bl">Recorded spend · 2027</div><div class="bv">$18,402.16</div></div><div><div class="bl">Expenses with confirmed dates</div><div class="bv">212</div></div><div><div class="bl">Dates to review</div><div class="bv">0</div></div></div>
+      </div>
+      <div class="samebar">Heading, filters and figures: unchanged</div>
+      <div class="halfgrid">
+        <div class="panel same"><h5>By category</h5><div class="ghost">Category rows, unchanged</div></div>
+        <div class="panel same"><h5>By supplier</h5><div class="ghost">Supplier rows, unchanged</div></div>
+        <div class="panel"><h5>Purchase tax recorded</h5>
+          <div><div class="tline"><span>Amount unknown — 3 expenses</span></div><div class="tline"><span>Known amount · review pending</span><b>$122.40</b></div><div class="tline"><span>Reviewed</span><b>$529.98</b></div><div class="tline"><span>Confirmed no tax</span><b>3 expenses</b></div></div></div>
+        <div class="panel same"><h5>Recorded spend by payment source</h5><div class="ghost">Unchanged</div></div>
+      </div>
+    </div>
+  </div></div></div>
+
+  <div class="cap" style="margin-top:16px"><b>After</b> <button class="mk res" data-note="RESTYLED: the tax box leaves the half-width grid for a full-width section, because it now has a band. Its title sits above it, as the kit does. Grouped by tax type instead of by review status. Review status moves into the shipped Review view filter, which gains the option “Tax review pending”.">RESTYLED</button></div>
+  <div class="scroll"><div class="fr w1200"><div class="ak console">
+    <div class="ctop"><span class="brand">FieldLogic<em>HQ</em></span><span class="sc">SUPPORT CONSOLE</span><span class="srch">⌕ Find a club, person or Stripe number</span></div>
+    <div class="cside"><div>TODAY</div><div>CUSTOMERS</div><div>HEALTH</div><div>GROWTH</div><div>PRODUCT</div><div>RECORDS</div><div>SYSTEM</div><div>PRIVATE FINANCE</div><div class="on">Bookkeeping</div></div>
+    <div class="cmain">
+      <div class="ph1"><div><div class="eye">Private finance</div><h4>Bookkeeping</h4></div></div>
+      <div class="ktabs"><span>Overview</span><span>Expenses <i class="cnt">4</i></span><span>Ledger</span><span class="on">Reports</span><span class="add btn lime">+ Add expense</span></div>
+      <div class="panel same">
+        <div class="ph1"><div><div class="eye">Recorded expenses</div><h5 style="font-size:20px">Expense report</h5><p class="hint">January 1 to December 31, 2027 · Period totals use confirmed incurred dates. Older dates to review appear separately.</p></div><div class="tb"><span class="btn lime">Export CSV</span><span class="btn lime">Accountant package</span></div></div>
+        <div class="fgrid"><div class="fld"><span class="lb">Period</span><div class="in sel">Custom dates</div></div><div class="fld"><span class="lb">From · incurred date</span><div class="in">Jan 1, 2027</div></div><div class="fld"><span class="lb">To · incurred date</span><div class="in">Dec 31, 2027</div></div><div class="fld"><span class="lb">Category</span><div class="in sel">All categories</div></div><div class="fld"><span class="lb">Find</span><div class="in ph">Supplier or purpose</div></div><div class="fld"><span class="lb">Review view</span><div class="in sel">All expenses</div></div></div>
+        <div class="tiles"><div><div class="bl">Recorded spend · 2027</div><div class="bv">$18,402.16</div></div><div><div class="bl">Expenses with confirmed dates</div><div class="bv">212</div></div><div><div class="bl">Dates to review</div><div class="bv">0</div></div></div>
+      </div>
+      <div class="samebar">Heading, filters and figures: unchanged</div>
+      <div class="halfgrid same">
+        <div class="panel"><h5>By category</h5><div class="ghost">Category rows, unchanged</div></div>
+        <div class="panel"><h5>By supplier</h5><div class="ghost">Supplier rows, unchanged</div></div>
+      </div>
+      <div class="newbox" style="display:flex;flex-direction:column;gap:12px;padding:4px" data-note="NEW section. Band: GST/HST paid (all GST and HST on active expenses), the part charged by simplified-registration suppliers (a fact about the receipts, not a credit), and the count with tax unknown. PST is a row, not a band cell, so it isn’t said twice. The by-type rows add up: 86.20 + 541.38 + 15.00 = 642.58. “Type not set” is expenses saved before this change.">
+        <div class="stitle">Purchase tax paid</div>
+        <div class="band c3">
+          <div><div class="bl">GST/HST paid</div><div class="bv">$642.58</div><div class="bs">209 expenses</div></div>
+          <div><div class="bl">Charged by simplified sellers</div><div class="bv">$31.20</div><div class="bs">3 expenses</div></div>
+          <div><div class="bl">Tax unknown</div><div class="bv">3</div><div class="bs">expenses</div></div>
+        </div>
+        <div class="tframe"><table class="k">
+          <thead><tr><th>Tax type</th><th class="r">Expenses</th><th class="r">Tax paid</th><th class="chev"></th></tr></thead>
+          <tbody>
+            <tr><td class="lk">GST 5%</td><td class="r">14</td><td class="r">$86.20</td><td class="chev">›</td></tr>
+            <tr><td class="lk">HST 13%</td><td class="r">192</td><td class="r">$541.38</td><td class="chev">›</td></tr>
+            <tr><td class="lk">HST 15%</td><td class="r">3</td><td class="r">$15.00</td><td class="chev">›</td></tr>
+            <tr><td class="lk">PST · part of the cost</td><td class="r">2</td><td class="r">$9.80</td><td class="chev">›</td></tr>
+            <tr><td class="lk">Type not set</td><td class="r">0</td><td class="r">$0.00</td><td class="chev">›</td></tr>
+          </tbody>
+        </table></div>
+        <p class="hint">Tax as charged on your receipts. Your credit is worked out on the GST/HST return view.</p>
+        <p class="hint">Registered for GST/HST from <b>September 26, 2026</b> · <span class="door" style="font-size:12px">Change date</span></p>
+      </div>
+      <div class="panel same"><h5>Recorded spend by payment source</h5><div class="ghost">Unchanged</div></div>
+    </div>
+  </div></div></div>
+
+  <h3>Your registration date, and changing it <button class="mk new" data-note="NEW, added after your facts (2026-11-06): you’re registered from September 26, 2026, and you’ve asked CRA to backdate it to May 1. Every credit reads this date: a service bought before it gets no credit. So it’s a stored setting with its history, not a fixed fact. It shows as one quiet line under Purchase tax paid (and under the worksheet’s heading in 4b). “Change date” opens a 416 question window. A reason is required, as for any Bookkeeping correction. Saving re-works every credit. A period already marked as filed shows what changed, as in tab 6 state D. Earlier dates stay in the window’s Changes list.">NEW</button></h3>
+  <div class="pair">
+    <div>
+      <div class="fr" style="width:520px"><div class="ak scrimbg" style="padding:28px 40px"><div class="win" style="width:416px">
+        <div class="wh"><div class="tb"><div class="eye">GST/HST</div><h4>Change your registration date?</h4></div><div class="x">×</div></div>
+        <div class="wb">
+          <p>Credits are worked out from this date. A service bought before it gets no credit.</p>
+          <div class="fld"><span class="lb">Registered from</span><div class="in">May 1, 2026</div></div>
+          <div class="fld"><span class="lb">Reason</span><div class="in">CRA approved the backdate</div></div>
+          <p class="hint">Changes · 1 — Sep 26, 2026 · first entry</p>
+        </div>
+        <div class="wf"><div class="fs"></div><div class="fe"><span class="btn quiet">Keep it</span><span class="btn lime">Change date</span></div></div>
+      </div></div></div>
+    </div>
+    <div class="card" style="max-width:520px;margin:0"><h3>What changing it does</h3><ul>
+      <li>Expenses from May 1 to September 25 that were “bought before your registration began” get their credits, worked out the usual way.</li>
+      <li>Equipment you bought before the date and still use for the business can also qualify. That is a different CRA rule (a deemed credit). The build has <code>/accounting</code> confirm how the form says so.</li>
+      <li>Nothing is deleted. The old date stays in the list of changes.</li>
+    </ul></div>
+  </div>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="pane" id="p5" hidden>
+  <h2>The worksheet: the return’s lines for any dates, each figure opening what’s behind it (4b)</h2>
+  <p>Drawn as a view in Reports (the recommended home, tab 7). Sales come from GST/HST Stage 3’s record of each invoice, by <b>issue date</b>. Credits come from your expenses. Regular method only. Example period January 1 to December 31, 2027. The table is the statement, with no figure band repeating it. Each figure with a dotted underline opens a window. Lines that add up from parts fold open with ▸. Line 103 is drawn open.</p>
+  <div class="cap"><b>Whole screen</b> · Reports, View · GST/HST return <button class="mk new" data-note="NEW view. The Reports redesign’s olive View pill gains a sixth entry, “GST/HST return”. The period pill offers presets from your filing frequency (This year, Last year, or quarters if you file quarterly) and Custom dates. “Copy lines” puts the lines on your clipboard as plain text (101 4700, 103 409.00, …) for typing into the return. “Mark as filed” is Ask 12.">NEW</button></div>
+  <div class="scroll"><div class="fr w1200"><div class="ak console">
+    <div class="ctop"><span class="brand">FieldLogic<em>HQ</em></span><span class="sc">SUPPORT CONSOLE</span><span class="srch">⌕ Find a club, person or Stripe number</span></div>
+    <div class="cside"><div>TODAY</div><div>CUSTOMERS</div><div>HEALTH</div><div>GROWTH</div><div>PRODUCT</div><div>RECORDS</div><div>SYSTEM</div><div>PRIVATE FINANCE</div><div class="on">Bookkeeping</div></div>
+    <div class="cmain">
+      <div class="ph1"><div><div class="eye">Private finance</div><h4>Bookkeeping</h4></div></div>
+      <div class="ktabs"><span>Overview</span><span>Expenses <i class="cnt">4</i></span><span>Ledger</span><span class="on">Reports</span><span class="add btn lime">+ Add expense</span></div>
+      <div class="tb"><span class="pillv">View · GST/HST return ▾</span><span class="pillp">Last year · 2027 ▾</span><span class="btn quiet">Expand all</span><span style="margin-left:auto" class="btn out">Copy lines</span><span class="btn out">Worksheet CSV</span><span class="btn out">Mark as filed…</span></div>
+      <div><div class="eye">Worksheet for your return · regular method</div><p class="hint" style="margin-top:2px">Sales by the date each invoice was issued, paid or not. Credits by expense date. Nothing is filed from here.</p></div>
+
+      <div class="co amb newbox" data-note="NEW: the Before you file box. Each underlined item opens a list window (one drawn below). The box shows only what can still change a line, and disappears when empty. An item you can’t fix leaves the box once you say so on the expense (“I can’t get the number”, or “No tax charged”).">
+        <b>Before you file</b>
+        <span><u>2 GST/HST numbers missing</u> on receipts of $100 or more: $24.70 of credit held out of line 106 · <u>3 expenses with tax unknown</u> · <u>1 supplier’s registration not checked</u> (Anthropic, $26.00 HST counted for now)</span>
+      </div>
+
+      <div class="tframe newbox" data-note="NEW: the return’s lines in the return’s order. A line that adds up from parts (101, 103, 107) folds open with ▸; its figure opens a window listing what it counts. Calculated lines (105, 108, 109) sit on the page ground and open nothing. The net row is set apart by a rule, not by size, and says “refund” or “you owe” in words.">
+      <table class="k">
+        <thead><tr><th>Line</th><th>What goes in it</th><th class="r">Amount</th></tr></thead>
+        <tbody>
+          <tr><td class="ln">101</td><td><span class="fold">▸</span><b>Sales and other revenue</b> <span class="hint">· before tax, includes zero-rated US sales</span></td><td class="r"><span class="fb">$4,700</span></td></tr>
+          <tr><td class="ln">103</td><td><span class="fold">▾</span><b>GST/HST collected or collectible</b> <span class="hint">· every invoice issued, paid or not</span></td><td class="r"><span class="fb">$409.00</span></td></tr>
+          <tr class="sub"><td></td><td>Ontario · HST 13% on $2,400.00</td><td class="r"><span class="fb" style="font-weight:500">$312.00</span></td></tr>
+          <tr class="sub"><td></td><td>Nova Scotia · HST 14% on $300.00</td><td class="r"><span class="fb" style="font-weight:500">$42.00</span></td></tr>
+          <tr class="sub"><td></td><td>Alberta · GST 5% on $600.00</td><td class="r"><span class="fb" style="font-weight:500">$30.00</span></td></tr>
+          <tr class="sub"><td></td><td>British Columbia · GST 5% on $500.00</td><td class="r"><span class="fb" style="font-weight:500">$25.00</span></td></tr>
+          <tr><td class="ln">104</td><td><span class="fold"></span><b>Adjustments that increase net tax</b> <span class="hint">· a bad debt later recovered, a supplier’s refund of tax you claimed</span></td><td class="r"><span class="fb">$0.00</span></td></tr>
+          <tr class="calc"><td class="ln">105</td><td class="lbl"><span class="fold"></span>Total · line 103 plus line 104 · Calculated</td><td class="r">$409.00</td></tr>
+          <tr><td class="ln">106</td><td><span class="fold"></span><b>Input tax credits</b> <span class="hint">· GST/HST on your expenses that you can claim</span></td><td class="r"><span class="fb">$576.98</span></td></tr>
+          <tr><td class="ln">107</td><td><span class="fold">▸</span><b>Adjustments that decrease net tax</b> <span class="hint">· credit notes issued, bad debts written off</span></td><td class="r"><span class="fb">$41.60</span></td></tr>
+          <tr class="calc"><td class="ln">108</td><td class="lbl"><span class="fold"></span>Total · line 106 plus line 107 · Calculated</td><td class="r">$618.58</td></tr>
+          <tr class="calc net"><td class="ln">109</td><td><span class="fold"></span>Net tax · line 105 minus line 108</td><td class="r">$209.58 refund</td></tr>
+        </tbody>
+      </table></div>
+      <div class="tframe newbox" data-note="NEW: what is NOT on the return, kept beside it so the worksheet agrees with Reports’ tax paid. 642.58 GST/HST paid − 31.20 simplified sellers − 9.70 share not claimable − 24.70 held = 576.98 on line 106.">
+        <div class="lrow"><span><b>Not on the return</b> · GST/HST charged by simplified sellers</span><span class="r">$31.20</span></div>
+        <div class="lrow"><span>Share not claimable (business use, meals)</span><span class="r">$9.70</span></div>
+        <div class="lrow"><span>Credits held until the supplier’s number is added</span><span class="r">$24.70</span></div>
+      </div>
+      <p class="hint">Lines 110 to 115 (instalments, rebates, refund or balance owing) are worked out on the return itself.</p>
+    </div>
+  </div></div></div>
+
+  <h3>The windows a figure or an item opens</h3>
+  <div class="pair">
+    <div>
+      <div class="cap"><b>Line 103</b> · the invoices <button class="mk new" data-note="NEW window. The figures frame at the top adds up to the line. The list is every invoice issued in the period. The invoice number is the link (it opens the charge in platform admin’s Money tab from GST/HST Stage 3, in a new tab), with one chevron column. A voided or uncollectible invoice stays in line 103, because tax was owed when it was issued. Its reversal is on line 107.">NEW</button></div>
+      <div class="scroll"><div class="fr w720"><div class="ak scrimbg"><div class="win">
+        <div class="wh rec"><div class="tb"><div class="eye">GST/HST return · line 103</div><h4>GST/HST collected or collectible</h4><div class="idl">2027 · by issue date</div></div><div class="x">×</div></div>
+        <div class="wb">
+          <dl class="fig"><div><dt>Invoices issued</dt><dd>27</dd></div><div><dt>Before tax</dt><dd>$3,800.00</dd></div><div class="tot"><dt>Tax collected or collectible</dt><dd>$409.00</dd></div></dl>
+          <div class="tframe"><table class="k">
+            <thead><tr><th>Issued</th><th>Invoice</th><th>Buyer</th><th>Taxed in</th><th class="r">Tax</th><th>Status</th><th class="chev"></th></tr></thead>
+            <tbody>
+              <tr><td>Dec 3</td><td class="lk">FLH-0412</td><td>Guelph Minor Baseball</td><td>ON · HST 13%</td><td class="r">$28.47</td><td><span class="chip ok">PAID</span></td><td class="chev">›</td></tr>
+              <tr><td>Nov 19</td><td class="lk">FLH-0388</td><td>Halifax Hawks</td><td>NS · HST 14%</td><td class="r">$4.06</td><td><span class="chip ok">PAID</span></td><td class="chev">›</td></tr>
+              <tr><td>Oct 3</td><td class="lk">FLH-0341</td><td>Sarnia Storm U13</td><td>ON · HST 13%</td><td class="r">$13.00</td><td><span class="chip amb">UNCOLLECTIBLE</span></td><td class="chev">›</td></tr>
+              <tr><td>Aug 3</td><td class="lk">FLH-0290</td><td>Red Deer Rebels</td><td>AB · GST 5%</td><td class="r">$10.95</td><td><span class="chip q">OPEN</span></td><td class="chev">›</td></tr>
+            </tbody>
+          </table></div>
+          <span class="door">Show all 27</span>
+        </div>
+        <div class="wf"><div class="fs">Figures from each invoice as Stripe issued it.</div><div class="fe"><span class="btn out">Export CSV</span></div></div>
+      </div></div></div></div>
+    </div>
+    <div>
+      <div class="cap"><b>Line 106</b> · from tax paid to credits <button class="mk new" data-note="NEW window. It walks from the tax paid in Reports to the credit on line 106, so the two pages agree. Each step is a button that filters the list under it. The total is bold over a rule, not tinted. The list shows only expenses that carried GST or HST.">NEW</button></div>
+      <div class="scroll"><div class="fr w720"><div class="ak scrimbg"><div class="win">
+        <div class="wh rec"><div class="tb"><div class="eye">GST/HST return · line 106</div><h4>Input tax credits</h4><div class="idl">2027 · by expense date</div></div><div class="x">×</div></div>
+        <div class="wb">
+          <dl class="fig">
+            <div><dt>GST/HST paid on 209 expenses</dt><dd>$642.58</dd></div>
+            <div><dt><span class="fb" style="font-weight:500">Charged by simplified sellers · 3</span></dt><dd>−$31.20</dd></div>
+            <div><dt><span class="fb" style="font-weight:500">Share not claimable (business use, meals) · 11</span></dt><dd>−$9.70</dd></div>
+            <div><dt><span class="fb" style="font-weight:500">Held · supplier’s number missing · 2</span></dt><dd>−$24.70</dd></div>
+            <div class="tot"><dt>Credits on line 106 · 204 expenses</dt><dd>$576.98</dd></div>
+          </dl>
+          <div class="tframe"><table class="k">
+            <thead><tr><th>Date</th><th>Supplier</th><th>Tax</th><th class="r">Tax paid</th><th class="r">Credit</th><th class="chev"></th></tr></thead>
+            <tbody>
+              <tr><td>Dec 12</td><td class="lk">Best Buy</td><td>HST 13%</td><td class="r">$195.00</td><td class="r">$195.00</td><td class="chev">›</td></tr>
+              <tr><td>Nov 8</td><td class="lk">Namecheap</td><td>HST 13%</td><td class="r">$3.20</td><td class="r">$3.20</td><td class="chev">›</td></tr>
+              <tr><td>Oct 9</td><td class="lk">Client lunch</td><td>HST 13%</td><td class="r">$9.10</td><td class="r">$4.55</td><td class="chev">›</td></tr>
+              <tr><td>Jul 22</td><td class="lk">Rogers</td><td>HST 13%</td><td class="r">$11.31</td><td class="r">$11.31</td><td class="chev">›</td></tr>
+            </tbody>
+          </table></div>
+          <span class="door">Show all 204</span>
+        </div>
+        <div class="wf"><div class="fs">Each row opens the expense.</div><div class="fe"><span class="btn out">Export CSV</span></div></div>
+      </div></div></div></div>
+    </div>
+  </div>
+  <div class="pair">
+    <div>
+      <div class="cap"><b>Before you file</b> · numbers missing <button class="mk new" data-note="NEW window: the list behind “2 GST/HST numbers missing”. Each row opens that expense’s correction form with More details open and the number field ready. If the same supplier has other expenses with no number, saving one offers “Use this number on Staples’s 3 other expenses”. Fixing a row removes it from this list and the box.">NEW</button></div>
+      <div class="scroll"><div class="fr w720"><div class="ak scrimbg"><div class="win">
+        <div class="wh rec"><div class="tb"><div class="eye">GST/HST return · before you file</div><h4>GST/HST numbers missing</h4><div class="idl">2027 · receipts of $100 or more</div></div><div class="x">×</div></div>
+        <div class="wb">
+          <div class="tframe"><table class="k">
+            <thead><tr><th>Date</th><th>Supplier</th><th class="r">Amount</th><th class="r">Credit held</th><th class="chev"></th></tr></thead>
+            <tbody>
+              <tr><td>Mar 14</td><td class="lk">Staples</td><td class="r">$113.00</td><td class="r">$13.00</td><td class="chev">›</td></tr>
+              <tr><td>Sep 2</td><td class="lk">Bell</td><td class="r">$101.70</td><td class="r">$11.70</td><td class="chev">›</td></tr>
+            </tbody>
+          </table></div>
+          <p class="hint">Open one to add the number from its receipt. If you can’t get it, tick “I can’t get the number” on the expense and the credit is left out.</p>
+        </div>
+        <div class="wf"><div class="fs">$24.70 of credit held</div><div class="fe"><span class="btn quiet">Close</span></div></div>
+      </div></div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="pane" id="p6" hidden>
+  <h2>When the worksheet can’t tell the whole story, it says so instead of showing zeros</h2>
+  <p>Four states, each drawn as the worksheet’s top part (the rest is tab 5). The rule: a zero means “nothing happened”. A figure we can’t know reads “Not available”, with a sentence saying why and what to do.</p>
+  <div class="pair">
+    <div>
+      <div class="cap"><b>A · Sales can’t be read right now</b> <button class="mk new" data-note="NEW state. The invoice record lives in the main database, not the Bookkeeping store, so the worksheet reads across. If that read fails, every sales line reads “Not available”, never $0. Credits still show, because they come from your expenses. With Ask 1 as recommended, this is the only time a worksheet has no sales data at all.">NEW</button></div>
+      <div class="scroll"><div class="fr w720"><div class="ak" style="padding:18px 22px;display:flex;flex-direction:column;gap:12px">
+        <div class="tb"><span class="pillv">View · GST/HST return ▾</span><span class="pillp" style="margin-left:auto">Last year · 2027 ▾</span></div>
+        <div class="co amb"><b>Sales couldn’t be read</b><span>The record of your invoices didn’t answer. Lines 101 to 105 and 109 need it. <u>Try again</u></span></div>
+        <div class="tframe"><table class="k"><tbody>
+          <tr><td class="ln">101</td><td><b>Sales and other revenue</b></td><td class="r na">Not available</td></tr>
+          <tr><td class="ln">103</td><td><b>GST/HST collected or collectible</b></td><td class="r na">Not available</td></tr>
+          <tr><td class="ln">104</td><td><b>Adjustments that increase net tax</b></td><td class="r na">Not available</td></tr>
+          <tr class="calc"><td class="ln">105</td><td class="lbl">Total · Calculated</td><td class="r na">Not available</td></tr>
+          <tr><td class="ln">106</td><td><b>Input tax credits</b></td><td class="r"><span class="fb">$576.98</span></td></tr>
+          <tr><td class="ln">107</td><td><b>Adjustments that decrease net tax</b></td><td class="r na">Not available</td></tr>
+          <tr class="calc"><td class="ln">108</td><td class="lbl">Total · Calculated</td><td class="r na">Not available</td></tr>
+          <tr class="calc net"><td class="ln">109</td><td>Net tax</td><td class="r na">Not available</td></tr>
+        </tbody></table></div>
+      </div></div></div>
+    </div>
+    <div>
+      <div class="cap"><b>B · Nothing sold in the period</b> <button class="mk new" data-note="NEW state. The record covers the whole period and no invoice was issued. Zeros are true here, so they show. Line 101 says to enter 0, which CRA asks for. The refund comes from your credits alone.">NEW</button></div>
+      <div class="scroll"><div class="fr w720"><div class="ak" style="padding:18px 22px;display:flex;flex-direction:column;gap:12px">
+        <div class="tb"><span class="pillv">View · GST/HST return ▾</span><span class="pillp" style="margin-left:auto">Jan 1 – Mar 31, 2027 ▾</span></div>
+        <div class="co"><b>Nothing sold in this period</b><span>No invoice was issued between Jan 1 and Mar 31, 2027. Enter 0 on lines 101 and 103. Your credits still count.</span></div>
+        <div class="tframe"><table class="k"><tbody>
+          <tr><td class="ln">101</td><td><b>Sales and other revenue</b></td><td class="r">$0</td></tr>
+          <tr><td class="ln">103</td><td><b>GST/HST collected or collectible</b></td><td class="r">$0.00</td></tr>
+          <tr><td class="ln">106</td><td><b>Input tax credits</b></td><td class="r"><span class="fb">$142.06</span></td></tr>
+          <tr class="calc net"><td class="ln">109</td><td>Net tax · line 105 minus line 108</td><td class="r">$142.06 refund</td></tr>
+        </tbody></table></div>
+      </div></div></div>
+    </div>
+  </div>
+  <div class="pair">
+    <div>
+      <div class="cap"><b>C · The period starts before the sales record does</b> <button class="mk new" data-note="NEW state. Only possible if Stage 3 does not copy older invoices (Ask 11). The worksheet names the first recorded day and offers two answers for the days before it. “No sales before Feb 12” is saved with the period, so you answer once. “Enter them yourself” opens two boxes, sales and tax collected for those days, saved as a note on the period (never as sales rows). Until you answer, lines 101 to 105 and 109 are marked PARTIAL.">NEW</button> <button class="mk ask" data-go-ask="11">Ask 11</button></div>
+      <div class="scroll"><div class="fr w720"><div class="ak" style="padding:18px 22px;display:flex;flex-direction:column;gap:12px">
+        <div class="tb"><span class="pillv">View · GST/HST return ▾</span><span class="pillp" style="margin-left:auto">Last year · 2027 ▾</span></div>
+        <div class="co amb"><b>Sales are recorded from February 12, 2027</b><span>Invoices from January 1 to February 11 aren’t in these lines. <u>No sales before Feb 12</u> · <u>Enter them yourself</u></span></div>
+        <div class="tframe"><table class="k"><tbody>
+          <tr><td class="ln">101</td><td><b>Sales and other revenue</b> <span class="chip amb">PARTIAL</span></td><td class="r"><span class="fb">$4,210</span></td></tr>
+          <tr><td class="ln">103</td><td><b>GST/HST collected or collectible</b> <span class="chip amb">PARTIAL</span></td><td class="r"><span class="fb">$362.70</span></td></tr>
+          <tr class="calc net"><td class="ln">109</td><td>Net tax <span class="chip amb">PARTIAL</span></td><td class="r">$255.88 refund</td></tr>
+        </tbody></table></div>
+      </div></div></div>
+    </div>
+    <div>
+      <div class="cap"><b>D · A period marked as filed</b> <button class="mk new" data-note="NEW state, Ask 12. “Mark as filed…” asks for the date you filed and saves the lines exactly as they stood. Afterwards the period shows those saved figures, not live ones. If anything inside the period changes later (a number added, an expense corrected), a row under the table says what changed and where it goes. A late credit is claimed on a later return, within four years; it appears on that return’s line 106 as “Credits from earlier periods”. The saved figures go into the accountant package.">NEW</button> <button class="mk ask" data-go-ask="12">Ask 12</button></div>
+      <div class="scroll"><div class="fr w720"><div class="ak" style="padding:18px 22px;display:flex;flex-direction:column;gap:12px">
+        <div class="tb"><span class="pillv">View · GST/HST return ▾</span><span class="pillp">Last year · 2027 ▾</span><span class="chip ok" style="margin-left:auto">FILED APRIL 20, 2028</span></div>
+        <div class="co"><b>Figures as you filed them</b><span>Saved April 20, 2028. They don’t change when an expense in 2027 does.</span></div>
+        <div class="tframe"><table class="k"><tbody>
+          <tr><td class="ln">106</td><td><b>Input tax credits</b></td><td class="r"><span class="fb">$576.98</span></td></tr>
+          <tr class="calc net"><td class="ln">109</td><td>Net tax · line 105 minus line 108</td><td class="r">$209.58 refund</td></tr>
+        </tbody></table></div>
+        <div class="co amb"><b>Changed since you filed</b><span>$11.70 credit released: Bell’s number added May 3, 2028. Claim it on your next return; it shows on 2028’s line 106 as “Credits from earlier periods”.</span></div>
+      </div></div></div>
+    </div>
+  </div>
+  <div class="card"><h3>Kept out of every state</h3><ul>
+    <li>No figure on the Overview, in any state.</li>
+    <li>No “profit” or “cash”. Net tax is a figure for the return only.</li>
+    <li>No figure copied from Stripe Tax’s own summary. Its “tax payable” has already taken off uncollectible invoices, so using it would count that relief twice.</li>
+    <li>No sales rows in the Bookkeeping store. The worksheet reads Stage 3’s record where it lives. A typed-in figure (state C) is a note on the period.</li>
+  </ul></div>
+</section>
+
+<!-- ============ 7 ============ -->
+<section class="pane" id="p7" hidden>
+  <h2>Where the worksheet lives: a view in Reports, or a fifth tab</h2>
+  <p>The brief asked for both. I recommend <b>A</b>: the ruled Reports redesign already has the income-tax statement (T2125) as a view, and it shares the same period control. A once-a-year task shouldn’t cost the page a tab every day. <b>B</b> is cleaner if you expect to open it monthly or quarterly. <button class="mk ask" data-go-ask="7">Ask 7</button></p>
+  <div class="pair">
+    <div>
+      <div class="cap"><b>A · View in Reports</b> · recommended <button class="mk new" data-note="A: the olive View pill from the ruled Reports redesign, opened. Its five views plus “GST/HST return” as the sixth. The tabs stay at four.">NEW</button></div>
+      <div class="scroll"><div class="fr w560"><div class="ak" style="padding:18px 22px;display:flex;flex-direction:column;gap:12px;min-height:400px">
+        <div class="ktabs"><span>Overview</span><span>Expenses <i class="cnt">4</i></span><span>Ledger</span><span class="on">Reports</span></div>
+        <div style="position:relative"><span class="pillv">View · GST/HST return ▾</span>
+          <div class="menu"><div>Spending</div><div>By month</div><div>Compare</div><div>Money position</div><div>Tax year (T2125)</div><div class="on">GST/HST return <span>✓</span></div></div></div>
+      </div></div></div>
+    </div>
+    <div>
+      <div class="cap"><b>B · Its own tab</b> <button class="mk new" data-note="B: a fifth tab, “GST/HST”. The same worksheet, with its own period control. The Reports View list stays at five.">NEW</button></div>
+      <div class="scroll"><div class="fr w560"><div class="ak" style="padding:18px 22px;display:flex;flex-direction:column;gap:12px;min-height:400px">
+        <div class="ktabs"><span>Overview</span><span>Expenses <i class="cnt">4</i></span><span>Ledger</span><span>Reports</span><span class="on">GST/HST</span></div>
+        <div class="tb"><span class="pillp">Last year · 2027 ▾</span></div>
+        <div class="ghost">The worksheet from tab 5, unchanged</div>
+      </div></div></div>
+    </div>
+  </div>
+  <p class="note-s">Either way, the Overview gets nothing. If A, the 4b build needs the Reports redesign (Bookkeeping Stage 3) built first, and that is already ahead of it on the ladder.</p>
+</section>
+
+<!-- ============ 8 ============ -->
+<section class="pane" id="p8" hidden>
+  <h2>The accountant package gains the worksheet and its sources</h2>
+  <p>The package (Reports → Accountant package) follows the period you picked. 4a adds tax columns to the expenses file. 4b adds the worksheet and the two lists behind it, so each line can be checked without opening the product. A period marked as filed also carries the figures as filed. The scope note stops saying Stripe income is left out, but only for the tax side of sales. <button class="mk res" data-note="RESTYLED: the same zip, with the same name, in the same place. New files are marked. The worksheet file has one row per line (101 to 109, with sub-rows) and the same figures as the screen.">RESTYLED</button></p>
+  <div class="pair">
+    <div style="flex:1;min-width:300px"><div class="cap"><b>Today</b></div>
+<div class="tree">fieldlogichq-accountant-package.zip
+├─ package-scope.txt
+├─ expenses.csv
+├─ owner-transfers.csv
+├─ receipt-index.csv
+└─ receipts/…</div></div>
+    <div style="flex:1;min-width:300px"><div class="cap"><b>After</b></div>
+<div class="tree">fieldlogichq-accountant-package.zip
+├─ package-scope.txt            <ins>(reworded)</ins>
+├─ expenses.csv                 <ins>+ tax lines, number,</ins>
+│                               <ins>  registration, kind, credit</ins>
+├─ owner-transfers.csv
+├─ <ins>gst-hst-worksheet.csv        4b · lines 101–109</ins>
+├─ <ins>gst-hst-as-filed.csv         4b · only for a filed period</ins>
+├─ <ins>gst-hst-sales.csv            4b · each invoice + credit note</ins>
+├─ <ins>gst-hst-credits.csv          4b · each expense’s credit</ins>
+├─ receipt-index.csv
+└─ receipts/…</div></div>
+  </div>
+  <div class="tw"><table class="t">
+    <thead><tr><th>package-scope.txt</th><th>Today</th><th>After 4b</th></tr></thead>
+    <tbody><tr><td>The “not in this package” sentence</td><td>Bank statements, Stripe income, processor fees, refunds, payouts and bank reconciliation are not in this package.</td><td>Bank statements, processor fees, payouts and bank reconciliation are not in this package. <ins>Sales are included only as the GST/HST record of each invoice and credit note.</ins></td></tr></tbody>
+  </table></div>
+  <p class="note-s">The yearly in-Canada copy of the records takes the same files. Records are kept six years. The sales file comes from Stage 3’s record, which keeps each invoice’s evidence for six years even if the buyer is deleted.</p>
+</section>
+
+<!-- ============ 9 ============ -->
+<section class="pane" id="p9" hidden>
+  <h2>On a phone: the form’s tax section and the worksheet, 390 wide</h2>
+  <p>Open this page on your phone to judge these at true size. The form is the shipped full-screen window (← at top left, no ×) and its pairs stack. The worksheet drops its toolbar buttons except “Copy lines”, and each line becomes a white card with its number at the left. Calculated lines sit on the page ground, and the net line is set apart by a rule.</p>
+  <div class="pair">
+    <div>
+      <div class="cap"><b>Form · More details</b> <button class="mk res" data-note="RESTYLED for a phone: the same fields as tab 2 in the same order, stacked, inside the shipped full-screen window. The remove × on a tax line is 44 wide. The blank number field keeps its normal border: a missing number is not an error. Only the hint is amber.">RESTYLED</button></div>
+      <div class="fr" style="width:390px"><div class="ak phone full">
+        <div class="wh" style="border-bottom:1px solid var(--line)"><span class="back">←</span><div class="tb"><div class="eye">Expenses · new</div><h4 style="font-size:16px">Add an expense</h4></div></div>
+        <div class="wb" style="padding:12px 16px 14px">
+          <div class="morebtn"><b>▾ More details</b><span>HST $74.78 · credit $74.78 · 100% business · no notes</span></div>
+          <div class="adv">
+            <div class="two"><div class="fld"><span class="lb">Tax on this receipt</span><div class="in sel">Shown on the receipt</div></div><div class="fld"><span class="lb">Tax review status</span><div class="in sel">Pending review</div></div></div>
+            <div class="taxrow"><div class="fld"><span class="lb">Tax type</span><div class="in sel">HST 13%</div></div><div class="fld"><span class="lb">Amount · CAD</span><div class="in">74.78</div></div><div class="rm">×</div></div>
+            <div class="doors"><span class="door">Work out from the total</span><span class="door">+ Add another tax</span></div>
+            <div class="two"><div class="fld"><span class="lb">Kind of purchase</span><div class="in sel">Everyday cost</div></div><div class="fld"><span class="lb">Business use %</span><div class="in">100</div></div></div>
+            <div class="co amb">Credit on your GST/HST return: <span class="fig">$74.78</span><span>Waiting for the supplier’s number. Receipts of $100 or more need it.</span></div>
+            <div class="fld"><span class="lb">Supplier’s GST/HST number</span><div class="in ph">&nbsp;</div><p class="hint warn">You can save without it. It shows in Needs attention.</p></div>
+          </div>
+        </div>
+        <div class="wf" style="padding:12px 16px;margin-top:auto"><div class="fe" style="flex:1"><span class="btn out" style="flex:1">Cancel</span><span class="btn lime" style="flex:1">Save expense</span></div></div>
+      </div></div>
+    </div>
+    <div>
+      <div class="cap"><b>Worksheet</b> <button class="mk new" data-note="NEW for a phone. No figure band, so nothing is said twice on one screen. Each line is a white card; tapping it opens its window as a full-screen sheet, where an invoice list becomes cards too. Sub-rows (provinces, kinds) show inside the opened line. “Copy lines” is the way to get the figures off the phone.">NEW</button></div>
+      <div class="fr" style="width:390px"><div class="ak phone">
+        <div class="pt">‹ Bookkeeping</div>
+        <div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px">
+          <div class="tb"><span class="pillv">View · GST/HST return ▾</span></div>
+          <div class="tb"><span class="pillp">Last year · 2027 ▾</span><span class="btn out" style="margin-left:auto">Copy lines</span></div>
+          <div class="co amb"><b>Before you file</b><span><u>2 numbers missing</u> · <u>3 tax unknown</u> · <u>1 supplier not checked</u></span></div>
+          <div class="pcard"><span class="ln">101</span><b>Sales and other revenue</b><span class="v">$4,700</span><span class="c">›</span><span class="s">Includes $900.00 zero-rated US sales</span></div>
+          <div class="pcard"><span class="ln">103</span><b>GST/HST collected or collectible</b><span class="v">$409.00</span><span class="c">›</span><span class="s">4 provinces · 27 invoices</span></div>
+          <div class="pcard"><span class="ln">104</span><b>Adjustments that increase net tax</b><span class="v">$0.00</span><span class="c">›</span></div>
+          <div class="pcard calc"><span class="ln">105</span><span style="color:var(--soft)">Total · Calculated</span><span class="v">$409.00</span><span></span></div>
+          <div class="pcard"><span class="ln">106</span><b>Input tax credits</b><span class="v">$576.98</span><span class="c">›</span></div>
+          <div class="pcard"><span class="ln">107</span><b>Adjustments that decrease net tax</b><span class="v">$41.60</span><span class="c">›</span><span class="s">Credit notes $28.60 · bad debts $13.00</span></div>
+          <div class="pcard calc"><span class="ln">108</span><span style="color:var(--soft)">Total · Calculated</span><span class="v">$618.58</span><span></span></div>
+          <div class="pcard calc net"><span class="ln">109</span><b>Net tax</b><span class="v">$209.58 refund</span><span></span></div>
+        </div>
+      </div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 10 ============ -->
+<section class="pane" id="p10" hidden>
+  <h2>Asks</h2>
+  <div class="card" style="border-left:5px solid var(--fix)"><h3>Ruled 2026-11-06</h3><p style="margin:0">Every ask <b>A</b>, as recommended. Facts: registered from <b>September 26, 2026</b>, with a request pending at CRA to backdate to <b>May 1, 2026</b>, so the date must be changeable (drawn at the end of tab 4). <b>Annual</b> filer. <b>No</b> quick method.</p></div>
+  <div class="card" style="border-left:5px solid var(--fix)"><h3>Added by the build, ruled 2026-11-06</h3><p style="margin:0"><b>Asks 13 and 14, both A</b>: a receipt with two taxes reads one line per tax, then the total and status once; an expense saved before this change adds only the credit cell, “Not worked out”, in plain text. Drawn at the end of tab 3.</p></div>
+  <p class="muted">Eleven asks and three facts. Pick one per ask; the green row is my recommendation; notes are optional. Press “Make my answers” and paste the text back into the chat. The build prompts are written after your answers.</p>
+  <div id="asks"></div>
+  <div class="card"><h3>What the design and flow checks settled without needing you</h3><ul>
+    <li>Tax stays inside More details. The tax question has three answers, so “no tax” is one pick and never a to-do. Nothing in the section blocks saving.</li>
+    <li>Business use stays visible on every expense. Kind of purchase starts from the category, and you can change it.</li>
+    <li>The credit sentence sits right under the figures that change it, neutral unless something is waiting or not claimable.</li>
+    <li>PST and QST are recorded as tax lines but never claimed. They count as part of the cost.</li>
+    <li>A missing number is said once: a chip in the record, a reason in Needs attention, an item in Before you file. A row with that reason opens straight to the number field. “I can’t get the number” clears it.</li>
+    <li>Credit notes and write-offs go on line 107, and recovered debts on 104. Line 103 stays gross. A voided invoice stays in 103 and its reversal shows on 107; the 4b build has <code>/accounting</code> confirm how a bare void is papered.</li>
+    <li>“Not available” is never shown as $0. A period that starts before the sales record does is marked partial until you answer for those days.</li>
+    <li>The worksheet table is the statement, with no band repeating it. Lines with parts fold open, a figure opens its window, and calculated lines open nothing.</li>
+    <li>Nothing on the Overview, ever. No sales rows in the Bookkeeping store.</li>
+  </ul></div>
+  <div class="card"><h3>Formatting rules that disagree with each other (listed, not picked silently)</h3><ul>
+    <li><b>Chevron on every row (K-08) vs. a chevron only where something opens (Standard §3.6).</b> The worksheet follows §3.6: calculated lines have no chevron.</li>
+    <li><b>Row chevron vs. the dotted-underline figure button (§3.6).</b> The worksheet uses the figure button, because the row also folds. Tables of records (invoices, expenses) keep name-link plus chevron.</li>
+    <li><b>Group rows fold (§2) vs. a row that opens a window (§3.6).</b> No rule covers a row that does both. Drawn as: ▸ folds, the figure opens.</li>
+    <li><b>A joined band for money figures vs. “a row that restates another is deleted” (§3.5).</b> The worksheet drops its band. Reports keeps a band, because its figures don’t repeat its rows.</li>
+    <li><b>§3.2 still says admin figures use the data face (K-10)</b>, but K-10 was retired 2026-10-24 and the kit says body face. Drawn in the body face.</li>
+    <li><b>Negative money:</b> the coach Budget uses red brackets; nothing covers platform admin. The worksheet writes “refund” or “you owe” in words.</li>
+  </ul></div>
+  <div class="paste"><div class="row"><button class="btn-d pri" id="mk">Make my answers</button><button class="btn-d" id="cp">Copy</button><span class="muted" id="cpmsg"></span></div>
+    <textarea id="out" readonly aria-label="Your answers" placeholder="Press “Make my answers”, then copy this text back into the chat."></textarea></div>
+</section>
+</div>
+
+<dialog class="note" id="nd"><div class="nh"><h3>About this</h3><button id="nx" aria-label="Close">×</button></div><div class="nb" id="nt"></div></dialog>
+
+<script>
+(function(){
+  var ASKS=[
+   {id:1,t:"Wait for Stage 3 before building the worksheet?",
+    r:"Tab 1. 4a needs only the expense form you already have. 4b reads GST/HST Stage 3’s record of each invoice’s tax, which isn’t built.",
+    o:[["A","Build 4a (what you pay) now; build 4b (sales and the worksheet) after Stage 3 records invoices","rec"],["B","Build both together after Stage 3",""]]},
+   {id:2,t:"Where the worksheet’s sales figures come from",
+    r:"Tabs 1 and 6. Bookkeeping’s parked Stripe income stage would import a Stripe CSV. Stage 3 keeps the same tax figures in our own database. Two copies would disagree.",
+    o:[["A","Stage 3’s own record only. Bookkeeping’s Stripe income stage keeps only what Stage 3 can’t give it (fees, payouts, bank matching). The ladder gains rows 4a and 4b.","rec"],["B","Import a Stripe CSV into Bookkeeping, as its Stage 6 planned",""]]},
+   {id:3,t:"Where a claimable credit or net tax may be shown",
+    r:"Tabs 2 to 5. Today’s rule: Overview and Reports never show recoverable tax, and the form says it does not claim a credit.",
+    o:[["A","On the worksheet, and on each expense with its reason. Reports shows tax paid only. Never on the Overview.","rec"],["B","On the worksheet only. Expenses show tax paid, no credit.",""],["C","Also on the Overview",""]]},
+   {id:4,t:"Which CAD figure for a sale charged in US dollars",
+    r:"Tab 1. Only matters once US sales open. /accounting: CRA values it at the rate on the day the tax is payable (the invoice date), from one source used consistently. Stripe’s filing amounts can be blank on exactly the zero-rated rows. This answer goes back into Stage 3’s first step, which has no rate column yet.",
+    o:[["A","Bank of Canada daily rate on the invoice date, stored on each invoice’s record with the rate and date. Stripe’s figure is kept as a cross-check.","rec"],["B","Stripe’s own CAD figure from the invoice (the brief’s recommendation)",""]]},
+   {id:5,t:"When a receipt of $100 or more has no supplier number",
+    r:"Tabs 2, 3 and 5. The $100 line is CRA’s. Your call is what the product does about a missing number.",
+    o:[["A","Save it, hold its credit off the worksheet, list it in Needs attention and Before you file. “I can’t get the number” leaves the credit out and clears it.","rec"],["B","Save it and say nothing; the credit counts anyway",""],["C","Don’t let it save without the number",""]]},
+   {id:6,t:"How the product knows a supplier’s tax can’t be claimed",
+    r:"Tab 2. The real test is which CRA registration the supplier holds. Bookkeeping has no supplier list, only a name on each expense, so “remembered” means filled in from your last expense with exactly the same name (Canva and Canva Pty won’t match).",
+    o:[["A","“Supplier’s registration” on each expense, filled in from the last one with the same name. Simplified = no credit, with how to get the tax refunded. Not checked = counted, and listed before you file.","rec"],["B","The same, but Not checked holds the credit until you check",""],["C","A yes/no “foreign supplier charged tax” on each expense",""]]},
+   {id:7,t:"Where the worksheet lives",
+    r:"Tab 7. The brief recommended its own tab. I disagree: the Reports redesign already holds the income-tax statement as a view.",
+    o:[["A","A sixth view in Reports, “GST/HST return”","rec"],["B","Its own fifth tab, “GST/HST”",""]]},
+   {id:8,t:"How the credit is worked out",
+    r:"Tab 2’s table. CRA’s rules differ by kind: everyday costs (90% or more gets all of it, 10% or less gets none, in between gets the share), equipment you keep (over 50% gets all of it, otherwise none), meals (half).",
+    o:[["A","The form asks “Kind of purchase”, applies CRA’s rules, and says the credit and why in one sentence","rec"],["B","You type the credit yourself on each expense",""]]},
+   {id:10,t:"Tax paid by type in Reports: now, or with the Reports redesign?",
+    r:"Tab 4. The Reports redesign (Bookkeeping Stage 3) is drawn and ruled but not built.",
+    o:[["A","Now, on today’s Reports page as part of 4a. The redesign carries it into its Spending view.","rec"],["B","Wait, and build it into the redesign only",""]]},
+   {id:11,t:"Sales made before Stage 3 starts recording",
+    r:"Tabs 1 and 6 (state C). Stage 3’s first step says “no backfill”. Once Stage 2 is live, a club that pays creates a taxed invoice; if Stage 3 ships later, those invoices are on no worksheet.",
+    o:[["A","Stage 3 copies every invoice issued since your registration date from Stripe when it first runs (changes its first step’s “no backfill”)","rec"],["B","No copy; the worksheet asks you to type in those days’ sales and tax collected",""],["C","No copy, and no way to add them (the worksheet just warns)",""]]},
+   {id:12,t:"Mark a period as filed",
+    r:"Tab 6 (state D). The worksheet is live, so a number added after you file would quietly change a filed period’s line 106.",
+    o:[["A","“Mark as filed…” saves the lines as filed. Later changes show as “Changed since you filed” and a late credit moves to your next return’s line 106. The saved figures go into the package.","rec"],["B","No; the worksheet always shows today’s figures",""]]},
+   {id:13,t:"Added 2026-11-06: a receipt with two taxes, in the record",
+    r:"Tab 3, end. The drawing showed only a single-tax cell. A British Columbia receipt carries GST and PST.",
+    o:[["A","One line per tax (“GST 5% · $3.00”, “PST · $4.20”), then “$7.20 in all · Pending review” as a quiet line under them. A single-tax receipt keeps its one line.","rec"],["B","One line: “GST 5% $3.00 + PST $4.20 · Pending review”",""]]},
+   {id:14,t:"Added 2026-11-06: an expense saved before this change, in the record",
+    r:"Tab 3, end. One tax amount with no type. It is never flagged in the register.",
+    o:[["A","Purchase tax reads “Type not set · $74.78 · Pending review”. Only the credit cell is added, in plain text (not amber): “Not worked out” with “Choose the tax type when you correct this expense.” Number and registration appear once a GST or HST type is chosen.","rec"],["B","The same, plus number “Not recorded” and registration “Not checked”",""],["C","Only the shipped cells; nothing new until it’s corrected",""]]},
+   {id:9,t:"Three facts the worksheet needs",facts:true,
+    r:"Tab 1. Nothing bought before your registration date is claimable (services). The period presets follow your filing frequency. The worksheet assumes the regular method. Find them in My Business Account if unsure; leave blank and the build session asks.",
+    f:[["f1","GST/HST registration effective date"],["f2","Filing frequency (annual / quarterly / monthly)"],["f3","Did you choose the quick method? (yes / no)"]]}
+  ];
+  var host=document.getElementById('asks');
+  ASKS.forEach(function(a){
+    var d=document.createElement('div');d.className='ask'+(a.facts?' facts':'');d.id='ask'+a.id;
+    var h='<h3><span class="no">'+(a.facts?'Facts':'Ask '+a.id)+'</span>'+a.t+'</h3><p class="rides">'+a.r+'</p>';
+    if(a.facts){h+='<div class="fl3">';a.f.forEach(function(f){h+='<label for="'+f[0]+'">'+f[1]+'<input type="text" id="'+f[0]+'"></label>';});h+='</div>';}
+    else{h+='<div class="opts">';
+      a.o.forEach(function(o){h+='<label class="'+o[2]+'"><input type="radio" name="a'+a.id+'" value="'+o[0]+'"'+(o[2]?' checked':'')+'><span><b>'+o[0]+'.</b> '+o[1]+'</span></label>';});
+      h+='</div><textarea id="n'+a.id+'" aria-label="Note for ask '+a.id+'" placeholder="Note (optional)"></textarea>';}
+    d.innerHTML=h;host.appendChild(d);
+  });
+  var tabs=document.getElementById('tabs');
+  function show(id){
+    [].forEach.call(tabs.querySelectorAll('button'),function(x){x.setAttribute('aria-selected',x.getAttribute('data-t')===id?'true':'false')});
+    [].forEach.call(document.querySelectorAll('section.pane'),function(s){s.hidden=s.id!==id});
+    window.scrollTo(0,0);
+  }
+  tabs.addEventListener('click',function(e){var b=e.target.closest('button[data-t]');if(b)show(b.getAttribute('data-t'));});
+  document.addEventListener('click',function(e){
+    var ga=e.target.closest('[data-go-ask]');
+    if(ga){show('p10');var t=document.getElementById('ask'+ga.getAttribute('data-go-ask'));if(t)t.scrollIntoView();return;}
+    var v=e.target.closest('.sw button');
+    if(v){var val=v.getAttribute('data-v');document.body.setAttribute('data-view',val);
+      [].forEach.call(document.querySelectorAll('.sw button'),function(x){x.setAttribute('aria-pressed',x.getAttribute('data-v')===val?'true':'false')});return;}
+    var m=e.target.closest('.mk[data-note]')||e.target.closest('.newbox');
+    if(m){var n=m.getAttribute('data-note')||('New or changed in this drawing: '+m.textContent.trim().replace(/\s+/g,' ')+'.');document.getElementById('nt').textContent=n;var d=document.getElementById('nd');if(d.showModal)d.showModal();}
+  });
+  document.getElementById('nx').onclick=function(){document.getElementById('nd').close()};
+  document.getElementById('mk').onclick=function(){
+    var L=['GST/HST Stage 4 drawings (round 2), my answers:'];
+    ASKS.forEach(function(a){
+      if(a.facts){a.f.forEach(function(f){var v=document.getElementById(f[0]).value.trim();L.push('Fact · '+f[1]+': '+(v||'(blank)'));});return;}
+      var c=document.querySelector('input[name=a'+a.id+']:checked');var n=document.getElementById('n'+a.id).value.trim();
+      L.push('Ask '+a.id+': '+(c?c.value:'(none)')+(n?' — '+n:''));});
+    document.getElementById('out').value=L.join('\n');};
+  document.getElementById('cp').onclick=function(){
+    var t=document.getElementById('out');var msg=document.getElementById('cpmsg');
+    function sel(){t.select();msg.textContent='Selected. Press Ctrl+C.';}
+    if(navigator.clipboard&&t.value){navigator.clipboard.writeText(t.value).then(function(){msg.textContent='Copied.'},sel);}else{sel();}};
+})();
+</script>
