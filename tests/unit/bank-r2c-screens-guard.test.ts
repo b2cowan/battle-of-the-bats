@@ -237,6 +237,10 @@ describe('9 · Find: the hints, the lines, Not in the bank yet, Still waiting?',
     const form = code('BankCheckForm.tsx');
     assert.match(form, /\(fresh\?\.stillWaiting \?\? \[\]\)\.filter\(w => !marked\.has\(w\.key\) && !dropped\.has\(w\.key\)\)/);
     assert.match(form, /onYes: \(\) => mark\(w\), onNo: \(\) => setDropped\(d => new Set\(d\)\.add\(w\.key\)\)/);
+    // BC4a (owner 2026-11-06): the check on which a line is put on the start doesn't ask about it, after the start took it.
+    assert.match(form, /setFigure\(null\);\n(?:\s*\/\/[^\n]*\n)*\s*setDropped\(d => new Set\(d\)\.add\(line\.key\)\);\n\s*onChanged\(r\.view, W\.atStartDone/);
+    // The start's lines arrive as Still-waiting rows: the same sentence, no start-only words.
+    assert.doesNotMatch(form, /stillWaiting[^\n]*atStart/);
     assert.match(code('BankFigure.tsx'), /W\.stillWaiting\(a\.what\)/);
   });
   it('every action is a real button (keyboard reachable): no clickable row or span; a chip is a door', () => {

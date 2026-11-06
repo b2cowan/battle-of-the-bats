@@ -9,8 +9,9 @@
  *   server's, and the saved check's own band comes back with the account read again.
  * ⚖ FIND (BC3a, `BankFind`): a line marked "Not in the bank yet" joins the sums with Undo and the band re-figures through
  *   `figureCheck` with the marked items (no arithmetic here); Save sends their KEYS only (`waiting`), the server reads each
- *   line's figures itself (rule 6). "Still waiting on {line}?" (ask 2) asks once per item of the latest earlier check: Yes
- *   marks it, No drops it for this check. A new date clears both.
+ *   line's figures itself (rule 6). "Still waiting on {line}?" (ask 2) asks once per item of the latest earlier check, and
+ *   per Waiting-at-the-start line of the start as the chain rules (BC4a, the server's `stillWaitingOn`): Yes marks it, No
+ *   drops it for this check. A new date clears both.
  * ⚖ THE TWO DOORS OUT OF THE CHECK (BC3b): "Add the missing line" opens the LEDGER'S OWN add window (`AddEntryWindow`), filled
  *   with the gap, the statement's date and the direction (the bank showing more → money in; less → money out), on the
  *   account's own club book; the line is written by the Ledger's route, never by bank code (ask 1). "Waiting at the start"
@@ -131,6 +132,9 @@ export default function BankCheckForm({ orgSlug, view, onSaved, onChanged, onSta
     if (!r.ok) { if (isStaleView(r.code)) onStale(r.error); else setError(r.error); return; }
     // The figure on screen counted the line as one of the books' own: it goes until the day is read again (/review).
     setFigure(null);
+    // Putting it on the start says it has cleared by this statement: this check doesn't ask "Still waiting?" about it
+    // (owner 2026-11-06, BC4a). Another day asks again, as the chain rules (`stillWaitingOn`).
+    setDropped(d => new Set(d).add(line.key));
     onChanged(r.view, W.atStartDone(nameOf(line)));
   }
 

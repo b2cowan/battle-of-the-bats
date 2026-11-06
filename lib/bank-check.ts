@@ -242,6 +242,40 @@ export function latestBefore<T extends { date: string }>(checks: readonly T[], d
   return last;
 }
 
+/**
+ * Ask 2 + "Start item re-check" (owner 2026-11-06, BC4a): what a check dated D asks "Still waiting?" about.
+ *   · the latest earlier check's own items (ask 2), less a line dated on or before the start that is no longer on the
+ *     start's list (taken off: the save would refuse it, M3);
+ *   · each of the start's Waiting-at-the-start lines, the start being the chain's FIRST LINK: asked unless the latest
+ *     earlier check saved AFTER the line went on the start answered it without keeping it (No, or it matched without it).
+ *     A check saved before then never saw the question and doesn't count. (A line saved with the start itself went on
+ *     when the start was saved.)
+ * Every line of the start's list comes back marked `atStart` (the screen may say so; the sentence stays the same). The
+ * check on which a line is put on the start doesn't ask about it: the screen drops it there (it has just said it cleared).
+ * Timestamps compare as the database writes them (one format), as `startCorrected` does.
+ */
+export function stillWaitingOn<C extends { kind: 'start' | 'check'; date: string; createdAt: string; waiting: readonly WaitingItem[] }>(
+  checks: readonly C[], date: string): WaitingItem[] {
+  const start = checks.find(c => c.kind === 'start') ?? null;
+  const earlier = checks.filter(c => c.kind === 'check' && c.date < date);
+  const onStart = new Map((start?.waiting ?? []).map(w => [w.key, w]));
+  const asked = new Map<string, WaitingItem>();
+  for (const w of latestBefore(earlier, date)?.waiting ?? []) {
+    if (onStart.has(w.key)) asked.set(w.key, { ...w, atStart: true });
+    else if (!start || w.date > start.date) asked.set(w.key, w);
+  }
+  for (const s of onStart.values()) {
+    if (asked.has(s.key)) continue;
+    const wentOn = s.addedAt ?? start!.createdAt;
+    const answered = latestBefore(earlier.filter(c => c.createdAt > wentOn), date);
+    if (!answered || answered.waiting.some(w => w.key === s.key)) {
+      asked.set(s.key, { key: s.key, date: s.date, direction: s.direction, amountCents: s.amountCents,
+        ...(s.label ? { label: s.label } : {}), atStart: true });
+    }
+  }
+  return [...asked.values()];
+}
+
 // ── suspects (ask 3) ─────────────────────────────────────────────────────────────────────────
 
 /**

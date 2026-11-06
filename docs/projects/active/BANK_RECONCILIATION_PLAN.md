@@ -66,6 +66,8 @@ need to type a statement balance, see the difference from the books on that date
 | M3 | **A check's Not in the bank yet line may not be dated on or before the starting statement:** the save refuses it. (Owner, 2026-11-06, BC3.) |
 | Q2 look-back | **Find looks at the 60 days before the start on any off check dated within 6 months of the start** (replaces "while no check since the start has matched": a cheque cashed after a matching check was missed). Pre-start lines are named in the callout only when exactly the gap. (Owner, 2026-11-06, BC3b.) |
 | Start item re-check | **A check dated before a start's Waiting-at-the-start line cleared also asks "Still waiting on {line}?" for each of the start's Waiting-at-the-start lines**, as it asks about the previous check's lines. Later work, not BC3b. (Owner, 2026-11-06, BC3b `/review`.) |
+| Start item re-check: when | **The start is the first link of the "Still waiting?" chain.** A check asks about each of the start's Waiting-at-the-start lines unless the latest earlier live check saved after the line was put on the start already answered: if it kept the line, the check asks again; if it didn't (No, or it matched without it), it stops. A check saved before the line went on the start never saw the question and doesn't count. The check on which the line is put on the start doesn't ask about it. (Owner, 2026-11-06, BC4a.) |
+| M3 exception | **A check may mark a line Not in the bank yet although it is dated on or before the start, only when the line is on the live starting statement's Waiting-at-the-start list.** Any other pre-start line is still refused, with the same sentence. (Owner, 2026-11-06, BC4a.) |
 
 ### Tick-off rulings that still stand (Appendix A §4)
 
@@ -656,7 +658,7 @@ missing line, Waiting at the start, M2, the finishing passes; two owner question
     "Matches · 1 line not in the bank yet"; the server refuses M3, a line outside the books and a line on its way; Nov 5
     asks Still waiting? (Yes, Undo, No, a new date asks again, Yes + Save carries it); no sideways scroll at 390. Every probe
     check and line removed (voided through the Ledger route, then deleted); the walk account holds its Sep 30 start only.
-- [x] **BC3b built 2026-11-06, finishing passes done 2026-11-06** (owner: yes to the UX summary; the Q2 look-back ruled wider, §0 "Q2 look-back"; all five `/review` fixes with mig 450, 2026-11-06). Anchors:
+- [x] **BC3b built 2026-11-06, finishing passes done 2026-11-06, committed `12c697389` 2026-11-06** (owner: yes to the UX summary; the Q2 look-back ruled wider, §0 "Q2 look-back"; all five `/review` fixes with mig 450, 2026-11-06). Anchors:
   - **Add the missing line** (`BankCheckForm` → the Ledger's own `AddEntryWindow`, new optional `prefill` prop: money in when
     the bank shows more, out when less, the statement's day, the gap; the account's own club book, `kind` now on the view's
     books; the budget words read as the Ledger page reads them). On every callout but a half; with no possibility to name,
@@ -714,10 +716,39 @@ missing line, Waiting at the start, M2, the finishing passes; two owner question
     ($5,000.00, no items, `corrected_at` NULL) only.
 
 ### BC4 — Club: the Bank tab on a phone (390)
+Build prompt written 2026-11-06: `BANK_BALANCE_CHECK_BC4_BUILD_PROMPT.md` (two sessions: BC4a the start's lines on an
+earlier re-check, two owner questions first; BC4b the phone frames, three owner questions first).
 - [ ] The phone frames of tabs 1–6: band, sums, Find cards with signed amounts and "Show 10 more", full-width buttons, the
   saved-check cards, the window full screen. No pinned strip or dock (gone with the tick-off).
 - [ ] Phone walk probe; `/review`.
-- [ ] **The start's lines on an earlier re-check** (owner 2026-11-06, §0 "Start item re-check"): a check dated before a
+- [x] **The start's lines on an earlier re-check — BC4a built 2026-11-06** (owner: §0 "Start item re-check: when" and "M3
+  exception" ruled as recommended; yes to the UX summary). Anchors:
+  - **The chain** (`stillWaitingOn`, `lib/bank-check.ts`, read by `figureForDate`'s `stillWaiting`): the latest earlier
+    check's own items (less a pre-start line no longer on the start's list), and each of the start's Waiting-at-the-start
+    lines unless the latest-dated earlier check saved after the line's `added_at` (a line saved with the start: the
+    start's `created_at`) answered without it; every start line comes marked `atStart`. The sentence stays "Still
+    waiting on {line}?".
+  - **The form** (`BankCheckForm`'s `atStart`): the check on which a line is put on the start drops it from Still
+    waiting? (a new date asks again).
+  - **M3's exception** (`savePlan`, `SaveFacts.startWaiting` read from the live start by `saveCheck`, never the request):
+    a line on the live start's list may be a check's item although dated on or before the start; every other rule holds
+    and any other pre-start line is `bad_item` with the same sentence. The lock is mig 449's start-books compare (a line
+    taken off moves it). No migration; `DATA_DICTIONARY.md` `bank_check_waiting` gotcha 1 says so.
+  - **Proved 2026-11-06:** 267 bank tests pass (new: `stillWaitingOn` 9 on the owner's example, M3's exception 5 cases,
+    server guard pins on the read and the save facts, screens guard pin on the form's drop); tsc, eslint, `check:spelling`,
+    `check:dictionary` clean; `check:layout --only=admin-accounting-bank` clean at 1440/768/390/361. Dev walk
+    `.probe/bank-bc4/bc4a.mjs` → `BANK_BC4A_WALK_PASSED` at 1440 and 390 (a $75.00 cheque of Sep 26; Oct 5 saved matching;
+    Oct 15 off → Waiting at the start → Matches with no Still waiting? about it → Save; Oct 5 opened → Check this statement
+    again → off by $75.00 → "Still waiting on {cheque}?" → Yes → Matches → Save, the opened check lists "Not in the bank
+    yet · {cheque}"; Oct 8 and Oct 12 ask, Oct 31 doesn't; the save keeps the start's line, refuses another pre-start line;
+    Take it off → no ask, a save naming it `bad_item`). `walk.mjs` and `bc3b.mjs` re-run → PASSED. The walk account holds
+    its Sep 30 start only (`corrected_at` NULL).
+  - **`/review` (standard, 3 lenses) 2026-11-06:** no Critical/High/Medium. Applied: the save guard's comment says it
+    compares the start's books, not its keys (a same-amount swap in the same instant isn't caught: same figures); a test
+    pins the ruled reading (the latest-DATED answered check decides); the dictionary line. Carried, not changed: a start
+    saved again on its own date while later checks stand asks its lines again (it went on again); a check that kept a line
+    later taken off the start keeps it in its saved list; saving without answering ends the chain, as ask 2 always did.
+  Original item: a check dated before a
   start's Waiting-at-the-start line cleared also asks "Still waiting on {line}?" for each such line (today "Still waiting?"
   carries only the previous check's lines, so "Check this statement again" on a statement from before the cheque cleared
   shows off by it, with no way to close it: M3 refuses a pre-start line as Not in the bank yet). Not phone work: it rides

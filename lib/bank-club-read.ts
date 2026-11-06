@@ -4,7 +4,7 @@ import { fetchAll, fetchAllIn } from './supabase-paging';
 import { getClubOwnedLedgers, resolvePersonNamer } from './db';
 import { onlinePaymentsOn } from './online-payments-switch';
 import { readPayouts } from './online-payouts';
-import { booksNowSay, latestBefore, suspectsSince, suspectsStart, type BankLine, type WaitingItem } from './bank-check';
+import { booksNowSay, stillWaitingOn, suspectsSince, suspectsStart, type BankLine, type WaitingItem } from './bank-check';
 import {
   CHECK_SELECT, ENTRY_SELECT, ONLINE_METHODS, WAITING_SELECT, beforeStartLines, beforeStartWindow, bookIdsOf, clubBooksOnDate,
   entryToBankLine, isOnlineEntry,
@@ -210,7 +210,8 @@ export interface ClubFigureForDate {
   onItsWay: OnItsWay;
   /** Ask 3: lines since the last match (since the start on a first check), newest first, at most SUSPECT_CAP. */
   suspects: { since: string; sinceMatch: boolean; total: number; lines: SuspectLine[] };
-  /** Ask 2: the latest earlier check's "Not in the bank yet" items, asked "Still waiting?" (BC3 asks). */
+  /** Ask 2: the latest earlier check's "Not in the bank yet" items, asked "Still waiting?" (BC3 asks), and the start's
+   *  Waiting-at-the-start lines as the chain's first link (BC4a, `stillWaitingOn`), each marked `atStart`. */
   stillWaiting: WaitingItem[];
   /** Q2 look-back (owner 2026-11-06): on a check within six months of the start, the account's lines of the 60 days before
    *  the start that could be "Waiting at the start" (`beforeStartLines`); null past six months. The screen offers them only
@@ -250,7 +251,7 @@ export async function figureForDate(orgId: string, account: ClubBankAccount, che
   return {
     date, kind, refused, booksCents: books.get(date)!, onItsWay: oiw,
     suspects: { since: s.since, sinceMatch: s.sinceMatch, total: s.lines.length, lines: s.lines.slice(0, SUSPECT_CAP) },
-    stillWaiting: [...(latestBefore(checks.filter(c => c.kind === 'check'), date)?.waiting ?? [])],
+    stillWaiting: stillWaitingOn(checks, date),
     beforeStart: look ? { ...look, lines: beforeStartLines(before, start).slice(0, SUSPECT_CAP) } : null,
     replaces,
   };

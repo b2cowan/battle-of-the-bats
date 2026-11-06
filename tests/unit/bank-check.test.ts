@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   HINT_CAP, MAX_COMBOS, booksNowSay, closingDirection, closingDirectionAtStart, coachBooksOnDate, figureCheck, figureOfSaved,
-  findHints, hintsFor, latestBefore, matchedWhenSaved, onItsWayOnCheck, savedTerms, startBooks, suspectsSince, typedCents,
+  findHints, hintsFor, latestBefore, matchedWhenSaved, stillWaitingOn, onItsWayOnCheck, savedTerms, startBooks, suspectsSince, typedCents,
   waitingOnCheck, waitingOnStart,
   type BankLine, type SavedCheck, type WaitingItem,
 } from '../../lib/bank-check.ts';
@@ -115,6 +115,72 @@ describe('saved checks: matched when saved, Books now say, the latest before', (
     assert.equal(latestBefore([start, matched, off], '2026-08-31')?.id, 'a');
     assert.equal(latestBefore([start, matched, off], '2026-09-30')?.id, 'b');
     assert.equal(latestBefore([start], '2026-06-30'), null);
+  });
+});
+
+describe("stillWaitingOn — the start is the chain's first link (owner 2026-11-06, BC4a)", () => {
+  // The owner's example: start Sep 30, a $75 cheque of Sep 26 cleared Oct 10, an Oct 5 check saved earlier, and an Oct 15
+  // check on which the cheque was put on the start (Waiting at the start) and then saved.
+  type C = SavedCheck & { createdAt: string };
+  const at = (day: string) => `2026-${day}T12:00:00.000000+00:00`;
+  const cheque: WaitingItem = { key: 'entry:c', date: '2026-09-26', direction: 'out', amountCents: 7500, label: 'Cheque #12',
+    atStart: true, addedAt: at('10-16'), addedBy: 'u1' };
+  const ownItem: WaitingItem = { key: 'entry:d', date: '2026-10-04', direction: 'in', amountCents: 2000 };
+  const start: C = { ...saved({ id: 's', kind: 'start', date: '2026-09-30', waiting: [cheque] }), createdAt: at('10-01') };
+  const oct5: C = { ...saved({ id: 'o5', date: '2026-10-05' }), createdAt: at('10-06') };
+  const oct15: C = { ...saved({ id: 'o15', date: '2026-10-15' }), createdAt: at('10-16').replace('12:00', '12:05') };
+  const asks = (checks: C[], date: string) => stillWaitingOn(checks, date).map(w => w.key);
+  const keptOct5: C = { ...oct5, id: 'o5b', createdAt: at('10-17'), waiting: [{ key: 'entry:c', date: '2026-09-26', direction: 'out', amountCents: 7500 }] };
+
+  it("the re-checked Oct 5 asks about the cheque, marked as the start's (no earlier check)", () => {
+    const w = stillWaitingOn([start, oct5, oct15], '2026-10-05');
+    assert.deepEqual(w, [{ key: 'entry:c', date: '2026-09-26', direction: 'out', amountCents: 7500, label: 'Cheque #12', atStart: true }]);
+  });
+
+  it("a check saved before the cheque went on the start never saw the question: it doesn't count", () => {
+    assert.deepEqual(asks([start, oct5, oct15], '2026-10-08'), ['entry:c']);
+  });
+
+  it('Oct 5 kept it: Oct 8, Oct 12 and the re-checked Oct 15 ask again, once', () => {
+    for (const d of ['2026-10-08', '2026-10-12', '2026-10-15']) assert.deepEqual(asks([start, keptOct5, oct15], d), ['entry:c'], d);
+    assert.equal(stillWaitingOn([start, keptOct5, oct15], '2026-10-08')[0].atStart, true, "carried by a check, still the start's");
+  });
+
+  it("Oct 15 was saved after it went on the start, without it: Oct 31 doesn't ask", () => {
+    assert.deepEqual(asks([start, oct5, oct15], '2026-10-31'), []);
+    assert.deepEqual(asks([start, keptOct5, oct15], '2026-10-31'), []);
+  });
+
+  it("a check's own items still carry to the next check (ask 2), beside the start's", () => {
+    const withOwn: C = { ...keptOct5, waiting: [...keptOct5.waiting, ownItem] };
+    assert.deepEqual(asks([start, withOwn], '2026-10-08').sort(), ['entry:c', 'entry:d']);
+    assert.deepEqual(asks([start, { ...oct15, waiting: [ownItem] }], '2026-10-31'), ['entry:d']);
+  });
+
+  it('taken off the start: a check that kept it no longer carries it (the save would refuse it, M3)', () => {
+    const bare: C = { ...start, waiting: [] };
+    const withOwn: C = { ...keptOct5, waiting: [...keptOct5.waiting, ownItem] };
+    assert.deepEqual(asks([bare, withOwn], '2026-10-08'), ['entry:d']);
+  });
+
+  it('a line saved with the start itself went on when the start was saved', () => {
+    const withStart: WaitingItem = { key: cheque.key, date: cheque.date, direction: cheque.direction, amountCents: cheque.amountCents,
+      label: cheque.label, atStart: true };
+    const s2: C = { ...start, waiting: [withStart] };
+    assert.deepEqual(asks([s2], '2026-10-05'), ['entry:c'], 'no check yet');
+    assert.deepEqual(asks([s2, oct5], '2026-10-08'), [], 'Oct 5, saved after the start, answered without it');
+  });
+
+  it('as ruled: the latest-DATED check among those saved after the line went on decides, not the latest check overall', () => {
+    // Oct 15 was saved before the cheque went on the start; Oct 5 is re-saved after it, without it: Oct 31 doesn't ask.
+    const early15: C = { ...oct15, createdAt: at('10-15') };
+    const resaved5: C = { ...oct5, id: 'o5c', createdAt: at('10-17') };
+    assert.deepEqual(asks([start, resaved5, early15], '2026-10-31'), []);
+  });
+
+  it("no start: only the latest earlier check's items", () => {
+    const c: C = { ...oct5, waiting: [ownItem] };
+    assert.deepEqual(asks([c], '2026-10-08'), ['entry:d']);
   });
 });
 

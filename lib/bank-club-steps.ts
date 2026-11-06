@@ -178,10 +178,11 @@ export async function saveCheck(ctx: AuthContextWithRole, accountId: string, ask
   const refusal = saveRefusal({ asked, date, today, checks });
   if (refusal) return bankRefusedAs(refusal);
   const figure = await figureForDate(ctx.org.id, account, checks, date, today, { kind: asked, suspects: false });
+  const start = checks.find(c => c.kind === 'start') ?? null;
   const plan = savePlan({
     kind: asked, date, body, entries,
     facts: { booksCents: figure.booksCents, onItsWay: figure.onItsWay, bookIds: bookIdsOf(account.books),
-      startDate: checks.find(c => c.kind === 'start')?.date ?? null },
+      startDate: start?.date ?? null, startWaiting: start?.waiting.map(w => w.key) ?? [] },
   });
   if (!plan.ok) return bankRefusedAs(plan.code);
   // ⚖ STRIPE DIDN'T ANSWER = WARN, NEVER BLOCK (owner 2026-11-06), decided HERE (BC2 review): the save reads Stripe again,
@@ -193,7 +194,6 @@ export async function saveCheck(ctx: AuthContextWithRole, accountId: string, ask
   const a = plan.args;
   // The start this figure was worked from (BC2 review, mig 449): the step refuses `changed` if it was replaced or
   // corrected since, so a check can't save the old start's books. A start names the start it replaces (none: null).
-  const start = checks.find(c => c.kind === 'start') ?? null;
   const r = await step('bank_check_save', {
     p_org: ctx.org.id, p_account: accountId, p_kind: a.kind, p_date: a.date, p_bank_cents: a.bankCents,
     p_books_cents: a.booksCents, p_on_its_way_cents: a.onItsWayCents, p_cash_cents: a.cashCents, p_book_ids: a.bookIds,

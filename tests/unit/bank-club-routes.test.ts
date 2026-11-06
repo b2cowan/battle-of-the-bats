@@ -23,7 +23,7 @@ const entry = (n: number, over: Partial<EntryRow> = {}): EntryRow => ({
 const none: OnItsWay = { state: 'none', cents: 0, lines: [] };
 const facts = (over: Partial<SaveFacts> = {}): SaveFacts => ({
   booksCents: 825_553, onItsWay: { state: 'counted', cents: 41_200, lines: [], paysOutOn: null },
-  bookIds: ['general', 'tourney'], startDate: '2026-09-30', ...over,
+  bookIds: ['general', 'tourney'], startDate: '2026-09-30', startWaiting: [], ...over,
 });
 const plan = (body: Record<string, unknown>, f: Partial<SaveFacts> = {}, entries: EntryRow[] = [], kind: 'start' | 'check' = 'check') =>
   savePlan({ kind, date: '2026-10-31', body, facts: facts(f), entries });
@@ -78,6 +78,15 @@ describe('Not in the bank yet: figures from the books, never the request (ask 2,
     assert.equal((one(entry(6, { entry_date: '2026-09-30' })) as { code: string }).code, 'bad_item', 'the start\'s own day');
     assert.equal((one(entry(7, { entry_date: '2026-09-12' })) as { code: string }).code, 'bad_item', 'before the start');
     assert.ok(one(entry(8, { entry_date: '2026-10-01' })).ok, 'the day after the start');
+    // M3's exception (owner 2026-11-06, BC4a): a line on the live start's Waiting-at-the-start list may be a check's item
+    // ("Still waiting?" on a check dated before it cleared); any other pre-start line stays bad_item.
+    const onStart = (e: EntryRow) => plan({ bankCents: 1, waiting: [`entry:${e.id}`] }, { startWaiting: [`entry:${U(7)}`] }, [e]);
+    const kept = onStart(entry(7, { entry_date: '2026-09-12' }));
+    assert.ok(kept.ok, "the start's own line");
+    if (kept.ok) assert.deepEqual(kept.args.waiting.map(w => [w.key, w.date, w.direction, w.amountCents]), [[`entry:${U(7)}`, '2026-09-12', 'out', 7500]]);
+    assert.equal((onStart(entry(6, { entry_date: '2026-09-12' })) as { code: string }).code, 'bad_item', 'a pre-start line not on the start');
+    assert.equal((onStart(entry(7, { entry_date: '2026-09-12', status: 'void' })) as { code: string }).code, 'bad_item', 'on the start, but void');
+    assert.equal((onStart(entry(7, { entry_date: '2026-09-12', ledger_id: 'elsewhere' })) as { code: string }).code, 'bad_item', "on the start, another account's book");
     // The start itself has no start before it: its own items (Q2) are never refused by this rule.
     assert.ok(plan({ bankCents: 1, waiting: [`entry:${U(9)}`] }, { booksCents: null, startDate: null }, [entry(9, { entry_date: '2026-09-12' })], 'start').ok);
     assert.match(BANK_REFUSAL.bad_item, /after your starting statement/);
@@ -278,7 +287,7 @@ describe('BC1 loose ends: the date floor, the label cut, a body that is not an o
   it('a waiting item\'s label is cut by characters, never mid-emoji', () => {
     const emoji = '😀'.repeat(201); // 402 UTF-16 units, 201 characters
     const p = savePlan({ kind: 'check', date: '2026-10-31', body: { bankCents: 1, waiting: [`entry:${U(9)}`] }, facts: {
-      booksCents: 0, bookIds: ['general'], startDate: null, onItsWay: { state: 'none', cents: 0, lines: [] } }, entries: [entry(9, { description: emoji })] });
+      booksCents: 0, bookIds: ['general'], startDate: null, startWaiting: [], onItsWay: { state: 'none', cents: 0, lines: [] } }, entries: [entry(9, { description: emoji })] });
     assert.ok(p.ok);
     const label = p.args.waiting[0].label!;
     assert.equal(Array.from(label).length, 200);

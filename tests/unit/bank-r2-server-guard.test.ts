@@ -192,8 +192,18 @@ describe('3. the client sends intent; the server decides (rule 6)', () => {
   it('a waiting line must be a posted line of the account\'s books dated on or before the statement, never one on its way', () => {
     assert.match(rules, /if \(!r \|\| r\.status !== 'posted' \|\| !books\.has\(r\.ledger_id\) \|\| r\.entry_date > date \|\| onItsWay\.has\(k as string\)\) return no\('bad_item'\);/);
     // M3 (owner 2026-11-06): a check's line must be dated after the starting statement, which the save step reads itself.
-    assert.match(rules, /if \(kind === 'check' && facts\.startDate !== null && r\.entry_date <= facts\.startDate\) return no\('bad_item'\);/);
-    assert.match(readCode('lib/bank-club-steps.ts'), /startDate: checks\.find\(c => c\.kind === 'start'\)\?\.date \?\? null/);
+    // M3's exception (owner 2026-11-06, BC4a): only a line on the LIVE start's list, read by the save step itself.
+    assert.match(rules, /if \(kind === 'check' && facts\.startDate !== null && r\.entry_date <= facts\.startDate && !onStart\.has\(k as string\)\) return no\('bad_item'\);/);
+    assert.match(rules, /const onStart = new Set\(facts\.startWaiting\);/);
+    const steps = readCode('lib/bank-club-steps.ts');
+    assert.match(steps, /startDate: start\?\.date \?\? null, startWaiting: start\?\.waiting\.map\(w => w\.key\) \?\? \[\]/);
+    assert.match(steps, /const start = checks\.find\(c => c\.kind === 'start'\) \?\? null;\n  const plan = savePlan\(/, 'the same start the lock holds (p_start_books)');
+    assert.doesNotMatch(steps, /startWaiting: [^\n]*body\./, "never the request's list");
+    // "Start item re-check" (BC4a): the day's figure asks from the chain with the start as its first link (the engine's
+    // `stillWaitingOn`, unit-tested in bank-check.test.ts), never the latest earlier check's items alone.
+    const read = readCode('lib/bank-club-read.ts');
+    assert.match(read, /stillWaiting: stillWaitingOn\(checks, date\),/);
+    assert.doesNotMatch(read, /latestBefore\(/);
   });
   it('every write is awaited', () => {
     for (const line of STEPS_CODE.split('\n')) {

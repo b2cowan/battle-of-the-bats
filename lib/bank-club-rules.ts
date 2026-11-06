@@ -161,6 +161,8 @@ export interface SaveFacts {
   bookIds: string[];
   /** The starting statement's date (null while there is none: a save then IS the start). */
   startDate: string | null;
+  /** The live start's Waiting-at-the-start line keys (M3's exception, BC4a). */
+  startWaiting: readonly string[];
 }
 
 /**
@@ -169,6 +171,11 @@ export interface SaveFacts {
  * Stripe's on its way (it is in the figure already; when Stripe didn't answer, nothing is, so any line may wait).
  * ⚖ M3 (owner 2026-11-06): a CHECK's line must be dated AFTER the starting statement — the start already proved a line on
  *   or before its date was in the bank (one that cleared late is the start's own "Waiting at the start", Q2).
+ * ⚖ M3's exception (owner 2026-11-06, BC4a): a line on the LIVE start's Waiting-at-the-start list may be a check's item
+ *   although it is dated on or before the start ("Still waiting?" asks about it on a check dated before it cleared); any
+ *   other pre-start line is still `bad_item`. The start under the lock (mig 449's `p_start_books`) refuses `changed` when
+ *   the start's books moved since this read, which a line taken off does; it compares the books, not the keys (a line taken
+ *   off and another of the same amount put on inside the same instant is not caught: the figures are the same, BC4a /review).
  */
 export function savePlan(input: { kind: 'start' | 'check'; date: string; body: Record<string, unknown>; facts: SaveFacts;
   entries: readonly EntryRow[] }) {
@@ -188,12 +195,13 @@ export function savePlan(input: { kind: 'start' | 'check'; date: string; body: R
   const byId = new Map(input.entries.map(r => [r.id, r]));
   const books = new Set(facts.bookIds);
   const onItsWay = new Set(facts.onItsWay.state === 'counted' ? facts.onItsWay.lines.map(l => l.key) : []);
+  const onStart = new Set(facts.startWaiting);
   const waiting = new Map<string, WaitingItem>();
   for (const k of keys) {
     const id = typeof k === 'string' ? entryIdOf(k) : null;
     const r = id ? byId.get(id) : undefined;
     if (!r || r.status !== 'posted' || !books.has(r.ledger_id) || r.entry_date > date || onItsWay.has(k as string)) return no('bad_item');
-    if (kind === 'check' && facts.startDate !== null && r.entry_date <= facts.startDate) return no('bad_item');
+    if (kind === 'check' && facts.startDate !== null && r.entry_date <= facts.startDate && !onStart.has(k as string)) return no('bad_item');
     const item = waitingItemOf(k as string, r);
     if (!item) return no('bad_item');
     waiting.set(item.key, item);

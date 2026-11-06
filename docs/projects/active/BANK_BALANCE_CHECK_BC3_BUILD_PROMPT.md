@@ -1,9 +1,9 @@
 # Bank balance check BC3: Find (build prompt, two sessions)
 
-> **✅ DONE 2026-11-06 — BC3b's finishing passes complete** (`/marketing` settled every Find word and added `bad_start_item`;
+> **✅ DONE 2026-11-06 — BC3b committed `12c697389` 2026-11-06, finishing passes complete** (`/marketing` settled every Find word and added `bad_start_item`;
 > `/simplify`; `/review` high: five fixes on the owner's "all five", incl. **mig 450** (`/dba` Finding #49), on dev; walks
 > `BANK_BC3A_WALK_PASSED` + `BANK_BC3B_WALK_PASSED` at 1440 and 390; record in plan §9 BC3). Owner ruling 2026-11-06: plan §0
-> "Start item re-check", a BC4 item. **Next: BC4 (the phone).** Nothing below is owed.
+> "Start item re-check", a BC4 item. **Next: BC4, prompt `BANK_BALANCE_CHECK_BC4_BUILD_PROMPT.md`.** Nothing below is owed.
 
 > **BC3b BUILT 2026-11-06, uncommitted (owner yes to the UX summary; Q2 look-back ruled wider, plan §0; mig 449 on dev,
 > `/dba` Finding #48; walks `BANK_BC3B_WALK_PASSED` at 1440 + 390, BC3a's re-run passed; record in plan §9 BC3). `/design`

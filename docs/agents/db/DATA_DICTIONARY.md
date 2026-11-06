@@ -9199,7 +9199,10 @@ saved (key, date, label, amount, direction). A money-out item adds to Should be 
 **Gotchas (read first):**
 1. **They belong to that check only.** The next check reads the latest earlier live check's items to ask "Still
    waiting?" (Yes carries the item onto the new check as a new row; No drops it; BC3 asks). Nothing copies them forward
-   by itself.
+   by itself. **The start is the chain's first link (BC4a, owner 2026-11-06):** a check also asks about the start's
+   items until the latest earlier check saved after the item's `added_at` answered without it (`stillWaitingOn`). So a
+   CHECK's item is dated after the start, **except** a line on the live start's list (M3's exception, `savePlan`): that
+   row has `at_start` false and a `line_date` on or before the start. It stays if the line is later taken off the start.
 2. **`at_start`** = an item of the starting statement (Q2, "Waiting at the start": a cheque written before the start and
    cashed after it). `bank_check_save` sets it from the kind: always true on a start's items, never on a check's.
    **Since mig 449 the usual way an item reaches the start is `bank_start_waiting`**, attaching it to the LIVE start in
