@@ -23,6 +23,7 @@ import { Note, type RegRowModel } from './RegistrationsList';
 import css from './Registrations.module.css';
 import { repKit } from '../../RepKit';
 import { SECOND_PARENT_WORDS } from '@/lib/league-second-parent';
+import { formatStoredDate } from '@/lib/timezone';
 
 const SP = SECOND_PARENT_WORDS.staff;
 
@@ -36,7 +37,9 @@ function SecondParentFact({ reg, onSave }: { reg: LeagueRegistration; onSave: ((
   const [value, setValue] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const shown = reg.guardianEmail2 ?? SP.none;
+  // Stage 3b (O3): a stopped address is no longer on the sign-up, so the line says who stopped it and when. No undo (O2): the
+  // typed address is refused by the server; a DIFFERENT address can still be added and replaces the line.
+  const shown = reg.guardianEmail2 ?? (reg.secondParentStoppedAt ? SP.stopped(formatStoredDate(reg.secondParentStoppedAt)) : SP.none);
 
   async function save() {
     if (!onSave || saving) return;

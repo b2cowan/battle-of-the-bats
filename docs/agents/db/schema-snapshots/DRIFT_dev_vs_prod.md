@@ -2,19 +2,20 @@
 
 **Generated:** 2026-11-06 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 203 divergence(s)** across dev/prod.
+**⚠️ 216 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
-| Tables | 1 | 6 | — |
-| Columns | 27 | 59 | 0 |
-| Indexes | 9 | 26 | 0 |
-| Constraints | 6 | 28 | — |
-| RLS / CHECK | 14 | 26 | 0 (RLS state) |
+| Tables | 2 | 6 | — |
+| Columns | 33 | 59 | 0 |
+| Indexes | 12 | 26 | 0 |
+| Constraints | 8 | 28 | — |
+| RLS / CHECK | 15 | 26 | 0 (RLS state) |
 
 ## Tables
-### Only in DEV (1)
+### Only in DEV (2)
 - `bank_check_waiting`
+- `second_parent_stops`
 
 ### Only in PROD (6)
 - `bank_check_added_lines`
@@ -25,7 +26,7 @@
 - `bank_saved_lines`
 
 ## Columns
-### Only in DEV (27)
+### Only in DEV (33)
 - `bank_check_waiting.amount_cents`
 - `bank_check_waiting.at_start`
 - `bank_check_waiting.check_id`
@@ -53,6 +54,12 @@
 - `rep_document_templates.validity`
 - `rep_roster_players.health_confirmed_at`
 - `rep_roster_players.health_confirmed_by`
+- `second_parent_stops.email`
+- `second_parent_stops.id`
+- `second_parent_stops.org_id`
+- `second_parent_stops.registration_ids`
+- `second_parent_stops.source`
+- `second_parent_stops.stopped_at`
 
 ### Only in PROD (59)
 - `bank_accounts.opening_balance_cents`
@@ -119,7 +126,7 @@
 _none_
 
 ## Indexes
-### Only in DEV (9)
+### Only in DEV (12)
 - `bank_check_waiting_once`
 - `bank_check_waiting_pkey`
 - `bank_checks_account_idx`
@@ -129,6 +136,9 @@ _none_
 - `family_links_child_id_idx`
 - `family_links_live_child_uniq`
 - `platform_refunds_credit_note_uniq`
+- `second_parent_stops_org_email_uniq`
+- `second_parent_stops_pkey`
+- `second_parent_stops_registration_ids_idx`
 
 ### Only in PROD (26)
 - `bank_accounts_set_up_by_idx`
@@ -162,13 +172,15 @@ _none_
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (6)
+### Only in DEV (8)
 - `bank_check_waiting.bank_check_waiting_check_id_fkey`
 - `bank_check_waiting.bank_check_waiting_once`
 - `bank_check_waiting.bank_check_waiting_pkey`
 - `bank_checks.bank_checks_deleted_by_fkey`
 - `family_links.family_links_child_id_fkey`
 - `rep_roster_players.rep_roster_players_health_confirmed_by_fkey`
+- `second_parent_stops.second_parent_stops_org_id_fkey`
+- `second_parent_stops.second_parent_stops_pkey`
 
 ### Only in PROD (28)
 - `bank_accounts.bank_accounts_set_up_by_fkey`
@@ -204,7 +216,7 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (14)
+### CHECK only in DEV (15)
 - `bank_check_waiting.bank_check_waiting_amount_cents_check`
 - `bank_check_waiting.bank_check_waiting_direction_check`
 - `bank_check_waiting.bank_check_waiting_label_check`
@@ -219,6 +231,7 @@ _none_
 - `platform_refunds.platform_refunds_invoice_id_chk`
 - `platform_refunds.platform_refunds_note_needs_invoice_chk`
 - `rep_document_templates.rep_document_templates_validity_check`
+- `second_parent_stops.second_parent_stops_email_check`
 
 ### CHECK only in PROD (26)
 - `bank_accounts.bank_accounts_opening_pair`

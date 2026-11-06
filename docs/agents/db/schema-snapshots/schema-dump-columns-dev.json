@@ -26343,6 +26343,60 @@
     "ordinal_position": 9
   },
   {
+    "table_name": "second_parent_stops",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "second_parent_stops",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "second_parent_stops",
+    "column_name": "email",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "second_parent_stops",
+    "column_name": "stopped_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "second_parent_stops",
+    "column_name": "source",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'stop_page'::text",
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "second_parent_stops",
+    "column_name": "registration_ids",
+    "data_type": "ARRAY",
+    "udt_name": "_uuid",
+    "is_nullable": "NO",
+    "column_default": "'{}'::uuid[]",
+    "ordinal_position": 6
+  },
+  {
     "table_name": "stripe_billing_drift_checks",
     "column_name": "id",
     "data_type": "uuid",

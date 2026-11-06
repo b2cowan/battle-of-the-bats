@@ -21,6 +21,7 @@ import { getClubSiteContent } from '@/lib/club-page-meta';
 import { leaguePayToken, leaguePayUrl } from '@/lib/league-pay-link';
 import { SIGNUP_LINK_WORDS as SW } from '@/lib/league-pay-words';
 import { readSecondParentEmail, secondParentRefusalWords, SECOND_PARENT_WORDS as SP } from '@/lib/league-second-parent';
+import { stoppedSecondParentRefusal } from '@/lib/league-second-parent-stop';
 import { went } from '@/lib/league-second-parent-mail';
 
 export const dynamic = 'force-dynamic';
@@ -142,6 +143,8 @@ export const POST = withObservability(async (req: Request,
   if (!guardianEmail) errors.guardianEmail = 'Enter your email address.';
   else if (!isValidEmail(guardianEmail)) errors.guardianEmail = 'Enter a valid email address.';
   if ('refusal' in second) errors.guardianEmail2 = secondParentRefusalWords(second.refusal, 'parent');
+  // Stage 3b (O4): an address that asked this club to stop is refused in words, never accepted silently.
+  else if (guardianEmail2) { const stopped = await stoppedSecondParentRefusal(org.id, guardianEmail2); if (stopped) errors.guardianEmail2 = stopped; }
   if (season.waiverText && !waiverAccepted) errors.waiverAccepted = 'Agree to the waiver to sign up.';
   if (Object.keys(errors).length > 0) return NextResponse.json({ errors }, { status: 400 });
   if (chosen.every(c => c === 'nofit')) {

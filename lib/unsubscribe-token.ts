@@ -124,3 +124,33 @@ export function buildGuardianUnsubscribeUrl(orgId: string, email: string): strin
   if (!token) return null;
   return `${base}/unsubscribe?org=${encodeURIComponent(orgId)}&guardian=${encodeURIComponent(normalized)}&token=${encodeURIComponent(token)}`;
 }
+
+// ── Per-SECOND-PARENT stop (Signed-in family accounts Stage 3b) ─────────────────
+// The "Stop these emails" button on a second parent's copy of a sign-up email. A fourth distinct HMAC suffix, keyed on
+// (org, normalised email) like the guardian family but with its own suffix, so the four families stay non-interchangeable:
+// a guardian or org unsubscribe link can never stop a second parent's address, and this link can never opt an org or a
+// family out of anything. It opens a confirm page (/second-parent-stop); only the POST behind that page writes. Same
+// accepted trade as the rest of the file: deterministic, never expires, and the address travels in the URL (the
+// recipient's own address, in their own mail). A stale forwarded link can only ever stop mail reaching that address.
+
+function secondParentStopKey(orgId: string, email: string): string {
+  return `${orgId}:${email.trim().toLowerCase()}:stop-second-parent`;
+}
+
+export function generateSecondParentStopToken(orgId: string, email: string): string | null {
+  return sign(secondParentStopKey(orgId, email));
+}
+
+export function verifySecondParentStopToken(orgId: string, email: string, token: string): boolean {
+  if (!orgId || !email || !token) return false;
+  return sameToken(generateSecondParentStopToken(orgId, email), token);
+}
+
+/** The link on a second parent's copy, or null when there is no secret (no button is drawn rather than a forgeable one). */
+export function buildSecondParentStopUrl(orgId: string, email: string): string | null {
+  const base = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.fieldlogichq.ca';
+  const normalized = email.trim().toLowerCase();
+  const token = generateSecondParentStopToken(orgId, normalized);
+  if (!token) return null;
+  return `${base}/second-parent-stop?org=${encodeURIComponent(orgId)}&email=${encodeURIComponent(normalized)}&token=${encodeURIComponent(token)}`;
+}

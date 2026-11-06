@@ -30,7 +30,7 @@ export const RESERVED_ORG_SLUGS: ReadonlySet<string> = new Set([
   'news', 'results', 'rules', 'schedule', 'standings', 'tryout-response', 'tryout-score',
   // Marketing / content
   'pricing', 'blog', 'changelog', 'about', 'contact', 'support', 'help', 'legal',
-  'privacy', 'terms', 'unsubscribe',
+  'privacy', 'terms', 'unsubscribe', 'second-parent-stop',
   'for-tournament-organizers', 'for-leagues', 'for-clubs', 'for-coaches',
   // The sandbox door (app/see-it-live) and its shareable chooser (app/demos) — static routes, so
   // an org holding either slug would be shadowed by it and lose every page it owns.

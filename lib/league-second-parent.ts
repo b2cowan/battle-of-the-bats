@@ -27,6 +27,27 @@ export const SECOND_PARENT_WORDS = {
   /** The first email's own words, so the two boxes never disagree. */
   invalid: 'Enter a valid email address.',
   sameAsYours: 'That’s the same email as yours. Leave this empty or enter the other parent’s.',
+  /**
+   * An address that asked to stop (Stage 3b, owner call O4): refused in words on the family form and on both of the club's
+   * windows, never accepted silently. DRAFT words for the /marketing pass: change them here and only here.
+   */
+  stoppedAddress: 'That address has asked not to get these emails from this club. Enter another or leave it empty.',
+  /**
+   * The confirm page behind the "Stop these emails" link (/second-parent-stop; Stage 3b). The reader may not know the club
+   * well and is signed out. DRAFT words for the /marketing pass: change them here and only here.
+   */
+  stop: {
+    button: 'Stop these emails',
+    title: 'Stop these emails?',
+    body: (club: string, email: string) => `${club} has been sending sign-up emails to ${email}. Press the button and they stop, for every season.`,
+    note: 'The club will see that these emails were stopped. Nobody is emailed about it.',
+    doneTitle: 'These emails have stopped',
+    doneBody: (club: string, email: string) => `${club} won’t send sign-up emails to ${email} again.`,
+    invalidTitle: 'We can’t use that link',
+    invalidBody: 'This link isn’t valid. If you’d like the emails to stop, reply to any email you received and we’ll take your address off within 10 business days as required by CASL.',
+    dbTitle: 'That didn’t go through',
+    dbBody: 'Something went wrong on our side, so the emails haven’t stopped yet. Open the link in your email again in a few minutes. If it still doesn’t work, reply to any email you received and we’ll take your address off within 10 business days as required by CASL.',
+  },
   /** The second parent's greeting: no name is asked. */
   greeting: 'Hi,',
   /**
@@ -53,6 +74,8 @@ export const SECOND_PARENT_WORDS = {
     sameAsFirst: 'That’s the same as the first email. Leave it empty or enter the other parent’s.',
     /** The first email changed to the second parent's: the database holds them apart, so it is said in words first. */
     firstIsSecond: 'That’s already the second parent’s email on this sign-up. Change or clear the second parent first.',
+    /** The record window's line where a stopped address was (Stage 3b, O3): nobody is emailed, the registrar can see it. */
+    stopped: (date: string) => `Stopped by the address owner, ${date}`,
     /** Under the edit box: a staff edit sends nothing (shipped behaviour, build prompt Part 5). */
     editHint: 'Applies to every child in this sign-up. Nothing is emailed when you change it.',
   },

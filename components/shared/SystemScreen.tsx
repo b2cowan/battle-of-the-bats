@@ -113,15 +113,18 @@ export function SystemAction({
   href,
   onClick,
   disabled,
+  submit,
   children,
 }: {
   kind: 'primary' | 'secondary';
   href?: string;
   onClick?: () => void;
   disabled?: boolean;
+  /** Inside a `<form>`: the button submits it (default is a plain button). */
+  submit?: boolean;
   children: ReactNode;
 }) {
   const cls = `${styles.btn} ${kind === 'primary' ? styles.primary : styles.secondary}`;
   if (href) return <Link href={href} className={cls}>{children}</Link>;
-  return <button type="button" className={cls} onClick={onClick} disabled={disabled}>{children}</button>;
+  return <button type={submit ? 'submit' : 'button'} className={cls} onClick={onClick} disabled={disabled}>{children}</button>;
 }

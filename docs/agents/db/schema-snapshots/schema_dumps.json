@@ -26345,6 +26345,60 @@
         "column_default": "now()"
       },
       {
+        "table_name": "second_parent_stops",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "second_parent_stops",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "second_parent_stops",
+        "pos": 3,
+        "column_name": "email",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "second_parent_stops",
+        "pos": 4,
+        "column_name": "stopped_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "second_parent_stops",
+        "pos": 5,
+        "column_name": "source",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'stop_page'::text"
+      },
+      {
+        "table_name": "second_parent_stops",
+        "pos": 6,
+        "column_name": "registration_ids",
+        "data_type": "ARRAY",
+        "udt_name": "_uuid",
+        "is_nullable": "NO",
+        "column_default": "'{}'::uuid[]"
+      },
+      {
         "table_name": "stripe_billing_drift_checks",
         "pos": 1,
         "column_name": "id",
@@ -34444,6 +34498,13 @@
         "constraint_name": "schedule_facility_lanes_tournament_id_fkey"
       },
       {
+        "table_name": "second_parent_stops",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "second_parent_stops_org_id_fkey"
+      },
+      {
         "table_name": "team_entitlements",
         "column_name": "org_id",
         "foreign_table": "organizations",
@@ -40297,6 +40358,21 @@
         "indexdef": "CREATE UNIQUE INDEX schedule_facility_lanes_unique_label ON public.schedule_facility_lanes USING btree (tournament_id, division_id, label)"
       },
       {
+        "tablename": "second_parent_stops",
+        "indexname": "second_parent_stops_org_email_uniq",
+        "indexdef": "CREATE UNIQUE INDEX second_parent_stops_org_email_uniq ON public.second_parent_stops USING btree (org_id, email)"
+      },
+      {
+        "tablename": "second_parent_stops",
+        "indexname": "second_parent_stops_pkey",
+        "indexdef": "CREATE UNIQUE INDEX second_parent_stops_pkey ON public.second_parent_stops USING btree (id)"
+      },
+      {
+        "tablename": "second_parent_stops",
+        "indexname": "second_parent_stops_registration_ids_idx",
+        "indexdef": "CREATE INDEX second_parent_stops_registration_ids_idx ON public.second_parent_stops USING gin (registration_ids)"
+      },
+      {
         "tablename": "stripe_billing_drift_checks",
         "indexname": "stripe_billing_drift_checks_checked_idx",
         "indexdef": "CREATE INDEX stripe_billing_drift_checks_checked_idx ON public.stripe_billing_drift_checks USING btree (checked_at DESC)"
@@ -45707,6 +45783,18 @@
       {
         "kind": "RLS",
         "table_name": "schedule_facility_lanes",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "second_parent_stops",
+        "detail": "second_parent_stops_email_check",
+        "check_clause": "((email = lower(btrim(email))) AND (email <> ''::text) AND (char_length(email) <= 200))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "second_parent_stops",
         "detail": "ENABLED",
         "check_clause": null
       },

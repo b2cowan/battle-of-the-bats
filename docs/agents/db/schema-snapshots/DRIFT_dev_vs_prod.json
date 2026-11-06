@@ -1,12 +1,12 @@
 {
   "generated": "2026-11-06",
-  "total": 203,
+  "total": 216,
   "counts": {
-    "tables": 7,
-    "columns": 86,
-    "indexes": 35,
-    "constraints": 34,
-    "rls": 41
+    "tables": 8,
+    "columns": 92,
+    "indexes": 38,
+    "constraints": 36,
+    "rls": 42
   },
   "items": [
     {
@@ -67,6 +67,10 @@
     },
     {
       "key": "check:only-dev:rep_document_templates.rep_document_templates_validity_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:second_parent_stops.second_parent_stops_email_check",
       "sig": ""
     },
     {
@@ -279,6 +283,30 @@
     },
     {
       "key": "column:only-dev:rep_roster_players.health_confirmed_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:second_parent_stops.email",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:second_parent_stops.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:second_parent_stops.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:second_parent_stops.registration_ids",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:second_parent_stops.source",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:second_parent_stops.stopped_at",
       "sig": ""
     },
     {
@@ -542,6 +570,14 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:second_parent_stops.second_parent_stops_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:second_parent_stops.second_parent_stops_pkey",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-prod:bank_accounts.bank_accounts_set_up_by_fkey",
       "sig": ""
     },
@@ -690,6 +726,18 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:second_parent_stops_org_email_uniq",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:second_parent_stops_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:second_parent_stops_registration_ids_idx",
+      "sig": ""
+    },
+    {
       "key": "index:only-prod:bank_accounts_set_up_by_idx",
       "sig": ""
     },
@@ -795,6 +843,10 @@
     },
     {
       "key": "table:only-dev:bank_check_waiting",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:second_parent_stops",
       "sig": ""
     },
     {

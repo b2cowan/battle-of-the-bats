@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { readSecondParentEmail, SECOND_PARENT_WORDS as SP } from '../../lib/league-second-parent.ts';
-import { readCode, readSource, functionBody } from './_source-code.ts';
+import { readCode, readSource, functionBody, filesUnder } from './_source-code.ts';
 
 /**
  * Signed-in family accounts Stage 3, Parts 1–3 (build prompt SIGNED_IN_FAMILY_STAGE3_BUILD_PROMPT.md; asks 1–6 ruled A
@@ -130,5 +130,101 @@ describe('the form (source guard)', () => {
   });
   it('the finish sentence names both addresses, and reads as before with one', () => {
     assert.match(FORM, /We’ve emailed this to <strong>\{result\.guardianEmail\}<\/strong>\{result\.guardianEmail2 && <> and <strong>\{result\.guardianEmail2\}<\/strong><\/>\}\. Keep/);
+  });
+});
+
+/**
+ * Stage 3b, Parts 1–3 (build prompt SIGNED_IN_FAMILY_STAGE3B_BUILD_PROMPT.md; owner calls O1–O5 ruled 2026-11-06): a second
+ * parent can stop the sign-up emails. The stop IS the removal (it clears the column), so these guards pin where the new table
+ * is read (the three entry points and the record window, and nowhere a message is sent) and what the stop page may write.
+ */
+describe('a stopped address is refused where an address can enter (Stage 3b, O4, source guard)', () => {
+  const PUBLIC = readCode('app/api/league/[orgSlug]/[seasonSlug]/register/route.ts');
+  const ADD = readCode('app/api/admin/house-league/seasons/[seasonId]/registrations/route.ts');
+  const EDIT = readCode('app/api/admin/house-league/seasons/[seasonId]/registrations/[regId]/route.ts');
+
+  it('the refusal sentence exists once, in the words module, and no route writes its own', () => {
+    assert.equal(SP.stoppedAddress, 'That address has asked not to get these emails from this club. Enter another or leave it empty.');
+    const files = ['lib', 'app', 'components'].flatMap(d => [...filesUnder(d, '.ts'), ...filesUnder(d, '.tsx')]);
+    for (const file of files) {
+      if (file === 'lib/league-second-parent.ts') continue;
+      assert.ok(!/asked not to get these emails/.test(readSource(file)), `${file} must take the refusal from SECOND_PARENT_WORDS`);
+    }
+  });
+  it('the public register route, Add registration and the record-window edit each look the address up AFTER reading it', () => {
+    for (const [name, code] of [['register', PUBLIC], ['add', ADD], ['edit', EDIT]] as const) {
+      const read = code.indexOf('readSecondParentEmail(');
+      const look = code.indexOf('stoppedSecondParentRefusal(');
+      assert.ok(read > 0 && look > read, `${name}: the stop lookup follows readSecondParentEmail`);
+    }
+    assert.match(PUBLIC, /else if \(guardianEmail2\) \{ const stopped = await stoppedSecondParentRefusal\(org\.id, guardianEmail2\); if \(stopped\) errors\.guardianEmail2 = stopped; \}/);
+    assert.match(ADD, /stoppedSecondParentRefusal\(ctx!\.org\.id, second\.email\)/);
+    assert.match(EDIT, /stoppedSecondParentRefusal\(ctx!\.org\.id, second\.email\)/);
+  });
+  it('the lookup is this club’s, fails closed, and keeps readSecondParentEmail pure', () => {
+    const body = functionBody(readCode('lib/league-second-parent-stop.ts'), 'stoppedSecondParentRefusal');
+    assert.match(body, /\.eq\('org_id', orgId\)\.eq\('email', normalized\)/);
+    assert.match(body, /if \(error\) throw error;/);
+    assert.ok(!/supabase|await/.test(functionBody(readCode('lib/league-second-parent.ts'), 'readSecondParentEmail')));
+  });
+});
+
+describe('the record window shows the stop (Stage 3b, O3, source guard)', () => {
+  it('words: "Stopped by the address owner, {date}", in the staff words', () => {
+    assert.equal(SP.staff.stopped('Nov 6, 2026'), 'Stopped by the address owner, Nov 6, 2026');
+  });
+  it('the list and every redrawn row carry the date; it is set only while the sign-up has no second address', () => {
+    assert.match(readCode('app/api/admin/house-league/seasons/[seasonId]/registrations/route.ts'), /await withSecondParentStops\(ctx!\.org\.id, /);
+    assert.match(readCode('app/api/admin/house-league/seasons/[seasonId]/registrations/[regId]/route.ts'), /withSecondParentStops\(data\.org_id, \[mapLeagueRegistration\(data\)\]\)/);
+    const stopLib = readCode('lib/league-second-parent-stop.ts');
+    const fn = stopLib.slice(stopLib.indexOf('function withSecondParentStops'));
+    assert.match(fn, /regs\.filter\(r => !r\.guardianEmail2\)/);
+    assert.match(fn, /\.eq\('org_id', orgId\)\.overlaps\('registration_ids', bare\)/);
+    assert.match(fn, /secondParentStoppedAt: r\.guardianEmail2 \? null/);
+  });
+  it('the window draws the line through formatStoredDate and keeps its Add control (a different address replaces the line)', () => {
+    const win = readCode('components/admin/kit/club/league/registrations/RegistrationRecordWindow.tsx');
+    assert.match(win, /SP\.stopped\(formatStoredDate\(reg\.secondParentStoppedAt\)\)/);
+    assert.match(win, /\{reg\.guardianEmail2 \? SP\.change : SP\.add\}/);
+  });
+});
+
+describe('nothing that sends mail reads the stop table (Stage 3b: the stop IS the removal)', () => {
+  it('second_parent_stops appears only in the stop helper and the stop page', () => {
+    const files = ['lib', 'app', 'components'].flatMap(d => [...filesUnder(d, '.ts'), ...filesUnder(d, '.tsx')]);
+    const readers = files.filter(f => /second_parent_stops/.test(readCode(f))).sort();
+    assert.deepEqual(readers, ['app/second-parent-stop/page.tsx', 'lib/league-second-parent-stop.ts']);
+  });
+  it('the stop clears only the org’s own sign-ups, in the database function the route calls', () => {
+    const sql = readSource('supabase/migrations/448_a_second_parent_can_stop.sql');
+    assert.match(sql, /UPDATE public\.league_registrations\s+SET guardian_email_2 = NULL\s+WHERE org_id = p_org/);
+    assert.match(sql, /GRANT EXECUTE ON FUNCTION public\.second_parent_stop\(uuid, text, text\) TO service_role;/);
+    assert.match(sql, /ENABLE ROW LEVEL SECURITY/);
+  });
+});
+
+describe('the stop page and its handler (Stage 3b, source guard)', () => {
+  const PAGE = readCode('app/second-parent-stop/page.tsx');
+  const ROUTE = readCode('app/api/second-parent-stop/route.ts');
+  it('a GET writes nothing: the page only reads (mail scanners prefetch links)', () => {
+    assert.ok(!/\.(insert|update|upsert|delete|rpc)\(/.test(PAGE), 'no write on the page');
+    assert.ok(!/export (async )?function (POST|PUT|PATCH|DELETE)/.test(PAGE));
+    assert.ok(!/export (async )?function GET/.test(ROUTE), 'the handler has no GET');
+    assert.match(PAGE, /<form method="post" action="\/api\/second-parent-stop"/);
+  });
+  it('the token is verified before anything is read or written', () => {
+    const view = functionBody(PAGE, 'viewOf');
+    assert.ok(view.indexOf('verifySecondParentStopToken(') > 0 && view.indexOf('verifySecondParentStopToken(') < view.indexOf('supabaseAdmin'));
+    const post = ROUTE.slice(ROUTE.indexOf('export const POST'));
+    assert.ok(post.indexOf('verifySecondParentStopToken(') > 0 && post.indexOf('verifySecondParentStopToken(') < post.indexOf('supabaseAdmin'));
+  });
+  it('the POST makes the one stop call and answers with a 303; a repeat visit reads the stop and shows done', () => {
+    const post = ROUTE.slice(ROUTE.indexOf('export const POST'));
+    assert.equal((post.match(/\.rpc\('second_parent_stop'/g) ?? []).length, 1);
+    assert.match(ROUTE, /NextResponse\.redirect\(.*, 303\)/);
+    assert.match(PAGE, /stop\.data\s*\?\s*\{ state: 'done'/);
+  });
+  it('the path is reserved so a club can never claim it', () => {
+    assert.match(readCode('lib/reserved-slugs.ts'), /'second-parent-stop'/);
   });
 });

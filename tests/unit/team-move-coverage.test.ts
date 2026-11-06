@@ -112,6 +112,7 @@ const STAYS: Record<string, string> = {
   league_games: 'house league',
   league_practices: 'house league',
   league_registrations: 'house league',
+  second_parent_stops: 'a second parent’s stop on a club’s house-league sign-ups (mig 448) — a coach portal runs no house league, so none exist to move',
   league_registration_price_changes: 'house league (a registration’s price history, mig 368)',
   league_season_fee_words: 'house league (a season’s budget word, mig 371)',
   league_email_log: 'house league',

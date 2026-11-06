@@ -5375,6 +5375,21 @@
     "indexdef": "CREATE UNIQUE INDEX schedule_facility_lanes_unique_label ON public.schedule_facility_lanes USING btree (tournament_id, division_id, label)"
   },
   {
+    "tablename": "second_parent_stops",
+    "indexname": "second_parent_stops_org_email_uniq",
+    "indexdef": "CREATE UNIQUE INDEX second_parent_stops_org_email_uniq ON public.second_parent_stops USING btree (org_id, email)"
+  },
+  {
+    "tablename": "second_parent_stops",
+    "indexname": "second_parent_stops_pkey",
+    "indexdef": "CREATE UNIQUE INDEX second_parent_stops_pkey ON public.second_parent_stops USING btree (id)"
+  },
+  {
+    "tablename": "second_parent_stops",
+    "indexname": "second_parent_stops_registration_ids_idx",
+    "indexdef": "CREATE INDEX second_parent_stops_registration_ids_idx ON public.second_parent_stops USING gin (registration_ids)"
+  },
+  {
     "tablename": "stripe_billing_drift_checks",
     "indexname": "stripe_billing_drift_checks_checked_idx",
     "indexdef": "CREATE INDEX stripe_billing_drift_checks_checked_idx ON public.stripe_billing_drift_checks USING btree (checked_at DESC)"

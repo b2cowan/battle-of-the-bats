@@ -1028,6 +1028,9 @@ export interface LeagueRegistration {
   /** The second parent's email (Signed-in family accounts Stage 3, mig 430): one per sign-up, null when none. It gets
    *  every email about the sign-up; it is NEVER a household key and never reaches a marketing or consent list. */
   guardianEmail2: string | null;
+  /** Stage 3b (mig 448): when the second parent's own "stop these emails" cleared this sign-up's second address; set only by the
+   *  club's registrations reads (lib/league-second-parent-stop.ts), only while the sign-up has no second address, else absent. */
+  secondParentStoppedAt?: string | null;
   guardianPhone: string | null;
   status: LeagueRegistrationStatus;
   waitlistPosition: number | null;

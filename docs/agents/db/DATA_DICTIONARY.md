@@ -6102,6 +6102,42 @@ previously had no opt-out of its own, and its lawful basis was purely relational
 <!-- dict:col:family_email_optouts.created_at -->
 **`opted_out_at` / `source` / `created_at`** (timestamptz NOT NULL / text NOT NULL default `'announcement_footer'` / timestamptz NOT NULL) — when and from which surface. `source` is for the record only; an opt-out suppresses ALL family email from the org regardless of where it arrived from.
 
+## `second_parent_stops`
+<!-- dict:table:second_parent_stops -->
+
+**Purpose:** a second parent's own "stop these emails" (**mig 448**, Signed-in family accounts Stage 3b; plan
+`SIGNED_IN_FAMILY_STAGE3B_SECOND_PARENT_STOP_PLAN.md`, owner calls O1–O5 ruled 2026-11-06). The address in
+`league_registrations.guardian_email_2` is typed by someone else and never verified; the person behind it presses **Stop these
+emails** on a confirm page (no sign-in) and the address comes off the club's sign-ups for good.
+
+**Gotchas:**
+1. **The stop IS the removal.** The stop clears `guardian_email_2` on every sign-up of that org whose second address matches
+   (inside the `second_parent_stop(p_org, p_email, p_source)` function, one transaction, service role only). The nine senders
+   already read that column, so **no send path reads this table**. Do not add a suppression check at send time.
+2. **Read in only three places:** the public register route and the two staff writes (Add registration, the record-window edit)
+   refuse a stopped address; the record window reads `registration_ids` to show "Stopped by the address owner, {date}".
+3. **Never a household key and never read for marketing or consent.** Not `family_email_optouts` (that table means "no
+   announcements", expands to the whole person through `org_person_emails`, and the sign-up copies never read it).
+   `org_person_emails` never holds a second address (only mig 430 mentions `guardian_email_2`; the address book is fed from the
+   first address), so a stop has nothing to clear there.
+4. **Org-wide and permanent, by ruling.** Every season, until never (O1). There is no "allow again" (O2): an address that said
+   stop stays stopped; the person can sign up themselves. Nobody is emailed when a stop happens (O3).
+5. **Service role only** (RLS on, no policies): it holds an address a person asked us to stop using.
+
+<!-- dict:col:second_parent_stops.id -->
+**`id`** (uuid, PK, default `gen_random_uuid()`).
+
+<!-- dict:col:second_parent_stops.org_id -->
+<!-- dict:col:second_parent_stops.email -->
+**`org_id` / `email`** (uuid NOT NULL FK → `organizations` CASCADE / text NOT NULL) — UNIQUE together (`second_parent_stops_org_email_uniq`). `email` is **normalized** (trim + lowercase, ≤ 200; CHECK `second_parent_stops_email_check`), the same shape as `guardian_email_2`.
+
+<!-- dict:col:second_parent_stops.stopped_at -->
+<!-- dict:col:second_parent_stops.source -->
+**`stopped_at` / `source`** (timestamptz NOT NULL default now() / text NOT NULL default `'stop_page'`) — when the address owner stopped, and from which surface (for the record only). `stopped_at` is the date the registrar sees.
+
+<!-- dict:col:second_parent_stops.registration_ids -->
+**`registration_ids`** (uuid[] NOT NULL default `{}`; GIN index) — the `league_registrations` ids the stop **cleared**. This is how the record window shows "Stopped by the address owner, {date}" once the address itself is gone from the sign-up. A repeat stop appends the ids it clears (de-duplicated). No FK: a deleted registration just leaves a dead id that matches nothing.
+
 ## `org_people`
 <!-- dict:table:org_people -->
 

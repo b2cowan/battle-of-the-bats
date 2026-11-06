@@ -39,6 +39,7 @@ import { clubPayoutsConnected, loadRegistrationDebits, returnedCardRefunds, unre
 import { onlinePaymentsOn } from '@/lib/online-payments-switch';
 import { writeOrgAudit } from '@/lib/org-audit';
 import { readSecondParentEmail, secondParentRefusalWords, SECOND_PARENT_WORDS } from '@/lib/league-second-parent';
+import { stoppedSecondParentRefusal, withSecondParentStops } from '@/lib/league-second-parent-stop';
 import { sendSecondParentTransactional, sendTransactionalToBothParents, went } from '@/lib/league-second-parent-mail';
 import { isSendableGuardianEmail, normalizeGuardianEmail } from '@/lib/guardian-email';
 
@@ -50,7 +51,9 @@ async function fetchReg(regId: string, seasonId: string) {
     .eq('id', regId)
     .eq('season_id', seasonId)
     .single();
-  return data ? mapLeagueRegistration(data) : null;
+  if (!data) return null;
+  // Stage 3b: the record window's "Stopped by the address owner" line travels with the row it redraws from.
+  return (await withSecondParentStops(data.org_id, [mapLeagueRegistration(data)]))[0];
 }
 
 /** The waitlist moved up (inside the same locked database step that freed the spot, mig 362): tell that family. */
@@ -468,6 +471,9 @@ export const PATCH = withObservability(async (req: Request,
     if ('refusal' in second) {
       return NextResponse.json({ error: secondParentRefusalWords(second.refusal, 'club'), code: 'second_email' }, { status: 400 });
     }
+    // Stage 3b (O4, O2): an address that asked this club to stop cannot be put back, by the registrar either.
+    const stopped = await stoppedSecondParentRefusal(ctx!.org.id, second.email);
+    if (stopped) return NextResponse.json({ error: stopped, code: 'second_email' }, { status: 400 });
     let q = supabaseAdmin.from('league_registrations')
       .update({ guardian_email_2: second.email, updated_at: new Date().toISOString() }).eq('season_id', seasonId);
     // A sign-up is its reference AND its first email (as every other reader defines it): a reference that collided with

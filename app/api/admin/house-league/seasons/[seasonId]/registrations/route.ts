@@ -4,6 +4,7 @@ import { houseLeagueRefusal } from '@/lib/house-league-gate';
 import { getLeagueSeasonById, mapLeagueRegistration } from '@/lib/db';
 import { placeLeagueRegistration } from '@/lib/league-registration-place';
 import { readSecondParentEmail, secondParentRefusalWords } from '@/lib/league-second-parent';
+import { stoppedSecondParentRefusal, withSecondParentStops } from '@/lib/league-second-parent-stop';
 import { leaguePrice } from '@/lib/league-price';
 import { isCalendarDate, tournamentToday } from '@/lib/timezone';
 import { supabaseAdmin } from '@/lib/supabase-admin';
@@ -62,7 +63,7 @@ export const GET = withObservability(async (req: Request,
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   if (changes.error) return NextResponse.json({ error: changes.error.message }, { status: 500 });
 
-  const registrations = (data ?? []).map(mapLeagueRegistration);
+  const registrations = await withSecondParentStops(ctx!.org.id, (data ?? []).map(mapLeagueRegistration));
   const shown = new Set(registrations.map(r => r.id));
   const money = Object.fromEntries([...lines].filter(([id]) => shown.has(id)));
   const [unrecordedCard, returnedRefunds, cardRefunds, notMatched, debits, disputes] = await Promise.all([
@@ -134,6 +135,9 @@ export const POST = withObservability(async (req: Request,
   if ('refusal' in second) {
     return NextResponse.json({ error: secondParentRefusalWords(second.refusal, 'club'), code: 'second_email' }, { status: 400 });
   }
+  // Stage 3b (O4): the registrar cannot add an address that asked this club to stop (and cannot undo a stop: O2).
+  const stopped = await stoppedSecondParentRefusal(ctx!.org.id, second.email);
+  if (stopped) return NextResponse.json({ error: stopped, code: 'second_email' }, { status: 400 });
 
   const playerDob = typeof body.playerDateOfBirth === 'string' && body.playerDateOfBirth.trim() ? body.playerDateOfBirth.trim() : null;
   if (playerDob && !isCalendarDate(playerDob)) {
