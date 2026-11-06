@@ -522,6 +522,7 @@ const LIVE_ROW_FILES: string[] = [
   'lib/user-contexts.ts',
   'components/admin/kit/club/AuditLogKit.tsx',
   'components/admin/kit/club/BillingKit.tsx',
+  'components/admin/kit/club/FeeOverdueBanner.tsx',
   'components/admin/kit/club/MembersKit.tsx',
   'components/admin/kit/useAdminKitNav.ts',
   'components/coaches/CoachesBottomNav.tsx',

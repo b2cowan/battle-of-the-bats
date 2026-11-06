@@ -7,6 +7,7 @@ import { ensureStripeCustomer } from './billing-setup';
 import { retrieveCheckout } from './stripe-connect';
 import { sendEmail, escapeHtml } from './email';
 import { stripeKeyIsLive } from './stripe-mode';
+import { FEE_INVOICE_OWED_STATUS, httpsOnly } from './fee-invoice-alert';
 import { warmEmailButton, warmEmailDocument, warmEmailParagraph, warmEmailSmall } from './email-envelope-warm';
 import { emailFactsPanel } from './online-refund-block';
 import {
@@ -837,15 +838,33 @@ export async function readClubFeesAndInvoices(
   orgId: string, opts: { limit?: number; now?: Date } = {},
 ): Promise<{ fees: ClubFeeView[]; invoices: ClubFeeInvoiceView[] }> {
   const now = opts.now ?? new Date();
-  const { data, error } = await supabaseAdmin.from('platform_stripe_fees').select(FEE_COLUMNS)
-    .eq('org_id', orgId).order('created_at', { ascending: false }).limit(opts.limit ?? 50);
+  const limit = opts.limit ?? 50;
+  const [{ data, error }, { data: openData, error: openError }] = await Promise.all([
+    supabaseAdmin.from('platform_stripe_fees').select(FEE_COLUMNS)
+      .eq('org_id', orgId).order('created_at', { ascending: false }).limit(limit),
+    // Fee invoice alerts Part 4 (Q5, owner 2026-11-05): every invoice the club still owes is in the answer, however old its fees are —
+    // the pinned banner and the door's count read the invoices table, so the page the banner points at must show what they count.
+    supabaseAdmin.from('platform_fee_invoices').select('id')
+      .eq('org_id', orgId).eq('livemode', stripeKeyIsLive()).eq('status', FEE_INVOICE_OWED_STATUS).limit(200),
+  ]);
   if (error) throw error;
-  const fees = (data ?? []) as FeeRow[];
+  if (openError) throw openError;
+  const windowFees = (data ?? []) as FeeRow[];
+  const openIds = new Set(((openData ?? []) as Array<{ id: string }>).map(i => i.id));
+  // The window may have cut an open invoice's fees off (it can only have when it came back full): fetch every fee under those invoices.
+  let fees = windowFees;
+  if (openIds.size && windowFees.length >= limit) {
+    const { data: extra, error: extraError } = await supabaseAdmin.from('platform_stripe_fees').select(FEE_COLUMNS)
+      .eq('org_id', orgId).in('fee_invoice_id', [...openIds]).order('created_at', { ascending: false }).limit(500);
+    if (extraError) throw extraError;
+    const byId = new Map([...windowFees, ...((extra ?? []) as FeeRow[])].map(f => [f.id, f] as const));
+    fees = [...byId.values()].sort((a, b) => b.created_at.localeCompare(a.created_at));
+  }
   if (!fees.length) return { fees: [], invoices: [] };
   const invIds = [...new Set(fees.map(f => f.fee_invoice_id).filter((x): x is string => !!x))];
   const opIds = [...new Set(fees.map(f => f.online_payment_id))];
   const [{ data: invData }, { data: opData }] = await Promise.all([
-    invIds.length ? supabaseAdmin.from('platform_fee_invoices').select(INVOICE_COLUMNS).in('id', invIds) : Promise.resolve({ data: [] }),
+    invIds.length ? supabaseAdmin.from('platform_fee_invoices').select(INVOICE_COLUMNS).eq('org_id', orgId).in('id', invIds) : Promise.resolve({ data: [] }),
     supabaseAdmin.from('online_payments').select('id, receipt_no').in('id', opIds),
   ]);
   const invs = new Map(((invData ?? []) as InvoiceRow[]).map(i => [i.id, i]));
@@ -886,13 +905,18 @@ export async function readClubFeesAndInvoices(
     const total = inv.total ?? inv.amount_due;
     let taxLines = Array.isArray(inv.tax_lines) ? inv.tax_lines.map(t => ({ label: t.label, amount: t.cents / 100 })) : null;
     if (!taxLines) {
+      // The plain difference is only honest when EVERY fee on the invoice is in hand: the read is capped, and a returned fee sits
+      // outside `mine`. Either way the gap would be labelled "Tax" with other money in it, so draw no tax line instead (review 2026-11-05).
+      // An open invoice's fees were all fetched on purpose (above), so the cap cannot have cut them; any other invoice is read through the window.
+      const complete = (openIds.has(inv.id) || windowFees.length < limit) && !views.some(v => v.invoiceNo === inv.invoice_number && !mine.includes(v));
       const feeCents = mine.reduce((sum, v) => sum + (v.credit ? -cents(v.amount) : cents(v.amount)), 0);
       const gap = total == null ? 0 : cents(total) - feeCents;
-      taxLines = gap > 0 ? [{ label: W.taxFallback, amount: gap / 100 }] : [];
+      taxLines = complete && gap > 0 ? [{ label: W.taxFallback, amount: gap / 100 }] : [];
     }
     invoices.push({
       invoiceNo: inv.invoice_number, state: mine[0].state as ClubFeeInvoiceView['state'], day: mine[0].invoiceDay,
-      total: total ?? null, taxLines, payUrl: inv.status === 'open' ? inv.hosted_invoice_url : null,
+      total: total ?? null, taxLines,
+      payUrl: inv.status === FEE_INVOICE_OWED_STATUS ? httpsOnly(inv.hosted_invoice_url) : null,
     });
   }
   return { fees: views, invoices };

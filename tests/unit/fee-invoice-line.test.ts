@@ -181,7 +181,7 @@ describe('one read, a refresh on return, and the gates', () => {
     assert.equal((hook.match(/\/api\/billing\/stripe-fees/g) ?? []).length, 1);
     for (const f of ['components/billing/StripeFeesList.tsx', 'components/billing/FeeInvoiceLine.tsx']) assert.doesNotMatch(readCode(f), /fetch\(|\/api\/billing\/stripe-fees/, f);
     assert.equal((body.match(/useStripeFeesRead\(/g) ?? []).length, 1);
-    assert.match(body, /<StripeFeesList read=\{feeRead\} \/>/); assert.match(body, /<FeeInvoiceLine read=\{feeRead\} \/>/);
+    assert.match(body, /<StripeFeesList read=\{feeRead\} \/>/); assert.match(body, /<FeeInvoiceLine read=\{feeRead\} overdue=\{org\.subscriptionStatus === 'canceled'\} \/>/);
   });
   it('coming back to the tab re-reads only while something is owed, and tells the brief only when it changed', () => {
     assert.match(hook, /visibilitychange/); assert.match(hook, /if \(!sig\) return/);

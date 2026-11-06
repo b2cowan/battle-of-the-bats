@@ -2,6 +2,7 @@
 
 import { ExternalLink } from 'lucide-react';
 import { feeLineFor, type FeesRead } from '@/lib/fee-invoice-line';
+import { seeFeeInvoices } from './seeFeeInvoices';
 import styles from './Billing.module.css';
 
 /**
@@ -12,8 +13,10 @@ import styles from './Billing.module.css';
  * coaches portal (its read has no fee invoices). Owner only because the page and the read behind it are. Words:
  * `STRIPE_FEE_WORDS.alert*`; the figure is the invoice's own total, never added up here.
  */
-export default function FeeInvoiceLine({ read }: { read: FeesRead | null }) {
-  const line = feeLineFor(read);
+export default function FeeInvoiceLine({ read, overdue = true }: { read: FeesRead | null; overdue?: boolean }) {
+  // Part 4: while the pinned banner is up (every club admin page, this one included) the banner speaks for anything overdue and this
+  // line is amber only (`overdue={false}`). A cancelled club has no banner, so its page passes true and keeps both tones.
+  const line = feeLineFor(read, { overdue });
   if (!line) return null;
   const { action } = line;
   return (
@@ -23,16 +26,7 @@ export default function FeeInvoiceLine({ read }: { read: FeesRead | null }) {
         ? <a className={`btn btn-lime ${styles.lineButton}`} href={action.href} target="_blank" rel="noopener noreferrer" aria-label={action.aria}>
             {action.label}<ExternalLink size={13} aria-hidden />
           </a>
-        : <button type="button" className={`btn btn-outline ${styles.lineButton}`} aria-label={action.aria} onClick={seeInvoices}>{action.label}</button>}
+        : <button type="button" className={`btn btn-outline ${styles.lineButton}`} aria-label={action.aria} onClick={seeFeeInvoices}>{action.label}</button>}
     </div>
   );
-}
-
-/** Takes the owner to the list below, which has a Pay invoice on each invoice, and moves keyboard focus to its heading. */
-function seeInvoices() {
-  const heading = document.getElementById('billing-stripe-fees');
-  if (!heading) return;
-  const calm = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-  heading.scrollIntoView({ behavior: calm ? 'auto' : 'smooth', block: 'start' });
-  heading.focus({ preventScroll: true });
 }

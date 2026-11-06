@@ -261,6 +261,8 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
   // Offer help without asserting cancellation, renewal, a price, or a retention clock.
   if (s.freeTime.status === 'error') return <><div className={styles.body}>
     {notice && <PageNotice notice={notice} />}
+    {/* Part 3 carried-in review item 1: the line was missing here, so an owner whose free-time read failed could owe and not be told. */}
+    {feeLine}
     <CoachCard className={styles.planCard}>
       <CoachEyebrow chip={<CoachChip tone="warn">{W.plan.unavailable}</CoachChip>}>{W.page.sections.plan}</CoachEyebrow>
       <h2 className={styles.planName}>{profile.config.label}</h2>
@@ -297,6 +299,8 @@ export function BillingBodyView({ snapshot: s, profile, ownProfile, profiles = P
     const modules = new Set<string>([...ownProfile.config.moduleEntitlements, ...org.enabledAddons]);
     return <><div className={styles.body}>
       {notice && <PageNotice notice={notice} />}
+      {/* Part 4 (Q4): a cancelled club has no banner (its one page is this one), so the same line, both tones, opens it. */}
+      {feeLine}
       <CoachCard className={styles.reactivate}>
         <CoachEyebrow chip={<CoachChip tone="danger">{W.reactivate.chip(preflight?.cancelled?.at ?? null)}</CoachChip>}>
           {premium ? W.reactivate.premiumCancelled : W.reactivate.cancelled(org.name)}
@@ -820,7 +824,7 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref, onFeesMayHaveCh
     });
   }
   return <>
-    <BillingBodyView snapshot={{ org, canManageBilling: true, usage, freeTime, founding, gating, cancellation, move }} profile={profile} ownProfile={ownProfile} actions={actions} notice={notice} waitNotice={waitNotice} justChose={justChose} detail={detail} onCloseDetail={() => setDetail(null)} cardWindowOpen={isFoundingSeasonCardWindowOpen()} foundingActive={isFoundingSeasonActive()} fees={<StripeFeesList read={feeRead} />} feeLine={<FeeInvoiceLine read={feeRead} />}
+    <BillingBodyView snapshot={{ org, canManageBilling: true, usage, freeTime, founding, gating, cancellation, move }} profile={profile} ownProfile={ownProfile} actions={actions} notice={notice} waitNotice={waitNotice} justChose={justChose} detail={detail} onCloseDetail={() => setDetail(null)} cardWindowOpen={isFoundingSeasonCardWindowOpen()} foundingActive={isFoundingSeasonActive()} fees={<StripeFeesList read={feeRead} />} feeLine={<FeeInvoiceLine read={feeRead} overdue={org.subscriptionStatus === 'canceled'} />}
       billingAddress={address.info?.location ? { line: formatBillingAddress(address.info.location), onEdit: () => address.edit() } : null} />
     {moveTo && <PlanMoveDialog key={`${org.id}:${moveTo}`} org={{ ...org, planId: ownProfile.key }} toPlan={moveTo} returnTo={billingBase} teamsHref={teamsHref}
       freeThrough={freeTime.status === 'ready' ? freeTime.data.portal?.lastDay ?? freeTime.data.freeTime?.lastDay ?? (founding.status === 'ready' && founding.data.isFoundingSeason ? founding.data.compUntil : null) : null}

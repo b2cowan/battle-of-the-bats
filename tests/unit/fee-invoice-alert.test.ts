@@ -53,9 +53,10 @@ describe('who gets the figure (Ask 6)', () => {
 describe('the rows become a count and an overdue count', () => {
   it('overdue = a due date already past; a missing or future date is merely open', () => {
     assert.deepEqual(feesOwedFrom([], NOW), { count: 0, overdue: 0 });
-    assert.deepEqual(feesOwedFrom([{ due_at: '2026-12-01T11:15:11Z' }], NOW), { count: 1, overdue: 1 });
+    // Part 4: an overdue one also carries the earliest due date (the banner's "since"); with no number it cannot name the invoice.
+    assert.deepEqual(feesOwedFrom([{ due_at: '2026-12-01T11:15:11Z' }], NOW), { count: 1, overdue: 1, earliestOverdue: '2026-12-01T11:15:11Z' });
     assert.deepEqual(feesOwedFrom([{ due_at: '2026-12-09T11:15:11Z' }], NOW), { count: 1, overdue: 0 });
-    assert.deepEqual(feesOwedFrom([{ due_at: null }, { due_at: '2026-12-01T00:00:00Z' }], NOW), { count: 2, overdue: 1 });
+    assert.deepEqual(feesOwedFrom([{ due_at: null }, { due_at: '2026-12-01T00:00:00Z' }], NOW), { count: 2, overdue: 1, earliestOverdue: '2026-12-01T00:00:00Z' });
   });
   it('due exactly now is not yet overdue; an unreadable date is open, never overdue', () => {
     assert.deepEqual(feesOwedFrom([{ due_at: NOW.toISOString() }], NOW), { count: 1, overdue: 0 });

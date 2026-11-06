@@ -30,6 +30,9 @@ const AdminKitProgramRow = dynamic(() => import('@/components/admin/kit/AdminKit
 // Club Tier Stage 1 — the morning brief, read once for the hub, the rail and the phone bar (and the
 // plan-aware program order they share).
 const ClubBriefProvider = dynamic(() => import('@/components/admin/kit/club/ClubBriefProvider').then(m => m.ClubBriefProvider));
+// Fee invoice alerts Part 4 — the overdue banner, at the top of the content column. Reads the brief above (owner only, overdue only,
+// draws nothing otherwise), so it is dynamic like its neighbours and carries its own stylesheet.
+const FeeOverdueBanner = dynamic(() => import('@/components/admin/kit/club/FeeOverdueBanner'));
 
 export default function AdminChrome({
   children,
@@ -129,6 +132,10 @@ export default function AdminChrome({
                 : children
           ) : (
             <>
+              {/* Fee invoice alerts Part 4 (Q1): once a fee invoice is overdue, one red-edged line opens every club admin page, beside the
+                  rail, above the header, scrolling away with the page. Not in the cancelled shell: that club's one page draws the
+                  line itself (Q4), because the brief is never read for it. */}
+              {!suspended && <FeeOverdueBanner />}
               {/* The Flip: one persistent shell header (event/org identity + status + pill), desktop
                   and mobile. Sticky; collapses on scroll. Supersedes the old mobile top bar + the
                   floating desktop pill. */}

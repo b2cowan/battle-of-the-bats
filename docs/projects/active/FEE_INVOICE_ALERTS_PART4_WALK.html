@@ -1,0 +1,263 @@
+<title>Fee Overdue Banner Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box (the house walk frame). */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .facts { grid-template-columns: 1fr; } .facts dd { margin-bottom: 6px; } }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.call { font-size: 13px; color: var(--warn); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+.opts { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; }
+.opt { display: flex; gap: 8px; align-items: flex-start; font-size: 0.95em; }
+.opt input { margin-top: 3px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · Fee invoice alerts · Part 4, the overdue banner</span>
+    <h1>Once an invoice is overdue, every club admin page opens with one red line and a Pay button, and it ends when the invoice is paid</h1>
+    <p class="sub">Written 2026-11-05 for Part 4. Dev only. Small database changes make the invoice overdue, paid and the club cancelled; every one is put back by a step that follows it, and Part F reads everything back.</p>
+  </header>
+  <section class="card"><h2>What this walk is for</h2><p>Parts 2 and 3 told the owner they owe FieldLogicHQ: a count on the <strong>Plan &amp; billing</strong> door and one line at the top of that page. An owner who never opens that page still never saw an <strong>overdue</strong> invoice. Part 4 adds the <strong>banner</strong>: once an invoice is overdue, every page of the club’s admin opens with one line with a red edge on its left, the words and a <strong>Pay invoice</strong> button. It has no close button, it scrolls away with the page, and it goes when the invoice is paid. On Plan &amp; billing the banner stands in for the red line, so you never see two. A cancelled club, which can open only Plan &amp; billing, gets the same red line at the top of that page.</p></section>
+  <section class="card"><h2>It passes when</h2><ul>
+    <li>With the invoice overdue, the owner sees the red banner at the top of the content area (beside the left rail, above the page title bar) on <strong>Plan &amp; billing, the hub and a third page</strong>, with the invoice’s number, amount and due day, and a lime <strong>Pay invoice</strong> button that opens Stripe in a new tab.</li>
+    <li>On Plan &amp; billing there is <strong>one</strong> red line (the banner), not a banner and a second line under it.</li>
+    <li>The banner has no close button and scrolls away with the page. On a phone it is one row with a button at least 44 px tall.</li>
+    <li>An invoice that is open but not yet due shows no banner anywhere (only the amber line on Plan &amp; billing from Part 3).</li>
+    <li>Paid in another tab: the banner clears when you come back to the tab, with no reload.</li>
+    <li>The club’s admin and treasurer never see the banner.</li>
+    <li>A cancelled club’s owner sees the same red line at the top of the one page they can open, and no banner above it.</li>
+  </ul></section>
+  <section class="card"><h2>Not in this walk</h2><ul>
+    <li><strong>Two or more overdue invoices at once</strong> (“2 invoices for Stripe fees are overdue. The earliest was due …” with a <strong>See invoices</strong> button). The dev club has one invoice and a second cannot be made by hand without inventing fees. The words, the button and the data are pinned by tests.</li>
+    <li><strong>The banner, the red failed-payment line and an amber line all at once.</strong> That needs a second open invoice. With one overdue invoice and a failed plan payment you would see two red items (the banner and the failed-payment line) and no amber one.</li>
+    <li><strong>A real payment.</strong> Paying is simulated in the database. Opening Stripe’s invoice page is allowed; do not pay it. <strong>Help articles</strong> are Part 5.</li>
+  </ul></section>
+  <section class="card"><h2>Before you start</h2><dl class="facts">
+    <dt>Server</dt><dd>The dev server on this computer, <strong>http://localhost:3000</strong>, restarted after the Part 4 build (new files were added).</dd>
+    <dt>A phone</dt><dd>Chrome’s device toolbar (Ctrl+Shift+M) at <strong>390</strong> wide works; a real phone on the same Wi-Fi works too (use this computer’s address instead of <code>localhost</code>).</dd>
+    <dt>The starting state</dt><dd>The dev club <strong>UAT Rep Club</strong> has exactly one fee invoice, <strong>APFJ8XMY-0001</strong>, open and due Dec 1, and its plan is active. <em>If it is not open, or the club has a second open invoice, stop and tell me.</em> If it reads paid, run Part F’s put-back command first (something has paid it between walks before).</dd>
+    <dt>The database commands</dt><dd>Run each in a terminal opened in the project folder, one at a time, exactly as written. Or tell me which step you are on and I will run it.</dd>
+    <dt>If a change undoes itself</dt><dd>The daily Stripe re-read can reset the invoice’s status and due date from Stripe. If a step does not look as it says, run that step’s command again and reload.</dd>
+    <dt>When done</dt><dd>Part F puts every change back and reads it back. Tell me if you stop partway and I will put the club back.</dd>
+  </dl></section>
+  <section class="card"><h2>Sign in as</h2><dl class="facts">
+    <dt>Owner (parts A to C, E)</dt><dd><code>uat-club-owner@uat-rep-club.local</code> · <code>UATPassword2026!</code> (owner of UAT Rep Club)</dd>
+    <dt>Sign-in link</dt><dd><code>http://localhost:3000/auth/login?next=/uat-rep-club/admin/org/billing</code> (on the phone, your computer’s address in place of <code>localhost</code>)</dd>
+    <dt>Admin and treasurer (part D)</dt><dd><code>uat-club-admin@uat-rep-club.local</code> and <code>uat-club-treasurer@uat-rep-club.local</code> · same password. Sign out of the owner first (or use a private window).</dd>
+    <dt>Keep it private</dt><dd>Dev-only passwords, and this page carries them.</dd>
+  </dl></section>
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+</main>
+<script>
+(function () {
+  var KEY = "qa-fee-overdue-banner-walk-v1";
+  var TITLE = "Fee invoice alerts Part 4 · the overdue banner · walk (written 2026-11-05)";
+  var DK = "Owner · desk";
+  var PH = "Owner · phone";
+  var DB = "Terminal";
+  var CMD = "node scripts/db-query.mjs --dev -q ";
+  var LATE = "<code>" + CMD + "\"update platform_fee_invoices set due_at = now() - interval '3 days' where invoice_number = 'APFJ8XMY-0001'\"</code>";
+  var BACK = "<code>" + CMD + "\"update platform_fee_invoices set status = 'open', paid_at = null, due_at = '2026-12-01 11:15:11+00' where invoice_number = 'APFJ8XMY-0001'\"</code>";
+  var PARTS = [
+ { id: "A", title: "Overdue: the red banner opens every page", steps: [
+  { who: DB, do: "Make the invoice three days late. Run: <br>" + LATE,
+    see: "The command prints <code>[]</code> with no error." },
+  { who: DK, do: "Sign in as the owner with the link above, at a desk width (1440). It opens <strong>Plan &amp; billing</strong>. Look at the very top of the content area, to the right of the left rail and above the page’s title bar.",
+    see: "One band with a <strong>red edge on its left</strong>: “<strong>Invoice APFJ8XMY-0001 for Stripe fees is overdue.</strong> $… was due …” (a day three days ago) and, at its right end, a lime <strong>Pay invoice ↗</strong> button." },
+  { who: DK, do: "Look at the rest of the top of Plan &amp; billing, under the title bar, and at the fees list further down.",
+    see: "<strong>No second red line</strong> under the title bar: the plan card comes next. The list shows the invoice with its Overdue chip and the same amount. The rail’s Plan &amp; billing row wears a <strong>red 1</strong>." },
+  { who: DK, do: "Click <strong>Home</strong> (the club hub) in the rail, then any third page (for example <strong>Members</strong>). Look at the top of each.",
+    see: "The <strong>same banner</strong> opens each page, same words, same button, in the same place." },
+  { who: DK, do: "On one of those pages, scroll down a long way, then back up. Look for a close (×) or “dismiss” control on the banner.",
+    see: "The banner <strong>scrolls away</strong> with the page and comes back when you scroll up. It has <strong>no close button</strong>." },
+  { who: DK, do: "Click the banner’s <strong>Pay invoice</strong> button, look at what opens, then close that tab <strong>without paying</strong>.",
+    see: "Stripe’s invoice page opens in a <strong>new tab</strong>; the admin tab stays where it was." },
+  { who: PH, do: "Switch to the phone width (390) and reload the hub, then Plan &amp; billing. Look at the banner on each.",
+    see: "<strong>One row</strong>: the words on the left (two short lines), the <strong>Pay invoice</strong> button on the right, at least 44 px tall (comfortable to tap). Nothing scrolls sideways, and the banner scrolls away with the page." }
+ ]},
+ { id: "B", title: "Not yet due: no banner", steps: [
+  { who: DB, do: "Put the invoice back to open and due Dec 1. Run: <br>" + BACK,
+    see: "The command prints <code>[]</code> with no error." },
+  { who: DK, do: "At the desk width, reload the hub, then open Plan &amp; billing.",
+    see: "The hub has <strong>no banner</strong>. Plan &amp; billing has no banner either, only the <strong>amber-edged line</strong> from Part 3 (“Invoice APFJ8XMY-0001 for Stripe fees is due Dec 1.”) and an amber 1 on the rail." }
+ ]},
+ { id: "C", title: "Paid in the other tab: the banner clears when you come back", steps: [
+  { who: DB, do: "Make the invoice late again. Run: <br>" + LATE,
+    see: "The command prints <code>[]</code> with no error." },
+  { who: DK, do: "Reload the <strong>hub</strong> (not Plan &amp; billing) and confirm the banner is there. Then open a second tab of any other page and stay on it.",
+    see: "The red banner is on the hub." },
+  { who: DB, do: "Pretend the invoice was paid. Run: <br><code>" + CMD + "\"update platform_fee_invoices set status = 'paid', paid_at = now() where invoice_number = 'APFJ8XMY-0001'\"</code>",
+    see: "The command prints <code>[]</code> with no error." },
+  { who: DK, do: "Switch back to the hub tab. <strong>Do not reload.</strong> Wait a second or two and look at the top of the page and the rail’s Plan &amp; billing row.",
+    see: "The <strong>banner is gone</strong> and the red count is gone from the rail, with no reload." },
+  { who: DB, do: "Put the invoice back. Run: <br>" + BACK + "<br>then make it late once more for the next part: " + LATE,
+    see: "Both commands print <code>[]</code>. The next parts start with the invoice overdue." }
+ ]},
+ { id: "D", title: "Only the owner", steps: [
+  { who: "Admin", do: "Sign out. Sign in as <strong>uat-club-admin@uat-rep-club.local</strong> and open the hub and one other page.",
+    see: "<strong>No banner</strong> on either page, though the invoice is overdue." },
+  { who: "Treasurer", do: "Sign out. Sign in as <strong>uat-club-treasurer@uat-rep-club.local</strong> and open the hub and one other page.",
+    see: "<strong>No banner</strong> either." }
+ ]},
+ { id: "E", title: "A cancelled club", steps: [
+  { who: DB, do: "Cancel the club by hand (the invoice is still overdue). Run: <br><code>" + CMD + "\"update organizations set subscription_status = 'canceled' where slug = 'uat-rep-club'\"</code>",
+    see: "The command prints <code>[]</code> with no error." },
+  { who: DK, do: "Sign out. Sign in as the <strong>owner</strong> and open <code>http://localhost:3000/uat-rep-club/admin</code>.",
+    see: "You are taken to <strong>Plan &amp; billing</strong>, the only page a cancelled club can open, and there is no left rail." },
+  { who: DK, do: "Look at the very top of that page, above the “Reactivate” card, and at the strip at the top of the screen.",
+    see: "<strong>One red-edged line</strong> at the top of the page with the same words and a lime <strong>Pay invoice ↗</strong> (“Invoice APFJ8XMY-0001 for Stripe fees is overdue …”). The strip above it has no banner of its own, so it is one red line, not two. The fees list below it shows the invoice." },
+  { who: DB, do: "Put the club back and the invoice back. Run: <br><code>" + CMD + "\"update organizations set subscription_status = 'active' where slug = 'uat-rep-club'\"</code><br>then: " + BACK,
+    see: "Both commands print <code>[]</code>. Reload as the owner: the rail is back and there is no banner." }
+ ]},
+ { id: "F", title: "Put everything back and read it back", steps: [
+  { who: DB, do: "Read it back. Run: <br><code>" + CMD + "\"select i.invoice_number, i.status, i.due_at, i.paid_at, o.subscription_status from platform_fee_invoices i join organizations o on o.id = i.org_id where o.slug = 'uat-rep-club'\"</code>",
+    see: "One row: <code>APFJ8XMY-0001</code>, status <code>open</code>, due <code>2026-12-01 11:15:11+00</code>, <code>paid_at</code> null, subscription_status <code>active</code>. If any of it differs, run the put-back commands from Part E step 4 and read it back again." }
+ ]}
+];
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var steps = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', (s.options ? '' : 'You should see: ') + s.see));
+      var rec = { part: p.id, step: id, boxes: [], options: s.options || null };
+      var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+      cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+      rec.boxes.push({ cb: cb, label: null });
+      var row = el('label', 'step'); row.appendChild(cb); row.appendChild(t); body.appendChild(row);
+      steps.push(rec);
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function isDone(r) { return r.boxes.some(function (b) { return b.cb.checked; }); }
+  function doneSteps(partId) { return steps.filter(function (r) { return (!partId || r.part === partId) && isDone(r); }); }
+  var totalSteps = steps.length;
+
+  function refresh() {
+    PARTS.forEach(function (p) {
+      var n = doneSteps(p.id).length;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + p.steps.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    var done = doneSteps(null).length;
+    document.getElementById('total').textContent = done + ' of ' + totalSteps + ' checked';
+    document.getElementById('barfill').style.width = (totalSteps ? Math.round(done * 100 / totalSteps) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [TITLE, 'Checked ' + doneSteps(null).length + ' of ' + totalSteps + ' steps'];
+    PARTS.forEach(function (p) {
+      var ticked = doneSteps(p.id);
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + p.steps.length
+        + (ticked.length ? ' (' + ticked.map(function (r) { return r.step; }).join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    steps.forEach(function (r) { r.boxes.forEach(function (b) { b.cb.checked = false; }); });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

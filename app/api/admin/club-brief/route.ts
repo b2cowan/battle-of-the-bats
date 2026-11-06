@@ -49,6 +49,9 @@ import type { OrgRole } from '@/lib/types';
  *   feesOwed — { count, overdue }: FieldLogicHQ fee invoices the club still owes (open), and how many are past due. OWNER ONLY
  *            (`hasBillingAccess`): the key is ABSENT for anyone else and when the read fails. Not a "count" above — it is
  *            money the club owes US, so it has no acting role list and does not follow the rep-team scope.
+ *            Part 4 (the overdue banner): while something is overdue it also carries `earliestOverdue` (the oldest due date) and,
+ *            when EXACTLY ONE is overdue, `overdueInvoice` { invoiceNo, day, total, payUrl } so the banner can name and pay it
+ *            (payUrl is https or null). Same owner-only gate, same one read of the club's own rows, no Stripe call.
  */
 
 /** Who may act, per count — copied from the route that performs the action, never widened. ⚖ The two

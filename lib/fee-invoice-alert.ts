@@ -20,7 +20,14 @@ export function canSeeFeesOwed(role: OrgRole | null | undefined, capabilities: R
   return hasBillingAccess(role, capabilities);
 }
 
-export type FeesOwed = { count: number; overdue: number };
+/** The one overdue invoice, as the Part 4 banner names it (owner Q6, 2026-11-05). `day` is the stored due date. */
+/** The one place a pay link is vetted: only a secure web address leaves the server or becomes a button (it goes straight into an href). */
+export const httpsOnly = (url: string | null | undefined): string | null => (url && /^https:\/\//i.test(url) ? url : null);
+
+export type OverdueInvoice = { invoiceNo: string; day: string | null; total: number | null; payUrl: string | null };
+/** `earliestOverdue` (the stored due date of the oldest overdue one) is present whenever something is overdue; `overdueInvoice`
+ *  only when EXACTLY ONE is overdue and it has its number. Both are absent otherwise, so the plain `{ count, overdue }` stays plain. */
+export type FeesOwed = { count: number; overdue: number; earliestOverdue?: string; overdueInvoice?: OverdueInvoice };
 export type FeeAlertTone = 'amber' | 'red';
 export type FeeAlert = { count: number; tone: FeeAlertTone; label: string };
 
@@ -33,10 +40,27 @@ export const FEE_ALERT_WORDS = {
 /** The status of a fee invoice the club still owes. Only `open` (owner, 2026-11-05): a voided, paid or `uncollectible` row drops out. */
 export const FEE_INVOICE_OWED_STATUS = 'open';
 
+export type FeeInvoiceOwedRow = {
+  due_at: string | null; invoice_number?: string | null; total?: number | null; amount_due?: number | null; hosted_invoice_url?: string | null;
+};
+
 /** Shape the route's rows into the brief's field. `overdue` = open with a due date already past (`dueAt` null never counts). */
-export function feesOwedFrom(rows: readonly { due_at: string | null }[], now: Date = new Date()): FeesOwed {
-  const overdue = rows.filter(r => r.due_at != null && Date.parse(r.due_at) < now.getTime()).length;
-  return { count: rows.length, overdue };
+export function feesOwedFrom(rows: readonly FeeInvoiceOwedRow[], now: Date = new Date()): FeesOwed {
+  const overdueRows = rows
+    .filter((r): r is FeeInvoiceOwedRow & { due_at: string } => r.due_at != null && Date.parse(r.due_at) < now.getTime())
+    .sort((a, b) => Date.parse(a.due_at) - Date.parse(b.due_at));
+  const out: FeesOwed = { count: rows.length, overdue: overdueRows.length };
+  if (overdueRows.length === 0) return out;
+  out.earliestOverdue = overdueRows[0].due_at;
+  const only = overdueRows.length === 1 ? overdueRows[0] : null;
+  if (only?.invoice_number) {
+    const total = only.total ?? only.amount_due ?? null;
+    out.overdueInvoice = {
+      invoiceNo: only.invoice_number, day: only.due_at, total: total == null ? null : Number(total),
+      payUrl: httpsOnly(only.hosted_invoice_url),
+    };
+  }
+  return out;
 }
 
 /**

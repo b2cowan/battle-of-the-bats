@@ -89,6 +89,41 @@ approver. Coaches portal untouched (the coach portal has no fee invoices).
 
 ## Progress
 
+- 2026-11-05 (Part 4 built, **uncommitted**; walk §468 published): **the overdue banner.** **Rulings this session (owner, all as recommended):**
+  Q6 = the brief carries the one overdue invoice (number, total, due day, https pay link) so the banner names and pays it; Q5 = the fees read
+  always includes every open invoice, however old its fees; Q4 = a cancelled club draws the same line (both tones) at the top of its own
+  Plan & billing page, NOT a shell banner (so no drawing check and no widening of the cancelled-org brief opt-out; changes Q2's "in the
+  shell"); slot = top of the content column above the page header, brief re-read when the tab returns. **Built:** `FeeOverdueBanner`
+  (dynamic in `AdminChrome`, `{!suspended && …}`, own stylesheet, tokens only, `role="status"`, no dismiss, not sticky, one row on a phone with a
+  44 px button); owner test = `billingLink != null`; `feesOwed` gained `earliestOverdue` and, when exactly one is overdue, `overdueInvoice`
+  (still owner only, still one read, no Stripe call); `overdueBannerFor` and a shared `oneInvoiceLine` in `lib/fee-invoice-line.ts` so the
+  banner and the page line say the same sentences (no new words, so no `/marketing` run); on Plan & billing the line is amber only
+  (`feeLineFor(read, { overdue: false })`) unless the club is cancelled; the line now also opens the cancelled card and the failed free-time
+  read (Part 3 review item 1); `readClubFeesAndInvoices` fetches every fee under the club's open invoices beyond the newest-50 window (and an
+  open invoice is never "incomplete" because of the cap); scroll helper moved to `seeFeeInvoices.ts` so the banner never imports billing's CSS.
+  **Verified:** typecheck clean; `fee-overdue-banner` (new), `fee-invoice-alert`, `fee-invoice-line` + nav-standard, admin-kit, org-billing-access,
+  plan-billing-source and plan-billing-body guards pass (113 + 60); `check:spelling` clean; `check:layout` on admin-org-billing, admin-hub,
+  admin-org-members, admin-club-more, admin-org-settings at 361/390/768/1440: nothing new on a screen the banner touches (the four new
+  Settings @768 tap-floor findings are on a page the banner does not draw on; the treasurer screen could not run, its session is signed out).
+  **`verify:changed` failures not from this part:** `plan-billing-usage` (free-time route), `support-console-stage3-guard` (ExpenseFormWindow),
+  the Stage 6 owner-walk summary and N1 door tests, `series-date-groups`, the coach form grouped list, practice plans phone stage 4.
+  **Not browsed:** the banner itself (it needs an overdue invoice made by hand, which is walk §468 Part A); a cancelled club's page with the line.
+  **Known, left:** (a) with a failed brief read the banner is absent and the page's line is amber-only, so a red state would show on the
+  pill's absence too (the door count and banner share the brief); (b) a banner + failed-payment red line + an amber line can stack on one
+  page only with a second open invoice (not makeable by hand; pinned by tests only); (c) a failed first fees read still never retries
+  (Part 3 item 2, hook not touched). **Owed:** the owner's walk §468, `/simplify` (new shared builder and component), `/review` (billing,
+  high-risk tier), the commit (explicit pathspecs; `AdminChrome`/`BillingBody` hunks may sit beside other sessions' edits), Part 5.
+
+- 2026-11-05 (Part 4 build prompt written): [FEE_INVOICE_ALERTS_PART4_BUILD_PROMPT.md](FEE_INVOICE_ALERTS_PART4_BUILD_PROMPT.md). **Not started;
+  Step 0 is a short drawing check and three owner rulings first.** Found while reading the code: (Q4) a cancelled club can reach only Plan
+  & billing, so the ruled "banner in the strip-only shell" sits above the page that already lists the invoice, and the brief is never
+  fetched for a cancelled club (the club-brief route refuses it; widening that is a decision point in `org-billing-access-guard`) —
+  recommend drawing the same line on the cancelled layout from the page's own read instead, with the shell banner as the alternative;
+  (Q5) the fees read's 50-row window can hide an old open invoice the pill counts (Part 3's "Known, left (a)") — recommend the reader always
+  includes every open invoice; (Q6) the brief's `feesOwed` is only `{count, overdue}`, which cannot fill the drawn banner (invoice number,
+  amount, day, pay link) — recommend widening it with the one overdue invoice. The plan's "reads `feesOwed.overdue`" decides whether to
+  draw, not what to say.
+
 - 2026-11-05 (Part 3 `/simplify` + `/review`, high-risk tier, four lenses: security/tenant, refresh concurrency, line-vs-pill rule,
   regression; **Part 3 committed `ea94c4de3` 2026-11-05**): **no Critical or High; the owner-only gate holds** (the page is behind the owner check, the route resolves the org from the
   caller's own memberships and needs the billing capability, so a foreign slug is a 401; the hook never mounts for a non-owner). The pay
