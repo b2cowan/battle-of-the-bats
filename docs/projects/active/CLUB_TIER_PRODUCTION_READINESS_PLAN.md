@@ -3239,7 +3239,7 @@ between the coach's idea of a team (kids who age up) and the club's (a slot that
   call, with counsel's read where it touches consent.
 - [ ] **14d · Existing data (the migration question):** — **part 1 (S5: the club's child page, the household's line per
   child, the club's doors, the coach's "With the {team} {years}") BUILT + committed `f455aeb13` 2026-11-05, no migration; /simplify,
-  /review (high) and /docs done; walk §462 PASSED 29/29 2026-11-05; part 2 (S6: the Children queue, Split records, the parent link on the child — mig 445) BUILT + committed `4b7341f08` 2026-11-05; /simplify, /review (high) and /docs done 2026-11-05; walk §467 published; prod mig 445 owed (build prompt Progress block).**
+  /review (high) and /docs done; walk §462 PASSED 29/29 2026-11-05; part 2 (S6: the Children queue, Split records, the parent link on the child — mig 445) BUILT + committed `4b7341f08` 2026-11-05; /simplify, /review (high) and /docs done 2026-11-05; walk §467 PASSED 28/29 2026-11-05 (unticked C2 = optional step), all seven calls kept as built; prod mig 445 owed (build prompt Progress block).**
   every club already has years of duplicate players. A **review-and-merge**
   pass (the matcher's existing high / possible tiers, the Families book's duplicate-guardian logic as the model) before any
   forced merge; a merge never deletes a season's entry, and a roster's history links survive it. Standalone coaches with no club
@@ -3261,7 +3261,7 @@ between the coach's idea of a team (kids who age up) and the club's (a slot that
 child key on the roster entry), the link from a season's entry to it, document ownership moved from the roster entry to the
 child, and the backfill that joins what a person or the roll already confirmed (⚠ corrected 2026-11-04: this line said "merges
 what the matcher is sure of", which Ask 4 overrules — a match is always a question, never a join; mig 435 built it that way).
-**Definition of done:** the window asks and each path does what
+**Definition of done:** ✅ **CLOSED 2026-11-06 (owner)** — built and walked (§453 · §455 · §458 · §462 · §467 all passed); the owner ruled 2026-11-06 to SKIP the `/demos` pass and to take the layout sweep with the next release (release §1d-5), the sweep's test club now has a two-season child and one possible-duplicate pair (`scripts/seed-club-children.mjs`, chained from the club seed, applied to dev 2026-11-06). The window asks and each path does what
 it says; a returning child is picked, never retyped, and arrives with their history and their still-valid documents; a duplicate
 typed anyway is flagged on every add door; existing duplicates have a review path; the privacy rulings are built into the reads;
 the demos carry it; unit tests for the roll, the picker's reads and the merge; the layout sweep on staging; **the Stage 14

@@ -608,7 +608,7 @@ HANDOFF → /marketing: none; free time is never advertised. One nit for a copy 
 **Proposed (my recommendations; awaiting the owner, none ruled):**
 - **P1.** A rule that **no new family-facing feature works without a sign-in**, except public tournaments and team public pages. Audit planned stages for any no-login family door. (A census of existing ones is parked in `SIGNED_IN_FAMILY_CENSUS_PROMPT.md`.)
 - **P2.** **Stage 14, "one player across seasons", becomes a prerequisite of the app.** A parent-to-child link has to hang on a durable child record, not on a per-season registration row.
-- **P3.** **Parent accounts are people, not organization members.** Keep them clear of the one-home-organization rules.
+- **P3.** **Parent accounts are people, not organization members.** Keep them clear of the one-home-organization rules. **Ruled yes 2026-11-04 (Stage 14 Ask 14); see "2026-11-06 — A parent account is a person".**
 - **P4.** **Counsel is on the critical path.** The guardian tier (a parent connected to one specific child) is built and switched off pending the PIPEDA and CASL review; the app cannot open before that review.
 - **P5.** **The installed web app first, store packaging later.** This is what the 2026-07-28 and 2026-07-11 entries already say; see the flag below.
 - **P6.** **A named end-state stage in the Club readiness plan, decisions first,** so the open questions below are answered before anything is built.
