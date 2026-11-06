@@ -89,6 +89,22 @@ approver. Coaches portal untouched (the coach portal has no fee invoices).
 
 ## Progress
 
+- 2026-11-06 (Part 5 walk §469 PASSED): **10 of 10 steps ticked (A 4/4, B 2/2, C 2/2, D 1/1, E 1/1); no defect, no notes.** Parts 1–5 are all
+  built and walked. The wording call in part E ("passes them on") came back ticked with no answer stated, so it stays an open owner question
+  (recommended: wait for D1); no wording was changed. Owed before the promote: migration 444 on prod.
+
+- 2026-11-06 (Part 5 built; walk §469 published): **help + wording check done.** `/docs`: a new sub-topic "How you're told an invoice is waiting"
+  (id `stripe-fees-alerts`) under "Stripe fees on your online payments" (count, page line, red line, owner only, cancelled club, nothing is
+  switched off); the invoice-row answer now describes the grouped row, tax as its own line, Overdue / "Was due"; the Club plan & billing
+  overview names the top line; search terms added. Help tests 19/19, lint and spelling clean. `/accounting`: amounts quoted equal the invoice
+  total (the figure Pay collects); tax names are Stripe's own with a neutral fallback; **one open owner question** (E in the walk): the list
+  lead "FieldLogicHQ passes them on" is pass-through language beside a taxed line, rides D1 (recorded in `RECOVERED_STRIPE_FEES_TAX.md`).
+  **No `/review`:** the Part 5 diff is help copy only, no logic. Owed: the owner's walk §469; migration 444 on prod before the promote.
+
+- 2026-11-06 (Part 4 walk §468 PASSED): **21 of 21 steps ticked (A 7/7, B 2/2, C 5/5, D 2/2, E 4/4, F 1/1); no defect, no notes.** The overdue
+  banner, the not-yet-due case, the clear-on-return after paying in another tab, the owner-only gate and the cancelled club's line all
+  behaved as drawn; the part F read-back passed. Part 4 is complete. Next: Part 5 (help). Still owed before the promote: migration 444 on prod.
+
 - 2026-11-06 (Part 4 review follow-up, owner asked "fix those medium to low items"; committed the commit after `601b9e3ed`): **fixed M1, M2,
   M3, L1, L2, L3, L4, L5, L7. Not code, left: M4 (apply migration 444 to prod before the promote is the fix; a fallback read would hide the
   real problem) and L6 (the full-height pages overflow by the banner's height only until it scrolls away, which is what a top-of-page

@@ -273,7 +273,7 @@ const orgHelp: HelpPageContent = {
         { label: 'Plan & billing', href: '../org/billing' },
       ],
       content: (
-        <p>Every plan uses the same Plan &amp; billing page: Your plan, What&rsquo;s in use, any free-time or Founding Season band, Stripe fees when any exist, Change plan, What&rsquo;s included, and Reduce or cancel. Open it beside Help at the foot of the sidebar, or in More &gt; You on a phone. Only the owner can use it; every other member sees a locked card.</p>
+        <p>Every plan uses the same Plan &amp; billing page: a line at the top while you owe an invoice for Stripe fees, Your plan, What&rsquo;s in use, any free-time or Founding Season band, Stripe fees when any exist, Change plan, What&rsquo;s included, and Reduce or cancel. Open it beside Help at the foot of the sidebar, or in More &gt; You on a phone. Only the owner can use it; every other member sees a locked card.</p>
       ),
       subtopics: [
         {
@@ -1235,9 +1235,9 @@ const orgHelp: HelpPageContent = {
     {
       id: 'stripe-fees',
       heading: 'Stripe fees on your online payments',
-      summary: 'The Stripe fees your online payments can cause, how FieldLogicHQ passes them on to every club on every plan, and the Stripe fees list on Plan & billing.',
-      keywords: ['stripe fees', 'stripe fee', 'dispute fee', 'card dispute fee', 'answering fee', 'returned bank debit fee', 'returned bank debit', 'card issued outside your country', 'foreign card', 'extra fee', 'fee invoice', 'invoice of its own', 'pay the invoice', 'complimentary plan', 'free plan', 'plan and billing', 'credited to your account', 'returned', 'answering fee returned', 'refunded to your card', 'cancelled club', 'other stripe fees'],
-      searchText: 'stripe fees on your online payments other stripe fees billed to the club passed on to every club on every plan your plan doesnt change complimentary free plan comped not exempt returned bank debit fee card dispute fee answering fee comes back if you win credited to your account taken from the clubs stripe balance extra fee for a card issued outside your country card from another country foreign card international card family never charged more refunded payment fee stays next fieldlogichq invoice invoice of its own sent on the 1st due in 30 days email from fieldlogichq pay the invoice stripes secure page reminder plan and billing stripe fees list below plan band cancelled reactivation billing grant on your next invoice on your dec 1 invoice invoice due paid couldnt be billed yet not billed test mode returned taken off the invoice that charged it refunded to the card that paid it no email from stripe nothing billed when stripe charged nothing cancelled club still billed still sees the list',
+      summary: 'The Stripe fees your online payments can cause, how FieldLogicHQ passes them on to every club on every plan, the Stripe fees list on Plan & billing, and how the owner is told an invoice is waiting or overdue.',
+      keywords: ['overdue invoice', 'overdue banner', 'red banner', 'invoice overdue', 'unpaid invoice', 'amber count', 'red count', 'number on plan and billing', 'invoice waiting', 'pay invoice', 'stripe fees', 'stripe fee', 'dispute fee', 'card dispute fee', 'answering fee', 'returned bank debit fee', 'returned bank debit', 'card issued outside your country', 'foreign card', 'extra fee', 'fee invoice', 'invoice of its own', 'pay the invoice', 'complimentary plan', 'free plan', 'plan and billing', 'credited to your account', 'returned', 'answering fee returned', 'refunded to your card', 'cancelled club', 'other stripe fees'],
+      searchText: 'how youre told an invoice is waiting overdue invoice red line on every admin page red banner pay invoice button no close button scrolls away amber number red number count on plan and billing in the sidebar on more on a phone failed subscription payment adds one only the owner is told cancelled club sees the line on plan and billing invoice total includes tax tax on its own line was due overdue chip nothing is switched off by an unpaid fee invoice stripe fees on your online payments other stripe fees billed to the club passed on to every club on every plan your plan doesnt change complimentary free plan comped not exempt returned bank debit fee card dispute fee answering fee comes back if you win credited to your account taken from the clubs stripe balance extra fee for a card issued outside your country card from another country foreign card international card family never charged more refunded payment fee stays next fieldlogichq invoice invoice of its own sent on the 1st due in 30 days email from fieldlogichq pay the invoice stripes secure page reminder plan and billing stripe fees list below plan band cancelled reactivation billing grant on your next invoice on your dec 1 invoice invoice due paid couldnt be billed yet not billed test mode returned taken off the invoice that charged it refunded to the card that paid it no email from stripe nothing billed when stripe charged nothing cancelled club still billed still sees the list',
       links: [
         { label: 'Plan & billing', href: '../org/billing' },
       ],
@@ -1272,12 +1272,27 @@ const orgHelp: HelpPageContent = {
               <HelpDefs>
                 <HelpDef term="On your next FieldLogicHQ invoice">It rides on your subscription&rsquo;s next invoice.</HelpDef>
                 <HelpDef term="On your Dec 1 invoice">It waits for the next invoice of its own.</HelpDef>
-                <HelpDef term="Invoice N &middot; due, or paid">It is on an invoice of its own. While that invoice is open, its invoice row shows the total, tax included, and a <strong>Pay invoice</strong> button.</HelpDef>
+                <HelpDef term="Invoice N &middot; due, or paid">It is on an invoice of its own, and its fees are grouped under that invoice. While the invoice is open, its row shows the total, tax included. Any tax appears as its own line, under the fees and named as Stripe names it (for example HST), so the figures add up. The row carries one <strong>Pay invoice</strong> button. Once the due day has passed the row is marked <strong>Overdue</strong> and reads &ldquo;Was due&rdquo; with the day.</HelpDef>
                 <HelpDef term="Credited to your account">An answering fee Stripe gave back after you won a dispute, taken off the same invoice as the fee it returns.</HelpDef>
                 <HelpDef term="Returned Nov 3">An answering fee Stripe gave back after you won, when the invoice that charged it had already gone out. It is taken off what you owe on that invoice while it is unpaid, or refunded to the card that paid it. Stripe sends no email about it; this line is the notice.</HelpDef>
                 <HelpDef term="Couldn&rsquo;t be billed yet">FieldLogicHQ sees it and bills it again. There is nothing for you to do.</HelpDef>
                 <HelpDef term="Not billed: test mode">Nothing moves while payouts are in test mode.</HelpDef>
               </HelpDefs>
+            </>
+          ),
+        },
+        {
+          id: 'stripe-fees-alerts',
+          title: 'How you’re told an invoice is waiting',
+          content: (
+            <>
+              <p>Only the owner is told. An invoice for Stripe fees that is waiting to be paid shows up in three places, and each goes away on its own once the invoice is paid, with no reload needed when you come back from Stripe&rsquo;s page.</p>
+              <HelpDefs>
+                <HelpDef term="A number on Plan &amp; billing">A small count sits on the Plan &amp; billing entry beside Help in the sidebar, and on <strong>More</strong> and its Plan &amp; billing row on a phone. It is amber while an invoice is waiting, and red once one is overdue. A subscription payment that failed adds one to the same count.</HelpDef>
+                <HelpDef term="A line at the top of Plan &amp; billing">It names the invoice and its total when only one is waiting, or says how many are waiting and points at the list, with <strong>Pay invoice</strong> opening Stripe&rsquo;s secure page in a new tab.</HelpDef>
+                <HelpDef term="A red line on every admin page">Once an invoice is overdue, every page of the admin area opens with one red line and a <strong>Pay invoice</strong> button. It has no close button and scrolls away with the page. On Plan &amp; billing it takes the overdue line&rsquo;s place instead of repeating it. A cancelled club&rsquo;s owner sees the same line at the top of Plan &amp; billing, its one page.</HelpDef>
+              </HelpDefs>
+              <HelpNote variant="info" title="Nothing is switched off">An unpaid invoice for Stripe fees never switches your account off. The lines are there so it doesn&rsquo;t slip past you.</HelpNote>
             </>
           ),
         },

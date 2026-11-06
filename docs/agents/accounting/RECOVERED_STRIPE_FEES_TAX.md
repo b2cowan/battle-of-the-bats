@@ -74,6 +74,14 @@ Club Tier 12d-1); owner ruling T2 (plan) taxes the payment fee on top; Stage 2 A
    is the fee plus its tax.
 4. Keep the fee and the recoveries on one switch: if D1 is ever answered "exempt", both lose tax together.
 
+5. **Display wording (reviewed 2026-11-06, Fee invoice alerts Part 5).** The banner and page line quote the invoice **total, tax
+   included** — the same figure the Pay invoice button collects — so no screen shows a number that differs from the payment. The
+   list shows tax as its own line under the fees, in Stripe's own rate name, with a neutral "Tax" fallback; no screen names a
+   rate that could be wrong in another province. ⚠ One tension, pre-existing and not changed by the alerts: the list's lead
+   ("Stripe charges these fees… FieldLogicHQ passes them on") is pass-through language, while this file's finding is that the
+   recovery is consideration for our own service, taxed on top. A club's accountant may ask why tax sits under a "passed on"
+   fee. It rides D1; reword the lead (to /marketing) if D1 is answered "taxable", leave it if "exempt".
+
 ## Sources
 - [Excise Tax Act s.152 — when consideration becomes due](https://laws-lois.justice.gc.ca/eng/acts/E-15/section-152.html) — accessed 2026-11-05
 - [CRA P-182R — Agency](https://www.canada.ca/en/revenue-agency/services/forms-publications/publications/p-182r/agency.html) — accessed 2026-11-05
