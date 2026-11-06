@@ -548,7 +548,7 @@ Start; BC2b the saved checks, Delete, the pill; one owner question first: a star
     drawing does); the server already takes it. Say yes and it is one field.
   - **Reader note:** a club member who can open Accounting but not move club money gets 403 on the Bank routes today (club read
     = write, B7), so the reader's "same screen without the form" branch is built but unreachable until that permission splits.
-- [x] **BC2b built 2026-11-06 — saved checks: the table, the opened window, Delete (one question, who/when), Check this
+- [x] **BC2b built 2026-11-06, committed `d93b79055` 2026-11-06 (with the finishing passes and the review fixes) — saved checks: the table, the opened window, Delete (one question, who/when), Check this
   statement again (replace), "Books now say".** Owner rulings that session (all as recommended): no cash field on the club
   desk (build to the drawing); the starting statement opens and can be deleted while no later check stands; "line", not
   "cheque"; "Checked by" carries the clock; yes to the UX summary; and (after `/design`) **keep** no Close button in a record
