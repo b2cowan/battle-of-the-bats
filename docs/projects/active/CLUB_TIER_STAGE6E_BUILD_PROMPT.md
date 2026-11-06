@@ -80,8 +80,8 @@ code. If something is open, the owner gets the plain-language UX summary (AGENCY
     and the practice header. 18/18 tests in `coach-arrival-and-places.test.ts` pass (re-run 2026-11-06).
   - R6 · settled by the 2026-10-09 held-save work; confirmed by the 11-04 build.
   - Owner said "go ahead with your recommendations" 2026-11-06: records restored (plan §6 Stage 6e, TODO line, ledger **§470**
-    — the walk was §452 on 11-04 but that number is now Stage 14 S1's; the walk page was re-labelled §470). The walk's 22 steps are
-    still owed; no record shows it walked.
+    — the walk was §452 on 11-04 but that number is now Stage 14 S1's; the walk page was re-labelled §470). The walk's 22 steps were
+    then marked complete on the owner's word (last bullet).
   - **Records closed (`c5c06896a`), then the wording call built 2026-11-06 — committed `6410ee31c`.** Owner said yes to one shared
     sentence; `/marketing` proposed Option A and the owner agreed: the phrase "(after the start)", no clock inside it, the same on
     the form's "Arrive by …" line (the separate "That's after the … start." sentence is gone, which also ends the screen-reader
@@ -90,4 +90,7 @@ code. If something is open, the owner gets the plain-language UX summary (AGENCY
     was rewritten and re-published. `check:layout` not run (the 11-04 UAT fixture gap stands; the change is a few words on an
     existing line). `/docs` not needed: no help article mentions the note.
   - **Left open, not built:** the practice "send to families" message does not carry the note (left alone). `/review` is
-    offered, not run. Browser check is the owner's: walk §470.
+    offered, not run.
+- **Walk §470 marked COMPLETE 2026-11-06 on the owner's word** ("mark walk 470 as complete, just commit is fine"). No paste-back came
+  with it, so no step counts or per-part verdicts are recorded, and no defect is recorded. **Stage 6e is closed**; the TODO line
+  moved to the archive.

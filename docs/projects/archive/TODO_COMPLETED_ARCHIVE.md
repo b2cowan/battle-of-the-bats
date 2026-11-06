@@ -6,6 +6,8 @@ Everything below was moved out of TODO.md verbatim on 2026-10-26. Add new comple
 
 (Newest additions go here.)
 
+- [x] 📅 Club Tier Stage 6e — the coach event form's last corrections: BUILT and COMMITTED `7597695a5` 2026-11-04 (a late arrival is noted; each date of a weekly game picks its opponent from the team's book; the other two leftovers were already settled); re-read against the code and closed on records 2026-11-06 (`c5c06896a`); late-arrival wording ruled with `/marketing` and built 2026-11-06 — one phrase, "(after the start)", on every screen (`6410ee31c`); owner walk §470 marked complete 2026-11-06 on the owner's word (no step counts recorded); left alone: the practice "send to families" message does not carry the note (see docs/projects/active/CLUB_TIER_PRODUCTION_READINESS_PLAN.md, Stage 6e)
+
 - [x] ⚖️ `/legal` agent built 2026-11-04, shaped like `/accounting` — agent file, legal facts (seeded from a repo census, two standing Canadian counsel gates recorded as ruled), research index with a 15-question backlog; owner asked 2026-11-04 (see docs/agents/legal/LEGAL_INDEX.md)
 
 - [x] Public tournament Stage 5 acceptance and review corrections — owner walk §432 PASS 60/60 checked 2026-10-31 (O1–O3 optional skipped; both desktop layouts approved as built); eight findings corrected with 680 tournament-focused tests and full types passing; follow-up browser checks recorded separately (see docs/projects/active/PUBLIC_TOURNAMENT_SITE_REVIEW_PLAN.md §13 and OWNER_QA_LEDGER.md §432).
