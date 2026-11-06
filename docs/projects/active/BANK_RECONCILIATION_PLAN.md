@@ -721,7 +721,7 @@ earlier re-check, two owner questions first; BC4b the phone frames, three owner 
 - [ ] The phone frames of tabs 1–6: band, sums, Find cards with signed amounts and "Show 10 more", full-width buttons, the
   saved-check cards, the window full screen. No pinned strip or dock (gone with the tick-off).
 - [ ] Phone walk probe; `/review`.
-- [x] **The start's lines on an earlier re-check — BC4a built 2026-11-06** (owner: §0 "Start item re-check: when" and "M3
+- [x] **The start's lines on an earlier re-check — BC4a built 2026-11-06, committed `664f2086e` 2026-11-06** (owner: §0 "Start item re-check: when" and "M3
   exception" ruled as recommended; yes to the UX summary). Anchors:
   - **The chain** (`stillWaitingOn`, `lib/bank-check.ts`, read by `figureForDate`'s `stillWaiting`): the latest earlier
     check's own items (less a pre-start line no longer on the start's list), and each of the start's Waiting-at-the-start

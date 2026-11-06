@@ -1,6 +1,6 @@
 # Bank balance check BC4: the start's lines on a re-check, then the Bank tab on a phone (build prompt, two sessions)
 
-> **BC4a done 2026-11-06** (built, walked `BANK_BC4A_WALK_PASSED` at 1440 and 390, `/review` applied; record in plan §9 BC4);
+> **BC4a done 2026-11-06, committed `664f2086e`** (built, walked `BANK_BC4A_WALK_PASSED` at 1440 and 390, `/review` applied; record in plan §9 BC4);
 > **next BC4b** (the phone, below). New words from BC4a for BC4b's `/marketing`: none (the sentence stays "Still waiting on
 > {line}?"; start lines come marked `atStart` if a phone or desk caption wants it).
 
@@ -42,6 +42,12 @@
 - **Walk probes** `.probe/bank-bc3/walk.mjs` (BC3a) and `.probe/bank-bc3/bc3b.mjs` (BC3b), run with
   `node --import ./tests/ts-resolver.mjs --env-file=.env.local <file>` (`WIDTH=390` for the phone): both pass at 1440 and
   390 today; they add their own lines through the Ledger route and remove every line, check and start correction.
+  **BC4a added `.probe/bank-bc4/bc4a.mjs`** (the start's cheque asked on a re-check, passes at 1440 and 390). At a phone's
+  width a saved check is a row card whose button is named by its title ("Oct 5, 2026 · $X"), not "Open the check for…":
+  the walks use `.or(getByRole('button', { name: /^Oct 5, 2026/ }))`; keep a card's name starting with its date.
+- **BC4a (committed `664f2086e` 2026-11-06):** "Still waiting?" now also carries the start's Waiting-at-the-start lines
+  (`stillWaitingOn`, each marked `atStart`; the sentence unchanged), and a check may save one as Not in the bank yet (M3's
+  exception). On a phone these are ordinary Still-waiting rows in the sums; nothing new to draw.
 
 ## Read first
 
@@ -172,7 +178,8 @@ the field label, "Should be there" for the band's middle tile, plan §5) and any
 8. **Prove on dev at 390 and 361** as the uat-rep-club treasurer on "Walk chequing": extend the BC3 walks at `WIDTH=390`
    (and 361 for the band and the callout row) for the card shapes, the signed amounts, "Show 10 more", the callout's
    buttons, Still waiting? and Waiting at the start on cards, a window full screen, and no sideways scroll anywhere; the
-   desk walks still pass at 1440. Restore everything; the walk account ends on its Sep 30 start only (`corrected_at` NULL).
+   desk walks still pass at 1440, and `.probe/bank-bc4/bc4a.mjs` still passes at 1440 and 390 (it drives the Find
+   callout's "Waiting at the start" button inside `[role="status"]` and the "Yes, still waiting on {line}" button). Restore everything; the walk account ends on its Sep 30 start only (`corrected_at` NULL).
 9. **Finishing passes:** `/design` on the phone frames as built, against the drawings (before hand-off, per memory), then
    **`/marketing` once** on the phone words ("Bank balance", "Should be there", any phone caption, and anything new from
    BC4a), then `/simplify`, then **`/review`** (standard, or high if a kit component changed). Records: plan §9 BC4, §5
