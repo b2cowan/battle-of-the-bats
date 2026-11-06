@@ -100,7 +100,9 @@ describe('where the pill is worn', () => {
   });
   it('the phone: More\'s pill carries the fee count, its spoken label no longer says an invoice is unread, and the sheet row wears it too', () => {
     const bar = readCode('components/admin/kit/AdminKitBottomNav.tsx');
-    assert.match(bar, /const moreBadge = moreUnread \+ \(feeAlert\?\.count \?\? 0\)/);
+    // Owner 2026-11-05: while a fee signal exists the pill is ONLY its count (unread never inflates an invoice number).
+    assert.match(bar, /const moreBadge = feeAlert \? feeAlert\.count : moreUnread/);
+    assert.match(bar, /moreUnread > 0 \? \[`\$\{badge\(moreUnread\)\} unread`\] : \[\]/);
     assert.doesNotMatch(bar, /`More, \$\{badge\(moreBadge\)\} unread`/);
     assert.match(bar, /aria-label=\{!moreOpen && moreBadge > 0 \? moreLabel : undefined\}/);
     assert.match(bar, /\{feeAlert && <span className=\{`\$\{styles\.dropCount\} \$\{feeTone\}`\} aria-label=\{feeAlert\.label\}>/);

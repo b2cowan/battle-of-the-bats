@@ -96,9 +96,9 @@ approver. Coaches portal untouched (the coach portal has no fee invoices).
   cancelled-club shell; that part must also carry the figure (the route would need the suspended-org opt-out, a decision point in
   `org-billing-access-guard`, or the figure moves to an already-exempt billing route); (b) the pill goes stale after paying until the owner
   reloads or revisits the hub, and a tournament-only owner never lands on the hub, so for them only a reload refreshes it — Part 3's page line
-  should call the brief's `reload()` on a payment; (c) **owner call:** More's phone pill adds unread chat/notifications to the invoice count
-  in the fee colour (3 unread + 1 invoice reads "4" amber); the screen-reader label splits them correctly; options: keep (as built, the
-  build prompt said to add it), or show only the fee count when a fee signal exists; (d) a span's `aria-label` inside a link is not announced
+  should call the brief's `reload()` on a payment; (c) **RULED by the owner after the review: while a fee signal exists, More's pill shows ONLY the invoice count** (unread chat and
+  notifications no longer inflate it; the label still speaks them and the sheet still lists them) — built in the follow-up change;
+  the cancelled-club gap in (a) is confirmed as Part 4's; (d) a span's `aria-label` inside a link is not announced
   by most screen readers (same pattern as the existing rail and notification counts); (e) the sandbox owner receives the figure from the
   route but never sees it.
 - 2026-11-05 (Part 2 built, **uncommitted**): the signal's data and the pill. **Owner rulings this session:** (1) tournament-only workspaces'

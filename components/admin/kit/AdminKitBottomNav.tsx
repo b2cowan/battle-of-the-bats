@@ -167,7 +167,9 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
   // Fee invoice alerts, Part 2: the Plan & billing signal rides More's pill (and the sheet's own row) — amber to pay, red overdue.
   const feeAlert = useFeeAlert();
   const moreUnread = moreChat + notifUnread;
-  const moreBadge = moreUnread + (feeAlert?.count ?? 0);
+  // ⚖ While a fee signal exists the pill shows ONLY its count, in its tone (owner, 2026-11-05): adding unread messages to an
+  // invoice count printed a number that read as invoices. The unread are still spoken in the label and listed in the sheet.
+  const moreBadge = feeAlert ? feeAlert.count : moreUnread;
   // One spoken label: the unread part only when there are unread, then the fee part in its own words (never "invoices unread").
   const moreLabel = ['More', ...(moreUnread > 0 ? [`${badge(moreUnread)} unread`] : []), ...(feeAlert ? [feeAlert.label] : [])].join(', ');
   const feeTone = feeAlert ? (feeAlert.tone === 'red' ? styles.feeRed : styles.feeAmber) : '';
