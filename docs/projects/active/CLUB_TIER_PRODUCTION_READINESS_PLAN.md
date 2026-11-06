@@ -3239,7 +3239,7 @@ between the coach's idea of a team (kids who age up) and the club's (a slot that
   call, with counsel's read where it touches consent.
 - [ ] **14d · Existing data (the migration question):** — **part 1 (S5: the club's child page, the household's line per
   child, the club's doors, the coach's "With the {team} {years}") BUILT + committed `f455aeb13` 2026-11-05, no migration; /simplify,
-  /review (high) and /docs done; walk §462 PASSED 29/29 2026-11-05; part 2 (S6: the Children queue, Split records, the parent link on the child — mig 445) BUILT 2026-11-05; /simplify, /review (high) and /docs done 2026-11-05; walk §467 published; prod mig 445 owed (build prompt Progress block).**
+  /review (high) and /docs done; walk §462 PASSED 29/29 2026-11-05; part 2 (S6: the Children queue, Split records, the parent link on the child — mig 445) BUILT + committed `4b7341f08` 2026-11-05; /simplify, /review (high) and /docs done 2026-11-05; walk §467 published; prod mig 445 owed (build prompt Progress block).**
   every club already has years of duplicate players. A **review-and-merge**
   pass (the matcher's existing high / possible tiers, the Families book's duplicate-guardian logic as the model) before any
   forced merge; a merge never deletes a season's entry, and a roster's history links survive it. Standalone coaches with no club
