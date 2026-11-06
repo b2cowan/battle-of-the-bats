@@ -89,7 +89,27 @@ approver. Coaches portal untouched (the coach portal has no fee invoices).
 
 ## Progress
 
-- 2026-11-05 (Part 4 built, **uncommitted**; walk §468 published): **the overdue banner.** **Rulings this session (owner, all as recommended):**
+- 2026-11-06 (Part 4 `/simplify` + `/review`, high-risk tier, four lenses: correctness, security/tenant, data/contract, regression/state;
+  **Part 4 committed `64bf861a8` 2026-11-06**): **no Critical or High; the owner-only gate holds** (the brief's `feesOwed` stays behind the
+  server's billing check from the caller's own membership; every query is scoped by org; a pay link must be `https` before it reaches an href).
+  **/simplify applied:** the banner now reads the org and role directly instead of the full nav hook (that hook made a coach-access request
+  on every admin page); one shared `httpsOnly` check replaces three spellings; the extra open-invoice fees query runs only when the
+  50-row window came back full; the open status uses the shared constant; a dead `id`, a redundant click wrapper and a duplicated test
+  assertion removed. The one `verify:changed` failure that was Part 4's own (workspace-flip-guard wants the banner listed beside the nav hook
+  it replaced) was fixed in the same commit. **Medium and lower, NOT fixed (owner to rule):** (M1) the chat page measures its top once, so
+  an owner who loads or refreshes the Tournaments chat page with an overdue invoice sees it sit about one banner-height out of place (the
+  banner arrives after the page measured); (M2) on Plan & billing the banner's "See invoices" button does nothing when the fees list is empty
+  or still loading (the 50-row window gap of Part 3 "Known (a)", now with a dead button); (M3) in that same gap, after paying, the billing page
+  never re-reads the brief, so the red banner can stay up until the next hub visit; (M4) the brief now needs migration 444 on prod, like the
+  Plan & billing page already did (without it the pill and banner go quiet rather than showing an error): apply 444 BEFORE this code
+  promotes; (L1) the page line drops overdue invoices on the assumption the banner is up, so a failed or stale brief leaves an overdue invoice
+  with no sentence on either surface (only the list's Overdue chip); (L2) the shared "See invoices" accessible name says "below" even where the
+  button leaves the page; (L3) every tab return re-reads the whole brief with no minimum gap (the page's own read has one); (L4) the platform
+  admin fees read and two comments still say "at most 50/100" though an open invoice's fees can add to that; (L5) `complete` ignores the
+  200-invoice / 500-fee caps (unreachable in practice); (L6) two full-height pages (Public site, Schedules) overflow by the banner's height
+  until it scrolls away; (L7) the per-fee `payUrl` is not https-vetted (nothing renders it). **Not browsed:** the banner itself (walk §468).
+
+- 2026-11-05 (Part 4 built; **committed `64bf861a8` 2026-11-06**; walk §468 published): **the overdue banner.** **Rulings this session (owner, all as recommended):**
   Q6 = the brief carries the one overdue invoice (number, total, due day, https pay link) so the banner names and pays it; Q5 = the fees read
   always includes every open invoice, however old its fees; Q4 = a cancelled club draws the same line (both tones) at the top of its own
   Plan & billing page, NOT a shell banner (so no drawing check and no widening of the cancelled-org brief opt-out; changes Q2's "in the
@@ -111,8 +131,8 @@ approver. Coaches portal untouched (the coach portal has no fee invoices).
   **Known, left:** (a) with a failed brief read the banner is absent and the page's line is amber-only, so a red state would show on the
   pill's absence too (the door count and banner share the brief); (b) a banner + failed-payment red line + an amber line can stack on one
   page only with a second open invoice (not makeable by hand; pinned by tests only); (c) a failed first fees read still never retries
-  (Part 3 item 2, hook not touched). **Owed:** the owner's walk §468, `/simplify` (new shared builder and component), `/review` (billing,
-  high-risk tier), the commit (explicit pathspecs; `AdminChrome`/`BillingBody` hunks may sit beside other sessions' edits), Part 5.
+  (Part 3 item 2, hook not touched). **Owed:** the owner's walk §468, migration 444 on prod before promote, the owner's call on the
+  Medium and lower items above, Part 5 (`/docs` for the whole feature + the accounting wording check).
 
 - 2026-11-05 (Part 4 build prompt written): [FEE_INVOICE_ALERTS_PART4_BUILD_PROMPT.md](FEE_INVOICE_ALERTS_PART4_BUILD_PROMPT.md). **Not started;
   Step 0 is a short drawing check and three owner rulings first.** Found while reading the code: (Q4) a cancelled club can reach only Plan
