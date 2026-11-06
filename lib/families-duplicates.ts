@@ -115,7 +115,7 @@ export function defaultKeeper(people: readonly DuplicatePersonIn[]): string {
     || p.id.localeCompare(q.id))[0].id;
 }
 
-const pairKey = (x: string, y: string) => (x < y ? `${x}|${y}` : `${y}|${x}`);
+export const pairKey = (x: string, y: string) => (x < y ? `${x}|${y}` : `${y}|${x}`);
 
 /** Joined sets of ids (path-compressed; the smaller id roots its set, so a set's root never depends on the order of
  *  joins). Shared with lib/families-audience.ts. */

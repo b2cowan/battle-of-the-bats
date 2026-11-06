@@ -1686,6 +1686,17 @@ export const SCREENS = [
   { id: 'admin-family-child',          area: 'families', session: 'repClubOwner', ready: 'h1',
     path: (c) => `/${c.clubSlug}/admin/families/children/${c.clubChildId}?from=${c.clubPersonId}` },
   { id: 'admin-families-duplicates',   area: 'families', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/families/duplicates` },
+  // Club Tier Stage 14 S6: the Children half of that tab (the Parents · Children switch turned over), and Split records open on a child's page.
+  { id: 'admin-families-duplicates-children', area: 'families', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/families/duplicates`,
+    interact: async (page) => {
+      const half = page.getByRole('button', { name: /^Children · \d+$/ }).first();
+      if (await half.count() === 0) return;
+      await half.click();
+      await page.waitForTimeout(800);
+    } },
+  { id: 'admin-family-child-split',    area: 'families', session: 'repClubOwner', ready: 'h1',
+    path: (c) => `/${c.clubSlug}/admin/families/children/${c.clubChildId}?from=${c.clubPersonId}`,
+    interact: (page) => openKitDialogBy(page, page.getByRole('button', { name: 'Split records', exact: true })), scope: '[data-kit-dialog]' },
   // Club Tier Stage 7c: the Emails tab, and the Email families window open over it — its one door (Send is never pressed).
   { id: 'admin-families-emails',       area: 'families', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/families/emails` },
   { id: 'admin-families-email-window', area: 'families', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/families/emails`,

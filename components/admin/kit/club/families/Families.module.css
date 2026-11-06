@@ -176,3 +176,6 @@ p.finishedNote { margin: 0 0 0.75rem; }
 .divider { margin: 1rem 0 0.4rem; font-size: var(--type-support); font-weight: 650; color: var(--text-tertiary); }
 .dividerRow td { padding-top: 0.9rem; font-size: var(--type-support); font-weight: 650; color: var(--text-tertiary); }
 .filter { min-width: 12rem; }
+
+/* ── Duplicates: the Parents · Children switch above the queue (Stage 14 S6). The kit's switch brings its own touch floor. ── */
+.hubSwitch { margin: 0 0 0.75rem; }

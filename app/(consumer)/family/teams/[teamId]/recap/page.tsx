@@ -67,7 +67,7 @@ export default async function FamilyRecapPage({ params }: { params: Promise<{ te
 
   // Who is connected → is there a recap → build it → note that they opened it. Four explicit
   // steps at the edge, rather than one resolver that silently writes while it reads.
-  const link = await getVerifiedLinkForUserTeam(user.id, teamId);
+  const link = await getVerifiedLinkForUserTeam(user.id, teamId, 'recap');
   const state = link
     ? await resolveFamilyRecapAvailability({ link, repTeamId: teamId })
     : { status: 'unavailable' as const };

@@ -333,6 +333,7 @@ test.describe('boundary — an account with no guardian link reaches no child da
       status: 'requested',
     });
     expect(error).not.toBeNull();
-    expect(String(error?.message ?? '')).toMatch(/family_links_role_player_ck|violates check/i);
+    // Since mig 445 the child is NOT NULL too, and a row with neither a player nor a child fails that first (the CHECK still stands behind it).
+    expect(String(error?.message ?? '')).toMatch(/family_links_role_player_ck|violates check|child_id/i);
   });
 });

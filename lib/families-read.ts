@@ -293,7 +293,7 @@ async function loadOrgFamilyWorld(orgId: string, opts: { attach?: boolean; forDu
     orgRows<any>('league_registrations',
       'id, child_id, person_id, player_first_name, player_last_name, player_date_of_birth, guardian_email, guardian_email_2, guardian_last_name, status, registration_fee_paid, fee_amount, waiver_accepted_at, registered_at, season_id, division_id, team_id, pay_link_sent_at, league_seasons(name, slug, status, registration_fee), league_divisions(name)',
       orgId),
-    orgRows<any>('family_links', 'id, person_id, player_id, user_id, status, role, relationship, invited_email, claimed_email, updated_at', orgId),
+    orgRows<any>('family_links', 'id, person_id, child_id, player_id, user_id, status, role, relationship, invited_email, claimed_email, updated_at', orgId),
     orgRows<any>('family_email_optouts', 'id, email, source, opted_out_at', orgId),
     unless(opts.forDuplicates, () => orgRows<any>('family_consents', 'id, guardian_email, basis, scope, basis_started_at, withdrawn_at', orgId)),
   ]);
@@ -329,7 +329,8 @@ async function loadOrgFamilyWorld(orgId: string, opts: { attach?: boolean; forDu
     rosterByPerson: byKey(rosterRows, r => r.person_id),
     leagueByPerson: byKey(leagueRegs, r => r.person_id),
     linksByPerson: byKey(links, (l: any) => l.person_id),
-    linksByPlayer: byKey(links, (l: any) => l.player_id),
+    // A parent link is the CHILD's (mig 445, Stage 14 S6): every season's link to a child is found by the child.
+    linksByChild: byKey(links, (l: any) => l.child_id),
   };
 }
 
@@ -700,7 +701,7 @@ function householdOf(world: World, p: any): Household {
   // (/review 2026-10-17): a guardian a coach revoked this season, still "verified" on last season's roster row, is NOT the
   // household. A revocation is the coach's latest word (the custody case); an older approval never outvotes it.
   const newestByPerson = new Map<string, any>();
-  for (const l of roster.flatMap(r => world.linksByPlayer.get(r.id) ?? [])) {
+  for (const l of roster.flatMap(r => world.linksByChild.get(r.child_id) ?? [])) {
     if (!l.person_id || l.person_id === p.id) continue;
     const cur = newestByPerson.get(l.person_id);
     if (!cur || String(l.updated_at ?? '') > String(cur.updated_at ?? '')) newestByPerson.set(l.person_id, l);

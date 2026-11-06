@@ -6,6 +6,8 @@ import { generateNoLoginToken, hashNoLoginToken } from './no-login-token';
 import { normalizeGuardianEmail } from './guardian-email';
 import { getTeamScopedRepTeamAccess, isTeamWorkspaceOrg } from './team-workspace-entitlements';
 import { isOrgBillingSuspended } from './org-billing-access';
+import { fetchAllIn } from './supabase-paging';
+import { reachedEntry, reachKey, type ChildTeamEntry, type ReachMode } from './family-link-reach';
 import type { Organization } from './types';
 
 /**
@@ -50,6 +52,10 @@ export interface FamilyLink {
   orgId: string;
   repTeamId: string;
   role: FamilyRole;
+  /** The CHILD this link is for (mig 445, Stage 14 S6 - Ask 13). What the link reaches follows the child's live seasons. */
+  childId: string;
+  /** The roster entry the link was made on - and, on a link a reader got from `reachingLinks` / `getVerifiedLinkForUserTeam`,
+   *  the entry it reaches NOW (the child's live entry on the team; the recap's: its newest closed). Never trust the stored one. */
   playerId: string | null;
   userId: string | null;
   invitedEmail: string;
@@ -67,6 +73,7 @@ interface FamilyLinkRow {
   org_id: string;
   rep_team_id: string;
   role: FamilyRole;
+  child_id: string;
   player_id: string | null;
   user_id: string | null;
   invited_email: string;
@@ -80,7 +87,7 @@ interface FamilyLinkRow {
 }
 
 const LINK_COLUMNS =
-  'id, org_id, rep_team_id, role, player_id, user_id, invited_email, relationship, status, ' +
+  'id, org_id, rep_team_id, role, child_id, player_id, user_id, invited_email, relationship, status, ' +
   'verified_via, created_at, approved_at, declined_at, revoked_at';
 
 function mapLink(row: FamilyLinkRow): FamilyLink {
@@ -89,6 +96,7 @@ function mapLink(row: FamilyLinkRow): FamilyLink {
     orgId: row.org_id,
     repTeamId: row.rep_team_id,
     role: row.role,
+    childId: row.child_id,
     playerId: row.player_id,
     userId: row.user_id,
     invitedEmail: row.invited_email,
@@ -294,13 +302,18 @@ export class FamilyLinkError extends Error {
 export async function listVerifiedFamilyEmails(repTeamId: string): Promise<Set<string>> {
   const { data, error } = await supabaseAdmin
     .from('family_links')
-    .select('invited_email')
+    .select('invited_email, child_id')
     .eq('rep_team_id', repTeamId)
     .eq('status', 'verified');
   if (error) throw error;
+  // Only a parent whose CHILD is on the team's live season is "a family of this team" (Stage 14 S6).
+  const reaching = await reachingLinks(
+    ((data ?? []) as { invited_email: string | null; child_id: string }[]).map(r => ({ ...r, repTeamId, childId: r.child_id })),
+    'live',
+  );
   const out = new Set<string>();
-  for (const row of data ?? []) {
-    const email = normalizeGuardianEmail((row as { invited_email: string | null }).invited_email);
+  for (const row of reaching) {
+    const email = normalizeGuardianEmail(row.invited_email);
     if (email) out.add(email);
   }
   return out;
@@ -373,16 +386,62 @@ export async function getVerifiedLinksForUser(userId: string): Promise<FamilyLin
 export async function getVerifiedLinkForUserTeam(
   userId: string,
   repTeamId: string,
+  /** 'recap' reaches the child's newest CLOSED season (the end-of-season recap's door); the default reaches the live one. */
+  mode: ReachMode = 'live',
 ): Promise<FamilyLink | null> {
+  // One parent can hold a link per child on a team (mig 445), so this reads them all and takes the first that REACHES the
+  // team now - a link whose child has no live season on the team (last season's team) reaches nothing.
   const { data, error } = await supabaseAdmin
     .from('family_links')
     .select(LINK_COLUMNS)
     .eq('user_id', userId)
     .eq('rep_team_id', repTeamId)
     .eq('status', 'verified')
-    .maybeSingle();
+    .order('created_at', { ascending: true });
   if (error) throw error;
-  return data ? mapLink(data as unknown as FamilyLinkRow) : null;
+  const links = (data ?? []).map(row => mapLink(row as unknown as FamilyLinkRow));
+  return (await reachingLinks(links, mode))[0] ?? null;
+}
+
+/**
+ * The links that REACH their team - the child holds an entry on it in a live season (mode 'live') or, for the recap, a closed
+ * one - each returned with `playerId` set to the entry it reaches. The one place "a parent link follows the child's seasons"
+ * (Stage 14 S6, Ask 13) is applied; the rule itself is pure (lib/family-link-reach.ts). Order is kept.
+ */
+export async function reachingLinks<T extends { childId: string; repTeamId: string; playerId?: string | null }>(
+  links: readonly T[],
+  mode: ReachMode,
+): Promise<T[]> {
+  if (links.length === 0) return [];
+  const byKey = await readChildTeamEntries(links.map(l => l.childId));
+  const out: T[] = [];
+  for (const l of links) {
+    const entry = reachedEntry(byKey.get(reachKey(l.childId, l.repTeamId)) ?? [], mode);
+    if (entry) out.push({ ...l, playerId: entry.id });
+  }
+  return out;
+}
+
+type YearRel = { status: string; year: number; created_at: string };
+
+/** Each child's non-call-up roster entries, by `childId|teamId`, with their season. (A call-up never reaches a team.) */
+async function readChildTeamEntries(childIds: readonly string[]): Promise<Map<string, ChildTeamEntry[]>> {
+  const rows = await fetchAllIn<{ id: string; child_id: string; team_id: string; rep_program_years: YearRel | YearRel[] | null }>(
+    [...new Set(childIds)],
+    (chunk, from, to) => supabaseAdmin.from('rep_roster_players')
+      .select('id, child_id, team_id, rep_program_years(status, year, created_at)')
+      .in('child_id', chunk).neq('status', 'callup').order('id').range(from, to),
+  );
+  const out = new Map<string, ChildTeamEntry[]>();
+  for (const r of rows) {
+    const y = Array.isArray(r.rep_program_years) ? r.rep_program_years[0] : r.rep_program_years;
+    if (!y) continue;
+    const k = reachKey(r.child_id, r.team_id);
+    const entry: ChildTeamEntry = { id: r.id, seasonStatus: y.status, seasonYear: Number(y.year), seasonCreatedAt: y.created_at };
+    const list = out.get(k);
+    if (list) list.push(entry); else out.set(k, [entry]);
+  }
+  return out;
 }
 
 /** Mint this family's own calendar token. Per family, not per team, so revoking one
@@ -398,7 +457,10 @@ export async function ensureFamilyCalendarToken(linkId: string): Promise<string>
   return token;
 }
 
-export async function resolveLinkByCalendarToken(token: string): Promise<FamilyLink | null> {
+/** A good token still names its link after the child's season on the team has closed: `reaches` says whether the feed has
+ *  anything to serve. (A closed season's feed is an EMPTY calendar - as it always was - not a refusal that counts against the
+ *  abuse ceiling every family behind a calendar company's server shares.) */
+export async function resolveLinkByCalendarToken(token: string): Promise<(FamilyLink & { reaches: boolean }) | null> {
   const { data, error } = await supabaseAdmin
     .from('family_links')
     .select(LINK_COLUMNS)
@@ -406,7 +468,11 @@ export async function resolveLinkByCalendarToken(token: string): Promise<FamilyL
     .eq('status', 'verified')
     .maybeSingle();
   if (error) throw error;
-  return data ? mapLink(data as unknown as FamilyLinkRow) : null;
+  if (!data) return null;
+  // A calendar feed stops with the child's season on the team (Stage 14 S6).
+  const link = mapLink(data as unknown as FamilyLinkRow);
+  const reached = (await reachingLinks([link], 'live'))[0];
+  return { ...(reached ?? link), reaches: !!reached };
 }
 
 // ── Adoption counts for the club (Chunk D 3.6) ─────────────────────────────────
@@ -436,12 +502,19 @@ export const EMPTY_TEAM_FAMILY_ROLLUP: Readonly<Omit<TeamFamilyRollup, 'repTeamI
 export async function getOrgFamilyRollup(orgId: string): Promise<Map<string, TeamFamilyRollup>> {
   const { data, error } = await supabaseAdmin
     .from('family_links')
-    .select('rep_team_id, status')
+    .select('rep_team_id, status, child_id')
     .eq('org_id', orgId);
   if (error) throw error;
 
+  // A verified parent counts as CONNECTED only while their child is on the team's live season (Stage 14 S6); a request waiting
+  // for the coach is counted as it stands.
+  const raw = ((data ?? []) as { rep_team_id: string; status: string; child_id: string }[])
+    .map(r => ({ ...r, repTeamId: r.rep_team_id, childId: r.child_id }));
+  const verified = await reachingLinks(raw.filter(r => r.status === 'verified'), 'live');
+  const rows = [...raw.filter(r => r.status !== 'verified'), ...verified];
+
   const byTeam = new Map<string, TeamFamilyRollup>();
-  for (const row of (data ?? []) as { rep_team_id: string; status: string }[]) {
+  for (const row of rows) {
     let entry = byTeam.get(row.rep_team_id);
     if (!entry) {
       entry = { repTeamId: row.rep_team_id, ...EMPTY_TEAM_FAMILY_ROLLUP };

@@ -6,7 +6,7 @@ import { getFamilySuppressionList, sendFamilyEmail } from './family-email';
 import { systemMailFace } from './club-email-context';
 import { formatInOrgZone } from './timezone';
 import { endSentence } from './utils';
-import { isVisibleToFamilies } from './family-access';
+import { isVisibleToFamilies, reachingLinks } from './family-access';
 
 /**
  * lib/family-notify.ts — telling connected families when their team's plan changes.
@@ -132,19 +132,26 @@ export async function notifyFamiliesOfGameUpdate(params: {
     // them about it.
     const { data: linkRows } = await supabaseAdmin
       .from('family_links')
-      .select('user_id, invited_email')
+      .select('user_id, invited_email, child_id')
       .eq('rep_team_id', event.teamId)
       .eq('status', 'verified');
-    const links = (linkRows ?? []) as { user_id: string | null; invited_email: string }[];
+    // ...and only a parent whose CHILD is on this team's live season (Stage 14 S6, Ask 13): last season's families are not told
+    // about this season's games.
+    const links = await reachingLinks(
+      ((linkRows ?? []) as { user_id: string | null; invited_email: string; child_id: string }[])
+        .map(l => ({ ...l, childId: l.child_id, repTeamId: event.teamId })),
+      'live',
+    );
     if (links.length === 0) return;
 
     const { title, body } = describe(event, team.name, params.kind);
     const link = `/family/teams/${event.teamId}`;
 
     // ── In-app (bell). Push is deliberately not in this event's defaults. ──
-    const userIds = links
+    // (A parent with two children on the team has two links: one bell, not two.)
+    const userIds = [...new Set(links
       .map(l => l.user_id)
-      .filter((id): id is string => !!id && id !== params.actorUserId);
+      .filter((id): id is string => !!id && id !== params.actorUserId))];
 
     // A COACH's copy opens their own Schedule, not the family app (coach-notifications review R4,
     // owner-approved D6 2026-09-03). Coaches are followed to their own team automatically, so

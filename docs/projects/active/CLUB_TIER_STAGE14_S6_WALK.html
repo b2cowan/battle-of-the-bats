@@ -1,0 +1,654 @@
+<title>Joining Records Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Public+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: sticky tab bar (Start · A–J · Paste back), one part on screen at a time; each step is Do → You should see. */
+:root {
+  --bg: #f6f5f2;
+  --surface: #ffffff;
+  --ink: #1d2327;
+  --muted: #5d676d;
+  --line: #d9d8d2;
+  --accent: #1f5f7a;
+  --accent-ink: #ffffff;
+  --accent-soft: #e3eef3;
+  --pass: #2a7a4b;
+  --pass-soft: #e2f1e8;
+  --issue: #b3402f;
+  --issue-soft: #f8e6e2;
+  --call: #946200;
+  --call-soft: #fbf0d8;
+  --font-body: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14181b; --surface: #1c2226; --ink: #e8ebec; --muted: #9aa5ab; --line: #333c41;
+    --accent: #6fb4d0; --accent-ink: #0d1a20; --accent-soft: #1b2e37;
+    --pass: #5cc088; --pass-soft: #17301f; --issue: #f08a78; --issue-soft: #3a1f1a;
+    --call: #e8b650; --call-soft: #3a2e12; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #14181b; --surface: #1c2226; --ink: #e8ebec; --muted: #9aa5ab; --line: #333c41;
+  --accent: #6fb4d0; --accent-ink: #0d1a20; --accent-soft: #1b2e37;
+  --pass: #5cc088; --pass-soft: #17301f; --issue: #f08a78; --issue-soft: #3a1f1a;
+  --call: #e8b650; --call-soft: #3a2e12; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.5; margin: 0; }
+.wrap { max-width: 860px; margin: 0 auto; padding-block: 0 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 9; background: var(--bg); border-bottom: 1px solid var(--line); padding-block: 10px 0; }
+.bar-top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.bar h1 { font-size: 15px; font-weight: 700; margin: 0; letter-spacing: 0.01em; }
+.count { font-family: var(--font-mono); font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.tabs { display: flex; gap: 2px; overflow-x: auto; padding-top: 8px; scrollbar-width: thin; }
+.tab { flex: 0 0 auto; border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 13px; font-weight: 600; padding: 8px 12px; border-bottom: 3px solid transparent; cursor: pointer; min-height: 40px; white-space: nowrap; }
+.tab:hover { color: var(--ink); }
+.tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+.tab .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-left: 6px; background: var(--line); vertical-align: 1px; }
+.tab .dot.pass { background: var(--pass); } .tab .dot.issue { background: var(--issue); } .tab .dot.call { background: var(--call); } .tab .dot.part { background: var(--accent); opacity: 0.55; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+main { padding-top: 22px; display: grid; gap: 18px; }
+h2 { font-size: 21px; line-height: 1.25; margin: 0; text-wrap: balance; }
+h3 { font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px; }
+p { margin: 0; max-width: 68ch; }
+.lede { color: var(--muted); }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; display: grid; gap: 8px; min-width: 0; }
+.grid2 { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.mono { font-family: var(--font-mono); font-size: 13px; }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th, td { text-align: left; padding: 6px 10px 6px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.scroll { overflow-x: auto; }
+.cred { display: grid; grid-template-columns: auto 1fr auto; gap: 4px 12px; align-items: center; font-size: 14px; }
+.cred .k { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+.cred .v { font-family: var(--font-mono); font-size: 13px; word-break: break-all; min-width: 0; }
+button.copy { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 6px; font: inherit; font-size: 12px; padding: 4px 9px; cursor: pointer; min-height: 30px; }
+button.copy:hover { border-color: var(--accent); }
+.callout { border-left: 4px solid var(--call); background: var(--call-soft); padding: 10px 14px; border-radius: 0 6px 6px 0; max-width: 72ch; }
+.callout.stop { border-left-color: var(--issue); background: var(--issue-soft); }
+.steps { display: grid; gap: 10px; padding: 0; margin: 0; list-style: none; }
+.step { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; min-width: 0; }
+.step.done { border-color: var(--pass); background: linear-gradient(0deg, var(--pass-soft), var(--pass-soft)); }
+.step input[type="checkbox"] { width: 22px; height: 22px; margin: 2px 0 0; accent-color: var(--accent); cursor: pointer; flex: none; }
+.step .body { display: grid; gap: 6px; min-width: 0; }
+.step .id { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+.who { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 1px 7px; border-radius: 4px; background: var(--accent-soft); color: var(--accent); margin-right: 6px; }
+.do b.lbl, .see b.lbl { font-family: var(--font-mono); font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-right: 6px; }
+.see { color: var(--ink); }
+.writes { font-size: 12.5px; color: var(--muted); }
+.opts { display: grid; gap: 6px; margin-top: 4px; }
+.opt { display: flex; gap: 10px; align-items: flex-start; }
+.opt input { width: 20px; height: 20px; margin-top: 2px; accent-color: var(--accent); flex: none; }
+code { font-family: var(--font-mono); font-size: 12.5px; background: var(--accent-soft); padding: 1px 5px; border-radius: 4px; word-break: break-word; }
+.verdict { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.vbtn { border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; font-size: 13px; font-weight: 600; padding: 7px 14px; border-radius: 6px; cursor: pointer; min-height: 38px; }
+.vbtn[aria-pressed="true"].pass { background: var(--pass); border-color: var(--pass); color: #fff; }
+.vbtn[aria-pressed="true"].issue { background: var(--issue); border-color: var(--issue); color: #fff; }
+.vbtn[aria-pressed="true"].call { background: var(--call); border-color: var(--call); color: #fff; }
+textarea { width: 100%; min-height: 70px; font: inherit; font-size: 14px; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; resize: vertical; }
+.primary { border: 0; background: var(--accent); color: var(--accent-ink); font: inherit; font-weight: 700; padding: 10px 18px; border-radius: 6px; cursor: pointer; min-height: 42px; }
+.pb { width: 100%; min-height: 260px; font-family: var(--font-mono); font-size: 12.5px; }
+.nav { display: flex; justify-content: space-between; gap: 10px; }
+.small { font-size: 13px; color: var(--muted); }
+ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+@media (max-width: 520px) { .cred { grid-template-columns: 1fr; } .step { grid-template-columns: auto 1fr; padding: 10px 12px; } }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <div class="bar">
+    <div class="bar-top">
+      <h1>§467 · Stage 14 S6 owner walk · joining records</h1>
+      <span class="count" id="count">0 of 0 ticked</span>
+    </div>
+    <div class="tabs" id="tabs" role="tablist" aria-label="Walk parts"></div>
+  </div>
+  <main id="main"></main>
+</div>
+
+
+<script type="application/json" id="walk-data">
+{
+ "asOf": "2026-11-05",
+ "parts": [
+  {
+   "id": "A",
+   "title": "The queue opens",
+   "who": "Owner",
+   "intro": "The Children half of Families › Duplicates, on a desk. Sign in as the owner (Start tab). Nothing is written in this part.",
+   "steps": [
+    {
+     "who": "Owner",
+     "do": "Open Duplicates (link on the Start tab).",
+     "see": "A two-way switch labelled “Which duplicates”: “Parents · N” and “Children · 4”. If Parents reads 0 the page opens on Children by itself; otherwise press Children. The Families tab’s pill shows the two numbers added together (N + 4)."
+    },
+    {
+     "who": "Owner",
+     "do": "Read the four cards in order.",
+     "see": "Maya Chen (“Same name, same birth date and the same parent”), Noah Kim (same words), Owen Patel (“Same name and birth date, different parent email”), Ava Lopez (“Same name and parent, birth date missing on one side”). The line above them reads “Records that may be one child. Nothing joins until you choose.”"
+    },
+    {
+     "who": "Owner",
+     "do": "Look at the “Join as one child” buttons.",
+     "see": "Lime on the first card (Maya) only; the others are outlined. Noah’s is dimmed and cannot be pressed (part C)."
+    },
+    {
+     "who": "Owner",
+     "do": "Look for the twins Ella and Mila.",
+     "see": "They are not on the list: they share a surname, birth date and parents but are two different first names, so they are never proposed."
+    },
+    {
+     "who": "Owner",
+     "do": "Read Maya’s card.",
+     "see": "Two sides, each with “Keep this record”, Born March 8, 2015, the seasons and the parent. One side holds the S6 Lynx 2027 and 2026 seasons and is picked already; the other holds “House league, Summer 2025 · U10 Rookie · Blue Jays”. Under them one sentence: “Joining keeps Maya Chen, born March 8, 2015, as one child with all 3 seasons. Every season keeps its own entry, and you can split them again from Maya’s page.”"
+    }
+   ]
+  },
+  {
+   "id": "B",
+   "title": "Join Maya",
+   "who": "Owner",
+   "intro": "The one decision the whole stage is for. This part WRITES to the fixture: it joins Maya’s two records. Parts E and F need it done first. A reset (Start tab) puts everything back.",
+   "steps": [
+    {
+     "who": "Owner",
+     "do": "On Maya’s card, press “Keep this record” on the other side, then back on the first side.",
+     "see": "The highlight and the radio follow your choice each time, and the sentence under the sides stays right (both records have the same name and birth date)."
+    },
+    {
+     "who": "Owner",
+     "do": "Press “Join as one child”.",
+     "see": "A small question window: “Join Maya Chen’s records?”, “Maya becomes one child with 3 seasons. Nothing in any season changes. You can split them again from Maya’s page.”, with Cancel and Join. Press Cancel once: nothing happens."
+    },
+    {
+     "who": "Owner",
+     "do": "Press “Join as one child” again, then Join.",
+     "see": "A notice “Joined. Maya Chen is one child now.” Maya’s card is gone, three cards remain, and the “Children · 3” count and the Families tab’s pill each drop by one."
+    },
+    {
+     "who": "Owner",
+     "do": "Open Maya’s page (link on the Start tab).",
+     "see": "Three seasons, newest first: 2027 Season, 2026 Season, Summer 2025 (the house-league one with its division and team). Nothing was lost or duplicated."
+    },
+    {
+     "who": "Owner",
+     "do": "Open Grace Chen’s household (link on the Start tab) and look at Maya’s line.",
+     "see": "It reads “3 seasons” (and the documents-to-sign part). Before the join it read fewer."
+    }
+   ]
+  },
+  {
+   "id": "C",
+   "title": "Noah: the join waits",
+   "who": "Owner",
+   "intro": "Two Noah Kim records sit on the same team in the same season, so the database would refuse a join. The card says so instead of failing. The last step is optional and changes the fixture.",
+   "steps": [
+    {
+     "who": "Owner",
+     "do": "Look at Noah Kim’s card.",
+     "see": "In place of the “Joining keeps…” sentence: “Both are on the S6 Lynx 2027 Season roster. Remove the extra entry first, then join them.” The Join button is dimmed.",
+     "stop": "If Join is live on this card, stop and tell me: that is the refused join."
+    },
+    {
+     "who": "Owner",
+     "do": "Optional: open the S6 Lynx roster (Start tab) and remove one of the two Noah Kim entries, then come back to Duplicates and reload.",
+     "see": "Noah’s card is gone (one record is left with a single season, so there is nothing to join)."
+    }
+   ]
+  },
+  {
+   "id": "D",
+   "title": "Owen: not the same child",
+   "who": "Owner",
+   "intro": "The way to say no. This part WRITES: it stores a “no”.",
+   "steps": [
+    {
+     "who": "Owner",
+     "do": "On Owen Patel’s card press “Not the same child”.",
+     "see": "A notice “Kept apart. They won’t be proposed again.” and the card disappears."
+    },
+    {
+     "who": "Owner",
+     "do": "Reload the page and open the Children view again.",
+     "see": "Owen has not come back. (Ava’s card, if you left it, is still there.)"
+    }
+   ]
+  },
+  {
+   "id": "E",
+   "title": "Split records",
+   "who": "Owner",
+   "intro": "Undo a join from the child’s page. Needs part B done. This part WRITES: it splits Maya’s Summer 2025 season off to a new child.",
+   "steps": [
+    {
+     "who": "Owner",
+     "do": "Open Maya’s page and find “Split records”.",
+     "see": "A button near the top of her seasons, because she now has three."
+    },
+    {
+     "who": "Owner",
+     "do": "Press it.",
+     "see": "A window titled “Split Maya’s records?”, “Choose the seasons that belong to a different child. They move to a new record; nothing is deleted.”, a list “Seasons that move” with one tick box per season, and “0 of 3 moving”."
+    },
+    {
+     "who": "Owner",
+     "do": "Look at the foot with nothing ticked, then tick all three.",
+     "see": "Both times the Split button waits and the reason reads “Choose some of the seasons, not none and not all.”"
+    },
+    {
+     "who": "Owner",
+     "do": "Leave only Summer 2025 ticked.",
+     "see": "“1 of 3 moving”, and the sentence “Each season keeps its own entry, money and papers. Maya stays one child with the seasons you leave, and the two won’t be proposed as one again.” No line about parents appears, because no parent is connected in this fixture."
+    },
+    {
+     "who": "Owner",
+     "do": "Press “Split records”.",
+     "see": "The window closes with “Split. Maya is now a separate child.” Maya’s page now shows two seasons: 2027 and 2026."
+    },
+    {
+     "who": "Owner",
+     "do": "Open Grace Chen’s household again.",
+     "see": "Two Maya Chen lines: the first with her two rep seasons, the new one with the one house-league season."
+    },
+    {
+     "who": "Owner",
+     "do": "Open Duplicates and the Children view.",
+     "see": "The two Mayas are not offered again (the split is remembered as a “no”)."
+    }
+   ]
+  },
+  {
+   "id": "F",
+   "title": "A child with one season",
+   "who": "Owner",
+   "intro": "Nothing to split. Nothing is written.",
+   "steps": [
+    {
+     "who": "Owner",
+     "do": "Open Jonah Ruiz’s page (link on the Start tab).",
+     "see": "His one season (2027), and no “Split records” button anywhere on the page."
+    }
+   ]
+  },
+  {
+   "id": "G",
+   "title": "A phone and the sizes in between",
+   "who": "Owner",
+   "intro": "Use the browser’s phone view (390 wide), then 361, 768 and 1440. Things a script cannot judge: whether the buttons are easy to hit and nothing runs off the side. Do it after part B (Maya then has three seasons for the Split window; the cards for Noah and Ava are enough for the queue even after Maya and Owen are gone). If you split her in part E, join her again first.",
+   "steps": [
+    {
+     "who": "Owner",
+     "do": "At 390 wide open Duplicates and the Children view.",
+     "see": "The switch fits on one line. Each card’s two sides stack one under the other. “Join as one child” and “Not the same child” are big enough to tap without care (at least about 44 tall). The page does not scroll sideways."
+    },
+    {
+     "who": "Owner",
+     "do": "Press Join on the first card and look at the question window.",
+     "see": "It fits the screen; Cancel and Join are easy to hit. Cancel it."
+    },
+    {
+     "who": "Owner",
+     "do": "On Maya’s page (three seasons) open Split records at 390.",
+     "see": "The window fits; the tick boxes are easy to tap; the foot button reads the same words as on the desk."
+    },
+    {
+     "who": "Owner",
+     "do": "Look at the cards at 361, 768 and 1440.",
+     "see": "Two columns of sides when there is room, one when there is not, never overlapping, no sideways scroll."
+    }
+   ]
+  },
+  {
+   "id": "H",
+   "title": "A coach is refused",
+   "who": "Club coach",
+   "intro": "Joining and splitting are the club’s Families permission, not a coach’s. Use a second browser window signed in as the club coach (Start tab). Nothing is written.",
+   "steps": [
+    {
+     "who": "Club coach",
+     "do": "Open the Duplicates address from the Start tab.",
+     "see": "No queue and no child details: the same refusal the other admin pages give a coach.",
+     "stop": "If the coach sees the Children queue or any child’s name from it, stop and tell me: that is a privacy defect."
+    },
+    {
+     "who": "Club coach",
+     "do": "Open Maya’s club page address (Start tab).",
+     "see": "Refused the same way. There is no Split records button for a coach."
+    }
+   ]
+  },
+  {
+   "id": "I",
+   "title": "The parent link (not walkable)",
+   "who": "You",
+   "intro": "Honest limit: the guardian tier is off, so no parent can be connected on this site and this stage’s parent-link change cannot be walked. It is proved by the database test (a parent link stays with the child through a roll, a join and a split; two guardians per child per team; a verified link never loses to a waiting one) and by the unit tests. Nothing on any screen shows it today.",
+   "steps": [
+    {
+     "who": "You",
+     "do": "Read the paragraph above.",
+     "see": "Tick when you have. Nothing to look at."
+    }
+   ]
+  },
+  {
+   "id": "J",
+   "title": "Calls for you",
+   "who": "You",
+   "intro": "One box per option, so the tick is the answer. “Keep as built” is first every time, so ticking it means nothing needs to change.",
+   "calls": [
+    {
+     "q": "(2) The parents’ end-of-season recap stays reachable after the season closes (a parent is still connected to the child, just not to a live season). Every other parent-facing page stops when the season closes.",
+     "opts": [
+      "Keep as built",
+      "Stop the recap too"
+     ]
+    },
+    {
+     "q": "(3) A child who changes teams can be invited on the new team while the old team’s connection stays on file.",
+     "opts": [
+      "Keep as built",
+      "End the old connection when the child moves"
+     ]
+    },
+    {
+     "q": "(4) Children whose only entries are call-ups, or who have no visible season, are never proposed. A house-league-only child is proposed against a rep child.",
+     "opts": [
+      "Keep as built",
+      "Change it (say how in the notes)"
+     ]
+    },
+    {
+     "q": "(5) The side picked as the keeper is the record with the most seasons, then one with a birth date, then the oldest. You can always pick the other side. Joining never loses a birth date: a kept record with none takes the other’s.",
+     "opts": [
+      "Keep as built",
+      "Always start on the first side shown"
+     ]
+    },
+    {
+     "q": "(7) The words I wrote that were not in the drawings: the empty state, the “Joined” and “Kept apart” notices, and the whole Split window. They follow the parents’ queue’s voice. I removed one sentence from the Split window (“Link them to the other one from its page…”) because no such control exists.",
+     "opts": [
+      "Keep as built",
+      "Change some words (say which in the notes)"
+     ]
+    },
+    {
+     "q": "(9) Parents on a house-league child still cannot be connected; the signed-in family accounts stage owns that.",
+     "opts": [
+      "Keep as built",
+      "Pull it into this stage"
+     ]
+    },
+    {
+     "q": "(10) A correction to the build prompt: “a re-invite after a roll is accepted” is not what changed. After a roll the parent is still connected to the child, so there is nothing to re-invite. What is newly allowed is one parent address on two brothers or sisters on the same team.",
+     "opts": [
+      "Keep as built",
+      "Change it (say how in the notes)"
+     ]
+    },
+    {
+     "q": "(i) Anything else you noticed.",
+     "opts": [
+      "Nothing else",
+      "Something else (say what in the notes)"
+     ]
+    }
+   ]
+  }
+ ]
+}
+</script>
+
+<script>
+(function () {
+  var KEY = "s6walk-2026-11-05-v1";
+  var data = JSON.parse(document.getElementById("walk-data").textContent);
+  var state = { ticks: {}, verdict: {}, notes: {}, tab: "start" };
+  try { var saved = JSON.parse(localStorage.getItem(KEY) || "null"); if (saved) { state.ticks = saved.ticks || {}; state.verdict = saved.verdict || {}; state.notes = saved.notes || {}; state.tab = saved.tab || "start"; } } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var parts = data.parts;
+  var tabsEl = document.getElementById("tabs");
+  var mainEl = document.getElementById("main");
+  var countEl = document.getElementById("count");
+
+  function el(tag, attrs, kids) {
+    var n = document.createElement(tag);
+    if (attrs) Object.keys(attrs).forEach(function (k) {
+      if (k === "class") n.className = attrs[k];
+      else if (k === "text") n.textContent = attrs[k];
+      else if (k === "html") n.innerHTML = attrs[k];
+      else if (k.indexOf("on") === 0) n.addEventListener(k.slice(2), attrs[k]);
+      else n.setAttribute(k, attrs[k]);
+    });
+    (kids || []).forEach(function (c) { if (c) n.appendChild(typeof c === "string" ? document.createTextNode(c) : c); });
+    return n;
+  }
+  function boxesOf(p) {
+    var out = [];
+    (p.steps || []).forEach(function (s, i) { out.push(p.id + (i + 1)); });
+    (p.calls || []).forEach(function (c, i) { c.opts.forEach(function (o, j) { out.push(p.id + (i + 1) + "." + (j + 1)); }); });
+    return out;
+  }
+  function partCount(p) { var b = boxesOf(p); var n = 0; b.forEach(function (id) { if (state.ticks[id]) n++; }); return { n: n, of: b.length }; }
+  function totals() {
+    var n = 0, of = 0;
+    parts.forEach(function (p) { if (p.calls) return; var c = partCount(p); n += c.n; of += c.of; });
+    return { n: n, of: of };
+  }
+  function renderCount() { var t = totals(); countEl.textContent = t.n + " of " + t.of + " steps ticked"; }
+
+  var order = ["start"].concat(parts.map(function (p) { return p.id; })).concat(["paste"]);
+  function renderTabs() {
+    tabsEl.innerHTML = "";
+    order.forEach(function (id) {
+      var label, dot = "";
+      if (id === "start") label = "Start";
+      else if (id === "paste") label = "Paste back";
+      else { var p = parts.filter(function (x) { return x.id === id; })[0]; label = p.id + " · " + p.title; var v = state.verdict[id]; var c = partCount(p); dot = v ? v : (c.n > 0 ? "part" : ""); }
+      var b = el("button", { "class": "tab", role: "tab", "aria-selected": String(state.tab === id), text: label, onclick: function () { go(id); } });
+      if (dot !== "" || (id !== "start" && id !== "paste")) b.appendChild(el("span", { "class": "dot " + dot }));
+      tabsEl.appendChild(b);
+    });
+  }
+  function go(id) { state.tab = id; save(); render(); window.scrollTo(0, 0); }
+
+  function cred(label, value) {
+    var b = el("button", { "class": "copy", type: "button", text: "Copy", onclick: function () {
+      var done = function () { b.textContent = "Copied"; setTimeout(function () { b.textContent = "Copy"; }, 1200); };
+      try { navigator.clipboard.writeText(value).then(done, function () { b.textContent = "Select it"; }); } catch (e) { b.textContent = "Select it"; }
+    } });
+    return [el("span", { "class": "k", text: label }), el("span", { "class": "v", text: value }), b];
+  }
+
+  function renderStart() {
+    var B = "http://localhost:3000";
+    function box(rows) { var d = el("div", { "class": "cred" }); rows.forEach(function (r) { cred(r[0], r[1]).forEach(function (n) { d.appendChild(n); }); }); return d; }
+    var c1 = box([["Site", B], ["Owner", "s6-walk-admin@dev.local"], ["Password", "devpass123"],
+      ["Duplicates", "http://localhost:3000/s6-walk-club/admin/families/duplicates"],
+      ["Families", "http://localhost:3000/s6-walk-club/admin/families"],
+      ["Grace Chen household", "http://localhost:3000/s6-walk-club/admin/families/78f3b2fb-7795-49cf-ba7e-014bb96cf992"],
+      ["Maya’s page", "http://localhost:3000/s6-walk-club/admin/families/children/d78285f5-d789-4b72-875e-02fd53322c44"],
+      ["Jonah’s page", "http://localhost:3000/s6-walk-club/admin/families/children/04422508-bbcd-4db2-b5af-9d24f39ea014"],
+      ["S6 Lynx roster", "http://localhost:3000/s6-walk-club/admin/rep-teams/teams/14cfad5c-1ff0-42b4-80cc-bf9346bc3135/roster"]]);
+    var c2 = box([["Club coach", "s6-walk-clubcoach@dev.local"], ["Password", "devpass123"],
+      ["Duplicates (part H)", "http://localhost:3000/s6-walk-club/admin/families/duplicates"],
+      ["Maya, club page (part H)", "http://localhost:3000/s6-walk-club/admin/families/children/d78285f5-d789-4b72-875e-02fd53322c44"]]);
+    var c5 = box([["Reset (new links; use before a second pass)", "node --env-file=.env.local .probe/s6-walk/fixture.mjs --reset"]]);
+    function row(a, b, c) { return el("tr", null, [el("td", { text: a }), el("td", { text: b }), el("td", { text: c })]); }
+    var who = el("div", { "class": "scroll" }, [el("table", null, [
+      el("thead", null, [el("tr", null, [el("th", { text: "Child" }), el("th", { text: "What is on record" }), el("th", { text: "What the queue shows" })])]),
+      el("tbody", null, [
+        row("Maya Chen (Grace is her parent)", "Two records: the rep seasons 2026 and 2027, and a house-league Summer 2025 (U10 Rookie · Blue Jays)", "A card, the surest kind: same name, birth date and parent"),
+        row("Noah Kim", "Two records, both on the S6 Lynx 2027 roster", "A card where Join waits"),
+        row("Owen Patel", "A house-league Summer 2026 (U13 · Orioles) and the S6 Lynx 2027, different parent emails", "A card: different parent"),
+        row("Ava Lopez", "The S6 Lynx 2027 and a house-league Summer 2026 (U13); one has no birth date", "A card: birth date missing on one side"),
+        row("Ella and Mila", "Twins", "No card, on purpose"),
+        row("Jonah Ruiz", "The 2027 season only", "Nothing; his page has no Split button"),
+        row("Leo Chen", "House league Summer 2027, Grace’s other child", "Nothing")
+      ])
+    ])]);
+    return [
+      el("h2", { text: "Joining records" }),
+      el("p", { "class": "lede", text: "As of " + data.asOf + ". Dev site only; keep this page private (it carries a dev password). One club, “S6 Walk Club”, and one rep team, “S6 Lynx” (12U AAA)." }),
+      el("div", { "class": "callout stop", html: "<b>Read this first.</b> Maya’s Summer 2025 house-league season starts as a <b>separate record</b> in this fixture, which is the point: part B joins it. Parts B, C (last step), D and E change the fixture. Press the reset command (below) to put everything back before a second pass." }),
+      el("div", { "class": "panel" }, [el("h3", { text: "Before you start" }), el("ul", { "class": "plain" }, [
+        el("li", { text: "The dev server must be running at localhost:3000, and it was restarted for this stage (new files)." }),
+        el("li", { text: "The fixture was just reset, so the four cards and every count start as written here." }),
+        el("li", { text: "Sign in as the owner first. Part H uses the club coach (a second browser window saves signing in and out)." })
+      ])]),
+      el("div", { "class": "panel" }, [el("h3", { text: "What this walk is for" }), el("p", { text: "To check the two new things a club admin can do about a child entered twice: join the two records into one child from Families › Duplicates, and split them again from the child’s page. One job, 9 parts and about 30 steps, then eight calls for you." })]),
+      el("div", { "class": "panel" }, [el("h3", { text: "What changed since the build" }), el("ul", { "class": "plain" }, [
+        el("li", { text: "A join now keeps a birth date: a kept record with none takes the other record’s." }),
+        el("li", { text: "A record with no birth date can no longer tie two records with different dates into one card; they come up as separate questions." }),
+        el("li", { text: "A parent whose child’s season has closed is no longer told “Not connected yet” (not walkable here: the guardian tier is off)." }),
+        el("li", { text: "The Duplicates screen no longer jumps to Children while you finish the last Parents card." })
+      ])]),
+      el("div", { "class": "panel" }, [el("h3", { text: "It passes when" }), el("ul", { "class": "plain" }, [
+        el("li", { text: "The four cards read as written, with a join waiting where two records share a team and season." }),
+        el("li", { text: "Joining Maya makes one child with three seasons, nothing lost, and Split puts the house-league season back on its own." }),
+        el("li", { text: "A split pair is never proposed again; Not the same child sticks." }),
+        el("li", { text: "A phone reads cleanly, and a coach is refused." })
+      ])]),
+      el("div", { "class": "panel" }, [el("h3", { text: "Not in this walk" }), el("ul", { "class": "plain" }, [
+        el("li", { text: "Connecting a parent to a child (the guardian tier is off; part I explains)." }),
+        el("li", { text: "Parents on house-league children (a later stage)." })
+      ])]),
+      el("div", { "class": "panel" }, [el("h3", { text: "Sign in as: owner (parts A–G)" }), c1]),
+      el("div", { "class": "panel" }, [el("h3", { text: "Sign in as: club coach (part H)" }), c2]),
+      el("div", { "class": "panel" }, [el("h3", { text: "Who is where" }), who]),
+      el("div", { "class": "panel" }, [el("h3", { text: "Command (only to start over)" }), c5,
+        el("p", { "class": "small", text: "Run it from the repository folder in a terminal. A reset rebuilds the club with new ids: the links above stop working, and the reset prints the new ones and saves them in the CREDENTIALS file in the fixture folder." })]),
+      el("div", { "class": "nav" }, [el("span"), el("button", { "class": "primary", type: "button", text: "Start with part A", onclick: function () { go("A"); } })])
+    ];
+  }
+
+
+  function renderPart(p) {
+    var out = [];
+    out.push(el("h2", { text: p.id + " · " + p.title }));
+    out.push(el("p", { "class": "lede", text: p.intro }));
+    if (p.steps) {
+      var ol = el("ol", { "class": "steps" });
+      p.steps.forEach(function (s, i) {
+        var id = p.id + (i + 1);
+        var cb = el("input", { type: "checkbox", id: "cb-" + id, "aria-label": "Step " + id + " done", onchange: function (e) { state.ticks[id] = e.target.checked; save(); render(true); } });
+        cb.checked = !!state.ticks[id];
+        var body = el("div", { "class": "body" }, [
+          el("div", { "class": "id" }, [el("span", { "class": "who", text: s.who }), id]),
+          doEl(s.do),
+          el("div", { "class": "see" }, [el("b", { "class": "lbl", text: "You should see" }), document.createTextNode(s.see)])
+        ]);
+        if (s.writes) body.appendChild(el("div", { "class": "writes", text: s.writes }));
+        if (s.stop) body.appendChild(el("div", { "class": "callout stop", text: s.stop }));
+        ol.appendChild(el("li", { "class": "step" + (state.ticks[id] ? " done" : "") }, [cb, body]));
+      });
+      out.push(ol);
+    }
+    if (p.calls) {
+      p.calls.forEach(function (c, i) {
+        var box = el("div", { "class": "panel" }, [el("p", { text: c.q })]);
+        var opts = el("div", { "class": "opts" });
+        c.opts.forEach(function (o, j) {
+          var id = p.id + (i + 1) + "." + (j + 1);
+          var cb = el("input", { type: "checkbox", id: "cb-" + id, onchange: function (e) { state.ticks[id] = e.target.checked; save(); render(true); } });
+          cb.checked = !!state.ticks[id];
+          opts.appendChild(el("label", { "class": "opt", "for": "cb-" + id }, [cb, el("span", { text: o })]));
+        });
+        box.appendChild(opts);
+        out.push(box);
+      });
+    }
+    out.push(signoff(p));
+    var idx = order.indexOf(p.id);
+    out.push(el("div", { "class": "nav" }, [
+      el("button", { "class": "vbtn", type: "button", text: "← Back", onclick: function () { go(order[idx - 1]); } }),
+      el("button", { "class": "primary", type: "button", text: idx === order.length - 2 ? "To the paste-back →" : "Next part →", onclick: function () { go(order[idx + 1]); } })
+    ]));
+    return out;
+  }
+  function doEl(text) {
+    var d = el("div", { "class": "do" }, [el("b", { "class": "lbl", text: "Do" })]);
+    String(text).split("\n").forEach(function (line, i) {
+      if (i > 0) d.appendChild(el("br"));
+      if (i > 0) d.appendChild(el("code", { text: line })); else d.appendChild(document.createTextNode(line));
+    });
+    return d;
+  }
+  function signoff(p) {
+    var c = partCount(p);
+    var v = el("div", { "class": "verdict" });
+    [["pass", "Pass"], ["issue", "Issue"], ["call", "Needs a call"]].forEach(function (pair) {
+      v.appendChild(el("button", { "class": "vbtn " + pair[0], type: "button", "aria-pressed": String(state.verdict[p.id] === pair[0]), text: pair[1], onclick: function () {
+        state.verdict[p.id] = state.verdict[p.id] === pair[0] ? "" : pair[0]; save(); render(true);
+      } }));
+    });
+    var ta = el("textarea", { id: "notes-" + p.id, "aria-label": "Notes for part " + p.id, placeholder: "Notes: what you saw, what looked wrong, the why behind a call." });
+    ta.value = state.notes[p.id] || "";
+    ta.addEventListener("input", function () { state.notes[p.id] = ta.value; save(); });
+    return el("div", { "class": "panel" }, [el("h3", { text: "Part " + p.id + " · " + c.n + " of " + c.of + " ticked" }), v, ta]);
+  }
+
+  function buildPasteBack() {
+    var t = totals();
+    var lines = ["Stage 14 S6 walk · joining records · " + data.asOf + " · ticked " + t.n + " of " + t.of + " steps"];
+    parts.forEach(function (p) {
+      var c = partCount(p);
+      var v = (state.verdict[p.id] || "no verdict").toUpperCase();
+      if (p.calls) {
+        lines.push("");
+        lines.push(p.id + " · " + p.title + " [" + v + "]");
+        p.calls.forEach(function (call, i) {
+          var picked = call.opts.filter(function (o, j) { return state.ticks[p.id + (i + 1) + "." + (j + 1)]; });
+          lines.push("  " + p.id + (i + 1) + ": " + (picked.length ? picked.join(" + ") : "NOT ANSWERED") + "  (" + call.q.slice(0, 70) + "…)");
+        });
+      } else {
+        lines.push("");
+        lines.push(p.id + " · " + p.title + " [" + v + "] " + c.n + "/" + c.of);
+        var missed = [];
+        (p.steps || []).forEach(function (s, i) { if (!state.ticks[p.id + (i + 1)]) missed.push(p.id + (i + 1)); });
+        if (missed.length) lines.push("  not ticked: " + missed.join(", "));
+      }
+      if ((state.notes[p.id] || "").trim()) lines.push("  notes: " + state.notes[p.id].trim().replace(/\n/g, " / "));
+    });
+    lines.push("");
+    lines.push("Reminder: the fraction is the evidence; a verdict is an opinion.");
+    return lines.join("\n");
+  }
+  function renderPaste() {
+    var ta = el("textarea", { "class": "pb", id: "pb-out", readonly: "readonly", "aria-label": "Paste-back text" });
+    ta.value = buildPasteBack();
+    var msg = el("span", { "class": "small", id: "pb-msg" });
+    var copyBtn = el("button", { "class": "primary", type: "button", text: "Copy the paste-back", onclick: function () {
+      ta.value = buildPasteBack();
+      var fail = function () { ta.focus(); ta.select(); msg.textContent = "Select and copy it by hand."; };
+      try { navigator.clipboard.writeText(ta.value).then(function () { msg.textContent = "Copied. Paste it into the chat."; }, fail); } catch (e) { fail(); }
+    } });
+    var reset = el("button", { "class": "vbtn", type: "button", text: "Clear every tick and note", onclick: function () {
+      if (!state._confirm) { state._confirm = true; reset.textContent = "Press again to clear everything"; return; }
+      state.ticks = {}; state.verdict = {}; state.notes = {}; state._confirm = false; save(); render();
+    } });
+    return [
+      el("h2", { text: "Paste back" }),
+      el("p", { "class": "lede", text: "Copy this into the chat when you finish, or when you stop. It carries the count per part, the verdicts, your notes and your answers to the calls." }),
+      ta,
+      el("div", { "class": "nav" }, [el("div", { "class": "verdict" }, [copyBtn, msg]), reset])
+    ];
+  }
+
+  function render(keepScroll) {
+    var y = window.scrollY;
+    renderTabs(); renderCount();
+    mainEl.innerHTML = "";
+    var nodes;
+    if (state.tab === "start") nodes = renderStart();
+    else if (state.tab === "paste") nodes = renderPaste();
+    else { var p = parts.filter(function (x) { return x.id === state.tab; })[0]; nodes = p ? renderPart(p) : renderStart(); }
+    nodes.forEach(function (n) { mainEl.appendChild(n); });
+    if (keepScroll === true) window.scrollTo(0, y);
+  }
+  render();
+})();
+</script>

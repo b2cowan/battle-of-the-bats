@@ -41,7 +41,7 @@ export const GET = withObservability(async (req: Request,
   if (!link) return refusedFeedResponse(req);
 
   const org = await getEnabledFamilyOrg(link.orgId, link.repTeamId);
-  const view = org ? await getFamilyTeamView({ repTeamId: link.repTeamId, requireVisibility: 'families' }) : null;
+  const view = org && link.reaches ? await getFamilyTeamView({ repTeamId: link.repTeamId, requireVisibility: 'families' }) : null;
   if (!view) {
     // Stopped: the team's name is read only here — a good read names the calendar from its view.
     const team = await getTeamFamilyAccess(link.repTeamId);

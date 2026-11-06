@@ -9,6 +9,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability, captureAndJson } from '@/lib/observability';
 import { canOpenFamilies } from '@/lib/families-access';
 import { buildDuplicatePairs } from '@/lib/families-read';
+import { buildChildProposals } from '@/lib/children-duplicates-read';
 import { tournamentToday } from '@/lib/timezone';
 import { canSeeFeesOwed, type FeesOwed } from '@/lib/fee-invoice-alert';
 import { readFeesOwed } from '@/lib/fee-invoices-owed';
@@ -60,7 +61,7 @@ const ACTING_ROLES = {
   assistantCoaches: ['owner', 'admin'],
 } as const satisfies Record<string, readonly OrgRole[]>;
 
-type ClubBriefCounts = Partial<Record<'tryoutApplications' | 'paymentRequests' | 'installmentsDue' | 'assistantCoaches' | 'familyDuplicates', number>>;
+type ClubBriefCounts = Partial<Record<'tryoutApplications' | 'paymentRequests' | 'installmentsDue' | 'assistantCoaches' | 'familyDuplicates' | 'familyChildDuplicates', number>>;
 type ClubBriefDetail = {
   tryoutApplications?: { teams: number; oldest: { teamId: string; programYearId: string } | null };
   /** `holdingPayout`: waiting requests the club's answer is the one thing between a team and its
@@ -209,6 +210,10 @@ export const GET = withObservability(async (req: Request) => {
     reads.push((async () => {
       // A failure leaves the count ABSENT (no pill), never a calm 0 — and never takes the rest of the brief down with it.
       try { counts.familyDuplicates = (await buildDuplicatePairs(org.id)).length; } catch (e) { console.error('[club-brief] the Duplicates count failed:', e); }
+    })());
+    // Stage 14 S6 (Ask 11): the Children half of the same tab, counted on its own; the tab's pill and the rail wear the sum.
+    reads.push((async () => {
+      try { counts.familyChildDuplicates = (await buildChildProposals(org.id, { detail: false })).length; } catch (e) { console.error('[club-brief] the Children count failed:', e); }
     })());
   }
 

@@ -34,6 +34,9 @@ export const GET = withObservability(async (req: Request,
 
   const link = await getVerifiedLinkForUserTeam(user.id, teamId);
   if (!link) {
+    // A parent whose child's season on this team has CLOSED is still connected (Stage 14 S6: a link follows the child) — the
+    // quiet state, as before, not a 404.
+    if (await getVerifiedLinkForUserTeam(user.id, teamId, 'recap')) return NextResponse.json({ ok: true, state: 'hidden' });
     // Covers all of: never asked, still waiting, declined, revoked, and someone else's
     // team. A pending requester learns their state from the join page, not from here.
     return NextResponse.json({ error: 'not_found' }, { status: 404 });

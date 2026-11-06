@@ -146,7 +146,7 @@ async function rejectedChildren(childId: string, others: readonly string[]): Pro
 export async function storeNotSameChild(
   childId: string,
   others: readonly string[],
-  door: 'single_add' | 'paste_list' | 'tryout_accept',
+  door: 'single_add' | 'paste_list' | 'tryout_accept' | 'children_queue' | 'split',
   userId: string | null,
 ): Promise<void> {
   const rows = [...new Set(others)].filter(o => o && o !== childId).map(o => ({

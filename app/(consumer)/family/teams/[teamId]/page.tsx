@@ -62,7 +62,14 @@ export default async function FamilyTeamPage({ params }: { params: Promise<{ tea
     );
   }
 
-  const link = await getVerifiedLinkForUserTeam(user.id, teamId);
+  // A link follows the CHILD (Stage 14 S6): `liveLink` reaches the team's live season, `recapLink` its newest finished one (or the
+  // live one when there is none). A parent whose child's season has closed has no live link — but is still connected, and the
+  // recap is the whole point of this page for them. The schedule and the child's payload below are served on `liveLink` ONLY.
+  const [liveLink, recapLink] = await Promise.all([
+    getVerifiedLinkForUserTeam(user.id, teamId),
+    getVerifiedLinkForUserTeam(user.id, teamId, 'recap'),
+  ]);
+  const link = liveLink ?? recapLink;
   if (!link) {
     // Covers waiting, declined, revoked and "not your team" alike. A waiting family is
     // told the truthful, un-alarming version rather than a 404 they'd read as a bug.
@@ -82,7 +89,7 @@ export default async function FamilyTeamPage({ params }: { params: Promise<{ tea
 
   const org = await getOrgForGate(link.orgId);
   const enabled = org ? await isFamilyLayerEnabled({ org, repTeamId: teamId }) : false;
-  const view = enabled ? await getFamilyTeamView({ repTeamId: teamId, requireVisibility: 'families' }) : null;
+  const view = enabled && liveLink ? await getFamilyTeamView({ repTeamId: teamId, requireVisibility: 'families' }) : null;
 
   // Chunk D 3.2 — does this family have a season recap waiting? Resolved through the shared
   // gate rather than re-checked here, and asked even when the schedule is gone: a season that
@@ -90,7 +97,7 @@ export default async function FamilyTeamPage({ params }: { params: Promise<{ tea
   // The link and the premium gate are handed over rather than re-derived — this request has
   // already paid for both.
   const recap = await resolveFamilyRecapAvailability({
-    link,
+    link: recapLink ?? link,
     repTeamId: teamId,
     org: enabled ? org : undefined,
   });

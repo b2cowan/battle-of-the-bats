@@ -4,7 +4,8 @@
  *
  * The one place every season of a child meets. Opened from a household's Children line, from a name on any rep team's
  * roster (the live roster and a past season's record), and from Families' "No family on file" list. It READS — the
- * club admin has no add-player door (Ask 8) and, until S6, no way to split the record (S5 call B):
+ * club admin has no add-player door (Ask 8). Its one action is SPLIT RECORDS (Stage 14 S6), shown when the child has two or more
+ * seasons — it parts seasons typed as one child, or undoes a join (nothing was ever deleted):
  *   the header — the child's name; Born {date} and where the child plays now as chips; back to the household it was
  *                opened from (`?from=`), else to Families.
  *   Seasons    — every season, newest first, rep and house league together; each season's fees read from its own book.
@@ -20,12 +21,14 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import KitDialog from '../KitDialog';
+import SplitRecordsWindow from './SplitRecordsWindow';
 import {
   Callout, ClubRow, ClubRowList, ClubSection, LoadFailed, NoticePill, PageLoading, RepChip, repKit,
   useDeferredLoad, useLatestRead,
 } from '../RepKit';
 import { moneyFetch } from '../money/MoneyKit';
 import { useOrg } from '@/lib/org-context';
+import { CHILD_SPLIT_WORDS as SW } from '@/lib/child-join-words';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import {
@@ -53,6 +56,7 @@ export default function ChildPage({ orgSlug, childId }: { orgSlug: string; child
   const [confirming, setConfirming] = useState(false);
   const [said, setSaid] = useState<string | null>(null);
   const [confirmError, setConfirmError] = useState<string | null>(null);
+  const [splitting, setSplitting] = useState(false);
   /** The window behind "+N earlier": one document's every copy. */
   const [copiesOf, setCopiesOf] = useState<CopiesOpen | null>(null);
 
@@ -94,6 +98,9 @@ export default function ChildPage({ orgSlug, childId }: { orgSlug: string; child
     <AdminPageHeader
       backTo={householdHref ? { href: householdHref, label: household!.name } : { href: familiesHref, label: W.families }}
       title={read?.child.name ?? W.families}
+      actions={read && read.seasons.length >= 2 ? (
+        <button type="button" className="btn btn-outline" aria-haspopup="dialog" onClick={() => setSplitting(true)}>{SW.open}</button>
+      ) : undefined}
       titleChips={read ? (
         <>
           {read.child.dateOfBirth && <RepChip>{W.born(read.child.dateOfBirth)}</RepChip>}
@@ -122,6 +129,10 @@ export default function ChildPage({ orgSlug, childId }: { orgSlug: string; child
     <div className={repKit.page}>
       {header}
       {said && <NoticePill message={said} onDone={() => setSaid(null)} />}
+      {splitting && (
+        <SplitRecordsWindow orgSlug={orgSlug} read={read} onClose={() => setSplitting(false)}
+          onSplit={message => { setSplitting(false); setSaid(message); void load(); }} />
+      )}
 
       <ClubSection title={W.seasons} list={isPhone}>
         {seasons.length === 0 ? <p className={repKit.dim}>{W.noSeasons}</p> : isPhone ? (

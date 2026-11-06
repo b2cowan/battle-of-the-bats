@@ -61,16 +61,25 @@ export async function countRecapViewers(params: {
   repTeamId: string;
   programYearId: string;
 }): Promise<RecapEngagement> {
-  // Guardians of THIS season's players, as they stand today. `player_id` is season-scoped (a
-  // rollover mints new roster rows), so the join through the roster is what makes this a
-  // per-season number. Bounded by two per player, so the id list stays small.
+  // Guardians of THIS season's players, as they stand today. A link is the CHILD's since mig 445 (Stage 14 S6), so the season
+  // is found through the children on its roster - a link made on an earlier season's entry still counts for the child's later
+  // one, which is the point. Bounded by two guardians per child, so the id list stays small.
+  const { data: roster, error: rosterError } = await supabaseAdmin
+    .from('rep_roster_players')
+    .select('child_id')
+    .eq('team_id', params.repTeamId)
+    .eq('program_year_id', params.programYearId)
+    .neq('status', 'callup');
+  if (rosterError) throw rosterError;
+  const childIds = [...new Set((roster ?? []).map(r => (r as { child_id: string }).child_id))];
+  if (childIds.length === 0) return { viewers: 0, eligible: 0 };
   const { data: links, error: linksError } = await supabaseAdmin
     .from('family_links')
-    .select('id, rep_roster_players!inner(program_year_id)')
+    .select('id')
     .eq('rep_team_id', params.repTeamId)
     .eq('role', 'guardian')
     .eq('status', 'verified')
-    .eq('rep_roster_players.program_year_id', params.programYearId);
+    .in('child_id', childIds);
   if (linksError) throw linksError;
 
   const eligibleIds = (links ?? []).map(l => (l as { id: string }).id);

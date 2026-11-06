@@ -22,7 +22,7 @@ import { hasBillingAccess } from '@/lib/roles';
 import type { FeesOwed } from '@/lib/fee-invoice-alert';
 import type { AdminProgramKey, ClubShape } from '@/lib/admin-kit-nav';
 
-export type BriefKey = 'tryoutApplications' | 'paymentRequests' | 'installmentsDue' | 'assistantCoaches' | 'familyDuplicates';
+export type BriefKey = 'tryoutApplications' | 'paymentRequests' | 'installmentsDue' | 'assistantCoaches' | 'familyDuplicates' | 'familyChildDuplicates';
 
 export type ClubBrief = {
   asOf: string;
@@ -141,6 +141,8 @@ export function briefPageCount(brief: ClubBrief | null, pageKey: string): number
  */
 export function briefProgramCount(brief: ClubBrief | null, programKey: AdminProgramKey): number {
   if (programKey === 'rep-teams') return briefPageCount(brief, 'rt-assistant-coaches');
+  // Families' Duplicates tab is two halves (parents, children — Stage 14 S6): the row wears their sum.
+  if (programKey === 'families') return familyDuplicatesTotal(brief);
   const key = PROGRAM_COUNT[programKey];
   return key ? brief?.counts[key] ?? 0 : 0;
 }
@@ -149,5 +151,9 @@ export function briefProgramCount(brief: ClubBrief | null, programKey: AdminProg
  *  requests', Families its Duplicates' (⚖ Club Tier Stage 5b, Ask 14). */
 const PROGRAM_COUNT: Partial<Record<AdminProgramKey, BriefKey>> = {
   accounting: 'paymentRequests',
-  families: 'familyDuplicates',
 };
+
+/** Everything waiting on Families › Duplicates: the parents' proposals plus the children's. */
+export function familyDuplicatesTotal(brief: ClubBrief | null): number {
+  return (brief?.counts.familyDuplicates ?? 0) + (brief?.counts.familyChildDuplicates ?? 0);
+}

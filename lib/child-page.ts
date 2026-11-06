@@ -69,6 +69,8 @@ export interface ChildPagePayload {
     ask: { title: string; line: string; seasonName: string } | null;
   };
   parents: ChildPageParent[];
+  /** Who is connected to this child as a parent right now (a live parent link, Stage 14 S6) — the Split window names them. */
+  connectedParents: string[];
 }
 
 const fullName = (first: string | null | undefined, last: string | null | undefined) => `${first ?? ''} ${last ?? ''}`.trim();
@@ -136,13 +138,13 @@ export async function buildChildPage(orgId: string, childId: string): Promise<Ch
   // no org column; the ids come from this org's own sign-ups, which is what scopes the read.
   const leagueTeamIds = [...new Set(league.map(r => r.team_id).filter(Boolean))] as string[];
   // Everything below depends only on the rows above, so the reads that need no one else's answer run together.
-  const [money, received, leagueTeams, parents, templatesRes] = await Promise.all([
+  const [money, received, leagueTeams, { parents, connected }, templatesRes] = await Promise.all([
     readRepMoney(orgId, rep.map(r => ({ ...r, rep_program_years: yearOf(r) }))),
     loadRegistrationsReceivedCents(league.map(r => r.id)),
     leagueTeamIds.length
       ? supabaseAdmin.from('league_teams').select('id, name').in('id', leagueTeamIds)
       : Promise.resolve({ data: [] as { id: string; name: string }[], error: null }),
-    readParents(orgId, rep, league),
+    readParents(orgId, childId, rep, league),
     rep.length
       ? supabaseAdmin.from('rep_document_templates').select('id, team_id, name, document_type, validity').eq('org_id', orgId).eq('is_active', true)
       : Promise.resolve({ data: [], error: null }),
@@ -247,41 +249,56 @@ export async function buildChildPage(orgId: string, childId: string): Promise<Ch
       ask,
     },
     parents,
+    connectedParents: connected,
   };
 }
 
-async function readParents(orgId: string, rep: readonly RepRow[], league: readonly LeagueRow[]): Promise<ChildPageParent[]> {
+async function readParents(orgId: string, childId: string, rep: readonly RepRow[], league: readonly LeagueRow[]): Promise<{ parents: ChildPageParent[]; connected: string[] }> {
   const ids = new Set<string>([...rep, ...league].map(r => r.person_id).filter((id): id is string => !!id));
-  // A co-guardian: their NEWEST link to one of the child's rep entries is verified (householdOf's rule).
-  if (rep.length) {
-    const { data: links, error } = await supabaseAdmin.from('family_links').select('person_id, status, updated_at')
-      .eq('org_id', orgId).in('player_id', rep.map(r => r.id));
-    if (error) throw error;
-    const newestLink = new Map<string, { status: string; updated_at: string | null }>();
-    for (const l of (links ?? []) as { person_id: string | null; status: string; updated_at: string | null }[]) {
-      if (!l.person_id) continue;
-      const cur = newestLink.get(l.person_id);
-      if (!cur || String(l.updated_at ?? '') > String(cur.updated_at ?? '')) newestLink.set(l.person_id, l);
-    }
-    for (const [pid, l] of newestLink) if (l.status === 'verified') ids.add(pid);
+  // A co-guardian: their NEWEST link to the child is verified (householdOf's rule). The link is the CHILD's since Stage 14 S6
+  // (mig 445), so every season's link is read in one query — and a LIVE link (not declined, not revoked) is "connected".
+  const { data: links, error: linkError } = await supabaseAdmin.from('family_links').select('person_id, invited_email, status, updated_at')
+    .eq('org_id', orgId).eq('child_id', childId);
+  if (linkError) throw linkError;
+  const newestLink = new Map<string, { status: string; updated_at: string | null }>();
+  const liveLinks = (links ?? []).filter((l: { status: string }) => l.status !== 'declined' && l.status !== 'revoked') as
+    { person_id: string | null; invited_email: string; status: string }[];
+  for (const l of (links ?? []) as { person_id: string | null; status: string; updated_at: string | null }[]) {
+    if (!l.person_id) continue;
+    const cur = newestLink.get(l.person_id);
+    if (!cur || String(l.updated_at ?? '') > String(cur.updated_at ?? '')) newestLink.set(l.person_id, l);
   }
-  if (ids.size > 0) {
+  for (const [pid, l] of newestLink) if (l.status === 'verified') ids.add(pid);
+  const peopleIds = new Set<string>([...ids, ...liveLinks.map(l => l.person_id).filter((x): x is string => !!x)]);
+  let people: { id: string; first_name: string | null; last_name: string | null; email_normalized: string | null; phone: string | null }[] = [];
+  if (peopleIds.size > 0) {
     const { data, error } = await supabaseAdmin.from('org_people').select('id, first_name, last_name, email_normalized, phone')
-      .eq('org_id', orgId).in('id', [...ids]);
+      .eq('org_id', orgId).in('id', [...peopleIds]);
     if (error) throw error;
-    return (data ?? [])
-      .map(p => ({ personId: p.id as string, name: personDisplayName(p), email: p.email_normalized ?? null, phone: p.phone ?? null }))
-      .sort((a, b) => a.name.localeCompare(b.name));
+    people = (data ?? []) as typeof people;
+  }
+  const nameOf = new Map(people.map(p => [p.id, personDisplayName(p)]));
+  const connected = [...new Set(liveLinks.map(l => (l.person_id ? nameOf.get(l.person_id) : null) ?? l.invited_email))].sort((a, b) => a.localeCompare(b));
+  if (ids.size > 0) {
+    return {
+      parents: people.filter(p => ids.has(p.id))
+        .map(p => ({ personId: p.id, name: personDisplayName(p), email: p.email_normalized ?? null, phone: p.phone ?? null }))
+        .sort((a, b) => a.name.localeCompare(b.name)),
+      connected,
+    };
   }
   // Nobody in the Families book: the newest entry's typed guardian, with no door.
   const stamp = (r: RepRow | LeagueRow) => String(('created_at' in r ? r.created_at : r.registered_at) ?? '');
   const newest = [...rep, ...league].sort((a, b) => stamp(b).localeCompare(stamp(a)))
     .find(r => fullName(r.guardian_first_name, r.guardian_last_name) || r.guardian_email);
-  if (!newest) return [];
-  return [{
-    personId: null, name: fullName(newest.guardian_first_name, newest.guardian_last_name) || newest.guardian_email || '',
-    email: newest.guardian_email ?? null, phone: newest.guardian_phone ?? null,
-  }];
+  if (!newest) return { parents: [], connected };
+  return {
+    parents: [{
+      personId: null, name: fullName(newest.guardian_first_name, newest.guardian_last_name) || newest.guardian_email || '',
+      email: newest.guardian_email ?? null, phone: newest.guardian_phone ?? null,
+    }],
+    connected,
+  };
 }
 
 /**

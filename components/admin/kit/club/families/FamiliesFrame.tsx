@@ -16,7 +16,7 @@ import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import HubTabBar from '@/components/shared/HubTabBar';
 import { FAMILY_EMAILS_TAB_WORDS as EW, FAMILY_LIST_WORDS as W } from '@/lib/families-words';
 import { repKit } from '../RepKit';
-import { useClubBrief } from '../ClubBriefProvider';
+import { familyDuplicatesTotal, useClubBrief } from '../ClubBriefProvider';
 import { WaitingCount } from '../money/MoneyKit';
 
 export default function FamiliesFrame({ orgSlug, children }: { orgSlug: string; children: ReactNode }) {
@@ -24,7 +24,7 @@ export default function FamiliesFrame({ orgSlug, children }: { orgSlug: string; 
   const { brief } = useClubBrief();
   const base = `/${orgSlug}/admin`;
   const tab = familiesTabFor(pathname, base) ?? 'families';
-  const waiting = brief?.counts.familyDuplicates ?? 0;
+  const waiting = familyDuplicatesTotal(brief);
   const tabs = familiesTabs(base).map(t => (t.id === 'duplicates' && waiting > 0 ? { ...t, mark: <WaitingCount n={waiting} /> } : t));
   // A child's page (Stage 14 S5) is a page of its own: its own header and title, no tab row over it.
   const childPage = isFamiliesChildPage(pathname, base);

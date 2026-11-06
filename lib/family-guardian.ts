@@ -2,7 +2,7 @@ import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
 import { normalizeGuardianEmail } from './guardian-email';
 import { generateNoLoginToken, hashNoLoginToken } from './no-login-token';
-import { FamilyLinkError, type FamilyLink } from './family-access';
+import { FamilyLinkError, getVerifiedLinkForUserTeam, type FamilyLink } from './family-access';
 
 /**
  * lib/family-guardian.ts — the GUARDIAN tier: a parent connected to one specific child.
@@ -99,11 +99,12 @@ export interface PlayerGuardianRow {
 }
 
 const GUARDIAN_COLUMNS =
-  'id, org_id, rep_team_id, role, player_id, user_id, invited_email, claimed_email, relationship, ' +
+  'id, org_id, rep_team_id, role, child_id, player_id, user_id, invited_email, claimed_email, relationship, ' +
   'status, verified_via, created_at, approved_at';
 
 interface GuardianRow {
   id: string;
+  child_id: string;
   player_id: string | null;
   invited_email: string;
   claimed_email: string | null;
@@ -139,7 +140,7 @@ export async function getGuardiansByPlayer(
       // The guardian contact the COACH typed — the assist's other half.
       supabaseAdmin
         .from('rep_roster_players')
-        .select('id, guardian_email')
+        .select('id, child_id, guardian_email')
         .eq('program_year_id', programYearId),
     ]);
   if (linkError) throw linkError;
@@ -151,8 +152,15 @@ export async function getGuardiansByPlayer(
       normalizeGuardianEmail((p as { guardian_email: string | null }).guardian_email),
     ]),
   );
+  // A link is the CHILD's (mig 445, Stage 14 S6): it is filed under that child's entry in THIS season, wherever the link was
+  // first made. A child with no entry here (last season's team) has no card.
+  const entryOfChild = new Map((playerRows ?? []).map(p => [(p as { child_id: string }).child_id, (p as { id: string }).id]));
 
   for (const raw of (linkRows ?? []) as unknown as GuardianRow[]) {
+    // Every guardian row carries its child from the moment it is written (mig 445; before it, its player - mig 290's strict
+    // CHECK). A child with no entry on this season's roster has no card here - never file it under another child.
+    const entryId = entryOfChild.get(raw.child_id);
+    if (!entryId) continue;
     const row: PlayerGuardianRow = {
       id: raw.id,
       email: raw.invited_email,
@@ -161,9 +169,7 @@ export async function getGuardiansByPlayer(
       verifiedVia: raw.verified_via,
       createdAt: raw.created_at,
       approvedAt: raw.approved_at,
-      matchesRosterContact: !!raw.player_id
-        && !!rosterContact.get(raw.player_id)
-        && rosterContact.get(raw.player_id) === raw.invited_email,
+      matchesRosterContact: rosterContact.get(entryId) === raw.invited_email,
       // Surfaced ONLY when it differs from the invited address. Repeating an identical address
       // twice on the row would be noise that trains the coach to stop reading it — and this is
       // the one line on the row that must survive being skimmed.
@@ -171,13 +177,7 @@ export async function getGuardiansByPlayer(
         ? raw.claimed_email
         : null,
     };
-
-    // Every guardian row carries its player from the moment it is written (mig 290 restored
-    // the strict CHECK once the ask-by-link path, the only producer of a player-less request,
-    // was removed). A null here is a row the database should have refused — skip, never file
-    // it under a child it does not name.
-    if (!raw.player_id) continue;
-    out.set(raw.player_id, [...(out.get(raw.player_id) ?? []), row]);
+    out.set(entryId, [...(out.get(entryId) ?? []), row]);
   }
   return out;
 }
@@ -185,10 +185,16 @@ export async function getGuardiansByPlayer(
 /** Live guardians for a player — the cap counts these. `declined`/`revoked` never count, so a
  *  mistake is recoverable rather than permanently consuming one of the two seats. */
 async function countLiveGuardians(playerId: string): Promise<number> {
+  // The cap is per CHILD on a team (mig 445): the entry names the child and the team.
+  const { data: entry, error: entryError } = await supabaseAdmin
+    .from('rep_roster_players').select('child_id, team_id').eq('id', playerId).maybeSingle();
+  if (entryError) throw entryError;
+  if (!entry) return 0;
   const { count, error } = await supabaseAdmin
     .from('family_links')
     .select('id', { count: 'exact', head: true })
-    .eq('player_id', playerId)
+    .eq('child_id', (entry as { child_id: string }).child_id)
+    .eq('rep_team_id', (entry as { team_id: string }).team_id)
     .eq('role', 'guardian')
     .in('status', ['requested', 'invited', 'pending_approval', 'verified']);
   if (error) throw error;
@@ -260,7 +266,7 @@ export async function approveGuardianLink(params: {
        the team's game-change mail goes to every verified link regardless of which player it hangs
        off. So the borrowed family would receive this team's email. Found by `/review`. */
     supabaseAdmin.from('rep_roster_players')
-      .select('id, team_id').eq('id', params.playerId).eq('team_id', params.repTeamId)
+      .select('id, team_id, child_id').eq('id', params.playerId).eq('team_id', params.repTeamId)
       .neq('status', 'callup').maybeSingle(),
   ]);
   if (playerResult.error) throw playerResult.error;
@@ -272,6 +278,7 @@ export async function approveGuardianLink(params: {
       status: 'verified',
       verified_via: 'coach_approved',
       player_id: params.playerId,
+      child_id: (playerResult.data as { child_id: string }).child_id,
       approved_at: new Date().toISOString(),
       approved_by_user_id: params.approvedByUserId,
       updated_at: new Date().toISOString(),
@@ -320,7 +327,7 @@ export async function inviteGuardian(params: {
 
   const { data: player, error: playerError } = await supabaseAdmin
     .from('rep_roster_players')
-    .select('id, team_id')
+    .select('id, team_id, child_id')
     .eq('id', params.playerId)
     .eq('team_id', params.repTeamId)
     // ⚠ Not a call-up (mig 309) — see the note on the approve path: a family link is the one
@@ -338,6 +345,7 @@ export async function inviteGuardian(params: {
       rep_team_id: params.repTeamId,
       role: 'guardian',
       player_id: params.playerId,
+      child_id: (player as { child_id: string }).child_id,
       invited_email: email,
       status: 'invited',
       claim_token_hash: hashNoLoginToken(token),
@@ -348,7 +356,7 @@ export async function inviteGuardian(params: {
     });
   if (error) {
     if ((error as { code?: string }).code === '23505') {
-      throw new FamilyLinkError('already_requested', 'That address already has a connection to this player.');
+      throw new FamilyLinkError('already_requested', 'That address already has a connection to this child.');
     }
     throw error;
   }
@@ -476,24 +484,16 @@ export async function inviteCoGuardian(params: {
 }): Promise<{ token: string }> {
   assertEnabled();
 
-  const { data, error } = await supabaseAdmin
-    .from('family_links')
-    .select('id, org_id, player_id')
-    .eq('user_id', params.userId)
-    .eq('rep_team_id', params.repTeamId)
-    .eq('role', 'guardian')
-    .eq('status', 'verified')
-    .maybeSingle();
-  if (error) throw error;
-  if (!data) throw new FamilyLinkError('not_found', 'You are not connected to a player on this team.');
-
-  const own = data as { org_id: string; player_id: string | null };
-  if (!own.player_id) throw new FamilyLinkError('not_found', 'Your connection is not attached to a player.');
+  // A parent can hold a link per child on a team (mig 445); the one that REACHES the team now is the one that may invite — its
+  // child's entry on the live season (Stage 14 S6).
+  const own = await getVerifiedLinkForUserTeam(params.userId, params.repTeamId);
+  if (!own) throw new FamilyLinkError('not_found', 'You are not connected to a player on this team.');
+  if (!own.playerId) throw new FamilyLinkError('not_found', 'Your connection is not attached to a player.');
 
   return inviteGuardian({
-    orgId: own.org_id,
+    orgId: own.orgId,
     repTeamId: params.repTeamId,
-    playerId: own.player_id,
+    playerId: own.playerId,
     email: params.email,
     invitedByUserId: params.userId,
   });

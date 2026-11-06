@@ -374,57 +374,161 @@ const familiesHelp: HelpPageContent = {
       group: 'Working the book',
       heading: 'One page per child',
       summary: 'A child’s seasons with the club, their papers, their health check and their parents, on one page.',
-      keywords: ['child page', 'child', 'player page', 'seasons', 'fees by season', 'documents', 'waiver', 'medical consent', 'code of conduct', 'last signed', 'earlier copies', 'health check', 'still right', 'confirm', 'medical note', 'emergency contact', 'parents', 'no family on file', 'roster name'],
-      searchText: 'one page per child open a child select the name in a family record children list roster name no family on file row seasons newest first rep house league fees paid in full no dues documents per team needs signing on file waiver code of conduct medical consent last signed earlier copies every copy newest first accepted at sign-up uploaded earlier season health medical note emergency contact still right for the season confirm clears the coach question parents open the household typed guardian no door read only no add player',
+      keywords: ['child page', 'child', 'player page', 'seasons', 'fees by season', 'documents', 'waiver', 'medical consent', 'code of conduct', 'last signed', 'earlier copies', 'health check', 'still right', 'confirm', 'medical note', 'emergency contact', 'parents', 'no family on file', 'roster name', 'split records', 'split a child', 'two children joined by mistake', 'undo a join'],
+      searchText: 'split records tick the seasons that leave a different child new record parents stay with the kept record nothing is deleted never proposed again one page per child open a child select the name in a family record children list roster name no family on file row seasons newest first rep house league fees paid in full no dues documents per team needs signing on file waiver code of conduct medical consent last signed earlier copies every copy newest first accepted at sign-up uploaded earlier season health medical note emergency contact still right for the season confirm clears the coach question parents open the household typed guardian no door read only no add player',
       content: (
-        <>
-          <p>
-            A child&rsquo;s page shows everything the club holds about one child, across rep teams and house league. Open it
-            by selecting the child&rsquo;s name in a family&rsquo;s <strong>Children</strong> list, on a rep roster or a past
-            season&rsquo;s roster, or in a <strong>No family on file</strong> row. You need the Families permission.
-          </p>
-          <ul>
-            <li><strong>Seasons</strong> &mdash; newest first, each with where the child played and what the season&rsquo;s own books show for fees: <em>Paid in full</em>, an amount with how much is paid, <em>No dues</em> or <em>Not owed yet</em>. A rep season reads the team&rsquo;s Player dues; a house-league sign-up reads that season&rsquo;s book.</li>
-            <li><strong>Documents</strong> &mdash; for each team the child is on this season, the same rows the coach sees: <em>Needs signing</em> or <em>On file</em>. <strong>Last signed</strong> shows the newest copy: its season, or its date for a document that is good until replaced. When there are older copies, <strong>+2 earlier</strong> (or however many) opens every copy, newest first, with the date and how each was signed. A house-league waiver accepted at sign-up counts as a copy of the Waiver, in date order. Teams are never added together. On a phone the card says what is owed now; open earlier copies on a computer. Papers are read-only here: they are uploaded by the club or the coach, on the team.</li>
-            <li><strong>Health</strong> &mdash; the child&rsquo;s medical note and emergency contact. Once a season it asks <em>Still right for the 2027 Season?</em> Press <strong>Confirm</strong> and the question is cleared for every team the child is on, so no coach is asked again. Confirm changes nothing in the note; it is changed where it is typed, on the coach&rsquo;s player page.</li>
-            <li><strong>Parents</strong> &mdash; each opens that family&rsquo;s record. If the team has only typed a guardian&rsquo;s name and nobody has a family record yet, the name is shown with no link.</li>
-          </ul>
-          <HelpNote variant="info" title="A child’s page is read-only, apart from Confirm">
-            There is no way to add a player or change a record here. Players are added by the team&rsquo;s coaches or from tryouts, and members who hold Families can read each child&rsquo;s medical note and emergency contact.
-          </HelpNote>
-        </>
+        <p>
+          A child&rsquo;s page shows everything the club holds about one child, across rep teams and house league. Open it
+          by selecting the child&rsquo;s name in a family&rsquo;s <strong>Children</strong> list, on a rep roster or a past
+          season&rsquo;s roster, or in a <strong>No family on file</strong> row. You need the Families permission.
+        </p>
       ),
+      subtopics: [
+        {
+          id: 'families-child-seasons',
+          title: 'Seasons and fees',
+          content: (
+            <p>
+              <strong>Seasons</strong> lists every season newest first, each with where the child played and what the season&rsquo;s own books show for fees:{' '}
+              <em>Paid in full</em>, an amount with how much is paid, <em>No dues</em> or <em>Not owed yet</em>. A rep season reads the team&rsquo;s
+              Player dues; a house-league sign-up reads that season&rsquo;s book.
+            </p>
+          ),
+        },
+        {
+          id: 'families-child-documents',
+          title: 'Documents and Last signed',
+          content: (
+            <>
+              <p>
+                <strong>Documents</strong> shows, for each team the child is on this season, the same rows the coach sees: <em>Needs signing</em> or <em>On file</em>.
+              </p>
+              <ul>
+                <li><strong>Last signed</strong> shows the newest copy: its season, or its date for a document that is good until replaced.</li>
+                <li>When there are older copies, <strong>+2 earlier</strong> (or however many) opens every copy, newest first, with the date and how each was signed.</li>
+                <li>A house-league waiver accepted at sign-up counts as a copy of the Waiver, in date order. Teams are never added together.</li>
+                <li>Papers are read-only here: they are uploaded by the club or the coach, on the team. On a phone the card says what is owed now; open earlier copies on a computer.</li>
+              </ul>
+            </>
+          ),
+        },
+        {
+          id: 'families-child-health-parents',
+          title: 'Health and parents',
+          content: (
+            <>
+              <p>
+                <strong>Health</strong> shows the child&rsquo;s medical note and emergency contact. Once a season it asks <em>Still right for the 2027 Season?</em>{' '}
+                Press <strong>Confirm</strong> and the question is cleared for every team the child is on, so no coach is asked again. Confirm changes nothing in the
+                note; it is changed where it is typed, on the coach&rsquo;s player page.
+              </p>
+              <p>
+                <strong>Parents</strong> lists each parent, and each opens that family&rsquo;s record. If the team has only typed a guardian&rsquo;s name and nobody has a family
+                record yet, the name is shown with no link.
+              </p>
+              <HelpNote variant="info" title="A child’s page is read-only, apart from Confirm and Split records">
+                There is no way to add a player or change a name or birth date here. Players are added by the team&rsquo;s coaches or from tryouts, and members who hold Families can read each child&rsquo;s medical note and emergency contact.
+              </HelpNote>
+            </>
+          ),
+        },
+        {
+          id: 'families-child-split',
+          title: 'Split records: two children recorded as one',
+          content: (
+            <>
+              <p>
+                <strong>Split records</strong> appears on a child with two or more seasons. Use it to undo a join, or to separate two children who were recorded as one.
+              </p>
+              <ol>
+                <li>Select <strong>Split records</strong>.</li>
+                <li>Tick the seasons that belong to a different child. Choose some of the seasons, not none and not all.</li>
+                <li>Select <strong>Split records</strong> in the window.</li>
+              </ol>
+              <p>
+                The ticked seasons move to a new record. Each season keeps its own entry, money and papers, nothing is deleted, and the parents stay with the record you keep.
+                The two records are remembered as not the same, so the Children queue never proposes them as one again.
+              </p>
+            </>
+          ),
+        },
+      ],
     },
     {
       id: 'families-duplicates',
       group: 'Working the book',
-      heading: 'Duplicates: are these the same parent?',
-      summary: 'Reviewing suspected duplicate parents, choosing which record survives, and dismissing for good.',
-      keywords: ['duplicates', 'possible duplicates', 'merge', 'not the same person', 'keep this record', 'which record survives', 'two records', 'same parent'],
-      searchText: 'duplicates tab merge families combine records duplicate review queue remembered surname first name initial phone same child birth date team season email changed keep this record survivor keeper three records one card cannot be undone',
+      heading: 'Duplicates: are these the same parent or child?',
+      summary: 'Reviewing suspected duplicate parents and children, choosing which record survives, and dismissing for good.',
+      keywords: ['duplicates', 'possible duplicates', 'merge', 'not the same person', 'keep this record', 'which record survives', 'two records', 'same parent', 'same child', 'join', 'join as one child', 'not the same child', 'children queue', 'two records for one child', 'birth date missing', 'remove the extra entry'],
+      searchText: 'duplicates tab merge families combine records duplicate review queue remembered surname first name initial phone same child birth date team season email changed keep this record survivor keeper three records one card cannot be undone parents children switch join as one child question window not the same child never comes back same name same birth date same parent different parent email birth date missing on one side one team in one season cannot join waits remove the extra entry split records undo a join',
       content: (
         <>
           <p>
-            Records are built from email addresses, and addresses drift &mdash; so one parent can arrive as two
-            records. The <strong>Duplicates</strong> tab proposes records that may be one parent, with its count
-            on the tab. <strong>Nothing merges until you choose.</strong>
+            The <strong>Duplicates</strong> tab holds two queues, picked with the switch at the top: <strong>Parents</strong> and{' '}
+            <strong>Children</strong>, each with its count. The tab&rsquo;s own count is the two added together.{' '}
+            <strong>Nothing merges or joins until you choose.</strong>
           </p>
-          <p>Records are proposed when they share a surname, their first names agree (an initial matches the name), and either:</p>
-          <ul>
-            <li>they share a <strong>phone number</strong>, or</li>
-            <li>they name the <strong>same child</strong> &mdash; the same name, and the same birth date where both rows have one, otherwise the same team and season.</li>
-          </ul>
-          <p>
-            A record is also proposed when a guardian&rsquo;s email was changed on a child&rsquo;s row and the
-            child moved to a new record. Three or more records that match are one card.
-          </p>
-          <ul>
-            <li><strong>Keep this record</strong> sits on each side. You choose which survives; it starts on the record with children, then the newer one.</li>
-            <li><strong>Merge into</strong> the record you kept asks first. The other addresses become former addresses and stay searchable, every child&rsquo;s records stay as they are, and an opt-out on either record stays.</li>
-            <li><strong>Not the same person</strong> is remembered, so the card never comes back.</li>
-          </ul>
         </>
       ),
+      subtopics: [
+        {
+          id: 'families-duplicates-parents',
+          title: 'Parents: are these the same parent?',
+          content: (
+            <>
+              <p>
+                Records are built from email addresses, and addresses drift &mdash; so one parent can arrive as two
+                records. The <strong>Parents</strong> queue proposes records that may be one parent.
+              </p>
+              <p>Records are proposed when they share a surname, their first names agree (an initial matches the name), and either:</p>
+              <ul>
+                <li>they share a <strong>phone number</strong>, or</li>
+                <li>they name the <strong>same child</strong> &mdash; the same name, and the same birth date where both rows have one, otherwise the same team and season.</li>
+              </ul>
+              <p>
+                A record is also proposed when a guardian&rsquo;s email was changed on a child&rsquo;s row and the
+                child moved to a new record. Three or more records that match are one card.
+              </p>
+              <ul>
+                <li><strong>Keep this record</strong> sits on each side. You choose which survives; it starts on the record with children, then the newer one.</li>
+                <li><strong>Merge into</strong> the record you kept asks first. The other addresses become former addresses and stay searchable, every child&rsquo;s records stay as they are, and an opt-out on either record stays.</li>
+                <li><strong>Not the same person</strong> is remembered, so the card never comes back.</li>
+              </ul>
+            </>
+          ),
+        },
+        {
+          id: 'families-duplicates-children',
+          title: 'Children: are these the same child?',
+          content: (
+            <>
+              <p>
+                The <strong>Children</strong> queue proposes child records that may be one child &mdash; for example a child entered
+                twice, once on a rep roster and once at a house-league sign-up. A card is proposed when the records have the same first and
+                last name and either:
+              </p>
+              <ul>
+                <li>the <strong>same birth date</strong>. The card says <em>Same name, same birth date and the same parent</em>, or <em>Same name and birth date, different parent email</em>; or</li>
+                <li>the same name and the <strong>same parent</strong>, with the birth date <em>missing on one side</em>.</li>
+              </ul>
+              <p>
+                Two different birth dates are never proposed, and neither are two records that both lack one. A record with no birth date
+                never ties two records with different dates into one card; they come up as separate questions. Three records that all match are one card.
+              </p>
+              <ul>
+                <li><strong>Keep this record</strong> sits on each side. The record you keep decides the child&rsquo;s name and birth date; it starts on the record with the most seasons. The card says what joining will keep.</li>
+                <li><strong>Join as one child</strong> asks first, in a small window. Every season keeps its own entry, money and papers, and the child&rsquo;s page then shows all the seasons. A join can be undone from the child&rsquo;s page with <strong>Split records</strong>.</li>
+                <li><strong>Not the same child</strong> is remembered, so the card never comes back.</li>
+              </ul>
+              <HelpNote variant="info" title="Two records on one team in one season">
+                When the records are on the same team in the same season, the card shows why <strong>Join as one child</strong> waits:{' '}
+                <em>Both are on the roster. Remove the extra entry first, then join them.</em> Once the extra entry is removed from the roster, the card goes away on its own or
+                becomes joinable.
+              </HelpNote>
+            </>
+          ),
+        },
+      ],
       faqs: [
         {
           id: 'faq-undo-merge',

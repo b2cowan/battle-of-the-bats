@@ -18,7 +18,7 @@ import { documentStateRows, type SeasonDocument } from '../../lib/document-state
  *   · the coach's "With the {team} {years}" is THIS team's seasons only, and only for a returning child (call E);
  *   · the household's line says "3 seasons · 2 documents to sign" only when each half says something;
  *   · the page sits behind the Families gate; the club's Confirm clears the child's question on every live entry (call C);
- *   · no "Split records" before S6 (call B) and no add-player door (Ask 8).
+ *   · "Split records" is the page's one action since S6 (it needs two seasons to split) and there is no add-player door (Ask 8).
  */
 const src = (p: string) => readFileSync(p, 'utf8');
 
@@ -227,9 +227,10 @@ describe('the page and its doors (source guards)', () => {
     assert.match(read, /templatesForTeam\(templateRows, r\.team_id\)/);
   });
 
-  it('no "Split records" before S6 and no add-player door (Ask 8)', () => {
+  it('Split records is offered only with two or more seasons, and there is no add-player door (Ask 8)', () => {
     const page = src('components/admin/kit/club/families/ChildPage.tsx');
-    assert.doesNotMatch(page, /['">]Split records/, 'no Split records button or words on screen');
+    assert.match(page, /read\.seasons\.length >= 2/, 'a child with one season has nothing to split');
+    assert.match(page, /SplitRecordsWindow/);
     assert.doesNotMatch(page, /Add player|method: 'POST'[\s\S]{0,80}roster/);
   });
 
