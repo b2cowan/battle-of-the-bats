@@ -1687,6 +1687,8 @@ export const SCREENS = [
     path: (c) => `/${c.clubSlug}/admin/families/children/${c.clubChildId}?from=${c.clubPersonId}` },
   { id: 'admin-families-duplicates',   area: 'families', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/families/duplicates` },
   // Club Tier Stage 14 S6: the Children half of that tab (the Parents · Children switch turned over), and Split records open on a child's page.
+  // ⚠ Both need `scripts/seed-club-children.mjs` to have run on the club (the seed runs it): a child with two seasons, and one
+  // possible-duplicate pair. Without them the first measures the empty state and the second has no Split button to press.
   { id: 'admin-families-duplicates-children', area: 'families', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/families/duplicates`,
     interact: async (page) => {
       const half = page.getByRole('button', { name: /^Children · \d+$/ }).first();

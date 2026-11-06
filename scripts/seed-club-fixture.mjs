@@ -1647,3 +1647,7 @@ async function addPartBCoaches() {
   die('13U AAA no address', (await db.from('rep_team_tryout_contacts').delete().eq('team_id', t13.id)).error);
   ok('15U AAA: questions go to tryouts.15u@lakeshorelynx.ca (set by Jordan Reyes) · 13U AAA: sign-ups open, the club’s address');
 }
+
+// Club Tier Stage 14: the two child shapes the layout sweep needs (a child with two seasons, one possible-duplicate pair).
+// A separate file so it can also be run alone against an already-seeded club WITHOUT a re-seed (which signs every test session out).
+await import('./seed-club-children.mjs');
