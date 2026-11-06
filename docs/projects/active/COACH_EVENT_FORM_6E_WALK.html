@@ -76,7 +76,7 @@ ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 
   </header>
   <section class="card"><h2>What this walk is for</h2><p>Two things. First, when a coach sets an arrival time later than the start, the form now says so under the Arrival field (a warning, never a block), and the same note rides beside “Arrive …” on the event window, the game page and the practice sheet. Second, when a coach adds a weekly repeating game, each date’s opponent box is now the same opponent picker a single game uses, so the team’s book of opponents is offered on every date.</p></section>
   <section class="card"><h2>It passes when</h2><ul>
-    <li>An arrival later than the start shows “That’s after the {time} start.” under the field, and not otherwise (earlier, or equal, shows nothing).</li>
+    <li>An arrival later than the start shows “(after the start)” on the “Arrive by …” line under the field, and not otherwise (earlier, or equal, shows nothing).</li>
     <li>The form still saves with that warning showing.</li>
     <li>The event window, the game page and the practice sheet read “Arrive … (after the start)” for a late arrival and nothing extra for a normal one.</li>
     <li>Each date row of a weekly game offers the team’s opponents with their records, takes a pick or a new name, and its list is never cut off.</li>
@@ -96,7 +96,7 @@ ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 
     <dt>Clean-up</dt><dd>Part F deletes the test events you add.</dd>
   </dl></section>
   <section class="card"><h2>Calls to make as you go</h2><ul>
-    <li><strong>The words</strong> “That’s after the 3:07 p.m. start.” and “(after the start)” are mine, not from the accepted copy. Say if either should change.</li>
+    <li><strong>The words</strong> “(after the start)” are one phrase, the same on every screen (settled with the owner and /marketing 2026-11-06). Say if it reads wrong to a parent.</li>
     <li><strong>Equal times are not flagged.</strong> Arriving at the start reads as a plain answer. Say if it should warn.</li>
   </ul></section>
   <section class="card">
@@ -118,15 +118,15 @@ ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 
   { who: COACH, do: "Press Add event and choose <strong>Game</strong>. Set the start to <strong>3:07 p.m.</strong> and leave Arrival on <strong>None</strong>.",
     see: "No line under Arrival." },
   { who: COACH, do: "Set Arrival to <strong>A specific time…</strong> and type <strong>5:30 p.m.</strong>.",
-    see: "Under the field, “Arrive by 5:30 p.m. — shows on the event and the calendar export.” and below it <strong>That’s after the 3:07 p.m. start.</strong>" },
+    see: "Under the field, one line: <strong>Arrive by 5:30 p.m. (after the start)</strong> — shows on the event and the calendar export. No second line." },
   { who: COACH, do: "Change Arrival to <strong>1 hour before</strong>.",
-    see: "The new line disappears; only the “Arrive by 2:07 p.m. …” line remains." },
+    see: "The “(after the start)” goes; the line reads “Arrive by 2:07 p.m. — shows on the event and the calendar export.”" },
   { who: COACH, do: "Set a specific time equal to the start (3:07 p.m.).",
-    see: "No “after the start” line (equal is not late)." },
+    see: "No “(after the start)” (equal is not late)." },
   { who: COACH, do: "Set it back to 5:30 p.m., add an opponent, and press Save.",
     see: "The game saves; the warning did not block it. Keep this game for part B." },
   { who: COACH, do: "Add event, choose <strong>Practice</strong>, start 4:00 p.m., Arrival a specific <strong>6:00 p.m.</strong>.",
-    see: "<strong>That’s after the 4:00 p.m. start.</strong> shows here too. Save it and keep it for part B." }
+    see: "<strong>Arrive by 6:00 p.m. (after the start)</strong> shows here too. Save it and keep it for part B." }
  ]},
  { id: "B", title: "The note where Arrive is shown", steps: [
   { who: COACH, do: "Open the late game from the schedule (the event window).",

@@ -87,6 +87,16 @@ export function arrivalIsAfterStartAt(startsAt: string | null | undefined, arriv
 export const ARRIVAL_AFTER_START_NOTE = 'after the start';
 
 /**
+ * What goes right after an arrival time wherever one is shown: " (after the start)" when it is later
+ * than the start, nothing otherwise. The ONE place the note is worded and bracketed — the form's line
+ * under Arrival, the event window, the game page and the practice header all append this (owner ruling
+ * 2026-11-06; the clock is already beside it, so none is repeated inside the note).
+ */
+export function arrivalNoteSuffix(isAfterStart: boolean): string {
+  return isAfterStart ? ` (${ARRIVAL_AFTER_START_NOTE})` : '';
+}
+
+/**
  * The FOLLOW rule (D1's second half): when the start moves, an arrival that was a preset moves
  * with it; a specific time stays put. Returns the arrival to store after a start change.
  */

@@ -73,7 +73,7 @@ import { formatInOrgZone } from '@/lib/timezone';
 import OpponentScoutingPanel from '@/components/coaches/OpponentScoutingPanel';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import { formatStoredClock } from '@/lib/utils';
-import { ARRIVAL_AFTER_START_NOTE, arrivalIsAfterStartAt } from '@/lib/coach-arrival';
+import { arrivalIsAfterStartAt, arrivalNoteSuffix } from '@/lib/coach-arrival';
 import styles from '../../../../coaches.module.css';
 import type {
   LineupSettings, RepAttendanceStatus, RepRosterPlayer, RepTeamEvent, RepTeamEventAttendance,
@@ -1285,7 +1285,7 @@ export default function CoachGameConsolePage({
           </div>
           <div className={styles.gdChips}>
             {event.fieldNumber && <span className={styles.gdChip}>{surfaceLabel(sportPack.id, event.fieldNumber)}</span>}
-            {event.arrivalTime && <span className={styles.gdChip}>Arrive {formatStoredClock(event.arrivalTime)}{arrivalIsAfterStartAt(event.startsAt, event.arrivalTime) ? ` (${ARRIVAL_AFTER_START_NOTE})` : ''}</span>}
+            {event.arrivalTime && <span className={styles.gdChip}>Arrive {formatStoredClock(event.arrivalTime)}{arrivalNoteSuffix(arrivalIsAfterStartAt(event.startsAt, event.arrivalTime))}</span>}
             {event.uniform && <span className={styles.gdChip}>{event.uniform}</span>}
           </div>
         </div>

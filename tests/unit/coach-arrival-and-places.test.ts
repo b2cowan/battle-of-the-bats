@@ -11,7 +11,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   ARRIVAL_PRESET_MINUTES, arrivalClockFor, arrivalPresetOf, arrivalAfterStartChange,
-  arrivalPresetLabel, normalizeArrivalDefault, arrivalIsAfterStart, arrivalIsAfterStartAt,
+  arrivalPresetLabel, normalizeArrivalDefault, arrivalIsAfterStart, arrivalIsAfterStartAt, arrivalNoteSuffix,
 } from '../../lib/coach-arrival.ts';
 import { matchPlace, applyPlaceToEvent, filterPlaces, readPlaceFields, placeKey } from '../../lib/coach-places.ts';
 import { surfaceLabel } from '../../lib/sports.ts';
@@ -148,5 +148,10 @@ describe('arrival after the start (Stage 6e, D-6 / F12)', () => {
     assert.equal(arrivalIsAfterStartAt('2026-06-10T19:07:00Z', '14:22'), false);
     assert.equal(arrivalIsAfterStartAt(null, '17:30'), false);
     assert.equal(arrivalIsAfterStartAt('2026-06-10T19:07:00Z', null), false);
+  });
+  it('words the note once, for every surface: " (after the start)" or nothing', () => {
+    // Owner ruled 2026-11-06: one phrase, no clock inside it, the same under the field and beside "Arrive …".
+    assert.equal(arrivalNoteSuffix(true), ' (after the start)');
+    assert.equal(arrivalNoteSuffix(false), '');
   });
 });

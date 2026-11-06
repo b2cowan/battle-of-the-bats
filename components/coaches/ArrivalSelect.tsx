@@ -3,7 +3,7 @@ import { useState } from 'react';
 import TimeInput from '@/components/shared/TimeInput';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import { formatTime } from '@/lib/utils';
-import { ARRIVAL_PRESET_MINUTES, arrivalClockFor, arrivalIsAfterStart, arrivalPresetOf, arrivalPresetLabel } from '@/lib/coach-arrival';
+import { ARRIVAL_PRESET_MINUTES, arrivalClockFor, arrivalIsAfterStart, arrivalNoteSuffix, arrivalPresetOf, arrivalPresetLabel } from '@/lib/coach-arrival';
 
 /**
  * ARRIVAL AS A LEAD TIME (Arrival & Places, owner rulings D1–D3, 2026-09-21).
@@ -87,13 +87,9 @@ export default function ArrivalSelect({
       </div>
       {value ? (
         <p className={`${styles.formHint} ${styles.formHintConsequence}`}>
-          <strong>Arrive by {formatTime(value)}</strong> — shows on the event and the calendar export.
-        </p>
-      ) : null}
-      {/* Stage 6e (D-6 / F12): a warning, never a block — a coach can mean it, and the form still saves. */}
-      {value && arrivalIsAfterStart(startTime, value) ? (
-        <p className={`${styles.formHint} ${styles.formHintConsequence}`} role="status">
-          That&rsquo;s after the {formatTime(startTime)} start.
+          {/* Stage 6e (D-6 / F12): a late arrival is noted in the SAME words every surface uses, on this same
+              line — a note, never a block (a coach can mean it, and the form still saves). */}
+          <strong>Arrive by {formatTime(value)}{arrivalNoteSuffix(arrivalIsAfterStart(startTime, value))}</strong> — shows on the event and the calendar export.
         </p>
       ) : null}
     </div>

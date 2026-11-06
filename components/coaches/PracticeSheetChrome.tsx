@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { CalendarDays, ChevronRight, NotebookPen } from 'lucide-react';
 import { formatInOrgZone } from '@/lib/timezone';
 import { formatStoredClock } from '@/lib/utils';
-import { ARRIVAL_AFTER_START_NOTE, arrivalIsAfterStartAt } from '@/lib/coach-arrival';
+import { arrivalIsAfterStartAt, arrivalNoteSuffix } from '@/lib/coach-arrival';
 import {
   practiceLengthMinutes, practicePlanFit, practicePlannedLabel, practiceRemainderLabel,
 } from '@/lib/practice-state';
@@ -130,7 +130,7 @@ export function PracticeWhenDoor({
 }) {
   const fit = planFit(startsAt, endsAt, plan, record);
   const arrive = !record && arrivalTime
-    ? `Arrive by ${formatStoredClock(arrivalTime)}${arrivalIsAfterStartAt(startsAt, arrivalTime) ? ` (${ARRIVAL_AFTER_START_NOTE})` : ''}`
+    ? `Arrive by ${formatStoredClock(arrivalTime)}${arrivalNoteSuffix(arrivalIsAfterStartAt(startsAt, arrivalTime))}`
     : null;
   /* ⚠ A clock never breaks across lines ("Arrive by 5:45 / p.m." — measured at 360 on the first
      build): every piece that carries a time or a count is its own no-wrap bit, so a line breaks at a
