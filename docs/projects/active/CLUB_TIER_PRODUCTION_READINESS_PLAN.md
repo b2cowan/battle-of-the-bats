@@ -2525,12 +2525,16 @@ club's clock. 6d designs the feed; nothing else of Stage 11 is 6d's.
 >   the calendar's clash read is built for one page view, the costliest part to serve).
 
 ### Stage 6e — The event form's last corrections (the deep dive's stage 5)
+> **Build prompt written 2026-11-06:** `CLUB_TIER_STAGE6E_BUILD_PROMPT.md` (re-read the four items first; fix only what is still open).
 **Re-read against the product first: 2026-10-09 changed this form.** The event window reads first and its pencil opens the
 form with a held save (`0366fb04`); a change that tells families is held until ✓ and asks (Tournament Stage 3 A36, the
 edit-autosaves exception); a series edit asks its scope at the pencil (§287). So R6 ("Edit details keeps its Save") is
 likely settled. Left to check: the practice's More label still promising an address (F13); the series' per-date opponent
 boxes taking the Opponent Picker (F13); an arrival after the start flagged under the field and on the sheet (D-6, F12).
 Small; it fills any gap in the sequence. **Holds the release?** ⚖ Yes since 2026-10-12 (owner, §7). Was: No.
+> **✅ BUILT and COMMITTED `7597695a5` 2026-11-04** (`/review` done, no migration): the practice's More label (F13a) and "Edit details keeps its Save" (R6) were already settled; a weekly game's per-date opponent boxes now use the Opponent Picker (F13b); an arrival later than the start is warned under the field and beside "Arrive …" on the event window, game page and practice sheet (D-6 / F12 — a warning, never a block).
+> **Re-read against the code 2026-11-06 (Part 0 of the build prompt): all four items fixed, no code written, stage closed on records only.** Its 2026-11-04 records (ledger §452, the TODO line, a paragraph here) were no longer in the tree on 2026-11-06 and are restored; the walk is now ledger **§470** (the walk page's old "§452" number was taken by Stage 14 S1), owed: https://claude.ai/artifact/7kVS5g7pYm6ZcKJMX3iyat — no record shows it walked.
+> **Owner calls still open:** the two wordings ("That's after the 3:07 p.m. start." under the field, "(after the start)" beside Arrive — the build's own, not yet past `/marketing`; leave as two phrasings until ruled); the practice "send to families" message does not carry the note (left alone); the warning line is a status region that mounts with its text, so a screen reader may not announce it (Low).
 
 ### Stage 7 — Tournaments inside a club + one door to every family
 > **✅ STAGE 7 CLOSED 2026-10-22 (owner).** All four parts are built and owner-walked: 7a tournament money (§354 ✅, all seven parts), 7b Add our teams

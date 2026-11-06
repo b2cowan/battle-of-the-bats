@@ -27768,3 +27768,16 @@ performed over the shared working tree. The original walk result is not claimed 
 <!-- §469 -->
 **✅ WALKED 2026-11-06 — PASSED, parts A–E all pass (10 of 10 steps ticked: A 4/4, B 2/2, C 2/2, D 1/1, E 1/1); no defect, no notes came back. Part 5 is complete and the Fee invoice alerts project is walked end to end (§465, §466, §468, §469). Part E's step was ticked but the paste carried no answer, so the "passes them on" wording call (leave until D1 / reword now) is NOT recorded as ruled; nothing was reworded.** Walk published 2026-11-06. [Interactive walk](https://claude.ai/artifact/9Px78GeNdEgc7AcZLVmg9W) · [repository HTML](FEE_INVOICE_ALERTS_PART5_WALK.html). One purpose, 5 parts (A–E, 10 steps), read-only (no database change): A the new article "How you're told an invoice is waiting" · B search finds it ("overdue banner", "unpaid invoice", "red banner") · C the invoice-row answer and the Club plan & billing paragraph · D a phone at 390 · E the owner's call on the "passes them on" sentence (recommended: leave until the payment-service tax question D1 is answered). Built from the `/docs` pass and the `/accounting` wording review of 2026-11-06 (help tests 19/19, lint and spelling clean). **No read-back needed.**
 <!-- /§469 -->
+
+## §470 · Coaches portal · Event form 6e owner walk — **the event form warns when an arrival is later than the start (under the field, on the event window, the game page and the practice sheet), and each date of a weekly repeating game picks its opponent from the team's book**
+<!-- §470 -->
+**Built + reviewed 2026-11-04, committed `7597695a5`:** Club Tier Stage 6e (the deep dive's stage 5). Two of its four leftovers were open when checked; the practice's "More" label and "Edit details keeps its Save" were already settled. No migration. `/review`: no Critical, High or Medium findings; one Low (the warning line is a status region that mounts with its text, so a screen reader may not announce it). Unit tests pass (18/18, re-run 2026-11-06). `check:layout` was **not run** on 2026-11-04: the UAT fixture was unavailable (repair is `node scripts/seed-free-coach-fixture.mjs`, not run).
+
+**Re-numbered 2026-11-06:** this walk was written on 2026-11-04 as §452; that number now belongs to the Stage 14 S1 walk, and the original §452 record was no longer in the ledger. The walk page now says §470. No record shows it was walked.
+
+**The walk (checkable):** https://claude.ai/artifact/7kVS5g7pYm6ZcKJMX3iyat (source [COACH_EVENT_FORM_6E_WALK.html](COACH_EVENT_FORM_6E_WALK.html)). One purpose, 22 steps in six parts: A the warning under Arrival (6) · B the note where Arrive is shown (4) · C a weekly game picks each date's opponent (8) · D editing a series (1) · E on a phone (2) · F put back (1). No fixture: any dev rep team with one finished game.
+
+**Known before the walk:** the practice "send to families" message does not carry the note (left alone); editing an existing series is believed to show no per-date opponent boxes (D1 confirms); the picker's list inside the date list is untested in a browser (C6, E2 are the risk).
+
+**Owner calls open with it:** the words "That's after the 3:07 p.m. start." and "(after the start)" are the build's own and have not been past `/marketing`; equal times are not flagged. Recommended: leave as two phrasings until ruled.
+<!-- /§470 -->
