@@ -238,14 +238,14 @@ export async function figureForDate(orgId: string, account: ClubBankAccount, che
  * (with `date`) the figure for that day. Null when the account is not one of this club's live club accounts (the route
  * answers 404). `today` is the club's day, the server's (rule 6), never the request's.
  */
-export async function readClubBankAccount(orgId: string, accountId: string, opts: { today: string; date?: string | null }) {
+export async function readClubBankAccount(orgId: string, accountId: string, opts: { today: string; date?: string | null; asked?: 'start' | 'check' }) {
   const [all, byAccount] = await Promise.all([readClubBankAccounts(orgId), readClubChecks(orgId)]);
   const account = all.accounts.find(a => a.id === accountId);
   if (!account) return null;
   const saved = byAccount.get(accountId) ?? [];
   const [checks, figure, nameOf] = await Promise.all([
     withBooksNow(saved),
-    opts.date ? figureForDate(orgId, account, saved, opts.date, opts.today) : Promise.resolve(null),
+    opts.date ? figureForDate(orgId, account, saved, opts.date, opts.today, { kind: opts.asked }) : Promise.resolve(null),
     resolvePersonNamer(orgId, saved.map(c => c.createdBy)),
   ]);
   const latest = new Map(all.accounts.map(a => [a.id, checkedThrough(byAccount.get(a.id) ?? [])]));

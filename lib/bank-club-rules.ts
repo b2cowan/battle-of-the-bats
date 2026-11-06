@@ -66,8 +66,14 @@ export function readCents(v: unknown, opts: { positive: boolean }): number | nul
   return v;
 }
 
-/** A real calendar day, YYYY-MM-DD. */
-export const readDay = (v: unknown): string | null => (typeof v === 'string' && isCalendarDate(v) ? v : null);
+/** The earliest statement a check takes: no bank statement of a club's books is older (0202-10-31 was once accepted as a start). */
+export const EARLIEST_STATEMENT_DAY = '2000-01-01';
+
+/** A real calendar day, YYYY-MM-DD, no earlier than `EARLIEST_STATEMENT_DAY` (ISO days compare as strings). */
+export const readDay = (v: unknown): string | null => (typeof v === 'string' && isCalendarDate(v) && v >= EARLIEST_STATEMENT_DAY ? v : null);
+
+/** The first `max` CHARACTERS of a text, never half of one (a UTF-16 cut can leave half an emoji). */
+export const cutText = (t: string, max: number): string => { const chars = Array.from(t); return chars.length <= max ? t : chars.slice(0, max).join(''); };
 
 export function readText(v: unknown, max: number): string | null {
   if (typeof v !== 'string') return null;
@@ -160,7 +166,7 @@ export function savePlan(input: { kind: 'start' | 'check'; date: string; body: R
     if (!r || r.status !== 'posted' || !books.has(r.ledger_id) || r.entry_date > date || onItsWay.has(k as string)) return no('bad_item');
     const amountCents = toCents(r.amount);
     if (amountCents <= 0) return no('bad_item');
-    const label = r.description?.trim().slice(0, 200);
+    const label = r.description ? cutText(r.description.trim(), 200) : undefined;
     waiting.set(k as string, { key: k as string, date: r.entry_date, direction: directionOfEntry(r), amountCents, ...(label ? { label } : {}) });
   }
   const items = [...waiting.values()];

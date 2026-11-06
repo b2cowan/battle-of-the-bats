@@ -4,7 +4,7 @@
  * tab 5, plan §6). Newest first, ending with the starting statement (greyed, "Starting point", no result). Each row is a
  * saved check's OWN figures: The bank said · Should have been · Result ("Matches", "Off by $X" amber, never red) and "Books
  * now say $X" when the books have changed since (ask 6, derived on the server). Who checked it and when.
- * ⚖ BC1 draws the list only: the check form above it, the opened window, Delete and "Check this statement again" are BC2.
+ * ⚖ The check form sits above the list (BC2a, passed in as `form`); the opened window, Delete and "Check this statement again" are BC2b.
  * ON A PHONE: the list is cards, the drawing's white row cards.
  */
 import type { ReactNode } from 'react';
@@ -15,8 +15,10 @@ import { BANK_WORDS as W } from '@/lib/bank-tab-words';
 import { cents, dayYear, throughWords, type AccountView, type SavedCheckView } from './BankShared';
 import s from './Bank.module.css';
 
-export default function BankStatements({ view, accountLine, tools }: {
+export default function BankStatements({ view, accountLine, tools, form }: {
   view: AccountView;
+  /** The check form, above the saved checks (ask 10): a writer's only. */
+  form?: ReactNode;
   /** The account's own controls beside its line (the Account pill, at a second account). */
   accountLine: ReactNode;
   /** The account's quiet doors (Add an account, Name and books), at the end of the line. */
@@ -34,6 +36,8 @@ export default function BankStatements({ view, accountLine, tools }: {
           {tools}
         </div>
       </div>
+
+      {form}
 
       <h2 className={s.listTitle}>{W.listTitle}</h2>
       {isPhone ? (

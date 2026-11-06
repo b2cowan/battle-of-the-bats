@@ -62,6 +62,25 @@ function assertCents(n: number, what: string): void {
   if (!Number.isInteger(n)) throw new Error(`bank-check: ${what} must be integer cents, got ${n}`);
 }
 
+/**
+ * A typed dollar amount → integer cents, or null when it isn't one. Reads every form a treasurer types or copies from a
+ * statement: "5402.10", "$5,402.10", "-12.40", "−12.40" (the typographic minus) and the bracket form the product itself
+ * prints for an overdraft, "($50.00)" (BC1 review). `positive` demands more than zero (cash); a balance may be zero or
+ * below. Lives with the engine so it is tested without a screen.
+ */
+export function typedCents(text: string, opts: { positive: boolean }): number | null {
+  let t = text.replace(/[$,\s]/g, '').replace(/^−/, '-');
+  let negative = false;
+  const bracket = /^\((.*)\)$/.exec(t);
+  if (bracket) { t = bracket[1]; negative = true; }
+  if (!/^-?\d+(\.\d{0,2})?$/.test(t)) return null;
+  if (negative && t.startsWith('-')) return null;
+  const c = Math.round(Number(t) * 100) * (negative ? -1 : 1);
+  if (!Number.isSafeInteger(c) || Math.abs(c) > 99_999_999_999) return null;
+  if (opts.positive && c <= 0) return null;
+  return c === 0 ? 0 : c;
+}
+
 /** Newest first, then key (a stable order for every list the screen shows). */
 export const newestFirst = (a: { date: string; key: string }, b: { date: string; key: string }) =>
   a.date > b.date ? -1 : a.date < b.date ? 1 : a.key < b.key ? -1 : a.key > b.key ? 1 : 0;

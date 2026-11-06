@@ -494,8 +494,40 @@ screen is deleted in BC1). That is a dev-only gap and is said in BC1's hand-off.
   foreign keys). Dev's saved start-time items were dropped by the backfill (dev only). Commit on owner yes.
 
 ### BC2 — Club: the Bank tab on a desk (tabs 2, 5, 6; R0 tab 8)
-- [ ] "Start checking {account}" (first check), the check form, the band as you type, the sums, the Stripe line + Show
-  (child rows, footer, the *not counted* notice), Save.
+Build prompt written 2026-11-06: `BANK_BALANCE_CHECK_BC2_BUILD_PROMPT.md` (two sessions: BC2a the form, the live band and
+Start; BC2b the saved checks, Delete, the pill; one owner question first: a start saved while Stripe is down).
+- [x] **BC2a built 2026-11-06** (owner said yes to the UX summary and to **warn, never block** for a start saved while Stripe
+  doesn't answer): the Bank tab has "Check a statement" above the saved checks, for a writer only. Anchors:
+  - **The form** (`components/admin/kit/club/money/bank/BankCheckForm.tsx`): Statement date (today) · Bank balance on that date
+    · lime Save this check; the band and sums read from `GET accounts/[id]?date=&asked=check` (debounced 350 ms on the date;
+    typing the balance re-figures at once with the engine's `figureCheck`, no round trip); Save sends only `{ date, bankCents }`;
+    the saved check's own band comes back with the account (rule 6). Save works while off (ruling 3): "It saves as off by $X…".
+    A day the server won't take (before the start, the start's own day, after today) says its own sentence; a day already
+    checked says "Saving replaces that check".
+  - **The band and sums** (`BankFigure.tsx`): the shipped joined band (`MoneySummaryBand`), "Matches" green, "Off by $X" amber,
+    direction in words; the sums always open (Your books with the book names · Online payments on their way · n · Stripe pays
+    them out {date} · Show/Hide, child rows, footer "Stripe pays these out on {date} · Payouts tab" · Should be in the bank);
+    *not counted* shows the notice with Try again. Hint "Lines since your last match ({date}): n" is plain text (its Show is BC3).
+  - **Start** (`BankSetup.tsx`): before saving it reads Stripe's on-its-way for the start's day (`asked=start`); *not counted*
+    shows the warning (two wordings: Stripe down, a payout that lists no lines) with **Try again** and **Start anyway**; the
+    saved start keeps NULL.
+  - **Server asked-for changes** (BC1 loose ends, `lib/bank-club-steps.ts` / `-rules.ts` / `-read.ts` + the five write routes):
+    `bankBody` (a JSON `null`/array body is a coded refusal, not a 500); `EARLIEST_STATEMENT_DAY` 2000-01-01 in `readDay`;
+    `cutText` (a waiting label cut by characters); `?asked=start|check` on the figure GET (so the check form's own start day reads
+    `before_start`). `typedCents` in the engine reads "($50.00)" as well as a minus sign.
+  - **Stale view:** `changed`, `account_not_found`, `start_exists`, `start_after_checks`, `no_start`, `check_not_found` →
+    `staleRefresh` in `BankTab` re-reads the overview and the account, THEN says the sentence (Start, the form and the account
+    window all use it); the first Start flips `never` off locally while the overview re-reads (BC1 review findings 1–3).
+  - **Proved 2026-11-06:** 21 new/extended tests (typedCents 4, loose ends 3, screens guard §5–§7 as 11); tsc, eslint, spelling
+    clean; `check:layout --only=admin-accounting-bank` clean at 361/390/768/1440 (the text-button tap floor now reaches 768);
+    dev probes `.probe/bank-bc2/routes.mjs` → `BANK_BC2_ROUTES_PASSED` (null bodies, date floor, `asked`, an overdrawn start,
+    off then matching check replacing the day, **Stripe forced down**: figure `not_counted`, Start anyway saved NULL) and
+    `.probe/bank-bc2/ui.mjs` → `BANK_BC2_UI_PASSED` (a real browser: band reads Matches, Save, the row in the list, a second
+    account's Start warning → Try again → Start anyway). Every probe row removed; Stripe id restored.
+  - **Open for the owner (not built, undrawn):** the club desk drawing has no "Cash not deposited yet" field (the coach phone
+    drawing does); the server already takes it. Say yes and it is one field.
+  - **Reader note:** a club member who can open Accounting but not move club money gets 403 on the Bank routes today (club read
+    = write, B7), so the reader's "same screen without the form" branch is built but unreachable until that permission splits.
 - [ ] Saved checks: the table, the opened window, Delete (one question, who/when), Check this statement again (replace),
   "Books now say".
 - [ ] Account pill with "{date} · Matches|Off by"; Add an account / Name and books with the Q3 sentence.

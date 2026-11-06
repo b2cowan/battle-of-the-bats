@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { withObservability } from '@/lib/observability';
 import { resolveClubMoney } from '@/lib/club-money-route';
-import { addAccount, bankAnswer, bankOverview } from '@/lib/bank-club-steps';
+import { addAccount, bankAnswer, bankBody, bankOverview } from '@/lib/bank-club-steps';
 
 /**
  * THE CLUB'S BANK (Bank balance check BC1; B1, B7).
@@ -20,7 +20,7 @@ export const GET = withObservability(async (req: Request) => {
 export const POST = withObservability(async (req: Request) => {
   const r = await resolveClubMoney(req, { scope: 'books', write: true });
   if ('error' in r) return r.error;
-  const body = await req.json().catch(() => ({})) as Record<string, unknown>;
+  const body = await bankBody(req);
   const out = await addAccount(r.ctx, body);
   return bankAnswer(r.ctx, out.ok ? out.id : '', out, 201);
 }, { route: '/api/admin/accounting/bank' });

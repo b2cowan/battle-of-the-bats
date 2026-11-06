@@ -1,8 +1,8 @@
 /*
  * THE BANK TAB (Bank balance check BC1 — Accounting › Bank; drawings BANK_BALANCE_CHECK_DRAWINGS.html tabs 5 and 6, R0
  * tab 8). Tokens only, the `--type-*` ladder only. The shared parts (KitDialog, the kit's table and row list, chips,
- * callouts, the lead pill) are the product's own; this sheet lays the tab out and draws only what they don't. BC2 adds the
- * check form and the band above the saved checks.
+ * callouts, the lead pill, the joined money band) are the product's own; this sheet lays the tab out and draws only what they
+ * don't: BC2a adds the check form's card and the sums under its band.
  */
 
 /* ── the top line: which account, how far it is checked, its quiet doors ── */
@@ -80,6 +80,50 @@ tr > td.nowrap { white-space: nowrap; }
 .bookMoves { margin-left: auto; font-size: var(--type-support); color: var(--badge-warning-ink); }
 .cardFoot { display: flex; justify-content: flex-end; gap: 0.5rem; margin: 1.25rem 0 0; }
 
+/* ── the check form (tab 2): one card above the saved checks ── */
+.checkCard {
+  margin: 0 0 1.5rem;
+  padding: 1.1rem 1.25rem 1.2rem;
+  border: 1px solid var(--home-line);
+  border-radius: 10px;
+  background: var(--home-card);
+}
+.checkTitle { margin: 0 0 0.75rem; font-size: var(--type-heading); font-weight: 700; color: var(--text-primary); }
+/* Date · Bank balance · Save, on one line at a desk; the button sits level with the inputs (a field carries a 0.9rem foot). */
+.checkRow { display: grid; grid-template-columns: minmax(150px, 210px) minmax(180px, 260px) auto; align-items: end; gap: 0 1rem; }
+.checkSave { margin: 0 0 0.9rem; }
+.hintLine { margin: 0.5rem 0 0; }
+.statusNote { margin: 0.25rem 0 0; font-size: var(--type-support); color: var(--text-secondary); line-height: 1.45; }
+.inlineLink { color: var(--home-olive); text-decoration: underline; text-underline-offset: 2px; }
+.inlineLink:hover { color: var(--text-primary); }
+.noticeSub { display: block; margin-top: 0.2rem; font-size: var(--type-support); font-weight: 400; color: var(--text-secondary); }
+
+/* The band (the shipped joined band, three tiles) with the drawing's gap above it. */
+.bandWrap { margin: 0.75rem 0 0.25rem; }
+
+/* The sums under the band, always open: label left, amount right, the total ruled off. */
+.sums { margin: 0.25rem 0 0; border: 1px solid var(--home-line); border-radius: 8px; background: var(--home-card); }
+.sumRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.55rem 0.9rem;
+  border-top: 1px solid var(--home-line);
+  font-size: var(--type-body);
+  color: var(--text-primary);
+}
+.sumRow:first-child { border-top: 0; }
+.sumQuiet { color: var(--text-tertiary); font-size: var(--type-support); }
+.sumAmt { font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; }
+.sumTotal { font-weight: 700; background: var(--surface-2); border-radius: 0 0 8px 8px; }
+.sumNotice { margin: 0; padding: 0.4rem 0.9rem 0.6rem; font-size: var(--type-support); color: var(--text-secondary); line-height: 1.45; }
+/* Stripe's lines, opened: one quiet row each, the footer saying when Stripe pays them out. */
+.childBox { padding: 0.15rem 0.9rem 0.6rem 1.6rem; border-top: 1px solid var(--home-line); background: var(--surface-2); }
+.childRows { list-style: none; margin: 0; padding: 0; }
+.childRow { display: flex; justify-content: space-between; gap: 1rem; padding: 0.3rem 0; font-size: var(--type-support); color: var(--text-secondary); }
+.childFoot { margin: 0.35rem 0 0; font-size: var(--type-support); color: var(--text-tertiary); }
+
 /* ══ THE PHONE (390): the saved checks are the kit's row cards; the starting point a quiet head row ══ */
 /* A saved check card's caption lines, one under another. */
 .cardLine { display: block; }
@@ -101,10 +145,17 @@ tr > td.nowrap { white-space: nowrap; }
 /* After a kit row (a saved check card), its own bottom rule already draws the line. */
 [data-row-list-row] + .pHead { border-top: 0; }
 
+/* A text button is a finger's target on every touch width (the layout check's floor reaches 768): 44px (Add an account, Name and books, Show). */
+@media (max-width: 768px) {
+  .link { display: inline-flex; align-items: center; justify-content: center; min-height: var(--tap-min, 44px); min-width: var(--tap-min, 44px); }
+}
+
 @media (max-width: 640px) {
   .pair { grid-template-columns: 1fr; }
-  /* A text button is a finger's target: 44px (Add an account, Name and books). */
-  .link { display: inline-flex; align-items: center; justify-content: center; min-height: var(--tap-min, 44px); min-width: var(--tap-min, 44px); }
+  .checkRow { grid-template-columns: 1fr; }
+  .checkCard { padding: 1rem; }
+  .checkSave > :global(.btn) { width: 100%; justify-content: center; }
+  .sumRow { flex-wrap: wrap; }
   .top { margin-bottom: 0.75rem; }
   .card { padding: 1rem; }
   .cardFoot > :global(.btn) { flex: 1; justify-content: center; }

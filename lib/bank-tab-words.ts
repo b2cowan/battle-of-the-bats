@@ -2,7 +2,8 @@
  * THE BANK TAB'S WORDS (Bank balance check BC1 — the club's Accounting › Bank; drawings
  * `BANK_BALANCE_CHECK_DRAWINGS.html` tabs 5 and 6, R0 tab 8). The screens' own words: the refusals a route answers live
  * in `lib/bank-check-words.ts` and are read from there, never restated here. Client-safe. Every string is a DRAFT for the
- * stage's `/marketing` pass (plan §5 records each). BC1 keeps the words of what BC1 still draws; BC2 adds the check's.
+ * stage's `/marketing` pass (plan §5 records each). BC2a adds the check form's words (the band, the sums, Save, Start's
+ * Stripe notice); BC2b adds the opened check's, Delete's and "Check this statement again".
  * Spelling follows the product (`check:spelling`): cheque, chequing; a clock only through `formatTime`.
  */
 import { pluralize as plural } from './utils';
@@ -29,6 +30,57 @@ export const BANK_WORDS = {
   saving: 'Saving…',
   setupFailed: 'The starting statement couldn’t be saved.',
   setupMissing: 'Enter the account name, the statement date and the bank balance on that date.',
+
+  // The first check, when Stripe didn't answer: warn, never block (owner 2026-11-06, BC1 review M1). The saved start keeps
+  // "not counted" so the checks after it can say why they may read off.
+  startNoticeDown: 'Stripe didn’t answer, so card payments on their way aren’t counted yet.',
+  startNoticeUnlisted: 'One of Stripe’s payouts doesn’t list what’s in it, so card payments on their way aren’t counted yet.',
+  startNoticeWhy: 'Checks after this one may read off by those payments. You can try again in a few minutes, or start anyway.',
+  tryAgain: 'Try again',
+  startAnyway: 'Start anyway',
+  startDateBad: 'Enter the statement date as it reads on the statement.',
+
+  // ── the check form (ask 10, tab 2): one card on the Bank tab, above the saved checks ──────
+  checkTitle: 'Check a statement',
+  checkBalance: 'Bank balance on that date',
+  saveCheck: 'Save this check',
+  saveOffNote: (amount: string) => `It saves as off by ${amount}. You can check this statement again later.`,
+  replacesNote: 'This statement is checked already. Saving replaces that check.',
+  figuring: 'Figuring this day…',
+  figureFailed: 'The figures for that day couldn’t be loaded.',
+  savedMatches: (date: string) => `Checked ${date}. The bank and your books agree.`,
+  savedOff: (date: string, amount: string) => `Checked ${date}. It saved as off by ${amount}.`,
+  saveFailed: 'The check couldn’t be saved.',
+  balanceMissing: 'Enter the bank balance on the statement date.',
+  // the band, and the sums under it (always open)
+  bandBank: 'The bank says',
+  bandShould: 'Should be in the bank',
+  bandDifference: 'Difference',
+  bandBankCaption: (date: string) => `Statement balance on ${date}`,
+  bandShouldCaption: (date: string) => `Your books on ${date}, less what hasn’t reached the bank yet`,
+  bandNoBalance: 'Type the balance to see it',
+  bandMatches: (date: string) => `The bank and your books agree on ${date}.`,
+  bandBankMore: (amount: string) => `The bank shows ${amount} more than your books.`,
+  bandBankLess: (amount: string) => `The bank shows ${amount} less than your books.`,
+  sumsTitle: 'How “Should be in the bank” is worked out',
+  sumBooks: (date: string) => `Your books on ${date}`,
+  sumOnItsWay: (n: number) => `Online payments on their way to your bank · ${n}`,
+  sumPaysOut: (date: string) => `Stripe pays them out ${date}`,
+  sumOnItsWayNone: 'Online payments on their way to your bank',
+  railCard: 'card',
+  railBank: 'bank',
+  sumShould: 'Should be in the bank',
+  show: 'Show',
+  hide: 'Hide',
+  notCounted: 'not counted',
+  notCountedDown: 'Couldn’t reach Stripe, so online payments on their way aren’t counted. Try again in a few minutes.',
+  notCountedUnlisted: 'One of Stripe’s payouts doesn’t list what’s in it, so online payments on their way aren’t counted.',
+  childOut: (amount: string) => `${amount} out`,
+  childFootPays: (date: string) => `Stripe pays these out on ${date}`,
+  childFootNotYet: 'Stripe hasn’t put all of these in a payout yet',
+  payoutsTab: 'Payouts tab',
+  linesSinceMatch: (date: string, n: number) => `Lines since your last match (${date}): ${n}`,
+  linesSinceStart: (date: string, n: number) => `Lines since your starting statement (${date}): ${n}`,
 
   // ── the account line and the saved checks (asks 4 and 6, tab 5) ───────────────────────────
   accountPill: 'Account',

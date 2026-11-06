@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   HINT_CAP, MAX_COMBOS, booksNowSay, coachBooksOnDate, figureCheck, figureOfSaved, findHints, latestBefore,
-  matchedWhenSaved, startBooks, suspectsSince,
+  matchedWhenSaved, startBooks, suspectsSince, typedCents,
   type BankLine, type SavedCheck, type WaitingItem,
 } from '../../lib/bank-check.ts';
 
@@ -230,5 +230,38 @@ describe('coachBooksOnDate — Cash on hand with a date cutoff (P2\')', () => {
       { date: null, moneyIn: 10, moneyOut: 0, movesCash: true, scheduled: false },
     ];
     assert.equal(coachBooksOnDate(rows, 100000, '2026-09-30'), 100000 + 50000 - 12050);
+  });
+});
+
+describe('typedCents — what a treasurer types, in cents (BC2: the bracket form the product prints)', () => {
+  const t = (s: string, positive = false) => typedCents(s, { positive });
+  it('plain, dollar-signed and comma-grouped amounts', () => {
+    assert.equal(t('5402.10'), 540_210);
+    assert.equal(t('$5,402.10'), 540_210);
+    assert.equal(t(' $ 12 '), 1_200);
+    assert.equal(t('0'), 0);
+    assert.equal(t('.5'), null, 'a bare fraction is not an amount');
+  });
+  it('an overdraft: a minus sign, the typographic minus, and the bracket form the product prints', () => {
+    assert.equal(t('-12.40'), -1_240);
+    assert.equal(t('−12.40'), -1_240);
+    assert.equal(t('($50.00)'), -5_000);
+    assert.equal(t('(50)'), -5_000);
+    assert.equal(t('($1,284.50)'), -128_450);
+    assert.equal(t('-($50.00)'), null, 'two minus signs is not a number');
+    assert.equal(t('($-50.00)'), null);
+    assert.equal(t('($50.00'), null, 'unbalanced bracket');
+  });
+  it('never a negative zero, never a third decimal, never words', () => {
+    assert.ok(Object.is(t('-0'), 0) && Object.is(t('(0.00)'), 0));
+    assert.equal(t('1.234'), null);
+    assert.equal(t('abc'), null);
+    assert.equal(t(''), null);
+  });
+  it('positive demands more than zero (cash); too large is refused', () => {
+    assert.equal(t('0', true), null);
+    assert.equal(t('($5.00)', true), null);
+    assert.equal(t('5', true), 500);
+    assert.equal(t('9999999999999'), null);
   });
 });

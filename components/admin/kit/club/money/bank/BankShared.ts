@@ -8,6 +8,7 @@ import { formatStoredDate } from '@/lib/timezone';
 import { jsonInit, moneyFetch, refusalText } from '@/lib/money-fetch';
 import type { bankAccountView, bankOverview } from '@/lib/bank-club-steps';
 import { BANK_WORDS as W } from '@/lib/bank-tab-words';
+import { typedCents } from '@/lib/bank-check';
 
 export type Overview = Awaited<ReturnType<typeof bankOverview>>;
 export type AccountView = NonNullable<Awaited<ReturnType<typeof bankAccountView>>>;
@@ -25,14 +26,32 @@ export const cents = (c: number | null | undefined): string => (c == null ? '' :
 /** "Oct 31, 2026" — a statement's day always carries its year (a statement may straddle one). */
 export const dayYear = (d: string | null | undefined): string => formatStoredDate(d);
 
-/** A typed amount in cents ("$5,402.10", "-12.40"), or null. A balance may be zero or below (an overdraft). */
-export function parseCents(s: string, opts: { positive: boolean }): number | null {
-  const t = s.replace(/[$,\s]/g, '').replace(/^−/, '-');
-  if (!/^-?\d+(\.\d{0,2})?$/.test(t)) return null;
-  const c = Math.round(Number(t) * 100);
-  if (!Number.isSafeInteger(c) || Math.abs(c) > 99_999_999_999) return null;
-  if (opts.positive && c <= 0) return null;
-  return c;
+export type Figure = NonNullable<AccountView['figure']>;
+
+/** A typed amount in cents ("$5,402.10", "-12.40", "($50.00)"), or null — the engine's own parser. */
+export const parseCents = typedCents;
+
+/**
+ * A refusal that means "the view you are looking at is stale" (BC1 review): another treasurer started, saved or moved
+ * something first, or the account is gone. The screen re-reads the overview and the account BEFORE it says the sentence.
+ */
+const STALE_CODES: ReadonlySet<string> = new Set(['changed', 'account_not_found', 'start_exists', 'start_after_checks', 'no_start', 'check_not_found']);
+export const isStaleView = (code: string | null): boolean => code !== null && STALE_CODES.has(code);
+
+/** The figure for a day (`GET …?date=`): what the screen draws from, or the sentence the server refused it with. */
+export type FigureAnswer =
+  | { ok: true; figure: Figure }
+  | { ok: false; code: string | null; error: string };
+
+export async function readFigure(orgSlug: string, accountId: string, date: string, asked: 'start' | 'check'): Promise<FigureAnswer> {
+  try {
+    const r = await moneyFetch<Record<string, unknown>>(bankUrl(orgSlug, `/accounts/${accountId}`, { date, asked }));
+    const figure = (r.data as unknown as AccountView).figure;
+    if (r.ok && figure) return { ok: true, figure };
+    return { ok: false, code: typeof r.data.code === 'string' ? r.data.code : null, error: refusalText(r.data, W.figureFailed) };
+  } catch {
+    return { ok: false, code: null, error: `${W.figureFailed} ${W.connection}` };
+  }
 }
 
 /** A write's answer: the account read again (the server's numbers), or a coded refusal in words. */

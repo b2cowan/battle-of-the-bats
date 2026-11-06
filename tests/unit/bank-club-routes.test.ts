@@ -6,6 +6,7 @@ import {
 } from '../../lib/bank-club-rules.ts';
 import type { ClubSavedCheck, EntryRow, OnItsWay } from '../../lib/bank-club-map.ts';
 import { BANK_REFUSAL } from '../../lib/bank-check-words.ts';
+import { readFileSync } from 'node:fs';
 
 /**
  * Bank balance check BC1 — THE ROUTES, DECIDED (lib/bank-club-rules.ts). The client sends intent (a date, a balance, the
@@ -176,5 +177,35 @@ describe('refusals are codes', () => {
     assert.equal(readDay('2026-02-29'), null);
     assert.equal(readDay('2028-02-29'), '2028-02-29');
     assert.equal(readDay('2026-10-31T00:00'), null);
+  });
+});
+
+describe('BC1 loose ends: the date floor, the label cut, a body that is not an object', () => {
+  it('a statement date before 2000-01-01 is not a day the server takes (0202-10-31 was once a start)', () => {
+    assert.equal(readDay('0202-10-31'), null);
+    assert.equal(readDay('1999-12-31'), null);
+    assert.equal(readDay('2000-01-01'), '2000-01-01');
+    assert.equal(readDay('2026-02-30'), null, 'a real calendar day still');
+    assert.equal(readDay(20261031), null);
+  });
+  it('a waiting item\'s label is cut by characters, never mid-emoji', () => {
+    const emoji = '😀'.repeat(201); // 402 UTF-16 units, 201 characters
+    const p = savePlan({ kind: 'check', date: '2026-10-31', body: { bankCents: 1, waiting: [`entry:${U(9)}`] }, facts: {
+      booksCents: 0, bookIds: ['general'], onItsWay: { state: 'none', cents: 0, lines: [] } }, entries: [entry(9, { description: emoji })] });
+    assert.ok(p.ok);
+    const label = p.args.waiting[0].label!;
+    assert.equal(Array.from(label).length, 200);
+    assert.equal(label, '😀'.repeat(200));
+    assert.ok(!/[\uD800-\uDBFF]$/.test(label), 'no lone high surrogate at the cut');
+  });
+  it('every bank write route reads its body through bankBody (a JSON null is a coded refusal, not a 500)', () => {
+    const dir = 'app/api/admin/accounting/bank';
+    const writes = ['route.ts', 'accounts/[accountId]/route.ts', 'accounts/[accountId]/setup/route.ts',
+      'accounts/[accountId]/books/route.ts', 'accounts/[accountId]/checks/route.ts'];
+    for (const f of writes) {
+      const src = readFileSync(`${dir}/${f}`, 'utf8');
+      assert.match(src, /await bankBody\(req\)/, f);
+      assert.doesNotMatch(src, /req\.json\(\)/, `${f}: reads its own body`);
+    }
   });
 });

@@ -9,8 +9,10 @@
  *   · an account not started (a second one) ..... the same card for that account
  *   · otherwise ................................. the account line ("{date} · Matches|Off by $X") and the saved checks
  *   · a second account .......................... the Account pill (only then) with "Add an account" at its foot
- * ⚠ BC1 ships no check form: the check sits on this tab above the saved checks (ask 10), built in BC2. Until then the dev
- *   tab shows the account pill, Name and books and the saved-checks list only.
+ * ⚖ The check form ("Check a statement", BC2a) sits on this tab above the saved checks (ask 10), for a writer only. The opened
+ *   check, Delete and "Check this statement again" are BC2b.
+ * ⚖ A refusal that means the view is STALE (someone changed the account first) re-reads the overview and the account, THEN says
+ *   the server's sentence (BC1 review): `staleRefresh`.
  * ⚖ NO YEAR PILL, no year anywhere: a statement may straddle a fiscal year.
  * ⚖ Every figure is the server's (rule 6): each write answers with the account read again, and the screen draws it.
  * ⚖ A member who can open Accounting but not move club money (B7) reads the same tab with every write control absent.
@@ -27,6 +29,7 @@ import { BANK_WORDS as W } from '@/lib/bank-tab-words';
 import { bankUrl, throughWords, type AccountView, type Overview } from './BankShared';
 import BankSetup from './BankSetup';
 import BankStatements from './BankStatements';
+import BankCheckForm from './BankCheckForm';
 import { AccountWindow } from './BankWindows';
 import s from './Bank.module.css';
 
@@ -43,14 +46,15 @@ export default function BankTab({ orgSlug }: { orgSlug: string }) {
 
   const beginRead = useLatestRead();
   /** `quiet`: a refresh after a save — if it fails the screen stays, rather than becoming a load failure. */
-  const loadOverview = useCallback(async (quiet?: boolean) => {
+  const loadOverview = useCallback(async (quiet?: boolean): Promise<Overview | null> => {
     const current = beginRead();
     if (!quiet) setFailed(false);
     const r = await moneyFetch<Overview>(bankUrl(orgSlug)).catch(() => null);
-    if (!current()) return;
-    if (!r?.ok) { if (!quiet) setFailed(true); return; }
+    if (!current()) return null;
+    if (!r?.ok) { if (!quiet) setFailed(true); return null; }
     setOverview(r.data);
     setAccountId(id => (id && r.data.accounts.some(a => a.id === id) ? id : r.data.accounts[0]?.id ?? null));
+    return r.data;
   }, [orgSlug, beginRead]);
   useDeferredLoad(!!orgSlug, loadOverview);
 
@@ -63,6 +67,18 @@ export default function BankTab({ orgSlug }: { orgSlug: string }) {
     if (!r?.ok) { setViewFailed(true); return; }
     setView(r.data);
   }, [orgSlug, beginView]);
+
+  /**
+   * The server refused because what the screen shows is stale (BC1 review): read the overview and the account AGAIN, then
+   * say the sentence. An account that is gone falls to the first one left (the effect below reads it).
+   */
+  const staleRefresh = useCallback(async (text: string) => {
+    setWin(null);
+    const o = await loadOverview(true);
+    const id = accountId && o?.accounts.some(a => a.id === accountId) ? accountId : null;
+    if (id) await loadView(id);
+    setNotice({ tone: 'bad', text });
+  }, [accountId, loadOverview, loadView, setNotice]);
 
   // A different account is a fresh read; a write's answer arrives with the write (the account read again), so the read
   // is skipped when the view in hand already is that account.
@@ -85,8 +101,16 @@ export default function BankTab({ orgSlug }: { orgSlug: string }) {
     return (
       <>
         {noticeEl}
-        <BankSetup orgSlug={orgSlug} account={null} books={overview.books}
-          onSaved={v => { setAccountId(v.account.id); setView(v); void loadOverview(); }} />
+        <BankSetup orgSlug={orgSlug} account={null} books={overview.books} onStale={t => void staleRefresh(t)}
+          onSaved={v => {
+            // The card flips away NOW: the overview is read again quietly after, and until it lands the first account holds
+            // every club book (rule 1), so the tab already is the account's (BC1 review finding 3).
+            setOverview(o => o && {
+              ...o, never: false, accounts: [{ id: v.account.id, name: v.account.name }],
+              books: o.books.map(b => ({ ...b, accountId: b.accountId ?? v.account.id })),
+            });
+            setAccountId(v.account.id); setView(v); void loadOverview(true);
+          }} />
       </>
     );
   }
@@ -118,9 +142,14 @@ export default function BankTab({ orgSlug }: { orgSlug: string }) {
   const body = !view.start
     // A second account named but not started yet: its own first-check card.
     ? canMove
-      ? <BankSetup key={view.account.id} orgSlug={orgSlug} account={view.account} books={overview.books} onSaved={setView} />
+      ? <BankSetup key={view.account.id} orgSlug={orgSlug} account={view.account} books={overview.books} onSaved={setView}
+          onStale={t => void staleRefresh(t)} />
       : <Callout role="status">{W.setupReader}</Callout>
-    : <BankStatements view={view} accountLine={accountLine} tools={accountTools || null} />;
+    : <BankStatements view={view} accountLine={accountLine} tools={accountTools || null}
+        form={canMove ? (
+          <BankCheckForm orgSlug={orgSlug} view={view} onStale={t => void staleRefresh(t)}
+            onSaved={(v, text) => { setView(v); setNotice({ tone: 'good', text }); }} />
+        ) : undefined} />;
 
   return (
     <>
@@ -129,7 +158,7 @@ export default function BankTab({ orgSlug }: { orgSlug: string }) {
       {(win?.kind === 'addAccount' || win?.kind === 'editAccount') && (
         <AccountWindow orgSlug={orgSlug} books={overview.books} accounts={accounts}
           editing={win.kind === 'editAccount' ? { id: view.account.id, name: view.account.name } : undefined}
-          onClose={() => setWin(null)}
+          onClose={() => setWin(null)} onStale={t => void staleRefresh(t)}
           onPartial={v => { setView(v); void loadOverview(true); }}
           onDone={(v, added) => {
             setWin(null);

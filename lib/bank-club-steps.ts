@@ -29,6 +29,15 @@ export const clubToday = () => tournamentToday();
 export const bankRefusedAs = (code: BankRefusalCode): Refused =>
   refused(statusOfRefusal(code), { error: BANK_REFUSAL[code], code });
 
+/**
+ * A write request's JSON body as an object. A body that is not one (a JSON `null`, an array, a number, text that isn't JSON)
+ * is an EMPTY one, so the step answers its own coded refusal (`bad_name`, `bad_figures`…) rather than a 500 on `null.name`.
+ */
+export async function bankBody(req: Request): Promise<Record<string, unknown>> {
+  const body: unknown = await req.json().catch(() => null);
+  return body && typeof body === 'object' && !Array.isArray(body) ? body as Record<string, unknown> : {};
+}
+
 /** One mig 447 step: its coded refusal, or its answer. */
 async function step(fn: string, args: Record<string, unknown>): Promise<Moved<{ data: Record<string, unknown> }>> {
   const { data, error } = await supabaseAdmin.rpc(fn, args);
@@ -64,8 +73,8 @@ const allBooks = (all: { accounts: { books: ClubBook[] }[]; unplacedBooks: ClubB
  * figure for that day (Your books, on its way, suspects, Still waiting?), from which the screen figures the band as the
  * balance is typed.
  */
-export async function bankAccountView(ctx: AuthContextWithRole, accountId: string, date: string | null) {
-  const read = await readClubBankAccount(ctx.org.id, accountId, { today: clubToday(), date });
+export async function bankAccountView(ctx: AuthContextWithRole, accountId: string, date: string | null, asked?: 'start' | 'check') {
+  const read = await readClubBankAccount(ctx.org.id, accountId, { today: clubToday(), date, asked });
   if (!read) return null;
   const { account, all, checks, latest, figure, nameOf } = read;
   const views = checks.map(c => checkView(c, nameOf));

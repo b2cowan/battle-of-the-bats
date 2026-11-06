@@ -9,7 +9,7 @@ import KitDialog from '../../KitDialog';
 import ck from '../../ClubKit.module.css';
 import { FormError, TextField } from '../MoneyKit';
 import { BANK_WORDS as W } from '@/lib/bank-tab-words';
-import { bankUrl, bankWrite, type AccountView, type Overview } from './BankShared';
+import { bankUrl, bankWrite, isStaleView, type AccountView, type Overview } from './BankShared';
 import s from './Bank.module.css';
 
 type Book = Overview['books'][number];
@@ -20,7 +20,7 @@ type Book = Overview['books'][number];
  * nothing earlier. A book can't be unticked out of an account: it would belong to none — it moves by being ticked in the
  * account it should be in.
  */
-export function AccountWindow({ orgSlug, books, accounts, editing, onClose, onDone, onPartial }: {
+export function AccountWindow({ orgSlug, books, accounts, editing, onClose, onDone, onPartial, onStale }: {
   orgSlug: string;
   books: readonly Book[];
   accounts: readonly { id: string; name: string }[];
@@ -30,6 +30,8 @@ export function AccountWindow({ orgSlug, books, accounts, editing, onClose, onDo
   onDone: (view: AccountView, added: boolean) => void;
   /** An edit saved part of what was asked, then one step was refused: the account as it now stands; the window stays open on the refusal. */
   onPartial: (view: AccountView) => void;
+  /** The server said the view is stale (the account or a book changed first): the tab re-reads, closes this window and says the sentence. */
+  onStale: (text: string) => void;
 }) {
   const [name, setName] = useState(editing?.name ?? '');
   const [moving, setMoving] = useState<Set<string>>(() => new Set());
@@ -39,6 +41,8 @@ export function AccountWindow({ orgSlug, books, accounts, editing, onClose, onDo
   const here = (b: Book) => !!editing && b.accountId === editing.id;
   const toggle = (id: string) => setMoving(m => { const n = new Set(m); if (n.has(id)) n.delete(id); else n.add(id); return n; });
   const dirty = name !== (editing?.name ?? '') || moving.size > 0;
+  /** A refused step: a stale view is re-read by the tab (it says the sentence after); anything else is said beside the button. */
+  const refuse = (r: { code: string | null; error: string }) => { if (isStaleView(r.code)) onStale(r.error); else setError(r.error); };
 
   async function go() {
     if (busy) return;
@@ -47,18 +51,18 @@ export function AccountWindow({ orgSlug, books, accounts, editing, onClose, onDo
     if (!editing) {
       const r = await bankWrite(bankUrl(orgSlug), 'POST', { name: name.trim(), ledgerIds: [...moving] }, W.addAccountFailed);
       setBusy(false);
-      if (r.ok) onDone(r.view, true); else setError(r.error);
+      if (r.ok) onDone(r.view, true); else refuse(r);
       return;
     }
     let last: AccountView | null = null;
     if (name.trim() !== editing.name) {
       const r = await bankWrite(bankUrl(orgSlug, `/accounts/${editing.id}`), 'PATCH', { name: name.trim() }, W.editAccountFailed);
-      if (!r.ok) { setBusy(false); setError(r.error); return; }
+      if (!r.ok) { setBusy(false); refuse(r); return; }
       last = r.view;
     }
     for (const ledgerId of moving) {
       const r = await bankWrite(bankUrl(orgSlug, `/accounts/${editing.id}/books`), 'POST', { ledgerId }, W.editAccountFailed);
-      if (!r.ok) { setBusy(false); setError(r.error); if (last) onPartial(last); return; }
+      if (!r.ok) { setBusy(false); refuse(r); if (last && !isStaleView(r.code)) onPartial(last); return; }
       last = r.view;
     }
     setBusy(false);
