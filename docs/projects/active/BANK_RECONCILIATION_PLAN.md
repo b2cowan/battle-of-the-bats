@@ -253,33 +253,51 @@ money table or a book line.** A guard test pins this: no bank code writes `accou
 > below are the drawings' words unless marked *new*.
 
 - [ ] "Bank" — the club Accounting tab and the coach Ledger view — club treasurer, coach
-- [ ] "Check a statement" · "Statement date" · "Bank balance on that date" (phone: "Bank balance") — the check form
-- [ ] "The bank says" · "Should be in the bank" (phone band: "Should be there") · "Difference" — the band
-- [ ] "Matches" · "Off by $X" + "The bank shows $X more than your books." / *new* "The bank shows $X less than your
-  books." — band, saved list, Overview line, Teams view
-- [ ] "Your books on {date}" · "Online payments on their way to your bank · {n}" · "Stripe pays them out {date}" — sums
-- [ ] *new* "Couldn't reach Stripe, so online payments on their way aren't counted. Try again in a few minutes." — the
-  Stripe line when it can't be read
+- [x] "Check a statement" · "Statement date" · "Bank balance on that date" (phone: "Bank balance") — the check form (settled, BC2 `/marketing` 2026-11-06; the phone word is BC4's)
+- [x] "The bank says" · "Should be in the bank" (phone band: "Should be there") · "Difference" — the band (settled, BC2 `/marketing` 2026-11-06; the phone word is BC4's)
+- [x] "Matches" · "Off by $X" + "The bank shows $X more than your books." / *new* "The bank shows $X less than your
+  books." — band, saved list, Overview line, Teams view (settled, BC2 `/marketing` 2026-11-06 for the band and list; the Overview line and Teams view are BC5's)
+- [x] "Your books on {date}" · "Online payments on their way to your bank · {n}" · "Stripe pays them out {date}" — sums (settled, BC2 `/marketing` 2026-11-06)
+- [x] *new* "Couldn't reach Stripe, so online payments on their way aren't counted. Try again in a few minutes." — the
+  Stripe line when it can't be read (settled, BC2 `/marketing` 2026-11-06)
 - [ ] "Not in the bank yet" · "Undo" · *new* "Still waiting on {line}?" · "Yes" · "No" — Find and the next check
 - [ ] "Cash not deposited yet" — the cash figure, the saved check, the report
 - [ ] "Find the $X" · "Lines since your last match · {date}" · "Exactly $X" · *new* "Half of $X. Entered the wrong way
   round?" · *new* "These {2|3} add up to $X" — Find
 - [ ] "Add the missing line" — opens the ordinary add form
-- [ ] "Save this check" · "It saves as off by $X. You can check this statement again later." — save
-- [ ] "Checked statements" · "The bank said" · "Should have been" · "Result" · "Checked by" · "Starting point" — list
-- [ ] "Books now say $X" — saved row chip
-- [ ] "Delete this check" · *new* "Delete the check for {date}? Its figures go; who deleted it and when is kept." ·
-  "Check this statement again" — the opened check
-- [ ] "Start checking {account}" · "Pick a bank statement you already have and type its date and ending balance. Checks
-  start from there." · "Start here" — club first check
+- [x] "Save this check" · "It saves as off by $X. You can check this statement again later." — save (settled, BC2 `/marketing` 2026-11-06)
+- [x] "Checked statements" · "The bank said" · "Should have been" · "Result" · "Checked by" · "Starting point" — list (settled, BC2 `/marketing` 2026-11-06)
+- [x] "Books now say $X" — saved row chip (settled, BC2 `/marketing` 2026-11-06)
+- [x] "Delete this check" · *new* "Delete the check for {date}? Its figures go; who deleted it and when is kept." ·
+  "Check this statement again" — the opened check (settled, BC2 `/marketing` 2026-11-06)
+- [x] "Start checking {account}" · "Pick a bank statement you already have and type its date and ending balance. Checks
+  start from there." · "Start here" — club first check (settled, BC2 `/marketing` 2026-11-06)
 - [ ] *new, Q2-A* "Waiting at the start" · "This was written before your starting statement and cashed after it." — Find
 - [ ] *new, Q1-A* "From the {2025 Season}" — the divider above last season's lines in the coach's Find
 - [ ] *new* "Statements from this season only, since {date}." (drawn) · *new* refusal "This statement is before the
   {2026 Season} started on {date}. Check it from last season before you start a new one." — coach
 - [ ] "Bank: {account} checked through {date} ›" · "Bank: not checked yet ›" · coach "Bank checked through {date} ›" ·
   Teams "bank checked through {date} · Matches" — the mark (ask 4)
-- [ ] *new, Q3-A* "Saved checks keep the books they counted. The next check of each account counts this book where it
-  is now." — Add an account / Name and books
+- [x] *new, Q3-A* "Saved checks keep the books they counted. The next check of each account counts this book where it
+  is now." — Add an account / Name and books (settled, BC2 `/marketing` 2026-11-06)
+- [x] *new, BC2a/BC2b, settled 2026-11-06* — the start and the opened check (`lib/bank-tab-words.ts`, `lib/bank-check-words.ts`):
+  "Stripe didn't answer, so online payments on their way aren't counted yet." / "One of Stripe's payouts doesn't list what's
+  in it, so online payments on their way aren't counted yet." + "Checks after this one may be off by those payments. You can
+  try again in a few minutes, or start anyway." · "Try again" · "Start anyway" — the Start warning; "Checked through {date}"
+  · "Not checked yet" — the top line; "Off by $X. Open the check for {date}" — the chip's spoken name; "online payments on
+  their way weren't counted" — a start's row; "{account} · saved check" · "Statement ending {date}" · "Should have been in
+  the bank" · "Not in the bank yet · {line}" · "Stripe didn't answer when this was saved, so online payments on their way
+  weren't counted." — the opened check; "Books now say $X. A line dated on or before {date} changed after this check was
+  saved. This check's figures stay as they were."; "Checked by {name} on {date} at {clock}"; "Delete this check?" · "Keep
+  it" · "Delete" · "The check for {date} is deleted."; "{account} · starting point" · "Starting statement · {date}" · "Checks
+  start from this balance" · "Started by {name} on {date} at {clock}" · "Delete the starting statement" / "?" · "Delete the
+  starting statement for {date}? Checking this account starts again from a statement you pick. Who deleted it and when is
+  kept." · "The starting statement for {date} is deleted. Start again from a statement." · "Open the starting statement
+  for {date}" — the start's window; refusals *new, BC2 review, written AFTER the pass — BC3's `/marketing` pass settles
+  them* "Stripe didn't answer just now, so online payments on their
+  way can't be counted. Look over the figures again, then save." / "One of Stripe's payouts doesn't list what's in it, so
+  online payments on their way can't be counted. Look over the figures again, then save." — a check whose save can't count
+  Stripe. "Cash not deposited yet" stays in the module for the coach (BC6): the club desk has no cash field (owner).
 - [ ] Report words (§6) — the printable page
 - [ ] Help search words carry "reconcile / reconciliation"; the collision with the coach's "reconcile the estimate" and
   the export's "RECONCILIATION — SPENDING TO CASH" (Appendix A §5) goes to the same pass.
@@ -508,9 +526,11 @@ Start; BC2b the saved checks, Delete, the pill; one owner question first: a star
     direction in words; the sums always open (Your books with the book names · Online payments on their way · n · Stripe pays
     them out {date} · Show/Hide, child rows, footer "Stripe pays these out on {date} · Payouts tab" · Should be in the bank);
     *not counted* shows the notice with Try again. Hint "Lines since your last match ({date}): n" is plain text (its Show is BC3).
-  - **Start** (`BankSetup.tsx`): before saving it reads Stripe's on-its-way for the start's day (`asked=start`); *not counted*
-    shows the warning (two wordings: Stripe down, a payout that lists no lines) with **Try again** and **Start anyway**; the
-    saved start keeps NULL.
+  - **Start** (`BankSetup.tsx`): *not counted* shows the warning (two wordings: Stripe down, a payout that lists no lines) with
+    **Try again** and **Start anyway**; the saved start keeps NULL. **Since the BC2 review (2026-11-06) the SERVER decides:**
+    `saveCheck` reads Stripe to save and refuses `not_counted_down` / `not_counted_unlisted` (409) unless the body carries
+    `anyway: true`; the card turns that refusal into its warning and has no pre-read of its own (BC2a's GET-then-PUT could
+    save an unwarned NULL when Stripe failed between the two reads).
   - **Server asked-for changes** (BC1 loose ends, `lib/bank-club-steps.ts` / `-rules.ts` / `-read.ts` + the five write routes):
     `bankBody` (a JSON `null`/array body is a coded refusal, not a 500); `EARLIEST_STATEMENT_DAY` 2000-01-01 in `readDay`;
     `cutText` (a waiting label cut by characters); `?asked=start|check` on the figure GET (so the check form's own start day reads
@@ -528,10 +548,47 @@ Start; BC2b the saved checks, Delete, the pill; one owner question first: a star
     drawing does); the server already takes it. Say yes and it is one field.
   - **Reader note:** a club member who can open Accounting but not move club money gets 403 on the Bank routes today (club read
     = write, B7), so the reader's "same screen without the form" branch is built but unreachable until that permission splits.
-- [ ] Saved checks: the table, the opened window, Delete (one question, who/when), Check this statement again (replace),
-  "Books now say".
-- [ ] Account pill with "{date} · Matches|Off by"; Add an account / Name and books with the Q3 sentence.
-- [ ] Layout guard + `check:layout --only admin-accounting-bank`; walk probe; `/simplify`, `/review`.
+- [x] **BC2b built 2026-11-06 — saved checks: the table, the opened window, Delete (one question, who/when), Check this
+  statement again (replace), "Books now say".** Owner rulings that session (all as recommended): no cash field on the club
+  desk (build to the drawing); the starting statement opens and can be deleted while no later check stands; "line", not
+  "cheque"; "Checked by" carries the clock; yes to the UX summary; and (after `/design`) **keep** no Close button in a record
+  window and the medium (640) width for a check's window (the shipped band wrapped "Off by $12.40" at 520). Anchors:
+  - **The list** (`BankStatements.tsx`): every row opens its check (the kit's `rowOpens`, the date a `nameButton`/`nameLink`
+    door, the `go` chevron; phone rows `ClubRow as="button"`, named by their own date, balance and result). Result: Matches ·
+    "Matches · n lines not in the bank yet" · amber "Off by $X" · amber "Books now say $X". Top line "Checked through {date}"
+    with the amber chip when the latest is off, the chip a door to that check ("Off by $X. Open the check for {date}"). The
+    starting statement opens too and, saved with Stripe not counted, says "online payments on their way weren't counted".
+  - **The opened check** (`BankCheckWindow.tsx`): "{account} · saved check" / "Statement ending {date}", medium, the shipped
+    band in past tense (`BankBand saved`), the saved sums line by line from the engine's `savedTerms` (`lib/bank-check.ts`:
+    the lines, their signs and the total; the screen formats only), "Books now say $X." with why, "Checked by {name} on {date}
+    at {clock}"; Delete is RepKit's `RecordDelete` ending the body, one question first, soft (who/when kept); the foot is
+    "Check this statement again" (a writer's). The start's window (520, no band, no foot): its balance, on its way, "Checks
+    start from this balance", "Started by …", and while later checks stand the server's `start_has_checks` sentence in place
+    of Delete; deleting it puts the account back on its Start card, under the Account pill when there are two.
+  - **Check this statement again:** the tab re-keys the form on that date and focuses the balance; saving replaces the check.
+- [x] Account pill with "{date} · Matches|Off by" (`throughWords` on each option) and Add an account / Name and books with
+  the Q3 sentence: built in BC1/BC2a; BC2b keeps the pill on a not-started account's Start card (BC2 review).
+- [x] **Proved 2026-11-06:** `/design` (delete door → `RecordDelete`, no Close, medium width, the chip made a door, phone sums
+  keep amounts right); `/marketing` (6 changes: "online payments" everywhere the start said "card", "Delete the starting
+  statement", "Checks start from this balance", "This check's figures stay as they were", the start's door named for the
+  starting statement; §5 below); `/simplify` (the sums' signs moved into the engine's `savedTerms` + `onItsWayOnCheck`
+  with 4 tests that the lines add to the saved total, one `SumRow`/`SumTotal`, one signed-amount formatter, a dead word
+  removed); `/review` high (4 lenses) — fixed: **the Stripe warning is the server's** (see Start above; a check shown counted
+  that the save can't count is refused and re-read, one shown not counted saves with `anyway`), the Start card keeps the
+  Account pill, the club's Delete reaches a club account only (`deleteCheck` reads the club's accounts first; a team's
+  account sits in the same org from BC6), the chip and phone rows keep their words for a screen reader, "check again" is
+  cleared on a delete, a net-zero line reads "$0.00". 232 bank tests; tsc, eslint, spelling, money arithmetic clean;
+  `check:layout --only=admin-accounting-bank` clean at 361/390/768/1440; dev walks `.probe/bank-bc2/routes.mjs` (now also
+  the server's `not_counted_down` refusal) → `BANK_BC2_ROUTES_PASSED`, `.probe/bank-bc2/ui.mjs` → `BANK_BC2_UI_PASSED`,
+  `.probe/bank-bc2b/ui.mjs` → `BANK_BC2B_UI_PASSED` (32 checks). Every probe row removed; Stripe id restored.
+  - **Review findings recorded, not fixed (Low unless marked):** (Low–Medium) a check saved in the instant its start is
+    re-saved on its own date carries the old start's books (`saveCheck` reads the books outside the account lock; pass the
+    start's id/books as an expected value to `bank_check_save`) — decide with BC3's M2; "Checked by" falls back to a removed
+    member's email (`resolvePersonNamer`, shared); a refused date's figure GET still reads Stripe; `staleRefresh` skips the
+    account re-read when the overview read was superseded, and a write's `setView` doesn't bump the view sequence; the Start
+    card's fields stay editable mid-save; two treasurers starting the very first account at once make two accounts (BC1's
+    `bank_account_add`); "Check this statement again" clears a typed balance (as designed: the form starts on that day,
+    empty).
 
 ### BC3 — Club: Find (tab 3)
 - [ ] The callout with the hints (exact, half, 2–3 lines), suspects since the last match with search, "Not in the bank

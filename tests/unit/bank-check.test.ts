@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   HINT_CAP, MAX_COMBOS, booksNowSay, coachBooksOnDate, figureCheck, figureOfSaved, findHints, latestBefore,
-  matchedWhenSaved, startBooks, suspectsSince, typedCents,
+  matchedWhenSaved, onItsWayOnCheck, savedTerms, startBooks, suspectsSince, typedCents,
   type BankLine, type SavedCheck, type WaitingItem,
 } from '../../lib/bank-check.ts';
 
@@ -263,5 +263,38 @@ describe('typedCents — what a treasurer types, in cents (BC2: the bracket form
     assert.equal(t('($5.00)', true), null);
     assert.equal(t('5', true), 500);
     assert.equal(t('9999999999999'), null);
+  });
+});
+
+describe('savedTerms — an opened check’s sums, line by line (BC2b): the signs are the engine’s, never the screen’s', () => {
+  const sum = (ts: ReturnType<typeof savedTerms>['terms']) => ts.reduce((n, t) => n + (t.cents ?? 0), 0);
+  const items: WaitingItem[] = [
+    { key: 'entry:chq', date: '2026-10-28', direction: 'out', amountCents: 41_200, label: 'Cheque 214' },
+    { key: 'entry:dep', date: '2026-10-30', direction: 'in', amountCents: 7_500 },
+  ];
+  it('a check: books, on its way off, an out-item added back, an in-item off, cash off; the lines add to Should have been', () => {
+    const c = saved({ id: 'c', date: '2026-10-31', bankCents: 500_000, booksCents: 520_000, onItsWayCents: 12_000, cashCents: 3_000, waiting: items });
+    const { terms, totalCents } = savedTerms(c);
+    assert.deepEqual(terms.map(t => [t.kind, t.cents]), [['base', 520_000], ['onItsWay', -12_000], ['waiting', 41_200], ['waiting', -7_500], ['cash', -3_000]]);
+    assert.equal(totalCents, figureOfSaved(c).shouldBeCents);
+    assert.equal(sum(terms), totalCents);
+  });
+  it('the start: the bank, on its way added, an out-item off, an in-item added; the lines add to the books it starts from', () => {
+    const c = saved({ id: 's', kind: 'start', date: '2026-09-30', bankCents: 500_000, onItsWayCents: 12_000, waiting: items });
+    const books = startBooks(c);
+    const { terms, totalCents } = savedTerms({ ...c, booksCents: books });
+    assert.deepEqual(terms.map(t => [t.kind, t.cents]), [['base', 500_000], ['onItsWay', 12_000], ['waiting', -41_200], ['waiting', 7_500]]);
+    assert.equal(totalCents, books);
+    assert.equal(sum(terms), totalCents);
+  });
+  it('a zero on-its-way and zero cash are left out; not counted stays as null; a start never shows cash', () => {
+    assert.deepEqual(savedTerms(saved({ id: 'z', date: '2026-10-31', booksCents: 100, cashCents: 0 })).terms.map(t => t.kind), ['base']);
+    const nc = savedTerms(saved({ id: 'n', date: '2026-10-31', booksCents: 100, onItsWayCents: null })).terms;
+    assert.deepEqual(nc.map(t => [t.kind, t.cents]), [['base', 100], ['onItsWay', null]]);
+    assert.deepEqual(savedTerms(saved({ id: 'sc', kind: 'start', date: '2026-09-30', bankCents: 100, booksCents: 100, cashCents: 500 })).terms.map(t => t.kind), ['base']);
+  });
+  it('the live sums take the same on-its-way sign: off the books on a check, so a negative (a refund) adds back', () => {
+    assert.equal(onItsWayOnCheck(12_000), -12_000);
+    assert.equal(onItsWayOnCheck(-2_500), 2_500);
   });
 });

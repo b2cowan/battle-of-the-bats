@@ -1,5 +1,7 @@
 # Bank balance check BC2b: the saved checks, the opened check, Delete, the account pill (build prompt)
 
+> ✅ **DONE 2026-11-06.** Steps 1–9 built and finished (the finish prompt BANK_BALANCE_CHECK_BC2B_FINISH_PROMPT.md: /marketing, /simplify, /review, records, commit). The record is plan §9 BC2.
+
 > **Written 2026-11-06**, after BC2a was committed. **Paste `execute @docs/projects/active/BANK_BALANCE_CHECK_BC2B_BUILD_PROMPT.md`
 > into a new chat on `dev`.** Other sessions share this working copy: stage explicit paths only, commit only your own hunks, and
 > only when the owner says (the recipe is the auto-memory note `reference_partial_commit_shared_tree`: a private index built on

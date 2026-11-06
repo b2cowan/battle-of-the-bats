@@ -9,8 +9,9 @@
  *   · an account not started (a second one) ..... the same card for that account
  *   · otherwise ................................. the account line ("{date} · Matches|Off by $X") and the saved checks
  *   · a second account .......................... the Account pill (only then) with "Add an account" at its foot
- * ⚖ The check form ("Check a statement", BC2a) sits on this tab above the saved checks (ask 10), for a writer only. The opened
- *   check, Delete and "Check this statement again" are BC2b.
+ * ⚖ The check form ("Check a statement", BC2a) sits on this tab above the saved checks (ask 10), for a writer only. Each
+ *   saved check opens in its window (BC2b, `BankCheckWindow`): Delete (one question; a writer's) and "Check this statement
+ *   again", which closes the window and re-keys the form with the check's date.
  * ⚖ A refusal that means the view is STALE (someone changed the account first) re-reads the overview and the account, THEN says
  *   the server's sentence (BC1 review): `staleRefresh`.
  * ⚖ NO YEAR PILL, no year anywhere: a statement may straddle a fiscal year.
@@ -31,9 +32,10 @@ import BankSetup from './BankSetup';
 import BankStatements from './BankStatements';
 import BankCheckForm from './BankCheckForm';
 import { AccountWindow } from './BankWindows';
+import BankCheckWindow from './BankCheckWindow';
 import s from './Bank.module.css';
 
-type Win = { kind: 'addAccount' } | { kind: 'editAccount' } | null;
+type Win = { kind: 'addAccount' } | { kind: 'editAccount' } | { kind: 'check'; id: string } | null;
 
 export default function BankTab({ orgSlug }: { orgSlug: string }) {
   const [overview, setOverview] = useState<Overview | null>(null);
@@ -42,6 +44,8 @@ export default function BankTab({ orgSlug }: { orgSlug: string }) {
   const [view, setView] = useState<AccountView | null>(null);
   const [viewFailed, setViewFailed] = useState(false);
   const [win, setWin] = useState<Win>(null);
+  // "Check this statement again": the date handed to the form, and a count that re-keys it (the same date twice re-keys too).
+  const [again, setAgain] = useState<{ date: string; n: number } | null>(null);
   const [notice, setNotice] = useNotice();
 
   const beginRead = useLatestRead();
@@ -119,7 +123,7 @@ export default function BankTab({ orgSlug }: { orgSlug: string }) {
   if (!view || view.account.id !== accountId) return <LoadingState label={W.loadingAccount} />;
 
   const accounts = view.accounts;
-  const pickAccount = (id: string) => { setWin(null); setView(null); setAccountId(id); };
+  const pickAccount = (id: string) => { setWin(null); setAgain(null); setView(null); setAccountId(id); };
 
   // The Account pill only at a second account, each option saying its latest check, "Add an account" at its foot as
   // "Add ledger" is on the Book pill. One account: its name in the line, and the door to add one.
@@ -140,21 +144,37 @@ export default function BankTab({ orgSlug }: { orgSlug: string }) {
   );
 
   const body = !view.start
-    // A second account named but not started yet: its own first-check card.
-    ? canMove
-      ? <BankSetup key={view.account.id} orgSlug={orgSlug} account={view.account} books={overview.books} onSaved={setView}
-          onStale={t => void staleRefresh(t)} />
-      : <Callout role="status">{W.setupReader}</Callout>
+    // An account named but not started yet (or its start deleted): its own first-check card, under the Account pill so a
+    // second account can still be picked (BC2 review).
+    ? <>
+        {accountLine && <div className={s.top}><div className={s.statusLine}>{accountLine}</div></div>}
+        {canMove
+          ? <BankSetup key={view.account.id} orgSlug={orgSlug} account={view.account} books={overview.books} onSaved={setView}
+              onStale={t => void staleRefresh(t)} />
+          : <Callout role="status">{W.setupReader}</Callout>}
+      </>
     : <BankStatements view={view} accountLine={accountLine} tools={accountTools || null}
+        onOpen={id => setWin({ kind: 'check', id })}
         form={canMove ? (
-          <BankCheckForm orgSlug={orgSlug} view={view} onStale={t => void staleRefresh(t)}
+          <BankCheckForm key={again?.n ?? 0} againDate={again?.date} orgSlug={orgSlug} view={view} onStale={t => void staleRefresh(t)}
             onSaved={(v, text) => { setView(v); setNotice({ tone: 'good', text }); }} />
         ) : undefined} />;
+
+  // The check the window holds, as the account reads now (gone after a re-read: the window closes with it).
+  const opened = win?.kind === 'check'
+    ? (view.start?.id === win.id ? view.start : view.checks.find(c => c.id === win.id)) ?? null
+    : null;
 
   return (
     <>
       {noticeEl}
       {body}
+      {opened && (
+        <BankCheckWindow orgSlug={orgSlug} view={view} check={opened} canMove={canMove}
+          onClose={() => setWin(null)} onStale={t => void staleRefresh(t)}
+          onAgain={date => { setWin(null); setAgain(a => ({ date, n: (a?.n ?? 0) + 1 })); }}
+          onDeleted={(v, text) => { setWin(null); setAgain(null); setView(v); setNotice({ tone: 'good', text }); }} />
+      )}
       {(win?.kind === 'addAccount' || win?.kind === 'editAccount') && (
         <AccountWindow orgSlug={orgSlug} books={overview.books} accounts={accounts}
           editing={win.kind === 'editAccount' ? { id: view.account.id, name: view.account.name } : undefined}

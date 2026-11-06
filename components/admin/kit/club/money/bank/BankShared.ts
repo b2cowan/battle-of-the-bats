@@ -23,6 +23,12 @@ export function bankUrl(orgSlug: string, path = '', params: Record<string, strin
 
 /** "$1,284.50" from integer cents. */
 export const cents = (c: number | null | undefined): string => (c == null ? '' : money(c / 100));
+/** "+ $75.00" / "− $412.00": a signed amount (the engine's `savedTerms`, `onItsWayOnCheck`), the way it moved the total. */
+export const moved = (signedCents: number): string =>
+  signedCents === 0 ? cents(0) : `${signedCents < 0 ? '−' : '+'} ${cents(Math.abs(signedCents))}`;
+/** The server's "Stripe failed between your read and the save" refusal (warn, never block): which notice it is. */
+export const notCountedOf = (code: string | null): 'stripe_down' | 'unlisted' | null =>
+  code === 'not_counted_down' ? 'stripe_down' : code === 'not_counted_unlisted' ? 'unlisted' : null;
 /** "Oct 31, 2026" — a statement's day always carries its year (a statement may straddle one). */
 export const dayYear = (d: string | null | undefined): string => formatStoredDate(d);
 
@@ -59,7 +65,7 @@ export type BankAnswer =
   | { ok: true; view: AccountView }
   | { ok: false; code: string | null; error: string; network: boolean };
 
-export async function bankWrite(url: string, method: 'POST' | 'PATCH' | 'PUT', body: unknown, fallback: string): Promise<BankAnswer> {
+export async function bankWrite(url: string, method: 'POST' | 'PATCH' | 'PUT' | 'DELETE', body: unknown, fallback: string): Promise<BankAnswer> {
   try {
     const init = method === 'PUT'
       ? { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }

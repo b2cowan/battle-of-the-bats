@@ -8,10 +8,12 @@
  *
  * ⚖ The FIRST account holds every club book (rule 1: a book in no account belongs to it), so its books are listed, not
  * chosen — unticking one would put it nowhere. A book leaves it by being added to a second account.
- * Saving: name the account (or rename it), read Stripe's on-its-way for the start's day, then its starting statement (one PUT).
+ * Saving: name the account (or rename it), then its starting statement (one PUT).
  * ⚖ STRIPE DIDN'T ANSWER = WARN, NEVER BLOCK (owner 2026-11-06, BC1 review M1): the start's books are worked from the money on its
- *   way, so a start saved without it makes every later check read off by those payments. The card says so with Try again and
- *   Start anyway; the saved start keeps "not counted" (the server records NULL, not 0).
+ *   way, so a start saved without it makes every later check be off by those payments. The SERVER decides (BC2 review): it
+ *   reads Stripe to save, and refuses a not-counted start unless the body says `anyway`, so Stripe failing between two
+ *   reads can't save one unwarned. The card turns that refusal into its notice with Try again and Start anyway; the saved
+ *   start keeps "not counted" (the server records NULL, not 0).
  */
 import { useState } from 'react';
 import { AlertTriangle, Check } from 'lucide-react';
@@ -21,7 +23,7 @@ import { DayField, FormError, TextField } from '../MoneyKit';
 import BankMoneyField from './BankMoneyField';
 import { tournamentToday } from '@/lib/timezone';
 import { BANK_WORDS as W } from '@/lib/bank-tab-words';
-import { bankUrl, bankWrite, isStaleView, parseCents, readFigure, type AccountView, type Overview } from './BankShared';
+import { bankUrl, bankWrite, isStaleView, notCountedOf, parseCents, type AccountView, type Overview } from './BankShared';
 import s from './Bank.module.css';
 
 export default function BankSetup({ orgSlug, account, books, onSaved, onStale }: {
@@ -54,7 +56,9 @@ export default function BankSetup({ orgSlug, account, books, onSaved, onStale }:
     setBusy(true); setError('');
     const fail = (r: { code: string | null; error: string }) => {
       setBusy(false);
-      if (isStaleView(r.code)) onStale(r.error); else setError(r.error);
+      const reason = notCountedOf(r.code);
+      if (reason) setNotCounted(reason);
+      else if (isStaleView(r.code)) onStale(r.error); else setError(r.error);
     };
     let id = accountId;
     if (!id) {
@@ -67,14 +71,9 @@ export default function BankSetup({ orgSlug, account, books, onSaved, onStale }:
       if (!r.ok) return fail(r);
       setSavedName(r.view.account.name);
     }
-    if (!anyway) {
-      // Is Stripe's money on its way countable on this day? The start's books are worked from it, so a start saved without
-      // it makes every later check read off by those payments for good — say so first (the server reads it again to save).
-      const f = await readFigure(orgSlug, id, date, 'start');
-      if (!f.ok) return fail(f);
-      if (f.figure.onItsWay.state === 'not_counted') { setBusy(false); setNotCounted(f.figure.onItsWay.reason); return; }
-    }
-    const r = await bankWrite(bankUrl(orgSlug, `/accounts/${id}/setup`), 'PUT', { date, bankCents: c }, W.setupFailed);
+    // Is Stripe's money on its way countable on this day? The server reads it to save and, unless `anyway`, refuses a start
+    // without it (`not_counted_*`): the start's books are worked from it, so the card says so first (`fail` → the notice).
+    const r = await bankWrite(bankUrl(orgSlug, `/accounts/${id}/setup`), 'PUT', { date, bankCents: c, anyway }, W.setupFailed);
     if (r.ok) { setNotCounted(null); onSaved(r.view); return; } // the card goes with the account's own view: it stays busy till then
     fail(r);
   }

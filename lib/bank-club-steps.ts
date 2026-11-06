@@ -168,6 +168,12 @@ export async function saveCheck(ctx: AuthContextWithRole, accountId: string, ask
     facts: { booksCents: figure.booksCents, onItsWay: figure.onItsWay, bookIds: bookIdsOf(account.books) },
   });
   if (!plan.ok) return bankRefusedAs(plan.code);
+  // ⚖ STRIPE DIDN'T ANSWER = WARN, NEVER BLOCK (owner 2026-11-06), decided HERE (BC2 review): the save reads Stripe again,
+  // so Stripe failing between the screen's read and this one must not save a "not counted" the treasurer never saw. The
+  // body's `anyway` is the treasurer's choice after reading the notice ("Start anyway", or a check shown not counted).
+  if (figure.onItsWay.state === 'not_counted' && body.anyway !== true) {
+    return bankRefusedAs(figure.onItsWay.reason === 'stripe_down' ? 'not_counted_down' : 'not_counted_unlisted');
+  }
   const a = plan.args;
   const r = await step('bank_check_save', {
     p_org: ctx.org.id, p_account: accountId, p_kind: a.kind, p_date: a.date, p_bank_cents: a.bankCents,
@@ -180,6 +186,10 @@ export async function saveCheck(ctx: AuthContextWithRole, accountId: string, ask
 /** DELETE /bank/accounts/{id}/checks/{checkId} — ask 5: any check, after one question; who and when are kept (soft). The
  *  starting statement can't go while a later check stands on it (`start_has_checks`). */
 export async function deleteCheck(ctx: AuthContextWithRole, accountId: string, checkId: string): Promise<Moved<object>> {
+  // A CLUB account's check only (BC2 review): the step keys on the org and the account, and a team's account (BC6) is in
+  // the same org — the club's door never reaches it.
+  const all = await readClubBankAccounts(ctx.org.id);
+  if (!all.accounts.some(a => a.id === accountId)) return bankRefusedAs('account_not_found');
   const r = await step('bank_check_delete', { p_org: ctx.org.id, p_account: accountId, p_check: checkId, p_actor: ctx.user.id });
   return r.ok ? { ok: true } : r;
 }

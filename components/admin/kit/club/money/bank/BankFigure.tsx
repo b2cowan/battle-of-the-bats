@@ -9,34 +9,84 @@
  * ⚖ The sums are always open: Your books (with the book names), Online payments on their way (· n · Show), the total.
  * ⚖ Online-payment lines are SHOWN, not tickable: they are counted in the figure, in one line (ask 8).
  */
-import { useState } from 'react';
+import { Fragment, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import MoneySummaryBand, { type MoneyTile } from '@/components/coaches/MoneySummaryBand';
 import { day } from '../MoneyKit';
-import type { CheckFigure } from '@/lib/bank-check';
+import { onItsWayOnCheck, type CheckFigure } from '@/lib/bank-check';
 import { BANK_WORDS as W } from '@/lib/bank-tab-words';
-import { cents, dayYear, type Figure } from './BankShared';
+import { cents, dayYear, moved, type Figure } from './BankShared';
 import s from './Bank.module.css';
 
-/** The three tiles. `figure` is null until there is a day's books; `typed` false until a balance is typed. */
-export function BankBand({ date, figure, typed }: { date: string; figure: CheckFigure | null; typed: boolean }) {
+/**
+ * The three tiles. `figure` is null until there is a day's books; `typed` false until a balance is typed. `saved`: a saved
+ * check's own band, opened (tab 5): The bank said · Should have been · Result, past tense, the direction its only caption.
+ */
+export function BankBand({ date, figure, typed, saved = false }: {
+  date: string; figure: CheckFigure | null; typed: boolean; saved?: boolean;
+}) {
   const when = dayYear(date);
   const settled = figure !== null && typed;
+  const direction = !settled || figure.direction === null ? null
+    : figure.direction === 'bank_more' ? W.bandBankMore(cents(figure.offByCents)) : W.bandBankLess(cents(figure.offByCents));
   const diff: MoneyTile = {
-    key: 'difference', label: W.bandDifference,
+    key: 'difference', label: saved ? W.savedResult : W.bandDifference,
     figure: !settled ? '—' : figure.result === 'matches' ? W.matches : W.offBy(cents(figure.offByCents)),
     tone: !settled ? 'plain' : figure.result === 'matches' ? 'good' : 'warn',
-    caption: !settled ? W.bandNoBalance
-      : figure.direction === null ? W.bandMatches(when)
-        : figure.direction === 'bank_more' ? W.bandBankMore(cents(figure.offByCents)) : W.bandBankLess(cents(figure.offByCents)),
+    caption: saved ? direction ?? undefined : !settled ? W.bandNoBalance : direction ?? W.bandMatches(when),
   };
   return (
-    <div className={s.bandWrap} aria-live="polite">
-      <MoneySummaryBand ariaLabel={W.checkTitle} tiles={[
-        { key: 'bank', label: W.bandBank, figure: settled ? cents(figure.bankCents) : '—', caption: W.bandBankCaption(when) },
-        { key: 'should', label: W.bandShould, figure: figure ? cents(figure.shouldBeCents) : '—', caption: W.bandShouldCaption(when) },
+    <div className={s.bandWrap} aria-live={saved ? undefined : 'polite'}>
+      <MoneySummaryBand ariaLabel={saved ? W.savedTitle(when) : W.checkTitle} tiles={[
+        { key: 'bank', label: saved ? W.savedBank : W.bandBank, figure: settled ? cents(figure.bankCents) : '—',
+          caption: saved ? undefined : W.bandBankCaption(when) },
+        { key: 'should', label: saved ? W.savedShould : W.bandShould, figure: figure ? cents(figure.shouldBeCents) : '—',
+          caption: saved ? undefined : W.bandShouldCaption(when) },
         diff,
       ]} />
+    </div>
+  );
+}
+
+/** One line of the sums, live or saved: what, and its amount (quiet: "not counted"). */
+function SumRow({ label, amount, quiet = false }: { label: ReactNode; amount: ReactNode; quiet?: boolean }) {
+  return (
+    <div className={s.sumRow}>
+      <span>{label}</span>
+      <span className={`${s.sumAmt}${quiet ? ` ${s.sumQuiet}` : ''}`}>{amount}</span>
+    </div>
+  );
+}
+
+/** The ruled-off total under the sums. */
+function SumTotal({ label, amount }: { label: string; amount: string }) {
+  return (
+    <div className={`${s.sumRow} ${s.sumTotal}`}>
+      <span>{label}</span>
+      <span className={s.sumAmt}>{amount}</span>
+    </div>
+  );
+}
+
+/** One line of a saved check's sums: what, and its amount with the way it moved the total ("+ $75.00", "− $412.00"). */
+export type SavedSumRow = { key: string; label: string; amount: string; quiet?: boolean; note?: string };
+
+/**
+ * A SAVED check's sums (tab 5, the opened check): the lines as they were saved, ruled off by the total. Every row arrives
+ * worded and signed (`savedSumRows` in BankCheckWindow, from the engine's `savedTerms`); this only lays them out.
+ */
+export function BankSavedSums({ rows, totalLabel, totalAmount }: {
+  rows: readonly SavedSumRow[]; totalLabel: string; totalAmount: string;
+}) {
+  return (
+    <div className={s.sums} role="group" aria-label={W.sumsTitle}>
+      {rows.map(r => (
+        <Fragment key={r.key}>
+          <SumRow label={r.label} amount={r.amount} quiet={r.quiet} />
+          {r.note && <p className={s.sumNotice}>{r.note}</p>}
+        </Fragment>
+      ))}
+      <SumTotal label={totalLabel} amount={totalAmount} />
     </div>
   );
 }
@@ -56,22 +106,18 @@ export function BankSums({ date, bookNames, booksCents, shouldBeCents, onItsWay,
   const counted = onItsWay.state === 'counted' && onItsWay.lines.length > 0 ? onItsWay : null;
   return (
     <div className={s.sums} role="group" aria-label={W.sumsTitle}>
-      <div className={s.sumRow}>
-        <span>{W.sumBooks(dayYear(date))}<span className={s.sumQuiet}> · {bookNames.join(', ')}</span></span>
-        <span className={s.sumAmt}>{cents(booksCents)}</span>
-      </div>
+      <SumRow label={<>{W.sumBooks(dayYear(date))}<span className={s.sumQuiet}> · {bookNames.join(', ')}</span></>} amount={cents(booksCents)} />
 
       {counted && (
         <>
-          <div className={s.sumRow}>
-            <span>
+          <SumRow
+            label={<>
               {W.sumOnItsWay(counted.lines.length)}
               {counted.paysOutOn && <span className={s.sumQuiet}> · {W.sumPaysOut(dayYear(counted.paysOutOn))}</span>}
               {' '}
               <button type="button" className={s.link} aria-expanded={open} onClick={() => setOpen(o => !o)}>{open ? W.hide : W.show}</button>
-            </span>
-            <span className={s.sumAmt}>{counted.cents < 0 ? `+ ${cents(Math.abs(counted.cents))}` : `− ${cents(counted.cents)}`}</span>
-          </div>
+            </>}
+            amount={moved(onItsWayOnCheck(counted.cents))} />
           {open && (
             <div className={s.childBox}>
               <ul className={s.childRows}>
@@ -93,10 +139,7 @@ export function BankSums({ date, bookNames, booksCents, shouldBeCents, onItsWay,
 
       {onItsWay.state === 'not_counted' && (
         <>
-          <div className={s.sumRow}>
-            <span>{W.sumOnItsWayNone}</span>
-            <span className={`${s.sumAmt} ${s.sumQuiet}`}>{W.notCounted}</span>
-          </div>
+          <SumRow label={W.sumOnItsWayNone} amount={W.notCounted} quiet />
           <p className={s.sumNotice} role="status">
             {onItsWay.reason === 'stripe_down' ? W.notCountedDown : W.notCountedUnlisted}
             {' '}<button type="button" className={s.link} onClick={onRetry}>{W.tryAgain}</button>
@@ -104,10 +147,7 @@ export function BankSums({ date, bookNames, booksCents, shouldBeCents, onItsWay,
         </>
       )}
 
-      <div className={`${s.sumRow} ${s.sumTotal}`}>
-        <span>{W.sumShould}</span>
-        <span className={s.sumAmt}>{cents(shouldBeCents)}</span>
-      </div>
+      <SumTotal label={W.sumShould} amount={cents(shouldBeCents)} />
     </div>
   );
 }

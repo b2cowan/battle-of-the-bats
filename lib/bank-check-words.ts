@@ -28,6 +28,10 @@ export const BANK_REFUSAL = {
   no_start: 'Start checking this account from a statement first.',
   before_start: 'This statement is on or before the one you started from. Check a later statement.',
   start_has_checks: 'Later checks start from this statement, so it can’t be deleted. Delete them first.',
+  // Stripe failed between the screen's read and the save's own (warn, never block, decided by the server, BC2 review):
+  // the screen shows the figure without online payments, and saving it is the treasurer's choice.
+  not_counted_down: 'Stripe didn’t answer just now, so online payments on their way can’t be counted. Look over the figures again, then save.',
+  not_counted_unlisted: 'One of Stripe’s payouts doesn’t list what’s in it, so online payments on their way can’t be counted. Look over the figures again, then save.',
 } as const;
 
 export type BankRefusalCode = keyof typeof BANK_REFUSAL;

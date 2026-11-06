@@ -10,6 +10,8 @@
  * ⚖ BC3 owns Find (the hints, the suspects, "Not in the bank yet", "Still waiting?", "Add the missing line"): none of it is
  *   here, so a check that is off can be saved and cannot yet be worked down from this screen.
  * Only a writer is given this component (B7): `BankTab` mounts it behind `canMove`.
+ * "Check this statement again" (BC2b) re-keys it with `againDate`: the server already replaces a live check of the same
+ * date, and the form already says so ("Saving replaces that check").
  */
 import { useEffect, useState } from 'react';
 import { figureCheck } from '@/lib/bank-check';
@@ -21,26 +23,32 @@ import { DayField, FormError } from '../MoneyKit';
 import BankMoneyField from './BankMoneyField';
 import { BankBand, BankSums } from './BankFigure';
 import {
-  bankUrl, bankWrite, cents, dayYear, isStaleView, parseCents, readFigure, type AccountView, type Figure,
+  bankUrl, bankWrite, cents, dayYear, isStaleView, notCountedOf, parseCents, readFigure, type AccountView, type Figure,
 } from './BankShared';
 import ck from '../../ClubKit.module.css';
 import s from './Bank.module.css';
 
 const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
 const DEBOUNCE_MS = 350;
+const BALANCE_ID = 'bank-check-balance';
 
-export default function BankCheckForm({ orgSlug, view, onSaved, onStale }: {
+export default function BankCheckForm({ orgSlug, view, onSaved, onStale, againDate }: {
   orgSlug: string;
   view: AccountView;
   /** The account read again after a save, and what to tell the treasurer about it. */
   onSaved: (view: AccountView, text: string) => void;
   /** The server said the view is stale: the tab re-reads, then says the sentence. */
   onStale: (text: string) => void;
+  /**
+   * "Check this statement again" (BC2b): the saved check's date, handed in from its window. The tab re-keys the form
+   * with it, so the form starts on that day with the balance empty, scrolled to and the cursor in the balance.
+   */
+  againDate?: string;
 }) {
   const today = tournamentToday();
   const accountId = view.account.id;
-  const [date, setDate] = useState(today);
-  const [asOf, setAsOf] = useState(today); // the date the figure is read for: `date`, after it stops changing
+  const [date, setDate] = useState(againDate ?? today);
+  const [asOf, setAsOf] = useState(againDate ?? today); // the date the figure is read for: `date`, after it stops changing
   const [balance, setBalance] = useState('');
   const [figure, setFigure] = useState<Figure | null>(null);
   const [readError, setReadError] = useState('');
@@ -50,6 +58,14 @@ export default function BankCheckForm({ orgSlug, view, onSaved, onStale }: {
   const beginRead = useLatestRead();
   // A saved or deleted check changes what the day's figure says (the suspects, Still waiting?): re-read after one.
   const checksKey = view.checks.map(c => c.id).join(',');
+
+  // Handed a date ("Check this statement again"): bring the form into view with the cursor in the balance.
+  useEffect(() => {
+    if (!againDate) return;
+    const field = document.getElementById(BALANCE_ID);
+    field?.scrollIntoView({ block: 'center' });
+    field?.focus({ preventScroll: true });
+  }, [againDate]);
 
   useEffect(() => {
     const t = window.setTimeout(() => setAsOf(date), DEBOUNCE_MS);
@@ -81,10 +97,14 @@ export default function BankCheckForm({ orgSlug, view, onSaved, onStale }: {
     if (busy || !fresh) return;
     if (typed === null) { setError(W.balanceMissing); return; }
     setBusy(true); setError('');
-    const r = await bankWrite(bankUrl(orgSlug, `/accounts/${accountId}/checks`), 'POST', { date, bankCents: typed }, W.saveFailed);
+    // `anyway`: the figure on screen is the one without online payments, so saving it is the treasurer's choice. A figure
+    // shown counted that Stripe can't count at the save is refused (`not_counted_*`): read again, so they see what saves.
+    const anyway = fresh.onItsWay.state === 'not_counted';
+    const r = await bankWrite(bankUrl(orgSlug, `/accounts/${accountId}/checks`), 'POST', { date, bankCents: typed, anyway }, W.saveFailed);
     setBusy(false);
     if (!r.ok) {
-      if (isStaleView(r.code)) onStale(r.error); else setError(r.error);
+      if (notCountedOf(r.code)) { setError(r.error); setAgain(n => n + 1); }
+      else if (isStaleView(r.code)) onStale(r.error); else setError(r.error);
       return;
     }
     const saved = r.view.checks.find(c => c.date === date);
@@ -100,7 +120,7 @@ export default function BankCheckForm({ orgSlug, view, onSaved, onStale }: {
       <FormError inPlace>{error}</FormError>
       <div className={s.checkRow}>
         <DayField id="bank-check-date" label={W.statementDate} value={date} onChange={v => { setDate(v); setError(''); }} max={today} />
-        <BankMoneyField id="bank-check-balance" label={W.checkBalance} value={balance} onChange={v => { setBalance(v); setError(''); }} />
+        <BankMoneyField id={BALANCE_ID} label={W.checkBalance} value={balance} onChange={v => { setBalance(v); setError(''); }} />
         <div className={s.checkSave}>
           <button type="button" className="btn btn-lime" onClick={() => void save()} disabled={busy || !fresh}>
             {busy ? W.saving : W.saveCheck}

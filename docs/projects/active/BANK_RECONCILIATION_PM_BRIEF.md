@@ -41,7 +41,10 @@ they don't, it says **Off by $75.00**, says which way, and helps find it. They s
   counted.
 - **Saved checks:** each one shows the bank's figure, what should have been there, and the result. Any check can be
   deleted, and the record keeps who did it and when. If someone edits the books afterwards, the saved check keeps its
-  figures and adds a quiet **Books now say $X**. Nothing warns or blocks on the money forms.
+  figures and adds a quiet **Books now say $X**. Nothing warns or blocks on the money forms. Any saved check opens to
+  show its figures line by line and who checked it, and **Check this statement again** replaces it. The starting
+  statement opens too, and can be deleted (to fix a mistyped start) until a later check stands on it (owner 2026-11-06).
+  When Stripe can't be reached, the treasurer is told before a start or check is saved without the money on its way.
 - **Elsewhere, quietly:** one line on each Overview ("Bank: Club chequing checked through Oct 31, 2026", with an amber
   "Off by $X" when the latest check is off); each team's mark on the club's Teams tab; a printable one-page report with
   signature lines; a reminder (never a block) at the fiscal-year close and at the coach's season close.

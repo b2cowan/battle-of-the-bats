@@ -30,7 +30,7 @@ export const STATUS_OF: Record<BankRefusalCode, number> = {
   account_not_found: 404, check_not_found: 404, book_not_found: 404, org_not_found: 404,
   bad_name: 400, bad_figures: 400, bad_kind: 400, bad_amount: 400, bad_date: 400, bad_item: 400, ends_in_future: 400,
   team_book: 409, name_taken: 409, changed: 409, start_exists: 409, start_after_checks: 409, no_start: 409,
-  before_start: 409, start_has_checks: 409,
+  before_start: 409, start_has_checks: 409, not_counted_down: 409, not_counted_unlisted: 409,
 };
 export const statusOfRefusal = (code: BankRefusalCode): number => STATUS_OF[code];
 

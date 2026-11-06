@@ -47,15 +47,15 @@ describe('3 · a reader reads the same tab with every write control absent (B7)'
     assert.match(tab, /if \(!canMove\) return <Callout role="status">\{W\.setupReader\}<\/Callout>;/);
     assert.match(tab, /const accountTools = canMove && \(/);
     assert.match(tab, /foot=\{canMove \? \(/);
-    assert.match(tab, /\? canMove\s+\? <BankSetup /, 'a second account\'s first-check card is the writer\'s only');
+    assert.match(tab, /\{canMove\s+\? <BankSetup /, 'a second account\'s first-check card is the writer\'s only');
   });
   it('every write a screen sends goes through bankWrite, and only from a component a writer reaches', () => {
     for (const f of FILES) {
       const src = readCode(f);
       assert.doesNotMatch(src, /moneyFetch\([^)]*\{\s*method:/, `${f}: a write outside bankWrite`);
     }
-    // The list itself writes nothing (BC2 adds Delete behind canMove).
-    assert.doesNotMatch(readCode(`${DIR}/BankStatements.tsx`), /bankWrite|onClick/);
+    // The list itself writes nothing: its rows only OPEN a check (BC2b); Delete is the window's, behind canMove (§8).
+    assert.doesNotMatch(readCode(`${DIR}/BankStatements.tsx`), /bankWrite|moneyFetch/);
   });
 });
 
@@ -80,7 +80,7 @@ describe('4 · the kit\'s parts', () => {
 
 // ── Bank balance check BC2a: the check form, the band, the sums, Start's Stripe notice ──────────────────────────────
 const code = (f: string) => readCode(`${DIR}/${f}`);
-const NEW_SCREENS = ['BankCheckForm.tsx', 'BankFigure.tsx', 'BankSetup.tsx'];
+const NEW_SCREENS = ['BankCheckForm.tsx', 'BankFigure.tsx', 'BankSetup.tsx', 'BankCheckWindow.tsx', 'BankStatements.tsx'];
 
 describe('5 · the check form: a balance, not a tick-off', () => {
   it('no tick vocabulary on any screen or in the words (tick, ticked, untick, a checkbox on a line)', () => {
@@ -130,7 +130,7 @@ describe('5 · the check form: a balance, not a tick-off', () => {
   });
   it('Save is intent only: the date and the typed balance; books, on its way and the result are the server\'s (rule 6)', () => {
     const form = code('BankCheckForm.tsx');
-    assert.match(form, /'POST', \{ date, bankCents: typed \}/);
+    assert.match(form, /'POST', \{ date, bankCents: typed, anyway \}/, 'anyway is the treasurer\'s choice, not a figure');
     assert.doesNotMatch(form, /booksCents:\s*(fresh|figure)\b[^)]*\}\s*,\s*W\./, 'the books never go up in the request');
     assert.doesNotMatch(form, /method:\s*['"]/, 'a write outside bankWrite');
   });
@@ -152,23 +152,38 @@ describe('5 · the check form: a balance, not a tick-off', () => {
 });
 
 describe('6 · Start, when Stripe doesn\'t answer: warn, never block (owner 2026-11-06)', () => {
-  it('the card reads Stripe\'s on-its-way for the start\'s day first and offers Try again and Start anyway', () => {
+  it('the SERVER decides (BC2 review): a save that can\'t count Stripe is refused unless the body says anyway', () => {
+    const steps = readCode('lib/bank-club-steps.ts');
+    assert.match(steps, /if \(figure\.onItsWay\.state === 'not_counted' && body\.anyway !== true\) \{\s*return bankRefusedAs\(figure\.onItsWay\.reason === 'stripe_down' \? 'not_counted_down' : 'not_counted_unlisted'\);/);
+    assert.match(code('BankShared.ts'), /code === 'not_counted_down' \? 'stripe_down' : code === 'not_counted_unlisted' \? 'unlisted' : null/);
+  });
+  it('the card turns that refusal into its notice and offers Try again and Start anyway', () => {
     const setup = code('BankSetup.tsx');
-    assert.match(setup, /readFigure\(orgSlug, id, date, 'start'\)/);
-    assert.match(setup, /onItsWay\.state === 'not_counted'/);
+    assert.match(setup, /'PUT', \{ date, bankCents: c, anyway \}/);
+    assert.match(setup, /const reason = notCountedOf\(r\.code\);\s*if \(reason\) setNotCounted\(reason\);/);
+    assert.doesNotMatch(setup, /readFigure\(/, 'no second read of its own: the save\'s read is the one that counts');
     assert.match(setup, /W\.startAnyway/);
     assert.match(setup, /W\.tryAgain/);
     assert.match(setup, /save\(true\)/, 'Start anyway saves');
   });
   it('the notice names which of the two reasons it is, from the words module', () => {
-    assert.match(BANK_WORDS.startNoticeDown, /Stripe didn’t answer, so card payments on their way aren’t counted yet/);
+    assert.match(BANK_WORDS.startNoticeDown, /Stripe didn’t answer, so online payments on their way aren’t counted yet/);
     assert.notEqual(BANK_WORDS.startNoticeDown, BANK_WORDS.startNoticeUnlisted);
+  });
+  it('a check shown counted that Stripe can\'t count at the save reads again; one shown not counted saves anyway', () => {
+    const form = code('BankCheckForm.tsx');
+    assert.match(form, /const anyway = fresh\.onItsWay\.state === 'not_counted';/);
+    assert.match(form, /'POST', \{ date, bankCents: typed, anyway \}/);
+    assert.match(form, /if \(notCountedOf\(r\.code\)\) \{ setError\(r\.error\); setAgain\(n => n \+ 1\); \}/);
+  });
+  it('the club\'s Delete reaches only a CLUB account\'s check (a team\'s account is in the same org, BC6)', () => {
+    assert.match(readCode('lib/bank-club-steps.ts'), /export async function deleteCheck[\s\S]{0,400}readClubBankAccounts\(ctx\.org\.id\);\s*if \(!all\.accounts\.some\(a => a\.id === accountId\)\) return bankRefusedAs\('account_not_found'\);/);
   });
 });
 
 describe('7 · a stale view is re-read before the sentence is said (BC1 review findings 1–3)', () => {
   it('every screen that writes passes a stale refusal to the tab, which re-reads the overview and the account first', () => {
-    for (const f of ['BankSetup.tsx', 'BankCheckForm.tsx', 'BankWindows.tsx']) {
+    for (const f of ['BankSetup.tsx', 'BankCheckForm.tsx', 'BankWindows.tsx', 'BankCheckWindow.tsx']) {
       assert.match(code(f), /isStaleView\(/, f);
       assert.match(code(f), /onStale\(/, f);
     }
@@ -178,5 +193,65 @@ describe('7 · a stale view is re-read before the sentence is said (BC1 review f
   });
   it('the first Start flips the tab off the setup card locally while the overview re-reads (finding 3)', () => {
     assert.match(code('BankTab.tsx'), /setOverview\(o => o && \{\s*\.\.\.o, never: false/);
+  });
+});
+
+// ── Bank balance check BC2b: the saved checks open, Delete, Check this statement again, the top line ─────────────────
+describe('8 · a saved check, opened', () => {
+  it('every row opens its check: the kit\'s table door, the date a named button, a phone card a button', () => {
+    const list = code('BankStatements.tsx');
+    assert.match(list, /className=\{repKit\.rowOpens\} onClick=\{\(\) => opened\(onOpen, c\.id\)\}/);
+    assert.match(list, /className=\{`\$\{repKit\.rowOpens\} \$\{s\.balanceRow\}`\} onClick=\{\(\) => opened\(onOpen, start\.id\)\}/, 'the start opens too (owner, BC2b ask 2)');
+    assert.match(list, /<button type="button" className=\{`\$\{repKit\.nameButton\} \$\{repKit\.nameLink\}`\} aria-label=\{\(isStart \? W\.openStart : W\.openCheck\)\(/, 'the start\'s door is named for the starting statement');
+    assert.equal(list.match(/<ClubRow key=\{\w+\.id\} as="button" chevron( muted)? onClick=\{\(\) => onOpen\(\w+\.id\)\}\n/g)?.length, 2, 'both phone cards are buttons');
+    assert.doesNotMatch(list, /<ClubRow [^\n]*aria-label/, 'a phone card is named by its own date, balance and result (a label would replace them)');
+  });
+  it('a start saved with Stripe not counted says so in its row', () => {
+    assert.match(code('BankStatements.tsx'), /start\.onItsWayCents === null \? W\.startNotCounted/);
+  });
+  it('the window draws the SAVED figure through the shipped joined band (no second band), past tense', () => {
+    const win = code('BankCheckWindow.tsx');
+    assert.match(win, /<BankBand date=\{check\.date\} figure=\{check\.figure\} typed saved \/>/);
+    assert.match(win, /import KitDialog from '\.\.\/\.\.\/KitDialog'/);
+    assert.match(code('BankFigure.tsx'), /label: saved \? W\.savedBank : W\.bandBank[\s\S]*label: saved \? W\.savedShould : W\.bandShould/);
+  });
+  it('Delete and Check this statement again are a writer\'s only (B7)', () => {
+    const win = code('BankCheckWindow.tsx');
+    assert.match(win, /\{canMove && \(\s*<div className=\{s\.recordDoor\}>/);
+    assert.match(win, /<RecordDelete onClick=/, 'an admin record\'s delete is RepKit\'s RecordDelete (design 2026-10-09)');
+    assert.match(win, /footer=\{canMove && !start \? \(\s*<button type="button" className="btn btn-lime" onClick=\{\(\) => onAgain\(check\.date\)\}/);
+    assert.doesNotMatch(win, /footerStart=|W\.close\b/, 'a record window closes by its ×: no Close, no door in the foot');
+    assert.match(code('BankTab.tsx'), /<BankCheckWindow orgSlug=\{orgSlug\} view=\{view\} check=\{opened\} canMove=\{canMove\}/);
+  });
+  it('Delete asks once, goes through bankWrite, and a stale refusal goes to staleRefresh', () => {
+    const win = code('BankCheckWindow.tsx');
+    assert.match(win, /bankWrite\(bankUrl\(orgSlug, `\/accounts\/\$\{view\.account\.id\}\/checks\/\$\{check\.id\}`\), 'DELETE'/);
+    assert.match(win, /if \(isStaleView\(r\.code\)\) onStale\(r\.error\); else setError\(r\.error\);/);
+    assert.match(win, /\{asking && \(\s*<KitDialog\s+kind="question"/, 'one question first');
+    assert.match(code('BankTab.tsx'), /<BankCheckWindow [\s\S]{0,200}onStale=\{t => void staleRefresh\(t\)\}/);
+    assert.match(code('BankShared.ts'), /'check_not_found'/, 'a check already gone is a stale view');
+    assert.equal(BANK_WORDS.deleteAsk('Oct 31, 2026'), 'Delete the check for Oct 31, 2026? Its figures go; who deleted it and when is kept.');
+  });
+  it('the start\'s door says the server\'s own sentence before the tap while a later check stands', () => {
+    const win = code('BankCheckWindow.tsx');
+    assert.match(win, /const startHeld = start && view\.checks\.length > 0;/);
+    assert.match(win, /BANK_REFUSAL\.start_has_checks/);
+  });
+  it('who checked it and when: the clock only through formatTime, the day only through formatStoredDate', () => {
+    const win = code('BankCheckWindow.tsx');
+    assert.match(win, /formatTime\(at\.time\)/);
+    assert.match(win, /dayYear\(at\.date\)/);
+    assert.doesNotMatch(win + code('BankStatements.tsx'), /toLocale(Time|Date)?String|getHours|getMinutes/);
+  });
+  it('Check this statement again re-keys the form with the date; the form focuses the balance', () => {
+    assert.match(code('BankTab.tsx'), /<BankCheckForm key=\{again\?\.n \?\? 0\} againDate=\{again\?\.date\}/);
+    assert.match(code('BankCheckForm.tsx'), /useState\(againDate \?\? today\)/);
+    assert.match(code('BankCheckForm.tsx'), /field\?\.focus\(\{ preventScroll: true \}\)/);
+  });
+  it('the top line says "Checked through {date}" and an amber chip when the latest check is off (ask 4)', () => {
+    const list = code('BankStatements.tsx');
+    assert.match(list, /W\.checkedThroughLead/);
+    assert.match(list, /through\.result === 'off' && view\.checks\[0\] && \(\s*<button type="button" className=\{s\.chipDoor\} aria-label=\{W\.openOffCheck\(cents\(through\.offByCents\), dayYear\(through\.date\)\)\} onClick=\{\(\) => onOpen\(view\.checks\[0\]\.id\)\}>\s*<RepChip tone="warn">\{W\.offBy\(/,
+      'the chip is a door to the latest check: every highlight opens, its name keeping the amount');
   });
 });

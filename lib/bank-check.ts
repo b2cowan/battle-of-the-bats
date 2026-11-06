@@ -174,6 +174,38 @@ export interface SavedCheck {
 export const figureOfSaved = (c: SavedCheck): CheckFigure =>
   figureCheck({ bankCents: c.bankCents, booksCents: c.booksCents, onItsWayCents: c.onItsWayCents, waiting: c.waiting, cashCents: c.cashCents });
 
+/** On a check, online payments on their way come OFF the books: they haven't reached the bank (the §4 formula's term). */
+export const onItsWayOnCheck = (onItsWayCents: number): number => -onItsWayCents;
+
+/** One line of a saved check's sums and the signed amount it moved the total by (`null`: on its way, not counted). */
+export type SavedTerm =
+  | { kind: 'base' | 'cash'; key: string; cents: number }
+  | { kind: 'onItsWay'; key: string; cents: number | null }
+  | { kind: 'waiting'; key: string; cents: number; item: WaitingItem };
+
+/**
+ * A saved check's sums, line by line, each signed the way it moved the total (BC2b, the opened check), so the screen only
+ * formats. A check is `figureCheck` written out: books · on its way (−) · each waiting item (an out-item +, an in-item −) ·
+ * cash (−) = Should have been in the bank. The start is `startBooks` written out: bank · on its way (+) · each waiting item
+ * (out −, in +) = the books it starts from. A zero on-its-way and zero cash are left out; a not-counted one stays (the
+ * screen says "not counted"). `totalCents` is the saved figure itself, never the terms re-added.
+ */
+export function savedTerms(c: SavedCheck): { terms: SavedTerm[]; totalCents: number } {
+  const start = c.kind === 'start';
+  const terms: SavedTerm[] = [{ kind: 'base', key: 'base', cents: start ? c.bankCents : c.booksCents }];
+  if (c.onItsWayCents === null) terms.push({ kind: 'onItsWay', key: 'onItsWay', cents: null });
+  else if (c.onItsWayCents !== 0) {
+    terms.push({ kind: 'onItsWay', key: 'onItsWay', cents: start ? c.onItsWayCents : onItsWayOnCheck(c.onItsWayCents) });
+  }
+  for (const w of c.waiting) {
+    // An out-item (a cheque not cashed yet) is still in the bank: added back on a check, taken off the bank at the start.
+    const s = signed(w.direction, w.amountCents);
+    terms.push({ kind: 'waiting', key: `w-${w.key}`, cents: start ? s : -s, item: w });
+  }
+  if (!start && c.cashCents) terms.push({ kind: 'cash', key: 'cash', cents: -c.cashCents });
+  return { terms, totalCents: start ? c.booksCents : figureOfSaved(c).shouldBeCents };
+}
+
 /** Ask 3's "matched": matched WHEN SAVED. A later "Books now say" doesn't un-match it. A start is a starting point, not a
  *  match. */
 export const matchedWhenSaved = (c: SavedCheck): boolean => c.kind === 'check' && figureOfSaved(c).differenceCents === 0;

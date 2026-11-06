@@ -43,10 +43,28 @@
 /* ── the saved checks (tab 5) ── */
 .listTitle { margin: 0 0 0.5rem; font-size: var(--type-body); font-weight: 600; color: var(--text-primary); }
 tr > td.nowrap { white-space: nowrap; }
-/* The starting statement: greyed, "Starting point", no result. */
+/* The starting statement: greyed, "Starting point", no result. It opens too (BC2b), its date door greyed with it. */
 .balanceRow > td { color: var(--text-tertiary); }
+.balanceRow > td > button { color: inherit; }
 .resultCell { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 0.5rem; }
 .listHint { margin: 0.6rem 0 0; }
+/* "online payments on their way weren't counted": a start saved while Stripe didn't answer, quiet beside "Starting point". */
+.startQuiet { font-size: var(--type-support); }
+/* The top line's "Checked through {date}" and, when the latest check is off, its amber chip (ask 4). */
+.through { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 0.5rem; }
+/* The top line's chip opens the latest check (every highlight is clickable). */
+.chipDoor { display: inline-flex; align-items: center; padding: 0; border: 0; background: none; font: inherit; cursor: pointer; border-radius: 999px; }
+.chipDoor:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+@media (max-width: 768px) {
+  .chipDoor { min-height: var(--tap-min, 44px); }
+}
+
+/* ── a saved check, opened (tab 5): the lines under the sums ── */
+.savedNote { margin: 0.75rem 0 0; font-size: var(--type-support); color: var(--text-secondary); line-height: 1.45; }
+.savedNote b { color: var(--text-primary); font-weight: 600; }
+/* The record's one rare door (RepKit's RecordDelete), ending the body; or the start's sentence in its place. */
+.recordDoor { margin: 1rem 0 0; padding: 0.75rem 0 0; border-top: 1px solid var(--home-line); }
+.recordDoor > .statusNote { margin: 0; }
 
 /* ── the first check: a starting statement (tab 6) ── */
 .card {
@@ -156,6 +174,8 @@ tr > td.nowrap { white-space: nowrap; }
   .checkCard { padding: 1rem; }
   .checkSave > :global(.btn) { width: 100%; justify-content: center; }
   .sumRow { flex-wrap: wrap; }
+  /* A long line wraps; its amount stays at the right edge, where every other amount is (/design BC2b). */
+  .sumRow > .sumAmt { margin-left: auto; }
   .top { margin-bottom: 0.75rem; }
   .card { padding: 1rem; }
   .cardFoot > :global(.btn) { flex: 1; justify-content: center; }
