@@ -1,21 +1,19 @@
 /**
- * THE CLUB'S BANK CHECK, READ (Bank reconciliation R2a; plan docs/projects/active/BANK_RECONCILIATION_PLAN.md §7 R2,
- * build prompt BANK_RECONCILIATION_R2_BUILD_PROMPT.md chunk R2a). The pure half: the server read
- * (`lib/bank-club-read.ts`) hands in rows, this turns them into the engine's `BankAccountState` (lib/bank-check.ts).
- * No IO, client-safe, so every rule here is tested with fixtures.
+ * THE CLUB'S BANK CHECK, READ — the pure half (Bank balance check BC1; plan docs/projects/active/BANK_RECONCILIATION_PLAN.md
+ * §4, §7, §9 BC1's build calls). The server read (`lib/bank-club-read.ts`) hands in rows; this turns them into the
+ * engine's inputs (lib/bank-check.ts). No IO, client-safe, so every rule here is tested with fixtures.
  *
- * ⚖ RULE 1 (R1 review): a club's FIRST account is its oldest live `owner_kind='club'` account, never "the oldest live
- *   account" (a team account moved in with a standalone team, mig 437, can be older). Every club book with no
- *   `bank_account_books` row belongs to it.
+ * ⚖ RULE 1: a club's FIRST account is its oldest live `owner_kind='club'` account, never "the oldest live account" (a team
+ *   account moved in with a standalone team, mig 437, can be older). Every club book with no `bank_account_books` row
+ *   belongs to it.
  * ⚖ RULE 6: every engine input is the server's. Nothing here takes a client's figure.
- * ⚖ NO YEAR (B3, B10): nothing here reads or names a fiscal year or a season.
+ * ⚖ NO YEAR: nothing here reads or names a fiscal year or a season.
  */
 
-import type {
-  BankCheckRecord, BankDirection, BankLine, BankMark, BankPayout, OpeningItem, SavedLine, StampedChange,
-} from './bank-check';
+import { newestFirst, signed, type BankDirection, type BankLine, type SavedCheck, type WaitingItem } from './bank-check';
 import { toCents } from './coach-register';
 import type { PayoutRow } from './online-payouts';
+import { addCalendarDays } from './timezone';
 
 // ── accounts and books ───────────────────────────────────────────────────────────────────────
 
@@ -25,9 +23,6 @@ export interface BankAccountRow {
   owner_kind: 'club' | 'team';
   created_at: string;
   archived_at: string | null;
-  opening_date: string | null;
-  opening_balance_cents: number | string | null;
-  set_up_at: string | null;
 }
 
 export interface ClubBook { id: string; name: string; entityType: string; entityId: string | null }
@@ -64,6 +59,9 @@ export function placeBooks(accounts: readonly BankAccountRow[], books: readonly 
   return { accountOfBook, booksOf, unplaced: [] };
 }
 
+/** The books a check counts, as `bank_check_save` compares them: distinct ids, sorted (uuid text order). */
+export const bookIdsOf = (books: readonly { id: string }[]): string[] => [...new Set(books.map(b => b.id))].sort();
+
 // ── book lines ───────────────────────────────────────────────────────────────────────────────
 
 export interface EntryRow {
@@ -75,284 +73,168 @@ export interface EntryRow {
   entry_type: 'income' | 'expense' | 'transfer_in' | 'transfer_out';
   status: 'posted' | 'pending' | 'void';
   linked_entry_id: string | null;
+  payment_method: string | null;
 }
 
 /** The columns an `EntryRow` is read with (one copy for every bank reader). */
-export const ENTRY_SELECT = 'id, ledger_id, entry_date, description, amount, entry_type, status, linked_entry_id';
+export const ENTRY_SELECT = 'id, ledger_id, entry_date, description, amount, entry_type, status, linked_entry_id, payment_method';
 
 /** Money in or out of the book: the one place an entry type becomes a direction (the amount is always positive). */
 export const directionOfEntry = (row: Pick<EntryRow, 'entry_type'>): BankDirection =>
   row.entry_type === 'income' || row.entry_type === 'transfer_in' ? 'in' : 'out';
 
 export const entryKey = (id: string) => `entry:${id}`;
-export const payoutKey = (id: string) => `payout:${id}`;
 /** The entry id inside an `entry:` key, or null for any other kind of key. */
 export const entryIdOf = (key: string): string | null => (key.startsWith('entry:') ? key.slice(6) : null);
 
-/** A club-book line as the engine reads it. Direction from `entry_type` (amount is always positive); a transfer half
- *  names its other half, so both halves in this account are left out automatically (B6). */
-export function entryToBankLine(row: EntryRow, payoutOf: ReadonlyMap<string, string>): BankLine {
-  const direction = directionOfEntry(row);
+/** A club-book line as the engine reads it. A transfer half names its other half, so both halves in this account net to
+ *  nothing in the suspects (the books figure, a SQL sum, nets them by itself). */
+export function entryToBankLine(row: EntryRow): BankLine {
   const isTransfer = row.entry_type === 'transfer_in' || row.entry_type === 'transfer_out';
   return {
-    key: entryKey(row.id), date: row.entry_date, direction, amountCents: toCents(row.amount), status: row.status,
+    key: entryKey(row.id), date: row.entry_date, direction: directionOfEntry(row), amountCents: toCents(row.amount),
     label: row.description,
     transferPairKey: isTransfer && row.linked_entry_id ? entryKey(row.linked_entry_id) : null,
-    payoutKey: payoutOf.get(row.id) ?? null,
   };
 }
+
+/** An online-payment book line (BC1 build call): every receipt, processing cost and refund line Stripe moves carries one
+ *  of these (verified on dev 2026-11-05). */
+export const ONLINE_METHODS = ['online_card', 'online_bank'] as const;
+export const isOnlineEntry = (row: Pick<EntryRow, 'payment_method'>): boolean =>
+  (ONLINE_METHODS as readonly string[]).includes(row.payment_method ?? '');
 
 // ── the bank tables ──────────────────────────────────────────────────────────────────────────
 
 export interface CheckRow {
   id: string;
+  bank_account_id: string;
+  kind: 'start' | 'check';
   statement_end_date: string;
   statement_ending_balance_cents: number | string;
-  status: 'open' | 'checked';
-  outstanding_snapshot: SavedLine[] | null;
+  books_cents: number | string;
+  on_its_way_cents: number | string | null;
+  cash_not_deposited_cents: number | string | null;
+  book_ids: string[] | null;
+  created_by: string | null;
+  created_at: string;
 }
-export interface AddedLineRow { check_id: string; line_key: string }
-export interface MarkRow {
-  check_id: string; line_key: string; line_date: string; direction: BankDirection; amount_cents: number | string; payout_key: string | null;
+/** The columns a `CheckRow` is read with. */
+export const CHECK_SELECT = 'id, bank_account_id, kind, statement_end_date, statement_ending_balance_cents, books_cents, '
+  + 'on_its_way_cents, cash_not_deposited_cents, book_ids, created_by, created_at';
+
+export interface WaitingRow {
+  check_id: string; line_key: string; line_date: string; label: string | null; amount_cents: number | string;
+  direction: BankDirection; at_start: boolean;
 }
-export interface SavedLineRow {
-  kind: 'opening_picked' | 'opening_typed' | 'carried';
-  line_key: string; line_date: string; direction: BankDirection; amount_cents: number | string; description: string | null;
-}
-export interface ChangeRow {
-  check_id: string; line_key: string; removed: boolean; changed_by: string | null; changed_at: string; cleared_at: string | null;
+export const WAITING_SELECT = 'check_id, line_key, line_date, label, amount_cents, direction, at_start';
+
+/** A saved check with the facts the list shows beside its figures. */
+export interface ClubSavedCheck extends SavedCheck {
+  bookIds: string[];
+  createdBy: string | null;
+  createdAt: string;
 }
 
-/** Statements with the lines added from each (Ask 8). A snapshot is only read from a CHECKED statement (gotcha 6:
- *  Undo leaves a stale one behind). */
-export function checkRecords(checks: readonly CheckRow[], added: readonly AddedLineRow[]): BankCheckRecord[] {
-  const addedBy = new Map<string, string[]>();
-  for (const a of added) { const list = addedBy.get(a.check_id); if (list) list.push(a.line_key); else addedBy.set(a.check_id, [a.line_key]); }
-  return checks.map(c => ({
-    id: c.id, statementEndDate: c.statement_end_date, statementEndingBalanceCents: Number(c.statement_ending_balance_cents),
-    status: c.status, addedLineKeys: addedBy.get(c.id) ?? [],
-    outstandingSnapshot: c.status === 'checked' ? (c.outstanding_snapshot ?? []) : null,
-  }));
-}
+const centsOrNull = (v: number | string | null): number | null => (v === null ? null : Number(v));
 
-export function marksOf(rows: readonly MarkRow[]): BankMark[] {
-  return rows.map(m => ({
-    key: m.line_key, checkId: m.check_id, date: m.line_date, direction: m.direction, amountCents: Number(m.amount_cents),
-    ...(m.payout_key ? { payoutKey: m.payout_key } : {}),
-  }));
-}
-
-/** Rule 5's mirror: the table's `opening_picked` / `opening_typed` are the engine's `picked` / `typed`. */
-export function savedOf(rows: readonly SavedLineRow[]): { openingItems: OpeningItem[]; carried: SavedLine[] } {
-  const openingItems: OpeningItem[] = [];
-  const carried: SavedLine[] = [];
-  for (const r of rows) {
-    const line: SavedLine = {
-      key: r.line_key, date: r.line_date, direction: r.direction, amountCents: Number(r.amount_cents),
-      ...(r.description ? { label: r.description } : {}),
+/** Live checks with their waiting items, oldest first. */
+export function savedChecksOf(rows: readonly CheckRow[], waiting: readonly WaitingRow[]): ClubSavedCheck[] {
+  const itemsOf = new Map<string, WaitingItem[]>();
+  for (const w of waiting) {
+    const item: WaitingItem = {
+      key: w.line_key, date: w.line_date, direction: w.direction, amountCents: Number(w.amount_cents),
+      ...(w.label ? { label: w.label } : {}), ...(w.at_start ? { atStart: true } : {}),
     };
-    if (r.kind === 'carried') carried.push(line);
-    else openingItems.push({ ...line, kind: r.kind === 'opening_typed' ? 'typed' : 'picked' });
+    const list = itemsOf.get(w.check_id);
+    if (list) list.push(item); else itemsOf.set(w.check_id, [item]);
   }
-  return { openingItems, carried };
+  return [...rows].sort((a, b) => (a.statement_end_date < b.statement_end_date ? -1 : a.statement_end_date > b.statement_end_date ? 1 : 0))
+    .map(r => ({
+      id: r.id, kind: r.kind, date: r.statement_end_date, bankCents: Number(r.statement_ending_balance_cents),
+      booksCents: Number(r.books_cents), onItsWayCents: centsOrNull(r.on_its_way_cents),
+      cashCents: centsOrNull(r.cash_not_deposited_cents),
+      waiting: (itemsOf.get(r.id) ?? []).sort((a, b) => newestFirst(b, a)),
+      bookIds: [...(r.book_ids ?? [])].sort(), createdBy: r.created_by, createdAt: r.created_at,
+    }));
 }
 
-/** Open (uncleared) changes only: "Mark checked again" clears them (Ask 11). */
-export function stampsOf(rows: readonly ChangeRow[]): StampedChange[] {
-  return rows.filter(r => !r.cleared_at).map(r => ({
-    key: r.line_key, checkId: r.check_id, changedBy: r.changed_by, changedAt: r.changed_at, ...(r.removed ? { removed: true } : {}),
-  }));
+/**
+ * "Your books on D" for a club check (P5, plan §4): the start's books + the posted movement of `bookIds` after the start
+ * through D. `through` is `bank_books_through` for those books (all-time through each date), so the movement is
+ * through(D) − through(start date): a line on or before the start never counts, wherever it sits.
+ */
+export function clubBooksOnDate(i: { startBooksCents: number; throughD: number; throughStart: number }): number {
+  return i.startBooksCents + i.throughD - i.throughStart;
 }
 
-/** Every key a list or a mark of this account names: the book lines behind them are read by id whatever their date,
- *  so "changed since" and an old line the book still reads are seen. */
-export function keysNamed(input: {
-  marks: readonly BankMark[]; checks: readonly BankCheckRecord[]; openingItems: readonly OpeningItem[];
-  carried: readonly SavedLine[]; stamps: readonly StampedChange[];
-}): string[] {
-  const keys = new Set<string>();
-  for (const m of input.marks) keys.add(m.key);
-  for (const c of input.checks) {
-    for (const s of c.outstandingSnapshot ?? []) keys.add(s.key);
-    for (const k of c.addedLineKeys ?? []) keys.add(k);
-  }
-  for (const o of input.openingItems) keys.add(o.key);
-  for (const s of input.carried) keys.add(s.key);
-  for (const s of input.stamps) keys.add(s.key);
-  return [...keys];
-}
+// ── Stripe "on its way" (ask 8, plan §4, O6) ─────────────────────────────────────────────────
 
-/** The first arrival day the Stripe read asks for: the last CHECKED statement's end (an older unticked payout is kept
- *  line by line in that statement's saved list), else the account's starting date. */
-export function payoutFloor(openingDate: string, checks: readonly BankCheckRecord[]): string {
-  let floor = openingDate;
-  for (const c of checks) if (c.status === 'checked' && c.statementEndDate > floor) floor = c.statementEndDate;
-  return floor;
-}
+/** Lines landed more than this many days before D are taken as paid out (Stripe's schedules are daily to weekly). */
+export const ON_ITS_WAY_DAYS = 30;
 
-// ── Stripe payouts ───────────────────────────────────────────────────────────────────────────
+/** The first day an online line can still be on its way on D: D − 30 days, exclusive (the window is (D − 30, D]). */
+export const onItsWayFloor = (date: string): string => addCalendarDays(date, -ON_ITS_WAY_DAYS);
+
+/** The figure a check saves for on its way is `OnItsWay.cents`: NULL = not counted, 0 = none. */
 
 /** The fields of a Payouts-tab row the bank check reads (type-only import: erased, so this file stays client-safe). */
-export type PayoutRowLike = Pick<PayoutRow, 'id' | 'arrives' | 'status' | 'contents' | 'amount' | 'lines'>;
+export type PayoutRowLike = Pick<PayoutRow, 'id' | 'arrives' | 'status' | 'contents' | 'lines'>;
 
-/** Why a payout's deposit and its book side differ, by reason (P4, plan Open questions; never "payment processing" by
- *  default). Signed cents, as each moves the deposit. */
-export interface PayoutGapFacts {
-  /** Card disputes in this payout whose loss is not booked: Stripe took the amount and its fee at once ("Dispute held"),
-   *  named from OUR stored amount + fee. Negative. */
-  disputesHeld: { disputeId: string; amountCents: number; feeCents: number }[];
-  disputeHeldCents: number;
-  /** The same held disputes as Stripe's own lines net them (signed). R2b offers "payment processing" only when this agrees
-   *  with `disputeHeldCents`: a disagreement means our stored figure is not the whole story, so nothing is guessed. */
-  disputeNetCents: number;
-  /** A dispute's money Stripe gave back that no book line records (won before any loss was booked). */
-  disputeReturnedCents: number;
-  /** Stripe activity with no record of ours: "Not from FieldLogicHQ". */
-  notOursCents: number;
-  /** A Stripe fee taken from the club's Stripe balance that no book line records (12d-1 ruling 5): a real cost, so it
-   *  IS offered as a "Payment processing" line — named first as what it is. */
-  stripeFeeCents: number;
+export interface OnItsWayLine {
+  key: string;
+  date: string;
+  label: string;
+  direction: BankDirection;
+  amountCents: number;
+  bookId: string;
+  /** Card or bank debit (the line's payment method). */
+  rail: 'card' | 'bank';
+  /** The arrival day of the payout holding it, when Stripe has put it in one. */
+  paysOutOn: string | null;
 }
 
-/** A payout with nothing named against its gap yet (a fresh set of facts to add into). */
-const emptyGapFacts = (): PayoutGapFacts =>
-  ({ disputesHeld: [], disputeHeldCents: 0, disputeNetCents: 0, disputeReturnedCents: 0, notOursCents: 0, stripeFeeCents: 0 });
+export type OnItsWay =
+  /** No online payments here (switched off, no Stripe account): no line at all. */
+  | { state: 'none'; cents: 0; lines: [] }
+  | { state: 'counted'; cents: number; lines: OnItsWayLine[]; paysOutOn: string | null }
+  /** Stripe didn't answer, or a payout in the window lists no lines (manual / still matching, O6): left out. */
+  | { state: 'not_counted'; reason: 'stripe_down' | 'unlisted'; cents: null; lines: OnItsWayLine[] };
 
-export interface BankPayoutsRead {
-  /** Automatic payouts Stripe has finished matching, that went or are going to the bank. */
-  payouts: BankPayout[];
-  /** Entry id → the payout it rode in. An entry belongs to one payout (the oldest that names it). */
-  payoutOf: Map<string, string>;
-  /** Payout key → the entry ids it names. */
-  membersOf: Map<string, string[]>;
-  facts: Record<string, PayoutGapFacts>;
-}
 
 /**
- * The Payouts read, as the bank check needs it (plan R2: never a second Stripe reader). A manual payout (Stripe lists
- * no lines for it), one still being matched, or one that did not arrive is NOT passed: their lines tick by hand.
+ * Online-payment book lines in the account's books dated in (D − 30, D], minus every line inside a payout that arrived
+ * on or before D and did not fail. Not counted when any payout arriving in [D − 30, D] that did not fail lists no lines
+ * (manual, or Stripe still matching it): its lines can't be told apart. Signed net (processing lines and refunds out), so
+ * it is what will land.
  */
-export function payoutsForBank(rows: readonly PayoutRowLike[]): BankPayoutsRead {
-  const usable = rows.filter(r => r.contents === 'listed' && r.status !== 'failed' && !!r.arrives)
-    .sort((a, b) => (a.arrives! < b.arrives! ? -1 : a.arrives! > b.arrives! ? 1 : a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
-  const payouts: BankPayout[] = [];
-  const payoutOf = new Map<string, string>();
-  const membersOf = new Map<string, string[]>();
-  const facts: Record<string, PayoutGapFacts> = {};
-  for (const r of usable) {
-    const key = payoutKey(r.id);
-    payouts.push({ key, arrivalDate: r.arrives!, amountCents: toCents(r.amount) });
-    const members: string[] = [];
-    const f = emptyGapFacts();
-    for (const l of r.lines) {
-      for (const id of l.entryIds ?? []) {
-        if (payoutOf.has(id)) continue;
-        payoutOf.set(id, key);
-        members.push(id);
-      }
-      const unbooked = (l.entryIds ?? []).length === 0;
-      const cents = toCents(l.amount);
-      if (l.kind === 'not_ours') f.notOursCents += cents;
-      else if (l.kind === 'stripe_fee' && unbooked) f.stripeFeeCents += cents;
-      else if (l.kind === 'dispute' && l.dispute && unbooked) {
-        // Named from OUR stored amount and fee (P4), never "payment processing".
-        f.disputesHeld.push({ disputeId: l.dispute.id, amountCents: l.dispute.amountCents, feeCents: l.dispute.feeCents });
-        f.disputeHeldCents -= l.dispute.amountCents + l.dispute.feeCents;
-        f.disputeNetCents += cents;
-      } else if (l.kind === 'dispute_won' && l.dispute && unbooked) f.disputeReturnedCents += cents;
+export function onItsWay(i: { date: string; online: readonly EntryRow[]; payouts: readonly PayoutRowLike[] }): Exclude<OnItsWay, { state: 'none' }> {
+  const floor = onItsWayFloor(i.date);
+  const landedBy = new Map<string, string>(); // entry id → arrival day of a payout that did not fail
+  let unlisted = false;
+  for (const p of i.payouts) {
+    if (p.status === 'failed' || !p.arrives) continue;
+    if (p.arrives >= floor && p.arrives <= i.date && p.contents !== 'listed') unlisted = true;
+    for (const l of p.lines) for (const id of l.entryIds ?? []) {
+      const had = landedBy.get(id);
+      if (!had || p.arrives < had) landedBy.set(id, p.arrives);
     }
-    membersOf.set(key, members);
-    facts[key] = f;
   }
-  return { payouts, payoutOf, membersOf, facts };
-}
-
-/**
- * A payment-processing line added from a statement rides the payout it closes (mig 439 writes the payout on its tick):
- * Stripe's own reading cannot name it (it is a line we booked after), so it joins that payout's members here. Without
- * this the line would be counted beside the payout's gap instead of closing it, and the offer would never go away.
- */
-export function withAddedMembers(bank: BankPayoutsRead, marks: readonly BankMark[], addedKeys: ReadonlySet<string>): BankPayoutsRead {
-  const payoutOf = new Map(bank.payoutOf);
-  const membersOf = new Map<string, string[]>([...bank.membersOf].map(([k, ids]) => [k, [...ids]]));
-  for (const m of marks) {
-    const id = m.payoutKey && addedKeys.has(m.key) ? entryIdOf(m.key) : null;
-    if (!id || !membersOf.has(m.payoutKey!) || payoutOf.has(id)) continue;
-    payoutOf.set(id, m.payoutKey!);
-    membersOf.get(m.payoutKey!)!.push(id);
+  const lines: OnItsWayLine[] = [];
+  for (const r of i.online) {
+    if (r.status !== 'posted' || !isOnlineEntry(r) || r.entry_date <= floor || r.entry_date > i.date) continue;
+    const arrives = landedBy.get(r.id) ?? null;
+    if (arrives && arrives <= i.date) continue;
+    lines.push({
+      key: entryKey(r.id), date: r.entry_date, label: r.description, direction: directionOfEntry(r), amountCents: toCents(r.amount),
+      bookId: r.ledger_id, rail: r.payment_method === 'online_bank' ? 'bank' : 'card', paysOutOn: arrives,
+    });
   }
-  return { ...bank, payoutOf, membersOf };
+  lines.sort(newestFirst);
+  if (unlisted) return { state: 'not_counted', reason: 'unlisted', cents: null, lines };
+  const cents = lines.reduce((n, l) => n + signed(l.direction, l.amountCents), 0);
+  // "Stripe pays them out {date}": the day the last of them lands, when every one is in a payout.
+  const paysOutOn = lines.length && lines.every(l => l.paysOutOn)
+    ? lines.reduce((m, l) => (l.paysOutOn! > m ? l.paysOutOn! : m), '') : null;
+  return { state: 'counted', cents, lines, paysOutOn };
 }
-
-/**
- * Which account a payout belongs to: the account whose books hold its book lines (the first account when it holds any of
- * them — a payout lands in one bank account), or the first account when none of its lines is in a club book. (A payout a
- * mark names stays where it was ticked: `assembleAccount` decides that before asking.)
- */
-export function accountOfPayout(input: {
-  members: readonly string[]; ledgerOf: ReadonlyMap<string, string>; accountOfBook: ReadonlyMap<string, string>;
-  firstAccountId: string;
-}): string {
-  const count = new Map<string, number>();
-  for (const id of input.members) {
-    const ledger = input.ledgerOf.get(id);
-    const acct = ledger ? input.accountOfBook.get(ledger) : undefined;
-    if (acct) count.set(acct, (count.get(acct) ?? 0) + 1);
-  }
-  if (count.size === 0 || count.has(input.firstAccountId)) return input.firstAccountId;
-  return [...count].sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1))[0][0];
-}
-
-/**
- * A payout's gap, by reason (P4). `otherCents` is what the named reasons don't explain. "Add it as payment processing"
- * (Ask 7) is offered for the Stripe fees plus that remainder when together they are money OUT, and `processingCents` is
- * that amount (positive, the line's size) — a held dispute and Stripe activity not ours are never part of it, and money
- * in is never a fee.
- */
-export function nameGap(gapCents: number, facts: PayoutGapFacts | undefined): {
-  disputeHeldCents: number; disputeReturnedCents: number; notOursCents: number; stripeFeeCents: number; otherCents: number;
-  offerPaymentProcessing: boolean; processingCents: number;
-} {
-  const f = facts ?? emptyGapFacts();
-  const otherCents = gapCents - f.disputeHeldCents - f.disputeReturnedCents - f.notOursCents - f.stripeFeeCents;
-  const fee = f.stripeFeeCents + otherCents;
-  return {
-    disputeHeldCents: f.disputeHeldCents, disputeReturnedCents: f.disputeReturnedCents, notOursCents: f.notOursCents,
-    stripeFeeCents: f.stripeFeeCents, otherCents, offerPaymentProcessing: fee < 0, processingCents: fee < 0 ? -fee : 0,
-  };
-}
-
-/**
- * Steps 3–4 of the read: which payouts and which lines are THIS account's.
- * - A payout belongs to the account its book lines sit in (`accountOfPayout`); one ticked on another account stays there.
- * - A line is this account's when its book is, or when a mark of this account names it (a ticked line stays on its old
- *   account's checks when its book moves, Ask 13).
- * - A line read by id whose book now sits in ANOTHER account moved away with its book: it is returned in `movedAway`, so
- *   the caller adds it to `claimedElsewhere` and no saved copy of it lingers here either.
- */
-export function assembleAccount(input: {
-  accountId: string; firstAccountId: string; ownBooks: ReadonlySet<string>; accountOfBook: ReadonlyMap<string, string>;
-  rows: readonly EntryRow[]; marks: readonly BankMark[]; bank: BankPayoutsRead; payoutsTickedElsewhere: ReadonlySet<string>;
-}): { lines: BankLine[]; payouts: BankPayout[]; movedAway: string[]; payoutGaps: Record<string, PayoutGapFacts> } {
-  const ledgerOf = new Map(input.rows.map(r => [r.id, r.ledger_id]));
-  const markedKeys = new Set(input.marks.map(m => m.key));
-  const payouts = input.bank.payouts.filter(p => {
-    if (markedKeys.has(p.key)) return true;
-    if (input.payoutsTickedElsewhere.has(p.key)) return false;
-    return accountOfPayout({ members: input.bank.membersOf.get(p.key) ?? [], ledgerOf, accountOfBook: input.accountOfBook,
-      firstAccountId: input.firstAccountId }) === input.accountId;
-  });
-  const passed = new Set(payouts.map(p => p.key));
-  const payoutOfHere = new Map([...input.bank.payoutOf].filter(([, k]) => passed.has(k)));
-  const lines: BankLine[] = [];
-  const movedAway: string[] = [];
-  for (const r of input.rows) {
-    const key = entryKey(r.id);
-    if (input.ownBooks.has(r.ledger_id) || markedKeys.has(key)) lines.push(entryToBankLine(r, payoutOfHere));
-    else if (input.accountOfBook.has(r.ledger_id)) movedAway.push(key);
-  }
-  const payoutGaps: Record<string, PayoutGapFacts> = {};
-  for (const k of passed) payoutGaps[k] = input.bank.facts[k];
-  return { lines, payouts, movedAway, payoutGaps };
-}
-

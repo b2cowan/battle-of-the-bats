@@ -4,11 +4,12 @@ import { resolveClubMoney } from '@/lib/club-money-route';
 import { addAccount, bankAnswer, bankOverview } from '@/lib/bank-club-steps';
 
 /**
- * THE CLUB'S BANK (Bank reconciliation R2b; B1, B7, C1, C10).
- * GET  ?orgSlug=                     — the club's accounts ("never done this" when none), each one's "checked through",
- *                                      and every club book with the account holding it. Anyone who can open Accounting.
+ * THE CLUB'S BANK (Bank balance check BC1; B1, B7).
+ * GET  ?orgSlug=                     — the club's accounts ("never done this" when none), each one's latest check
+ *                                      ("checked through {date} · Matches|Off by $X", ask 4), and every club book with the
+ *                                      account holding it. Whoever can move club money (club read = write today, B7).
  * POST { name, ledgerIds? }          — name an account. The first holds every club book; a later one takes the books it
- *                                      names (their unticked lines move with them, Ask 13). Answers with its view (201).
+ *                                      names (saved checks keep the books they counted, Q3). Answers with its view (201).
  */
 export const GET = withObservability(async (req: Request) => {
   const r = await resolveClubMoney(req, { scope: 'books', write: false });
@@ -21,5 +22,5 @@ export const POST = withObservability(async (req: Request) => {
   if ('error' in r) return r.error;
   const body = await req.json().catch(() => ({})) as Record<string, unknown>;
   const out = await addAccount(r.ctx, body);
-  return bankAnswer(r.ctx, out.ok ? out.id : '', null, out, 201);
+  return bankAnswer(r.ctx, out.ok ? out.id : '', out, 201);
 }, { route: '/api/admin/accounting/bank' });

@@ -1,45 +1,35 @@
 import 'server-only';
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from './supabase-admin';
-import { fetchAllIn } from './supabase-paging';
-import { resolvePersonNamer } from './db';
 import type { AuthContextWithRole } from './api-auth';
 import { canMoveClubMoney } from './member-access';
 import { moveRefused, refused, type Moved, type Refused } from './club-money-route';
-import { loadFiscalSetting } from './club-fiscal-year-server';
-import { closedThrough } from './club-fiscal-year';
 import { tournamentToday } from './timezone';
-import { bankFeeDate, evaluateCheck, orderedChecks } from './bank-check';
-import { readClubBankAccount, readClubBankAccounts, type ClubBankRead } from './bank-club-read';
-import { directionOfEntry, ENTRY_SELECT, type EntryRow } from './bank-club-map';
-import { toCents } from './coach-register';
 import { isUuid } from './utils';
+import { entriesById, figureForDate, readClubBankAccount, readClubBankAccounts, readClubChecks } from './bank-club-read';
+import { bookIdsOf, type ClubBook } from './bank-club-map';
 import {
-  bookNames, checkSummaries, checkToShow, checkedThrough, keptOutPlan, markPlan, openingPlan, payoutGapViews, pickerSearch, readCents,
-  readDay, readText, refusalOfDbError, refusalOfStep, statusOfRefusal, tickPlan, undoPlan, type BankCheckEvent, type Decision,
+  checkView, readDay, readText, refusalOfDbError, refusalOfStep, savePlan, saveRefusal, statusOfRefusal, waitingIdsOf,
 } from './bank-club-rules';
 import { BANK_REFUSAL, type BankRefusalCode } from './bank-check-words';
 
 /**
- * THE CLUB'S BANK STEPS (Bank reconciliation R2b): what each route under app/api/admin/accounting/bank/** does, once its
- * gate (`resolveClubMoney`, B7) has passed. Every step reads the account fresh (lib/bank-club-read.ts), decides with
- * the pure rules (lib/bank-club-rules.ts) and the engine, and writes through mig 439's and 440's functions, or, for a
- * rename, one plain row. A write answers with the account's view read again, so the screen shows the server's numbers,
- * never its own (rule 6).
- * ⚖ No year, no season: nothing here reads either.
+ * THE CLUB'S BANK STEPS (Bank balance check BC1): what each route under app/api/admin/accounting/bank/** does, once its
+ * gate (`resolveClubMoney`, B7) has passed. Every step reads the account fresh (lib/bank-club-read.ts), decides with the
+ * pure rules (lib/bank-club-rules.ts) and the engine, and writes through mig 447's functions, or, for a rename, one plain
+ * row. A write answers with the account's view read again, so the screen shows the server's numbers (rule 6).
+ * ⚖ Nothing here writes money (ask 1): no step touches `accounting_entries` or a rep money table.
+ * ⚖ No year, no season: nothing here reads either. A statement date is a DAY.
  */
 
-/** The club's day: the end of the Stripe read, the fee's "today" (rule 6: the server's, never the request's). */
+/** The club's day: the latest statement date a save takes, and the Stripe read's end (rule 6: the server's). */
 export const clubToday = () => tournamentToday();
 
 /** A coded refusal, at the one status the code has (`STATUS_OF`), with its words. */
 export const bankRefusedAs = (code: BankRefusalCode): Refused =>
   refused(statusOfRefusal(code), { error: BANK_REFUSAL[code], code });
 
-/** A rules decision's refusal as the route's. */
-const fromDecision = (d: Extract<Decision<object>, { ok: false }>): Refused => bankRefusedAs(d.code);
-
-/** One mig 439 / 440 step: its coded refusal, or its answer. */
+/** One mig 447 step: its coded refusal, or its answer. */
 async function step(fn: string, args: Record<string, unknown>): Promise<Moved<{ data: Record<string, unknown> }>> {
   const { data, error } = await supabaseAdmin.rpc(fn, args);
   if (error) {
@@ -53,150 +43,60 @@ async function step(fn: string, args: Record<string, unknown>): Promise<Moved<{ 
 
 // ── reads ────────────────────────────────────────────────────────────────────────────────────
 
-/** Each account's latest checked statement end (the Account pill: "through Oct 31, 2026" / "not checked yet"). */
-async function checkedThroughByAccount(accountIds: readonly string[]): Promise<Map<string, string>> {
-  const rows = await fetchAllIn<{ bank_account_id: string; statement_end_date: string }>(accountIds, (c, a, b) =>
-    supabaseAdmin.from('bank_checks').select('bank_account_id, statement_end_date').in('bank_account_id', c)
-      .eq('status', 'checked').order('bank_account_id').order('statement_end_date').range(a, b));
-  const out = new Map<string, string>();
-  for (const r of rows) if (!out.has(r.bank_account_id) || r.statement_end_date > out.get(r.bank_account_id)!) out.set(r.bank_account_id, r.statement_end_date);
-  return out;
-}
-
-/** GET /bank — the club's accounts (C1's "never done this", C10's pill) and every club book with the account holding it. */
+/** GET /bank — the club's accounts ("never done this" when none) and every club book with the account holding it. (Each
+ *  account's latest check is the account view's: the Account pill reads it there.) */
 export async function bankOverview(ctx: AuthContextWithRole) {
   const all = await readClubBankAccounts(ctx.org.id);
-  const through = await checkedThroughByAccount(all.accounts.map(a => a.id));
-  const books = [...all.accounts.flatMap(a => a.books), ...all.unplacedBooks];
   return {
     never: all.never,
-    accounts: all.accounts.map(a => ({
-      id: a.id, name: a.name, isFirst: a.isFirst, setup: a.setup, bookIds: a.books.map(b => b.id),
-      checkedThrough: through.get(a.id) ?? null,
-    })),
-    books: books.map(b => ({ id: b.id, name: b.name, entityType: b.entityType, accountId: all.accountOfBook.get(b.id) ?? null })),
+    accounts: all.accounts.map(a => ({ id: a.id, name: a.name })),
+    books: allBooks(all).map(b => ({ id: b.id, name: b.name, accountId: all.accountOfBook.get(b.id) ?? null })),
     canMove: canMoveClubMoney(ctx, ctx.org),
   };
 }
 
-async function eventsOf(orgId: string, checkIds: readonly string[]): Promise<BankCheckEvent[]> {
-  const rows = await fetchAllIn<{ check_id: string; kind: BankCheckEvent['kind']; at: string; by_user: string | null; reason: string | null }>(
-    checkIds, (c, a, b) => supabaseAdmin.from('bank_check_events').select('check_id, kind, at, by_user, reason')
-      .in('check_id', c).order('at').order('id').range(a, b));
-  const nameOf = await resolvePersonNamer(orgId, rows.map(r => r.by_user));
-  return rows.map(r => ({ checkId: r.check_id, kind: r.kind, at: r.at, byName: nameOf(r.by_user), reason: r.reason }));
-}
+const allBooks = (all: { accounts: { books: ClubBook[] }[]; unplacedBooks: ClubBook[] }) =>
+  [...all.accounts.flatMap(a => a.books), ...all.unplacedBooks];
 
 /**
- * GET /bank/accounts/{id} — one account: its statements (C4, C5), the one shown (C2/C3: band, ticks, outstanding, kept
- * out, left out automatically, payout gaps by reason, changed since), what can happen next, and the fee's date.
+ * GET /bank/accounts/{id}[?date=] — one account: its books, the starting statement, the saved checks newest first (each
+ * with its band, result and "Books now say"), the Account pill's accounts with their latest check, and with `date` the
+ * figure for that day (Your books, on its way, suspects, Still waiting?), from which the screen figures the band as the
+ * balance is typed.
  */
-export async function bankAccountView(ctx: AuthContextWithRole, accountId: string, askedCheck: string | null) {
-  const today = clubToday();
-  const read = await readClubBankAccount(ctx.org.id, accountId, { today });
+export async function bankAccountView(ctx: AuthContextWithRole, accountId: string, date: string | null) {
+  const read = await readClubBankAccount(ctx.org.id, accountId, { today: clubToday(), date });
   if (!read) return null;
-  return viewOf(ctx, read, askedCheck, today);
-}
-
-async function viewOf(ctx: AuthContextWithRole, read: ClubBankRead, askedCheck: string | null, today: string) {
-  const { state, account, all } = read;
-  const [events, setting, through] = await Promise.all([
-    eventsOf(ctx.org.id, state.checks.map(c => c.id)),
-    loadFiscalSetting(ctx.org.id),
-    checkedThroughByAccount(all.accounts.map(a => a.id)),
-  ]);
-  const summaries = checkSummaries(state, events);
-  const shownId = state.setup ? checkToShow(state, askedCheck) : null;
-  const shown = shownId ? evaluateCheck(state, shownId) : null;
-  const shownRecord = shownId ? state.checks.find(c => c.id === shownId)! : null;
-  const names = new Map([...all.accounts.flatMap(a => a.books), ...all.unplacedBooks].map(b => [b.id, b.name]));
-  const last = orderedChecks(state).at(-1) ?? null;
+  const { account, all, checks, latest, figure, nameOf } = read;
+  const views = checks.map(c => checkView(c, nameOf));
+  const bookName = new Map(allBooks(all).map(b => [b.id, b.name]));
+  const named = <L extends { bookId: string }>(lines: L[]) => lines.map(l => ({ ...l, bookName: bookName.get(l.bookId) ?? null }));
   return {
-    account: { id: account.id, name: account.name, isFirst: account.isFirst, setup: account.setup,
-      books: account.books.map(b => ({ id: b.id, name: b.name, entityType: b.entityType })) },
-    accounts: all.accounts.map(a => ({ id: a.id, name: a.name, isFirst: a.isFirst, checkedThrough: through.get(a.id) ?? null })),
+    account: { id: account.id, name: account.name, isFirst: account.isFirst, books: account.books.map(b => ({ id: b.id, name: b.name })) },
+    accounts: all.accounts.map(a => ({ id: a.id, name: a.name, isFirst: a.isFirst, checkedThrough: latest.get(a.id) ?? null })),
     canMove: canMoveClubMoney(ctx, ctx.org),
-    payoutsUnavailable: read.payoutsUnavailable,
-    /** The starting point's items (C1 again, while no statement starts from it). */
-    openingItems: state.openingItems ?? [],
-    checks: summaries,
-    checkedThrough: checkedThrough(summaries),
-    /** The "Check a statement" window: where the next one starts, and whether one may start (every one checked). */
-    next: state.setup ? {
-      startsAfter: last ? last.statementEndDate : state.setup.openingDate,
-      startingBalanceCents: last ? last.statementEndingBalanceCents : state.setup.openingBalanceCents,
-      canStart: !state.checks.some(c => c.status === 'open'),
-    } : null,
-    shown: shown && shownRecord ? {
-      ...shown,
-      status: shownRecord.status,
-      addedLineKeys: shownRecord.addedLineKeys ?? [],
-      books: bookNames([...shown.ticked, ...shown.outstanding, ...shown.keptOut, ...shown.autoExcluded.map(a => a.row)], read.lineBooks, names),
-      payoutGaps: payoutGapViews(shown, read.payoutGaps, read.payoutMembers),
-      /** Ask 8: the fee's day — the statement's end, or today when that day is in a closed fiscal year. */
-      feeDate: shownRecord.status === 'open'
-        ? bankFeeDate({ statementEndDate: shown.statementEndDate, booksClosedThrough: closedThrough(setting), today }) : null,
+    start: views.find(v => v.kind === 'start') ?? null,
+    checks: views.filter(v => v.kind === 'check').reverse(),
+    checkedThrough: latest.get(account.id) ?? null,
+    figure: figure ? {
+      ...figure,
+      suspects: { ...figure.suspects, lines: named(figure.suspects.lines) },
+      onItsWay: { ...figure.onItsWay, lines: named(figure.onItsWay.lines) },
     } : null,
   };
 }
 
 /** A write step's answer: its refusal, or the account read again. */
-export async function bankAnswer(ctx: AuthContextWithRole, accountId: string, checkId: string | null,
-  r: Moved<object>, status = 200): Promise<Response> {
+export async function bankAnswer(ctx: AuthContextWithRole, accountId: string, r: Moved<object>, status = 200): Promise<Response> {
   if (!r.ok) return moveRefused(r);
-  const view = await bankAccountView(ctx, accountId, checkId);
+  const view = await bankAccountView(ctx, accountId, null);
   if (!view) return moveRefused(bankRefusedAs('account_not_found'));
   return NextResponse.json(view, { status });
 }
 
-const PAGE = 50;
-
-/**
- * GET /bank/lines-before — C1's "still outstanding then" picker: posted lines of the account's books (or, before the club
- * has an account, every club book) dated on or before the starting date, newest first, by words or amount, a page at a
- * time. The starting date is a DAY the treasurer typed, never a year.
- */
-export async function linesBefore(ctx: AuthContextWithRole, p: { accountId: string | null; date: unknown; q: string; offset: number }):
-  Promise<Moved<{ lines: unknown[]; more: boolean }>> {
-  const day = readDay(p.date);
-  if (!day) return bankRefusedAs('bad_date');
-  const all = await readClubBankAccounts(ctx.org.id);
-  let books: { id: string; name: string }[];
-  if (p.accountId) {
-    const a = all.accounts.find(x => x.id === p.accountId);
-    if (!a) return bankRefusedAs('account_not_found');
-    books = a.books;
-  } else {
-    books = all.never ? all.unplacedBooks : (all.accounts.find(a => a.isFirst)?.books ?? []);
-  }
-  if (books.length === 0) return { ok: true, lines: [], more: false };
-  const names = new Map(books.map(b => [b.id, b.name]));
-  let q = supabaseAdmin.from('accounting_entries').select(ENTRY_SELECT)
-    .in('ledger_id', books.map(b => b.id)).eq('status', 'posted').lte('entry_date', day);
-  const search = pickerSearch(p.q);
-  if (search.kind === 'amount') q = q.eq('amount', search.amount);
-  // All digits: a cheque number as much as an amount. Digits need no escaping inside the `or` filter.
-  else if (search.kind === 'either') q = q.or(`amount.eq.${search.amount},description.ilike.%${search.words}%`);
-  else if (search.kind === 'words') q = q.ilike('description', `%${search.words.replace(/[%_\\]/g, m => `\\${m}`)}%`);
-  const offset = Math.max(0, Math.min(Number.isInteger(p.offset) ? p.offset : 0, 5000));
-  const { data, error } = await q.order('entry_date', { ascending: false }).order('id', { ascending: false })
-    .range(offset, offset + PAGE);
-  if (error) throw error;
-  const rows = (data ?? []) as EntryRow[];
-  return {
-    ok: true,
-    more: rows.length > PAGE,
-    lines: rows.slice(0, PAGE).map(r => ({
-      key: `entry:${r.id}`, date: r.entry_date, description: r.description, bookName: names.get(r.ledger_id) ?? null,
-      direction: directionOfEntry(r),
-      amountCents: toCents(r.amount),
-    })),
-  };
-}
-
 // ── accounts and books ───────────────────────────────────────────────────────────────────────
 
-/** POST /bank — name an account; a second one takes the books it names (C10, Ask 13). */
+/** POST /bank — name an account; a second one takes the books it names (R0 tab 8). */
 export async function addAccount(ctx: AuthContextWithRole, body: Record<string, unknown>): Promise<Moved<{ id: string }>> {
   const name = readText(body.name, 80);
   if (!name) return bankRefusedAs('bad_name');
@@ -221,7 +121,8 @@ export async function renameAccount(ctx: AuthContextWithRole, accountId: string,
   return (data ?? []).length ? { ok: true } : bankRefusedAs('account_not_found');
 }
 
-/** POST /bank/accounts/{id}/books — move a club book's money into this account (Ask 13). */
+/** POST /bank/accounts/{id}/books — move a club book's money into this account. Saved checks keep the books they counted
+ *  (Q3); the next check of each account counts the book where it is now. */
 export async function moveBook(ctx: AuthContextWithRole, accountId: string, body: Record<string, unknown>): Promise<Moved<object>> {
   const ledgerId = typeof body.ledgerId === 'string' ? body.ledgerId : '';
   if (!isUuid(ledgerId)) return bankRefusedAs('book_not_found');
@@ -229,121 +130,48 @@ export async function moveBook(ctx: AuthContextWithRole, accountId: string, body
   return r.ok ? { ok: true } : r;
 }
 
+// ── a check ──────────────────────────────────────────────────────────────────────────────────
+
 /**
- * PUT /bank/accounts/{id}/setup — the starting date, the bank balance then, and what was still outstanding (C1, Ask 3).
- * Refused once a statement exists (rule 2). A picked item's figures are read here from the book (rule 6).
+ * PUT /bank/accounts/{id}/setup (`asked: 'start'`) — the starting statement (ask 7): a date and a balance, and (Q2) the
+ * lines waiting at the start. POST /bank/accounts/{id}/checks (`asked: 'check'`) — save a check (ruling 3: matching or
+ * not), with its Not in the bank yet lines and the cash figure. Both: one step (`bank_check_save`), which replaces a live
+ * check of the same date ("Check this statement again").
  */
-export async function setUpAccount(ctx: AuthContextWithRole, accountId: string, body: Record<string, unknown>): Promise<Moved<object>> {
-  const openingDate = readDay(body.openingDate);
-  const balance = readCents(body.openingBalanceCents, { positive: false });
-  if (!openingDate || balance === null) return bankRefusedAs('bad_start');
-  if (openingDate > clubToday()) return bankRefusedAs('starts_in_future');
-  const keys = Array.isArray(body.picked) ? body.picked.filter((k): k is string => typeof k === 'string') : [];
-  // Only uuids are looked up (a malformed one is simply not found, and `openingPlan` refuses it); the plan caps the count at 500.
-  const ids = keys.map(k => (k.startsWith('entry:') ? k.slice(6) : '')).filter(isUuid).slice(0, 501);
-  // The picked lines come from the request alone, so their read need not wait for the account's.
-  const [all, rows] = await Promise.all([
-    readClubBankAccounts(ctx.org.id),
-    fetchAllIn<EntryRow>(ids, (c, a, b) =>
-      supabaseAdmin.from('accounting_entries').select(ENTRY_SELECT).in('id', c).order('id').range(a, b)),
+export async function saveCheck(ctx: AuthContextWithRole, accountId: string, asked: 'start' | 'check',
+  body: Record<string, unknown>): Promise<Moved<{ id: string }>> {
+  const date = readDay(body.date);
+  if (!date) return bankRefusedAs('bad_figures');
+  const today = clubToday();
+  // The waiting lines' rows are named by the request alone, so their read need not wait for the account's.
+  const [all, byAccount, entries] = await Promise.all([
+    readClubBankAccounts(ctx.org.id), readClubChecks(ctx.org.id), entriesById(waitingIdsOf(body.waiting)),
   ]);
   const account = all.accounts.find(a => a.id === accountId);
   if (!account) return bankRefusedAs('account_not_found');
-  const plan = openingPlan({ openingDate, pickedKeys: body.picked, typed: body.typed, rows, books: new Set(account.books.map(b => b.id)) });
-  if (!plan.ok) return fromDecision(plan);
-  const r = await step('bank_account_set_up', {
-    p_org: ctx.org.id, p_account: accountId, p_opening_date: openingDate, p_opening_balance_cents: balance,
-    p_picked: plan.picked, p_typed: plan.typed, p_actor: ctx.user.id,
+  const checks = byAccount.get(accountId) ?? [];
+  // The date rules first (the step holds them again under the lock): a refused save reads no figure.
+  const refusal = saveRefusal({ asked, date, today, checks });
+  if (refusal) return bankRefusedAs(refusal);
+  const figure = await figureForDate(ctx.org.id, account, checks, date, today, { kind: asked, suspects: false });
+  const plan = savePlan({
+    kind: asked, date, body, entries,
+    facts: { booksCents: figure.booksCents, onItsWay: figure.onItsWay, bookIds: bookIdsOf(account.books) },
   });
-  return r.ok ? { ok: true } : r;
-}
-
-// ── a statement ──────────────────────────────────────────────────────────────────────────────
-
-/** POST /bank/accounts/{id}/checks — start a statement, in order (`canStartCheck`, held under mig 439's lock). */
-export async function startCheck(ctx: AuthContextWithRole, accountId: string, body: Record<string, unknown>): Promise<Moved<{ id: string }>> {
-  const end = readDay(body.statementEndDate);
-  const balance = readCents(body.statementEndingBalanceCents, { positive: false });
-  if (!end || balance === null) return bankRefusedAs('bad_figures');
-  // A bank can't have printed a statement that ends after today (a typo; its fee would be dated in the future too).
-  if (end > clubToday()) return bankRefusedAs('ends_in_future');
-  const r = await step('bank_check_start', { p_org: ctx.org.id, p_account: accountId, p_end: end, p_balance_cents: balance, p_actor: ctx.user.id });
+  if (!plan.ok) return bankRefusedAs(plan.code);
+  const a = plan.args;
+  const r = await step('bank_check_save', {
+    p_org: ctx.org.id, p_account: accountId, p_kind: a.kind, p_date: a.date, p_bank_cents: a.bankCents,
+    p_books_cents: a.booksCents, p_on_its_way_cents: a.onItsWayCents, p_cash_cents: a.cashCents, p_book_ids: a.bookIds,
+    p_waiting: a.waiting, p_actor: ctx.user.id,
+  });
   return r.ok ? { ok: true, id: r.data.id as string } : r;
 }
 
-/** PATCH /bank/accounts/{id}/checks/{checkId} — correct an OPEN statement's figures ("Undo, then re-enter", rule 2). */
-export async function refigureCheck(ctx: AuthContextWithRole, accountId: string, checkId: string, body: Record<string, unknown>): Promise<Moved<object>> {
-  const end = readDay(body.statementEndDate);
-  const balance = readCents(body.statementEndingBalanceCents, { positive: false });
-  if (!end || balance === null) return bankRefusedAs('bad_figures');
-  // A bank can't have printed a statement that ends after today (a typo; its fee would be dated in the future too).
-  if (end > clubToday()) return bankRefusedAs('ends_in_future');
-  const r = await step('bank_check_refigure', { p_org: ctx.org.id, p_account: accountId, p_check: checkId, p_end: end, p_balance_cents: balance });
-  return r.ok ? { ok: true } : r;
-}
-
-/** The account read for a write, or its refusal. */
-export async function readFor(ctx: AuthContextWithRole, accountId: string): Promise<Moved<{ read: ClubBankRead }>> {
-  const read = await readClubBankAccount(ctx.org.id, accountId, { today: clubToday() });
-  if (!read) return bankRefusedAs('account_not_found');
-  if (!read.state.setup) return bankRefusedAs('not_set_up');
-  return { ok: true, read };
-}
-
-/** POST /bank/accounts/{id}/checks/{checkId}/ticks — tick or untick one row (rule 3: a payout with its members). */
-export async function tickRow(ctx: AuthContextWithRole, accountId: string, checkId: string, body: Record<string, unknown>): Promise<Moved<object>> {
-  const key = typeof body.key === 'string' ? body.key : '';
-  const tick = body.ticked !== false;
-  const got = await readFor(ctx, accountId);
-  if (!got.ok) return got;
-  const plan = tickPlan(got.read.state, checkId, key, tick);
-  if (!plan.ok) return fromDecision(plan);
-  if (!plan.insert.length && !plan.remove.length) return { ok: true };
-  // ONE step (mig 440), under the lock Mark checked takes: refused `not_open` once the statement is checked, the payout
-  // and its members together (rule 3), a double tap's twin a success and a row ticked elsewhere `changed`.
-  const r = await step('bank_check_tick', {
-    p_org: ctx.org.id, p_account: accountId, p_check: checkId, p_remove: plan.remove, p_insert: plan.insert, p_actor: ctx.user.id,
-  });
-  return r.ok ? { ok: true } : r;
-}
-
-/** POST /bank/accounts/{id}/checks/{checkId}/kept-out — "Didn't go through the bank" / "Put it back" (B6). */
-export async function keepOut(ctx: AuthContextWithRole, accountId: string, checkId: string, body: Record<string, unknown>): Promise<Moved<object>> {
-  const key = typeof body.key === 'string' ? body.key : '';
-  const keptOut = body.keptOut !== false;
-  const got = await readFor(ctx, accountId);
-  if (!got.ok) return got;
-  const plan = keptOutPlan(got.read.state, checkId, key, keptOut);
-  if (!plan.ok) return fromDecision(plan);
-  if (plan.noop) return { ok: true };
-  // ONE step (mig 440), under the same lock: refused `not_open` once the statement is checked.
-  const r = await step('bank_check_keep_out', {
-    p_org: ctx.org.id, p_account: accountId, p_check: checkId, p_key: key, p_kept_out: keptOut, p_actor: ctx.user.id,
-  });
-  return r.ok ? { ok: true } : r;
-}
-
-/** POST /bank/accounts/{id}/checks/{checkId}/mark — Mark checked, or (`again`) Mark checked again. One step (mig 439). */
-export async function markCheck(ctx: AuthContextWithRole, accountId: string, checkId: string, body: Record<string, unknown>): Promise<Moved<object>> {
-  const again = body.again === true;
-  const got = await readFor(ctx, accountId);
-  if (!got.ok) return got;
-  const plan = markPlan(got.read.state, checkId, again);
-  if (!plan.ok) return fromDecision(plan);
-  const r = await step('bank_check_mark', {
-    p_org: ctx.org.id, p_account: accountId, p_check: checkId, p_kind: again ? 'checked_again' : 'checked', p_seen: plan.seen,
-    p_snapshot: plan.outstandingSnapshot, p_marks: plan.marks, p_actor: ctx.user.id,
-  });
-  return r.ok ? { ok: true } : r;
-}
-
-/** POST /bank/accounts/{id}/checks/{checkId}/undo — the latest checked statement, with a reason (Ask 9). */
-export async function undoCheck(ctx: AuthContextWithRole, accountId: string, checkId: string, body: Record<string, unknown>): Promise<Moved<object>> {
-  const got = await readFor(ctx, accountId);
-  if (!got.ok) return got;
-  const plan = undoPlan(got.read.state, checkId, body.reason);
-  if (!plan.ok) return fromDecision(plan);
-  const r = await step('bank_check_undo', { p_org: ctx.org.id, p_account: accountId, p_check: checkId, p_reason: plan.reason, p_actor: ctx.user.id });
+/** DELETE /bank/accounts/{id}/checks/{checkId} — ask 5: any check, after one question; who and when are kept (soft). The
+ *  starting statement can't go while a later check stands on it (`start_has_checks`). */
+export async function deleteCheck(ctx: AuthContextWithRole, accountId: string, checkId: string): Promise<Moved<object>> {
+  const r = await step('bank_check_delete', { p_org: ctx.org.id, p_account: accountId, p_check: checkId, p_actor: ctx.user.id });
   return r.ok ? { ok: true } : r;
 }
 

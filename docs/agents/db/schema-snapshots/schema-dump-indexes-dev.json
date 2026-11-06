@@ -150,89 +150,19 @@
     "indexdef": "CREATE UNIQUE INDEX bank_accounts_pkey ON public.bank_accounts USING btree (id)"
   },
   {
-    "tablename": "bank_accounts",
-    "indexname": "bank_accounts_set_up_by_idx",
-    "indexdef": "CREATE INDEX bank_accounts_set_up_by_idx ON public.bank_accounts USING btree (set_up_by) WHERE (set_up_by IS NOT NULL)"
+    "tablename": "bank_check_waiting",
+    "indexname": "bank_check_waiting_once",
+    "indexdef": "CREATE UNIQUE INDEX bank_check_waiting_once ON public.bank_check_waiting USING btree (check_id, line_key)"
   },
   {
-    "tablename": "bank_check_added_lines",
-    "indexname": "bank_check_added_lines_by_idx",
-    "indexdef": "CREATE INDEX bank_check_added_lines_by_idx ON public.bank_check_added_lines USING btree (added_by) WHERE (added_by IS NOT NULL)"
-  },
-  {
-    "tablename": "bank_check_added_lines",
-    "indexname": "bank_check_added_lines_once",
-    "indexdef": "CREATE UNIQUE INDEX bank_check_added_lines_once ON public.bank_check_added_lines USING btree (check_id, line_key)"
-  },
-  {
-    "tablename": "bank_check_added_lines",
-    "indexname": "bank_check_added_lines_pkey",
-    "indexdef": "CREATE UNIQUE INDEX bank_check_added_lines_pkey ON public.bank_check_added_lines USING btree (id)"
-  },
-  {
-    "tablename": "bank_check_changes",
-    "indexname": "bank_check_changes_changed_by_idx",
-    "indexdef": "CREATE INDEX bank_check_changes_changed_by_idx ON public.bank_check_changes USING btree (changed_by) WHERE (changed_by IS NOT NULL)"
-  },
-  {
-    "tablename": "bank_check_changes",
-    "indexname": "bank_check_changes_check_idx",
-    "indexdef": "CREATE INDEX bank_check_changes_check_idx ON public.bank_check_changes USING btree (check_id, changed_at)"
-  },
-  {
-    "tablename": "bank_check_changes",
-    "indexname": "bank_check_changes_cleared_by_idx",
-    "indexdef": "CREATE INDEX bank_check_changes_cleared_by_idx ON public.bank_check_changes USING btree (cleared_by) WHERE (cleared_by IS NOT NULL)"
-  },
-  {
-    "tablename": "bank_check_changes",
-    "indexname": "bank_check_changes_open_idx",
-    "indexdef": "CREATE INDEX bank_check_changes_open_idx ON public.bank_check_changes USING btree (check_id) WHERE (cleared_at IS NULL)"
-  },
-  {
-    "tablename": "bank_check_changes",
-    "indexname": "bank_check_changes_pkey",
-    "indexdef": "CREATE UNIQUE INDEX bank_check_changes_pkey ON public.bank_check_changes USING btree (id)"
-  },
-  {
-    "tablename": "bank_check_events",
-    "indexname": "bank_check_events_by_idx",
-    "indexdef": "CREATE INDEX bank_check_events_by_idx ON public.bank_check_events USING btree (by_user) WHERE (by_user IS NOT NULL)"
-  },
-  {
-    "tablename": "bank_check_events",
-    "indexname": "bank_check_events_check_idx",
-    "indexdef": "CREATE INDEX bank_check_events_check_idx ON public.bank_check_events USING btree (check_id, at)"
-  },
-  {
-    "tablename": "bank_check_events",
-    "indexname": "bank_check_events_pkey",
-    "indexdef": "CREATE UNIQUE INDEX bank_check_events_pkey ON public.bank_check_events USING btree (id)"
-  },
-  {
-    "tablename": "bank_check_marks",
-    "indexname": "bank_check_marks_by_idx",
-    "indexdef": "CREATE INDEX bank_check_marks_by_idx ON public.bank_check_marks USING btree (marked_by) WHERE (marked_by IS NOT NULL)"
-  },
-  {
-    "tablename": "bank_check_marks",
-    "indexname": "bank_check_marks_check_idx",
-    "indexdef": "CREATE INDEX bank_check_marks_check_idx ON public.bank_check_marks USING btree (check_id)"
-  },
-  {
-    "tablename": "bank_check_marks",
-    "indexname": "bank_check_marks_one_tick",
-    "indexdef": "CREATE UNIQUE INDEX bank_check_marks_one_tick ON public.bank_check_marks USING btree (bank_account_id, line_key)"
-  },
-  {
-    "tablename": "bank_check_marks",
-    "indexname": "bank_check_marks_pkey",
-    "indexdef": "CREATE UNIQUE INDEX bank_check_marks_pkey ON public.bank_check_marks USING btree (id)"
+    "tablename": "bank_check_waiting",
+    "indexname": "bank_check_waiting_pkey",
+    "indexdef": "CREATE UNIQUE INDEX bank_check_waiting_pkey ON public.bank_check_waiting USING btree (id)"
   },
   {
     "tablename": "bank_checks",
-    "indexname": "bank_checks_checked_by_idx",
-    "indexdef": "CREATE INDEX bank_checks_checked_by_idx ON public.bank_checks USING btree (checked_by) WHERE (checked_by IS NOT NULL)"
+    "indexname": "bank_checks_account_idx",
+    "indexdef": "CREATE INDEX bank_checks_account_idx ON public.bank_checks USING btree (bank_account_id, statement_end_date)"
   },
   {
     "tablename": "bank_checks",
@@ -241,48 +171,23 @@
   },
   {
     "tablename": "bank_checks",
-    "indexname": "bank_checks_id_account",
-    "indexdef": "CREATE UNIQUE INDEX bank_checks_id_account ON public.bank_checks USING btree (id, bank_account_id)"
+    "indexname": "bank_checks_deleted_by_idx",
+    "indexdef": "CREATE INDEX bank_checks_deleted_by_idx ON public.bank_checks USING btree (deleted_by) WHERE (deleted_by IS NOT NULL)"
   },
   {
     "tablename": "bank_checks",
-    "indexname": "bank_checks_one_per_end_date",
-    "indexdef": "CREATE UNIQUE INDEX bank_checks_one_per_end_date ON public.bank_checks USING btree (bank_account_id, statement_end_date)"
+    "indexname": "bank_checks_one_live_per_date",
+    "indexdef": "CREATE UNIQUE INDEX bank_checks_one_live_per_date ON public.bank_checks USING btree (bank_account_id, statement_end_date) WHERE (deleted_at IS NULL)"
+  },
+  {
+    "tablename": "bank_checks",
+    "indexname": "bank_checks_one_live_start",
+    "indexdef": "CREATE UNIQUE INDEX bank_checks_one_live_start ON public.bank_checks USING btree (bank_account_id) WHERE ((kind = 'start'::text) AND (deleted_at IS NULL))"
   },
   {
     "tablename": "bank_checks",
     "indexname": "bank_checks_pkey",
     "indexdef": "CREATE UNIQUE INDEX bank_checks_pkey ON public.bank_checks USING btree (id)"
-  },
-  {
-    "tablename": "bank_line_exclusions",
-    "indexname": "bank_line_exclusions_by_idx",
-    "indexdef": "CREATE INDEX bank_line_exclusions_by_idx ON public.bank_line_exclusions USING btree (excluded_by) WHERE (excluded_by IS NOT NULL)"
-  },
-  {
-    "tablename": "bank_line_exclusions",
-    "indexname": "bank_line_exclusions_once",
-    "indexdef": "CREATE UNIQUE INDEX bank_line_exclusions_once ON public.bank_line_exclusions USING btree (bank_account_id, line_key)"
-  },
-  {
-    "tablename": "bank_line_exclusions",
-    "indexname": "bank_line_exclusions_pkey",
-    "indexdef": "CREATE UNIQUE INDEX bank_line_exclusions_pkey ON public.bank_line_exclusions USING btree (id)"
-  },
-  {
-    "tablename": "bank_saved_lines",
-    "indexname": "bank_saved_lines_by_idx",
-    "indexdef": "CREATE INDEX bank_saved_lines_by_idx ON public.bank_saved_lines USING btree (saved_by) WHERE (saved_by IS NOT NULL)"
-  },
-  {
-    "tablename": "bank_saved_lines",
-    "indexname": "bank_saved_lines_once",
-    "indexdef": "CREATE UNIQUE INDEX bank_saved_lines_once ON public.bank_saved_lines USING btree (bank_account_id, line_key)"
-  },
-  {
-    "tablename": "bank_saved_lines",
-    "indexname": "bank_saved_lines_pkey",
-    "indexdef": "CREATE UNIQUE INDEX bank_saved_lines_pkey ON public.bank_saved_lines USING btree (id)"
   },
   {
     "tablename": "basic_coach_team_announcements",
@@ -1151,6 +1056,11 @@
   },
   {
     "tablename": "family_links",
+    "indexname": "family_links_child_id_idx",
+    "indexdef": "CREATE INDEX family_links_child_id_idx ON public.family_links USING btree (child_id)"
+  },
+  {
+    "tablename": "family_links",
     "indexname": "family_links_claim_token_hash_key",
     "indexdef": "CREATE UNIQUE INDEX family_links_claim_token_hash_key ON public.family_links USING btree (claim_token_hash)"
   },
@@ -1161,8 +1071,8 @@
   },
   {
     "tablename": "family_links",
-    "indexname": "family_links_live_uniq",
-    "indexdef": "CREATE UNIQUE INDEX family_links_live_uniq ON public.family_links USING btree (rep_team_id, invited_email, role) WHERE (status <> ALL (ARRAY['declined'::text, 'revoked'::text]))"
+    "indexname": "family_links_live_child_uniq",
+    "indexdef": "CREATE UNIQUE INDEX family_links_live_child_uniq ON public.family_links USING btree (child_id, rep_team_id, invited_email, role) WHERE (status <> ALL (ARRAY['declined'::text, 'revoked'::text]))"
   },
   {
     "tablename": "family_links",
@@ -3153,6 +3063,11 @@
     "tablename": "platform_refunds",
     "indexname": "platform_refunds_charge_idx",
     "indexdef": "CREATE INDEX platform_refunds_charge_idx ON public.platform_refunds USING btree (stripe_charge_id)"
+  },
+  {
+    "tablename": "platform_refunds",
+    "indexname": "platform_refunds_credit_note_uniq",
+    "indexdef": "CREATE UNIQUE INDEX platform_refunds_credit_note_uniq ON public.platform_refunds USING btree (stripe_credit_note_id) WHERE (stripe_credit_note_id IS NOT NULL)"
   },
   {
     "tablename": "platform_refunds",

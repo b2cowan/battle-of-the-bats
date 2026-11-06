@@ -1,71 +1,76 @@
-# PM brief: checking the books against the bank (both portals)
+# PM brief: the bank balance check (both portals)
 
-**Plan:** `BANK_RECONCILIATION_PLAN.md` · **Priority:** High (inside the Club release, owner 2026-10-12; planned and
-drawn before Stage 8) · **Status:** planned; all twelve asks (B1–B12) ruled A by the owner 2026-11-04, as recommended.
-Drawings approved 2026-11-04. **R1 built 2026-11-04** (behind the scenes, nothing a customer sees yet): the bank account, the statement and the tick are stored; the arithmetic is proven against both example statements; a Stripe payout was measured to add up to the cent when the family pays the fee (the club-pays case still needs one test payment). **R2, the club's Bank tab, built 2026-11-04 to 2026-11-05 (complete
-at its last commit)**: under Accounting → Bank a club treasurer names the bank account, enters where the books stood, then
-checks statements to a $0.00 difference, with a Stripe payout ticked as one line, bank fees added from the check, Undo
-with a reason, a second account and books moved between accounts. It works at a desk and on a phone (the difference
-stays pinned at the top and the main button stays in reach at the bottom). Members who can open Accounting but not move
-money read the same tab with no buttons. Before it reaches customers: the database changes go to production, and one
-club-pays payout is seen in a browser. Next: R3, where the bank check shows elsewhere in the club's money screens.
-
----
+**Plan:** `BANK_RECONCILIATION_PLAN.md` · **Drawings:** https://claude.ai/artifact/XdxsbzGpGwyDvWttJcjFeN ·
+**Priority:** High (inside the Club release, owner 2026-10-12; planned and drawn before Stage 8) · **Status:** re-planned
+2026-11-05 by the owner. Ten drawing asks ruled as recommended 2026-11-05; plan rewritten 2026-11-05; three edge-case
+asks (Q1–Q3) ruled as recommended 2026-11-05. Next: stage BC1, behind the scenes. The earlier tick-off version (built on dev 2026-11-04/05) is
+superseded and is taken apart in BC1.
 
 ## What it does
 
-Once a month, a club treasurer, or a team's coach or team treasurer, opens their bank statement beside FieldLogicHQ. They
-type the statement's end date and closing balance, tick off each line the bank shows, and watch the difference fall to
-$0.00. Then they mark the statement checked. The club and the team each carry a quiet "Bank checked through March 31",
-and the club can see that line for every one of its teams.
+A club treasurer, or a team's coach or team treasurer, opens their bank statement and types two things: the statement's
+**date** and its **balance**. FieldLogicHQ counts every line in their books up to that date and shows three figures side
+by side: **The bank says**, **Should be in the bank**, and the **Difference**. When they agree it says **Matches**. When
+they don't, it says **Off by $75.00**, says which way, and helps find it. They save the check either way.
 
 ## Why it matters
 
-- **It's the one money job the product makes a treasurer do somewhere else.** Today every club and team keeps its books
-  here and then checks them against the bank in a spreadsheet, or doesn't check at all.
-- **Associations require it.** Canadian minor-hockey associations commonly require every team to hand in a monthly bank
-  reconciliation, and a final one at season end. Today that's a spreadsheet emailed to the club. After this, the club
-  sees each team's "checked through" date without asking.
-- **It's the claim we took off the Club page.** "Payment reconciliation" was removed from every Club page on 2026-10-19
-  because nothing did it. This is what makes the claim true again.
-- **The comparable tools don't do it.** The team apps we looked at (TeamSnap, Jersey Watch) track payments but don't
-  check a bank statement. Accounting tools (QuickBooks, Wave) do, but a volunteer doesn't run their team in QuickBooks.
+- **It fits how volunteers actually work.** Treasurers and coaches aren't accountants. They log what they see in the bank
+  and want to know "are my books right as of the statement?" Ticking off every line, the earlier design, was an
+  accountant's job; the owner stopped it for that reason.
+- **It is the form associations already ask for.** Minor-hockey associations ask each team for a monthly bank
+  reconciliation: bank balance, plus deposits not yet in, less cheques not yet cashed, equals the books. The balance
+  check is that form, and its saved check prints as that page.
+- **It makes a claim true again.** "Payment reconciliation" came off the Club pages on 2026-10-19 because nothing did it.
+- **Competitors don't do it.** Team apps track payments but don't check the bank; accounting tools do, but volunteers
+  don't run a team in QuickBooks.
 
-## What the treasurer and the coach see differently
+## What people see
 
-- **Club:** a new **Bank** tab in Accounting. The first visit sets up the account: a name, a starting balance, and which
-  books belong to it (all of them by default). Each statement is one check. A Stripe deposit arrives as **one** line that
-  ticks every family payment inside it at once, instead of thirty lines to hunt for.
-- **Coach:** a fourth way to view the Ledger, **Bank**, beside Timeline, Bills and Payment schedule. It's the same book
-  arranged against the statement. A line paid in cash that never went to the bank can be marked "Didn't go through the
-  bank", so a team that pays refs in cash can still balance.
-- **When it doesn't balance:** three plain helpers: add a bank fee or interest, find a line by its amount, or finish later.
-  No bookkeeping vocabulary.
-- **Nothing locks.** Changing a line already matched to a statement gives a warning, and the checked statement then says
-  "Changed since it was checked" until someone re-checks. Only the latest check can be undone, with a reason.
-- **Elsewhere, quietly:** one line on each Overview; each team's date on the club's Teams tab; a printable one-page
-  report to hand the board or the association; a reminder in the fiscal-year close and the season close (a warning,
-  never a block).
+- **Club:** Accounting → **Bank**. The first time, they pick a statement they already have and type its date and balance
+  ("Start checking Club chequing"). From then on, the check sits at the top of the tab and the saved checks sit below.
+- **Coach:** Money → Ledger → View: **Bank**. No starting question: the season's opening balance is the start. An
+  optional box, **Cash not deposited yet**, covers the envelope of cash a coach hasn't banked.
+- **When it's off, Find helps:** a line of exactly the difference ("Cheque #214 is exactly $75.00, the bank may not have
+  cashed it yet"), a line of half the difference (entered the wrong way round), or two or three lines that add up to it,
+  plus the list of lines since the last check that matched. Two buttons: **Not in the bank yet** (counts that cheque as
+  still waiting, for this check), and **Add the missing line** (opens the usual add form, filled in, for a bank fee or
+  interest they hadn't entered).
+- **Online payments (club only):** money families paid online that Stripe hasn't paid out yet shows as one line, "Online
+  payments on their way to your bank", worked out automatically. If Stripe can't be reached, the line says so and isn't
+  counted.
+- **Saved checks:** each one shows the bank's figure, what should have been there, and the result. Any check can be
+  deleted, and the record keeps who did it and when. If someone edits the books afterwards, the saved check keeps its
+  figures and adds a quiet **Books now say $X**. Nothing warns or blocks on the money forms.
+- **Elsewhere, quietly:** one line on each Overview ("Bank: Club chequing checked through Oct 31, 2026", with an amber
+  "Off by $X" when the latest check is off); each team's mark on the club's Teams tab; a printable one-page report with
+  signature lines; a reminder (never a block) at the fiscal-year close and at the coach's season close.
 
-## Who it's for
+## Who can do what
 
-- **Club:** whoever can already move club money (owner; admin and treasurer by default). Everyone who can open Accounting
-  can read the checks.
-- **Coach:** whoever has money **write** on the team. Money **read** sees the checks.
-- **Plans (ruled 2026-11-04, B11):** the Club plan, as part of Accounting; the Premium Coaches Portal, both standalone
-  and Club-included. The free portal has no Ledger and gets nothing. No price changes.
+- **Club:** whoever can move club money checks; on the club side today, that is everyone who can open Accounting.
+- **Coach:** money write can check; money read sees the checks and the mark but not the form.
+- **The club** sees each linked team's mark, read-only. A standalone team's mark is seen by no club.
+- **Plans:** part of Accounting on Club and Club · Association; on the coach side, the Premium Coaches Portal. No price or
+  plan change (logged 2026-11-04).
 
-## What it deliberately leaves out of the first release
+## Tradeoffs made
 
-Uploading a statement file, a live connection to the bank, a second person's sign-off, a "send to the club for review"
-flow, and anything on a closed season's page. Each is written down in the plan so it's a decision, not a gap.
+- **No line-by-line ticking.** Faster and plainer. What it gives up: a check that's off says *how much*, not *which
+  line*. Find's hints narrow it down.
+- **Cash is one figure, not a cash box.** Nothing changes on any money form. A cash box can come later as a second
+  account.
+- **Three edge cases, ruled 2026-11-05:** a cheque that crosses a coach's season rollover can still be found (Find also
+  looks at the end of last season); a cheque written before the club's starting statement and cashed after it can be
+  marked "Waiting at the start", which fixes every later check; and when a book moves to a different bank account,
+  earlier saved checks keep the books they counted.
 
 ## Success criteria
 
-- A treasurer with a real month of club activity, including a Stripe deposit, reaches $0.00 and marks it checked in one
-  sitting, without help.
-- A coach whose team handled some cash reaches $0.00 using "Didn't go through the bank".
-- A club with five teams can see, on one screen, which teams have checked their bank this month.
-- A cheque written before the season's rollover can still be ticked when it cashes after it.
-- No figure on any existing money screen changes because of this feature.
-- "Bank reconciliation" goes back on the Club page only after the owner walk passes.
+- A treasurer with a statement in hand reaches "Matches" or a named "Off by" in under two minutes on a desk or a phone,
+  without help.
+- The two worked examples in the drawings (Lakeshore Lynx club, Ridge 13U coach) figure exactly as drawn.
+- A check that's off by a single uncashed cheque names the cheque in Find.
+- The printed report carries the association's formula and two signature lines.
+- Nothing in the bank check writes to the books on its own.
+- The owner walk passes in both portals, desk and phone, before "bank reconciliation" returns to any Club page.

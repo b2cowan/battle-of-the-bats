@@ -1,39 +1,40 @@
 import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
 import { fetchAll, fetchAllIn } from './supabase-paging';
-import { getClubOwnedLedgers } from './db';
+import { getClubOwnedLedgers, resolvePersonNamer } from './db';
 import { onlinePaymentsOn } from './online-payments-switch';
 import { readPayouts } from './online-payouts';
-import type { BankAccountState } from './bank-check';
+import { booksNowSay, latestBefore, suspectsSince, suspectsStart, type BankLine, type WaitingItem } from './bank-check';
 import {
-  ENTRY_SELECT, assembleAccount, checkRecords, entryIdOf, entryKey, keysNamed, liveClubAccounts, marksOf,
-  payoutFloor, payoutsForBank, placeBooks, savedOf, stampsOf, withAddedMembers,
-  type AddedLineRow, type BankAccountRow, type BookMoveRow, type ChangeRow, type CheckRow, type ClubBook, type EntryRow,
-  type MarkRow, type PayoutGapFacts, type SavedLineRow,
+  CHECK_SELECT, ENTRY_SELECT, ONLINE_METHODS, WAITING_SELECT, bookIdsOf, clubBooksOnDate, entryToBankLine, isOnlineEntry,
+  liveClubAccounts, onItsWay, onItsWayFloor, placeBooks, savedChecksOf,
+  type BankAccountRow, type BookMoveRow, type CheckRow, type ClubBook, type ClubSavedCheck, type EntryRow, type OnItsWay,
+  type PayoutRowLike, type WaitingRow,
 } from './bank-club-map';
+import { checkedThrough, saveRefusal, type SaveRefusal } from './bank-club-rules';
 
 /**
- * THE CLUB'S BANK READER (Bank reconciliation R2a; build prompt chunk R2a, rules 1 and 6). One read turns "this club's
- * bank account" into the engine's `BankAccountState` (lib/bank-check.ts) — everything R2b's routes and R2c's screens
- * stand on. Server only; the client never supplies a line, a payout or a figure (rule 6).
+ * THE CLUB'S BANK READER (Bank balance check BC1; plan §4, §7, §9 BC1). Server only; the client never supplies a line, a
+ * payout or a figure (rule 6). One account's read is: its books (placed now), its live saved checks with their waiting
+ * items and "Books now say" (re-figured over each check's OWN books, Q3/O1), every account's latest check (the pill), and
+ * — for a statement date D — Your books on D, Stripe on its way, the suspects since the last match and the latest earlier
+ * check's items ("Still waiting?").
  *
- * BOUNDED READS (never all-time, never a year parameter): the account's books from its starting date on; plus, BY ID,
- * every line a mark, a checked statement's saved list, the carried list, an opening item, an added line or a stamped
- * change names, whatever its date; plus a payout's own book lines. Stripe is read from the last checked statement's end
- * (lib/online-payouts.ts, the Payouts reader, never a second one); a failed read is `payoutsUnavailable`, never a throw.
+ * BOUNDED READS, never a year parameter: the club's live checks are ONE query (their items embedded), read beside the
+ * accounts; the books through a set of dates is ONE SQL pass (`bank_books_through`, mig 447); the suspects are the
+ * account's posted lines after the last match through D; on its way reads the 30 days before D and the club's Payouts
+ * reader (lib/online-payouts.ts, never a second Stripe reader; a failure is *not counted*, never a throw).
  */
 
-export interface ClubBankAccount {
+interface ClubBankAccount {
   id: string;
   name: string;
   isFirst: boolean;
-  /** null until the first check's starting point is set (C1). */
-  setup: { openingDate: string; openingBalanceCents: number } | null;
   books: ClubBook[];
 }
 
-export interface ClubBankAccounts {
-  /** The club has never set up an account: C1's "never done this" state; every club book is unplaced. */
+interface ClubBankAccounts {
+  /** The club has never added an account: the "never done this" state; every club book is unplaced. */
   never: boolean;
   accounts: ClubBankAccount[];
   unplacedBooks: ClubBook[];
@@ -41,27 +42,10 @@ export interface ClubBankAccounts {
   accountOfBook: Map<string, string>;
 }
 
-export interface ClubBankRead {
-  account: ClubBankAccount;
-  /** The club's accounts and books, as read for this account (the Account pill, the Book column's names). */
-  all: ClubBankAccounts;
-  state: BankAccountState;
-  /** Stripe did not answer: no payouts were passed, so their lines read one by one (the engine's fallback). */
-  payoutsUnavailable: boolean;
-  /** Per payout key passed: what its gap is made of, by reason (P4). */
-  payoutGaps: Record<string, PayoutGapFacts>;
-  /** Per payout key passed: every book line (`entry:` key) Stripe says rode in it, wherever that line sits now. A member
-   *  the engine's book side lacks (void, or in a book another account holds) means the gap is not a fee (R2b). */
-  payoutMembers: Record<string, string[]>;
-  /** A book line's key → the book it is in (the tick list's Book column). */
-  lineBooks: Record<string, string>;
-}
-
 /** The club's accounts and which books each holds (rule 1: the first is the oldest live CLUB account). */
 export async function readClubBankAccounts(orgId: string): Promise<ClubBankAccounts> {
   const [acctRes, books] = await Promise.all([
-    supabaseAdmin.from('bank_accounts')
-      .select('id, name, owner_kind, created_at, archived_at, opening_date, opening_balance_cents, set_up_at')
+    supabaseAdmin.from('bank_accounts').select('id, name, owner_kind, created_at, archived_at')
       .eq('org_id', orgId).eq('owner_kind', 'club').is('archived_at', null),
     getClubOwnedLedgers(orgId),
   ]);
@@ -72,137 +56,204 @@ export async function readClubBankAccounts(orgId: string): Promise<ClubBankAccou
   const placed = placeBooks(rows, books, moves);
   return {
     never: rows.length === 0,
-    accounts: rows.map((r, i) => ({
-      id: r.id, name: r.name, isFirst: i === 0,
-      setup: r.opening_date ? { openingDate: r.opening_date, openingBalanceCents: Number(r.opening_balance_cents) } : null,
-      books: placed.booksOf.get(r.id) ?? [],
-    })),
+    accounts: rows.map((r, i) => ({ id: r.id, name: r.name, isFirst: i === 0, books: placed.booksOf.get(r.id) ?? [] })),
     unplacedBooks: placed.unplaced,
     accountOfBook: placed.accountOfBook,
   };
 }
 
-/** Entry rows by id (chunked), any ledger: the caller decides which belong. */
-async function entriesById(ids: readonly string[]): Promise<EntryRow[]> {
-  return fetchAllIn<EntryRow>(ids, (c, a, b) =>
-    supabaseAdmin.from('accounting_entries').select(ENTRY_SELECT).in('id', c).order('id').range(a, b));
+/** Every LIVE check of the club's live club accounts, with its waiting items, oldest first per account — one query (the
+ *  items embedded), so it needs no account id and runs beside the accounts read. */
+export async function readClubChecks(orgId: string): Promise<Map<string, ClubSavedCheck[]>> {
+  const rows = await fetchAll<CheckRow & { bank_check_waiting: Omit<WaitingRow, 'check_id'>[] }>((a, b) => supabaseAdmin.from('bank_checks')
+    .select(`${CHECK_SELECT}, bank_check_waiting(${WAITING_SELECT}), bank_accounts!inner(org_id)`)
+    .eq('bank_accounts.org_id', orgId).eq('bank_accounts.owner_kind', 'club').is('bank_accounts.archived_at', null)
+    .is('deleted_at', null).order('bank_account_id').order('statement_end_date').order('id').range(a, b));
+  const byAccount = new Map<string, { checks: CheckRow[]; waiting: WaitingRow[] }>();
+  for (const r of rows) {
+    const g = byAccount.get(r.bank_account_id) ?? { checks: [], waiting: [] };
+    g.checks.push(r);
+    for (const w of r.bank_check_waiting ?? []) g.waiting.push({ ...w, check_id: r.id });
+    byAccount.set(r.bank_account_id, g);
+  }
+  return new Map([...byAccount].map(([id, g]) => [id, savedChecksOf(g.checks, g.waiting)]));
 }
 
-/** The club's Stripe payouts from `from` to today, with the book lines behind each; `unavailable` when Stripe didn't answer. */
-async function readClubPayouts(orgId: string, from: string, today: string) {
-  if (!onlinePaymentsOn()) return { rows: [], unavailable: false };
+/** `bank_books_through`: posted in − posted out of these books, all-time through each date, in one pass (mig 447). */
+async function booksThrough(bookIds: readonly string[], dates: readonly string[]): Promise<Map<string, number>> {
+  const out = new Map<string, number>();
+  const asked = [...new Set(dates)];
+  if (asked.length === 0) return out;
+  if (bookIds.length > 0) {
+    const { data, error } = await supabaseAdmin.rpc('bank_books_through', { p_ledgers: [...bookIds], p_dates: asked });
+    if (error) throw error;
+    for (const r of (data ?? []) as { through_date: string; net_cents: number | string }[]) out.set(r.through_date, Number(r.net_cents));
+  }
+  for (const d of asked) if (!out.has(d)) out.set(d, 0);
+  return out;
+}
+
+/** "Your books on D" for each date over these books (P5): the start's books + their movement after the start through D.
+ *  The one home of that sum for both the saved list (each check's own books, Q3) and the day's figure (the books now). */
+async function booksOnDates(start: ClubSavedCheck, bookIds: readonly string[], dates: readonly string[]): Promise<Map<string, number>> {
+  const through = await booksThrough(bookIds, [start.date, ...dates]);
+  return new Map(dates.map(d => [d, clubBooksOnDate({ startBooksCents: start.booksCents, throughD: through.get(d)!, throughStart: through.get(start.date)! })]));
+}
+
+/** The club's Stripe payouts arriving from `from` to `today`, with the book lines behind each. `none` when the club has no
+ *  Stripe account; `unavailable` when Stripe didn't answer. */
+async function readClubPayouts(orgId: string, from: string, today: string):
+  Promise<{ kind: 'none' } | { kind: 'unavailable' } | { kind: 'read'; rows: PayoutRowLike[] }> {
   const { data: acct, error } = await supabaseAdmin.from('org_payment_accounts')
     .select('stripe_account_id, livemode').eq('org_id', orgId).maybeSingle();
   if (error) throw error;
-  if (!acct?.stripe_account_id) return { rows: [], unavailable: false };
+  if (!acct?.stripe_account_id) return { kind: 'none' };
   try {
     const read = await readPayouts({
       orgId, accountId: acct.stripe_account_id as string, livemode: !!acct.livemode, from, to: today, withEntries: true,
     });
-    return { rows: read.payouts, unavailable: false };
+    return { kind: 'read', rows: read.payouts };
   } catch (err) {
-    console.error('[bank-club-read] the Stripe payouts read failed; payouts are left out:', err);
-    return { rows: [], unavailable: true };
+    console.error('[bank-club-read] the Stripe payouts read failed; on its way is not counted:', err);
+    return { kind: 'unavailable' };
   }
 }
 
 /**
- * One account's whole state, ready for `evaluateCheck`. Null when the account is not one of this club's live club
- * accounts (the route answers 404). `today` is the club's day (the Stripe read's end): R2b's routes derive it on the server
- * (rule 6), never from the request.
+ * Stripe "on its way" on D for these books (plan §4, ask 8): the online lines of the 30 days before D, less those inside a
+ * payout that arrived by D. `today` is the club's day (the Payouts read reaches past D for the "pays them out" day). With
+ * online payments switched off there is no line at all, and nothing is read.
  */
-export async function readClubBankAccount(orgId: string, accountId: string, opts: { today: string }): Promise<ClubBankRead | null> {
-  const all = await readClubBankAccounts(orgId);
+async function readOnItsWay(orgId: string, bookIds: readonly string[], date: string, today: string): Promise<OnItsWay> {
+  if (!onlinePaymentsOn()) return { state: 'none', cents: 0, lines: [] };
+  const floor = onItsWayFloor(date);
+  const [payouts, online] = await Promise.all([
+    readClubPayouts(orgId, floor, today),
+    fetchAllIn<EntryRow>([...bookIds], (c, a, b) => supabaseAdmin.from('accounting_entries').select(ENTRY_SELECT)
+      .in('ledger_id', c).eq('status', 'posted').in('payment_method', [...ONLINE_METHODS])
+      .gt('entry_date', floor).lte('entry_date', date).order('entry_date').order('id').range(a, b)),
+  ]);
+  if (payouts.kind === 'none') return { state: 'none', cents: 0, lines: [] };
+  const figured = onItsWay({ date, online, payouts: payouts.kind === 'read' ? payouts.rows : [] });
+  if (payouts.kind === 'unavailable') return { state: 'not_counted', reason: 'stripe_down', cents: null, lines: figured.lines };
+  return figured;
+}
+
+type SuspectLine = BankLine & { bookId: string; online: boolean };
+
+/** Posted lines of these books dated after `after` through `to` (the suspects' window), as the engine reads them. */
+async function linesBetween(bookIds: readonly string[], after: string, to: string): Promise<SuspectLine[]> {
+  const rows = await fetchAllIn<EntryRow>([...bookIds], (c, a, b) => supabaseAdmin.from('accounting_entries').select(ENTRY_SELECT)
+    .in('ledger_id', c).eq('status', 'posted').gt('entry_date', after).lte('entry_date', to)
+    .order('entry_date').order('id').range(a, b));
+  return rows.map(r => ({ ...entryToBankLine(r), bookId: r.ledger_id, online: isOnlineEntry(r) }));
+}
+
+/** A saved check as the list shows it: its own figures, and "Books now say" re-figured over its own books (O1). */
+export interface ClubCheckView extends ClubSavedCheck {
+  /** Ask 6: the books as they read now, when they differ from the saved figure; never on the start. */
+  booksNowSayCents: number | null;
+}
+
+/**
+ * Ask 6 + Q3: re-figure every saved check's books as they read now — the start's books as they read now (a Q2 item
+ * attached later moves every later check) + the movement of the check's OWN `book_ids` since the start. One SQL call per
+ * distinct book list (a move between accounts is the only thing that makes two).
+ */
+async function withBooksNow(checks: readonly ClubSavedCheck[]): Promise<ClubCheckView[]> {
+  const start = checks.find(c => c.kind === 'start');
+  const groups = new Map<string, ClubSavedCheck[]>();
+  for (const c of checks) {
+    if (c.kind !== 'check') continue;
+    const k = c.bookIds.join(',');
+    const g = groups.get(k);
+    if (g) g.push(c); else groups.set(k, [c]);
+  }
+  const nowOf = new Map<string, number>();
+  if (start) {
+    await Promise.all([...groups.values()].map(async g => {
+      const books = await booksOnDates(start, g[0].bookIds, g.map(c => c.date));
+      for (const c of g) nowOf.set(c.id, books.get(c.date)!);
+    }));
+  }
+  return checks.map(c => ({ ...c, booksNowSayCents: nowOf.has(c.id) ? booksNowSay(c.booksCents, nowOf.get(c.id)!) : null }));
+}
+
+/** At most this many suspects go to the screen (the hints look through the most recent 400: lib/bank-check.ts). */
+const SUSPECT_CAP = 1000;
+
+/** The figure for a statement date D (no bank balance: the screen types it and the engine figures the band). */
+export interface ClubFigureForDate {
+  date: string;
+  /** What saving on this date writes: the starting statement, or a check. */
+  kind: 'start' | 'check';
+  /** Why a save on this date would be refused (the screen says it before Save; the save step refuses the same). */
+  refused: SaveRefusal | null;
+  /** Your books on D; null for a start (its books are the bank balance solved: `startBooks`). */
+  booksCents: number | null;
+  onItsWay: OnItsWay;
+  /** Ask 3: lines since the last match (since the start on a first check), newest first, at most SUSPECT_CAP. */
+  suspects: { since: string; sinceMatch: boolean; total: number; lines: SuspectLine[] };
+  /** Ask 2: the latest earlier check's "Not in the bank yet" items, asked "Still waiting?" (BC3 asks). */
+  stillWaiting: WaitingItem[];
+  /** The live check of this date a save would replace ("Check this statement again"). */
+  replaces: string | null;
+}
+
+/**
+ * The facts a save on D stands on, read fresh (the save step and the screen's figure share it; rule 6). `kind` is the
+ * door a save comes through; the screen's read leaves it out and gets what saving on that day would be (a start when
+ * there is none yet, or on the start's own date). The save path skips the suspects (`suspects: false`).
+ */
+export async function figureForDate(orgId: string, account: ClubBankAccount, checks: readonly ClubSavedCheck[], date: string,
+  today: string, opts: { kind?: 'start' | 'check'; suspects?: boolean } = {}): Promise<ClubFigureForDate> {
+  const bookIds = bookIdsOf(account.books);
+  const start = checks.find(c => c.kind === 'start') ?? null;
+  const kind = opts.kind ?? (!start || start.date === date ? 'start' : 'check');
+  const refused = saveRefusal({ asked: kind, date, today, checks });
+  const replaces = checks.find(c => c.date === date)?.id ?? null;
+  const noSuspects = { since: date, sinceMatch: false, total: 0, lines: [] };
+
+  if (kind === 'start' || !start || refused) {
+    return { date, kind, refused, booksCents: null, onItsWay: await readOnItsWay(orgId, bookIds, date, today), suspects: noSuspects,
+      stillWaiting: [], replaces };
+  }
+  const { since } = suspectsStart(checks, date, start.date);
+  const [books, oiw, window] = await Promise.all([
+    booksOnDates(start, bookIds, [date]),
+    readOnItsWay(orgId, bookIds, date, today),
+    opts.suspects === false ? Promise.resolve<SuspectLine[]>([]) : linesBetween(bookIds, since, date),
+  ]);
+  const s = suspectsSince({ lines: window, checks, date, startDate: start.date });
+  return {
+    date, kind, refused, booksCents: books.get(date)!, onItsWay: oiw,
+    suspects: { since: s.since, sinceMatch: s.sinceMatch, total: s.lines.length, lines: s.lines.slice(0, SUSPECT_CAP) },
+    stillWaiting: [...(latestBefore(checks.filter(c => c.kind === 'check'), date)?.waiting ?? [])],
+    replaces,
+  };
+}
+
+/**
+ * One account: its books, live checks with "Books now say", every account's latest check, the names of who checked, and
+ * (with `date`) the figure for that day. Null when the account is not one of this club's live club accounts (the route
+ * answers 404). `today` is the club's day, the server's (rule 6), never the request's.
+ */
+export async function readClubBankAccount(orgId: string, accountId: string, opts: { today: string; date?: string | null }) {
+  const [all, byAccount] = await Promise.all([readClubBankAccounts(orgId), readClubChecks(orgId)]);
   const account = all.accounts.find(a => a.id === accountId);
   if (!account) return null;
-  const first = all.accounts.find(a => a.isFirst)!;
-  const otherAccountIds = all.accounts.filter(a => a.id !== accountId).map(a => a.id);
-
-  // The bounded line read (the account's books from its starting date on) needs only the account, so it rides in the first
-  // batch. The floor is the starting date, NOT the last checked end: a line back-dated into a checked month is outstanding
-  // on the next check (B4) and a moved-in book's older unticked lines are this account's (Ask 13); book lines carry no
-  // trustworthy "last changed" stamp to find either another way.
-  const ownBooks = new Set(account.books.map(b => b.id));
-  const [checkRows, markRows, exclusionRows, savedRows, windowRows] = await Promise.all([
-    fetchAll<CheckRow>((a, b) => supabaseAdmin.from('bank_checks')
-      .select('id, statement_end_date, statement_ending_balance_cents, status, outstanding_snapshot')
-      .eq('bank_account_id', accountId).order('statement_end_date').range(a, b)),
-    fetchAll<MarkRow>((a, b) => supabaseAdmin.from('bank_check_marks')
-      .select('check_id, line_key, line_date, direction, amount_cents, payout_key')
-      .eq('bank_account_id', accountId).order('line_key').order('check_id').range(a, b)),
-    fetchAll<{ line_key: string }>((a, b) => supabaseAdmin.from('bank_line_exclusions')
-      .select('line_key').eq('bank_account_id', accountId).order('line_key').range(a, b)),
-    fetchAll<SavedLineRow>((a, b) => supabaseAdmin.from('bank_saved_lines')
-      .select('kind, line_key, line_date, direction, amount_cents, description')
-      .eq('bank_account_id', accountId).order('line_key').order('kind').range(a, b)),
-    account.setup ? fetchAllIn<EntryRow>([...ownBooks], (c, a, b) =>
-      supabaseAdmin.from('accounting_entries').select(ENTRY_SELECT).in('ledger_id', c).gt('entry_date', account.setup!.openingDate)
-        .order('entry_date').order('id').range(a, b)) : Promise.resolve<EntryRow[]>([]),
+  const saved = byAccount.get(accountId) ?? [];
+  const [checks, figure, nameOf] = await Promise.all([
+    withBooksNow(saved),
+    opts.date ? figureForDate(orgId, account, saved, opts.date, opts.today) : Promise.resolve(null),
+    resolvePersonNamer(orgId, saved.map(c => c.createdBy)),
   ]);
-  const checkIds = checkRows.map(c => c.id);
-  // Stripe needs only the statements' dates and states, so it starts with the two reads that follow, not after them.
-  const stripeFrom = account.setup ? payoutFloor(account.setup.openingDate, checkRecords(checkRows, [])) : '';
-  const payoutReading = account.setup ? readClubPayouts(orgId, stripeFrom, opts.today) : null;
-  payoutReading?.catch(() => undefined); // awaited below; this only keeps an early failure of the two reads from leaving it unhandled
-  const [addedRows, changeRows] = await Promise.all([
-    fetchAllIn<AddedLineRow>(checkIds, (c, a, b) =>
-      supabaseAdmin.from('bank_check_added_lines').select('check_id, line_key').in('check_id', c).order('line_key').order('check_id').range(a, b)),
-    fetchAllIn<ChangeRow>(checkIds, (c, a, b) =>
-      supabaseAdmin.from('bank_check_changes').select('check_id, line_key, removed, changed_by, changed_at, cleared_at')
-        .in('check_id', c).is('cleared_at', null).order('changed_at').order('id').range(a, b)),
-  ]);
+  const latest = new Map(all.accounts.map(a => [a.id, checkedThrough(byAccount.get(a.id) ?? [])]));
+  return { account, all, checks, latest, figure, nameOf };
+}
 
-  const checks = checkRecords(checkRows, addedRows);
-  const marks = marksOf(markRows);
-  const { openingItems, carried } = savedOf(savedRows);
-  const stampedChanges = stampsOf(changeRows);
-  const exclusions = exclusionRows.map(r => r.line_key);
-
-  const base: BankAccountState = {
-    setup: account.setup, lines: [], payouts: [], openingItems, checks, marks, exclusions, carried, stampedChanges,
-    claimedElsewhere: [],
-  };
-  // Not set up yet (C1): no starting point means no line belongs to a check yet.
-  if (!account.setup) return { account, all, state: base, payoutsUnavailable: false, payoutGaps: {}, payoutMembers: {}, lineBooks: {} };
-
-  // 1. The window read above, and every line the account names, by id.
-  const rows = new Map(windowRows.map(r => [r.id, r]));
-  const named = keysNamed({ marks, checks, openingItems, carried, stamps: stampedChanges });
-  const namedIds = named.map(entryIdOf).filter((x): x is string => !!x && !rows.has(x));
-
-  // 2. Stripe (started above, from the last checked statement's end); then any payout member line not read yet, by id.
-  const payoutRead = await payoutReading!;
-  const bank = withAddedMembers(payoutsForBank(payoutRead.rows), marks, new Set(addedRows.map(a => a.line_key)));
-  const memberIds = [...bank.payoutOf.keys()].filter(id => !rows.has(id));
-  for (const r of await entriesById([...namedIds, ...memberIds])) rows.set(r.id, r);
-
-  // 3–4. Which payouts and lines are this account's (pure: `assembleAccount`).
-  const markedKeys = new Set(marks.map(m => m.key));
-  const marksOnOthers = async (keys: string[]): Promise<string[]> => otherAccountIds.length === 0 ? [] :
-    (await fetchAllIn<{ line_key: string }>(keys, (c, a, b) => supabaseAdmin.from('bank_check_marks').select('line_key')
-      .in('bank_account_id', otherAccountIds).in('line_key', c).order('line_key').order('bank_account_id').range(a, b))).map(r => r.line_key);
-  const otherMarkedPayouts = new Set(await marksOnOthers(bank.payouts.map(p => p.key).filter(k => !markedKeys.has(k))));
-  const { lines, payouts, movedAway, payoutGaps } = assembleAccount({
-    accountId, firstAccountId: first.id, ownBooks, accountOfBook: all.accountOfBook, rows: [...rows.values()], marks, bank,
-    payoutsTickedElsewhere: otherMarkedPayouts,
-  });
-
-  // 5. Lines ticked on the club's OTHER accounts (Ask 13): only those this account could show. (The payouts passed here
-  // are by construction not ticked elsewhere: `assembleAccount` dropped those.)
-  const tickedElsewhere = await marksOnOthers(lines.map(l => l.key).filter(k => !markedKeys.has(k)));
-
-  const payoutMembers: Record<string, string[]> = {};
-  for (const p of payouts) payoutMembers[p.key] = (bank.membersOf.get(p.key) ?? []).map(entryKey);
-  const lineBooks: Record<string, string> = {};
-  for (const l of lines) { const r = rows.get(entryIdOf(l.key) ?? ''); if (r) lineBooks[l.key] = r.ledger_id; }
-
-  return {
-    account,
-    all,
-    state: { ...base, lines, payouts, claimedElsewhere: [...new Set([...tickedElsewhere, ...movedAway])] },
-    payoutsUnavailable: payoutRead.unavailable,
-    payoutGaps,
-    payoutMembers,
-    lineBooks,
-  };
+/** Lines of the books by id (a waiting item's figures come from the books: rule 6). */
+export async function entriesById(ids: readonly string[]): Promise<EntryRow[]> {
+  return fetchAllIn<EntryRow>([...ids], (c, a, b) =>
+    supabaseAdmin.from('accounting_entries').select(ENTRY_SELECT).in('id', c).order('id').range(a, b));
 }

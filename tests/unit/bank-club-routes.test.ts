@@ -1,407 +1,172 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import type { BankAccountState, BankCheckRecord, BankLine, BankMark } from '../../lib/bank-check.ts';
-import type { EntryRow, PayoutGapFacts } from '../../lib/bank-club-map.ts';
-import { withAddedMembers } from '../../lib/bank-club-map.ts';
-import { evaluateCheck } from '../../lib/bank-check.ts';
 import {
-  checkSummaries, keptOutPlan, markPlan, openingPlan, payoutGapViews, pickerSearch, readCents, readDay, refusalOfDbError,
-  refusalOfStep, STATUS_OF, statusOfRefusal, tickPlan, undoPlan,
+  checkView, checkedThrough, pickerSearch, readCents, readDay, refusalOfDbError, refusalOfStep, savePlan, saveRefusal, STATUS_OF,
+  waitingIdsOf, type SaveFacts,
 } from '../../lib/bank-club-rules.ts';
+import type { ClubSavedCheck, EntryRow, OnItsWay } from '../../lib/bank-club-map.ts';
 import { BANK_REFUSAL } from '../../lib/bank-check-words.ts';
 
 /**
- * Bank reconciliation R2b — THE ROUTES, DECIDED (lib/bank-club-rules.ts). The client sends intent; these are the rows a
- * route writes or the code it refuses with. The R1 review's rules the database does NOT enforce are held here: rule 2
- * (a checked statement's figures — the SQL half is in bank-r2-server-guard), rule 3 (a payout and its members together),
- * rule 4 (Mark checked replaces the ticks), rule 5 (a typed key is minted by the database, never sent), rule 6 (the
- * Difference recomputed on the server).
+ * Bank balance check BC1 — THE ROUTES, DECIDED (lib/bank-club-rules.ts). The client sends intent (a date, a balance, the
+ * lines not in the bank yet, the cash); the server has read the account; these are what the save step writes or refuses.
+ * Ruling 3 (a check saves matching or not), ask 1 (cash is a figure only), ask 7 (the start is a date and a balance),
+ * rule 6 (every figure but the balance and the cash is the server's).
  */
 
-const line = (key: string, date: string, direction: 'in' | 'out', amountCents: number, over: Partial<BankLine> = {}): BankLine =>
-  ({ key, date, direction, amountCents, status: 'posted', ...over });
-const mark = (key: string, checkId: string, date: string, direction: 'in' | 'out', amountCents: number, payoutKey?: string): BankMark =>
-  ({ key, checkId, date, direction, amountCents, ...(payoutKey ? { payoutKey } : {}) });
-const check = (id: string, end: string, endingCents: number, over: Partial<BankCheckRecord> = {}): BankCheckRecord =>
-  ({ id, statementEndDate: end, statementEndingBalanceCents: endingCents, status: 'open', ...over });
-
-const A = line('entry:a', '2026-09-05', 'in', 20_000);
-const B = line('entry:b', '2026-09-10', 'out', 5_000);
-const P1 = line('entry:p1', '2026-09-12', 'in', 10_000, { payoutKey: 'payout:po_1' });
-const P2 = line('entry:p2', '2026-09-13', 'in', 5_000, { payoutKey: 'payout:po_1' });
-const LATE = line('entry:late', '2026-10-05', 'in', 1_000);
-const PO = { key: 'payout:po_1', arrivalDate: '2026-09-15', amountCents: 15_000 };
-/** $1,000.00 at Aug 31; everything ticked = $1,300.00 at Sep 30. */
-const state = (over: Partial<BankAccountState> = {}): BankAccountState => ({
-  setup: { openingDate: '2026-08-31', openingBalanceCents: 100_000 },
-  lines: [A, B, P1, P2, LATE], payouts: [PO], checks: [check('c1', '2026-09-30', 130_000)], marks: [], ...over,
+const U = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
+const entry = (n: number, over: Partial<EntryRow> = {}): EntryRow => ({
+  id: U(n), ledger_id: 'general', entry_date: '2026-10-28', description: ` Cheque #${n} `, amount: '75.00', entry_type: 'expense',
+  status: 'posted', linked_entry_id: null, payment_method: null, ...over,
 });
+const none: OnItsWay = { state: 'none', cents: 0, lines: [] };
+const facts = (over: Partial<SaveFacts> = {}): SaveFacts => ({
+  booksCents: 825_553, onItsWay: { state: 'counted', cents: 41_200, lines: [], paysOutOn: null },
+  bookIds: ['general', 'tourney'], ...over,
+});
+const plan = (body: Record<string, unknown>, f: Partial<SaveFacts> = {}, entries: EntryRow[] = [], kind: 'start' | 'check' = 'check') =>
+  savePlan({ kind, date: '2026-10-31', body, facts: facts(f), entries });
 
-describe('rule 3: a payout tick and its members are written and removed together', () => {
-  it('ticking a payout writes its tick and one per member line, each naming the payout', () => {
-    const p = tickPlan(state(), 'c1', 'payout:po_1', true);
+describe('ruling 3: a check saves whether it matches or not', () => {
+  it('Off by $75.00 saves: the step gets the server\'s books and on its way, the typed balance, no difference', () => {
+    const p = plan({ bankCents: 791_853 });
     assert.ok(p.ok);
-    assert.deepEqual(p.insert.map(m => [m.key, m.payoutKey ?? null]).sort(),
-      [['entry:p1', 'payout:po_1'], ['entry:p2', 'payout:po_1'], ['payout:po_1', null]]);
-    assert.deepEqual(p.remove, []);
+    if (!p.ok) return;
+    assert.deepEqual(p.args, { kind: 'check', date: '2026-10-31', bankCents: 791_853, booksCents: 825_553, onItsWayCents: 41_200,
+      cashCents: null, bookIds: ['general', 'tourney'], waiting: [] });
   });
-  it('a member already ticked on its own (Stripe was down) is not written twice', () => {
-    const s = state({ marks: [mark('entry:p1', 'c1', P1.date, 'in', 10_000)] });
-    const p = tickPlan(s, 'c1', 'payout:po_1', true);
+  it('a request\'s own books, on its way or difference are never read (rule 6)', () => {
+    const p = plan({ bankCents: 1, booksCents: 1, onItsWayCents: 1, differenceCents: 0 });
+    assert.ok(p.ok && p.args.booksCents === 825_553 && p.args.onItsWayCents === 41_200);
+  });
+  it('on its way NOT counted saves as NULL, never 0', () => {
+    const p = plan({ bankCents: 1 }, { onItsWay: { state: 'not_counted', reason: 'stripe_down', cents: null, lines: [] } });
+    assert.ok(p.ok && p.args.onItsWayCents === null);
+    const q = plan({ bankCents: 1 }, { onItsWay: none });
+    assert.ok(q.ok && q.args.onItsWayCents === 0);
+  });
+  it('a balance that is not integer cents is bad_figures; an overdraft is fine', () => {
+    assert.deepEqual(plan({ bankCents: 12.5 }), { ok: false, status: 400, code: 'bad_figures' });
+    assert.ok(plan({ bankCents: -2_500 }).ok);
+  });
+});
+
+describe('Not in the bank yet: figures from the books, never the request (ask 2, rule 6)', () => {
+  it('the line\'s date, words, amount and direction are the book\'s', () => {
+    const p = plan({ bankCents: 1, waiting: [`entry:${U(214)}`, `entry:${U(214)}`] }, {}, [entry(214)]);
     assert.ok(p.ok);
-    assert.deepEqual(p.insert.map(m => m.key).sort(), ['entry:p2', 'payout:po_1']);
+    if (!p.ok) return;
+    assert.deepEqual(p.args.waiting, [{ key: `entry:${U(214)}`, date: '2026-10-28', label: 'Cheque #214', amountCents: 7_500, direction: 'out' }]);
   });
-  it('unticking the payout removes it and every member it stamped', () => {
-    const s = state({ marks: [mark('payout:po_1', 'c1', PO.arrivalDate, 'in', 15_000), mark('entry:p1', 'c1', P1.date, 'in', 10_000, 'payout:po_1'),
-      mark('entry:p2', 'c1', P2.date, 'in', 5_000, 'payout:po_1'), mark('entry:a', 'c1', A.date, 'in', 20_000)] });
-    const p = tickPlan(s, 'c1', 'payout:po_1', false);
+  it('a line not posted, in another account\'s book, dated after the statement, unread, or on its way is bad_item', () => {
+    const bad = (e: EntryRow, f: Partial<SaveFacts> = {}) => plan({ bankCents: 1, waiting: [`entry:${e.id}`] }, f, [e]);
+    assert.equal((bad(entry(1, { status: 'pending' })) as { code: string }).code, 'bad_item');
+    assert.equal((bad(entry(2, { ledger_id: 'casino' })) as { code: string }).code, 'bad_item');
+    assert.equal((bad(entry(3, { entry_date: '2026-11-01' })) as { code: string }).code, 'bad_item');
+    assert.equal((plan({ bankCents: 1, waiting: [`entry:${U(4)}`] }) as { code: string }).code, 'bad_item');
+    assert.equal((plan({ bankCents: 1, waiting: ['typed:x'] }) as { code: string }).code, 'bad_item');
+    const onWay: OnItsWay = { state: 'counted', cents: 100, paysOutOn: null, lines: [{ key: `entry:${U(5)}`, date: '2026-10-30', label: 'x',
+      direction: 'in', amountCents: 100, bookId: 'general', rail: 'card', paysOutOn: null }] };
+    assert.equal((bad(entry(5, { entry_type: 'income' }), { onItsWay: onWay }) as { code: string }).code, 'bad_item');
+    // Stripe didn't answer: nothing is counted as on its way, so the same line may be marked Not in the bank yet.
+    const down: OnItsWay = { state: 'not_counted', reason: 'stripe_down', cents: null, lines: onWay.lines };
+    assert.ok(bad(entry(5, { entry_type: 'income' }), { onItsWay: down }).ok);
+  });
+  it('only entry:{uuid} keys are looked up, at most one past the cap', () => {
+    assert.deepEqual(waitingIdsOf([`entry:${U(1)}`, 'entry:not-a-uuid', 7, `typed:${U(2)}`]), [U(1)]);
+    assert.deepEqual(waitingIdsOf('entry:x'), []);
+  });
+});
+
+describe('cash (ask 1) and the start (ask 7)', () => {
+  it('cash is a positive figure on a check; 0 or empty is none', () => {
+    const p = plan({ bankCents: 306_000, cashCents: 18_000 });
+    assert.ok(p.ok && p.args.cashCents === 18_000);
+    for (const empty of [0, null, undefined]) { const q = plan({ bankCents: 1, cashCents: empty }); assert.ok(q.ok && q.args.cashCents === null); }
+    assert.equal((plan({ bankCents: 1, cashCents: -5 }) as { code: string }).code, 'bad_amount');
+  });
+  it('the start: its books are the bank solved (− a cheque waiting at the start), no cash, its own kind', () => {
+    const p = plan({ bankCents: 500_000, waiting: [`entry:${U(188)}`] }, { booksCents: null, onItsWay: none },
+      [entry(188, { entry_date: '2026-06-28' })], 'start');
     assert.ok(p.ok);
-    assert.deepEqual(p.remove.sort(), ['entry:p1', 'entry:p2', 'payout:po_1']);
-  });
-  it('unticking a payout while Stripe is down removes the whole group (the payout is a row from its tick; its members ride it)', () => {
-    const s = state({ payouts: [], marks: [mark('payout:po_1', 'c1', PO.arrivalDate, 'in', 15_000),
-      mark('entry:p1', 'c1', P1.date, 'in', 10_000, 'payout:po_1'), mark('entry:p2', 'c1', P2.date, 'in', 5_000, 'payout:po_1')] });
-    const p = tickPlan(s, 'c1', 'payout:po_1', false);
-    assert.ok(p.ok);
-    assert.deepEqual(p.remove.sort(), ['entry:p1', 'entry:p2', 'payout:po_1']);
-    // A member is not a row of its own any more, so a stale member-only untick finds nothing to remove (a double tap).
-    const stale = tickPlan(s, 'c1', 'entry:p1', false);
-    assert.ok(stale.ok);
-    assert.deepEqual(stale.remove, []);
-  });
-  it('a plain line ticks alone and keeps no payout link', () => {
-    const p = tickPlan(state({ payouts: [] }), 'c1', 'entry:p1', true);
-    assert.ok(p.ok);
-    assert.deepEqual(p.insert, [{ key: 'entry:p1', checkId: 'c1', date: P1.date, direction: 'in', amountCents: 10_000 }]);
+    if (!p.ok) return;
+    assert.equal(p.args.kind, 'start');
+    assert.equal(p.args.booksCents, 492_500);
+    assert.equal((plan({ bankCents: 1, cashCents: 100 }, { booksCents: null }, [], 'start') as { code: string }).code, 'bad_amount');
   });
 });
 
-describe('ticks are intent: the server decides what is tickable', () => {
-  it('a line waiting for the next statement is refused', () => {
-    const p = tickPlan(state(), 'c1', 'entry:late', true);
-    assert.deepEqual(p, { ok: false, status: 409, code: 'not_outstanding' });
+describe("the date rules, before any figure is read (saveRefusal: bank_check_save's order)", () => {
+  const start = { kind: 'start' as const, date: '2026-09-30' };
+  const sep = { kind: 'check' as const, date: '2026-10-15' };
+  const r = (asked: 'start' | 'check', date: string, checks: { kind: 'start' | 'check'; date: string }[]) =>
+    saveRefusal({ asked, date, today: '2026-11-05', checks });
+  it("never after the club's today, whatever the door", () => {
+    assert.equal(r('check', '2026-11-06', [start]), 'ends_in_future');
+    assert.equal(r('start', '2026-11-06', []), 'ends_in_future');
   });
-  it('a key the account does not hold is refused', () => {
-    assert.equal((tickPlan(state(), 'c1', 'entry:someone-elses', true) as { code: string }).code, 'not_outstanding');
+  it('a check: no start is no_start; on or before the start is before_start (O2); after it is fine', () => {
+    assert.equal(r('check', '2026-10-31', []), 'no_start');
+    assert.equal(r('check', '2026-09-30', [start]), 'before_start');
+    assert.equal(r('check', '2026-09-01', [start]), 'before_start');
+    assert.equal(r('check', '2026-10-31', [start, sep]), null);
   });
-  it('a checked statement takes no ticks (undo it first)', () => {
-    const s = state({ checks: [check('c1', '2026-09-30', 130_000, { status: 'checked', outstandingSnapshot: [] })] });
-    assert.deepEqual(tickPlan(s, 'c1', 'entry:a', true), { ok: false, status: 409, code: 'not_open' });
-    assert.deepEqual(keptOutPlan(s, 'c1', 'entry:a', true), { ok: false, status: 409, code: 'not_open' });
-  });
-  it('a double tap is a no-op, both ways', () => {
-    const s = state({ marks: [mark('entry:a', 'c1', A.date, 'in', 20_000)] });
-    assert.deepEqual(tickPlan(s, 'c1', 'entry:a', true), { ok: true, insert: [], remove: [] });
-    assert.deepEqual(tickPlan(state(), 'c1', 'entry:a', false), { ok: true, insert: [], remove: [] });
-  });
-  it('an unknown statement is not found', () => {
-    assert.deepEqual(tickPlan(state(), 'nope', 'entry:a', true), { ok: false, status: 404, code: 'check_not_found' });
-  });
-});
-
-describe('"Didn\'t go through the bank" (B6)', () => {
-  it('a payout never', () => assert.equal((keptOutPlan(state(), 'c1', 'payout:po_1', true) as { code: string }).code, 'not_a_line'));
-  it('an outstanding line may be kept out; one already out is a no-op; Put it back on a line not out is a no-op', () => {
-    assert.deepEqual(keptOutPlan(state(), 'c1', 'entry:b', true), { ok: true, noop: false });
-    assert.deepEqual(keptOutPlan(state({ exclusions: ['entry:b'] }), 'c1', 'entry:b', true), { ok: true, noop: true });
-    assert.deepEqual(keptOutPlan(state({ exclusions: ['entry:b'] }), 'c1', 'entry:b', false), { ok: true, noop: false });
-    assert.deepEqual(keptOutPlan(state(), 'c1', 'entry:b', false), { ok: true, noop: true });
-  });
-  it('a line already ticked can\'t be kept out', () => {
-    const s = state({ marks: [mark('entry:b', 'c1', B.date, 'out', 5_000)] });
-    assert.equal((keptOutPlan(s, 'c1', 'entry:b', true) as { code: string }).code, 'not_outstanding');
+  it('a start: another date is start_exists; its own date replaces it; never on or after a live check', () => {
+    assert.equal(r('start', '2026-09-29', [start]), 'start_exists');
+    assert.equal(r('start', '2026-09-30', [start]), null);
+    assert.equal(r('start', '2026-10-20', [sep]), 'start_after_checks');
+    assert.equal(r('start', '2026-09-30', []), null);
   });
 });
 
-describe('rules 4 and 6: Mark checked recomputes the Difference and replaces the ticks', () => {
-  const allTicked = () => state({ marks: [
-    mark('entry:a', 'c1', A.date, 'in', 20_000), mark('entry:b', 'c1', B.date, 'out', 5_000),
-    mark('payout:po_1', 'c1', PO.arrivalDate, 'in', 15_000), mark('entry:p1', 'c1', P1.date, 'in', 10_000, 'payout:po_1'),
-    mark('entry:p2', 'c1', P2.date, 'in', 5_000, 'payout:po_1'),
-  ] });
-  it('a non-zero Difference is refused 422, whatever the client believes', () => {
-    const s = allTicked();
-    s.marks = s.marks.filter(m => m.key !== 'entry:b');
-    assert.deepEqual(markPlan(s, 'c1', false), { ok: false, status: 422, code: 'not_zero' });
+describe('what the list shows', () => {
+  const c = (id: string, kind: 'start' | 'check', date: string, bank: number, books: number, extra: Partial<ClubSavedCheck> = {}) =>
+    ({ id, kind, date, bankCents: bank, booksCents: books, onItsWayCents: 0, cashCents: null, waiting: [], bookIds: [],
+      createdBy: 'u1', createdAt: `${date}T12:00:00Z`, ...extra });
+  it('a saved check\'s band from its own figures, its "Books now say", who checked it', () => {
+    const v = checkView({ ...c('oct', 'check', '2026-10-31', 791_853, 825_553, { onItsWayCents: 41_200 }), booksNowSayCents: 817_553 },
+      id => (id === 'u1' ? 'Dana' : null));
+    assert.deepEqual([v.figure.result, v.figure.offByCents, v.figure.shouldBeCents, v.booksNowSayCents, v.checkedBy],
+      ['off', 7_500, 784_353, 817_553, 'Dana']);
   });
-  it('at $0.00 it keeps exactly the engine\'s ticks (the complete set), what it saw, and the outstanding list', () => {
-    const s = allTicked();
-    // A line voided after it was ticked: the statement drops it (its amber can clear).
-    s.lines = s.lines.map(l => (l.key === 'entry:a' ? { ...l, status: 'void' as const } : l));
-    s.checks = [check('c1', '2026-09-30', 110_000)];
-    const p = markPlan(s, 'c1', false);
-    assert.ok(p.ok, JSON.stringify(p));
-    assert.deepEqual(p.marks.map(m => m.key).sort(), ['entry:b', 'entry:p1', 'entry:p2', 'payout:po_1']);
-    assert.deepEqual(p.seen.sort(), ['entry:a', 'entry:b', 'entry:p1', 'entry:p2', 'payout:po_1']);
-    assert.deepEqual(p.outstandingSnapshot, []);
-  });
-  it('an earlier open statement is checked first', () => {
-    const s = allTicked();
-    s.checks = [check('c0', '2026-09-15', 100_000), check('c1', '2026-09-30', 130_000)];
-    assert.deepEqual(markPlan(s, 'c1', false), { ok: false, status: 409, code: 'earlier_open' });
-  });
-  it('Mark checked again with nothing changed is refused', () => {
-    const s = allTicked();
-    s.checks = [check('c1', '2026-09-30', 130_000, { status: 'checked', outstandingSnapshot: [] })];
-    assert.deepEqual(markPlan(s, 'c1', true), { ok: false, status: 409, code: 'nothing_changed' });
+  it('checked through = the latest CHECK (never the start), with its result', () => {
+    assert.equal(checkedThrough([c('s', 'start', '2026-08-31', 5, 5)]), null);
+    assert.deepEqual(checkedThrough([c('s', 'start', '2026-08-31', 5, 5), c('sep', 'check', '2026-09-30', 10, 10), c('oct', 'check', '2026-10-31', 12, 10)]),
+      { date: '2026-10-31', result: 'off', offByCents: 2 });
   });
 });
 
-describe('Undo (B4, Ask 9)', () => {
-  const two = () => state({ checks: [
-    check('c1', '2026-09-30', 130_000, { status: 'checked', outstandingSnapshot: [] }),
-    check('c2', '2026-10-31', 130_000, { status: 'checked', outstandingSnapshot: [] }),
-  ] });
-  it('only the latest checked statement', () => assert.deepEqual(undoPlan(two(), 'c1', 'oops'), { ok: false, status: 409, code: 'not_latest' }));
-  it('a reason is required, trimmed, 500 at most', () => {
-    assert.deepEqual(undoPlan(two(), 'c2', '   '), { ok: false, status: 400, code: 'reason_required' });
-    assert.deepEqual(undoPlan(two(), 'c2', 'x'.repeat(501)), { ok: false, status: 400, code: 'reason_required' });
-    assert.deepEqual(undoPlan(two(), 'c2', '  Typed the ending balance wrong '), { ok: true, reason: 'Typed the ending balance wrong' });
-  });
-  it('after an undo the list shows who undid it and why, and the one before gains the Undo (step back)', () => {
-    const s = two();
-    s.checks[1] = { ...s.checks[1], status: 'open' };
-    const sums = checkSummaries(s, [
-      { checkId: 'c2', kind: 'checked', at: '2026-11-03T20:14:00Z', byName: 'Priya Shah', reason: null },
-      { checkId: 'c2', kind: 'undone', at: '2026-11-04T14:02:00Z', byName: 'Priya Shah', reason: 'Typed the ending balance wrong' },
-    ]);
-    assert.equal(sums[0].id, 'c2');
-    assert.deepEqual(sums[0].undone, { at: '2026-11-04T14:02:00Z', byName: 'Priya Shah', reason: 'Typed the ending balance wrong' });
-    assert.equal(sums[0].can.refigure, true);
-    assert.equal(sums[1].can.undo, true);
-    assert.equal(sums[1].can.refigure, false, 'a checked statement\'s figures are fixed');
-  });
-});
-
-describe('rule 5 and rule 6: the starting point', () => {
-  const row = (id: string, over: Partial<EntryRow> = {}): EntryRow => ({
-    id, ledger_id: 'gen', entry_date: '2026-08-29', description: 'Cheque #201 · Officials', amount: '240.00', entry_type: 'expense',
-    status: 'posted', linked_entry_id: null, ...over,
-  });
-  const base = { openingDate: '2026-08-31', books: new Set(['gen']) };
-  it('a picked item\'s figures come from the book, never the request', () => {
-    const p = openingPlan({ ...base, pickedKeys: ['entry:r1'], typed: [], rows: [row('r1')] });
-    assert.ok(p.ok);
-    assert.deepEqual(p.picked, [{ key: 'entry:r1', date: '2026-08-29', amountCents: 24_000, direction: 'out', description: 'Cheque #201 · Officials' }]);
-  });
-  it('a picked item outside the account\'s books, after the starting date, not posted, or a typed key is refused', () => {
-    for (const [keys, rows] of [
-      [['entry:r1'], [row('r1', { ledger_id: 'gaming' })]],
-      [['entry:r1'], [row('r1', { entry_date: '2026-09-01' })]],
-      [['entry:r1'], [row('r1', { status: 'void' })]],
-      [['typed:00000000-0000-0000-0000-000000000000'], []],
-      [['entry:missing'], []],
-    ] as const) {
-      assert.deepEqual(openingPlan({ ...base, pickedKeys: keys, typed: [], rows }), { ok: false, status: 400, code: 'item_not_in_books' });
-    }
-  });
-  it('a typed item needs a date on or before the start, a direction, an amount and words — and never carries a key', () => {
-    const ok = openingPlan({ ...base, pickedKeys: [], rows: [],
-      typed: [{ key: 'typed:forged', date: '2026-08-30', direction: 'in', amountCents: 30_000, description: ' Sponsor cheque ' }] });
-    assert.ok(ok.ok);
-    assert.deepEqual(ok.typed, [{ date: '2026-08-30', direction: 'in', amountCents: 30_000, description: 'Sponsor cheque' }]);
-    for (const t of [
-      { date: '2026-09-01', direction: 'in', amountCents: 1, description: 'x' },
-      { date: '2026-08-30', direction: 'sideways', amountCents: 1, description: 'x' },
-      { date: '2026-08-30', direction: 'in', amountCents: 0, description: 'x' },
-      { date: '2026-08-30', direction: 'in', amountCents: 1.5, description: 'x' },
-      { date: '2026-08-30', direction: 'in', amountCents: 1, description: '' },
-    ]) assert.deepEqual(openingPlan({ ...base, pickedKeys: [], rows: [], typed: [t] }), { ok: false, status: 400, code: 'bad_item' });
-  });
-});
-
-describe('a payout\'s gap, named by reason, and the payment-processing offer (P4, Ask 7)', () => {
-  const facts = (over: Partial<PayoutGapFacts> = {}): PayoutGapFacts =>
-    ({ disputesHeld: [], disputeHeldCents: 0, disputeNetCents: 0, disputeReturnedCents: 0, notOursCents: 0, stripeFeeCents: 0, ...over });
-  const withDeposit = (cents: number) => state({ payouts: [{ ...PO, amountCents: cents }] });
-  const view = (s: BankAccountState, f: PayoutGapFacts, members = ['entry:p1', 'entry:p2']) =>
-    payoutGapViews(evaluateCheck(s, 'c1'), { 'payout:po_1': f }, { 'payout:po_1': members })['payout:po_1'];
-
-  it('a payout rebuilt from its tick (Stripe is no longer asked about it) counts its gap but names and offers nothing', () => {
-    const marks = [
-      { key: 'payout:po_1', checkId: 'c1', date: PO.arrivalDate, direction: 'in' as const, amountCents: 14_500 },
-      ...[P1, P2].map(l => ({ key: l.key, checkId: 'c1', date: l.date, direction: l.direction, amountCents: l.amountCents, payoutKey: 'payout:po_1' })),
-    ];
-    const ev = evaluateCheck(state({ payouts: [], marks }), 'c1');
-    const row = ev.ticked.find(r => r.kind === 'payout');
-    assert.ok(row && row.kind === 'payout' && row.fromMark, 'the payout is a row again');
-    assert.equal(row.gapCents, 14_500 - row.bookCents, 'its gap is counted');
-    assert.deepEqual(payoutGapViews(ev, { 'payout:po_1': facts({ stripeFeeCents: -500 }) }, { 'payout:po_1': ['entry:p1', 'entry:p2'] }), {},
-      'no reason is known, so none is named and the payment-processing line is not offered');
-  });
-  it('a Stripe fee the books lack is offered, at the server\'s figure', () => {
-    const v = view(withDeposit(14_500), facts({ stripeFeeCents: -500 }));
-    assert.equal(v.gapCents, -500);
-    assert.equal(v.offerPaymentProcessing, true);
-    assert.equal(v.processingCents, 500);
-  });
-  it('an open dispute is named "held", never offered as payment processing', () => {
-    const v = view(withDeposit(15_000 - 17_175), facts({
-      disputesHeld: [{ disputeId: 'dp_1', amountCents: 15_675, feeCents: 1_500 }], disputeHeldCents: -17_175, disputeNetCents: -17_175 }));
-    assert.equal(v.disputeHeldCents, -17_175);
-    assert.equal(v.otherCents, 0);
-    assert.equal(v.offerPaymentProcessing, false);
-  });
-  it('a member line voided (or in another account\'s book) means the gap is not a fee: no offer', () => {
-    const s = withDeposit(15_000);
-    s.lines = s.lines.map(l => (l.key === 'entry:p2' ? { ...l, status: 'void' as const } : l));
-    const v = view(s, facts());
-    assert.equal(v.gapCents, 5_000);
-    assert.equal(v.missingMembers, 1);
-    assert.equal(v.offerPaymentProcessing, false);
-    const fee = view(withDeposit(14_500), facts({ stripeFeeCents: -500 }), ['entry:p1', 'entry:p2', 'entry:moved-away']);
-    assert.equal(fee.offerPaymentProcessing, false);
-  });
-  it('a held dispute whose stored figure disagrees with Stripe\'s own net: no offer', () => {
-    const v = view(withDeposit(15_000 - 17_175 - 500), facts({
-      disputesHeld: [{ disputeId: 'dp_1', amountCents: 15_675, feeCents: 1_500 }], disputeHeldCents: -17_175, disputeNetCents: -17_000,
-      stripeFeeCents: -500 }));
-    assert.equal(v.offerPaymentProcessing, false);
-  });
-
-  describe('a withheld offer names its own reason, one of four (R2b-2)', () => {
-    it('offered: no reason', () => {
-      assert.equal(view(withDeposit(14_500), facts({ stripeFeeCents: -500 })).withheld, null);
-    });
-    it('no gap at all', () => {
-      const v = view(withDeposit(15_000), facts());
-      assert.equal(v.gapCents, 0);
-      assert.equal(v.withheld, 'no_processing_gap');
-    });
-    it('the gap is not a fee: a held dispute, or money in', () => {
-      const held = view(withDeposit(15_000 - 17_175), facts({
-        disputesHeld: [{ disputeId: 'dp_1', amountCents: 15_675, feeCents: 1_500 }], disputeHeldCents: -17_175, disputeNetCents: -17_175 }));
-      assert.equal(held.withheld, 'gap_not_a_fee');
-      assert.equal(view(withDeposit(15_300), facts()).withheld, 'gap_not_a_fee');
-    });
-    it('a payout line missing from this account\'s books (voided, or a book moved away), even when the rest looks like a fee', () => {
-      const s = withDeposit(15_000);
-      s.lines = s.lines.map(l => (l.key === 'entry:p2' ? { ...l, status: 'void' as const } : l));
-      assert.equal(view(s, facts()).withheld, 'payout_line_missing');
-      assert.equal(view(withDeposit(14_500), facts({ stripeFeeCents: -500 }), ['entry:p1', 'entry:p2', 'entry:moved-away']).withheld,
-        'payout_line_missing');
-    });
-    it('a held dispute whose stored figure disagrees with Stripe\'s net', () => {
-      const v = view(withDeposit(15_000 - 17_175 - 500), facts({
-        disputesHeld: [{ disputeId: 'dp_1', amountCents: 15_675, feeCents: 1_500 }], disputeHeldCents: -17_175, disputeNetCents: -17_000,
-        stripeFeeCents: -500 }));
-      assert.equal(v.withheld, 'dispute_figure_differs');
-    });
-    it('the order (review): a missing line is named even when the gap reads $0.00; a disagreeing dispute only when a fee would be offered', () => {
-      assert.equal(view(withDeposit(15_000), facts(), ['entry:p1', 'entry:p2', 'entry:moved-away']).withheld, 'payout_line_missing');
-      const notAFee = view(withDeposit(15_000 - 17_175), facts({
-        disputesHeld: [{ disputeId: 'dp_1', amountCents: 15_675, feeCents: 1_500 }], disputeHeldCents: -17_175, disputeNetCents: -17_000 }));
-      assert.equal(notAFee.withheld, 'gap_not_a_fee');
-    });
-    it('the offer follows the reason: offered exactly when nothing withholds it', () => {
-      for (const v of [view(withDeposit(14_500), facts({ stripeFeeCents: -500 })), view(withDeposit(15_000), facts())]) {
-        assert.equal(v.offerPaymentProcessing, v.withheld === null);
-        assert.equal(v.processingCents > 0, v.withheld === null);
-      }
-    });
-    it('each reason is a refusal with words and a conflict status', () => {
-      for (const c of ['no_processing_gap', 'gap_not_a_fee', 'payout_line_missing', 'dispute_figure_differs'] as const) {
-        assert.ok(BANK_REFUSAL[c], c);
-        assert.equal(statusOfRefusal(c), 409, c);
-      }
-    });
-  });
-});
-
-describe('the starting-point picker\'s search, by shape (R2b-2)', () => {
+describe('Find\'s search, by shape (BC3 reuses it)', () => {
   it('all digits: a cheque number or an amount, both searched', () => {
     assert.deepEqual(pickerSearch(' 1234 '), { kind: 'either', amount: 1234, words: '1234' });
   });
-  it('a dollar sign or a decimal: an amount only', () => {
+  it('a dollar sign or a decimal: an amount only; words: the description; nothing typed: everything', () => {
     assert.deepEqual(pickerSearch('$12'), { kind: 'amount', amount: 12 });
     assert.deepEqual(pickerSearch('12.50'), { kind: 'amount', amount: 12.5 });
-    assert.deepEqual(pickerSearch('$1234.5'), { kind: 'amount', amount: 1234.5 });
-  });
-  it('words: the description; nothing typed: everything', () => {
     assert.deepEqual(pickerSearch('Cheque 1234'), { kind: 'words', words: 'Cheque 1234' });
     assert.deepEqual(pickerSearch('   '), { kind: 'none' });
   });
 });
 
-describe('a payment-processing line closes its payout\'s gap; it is never counted beside it (R2b review)', () => {
-  // Deposit $145.00 for $150.00 of book lines: Stripe kept $5.00. Everything ticked, statement at $1,000 + 200 - 50 + 145.
-  const FEE = line('entry:fee', '2026-09-30', 'out', 500);
-  const ticks = (feeMark: BankMark[]) => [
-    mark('payout:po_1', 'c1', PO.arrivalDate, 'in', 14_500), mark('entry:p1', 'c1', P1.date, 'in', 10_000, 'payout:po_1'),
-    mark('entry:p2', 'c1', P2.date, 'in', 5_000, 'payout:po_1'), mark('entry:a', 'c1', A.date, 'in', 20_000),
-    mark('entry:b', 'c1', B.date, 'out', 5_000), ...feeMark,
-  ];
-  const at = (lines: BankLine[], marks: BankMark[]) =>
-    evaluateCheck({ ...state({ payouts: [{ ...PO, amountCents: 14_500 }], lines, marks }), checks: [check('c1', '2026-09-30', 129_500, { addedLineKeys: ['entry:fee'] })] }, 'c1');
-
-  it('a fee line that rides the payout: the gap closes and the statement stays at $0.00', () => {
-    const rides = at([A, B, P1, P2, { ...FEE, payoutKey: 'payout:po_1' }], ticks([mark('entry:fee', 'c1', FEE.date, 'out', 500, 'payout:po_1')]));
-    assert.equal(rides.payoutGapCents, 0);
-    assert.equal(rides.differenceCents, 0);
-  });
-  it('the same line ticked on its own (the first version) left the gap AND the line: the statement was $5.00 off', () => {
-    const alone = at([A, B, P1, P2, FEE], ticks([mark('entry:fee', 'c1', FEE.date, 'out', 500)]));
-    assert.equal(alone.payoutGapCents, -500);
-    assert.equal(alone.differenceCents, 500);
-  });
-  it('once the line rides the payout, the offer is gone (no second line to add)', () => {
-    const s = state({ payouts: [{ ...PO, amountCents: 14_500 }], lines: [A, B, P1, P2, { ...FEE, payoutKey: 'payout:po_1' }],
-      marks: ticks([mark('entry:fee', 'c1', FEE.date, 'out', 500, 'payout:po_1')]) });
-    const v = payoutGapViews(evaluateCheck({ ...s, checks: [check('c1', '2026-09-30', 129_500, { addedLineKeys: ['entry:fee'] })] }, 'c1'),
-      { 'payout:po_1': { disputesHeld: [], disputeHeldCents: 0, disputeNetCents: 0, disputeReturnedCents: 0, notOursCents: 0, stripeFeeCents: -500 } },
-      { 'payout:po_1': ['entry:p1', 'entry:p2', 'entry:fee'] })['payout:po_1'];
-    assert.equal(v.gapCents, 0);
-    assert.equal(v.offerPaymentProcessing, false);
-  });
-  it('the reader joins an added line to the payout its tick names, and only that', () => {
-    const bank = { payouts: [], payoutOf: new Map([['p1', 'payout:po_1']]), membersOf: new Map([['payout:po_1', ['p1']]]), facts: {} };
-    const marks = [mark('entry:fee', 'c1', FEE.date, 'out', 500, 'payout:po_1'), mark('entry:other', 'c1', FEE.date, 'out', 100, 'payout:po_1'),
-      mark('entry:gone', 'c1', FEE.date, 'out', 100, 'payout:po_9')];
-    const out = withAddedMembers(bank, marks, new Set(['entry:fee', 'entry:gone']));
-    assert.equal(out.payoutOf.get('fee'), 'payout:po_1');
-    assert.deepEqual(out.membersOf.get('payout:po_1'), ['p1', 'fee']);
-    assert.equal(out.payoutOf.has('other'), false, 'not an added line');
-    assert.equal(out.payoutOf.has('gone'), false, 'its payout is not here');
-    assert.deepEqual(bank.membersOf.get('payout:po_1'), ['p1'], 'the Stripe read is not mutated');
-  });
-});
-
-describe('kept out: only a line inside the statement\'s window (R2b review)', () => {
-  it('a starting-point item or a back-dated line is refused, not hidden from every list', () => {
-    const OLD = line('entry:old', '2026-08-10', 'out', 700);
-    const s = state({ lines: [A, B, OLD], openingItems: [{ kind: 'picked', key: 'entry:old', date: '2026-08-10', direction: 'out', amountCents: 700 }] });
-    assert.equal(evaluateCheck(s, 'c1').outstanding.some(r => r.key === 'entry:old'), true);
-    assert.deepEqual(keptOutPlan(s, 'c1', 'entry:old', true), { ok: false, status: 409, code: 'not_outstanding' });
-  });
-});
-
 describe('refusals are codes', () => {
-  it('every code has words and a status', () => {
-    assert.equal(statusOfRefusal('not_zero'), 422);
-    assert.equal(statusOfRefusal('account_not_found'), 404);
-    assert.equal(statusOfRefusal('one_is_open'), 409);
-    assert.equal(refusalOfStep('ends_too_early'), 'ends_too_early');
-    assert.equal(refusalOfStep('something new'), 'changed');
-    // Every code is named in the status table (no silent 409 default), and every one has words.
+  it('every code has words and exactly one status', () => {
     assert.deepEqual(Object.keys(STATUS_OF).sort(), Object.keys(BANK_REFUSAL).sort());
+    for (const s of Object.values(STATUS_OF)) assert.ok([400, 404, 409].includes(s));
   });
-  it('a tick or keep-out on a statement just checked: the step\'s `not_open`, at 409, with words (R2b-2)', () => {
-    assert.equal(refusalOfStep('not_open'), 'not_open');
-    assert.equal(statusOfRefusal('not_open'), 409);
-    assert.match(BANK_REFUSAL.not_open, /checked/);
-    // A row ticked on another statement a moment ago: the step answers, or raises, `changed`.
-    assert.equal(refusalOfStep('changed'), 'changed');
-    assert.equal(refusalOfDbError({ message: 'bank_step_refused:changed' }), 'changed');
+  it('a step\'s unknown code reads as changed (read again)', () => {
+    assert.equal(refusalOfStep('before_start'), 'before_start');
+    assert.equal(refusalOfStep('not_a_code'), 'changed');
+    assert.equal(refusalOfStep(undefined), 'changed');
   });
   it('the database\'s refusals map to codes; anything else is a real failure', () => {
+    assert.equal(refusalOfDbError({ message: 'bank_step_refused:bad_item' }), 'bad_item');
     assert.equal(refusalOfDbError({ message: 'bank_book_is_team_book' }), 'team_book');
     assert.equal(refusalOfDbError({ message: 'bank_book_other_club' }), 'book_not_found');
     assert.equal(refusalOfDbError({ message: 'bank_book_not_club_account' }), 'account_not_found');
-    assert.equal(refusalOfDbError({ message: 'bank_step_refused:ticked_elsewhere' }), 'ticked_elsewhere');
     assert.equal(refusalOfDbError({ code: '23505', message: 'duplicate key value violates unique constraint "bank_accounts_club_name"' }), 'name_taken');
-    assert.equal(refusalOfDbError({ code: '23505', message: 'duplicate key value violates unique constraint "bank_checks_one_per_end_date"' }), 'ends_too_early');
+    assert.equal(refusalOfDbError({ code: '23505', message: 'duplicate key value violates unique constraint "bank_check_waiting_once"' }), 'bad_item');
+    assert.equal(refusalOfDbError({ code: '23505', message: 'duplicate key value violates unique constraint "bank_checks_one_live_per_date"' }), 'changed');
     assert.equal(refusalOfDbError({ message: 'connection reset' }), null);
-    for (const c of ['ticked_elsewhere', 'team_book', 'name_taken'] as const) assert.ok(BANK_REFUSAL[c]);
   });
   it('request figures: integer cents, a real calendar day', () => {
     assert.equal(readCents(-1250, { positive: false }), -1250);

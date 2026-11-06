@@ -1,4 +1,617 @@
-# Bank reconciliation — both portals — Implementation Plan
+# Bank reconciliation — both portals — THE BALANCE CHECK — Implementation Plan
+
+> **Status:** Re-planned 2026-11-05 as **the balance check** (owner rulings 1 and 3 + drawing asks 1–10, all as
+> recommended, 2026-11-05). Plan rewritten 2026-11-05 from `BANK_BALANCE_CHECK_REPLAN_PROMPT.md`. **Three new owner asks
+> (Q1–Q3) RULED 2026-11-05, all A (as recommended), pasted back with no notes (§0, §8)** on `BANK_BALANCE_CHECK_ASKS.html`, https://claude.ai/artifact/E1Fy1qtppmJeEXMw3qVvKH (paste-back). **Next: BC1** (the engine, the migration and the
+> club's server), build prompt `BANK_BALANCE_CHECK_BC1_BUILD_PROMPT.md`, written 2026-11-05. BC1 does not wait on Q1–Q3
+> (§7 says which stage each ask feeds).
+> **Created:** 2026-11-04 (tick-off planning session) · **Rewritten:** 2026-11-05 · **Branch:** dev
+> **PM brief:** `BANK_RECONCILIATION_PM_BRIEF.md` (rewritten 2026-11-05)
+> **Drawings of record:** `BANK_BALANCE_CHECK_DRAWINGS.html`, https://claude.ai/artifact/XdxsbzGpGwyDvWttJcjFeN (tabs 2–6
+> the screens, tab 7 the asks). R0 `BANK_RECONCILIATION_DRAWINGS.html` (https://claude.ai/artifact/6s8iTzaxGQDfAqugrSMbmZ)
+> still holds for **tab 7** (where the mark shows), **tab 8** (a second account, books between accounts) and **tab 9**
+> (the report), re-worded by asks 4 and 9 (§6 here).
+> **Plan-of-record slot:** `CLUB_TIER_PRODUCTION_READINESS_PLAN.md` § "Bank reconciliation — both portals"
+> **History:** the tick-off plan (asks B1–B12, R0 drawing asks 1–14, R1–R2 build records) is **Appendix A**, verbatim.
+> R1–R2 are committed on dev (`502a69d39` … `d4ca80052`, 2026-11-04/05); the owner stopped their walk (§461) 2026-11-05.
+
+## Goal
+
+A club treasurer, or a team's coach or team treasurer, types a bank statement's **date** and **balance**. Every book line
+on or before that date counts by itself. The screen shows **The bank says · Should be in the bank · Difference**, and when
+the two don't agree it helps find what's missing. A check saves whether it matches or reads **"Off by $X"**. Nobody ticks
+lines. One model, both portals. The club and the team each carry a quiet "Bank checked through {date}", and the club can
+see it for each of its teams. This is the customer's own money; it does not touch what FieldLogicHQ charges.
+
+---
+
+## 0. What is ruled (do not reopen), recorded as ruled, nothing added
+
+### Standing rulings (still hold)
+
+| # | Ruling | Source |
+|---|---|---|
+| R-a | **Both portals:** the club's Accounting and the coach's team Ledger. | owner 2026-10-06 |
+| R-b | **Planned and drawn before Stage 8; inside the Club release.** | owner 2026-10-06, 2026-10-12; `BUSINESS_DECISIONS.md` 2026-10-16 |
+| R-c | **Marketing claims only what ships:** "payment reconciliation" stays out of every Club page until this ships. | `BUSINESS_DECISIONS.md` 2026-10-19 |
+| R-d | **D1:** the coach's records are the source of truth for team money; the club reads them. | Club Tier plan D1 |
+| R-e | **Coaches Portal rules bind the coach half:** a season is live until closed; a closed season is one page; unsettled money warns, never blocks; a history shelf needs its own owner mockup session. | `CLAUDE.md` (2026-08-18) |
+| R-f | **Club fiscal year:** a closed fiscal year is read in place on the club's money tabs, locked. | owner 2026-10-07 |
+
+### The balance-check rulings (owner, 2026-11-05)
+
+The owner's reason, in chat: coaches and treasurers are not accountants. They log transactions from their bank, and they
+need to type a statement balance, see the difference from the books on that date, and use it to find what's missing.
+
+| # | Ruling |
+|---|---|
+| 1 | **One model for BOTH portals.** |
+| 3 | **A check SAVES while off** and reads "Off by $X" (replaces B5's $0.00 rule). |
+| Ask 1 | **Cash:** ONE optional "Cash not deposited yet" figure on the check; no money form changes. (The drawing labels this option **C**, listed first as recommended; "all A" on the ruling card means "as recommended". A cash box is a later second account.) |
+| Ask 2 | **"Not in the bank yet"** lasts for that check only; the next check asks "Still waiting?" once. |
+| Ask 3 | **Suspects** = every line since the last check that MATCHED (every line, on a first check). |
+| Ask 4 | **The "checked through" line** moves to the latest check and shows an amber "Off by $X" chip when off. |
+| Ask 5 | **Any saved check can be deleted**, after one question, who and when recorded. |
+| Ask 6 | **Books changed after a save:** the saved row adds "Books now say $X"; no warning on money forms. |
+| Ask 7 | **A club's first check** on an account asks one statement (date + balance) to start from, no outstanding picker; a **coach's** season opening balance is the start, no question. |
+| Ask 8 | **Club online payments not yet paid out** are worked out from Stripe and shown as one line. |
+| Ask 9 | **The association report stays**, built from a saved check. |
+| Ask 10 | **The check sits on the Bank tab / the Ledger's Bank view itself**, above the saved checks. |
+| Walk | **Owner walk §461 STOPPED** 2026-11-05 (R2 as built is superseded). |
+| Ship | **Don't hide the built Bank tab;** the next promote will not come before this project is complete (owner 2026-11-05). |
+| Q1 | **A cheque across a coach's rollover:** the coach's Find also searches last season's lines dated after its last matched check, read by the bank route itself (no year parameter from the page), under a divider "From the {2025 Season}"; such a line can be marked Not in the bank yet. (Asks page, ruled A 2026-11-05.) |
+| Q2 | **A cheque written before the club's starting statement:** while no check since the start has matched, Find also searches the 60 days before the start; a line found there offers "Waiting at the start", which attaches it to the starting statement and fixes every later check. (Ruled A 2026-11-05.) |
+| Q3 | **A book moved between accounts:** each saved check keeps the books it counted, so a move changes nothing earlier and "Books now say" means only that a line changed; the next check of each account counts the book where it is now; the move window says so in one sentence. (Ruled A 2026-11-05.) |
+
+### Tick-off rulings that still stand (Appendix A §4)
+
+- **B1 (P1): the unit is a bank account, not a book.** Every club book belongs to the club's first account by default; a
+  club may add a second account and move a book to it (gaming funds). A team has exactly one account, its own.
+- **B7:** club: whoever can move club money may check; anyone who can open Accounting reads (on the club side today these
+  are one permission, Appendix A §7 R2c). Coach: money write may check; money read sees the checks and the mark. Each
+  check records who and when. No second approver.
+- **B8:** club: an Accounting tab **Bank** after Ledger (built). Coach: a fourth Ledger view **Bank** in the View pill.
+  Stage 13 re-checks these doors.
+- **B9 (re-worded by asks 4 and 9):** one line on the club Accounting Overview and the coach Money Overview; each linked
+  team's mark on the club's Teams tab, read-only (D1-safe, no standalone team is read by any club); a printable one-page
+  report; warnings, never blocks, on the fiscal-year close and on Close the season / Start next season; nothing on Budget
+  vs. Actual, the Statement, exports or the closed-season page.
+- **B11 (logged Decided in `BUSINESS_DECISIONS.md` 2026-11-04):** club: part of Accounting (Club and Club · Association),
+  no new key. Coach: Premium Coaches Portal, riding the Ledger; Basic gets no tease. No price or plan change.
+- **B12 (still out of the first release):** statement upload, a live bank feed, preparer/reviewer sign-off,
+  submit-to-club and the club returning a team's check, a closed-season shelf, a per-line matched mark in the Ledger, the
+  Basic portal, coach-side Stripe, storing account numbers. ("Undo of any check but the latest" is moot: ask 5.)
+- **P3:** associations read a team's check; the club reads the coach's fact (D1).
+
+### Superseded (history in Appendix A, one line each)
+
+- **B2:** typing the statement then **ticking each line** → gone; every line on or before the date counts by itself.
+- **B3:** the statement chain and the **starting-point picks** (outstanding items at setup) → gone; ask 7.
+- **B4:** **"Changed since it was checked"** and **undo-latest with a reason** → gone; asks 6 and 5.
+- **B5:** the **$0.00 rule** (and its fee-to-a-book helper) → gone; ruling 3, "Add the missing line".
+- **B6:** the **per-line "Didn't go through the bank"** keep-out → gone; ask 1 (one cash figure).
+- **B10:** the **carried snapshot** at rollover → gone; the coach reads the working season (Q1 for the one gap).
+- **R0 drawing asks 3–13** (opening picks, one ticked list, the pinned strip and dock, keep-out placement, the payout gap
+  tick, the re-dated fee, step-back undo, the edit warning, Look again / Mark checked again, rollover carry, a moved book
+  taking its unticked lines) → served the tick model, gone. Ask 1 (a fee or interest goes to the account's own book)
+  survives as the default book of "Add the missing line"; ask 14 (two signature lines) survives on the report; ask 2
+  (coach fee category) survives because "Add the missing line" opens the ordinary coach form.
+
+---
+
+## 1. Premises (said before the work)
+
+**P1. The unit is a bank account.** Unchanged (Appendix A §1 P1).
+
+**P2'. A coach's books are Cash on hand on a date.** The coach's "Your books on {date}" is the season's opening balance
+plus every settled movement that moves cash, dated on or before the statement date: the same rule as Cash on hand
+(`cashOnHandCents`, `lib/coach-register.ts:297`), with a date cutoff. Money that never went through the bank shows up as
+the difference and is answered by one figure, "Cash not deposited yet" (ask 1). A family-paid vendor row is already left
+out (it doesn't move cash).
+
+**P3. Associations read a team's check; the club reads the coach's fact.** Unchanged.
+
+**P4. Stripe deposits are net; the books are gross.** Measured in R1/R2a (Appendix A §7): family-pays payouts sum to the
+cent; club-pays holds on Stripe's side (book income − the booked processing line = net). "On its way" is therefore the
+book side of the online lines not yet paid out, processing lines included, so it equals what will land.
+
+**P5. A club book has no opening balance, so the starting statement IS the club account's opening.** The club's "Your
+books on {date}" = the starting statement's balance + the account's book movement after the starting date, through the
+statement date. Books placed in the account count from the start; a transfer between two books in the same account nets
+to nothing; a transfer to another account counts in each.
+
+**Disagreements with the rulings, said out loud (each is an owner ask, §8):**
+
+- **Q1, a cheque across a coach's rollover.** Written in the closing season, cashed in the new one. The new season's
+  opening balance already counts it, so the arithmetic is right. But on the first check of the new season the bank shows
+  $X more than the books, and Find (ask 3: this season's lines) can't name the cheque. The coach is left with an
+  unexplained "Off by" until it clears.
+- **Q2, a cheque written before the club's starting statement and cashed after it.** The drawing (tab 6) says Find names
+  it. **Naming it does not fix it.** The bank at the start was $X higher than the books, so once the cheque clears every
+  later check reads "Off by $X" for good. "Not in the bank yet" can't help, because it has cleared. "Add the missing line"
+  would double-count it. Ask 7's "no outstanding picker" needs an after-the-fact way to tell the start about that line.
+- **Q3, moving a book between accounts after checks exist.** If "Books now say" re-figures a saved check from today's
+  placement, one move flags every earlier check on both accounts, though nothing in them changed. The next check of each
+  account comes out the same either way. Only the earlier checks differ, and nobody has ruled it.
+
+**Not a disagreement:** dropping the tick-off is right. The code agrees. The whole "which lines are in the account up to
+D" question collapses to one SQL sum the club already has (`club_book_totals`, mig 317:557, posted in − posted out with
+`entry_date <= p_to`, pending and void excluded). On the coach side, Cash on hand plus a date cutoff answers it. Most of
+R1–R2's cost was the tick bookkeeping that ruling 1 removes.
+
+---
+
+## 2. What is true today (re-verified 2026-11-05 where the build changed it)
+
+Appendix A §2 still holds for the books themselves (club `accounting_entries` / `accounting_ledgers`; the fiscal lock;
+`canMoveClubMoney`; the coach register as a view over ~8 tables in cents; the season-scoped register; no year parameter;
+the Payouts tab reading Stripe live). What R1–R2 added on dev:
+
+- **Tables (mig 436, on prod 2026-11-04/05, service role only, RLS on with no policies):** `bank_accounts` (club|team,
+  name only, `opening_date` / `opening_balance_cents`, one live per team, unique club names), `bank_account_books` (club
+  book → account, guard refuses team books and other clubs' books), `bank_checks` (statement date + balance, `status`
+  open|checked, `outstanding_snapshot`), and six tick-era tables: `bank_check_events`, `bank_check_marks`,
+  `bank_check_added_lines`, `bank_check_changes`, `bank_line_exclusions`, `bank_saved_lines`.
+- **Mig 437 (on prod):** `move_team_into_club` carries `bank_accounts`. Keep; any re-create starts from 437
+  (`tests/unit/team-move-coverage.test.ts`).
+- **Mig 439 (on prod):** nine step functions. **Migs 440 and 442 (dev only, `pending` in `MANUAL_PROD_STEPS.json`):** tick
+  locks, keep-out locks, the book-move lock order, `bank_club_account_of_book`, `bank_club_line_left`. Because 440/442 are
+  `pending`, they block a promote today.
+- **Server:** `lib/bank-check.ts` (tick engine), `lib/bank-club-map.ts` (book reader, placement), `lib/bank-club-read.ts`
+  (accounts + books + the club Payouts read, `unavailable` when Stripe doesn't answer, `bank-club-read.ts:91-103`),
+  `lib/bank-club-rules.ts`, `lib/bank-club-steps.ts`, `lib/bank-check-fee.ts` (the only bank code that writes a real book
+  line), `lib/bank-check-words.ts`, `lib/bank-tab-words.ts`; 12 route files under `app/api/admin/accounting/bank/**`.
+- **Screen:** Accounting → Bank after Ledger (`lib/admin-kit-nav.ts:369,388`), no flag; components in
+  `components/admin/kit/club/money/bank/`; layout screen id `admin-accounting-bank`.
+- **Coach:** no bank code. `carriedAtRollover` (`lib/bank-check.ts:554`) is defined and never called.
+- **Season start:** the rollover (`lib/rep-season-rollover.ts:127`, Stage 14's file) writes the new season's
+  `opening_balance` from `seasonClosingCashCents`. Which date a season's books "start" on is not one stored column (open
+  question O5).
+
+---
+
+## 3. Research
+
+Appendix A §3 stands. The association form the report serves is the balance check's own formula: *bank balance + deposits
+not yet in the bank − cheques not yet cashed = books* (MoneyMinder, Keiter; Cochrane, North Durham, Nanaimo, Kitchener,
+Chilliwack). The balance check is the form the associations already ask for, which the tick-off was not.
+
+---
+
+## 4. The arithmetic (one engine, two sources)
+
+For one account and one statement date **D**:
+
+```
+The bank says          = the typed statement balance on D
+Your books on D        = club:  start balance + Σ(posted in − posted out) of the account's books, start < entry_date ≤ D
+                         coach: season opening balance + Σ settled, cash-moving rows with date ≤ D
+On its way (club only) = Σ book lines of online payments landed ≤ D whose payout had not arrived by D
+                         (processing lines included, so it is the net that will land)
+Not in the bank yet    = Σ lines marked on THIS check: a money-out line adds its amount, a money-in line subtracts it
+Cash not deposited yet = the one optional typed figure (subtracts)
+Should be in the bank  = books − on its way + not in the bank yet − cash
+Difference             = bank − should be  →  0: "Matches" · else "Off by $|d|" + a sentence giving the direction
+```
+
+- **Starting statement (club):** saved as a check of kind `start`, result always "Starting point" (no result shown). Its
+  books figure = its bank balance, adjusted by its waiting items (the Not-in-the-bank-yet rule solved for the books: a
+  money-out line waiting at the start subtracts). With Q2-A, a line found later and marked "Waiting at the start" joins
+  those items and moves every later check by its amount.
+- **Coach:** no `start` row. The season opening balance is the start; a statement dated before the season's start is
+  refused with a sentence saying why.
+- **Saved figures:** each check saves the bank figure, the books figure, the on-its-way figure (or *not counted*, when
+  Stripe didn't answer), each Not-in-the-bank-yet item (line key, date, label, amount, direction), the cash figure, and
+  who/when.
+- **"Books now say $X" (ask 6) = recompute on read.** The list re-figures *Your books on D* for every saved check from the
+  books as they stand now, and adds the chip where it differs from the saved books figure. X is that books figure.
+  Saved results never change. With Q3-A (recommended) each club check saves the books it counted, and the re-figure uses
+  that list. Club cost: one SQL call per list (`bank_books_through(ledgers, dates[])`, one pass over the account's
+  posted lines). Coach cost: none extra; the register rows are already loaded for the view, and the re-figure is
+  a pure pass with a date cutoff.
+- **"Matched" for ask 3** means *matched when saved*. A later "Books now say" doesn't un-match it.
+
+### The hints (drawing tab 3), bounded
+
+Candidates are the suspects (lines since the last matched check, or since the start), minus lines already marked Not in
+the bank yet, **capped at the most recent 400 lines**:
+
+1. **Exact:** one line whose amount is |difference|, either direction. The callout names the first one found; every match
+   gets the "Exactly $X" chip.
+2. **Half:** one line of |difference| ÷ 2, worded "entered the wrong way round?" (money in entered as money out, or the
+   reverse). Only when the difference is an even number of cents.
+3. **Two or three lines that add up to it,** same direction. Pairs and triples by sort + two pointers, O(n²) on the
+   capped 400 (~160k steps, well under 50 ms). Show at most **3** combinations, nearest-dated first.
+4. With none of those, the callout drops away and the list stays (as drawn).
+
+Pure, client-safe, no IO; tests pin the cap, the cents parity and the ordering.
+
+### Stripe "on its way" (ask 8, club only)
+
+- **Definition:** online-payment book lines (the same sources the Payouts reader indexes: team payments, payment items,
+  refunds, disputes) dated on or before D, **minus** every line inside a payout whose `arrival_date` ≤ D. A line in a
+  payout arriving after D, or in no payout yet, is on its way. Lines landed more than **30 days** before D are taken as
+  paid out (Stripe's schedules are daily to weekly). The "Stripe pays them out {date}" footer is the arrival date of the
+  payout holding them, when there is one.
+- **Read:** `readPayouts({…, from: D − 30 days, to: today, withEntries: true})` (`lib/online-payouts.ts:250`), the same
+  3-minute cache.
+- **Stripe can't be reached, or a payout lists no lines (manual / matching payouts):** the line reads *not counted* with a
+  quiet notice (words §5). The check still figures and saves (drawing tab 6: "the line is left out and the check reads
+  off"), and the saved check records *on its way: not counted*. A club with online payments off or no Stripe account has
+  no line at all.
+
+### Cash (ask 1)
+
+One optional figure on the check, saved with that check only, empty on the next one. **Nothing reaches a money form, a
+money table or a book line.** A guard test pins this: no bank code writes `accounting_entries` or any rep money table.
+
+---
+
+## 5. Words for /marketing
+
+> Customer-visible wording written during the build, settled in ONE `/marketing` pass per stage, before the walk. Drafts
+> below are the drawings' words unless marked *new*.
+
+- [ ] "Bank" — the club Accounting tab and the coach Ledger view — club treasurer, coach
+- [ ] "Check a statement" · "Statement date" · "Bank balance on that date" (phone: "Bank balance") — the check form
+- [ ] "The bank says" · "Should be in the bank" (phone band: "Should be there") · "Difference" — the band
+- [ ] "Matches" · "Off by $X" + "The bank shows $X more than your books." / *new* "The bank shows $X less than your
+  books." — band, saved list, Overview line, Teams view
+- [ ] "Your books on {date}" · "Online payments on their way to your bank · {n}" · "Stripe pays them out {date}" — sums
+- [ ] *new* "Couldn't reach Stripe, so online payments on their way aren't counted. Try again in a few minutes." — the
+  Stripe line when it can't be read
+- [ ] "Not in the bank yet" · "Undo" · *new* "Still waiting on {line}?" · "Yes" · "No" — Find and the next check
+- [ ] "Cash not deposited yet" — the cash figure, the saved check, the report
+- [ ] "Find the $X" · "Lines since your last match · {date}" · "Exactly $X" · *new* "Half of $X. Entered the wrong way
+  round?" · *new* "These {2|3} add up to $X" — Find
+- [ ] "Add the missing line" — opens the ordinary add form
+- [ ] "Save this check" · "It saves as off by $X. You can check this statement again later." — save
+- [ ] "Checked statements" · "The bank said" · "Should have been" · "Result" · "Checked by" · "Starting point" — list
+- [ ] "Books now say $X" — saved row chip
+- [ ] "Delete this check" · *new* "Delete the check for {date}? Its figures go; who deleted it and when is kept." ·
+  "Check this statement again" — the opened check
+- [ ] "Start checking {account}" · "Pick a bank statement you already have and type its date and ending balance. Checks
+  start from there." · "Start here" — club first check
+- [ ] *new, Q2-A* "Waiting at the start" · "This was written before your starting statement and cashed after it." — Find
+- [ ] *new, Q1-A* "From the {2025 Season}" — the divider above last season's lines in the coach's Find
+- [ ] *new* "Statements from this season only, since {date}." (drawn) · *new* refusal "This statement is before the
+  {2026 Season} started on {date}. Check it from last season before you start a new one." — coach
+- [ ] "Bank: {account} checked through {date} ›" · "Bank: not checked yet ›" · coach "Bank checked through {date} ›" ·
+  Teams "bank checked through {date} · Matches" — the mark (ask 4)
+- [ ] *new, Q3-A* "Saved checks keep the books they counted. The next check of each account counts this book where it
+  is now." — Add an account / Name and books
+- [ ] Report words (§6) — the printable page
+- [ ] Help search words carry "reconcile / reconciliation"; the collision with the coach's "reconcile the estimate" and
+  the export's "RECONCILIATION — SPENDING TO CASH" (Appendix A §5) goes to the same pass.
+- [ ] R-c marketing truth: "bank reconciliation" returns to Club copy only after BC9's walk (pricing, Club plan article,
+  homepage, in-app plan list, `PRICING_PAGE_COPY.md`). The three overclaims (onboarding, email defaults, module catalog)
+  are still routed to `/marketing`, open.
+
+---
+
+## 6. Build notes from the drawings
+
+**Tab 2, a check that matches.** One page: the check on top, saved checks below (ask 10). Club desk: Account pill ·
+"Checked through {date}" · "Name and books"; "Check a statement" with Statement date and Bank balance, lime "Save this
+check" inline; the shipped money band, three tiles joined (house rule), updating as you type (debounced server figure);
+sums always open: Your books (with the book names), Online payments on their way (· n · Show), total; hint "Lines since
+your last check ({date}): n · Show them". Coach phone: no Account pill; "Team bank account · checked through {date}";
+Statement date, Bank balance, the wide optional Cash not deposited yet; band captions "your books, less $X cash"; full-width
+Save; "Statements from this season only, since {date}." The middle tile is "Should be in the bank" everywhere ("Should be
+there" on a phone band). ⚠ The tab-2 hint says "since your last **check**" and the suspects say "since your last
+**match**". Ask 3 rules *match*; build both as *match*.
+
+**Tab 3, Off by $75.00.** Amber, never red; direction in words, never a minus sign. "Find the $75.00" callout with the
+first hint, the second sentence, buttons "Not in the bank yet" and "Add the missing line". Suspects toolbar "Lines since
+your last match · {date}" + search "Find an amount or a name…"; table Date | What | Book | Money out | Money in | action;
+the matching row tinted amber with the chip; "Not in the bank yet" on hover for any row; online-payment lines greyed
+"counted above". Phone: signed amounts on row cards, "Show 10 more", full-width buttons. After "Not in the bank yet": the
+item joins the sums (+ $75.00, "Undo"), tiles re-figure, the list closes. "Add the missing line" opens the ordinary add
+form for that portal with amount, date and direction filled (club: the account's own first book, R0 ask 1; coach: the
+ordinary Ledger add, fee category required, R0 ask 2). No separate bank-fee button. **"Still waiting?" (ask 2) is not
+drawn:** build it as rows in the next check's sums, one per item of the latest earlier check, each with Yes (carries the
+item onto this check) and No (drops it); once answered it stops asking.
+
+**Tab 4, cash.** Option C only.
+
+**Tab 5, saved checks.** Table: Statement date (link) | The bank said | Should have been | Result | Checked by | ›. Result:
+"Matches", "Matches · n cheque(s) not in the bank yet", amber chip "Off by $X", amber chip "Books now say $X"; the starting
+statement row greyed, "Starting point", no chevron (Q2 may add a "Correct the start" door). The opened check is a form
+window 520: eyebrow "{account} · saved check", "Statement ending {date}", the three tiles, the saved sums, "Checked by
+{name} on {date}.", footer red ghost "Delete this check" · "Close" · "Check this statement again" (opens the check with
+the date filled; saving replaces the old one). Phone: white row cards, the window full screen.
+
+**Tab 6, club only.** First check: "Start checking {account}" + the two fields + lime "Start here" + "Books in this
+account: … · Change". Stripe line opened: child rows (date · what · who · card/bank · book · amount), footer "Stripe pays
+these out on {date} · Payouts tab". Account pill options carry "{date} · Matches|Off by $X"; "Add an account" and "Name
+and books" stay as built.
+
+**R0 tab 7, where the mark shows (re-worded by ask 4).** Club Overview: the line right of "Where the club stands", no new
+row. Coach Money Overview: in the Cash on hand card's foot, right of "Ledger", linking to Ledger → View: Bank. Teams tab:
+column "Bank checked" ("Not checked yet" · "Through {date}" + "Matches" or amber "Off by $X"). "Changed since" chips
+become "Off by $X". Fiscal-year close "Still open" row: "{account} last checked {date} · {Matches | Off by $X}", and
+"not checked in the last month of {year}" when the latest check is before the year's last month (no statement count).
+Coach Start next season / Close the season: "The bank is checked through {date}. Check the season's last statement
+before you {start the new season | close}: the new season's Bank view starts from its own opening balance." Then "You
+can still …". Warn, never block. K7 read-only coach: the same view without the form, Find buttons or Delete.
+
+**R0 tab 8, a second account.** As built ("Add an account", "Name and books", a name only, never the number). The
+tick-era hints ("Its lines not yet ticked move with it") are replaced by the Q3 sentence. A transfer between two books in
+one account nets out by itself. A team keeps one account (a team gaming account is out of the first release).
+
+**R0 tab 9, the report (re-worded by ask 9).** One printable US Letter page from a saved check, no phone version.
+Eyebrow "{club} · Bank check"; "{account} · statement ending {date}"; "Books in this account: …". Lines, the association
+formula top to bottom: Bank balance on the statement · + Not in the bank yet (table: Date | What | Book | Amount) · −
+Online payments on their way (or "not counted") · − Cash not deposited yet · = Should be in the bank · Your books on {date}
+(club: "Starting point {date} {balance} + book movement since") · Result Matches / Off by $X · "Checked by {name}
+({role}), {date} at {time}" (formatTime) · "Books now say $X" when it applies · signature lines "Prepared by · date" and
+"Reviewed by · date" · footer "Printed {date} from FieldLogicHQ · {club} · Accounting → Bank" (coach "… · Money → Ledger →
+Bank"). The team report drops R0's "Against the team's Ledger" line (the books ARE the Ledger now) and "Not counted".
+Doesn't carry: an account number, a line listing, Budget vs. Actual figures.
+
+---
+
+## 7. Reuse map (census 2026-11-05; cited lines opened)
+
+| Piece | Carries | Rewritten | Deleted |
+|---|---|---|---|
+| **Tables** | `bank_accounts` (its `opening_*` pair dropped, the start is a `start` check), `bank_account_books` + guard | `bank_checks`: drop `status`, `checked_by/at`, `outstanding_snapshot`, the two tick constraints; add `kind` start\|check, books / on-its-way / cash figures, books list, `deleted_by/at` with the one-per-date unique made partial on live rows | `bank_check_marks`, `bank_check_added_lines`, `bank_check_changes`, `bank_line_exclusions`, `bank_saved_lines`, `bank_check_events` (who/when lives on the check) |
+| **New table** | | | → `bank_check_waiting` (check, line key, date, label, amount, direction; also the start's Q2 items) |
+| **Functions** | `bank_first_club_account`, `bank_club_account_of_book`, the 437 team move | `bank_book_move`, `bank_account_add` (keep the lock order: own advisory lock → accounts in id order → book; strip exclusion / opening-pick work); new `bank_check_save` (one step: replace a live same-date check, write items), `bank_check_delete`, `bank_books_through(ledgers, dates[])` | `bank_account_set_up`, `bank_check_start`, `_refigure`, `_mark`, `_undo`, `_add_line`, `bank_tick_rows`, `bank_keep_out_rows`, `bank_check_tick`, `bank_check_keep_out`, `bank_club_line_left` |
+| **Engine** `lib/bank-check.ts` | `BankDirection`, `BankLine`, `signed`, `toCents` | `figureCheck`, `findHints`, `suspectsSince`, `booksNowSay`, the coach date cutoff | `evaluateCheck`, marks / saved / opening / snapshot types, `canMark*`, `canUndo`, `snapshotForMarking`, `payoutTickMarks`, `carriedAtRollover` |
+| **Club reader** | `bank-club-map.ts` placement + entry mapping (`liveClubAccounts`, `placeBooks`, `ENTRY_SELECT`, `directionOfEntry`, `entryToBankLine`); `readClubBankAccounts`; `readClubPayouts` | `readClubBankAccount` → account + saved checks + figure for D + suspects + on its way | `checkRecords`, `marksOf`, `savedOf`, `stampsOf`, `payoutFloor`, `withAddedMembers`, `assembleAccount`, `accountOfPayout`, `nameGap` |
+| **Rules / steps** | the Decision / refusal pattern, `readCents`, `readDay`, `readText`, `pickerSearch`; `step()`, `bankOverview`, `addAccount`, `renameAccount`, `moveBook`, `clubToday` | `startCheck` → save; `bankAccountView` | `openingPlan`, `tickPlan`, `keptOutPlan`, `markPlan`, `undoPlan`, `payoutGapViews`, `tickRow`, `keepOut`, `markCheck`, `undoCheck`, `refigureCheck`, `setUpAccount`, `linesBefore`; **`lib/bank-check-fee.ts` whole** (drawing: no separate bank-fee button) |
+| **Words** | `bank-check-words.ts` refusal shape (trimmed to surviving codes); `bank-tab-words.ts` loading / failure / account words | the band, sums, Find, save words (§5) | tick, picker, gap, undo words |
+| **Routes** `app/api/admin/accounting/bank/**` | `GET/POST /`, `PATCH accounts/[id]`, `POST accounts/[id]/books` | `GET accounts/[id]` (+ `?date=` figure), `PUT accounts/[id]/setup` → the starting statement, `POST accounts/[id]/checks` → save | `checks/[id]` PATCH, `ticks`, `kept-out`, `mark`, `undo`, `lines`, `lines-before`; new `DELETE checks/[id]` |
+| **Screens** `components/admin/kit/club/money/bank/` | `BankTab` shell + account switching, `AccountWindow`, `MoneyField`, `BankPhone` row, `BankShared` helpers (not `isStuck`), most of `Bank.module.css`; wiring `admin-kit-nav.ts:369,388`, page, layout id | `BankStatements` → saved checks; `BankSetup` → "Start checking" (name/books/date/balance fields carry) | `BankCheck.tsx` (tick screen), `FeeWindow`, `UndoWindow` (its frame may become the delete confirm), the pinned strip and dock |
+| **Tests** | `bank-club-read.test.ts` accounts / book lines / transfer pair / moved book / no-year guards; `admin-kit-nav.test.ts:228`; `team-move-coverage` | `bank-r2-server-guard.test.ts` §0–§6 (it pins the function list, the route list and live definitions; it **must** change with BC1); `bank-r2c-screens-guard.test.ts` keeps §1, §4, generic §3 | engine tick tests, route tick plans, dock / strip pins |
+
+**Untouched:** `lib/bank-debit*.ts` (online bank debits), `lib/demo-*reconcile*` (demo reseed), the Payouts tab.
+
+---
+
+## 8. Owner asks (on `BANK_BALANCE_CHECK_ASKS.html`, https://claude.ai/artifact/E1Fy1qtppmJeEXMw3qVvKH, paste-back)
+
+> **RULED 2026-11-05: Q1 A, Q2 A, Q3 A** (all as recommended, no notes). Recorded in §0. The options below are kept as
+> asked.
+
+- **Q1, a cheque across a coach's rollover (feeds BC6).** **A (recommended):** the coach's Find also searches last
+  season's lines dated after its last matched check, read by the bank route itself (no year parameter from the page),
+  under a divider "From the {2025 Season}"; such a line can be marked Not in the bank yet. B: the closing season's last
+  check hands its Not-in-the-bank-yet items to the new season's first check (misses a cheque written after that check).
+  C: nothing; the coach sees "Off by" until it clears.
+- **Q2, a cheque written before the club's starting statement (feeds BC3).** **A (recommended):** when the account's checks
+  since the start have never matched, Find also searches the 60 days before the start. A line found there offers
+  "Waiting at the start", which attaches it to the starting statement and fixes every later check. B: the starting row
+  opens and its date and balance can be corrected (no line named). C: as ruled, Find names it and the user deals with
+  it outside.
+- **Q3, a book moved between accounts after checks exist (feeds BC1's columns and BC2).** **A (recommended):** each saved
+  check keeps the books it counted, so a move changes nothing earlier and "Books now say" means only that a line changed;
+  the next check of each account counts the book where it is now; the move window says so in one sentence. B: every check
+  is re-figured with today's placement, so a move flags every earlier check on both accounts with "Books now say".
+  (Either way, the next check after a move can be off until the bank moves the money too. That is the bank's real state.)
+
+---
+
+## 9. Stages (each one build session; sequenced by dependency and rework risk)
+
+**Why this order.** The migration first, because every later screen reads the new shape and the old tick tables would
+otherwise keep being written. Then the club, because its tab exists and its reader exists. Find gets its own session
+because the hints, suspects, waiting items and "Still waiting?" are the riskiest logic. The coach follows the club,
+reusing the engine whole. The coach touchpoints wait for Stage 14 (it owns the rollover modal's file). No "hide the old
+tab" stage: the owner ruled no promote before this completes (2026-11-05), and the BC1 migration is `pending` in
+`MANUAL_PROD_STEPS.json`, so a promote is refused until it is applied on prod.
+
+**Between BC1 and BC2 the dev Bank tab shows the account pill, Name and books, and the saved-checks list only** (the tick
+screen is deleted in BC1). That is a dev-only gap and is said in BC1's hand-off.
+
+### BC1 — The engine, the migration and the club's server (no new screens)
+- [x] Read-only count on prod of every bank table before writing the migration (expected 0 rows; if not, stop and ask).
+  **Done 2026-11-05 (owner yes): 0 rows in all nine** (`.probe/bank-bc1/prod-count.mjs`). Dev held 1 account (uat-rep-club
+  "Walk chequing", start 2026-09-30 $5,000.00) and the stopped walk's one tick statement.
+- [x] Migration **`447_the_bank_check_is_a_balance.sql`** (446 was taken by GST Part 6b the same day). **`/dba` reviewed the
+  draft 2026-11-05** (Finding #47 in `DB_ARCHITECTURE_REVIEW.md`: `bank_books_through`'s CTEs `MATERIALIZED`, a non-partial
+  `bank_checks_account_idx`, a waiting item's key validated, a prod PRE-CHECK); **applied to dev 2026-11-05 and re-run once
+  (no-op)**; end shape on dev = 4 bank tables, 8 bank functions; the walk account's starting point became its `start`
+  check, the tick statement was deleted. **Proved by `.probe/bank-bc1/functions.sql`** (rolled back, `BANK_BC1_SQL_PASSED`:
+  every refusal of save/delete, the replace-same-date soft delete, a move keeping earlier `book_ids`, `bank_books_through`
+  against a plain sum, a transfer pair and a pending line moving nothing, grants and RLS).
+  ⚠ **Until BC1's server code lands (steps below), dev's Bank tab and its routes 500**: they still read the dropped tables.
+- [x] `MANUAL_PROD_STEPS.json`: 440 and 442 → `held` (never apply, superseded by 447), 447 `pending` with the PRE-CHECK
+  (2026-11-05; `check-manual-prod-migrations` lists 447 as blocking a promote). **Commit these with the migration.**
+
+**BC1 build calls made 2026-11-05 (for the next session; said to the owner):**
+- **The start counts Stripe on its way.** The start's books = its bank balance − Σ money-out waiting + Σ money-in waiting
+  **+ on its way at the start** (the §4 formula solved for the books, whole). Without it, any club taking card payments
+  starts with its in-transit payments missing and every later check reads "Off by" that amount for good. Owner may flip
+  it (one line); not ruled.
+- **An online-payment book line** = a posted `accounting_entries` line with `payment_method IN ('online_card',
+  'online_bank')` (verified on dev: every receipt, processing cost and refund line Stripe moves carries it). On its way on
+  D = those lines in the account's books dated in (D − 30, D], minus every line inside a payout with
+  `arrives <= D` that did not fail. *Not counted* when Stripe throws, or when any non-failed payout arriving in
+  [D − 30, D] is `manual` / `matching` (O6, as recommended). Only payouts arriving ≤ D need reading to subtract; reading
+  a little past D gives the "Stripe pays them out {date}" footer.
+- **Saved figures** are `statement_ending_balance_cents` (the bank says), `books_cents`, `on_its_way_cents` (NULL = not
+  counted, 0 = none), `cash_not_deposited_cents`, the waiting items; **the difference is never stored**: the engine
+  figures it from those (one home of the arithmetic). "Matched when saved" = that figure is 0.
+- **"Books now say"** for a club check = the start's books **as they read now** (its waiting items now, so Q2 items
+  attached later move every later check) + `bank_books_through(check.book_ids, [D, start date])` difference.
+- **O2 closed as recommended:** the start owns its date; a check must be after it (`before_start`). A second start on
+  another date is `start_exists`; a start re-saved on its own date replaces it even with later checks standing.
+- **Refusal codes the step returns:** `bad_kind`, `bad_figures`, `bad_amount`, `account_not_found`, `ends_in_future`,
+  `changed` (book list not the account's now), `start_exists`, `start_after_checks`, `no_start`, `before_start`; delete:
+  `check_not_found`, `start_has_checks`; raised `bank_step_refused:bad_item`; 23505 on `bank_check_waiting_once` → `bad_item`.
+- [x] `DATA_DICTIONARY.md` bank section rewritten 2026-11-05 (tables, columns, the 7 functions, gotchas, §4's sign rules;
+  a short "tick-era tables, dropped by 447, still on prod until it is applied" stub keeps `check:dictionary` honest while
+  prod holds 436's shape — delete it after the prod apply); `refresh:snapshots` run (watermark 447).
+- [x] Engine `lib/bank-check.ts` rewritten 2026-11-05: `figureCheck`, `startBooks` (the start's books solved, with Stripe
+  on its way), `figureOfSaved` / `matchedWhenSaved`, `booksNowSay`, `latestBefore`, `suspectsSince` (a same-account
+  transfer pair drops out), `findHints` (cap 400, ≤3 combinations, nearest-dated first, a 200k-step stop so identical
+  amounts can't run away), `coachBooksOnDate` (Cash on hand's own arithmetic with a cutoff). 21 tests in
+  `tests/unit/bank-check.test.ts`, the drawing examples to the cent.
+- [x] Club reader 2026-11-05: `lib/bank-club-map.ts` (pure: placement, entry lines, saved checks, `clubBooksOnDate`, the
+  on-its-way rule `onItsWay`) and `lib/bank-club-read.ts` (`booksThrough` → `bank_books_through`, `readOnItsWay`,
+  `figureForDate`, "Books now say" grouped by each check's own `book_ids`). 26 tests in `bank-club-read.test.ts`.
+- [x] Routes 2026-11-05: six files (`GET/POST /`, `GET ?date=` / `PATCH accounts/[id]`, `PUT …/setup` = the start,
+  `POST …/books`, `POST …/checks` = save, `DELETE …/checks/[checkId]`); the six tick routes deleted. Rules in
+  `lib/bank-club-rules.ts` (`savePlan`, `checkView`, `checkedThrough`; 18 tests in `bank-club-routes.test.ts`), steps in
+  `lib/bank-club-steps.ts`, refusal words trimmed to mig 447's codes.
+- [x] Deleted 2026-11-05: `lib/bank-check-fee.ts`, `BankCheck.tsx`, `BankPhone.tsx` (a tick-checkbox row; §7 listed it
+  as carried, but nothing renders it and its CSS failed `check-css-selectors`; BC4 builds the Find cards fresh), the
+  Statement / Fee / Undo windows, `isStuck`, the dead words and CSS. `BankTab` = account pill + Name and books + the
+  saved-checks list (`BankStatements`, tab 5's columns, read-only); `BankSetup` = "Start checking" (name, books, statement
+  date and balance, no picker).
+- [x] Guards 2026-11-05: `bank-r2-server-guard.test.ts` rewritten (66 tests: the live function set, every earlier bank
+  function re-made or dropped by 447, the route list, rule 6, the steps, ⚖ §5 "no bank code writes money" over every bank
+  lib, route and screen and every live bank function, R2b-3's lock order); `bank-r2c-screens-guard.test.ts` trimmed to
+  §1, §3, §4 (8 tests); `team-move-coverage` passes.
+- [x] Probed on dev 2026-11-05 as the uat-rep-club treasurer: `.probe/bank-bc1/routes.mjs` → `BANK_BC1_ROUTES_PASSED`
+  (41 checks: add an account with a book, every save refusal, start, a matching check, an off check that saves, a cheque
+  marked Not in the bank yet replacing the date's check (old row soft-deleted), Still waiting read, a line added after the
+  save → "Books now say", the book moved back with `book_ids` and the earlier figure unchanged, delete soft, the reader
+  refused). Every probe row removed (`.probe/bank-bc1/leftovers.mjs`: the walk account and its start only).
+- [x] `/simplify` 2026-11-05 (4 angles): the save's date rules now live in ONE pure `saveRefusal` (the step's order),
+  asked by both the save and the screen's figure; the club's live checks are one query (items embedded) read beside the
+  accounts; the name lookup runs beside the slow reads; a save reads no suspects and a refused save reads no figure; no
+  online-lines read with online payments off; one `booksOnDates`; the engine's `suspectsStart` + a generic
+  `suspectsSince`; one waiting-item shape; the overview trimmed to what the screen reads; a guard pins the save step's
+  club-book kinds to `CLUB_OWNED_BOOK_KINDS`. Fixed on the way: with Stripe down a line is no longer refused as Not in
+  the bank yet (nothing is counted on its way then). Skipped: merging the two parallel `bank_books_through` calls,
+  slimming a write's re-read, `jsonInit` learning PUT (outside the bank files), a SQL rewrite of applied mig 447. Re-proved:
+  161 bank tests, typecheck, lint, the dev probe `BANK_BC1_ROUTES_PASSED`.
+- [x] `/review` (high) 2026-11-06 — no Critical, no High; NO code changed by the review (so no probe re-run). Gate: tsc clean,
+  161 bank tests, lint clean. Four lenses (arithmetic and signs, write path, SQL and lock order, screens and blast radius);
+  mig 447 reaches ONE end shape from dev and prod, R2b-3's lock order holds in move / add / save / delete, every route keeps
+  `resolveClubMoney` scope 'books', no bank code writes money. **Open, all Medium or Low, none blocks the commit:**
+  (M1) a START saved while Stripe is down or a manual / matching payout falls in the window books on-its-way as 0, so every
+  later check reads "Off by" that amount for good: owner call (refuse the start, or warn); (M2) "Books now say" uses the start's
+  saved books, not the start's waiting items as they read now (plan build call): latent until BC3 attaches a Q2 item, fix in
+  `withBooksNow` then; (M3) a check's waiting item has no lower date bound, so a line the start already proved was in the bank
+  can be marked Not in the bank yet: decide in BC3; (L) a JSON `null` body gives a 500 not a coded refusal on the five write
+  routes; no lower bound on a statement date (0202-10-31 is accepted as a start); a >200-char description cut mid-emoji;
+  a same-account transfer half is accepted as a waiting item; a payout still in transit on D counts as landed; the screens'
+  `changed` / `account_not_found` words don't re-read the view (BC2 rebuilds these); apply 447 on a quiet moment (it drops
+  foreign keys). Dev's saved start-time items were dropped by the backfill (dev only). Commit on owner yes.
+
+### BC2 — Club: the Bank tab on a desk (tabs 2, 5, 6; R0 tab 8)
+- [ ] "Start checking {account}" (first check), the check form, the band as you type, the sums, the Stripe line + Show
+  (child rows, footer, the *not counted* notice), Save.
+- [ ] Saved checks: the table, the opened window, Delete (one question, who/when), Check this statement again (replace),
+  "Books now say".
+- [ ] Account pill with "{date} · Matches|Off by"; Add an account / Name and books with the Q3 sentence.
+- [ ] Layout guard + `check:layout --only admin-accounting-bank`; walk probe; `/simplify`, `/review`.
+
+### BC3 — Club: Find (tab 3)
+- [ ] The callout with the hints (exact, half, 2–3 lines), suspects since the last match with search, "Not in the bank
+  yet" + Undo, "Still waiting?" on the next check, "Add the missing line" (the ordinary Ledger add form, prefilled, the
+  account's first book), Q2's answer.
+- [ ] Engine tests for the hint bounds; walk probe; `/review`.
+
+### BC4 — Club: the Bank tab on a phone (390)
+- [ ] The phone frames of tabs 1–6: band, sums, Find cards with signed amounts and "Show 10 more", full-width buttons, the
+  saved-check cards, the window full screen. No pinned strip or dock (gone with the tick-off).
+- [ ] Phone walk probe; `/review`.
+
+### BC5 — Club: the touchpoints and the club half's words
+- [ ] The Overview line (ask 4), the fiscal-year close "Still open" row (`lib/club-fiscal-year-moves.ts`), the report
+  (club, ask 9), help in `lib/help-content/accounting.tsx` (`/docs`), the `/marketing` pass on §5's club words.
+
+### BC6 — Coach: the source and the routes (no screen)
+- [ ] The team account, created at the first save (no setup question; name "Team bank account").
+- [ ] The coach figure: opening balance + settled cash-moving register rows ≤ D (`coach-register-book.ts` rows, pure
+  cutoff); a date before the season start refused (O5 decides the date); Find per Q1.
+- [ ] Routes `app/api/coaches/[orgSlug]/teams/[teamId]/bank/**` with `canWriteMoney` / `canViewMoney`; the statement date
+  is not a year; confirm the `HISTORY_ENDPOINTS` guard stays unchanged (and, with Q1-A, record the previous-season read
+  as the decision it is, answering the three questions in `CLAUDE.md`).
+- [ ] Saved checks and the mark read the working season only; the closed-season page shows nothing (B9).
+
+### BC7 — Coach: the Ledger's Bank view (desk + phone)
+- [ ] The fourth View pill option; the check with Cash not deposited yet; Find; saved checks; the read-only form for money
+  read (K7). Walk probes both widths.
+
+### BC8 — Coach touchpoints and the club's read (after Stage 14)
+- [ ] The Money Overview line; the Start next season / Close the season warnings (the modal's list only, never
+  `rep-season-rollover.ts`); the team report; the club Teams tab "Bank checked" column through a team-scoped reader
+  (like `teamCashHeld`); help in `coaches.tsx`; `/marketing` on the coach words.
+
+### BC9 — The walk and marketing truth
+- [ ] Owner walk, both portals, desk and phone (a checkable page, a § in the Owner QA Ledger). `/marketing` puts "bank
+  reconciliation" back (R-c) and settles the collisions; `/demos` decides on sandbox seeds.
+
+### Neighbours
+- **Stage 12:** reuses the Payouts reader (P4 proved). An app-landed club-pays payout seen in a browser is still owed
+  (Appendix A §7 R2a); BC2's walk covers it.
+- **Stage 13:** re-checks the B8 doors.
+- **Stage 14:** BC8 waits for it; nothing here touches family, roster or rollover code.
+- **Stage 8:** BC9's walk is one of its §7 items.
+
+---
+
+## Architectural decisions
+
+- **The mark sits beside the money, never on it.** No column on `accounting_entries` or a rep money table; the fiscal lock
+  is untouched; no bank code writes a book line (cash is a figure on the check; "Add the missing line" opens the
+  ordinary form, which writes through its own route).
+- **One engine, two sources.** `lib/bank-check.ts` is pure; the club source is a SQL sum over the account's books, the coach
+  source the season's register rows.
+- **Recompute on read, save figures once.** A saved check's figures never change; "Books now say" is derived each read.
+- **The starting statement is a check of kind `start`** (not account columns), so its Q2 items hang off it like any
+  check's.
+- **Delete is soft** (`deleted_by/at`); the one-per-date unique holds for live rows; re-checking a statement soft-deletes
+  the old row and saves a new one in one step, so the record of who checked it before survives.
+- **Tables stay service-role only** (dictionary rule 7); routes decide with existing permissions.
+- **Lock order carried from R2b-3:** an account-add advisory lock → accounts in id order → book. Never book before account.
+
+## Open questions (build-time, not owner asks)
+
+- [x] **O1 (BC1):** `bank_checks.book_ids` (the books a club check counted) is added in BC1, and the re-figure for
+  "Books now say" reads it. Closed by Q3 = A (2026-11-05).
+- [x] **O2 (BC1):** one live check per date, or allow a check dated on the start date? Closed as recommended 2026-11-05
+  in mig 447: the start owns its date; a check must be after it.
+- [ ] **O3 (BC2):** the band "as you type": debounce the server figure (~400 ms) and show the previous figure while
+  waiting, or figure only on blur? (Recommend debounce.)
+- [ ] **O4 (BC3):** Find's search field: amounts in either direction (as built, `pickerSearch`), "12,50" parse finding
+  from R2c fixed in the shared cents parser.
+- [ ] **O5 (BC6):** the season's start date for "statements from this season only, since {date}": the earliest of the
+  season's own start field if one exists, else the date the season was created / rolled into. Verify against
+  `rep_program_years` before building.
+- [x] **O6 (BC1):** whether a payout that lists no lines (manual / matching) should make the whole on-its-way line *not
+  counted*, or count everything since the last listed payout. Taken as recommended 2026-11-05 (*not counted*); the rule
+  is in §9 BC1's build calls.
+- [ ] **Carried findings (not this project's; already recorded in Appendix A §7):** club admin pages 72px taller than a
+  phone screen; `--admin-header-h` re-publish; `joinSub` duplicates `subLine`; a refunded house-league payment with no
+  income entry (Stage 12).
+
+---
+
+# Appendix A — the tick-off plan (SUPERSEDED 2026-11-05), verbatim
+
+> Kept for its rulings that still stand (§0 R-a…R-f, P1, P3, §2, §3, B1, B7, B8, B9, B11, B12), its research, and the
+> R1–R2 build record (§7). Everything about ticking, statement windows, starting-point picks, carried lists, keep-outs,
+> "changed since", Mark checked again and undo-latest is history. Line numbers cited elsewhere as
+> `BANK_RECONCILIATION_PLAN.md:NNN` before 2026-11-05 now sit inside this appendix.
+
+## (A) Bank reconciliation — both portals — Implementation Plan
+
+> ⚠⚠ **RE-PLANNED 2026-11-05 (owner): THE BALANCE CHECK replaces the tick-off. This file is being rewritten; until then,
+> read everything below about ticking, statement windows, starting-point picks, carried lists, keep-outs, "changed
+> since", Mark checked again and undo-latest as SUPERSEDED. Do not build R3+ from it.** Owner, in chat: coaches and
+> treasurers are not accountants; they log transactions from their bank and need to type a statement balance, see the
+> difference from the books on that date, and use it to find what's missing. Ruled the same day: **(1)** one model for
+> BOTH portals; **(3)** a check SAVES while off and reads "Off by $X" (replaces B5's $0.00 rule). Drawings round 1
+> (after /design): `BANK_BALANCE_CHECK_DRAWINGS.html`, https://claude.ai/artifact/XdxsbzGpGwyDvWttJcjFeN. **Drawing asks
+> 1–10 RULED 2026-11-05, all A (as recommended), no notes:** 1 cash = ONE optional "Cash not deposited yet" figure on the
+> check, no money form changes (option C; a cash box is a later second account) · 2 "Not in the bank yet" lasts for that
+> check only, the next check asks "Still waiting?" once · 3 suspects = every line since the last check that MATCHED · 4 the
+> "checked through" line moves to the latest check and shows an amber "Off by $X" chip when off · 5 any saved check can be
+> deleted (who/when recorded) · 6 books changed after a save → the saved row adds "Books now say $X", no warning on money
+> forms · 7 a club's first check on an account asks one statement (date + balance) to start from, no outstanding picker; a
+> coach's season opening balance is the start, no question · 8 club online payments not yet paid out are worked out from
+> Stripe as one line · 9 the association report stays, built from a saved check · 10 the check sits on the Bank tab /
+> Ledger Bank view itself, above the saved checks. **Owner walk §461 STOPPED 2026-11-05** (R2 as built is superseded).
+> ⚠ **Prod:** migs 436/437/439 are on prod (2026-11-05); 440/442 must NOT be applied as "owed" without the rewrite's
+> migration decision. The built R2 Bank tab has no flag; **owner ruled 2026-11-05: don't hide it, the next promote
+> will not come before this project is complete.**
 
 > **Status:** Planned; **asks B1–B12 RULED 2026-11-04, all twelve A (as recommended)**, pasted back from the review page with
 > no notes. Next: R0, the owner mockup session (`BANK_RECONCILIATION_DRAWING_PROMPT.md`).
@@ -1011,8 +1624,17 @@ Every stage: migration first where there is one, then the `DATA_DICTIONARY.md` u
 > - **R2 COMPLETE 2026-11-05** (R2a `af458c945`, R2b `01c533436`, R2b-2 `9a25464ea`, R2b-3 `c99e8e764`, R2c
 >   `7d7b79cdb`, the payout fix `aa106bac8`, R2d `d4ca80052`). **Owed before R2 is promoted:** migrations 436, 437, 439,
 >   440, 442 applied to prod (`MANUAL_PROD_STEPS.json`; applied to dev); a club-pays payout seen in a browser; Stage 13
->   re-checks the Accounting tab row now that Bank sits in it (B8); R2b-3's three route proofs
->   (`.probe/bank-r2b3-all.mjs`) re-run.
+>   re-checks the Accounting tab row now that Bank sits in it (B8). *R2b-3's route proofs re-run 2026-11-05 after R2d's
+>   commit: `.probe/bank-r2b3-all.mjs` six of six PASS, `BANK_R2B3_PASSED`; the club left with no bank account.*
+> - **Owner walk §461 published 2026-11-05** (https://claude.ai/artifact/8iE1yhY8wiv8myhE9Pgnsn, source
+>   `BANK_RECONCILIATION_R2_WALK.html`): the club half of R7's walk, moved up so R3 builds on walked screens (owner yes
+>   2026-11-05). R7 keeps the coach side and a short club re-check.
+> - **⚖ Found writing the walk (B7, not a defect of R2):** on the club side, "who reads" and "who moves money" are ONE
+>   rule today: `canMoveClubMoney` is `canOpenModule(…, 'module_accounting')` (`lib/member-access.ts:76`), and the
+>   books gate reads with the same check (`lib/club-money-route.ts:30-32`). So no club member can open the Bank tab
+>   without being able to work in it; the read-only form (every write control absent) is built and guarded but
+>   unreachable from a club login. B7 A's "two money permissions" are two only on the coach side (money read vs write),
+>   where R5 will exercise it. Nothing to change unless the owner wants a club "reads the books, can't move money" grant.
 
 ### R3 — Club: the touchpoints
 - [ ] Matched-line warning on the club entry edit/void routes and windows (C6); changed-since stamp.
