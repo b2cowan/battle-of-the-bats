@@ -1,10 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { ExternalLink } from 'lucide-react';
 import { CoachChip } from '@/components/coaches/kit';
 import { STRIPE_FEE_WORDS as W, money } from '@/lib/online-payment-words';
-import { formatStoredDate } from '@/lib/timezone';
+import { feeIsOnInvoice, owedInvoicesOf, shortDay, type FeeInvoice as Invoice, type FeeRow as Fee, type FeesRead } from '@/lib/fee-invoice-line';
 import ck from './Billing.module.css';
 import css from './StripeFeesList.module.css';
 
@@ -21,17 +20,7 @@ import css from './StripeFeesList.module.css';
  * the red edge is a second cue only. A fee whose invoice the server did not describe falls back to the plain line it always had.
  */
 
-type Fee = {
-  id: string; line: string; createdAt: string; amount: number; credit: boolean;
-  state: 'next' | 'waiting' | 'own_open' | 'own_paid' | 'own_overdue' | 'credit' | 'returned' | 'test' | 'error';
-  invoiceNo: string | null; invoiceDay: string | null; payUrl: string | null;
-};
-type Invoice = {
-  invoiceNo: string; state: 'own_open' | 'own_overdue' | 'own_paid'; day: string | null;
-  total: number | null; taxLines: Array<{ label: string; amount: number }>; payUrl: string | null;
-};
-
-const short = (v: string | null) => (v ? formatStoredDate(v, { withYear: false }) : '');
+const short = (v: string | null) => shortDay(v) ?? '';
 
 function billedWords(f: Fee): string {
   switch (f.state) {
@@ -65,13 +54,14 @@ function FeeRow({ fee, inGroup }: { fee: Fee; inGroup: boolean }) {
 function InvoiceGroup({ invoice, fees }: { invoice: Invoice; fees: Fee[] }) {
   const overdue = invoice.state === 'own_overdue';
   const paid = invoice.state === 'own_paid';
-  const sub = paid ? W.paidSub(short(invoice.day)) : overdue ? W.overdueSub(short(invoice.day)) : W.dueSub(short(invoice.day));
+  // No day (a legacy row with no due date) draws no sub line rather than "Due " with nothing after it.
+  const sub = !invoice.day ? null : paid ? W.paidSub(short(invoice.day)) : overdue ? W.overdueSub(short(invoice.day)) : W.dueSub(short(invoice.day));
   return (
     <ul className={`${css.list} ${css.group}`}>
       <li className={`${css.head}${overdue ? ` ${css.headOverdue}` : ''}`}>
         <div className={css.what}>
           <span className={css.invoiceName}>{W.invoiceHeading(invoice.invoiceNo)}{overdue && <CoachChip tone="danger">{W.chipOverdue}</CoachChip>}</span>
-          <span className={css.billed}>{sub}</span>
+          {sub && <span className={css.billed}>{sub}</span>}
         </div>
         <div className={css.headSide}>
           {invoice.total != null && <span className={css.total}><span className={ck.srOnly}>{W.total} </span>{money(invoice.total)}</span>}
@@ -100,36 +90,23 @@ function InvoiceGroup({ invoice, fees }: { invoice: Invoice; fees: Fee[] }) {
   );
 }
 
-export default function StripeFeesList({ slug }: { slug: string }) {
-  const [read, setRead] = useState<{ fees: Fee[]; invoices?: Invoice[]; planFree: boolean } | null>(null);
-
-  useEffect(() => {
-    if (!slug) return;
-    let live = true;
-    fetch(`/api/billing/stripe-fees?orgSlug=${encodeURIComponent(slug)}`, { cache: 'no-store' })
-      .then(r => (r.ok ? r.json() : null))
-      .then(d => { if (live && d) setRead(d as { fees: Fee[]; invoices?: Invoice[]; planFree: boolean }); })
-      .catch(() => {});
-    return () => { live = false; };
-  }, [slug]);
-
+/** The read comes from the page (`useStripeFeesRead`), shared with the line above the plan card, so nothing is fetched twice. */
+export default function StripeFeesList({ read }: { read: FeesRead | null }) {
   if (!read?.fees.length) return null;
 
   const invoices = read.invoices ?? [];
-  const byNo = new Map(invoices.map(i => [i.invoiceNo, i]));
-  const onInvoice = (f: Fee) => !!f.invoiceNo && byNo.has(f.invoiceNo) && (f.state === 'own_open' || f.state === 'own_overdue' || f.state === 'own_paid');
-  const feesOf = (no: string) => read.fees.filter(f => f.invoiceNo === no && onInvoice(f));
-  // Owed first (overdue before open, soonest due first), then the ones not on an invoice yet, then whatever has its own words.
-  const owed = invoices.filter(i => i.state !== 'own_paid' && feesOf(i.invoiceNo).length)
-    .sort((a, b) => (a.state === b.state ? (a.day ?? '').localeCompare(b.day ?? '') : a.state === 'own_overdue' ? -1 : 1));
+  const feesOf = (no: string) => read.fees.filter(f => f.invoiceNo === no && feeIsOnInvoice(f, invoices));
+  // Owed first (overdue before open, soonest due first; the line above the plan card reads the same rule), then the ones not on
+  // an invoice yet, then whatever has its own words.
+  const owed = owedInvoicesOf(read);
   const paid = invoices.filter(i => i.state === 'own_paid' && feesOf(i.invoiceNo).length)
     .sort((a, b) => (b.day ?? '').localeCompare(a.day ?? ''));
   const unbilled = read.fees.filter(f => f.state === 'next' || f.state === 'waiting');
-  const other = read.fees.filter(f => !onInvoice(f) && f.state !== 'next' && f.state !== 'waiting');
+  const other = read.fees.filter(f => !feeIsOnInvoice(f, invoices) && f.state !== 'next' && f.state !== 'waiting');
 
   return (
     <section className={ck.section} aria-labelledby="billing-stripe-fees">
-      <div className={ck.sectionHead}><h2 id="billing-stripe-fees" className={ck.sectionTitle}>{W.listHeading}</h2></div>
+      <div className={ck.sectionHead}><h2 id="billing-stripe-fees" tabIndex={-1} className={ck.sectionTitle}>{W.listHeading}</h2></div>
       <p className={ck.lede}>{W.listLead}{read.planFree ? ` ${W.listPlan}` : ''}</p>
       {owed.map(i => <InvoiceGroup key={i.invoiceNo} invoice={i} fees={feesOf(i.invoiceNo)} />)}
       {unbilled.length > 0 && (

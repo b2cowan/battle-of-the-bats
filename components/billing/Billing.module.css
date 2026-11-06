@@ -160,6 +160,8 @@
 }
 .sectionTitle {
   margin: 0;
+  /* "See invoices" (Fee invoice alerts Part 3) scrolls the fees heading to the top: keep it clear of the club admin's fixed strip. */
+  scroll-margin-top: calc(var(--admin-topstrip-h, 0px) + var(--sandbox-chrome-h, 0px) + 1rem);
   font-family: var(--font-sans, system-ui, sans-serif);
   font-size: var(--type-heading);
   font-weight: 700;
@@ -333,6 +335,16 @@
 .calloutLines { display: grid; gap: 0.4rem; }
 .calloutLines.calloutLines > p { margin: 0; }
 .calloutDanger { border-left-color: var(--danger); }
+/* Fee invoice alerts Part 3: a callout with its button at the right (drawing "One line at the top of Plan & billing"). On a phone
+   the words come first and the button stands full width beneath them at the 44px tap floor. */
+.lineBar { display: flex; align-items: center; gap: 0.75rem 1rem; max-width: none; }
+.lineText { flex: 1; min-width: 0; margin: 0; }
+.lineText strong { color: var(--text-primary); font-weight: 650; }
+.lineBar .lineButton { flex: none; display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; white-space: nowrap; }
+@media (max-width: 640px) {
+  .lineBar { flex-direction: column; align-items: stretch; }
+  .lineBar .lineButton { width: 100%; min-height: var(--tap-min, 44px); }
+}
 /* The quiet line(s) under the list of what goes offline. */
 .afterList { padding-top: 0.5rem; }
 .moveBandFrame { display: grid; gap: 0.35rem; }

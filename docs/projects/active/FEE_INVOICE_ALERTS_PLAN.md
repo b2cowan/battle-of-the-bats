@@ -89,6 +89,52 @@ approver. Coaches portal untouched (the coach portal has no fee invoices).
 
 ## Progress
 
+- 2026-11-05 (Part 3 `/simplify` + `/review`, high-risk tier, four lenses: security/tenant, refresh concurrency, line-vs-pill rule,
+  regression): **no Critical or High; the owner-only gate holds** (the page is behind the owner check, the route resolves the org from the
+  caller's own memberships and needs the billing capability, so a foreign slug is a 401; the hook never mounts for a non-owner). The pay
+  link comes only from Stripe's address, https-checked on the server and again in the line, `rel` noopener. **`/simplify` applied:** the fee
+  and invoice types are now the server's own (`ClubFeeView` / `ClubFeeInvoiceView`, type-only import) instead of a second copy; the owed
+  rule no longer re-scans per invoice; the one-invoice branch reads `owed[0]`; `FeeLine` is no longer exported. **`/review` fixed:** the
+  refresh compared only the owed COUNT, so an invoice that went overdue (or was swapped for a new one) while the count stayed put would not
+  refresh the door's pill — it now compares which invoices are owed and in what state; two overlapping reads are ordered (only the newest
+  answer is used); "See invoices" scrolls the fees heading clear of the club admin's fixed top strip. **Known, left:** (a) ⚠ the fees read
+  covers only the newest 50 fee rows and builds invoices only from those (`readClubFeesAndInvoices`, unchanged here), while the pill reads
+  the invoices table directly: an open invoice whose fees are all older than the newest 50 shows on the pill but not on the line or the
+  list, and likewise an open invoice whose only in-window fees are returned/test/error rows; the same read also has no live/test-mode
+  filter where the pill has one. A reader change, so it belongs with Part 4's shell or an owner call; (b) a failed first read leaves the page
+  without a line until it is reloaded, and a persistent 401/5xx keeps the last owed line (by the "extra read, never a failed page" intent);
+  (c) the line sits below a `PageNotice` when one is showing, not above it; (d) no-date legacy invoices sort first among open ones;
+  (e) the line's alert-role tone (`status`) is polite while the failed-payment line is `alert`; (f) `fees[].payUrl` (per fee) is not
+  https-checked server-side — no component links it. The 64ch cap stays on the shared `.waitCallout` (only the new line lifts it for
+  itself), so the other wait callouts are unchanged. The rest of the cleanup suggestions (the shared
+  callout shell, a shared scroll helper, the brief's `reload` through context, behavioural instead of source-text tests) were left as
+  not worth widening this change.
+
+- 2026-11-05 (Part 3 walk §466 PASSED, owner paste-back): all six parts A–F pass, 22 of 22 steps, no defect, no notes; the part E put-back and
+  read-back passed. **Owed on Part 3:** `/simplify` (new shared module and hook), `/review`, the commit. Parts 4–5 next.
+
+- 2026-11-05 (Part 3 built and probed on dev; walk §466 published): **the page line and the failed-payment button.** **Rulings this session:**
+  overdue gets the red line NOW, in both tones (the banner in Part 4 later stands in for it on this page); words accepted as proposed by
+  `/marketing` (the overdue detail is a full sentence, "$X was due Dec 1."; two or more say the count and the earliest day with a plain
+  **See invoices** button that scrolls to the list; one overdue plus other open invoices names the overdue one with its own Pay invoice).
+  **Decision (a):** the line reads the SAME `invoices[]` the list reads: the page now fetches the fees ONCE (`useStripeFeesRead`) and hands the
+  read to the list and the line; the owed-first rule moved to `lib/fee-invoice-line.ts`, which the list and the line share, so they cannot
+  disagree on the count. The figure on the line is the invoice's own total (nothing added up in the browser). Added one string the helper did
+  not propose: `alertOpenNoDay` ("Invoice X for Stripe fees is open.") for a legacy invoice with no due date. **Built:** the line
+  (`FeeInvoiceLine`, the `waitCallout` recipe, amber, `calloutDanger` red, Pay invoice lime to Stripe in a new tab, https only; 44 px full-width
+  on a phone); the failed-payment callout keeps `W.plan.pastDue` word for word and gains the plan card's own Payment method & invoices action
+  (`a.portal`, same busy and disabled states, no second door); on return to the tab, while something is owed, the fee read repeats and, if
+  what is owed changed, calls the brief's `reload()` (the club admin passes it in; the coaches portal passes nothing), so the pill, the line and
+  the list agree with no reload. **Proven on dev** (signed-in probe): amber line with the real figures; red-edged failed-payment line + button;
+  after the invoice was marked paid and the tab came back, one fee read and one pill read ran and the line, the door's count and the open entry
+  cleared; put back, read back open / due 2026-12-01 / plan active. `check:layout` clean (admin-org-billing 361 + 1440, coach-billing 361).
+  Tests: `tests/unit/fee-invoice-line.test.ts` (new, 24); the Stripe-fees tests and the billing actions harness updated for the shared read.
+  **Known, left:** (a) a CANCELLED club's owner sees the list but not the line (the cancelled layout is Part 4's shell); (b) a payment whose
+  webhook lands after the owner returns shows on the next return or reload (one re-read per return); (c) the coaches portal's line is absent
+  because its fee read is empty (tested, and the cancelled portal checked in a browser; an ACTIVE portal was not browsed);
+  (d) the dev walk's two-invoice plural forms are pinned by tests only. **Owed:** the owner's walk §466, `/review`, dev server restart after the
+  new files, and `/simplify` (a new shared module and hook).
+
 - 2026-11-05 (Part 2 `/review`, high-risk tier, three lenses: security/tenant, correctness, regression): **no Critical or High; the owner-only
   gate holds** (non-owner, no-billing-capability and other-org cases all get the field ABSENT). Fixed: a comment overstating the route's gate;
   edge-case tests added (due exactly now; unreadable date). **Known, left, for Parts 3–4 or an owner call:** (a) ⚠ **a CANCELLED club's owner
@@ -144,6 +190,8 @@ approver. Coaches portal untouched (the coach portal has no fee invoices).
   unconfirmed (check in test mode before the walk); (c) the fee read is capped at the newest 50 rows, so a club with more than 50
   fees may see lines that don't add up to the total; (d) test-mode vs live rows are not separated on this read (never was; every writer
   is pinned to the live key). No unit test yet for the grouping render itself.
+- 2026-11-05: **Part 3 build prompt written:** [FEE_INVOICE_ALERTS_PART3_BUILD_PROMPT.md](FEE_INVOICE_ALERTS_PART3_BUILD_PROMPT.md).
+  Part 2 walk §465 passed 22/22. It raises one owner question before the build (overdue on Plan & billing until Part 4's banner exists).
 - 2026-11-05: **Part 2 build prompt written:** [FEE_INVOICE_ALERTS_PART2_BUILD_PROMPT.md](FEE_INVOICE_ALERTS_PART2_BUILD_PROMPT.md).
   It notes `--danger-fill` already exists, so the red pill may need no new token (check contrast first).
 - Wording (marketing helper, 2026-11-05): proposals returned for the banner, page line, chips, pill spoken labels and plurals; Part 1's

@@ -10,7 +10,7 @@ This file is the **index** of open work for the FieldLogicHQ platform. AI models
 
 ---
 
-- [ ] 💳 **Fee invoice alerts** — the Stripe fees list regrouped by invoice (total + tax + one Pay button) and the owner told they owe (rail pill, page line, overdue banner); drawings ruled 2026-11-05; Part 1 committed `912cfffdb`; **Part 2 (rail pill + phone More pill) BUILT 2026-11-05, uncommitted, dev restart + layout check + owner walk owed**; Parts 3–5 next (see docs/projects/active/FEE_INVOICE_ALERTS_PLAN.md)
+- [ ] 💳 **Fee invoice alerts** — the Stripe fees list regrouped by invoice (total + tax + one Pay button) and the owner told they owe (rail pill, page line, overdue banner); drawings ruled 2026-11-05; Part 1 committed `912cfffdb`; **Part 2 (rail pill + phone More pill) committed `34227e6e4` + `e1ba62c90` 2026-11-05, walk §465 PASSED 22/22 2026-11-05**; **Part 3 (page line + failed-payment button) built 2026-11-05, probed on dev, walk §466 PASSED 22/22 2026-11-05; /simplify + /review done 2026-11-05**; Parts 4–5 next (see docs/projects/active/FEE_INVOICE_ALERTS_PLAN.md)
 
 - [ ] Open Stripe from the organizer Payouts card in a new tab, preserving Settings and updating both help articles (implemented 2026-10-31; 32 focused tests, lint and spelling pass; verify:changed stops at 3 unrelated unit failures; owner browser checks pending).
 

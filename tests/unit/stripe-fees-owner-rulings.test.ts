@@ -31,7 +31,8 @@ describe('ruling 2: a cancelled club is still billed, and sees its Stripe fees l
     const kit = readCode('components/billing/BillingBody.tsx');
     const cancelled = kit.slice(kit.indexOf('if (cancelled && controlsReady)'), kit.indexOf('const changeKeys'));
     assert.ok(cancelled.indexOf('{fees}') > cancelled.indexOf('billing-reactivate-btn'), 'shared body: fees remain below the reactivation card');
-    assert.match(kit, /fees=\{<StripeFeesList key=\{org\.id\} slug=\{org\.slug\} \/>\}/);
+    // Fee invoice alerts Part 3: the page reads the fees once (the org's body is keyed by org id) and hands that read to the list and the line.
+    assert.match(kit, /fees=\{<StripeFeesList read=\{feeRead\} \/>\}/);
     const page = readCode('app/[orgSlug]/admin/org/billing/page.tsx');
     assert.match(page, /return <BillingKit \/>/);
     assert.match(readCode('components/admin/kit/club/BillingKit.tsx'), /<BillingBody billingBase=/);

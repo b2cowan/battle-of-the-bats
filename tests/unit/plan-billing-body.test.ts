@@ -172,8 +172,9 @@ describe('billing state distinctions in the rendered body', () => {
     assert.ok(rendered.includes(PLAN_BILLING_PROFILES.club_large.included.article[0]));
   });
   it('the actual fees component omits its section until a fee has been read', () => {
-    const { default: Fees } = load('components/billing/StripeFeesList.tsx') as { default: ComponentType<{ slug: string }> };
-    assert.equal(renderToStaticMarkup(createElement(Fees, { slug: 'club-a' })), '');
+    const { default: Fees } = load('components/billing/StripeFeesList.tsx') as { default: ComponentType<{ read: unknown }> };
+    assert.equal(renderToStaticMarkup(createElement(Fees, { read: null })), '');
+    assert.equal(renderToStaticMarkup(createElement(Fees, { read: { fees: [], invoices: [], planFree: false } })), '');
   });
   it('loading and unavailable counts never render invented zeroes', () => {
     const props = fixture('club'); props.snapshot.usage = { status: 'loading' };

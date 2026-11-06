@@ -116,6 +116,9 @@ function environment() {
   let timerId = 0;
   const previousFetch = globalThis.fetch;
   const previousWindow = Object.getOwnPropertyDescriptor(globalThis, 'window');
+  const previousDocument = Object.getOwnPropertyDescriptor(globalThis, 'document');
+  // The fee read listens for the tab showing again (visibilitychange); nothing in these contracts fires it.
+  Object.defineProperty(globalThis, 'document', { configurable: true, value: { visibilityState: 'visible', addEventListener() {}, removeEventListener() {} } });
   const assigned: string[] = [];
   const replaced: string[] = [];
   Object.defineProperty(globalThis, 'window', { configurable: true, value: {
@@ -133,6 +136,11 @@ function environment() {
     // these contracts are about the money requests, so it is answered here and not logged.
     if (endpoint.startsWith('/api/billing/location') && !init?.method) {
       return { ok: true, json: async () => ({ location: ADDRESS_ON_FILE, buyer: 'club', name: 'Falcons', usSalesOpen: false }) } as Response;
+    }
+    // Fee invoice alerts Part 3: the Stripe fees are one background read for the line and the list (nothing owed here); like the
+    // address lookup, it is not a money request, so it is answered and not logged.
+    if (endpoint.startsWith('/api/billing/stripe-fees') && !init?.method) {
+      return { ok: true, json: async () => ({ fees: [], invoices: [], planFree: false }) } as Response;
     }
     requests.push({ endpoint, init });
     const queued = answers.get(endpoint)?.shift();
@@ -163,6 +171,8 @@ function environment() {
       globalThis.fetch = previousFetch;
       if (previousWindow) Object.defineProperty(globalThis, 'window', previousWindow);
       else Reflect.deleteProperty(globalThis, 'window');
+      if (previousDocument) Object.defineProperty(globalThis, 'document', previousDocument);
+      else Reflect.deleteProperty(globalThis, 'document');
     },
   };
 }

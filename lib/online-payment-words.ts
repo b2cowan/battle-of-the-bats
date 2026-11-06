@@ -6,7 +6,7 @@
  * written here either: the payments terms are counsel's (TERMS_PLACEHOLDER).
  */
 import { formatStoredDate, utcToZonedInputs } from './timezone';
-import { formatTime, possessive } from './utils';
+import { formatTime, pluralize, possessive } from './utils';
 
 /** "$1,234.50" — online payments always show cents (a receipt is exact). */
 export function money(dollars: number): string {
@@ -1209,6 +1209,20 @@ export const STRIPE_FEE_WORDS = {
   taxFallback: 'Tax',
   groupUnbilled: 'Not on an invoice yet',
   groupPaid: (n: number) => `Paid invoices · ${n}`,
+  // Fee invoice alerts Part 3 (owner 2026-11-05, wording /marketing, accepted as proposed): the one line at the top of Plan & billing.
+  // One invoice names it and carries Pay invoice (above); two or more say how many and the earliest day, and point at the list.
+  // An invoice never switches anything off, so none of these say what happens if it waits. `alertOpenNoDay` is for a legacy
+  // row with no due date (a line that says "due " with nothing after it would be wrong).
+  alertOpen: (invoiceNo: string, day: string) => `Invoice ${invoiceNo} for Stripe fees is due ${day}.`,
+  alertOpenNoDay: (invoiceNo: string) => `Invoice ${invoiceNo} for Stripe fees is open.`,
+  alertAmountDue: (amount: string) => `Amount due ${amount}.`,
+  alertOverdue: (invoiceNo: string) => `Invoice ${invoiceNo} for Stripe fees is overdue.`,
+  alertOverdueDetail: (amount: string, day: string) => `${amount} was due ${day}.`,
+  alertOpenMany: (count: number, day: string | null) => `${pluralize(count, 'invoice')} for Stripe fees to pay.${day ? ` The first is due ${day}.` : ''}`,
+  alertOverdueMany: (overdue: number, day: string | null) =>
+    `${pluralize(overdue, 'invoice')} for Stripe fees ${overdue === 1 ? 'is' : 'are'} overdue.${day ? ` The earliest was due ${day}.` : ''}`,
+  alertSeeInvoices: 'See invoices',
+  alertSeeInvoicesAria: 'See the fee invoices below',
   // §6.1 platform admin's panel (`pa.fee.*`).
   paHeading: 'Fees billed to the club',
   paFor: 'For',
