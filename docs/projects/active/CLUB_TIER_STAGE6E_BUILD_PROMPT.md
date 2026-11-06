@@ -82,6 +82,12 @@ code. If something is open, the owner gets the plain-language UX summary (AGENCY
   - Owner said "go ahead with your recommendations" 2026-11-06: records restored (plan §6 Stage 6e, TODO line, ledger **§470**
     — the walk was §452 on 11-04 but that number is now Stage 14 S1's; the walk page was re-labelled §470). The walk's 22 steps are
     still owed; no record shows it walked.
-  - **Left open, not built:** the two late-arrival wordings ("That's after the … start." under the field vs "(after the start)"
-    on the sheets — the build's own, never past `/marketing`; owner call), the practice "send to families" message not
-    carrying the note (left alone), and the status-region announcement Low. No `/review` or `/docs` run: no code changed.
+  - **Records closed (`c5c06896a`), then the wording call built 2026-11-06 — committed `6410ee31c`.** Owner said yes to one shared
+    sentence; `/marketing` proposed Option A and the owner agreed: the phrase "(after the start)", no clock inside it, the same on
+    the form's "Arrive by …" line (the separate "That's after the … start." sentence is gone, which also ends the screen-reader
+    Low), the event window, the game page and the practice header. One helper (`arrivalNoteSuffix` in `lib/coach-arrival.ts`)
+    words it for all four. Red test first (19/19 now), lint 0 errors, `check:spelling` and full `typecheck` clean; the walk page
+    was rewritten and re-published. `check:layout` not run (the 11-04 UAT fixture gap stands; the change is a few words on an
+    existing line). `/docs` not needed: no help article mentions the note.
+  - **Left open, not built:** the practice "send to families" message does not carry the note (left alone). `/review` is
+    offered, not run. Browser check is the owner's: walk §470.

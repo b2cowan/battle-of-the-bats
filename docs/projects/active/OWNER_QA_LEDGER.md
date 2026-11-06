@@ -27779,5 +27779,5 @@ performed over the shared working tree. The original walk result is not claimed 
 
 **Known before the walk:** the practice "send to families" message does not carry the note (left alone); editing an existing series is believed to show no per-date opponent boxes (D1 confirms); the picker's list inside the date list is untested in a browser (C6, E2 are the risk).
 
-**Owner calls open with it:** the words "That's after the 3:07 p.m. start." and "(after the start)" are the build's own and have not been past `/marketing`; equal times are not flagged. Recommended: leave as two phrasings until ruled.
+**Wording RULED 2026-11-06 (owner, past `/marketing`), built, committed `6410ee31c`:** one phrase everywhere, "(after the start)"; under the field it sits on the same "Arrive by …" line (no second sentence). Walk steps A2, A3 and A6 and the "calls" card were rewritten to match and the walk re-published (version 3). Equal times are still not flagged.
 <!-- /§470 -->
