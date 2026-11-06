@@ -7,14 +7,16 @@
  * ⚖ RULING 3: Save works whether the check matches or is off. There is no $0.00 gate anywhere.
  * ⚖ RULE 6: the screen sends INTENT (the date, the typed balance); Your books, Stripe on its way and every figure are the
  *   server's, and the saved check's own band comes back with the account read again.
- * ⚖ BC3 owns Find (the hints, the suspects, "Not in the bank yet", "Still waiting?", "Add the missing line"): none of it is
- *   here, so a check that is off can be saved and cannot yet be worked down from this screen.
+ * ⚖ FIND (BC3a, `BankFind`): a line marked "Not in the bank yet" joins the sums with Undo and the band re-figures through
+ *   `figureCheck` with the marked items (no arithmetic here); Save sends their KEYS only (`waiting`), the server reads each
+ *   line's figures itself (rule 6). "Still waiting on {line}?" (ask 2) asks once per item of the latest earlier check: Yes
+ *   marks it, No drops it for this check. A new date clears both. "Add the missing line" is BC3b's.
  * Only a writer is given this component (B7): `BankTab` mounts it behind `canMove`.
  * "Check this statement again" (BC2b) re-keys it with `againDate`: the server already replaces a live check of the same
  * date, and the form already says so ("Saving replaces that check").
  */
 import { useEffect, useState } from 'react';
-import { figureCheck } from '@/lib/bank-check';
+import { figureCheck, waitingOnCheck, type WaitingItem } from '@/lib/bank-check';
 import { BANK_REFUSAL } from '@/lib/bank-check-words';
 import { BANK_WORDS as W } from '@/lib/bank-tab-words';
 import { tournamentToday } from '@/lib/timezone';
@@ -22,8 +24,9 @@ import { useLatestRead } from '../../RepKit';
 import { DayField, FormError } from '../MoneyKit';
 import BankMoneyField from './BankMoneyField';
 import { BankBand, BankSums } from './BankFigure';
+import BankFind from './BankFind';
 import {
-  bankUrl, bankWrite, cents, dayYear, isStaleView, notCountedOf, parseCents, readFigure, type AccountView, type Figure,
+  bankUrl, bankWrite, cents, dayYear, isStaleView, moved, notCountedOf, parseCents, readFigure, type AccountView, type Figure,
 } from './BankShared';
 import ck from '../../ClubKit.module.css';
 import s from './Bank.module.css';
@@ -55,6 +58,9 @@ export default function BankCheckForm({ orgSlug, view, onSaved, onStale, againDa
   const [again, setAgain] = useState(0); // "Try again" on a figure Stripe couldn't give
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  // Find (BC3a): the lines marked Not in the bank yet (in the order marked), and the Still-waiting items answered No.
+  const [marked, setMarked] = useState<ReadonlyMap<string, WaitingItem>>(new Map());
+  const [dropped, setDropped] = useState<ReadonlySet<string>>(new Set());
   const beginRead = useLatestRead();
   // A saved or deleted check changes what the day's figure says (the suspects, Still waiting?): re-read after one.
   const checksKey = view.checks.map(c => c.id).join(',');
@@ -84,14 +90,22 @@ export default function BankCheckForm({ orgSlug, view, onSaved, onStale, againDa
 
   const fresh = figure !== null && figure.date === date && !figure.refused ? figure : null;
   const typed = parseCents(balance, { positive: false });
+  const items = [...marked.values()];
   // The band is the ENGINE's: with no balance typed yet only "Should be in the bank" is read from it.
   const band = fresh && fresh.booksCents !== null
-    ? figureCheck({ bankCents: typed ?? 0, booksCents: fresh.booksCents, onItsWayCents: fresh.onItsWay.cents, waiting: [], cashCents: null })
-    : null;
-  const lines = fresh && fresh.suspects.total > 0
-    ? (fresh.suspects.sinceMatch ? W.linesSinceMatch : W.linesSinceStart)(dayYear(fresh.suspects.since), fresh.suspects.total)
+    ? figureCheck({ bankCents: typed ?? 0, booksCents: fresh.booksCents, onItsWayCents: fresh.onItsWay.cents, waiting: items, cashCents: null })
     : null;
   const replaces = !!fresh?.replaces;
+
+  const mark = (w: WaitingItem) => { setMarked(m => new Map(m).set(w.key, w)); setError(''); };
+  const unmark = (key: string) => { setMarked(m => { const n = new Map(m); n.delete(key); return n; }); setError(''); };
+  /** A new day is a new check: its marks and answers go (the lines and the earlier check's items are that day's). */
+  const pickDate = (v: string) => { setDate(v); setError(''); setMarked(new Map()); setDropped(new Set()); };
+  const waitingRows = items.map(w => ({ key: w.key, what: w.label || W.lineUnnamed, amount: moved(waitingOnCheck(w)), onUndo: () => unmark(w.key) }));
+  const askingRows = (fresh?.stillWaiting ?? []).filter(w => !marked.has(w.key) && !dropped.has(w.key)).map(w => ({
+    key: w.key, what: w.label || W.lineUnnamed, amount: cents(w.amountCents),
+    onYes: () => mark(w), onNo: () => setDropped(d => new Set(d).add(w.key)),
+  }));
 
   async function save() {
     if (busy || !fresh) return;
@@ -100,7 +114,9 @@ export default function BankCheckForm({ orgSlug, view, onSaved, onStale, againDa
     // `anyway`: the figure on screen is the one without online payments, so saving it is the treasurer's choice. A figure
     // shown counted that Stripe can't count at the save is refused (`not_counted_*`): read again, so they see what saves.
     const anyway = fresh.onItsWay.state === 'not_counted';
-    const r = await bankWrite(bankUrl(orgSlug, `/accounts/${accountId}/checks`), 'POST', { date, bankCents: typed, anyway }, W.saveFailed);
+    // The marked lines go up as KEYS only: their figures are the server's read of the books (rule 6).
+    const r = await bankWrite(bankUrl(orgSlug, `/accounts/${accountId}/checks`), 'POST',
+      { date, bankCents: typed, anyway, waiting: [...marked.keys()] }, W.saveFailed);
     setBusy(false);
     if (!r.ok) {
       if (notCountedOf(r.code)) { setError(r.error); setAgain(n => n + 1); }
@@ -111,7 +127,7 @@ export default function BankCheckForm({ orgSlug, view, onSaved, onStale, againDa
     onSaved(r.view, saved
       ? saved.figure.result === 'matches' ? W.savedMatches(dayYear(date)) : W.savedOff(dayYear(date), cents(saved.figure.offByCents))
       : W.saved);
-    setBalance(''); setDate(today); setAsOf(today);
+    setBalance(''); pickDate(today); setAsOf(today);
   }
 
   return (
@@ -119,7 +135,7 @@ export default function BankCheckForm({ orgSlug, view, onSaved, onStale, againDa
       <h2 id="bank-check-title" className={s.checkTitle}>{W.checkTitle}</h2>
       <FormError inPlace>{error}</FormError>
       <div className={s.checkRow}>
-        <DayField id="bank-check-date" label={W.statementDate} value={date} onChange={v => { setDate(v); setError(''); }} max={today} />
+        <DayField id="bank-check-date" label={W.statementDate} value={date} onChange={pickDate} max={today} />
         <BankMoneyField id={BALANCE_ID} label={W.checkBalance} value={balance} onChange={v => { setBalance(v); setError(''); }} />
         <div className={s.checkSave}>
           <button type="button" className="btn btn-lime" onClick={() => void save()} disabled={busy || !fresh}>
@@ -137,8 +153,8 @@ export default function BankCheckForm({ orgSlug, view, onSaved, onStale, againDa
           <BankBand date={date} figure={band} typed={typed !== null} />
           <BankSums date={date} bookNames={view.account.books.map(b => b.name)} booksCents={fresh.booksCents}
             shouldBeCents={band.shouldBeCents} onItsWay={fresh.onItsWay} payoutsHref={`/${orgSlug}/admin/accounting/payouts`}
-            onRetry={() => setAgain(n => n + 1)} />
-          {lines && <p className={`${ck.hint} ${s.hintLine}`}>{lines}</p>}
+            onRetry={() => setAgain(n => n + 1)} waiting={waitingRows} asking={askingRows} />
+          <BankFind key={date} figure={fresh} band={band} typed={typed !== null} marked={marked} onMark={mark} onUndo={unmark} />
         </>
       )}
     </section>

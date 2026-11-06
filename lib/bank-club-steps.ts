@@ -165,7 +165,8 @@ export async function saveCheck(ctx: AuthContextWithRole, accountId: string, ask
   const figure = await figureForDate(ctx.org.id, account, checks, date, today, { kind: asked, suspects: false });
   const plan = savePlan({
     kind: asked, date, body, entries,
-    facts: { booksCents: figure.booksCents, onItsWay: figure.onItsWay, bookIds: bookIdsOf(account.books) },
+    facts: { booksCents: figure.booksCents, onItsWay: figure.onItsWay, bookIds: bookIdsOf(account.books),
+      startDate: checks.find(c => c.kind === 'start')?.date ?? null },
   });
   if (!plan.ok) return bankRefusedAs(plan.code);
   // ⚖ STRIPE DIDN'T ANSWER = WARN, NEVER BLOCK (owner 2026-11-06), decided HERE (BC2 review): the save reads Stripe again,

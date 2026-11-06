@@ -142,6 +142,51 @@ tr > td.nowrap { white-space: nowrap; }
 .childRow { display: flex; justify-content: space-between; gap: 1rem; padding: 0.3rem 0; font-size: var(--type-support); color: var(--text-secondary); }
 .childFoot { margin: 0.35rem 0 0; font-size: var(--type-support); color: var(--text-tertiary); }
 
+/* Still waiting? (ask 2): its Yes and No, side by side after the question. */
+.askActs { display: inline-flex; gap: 0.75rem; }
+
+/* ── Find (BC3a, drawing tab 3): under the sums, while the check is off; "Show them" otherwise ── */
+.find { display: flex; flex-direction: column; gap: 0.75rem; margin: 0.75rem 0 0; }
+.find > .hintLine { margin: 0; }
+.findTitle { margin: 0.25rem 0 0; font-size: var(--type-heading); font-weight: 700; color: var(--text-primary); }
+/* The callout's second sentence, and its answers (the button, "1 of 3 · Next possibility"). */
+.calloutSub { display: block; margin-top: 0.3rem; font-size: var(--type-support); color: var(--text-secondary); }
+.calloutActs { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; }
+.hintNext { display: inline-flex; align-items: center; gap: 0.4rem; }
+/* The lines' toolbar: "Lines since your last match · {date}", then the search at the right. */
+.findBar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; }
+.findSince { font-size: var(--type-body); font-weight: 600; color: var(--text-primary); }
+.findWhat { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.5rem; }
+.findDetail { color: var(--text-tertiary); font-size: var(--type-support); }
+td.moneyIn { color: var(--badge-success-ink); }
+.findTable td.actCell, .findTable th.actCell { width: 11rem; text-align: right; white-space: nowrap; }
+/* A hinted line: amber-soft (never red). A marked line, and the online payments counted above: greyed, no tint. */
+.findTable tr.hitRow > td { background: rgba(var(--warning-rgb), 0.08); }
+.findTable tr.markedRow > td, .findTable tr.clearedRow > td { color: var(--text-tertiary); }
+.findTable tr.markedRow > td.moneyIn { color: var(--text-tertiary); }
+/* "Not in the bank yet" on any row: shown on a hinted row, and under the pointer or the keyboard's focus on the rest —
+   never hover-only (focus shows it; a touch screen, which has no pointer to hover, shows it always). */
+.markBtn {
+  padding: 0.3rem 0.65rem;
+  border: 1px solid var(--home-line);
+  border-radius: 6px;
+  background: var(--home-card);
+  font: inherit;
+  font-size: var(--type-support);
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+  opacity: 0;
+}
+.markBtn:hover { border-color: var(--home-olive); }
+.markBtn:focus-visible { opacity: 1; outline: 2px solid var(--home-olive); outline-offset: 2px; }
+.markShown,
+.findTable tr:hover .markBtn,
+.findTable tr:focus-within .markBtn { opacity: 1; }
+@media (hover: none) {
+  .markBtn { opacity: 1; }
+}
+
 /* ══ THE PHONE (390): the saved checks are the kit's row cards; the starting point a quiet head row ══ */
 /* A saved check card's caption lines, one under another. */
 .cardLine { display: block; }
@@ -166,6 +211,7 @@ tr > td.nowrap { white-space: nowrap; }
 /* A text button is a finger's target on every touch width (the layout check's floor reaches 768): 44px (Add an account, Name and books, Show). */
 @media (max-width: 768px) {
   .link { display: inline-flex; align-items: center; justify-content: center; min-height: var(--tap-min, 44px); min-width: var(--tap-min, 44px); }
+  .markBtn { min-height: var(--tap-min, 44px); }
 }
 
 @media (max-width: 640px) {

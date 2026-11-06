@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
-  checkView, checkedThrough, pickerSearch, readCents, readDay, refusalOfDbError, refusalOfStep, savePlan, saveRefusal, STATUS_OF,
+  checkView, checkedThrough, lineMatches, pickerSearch, readCents, readDay, refusalOfDbError, refusalOfStep, savePlan, saveRefusal, STATUS_OF,
   waitingIdsOf, type SaveFacts,
 } from '../../lib/bank-club-rules.ts';
 import type { ClubSavedCheck, EntryRow, OnItsWay } from '../../lib/bank-club-map.ts';
@@ -23,7 +23,7 @@ const entry = (n: number, over: Partial<EntryRow> = {}): EntryRow => ({
 const none: OnItsWay = { state: 'none', cents: 0, lines: [] };
 const facts = (over: Partial<SaveFacts> = {}): SaveFacts => ({
   booksCents: 825_553, onItsWay: { state: 'counted', cents: 41_200, lines: [], paysOutOn: null },
-  bookIds: ['general', 'tourney'], ...over,
+  bookIds: ['general', 'tourney'], startDate: '2026-09-30', ...over,
 });
 const plan = (body: Record<string, unknown>, f: Partial<SaveFacts> = {}, entries: EntryRow[] = [], kind: 'start' | 'check' = 'check') =>
   savePlan({ kind, date: '2026-10-31', body, facts: facts(f), entries });
@@ -72,6 +72,15 @@ describe('Not in the bank yet: figures from the books, never the request (ask 2,
     // Stripe didn't answer: nothing is counted as on its way, so the same line may be marked Not in the bank yet.
     const down: OnItsWay = { state: 'not_counted', reason: 'stripe_down', cents: null, lines: onWay.lines };
     assert.ok(bad(entry(5, { entry_type: 'income' }), { onItsWay: down }).ok);
+  });
+  it('M3 (owner 2026-11-06): a check\'s line dated on or before the starting statement is bad_item; after it is fine', () => {
+    const one = (e: EntryRow, kind: 'start' | 'check' = 'check') => plan({ bankCents: 1, waiting: [`entry:${e.id}`] }, {}, [e], kind);
+    assert.equal((one(entry(6, { entry_date: '2026-09-30' })) as { code: string }).code, 'bad_item', 'the start\'s own day');
+    assert.equal((one(entry(7, { entry_date: '2026-09-12' })) as { code: string }).code, 'bad_item', 'before the start');
+    assert.ok(one(entry(8, { entry_date: '2026-10-01' })).ok, 'the day after the start');
+    // The start itself has no start before it: its own items (Q2) are never refused by this rule.
+    assert.ok(plan({ bankCents: 1, waiting: [`entry:${U(9)}`] }, { booksCents: null, startDate: null }, [entry(9, { entry_date: '2026-09-12' })], 'start').ok);
+    assert.match(BANK_REFUSAL.bad_item, /after your starting statement/);
   });
   it('only entry:{uuid} keys are looked up, at most one past the cap', () => {
     assert.deepEqual(waitingIdsOf([`entry:${U(1)}`, 'entry:not-a-uuid', 7, `typed:${U(2)}`]), [U(1)]);
@@ -147,6 +156,26 @@ describe('Find\'s search, by shape (BC3 reuses it)', () => {
     assert.deepEqual(pickerSearch('Cheque 1234'), { kind: 'words', words: 'Cheque 1234' });
     assert.deepEqual(pickerSearch('   '), { kind: 'none' });
   });
+  it('a statement\'s thousands comma is an amount (BC3a); "12,50" is not a group of three, so it stays words (O4)', () => {
+    assert.deepEqual(pickerSearch('$1,250.00'), { kind: 'amount', amount: 1250 });
+    assert.deepEqual(pickerSearch('1,250'), { kind: 'amount', amount: 1250 });
+    assert.deepEqual(pickerSearch('1,234,567.89'), { kind: 'amount', amount: 1234567.89 });
+    assert.deepEqual(pickerSearch('12,50'), { kind: 'words', words: '12,50' });
+    assert.deepEqual(pickerSearch('1,25'), { kind: 'words', words: '1,25' });
+  });
+  it('a line answers it: an amount to the cent in either direction; words in its own words or how it came, any case', () => {
+    const cheque = { amountCents: 7_500, label: 'Cheque #214 · Umpire clinic', how: 'Cheque 214' };
+    assert.ok(lineMatches(pickerSearch('$75'), cheque));
+    assert.ok(lineMatches(pickerSearch('75.00'), cheque));
+    assert.ok(!lineMatches(pickerSearch('75.01'), cheque));
+    assert.ok(lineMatches(pickerSearch('umpire'), cheque));
+    assert.ok(lineMatches(pickerSearch('214'), cheque), 'all digits: the cheque number in its words');
+    assert.ok(lineMatches(pickerSearch('75'), cheque), 'all digits: or the amount');
+    assert.ok(!lineMatches(pickerSearch('$214'), cheque), 'a dollar sign is an amount only');
+    assert.ok(lineMatches(pickerSearch(''), cheque));
+    assert.ok(lineMatches(pickerSearch('cheque 214'), { amountCents: 1, label: null, how: 'Cheque 214' }));
+    assert.ok(lineMatches(pickerSearch('0.10'), { amountCents: 10 }), 'no float drift to the cent');
+  });
 });
 
 describe('refusals are codes', () => {
@@ -191,7 +220,7 @@ describe('BC1 loose ends: the date floor, the label cut, a body that is not an o
   it('a waiting item\'s label is cut by characters, never mid-emoji', () => {
     const emoji = '😀'.repeat(201); // 402 UTF-16 units, 201 characters
     const p = savePlan({ kind: 'check', date: '2026-10-31', body: { bankCents: 1, waiting: [`entry:${U(9)}`] }, facts: {
-      booksCents: 0, bookIds: ['general'], onItsWay: { state: 'none', cents: 0, lines: [] } }, entries: [entry(9, { description: emoji })] });
+      booksCents: 0, bookIds: ['general'], startDate: null, onItsWay: { state: 'none', cents: 0, lines: [] } }, entries: [entry(9, { description: emoji })] });
     assert.ok(p.ok);
     const label = p.args.waiting[0].label!;
     assert.equal(Array.from(label).length, 200);

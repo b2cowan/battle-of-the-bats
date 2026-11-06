@@ -20,7 +20,8 @@ export const BANK_REFUSAL = {
   bad_kind: 'That kind of check can’t be saved here.',
   bad_amount: 'Enter the cash not deposited yet as an amount above $0.00, or leave it empty.',
   bad_date: 'Enter the date as it reads on the statement.',
-  bad_item: 'A line marked Not in the bank yet must be a line in this account’s books, dated on or before the statement.',
+  // M3 (owner 2026-11-06): after the starting statement too — the start already proved an earlier line was in the bank.
+  bad_item: 'A line marked Not in the bank yet must be a line in this account’s books, dated after your starting statement and on or before this one.',
   ends_in_future: 'A statement can’t be dated after today. Enter the date printed on it.',
   changed: 'Something in this account changed while you were looking. Here it is again.',
   start_exists: 'This account already starts from a statement on another date.',

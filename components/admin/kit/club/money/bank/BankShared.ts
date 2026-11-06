@@ -9,6 +9,7 @@ import { jsonInit, moneyFetch, refusalText } from '@/lib/money-fetch';
 import type { bankAccountView, bankOverview } from '@/lib/bank-club-steps';
 import { BANK_WORDS as W } from '@/lib/bank-tab-words';
 import { typedCents } from '@/lib/bank-check';
+import { paymentMethodWord } from '@/lib/house-league-money-words';
 
 export type Overview = Awaited<ReturnType<typeof bankOverview>>;
 export type AccountView = NonNullable<Awaited<ReturnType<typeof bankAccountView>>>;
@@ -33,6 +34,9 @@ export const notCountedOf = (code: string | null): 'stripe_down' | 'unlisted' | 
 export const dayYear = (d: string | null | undefined): string => formatStoredDate(d);
 
 export type Figure = NonNullable<AccountView['figure']>;
+
+/** How a line came, as the Ledger words it ("Cheque 214", "E-Transfer", "Online, card"), or null when it doesn't say. */
+export const howWord = (method: string | null | undefined): string | null => (method ? paymentMethodWord(method) : null);
 
 /** A typed amount in cents ("$5,402.10", "-12.40", "($50.00)"), or null — the engine's own parser. */
 export const parseCents = typedCents;

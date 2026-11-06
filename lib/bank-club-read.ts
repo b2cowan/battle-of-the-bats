@@ -139,14 +139,16 @@ async function readOnItsWay(orgId: string, bookIds: readonly string[], date: str
   return figured;
 }
 
-type SuspectLine = BankLine & { bookId: string; online: boolean };
+/** A suspect as Find lists it: the engine's line, its book, whether it is an online payment, and how it came (the
+ *  ledger's own phrase — "Cheque 214", "E-Transfer", `online_card` — worded by the screen; BC3a). */
+type SuspectLine = BankLine & { bookId: string; online: boolean; method: string | null };
 
 /** Posted lines of these books dated after `after` through `to` (the suspects' window), as the engine reads them. */
 async function linesBetween(bookIds: readonly string[], after: string, to: string): Promise<SuspectLine[]> {
   const rows = await fetchAllIn<EntryRow>([...bookIds], (c, a, b) => supabaseAdmin.from('accounting_entries').select(ENTRY_SELECT)
     .in('ledger_id', c).eq('status', 'posted').gt('entry_date', after).lte('entry_date', to)
     .order('entry_date').order('id').range(a, b));
-  return rows.map(r => ({ ...entryToBankLine(r), bookId: r.ledger_id, online: isOnlineEntry(r) }));
+  return rows.map(r => ({ ...entryToBankLine(r), bookId: r.ledger_id, online: isOnlineEntry(r), method: r.payment_method?.trim() || null }));
 }
 
 /** A saved check as the list shows it: its own figures, and "Books now say" re-figured over its own books (O1). */

@@ -62,6 +62,8 @@ need to type a statement balance, see the difference from the books on that date
 | Q1 | **A cheque across a coach's rollover:** the coach's Find also searches last season's lines dated after its last matched check, read by the bank route itself (no year parameter from the page), under a divider "From the {2025 Season}"; such a line can be marked Not in the bank yet. (Asks page, ruled A 2026-11-05.) |
 | Q2 | **A cheque written before the club's starting statement:** while no check since the start has matched, Find also searches the 60 days before the start; a line found there offers "Waiting at the start", which attaches it to the starting statement and fixes every later check. (Ruled A 2026-11-05.) |
 | Q3 | **A book moved between accounts:** each saved check keeps the books it counted, so a move changes nothing earlier and "Books now say" means only that a line changed; the next check of each account counts the book where it is now; the move window says so in one sentence. (Ruled A 2026-11-05.) |
+| Q2 + ask 6 | **A line marked Waiting at the start leaves saved checks' figures as they were:** saved later checks show "Books now say $X"; the next check, and "Check this statement again" on any of them, figure from the corrected start. (Owner, 2026-11-06, BC3.) |
+| M3 | **A check's Not in the bank yet line may not be dated on or before the starting statement:** the save refuses it. (Owner, 2026-11-06, BC3.) |
 
 ### Tick-off rulings that still stand (Appendix A §4)
 
@@ -272,6 +274,12 @@ money table or a book line.** A guard test pins this: no bank code writes `accou
   "Check this statement again" — the opened check (settled, BC2 `/marketing` 2026-11-06)
 - [x] "Start checking {account}" · "Pick a bank statement you already have and type its date and ending balance. Checks
   start from there." · "Start here" — club first check (settled, BC2 `/marketing` 2026-11-06)
+  (BC3a 2026-11-06: built as drafts in `lib/bank-tab-words.ts`, with the undrawn *new* ones: the bank-less exact "If the
+  bank hasn’t received it yet, that’s the gap." / "Or the bank took out $X your books don’t have: a fee or a payment you
+  haven’t entered.", "These {2|3} add up to $X:" + "If the bank hasn’t cashed/received them yet, that’s the gap.", chips
+  "Half of $X" · "Part of $X", "Next possibility", "Online payments · n · on their way, counted above", "not in the bank
+  yet, counted above", "Show {n} more", the Still waiting Yes/No spoken names, and the `bad_item` refusal's M3 sentence.
+  BC3b's `/marketing` pass settles all of them.)
 - [ ] *new, Q2-A* "Waiting at the start" · "This was written before your starting statement and cashed after it." — Find
 - [ ] *new, Q1-A* "From the {2025 Season}" — the divider above last season's lines in the coach's Find
 - [ ] *new* "Statements from this season only, since {date}." (drawn) · *new* refusal "This statement is before the
@@ -591,10 +599,51 @@ Start; BC2b the saved checks, Delete, the pill; one owner question first: a star
     empty).
 
 ### BC3 — Club: Find (tab 3)
-- [ ] The callout with the hints (exact, half, 2–3 lines), suspects since the last match with search, "Not in the bank
-  yet" + Undo, "Still waiting?" on the next check, "Add the missing line" (the ordinary Ledger add form, prefilled, the
-  account's first book), Q2's answer.
-- [ ] Engine tests for the hint bounds; walk probe; `/review`.
+Build prompt written 2026-11-06: `BANK_BALANCE_CHECK_BC3_BUILD_PROMPT.md` (two sessions: BC3a Find on a check; BC3b Add the
+missing line, Waiting at the start, M2, the finishing passes; two owner questions first: Q2 vs ask 6, and M3).
+- [x] **BC3a built 2026-11-06** (owner: Q2 vs ask 6 and M3 ruled as recommended, §0; yes to the UX summary). Anchors:
+  - **Find** (`components/admin/kit/club/money/bank/BankFind.tsx`, mounted by `BankCheckForm` under the sums, so behind
+    `canMove`): while the check is off, "Find the $X", an amber `Callout` naming ONE possibility (exact · half · 2–3 lines),
+    "{i} of {n} · Next possibility" when there are more, and "Not in the bank yet" on an exact one; then "Lines since your
+    last match · {date}" (or since the starting statement) with the product's `SearchField`, the kit's table (Date · What
+    with how it came · Book · Money out · Money in green · the action), newest first, 50 at a time ("Show {n} more"). A
+    hinted row is amber-soft with its chip ("Exactly $X" · "Half of $X" · "Part of $X"); the chip is a button that brings its
+    possibility into the callout. "Not in the bank yet" on every row: shown on a hinted row, on hover, on keyboard focus,
+    always on a touch screen. Online payments on their way: one greyed row "Online payments · n · on their way, counted
+    above", no action. A marked line stays in the list, greyed, with Undo. While the check matches or before a balance is
+    typed, the tab-2 hint "Lines since your last match ({date}): n" carries **Show them** / Hide them (the same list, no
+    callout).
+  - **The hints are the engine's:** `hintsFor` (`lib/bank-check.ts`) = `findHints` over the candidates in the
+    `closingDirection` only (the bank showing more → money-out lines; less → money-in lines), as one list exact → half →
+    combinations. **Build call said to the owner and accepted with the UX summary:** §4's "either direction" was wrong — a
+    line the other way, marked, doubles the gap (pinned by a test). Candidates = suspects − marked − on its way.
+  - **Not in the bank yet + Undo** (ask 2): marking adds "Not in the bank yet · {line}" + Undo + the engine's sign
+    (`waitingOnCheck`: + for money out, − for money in; `savedTerms` now uses it too) to the sums; the band is `figureCheck`
+    with the marked items; Find closes when it matches. Save sends `waiting` = the marked KEYS (with `anyway` as before). A
+    new date clears the marks and the answers.
+  - **Still waiting?** (ask 2, not drawn): one sums row per item of the latest earlier check (`stillWaiting`), "Still waiting
+    on {line}?" with Yes (marks it) and No (drops it for this check); Undo on a carried item asks again.
+  - **M3** (`savePlan`, `lib/bank-club-rules.ts`): a check's line dated on or before the start → `bad_item` (`SaveFacts.startDate`,
+    read by `saveCheck`); the `bad_item` sentence now says "dated after your starting statement and on or before this one".
+  - **Search:** `pickerSearch` also reads a statement's thousands comma ("$1,250.00", "1,250") as an amount; "12,50" stays
+    words (O4 stays BC3b's). `lineMatches` = an amount to the cent either direction, or words in the line or how it came.
+    The day's figure's suspects carry `method` (worded by `paymentMethodWord`).
+  - **Not built here (BC3b):** "Add the missing line" (absent, not a dead button), Waiting at the start, M2, O4's "12,50",
+    the drawing's "Online payments paid out {date} · n" grouping (paid-out lines show one by one: the read doesn't know a
+    line's payout).
+  - **Proved 2026-11-06:** 241 bank tests pass (new: `hintsFor` 5, M3 1, search 2, screens guard §9 as 7; moved pins: the Save
+    body, Show them, the form's imports); tsc and eslint clean on the bank files; `check:spelling`, `check:tokens`,
+    `check:css-purity`, `check:club-money-arithmetic` clean, no new bank CSS selector finding; `check:layout
+    --only=admin-accounting-bank` clean at 1440/768/390/361. Dev walk `.probe/bank-bc3/walk.mjs` (run with the ts resolver) →
+    `BANK_BC3A_WALK_PASSED` at 1440 and at 390 (47 checks): five lines added as the treasurer through the Ledger route; Show
+    them; off by $75.13 → callout, chip, one tap → Matches and Find closes, Undo; half; two lines; the bank showing less names
+    the deposit; search by amount and name; the row button on keyboard focus; mark from the row, Save, the list says
+    "Matches · 1 line not in the bank yet"; the server refuses M3, a line outside the books and a line on its way; Nov 5
+    asks Still waiting? (Yes, Undo, No, a new date asks again, Yes + Save carries it); no sideways scroll at 390. Every probe
+    check and line removed (voided through the Ledger route, then deleted); the walk account holds its Sep 30 start only.
+- [ ] BC3b: "Add the missing line" (the ordinary Ledger add form, prefilled, the account's first book), Waiting at the start
+  (Q2, as ruled §0), M2, O4, the BC2 review's start-under-lock finding; `/design`, `/marketing` (Find's words, drafts in
+  `lib/bank-tab-words.ts`), `/simplify`, `/review`.
 
 ### BC4 — Club: the Bank tab on a phone (390)
 - [ ] The phone frames of tabs 1–6: band, sums, Find cards with signed amounts and "Show 10 more", full-width buttons, the

@@ -80,7 +80,7 @@ describe('4 · the kit\'s parts', () => {
 
 // ── Bank balance check BC2a: the check form, the band, the sums, Start's Stripe notice ──────────────────────────────
 const code = (f: string) => readCode(`${DIR}/${f}`);
-const NEW_SCREENS = ['BankCheckForm.tsx', 'BankFigure.tsx', 'BankSetup.tsx', 'BankCheckWindow.tsx', 'BankStatements.tsx'];
+const NEW_SCREENS = ['BankCheckForm.tsx', 'BankFigure.tsx', 'BankSetup.tsx', 'BankCheckWindow.tsx', 'BankStatements.tsx', 'BankFind.tsx'];
 
 describe('5 · the check form: a balance, not a tick-off', () => {
   it('no tick vocabulary on any screen or in the words (tick, ticked, untick, a checkbox on a line)', () => {
@@ -117,7 +117,7 @@ describe('5 · the check form: a balance, not a tick-off', () => {
       assert.doesNotMatch(src, /[Cc]ents\s*[-+*/]\s*[A-Za-z0-9(]|[A-Za-z0-9)]\s*[-+*/]\s*[A-Za-z.]*[Cc]ents\b/, `${f}: arithmetic on cents`);
       assert.doesNotMatch(src, /\.reduce\(/, `${f}: a sum`);
     }
-    assert.match(code('BankCheckForm.tsx'), /import \{ figureCheck \} from '@\/lib\/bank-check'/);
+    assert.match(code('BankCheckForm.tsx'), /import \{ figureCheck, waitingOnCheck, type WaitingItem \} from '@\/lib\/bank-check'/);
     assert.match(code('BankCheckForm.tsx'), /figureCheck\(\{ bankCents: typed \?\? 0, booksCents: fresh\.booksCents, onItsWayCents: fresh\.onItsWay\.cents/);
   });
   it('words come from the words module only: no sentence typed into a new screen', () => {
@@ -130,7 +130,8 @@ describe('5 · the check form: a balance, not a tick-off', () => {
   });
   it('Save is intent only: the date and the typed balance; books, on its way and the result are the server\'s (rule 6)', () => {
     const form = code('BankCheckForm.tsx');
-    assert.match(form, /'POST', \{ date, bankCents: typed, anyway \}/, 'anyway is the treasurer\'s choice, not a figure');
+    assert.match(form, /'POST',\s*\{ date, bankCents: typed, anyway, waiting: \[\.\.\.marked\.keys\(\)\] \}/,
+      'anyway is the treasurer\'s choice, not a figure; the marked lines go up as KEYS only (BC3a)');
     assert.doesNotMatch(form, /booksCents:\s*(fresh|figure)\b[^)]*\}\s*,\s*W\./, 'the books never go up in the request');
     assert.doesNotMatch(form, /method:\s*['"]/, 'a write outside bankWrite');
   });
@@ -143,11 +144,12 @@ describe('5 · the check form: a balance, not a tick-off', () => {
     assert.match(code('BankTab.tsx'), /form=\{canMove \? \(\s*<BankCheckForm /);
     assert.match(code('BankCheckForm.tsx'), /readFigure\(orgSlug, accountId, asOf, 'check'\)/);
   });
-  it('Online-payment lines are shown, never tickable; Show is the sums\' own, and Find\'s Show them is not here (BC3)', () => {
+  it('Online-payment lines are shown, never tickable; Show is the sums\' own, and Show them is Find\'s door (BC3a)', () => {
     const fig = code('BankFigure.tsx');
     assert.doesNotMatch(fig, /checkbox/);
     assert.match(fig, /aria-expanded=\{open\}/);
-    assert.doesNotMatch(code('BankCheckForm.tsx'), /Show them|W\.showThem/);
+    assert.doesNotMatch(code('BankCheckForm.tsx'), /W\.showThem|W\.linesSince/, 'the form no longer draws the plain hint itself');
+    assert.match(code('BankFind.tsx'), /aria-expanded=\{open\} onClick=\{\(\) => setOpen\(o => !o\)\}>\{open \? W\.hideThem : W\.showThem\}/);
   });
 });
 
@@ -173,7 +175,7 @@ describe('6 · Start, when Stripe doesn\'t answer: warn, never block (owner 2026
   it('a check shown counted that Stripe can\'t count at the save reads again; one shown not counted saves anyway', () => {
     const form = code('BankCheckForm.tsx');
     assert.match(form, /const anyway = fresh\.onItsWay\.state === 'not_counted';/);
-    assert.match(form, /'POST', \{ date, bankCents: typed, anyway \}/);
+    assert.match(form, /'POST',\s*\{ date, bankCents: typed, anyway, waiting:/);
     assert.match(form, /if \(notCountedOf\(r\.code\)\) \{ setError\(r\.error\); setAgain\(n => n \+ 1\); \}/);
   });
   it('the club\'s Delete reaches only a CLUB account\'s check (a team\'s account is in the same org, BC6)', () => {
@@ -193,6 +195,62 @@ describe('7 · a stale view is re-read before the sentence is said (BC1 review f
   });
   it('the first Start flips the tab off the setup card locally while the overview re-reads (finding 3)', () => {
     assert.match(code('BankTab.tsx'), /setOverview\(o => o && \{\s*\.\.\.o, never: false/);
+  });
+});
+
+// ── Bank balance check BC3a: Find on a check ──────────────────────────────────────────────────────────────────────
+describe('9 · Find: the hints, the lines, Not in the bank yet, Still waiting?', () => {
+  it('Find is a writer\'s: it lives inside the check form, which the tab mounts behind canMove', () => {
+    assert.match(code('BankCheckForm.tsx'), /<BankFind key=\{date\} figure=\{fresh\} band=\{band\}/);
+    assert.match(code('BankTab.tsx'), /form=\{canMove \? \(\s*<BankCheckForm /);
+    for (const f of FILES) {
+      if (f.endsWith('BankCheckForm.tsx')) continue;
+      assert.doesNotMatch(readCode(f), /<BankFind\b/, `${f}: Find mounted outside the writer's form`);
+    }
+  });
+  it('the hints are the engine\'s only (hintsFor over findHints): no screen walks the lines for amounts itself', () => {
+    const find = code('BankFind.tsx');
+    assert.match(find, /hintsFor\(band\.differenceCents, lines\.filter\(l => !marked\.has\(l\.key\)\)\)/, 'on the TYPED difference, less the marked lines');
+    for (const f of FILES) {
+      assert.doesNotMatch(readCode(f), /\bfindHints\(/, `${f}: the raw finder bypasses the direction rule`);
+      assert.doesNotMatch(readCode(f), /amountCents\s*===|===\s*\w+\.amountCents/, `${f}: an amount compared on a screen`);
+    }
+    assert.match(readCode('lib/bank-check.ts'), /export function hintsFor[\s\S]{0,400}findHints\(differenceCents, direction \? candidates\.filter\(l => l\.direction === direction\) : \[\]\)/);
+  });
+  it('lines on their way are never candidates and have no action; the search is the rules\' (pickerSearch + lineMatches)', () => {
+    const find = code('BankFind.tsx');
+    assert.match(find, /const lines = suspects\.lines\.filter\(l => !onWayKeys\.has\(l\.key\)\);/);
+    assert.match(find, /<td className=\{s\.actCell\} \/>\s*<\/tr>/, 'the on-their-way row\'s action cell is empty');
+    assert.match(find, /lineMatches\(search, /);
+    assert.match(find, /<SearchField /, 'the product\'s one search field');
+  });
+  it('the band re-figures through figureCheck with the marked items; the sums take the engine\'s sign', () => {
+    const form = code('BankCheckForm.tsx');
+    assert.match(form, /figureCheck\(\{ bankCents: typed \?\? 0, booksCents: fresh\.booksCents, onItsWayCents: fresh\.onItsWay\.cents, waiting: items, cashCents: null \}\)/);
+    assert.match(form, /amount: moved\(waitingOnCheck\(w\)\)/);
+    assert.match(form, /const pickDate = \(v: string\) => \{ setDate\(v\); setError\(''\); setMarked\(new Map\(\)\); setDropped\(new Set\(\)\); \};/, 'a new date clears the marks and the answers');
+  });
+  it('Still waiting? asks each of the earlier check\'s items once: Yes marks it, No drops it', () => {
+    const form = code('BankCheckForm.tsx');
+    assert.match(form, /\(fresh\?\.stillWaiting \?\? \[\]\)\.filter\(w => !marked\.has\(w\.key\) && !dropped\.has\(w\.key\)\)/);
+    assert.match(form, /onYes: \(\) => mark\(w\), onNo: \(\) => setDropped\(d => new Set\(d\)\.add\(w\.key\)\)/);
+    assert.match(code('BankFigure.tsx'), /W\.stillWaiting\(a\.what\)/);
+  });
+  it('every action is a real button (keyboard reachable): no clickable row or span; a chip is a door', () => {
+    const find = code('BankFind.tsx');
+    assert.doesNotMatch(find, /<(tr|td|span|div)\b[^>]*onClick/, 'a click on something that is not a button');
+    assert.match(find, /<button type="button" className=\{s\.chipDoor\} aria-label=\{W\.chipOpen\(chipWords\(hint\)\)\} onClick=\{\(\) => setPick\(hint\.key\)\}>/);
+    assert.match(find, /aria-label=\{W\.markLine\(name\)\}/, 'each row\'s button names its line');
+    // Not hover-only: focus shows the button, and a touch screen shows it always.
+    const css = readSource(CSS);
+    assert.match(css, /\.findTable tr:focus-within \.markBtn \{ opacity: 1; \}|\.findTable tr:focus-within \.markBtn,?[\s\S]{0,40}\{ opacity: 1; \}/);
+    assert.match(css, /\.markBtn:focus-visible \{ opacity: 1;/);
+    assert.match(css, /@media \(hover: none\) \{\s*\.markBtn \{ opacity: 1; \}/);
+  });
+  it('a hinted row is amber-soft, never red; "Add the missing line" is not a dead button (BC3b wires it)', () => {
+    assert.match(readSource(CSS), /tr\.hitRow > td \{ background: rgba\(var\(--warning-rgb\), 0\.08\); \}/);
+    assert.doesNotMatch(code('BankFind.tsx'), /tone="(bad|danger)"|--danger|--bad\b/);
+    assert.doesNotMatch(code('BankFind.tsx'), /addMissing|Add the missing line/);
   });
 });
 

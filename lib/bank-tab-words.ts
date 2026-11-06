@@ -82,6 +82,53 @@ export const BANK_WORDS = {
   linesSinceMatch: (date: string, n: number) => `Lines since your last match (${date}): ${n}`,
   linesSinceStart: (date: string, n: number) => `Lines since your starting statement (${date}): ${n}`,
 
+  // ── Find (BC3a, drawing tab 3; the half, combination, bank-less and Still waiting sentences are NOT drawn): drafts until
+  // BC3b's /marketing pass. Amber, never red; a direction in words, never a minus sign.
+  findTitle: (amount: string) => `Find the ${amount}`,
+  showThem: 'Show them',
+  hideThem: 'Hide them',
+  // The callout: the line in bold, its date in brackets, then one of these.
+  hintDate: (date: string) => `(${date})`,
+  lineUnnamed: 'A line',
+  hintExactOut: (amount: string) => `is exactly ${amount}. If the bank hasn’t cashed it yet, that’s the gap.`,
+  hintExactIn: (amount: string) => `is exactly ${amount}. If the bank hasn’t received it yet, that’s the gap.`,
+  hintOrMore: (amount: string) => `Or the bank received ${amount} your books don’t have: a deposit or interest you haven’t entered.`,
+  hintOrLess: (amount: string) => `Or the bank took out ${amount} your books don’t have: a fee or a payment you haven’t entered.`,
+  hintHalf: (line: string, amount: string) => `is ${line}. Half of ${amount}. Entered the wrong way round?`,
+  hintCombo: (n: number, amount: string) => `These ${n} add up to ${amount}:`,
+  hintComboOut: 'If the bank hasn’t cashed them yet, that’s the gap.',
+  hintComboIn: 'If the bank hasn’t received them yet, that’s the gap.',
+  and: 'and',
+  hintNext: 'Next possibility',
+  hintCount: (at: number, n: number) => `${at} of ${n}`,
+  noLinesSince: 'No lines in your books since then.',
+  noLinesMatch: 'No line matches that search.',
+  // The lines (the suspects)
+  findSinceMatch: (date: string) => `Lines since your last match · ${date}`,
+  findSinceStart: (date: string) => `Lines since your starting statement · ${date}`,
+  findSearch: 'Find an amount or a name',
+  findCol: { date: 'Date', what: 'What', book: 'Book', out: 'Money out', in: 'Money in', act: 'What to do with it' },
+  chipExact: (amount: string) => `Exactly ${amount}`,
+  chipHalf: (amount: string) => `Half of ${amount}`,
+  chipCombo: (amount: string) => `Part of ${amount}`,
+  // A chip is a door: it brings its possibility into the callout (every highlight is clickable).
+  chipOpen: (chip: string) => `${chip}. Show it in Find`,
+  notInBankYet: 'Not in the bank yet',
+  markLine: (what: string) => `Not in the bank yet: ${what}`,
+  onTheirWayRow: (n: number) => `Online payments · ${n}`,
+  onTheirWayDetail: 'on their way, counted above',
+  booksCount: (n: number) => `${n} books`,
+  markedDetail: 'not in the bank yet, counted above',
+  undo: 'Undo',
+  undoLine: (what: string) => `Undo Not in the bank yet: ${what}`,
+  showMore: (n: number) => `Show ${n} more`,
+  // Ask 2: the next check asks once about each of the previous check's items.
+  stillWaiting: (what: string) => `Still waiting on ${what}?`,
+  yes: 'Yes',
+  no: 'No',
+  stillYes: (what: string) => `Yes, ${what} is still not in the bank`,
+  stillNo: (what: string) => `No, ${what} is in the bank now`,
+
   // ── the account line and the saved checks (asks 4 and 6, tab 5) ───────────────────────────
   accountPill: 'Account',
   throughResult: (date: string, result: string) => `checked through ${date} · ${result}`,

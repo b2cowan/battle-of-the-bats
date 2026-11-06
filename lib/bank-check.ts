@@ -177,6 +177,10 @@ export const figureOfSaved = (c: SavedCheck): CheckFigure =>
 /** On a check, online payments on their way come OFF the books: they haven't reached the bank (the §4 formula's term). */
 export const onItsWayOnCheck = (onItsWayCents: number): number => -onItsWayCents;
 
+/** On a check, a Not-in-the-bank-yet item moves the total the other way from its line: a money-out line (a cheque not
+ *  cashed) is still in the bank, so it ADDS back; a money-in line (a deposit not landed) comes off (the §4 formula's term). */
+export const waitingOnCheck = (w: Pick<WaitingItem, 'direction' | 'amountCents'>): number => -signed(w.direction, w.amountCents);
+
 /** One line of a saved check's sums and the signed amount it moved the total by (`null`: on its way, not counted). */
 export type SavedTerm =
   | { kind: 'base' | 'cash'; key: string; cents: number }
@@ -199,8 +203,7 @@ export function savedTerms(c: SavedCheck): { terms: SavedTerm[]; totalCents: num
   }
   for (const w of c.waiting) {
     // An out-item (a cheque not cashed yet) is still in the bank: added back on a check, taken off the bank at the start.
-    const s = signed(w.direction, w.amountCents);
-    terms.push({ kind: 'waiting', key: `w-${w.key}`, cents: start ? s : -s, item: w });
+    terms.push({ kind: 'waiting', key: `w-${w.key}`, cents: start ? signed(w.direction, w.amountCents) : waitingOnCheck(w), item: w });
   }
   if (!start && c.cashCents) terms.push({ kind: 'cash', key: 'cash', cents: -c.cashCents });
   return { terms, totalCents: start ? c.booksCents : figureOfSaved(c).shouldBeCents };
@@ -348,6 +351,39 @@ export function findHints(differenceCents: number, candidates: readonly BankLine
     }
   }
   return { targetCents, exact, half, combos: best.map(c => c.lines), capped };
+}
+
+/**
+ * The lines that can EXPLAIN a gap, by direction (BC3, said to the owner 2026-11-06): the bank showing MORE than the books
+ * is a money-OUT line — a cheque not cashed yet (exact, or several adding up), or an expense entered as money in (half). The
+ * bank showing LESS is a money-IN line, the same three ways round. A line the other way can only widen the gap if marked
+ * (its Not-in-the-bank-yet term has the gap's own sign), so it is never a hint. Null at a difference of zero.
+ */
+export const closingDirection = (differenceCents: number): BankDirection | null =>
+  differenceCents > 0 ? 'out' : differenceCents < 0 ? 'in' : null;
+
+/** One hint the callout can name: the lines it points at, in the order the callout names them. `key` is stable. */
+export interface Hint {
+  key: string;
+  kind: 'exact' | 'half' | 'combo';
+  lines: BankLine[];
+}
+
+/**
+ * "Find the $X" for a check (drawing tab 3): `findHints` over the candidates whose direction can explain the difference
+ * (`closingDirection`), as ONE list in the order the callout offers them — every exact line, then every half, then the
+ * combinations (nearest-dated first within each). The caller passes the suspects less the lines already marked Not in the
+ * bank yet and less those counted on their way.
+ */
+export function hintsFor(differenceCents: number, candidates: readonly BankLine[]): { targetCents: number; hints: Hint[]; capped: boolean } {
+  const direction = closingDirection(differenceCents);
+  const h = findHints(differenceCents, direction ? candidates.filter(l => l.direction === direction) : []);
+  const hints: Hint[] = [
+    ...h.exact.map(l => ({ key: `exact:${l.key}`, kind: 'exact' as const, lines: [l] })),
+    ...h.half.map(l => ({ key: `half:${l.key}`, kind: 'half' as const, lines: [l] })),
+    ...h.combos.map(c => ({ key: `combo:${c.map(l => l.key).join('+')}`, kind: 'combo' as const, lines: c })),
+  ];
+  return { targetCents: h.targetCents, hints, capped: h.capped };
 }
 
 // ── the coach's books on a date (BC6 wires it) ───────────────────────────────────────────────

@@ -179,6 +179,9 @@ describe('3. the client sends intent; the server decides (rule 6)', () => {
   });
   it('a waiting line must be a posted line of the account\'s books dated on or before the statement, never one on its way', () => {
     assert.match(rules, /if \(!r \|\| r\.status !== 'posted' \|\| !books\.has\(r\.ledger_id\) \|\| r\.entry_date > date \|\| onItsWay\.has\(k as string\)\) return no\('bad_item'\);/);
+    // M3 (owner 2026-11-06): a check's line must be dated after the starting statement, which the save step reads itself.
+    assert.match(rules, /if \(kind === 'check' && facts\.startDate !== null && r\.entry_date <= facts\.startDate\) return no\('bad_item'\);/);
+    assert.match(readCode('lib/bank-club-steps.ts'), /startDate: checks\.find\(c => c\.kind === 'start'\)\?\.date \?\? null/);
   });
   it('every write is awaited', () => {
     for (const line of STEPS_CODE.split('\n')) {

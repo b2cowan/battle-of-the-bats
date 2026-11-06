@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
-  HINT_CAP, MAX_COMBOS, booksNowSay, coachBooksOnDate, figureCheck, figureOfSaved, findHints, latestBefore,
-  matchedWhenSaved, onItsWayOnCheck, savedTerms, startBooks, suspectsSince, typedCents,
+  HINT_CAP, MAX_COMBOS, booksNowSay, closingDirection, coachBooksOnDate, figureCheck, figureOfSaved, findHints, hintsFor,
+  latestBefore, matchedWhenSaved, onItsWayOnCheck, savedTerms, startBooks, suspectsSince, typedCents, waitingOnCheck,
   type BankLine, type SavedCheck, type WaitingItem,
 } from '../../lib/bank-check.ts';
 
@@ -213,6 +213,49 @@ describe('findHints — bounded (plan §4)', () => {
   it('nothing to find at a difference of zero', () => {
     const h = findHints(0, [line('entry:z', '2026-10-01', 'out', 0 + 1)]);
     assert.deepEqual([h.exact, h.half, h.combos], [[], [], []]);
+  });
+});
+
+describe('hintsFor — only the lines that can explain the gap (BC3a, said to the owner 2026-11-06)', () => {
+  const xs = [
+    line('entry:out75', '2026-10-29', 'out', 7500), line('entry:in75', '2026-10-30', 'in', 7500),
+    line('entry:outHalf', '2026-10-20', 'out', 3750), line('entry:inHalf', '2026-10-21', 'in', 3750),
+    line('entry:o1', '2026-10-10', 'out', 2500), line('entry:o2', '2026-10-11', 'out', 5000),
+    line('entry:i1', '2026-10-12', 'in', 2500), line('entry:i2', '2026-10-13', 'in', 5000),
+  ];
+  it('the bank showing MORE: money-out lines only, exact then half then combinations', () => {
+    const { targetCents, hints } = hintsFor(7500, xs);
+    assert.equal(targetCents, 7500);
+    assert.deepEqual(hints.map(h => [h.kind, h.lines.map(l => l.key)]), [
+      ['exact', ['entry:out75']], ['half', ['entry:outHalf']], ['combo', ['entry:o2', 'entry:o1']],
+    ]);
+    for (const h of hints) for (const l of h.lines) assert.equal(l.direction, 'out');
+  });
+  it('the bank showing LESS: money-in lines only', () => {
+    const { hints } = hintsFor(-7500, xs);
+    assert.deepEqual(hints.filter(h => h.kind !== 'combo').map(h => h.lines[0].key), ['entry:in75', 'entry:inHalf']);
+    for (const h of hints) for (const l of h.lines) assert.equal(l.direction, 'in');
+  });
+  it('marking a hinted line closes the gap; the same amount the other way would double it (why the rule)', () => {
+    const books = 100_000;
+    const off = figureCheck({ bankCents: books + 7500, booksCents: books, onItsWayCents: 0, waiting: [], cashCents: null });
+    const asItem = (l: BankLine): WaitingItem => ({ key: l.key, date: l.date, direction: l.direction, amountCents: l.amountCents });
+    const right = hintsFor(off.differenceCents, xs).hints[0].lines[0];
+    assert.equal(figureCheck({ bankCents: books + 7500, booksCents: books, onItsWayCents: 0, waiting: [asItem(right)], cashCents: null }).result, 'matches');
+    const wrong = figureCheck({ bankCents: books + 7500, booksCents: books, onItsWayCents: 0, waiting: [asItem(xs[1])], cashCents: null });
+    assert.equal(wrong.offByCents, 15_000);
+  });
+  it('every hint has a stable key; nothing at a difference of zero', () => {
+    const keys = hintsFor(7500, xs).hints.map(h => h.key);
+    assert.equal(new Set(keys).size, keys.length);
+    assert.deepEqual(hintsFor(0, xs).hints, []);
+    assert.equal(closingDirection(1), 'out');
+    assert.equal(closingDirection(-1), 'in');
+    assert.equal(closingDirection(0), null);
+  });
+  it('a waiting item on a check: a money-out line adds back, a money-in line comes off (the sums\' signs)', () => {
+    assert.equal(waitingOnCheck({ direction: 'out', amountCents: 7500 }), 7500);
+    assert.equal(waitingOnCheck({ direction: 'in', amountCents: 7500 }), -7500);
   });
 });
 

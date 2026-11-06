@@ -91,8 +91,14 @@ export function BankSavedSums({ rows, totalLabel, totalAmount }: {
   );
 }
 
+/** A line marked Not in the bank yet on the check being typed (BC3a): its words, its signed amount (the engine's
+ *  `waitingOnCheck`, formatted by `moved`), and its Undo. */
+export type LiveWaitingRow = { key: string; what: string; amount: string; onUndo: () => void };
+/** Ask 2: one of the previous check's items, asked once ("Still waiting on {line}?"). Yes carries it; No drops it. */
+export type StillWaitingRow = { key: string; what: string; amount: string; onYes: () => void; onNo: () => void };
+
 /** The sums that make "Should be in the bank": always open, one line each. */
-export function BankSums({ date, bookNames, booksCents, shouldBeCents, onItsWay, payoutsHref, onRetry }: {
+export function BankSums({ date, bookNames, booksCents, shouldBeCents, onItsWay, payoutsHref, onRetry, waiting = [], asking = [] }: {
   date: string;
   bookNames: readonly string[];
   booksCents: number;
@@ -101,6 +107,10 @@ export function BankSums({ date, bookNames, booksCents, shouldBeCents, onItsWay,
   payoutsHref: string;
   /** Asks the server to read Stripe again ("Try again" beside a not-counted line). */
   onRetry: () => void;
+  /** The lines marked Not in the bank yet on this check (BC3a), each with Undo. */
+  waiting?: readonly LiveWaitingRow[];
+  /** The previous check's items not answered yet (ask 2): asked here, never counted until Yes. */
+  asking?: readonly StillWaitingRow[];
 }) {
   const [open, setOpen] = useState(false);
   const counted = onItsWay.state === 'counted' && onItsWay.lines.length > 0 ? onItsWay : null;
@@ -146,6 +156,23 @@ export function BankSums({ date, bookNames, booksCents, shouldBeCents, onItsWay,
           </p>
         </>
       )}
+
+      {waiting.map(w => (
+        <SumRow key={w.key} label={<>
+          {W.savedWaiting(w.what)}{' '}
+          <button type="button" className={s.link} aria-label={W.undoLine(w.what)} onClick={w.onUndo}>{W.undo}</button>
+        </>} amount={w.amount} />
+      ))}
+
+      {asking.map(a => (
+        <SumRow key={a.key} quiet label={<>
+          {W.stillWaiting(a.what)}{' '}
+          <span className={s.askActs}>
+            <button type="button" className={s.link} aria-label={W.stillYes(a.what)} onClick={a.onYes}>{W.yes}</button>
+            <button type="button" className={s.link} aria-label={W.stillNo(a.what)} onClick={a.onNo}>{W.no}</button>
+          </span>
+        </>} amount={a.amount} />
+      ))}
 
       <SumTotal label={W.sumShould} amount={cents(shouldBeCents)} />
     </div>

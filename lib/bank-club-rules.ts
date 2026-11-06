@@ -83,15 +83,32 @@ export function readText(v: unknown, max: number): string | null {
 
 /**
  * Find's search, by shape (BC3): `$12` or `12.50` is an amount only; all digits ("1234") is a cheque number as much as an
- * amount, so it searches both; anything else is words in the description.
+ * amount, so it searches both; anything else is words in the description. A statement's own thousands comma ("$1,250.00",
+ * "1,250": groups of exactly three digits) is an amount (BC3a); "12,50" is not a group of three, so it stays words (O4).
  */
-export function pickerSearch(q: string):
-  { kind: 'none' } | { kind: 'amount'; amount: number } | { kind: 'either'; amount: number; words: string } | { kind: 'words'; words: string } {
+export type FindSearch =
+  { kind: 'none' } | { kind: 'amount'; amount: number } | { kind: 'either'; amount: number; words: string } | { kind: 'words'; words: string };
+
+export function pickerSearch(q: string): FindSearch {
   const words = q.trim().slice(0, 80);
   if (!words) return { kind: 'none' };
   if (/^\d{1,9}$/.test(words)) return { kind: 'either', amount: Number(words), words };
-  if (/^\$?\d{1,9}(\.\d{1,2})?$/.test(words)) return { kind: 'amount', amount: Number(words.replace('$', '')) };
+  if (/^\$?\d{1,9}(\.\d{1,2})?$/.test(words) || /^\$?\d{1,3}(,\d{3}){1,2}(\.\d{1,2})?$/.test(words)) {
+    return { kind: 'amount', amount: Number(words.replace(/[$,]/g, '')) };
+  }
   return { kind: 'words', words };
+}
+
+/**
+ * Does a line answer Find's search (BC3a)? An amount matches the line's own amount to the cent, in either direction; words
+ * match the line's words or how it came ("Cheque 214", "E-Transfer"), any case. Nothing typed matches every line.
+ */
+export function lineMatches(search: FindSearch, line: { amountCents: number; label?: string | null; how?: string | null }): boolean {
+  if (search.kind === 'none') return true;
+  const byAmount = search.kind !== 'words' && Math.round(search.amount * 100) === line.amountCents;
+  if (search.kind === 'amount') return byAmount;
+  const w = search.words.toLowerCase();
+  return byAmount || [line.label, line.how].some(t => !!t && t.toLowerCase().includes(w));
 }
 
 /** At most this many "Not in the bank yet" lines on one check. */
@@ -134,12 +151,16 @@ export interface SaveFacts {
   onItsWay: OnItsWay;
   /** The account's books now (the step refuses `changed` if they moved since). */
   bookIds: string[];
+  /** The starting statement's date (null while there is none: a save then IS the start). */
+  startDate: string | null;
 }
 
 /**
  * Decide a save whose date rules have passed (`saveRefusal`). The waiting keys are looked up in `entries` (read by id on
  * the server): each must be a POSTED line of the account's books dated on or before the statement and not one counted in
  * Stripe's on its way (it is in the figure already; when Stripe didn't answer, nothing is, so any line may wait).
+ * ⚖ M3 (owner 2026-11-06): a CHECK's line must be dated AFTER the starting statement — the start already proved a line on
+ *   or before its date was in the bank (one that cleared late is the start's own "Waiting at the start", Q2).
  */
 export function savePlan(input: { kind: 'start' | 'check'; date: string; body: Record<string, unknown>; facts: SaveFacts;
   entries: readonly EntryRow[] }) {
@@ -164,6 +185,7 @@ export function savePlan(input: { kind: 'start' | 'check'; date: string; body: R
     const id = typeof k === 'string' ? entryIdOf(k) : null;
     const r = id ? byId.get(id) : undefined;
     if (!r || r.status !== 'posted' || !books.has(r.ledger_id) || r.entry_date > date || onItsWay.has(k as string)) return no('bad_item');
+    if (kind === 'check' && facts.startDate !== null && r.entry_date <= facts.startDate) return no('bad_item');
     const amountCents = toCents(r.amount);
     if (amountCents <= 0) return no('bad_item');
     const label = r.description ? cutText(r.description.trim(), 200) : undefined;
