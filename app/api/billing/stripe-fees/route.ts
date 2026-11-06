@@ -9,7 +9,7 @@ import { hasCapability } from '@/lib/roles';
  * GET /api/billing/stripe-fees — the Stripe fees a club's online payments caused, for Settings › Plan & billing (Club Tier
  * Stage 12d-1 Part 4, ruling 4: what, when, billed / unpaid, Pay the invoice). Requires billing access, like the page.
  *
- *   fees      — newest first, at most 50; 12c's rows that were never billed (comped, before the owner's 2026-10-26 ruling)
+ *   fees      — newest first: the latest 50, plus every fee under a still-open invoice however old; 12c's rows that were never billed (comped, before the owner's 2026-10-26 ruling)
  *               are left out, since nothing was ever owed on them. The stored billing error never leaves the platform.
  *   invoices  — the club's own fee invoices the fees sit on: number, state, day, Stripe's total (tax included) and named tax
  *               lines, the pay link while open (owner drawings 2026-11-05; the list groups by invoice).

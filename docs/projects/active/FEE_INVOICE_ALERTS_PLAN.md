@@ -89,6 +89,20 @@ approver. Coaches portal untouched (the coach portal has no fee invoices).
 
 ## Progress
 
+- 2026-11-06 (Part 4 review follow-up, owner asked "fix those medium to low items"; committed the commit after `601b9e3ed`): **fixed M1, M2,
+  M3, L1, L2, L3, L4, L5, L7. Not code, left: M4 (apply migration 444 to prod before the promote is the fix; a fallback read would hide the
+  real problem) and L6 (the full-height pages overflow by the banner's height only until it scrolls away, which is what a top-of-page
+  band should do; sizing them around a band that leaves the screen would leave a gap instead).** What changed: (M1) the banner tells the
+  window to re-measure when it arrives or leaves, so the Tournaments chat page sits right even when the banner shows up after it loaded;
+  (M2) on Plan & billing the banner's button waits a few seconds for the fees list to appear, then goes to it, instead of doing nothing;
+  (M3, L3) the banner watches the tab return on every page including Plan & billing, at most once per 5 seconds; (L1) the page's red line
+  steps aside only when the brief really shows an overdue invoice (or is still loading), so a failed or stale brief can no longer leave an
+  overdue invoice unspoken, and the neutral billing body is told by `BillingKit` (it must not read the brief itself, a standing guard);
+  (L2) the banner's "See invoices" takes its visible label as its name except on Plan & billing, where the list really is below;
+  (L4) the stale "at most 50" comments say what is true; (L5) the open-invoice and open-fee caps are named, and a read that hit one no
+  longer draws the plain-difference "Tax" line; (L7) the per-fee pay link goes through the same https check. Checked: billing, banner, alert
+  and flip-guard tests (206), typecheck, lint, spelling; `verify:changed` fails only the same seven tests as before. **Not browsed.**
+
 - 2026-11-06 (Part 4 `/simplify` + `/review`, high-risk tier, four lenses: correctness, security/tenant, data/contract, regression/state;
   **Part 4 committed `64bf861a8` 2026-11-06**): **no Critical or High; the owner-only gate holds** (the brief's `feesOwed` stays behind the
   server's billing check from the caller's own membership; every query is scoped by org; a pay link must be `https` before it reaches an href).

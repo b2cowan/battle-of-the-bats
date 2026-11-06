@@ -115,10 +115,17 @@ describe('where the banner sits and who sees it', () => {
     assert.doesNotMatch(banner, /useAdminKitNav/, 'the full nav hook fetches coach access on every admin page');
     assert.doesNotMatch(banner, /fetch\(|localStorage|sessionStorage|dismiss|onClose|snooze/i);
   });
-  it('re-reads the brief when the tab returns (not on Plan & billing, which does it itself), with no timer', () => {
+  it('re-reads the brief when the tab returns, on every page and at most once per gap, with no timer', () => {
     assert.match(banner, /visibilitychange/); assert.match(banner, /reload\(\)/);
-    assert.match(banner, /const watching = !!line && !onBilling/);
+    assert.match(banner, /const watching = !!line;/);
+    assert.match(banner, /Date\.now\(\) - lastRead\.current < RE_READ_GAP_MS/);
     assert.doesNotMatch(banner, /setInterval|setTimeout/);
+  });
+  it('tells a screen that measured the header (the chat) when the banner arrives or goes, and its button waits for the list', () => {
+    assert.match(banner, /dispatchEvent\(new Event\('resize'\)\)/);
+    assert.match(banner, /if \(onBilling\) \{ e\.preventDefault\(\); seeFeeInvoicesWhenReady\(\); \}/);
+    assert.match(banner, /aria-label=\{onBilling \? action\.aria : undefined\}/);
+    assert.match(readCode('components/billing/seeFeeInvoices.ts'), /MutationObserver/);
   });
   it('is a persistent status line, not an alert; scrolls away (no sticky); tokens only; 44 px button on a phone', () => {
     assert.match(banner, /role="status"/);
@@ -140,6 +147,7 @@ describe('the fees read always includes every open invoice (Q5)', () => {
     assert.match(src, /\.in\('fee_invoice_id', \[\.\.\.openIds\]\)/);
   });
   it('an open invoice is never "incomplete" because of the cap, so its tax line is still drawn', () => {
-    assert.match(src, /openIds\.has\(inv\.id\) \|\| windowFees\.length < limit/);
+    assert.match(src, /openIds\.has\(inv\.id\) && !extraCapped && openIds\.size < OPEN_INVOICE_CAP/);
+    assert.match(src, /\(openComplete \|\| windowFees\.length < limit\)/);
   });
 });

@@ -12,17 +12,20 @@
  * `role="status"` on purpose: the banner is persistent and the same news is on Plan & billing, so it must not interrupt every
  * screen reader the moment the brief arrives (the failed-payment callout there is the `alert`).
  */
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ExternalLink } from 'lucide-react';
 import { overdueBannerFor } from '@/lib/fee-invoice-line';
-import { seeFeeInvoices } from '@/components/billing/seeFeeInvoices';
+import { seeFeeInvoicesWhenReady } from '@/components/billing/seeFeeInvoices';
 import { useOrg } from '@/lib/org-context';
 import { useIsSandbox } from '@/components/sandbox/SandboxProvider';
 import { kitBillingLink } from '@/lib/admin-kit-nav';
 import { useClubBrief } from './ClubBriefProvider';
 import styles from './FeeOverdueBanner.module.css';
+
+/** Re-reading the brief on a tab return is skipped when it was done this recently (the fees list's own read keeps a gap too). */
+const RE_READ_GAP_MS = 5000;
 
 export default function FeeOverdueBanner() {
   // Not `useAdminKitNav`: that hook also fetches the coach's team access and builds every rail list, and this runs on every admin page.
@@ -35,14 +38,30 @@ export default function FeeOverdueBanner() {
   const onBilling = !!billingLink && pathname.startsWith(billingLink.href);
 
   // After paying in Stripe's tab the owner comes back to a page still wearing the banner: read the brief again when the tab returns
-  // (the club brief's own refresh, not a poller). Plan & billing already does this through its fee read, so it is left alone there.
-  const watching = !!line && !onBilling;
+  // (the club brief's own refresh, not a poller), at most once per RE_READ_GAP_MS so flipping tabs is not a burst of reads. Plan &
+  // billing's fee read also asks for a refresh when what is owed changes, but only when it saw the invoice, so the banner watches there too.
+  const watching = !!line;
+  const lastRead = useRef(0);
   useEffect(() => {
     if (!watching) return;
-    const back = () => { if (document.visibilityState === 'visible') reload(); };
+    const back = () => {
+      if (document.visibilityState !== 'visible' || Date.now() - lastRead.current < RE_READ_GAP_MS) return;
+      lastRead.current = Date.now();
+      reload();
+    };
     document.addEventListener('visibilitychange', back);
     return () => document.removeEventListener('visibilitychange', back);
   }, [watching, reload]);
+
+  // The banner pushes the page header down when it arrives (after the brief) and back up when it goes. A screen that measured where the
+  // header ends (the tournament chat pins itself under it) listens for a window resize, so tell it.
+  const shown = !!line && !!billingLink;
+  useEffect(() => {
+    if (!shown) return;
+    const nudge = () => { requestAnimationFrame(() => window.dispatchEvent(new Event('resize'))); };
+    nudge();
+    return nudge;
+  }, [shown]);
 
   if (!line || !billingLink) return null;
   const { action } = line;
@@ -53,9 +72,10 @@ export default function FeeOverdueBanner() {
         ? <a className={`btn btn-lime ${styles.button}`} href={action.href} target="_blank" rel="noopener noreferrer" aria-label={action.aria}>
             {action.label}<ExternalLink size={13} aria-hidden />
           </a>
-        // On Plan & billing the list is right below, so the button scrolls to it; anywhere else it opens Plan & billing.
-        : <Link className={`btn btn-outline ${styles.button}`} href={billingLink.href} aria-label={action.aria}
-            onClick={e => { if (onBilling && seeFeeInvoices()) e.preventDefault(); }}>{action.label}</Link>}
+        // On Plan & billing the list is on the page (or about to be: it waits for it), so the button scrolls to it; anywhere else it
+        // opens Plan & billing, and the words "below" in the shared name would be wrong there, so the visible label is the name.
+        : <Link className={`btn btn-outline ${styles.button}`} href={billingLink.href} aria-label={onBilling ? action.aria : undefined}
+            onClick={e => { if (onBilling) { e.preventDefault(); seeFeeInvoicesWhenReady(); } }}>{action.label}</Link>}
     </div>
   );
 }

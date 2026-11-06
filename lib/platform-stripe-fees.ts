@@ -818,7 +818,8 @@ export type ClubFeeView = {
 
 /**
  * A club's Stripe fees, newest first, for Settings › Plan & billing (the owner) and platform admin's panel. Starts from
- * the small table (the club's own fees) and reads at most `limit`; a failure reads as an empty list on the screen's side.
+ * the small table (the club's own fees) and reads the newest `limit`, plus every fee under a still-open invoice however old (Fee
+ * invoice alerts Part 4), so the list can run past `limit`; a failure reads as an empty list on the screen's side.
  */
 export async function readClubFees(orgId: string, opts: { limit?: number; now?: Date } = {}): Promise<ClubFeeView[]> {
   return (await readClubFeesAndInvoices(orgId, opts)).fees;
@@ -833,6 +834,10 @@ export type ClubFeeInvoiceView = {
 
 const cents = (dollars: number) => Math.round(dollars * 100);
 
+/** The most open invoices, and the most fees under them, the read will fetch beyond its window (a club has a handful at most). */
+const OPEN_INVOICE_CAP = 200;
+const OPEN_FEE_CAP = 500;
+
 /** The fees and, beside them, the invoices they sit on. Never a total on a fee line: several fees share one invoice. */
 export async function readClubFeesAndInvoices(
   orgId: string, opts: { limit?: number; now?: Date } = {},
@@ -845,7 +850,7 @@ export async function readClubFeesAndInvoices(
     // Fee invoice alerts Part 4 (Q5, owner 2026-11-05): every invoice the club still owes is in the answer, however old its fees are —
     // the pinned banner and the door's count read the invoices table, so the page the banner points at must show what they count.
     supabaseAdmin.from('platform_fee_invoices').select('id')
-      .eq('org_id', orgId).eq('livemode', stripeKeyIsLive()).eq('status', FEE_INVOICE_OWED_STATUS).limit(200),
+      .eq('org_id', orgId).eq('livemode', stripeKeyIsLive()).eq('status', FEE_INVOICE_OWED_STATUS).limit(OPEN_INVOICE_CAP),
   ]);
   if (error) throw error;
   if (openError) throw openError;
@@ -853,10 +858,12 @@ export async function readClubFeesAndInvoices(
   const openIds = new Set(((openData ?? []) as Array<{ id: string }>).map(i => i.id));
   // The window may have cut an open invoice's fees off (it can only have when it came back full): fetch every fee under those invoices.
   let fees = windowFees;
+  let extraCapped = false;
   if (openIds.size && windowFees.length >= limit) {
     const { data: extra, error: extraError } = await supabaseAdmin.from('platform_stripe_fees').select(FEE_COLUMNS)
-      .eq('org_id', orgId).in('fee_invoice_id', [...openIds]).order('created_at', { ascending: false }).limit(500);
+      .eq('org_id', orgId).in('fee_invoice_id', [...openIds]).order('created_at', { ascending: false }).limit(OPEN_FEE_CAP);
     if (extraError) throw extraError;
+    extraCapped = (extra?.length ?? 0) >= OPEN_FEE_CAP;
     const byId = new Map([...windowFees, ...((extra ?? []) as FeeRow[])].map(f => [f.id, f] as const));
     fees = [...byId.values()].sort((a, b) => b.created_at.localeCompare(a.created_at));
   }
@@ -889,7 +896,7 @@ export async function readClubFeesAndInvoices(
       createdAt: f.created_at, amount: Number(f.amount), credit: isFeeCredit(f.kind), source: f.amount_source, state,
       invoiceNo: inv?.invoice_number ?? null,
       invoiceDay: state === 'returned' ? f.billed_at : inv ? (inv.status === 'paid' ? inv.paid_at : inv.due_at) : state === 'waiting' ? nextFirst : null,
-      payUrl: inv && inv.status === 'open' ? inv.hosted_invoice_url : null,
+      payUrl: inv && inv.status === FEE_INVOICE_OWED_STATUS ? httpsOnly(inv.hosted_invoice_url) : null,
       billError: f.bill_error, billedAt: f.billed_at,
     } satisfies ClubFeeView;
   });
@@ -907,8 +914,9 @@ export async function readClubFeesAndInvoices(
     if (!taxLines) {
       // The plain difference is only honest when EVERY fee on the invoice is in hand: the read is capped, and a returned fee sits
       // outside `mine`. Either way the gap would be labelled "Tax" with other money in it, so draw no tax line instead (review 2026-11-05).
-      // An open invoice's fees were all fetched on purpose (above), so the cap cannot have cut them; any other invoice is read through the window.
-      const complete = (openIds.has(inv.id) || windowFees.length < limit) && !views.some(v => v.invoiceNo === inv.invoice_number && !mine.includes(v));
+      // An open invoice's fees were all fetched on purpose (above) unless one of the two caps was reached; any other invoice is read through the window.
+      const openComplete = openIds.has(inv.id) && !extraCapped && openIds.size < OPEN_INVOICE_CAP;
+      const complete = (openComplete || windowFees.length < limit) && !views.some(v => v.invoiceNo === inv.invoice_number && !mine.includes(v));
       const feeCents = mine.reduce((sum, v) => sum + (v.credit ? -cents(v.amount) : cents(v.amount)), 0);
       const gap = total == null ? 0 : cents(total) - feeCents;
       taxLines = complete && gap > 0 ? [{ label: W.taxFallback, amount: gap / 100 }] : [];

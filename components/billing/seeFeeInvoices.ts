@@ -12,3 +12,15 @@ export function seeFeeInvoices(): boolean {
   heading.focus({ preventScroll: true });
   return true;
 }
+
+/**
+ * The banner's version on Plan & billing: the list may still be loading when the owner taps, so wait for it to appear (a few
+ * seconds at most) instead of doing nothing, then go there. Does nothing further if it never comes.
+ */
+export function seeFeeInvoicesWhenReady(waitMs = 3000): void {
+  if (seeFeeInvoices()) return;
+  const stop = () => { observer.disconnect(); clearTimeout(timer); };
+  const observer = new MutationObserver(() => { if (seeFeeInvoices()) stop(); });
+  observer.observe(document.body, { childList: true, subtree: true });
+  const timer = setTimeout(stop, waitMs);
+}

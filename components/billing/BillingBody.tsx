@@ -534,16 +534,18 @@ function useBillingRead<T>(url: string | null, revision: string): BillingRead<T>
 }
 
 /** `onFeesMayHaveChanged`: the club admin passes the brief's `reload`, so the pill on the Plan & billing door follows a payment
- *  made in Stripe's tab; the coaches portal has no fee invoices and passes nothing. */
-export default function BillingBody({ billingBase, teamsHref, onFeesMayHaveChanged }: { billingBase: string; teamsHref: string; onFeesMayHaveChanged?: () => void }) {
+ *  made in Stripe's tab; the coaches portal has no fee invoices and passes nothing.
+ *  `bannerCoversOverdue`: the club admin says the pinned overdue banner is up (or on its way), so this page's own line is amber only;
+ *  left out, the page draws the red line itself, so an overdue invoice is never unspoken when the brief failed or is stale. */
+export default function BillingBody({ billingBase, teamsHref, onFeesMayHaveChanged, bannerCoversOverdue }: { billingBase: string; teamsHref: string; onFeesMayHaveChanged?: () => void; bannerCoversOverdue?: boolean }) {
   const { currentOrg, userRole, loading, refresh } = useOrg();
   if (loading || !currentOrg || !userRole) return <LoadingState label={W.page.loading} />;
   // Plan & billing is the owner's alone (owner, 2026-10-29). No billing reads mount for anyone else, including free-time and cancelled states.
   if (userRole !== 'owner') return <LockedCard orgName={currentOrg.name} />;
-  return <BillingOwnerBody key={currentOrg.id} org={currentOrg} refresh={refresh} billingBase={billingBase} teamsHref={teamsHref} onFeesMayHaveChanged={onFeesMayHaveChanged} />;
+  return <BillingOwnerBody key={currentOrg.id} org={currentOrg} refresh={refresh} billingBase={billingBase} teamsHref={teamsHref} onFeesMayHaveChanged={onFeesMayHaveChanged} bannerCoversOverdue={bannerCoversOverdue} />;
 }
 
-type BillingOwnerProps = { org: Organization; refresh: () => Promise<void>; billingBase: string; teamsHref: string; onFeesMayHaveChanged?: () => void };
+type BillingOwnerProps = { org: Organization; refresh: () => Promise<void>; billingBase: string; teamsHref: string; onFeesMayHaveChanged?: () => void; bannerCoversOverdue?: boolean };
 function BillingOwnerBody(props: BillingOwnerProps) {
   const params = useSearchParams();
   // Keep the marker throughout waiting, on either side of the flip. No ordinary billing reads or payment controls mount.
@@ -551,7 +553,7 @@ function BillingOwnerBody(props: BillingOwnerProps) {
     ? <ClubUpgradeSetup orgSlug={props.org.slug} /> : <BillingPlanBody {...props} />;
 }
 
-function BillingPlanBody({ org, refresh, billingBase, teamsHref, onFeesMayHaveChanged }: BillingOwnerProps) {
+function BillingPlanBody({ org, refresh, billingBase, teamsHref, onFeesMayHaveChanged, bannerCoversOverdue = false }: BillingOwnerProps) {
   const router = useRouter();
   // One read of the Stripe fees for the line above the plan card AND the list below (Fee invoice alerts Part 3).
   const feeRead = useStripeFeesRead(org.slug, onFeesMayHaveChanged);
@@ -824,7 +826,7 @@ function BillingPlanBody({ org, refresh, billingBase, teamsHref, onFeesMayHaveCh
     });
   }
   return <>
-    <BillingBodyView snapshot={{ org, canManageBilling: true, usage, freeTime, founding, gating, cancellation, move }} profile={profile} ownProfile={ownProfile} actions={actions} notice={notice} waitNotice={waitNotice} justChose={justChose} detail={detail} onCloseDetail={() => setDetail(null)} cardWindowOpen={isFoundingSeasonCardWindowOpen()} foundingActive={isFoundingSeasonActive()} fees={<StripeFeesList read={feeRead} />} feeLine={<FeeInvoiceLine read={feeRead} overdue={org.subscriptionStatus === 'canceled'} />}
+    <BillingBodyView snapshot={{ org, canManageBilling: true, usage, freeTime, founding, gating, cancellation, move }} profile={profile} ownProfile={ownProfile} actions={actions} notice={notice} waitNotice={waitNotice} justChose={justChose} detail={detail} onCloseDetail={() => setDetail(null)} cardWindowOpen={isFoundingSeasonCardWindowOpen()} foundingActive={isFoundingSeasonActive()} fees={<StripeFeesList read={feeRead} />} feeLine={<FeeInvoiceLine read={feeRead} overdue={org.subscriptionStatus === 'canceled' || !bannerCoversOverdue} />}
       billingAddress={address.info?.location ? { line: formatBillingAddress(address.info.location), onEdit: () => address.edit() } : null} />
     {moveTo && <PlanMoveDialog key={`${org.id}:${moveTo}`} org={{ ...org, planId: ownProfile.key }} toPlan={moveTo} returnTo={billingBase} teamsHref={teamsHref}
       freeThrough={freeTime.status === 'ready' ? freeTime.data.portal?.lastDay ?? freeTime.data.freeTime?.lastDay ?? (founding.status === 'ready' && founding.data.isFoundingSeason ? founding.data.compUntil : null) : null}
