@@ -1,6 +1,6 @@
 # Bank balance check BC3: Find (build prompt, two sessions)
 
-> **BC3a done 2026-11-06 (built and walked on dev, `BANK_BC3A_WALK_PASSED`; record in plan §9 BC3; the
+> **BC3a done 2026-11-06 (committed `d55c4ad77`; walked on dev, `BANK_BC3A_WALK_PASSED`; record in plan §9 BC3; the
 > owner's two answers in plan §0). Next BC3b: start at "BC3b — the doors out of the check" below.** BC3a's build call to
 > carry: hints only name lines in the direction that can close the gap (`hintsFor`); Find's words are drafts for BC3b's
 > `/marketing` pass (plan §5).

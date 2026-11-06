@@ -601,7 +601,8 @@ Start; BC2b the saved checks, Delete, the pill; one owner question first: a star
 ### BC3 — Club: Find (tab 3)
 Build prompt written 2026-11-06: `BANK_BALANCE_CHECK_BC3_BUILD_PROMPT.md` (two sessions: BC3a Find on a check; BC3b Add the
 missing line, Waiting at the start, M2, the finishing passes; two owner questions first: Q2 vs ask 6, and M3).
-- [x] **BC3a built 2026-11-06** (owner: Q2 vs ask 6 and M3 ruled as recommended, §0; yes to the UX summary). Anchors:
+- [x] **BC3a built 2026-11-06, committed `d55c4ad77` 2026-11-06** (owner: Q2 vs ask 6 and M3 ruled as recommended, §0; yes to
+  the UX summary). Anchors:
   - **Find** (`components/admin/kit/club/money/bank/BankFind.tsx`, mounted by `BankCheckForm` under the sums, so behind
     `canMove`): while the check is off, "Find the $X", an amber `Callout` naming ONE possibility (exact · half · 2–3 lines),
     "{i} of {n} · Next possibility" when there are more, and "Not in the bank yet" on an exact one; then "Lines since your
