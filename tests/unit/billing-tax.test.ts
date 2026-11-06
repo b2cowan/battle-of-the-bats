@@ -83,9 +83,12 @@ describe('Part 2 · what a taxed Stripe call carries', () => {
     assert.equal('address' in TAXED_CHECKOUT.customer_update, false);
   });
 
-  it('a recovered fee is a general service, taxed on top (Ask 3), never the SaaS preset', () => {
-    assert.deepEqual(RECOVERED_FEE_TAX, { tax_behavior: 'exclusive', tax_code: 'txcd_20030000' });
+  it('a recovered fee is a Platform Fee, taxed on top (Ask 3) at the CLUB\'s province, never the SaaS preset', () => {
+    assert.deepEqual(RECOVERED_FEE_TAX, { tax_behavior: 'exclusive', tax_code: 'txcd_90050001' });
     assert.notEqual(RECOVERED_FEE_TAX.tax_code, 'txcd_10103001');
+    // GST/HST Stage 2 Part 6 (test mode 2026-11-05): "General - Services" is ORIGIN-sourced by Stripe Tax in Canada, so every club
+    // was charged our head office's Ontario 13%. A code goes here only after a tax calculation shows it follows the club's address.
+    assert.notEqual(RECOVERED_FEE_TAX.tax_code, 'txcd_20030000', 'General - Services taxes every club at Ontario 13%');
   });
 });
 

@@ -286,10 +286,85 @@ its tax from a listed taxed call, may write only the keys named), or `untaxed` w
      The `/accounting` review (item 6c) said a refund of a taxed subscription invoice goes through a credit note (the s.232 document
      and the tax reduction Stripe Tax keeps). Part 6's matrix row for refunds must test this path; a fix routes to `/plan`.
 
-Next: Part 6 (the Stripe test matrix) may run now — **build prompt written 2026-11-05:
-[GST_HST_STAGE2_PART6_BUILD_PROMPT.md](GST_HST_STAGE2_PART6_BUILD_PROMPT.md)** (its first message lists the owner's steps); ONE
-Stage 2 walk at Part 7 (2b has its own). **Owner step before Part 6:** our GST/HST number on TEST-mode invoices — read 2026-11-05:
-test account has no account tax ID.
+**Part 6 RUN 2026-11-05 — the Stripe test matrix** ([GST_HST_STAGE2_PART6_BUILD_PROMPT.md](GST_HST_STAGE2_PART6_BUILD_PROMPT.md);
+no product change; scripts and every run file in `.probe/gst2/part6-*`). **Two money defects found and stopped (below); every other
+cell passed.** All figures in cents; [V 2026-11-05] unless marked.
+- **Owner step 1 DONE 2026-11-05:** our GST/HST number added to the TEST account and set as the invoice default. Verified by API (one
+  `ca_gst_hst`, `default_account_tax_ids` set) and by PDF: it did NOT print until the default was saved (control run with the id
+  attached by hand printed "CA GST/HST … Canada"), then printed on every invoice and credit note read (`part6-default-taxid-3-run*.txt`).
+  ⚠ `account_tax_ids` on the invoice object stays null — the default prints at render time; a check must read the PDF.
+- **Owner step 2 DONE:** the five hosted Checkout pages paid (test card). **Step 3 DONE 2026-11-05:** the owner read the NB yearly invoice and the credit note — our
+  GST/HST number and "Part 6 New Brunswick Club" on both. **Step 4 owed** (live Dashboard → Settings → Plans and fees → Invoice
+  history; Stripe's help says card processing is exempt, only its SaaS products carry GST/HST — recorded in `RECOVERED_STRIPE_FEES_TAX.md`).
+- Corrected the prompt, out loud: the test registration is active from **2026-11-05**, not 2026-09-26 (Stripe refuses a past date; no
+  effect — every test charge is later); dropped as an owner step. Stripe lists `ca_gst_hst` as "impact in tax calculation: yes", so
+  the buyer's-own-number row was tested by script FIRST: tax stays on (`standard_rated`) for ON/NS/AB (`part6-buyer-number-run1.txt`).
+- How: 13 throwaway dev clubs + owners, each Stripe customer on its own test clock at its group's address, already paying Club yearly
+  with tax (the fixture); every step then taken **as the owner through the product's own routes on the local dev server** (billing
+  address PUT, move preview + move with the quote's figure, both checkout routes), or the product's own functions where no route
+  serves a script (`makeRefund`, `billFee` / `sendMonthlyFeeInvoices`, `buildNextSeasonCheckoutParams`). `US_SALES_OPEN=true` on dev.
+
+| Buyer | A club checkout (page) → first charge after the 90-day trial | D move up Club → Club · Association yearly: quote = charge | Renewal (test clock) | Tax named |
+|---|---|---|---|---|
+| ON | 0 at page → 219000 + 28470 ✓ | 180798 = 180798 ✓ | after E: see E | HST 13% |
+| NS | skipped (1) | 182399 = 182399 ✓ | 379000 + 53060 ✓ | HST 14% |
+| NB/NL/PE (NB) | 0 → 219000 + 32850 ✓ | 183999 = 183999 ✓ | 379000 + 56850 ✓ | HST 15% |
+| AB | skipped (1) | 167999 = 167999 ✓ | 379000 + 18950 ✓ | GST 5% |
+| BC · SK · MB · QC | skipped (1) | 167999 / 167998 / 167999 / 167999 ✓ | 379000 + 18950 ✓ each | GST 5% + PST/RST/QST 0% `not_collecting` (Stage 7, correct) |
+| US (sales open on dev) | 0 → 219000 + 0 ✓ | 159999 = 159999 ✓ | 379000 + 0 ✓ | Sales Tax 0% `not_collecting` |
+| Flagged: US address, CA card | skipped (2) | **HELD** 409 `billing_review_hold`, nothing charged ✓ | (its existing sub renews untaxed by its US address — Ask 1 holds paid STEPS, by design) | — |
+| Flagged: ON address, US card | skipped (2) | 180799 = 180799 ✓ | 379000 + 49270 ✓ | HST 13% (taxed by its address ✓) |
+| Club with its own GST/HST number | number typed on the page → 219000 + 28470 ✓, customer holds `ca_gst_hst` | 180799 = 180799 ✓ | 379000 + 49270 ✓ | HST 13%, `standard_rated`; its number prints too |
+
+Every charged row: `automatic_tax.status` `complete`; our number and the buyer's name print on the PDF. Other paths (ON unless named):
+- **B coach Premium checkout:** 2900 + 377 HST 13% at the page ✓. **Premium → Club in place** (that coach, an AB club address typed):
+  quote 19949 = charge 19949, GST 5%, the Stripe customer now holds the AB address ✓.
+- **C Founding next-season:** the builder's session is accepted by Stripe, $0 today, tax on; the builder's subscription settings on a
+  test clock charge 219000 + 28470 HST 13% at trial_end 2027-10-01 ✓ (the hosted page itself needs a person: not paid).
+- **E move down:** the schedule carries `default_settings.automatic_tax` on, phases inherit ✓. The ON renewal after it read **219002**:
+  traced to the TEST CLOCK — the quote's `proration_date` is real time while the clock was frozen at creation, so Stripe billed the 3½
+  minutes "before" the move up (−1 + 3 cents). Re-run at size (`part6-ondn-later-run1.txt`: up, 182 days, down through the routes):
+  the renewal is exactly 219000 + 28470. **Not a defect; cannot happen without a test clock.**
+- **Recovered fees** (the product's own `billFee` / `sendMonthlyFeeInvoices`): AB fee **rides** the taxed subscription, quote = charge
+  399645 ✓; **the 2026-11-05 safety net ✓**: SK's subscription with tax OFF → `own_invoice`, no ride; its monthly fee invoice is taxed,
+  `complete`, our number + name print, emailed (Resend test inbox) ✓. **But see defect 1: both fee lines were taxed HST 13%.**
+- **Refund (platform admin, `makeRefund`):** see defect 2. **Credit note** (made in Stripe directly — no product path exists for a
+  subscription invoice): $100 on the NB 15% invoice → 10000 + 1500 reversed, our number + name print ✓ (`part6-credit-note-run1.txt`).
+
+**Skipped cells:** (1) A for NS, AB, BC, SK, MB, QC and B outside ON — the same checkout code and the same Stripe engine as the paid
+rows, and each group's rate is proven through the product by D and the renewal; kept the owner's batch to five pages. (2) A for the
+flagged buyers — the hold is decided by the same `requireBillingLocation` the move preview refused with; not re-proven on a page.
+E, C and Premium → Club ran for ON only (the prompt's minimum). Fee rows ran AB (ride) and SK (own) only: defect 1 makes per-province
+fee rows moot until the code is fixed — re-run them after it.
+
+**⚠ Defect 1 — a recovered Stripe fee is taxed at ONTARIO's 13% for every club** (`part6-fees-run1.txt`, `part6-fees-sk-run1.txt`,
+`part6-fee-code-run1.txt`, `part6-fee-code-2-run1.txt`). `RECOVERED_FEE_TAX`'s `txcd_20030000` ("General - Services") is
+ORIGIN-sourced by Stripe Tax in Canada: AB/BC/SK/MB/QC 13% instead of 5%, NS 13% instead of 14%, NB 13% instead of 15%, a US club
+13% instead of 0. `/accounting` (2026-11-05, `RECOVERED_STRIPE_FEES_TAX.md` corrected): place of supply is the club's address (Memo
+3-3-6), so the code must be destination-sourced — **`txcd_90050001` "Platform Fee"** (also the code the online-payment fee itself
+should carry, so T2 never diverges); not "Credit Card Processing Services" (pre-judges D1). No exposure: nothing sold, production has
+0 subscriptions and no fee invoices. **FIXED 2026-11-05 on the owner's yes:** `RECOVERED_FEE_TAX.tax_code` → `txcd_90050001`
+  (`lib/billing-tax.ts`, comment says why; the two pins updated; `billing-tax.test.ts` now refuses `txcd_20030000` by name); 119 tax, guard
+  and fee tests pass. Re-run through the product's own `billFee` (`part6-fees-fixed-run1.txt`, fee rides the renewal, quote = charge):
+  AB 1500 + 75 (GST 5%) · NS 1500 + 210 (HST 14%) · NB 1500 + 225 (HST 15%) · US 1500 + 0 — one tax line with the plan's, number prints.
+  The club's own fee invoice uses the same constant (not re-run).
+**⚠ Defect 2 — platform admin's refund makes no credit note** (`part6-refund-run1.txt`): $100 refunded to the card; the invoice still
+reads paid 432060 with its full HST, no credit note, no document to the club. Confirms the Part 5 finding; `/accounting` confirms the
+credit-note shape (6c). **Routed to `/plan` (owner ruling); not fixed here.**
+**Observation (not a defect) — the name on the invoice:** Checkout's `customer_update.name: 'auto'` saves the CARDHOLDER's name when no
+business name is typed, so a club's yearly invoice names the person who paid. `/accounting`: compliant ($500+ rule allows "the
+recipient's duly authorized agent or representative", ITC Information Regs s.3(c)(ii)); the club's name is the cleaner record.
+**Owner 2026-11-05: yes, the club's name** (unless a business name was typed on Stripe's page) — a product change, so PLANNED with
+  defect 2's fix, not built in this test-only part.
+**Side finding (not tax, → `/billing`):** the sandbox `stripe_prices` row `league` / `annual` points at a MONTHLY-interval $890 price
+(`price_1TYxwJ…`).
+**Cleanup 2026-11-05** (`part6-cleanup-run1.txt`): every `gst2-part6` club, sign-in, billing address, fee row, fee invoice row, the
+coach portal Checkout made, and every test clock / customer / subscription deleted ; the NB club (held for step 3) and the fee re-run's AB/NS/NB/US clubs deleted after (`part6-cleanup-run2.txt`: no
+`gst2-part6` club, sign-in or test clock left). No email reached a made-up address
+(`email_sends` shows none).
+
+Next: `/plan` the refund credit note (defect 2) + the club's name on checkout invoices; Part 7 (closeout). ONE Stage 2 walk at
+Part 7 (2b has its own).
 
 **Rulings (owner, 2026-11-05, all as recommended):**
 - **Ask 1:** one helper decides tax: taxes by the stored address; a US address with disagreeing card/payout evidence

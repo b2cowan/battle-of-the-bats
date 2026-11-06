@@ -1,5 +1,5 @@
 # GST/HST (and provincial tax) on FieldLogicHQ's subscriptions to Canadian customers
-**Last verified:** 2026-10-31
+**Last verified:** 2026-11-05 (invoice name rule + refunds added; the rest 2026-10-31)
 **Re-verify by:** 2027-10-31, or if any province changes its rate, if FieldLogicHQ's GST/HST registration status changes, or if Stripe Tax registrations are added
 **Depends on facts:** **registered for GST/HST** (owner confirmed 2026-10-31; nothing sold yet); Ontario home base;
 subscriptions sold to clubs (organizations) and to individual coaches (coach Premium)
@@ -46,6 +46,17 @@ if it has none, the IPP fallback is the **highest-rate province** where the prop
 **Invoices (input-tax-credit documentation, tiers since 2021-04-20):** under $100: supplier/trading name, date, total ·
 $100–$499.99: add GST/HST charged (or that it's included), **GST/HST registration number** · $500+: add buyer's name,
 description, payment terms. (Memo 8.4 still shows the old $30/$150 tiers — outdated.)
+- **The $500+ name, exactly** (Input Tax Credit Information (GST/HST) Regulations s.3(c)(ii), read 2026-11-05): "the recipient's
+  name, the name under which the recipient does business **or the name of the recipient's duly authorized agent or
+  representative**". So a club invoice naming the person who paid for the club (Stripe Checkout saves the cardholder's name when
+  no business name is typed — seen in Stage 2 Part 6 test mode) still meets the rule; the club's own name is the cleaner record
+  (its books and any ITC claim are the club's). Recommendation: the club's name on the invoice, unless the buyer typed a business
+  name on Stripe's page — not a compliance gate either way.
+- **A refund of a taxed invoice goes through a credit note** (accounting review 6c, confirmed 2026-11-05 Part 6): the credit note
+  is the s.232 document showing the tax adjusted, and the reduction Stripe Tax records. Test mode: a $100 credit note on a 15%
+  invoice reverses $100 + $15 HST and prints our GST/HST number and the buyer's name (`.probe/gst2/part6-credit-note-run1.txt`).
+  A bare refund on the charge (platform admin's refund today) leaves the invoice "paid" with its full tax and issues no document
+  (`part6-refund-run1.txt`) — the fix is routed to `/plan`.
 
 ## Recommendation
 1. Registered (2026-10-31) with no sales yet: every taxable supply from the first one carries tax; the small-supplier

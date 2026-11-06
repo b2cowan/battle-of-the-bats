@@ -40,10 +40,34 @@ Club Tier 12d-1); owner ruling T2 (plan) taxes the payment fee on top; Stage 2 A
   edge case (every connect now needs the address; production had 0 payout accounts on 2026-11-05) — it is the reason the wait
   must stay short, not a reason to bill untaxed.
 
+- **⚠ The Stripe tax code decides the place of supply Stripe uses, and "General - Services" gets it wrong** (added 2026-11-05,
+  Stage 2 Part 6, test mode). Stripe Tax sources `txcd_20030000` ("General - Services") by **origin** in Canada: every club is
+  charged our head office's Ontario HST 13% — an Alberta/BC/Saskatchewan/Québec club 13% instead of 5% GST, a Nova Scotia club
+  13% instead of 14%, New Brunswick 13% instead of 15%, and a US club 13% instead of zero-rated
+  (`.probe/gst2/part6-fee-code-run1.txt`, `part6-fee-code-2-run1.txt`; through the product's own billing code
+  `part6-fees-run1.txt`, `part6-fees-sk-run1.txt`). That contradicts the place-of-supply finding above (the club's address).
+  `txcd_90050001` ("Platform Fee": "a fee charged by an online marketplace or platform operator to businesses for facilitating
+  the distribution, discovery, or sale of the seller's goods, services…"), `txcd_10000000` (General - Electronically Supplied
+  Services) and `txcd_20060051` (Credit Card Processing Services) are all **destination**-sourced and standard-rated: 5 / 13 /
+  14 / 15 by the club's province, GST only in Québec, US 0 (not collecting).
+
+- **Stripe does not charge GST/HST on its payment-processing fees** (added 2026-11-05, Stage 2 Part 6): "Payment processing fees
+  charged to you by Stripe will be tax exempt"; GST/HST is charged on its SaaS products (Billing, Radar, Tax, Sigma) and Terminal
+  hardware, on a monthly tax invoice under Settings → Plans and fees → Invoice history, by the 10th of the next month
+  ([Stripe](https://support.stripe.com/questions/taxes-on-stripe-fees-for-businesses-based-in-canada), accessed 2026-11-05). So the
+  dispute, returned-debit and foreign-card fees we recover carry no Stripe tax: the "net of Stripe's tax" base is the fee itself
+  (item 2 below holds, with nothing to strip). ⚠ Bears on **D1**: Stripe treats its own processing as an exempt financial service —
+  a professional should weigh that before confirming our payment service is taxable (T2). The owner's live-account check (are there
+  tax invoices, for which fees) is still owed.
+
 ## Recommendation (for Stage 2 Part 2)
-1. Give every recovered-fee invoice item an explicit `tax_behavior: 'exclusive'` and an explicit Stripe tax code for a general
-   service (verify the code in Stripe's list; do not rely on the account's SaaS preset, which describes the subscription, not a
-   fee recovery). On a subscription invoice it is then taxed with it; the club's own monthly fee invoice turns on automatic tax.
+1. Give every recovered-fee invoice item an explicit `tax_behavior: 'exclusive'` and an explicit Stripe tax code (do not rely on
+   the account's SaaS preset, which describes the subscription, not a fee recovery). On a subscription invoice it is then taxed
+   with it; the club's own monthly fee invoice turns on automatic tax. **Corrected 2026-11-05 (Part 6): the code is
+   `txcd_90050001` "Platform Fee", NOT `txcd_20030000` "General - Services"** (origin-sourced; see the finding). "Platform Fee"
+   describes what the club is paying for (FieldLogicHQ's payment service as the platform), is destination-sourced like the
+   subscription, and is the code the **online-payment fee itself** should carry when it is taxed, so T2's "never diverge" holds
+   by one constant. Not "Credit Card Processing Services": it names a financial service and would pre-judge D1.
 2. Record the fee **net of any tax Stripe charged FieldLogicHQ** (check one Stripe fee invoice in test and live: does Stripe
    charge GST/HST on dispute and debit-return fees?).
 3. Credits: credit the original invoice line (never a free-standing negative amount) so Stripe reverses its tax; the club's credit

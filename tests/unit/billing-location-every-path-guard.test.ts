@@ -483,7 +483,7 @@ describe('every Stripe charge in app/, lib/ and components/ is on the list', () 
   it('the shared tax settings still turn tax on (every `taxed` entry names them)', () => {
     assert.deepEqual(AUTOMATIC_TAX, { enabled: true });
     assert.deepEqual(TAXED_CHECKOUT.automatic_tax, AUTOMATIC_TAX);
-    assert.deepEqual(RECOVERED_FEE_TAX, { tax_behavior: 'exclusive', tax_code: 'txcd_20030000' });
+    assert.deepEqual(RECOVERED_FEE_TAX, { tax_behavior: 'exclusive', tax_code: 'txcd_90050001' });
   });
 
   it('nothing turns tax off, and nothing defines its own copy of the shared settings', () => {
