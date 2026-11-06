@@ -24,6 +24,9 @@ none, knows no customer's location, has no Terms of Service, and prices never sa
 - **Prices everywhere** read "plus applicable taxes".
 - **A club taking online payments** gets a monthly statement of the fees FieldLogicHQ took and the tax on them, once
   counsel confirms the fee's treatment.
+- **A refund to a club** (staff, platform admin) comes with a credit note that shows the tax given back, and the club gets
+  it. A club's invoices carry the club's name, not the name of whoever's card paid, unless the club typed a business name
+  (Stage 2 Part 6b, planned 2026-11-05).
 - **The owner** sees tax collected by province, sales to US clubs, tax paid on expenses, and a ready-to-file return
   worksheet in Bookkeeping. Staff see each charge's tax and why on the organization's Money tab.
 - **New customers accept Terms of Service** at signup.

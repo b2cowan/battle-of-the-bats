@@ -4,7 +4,9 @@ import { withObservability } from '@/lib/observability';
 import { getStripe } from '@/lib/stripe';
 import { consoleClock } from '@/lib/console-dates';
 import { inFlightWords, readClubCharge, recoverRefunds } from '@/lib/console-money-stripe';
+import { listIssuedCreditNotes } from '@/lib/console-money-credit';
 import { stripeKeyIsLive } from '@/lib/online-payments-switch';
+import type { ChargeCreditNote } from '@/lib/console-money';
 import { clubRefunds, clubStripeFacts, priceMap, refundStore } from '@/lib/console-money-store';
 
 /**
@@ -12,6 +14,8 @@ import { clubRefunds, clubStripeFacts, priceMap, refundStore } from '@/lib/conso
  * refund (T6): a charge number from Find or typed into the address shows nothing unless it belongs to exactly this
  * club's Stripe customer, in this site's mode. Opening the charge is also recovery's moment: an unfinished refund old
  * enough to have finished is decided by listing the charge's refunds in Stripe — never by sending another (G 6).
+ * GST/HST Part 6b: a charge that paid an invoice also lists that invoice's credit notes, each with Stripe's PDF link (read
+ * here each time, never stored: the link's lifetime is Stripe's). A failed list reads as null, "not read", never "none".
  */
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -44,8 +48,17 @@ export const GET = withObservability(async (_req: Request, { params }: { params:
     // Recovery could not ask Stripe: the charge stays held, and the window says so rather than offering a refund.
     inFlight = 'A refund of this charge is waiting for Stripe’s answer, and Stripe could not be asked just now. Open the charge again in a moment.';
   }
-  // The charge's remainder is Stripe's own (read above), whatever our record said; our refunds name who made them.
-  const refunds = await clubRefunds(id, chargeId);
+  // The charge's remainder is Stripe's own (read above), whatever our record said; our refunds name who made them. The two reads
+  // do not depend on each other.
+  const invoiceId = charge.invoice?.id;
+  const [refunds, creditNotes] = await Promise.all([
+    clubRefunds(id, chargeId),
+    invoiceId
+      ? listIssuedCreditNotes(stripe, invoiceId).then((notes): ChargeCreditNote[] | null => notes.map(n => ({
+        id: n.id, number: n.number, totalCents: n.total, currency: n.currency, createdAt: new Date(n.created * 1000).toISOString(), pdf: n.pdf?.startsWith('https://') ? n.pdf : null, // utc-intentional: Stripe's unix instant
+      })), () => null)
+      : Promise.resolve<ChargeCreditNote[] | null>([]),
+  ]);
 
-  return NextResponse.json({ charge, ourRefunds: refunds, inFlight }, { headers: noStore });
+  return NextResponse.json({ charge, ourRefunds: refunds, inFlight, creditNotes }, { headers: noStore });
 }, { route: '/api/platform-admin/orgs/[id]/money/charges/[chargeId]' });

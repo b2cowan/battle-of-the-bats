@@ -9684,12 +9684,12 @@ The **platform control plane** — the tables behind `/platform-admin/` that Fie
 ### `platform_refunds`
 <!-- dict:table:platform_refunds -->
 
-**Purpose:** the support console's **record of every refund a staff member makes** from a club's Money tab (mig 380, Support console Stage 3, owner Q1–Q3 2026-10-26). Written as `started` **before** Stripe is asked and completed with Stripe's answer, so a refund can never exist in Stripe without a line here. Only the club's **subscription** charges (the family payments rail keeps its own `online_payment_refunds`).
+**Purpose:** the support console's **record of every refund a staff member makes** from a club's Money tab (mig 380, Support console Stage 3, owner Q1–Q3 2026-10-26). Written as `started` **before** Stripe is asked and completed with Stripe's answer, so a refund can never exist in Stripe without a line here. Only the club's **subscription** charges (the family payments rail keeps its own `online_payment_refunds`). **Since mig 446 (GST/HST Stage 2 Part 6b, 2026-11-05), a charge that paid an invoice is refunded through a Stripe credit note** (the s.232 document that reverses the GST/HST; accounting 6c); a charge that paid no invoice keeps the bare refund (R3).
 
 **Gotchas (read first):**
-1. **The row's `id` is the refund's idempotency key** and rides in the Stripe refund's `metadata.platform_refund_id`. Recovery (opening the charge) lists the charge's refunds in Stripe and matches that id; it **never re-sends** a refund — Stripe prunes keys after ≥24 h, so a second POST could make a second refund.
+1. **The row's `id` is the refund's idempotency key** and rides in `metadata.platform_refund_id` — on the Stripe **refund** for a no-invoice charge, on the **credit note** for an invoice charge (⚠ the refund a credit note makes carries none of our metadata, verified 2026-11-05). Recovery (opening the charge) lists the invoice's credit notes (row has `stripe_invoice_id`) or the charge's refunds and matches that id; it **never re-sends** — Stripe prunes keys after ≥24 h, so a second POST could make a second refund.
 2. **One unfinished refund per charge, by the database** — partial unique index `platform_refunds_one_open_per_charge` on `stripe_charge_id` WHERE `status IN ('started','unknown')`. `not_made` releases the charge.
-3. **Forward-only, request frozen** — trigger `platform_refunds_guard`: an insert must be `started` with no refund id; after that only `status` (started → done/refused/unknown/not_made; unknown → done/not_made), `stripe_refund_id` (once), the error code/request id and `completed_at` may change.
+3. **Forward-only, request frozen** — trigger `platform_refunds_guard` (re-made by mig 446): an insert must be `started` with no refund id and no credit note id; after that only `status` (started → done/refused/unknown/not_made; unknown → done/not_made), `stripe_refund_id` (once), `stripe_credit_note_id` and `stripe_credit_note_number` (once), the error code/request id and `completed_at` may change. `stripe_invoice_id` is part of the frozen request. CHECKs: a credit note needs an invoice (`platform_refunds_note_needs_invoice_chk`), and **`done` with an invoice needs its credit note** (`platform_refunds_done_invoice_has_note_chk`), so a refund of an invoice charge that skipped the note cannot be recorded as done.
 4. **Never card data, never Stripe's raw reply** — the card's brand and last four are read from Stripe each time they are shown; a refusal keeps only Stripe's error `code` and request id. The typed `reason` is never sent to Stripe.
 5. **Service role only.** RLS on, no policies; `anon`/`authenticated` hold no privilege (rule 7).
 
@@ -9701,7 +9701,12 @@ The **platform control plane** — the tables behind `/platform-admin/` that Fie
 <!-- dict:col:platform_refunds.stripe_customer_id -->
 <!-- dict:col:platform_refunds.stripe_charge_id -->
 <!-- dict:col:platform_refunds.stripe_refund_id -->
-**`stripe_customer_id`** / **`stripe_charge_id`** (text, NOT NULL; charge CHECK `^(ch|py)_`) / **`stripe_refund_id`** (text, nullable, UNIQUE; CHECK `^(re|pyr)_`) — the club's Stripe customer at the time, the refunded charge (ownership-checked against exactly this club's customer), and Stripe's refund once made. The Story de-duplicates console and dashboard refunds on `stripe_refund_id`.
+**`stripe_customer_id`** / **`stripe_charge_id`** (text, NOT NULL; charge CHECK `^(ch|py)_`) / **`stripe_refund_id`** (text, nullable, UNIQUE; CHECK `^(re|pyr)_`) — the club's Stripe customer at the time, the refunded charge (ownership-checked against exactly this club's customer), and Stripe's refund once made (for an invoice charge, the refund the credit note made, read off `note.refunds`). The Story de-duplicates console and dashboard refunds on `stripe_refund_id`.
+
+<!-- dict:col:platform_refunds.stripe_invoice_id -->
+<!-- dict:col:platform_refunds.stripe_credit_note_id -->
+<!-- dict:col:platform_refunds.stripe_credit_note_number -->
+**`stripe_invoice_id`** (text, nullable; CHECK `^in_`) / **`stripe_credit_note_id`** (text, nullable, unique where set — index `platform_refunds_credit_note_uniq`; CHECK `^cn_`) — mig 446. The invoice the charge paid, learned from Stripe before it is asked and written at the start (frozen); NULL = the charge paid no invoice, or the row predates mig 446. The credit note Stripe made, written once with its answer or by recovery. **`stripe_credit_note_number`** (text, nullable; CHECK `^[A-Za-z0-9-]{1,64}$` and only with a note id) — its printed number (e.g. `MBEEZ5VW-0001-CN-01`), written with the id and never changed, so the club's Story names the document without a Stripe read (the PDF link is read from Stripe in the charge window). See gotcha 3 for the CHECKs.
 
 <!-- dict:col:platform_refunds.amount_cents -->
 <!-- dict:col:platform_refunds.currency -->
@@ -9712,7 +9717,7 @@ The **platform control plane** — the tables behind `/platform-admin/` that Fie
 **`stripe_reason`** (text, CHECK `duplicate|requested_by_customer`) — Stripe's reason: `duplicate` when the Money tab flagged the charge as a double charge. **Never `fraudulent`** (it adds the card and email to Stripe's block lists).
 
 <!-- dict:col:platform_refunds.status -->
-**`status`** (text, NOT NULL, default `started`; CHECK `started|done|refused|unknown|not_made`) — see gotcha 3. `refused` only on Stripe's definite 4xx; `unknown` on a timeout or a Stripe 5xx until recovery decides.
+**`status`** (text, NOT NULL, default `started`; CHECK `started|done|refused|unknown|not_made`) — see gotcha 3. `refused` only on Stripe's definite 4xx; `unknown` on a timeout or a Stripe 5xx until recovery decides. `done` on an invoice charge means the credit note was made; its refund to the card can still fail later (the note stands, and the console says so).
 
 <!-- dict:col:platform_refunds.stripe_error_code -->
 <!-- dict:col:platform_refunds.stripe_request_id -->

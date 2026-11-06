@@ -2,10 +2,12 @@
 // its store as arguments), so the refund guards can run the real code against fakes. The routes are the server's.
 import type Stripe from 'stripe';
 import {
-  REFUND_WORDS, decideRefund, formatCents, cardWords, remainingCents, stripeReasonFor, stripeRefusalWords,
+  REFUND_WORDS, decideRefund, formatCents, cardWords, isWholeCents, remainingCents, stripeReasonFor, stripeRefusalWords,
   type MoneyCharge, type MoneyInvoice, type MoneyRead, type MoneyRefund, type MoneySubscription, type NextCharge, type RefundAsk,
 } from './console-money';
 import { FEE_INVOICE_META } from './online-payment-words';
+import { READ_OPTS, idOf, noteFacts, planCreditNote, refundIdOfNote, type CreditPlan, type CreditRefusal, type CreditTarget } from './console-money-credit';
+
 
 /**
  * The Money tab's server half (Support console Stage 3; owner Q1–Q4 2026-10-26; drawings A–C, G, H). Stripe is read live
@@ -13,13 +15,15 @@ import { FEE_INVOICE_META } from './online-payment-words';
  *   1. the refunds record, written as `started` BEFORE Stripe is asked — if it cannot be written, Stripe never is (T10);
  *   2. ONE Stripe call, its idempotency key our record's id, the amount always explicit, our id in its metadata;
  *   3. the record completed with Stripe's answer: done · refused (a definite 4xx only) · unknown (a timeout or a 5xx).
- * Recovery never re-sends: it LISTS the charge's refunds and looks for our id (Stripe prunes keys after ~24 h, so a second
- * request could make a second refund). Everything here takes its Stripe client and its store as arguments, so the guards
- * run it against mocks with no network.
+ * The one call is a CREDIT NOTE when the charge paid an invoice (GST/HST Part 6b: the document that reverses the tax; the
+ * note makes the refund), and a bare refund only when it paid none (R3).
+ * Recovery never re-sends: it LISTS the invoice's credit notes (or the charge's refunds) and looks for our id (Stripe prunes
+ * keys after ~24 h, so a second request could make a second refund). Everything here takes its Stripe client and its store
+ * as arguments, so the guards run it against mocks with no network.
  */
 
-/** Each read's time limit; a refund's own limit is longer (it must not be cut short into "unknown" needlessly). */
-export const READ_OPTS = { timeout: 8000, maxNetworkRetries: 1 } as const;
+// Each read's time limit is READ_OPTS (console-money-credit.ts, shared with the credit-note planner); a refund's own limit is
+// longer (it must not be cut short into "unknown" needlessly).
 // The refund route has 60 seconds: two reads (8 s, one retry each) and the refund (15 s, one same-key retry) fit inside it.
 export const REFUND_OPTS = { timeout: 15000, maxNetworkRetries: 1 } as const;
 /** An unfinished refund older than this cannot still be running (the route's limit is 60 s): recovery may decide it. */
@@ -30,7 +34,6 @@ const DAY = 86_400_000;
 
 export type PriceMap = Map<string, { planId: string; cycle: string }>;
 
-const idOf = (v: string | { id: string } | null | undefined): string | null => (v == null ? null : typeof v === 'string' ? v : v.id);
 const iso = (unix: number | null | undefined): string | null => (unix ? new Date(unix * 1000).toISOString() : null); // utc-intentional: Stripe's unix instants
 /** A customer that has not been deleted in Stripe, or null. */
 const liveCustomer = (c: Stripe.Customer | Stripe.DeletedCustomer): Stripe.Customer | null => ('deleted' in c && c.deleted ? null : (c as Stripe.Customer));
@@ -266,9 +269,10 @@ export async function readClubMoney(stripe: Stripe, customerId: string, opts: { 
 
 /**
  * One charge, ownership- and mode-checked; null when it is not this club's (or not found). With `prices` it also reads the
- * invoice behind it (the charge window); the refund passes null, needing only the charge and its customer's email.
+ * invoice behind it (the charge window); the refund passes null, needing the charge, its customer's email and its payment
+ * (from which `invoiceIdsForCharge` learns the invoice a credit note goes on).
  */
-export async function readClubCharge(stripe: Stripe, chargeId: string, club: ClubStripe, live: boolean, prices: PriceMap | null): Promise<{ charge: MoneyCharge; customerEmail: string | null } | null> {
+export async function readClubCharge(stripe: Stripe, chargeId: string, club: ClubStripe, live: boolean, prices: PriceMap | null): Promise<{ charge: MoneyCharge; customerEmail: string | null; paymentIntentId: string | null } | null> {
   if (!/^(ch|py)_[A-Za-z0-9]+$/.test(chargeId)) return null;
   let charge: Stripe.Charge;
   try {
@@ -281,7 +285,7 @@ export async function readClubCharge(stripe: Stripe, chargeId: string, club: Clu
   const pi = idOf(charge.payment_intent);
   const invoice = prices && pi ? await invoiceForIntent(stripe, pi, prices) : null;
   const customer = charge.customer && typeof charge.customer !== 'string' ? liveCustomer(charge.customer) : null;
-  return { charge: toMoneyCharge(charge, invoice), customerEmail: customer?.email ?? null };
+  return { charge: toMoneyCharge(charge, invoice), customerEmail: customer?.email ?? null, paymentIntentId: pi };
 }
 
 // ── Find (owner Q5): one exact read of one Stripe item, then its club by its customer ──────────────────────────────
@@ -337,6 +341,8 @@ export async function findStripeItem(stripe: Stripe, number: string, kind: 'paym
 export type RefundRecord = {
   id: string; status: 'started' | 'done' | 'refused' | 'unknown' | 'not_made'; actor_email: string; created_at: string;
   amount_cents: number; currency: string; reason: string; stripe_refund_id: string | null;
+  /** The invoice the charge paid (mig 446): set = the refund is a credit note, found by the note's metadata on recovery. */
+  stripe_invoice_id: string | null;
 };
 
 /** Our refunds record, as the refund needs it (the route passes the database; the guards pass a fake). */
@@ -350,9 +356,15 @@ export type RefundStore = {
     org_id: string; stripe_customer_id: string; stripe_charge_id: string; amount_cents: number; currency: string;
     remaining_seen_cents: number; stripe_reason: 'duplicate' | 'requested_by_customer'; reason: string;
     actor_email: string; actor_role: string; livemode: boolean;
+    /** The invoice the charge paid, or null (R3: it paid none). Frozen with the request (mig 446's guard). */
+    stripe_invoice_id: string | null;
   }): Promise<{ id: string }>;
   /** Complete an UNFINISHED record (started or unknown); false when it was already completed (nothing written). */
-  complete(id: string, patch: { status: RefundRecord['status']; stripe_refund_id?: string | null; stripe_error_code?: string | null; stripe_request_id?: string | null }): Promise<boolean>;
+  complete(id: string, patch: {
+    status: RefundRecord['status']; stripe_refund_id?: string | null; stripe_error_code?: string | null; stripe_request_id?: string | null;
+    /** The credit note Stripe made, set once (a `done` refund of an invoice charge needs it: mig 446's CHECK). */
+    stripe_credit_note_id?: string; stripe_credit_note_number?: string | null;
+  }): Promise<boolean>;
   /** The strict audit write: throws when it cannot be written. */
   audit(entry: { actorEmail: string; orgId: string; action: string; value: Record<string, unknown>; reason: string }): Promise<void>;
 };
@@ -383,6 +395,11 @@ export type RefundInput = {
   ownClub: boolean;
   demoClub: boolean;
   charge: MoneyCharge;
+  /**
+   * The invoice the charge paid, read by the route just before (`invoiceIdsForCharge` → `readCreditTarget`), or null when it
+   * paid none (R3). Set, the refund is a credit note and `refunds.create` is never called. Required, so no caller forgets it.
+   */
+  invoice: CreditTarget | null;
   ask: RefundAsk;
   /** The Money tab flagged this charge as charged twice: Stripe's reason is then `duplicate`. */
   flaggedDuplicate: boolean;
@@ -393,7 +410,7 @@ export type RefundInput = {
 
 export type RefundOutcome =
   | { ok: false; status: number; error: string; field?: 'amount' | 'reason'; nothingSent: boolean }
-  | { ok: true; state: 'done'; message: string; stripeRefundId: string; auditMissing: boolean }
+  | { ok: true; state: 'done'; message: string; stripeRefundId: string | null; stripeCreditNoteId: string | null; auditMissing: boolean }
   | { ok: false; state: 'refused' | 'unknown'; status: number; error: string; nothingSent: false };
 
 /** Make one refund, in the fixed order. Never retries a refund on its own beyond Stripe's own same-key retries. */
@@ -410,6 +427,9 @@ export async function makeRefund(stripe: Stripe, store: RefundStore, input: Refu
     input.ask,
   );
   if (!decision.ok) return { ...decision, nothingSent: true };
+  const { invoice } = input;
+  // A credit note's before-tax figure is part of what the window showed (R1): without it the note is not the one seen.
+  if (invoice && !isWholeCents(input.ask.beforeTaxCents)) return { ok: false, status: 409, field: 'amount', error: REFUND_WORDS.noteChanged, nothingSent: true };
 
   const stripeReason = stripeReasonFor(input.flaggedDuplicate);
   let record: { id: string };
@@ -418,6 +438,7 @@ export async function makeRefund(stripe: Stripe, store: RefundStore, input: Refu
       org_id: input.orgId, stripe_customer_id: input.club.customerId!, stripe_charge_id: charge.id,
       amount_cents: decision.amountCents, currency: charge.currency, remaining_seen_cents: remainingCents(charge),
       stripe_reason: stripeReason, reason: decision.reason, actor_email: actor.email, actor_role: actor.role, livemode: input.live,
+      stripe_invoice_id: invoice?.invoiceId ?? null,
     });
   } catch (err) {
     if (err instanceof InFlightError) {
@@ -443,19 +464,57 @@ export async function makeRefund(stripe: Stripe, store: RefundStore, input: Refu
     return { ok: false, status: 503, error: REFUND_WORDS.readFailed, nothingSent: true };
   }
 
+  // A credit note is planned again now that our record holds the charge: Stripe's answer must be the one the person saw
+  // (card figure AND before-tax figure). The invoice's lines and earlier notes are the ones the route read just before; Stripe's
+  // own preview and create still refuse more than the invoice has left, so a note made elsewhere in between ends in a refusal. One that moved is a new record and a new look, never a re-send under this key
+  // (Stripe refuses the same key with other figures, Part 0 2d).
+  let plan: CreditPlan | null = null;
+  if (invoice) {
+    let planned: CreditPlan | CreditRefusal;
+    try {
+      planned = await planCreditNote(stripe, invoice, decision.amountCents);
+    } catch (err) {
+      await store.complete(record.id, { status: 'not_made' }).catch(() => false);
+      return stripeErrorFacts(err).definite
+        ? { ok: false, status: 409, field: 'amount', error: REFUND_WORDS.noteNotWorkedOut, nothingSent: true }
+        : { ok: false, status: 503, error: REFUND_WORDS.noteReadFailed, nothingSent: true };
+    }
+    if (!planned.ok || planned.cardCents !== decision.amountCents || planned.beforeTaxCents !== input.ask.beforeTaxCents) {
+      await store.complete(record.id, { status: 'not_made' }).catch(() => false);
+      return { ok: false, status: 409, field: 'amount', error: planned.ok ? REFUND_WORDS.noteChanged : planned.error, nothingSent: true };
+    }
+    plan = planned;
+  }
+
   const auditValue = {
     refund_record_id: record.id, stripe_charge_id: charge.id, amount_cents: decision.amountCents, currency: charge.currency,
-    stripe_reason: stripeReason,
+    stripe_reason: stripeReason, ...(plan ? { stripe_invoice_id: invoice!.invoiceId, before_tax_cents: plan.beforeTaxCents } : {}),
   };
-  let refund: Stripe.Refund;
+  // Our number, the club and the staff member only: never the typed reason (it can hold a customer's details).
+  const metadata = { platform_refund_id: record.id, org_id: input.orgId, staff_email: actor.email };
+  let made: { refundId: string | null; refundStatus: string | null; note: { id: string; number: string } | null };
   try {
-    refund = await stripe.refunds.create({
-      charge: charge.id,
-      amount: decision.amountCents,
-      reason: stripeReason,
-      // Our number, the club and the staff member only: never the typed reason (it can hold a customer's details).
-      metadata: { platform_refund_id: record.id, org_id: input.orgId, staff_email: actor.email },
-    }, { ...REFUND_OPTS, idempotencyKey: record.id });
+    if (plan) {
+      // The credit note makes the refund. Lines by before-tax `amount` only (never a top-level amount: it reverses no tax;
+      // never `quantity`); `refund_amount` exactly the previewed total; Stripe emails the note (R2); no memo, no reason text.
+      const note = await stripe.creditNotes.create({
+        invoice: invoice!.invoiceId,
+        lines: plan.lines,
+        refund_amount: plan.cardCents,
+        email_type: 'credit_note',
+        metadata,
+      }, { ...REFUND_OPTS, idempotencyKey: record.id });
+      made = { refundId: refundIdOfNote(note), refundStatus: null, note: { id: note.id, number: note.number } };
+    } else {
+      // R3: the charge paid no invoice, so no tax was invoiced on it and there is no document to credit.
+      const refund = await stripe.refunds.create({
+        charge: charge.id,
+        amount: decision.amountCents,
+        reason: stripeReason,
+        metadata,
+      }, { ...REFUND_OPTS, idempotencyKey: record.id });
+      made = { refundId: refund.id, refundStatus: refund.status ?? null, note: null };
+    }
   } catch (err) {
     const facts = stripeErrorFacts(err);
     const state = facts.definite ? 'refused' as const : 'unknown' as const;
@@ -468,45 +527,76 @@ export async function makeRefund(stripe: Stripe, store: RefundStore, input: Refu
   }
 
   // Stripe made the refund. Nothing below may turn that into "no money moved": each step's failure is logged and said.
-  await store.complete(record.id, { status: 'done', stripe_refund_id: refund.id }).catch(err => {
+  await store.complete(record.id, {
+    status: 'done', stripe_refund_id: made.refundId,
+    ...noteFacts(made.note),
+  }).catch(err => {
     console.error('[console-money] refund made, record not completed (recovery will):', (err as { code?: string }).code ?? 'error');
     return false;
   });
+  // The refund a credit note makes is read for its fate (a note stands on its own even when its refund fails). Unread, it
+  // is said as on its way, as a bare refund's answer is.
+  if (made.note && made.refundId) {
+    made.refundStatus = await stripe.refunds.retrieve(made.refundId, {}, READ_OPTS).then(r => r.status ?? null, () => null);
+  }
   let auditMissing = false;
   try {
     await store.audit({ actorEmail: actor.email, orgId: input.orgId, action: 'refund_charge',
-      value: { ...auditValue, stripe_refund_id: refund.id, outcome: 'done' }, reason: decision.reason });
+      value: { ...auditValue, stripe_refund_id: made.refundId, ...noteFacts(made.note), outcome: 'done' },
+      reason: decision.reason });
   } catch {
     auditMissing = true;
   }
-  const didNotReach = refund.status === 'failed' || refund.status === 'canceled';
-  return {
-    ok: true, state: 'done', stripeRefundId: refund.id, auditMissing,
-    message: didNotReach
-      ? `Stripe took the refund of ${formatCents(decision.amountCents, charge.currency)} but reports it did not reach the card. It is in the club’s Story with your reason.`
-      : `Refunded ${formatCents(decision.amountCents, charge.currency)} to the ${cardWords(charge.card)}. Stripe says it is on its way. It is in the club’s Story with your reason.${auditMissing ? ' The audit entry could not be written; the refund is recorded on the club.' : ''}`,
-  };
+  const amount = formatCents(decision.amountCents, charge.currency);
+  const didNotReach = made.refundStatus === 'failed' || made.refundStatus === 'canceled';
+  const story = ` It is in the club’s Story with your reason.${auditMissing ? ' The audit entry could not be written; the refund is recorded on the club.' : ''}`;
+  const message = made.note
+    ? didNotReach
+      ? `Stripe made credit note ${made.note.number} and took the refund of ${amount}, but reports it did not reach the card. The credit note stands.${story}`
+      : `Refunded ${amount} to the ${cardWords(charge.card)} with credit note ${made.note.number}. Stripe says it is on its way.${story}`
+    : didNotReach
+      ? `Stripe took the refund of ${amount} but reports it did not reach the card.${story}`
+      : `Refunded ${amount} to the ${cardWords(charge.card)}. Stripe says it is on its way.${story}`;
+  return { ok: true, state: 'done', stripeRefundId: made.refundId, stripeCreditNoteId: made.note?.id ?? null, auditMissing, message };
 }
 
 /**
  * Recovery, run when a charge is opened: an unfinished refund old enough that its request cannot still be running is
- * decided by LISTING the charge's refunds in Stripe and matching our id in their metadata. Found → done; not found →
- * not made (the charge is released). It never sends a refund. Returns the records still in flight (younger ones).
+ * decided by LISTING, matching our id in metadata. A record with an invoice is a credit note: the invoice's notes are
+ * listed and the NOTE's metadata matched (the refund a note makes carries none of ours, Part 0 2b). A record without one
+ * (R3) lists the charge's refunds. Found → done; not found → not made (the charge is released). It never sends anything.
+ * Returns the records still in flight (younger ones).
  */
 export async function recoverRefunds(stripe: Stripe, store: RefundStore, input: { orgId: string; chargeId: string; now: Date }): Promise<RefundRecord[]> {
   const open = await store.openFor(input.chargeId);
   const old = open.filter(r => input.now.getTime() - Date.parse(r.created_at) >= RECOVERY_AFTER_MS);
   if (old.length === 0) return open;
-  const { items } = await listAll<Stripe.Refund>(after => stripe.refunds.list({ charge: input.chargeId, limit: PAGE, ...(after ? { starting_after: after } : {}) }, READ_OPTS));
-  const byOurId = new Map(items.filter(r => r.metadata?.platform_refund_id).map(r => [r.metadata!.platform_refund_id, r] as const));
+  // What Stripe holds, by OUR record id (a uuid, so a note and a bare refund can never share a key): a record with an invoice
+  // is found only by its credit note, one without only by a refund on the charge.
+  const hits = new Map<string, { refundId: string | null; note?: Stripe.CreditNote }>();
+  // A list that was cut off cannot say "not there": a record it does not show stays unresolved (and the charge held).
+  const cutOff = new Set<string>();
+  for (const invoiceId of new Set(old.map(r => r.stripe_invoice_id).filter((v): v is string => !!v))) {
+    const { items, more } = await listAll<Stripe.CreditNote>(after => stripe.creditNotes.list({ invoice: invoiceId, limit: PAGE, ...(after ? { starting_after: after } : {}) }, READ_OPTS));
+    for (const n of items) if (n.metadata?.platform_refund_id) hits.set(n.metadata.platform_refund_id, { refundId: refundIdOfNote(n), note: n });
+    if (more) cutOff.add(invoiceId);
+  }
+  if (old.some(r => !r.stripe_invoice_id)) {
+    const { items, more } = await listAll<Stripe.Refund>(after => stripe.refunds.list({ charge: input.chargeId, limit: PAGE, ...(after ? { starting_after: after } : {}) }, READ_OPTS));
+    for (const f of items) if (f.metadata?.platform_refund_id) hits.set(f.metadata.platform_refund_id, { refundId: f.id });
+    if (more) cutOff.add('');
+  }
+  const unresolved = new Set<string>();
   for (const r of old) {
-    const found = byOurId.get(r.id);
+    const hit = hits.get(r.id);
+    if (!hit && cutOff.has(r.stripe_invoice_id ?? '')) { unresolved.add(r.id); continue; }
+    const facts = hit ? { stripe_refund_id: hit.refundId, ...noteFacts(hit.note) } : null;
     // Only from started or unknown: two people opening the charge at once complete it once, and write one entry.
-    const changed = await store.complete(r.id, found ? { status: 'done', stripe_refund_id: found.id } : { status: 'not_made' });
+    const changed = await store.complete(r.id, facts ? { status: 'done', ...facts } : { status: 'not_made' });
     if (!changed) continue;
     await store.audit({ actorEmail: 'refund-recovery', orgId: input.orgId, action: 'refund_charge_resolved',
-      value: { refund_record_id: r.id, stripe_charge_id: input.chargeId, outcome: found ? 'done' : 'not_made', stripe_refund_id: found?.id ?? null,
+      value: { refund_record_id: r.id, stripe_charge_id: input.chargeId, outcome: facts ? 'done' : 'not_made', stripe_refund_id: hit?.refundId ?? null, ...noteFacts(hit?.note),
         amount_cents: r.amount_cents, currency: r.currency, started_by: r.actor_email }, reason: r.reason }).catch(() => undefined);
   }
-  return open.filter(r => !old.includes(r));
+  return open.filter(r => !old.includes(r) || unresolved.has(r.id));
 }

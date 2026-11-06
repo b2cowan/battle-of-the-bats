@@ -365,6 +365,9 @@ coach portal Checkout made, and every test clock / customer / subscription delet
 
 Next: `/plan` the refund credit note (defect 2) + the club's name on checkout invoices; Part 7 (closeout). ONE Stage 2 walk at
 Part 7 (2b has its own).
+**Planned 2026-11-05 as Part 6b** ([GST_HST_STAGE2_PART6B_BUILD_PROMPT.md](GST_HST_STAGE2_PART6B_BUILD_PROMPT.md)): a test-mode spike,
+a `platform_refunds` migration, the refund through a credit note (with a split preview), the club's name put back after Checkout.
+Owner ruled R1–R3 as recommended 2026-11-05. Runs before Part 7; its walk steps fold into Part 7's walk.
 
 **Rulings (owner, 2026-11-05, all as recommended):**
 - **Ask 1:** one helper decides tax: taxes by the stored address; a US address with disagreeing card/payout evidence

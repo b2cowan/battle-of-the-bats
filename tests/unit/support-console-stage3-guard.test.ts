@@ -11,6 +11,7 @@
  *   4. what leaves us (metadata, never the typed reason; never Stripe's own error text);
  *   5. no card data in anything we write;
  *   6. the reads (a role without the Stripe power never calls Stripe; Stripe down shows our record; nothing stored);
+ *   6b. a charge that paid an invoice is refunded through ONE credit note (GST/HST Part 6b), never refunds.create;
  *   7. Find (nothing not shaped like a Stripe or invoice number builds a Stripe query);
  *   8. Q9 (a paying club's plan is refused everywhere); 10. Q7 (bulk billing status: an end, a cap, never your club);
  *   11. Q8 (one running plan grant, in the database); 12. the window foot face; 13. the 23 threats, each guarded.
@@ -29,6 +30,7 @@ import {
   InFlightError, RECOVERY_AFTER_MS, customerSharing, makeRefund, ownsObject, recoverRefunds, stripeErrorFacts,
   type RefundInput, type RefundRecord, type RefundStore,
 } from '../../lib/console-money-stripe.ts';
+import { creditLines, creditRoom, planCreditNote, type CreditTarget } from '../../lib/console-money-credit.ts';
 import { stripeStillBills } from '../../lib/stripe-billing-state.ts';
 import { invoiceNumberQuery, runFind, stripeNumberKind, type FindReaders } from '../../lib/platform-find.ts';
 import { lastDayRefusal } from '../../lib/free-time.ts';
@@ -59,7 +61,7 @@ function fakeStore(seed: RefundRecord[] = [], opts: { insertFails?: boolean } = 
       // The partial unique index: one unfinished refund per charge.
       if (records.some(r => (r as RefundRecord & { charge?: string }).charge === row.stripe_charge_id && (r.status === 'started' || r.status === 'unknown'))) throw new InFlightError();
       const rec = { id: `rf-${++n}`, status: 'started', actor_email: row.actor_email, created_at: NOW.toISOString(), amount_cents: row.amount_cents,
-        currency: row.currency, reason: row.reason, stripe_refund_id: null, charge: row.stripe_charge_id } as RefundRecord & { charge: string };
+        currency: row.currency, reason: row.reason, stripe_refund_id: null, stripe_invoice_id: row.stripe_invoice_id, charge: row.stripe_charge_id } as RefundRecord & { charge: string };
       records.push(rec);
       return { id: rec.id };
     },
@@ -99,7 +101,7 @@ function fakeStripe(opts: { error?: unknown; listed?: Array<{ id: string; metada
 
 const input = (over: Partial<RefundInput> = {}): RefundInput => ({
   orgId: 'org-1', club: CLUB, actor: { email: 'billing@fieldlogichq.ca', role: 'billing' }, ownClub: false, demoClub: false,
-  charge: CHARGE, ask: { amountCents: 10000, remainingSeenCents: 10000, reason: 'Charged twice on the Oct 1 renewal' },
+  charge: CHARGE, invoice: null, ask: { amountCents: 10000, remainingSeenCents: 10000, reason: 'Charged twice on the Oct 1 renewal' },
   flaggedDuplicate: true, live: false, now: NOW, clock: () => '3:06 p.m.', ...over,
 });
 const stripeError = (statusCode: number, code: string, message = 'No such charge; acct_1ABC rk_live_secret') =>
@@ -378,10 +380,199 @@ describe('5 · nothing we write carries a card number, expiry, holder name, bill
   });
   it('the Story’s console refund says "to the card it came from", never the card', () => {
     const story = readCode('lib/platform-story.ts');
-    assert.match(story, /To the card it came from · the plan did not change/);
+    // GST/HST Part 6b: the sub names the credit note (or says there is none), still never the card.
+    assert.match(story, /sub: `To the card it came from · \$\{f\.stripe_credit_note_number \? `credit note \$\{f\.stripe_credit_note_number\}` : 'no credit note'\} · the plan did not change`/);
     const select = /from\('platform_refunds'\)\.select\('([^']*)'\)/.exec(story)?.[1] ?? '';
     assert.doesNotMatch(select, /card|last4|exp/);
     assert.doesNotMatch(readSource('supabase/migrations/380_support_console_money.sql').replace(/--.*$/gm, '').replace(/COMMENT ON[\s\S]*?;/g, ''), /last4|exp_month|fingerprint|card_/);
+  });
+});
+
+// ── 6b · A refund of an invoice charge is a CREDIT NOTE (GST/HST Stage 2 Part 6b; owner R1–R3 2026-11-05) ──────────────
+// Against a fake Stripe that taxes each credit-note line at one rate, rounding per line, as Stripe did in Part 0
+// (.probe/gst2/part6b-credit-notes-run1.txt: ON 13% 10000 → 10001 / 9999; NB 15% 10000 exact).
+
+const TARGET_ON: CreditTarget = {
+  invoiceId: 'in_1PlanOn', currency: 'cad', total: 247470, beforeTax: 219000, creditedCents: 0, creditedBeforeTaxCents: 0,
+  lines: [{ id: 'il_plan', amount: 219000, creditedCents: 0 }], isFeeInvoice: false,
+};
+const TARGET_NB: CreditTarget = { ...TARGET_ON, invoiceId: 'in_1PlanNb', total: 251850 };
+const INVOICE_CHARGE: MoneyCharge = { ...CHARGE, amountCents: 247470, invoice: { id: 'in_1PlanOn', number: 'ABC-0001', billingReason: 'subscription_cycle',
+  subscriptionId: 'sub_1', periodStart: null, periodEnd: null, planId: 'club', cycle: 'annual', fromPlanId: null, description: null, taxCents: 28470 } };
+
+type NotePosted = { params: Stripe.CreditNoteCreateParams; options: Stripe.RequestOptions };
+function fakeCreditStripe(opts: { rate?: number; charged?: number; error?: unknown; refundStatus?: string; listedNotes?: Array<Record<string, unknown>> } = {}) {
+  const rate = opts.rate ?? 0.13;
+  const created: NotePosted[] = [];
+  const previews: Stripe.CreditNotePreviewParams[] = [];
+  const refundPosts: unknown[] = [];
+  let noteLists = 0;
+  let refundLists = 0;
+  const byKey = new Map<string, Record<string, unknown>>();
+  const shape = (lines: Stripe.CreditNotePreviewParams['lines']) => {
+    const before = (lines ?? []).reduce((sum, l) => sum + (l.amount ?? 0), 0);
+    const tax = (lines ?? []).reduce((sum, l) => sum + Math.round((l.amount ?? 0) * rate), 0);
+    return { total: before + tax, post_payment_amount: before + tax, total_excluding_tax: before, subtotal: before,
+      total_taxes: [{ amount: tax, tax_behavior: 'exclusive', tax_rate_details: { tax_rate: 'txr_hst' }, taxability_reason: 'standard_rated', taxable_amount: before, type: 'tax_rate_details' }] };
+  };
+  const stripe = {
+    charges: { async retrieve() { return { amount: opts.charged ?? INVOICE_CHARGE.amountCents, amount_refunded: 0 }; } },
+    creditNotes: {
+      async preview(params: Stripe.CreditNotePreviewParams) { previews.push(params); return shape(params.lines); },
+      async create(params: Stripe.CreditNoteCreateParams, options: Stripe.RequestOptions) {
+        created.push({ params, options });
+        if (opts.error) throw opts.error;
+        const key = options.idempotencyKey!;
+        if (!byKey.has(key)) byKey.set(key, { id: `cn_${byKey.size + 1}`, number: `MBEEZ5VW-0001-CN-0${byKey.size + 1}`, ...shape(params.lines), refunds: [{ refund: `re_cn${byKey.size + 1}`, amount_refunded: params.refund_amount, type: 'refund' }] });
+        return byKey.get(key)!;
+      },
+      async list() { noteLists++; return { data: opts.listedNotes ?? [], has_more: false }; },
+    },
+    refunds: {
+      async create(params: unknown) { refundPosts.push(params); return { id: 're_bare', status: 'succeeded' }; },
+      async retrieve() { return { status: opts.refundStatus ?? 'succeeded' }; },
+      async list() { refundLists++; return { data: [], has_more: false }; },
+    },
+  } as unknown as Stripe;
+  return { stripe, created, previews, refundPosts, noteLists: () => noteLists, refundLists: () => refundLists };
+}
+const noteInput = (over: Partial<RefundInput> = {}): RefundInput => input({
+  charge: INVOICE_CHARGE, invoice: TARGET_ON, flaggedDuplicate: false,
+  ask: { amountCents: 247470, beforeTaxCents: 219000, remainingSeenCents: 247470, reason: 'The club closed; refund the renewal' }, ...over,
+});
+
+describe('6b · a refund of a charge that paid an invoice is a credit note', () => {
+  it('the whole charge: ONE credit note, keyed by our record, the line by its before-tax amount; refunds.create is never called', async () => {
+    const store = fakeStore();
+    const s = fakeCreditStripe();
+    const r = await makeRefund(s.stripe, store, noteInput());
+    assert.ok(r.ok, JSON.stringify(r));
+    assert.equal(s.refundPosts.length, 0, 'an invoice charge never reaches refunds.create');
+    assert.equal(s.created.length, 1);
+    const { params, options } = s.created[0];
+    assert.equal(options.idempotencyKey, store.records[0].id, 'the key is our record’s id');
+    assert.equal(params.invoice, 'in_1PlanOn');
+    assert.deepEqual(params.lines, [{ type: 'invoice_line_item', invoice_line_item: 'il_plan', amount: 219000 }]);
+    assert.equal(params.refund_amount, 247470, 'refund_amount is exactly the previewed total');
+    assert.equal(params.email_type, 'credit_note', 'R2: Stripe emails the credit note');
+    assert.ok(!('amount' in params), 'never a top-level amount: it reverses no tax');
+    assert.ok(!params.lines!.some(l => 'quantity' in l), 'never quantity: Stripe refuses it on a proration line');
+    assert.ok(!('memo' in params) && !('reason' in params), 'no memo, no reason: the typed reason never reaches the document');
+    assert.deepEqual(Object.keys(params.metadata as object).sort(), ['org_id', 'platform_refund_id', 'staff_email']);
+    assert.ok(!JSON.stringify(params).includes('The club closed'));
+    assert.equal(store.captured.inserts[0].stripe_invoice_id, 'in_1PlanOn', 'the invoice is written with the request');
+    assert.deepEqual(store.captured.completes[0].patch, { status: 'done', stripe_refund_id: 're_cn1', stripe_credit_note_id: 'cn_1', stripe_credit_note_number: 'MBEEZ5VW-0001-CN-01' });
+    assert.match((r as { message: string }).message, /^Refunded \$2,474\.70 to the Visa ending 4242 with credit note MBEEZ5VW-0001-CN-01\. Stripe says it is on its way\./);
+    assert.ok(store.captured.audits.some(a => a.action === 'refund_charge' && (a.value as Record<string, unknown>).stripe_credit_note_id === 'cn_1'));
+  });
+
+  it('R1: a part refund is the nearest total NOT above the figure typed (ON 13%: $100.00 → $99.99; NB 15%: exact)', async () => {
+    const on = await planCreditNote(fakeCreditStripe().stripe, TARGET_ON, 10000);
+    assert.ok(on.ok);
+    assert.deepEqual([on.cardCents, on.beforeTaxCents], [9999, 8849], 'b 8850 makes $100.01, so one cent less before tax');
+    const nb = await planCreditNote(fakeCreditStripe({ rate: 0.15 }).stripe, TARGET_NB, 10000);
+    assert.ok(nb.ok);
+    assert.deepEqual([nb.cardCents, nb.beforeTaxCents], [10000, 8696]);
+    // A figure just above a reachable one walks up to it, never past.
+    const up = await planCreditNote(fakeCreditStripe().stripe, TARGET_ON, 10002);
+    assert.ok(up.ok);
+    assert.ok(up.cardCents <= 10002 && up.cardCents >= 10001);
+    // Walking UP: the first estimate lands a cent below and the next cent jumps past (b 88 → $0.99, b 89 → $1.01).
+    const below = await planCreditNote(fakeCreditStripe().stripe, TARGET_ON, 100);
+    assert.ok(below.ok);
+    assert.deepEqual([below.cardCents, below.beforeTaxCents], [99, 88]);
+    for (const typed of [1, 4, 13, 22, 48, 100, 3333, 12345, 247469]) {
+      const p = await planCreditNote(fakeCreditStripe().stripe, TARGET_ON, typed);
+      assert.ok(p.ok && p.cardCents <= typed && p.cardCents >= typed - 1, `${typed} → ${p.ok ? p.cardCents : p.error}`);
+    }
+  });
+
+  it('a preview that moved since the window is a new record and a new look, never a re-send', async () => {
+    for (const ask of [
+      { amountCents: 10000, beforeTaxCents: 8850, remainingSeenCents: 247470, reason: 'Part' }, // a figure Stripe cannot make
+      { amountCents: 9999, beforeTaxCents: 8850, remainingSeenCents: 247470, reason: 'Part' },  // the split moved
+    ]) {
+      const store = fakeStore();
+      const s = fakeCreditStripe();
+      const r = await makeRefund(s.stripe, store, noteInput({ ask }));
+      assert.equal(r.ok, false);
+      assert.equal((r as { error: string }).error, REFUND_WORDS.noteChanged);
+      assert.equal(s.created.length + s.refundPosts.length, 0, 'nothing sent');
+      assert.equal(store.records[0].status, 'not_made', 'the record is closed, so the next try is a new record and a new key');
+    }
+    const none = fakeStore();
+    const t = fakeCreditStripe();
+    const r = await makeRefund(t.stripe, none, noteInput({ ask: { amountCents: 247470, remainingSeenCents: 247470, reason: 'No split sent' } }));
+    assert.equal((r as { error: string }).error, REFUND_WORDS.noteChanged);
+    assert.equal(none.captured.inserts.length, 0, 'without the before-tax figure nothing is written');
+  });
+
+  it('a credit note whose refund failed still stands, and is said so', async () => {
+    const r = await makeRefund(fakeCreditStripe({ refundStatus: 'failed' }).stripe, fakeStore(), noteInput());
+    assert.ok(r.ok);
+    assert.match((r as { message: string }).message, /did not reach the card\. The credit note stands\./);
+  });
+
+  it('Stripe’s no on the note leaves a refused record; a lost answer is unknown — as a bare refund', async () => {
+    const no = fakeStore();
+    await makeRefund(fakeCreditStripe({ error: stripeError(400, 'invalid_request_error') }).stripe, no, noteInput());
+    assert.equal(no.records[0].status, 'refused');
+    const lost = fakeStore();
+    await makeRefund(fakeCreditStripe({ error: Object.assign(new Error('timeout'), { type: 'StripeConnectionError' }) }).stripe, lost, noteInput());
+    assert.equal(lost.records[0].status, 'unknown');
+  });
+
+  it('the lines: positive lines only, the largest first, spilling past its room; the pool is the net before tax', () => {
+    // A proration invoice: the positive line (21,900) is larger than what was paid (19,000 net of the unused-time line).
+    const proration: CreditTarget = { ...TARGET_ON, total: 21470, beforeTax: 19000, lines: [{ id: 'il_new', amount: 21900, creditedCents: 0 }] };
+    assert.equal(creditRoom(proration).pool, 19000);
+    assert.deepEqual(creditLines(creditRoom(proration).order, 19000), [{ type: 'invoice_line_item', invoice_line_item: 'il_new', amount: 19000 }]);
+    // Plan + a recovered fee: the plan line takes a part refund first; past its room, the fee line.
+    const both: CreditTarget = { ...TARGET_ON, total: 249165, beforeTax: 220500, lines: [{ id: 'il_fee', amount: 1500, creditedCents: 0 }, { id: 'il_plan', amount: 219000, creditedCents: 0 }] };
+    const { order } = creditRoom(both);
+    assert.deepEqual(creditLines(order, 8850).map(l => [l.invoice_line_item, l.amount]), [['il_plan', 8850]]);
+    assert.deepEqual(creditLines(order, 219500).map(l => [l.invoice_line_item, l.amount]), [['il_plan', 219000], ['il_fee', 500]]);
+    // Earlier notes: a line's room is its amount less what they took.
+    const after = { ...both, creditedBeforeTaxCents: 8850, lines: [{ id: 'il_fee', amount: 1500, creditedCents: 0 }, { id: 'il_plan', amount: 219000, creditedCents: 8850 }] };
+    assert.equal(creditRoom(after).pool, 211650);
+    // Nothing left: refused, nothing previewed.
+    assert.equal(creditRoom({ ...both, creditedBeforeTaxCents: 220500 }).pool, 0);
+  });
+
+  it('all that is left credits every line its room, exactly (Stripe’s last note takes the remaining tax)', async () => {
+    const both: CreditTarget = { ...TARGET_ON, total: 249165, beforeTax: 220500, lines: [{ id: 'il_fee', amount: 1500, creditedCents: 0 }, { id: 'il_plan', amount: 219000, creditedCents: 0 }] };
+    const s = fakeCreditStripe();
+    const p = await planCreditNote(s.stripe, both, 249165);
+    assert.ok(p.ok);
+    assert.equal(s.previews.length, 1, 'one preview');
+    assert.deepEqual(p.lines.map(l => l.amount), [219000, 1500]);
+    assert.equal(p.cardCents, 249165);
+    assert.equal(p.capped, false);
+  });
+
+  it('recovery finds the credit note by ITS metadata (the refund a note makes carries none), never sends anything', async () => {
+    const old = new Date(NOW.getTime() - RECOVERY_AFTER_MS - 1000).toISOString();
+    const rec = (id: string) => ({ id, status: 'unknown', actor_email: 'b@x', created_at: old, amount_cents: 247470, currency: 'cad', reason: 'r', stripe_refund_id: null, stripe_invoice_id: 'in_1PlanOn', charge: INVOICE_CHARGE.id }) as RefundRecord & { charge: string };
+    const store = fakeStore([rec('rf-old')]);
+    const s = fakeCreditStripe({ listedNotes: [{ id: 'cn_9', number: 'MBEEZ5VW-0001-CN-09', metadata: { platform_refund_id: 'rf-old' }, refunds: [{ refund: 're_9', amount_refunded: 247470 }] }] });
+    await recoverRefunds(s.stripe, store, { orgId: 'org-1', chargeId: INVOICE_CHARGE.id, now: NOW });
+    assert.equal(s.noteLists(), 1);
+    assert.equal(s.refundLists(), 0, 'an invoice record is found by its note, not the charge’s refunds');
+    assert.equal(s.created.length + s.refundPosts.length, 0);
+    assert.deepEqual(store.captured.completes[0].patch, { status: 'done', stripe_refund_id: 're_9', stripe_credit_note_id: 'cn_9', stripe_credit_note_number: 'MBEEZ5VW-0001-CN-09' });
+    // No note with our id: not made (the charge is released).
+    const none = fakeStore([rec('rf-gone')]);
+    await recoverRefunds(fakeCreditStripe({ listedNotes: [{ id: 'cn_x', number: 'X', metadata: { platform_refund_id: 'someone-else' }, refunds: [] }] }).stripe, none, { orgId: 'org-1', chargeId: INVOICE_CHARGE.id, now: NOW });
+    assert.equal(none.records[0].status, 'not_made');
+  });
+
+  it('R3: a charge that paid no invoice keeps today’s bare refund, and asks Stripe for no credit note', async () => {
+    const s = fakeCreditStripe({ charged: CHARGE.amountCents });
+    const r = await makeRefund(s.stripe, fakeStore(), input({ invoice: null }));
+    assert.ok(r.ok);
+    assert.equal(s.refundPosts.length, 1);
+    assert.equal(s.created.length + s.previews.length, 0);
+    assert.equal((r as { stripeCreditNoteId: string | null }).stripeCreditNoteId, null);
   });
 });
 

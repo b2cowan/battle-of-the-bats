@@ -13,9 +13,9 @@ import { consoleClock, consoleWhen } from '@/lib/console-dates';
 import { formatStoredDate } from '@/lib/timezone';
 import { possessive } from '@/lib/utils';
 import {
-  agreeLine, cardWords, centsFromTyped, compareRecord, differsWords, findPatterns, flagWords, formatCents,
+  agreeLine, cardWords, centsFromTyped, compareRecord, creditSplitWords, differsWords, findPatterns, flagWords, formatCents,
   moneyBand, paidForWords, refundDoorRefusal, remainingCents, stripeSaysWords, subscriptionsMoreWords, REFUND_REASON_MAX, REFUND_WORDS,
-  type ChargeFlag, type CompareRow, type MoneyCharge, type MoneyRead, type OurMoneyRecord,
+  type ChargeCreditNote, type ChargeFlag, type CompareRow, type MoneyCharge, type MoneyRead, type OurMoneyRecord,
 } from '@/lib/console-money';
 import { brandLabel } from '@/lib/online-payment-words';
 import type { ConsoleRefund } from '@/lib/console-money-store';
@@ -332,7 +332,7 @@ function OursOnly({ rows }: { rows: ReturnType<typeof compareRecord> }) {
 
 // ── The charge window, then the refund window (drawing C; every refusal drawing G) ───────────────────────────────────
 
-type ChargeAnswer = { charge: MoneyCharge; ourRefunds: ConsoleRefund[]; inFlight: string | null };
+type ChargeAnswer = { charge: MoneyCharge; ourRefunds: ConsoleRefund[]; inFlight: string | null; creditNotes?: ChargeCreditNote[] | null };
 
 function ChargeWindows({ orgId, orgName, chargeId, startWithRefund, flag, gate, read, stripeBase, onClose, onRefunded }: {
   orgId: string; orgName: string; chargeId: string; startWithRefund: boolean; flag: ChargeFlag | undefined;
@@ -410,11 +410,25 @@ function ChargeWindows({ orgId, orgName, chargeId, startWithRefund, flag, gate, 
                   return (
                     <span key={r.id} className={money.refundLine}>
                       {formatCents(r.amountCents, c.currency)} · {consoleWhen(r.createdAt)} · {ours ? ours.actorEmail : 'in Stripe’s dashboard'}
+                      {ours?.creditNoteNumber ? ` · credit note ${ours.creditNoteNumber}` : ''}
                       {r.status === 'pending' ? ' · on its way' : ''}
                     </span>
                   );
                 })}
               </dd>
+              {c.invoice && (
+                <>
+                  <dt className={kit.eye}>Credit notes</dt>
+                  <dd>
+                    {answer?.creditNotes == null ? 'Not read from Stripe' : answer.creditNotes.length === 0 ? 'None' : answer.creditNotes.map(n => (
+                      <span key={n.id} className={money.refundLine}>
+                        {n.number} · {formatCents(n.totalCents, n.currency)} · {consoleWhen(n.createdAt)}
+                        {n.pdf && <>{' '}<a className={`${kit.door} ${kit.doorSm}`} href={n.pdf} target="_blank" rel="noreferrer">PDF</a></>}
+                      </span>
+                    ))}
+                  </dd>
+                </>
+              )}
               <dt className={kit.eye}>Stripe charge</dt>
               <dd className={styles.factLine}>
                 <code className={kit.code}>{c.id}</code>
@@ -434,6 +448,9 @@ function ChargeWindows({ orgId, orgName, chargeId, startWithRefund, flag, gate, 
   );
 }
 
+/** The preview route's answer (GST/HST Part 6b, R1): Stripe's credit note for the figure typed. */
+type NotePreview = { note: 'credit_note'; cardCents: number; beforeTaxCents: number; taxLines: Array<{ label: string; cents: number }>; capped: boolean; feeInvoice: boolean };
+
 function RefundWindow({ orgId, orgName, charge, read, flaggedDuplicate, onClose, onDone }: {
   orgId: string; orgName: string; charge: MoneyCharge; read: MoneyRead; flaggedDuplicate: boolean;
   onClose: () => void; onDone: (message: string) => void;
@@ -446,8 +463,30 @@ function RefundWindow({ orgId, orgName, charge, read, flaggedDuplicate, onClose,
   // A refusal after the click that sent nothing (the amount changed, our record could not be written): said in the foot.
   const [nothingSent, setNothingSent] = useState(false);
   const typedCents = centsFromTyped(typed);
-  const amount = all ? left : typedCents;
+  const asked = all ? left : typedCents;
   const over = !all && typedCents != null && typedCents > left;
+  // A charge that paid an invoice is refunded through a credit note: the figure sent is Stripe's (the nearest it can make
+  // with the tax, never above what was typed), asked as the amount settles. One that paid none is refunded as typed (R3).
+  const viaNote = !!charge.invoice;
+  const [preview, setPreview] = useState<{ forCents: number; round: number; answer: NotePreview | null; error: string | null } | null>(null);
+  // A refusal that sent nothing (the note moved since this preview) asks Stripe again, so the next try is a fresh figure.
+  const [round, setRound] = useState(0);
+  const toPreview = viaNote && asked && !over && !sent ? asked : null;
+  useEffect(() => {
+    if (toPreview == null) return;
+    let live = true;
+    const t = setTimeout(() => {
+      void sendJson(`/api/platform-admin/orgs/${orgId}/money/charges/${encodeURIComponent(charge.id)}/refund/preview`, 'POST', { amountCents: toPreview }).then(({ ok, data }) => {
+        if (!live) return;
+        setPreview({ forCents: toPreview, round, answer: ok && data.note === 'credit_note' ? data as unknown as NotePreview : null,
+          error: !ok ? errorOf(data, REFUND_WORDS.noteReadFailed) : data.note === 'credit_note' ? null : REFUND_WORDS.noteInvoiceGone });
+      });
+    }, all ? 0 : 450);
+    return () => { live = false; clearTimeout(t); };
+  }, [toPreview, round, all, orgId, charge.id]);
+  const seen = preview && preview.forCents === toPreview && preview.round === round ? preview : null;
+  const note = seen?.answer ?? null;
+  const amount = viaNote ? note?.cardCents ?? null : asked;
   const earlier = charge.refundedCents;
   const card = cardWords(charge.card);
   const when = consoleWhen(charge.createdAt);
@@ -455,19 +494,31 @@ function RefundWindow({ orgId, orgName, charge, read, flaggedDuplicate, onClose,
   const receipt = read.testMode
     ? 'Test payment: no money moves.'
     : read.customer.email ? `Stripe emails a receipt to ${read.customer.email}.` : 'Stripe has no email for this customer, so no receipt is sent.';
+  // R2: Stripe emails the credit note, from the same sender as the receipt. R3: a charge that paid no invoice has none.
+  const noteWords = !viaNote ? REFUND_WORDS.noInvoice
+    : read.customer.email ? `A credit note goes to ${read.customer.email}.` : 'Stripe has no email for this customer, so the credit note is not emailed.';
+  const split = note && note.taxLines.length > 0 ? `: ${creditSplitWords(note.beforeTaxCents, note.taxLines, charge.currency, note.feeInvoice)}` : '';
+  const moved = note && asked && note.cardCents !== asked
+    ? note.capped
+      ? `Stripe can refund at most ${formatCents(note.cardCents, charge.currency)}: the rest of this invoice was credited before. `
+      : `Stripe can refund ${formatCents(note.cardCents, charge.currency)}, the nearest it can make with the tax. `
+    : '';
 
   const sentence = amount && !over ? (
     <>
       {read.testMode && <><span className={`${kit.chip} ${kit.chipInfo}`}>Test mode</span>{' '}</>}
       {amount === charge.amountCents
-        ? <>Refund <b>{formatCents(amount, charge.currency)}</b> to the <b>{card}</b>. </>
-        : <>Refund <b>{formatCents(amount, charge.currency)}</b> of the <b>{formatCents(charge.amountCents, charge.currency)}</b> charge to the <b>{card}</b>. </>}
+        ? <>Refund <b>{formatCents(amount, charge.currency)}</b> to the <b>{card}</b>{split}. </>
+        : <>Refund <b>{formatCents(amount, charge.currency)}</b> of the <b>{formatCents(charge.amountCents, charge.currency)}</b> charge to the <b>{card}</b>{split}. </>}
+      {moved}
       <b>This cannot be undone.</b>{' '}
       {earlier + amount < charge.amountCents && <>With {earlier ? `the ${formatCents(earlier, charge.currency)} already refunded` : 'this refund'}, {formatCents(charge.amountCents - earlier - amount, charge.currency)} stays paid. </>}
       {possessive(orgName)} plan does not change{next ? <>, the subscription keeps running, and the next charge is still {formatStoredDate(next.at)}</> : ''}.
-      {' '}The card usually shows it in 5 to 10 business days. {receipt}
+      {' '}The card usually shows it in 5 to 10 business days. {receipt} {noteWords}
     </>
-  ) : <>Choose how much to refund.</>;
+  ) : viaNote && asked && !over
+    ? <>{seen?.error ?? 'Asking Stripe for the credit note…'}</>
+    : <>Choose how much to refund.</>;
 
   return (
     <RecordWindow
@@ -485,13 +536,14 @@ function RefundWindow({ orgId, orgName, charge, read, flaggedDuplicate, onClose,
       whyMax={REFUND_REASON_MAX}
       onConfirm={async reason => {
         const { ok, data } = await sendJson(`/api/platform-admin/orgs/${orgId}/money/charges/${encodeURIComponent(charge.id)}/refund`, 'POST', {
-          amountCents: amount, remainingSeenCents: left, reason, duplicate: flaggedDuplicate,
+          amountCents: amount, beforeTaxCents: note?.beforeTaxCents, remainingSeenCents: left, reason, duplicate: flaggedDuplicate,
         });
         if (ok) { onDone(typeof data.message === 'string' ? data.message : 'Refunded.'); return null; }
         // Only the server's own "nothing was sent" is believed: a lost answer (a dropped connection, a gateway's page) may
         // have followed a refund Stripe made, so it reads as unknown, and the charge is checked when it is opened again.
         if (data.nothingSent === true) {
           setNothingSent(true);
+          if (viaNote && data.field === 'amount') setRound(n => n + 1);
           return errorOf(data, 'That did not go through. Try again in a moment.');
         }
         setSent(true);

@@ -9,7 +9,7 @@ import { InFlightError, customerSharing, type CustomerWorkspace, type PriceMap, 
  * Stripe facts. The refund route hands `refundStore` to `makeRefund`; the guards hand it a fake.
  */
 
-const RECORD_COLUMNS = 'id, status, actor_email, created_at, amount_cents, currency, reason, stripe_refund_id';
+const RECORD_COLUMNS = 'id, status, actor_email, created_at, amount_cents, currency, reason, stripe_refund_id, stripe_invoice_id';
 
 export const refundStore: RefundStore = {
   async openFor(chargeId) {
@@ -89,15 +89,17 @@ export async function priceMap(): Promise<PriceMap> {
     .map(r => [r.price_id, { planId: r.plan_id, cycle: r.billing_cycle }] as const));
 }
 
-export type ConsoleRefund = { id: string; chargeId: string; stripeRefundId: string | null; status: string; amountCents: number; currency: string; actorEmail: string; createdAt: string };
+export type ConsoleRefund = { id: string; chargeId: string; stripeRefundId: string | null; status: string; amountCents: number; currency: string; actorEmail: string; createdAt: string;
+  /** GST/HST Part 6b (mig 446): the credit note that made it, when the charge paid an invoice. */
+  creditNoteNumber: string | null };
 
 /** The console's refunds of one charge (the charge window's "who"). Never the card, and not the reason (the Story has it). */
 export async function clubRefunds(orgId: string, chargeId: string): Promise<ConsoleRefund[]> {
   const { data, error } = await supabaseAdmin.from('platform_refunds')
-    .select('id, stripe_charge_id, stripe_refund_id, status, amount_cents, currency, actor_email, created_at')
+    .select('id, stripe_charge_id, stripe_refund_id, stripe_credit_note_number, status, amount_cents, currency, actor_email, created_at')
     .eq('org_id', orgId).eq('stripe_charge_id', chargeId).order('created_at', { ascending: false }).limit(100);
   if (error) throw error;
-  return ((data ?? []) as Array<{ id: string; stripe_charge_id: string; stripe_refund_id: string | null; status: string; amount_cents: number; currency: string; actor_email: string; created_at: string }>)
+  return ((data ?? []) as Array<{ id: string; stripe_charge_id: string; stripe_refund_id: string | null; stripe_credit_note_number: string | null; status: string; amount_cents: number; currency: string; actor_email: string; created_at: string }>)
     .map(r => ({ id: r.id, chargeId: r.stripe_charge_id, stripeRefundId: r.stripe_refund_id, status: r.status, amountCents: r.amount_cents,
-      currency: r.currency, actorEmail: r.actor_email, createdAt: r.created_at }));
+      currency: r.currency, actorEmail: r.actor_email, createdAt: r.created_at, creditNoteNumber: r.stripe_credit_note_number }));
 }

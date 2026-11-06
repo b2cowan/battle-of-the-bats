@@ -66,6 +66,9 @@ export type MoneyCharge = {
   invoice: MoneyInvoice | null;
 };
 
+/** GST/HST Part 6b: a credit note on the invoice a charge paid, as the charge window lists it (read live, never stored). */
+export type ChargeCreditNote = { id: string; number: string; totalCents: number; currency: string; createdAt: string; pdf: string | null };
+
 export type MoneySubscription = {
   id: string;
   status: string;
@@ -491,7 +494,12 @@ export type RefundFacts = {
   refundsLast24h: number;
   now: Date;
 };
-export type RefundAsk = { amountCents: unknown; remainingSeenCents: unknown; reason: unknown };
+/**
+ * `beforeTaxCents`: the credit note's before-tax figure the window showed (GST/HST Part 6b, R1), sent back with the card
+ * figure it previewed; the server plans the note again and refuses when Stripe's answer moved. Ignored for a charge that
+ * paid no invoice (R3).
+ */
+export type RefundAsk = { amountCents: unknown; remainingSeenCents: unknown; reason: unknown; beforeTaxCents?: unknown };
 export type RefundRefusal = { ok: false; status: number; error: string; field?: 'amount' | 'reason' };
 
 export const REFUND_WORDS = {
@@ -509,7 +517,23 @@ export const REFUND_WORDS = {
   noAnswer: 'Stripe did not answer. The refund may or may not have gone through. Opening the charge checks with Stripe; it never offers a second refund until it knows.',
   readFailed: 'Stripe could not be read, so nothing was sent. No money moved. Try again in a moment.',
   readerRole: 'Refunds are made by Billing or a Super admin. Hand this charge on with its number.',
+  // GST/HST Stage 2 Part 6b: a charge that paid an invoice is refunded through a credit note (owner R1–R3 2026-11-05).
+  manyInvoices: 'This charge paid more than one invoice, so it cannot be refunded here. Refund it in Stripe. No money moved.',
+  invoiceNotPaid: 'Stripe does not show this charge’s invoice as paid, so it cannot be refunded here. Refund it in Stripe. No money moved.',
+  manyPayments: 'This charge’s invoice was paid by more than one payment, so it cannot be refunded here. Refund it in Stripe. No money moved.',
+  nothingToCredit: 'This charge’s invoice has nothing left to credit, so it cannot be refunded here. No money moved.',
+  noteNotWorkedOut: 'Stripe could not work out a credit note for that amount. Change the amount and try again. No money moved.',
+  noteChanged: 'Stripe’s credit note for this amount changed since you opened it. Check the amount and try again. No money moved.',
+  noteReadFailed: 'Stripe could not work out the credit note just now. Try again in a moment.',
+  noteInvoiceGone: 'Stripe shows no invoice behind this charge just now, so no credit note can be made. Close this window and open the charge again.',
+  noInvoice: 'This charge paid no invoice, so there is no credit note.',
 } as const;
+
+/** "$88.50 for the plan + $11.51 HST 13%": a credit note's split, in the refund window (R1). */
+export function creditSplitWords(beforeTaxCents: number, taxLines: ReadonlyArray<{ label: string; cents: number }>, currency: string, feeInvoice: boolean): string {
+  const what = `${formatCents(beforeTaxCents, currency)} for the ${feeInvoice ? 'Stripe fees' : 'plan'}`;
+  return [what, ...taxLines.map(t => `${formatCents(t.cents, currency)} ${t.label}`)].join(' + ');
+}
 
 /** Stripe's definite no, in fixed words chosen from its error code (never its own text). */
 export function stripeRefusalWords(code: string | null): string {

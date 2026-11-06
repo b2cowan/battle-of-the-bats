@@ -124,7 +124,7 @@ export async function buildClubStory(orgId: string, opts: { money?: boolean; lea
     supabaseAdmin.from('feedback_submissions').select('id, user_email, submitter_name, type, title, body, status, triaged_by, created_at')
       .eq('org_id', orgId).order('created_at', { ascending: false }).limit(SOURCE_CAP),
     opts.money
-      ? supabaseAdmin.from('platform_refunds').select('id, stripe_charge_id, stripe_refund_id, amount_cents, currency, actor_email, reason, completed_at, created_at')
+      ? supabaseAdmin.from('platform_refunds').select('id, stripe_charge_id, stripe_refund_id, stripe_credit_note_number, amount_cents, currency, actor_email, reason, completed_at, created_at')
         .eq('org_id', orgId).eq('status', 'done').order('created_at', { ascending: false }).limit(SOURCE_CAP)
       : Promise.resolve({ data: [] as unknown[] }),
     // A Coaches Portal staff gave free time (Stage 4b): its mark (mig 406, never cleared) and what the copy brought across.
@@ -371,10 +371,14 @@ export async function buildClubStory(orgId: string, opts: { money?: boolean; lea
   }
 
   // ── Refunds made in this console (Stage 3): a fact, never Put it back; the card is never named ───────────────────
-  for (const f of (refundsRes.data ?? []) as Array<{ id: string; stripe_charge_id: string; stripe_refund_id: string | null; amount_cents: number; currency: string; actor_email: string; reason: string; completed_at: string | null; created_at: string }>) {
+  // GST/HST Part 6b (mig 446): a refund of an invoice charge names its credit note (the PDF is in the charge window it opens).
+  // One without (a charge that paid no invoice, R3, or a refund from before credit notes) says so, never "no invoice":
+  // a row from before mig 446 does not record whether it had one.
+  for (const f of (refundsRes.data ?? []) as Array<{ id: string; stripe_charge_id: string; stripe_refund_id: string | null; stripe_credit_note_number: string | null; amount_cents: number; currency: string; actor_email: string; reason: string; completed_at: string | null; created_at: string }>) {
     entries.push({
       key: `refund:${f.stripe_refund_id ?? f.id}`, at: f.completed_at ?? f.created_at, kind: 'billing',
-      title: `Refunded ${formatCents(f.amount_cents, f.currency)}${CONSOLE_REFUND_TAIL}`, sub: 'To the card it came from · the plan did not change',
+      title: `Refunded ${formatCents(f.amount_cents, f.currency)}${CONSOLE_REFUND_TAIL}`,
+      sub: `To the card it came from · ${f.stripe_credit_note_number ? `credit note ${f.stripe_credit_note_number}` : 'no credit note'} · the plan did not change`,
       who: f.actor_email, why: f.reason, chargeId: f.stripe_charge_id,
     });
   }
