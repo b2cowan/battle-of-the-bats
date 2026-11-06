@@ -162,7 +162,7 @@ hashes, never “uncommitted”.
 
 ## Progress
 
-### Session A (2026-11-06, Opus): Parts 0–2 built; migration 006 applied to development 2026-11-06
+### Session A (2026-11-06, Opus): Parts 0–2 committed f68ebf9fe 2026-11-06; migration 006 applied to development 2026-11-06
 - **006 applied to dev 2026-11-06** (after the owner refreshed the fieldlogichq login): 51 revisions / 25 expenses before and after; 5 columns
   with the right types; both tables; registration rev 1 = 2026-09-26; 0 tax lines. The app account (bookkeeping_app) reads both new tables
   and the new columns (old rows NULL). Evidence: .probe/gst4a/migration-006-{inspect,apply}.log, app-read.log.
@@ -196,5 +196,6 @@ hashes, never “uncommitted”.
   `supplierPrefill`/`sameSupplier`, `currentRegistrationDate`, `defaultPurchaseKind`, `needsSupplierNumber`, every label and sentence).
   `tests/unit/bookkeeping-gst.test.ts` 36/36: every tab-2 row, thresholds, rounding (final only, half up), before/after the date for
   services and equipment, a date change re-working a credit, legacy mapping, the sum rule, the prefill. Lint clean.
+- **Session B starts here.** Its prompt is the Session B section above plus these notes.
 - **Session B needs:** a schema-ready probe for the 006 columns (like `hasExpenseTaxColumn`); the form's money formatter is duplicated
   in four files plus `bookkeeping-gst.ts` (a `/simplify` item for Part 7).
