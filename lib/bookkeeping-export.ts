@@ -1,4 +1,5 @@
 import { businessCents, csvCell, currentExpenses, hasKnownTaxAmount, isExpenseDate, type ExpenseRevision, type ReviewFilter } from './bookkeeping-expenses';
+import { expenseCredit, resolveTaxState, TAX_TYPES, type TaxLine } from './bookkeeping-gst';
 import { currentOwnerMovements, type OwnerMovementRevision } from './bookkeeping-owner-movements';
 import { matchesExpenseFilters, type ExpenseFilters, type ExpenseStatus } from './bookkeeping-filters';
 export type { ExpenseFilters } from './bookkeeping-filters';
@@ -58,13 +59,35 @@ export function selectExpenseRevisions(revisions: ExpenseRevision[], filters: Ex
 const COLUMNS = [
   'expense_id', 'revision', 'date', 'incurred_date', 'paid_date', 'date_status', 'selected_period', 'supplier', 'category', 'business_purpose',
   'original_currency', 'original_amount', 'cad_amount', 'cad_business_amount',
-  'recorded_tax_cad', 'tax_amount_status', 'tax_status', 'business_use_percent', 'payment_source',
+  'recorded_tax_cad', 'tax_amount_status', 'tax_status',
+  // GST/HST Stage 4a: the tax lines flattened by type, the supplier facts, and the credit as worked out today.
+  'tax_answer', 'gst_cad', 'hst_cad', 'hst_rate', 'pst_cad', 'qst_cad', 'other_cad',
+  'supplier_tax_number', 'supplier_registration', 'purchase_kind', 'credit_cad', 'credit_state',
+  'business_use_percent', 'payment_source',
   'conversion_note', 'conversion_source', 'conversion_rate', 'notes', 'status', 'change_reason', 'void_reason', 'receipt_name', 'receipt_download',
   'revision_created_at', 'revision_created_by',
 ];
 const dollars = (cents: number) => (cents / 100).toFixed(2);
 
-export function expenseCsv(selected: ExpenseRevision[], filters: ExpenseFilters = { from: null, to: null, category: '', query: '', review: 'all' }): string {
+/** One revision's tax lines by type, as dollars; a type the receipt didn't have is blank. A pre-4a “Type not set” amount stays only in recorded_tax_cad. */
+function taxColumns(lines: readonly TaxLine[]): string[] {
+  const sum = (match: (line: TaxLine) => boolean) => {
+    const found = lines.filter(match);
+    return found.length ? dollars(found.reduce((total, line) => total + line.cents, 0)) : '';
+  };
+  const hstRates = [...new Set(lines.filter(line => TAX_TYPES[line.type].gstHst === 'HST').map(line => TAX_TYPES[line.type].rate))];
+  return [sum(line => line.type === 'gst5'), sum(line => TAX_TYPES[line.type].gstHst === 'HST'), hstRates.join('/'),
+    sum(line => line.type === 'pst'), sum(line => line.type === 'qst'), sum(line => line.type === 'other')];
+}
+
+/**
+ * `registrationDate` is the current GST/HST registration effective date. The credit is worked out on export from it and
+ * the revision's facts, never read from storage. It is filled only on each expense's current active revision:
+ * superseded and voided revisions leave it blank, and the status column says why. As on the record, a held credit
+ * keeps its figure with the state `held`; only the `counted` states reach the return.
+ */
+export function expenseCsv(selected: ExpenseRevision[], filters: ExpenseFilters = { from: null, to: null, category: '', query: '', review: 'all' },
+  registrationDate: string | null = null): string {
   const current = new Map(currentExpenses(selected).map(row => [row.expense_id, row]));
   const lines = [COLUMNS.map(csvCell).join(',')];
   const selectedPeriod = filters.from || filters.to ? `${filters.from || 'any start'} to ${filters.to || 'any end'}` : 'All confirmed dates; legacy dates to review included';
@@ -72,12 +95,19 @@ export function expenseCsv(selected: ExpenseRevision[], filters: ExpenseFilters 
     const latest = current.get(row.expense_id)!;
     const receiptUrl = row.receipt_path
       ? `/api/platform-admin/bookkeeping/receipt/${row.expense_id}/${row.revision}` : '';
+    const tax = resolveTaxState(row, row.tax_lines ?? []);
+    const credit = row === latest && !row.void_reason ? expenseCredit(row, registrationDate) : null;
+    const creditState = !credit ? '' : credit.registrationUnchecked ? `${credit.state}_registration_unchecked` : credit.state;
     lines.push([
       row.expense_id, row.revision, row.expense_date, row.incurred_date ?? '', row.paid_date ?? '',
       row.incurred_date && row.paid_date ? 'confirmed' : 'legacy_unconfirmed', selectedPeriod, row.supplier, row.category,
       row.business_purpose, row.original_currency, dollars(row.original_cents),
       dollars(row.cad_cents), dollars(businessCents(row)), hasKnownTaxAmount(row) ? dollars(row.tax_cad_cents) : '',
-      hasKnownTaxAmount(row) ? 'known' : 'unknown', row.tax_status, row.business_use_percent, row.payment_source,
+      hasKnownTaxAmount(row) ? 'known' : 'unknown', row.tax_status,
+      tax.answer, ...taxColumns(tax.lines),
+      row.supplier_tax_number ?? '', row.supplier_registration ?? '', row.purchase_kind ?? '',
+      credit ? dollars(credit.creditCents) : '', creditState,
+      row.business_use_percent, row.payment_source,
       row.conversion_note, row.conversion_source ?? '', row.conversion_rate ?? '', row.notes, row === latest ? (row.void_reason ? 'void' : 'current') : 'superseded',
       row.change_reason, row.void_reason, row.receipt_name, receiptUrl, row.created_at, row.created_by,
     ].map(csvCell).join(','));

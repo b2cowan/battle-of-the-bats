@@ -26,7 +26,10 @@ function expenseForm(row = expense) {
     cadAmount: (row.cad_cents / 100).toFixed(2), taxCadAmount: (row.tax_cad_cents / 100).toFixed(2), taxAmountKnown: String(row.tax_amount_known ?? ''),
     taxStatus: row.tax_status, businessUsePercent: String(row.business_use_percent), paymentSource: row.payment_source,
     conversionNote: row.conversion_note ?? '', conversionSource: row.conversion_source ?? '', conversionRate: String(row.conversion_rate ?? ''),
-    notes: row.notes ?? '', hasReceipt: String(Boolean(row.receipt_path)), receiptName: row.receipt_name ?? '', changeReason: 'S1 void', voidReason: 'S1 void' };
+    notes: row.notes ?? '', hasReceipt: String(Boolean(row.receipt_path)), receiptName: row.receipt_name ?? '',
+    taxAnswer: row.tax_answer ?? '', taxLines: JSON.stringify(row.tax_lines ?? []), supplierTaxNumber: row.supplier_tax_number ?? '',
+    supplierRegistration: row.supplier_registration ?? '', purchaseKind: row.purchase_kind ?? '', numberUnobtainable: String(row.number_unobtainable ?? ''),
+    changeReason: 'S1 void', voidReason: 'S1 void' };
   for (const [key, value] of Object.entries(values)) form.set(key, value);
   return form;
 }
@@ -35,7 +38,7 @@ function transferBody(row = movement) {
     movementKind: row.movement_kind, amount: (row.amount_cents / 100).toFixed(2), linkedExpenseId: row.linked_expense_id,
     sourceReference: row.source_reference, note: row.note, changeReason: 'S1 void', voidReason: 'S1 void' };
 }
-function route(file: string, previous: ExpenseRevision | OwnerMovementRevision, reimbursed = false) {
+function route(file: string, previous: ExpenseRevision | OwnerMovementRevision, reimbursed = false, gstReady = true) {
   const inserted: Record<string, unknown>[] = [];
   let uploaded = 0;
   const load = billingTestLoader({
@@ -45,7 +48,7 @@ function route(file: string, previous: ExpenseRevision | OwnerMovementRevision, 
     '@/lib/bookkeeping-store': {
       latestExpenseRevision: async () => previous, latestOwnerMovementRevision: async () => previous,
       hasExpenseDateColumns: async () => true, hasExpenseTaxColumn: async () => true, hasExpenseConversionColumns: async () => true,
-      hasOwnerMovementTable: async () => true,
+      hasOwnerMovementTable: async () => true, hasGstTaxSchema: async () => gstReady, gstRegistrationDate: async () => '2026-09-26',
       listExpenseRevisions: async () => [{ ...expense, payment_source: 'personal' }],
       listOwnerMovementRevisions: async () => reimbursed ? [{ ...movement, movement_kind: 'expense_reimbursement', linked_expense_id: expense.expense_id }] : [],
       insertExpenseRevision: async (row: Record<string, unknown>) => { inserted.push(row); return { ...row, created_at: 'now' }; },
@@ -80,6 +83,27 @@ describe('immutable expense void route', () => {
     for (const key of Object.keys(legacy).filter(key => !['revision', 'change_reason', 'void_reason', 'created_at', 'created_by'].includes(key)))
       assert.deepEqual(saved[key], legacy[key as keyof ExpenseRevision], key);
     assert.equal(saved.revision, 3); assert.equal(saved.void_reason, 'S1 void');
+  });
+  it('carries the GST/HST tax lines and every 4a field into the void unchanged (BKX-5.9)', async () => {
+    const gst: ExpenseRevision = { ...expense, cad_cents: 11300, original_cents: 11300, tax_cad_cents: 1300, tax_status: 'pending',
+      tax_answer: 'shown', tax_lines: [{ type: 'gst5', cents: 500 }, { type: 'pst', cents: 800 }], supplier_tax_number: null,
+      supplier_registration: 'not_checked', purchase_kind: 'capital', number_unobtainable: true };
+    const api = route('app/api/platform-admin/bookkeeping/expenses/route.ts', gst);
+    assert.equal((await api.post(expenseForm(gst))).status, 201);
+    for (const key of ['tax_answer', 'tax_lines', 'supplier_tax_number', 'supplier_registration', 'purchase_kind', 'number_unobtainable', 'tax_cad_cents'])
+      assert.deepEqual(api.inserted[0][key], gst[key as keyof ExpenseRevision], key);
+    for (const [field, value] of [['taxLines', JSON.stringify([{ type: 'hst13', cents: 1300 }])], ['taxAnswer', 'unknown'],
+      ['supplierTaxNumber', '123456789 RT0001'], ['supplierRegistration', 'normal'], ['purchaseKind', 'operating'], ['numberUnobtainable', 'false']]) {
+      const changed = route('app/api/platform-admin/bookkeeping/expenses/route.ts', gst);
+      const form = expenseForm(gst); form.set(field, value);
+      assert.equal((await changed.post(form)).status, 409, field); assert.equal(changed.inserted.length, 0, field);
+    }
+  });
+  it('pauses a void, rather than failing it, while migration 006 is not applied', async () => {
+    const api = route('app/api/platform-admin/bookkeeping/expenses/route.ts', expense, false, false);
+    const response = await api.post(expenseForm());
+    assert.equal(response.status, 503); assert.equal(api.inserted.length, 0);
+    assert.match((await response.json()).error, /storage is being updated/);
   });
   it('retains stale-revision and linked-reimbursement refusals', async () => {
     const api = route('app/api/platform-admin/bookkeeping/expenses/route.ts', expense);

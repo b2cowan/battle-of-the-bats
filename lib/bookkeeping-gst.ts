@@ -222,6 +222,36 @@ export function workOutCredit(input: CreditInput): Credit {
   };
 }
 
+/** The saved facts of one expense revision that its credit reads (structurally an ExpenseRevision). */
+export type CreditRow = TaxFacts & {
+  tax_lines?: readonly TaxLine[];
+  category: string; business_use_percent: number; cad_cents: number;
+  incurred_date?: string | null; expense_date: string; supplier: string;
+  supplier_registration?: SupplierRegistration | null; supplier_tax_number?: string | null;
+  number_unobtainable?: boolean | null; purchase_kind?: PurchaseKind | null;
+};
+
+/**
+ * The credit of a saved revision, worked out on read. Older revisions go through resolveTaxState; a registration
+ * never stated reads as Not checked, and a kind never stated starts from the category (ruling 8). Null when no
+ * registration date is on record (storage before migration 006), because no credit can be worked out without it.
+ */
+export function expenseCredit(row: CreditRow, registrationDate: string | null): Credit | null {
+  if (!registrationDate) return null;
+  return workOutCredit({
+    lines: resolveTaxState(row, row.tax_lines ?? []).lines,
+    kind: row.purchase_kind ?? defaultPurchaseKind(row.category),
+    businessUsePercent: row.business_use_percent,
+    receiptTotalCents: row.cad_cents,
+    incurredDate: row.incurred_date ?? row.expense_date,
+    registration: row.supplier_registration ?? 'not_checked',
+    hasNumber: Boolean(row.supplier_tax_number?.trim()),
+    numberUnobtainable: Boolean(row.number_unobtainable),
+    registrationDate,
+    supplier: row.supplier,
+  });
+}
+
 /** The register's fifth reason: a credit that would count but waits on the supplier's number. */
 export function needsSupplierNumber(credit: Credit): boolean {
   return credit.state === 'held';

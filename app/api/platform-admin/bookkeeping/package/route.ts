@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireBookkeepingApi } from '@/lib/bookkeeping-access';
 import { csvCell } from '@/lib/bookkeeping-expenses';
 import { expenseCsv, ownerMovementCsv, parseExpenseFilters, selectExpenseRevisions, selectOwnerMovementRevisions } from '@/lib/bookkeeping-export';
-import { getReceipt, hasOwnerMovementTable, headReceipt, listExpenseRevisions, listOwnerMovementRevisions } from '@/lib/bookkeeping-store';
+import { getReceipt, gstRegistrationDate, hasOwnerMovementTable, headReceipt, listExpenseRevisions, listOwnerMovementRevisions } from '@/lib/bookkeeping-store';
 import type { OwnerMovementRevision } from '@/lib/bookkeeping-owner-movements';
 import { zipStream, type ZipEntry } from '@/lib/bookkeeping-zip';
 import { withObservability } from '@/lib/observability';
@@ -18,8 +18,10 @@ export const GET = withObservability(async (req: NextRequest) => {
   let revisions;
   let ownerRevisions: OwnerMovementRevision[] = [];
   let ownerSchemaReady = false;
+  let registrationDate: string | null = null;
   try {
     revisions = await listExpenseRevisions();
+    registrationDate = await gstRegistrationDate();
     ownerSchemaReady = await hasOwnerMovementTable();
     if (ownerSchemaReady) ownerRevisions = await listOwnerMovementRevisions();
   } catch { return NextResponse.json({ error: 'Unable to prepare accountant package' }, { status: 500 }); }
@@ -46,7 +48,7 @@ export const GET = withObservability(async (req: NextRequest) => {
   const hashes = new Map<string, string>();
   const encoder = new TextEncoder();
   const entries: ZipEntry[] = [
-    { name: 'expenses.csv', load: async () => encoder.encode(expenseCsv(selected, filters)) },
+    { name: 'expenses.csv', load: async () => encoder.encode(expenseCsv(selected, filters, registrationDate)) },
     { name: 'owner-transfers.csv', load: async () => encoder.encode(ownerMovementCsv(selectedOwners)) },
     { name: 'package-scope.txt', load: async () => encoder.encode([
       'FieldLogicHQ private proprietor bookkeeping package',

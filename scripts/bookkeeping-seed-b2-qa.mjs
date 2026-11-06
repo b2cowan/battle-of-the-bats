@@ -5,6 +5,8 @@ const DEV_HOST = 'wbufvbnlahjfagmjgrheg4ee5q.dsql.us-east-2.on.aws';
 const DEV_BUCKET = 'fieldlogichq-bookkeeping-receipts-dev-859850635274';
 const PREFIX = 'B2 QA Seed 2026-10-23';
 const CREATED_BY = '00000000-0000-4000-8000-000000000001';
+// GST/HST Stage 4a: these rows stay pre-4a on purpose (no tax answer, no lines), so they keep exercising the legacy
+// mapping (resolveTaxState): a known amount reads “Type not set”. A row given tax_lines writes them with its revision.
 const expenses = [
   {
     id: 'b2026102-3000-4000-8000-000000000001', supplier: `${PREFIX} Personal CAD`,
@@ -101,13 +103,20 @@ try {
             expense_id, revision, expense_date, supplier, category, business_purpose,
             original_currency, original_cents, cad_cents, tax_cad_cents, tax_status,
             business_use_percent, payment_source, conversion_note, conversion_source, conversion_rate, notes, change_reason,
-            receipt_path, receipt_name, void_reason, created_by
+            receipt_path, receipt_name, void_reason, created_by,
+            tax_answer, supplier_tax_number, supplier_registration, purchase_kind, number_unobtainable
           ) VALUES (
             ${row.id}::uuid, 1, ${row.expense_date}::date, ${row.supplier}, ${row.category}, ${row.business_purpose},
             ${row.original_currency}, ${row.original_cents}, ${row.cad_cents}, ${row.tax_cad_cents}, ${row.tax_status},
             ${row.business_use_percent}, ${row.payment_source}, ${row.conversion_note}, ${row.conversion_source ?? null}, ${row.conversion_rate ?? null}, ${`Synthetic B2 QA seed; ${PREFIX}`},
-            NULL, ${row.receipt_path}, ${row.receipt_name}, NULL, ${CREATED_BY}::uuid
+            NULL, ${row.receipt_path}, ${row.receipt_name}, NULL, ${CREATED_BY}::uuid,
+            ${row.tax_answer ?? null}, ${row.supplier_tax_number ?? null}, ${row.supplier_registration ?? null},
+            ${row.purchase_kind ?? null}, ${row.number_unobtainable ?? null}
           )`;
+          for (const [index, line] of (row.tax_lines ?? []).entries()) {
+            await tx`INSERT INTO bookkeeping.expense_tax_lines (expense_id, revision, line_no, tax_type, cents)
+              VALUES (${row.id}::uuid, 1, ${index + 1}, ${line.type}, ${line.cents})`;
+          }
         }
       });
     } catch (error) {
@@ -136,6 +145,11 @@ try {
       throw new Error(`Synthetic receipt verification failed for ${row.receipt_name}.`);
     }
   }
+  // The sum rule: any seeded tax lines add up to their revision's tax amount.
+  const unbalanced = await sql`SELECT r.expense_id FROM bookkeeping.expense_revisions r
+    JOIN bookkeeping.expense_tax_lines l ON l.expense_id = r.expense_id AND l.revision = r.revision
+    WHERE r.supplier LIKE ${`${PREFIX}%`} GROUP BY r.expense_id, r.revision, r.tax_cad_cents HAVING sum(l.cents) <> r.tax_cad_cents`;
+  if (unbalanced.length) throw new Error('Seeded tax lines do not add up to their tax amount.');
   console.log('Verified development QA rows: 3 expenses, 2 receipts, $27.00 spend, $17.00 personally paid.');
   console.log(`Search the register for “${PREFIX}”.`);
 } finally {

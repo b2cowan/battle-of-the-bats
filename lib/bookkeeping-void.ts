@@ -9,7 +9,11 @@ export function expenseVoidValues(row: ExpenseRevision): Record<string, string> 
     cadAmount: (row.cad_cents / 100).toFixed(2), taxCadAmount: (row.tax_cad_cents / 100).toFixed(2), taxAmountKnown: String(row.tax_amount_known ?? ''),
     taxStatus: row.tax_status, businessUsePercent: String(row.business_use_percent), paymentSource: row.payment_source,
     conversionNote: row.conversion_note ?? '', conversionSource: row.conversion_source ?? '', conversionRate: String(row.conversion_rate ?? ''),
-    notes: row.notes ?? '', hasReceipt: String(Boolean(row.receipt_path)), receiptName: row.receipt_name ?? '' };
+    notes: row.notes ?? '', hasReceipt: String(Boolean(row.receipt_path)), receiptName: row.receipt_name ?? '',
+    // GST/HST Stage 4a: the tax answer, its lines and the supplier facts travel unchanged too (BKX-5.9).
+    taxAnswer: row.tax_answer ?? '', taxLines: JSON.stringify((row.tax_lines ?? []).map(line => ({ type: line.type, cents: line.cents }))),
+    supplierTaxNumber: row.supplier_tax_number ?? '', supplierRegistration: row.supplier_registration ?? '',
+    purchaseKind: row.purchase_kind ?? '', numberUnobtainable: String(row.number_unobtainable ?? '') };
 }
 export function expenseVoidForm(row: ExpenseRevision, reason: string): FormData {
   const form = new FormData();

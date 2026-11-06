@@ -14,6 +14,13 @@ const base: ExpenseRevision = {
   void_reason: null, created_at: '2026-05-02T00:00:00Z', created_by: 'owner',
 };
 
+/** One cell of an exported CSV, by data row index and column name (every cell is quoted, and these test values hold no commas). */
+function cell(csv: string, row: number, column: string): string {
+  const [head, ...rows] = csv.replace('﻿', '').trim().split('\r\n');
+  const names = head.split(',').map(name => JSON.parse(name));
+  return JSON.parse(rows[row].split(',')[names.indexOf(column)]);
+}
+
 describe('bookkeeping accountant export', () => {
   it('exports source and derived rate while leaving legacy conversion columns blank', () => {
     const usd = { ...base, original_currency: 'USD' as const, conversion_source: 'card_statement' as const, conversion_rate: 1.40644878262777 };
@@ -32,6 +39,41 @@ describe('bookkeeping accountant export', () => {
     assert.match(csv, /"'\=Supplier"/);
     assert.match(csv, /"superseded"/);
     assert.match(csv, /"current"/);
+  });
+
+  it('flattens tax lines by type and works the credit out on export, for the current active revision only', () => {
+    const header = expenseCsv([]).replace('﻿', '').split('\r\n')[0];
+    assert.match(header, /"tax_status","tax_answer","gst_cad","hst_cad","hst_rate","pst_cad","qst_cad","other_cad","supplier_tax_number","supplier_registration","purchase_kind","credit_cad","credit_state","business_use_percent"/);
+    const bc: ExpenseRevision = { ...base, incurred_date: '2026-10-01', paid_date: '2026-10-01', cad_cents: 11200, original_cents: 11200, tax_cad_cents: 1200,
+      tax_answer: 'shown', tax_lines: [{ type: 'gst5', cents: 500 }, { type: 'pst', cents: 700 }], supplier_tax_number: '123456789 RT0001',
+      supplier_registration: 'normal', purchase_kind: 'operating', number_unobtainable: false };
+    const csv = expenseCsv([bc], undefined, '2026-09-26');
+    assert.deepEqual(['gst_cad', 'hst_cad', 'hst_rate', 'pst_cad', 'qst_cad', 'other_cad'].map(column => cell(csv, 0, column)), ['5.00', '', '', '7.00', '', '']);
+    assert.deepEqual(['supplier_tax_number', 'supplier_registration', 'purchase_kind', 'credit_cad', 'credit_state'].map(column => cell(csv, 0, column)),
+      ['123456789 RT0001', 'normal', 'operating', '5.00', 'counted']);
+    const hst = { ...bc, tax_cad_cents: 1456, tax_lines: [{ type: 'hst13' as const, cents: 1300 }, { type: 'hst15' as const, cents: 156 }] };
+    assert.deepEqual(['hst_cad', 'hst_rate'].map(column => cell(expenseCsv([hst], undefined, '2026-09-26'), 0, column)), ['14.56', '13/15']);
+    // A held credit keeps its figure, as on the record; Not checked is counted and says so.
+    const held = { ...bc, supplier_tax_number: null };
+    assert.deepEqual(['credit_cad', 'credit_state'].map(column => cell(expenseCsv([held], undefined, '2026-09-26'), 0, column)), ['5.00', 'held']);
+    const unchecked = { ...bc, supplier_registration: 'not_checked' as const };
+    assert.equal(cell(expenseCsv([unchecked], undefined, '2026-09-26'), 0, 'credit_state'), 'counted_registration_unchecked');
+    // The registration date is read, never stored: moving it after the purchase removes the credit.
+    assert.deepEqual(['credit_cad', 'credit_state'].map(column => cell(expenseCsv([bc], undefined, '2026-10-02'), 0, column)), ['0.00', 'before_registration']);
+    // Superseded and voided revisions carry no credit; neither does storage without a registration date.
+    const corrected = { ...bc, revision: 2, change_reason: 'Number added' };
+    const history = expenseCsv([bc, corrected], undefined, '2026-09-26');
+    assert.deepEqual([cell(history, 0, 'credit_cad'), cell(history, 0, 'credit_state'), cell(history, 1, 'credit_state')], ['', '', 'counted']);
+    assert.equal(cell(expenseCsv([{ ...bc, void_reason: 'Duplicate' }], undefined, '2026-09-26'), 0, 'credit_cad'), '');
+    assert.equal(cell(expenseCsv([bc]), 0, 'credit_state'), '');
+  });
+  it('maps a pre-4a revision through the legacy rule, so nothing old changes meaning', () => {
+    const one = (row: ExpenseRevision, column: string) => cell(expenseCsv([row], undefined, '2026-09-26'), 0, column);
+    const known = { ...base, tax_amount_known: true };
+    assert.deepEqual(['tax_answer', 'recorded_tax_cad', 'gst_cad', 'hst_cad', 'credit_state'].map(column => one(known, column)), ['shown', '0.13', '', '', 'type_not_set']);
+    assert.deepEqual(['tax_answer', 'credit_state'].map(column => one({ ...base, tax_cad_cents: 0, tax_amount_known: false }, column)), ['unknown', 'no_tax']);
+    assert.deepEqual(['tax_answer', 'credit_state'].map(column => one({ ...base, tax_cad_cents: 0, tax_status: 'none' }, column)), ['none', 'no_tax']);
+    assert.doesNotMatch(expenseCsv([base], undefined, '2026-09-26'), /undefined|NaN|null/);
   });
 
   it('rejects invalid ranges', () => {

@@ -34,16 +34,24 @@ try {
   }
   await mkdir('.bookkeeping-backups', { recursive: true });
   await s3.send(new PutObjectCommand({ Bucket: bucket, Key: key, Body: bytes, ContentType: 'application/pdf', IfNoneMatch: '*' }));
-  await sql`INSERT INTO bookkeeping.expense_revisions (
-    expense_id, revision, expense_date, supplier, category, business_purpose,
-    original_currency, original_cents, cad_cents, tax_cad_cents, tax_status,
-    business_use_percent, payment_source, receipt_path, receipt_name, created_by
-  ) VALUES (
-    ${id}::uuid, 1, '2026-10-23'::date, 'Synthetic restore drill', 'Testing',
-    'Restore proof only', 'CAD', 123, 123, 0, 'none', 100, 'personal',
-    ${key.slice('receipts/'.length)}, 'synthetic.pdf', ${actor}::uuid
-  )`;
+  // GST/HST Stage 4a: the synthetic revision carries every 006 field and one tax line, written together.
+  await sql.begin(async tx => {
+    await tx`INSERT INTO bookkeeping.expense_revisions (
+      expense_id, revision, expense_date, supplier, category, business_purpose,
+      original_currency, original_cents, cad_cents, tax_cad_cents, tax_status,
+      business_use_percent, payment_source, receipt_path, receipt_name, created_by,
+      tax_answer, supplier_tax_number, supplier_registration, purchase_kind, number_unobtainable
+    ) VALUES (
+      ${id}::uuid, 1, '2026-10-23'::date, 'Synthetic restore drill', 'Testing',
+      'Restore proof only', 'CAD', 123, 123, 14, 'pending', 100, 'personal',
+      ${key.slice('receipts/'.length)}, 'synthetic.pdf', ${actor}::uuid,
+      'shown', '123456789 RT0001', 'normal', 'operating', false
+    )`;
+    await tx`INSERT INTO bookkeeping.expense_tax_lines (expense_id, revision, line_no, tax_type, cents)
+      VALUES (${id}::uuid, 1, 1, 'hst13', 14)`;
+  });
   const before = await sql`SELECT created_at FROM bookkeeping.expense_revisions WHERE expense_id = ${id}::uuid`;
+  const lineBefore = await sql`SELECT created_at FROM bookkeeping.expense_tax_lines WHERE expense_id = ${id}::uuid`;
   backup('create');
   backup('verify');
   const tampered = await readFile(archive);
@@ -56,21 +64,31 @@ try {
     });
   } catch { rejected = true; }
   if (!rejected) throw new Error('Tampered encrypted backup was accepted');
+  await sql`DELETE FROM bookkeeping.expense_tax_lines WHERE expense_id = ${id}::uuid`;
   await sql`DELETE FROM bookkeeping.expense_revisions WHERE expense_id = ${id}::uuid`;
   const versionsBefore = await s3.send(new ListObjectVersionsCommand({ Bucket: bucket, Prefix: key }));
   for (const version of versionsBefore.Versions ?? []) {
     if (version.Key === key) await s3.send(new DeleteObjectCommand({ Bucket: bucket, Key: key, VersionId: version.VersionId }));
   }
   backup('restore-dev');
-  const after = await sql`SELECT expense_id, revision, created_at, cad_cents FROM bookkeeping.expense_revisions WHERE expense_id = ${id}::uuid`;
+  const after = await sql`SELECT expense_id, revision, created_at, cad_cents, tax_answer, supplier_tax_number, supplier_registration,
+    purchase_kind, number_unobtainable FROM bookkeeping.expense_revisions WHERE expense_id = ${id}::uuid`;
   if (after.length !== 1 || after[0].revision !== 1 || Number(after[0].cad_cents) !== 123 ||
     String(after[0].created_at) !== String(before[0].created_at)) throw new Error('Restored row differs from source');
+  if (after[0].tax_answer !== 'shown' || after[0].supplier_tax_number !== '123456789 RT0001' || after[0].supplier_registration !== 'normal' ||
+    after[0].purchase_kind !== 'operating' || after[0].number_unobtainable !== false) throw new Error('Restored GST/HST fields differ from source');
+  const lineAfter = await sql`SELECT line_no, tax_type, cents, created_at FROM bookkeeping.expense_tax_lines WHERE expense_id = ${id}::uuid`;
+  if (lineAfter.length !== 1 || lineAfter[0].line_no !== 1 || lineAfter[0].tax_type !== 'hst13' || Number(lineAfter[0].cents) !== 14 ||
+    String(lineAfter[0].created_at) !== String(lineBefore[0].created_at)) throw new Error('Restored tax line differs from source');
   const object = await s3.send(new GetObjectCommand({ Bucket: bucket, Key: key }));
   const received = object.Body && await object.Body.transformToByteArray();
   if (!received || !Buffer.from(received).equals(bytes)) throw new Error('Restored receipt bytes differ from source');
-  console.log('Synthetic development backup and restore preserved the revision, timestamp and receipt bytes');
+  console.log('Synthetic development backup and restore preserved the revision, its GST/HST fields and tax line, timestamps and receipt bytes');
 } finally {
-  try { await sql`DELETE FROM bookkeeping.expense_revisions WHERE expense_id = ${id}::uuid`; }
+  try {
+    await sql`DELETE FROM bookkeeping.expense_tax_lines WHERE expense_id = ${id}::uuid`;
+    await sql`DELETE FROM bookkeeping.expense_revisions WHERE expense_id = ${id}::uuid`;
+  }
   finally {
     const versions = await s3.send(new ListObjectVersionsCommand({ Bucket: bucket, Prefix: key }));
     for (const version of [...(versions.Versions ?? []), ...(versions.DeleteMarkers ?? [])]) {

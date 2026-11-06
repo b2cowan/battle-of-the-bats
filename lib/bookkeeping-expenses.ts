@@ -1,3 +1,8 @@
+import {
+  isPurchaseKind, isSupplierRegistration, isTaxAnswer, isTaxType, resolveTaxState, taxLinesMatchTotal,
+  type PurchaseKind, type SupplierRegistration, type TaxAnswer, type TaxLine,
+} from './bookkeeping-gst';
+
 export type TaxStatus = 'pending' | 'none' | 'reviewed';
 export type PaymentSource = 'business_bank' | 'business_card' | 'personal' | 'other';
 export const CONVERSION_SOURCES = {
@@ -45,6 +50,14 @@ export type ExpenseRevision = {
   void_reason: string | null;
   created_at: string;
   created_by: string;
+  /** GST/HST Stage 4a (migration 006). NULL or absent = saved before 006; resolveTaxState maps those. */
+  tax_answer?: TaxAnswer | null;
+  supplier_tax_number?: string | null;
+  supplier_registration?: SupplierRegistration | null;
+  purchase_kind?: PurchaseKind | null;
+  number_unobtainable?: boolean | null;
+  /** This revision's stored rows of bookkeeping.expense_tax_lines, in line order. Absent before 006. */
+  tax_lines?: TaxLine[];
 };
 
 export function currentExpenses(rows: ExpenseRevision[]): ExpenseRevision[] {
@@ -219,6 +232,67 @@ export function validateExpenseFields(input: ExpenseFieldInput): FieldRefusal | 
   if (input.isVoid && !input.voidReason) return { field: 'voidReason', error: 'Say why this expense should leave the report.' };
   if (input.isCorrection && !input.changeReason) return { field: input.isVoid ? 'voidReason' : 'changeReason', error: 'Say what changed and why.' };
   return null;
+}
+
+export const MAX_TAX_LINES = 10;
+export const MAX_SUPPLIER_TAX_NUMBER = 40;
+const RELOAD = 'Reload the page and try again.';
+
+/** The raw GST/HST Stage 4a fields of an expense post. Text fields are trimmed; null = absent or over its limit. */
+export type ExpenseTaxInput = {
+  taxAnswer: string | null; taxLines: string | null; taxCents: number;
+  supplierTaxNumber: string | null; hasSupplierTaxNumber: boolean;
+  supplierRegistration: string | null; purchaseKind: string | null; numberUnobtainable: string | null;
+  /** Only a correction of an expense whose saved tax already has “Type not set” may keep that type. */
+  allowUnsetType: boolean;
+};
+export type ExpenseTaxFields = Required<Pick<ExpenseRevision,
+  'tax_answer' | 'tax_lines' | 'supplier_tax_number' | 'supplier_registration' | 'purchase_kind' | 'number_unobtainable' | 'tax_amount_known'>>;
+
+/**
+ * The tax section of a 4a post. Nothing here blocks a save beyond today's rules: the amount is required once
+ * “Shown on the receipt” is picked, and the lines must add up to it (the sum rule). A credit is never read
+ * from the client: the server works it out on read from these facts and the registration date.
+ */
+export function validateExpenseTaxFields(input: ExpenseTaxInput): FieldRefusal | { value: ExpenseTaxFields } {
+  if (!isTaxAnswer(input.taxAnswer)) return { field: 'taxAnswer', error: 'Choose what this receipt shows for tax.' };
+  let parsed: unknown = [];
+  if (input.taxLines) {
+    try { parsed = JSON.parse(input.taxLines); } catch { return { error: RELOAD }; }
+  }
+  if (!Array.isArray(parsed) || parsed.length > MAX_TAX_LINES) return { error: RELOAD };
+  const lines: TaxLine[] = [];
+  for (const item of parsed) {
+    if (!item || typeof item !== 'object' || Array.isArray(item)) return { error: RELOAD };
+    const { type, cents } = item as Record<string, unknown>;
+    if (!isTaxType(type) || (type === 'unset' && !input.allowUnsetType)) return { error: RELOAD };
+    if (typeof cents !== 'number' || !Number.isSafeInteger(cents) || cents <= 0) return { field: 'taxLines', error: 'Enter each tax amount above $0.00.' };
+    lines.push({ type, cents });
+  }
+  if (input.taxAnswer === 'shown') {
+    if (!lines.length) return { field: 'taxLines', error: 'Enter the tax amount.' };
+    if (!taxLinesMatchTotal(lines, input.taxCents)) return { field: 'taxLines', error: `The tax lines don't add up to the tax amount. ${RELOAD}` };
+  } else if (lines.length || input.taxCents !== 0) return { error: RELOAD };
+  if (input.hasSupplierTaxNumber && input.supplierTaxNumber === null) {
+    return { field: 'supplierTaxNumber', error: `Keep the number to ${MAX_SUPPLIER_TAX_NUMBER} characters.` };
+  }
+  if (input.supplierRegistration && !isSupplierRegistration(input.supplierRegistration)) return { error: RELOAD };
+  if (input.purchaseKind && !isPurchaseKind(input.purchaseKind)) return { error: RELOAD };
+  if (!['', 'true', 'false'].includes(input.numberUnobtainable ?? '')) return { error: RELOAD };
+  const number = input.supplierTaxNumber || null;
+  return { value: {
+    tax_answer: input.taxAnswer, tax_lines: lines, tax_amount_known: input.taxAnswer !== 'unknown',
+    supplier_tax_number: number,
+    supplier_registration: (input.supplierRegistration || null) as SupplierRegistration | null,
+    purchase_kind: (input.purchaseKind || null) as PurchaseKind | null,
+    // A number on hand means there is nothing to give up on.
+    number_unobtainable: input.numberUnobtainable === 'true' && !number,
+  } };
+}
+
+/** True when the saved tax of this revision resolves to a line of type “Type not set” (a pre-4a amount, or one kept so). */
+export function hasUnsetTaxType(row: ExpenseRevision): boolean {
+  return resolveTaxState(row, row.tax_lines ?? []).lines.some(line => line.type === 'unset');
 }
 
 export function isExpenseDate(value: unknown): value is string {
