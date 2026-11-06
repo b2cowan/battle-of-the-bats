@@ -802,7 +802,7 @@ earlier re-check, two owner questions first; BC4b the phone frames, three owner 
 Build prompt written 2026-11-06: `BANK_BALANCE_CHECK_BC5_BUILD_PROMPT.md` (two sessions: BC5a the Overview line and the
 fiscal-year close row, three owner questions first; BC5b the printable report, help and the club half's words, two owner
 questions first). The Teams tab's "Bank checked" column (R0 tab 7) reads each team's bank, so it is BC8's.
-- [x] **The Overview line and the fiscal-year close row — BC5a built 2026-11-06** (owner: §0 "Overview accounts",
+- [x] **The Overview line and the fiscal-year close row — BC5a built 2026-11-06, committed `0ec285816` 2026-11-06** (owner: §0 "Overview accounts",
   "Overview past year", "Close row", "Close snapshot" ruled as recommended; yes to the UX summary). Anchors:
   - **Rules** (`lib/bank-club-rules.ts`): `checkedThrough(checks, asOf?)` now carries the check's `id` and, with `asOf`,
     reads the latest check on or before that day; `bankCloseRow(checks, lastDay)` → `unchecked` (no check by the year
