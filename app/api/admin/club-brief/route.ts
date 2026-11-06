@@ -10,6 +10,8 @@ import { withObservability, captureAndJson } from '@/lib/observability';
 import { canOpenFamilies } from '@/lib/families-access';
 import { buildDuplicatePairs } from '@/lib/families-read';
 import { tournamentToday } from '@/lib/timezone';
+import { canSeeFeesOwed, type FeesOwed } from '@/lib/fee-invoice-alert';
+import { readFeesOwed } from '@/lib/fee-invoices-owed';
 import type { OrgRole } from '@/lib/types';
 
 /**
@@ -41,6 +43,11 @@ import type { OrgRole } from '@/lib/types';
  *   detail — the drawn sub-lines of two cards: tryouts { teams, oldest: { teamId, programYearId } }
  *            (how many teams have one waiting; the card opens the team with the OLDEST application)
  *            and paymentRequests { oldestDays }. Present only where the count itself is present.
+ *
+ * ── Fee invoice alerts, Part 2 (2026-11-05) ─────────────────────────────────────────────────────────
+ *   feesOwed — { count, overdue }: FieldLogicHQ fee invoices the club still owes (open), and how many are past due. OWNER ONLY
+ *            (`hasBillingAccess`): the key is ABSENT for anyone else and when the read fails. Not a "count" above — it is
+ *            money the club owes US, so it has no acting role list and does not follow the rep-team scope.
  */
 
 /** Who may act, per count — copied from the route that performs the action, never widened. ⚖ The two
@@ -205,6 +212,16 @@ export const GET = withObservability(async (req: Request) => {
     })());
   }
 
+  // ── Fee invoices the club owes (Fee invoice alerts, Part 2): OWNER ONLY — present for someone with the billing door,
+  // ABSENT (not zero) for everyone else. One read of the club's own open rows, no Stripe call. A failed read leaves it ABSENT
+  // (no pill) rather than a calm 0, and never takes the rest of the brief down with it.
+  let feesOwed: FeesOwed | undefined;
+  if (canSeeFeesOwed(ctx.role, ctx.capabilities)) {
+    reads.push((async () => {
+      try { feesOwed = await readFeesOwed(org.id); } catch (e) { console.error('[club-brief] the fee invoices owed read failed:', e); }
+    })());
+  }
+
   const [shape] = await Promise.all([shapeRead, ...reads]);
   // A count that failed is not a zero — say so rather than print a calm 0 (the brief is a to-do list).
   if (fail.error) return captureAndJson(fail.error, { error: 'Could not read this morning’s brief.' }, 500);
@@ -217,5 +234,6 @@ export const GET = withObservability(async (req: Request) => {
       ? { teams: { active: teamIds.length, groups: new Set(teamRows.map(t => t.group_id).filter(Boolean)).size } }
       : {}),
     detail,
+    ...(feesOwed ? { feesOwed } : {}),
   });
 }, { route: '/api/admin/club-brief' });

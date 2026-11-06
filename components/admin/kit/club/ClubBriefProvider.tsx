@@ -18,6 +18,8 @@ import { usePathname } from 'next/navigation';
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
 import { isTournamentOnlyWorkspace } from '@/lib/module-entitlements';
+import { hasBillingAccess } from '@/lib/roles';
+import type { FeesOwed } from '@/lib/fee-invoice-alert';
 import type { AdminProgramKey, ClubShape } from '@/lib/admin-kit-nav';
 
 export type BriefKey = 'tryoutApplications' | 'paymentRequests' | 'installmentsDue' | 'assistantCoaches' | 'familyDuplicates';
@@ -37,6 +39,8 @@ export type ClubBrief = {
     /** `sent`: payments coaches say are on the way; `overdue`: the overdue band inside the count. */
     installmentsDue?: { sent: number; overdue?: number };
   };
+  /** Fee invoices the club owes FieldLogicHQ — OWNER ONLY (present only with billing access; absent otherwise and when the read failed). */
+  feesOwed?: FeesOwed;
 };
 
 type State = { orgSlug: string | null; status: 'loading' | 'ready' | 'error'; brief: ClubBrief | null };
@@ -53,14 +57,16 @@ const ClubBriefContext = createContext<ClubBriefValue | null>(null);
 
 export function ClubBriefProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const { currentOrg } = useOrg();
+  const { currentOrg, userRole, userCapabilities } = useOrg();
   const { tournaments } = useTournament();
   const orgSlug = currentOrg?.slug ?? null;
   const base = orgSlug ? `/${orgSlug}/admin` : null;
   const onHub = pathname === base;
-  // A tournament-only workspace has no club hub and no program order to feed; a cancelled one has
-  // nothing to act on (every program is closed until it pays again).
-  const enabled = !!currentOrg && !isTournamentOnlyWorkspace(currentOrg) && currentOrg.subscriptionStatus !== 'canceled';
+  // A tournament-only workspace has no club hub and no program order to feed — but its OWNER still owes fee invoices
+  // (Fee invoice alerts, Part 2, owner ruling 2026-11-05), so the read stays on for the person with the billing door and
+  // for no one else there. A cancelled one has nothing to act on (every program is closed until it pays again).
+  const enabled = !!currentOrg && currentOrg.subscriptionStatus !== 'canceled'
+    && (!isTournamentOnlyWorkspace(currentOrg) || hasBillingAccess(userRole, userCapabilities));
 
   const [state, setState] = useState<State>({ orgSlug: null, status: 'loading', brief: null });
   const [nonce, setNonce] = useState(0);

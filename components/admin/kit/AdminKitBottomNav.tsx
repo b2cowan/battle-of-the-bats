@@ -45,6 +45,7 @@ import { briefProgramCount } from './club/ClubBriefProvider';
 import { MESSAGES_TAB } from '@/lib/invite-only-words';
 import styles from '@/components/coaches/CoachesBottomNav.module.css';
 import kit from './AdminKitFrame.module.css';
+import { useFeeAlert } from './useFeeAlert';
 
 const badge = (n: number): string => (n > 9 ? '9+' : String(n));
 
@@ -163,7 +164,13 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
     || (!tournamentBar && nav.section === 'org')
     || pathname === `${base}/notifications`;
   const moreChat = tournamentBar && chatInNav && !chatIsPrimary ? chatUnread : 0;
-  const moreBadge = moreChat + notifUnread;
+  // Fee invoice alerts, Part 2: the Plan & billing signal rides More's pill (and the sheet's own row) — amber to pay, red overdue.
+  const feeAlert = useFeeAlert();
+  const moreUnread = moreChat + notifUnread;
+  const moreBadge = moreUnread + (feeAlert?.count ?? 0);
+  // One spoken label: the unread part only when there are unread, then the fee part in its own words (never "invoices unread").
+  const moreLabel = ['More', ...(moreUnread > 0 ? [`${badge(moreUnread)} unread`] : []), ...(feeAlert ? [feeAlert.label] : [])].join(', ');
+  const feeTone = feeAlert ? (feeAlert.tone === 'red' ? styles.feeRed : styles.feeAmber) : '';
   const close = () => setMoreOpen(false);
 
   const row = (l: KitLink, count = 0) => {
@@ -233,12 +240,12 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
           id="admin-mob-more"
           aria-haspopup="true"
           aria-expanded={moreOpen}
-          aria-label={!moreOpen && moreBadge > 0 ? `More, ${badge(moreBadge)} unread` : undefined}
+          aria-label={!moreOpen && moreBadge > 0 ? moreLabel : undefined}
         >
           <span className={styles.iconWrap}>
             {moreOpen ? <X size={22} strokeWidth={2} aria-hidden /> : <MoreHorizontal size={22} strokeWidth={moreActive ? 2.5 : 1.8} aria-hidden />}
             {moreActive && !moreOpen && <span className={styles.activeDot} />}
-            {!moreOpen && moreBadge > 0 && <span aria-hidden className={styles.tabCount}>{badge(moreBadge)}</span>}
+            {!moreOpen && moreBadge > 0 && <span aria-hidden className={`${styles.tabCount}${feeTone ? ` ${feeTone}` : ''}`}>{badge(moreBadge)}</span>}
           </span>
           <span className={styles.label}>More</span>
         </button>
@@ -340,6 +347,7 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
                     )}
                     {billingLink && <Link className={styles.dropItem} href={billingLink.href} role="menuitem" id="admin-mob-billing" onClick={close} aria-current={isKitLinkActive(pathname, billingLink) ? 'page' : undefined}>
                       {billingLink.icon && <billingLink.icon size={17} aria-hidden />}<span>{billingLink.label}</span>
+                      {feeAlert && <span className={`${styles.dropCount} ${feeTone}`} aria-label={feeAlert.label}>{badge(feeAlert.count)}</span>}
                     </Link>}
                   </div>
                 </>

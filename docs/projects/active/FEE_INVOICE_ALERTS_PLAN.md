@@ -89,6 +89,36 @@ approver. Coaches portal untouched (the coach portal has no fee invoices).
 
 ## Progress
 
+- 2026-11-05 (Part 2 `/review`, high-risk tier, three lenses: security/tenant, correctness, regression): **no Critical or High; the owner-only
+  gate holds** (non-owner, no-billing-capability and other-org cases all get the field ABSENT). Fixed: a comment overstating the route's gate;
+  edge-case tests added (due exactly now; unreadable date). **Known, left, for Parts 3–4 or an owner call:** (a) ⚠ **a CANCELLED club's owner
+  sees no pill** (the route refuses a cancelled org and the provider skips it, yet fee invoices exist for cancelled clubs) — this is Part 4's
+  cancelled-club shell; that part must also carry the figure (the route would need the suspended-org opt-out, a decision point in
+  `org-billing-access-guard`, or the figure moves to an already-exempt billing route); (b) the pill goes stale after paying until the owner
+  reloads or revisits the hub, and a tournament-only owner never lands on the hub, so for them only a reload refreshes it — Part 3's page line
+  should call the brief's `reload()` on a payment; (c) **owner call:** More's phone pill adds unread chat/notifications to the invoice count
+  in the fee colour (3 unread + 1 invoice reads "4" amber); the screen-reader label splits them correctly; options: keep (as built, the
+  build prompt said to add it), or show only the fee count when a fee signal exists; (d) a span's `aria-label` inside a link is not announced
+  by most screen readers (same pattern as the existing rail and notification counts); (e) the sandbox owner receives the figure from the
+  route but never sees it.
+- 2026-11-05 (Part 2 built, **uncommitted**): the signal's data and the pill. **Owner rulings this session:** (1) tournament-only workspaces'
+  owners are read too (the brief fetch stays on for them, owner only); (2) only `open` is owed (`uncollectible` drops out; the rest of the
+  product counts open + uncollectible, so the pill and the online-payment endings can differ by that one state); (3) pill words accepted
+  as proposed, with the curly apostrophe (`Plan payment didn’t go through`). **Built:** `lib/fee-invoice-alert.ts` (pure: `FeesOwed`,
+  `feesOwedFrom`, `feeAlertFor`, `canSeeFeesOwed`, `FEE_ALERT_WORDS`; `PLAN_BILLING_WORDS.feeAlert` is the same object, kept in the tiny file
+  so the rail does not pull the whole words module); `lib/fee-invoices-owed.ts` (one read: own `org_id`, this key's `livemode`, `open`, no
+  Stripe); `feesOwed` on `/api/admin/club-brief` (owner only, ABSENT otherwise and when the read fails); `useFeeAlert` (null unless
+  `billingLink != null`; `past_due` read from the org, no fetch); rail foot pill (`WaitingCount` gained a `tone`); phone: More's pill carries the
+  fee count, More's spoken label is built as "More, N unread, <fee words>" (no invoice is ever "unread"), the sheet's billing row wears the
+  pill. Red = the rail's tint recipe with `--danger-rgb`/`--danger-text` (`.countRed`; `.feeAmber`/`.feeRed` in the bottom nav's shared sheet):
+  **no new token, so Ask 8's one extension is still unspent.** Red's number is the OVERDUE invoices (figure, colour and words agree); a
+  failed plan payment adds 1 and its own phrase. `kitBillingLink` and its call are untouched (nav-standard-guard). Tests:
+  `tests/unit/fee-invoice-alert.test.ts` (new) + the nav/kit/billing/contrast guards pass; typecheck clean. **Known, left:** (a) the brief
+  re-reads only on arrival at the hub, so after paying, the pill clears on the next hub visit or reload; (b) `npm test` shows 7 failures in
+  other areas (practice-plans phone guard, plan-billing-usage, public-tournament stage 6 walk ×3, series-date-groups, support-console
+  stage 3) and `check-admin-old-look` / `check-admin-type` / `check-css-selectors` fail on other sessions' files; none touch these files;
+  (c) **owed:** dev server restart (the auto-mode classifier refused the stop; new files + route field), `check:layout --changed` at 361 and
+  1440 on the rail/bottom nav, the owner's walk. No help article, banner or page line (Parts 3–5).
 - 2026-11-05 (later): **Part 1 BUILT, not yet applied or walked.** Migration `444_fee_invoice_total_and_tax.sql` written (adds `total` and
   `tax_lines`) but **NOT applied to dev: the auto-mode classifier refused the apply as a shared-resource change, so the owner applies it**
   (`node scripts/apply-migration-api.mjs supabase/migrations/444_fee_invoice_total_and_tax.sql`, then `npm run refresh:snapshots`).
@@ -102,6 +132,20 @@ approver. Coaches portal untouched (the coach portal has no fee invoices).
 - 2026-11-05 (after the owner's yes): **migration 444 applied to dev**; snapshots refreshed by the hook; `check:dictionary` passes;
   the dev-vs-prod drift lists exactly 444's three objects (`total`, `tax_lines`, `platform_fee_invoices_tax_lines_chk`) as missing on
   prod, as expected. **Prod apply owed before this code promotes.** Dev server restart owed before a browser look.
+- 2026-11-05 (review): **Part 1 `/review` (high-risk tier, four lenses) done.** Fixed in the follow-up commit: the address tidy no longer
+  lower-cases a small word right after the house number (45 The Esplanade), keeps French ordinals (5e avenue) and PO/RR/PH/c/o and
+  directions with punctuation (NW,); the invoice read is scoped to the club's own org; the Pay link goes out only as an https address;
+  the "Tax" fallback line is drawn only when every fee on the invoice is in hand (read cap, returned fee), else none; an invoice with no
+  day draws no sub line; dictionary wording corrected (no backfill for paid/void rows; amount_due claim softened). **Known, left as
+  is:** (a) ⚠ **migration 444 must be on prod BEFORE this code promotes** — the shared invoice column list now names `total` and
+  `tax_lines`, so code first would fail the monthly fee-invoice run, its emails and reminders, and the paid/open status writes (they
+  heal after the migration; nothing is double-billed); (b) a returned (credit-note) fee shows as its own plain row, not as a negative
+  line under its invoice, and the invoice total is Stripe's — whether that equals the Stripe page's amount owed after a credit note is
+  unconfirmed (check in test mode before the walk); (c) the fee read is capped at the newest 50 rows, so a club with more than 50
+  fees may see lines that don't add up to the total; (d) test-mode vs live rows are not separated on this read (never was; every writer
+  is pinned to the live key). No unit test yet for the grouping render itself.
+- 2026-11-05: **Part 2 build prompt written:** [FEE_INVOICE_ALERTS_PART2_BUILD_PROMPT.md](FEE_INVOICE_ALERTS_PART2_BUILD_PROMPT.md).
+  It notes `--danger-fill` already exists, so the red pill may need no new token (check contrast first).
 - Wording (marketing helper, 2026-11-05): proposals returned for the banner, page line, chips, pill spoken labels and plurals; Part 1's
   strings are in. Parts 2–4's strings are proposals pending the owner's nod (see the summary in the conversation): plural forms are
   needed because two open fee invoices can exist.

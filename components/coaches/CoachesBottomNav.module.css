@@ -129,6 +129,19 @@
     font-weight: 700;
     line-height: 1;
   }
+  /* The Plan & billing signal (Fee invoice alerts, Part 2): the rail's own count recipe — a tint, a word-coloured digit and a
+     hairline edge — amber while an invoice is open (or a plan payment failed), red once one is overdue. It rides More's pill
+     in place of the lime unread colour. Tokens only (`admin-kit-guard`); the same recipe is `.countRed` in AdminKitFrame. */
+  .tabCount.feeAmber, .dropCount.feeAmber {
+    background: rgba(var(--home-amber-rgb), 0.11);
+    color: var(--home-amber);
+    box-shadow: inset 0 0 0 1px rgba(var(--home-amber-rgb), 0.32);
+  }
+  .tabCount.feeRed, .dropCount.feeRed {
+    background: rgba(var(--danger-rgb), 0.11);
+    color: var(--danger-text);
+    box-shadow: inset 0 0 0 1px rgba(var(--danger-rgb), 0.32);
+  }
 
   /* MIXED CASE (owner, 2026-09-27): the portal's type ladder already set primary navigation in
      sentence case (2026-08-19 — nav was tying the uppercase column headings it navigates to), and

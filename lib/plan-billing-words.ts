@@ -20,6 +20,7 @@ import { PLAN_BILLING_TITLE } from './plan-billing-title';
 import type { OrgPlan as OrgPlanKey } from './types';
 import { STATUS_WORD } from './tournament-status-words';
 import { BILLING_TAX_WORDS } from './billing-tax';
+import { FEE_ALERT_WORDS } from './fee-invoice-alert';
 
 const day = (iso: string) => formatStoredDate(iso, { longMonth: true });
 /** "November 30" — a date the sentence has already given with its year. */
@@ -56,6 +57,9 @@ const charge = (plan: OrgPlanKey, billing: BillingCycle, cents?: number | null, 
   : price(billing === 'annual' ? PLAN_CONFIG[plan].annualPrice : PLAN_CONFIG[plan].monthlyPrice, billing);
 
 export const PLAN_BILLING_WORDS = {
+  /** The spoken labels of the Plan & billing door's pill (rail + phone More) — Fee invoice alerts Part 2; the object lives in
+   *  the tiny `fee-invoice-alert` module so the rail's bundle does not pull this whole file. */
+  feeAlert: FEE_ALERT_WORDS,
   coverage: {
     eyebrow: 'Plan',
     title: (club: string) => `Covered by ${club}`,

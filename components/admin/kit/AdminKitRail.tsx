@@ -51,15 +51,16 @@ import { briefPageCount, briefProgramCount } from './club/ClubBriefProvider';
 import { useHouseLeagueAccess, useHouseLeagueSeasons, type FrameSeason } from './useHouseLeagueSeasons';
 import { seasonGroup, seasonPageHref, seasonPagesFor, seasonSegment, toReviewLabel } from '@/lib/house-league-season';
 import type { HouseLeagueAccess } from '@/lib/house-league-access';
+import { useFeeAlert } from './useFeeAlert';
 import styles from './AdminKitFrame.module.css';
 
 /** A page as both the rail and the strip's menu list it (a season's Registrations carries its waiting count). */
 type PageRow = { href: string; label: string; active: boolean; count?: number; countLabel?: string };
 
 /** The amber waiting count, worn by a rail door and by its row in the strip's menu. */
-function WaitingCount({ count, label, className = '' }: { count: number; label: string; className?: string }) {
+function WaitingCount({ count, label, className = '', tone = 'amber' }: { count: number; label: string; className?: string; tone?: 'amber' | 'red' }) {
   if (count <= 0) return null;
-  return <span className={`${styles.count}${className ? ` ${className}` : ''}`} aria-label={label}>{count > 9 ? '9+' : count}</span>;
+  return <span className={`${styles.count}${tone === 'red' ? ` ${styles.countRed}` : ''}${className ? ` ${className}` : ''}`} aria-label={label}>{count > 9 ? '9+' : count}</span>;
 }
 
 /** One rail door — the coach rail's row, with the admin's worklist count and chat badge. `stripIcon` is an
@@ -120,6 +121,7 @@ export default function AdminKitRail() {
     base, orgSlug, programs, alsoOnPlan, brief, orgLinks, section, tournamentOnly, isCanceled,
     onTournaments, coachDoor, calendarLink, schedulesLink, billingLink, helpHref, siteInNav,
   } = nav;
+  const feeAlert = useFeeAlert();
   const repTeamId = pathname.match(/\/rep-teams\/teams\/([^/]+)/)?.[1] ?? null;
   const seasonId = pathname.match(/\/house-league\/seasons\/([^/]+)/)?.[1] ?? null;
   const repTeamName = useRailTeamName(repTeamId);
@@ -321,6 +323,8 @@ export default function AdminKitRail() {
         <div className={styles.foot}>
           {billingLink && <Link href={billingLink.href} className={`${styles.item} ${styles.footItem}${isKitLinkActive(pathname, billingLink) ? ` ${styles.itemActive}` : ''}`} aria-current={isKitLinkActive(pathname, billingLink) ? 'page' : undefined}>
             {billingLink.icon && <billingLink.icon size={14} aria-hidden />} <span className={strip.rowLabel}>{billingLink.label}</span>
+            {/* Fee invoice alerts, Part 2: an invoice to pay (amber), an overdue one (red) or a failed plan payment (amber). */}
+            {feeAlert && <WaitingCount count={feeAlert.count} label={feeAlert.label} tone={feeAlert.tone} className={strip.cornerCount} />}
           </Link>}
           <Link href={helpHref} className={`${styles.item} ${styles.footItem}`} target="_blank" rel="noopener noreferrer">
             <HelpCircle size={14} aria-hidden /> <span className={strip.rowLabel}>Help</span> <ReleaseDot className={strip.cornerDot} />
