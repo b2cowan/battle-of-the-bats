@@ -8,6 +8,15 @@
 .blockLabel { margin: 0 0 0.4rem; font-size: var(--type-support); font-weight: 650; color: var(--text-secondary); }
 /* The phone's one sentence per team. */
 .sentence { margin: 0; font-size: var(--type-body); color: var(--text-secondary); line-height: 1.45; }
+/* Last signed (owner 2026-11-05): the one value, then "+N earlier" on its line. A house-league value takes its
+   "House league" line under it, as the Seasons table does; the link stays beside the season's name. */
+.last { display: inline-flex; align-items: baseline; flex-wrap: wrap; gap: 0 0.5rem; }
+/* `button.` outranks the kit's `.inlineLink` (its `font: inherit`) whichever stylesheet loads last. The kit's
+   tap floor (44px at 768 and below) is kept on purpose: a touch tablet sees this table. */
+button.earlier { font-size: var(--type-support); white-space: nowrap; }
+.sentence button.earlier { margin-left: 0.5rem; }
+/* A date is one token (2026-08-14): never wraps, figures line up. */
+.date { white-space: nowrap; font-variant-numeric: tabular-nums; }
 .ask { margin-top: 0.9rem; }
 .askLine { display: block; margin-top: 0.15rem; font-size: var(--type-support); color: var(--text-secondary); }
 .askError { margin: 0.5rem 0 0; font-size: var(--type-support); color: var(--danger); }

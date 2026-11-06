@@ -32,7 +32,7 @@ import { isLiveSeasonStatus } from './season-live';
 import { isFinishedLeagueSeason } from './house-league-access';
 import {
   currentChip, documentRows, historyOnlyRows, leagueFeesLine, leagueSeasonStatus, repFeesLine, repSeasonStatus,
-  sortSeasonRows, type ChildDocumentRow, type ChildSeasonRow,
+  sortSeasonRows, type ChildDocumentRow, type ChildSeasonRow, type LeagueWaiver,
 } from './child-page-words';
 
 export interface ChildPageDocuments {
@@ -59,8 +59,8 @@ export interface ChildPagePayload {
   currentChip: string | null;
   seasons: ChildSeasonRow[];
   documents: ChildPageDocuments[];
-  /** House-league waivers when the child has no rep team at all (the Documents section's only rows). */
-  leagueOnlyWaivers: string[];
+  /** House-league waivers when the child has no rep team at all (the Documents section's only rows), newest first. */
+  leagueOnlyWaivers: LeagueWaiver[];
   health: {
     medicalNotes: string | null;
     emergencyName: string | null;
@@ -186,7 +186,10 @@ export async function buildChildPage(orgId: string, childId: string): Promise<Ch
   const sortedSeasons = sortSeasonRows(seasons);
 
   // ── Documents, per team ──
-  const leagueWaivers = league.filter(r => r.waiver_accepted_at).map(r => String(one(r.league_seasons)?.name ?? 'House league'));
+  // Each with the date the sign-up accepted it, so the Waiver row sorts it in among the team's copies by date.
+  const leagueWaivers: LeagueWaiver[] = league.filter(r => r.waiver_accepted_at)
+    // A missing season record gives '' (the copy then reads by its date), never "House league" — the row already says that.
+    .map(r => ({ seasonName: String(one(r.league_seasons)?.name ?? ''), acceptedAt: String(r.waiver_accepted_at) }));
   const liveEntries = liveRepEntries(rep);
   const documents: ChildPageDocuments[] = [];
   const asEntry = (r: RepRow) => ({ id: r.id, childId: r.child_id, teamId: r.team_id, orgId, status: r.status });
@@ -198,7 +201,7 @@ export async function buildChildPage(orgId: string, childId: string): Promise<Ch
     const y = yearOf(r)!;
     const docs = await readChildTeamDocuments(asEntry(r));
     const state = documentStateRows({ templates: templatesForTeam(templateRows, r.team_id), documents: docs, season: { id: y.id, name: y.name } });
-    const rows = documentRows({ state, documents: docs, workingSeasonId: y.id, leagueWaivers: waiversPlaced ? [] : leagueWaivers });
+    const rows = documentRows({ state, documents: docs, leagueWaivers: waiversPlaced ? [] : leagueWaivers });
     if (rows.some(x => x.documentType === 'waiver')) waiversPlaced = true;
     documents.push({
       teamId: r.team_id, teamName: teamNameOf(r), seasonName: y.name, seasonYear: Number(y.year),

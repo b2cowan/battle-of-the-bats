@@ -163,48 +163,87 @@ export interface ChildDocumentRow {
   /** "Needs signing" / "On file", or null (history only). */
   chip: string | null;
   tone: 'good' | 'warn' | null;
-  /** "2026 Season · Summer 2025 waiver" — earlier copies by season; a good-until-replaced copy on file by its date. */
-  history: string;
+  /**
+   * LAST SIGNED (owner 2026-11-05, drawing https://claude.ai/artifact/58oV67ka48y4yCFPqWneya, "proceed as recommended"):
+   * the newest copy — "2026 Season", a house-league summer ("Summer 2025" over "House league"), or, for a
+   * good-until-replaced document, its date. Null when nothing was ever signed (the cell's dash). This season's own copy
+   * counts (A1): an on-file row reads "2027 Season", never a dash that could read as never signed.
+   */
+  last: { text: string; houseLeague: boolean; isDate: boolean } | null;
+  /** EVERY copy, newest first by date, rep and house league in one list — the window behind "+N earlier" (N = length − 1).
+   *  A replaced good-until-replaced copy is here too (A4). */
+  copies: DocumentCopy[];
 }
 
-/** The rows for one team: the working season's state per type (the coach's rows) and each type's history. */
+/** One signed copy: a team's upload, or a waiver accepted at a house-league sign-up. */
+export interface DocumentCopy {
+  /** "2026 Season" / "Summer 2025". */
+  seasonName: string;
+  houseLeague: boolean;
+  /** The stored timestamp: when the copy was recorded on the team, or when the sign-up accepted the waiver. */
+  at: string;
+}
+
+/** A house-league sign-up that accepted the waiver. */
+export interface LeagueWaiver {
+  seasonName: string;
+  acceptedAt: string;
+}
+
+/** A stored timestamp as a sort key; one that will not parse sorts last rather than scrambling the order (NaN). */
+const sortKey = (at: string) => Date.parse(at) || 0;
+
+/** Newest first by date; the house-league waivers sort IN, never appended after the team's copies (the old History bug). */
+export function documentCopies(documents: readonly SeasonDocument[], leagueWaivers: readonly LeagueWaiver[] = []): DocumentCopy[] {
+  const copies: DocumentCopy[] = [
+    ...documents.map(d => ({ seasonName: d.seasonName, houseLeague: false, at: d.createdAt })),
+    ...leagueWaivers.map(w => ({ seasonName: w.seasonName, houseLeague: true, at: w.acceptedAt })),
+  ];
+  return copies.sort((a, b) => sortKey(b.at) - sortKey(a.at));
+}
+
+/** A copy's name: its season, or — when the season's record is missing (the reader gives '') — its date, never a blank. */
+export function copyName(c: DocumentCopy): string {
+  return c.seasonName || formatStoredDate(c.at);
+}
+
+/** The row's one value: the season's name, or the date for a document that stays good until it is replaced. */
+function lastSigned(copies: readonly DocumentCopy[], byDate: boolean): ChildDocumentRow['last'] {
+  const c = copies[0];
+  if (!c) return null;
+  const isDate = byDate || !c.seasonName;
+  return { text: isDate ? formatStoredDate(c.at) : c.seasonName, houseLeague: c.houseLeague, isDate };
+}
+
+/** The rows for one team: the working season's state per type (the coach's rows) and each type's last signed copy. */
 export function documentRows(p: {
   state: readonly DocumentStateRow[];
   documents: readonly SeasonDocument[];
-  workingSeasonId: string;
-  /** House-league seasons whose sign-up accepted the waiver ("Summer 2025") — added to the Waiver row's history. */
-  leagueWaivers?: readonly string[];
+  /** House-league sign-ups that accepted the waiver — copies of the Waiver row. */
+  leagueWaivers?: readonly LeagueWaiver[];
 }): ChildDocumentRow[] {
   return p.state.map(s => {
-    const docs = p.documents.filter(d => d.documentType === s.documentType)
-      .slice().sort((a, b) => b.seasonYear - a.seasonYear || (b.createdAt < a.createdAt ? -1 : 1));
-    let history: string[];
-    if (s.validity === 'good_until_replaced' && s.state === 'on_file') {
-      history = docs[0] ? [formatStoredDate(docs[0].createdAt)] : [];
-    } else {
-      history = [...new Set(docs.filter(d => d.seasonId !== p.workingSeasonId).map(d => d.seasonName).filter(Boolean))];
-    }
-    if (s.documentType === 'waiver') history.push(...(p.leagueWaivers ?? []).map(n => `${n} waiver`));
+    const copies = documentCopies(
+      p.documents.filter(d => d.documentType === s.documentType),
+      s.documentType === 'waiver' ? p.leagueWaivers : [],
+    );
     return {
       documentType: s.documentType, label: s.label, validity: VALIDITY_LABEL[s.validity],
-      state: s.state, chip: s.chip, tone: s.state === 'on_file' ? 'good' : 'warn', history: history.join(' · '),
+      state: s.state, chip: s.chip, tone: s.state === 'on_file' ? 'good' : 'warn',
+      last: lastSigned(copies, s.validity === 'good_until_replaced'), copies,
     };
   });
 }
 
-/** A team with no working season: what was signed, by season, with no state. */
-export function historyOnlyRows(documents: readonly SeasonDocument[], leagueWaivers: readonly string[] = []): ChildDocumentRow[] {
-  const byType = new Map<RepDocumentType, string[]>();
-  for (const d of documents.slice().sort((a, b) => b.seasonYear - a.seasonYear)) {
-    const list = byType.get(d.documentType) ?? [];
-    if (d.seasonName && !list.includes(d.seasonName)) list.push(d.seasonName);
-    byType.set(d.documentType, list);
-  }
-  if (leagueWaivers.length) byType.set('waiver', [...(byType.get('waiver') ?? []), ...leagueWaivers.map(n => `${n} waiver`)]);
+/** A team with no working season: what was signed, with no state — each type's last copy by season. */
+export function historyOnlyRows(documents: readonly SeasonDocument[], leagueWaivers: readonly LeagueWaiver[] = []): ChildDocumentRow[] {
   const order: RepDocumentType[] = ['waiver', 'code_of_conduct', 'medical_consent', 'other'];
-  return order.filter(t => byType.has(t)).map(t => ({
-    documentType: t, label: DOCUMENT_TYPE_LABEL[t], validity: null, state: null, chip: null, tone: null, history: (byType.get(t) ?? []).join(' · '),
-  }));
+  return order.flatMap(t => {
+    const copies = documentCopies(documents.filter(d => d.documentType === t), t === 'waiver' ? leagueWaivers : []);
+    return copies.length
+      ? [{ documentType: t, label: DOCUMENT_TYPE_LABEL[t], validity: null, state: null, chip: null, tone: null, last: lastSigned(copies, false), copies }]
+      : [];
+  });
 }
 
 /** The phone's one sentence: "Waiver and code of conduct need signing for 2027. Medical consent on file." */
@@ -235,8 +274,21 @@ export const CHILD_PAGE_WORDS = {
   colFees: 'Fees',
   colDocument: 'Document',
   colFor: (year: number) => `For ${year}`,
-  colHistory: 'History',
+  colLastSigned: 'Last signed',
   houseLeague: 'House league',
+  /** "+3 earlier" — opens every copy. */
+  earlier: (n: number) => `+${n} earlier`,
+  earlierLabel: (doc: string, n: number) => `${doc}: ${pluralize(n, 'earlier copy', 'earlier copies')}`,
+  /** The window: "Waiver" under "Avery Park · S5 Lynx". */
+  copiesEyebrow: (child: string, where: string) => `${child} · ${where}`,
+  copiesCount: (n: number) => `${pluralize(n, 'signed copy', 'signed copies')}, newest first.`,
+  colDate: 'Date',
+  colHow: 'How',
+  howUploaded: 'Uploaded',
+  howSignUp: 'Accepted at sign-up',
+  /** The child with no rep team: "House league: Summer 2029 waiver accepted at sign-up." */
+  leagueOnlyWaiver: (seasonName: string) => `${seasonName} waiver accepted at sign-up.`,
+  waiver: 'Waiver',
   born: (dob: string) => `Born ${formatStoredDate(dob)}`,
   medicalNote: 'Medical note',
   emergencyContact: 'Emergency contact',

@@ -7,6 +7,25 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-11-05 — A CHILD'S DOCUMENTS: ONE "LAST SIGNED" A ROW, EVERY COPY BEHIND "+N EARLIER" (owner, "proceed as recommended", asks A1–A5 on https://claude.ai/artifact/58oV67ka48y4yCFPqWneya; raised from the S5 child page: *"putting a list of past documents could make this too much of a jumble of words … maybe something to click to see a whole list?"*)
+
+**Decision (as ruled):** the child page's Documents card replaces the History column (every earlier copy joined with
+"·", house-league waivers appended after the team's copies whatever their date) with **Last signed**: one value per
+row, the newest copy **by date** across the team's uploads and house-league sign-ups; a document signed each season
+shows the season's name, one good until replaced shows its date; a dash when never signed. **"+N earlier"** (the kit's
+inline link at the support size, on the value's line, only when there are earlier copies) opens a read-only window at
+640 (a short table keeps 640) listing every copy newest first: Season · Date · How (Uploaded / Accepted at sign-up).
+(A1) This season's own copy counts: an on-file row reads "2027 Season", never a dash. (A2) A house-league copy is the
+season's name with "House league" under it, as the Seasons table names it. (A3) The phone keeps its one sentence; no
+earlier copies on a phone. (A4) A replaced good-until-replaced copy counts toward "+N earlier". (A5) A copy in the
+window does not open its file — a separate staff-access question. The house-league-only sentence and the
+between-seasons block take the same rule.
+**Rationale:** the column grew one entry a season and buried the newest house-league copy last; the question a reader
+brings is "have they signed this before?", which one value answers. In a table cell the window's door stays an inline
+link: the outlined-button rule (2026-10-01) is for toolbars and window feet, and a box in every row is the noise this
+removed (the /design pass's call, drawn and accepted).
+**Applies to:** the club child page's Documents card (Club Tier Stage 14 S5).
+
 ### 2026-11-05 — A FEE INVOICE THE CLUB OWES: GROUPED BY INVOICE, TOLD TO THE OWNER BY A RAIL PILL, A PAGE LINE AND, WHEN OVERDUE, A PINNED BANNER (owner, drawing asks 1–8 all A on https://claude.ai/artifact/4dmPojUsg4EspaphPVxSEc; raised from: *"is this the only way owners become aware of invoices they owe?"*)
 
 **Decision (as ruled):** (1) Plan & billing's Stripe fees list groups by invoice: one invoice row (number, due date, an Overdue chip with

@@ -1,0 +1,542 @@
+<title>Child page · Last signed</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700&family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
+<style>
+/* Layout: sticky numbered tabs → a View row → one framed specimen per section, its explanation beside it. */
+:root {
+  /* document chrome — a cool slate ground, so the warm product frames read as specimens */
+  --doc-bg: #EDEFF1; --doc-panel: #FFFFFF; --doc-ink: #1D2228; --doc-soft: #4D5660; --doc-dim: #6B747E;
+  --doc-line: rgba(29, 34, 40, 0.12); --doc-accent: #2E5E8C; --doc-accent-soft: rgba(46, 94, 140, 0.10);
+  --tag-new: #2E6B3A; --tag-new-bg: rgba(46, 107, 58, 0.10);
+  --tag-re: #8A5A00; --tag-re-bg: rgba(138, 90, 0, 0.10);
+  --tag-un: #5B6470; --tag-un-bg: rgba(91, 100, 112, 0.10);
+  --tag-gone: #9B2C2C; --tag-gone-bg: rgba(155, 44, 44, 0.08);
+  /* the product's warm portal tokens (globals.css), restated by value — the specimen is always the light warm theme */
+  --p-paper: #F8F4ED; --p-card: #FFFFFF; --p-ink: #241E15; --p-ink-soft: #4A4235; --p-dim: #615A54;
+  --p-line: rgba(70, 55, 30, 0.12); --p-olive: #57651E; --p-olive-soft: rgba(87, 101, 30, 0.10);
+  --p-warn-ink: #6B4105; --p-warn-rgb: 131, 80, 6; --p-good-ink: #2A5222; --p-good-rgb: 52, 102, 42;
+  --f-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --f-display: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  --f-data: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --doc-bg: #14171B; --doc-panel: #1C2026; --doc-ink: #E7EAEE; --doc-soft: #B3BAC3; --doc-dim: #8A929C;
+    --doc-line: rgba(231, 234, 238, 0.12); --doc-accent: #8DB6DE; --doc-accent-soft: rgba(141, 182, 222, 0.14);
+    --tag-new: #8FD19C; --tag-new-bg: rgba(143, 209, 156, 0.12);
+    --tag-re: #E8BE6A; --tag-re-bg: rgba(232, 190, 106, 0.12);
+    --tag-un: #AEB6C0; --tag-un-bg: rgba(174, 182, 192, 0.12);
+    --tag-gone: #F0A0A0; --tag-gone-bg: rgba(240, 160, 160, 0.10);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --doc-bg: #14171B; --doc-panel: #1C2026; --doc-ink: #E7EAEE; --doc-soft: #B3BAC3; --doc-dim: #8A929C;
+  --doc-line: rgba(231, 234, 238, 0.12); --doc-accent: #8DB6DE; --doc-accent-soft: rgba(141, 182, 222, 0.14);
+  --tag-new: #8FD19C; --tag-new-bg: rgba(143, 209, 156, 0.12);
+  --tag-re: #E8BE6A; --tag-re-bg: rgba(232, 190, 106, 0.12);
+  --tag-un: #AEB6C0; --tag-un-bg: rgba(174, 182, 192, 0.12);
+  --tag-gone: #F0A0A0; --tag-gone-bg: rgba(240, 160, 160, 0.10);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--doc-bg); color: var(--doc-ink); font-family: var(--f-sans); font-size: 14px; line-height: 1.5; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--doc-panel); }
+.wrap { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); max-width: 1280px; margin: 0 auto; }
+
+/* ── page head + sticky tabs ── */
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--doc-panel); border-bottom: 1px solid var(--doc-line); }
+.top .wrap { padding-block: 0.7rem 0; }
+.kicker { margin: 0; font-family: var(--f-data); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--doc-dim); }
+h1 { margin: 0.1rem 0 0.55rem; font-size: 1.15rem; font-weight: 700; text-wrap: balance; }
+.tabs { display: flex; gap: 0.25rem; overflow-x: auto; scrollbar-width: none; }
+.tabs button { flex: none; font: inherit; font-weight: 600; font-size: 13px; color: var(--doc-soft); background: none; border: 0; border-bottom: 2px solid transparent; padding: 0.5rem 0.75rem 0.6rem; cursor: pointer; }
+.tabs button[aria-selected="true"] { color: var(--doc-ink); border-bottom-color: var(--doc-accent); }
+.tabs button:focus-visible, button:focus-visible, a:focus-visible { outline: 2px solid var(--doc-accent); outline-offset: 2px; }
+
+main .wrap { padding-block: 1.1rem 3rem; }
+section[role="tabpanel"] { display: grid; gap: 1rem; }
+.lede { margin: 0; max-width: 72ch; color: var(--doc-soft); }
+.lede b { color: var(--doc-ink); }
+
+/* the View row — ONE white track with two options (the kit's ViewSwitch look) */
+.viewRow { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+.viewRow > span { font-family: var(--f-data); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--doc-dim); }
+.track { display: inline-flex; padding: 3px; gap: 2px; background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 999px; }
+.track button { font: inherit; font-size: 13px; font-weight: 600; color: var(--doc-soft); background: none; border: 0; border-radius: 999px; padding: 0.3rem 0.85rem; cursor: pointer; }
+.track button[aria-pressed="true"] { background: var(--doc-accent-soft); color: var(--doc-ink); }
+
+/* a specimen and its notes */
+.spec { display: grid; gap: 0.6rem; min-width: 0; }
+.specHead { display: flex; align-items: baseline; gap: 0.6rem; flex-wrap: wrap; }
+.specHead h2 { margin: 0; font-size: 0.95rem; font-weight: 700; }
+.chrome { font-family: var(--f-data); font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--doc-dim); }
+.frame { overflow-x: auto; border-radius: 10px; border: 1px solid var(--doc-line); background: var(--p-paper); padding: 1rem; }
+.notes { margin: 0; padding-left: 1.1rem; color: var(--doc-soft); max-width: 78ch; display: grid; gap: 0.3rem; }
+.notes b { color: var(--doc-ink); }
+.split { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.25rem; }
+
+/* tags — NEW / RESTYLED / UNCHANGED / REMOVED, each opens its note */
+.mk { display: inline-flex; align-items: center; gap: 0.25rem; font-family: var(--f-data); font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; border-radius: 4px; padding: 0.1rem 0.4rem; border: 0; cursor: pointer; vertical-align: 0.1em; }
+.mk.new { color: var(--tag-new); background: var(--tag-new-bg); }
+.mk.re { color: var(--tag-re); background: var(--tag-re-bg); }
+.mk.un { color: var(--tag-un); background: var(--tag-un-bg); }
+.mk.gone { color: var(--tag-gone); background: var(--tag-gone-bg); }
+.pin { display: inline-flex; align-items: center; justify-content: center; width: 1.25rem; height: 1.25rem; border-radius: 999px; background: var(--doc-accent); color: var(--doc-panel); font-family: var(--f-data); font-size: 10px; font-weight: 700; border: 0; cursor: pointer; vertical-align: 0.15em; margin-left: 0.3rem; }
+
+/* ═════════ THE PRODUCT, restated by value from the shipped kit ═════════ */
+.p { font-family: var(--f-sans); color: var(--p-ink); font-size: 14px; line-height: 1.5; }
+.pPair { display: grid; grid-template-columns: 690px 440px; gap: 0 20px; align-items: start; width: 1150px; }
+.pPair.solo { grid-template-columns: 690px; width: 690px; }
+.pSection { background: var(--p-card); border: 1px solid var(--p-line); border-radius: 8px; }
+.pSectionHead { display: flex; align-items: center; gap: 0.5rem 0.75rem; padding: 0.85rem 1.1rem 0.4rem; }
+.pSectionTitle { margin: 0 auto 0 0; font-size: 16px; font-weight: 700; line-height: 1.25; color: var(--p-ink); }
+.pSectionBody { padding: 0.4rem 1.1rem 1.05rem; }
+.pBlocks { display: flex; flex-direction: column; gap: 0.9rem; }
+.pBlockLabel { margin: 0 0 0.4rem; font-size: 12px; font-weight: 650; color: var(--p-ink-soft); }
+.pTableFrame { border: 1px solid var(--p-line); border-radius: 8px; background: var(--p-card); overflow-x: auto; }
+.pTable { width: 100%; border-collapse: collapse; }
+.pTable th { text-align: left; padding: 0.42rem 1rem; font-family: var(--f-display); font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--p-ink-soft); border-bottom: 1px solid var(--p-line); white-space: nowrap; }
+.pTable td { padding: 0.42rem 1rem; font-size: 14px; color: var(--p-ink); border-bottom: 1px solid var(--p-line); vertical-align: middle; }
+.pTable tr:has(.ladder) > td { padding-top: 0.62rem; padding-bottom: 0.62rem; }
+.pTable tbody tr:last-child > td { border-bottom: 0; }
+.name { font-weight: 650; color: var(--p-ink); }
+.ladder { display: block; font-size: 12px; color: var(--p-ink-soft); }
+.dimc { color: var(--p-dim); }
+.chip { display: inline-flex; align-items: center; font-family: var(--f-data); font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; border: 1px solid var(--p-line); border-radius: 999px; padding: 0.12rem 0.5rem; white-space: nowrap; }
+.chip.warn { color: var(--p-warn-ink); background: rgba(var(--p-warn-rgb), 0.08); border-color: rgba(var(--p-warn-rgb), 0.3); }
+.chip.good { color: var(--p-good-ink); background: rgba(var(--p-good-rgb), 0.08); border-color: rgba(var(--p-good-rgb), 0.28); }
+.sentence { margin: 0; font-size: 14px; color: var(--p-ink-soft); line-height: 1.45; }
+/* "+N earlier" — the kit's inlineLink at the support size, on the value's line */
+.earlier { margin-left: 0.5rem; font: inherit; font-size: 12px; font-weight: 650; color: var(--p-olive); text-decoration: underline; text-underline-offset: 3px; background: none; border: 0; padding: 0; cursor: pointer; white-space: nowrap; }
+.earlier:hover { color: var(--p-ink); }
+.last { white-space: nowrap; }
+/* Health, sketched only as a neighbour */
+.dl { display: grid; grid-template-columns: max-content 1fr; gap: 0.4rem 1rem; margin: 0; font-size: 14px; }
+.dl dt { color: var(--p-dim); }
+.dl dd { margin: 0; }
+/* "Show only what differs" */
+.diffOnly .same { opacity: 0.22; }
+.diffOnly .same .mk { visibility: hidden; }
+
+/* the window (KitDialog size "medium" 640: a short table keeps 640, One Window S2; tinted edge, no shadow, Q6) */
+.scrim { background: rgba(36, 30, 21, 0.28); padding: 1.6rem; border-radius: 8px; display: flex; justify-content: center; width: 720px; }
+.kd { width: 640px; background: var(--p-card); border: 1px solid rgba(87, 101, 30, 0.3); border-radius: 12px; font-family: var(--f-sans); }
+.kdHead { display: flex; align-items: flex-start; gap: 0.6rem; padding: 1.1rem 1.5rem 0.4rem; }
+.kdTitleBlock { flex: 1; min-width: 0; }
+.kdEyebrow { margin: 0 0 0.2rem; font-family: var(--f-data); font-size: 11px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--p-ink-soft); }
+.kdTitle { margin: 0; font-size: 16px; font-weight: 700; line-height: 1.25; color: var(--p-ink); }
+.kdClose { width: 2rem; height: 2rem; display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: 6px; background: none; color: var(--p-dim); cursor: pointer; }
+.kdClose:hover { background: var(--p-olive-soft); color: var(--p-ink); }
+.kdBody { padding: 0.6rem 1.5rem 1.25rem; color: var(--p-ink-soft); font-size: 14px; }
+.kdBody p { margin: 0 0 0.75rem; }
+
+/* phone */
+.phone { width: 390px; background: var(--p-paper); border-radius: 22px; border: 1px solid var(--doc-line); padding: 14px 12px; }
+.phones { display: flex; gap: 1.25rem; flex-wrap: wrap; align-items: flex-start; }
+.phoneCol { display: grid; gap: 0.5rem; }
+.phone .pSectionHead { padding: 0.8rem 1rem 0.35rem; }
+.phone .pSectionBody { padding: 0.35rem 1rem 1rem; }
+.phone .earlier { display: inline-flex; align-items: center; min-height: 44px; margin-left: 0; }
+.phone .kd { width: 100%; border-radius: 14px 14px 0 0; }
+.phone .kdClose { width: 44px; height: 44px; margin: -0.5rem -0.6rem 0 0; }
+
+/* asks */
+.asks { display: grid; gap: 0.75rem; }
+.ask { background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; padding: 0.9rem 1rem; display: grid; gap: 0.35rem; max-width: 86ch; }
+.ask h3 { margin: 0; font-size: 0.95rem; font-weight: 700; display: flex; gap: 0.5rem; align-items: baseline; }
+.ask h3 .n { font-family: var(--f-data); font-size: 12px; color: var(--doc-accent); }
+.ask p { margin: 0; color: var(--doc-soft); }
+.rec { color: var(--doc-ink) !important; }
+.rec b { color: var(--tag-new); }
+.build { background: var(--doc-panel); border: 1px dashed var(--doc-line); border-radius: 10px; padding: 0.9rem 1rem; max-width: 86ch; }
+.build h3 { margin: 0 0 0.4rem; font-size: 0.9rem; }
+.build ul { margin: 0; padding-left: 1.1rem; color: var(--doc-soft); display: grid; gap: 0.25rem; }
+code { font-family: var(--f-data); font-size: 12px; }
+
+/* note dialog (on-page, not a native alert) */
+.noteScrim { position: fixed; inset: 0; z-index: 20; background: rgba(10, 12, 15, 0.45); display: flex; align-items: center; justify-content: center; padding: 16px; }
+.noteBox { width: min(460px, 100%); background: var(--doc-panel); color: var(--doc-ink); border: 1px solid var(--doc-line); border-radius: 12px; padding: 1rem 1.1rem; display: grid; gap: 0.5rem; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); }
+.noteBox h3 { margin: 0; font-size: 0.95rem; }
+.noteBox p { margin: 0; color: var(--doc-soft); }
+.noteBox button { justify-self: end; font: inherit; font-weight: 600; color: var(--doc-ink); background: var(--doc-accent-soft); border: 1px solid var(--doc-line); border-radius: 8px; padding: 0.35rem 0.9rem; cursor: pointer; }
+/* live window over a specimen */
+.liveScrim { position: fixed; inset: 0; z-index: 15; background: rgba(36, 30, 21, 0.35); display: flex; align-items: center; justify-content: center; padding: 16px; }
+.liveScrim .kd { width: min(640px, 100%); max-height: calc(100dvh - 2.5rem); overflow-y: auto; }
+
+@media (prefers-reduced-motion: no-preference) { .tabs button, .track button { transition: background 120ms, color 120ms; } }
+</style>
+
+<div class="top">
+  <div class="wrap">
+    <p class="kicker">Club Tier Stage 14 · S5 · the player record · drawings round 1 · Nov 5, 2026 · RULED: A1–A5 as recommended, built</p>
+    <h1>Documents: one “Last signed” per row, and every earlier copy one click away</h1>
+    <div class="tabs" role="tablist" aria-label="Sections">
+      <button role="tab" id="t1" aria-controls="s1" aria-selected="true">1 · Last signed</button>
+      <button role="tab" id="t2" aria-controls="s2" aria-selected="false">2 · Earlier copies</button>
+      <button role="tab" id="t3" aria-controls="s3" aria-selected="false">3 · Other places</button>
+      <button role="tab" id="t4" aria-controls="s4" aria-selected="false">4 · Asks</button>
+    </div>
+  </div>
+</div>
+
+<main>
+<div class="wrap">
+
+<!-- ═══════════════ 1 · LAST SIGNED ═══════════════ -->
+<section role="tabpanel" id="s1" aria-labelledby="t1">
+  <p class="lede">The Documents card on a child's page, drawn at <b>true size</b> next to Health and emergency, before and after the change. The <b>History</b> column became <b>Last signed</b>. It shows one value, and a short link opens the rest. Switch to <b>Six seasons on</b> to see why: today's column has no limit, and it lists the newest house-league copy last.</p>
+
+  <div class="viewRow">
+    <span>Child</span>
+    <div class="track" role="group" aria-label="Which child">
+      <button type="button" data-scn="today" aria-pressed="true">Today (the walk club)</button>
+      <button type="button" data-scn="later" aria-pressed="false">Six seasons on</button>
+    </div>
+    <span>View</span>
+    <div class="track" role="group" aria-label="View">
+      <button type="button" data-view="all" aria-pressed="true">Everything</button>
+      <button type="button" data-view="diff" aria-pressed="false">Show only what differs</button>
+    </div>
+  </div>
+
+  <div class="spec">
+    <div class="specHead"><h2>Before: what ships today</h2><span class="chrome">Club admin · desktop · Families › child page</span></div>
+    <div class="frame"><div class="p pPair cmp" id="before"></div></div>
+  </div>
+
+  <div class="spec">
+    <div class="specHead"><h2>After</h2><span class="chrome">Club admin · desktop · Families › child page</span></div>
+    <div class="frame"><div class="p pPair cmp" id="after"></div></div>
+    <ul class="notes">
+      <li><b>One value a row, newest first across rep and house league.</b> The newest copy is found by its date, so a house-league summer that came after a rep season shows first (the six-seasons example).</li>
+      <li><b>A document signed each season shows the season's name; a document good until replaced shows its date</b>, as now. The small line under each document's name already says which kind it is.</li>
+      <li><b>“+N earlier”</b> sits on the same line, in the kit's olive inline-link style at the small size, and only appears when there <i>are</i> earlier copies. Click it in the After drawing to open the window (tab 2).</li>
+      <li><b>A house-league copy is named the way the Seasons table above names it</b>: the season, with “House league” under it. That replaces “Summer 2025 waiver”, which repeated the row's own name.</li>
+      <li><b>Never signed</b> shows a dash, as now.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ═══════════════ 2 · EARLIER COPIES ═══════════════ -->
+<section role="tabpanel" id="s2" aria-labelledby="t2" hidden>
+  <p class="lede">The window behind “+N earlier”. It is the kit's ordinary window at 640 wide (the width a short table keeps), with a tinted edge and no shadow, the child's name above the title, the document as the title and an × to close. It only reads, so there is nothing to save. <b>It lists every copy, newest first</b>, including the one shown in the row, so the list is complete on its own.</p>
+
+  <div class="split">
+    <div class="spec">
+      <div class="specHead"><h2>Waiver: every signed copy</h2><span class="mk new" data-note="New window. It replaces the run-on list in the History cell. It opens from “+N earlier” in that row only.">New</span><span class="chrome">Club admin · desktop · window over the child page</span></div>
+      <div class="frame"><div class="scrim" id="win-desk"></div></div>
+      <ul class="notes">
+        <li><b>How</b> tells the two sources apart: a coach uploaded the copy on the team, or the family accepted the waiver at house-league sign-up. <b>Date</b> is the day that happened. For a coach's upload, that's the upload date (the same date the row shows today for medical consent).</li>
+        <li>No “Open” on a copy yet. That's ask A5.</li>
+        <li><b>Why the link stays a link and not an outlined button:</b> the rule that an action opening a window is an outlined button applies to toolbars and window feet. Inside a table cell, the kit uses an inline link for “Show all N” on the family record. A boxed button in every row would bring back the noise this change removes.</li>
+        <li>Rep and house-league copies are shown in one list, sorted by date.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ 3 · OTHER PLACES ═══════════════ -->
+<section role="tabpanel" id="s3" aria-labelledby="t3" hidden>
+  <p class="lede">Three other places show the same run-on list, or read the same information. Each one gets the same rule: one value, and the rest one click away.</p>
+
+  <div class="spec">
+    <div class="specHead"><h2>A · A child who only plays house league</h2><span class="chrome">Club admin · desktop · Documents card, no rep team</span></div>
+    <div class="frame"><div class="p pPair solo" id="league-only"></div></div>
+    <ul class="notes">
+      <li>Today this sentence lists every summer, so it grows each year just like the column. After: the newest summer, then “+2 earlier”, which opens the same window.</li>
+    </ul>
+  </div>
+
+  <div class="spec">
+    <div class="specHead"><h2>B · A team with no live season</h2><span class="chrome">Club admin · desktop · a team between seasons</span></div>
+    <div class="frame"><div class="p pPair solo" id="no-season"></div></div>
+    <ul class="notes">
+      <li>When the team has no working season there is no “For 2027” column and no chips. The card is only <b>Document · Last signed</b>, under the same rule.</li>
+    </ul>
+  </div>
+
+  <div class="spec">
+    <div class="specHead"><h2>C · Phone</h2><span class="chrome">Club admin · phone 390 px · true size</span></div>
+    <div class="phones" id="phones"></div>
+    <ul class="notes">
+      <li>The phone never had the History column. It shows one sentence per team about what's owed now. <b>Recommended: leave it alone</b> (ask A3). The drawing on the right is the alternative if you want earlier copies on a phone too.</li>
+      <li>Open this page on your phone to judge the 44 px link at its real size.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ═══════════════ 4 · ASKS ═══════════════ -->
+<section role="tabpanel" id="s4" aria-labelledby="t4" hidden>
+  <p class="lede">You ruled on the main change. Five details are left. Each has a recommendation, so “agree as recommended” settles all of them.</p>
+  <div class="asks">
+    <div class="ask">
+      <h3><span class="n">A1</span>A document already on file for this season</h3>
+      <p>Its Last signed reads “2027 Season”, which repeats what the On file chip says. The alternative is a dash, but a dash could be read as “never signed”.</p>
+      <p class="rec"><b>Recommended:</b> show “2027 Season”. Every row then reads the same way, and nothing looks missing.</p>
+    </div>
+    <div class="ask">
+      <h3><span class="n">A2</span>How a house-league copy is named</h3>
+      <p>“Summer 2025” with “House league” on a second small line, the way the Seasons table on the same page names it. The row grows one line taller only when the newest copy is a house-league one.</p>
+      <p class="rec"><b>Recommended:</b> as drawn. The other option, “Summer 2025 (house league)” on one line, is a new way of writing it that appears nowhere else.</p>
+    </div>
+    <div class="ask">
+      <h3><span class="n">A3</span>Earlier copies on a phone</h3>
+      <p>The phone's sentence says what's owed now and has never shown history.</p>
+      <p class="rec"><b>Recommended:</b> leave the phone as it is. Looking up an old copy is a job for the desk, and the sentence stays one line. Option: the “Earlier copies” link drawn in tab 3 C.</p>
+    </div>
+    <div class="ask">
+      <h3><span class="n">A4</span>Replaced medical consents become visible</h3>
+      <p>Today a good-until-replaced document shows only the copy on file, and the older ones are hidden entirely. Under the new rule they count toward “+N earlier” and appear in the window.</p>
+      <p class="rec"><b>Recommended:</b> yes. A replaced consent is still a signed copy, and the window is where someone would look for it.</p>
+    </div>
+    <div class="ask">
+      <h3><span class="n">A5</span>Opening a copy from the window</h3>
+      <p>Each row in the window could open the signed file. That would let a club admin read a coach's uploaded papers, which raises the question of what club staff may see. That's a separate decision.</p>
+      <p class="rec"><b>Recommended:</b> not in this change. The window lists the copies. Opening them can be a later ask if you want it.</p>
+    </div>
+  </div>
+
+  <div class="build">
+    <h3>Build notes (for the session that builds it)</h3>
+    <ul>
+      <li>One change to the words module and one to the child page; the window is the kit's <code>KitDialog</code> at <code>size="medium"</code> (640, One Window S2) with an <code>eyebrow</code> and no foot; × closes it at a desk, ← on a phone, where it is full screen. The link is <code>repKit.inlineLink</code> at the support size; on a phone it gets the tap floor (the kit already does that at 768 px and below).</li>
+      <li>Sort every copy (coach uploads by date added, house-league waivers by the date the waiver was accepted) into ONE list by date, newest first. The row shows <code>[0]</code>; the link shows <code>length − 1</code>. Today the house-league names are appended after the sort, which is the ordering bug.</li>
+      <li>The window's list is the whole list, including the row's own copy and this season's copy.</li>
+      <li>The house-league-only sentence (tab 3 A) and the no-season block (tab 3 B) take the same list.</li>
+      <li>Column heading <code>colHistory</code> → “Last signed”. Run the spelling and help checks: the Families help article mentions the column.</li>
+    </ul>
+  </div>
+</section>
+
+</div>
+</main>
+
+<script>
+(() => {
+  // ── data: two children ──
+  const SCN = {
+    today: {
+      child: 'Avery Park', team: 'S5 Lynx', year: 2027,
+      rows: [
+        { label: 'Waiver', validity: 'Signed each season', chip: ['Needs signing', 'warn'],
+          before: '2026 Season · Summer 2025 waiver',
+          last: ['2026 Season'], earlier: 1,
+          copies: [['2026 Season', null, 'Mar 9, 2026', 'Uploaded'], ['Summer 2025', 'House league', 'May 20, 2025', 'Accepted at sign-up']] },
+        { label: 'Code of conduct', validity: 'Signed each season', chip: ['Needs signing', 'warn'],
+          before: '2026 Season', last: ['2026 Season'], earlier: 0 },
+        { label: 'Medical consent', validity: 'Good until replaced', chip: ['On file', 'good'],
+          before: 'Apr 12, 2026', last: ['Apr 12, 2026'], earlier: 0 },
+      ],
+    },
+    later: {
+      child: 'Avery Park', team: 'S5 Lynx', year: 2030,
+      rows: [
+        { label: 'Waiver', validity: 'Signed each season', chip: ['Needs signing', 'warn'],
+          before: '2029 Season · 2028 Season · 2027 Season · 2026 Season · Summer 2029 waiver · Summer 2028 waiver · Summer 2025 waiver',
+          last: ['Summer 2029', 'House league'], earlier: 6,
+          copies: [
+            ['Summer 2029', 'House league', 'Jun 2, 2029', 'Accepted at sign-up'],
+            ['2029 Season', null, 'Mar 14, 2029', 'Uploaded'],
+            ['Summer 2028', 'House league', 'May 28, 2028', 'Accepted at sign-up'],
+            ['2028 Season', null, 'Mar 6, 2028', 'Uploaded'],
+            ['2027 Season', null, 'Mar 2, 2027', 'Uploaded'],
+            ['2026 Season', null, 'Mar 9, 2026', 'Uploaded'],
+            ['Summer 2025', 'House league', 'May 20, 2025', 'Accepted at sign-up'],
+          ] },
+        { label: 'Code of conduct', validity: 'Signed each season', chip: ['Needs signing', 'warn'],
+          before: '2029 Season · 2028 Season · 2027 Season · 2026 Season', last: ['2029 Season'], earlier: 3,
+          copies: [['2029 Season', null, 'Mar 14, 2029', 'Uploaded'], ['2028 Season', null, 'Mar 6, 2028', 'Uploaded'], ['2027 Season', null, 'Mar 2, 2027', 'Uploaded'], ['2026 Season', null, 'Mar 9, 2026', 'Uploaded']] },
+        { label: 'Medical consent', validity: 'Good until replaced', chip: ['On file', 'good'],
+          before: 'Mar 2, 2029', last: ['Mar 2, 2029'], earlier: 1,
+          copies: [['2029 Season', null, 'Mar 2, 2029', 'Uploaded'], ['2026 Season', null, 'Apr 12, 2026', 'Uploaded']] },
+      ],
+    },
+  };
+  let scn = 'today';
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const tag = (kind, label, note) => `<button type="button" class="mk ${kind}" data-note="${esc(note)}">${label}</button>`;
+
+  const health = `
+    <section class="pSection same">
+      <div class="pSectionHead"><h3 class="pSectionTitle">Health and emergency</h3></div>
+      <div class="pSectionBody">
+        <dl class="dl"><dt>Medical note</dt><dd>Mild peanut allergy. EpiPen in bag.</dd><dt>Emergency contact</dt><dd>Jordan Park · (416) 555-0142</dd></dl>
+      </div>
+    </section>`;
+
+  function card(s, after) {
+    const toSign = s.rows.filter(r => r.chip[1] === 'warn').length;
+    const head = after
+      ? `Last signed ${tag('re', 'Restyled', 'Was “History”: every earlier copy joined with dots. Now one value, the newest copy across rep and house league, plus “+N earlier” when there are more.')}`
+      : `History ${tag('gone', 'Goes', 'Every earlier copy joined with “·”. No limit, and house-league copies are added at the end whatever their date.')}`;
+    const rows = s.rows.map((r, i) => {
+      let cell;
+      if (after) {
+        const v = r.last[1] ? `<span class="name" style="font-weight:400">${esc(r.last[0])}</span><span class="ladder">${esc(r.last[1])}</span>` : esc(r.last[0]);
+        const link = r.earlier ? `<button type="button" class="earlier" data-open="${i}">+${r.earlier} earlier</button>` : '';
+        cell = r.last[1] ? `<div style="display:flex;align-items:baseline;gap:0"><div>${v}</div>${link}</div>` : `<span class="last">${v}</span>${link}`;
+      } else {
+        cell = esc(r.before);
+      }
+      return `<tr>
+        <td class="same"><span class="name">${esc(r.label)}</span><span class="ladder">${esc(r.validity)}</span></td>
+        <td class="same"><span class="chip ${r.chip[1]}">${esc(r.chip[0])}</span></td>
+        <td>${cell}</td>
+      </tr>`;
+    }).join('');
+    return `
+      <section class="pSection">
+        <div class="pSectionHead"><h3 class="pSectionTitle">Documents</h3>${toSign ? `<span class="chip warn same">${toSign} to sign</span>` : ''}</div>
+        <div class="pSectionBody">
+          <div class="pTableFrame">
+            <table class="pTable">
+              <thead><tr><th class="same">Document</th><th class="same">For ${s.year}</th><th>${head}</th></tr></thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>
+        </div>
+      </section>${health}`;
+  }
+
+  function windowHTML(s, i, phone) {
+    const r = s.rows[i];
+    const list = r.copies || [];
+    const body = list.map(c => `<tr>
+      <td><span class="name" style="font-weight:${c[1] ? 650 : 650}">${esc(c[0])}</span>${c[1] ? `<span class="ladder">${esc(c[1])}</span>` : ''}</td>
+      <td style="white-space:nowrap">${esc(c[2])}</td>
+      <td class="dimc">${esc(c[3])}</td></tr>`).join('');
+    return `
+      <div class="kd" role="dialog" aria-label="${esc(r.label)}: signed copies">
+        <div class="kdHead">
+          <div class="kdTitleBlock"><p class="kdEyebrow">${esc(s.child)} · ${esc(s.team)}</p><h3 class="kdTitle">${esc(r.label)}</h3></div>
+          <button type="button" class="kdClose" data-close aria-label="Close"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+        </div>
+        <div class="kdBody">
+          <p>${list.length} signed ${list.length === 1 ? 'copy' : 'copies'}, newest first.</p>
+          <div class="pTableFrame"><table class="pTable">
+            <thead><tr><th>Season</th><th>Date</th><th>How</th></tr></thead>
+            <tbody>${body}</tbody>
+          </table></div>
+        </div>
+      </div>`;
+  }
+
+  function render() {
+    const s = SCN[scn];
+    document.getElementById('before').innerHTML = card(s, false);
+    document.getElementById('after').innerHTML = card(s, true);
+  }
+
+  // ── static specimens (tabs 2, 3) ──
+  document.getElementById('win-desk').innerHTML = windowHTML(SCN.later, 0, false);
+
+  document.getElementById('league-only').innerHTML = `
+    <section class="pSection">
+      <div class="pSectionHead"><h3 class="pSectionTitle">Documents</h3></div>
+      <div class="pSectionBody" style="display:grid;gap:0.75rem">
+        <div><span class="chrome" style="color:var(--p-dim)">Before</span>
+          <p class="sentence">House league: Summer 2029 waiver accepted at sign-up · Summer 2028 waiver accepted at sign-up · Summer 2025 waiver accepted at sign-up.</p></div>
+        <div><span class="chrome" style="color:var(--p-dim)">After</span> ${tag('re', 'Restyled', 'The same sentence, cut to the newest summer, with “+2 earlier” opening the same window as the column.')}
+          <p class="sentence">House league: Summer 2029 waiver accepted at sign-up.<button type="button" class="earlier" data-open-league>+2 earlier</button></p></div>
+      </div>
+    </section>`;
+
+  document.getElementById('no-season').innerHTML = `
+    <section class="pSection">
+      <div class="pSectionHead"><h3 class="pSectionTitle">Documents</h3></div>
+      <div class="pSectionBody">
+        <p class="pBlockLabel">S5 Lynx · between seasons</p>
+        <div class="pTableFrame"><table class="pTable">
+          <thead><tr><th>Document</th><th>Last signed ${tag('re', 'Restyled', 'Was “History”. Same rule as the main card: one value and “+N earlier”.')}</th></tr></thead>
+          <tbody>
+            <tr><td><span class="name">Waiver</span></td><td><span class="last">2029 Season</span><button type="button" class="earlier" data-open="0" data-scn="later">+6 earlier</button></td></tr>
+            <tr><td><span class="name">Code of conduct</span></td><td><span class="last">2029 Season</span><button type="button" class="earlier" data-open="1" data-scn="later">+3 earlier</button></td></tr>
+            <tr><td><span class="name">Medical consent</span></td><td><span class="last">Mar 2, 2029</span><button type="button" class="earlier" data-open="2" data-scn="later">+1 earlier</button></td></tr>
+          </tbody>
+        </table></div>
+      </div>
+    </section>`;
+
+  const phoneCard = withLink => `
+    <div class="phone p">
+      <section class="pSection">
+        <div class="pSectionHead"><h3 class="pSectionTitle">Documents</h3><span class="chip warn">2 to sign</span></div>
+        <div class="pSectionBody">
+          <p class="sentence">Waiver and code of conduct need signing for 2030. Medical consent on file.</p>
+          ${withLink ? `<button type="button" class="earlier" data-open="0" data-scn="later">Earlier copies</button>` : ''}
+        </div>
+      </section>
+    </div>`;
+  document.getElementById('phones').innerHTML = `
+    <div class="phoneCol"><div class="specHead"><h2 style="font-size:0.85rem">Recommended: as today</h2>${tag('un', 'Unchanged', 'The phone keeps its one sentence about what is owed now. It never showed the History column.')}</div>${phoneCard(false)}</div>
+    <div class="phoneCol"><div class="specHead"><h2 style="font-size:0.85rem">Option: an “Earlier copies” link</h2>${tag('new', 'New', 'Only if A3 goes the other way. A 44 px link under the sentence. It opens a full-screen window with a ← (the One window rule on a phone), listing every document’s copies, grouped by document.')}</div>${phoneCard(true)}</div>`;
+
+  // ── tabs ──
+  const tabs = [...document.querySelectorAll('[role="tab"]')];
+  function show(id) {
+    tabs.forEach(t => {
+      const on = t.id === id;
+      t.setAttribute('aria-selected', on);
+      document.getElementById(t.getAttribute('aria-controls')).hidden = !on;
+    });
+    try { localStorage.setItem('cpls-tab', id); } catch (e) {}
+    window.scrollTo({ top: 0 });
+  }
+  tabs.forEach(t => t.addEventListener('click', () => show(t.id)));
+  try { const k = localStorage.getItem('cpls-tab'); if (k && document.getElementById(k)) show(k); } catch (e) {}
+
+  // ── switches ──
+  document.querySelectorAll('[data-scn]').forEach(b => {
+    if (!b.closest('.track')) return;
+    b.addEventListener('click', () => {
+      scn = b.dataset.scn;
+      b.parentElement.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b));
+      render();
+    });
+  });
+  document.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => {
+    b.parentElement.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b));
+    document.querySelectorAll('.cmp').forEach(c => c.classList.toggle('diffOnly', b.dataset.view === 'diff'));
+  }));
+
+  // ── overlays: tag notes, and the live window behind "+N earlier" ──
+  function overlay(cls, html) {
+    const o = document.createElement('div');
+    o.className = cls; o.innerHTML = html;
+    const close = () => { o.remove(); document.removeEventListener('keydown', onKey); };
+    const onKey = e => { if (e.key === 'Escape') close(); };
+    o.addEventListener('click', e => { if (e.target === o || e.target.closest('[data-close]')) close(); });
+    document.addEventListener('keydown', onKey);
+    document.body.appendChild(o);
+    const f = o.querySelector('button'); if (f) f.focus();
+  }
+  const KIND = { new: 'New', re: 'Restyled', un: 'Unchanged', gone: 'Goes' };
+  document.addEventListener('click', e => {
+    const mk = e.target.closest('.mk');
+    if (mk) {
+      e.preventDefault(); e.stopPropagation();
+      const kind = [...mk.classList].find(c => KIND[c]);
+      overlay('noteScrim', `<div class="noteBox" role="dialog" aria-label="${KIND[kind]}"><h3>${KIND[kind]}</h3><p>${esc(mk.dataset.note)}</p><button type="button" data-close>Close</button></div>`);
+      return;
+    }
+    const open = e.target.closest('[data-open]');
+    if (open) {
+      const s = SCN[open.dataset.scn || scn];
+      overlay('liveScrim p', windowHTML(s, Number(open.dataset.open), false));
+      return;
+    }
+    if (e.target.closest('[data-open-league]')) {
+      const s = { child: 'Riley Chen', team: 'House league', rows: [{ label: 'Waiver', copies: [
+        ['Summer 2029', 'House league', 'Jun 2, 2029', 'Accepted at sign-up'],
+        ['Summer 2028', 'House league', 'May 28, 2028', 'Accepted at sign-up'],
+        ['Summer 2025', 'House league', 'May 20, 2025', 'Accepted at sign-up']] }] };
+      overlay('liveScrim p', windowHTML(s, 0, false));
+    }
+  });
+
+  render();
+})();
+</script>

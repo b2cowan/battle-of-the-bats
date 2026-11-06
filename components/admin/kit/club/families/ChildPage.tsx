@@ -9,6 +9,8 @@
  *                opened from (`?from=`), else to Families.
  *   Seasons    — every season, newest first, rep and house league together; each season's fees read from its own book.
  *   Documents  — per team, the coach's rule and count ("2 to sign"), never pooled; on a phone one sentence per team.
+ *                Last signed (owner 2026-11-05, drawing 58oV67ka48y4yCFPqWneya): ONE value a row, the newest copy by date
+ *                across the team and house league; "+N earlier" opens every copy in a window (desk only — A3).
  *   Health and emergency — the child's one value, and "Still right for the {season}?" with Confirm (it clears every
  *                coach's question — S5 call C).
  *   Parents    — each opens their household.
@@ -17,6 +19,7 @@ import { useCallback, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import KitDialog from '../KitDialog';
 import {
   Callout, ClubRow, ClubRowList, ClubSection, LoadFailed, NoticePill, PageLoading, RepChip, repKit,
   useDeferredLoad, useLatestRead,
@@ -26,8 +29,10 @@ import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import {
-  CHILD_PAGE_WORDS as W, SEASON_STATUS_LABEL, SEASON_STATUS_TONE, documentsSentence, seasonRowPhoneLine, seasonRowPhoneTitle,
+  CHILD_PAGE_WORDS as W, SEASON_STATUS_LABEL, SEASON_STATUS_TONE, copyName, documentCopies, documentsSentence, seasonRowPhoneLine, seasonRowPhoneTitle,
+  type DocumentCopy,
 } from '@/lib/child-page-words';
+import { formatStoredDate } from '@/lib/timezone';
 import type { ChildPageDocuments, ChildPagePayload } from '@/lib/child-page';
 import fam from './Families.module.css';
 import css from './ChildPage.module.css';
@@ -48,6 +53,8 @@ export default function ChildPage({ orgSlug, childId }: { orgSlug: string; child
   const [confirming, setConfirming] = useState(false);
   const [said, setSaid] = useState<string | null>(null);
   const [confirmError, setConfirmError] = useState<string | null>(null);
+  /** The window behind "+N earlier": one document's every copy. */
+  const [copiesOf, setCopiesOf] = useState<CopiesOpen | null>(null);
 
   const beginRead = useLatestRead();
   const load = useCallback(async () => {
@@ -109,6 +116,7 @@ export default function ChildPage({ orgSlug, childId }: { orgSlug: string; child
   const { seasons, documents, health, parents } = read;
   const toSign = documents.reduce((s, d) => s + d.toSign, 0);
   const hasHealth = !!(health.medicalNotes || health.emergencyName || health.emergencyPhone);
+  const leagueCopies = documentCopies([], read.leagueOnlyWaivers);
 
   return (
     <div className={repKit.page}>
@@ -159,10 +167,17 @@ export default function ChildPage({ orgSlug, childId }: { orgSlug: string; child
           {documents.length === 0 && read.leagueOnlyWaivers.length === 0 ? <p className={repKit.dim}>{W.noDocuments}</p> : (
             <div className={css.blocks}>
               {documents.map(d => (
-                <DocumentsBlock key={d.teamId} block={d} isPhone={isPhone} labelled={documents.length > 1 || d.seasonName === null} />
+                <DocumentsBlock key={d.teamId} block={d} isPhone={isPhone} labelled={documents.length > 1 || d.seasonName === null}
+                  onEarlier={(title, copies) => setCopiesOf({ title, eyebrow: W.copiesEyebrow(read.child.name, d.teamName), copies })} />
               ))}
-              {read.leagueOnlyWaivers.length > 0 && (
-                <p className={css.sentence}>{`${W.houseLeague}: ${read.leagueOnlyWaivers.map(n => `${n} waiver accepted at sign-up`).join(' · ')}.`}</p>
+              {leagueCopies.length > 0 && (
+                <p className={css.sentence}>
+                  {`${W.houseLeague}: ${W.leagueOnlyWaiver(copyName(leagueCopies[0]))}`}
+                  {!isPhone && leagueCopies.length > 1 && (
+                    <EarlierLink doc={W.waiver} n={leagueCopies.length - 1}
+                      onOpen={() => setCopiesOf({ title: W.waiver, eyebrow: W.copiesEyebrow(read.child.name, W.houseLeague), copies: leagueCopies })} />
+                  )}
+                </p>
               )}
             </div>
           )}
@@ -193,6 +208,7 @@ export default function ChildPage({ orgSlug, childId }: { orgSlug: string; child
           )}
         </ClubSection>
       </div>
+      {copiesOf && <CopiesWindow open={copiesOf} onClose={() => setCopiesOf(null)} />}
 
       <ClubSection title={W.parents} list={isPhone && parents.length > 0}>
         {parents.length === 0 ? <p className={repKit.dim}>{W.noParents}</p> : isPhone ? (
@@ -227,7 +243,11 @@ export default function ChildPage({ orgSlug, childId }: { orgSlug: string; child
   );
 }
 
-function DocumentsBlock({ block, isPhone, labelled }: { block: ChildPageDocuments; isPhone: boolean; labelled: boolean }) {
+interface CopiesOpen { title: string; eyebrow: string; copies: DocumentCopy[] }
+
+function DocumentsBlock({ block, isPhone, labelled, onEarlier }: {
+  block: ChildPageDocuments; isPhone: boolean; labelled: boolean; onEarlier: (title: string, copies: DocumentCopy[]) => void;
+}) {
   const label = labelled ? <p className={css.blockLabel}>{W.teamDocs(block.teamName, block.seasonName)}</p> : null;
   if (isPhone) {
     return (
@@ -246,7 +266,7 @@ function DocumentsBlock({ block, isPhone, labelled }: { block: ChildPageDocument
             <tr>
               <th scope="col">{W.colDocument}</th>
               {block.seasonYear != null && <th scope="col">{W.colFor(block.seasonYear)}</th>}
-              <th scope="col">{W.colHistory}</th>
+              <th scope="col">{W.colLastSigned}</th>
             </tr>
           </thead>
           <tbody>
@@ -257,12 +277,63 @@ function DocumentsBlock({ block, isPhone, labelled }: { block: ChildPageDocument
                   {r.validity && <span className={fam.ladder}>{r.validity}</span>}
                 </td>
                 {block.seasonYear != null && <td>{r.chip && <RepChip tone={r.tone ?? 'neutral'}>{r.chip}</RepChip>}</td>}
-                <td className={r.history ? undefined : repKit.dim}>{r.history || '—'}</td>
+                <td className={r.last ? undefined : repKit.dim}>
+                  {r.last ? (
+                    <span className={css.last}>
+                      <span className={r.last.isDate ? css.date : undefined}>
+                        {r.last.text}
+                        {r.last.houseLeague && <span className={fam.ladder}>{W.houseLeague}</span>}
+                      </span>
+                      {r.copies.length > 1 && <EarlierLink doc={r.label} n={r.copies.length - 1} onOpen={() => onEarlier(r.label, r.copies)} />}
+                    </span>
+                  ) : '—'}
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
     </div>
+  );
+}
+
+/** "+3 earlier": the kit's inline link at the support size, on the value's line. It opens a window, so it says so. */
+function EarlierLink({ doc, n, onOpen }: { doc: string; n: number; onOpen: () => void }) {
+  return (
+    <button type="button" className={`${repKit.inlineLink} ${css.earlier}`} aria-haspopup="dialog" aria-label={W.earlierLabel(doc, n)} onClick={onOpen}>
+      {W.earlier(n)}
+    </button>
+  );
+}
+
+/** Every signed copy of one document, newest first — it reads; nothing in it is typed, so it has no foot. */
+function CopiesWindow({ open, onClose }: { open: CopiesOpen; onClose: () => void }) {
+  return (
+    <KitDialog kind="form" record size="medium" eyebrow={open.eyebrow} title={open.title} onClose={onClose}>
+      <p>{W.copiesCount(open.copies.length)}</p>
+      <div className={repKit.tableFrame}>
+        <table className={repKit.table}>
+          <thead>
+            <tr>
+              <th scope="col">{W.colSeason}</th>
+              <th scope="col">{W.colDate}</th>
+              <th scope="col">{W.colHow}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {open.copies.map((c, i) => (
+              <tr key={i}>
+                <td>
+                  <span className={fam.childName}>{copyName(c)}</span>
+                  {c.houseLeague && <span className={fam.ladder}>{W.houseLeague}</span>}
+                </td>
+                <td className={css.date}>{formatStoredDate(c.at)}</td>
+                <td className={repKit.dim}>{c.houseLeague ? W.howSignUp : W.howUploaded}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </KitDialog>
   );
 }

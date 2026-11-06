@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
 import {
-  currentChip, documentRows, documentsSentence, historyOnlyRows, householdChildSub, leagueFeesLine, leagueSeasonStatus,
+  copyName, currentChip, documentCopies, documentRows, documentsSentence, historyOnlyRows, householdChildSub, leagueFeesLine, leagueSeasonStatus,
   repFeesLine, repSeasonStatus, seasonRowPhoneLine, seasonRowPhoneTitle, sortSeasonRows, withTeamLine, yearsLine,
   type ChildSeasonRow,
 } from '../../lib/child-page-words';
@@ -12,7 +12,9 @@ import { documentStateRows, type SeasonDocument } from '../../lib/document-state
  * CLUB TIER STAGE 14 S5 — one page per child (owner 2026-11-05, "agree as recommended" on the S5 Part 0 calls A–H).
  * The rules that must hold however the screens change:
  *   · the club's child page lists every season, rep and house league together, newest first, each with its own fees;
- *   · papers are per TEAM, the coach's rule (never pooled — call D); a house-league waiver joins the Waiver history;
+ *   · papers are per TEAM, the coach's rule (never pooled — call D); a house-league waiver is one of the Waiver's copies;
+ *   · Last signed (owner 2026-11-05) is ONE value: the newest copy BY DATE, house league sorted in, with every copy
+ *     behind "+N earlier"; this season's own copy counts; a replaced good-until-replaced copy is still a copy;
  *   · the coach's "With the {team} {years}" is THIS team's seasons only, and only for a returning child (call E);
  *   · the household's line says "3 seasons · 2 documents to sign" only when each half says something;
  *   · the page sits behind the Families gate; the club's Confirm clears the child's question on every live entry (call C);
@@ -124,26 +126,72 @@ describe('documents, per team', () => {
   ];
   const state = documentStateRows({ templates, documents, season: { id: 's27', name: '2027 Season' } });
 
-  it('the drawn rows: waiver and code need signing with their history; medical consent on file by its date', () => {
-    const rows = documentRows({ state, documents, workingSeasonId: 's27', leagueWaivers: ['Summer 2025'] });
-    assert.deepEqual(rows.map(r => [r.label, r.chip, r.history]), [
-      ['Waiver', 'Needs signing', '2026 Season · Summer 2025 waiver'],
-      ['Code of conduct', 'Needs signing', '2026 Season'],
-      ['Medical consent', 'On file', 'Apr 12, 2026'],
+  const last = (r: { last: { text: string; houseLeague: boolean } | null }) => r.last && (r.last.houseLeague ? `${r.last.text} / House league` : r.last.text);
+
+  it('the drawn rows: one Last signed value a row, and how many earlier copies sit behind it', () => {
+    const rows = documentRows({ state, documents, leagueWaivers: [{ seasonName: 'Summer 2025', acceptedAt: '2025-05-20T14:00:00Z' }] });
+    assert.deepEqual(rows.map(r => [r.label, r.chip, last(r), r.copies.length - 1]), [
+      ['Waiver', 'Needs signing', '2026 Season', 1],
+      ['Code of conduct', 'Needs signing', '2026 Season', 0],
+      ['Medical consent', 'On file', 'Apr 12, 2026', 0],
     ]);
     assert.equal(rows[0].validity, 'Signed each season');
     assert.equal(rows[2].validity, 'Good until replaced');
   });
 
+  it('a house-league waiver newer than the team\'s copy comes FIRST: sorted in by date, never appended', () => {
+    const rows = documentRows({ state, documents, leagueWaivers: [
+      { seasonName: 'Summer 2026', acceptedAt: '2026-06-02T14:00:00Z' },
+      { seasonName: 'Summer 2025', acceptedAt: '2025-05-20T14:00:00Z' },
+    ] });
+    assert.equal(last(rows[0]), 'Summer 2026 / House league');
+    assert.deepEqual(rows[0].copies.map(c => c.seasonName), ['Summer 2026', '2026 Season', 'Summer 2025']);
+    // Only the Waiver row takes house-league copies.
+    assert.equal(rows[1].copies.length, 1);
+  });
+
+  it('this season\'s own copy is the last signed (A1); a replaced good-until-replaced copy is still an earlier copy (A4)', () => {
+    const docs = [
+      doc({ id: 'w27', documentType: 'waiver', seasonId: 's27', seasonName: '2027 Season', seasonYear: 2027, createdAt: '2027-03-02T15:00:00Z' }),
+      doc({ id: 'w26', documentType: 'waiver' }),
+      doc({ id: 'm27', documentType: 'medical_consent', seasonId: 's27', seasonName: '2027 Season', seasonYear: 2027, createdAt: '2027-03-02T15:00:00Z' }),
+      doc({ id: 'm26', documentType: 'medical_consent' }),
+    ];
+    const st = documentStateRows({ templates, documents: docs, season: { id: 's27', name: '2027 Season' } });
+    const rows = documentRows({ state: st, documents: docs });
+    assert.deepEqual(rows.map(r => [r.label, r.chip, last(r), r.copies.length]), [
+      ['Waiver', 'On file', '2027 Season', 2],
+      ['Code of conduct', 'Needs signing', null, 0],
+      ['Medical consent', 'On file', 'Mar 2, 2027', 2],
+    ]);
+  });
+
+  it('every copy, newest first by date: the window\'s list', () => {
+    const copies = documentCopies(
+      [doc({ createdAt: '2026-03-09T15:00:00Z' }), doc({ seasonName: '2028 Season', createdAt: '2028-03-06T15:00:00Z' })],
+      [{ seasonName: 'Summer 2027', acceptedAt: '2027-05-28T14:00:00Z' }],
+    );
+    assert.deepEqual(copies.map(c => [c.seasonName, c.houseLeague]), [['2028 Season', false], ['Summer 2027', true], ['2026 Season', false]]);
+  });
+
+  it('a copy whose season record is missing reads by its date, never a blank (/review)', () => {
+    const rows = historyOnlyRows([doc({ seasonId: '', seasonName: '' })], [{ seasonName: '', acceptedAt: 'not a date' }]);
+    assert.equal(last(rows[0]), 'Apr 12, 2026');
+    assert.equal(rows[0].last?.isDate, true);
+    // An unreadable timestamp sorts last, it never scrambles the order.
+    assert.deepEqual(rows[0].copies.map(c => c.houseLeague), [false, true]);
+    assert.equal(copyName(rows[0].copies[0]), 'Apr 12, 2026');
+  });
+
   it('the phone\'s sentence', () => {
-    const rows = documentRows({ state, documents, workingSeasonId: 's27' });
+    const rows = documentRows({ state, documents });
     assert.equal(documentsSentence(rows, 2027), 'Waiver and code of conduct need signing for 2027. Medical consent on file.');
     assert.equal(documentsSentence([], 2027), 'No documents on file.');
   });
 
-  it('a team with no working season shows what was signed, by season, with no state', () => {
-    const rows = historyOnlyRows([doc({ documentType: 'waiver' }), doc({ documentType: 'waiver', seasonId: 's25', seasonName: '2025 Season', seasonYear: 2025 })]);
-    assert.deepEqual(rows.map(r => [r.label, r.chip, r.history]), [['Waiver', null, '2026 Season · 2025 Season']]);
+  it('a team with no working season shows each type\'s last copy by season, with no state', () => {
+    const rows = historyOnlyRows([doc({ documentType: 'waiver' }), doc({ documentType: 'waiver', seasonId: 's25', seasonName: '2025 Season', seasonYear: 2025, createdAt: '2025-04-01T15:00:00Z' })]);
+    assert.deepEqual(rows.map(r => [r.label, r.chip, last(r), r.copies.length - 1]), [['Waiver', null, '2026 Season', 1]]);
   });
 });
 
