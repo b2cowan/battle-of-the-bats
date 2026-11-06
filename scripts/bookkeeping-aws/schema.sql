@@ -32,6 +32,12 @@ CREATE TABLE bookkeeping.expense_revisions (
   void_reason text CHECK (void_reason IS NULL OR length(btrim(void_reason)) BETWEEN 1 AND 500),
   created_at timestamptz NOT NULL DEFAULT now(),
   created_by uuid NOT NULL,
+  -- 006 (GST/HST Stage 4a): nullable, no default, no CHECK; validated in the app. NULL = saved before 006.
+  tax_answer text,
+  supplier_tax_number text,
+  supplier_registration text,
+  purchase_kind text,
+  number_unobtainable boolean,
   PRIMARY KEY (expense_id, revision),
   CHECK ((receipt_path IS NULL) = (receipt_name IS NULL)),
   CHECK (revision = 1 OR change_reason IS NOT NULL),
@@ -62,3 +68,33 @@ CREATE TABLE bookkeeping.owner_movement_revisions (
 );
 REVOKE ALL ON bookkeeping.owner_movement_revisions FROM PUBLIC;
 GRANT SELECT, INSERT ON bookkeeping.owner_movement_revisions TO bookkeeping_app;
+
+-- 006 (GST/HST Stage 4a): one row per tax on a receipt, written with its expense revision.
+-- The lines of a revision sum to its tax_cad_cents (app-enforced), so every older reader stays right.
+CREATE TABLE bookkeeping.expense_tax_lines (
+  expense_id uuid NOT NULL,
+  revision integer NOT NULL CHECK (revision > 0),
+  line_no smallint NOT NULL CHECK (line_no BETWEEN 1 AND 10),
+  tax_type text NOT NULL CHECK (tax_type IN ('gst5', 'hst13', 'hst14', 'hst15', 'pst', 'qst', 'other', 'unset')),
+  cents bigint NOT NULL CHECK (cents > 0),
+  created_at timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (expense_id, revision, line_no)
+);
+REVOKE ALL ON bookkeeping.expense_tax_lines FROM PUBLIC;
+GRANT SELECT, INSERT ON bookkeeping.expense_tax_lines TO bookkeeping_app;
+
+-- 006: the GST/HST registration effective date as a setting with its history; the highest revision is current.
+-- Every input tax credit is computed on read from it and never stored.
+CREATE TABLE bookkeeping.gst_registration_revisions (
+  revision integer NOT NULL CHECK (revision > 0),
+  effective_date date NOT NULL,
+  reason text NOT NULL CHECK (length(btrim(reason)) BETWEEN 1 AND 500),
+  created_at timestamptz NOT NULL DEFAULT now(),
+  created_by uuid NOT NULL,
+  PRIMARY KEY (revision)
+);
+REVOKE ALL ON bookkeeping.gst_registration_revisions FROM PUBLIC;
+GRANT SELECT, INSERT ON bookkeeping.gst_registration_revisions TO bookkeeping_app;
+-- Seed (owner fact 2026-11-06). The nil uuid marks a row written by the schema, not a person.
+INSERT INTO bookkeeping.gst_registration_revisions (revision, effective_date, reason, created_by)
+  VALUES (1, DATE '2026-09-26', 'First entry', '00000000-0000-0000-0000-000000000000'::uuid);
