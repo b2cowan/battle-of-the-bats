@@ -3,7 +3,8 @@
  * `BANK_BALANCE_CHECK_DRAWINGS.html` tabs 5 and 6, R0 tab 8). The screens' own words: the refusals a route answers live
  * in `lib/bank-check-words.ts` and are read from there, never restated here. Client-safe. BC2a's and BC2b's strings passed
  * `/marketing` 2026-11-06 (plan §5 records each). BC2a adds the check form's words (the band, the sums, Save, Start's
- * Stripe notice); BC2b adds the opened check's, Delete's and "Check this statement again".
+ * Stripe notice); BC2b adds the opened check's, Delete's and "Check this statement again". BC4b's phone words (the
+ * `…Phone` keys: the balance label, the band's middle label and captions, Find's group head) passed `/marketing` 2026-11-06.
  * Spelling follows the product (`check:spelling`): chequing (an account's name); a statement's entry is a "line"; a clock
  * only through `formatTime`.
  */
@@ -43,6 +44,8 @@ export const BANK_WORDS = {
   // ── the check form (ask 10, tab 2): one card on the Bank tab, above the saved checks ──────
   checkTitle: 'Check a statement',
   checkBalance: 'Bank balance on that date',
+  // On a phone the two fields sit side by side (drawn, owner 2026-11-06 BC4b): the short word.
+  checkBalancePhone: 'Bank balance',
   saveCheck: 'Save this check',
   saveOffNote: (amount: string) => `It saves as off by ${amount}. You can check this statement again later.`,
   replacesNote: 'This statement is checked already. Saving replaces that check.',
@@ -55,6 +58,12 @@ export const BANK_WORDS = {
   // the band, and the sums under it (always open)
   bandBank: 'The bank says',
   bandShould: 'Should be in the bank',
+  // The phone band's middle tile, two-up beside "The bank says" (plan §5, BC4b).
+  bandShouldPhone: 'Should be there',
+  // The phone band's two-up captions (BC4b `/marketing`): the statement date is in the field above, so no year. The middle
+  // tile names no figure: marked lines and an uncounted Stripe make a single "on its way" amount untrue; the sums say it.
+  bandBankCaptionPhone: (date: string) => `On ${date}`,
+  bandShouldCaptionPhone: 'Your books, adjusted for what’s pending',
   bandDifference: 'Difference',
   bandBankCaption: (date: string) => `Statement balance on ${date}`,
   bandShouldCaption: (date: string) => `Your books on ${date}, less what hasn’t reached the bank yet`,
@@ -107,6 +116,9 @@ export const BANK_WORDS = {
   // The lines (the suspects)
   findSinceMatch: (date: string) => `Lines since your last match · ${date}`,
   findSinceStart: (date: string) => `Lines since your starting statement · ${date}`,
+  // The phone's group head over the cards (an uppercase band, BC4b `/marketing`): no "Lines", no year.
+  findSinceMatchPhone: (date: string) => `Since your last match · ${date}`,
+  findSinceStartPhone: (date: string) => `Since your starting statement · ${date}`,
   findSearch: 'Find an amount or a name',
   findCol: { date: 'Date', what: 'What', book: 'Book', out: 'Money out', in: 'Money in', act: 'Action' },
   chipExact: (amount: string) => `Exactly ${amount}`,

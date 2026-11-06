@@ -12,6 +12,7 @@
 import { Fragment, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import MoneySummaryBand, { type MoneyTile } from '@/components/coaches/MoneySummaryBand';
+import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { day } from '../MoneyKit';
 import { onItsWayOnCheck, type CheckFigure } from '@/lib/bank-check';
 import { BANK_WORDS as W } from '@/lib/bank-tab-words';
@@ -26,6 +27,8 @@ export function BankBand({ date, figure, typed, saved = false }: {
   date: string; figure: CheckFigure | null; typed: boolean; saved?: boolean;
 }) {
   const when = dayYear(date);
+  // On a phone the band is two-up (the shipped band's own ≤760 rule): the middle tile takes the phone's shorter word.
+  const isPhone = useIsPhone();
   const settled = figure !== null && typed;
   const direction = !settled || figure.direction === null ? null
     : figure.direction === 'bank_more' ? W.bandBankMore(cents(figure.offByCents)) : W.bandBankLess(cents(figure.offByCents));
@@ -38,10 +41,11 @@ export function BankBand({ date, figure, typed, saved = false }: {
   return (
     <div className={s.bandWrap} aria-live={saved ? undefined : 'polite'}>
       <MoneySummaryBand ariaLabel={saved ? W.savedTitle(when) : W.checkTitle} tiles={[
+        // On a phone the shipped band shows `captionShort` in place of the caption (BC4b `/marketing`).
         { key: 'bank', label: saved ? W.savedBank : W.bandBank, figure: settled ? cents(figure.bankCents) : '—',
-          caption: saved ? undefined : W.bandBankCaption(when) },
-        { key: 'should', label: saved ? W.savedShould : W.bandShould, figure: figure ? cents(figure.shouldBeCents) : '—',
-          caption: saved ? undefined : W.bandShouldCaption(when) },
+          caption: saved ? undefined : W.bandBankCaption(when), captionShort: saved ? undefined : W.bandBankCaptionPhone(day(date)) },
+        { key: 'should', label: saved ? W.savedShould : isPhone ? W.bandShouldPhone : W.bandShould, figure: figure ? cents(figure.shouldBeCents) : '—',
+          caption: saved ? undefined : W.bandShouldCaption(when), captionShort: saved ? undefined : W.bandShouldCaptionPhone },
         diff,
       ]} />
     </div>

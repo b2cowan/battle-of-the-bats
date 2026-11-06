@@ -68,6 +68,10 @@ need to type a statement balance, see the difference from the books on that date
 | Start item re-check | **A check dated before a start's Waiting-at-the-start line cleared also asks "Still waiting on {line}?" for each of the start's Waiting-at-the-start lines**, as it asks about the previous check's lines. Later work, not BC3b. (Owner, 2026-11-06, BC3b `/review`.) |
 | Start item re-check: when | **The start is the first link of the "Still waiting?" chain.** A check asks about each of the start's Waiting-at-the-start lines unless the latest earlier live check saved after the line was put on the start already answered: if it kept the line, the check asks again; if it didn't (No, or it matched without it), it stops. A check saved before the line went on the start never saw the question and doesn't count. The check on which the line is put on the start doesn't ask about it. (Owner, 2026-11-06, BC4a.) |
 | M3 exception | **A check may mark a line Not in the bank yet although it is dated on or before the start, only when the line is on the live starting statement's Waiting-at-the-start list.** Any other pre-start line is still refused, with the same sentence. (Owner, 2026-11-06, BC4a.) |
+| Phone sums | **On the club phone the sums show as on the desk, stacked under the band** (not behind the second tile). (Owner, 2026-11-06, BC4b.) |
+| Phone search | **Find keeps the product's search on a phone, full width above the cards.** (Owner, 2026-11-06, BC4b.) |
+| Phone page size | **Find shows 10 lines at a time on a phone ("Show 10 more"), 50 on a desk.** (Owner, 2026-11-06, BC4b.) |
+| Phone fields | **On a phone the check's Statement date and Bank balance sit side by side, as drawn, the balance labelled "Bank balance"**; if the date field doesn't fit at 361px they stack and the owner is told. (Owner, 2026-11-06, BC4b.) |
 
 ### Tick-off rulings that still stand (Appendix A §4)
 
@@ -259,8 +263,10 @@ money table or a book line.** A guard test pins this: no bank code writes `accou
 > below are the drawings' words unless marked *new*.
 
 - [ ] "Bank" — the club Accounting tab and the coach Ledger view — club treasurer, coach
-- [x] "Check a statement" · "Statement date" · "Bank balance on that date" (phone: "Bank balance") — the check form (settled, BC2 `/marketing` 2026-11-06; the phone word is BC4's)
-- [x] "The bank says" · "Should be in the bank" (phone band: "Should be there") · "Difference" — the band (settled, BC2 `/marketing` 2026-11-06; the phone word is BC4's)
+- [x] "Check a statement" · "Statement date" · "Bank balance on that date" (phone: "Bank balance") — the check form (settled, BC2 `/marketing` 2026-11-06; the phone word "Bank balance" settled, BC4b `/marketing` 2026-11-06)
+- [x] "The bank says" · "Should be in the bank" (phone band: "Should be there") · "Difference" — the band (settled, BC2 `/marketing` 2026-11-06; the phone word "Should be there" settled, BC4b `/marketing` 2026-11-06)
+- [x] *new, BC4b* the phone band's captions (settled, BC4b `/marketing` 2026-11-06): "On {date}" (the bank tile, no-year date) and "Your books, adjusted for what’s pending" (the middle tile, no date or figure: marked lines and an uncounted Stripe make a single "on its way" amount untrue). The Difference tile keeps its desk captions (full width on a phone).
+- [x] *new, BC4b* Find's group head on a phone (settled, BC4b `/marketing` 2026-11-06): "Since your last match · {date}" / "Since your starting statement · {date}", no-year date, no "Lines" (the uppercase band orphaned the year at 361). The desk heads are unchanged; "Still waiting on {line}?" is unchanged.
 - [x] "Matches" · "Off by $X" + "The bank shows $X more than your books." / *new* "The bank shows $X less than your
   books." — band, saved list, Overview line, Teams view (settled, BC2 `/marketing` 2026-11-06 for the band and list; the Overview line and Teams view are BC5's)
 - [x] "Your books on {date}" · "Online payments on their way to your bank · {n}" · "Stripe pays them out {date}" — sums (settled, BC2 `/marketing` 2026-11-06)
@@ -718,9 +724,43 @@ missing line, Waiting at the start, M2, the finishing passes; two owner question
 ### BC4 — Club: the Bank tab on a phone (390)
 Build prompt written 2026-11-06: `BANK_BALANCE_CHECK_BC4_BUILD_PROMPT.md` (two sessions: BC4a the start's lines on an
 earlier re-check, two owner questions first; BC4b the phone frames, three owner questions first).
-- [ ] The phone frames of tabs 1–6: band, sums, Find cards with signed amounts and "Show 10 more", full-width buttons, the
-  saved-check cards, the window full screen. No pinned strip or dock (gone with the tick-off).
-- [ ] Phone walk probe; `/review`.
+- [x] **The phone frames — BC4b built 2026-11-06** (owner: §0 "Phone sums / search / page size / fields" ruled as
+  recommended; yes to the UX summary). Anchors:
+  - **Find on a phone** (`BankFind`, `useIsPhone`): `phoneList` = the kit's `ClubRowList` of static `ClubRow` cards
+    (`LineCard`: title what, caption date · book · how + the chip door, `trail` the signed amount
+    `moved(signed(direction, amountCents))`, its action a `RowAction` in `actions`, full width at the card's foot, K-09);
+    `deskTable` is the unchanged table. `ClubRowBand` group heads ("Since your last match · {date}", the look-back's), the
+    look-back's sentence and "Show N more" as quiet `<li>`s (`MoreRow`); 10 per page on a phone (`PAGE_PHONE`), 50 at a
+    desk; the look-back also pages by 10 on a phone only (`beforePages`: its 60 days put Save thousands of px down). The
+    search full width (`layout="fill"`). A hinted card amber-soft (`.findCards li:has(.chipDoor)`, `ClubRow` takes no
+    className); a marked or on-their-way card greyed in title and amount (`.cardDim`; never `muted`, see /review).
+  - **The form** (`BankCheckForm`): date + "Bank balance" side by side (fits at 361); Save, its notes and the form's error
+    are the card's last things on a phone (drawn), inline at a desk as before.
+  - **The band** (`BankBand`): "Should be there" by `useIsPhone`; phone captions through the shipped band's
+    `captionShort` ("On {date}", "Your books, adjusted for what's pending"). Live band only; the saved band unchanged.
+  - **CSS** (`Bank.module.css`): ≤640 the callout's answers stack, full width, one line each (/design: side by side they
+    broke mid-phrase); a sum's amount stays beside its words' first line (`overflow-wrap: anywhere` on the words).
+  - Windows: `KitDialog kind="form"` is full screen ≤640 already (no kit change); Delete's question stays the kit's card.
+- [x] **Proved 2026-11-06:** 275 bank tests (screens guard §11 new: cards never a table, no `as=` on a Find card,
+  RowAction, the engine's sign, page sizes, MoreRow, the search, amber-soft, the stacked callout, the phone words, no
+  `muted`, the error by Save, no sticky/fixed, no tick vocabulary); tsc, focused lint, `check:spelling`, `check:tokens`,
+  `check:css-purity` clean; `check:layout --only=admin-accounting-bank` clean at 1440/768/390/361. Dev walks, made
+  width-aware: `.probe/bank-bc3/walk.mjs` (phone: no table, the group head, the fields side by side, the date fits, 10
+  cards + "Show 10 more", the band two-up + "Should be there" + phone captions, the card "− $75.13" / "+ $512.34" green,
+  the card not a button, 44px actions, amber-soft, the callout stacked, the search full width, Save after Find, the
+  opened check full screen, Still waiting? 44px; desk: Money in green) → `BANK_BC3A_WALK_PASSED` at 390, 361, 1440;
+  `bc3b.mjs` (the look-back head, Waiting at the start 44px, "− $500.37", the callout stacked) → PASSED at 390, 361, 1440;
+  `.probe/bank-bc4/bc4a.mjs` → PASSED at 390 and 1440 (its "Saving replaces" check now waits for the figure). The walk
+  account ends on its Sep 30 start only (`corrected_at` NULL).
+- [x] **Finishing passes 2026-11-06:** `/design` (Save last on a phone, as drawn; the callout stacked; the sum's amount
+  beside its words; phone captions to `/marketing`); `/marketing` once (§5 ticks: "Bank balance", "Should be there", the
+  phone captions, the phone group head); `/simplify` (one `MoreRow`, `LineView`, `phoneList`/`deskTable` lifted and
+  built only while open, `composes` for the amount and quiet styles; skipped: an inline-style tint, one page counter);
+  `/review` standard (2 lenses): applied the desk Money-in green lost to the kit's `.table td` (scoped
+  `.findTable td.moneyIn, .cardAmt.moneyIn`), the `muted` card under the contrast floor, the error by Save, a long unbroken
+  name under its amount, an empty group head. Carried, not changed: focus falls to the page when the last "Show N more"
+  goes (the desk's behaviour too); a hinted line past the first 10 cards is reached through the callout's own button; a
+  CSS-only phone label needs a `labelShort` on the shared band (a kit change, later).
 - [x] **The start's lines on an earlier re-check — BC4a built 2026-11-06, committed `664f2086e` 2026-11-06** (owner: §0 "Start item re-check: when" and "M3
   exception" ruled as recommended; yes to the UX summary). Anchors:
   - **The chain** (`stillWaitingOn`, `lib/bank-check.ts`, read by `figureForDate`'s `stillWaiting`): the latest earlier
@@ -755,6 +795,9 @@ earlier re-check, two owner questions first; BC4b the phone frames, three owner 
   BC4 as the next bank session.
 
 ### BC5 — Club: the touchpoints and the club half's words
+Build prompt written 2026-11-06: `BANK_BALANCE_CHECK_BC5_BUILD_PROMPT.md` (two sessions: BC5a the Overview line and the
+fiscal-year close row, three owner questions first; BC5b the printable report, help and the club half's words, two owner
+questions first). The Teams tab's "Bank checked" column (R0 tab 7) reads each team's bank, so it is BC8's.
 - [ ] The Overview line (ask 4), the fiscal-year close "Still open" row (`lib/club-fiscal-year-moves.ts`), the report
   (club, ask 9), help in `lib/help-content/accounting.tsx` (`/docs`), the `/marketing` pass on §5's club words.
 

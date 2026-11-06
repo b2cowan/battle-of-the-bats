@@ -158,7 +158,9 @@ tr > td.nowrap { white-space: nowrap; }
 .findSince { font-size: var(--type-body); font-weight: 600; color: var(--text-primary); }
 .findWhat { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.5rem; }
 .findDetail { color: var(--text-tertiary); font-size: var(--type-support); }
-td.moneyIn { color: var(--badge-success-ink); }
+/* Money in: green, in the table's column and on a phone card's signed amount (BC4b). Scoped, so it outranks the kit
+   table's own cell ink (`.table td`) rather than tying with it (/review BC4b). */
+.findTable td.moneyIn, .cardAmt.moneyIn { color: var(--badge-success-ink); }
 .findTable td.actCell, .findTable th.actCell { width: 11rem; text-align: right; white-space: nowrap; }
 /* A hinted line: amber-soft (never red). A marked line, and the online payments counted above: greyed, no tint. */
 .findTable tr.hitRow > td { background: rgba(var(--warning-rgb), 0.08); }
@@ -215,14 +217,34 @@ td.moneyIn { color: var(--badge-success-ink); }
   .markBtn { min-height: var(--tap-min, 44px); }
 }
 
+/* Find on a phone (BC4b, drawing tab 3): the kit's row cards in one white list, never the table. A hinted card is
+   amber-soft (never red), as the hinted table row is; its chip stays a door. The amount at the right carries its sign. */
+.findCards li:has(.chipDoor) { background: rgba(var(--warning-rgb), 0.08); }
+.cardAmt { composes: sumAmt; font-weight: 600; }
+/* A marked line, and the online payments counted above: greyed in the title and amount, as their table rows are. Never
+   the kit's `muted` opacity: it dims Undo, and took the caption under the contrast floor (/review BC4b). */
+.cardDim { color: var(--text-tertiary); }
+/* The look-back's sentence under its group head, and "Show 10 more", the list's last quiet row. */
+.cardQuiet { composes: sumQuiet; display: block; padding: 0.5rem 0.85rem; border-bottom: 1px solid var(--home-line); line-height: 1.45; }
+.cardMore { display: flex; justify-content: center; padding: 0 0.85rem; border-bottom: 1px solid var(--home-line); }
+.cardMore:last-child { border-bottom: 0; }
+
 @media (max-width: 640px) {
   .pair { grid-template-columns: 1fr; }
-  .checkRow { grid-template-columns: 1fr; }
+  /* Statement date and Bank balance side by side (drawn; owner 2026-11-06, BC4b). Save is the card's last thing on a
+     phone (drawn: BankCheckForm places it after Find), full width, its notes under it. */
+  .checkRow { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 0.75rem; }
+  .checkSave { margin: 0.75rem 0 0; }
+  /* The callout's answers each on its own full-width row, one line, 44px (the kit's callout floor), the count and "Next
+     possibility" under them. Side by side (drawn) they broke mid-phrase at 390 and 361 ("Not in the / bank yet"):
+     /design BC4b. */
+  .calloutActs { display: flex; flex-direction: column; align-items: stretch; flex: 1 1 100%; gap: 0.5rem; }
+  .calloutActs > :global(.btn) { width: 100%; justify-content: center; }
   .checkCard { padding: 1rem; }
   .checkSave > :global(.btn) { width: 100%; justify-content: center; }
-  .sumRow { flex-wrap: wrap; }
-  /* A long line wraps; its amount stays at the right edge, where every other amount is (/design BC2b). */
-  .sumRow > .sumAmt { margin-left: auto; }
+  /* A long line wraps in its own column; its amount stays at the right edge beside the line's first words (/design BC2b,
+     kept beside them by /design BC4b: dropped onto a line of its own it read as a separate row). */
+  .sumRow > :first-child { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
   .top { margin-bottom: 0.75rem; }
   .card { padding: 1rem; }
   .cardFoot > :global(.btn) { flex: 1; justify-content: center; }

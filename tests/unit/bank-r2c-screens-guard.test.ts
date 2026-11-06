@@ -294,7 +294,11 @@ describe('10 · Add the missing line, Waiting at the start', () => {
     assert.match(code('BankCheckWindow.tsx'), /patchStart\(orgSlug, view\.account\.id, \{ remove: item\.key \}\)/);
     assert.match(code('BankCheckWindow.tsx'), /savedSumRows\(check, canMove && start \? /, 'only a writer, only on the start');
     // A line before the start offers Waiting at the start, never Not in the bank yet (M3).
-    assert.match(code('BankFind.tsx'), /foundBefore\.map\(l => \(\s*<LineRow key=\{l\.key\} line=\{l\} chip=\{chipFor\(l\.key\)\}\s*action=\{\{ label: W\.atStart,/);
+    // One map for each group, drawn as a table row at a desk and a card on a phone (BC4b): the action is the same.
+    assert.match(code('BankFind.tsx'), /beforeShown\.map\(l => \(\s*<LineView key=\{l\.key\} line=\{l\} chip=\{chipFor\(l\.key\)\}\s*action=\{\{ label: W\.atStart,/);
+    // The look-back pages by 10 on a phone (Save is the card's last thing there); the desk lists it whole (BC4b /design).
+    assert.match(code('BankFind.tsx'), /const beforeShown = isPhone \? foundBefore\.slice\(0, beforePages \* PAGE_PHONE\) : foundBefore;/);
+    assert.match(code('BankFind.tsx'), /const LineView = isPhone \? LineCard : LineRow;/);
   });
   it('a corrected start re-reads the day\'s figure; "Books now say" says why', () => {
     assert.match(code('BankCheckForm.tsx'), /const checksKey = `\$\{view\.checks\.map\(c => c\.id\)\.join\(','\)\}\|\$\{view\.start\?\.id \?\? ''\}:\$\{view\.start\?\.booksCents \?\? ''\}`;/);
@@ -319,7 +323,7 @@ describe('8 · a saved check, opened', () => {
     const win = code('BankCheckWindow.tsx');
     assert.match(win, /<BankBand date=\{check\.date\} figure=\{check\.figure\} typed saved \/>/);
     assert.match(win, /import KitDialog from '\.\.\/\.\.\/KitDialog'/);
-    assert.match(code('BankFigure.tsx'), /label: saved \? W\.savedBank : W\.bandBank[\s\S]*label: saved \? W\.savedShould : W\.bandShould/);
+    assert.match(code('BankFigure.tsx'), /label: saved \? W\.savedBank : W\.bandBank[\s\S]*label: saved \? W\.savedShould : isPhone \? W\.bandShouldPhone : W\.bandShould/);
   });
   it('Delete and Check this statement again are a writer\'s only (B7)', () => {
     const win = code('BankCheckWindow.tsx');
@@ -359,5 +363,84 @@ describe('8 · a saved check, opened', () => {
     assert.match(list, /W\.checkedThroughLead/);
     assert.match(list, /through\.result === 'off' && view\.checks\[0\] && \(\s*<button type="button" className=\{s\.chipDoor\} aria-label=\{W\.openOffCheck\(cents\(through\.offByCents\), dayYear\(through\.date\)\)\} onClick=\{\(\) => onOpen\(view\.checks\[0\]\.id\)\}>\s*<RepChip tone="warn">\{W\.offBy\(/,
       'the chip is a door to the latest check: every highlight opens, its name keeping the amount');
+  });
+});
+
+// ── Bank balance check BC4b: the Bank tab on a phone (drawing tabs 1, 3, 5; owner 2026-11-06) ────────────────────────
+describe('11 · the phone: Find as row cards, the callout\'s row, the two phone words', () => {
+  it('below 640px Find is the kit\'s row cards in one list, never the table', () => {
+    const find = code('BankFind.tsx');
+    assert.match(find, /const isPhone = useIsPhone\(\);/);
+    // The table is the desk's branch only; the phone's is ClubRowList.
+    assert.match(find, /: isPhone \? \(searchedEmpty \? null : phoneList\) : deskTable\}/);
+    // Money in stays green at a desk too: scoped above the kit table's own cell ink (/review BC4b caught it tying).
+    assert.match(readSource(CSS), /\.findTable td\.moneyIn, \.cardAmt\.moneyIn \{ color: var\(--badge-success-ink\); \}/);
+    assert.match(find, /const phoneList = \(\s*<div className=\{s\.findCards\}>\s*<ClubRowList label=\{sinceTitle\}>/);
+    assert.match(find, /const deskTable = \(\s*<div className=\{repKit\.tableFrame\}>\s*<table /);
+    const cards = find.slice(find.indexOf('const phoneList'), find.indexOf('const deskTable'));
+    assert.match(cards, /<\/ClubRowList>/, 'the phone list is whole before the desk table starts');
+    assert.doesNotMatch(cards, /<table|<tr\b|<td\b/, 'no table on a phone');
+    // A card is never a button: its action is its own control (the kit's RowAction).
+    assert.doesNotMatch(find, /<ClubRow\b[^>]*\bas=/, 'a Find card has no as="button"/"link"');
+    assert.match(find, /<RowAction aria-label=\{action\.aria\} onClick=\{action\.onClick\} disabled=\{action\.disabled\}>\{action\.label\}<\/RowAction>/);
+    assert.match(find, /<RowAction quiet aria-label=\{W\.undoLine\(name\)\} onClick=\{undo\}>\{W\.undo\}<\/RowAction>/);
+  });
+  it('the signed amount is the engine\'s sign, formatted; no arithmetic on the screen', () => {
+    const find = code('BankFind.tsx');
+    assert.match(find, /moved\(signed\(l\.direction, l\.amountCents\)\)/);
+    assert.match(find, /moved\(oiw\.cents\)/, 'the online payments\' amount as the figure signs it');
+    assert.match(readCode('lib/bank-check.ts'), /export const signed = \(direction: BankDirection, cents: number\) => \(direction === 'in' \? cents : -cents\);/);
+    assert.doesNotMatch(find, /amountCents\s*\*|-\s*l\.amountCents|\*\s*-1/, 'no sign worked out on the screen');
+  });
+  it('the phone pages by 10, the desk by 50; Show more is a real button ending its group', () => {
+    const find = code('BankFind.tsx');
+    assert.match(find, /const PAGE = 50;\nconst PAGE_PHONE = 10;/);
+    assert.match(find, /const page = isPhone \? PAGE_PHONE : PAGE;/);
+    assert.match(find, /\{more > 0 && <MoreRow n=\{more\} onClick=\{\(\) => setPages\(n => n \+ 1\)\} \/>\}/);
+    assert.match(find, /\{beforeMore > 0 && <MoreRow n=\{beforeMore\} onClick=\{\(\) => setBeforePages\(n => n \+ 1\)\} \/>\}/);
+    assert.match(find, /function MoreRow[\s\S]{0,120}<li className=\{s\.cardMore\}>\s*<button type="button" className=\{s\.link\} onClick=\{onClick\}>\{W\.showMore\(n\)\}<\/button>/);
+  });
+  it('the search stays on a phone, full width above the cards (owner, BC4b)', () => {
+    assert.match(code('BankFind.tsx'), /\{isPhone \? <SearchField value=\{query\} onChange=\{searchFor\} label=\{W\.findSearch\} layout="fill" \/>/);
+  });
+  it('a hinted card is amber-soft, never red; marked and on-their-way cards are greyed', () => {
+    const css = readSource(CSS);
+    assert.match(css, /\.findCards li:has\(\.chipDoor\) \{ background: rgba\(var\(--warning-rgb\), 0\.08\); \}/);
+    assert.match(css, /\.cardDim \{ color: var\(--text-tertiary\); \}/);
+    // Never the kit's `muted` opacity on a Find card: it took the caption under the contrast floor (/review BC4b).
+    assert.doesNotMatch(code('BankFind.tsx'), /<ClubRow muted\b|<ClubRow[^>]*\bmuted\b/);
+    // A failed save's sentence sits by Save on a phone, where Save is the card's last thing.
+    assert.match(code('BankCheckForm.tsx'), /\{isPhone && <FormError inPlace>\{error\}<\/FormError>\}\s*\{isPhone && saveButton\}/);
+  });
+  it('the callout\'s answers are each a full-width row on a phone, equal widths', () => {
+    const css = readSource(CSS);
+    const phone = css.slice(css.lastIndexOf('@media (max-width: 640px)'));
+    // Each its own full-width row, one line (/design BC4b: side by side they broke mid-phrase at 390 and 361).
+    assert.match(phone, /\.calloutActs \{ display: flex; flex-direction: column; align-items: stretch; flex: 1 1 100%; gap: 0\.5rem; \}/);
+    assert.match(phone, /\.calloutActs > :global\(\.btn\) \{ width: 100%; justify-content: center; \}/);
+    // The 44px floor is the kit callout's own (≤768).
+    assert.match(readSource('components/admin/kit/club/RepKit.module.css'), /@media \(max-width: 768px\) \{ \.calloutActions :global\(\.btn\) \{ min-height: var\(--tap-min, 44px\); \} \}/);
+  });
+  it('the two phone words come from the words module: "Bank balance" (fields side by side) and "Should be there"', () => {
+    assert.equal(BANK_WORDS.checkBalancePhone, 'Bank balance');
+    assert.equal(BANK_WORDS.bandShouldPhone, 'Should be there');
+    // The phone captions and group head (/marketing BC4b): no year, no figure in the middle tile (it can't be one amount).
+    assert.equal(BANK_WORDS.bandBankCaptionPhone('Nov 1'), 'On Nov 1');
+    assert.equal(BANK_WORDS.bandShouldCaptionPhone, 'Your books, adjusted for what’s pending');
+    assert.equal(BANK_WORDS.findSinceMatchPhone('Sep 30'), 'Since your last match · Sep 30');
+    assert.match(code('BankFigure.tsx'), /captionShort: saved \? undefined : W\.bandBankCaptionPhone\(day\(date\)\)/);
+    assert.match(code('BankFigure.tsx'), /captionShort: saved \? undefined : W\.bandShouldCaptionPhone/);
+    assert.match(code('BankFind.tsx'), /<ClubRowBand>\{sinceHead\}<\/ClubRowBand>/);
+    assert.match(code('BankCheckForm.tsx'), /label=\{isPhone \? W\.checkBalancePhone : W\.checkBalance\}/);
+    const css = readSource(CSS);
+    const phone = css.slice(css.lastIndexOf('@media (max-width: 640px)'));
+    assert.match(phone, /\.checkRow \{ grid-template-columns: minmax\(0, 1fr\) minmax\(0, 1fr\);/);
+  });
+  it('no pinned strip or dock, and no tick vocabulary, on any bank screen', () => {
+    for (const f of [...FILES, CSS]) {
+      const src = f === CSS ? readSource(f) : readCode(f);
+      assert.doesNotMatch(src, /position:\s*sticky|position:\s*fixed/, `${f}: a pinned strip or dock`);
+      assert.doesNotMatch(src, /\b[Tt]ick(ed|ing|s)?\b(?![- ]?off\b)/, `${f}: tick vocabulary`);
+    }
   });
 });

@@ -26,17 +26,19 @@
 import { useState, type ReactNode } from 'react';
 import SearchField from '@/components/shared/SearchField';
 import tb from '@/components/admin/tournament/AdminToolbar.module.css';
-import { Callout, RepChip, repKit } from '../../RepKit';
+import { useIsPhone } from '@/lib/hooks/useIsPhone';
+import { Callout, ClubRow, ClubRowBand, ClubRowList, RepChip, RowAction, repKit } from '../../RepKit';
 import { day } from '../MoneyKit';
-import { hintsFor, type BankLine, type CheckFigure, type Hint, type WaitingItem } from '@/lib/bank-check';
+import { hintsFor, signed, type BankLine, type CheckFigure, type Hint, type WaitingItem } from '@/lib/bank-check';
 import { lineMatches, pickerSearch } from '@/lib/bank-club-rules';
 import { BANK_WORDS as W } from '@/lib/bank-tab-words';
-import { cents, dayYear, howWord, nameOf, type Figure } from './BankShared';
+import { cents, dayYear, howWord, moved, nameOf, type Figure } from './BankShared';
 import ck from '../../ClubKit.module.css';
 import s from './Bank.module.css';
 
-/** Lines shown at a time ("Show 50 more"). */
+/** Lines shown at a time: "Show 50 more" at a desk, "Show 10 more" on a phone (drawn; owner 2026-11-06, BC4b). */
 const PAGE = 50;
+const PAGE_PHONE = 10;
 
 type Line = Figure['suspects']['lines'][number];
 
@@ -65,7 +67,10 @@ export default function BankFind({ figure, band, typed, marked, busy, onMark, on
   const [open, setOpen] = useState(false); // "Show them", while the check isn't off
   const [pick, setPick] = useState<string | null>(null); // the possibility the callout names
   const [query, setQuery] = useState('');
-  const [limit, setLimit] = useState(PAGE);
+  const [pages, setPages] = useState(1); // pages shown, so a width change keeps its page size
+  const [beforePages, setBeforePages] = useState(1); // the look-back's own pages (a phone's)
+  const isPhone = useIsPhone();
+  const page = isPhone ? PAGE_PHONE : PAGE;
 
   const suspects = figure.suspects;
   const off = typed && band.result === 'off';
@@ -103,14 +108,88 @@ export default function BankFind({ figure, band, typed, marked, busy, onMark, on
   const search = pickerSearch(query);
   const matches = (l: Line) => lineMatches(search, { amountCents: l.amountCents, label: l.label, how: howWord(l.method) });
   const found = lines.filter(matches);
-  const shown = found.slice(0, limit);
-  const more = Math.min(PAGE, found.length - shown.length);
+  const shown = found.slice(0, pages * page);
+  const more = Math.min(page, found.length - shown.length);
   const foundBefore = before.filter(matches);
+  // On a phone the look-back pages by 10 too (its 60 days can run to dozens of cards, and Save is the card's last thing);
+  // the desk lists it whole, as it always has.
+  const beforeShown = isPhone ? foundBefore.slice(0, beforePages * PAGE_PHONE) : foundBefore;
+  const beforeMore = Math.min(PAGE_PHONE, foundBefore.length - beforeShown.length);
   const searchedEmpty = (lines.length > 0 || before.length > 0) && found.length === 0 && foundBefore.length === 0;
   const listOpen = off || open;
   const bankMore = band.direction === 'bank_more';
 
   const sinceHint = (suspects.sinceMatch ? W.linesSinceMatch : W.linesSinceStart)(when, suspects.total);
+  const sinceTitle = (suspects.sinceMatch ? W.findSinceMatch : W.findSinceStart)(when);
+  // The phone's group head over the cards: shorter, no year (BC4b `/marketing`).
+  const sinceHead = (suspects.sinceMatch ? W.findSinceMatchPhone : W.findSinceStartPhone)(day(suspects.since));
+  const searchFor = (q: string) => { setQuery(q); setPages(1); setBeforePages(1); };
+
+  // Each line once (only while the list is open), a table row at a desk and a row card on a phone, with the same action:
+  // after the start "Not in the bank yet" (or Undo once marked); before it "Waiting at the start", never "Not in the bank
+  // yet" (M3).
+  const LineView = isPhone ? LineCard : LineRow;
+  const lineRows = listOpen ? shown.map(l => (
+    <LineView key={l.key} line={l} chip={chipFor(l.key)}
+      action={{ label: W.notInBankYet, aria: W.markLine(nameOf(l)), onClick: () => onMark(itemOf(l)) }}
+      undo={marked.has(l.key) ? () => onUndo(l.key) : undefined} />
+  )) : null;
+  const beforeRows = listOpen && foundBefore.length > 0 ? beforeShown.map(l => (
+    <LineView key={l.key} line={l} chip={chipFor(l.key)}
+      action={{ label: W.atStart, aria: W.atStartLine(nameOf(l)), onClick: () => onAtStart(l), disabled: busy }} />
+  )) : null;
+  // The look-back's heading and its why (BC3b), a group head over its cards on a phone, the kit's group row at a desk.
+  const lookBackTitle = figure.beforeStart ? W.beforeStartTitle(dayYear(figure.beforeStart.through)) : '';
+
+  // ON A PHONE: the kit's white row cards in one list, never the table (drawing tab 3). A card is not a button: its one
+  // action is its own 44px control; the amount at the right carries the line's own sign. Each group ends "Show N more".
+  const phoneList = (
+    <div className={s.findCards}>
+      <ClubRowList label={sinceTitle}>
+        {/* The group's head only over cards (a search matching only the look-back leaves no head over nothing). */}
+        {(shown.length > 0 || (search.kind === 'none' && onWay.length > 0)) && <ClubRowBand>{sinceHead}</ClubRowBand>}
+        {search.kind === 'none' && onWay.length > 0 && <OnTheirWayCard figure={figure} />}
+        {lineRows}
+        {more > 0 && <MoreRow n={more} onClick={() => setPages(n => n + 1)} />}
+        {beforeRows && (
+          <>
+            <ClubRowBand>{lookBackTitle}</ClubRowBand>
+            <li className={s.cardQuiet}>{W.atStartWhy}</li>
+            {beforeRows}
+            {beforeMore > 0 && <MoreRow n={beforeMore} onClick={() => setBeforePages(n => n + 1)} />}
+          </>
+        )}
+      </ClubRowList>
+    </div>
+  );
+  const deskTable = (
+    <div className={repKit.tableFrame}>
+      <table className={`${repKit.table} ${s.findTable}`}>
+        <thead>
+          <tr>
+            <th scope="col">{W.findCol.date}</th>
+            <th scope="col">{W.findCol.what}</th>
+            <th scope="col">{W.findCol.book}</th>
+            <th scope="col" className={repKit.num}>{W.findCol.out}</th>
+            <th scope="col" className={repKit.num}>{W.findCol.in}</th>
+            <th scope="col" className={s.actCell} aria-label={W.findCol.act} />
+          </tr>
+        </thead>
+        <tbody>
+          {search.kind === 'none' && onWay.length > 0 && <OnTheirWayRow figure={figure} />}
+          {lineRows}
+        </tbody>
+        {beforeRows && (
+          <tbody>
+            {/* The kit's group row (as an allocation's window heads its teams), the heading of the look-back. */}
+            <tr className={repKit.band}><td colSpan={6}>{lookBackTitle}</td></tr>
+            <tr><td colSpan={6} className={repKit.dim}>{W.atStartWhy}</td></tr>
+            {beforeRows}
+          </tbody>
+        )}
+      </table>
+    </div>
+  );
 
   return (
     <section className={s.find} aria-labelledby={off ? 'bank-find-title' : undefined}>
@@ -139,50 +218,22 @@ export default function BankFind({ figure, band, typed, marked, busy, onMark, on
 
       {listOpen && (
         <>
-          <div className={s.findBar}>
-            <span className={s.findSince}>{(suspects.sinceMatch ? W.findSinceMatch : W.findSinceStart)(when)}</span>
-            <span className={tb.toolbarSpacer} aria-hidden />
-            <SearchField value={query} onChange={q => { setQuery(q); setLimit(PAGE); }} label={W.findSearch} />
-          </div>
-          {lines.length === 0 && onWay.length === 0 && before.length === 0 ? <p className={`${ck.hint} ${s.hintLine}`}>{W.noLinesSince}</p> : (
-            <div className={repKit.tableFrame}>
-              <table className={`${repKit.table} ${s.findTable}`}>
-                <thead>
-                  <tr>
-                    <th scope="col">{W.findCol.date}</th>
-                    <th scope="col">{W.findCol.what}</th>
-                    <th scope="col">{W.findCol.book}</th>
-                    <th scope="col" className={repKit.num}>{W.findCol.out}</th>
-                    <th scope="col" className={repKit.num}>{W.findCol.in}</th>
-                    <th scope="col" className={s.actCell} aria-label={W.findCol.act} />
-                  </tr>
-                </thead>
-                <tbody>
-                  {search.kind === 'none' && onWay.length > 0 && <OnTheirWayRow figure={figure} />}
-                  {shown.map(l => (
-                    <LineRow key={l.key} line={l} chip={chipFor(l.key)}
-                      action={{ label: W.notInBankYet, aria: W.markLine(nameOf(l)), onClick: () => onMark(itemOf(l)) }}
-                      undo={marked.has(l.key) ? () => onUndo(l.key) : undefined} />
-                  ))}
-                </tbody>
-                {foundBefore.length > 0 && figure.beforeStart && (
-                  <tbody>
-                    {/* The kit's group row (as an allocation's window heads its teams), the heading of the look-back. */}
-                    <tr className={repKit.band}><td colSpan={6}>{W.beforeStartTitle(dayYear(figure.beforeStart.through))}</td></tr>
-                    <tr><td colSpan={6} className={repKit.dim}>{W.atStartWhy}</td></tr>
-                    {foundBefore.map(l => (
-                      <LineRow key={l.key} line={l} chip={chipFor(l.key)}
-                        action={{ label: W.atStart, aria: W.atStartLine(nameOf(l)), onClick: () => onAtStart(l), disabled: busy }} />
-                    ))}
-                  </tbody>
-                )}
-              </table>
+          {/* The search: at the toolbar's right at a desk; its own full-width row above the cards on a phone (owner, BC4b). */}
+          {isPhone ? <SearchField value={query} onChange={searchFor} label={W.findSearch} layout="fill" /> : (
+            <div className={s.findBar}>
+              <span className={s.findSince}>{sinceTitle}</span>
+              <span className={tb.toolbarSpacer} aria-hidden />
+              <SearchField value={query} onChange={searchFor} label={W.findSearch} />
             </div>
           )}
+          {lines.length === 0 && onWay.length === 0 && before.length === 0
+            ? <p className={`${ck.hint} ${s.hintLine}`}>{W.noLinesSince}</p>
+            // A search that finds nothing: on a phone the empty group head drops away, "No line matches" says it (/review).
+            : isPhone ? (searchedEmpty ? null : phoneList) : deskTable}
           {searchedEmpty && <p className={`${ck.hint} ${s.hintLine}`}>{W.noLinesMatch}</p>}
-          {more > 0 && (
+          {!isPhone && more > 0 && (
             <p className={s.hintLine}>
-              <button type="button" className={s.link} onClick={() => setLimit(n => n + PAGE)}>{W.showMore(more)}</button>
+              <button type="button" className={s.link} onClick={() => setPages(n => n + 1)}>{W.showMore(more)}</button>
             </p>
           )}
         </>
@@ -268,22 +319,70 @@ function LineRow({ line: l, chip, action, undo }: {
   );
 }
 
+/** The same line as a phone's row card (drawing tab 3, the kit's `ClubRow`): title what · sub-line date · book · how it
+ *  came, with its chip · the amount at the right with the line's own sign (−$75.00 out, +$100.00 in green; the engine's
+ *  `signed`, plan §6's phone rule) · its action, its own 44px button (the kit's `RowAction`, under the card on a phone).
+ *  The card itself is not a button. A marked line greys and offers Undo. */
+function LineCard({ line: l, chip, action, undo }: Parameters<typeof LineRow>[0]) {
+  const isMarked = undo !== undefined;
+  const name = nameOf(l);
+  const sub = [day(l.date), l.bookName, howWord(l.method)].filter(Boolean).join(' · ');
+  return (
+    <ClubRow
+      title={<span className={isMarked ? s.cardDim : undefined}>{name}</span>}
+      caption={<span className={s.findWhat}><span>{sub}{isMarked && ` · ${W.markedDetail}`}</span>{!isMarked && chip}</span>}
+      trail={<span className={`${s.cardAmt}${isMarked ? ` ${s.cardDim}` : l.direction === 'in' ? ` ${s.moneyIn}` : ''}`}>{moved(signed(l.direction, l.amountCents))}</span>}
+      actions={isMarked
+        ? <RowAction quiet aria-label={W.undoLine(name)} onClick={undo}>{W.undo}</RowAction>
+        : <RowAction aria-label={action.aria} onClick={action.onClick} disabled={action.disabled}>{action.label}</RowAction>} />
+  );
+}
+
+/** "Show N more", the last quiet row of a phone group (drawn). */
+function MoreRow({ n, onClick }: { n: number; onClick: () => void }) {
+  return (
+    <li className={s.cardMore}>
+      <button type="button" className={s.link} onClick={onClick}>{W.showMore(n)}</button>
+    </li>
+  );
+}
+
+/** Online payments on their way, as the row or the card says them: the days they span, their book(s). */
+function onWayWords(lines: readonly { date: string; bookName?: string | null; bookId: string }[]) {
+  const days = lines.map(l => l.date).sort();
+  const span = days[0] === days[days.length - 1] ? day(days[0]) : `${day(days[0])} – ${day(days[days.length - 1])}`;
+  const books = new Set(lines.map(l => l.bookName ?? l.bookId));
+  return { span, book: books.size === 1 ? [...books][0] : W.booksCount(books.size) };
+}
+
 /** Online payments on their way: counted above in one line, so here one greyed row with no action (drawn). */
 function OnTheirWayRow({ figure }: { figure: Figure }) {
   const oiw = figure.onItsWay;
   if (oiw.state !== 'counted') return null;
-  const days = oiw.lines.map(l => l.date).sort();
-  const span = days[0] === days[days.length - 1] ? day(days[0]) : `${day(days[0])} – ${day(days[days.length - 1])}`;
-  const books = new Set(oiw.lines.map(l => l.bookName ?? l.bookId));
+  const { span, book } = onWayWords(oiw.lines);
   const amount = cents(Math.abs(oiw.cents));
   return (
     <tr className={s.clearedRow}>
       <td className={s.nowrap}>{span}</td>
       <td>{W.onTheirWayRow(oiw.lines.length)}<span className={s.findDetail}> · {W.onTheirWayDetail}</span></td>
-      <td>{books.size === 1 ? [...books][0] : W.booksCount(books.size)}</td>
+      <td>{book}</td>
       <td className={repKit.num}>{oiw.cents < 0 ? amount : ''}</td>
       <td className={repKit.num}>{oiw.cents >= 0 ? amount : ''}</td>
       <td className={s.actCell} />
     </tr>
+  );
+}
+
+/** The same on a phone: one greyed card, no action, its amount signed as the figure has it (out is below zero). */
+function OnTheirWayCard({ figure }: { figure: Figure }) {
+  const oiw = figure.onItsWay;
+  if (oiw.state !== 'counted') return null;
+  const { span, book } = onWayWords(oiw.lines);
+  return (
+    // Greyed in its title and amount, as its table row is; never the kit's `muted` opacity, which took its caption (real
+    // information) under the contrast floor (/review BC4b).
+    <ClubRow title={<span className={s.cardDim}>{W.onTheirWayRow(oiw.lines.length)}</span>}
+      caption={`${span} · ${book} · ${W.onTheirWayDetail}`}
+      trail={<span className={`${s.cardAmt} ${s.cardDim}`}>{moved(oiw.cents)}</span>} />
   );
 }

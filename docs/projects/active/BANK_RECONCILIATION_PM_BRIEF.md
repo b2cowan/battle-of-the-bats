@@ -5,9 +5,12 @@
 2026-11-05 by the owner. Ten drawing asks ruled as recommended 2026-11-05; plan rewritten 2026-11-05; three edge-case
 asks (Q1–Q3) ruled as recommended 2026-11-05. BC1–BC3 built on dev by 2026-11-06: the club treasurer's check on a
 desk, its saved checks, and Find (what's missing, Not in the bank yet, Still waiting?, Add the missing line, and Waiting
-at the start for a cheque written before the starting statement). Next: BC4, the Bank tab on a phone, plus one owner
-ruling of 2026-11-06 — an earlier statement re-checked after the start was corrected also asks "Still waiting?" about the
-start's lines. The earlier tick-off version (built on dev 2026-11-04/05) is superseded and was taken apart in BC1.
+at the start for a cheque written before the starting statement). BC4 built on dev 2026-11-06: an earlier statement
+re-checked after the start was corrected also asks "Still waiting?" about the start's lines (BC4a), and the Bank tab on a
+phone (BC4b, four owner rulings: the sums shown, the search kept, 10 lines at a time, the two fields side by side). Next:
+BC5, the club's touchpoints (the Overview line, the fiscal-year close row, the printable report, help); the
+club's Teams column waits for BC8. The earlier tick-off version (built on dev
+2026-11-04/05) is superseded and was taken apart in BC1.
 
 ## What it does
 
@@ -48,6 +51,10 @@ they don't, it says **Off by $75.00**, says which way, and helps find it. They s
   show its figures line by line and who checked it, and **Check this statement again** replaces it. The starting
   statement opens too, and can be deleted (to fix a mistyped start) until a later check stands on it (owner 2026-11-06).
   When Stripe can't be reached, the treasurer is told before a start or check is saved without the money on its way.
+- **On a phone (club, BC4b):** the same check, laid out for a thumb. Statement date and Bank balance side by side; the
+  band two-up ("The bank says" · "Should be there") with Difference under them; the sums always open. Find's lines are
+  white cards, 10 at a time, each with the amount signed (−$75.00 out, +$100.00 in green) and its own 44px button; the
+  callout's buttons are full width; Save is the last thing on the card; every window opens full screen.
 - **Elsewhere, quietly:** one line on each Overview ("Bank: Club chequing checked through Oct 31, 2026", with an amber
   "Off by $X" when the latest check is off); each team's mark on the club's Teams tab; a printable one-page report with
   signature lines; a reminder (never a block) at the fiscal-year close and at the coach's season close.

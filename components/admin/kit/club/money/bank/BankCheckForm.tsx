@@ -27,6 +27,7 @@ import { AddEntryWindow, useBudgetWords } from '../LedgerWindows';
 import { BANK_REFUSAL } from '@/lib/bank-check-words';
 import { BANK_WORDS as W } from '@/lib/bank-tab-words';
 import { tournamentToday } from '@/lib/timezone';
+import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { useLatestRead } from '../../RepKit';
 import { DayField, FormError } from '../MoneyKit';
 import BankMoneyField from './BankMoneyField';
@@ -60,6 +61,8 @@ export default function BankCheckForm({ orgSlug, view, onSaved, onChanged, onSta
   againDate?: string;
 }) {
   const today = tournamentToday();
+  // On a phone the date and the balance sit side by side (drawn; owner 2026-11-06, BC4b): the balance takes the short word.
+  const isPhone = useIsPhone();
   const accountId = view.account.id;
   const [date, setDate] = useState(againDate ?? today);
   const [asOf, setAsOf] = useState(againDate ?? today); // the date the figure is read for: `date`, after it stops changing
@@ -165,21 +168,32 @@ export default function BankCheckForm({ orgSlug, view, onSaved, onChanged, onSta
     setBalance(''); pickDate(today); setAsOf(today);
   }
 
+  // Save and what saving it means: inline after the fields at a desk, the card's last thing on a phone (drawn).
+  const saveButton = (
+    <div className={s.checkSave}>
+      <button type="button" className="btn btn-lime" onClick={() => void save()} disabled={busy || !fresh}>
+        {busy ? W.saving : W.saveCheck}
+      </button>
+    </div>
+  );
+  const saveNotes = (
+    <>
+      {band && band.result === 'off' && typed !== null && <p className={ck.hint}>{W.saveOffNote(cents(band.offByCents))}</p>}
+      {replaces && <p className={ck.hint}>{W.replacesNote}</p>}
+    </>
+  );
+
   return (
     <section className={s.checkCard} aria-labelledby="bank-check-title">
       <h2 id="bank-check-title" className={s.checkTitle}>{W.checkTitle}</h2>
-      <FormError inPlace>{error}</FormError>
+      {/* What went wrong sits by Save: at the card's top at a desk (Save is inline there), above Save on a phone (/review). */}
+      {!isPhone && <FormError inPlace>{error}</FormError>}
       <div className={s.checkRow}>
         <DayField id="bank-check-date" label={W.statementDate} value={date} onChange={pickDate} max={today} />
-        <BankMoneyField id={BALANCE_ID} label={W.checkBalance} value={balance} onChange={v => { setBalance(v); setError(''); }} />
-        <div className={s.checkSave}>
-          <button type="button" className="btn btn-lime" onClick={() => void save()} disabled={busy || !fresh}>
-            {busy ? W.saving : W.saveCheck}
-          </button>
-        </div>
+        <BankMoneyField id={BALANCE_ID} label={isPhone ? W.checkBalancePhone : W.checkBalance} value={balance} onChange={v => { setBalance(v); setError(''); }} />
+        {!isPhone && saveButton}
       </div>
-      {band && band.result === 'off' && typed !== null && <p className={ck.hint}>{W.saveOffNote(cents(band.offByCents))}</p>}
-      {replaces && <p className={ck.hint}>{W.replacesNote}</p>}
+      {!isPhone && saveNotes}
 
       <StatusLine figure={figure} date={date} readError={readError} fresh={!!fresh} onRetry={() => setAgain(n => n + 1)} />
 
@@ -196,6 +210,11 @@ export default function BankCheckForm({ orgSlug, view, onSaved, onChanged, onSta
             })} />
         </>
       )}
+      {/* On a phone Save is the card's last thing, its notes under it (drawing tabs 1 and 3, /design BC4b): type, read,
+          fix in Find, then save, with no scroll back up past the band. */}
+      {isPhone && <FormError inPlace>{error}</FormError>}
+      {isPhone && saveButton}
+      {isPhone && saveNotes}
       {adding && ownBook && (
         <AddEntryWindow book={{ id: ownBook.id, name: ownBook.name, kind: ownBook.kind as LedgerKind, entityId: ownBook.entityId }}
           // The club's fiscal years, as the Ledger hands them: a date in a closed year is said under the field (/review).

@@ -1,5 +1,8 @@
 # Bank balance check BC4: the start's lines on a re-check, then the Bank tab on a phone (build prompt, two sessions)
 
+> **BC4b done 2026-11-06** (built, the walks passed at 390, 361 and 1440, `/design`, `/marketing`, `/simplify`, `/review`
+> applied; record in plan §9 BC4). **This prompt is DONE**; next is BC5, `BANK_BALANCE_CHECK_BC5_BUILD_PROMPT.md`.
+
 > **BC4a done 2026-11-06, committed `664f2086e`** (built, walked `BANK_BC4A_WALK_PASSED` at 1440 and 390, `/review` applied; record in plan §9 BC4);
 > **next BC4b** (the phone, below). New words from BC4a for BC4b's `/marketing`: none (the sentence stays "Still waiting on
 > {line}?"; start lines come marked `atStart` if a phone or desk caption wants it).
