@@ -1,6 +1,6 @@
 # GST/HST · Stage 2 Part 6b: a refund goes through a credit note, and a checkout invoice names the club (build prompt)
 
-> **Status: BUILDING — owner ruled R1–R4; Part 0 run, Parts 1–2 committed `fcef13e3b` 2026-11-05 (mig 446 dev, prod apply owed BEFORE they ship), Part 3 (the club's name after Checkout) committed `2d2f8b7c7` 2026-11-06. Next: Part 4.**
+> **Status: BUILDING — owner ruled R1–R4; Part 0 run, Parts 1–2 committed `fcef13e3b` 2026-11-05 (mig 446 dev, prod apply owed BEFORE they ship), Part 3 (the club's name after Checkout) committed `2d2f8b7c7` 2026-11-06, Part 4 (/accounting + the matrix re-run; the discounted-invoice cap fixed) committed 2026-11-06 (hash in ▶ Progress). Owner questions Q1–Q5 open. Next: Part 7.**
 
 > Written 2026-11-05 by `/plan`. Parent: [GST_HST_STAGE2_BUILD_PROMPT.md](GST_HST_STAGE2_BUILD_PROMPT.md) ▶ Progress, "Part 6 RUN"
 > (Defect 2 and the "name on the invoice" observation are this part's whole reason). Plan of record:
@@ -180,16 +180,17 @@ Settle Stripe's behavior before designing against it. Write each answer into ▶
 
 ## Part 4 · Close it into Part 7
 
-- [ ] `/accounting` review **before hand-off** (it changes what we invoice and record): the credit note's contents (s.232 / Memo
+- [x] `/accounting` review **before hand-off** (it changes what we invoice and record): the credit note's contents (s.232 / Memo
   12.2 list), R1's rounding rule, R3's bare refund, the name rule. Apply findings or record owner questions.
-- [ ] `/legal` only if R2 = C (our own email).
-- [ ] `/review` on Parts 1–3; `/simplify` first if the preview route duplicates `creditAgainst`'s math (share one helper).
-- [ ] **Matrix rows re-run** (test mode, through the product): full + part refund on ON 13% and NB 15%; a proration invoice; a
+- [x] `/legal` only if R2 = C (our own email). (R2 = A: not needed.)
+- [x] `/review` on Parts 1–3; `/simplify` first if the preview route duplicates `creditAgainst`'s math (share one helper).
+  (Done in Parts 2–3; Part 4's own fix reviewed on its own.)
+- [x] **Matrix rows re-run** (test mode, through the product): full + part refund on ON 13% and NB 15%; a proration invoice; a
   fee invoice; a no-invoice charge; recovery (kill after the Stripe call). Name: path A with no business name → the first invoice
   after the trial names the club; typed business name kept; Premium → Club renames to the club.
-- [ ] Steps for Part 7's ONE Stage 2 walk: the refund window's split and credit-note line; the credit note PDF (our GST/HST number,
+- [x] Steps for Part 7's ONE Stage 2 walk: the refund window's split and credit-note line; the credit note PDF (our GST/HST number,
   the club's name, the tax reversed); the email (R2); the Story entry. TODO / Progress truth-up.
-- [ ] Help: platform-admin-only (refund) needs no help article. The name change alters no flow. Skip `/docs` unless Part 0
+- [x] Help: platform-admin-only (refund) needs no help article. The name change alters no flow. Skip `/docs` unless Part 0
   changes the Checkout page the buyer sees (`name_collection`).
 
 ## Words for /marketing
@@ -498,3 +499,137 @@ Settle Stripe's behavior before designing against it. Write each answer into ▶
   `/accounting` review, then the matrix re-run, including the name row through a real page and the real webhook (OPEN 2
   above). Read the production webhook endpoint's API version (OPEN 1). ⚠ Migration 446 must be applied to prod BEFORE
   Parts 1–2 ship.
+- 2026-11-06: **Part 4 RUN (the /accounting review, the matrix re-run, the steps for Part 7).** Commit hash in the next entry. All
+  [V 2026-11-06].
+  - **Production's webhook (Part 3 OPEN 1) — CLOSED.** One read-only live call, owner-approved
+    (`.probe/gst2/part6b-part4-live-endpoint-run1.txt`): `https://www.fieldlogichq.ca/api/billing/webhook` is pinned to
+    `2026-04-22.dahlia`, enabled, and hears `checkout.session.completed`. Nothing written in live mode.
+  - **A defect the matrix found, FIXED: a discounted invoice could not be refunded at all.** Part 2 OPEN 1's probe
+    (`part6b-part4-refunds-run1.txt` J): a credit-note line's `amount` is in the invoice LINE's units, BEFORE the discount (25% off a
+    219000 line: crediting 219000 previews the whole 185603 paid). The planner capped the note at the after-discount
+    `total_excluding_tax` (164250), so "all of it" previewed 139202 marked capped, a typed $100 previewed $75.04 ("the nearest it
+    can make", false), and the confirm then refused every time with "changed since you opened it" (nothing sent). Fix
+    (`lib/console-money-credit.ts`): the cap is the net of ALL the invoice's own line amounts (`linesNetCents`, negative proration
+    lines included), the unit Stripe uses; identical to the old cap on an undiscounted invoice. Guards: §6b discounted-invoice case
+    (a fake that takes the discount off each line inside the note, as Stripe does) + a source guard on the cap; mutate-and-fail 2/2
+    (`part6b-part4-mutate-run1.txt`). `/review` on this change only (high-risk tier; an independent finder on correctness +
+    blast radius, adjudicated here): no Critical or High. Applied: the walk's comment ("each cent adds at least one") was false on a
+    discounted line, now says so. Accepted and recorded: a deep discount (≈ 75% off and more) can exhaust the 6-preview walk (same
+    class as Q1); a dashboard-made note with a custom line on a DISCOUNTED invoice overstates the pool (refuses, safe); a
+    tax-inclusive price would refuse safely (no inclusive price exists; Stage 2 prices are exclusive, `billing-tax.ts:214`); the
+    behavioural test builds the target by hand (the source guard pins the read). Lint clean, typecheck exit 0 (8 GB heap).
+  - **`/accounting` verdicts** (new topic `docs/agents/accounting/CREDIT_NOTES_ON_REFUNDS.md`, index row; SOR/91-44 s.3 and Memo
+    12.2 read 2026-11-06; credit-note PDFs read, `part6b-part4-note-pdf-run1.txt`):
+    1. **The credit note meets s.232 / SOR/91-44 s.3:** "Credit Note"; our name + "CA GST/HST 767993298RT0002"; the club's name (and
+       address) under "Bill to"; date of issue; each line before tax and "HST - Canada (13% on CA$88.49) CA$11.50"; the original
+       invoice by number. No address and no invoice number are required (Memo ¶20 recommends the invoice DATE; the number meets it
+       in substance). A note made after a rename prints the INVOICE's name and address (`part6b-part4-note-name-run1.txt`) — right.
+       ⚠ **The test account's header reads "FieldLogicHQ sandbox, Charlottetown, Prince Edward Island"** — not a s.3 item, but the
+       LIVE account's public details (name, Ontario address, GST/HST number) must be read before the first live note (Part 7 step W9).
+    2. **R1 is sound:** the nearest figure not above what was typed never over-claims the adjustment; the sentence is accurate
+       wherever the planner truly found the nearest (not so on a line coupon, Q1).
+    3. **Largest line first, spilling:** sound. One invoice's taxed lines share one place of supply and rate, so the tax reversed is
+       the same whichever line takes it; only the record's line attribution could differ (e.g. a refund "of the fee" lands on the
+       plan line). Acceptable.
+    4. **R3 bare refund:** sound. No invoice → Stripe Tax recorded no tax; with no note no adjustment is claimed (Memo ¶22) — safe side.
+    5. **Name:** cardholder, typed business name and club name each meet s.3(c) (and the $500 invoice rule). R4 compliant; a business
+       name typed EARLIER replaced by the club's name is compliant (the buyer's own GST/HST number is not a required item and stays
+       on the customer); Premium → Club: notes on old invoices keep the coach's name (the recipient of that supply).
+    6. **The fee list not showing a refunded fee invoice is not a tax gap** (the note is issued and emailed, R2) — a product nicety (Q4).
+    7. **The line-coupon limit is not a money defect** (nothing wrong moves or is filed; it fails safe) → owner question Q1.
+    No finding changes code a club sees, so no `/docs`. No `/legal` (R2 = A).
+  - **Matrix (test mode, through the product's own path; `part6b-part4-refunds-run2.txt` + `-result2.json` after the fix; run 1
+    before it).** Refunds: readClubCharge → creditTargetForCharge → planCreditNote → makeRefund → recoverRefunds. Every note:
+    refund = note total = preview, never above the typed figure; the note carries our metadata, its refund none; PDF present.
+
+    | Row | Typed | Result | Pass |
+    |---|---|---|---|
+    | ON 13% part, then rest | 100.00 / all | 99.99 (88.49 + 11.50), then 2,374.71 | ✅ |
+    | ON 13% whole | all | 2,474.70 (2,190.00 + 284.70) | ✅ |
+    | NB 15% whole; part then rest | all; 33.33 / all | 2,518.50; 33.33 exact (28.98 + 4.35), then 2,485.17 | ✅ |
+    | Proration invoice whole | all | 214.70 (one line, 190.00 = the net) | ✅ |
+    | Subscription first invoice part | 10.00 | 10.00 (8.85 + 1.15) | ✅ |
+    | Plan + recovered fee part, then rest | 100.00 / all | 99.99 on the plan line, then 2,391.66 [2,101.51 + 15.00] | ✅ |
+    | **Our monthly fee invoice** (FEE_INVOICE_META) part, then rest | 10.00 / all | planner knows it; 10.00, then 37.57 | ✅ |
+    | No-invoice charge (R3) part, then rest | 20.00 / all | bare refunds, no note | ✅ |
+    | Split moved by a cent | 100.00 | 409, record not made, nothing sent | ✅ |
+    | Recovery: answer lost AFTER the note | 100.00 | unknown → recovery finds the NOTE by its metadata → done with note, number, refund | ✅ |
+    | Recovery: answer lost BEFORE the note | 50.00 | unknown → not made → a fresh "rest" refund worked | ✅ |
+    | **Discounted, 25% off (subscription coupon)** whole; part then rest | all; 100.00 / all | 1,856.03 exact; 99.99 (line 117.99), then 1,756.04 | ✅ (❌ in run 1: capped 1,392.02, then 409) |
+    | **Discounted, $150 off** whole; part then rest | all; 100.00 / all | 2,305.20 exact; 99.99, then 2,205.21 | ✅ (❌ in run 1) |
+    | **Line-level 10% coupon on the plan item** (plan + fee) whole | all | 2,244.18 exact | ✅ |
+    | Line-level coupon part 100.00 / 2,000.00 | 100.00; 2,000.00 | previewed 99.97 / 1,998.54 (not the nearest), then 409 every time, nothing sent | ❌ → **Q1** |
+
+    Name — through REAL Checkout pages (paid by the owner 2026-11-06, test card, cardholder "Pat Cardholder") and the REAL webhook:
+    made by the product (`create-checkout` Club yearly with its 90-day trial, on a test clock; `create-team-checkout` Premium
+    monthly), delivered by Stripe's own CLI (`stripe listen`) through `.probe/gst2/part6b-part4-relay.mjs` (verifies the CLI's
+    signature, re-signs the same raw body with the local secret) to the local server, which runs Part 3. The hosted dev site's
+    test endpoint was paused for the row with the owner's OK (14:14–14:45 UTC, then resumed; `part6b-part4-endpoint-run1.txt`)
+    because it runs older code and the event claim is shared. Every event answered `ok`, none a duplicate
+    (`part6b-part4-relay-log.jsonl`, `part6b-part4-name-run1.txt`):
+
+    | Row | What Stripe did | After the webhook | Next paid invoice | Pass |
+    |---|---|---|---|---|
+    | A, no business name | name → "Pat Cardholder" at t=…120; event at …122 | "Part 6b4 Plain Name Club" at …123 | after the trial, `subscription_cycle` 2,474.70 names the club (PDF too) | ✅ |
+    | A, "Typed Business Ltd" + 123456789RT0002 | name → typed at …171; event at …173 | kept; our stored name left as ours; number on the customer | names "Typed Business Ltd", PDF shows the number | ✅ |
+    | B coach Premium, no business name | first invoice inside Checkout names "Pat Cardholder" (R4, accepted); event at …192 | "Part Sixbee Coach" | Premium → Club in place (move 200): customer "Part 6b4 Hawks Club" (AB), the move invoice names the club | ✅ |
+
+    **Part 3 OPEN 2 (event ordering) — CLOSED:** in all three, Stripe wrote the cardholder's name BEFORE it made the
+    `checkout.session.completed` event, and the real delivery restored ours after. Cleanup: 2 clubs, 1 coach portal, 3 sign-ins,
+    2 test clocks (with their customers and subscriptions), the coach's customer, 15 matrix customers, 4 products archived, 5 coupons
+    deleted, ping customers deleted. Probes are not committed.
+  - **Steps for Part 7** (they fold into its ONE Stage 2 walk; not published here). A club whose email is the owner's (test mode
+    mails only verified team addresses), a paid taxed invoice charge, a second one, and a charge with no invoice.
+    - W1 · Platform admin → the club → Money → the invoice charge → **Refund this charge** → Part of it → **$100.00**. The window says
+      "Refund $99.99 of the $… charge to the Visa ending 4242: $88.49 for the plan + $11.50 HST 13%. Stripe can refund $99.99, the
+      nearest it can make with the tax. This cannot be undone. … A credit note goes to {email}." "Test mode" shows. Confirm.
+    - W2 · The success message names the credit note number. The charge window now lists "credit note …-CN-01" with a PDF link.
+    - W3 · Open the PDF: "Credit Note", our name and GST/HST number, the club's name and address, the original invoice number,
+      "HST - Canada (13% on CA$88.49) CA$11.50", "CA$99.99 refunded".
+    - W4 · The inbox: Stripe's credit-note email (R2) and its refund receipt arrive (record both, or which one).
+    - W5 · The club's Story: "Refunded $99.99 of a charge · To the card it came from · credit note …-CN-01 · the plan did not change".
+    - W6 · The second charge → "All of it": the split is the whole invoice and no "nearest" sentence; the Story names a second note.
+    - W7 · The no-invoice charge → Refund: "This charge paid no invoice, so there is no credit note." Confirm; the Story says
+      "· no credit note ·".
+    - W8 · The name: a club that paid Stripe's page with no business name — its next paid invoice (after the trial, a test clock
+      fixture) is billed to the club's name; one that typed a business name keeps it.
+    - W9 · **Live account check (read only):** Stripe dashboard, LIVE mode → Settings → Business → Public details: the name, the
+      Ontario address and phone that invoices and credit notes print (the test account prints a PEI sandbox address).
+    - W10 · (only if Q2 = gate) sign in as support → the Money tab's charge window shows no credit-note PDF link.
+  - **Every open item from Parts 2–3, in one place:**
+    - P2-1 discounted invoice: **CLOSED** for subscription- and invoice-level coupons (the cap fix above); a line-level coupon and a
+      very deep discount → **Q1**.
+    - P2-2 a legacy charge with no payment intent refunds bare → **Q3**.
+    - P2-3 window and server disagree about "has an invoice" (window shows none, server finds one → "changed since you opened it"
+      until the charge is reopened) → **Q5**.
+    - P2-4 support sees credit-note PDFs → **Q2**.
+    - P2-5 a note number outside letters/digits/hyphens fails mig 446's CHECK at completion → **carried, known** (every Stripe number
+      seen fits: `…-0001-CN-01`).
+    - P2-6 Plan & billing's fee list does not show a refunded fee invoice → **Q4** (accounting: not a tax gap).
+    - P3-1 production webhook API version → **CLOSED** (dahlia, read 2026-11-06).
+    - P3-2 event ordering end to end → **CLOSED** (the name row above).
+    - P3-3 Premium → Club renames to the club → **CLOSED** (proven, n_coach).
+    - P3-4 a business name typed earlier replaced by the club's name → **CLOSED** (accounting: compliant; as ruled).
+    - P3-5 a name changed to exactly the cardholder's + a late replay → **carried, known** (very unlikely).
+    - P3-6 `putBack` between Checkout and the webhook → **carried, known** (predates Part 3).
+    - Live account public details → **Part 7 step W9**.
+  - **Owner questions** (each with a recommendation):
+    - **Q1 · Part refunds of an invoice with a LINE-level coupon (or a discount of ~75% and more).** The planner steps one unit at a
+      time and runs out of previews: the window shows a figure that is not the nearest and the confirm refuses every time (nothing
+      sent; a whole refund works). The product never applies a coupon itself; one exists only if someone adds it in Stripe's
+      dashboard. *Recommend:* build "step by the gap" (each preview moves by the remaining difference; converges in 2–3 previews,
+      guarded with the fake) as a small item in Part 7, before the walk — it removes a false sentence. Not a gate if you would
+      rather accept it as known.
+    - **Q2 · Support sees credit-note PDFs.** The charge window shows the note's PDF link to every role that can open the Money tab;
+      support cannot refund, and the console shows no other billing PDF to support. The PDF carries the club's billing name, address
+      and tax details. *Recommend:* gate the link behind the `refund` power (least access; the club already gets the note by email
+      and in Stripe's portal).
+    - **Q3 · A legacy charge with no payment intent refunds bare** (no note). *Recommend:* accept as known — production has no
+      subscriptions yet, our checkout always makes a payment intent, and a bare refund claims no tax adjustment (safe side).
+    - **Q4 · Plan & billing's fee list does not show that a fee invoice was refunded.** *Recommend:* a small `/plan` follow-up after
+      Stage 2 closes ("Refunded $X · credit note" on the fee row) — not a gate; the club has the note by email and in the portal.
+    - **Q5 · The window and the server can disagree about "has an invoice"** (needs a transient Stripe gap; recoverable by reopening
+      the charge). *Recommend:* accept as known.
+  - **Checks:** the five named guards 139/140 (the one failure is the known stage3 §12 on `ExpenseFormWindow.tsx`, another
+    session's). Lint clean on the changed files; typecheck exit 0 (8 GB heap). Help: platform-admin only, no flow change → no
+    `/docs`. Nothing in production needs applying for Part 4; ⚠ **migration 446 must reach prod BEFORE Parts 1–2 ship.**

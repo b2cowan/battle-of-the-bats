@@ -89,4 +89,13 @@ describe('a refund of a charge that paid an invoice goes through a credit note',
     const body = fees.slice(fees.indexOf('async function creditAgainst('));
     assert.match(body, /email_type: 'none',/);
   });
+
+  it('the planner caps in LINE units: the net of the invoice’s own lines, never the after-discount total (Part 4, J)', () => {
+    // A note line's amount is before the line's discount (part6b-part4-refunds-run1.txt J: 25% off, the 219000 line by its own
+    // amount → the whole 185603). A cap read from `total_excluding_tax` credited a discounted invoice 75% of the way.
+    const planner = readCode(PLANNER);
+    assert.match(planner, /linesNetCents: lines\.reduce\(\(s, l\) => s \+ l\.amount, 0\),/);
+    assert.doesNotMatch(planner, /inv\.total_excluding_tax|inv\.subtotal/);
+    assert.match(planner, /target\.linesNetCents - target\.creditedBeforeTaxCents/);
+  });
 });

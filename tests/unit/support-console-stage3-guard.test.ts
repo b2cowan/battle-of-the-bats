@@ -393,7 +393,7 @@ describe('5 · nothing we write carries a card number, expiry, holder name, bill
 // (.probe/gst2/part6b-credit-notes-run1.txt: ON 13% 10000 → 10001 / 9999; NB 15% 10000 exact).
 
 const TARGET_ON: CreditTarget = {
-  invoiceId: 'in_1PlanOn', currency: 'cad', total: 247470, beforeTax: 219000, creditedCents: 0, creditedBeforeTaxCents: 0,
+  invoiceId: 'in_1PlanOn', currency: 'cad', total: 247470, linesNetCents: 219000, creditedCents: 0, creditedBeforeTaxCents: 0,
   lines: [{ id: 'il_plan', amount: 219000, creditedCents: 0 }], isFeeInvoice: false,
 };
 const TARGET_NB: CreditTarget = { ...TARGET_ON, invoiceId: 'in_1PlanNb', total: 251850 };
@@ -401,8 +401,10 @@ const INVOICE_CHARGE: MoneyCharge = { ...CHARGE, amountCents: 247470, invoice: {
   subscriptionId: 'sub_1', periodStart: null, periodEnd: null, planId: 'club', cycle: 'annual', fromPlanId: null, description: null, taxCents: 28470 } };
 
 type NotePosted = { params: Stripe.CreditNoteCreateParams; options: Stripe.RequestOptions };
-function fakeCreditStripe(opts: { rate?: number; charged?: number; error?: unknown; refundStatus?: string; listedNotes?: Array<Record<string, unknown>> } = {}) {
+function fakeCreditStripe(opts: { rate?: number; discount?: number; charged?: number; error?: unknown; refundStatus?: string; listedNotes?: Array<Record<string, unknown>> } = {}) {
   const rate = opts.rate ?? 0.13;
+  // A line's discount (a fraction) comes off INSIDE the note, as Stripe does: a note line's amount is before it (Part 4, J).
+  const net = (amount: number) => Math.round(amount * (1 - (opts.discount ?? 0)));
   const created: NotePosted[] = [];
   const previews: Stripe.CreditNotePreviewParams[] = [];
   const refundPosts: unknown[] = [];
@@ -410,8 +412,8 @@ function fakeCreditStripe(opts: { rate?: number; charged?: number; error?: unkno
   let refundLists = 0;
   const byKey = new Map<string, Record<string, unknown>>();
   const shape = (lines: Stripe.CreditNotePreviewParams['lines']) => {
-    const before = (lines ?? []).reduce((sum, l) => sum + (l.amount ?? 0), 0);
-    const tax = (lines ?? []).reduce((sum, l) => sum + Math.round((l.amount ?? 0) * rate), 0);
+    const before = (lines ?? []).reduce((sum, l) => sum + net(l.amount ?? 0), 0);
+    const tax = (lines ?? []).reduce((sum, l) => sum + Math.round(net(l.amount ?? 0) * rate), 0);
     return { total: before + tax, post_payment_amount: before + tax, total_excluding_tax: before, subtotal: before,
       total_taxes: [{ amount: tax, tax_behavior: 'exclusive', tax_rate_details: { tax_rate: 'txr_hst' }, taxability_reason: 'standard_rated', taxable_amount: before, type: 'tax_rate_details' }] };
   };
@@ -522,13 +524,13 @@ describe('6b · a refund of a charge that paid an invoice is a credit note', () 
     assert.equal(lost.records[0].status, 'unknown');
   });
 
-  it('the lines: positive lines only, the largest first, spilling past its room; the pool is the net before tax', () => {
+  it('the lines: positive lines only, the largest first, spilling past its room; the pool is the net of the lines', () => {
     // A proration invoice: the positive line (21,900) is larger than what was paid (19,000 net of the unused-time line).
-    const proration: CreditTarget = { ...TARGET_ON, total: 21470, beforeTax: 19000, lines: [{ id: 'il_new', amount: 21900, creditedCents: 0 }] };
+    const proration: CreditTarget = { ...TARGET_ON, total: 21470, linesNetCents: 19000, lines: [{ id: 'il_new', amount: 21900, creditedCents: 0 }] };
     assert.equal(creditRoom(proration).pool, 19000);
     assert.deepEqual(creditLines(creditRoom(proration).order, 19000), [{ type: 'invoice_line_item', invoice_line_item: 'il_new', amount: 19000 }]);
     // Plan + a recovered fee: the plan line takes a part refund first; past its room, the fee line.
-    const both: CreditTarget = { ...TARGET_ON, total: 249165, beforeTax: 220500, lines: [{ id: 'il_fee', amount: 1500, creditedCents: 0 }, { id: 'il_plan', amount: 219000, creditedCents: 0 }] };
+    const both: CreditTarget = { ...TARGET_ON, total: 249165, linesNetCents: 220500, lines: [{ id: 'il_fee', amount: 1500, creditedCents: 0 }, { id: 'il_plan', amount: 219000, creditedCents: 0 }] };
     const { order } = creditRoom(both);
     assert.deepEqual(creditLines(order, 8850).map(l => [l.invoice_line_item, l.amount]), [['il_plan', 8850]]);
     assert.deepEqual(creditLines(order, 219500).map(l => [l.invoice_line_item, l.amount]), [['il_plan', 219000], ['il_fee', 500]]);
@@ -540,7 +542,7 @@ describe('6b · a refund of a charge that paid an invoice is a credit note', () 
   });
 
   it('all that is left credits every line its room, exactly (Stripe’s last note takes the remaining tax)', async () => {
-    const both: CreditTarget = { ...TARGET_ON, total: 249165, beforeTax: 220500, lines: [{ id: 'il_fee', amount: 1500, creditedCents: 0 }, { id: 'il_plan', amount: 219000, creditedCents: 0 }] };
+    const both: CreditTarget = { ...TARGET_ON, total: 249165, linesNetCents: 220500, lines: [{ id: 'il_fee', amount: 1500, creditedCents: 0 }, { id: 'il_plan', amount: 219000, creditedCents: 0 }] };
     const s = fakeCreditStripe();
     const p = await planCreditNote(s.stripe, both, 249165);
     assert.ok(p.ok);
@@ -548,6 +550,21 @@ describe('6b · a refund of a charge that paid an invoice is a credit note', () 
     assert.deepEqual(p.lines.map(l => l.amount), [219000, 1500]);
     assert.equal(p.cardCents, 249165);
     assert.equal(p.capped, false);
+  });
+
+  it('a DISCOUNTED invoice: the pool is in line units, so all of it is exact and a part lands on the nearest (Part 4, J)', async () => {
+    // 25% off a 219000 line at ON 13%: 164250 before tax + 21353 = 185603 paid. The note's line is 219000 (before the discount).
+    const discounted: CreditTarget = { ...TARGET_ON, total: 185603, linesNetCents: 219000 };
+    assert.equal(creditRoom(discounted).pool, 219000);
+    const all = await planCreditNote(fakeCreditStripe({ discount: 0.25 }).stripe, discounted, 185603);
+    assert.ok(all.ok);
+    assert.deepEqual([all.cardCents, all.lines.map(l => l.amount), all.capped], [185603, [219000], false]);
+    const s = fakeCreditStripe({ discount: 0.25 });
+    const part = await planCreditNote(s.stripe, discounted, 10000);
+    assert.ok(part.ok);
+    // 11799 → 8849 + 1150 = 9999; 11800 → 8850 + 1151 = 10001 (above). The nearest NOT above, in ≤ 3 previews.
+    assert.deepEqual([part.cardCents, part.beforeTaxCents, part.capped], [9999, 8849, false]);
+    assert.ok(s.previews.length <= 3, `${s.previews.length} previews`);
   });
 
   it('recovery finds the credit note by ITS metadata (the refund a note makes carries none), never sends anything', async () => {

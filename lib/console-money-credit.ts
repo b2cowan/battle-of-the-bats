@@ -12,7 +12,11 @@ import { FEE_INVOICE_META } from './online-payment-words';
  *   · a top-level `amount` on a paid taxed invoice is ACCEPTED and reverses NO tax (1a), so a note is always made of
  *     invoice lines, each by its before-tax `amount`. Never `quantity`: Stripe refuses it on a proration line (5a, 5c);
  *   · a negative line cannot be credited (5d); each line is capped at its own amount less earlier notes on it (2i); the
- *     whole is capped at the invoice's net before-tax total (a proration invoice's positive line is larger than what was paid, 5b);
+ *     whole is capped at the NET OF THE INVOICE'S LINES (a proration invoice's positive line is larger than what was paid, 5b);
+ *   · a note line's `amount` is in the invoice LINE's units: BEFORE any discount as well as before tax. Stripe takes the line's
+ *     discount off inside the note (Part 4 matrix 2026-11-06, `part6b-part4-refunds-run1.txt` J: 25% off, a 219000 line by its
+ *     own amount → the whole 185603 paid). So every cap here is in line units, never the after-discount `total_excluding_tax`
+ *     (that cap credited a discounted invoice 75% of the way and refused it every time);
  *   · the tax is Stripe's: a note's total is asked of `creditNotes.preview`, never worked out here. The total rises with the
  *     before-tax amount, so the planner walks to the NEAREST TOTAL NOT ABOVE the typed figure (R1: never refund more than staff
  *     typed). About 1 card figure in 9 has no before-tax cent that hits it exactly (1g), so the window shows Stripe's figure;
@@ -46,11 +50,14 @@ export type CreditTarget = {
   currency: string;
   /** The invoice's total, tax included. */
   total: number;
-  /** Its net before-tax total (a proration invoice nets its negative "unused time" line here). */
-  beforeTax: number;
+  /**
+   * The net of ALL its lines' amounts, in line units: before discounts and tax (a proration invoice nets its negative "unused
+   * time" line here). Never the after-discount `total_excluding_tax`: a note line's amount is before the discount (Part 4, J).
+   */
+  linesNetCents: number;
   /** What issued notes already credited, tax included (pre- and post-payment). */
   creditedCents: number;
-  /** What issued notes already credited, before tax (every line of theirs, incl. a custom line no invoice line carries). */
+  /** What issued notes already credited, in line units (every line of theirs, incl. a custom line no invoice line carries). */
   creditedBeforeTaxCents: number;
   /** The positive lines, as on the invoice. */
   lines: CreditLine[];
@@ -128,7 +135,7 @@ async function readCreditTarget(stripe: Stripe, invoiceId: string, owner: Credit
     invoiceId,
     currency: inv.currency,
     total: inv.total,
-    beforeTax: inv.total_excluding_tax ?? inv.subtotal,
+    linesNetCents: lines.reduce((s, l) => s + l.amount, 0),
     creditedCents: (inv.pre_payment_credit_notes_amount ?? 0) + (inv.post_payment_credit_notes_amount ?? 0),
     creditedBeforeTaxCents,
     lines: lines.filter(l => l.amount > 0).map(l => ({ id: l.id, amount: l.amount, creditedCents: takenByLine.get(l.id) ?? 0 })),
@@ -154,7 +161,7 @@ export function creditRoom(target: CreditTarget): { order: Array<{ id: string; r
     .map(l => ({ id: l.id, room: l.amount - l.creditedCents }))
     .filter(l => l.room > 0)
     .sort((a, b) => b.room - a.room);
-  const pool = Math.min(order.reduce((s, l) => s + l.room, 0), target.beforeTax - target.creditedBeforeTaxCents);
+  const pool = Math.min(order.reduce((s, l) => s + l.room, 0), target.linesNetCents - target.creditedBeforeTaxCents);
   return { order, pool: Math.max(0, pool) };
 }
 
@@ -192,7 +199,8 @@ export async function planCreditNote(stripe: Stripe, target: CreditTarget, cardC
   let best: { b: number; note: Stripe.CreditNote } | null = null;
   if (note.total <= cardCents) {
     best = { b, note };
-    // Below the figure: one more cent before tax may still fit (each cent adds at least one to the total).
+    // Below the figure: one more line unit may still fit. ⚠ On a discounted line a unit adds LESS than a cent, so a step can add
+    // nothing and a deep discount can exhaust MAX_PREVIEWS short of the nearest (never above it; Part 4 owner question Q1).
     while (best.note.total < cardCents && best.b < pool && previews < MAX_PREVIEWS) {
       const next = await preview(best.b + 1);
       if (next.total > cardCents) break;
