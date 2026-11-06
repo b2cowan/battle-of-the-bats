@@ -2,9 +2,9 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   checkView, checkedThrough, lineMatches, pickerSearch, readCents, readDay, refusalOfDbError, refusalOfStep, savePlan, saveRefusal, STATUS_OF,
-  waitingIdsOf, type SaveFacts,
+  startItemPlan, waitingIdsOf, type SaveFacts,
 } from '../../lib/bank-club-rules.ts';
-import type { ClubSavedCheck, EntryRow, OnItsWay } from '../../lib/bank-club-map.ts';
+import { beforeStartLines, beforeStartWindow, type ClubSavedCheck, type EntryRow, type OnItsWay } from '../../lib/bank-club-map.ts';
 import { BANK_REFUSAL } from '../../lib/bank-check-words.ts';
 import { readFileSync } from 'node:fs';
 
@@ -81,6 +81,8 @@ describe('Not in the bank yet: figures from the books, never the request (ask 2,
     // The start itself has no start before it: its own items (Q2) are never refused by this rule.
     assert.ok(plan({ bankCents: 1, waiting: [`entry:${U(9)}`] }, { booksCents: null, startDate: null }, [entry(9, { entry_date: '2026-09-12' })], 'start').ok);
     assert.match(BANK_REFUSAL.bad_item, /after your starting statement/);
+    // Waiting at the start has the other date rule, so its own sentence (BC3b /marketing).
+    assert.match(BANK_REFUSAL.bad_start_item, /on or before your starting statement/);
   });
   it('only entry:{uuid} keys are looked up, at most one past the cap', () => {
     assert.deepEqual(waitingIdsOf([`entry:${U(1)}`, 'entry:not-a-uuid', 7, `typed:${U(2)}`]), [U(1)]);
@@ -132,9 +134,9 @@ describe("the date rules, before any figure is read (saveRefusal: bank_check_sav
 describe('what the list shows', () => {
   const c = (id: string, kind: 'start' | 'check', date: string, bank: number, books: number, extra: Partial<ClubSavedCheck> = {}) =>
     ({ id, kind, date, bankCents: bank, booksCents: books, onItsWayCents: 0, cashCents: null, waiting: [], bookIds: [],
-      createdBy: 'u1', createdAt: `${date}T12:00:00Z`, ...extra });
+      createdBy: 'u1', createdAt: `${date}T12:00:00Z`, correctedAt: null, ...extra });
   it('a saved check\'s band from its own figures, its "Books now say", who checked it', () => {
-    const v = checkView({ ...c('oct', 'check', '2026-10-31', 791_853, 825_553, { onItsWayCents: 41_200 }), booksNowSayCents: 817_553 },
+    const v = checkView({ ...c('oct', 'check', '2026-10-31', 791_853, 825_553, { onItsWayCents: 41_200 }), booksNowSayCents: 817_553, startCorrected: false },
       id => (id === 'u1' ? 'Dana' : null));
     assert.deepEqual([v.figure.result, v.figure.offByCents, v.figure.shouldBeCents, v.booksNowSayCents, v.checkedBy],
       ['off', 7_500, 784_353, 817_553, 'Dana']);
@@ -156,12 +158,16 @@ describe('Find\'s search, by shape (BC3 reuses it)', () => {
     assert.deepEqual(pickerSearch('Cheque 1234'), { kind: 'words', words: 'Cheque 1234' });
     assert.deepEqual(pickerSearch('   '), { kind: 'none' });
   });
-  it('a statement\'s thousands comma is an amount (BC3a); "12,50" is not a group of three, so it stays words (O4)', () => {
+  it('a statement\'s thousands comma is an amount (BC3a); a comma before exactly two final digits is a decimal comma (O4, BC3b)', () => {
     assert.deepEqual(pickerSearch('$1,250.00'), { kind: 'amount', amount: 1250 });
     assert.deepEqual(pickerSearch('1,250'), { kind: 'amount', amount: 1250 });
     assert.deepEqual(pickerSearch('1,234,567.89'), { kind: 'amount', amount: 1234567.89 });
-    assert.deepEqual(pickerSearch('12,50'), { kind: 'words', words: '12,50' });
-    assert.deepEqual(pickerSearch('1,25'), { kind: 'words', words: '1,25' });
+    assert.deepEqual(pickerSearch('12,50'), { kind: 'amount', amount: 12.5 });
+    assert.deepEqual(pickerSearch('$1250,00'), { kind: 'amount', amount: 1250 });
+    assert.deepEqual(pickerSearch('1,25'), { kind: 'amount', amount: 1.25 });
+    // Neither a thousands group nor two decimals: words, never a guess.
+    assert.deepEqual(pickerSearch('12,5'), { kind: 'words', words: '12,5' });
+    assert.deepEqual(pickerSearch('1,2,3'), { kind: 'words', words: '1,2,3' });
   });
   it('a line answers it: an amount to the cent in either direction; words in its own words or how it came, any case', () => {
     const cheque = { amountCents: 7_500, label: 'Cheque #214 · Umpire clinic', how: 'Cheque 214' };
@@ -175,6 +181,58 @@ describe('Find\'s search, by shape (BC3 reuses it)', () => {
     assert.ok(lineMatches(pickerSearch(''), cheque));
     assert.ok(lineMatches(pickerSearch('cheque 214'), { amountCents: 1, label: null, how: 'Cheque 214' }));
     assert.ok(lineMatches(pickerSearch('0.10'), { amountCents: 10 }), 'no float drift to the cent');
+  });
+});
+
+describe('Waiting at the start: correcting the starting statement (Q2-A, BC3b; mig 449 re-checks it)', () => {
+  const start: ClubSavedCheck = { id: 'st', kind: 'start', date: '2026-09-30', bankCents: 500_000, booksCents: 500_000, onItsWayCents: 0,
+    cashCents: null, waiting: [], bookIds: ['general'], createdBy: 'u1', createdAt: '2026-10-01T12:00:00Z', correctedAt: null };
+  const p = (body: Record<string, unknown>, entries: EntryRow[], s: ClubSavedCheck | null = start) =>
+    startItemPlan({ body, start: s, bookIds: ['general', 'tourney'], entries });
+  const chq = entry(9, { entry_date: '2026-09-26', amount: '500.00' });
+  it('a cheque before the start: its figures from the books; the start\'s books move by exactly it (out comes off)', () => {
+    const r = p({ add: `entry:${U(9)}` }, [chq]);
+    assert.ok(r.ok);
+    if (!r.ok) return;
+    assert.deepEqual(r.args, { startId: 'st', booksBefore: 500_000, booksAfter: 450_000, remove: null,
+      add: { key: `entry:${U(9)}`, date: '2026-09-26', direction: 'out', amountCents: 50_000, label: 'Cheque #9' } });
+  });
+  it('a deposit before the start goes ON; taking a line off moves the books back by it', () => {
+    const dep = entry(10, { entry_date: '2026-09-29', amount: '120.00', entry_type: 'income' });
+    const r = p({ add: `entry:${U(10)}` }, [dep]);
+    assert.ok(r.ok && r.args.booksAfter === 512_000);
+    const on = { ...start, booksCents: 450_000, waiting: [{ key: `entry:${U(9)}`, date: '2026-09-26', direction: 'out' as const, amountCents: 50_000, atStart: true }] };
+    const off = p({ remove: `entry:${U(9)}` }, [], on);
+    assert.ok(off.ok && off.args.booksAfter === 500_000 && off.args.remove === `entry:${U(9)}`);
+    assert.deepEqual(p({ remove: 'entry:gone' }, [], on), { ok: false, status: 409, code: 'changed' });
+    assert.deepEqual(p({ add: `entry:${U(9)}` }, [chq], on), { ok: false, status: 400, code: 'bad_start_item' }, 'already on the start');
+  });
+  it('refused: after the start, not posted, another account\'s book, an online payment, a transfer inside the account (the start\'s own sentence); no start; both or neither', () => {
+    const bad = (e: EntryRow, extra: EntryRow[] = []) => p({ add: `entry:${e.id}` }, [e, ...extra]);
+    assert.equal((bad(entry(1, { entry_date: '2026-10-01' })) as { code: string }).code, 'bad_start_item');
+    assert.equal((bad(entry(2, { entry_date: '2026-09-20', status: 'pending' })) as { code: string }).code, 'bad_start_item');
+    assert.equal((bad(entry(3, { entry_date: '2026-09-20', ledger_id: 'gaming' })) as { code: string }).code, 'bad_start_item');
+    assert.equal((bad(entry(4, { entry_date: '2026-09-20', payment_method: 'online_card' })) as { code: string }).code, 'bad_start_item');
+    const half = entry(5, { entry_date: '2026-09-20', entry_type: 'transfer_out', linked_entry_id: U(6) });
+    assert.equal((bad(half, [entry(6, { entry_date: '2026-09-20', entry_type: 'transfer_in', ledger_id: 'tourney' })]) as { code: string }).code, 'bad_start_item');
+    // A transfer to a book in ANOTHER account is a real bank movement: it may wait at the start.
+    assert.ok(bad(half, [entry(6, { entry_date: '2026-09-20', entry_type: 'transfer_in', ledger_id: 'gaming' })]).ok);
+    assert.equal((p({ add: `entry:${U(9)}` }, [chq], null) as { code: string }).code, 'no_start');
+    assert.equal((p({ add: `entry:${U(9)}`, remove: 'x' }, [chq]) as { code: string }).code, 'bad_item');
+    assert.equal((p({}, []) as { code: string }).code, 'bad_item');
+  });
+  it('the look-back: the 60 days before the start, on a check dated within six months of it (owner 2026-11-06)', () => {
+    assert.deepEqual(beforeStartWindow('2026-09-30', '2026-11-30'), { after: '2026-08-01', through: '2026-09-30' });
+    assert.ok(beforeStartWindow('2026-09-30', '2027-03-30'));
+    assert.equal(beforeStartWindow('2026-09-30', '2027-03-31'), null);
+    assert.equal(beforeStartWindow('2026-09-30', '2026-09-30'), null);
+  });
+  it('its lines: never one already at the start, an online payment, or a transfer inside the window', () => {
+    const L = (key: string, extra: Partial<{ online: boolean; transferPairKey: string }> = {}) =>
+      ({ key, date: '2026-09-20', direction: 'out' as const, amountCents: 100, online: false, ...extra });
+    const lines = [L('a'), L('b', { online: true }), L('c'), L('t1', { transferPairKey: 't2' }), L('t2', { transferPairKey: 't1' }), L('t3', { transferPairKey: 'elsewhere' })];
+    const s = { waiting: [{ key: 'c', date: '2026-09-20', direction: 'out' as const, amountCents: 100 }] };
+    assert.deepEqual(beforeStartLines(lines, s).map(l => l.key).sort(), ['a', 't3']);
   });
 });
 

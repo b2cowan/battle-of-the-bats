@@ -53,6 +53,9 @@ export interface WaitingItem {
   label?: string;
   /** Q2: an item of the starting statement ("Waiting at the start"). */
   atStart?: boolean;
+  /** Q2: attached to the start AFTER the start was saved — when (ISO timestamp), and by whom (mig 449). */
+  addedAt?: string;
+  addedBy?: string | null;
 }
 
 /** Money in is +, money out is −. */
@@ -67,12 +70,21 @@ function assertCents(n: number, what: string): void {
  * statement: "5402.10", "$5,402.10", "-12.40", "−12.40" (the typographic minus) and the bracket form the product itself
  * prints for an overdraft, "($50.00)" (BC1 review). `positive` demands more than zero (cash); a balance may be zero or
  * below. Lives with the engine so it is tested without a screen.
+ * ⚖ THE COMMA (O4, BC3b): a comma before exactly two final digits is a DECIMAL comma ("12,50" = $12.50, as a French
+ *   keyboard types it) — it can't be a thousands comma, which always has three digits after it. Every other comma must be
+ *   a thousands comma in groups of three ("1,250", "$5,402.10"); anything else ("12,5", "1,2,3", "12,50.10") is not an
+ *   amount, never a guess.
  */
 export function typedCents(text: string, opts: { positive: boolean }): number | null {
-  let t = text.replace(/[$,\s]/g, '').replace(/^−/, '-');
+  let t = text.replace(/[$\s]/g, '').replace(/^−/, '-');
   let negative = false;
   const bracket = /^\((.*)\)$/.exec(t);
   if (bracket) { t = bracket[1]; negative = true; }
+  if (/^-?\d+,\d{2}$/.test(t)) t = t.replace(',', '.');
+  else if (t.includes(',')) {
+    if (!/^-?\d{1,3}(,\d{3})+(\.\d{0,2})?$/.test(t)) return null;
+    t = t.replace(/,/g, '');
+  }
   if (!/^-?\d+(\.\d{0,2})?$/.test(t)) return null;
   if (negative && t.startsWith('-')) return null;
   const c = Math.round(Number(t) * 100) * (negative ? -1 : 1);
@@ -152,8 +164,9 @@ export function figureCheck(i: CheckInputs): CheckFigure {
  */
 export function startBooks(i: { bankCents: number; onItsWayCents: number | null; waiting: readonly WaitingItem[] }): number {
   assertCents(i.bankCents, 'bank balance');
-  const { outCents, inCents } = waitingSums(i.waiting);
-  return i.bankCents - outCents + inCents + (i.onItsWayCents ?? 0);
+  for (const w of i.waiting) assertCents(w.amountCents, `waiting item ${w.key}`);
+  // Each item moves the start its own line's way (`waitingOnStart`, the one home of that sign).
+  return i.bankCents + i.waiting.reduce((t, w) => t + waitingOnStart(w), 0) + (i.onItsWayCents ?? 0);
 }
 
 // ── saved checks ─────────────────────────────────────────────────────────────────────────────
@@ -181,6 +194,11 @@ export const onItsWayOnCheck = (onItsWayCents: number): number => -onItsWayCents
  *  cashed) is still in the bank, so it ADDS back; a money-in line (a deposit not landed) comes off (the §4 formula's term). */
 export const waitingOnCheck = (w: Pick<WaitingItem, 'direction' | 'amountCents'>): number => -signed(w.direction, w.amountCents);
 
+/** On the START, a waiting item moves the books its own line's way (`startBooks` solved): a money-out line (a cheque the
+ *  bank hadn't cashed yet) comes OFF the bank's balance, a money-in line goes on. The one home of that sign: "Waiting at
+ *  the start" moves the start's books by exactly this (Q2; mig 449's `bank_start_waiting` re-checks it). */
+export const waitingOnStart = (w: Pick<WaitingItem, 'direction' | 'amountCents'>): number => signed(w.direction, w.amountCents);
+
 /** One line of a saved check's sums and the signed amount it moved the total by (`null`: on its way, not counted). */
 export type SavedTerm =
   | { kind: 'base' | 'cash'; key: string; cents: number }
@@ -203,7 +221,7 @@ export function savedTerms(c: SavedCheck): { terms: SavedTerm[]; totalCents: num
   }
   for (const w of c.waiting) {
     // An out-item (a cheque not cashed yet) is still in the bank: added back on a check, taken off the bank at the start.
-    terms.push({ kind: 'waiting', key: `w-${w.key}`, cents: start ? signed(w.direction, w.amountCents) : waitingOnCheck(w), item: w });
+    terms.push({ kind: 'waiting', key: `w-${w.key}`, cents: start ? waitingOnStart(w) : waitingOnCheck(w), item: w });
   }
   if (!start && c.cashCents) terms.push({ kind: 'cash', key: 'cash', cents: -c.cashCents });
   return { terms, totalCents: start ? c.booksCents : figureOfSaved(c).shouldBeCents };
@@ -235,10 +253,15 @@ export function suspectsSince<L extends BankLine>(i: {
   lines: readonly L[]; checks: readonly SavedCheck[]; date: string; startDate: string;
 }): { since: string; sinceMatch: boolean; lines: L[] } {
   const { since, sinceMatch } = suspectsStart(i.checks, i.date, i.startDate);
-  const inWindow = i.lines.filter(l => l.date > since && l.date <= i.date);
-  const keys = new Set(inWindow.map(l => l.key));
-  const lines = inWindow.filter(l => !(l.transferPairKey && keys.has(l.transferPairKey))).sort(newestFirst);
+  const lines = withoutInnerTransfers(i.lines.filter(l => l.date > since && l.date <= i.date)).sort(newestFirst);
   return { since, sinceMatch, lines };
+}
+
+/** A transfer between two books of one account nets to nothing in it: both halves leave a list holding both (Find's
+ *  suspects, the look-back before the start). */
+export function withoutInnerTransfers<L extends Pick<BankLine, 'key' | 'transferPairKey'>>(lines: readonly L[]): L[] {
+  const keys = new Set(lines.map(l => l.key));
+  return lines.filter(l => !(l.transferPairKey && keys.has(l.transferPairKey)));
 }
 
 /** Ask 3's anchor alone: the day the suspects start after (the latest check before D that matched when saved, else the
@@ -362,24 +385,40 @@ export function findHints(differenceCents: number, candidates: readonly BankLine
 export const closingDirection = (differenceCents: number): BankDirection | null =>
   differenceCents > 0 ? 'out' : differenceCents < 0 ? 'in' : null;
 
-/** One hint the callout can name: the lines it points at, in the order the callout names them. `key` is stable. */
+/** One hint the callout can name: the lines it points at, in the order the callout names them. `key` is stable.
+ *  `atStart`: one line dated on or before the starting statement, of exactly the gap ("Waiting at the start", Q2). */
 export interface Hint {
   key: string;
-  kind: 'exact' | 'half' | 'combo';
+  kind: 'exact' | 'atStart' | 'half' | 'combo';
   lines: BankLine[];
 }
 
+/** The direction a line dated BEFORE the start must have to explain a gap (Q2): the other way from a check's own line. A
+ *  cheque written before the start and cashed after it leaves the bank showing LESS than the books (the start's books held
+ *  it as still in the bank), so it closes a gap of the bank showing less: `waitingOnStart` has the opposite sign to
+ *  `waitingOnCheck`. */
+export const closingDirectionAtStart = (differenceCents: number): BankDirection | null => {
+  const d = closingDirection(differenceCents);
+  return d === 'out' ? 'in' : d === 'in' ? 'out' : null;
+};
+
 /**
  * "Find the $X" for a check (drawing tab 3): `findHints` over the candidates whose direction can explain the difference
- * (`closingDirection`), as ONE list in the order the callout offers them — every exact line, then every half, then the
- * combinations (nearest-dated first within each). The caller passes the suspects less the lines already marked Not in the
- * bank yet and less those counted on their way.
+ * (`closingDirection`), as ONE list in the order the callout offers them — every exact line, then every line before the
+ * start of exactly the gap (Q2, owner 2026-11-06: those are named only when exact), then every half, then the combinations
+ * (nearest-dated first within each). The caller passes the suspects less the lines already marked Not in the bank yet and
+ * less those counted on their way, and (`beforeStart`) the look-back's lines less those already waiting at the start.
  */
-export function hintsFor(differenceCents: number, candidates: readonly BankLine[]): { targetCents: number; hints: Hint[]; capped: boolean } {
+export function hintsFor(differenceCents: number, candidates: readonly BankLine[], beforeStart: readonly BankLine[] = []):
+  { targetCents: number; hints: Hint[]; capped: boolean } {
   const direction = closingDirection(differenceCents);
   const h = findHints(differenceCents, direction ? candidates.filter(l => l.direction === direction) : []);
+  const startDirection = closingDirectionAtStart(differenceCents);
+  const atStart = h.targetCents === 0 ? [] : beforeStart
+    .filter(l => l.direction === startDirection && l.amountCents === h.targetCents).sort(newestFirst);
   const hints: Hint[] = [
     ...h.exact.map(l => ({ key: `exact:${l.key}`, kind: 'exact' as const, lines: [l] })),
+    ...atStart.map(l => ({ key: `atStart:${l.key}`, kind: 'atStart' as const, lines: [l] })),
     ...h.half.map(l => ({ key: `half:${l.key}`, kind: 'half' as const, lines: [l] })),
     ...h.combos.map(c => ({ key: `combo:${c.map(l => l.key).join('+')}`, kind: 'combo' as const, lines: c })),
   ];

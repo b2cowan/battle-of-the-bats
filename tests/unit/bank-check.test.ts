@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
-  HINT_CAP, MAX_COMBOS, booksNowSay, closingDirection, coachBooksOnDate, figureCheck, figureOfSaved, findHints, hintsFor,
-  latestBefore, matchedWhenSaved, onItsWayOnCheck, savedTerms, startBooks, suspectsSince, typedCents, waitingOnCheck,
+  HINT_CAP, MAX_COMBOS, booksNowSay, closingDirection, closingDirectionAtStart, coachBooksOnDate, figureCheck, figureOfSaved,
+  findHints, hintsFor, latestBefore, matchedWhenSaved, onItsWayOnCheck, savedTerms, startBooks, suspectsSince, typedCents,
+  waitingOnCheck, waitingOnStart,
   type BankLine, type SavedCheck, type WaitingItem,
 } from '../../lib/bank-check.ts';
 
@@ -259,6 +260,42 @@ describe('hintsFor — only the lines that can explain the gap (BC3a, said to th
   });
 });
 
+describe('Waiting at the start — a line before the starting statement (Q2-A, BC3b)', () => {
+  const posts = [line('entry:o75', '2026-11-20', 'out', 7500), line('entry:i75', '2026-11-21', 'in', 7500)];
+  const pre = [
+    line('entry:chq', '2026-09-26', 'out', 50_000), line('entry:dep', '2026-09-27', 'in', 50_000),
+    line('entry:near', '2026-09-28', 'out', 49_999),
+  ];
+  it('the bank showing LESS names a money-OUT cheque before the start (it cleared after; the start held it)', () => {
+    const { hints } = hintsFor(-50_000, [], pre);
+    assert.deepEqual(hints.map(h => [h.kind, h.lines[0].key]), [['atStart', 'entry:chq']]);
+  });
+  it('the bank showing MORE names a money-IN deposit before the start; exact only, never a half or a combination', () => {
+    assert.deepEqual(hintsFor(50_000, [], pre).hints.map(h => [h.kind, h.lines[0].key]), [['atStart', 'entry:dep']]);
+    assert.deepEqual(hintsFor(100_000, [], pre).hints, [], 'a half or a sum of lines before the start is never offered');
+    assert.equal(closingDirectionAtStart(1), 'in');
+    assert.equal(closingDirectionAtStart(-1), 'out');
+    assert.equal(closingDirectionAtStart(0), null);
+  });
+  it('a check\'s own exact line comes first, then the one before the start, then the half', () => {
+    const { hints } = hintsFor(-7500, [...posts, line('entry:half', '2026-11-10', 'in', 3750)], [line('entry:pre75', '2026-09-20', 'out', 7500)]);
+    assert.deepEqual(hints.map(h => h.kind), ['exact', 'atStart', 'half']);
+  });
+  it('attaching it closes the gap: the start\'s books move by waitingOnStart (out −, in +), the opposite of a check\'s item', () => {
+    const start = saved({ id: 's', kind: 'start', date: '2026-09-30', bankCents: 500_000, onItsWayCents: 0, waiting: [] });
+    const chq: WaitingItem = { key: 'entry:chq', date: '2026-09-26', direction: 'out', amountCents: 50_000, atStart: true };
+    const before = startBooks(start);
+    const after = startBooks({ ...start, waiting: [chq] });
+    assert.equal(after, before + waitingOnStart(chq));
+    assert.equal(waitingOnStart(chq), -waitingOnCheck(chq));
+    // Every later check: the books move with the start; the cleared cheque left the bank — now they agree.
+    const movement = 10_000;
+    const bank = before + movement - 50_000;
+    assert.equal(figureCheck({ bankCents: bank, booksCents: before + movement, onItsWayCents: 0, waiting: [], cashCents: null }).offByCents, 50_000);
+    assert.equal(figureCheck({ bankCents: bank, booksCents: after + movement, onItsWayCents: 0, waiting: [], cashCents: null }).result, 'matches');
+  });
+});
+
 describe('coachBooksOnDate — Cash on hand with a date cutoff (P2\')', () => {
   it('the opening + settled cash-moving rows on or before the date', () => {
     const rows = [
@@ -300,6 +337,18 @@ describe('typedCents — what a treasurer types, in cents (BC2: the bracket form
     assert.equal(t('1.234'), null);
     assert.equal(t('abc'), null);
     assert.equal(t(''), null);
+  });
+  it('a decimal comma before exactly two digits (O4, BC3b); every other comma is a thousands group of three, or nothing', () => {
+    assert.equal(t('12,50'), 1_250);
+    assert.equal(t('$1250,00'), 125_000);
+    assert.equal(t('-12,50'), -1_250);
+    assert.equal(t('(12,50)'), -1_250);
+    assert.equal(t('1,250'), 125_000, 'three digits after a comma: a thousands comma, never $1.25');
+    assert.equal(t('1,234,567.89'), 123_456_789);
+    assert.equal(t('12,5'), null);
+    assert.equal(t('1,2,3'), null);
+    assert.equal(t('12,50.10'), null);
+    assert.equal(t('1,2500'), null);
   });
   it('positive demands more than zero (cash); too large is refused', () => {
     assert.equal(t('0', true), null);

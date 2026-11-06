@@ -57,7 +57,7 @@ import DateRangeDropdown from '@/components/coaches/DateRangeDropdown';
 import FilterGroup from '@/components/coaches/FilterGroup';
 import pill from '@/components/shared/FilterPill.module.css';
 import { day, money, moneyFetch, moneyKit } from '@/components/admin/kit/club/money/MoneyKit';
-import { AddEntryWindow, LineWindow, TransferWindow, type BookRef, type WordList } from '@/components/admin/kit/club/money/LedgerWindows';
+import { AddEntryWindow, LineWindow, TransferWindow, useBudgetWords, type BookRef } from '@/components/admin/kit/club/money/LedgerWindows';
 import AddLedgerWindow from '@/components/admin/kit/club/money/AddLedgerWindow';
 import PayeesWindow from '@/components/admin/kit/club/money/PayeesWindow';
 import type { BookRead, BookRowOut, LineStatus } from '@/lib/club-ledger-read';
@@ -122,8 +122,6 @@ export default function LedgerTab() {
   const [win, setWin] = useState<'add' | 'transfer' | 'ledger' | null>(null);
   const { tournaments } = useTournament();
   const [notice, setNotice] = useNotice();
-  /** The budget words a line can be filed under (Ask 4a) — read when a window that files one first opens. */
-  const [words, setWords] = useState<WordList | null>(null);
   /** The Payees window (Stage 3d): from Tools, or by the old page's address (`?payees=1`, `?payee=`) — read whenever it
    *  changes (a link followed while already here too), dropped below, and the window mounts once the address is clean
    *  (its Back step then starts from the clean Ledger — /review 2026-10-08). */
@@ -239,15 +237,8 @@ export default function LedgerTab() {
     void loadBooks();
   }, [loadBook, loadBooks, setNotice]);
 
-  const wantWords = !!read?.canMove && (open != null || win === 'add') && words === null;
-  useEffect(() => {
-    if (!wantWords) return;
-    let live = true;
-    void moneyFetch<{ categories?: WordList }>(`/api/admin/accounting/budget-categories?scope=org&forPlanning=1&hostedEvents=1&${q}`)
-      .then(r => { if (live) setWords(r.ok ? r.data.categories ?? [] : []); })
-      .catch(() => { if (live) setWords([]); });
-    return () => { live = false; };
-  }, [wantWords, q]);
+  /** The budget words a line can be filed under (Ask 4a) — read when a window that files one first opens. */
+  const words = useBudgetWords(q, !!read?.canMove && (open != null || win === 'add'));
 
   if (booksFailed) return <LoadFailed title="We couldn’t load the club’s books." onRetry={() => void loadBooks()} />;
   if (!books || teamBook) return <LoadingState label="Loading the club’s books…" />;

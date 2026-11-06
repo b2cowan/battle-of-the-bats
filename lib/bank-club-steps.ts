@@ -3,13 +3,15 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin } from './supabase-admin';
 import type { AuthContextWithRole } from './api-auth';
 import { canMoveClubMoney } from './member-access';
+import { loadFiscalSetting } from './club-fiscal-year-server';
 import { moveRefused, refused, type Moved, type Refused } from './club-money-route';
 import { tournamentToday } from './timezone';
 import { isUuid } from './utils';
 import { entriesById, figureForDate, readClubBankAccount, readClubBankAccounts, readClubChecks } from './bank-club-read';
 import { bookIdsOf, type ClubBook } from './bank-club-map';
 import {
-  checkView, readDay, readText, refusalOfDbError, refusalOfStep, savePlan, saveRefusal, statusOfRefusal, waitingIdsOf,
+  checkView, readDay, readText, refusalOfDbError, refusalOfStep, savePlan, saveRefusal, startItemIdOf, startItemPlan,
+  statusOfRefusal, waitingIdsOf,
 } from './bank-club-rules';
 import { BANK_REFUSAL, type BankRefusalCode } from './bank-check-words';
 
@@ -38,16 +40,18 @@ export async function bankBody(req: Request): Promise<Record<string, unknown>> {
   return body && typeof body === 'object' && !Array.isArray(body) ? body as Record<string, unknown> : {};
 }
 
-/** One mig 447 step: its coded refusal, or its answer. */
-async function step(fn: string, args: Record<string, unknown>): Promise<Moved<{ data: Record<string, unknown> }>> {
+/** One mig 447 step: its coded refusal, or its answer. `as` re-words a code for this step's own door (one place for it). */
+async function step(fn: string, args: Record<string, unknown>, as: Partial<Record<BankRefusalCode, BankRefusalCode>> = {}):
+  Promise<Moved<{ data: Record<string, unknown> }>> {
+  const refuse = (code: BankRefusalCode) => bankRefusedAs(as[code] ?? code);
   const { data, error } = await supabaseAdmin.rpc(fn, args);
   if (error) {
     const code = refusalOfDbError(error);
-    if (code) return bankRefusedAs(code);
+    if (code) return refuse(code);
     throw error;
   }
   const r = data as { ok: boolean; code?: string } & Record<string, unknown>;
-  return r.ok ? { ok: true, data: r } : bankRefusedAs(refusalOfStep(r.code));
+  return r.ok ? { ok: true, data: r } : refuse(refusalOfStep(r.code));
 }
 
 // ── reads ────────────────────────────────────────────────────────────────────────────────────
@@ -74,22 +78,33 @@ const allBooks = (all: { accounts: { books: ClubBook[] }[]; unplacedBooks: ClubB
  * balance is typed.
  */
 export async function bankAccountView(ctx: AuthContextWithRole, accountId: string, date: string | null, asked?: 'start' | 'check') {
-  const read = await readClubBankAccount(ctx.org.id, accountId, { today: clubToday(), date, asked });
+  const canMove = canMoveClubMoney(ctx, ctx.org);
+  // The club's fiscal years, for a writer only: "Add the missing line" opens the Ledger's add window, which warns under
+  // the date when it falls in a closed year (the Ledger page hands it the same setting, its closers left out).
+  const [read, setting] = await Promise.all([
+    readClubBankAccount(ctx.org.id, accountId, { today: clubToday(), date, asked }),
+    // (Not on a day's figure read: the form keeps the account read it was given.)
+    canMove && date === null ? loadFiscalSetting(ctx.org.id) : Promise.resolve(null),
+  ]);
   if (!read) return null;
   const { account, all, checks, latest, figure, nameOf } = read;
   const views = checks.map(c => checkView(c, nameOf));
   const bookName = new Map(allBooks(all).map(b => [b.id, b.name]));
   const named = <L extends { bookId: string }>(lines: L[]) => lines.map(l => ({ ...l, bookName: bookName.get(l.bookId) ?? null }));
   return {
-    account: { id: account.id, name: account.name, isFirst: account.isFirst, books: account.books.map(b => ({ id: b.id, name: b.name })) },
+    // A book's kind and owner: "Add the missing line" opens the Ledger's own add window on it (BC3b).
+    account: { id: account.id, name: account.name, isFirst: account.isFirst,
+      books: account.books.map(b => ({ id: b.id, name: b.name, kind: b.entityType, entityId: b.entityId })) },
     accounts: all.accounts.map(a => ({ id: a.id, name: a.name, isFirst: a.isFirst, checkedThrough: latest.get(a.id) ?? null })),
-    canMove: canMoveClubMoney(ctx, ctx.org),
+    canMove,
+    fiscal: setting ? { firstMonth: setting.firstMonth, rows: setting.rows.map(r => ({ ...r, closedBy: null, closingBalance: null })) } : null,
     start: views.find(v => v.kind === 'start') ?? null,
     checks: views.filter(v => v.kind === 'check').reverse(),
     checkedThrough: latest.get(account.id) ?? null,
     figure: figure ? {
       ...figure,
       suspects: { ...figure.suspects, lines: named(figure.suspects.lines) },
+      beforeStart: figure.beforeStart ? { ...figure.beforeStart, lines: named(figure.beforeStart.lines) } : null,
       onItsWay: { ...figure.onItsWay, lines: named(figure.onItsWay.lines) },
     } : null,
   };
@@ -176,12 +191,45 @@ export async function saveCheck(ctx: AuthContextWithRole, accountId: string, ask
     return bankRefusedAs(figure.onItsWay.reason === 'stripe_down' ? 'not_counted_down' : 'not_counted_unlisted');
   }
   const a = plan.args;
+  // The start this figure was worked from (BC2 review, mig 449): the step refuses `changed` if it was replaced or
+  // corrected since, so a check can't save the old start's books. A start names the start it replaces (none: null).
+  const start = checks.find(c => c.kind === 'start') ?? null;
   const r = await step('bank_check_save', {
     p_org: ctx.org.id, p_account: accountId, p_kind: a.kind, p_date: a.date, p_bank_cents: a.bankCents,
     p_books_cents: a.booksCents, p_on_its_way_cents: a.onItsWayCents, p_cash_cents: a.cashCents, p_book_ids: a.bookIds,
-    p_waiting: a.waiting, p_actor: ctx.user.id,
+    p_waiting: a.waiting, p_start: start?.id ?? null, p_start_books: start?.booksCents ?? null, p_actor: ctx.user.id,
   });
   return r.ok ? { ok: true, id: r.data.id as string } : r;
+}
+
+/**
+ * PATCH /bank/accounts/{id}/setup — correct the starting statement (Q2-A, "Waiting at the start"): `{ add: 'entry:{id}' }`
+ * puts a line written before the start and cleared after it on the start; `{ remove: 'entry:{id}' }` takes one off. The
+ * start's books move by exactly that line (`startItemPlan`); saved later checks keep their figures and read "Books now
+ * say" (ruling "Q2 + ask 6"). One step (`bank_start_waiting`), compare-and-swap on the start this read.
+ */
+export async function correctStart(ctx: AuthContextWithRole, accountId: string, body: Record<string, unknown>): Promise<Moved<object>> {
+  const id = startItemIdOf(body);
+  const [all, byAccount, line] = await Promise.all([
+    readClubBankAccounts(ctx.org.id), readClubChecks(ctx.org.id), id ? entriesById([id]) : Promise.resolve([]),
+  ]);
+  const account = all.accounts.find(a => a.id === accountId);
+  if (!account) return bankRefusedAs('account_not_found');
+  // A transfer's other half decides whether it nets to nothing in this account.
+  const pairId = line[0]?.linked_entry_id;
+  const entries = pairId && isUuid(pairId) ? [...line, ...await entriesById([pairId])] : line;
+  const plan = startItemPlan({
+    body, start: (byAccount.get(accountId) ?? []).find(c => c.kind === 'start') ?? null, bookIds: bookIdsOf(account.books), entries,
+  });
+  if (!plan.ok) return bankRefusedAs(plan.code);
+  const a = plan.args;
+  const r = await step('bank_start_waiting', {
+    p_org: ctx.org.id, p_account: accountId, p_start: a.startId, p_books_before: a.booksBefore, p_books_after: a.booksAfter,
+    p_add: a.add, p_remove: a.remove, p_actor: ctx.user.id,
+    // The step's `bad_item` on an add (a line put on the start twice in the same instant: bank_check_waiting_once) is
+    // the start's refusal, in the start's words.
+  }, a.add ? { bad_item: 'bad_start_item' } : {});
+  return r.ok ? { ok: true } : r;
 }
 
 /** DELETE /bank/accounts/{id}/checks/{checkId} — ask 5: any check, after one question; who and when are kept (soft). The

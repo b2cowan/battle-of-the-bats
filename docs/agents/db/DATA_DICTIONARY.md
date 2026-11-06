@@ -9113,9 +9113,15 @@ every book line on or before the date counts by itself.
 1. **The difference is NEVER stored.** Saved figures are the bank, books, on-its-way and cash figures and the waiting
    items; the engine figures the difference from them every read. "Matched when saved" (suspects since the last match,
    ask 3) = that figure is 0. A later "Books now say" doesn't un-match it.
-2. **Saved figures never change (ask 6).** "Books now say $X" is derived on read: club = the start's books **as they read
-   now** (its waiting items now, so a Q2 item attached later moves every later check) + the `bank_books_through`
-   difference over the check's own `book_ids` (Q3). No trigger stops an UPDATE; the only writers are the two steps below.
+2. **A CHECK's saved figures never change (ask 6).** "Books now say $X" is derived on read: club = the start's
+   `books_cents` **as it is now** + the `bank_books_through` difference over the check's own `book_ids` (Q3). **The ONE
+   figure a step re-writes is a START's `books_cents`** (mig 449, Q2 "Waiting at the start"): `bank_start_waiting` moves
+   it by exactly the item it attaches or takes off (out −, in +), so a line attached later shows on every saved later check
+   as "Books now say" while that check's own figures stay (ruling "Q2 + ask 6"; closes BC1 review M2). No trigger stops
+   an UPDATE; the only writers are the steps below. Since mig 450 the start also keeps WHEN it was last corrected and by
+   whom (`corrected_at` / `corrected_by`): a saved check older than that reads "Books now say" with the start's reason
+   ("The starting statement was corrected after this check was saved"), not the ledger's — a line taken off leaves no row
+   of its own, so the items alone can't tell.
 3. **`on_its_way_cents` NULL ≠ 0.** NULL = *not counted* (Stripe didn't answer, or a payout in the window listed no lines:
    manual / matching, O6); 0 = none, or the club takes no online payments.
 4. **One LIVE check per date per account** (partial unique `bank_checks_one_live_per_date`, `WHERE deleted_at IS NULL`)
@@ -9124,7 +9130,11 @@ every book line on or before the date counts by itself.
 5. **Delete is SOFT (ask 5):** `deleted_by` / `deleted_at` (CHECK `bank_checks_deleted_shape`: a who needs a when; the
    who may later be SET NULL, the when never). Every reader filters `deleted_at IS NULL`. The start can't be deleted
    while a live `check` exists (`start_has_checks`).
-6. **Written only by `bank_check_save` and `bank_check_delete` (mig 447)**, each under the account's row lock `FOR UPDATE`.
+6. **Written only by `bank_check_save` and `bank_check_delete` (mig 447; save re-made by 449) and `bank_start_waiting` (a
+   start's `books_cents` only, mig 449)**, each under the account's row lock `FOR UPDATE`. Since 449 the save also takes
+   `p_start` / `p_start_books` — the live start the route figured from — and refuses `changed` when the start was
+   replaced or corrected meanwhile (a start names the start it replaces, NULL for the first; since mig 450 a START's
+   re-save also compares the start's books, so a correction made in between is never replaced unseen).
    Save refuses (codes, never prose): `bad_kind`, `bad_figures`, `bad_amount` (cash ≤ 0 or on a start),
    `account_not_found`, `ends_in_future` (after the club's today, America/Toronto), `changed` (club: `p_book_ids` is not
    the account's books now — a book moved since the route read it), `start_exists` (a second start on another date; a
@@ -9170,6 +9180,14 @@ NULL = not counted) / **`cash_not_deposited_cents`** (bigint, nullable; CHECK `b
 **`deleted_by`** (FK → `auth.users` SET NULL; index `bank_checks_deleted_by_idx`) / **`deleted_at`** — the soft delete,
 also written when a re-check of the same date replaces it.
 
+<!-- dict:col:bank_checks.corrected_by -->
+<!-- dict:col:bank_checks.corrected_at -->
+**`corrected_by`** (FK → `auth.users` SET NULL; partial index `bank_checks_corrected_by_idx`) / **`corrected_at`**
+(timestamptz) — mig 450: a STARTING STATEMENT only, when a line was last put on it or taken off it ("Waiting at the
+start", `bank_start_waiting`) and by whom; NULL until the first correction, and NULL on every `check` (CHECK
+`bank_checks_corrected_shape`: both NULL, or a start with a when; the who may later be SET NULL). A re-saved start is a
+new row with both NULL.
+
 ---
 
 ## `bank_check_waiting`
@@ -9183,11 +9201,16 @@ saved (key, date, label, amount, direction). A money-out item adds to Should be 
    waiting?" (Yes carries the item onto the new check as a new row; No drops it; BC3 asks). Nothing copies them forward
    by itself.
 2. **`at_start`** = an item of the starting statement (Q2, "Waiting at the start": a cheque written before the start and
-   cashed after it). `bank_check_save` sets it from the kind: always true on a start's items, never on a check's. Re-saving
-   the start (its own date) with a new item moves every later check's "Books now say" by that amount.
-3. **Written only by `bank_check_save`**, which validates each item (key 3–200 chars, a date not after the check's,
-   direction `in|out`, amount > 0) and raises `bank_step_refused:bad_item` otherwise. The route reads every item's figures
-   from the books on the server, never from the request. UNIQUE (`check_id`, `line_key`) (`bank_check_waiting_once`).
+   cashed after it). `bank_check_save` sets it from the kind: always true on a start's items, never on a check's.
+   **Since mig 449 the usual way an item reaches the start is `bank_start_waiting`**, attaching it to the LIVE start in
+   place (and `added_by` / `added_at` say who and when); it moves the start's `books_cents` by the item, so every later
+   check's "Books now say" moves by that amount. Taking one off is a hard DELETE (who removed it is not kept: dba Finding
+   #48, accepted).
+3. **Written only by `bank_check_save` and `bank_start_waiting`**, which validate each item (key 3–200 chars, a date not
+   after the check's — the start's for 449's step — direction `in|out`, amount > 0) and refuse `bad_item` otherwise. The
+   route reads every item's figures from the books on the server, never from the request; a start's item is never an
+   online payment or a transfer inside the account (`startItemPlan`). UNIQUE (`check_id`, `line_key`)
+   (`bank_check_waiting_once`).
 4. **Service role only** (RLS on, no policies). ON DELETE CASCADE from `bank_checks` (a soft delete keeps them).
 
 <!-- dict:col:bank_check_waiting.check_id -->
@@ -9197,13 +9220,18 @@ saved (key, date, label, amount, direction). A money-out item adds to Should be 
 <!-- dict:col:bank_check_waiting.amount_cents -->
 <!-- dict:col:bank_check_waiting.direction -->
 <!-- dict:col:bank_check_waiting.at_start -->
+<!-- dict:col:bank_check_waiting.added_by -->
+<!-- dict:col:bank_check_waiting.added_at -->
 **`check_id`** (FK → `bank_checks.id` CASCADE) / **`line_key`** (text 3–200: `entry:{accounting_entries.id}` club; a
 settled coach register row id, BC6) / **`line_date`** (date) / **`label`** (text, trimmed 1–200, nullable) /
-**`amount_cents`** (bigint > 0) / **`direction`** (`in|out`) / **`at_start`** (boolean NOT NULL, default false).
+**`amount_cents`** (bigint > 0) / **`direction`** (`in|out`) / **`at_start`** (boolean NOT NULL, default false) /
+**`added_by`** (FK → `auth.users` SET NULL; partial index `bank_check_waiting_added_by_idx`) / **`added_at`**
+(timestamptz) — mig 449: who attached a line to the start after the start was saved, and when; NULL on every item saved
+with its own check (CHECK `bank_check_waiting_added_shape`: both NULL, or a start's item with a when).
 
 ---
 
-### Bank functions (mig 447; all service role only, `RETURNS jsonb {ok, code?}` unless noted)
+### Bank functions (mig 447, 449, 450; all service role only, `RETURNS jsonb {ok, code?}` unless noted)
 
 - **`bank_first_club_account(org)`** (sql, uuid) — the oldest live club-kind account.
 - **`bank_club_account_of_book(org, ledger)`** (sql, uuid) — `bank_account_books` gotcha 5.
@@ -9215,8 +9243,15 @@ settled coach register row id, BC6) / **`line_date`** (date) / **`label`** (text
   through each date, in integer cents, in ONE pass (CTEs `MATERIALIZED`, dba 2026-11-05): `club_book_totals`' rule (mig
   317): `income`/`transfer_in` in, `expense`/`transfer_out` out, `pending`/`void` move nothing; a transfer between two of
   the books nets to nothing by itself. A date with no lines before it reads 0.
-- **`bank_check_save(org, account, kind, date, bank, books, on_its_way, cash, book_ids[], waiting jsonb, actor)`** —
-  `bank_checks` gotcha 6; returns `{ok, id, replaced}`.
+- **`bank_check_save(org, account, kind, date, bank, books, on_its_way, cash, book_ids[], waiting jsonb, start, start_books,
+  actor)`** — `bank_checks` gotcha 6; returns `{ok, id, replaced}`. Mig 449 dropped 447's 11-argument signature; mig 450
+  re-made it (same signature) so a start's re-save also compares `start_books`.
+- **`bank_start_waiting(org, account, start, books_before, books_after, add jsonb, remove text, actor)`** (mig 449) —
+  "Waiting at the start": exactly one of `add` / `remove`; under the account's lock, compare-and-swap on the live start
+  (id + `books_cents`, else `changed`), re-checks `books_after = books_before ± the item` (`bad_figures`; every refusal
+  before its write), inserts (`at_start`, `added_by/at`) or deletes the item, sets the start's `books_cents` (and, mig
+  450, `corrected_at` / `corrected_by`). Codes
+  `bad_item`, `bad_figures`, `account_not_found`, `no_start`, `changed`; 23505 on `bank_check_waiting_once` → `bad_item`.
 - **`bank_check_delete(org, account, check, actor)`** — `bank_checks` gotcha 5.
 - Dropped by mig 447 (never re-create): `bank_account_set_up`, `bank_check_start`, `bank_check_refigure`,
   `bank_check_mark`, `bank_check_undo`, `bank_check_add_line`, `bank_tick_rows`, `bank_keep_out_rows`,

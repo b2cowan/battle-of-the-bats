@@ -3,8 +3,11 @@
 **Plan:** `BANK_RECONCILIATION_PLAN.md` · **Drawings:** https://claude.ai/artifact/XdxsbzGpGwyDvWttJcjFeN ·
 **Priority:** High (inside the Club release, owner 2026-10-12; planned and drawn before Stage 8) · **Status:** re-planned
 2026-11-05 by the owner. Ten drawing asks ruled as recommended 2026-11-05; plan rewritten 2026-11-05; three edge-case
-asks (Q1–Q3) ruled as recommended 2026-11-05. Next: stage BC1, behind the scenes. The earlier tick-off version (built on dev 2026-11-04/05) is
-superseded and is taken apart in BC1.
+asks (Q1–Q3) ruled as recommended 2026-11-05. BC1–BC3 built on dev by 2026-11-06: the club treasurer's check on a
+desk, its saved checks, and Find (what's missing, Not in the bank yet, Still waiting?, Add the missing line, and Waiting
+at the start for a cheque written before the starting statement). Next: BC4, the Bank tab on a phone, plus one owner
+ruling of 2026-11-06 — an earlier statement re-checked after the start was corrected also asks "Still waiting?" about the
+start's lines. The earlier tick-off version (built on dev 2026-11-04/05) is superseded and was taken apart in BC1.
 
 ## What it does
 

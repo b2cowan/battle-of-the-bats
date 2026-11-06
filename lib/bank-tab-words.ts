@@ -82,8 +82,8 @@ export const BANK_WORDS = {
   linesSinceMatch: (date: string, n: number) => `Lines since your last match (${date}): ${n}`,
   linesSinceStart: (date: string, n: number) => `Lines since your starting statement (${date}): ${n}`,
 
-  // ── Find (BC3a, drawing tab 3; the half, combination, bank-less and Still waiting sentences are NOT drawn): drafts until
-  // BC3b's /marketing pass. Amber, never red; a direction in words, never a minus sign.
+  // ── Find (BC3a, drawing tab 3; the half, combination, bank-less and Still waiting sentences are NOT drawn): settled,
+  // BC3b /marketing 2026-11-06. Amber, never red; a direction in words, never a minus sign.
   findTitle: (amount: string) => `Find the ${amount}`,
   showThem: 'Show them',
   hideThem: 'Hide them',
@@ -92,9 +92,10 @@ export const BANK_WORDS = {
   lineUnnamed: 'A line',
   hintExactOut: (amount: string) => `is exactly ${amount}. If the bank hasn’t cashed it yet, that’s the gap.`,
   hintExactIn: (amount: string) => `is exactly ${amount}. If the bank hasn’t received it yet, that’s the gap.`,
-  hintOrMore: (amount: string) => `Or the bank received ${amount} your books don’t have: a deposit or interest you haven’t entered.`,
-  hintOrLess: (amount: string) => `Or the bank took out ${amount} your books don’t have: a fee or a payment you haven’t entered.`,
-  hintHalf: (line: string, amount: string) => `is ${line}. Half of ${amount}. Entered the wrong way round?`,
+  // Under a possibility it opens with "Or"; with nothing to name it stands alone (`alone`).
+  hintOrMore: (amount: string, alone = false) => `${alone ? 'The' : 'Or the'} bank received ${amount} your books don’t have: a deposit or interest you haven’t entered.`,
+  hintOrLess: (amount: string, alone = false) => `${alone ? 'The' : 'Or the'} bank took out ${amount} your books don’t have: a fee or a payment you haven’t entered.`,
+  hintHalf: (lineAmount: string, amount: string) => `is ${lineAmount}, half of the ${amount} gap. Was it entered the wrong way round?`,
   hintCombo: (n: number, amount: string) => `These ${n} add up to ${amount}:`,
   hintComboOut: 'If the bank hasn’t cashed them yet, that’s the gap.',
   hintComboIn: 'If the bank hasn’t received them yet, that’s the gap.',
@@ -107,12 +108,12 @@ export const BANK_WORDS = {
   findSinceMatch: (date: string) => `Lines since your last match · ${date}`,
   findSinceStart: (date: string) => `Lines since your starting statement · ${date}`,
   findSearch: 'Find an amount or a name',
-  findCol: { date: 'Date', what: 'What', book: 'Book', out: 'Money out', in: 'Money in', act: 'What to do with it' },
+  findCol: { date: 'Date', what: 'What', book: 'Book', out: 'Money out', in: 'Money in', act: 'Action' },
   chipExact: (amount: string) => `Exactly ${amount}`,
   chipHalf: (amount: string) => `Half of ${amount}`,
   chipCombo: (amount: string) => `Part of ${amount}`,
   // A chip is a door: it brings its possibility into the callout (every highlight is clickable).
-  chipOpen: (chip: string) => `${chip}. Show it in Find`,
+  chipOpen: (chip: string) => `${chip}. Show this possibility`,
   notInBankYet: 'Not in the bank yet',
   markLine: (what: string) => `Not in the bank yet: ${what}`,
   onTheirWayRow: (n: number) => `Online payments · ${n}`,
@@ -120,14 +121,35 @@ export const BANK_WORDS = {
   booksCount: (n: number) => `${n} books`,
   markedDetail: 'not in the bank yet, counted above',
   undo: 'Undo',
-  undoLine: (what: string) => `Undo Not in the bank yet: ${what}`,
+  undoLine: (what: string) => `Undo marking ${what} as not in the bank yet`,
   showMore: (n: number) => `Show ${n} more`,
   // Ask 2: the next check asks once about each of the previous check's items.
   stillWaiting: (what: string) => `Still waiting on ${what}?`,
   yes: 'Yes',
   no: 'No',
-  stillYes: (what: string) => `Yes, ${what} is still not in the bank`,
+  stillYes: (what: string) => `Yes, still waiting on ${what}`,
   stillNo: (what: string) => `No, ${what} is in the bank now`,
+
+  // ── BC3b (not drawn but "Add the missing line"): settled, BC3b /marketing 2026-11-06 ──────────────────────────────
+  // "Add the missing line" (tab 3): the Ledger's own add window, filled with the gap, the statement's date and the direction.
+  addMissing: 'Add the missing line',
+  // Q2-A "Waiting at the start": a line of the 60 days before the starting statement, on an off check within six months of it.
+  atStart: 'Waiting at the start',
+  atStartLine: (what: string) => `Waiting at the start: ${what}`,
+  // A condition, not a claim about every row under it (/design); either direction (a deposit can wait at the start too).
+  atStartWhy: 'If one of these was dated before your starting statement but reached the bank after it, mark it Waiting at the start.',
+  beforeStartTitle: (date: string) => `Before your starting statement · ${date}`,
+  hintAtStart: (amount: string) => `is exactly ${amount} and dated before your starting statement. If it reached the bank after that statement, that’s the gap.`,
+  atStartDone: (what: string) => `${what} is waiting at the start. Checks from now on start from the corrected balance.`,
+  atStartFailed: 'The starting statement couldn’t be corrected.',
+  // The start's window: its items, who put each one there, and the way back.
+  savedAtStart: (what: string) => `Waiting at the start · ${what}`,
+  // Under the line's own row, so it doesn't repeat the line (/design); "Marked": they marked it, they didn't enter it.
+  atStartAdded: (who: string | null, date: string) => (who ? `Marked by ${who} on ${date}.` : `Marked on ${date}.`),
+  takeOff: 'Take it off',
+  takeOffLine: (what: string) => `Take ${what} off the starting statement`,
+  takenOff: (what: string) => `${what} is off the starting statement.`,
+  booksNowSayStartWhy: 'The starting statement was corrected after this check was saved. This check’s figures stay as they were.',
 
   // ── the account line and the saved checks (asks 4 and 6, tab 5) ───────────────────────────
   accountPill: 'Account',

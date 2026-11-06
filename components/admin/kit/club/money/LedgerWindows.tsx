@@ -79,6 +79,24 @@ export function splitHow(paymentMethod: string | null): { method: DuesPaymentMet
 export type WordList = BudgetCategoryWithItems[];
 
 /**
+ * The club's budget words, read once, the first time a window that files a line is `wanted` (the Ledger page, and the Bank
+ * tab's "Add the missing line"). `null` until read; a failed read is an empty list (the window still adds a line).
+ */
+export function useBudgetWords(q: string, wanted: boolean): WordList | null {
+  const [words, setWords] = useState<WordList | null>(null);
+  const want = wanted && words === null;
+  useEffect(() => {
+    if (!want) return;
+    let live = true;
+    void moneyFetch<{ categories?: WordList }>(`/api/admin/accounting/budget-categories?scope=org&forPlanning=1&hostedEvents=1&${q}`)
+      .then(r => { if (live) setWords(r.ok ? r.data.categories ?? [] : []); })
+      .catch(() => { if (live) setWords([]); });
+    return () => { live = false; };
+  }, [want, q]);
+  return words;
+}
+
+/**
  * What the plan of the fiscal year a day falls in holds, by word — the "Filed under" hint's question: is this word
  * on the plan? The SERVER decides the year (`?day=`, Stage 3c — never a date's first four characters), and names
  * it. Read once per day the window asks about.
@@ -228,18 +246,24 @@ function PayeeField({ id, q, value, onChange, onManage, label }: {
 
 // ── Add an entry ─────────────────────────────────────────────────────────────────────────────────
 
-export function AddEntryWindow({ book, q, orgSlug, words, fiscal = null, canMove = false, onAdded, onClose }: {
+export function AddEntryWindow({ book, q, orgSlug, words, fiscal = null, canMove = false, prefill, onAdded, onClose }: {
   book: BookRef; q: string; orgSlug: string; words: WordList | null;
   /** The club's fiscal years (Stage 3c) — a date in a closed one is refused under the field. */
   fiscal?: FiscalSetting | null;
   /** Can this reader reopen a year (the refusal's second way out)? */
   canMove?: boolean;
+  /**
+   * What the window starts with, when another screen opened it for a reason (the Bank tab's "Add the missing line", Bank
+   * balance check BC3b: the gap's amount, the statement's date, the direction). Every field stays editable; without it the
+   * window starts as it always has (money out, today, empty).
+   */
+  prefill?: { entryType?: 'income' | 'expense'; date?: string; amount?: string };
   onAdded: (text: string) => void; onClose: () => void;
 }) {
-  const [entryType, setEntryType] = useState<'income' | 'expense'>('expense');
-  const [date, setDate] = useState(() => tournamentToday());
+  const [entryType, setEntryType] = useState<'income' | 'expense'>(prefill?.entryType ?? 'expense');
+  const [date, setDate] = useState(() => prefill?.date ?? tournamentToday());
   const [what, setWhat] = useState('');
-  const [amount, setAmount] = useState('');
+  const [amount, setAmount] = useState(prefill?.amount ?? '');
   const [word, setWord] = useState<BudgetItemSelection | null>(null);
   const [payee, setPayee] = useState<PayeeSelection | null>(null);
   const [method, setMethod] = useState<DuesPaymentMethod | ''>('');

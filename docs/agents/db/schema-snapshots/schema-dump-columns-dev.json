@@ -783,6 +783,24 @@
     "ordinal_position": 8
   },
   {
+    "table_name": "bank_check_waiting",
+    "column_name": "added_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "bank_check_waiting",
+    "column_name": "added_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 10
+  },
+  {
     "table_name": "bank_checks",
     "column_name": "id",
     "data_type": "uuid",
@@ -898,6 +916,24 @@
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 17
+  },
+  {
+    "table_name": "bank_checks",
+    "column_name": "corrected_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 18
+  },
+  {
+    "table_name": "bank_checks",
+    "column_name": "corrected_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 19
   },
   {
     "table_name": "basic_coach_team_announcements",

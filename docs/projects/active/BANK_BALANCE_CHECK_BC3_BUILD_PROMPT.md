@@ -1,5 +1,19 @@
 # Bank balance check BC3: Find (build prompt, two sessions)
 
+> **✅ DONE 2026-11-06 — BC3b's finishing passes complete** (`/marketing` settled every Find word and added `bad_start_item`;
+> `/simplify`; `/review` high: five fixes on the owner's "all five", incl. **mig 450** (`/dba` Finding #49), on dev; walks
+> `BANK_BC3A_WALK_PASSED` + `BANK_BC3B_WALK_PASSED` at 1440 and 390; record in plan §9 BC3). Owner ruling 2026-11-06: plan §0
+> "Start item re-check", a BC4 item. **Next: BC4 (the phone).** Nothing below is owed.
+
+> **BC3b BUILT 2026-11-06, uncommitted (owner yes to the UX summary; Q2 look-back ruled wider, plan §0; mig 449 on dev,
+> `/dba` Finding #48; walks `BANK_BC3B_WALK_PASSED` at 1440 + 390, BC3a's re-run passed; record in plan §9 BC3). `/design`
+> done: no change, two wording findings for `/marketing`: (1) the look-back's sentence row reads as a claim about every
+> line — make it a condition ("If one of these was written before your starting statement and cashed after it, mark it
+> Waiting at the start."); (2) the start window's note repeats the line name — "Added by {name} on {date}.". Book column
+> wrap at 1440 is BC3a's, left for BC4. **Resume at BC3b step 6 from `/marketing`**, then `/simplify`, `/review` (high),
+> the records (§5 ticks, TODO, auto-memory, this file), commit on the owner's yes (partial-commit recipe:
+> `MANUAL_PROD_STEPS.json`, `DB_ARCHITECTURE_REVIEW.md`, `DATA_DICTIONARY.md` and the snapshots are shared with other sessions).**
+
 > **BC3a done 2026-11-06 (committed `d55c4ad77`; walked on dev, `BANK_BC3A_WALK_PASSED`; record in plan §9 BC3; the
 > owner's two answers in plan §0). Next BC3b: start at "BC3b — the doors out of the check" below.** BC3a's build call to
 > carry: hints only name lines in the direction that can close the gap (`hintsFor`); Find's words are drafts for BC3b's

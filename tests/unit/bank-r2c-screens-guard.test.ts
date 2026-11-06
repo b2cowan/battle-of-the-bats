@@ -117,7 +117,7 @@ describe('5 · the check form: a balance, not a tick-off', () => {
       assert.doesNotMatch(src, /[Cc]ents\s*[-+*/]\s*[A-Za-z0-9(]|[A-Za-z0-9)]\s*[-+*/]\s*[A-Za-z.]*[Cc]ents\b/, `${f}: arithmetic on cents`);
       assert.doesNotMatch(src, /\.reduce\(/, `${f}: a sum`);
     }
-    assert.match(code('BankCheckForm.tsx'), /import \{ figureCheck, waitingOnCheck, type WaitingItem \} from '@\/lib\/bank-check'/);
+    assert.match(code('BankCheckForm.tsx'), /import \{ figureCheck, waitingOnCheck, type BankLine, type WaitingItem \} from '@\/lib\/bank-check'/);
     assert.match(code('BankCheckForm.tsx'), /figureCheck\(\{ bankCents: typed \?\? 0, booksCents: fresh\.booksCents, onItsWayCents: fresh\.onItsWay\.cents/);
   });
   it('words come from the words module only: no sentence typed into a new screen', () => {
@@ -210,7 +210,10 @@ describe('9 · Find: the hints, the lines, Not in the bank yet, Still waiting?',
   });
   it('the hints are the engine\'s only (hintsFor over findHints): no screen walks the lines for amounts itself', () => {
     const find = code('BankFind.tsx');
-    assert.match(find, /hintsFor\(band\.differenceCents, lines\.filter\(l => !marked\.has\(l\.key\)\)\)/, 'on the TYPED difference, less the marked lines');
+    assert.match(find, /hintsFor\(band\.differenceCents, lines\.filter\(l => !marked\.has\(l\.key\)\), before\)/,
+      'on the TYPED difference, less the marked lines, with the look-back\'s lines (BC3b)');
+    // Q2's look-back is offered only while the check is off (the server sends it within six months of the start).
+    assert.match(find, /const before = off && figure\.beforeStart \? figure\.beforeStart\.lines : \[\];/);
     for (const f of FILES) {
       assert.doesNotMatch(readCode(f), /\bfindHints\(/, `${f}: the raw finder bypasses the direction rule`);
       assert.doesNotMatch(readCode(f), /amountCents\s*===|===\s*\w+\.amountCents/, `${f}: an amount compared on a screen`);
@@ -240,17 +243,58 @@ describe('9 · Find: the hints, the lines, Not in the bank yet, Still waiting?',
     const find = code('BankFind.tsx');
     assert.doesNotMatch(find, /<(tr|td|span|div)\b[^>]*onClick/, 'a click on something that is not a button');
     assert.match(find, /<button type="button" className=\{s\.chipDoor\} aria-label=\{W\.chipOpen\(chipWords\(hint\)\)\} onClick=\{\(\) => setPick\(hint\.key\)\}>/);
-    assert.match(find, /aria-label=\{W\.markLine\(name\)\}/, 'each row\'s button names its line');
+    assert.match(find, /aria: W\.markLine\(nameOf\(l\)\)/, 'each row\'s button names its line');
+    assert.match(find, /aria: W\.atStartLine\(nameOf\(l\)\)/, 'a line before the start names its line too');
+    assert.match(find, /aria-label=\{action\.aria\}/);
     // Not hover-only: focus shows the button, and a touch screen shows it always.
     const css = readSource(CSS);
     assert.match(css, /\.findTable tr:focus-within \.markBtn \{ opacity: 1; \}|\.findTable tr:focus-within \.markBtn,?[\s\S]{0,40}\{ opacity: 1; \}/);
     assert.match(css, /\.markBtn:focus-visible \{ opacity: 1;/);
     assert.match(css, /@media \(hover: none\) \{\s*\.markBtn \{ opacity: 1; \}/);
   });
-  it('a hinted row is amber-soft, never red; "Add the missing line" is not a dead button (BC3b wires it)', () => {
+  it('a hinted row is amber-soft, never red', () => {
     assert.match(readSource(CSS), /tr\.hitRow > td \{ background: rgba\(var\(--warning-rgb\), 0\.08\); \}/);
     assert.doesNotMatch(code('BankFind.tsx'), /tone="(bad|danger)"|--danger|--bad\b/);
-    assert.doesNotMatch(code('BankFind.tsx'), /addMissing|Add the missing line/);
+  });
+});
+
+// ── Bank balance check BC3b: the two doors out of the check ────────────────────────────────────────────────────────
+describe('10 · Add the missing line, Waiting at the start', () => {
+  it('"Add the missing line" opens the LEDGER\'S OWN add window, filled; no bank screen writes a book line (ask 1)', () => {
+    const form = code('BankCheckForm.tsx');
+    assert.match(form, /import \{ AddEntryWindow, useBudgetWords \} from '\.\.\/LedgerWindows';/);
+    // The words the line is filed under are the Ledger page's own read (one loader for both doors).
+    assert.match(form, /const words = useBudgetWords\(q, adding !== null\);/);
+    assert.match(readCode('app/[orgSlug]/admin/accounting/ledger/page.tsx'), /const words = useBudgetWords\(q, /);
+    assert.match(form, /setAdding\(\{\s*entryType: band\.direction === 'bank_more' \? 'income' : 'expense', date, amount: fieldAmount\(band\.offByCents\),/,
+      'the gap, the statement\'s day, and the direction that closes it');
+    assert.match(form, /view\.account\.books\.find\(b => b\.kind === 'org' && !b\.entityId\) \?\? view\.account\.books\[0\]/, 'the account\'s own club book (the Ledger\'s rule)');
+    assert.match(code('BankFind.tsx'), /onClick=\{onAddLine\} disabled=\{busy\}>\{W\.addMissing\}<\/button>/, 'a real door, never a dead button; held while a write is on its way');
+    // The window keeps what it opened with (a figure read again never moves or closes it) and knows the closed years.
+    assert.match(form, /\{adding && ownBook && \(/);
+    assert.match(form, /fiscal=\{view\.fiscal\} canMove prefill=\{adding\}/);
+    for (const f of FILES) {
+      assert.doesNotMatch(readCode(f), /\/entries\b/, `${f}: a bank screen posts a book line itself`);
+    }
+    // The Ledger page's own add window starts as it always has without a prefill.
+    const lw = readCode('components/admin/kit/club/money/LedgerWindows.tsx');
+    assert.match(lw, /useState<'income' \| 'expense'>\(prefill\?\.entryType \?\? 'expense'\)/);
+    assert.match(lw, /useState\(\(\) => prefill\?\.date \?\? tournamentToday\(\)\)/);
+    assert.match(lw, /useState\(prefill\?\.amount \?\? ''\)/);
+  });
+  it('"Waiting at the start" corrects the start through PATCH …/setup with the line\'s KEY only; "Take it off" the same way', () => {
+    // One helper sends both (`patchStart`): the line's key, nothing else.
+    assert.match(code('BankShared.ts'), /bankWrite\(bankUrl\(orgSlug, `\/accounts\/\$\{accountId\}\/setup`\), 'PATCH', body, W\.atStartFailed\)/);
+    assert.match(code('BankShared.ts'), /body: \{ add: string \} \| \{ remove: string \}/);
+    assert.match(code('BankCheckForm.tsx'), /patchStart\(orgSlug, accountId, \{ add: line\.key \}\)/);
+    assert.match(code('BankCheckWindow.tsx'), /patchStart\(orgSlug, view\.account\.id, \{ remove: item\.key \}\)/);
+    assert.match(code('BankCheckWindow.tsx'), /savedSumRows\(check, canMove && start \? /, 'only a writer, only on the start');
+    // A line before the start offers Waiting at the start, never Not in the bank yet (M3).
+    assert.match(code('BankFind.tsx'), /foundBefore\.map\(l => \(\s*<LineRow key=\{l\.key\} line=\{l\} chip=\{chipFor\(l\.key\)\}\s*action=\{\{ label: W\.atStart,/);
+  });
+  it('a corrected start re-reads the day\'s figure; "Books now say" says why', () => {
+    assert.match(code('BankCheckForm.tsx'), /const checksKey = `\$\{view\.checks\.map\(c => c\.id\)\.join\(','\)\}\|\$\{view\.start\?\.id \?\? ''\}:\$\{view\.start\?\.booksCents \?\? ''\}`;/);
+    assert.match(code('BankCheckWindow.tsx'), /check\.startCorrected \? W\.booksNowSayStartWhy : W\.booksNowSayWhy\(when\)/);
   });
 });
 

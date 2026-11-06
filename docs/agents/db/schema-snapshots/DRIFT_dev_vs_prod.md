@@ -2,15 +2,15 @@
 
 **Generated:** 2026-11-06 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 216 divergence(s)** across dev/prod.
+**⚠️ 226 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 2 | 6 | — |
-| Columns | 33 | 59 | 0 |
-| Indexes | 12 | 26 | 0 |
-| Constraints | 8 | 28 | — |
-| RLS / CHECK | 15 | 26 | 0 (RLS state) |
+| Columns | 37 | 59 | 0 |
+| Indexes | 14 | 26 | 0 |
+| Constraints | 10 | 28 | — |
+| RLS / CHECK | 17 | 26 | 0 (RLS state) |
 
 ## Tables
 ### Only in DEV (2)
@@ -26,7 +26,9 @@
 - `bank_saved_lines`
 
 ## Columns
-### Only in DEV (33)
+### Only in DEV (37)
+- `bank_check_waiting.added_at`
+- `bank_check_waiting.added_by`
 - `bank_check_waiting.amount_cents`
 - `bank_check_waiting.at_start`
 - `bank_check_waiting.check_id`
@@ -38,6 +40,8 @@
 - `bank_checks.book_ids`
 - `bank_checks.books_cents`
 - `bank_checks.cash_not_deposited_cents`
+- `bank_checks.corrected_at`
+- `bank_checks.corrected_by`
 - `bank_checks.deleted_at`
 - `bank_checks.deleted_by`
 - `bank_checks.kind`
@@ -126,10 +130,12 @@
 _none_
 
 ## Indexes
-### Only in DEV (12)
+### Only in DEV (14)
+- `bank_check_waiting_added_by_idx`
 - `bank_check_waiting_once`
 - `bank_check_waiting_pkey`
 - `bank_checks_account_idx`
+- `bank_checks_corrected_by_idx`
 - `bank_checks_deleted_by_idx`
 - `bank_checks_one_live_per_date`
 - `bank_checks_one_live_start`
@@ -172,10 +178,12 @@ _none_
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (8)
+### Only in DEV (10)
+- `bank_check_waiting.bank_check_waiting_added_by_fkey`
 - `bank_check_waiting.bank_check_waiting_check_id_fkey`
 - `bank_check_waiting.bank_check_waiting_once`
 - `bank_check_waiting.bank_check_waiting_pkey`
+- `bank_checks.bank_checks_corrected_by_fkey`
 - `bank_checks.bank_checks_deleted_by_fkey`
 - `family_links.family_links_child_id_fkey`
 - `rep_roster_players.rep_roster_players_health_confirmed_by_fkey`
@@ -216,12 +224,14 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (15)
+### CHECK only in DEV (17)
+- `bank_check_waiting.bank_check_waiting_added_shape`
 - `bank_check_waiting.bank_check_waiting_amount_cents_check`
 - `bank_check_waiting.bank_check_waiting_direction_check`
 - `bank_check_waiting.bank_check_waiting_label_check`
 - `bank_check_waiting.bank_check_waiting_line_key_check`
 - `bank_checks.bank_checks_cash_shape`
+- `bank_checks.bank_checks_corrected_shape`
 - `bank_checks.bank_checks_deleted_shape`
 - `bank_checks.bank_checks_kind`
 - `platform_fee_invoices.platform_fee_invoices_tax_lines_chk`

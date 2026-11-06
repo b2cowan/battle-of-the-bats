@@ -785,6 +785,24 @@
         "column_default": "false"
       },
       {
+        "table_name": "bank_check_waiting",
+        "pos": 9,
+        "column_name": "added_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_check_waiting",
+        "pos": 10,
+        "column_name": "added_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "bank_checks",
         "pos": 1,
         "column_name": "id",
@@ -898,6 +916,24 @@
         "column_name": "deleted_at",
         "data_type": "timestamp with time zone",
         "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_checks",
+        "pos": 18,
+        "column_name": "corrected_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "bank_checks",
+        "pos": 19,
+        "column_name": "corrected_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
         "is_nullable": "YES",
         "column_default": null
       },
@@ -29172,6 +29208,13 @@
       },
       {
         "table_name": "bank_check_waiting",
+        "column_name": "added_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "bank_check_waiting_added_by_fkey"
+      },
+      {
+        "table_name": "bank_check_waiting",
         "column_name": "check_id",
         "foreign_table": "bank_checks",
         "foreign_column": "id",
@@ -29183,6 +29226,13 @@
         "foreign_table": "bank_accounts",
         "foreign_column": "id",
         "constraint_name": "bank_checks_bank_account_id_fkey"
+      },
+      {
+        "table_name": "bank_checks",
+        "column_name": "corrected_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "bank_checks_corrected_by_fkey"
       },
       {
         "table_name": "bank_checks",
@@ -35134,6 +35184,11 @@
       },
       {
         "tablename": "bank_check_waiting",
+        "indexname": "bank_check_waiting_added_by_idx",
+        "indexdef": "CREATE INDEX bank_check_waiting_added_by_idx ON public.bank_check_waiting USING btree (added_by) WHERE (added_by IS NOT NULL)"
+      },
+      {
+        "tablename": "bank_check_waiting",
         "indexname": "bank_check_waiting_once",
         "indexdef": "CREATE UNIQUE INDEX bank_check_waiting_once ON public.bank_check_waiting USING btree (check_id, line_key)"
       },
@@ -35146,6 +35201,11 @@
         "tablename": "bank_checks",
         "indexname": "bank_checks_account_idx",
         "indexdef": "CREATE INDEX bank_checks_account_idx ON public.bank_checks USING btree (bank_account_id, statement_end_date)"
+      },
+      {
+        "tablename": "bank_checks",
+        "indexname": "bank_checks_corrected_by_idx",
+        "indexdef": "CREATE INDEX bank_checks_corrected_by_idx ON public.bank_checks USING btree (corrected_by) WHERE (corrected_by IS NOT NULL)"
       },
       {
         "tablename": "bank_checks",
@@ -40971,6 +41031,12 @@
       {
         "kind": "CHECK",
         "table_name": "bank_check_waiting",
+        "detail": "bank_check_waiting_added_shape",
+        "check_clause": "(((added_at IS NULL) AND (added_by IS NULL)) OR (at_start AND (added_at IS NOT NULL)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "bank_check_waiting",
         "detail": "bank_check_waiting_amount_cents_check",
         "check_clause": "(amount_cents > 0)"
       },
@@ -41003,6 +41069,12 @@
         "table_name": "bank_checks",
         "detail": "bank_checks_cash_shape",
         "check_clause": "((cash_not_deposited_cents IS NULL) OR ((kind = 'check'::text) AND (cash_not_deposited_cents > 0)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "bank_checks",
+        "detail": "bank_checks_corrected_shape",
+        "check_clause": "(((corrected_at IS NULL) AND (corrected_by IS NULL)) OR ((kind = 'start'::text) AND (corrected_at IS NOT NULL)))"
       },
       {
         "kind": "CHECK",

@@ -157,7 +157,9 @@ export default function BankTab({ orgSlug }: { orgSlug: string }) {
         onOpen={id => setWin({ kind: 'check', id })}
         form={canMove ? (
           <BankCheckForm key={again?.n ?? 0} againDate={again?.date} orgSlug={orgSlug} view={view} onStale={t => void staleRefresh(t)}
-            onSaved={(v, text) => { setView(v); setNotice({ tone: 'good', text }); }} />
+            onSaved={(v, text) => { setView(v); setNotice({ tone: 'good', text }); }}
+            // A line added through the Ledger's window (no account in hand: read it again) or the start corrected.
+            onChanged={(v, text) => { if (v) setView(v); else void loadView(view.account.id); setNotice({ tone: 'good', text }); }} />
         ) : undefined} />;
 
   // The check the window holds, as the account reads now (gone after a re-read: the window closes with it).
@@ -172,6 +174,7 @@ export default function BankTab({ orgSlug }: { orgSlug: string }) {
       {opened && (
         <BankCheckWindow orgSlug={orgSlug} view={view} check={opened} canMove={canMove}
           onClose={() => setWin(null)} onStale={t => void staleRefresh(t)}
+          onChanged={(v, text) => { setView(v); setNotice({ tone: 'good', text }); }}
           onAgain={date => { setWin(null); setAgain(a => ({ date, n: (a?.n ?? 0) + 1 })); }}
           onDeleted={(v, text) => { setWin(null); setAgain(null); setView(v); setNotice({ tone: 'good', text }); }} />
       )}

@@ -1,17 +1,21 @@
 {
   "generated": "2026-11-06",
-  "total": 216,
+  "total": 226,
   "counts": {
     "tables": 8,
-    "columns": 92,
-    "indexes": 38,
-    "constraints": 36,
-    "rls": 42
+    "columns": 96,
+    "indexes": 40,
+    "constraints": 38,
+    "rls": 44
   },
   "items": [
     {
       "key": "check:changed:child_match_rejections.child_match_rejections_door_check",
       "sig": "(door = ANY (ARRAY['single_add'::text, 'paste_list'::text, 'tryout_accept'::text, 'children_queue'::text, 'split'::text])) :: (door = ANY (ARRAY['single_add'::text, 'paste_list'::text, 'tryout_accept'::text]))"
+    },
+    {
+      "key": "check:only-dev:bank_check_waiting.bank_check_waiting_added_shape",
+      "sig": ""
     },
     {
       "key": "check:only-dev:bank_check_waiting.bank_check_waiting_amount_cents_check",
@@ -31,6 +35,10 @@
     },
     {
       "key": "check:only-dev:bank_checks.bank_checks_cash_shape",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:bank_checks.bank_checks_corrected_shape",
       "sig": ""
     },
     {
@@ -178,6 +186,14 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:bank_check_waiting.added_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_check_waiting.added_by",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:bank_check_waiting.amount_cents",
       "sig": ""
     },
@@ -219,6 +235,14 @@
     },
     {
       "key": "column:only-dev:bank_checks.cash_not_deposited_cents",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_checks.corrected_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:bank_checks.corrected_by",
       "sig": ""
     },
     {
@@ -546,6 +570,10 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:bank_check_waiting.bank_check_waiting_added_by_fkey",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:bank_check_waiting.bank_check_waiting_check_id_fkey",
       "sig": ""
     },
@@ -555,6 +583,10 @@
     },
     {
       "key": "constraint:only-dev:bank_check_waiting.bank_check_waiting_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:bank_checks.bank_checks_corrected_by_fkey",
       "sig": ""
     },
     {
@@ -690,6 +722,10 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:bank_check_waiting_added_by_idx",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:bank_check_waiting_once",
       "sig": ""
     },
@@ -699,6 +735,10 @@
     },
     {
       "key": "index:only-dev:bank_checks_account_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:bank_checks_corrected_by_idx",
       "sig": ""
     },
     {

@@ -281,6 +281,16 @@
   },
   {
     "table_name": "bank_check_waiting",
+    "constraint_name": "bank_check_waiting_added_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "added_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "bank_check_waiting",
     "constraint_name": "bank_check_waiting_check_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "check_id",
@@ -327,6 +337,16 @@
     "foreign_table": "bank_accounts",
     "foreign_column": "id",
     "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "bank_checks",
+    "constraint_name": "bank_checks_corrected_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "corrected_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
     "update_rule": "NO ACTION"
   },
   {

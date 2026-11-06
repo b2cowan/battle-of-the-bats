@@ -28,8 +28,8 @@ import { utcToZonedInputs } from '@/lib/timezone';
 import { BANK_REFUSAL } from '@/lib/bank-check-words';
 import { BANK_WORDS as W } from '@/lib/bank-tab-words';
 import { BankBand, BankSavedSums, type SavedSumRow } from './BankFigure';
-import { savedTerms } from '@/lib/bank-check';
-import { bankUrl, bankWrite, cents, dayYear, isStaleView, moved, type AccountView, type SavedCheckView } from './BankShared';
+import { savedTerms, type WaitingItem } from '@/lib/bank-check';
+import { bankUrl, bankWrite, cents, dayYear, isStaleView, moved, patchStart, type AccountView, type SavedCheckView } from './BankShared';
 import s from './Bank.module.css';
 
 /**
@@ -37,8 +37,9 @@ import s from './Bank.module.css';
  * (or *not counted*) · each Not in the bank yet item · cash; the start is The bank said · on its way · its waiting items,
  * ruled off by the books it starts from (ask 7). This only names and formats them.
  */
-function savedSumRows(c: SavedCheckView): { rows: SavedSumRow[]; total: string } {
+function savedSumRows(c: SavedCheckView, takeOff: ((item: WaitingItem) => void) | null, busy: boolean): { rows: SavedSumRow[]; total: string } {
   const { terms, totalCents } = savedTerms(c);
+  const start = c.kind === 'start';
   const rows = terms.map((t): SavedSumRow => {
     switch (t.kind) {
       case 'base': return c.kind === 'start'
@@ -47,14 +48,24 @@ function savedSumRows(c: SavedCheckView): { rows: SavedSumRow[]; total: string }
       case 'onItsWay': return t.cents === null
         ? { key: t.key, label: W.savedOnItsWay, amount: W.notCounted, quiet: true, note: W.savedNotCountedNote }
         : { key: t.key, label: W.savedOnItsWay, amount: moved(t.cents) };
-      case 'waiting': return { key: t.key, label: W.savedWaiting(t.item.label ?? dayYear(t.item.date)), amount: moved(t.cents) };
+      case 'waiting': {
+        const what = t.item.label ?? dayYear(t.item.date);
+        if (!start) return { key: t.key, label: W.savedWaiting(what), amount: moved(t.cents) };
+        // The start's items (Q2): who put each one there, and (a writer's) the way back.
+        const added = t.item.addedAt ? utcToZonedInputs(t.item.addedAt) : null;
+        return {
+          key: t.key, label: W.savedAtStart(what), amount: moved(t.cents),
+          note: added ? W.atStartAdded(t.item.addedBy ?? null, dayYear(added.date)) : undefined,
+          action: takeOff ? { label: W.takeOff, aria: W.takeOffLine(what), onClick: () => takeOff(t.item), disabled: busy } : undefined,
+        };
+      }
       case 'cash': return { key: t.key, label: W.savedCash, amount: moved(t.cents) };
     }
   });
   return { rows, total: cents(totalCents) };
 }
 
-export default function BankCheckWindow({ orgSlug, view, check, canMove, onClose, onAgain, onDeleted, onStale }: {
+export default function BankCheckWindow({ orgSlug, view, check, canMove, onClose, onAgain, onDeleted, onChanged, onStale }: {
   orgSlug: string;
   view: AccountView;
   check: SavedCheckView;
@@ -65,6 +76,8 @@ export default function BankCheckWindow({ orgSlug, view, check, canMove, onClose
   onAgain: (date: string) => void;
   /** The account read again after the delete, and what to tell the treasurer. */
   onDeleted: (view: AccountView, text: string) => void;
+  /** The starting statement corrected (a line taken off it): the account read again; the window stays open on it. */
+  onChanged: (view: AccountView, text: string) => void;
   /** The server said the view is stale: the tab re-reads, then says the sentence. */
   onStale: (text: string) => void;
 }) {
@@ -77,7 +90,17 @@ export default function BankCheckWindow({ orgSlug, view, check, canMove, onClose
   const checkedLine = (start ? W.startedOn : W.checkedOn)(check.checkedBy, dayYear(at.date), formatTime(at.time));
   // The start can't go while a later check stands on it (`start_has_checks`): the screen says so before the tap.
   const startHeld = start && view.checks.length > 0;
-  const sums = savedSumRows(check);
+
+  /** "Take it off" (Q2): the line leaves the starting statement, and the start's books move back by it. */
+  async function takeOff(item: WaitingItem) {
+    if (busy) return;
+    setBusy(true); setError('');
+    const r = await patchStart(orgSlug, view.account.id, { remove: item.key });
+    setBusy(false);
+    if (!r.ok) { if (isStaleView(r.code)) onStale(r.error); else setError(r.error); return; }
+    onChanged(r.view, W.takenOff(item.label ?? dayYear(item.date)));
+  }
+  const sums = savedSumRows(check, canMove && start ? (i => void takeOff(i)) : null, busy);
 
   async function remove() {
     if (busy) return;
@@ -107,9 +130,12 @@ export default function BankCheckWindow({ orgSlug, view, check, canMove, onClose
         ) : undefined}
       >
         {!start && <BankBand date={check.date} figure={check.figure} typed saved />}
+        {/* The window's own refusal (a take-off the server turned down); the delete question keeps its own. */}
+        {!asking && <FormError>{error}</FormError>}
         <BankSavedSums rows={sums.rows} totalLabel={start ? W.startBooks : W.savedShouldTotal} totalAmount={sums.total} />
         {check.booksNowSayCents !== null && (
-          <p className={s.savedNote}><b>{W.booksNowSay(cents(check.booksNowSayCents))}.</b> {W.booksNowSayWhy(when)}</p>
+          <p className={s.savedNote}><b>{W.booksNowSay(cents(check.booksNowSayCents))}.</b>{' '}
+            {check.startCorrected ? W.booksNowSayStartWhy : W.booksNowSayWhy(when)}</p>
         )}
         <p className={s.savedNote}>{checkedLine}</p>
         {canMove && (

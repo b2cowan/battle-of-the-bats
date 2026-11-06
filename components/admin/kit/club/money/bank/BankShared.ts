@@ -24,6 +24,8 @@ export function bankUrl(orgSlug: string, path = '', params: Record<string, strin
 
 /** "$1,284.50" from integer cents. */
 export const cents = (c: number | null | undefined): string => (c == null ? '' : money(c / 100));
+/** "75.00": integer cents as an amount FIELD holds it (the add window "Add the missing line" fills, BC3b). */
+export const fieldAmount = (c: number): string => (c / 100).toFixed(2);
 /** "+ $75.00" / "− $412.00": a signed amount (the engine's `savedTerms`, `onItsWayOnCheck`), the way it moved the total. */
 export const moved = (signedCents: number): string =>
   signedCents === 0 ? cents(0) : `${signedCents < 0 ? '−' : '+'} ${cents(Math.abs(signedCents))}`;
@@ -82,6 +84,13 @@ export async function bankWrite(url: string, method: 'POST' | 'PATCH' | 'PUT' | 
     return { ok: false, code: null, error: `${fallback} ${W.connection}`, network: true };
   }
 }
+
+/** "Waiting at the start" and "Take it off" (Q2, BC3b): correct the starting statement by one line's KEY only (rule 6). */
+export const patchStart = (orgSlug: string, accountId: string, body: { add: string } | { remove: string }): Promise<BankAnswer> =>
+  bankWrite(bankUrl(orgSlug, `/accounts/${accountId}/setup`), 'PATCH', body, W.atStartFailed);
+
+/** A line's name as every bank screen says it: its words, else "A line". */
+export const nameOf = (l: { label?: string | null }): string => l.label?.trim() || W.lineUnnamed;
 
 /** Ask 4: "{date} · Matches" / "{date} · Off by $X" — an account's latest check, as the pill and the line say it. */
 export const throughWords = (t: AccountView['checkedThrough']): string =>

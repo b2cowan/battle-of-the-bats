@@ -10,10 +10,10 @@
  * ⚖ NO YEAR: nothing here reads or names a fiscal year or a season.
  */
 
-import { newestFirst, signed, type BankDirection, type BankLine, type SavedCheck, type WaitingItem } from './bank-check';
+import { newestFirst, signed, withoutInnerTransfers, type BankDirection, type BankLine, type SavedCheck, type WaitingItem } from './bank-check';
 import { toCents } from './coach-register';
 import type { PayoutRow } from './online-payouts';
-import { addCalendarDays } from './timezone';
+import { addCalendarDays, addCalendarMonths } from './timezone';
 
 // ── accounts and books ───────────────────────────────────────────────────────────────────────
 
@@ -118,22 +118,28 @@ export interface CheckRow {
   book_ids: string[] | null;
   created_by: string | null;
   created_at: string;
+  /** Mig 450: a start's last correction ("Waiting at the start" put on or taken off). */
+  corrected_at?: string | null;
 }
 /** The columns a `CheckRow` is read with. */
 export const CHECK_SELECT = 'id, bank_account_id, kind, statement_end_date, statement_ending_balance_cents, books_cents, '
-  + 'on_its_way_cents, cash_not_deposited_cents, book_ids, created_by, created_at';
+  + 'on_its_way_cents, cash_not_deposited_cents, book_ids, created_by, created_at, corrected_at';
 
 export interface WaitingRow {
   check_id: string; line_key: string; line_date: string; label: string | null; amount_cents: number | string;
   direction: BankDirection; at_start: boolean;
+  /** Mig 449: attached to the start after it was saved ("Waiting at the start"). */
+  added_by?: string | null; added_at?: string | null;
 }
-export const WAITING_SELECT = 'check_id, line_key, line_date, label, amount_cents, direction, at_start';
+export const WAITING_SELECT = 'check_id, line_key, line_date, label, amount_cents, direction, at_start, added_by, added_at';
 
 /** A saved check with the facts the list shows beside its figures. */
 export interface ClubSavedCheck extends SavedCheck {
   bookIds: string[];
   createdBy: string | null;
   createdAt: string;
+  /** A start only: when a line was last put on it or taken off (mig 450); null until then. */
+  correctedAt: string | null;
 }
 
 const centsOrNull = (v: number | string | null): number | null => (v === null ? null : Number(v));
@@ -145,6 +151,7 @@ export function savedChecksOf(rows: readonly CheckRow[], waiting: readonly Waiti
     const item: WaitingItem = {
       key: w.line_key, date: w.line_date, direction: w.direction, amountCents: Number(w.amount_cents),
       ...(w.label ? { label: w.label } : {}), ...(w.at_start ? { atStart: true } : {}),
+      ...(w.added_at ? { addedAt: w.added_at, addedBy: w.added_by ?? null } : {}),
     };
     const list = itemsOf.get(w.check_id);
     if (list) list.push(item); else itemsOf.set(w.check_id, [item]);
@@ -156,6 +163,7 @@ export function savedChecksOf(rows: readonly CheckRow[], waiting: readonly Waiti
       cashCents: centsOrNull(r.cash_not_deposited_cents),
       waiting: (itemsOf.get(r.id) ?? []).sort((a, b) => newestFirst(b, a)),
       bookIds: [...(r.book_ids ?? [])].sort(), createdBy: r.created_by, createdAt: r.created_at,
+      correctedAt: r.corrected_at ?? null,
     }));
 }
 
@@ -166,6 +174,29 @@ export function savedChecksOf(rows: readonly CheckRow[], waiting: readonly Waiti
  */
 export function clubBooksOnDate(i: { startBooksCents: number; throughD: number; throughStart: number }): number {
   return i.startBooksCents + i.throughD - i.throughStart;
+}
+
+// ── "Waiting at the start": the look-back before the starting statement (Q2, owner 2026-11-05/06) ──────────────
+
+/** Find looks this many days before the starting statement (Q2-A). */
+const BEFORE_START_DAYS = 60;
+/** …on a check dated within this many months of the start (owner 2026-11-06: a cheque is generally stale after six). */
+const BEFORE_START_MONTHS = 6;
+
+/** The look-back's window for a check dated D: (start − 60 days, start], or null once D is past six months from the start. */
+export function beforeStartWindow(startDate: string, date: string): { after: string; through: string } | null {
+  if (date <= startDate || date > addCalendarMonths(startDate, BEFORE_START_MONTHS)) return null;
+  return { after: addCalendarDays(startDate, -BEFORE_START_DAYS), through: startDate };
+}
+
+/**
+ * The look-back's lines as Find offers them: posted lines of the account's books in the window, less those already
+ * waiting at the start, less online payments (Stripe's own figure counts those: the start's on its way), less a transfer
+ * whose other half is in the window too (it nets to nothing in this account). Newest first.
+ */
+export function beforeStartLines<L extends BankLine & { online: boolean }>(lines: readonly L[], start: Pick<SavedCheck, 'waiting'>): L[] {
+  const waiting = new Set(start.waiting.map(w => w.key));
+  return withoutInnerTransfers(lines).filter(l => !l.online && !waiting.has(l.key)).sort(newestFirst);
 }
 
 // ── Stripe "on its way" (ask 8, plan §4, O6) ─────────────────────────────────────────────────

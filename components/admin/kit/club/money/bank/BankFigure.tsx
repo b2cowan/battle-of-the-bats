@@ -69,7 +69,11 @@ function SumTotal({ label, amount }: { label: string; amount: string }) {
 }
 
 /** One line of a saved check's sums: what, and its amount with the way it moved the total ("+ $75.00", "− $412.00"). */
-export type SavedSumRow = { key: string; label: string; amount: string; quiet?: boolean; note?: string };
+export type SavedSumRow = {
+  key: string; label: string; amount: string; quiet?: boolean; note?: string;
+  /** A writer's one door on the line (the start's "Take it off", BC3b): its words, its spoken name, what it does. */
+  action?: { label: string; aria: string; onClick: () => void; disabled?: boolean };
+};
 
 /**
  * A SAVED check's sums (tab 5, the opened check): the lines as they were saved, ruled off by the total. Every row arrives
@@ -82,7 +86,10 @@ export function BankSavedSums({ rows, totalLabel, totalAmount }: {
     <div className={s.sums} role="group" aria-label={W.sumsTitle}>
       {rows.map(r => (
         <Fragment key={r.key}>
-          <SumRow label={r.label} amount={r.amount} quiet={r.quiet} />
+          <SumRow quiet={r.quiet} amount={r.amount} label={r.action ? <>
+            {r.label}{' '}
+            <button type="button" className={s.link} aria-label={r.action.aria} onClick={r.action.onClick} disabled={r.action.disabled}>{r.action.label}</button>
+          </> : r.label} />
           {r.note && <p className={s.sumNotice}>{r.note}</p>}
         </Fragment>
       ))}

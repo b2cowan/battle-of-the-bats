@@ -33,10 +33,16 @@ const BANK_LIBS = ['lib/bank-check.ts', 'lib/bank-club-steps.ts', 'lib/bank-club
 const sqlCode = (path: string) => readCode(path).split('\n').map(l => l.replace(/--.*$/, '')).join('\n');
 const MIG_447_PATH = 'supabase/migrations/447_the_bank_check_is_a_balance.sql';
 const MIG_447 = sqlCode(MIG_447_PATH);
+/** Mig 449 (BC3b): the start can be corrected; a save holds its start. Re-makes bank_check_save, adds bank_start_waiting. */
+const MIG_449_PATH = 'supabase/migrations/449_the_start_can_be_corrected.sql';
+const MIG_449 = sqlCode(MIG_449_PATH);
+/** Mig 450 (BC3b /review): the start says when it was corrected; a re-saved start holds its books. Re-makes both. */
+const MIG_450_PATH = 'supabase/migrations/450_the_start_says_when_it_was_corrected.sql';
+const MIG_450 = sqlCode(MIG_450_PATH);
 
 /** The bank functions after mig 447: the balance check's whole database half (a trigger function aside). */
 const LIVE_FNS = ['bank_first_club_account', 'bank_club_account_of_book', 'bank_book_move', 'bank_account_add',
-  'bank_books_through', 'bank_check_save', 'bank_check_delete'];
+  'bank_books_through', 'bank_check_save', 'bank_check_delete', 'bank_start_waiting'];
 
 /** A function's CREATE head, however it is spelled (case, OR REPLACE, the schema), so a migration can't slip past. */
 const fnHead = (name: string) => new RegExp(String.raw`CREATE\s+(?:OR\s+REPLACE\s+)?FUNCTION\s+(?:public\.)?${name}\s*\(`, 'i');
@@ -68,12 +74,18 @@ const STEPS_CODE = readCode('lib/bank-club-steps.ts');
 const stepBody = (name: string) => between(STEPS_CODE, `export async function ${name}(`, '\nexport ', name);
 
 describe('0. the bank functions: the server\'s only, the live set is the balance check\'s, every code has words', () => {
-  it('mig 447 is the last bank migration that makes a function, and it makes exactly the live set', () => {
-    assert.equal(BANK_FN_MIGS.at(-1)?.path, MIG_447_PATH, 'a later bank migration must be added to this guard');
-    assert.deepEqual([...BANK_FN_MIGS.at(-1)!.fns].sort(), [...LIVE_FNS].sort());
+  it('447, 449 then 450 are the last bank migrations that make a function, and together they make exactly the live set', () => {
+    assert.deepEqual(BANK_FN_MIGS.slice(-3).map(m => m.path), [MIG_447_PATH, MIG_449_PATH, MIG_450_PATH], 'a later bank migration must be added to this guard');
+    assert.deepEqual([...BANK_FN_MIGS.at(-2)!.fns].sort(), ['bank_check_save', 'bank_start_waiting']);
+    assert.deepEqual([...BANK_FN_MIGS.at(-1)!.fns].sort(), ['bank_check_save', 'bank_start_waiting']);
+    assert.deepEqual([...new Set(BANK_FN_MIGS.slice(-3).flatMap(m => m.fns))].sort(), [...LIVE_FNS].sort());
+    // 450 re-makes both with the SAME signatures (no second overload): it drops nothing.
+    assert.doesNotMatch(MIG_450, /DROP FUNCTION/);
+    // 449 replaces bank_check_save's signature: the 447 one is dropped by signature, never left beside it.
+    assert.match(MIG_449, /DROP FUNCTION IF EXISTS public\.bank_check_save\(uuid, uuid, text, date, bigint, bigint, bigint, bigint, uuid\[\], jsonb, uuid\);/);
   });
   it('every function an earlier bank migration made is re-made by 447 or DROPPED by it (by signature, IF EXISTS)', () => {
-    const earlier = new Set(BANK_FN_MIGS.slice(0, -1).flatMap(m => m.fns));
+    const earlier = new Set(BANK_FN_MIGS.slice(0, -3).flatMap(m => m.fns));
     for (const f of earlier) {
       if (LIVE_FNS.includes(f)) continue;
       assert.match(MIG_447, new RegExp(String.raw`DROP FUNCTION IF EXISTS public\.${f}\(`), `${f} is neither live nor dropped`);
@@ -108,7 +120,7 @@ describe('0. the bank functions: the server\'s only, the live set is the balance
 const EXPECTED: Record<string, Record<string, boolean>> = {
   'app/api/admin/accounting/bank/route.ts': { GET: false, POST: true },
   'app/api/admin/accounting/bank/accounts/[accountId]/route.ts': { GET: false, PATCH: true },
-  'app/api/admin/accounting/bank/accounts/[accountId]/setup/route.ts': { PUT: true },
+  'app/api/admin/accounting/bank/accounts/[accountId]/setup/route.ts': { PUT: true, PATCH: true },
   'app/api/admin/accounting/bank/accounts/[accountId]/books/route.ts': { POST: true },
   'app/api/admin/accounting/bank/accounts/[accountId]/checks/route.ts': { POST: true },
   'app/api/admin/accounting/bank/accounts/[accountId]/checks/[checkId]/route.ts': { DELETE: true },
@@ -188,9 +200,9 @@ describe('3. the client sends intent; the server decides (rule 6)', () => {
       if (/supabaseAdmin\.(from\([^)]*\)\.(insert|update|delete|upsert)|rpc)\(/.test(line)) assert.match(line, /await /, line.trim());
     }
   });
-  it('the steps the routes call are mig 447\'s, and bank_books_through is the read\'s', () => {
+  it('the steps the routes call are mig 447\'s and 449\'s, and bank_books_through is the read\'s', () => {
     const called = [...STEPS_CODE.matchAll(/step\('(\w+)'/g)].map(m => m[1]).sort();
-    assert.deepEqual(called, ['bank_account_add', 'bank_book_move', 'bank_check_delete', 'bank_check_save']);
+    assert.deepEqual(called, ['bank_account_add', 'bank_book_move', 'bank_check_delete', 'bank_check_save', 'bank_start_waiting']);
     assert.match(readCode('lib/bank-club-read.ts'), /supabaseAdmin\.rpc\('bank_books_through', \{ p_ledgers: \[\.\.\.bookIds\], p_dates: asked \}\)/);
   });
 });
@@ -209,6 +221,41 @@ describe('4. the steps (mig 447)', () => {
     const insert = f.indexOf('INSERT INTO bank_checks');
     assert.ok(replace > lock && replace < insert, 'the live check of the date goes (soft), then the new one');
     assert.match(f, /at_start\)\s+VALUES \([^;]*p_kind = 'start'\);/, 'at_start comes from the kind, never the request');
+  });
+  it('a save holds the start it was figured from (mig 449, BC2 review): the route sends it, the step compares under the lock', () => {
+    const f = live('bank_check_save');
+    const lock = f.search(/FROM bank_accounts WHERE id = p_account AND org_id = p_org AND archived_at IS NULL FOR UPDATE;/);
+    const cas = f.search(/IF v_start\.id IS DISTINCT FROM p_start OR v_start\.books_cents IS DISTINCT FROM p_start_books THEN\s+RETURN jsonb_build_object\('ok', false, 'code', 'changed'\)/);
+    assert.ok(lock > 0 && cas > lock && cas < f.indexOf('INSERT INTO bank_checks'), 'a check: the start compared under the lock, before any write');
+    // A start names the start it replaces AND the books it read (450: a correction keeps the id and moves the books).
+    const starts = f.slice(0, f.indexOf('ELSIF v_acct.owner_kind'));
+    assert.match(starts, /IF v_start\.id IS DISTINCT FROM p_start OR v_start\.books_cents IS DISTINCT FROM p_start_books THEN\s+RETURN jsonb_build_object\('ok', false, 'code', 'changed'\)/, 'a start holds the start it read, with its books');
+    assert.match(stepBody('saveCheck'), /p_start: start\?\.id \?\? null, p_start_books: start\?\.booksCents \?\? null/);
+  });
+  it('"Waiting at the start" (mig 449): the account first, compare-and-swap on the start, the books move by exactly the item, every refusal before its write', () => {
+    const f = live('bank_start_waiting');
+    const lock = f.search(/FROM bank_accounts WHERE id = p_account AND org_id = p_org AND owner_kind = 'club' AND archived_at IS NULL FOR UPDATE;/);
+    assert.ok(lock > 0 && f.slice(0, lock).match(/FOR UPDATE/g) === null, 'nothing is locked before the account');
+    const cas = f.search(/IF v_start\.id <> p_start OR v_start\.books_cents <> p_books_before THEN\s+RETURN jsonb_build_object\('ok', false, 'code', 'changed'\)/);
+    assert.ok(cas > lock);
+    // The sign is the engine's waitingOnStart (out comes off the start, in goes on), re-checked here; reversed to take one off.
+    assert.match(f, /v_delta := CASE WHEN p_add->>'direction' = 'out' THEN -v_amount ELSE v_amount END;\s+IF p_books_after <> p_books_before \+ v_delta THEN\s+RETURN jsonb_build_object\('ok', false, 'code', 'bad_figures'\)/);
+    assert.match(f, /v_delta := CASE WHEN v_direction = 'out' THEN v_amount ELSE -v_amount END;\s+IF p_books_after <> p_books_before \+ v_delta THEN\s+RETURN jsonb_build_object\('ok', false, 'code', 'bad_figures'\)/);
+    assert.match(readCode('lib/bank-check.ts'), /export const waitingOnStart = \(w: Pick<WaitingItem, 'direction' \| 'amountCents'>\): number => signed\(w\.direction, w\.amountCents\);/);
+    // Every refusal before the write it guards (a plain RETURN commits what was written; dba Finding #48).
+    const insert = f.indexOf('INSERT INTO bank_check_waiting');
+    const del = f.indexOf('DELETE FROM bank_check_waiting');
+    assert.ok(f.lastIndexOf("'bad_figures'", insert) > 0 && f.lastIndexOf("'bad_figures'", del) > insert, 'the sum is checked before the insert and before the delete');
+    assert.equal(f.slice(del).match(/RETURN jsonb_build_object\('ok', false/g), null, 'nothing refuses after the delete');
+    assert.match(f, /at_start, added_by, added_at\)\s+VALUES \([^;]*true, p_actor, now\(\)\);/, 'always a start\'s item, with who and when');
+    // Only the START's books move, and the start keeps when and by whom (450: a line taken off leaves no row of its own).
+    assert.match(f, /UPDATE bank_checks SET books_cents = p_books_after, corrected_at = now\(\), corrected_by = p_actor WHERE id = v_start\.id;/, 'only the START\'s books move, with who and when');
+    assert.match(MIG_450, /CHECK \(\(corrected_at IS NULL AND corrected_by IS NULL\) OR \(kind = 'start' AND corrected_at IS NOT NULL\)\)/, 'only a start is ever corrected');
+    // "Books now say" names the start's reason when the start moved after the check was saved (BC3b /review).
+    assert.match(readCode('lib/bank-club-read.ts'), /const startMoved = \[start\?\.correctedAt, start\?\.createdAt\]/);
+    assert.match(readCode('lib/bank-club-map.ts'), /created_by, created_at, corrected_at';/);
+    assert.match(stepBody('correctStart'), /const plan = startItemPlan\(\{/);
+    assert.match(stepBody('correctStart'), /entriesById\(\[id\]\)/, 'the line\'s figures are read from the books by id (rule 6)');
   });
   it('delete is SOFT, and the start can\'t go while a later check stands', () => {
     const f = live('bank_check_delete');
@@ -299,10 +346,11 @@ describe('6. R2b-3\'s lock order, carried by mig 447', () => {
     assert.doesNotMatch(f, /FROM organizations[^;]*FOR (UPDATE|NO KEY UPDATE|SHARE|KEY SHARE)/, 'the club row is never locked here');
     assert.match(f, /INSERT INTO bank_accounts \(org_id, owner_kind, name, created_by, created_at\)\s+VALUES \(p_org, 'club', v_name, p_actor, clock_timestamp\(\)\)/);
   });
-  it('save and delete lock the account and never a book or the club row', () => {
-    for (const f of ['bank_check_save', 'bank_check_delete']) {
+  it('save, delete and correcting the start lock the account and never a book or the club row', () => {
+    for (const f of ['bank_check_save', 'bank_check_delete', 'bank_start_waiting']) {
       const body = live(f);
-      assert.match(body, /FROM bank_accounts WHERE id = p_account AND org_id = p_org AND archived_at IS NULL FOR UPDATE;/, f);
+      // (Correcting the start is a club account's only: its lock names the kind.)
+      assert.match(body, /FROM bank_accounts WHERE id = p_account AND org_id = p_org (AND owner_kind = 'club' )?AND archived_at IS NULL FOR UPDATE;/, f);
       assert.doesNotMatch(body, /FROM (accounting_ledgers|organizations)[^;]*FOR (UPDATE|NO KEY UPDATE|SHARE|KEY SHARE)/, f);
     }
   });

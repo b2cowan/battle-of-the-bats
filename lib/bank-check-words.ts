@@ -21,7 +21,9 @@ export const BANK_REFUSAL = {
   bad_amount: 'Enter the cash not deposited yet as an amount above $0.00, or leave it empty.',
   bad_date: 'Enter the date as it reads on the statement.',
   // M3 (owner 2026-11-06): after the starting statement too — the start already proved an earlier line was in the bank.
-  bad_item: 'A line marked Not in the bank yet must be a line in this account’s books, dated after your starting statement and on or before this one.',
+  bad_item: 'A line marked Not in the bank yet has to be one of this account’s own lines, dated after your starting statement and on or before the statement you’re checking.',
+  // Waiting at the start (Q2-A): the other date rule, so its own sentence (BC3b /marketing).
+  bad_start_item: 'To wait at the start, a line has to move money in or out of this account, be dated on or before your starting statement, and not be waiting there already. Online payments can’t wait at the start.',
   ends_in_future: 'A statement can’t be dated after today. Enter the date printed on it.',
   changed: 'Something in this account changed while you were looking. Here it is again.',
   start_exists: 'This account already starts from a statement on another date.',
@@ -31,8 +33,9 @@ export const BANK_REFUSAL = {
   start_has_checks: 'Later checks start from this statement, so it can’t be deleted. Delete them first.',
   // Stripe failed between the screen's read and the save's own (warn, never block, decided by the server, BC2 review):
   // the screen shows the figure without online payments, and saving it is the treasurer's choice.
-  not_counted_down: 'Stripe didn’t answer just now, so online payments on their way can’t be counted. Look over the figures again, then save.',
-  not_counted_unlisted: 'One of Stripe’s payouts doesn’t list what’s in it, so online payments on their way can’t be counted. Look over the figures again, then save.',
+  // Settled, BC3b /marketing 2026-11-06. The screen reads the figure again without them, so the sentence says it does.
+  not_counted_down: 'Stripe didn’t answer just now, so online payments on their way aren’t counted. The figures now leave them out. Look them over, then save, or try again in a few minutes.',
+  not_counted_unlisted: 'One of Stripe’s payouts doesn’t list what’s in it, so online payments on their way aren’t counted. The figures now leave them out. Look them over, then save.',
 } as const;
 
 export type BankRefusalCode = keyof typeof BANK_REFUSAL;

@@ -12,8 +12,8 @@
  * ⚖ NO YEAR: nothing here reads or names a fiscal year or a season.
  */
 
-import { figureOfSaved, startBooks, type CheckFigure, type SavedCheck, type WaitingItem } from './bank-check';
-import { directionOfEntry, entryIdOf, type ClubSavedCheck, type EntryRow, type OnItsWay } from './bank-club-map';
+import { figureOfSaved, startBooks, typedCents, waitingOnStart, type CheckFigure, type SavedCheck, type WaitingItem } from './bank-check';
+import { directionOfEntry, entryIdOf, isOnlineEntry, type ClubSavedCheck, type EntryRow, type OnItsWay } from './bank-club-map';
 import { BANK_REFUSAL, type BankRefusalCode } from './bank-check-words';
 import { toCents } from './coach-register';
 import { isCalendarDate } from './timezone';
@@ -28,7 +28,7 @@ export const no = (code: BankRefusalCode): { ok: false; status: number; code: Ba
  *  everything else a conflict 409. */
 export const STATUS_OF: Record<BankRefusalCode, number> = {
   account_not_found: 404, check_not_found: 404, book_not_found: 404, org_not_found: 404,
-  bad_name: 400, bad_figures: 400, bad_kind: 400, bad_amount: 400, bad_date: 400, bad_item: 400, ends_in_future: 400,
+  bad_name: 400, bad_figures: 400, bad_kind: 400, bad_amount: 400, bad_date: 400, bad_item: 400, bad_start_item: 400, ends_in_future: 400,
   team_book: 409, name_taken: 409, changed: 409, start_exists: 409, start_after_checks: 409, no_start: 409,
   before_start: 409, start_has_checks: 409, not_counted_down: 409, not_counted_unlisted: 409,
 };
@@ -84,7 +84,9 @@ export function readText(v: unknown, max: number): string | null {
 /**
  * Find's search, by shape (BC3): `$12` or `12.50` is an amount only; all digits ("1234") is a cheque number as much as an
  * amount, so it searches both; anything else is words in the description. A statement's own thousands comma ("$1,250.00",
- * "1,250": groups of exactly three digits) is an amount (BC3a); "12,50" is not a group of three, so it stays words (O4).
+ * "1,250": groups of exactly three digits) is an amount (BC3a); a comma before exactly two final digits ("12,50") is a
+ * DECIMAL comma (O4, BC3b). Anything shaped like an amount is read by the balance field's own parser (`typedCents`), so
+ * the search and the field never disagree about what a number is.
  */
 export type FindSearch =
   { kind: 'none' } | { kind: 'amount'; amount: number } | { kind: 'either'; amount: number; words: string } | { kind: 'words'; words: string };
@@ -93,10 +95,8 @@ export function pickerSearch(q: string): FindSearch {
   const words = q.trim().slice(0, 80);
   if (!words) return { kind: 'none' };
   if (/^\d{1,9}$/.test(words)) return { kind: 'either', amount: Number(words), words };
-  if (/^\$?\d{1,9}(\.\d{1,2})?$/.test(words) || /^\$?\d{1,3}(,\d{3}){1,2}(\.\d{1,2})?$/.test(words)) {
-    return { kind: 'amount', amount: Number(words.replace(/[$,]/g, '')) };
-  }
-  return { kind: 'words', words };
+  const c = /^\$?[\d,.]+$/.test(words) ? typedCents(words, { positive: false }) : null;
+  return c !== null ? { kind: 'amount', amount: c / 100 } : { kind: 'words', words };
 }
 
 /**
@@ -109,6 +109,14 @@ export function lineMatches(search: FindSearch, line: { amountCents: number; lab
   if (search.kind === 'amount') return byAmount;
   const w = search.words.toLowerCase();
   return byAmount || [line.label, line.how].some(t => !!t && t.toLowerCase().includes(w));
+}
+
+/** A book line as a waiting item, its figures the server's own read of the line (rule 6); null for one with no amount. */
+function waitingItemOf(key: string, r: EntryRow): WaitingItem | null {
+  const amountCents = toCents(r.amount);
+  if (amountCents <= 0) return null;
+  const label = r.description ? cutText(r.description.trim(), 200) : undefined;
+  return { key, date: r.entry_date, direction: directionOfEntry(r), amountCents, ...(label ? { label } : {}) };
 }
 
 /** At most this many "Not in the bank yet" lines on one check. */
@@ -186,10 +194,9 @@ export function savePlan(input: { kind: 'start' | 'check'; date: string; body: R
     const r = id ? byId.get(id) : undefined;
     if (!r || r.status !== 'posted' || !books.has(r.ledger_id) || r.entry_date > date || onItsWay.has(k as string)) return no('bad_item');
     if (kind === 'check' && facts.startDate !== null && r.entry_date <= facts.startDate) return no('bad_item');
-    const amountCents = toCents(r.amount);
-    if (amountCents <= 0) return no('bad_item');
-    const label = r.description ? cutText(r.description.trim(), 200) : undefined;
-    waiting.set(k as string, { key: k as string, date: r.entry_date, direction: directionOfEntry(r), amountCents, ...(label ? { label } : {}) });
+    const item = waitingItemOf(k as string, r);
+    if (!item) return no('bad_item');
+    waiting.set(item.key, item);
   }
   const items = [...waiting.values()];
 
@@ -213,17 +220,67 @@ export interface CheckView {
   figure: CheckFigure;
   /** Ask 6: the books as they read now, when they differ (never on the start). */
   booksNowSayCents: number | null;
+  /** Q2: the starting statement was corrected after this check was saved (the "Books now say" reason). */
+  startCorrected: boolean;
   checkedBy: string | null;
   checkedAt: string;
 }
 
-export function checkView(c: ClubSavedCheck & { booksNowSayCents: number | null }, nameOf: (id: string | null) => string | null): CheckView {
+export function checkView(c: ClubSavedCheck & { booksNowSayCents: number | null; startCorrected: boolean },
+  nameOf: (id: string | null) => string | null): CheckView {
   return {
     id: c.id, kind: c.kind, date: c.date, bankCents: c.bankCents, booksCents: c.booksCents, onItsWayCents: c.onItsWayCents,
-    cashCents: c.cashCents, waiting: [...c.waiting], figure: figureOfSaved(c), booksNowSayCents: c.booksNowSayCents,
+    cashCents: c.cashCents,
+    // Who put a line on the start is a name on the screen, never an id (an item saved with its own check has none).
+    waiting: c.waiting.map(w => (w.addedAt ? { ...w, addedBy: nameOf(w.addedBy ?? null) } : w)),
+    figure: figureOfSaved(c), booksNowSayCents: c.booksNowSayCents, startCorrected: c.startCorrected,
     checkedBy: nameOf(c.createdBy), checkedAt: c.createdAt,
   };
 }
+
+// ── "Waiting at the start" (Q2): put a line on the starting statement, or take one off ───────────────────────────
+
+/**
+ * Decide a correction of the starting statement (Q2-A, owner 2026-11-05; mig 449's `bank_start_waiting` holds it again
+ * under the account's lock). `add`: a line key the server read from the books by id (`entries`, with its transfer's other
+ * half when it has one) — a POSTED line of the account's books dated ON OR BEFORE the start, not an online payment (the
+ * start's on its way is Stripe's figure), not a transfer whose other half is in this account (it nets to nothing), not on
+ * the start already. `remove`: a line key on the start now. The start's books move by exactly the item
+ * (`waitingOnStart`): the step re-checks the same sum.
+ */
+export function startItemPlan(input: { body: Record<string, unknown>; start: ClubSavedCheck | null; bookIds: readonly string[];
+  entries: readonly EntryRow[] }) {
+  const { body, start } = input;
+  const add = typeof body.add === 'string' ? body.add : null;
+  const remove = typeof body.remove === 'string' ? body.remove : null;
+  if ((add === null) === (remove === null)) return no('bad_item');
+  if (!start) return no('no_start');
+  const before = start.booksCents;
+  if (remove !== null) {
+    const item = start.waiting.find(w => w.key === remove);
+    if (!item) return no('changed');
+    return { ok: true as const, args: { startId: start.id, booksBefore: before, booksAfter: before - waitingOnStart(item), add: null, remove } };
+  }
+  const id = entryIdOf(add!);
+  const byId = new Map(input.entries.map(r => [r.id, r]));
+  const r = id ? byId.get(id) : undefined;
+  const books = new Set(input.bookIds);
+  // A line the start can't hold has its own sentence (`bad_start_item`): `bad_item`'s says "dated after your starting
+  // statement", the opposite of this door's rule (BC3b /marketing).
+  if (!r || r.status !== 'posted' || !books.has(r.ledger_id) || r.entry_date > start.date || isOnlineEntry(r)) return no('bad_start_item');
+  const pair = r.linked_entry_id ? byId.get(r.linked_entry_id) : undefined;
+  if (pair && books.has(pair.ledger_id)) return no('bad_start_item');
+  if (start.waiting.some(w => w.key === add)) return no('bad_start_item');
+  const item = waitingItemOf(add!, r);
+  if (!item) return no('bad_start_item');
+  return { ok: true as const, args: { startId: start.id, booksBefore: before, booksAfter: before + waitingOnStart(item), add: item, remove: null } };
+}
+
+/** The entry id a start correction adds (null for a removal, or a key that isn't a club line). */
+export const startItemIdOf = (body: Record<string, unknown>): string | null => {
+  const id = typeof body.add === 'string' ? entryIdOf(body.add) : null;
+  return id && isUuid(id) ? id : null;
+};
 
 /** Ask 4: the account's "checked through" — its latest check's date and result (Matches / Off by $X); null before one. */
 export function checkedThrough(checks: readonly ClubSavedCheck[]): { date: string; result: 'matches' | 'off'; offByCents: number } | null {

@@ -151,6 +151,11 @@
   },
   {
     "tablename": "bank_check_waiting",
+    "indexname": "bank_check_waiting_added_by_idx",
+    "indexdef": "CREATE INDEX bank_check_waiting_added_by_idx ON public.bank_check_waiting USING btree (added_by) WHERE (added_by IS NOT NULL)"
+  },
+  {
+    "tablename": "bank_check_waiting",
     "indexname": "bank_check_waiting_once",
     "indexdef": "CREATE UNIQUE INDEX bank_check_waiting_once ON public.bank_check_waiting USING btree (check_id, line_key)"
   },
@@ -163,6 +168,11 @@
     "tablename": "bank_checks",
     "indexname": "bank_checks_account_idx",
     "indexdef": "CREATE INDEX bank_checks_account_idx ON public.bank_checks USING btree (bank_account_id, statement_end_date)"
+  },
+  {
+    "tablename": "bank_checks",
+    "indexname": "bank_checks_corrected_by_idx",
+    "indexdef": "CREATE INDEX bank_checks_corrected_by_idx ON public.bank_checks USING btree (corrected_by) WHERE (corrected_by IS NOT NULL)"
   },
   {
     "tablename": "bank_checks",

@@ -6,7 +6,8 @@ import { onlinePaymentsOn } from './online-payments-switch';
 import { readPayouts } from './online-payouts';
 import { booksNowSay, latestBefore, suspectsSince, suspectsStart, type BankLine, type WaitingItem } from './bank-check';
 import {
-  CHECK_SELECT, ENTRY_SELECT, ONLINE_METHODS, WAITING_SELECT, bookIdsOf, clubBooksOnDate, entryToBankLine, isOnlineEntry,
+  CHECK_SELECT, ENTRY_SELECT, ONLINE_METHODS, WAITING_SELECT, beforeStartLines, beforeStartWindow, bookIdsOf, clubBooksOnDate,
+  entryToBankLine, isOnlineEntry,
   liveClubAccounts, onItsWay, onItsWayFloor, placeBooks, savedChecksOf,
   type BankAccountRow, type BookMoveRow, type CheckRow, type ClubBook, type ClubSavedCheck, type EntryRow, type OnItsWay,
   type PayoutRowLike, type WaitingRow,
@@ -155,12 +156,17 @@ async function linesBetween(bookIds: readonly string[], after: string, to: strin
 export interface ClubCheckView extends ClubSavedCheck {
   /** Ask 6: the books as they read now, when they differ from the saved figure; never on the start. */
   booksNowSayCents: number | null;
+  /** Q2: a line was put on (or taken off) the starting statement after this check was saved — why the books now differ. */
+  startCorrected: boolean;
 }
 
 /**
- * Ask 6 + Q3: re-figure every saved check's books as they read now — the start's books as they read now (a Q2 item
- * attached later moves every later check) + the movement of the check's OWN `book_ids` since the start. One SQL call per
- * distinct book list (a move between accounts is the only thing that makes two).
+ * Ask 6 + Q3: re-figure every saved check's books as they read now — the start's books AS THEY READ NOW + the movement of
+ * the check's OWN `book_ids` since the start. One SQL call per distinct book list (a move between accounts is the only
+ * thing that makes two).
+ * ⚖ M2 (BC1 review, closed BC3b): the start's books ARE its items as they are now — `bank_start_waiting` (mig 449) moves
+ *   the start's `books_cents` by exactly each item it attaches or takes off, so a line marked "Waiting at the start" shows
+ *   on every saved later check as "Books now say $X" (ruling "Q2 + ask 6"), and its figures stay as they were.
  */
 async function withBooksNow(checks: readonly ClubSavedCheck[]): Promise<ClubCheckView[]> {
   const start = checks.find(c => c.kind === 'start');
@@ -178,7 +184,15 @@ async function withBooksNow(checks: readonly ClubSavedCheck[]): Promise<ClubChec
       for (const c of g) nowOf.set(c.id, books.get(c.date)!);
     }));
   }
-  return checks.map(c => ({ ...c, booksNowSayCents: nowOf.has(c.id) ? booksNowSay(c.booksCents, nowOf.get(c.id)!) : null }));
+  // The start moved after a check was saved: it was corrected (a line put on or taken off, mig 450's `corrected_at`: a
+  // line taken off leaves no row of its own), or it was saved again after it. Either way the start's reason, not the
+  // ledger's (BC3b /review).
+  const startMoved = [start?.correctedAt, start?.createdAt].filter((t): t is string => !!t);
+  return checks.map(c => ({
+    ...c,
+    booksNowSayCents: nowOf.has(c.id) ? booksNowSay(c.booksCents, nowOf.get(c.id)!) : null,
+    startCorrected: c.kind === 'check' && startMoved.some(t => t > c.createdAt),
+  }));
 }
 
 /** At most this many suspects go to the screen (the hints look through the most recent 400: lib/bank-check.ts). */
@@ -198,6 +212,10 @@ export interface ClubFigureForDate {
   suspects: { since: string; sinceMatch: boolean; total: number; lines: SuspectLine[] };
   /** Ask 2: the latest earlier check's "Not in the bank yet" items, asked "Still waiting?" (BC3 asks). */
   stillWaiting: WaitingItem[];
+  /** Q2 look-back (owner 2026-11-06): on a check within six months of the start, the account's lines of the 60 days before
+   *  the start that could be "Waiting at the start" (`beforeStartLines`); null past six months. The screen offers them only
+   *  while the check is off. */
+  beforeStart: { after: string; through: string; lines: SuspectLine[] } | null;
   /** The live check of this date a save would replace ("Check this statement again"). */
   replaces: string | null;
 }
@@ -218,19 +236,22 @@ export async function figureForDate(orgId: string, account: ClubBankAccount, che
 
   if (kind === 'start' || !start || refused) {
     return { date, kind, refused, booksCents: null, onItsWay: await readOnItsWay(orgId, bookIds, date, today), suspects: noSuspects,
-      stillWaiting: [], replaces };
+      stillWaiting: [], beforeStart: null, replaces };
   }
   const { since } = suspectsStart(checks, date, start.date);
-  const [books, oiw, window] = await Promise.all([
+  const look = opts.suspects === false ? null : beforeStartWindow(start.date, date);
+  const [books, oiw, window, before] = await Promise.all([
     booksOnDates(start, bookIds, [date]),
     readOnItsWay(orgId, bookIds, date, today),
     opts.suspects === false ? Promise.resolve<SuspectLine[]>([]) : linesBetween(bookIds, since, date),
+    look ? linesBetween(bookIds, look.after, look.through) : Promise.resolve<SuspectLine[]>([]),
   ]);
   const s = suspectsSince({ lines: window, checks, date, startDate: start.date });
   return {
     date, kind, refused, booksCents: books.get(date)!, onItsWay: oiw,
     suspects: { since: s.since, sinceMatch: s.sinceMatch, total: s.lines.length, lines: s.lines.slice(0, SUSPECT_CAP) },
     stillWaiting: [...(latestBefore(checks.filter(c => c.kind === 'check'), date)?.waiting ?? [])],
+    beforeStart: look ? { ...look, lines: beforeStartLines(before, start).slice(0, SUSPECT_CAP) } : null,
     replaces,
   };
 }
@@ -248,7 +269,7 @@ export async function readClubBankAccount(orgId: string, accountId: string, opts
   const [checks, figure, nameOf] = await Promise.all([
     withBooksNow(saved),
     opts.date ? figureForDate(orgId, account, saved, opts.date, opts.today, { kind: opts.asked }) : Promise.resolve(null),
-    resolvePersonNamer(orgId, saved.map(c => c.createdBy)),
+    resolvePersonNamer(orgId, [...saved.map(c => c.createdBy), ...saved.flatMap(c => c.waiting.map(w => w.addedBy ?? null))]),
   ]);
   const latest = new Map(all.accounts.map(a => [a.id, checkedThrough(byAccount.get(a.id) ?? [])]));
   return { account, all, checks, latest, figure, nameOf };

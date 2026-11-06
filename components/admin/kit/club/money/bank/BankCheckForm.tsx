@@ -10,13 +10,19 @@
  * ⚖ FIND (BC3a, `BankFind`): a line marked "Not in the bank yet" joins the sums with Undo and the band re-figures through
  *   `figureCheck` with the marked items (no arithmetic here); Save sends their KEYS only (`waiting`), the server reads each
  *   line's figures itself (rule 6). "Still waiting on {line}?" (ask 2) asks once per item of the latest earlier check: Yes
- *   marks it, No drops it for this check. A new date clears both. "Add the missing line" is BC3b's.
+ *   marks it, No drops it for this check. A new date clears both.
+ * ⚖ THE TWO DOORS OUT OF THE CHECK (BC3b): "Add the missing line" opens the LEDGER'S OWN add window (`AddEntryWindow`), filled
+ *   with the gap, the statement's date and the direction (the bank showing more → money in; less → money out), on the
+ *   account's own club book; the line is written by the Ledger's route, never by bank code (ask 1). "Waiting at the start"
+ *   corrects the starting statement (`PATCH …/setup`). After either, the day's figure is read again (the typed balance stays).
  * Only a writer is given this component (B7): `BankTab` mounts it behind `canMove`.
  * "Check this statement again" (BC2b) re-keys it with `againDate`: the server already replaces a live check of the same
  * date, and the form already says so ("Saving replaces that check").
  */
 import { useEffect, useState } from 'react';
-import { figureCheck, waitingOnCheck, type WaitingItem } from '@/lib/bank-check';
+import { figureCheck, waitingOnCheck, type BankLine, type WaitingItem } from '@/lib/bank-check';
+import type { LedgerKind } from '@/lib/club-ledger';
+import { AddEntryWindow, useBudgetWords } from '../LedgerWindows';
 import { BANK_REFUSAL } from '@/lib/bank-check-words';
 import { BANK_WORDS as W } from '@/lib/bank-tab-words';
 import { tournamentToday } from '@/lib/timezone';
@@ -26,7 +32,8 @@ import BankMoneyField from './BankMoneyField';
 import { BankBand, BankSums } from './BankFigure';
 import BankFind from './BankFind';
 import {
-  bankUrl, bankWrite, cents, dayYear, isStaleView, moved, notCountedOf, parseCents, readFigure, type AccountView, type Figure,
+  bankUrl, bankWrite, cents, dayYear, fieldAmount, isStaleView, moved, nameOf, notCountedOf, parseCents, patchStart, readFigure, type AccountView,
+  type Figure,
 } from './BankShared';
 import ck from '../../ClubKit.module.css';
 import s from './Bank.module.css';
@@ -35,11 +42,14 @@ const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
 const DEBOUNCE_MS = 350;
 const BALANCE_ID = 'bank-check-balance';
 
-export default function BankCheckForm({ orgSlug, view, onSaved, onStale, againDate }: {
+export default function BankCheckForm({ orgSlug, view, onSaved, onChanged, onStale, againDate }: {
   orgSlug: string;
   view: AccountView;
   /** The account read again after a save, and what to tell the treasurer about it. */
   onSaved: (view: AccountView, text: string) => void;
+  /** Something outside this check changed (a line added to the books, the start corrected): the account in hand (or, when
+   *  null, read it again) and what to say. The form keeps what is typed. */
+  onChanged: (view: AccountView | null, text: string) => void;
   /** The server said the view is stale: the tab re-reads, then says the sentence. */
   onStale: (text: string) => void;
   /**
@@ -61,9 +71,14 @@ export default function BankCheckForm({ orgSlug, view, onSaved, onStale, againDa
   // Find (BC3a): the lines marked Not in the bank yet (in the order marked), and the Still-waiting items answered No.
   const [marked, setMarked] = useState<ReadonlyMap<string, WaitingItem>>(new Map());
   const [dropped, setDropped] = useState<ReadonlySet<string>>(new Set());
+  // "Add the missing line": the Ledger's add window, filled with what the screen said when it opened (the gap, the day, the
+  // direction), so a figure read again meanwhile never moves or closes it; the budget words read when it opens.
+  const [adding, setAdding] = useState<{ entryType: 'income' | 'expense'; date: string; amount: string } | null>(null);
   const beginRead = useLatestRead();
-  // A saved or deleted check changes what the day's figure says (the suspects, Still waiting?): re-read after one.
-  const checksKey = view.checks.map(c => c.id).join(',');
+  // A saved or deleted check, or a corrected start, changes what the day's figure says: re-read after one.
+  const checksKey = `${view.checks.map(c => c.id).join(',')}|${view.start?.id ?? ''}:${view.start?.booksCents ?? ''}`;
+  const q = `orgSlug=${encodeURIComponent(orgSlug)}`;
+  const words = useBudgetWords(q, adding !== null);
 
   // Handed a date ("Check this statement again"): bring the form into view with the cursor in the balance.
   useEffect(() => {
@@ -101,11 +116,27 @@ export default function BankCheckForm({ orgSlug, view, onSaved, onStale, againDa
   const unmark = (key: string) => { setMarked(m => { const n = new Map(m); n.delete(key); return n; }); setError(''); };
   /** A new day is a new check: its marks and answers go (the lines and the earlier check's items are that day's). */
   const pickDate = (v: string) => { setDate(v); setError(''); setMarked(new Map()); setDropped(new Set()); };
-  const waitingRows = items.map(w => ({ key: w.key, what: w.label || W.lineUnnamed, amount: moved(waitingOnCheck(w)), onUndo: () => unmark(w.key) }));
+  const waitingRows = items.map(w => ({ key: w.key, what: nameOf(w), amount: moved(waitingOnCheck(w)), onUndo: () => unmark(w.key) }));
   const askingRows = (fresh?.stillWaiting ?? []).filter(w => !marked.has(w.key) && !dropped.has(w.key)).map(w => ({
-    key: w.key, what: w.label || W.lineUnnamed, amount: cents(w.amountCents),
+    key: w.key, what: nameOf(w), amount: cents(w.amountCents),
     onYes: () => mark(w), onNo: () => setDropped(d => new Set(d).add(w.key)),
   }));
+
+  /** "Waiting at the start" (Q2): the line goes on the starting statement; the account and the day are read again. */
+  async function atStart(line: BankLine) {
+    if (busy) return;
+    setBusy(true); setError('');
+    const r = await patchStart(orgSlug, accountId, { add: line.key });
+    setBusy(false);
+    if (!r.ok) { if (isStaleView(r.code)) onStale(r.error); else setError(r.error); return; }
+    // The figure on screen counted the line as one of the books' own: it goes until the day is read again (/review).
+    setFigure(null);
+    onChanged(r.view, W.atStartDone(nameOf(line)));
+  }
+
+  // The book "Add the missing line" writes to: the account's own club book (R0 ask 1; the Ledger's rule: the club's, not an
+  // event's), else its first.
+  const ownBook = view.account.books.find(b => b.kind === 'org' && !b.entityId) ?? view.account.books[0] ?? null;
 
   async function save() {
     if (busy || !fresh) return;
@@ -154,8 +185,19 @@ export default function BankCheckForm({ orgSlug, view, onSaved, onStale, againDa
           <BankSums date={date} bookNames={view.account.books.map(b => b.name)} booksCents={fresh.booksCents}
             shouldBeCents={band.shouldBeCents} onItsWay={fresh.onItsWay} payoutsHref={`/${orgSlug}/admin/accounting/payouts`}
             onRetry={() => setAgain(n => n + 1)} waiting={waitingRows} asking={askingRows} />
-          <BankFind key={date} figure={fresh} band={band} typed={typed !== null} marked={marked} onMark={mark} onUndo={unmark} />
+          <BankFind key={date} figure={fresh} band={band} typed={typed !== null} marked={marked} busy={busy} onMark={mark} onUndo={unmark}
+            onAtStart={l => void atStart(l)} onAddLine={() => setAdding({
+              // The gap, the statement's day, and the way it must go to close it: the bank holding more is money in.
+              entryType: band.direction === 'bank_more' ? 'income' : 'expense', date, amount: fieldAmount(band.offByCents),
+            })} />
         </>
+      )}
+      {adding && ownBook && (
+        <AddEntryWindow book={{ id: ownBook.id, name: ownBook.name, kind: ownBook.kind as LedgerKind, entityId: ownBook.entityId }}
+          // The club's fiscal years, as the Ledger hands them: a date in a closed year is said under the field (/review).
+          q={q} orgSlug={orgSlug} words={words} fiscal={view.fiscal} canMove prefill={adding}
+          onClose={() => setAdding(null)}
+          onAdded={text => { setAdding(null); setAgain(n => n + 1); onChanged(null, text); }} />
       )}
     </section>
   );

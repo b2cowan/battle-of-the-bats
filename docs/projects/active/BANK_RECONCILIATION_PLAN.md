@@ -64,6 +64,8 @@ need to type a statement balance, see the difference from the books on that date
 | Q3 | **A book moved between accounts:** each saved check keeps the books it counted, so a move changes nothing earlier and "Books now say" means only that a line changed; the next check of each account counts the book where it is now; the move window says so in one sentence. (Ruled A 2026-11-05.) |
 | Q2 + ask 6 | **A line marked Waiting at the start leaves saved checks' figures as they were:** saved later checks show "Books now say $X"; the next check, and "Check this statement again" on any of them, figure from the corrected start. (Owner, 2026-11-06, BC3.) |
 | M3 | **A check's Not in the bank yet line may not be dated on or before the starting statement:** the save refuses it. (Owner, 2026-11-06, BC3.) |
+| Q2 look-back | **Find looks at the 60 days before the start on any off check dated within 6 months of the start** (replaces "while no check since the start has matched": a cheque cashed after a matching check was missed). Pre-start lines are named in the callout only when exactly the gap. (Owner, 2026-11-06, BC3b.) |
+| Start item re-check | **A check dated before a start's Waiting-at-the-start line cleared also asks "Still waiting on {line}?" for each of the start's Waiting-at-the-start lines**, as it asks about the previous check's lines. Later work, not BC3b. (Owner, 2026-11-06, BC3b `/review`.) |
 
 ### Tick-off rulings that still stand (Appendix A §4)
 
@@ -262,11 +264,15 @@ money table or a book line.** A guard test pins this: no bank code writes `accou
 - [x] "Your books on {date}" · "Online payments on their way to your bank · {n}" · "Stripe pays them out {date}" — sums (settled, BC2 `/marketing` 2026-11-06)
 - [x] *new* "Couldn't reach Stripe, so online payments on their way aren't counted. Try again in a few minutes." — the
   Stripe line when it can't be read (settled, BC2 `/marketing` 2026-11-06)
-- [ ] "Not in the bank yet" · "Undo" · *new* "Still waiting on {line}?" · "Yes" · "No" — Find and the next check
+- [x] "Not in the bank yet" · "Undo" · *new* "Still waiting on {line}?" · "Yes" · "No" — Find and the next check (settled,
+  BC3b `/marketing` 2026-11-06; spoken names "Undo marking {line} as not in the bank yet", "Yes, still waiting on {line}")
 - [ ] "Cash not deposited yet" — the cash figure, the saved check, the report
-- [ ] "Find the $X" · "Lines since your last match · {date}" · "Exactly $X" · *new* "Half of $X. Entered the wrong way
-  round?" · *new* "These {2|3} add up to $X" — Find
-- [ ] "Add the missing line" — opens the ordinary add form
+- [x] "Find the $X" · "Lines since your last match · {date}" · "Exactly $X" · "These {2|3} add up to $X" — Find (settled,
+  BC3b `/marketing` 2026-11-06). The half reads "{line} ({date}) is $X, half of the $Y gap. Was it entered the wrong way
+  round?". The bank-side sentence opens "Or the bank…" under a possibility and "The bank…" standing alone. The search
+  keeps the drawn "Find an amount or a name" (the Payouts search is "Find an amount, a name or a receipt"). The chip's
+  spoken name is "{chip}. Show this possibility"; the action column's spoken header is "Action".
+- [x] "Add the missing line" — opens the ordinary add form (settled, BC3b `/marketing` 2026-11-06)
 - [x] "Save this check" · "It saves as off by $X. You can check this statement again later." — save (settled, BC2 `/marketing` 2026-11-06)
 - [x] "Checked statements" · "The bank said" · "Should have been" · "Result" · "Checked by" · "Starting point" — list (settled, BC2 `/marketing` 2026-11-06)
 - [x] "Books now say $X" — saved row chip (settled, BC2 `/marketing` 2026-11-06)
@@ -279,8 +285,15 @@ money table or a book line.** A guard test pins this: no bank code writes `accou
   haven’t entered.", "These {2|3} add up to $X:" + "If the bank hasn’t cashed/received them yet, that’s the gap.", chips
   "Half of $X" · "Part of $X", "Next possibility", "Online payments · n · on their way, counted above", "not in the bank
   yet, counted above", "Show {n} more", the Still waiting Yes/No spoken names, and the `bad_item` refusal's M3 sentence.
-  BC3b's `/marketing` pass settles all of them.)
-- [ ] *new, Q2-A* "Waiting at the start" · "This was written before your starting statement and cashed after it." — Find
+  BC3b's `/marketing` pass settled all of them 2026-11-06, as the lines above and below record.)
+- [x] *new, Q2-A* "Waiting at the start" — Find (settled, BC3b `/marketing` 2026-11-06). Either direction, so "reached the
+  bank", not "cashed": the look-back's sentence row (a condition, `/design`) "If one of these was dated before your starting
+  statement but reached the bank after it, mark it Waiting at the start."; the callout "{line} ({date}) is exactly $X and
+  dated before your starting statement. If it reached the bank after that statement, that’s the gap."; the start's window
+  "Waiting at the start · {line}" with "Marked by {name} on {date}." (`/design`: not the line's name again) and "Take it
+  off". Its refusal has its own code `bad_start_item`: "To wait at the start, a line has to move money in or out of this
+  account, be dated on or before your starting statement, and not be waiting there already. Online payments can’t wait at
+  the start." (`bad_item`'s sentence said "dated after your starting statement", the opposite of this door).
 - [ ] *new, Q1-A* "From the {2025 Season}" — the divider above last season's lines in the coach's Find
 - [ ] *new* "Statements from this season only, since {date}." (drawn) · *new* refusal "This statement is before the
   {2026 Season} started on {date}. Check it from last season before you start a new one." — coach
@@ -301,11 +314,12 @@ money table or a book line.** A guard test pins this: no bank code writes `accou
   start from this balance" · "Started by {name} on {date} at {clock}" · "Delete the starting statement" / "?" · "Delete the
   starting statement for {date}? Checking this account starts again from a statement you pick. Who deleted it and when is
   kept." · "The starting statement for {date} is deleted. Start again from a statement." · "Open the starting statement
-  for {date}" — the start's window; refusals *new, BC2 review, written AFTER the pass — BC3's `/marketing` pass settles
-  them* "Stripe didn't answer just now, so online payments on their
-  way can't be counted. Look over the figures again, then save." / "One of Stripe's payouts doesn't list what's in it, so
-  online payments on their way can't be counted. Look over the figures again, then save." — a check whose save can't count
-  Stripe. "Cash not deposited yet" stays in the module for the coach (BC6): the club desk has no cash field (owner).
+  for {date}" — the start's window; refusals *new, BC2 review, written AFTER the pass; settled, BC3b `/marketing` 2026-11-06*
+  "Stripe didn't answer just now, so online payments on their way aren't counted. The figures now leave them out. Look them
+  over, then save, or try again in a few minutes." / "One of Stripe's payouts doesn't list what's in it, so online payments
+  on their way aren't counted. The figures now leave them out. Look them over, then save." — a check whose save can't count
+  Stripe (the screen reads the figure again without them). `bad_item` settled as "A line marked Not in the bank yet has to
+  be one of this account's own lines, dated after your starting statement and on or before the statement you're checking." "Cash not deposited yet" stays in the module for the coach (BC6): the club desk has no cash field (owner).
 - [ ] Report words (§6) — the printable page
 - [ ] Help search words carry "reconcile / reconciliation"; the collision with the coach's "reconcile the estimate" and
   the export's "RECONCILIATION — SPENDING TO CASH" (Appendix A §5) goes to the same pass.
@@ -642,14 +656,72 @@ missing line, Waiting at the start, M2, the finishing passes; two owner question
     "Matches · 1 line not in the bank yet"; the server refuses M3, a line outside the books and a line on its way; Nov 5
     asks Still waiting? (Yes, Undo, No, a new date asks again, Yes + Save carries it); no sideways scroll at 390. Every probe
     check and line removed (voided through the Ledger route, then deleted); the walk account holds its Sep 30 start only.
-- [ ] BC3b: "Add the missing line" (the ordinary Ledger add form, prefilled, the account's first book), Waiting at the start
-  (Q2, as ruled §0), M2, O4, the BC2 review's start-under-lock finding; `/design`, `/marketing` (Find's words, drafts in
-  `lib/bank-tab-words.ts`), `/simplify`, `/review`.
+- [x] **BC3b built 2026-11-06, finishing passes done 2026-11-06** (owner: yes to the UX summary; the Q2 look-back ruled wider, §0 "Q2 look-back"; all five `/review` fixes with mig 450, 2026-11-06). Anchors:
+  - **Add the missing line** (`BankCheckForm` → the Ledger's own `AddEntryWindow`, new optional `prefill` prop: money in when
+    the bank shows more, out when less, the statement's day, the gap; the account's own club book, `kind` now on the view's
+    books; the budget words read as the Ledger page reads them). On every callout but a half; with no possibility to name,
+    the "Or the bank…" sentence and its door stand alone under the title (not drawn). The line is written by the Ledger's
+    route; the figure re-reads after it.
+  - **Waiting at the start** (Q2-A): the day's figure carries `beforeStart` (the 60 days before the start, on a check within
+    six months of it: `beforeStartWindow` / `beforeStartLines` in `lib/bank-club-map.ts`; never an online line, a line
+    already at the start, or a transfer inside the window); Find shows them only while off, under the kit's band row
+    "Before your starting statement · {date}" and the sentence, each with "Waiting at the start"; the callout names one only
+    when exactly the gap (`hintsFor`'s `atStart` kind, `closingDirectionAtStart`: the other way from a check's own line).
+    `PATCH …/setup` `{ add | remove }` → `correctStart` → `startItemPlan` (rules) → mig 449's `bank_start_waiting`; the start's
+    window lists "Waiting at the start · {line}", who added it and when, and a writer's "Take it off".
+  - **M2 closed**: the start's `books_cents` moves by exactly the item (`waitingOnStart`, re-checked in SQL), so
+    `withBooksNow` reads the start as it is now; a saved later check reads "Books now say $X" with "The starting statement
+    was corrected after this check was saved." (`startCorrected`).
+  - **The BC2 review's start-under-lock finding fixed**: `bank_check_save` takes `p_start` / `p_start_books` (mig 449) and
+    refuses `changed` when the start was replaced or corrected since the route read it.
+  - **O4 closed**: a comma before exactly two final digits is a decimal comma ("12,50" = $12.50) in `typedCents` and
+    `pickerSearch`; any other comma must be a thousands group of three ("1,250"); "12,5" and "1,2,3" are not amounts.
+  - **Mig 449** `449_the_start_can_be_corrected.sql` (`/dba` Finding #48: the sum re-check and refusals before writes;
+    removal is a hard delete, accepted), applied to dev 2026-11-06; `MANUAL_PROD_STEPS.json` 449 `pending`, after 447, same
+    promote as this code; dictionary + snapshots refreshed.
+  - **Proved 2026-11-06:** 447 bank tests (new: at-start hints 4, the comma 1, `startItemPlan` + look-back 5, guards §0/§3/§4/§6
+    for 449 and screens §10 as 3); tsc, eslint, spelling, CSS purity, money arithmetic clean; `check:layout
+    --only=admin-accounting-bank` clean at 1440/768/390/361. Dev walk `.probe/bank-bc3/bc3b.mjs` → `BANK_BC3B_WALK_PASSED`
+    at 1440 and 390 (the look-back offers a Sep 26 cheque and never an online line; Nov 1 saved off; Nov 2 one tap on
+    Waiting at the start → Matches, the same start with its books down by the cheque and who/when; Nov 1 reads "Books now
+    say" with the start's reason, its figures as saved; the start's window and Take it off; refusals: after the start,
+    online, twice, a stale start for a correction and a save, a wrong sum with nothing written; search "12,50"; Add the
+    missing line opens filled and the check matches). BC3a's walk re-run → `BANK_BC3A_WALK_PASSED`. Every probe line, check
+    and start correction removed; the walk account holds its Sep 30 start ($5,000.00) only.
+  - **Finishing passes, 2026-11-06:** `/design` — no change, two wording findings handed on. `/marketing` — every Find word
+    settled (§5 ticks), the two BC2 refusals settled, and a new code `bad_start_item` with its own sentence (a refused
+    Waiting at the start said `bad_item`'s "dated after your starting statement", the opposite of that door; `step(…, as)`
+    re-words the step's `bad_item` on an add). `/simplify` — one budget-words loader for the Ledger page and the bank
+    (`useBudgetWords`, `LedgerWindows.tsx`), `patchStart` / `nameOf` in `BankShared.ts`, one waiting-item builder
+    (`waitingItemOf`), one transfer filter (`withoutInnerTransfers`), `pickerSearch` reads an amount through `typedCents`,
+    `startBooks` sums `waitingOnStart`, `LineRow`'s optional `undo`, the club's own book picked by the Ledger's rule
+    (`!entityId`); skipped with reasons: the look-back read on every figure (parallel, needed the instant the check is off),
+    the two re-reads after an add or a correction (rare, human-paced), the "Or" sentence's flag. `/review` (high, five lenses)
+    — confirmed and fixed: (M) "Books now say" named the ledger's reason after Take it off → **mig 450** (`/dba` Finding #49):
+    `bank_checks.corrected_at` / `corrected_by` stamped by `bank_start_waiting`, read as `startCorrected` (with a re-saved
+    start's `createdAt`); (M) the add window had no `fiscal` → the account read carries the club's fiscal years for a writer
+    (`bankAccountView`, not on a day's figure read) and the form passes them; (L) the figure clears after Waiting at the
+    start; (L) "Add the missing line" is held while busy and keeps what it opened with; (L) a start re-save now compares the
+    start's books too (450). Owner question answered: §0 "Start item re-check" (a BC4 item). Carried, not changed: one-tap
+    Waiting at the start, "dated before" vs on-or-before wording, the line not re-verified under the lock, "Marked by" can
+    show a removed member's email (BC2's open item), a write's view not bumping the read sequence (BC2's).
+  - **Proved again 2026-11-06 after the passes:** 313 bank + ledger tests pass (new pins: 450 in the server guard, the start's
+    reason, the shared loader, the add window's fiscal and prefill, `bad_start_item`); tsc, eslint, spelling, dictionary,
+    `check:layout --only=admin-accounting-bank` (4 widths) clean. Mig 450 applied to dev 2026-11-06, snapshots refreshed,
+    `MANUAL_PROD_STEPS.json` 450 `pending` after 449, same promote. Dev walks: `bc3b.mjs` → `BANK_BC3B_WALK_PASSED` at 1440 and
+    390 (new: Nov 3 saved while the cheque waits at the start, then Take it off: the start keeps who/when and Nov 3 reads the
+    start's reason); `walk.mjs` → `BANK_BC3A_WALK_PASSED` at 1440 and 390. The walk account holds its Sep 30 start
+    ($5,000.00, no items, `corrected_at` NULL) only.
 
 ### BC4 — Club: the Bank tab on a phone (390)
 - [ ] The phone frames of tabs 1–6: band, sums, Find cards with signed amounts and "Show 10 more", full-width buttons, the
   saved-check cards, the window full screen. No pinned strip or dock (gone with the tick-off).
 - [ ] Phone walk probe; `/review`.
+- [ ] **The start's lines on an earlier re-check** (owner 2026-11-06, §0 "Start item re-check"): a check dated before a
+  start's Waiting-at-the-start line cleared also asks "Still waiting on {line}?" for each such line (today "Still waiting?"
+  carries only the previous check's lines, so "Check this statement again" on a statement from before the cheque cleared
+  shows off by it, with no way to close it: M3 refuses a pre-start line as Not in the bank yet). Not phone work: it rides
+  BC4 as the next bank session.
 
 ### BC5 — Club: the touchpoints and the club half's words
 - [ ] The Overview line (ask 4), the fiscal-year close "Still open" row (`lib/club-fiscal-year-moves.ts`), the report
