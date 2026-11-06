@@ -90,7 +90,7 @@ approver. Coaches portal untouched (the coach portal has no fee invoices).
 ## Progress
 
 - 2026-11-05 (Part 3 `/simplify` + `/review`, high-risk tier, four lenses: security/tenant, refresh concurrency, line-vs-pill rule,
-  regression): **no Critical or High; the owner-only gate holds** (the page is behind the owner check, the route resolves the org from the
+  regression; **Part 3 committed `ea94c4de3` 2026-11-05**): **no Critical or High; the owner-only gate holds** (the page is behind the owner check, the route resolves the org from the
   caller's own memberships and needs the billing capability, so a foreign slug is a 401; the hook never mounts for a non-owner). The pay
   link comes only from Stripe's address, https-checked on the server and again in the line, `rel` noopener. **`/simplify` applied:** the fee
   and invoice types are now the server's own (`ClubFeeView` / `ClubFeeInvoiceView`, type-only import) instead of a second copy; the owed
