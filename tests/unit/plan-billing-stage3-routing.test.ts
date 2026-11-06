@@ -237,6 +237,34 @@ describe('sign-in contexts and accepted invitations use the same standalone land
   }
 });
 
+describe('a Club owner lands on the setup checklist only until setup is finished (Stage 13 fix-now 1, F-O1-10)', () => {
+  // The checklist now sets the mark (every step done, or Go to Overview); the resolver reads it. Empty → the checklist;
+  // set → the Overview. A Club owner's landing reads nothing from the database before this check.
+  const club: Organization = { ...workspace, accountKind: 'organization', planId: 'club', slug: 'harbourtown' };
+  type MemberRow = Parameters<typeof import('../../lib/user-contexts.ts').getDestinationForMembership>[0];
+  const memberFor = (role: OrgRole, mark: string | null) => ({
+    id: 'membership-club', organization_id: club.id, role, capabilities: null,
+    organizations: {
+      id: club.id, slug: club.slug, name: club.name, plan_id: club.planId, account_kind: club.accountKind,
+      subscription_status: club.subscriptionStatus, enabled_addons: [], onboarding_completed_at: mark, free_floor: null,
+    },
+  }) as unknown as MemberRow;
+  const destination = async (role: OrgRole, mark: string | null) => {
+    const { load } = fixture({ name: 'club', role, expected: '', org: club });
+    const { getDestinationForMembership } = load('lib/user-contexts.ts') as typeof import('../../lib/user-contexts.ts');
+    return getDestinationForMembership(memberFor(role, mark), userId);
+  };
+  it('the mark empty: the setup checklist', async () => {
+    assert.equal(await destination('owner', null), '/harbourtown/admin/onboarding?plan=club');
+  });
+  it('the mark set (every step done, or Go to Overview): the Overview', async () => {
+    assert.equal(await destination('owner', '2026-11-06T12:00:00Z'), '/harbourtown/admin');
+  });
+  it('an admin never lands on the owner\'s checklist, mark or no mark', async () => {
+    assert.equal(await destination('admin', null), '/harbourtown/admin');
+  });
+});
+
 describe('the Coaches Portal layout seeds the per-member switches of the viewer', () => {
   // With an initial org the client OrgProvider never fetches /api/org-context, so a provider seeded with
   // the role alone leaves every switch null for the life of the portal: the Tournaments you run door then

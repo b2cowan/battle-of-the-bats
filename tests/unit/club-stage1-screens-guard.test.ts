@@ -17,6 +17,26 @@ import { readCode } from './_source-code.ts';
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 
+describe('the setup checklist lets a Club owner go (Stage 13 fix-now 1, F-O1-10)', () => {
+  const kit = readCode('components/admin/kit/club/ClubSetupKit.tsx');
+  it('the checklist marks setup finished, through the one completion route', () => {
+    assert.match(kit, /fetch\(`\/api\/admin\/org\/complete-onboarding\?orgSlug=\$\{encodeURIComponent\(slug\)\}`, \{ method: 'POST' \}\)\.catch\(\(\) => null\)/,
+      'a failed mark is ignored, as the legacy page does');
+  });
+  it('when every step is done, and when the owner presses Go to Overview', () => {
+    assert.match(kit, /useEffect\(\(\) => \{ if \(allDone\) void markFinished\(\); \}/, 'all done marks it');
+    assert.match(kit, /await markFinished\(\);\s*router\.push\(base\);/, 'Go to Overview marks, then navigates');
+    assert.match(kit, /<button type="button"[^>]*onClick=\{\(\) => void goToOverview\(\)\}[^>]*>\s*Go to Overview/,
+      'Go to Overview is a button, never a plain link that leaves the mark empty');
+    assert.doesNotMatch(kit, /<Link href=\{base\}[^>]*>Go to Overview<\/Link>/);
+  });
+  it('the way back stays: the Overview\'s setup row reads the checklist, never the mark', () => {
+    const hub = readCode('components/admin/kit/club/ClubHubKit.tsx');
+    assert.match(hub, /isOwner && checklist && !checklist\.allDone &&/);
+    assert.doesNotMatch(hub, /onboardingCompletedAt/);
+  });
+});
+
 describe('the switch — the hub', () => {
   it('the hub is the club\'s kit hub; the old hub serves only a tournament-only workspace and the no-org moment', () => {
     // Admin Design Continuity Part B, area 2 (2026-09-29): the switch-off half of the condition is gone —

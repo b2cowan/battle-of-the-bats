@@ -239,6 +239,9 @@ export interface GenerateSummary {
   half: string[];
   kept: number;
   notKept: number;
+  /** Set when the per-day setting is what leaves slots open (Stage 13 fix-now 3): the setting, and the most slots the teams
+   *  can hold at it. `handedOut` and `open` already count it. */
+  dayLimit?: { perDay: number; canUse: number } | null;
 }
 
 /** [marketing] "12 weeks · 2 lanes · 30 slots a week · 354 slots" / "25 Sundays · 6 fields · 12 slots a Sunday · 300 slots". */
@@ -278,7 +281,8 @@ export function closingNote(p: { summary: GenerateSummary; method: ScheduleSetti
   }
   // Sharing freed some of it (Stage 11c): the row says why — "50 slots left open: 9U AA and 11U AA share a facility."
   const freed = s.targets.reduce((n, t) => n + t.slots, 0) > s.handedOut;
-  const why = freed && p.sharing ? `: ${p.sharing}.` : '.';
+  // The per-day setting is what leaves them open (Stage 13 fix-now 3): the row says so — "275 slots left open at 1 practice a day."
+  const why = s.dayLimit ? ` at ${pluralize(s.dayLimit.perDay, 'practice')} a day.` : freed && p.sharing ? `: ${p.sharing}.` : '.';
   return { words: `${pluralize(s.open, 'slot')} left open${why}${s.held ? ` ${s.held} more ${s.held === 1 ? 'is' : 'are'} held by ${heldByWords(s)}.` : ''}`, over: false };
 }
 

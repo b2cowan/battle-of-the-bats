@@ -11,9 +11,14 @@
  *
  * ⚖ D6: no Founding Season banner, and no tournament plan chooser at the top (A06/A08). v8: the
  * "come back from Overview" sentence sits BESIDE its button, not under the title.
+ *
+ * ⚖ THE CHECKLIST LETS GO (Stage 13 fix-now 1, F-O1-10): the landing resolver sends a Club owner here at every sign-in
+ * while the setup-finished mark is empty. It is set when every step is done and when the owner presses "Go to Overview";
+ * a failed mark is ignored. The Overview's "Continue setup" row reads the checklist, not the mark, so the way back stays.
  */
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Check, AlertTriangle, Users, CalendarDays, Trophy } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
@@ -86,6 +91,13 @@ export default function ClubSetupKit() {
   const slug = currentOrg?.slug ?? '';
   const base = `/${slug}/admin`;
   const [state, setState] = useState<{ status: 'loading' | 'ready' | 'error'; data: Checklist | null }>({ status: 'loading', data: null });
+  const router = useRouter();
+  const [leaving, setLeaving] = useState(false);
+  /** Marks setup finished. Best effort: a failed mark never holds the owner here (the legacy page ignores it too). */
+  const markFinished = useCallback(
+    () => fetch(`/api/admin/org/complete-onboarding?orgSlug=${encodeURIComponent(slug)}`, { method: 'POST' }).catch(() => null),
+    [slug],
+  );
 
   const load = useCallback(() => {
     if (!slug) return;
@@ -97,6 +109,16 @@ export default function ClubSetupKit() {
   }, [slug]);
 
   useEffect(() => { if (userRole === 'owner') load(); }, [load, userRole]);
+  // Every step done: setup is finished, and the next sign-in lands on the Overview.
+  const allDone = state.data?.allDone === true;
+  useEffect(() => { if (allDone) void markFinished(); }, [allDone, markFinished]);
+
+  async function goToOverview() {
+    if (leaving) return;
+    setLeaving(true);
+    await markFinished();
+    router.push(base);
+  }
 
   if (loading || !currentOrg || !userRole) return <LoadingState label="Loading the setup steps…" />;
 
@@ -168,7 +190,9 @@ export default function ClubSetupKit() {
           </div>
 
           <div className={styles.foot}>
-            <Link href={base} className={`btn btn-outline ${styles.overviewDoor}`}>Go to Overview</Link>
+            <button type="button" className={`btn btn-outline ${styles.overviewDoor}`} onClick={() => void goToOverview()} disabled={leaving}>
+              Go to Overview
+            </button>
             <span className={ck.hint}>You can come back to this checklist from Overview at any time.</span>
           </div>
         </>

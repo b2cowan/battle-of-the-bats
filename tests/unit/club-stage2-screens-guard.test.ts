@@ -433,3 +433,24 @@ describe('what /review fixed stays fixed', () => {
     assert.match(src, /if \(dirty && !\(await handleSave\(\)\)\) return;\s*onArchive\(\);/);
   });
 });
+
+describe('a rep team\'s page is current when a season window closes (Stage 13 fix-now 7, F-O4-3)', () => {
+  const dialogs = readCode('components/admin/kit/club/SeasonDialogs.tsx');
+  const page = readCode('app/[orgSlug]/admin/rep-teams/teams/[teamId]/page.tsx');
+  const tryouts = readCode('app/[orgSlug]/admin/rep-teams/teams/[teamId]/tryouts/page.tsx');
+  it('each window stays busy until its page has reloaded: Start next season, Close the season, the first season', () => {
+    assert.match(dialogs, /await onStarted\(name\.trim\(\), Array\.isArray\(w\)[^;]*;\s*setBusy\(false\);/);
+    assert.match(dialogs, /await onClosed\(target\.name\);\s*setBusy\(false\);/);
+    assert.match(dialogs, /await onStarted\(name\.trim\(\)\);\s*setBusy\(false\);/);
+  });
+  it('the page reloads before the window closes and before the banner', () => {
+    const handlers = [...page.matchAll(/on(?:Started|Closed)=\{async [^=]*=> \{([\s\S]*?)\n {10}\}\}/g)].map(m => m[1]);
+    assert.equal(handlers.length, 3);
+    for (const h of handlers) {
+      assert.ok(h.indexOf('await load();') >= 0 && h.indexOf('await load();') < h.indexOf('setWindowOpen(null);'), h);
+      assert.ok(h.indexOf('setWindowOpen(null);') < h.indexOf('setNotice('), h);
+    }
+    const t = tryouts.match(/onStarted=\{async name => \{([\s\S]*?)\n {10}\}\}/)![1];
+    assert.ok(t.indexOf('await load();') < t.indexOf('setStarting(false);') && t.indexOf('setStarting(false);') < t.indexOf('setNotice('));
+  });
+});

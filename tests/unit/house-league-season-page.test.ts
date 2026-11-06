@@ -211,3 +211,30 @@ describe('3b · the dead "Auto-generate fee entries" switch is written nowhere (
     it(f, () => assert.doesNotMatch(readCode(f), /autoGenerateFees|auto_generate_fees:/));
   }
 });
+
+describe('"The club hasn\'t given this season any time yet" only when it hasn\'t (Stage 13 fix-now 4, F-O3-7)', () => {
+  const route = readCode('app/api/admin/house-league/seasons/[seasonId]/route.ts');
+  const server = readCode('lib/league-time-server.ts');
+  const page = readCode('app/[orgSlug]/admin/house-league/seasons/[seasonId]/page.tsx');
+  it('"given" reads the program\'s own time — the time window\'s set, as a head count — not only what was divided', () => {
+    assert.match(route, /houseLeagueSlotCount\(ctx!\.org\.id, season\)/);
+    assert.match(route, /given: timeUses\.given > 0 \|\| timeUses\.divided > 0, divided: timeUses\.divided > 0/);
+    const count = server.slice(server.indexOf('export async function houseLeagueSlotCount'), server.indexOf('export async function usesOf'));
+    assert.match(count, /\{ count: 'exact', head: true \}/, 'a head count: this runs on every season read');
+    assert.doesNotMatch(count, /fetchAll/, 'never a page-through');
+    // The window's rows and the head count start from ONE definition of house league's time, so the sets cannot differ.
+    assert.match(count, /liveHouseLeagueSlots\(orgId, 'id', \{ count: 'exact', head: true \}\)/);
+    const rows = server.slice(server.indexOf('export async function houseLeagueSlotRows'), server.indexOf('export async function houseLeagueSlotCount'));
+    assert.match(rows, /liveHouseLeagueSlots\(orgId, columns\)/);
+    const shared = server.slice(server.indexOf('function liveHouseLeagueSlots'), server.indexOf('export async function houseLeagueSlotRows'));
+    for (const f of [/\.is\('removed_at', null\)/, /\.gt\('starts_at', /, /\.eq\('club_schedule_slot_programs\.program', HOUSE_LEAGUE\)/, /\.eq\('club_schedules\.state', 'final'\)/]) {
+      assert.match(shared, f, `the same set the time window reads: ${f}`);
+    }
+  });
+  it('three states: none given, given but not divided (the door to House league\'s time), divided (no line)', () => {
+    assert.match(page, /const showNoTime = !!clubTime && !clubTime\.given;/);
+    assert.match(page, /const showUndivided = !!clubTime && clubTime\.given && !clubTime\.divided;/);
+    assert.match(page, /\{showUndivided && \([\s\S]{0,200}href=\{`\/\$\{orgSlug\}\/admin\/house-league\/seasons\/\$\{seasonId\}\/schedule\?time=1`\}/);
+    assert.match(page, /const clubTime = canRun && !isFinishedLeagueSeason\(season\)/, 'read only by the people who divide it');
+  });
+});

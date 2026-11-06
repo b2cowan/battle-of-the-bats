@@ -80,7 +80,8 @@ export function StartSeasonDialog({
   preflight: SeasonPreflight;
   headCoachName: string | null;
   onClose: () => void;
-  onStarted: (seasonName: string, warnings: string[]) => void;
+  /** Awaited while the window stays busy: the page reloads before the window closes (Stage 13 fix-now 7, F-O4-3). */
+  onStarted: (seasonName: string, warnings: string[]) => void | Promise<void>;
 }) {
   const from = preflight.rollsFrom!;
   const [name, setName] = useState(preflight.suggested?.name ?? `${from.year + 1} Season`);
@@ -116,11 +117,12 @@ export function StartSeasonDialog({
       year: yearNum, name: name.trim(), carryBudget, carryFees,
       ...rollRequestFields({ path, ticked, bringAnyway, facts: roll, division }),
     });
-    setBusy(false);
-    if (!out.ok) { setError(out.error); return; }
-    // The season has started; what the roll could not do (a player or the division that did not carry) rides along.
+    if (!out.ok) { setBusy(false); setError(out.error); return; }
+    // The season has started; what the roll could not do (a player or the division that did not carry) rides along. The
+    // window stays on "Starting…" until the page holds the new season (Stage 13 fix-now 7).
     const w = (out.data.summary as { warnings?: unknown } | undefined)?.warnings;
-    onStarted(name.trim(), Array.isArray(w) ? w.filter((x): x is string => typeof x === 'string') : []);
+    await onStarted(name.trim(), Array.isArray(w) ? w.filter((x): x is string => typeof x === 'string') : []);
+    setBusy(false);
   }
 
   return (
@@ -261,7 +263,8 @@ export function CloseSeasonDialog({
   teamName: string;
   preflight: SeasonPreflight;
   onClose: () => void;
-  onClosed: (seasonName: string) => void;
+  /** Awaited while the window stays busy (Stage 13 fix-now 7). */
+  onClosed: (seasonName: string) => void | Promise<void>;
 }) {
   const open = preflight.openSeasons;
   // With two open (the state old Add Program Year could make), the club names WHICH — never a guess.
@@ -278,9 +281,9 @@ export function CloseSeasonDialog({
     const out = await send(`/api/admin/rep-teams/teams/${teamId}/seasons?orgSlug=${encodeURIComponent(orgSlug)}`, 'PATCH', {
       action: 'close', seasonId: target.id,
     });
+    if (!out.ok) { setBusy(false); setError(out.error); return; }
+    await onClosed(target.name);
     setBusy(false);
-    if (!out.ok) { setError(out.error); return; }
-    onClosed(target.name);
   }
 
   return (
@@ -327,7 +330,8 @@ export function FirstSeasonDialog({
   teamId: string;
   teamName: string;
   onClose: () => void;
-  onStarted: (seasonName: string) => void;
+  /** Awaited while the window stays busy (Stage 13 fix-now 7). */
+  onStarted: (seasonName: string) => void | Promise<void>;
 }) {
   const thisYear = new Date().getFullYear();
   const [name, setName] = useState(`${thisYear} Season`);
@@ -344,9 +348,9 @@ export function FirstSeasonDialog({
     const out = await send(`/api/admin/rep-teams/teams/${teamId}/program-years?orgSlug=${encodeURIComponent(orgSlug)}`, 'POST', {
       name: name.trim(), year: yearNum,
     });
+    if (!out.ok) { setBusy(false); setError(out.error); return; }
+    await onStarted(name.trim());
     setBusy(false);
-    if (!out.ok) { setError(out.error); return; }
-    onStarted(name.trim());
   }
 
   return (

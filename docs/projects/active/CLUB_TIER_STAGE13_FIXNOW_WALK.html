@@ -1,0 +1,291 @@
+<title>Stage 13 Fix-now Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box (the house walk frame). */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .facts { grid-template-columns: 1fr; } .facts dd { margin-bottom: 6px; } }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.callnote { font-size: 13px; color: var(--warn); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+</style>
+
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · Club Tier Stage 13 · Fix now · §473</span>
+    <h1>The eight fix-now defects are gone</h1>
+    <p class="sub">Written 2026-11-06, after the fix-now build (built, not yet committed). One purpose: each of the eight defects the Stage 13 walk found (and the sidebar review added) no longer happens. One part per defect, on a copy of the walk’s club.</p>
+  </header>
+  <section class="card"><h2>What this walk is for</h2><p>The Stage 13 walk of Harbourtown Minor Ball found screens that said something false, or buttons that did something worse than they promised. None of the eight changes a screen’s shape. Each one makes an existing screen tell the truth: the setup checklist lets a Club owner go; removing a member who is also a parent keeps their family sign-in; “Evenly” splits the dome evenly and says what 1 a day leaves open; house league’s “no time yet” line is true; the tab title drops the tournament on club pages; the Overview’s Organization row loses its stray spaces; a rep team’s page is current when a season window closes; and only one sidebar row lights inside a season.</p></section>
+  <section class="card"><h2>It passes when</h2><ul>
+    <li><strong>1</strong> After “Go to Overview”, the owner’s next sign-in lands on the Overview, and the Overview still offers “Continue setup”.</li>
+    <li><strong>2</strong> Removing a member who is a connected parent says “Their account is kept … They can still sign in to see their family.”, and after Remove that person can still sign in and see their family.</li>
+    <li><strong>3</strong> On the dome at Evenly and 1 a day, the form says “At 1 a day, 7 teams can use 175 of the 450 slots.”, and every draft gives every team 25 (175 in all). At 3 a day the plain hint is back and all 450 go out.</li>
+    <li><strong>4</strong> The season’s Overview reads correctly in all three states: no time, time given but not divided (with a door to House league’s time), and divided (no line). A league admin is never sent to Schedules.</li>
+    <li><strong>5</strong> House league and Organization tabs carry no tournament name; a tournament page does.</li>
+    <li><strong>6</strong> The Overview reads “Organization: members, plan &amp; billing (8 of 15 teams), settings”.</li>
+    <li><strong>7</strong> When Start next season and Close the season finish, the page already shows the new state when the banner appears.</li>
+    <li><strong>8</strong> Inside a house league season only the season’s own row is lit, not “Seasons” as well.</li>
+  </ul></section>
+  <section class="card"><h2>Not in this walk</h2><ul>
+    <li><strong>The drafts’ “7 teams short” warning saying why</strong>, and Permits as a door. Both are 13c.</li>
+    <li><strong>Telling the league admin when time arrives.</strong> That is 13d.</li>
+    <li><strong>The sidebar’s shape, chevrons and the lone “Seasons” / “Site editor” rows.</strong> That is Ask 25 and 13i, after a drawing session.</li>
+    <li><strong>The Slots column per team</strong> in New schedule still shows each team’s share (64 or 65) at 1 a day. The new hint gives the real figure; the column is left as it is (noted for 13c).</li>
+    <li><strong>The house league time window’s own sentence</strong> for a league admin (“An owner or an admin gives it, in Schedules.”) is unchanged. Only the season Overview’s line changed.</li>
+  </ul></section>
+  <section class="card"><h2>Before you start</h2><dl class="facts">
+    <dt>Dev server</dt><dd>This build adds new files and changes shared modules. Stop the dev server, delete <code>.next</code>, run <code>npm run dev</code> and wait for “Ready”. Part S shows whether it is the new build.</dd>
+    <dt>The club</dt><dd>A fresh copy of the walk’s club, <strong>Harbourtown Minor Ball</strong>, at slug <code>navj-club-fx</code>, so nothing here touches the walk’s read-only club. Claude makes it in Part S, and prepares the one parent-member and the empty setup mark there.</dd>
+    <dt>Sign-ins</dt><dd>Every account is <code>…@dev.local</code> with password <code>devpass123</code>: <code>navj-club-fx-owner</code>, <code>navj-club-fx-admin</code>, <code>navj-club-fx-leagueadmin</code>. Sign in at <code>http://localhost:3000/login</code>. Use a private window per person.</dd>
+    <dt>Emails</dt><dd>Nothing here emails a family. Two steps send a staff notice to a <code>@dev.local</code> address, which cannot receive mail: Remove (2) sends “your access was removed” to the removed member, and Start next season and Close the season (7) tell the team’s coaches.</dd>
+    <dt>Keep private</dt><dd>These are dev-only accounts; the page carries the password, so do not share the link.</dd>
+    <dt>When done</dt><dd>Part Z: tell Claude “fix-now walk done” and it removes the copy.</dd>
+  </dl></section>
+  <section class="card"><h2>Calls to make as you go</h2><ul>
+    <li><strong>The removal window’s new sentence (2).</strong> “They can still sign in to see their family.” Right words, or say it another way?</li>
+    <li><strong>The per-day hint and the footer (3).</strong> “One prevents back-to-back sessions in generated drafts. At 1 a day, 7 teams can use 175 of the 450 slots.” beside the setting, and “275 slots left open at 1 practice a day.” in the table. Clear enough?</li>
+    <li><strong>The given-but-not-divided line (4).</strong> “The club has given this season time. None of it is divided into games or practices yet. House league’s time →”. Keep, or shorter?</li>
+    <li><strong>The window stays on “Starting…” a moment longer (7).</strong> It now waits for the page to reload. Does the wait feel right?</li>
+  </ul></section>
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+</main>
+
+<script>
+(function () {
+  var KEY = "club-stage13-fixnow-walk-v1";
+  var TITLE = "Stage 13 fix-now walk §473 · The eight fix-now defects are gone (2026-11-06)";
+  var BASE = "<code>http://localhost:3000/navj-club-fx/admin</code>";
+  var OWNER = "Owner · navj-club-fx-owner@dev.local";
+  var ADMIN = "Club admin · navj-club-fx-admin@dev.local";
+  var LA = "League admin · navj-club-fx-leagueadmin@dev.local";
+  var PARTS = [
+ { id: "S", title: "Get ready: the new build, and the copy", steps: [
+  { who: "You → Claude", do: "Tell Claude <strong>“fix-now walk: make the copy”</strong>. It seeds <code>navj-club-fx</code>, empties its setup-finished mark, adds a club member who is also a connected parent on a rep team (it tells you their name and email), and reads both back.",
+    see: "Claude names the copy and the parent-member’s sign-in, and confirms the setup mark is empty and the parent’s family connection is live." },
+  { who: OWNER, do: "Sign in. Look at where you land.",
+    see: "The <strong>Set up your club</strong> checklist (the mark is empty, so this is still right). If you land on the Overview, the copy isn’t ready: tell Claude." }
+ ]},
+ { id: "1", title: "The setup checklist lets a Club owner go", steps: [
+  { who: OWNER, do: "On the checklist, press <strong>Go to Overview</strong>.",
+    see: "The button is briefly unavailable, then the Overview opens. The quiet rows still include <strong>Setup: n of 5 steps done · Continue setup</strong>." },
+  { who: OWNER, do: "Press <strong>Continue setup</strong>.",
+    see: "The checklist opens again, as its hint promises (“You can come back to this checklist from Overview at any time.”)." },
+  { who: OWNER, do: "Sign out, then sign in again.",
+    see: "You land on the <strong>Overview</strong>, not the checklist." }
+ ]},
+ { id: "2", title: "Removing a member who is also a parent keeps their family sign-in", steps: [
+  { who: ADMIN + " (or the owner)", do: "Organization › <strong>Members</strong>. Open the parent-member Claude named and choose <strong>Remove</strong>. Read the question; do not press yet.",
+    see: "“This removes {name} from Harbourtown Minor Ball. Their account is kept. They can still sign in to see their family.” Not “This permanently deletes their account.”",
+    call: "Call: the new sentence’s wording." },
+  { who: ADMIN, do: "For contrast, open a member who has no other club and no family (for example the treasurer) and choose Remove. Read it, then <strong>Cancel</strong>.",
+    see: "“This permanently deletes their account. They would need a new invitation to come back.” Do not press Remove." },
+  { who: ADMIN, do: "Back on the parent-member, press <strong>Remove</strong>.",
+    see: "They leave the Members list. (Their “access removed” notice goes to a dev address that receives nothing.)" },
+  { who: "The parent · private window", do: "Sign in as the parent-member with <code>devpass123</code>.",
+    see: "The sign-in works and lands on their family page, with their child’s team. Before the fix the account was gone." }
+ ]},
+ { id: "3", title: "“Evenly” splits the dome evenly, and says what 1 a day leaves open", steps: [
+  { who: OWNER, do: "Schedules › <strong>New schedule</strong>, starting from the <strong>Winter dome 2026–27</strong> permit (the Lakeshore Dome's; Sundays, 6 fields). Tick the 7 running rep teams. Split the time <strong>Evenly</strong>; leave Practices per team, per day at <strong>1 practice</strong>.",
+    see: "The summary reads 25 Sundays and 450 slots. Beside the per-day setting: “One prevents back-to-back sessions in generated drafts. At 1 a day, 7 teams can use 175 of the 450 slots.”",
+    call: "Call: the hint’s wording." },
+  { who: OWNER, do: "Look at the foot of the teams table and the window’s footer.",
+    see: "“275 slots left open at 1 practice a day.” and “175 slots for 7 teams.” Never “Nothing left open.” or “450 slots for 7 teams.”" },
+  { who: OWNER, do: "Press <strong>Generate drafts</strong> and open each of the three drafts’ team figures.",
+    see: "Every team has 25 (at most 1 apart), and 175 are handed out. Before the fix the first team took 25 and the last ones 1." },
+  { who: OWNER, do: "Go back and raise Practices per team, per day to <strong>3 practices</strong>.",
+    see: "The hint goes back to “One prevents back-to-back sessions in generated drafts; some slots may stay open.” The table says “Nothing left open.” and the footer “450 slots for 7 teams.”" },
+  { who: OWNER, do: "Generate again.",
+    see: "All 450 handed out; the teams are within 1 of each other (64 or 65). Close the window without saving." }
+ ]},
+ { id: "4", title: "House league’s “no time yet” line is true in all three states", steps: [
+  { who: LA, do: "House league › <strong>2026 Fall House League</strong> › Overview, on a desk-width window.",
+    see: "“The club hasn’t given this season any time yet. Ask an owner or an admin to give house league time.” Nothing sends you to Schedules." },
+  { who: OWNER, do: "Open the same Overview.",
+    see: "“The club hasn’t given this season any time yet. It gives it in the club’s Schedules; games and practices can be made once it has.”" },
+  { who: OWNER, do: "Schedules › New schedule from the <strong>Fall diamonds</strong> permit, dates inside Nov 27, 2026 to Feb 4, 2027, and give all of it to <strong>house league</strong> (the “Give it to house league” choice).",
+    see: "The schedule is saved for house league in one step." },
+  { who: LA, do: "Reload the season’s Overview.",
+    see: "“The club has given this season time. None of it is divided into games or practices yet.” with a <strong>House league’s time →</strong> link. The “hasn’t given” line is gone.",
+    call: "Call: the given-but-not-divided wording." },
+  { who: LA, do: "Press <strong>House league’s time →</strong>.",
+    see: "The season’s Schedule page opens with the House league’s time window open." },
+  { who: LA, do: "In that window give one stretch to <strong>U9 games</strong> and Save. Go back to the Overview.",
+    see: "No time line at all." }
+ ]},
+ { id: "5", title: "Tab titles carry a tournament’s name only on tournament pages", steps: [
+  { who: OWNER, do: "Open Tournaments › <strong>Harbourtown Invitational</strong> so it is the chosen tournament. Look at the browser tab.",
+    see: "The tab includes “Harbourtown Invitational”." },
+  { who: OWNER, do: "Now open House league › 2026 Fall House League, then Organization › Members.",
+    see: "“House league - Harbourtown Minor Ball - FieldLogicHQ” and “Members - Harbourtown Minor Ball - FieldLogicHQ”. No tournament name." }
+ ]},
+ { id: "6", title: "The Overview’s Organization row has no stray spaces", steps: [
+  { who: OWNER, do: "Open the Overview (" + BASE + ") on a desk-width window. Read the quiet Organization row.",
+    see: "“Organization: members, plan &amp; billing (8 of 15 teams), settings”. No space before a colon or comma." },
+  { who: OWNER + " · phone width (390 px)", do: "Read the same row on a phone.",
+    see: "It wraps as one sentence, with no gaps before the punctuation, and nothing runs off the side." }
+ ]},
+ { id: "7", title: "A rep team’s page is current when a season window closes", steps: [
+  { who: OWNER, do: "Rep teams › a team with a live season (for example <strong>15U AAA</strong>) › <strong>Start next season</strong>. Fill the window and press Start.",
+    see: "The window stays on “Starting…” until the page has the new season, then closes. When the banner “The {season} has started …” appears, the page already shows the new season (its name and the Seasons list). Wait 2 to 3 seconds: nothing changes after the banner.",
+    call: "Call: does the slightly longer “Starting…” feel right?" },
+  { who: OWNER, do: "On another team with a live season (for example <strong>14U AA</strong>), press <strong>Close the season</strong> and confirm.",
+    see: "The page shows the closed season the moment the banner “The {season} is closed …” appears." }
+ ]},
+ { id: "8", title: "One sidebar row lit inside a house league season", steps: [
+  { who: OWNER, do: "House league › open <strong>2026 Fall House League</strong>. Look at the sidebar.",
+    see: "Only the season’s own row is highlighted; <strong>Seasons</strong> is not lit as well." },
+  { who: OWNER, do: "Press <strong>Seasons</strong> in the sidebar.",
+    see: "The house league page opens and Seasons is now the one lit row." },
+  { who: OWNER + " · phone width", do: "Inside the season, open the phone menu’s House league list.",
+    see: "The same: the season lit, Seasons not." }
+ ]},
+ { id: "Z", title: "Put back", steps: [
+  { who: "You → Claude", do: "Tell Claude <strong>“fix-now walk done”</strong>. It removes the <code>navj-club-fx</code> copy and its accounts.",
+    see: "Claude reports the copy gone." }
+ ]}
+];
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+      if (s.call) t.appendChild(el('span', 'callnote', s.call));
+      var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+      cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+      boxes.push({ part: p.id, step: id, cb: cb });
+      var row = el('label', 'step'); row.appendChild(cb); row.appendChild(t); body.appendChild(row);
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function doneSteps(partId) {
+    return boxes.filter(function (b) { return (!partId || b.part === partId) && b.cb.checked; }).map(function (b) { return b.step; });
+  }
+  var totalSteps = boxes.length;
+
+  function refresh() {
+    PARTS.forEach(function (p) {
+      var n = doneSteps(p.id).length;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + p.steps.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    var done = doneSteps(null).length;
+    document.getElementById('total').textContent = done + ' of ' + totalSteps + ' checked';
+    document.getElementById('barfill').style.width = (totalSteps ? Math.round(done * 100 / totalSteps) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [TITLE, 'Checked ' + doneSteps(null).length + ' of ' + totalSteps + ' steps'];
+    PARTS.forEach(function (p) {
+      var ticked = doneSteps(p.id);
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + p.steps.length + (ticked.length ? ' (' + ticked.join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

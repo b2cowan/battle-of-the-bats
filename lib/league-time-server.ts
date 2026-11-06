@@ -4,7 +4,7 @@ import { fetchAll, fetchAllIn } from './supabase-paging';
 import { getDivisionsForSeason } from './db';
 import { readClubPlaces } from './permit-lookup';
 import { weekdayOf } from './permit-time';
-import { utcToZonedInputs } from './timezone';
+import { addCalendarDays, utcToZonedInputs, zonedWallClockToUtc } from './timezone';
 import { HOUSE_LEAGUE } from './club-schedule-holders';
 import {
   groupLeagueTime, LEAGUE_TIME_REFUSALS as R,
@@ -41,18 +41,42 @@ type SlotRow = {
 const inSeason = (season: Pick<LeagueSeason, 'seasonStartDate' | 'seasonEndDate'>, day: string) =>
   (!season.seasonStartDate || day >= season.seasonStartDate) && (!season.seasonEndDate || day <= season.seasonEndDate);
 
+/**
+ * THE ONE DEFINITION of "house league's time": live slots of final schedules the program holds, still to come. The rows
+ * read and the head count both start here, so they can never count two different sets.
+ */
+function liveHouseLeagueSlots(orgId: string, select: string, head?: { count: 'exact'; head: true }) {
+  return supabaseAdmin.from('club_schedule_slots')
+    .select(`${select}, club_schedule_slot_programs!inner(program), club_schedules!inner(state)`, head)
+    .eq('org_id', orgId).is('removed_at', null).gt('starts_at', new Date().toISOString())
+    .eq('club_schedule_slot_programs.program', HOUSE_LEAGUE).eq('club_schedules.state', 'final');
+}
+
 /** House league's live slots of final schedules, still to come, inside the season (ids alone when `ids` narrows it). */
 export async function houseLeagueSlotRows(orgId: string, season: LeagueSeason, ids?: readonly string[]): Promise<SlotRow[]> {
-  const now = new Date().toISOString();
-  const columns = 'id, schedule_id, block_id, org_venue_id, facility_id, starts_at, ends_at, club_schedule_slot_programs!inner(program), club_schedules!inner(state)';
+  const columns = 'id, schedule_id, block_id, org_venue_id, facility_id, starts_at, ends_at';
   const rows = ids
-    ? await fetchAllIn<SlotRow>(ids, (c, a, b) => supabaseAdmin.from('club_schedule_slots').select(columns)
-      .eq('org_id', orgId).in('id', c).is('removed_at', null).gt('starts_at', now)
-      .eq('club_schedule_slot_programs.program', HOUSE_LEAGUE).eq('club_schedules.state', 'final').order('id').range(a, b))
-    : await fetchAll<SlotRow>((a, b) => supabaseAdmin.from('club_schedule_slots').select(columns)
-      .eq('org_id', orgId).is('removed_at', null).gt('starts_at', now)
-      .eq('club_schedule_slot_programs.program', HOUSE_LEAGUE).eq('club_schedules.state', 'final').order('id').range(a, b));
+    ? await fetchAllIn<SlotRow>(ids, (c, a, b) => liveHouseLeagueSlots(orgId, columns).in('id', c).order('id').range(a, b))
+    : await fetchAll<SlotRow>((a, b) => liveHouseLeagueSlots(orgId, columns).order('id').range(a, b));
   return rows.filter(r => inSeason(season, utcToZonedInputs(r.starts_at).date));
+}
+
+/**
+ * HAS THE CLUB GIVEN THIS SEASON TIME? (Stage 13 fix-now 4, F-O3-7) — a HEAD COUNT of the set `houseLeagueSlotRows` reads:
+ * house league's live slots of final schedules, still to come, inside the season's dates. It runs on every season read,
+ * so it never pages the rows through; the dates are club days, bounded at the club's midnight. "Given" is true before the
+ * league admin divides any of it into a division's games or practices (that is `league_slot_uses`, counted apart).
+ * A failed count throws: the caller shows no line rather than a guess.
+ */
+export async function houseLeagueSlotCount(orgId: string, season: Pick<LeagueSeason, 'seasonStartDate' | 'seasonEndDate'>): Promise<number> {
+  const from = season.seasonStartDate ? zonedWallClockToUtc(season.seasonStartDate, '00:00') : null;
+  const until = season.seasonEndDate ? zonedWallClockToUtc(addCalendarDays(season.seasonEndDate, 1), '00:00') : null;
+  let q = liveHouseLeagueSlots(orgId, 'id', { count: 'exact', head: true });
+  if (from) q = q.gte('starts_at', from);
+  if (until) q = q.lt('starts_at', until);
+  const { count, error } = await q;
+  if (error) throw error;
+  return count ?? 0;
 }
 
 /** Each slot's use, by slot. */

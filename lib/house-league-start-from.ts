@@ -329,8 +329,12 @@ export const START_FROM_WORDS = {
   /** §11 `mk.noTime`'s first sentence: the product's own (`lib/league-time.ts`), said of this season. */
   noTime: 'The club hasn’t given this season any time yet.',
   noTimeHowAdmin: 'It gives it in the club’s Schedules; games and practices can be made once it has.',
-  /** A league admin cannot open Schedules: `noneGivenLeagueAdmin`'s second sentence (`lib/league-time.ts`). */
-  noTimeHowLeagueAdmin: 'An owner or an admin gives it, in Schedules.',
+  /** A league admin cannot open Schedules, so the sentence never sends them there (Stage 13 fix-now 4, F-O3-7). */
+  noTimeHowLeagueAdmin: 'Ask an owner or an admin to give house league time.',
+  /** Given but not yet divided (Stage 13 fix-now 4): the club has given house league time in the season, and none of it is
+   *  a division's games or practices yet. Read only by the people who divide it; its door opens House league's time. */
+  timeNotDivided: 'The club has given this season time. None of it is divided into games or practices yet.',
+  timeNotDividedDoor: 'House league’s time →',
 } as const;
 
 /** The picker's second line (§7 `sf.option`): "{Finished} · {4 age groups} · {22 teams}". */

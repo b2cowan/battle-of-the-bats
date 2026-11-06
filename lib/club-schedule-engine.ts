@@ -618,22 +618,99 @@ export function seatCounts(slots: readonly Slot[], settings: Pick<ScheduleSettin
   };
 }
 
-/** Largest remainder of `total` over positive deficits, each capped. */
+/**
+ * A WATER-FILL of `total` over positive deficits: one slot at a time to whoever is most behind (its deficit less what it
+ * has been handed so far), ties by list order, each up to its cap; a slot nobody has room for is not handed.
+ *
+ * ⚠ Never whole parts in list order (F-O2-5): that gave the first teams quota they could not place and the rest nothing.
+ * Weighted shares keep their weights: a bigger share is a bigger deficit, so it is behind first.
+ */
 function apportionDeficits(total: number, deficits: Map<string, number>, caps: Map<string, number>): Map<string, number> {
   const out = new Map<string, number>([...deficits.keys()].map(k => [k, 0]));
   const ids = [...deficits.keys()].filter(k => (deficits.get(k) ?? 0) > 0 && (caps.get(k) ?? 0) > 0);
-  let left = total;
-  // Whole parts first, then the remainders; any leftover goes to whoever still has room, most behind first.
-  for (const k of ids) {
-    const take = Math.min(Math.floor(deficits.get(k)!), caps.get(k)!, left);
-    out.set(k, take); left -= take;
-  }
-  const order = ids.map(k => ({ k, rem: deficits.get(k)! - out.get(k)! })).sort((a, b) => b.rem - a.rem);
-  for (const { k } of order) {
-    if (left <= 0) break;
-    if (out.get(k)! < caps.get(k)!) { out.set(k, out.get(k)! + 1); left--; }
+  for (let left = total; left > 0; left--) {
+    let best: string | null = null, gap = -Infinity;
+    for (const k of ids) {
+      if (out.get(k)! >= caps.get(k)!) continue;
+      const g = deficits.get(k)! - out.get(k)!;
+      if (g > gap + EPS) { best = k; gap = g; }
+    }
+    if (best === null) break;
+    out.set(best, out.get(best)! + 1);
   }
   return out;
+}
+
+/**
+ * HOW MANY OF `slots` ONE TEAM COULD HOLD — at most `maxPerDay` a day, never two at once (the most slots on a day that
+ * don't overlap), and with no back-to-back days the best set of days none next to another or to a day in `heldDays`. A
+ * ceiling, never a plan: the drafts cap a team's weekly quota at it, so a slot a team can't use goes to one that can, and
+ * the form says what a per-day limit leaves open (`slotsTeamsCanHold`). `usable`: the slots this team may have at all.
+ */
+function placeableCount(slots: readonly Slot[], usable: (s: Slot) => boolean, maxPerDay: number, noBackToBack: boolean,
+  heldDays: ReadonlySet<string> = new Set()): number {
+  const byDay = new Map<string, Slot[]>();
+  for (const s of slots) if (usable(s)) (byDay.get(s.day) ?? byDay.set(s.day, []).get(s.day)!).push(s);
+  const perDay = new Map<string, number>();
+  for (const [day, list] of byDay) {
+    // The most that don't overlap: earliest finish first.
+    let n = 0, end = -Infinity;
+    for (const s of [...list].sort((a, b) => a.endMs - b.endMs)) if (s.startMs >= end) { n++; end = s.endMs; }
+    perDay.set(day, Math.min(maxPerDay, n));
+  }
+  if (!noBackToBack) return [...perDay.values()].reduce((a, b) => a + b, 0);
+  // No back-to-back days: the best days of the week, none next to another (a day next to one already held is out).
+  let take = 0, skip = 0, prev: string | null = null;
+  for (const d of [...perDay.keys()].sort()) {
+    if (heldDays.has(addCalendarDays(d, -1)) || heldDays.has(addCalendarDays(d, 1))) continue;
+    const v = perDay.get(d)!;
+    const best = Math.max(take, skip);
+    take = (prev !== null && addCalendarDays(prev, 1) === d ? skip : best) + v;
+    skip = best;
+    prev = d;
+  }
+  return Math.max(take, skip);
+}
+
+/**
+ * WHAT A PER-DAY LIMIT LEAVES OPEN (Stage 13 fix-now 3; owner ruling 2026-11-06: a blank schedule keeps "1 practice per
+ * team, per day", and the form says what that leaves open beside the setting). The most slots the ticked teams could hold
+ * at `maxPerDay` (null: no daily limit), week by week: each team at most that many a day, never two at once, on the slots
+ * it may have (a small max flow — a slot to one team). The page compares the setting's figure with no limit's to know the
+ * setting is what leaves them open. Null when a team has no limit at all (a program) or when teams share a facility (a
+ * shared slot holds two teams, which this count does not model — the sentence is never said on a guess).
+ */
+export function slotsTeamsCanHold(input: EngineInput, limit: number | null): number | null {
+  const { settings, teams, fixed } = input;
+  if (teams.some(t => t.many) || sharingPools(settings.rules.sharing, teams).pools.length > 0) return null;
+  const maxPerDay = limit ?? 99;
+  const rules = buildRules(input);
+  const { weeks, seatsByWeek } = prepare(input);
+  let total = 0;
+  for (const week of weeks) {
+    const slots = seatsByWeek.get(week)!.map(x => x.slot);
+    const usable = (t: EngineTeam) => (s: Slot) => (fixed.has(s.key) ? (fixed.get(s.key) ?? []).includes(t.id) : rules.eligible(t, s));
+    // source 0 → team (its week's ceiling) → team-day (the limit) → slot → sink 1.
+    let n = 2;
+    const slotNode = new Map(slots.map(s => [s.key, n++]));
+    const edges: [number, number, number][] = slots.map(s => [slotNode.get(s.key)!, 1, 1]);
+    for (const t of teams) {
+      const mine = slots.filter(usable(t));
+      const cap = placeableCount(mine, () => true, maxPerDay, settings.rules.noBackToBack);
+      if (cap <= 0) continue;
+      const teamNode = n++;
+      edges.push([0, teamNode, Math.min(cap, settings.rules.maxPerWeek ?? Infinity)]);
+      const dayNode = new Map<string, number>();
+      for (const s of mine) {
+        if (!dayNode.has(s.day)) { dayNode.set(s.day, n++); edges.push([teamNode, dayNode.get(s.day)!, maxPerDay]); }
+        edges.push([dayNode.get(s.day)!, slotNode.get(s.key)!, 1]);
+      }
+    }
+    const flow = new MinCostFlow(n);
+    for (const [u, v, cap] of edges) flow.addEdge(u, v, cap, 0);
+    total += flow.run(0, 1);
+  }
+  return total;
 }
 
 const STRATEGIES_SAME: DraftStrategy[] = ['best', 'mix', 'youngest'];
@@ -729,6 +806,11 @@ export function makeDraft(input: EngineInput, strategy: DraftStrategy, round = 0
     return { kept, free };
   };
 
+  /** The most of this week's slots a team could hold: its own kept ones, and the free ones its rules let it have. */
+  const canPlace = (t: EngineTeam, seats: readonly Seat[]) =>
+    placeableCount(seats.map(x => x.slot), s => (fixed.has(s.key) ? (assignments.get(s.key) ?? []).includes(t.id) : rules.eligible(t, s)),
+      maxPerDay, settings.rules.noBackToBack, daysHeld.get(t.id));
+
   /**
    * This week's need, team by team — a set number a week, or each share's deficit so far (the shares hold every week) —
    * counted as the shares count, less what the week's kept slots already give it.
@@ -741,7 +823,9 @@ export function makeDraft(input: EngineInput, strategy: DraftStrategy, round = 0
       const ideal = new Map(teams.map(t => [t.id, targets.slots.get(t.id)! * cumSeats / Math.max(1, targets.capacity)]));
       const deficits = new Map(teams.map(t => [t.id, ideal.get(t.id)! - have.get(t.id)!]));
       // Rounded UP: a team that shares may be owed half a facility (units), which a whole cap of 0 would never hand it.
-      const caps = new Map(teams.map(t => [t.id, Math.min(Math.ceil(targets.slots.get(t.id)! - have.get(t.id)! - EPS), t.many ? Infinity : maxPerWeek)]));
+      // And never more than it can place THIS week (fix-now 3), so a slot a team can't use goes to a team that can.
+      const caps = new Map(teams.map(t => [t.id, Math.min(Math.ceil(targets.slots.get(t.id)! - have.get(t.id)! - EPS),
+        t.many ? Infinity : Math.min(maxPerWeek, canPlace(t, seats)))]));
       const toHand = Math.max(0, Math.min(seats.length,
         Math.round([...ideal.values()].reduce((a, b) => a + b, 0) - [...have.values()].reduce((a, b) => a + b, 0))));
       const share = apportionDeficits(toHand, deficits, caps);

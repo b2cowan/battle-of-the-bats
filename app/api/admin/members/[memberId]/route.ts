@@ -10,10 +10,8 @@ import { VOLUNTEER_REFUSAL } from '@/lib/volunteer-words';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import type { OrgRole } from '@/lib/types';
 import { sendEmail, memberSuspendedHtml, memberRemovedHtml, memberAccessChangedHtml } from '@/lib/email';
-import {
-  cleanupBasicCoachTeamsForUserDeletion,
-  countActiveBasicCoachTeamMembershipsForUser,
-} from '@/lib/basic-coach-teams';
+import { cleanupBasicCoachTeamsForUserDeletion } from '@/lib/basic-coach-teams';
+import { readAccountKeepFacts } from '@/lib/member-account-keep-server';
 import { withObservability } from '@/lib/observability';
 import { writeOrgAudit } from '@/lib/org-audit';
 import { FAMILIES_GRANT_REFUSAL } from '@/lib/families-words';
@@ -65,9 +63,8 @@ export const GET = withObservability(async (req: Request, { params }: Params) =>
   const [
     { count: tournamentCount },
     { count: divisionCount },
-    { count: otherOrgCount },
     { count: coachingAssignmentCount },
-    basicCoachTeamCount,
+    keep,
   ] = await Promise.all([
     supabaseAdmin
       .from('tournaments')
@@ -78,29 +75,24 @@ export const GET = withObservability(async (req: Request, { params }: Params) =>
       .from('divisions')
       .select('id', { count: 'exact', head: true })
       .eq('contact_member_id', memberId),
-    // J4-036: other org memberships drive the "membership-only vs hard-delete" warning + behavior.
-    supabaseAdmin
-      .from('organization_members')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', target.user_id)
-      .neq('organization_id', org.id),
     // Rep-team coaching assignments this person holds (also lost on removal).
     supabaseAdmin
       .from('rep_team_coaches')
       .select('id', { count: 'exact', head: true })
       .eq('user_id', target.user_id),
-    // Free (Basic) Coaches Portal teams. An active free portal counts as off-org presence: it now
-    // forces the membership-only (account-preserving) path in DELETE, so the warning reassures the
-    // admin the portal is kept rather than (as before) silently destroying it.
-    countActiveBasicCoachTeamMembershipsForUser(target.user_id),
+    // J4-036 / F-A5-10: is the account kept (another org, a free Coaches Portal, a family connection)? The SAME helper
+    // DELETE decides with, so the window's "Their account is kept" is exactly what Remove does.
+    readAccountKeepFacts(target.user_id, org.id),
   ]);
 
   return NextResponse.json({
     tournamentCount: tournamentCount ?? 0,
     divisionCount: divisionCount ?? 0,
-    otherOrgCount: otherOrgCount ?? 0,
+    otherOrgCount: keep.otherOrgCount,
     coachingAssignmentCount: coachingAssignmentCount ?? 0,
-    basicCoachTeamCount,
+    basicCoachTeamCount: keep.basicCoachTeamCount,
+    familyLinkCount: keep.familyLinkCount,
+    accountKept: keep.reason !== null,
   });
 }, { route: '/api/admin/members/[memberId]' });
 
@@ -157,22 +149,20 @@ export const DELETE = withObservability(async (req: Request, { params }: Params)
   // Preserve the account and remove ONLY this org's membership row + scope rows whenever off-org
   // presence exists; hard-delete ONLY a true sole-presence account (owner-approved: gated, not removed).
   //
-  // Off-org presence = (a) membership in another organization OR (b) an active free (Basic) Coaches
-  // Portal. A free portal is org-less (not an organization_members row), so it was invisible to the
-  // original check and a free-only coach fell through to hard-delete — the data-loss footgun this closes.
-  const [{ count: otherMembershipCount }, basicCoachTeamCount] = await Promise.all([
-    supabaseAdmin
-      .from('organization_members')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', target.user_id)
-      .neq('organization_id', org.id),
-    countActiveBasicCoachTeamMembershipsForUser(target.user_id),
-  ]);
+  // Off-org presence = (a) membership in another organization, (b) an active free (Basic) Coaches
+  // Portal (org-less, so invisible to (a) — a free-only coach once fell through to hard-delete), or
+  // (c) a family connection: a parent signs in to see their child, and deleting the account orphaned
+  // the link (F-A5-10). One helper decides, shared with GET's wording (lib/member-account-keep.ts).
+  // A count that fails to come back refuses the removal — it never reads as zero and deletes.
+  let keep: Awaited<ReturnType<typeof readAccountKeepFacts>>;
+  try {
+    keep = await readAccountKeepFacts(target.user_id, org.id);
+  } catch (e) {
+    console.error('[members] account-keep check failed:', e);
+    return NextResponse.json({ error: 'We couldn’t check what removing this member changes. Try again.' }, { status: 500 });
+  }
 
-  const hasOtherOrg = (otherMembershipCount ?? 0) > 0;
-  const hasFreeCoachPortal = basicCoachTeamCount > 0;
-
-  if (hasOtherOrg || hasFreeCoachPortal) {
+  if (keep.reason) {
     // Membership-only removal: drop this org's member row + its scope/assignment rows.
     // (These FK to organization_members.id; delete them explicitly since we're not cascading
     // via the auth user.) The account, other orgs, and the free Coaches Portal are all preserved —
@@ -195,9 +185,10 @@ export const DELETE = withObservability(async (req: Request, { params }: Params)
       email: targetEmail,
       role: target.role,
       membershipOnly: true,
-      otherOrgs: otherMembershipCount ?? 0,
-      basicCoachTeams: basicCoachTeamCount,
-      preservedReason: hasOtherOrg ? 'other_org' : 'basic_coach_portal',
+      otherOrgs: keep.otherOrgCount,
+      basicCoachTeams: keep.basicCoachTeamCount,
+      familyLinks: keep.familyLinkCount,
+      preservedReason: keep.reason,
     });
 
     // The account survives, so a courtesy "your access was removed" notice is meaningful (mirrors

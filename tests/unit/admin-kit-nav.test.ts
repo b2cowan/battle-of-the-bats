@@ -215,6 +215,15 @@ describe('the admin kit nav — where you are', () => {
     assert.equal(isKitLinkActive(`${BASE}/rep-teams/allocations`, teams), false);
   });
 
+  it('inside a house league season only the season\'s row lights, not Seasons as well (Stage 13 fix-now 8)', () => {
+    const [hl] = kitPrograms({ base: BASE, canUse: c => c === 'module_house_league' });
+    const seasons = hl.pages.find(p => p.key === 'hl-seasons')!;
+    assert.equal(isKitLinkActive(`${BASE}/house-league`, seasons), true, 'lit on its own page');
+    assert.equal(isKitLinkActive(`${BASE}/house-league/seasons/s1`, seasons), false, 'a season page is lit in its own block');
+    assert.equal(isKitLinkActive(`${BASE}/house-league/seasons/s1/schedule`, seasons), false);
+    assert.equal(seasons.also, undefined, 'no also-path: there is no page at /house-league/seasons to light it for');
+  });
+
   it('⚖ Accounting is ONE ROW that never opens; its pages are the tab row (Club Tier Stage 3a, Ask 2 option B)', () => {
     const [acct] = kitPrograms({ base: BASE, canUse: c => c === 'module_accounting' });
     assert.equal(acct.key, 'accounting');

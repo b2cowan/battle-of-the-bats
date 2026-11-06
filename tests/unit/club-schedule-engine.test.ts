@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
-  ageOf, apportionByGroup, cutSlots, generateDrafts, heldSlots, makeDraft, matchPool, planMove, shareTargets, slotPatterns, teamResults,
+  ageOf, apportionByGroup, cutSlots, generateDrafts, heldSlots, makeDraft, matchPool, planMove, shareTargets, slotPatterns, slotsTeamsCanHold, teamResults,
   teamTwice, type DraftMeasure, type EngineInput, type EngineTeam, type PoolBooking, type Slot,
 } from '../../lib/club-schedule-engine.ts';
 import { defaultSettings, readScheduleSettings, rulesOn, sharingInSeason, sharingPools, slotRoom, type ScheduleSettings } from '../../lib/club-schedule-settings.ts';
@@ -583,5 +583,70 @@ describe('Stage 11c · the reader refuses a sharing rule that can’t share, in 
     assert.equal(slotRoom(['t15aa'], 1, pools), 1);
     assert.equal(slotRoom(['t9aa'], 0.5, pools), 1);
     assert.equal(slotRoom([], 1, pools), 1);
+  });
+});
+
+// ── Stage 13 fix-now 3 (F-O2-5): Evenly is even ─────────────────────────────────────────────────────────────────────
+// The walk's dome permit: 25 Sundays × 18 slots (6 fields × three hour-long starts) = 450, 7 teams, Evenly. Before the fix
+// the drafts handed out 46: 25 · 10 · 4 · 3 · 2 · 1 · 1 — a whole-parts pass in list order gave the first teams quota they
+// could not place at 1 a day, and the rest nothing, week after week.
+describe('Stage 13 fix-now 3 · Evenly is even, whatever the per-day limit', () => {
+  const SEVEN = TEAMS.slice(0, 7);
+  const SUNDAYS = {
+    startsOn: '2026-10-04', endsOn: '2027-03-21',
+    blocks: [block('b1', DOME, F, [7], '08:00', '11:00')], datesOff: [],
+  };
+  const sundays = cutSlots(SUNDAYS, { slotMinutes: 60, changeoverMinutes: 0, prime: null, venueFacilities: DOME_VF });
+  const input = (over: Omit<Partial<ScheduleSettings>, 'rules'> & { rules?: Partial<ScheduleSettings['rules']> } = {}): EngineInput => ({
+    slots: sundays, teams: SEVEN, held: new Map(), teamBookings: new Map(), fixed: new Map(),
+    settings: settings({ slotMinutes: 60, teamIds: SEVEN.map(t => t.id), split: { method: 'even', values: {} }, ...over }),
+  });
+
+  it('the dome as walked: 25 Sundays × 18 slots = 450', () => {
+    assert.equal(sundays.length, 450);
+    assert.equal(new Set(sundays.map(s => s.week)).size, 25);
+  });
+  for (const d of generateDrafts(input({ rules: { maxPerDay: 1 } }))) {
+    it(`${d.strategy}: at 1 a day every team gets 25 (the gap at most 1), 175 in all — the ceiling`, () => {
+      const got = d.teams.map(r => r.got);
+      assert.ok(Math.max(...got) - Math.min(...got) <= 1, got.join(' · '));
+      assert.equal(d.totals.handedOut, 175);
+      assert.deepEqual(got, [25, 25, 25, 25, 25, 25, 25]);
+    });
+  }
+  for (const d of generateDrafts(input({ rules: { maxPerDay: 3 } }))) {
+    it(`${d.strategy}: at 3 a day all 450 go out, the gap at most 1`, () => {
+      const got = d.teams.map(r => r.got);
+      assert.equal(d.totals.handedOut, 450);
+      assert.ok(Math.max(...got) - Math.min(...got) <= 1, got.join(' · '));
+    });
+  }
+  it('the ceiling the form says: 175 at 1 a day, 450 at 3, 450 with no daily limit', () => {
+    assert.equal(slotsTeamsCanHold(input(), 1), 175);
+    assert.equal(slotsTeamsCanHold(input(), 3), 450);
+    assert.equal(slotsTeamsCanHold(input(), null), 450);
+  });
+  it('a team off a Sunday gives that Sunday to the others, never a quota nobody can place', () => {
+    const off = input({ rules: { maxPerDay: 1, daysOff: [{ teamId: SEVEN[0].id, date: '2026-10-04', weekday: null, note: null }] } });
+    const d = makeDraft(off, 'best');
+    assert.equal(d.teams.find(r => r.teamId === SEVEN[0].id)!.got, 24);
+    for (const t of SEVEN.slice(1)) assert.equal(d.teams.find(r => r.teamId === t.id)!.got, 25, t.name);
+    assert.equal(slotsTeamsCanHold(off, 1), 174);
+  });
+  it('By percentage keeps its weights through the water-fill: 50 / 30 / 20 of one field\'s 75 slots', () => {
+    const one = cutSlots({ ...SUNDAYS, blocks: [block('b1', DOME, ['f-1'], [7], '08:00', '11:00')] }, { slotMinutes: 60, changeoverMinutes: 0, prime: null, venueFacilities: DOME_VF });
+    const three = SEVEN.slice(0, 3);
+    const weighted: EngineInput = {
+      slots: one, teams: three, held: new Map(), teamBookings: new Map(), fixed: new Map(),
+      settings: settings({ slotMinutes: 60, teamIds: three.map(t => t.id), split: { method: 'percentage', values: { [three[0].id]: 50, [three[1].id]: 30, [three[2].id]: 20 } }, rules: { maxPerDay: null } }),
+    };
+    assert.equal(one.length, 75);
+    for (const d of generateDrafts(weighted)) {
+      assert.deepEqual(d.teams.map(r => r.got), [38, 22, 15], d.strategy);
+    }
+  });
+  it('sharing a facility or a program: no ceiling is said (a shared slot holds two teams)', () => {
+    assert.equal(slotsTeamsCanHold({ ...input(), settings: settings({ teamIds: SEVEN.map(t => t.id), rules: { sharing: [{ teamIds: [SEVEN[0].id, SEVEN[1].id], groupIds: [], atOnce: 2 }] } }) }, 1), null);
+    assert.equal(slotsTeamsCanHold({ ...input(), teams: [{ ...SEVEN[0], many: true }, ...SEVEN.slice(1)] }, 1), null);
   });
 });

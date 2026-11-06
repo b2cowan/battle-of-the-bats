@@ -147,7 +147,9 @@ function programDef(key: AdminProgramKey, base: string): Omit<KitProgram, 'key'>
       // carry a dead door forward; the legacy link is written down as a defect, not fixed here.
       return {
         label: 'House league', icon: CalendarDays, href: h,
-        pages: [{ key: 'hl-seasons', label: 'Seasons', href: h, exact: true, also: [`${h}/seasons`] }],
+        // No `also` (Stage 13 fix-now 8): inside a season the season's own rail block lights its page, as a rep team's
+        // does — "Seasons" lit as well was a second highlight. There is no page at /house-league/seasons itself.
+        pages: [{ key: 'hl-seasons', label: 'Seasons', href: h, exact: true }],
       };
     }
     case 'tournaments': {

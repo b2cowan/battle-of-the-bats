@@ -373,13 +373,14 @@ export default function TeamPage({ params }: { params: Promise<{ orgSlug: string
           headCoachName={headCoachName}
           onClose={() => setWindowOpen(null)}
           onStarted={async (name, warnings) => {
+            // Reload FIRST, the window still busy, so the banner never stands over last season (Stage 13 fix-now 7, F-O4-3).
+            await load();
             setWindowOpen(null);
             const started = `The ${name} has started. ${possessive(team.name)} coaches have been told.`;
             // A warning keeps the notice up (a "good" one fades) so a division that did not move is read, not missed.
             setNotice(warnings.length > 0
               ? { tone: 'bad', text: `${started} ${warnings.join(' ')}` }
               : { tone: 'good', text: started });
-            await load();
           }}
         />
       )}
@@ -391,9 +392,9 @@ export default function TeamPage({ params }: { params: Promise<{ orgSlug: string
           preflight={preflight}
           onClose={() => setWindowOpen(null)}
           onClosed={async name => {
+            await load();
             setWindowOpen(null);
             setNotice({ tone: 'good', text: `The ${name} is closed. ${possessive(team.name)} coaches have been told.` });
-            await load();
           }}
         />
       )}
@@ -404,9 +405,9 @@ export default function TeamPage({ params }: { params: Promise<{ orgSlug: string
           teamName={team.name}
           onClose={() => setWindowOpen(null)}
           onStarted={async name => {
+            await load();
             setWindowOpen(null);
             setNotice({ tone: 'good', text: `The ${name} has started. Invite ${possessive(team.name)} head coach from Coaches.` });
-            await load();
           }}
         />
       )}

@@ -11,6 +11,8 @@
  */
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
+import { readFileSync } from 'node:fs';
+import { SCHEDULE_SCREEN_WORDS as SCREEN } from '../../lib/club-schedule-words.ts';
 import {
   closingNote, dropVerdict, facilityNoun, gridColumns, isStale, openingDay, perWeek, ruleBroken, slotDays, stepGrid, summaryLine,
   viewBillSlots, weekCounts, weekShortfalls, weekdayDates, weeksOnScreen, type GenerateSummary, type SlotView,
@@ -79,6 +81,27 @@ describe('step 1 counts the time the way the drawings say it', () => {
   it('By percentage, all of it: "Nothing left open. 2 of the 354 slots are held by 13U AAA’s tryout day."', () => {
     assert.deepEqual(closingNote({ summary: summary({ open: 0, handedOut: 352 }), method: 'percentage', percentHundredths: 10000 }),
       { words: 'Nothing left open. 2 of the 354 slots are held by 13U AAA’s tryout day.', over: false });
+  });
+  it('Stage 13 fix-now 3: the per-day setting never reads as "Nothing left open" — the dome at 1 a day', () => {
+    // 450 slots, 7 teams, Evenly: the shares hand out all 450, but at 1 a day the teams can hold 175 (the route counts it).
+    const dome = summary({ slots: 450, seats: 450, held: 0, heldBy: [], heldWhat: [], handedOut: 175, open: 275, dayLimit: { perDay: 1, canUse: 175 } });
+    assert.deepEqual(closingNote({ summary: dome, method: 'even', percentHundredths: 10000 }), { words: '275 slots left open at 1 practice a day.', over: false });
+    assert.equal(SCREEN.practicesPerDayCanUse(1, 7, 175, 450), 'At 1 a day, 7 teams can use 175 of the 450 slots.');
+    assert.equal(`${SCREEN.practicesPerDayWhy} ${SCREEN.practicesPerDayCanUse(2, 7, 350, 450)}`,
+      'One prevents back-to-back sessions in generated drafts. At 2 a day, 7 teams can use 350 of the 450 slots.');
+    // With a booking holding some, the row still says who holds them.
+    assert.equal(closingNote({ summary: { ...dome, held: 2, heldWhat: [{ name: '13U AAA', kind: 'tryout' }] }, method: 'even', percentHundredths: 10000 }).words,
+      '275 slots left open at 1 practice a day. 2 more are held by 13U AAA’s tryout day.');
+    // Raised until the setting leaves nothing open: the route sends no dayLimit, and the row reads as before.
+    assert.deepEqual(closingNote({ summary: summary({ held: 0, heldBy: [], heldWhat: [], open: 0, handedOut: 450 }), method: 'even', percentHundredths: 10000 }),
+      { words: 'Nothing left open.', over: false });
+  });
+  it('the route counts the per-day ceiling into the summary, and the hint reads it beside the setting', () => {
+    const route = readFileSync(new URL('../../app/api/admin/schedules/generate/route.ts', import.meta.url), 'utf8');
+    assert.match(route, /const handedOut = Math\.min\(targets\.handedOut, canHold \?\? Infinity\);/);
+    assert.match(route, /canHold < targets\.handedOut && canHold < \(slotsTeamsCanHold\(input, null\) \?\? 0\)/, 'the setting is named only when it is the cause');
+    const form = readFileSync(new URL('../../components/admin/kit/club/schedules/NewScheduleWindow.tsx', import.meta.url), 'utf8');
+    assert.match(form, /shown\?\.dayLimit\s*\?\s*`\$\{W\.practicesPerDayWhy\} \$\{W\.practicesPerDayCanUse\(/);
   });
   it('over 100% holds Generate drafts, with the reason in the table', () => {
     assert.deepEqual(closingNote({ summary: summary(), method: 'percentage', percentHundredths: 10500 }), { words: '5% over', over: true });

@@ -27,6 +27,7 @@ import { loadSeasonMoneyLines } from '@/lib/league-money-read';
 import { seasonMoney } from '@/lib/league-money';
 import { seedLeagueSeasonBudget } from '@/lib/house-league-budget';
 import { clubSchedulerOn } from '@/lib/club-schedule-gate';
+import { houseLeagueSlotCount } from '@/lib/league-time-server';
 
 // Two steps go back (Club Tier Stage 9a; owner 2026-10-24): Reopen registration only while registration is closed and play
 // has not started, and Reopen a finished season (completed or archived) back to running. A finished season is locked
@@ -78,9 +79,14 @@ export const GET = withObservability(async (_req: Request,
     getTeamsForSeason(seasonId),
     loadSeasonMoneyLines(ctx!.org.id, seasonId),
     supabaseAdmin.from('league_team_coaches').select('team_id').eq('season_id', seasonId).is('removed_at', null),
-    // Has the club given this season any of its time (a slot use)? Asked only where the club's schedule exists, and not of a finished season.
+    // The club's time for this season (Stage 13 fix-now 4, F-O3-7): has the club GIVEN house league time in the season
+    // (the program's own time, a head count of what the time window reads), and has the league admin DIVIDED any of it
+    // (a slot use)? Asked only where the club's schedule exists, and not of a finished season. A failed count is null.
     schedulerOn && !isFinishedLeagueSeason(season)
-      ? supabaseAdmin.from('league_slot_uses').select('slot_id', { count: 'exact', head: true }).eq('season_id', seasonId)
+      ? Promise.all([
+        houseLeagueSlotCount(ctx!.org.id, season),
+        supabaseAdmin.from('league_slot_uses').select('slot_id', { count: 'exact', head: true }).eq('season_id', seasonId),
+      ]).then(([given, uses]) => (uses.error ? null : { given, divided: uses.count ?? 0 }), () => null)
       : Promise.resolve(null),
   ]);
 
@@ -146,10 +152,11 @@ export const GET = withObservability(async (_req: Request,
     // The Overview's Owed · Still owing tiles (9b-2): the same band the Money page reads, from the frozen prices and the book —
     // what is clearing too (12c Part 6), so Still owing matches the Money page while a bank debit is on its way.
     money: seasonMoney(regs, season, moneyLines, clearingCents),
-    // The Overview's "The club hasn't given this season any time yet." (9f-2, copy §11 mk.noTime): null where the club's
-    // schedule does not exist (nothing to give) or the count failed (a note is never shown on a guess). Who reads which
-    // second sentence is the page's, from the one gate's answer (an owner or an admin gives the time).
-    clubTime: timeUses && !timeUses.error ? { given: (timeUses.count ?? 0) > 0 } : null,
+    // The Overview's time line (9f-2, copy §11 mk.noTime; Stage 13 fix-now 4): none given → "The club hasn't given this
+    // season any time yet."; given but not divided → a door to House league's time; divided → no line. Null where the
+    // club's schedule does not exist (nothing to give) or a count failed (a note is never shown on a guess). Who reads
+    // which second sentence is the page's, from the one gate's answer (an owner or an admin gives the time).
+    clubTime: timeUses ? { given: timeUses.given > 0 || timeUses.divided > 0, divided: timeUses.divided > 0 } : null,
   });
 }, { route: '/api/admin/house-league/seasons/[seasonId]' });
 

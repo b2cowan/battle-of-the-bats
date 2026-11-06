@@ -843,7 +843,12 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
               .map(n => <option key={n} value={String(n)}>{W.practicesPerDayChoice(n)}</option>)}
             <option value="">{W.practicesPerDayNoLimit}</option>
           </select>
-          <span id="ns-max-per-day-hint" className={ck.hint}>{W.practicesPerDayHint}</span>
+          {/* Stage 13 fix-now 3 (owner 2026-11-06): the setting says what it leaves open, beside itself. */}
+          <span id="ns-max-per-day-hint" className={ck.hint}>
+            {shown?.dayLimit
+              ? `${W.practicesPerDayWhy} ${W.practicesPerDayCanUse(shown.dayLimit.perDay, shown.targets.length, shown.dayLimit.canUse, shown.seats)}`
+              : W.practicesPerDayHint}
+          </span>
         </label>
       </div>
       </>)}

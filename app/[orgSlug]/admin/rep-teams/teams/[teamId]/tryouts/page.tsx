@@ -537,9 +537,10 @@ export default function TeamTryoutsPage({ params }: { params: Promise<{ orgSlug:
           headCoachName={headName}
           onClose={() => setStarting(false)}
           onStarted={async name => {
+            // Reload first, the window still busy (Stage 13 fix-now 7).
+            await load();
             setStarting(false);
             setNotice({ tone: 'good', text: `The ${name} has started. Open sign-ups when you’re ready.` });
-            await load();
           }}
         />
       )}

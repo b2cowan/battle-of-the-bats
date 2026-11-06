@@ -69,8 +69,9 @@ interface SeasonDetail {
   };
   /** The season's money band (9b-2, lib/league-money.ts seasonMoney): the Owed · Still owing tiles. */
   money?: SeasonMoney;
-  /** Has the club given this season any of its time (9f-2 mk.noTime)? Null where the club's schedule does not exist. */
-  clubTime?: { given: boolean } | null;
+  /** Has the club given this season any of its time (9f-2 mk.noTime), and has any of it been divided into a division's
+   *  games or practices (Stage 13 fix-now 4)? Null where the club's schedule does not exist. */
+  clubTime?: { given: boolean; divided: boolean } | null;
 }
 
 export default function SeasonOverviewPage() {
@@ -209,9 +210,14 @@ export default function SeasonOverviewPage() {
     }
     return <Link href={`/${orgSlug}/admin/house-league/seasons/${startedFrom.sourceId}`} className={`${ck.chip} ${s.stepMark}`}>{SF.markFrom(startedFrom.sourceName)}</Link>;
   };
-  // The club's time (copy §11 mk.noTime): any live season the club has not given time to yet, for the people who run it.
-  // Where the club's schedule exists, placing a game anywhere is exactly the owner's and the admin's: the people who give time.
-  const showNoTime = canRun && !isFinishedLeagueSeason(season) && !!detail.clubTime && !detail.clubTime.given;
+  // The club's time (copy §11 mk.noTime; Stage 13 fix-now 4, F-O3-7), for the people who run a live season — who are the
+  // people who divide it (House league's time saves on `run`). Three states: none given (where the club's schedule exists,
+  // placing a game anywhere is exactly the owner's and the admin's, the people who give time; a league admin is told to
+  // ask, never sent to Schedules, which they can't open); given but not divided (the door to House league's time);
+  // divided (no line).
+  const clubTime = canRun && !isFinishedLeagueSeason(season) ? detail.clubTime ?? null : null;
+  const showNoTime = !!clubTime && !clubTime.given;
+  const showUndivided = !!clubTime && clubTime.given && !clubTime.divided;
 
   return (
     <div className={repKit.page}>
@@ -270,6 +276,12 @@ export default function SeasonOverviewPage() {
         <p className={s.timeNote}>
           {SF.noTime}
           <span className={s.deskOnly}> {access?.placeAnywhere ? SF.noTimeHowAdmin : SF.noTimeHowLeagueAdmin}</span>
+        </p>
+      )}
+      {showUndivided && (
+        <p className={s.timeNote}>
+          {SF.timeNotDivided}{' '}
+          <Link href={`/${orgSlug}/admin/house-league/seasons/${seasonId}/schedule?time=1`} className={ck.link}>{SF.timeNotDividedDoor}</Link>
         </p>
       )}
       {moves.includes('start') && canMove && (

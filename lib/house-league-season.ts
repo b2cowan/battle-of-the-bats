@@ -44,10 +44,13 @@ export function seasonPagesFor(access: Pick<HouseLeagueAccess, 'read' | 'readMon
   });
 }
 
-/** The page segment a path inside a season is on ('' = the season's Overview). The old Ledger path reads as Money. */
+/**
+ * The page segment a path inside a season is on ('' = the season's Overview). The old Ledger path reads as Money; a club
+ * schedule opened from the season's time window (`club-schedule/[id]`) reads as Schedule, so a row is always lit there.
+ */
 export function seasonSegment(pathname: string): string {
   const seg = pathname.match(/\/house-league\/seasons\/[^/]+\/([^/?#]+)/)?.[1] ?? '';
-  return seg === 'ledger' ? 'money' : seg;
+  return seg === 'ledger' ? 'money' : seg === 'club-schedule' ? 'schedule' : seg;
 }
 
 /** Which of the season's pages a path is on. */

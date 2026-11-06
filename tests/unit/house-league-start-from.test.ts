@@ -221,6 +221,12 @@ describe('the words, verbatim (§14.1)', () => {
     assert.equal(W.ageLineMoved(1), 'birth years moved up one year');
     assert.equal(W.noTime, 'The club hasn’t given this season any time yet.');
     assert.equal(W.noTimeHowAdmin, 'It gives it in the club’s Schedules; games and practices can be made once it has.');
+    // Stage 13 fix-now 4: a league admin can't open Schedules, so they are told to ask; a season given time but not
+    // divided says so, with a door to House league's time.
+    assert.equal(W.noTimeHowLeagueAdmin, 'Ask an owner or an admin to give house league time.');
+    assert.doesNotMatch(W.noTimeHowLeagueAdmin, /Schedules/);
+    assert.equal(W.timeNotDivided, 'The club has given this season time. None of it is divided into games or practices yet.');
+    assert.equal(W.timeNotDividedDoor, 'House league’s time →');
   });
 });
 

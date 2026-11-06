@@ -76,6 +76,9 @@ describe('1b · the season’s pages (9a·2) and who sees them (frame F)', () =>
     assert.equal(seasonPageAt(`${s}/registrations`), 'registrations');
     assert.equal(seasonPageAt(`${s}/ledger`), 'money');
     assert.equal(seasonSegment(`${s}/teams?division=1`), 'teams');
+    // A club schedule opened from the season's time window lights Schedule (Stage 13 fix-now 8: no page is left unlit).
+    assert.equal(seasonSegment(`${s}/club-schedule/xyz`), 'schedule');
+    assert.equal(seasonPageAt(`${s}/club-schedule/xyz`), 'schedule');
     assert.equal(seasonPageHref(s, ''), s);
     assert.equal(seasonPageHref(s, 'money'), `${s}/money`);
   });

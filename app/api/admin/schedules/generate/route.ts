@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { withObservability } from '@/lib/observability';
 import { isUuid } from '@/lib/utils';
-import { generateDrafts, seatCounts, shareTargets } from '@/lib/club-schedule-engine';
+import { generateDrafts, seatCounts, shareTargets, slotsTeamsCanHold } from '@/lib/club-schedule-engine';
 import { buildEngineInput, loadSchedule, readScheduleRequest, repTeamsRefusal, resolveScheduler, schedulerRefusal, teamNamer } from '@/lib/club-schedule-server';
 import { SCHEDULE_REFUSALS as R, SCHEDULE_WORDS as W, measureLines, warningLine } from '@/lib/club-schedule-words';
 
@@ -46,6 +46,14 @@ export const POST = withObservability(async (req: Request) => {
   const targets = shareTargets(input.teams, settings, counts);
   const perWeek = new Map<string, number>();
   for (const s of input.slots) perWeek.set(s.week, (perWeek.get(s.week) ?? 0) + 1);
+  // What the per-day setting lets the teams hold (Stage 13 fix-now 3): never more than the shares are handed, and said as
+  // the setting's own doing only when no daily limit would let them hold more (`dayLimit`, the hint beside the setting).
+  const perDay = settings.rules.maxPerDay;
+  const canHold = slotsTeamsCanHold(input, perDay);
+  const handedOut = Math.min(targets.handedOut, canHold ?? Infinity);
+  // The second count (no daily limit) only runs when the limit actually leaves shares unplaced.
+  const dayLimit = perDay != null && canHold != null && canHold < targets.handedOut && canHold < (slotsTeamsCanHold(input, null) ?? 0)
+    ? { perDay, canUse: canHold } : null;
   const slotKeys = new Set(input.slots.map(s => s.key));
   const heldHere = avoid ? input.slots.filter(s => input.held.has(s.key) && !input.fixed.has(s.key)) : [];
   const summary = {
@@ -58,7 +66,7 @@ export const POST = withObservability(async (req: Request) => {
     // Each team's practices its share comes to (a shared slot is half a facility, so a team that shares holds more of
     // them for the same share — Stage 11c), and the slots they fill, a shared slot once ("250 slots for 8 teams.").
     targets: input.teams.map(x => ({ teamId: x.id, slots: targets.practices.get(x.id) ?? 0, prime: targets.prime.get(x.id) ?? 0 })),
-    handedOut: targets.handedOut, open: Math.max(0, counts.capacity - targets.handedOut),
+    handedOut, open: Math.max(0, counts.capacity - handedOut), dayLimit,
     // The half facilities a sharing rule never shares (the rule's sentence names them).
     half: [...new Set(input.slots.filter(s => s.weight < 1 && s.facilityId).map(s => s.facilityId!))],
     kept: [...input.fixed.keys()].filter(k => slotKeys.has(k)).length,

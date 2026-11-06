@@ -62,7 +62,11 @@ const TOURNAMENT_CONTROLS: { cap: Capability; label: string }[] = [
 
 type Refusal = { text: string; seat?: boolean };
 type Ask = 'suspend' | 'remove' | null;
-type RemoveImpact = { tournamentCount: number; divisionCount: number; otherOrgCount: number; coachingAssignmentCount: number; basicCoachTeamCount: number };
+/** `accountKept`: the server's one answer (lib/member-account-keep.ts) — the same one Remove acts on, never re-decided here. */
+type RemoveImpact = {
+  tournamentCount: number; divisionCount: number; otherOrgCount: number; coachingAssignmentCount: number; basicCoachTeamCount: number;
+  familyLinkCount: number; accountKept: boolean;
+};
 
 const sameSet = (a: readonly string[], b: readonly string[]) => a.length === b.length && [...a].sort().join() === [...b].sort().join();
 const sameCaps = (a: Record<string, boolean> | null, b: Record<string, boolean>) => {
@@ -120,6 +124,7 @@ export default function ManageMemberDialog({
   const [ask, setAsk] = useState<Ask>(null);
   const [acting, setActing] = useState(false);
   const [impact, setImpact] = useState<RemoveImpact | null>(null);
+  const [impactFailed, setImpactFailed] = useState(false);
 
   // The saved answer and the draft's answer, from the ONE computation the gates use.
   const saved = useMemo(() => new Map(member.access.map(a => [a.module, a.canOpen])), [member.access]);
@@ -155,10 +160,11 @@ export default function ManageMemberDialog({
     if (ask !== 'remove') return;
     let stale = false;
     setImpact(null);
+    setImpactFailed(false);
     fetch(`/api/admin/members/${member.id}${orgQuery}`)
-      .then(r => (r.ok ? r.json() : null))
-      .then(d => { if (!stale && d) setImpact(d as RemoveImpact); })
-      .catch(() => {});
+      .then(r => (r.ok ? r.json() : Promise.reject(new Error())))
+      .then(d => { if (!stale) setImpact(d as RemoveImpact); })
+      .catch(() => { if (!stale) setImpactFailed(true); });
     return () => { stale = true; };
   }, [ask, member.id, orgQuery]);
 
@@ -536,14 +542,18 @@ export default function ManageMemberDialog({
           }
         >
           {!impact ? (
-            <LoadingState inline label="Loading what this changes…" />
+            impactFailed
+              ? <p role="alert">We couldn’t check what removing them changes. Close this and try again.</p>
+              : <LoadingState inline label="Loading what this changes…" />
           ) : (
             <>
-              {/* J4-036: removal keeps the account whenever the person is anywhere else. */}
-              {impact.otherOrgCount > 0 || impact.basicCoachTeamCount > 0 ? (
+              {/* J4-036 / F-A5-10: removal keeps the account whenever the person is anywhere else — another org, a free
+                  Coaches Portal, or a family connection (a parent still signs in to see their child). */}
+              {impact.accountKept ? (
                 <p>
                   This removes {first === 'They' ? 'them' : first} from {org.name}. Their account is kept
                   {impact.otherOrgCount > 0 ? `, along with their ${impact.otherOrgCount} other organization${impact.otherOrgCount === 1 ? '' : 's'}` : ''}.
+                  {impact.familyLinkCount > 0 ? ' They can still sign in to see their family.' : ''}
                 </p>
               ) : (
                 <p>This permanently deletes their account. They would need a new invitation to come back.</p>

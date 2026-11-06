@@ -489,6 +489,11 @@ export const SCHEDULE_SCREEN_WORDS = {
   timeMode: 'Each team’s time',
   practicesPerDay: 'Practices per team, per day',
   practicesPerDayHint: 'One prevents back-to-back sessions in generated drafts; some slots may stay open.',
+  /** Stage 13 fix-now 3 (owner 2026-11-06): when the setting is what leaves slots open, the hint says how many, in place of
+   *  "some slots may stay open" — "One prevents … drafts. At 1 a day, 7 teams can use 175 of the 450 slots." */
+  practicesPerDayWhy: 'One prevents back-to-back sessions in generated drafts.',
+  practicesPerDayCanUse: (perDay: number, teams: number, canUse: number, slots: number) =>
+    `At ${perDay} a day, ${pluralize(teams, 'team')} can use ${canUse} of the ${slots} slots.`,
   practicesPerDayChoice: (n: number) => `${pluralize(n, 'practice')}`,
   practicesPerDayNoLimit: 'No daily limit',
   timeSame: 'The same each week',

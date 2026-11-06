@@ -310,3 +310,34 @@ describe('/review 2026-09-26 — what the adversarial review found, pinned', () 
     assert.match(read('app/(consumer)/auth/accept-invite/AcceptInviteForm.tsx'), /prev === 'waiting' \|\| prev === 'expired' \? 'ready' : prev/);
   });
 });
+
+describe('Remove member keeps a parent\'s family sign-in (Stage 13 fix-now 2, F-A5-10)', () => {
+  const route = read('app/api/admin/members/[memberId]/route.ts');
+  const helper = read('lib/member-account-keep-server.ts');
+
+  it('GET (the window\'s wording) and DELETE (what happens) ask the one helper', () => {
+    assert.equal((route.match(/readAccountKeepFacts\(target\.user_id, org\.id\)/g) ?? []).length, 2, 'GET and DELETE both call it');
+    assert.match(route, /accountKept: keep\.reason !== null/, 'GET hands the window the answer, not the counts to re-decide');
+    assert.match(route, /if \(keep\.reason\) \{/, 'DELETE keeps the account on the same answer');
+    assert.doesNotMatch(route, /countActiveBasicCoachTeamMembershipsForUser|\.neq\('organization_id', org\.id\)/,
+      'no second, private copy of the keep-the-account counting in the route');
+    assert.match(read('components/admin/kit/club/ManageMemberDialog.tsx'), /\{impact\.accountKept \? \(/);
+  });
+
+  it('the keep check counts family links that still connect someone, in any club', () => {
+    assert.match(helper, /\.from\('family_links'\)[\s\S]{0,120}\.eq\('user_id', userId\)\s*\.not\('status', 'in', `\(\$\{ENDED_FAMILY_LINK_STATUSES\.join\(','\)\}\)`\)/);
+    assert.doesNotMatch(helper.match(/\.from\('family_links'\)[\s\S]{0,200}/)![0], /org_id/, 'a link anywhere means the account has another use');
+  });
+
+  it('a count that fails refuses the removal — it never reads as zero and deletes the account', () => {
+    assert.match(helper, /if \(otherOrgs\.error\) throw otherOrgs\.error;/);
+    assert.match(helper, /if \(familyLinks\.error\) throw familyLinks\.error;/);
+    assert.match(route, /catch \(e\) \{\s*console\.error\('\[members\] account-keep check failed:', e\);\s*return NextResponse\.json\(/);
+    assert.ok(route.indexOf('readAccountKeepFacts(target.user_id, org.id);\n  } catch') < route.indexOf('auth.admin.deleteUser('),
+      'the check runs before any delete');
+  });
+
+  it('the audit says why the account was kept', () => {
+    assert.match(route, /familyLinks: keep\.familyLinkCount,\s*preservedReason: keep\.reason,/);
+  });
+});

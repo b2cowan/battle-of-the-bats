@@ -386,11 +386,15 @@ export default function ClubHubKit() {
         {isOwner && (
           <span className={ck.quietItem}>
             <Building2 size={14} aria-hidden />
-            <Link href={`${base}/org`} className={ck.link}>Organization</Link>:
-            {' '}<Link href={`${base}/org/members`} className={ck.link}>members</Link>,
-            {' '}<Link href={`${base}/org/billing`} className={ck.link}>plan &amp; billing</Link>
-            {capacity && <span className={ck.muted}>({capacity})</span>},
-            {' '}<Link href={`${base}/org/settings`} className={ck.link}>settings</Link>
+            {/* One inline run after the icon (Stage 13 fix-now 6, F-NAV-1): each piece as its own flex item took the row's
+                gap, and read "Organization : members , plan & billing (8 of 15 teams) , settings". */}
+            <span>
+              <Link href={`${base}/org`} className={ck.link}>Organization</Link>:
+              {' '}<Link href={`${base}/org/members`} className={ck.link}>members</Link>,
+              {' '}<Link href={`${base}/org/billing`} className={ck.link}>plan &amp; billing</Link>
+              {capacity && <> <span className={ck.muted}>({capacity})</span></>},
+              {' '}<Link href={`${base}/org/settings`} className={ck.link}>settings</Link>
+            </span>
           </span>
         )}
         {isOwner && checklist && !checklist.allDone && (
