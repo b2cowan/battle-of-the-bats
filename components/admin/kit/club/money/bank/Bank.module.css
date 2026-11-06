@@ -59,6 +59,39 @@ tr > td.nowrap { white-space: nowrap; }
   .chipDoor { min-height: var(--tap-min, 44px); }
 }
 
+/* ── the Accounting Overview's bank line (BC5a, R0 tab 7): right of "Where the club stands", no row of its own ── */
+.overviewHead { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 1rem; }
+.overviewMarks { display: flex; flex-direction: column; align-items: flex-end; gap: 0.15rem; margin: 0 0 0.45rem auto; min-width: 0; }
+.overviewMark { display: inline-flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 0.25rem 0.5rem; min-width: 0; }
+.overviewDoor {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 0.25rem;
+  font-size: var(--type-support);
+  color: var(--text-secondary);
+  text-decoration: none;
+  border-radius: 2px;
+  overflow-wrap: anywhere;
+}
+.overviewDoor b { color: var(--text-primary); font-weight: 600; }
+.overviewDoor > svg { color: var(--text-tertiary); flex-shrink: 0; }
+.overviewDoor:hover { color: var(--text-primary); text-decoration: underline; }
+.overviewDoor:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+/* A touch width: each door a full tap (the chip's floor too, above). A phone: the heading row wraps, the lines under it. */
+@media (max-width: 768px) {
+  .overviewMarks { gap: 0; }
+  .overviewDoor { min-height: var(--tap-min, 44px); }
+}
+@media (max-width: 640px) {
+  .overviewMarks { margin-left: 0; width: 100%; align-items: stretch; }
+  /* A line and its chip share one tap row: the sentence wraps, never the chip (/design BC5a: a wrapped chip read as an
+     orphan and added a second 44px row). */
+  .overviewMark { justify-content: flex-start; flex-wrap: nowrap; }
+  .overviewMark > .overviewDoor { flex: 1 1 0; min-width: 0; }
+  .overviewMark > .chipDoor { flex: none; }
+}
+
 /* ── a saved check, opened (tab 5): the lines under the sums ── */
 .savedNote { margin: 0.75rem 0 0; font-size: var(--type-support); color: var(--text-secondary); line-height: 1.45; }
 .savedNote b { color: var(--text-primary); font-weight: 600; }

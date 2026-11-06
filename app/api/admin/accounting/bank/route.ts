@@ -5,9 +5,10 @@ import { addAccount, bankAnswer, bankBody, bankOverview } from '@/lib/bank-club-
 
 /**
  * THE CLUB'S BANK (Bank balance check BC1; B1, B7).
- * GET  ?orgSlug=                     — the club's accounts ("never done this" when none), each one's latest check
- *                                      ("checked through {date} · Matches|Off by $X", ask 4), and every club book with the
- *                                      account holding it. Whoever can move club money (club read = write today, B7).
+ * GET  ?orgSlug=                     — the club's accounts ("never done this" when none) and every club book with the
+ *                                      account holding it. Each account's latest check is read by the account view (the
+ *                                      Account pill) and by the Overview's summary (`bankMarks`, ask 4), not here.
+ *                                      Whoever can open club Accounting (the read gate, B7).
  * POST { name, ledgerIds? }          — name an account. The first holds every club book; a later one takes the books it
  *                                      names (saved checks keep the books they counted, Q3). Answers with its view (201).
  */

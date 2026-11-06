@@ -43,15 +43,17 @@ interface ClubBankAccounts {
   accountOfBook: Map<string, string>;
 }
 
+/** The club's live club accounts, oldest first (rule 1). */
+async function liveAccountsOf(orgId: string): Promise<BankAccountRow[]> {
+  const { data, error } = await supabaseAdmin.from('bank_accounts').select('id, name, owner_kind, created_at, archived_at')
+    .eq('org_id', orgId).eq('owner_kind', 'club').is('archived_at', null);
+  if (error) throw error;
+  return liveClubAccounts((data ?? []) as BankAccountRow[]);
+}
+
 /** The club's accounts and which books each holds (rule 1: the first is the oldest live CLUB account). */
 export async function readClubBankAccounts(orgId: string): Promise<ClubBankAccounts> {
-  const [acctRes, books] = await Promise.all([
-    supabaseAdmin.from('bank_accounts').select('id, name, owner_kind, created_at, archived_at')
-      .eq('org_id', orgId).eq('owner_kind', 'club').is('archived_at', null),
-    getClubOwnedLedgers(orgId),
-  ]);
-  if (acctRes.error) throw acctRes.error;
-  const rows = liveClubAccounts((acctRes.data ?? []) as BankAccountRow[]);
+  const [rows, books] = await Promise.all([liveAccountsOf(orgId), getClubOwnedLedgers(orgId)]);
   const moves = await fetchAllIn<BookMoveRow>(books.map(b => b.id), (c, a, b) =>
     supabaseAdmin.from('bank_account_books').select('ledger_id, bank_account_id').in('ledger_id', c).order('ledger_id').range(a, b));
   const placed = placeBooks(rows, books, moves);
@@ -274,6 +276,30 @@ export async function readClubBankAccount(orgId: string, accountId: string, opts
   ]);
   const latest = new Map(all.accounts.map(a => [a.id, checkedThrough(byAccount.get(a.id) ?? [])]));
   return { account, all, checks, latest, figure, nameOf };
+}
+
+/**
+ * The club's live club accounts in the Bank tab's order (rule 1: the first is the oldest), each with its live checks
+ * oldest first — no books, no figures: what the Overview line and the fiscal-year close's bank row read (BC5a). Two
+ * bounded reads side by side; the caller names the day it asks about (never a year here).
+ */
+export async function readClubBankMarks(orgId: string): Promise<{ never: boolean; accounts: { id: string; name: string; checks: ClubSavedCheck[] }[] }> {
+  const [rows, byAccount] = await Promise.all([liveAccountsOf(orgId), readClubChecks(orgId)]);
+  return { never: rows.length === 0, accounts: rows.map(r => ({ id: r.id, name: r.name, checks: byAccount.get(r.id) ?? [] })) };
+}
+
+/**
+ * `readClubBankMarks` for a screen where the bank is only a mark — the Overview's line, the close's warning row (BC5a
+ * /review): a failed read is logged and answers null, so the page or the close it sits on never fails for it (warn,
+ * never block). The Bank tab itself reads the throwing form: there the bank IS the page.
+ */
+export async function readClubBankMarksQuietly(orgId: string): Promise<Awaited<ReturnType<typeof readClubBankMarks>> | null> {
+  try {
+    return await readClubBankMarks(orgId);
+  } catch (err) {
+    console.error('[bank-club-read] the bank marks read failed; the Overview line and the close row are left out:', err);
+    return null;
+  }
 }
 
 /** Lines of the books by id (a waiting item's figures come from the books: rule 6). */

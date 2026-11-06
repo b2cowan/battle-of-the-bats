@@ -173,6 +173,12 @@ export const BANK_WORDS = {
   matches: 'Matches',
   matchesWaiting: (n: number) => `Matches · ${plural(n, 'line')} not in the bank yet`,
   offBy: (amount: string) => `Off by ${amount}`,
+  // The Accounting Overview's line, right of "Where the club stands" (BC5a, ask 4, R0 tab 7): "Bank: {account} checked
+  // through {date} ›" · "Bank: {account} · not checked yet ›" · "Bank: not checked yet ›" (no account). BC5b's /marketing.
+  overviewLead: 'Bank:',
+  overviewThrough: 'checked through',
+  overviewNotChecked: '· not checked yet',
+  overviewNoAccount: 'not checked yet',
   booksNowSay: (amount: string) => `Books now say ${amount}`,
   listTitle: 'Checked statements',
   listCol: { date: 'Statement date', bankSaid: 'The bank said', shouldHave: 'Should have been', result: 'Result', checkedBy: 'Checked by', open: 'Open' },

@@ -444,3 +444,53 @@ describe('11 · the phone: Find as row cards, the callout\'s row, the two phone 
     }
   });
 });
+
+describe('12. BC5a: the Overview line and the fiscal-year close row (ask 4, R0 tab 7; owner 2026-11-06)', () => {
+  const OVERVIEW = 'app/[orgSlug]/admin/accounting/page.tsx';
+  const line = readCode(`${DIR}/BankOverviewLine.tsx`);
+  it('the line sits right of "Where the club stands", from the summary read, never a year (it reads today on every year)', () => {
+    const page = readCode(OVERVIEW);
+    assert.match(page, /<BankOverviewLine marks=\{read\.bank \?\? null\} accountingBase=\{base\}>\s*<p className=\{cr\.recordSectionTitle\}>\{SUMMARY_WORDS\.standsHeading\(summary\.today\)\}<\/p>\s*<\/BankOverviewLine>/);
+    const route = readCode('app/api/admin/accounting/summary/route.ts');
+    assert.match(route, /bankMarks\(ctx\),/);
+    const steps = readCode('lib/bank-club-steps.ts');
+    const marks = steps.slice(steps.indexOf('export async function bankMarks'), steps.indexOf('const allBooks'));
+    assert.match(marks, /checkedThrough: checkedThrough\(a\.checks\)/);
+    assert.doesNotMatch(marks, /year|asOf|lastDay/i);
+  });
+  it('one line per account, each a door to the Bank tab on it; the off chip a door to that check; never a figure', () => {
+    assert.match(line, /marks\.accounts\.map\(a =>/);
+    assert.match(line, /<Link href=\{bankTabHref\(accountingBase, a\.id\)\} className=\{s\.overviewDoor\}>/);
+    assert.match(line, /t\?\.result === 'off' && \(\s*<Link href=\{bankTabHref\(accountingBase, a\.id, t\.id\)\} className=\{s\.chipDoor\}/);
+    assert.match(line, /<RepChip tone="warn">\{W\.offBy\(cents\(t\.offByCents\)\)\}<\/RepChip>/);
+    assert.doesNotMatch(line, /bankCents|booksCents|shouldBe/);
+  });
+  it('no account: a writer’s door to the first check; a reader sees no line', () => {
+    assert.match(line, /marks\.accounts\.length === 0\s*\? \(marks\.canMove \? \[/);
+  });
+  it('the Bank tab opens on the door’s account and check once, then drops them from the address', () => {
+    const tab = readCode(`${DIR}/BankTab.tsx`);
+    assert.match(tab, /if \(arrived\.current === null\) arrived\.current = \{ account: search\.get\('account'\), check: search\.get\('check'\) \};/);
+    assert.match(tab, /arrived\.current = \{ account: null, check: null \};/);
+    assert.match(tab, /rest\.delete\('account'\); rest\.delete\('check'\);/);
+  });
+  it('the close row: a fifth kind from the server, no count, no figure, its door the Bank tab; never stored by the close', () => {
+    const reads = readCode('lib/club-fiscal-reads.ts');
+    assert.match(reads, /bank: bankOpen\(bank\?\.accounts \?\? \[\], year\.lastDay\),/);
+    // A warning only: the close and the Overview read the bank quietly (a failed read never blocks either, /review BC5a).
+    assert.match(reads, /readClubBankMarksQuietly\(orgId\),/);
+    assert.match(readCode('lib/bank-club-steps.ts'), /const marks = await readClubBankMarksQuietly\(ctx\.org\.id\);\s*if \(!marks\) return null;/);
+    const snap = reads.slice(reads.indexOf('function closeSnapshot('), reads.indexOf('// ── The Overview'));
+    assert.doesNotMatch(snap, /\bbank\b/, 'the close stores no bank state (owner "Close snapshot")');
+    const parts = readCode('components/admin/kit/club/money/FiscalYearParts.tsx');
+    assert.match(parts, /o\.pending\.count \+ o\.bank\.count > 0/);
+    const row = parts.slice(parts.indexOf('{o.bank.rows.map(r => ('), parts.indexOf('))}', parts.indexOf('{o.bank.rows.map(r => (')));
+    assert.doesNotMatch(row, /count=|figure=/);
+    assert.match(row, /href=\{bankTabHref\(accountingBase, r\.accountId, r\.kind === 'off' \? r\.checkId : undefined\)\}/);
+  });
+  it('the reader names no year: the close passes the year’s last DAY to the pure rule', () => {
+    const rules = readCode('lib/bank-club-rules.ts');
+    assert.match(rules, /export function bankCloseRow\(checks: readonly ClubSavedCheck\[\], lastDay: string\)/);
+    assert.doesNotMatch(readCode('lib/bank-club-read.ts'), /fiscal|lastDay/i);
+  });
+});

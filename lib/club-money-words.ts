@@ -833,6 +833,12 @@ export const CLOSE_YEAR_WORDS = {
   unfiledWhyShort: 'off-plan',
   pendingWhy: (next: string) => `counts in ${next} when it clears`,
   pendingWhyShort: (next: string) => `clears in ${next}`,
+  // The bank's row (Bank balance check BC5a, owner 2026-11-06 "Close row"): one per account, no count; BC5b's /marketing.
+  bankUncheckedNoun: (account: string, name: string) => `${account} not checked in the last month of ${name}`,
+  bankUncheckedNounShort: (account: string) => `${account} not checked`,
+  bankOffNoun: (account: string, amount: string) => `${account} off by ${amount}`,
+  bankLastChecked: (date: string) => `last checked ${formatStoredDate(date)}`,
+  bankNoCheckBy: (lastDay: string) => `no check by ${formatStoredDate(lastDay)}`,
   /** The three promises, in one line at the foot, read just before the button that relies on them. */
   promises: 'Nothing is deleted, and you can reopen it while it is the latest closed year. Closing the club’s year never touches a team’s own book.',
   promisesShort: 'Nothing is deleted, and you can reopen it. A team’s own book is never touched.',

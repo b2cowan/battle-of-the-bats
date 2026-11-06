@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
-  checkView, checkedThrough, lineMatches, pickerSearch, readCents, readDay, refusalOfDbError, refusalOfStep, savePlan, saveRefusal, STATUS_OF,
+  bankCloseRow, checkView, checkedThrough, lineMatches, pickerSearch, readCents, readDay, refusalOfDbError, refusalOfStep, savePlan, saveRefusal, STATUS_OF,
   startItemPlan, waitingIdsOf, type SaveFacts,
 } from '../../lib/bank-club-rules.ts';
 import { beforeStartLines, beforeStartWindow, type ClubSavedCheck, type EntryRow, type OnItsWay } from '../../lib/bank-club-map.ts';
@@ -153,7 +153,47 @@ describe('what the list shows', () => {
   it('checked through = the latest CHECK (never the start), with its result', () => {
     assert.equal(checkedThrough([c('s', 'start', '2026-08-31', 5, 5)]), null);
     assert.deepEqual(checkedThrough([c('s', 'start', '2026-08-31', 5, 5), c('sep', 'check', '2026-09-30', 10, 10), c('oct', 'check', '2026-10-31', 12, 10)]),
-      { date: '2026-10-31', result: 'off', offByCents: 2 });
+      { id: 'oct', date: '2026-10-31', result: 'off', offByCents: 2 });
+  });
+  it('as of a day (BC5a): the latest check dated on or before it, the day itself included', () => {
+    const checks = [c('s', 'start', '2026-05-31', 5, 5), c('jun', 'check', '2026-06-30', 10, 10), c('sep', 'check', '2026-09-30', 12, 10)];
+    assert.equal(checkedThrough(checks, '2026-06-29'), null);
+    assert.deepEqual(checkedThrough(checks, '2026-06-30'), { id: 'jun', date: '2026-06-30', result: 'matches', offByCents: 0 });
+    assert.deepEqual(checkedThrough(checks, '2026-08-31')?.id, 'jun');
+    assert.equal(checkedThrough(checks)?.id, 'sep');
+  });
+});
+
+describe("the fiscal-year close’s bank row (BC5a, owner 2026-11-06 Close row)", () => {
+  const c = (id: string, kind: 'start' | 'check', date: string, bank: number, books: number) =>
+    ({ id, kind, date, bankCents: bank, booksCents: books, onItsWayCents: 0, cashCents: null, waiting: [], bookIds: [],
+      createdBy: 'u1', createdAt: `${date}T12:00:00Z`, correctedAt: null }) as ClubSavedCheck;
+  const END = '2026-08-31';
+  const start = c('s', 'start', '2025-08-31', 5, 5);
+  it("a check in the year’s last month that matches: nothing open", () => {
+    assert.equal(bankCloseRow([start, c('aug', 'check', '2026-08-31', 9, 9)], END), null);
+    assert.equal(bankCloseRow([start, c('aug', 'check', '2026-08-01', 9, 9)], END), null);
+  });
+  it('the latest by the year end is before its last month: unchecked, with that day', () => {
+    assert.deepEqual(bankCloseRow([start, c('jun', 'check', '2026-06-30', 9, 9)], END), { kind: 'unchecked', lastChecked: '2026-06-30' });
+    assert.deepEqual(bankCloseRow([start, c('jul', 'check', '2026-07-31', 9, 9)], END), { kind: 'unchecked', lastChecked: '2026-07-31' });
+  });
+  it('no check by the year end: unchecked, never checked; a check after the year end does not count for it', () => {
+    assert.deepEqual(bankCloseRow([start], END), { kind: 'unchecked', lastChecked: null });
+    assert.deepEqual(bankCloseRow([start, c('sep', 'check', '2026-09-30', 9, 9)], END), { kind: 'unchecked', lastChecked: null });
+  });
+  it('the latest in the last month is off: off, with its check (the row opens it) and the amount', () => {
+    assert.deepEqual(bankCloseRow([start, c('aug', 'check', '2026-08-31', 1_240, 0)], END),
+      { kind: 'off', lastChecked: '2026-08-31', checkId: 'aug', offByCents: 1_240 });
+  });
+  it('an earlier off check later matched in the last month: nothing open (the latest decides)', () => {
+    assert.equal(bankCloseRow([start, c('jul', 'check', '2026-07-31', 1, 0), c('aug', 'check', '2026-08-31', 9, 9)], END), null);
+  });
+  it("no row when bank checking began in or after the year’s last month, or has no start (the year was never in reach)", () => {
+    assert.equal(bankCloseRow([], END), null);
+    assert.equal(bankCloseRow([c('s2', 'start', '2026-08-15', 5, 5)], END), null);
+    assert.equal(bankCloseRow([c('s3', 'start', '2026-09-30', 5, 5)], END), null);
+    assert.deepEqual(bankCloseRow([c('s4', 'start', '2026-07-31', 5, 5)], END), { kind: 'unchecked', lastChecked: null });
   });
 });
 

@@ -22,6 +22,16 @@ export function bankUrl(orgSlug: string, path = '', params: Record<string, strin
   return `/api/admin/accounting/bank${path}?orgSlug=${encodeURIComponent(orgSlug)}${extra}`;
 }
 
+/** The Bank TAB's address (a page, not a route), opened on an account and a check: the tab reads `account` and `check`
+ *  once on arrival, then drops them (BC5a: the Overview's line, the fiscal-year close's row). */
+export const bankTabHref = (accountingBase: string, accountId?: string, checkId?: string): string => {
+  const p = new URLSearchParams();
+  if (accountId) p.set('account', accountId);
+  if (checkId) p.set('check', checkId);
+  const qs = p.toString();
+  return `${accountingBase}/bank${qs ? `?${qs}` : ''}`;
+};
+
 /** "$1,284.50" from integer cents. */
 export const cents = (c: number | null | undefined): string => (c == null ? '' : money(c / 100));
 /** "75.00": integer cents as an amount FIELD holds it (the add window "Add the missing line" fills, BC3b). */

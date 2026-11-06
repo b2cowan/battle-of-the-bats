@@ -1,5 +1,11 @@
 # Bank balance check BC5: the club's touchpoints (build prompt, two sessions)
 
+> **BC5a done 2026-11-06** (built, walked `BANK_BC5A_WALK_PASSED` at 1440, 390 and 361, `/design` and `/review` applied;
+> owner rulings in plan §0 "Overview accounts / Overview past year / Close row / Close snapshot"; record in plan §9 BC5).
+> **Next BC5b** (below). For BC5b: the `/marketing` pass also takes the Overview line's words (`BANK_WORDS.overview*`) and
+> the close row's (`CLOSE_YEAR_WORDS.bank*`); three `/design` points went to the owner (the chip after the chevron, the
+> close row's "off by" not amber, its long bold noun). BC4b committed `6931b1e77` before BC5a began.
+
 > **Written 2026-11-06**, after BC4b was built (plan §9 BC4). **Paste
 > `execute @docs/projects/active/BANK_BALANCE_CHECK_BC5_BUILD_PROMPT.md` into a new chat on `dev`.** The first session
 > builds **BC5a**; it ends by writing one line at the top of this file ("BC5a done …, next BC5b") and the second session

@@ -17,8 +17,12 @@
  * ⚖ NO YEAR PILL, no year anywhere: a statement may straddle a fiscal year.
  * ⚖ Every figure is the server's (rule 6): each write answers with the account read again, and the screen draws it.
  * ⚖ A member who can open Accounting but not move club money (B7) reads the same tab with every write control absent.
+ * ⚖ A door from elsewhere (BC5a: the Overview's bank line and the fiscal-year close's bank row) names `?account=` and, for an
+ *   off check, `?check=`: read ONCE on arrival — the tab opens on that account and the check's window over it — then dropped
+ *   from the address, so a reload or a later pick doesn't reopen it. An id that isn't there falls to the usual first account.
  */
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Plus } from 'lucide-react';
 import SingleSelectDropdown from '@/components/coaches/SingleSelectDropdown';
 import pill from '@/components/shared/FilterPill.module.css';
@@ -47,6 +51,12 @@ export default function BankTab({ orgSlug }: { orgSlug: string }) {
   // "Check this statement again": the date handed to the form, and a count that re-keys it (the same date twice re-keys too).
   const [again, setAgain] = useState<{ date: string; n: number } | null>(null);
   const [notice, setNotice] = useNotice();
+  // The door's account and check, as the address named them on arrival (read once; see the header).
+  const search = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  const arrived = useRef<{ account: string | null; check: string | null } | null>(null);
+  if (arrived.current === null) arrived.current = { account: search.get('account'), check: search.get('check') };
 
   const beginRead = useLatestRead();
   /** `quiet`: a refresh after a save — if it fails the screen stays, rather than becoming a load failure. */
@@ -57,7 +67,9 @@ export default function BankTab({ orgSlug }: { orgSlug: string }) {
     if (!current()) return null;
     if (!r?.ok) { if (!quiet) setFailed(true); return null; }
     setOverview(r.data);
-    setAccountId(id => (id && r.data.accounts.some(a => a.id === id) ? id : r.data.accounts[0]?.id ?? null));
+    const asked = arrived.current?.account ?? null;
+    const has = (id: string | null): id is string => !!id && r.data.accounts.some(a => a.id === id);
+    setAccountId(id => (has(id) ? id : has(asked) ? asked : r.data.accounts[0]?.id ?? null));
     return r.data;
   }, [orgSlug, beginRead]);
   useDeferredLoad(!!orgSlug, loadOverview);
@@ -92,6 +104,21 @@ export default function BankTab({ orgSlug }: { orgSlug: string }) {
     return loadView(accountId);
   }, [accountId, heldAccountId, loadView]);
   useDeferredLoad(!!accountId, loadWanted);
+
+  // The door's check opens once its account is on screen; then the address forgets both (header).
+  useEffect(() => {
+    const a = arrived.current;
+    if (!view || !a || (!a.account && !a.check)) return;
+    if (a.check && view.account.id === a.account && (view.start?.id === a.check || view.checks.some(c => c.id === a.check))) {
+      setWin({ kind: 'check', id: a.check });
+    }
+    arrived.current = { account: null, check: null };
+    // Only the door's two keys go; anything else in the address stays (/review BC5a).
+    const rest = new URLSearchParams(window.location.search);
+    rest.delete('account'); rest.delete('check');
+    const qs = rest.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  }, [view, router, pathname]);
 
   if (failed) return <LoadFailed title={W.loadFailed} onRetry={() => void loadOverview()} />;
   if (!overview) return <LoadingState label={W.loading} />;

@@ -35,6 +35,9 @@
  *   · the one Export: on a CLOSED year it writes the YEAR-END REPORT (Excel first, then PDF) — read only from
  *     locked figures, in the drawing's order, with one line in place of the teams' cash; on an open year it is
  *     3b's board report, its title carrying the year's name and its two days.
+ *
+ * ⚖ BANK BALANCE CHECK BC5a (ask 4, R0 tab 7; owner 2026-11-06): the bank line sits right of "Where the club stands", one
+ *   per account, each a door to the Bank tab (`BankOverviewLine`); it reads TODAY on every year, as the band does.
  */
 import PayoutsStatusLine from '@/components/admin/kit/club/PayoutsStatusLine';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -74,6 +77,7 @@ import { formatStoredDate } from '@/lib/timezone';
 import type { FiscalYearOption, FiscalYearRead } from '@/lib/club-fiscal-year';
 import type { OverviewYearReads } from '@/lib/club-fiscal-reads';
 import LoadingState from '@/components/shared/LoadingState';
+import BankOverviewLine, { type BankMarks } from '@/components/admin/kit/club/money/bank/BankOverviewLine';
 
 /** The Overview's read (Stage 3c): the fiscal year read, the Year pill, the summary — and the year's own reads
  *  session 2 draws (the ended year's door, "From 2025–26, still open", a closed year's year-end report). */
@@ -84,6 +88,9 @@ interface Read {
   endedOpen: OverviewYearReads['endedOpen'];
   stillOpen: OverviewYearReads['stillOpen'];
   yearEnd: OverviewYearReads['yearEnd'];
+  /** Bank balance check BC5a: each account's latest check, as today reads it (the line right of "Where the club stands");
+   *  null when the bank couldn't be read (the line is left out). */
+  bank: BankMarks | null;
 }
 
 const KIND_TONE: Record<LedgerKind, ChipTone> = { org: 'good', tournament: 'neutral', league_season: 'neutral', team: 'info' };
@@ -241,8 +248,10 @@ export default function AccountingOverviewPage() {
       {/* The treasurer's Payouts line (Club Tier Stage 12a, A1); the owner's quiet line while not set up (A6). */}
       {currentOrg && <PayoutsStatusLine orgSlug={currentOrg.slug} planId={currentOrg.planId} home="club" />}
 
-      {/* ── Where the club stands · today ── */}
-      <p className={cr.recordSectionTitle}>{SUMMARY_WORDS.standsHeading(summary.today)}</p>
+      {/* ── Where the club stands · today, and the bank line right of it (BC5a, ask 4) ── */}
+      <BankOverviewLine marks={read.bank ?? null} accountingBase={base}>
+        <p className={cr.recordSectionTitle}>{SUMMARY_WORDS.standsHeading(summary.today)}</p>
+      </BankOverviewLine>
       <div className={cr.report}>
         <MoneySummaryBand
           ariaLabel="Where the club stands today"

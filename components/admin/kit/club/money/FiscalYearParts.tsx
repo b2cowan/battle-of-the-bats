@@ -50,6 +50,7 @@ import type { CloseQuestion } from '@/lib/club-fiscal-reads';
 import type { OpenInstallmentRow } from '@/lib/club-team-needs';
 import { FormError, ReasonQuestion, jsonInit, money, moneyFetch, refusalText } from './MoneyKit';
 import fy from './FiscalYear.module.css';
+import { bankTabHref, cents } from './bank/BankShared';
 import LoadingState from '@/components/shared/LoadingState';
 
 // ── A closed (or reopened) year's line ────────────────────────────────────────────────────────
@@ -452,9 +453,10 @@ function installmentDetail(rows: readonly OpenInstallmentRow[], short: boolean):
 }
 
 /** One kind of money still open: its count, what it is, whose and when, its figure, and the chevron — a door to the
- *  page that settles it (Ask 2). A count that waits on the club is the rail's amber pill (owner, 2026-10-01). */
+ *  page that settles it (Ask 2). A count that waits on the club is the rail's amber pill (owner, 2026-10-01). The bank's
+ *  row has no count and no figure (BC5a, owner 2026-11-06 "Close row": a statement isn't always monthly). */
 function OpenRow({ count, noun, detail, figure, href, waiting }: {
-  count: number; noun: string; detail?: ReactNode; figure: string; href: string; waiting?: boolean;
+  count?: number; noun: string; detail?: ReactNode; figure?: string; href: string; waiting?: boolean;
 }) {
   // A detail with nothing in it draws no " · " (an empty list or an empty string).
   const hasDetail = detail != null && detail !== '' && !(Array.isArray(detail) && detail.length === 0);
@@ -567,7 +569,7 @@ export function CloseYearQuestion({ q, year, accountingBase, onClosed, onClose }
 
   const o = question?.open;
   const next = question?.carries.nextYear.name ?? '';
-  const anyOpen = !!o && o.installments.count + o.requests.count + o.unfiled.count + o.pending.count > 0;
+  const anyOpen = !!o && o.installments.count + o.requests.count + o.unfiled.count + o.pending.count + o.bank.count > 0;
   const ledgerDoor = (p: Record<string, string>) => `${accountingBase}/ledger?${new URLSearchParams(p)}`;
 
   return (
@@ -636,6 +638,16 @@ export function CloseYearQuestion({ q, year, accountingBase, onClosed, onClose }
                     figure={money(o.pending.amount)} href={ledgerDoor(o.pending.ledger)}
                   />
                 )}
+                {/* The bank (BC5a): one row per account not checked by the year end, or off there; an off row opens that check. */}
+                {o.bank.rows.map(r => (
+                  <OpenRow
+                    key={r.accountId}
+                    noun={r.kind === 'off' ? W.bankOffNoun(r.accountName, cents(r.offByCents))
+                      : isPhone ? W.bankUncheckedNounShort(r.accountName) : W.bankUncheckedNoun(r.accountName, year.name)}
+                    detail={r.lastChecked ? W.bankLastChecked(r.lastChecked) : W.bankNoCheckBy(question.year.lastDay)}
+                    href={bankTabHref(accountingBase, r.accountId, r.kind === 'off' ? r.checkId : undefined)}
+                  />
+                ))}
               </div>
             )}
           </div>

@@ -21,6 +21,8 @@ import { closerNames } from './club-fiscal-year-server';
 import { NOT_FILED_ID } from './club-ledger';
 import { NOT_FILED_WORD, OUTSIDE_YOUR_GROUPS_WORD } from './club-money-words';
 import { owedRows, type OpenInstallmentRow } from './club-team-needs';
+import { readClubBankMarksQuietly } from './bank-club-read';
+import { bankCloseRow, type BankCloseRow } from './bank-club-rules';
 import {
   buildAgainstLastYear, buildYearEndReport, compareSpans, holdsBooks, scopeCloseSnapshot, statementOrder,
   type AgainstLastYear, type CloseSnapshot, type YearEndReport,
@@ -88,6 +90,9 @@ export interface YearOpenMoney {
   unfiled: { count: number; amount: number; moneyIn: number; moneyOut: number; ledger: { from: string; to: string; category: string; book?: string } };
   /** Lines still pending in the year (a cheque not cleared); the door is the Ledger narrowed to pending. */
   pending: { count: number; amount: number; rows: OpenLineRow[]; ledger: { from: string; to: string; status: 'pending'; book?: string } };
+  /** Bank balance check BC5a (owner 2026-11-06 "Close row"): each account whose bank isn't checked by the year end, or is
+   *  off there — one row each, no statement count, a warning only. Never stored by the close ("Close snapshot"). */
+  bank: { count: number; rows: (BankCloseRow & { accountId: string; accountName: string })[] };
 }
 
 export interface CloseQuestion {
@@ -135,7 +140,7 @@ function busiestBook(lines: readonly { ledgerId: string }[]): { book?: string } 
 
 /**
  * THE CLOSE QUESTION: what closing `year` locks, what carries, and the four kinds of open money still in it —
- * each counted, totalled, and a door. Never blocks (Ask 2); `canClose`/`refusal` say only what the step itself
+ * each counted, totalled, and a door — and the bank's fifth kind (BC5a: an account not checked by the year end). Never blocks (Ask 2); `canClose`/`refusal` say only what the step itself
  * refuses (not ended, already closed, oldest first). `scope` names teams (B11) — the snapshot a close stores is
  * the club's own, unscoped (`closeSnapshot`).
  */
@@ -147,7 +152,7 @@ export async function closeQuestion(
   const next = nextFiscalYear(year, setting);
   const loop = await loadClubLoop(orgId, null);
   const booksP = loadClubBooks(orgId, year, setting);
-  const [allocations, requests, booksNow, bookLines, planLines, nextLines, reopenings, closing, heldDay] = await Promise.all([
+  const [allocations, requests, booksNow, bookLines, planLines, nextLines, reopenings, closing, heldDay, bank] = await Promise.all([
     allocationsOf(orgId, loop, setting),
     loadRequests(orgId),
     booksP,
@@ -160,6 +165,8 @@ export async function closeQuestion(
       : Promise.resolve([] as Record<string, any>[]),
     supabaseAdmin.rpc('club_closing_balance', { p_org: orgId, p_last: year.lastDay }).then(r => { if (r.error) throw r.error; return Number(r.data); }),
     supabaseAdmin.rpc('club_fiscal_first_held_day', { p_org: orgId }).then(r => { if (r.error) throw r.error; return (r.data as string | null) ?? null; }),
+    // A warning only: a bank read that fails leaves the row out and never blocks the close (/review BC5a).
+    readClubBankMarksQuietly(orgId),
   ]);
 
   // 1. Installments still owed on the bills that count in the year.
@@ -193,6 +200,7 @@ export async function closeQuestion(
       rows: pending.map(l => ({ entryId: l.id, ledgerId: l.ledgerId, bookName: l.bookName, date: l.entryDate, description: l.description, amount: l.amount, direction: clubMovement(l) as 'in' | 'out' })),
       ledger: { from: year.firstDay, to: year.lastDay, status: 'pending', ...busiestBook(pending) },
     },
+    bank: bankOpen(bank?.accounts ?? [], year.lastDay),
   };
 
   // What the step itself would refuse (it warns about the rest, never blocks).
@@ -220,6 +228,15 @@ export async function closeQuestion(
     } : null,
   };
   return { question, snapshot: closeSnapshot(loop, allocations, year, setting, today, open, waiting.map(r => r.teamName), pending) };
+}
+
+/** 5. The bank (BC5a): one row per account still open at the year end, in the Bank tab's account order. */
+function bankOpen(accounts: NonNullable<Awaited<ReturnType<typeof readClubBankMarksQuietly>>>['accounts'], lastDay: string): YearOpenMoney['bank'] {
+  const rows = accounts.flatMap(a => {
+    const row = bankCloseRow(a.checks, lastDay);
+    return row ? [{ ...row, accountId: a.id, accountName: a.name }] : [];
+  });
+  return { count: rows.length, rows };
 }
 
 /** What a close STORES (org_fiscal_years.closing_snapshot): the open money as it stood, and each team's standing

@@ -290,10 +290,37 @@ export const startItemIdOf = (body: Record<string, unknown>): string | null => {
   return id && isUuid(id) ? id : null;
 };
 
-/** Ask 4: the account's "checked through" — its latest check's date and result (Matches / Off by $X); null before one. */
-export function checkedThrough(checks: readonly ClubSavedCheck[]): { date: string; result: 'matches' | 'off'; offByCents: number } | null {
-  const last = checks.filter(c => c.kind === 'check').at(-1);
+export interface CheckedThrough { id: string; date: string; result: 'matches' | 'off'; offByCents: number }
+
+/** Ask 4: the account's "checked through" — its latest check's id, date and result (Matches / Off by $X); null before
+ *  one. With `asOf`, the latest check dated on or before that day (BC5a: the fiscal-year close reads the year's last day).
+ *  `checks` are oldest first (`readClubChecks`). */
+export function checkedThrough(checks: readonly ClubSavedCheck[], asOf?: string): CheckedThrough | null {
+  const last = checks.filter(c => c.kind === 'check' && (asOf === undefined || c.date <= asOf)).at(-1);
   if (!last) return null;
   const f = figureOfSaved(last);
-  return { date: last.date, result: f.result, offByCents: f.offByCents };
+  return { id: last.id, date: last.date, result: f.result, offByCents: f.offByCents };
+}
+
+/** A bank row of the fiscal-year close's "Still open" (BC5a, owner 2026-11-06 "Close row"): `unchecked` — no check on or
+ *  before the year end, or the latest is before the year's last month; `off` — the latest by the year end is off. */
+export type BankCloseRow =
+  | { kind: 'unchecked'; lastChecked: string | null }
+  | { kind: 'off'; lastChecked: string; checkId: string; offByCents: number };
+
+/**
+ * The close row for one account and a year ending `lastDay` (a month's last day: a fiscal year runs whole months), or null
+ * when nothing is open. ⚖ No row when the account's bank checking began in or after the year's last month (its start
+ * dated then or later), or has no start: that year was never in the checks' reach, so a row would ask the impossible.
+ * Warns, never blocks (the close's own rule).
+ */
+export function bankCloseRow(checks: readonly ClubSavedCheck[], lastDay: string): BankCloseRow | null {
+  const lastMonth = `${lastDay.slice(0, 8)}01`;
+  const start = checks.find(c => c.kind === 'start');
+  if (!start || start.date >= lastMonth) return null;
+  const latest = checkedThrough(checks, lastDay);
+  if (!latest || latest.date < lastMonth) return { kind: 'unchecked', lastChecked: latest?.date ?? null };
+  return latest.result === 'off'
+    ? { kind: 'off', lastChecked: latest.date, checkId: latest.id, offByCents: latest.offByCents }
+    : null;
 }

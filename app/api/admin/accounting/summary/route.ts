@@ -7,6 +7,7 @@ import { overviewYearReads } from '@/lib/club-fiscal-reads';
 import { teamIdsInScope } from '@/lib/club-team-route';
 import { tournamentToday } from '@/lib/timezone';
 import { clubPlanYears, readBoardSummary } from '@/lib/club-budget-read';
+import { bankMarks } from '@/lib/bank-club-steps';
 
 /**
  * GET /api/admin/accounting/summary?year=2026-09-01 — the board summary for a FISCAL YEAR, which IS the Overview tab (Club Tier
@@ -36,6 +37,10 @@ import { clubPlanYears, readBoardSummary } from '@/lib/club-budget-read';
  *     waiting, until each is settled (each row its team, what, state, amount, and the door it opens).
  *   · `yearEnd` — on a CLOSED year, the year-end report's figures (the Overview's Export prints it), read only
  *     from locked figures; null on an open year (the Export is 3b's board report, unchanged).
+ *
+ * ⚖ Bank balance check BC5a (ask 4; owner 2026-11-06): `bank` — each live account's latest check as TODAY reads it, for
+ *   the line beside "Where the club stands" (never the year's: that band is today on every year). `never` + `canMove`:
+ *   the no-account state (a writer's door to the first check; a reader sees no line).
  */
 export const GET = withObservability(async (req: Request) => {
   const gate = await resolveClubMoney(req, { scope: 'books', write: false });
@@ -46,11 +51,12 @@ export const GET = withObservability(async (req: Request) => {
   const { setting, year } = await resolveFiscalYear(req, ctx.org.id, today);
   const canMove = canMoveClubMoney(ctx, ctx.org);
   const scope = teamIdsInScope(ctx);
-  const [summary, years, read, extra] = await Promise.all([
+  const [summary, years, read, extra, bank] = await Promise.all([
     readBoardSummary(ctx.org.id, year, setting, scope, today),
     clubPlanYears(ctx.org.id, setting, today),
     describeFiscalYear(ctx.org.id, year, setting, today, canMove),
     overviewYearReads(ctx.org.id, { year, setting, today, canMove, scope }),
+    bankMarks(ctx),
   ]);
-  return NextResponse.json({ year: read, years, summary, ...extra });
+  return NextResponse.json({ year: read, years, summary, ...extra, bank });
 }, { route: '/api/admin/accounting/summary' });

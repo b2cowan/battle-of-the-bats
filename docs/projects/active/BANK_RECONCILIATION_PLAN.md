@@ -72,6 +72,10 @@ need to type a statement balance, see the difference from the books on that date
 | Phone search | **Find keeps the product's search on a phone, full width above the cards.** (Owner, 2026-11-06, BC4b.) |
 | Phone page size | **Find shows 10 lines at a time on a phone ("Show 10 more"), 50 on a desk.** (Owner, 2026-11-06, BC4b.) |
 | Phone fields | **On a phone the check's Statement date and Bank balance sit side by side, as drawn, the balance labelled "Bank balance"**; if the date field doesn't fit at 361px they stack and the owner is told. (Owner, 2026-11-06, BC4b.) |
+| Overview accounts | **One Overview line per account, each its own door, in the Bank tab's account order.** (Owner, 2026-11-06, BC5a.) |
+| Overview past year | **The Overview line always reads today, on every year the Year pill shows**, as the "Where the club stands" band beside it does. (Owner, 2026-11-06, BC5a.) |
+| Close row | **The fiscal-year close shows a bank row only when something is open, one row per such account, with no statement count**: its latest check on or before the year end is missing, is before the year's last month, or is off. It warns, never blocks; it opens the Bank tab on that account. (Owner, 2026-11-06, BC5a.) |
+| Close snapshot | **The close does not store the bank's state**: the saved checks are the record; nothing is added to the year-end report. (Owner, 2026-11-06, BC5a.) |
 
 ### Tick-off rulings that still stand (Appendix A §4)
 
@@ -724,7 +728,7 @@ missing line, Waiting at the start, M2, the finishing passes; two owner question
 ### BC4 — Club: the Bank tab on a phone (390)
 Build prompt written 2026-11-06: `BANK_BALANCE_CHECK_BC4_BUILD_PROMPT.md` (two sessions: BC4a the start's lines on an
 earlier re-check, two owner questions first; BC4b the phone frames, three owner questions first).
-- [x] **The phone frames — BC4b built 2026-11-06** (owner: §0 "Phone sums / search / page size / fields" ruled as
+- [x] **The phone frames — BC4b built 2026-11-06, committed `6931b1e77` 2026-11-06** (owner: §0 "Phone sums / search / page size / fields" ruled as
   recommended; yes to the UX summary). Anchors:
   - **Find on a phone** (`BankFind`, `useIsPhone`): `phoneList` = the kit's `ClubRowList` of static `ClubRow` cards
     (`LineCard`: title what, caption date · book · how + the chip door, `trail` the signed amount
@@ -798,8 +802,41 @@ earlier re-check, two owner questions first; BC4b the phone frames, three owner 
 Build prompt written 2026-11-06: `BANK_BALANCE_CHECK_BC5_BUILD_PROMPT.md` (two sessions: BC5a the Overview line and the
 fiscal-year close row, three owner questions first; BC5b the printable report, help and the club half's words, two owner
 questions first). The Teams tab's "Bank checked" column (R0 tab 7) reads each team's bank, so it is BC8's.
-- [ ] The Overview line (ask 4), the fiscal-year close "Still open" row (`lib/club-fiscal-year-moves.ts`), the report
-  (club, ask 9), help in `lib/help-content/accounting.tsx` (`/docs`), the `/marketing` pass on §5's club words.
+- [x] **The Overview line and the fiscal-year close row — BC5a built 2026-11-06** (owner: §0 "Overview accounts",
+  "Overview past year", "Close row", "Close snapshot" ruled as recommended; yes to the UX summary). Anchors:
+  - **Rules** (`lib/bank-club-rules.ts`): `checkedThrough(checks, asOf?)` now carries the check's `id` and, with `asOf`,
+    reads the latest check on or before that day; `bankCloseRow(checks, lastDay)` → `unchecked` (no check by the year
+    end, or the latest before the year's last month) · `off` (the latest by the year end is off, with its check id) ·
+    null; no row when the account has no start or its start is in or after the year's last month (the year was never in
+    reach).
+  - **Reads**: `readClubBankMarks` (`lib/bank-club-read.ts`: live club accounts in the tab's order + their checks, no books;
+    the accounts query is one helper, `liveAccountsOf`, shared with `readClubBankAccounts`) and its quiet form
+    `readClubBankMarksQuietly` (a failed read is logged and answers null: /review, since migs 447/449/450 reach prod with
+    the bank code and the Overview and Close year must never fail for a warning). `bankMarks` (`lib/bank-club-steps.ts`)
+    → the summary route's `bank` (today, never the year). `closeQuestion` (`lib/club-fiscal-reads.ts`) → `open.bank`
+    (a fifth kind; `closeSnapshot` copies fields by hand, so nothing is stored). The `/bank` route comment fixed (it
+    claimed a latest-check read the route doesn't do).
+  - **Screens**: `BankOverviewLine` (right of "Where the club stands", one line per account, the amber chip a separate
+    door to the check, after the line's chevron since links can't nest; a writer with no account gets "Bank: not
+    checked yet ›", a reader nothing; ≤768 44px doors, ≤640 under the heading, line and chip on one row). The Bank tab
+    reads `?account=` / `?check=` once (`bankTabHref`, `BankShared.ts`), opens that account and check, then drops only
+    those two keys. The close window's `OpenRow` takes no count and no figure for the bank rows; words in
+    `CLOSE_YEAR_WORDS.bank*` (beside the other rows) and `BANK_WORDS.overview*`, both for BC5b's `/marketing`.
+- [x] **Proved 2026-11-06:** 289 bank tests (new: `checkedThrough` as of a day, `bankCloseRow`'s six cases; screens guard
+  §12), 677 with the fiscal and words suites; tsc 0 errors, focused lint, `check:spelling`, `check:tokens`;
+  `check:layout --only=admin-accounting,admin-accounting-treasurer,admin-accounting-bank` clean at 1440/768/390/361 (the
+  first run caught the line's door under the tap floor at 768). Dev walk `.probe/bank-bc5/bc5a.mjs` →
+  `BANK_BC5A_WALK_PASSED` at 1440, 390 and 361 (a matching check, then an off one; the line, the chip, its door to the
+  opened check and the address dropped, the line's door, a past fiscal year reads today, the close question's row read
+  through its route); the walk account ends on its Sep 30 start only. ⚠ The close WINDOW was not seen in a browser: no
+  dev club has an ended, open year.
+- [x] **Finishing passes 2026-11-06:** `/design` (applied: line and chip on one row on a phone; to the owner: the chip
+  sits after the chevron, not before as drawn; the close row's "off by" isn't amber, as drawn; its long bold noun);
+  `/review` standard (3 lenses): applied the quiet bank read (Overview, Teams tab and Close year no longer depend on
+  the bank tables), only the door's two keys dropped from the address, the bank route's gate comment; kept: a no-account
+  tab keeps the keys in its address, the Teams tab pays the two small reads, one start per account assumed.
+- [ ] **BC5b:** the report (club, ask 9), help in `lib/help-content/accounting.tsx` (`/docs`), the `/marketing` pass on
+  §5's club words (incl. the Overview line's and the close row's).
 
 ### BC6 — Coach: the source and the routes (no screen)
 - [ ] The team account, created at the first save (no setup question; name "Team bank account").

@@ -7,10 +7,10 @@ import { loadFiscalSetting } from './club-fiscal-year-server';
 import { moveRefused, refused, type Moved, type Refused } from './club-money-route';
 import { tournamentToday } from './timezone';
 import { isUuid } from './utils';
-import { entriesById, figureForDate, readClubBankAccount, readClubBankAccounts, readClubChecks } from './bank-club-read';
+import { entriesById, figureForDate, readClubBankAccount, readClubBankAccounts, readClubBankMarksQuietly, readClubChecks } from './bank-club-read';
 import { bookIdsOf, type ClubBook } from './bank-club-map';
 import {
-  checkView, readDay, readText, refusalOfDbError, refusalOfStep, savePlan, saveRefusal, startItemIdOf, startItemPlan,
+  checkView, checkedThrough, readDay, readText, refusalOfDbError, refusalOfStep, savePlan, saveRefusal, startItemIdOf, startItemPlan,
   statusOfRefusal, waitingIdsOf,
 } from './bank-club-rules';
 import { BANK_REFUSAL, type BankRefusalCode } from './bank-check-words';
@@ -65,6 +65,23 @@ export async function bankOverview(ctx: AuthContextWithRole) {
     accounts: all.accounts.map(a => ({ id: a.id, name: a.name })),
     books: allBooks(all).map(b => ({ id: b.id, name: b.name, accountId: all.accountOfBook.get(b.id) ?? null })),
     canMove: canMoveClubMoney(ctx, ctx.org),
+  };
+}
+
+/**
+ * The Accounting Overview's bank line (BC5a; ask 4, R0 tab 7; owner 2026-11-06 "Overview accounts" / "Overview past
+ * year"): each live account's latest check, as TODAY reads it — never a year, as "Where the club stands" beside it is
+ * today on every year the Year pill shows. `never` + `canMove` decide the no-account state (a reader sees no line: the
+ * Bank tab would only tell them to ask the treasurer). Read by GET /api/admin/accounting/summary, behind its gate.
+ * Null when the bank couldn't be read: the line is left out, the Overview still loads (/review BC5a).
+ */
+export async function bankMarks(ctx: AuthContextWithRole) {
+  const marks = await readClubBankMarksQuietly(ctx.org.id);
+  if (!marks) return null;
+  return {
+    never: marks.never,
+    canMove: canMoveClubMoney(ctx, ctx.org),
+    accounts: marks.accounts.map(a => ({ id: a.id, name: a.name, checkedThrough: checkedThrough(a.checks) })),
   };
 }
 
