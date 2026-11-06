@@ -368,7 +368,7 @@ Part 7 (2b has its own).
 **Planned 2026-11-05 as Part 6b** ([GST_HST_STAGE2_PART6B_BUILD_PROMPT.md](GST_HST_STAGE2_PART6B_BUILD_PROMPT.md)): a test-mode spike,
 a `platform_refunds` migration, the refund through a credit note (with a split preview), the club's name put back after Checkout.
 Owner ruled R1–R3 as recommended 2026-11-05. Runs before Part 7; its walk steps fold into Part 7's walk.
-**Part 7 (closeout) BUILT + REVIEWED 2026-11-06; walk §471 published, owed** (commit hash in the next entry). All [V 2026-11-06]:
+**Part 7 (closeout) BUILT + REVIEWED 2026-11-06, COMMITTED `e303868f4` 2026-11-06 on dev (31 files; shared files took only Part 7's lines), pushed for the walk; walk §471 published, owed.** All [V 2026-11-06]:
 - **Q1 · step by the gap** (`lib/console-money-credit.ts` `planCreditNote` + `nextCreditAmount`): a bracket search for the LARGEST
   before-tax line amount whose Stripe-previewed total is not above the typed figure; guesses by the last preview's own ratio, then
   the line through the last two previews, a spill point first when a guess would cross onto another line, halving once the bracket's
