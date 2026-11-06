@@ -1,6 +1,6 @@
 # GST/HST · Stage 2 Part 6b: a refund goes through a credit note, and a checkout invoice names the club (build prompt)
 
-> **Status: BUILDING 2026-11-05 — owner ruled R1–R4; Part 0 run, Part 1 (mig 446, dev) done, Part 2 (the credit-note refund) built 2026-11-05. Next: Part 3.**
+> **Status: BUILDING — owner ruled R1–R4; Part 0 run, Parts 1–2 committed `fcef13e3b` 2026-11-05 (mig 446 dev, prod apply owed BEFORE they ship), Part 3 (the club's name after Checkout) committed 2026-11-06 (hash in ▶ Progress). Next: Part 4.**
 
 > Written 2026-11-05 by `/plan`. Parent: [GST_HST_STAGE2_BUILD_PROMPT.md](GST_HST_STAGE2_BUILD_PROMPT.md) ▶ Progress, "Part 6 RUN"
 > (Defect 2 and the "name on the invoice" observation are this part's whole reason). Plan of record:
@@ -369,3 +369,125 @@ Settle Stripe's behavior before designing against it. Write each answer into ▶
     `money.compare` at MoneyTab:209 (existing, not this part); admin-type / old-look / export-catalog / org-slug / index-coverage
     fail on files this part did not touch. Next: Part 3 (fresh session), then `/simplify` (the planner vs `creditAgainst`'s
     preview) and `/review` on Parts 1–3 per Part 4.
+- 2026-11-05: **Parts 1–2 COMMITTED `fcef13e3b` on dev (18 files; not pushed) after `/simplify` and `/review` (high-risk tier).**
+  Migration 446 applied to dev 2026-11-05, prod apply owed (MANUAL_PROD_STEPS); it must land before the code ships. The
+  schema snapshots are not in the commit (they also hold other sessions' migrations 445 and 447); the next snapshot refresh
+  takes them. Supersedes the "READ_OPTS … re-exported from console-money-stripe.ts" line above: the re-export is gone, both
+  Stripe modules import it from `console-money-credit.ts`.
+  - **`/simplify` (4 angles).** Verdict on the owner's question: **`creditAgainst` shares nothing with the planner** (its
+    preview is one exact line with no options and only when `automatic_tax` is on; the planner previews spilled lines with
+    `READ_OPTS`, which a guard pins; the money split, `email_type`, metadata key and idempotency key all differ). Applied, with
+    both paths' behaviour unchanged: one `idOf` (the planner's) instead of a second copy in the Stripe module; `refundIdOfNote`
+    and `noteFacts` so creation and recovery read a note's refund and id/number one way (the pair had been spelled out four
+    times); `recoverRefunds` is one lookup keyed by our record id instead of two maps and a nested ternary; one
+    `listIssuedCreditNotes` shared by the planner's read and the charge window (the window's own list stopped at 20 notes and
+    did not page); the charge window reads the notes and our refund rows together; `MAX_PREVIEWS`, `invoiceIdsForCharge`
+    and `readCreditTarget` are no longer exported (`creditTargetForCharge` is the one door); `feeRowId` became `isFeeInvoice`
+    (it was only ever read as a yes/no, and its comment promised a re-read that was deliberately not built); two derivations
+    in the window. **Skipped:** one `loadClubCharge` for the three routes' copied ownership gate; one invoice-read shared by
+    the charge window and the planner; passing the window's before-tax figure to the planner as a starting guess; asking Stripe
+    to expand the note's refund on create (would drop one call after the money moved; not verified against Stripe, so not
+    built); caching tax-rate names; cancelling a superseded preview request. Each changes a read on the money path or reaches
+    outside this diff; none is a defect.
+  - **`/review` (money failure modes, planner + window, security + tenancy, data + contract): no Critical or High.** Applied:
+    (1) the invoice is now checked to belong to the club's own Stripe customer and the site's mode before a note is planned
+    (404 "not this club's"), instead of resting on "the payment is the club's, so the invoice is" — `creditTargetForCharge` takes
+    the owner; (2) the window dead end: when the preview route found no invoice for a charge the window showed one on, the window
+    said "Asking Stripe…" for ever with confirm blocked; it now says `REFUND_WORDS.noteInvoiceGone` (close and open the charge
+    again); (3) recovery: a Stripe list that was cut off (3 pages) and does not show a record no longer decides "not made" and
+    releases the charge — the record stays open and the charge held; (4) the charge window's PDF link is `https://` only;
+    (5) a refusal that is not about the amount no longer blanks the window and re-previews; (6) the comment over the
+    re-plan said it re-reads the invoice — it re-uses the target the route read just before (Stripe's own preview and create
+    still refuse over-credit), now said plainly. Probe re-run after (1): `.probe/gst2/part6b-part2-refunds-run2.txt`, same results
+    as run 1 (every refund = note = preview, never above the typed figure; the three refusals are the staged ones).
+    Guards pass (the stage3 §12 failure on `ExpenseFormWindow.tsx` is the pre-existing one); typecheck exit 0.
+  - **OPEN — owner/follow-up, none blocks the commit:**
+    1. **A discounted invoice is unprobed.** A credit-note line's `amount` may be before discounts while the planner's pool uses
+       the invoice's after-discount total, so a full refund of a discounted subscription invoice might cap short and say "the rest
+       of this invoice was credited before" when it was not. It fails safe (never refunds more). Discounts exist in the product
+       (coupons, retention offers). Probe: pay a discounted invoice, preview a note for the whole line. Related: the planner starts
+       from the invoice-wide ratio and steps one cent at a time within 6 previews; a discount, mixed tax across lines or part-credits
+       can exhaust that and give a plan below the nearest (never above), with "the nearest it can make" said falsely. Stepping by
+       the gap would converge in ~2 previews. Do the probe first; it decides whether this is needed.
+    2. **A legacy charge refunds bare.** The invoice is learned only through the charge's payment intent; a charge with none, or
+       an invoice paid by a `charge`-type payment, finds no invoice and refunds without a note (R3's path). Probably no such charge
+       in 2026; a guard would refuse a bare refund when the charge shows an invoice.
+    3. **The window can disagree with the server about "has an invoice"** (both read the same payment list; needs a transient
+       gap). One direction now says so (item 2 above); the other (window shows none, server finds one) refuses with "changed since
+       you opened it" every time until the charge is opened again — recoverable, misleading.
+    4. **The charge window now shows the note's PDF link to every role that can open the Money tab (including support, which
+       cannot refund).** The PDF carries the club's billing name, address and tax details. Gate it behind `refund` if support
+       should not hold it.
+    5. A note number outside letters, digits and hyphens would fail migration 446's number CHECK at completion (recovery would
+       then throw and hold the charge). Stripe's numbers fit; catch it in recovery or drop the CHECK if that ever matters.
+    6. Plan & billing's fee list still does not show a refunded fee invoice (the deliberate no-build above).
+  - **Next:** Part 3 (the club's name on its invoices), fresh session. The dev server needs a restart before the owner tests
+    (new files and a new route).
+- 2026-11-06: **Part 3 BUILT and reviewed (the club's name goes back on after Stripe's page).** Commit hash in the next entry.
+  - **Verified before building** (all [V 2026-11-06]):
+    - Path B stamps the CUSTOMER, not only the session: the `metadata` at `create-team-checkout/route.ts:320` is inside
+      `customers.create` (the `create()` of `buyerStripeCustomer`, :317-323), and a customer found again is named through
+      `stampStripeCustomerAddress(customerId, located.location, buyerName)` (:327 → `billing-location-server.ts:136`
+      `buyerNameUpdate`). Nothing changed. A coach with no `full_name`/`name` gets no name of ours, so the fix does nothing
+      for them (correct: we have no name to put back).
+    - Path A: the Stripe path always has a billing address (`create-checkout/route.ts:188-196`: only the comped Founding
+      upgrade skips it, and that returns before Stripe at :355-367), so `ensureStripeCustomer` (:394, name = the club's)
+      stamps a new customer at `billing-setup.ts:62` and an existing one through `buyerNameUpdate` at :101. "No name of ours
+      stored → change nothing" is therefore only an old customer whose existing name `buyerNameUpdate` already refused to
+      replace (it read that name as the buyer's own). Overwriting it after Checkout would contradict that same rule. Right
+      outcome. Path C: `choose-next-season/route.ts:145`, same function, club's or coach's name.
+    - The operator line copies `tellOwnerOfUnrecognisedPrice` (`webhook/route.ts:157-176`): a log line, a platform event
+      (free text, no CHECK), and `alertOwner` with a once-only key. New: event `buyer_name_not_restored`, inbox kind
+      `buyer_name_alert` (never logged, not a Story kind).
+  - **Built.** `buyerNameAfterCheckout(session, customer)` (`lib/billing-tax.ts`, pure). The webhook's
+    `restoreBuyerName` (retrieve fresh, decide, one `customers.update({ name })`; never throws; a failure is told once per
+    session) is called in `checkout.session.completed` when `session.mode === 'subscription'`, right after the setup arm and
+    before the next-season, add-on and standalone_team arms. `buyerNameUpdate` is unchanged (pins at `billing-tax.test.ts`
+    :104-105 kept).
+  - **Tests.** `billing-tax.test.ts`: 6 cases (cardholder replaced; typed kept, with our stored name left so `buyerNameUpdate`
+    keeps it too; no name of ours; already ours or replayed; changed after Checkout; an older payload). New
+    `billing-buyer-name-path-guard.test.ts`: one call, in the subscription arm, before the three early-break arms; read
+    fresh, decided, one update; never throws, and is told (log, event, owner); every path stores our name first (A, B new and
+    found again, C); R4: `customer_update.name: 'auto'` kept and no `name_collection` anywhere in `app/` or `lib/`.
+    **Mutate-and-fail 16/16** (`.probe/gst2/p6b3-mutate.cjs`, run `part6b-part3-mutate-run3.txt`). No webhook unit harness
+    exists for this arm, so none was built.
+  - **Test-mode proof** (`.probe/gst2/part6b-part3-name.mjs`, runs `part6b-part3-name-run1.txt` and `-run2.txt` after the
+    review fix, 11/11 both times). The product's own decision runs on real test customers, using the REAL Part 0 sessions
+    (a_on not typed, a_num typed with a GST/HST number), and is applied as the webhook applies it. Results:
+    (a) not typed → the club's name; (b) typed → kept, our stored name left as ours; (c) no name of ours → untouched;
+    (d) replay → no second change; (e) renamed after Checkout → untouched. **(f) on a test clock:** a trial subscription's
+    $0 first invoice names the cardholder, and its first PAID invoice after the trial names the club. A no-trial subscription
+    (R4: a returning club) has a PAID first invoice that names the cardholder (accepted), and its renewal names the club.
+    Taxed at ON 13% (1000 + 130). Cleanup: the clock deleted with its customers, 4 customers deleted, the product archived.
+  - **`/review` (high-risk tier; 4 lenses: correctness, blast radius, concurrency/Stripe ordering, security/data): no Critical
+    or High.** One fix applied: a payload with no `collected_information` at all (a webhook endpoint on an older API
+    version) now changes nothing. The finder was right: Part 0's typed session has `customer_details.name` = the typed
+    business name, so on such a payload a typed name would have looked like the cardholder's and been overwritten. The test
+    endpoint is pinned to `2026-04-22.dahlia` and its events carry the object (`part6b-part3-endpoint-version-run1.txt`).
+    Guards, mutants and the probe were re-run after the fix. Accepted as is, and recorded here: transient Stripe errors are
+    not retried (the prompt's rule: never fail the webhook; the owner email is the repair path). Two inline Stripe calls run
+    before the plan record (the other arms already call Stripe inline; there is no throw path). A retry over 3 days could
+    email the owner again after the email provider's once-only window.
+  - **OPEN / known (none blocks the commit):**
+    1. **Production's webhook endpoint must be pinned to `2026-04-22.dahlia` too** (Part 4 / the promote: read its
+       `api_version` in live mode). On an older pin, the fix above makes the restore a silent no-op, never a wrong name.
+    2. **Event ordering is not proven end to end.** The proof used real session payloads and real customers, but not a
+       real Checkout followed by the real webhook. If Stripe ever delivered the event before Checkout wrote the cardholder's
+       name, the name would still be ours, nothing would change, and Checkout would then overwrite it. Part 4's matrix row
+       "path A, no business name → the first invoice after the trial names the club" runs through a real page and the real
+       webhook, and decides it.
+    3. **A Premium → Club move after this:** the webhook has put the coach's own name back, so `buyerNameUpdate`
+       (`withClubAddressOnStripe`) renames to the club at the move. A coach who typed a business name on the Premium page
+       keeps it. Known, as ruled.
+    4. **A business name typed on an EARLIER Checkout and not typed this time** is replaced by the club's name. Checkout
+       itself overwrites it with the cardholder's, and the owner's rule is "the club's name unless a business name was typed
+       on the page". The GST/HST number stays on the customer.
+    5. A name changed (in Stripe's portal or dashboard) to exactly the cardholder's, followed by a late replay of the same
+       Checkout event, would be put back to ours. The safety rule compares names only.
+    6. `billing-location-server.ts` `putBack` (a refused club-address move restores a snapshot of the name) could write the
+       cardholder's name back if it ran in the seconds between Checkout and the webhook. This predates Part 3 and is very
+       unlikely.
+  - **Verify 2026-11-06:** typecheck exit 0 (8 GB heap); lint clean on every changed file; spelling, dates and dictionary
+    checks pass. The named guards pass except the known stage3 §12 failure on `ExpenseFormWindow.tsx` (not this part).
+    Nothing in production needs applying for Part 3 (no migration). No UI changed, so no `/docs`. The dev server needs no
+    restart for browser testing (the new file is a test).

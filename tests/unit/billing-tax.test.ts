@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
-  AUTOMATIC_TAX, BILLING_REVIEW_HOLD, BILLING_TAX_WORDS, BUYER_NAME_META, RECOVERED_FEE_TAX, TAXED_CHECKOUT, buyerNameUpdate, decideBuyerTax,
+  AUTOMATIC_TAX, BILLING_REVIEW_HOLD, BILLING_TAX_WORDS, BUYER_NAME_META, RECOVERED_FEE_TAX, TAXED_CHECKOUT, buyerNameAfterCheckout, buyerNameUpdate, decideBuyerTax,
   namedTaxLines, quoteTax, taxLineLabel, taxWasWorkedOut,
 } from '../../lib/billing-tax.ts';
 import {
@@ -108,6 +108,53 @@ describe('buyerNameUpdate · the buyer’s name on the Stripe customer', () => {
     assert.equal(buyerNameUpdate({ name: null }, '  '), null);
     assert.equal(buyerNameUpdate({ name: 'Riverdale', metadata: ours('Riverdale') }, 'Riverdale'), null);
     assert.deepEqual(buyerNameUpdate({ name: 'Riverdale', metadata: {} }, 'Riverdale'), { metadata: ours('Riverdale') });
+  });
+});
+
+describe('buyerNameAfterCheckout · the club’s name goes back on after Stripe’s page (Part 6b Part 3, owner 2026-11-05)', () => {
+  const ours = (name: string) => ({ [BUYER_NAME_META]: name });
+  // The two session shapes Part 0 recorded (.probe/gst2/part6b-sessions-run1.txt, test mode 2026-11-05).
+  const notTyped = {
+    collected_information: { business_name: null },
+    customer_details: { name: 'Tom Morello', business_name: null },
+  };
+  const typed = {
+    collected_information: { business_name: 'Riverdale Minor Ball Assn. Inc.' },
+    customer_details: { name: 'Riverdale Minor Ball Assn. Inc.', business_name: 'Riverdale Minor Ball Assn. Inc.' },
+  };
+  it('puts our name back over the cardholder’s when no business name was typed', () => {
+    assert.deepEqual(buyerNameAfterCheckout(notTyped, { name: 'Tom Morello', metadata: ours('Riverdale Minor Ball') }), { name: 'Riverdale Minor Ball' });
+  });
+  it('keeps a business name typed on Stripe’s page, and leaves our name stored so it stays theirs', () => {
+    const customer = { name: 'Riverdale Minor Ball Assn. Inc.', metadata: ours('Riverdale Minor Ball') };
+    assert.equal(buyerNameAfterCheckout(typed, customer), null);
+    // …so the next paid step's buyerNameUpdate keeps it too (the existing pin, unchanged).
+    assert.equal(buyerNameUpdate(customer, 'Riverdale Minor Ball'), null);
+    // Either field alone is enough to say a name was typed.
+    assert.equal(buyerNameAfterCheckout({ collected_information: { business_name: 'X Inc.' }, customer_details: { name: 'Tom Morello' } },
+      { name: 'Tom Morello', metadata: ours('Riverdale Minor Ball') }), null);
+    assert.equal(buyerNameAfterCheckout({ collected_information: { business_name: null }, customer_details: { name: 'Tom Morello', business_name: 'X Inc.' } },
+      { name: 'Tom Morello', metadata: ours('Riverdale Minor Ball') }), null);
+  });
+  it('changes nothing on a payload that cannot say whether a name was typed (an older API version; /review 2026-11-06)', () => {
+    // A typed name on such a payload: the customer's name and customer_details.name are both the typed business name.
+    const old = { customer_details: { name: 'Riverdale Minor Ball Assn. Inc.' } };
+    assert.equal(buyerNameAfterCheckout(old, { name: 'Riverdale Minor Ball Assn. Inc.', metadata: ours('Riverdale Minor Ball') }), null);
+    assert.equal(buyerNameAfterCheckout({ ...notTyped, collected_information: null }, { name: 'Tom Morello', metadata: ours('Riverdale Minor Ball') }), null);
+  });
+  it('does nothing for an old customer with no name of ours stored (it never invents one)', () => {
+    assert.equal(buyerNameAfterCheckout(notTyped, { name: 'Tom Morello', metadata: {} }), null);
+    assert.equal(buyerNameAfterCheckout(notTyped, { name: 'Tom Morello', metadata: null }), null);
+    assert.equal(buyerNameAfterCheckout(notTyped, { name: 'Tom Morello', metadata: ours('  ') }), null);
+  });
+  it('does nothing when the name is already ours (a cardholder with the club’s name, or an event replayed after the fix)', () => {
+    assert.equal(buyerNameAfterCheckout(notTyped, { name: 'Riverdale Minor Ball', metadata: ours('Riverdale Minor Ball') }), null);
+  });
+  it('does nothing when the customer’s name is not the one Checkout wrote (set by someone after Checkout)', () => {
+    assert.equal(buyerNameAfterCheckout(notTyped, { name: 'Changed In The Dashboard', metadata: ours('Riverdale Minor Ball') }), null);
+    assert.equal(buyerNameAfterCheckout({ collected_information: null, customer_details: { name: null } },
+      { name: 'Tom Morello', metadata: ours('Riverdale Minor Ball') }), null);
+    assert.equal(buyerNameAfterCheckout({}, { name: null, metadata: ours('Riverdale Minor Ball') }), null);
   });
 });
 

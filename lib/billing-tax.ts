@@ -75,6 +75,39 @@ export function buyerNameUpdate(
   return { name: want, metadata: { [BUYER_NAME_META]: want } };
 }
 
+/**
+ * After a subscription Checkout (paths A, B, C; GST/HST Stage 2 Part 6b, owner 2026-11-05): the club's name goes back on its Stripe
+ * customer unless the buyer typed a business name on Stripe's page. `customer_update.name: 'auto'` (TAXED_CHECKOUT, needed for the
+ * GST/HST number field) makes Checkout write the CARDHOLDER's name onto the customer when no business name is typed, and
+ * `buyerNameUpdate` would then read that name as the buyer's own and keep it on every later invoice. Part 0 (test mode 2026-11-05):
+ * a typed name arrives as `collected_information.business_name` (and becomes the customer's name); none typed leaves it null and
+ * `customer_details.name` = the cardholder. A typed name is kept with `BUYER_NAME_META` left as ours, so it stays "theirs".
+ * Null = change nothing: a business name was typed; no name of ours is stored (an old customer: we never invent one); the name is
+ * already ours; or the customer's name is not the one Checkout wrote (someone set it after Checkout, so a late or replayed event
+ * never overwrites it). ⚠ R4 (owner 2026-11-05): an invoice made INSIDE Checkout (a returning club, no second trial; Premium) is
+ * already finalized and may name the cardholder; this fixes every invoice after it.
+ */
+export function buyerNameAfterCheckout(
+  session: {
+    collected_information?: { business_name?: string | null } | null;
+    customer_details?: { name?: string | null; business_name?: string | null } | null;
+  },
+  customer: { name?: string | null; metadata?: Record<string, string> | null },
+): { name: string } | null {
+  // A payload with no `collected_information` at all (a webhook endpoint on an older API version) cannot say whether a name was
+  // typed, and a typed one would look like the cardholder's (Part 0: `customer_details.name` = the typed business name), so it
+  // changes nothing (/review 2026-11-06). The test endpoint is pinned to 2026-04-22.dahlia, which always carries the object.
+  if (!session.collected_information) return null;
+  if (session.collected_information.business_name?.trim() || session.customer_details?.business_name?.trim()) return null;
+  const ours = customer.metadata?.[BUYER_NAME_META]?.trim();
+  if (!ours) return null;
+  const current = customer.name?.trim() ?? '';
+  if (current === ours) return null;
+  const written = session.customer_details?.name?.trim() ?? '';
+  if (!written || current !== written) return null;
+  return { name: ours };
+}
+
 /** One tax on an invoice, as a buyer reads it: "HST 13%". From Stripe's tax rate (Stripe Tax makes one per jurisdiction). */
 export function taxLineLabel(rate: { display_name?: string | null; percentage?: number | null; effective_percentage?: number | null }): string {
   const pct = rate.effective_percentage ?? rate.percentage;

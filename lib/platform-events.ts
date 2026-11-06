@@ -18,6 +18,9 @@ export type PlatformEventType =
   | 'subscription_charge_refunded'
   // Part 5: a subscription on a price no slot has ever used (keyed on the subscription and the day). Nothing acts on it.
   | 'unrecognised_price'
+  // GST/HST Stage 2 Part 6b Part 3: the club's name could not be put back on its Stripe customer after Checkout (keyed on the
+  // session). Nothing later repairs it, so it is told; nothing acts on it.
+  | 'buyer_name_not_restored'
   | 'tournament_plus_upgrade_gate_viewed'
   | 'tournament_plus_upgrade_gate_clicked'
   | 'tournament_plus_acquisition_cta_viewed'

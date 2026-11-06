@@ -32,6 +32,7 @@ import { cancelScheduledEmail } from '@/lib/email-sender';
 import { notify } from '@/lib/notify';
 import { syncFeeInvoiceFromEvent } from '@/lib/platform-stripe-fees';
 import { FEE_INVOICE_META } from '@/lib/online-payment-words';
+import { buyerNameAfterCheckout } from '@/lib/billing-tax';
 import { orgOwnerUserIds } from '@/lib/notify-recipients';
 import { clearSettled } from '@/lib/needs-attention';
 import type { OrgPlan } from '@/lib/types';
@@ -137,7 +138,7 @@ function subscriptionChargeDeps(): SubscriptionChargeDeps {
  * rare and the owner tests them in test mode. A failed send is logged, never a 500: the platform event is the record, the
  * email the alarm. The once-only key keeps a retried event from sending twice.
  */
-async function alertOwner(kind: 'subscription_charge_alert' | 'unrecognised_price_alert', subject: string, html: string, idempotencyKey: string) {
+async function alertOwner(kind: 'subscription_charge_alert' | 'unrecognised_price_alert' | 'buyer_name_alert', subject: string, html: string, idempotencyKey: string) {
   const result = await sendEmail(ADMIN_EMAIL, subject, html, { kind, idempotencyKey })
     .catch(error => { console.error('[billing webhook] the owner alert could not be sent:', error); return null; });
   if (result && result.status === 'provider_error') console.error('[billing webhook] the owner alert was refused:', subject);
@@ -173,6 +174,42 @@ async function tellOwnerOfUnrecognisedPrice(sub: Stripe.Subscription, priceId: s
       + `<p>${org ? `<a href="${SITE_URL}/platform-admin/orgs/${org.id}">Open the club's record</a> &middot; ` : ''}`
       + `<a href="${dashboard}/subscriptions/${encodeURIComponent(sub.id)}">Open the subscription in Stripe</a></p>`,
     key);
+}
+
+/**
+ * GST/HST Stage 2 Part 6b Part 3 (owner 2026-11-05): after a subscription Checkout, the club's name goes back on its Stripe
+ * customer unless the buyer typed a business name on Stripe's page (`buyerNameAfterCheckout` decides). Read fresh, one update.
+ * ⚠ NEVER throws: the name is not money, and a 500 would make Stripe re-send the whole event (the plan's record with it). But
+ * nothing later repairs a miss (`buyerNameUpdate` reads the cardholder's name as the buyer's own), so a failure is told the way
+ * an unrecognised price is: a log line, a platform event and an email to the owner, once per session.
+ */
+async function restoreBuyerName(session: Stripe.Checkout.Session, customerId: string) {
+  try {
+    const customer = await stripe.customers.retrieve(customerId);
+    if ('deleted' in customer && customer.deleted) return;
+    const naming = buyerNameAfterCheckout(session, customer as Stripe.Customer);
+    if (naming) await stripe.customers.update(customerId, naming);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(`[billing webhook] ${session.id}: the club's name could not be put back on ${customerId}:`, error);
+    try {
+      const key = `${session.id}:buyer_name_not_restored`;
+      const orgId = session.metadata?.orgId ?? null;
+      await writePlatformEvent({
+        eventType: 'buyer_name_not_restored', source: 'stripe', sourceEventId: key, orgId,
+        metadata: { stripeCheckoutSessionId: session.id, stripeCustomerId: customerId, error: message },
+      });
+      await alertOwner('buyer_name_alert', 'A club’s name was not put back on its Stripe customer',
+        '<p>After a Checkout, the club’s name could not be put back on its Stripe customer, so its later invoices may name the person who paid.</p>'
+          + `<ul><li>Customer: ${escapeHtml(customerId)}</li><li>Checkout session: ${escapeHtml(session.id)}</li><li>Stripe said: ${escapeHtml(message)}</li></ul>`
+          + '<p>Nothing else was changed. Put the club’s name on the customer in Stripe (the name stored under fieldlogic_buyer_name in its metadata).</p>'
+          + `<p>${orgId ? `<a href="${SITE_URL}/platform-admin/orgs/${encodeURIComponent(orgId)}">Open the club's record</a> &middot; ` : ''}`
+          + `<a href="${stripeDashboardBase()}/customers/${encodeURIComponent(customerId)}">Open the customer in Stripe</a></p>`,
+        key);
+    } catch (tellError) {
+      console.error('[billing webhook] the name failure could not be recorded:', tellError);
+    }
+  }
 }
 
 /** The subscription an invoice bills, when it bills one (a one-off invoice made in Stripe's dashboard bills none). */
@@ -268,6 +305,11 @@ async function runVerifiedBillingEvent(event: Stripe.Event, customerId: string |
         ]);
         break;
       }
+
+      // GST/HST Stage 2 Part 6b Part 3: every subscription Checkout (A club, B coach Premium, C Founding next-season) puts our
+      // name back over the cardholder's. ⚠ HERE, before the arms below: the next-season and standalone_team arms `break` early,
+      // so a call placed after them never runs for paths C and B. Never throws (build guard: billing-buyer-name-path-guard).
+      if (session.mode === 'subscription') await restoreBuyerName(session, customerId);
 
       // The next-season plan choice (Founding Season: the 2028 choice). Recorded from the SESSION as
       // well as from the subscription event, because the two arrive independently and the desk must
