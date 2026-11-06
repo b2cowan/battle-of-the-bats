@@ -5,7 +5,7 @@ import {
   namedTaxLines, quoteTax, taxLineLabel, taxWasWorkedOut,
 } from '../../lib/billing-tax.ts';
 import {
-  BILLING_ADDRESS_REQUIRED, BILLING_LOCATION_WORDS, CA_POSTAL_FIRST_LETTERS, countryInfo, type StoredBillingLocation,
+  BILLING_ADDRESS_REQUIRED, BILLING_LOCATION_WORDS, CA_POSTAL_FIRST_LETTERS, countryInfo, toStripeAddress, type StoredBillingLocation,
 } from '../../lib/billing-location.ts';
 
 /**
@@ -26,7 +26,7 @@ describe('decideBuyerTax', () => {
       const stored = { ...guelph, regionCode: r.code, postalCode: `${CA_POSTAL_FIRST_LETTERS[r.code][0]}1A 1A1` };
       const t = decideBuyerTax({ stored, review: null, usSalesOpen: false });
       if (!t.ok) assert.fail(r.code);
-      assert.deepEqual(t.stripeAddress, { line1: '120 Elm Street', line2: '', city: 'Guelph', state: r.code, postal_code: stored.postalCode, country: 'CA' });
+      assert.deepEqual(toStripeAddress(t.location), { line1: '120 Elm Street', line2: '', city: 'Guelph', state: r.code, postal_code: stored.postalCode, country: 'CA' });
     }
   });
   it('a flagged Canadian address is still taxed by that address (Ask 1)', () => {
@@ -37,8 +37,8 @@ describe('decideBuyerTax', () => {
   it('a US buyer, with US sales open and nothing flagged, goes to Stripe (Stripe charges no Canadian tax)', () => {
     const t = decideBuyerTax({ stored: buffalo, review: null, usSalesOpen: true });
     if (!t.ok) assert.fail();
-    assert.equal(t.stripeAddress.country, 'US');
-    assert.equal(t.stripeAddress.state, 'NY');
+    assert.equal(toStripeAddress(t.location).country, 'US');
+    assert.equal(toStripeAddress(t.location).state, 'NY');
   });
   it('a flagged US address is HELD with the plain sentence and its own code (Ask 1)', () => {
     for (const reason of ['card_country_mismatch', 'payout_country_mismatch', 'country_changed_after_paying'] as const) {

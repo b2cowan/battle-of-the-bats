@@ -299,9 +299,29 @@ describe('a "Start your club" address goes on the Stripe customer BEFORE the mov
     assert.deepEqual(stamps.map(x => x.address.line1), ['9 Field Road', '120 Elm Street']);
   });
 
+  it('Part 7: a lost answer Stripe made anyway (the check says it landed) keeps the club\'s address; a refusal the check confirms puts it back', async () => {
+    homes.cus_coach = home;
+    const s = server();
+    const located = await s.requireBillingLocation(club, address);
+    if (!located.ok) return assert.fail();
+    const landed = await s.withClubAddressOnStripe<{ code?: string }>(club, located.location, async () => false, async () => ({ code: 'stripe_error' }));
+    assert.deepEqual(landed, { ok: true, result: { code: 'stripe_error' } });
+    assert.deepEqual(stamps.map(x => x.address.line1), ['9 Field Road'], 'nothing put back: the subscription is the club\'s now');
+    stamps.length = 0;
+    await s.withClubAddressOnStripe<{ code?: string }>(club, located.location, async () => true, async () => ({ code: 'stripe_error' }));
+    assert.deepEqual(stamps.map(x => x.address.line1), ['9 Field Road', '120 Elm Street'], 'an awaited refusal still puts it back');
+  });
+
   it('the move route stamps through withClubAddressOnStripe and never runs the move outside it for a club address', () => {
     const move = readCode('app/api/billing/move/route.ts');
-    assert.match(move, /withClubAddressOnStripe\(clubAddress\.buyer, clubAddress\.location, r => 'code' in r, runMove\)/);
+    assert.match(move, /withClubAddressOnStripe\(clubAddress\.buyer, clubAddress\.location, refused, runMove\)/);
+    // Part 7 (owner 2026-11-06): the no-Stripe refusals are asked BEFORE the stamp, and a stripe_error is checked against Stripe
+    // before the coach's address goes back.
+    const early = move.indexOf('await moveRefusalBeforeStripe(org, toPlan,');
+    assert.ok(early > 0 && early < move.indexOf('withClubAddressOnStripe(clubAddress.buyer'), 'the early refusal comes before the stamp');
+    assert.match(move, /if \(early\) return refusalResponse\(early\);/);
+    assert.match(move, /if \(r\.code === 'stripe_error' && await moveLandedInStripe\(org, toPlan\) === true\) \{ landed = true; return false; \}/);
+    assert.match(move, /refusalResponse\(landed \? \{ \.\.\.result, error: MOVE_LANDED_UNCONFIRMED \} : result\)/, 'a move that landed never says nothing was changed');
     assert.doesNotMatch(move, /copyBillingLocationToStripe\(/, 'no copy after the move any more');
     const server = readCode('lib/billing-location-server.ts');
     assert.match(server, /if \(sentAddress\) \{\s*const saved = await saveBillingLocation\(buyer, sentAddress, \{ copyToStripe: false \}\)/);

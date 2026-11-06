@@ -146,22 +146,6 @@ async function stampCustomers(customerIds: string[], location: BillingLocation):
   }
 }
 
-/**
- * The buyer's saved address onto the Stripe customers they pay through, AFTER a purchase is accepted (owner Part 3 Ask 2,
- * 2026-11-04). A Premium coach's "Start your club" saves the CLUB's address with the move, but until the move is accepted
- * that portal's Stripe customer is still the coach's own Premium billing: copying it at save time put a club that was never
- * made onto the coach's billing (and Stage 2 taxes by the Stripe customer's address). Never fails the caller.
- * Stage 2 (Ask 2, 2026-11-05): the Premium → Club move no longer copies through here; it stamps BEFORE its Stripe update with
- * `withClubAddressOnStripe`, because the move's prorated invoice is taxed by the customer's address.
- */
-export async function copyBillingLocationToStripe(buyer: BillingBuyer, location: BillingLocation): Promise<void> {
-  const ids = await buyerCustomerIds(buyer).catch((error) => {
-    void captureError(error, { route: 'billing-location:stripe-copy' });
-    return [];
-  });
-  await stampCustomers(ids, location);
-}
-
 const upperCountry = (code: string | null | undefined): string | null => (code ? code.toUpperCase() : null);
 
 /**
@@ -286,8 +270,8 @@ export async function requireBillingLocation(buyer: BillingBuyer, sentAddress?: 
   | { ok: false; response: Response }
 > {
   // An address that came with the purchase (the "Start your club" window) is saved to the buyer's own row first, but NOT copied
-  // to Stripe: the purchase is not accepted yet. The caller copies it once it is (Ask 2): the move after its move is made, a
-  // checkout through the customer the checkout itself charges.
+  // to Stripe: the purchase is not accepted yet (Stage 1 Part 3 Ask 2). The Premium → Club move stamps it just before its Stripe
+  // update (`withClubAddressOnStripe`, Stage 2 Ask 2); a checkout through the customer the checkout itself charges.
   if (sentAddress) {
     const saved = await saveBillingLocation(buyer, sentAddress, { copyToStripe: false });
     if (!saved.ok) return { ok: false, response: saveRefusalResponse(saved) };
@@ -322,7 +306,8 @@ export async function requireBillingLocation(buyer: BillingBuyer, sentAddress?: 
 export async function withClubAddressOnStripe<T>(
   buyer: Extract<BillingBuyer, { kind: 'org' }>,
   location: BillingLocation,
-  isRefused: (result: T) => boolean,
+  /** True = put the coach's address back. May ask Stripe (a lost answer is checked before anything is put back). */
+  isRefused: (result: T) => boolean | Promise<boolean>,
   move: () => Promise<T>,
 ): Promise<{ ok: true; result: T } | { ok: false; response: Response }> {
   const refusal = () => ({
@@ -333,14 +318,19 @@ export async function withClubAddressOnStripe<T>(
   if (!ids) return refusal();
   const stripe = getStripe();
   const before = new Map<string, Before>();
+  const read: Array<[string, Stripe.Customer | null]> = [];
   try {
     for (const id of ids) {
       const customer = await stripe.customers.retrieve(id);
       const live = 'deleted' in customer && customer.deleted ? null : customer as Stripe.Customer;
       before.set(id, { address: live?.address ?? null, name: live?.name ?? null, ourName: live?.metadata?.[BUYER_NAME_META] ?? null });
+      read.push([id, live]);
     }
-    // The club's name with its address: the move's invoice is the CLUB's (accounting 6b), and both go back on a refusal.
-    await Promise.all(ids.map(id => stampStripeCustomerAddress(id, location, buyer.name)));
+    // The club's name with its address: the move's invoice is the CLUB's (accounting 6b), and both go back on a refusal. Stamped
+    // from the customers just read (as `stampStripeCustomerAddress` would, without reading each one again).
+    await Promise.all(read.map(([id, live]) => stripe.customers.update(id, {
+      address: toStripeAddress(location), ...((live && buyerNameUpdate(live, buyer.name)) ?? {}),
+    })));
   } catch (error) {
     void captureError(error, { route: 'billing-location:club-stamp' });
     await putBack(before);
@@ -353,7 +343,7 @@ export async function withClubAddressOnStripe<T>(
     await putBack(before);
     throw error;
   }
-  if (isRefused(result)) await putBack(before);
+  if (await isRefused(result)) await putBack(before);
   return { ok: true, result };
 }
 

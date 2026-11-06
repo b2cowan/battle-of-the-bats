@@ -17,8 +17,8 @@ import { FEE_INVOICE_META } from './online-payment-words';
  *     discount off inside the note (Part 4 matrix 2026-11-06, `part6b-part4-refunds-run1.txt` J: 25% off, a 219000 line by its
  *     own amount → the whole 185603 paid). So every cap here is in line units, never the after-discount `total_excluding_tax`
  *     (that cap credited a discounted invoice 75% of the way and refused it every time);
- *   · the tax is Stripe's: a note's total is asked of `creditNotes.preview`, never worked out here. The total rises with the
- *     before-tax amount, so the planner walks to the NEAREST TOTAL NOT ABOVE the typed figure (R1: never refund more than staff
+ *   · the tax is Stripe's: a note's total is asked of `creditNotes.preview`, never worked out here. The total never falls as the
+ *     before-tax amount rises, so the planner steps by the gap to the NEAREST TOTAL NOT ABOVE the typed figure (R1: never refund more than staff
  *     typed). About 1 card figure in 9 has no before-tax cent that hits it exactly (1g), so the window shows Stripe's figure;
  *   · the last note on a line takes the line's remaining tax exactly (2h), so "all that is left" is always exact;
  *   · Stripe's PREVIEW does not refuse more than is left on the charge (3b); the charge-remainder check in `decideRefund` stays the guard.
@@ -26,8 +26,12 @@ import { FEE_INVOICE_META } from './online-payment-words';
 
 /** Each read's time limit (the Money tab's reads, the refund's re-reads and every preview). */
 export const READ_OPTS = { timeout: 8000, maxNetworkRetries: 1 } as const;
-/** A plan never asks Stripe more than this many previews (the estimate is within a cent or two: ≤ 3 in practice). */
-const MAX_PREVIEWS = 6;
+/**
+ * A plan never asks Stripe more than this many previews. Step by the gap closes the bracket in 2–3 on an undiscounted invoice;
+ * a 90%-off line or a coupon on one line of two takes up to 7 (Part 7 sweeps, `.probe/gst2/part7-q1-*`: 0 wrong of 11,298
+ * figures, 3 refused at 8). Past it the plan refuses: a figure not proven the nearest is never stated.
+ */
+export const MAX_PREVIEWS = 8;
 
 export const idOf = (v: string | { id?: string } | null | undefined): string | null => (v == null ? null : typeof v === 'string' ? v : v.id ?? null);
 
@@ -178,14 +182,50 @@ export function creditLines(order: ReadonlyArray<{ id: string; room: number }>, 
   return out;
 }
 
+/** A line amount Stripe previewed, and the note total it answered. */
+type CreditSeen = { b: number; total: number };
+
 /**
- * The credit note for a card figure (tax included): the largest before-tax amount whose previewed total is not above it.
- * Starts from the invoice's own ratio (all that is left → every line's room, exact), then steps a cent at a time.
- * Throws when Stripe cannot be asked; refuses when nothing is left to credit or no total fits.
+ * The next line amount to ask Stripe about ("step by the gap", owner Q1 2026-11-06), strictly inside the bracket so every
+ * preview narrows it. Every guess aims at the figure's last half-cent (the edge between "fits" and "one cent over"):
+ *   · the first step: the last preview's distance to the figure, scaled by that preview's OWN ratio (line units per card cent:
+ *     on a discounted line a unit is worth less than a cent, and on a line-level coupon the invoice's average ratio is wrong for
+ *     the line being credited — Part 4's J3 ran out of previews stepping one unit at a time);
+ *   · after it: the straight line through the last two previews (the ratio AT THE MARGIN, which differs from a preview's own
+ *     ratio once the note spills from a full-price line onto a discounted one);
+ *   · the middle, once both sides are known and their totals are at most two cents apart: the edge then sits somewhere in a run
+ *     of amounts that make the same total (a unit worth less than a cent), where no ratio can say where; halving finds it;
+ *   · a guess that would cross a SPILL POINT (where the note moves onto the next line, `spills`: a full-price line and a
+ *     discounted one have different ratios) asks about the spill point first, so no ratio is carried across lines.
+ */
+function nextCreditAmount(last: CreditSeen, prev: CreditSeen | null, lo: CreditSeen | null, hi: CreditSeen | null, cardCents: number, pool: number, spills: readonly number[]): number {
+  const floor = lo?.b ?? 0;
+  const ceil = hi?.b ?? pool + 1;
+  const aim = cardCents + 0.5;
+  const sameLine = (a: number, z: number) => !spills.some(k => Math.min(a, z) < k && k < Math.max(a, z));
+  let guess = lo && hi && hi.total - lo.total <= 2 ? Math.floor((floor + ceil) / 2)
+    : prev && prev.total !== last.total && sameLine(prev.b, last.b) ? last.b + Math.round((aim - last.total) * (last.b - prev.b) / (last.total - prev.total))
+    : last.total > 0 ? last.b + Math.round((aim - last.total) * (last.b / last.total))
+    : last.b * 2;
+  const crossed = spills.filter(k => k > floor && k < ceil && Math.min(last.b, guess) < k && k < Math.max(last.b, guess));
+  if (crossed.length) guess = guess > last.b ? crossed[0] : crossed[crossed.length - 1];
+  return Math.min(ceil - 1, Math.max(floor + 1, guess));
+}
+
+/**
+ * The credit note for a card figure (tax included): the LARGEST before-tax amount whose previewed total is not above it.
+ * Starts from the invoice's own ratio (all that is left → every line's room, exact, one preview), then steps by the gap
+ * (`nextCreditAmount`) inside a bracket: `lo` the largest amount seen that fits, `hi` the smallest seen above (none = past the
+ * pool). It answers only once the two are one unit apart, i.e. once Stripe has shown that one unit more would go above.
+ * That proof is what makes the plan DETERMINISTIC: the refund re-plans on the figure the window showed, and the largest amount
+ * fitting that figure is the same amount (the total never falls as the amount rises), so the split cannot move between the
+ * look and the confirm (the 409 loop of Part 4's J3). Throws when Stripe cannot be asked; refuses when nothing is left to
+ * credit, or when MAX_PREVIEWS ends before the bracket closes — a figure that is not proven the nearest is never stated (R1).
  */
 export async function planCreditNote(stripe: Stripe, target: CreditTarget, cardCents: number): Promise<CreditPlan | CreditRefusal> {
   const { order, pool } = creditRoom(target);
   if (pool <= 0 || cardCents <= 0) return { ok: false, status: 409, error: REFUND_WORDS.nothingToCredit };
+  const notWorkedOut: CreditRefusal = { ok: false, status: 409, error: REFUND_WORDS.noteNotWorkedOut };
   const leftOnInvoice = target.total - target.creditedCents;
   let previews = 0;
   const preview = (b: number) => {
@@ -193,35 +233,31 @@ export async function planCreditNote(stripe: Stripe, target: CreditTarget, cardC
     return stripe.creditNotes.preview({ invoice: target.invoiceId, lines: creditLines(order, b) }, READ_OPTS);
   };
 
+  let lo: (CreditSeen & { note: Stripe.CreditNote }) | null = null;
+  let hi: CreditSeen | null = null;
+  let prev: CreditSeen | null = null;
+  // Where the note moves onto the next line (the running total of the rooms, largest line first).
+  const spills: number[] = [];
+  for (let i = 0, at = 0; i < order.length - 1; i++) { at += order[i].room; if (at < pool) spills.push(at); }
   let b = leftOnInvoice <= 0 || cardCents >= leftOnInvoice ? pool
     : Math.min(pool, Math.max(1, Math.round(cardCents * pool / leftOnInvoice)));
-  let note = await preview(b);
-  let best: { b: number; note: Stripe.CreditNote } | null = null;
-  if (note.total <= cardCents) {
-    best = { b, note };
-    // Below the figure: one more line unit may still fit. ⚠ On a discounted line a unit adds LESS than a cent, so a step can add
-    // nothing and a deep discount can exhaust MAX_PREVIEWS short of the nearest (never above it; Part 4 owner question Q1).
-    while (best.note.total < cardCents && best.b < pool && previews < MAX_PREVIEWS) {
-      const next = await preview(best.b + 1);
-      if (next.total > cardCents) break;
-      best = { b: best.b + 1, note: next };
-    }
-  } else {
-    while (b > 1 && previews < MAX_PREVIEWS) {
-      b--;
-      note = await preview(b);
-      if (note.total <= cardCents) { best = { b, note }; break; }
-    }
+  for (;;) {
+    const note = await preview(b);
+    const seen = { b, total: note.total };
+    if (note.total <= cardCents) lo = { ...seen, note }; else hi = seen;
+    if ((hi?.b ?? pool + 1) - (lo?.b ?? 0) <= 1) break;
+    if (previews >= MAX_PREVIEWS) return notWorkedOut;
+    b = nextCreditAmount(seen, prev, lo, hi, cardCents, pool, spills);
+    prev = seen;
   }
-  if (!best) return { ok: false, status: 409, error: REFUND_WORDS.noteNotWorkedOut };
-  // A paid invoice's note is all after payment; `refund_amount` must equal this figure exactly or Stripe refuses it.
-  if (best.note.post_payment_amount !== best.note.total) return { ok: false, status: 409, error: REFUND_WORDS.noteNotWorkedOut };
+  // Nothing fits, or Stripe's note is not all after payment (`refund_amount` must equal its total exactly or Stripe refuses it).
+  if (!lo || lo.note.total <= 0 || lo.note.post_payment_amount !== lo.note.total) return notWorkedOut;
   return {
     ok: true,
-    lines: creditLines(order, best.b),
-    cardCents: best.note.total,
-    beforeTaxCents: best.note.total_excluding_tax ?? best.note.subtotal,
-    taxes: best.note.total_taxes ?? [],
-    capped: best.b === pool && best.note.total < cardCents,
+    lines: creditLines(order, lo.b),
+    cardCents: lo.note.total,
+    beforeTaxCents: lo.note.total_excluding_tax ?? lo.note.subtotal,
+    taxes: lo.note.total_taxes ?? [],
+    capped: lo.b === pool && lo.note.total < cardCents,
   };
 }

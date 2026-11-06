@@ -69,6 +69,22 @@ export type MoneyCharge = {
 /** GST/HST Part 6b: a credit note on the invoice a charge paid, as the charge window lists it (read live, never stored). */
 export type ChargeCreditNote = { id: string; number: string; totalCents: number; currency: string; createdAt: string; pdf: string | null };
 
+/**
+ * A Stripe credit note as the charge window lists it. `withPdf` = the reader can REFUND (owner Q2 2026-11-06, GST/HST Stage 2
+ * Part 7): Stripe's PDF carries the club's billing name, address and tax details, so a role that only reads Stripe gets the note's
+ * number, total and date, and `pdf: null`. Only an https link is ever handed on.
+ */
+export function toChargeCreditNote(
+  n: { id: string; number: string; total: number; currency: string; created: number; pdf?: string | null },
+  opts: { withPdf: boolean },
+): ChargeCreditNote {
+  return {
+    id: n.id, number: n.number, totalCents: n.total, currency: n.currency,
+    createdAt: new Date(n.created * 1000).toISOString(), // utc-intentional: Stripe's unix instant
+    pdf: opts.withPdf && n.pdf?.startsWith('https://') ? n.pdf : null,
+  };
+}
+
 export type MoneySubscription = {
   id: string;
   status: string;

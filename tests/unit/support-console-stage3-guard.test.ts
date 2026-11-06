@@ -30,7 +30,7 @@ import {
   InFlightError, RECOVERY_AFTER_MS, customerSharing, makeRefund, ownsObject, recoverRefunds, stripeErrorFacts,
   type RefundInput, type RefundRecord, type RefundStore,
 } from '../../lib/console-money-stripe.ts';
-import { creditLines, creditRoom, planCreditNote, type CreditTarget } from '../../lib/console-money-credit.ts';
+import { MAX_PREVIEWS, creditLines, creditRoom, planCreditNote, type CreditTarget } from '../../lib/console-money-credit.ts';
 import { stripeStillBills } from '../../lib/stripe-billing-state.ts';
 import { invoiceNumberQuery, runFind, stripeNumberKind, type FindReaders } from '../../lib/platform-find.ts';
 import { lastDayRefusal } from '../../lib/free-time.ts';
@@ -401,10 +401,12 @@ const INVOICE_CHARGE: MoneyCharge = { ...CHARGE, amountCents: 247470, invoice: {
   subscriptionId: 'sub_1', periodStart: null, periodEnd: null, planId: 'club', cycle: 'annual', fromPlanId: null, description: null, taxCents: 28470 } };
 
 type NotePosted = { params: Stripe.CreditNoteCreateParams; options: Stripe.RequestOptions };
-function fakeCreditStripe(opts: { rate?: number; discount?: number; charged?: number; error?: unknown; refundStatus?: string; listedNotes?: Array<Record<string, unknown>> } = {}) {
+function fakeCreditStripe(opts: { rate?: number; discount?: number | Record<string, number>; charged?: number; error?: unknown; refundStatus?: string; listedNotes?: Array<Record<string, unknown>> } = {}) {
   const rate = opts.rate ?? 0.13;
   // A line's discount (a fraction) comes off INSIDE the note, as Stripe does: a note line's amount is before it (Part 4, J).
-  const net = (amount: number) => Math.round(amount * (1 - (opts.discount ?? 0)));
+  // One number = every line (a subscription or invoice coupon); by line id = a LINE-level coupon (Part 4's J3).
+  const off = (line?: string) => (typeof opts.discount === 'number' ? opts.discount : opts.discount?.[line ?? ''] ?? 0);
+  const net = (amount: number, line?: string) => amount - Math.round(amount * off(line));
   const created: NotePosted[] = [];
   const previews: Stripe.CreditNotePreviewParams[] = [];
   const refundPosts: unknown[] = [];
@@ -412,8 +414,8 @@ function fakeCreditStripe(opts: { rate?: number; discount?: number; charged?: nu
   let refundLists = 0;
   const byKey = new Map<string, Record<string, unknown>>();
   const shape = (lines: Stripe.CreditNotePreviewParams['lines']) => {
-    const before = (lines ?? []).reduce((sum, l) => sum + net(l.amount ?? 0), 0);
-    const tax = (lines ?? []).reduce((sum, l) => sum + Math.round(net(l.amount ?? 0) * rate), 0);
+    const before = (lines ?? []).reduce((sum, l) => sum + net(l.amount ?? 0, l.invoice_line_item), 0);
+    const tax = (lines ?? []).reduce((sum, l) => sum + Math.round(net(l.amount ?? 0, l.invoice_line_item) * rate), 0);
     return { total: before + tax, post_payment_amount: before + tax, total_excluding_tax: before, subtotal: before,
       total_taxes: [{ amount: tax, tax_behavior: 'exclusive', tax_rate_details: { tax_rate: 'txr_hst' }, taxability_reason: 'standard_rated', taxable_amount: before, type: 'tax_rate_details' }] };
   };
@@ -565,6 +567,133 @@ describe('6b · a refund of a charge that paid an invoice is a credit note', () 
     // 11799 → 8849 + 1150 = 9999; 11800 → 8850 + 1151 = 10001 (above). The nearest NOT above, in ≤ 3 previews.
     assert.deepEqual([part.cardCents, part.beforeTaxCents, part.capped], [9999, 8849, false]);
     assert.ok(s.previews.length <= 3, `${s.previews.length} previews`);
+  });
+
+  // ── Q1 (owner 2026-11-06): step by the gap. The planner must land on the LARGEST line amount whose total is not above the
+  // figure (the nearest, R1), within MAX_PREVIEWS, and planning again on the figure it returned must return the same split.
+  const nearestByHand = async (target: CreditTarget, discount: number | Record<string, number>, typed: number, rate = 0.13) => {
+    // Brute force against the same fake: the largest before-tax amount whose total is not above the figure.
+    const { order, pool } = creditRoom(target);
+    const { stripe } = fakeCreditStripe({ discount, rate });
+    let lo = 0, hi = pool;
+    while (lo < hi) {
+      const m = Math.ceil((lo + hi) / 2);
+      if ((await stripe.creditNotes.preview({ invoice: target.invoiceId, lines: creditLines(order, m) })).total <= typed) lo = m; else hi = m - 1;
+    }
+    return lo;
+  };
+  const sumOf = (p: { lines: Array<{ amount: number }> }) => p.lines.reduce((t, l) => t + l.amount, 0);
+  // Part 4's J3: a 10% coupon on the PLAN line only, beside an undiscounted recovered fee (the invoice's average ratio is wrong
+  // for the line being credited, so the old one-unit walk ran out at $99.97 and the confirm refused every time).
+  const LINE_COUPON: CreditTarget = { ...TARGET_ON, total: 224418, linesNetCents: 220500,
+    lines: [{ id: 'il_fee', amount: 1500, creditedCents: 0 }, { id: 'il_plan', amount: 219000, creditedCents: 0 }] };
+  const LINE_OFF = { il_plan: 0.10 };
+  const DEEP: CreditTarget = { ...TARGET_ON, total: 61868, linesNetCents: 219000 }; // 75% off: 54750 + 7118
+  // A 75% coupon on the LARGER line of two, the full-price line spilled onto after it (the ratio changes at the spill point).
+  const SPILL: CreditTarget = { ...TARGET_ON, total: 48025, linesNetCents: 80000,
+    lines: [{ id: 'il_plan', amount: 50000, creditedCents: 0 }, { id: 'il_fee', amount: 30000, creditedCents: 0 }] };
+  const SPILL_OFF = { il_plan: 0.75 };
+
+  it('Q1: a LINE-level coupon on a two-line invoice lands on the nearest, within the preview budget (J3: $100.00)', async () => {
+    for (const typed of [10000, 200000, 3333, 99, 150001]) {
+      const s = fakeCreditStripe({ discount: LINE_OFF });
+      const p = await planCreditNote(s.stripe, LINE_COUPON, typed);
+      assert.ok(p.ok, `${typed}: ${p.ok ? '' : p.error}`);
+      assert.ok(p.cardCents <= typed, 'never above what was typed (R1)');
+      assert.equal(sumOf(p), await nearestByHand(LINE_COUPON, LINE_OFF, typed), `${typed}: the nearest, not a figure short of it`);
+      assert.ok(s.previews.length <= MAX_PREVIEWS, `${typed}: ${s.previews.length} previews`);
+    }
+    const j3 = await planCreditNote(fakeCreditStripe({ discount: LINE_OFF }).stripe, LINE_COUPON, 10000);
+    assert.ok(j3.ok && j3.cardCents >= 9999, 'J3 reaches a cent of $100.00, not $99.97');
+  });
+
+  it('Q1: a 75%-off line (a unit worth a quarter of a cent) and a coupon on the larger of two lines land on the nearest', async () => {
+    for (const [target, discount] of [[DEEP, 0.75], [SPILL, SPILL_OFF]] as const) {
+      for (const typed of [10000, 1, 4, 777, 14125, 16905, 20795, 47000]) {
+        const s = fakeCreditStripe({ discount });
+        const p = await planCreditNote(s.stripe, target, typed);
+        const want = await nearestByHand(target, discount, typed);
+        if (want === 0) { assert.equal(p.ok, false, `${typed}: nothing fits`); continue; }
+        assert.ok(p.ok, `${typed}: ${p.ok ? '' : p.error}`);
+        assert.ok(p.cardCents <= typed);
+        assert.equal(sumOf(p), want, `${target.invoiceId}/${typed}: the largest amount that fits`);
+        assert.ok(s.previews.length <= MAX_PREVIEWS, `${typed}: ${s.previews.length} previews`);
+      }
+    }
+  });
+
+  it('Q1: a sweep of 60 figures across each invoice (incl. 90% off at NB 15%): every one the nearest, none past the budget', async () => {
+    const NINETY: CreditTarget = { ...TARGET_NB, total: 25185, linesNetCents: 219000 };
+    for (const [target, discount, rate] of [[LINE_COUPON, LINE_OFF, 0.13], [DEEP, 0.75, 0.13], [SPILL, SPILL_OFF, 0.13], [NINETY, 0.9, 0.15]] as const) {
+      const misses: string[] = [];
+      for (let k = 1; k <= 60; k++) {
+        const typed = Math.max(1, Math.floor(target.total * k / 61) + (k % 7));
+        const s = fakeCreditStripe({ discount, rate });
+        const p = await planCreditNote(s.stripe, target, typed);
+        const want = await nearestByHand(target, discount, typed, rate);
+        if (!p.ok || sumOf(p) !== want || p.cardCents > typed || s.previews.length > MAX_PREVIEWS) misses.push(`${typed}→${p.ok ? sumOf(p) : 'refused'} (want ${want}, ${s.previews.length} previews)`);
+      }
+      assert.deepEqual(misses, [], `${target.invoiceId} ${JSON.stringify(discount)}`);
+    }
+  });
+
+  it('Q1: invoices pinned from the Part 7 random sweep (three lines; a 90%-off line beside a full-price one) land on the nearest', async () => {
+    // Each failed without one rule (.probe/gst2/part7-q1-find.mjs): the first three without the spill point, the last two without halving.
+    const cases: Array<{ rate: number; lines: Array<[string, number, number]>; typed: number[] }> = [
+      { rate: 0.13, lines: [['l0', 52317, 0], ['l1', 95861, 0.1], ['l2', 151849, 0.9]], typed: [39151, 19300, 23095] },
+      { rate: 0.15, lines: [['l0', 200218, 0.9], ['l1', 227758, 0]], typed: [264263] },
+      { rate: 0.05, lines: [['l0', 240230, 0.9], ['l1', 86837, 0]], typed: [21346] },
+    ];
+    for (const c of cases) {
+      const discount = Object.fromEntries(c.lines.map(([id, , d]) => [id, d]));
+      const base: CreditTarget = { ...TARGET_ON, total: 0, linesNetCents: c.lines.reduce((t, [, a]) => t + a, 0),
+        lines: c.lines.map(([id, amount]) => ({ id, amount, creditedCents: 0 })) };
+      const { order, pool } = creditRoom(base);
+      const target = { ...base, total: (await fakeCreditStripe({ discount, rate: c.rate }).stripe.creditNotes.preview({ invoice: 'x', lines: creditLines(order, pool) })).total };
+      for (const typed of c.typed) {
+        const p = await planCreditNote(fakeCreditStripe({ discount, rate: c.rate }).stripe, target, typed);
+        assert.ok(p.ok, `${typed}: ${p.ok ? '' : p.error}`);
+        assert.equal(sumOf(p), await nearestByHand(target, discount, typed, c.rate), `${typed}`);
+        const again = await planCreditNote(fakeCreditStripe({ discount, rate: c.rate }).stripe, target, p.cardCents);
+        assert.ok(again.ok);
+        assert.deepEqual(again.lines, p.lines, `${typed}: the re-plan keeps the split`);
+      }
+    }
+  });
+
+  it('Q1: planning again on the figure it returned returns the SAME split (the refund re-plans on it; a split that moves is the 409 loop)', async () => {
+    for (const [target, discount] of [[LINE_COUPON, LINE_OFF], [DEEP, 0.75], [SPILL, SPILL_OFF], [TARGET_ON, 0]] as const) {
+      for (const typed of [10000, 2000, 33333, 4321]) {
+        const first = await planCreditNote(fakeCreditStripe({ discount }).stripe, target, typed);
+        if (!first.ok) continue;
+        const again = await planCreditNote(fakeCreditStripe({ discount }).stripe, target, first.cardCents);
+        assert.ok(again.ok);
+        assert.deepEqual([again.lines, again.beforeTaxCents, again.cardCents], [first.lines, first.beforeTaxCents, first.cardCents], `${target.invoiceId}/${typed}`);
+      }
+    }
+    // End to end: the confirm, sent the figures the window previewed on J3's invoice, makes the note (no "changed since").
+    const look = await planCreditNote(fakeCreditStripe({ discount: LINE_OFF }).stripe, LINE_COUPON, 10000);
+    assert.ok(look.ok);
+    const s = fakeCreditStripe({ discount: LINE_OFF, charged: 224418 });
+    const charge = { ...INVOICE_CHARGE, amountCents: 224418 };
+    const r = await makeRefund(s.stripe, fakeStore(), noteInput({ charge, invoice: LINE_COUPON,
+      ask: { amountCents: look.cardCents, beforeTaxCents: look.beforeTaxCents, remainingSeenCents: 224418, reason: 'Part of the renewal' } }));
+    assert.ok(r.ok, JSON.stringify(r));
+    assert.equal(s.created[0].params.refund_amount, look.cardCents);
+    assert.deepEqual(s.created[0].params.lines, look.lines);
+  });
+
+  it('Q1: all that is left is still ONE exact preview; a figure the budget cannot prove is REFUSED, never stated', async () => {
+    const s = fakeCreditStripe({ discount: LINE_OFF });
+    const all = await planCreditNote(s.stripe, LINE_COUPON, 224418);
+    assert.ok(all.ok);
+    assert.deepEqual([all.cardCents, sumOf(all), s.previews.length, all.capped], [224418, 220500, 1, false]);
+    // 99.99% off: a cent of total is ten thousand line units, so no budget can find the edge. Refused, with nothing above typed.
+    const t = fakeCreditStripe({ discount: 0.9999, rate: 0 });
+    const no = await planCreditNote(t.stripe, { ...TARGET_ON, total: 22, linesNetCents: 219000 }, 10);
+    assert.equal(no.ok, false);
+    assert.equal((no as { error: string }).error, REFUND_WORDS.noteNotWorkedOut);
+    assert.equal(t.previews.length, MAX_PREVIEWS, 'the budget is a ceiling');
   });
 
   it('recovery finds the credit note by ITS metadata (the refund a note makes carries none), never sends anything', async () => {

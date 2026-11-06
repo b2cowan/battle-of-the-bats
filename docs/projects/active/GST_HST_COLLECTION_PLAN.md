@@ -27,7 +27,7 @@ Every outstanding piece of work in this plan has a home in one of these stages. 
   committed `32d466e59` 2026-11-04, Part 4 (the guard) committed `95dbdcbec` 2026-11-04, Part 5 (closeout: `/accounting` review, help, the first-time plan screen
   fix, US wording v2) committed `1ab0bfb6f` 2026-11-04; owner walk §454 PASSED 34/34 2026-11-04, Part B re-walked on Part 6 (`e8e37a408`) and passed 2026-11-05; **Stage 1 CLOSED 2026-11-05** — country, province/state, address and US declaration on our own
   records. Needs T1 (ruled).
-- **Stage 2 — Subscriptions charge the right tax:** IN PROGRESS (build prompt `GST_HST_STAGE2_BUILD_PROMPT.md`; its ▶ Progress block holds each part's commit) — Parts 0–4 and 2b committed 2026-11-05 (walk §463 passed); Part 5 (the guard: every Stripe charge and quote carries tax or is on a short untaxed list with its reason) built 2026-11-05; Part 6 (the Stripe test matrix) RUN 2026-11-05 — every path and buyer group charges the tax it quoted, except two money defects stopped and recorded in the Progress block: recovered Stripe fees taxed at Ontario 13% for every club (tax code fixed 2026-11-05 on the owner's yes, re-run passed) and platform admin's refund making no credit note (→ /plan); Part 7 (closeout) next — Stripe Tax registration, tax on every checkout path and
+- **Stage 2 — Subscriptions charge the right tax:** IN PROGRESS (build prompt `GST_HST_STAGE2_BUILD_PROMPT.md`; its ▶ Progress block holds each part's commit) — Parts 0–4 and 2b committed 2026-11-05 (walk §463 passed); Part 5 (the guard: every Stripe charge and quote carries tax or is on a short untaxed list with its reason) built 2026-11-05; Part 6 (the Stripe test matrix) RUN 2026-11-05 — every path and buyer group charges the tax it quoted, except two money defects stopped and recorded in the Progress block: recovered Stripe fees taxed at Ontario 13% for every club (tax code fixed 2026-11-05 on the owner's yes, re-run passed) and platform admin's refund making no credit note (→ /plan); Part 7 (closeout) BUILT + reviewed 2026-11-06 (Q1 step by the gap, Q2 credit-note PDF and fee pay link for refund staff only, the Premium → Club stamp hardened, help "Taxes: what you're charged and why"; /accounting cleared; /simplify + /review no Critical or High), owner walk §471 owed; the exit-step audit read 2026-11-06 says live does NOT match yet (0 registrations, default not exclusive): promote prerequisites in MANUAL_PROD_STEPS (446's note). Was: Part 7 (closeout) next — Stripe Tax registration, tax on every checkout path and
   preview, "plus applicable taxes", province test matrix; exit step re-runs the Stripe audit. Needs Stage 1, T4, T5.
 - **Stage 3 — Every tax result has a reason, and staff can see it:** NOT STARTED — charge-level tax record and the Money
   tab. Needs Stage 2.
@@ -209,6 +209,15 @@ Bookkeeping plan; tax stays here.
   first address read is pending; a Stripe stamp error at checkout is a 500; the address read runs on mount even when unused.
 - **Exit step (owner, 2026-10-31):** re-run the read-only revenue-readiness Stripe audit
   (`scripts/audit-revenue-readiness.mjs`, §6) after Stage 2 ships, and record that the tax settings it reads now match.
+  **Read 2026-11-06 (Part 7): they do not match yet** — live has 0 registrations and default behaviour "Automatic"; both are owner
+  steps before the promote (Ask 7). Re-run at the promote; stop if either fails.
+- **Follow-ups after Stage 2 (recorded 2026-11-06, not built):** (a) **Q4 (owner ruling):** Plan & billing's fee row shows
+  "Refunded $X · credit note" for a refunded fee invoice — a `/plan` item. (b) **/review Lows from Part 7:** the fee-invoice email's
+  lines can disagree with its Total when the Stripe customer has a balance; a fee waiting for an address reads to the club as
+  "couldn't be billed yet" and the daily retry clears the operator reason; a Stripe customer with only a country passes the
+  "has an address" check; a coach whose `full_name` is empty gets no buyer name even with `name` set (with the known first/last-name
+  gap); a refused move down can leave a bare schedule on the subscription; a slow Stripe can take a refund preview past its 30 s
+  limit (fails safe). Detail: the Stage 2 build prompt ▶ Progress, Part 7.
 
 ### Stage 3 — Every tax result has a reason, and staff can see it
 *Owner: revenue plan (D17) + Support console Money tab.*

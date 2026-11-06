@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
-import { requirePlatformPower } from '@/lib/platform-auth';
+import { hasPlatformPower, requirePlatformPower } from '@/lib/platform-auth';
 import { withObservability } from '@/lib/observability';
 import { getStripe } from '@/lib/stripe';
 import { consoleClock } from '@/lib/console-dates';
 import { inFlightWords, readClubCharge, recoverRefunds } from '@/lib/console-money-stripe';
 import { listIssuedCreditNotes } from '@/lib/console-money-credit';
 import { stripeKeyIsLive } from '@/lib/online-payments-switch';
-import type { ChargeCreditNote } from '@/lib/console-money';
+import { toChargeCreditNote, type ChargeCreditNote } from '@/lib/console-money';
 import { clubRefunds, clubStripeFacts, priceMap, refundStore } from '@/lib/console-money-store';
 
 /**
@@ -16,6 +16,8 @@ import { clubRefunds, clubStripeFacts, priceMap, refundStore } from '@/lib/conso
  * enough to have finished is decided by listing the charge's refunds in Stripe — never by sending another (G 6).
  * GST/HST Part 6b: a charge that paid an invoice also lists that invoice's credit notes, each with Stripe's PDF link (read
  * here each time, never stored: the link's lifetime is Stripe's). A failed list reads as null, "not read", never "none".
+ * The PDF link goes only to a role that can REFUND (owner Q2 2026-11-06, Part 7): the document carries the club's billing name,
+ * address and tax details, and a role that only reads Stripe (support) sees each note's number, total and date, no link.
  */
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -26,6 +28,7 @@ export const GET = withObservability(async (_req: Request, { params }: { params:
   const auth = await requirePlatformPower('find_stripe');
   if (auth.response) return auth.response;
   const { id, chargeId } = await params;
+  const pdfAllowed = hasPlatformPower(auth.role, 'refund');
   const nothing = NextResponse.json({ error: 'Nothing matches that charge on this club.' }, { status: 404, headers: noStore });
 
   const [club, prices] = await Promise.all([clubStripeFacts(id), priceMap()]);
@@ -54,9 +57,7 @@ export const GET = withObservability(async (_req: Request, { params }: { params:
   const [refunds, creditNotes] = await Promise.all([
     clubRefunds(id, chargeId),
     invoiceId
-      ? listIssuedCreditNotes(stripe, invoiceId).then((notes): ChargeCreditNote[] | null => notes.map(n => ({
-        id: n.id, number: n.number, totalCents: n.total, currency: n.currency, createdAt: new Date(n.created * 1000).toISOString(), pdf: n.pdf?.startsWith('https://') ? n.pdf : null, // utc-intentional: Stripe's unix instant
-      })), () => null)
+      ? listIssuedCreditNotes(stripe, invoiceId).then((notes): ChargeCreditNote[] | null => notes.map(n => toChargeCreditNote(n, { withPdf: pdfAllowed })), () => null)
       : Promise.resolve<ChargeCreditNote[] | null>([]),
   ]);
 

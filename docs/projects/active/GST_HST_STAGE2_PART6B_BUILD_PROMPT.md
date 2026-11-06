@@ -1,6 +1,6 @@
 # GST/HST · Stage 2 Part 6b: a refund goes through a credit note, and a checkout invoice names the club (build prompt)
 
-> **Status: BUILDING — owner ruled R1–R4; Part 0 run, Parts 1–2 committed `fcef13e3b` 2026-11-05 (mig 446 dev, prod apply owed BEFORE they ship), Part 3 (the club's name after Checkout) committed `2d2f8b7c7` 2026-11-06, Part 4 (/accounting + the matrix re-run; the discounted-invoice cap fixed) committed `a449eeb53` 2026-11-06. Owner questions Q1–Q5 open. Next: Part 7.**
+> **Status: BUILDING — owner ruled R1–R4; Part 0 run, Parts 1–2 committed `fcef13e3b` 2026-11-05 (mig 446 dev, prod apply owed BEFORE they ship), Part 3 (the club's name after Checkout) committed `2d2f8b7c7` 2026-11-06, Part 4 (/accounting + the matrix re-run; the discounted-invoice cap fixed) committed `a449eeb53` 2026-11-06. Owner RULED Q1–Q5 as recommended 2026-11-06. **Q1 (step by the gap) and Q2 (the PDF link for refund staff only) BUILT 2026-11-06 in Stage 2 Part 7** (record: the Stage 2 build prompt ▶ Progress, Part 7); the 6b walk steps W1–W10 fold into walk §471 (W7 left out: no-invoice charge). Mig 446 prod apply owed BEFORE Parts 1–2 ship.**
 
 > Written 2026-11-05 by `/plan`. Parent: [GST_HST_STAGE2_BUILD_PROMPT.md](GST_HST_STAGE2_BUILD_PROMPT.md) ▶ Progress, "Part 6 RUN"
 > (Defect 2 and the "name on the invoice" observation are this part's whole reason). Plan of record:
@@ -636,3 +636,15 @@ Settle Stripe's behavior before designing against it. Write each answer into ▶
 - 2026-11-06: **Part 4 COMMITTED `a449eeb53` on dev (7 files; not pushed; TODO.md took only the GST/HST line, the accounting index
   only the credit-notes row).** Nothing in production needs applying for Part 4. ⚠ Migration 446 must reach prod BEFORE Parts 1–2
   ship. **Next: Part 7** (the Stage 2 closeout and its ONE walk, folding in W1–W10 above), fresh session, after the owner answers Q1–Q5.
+- 2026-11-06: **Owner RULED Q1–Q5 AS RECOMMENDED** (in chat, after the Part 4 hand-off). FINAL, do not re-ask:
+  - **Q1 → BUILD "step by the gap"** in the credit-note planner, as Part 7's first item (before the walk): each preview moves the
+    line amount by the remaining difference (scaled by the last preview's ratio) instead of one unit, so a line-level coupon or a
+    deep discount reaches the nearest figure not above what was typed within the preview budget. The window must never again say
+    "the nearest it can make" of a figure that is not the nearest.
+  - **Q2 → GATE the credit-note PDF link behind the `refund` power**, server side (the charge read does not return the link to a
+    role without it), not only hidden in the window.
+  - **Q3 → ACCEPTED as known:** a legacy charge with no payment intent refunds bare (no such charge in production; claims no tax).
+  - **Q4 → a `/plan` follow-up AFTER Stage 2 closes:** Plan & billing's fee row shows "Refunded $X · credit note". Not built in
+    Part 7; Part 7 records it as its own TODO line.
+  - **Q5 → ACCEPTED as known:** the window and the server can briefly disagree about "has an invoice"; reopening the charge clears it.
+- 2026-11-06: **Q1 + Q2 BUILT in Stage 2 Part 7** (record there; commit hash in its next entry). Q1: the planner proves its figure is the nearest (bracket search, MAX_PREVIEWS 8), the matrix re-run passes every row incl. J3 (`part6b-part7-refunds-run1.txt`); Q2: the charge read returns a credit note's PDF only with `refund`, extended by the owner to the console fee list's pay link. Q3 and Q5 stay accepted as known; Q4 is its own TODO line. Steps W1–W6, W8–W10 are in walk §471 (https://claude.ai/artifact/TpB5Lqu19rrpoPv7DWvQaV).

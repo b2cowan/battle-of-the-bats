@@ -24,7 +24,6 @@ const billingLocationOnFile = {
   saveRefusalResponse: () => Response.json({ code: 'invalid_billing_address' }, { status: 400 }),
   billingAddressFromBody: () => null,
   stampStripeCustomerAddress: async () => {},
-  copyBillingLocationToStripe: async () => {},
   withClubAddressOnStripe: async (_b: unknown, _l: unknown, _r: unknown, move: () => Promise<unknown>) => ({ ok: true, result: await move() }),
   recordCardCountry: async () => {},
 };

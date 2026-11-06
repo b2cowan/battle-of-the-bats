@@ -65,7 +65,7 @@ describe('every paid path checks the billing address before Stripe (paths A–E)
     const check = at(post, 'requireBillingLocation(', file);
     assert.ok(check < at(post, 'applyMove(', file), `${file}: the check must come before the move reaches Stripe`);
     // Stage 2: a move DOWN is asked too — it turns tax on for the renewal it schedules, which Stripe refuses without an address.
-    assert.match(post, /if \(moveDirection\(ownPlanOf\(org\), toPlan\) !== null\) \{[\s\S]*?requireBillingLocation\(/, `${file}: every move is asked (up charges now, down schedules a taxed renewal)`);
+    assert.match(post, /const direction = moveDirection\(ownPlanOf\(org\), toPlan\);\s*if \(direction !== null\) \{[\s\S]*?requireBillingLocation\(/, `${file}: every move is asked (up charges now, down schedules a taxed renewal)`);
     assert.match(post, /requireBillingLocation\(buyer, clubName \? billingAddressFromBody\(body\.billingAddress\)/, `${file}: the in-place club address is handed to the check, which saves it first`);
   });
 

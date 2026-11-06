@@ -267,8 +267,8 @@ const orgHelp: HelpPageContent = {
       id: 'club-plan-and-billing',
       heading: 'Club plan & billing',
       summary: 'Your plan, what’s in use, your billing address, changing plan, what’s included, and reducing or cancelling your subscription.',
-      keywords: ['club plan', 'club billing', 'plan and billing', 'teams on your plan', 'club association', 'move to club association', 'team cap', 'add team at the cap', 'cancel club', 'reactivate club', 'capacity', 'free time', 'free through', 'free time ended', 'billing address', 'change billing address', 'club address', 'billed to', 'sales tax', 'tax', 'GST', 'HST', 'PO Box', 'United States', 'US club'],
-      searchText: 'billing address where the club is billed asked once before the first paid checkout billed to remembered sales tax work out the tax prints on your invoices nothing charged differently club address start your club club billing address filled in from the coach home address po box street address change it billing address button plan card stripe billing page payment method no longer changes the address united states not selling in the united states yet gst hst free through free time from fieldlogichq a plan given for a while goes back automatically free time ended last 14 days amber contact us to keep the plan nothing is charged club plan and billing rail foot beside help more you owner only your plan whats in use change plan whats included reduce or cancel capacity readout club two sizes club association move up prorated today move down at renewal no credit keep current band add team at the cap archive a team contact us custom plan what club includes families rep teams accounting public site house league tournaments unlimited board and staff cancel and suspend goes offline ninety days retention reactivate within retention plan limits retained remainder public site online coach portals reopen archived tournaments return',
+      keywords: ['club plan', 'club billing', 'plan and billing', 'teams on your plan', 'club association', 'move to club association', 'team cap', 'add team at the cap', 'cancel club', 'reactivate club', 'capacity', 'free time', 'free through', 'free time ended', 'billing address', 'change billing address', 'club address', 'billed to', 'sales tax', 'tax', 'GST', 'HST', 'PO Box', 'United States', 'US club', 'taxes', 'plus applicable taxes', 'why am I charged tax', 'tax on my invoice', 'GST/HST number', 'business number', 'credit note', 'charge changed'],
+      searchText: 'billing address where the club is billed asked once before the first paid checkout billed to remembered sales tax work out the tax prints on your invoices next charge taxed for the new address taxes what youre charged and why plus applicable taxes gst hst rate named hst 13% due today total tax line charge changed nothing was charged press again renewal price before tax stripe fees taxed gst/hst number business number on stripe payment page tax still applies refund credit note tax given back couldnt work out the tax check the address club address start your club club billing address filled in from the coach home address po box street address change it billing address button plan card stripe billing page payment method no longer changes the address united states not selling in the united states yet gst hst free through free time from fieldlogichq a plan given for a while goes back automatically free time ended last 14 days amber contact us to keep the plan nothing is charged club plan and billing rail foot beside help more you owner only your plan whats in use change plan whats included reduce or cancel capacity readout club two sizes club association move up prorated today move down at renewal no credit keep current band add team at the cap archive a team contact us custom plan what club includes families rep teams accounting public site house league tournaments unlimited board and staff cancel and suspend goes offline ninety days retention reactivate within retention plan limits retained remainder public site online coach portals reopen archived tournaments return',
       links: [
         { label: 'Plan & billing', href: '../org/billing' },
       ],
@@ -301,13 +301,30 @@ const orgHelp: HelpPageContent = {
             <>
               <p>Before your club&rsquo;s first paid checkout, a <strong>Billing address</strong> window asks where the club is billed. You answer once: later purchases go straight through and say <strong>Billed to</strong> the address on file.</p>
               <ul>
-                <li>We use it to work out the sales tax on what we bill your club, and it prints on your invoices. Nothing is charged differently today.</li>
+                <li>We use it to work out the GST or HST on what we bill your club, and it prints on your invoices. Change it and your next charge is taxed for the new address.</li>
                 <li>Give the club&rsquo;s own address. When a coach turns a Coaches Portal into a club with <strong>Start your club</strong>, the <strong>Club billing address</strong> is filled in from the coach&rsquo;s home address &mdash; change it if the club has its own.</li>
                 <li>A PO Box on its own can&rsquo;t be a billing address. Enter a street address.</li>
                 <li>A free or comped plan isn&rsquo;t asked until someone presses a button that pays.</li>
                 <li>Choosing United States says &ldquo;We&rsquo;re not selling in the United States yet.&rdquo;</li>
               </ul>
               <HelpNote variant="info" title="Changing it">Open Plan &amp; billing and choose <strong>Billing address</strong> on the plan card, which shows the address on file. Stripe&rsquo;s billing page (Payment method &amp; invoices) updates your card and invoices, but no longer changes the address.</HelpNote>
+            </>
+          ),
+        },
+        {
+          id: 'club-plan-and-billing-t-taxes',
+          title: 'Taxes: what you’re charged and why',
+          content: (
+            <>
+              <p>Our prices are plus applicable taxes. The tax is worked out from your club&rsquo;s billing address: GST, or HST in the provinces that charge it, named with its rate on every quote and invoice, for example <strong>HST 13%</strong>.</p>
+              <ul>
+                <li>Before you pay, the window shows the plan&rsquo;s price, the tax on its own line, and <strong>Due today</strong>, which is the total you&rsquo;re charged.</li>
+                <li>If the charge has changed by the time you press the button, nothing is charged. The window shows the new figure and asks you to check it and press again.</li>
+                <li>A renewal shows the price before tax, with <strong>plus applicable taxes</strong> under it. Stripe fees we bill back to the club carry the same tax.</li>
+                <li>You can type your club&rsquo;s GST/HST number on Stripe&rsquo;s payment page. It prints on your invoices; the tax still applies.</li>
+                <li>When we refund a charge, Stripe emails a credit note that shows the tax given back.</li>
+              </ul>
+              <HelpNote variant="info" title="If the tax can’t be worked out">The window says &ldquo;We couldn&rsquo;t work out the tax for this billing address. Check the address and try again.&rdquo; Open <strong>Billing address</strong> on the plan card and check the street, city, province and postal code.</HelpNote>
             </>
           ),
         },

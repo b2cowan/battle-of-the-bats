@@ -2,7 +2,6 @@ import {
   BILLING_ADDRESS_REQUIRED,
   BILLING_LOCATION_WORDS,
   storedLocationStillValid,
-  toStripeAddress,
   type BillingLocation,
   type ReviewReason,
   type StoredBillingLocation,
@@ -123,12 +122,15 @@ export async function namedTaxLines(
   totalTaxes: ReadonlyArray<{ amount: number; tax_rate_details?: { tax_rate?: string | { id: string } | null } | null }> | null | undefined,
   rateOf: (id: string) => Promise<{ display_name?: string | null; percentage?: number | null; effective_percentage?: number | null }>,
 ): Promise<Array<{ label: string; cents: number }>> {
-  const out = new Map<string, number>();
-  for (const t of totalTaxes ?? []) {
-    if (!t.amount) continue;
+  const taxed = (totalTaxes ?? []).filter(t => t.amount).map(t => {
     const ref = t.tax_rate_details?.tax_rate;
-    const id = typeof ref === 'string' ? ref : ref?.id ?? null;
-    const label = id ? taxLineLabel(await rateOf(id)) : 'Tax';
+    return { amount: t.amount, id: typeof ref === 'string' ? ref : ref?.id ?? null };
+  });
+  const ids = [...new Set(taxed.map(t => t.id).filter((id): id is string => !!id))];
+  const labels = new Map(await Promise.all(ids.map(async id => [id, taxLineLabel(await rateOf(id))] as const)));
+  const out = new Map<string, number>();
+  for (const t of taxed) {
+    const label = t.id ? labels.get(t.id)! : 'Tax';
     out.set(label, (out.get(label) ?? 0) + t.amount);
   }
   return [...out].map(([label, cents]) => ({ label, cents }));
@@ -151,7 +153,7 @@ export const BILLING_TAX_WORDS = {
 } as const;
 
 export type BuyerTax =
-  | { ok: true; location: BillingLocation; stripeAddress: ReturnType<typeof toStripeAddress> }
+  | { ok: true; location: BillingLocation }
   | { ok: false; code: typeof BILLING_ADDRESS_REQUIRED | typeof BILLING_REVIEW_HOLD; error: string };
 
 /**
@@ -166,7 +168,7 @@ export function decideBuyerTax(facts: {
   const location = facts.stored ? storedLocationStillValid(facts.stored, facts.usSalesOpen) : null;
   if (!location) return { ok: false, code: BILLING_ADDRESS_REQUIRED, error: BILLING_LOCATION_WORDS.required };
   if (location.country === 'US' && facts.review) return { ok: false, code: BILLING_REVIEW_HOLD, error: BILLING_TAX_WORDS.held };
-  return { ok: true, location, stripeAddress: toStripeAddress(location) };
+  return { ok: true, location };
 }
 
 /** Stripe's tax answer on a preview, invoice or session: true only when it placed the buyer and worked the tax out. */

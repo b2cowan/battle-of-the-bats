@@ -27,7 +27,7 @@ import { afterEach, beforeEach, describe, it } from 'node:test';
 import { readCode } from './_source-code.ts';
 import { supabaseAdmin } from '../../lib/supabase-admin.ts';
 import { getStripe } from '../../lib/stripe.ts';
-import { applyMove, applyPlanChangeSideEffects, hasLiveSubscription, previewMove, type MoveOrg, type MovePreview, type MoveRefusal } from '../../lib/plan-move.ts';
+import { applyMove, applyPlanChangeSideEffects, hasLiveSubscription, moveLandedInStripe, moveRefusalBeforeStripe, previewMove, type MoveOrg, type MovePreview, type MoveRefusal } from '../../lib/plan-move.ts';
 import { flipWorkspaceIntoClub } from '../../lib/workspace-flip.ts';
 import { moveDirection } from '../../lib/plan-move-options.ts';
 import { trustedPreviewLines, type PreviewInvoiceLike } from '../../lib/plan-move-preview-lines.ts';
@@ -841,6 +841,48 @@ describe('8 · after the review: money, refusals and records', () => {
     // An ordinary club has no workspace row and is never refused, whatever its team count.
     stubDatabase({ rep_teams: { count: 40 } });
     assert.equal(await workspaceCannotBecomeClub('org_1'), null);
+  });
+
+  it('Part 7: REFUSES a portal whose Stripe customer also pays for another portal, BEFORE any charge (the club address would land on both)', async () => {
+    const SHARED = { team_workspaces: { one: { workspace_state: 'independent', stripe_customer_id: 'cus_coach' }, count: 1 }, rep_teams: { count: 1 } };
+    stubDatabase({ ...PRICES, ...SHARED });
+    assert.match(await workspaceCannotBecomeClub('org_1') ?? '', /also pays for another Coaches Portal/);
+    stubStripe({ sub: subscription(), invoice: invoiceOf([line(5000, NEW_PRICE), line(-2000, OLD_PRICE)]) });
+    const preview = await previewMove(premiumOrg(), 'club');
+    assert.ok(isRefusal(preview) && preview.code === 'cannot_become_club', JSON.stringify(preview));
+    const applied = await applyMove(premiumOrg(), 'club', { expectedAmountDue: SHOWN, actor: 'x', clubName: 'Hawks' });
+    assert.ok(isRefusal(applied) && applied.code === 'cannot_become_club');
+    assert.equal(stripeCalls.update.length, 0, 'nothing is charged');
+    // Its own customer and no other paying portal: through (the count is of OTHER portals with a subscription).
+    stubDatabase({ ...PRICES, team_workspaces: { one: { workspace_state: 'independent', stripe_customer_id: 'cus_coach' }, count: 0 }, rep_teams: { count: 1 } });
+    assert.equal(await workspaceCannotBecomeClub('org_1'), null);
+    // Only a portal that still renews on the customer counts (an ended one keeps its old subscription id): pinned in the query.
+    const status = readFileSync('lib/workspace-upgrade-status.ts', 'utf8');
+    assert.match(status, /\.not\('subscription_status', 'in', '\(canceled,incomplete_expired\)'\)/);
+    assert.match(status, /\.neq\('billing_mode', 'org_team_addon'\)/);
+    assert.match(status, /\.not\('workspace_state', 'in', '\(org_owned,archived\)'\)/);
+    // A test-mode stand-in customer is never asked about.
+    stubDatabase({ ...PRICES, team_workspaces: { one: { workspace_state: 'independent', stripe_customer_id: 'mock_cus' }, count: 5 }, rep_teams: { count: 1 } });
+    assert.equal(await workspaceCannotBecomeClub('org_1'), null);
+  });
+
+  it('Part 7: the early refusal (asked before the club address goes on Stripe) changes nothing in Stripe and answers as applyMove would', async () => {
+    stubDatabase({ ...PRICES, ...ONE_TEAM });
+    stubStripe({ sub: subscription() });
+    assert.equal((await moveRefusalBeforeStripe(premiumOrg(), 'club', '   '))?.code, 'club_name_invalid', 'a blank name, before any Stripe read');
+    assert.equal(await moveRefusalBeforeStripe(premiumOrg(), 'club', 'Hawks'), null, 'a move that can go through is not refused');
+    stubDatabase({ ...PRICES, team_workspaces: { one: { workspace_state: 'independent' } }, rep_teams: { count: 2 } });
+    assert.equal((await moveRefusalBeforeStripe(premiumOrg(), 'club', 'Hawks'))?.code, 'cannot_become_club');
+    assert.equal(stripeCalls.update.length + stripeCalls.createPreview, 0, 'no update and no price asked');
+  });
+
+  it('Part 7: after a stripe_error, Stripe is asked whether the move landed: the target price on the subscription = yes', async () => {
+    stubDatabase({ ...PRICES });
+    stubStripe({ sub: subscription({ items: { data: [{ id: 'si_1', quantity: 1, price: { id: 'price_club_monthly', recurring: { interval: 'month' } }, current_period_start: NOW - 864000, current_period_end: NOW + 1728000 }] } }) });
+    assert.equal(await moveLandedInStripe(premiumOrg(), 'club'), true);
+    stubStripe({ sub: subscription() });
+    assert.equal(await moveLandedInStripe(premiumOrg(), 'club'), false);
+    assert.equal(await moveLandedInStripe(premiumOrg({ stripeSubscriptionId: null }), 'club'), null, 'nothing to read: no answer, the caller keeps its own');
   });
 
   it('refusals read in plain words (no "card", no code names)', async () => {

@@ -368,6 +368,63 @@ Part 7 (2b has its own).
 **Planned 2026-11-05 as Part 6b** ([GST_HST_STAGE2_PART6B_BUILD_PROMPT.md](GST_HST_STAGE2_PART6B_BUILD_PROMPT.md)): a test-mode spike,
 a `platform_refunds` migration, the refund through a credit note (with a split preview), the club's name put back after Checkout.
 Owner ruled R1–R3 as recommended 2026-11-05. Runs before Part 7; its walk steps fold into Part 7's walk.
+**Part 7 (closeout) BUILT + REVIEWED 2026-11-06; walk §471 published, owed** (commit hash in the next entry). All [V 2026-11-06]:
+- **Q1 · step by the gap** (`lib/console-money-credit.ts` `planCreditNote` + `nextCreditAmount`): a bracket search for the LARGEST
+  before-tax line amount whose Stripe-previewed total is not above the typed figure; guesses by the last preview's own ratio, then
+  the line through the last two previews, a spill point first when a guess would cross onto another line, halving once the bracket's
+  totals are within two cents. It answers only once Stripe has shown one unit more goes above (that proof is what makes the
+  confirm's re-plan land on the same split); `MAX_PREVIEWS` 6 → 8; past it, `noteNotWorkedOut`. Each rule measured to earn its keep
+  (`.probe/gst2/part7-q1-sweep.mjs` 3,798 figures, 0 wrong; `part7-q1-random.mjs` 7,500 figures, 0 wrong, 0 moved on re-plan, 3
+  refused). Guards §6b: line coupon on a two-line invoice, 75% off, a coupon on the larger of two lines, a 60-figure sweep incl. 90%
+  off at NB 15%, pinned invoices, re-plan stability + a confirm at the previewed figure, all-left one preview, 99.99% off refused at
+  the budget; mutate-and-fail 5/5 (`part7-q1-mutate-run1.txt`). **Test-mode matrix re-run, every row passes, J3 included**
+  (`.probe/gst2/part6b-part7-refunds-run1.txt`, `-result1.json`): line coupon $100.00 → $99.99 (was $99.97 + 409), $2,000.00 exact;
+  75% off subscription $100.00 → $99.99 and $33.33 → $33.32 in 4 previews; every figure checked by an independent one-unit-more
+  preview. Cleanup: 9 customers deleted, 2 products archived, 4 coupons deleted, nothing in the database.
+- **Q2 · the credit-note PDF link** is returned only with the `refund` power (`toChargeCreditNote` in `lib/console-money.ts`, the
+  charge route passes `withPdf`); **owner 2026-11-06 extended it to the console's fee list**: an owed fee invoice's Stripe pay link
+  only with `refund` (the stripe-fees route). Guard `tests/unit/credit-note-pdf-gate-guard.test.ts` (5 tests; mutate 5/5,
+  `part7-q2-mutate-run1.txt`).
+- **Exit step** (`scripts/audit-revenue-readiness.mjs`, read only, not edited): `stripe-live-2026-11-06.json` /
+  `stripe-sandbox-2026-11-06.json`. **The tax settings do NOT match yet:** live has the head office and `txcd_10103001` on every
+  product, but **0 registrations** (sandbox: CA standard, active) and default behaviour **`inferred_by_currency`** (sandbox:
+  exclusive); all 14 live prices `unspecified`. Promote prerequisites (Ask 7), recorded in `MANUAL_PROD_STEPS.json` (446's note).
+  The portal needs **no** configuration bump (`tax_id` allowed, live audit). Test mode: an `unspecified` CAD price under an
+  exclusive default is taxed exclusive and the quote adds up (`part7-unspecified-price-run1.txt`), so the live prices stay as they are.
+- **`/accounting` (blocking): cleared.** Nothing in Stage 2 needs a change before the walk; Q1 makes R1's sentence true everywhere;
+  Q2 is least access. The LIVE account blocks the promote: without the Canada registration every Canadian sale is charged $0 tax
+  silently (Stripe says `not_collecting`, status still complete) and the tax is owed at our cost. W9 widened: our GST/HST number on
+  live documents. `STRIPE_TAX_SETUP.md` re-verified and rewritten; `CREDIT_NOTES_ON_REFUNDS.md` updated (and our registration number
+  redacted from it; it is in git history and printed on every invoice anyway).
+- **`/simplify`** (4 angles) applied, behaviour unchanged: Premium → Club stamps from the customers it read (one Stripe read each, not
+  two); `copyBillingLocationToStripe` (no caller) and `BuyerTax.stripeAddress` (read by tests only) deleted; one direction read in the
+  move route; tax-rate lookups in parallel, each id once; the PDF gate as a pure mapping; the planner's refusals in one place.
+  Skipped: `ensureStripeCustomer` through `stampStripeCustomerAddress` (would route it through a module the test loader stubs); one
+  fee-line builder (the every-path guard pins each site on purpose).
+- **`/review` (high-risk, 5 lenses): no Critical or High.** Medium, confirmed, **fixed on the owner's yes (2026-11-06, before the
+  walk):** the Premium → Club stamp (a) ran before the refusal checks → `moveRefusalBeforeStripe` asked first; (b) a lost Stripe answer
+  read as refused put the coach's address back on a move Stripe made → `moveLandedInStripe` re-reads first, and a landed move says
+  "Stripe made the change, but its answer didn’t reach us in time…" instead of "Nothing was changed"; (c) a coach's one Stripe customer
+  covering two portals would carry the club's address and name to the other → `workspaceCannotBecomeClub` refuses when another portal
+  still renews on that customer (re-review: ended, club-paid and moved portals excluded). Tests + mutate 8/8
+  (`part7-move-mutate-run1.txt`). **Recorded, not fixed (Low; follow-up line in TODO):** the fee-invoice email's lines vs its Total when
+  the customer has a balance; a fee waiting for an address reads to the club as "couldn't be billed yet" and the daily retry clears the
+  reason; a Stripe customer with only a country passes `customerHasAddress`; `full_name ?? name` misses an empty full name; a refused
+  move down can leave a bare schedule; a slow Stripe can take a refund preview past its 30 s limit (fails safe). Accepted: look and
+  confirm budgets (0 in 7,500), Akwesasne-type postal exceptions (Ask 4 ruled).
+- **`/docs`:** "Taxes: what you’re charged and why" (club guide, Club plan & billing) and "What tax am I charged, and why?" (coach
+  FAQ); both billing-address answers lost "Nothing is charged differently today." Spelling gate passes.
+- **Checks:** the five named guards + the new PDF guard + billing-location-evidence + workspace-move-money + checkout guard all pass
+  (one known failure, stage3 §12 on `ExpenseFormWindow.tsx`). Typecheck exit 0 (8 GB heap, three runs). Lint: 0 errors.
+  `verify:changed`: 14,483 tests, 8 failing — 1 was ours (the checkout guard pinned the move route's old wording; fixed), 7 known
+  and not ours (practice-plans N1, plan-billing free time, public tournament Stage 6 walk ×3, series-date-groups, stage3 §12). Its
+  later checks run one by one: 17 pass; 8 fail, none on Stage 2 files (admin old look + lettering, schema parity and index coverage
+  from the bank check's migrations, org-slug callers in public-site own-address, CSS selectors incl. `money.compare` absent at HEAD,
+  the export catalog's founding-season entry).
+- **Walk §471** published: https://claude.ai/artifact/TpB5Lqu19rrpoPv7DWvQaV (source `GST_HST_STAGE2_WALK.html`; folds in 6b's
+  W1–W10 except W7, the no-invoice charge). Runs on the dev site after the push (owner chose push over the localhost relay).
+- **Owner 2026-11-06:** Q4 (Plan & billing's fee row "Refunded $X · credit note") is its own TODO line, a `/plan` follow-up after Stage 2.
+
 
 **Rulings (owner, 2026-11-05, all as recommended):**
 - **Ask 1:** one helper decides tax: taxes by the stored address; a US address with disagreeing card/payout evidence

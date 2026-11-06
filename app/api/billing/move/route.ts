@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { withObservability } from '@/lib/observability';
-import { applyMove, cancelScheduledMove, getScheduledMove, hasLiveSubscription } from '@/lib/plan-move';
+import { applyMove, cancelScheduledMove, getScheduledMove, hasLiveSubscription, moveLandedInStripe, moveRefusalBeforeStripe } from '@/lib/plan-move';
 import { moveDirection } from '@/lib/plan-move-options';
 import { authorizeMove, parseTargetPlan, refuseIfGated, refusalResponse } from '@/lib/plan-move-route';
 import { writeOrgBillingAudit } from '@/lib/billing-retention';
@@ -65,8 +65,9 @@ export const POST = withObservability(async (req: Request) => {
   // Stage 2: a move DOWN charges nothing today but turns tax on for the renewal it schedules, which Stripe refuses for a customer
   // it cannot place, so it asks the same question (the screen opens the Billing address window, not a provider error).
   let clubAddress: { buyer: Extract<BillingBuyer, { kind: 'org' }>; location: BillingLocation } | null = null;
-  if (moveDirection(ownPlanOf(org), toPlan) !== null) {
-    const up = moveDirection(ownPlanOf(org), toPlan) === 'up';
+  const direction = moveDirection(ownPlanOf(org), toPlan);
+  if (direction !== null) {
+    const up = direction === 'up';
     const clubName = up && ownPlanOf(org) === 'team' && typeof body.clubName === 'string' ? body.clubName.trim() : null;
     const buyer = { kind: 'org' as const, orgId: org.id, name: clubName || org.name, stripeCustomerId: org.stripeCustomerId ?? null };
     const located = await requireBillingLocation(buyer, clubName ? billingAddressFromBody(body.billingAddress) : null);
@@ -81,15 +82,25 @@ export const POST = withObservability(async (req: Request) => {
   // GST/HST Stage 2 Ask 2 (owner 2026-11-05): the move's prorated invoice is taxed by the Stripe customer's address, so the club's
   // address goes on BEFORE the move, and the coach's home address is put back if the move is refused (or throws). A stamp that
   // fails refuses the move with nothing changed.
+  // Part 7 (owner 2026-11-06): the refusals that need no Stripe change are asked BEFORE the stamp, and after a `stripe_error`
+  // (which a lost answer also reads as) the coach's address goes back only if Stripe did not make the move after all.
   let result: Awaited<ReturnType<typeof runMove>>;
+  let landed = false;
   if (clubAddress) {
-    const stamped = await withClubAddressOnStripe(clubAddress.buyer, clubAddress.location, r => 'code' in r, runMove);
+    const early = await moveRefusalBeforeStripe(org, toPlan, typeof body.clubName === 'string' ? body.clubName : null);
+    if (early) return refusalResponse(early);
+    const refused = async (r: Awaited<ReturnType<typeof runMove>>) => {
+      if (!('code' in r)) return false;
+      if (r.code === 'stripe_error' && await moveLandedInStripe(org, toPlan) === true) { landed = true; return false; }
+      return true;
+    };
+    const stamped = await withClubAddressOnStripe(clubAddress.buyer, clubAddress.location, refused, runMove);
     if (!stamped.ok) return stamped.response;
     result = stamped.result;
   } else {
     result = await runMove();
   }
-  if ('code' in result) return refusalResponse(result);
+  if ('code' in result) return refusalResponse(landed ? { ...result, error: MOVE_LANDED_UNCONFIRMED } : result);
 
   await writeOrgBillingAudit(org.id, authorized.actorId,
     result.direction === 'up' ? 'plan_moved_up' : 'plan_move_scheduled',
@@ -101,6 +112,9 @@ export const POST = withObservability(async (req: Request) => {
     });
   return NextResponse.json(result);
 }, { route: '/api/billing/move' });
+
+/** Stripe made the move, but its answer was lost on the way (Part 7): never "nothing was changed — try again". */
+const MOVE_LANDED_UNCONFIRMED = 'Stripe made the change, but its answer didn’t reach us in time. Wait a minute and reload the page before pressing anything again.';
 
 export const DELETE = withObservability(async (req: Request) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;

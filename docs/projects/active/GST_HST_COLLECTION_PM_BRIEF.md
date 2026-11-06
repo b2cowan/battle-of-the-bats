@@ -26,7 +26,11 @@ none, knows no customer's location, has no Terms of Service, and prices never sa
   counsel confirms the fee's treatment.
 - **A refund to a club** (staff, platform admin) comes with a credit note that shows the tax given back, and the club gets
   it. A club's invoices carry the club's name, not the name of whoever's card paid, unless the club typed a business name
-  (Stage 2 Part 6b, planned 2026-11-05).
+  (Stage 2 Part 6b, built 2026-11-05/06; a part refund lands on the nearest figure Stripe can make, 2026-11-06.)
+- **Stage 2 closeout (2026-11-06):** every quoted price says "plus applicable taxes", every paid step adds GST or HST for the
+  buyer's billing address and charges what it quoted; a coach whose billing pays for two portals is asked to contact us before
+  one becomes a club; the help explains the tax. **Owner walk §471 owed.** Before it reaches customers, the live Stripe account
+  needs its Canada registration and "Include tax in prices: No" (owner steps at the promote).
 - **The owner** sees tax collected by province, sales to US clubs, tax paid on expenses, and a ready-to-file return
   worksheet in Bookkeeping. Staff see each charge's tax and why on the organization's Money tab.
 - **New customers accept Terms of Service** at signup.

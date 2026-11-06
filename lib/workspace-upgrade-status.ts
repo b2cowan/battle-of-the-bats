@@ -4,7 +4,10 @@ import { clubUpgradeStateOf, type ClubUpgradeState } from './workspace-upgrade';
 /**
  * Would the flip refuse this portal for a reason no payment can fix? Asked BEFORE any charge (the move's validation, the in-place
  * checkout), because the flip says no by name AFTER the money is taken. The same two rules as the flip (mig 414): the workspace has
- * not already moved into someone else's club, and the organization holds no more than its one team.
+ * not already moved into someone else's club, and the organization holds no more than its one team. And a third, ours (GST/HST
+ * Stage 2 Part 7, owner 2026-11-06): its Stripe customer pays for no OTHER portal. A coach has one customer for every portal they
+ * buy (lib/team-checkout-customer.ts), and the club's address and name go onto that customer before the move (Ask 2) — they would
+ * then tax and name the coach's other portal's renewals too. Contact us; the club gets set up by hand.
  *
  * Returns a sentence the screen can show, or null when the portal can become a club. An ordinary club has no workspace row and is
  * never asked. Throws when the database does (the caller answers 500; nothing has been charged).
@@ -13,9 +16,9 @@ export async function workspaceCannotBecomeClub(orgId: string): Promise<string |
   const [{ data: workspace, error: workspaceError }, { count, error: teamsError }] = await Promise.all([
     supabaseAdmin
       .from('team_workspaces')
-      .select('workspace_state')
+      .select('workspace_state, stripe_customer_id')
       .eq('workspace_org_id', orgId)
-      .maybeSingle<{ workspace_state: string | null }>(),
+      .maybeSingle<{ workspace_state: string | null; stripe_customer_id: string | null }>(),
     supabaseAdmin
       .from('rep_teams')
       .select('id', { count: 'exact', head: true })
@@ -29,6 +32,24 @@ export async function workspaceCannotBecomeClub(orgId: string): Promise<string |
   }
   if ((count ?? 0) > 1) {
     return 'This workspace holds more than one team, so it can’t become a club on its own yet. Contact us and we’ll help.';
+  }
+  const customer = workspace.stripe_customer_id;
+  if (customer && !customer.startsWith('mock_')) {
+    const { count: others, error: othersError } = await supabaseAdmin
+      .from('team_workspaces')
+      .select('id', { count: 'exact', head: true })
+      .eq('stripe_customer_id', customer)
+      .neq('workspace_org_id', orgId)
+      .not('stripe_subscription_id', 'is', null)
+      // Only a portal that still renews on this customer: an ended one keeps its old subscription id (the webhook finds it by
+      // it), a club-paid one (org_team_addon) carries the club's customer, and one that moved into a club is not billed.
+      .not('subscription_status', 'in', '(canceled,incomplete_expired)')
+      .neq('billing_mode', 'org_team_addon')
+      .not('workspace_state', 'in', '(org_owned,archived)');
+    if (othersError) throw othersError;
+    if ((others ?? 0) > 0) {
+      return 'This workspace’s billing also pays for another Coaches Portal, so it can’t become a club on its own yet. Contact us and we’ll set the club up.';
+    }
   }
   return null;
 }

@@ -393,6 +393,38 @@ export type MoveResult =
  * A Premium coach's portal moving onto Club (Stage 4b) also passes `clubName`: it is REQUIRED there (refused before Stripe is
  * touched), put on the subscription's metadata so a webhook retry can read it back, and handed to the flip.
  */
+/**
+ * The refusals a move can give WITHOUT asking Stripe to change anything: the club's name (Premium → Club), then `validateMove`.
+ * The move route asks this BEFORE it puts the club's address on the Stripe customer (GST/HST Stage 2 Part 7, owner 2026-11-06), so
+ * a move that was always going to be refused never stamps, and a renewal finalizing meanwhile is never taxed or named for a club
+ * that is not being made. `applyMove` still asks it all again: this is the early answer, not a replacement.
+ */
+export async function moveRefusalBeforeStripe(org: MoveOrg, toPlan: OrgPlan, clubName: string | null): Promise<MoveRefusal | null> {
+  if (ownPlanOf(org) === 'team' && moveDirection('team', toPlan)) {
+    const named = parseClubName(clubName);
+    if (!named.ok) return { code: 'club_name_invalid', error: named.error };
+  }
+  const checked = await validateMove(org, toPlan);
+  return checked.ok ? null : checked.refusal;
+}
+
+/**
+ * Did Stripe make the move anyway? `applyMove` answers `stripe_error` for every throw, a lost answer included (a timeout after
+ * Stripe applied the update), so before the route puts the coach's address back (Ask 2) it asks Stripe afresh: true = the
+ * subscription now carries the target plan's price; false = it does not; null = Stripe could not be read (the caller keeps
+ * its answer). Part 7, owner 2026-11-06.
+ */
+export async function moveLandedInStripe(org: MoveOrg, toPlan: OrgPlan): Promise<boolean | null> {
+  try {
+    const live = await loadLiveSubscription(org);
+    if ('code' in live) return null;
+    const priceId = await getStripePriceId(toPlan, live.billingCycle);
+    return priceId ? live.item.price.id === priceId : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function applyMove(
   org: MoveOrg,
   toPlan: OrgPlan,

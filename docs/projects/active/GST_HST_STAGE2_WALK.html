@@ -1,0 +1,338 @@
+<title>Stage 2 Tax Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box (the house walk frame). */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .facts { grid-template-columns: 1fr; } .facts dd { margin-bottom: 6px; } }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.call { font-size: 13px; color: var(--warn); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+.opts { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; }
+.opt { display: flex; gap: 8px; align-items: flex-start; font-size: 0.95em; }
+.opt input { margin-top: 3px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · GST/HST · Stage 2 · §471</span>
+    <h1>A buyer is quoted, and charged, the right tax for where they are, on every paid step</h1>
+    <p class="sub">Written 2026-11-06 for the Stage 2 closeout (Parts 0–6b and Part 7). It runs on the dev site against real Stripe test-mode checkouts, with real webhooks. It is the only end-to-end look at the tax on the dev site; the automated tests and the scripted Stripe matrix proved the figures, and your ticks prove what a buyer and staff actually see.</p>
+  </header>
+  <section class="card"><h2>What this walk is for</h2><p>From Stage 2 on, every price we quote says <strong>plus applicable taxes</strong>, and every paid step adds GST or HST for the buyer’s billing address: HST 13% in Ontario, 14% in Nova Scotia, GST 5% in Alberta. The figure a window quotes is the figure Stripe charges. A GST/HST number typed on Stripe’s page prints on the invoice and leaves the tax in place. A refund from platform admin goes through a credit note that shows the tax given back. Part 7 also changed three things you will see: a part refund lands on the nearest figure Stripe can make, staff without refund rights see no credit-note PDF, and a coach whose billing pays for two portals can’t turn one into a club.</p></section>
+  <section class="card"><h2>It passes when</h2><ul>
+    <li>Every price before Stripe’s page says “plus applicable taxes”, and every quote that charges today shows the tax by name with <strong>Due today</strong> as the total.</li>
+    <li>Stripe’s page and the invoice charge exactly what FieldLogicHQ quoted, at the rate for the buyer’s province.</li>
+    <li>Changing the billing address changes the tax on the next charge, and a postal code from another province is refused.</li>
+    <li>A GST/HST number shows on the invoice, and the tax stays.</li>
+    <li>Premium → Club quotes and charges at the club’s address, and a coach with two paid portals is told to contact us instead.</li>
+    <li>A refund makes a credit note with the tax reversed; the part refund lands on the nearest figure; the club’s Story says so.</li>
+    <li>The help guide explains the tax, and the live Stripe account shows our real business details.</li>
+  </ul></section>
+  <section class="card"><h2>Not in this walk</h2><ul>
+    <li><strong>The Founding next-season choice.</strong> It doesn’t open until 2027-06-01. Its checkout uses the same tax setting as the others, and the every-path test pins it.</li>
+    <li><strong>A US buyer.</strong> US sales are closed (“We’re not selling in the United States yet.”). Stripe test mode charged a US address no Canadian tax (Part 6).</li>
+    <li><strong>A charge that paid no invoice.</strong> Our checkouts always make one. The refund matrix proved a bare refund makes no credit note.</li>
+    <li><strong>A club’s name on its first invoice after a free trial.</strong> It needs a 90-day clock. Part 6b proved it on Stripe test clocks with real Checkout pages; D3 checks the name on Stripe’s customer instead.</li>
+    <li><strong>Fee invoices for online payments.</strong> Walk §463 covered the address step; the scripted matrix proved the fee tax by province.</li>
+  </ul></section>
+  <section class="card"><h2>Before you start</h2><dl class="facts">
+    <dt>Dev site</dt><dd><strong>https://dev.fieldlogichq.ca</strong> must be running the Part 7 build. I push dev once you OK the commit, and it rebuilds (about 20 minutes). Step A1 checks it. Don’t go past A1 until it passes.</dd>
+    <dt>Your inbox</dt><dd>The walk signs up new buyers with plus parts on your own address: <code>you+tax1</code> (an Ontario club), <code>you+tax2</code> (a Nova Scotia club with a GST/HST number), <code>you+tax3</code> (an Ontario coach with two portals), <code>you+tax4</code> (a coach who starts a club in Alberta). Any password; confirm the email if asked.</dd>
+    <dt>Test card</dt><dd><code>4000 0012 4000 0000</code> (Canadian), any future expiry, any CVC. On Stripe’s page put <strong>Pat Cardholder</strong> as the name on the card, so you can tell it from the club’s name later.</dd>
+    <dt>Addresses</dt><dd>Ontario: <code>1 Main Street</code>, Guelph, Ontario, <code>N1H 4H2</code>. Nova Scotia: <code>1 Main Street</code>, Halifax, Nova Scotia, <code>B3H 1A1</code>. Alberta: <code>1 Main Street</code>, Calgary, Alberta, <code>T2P 1J9</code>.</dd>
+    <dt>Stripe</dt><dd>The test dashboard (<code>https://dashboard.stripe.com/test/customers</code>) to read invoices and customers. Part K is the LIVE dashboard, read only: change nothing there in this walk.</dd>
+    <dt>Two windows</dt><dd>Keep platform admin signed in beside the buyer, in a private window or another browser. Sign each new buyer out before the next sign-up.</dd>
+  </dl></section>
+  <section class="card"><h2>Sign in as</h2><dl class="facts">
+    <dt>Platform admin</dt><dd><code>uat-platform@fieldlogichq.ca</code> · <code>UATPassword2026!</code> · <code>https://dev.fieldlogichq.ca/platform-admin/login</code>. A buyer’s record is under Organizations; refunds are on its <strong>Money</strong> tab.</dd>
+    <dt>Support role (Part J)</dt><dd>Any staff login whose role is <strong>Support</strong> (Platform admin → Staff). If you have none, mark Part J “Needs a call”: the build guard proves it.</dd>
+    <dt>New buyers</dt><dd>The four plus addresses above, made during the walk.</dd>
+    <dt>Keep it private</dt><dd>These are dev-only passwords, and this page carries them.</dd>
+  </dl></section>
+  <section class="card"><h2>Calls to make as you go</h2><ul>
+    <li><strong>The “billing also pays for another Coaches Portal” sentence (H2).</strong> New in Part 7, not yet past <code>/marketing</code>. Say if it reads wrong.</li>
+    <li><strong>The “Stripe made the change, but its answer didn’t reach us” sentence.</strong> New in Part 7; you will not see it in this walk (it needs a lost answer from Stripe). Read it in the notes if you want to rule on it.</li>
+  </ul></section>
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+</main>
+
+<script>
+(function () {
+  var KEY = "gst-hst-stage2-walk-v1";
+  var TITLE = "GST/HST · Stage 2 walk §471 · A buyer is quoted, and charged, the right tax for where they are, on every paid step (2026-11-06)";
+  var PA = "Platform admin";
+  var CA = "<code>4000 0012 4000 0000</code>";
+  var ON = "<code>1 Main Street</code>, Guelph, Ontario, <code>N1H 4H2</code>";
+  var NS = "<code>1 Main Street</code>, Halifax, Nova Scotia, <code>B3H 1A1</code>";
+  var AB = "<code>1 Main Street</code>, Calgary, Alberta, <code>T2P 1J9</code>";
+  var ST = "Stripe test dashboard";
+  var PARTS = [
+ { id: "A", title: "The dev site has the Part 7 build (stop check)", steps: [
+  { who: PA, do: "Open <code>https://dev.fieldlogichq.ca/platform-admin/help/org#club-plan-and-billing-t-taxes</code>.",
+    see: "An answer titled <strong>Taxes: what you’re charged and why</strong>, starting “Our prices are plus applicable taxes.”",
+    options: ["The answer is there", "No such answer: the dev site is on an older build. STOPPED, will wait and retry"] }
+ ]},
+ { id: "B", title: "A new Ontario club: the price says plus tax, Stripe adds HST 13% (you+tax1)", steps: [
+  { who: "New buyer · you+tax1", do: "Open <code>https://dev.fieldlogichq.ca/start/tournament</code> and sign up a new organization named <strong>Tax Walk Ontario</strong>, as you+tax1.",
+    see: "The first-time plan screen. Under the prices: <strong>Prices are plus applicable taxes.</strong>" },
+  { who: "Owner · tax1", do: "Choose <strong>Monthly</strong> if offered and press the button for <strong>Tournament Plus</strong>. On the Billing address screen enter " + ON + " and press <strong>Continue to checkout</strong>.",
+    see: "Stripe’s test checkout for Tournament Plus. It names the tax for Ontario, <strong>HST</strong> at 13%, on the amount after the free trial (today’s charge is 0 during the trial). Pay with " + CA + " as Pat Cardholder.",
+    options: ["HST 13% shown, on the after-trial amount", "No tax line at all (tell me)", "A different rate (tell me which)"] },
+  { who: "Owner · tax1", do: "Open <strong>Plan &amp; billing</strong>.",
+    see: "The plan card shows the price with <strong>plus applicable taxes</strong> beside or under it, and “Billing address: 1 Main Street, Guelph, Ontario N1H 4H2”." },
+  { who: ST, do: "Customers → search <strong>Tax Walk Ontario</strong> → open it.",
+    see: "The customer’s name is <strong>Tax Walk Ontario</strong>, not Pat Cardholder (Stripe’s page wrote the cardholder’s name; our webhook put the club’s back). Its address is the Guelph one." }
+ ]},
+ { id: "C", title: "Nova Scotia, with a GST/HST number: HST 14%, and the number does not remove it (you+tax2)", steps: [
+  { who: "New buyer · you+tax2", do: "Sign out. Sign up <strong>Tax Walk Halifax</strong> at <code>https://dev.fieldlogichq.ca/start/tournament</code> as you+tax2, press <strong>Tournament Plus</strong>, and give " + NS + ".",
+    see: "Stripe’s checkout names <strong>HST</strong> at <strong>14%</strong> (Nova Scotia’s rate since April 2025)." },
+  { who: "Owner · tax2", do: "On Stripe’s page tick the box for buying as a business, type the business name <strong>Halifax Hawks Society</strong> and the GST/HST number <code>123456789RT0002</code>, and pay with " + CA + ".",
+    see: "The tax line is still there after the number is typed: <strong>HST 14%</strong> does not change to 0.",
+    options: ["Tax unchanged after the number", "The tax went to 0 (a defect: tell me)"] },
+  { who: ST, do: "Open the customer for this club.",
+    see: "Its name is <strong>Halifax Hawks Society</strong> (the business name typed is the buyer’s own and is kept), and its tax IDs list the CA GST/HST number." }
+ ]},
+ { id: "D", title: "The address decides the next charge; a postal code from another province is refused (Tax Walk Halifax)", steps: [
+  { who: "Owner · tax2", do: "On Plan &amp; billing press <strong>Billing address</strong>.",
+    see: "The window’s hint reads <strong>Your next charge is taxed for this address.</strong>" },
+  { who: "Owner · tax2", do: "Choose <strong>Alberta</strong> but leave the postal code <code>B3H 1A1</code>, and press <strong>Save</strong>.",
+    see: "A red line under the postal code: <strong>A postal code in Alberta starts with T.</strong> Nothing is saved." },
+  { who: "Owner · tax2", do: "Change it to " + AB + " and press <strong>Save</strong>.",
+    see: "“Billing address saved”, and the card line reads Calgary, Alberta." },
+  { who: "Owner · tax2", do: "Under Change plan press <strong>Move to Club</strong> and read the window before you confirm.",
+    see: "The window quotes the move. Any tax on it is named <strong>GST 5%</strong> (Alberta), not HST 14%, and <strong>Due today</strong> is the total. During the free trial today’s figure can be 0; the renewal figure then carries <strong>plus applicable taxes</strong>. Confirm, or Cancel if you prefer to keep the club small.",
+    options: ["GST 5% (or 0 today with “plus applicable taxes” on the renewal)", "Still HST 14% (a defect: tell me)", "Something else (notes)"] }
+ ]},
+ { id: "E", title: "A coach buys Premium: HST 13% at their home address, charged today (you+tax3)", steps: [
+  { who: "New buyer · you+tax3", do: "Sign out. Open <code>https://dev.fieldlogichq.ca/team</code>, make the account (you+tax3), name the team <strong>Tax Walk Team One</strong>, press <strong>Next</strong>, enter " + ON + " on the Address step.",
+    see: "Before Stripe’s page, the price says <strong>plus applicable taxes</strong>." },
+  { who: "Coach · tax3", do: "Press <strong>Continue to checkout</strong>.",
+    see: "Stripe’s checkout charges today: <strong>$29.00 + HST 13% $3.77 = $32.77</strong> (no trial on Premium). Pay with " + CA + " as Pat Cardholder." },
+  { who: ST, do: "Open this coach’s customer → its first invoice.",
+    see: "Paid <strong>$32.77</strong>: $29.00 and a tax line HST 13% $3.77. The PDF shows our name and GST/HST number at the top. (The first invoice is made inside Stripe’s page, so it may name Pat Cardholder: accepted, R4.)" }
+ ]},
+ { id: "F", title: "Refunds from platform admin go through a credit note (Tax Walk Team One’s $32.77 charge)", steps: [
+  { who: PA, do: "Open Tax Walk Team One’s record → <strong>Money</strong> → the $32.77 charge → <strong>Refund this charge</strong> → <strong>Part of it</strong> → type <strong>$15.08</strong>.",
+    see: "“Refund $15.07 of the $32.77 charge to the Visa ending 0000: $13.34 for the plan + $1.73 HST 13%. Stripe can refund $15.07, the nearest it can make with the tax.” Then <strong>This cannot be undone.</strong> and “A credit note goes to …” with your plus address, and a Test mode mark.",
+    options: ["Exactly this split and sentence", "Different figures (notes)", "No split, or an error"] },
+  { who: PA, do: "Press the refund button to confirm.",
+    see: "A success message that names the credit note’s number (…-CN-01). The charge window now lists that credit note with a <strong>PDF</strong> link." },
+  { who: PA, do: "Open the PDF.",
+    see: "“Credit Note”, our name and GST/HST number, the buyer’s name and address under Bill to, the original invoice number, “HST - Canada (13% on CA$13.34) CA$1.73”, and CA$15.07 refunded." },
+  { who: "Your inbox", do: "Look for mail to you+tax3.",
+    see: "Stripe’s credit-note email and/or its refund receipt arrive. Note which ones in the notes." },
+  { who: PA, do: "Open the record’s <strong>Story</strong>.",
+    see: "“Refunded $15.07 of a charge · To the card it came from · credit note …-CN-01 · the plan did not change”." },
+  { who: PA, do: "Refund the same charge again, <strong>All of it</strong>.",
+    see: "The split is the rest: $15.66 for the plan + $2.04 HST 13% ($17.70), with no “nearest” sentence. Confirm: a second credit note (…-CN-02) and a second Story line." }
+ ]},
+ { id: "G", title: "Premium → Club in place: quoted and charged at the CLUB’s address (you+tax4)", steps: [
+  { who: "New buyer · you+tax4", do: "Sign out. At <code>https://dev.fieldlogichq.ca/team</code> make you+tax4, team <strong>Tax Walk Hawks</strong>, home address " + ON + ", and pay Premium with " + CA + ".",
+    see: "Charged $32.77 (HST 13%), as in E." },
+  { who: "Coach · tax4", do: "On Plan &amp; billing press <strong>Start my club</strong>. Name it <strong>Tax Walk Hawks Club</strong>. Leave the Ontario address and read the figures.",
+    see: "<strong>Loading the charge…</strong>, then the figures for today with the tax named <strong>HST 13%</strong> and <strong>Due today</strong> as the total." },
+  { who: "Coach · tax4", do: "Change the club’s province to <strong>Alberta</strong>, postal code <code>T2P 1J9</code>, city Calgary.",
+    see: "While the address is half-typed: <strong>The charge shows once the address is complete.</strong> Once it is complete the figures reload with <strong>GST 5%</strong>, and Due today drops." },
+  { who: "Coach · tax4", do: "Press <strong>Start my club</strong>.",
+    see: "The portal becomes Tax Walk Hawks Club. Its Plan &amp; billing shows Calgary, Alberta and the Club price with <strong>plus applicable taxes</strong>." },
+  { who: ST, do: "Open this customer → the newest invoice (the move).",
+    see: "Its total equals the Due today you saw; the tax line is GST 5%; it is billed to <strong>Tax Walk Hawks Club</strong> at the Calgary address." },
+  { who: PA, do: "Refund that move charge, <strong>All of it</strong>.",
+    see: "The window shows the whole invoice as the split (GST 5%), with no “nearest” sentence. Confirm: a credit note is made and the Story names it." }
+ ]},
+ { id: "H", title: "A coach whose billing pays for two portals can’t make one a club (you+tax3)", steps: [
+  { who: "Coach · tax3", do: "Sign in as you+tax3. Open <code>https://dev.fieldlogichq.ca/team</code> and start a second team, <strong>Tax Walk Team Two</strong>; it says “Billed to 1 Main Street…” and goes to Stripe. Pay with " + CA + ".",
+    see: "A second Premium portal, paid, on the same billing." },
+  { who: "Coach · tax3", do: "On Tax Walk Team One’s Plan &amp; billing press <strong>Start my club</strong>, name it, and look at the window.",
+    see: "No charge is quoted. The window says: <strong>This workspace’s billing also pays for another Coaches Portal, so it can’t become a club on its own yet. Contact us and we’ll set the club up.</strong> Nothing is charged, and the Stripe customer’s address is unchanged.",
+    options: ["This sentence, nothing charged", "The window quotes a charge (a defect: tell me)", "A different message (notes)"] }
+ ]},
+ { id: "I", title: "The help guide explains the tax", steps: [
+  { who: "Owner · tax1", do: "As Tax Walk Ontario, open Help → the organization guide and search <strong>taxes</strong>, then open <strong>Taxes: what you’re charged and why</strong>.",
+    see: "Prices plus applicable taxes; GST or HST by billing address, named with its rate; Due today is the total; a changed charge charges nothing; a renewal shows the price before tax; a GST/HST number prints but the tax stays; a refund comes with a credit note. Anything untrue: notes." },
+  { who: "Coach · tax3", do: "In the Coaches Portal help, search <strong>tax</strong> and open <strong>What tax am I charged, and why?</strong>",
+    see: "The same facts in a coach’s words, plus the note about a portal whose billing pays for another." }
+ ]},
+ { id: "J", title: "Support sees no credit-note PDF (W10)", steps: [
+  { who: "Support login", do: "Sign in as a Support staff member, open Tax Walk Team One → Money → the $32.77 charge.",
+    see: "The two credit notes are listed with number, total and date, and <strong>no PDF link</strong>. There is no Refund button.",
+    options: ["No PDF link, no Refund button", "A PDF link shows (a defect: tell me)", "No Support login to use (Needs a call)"] }
+ ]},
+ { id: "K", title: "The LIVE Stripe account: read only, before the first real invoice (W9)", steps: [
+  { who: "Stripe LIVE dashboard", do: "Switch the dashboard to <strong>live</strong> (test mode off). Open Settings → Business → <strong>Public details</strong>. Change nothing.",
+    see: "The business name FieldLogicHQ, the Ontario address and phone that invoices and credit notes print. (The test account prints a PEI sandbox address: that is why this is checked.)",
+    options: ["Name and Ontario address right", "Something to fix (notes)"] },
+  { who: "Stripe LIVE dashboard", do: "Open Settings → Billing → Invoices (invoice template) and look for the tax ID shown on invoices.",
+    see: "Our GST/HST number is set to show on invoices and credit notes. If it is not there, note it: it is a promote step." },
+  { who: "Stripe LIVE dashboard", do: "Open Tax → Registrations and Tax → Settings.",
+    see: "As read on 2026-11-06: <strong>no registration yet</strong>, and Include tax in prices is “Automatic”. Both are promote steps (add Canada, standard, start collecting now; set Include tax in prices to No). Doing them now is your call; this walk only reads." }
+ ]},
+ { id: "L", title: "Put back", steps: [
+  { who: "Nothing to run", do: "The walk’s clubs, portals and Stripe test customers can stay on dev (test mode only).",
+    see: "Tell me in the notes if you want them removed, and I will remove them." }
+ ]}
+];
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var steps = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+      if (s.call) t.appendChild(el('span', 'call', s.call));
+      var rec = { part: p.id, step: id, boxes: [], options: s.options || null };
+      if (s.options) {
+        // One box per answer: the tick IS the answer, and the summary prints which one.
+        var opts = el('span', 'opts');
+        s.options.forEach(function (label, k) {
+          var oid = id + String.fromCharCode(97 + k);
+          var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + oid; cb.checked = !!state.ticks[oid];
+          cb.addEventListener('change', function () { state.ticks[oid] = cb.checked; save(); refresh(); });
+          rec.boxes.push({ cb: cb, label: label });
+          var o = el('label', 'opt'); o.appendChild(cb); o.appendChild(el('span', null, label)); opts.appendChild(o);
+        });
+        t.appendChild(opts);
+        var row = el('div', 'step'); row.appendChild(el('span', null, '')); row.appendChild(t); body.appendChild(row);
+      } else {
+        var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+        cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+        rec.boxes.push({ cb: cb, label: null });
+        var row2 = el('label', 'step'); row2.appendChild(cb); row2.appendChild(t); body.appendChild(row2);
+      }
+      steps.push(rec);
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function isDone(r) { return r.boxes.some(function (b) { return b.cb.checked; }); }
+  function doneSteps(partId) { return steps.filter(function (r) { return (!partId || r.part === partId) && isDone(r); }); }
+  var totalSteps = steps.length;
+
+  function refresh() {
+    PARTS.forEach(function (p) {
+      var n = doneSteps(p.id).length;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + p.steps.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    var done = doneSteps(null).length;
+    document.getElementById('total').textContent = done + ' of ' + totalSteps + ' checked';
+    document.getElementById('barfill').style.width = (totalSteps ? Math.round(done * 100 / totalSteps) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [TITLE, 'Checked ' + doneSteps(null).length + ' of ' + totalSteps + ' steps'];
+    PARTS.forEach(function (p) {
+      var ticked = doneSteps(p.id);
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + p.steps.length
+        + (ticked.length ? ' (' + ticked.map(function (r) { return r.step; }).join(', ') + ')' : ''));
+      ticked.filter(function (r) { return r.options; }).forEach(function (r) {
+        lines.push('  ' + r.step + ': ' + r.boxes.filter(function (b) { return b.cb.checked; }).map(function (b) { return b.label; }).join(' + '));
+      });
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    steps.forEach(function (r) { r.boxes.forEach(function (b) { b.cb.checked = false; }); });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>
