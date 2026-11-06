@@ -1,6 +1,6 @@
 # GST/HST · Stage 2 Part 6b: a refund goes through a credit note, and a checkout invoice names the club (build prompt)
 
-> **Status: BUILDING — owner ruled R1–R4; Part 0 run, Parts 1–2 committed `fcef13e3b` 2026-11-05 (mig 446 dev, prod apply owed BEFORE they ship), Part 3 (the club's name after Checkout) committed 2026-11-06 (hash in ▶ Progress). Next: Part 4.**
+> **Status: BUILDING — owner ruled R1–R4; Part 0 run, Parts 1–2 committed `fcef13e3b` 2026-11-05 (mig 446 dev, prod apply owed BEFORE they ship), Part 3 (the club's name after Checkout) committed `2d2f8b7c7` 2026-11-06. Next: Part 4.**
 
 > Written 2026-11-05 by `/plan`. Parent: [GST_HST_STAGE2_BUILD_PROMPT.md](GST_HST_STAGE2_BUILD_PROMPT.md) ▶ Progress, "Part 6 RUN"
 > (Defect 2 and the "name on the invoice" observation are this part's whole reason). Plan of record:
@@ -491,3 +491,10 @@ Settle Stripe's behavior before designing against it. Write each answer into ▶
     checks pass. The named guards pass except the known stage3 §12 failure on `ExpenseFormWindow.tsx` (not this part).
     Nothing in production needs applying for Part 3 (no migration). No UI changed, so no `/docs`. The dev server needs no
     restart for browser testing (the new file is a test).
+- 2026-11-06: **Part 3 COMMITTED `2d2f8b7c7` on dev (8 files; not pushed; TODO.md took only the GST/HST line).** Full
+  `npm test`: 14433 / 7 fail, none in this part's files. They are stage3 §12 (`ExpenseFormWindow.tsx`), the practice-plans
+  phone guard N1, plan-billing free time (2), the public tournament Stage 6 walk HTML, and `series-date-groups` (a coach
+  schedule form guard, 4 ✕ taps where 3 are expected; another session's work). **Next: Part 4** (fresh session):
+  `/accounting` review, then the matrix re-run, including the name row through a real page and the real webhook (OPEN 2
+  above). Read the production webhook endpoint's API version (OPEN 1). ⚠ Migration 446 must be applied to prod BEFORE
+  Parts 1–2 ship.
