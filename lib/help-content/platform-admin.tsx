@@ -35,7 +35,7 @@ const platformAdminHelp: HelpPageContent = {
               <HelpDefs>
                 <HelpDef term="Today">What is waiting on us. It sits alone at the top.</HelpDef>
                 <HelpDef term="Customers"><strong>Clubs &amp; portals</strong>, <strong>People</strong>, <strong>Founding season</strong> (accounts on a free season) and <strong>Retention</strong>.</HelpDef>
-                <HelpDef term="Health"><strong>Status</strong> (is the platform healthy right now), <strong>Errors</strong>, <strong>Feedback</strong>, <strong>Sent emails</strong> and <strong>Online payments</strong> (Super admin, Support and Billing only for the last two).</HelpDef>
+                <HelpDef term="Health"><strong>Status</strong> (is the platform healthy right now), <strong>Errors</strong>, <strong>Feedback</strong>, <strong>Sent emails</strong>, <strong>Online payments</strong> (Super admin, Support and Billing only for those two) and <strong>Stripe</strong> (Super admin, Billing, Support and Product).</HelpDef>
                 <HelpDef term="Growth"><strong>Leads</strong>, <strong>Campaigns</strong>, <strong>Pitch decks</strong> and <strong>Business numbers</strong> (every role can open the last one).</HelpDef>
                 <HelpDef term="Product"><strong>Plans &amp; pricing</strong>, <strong>Approval queue</strong>, <strong>Bulk changes</strong>, <strong>Email templates</strong> and <strong>Export registry</strong> (every way data leaves the product, read-only).</HelpDef>
                 <HelpDef term="Records"><strong>Staff</strong> and the <strong>Audit log</strong>.</HelpDef>
@@ -143,6 +143,7 @@ const platformAdminHelp: HelpPageContent = {
             <HelpDef term="Leads, Campaigns, Pitch decks (every write)">Super admin, Product and Growth.</HelpDef>
             <HelpDef term="Staff and roles, and Records opened in the Audit log">Super admin only.</HelpDef>
             <HelpDef term="Find&rsquo;s Stripe numbers">Super admin, Billing and Support.</HelpDef>
+            <HelpDef term="Health &rsaquo; Stripe">Super admin, Billing, Support and Product. Growth and Read only do not see the entry. It changes nothing for any role, so Billing, Support and Product see the read-only marker.</HelpDef>
             <HelpDef term="A club&rsquo;s Online payments tab and Health &rsaquo; Online payments">Super admin, Billing and Support. Both are read only for every role.</HelpDef>
           </HelpDefs>
         </>
@@ -999,6 +1000,29 @@ const platformAdminHelp: HelpPageContent = {
           keywords: ['all fine', 'everything working', 'not judged'],
         },
       ],
+    },
+    {
+      id: 'stripe-page',
+      group: 'Support SOP',
+      heading: 'How to read the Stripe page',
+      summary: 'Health › Stripe tells you when Stripe and the product stop agreeing: failing updates, the morning comparison, and the settings held in Stripe.',
+      keywords: ['stripe', 'stripe page', 'webhook', 'updates from stripe', 'still failing', 'set aside', 'wrong mode', 'morning check', 'morning comparison', 'records disagree', 'stripe settings', 'billing page settings', 'failed payment try', 'cannot be read from here', 'all clear', 'need a look', 'plan billing', 'family payments'],
+      searchText: 'how do i read the stripe page health stripe super admin billing support product read only eye no check now no send again chip all clear n need a look four figures last update from stripe updates still failing records that disagree settings to check updates from stripe plan billing family payments last received still failing set aside not ours no customer wrong mode seven days what failed our records against stripe morning comparison checked stale thirty six hours stripe settings billing page the same audit cannot be read from here what happens after the last failed payment try check it in stripe could not read is not nothing wrong reload',
+      links: [
+        { label: 'Stripe', href: '/platform-admin/watching-stripe' },
+        { label: 'Online payments', href: '/platform-admin/online-payments' },
+      ],
+      content: (
+        <>
+          <p><strong>Health &rsaquo; Stripe</strong> tells you when Stripe and the product stop agreeing, so you open Stripe&rsquo;s dashboard only to fix a setting. It reads and reports; it never repairs anything, and it has no <em>Check now</em> or <em>Send again</em>. Super admin, Billing, Support and Product can open it.</p>
+          <HelpDefs>
+            <HelpDef term="The chip and the four figures">The chip reads <em>All clear</em> or <em>N need a look</em>. The figures are the last update from Stripe, updates still failing, records that disagree and settings to check. A dash means that part could not be read, which is not the same as nothing being wrong: reload to try again.</HelpDef>
+            <HelpDef term="Updates from Stripe">Two rows, <strong>Plan billing</strong> and <strong>Family payments</strong>: when the last update arrived, how many are still failing (never processed, however old), and how many were set aside or arrived in the wrong mode in the last 7 days. Updates that are <em>not ours</em> are normal. A short list under the table says what failed and when.</HelpDef>
+            <HelpDef term="Our records against Stripe">The last result of the morning comparison of each club&rsquo;s plan against what Stripe holds, as it was stored. This page cannot run it again. A result older than 36 hours shows a warning, because the check should run every morning.</HelpDef>
+            <HelpDef term="Stripe settings">What our billing page offers customers in Stripe, checked by the same audit the scripts run. The last row, <strong>what happens after the last failed payment try</strong>, always reads <em>Cannot be read from here</em>: Stripe does not let the product read it, so open the link and check it in Stripe.</HelpDef>
+          </HelpDefs>
+        </>
+      ),
     },
     {
       id: 'sent-emails',
