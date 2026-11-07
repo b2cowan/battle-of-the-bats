@@ -209,12 +209,18 @@ const tidy = (v: string | null | undefined): string => (v ?? '').replace(UNSTORA
 // Words a name keeps in lower case after its first ("Niagara-on-the-Lake", "Rivière-du-Loup").
 const SMALL_NAME_WORDS = new Set(['de', 'du', 'des', 'la', 'le', 'les', 'sur', 'sous', 'on', 'the', 'of', 'and', 'by', 'au', 'aux', 'en', 'd', 'l']);
 const DIRECTIONS = /^(n|s|e|w|ne|nw|se|sw)$/;
+// Abbreviations that are capitals however they are typed (PO Box, RR 3, PH 2).
+const CAPITAL_WORDS = new Set(['po', 'rr', 'ph']);
 
-function capitalizeWord(word: string, street: boolean, first: boolean): string {
+function capitalizeWord(word: string, street: boolean, first: boolean, last: boolean): string {
   const lower = word.toLowerCase();
   if (/^\d+(st|nd|rd|th)$/.test(lower)) return lower; // 1st, 22nd
+  // French ordinals (5e avenue, 1re rue, 1er rang). A trailing 4e is a unit letter, so it stays a capital below.
+  if (!last && /^\d+(e|er|re|ère|ème)$/.test(lower)) return lower;
+  if (lower === 'c/o') return lower;
+  if (CAPITAL_WORDS.has(lower)) return lower.toUpperCase();
   if (/\d/.test(lower)) return lower.toUpperCase(); // 4b -> 4B, 123 stays 123
-  if (street && DIRECTIONS.test(lower)) return lower.toUpperCase(); // NW, SE
+  if (street && DIRECTIONS.test(lower.replace(/[.,]/g, ''))) return lower.toUpperCase(); // NW, SE, N.W., NW,
   if (!first && SMALL_NAME_WORDS.has(lower)) return lower;
   return lower.replace(/(^|[-'’])(\p{L})(\p{L}*)/gu, (whole, sep: string, head: string, rest: string) => {
     if (sep === '-' && SMALL_NAME_WORDS.has(`${head}${rest}`)) return whole; // the "on" in Niagara-on-the-Lake
@@ -231,7 +237,14 @@ function capitalizeWord(word: string, street: boolean, first: boolean): string {
 export function tidyAddressCase(value: string, street: boolean): string {
   const letters = value.replace(/[^\p{L}]/gu, '');
   if (!letters || (letters !== letters.toLowerCase() && letters !== letters.toUpperCase())) return value;
-  return value.split(' ').map((word, i) => capitalizeWord(word, street, i === 0)).join(' ');
+  // "First" is the first word that has letters, so the street name after a house number is still a first word (45 The Esplanade).
+  const words = value.split(' ');
+  let seenName = false;
+  return words.map((word, i) => {
+    const first = !seenName && /\p{L}/u.test(word);
+    if (first) seenName = true;
+    return capitalizeWord(word, street, first, i === words.length - 1);
+  }).join(' ');
 }
 
 /** Canada Post: no D, F, I, O, Q or U anywhere; no W or Z as the first letter. Returns "A1A 1A1" or null. */

@@ -151,6 +151,14 @@ describe('the check', () => {
     assert.equal(cased('22 2nd line', 'niagara-on-the-lake').line1, '22 2nd Line');
     assert.equal(cased('1 elm st', 'rivière-du-loup').city, 'Rivière-du-Loup');
     assert.equal(cased('1 elm st', "o'brien").city, "O'Brien");
+    // Review 2026-11-05: a small word right after the house number is still the start of the name; French ordinals; capital abbreviations.
+    assert.equal(cased('45 THE ESPLANADE', 'toronto').line1, '45 The Esplanade');
+    assert.equal(cased('1 la salle ave', 'toronto').line1, '1 La Salle Ave');
+    assert.equal(cased('5e avenue', 'montréal').line1, '5e Avenue');
+    assert.equal(cased('12 main st', 'toronto', 'apt 4e').line2, 'Apt 4E');
+    assert.equal(cased('12 main st', 'toronto', 'ph 2').line2, 'PH 2');
+    assert.equal(cased('12 main st', 'toronto', 'C/O JOHN SMITH').line2, 'c/o John Smith');
+    assert.equal(cased('45 MAPLE AVE NW, UNIT 4', 'calgary').line1, '45 Maple Ave NW, Unit 4');
     // Mixed case is the owner's own spelling: not touched, even when it looks wrong.
     assert.equal(cased('120 Elm st', 'McDonald').line1, '120 Elm st');
     assert.equal(cased('120 Elm st', 'McDonald').city, 'McDonald');
