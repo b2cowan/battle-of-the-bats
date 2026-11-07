@@ -17,9 +17,13 @@ rollover), then the server a screen will call (BC6b): a coach with money write s
 "Team bank account" made at the first save; money read sees it all and saves nothing; a team with no live season gets
 nothing; the club reads none of it. BC7 built on dev 2026-11-06, the coach's screen: Money → Ledger → View: Bank, on a
 desk (BC7a) and a phone (BC7b: Save last, "Your books, less $X cash", Find's lines 10 at a time with "Not in the bank yet"
-under each); a money-read coach sees the checks with no form and no Delete; walked as both coaches at three widths. Next:
-BC8 after Stage 14 (the Overview line, the season warnings, the team report, coach help; the club's Teams column needs an
-owner answer first). The earlier tick-off version (built on dev
+under each); a money-read coach sees the checks with no form and no Delete; walked as both coaches at three widths. BC8
+built on dev 2026-11-06/07, the coach's touchpoints: the Money Overview line ("Bank: checked through {date} ›", the amber
+"Off by $X" chip, "Bank: not checked yet ›") and the season windows' sentence (BC8a; the owner withdrew the club's Teams
+column to keep the coach's books the team's); then the team's printed check (one page, bank first, the checker's team
+role, two signature lines, no starting-point line), the season windows saying "off" in amber and a match quietly, the
+coach help article and the coach words' pass (BC8b, four owner rulings). Next: BC9, the owner walk of both portals, then
+"bank reconciliation" back in marketing and the production promote. The earlier tick-off version (built on dev
 2026-11-04/05) is superseded and was taken apart in BC1.
 
 ## What it does

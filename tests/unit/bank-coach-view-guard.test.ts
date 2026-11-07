@@ -48,11 +48,22 @@ describe('2 · K7 / B7: money read sees the checks, never the doors', () => {
     assert.match(code('CoachBankView.tsx'), /\{view\.canWrite && \(\s*<CoachBankCheck /);
     assert.match(code('CoachBankView.tsx'), /canWrite=\{view\.canWrite\}/);
   });
-  it('Delete and "Check this statement again" are a writer\'s; there is no print (BC8\'s team report)', () => {
+  it('Delete and "Check this statement again" are a writer\'s', () => {
     const win = code('CoachBankWindow.tsx');
-    assert.match(win, /footerStart=\{canWrite \? \(asking \?/);
+    assert.match(win, /\{canWrite && \(\s*<button type="button" className=\{styles\.deleteRecordBtn\} onClick=\{\(\) => setAsking\(true\)\}/);
     assert.match(win, /\{canWrite && <button type="button" className=\{styles\.btnPrimary\} onClick=\{\(\) => onAgain\(check\.date\)\}>/);
-    assert.doesNotMatch(ALL, /window\.print|printCheck|Printer/);
+  });
+  it('"Print this check" is EVERYONE\'s who opens the check, money read too, a desk\'s door only (BC8b, "Report door")', () => {
+    // Changed on purpose at BC8b (owner, plan §0 "Report door", carried to the team): BC7 pinned "no print" until the
+    // team's report existed.
+    const win = code('CoachBankWindow.tsx');
+    const door = win.match(/<button type="button" className=\{b\.printDoor\} onClick=\{\(\) => window\.print\(\)\}/);
+    assert.ok(door, 'the print door prints from the same screen');
+    const before = win.slice(Math.max(0, door!.index! - 400), door!.index!);
+    assert.doesNotMatch(before.slice(before.lastIndexOf('</button>')), /canWrite/, 'not behind money write');
+    assert.match(win, /<CoachBankReport teamName=\{teamName\} accountName=\{accountName\} check=\{check\} \/>/);
+    assert.match(readCode(`${DIR}/CoachBank.module.css`), /@media \(max-width: 640px\) \{ \.printDoor \{ display: none; \} \}/, 'absent at 640 and under (R0 tab 9: no phone version)');
+    assert.equal(BANK_WORDS.printCheck, 'Print this check');
   });
   it('"never checked" is no checks, never no account (BC6b kept edge a)', () => {
     assert.match(code('CoachBankView.tsx'), /view\.checks\.length === 0 \?/);
@@ -108,7 +119,11 @@ describe('4 · the working season only', () => {
 
 describe('5 · one look-free module shared, each portal its own look', () => {
   it('the coach view never reaches into the admin kit or the club\'s Bank screens', () => {
-    assert.doesNotMatch(ALL, /components\/admin|RepKit|MoneyKit|ClubKit|KitDialog|club\/money\/bank/);
+    // ⚖ One exception, BC8b: the team's report sits in the shipped paper frame `PrintedPage` (look-free: paper inks fixed,
+    //   the mounting portal's own type), as the club's report and the tournament Summary do. Nothing else of admin.
+    const frame = "import PrintedPage from '@/components/admin/tournament/PrintedPage';";
+    assert.ok(code('CoachBankReport.tsx').includes(frame));
+    assert.doesNotMatch(ALL.split(frame).join(''), /components\/admin|RepKit|MoneyKit|ClubKit|KitDialog|club\/money\/bank|BankCheckReport/);
   });
   it('the band tiles and the formatting come from lib/bank-screen.ts in both portals', () => {
     assert.match(code('CoachBankCheck.tsx'), /from '@\/lib\/bank-screen'/);
@@ -164,7 +179,10 @@ describe('7 · the coach\'s touchpoints (BC8a: K6, K7, R0 tab 7; owner BC8a ruli
     assert.match(LINE, /if \(r\.ok\) setView\(r\.view\); else setFailed\(true\);/);
     assert.match(LINE, /if \(!view\) return failed \? null : /);
     assert.doesNotMatch(LINE, /W\.matches/);
-    assert.equal(BANK_WORDS.coachOverviewNotChecked, 'Bank not checked yet', 'never checked: the same door (owner BC8a)');
+    // Never checked: the same door (owner BC8a), in the club's settled no-account words (BC8b `/marketing`: one spelling).
+    assert.match(LINE, /\{W\.overviewLead\} \{W\.overviewThrough\} /);
+    assert.match(LINE, /\{W\.overviewLead\} <span className=\{b\.overviewDate\}>\{W\.overviewNoAccount\}/);
+    assert.equal(`${BANK_WORDS.overviewLead} ${BANK_WORDS.overviewNoAccount}`, 'Bank: not checked yet');
   });
   it('every highlight opens what it names: the amber chip opens that check (?bankCheck=, read once)', () => {
     assert.match(LINE, /<Link href=\{bankCheckHref\(href, t\.id\)\} className=\{b\.chipDoor\}/);
@@ -176,7 +194,8 @@ describe('7 · the coach\'s touchpoints (BC8a: K6, K7, R0 tab 7; owner BC8a ruli
       'the window opens only once the address no longer carries the key (the BC8a walk: Back reopened it otherwise), waits for a read that has the check, and never opens unasked');
   });
   it('the season windows warn only when the season has a check, never block, and the roll knows nothing of the bank', () => {
-    assert.match(code('coachBank.ts'), /if \(current && r\.ok && r\.view\.checkedThrough\) setThrough\(r\.view\.checkedThrough\.date\);/);
+    assert.match(code('coachBank.ts'), /if \(current && r\.ok && r\.view\.checkedThrough\) setThrough\(r\.view\.checkedThrough\);/);
+    assert.match(code('coachBank.ts'), /if \(!through\) return null;/);
     assert.match(CLOSE, /useSeasonBankWarning\(orgSlug, teamId, 'close'\)/);
     assert.match(START, /useSeasonBankWarning\(orgSlug, teamId, 'start'\)/);
     // Start next season holds typed answers: the sentence alone, no door out of the form.
@@ -184,7 +203,48 @@ describe('7 · the coach\'s touchpoints (BC8a: K6, K7, R0 tab 7; owner BC8a ruli
     for (const src of [CLOSE, START]) assert.doesNotMatch(src, /bankWarning[^\n]*disabled|disabled=\{[^}]*bankWarning/, 'warn, never block');
     assert.doesNotMatch(readCode('lib/rep-season-rollover.ts'), /bank/i);
   });
+  it('⚖ off or matching (owner BC8b 2026-11-07): an off check is the amber warning, a match a plain line outside the box', () => {
+    assert.match(code('coachBank.ts'), /through\.result === 'off'\s*\? \{ off: true, text: W\.coachSeasonOff\(/);
+    assert.match(CLOSE, /const bankWarning = bankNote\?\.off \? bankNote\.text : null;/);
+    assert.match(CLOSE, /const hasWarnings = owesDues \|\| owesBack \|\| !!bankWarning;/, 'a match never opens the "Before you do" box');
+    assert.match(CLOSE, /You can still close — but these get harder to sort out afterwards\.\s*<\/p>\s*<\/div>\s*\)\}\s*\{bankMatches && \(/, 'the match sits under the box');
+    assert.match(START, /\{bankNote && \(bankNote\.off \? \(\s*<div [\s\S]*?<AlertTriangle [\s\S]*?\) : \(\s*<p /);
+    // Under the consequence it is about, never at the form's foot (/design BC8b: out of sight while Start was live).
+    assert.ok(START.indexOf('{bankNote && (bankNote.off') < START.indexOf('{ROLL_QUESTION}'), 'above the roll question');
+    assert.equal(BANK_WORDS.coachSeasonOff('$75.00', 'Oct 31, 2026', 'close'),
+      'Your bank check was off by $75.00 on Oct 31, 2026. Check the season’s last statement before you close: a closed season has no Bank view.');
+    assert.equal(BANK_WORDS.coachSeasonMatches('Oct 31, 2026', 'start'),
+      'The bank matches through Oct 31, 2026. If you have a later statement, check it before you start the new season: the new season’s Bank view starts from its own opening balance.');
+  });
   it('⚖ B (owner BC8a): the club\'s Teams tab shows no bank column — the coach\'s books stay the team\'s', () => {
     assert.doesNotMatch(readCode('components/admin/kit/club/money/TeamsTable.tsx'), /bank/i);
+  });
+});
+
+describe('8 · the team\'s printed check (BC8b: K8, R0 tab 9, the club\'s report rulings carried; owner 2026-11-07)', () => {
+  const rep = code('CoachBankReport.tsx');
+  const css = readCode(`${DIR}/CoachBankReport.module.css`);
+  it('bank first from the engine, the saved result, no arithmetic on the page', () => {
+    assert.match(rep, /const \{ terms, totalCents \} = reportTerms\(check\);/);
+    assert.match(rep, /<PrintedPage\s+name="team-bank-check"/);
+    assert.doesNotMatch(rep, /bankCents \+|booksCents -|\+ check\.|- check\./, 'the page only formats');
+  });
+  it('the team drops what it has not: no starting point (owner "Team report start line"), no on its way, no books list', () => {
+    assert.doesNotMatch(rep, /startingPoint|reportStartingPoint|reportOnItsWay|reportBooks\(|dates=/);
+  });
+  it('who checked carries the team role, as the staff list reads today (owner "Team report role")', () => {
+    assert.match(rep, /W\.reportCheckedBy\(check\.checkedBy, check\.checkedByRole, dayYear\(at\.date\), formatTime\(at\.time\)\)/);
+    assert.match(readCode('lib/bank-coach-steps.ts'), /checkedByRole: roleOf\(ch\.createdBy\)/);
+    // Only on the plain read, beside it (never on a statement day's figure read, which runs as the coach types).
+    assert.match(readCode('lib/bank-coach-steps.ts'), /date === null \? teamCheckerRoles\(c\.orgId, c\.season\.teamId\) : Promise\.resolve\(\(\) => null\)/);
+    // Quiet: a failed role read drops the role, never the bank read.
+    assert.match(readCode('lib/bank-coach-read.ts'), /export async function teamCheckerRoles[\s\S]*?try \{[\s\S]*?\} catch \(e\) \{[\s\S]*?return \(\) => null;/);
+  });
+  it('both signature lines stay (owner "Team report sign lines"), and the foot names the coach\'s path', () => {
+    assert.match(rep, /\[W\.reportPrepared, W\.reportReviewed\]\.map\(/);
+    assert.equal(BANK_WORDS.coachReportFoot('Nov 7, 2026', 'U13 Raptors'), 'Printed Nov 7, 2026 from FieldLogicHQ · U13 Raptors · Money → Ledger → Bank');
+  });
+  it('⚠ BC5b\'s trap: printed th/td are put back to paper ink, whatever the coach\'s theme', () => {
+    assert.match(css, /\.sums th, \.sums td \{[^}]*color: #1F1B14;[^}]*background: transparent;/);
   });
 });

@@ -2,9 +2,9 @@
 /**
  * THE COACH MONEY OVERVIEW'S BANK LINE (Bank balance check BC8a; K7, R0 tab 7 drew it "in the Cash on hand card's foot,
  * right of 'Ledger'"; built under the IN/OUT bars, above the foot: the walk found it can't fit beside "Ledger →").
- *   · "Bank checked through {date} ›"   — the season's latest check, a door to the Bank view
+ *   · "Bank: checked through {date} ›"  — the season's latest check, a door to the Bank view
  *   · the amber "Off by $X" chip beside it when that check is off — a door to the check itself (every highlight opens)
- *   · "Bank not checked yet ›"          — no check this season (owner BC8a), the same door: it is how a coach finds it
+ *   · "Bank: not checked yet ›"         — no check this season (owner BC8a), the same door: it is how a coach finds it
  * No "Matches": quiet when all is well, as the club's settled Overview line is. Never a figure but the chip's.
  * Money read and money write alike (the route answers both; a reader's Bank view has no form, K7).
  * ⚠ QUIET (BC5a's lesson: the bank tables reach production with the bank code): a read that fails — refused, no live
@@ -43,8 +43,8 @@ export default function CoachBankOverviewLine({ orgSlug, teamId, href }: {
     <span className={b.overviewMark}>
       <Link href={href} className={b.overviewDoor}>
         {/* The last words keep the "›" (a phone wraps the sentence, never leaving the chevron alone on a line). */}
-        {t ? <>{W.coachOverviewThrough} <span className={b.overviewDate}><b>{dayYear(t.date)}</b><ChevronRight size={14} aria-hidden /></span></>
-          : <span className={b.overviewDate}>{W.coachOverviewNotChecked}<ChevronRight size={14} aria-hidden /></span>}
+        {t ? <>{W.overviewLead} {W.overviewThrough} <span className={b.overviewDate}><b>{dayYear(t.date)}</b><ChevronRight size={14} aria-hidden /></span></>
+          : <>{W.overviewLead} <span className={b.overviewDate}>{W.overviewNoAccount}<ChevronRight size={14} aria-hidden /></span></>}
       </Link>
       {t?.result === 'off' && (
         <Link href={bankCheckHref(href, t.id)} className={b.chipDoor}

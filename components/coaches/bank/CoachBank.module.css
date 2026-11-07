@@ -194,6 +194,19 @@ tr:focus-within .markBtn { opacity: 1; }
 .empty { margin: 0.6rem 0 0; }
 
 /* ── a saved check, opened: the lines under its band ── */
+/* The opened check's foot, left: Delete (a writer's) and "Print this check" (BC8b, everyone's, a desk's door only: R0 tab 9
+   has no phone version, as the club's is hidden at 640 and under). Quiet words, the foot's own size. */
+.footDoors { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 1.25rem; margin-right: auto; }
+.printDoor {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  padding: 0.3rem 0; border: 0; background: none; font: inherit; font-size: var(--type-body);
+  color: var(--text-secondary); cursor: pointer;
+}
+.printDoor:hover { color: var(--text-primary); text-decoration: underline; }
+.printDoor:disabled { opacity: 0.5; cursor: default; text-decoration: none; }
+.printDoor:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+@media (pointer: coarse) { .printDoor { min-height: var(--tap-min, 44px); } }
+@media (max-width: 640px) { .printDoor { display: none; } }
 .savedNote { margin: 0.75rem 0 0; font-size: var(--type-support); color: var(--text-secondary); line-height: 1.45; }
 .savedNote b { color: var(--text-primary); font-weight: 600; }
 

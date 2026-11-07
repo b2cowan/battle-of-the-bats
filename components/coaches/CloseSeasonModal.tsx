@@ -105,10 +105,14 @@ export default function CloseSeasonModal({
   const money = preflight?.money ?? null;
   const owesDues = !!money && money.familiesOwing > 0 && money.duesOutstanding > 0;
   const owesBack = !!money && money.waitingToReturn > 0;
-  /* The bank (BC8a; K6, R0 tab 7): one sentence when the season has a check, warn never block, its own quiet read. The way
-     back goes to the Bank view when the bank is all there is to see to; with money owed too, to Money's Overview, which
-     carries the bank line as well. Nothing is typed here, so leaving loses nothing (the one-window rule). */
-  const bankWarning = useSeasonBankWarning(orgSlug, teamId, 'close');
+  /* The bank (BC8a; K6, R0 tab 7): one sentence when the season has a check, warn never block, its own quiet read. ⚖ Owner
+     BC8b 2026-11-07: an OFF check is a warning in the "Before you do" box; a MATCHING one is a plain line under it, never as
+     loud as money owed. The way back goes to the Bank view when an off bank is all there is to see to; with money owed too,
+     to Money's Overview, which carries the bank line as well. Nothing is typed here, so leaving loses nothing (the
+     one-window rule). */
+  const bankNote = useSeasonBankWarning(orgSlug, teamId, 'close');
+  const bankWarning = bankNote?.off ? bankNote.text : null;
+  const bankMatches = bankNote && !bankNote.off ? bankNote.text : null;
   const hasWarnings = owesDues || owesBack || !!bankWarning;
   // Only once the money is known (/review BC8a): before the preflight lands, or when it failed, money may be owed.
   const toBankView = !!bankWarning && !!money && !owesDues && !owesBack;
@@ -185,6 +189,9 @@ export default function CloseSeasonModal({
             You can still close — but these get harder to sort out afterwards.
           </p>
         </div>
+      )}
+      {bankMatches && (
+        <p style={{ margin: '0 0 1rem', fontSize: '0.85rem', color: 'var(--white-80)', lineHeight: 1.5 }}>{bankMatches}</p>
       )}
 
       <QuestionReason className={styles.errorText}>{error}</QuestionReason>

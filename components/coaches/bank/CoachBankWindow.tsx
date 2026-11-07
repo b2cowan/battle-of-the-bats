@@ -8,15 +8,18 @@
  *   · the foot's left ...... "Delete this check" (red words, the Ledger's record door), one question docked in its place
  *                            (the Ledger's own record window does the same); who deleted it and when is kept (soft)
  *   · the foot's right ..... Close, and "Check this statement again" (the form above gets the date; saving replaces this)
+ *   · beside it ............ "Print this check" (BC8b; the club's "Report door" carried): the team's printed check, for
+ *                            everyone who opens the window (money read too, a read not a write), a desk's door only
+ *                            (hidden at 640 and under: R0 tab 9 has no phone version); the report is mounted with the window
  * ⚖ K7: a money-read coach opens the same window with no Delete and no "Check this statement again".
- * ⚖ No print: the team's paper is BC8's team report (plan §9 BC8).
  * ⚖ A team has no online payments on their way (B12: no coach-side Stripe): its saved checks carry none, so no such line.
  */
 import { useState } from 'react';
-import { Trash2 } from 'lucide-react';
+import { Printer, Trash2 } from 'lucide-react';
 import QuestionShell from '@/components/coaches/QuestionShell';
 import MoneySummaryBand from '@/components/coaches/MoneySummaryBand';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
+import { useCoaches } from '@/lib/coaches-context';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { formatTime } from '@/lib/utils';
 import { utcToZonedInputs } from '@/lib/timezone';
@@ -24,6 +27,7 @@ import { savedTerms } from '@/lib/bank-check';
 import { BANK_WORDS as W } from '@/lib/bank-tab-words';
 import { bankBandTiles, cents, dayYear, moved, nameOf } from '@/lib/bank-screen';
 import { deleteTeamCheck, type TeamBank, type TeamCheck } from './coachBank';
+import CoachBankReport from './CoachBankReport';
 import b from './CoachBank.module.css';
 
 export default function CoachBankWindow({ orgSlug, teamId, accountName, check, canWrite, onClose, onAgain, onDeleted }: {
@@ -39,6 +43,8 @@ export default function CoachBankWindow({ orgSlug, teamId, accountName, check, c
   onDeleted: (view: TeamBank, text: string) => void;
 }) {
   const isPhone = useIsPhone();
+  // The printed page's team (its eyebrow and foot): the portal's own assignment, as the Ledger names the team.
+  const teamName = useCoaches().assignments.find(a => a.teamId === teamId)?.teamName ?? '';
   const [asking, setAsking] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -68,8 +74,8 @@ export default function CoachBankWindow({ orgSlug, teamId, accountName, check, c
   return (
     <QuestionShell open onClose={onClose} busy={busy} wide ariaLabel={W.savedTitle(when)}
       eyebrow={W.savedEyebrow(accountName)} title={W.savedTitle(when)}
-      footerStart={canWrite ? (asking ? (
-        // The Ledger's record window's own question, docked where Delete stood.
+      footerStart={asking ? (
+        // The Ledger's record window's own question, docked where Delete stood (a writer's only).
         <div className={styles.dangerConfirm} role="group" aria-label={W.deleteTitle}>
           <p className={styles.dangerConfirmTitle}>{W.deleteTitle}</p>
           <p className={styles.dangerConfirmBody}>{W.deleteAsk(when)}</p>
@@ -79,11 +85,20 @@ export default function CoachBankWindow({ orgSlug, teamId, accountName, check, c
             <button type="button" className={styles.btnDanger} onClick={() => void remove()} disabled={busy}>{busy ? W.deleting : W.deleteYes}</button>
           </div>
         </div>
-      ) : (
-        <button type="button" className={styles.deleteRecordBtn} onClick={() => setAsking(true)} disabled={busy}>
-          <Trash2 size={13} aria-hidden /> {W.deleteCheck}
-        </button>
-      )) : undefined}
+      ) : (canWrite || !isPhone) && (
+        // A reader on a phone has neither door (Print is a desk's): no empty slot in the foot (/review BC8b).
+        <span className={b.footDoors}>
+          {canWrite && (
+            <button type="button" className={styles.deleteRecordBtn} onClick={() => setAsking(true)} disabled={busy}>
+              <Trash2 size={13} aria-hidden /> {W.deleteCheck}
+            </button>
+          )}
+          {/* The team's printed check (BC8b, "Report door"): everyone who opens the check, a desk's door only. */}
+          <button type="button" className={b.printDoor} onClick={() => window.print()} disabled={busy}>
+            <Printer size={13} aria-hidden /> {W.printCheck}
+          </button>
+        </span>
+      )}
       footer={asking ? undefined : (
         <>
           <button type="button" className={styles.btnSecondary} onClick={onClose}>{W.close}</button>
@@ -103,6 +118,8 @@ export default function CoachBankWindow({ orgSlug, teamId, accountName, check, c
         <p className={b.savedNote}><b>{W.booksNowSay(cents(check.booksNowSayCents))}.</b> {W.booksNowSayWhy(when)}</p>
       )}
       <p className={b.savedNote}>{W.checkedOn(check.checkedBy, dayYear(at.date), formatTime(at.time))}</p>
+      {/* Hidden on screen; only the paper (portalled onto <body>, as the club's is mounted with its window). */}
+      {check.kind === 'check' && <CoachBankReport teamName={teamName} accountName={accountName} check={check} />}
     </QuestionShell>
   );
 }

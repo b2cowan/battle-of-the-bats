@@ -11,7 +11,7 @@ import { useEffect, useState } from 'react';
 import type { teamBankView } from '@/lib/bank-coach-steps';
 import { jsonInit, moneyFetch, refusalText } from '@/lib/money-fetch';
 import { BANK_WORDS as W } from '@/lib/bank-tab-words';
-import { dayYear } from '@/lib/bank-screen';
+import { cents, dayYear } from '@/lib/bank-screen';
 
 export type TeamBank = Awaited<ReturnType<typeof teamBankView>>;
 export type TeamCheck = TeamBank['checks'][number];
@@ -52,22 +52,29 @@ async function answer(url: string, init: RequestInit | undefined, fallback: stri
 export const readTeamBank = (orgSlug: string, teamId: string, date?: string, fallback: string = W.coachLoadFailed): Promise<BankAnswer> =>
   answer(coachBankUrl(orgSlug, teamId, '', date), undefined, fallback);
 
+/** The season windows' bank sentence: `off` is a warning (amber, in the windows' warnings); a match is a plain line. */
+export interface SeasonBankNote { text: string; off: boolean }
+
 /**
- * Start next season / Close the season's bank sentence (BC8a; K6, R0 tab 7): "The bank is checked through {date}. Check the
- * season's last statement before you …", or null. ⚖ Only when the season has a check (owner BC8a: a team that never used
- * the bank check is not nagged about it), whatever its date. Warn, never block: nothing here touches the roll or the close.
+ * Start next season / Close the season's bank sentence (BC8a; K6, R0 tab 7), from the season's latest check, or null.
+ * ⚖ Only when the season has a check (owner BC8a: a team that never used the bank check is not nagged about it), whatever
+ *   its date. ⚖ Off or matching (owner BC8b 2026-11-07): an off check says so, a warning; a matching one is a plain line.
+ * Warn, never block: nothing here touches the roll or the close.
  * ⚠ QUIET, read when the window OPENS (the windows' own preflight rule): a read that fails says nothing.
  */
-export function useSeasonBankWarning(orgSlug: string, teamId: string, verb: 'start' | 'close'): string | null {
-  const [through, setThrough] = useState<string | null>(null);
+export function useSeasonBankWarning(orgSlug: string, teamId: string, verb: 'start' | 'close'): SeasonBankNote | null {
+  const [through, setThrough] = useState<TeamBank['checkedThrough']>(null);
   useEffect(() => {
     let current = true;
     void readTeamBank(orgSlug, teamId).then(r => {
-      if (current && r.ok && r.view.checkedThrough) setThrough(r.view.checkedThrough.date);
+      if (current && r.ok && r.view.checkedThrough) setThrough(r.view.checkedThrough);
     });
     return () => { current = false; };
   }, [orgSlug, teamId]);
-  return through ? W.coachSeasonWarning(dayYear(through), verb) : null;
+  if (!through) return null;
+  return through.result === 'off'
+    ? { off: true, text: W.coachSeasonOff(cents(through.offByCents), dayYear(through.date), verb) }
+    : { off: false, text: W.coachSeasonMatches(dayYear(through.date), verb) };
 }
 
 /** POST a check: the screen sends INTENT (the date, the typed balance, the cash, the marked lines' KEYS); every figure is

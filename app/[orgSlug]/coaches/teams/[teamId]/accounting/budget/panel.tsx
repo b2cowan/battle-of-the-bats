@@ -2285,7 +2285,7 @@ export function BudgetPlanPanel({
      on. Zero new arithmetic: `min closing from m onward` is the one comparison the sentence makes,
      and it reads the monthly series the view already walked. */
   const whyNoRoom: string | null = baseView.estimateRows
-    ? 'Spending room is unresolved: complete the dates and reconcile the estimate before relying on a positive monthly balance.'
+    ? 'Spending room is unresolved: complete the dates and match the estimate to the itemized total before relying on a positive monthly balance.'
     : !duesView && requiredDues > 0.005
       ? 'Set dues for all players first — required dues have not been counted as money coming in.'
       : baseView.truncated

@@ -98,7 +98,7 @@ export default function StartNextSeasonModal({
   // team that never used tryouts) just sees no line.
   const [tryoutWarning, setTryoutWarning] = useState<string | null>(null);
   // The bank's sentence (BC8a): a quiet read when the window opens, only when this season has a check.
-  const bankWarning = useSeasonBankWarning(orgSlug, teamId, 'start');
+  const bankNote = useSeasonBankWarning(orgSlug, teamId, 'start');
 
   // Only teams that have actually USED tryouts get the check — the nav's own signal. This also
   // skips the fetch for coaches without the tryouts grant (403) and avoids lazily creating a
@@ -344,6 +344,25 @@ export default function StartNextSeasonModal({
             </p>
           </div>
 
+          {/* The bank (BC8a; K6, R0 tab 7): when this season has a check, say where it stands before the roll. Warn, never
+              block, and the sentence alone: a door to the Bank view would leave this form and lose what is typed (the
+              one-window rule). The roll itself is untouched (lib/rep-season-rollover.ts knows nothing of the bank).
+              ⚖ Owner BC8b 2026-11-07: an OFF check is an amber note; a MATCHING one a plain line, no warning icon.
+              Under the consequence it is about (/design BC8b: at the form's foot, below the carry list, the amber note was
+              out of sight while Start was live). */}
+          {bankNote && (bankNote.off ? (
+            <div style={{
+              display: 'flex', gap: '0.55rem', alignItems: 'flex-start', marginBottom: '1rem',
+              background: 'rgba(var(--warning-rgb), 0.1)', border: '1px solid rgba(var(--warning-rgb), 0.3)',
+              borderRadius: 8, padding: '0.7rem 0.85rem',
+            }}>
+              <AlertTriangle size={16} style={{ color: 'var(--warning)', flexShrink: 0, marginTop: 2 }} aria-hidden />
+              <span style={{ fontSize: '0.85rem', color: 'var(--white-80)', lineHeight: 1.5 }}>{bankNote.text}</span>
+            </div>
+          ) : (
+            <p style={{ margin: '0 0 1rem', fontSize: '0.85rem', color: 'var(--white-80)', lineHeight: 1.5 }}>{bankNote.text}</p>
+          ))}
+
           {/* ── THE QUESTION (Stage 14a) — first after the consequence, because it decides what the rest mean.
               It replaces the one-sentence roster promise that stood here (every active player, always). */}
           <fieldset className={styles.rollChoices}>
@@ -543,20 +562,6 @@ export default function StartNextSeasonModal({
             }}>
               <AlertTriangle size={16} style={{ color: 'var(--warning)', flexShrink: 0, marginTop: 2 }} aria-hidden />
               <span style={{ fontSize: '0.85rem', color: 'var(--white-80)', lineHeight: 1.5 }}>{tryoutWarning}</span>
-            </div>
-          )}
-
-          {/* The bank (BC8a; K6, R0 tab 7): when this season has a check, say where it stands before the roll. Warn, never
-              block, and the sentence alone: a door to the Bank view would leave this form and lose what is typed (the
-              one-window rule). The roll itself is untouched (lib/rep-season-rollover.ts knows nothing of the bank). */}
-          {bankWarning && (
-            <div style={{
-              display: 'flex', gap: '0.55rem', alignItems: 'flex-start', marginTop: '1rem',
-              background: 'rgba(var(--warning-rgb), 0.1)', border: '1px solid rgba(var(--warning-rgb), 0.3)',
-              borderRadius: 8, padding: '0.7rem 0.85rem',
-            }}>
-              <AlertTriangle size={16} style={{ color: 'var(--warning)', flexShrink: 0, marginTop: 2 }} aria-hidden />
-              <span style={{ fontSize: '0.85rem', color: 'var(--white-80)', lineHeight: 1.5 }}>{bankWarning}</span>
             </div>
           )}
 

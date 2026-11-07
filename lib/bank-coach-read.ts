@@ -2,6 +2,8 @@ import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
 import { fetchAll } from './supabase-paging';
 import { resolvePersonNamer } from './db';
+import { listActiveMemberships, resolveMembershipCapabilities } from './coach-membership';
+import { staffKindWord } from './coach-capabilities';
 import { loadSeasonRegisterRows } from './coach-register-book';
 import { toCents } from './coach-register';
 import { orgDayKey } from './timezone';
@@ -125,4 +127,23 @@ export async function readTeamBank(i: { orgId: string; season: RepProgramYear; t
     facts: day?.facts ?? null,
     nameOf,
   };
+}
+
+/**
+ * Who checked, as the team's printed check names them (BC8b, owner "Team report role" 2026-11-07: "Checked by {name}
+ * ({role})"): their word on the team's staff list TODAY ("Head coach", "Team manager"), as the club's report reads a
+ * member's role today — a saved check keeps who, not the role they held. Null for someone no longer on the team's staff,
+ * and for everyone when the read fails (logged): a role is a parenthetical on the paper, never worth the bank read. One
+ * bounded read of the team's active seats; the caller asks only on the view's plain read (/simplify BC8b: never on a
+ * statement day's figure read, which runs as the coach types), beside `readTeamBank`, not after it.
+ */
+export async function teamCheckerRoles(orgId: string, teamId: string): Promise<(id: string | null) => string | null> {
+  try {
+    const seats = await listActiveMemberships(orgId, teamId);
+    const words = new Map(seats.map(m => [m.userId, staffKindWord(resolveMembershipCapabilities(m), m.staffKind)]));
+    return id => (id ? words.get(id) ?? null : null);
+  } catch (e) {
+    console.error('[bank-coach-read] the checkers’ roles read failed; the report names them without a role:', e instanceof Error ? e.message : e);
+    return () => null;
+  }
 }

@@ -88,6 +88,10 @@ need to type a statement balance, see the difference from the books on that date
 | Teams column | **No "Bank checked" column on the club's Teams tab (option B).** B9's Teams-tab mark is withdrawn by the owner's 2026-11-06 independence ruling (the club sees one "Held by the team" figure of a team's books, D1); nothing is built and the guards keeping the club out of a coach's bank stay. The owner's reason, in his words: a coach's ledger entries "are real and should be considered so. bank rec is just for the coaches and treasurers to find what is missing, the assumption is everything there is correct, therefore no need to identify coach money recs up to the club." (Owner, 2026-11-06, BC8a.) |
 | Coach line, never checked | **Before the team's first check this season, the coach Money Overview line says "Bank not checked yet ›", a door to the Bank view, for money read and money write alike.** (Owner's yes to the BC8a UX summary, 2026-11-06.) |
 | Season windows, never checked | **No bank sentence in Start next season or Close the season for a team with no check this season; the drawn sentence whenever one exists, whatever its date.** (Owner, 2026-11-06, BC8a.) |
+| Team report sign lines | **The team's printed check keeps both signature lines, "Prepared by · Date" and "Reviewed by · Date", as the club's.** (Owner, 2026-11-07, BC8b.) |
+| Team report role | **The team's printed check names the checker's role on the team, as the team's staff list reads today ("Checked by {name} ({role}), …"); a failed role read drops the role only.** (Owner, 2026-11-07, BC8b.) |
+| Team report start line | **The team's printed check has no starting-point line: "Your books on {date}" stands alone.** (Owner, 2026-11-07, BC8b.) |
+| Season windows, off or matching | **When the season's latest check is off, the windows' sentence says so, amber ("The bank was off by $X on {date}. Check the season's last statement before you …"); when it matches, a plain line with no warning icon, outside Close the season's amber "Before you do" box ("The bank matches through {date}. If you have a later statement, check it before you …").** (Owner, 2026-11-07, BC8b.) |
 
 ### Tick-off rulings that still stand (Appendix A §4)
 
@@ -278,8 +282,9 @@ money table or a book line.** A guard test pins this: no bank code writes `accou
 > Customer-visible wording written during the build, settled in ONE `/marketing` pass per stage, before the walk. Drafts
 > below are the drawings' words unless marked *new*.
 
-- [ ] "Bank" — the club Accounting tab and the coach Ledger view — club treasurer, coach. *Club half settled, BC5b
-  `/marketing` 2026-11-06: keep "Bank" (the treasurer's own word; no "Reconciliation" on a tab). The coach view goes to BC8.*
+- [x] "Bank" — the club Accounting tab and the coach Ledger view — club treasurer, coach. *Club half settled, BC5b
+  `/marketing` 2026-11-06: keep "Bank" (the treasurer's own word; no "Reconciliation" on a tab). Coach view kept, BC8b
+  `/marketing` 2026-11-07.*
 - [x] "Check a statement" · "Statement date" · "Bank balance on that date" (phone: "Bank balance") — the check form (settled, BC2 `/marketing` 2026-11-06; the phone word "Bank balance" settled, BC4b `/marketing` 2026-11-06)
 - [x] "The bank says" · "Should be in the bank" (phone band: "Should be there") · "Difference" — the band (settled, BC2 `/marketing` 2026-11-06; the phone word "Should be there" settled, BC4b `/marketing` 2026-11-06)
 - [x] *new, BC4b* the phone band's captions (settled, BC4b `/marketing` 2026-11-06): "On {date}" (the bank tile, no-year date) and "Your books, adjusted for what’s pending" (the middle tile, no date or figure: marked lines and an uncounted Stripe make a single "on its way" amount untrue). The Difference tile keeps its desk captions (full width on a phone).
@@ -291,7 +296,7 @@ money table or a book line.** A guard test pins this: no bank code writes `accou
   Stripe line when it can't be read (settled, BC2 `/marketing` 2026-11-06)
 - [x] "Not in the bank yet" · "Undo" · *new* "Still waiting on {line}?" · "Yes" · "No" — Find and the next check (settled,
   BC3b `/marketing` 2026-11-06; spoken names "Undo marking {line} as not in the bank yet", "Yes, still waiting on {line}")
-- [ ] "Cash not deposited yet" — the cash figure, the saved check, the report
+- [x] "Cash not deposited yet" — the cash figure, the saved check, the report (settled, BC8b `/marketing` 2026-11-07)
 - [x] "Find the $X" · "Lines since your last match · {date}" · "Exactly $X" · "These {2|3} add up to $X" — Find (settled,
   BC3b `/marketing` 2026-11-06). The half reads "{line} ({date}) is $X, half of the $Y gap. Was it entered the wrong way
   round?". The bank-side sentence opens "Or the bank…" under a possibility and "The bank…" standing alone. The search
@@ -319,28 +324,41 @@ money table or a book line.** A guard test pins this: no bank code writes `accou
   off". Its refusal has its own code `bad_start_item`: "To wait at the start, a line has to move money in or out of this
   account, be dated on or before your starting statement, and not be waiting there already. Online payments can’t wait at
   the start." (`bad_item`'s sentence said "dated after your starting statement", the opposite of this door).
-- [ ] *new, Q1-A* "From the {2025 Season}" — the divider above last season's lines in the coach's Find
-- [ ] *new, BC7a drafts* (coach Bank view, `BANK_WORDS.coach*`, for BC8's pass): "Team bank account" · "Lines since the
+- [x] *new, Q1-A* "From the {2025 Season}" — the divider above last season's lines in the coach's Find (kept, BC8b
+  `/marketing` 2026-11-07: the closed-season page's own title for that season)
+- [x] *new, BC7a drafts* (coach Bank view, `BANK_WORDS.coach*`, for BC8's pass): "Team bank account" · "Lines since the
   season started ({date}): n" / "Lines since the season started · {date}" (Find's head before any match) · "No statements
-  checked this season yet." · "The bank checks couldn't be loaded." · "Loading the bank checks…" · "Close"
-- [ ] *new, BC7b drafts* (the coach's phone, for BC8's pass): "Your books, less {$X} cash" (the middle tile's phone caption
+  checked this season yet." · "The bank checks couldn't be loaded." · "Loading the bank checks…" · "Close" (all kept,
+  BC8b `/marketing` 2026-11-07)
+- [x] *new, BC7b drafts* (the coach's phone, for BC8's pass): "Your books, less {$X} cash" (the middle tile's phone caption
   when the cash is the only thing taken off; drawn lowercase "your books, less $180.00 cash", written capitalized as the
   club's phone caption is) · "Since the season started · {Oct 18}" (Find's group head over the phone rows before any match)
-- [ ] *new* "Statements from this season only, since {date}." (drawn) · *new* refusal "This statement is before the
-  {2026 Season} started on {date}. Check it from last season before you start a new one." — coach
-- [ ] "Bank: {account} checked through {date} ›" · "Bank: not checked yet ›" · coach "Bank checked through {date} ›" ·
+  (both kept, BC8b `/marketing` 2026-11-07; not "cash on hand", which is the Overview card's)
+- [x] *new* "Statements from this season only, since {date}." (drawn) · refusal `before_season` "This statement is dated
+  before the season started. Check a statement from this season." — coach (kept, BC8b `/marketing` 2026-11-07; the
+  drafted "…Check it from last season before you start a new one." was replaced at BC6a and is gone: a closed season has
+  no Bank view). `bad_team_item` kept.
+- [x] "Bank: {account} checked through {date} ›" · "Bank: not checked yet ›" · coach "Bank checked through {date} ›" ·
   ~~Teams "bank checked through {date} · Matches"~~ (withdrawn, §0 "Teams column") — the mark (ask 4). *Club half settled, BC5b `/marketing` 2026-11-06:
   kept "Bank: {account} checked through {date} ›" · "Bank: {account} · not checked yet ›" · "Bank: not checked yet ›" and
   the amber "Off by $X" chip. The fiscal-year close row changed to one short noun on a desk and a phone, "{account} not
   checked" (was "… not checked in the last month of {year}", which ran past its sibling rows and repeated its detail),
-  with "last checked {date}" / "no check by {date}" beside it; "{account} off by {amount}" kept. Coach and Teams: BC8.*
-- [ ] *new, BC8a drafts* (the coach's touchpoints, for BC8b's pass): "Bank checked through {date} ›" · "Bank not checked
-  yet ›" — the Money Overview line; "The bank is checked through {date}. Check the season's last statement before you
-  start the new season: the new season's Bank view starts from its own opening balance." — Start next season (drawn);
-  "The bank is checked through {date}. Check the season's last statement before you close: a closed season has no Bank
-  view." — Close the season (the drawn clause promised a new season's Bank view to a team starting none; /review BC8a).
-  ⚠ For the pass (/design BC8a): neither sentence says when the latest check is OFF, and a matching check reads as
-  alarming as money owed inside Close the season's amber box.
+  with "last checked {date}" / "no check by {date}" beside it; "{account} off by {amount}" kept. Coach: BC8b, the next
+  line. Teams: withdrawn.*
+- [x] *new, BC8a drafts* (the coach's touchpoints): the Money Overview line *settled, BC8b `/marketing` 2026-11-07, as the
+  club's own no-account line* "Bank: checked through {date} ›" · "Bank: not checked yet ›" (was "Bank checked through" /
+  "Bank not checked yet": one state, one spelling; a team has one account, so no name), the amber "Off by $X" chip beside
+  it. The season windows' sentence, split by the owner's "Season windows, off or matching" (BC8b): off, amber, "Your bank
+  check was off by {$X} on {date}. Check the season’s last statement before you {start the new season: the new season’s
+  Bank view starts from its own opening balance. | close: a closed season has no Bank view.}" (`/marketing`: the subject is
+  the coach's check, never "the bank", which isn't what's off); matching, plain, "The bank matches through {date}. If you
+  have a later statement, check it before you {…}".
+- [x] *new, BC8b* the team's printed check: the club's settled report words, with "{team} · Bank check", "Team bank
+  account · statement ending {date}" and the foot "Printed {date} from FieldLogicHQ · {team} · Money → Ledger → Bank"
+  (settled, BC8b `/marketing` 2026-11-07).
+- [x] *BC8b collisions* (`/marketing` 2026-11-07, as recommended at BC5b): KEEP the coach export header "RECONCILIATION —
+  SPENDING TO CASH" (a true accounting bridge, named); CHANGE the coach Budget panel's "reconcile the estimate" to "match
+  the estimate to the itemized total" (done).
 - [x] *new, Q3-A* "Saved checks keep the books they counted. The next check of each account counts this book where it
   is now." — Add an account / Name and books (settled, BC2 `/marketing` 2026-11-06)
 - [x] *new, BC2a/BC2b, settled 2026-11-06* — the start and the opened check (`lib/bank-tab-words.ts`, `lib/bank-check-words.ts`):
@@ -1151,7 +1169,59 @@ owner's 2026-11-06 independence ruling (`decision_coach_books_stay_the_teams`); 
     memory" rule); one more bank GET per Overview load and per window open (quiet; the bank tables reach prod with the code,
     447/449/450, in one promote). `verify:changed`'s red lines were all other sessions' files (billing tax words, practice
     plans on a phone, a Stage 6 owner walk, console money), none in this scope.
-- [ ] **BC8b** — the team report (K8), help in `coaches.tsx`, `/marketing` on the coach words.
+- [x] **BC8b — the team report (K8), coach help, the coach words, built 2026-11-07** (owner: §0 "Team report sign lines",
+  "Team report role", "Team report start line", "Season windows, off or matching", all as recommended; yes to the UX
+  summary).
+  - **The team's printed check** (`components/coaches/bank/CoachBankReport.tsx` + its own paper sheet): one Letter page
+    from a saved check, in the shipped `PrintedPage` frame (look-free; `bank-coach-view-guard` §5 allows that ONE admin
+    import, with the reason), bank first from the engine's `reportTerms`: Bank balance on the statement · Not in the bank
+    yet (Date · What · Amount) · Cash not deposited yet · What your books should say · Your books on {date} · Result + the
+    direction · "Checked by {name} ({role}), {date} at {time}" · Books now say · Prepared by / Reviewed by · "Printed {date}
+    from FieldLogicHQ · {team} · Money → Ledger → Bank". No books list, no starting point, no on its way. BC5b's trap
+    handled (th/td reset to paper ink; walked on a dark theme). "Print this check" sits in the opened check's foot beside
+    Delete, for money read and write, hidden at 640 and under (`bank-coach-view-guard` §2 changed on purpose: it pinned
+    "no print" until now; §8 pins the report).
+  - **The role** (server, additive): `teamBankView` reads the team's active seats beside the bank read (`teamCheckerRoles`,
+    quiet: a failed read drops the role), on the plain read only (never a statement day's figure read). `checkedByRole`
+    on each check = the staff word today ("Head coach"). ⚖ Accepted (/review BC8b, security lens): a money-read assistant
+    now sees the checkers' staff words, which the staff list (staff managers only) doesn't show them; the name was already
+    shown, and the owner's role ruling puts it on a page every reader may print.
+  - **The season windows, off or matching:** `useSeasonBankWarning` answers `{ text, off }`. Off: amber with the icon
+    ("Your bank check was off by…"), in Close the season's "Before you do" box (and its way back to the Bank view when
+    it is the only warning). Matching: a plain line, no icon, under Close's box (a match never opens the box); in Start
+    next season, both now sit right under "This closes the {season}" (/design BC8b: at the form's foot the amber note was
+    out of sight while Start was live).
+  - **Words** (`/marketing`, §5 ticked): all coach drafts kept except the Overview line, now the club's own no-account
+    "Bank: checked through {date} ›" / "Bank: not checked yet ›" (the coach keys are gone), and the off sentence's subject
+    ("Your bank check was off", not "the bank"). Collisions ruled: the export header kept; the Budget panel's "reconcile
+    the estimate" → "match the estimate to the itemized total".
+  - **Help** (`/docs`): "Checking the bank statement: the Bank view" (`#premium-money-bank`, six subtopics: where and who,
+    check, find, saved checks, the printed page, the season windows), "reconcile / reconciliation / bank reconciliation"
+    in its search words only (R-c); pointers from the Ledger's views and the Cash on hand definition.
+  - Checks: the bank, window, season and help tests green (guards 94/94; the wider set 1121/1121 before the cleanups);
+    typecheck clean (the dev server's own generated route types were mid-write and excluded); focused lint, spelling,
+    tokens, CSS purity clean; `check:layout --only=coach-accounting,coach-ledger-bank` clean at 361/390/768/1440.
+    `verify:changed`'s red lines are other sessions' (a tax-words test over committed help text, a team-move census over
+    the tax session's new table, practice plans, a Stage 6 walk, console money): none in this scope.
+  - Walks (dev): `.probe/bank-bc8/bc8b.mjs` (UAT Test Team: an off check with cash and a line not in the bank yet, and a
+    matching one; the door for write and read at 1440, absent at 390; the paper's words and order, the role, no club
+    lines, paper ink on a dark theme, `page.pdf` ONE page each; the Overview line's settled words) PASSED;
+    `.probe/bank-bc8/bc8b-windows.mjs` (`uat-standalone`: matching → plain, off → amber with the sentence, both windows
+    proceed-able, opened never confirmed; 1440 + 390) PASSED. Both remove what they made. PDFs and shots in
+    `.probe/bank-bc8/shots/b-*`.
+  - `/design` (helper): all three surfaces fine. Applied: the Start note's place (above), the icon sizes matched, the
+    matching line one size in both windows, the printed "Not in the bank yet" row may break across sheets. ⚠ **For BC9:**
+    the club's printed check has the same latent rule (a near-page list jumps whole to sheet two; admin kit out of scope
+    here) — print a check with ~25 items on both portals.
+  - `/simplify` (4 lenses): applied the role read's move off the figure reads, Start's one test of off/matching, the
+    matching line's one style. Kept: the coach's paper sheet mirrors the club's line for line (owner "Coach sharing": no
+    admin-kit change); the report mounted with the window (as the club's; Ctrl+P prints it). ⚠ **Follow-up, owner call:**
+    `PrintedPage` now serves four papers in two portals from `components/admin/tournament/`; a neutral home (e.g.
+    `components/print/`) would delete the guard's one exception, but it changes the club report's import (admin kit).
+  - `/review` standard (3 lenses: correctness, security/tenancy, regression): no Critical/High. Applied: a reader's empty
+    foot slot on a phone; a team name not at hand prints "Bank check" with no stray separator; the paper only from a
+    check (never a start). Accepted: "role today" (a removed checker prints without one); "matches through" reads the
+    saved figure, as the Overview line does.
 
 ### BC9 — The walk and marketing truth
 - [ ] Owner walk, both portals, desk and phone (a checkable page, a § in the Owner QA Ledger). `/marketing` puts "bank

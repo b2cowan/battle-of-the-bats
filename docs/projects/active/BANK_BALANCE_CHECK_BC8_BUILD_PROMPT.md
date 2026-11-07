@@ -1,5 +1,12 @@
 # Bank balance check BC8: the coach's touchpoints and the club's read (build prompt, two sessions)
 
+> **✅ BC8 DONE. BC8b done 2026-11-07** (built, walked on dev, /design, /simplify, /review; plan §9 BC8 holds the record,
+> §0 the four rulings: both sign lines kept, the checker's team role, no starting-point line, the season windows say
+> "off" in amber and a match plainly). **Next: BC9**, the owner walk of both portals (a checkable page and a § in the Owner
+> QA Ledger), `/marketing` putting "bank reconciliation" back, `/demos`; then the prod apply of 447/449/450 with the bank
+> code in one promote. ⚠ For BC9: print a check with ~25 lines not in the bank yet on BOTH portals (sheet breaks), and
+> re-walk Back after closing a check opened from the club Overview's chip (BC8a's finding).
+
 > **BC8a done 2026-11-07** (built, walked on dev, /design, /review; plan §9 BC8 holds the record, §0 the three rulings: the
 > Teams column is WITHDRAWN (B), "Bank not checked yet ›" before the first check, no window sentence without a check).
 > **Next: BC8b.** ⚠ For BC8b: the Overview line sits under the Cash on hand card's IN/OUT bars, not in its foot (the walk;

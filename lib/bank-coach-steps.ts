@@ -7,7 +7,7 @@ import { moveRefused, type Moved } from './club-money-route';
 import { tournamentToday } from './timezone';
 import { bankRefusedAs, step } from './bank-club-steps';
 import { checkView, readDay } from './bank-club-rules';
-import { readTeamBank, teamAccountOf, TEAM_BANK_ACCOUNT_NAME, type TeamBankAccount } from './bank-coach-read';
+import { readTeamBank, teamAccountOf, teamCheckerRoles, TEAM_BANK_ACCOUNT_NAME, type TeamBankAccount } from './bank-coach-read';
 import { coachSavePlan } from './bank-coach-rules';
 import type { RepProgramYear } from './types';
 
@@ -50,12 +50,17 @@ export function askedDay(req: Request): string | null | false {
  * money write sees the form; money read sees the same figures and no save (K7).
  */
 export async function teamBankView(c: TeamBankCaller, date: string | null) {
-  const read = await readTeamBank({ orgId: c.orgId, season: c.season, today: tournamentToday(), date });
+  const [read, roleOf] = await Promise.all([
+    readTeamBank({ orgId: c.orgId, season: c.season, today: tournamentToday(), date }),
+    // The printed check (BC8b): the plain read only — a statement day's figure read (as the coach types) draws no check.
+    date === null ? teamCheckerRoles(c.orgId, c.season.teamId) : Promise.resolve(() => null),
+  ]);
   return {
     account: read.account,
     canWrite: c.canWrite,
     season: { name: c.season.name, start: read.seasonStart },
-    checks: read.checks.map(ch => checkView(ch, read.nameOf)).reverse(),
+    // Who checked, with their word on the team's staff list as it reads today (null on a day's figure read).
+    checks: read.checks.map(ch => ({ ...checkView(ch, read.nameOf), checkedByRole: roleOf(ch.createdBy) })).reverse(),
     checkedThrough: read.latest,
     figure: read.figure,
   };

@@ -10,6 +10,12 @@
  */
 import { pluralize as plural } from './utils';
 
+/** The season windows' verb and its reason (BC8a): Close the season starts no season, so its reason is its own. */
+const seasonVerb = {
+  start: 'start the new season: the new season’s Bank view starts from its own opening balance.',
+  close: 'close: a closed season has no Bank view.',
+} as const;
+
 export const BANK_WORDS = {
   loading: 'Loading the bank…',
   loadingAccount: 'Loading the account…',
@@ -295,16 +301,23 @@ export const BANK_WORDS = {
   coachFindSinceSeasonPhone: (date: string) => `Since the season started · ${date}`,
   // The portal's record windows end on Close (the Ledger's own line window does).
   close: 'Close',
-  // ── the coach's touchpoints (BC8a; R0 tab 7). Drafts for BC8b's `/marketing`. ──
-  // The Money Overview's Cash on hand foot, right of "Ledger": "Bank checked through {date} ›", the amber "Off by $X" chip
-  // beside it when the latest check is off (a door to that check), "Bank not checked yet ›" before the first (owner BC8a).
-  // No "Matches": the line is quiet when all is well, as the club's settled Overview line is.
-  coachOverviewThrough: 'Bank checked through',
-  coachOverviewNotChecked: 'Bank not checked yet',
+  // ── the coach's touchpoints (BC8a; R0 tab 7; settled, BC8b `/marketing` 2026-11-07). ──
+  // The Money Overview line is the CLUB's settled no-account line, "Bank: checked through {date} ›" / "Bank: not checked
+  // yet ›" (`overviewLead` + `overviewThrough` / `overviewNoAccount`: a team has one account, so no name; one spelling for
+  // one state, BC8b `/marketing`), with the amber "Off by $X" chip beside it when off. No coach keys of its own.
   // Start next season / Close the season, only when the season has a check (owner BC8a: never nag a team that doesn't use
   // it). Drawn R0 tab 7 for Start next season; Close the season starts no season, so its reason is its own (/review BC8a:
   // the drawn clause promised it a new season's Bank view): a closed season is one page, with no Bank view (B9).
-  coachSeasonWarning: (date: string, verb: 'start' | 'close') => verb === 'start'
-    ? `The bank is checked through ${date}. Check the season’s last statement before you start the new season: the new season’s Bank view starts from its own opening balance.`
-    : `The bank is checked through ${date}. Check the season’s last statement before you close: a closed season has no Bank view.`,
+  // ⚖ Off or matching (owner "Season windows, off or matching", BC8b 2026-11-07): an OFF latest check says so, amber; a
+  // MATCHING one is a plain line with no warning icon, outside Close the season's amber "Before you do" box. The off
+  // sentence's subject is the coach's check, never "the bank" (BC8b `/marketing`: the books are what's off).
+  coachSeasonOff: (amount: string, date: string, verb: 'start' | 'close') =>
+    `Your bank check was off by ${amount} on ${date}. Check the season’s last statement before you ${seasonVerb[verb]}`,
+  coachSeasonMatches: (date: string, verb: 'start' | 'close') =>
+    `The bank matches through ${date}. If you have a later statement, check it before you ${seasonVerb[verb]}`,
+
+  // ── the team's printed check (BC8b; K8, R0 tab 9, the club's BC5b report rulings carried; owner "Team report sign lines
+  // / role / start line" 2026-11-07). The eyebrow, title, sum and sign-off words are the club's settled report words above.
+  coachReportFoot: (date: string, team: string) => `Printed ${date} from FieldLogicHQ${team ? ` · ${team}` : ''} · Money → Ledger → Bank`,
+  coachReportEyebrowBare: 'Bank check',
 } as const;
