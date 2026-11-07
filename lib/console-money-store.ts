@@ -2,6 +2,7 @@ import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
 import { isUuid } from './utils';
 import { writePlatformAuditLogStrict } from './platform-audit';
+import { recordCreditNoteTax, recordTaxOrReport } from './charge-tax-record-server';
 import { InFlightError, customerSharing, type CustomerWorkspace, type PriceMap, type RefundRecord, type RefundStore } from './console-money-stripe';
 
 /**
@@ -39,6 +40,9 @@ export const refundStore: RefundStore = {
   },
   async audit(entry) {
     await writePlatformAuditLogStrict(entry.actorEmail, entry.orgId, entry.action, 'charge', null, entry.value, { reason: entry.reason });
+  },
+  async recordCreditNote(noteId) {
+    await recordTaxOrReport({ kind: 'credit_note', id: noteId }, () => recordCreditNoteTax(noteId));
   },
 };
 

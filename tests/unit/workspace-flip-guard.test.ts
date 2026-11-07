@@ -397,6 +397,7 @@ const SPECIAL: Record<string, [Klass, string]> = {
   'lib/billing-setup.ts': ['tombstone-aware', 'recordNextSeasonChoice never writes Stripe ids onto a tombstone (this build)'],
   'lib/lead-book.ts': ['tombstone-aware', 'counts a workspace as paying through billing_owner_org_id, which the flip sets to the club itself'],
   'lib/console-money-store.ts': ['tombstone-aware', 'matches workspaces by Stripe customer id, which the flip NULLs'],
+  'lib/charge-tax-record-server.ts': ['tombstone-aware', 'GST/HST Stage 3: a tax record finds a Premium invoice\'s portal ONLY by stripe_subscription_id, which the flip NULLs, and only after organizations.stripe_subscription_id (the club\'s own row) found nothing; the buyer itself is buyerOfStripeCustomer\'s answer'],
   'lib/billing-drift-server.ts': ['tombstone-aware', 'the daily Stripe comparison (Stage 0 Part 11): reads only workspace rows that still hold a subscription id, which the flip NULLs (a flipped club is compared through its own organization row); read-only'],
   'app/api/platform-admin/find/route.ts': ['tombstone-aware', 'finds a workspace by Stripe id, which the flip NULLs; the club is found through its own organization'],
   'lib/platform-story.ts': ['live-row', 'reads free_time_given_at and the migration summary for the Story: history, not behaviour'],

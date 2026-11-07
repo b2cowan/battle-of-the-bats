@@ -7,6 +7,7 @@ import { captureError } from './observability/capture';
 import { paidOrPromisedToPay } from './plan-move';
 import { isTeamWorkspaceOrg } from './team-workspace-kind';
 import { isUuid } from './utils';
+import type { SaleEvidence } from './charge-tax-record';
 import {
   BILLING_LOCATION_WORDS,
   US_DECLARATION_VERSION,
@@ -461,6 +462,31 @@ async function payoutCountryOf(buyer: BillingBuyer): Promise<string | null> {
 }
 
 /**
+ * The buyer's evidence AS IT STANDS NOW, for a charge's tax record to COPY (GST/HST Stage 3 Part 1, lib/charge-tax-record.ts): the
+ * address and declaration, the card country on the row, the club's payout country, and `currentReview` worked out from them — the
+ * values `readBillingLocation` leaves out. Null location = no row (the record keeps `evidence_missing`). Throws on a failed read.
+ */
+export async function readSaleEvidence(buyer: BillingBuyer): Promise<SaleEvidence> {
+  const { row, payoutCountry, review } = await rowWithReview(buyer);
+  return {
+    location: row ? toStored(row) : null,
+    cardCountry: upperCountry(row?.card_country ?? null),
+    payoutCountry: upperCountry(payoutCountry),
+    review,
+  };
+}
+
+/** A buyer's row, the club's payout country, and `currentReview` worked out from them NOW (null when there is no row): the one
+ *  resolution the kept tax record and platform admin's address block both read. */
+async function rowWithReview(buyer: BillingBuyer) {
+  const [row, payoutCountry] = await Promise.all([readRow(buyer), payoutCountryOf(buyer)]);
+  const review = row && currentReview({
+    country: row.country, cardCountry: row.card_country, payoutCountry, storedReason: row.review_reason, storedNote: row.review_note,
+  });
+  return { row, payoutCountry, review };
+}
+
+/**
  * Platform admin's read of an organization's billing address (Part 3; the Money tab's one read-only block). A club's is its
  * own row; a Coaches Portal's is its billing owner's PERSON row (a coach buys as a person), the same row billingBuyerOf
  * gives the owner on Plan & billing. "Needs review" is `currentReview`: the stored flag, or the card and payout evidence as it
@@ -485,10 +511,7 @@ export async function readBillingLocationForConsole(orgId: string): Promise<Cons
   } else {
     buyer = { kind: 'org', orgId, name: org.name };
   }
-  const [row, payoutCountry] = await Promise.all([readRow(buyer), payoutCountryOf(buyer)]);
-  const review = row && currentReview({
-    country: row.country, cardCountry: row.card_country, payoutCountry, storedReason: row.review_reason, storedNote: row.review_note,
-  });
+  const { row, review } = await rowWithReview(buyer);
   return {
     buyer: buyer.kind === 'org' ? 'club' : 'person',
     location: row ? toStored(row) : null,

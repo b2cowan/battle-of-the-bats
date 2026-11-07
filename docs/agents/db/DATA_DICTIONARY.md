@@ -9743,6 +9743,156 @@ The **platform control plane** — the tables behind `/platform-admin/` that Fie
 <!-- dict:col:platform_refunds.completed_at -->
 **`completed_at`** (timestamptz, nullable) — when Stripe's answer (or recovery) completed the row.
 
+### `platform_charge_tax_records`
+<!-- dict:table:platform_charge_tax_records -->
+
+**Purpose:** FieldLogicHQ's **own tax record of every invoice it issues** on its platform Stripe account (mig 451, GST/HST Stage 3 Part 1, owner rulings 2026-11-06): a club's plan, a coach's own Premium, a club's Stripe-fees invoice, or a one-off made in Stripe's dashboard. One row per Stripe invoice, written **by us at the time** with the tax, **our** GST/HST reason and a **copy** of the buyer's evidence (address, declaration, card and payout country, review) as it stood. CRA needs six years; the buyer's `billing_locations` row is the CURRENT location and deletes with the buyer, so it is copied, never linked. Stage 4 (the books) sums this table by `issued_at`. Writer: [lib/charge-tax-record-server.ts](../../../lib/charge-tax-record-server.ts) (rules pure in [lib/charge-tax-record.ts](../../../lib/charge-tax-record.ts)).
+
+**Gotchas (read first):**
+1. **Written at issue, not at payment** (Ask 1: GST/HST is owed when the invoice is issued, ETA s.168/s.152, paid or not). The billing webhook writes it on any of `CHARGE_TAX_INVOICE_EVENTS` (finalized, paid, payment_succeeded, payment_failed, voided, marked_uncollectible), re-reading the invoice with its tax rates expanded (the event names rates by id only), **before** the fee-invoice route and the plan's own work. Idempotent: unique `stripe_invoice_id`, insert-ignore then a state update. A draft is never recorded.
+2. **A failed write never stops the webhook's own work** (`recordTaxOrReport`: observability + one `tax_record_alert` email per invoice). The **daily online-payments job** (`stripe-fees-daily`, step `tax_records`) records every invoice Stripe made in the last 35 days that has no row (120 a run), and re-reads every row still `open`; step `tax_records_backfill` then copies everything from 2026-05-01 up to the first `event` row (120 a run, until none is missing).
+3. **As it stood — enforced.** Trigger `platform_charge_tax_records_guard`: after the insert only `status`, `paid_at`, `voided_at`, `uncollectible_at`, `stripe_payment_intent_id`, `refunded_cents` and `updated_at` may change, plus the CAD valuation (`fx_rate`, `fx_rate_date`, `fx_source`, the three `cad_*`) and `stripe_cad_total_cents`, each **set once** (compared as jsonb minus those, so a column added later is frozen by default). The writer moves the state **only forward in Stripe's order** (open → paid / void / uncollectible; uncollectible → paid / void) and never drops a recorded date, so two events read at once cannot roll a record back. Evidence that could not be read stays `evidence_missing`; it is never filled in later.
+4. **Kept: no foreign key, on purpose.** `org_id` and `user_id` are plain ids (not even SET NULL), so deleting a club or a person deletes nothing and keeps whose it was (`tests/unit/billing-location-every-path-guard.test.ts` reads the snapshot: zero FKs). A **live** row cannot be deleted (the same trigger); test-mode rows can.
+5. **Our reason, not Stripe's** (Ask 2, revised after the Part 0 probe). Stripe's `taxability_reason` is per tax LINE, and for a US buyer it names the US state it is not collecting in, with no Canadian line at all. `gst_hst_position` is our one answer for Canadian GST/HST; `tax_lines` keeps every Stripe line verbatim. ⚠ A Stripe **HST line names "Canada", never the province**: the place is `taxed_region`.
+6. **Service role only.** RLS on, no policies; `anon`/`authenticated` hold no privilege.
+
+**Fields** (`id` uuid, `created_at` / `updated_at` boilerplate):
+
+<!-- dict:col:platform_charge_tax_records.stripe_invoice_id -->
+<!-- dict:col:platform_charge_tax_records.livemode -->
+<!-- dict:col:platform_charge_tax_records.invoice_number -->
+**`stripe_invoice_id`** (text, NOT NULL, UNIQUE; CHECK `^in_`) — the invoice. **`livemode`** (boolean, NOT NULL) — Stripe's mode of the invoice. **`invoice_number`** (text, nullable; 1–64 characters, no character rule: a number typed in Stripe's dashboard must never refuse the record) — its printed number.
+
+<!-- dict:col:platform_charge_tax_records.kind -->
+**`kind`** (text, NOT NULL; `subscription` / `premium` / `fee` / `one_off`) — the fee marker (`metadata.fieldlogichq_fee_invoice_id`) first, then a PERSON buyer = `premium`, then a subscription = `subscription`, else `one_off`.
+
+<!-- dict:col:platform_charge_tax_records.org_id -->
+<!-- dict:col:platform_charge_tax_records.user_id -->
+<!-- dict:col:platform_charge_tax_records.buyer_kind -->
+<!-- dict:col:platform_charge_tax_records.buyer_name -->
+**`org_id`** / **`user_id`** (uuid, nullable, **no FK**) — the organization the invoice belongs to (the club; for Premium the coach's portal, by its subscription, else the one organization holding the customer) and, for Premium, the coach who pays as a person. **`buyer_kind`** (text, NOT NULL; `club` / `person` / `unknown`, CHECK `platform_charge_tax_records_buyer_shape`: club needs `org_id`, person needs `user_id`) — `buyerOfStripeCustomer`'s answer; `unknown` when the customer is no one's or ambiguous. **`buyer_name`** (text, nullable) — the name printed on the invoice (`customer_name`).
+
+<!-- dict:col:platform_charge_tax_records.stripe_customer_id -->
+<!-- dict:col:platform_charge_tax_records.stripe_subscription_id -->
+<!-- dict:col:platform_charge_tax_records.stripe_payment_intent_id -->
+**`stripe_customer_id`** (text, NOT NULL) / **`stripe_subscription_id`** (text, nullable; the invoice's `parent.subscription_details`) / **`stripe_payment_intent_id`** (text, nullable; the paid `invoice.payments` entry — the charge's `payment_intent` joins to it; never dropped by a later read that lists none).
+
+<!-- dict:col:platform_charge_tax_records.issued_at -->
+<!-- dict:col:platform_charge_tax_records.currency -->
+**`issued_at`** (timestamptz, NOT NULL) — `status_transitions.finalized_at`: the date the tax is owed and the period Stage 4 sums it in. **`currency`** (text, NOT NULL, lower case).
+
+<!-- dict:col:platform_charge_tax_records.amount_before_tax_cents -->
+<!-- dict:col:platform_charge_tax_records.tax_total_cents -->
+<!-- dict:col:platform_charge_tax_records.total_cents -->
+**`amount_before_tax_cents`** (integer, NOT NULL; may be negative, a proration credit) — Stripe's `total_excluding_tax` (after discounts): what revenue counts and the tax sits on. **`tax_total_cents`** — the sum of `total_taxes`. **`total_cents`** — Stripe's `total`.
+
+<!-- dict:col:platform_charge_tax_records.tax_lines -->
+**`tax_lines`** (jsonb array, NOT NULL) — one entry per Stripe tax line: `{source: "stripe"|"ours", name, tax_type, jurisdiction, jurisdiction_level, country, region, rate, effective_rate, taxable_cents, cents, taxability_reason, tax_rate_id, tax_behavior}`, snake_case so SQL can sum it. A BC sale is two lines (GST `standard_rated`, PST 7% `not_collecting` at 0). On a zero-rated sale **we** add `{source: "ours", country: "CA", tax_type: "gst", rate: 0, cents: 0, taxability_reason: "zero_rated", taxable_cents: <before tax>}`, because Stripe shows no Canadian line for a buyer outside Canada.
+
+<!-- dict:col:platform_charge_tax_records.stripe_tax_status -->
+**`stripe_tax_status`** (text, nullable; `complete` / `requires_location_inputs` / `failed`) — `automatic_tax.status`; NULL = automatic tax off.
+
+<!-- dict:col:platform_charge_tax_records.gst_hst_position -->
+<!-- dict:col:platform_charge_tax_records.gst_hst_position_why -->
+**`gst_hst_position`** (text, NOT NULL; `taxed` / `zero_rated` / `missing`) — `gstHstPosition()`: tax not worked out → missing; a Canadian GST/HST line Stripe rated (standard, reduced, … even at $0 on a trial) → taxed; Stripe's own `zero_rated` → zero_rated; placed in Canada with no rated line → missing; placed outside Canada → zero_rated only with a US address AND the US declaration (version + date) on our records, in the country Stripe placed, else missing. **`gst_hst_position_why`** (text, set exactly when missing, CHECK `platform_charge_tax_records_why_shape`) — `stripe_did_not_work_out`, `canadian_buyer_not_charged` (e.g. a live account with no Canada registration: Stripe answers `not_collecting`), `no_evidence_for_zero_rating`, `unexpected_reason`. How strong the evidence is (a US card, a review flag) is Stage 3 Part 3's "needs a look", not this answer.
+
+<!-- dict:col:platform_charge_tax_records.taxed_country -->
+<!-- dict:col:platform_charge_tax_records.taxed_region -->
+<!-- dict:col:platform_charge_tax_records.taxed_postal_code -->
+**`taxed_country`** / **`taxed_region`** / **`taxed_postal_code`** (text, nullable; `taxed_region` up to 100 characters, since a hand-made invoice may spell the province out) — where Stripe placed the buyer: the invoice's own `customer_address`.
+
+<!-- dict:col:platform_charge_tax_records.evidence_missing -->
+<!-- dict:col:platform_charge_tax_records.evidence_country -->
+<!-- dict:col:platform_charge_tax_records.evidence_region -->
+<!-- dict:col:platform_charge_tax_records.evidence_line1 -->
+<!-- dict:col:platform_charge_tax_records.evidence_line2 -->
+<!-- dict:col:platform_charge_tax_records.evidence_city -->
+<!-- dict:col:platform_charge_tax_records.evidence_postal_code -->
+<!-- dict:col:platform_charge_tax_records.evidence_confirmed_at -->
+<!-- dict:col:platform_charge_tax_records.us_declaration_version -->
+<!-- dict:col:platform_charge_tax_records.us_declaration_at -->
+**`evidence_missing`** (boolean, NOT NULL; CHECK `platform_charge_tax_records_evidence_shape`: false needs `evidence_country`) — no address of ours could be read when the record was written. **`evidence_country`**, **`evidence_region`**, **`evidence_line1`**, **`evidence_line2`**, **`evidence_city`**, **`evidence_postal_code`**, **`evidence_confirmed_at`**, **`us_declaration_version`**, **`us_declaration_at`** — a COPY of the buyer's `billing_locations` row at that moment (`readSaleEvidence`).
+
+<!-- dict:col:platform_charge_tax_records.card_country -->
+<!-- dict:col:platform_charge_tax_records.payout_country -->
+<!-- dict:col:platform_charge_tax_records.review_reason -->
+<!-- dict:col:platform_charge_tax_records.review_note -->
+<!-- dict:col:platform_charge_tax_records.evidence_read_at -->
+**`card_country`** (the row's card country) / **`payout_country`** (a club's connected payout account's verified country, read live) — upper case. **`review_reason`** / **`review_note`** (text, nullable) — `currentReview` worked out at that moment (the stored flag, or the card/payout evidence), with its sentence; the console's own review is worked out at read and never stored, so this is its only record. **`evidence_read_at`** (timestamptz, NOT NULL) — when the evidence was read.
+
+<!-- dict:col:platform_charge_tax_records.evidence_captured -->
+**`evidence_captured`** (text, NOT NULL; `event` / `catch_up` / `backfill`, frozen) — how the record was written: at the time (the billing webhook, or a note maker), by the daily catch-up (an event missed within 35 days), or by the **backfill** (owner 2026-11-06, GST/HST Stage 4 Ask 11 = A: every invoice issued from 2026-05-01 up to the first `event` record, so a sale made between Stage 2's promote and Stage 3's still reaches the return worksheet). Only `event` is evidence as at the sale; a backfilled row's evidence was read when it was copied. A first write from an event a day or more after the invoice was issued (a Stripe retry, a later event after the first one failed) is labelled `catch_up`, not `event`.
+
+<!-- dict:col:platform_charge_tax_records.fx_rate -->
+<!-- dict:col:platform_charge_tax_records.fx_rate_date -->
+<!-- dict:col:platform_charge_tax_records.fx_source -->
+<!-- dict:col:platform_charge_tax_records.cad_amount_before_tax_cents -->
+<!-- dict:col:platform_charge_tax_records.cad_tax_total_cents -->
+<!-- dict:col:platform_charge_tax_records.cad_total_cents -->
+<!-- dict:col:platform_charge_tax_records.stripe_cad_total_cents -->
+**The CAD valuation** (owner 2026-11-06, Stage 4 Ask 4 = A; CRA Memo 3-6 / ETA s.159; [GST_HST_RETURN_LINES.md](../accounting/GST_HST_RETURN_LINES.md) §5): **`fx_rate`** (numeric(14,8), CAD per unit), **`fx_rate_date`** (date), **`fx_source`** (`same_currency` / `bank_of_canada`), **`cad_amount_before_tax_cents`**, **`cad_tax_total_cents`**, **`cad_total_cents`** — **the figures the return worksheet sums.** A CAD sale is itself (rate 1, `same_currency`, the CAD figures = the figures; CHECK `platform_charge_tax_records_cad_is_itself`). A non-CAD sale takes the Bank of Canada Valet daily rate (`FX{CUR}CAD`) for the invoice's Ontario date, or the business day before it, each figure rounded half away from zero; all six are present or all absent (CHECK `_fx_shape`), absent = the rate could not be read yet, filled by the next write and **set once** (the guard). Only US sales need it and they are closed, so it never runs in production yet. **`stripe_cad_total_cents`** (integer, nullable, set once) — Stripe's own CAD settlement figure for a paid non-CAD invoice: a **cross-check only**, never the return figure (its filing columns can be blank on zero-rated rows).
+
+<!-- dict:col:platform_charge_tax_records.status -->
+<!-- dict:col:platform_charge_tax_records.paid_at -->
+<!-- dict:col:platform_charge_tax_records.voided_at -->
+<!-- dict:col:platform_charge_tax_records.uncollectible_at -->
+**`status`** (text, NOT NULL; `open` / `paid` / `void` / `uncollectible`) with **`paid_at`**, **`voided_at`**, **`uncollectible_at`** (from `status_transitions`) — the only state that moves. A write-off's tax relief lands in the `uncollectible_at` period ([UNPAID_SUBSCRIPTION_INVOICES.md](../accounting/UNPAID_SUBSCRIPTION_INVOICES.md) step 3), so the date is kept, not just the status.
+
+<!-- dict:col:platform_charge_tax_records.refunded_cents -->
+**`refunded_cents`** (integer, NOT NULL, default 0) — what has been refunded on the payment so far (`charge.amount_refunded`; only ever rises): read from the payment when the record is first written, kept by `charge.refunded`, and caught up by the daily job's refund sweep (refunds in the last 35 days) when that event was missed or failed. Compared with the invoice's credit notes it finds a refund made with **no** credit note (tax not reduced).
+
+<!-- dict:col:platform_charge_tax_records.created_at -->
+<!-- dict:col:platform_charge_tax_records.updated_at -->
+
+### `platform_credit_note_tax_records`
+<!-- dict:table:platform_credit_note_tax_records -->
+
+**Purpose:** the tax record of every **credit note** on our invoices (mig 451, GST/HST Stage 3 Part 1, Ask 3), dated by the note (a reduction counts in the period the note is issued, not the invoice's). Written from `credit_note.created` / `.updated` / `.voided` and **directly** by the two places that make notes — the console refund (`makeRefund` → `refundStore.recordCreditNote`) and the fee credit (lib/platform-stripe-fees.ts) — keyed by `stripe_credit_note_id`, so none double-writes; the daily catch-up writes any missed. Amounts are **positive**; Stage 4 subtracts them. Same keep rules as `platform_charge_tax_records` (no FK, a live row cannot be deleted, trigger `platform_credit_note_tax_records_guard`: only `status`, `voided_at`, `updated_at` change, plus the CAD valuation set once). A void is kept with its first date and never undone. The owner (`kind`, `org_id`, `user_id`) is copied from the invoice's record, which the writer records first when it has none yet. ⚠ Stripe only voids a note on an OPEN invoice (verified 2026-11-06), so a refund's note is never voided.
+
+<!-- dict:col:platform_credit_note_tax_records.stripe_credit_note_id -->
+<!-- dict:col:platform_credit_note_tax_records.stripe_invoice_id -->
+<!-- dict:col:platform_credit_note_tax_records.livemode -->
+<!-- dict:col:platform_credit_note_tax_records.note_number -->
+**`stripe_credit_note_id`** (text, NOT NULL, UNIQUE; `^cn_`) / **`stripe_invoice_id`** (text, NOT NULL; no FK — the invoice's record may not exist) / **`livemode`** / **`note_number`** (the printed number, e.g. `ODABHO2Z-0001-CN-01`).
+
+<!-- dict:col:platform_credit_note_tax_records.kind -->
+<!-- dict:col:platform_credit_note_tax_records.org_id -->
+<!-- dict:col:platform_credit_note_tax_records.user_id -->
+<!-- dict:col:platform_credit_note_tax_records.stripe_customer_id -->
+**`kind`** / **`org_id`** / **`user_id`** (nullable, no FK) — copied from the invoice's own record; with none, matched from the customer (`kind` then NULL). **`stripe_customer_id`** (text, NOT NULL).
+
+<!-- dict:col:platform_credit_note_tax_records.note_type -->
+<!-- dict:col:platform_credit_note_tax_records.stripe_reason -->
+<!-- dict:col:platform_credit_note_tax_records.issued_at -->
+<!-- dict:col:platform_credit_note_tax_records.currency -->
+**`note_type`** (text, NOT NULL; `pre_payment` / `post_payment` / `mixed`) — Stripe's type. **`stripe_reason`** (text, nullable) — Stripe's reason code. **`issued_at`** (timestamptz, NOT NULL) — `effective_at`, else `created`. **`currency`**.
+
+<!-- dict:col:platform_credit_note_tax_records.amount_before_tax_cents -->
+<!-- dict:col:platform_credit_note_tax_records.tax_total_cents -->
+<!-- dict:col:platform_credit_note_tax_records.total_cents -->
+<!-- dict:col:platform_credit_note_tax_records.tax_lines -->
+**`amount_before_tax_cents`** (`total_excluding_tax`) / **`tax_total_cents`** (the sum of the note's `total_taxes`) / **`total_cents`** / **`tax_lines`** (the same shape as the invoice record's).
+
+<!-- dict:col:platform_credit_note_tax_records.refund_cents -->
+<!-- dict:col:platform_credit_note_tax_records.out_of_band_cents -->
+**`refund_cents`** (the sum of the note's `refunds[].amount_refunded`: paid back to the card) / **`out_of_band_cents`** (settled outside Stripe). The rest of a post-payment note went to the customer's Stripe balance.
+
+<!-- dict:col:platform_credit_note_tax_records.status -->
+<!-- dict:col:platform_credit_note_tax_records.voided_at -->
+**`status`** (`issued` / `void`) with **`voided_at`** (set exactly when void, CHECK `platform_credit_note_tax_records_void_shape`).
+
+<!-- dict:col:platform_credit_note_tax_records.evidence_captured -->
+<!-- dict:col:platform_credit_note_tax_records.fx_rate -->
+<!-- dict:col:platform_credit_note_tax_records.fx_rate_date -->
+<!-- dict:col:platform_credit_note_tax_records.fx_source -->
+<!-- dict:col:platform_credit_note_tax_records.cad_amount_before_tax_cents -->
+<!-- dict:col:platform_credit_note_tax_records.cad_tax_total_cents -->
+<!-- dict:col:platform_credit_note_tax_records.cad_total_cents -->
+**`evidence_captured`** (`event` / `catch_up` / `backfill`) and **the CAD valuation** (`fx_rate`, `fx_rate_date`, `fx_source`, `cad_*`) — as on `platform_charge_tax_records`, valued on the **note's own** issue date (⚠ open for `/accounting`: whether a reduction should take the original invoice's rate instead). Set once.
+
+<!-- dict:col:platform_credit_note_tax_records.created_at -->
+<!-- dict:col:platform_credit_note_tax_records.updated_at -->
+
 **The read-only lookup over sign-in records (same migration, functions only — invisible to the column snapshots).** `platform_people_search(p_query, p_status, p_exclude_emails, p_clubs, p_offset, p_limit)` (the People list: ranked, paged, ≤100 a page, `total_count` for the pager), `platform_find_people(p_query, p_exclude_emails)` (Find's People group: 2–120 characters, `LIMIT 8` in SQL), `platform_people_by_ids(p_ids)` (owners/members by account id, ≤1,000 per call — the caller chunks) and `platform_find_clubs(p_query, p_exclude_slugs)` (Find's Clubs group: name, web name, own web address, owner email; `LIMIT 8`). All `SECURITY DEFINER`, `search_path = ''`, schema-qualified; they return **exactly** id, email, name (metadata `display_name` → `full_name` → `name`), last sign-in, created, banned-until, email-confirmed-at (clubs: id, name, slug, plan, status, kind, own address, one owner email). LIKE wildcards in the words are escaped. Staff accounts (`platform_users` + the bootstrap emails the caller passes) are left out. **Execute is revoked from PUBLIC, anon and authenticated and granted to service_role only** (rule 7; `tests/unit/support-console-stage2-guard.test.ts`, and a dev call with the anon key returned 42501 for all four on 2026-10-25). They end the 1,000-account cap the console's single `listUsers` pages had (Customer users, the clubs list's owner sign-ins, Today's owner-inactive count, the Founding Season desk). **Mig 367 (2026-10-25, /review fix)** replaced `platform_find_clubs` with the same signature and grants: a club's matched owner is the EXACT email searched when one of its owners has it, then the alphabetically first containing the words — 365 took the first containing them, so `owner@x` showed `coowner@x` and missed the exact-match rank.
 
 ### `platform_account_emails`

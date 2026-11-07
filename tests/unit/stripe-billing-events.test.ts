@@ -223,7 +223,8 @@ describe('Stripe\'s current answer, not the event\'s copy', () => {
 
 describe('the webhook wears it', () => {
   const route = readCode('app/api/billing/webhook/route.ts');
-  const seam = functionBody(route, 'runVerifiedBillingEvent');
+  // The seam, and the plan's own work it calls (split out by GST/HST Stage 3 so an invoice's tax record is written after it).
+  const seam = functionBody(route, 'runVerifiedBillingEvent') + functionBody(route, 'runPlanWork');
   const arm = (name: string) => seam.slice(seam.indexOf(`case '${name}'`), seam.indexOf('case ', seam.indexOf(`case '${name}'`) + 6));
 
   it('every verified event goes through the record, to the one seam', () => {

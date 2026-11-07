@@ -32,6 +32,8 @@ import { cancelScheduledEmail } from '@/lib/email-sender';
 import { notify } from '@/lib/notify';
 import { syncFeeInvoiceFromEvent } from '@/lib/platform-stripe-fees';
 import { FEE_INVOICE_META } from '@/lib/online-payment-words';
+import { CHARGE_TAX_CREDIT_NOTE_EVENTS, CHARGE_TAX_INVOICE_EVENTS } from '@/lib/charge-tax-record';
+import { orgOfSubscription, recordCreditNoteTax, recordInvoiceRefunded, recordInvoiceTax, recordTaxOrReport } from '@/lib/charge-tax-record-server';
 import { buyerNameAfterCheckout } from '@/lib/billing-tax';
 import { orgOwnerUserIds } from '@/lib/notify-recipients';
 import { clearSettled } from '@/lib/needs-attention';
@@ -100,26 +102,17 @@ function subscriptionChargeDeps(): SubscriptionChargeDeps {
   };
   return {
     retrieveCharge: id => stripe.charges.retrieve(id, { expand: ['refunds'] }),
+    recordRefunded: (invoiceId, refundedCents) =>
+      recordTaxOrReport({ kind: 'invoice', id: invoiceId }, () => recordInvoiceRefunded(invoiceId, refundedCents)),
     async invoiceForPaymentIntent(paymentIntent) {
       const res = await stripe.invoicePayments.list({ payment: { type: 'payment_intent', payment_intent: paymentIntent }, limit: 1, expand: ['data.invoice'] });
       const inv = res.data[0]?.invoice;
       return inv && typeof inv !== 'string' && !('deleted' in inv && inv.deleted) ? inv as Stripe.Invoice : null;
     },
+    // GST/HST Stage 3: the ONE owner rule, shared with the tax record, so a charge's alert and its record name the same club.
     async ownerOf(subscriptionId, customerId) {
-      const { data: org, error } = await supabaseAdmin.from('organizations').select('id, name')
-        .eq('stripe_subscription_id', subscriptionId).limit(1).maybeSingle();
-      if (error) throw new Error(`Couldn't find the subscription's club: ${error.message}`);
-      if (org) return { orgId: org.id, orgName: org.name, teamWorkspaceId: null };
-      const { data: ws, error: wsError } = await supabaseAdmin.from('team_workspaces')
-        .select('id, workspace_org_id, billing_owner_org_id').eq('stripe_subscription_id', subscriptionId).limit(1).maybeSingle();
-      if (wsError) throw new Error(`Couldn't find the subscription's portal: ${wsError.message}`);
-      const wsOrgId = (ws?.billing_owner_org_id ?? ws?.workspace_org_id) as string | null | undefined;
-      if (ws && wsOrgId) return { orgId: wsOrgId, orgName: await orgName(wsOrgId), teamWorkspaceId: ws.id };
-      if (!customerId) return null;
-      const { data: holders, error: holdersError } = await supabaseAdmin.from('organizations').select('id, name')
-        .eq('stripe_customer_id', customerId).limit(2);
-      if (holdersError) throw new Error(`Couldn't find the customer's club: ${holdersError.message}`);
-      return holders?.length === 1 ? { orgId: holders[0].id, orgName: holders[0].name, teamWorkspaceId: null } : null;
+      const owner = await orgOfSubscription(subscriptionId, customerId);
+      return owner ? { ...owner, orgName: await orgName(owner.orgId) } : null;
     },
     async consoleRefundIds(chargeId) {
       const { data, error } = await supabaseAdmin.from('platform_refunds').select('stripe_refund_id').eq('stripe_charge_id', chargeId);
@@ -245,6 +238,26 @@ async function runVerifiedBillingEvent(event: Stripe.Event, customerId: string |
   // Stage 0 (S9): a dispute names no customer, so these are resolved through their charge BEFORE the early return below.
   if (isSubscriptionChargeEvent(event.type)) return handleSubscriptionChargeEvent(event, subscriptionChargeDeps());
 
+  // GST/HST Stage 3 Part 1: every invoice we issue and every credit note keeps its tax record. A credit note has no plan work.
+  // An invoice's record is written AFTER the plan's own work, whatever that work answered (a club's Stripe-fees invoice, a
+  // stray subscription's invoice and a coach's own Premium are all recorded), so a club's plan never waits on our bookkeeping.
+  // Reported, never thrown (the daily job's catch-up writes a record that failed here). A throw in the plan work skips it:
+  // Stripe sends the event again.
+  if ((CHARGE_TAX_CREDIT_NOTE_EVENTS as readonly string[]).includes(event.type)) {
+    const noteId = (event.data.object as Stripe.CreditNote).id;
+    await recordTaxOrReport({ kind: 'credit_note', id: noteId }, () => recordCreditNoteTax(noteId));
+    return 'processed';
+  }
+  const outcome = await runPlanWork(event, customerId);
+  if ((CHARGE_TAX_INVOICE_EVENTS as readonly string[]).includes(event.type)) {
+    const invoiceId = (event.data.object as Stripe.Invoice).id;
+    if (invoiceId) await recordTaxOrReport({ kind: 'invoice', id: invoiceId }, () => recordInvoiceTax(invoiceId));
+  }
+  return outcome;
+}
+
+/** The plan's own work for one verified billing event (everything but the tax record above). */
+async function runPlanWork(event: Stripe.Event, customerId: string | null): Promise<BillingEventOutcome> {
   if (!customerId) return 'no_customer';
 
   // 12d-1 Part 4: a club's own invoice of Stripe fees is written to its own row and NOTHING else. Read before the switch,

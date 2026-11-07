@@ -16,6 +16,7 @@ import {
 import { addCalendarMonths, formatStoredDate, orgMonthKey, zonedWallClockToUtc } from './timezone';
 import { AUTOMATIC_TAX, RECOVERED_FEE_TAX, namedTaxLines } from './billing-tax';
 import { readBillingLocation, usSalesOpen } from './billing-location-server';
+import { recordCreditNoteTax, recordTaxOrReport } from './charge-tax-record-server';
 import { storedLocationStillValid, type BillingLocation } from './billing-location';
 
 /**
@@ -364,6 +365,9 @@ async function creditAgainst(f: FeeRow, answer: FeeRow, invoiceId: string): Prom
     if (after - refund > 0) params.credit_amount = after - refund;
     note = await stripe.creditNotes.create(params, { idempotencyKey: `fee-credit:${f.id}` });
   }
+  // GST/HST Stage 3: the note's tax record now (the credit-note event writes the same row, keyed by the note). Never throws.
+  const madeNote = note;
+  await recordTaxOrReport({ kind: 'credit_note', id: madeNote.id }, () => recordCreditNoteTax(madeNote.id));
   const { error } = await supabaseAdmin.from('platform_stripe_fees')
     .update({ stripe_credit_note_id: note.id, billed_at: new Date().toISOString(), billed_on: 'credit_note', bill_error: null })
     .eq('id', f.id).is('billed_at', null).is('fee_invoice_id', null);

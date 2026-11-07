@@ -35,7 +35,10 @@
  */
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import { AUTOMATIC_TAX, RECOVERED_FEE_TAX, TAXED_CHECKOUT } from '../../lib/billing-tax.ts';
+import { CHARGE_TAX_CREDIT_NOTE_EVENTS, CHARGE_TAX_INVOICE_EVENTS } from '../../lib/charge-tax-record.ts';
 import { between, filesUnder, readCode, sourceExists, stripComments } from './_source-code.ts';
 
 /** Every Stripe method that charges, opens a charge, or quotes one, by its path on the client. */
@@ -585,5 +588,144 @@ describe('turning on online payments asks for the club’s billing address first
     assert.ok(check >= 0 && check < ride.indexOf('return { customer:'),
       'lib/platform-stripe-fees.ts: subscriptionToRide must send a club whose subscription has tax off to its own fee invoice — '
       + 'a fee on that subscription’s invoice would go out without tax (Ask 3)');
+  });
+});
+
+/**
+ * EVERY CHARGE LEAVES A TAX RECORD — GST/HST Stage 3 Part 1 (build prompt GST_HST_STAGE3_BUILD_PROMPT.md; owner rulings 2026-11-06).
+ * The same list, a third answer: does the charge this call opens leave a record in `platform_charge_tax_records`? Only a Stripe
+ * INVOICE on our own account does, through the billing webhook's writer (and the daily catch-up). So each entry above is either
+ *   · `invoice` — what it opens is billed by a Stripe invoice on our account (a subscription's, or the club's fee invoice), or
+ *   · `none` — with the reason: it charges nothing (a quote, a card saved, a cancel), or it is not our sale (a family paying a club).
+ * A charge that is ours and opens no invoice (a payment intent, a payment link, a one-time Checkout on our account) cannot claim
+ * `invoice`, so it fails here until the writer learns it. A new entry above with no answer here fails too.
+ */
+const RECORD_NONE = {
+  quote: 'a quote: charges nothing',
+  setup: 'saves a card and charges nothing',
+  cancel: 'a cancel and its withdrawal charge nothing',
+  club: 'the club’s own sale on the club’s own Stripe account (not ours: it never reaches our invoices)',
+  dead: 'DEAD: nothing calls it (its pin above)',
+} as const;
+const TAX_RECORD: Record<string, { invoice: string } | { none: string }> = {
+  'app/api/billing/create-checkout/route.ts checkout.sessions.create': { invoice: 'a subscription Checkout: every charge is a subscription invoice' },
+  'app/api/billing/create-team-checkout/route.ts checkout.sessions.create': { invoice: 'Premium: a subscription invoice billed to the coach' },
+  'app/api/billing/choose-next-season/route.ts checkout.sessions.create': { invoice: 'the Founding next-season subscription: its first invoice comes later' },
+  'lib/plan-move.ts subscriptions.update': { invoice: 'a move up: its prorated invoice' },
+  'lib/plan-move.ts subscriptionSchedules.create': { invoice: 'a move down: the renewal invoice at the date' },
+  'lib/plan-move.ts subscriptionSchedules.update': { invoice: 'a move down: the renewal invoice at the date' },
+  'lib/plan-move.ts invoices.createPreview': { none: RECORD_NONE.quote },
+  'lib/workspace-upgrade-preview.ts invoices.createPreview': { none: RECORD_NONE.quote },
+  'lib/console-money-stripe.ts invoices.createPreview': { none: RECORD_NONE.quote },
+  'lib/plan-ending-server.ts subscriptions.update': { none: RECORD_NONE.cancel },
+  'lib/billing-setup.ts checkout.sessions.create': { none: RECORD_NONE.setup },
+  'lib/team-org-billing.ts checkout.sessions.create': { none: RECORD_NONE.dead },
+  'lib/stripe-connect.ts checkout.sessions.create': { none: RECORD_NONE.club },
+  'lib/platform-stripe-fees.ts invoiceItems.create': { invoice: 'a fee line, billed on the club’s fee invoice or its subscription’s next invoice' },
+  'lib/platform-stripe-fees.ts invoices.create': { invoice: 'the club’s own fee invoice' },
+  'lib/platform-stripe-fees.ts invoices.finalizeInvoice': { invoice: 'the club’s own fee invoice' },
+};
+const NEVER_AN_INVOICE = ['paymentIntents.create', 'paymentLinks.create'];
+const WEBHOOK = 'app/api/billing/webhook/route.ts';
+const REPO_ROOT = path.join(import.meta.dirname, '..', '..');
+
+describe('every charge leaves a tax record (GST/HST Stage 3 Part 1)', () => {
+  it('every entry on the charging list answers the record question, and no answer outlives its entry', () => {
+    for (const e of CHARGING_CALLS) {
+      assert.ok(TAX_RECORD[`${e.file} ${e.call}`], `${e.file} \`${e.call}\` has no tax-record answer: add it to TAX_RECORD — \`invoice\` `
+        + '(billed by a Stripe invoice on our account, so the billing webhook records it) or `none` with the reason.');
+    }
+    for (const key of Object.keys(TAX_RECORD)) {
+      assert.ok(CHARGING_CALLS.some(e => `${e.file} ${e.call}` === key), `TAX_RECORD names \`${key}\`, which is no longer on the charging list: remove it`);
+    }
+  });
+
+  it('a charge that opens no invoice cannot claim one', () => {
+    for (const [key, answer] of Object.entries(TAX_RECORD)) {
+      if (!('invoice' in answer)) continue;
+      assert.ok(!NEVER_AN_INVOICE.some(m => key.endsWith(` ${m}`)), `${key} opens no Stripe invoice, so no tax record is written for it: `
+        + 'teach lib/charge-tax-record-server.ts to record it before calling it `invoice`.');
+      if (key.endsWith(' checkout.sessions.create')) {
+        const file = key.slice(0, -' checkout.sessions.create'.length);
+        const tax = CHARGING_CALLS.find(e => e.file === file && e.call === 'checkout.sessions.create')?.tax;
+        const builder = tax && 'builtBy' in tax && tax.builtBy ? tax.builtBy.file : null;
+        const code = (CODE.get(file) ?? '') + (builder ? CODE.get(builder) ?? '' : '');
+        assert.match(code, /mode: 'subscription'/, `${file}: a Checkout recorded as \`invoice\` must be a subscription Checkout (a one-time payment has no invoice)`);
+      }
+    }
+  });
+
+  it(`${WEBHOOK}: every invoice event is recorded AFTER the plan's own work, whatever it answered; every credit-note event is recorded`, () => {
+    const code = CODE.get(WEBHOOK)!;
+    const run = between(code, 'async function runVerifiedBillingEvent(', 'async function runPlanWork(', `${WEBHOOK} runVerifiedBillingEvent`);
+    const plan = between(code, 'async function runPlanWork(', 'switch (event.type)', `${WEBHOOK} runPlanWork`);
+    const notes = run.indexOf('(CHARGE_TAX_CREDIT_NOTE_EVENTS as readonly string[]).includes(event.type)');
+    const work = run.indexOf('const outcome = await runPlanWork(event, customerId);');
+    const invoices = run.indexOf('(CHARGE_TAX_INVOICE_EVENTS as readonly string[]).includes(event.type)');
+    assert.ok(notes >= 0 && run.indexOf('recordCreditNoteTax(noteId)', notes) > notes, `${WEBHOOK}: every credit-note event must reach recordCreditNoteTax`);
+    // The plan's work comes first (a club's plan never waits on our bookkeeping), and nothing between it and the record returns.
+    assert.ok(work > notes && invoices > work, `${WEBHOOK}: the invoice's tax record must be written after runPlanWork`);
+    assert.ok(run.indexOf('recordInvoiceTax(invoiceId)', invoices) > invoices, `${WEBHOOK}: every invoice event must reach recordInvoiceTax`);
+    assert.ok(!run.slice(work + 1, invoices).includes('return'), `${WEBHOOK}: nothing may return between the plan's work and the tax record`);
+    // Every early return (no customer, the fee invoice's own route, the stray subscription) is inside the plan's work, so a fee
+    // invoice and a customer-less event still reach the record.
+    for (const early of ['if (!customerId) return', 'FEE_INVOICE_META']) {
+      assert.ok(plan.includes(early), `${WEBHOOK}: \`${early}\` must live in runPlanWork, or the events it returns for are never recorded`);
+      assert.ok(!run.includes(early), `${WEBHOOK}: \`${early}\` in runVerifiedBillingEvent would skip the tax record`);
+    }
+    assert.ok(!/await recordInvoiceTax\(|await recordCreditNoteTax\(/.test(run), `${WEBHOOK}: the writers run inside recordTaxOrReport, so a failed record never fails the event`);
+  });
+
+  it(`${WEBHOOK}: a charge alert and its tax record name the same club (one shared owner rule)`, () => {
+    assert.match(CODE.get(WEBHOOK)!, /async ownerOf\(subscriptionId, customerId\) \{\s*const owner = await orgOfSubscription\(subscriptionId, customerId\);/,
+      `${WEBHOOK}: ownerOf must use orgOfSubscription (lib/charge-tax-record-server.ts), the tax record's own rule`);
+  });
+
+  it('the refund handler keeps what was refunded on the invoice’s record, before it decides the charge is not a subscription’s', () => {
+    const handler = between(CODE.get('lib/stripe-subscription-charges.ts')!, 'export async function handleSubscriptionChargeEvent(', 'const customerId =', 'handleSubscriptionChargeEvent');
+    const record = handler.indexOf('deps.recordRefunded(invoice.id, charge.amount_refunded)');
+    assert.ok(record >= 0 && record < handler.indexOf("return 'not_ours'", handler.indexOf('invoiceForPaymentIntent')), 'the refunded figure must be recorded before the not-a-subscription return');
+    assert.match(CODE.get(WEBHOOK)!, /recordRefunded: \(invoiceId, refundedCents\) =>\s*recordTaxOrReport\(/, `${WEBHOOK}: the webhook must hand the refund handler its recorder`);
+  });
+
+  it('every place that makes a credit note writes its record at once', () => {
+    const makers = SOURCE_FILES.filter(f => /(?<![\w$])creditNotes\s*\.\s*create\s*\(/.test(CODE.get(f) ?? ''));
+    assert.ok(makers.length >= 2, `only ${makers.length} credit-note makers found: the census is broken`);
+    const writes: Record<string, string> = {
+      'lib/console-money-stripe.ts': 'store.recordCreditNote(made.note.id)',
+      'lib/platform-stripe-fees.ts': 'recordCreditNoteTax(madeNote.id)',
+    };
+    for (const f of makers) {
+      assert.ok(writes[f], `${f} makes a credit note with no tax record written: call recordCreditNoteTax (inside recordTaxOrReport) after it, and pin it here`);
+      assert.ok(CODE.get(f)!.includes(writes[f]), `${f}: \`${writes[f]}\` is gone`);
+    }
+    assert.match(CODE.get('lib/console-money-store.ts')!, /async recordCreditNote\(noteId\) \{\s*await recordTaxOrReport\(\{ kind: 'credit_note', id: noteId \}, \(\) => recordCreditNoteTax\(noteId\)\);/,
+      'lib/console-money-store.ts: the refund store must write the note’s record');
+  });
+
+  it('the daily online-payments job runs the catch-up, then the backfill (owner, Stage 4 Ask 11)', () => {
+    const job = CODE.get('app/api/platform-admin/stripe-fees-daily/route.ts')!;
+    const catchUp = job.indexOf("await run('tax_records', () => catchUpChargeTaxRecords(now));");
+    const backfill = job.indexOf("await run('tax_records_backfill', () => backfillChargeTaxRecords(now));");
+    assert.ok(catchUp >= 0 && backfill > catchUp, 'the daily job must run the tax-record catch-up and then the backfill');
+  });
+
+  it('every event the writer needs is on the Stripe setup guide (the live endpoint must be sent each one)', () => {
+    const guide = readFileSync(path.join(REPO_ROOT, 'docs/agents/ops/stripe-setup-guide.md'), 'utf8');
+    for (const type of [...CHARGE_TAX_INVOICE_EVENTS, ...CHARGE_TAX_CREDIT_NOTE_EVENTS]) {
+      assert.ok(guide.includes(`\`${type}\``), `docs/agents/ops/stripe-setup-guide.md does not list \`${type}\`, which the tax record needs`);
+    }
+  });
+
+  it('deleting a club or a person deletes no tax record: the live schema links neither table to anything', () => {
+    const constraints = JSON.parse(readFileSync(path.join(REPO_ROOT, 'docs/agents/db/schema-snapshots/schema-dump-constraints-dev.json'), 'utf8')) as
+      Array<{ table_name: string; constraint_type: string; constraint_name: string }>;
+    for (const table of ['platform_charge_tax_records', 'platform_credit_note_tax_records']) {
+      const mine = constraints.filter(c => c.table_name === table);
+      assert.ok(mine.some(c => c.constraint_type === 'PRIMARY KEY'), `${table} is not in the dev schema snapshot: apply migration 451 and refresh the snapshots`);
+      const links = mine.filter(c => c.constraint_type === 'FOREIGN KEY');
+      assert.deepEqual(links.map(c => c.constraint_name), [], `${table} must keep plain ids (no foreign key): a key to organizations or users would `
+        + 'cascade or empty them when the club or person is deleted, and CRA needs the record for six years');
+    }
   });
 });

@@ -367,6 +367,9 @@ export type RefundStore = {
   }): Promise<boolean>;
   /** The strict audit write: throws when it cannot be written. */
   audit(entry: { actorEmail: string; orgId: string; action: string; value: Record<string, unknown>; reason: string }): Promise<void>;
+  /** GST/HST Stage 3: the credit note's tax record, written at once (the credit-note event writes the same row, keyed by the
+   *  note, so neither doubles it). Reports its own failure; never throws. */
+  recordCreditNote?(noteId: string): Promise<void>;
 };
 
 export class InFlightError extends Error {}
@@ -547,6 +550,8 @@ export async function makeRefund(stripe: Stripe, store: RefundStore, input: Refu
   } catch {
     auditMissing = true;
   }
+  // GST/HST Stage 3: the note's tax record, AFTER the Story's audit row (a slow record never costs the refund its audit).
+  if (made.note && store.recordCreditNote) await store.recordCreditNote(made.note.id);
   const amount = formatCents(decision.amountCents, charge.currency);
   const didNotReach = made.refundStatus === 'failed' || made.refundStatus === 'canceled';
   const story = ` It is in the club’s Story with your reason.${auditMissing ? ' The audit entry could not be written; the refund is recorded on the club.' : ''}`;

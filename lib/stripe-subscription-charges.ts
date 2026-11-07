@@ -47,6 +47,9 @@ export type SubscriptionChargeDeps = {
   invoiceForPaymentIntent(paymentIntentId: string): Promise<Stripe.Invoice | null>;
   /** The club a subscription bills (or, once it has ended, the one club holding its customer). Null when none is found. */
   ownerOf(subscriptionId: string, customerId: string | null): Promise<ChargeOwner | null>;
+  /** GST/HST Stage 3: what has been refunded on an invoice's payment so far, onto that invoice's tax record (any invoice, a
+   *  club's Stripe-fees one too). Reports its own failure; never throws. */
+  recordRefunded?(invoiceId: string, refundedCents: number): Promise<void>;
   /** The Stripe refund ids our support console made on a charge (its refunds already have their own Story row). */
   consoleRefundIds(chargeId: string): Promise<Set<string>>;
   writeEvent(input: PlatformEventInput): Promise<void>;
@@ -104,6 +107,9 @@ export async function handleSubscriptionChargeEvent(
   const paymentIntentId = idOf(charge.payment_intent);
   if (!paymentIntentId) return 'not_ours';
   const invoice = await deps.invoiceForPaymentIntent(paymentIntentId);
+  // A refund made with no credit note leaves the invoice's tax unreduced: the record keeps the refunded figure, so "needs a look"
+  // can compare it with the notes (GST/HST Stage 3). Every invoice, before the subscription test below.
+  if (type === 'charge.refunded' && invoice?.id && deps.recordRefunded) await deps.recordRefunded(invoice.id, charge.amount_refunded);
   const subscriptionId = idOf(invoice?.parent?.subscription_details?.subscription ?? null);
   if (!invoice || !subscriptionId) return 'not_ours';
 

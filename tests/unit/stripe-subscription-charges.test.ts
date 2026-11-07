@@ -158,8 +158,13 @@ describe('the webhook wears it', () => {
     for (const t of ['charge.dispute.created', 'charge.dispute.updated', 'charge.dispute.closed', 'charge.refunded']) {
       assert.ok(isSubscriptionChargeEvent(t), t);
     }
+    // The customer-less return lives in the plan's own work (GST/HST Stage 3 records an invoice after it), which the seam calls
+    // only after these four are handled.
     const handled = seam.indexOf('isSubscriptionChargeEvent(event.type)');
-    assert.ok(handled > -1 && handled < seam.indexOf("if (!customerId) return 'no_customer'"));
+    const planWork = seam.indexOf('await runPlanWork(event, customerId)');
+    assert.ok(handled > -1 && planWork > handled, 'the four must be handled before the plan work (and its customer-less return)');
+    assert.ok(!seam.includes("if (!customerId) return 'no_customer'"), 'the customer-less return must not come before the four');
+    assert.ok(functionBody(route, 'runPlanWork').includes("if (!customerId) return 'no_customer'"));
   });
   it('suspends nothing: the handler writes no organization and cancels nothing', () => {
     const handler = readCode('lib/stripe-subscription-charges.ts');
