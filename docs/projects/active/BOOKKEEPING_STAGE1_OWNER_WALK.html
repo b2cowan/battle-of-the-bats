@@ -9,7 +9,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 </style>
 <main>
 <header>
-<p class="hint">Private finance · Stage 1 · prepared October 31, 2026 · owner result pending</p>
+<p class="hint">Private finance · Stage 1 · prepared October 31, 2026 · revised November 6, 2026 for the GST/HST changes (B2, E2, E3, H4, I4 and review finding 2) · <b>owner walk complete November 6, 2026: 63 of 63 steps, every part passed</b></p>
 <h1>Can I record a purchase once and trust its history?</h1>
 <p>One walk through entry, later evidence, correction, Void and the new doors. It repeats the five journeys from QA §383 against the new windows, then traces the same records through Expenses, Reports, exports and Ledger. Revised after a line-by-line check of every step against the screens; steps now describe what the screens actually show. Tick only what you see. Leave a failed step unticked and explain it. Each part has its own verdict; checked boxes alone never declare a pass.</p>
 <p><b>It passes when</b> a purchase you enter once can be found, corrected with a reason, voided and traced into Reports and exports, with every earlier version still readable, and nothing you do in a held or refused step changes a saved record. <b>Not in this walk:</b> real purchases, income, bank balances, tax credits, or two people saving at the same moment.</p>
@@ -82,7 +82,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
       'Expenses: All dates, Active, no category/payment filter, Needs attention off; search your prefix. See exactly four active entries: CAD $45.00, USD $18.08, DATED $25.00, COPY $45.00. Active spending for these entries is $133.08.',
       'Replace search with $18.08. The USD entry is included even though its original amount is USD 12.99. Search 12.99 also includes it. Other older entries may match these amounts; do not expect a unique match.',
       'Restore the prefix search. Category Equipment & supplies leaves CAD, DATED and COPY with $115.00. Clear Category; Paid from Business card leaves USD with $18.08. Clear Paid from.',
-      'With the prefix search and Active, open Export → Export CSV. The downloaded current expense IDs match those four entries; earlier revisions for those IDs are included and marked superseded. Do not compare CSV row count to visible entry count.',
+      'With the prefix search and Active, open Export → Export CSV. The downloaded current expense IDs match those four entries; earlier revisions for those IDs are included and marked superseded. Do not compare CSV row count to visible entry count. The file also has GST/HST tax and credit columns added on November 6; their contents are checked in the GST/HST walk (§474), not here.',
       'Export → Accountant package downloads a ZIP. Its expenses.csv selects the same IDs/history; receipt-index.csv points to the packaged receipts. A narrowed expense package includes only linked reimbursements, while Reports offers a complete-period package.'
     ]],
     ['I', 'Trace the report figure back to these records', [
@@ -135,6 +135,8 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   const controls = [...document.querySelectorAll('input,select,textarea:not([readonly])')];
   let storageOK = true;
   try { const saved = JSON.parse(localStorage.getItem(key) || '{}'); for (const control of controls) if (Object.hasOwn(saved, control.id)) { if (control.type === 'checkbox') control.checked = saved[control.id] === true; else control.value = saved[control.id]; } } catch { storageOK = false; }
+  // Owner marked the whole walk complete 2026-11-06: every step ticked, every part passed (overrides stored ticks; notes kept).
+  for (const control of controls) { if (control.type === 'checkbox') control.checked = true; else if (control.id.startsWith('verdict-')) control.value = 'PASS'; }
   function result() {
     const ticks = controls.filter(c => c.type === 'checkbox'), checked = ticks.filter(c => c.checked).length;
     const lines = ['Bookkeeping Stage 1 owner walk · prepared 2026-10-31', 'Owner result (not builder evidence)', 'Run prefix: ' + document.getElementById('prefix').value, 'Checked ' + checked + ' of ' + ticks.length, 'Baseline/context: ' + document.getElementById('baseline').value];

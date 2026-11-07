@@ -74,6 +74,8 @@ export default function ExpenseFormWindow({ expense, expenses, categories, asVoi
   const [taxAnswer, setTaxAnswer] = useState<TaxAnswer>(savedTax?.answer ?? 'unknown');
   const [drafts, setDrafts] = useState<LineDraft[]>(() => savedTax?.lines.length
     ? savedTax.lines.map(line => draftLine(line.type, dollars(line.cents))) : [draftLine('hst13')]);
+  // A saved expense keeps the amounts it was saved with; a new one works the tax out from the total until it is typed over.
+  const [taxTyped, setTaxTyped] = useState(Boolean(savedTax?.lines.length));
   const [taxStatus, setTaxStatus] = useState<'pending' | 'reviewed'>(base?.tax_status === 'reviewed' ? 'reviewed' : 'pending');
   // Kind starts from the category and follows it until one is picked (ruling 8).
   const [kindChoice, setKindChoice] = useState<PurchaseKind | ''>(base?.purchase_kind ?? '');
@@ -90,9 +92,12 @@ export default function ExpenseFormWindow({ expense, expenses, categories, asVoi
   const windowParams = new URLSearchParams(address.split('?')[1] ?? '');
   const windowAddress = bookkeepingAddress(windowParams, { record: expense?.expense_id ?? null, form: expense ? editing ? 'correct' : null : 'add' });
   const shown = taxAnswer === 'shown';
-  const lines: TaxLine[] = shown ? drafts.map(line => ({ type: line.type, cents: parseCents(line.amount) ?? 0 })) : [];
-  const gstHst = hasGstHstLine(lines);
   const totalCents = parseCents(currency === 'CAD' ? originalAmount : cadAmount);
+  // One tax at a known rate: the amount follows the total until the coach types over it (the form never asks for a figure it can work out).
+  const autoRate = drafts.length === 1 && !taxTyped ? TAX_TYPES[drafts[0].type].rate : null;
+  const shownDrafts: LineDraft[] = autoRate && totalCents ? [{ ...drafts[0], amount: dollars(taxFromTotal(totalCents, autoRate)) }] : drafts;
+  const lines: TaxLine[] = shown ? shownDrafts.map(line => ({ type: line.type, cents: parseCents(line.amount) ?? 0 })) : [];
+  const gstHst = hasGstHstLine(lines);
   const kind = kindChoice || defaultPurchaseKind(category);
   const prefill = supplierPrefill(expenses.filter(row => row.expense_id !== expense?.expense_id), supplier);
   const number = (numberText ?? prefill?.number ?? '').trim();
@@ -274,22 +279,22 @@ export default function ExpenseFormWindow({ expense, expenses, categories, asVoi
             <option value="pending">{TAX_STATUS_LABELS.pending}</option><option value="reviewed">{TAX_STATUS_LABELS.reviewed}</option></select></label> : businessUseField()}
         </div>
         {shown && <div className={styles.taxLines}>
-          {drafts.map((line, index) => <div key={line.key} className={styles.taxLine}>
+          {shownDrafts.map((line, index) => <div key={line.key} className={styles.taxLine}>
             <label>Tax type<select className={`${kit.select} ${line.type === 'unset' ? styles.unsetType : ''}`} value={line.type}
               {...(line.type === 'unset' && drafts.findIndex(item => item.type === 'unset') === index ? fieldFor('taxType') : {})}
               onChange={event => changeLine(line.key, { type: event.target.value as TaxType })}>
               {line.type === 'unset' && <option value="unset">{UNSET_TYPE_PROMPT}</option>}
               {CHOOSABLE_TAX_TYPES.map(type => <option key={type} value={type}>{TAX_TYPES[type].label}</option>)}</select></label>
             <label>Amount · CAD<input className={kit.field} inputMode="decimal" required value={line.amount}
-              {...(index === 0 ? fieldFor('taxLines') : { id: `bk-taxLine-${line.key}` })} onChange={event => changeLine(line.key, { amount: event.target.value })} /></label>
+              {...(index === 0 ? fieldFor('taxLines') : { id: `bk-taxLine-${line.key}` })} onChange={event => { setTaxTyped(true); changeLine(line.key, { amount: event.target.value }); }} /></label>
             {drafts.length > 1 && <button type="button" className={styles.removeTax} aria-label={`Remove ${TAX_TYPES[line.type].label} line`}
               onClick={() => { setDrafts(current => current.filter(item => item.key !== line.key)); setDirty(true); }}>×</button>}
           </div>)}
           <div className={styles.taxDoors}>
-            {singleRate && <button type="button" className={styles.textButton} disabled={!totalCents}
-              onClick={() => { changeLine(drafts[0].key, { amount: dollars(taxFromTotal(totalCents!, singleRate)) }); setDirty(true); }}>Work out from the total</button>}
+            {singleRate && taxTyped && <button type="button" className={styles.textButton} disabled={!totalCents}
+              onClick={() => { setTaxTyped(false); setDirty(true); }}>Work out from the total</button>}
             {drafts.length < MAX_TAX_LINES && <button type="button" className={styles.textButton}
-              onClick={() => { setDrafts(current => [...current, draftLine('pst')]); setDirty(true); }}>+ Add another tax</button>}
+              onClick={() => { setDrafts([...shownDrafts, draftLine('pst')]); setTaxTyped(true); setDirty(true); }}>+ Add another tax</button>}
           </div>
         </div>}
         {shown && (gstHst ? <div className={styles.pair}>

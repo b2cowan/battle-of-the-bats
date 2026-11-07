@@ -128,7 +128,7 @@
 .error { background: rgba(var(--danger-rgb), .1); color: var(--danger-text); border: 1px solid var(--danger); }
 .notice { background: var(--home-olive-soft); color: var(--text-primary); border: 1px solid var(--home-line-strong); }
 .rows { display: grid; gap: .55rem; }
-.fieldStack { display: grid; gap: .3rem; min-width: 0; }
+.fieldStack { display: grid; align-content: start; gap: .3rem; min-width: 0; }
 .fieldStack .hint { margin: 0; }
 .expenseForm { gap: .7rem; }
 .form .purposeField { min-height: 44px; max-height: 9rem; resize: none; }

@@ -1,6 +1,6 @@
 # Owner bookkeeping: easier daily work
 
-**Part 6 review and owner walk prepared, 2026-10-31:** Parts 1–5 are committed and checked, latest `b9712ccd5`. The [final review](BOOKKEEPING_STAGE1_REVIEW.md) and [63-step owner walk](BOOKKEEPING_STAGE1_OWNER_WALK.html) are ready; QA ledger §431 waits for the owner's paste-back. One existing concurrent-repayment finding is recorded before real-books use. Part 6's separate commit approval follows. Evidence and resume boundaries are in §13.
+**Part 6 review and owner walk prepared, 2026-10-31:** Parts 1–5 are committed and checked, latest `b9712ccd5`. The [final review](BOOKKEEPING_STAGE1_REVIEW.md) and [63-step owner walk](BOOKKEEPING_STAGE1_OWNER_WALK.html) are ready; **the owner walk passed 63/63 on 2026-11-06** (QA ledger §431). One existing concurrent-repayment finding is recorded before real-books use. Part 6's separate commit approval follows. Evidence and resume boundaries are in §13.
 
 **Part 4 built and checked, 2026-10-30:** the owner asked to proceed with the compact Overview. Parts 1–3 are committed and checked: foundations `cbdd5ccde`, lettering guard `bf8ba972c`, restore mapping `86fd8c5e2`, form/USD evidence `974fc7208`, register and shared selection `22e072420`. Part 4 ships the month's spending tile and the Needs attention/Recent tables; its choices and verification live in §13. Parts 5–6 follow after Part 4's own checks and owner-approved commit.
 
