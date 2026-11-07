@@ -392,16 +392,24 @@ export async function catchUpChargeTaxRecords(now: Date): Promise<{ invoices: nu
  * first record the webhook wrote at the time (or up to now, before there is one), through the same builder, marked `backfill` (its
  * evidence is read now, never claimed as at the sale). Run by the daily job after the catch-up. Its window ends where the writer
  * began, so it is fixed and small once Stage 3 is live; re-running it finds nothing to add. One document's failure never stops the rest.
+ *
+ * `complete` (GST/HST Stage 4b, the return's "sales are recorded from" state C): true when this run STARTED every document the
+ * window was missing and none failed, so the record is whole from the floor to `until`. The job writes it on its own record
+ * (platform_audit_log, action `stripe_fees_sweep`, step `tax_records_backfill`); the worksheet reader looks for one such run.
+ * A failed run throws (failIfAny) and so never says complete.
  */
-export async function backfillChargeTaxRecords(now: Date): Promise<{ invoices: number; notes: number; failed: number; until: string }> {
+export async function backfillChargeTaxRecords(now: Date): Promise<{ invoices: number; notes: number; failed: number; until: string; complete: boolean; live: boolean }> {
   const floor = Math.floor(new Date(BACKFILL_FLOOR_ISO).getTime() / 1000);
   const stopAt = now.getTime() + JOB_BUDGET_MS;
+  // The mode this run copied for: the worksheet only trusts a complete run in its own mode.
+  const live = stripeKeyIsLive();
   const { data: first, error } = await supabaseAdmin.from(CHARGES).select('created_at')
-    .eq('livemode', stripeKeyIsLive()).eq('evidence_captured', 'event').order('created_at', { ascending: true }).limit(1);
+    .eq('livemode', live).eq('evidence_captured', 'event').order('created_at', { ascending: true }).limit(1);
   if (error) throw error;
   const untilIso = (first?.[0] as { created_at?: string } | undefined)?.created_at ?? now.toISOString();
   const until = Math.ceil(new Date(untilIso).getTime() / 1000);
-  if (until <= floor || Date.now() > stopAt) return { invoices: 0, notes: 0, failed: 0, until: untilIso };
+  if (until <= floor) return { invoices: 0, notes: 0, failed: 0, until: untilIso, complete: true, live };
+  if (Date.now() > stopAt) return { invoices: 0, notes: 0, failed: 0, until: untilIso, complete: false, live };
 
   const window = { created: { gte: floor, lt: until }, limit: 100 };
   const invoiceIds = await collect(stripe.invoices.list(window, STRIPE_OPTS), inv => (inv.id && inv.status !== 'draft' ? inv.id : null));
@@ -409,7 +417,9 @@ export async function backfillChargeTaxRecords(now: Date): Promise<{ invoices: n
   const invoices = await recordMissing('invoice', invoiceIds, 'backfill', BACKFILL_PER_RUN, stopAt);
   const noteIds = await collect(stripe.creditNotes.list(window, STRIPE_OPTS), note => note.id);
   const notes = await recordMissing('credit_note', noteIds, 'backfill', Math.max(0, BACKFILL_PER_RUN - invoices.tried), stopAt);
-  return failIfAny('The tax-record backfill', { invoices: invoices.written, notes: notes.written, failed: invoices.failed + notes.failed, until: untilIso });
+  const failed = invoices.failed + notes.failed;
+  return failIfAny('The tax-record backfill', { invoices: invoices.written, notes: notes.written, failed, until: untilIso,
+    complete: failed === 0 && invoices.left === 0 && notes.left === 0, live });
 }
 
 /** The listed documents, each picked down to what the caller keeps (null = left out), stopping at `max` kept. */
@@ -424,20 +434,24 @@ async function collect<T, R>(pages: AsyncIterable<T>, pick: (doc: T) => R | null
 }
 
 /** Writes a record for each of these Stripe ids that has none yet, at most `limit` of them, a few at a time, starting none after
- *  `stopAt`. A failure is counted and logged, never thrown. `tried` = how many were missing (within the limit). */
+ *  `stopAt`. A failure is counted and logged, never thrown. `tried` = how many were missing (within the limit); `left` = how many
+ *  missing ones were never started (past the limit, or out of time). */
 async function recordMissing(doc: 'invoice' | 'credit_note', ids: string[], captured: EvidenceCaptured, limit: number, stopAt: number):
-  Promise<{ written: number; tried: number; failed: number }> {
+  Promise<{ written: number; tried: number; failed: number; left: number }> {
   const [table, column, record] = doc === 'invoice'
     ? [CHARGES, 'stripe_invoice_id', recordInvoiceTax] as const
     : [NOTES, 'stripe_credit_note_id', recordCreditNoteTax] as const;
-  const missing = (await notRecorded(table, column, ids)).slice(0, limit);
+  const all = await notRecorded(table, column, ids);
+  const missing = all.slice(0, limit);
   let written = 0;
   let failed = 0;
+  let started = 0;
   await inParallel(missing, WRITE_CONCURRENCY, async id => {
     if (Date.now() > stopAt) return;
+    started++;
     try { if (await record(id, captured) === 'recorded') written++; } catch (e) { failed++; console.error(`[charge-tax-record] ${captured} ${doc}`, id, e); }
   });
-  return { written, tried: missing.length, failed };
+  return { written, tried: missing.length, failed, left: all.length - started };
 }
 
 /** Which of these Stripe ids have no row yet. */

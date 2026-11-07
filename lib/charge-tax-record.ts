@@ -204,7 +204,7 @@ export function rateFromValet(
 /** Cents × rate, rounded half away from zero (a negative proration credit rounds like its positive). The product is cut to 15
  *  significant digits first, so a true half cent that binary arithmetic lands a hair under (100 × 1.005 = 100.49999…) still rounds
  *  up. Never -0. */
-const toCad = (cents: number, rate: number): number => {
+export const toCad = (cents: number, rate: number): number => {
   const magnitude = Math.round(Number((Math.abs(cents) * rate).toPrecision(15)));
   return cents < 0 && magnitude !== 0 ? -magnitude : magnitude;
 };

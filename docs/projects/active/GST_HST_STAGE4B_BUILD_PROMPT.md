@@ -109,4 +109,94 @@ Branch `dev` only. Commit nothing until the owner says; stage explicit pathspecs
 
 ## Progress
 
-(empty)
+### Session A: built and reviewed 2026-11-07 (no screen, no migration, no package change)
+
+**Files.** New: `lib/gst-return-worksheet.ts` (the pure engine, `buildWorksheet`; it also owns the column lists `WORKSHEET_SALE_COLUMNS` /
+`WORKSHEET_NOTE_COLUMNS`), `lib/gst-return-worksheet-read.ts` (server-only reads: `readGstReturnWorksheet(period)` plus the three reads
+on their own for Session D), `tests/unit/gst-return-worksheet.test.ts` (40 tests, built fixtures). Changed: `lib/charge-tax-record.ts`
+(`toCad` exported, unchanged), `lib/charge-tax-record-server.ts` (the backfill marker below), `docs/agents/db/DATA_DICTIONARY.md` (one
+clause on the marker), `docs/agents/accounting/GST_HST_RETURN_LINES.md` §9 + its index row (the /accounting review). `BookkeepingClient.tsx`
+not touched.
+
+**Facts relied on.** [V] = opened this session: `StoredTaxLine` and `isCanadianGstHst` (`lib/charge-tax-record.ts:42-57,116`); `toCad`'s
+rounding and `cadValuation` (rate dated by `orgDayKey`); 451's columns, the fx all-or-nothing shape and the period indexes; `beforeRegistration`
+(`lib/console-money-sales.ts:214`, also treats anything before the floor as outside); `expenseCredit` / `workOutCredit` / `summarizeTaxPaid`
+(`lib/bookkeeping-gst.ts`); `selectExpenseRevisions` lives in `lib/bookkeeping-export.ts:54`, NOT the store (the prompt's audit put it there);
+`gstRegistrationDate` (`lib/bookkeeping-store.ts:237`); `readAllPages` (`lib/console-money-needs-look.ts:149`); the looks guard
+(`tests/unit/console-money-looks.test.ts:357-385`, which now scans the new reader too and passes); Reports totals only confirmed-dated expenses
+(`BookkeepingClient.tsx:155`, read only). [H] = handed over: dev's backfill ran with 0 rows.
+
+**The rules, where they live (all in `buildWorksheet`).** Day rule = `orgDayKey` (Stage 3's: the stored rate date, `beforeRegistration` and the
+"needs a look" checks use it). The reader reads a day wider each side and the engine decides the edge. Sales: issue day; 101 = the stored
+`cad_amount_before_tax_cents`, whole dollars once; 103 = Canadian GST/HST lines × rate, rounded per invoice (residue on the larger line when two
+foreign lines share an invoice), grouped by tax, rate and province. Credit notes: own issue day, valued at the invoice's rate (the note's own CAD
+columns are not even read). Write-off: day of `uncollectible_at`, GST/HST × (total − pre-payment notes on or before it) ÷ total; any payment
+before it means listed, not claimed. Recovery: day of `paid_at` after a write-off, exactly what the write-off relieved. Cap: in time order per
+invoice, net of recoveries. 106: 4a's counted credits on the same set Reports totals; the "Not on the return" bridge (paid − simplified −
+not registered − before registration − share not claimable − held − not claimed − type not set = 106) is tested to agree with
+`summarizeTaxPaid`.
+
+**Before you file (`unresolved`, each with the lines it can still change; empty = information only).** Sales: missing answer, no rate (foreign
+sale with null CAD), voided with no note, issued before the registration date, relief capped, relief with no rate, write-off share unknown,
+recovery share unknown, note with no invoice record. Expenses: credit held, tax unknown, registration not checked, type not set, dates to review.
+**Shared customers** are on the list by construction (the read has no customer filter). Saying "on no club's list" needs
+`visibleCustomers` (`lib/console-money-sales-tax-wait.ts:35`, not exported, and that module imports `judgeSales`), so that sentence is
+**Session B's call**.
+
+**States.** A: a sales failure → 101, 103, 104, 105, 107, 108, 109 `null` with `sales_unread`, and 106 stands. The reverse (`expenses_unread`,
+or `expenses_too_many`) → 106, 108, 109 `null`, and the sales lines stand. An unread registration date → every line `null`
+(`registration_unread`): the sales cannot be split without it. B: `nothingSold`. C: `partial` when the return's part of the period (from the
+registration day) starts before `salesRecordStart`, or that is unknown.
+
+**"Sales are recorded from…": the backfill did NOT record that it finished, so the smallest honest marker was added.** In
+`lib/charge-tax-record-server.ts`, `recordMissing` now also returns `left` (missing documents never started), and the backfill returns
+`complete: true` when it started every missing document and none failed. The daily job already writes each step's result onto its
+`platform_audit_log` row, so no table or migration was needed. The reader takes the floor (May 1, 2026) once any run said complete; before
+that, the day AFTER the first webhook-written record; else unknown. ⚠ This changes what a production job records (additive only). It needs
+one run of the daily job on each environment before the worksheet stops reading as partial.
+
+**Owner push-back raised before the build.** (1) The marker above. (2) `listExpenseRevisions` stops at 1,001 rows without saying so. The
+worksheet's read refuses past 1,000 (`expenses_too_many`, so 106 reads "Not available") rather than dropping the oldest expenses. The shared
+read is unchanged; paging it is a separate fix. (3) Our record does not store how much of a part-paid invoice was paid, so such a write-off is
+listed, never estimated.
+
+**/accounting review (2026-11-07, `GST_HST_RETURN_LINES.md` §9): all ten rules confirmed, no engine change.** Recorded as owner or accountant
+questions: (a) bad-debt relief needs an arm's-length buyer (true for clubs; never invoice a related person through Stripe); (b) "mark paid out of
+band" on an uncollectible invoice reads as a recovery, so use it only when money arrived; (c) the **ITC period date**: 4a dates a credit by its
+incurred date, which can fall before the supplier's invoice (a monthly bill dated the 1st). That lands one period early, and only across
+December 31 for an annual filer. Recommendation: the form's help says the incurred date of a bill is the supplier's invoice date, and the
+accountant confirms; (d) proration credits net into 103 instead of going on 107 (same net tax); (e) **for Session C**: a record that arrives
+after a period is filed is not handled one way. Under-reported tax is believed to need an adjustment to the filed return; missed ITCs and
+bad-debt relief can go on a later return within four years; a late s.232 note is unresearched. "Changed since you filed" must say which. Research
+it at the start of C.
+
+**Checks.** `tests/unit/gst-return-worksheet.test.ts` 40/40. The neighbouring tax and guard suites 302/302 (looks guard, the job guard,
+charge-tax-record, sales, needs-a-look, every bookkeeping-gst file, export). `tsc --noEmit` clean. Full `npm test` 2026-11-07: 15,256 / 15,269. The 13 failures
+all sit in other sessions' uncommitted work (help-content's tax phrase, practice plans on a phone, the house-league season gate, the portal-tag
+and workspace-status censuses, the team move's org_id list, console window feet, billing free time, two walk-page tests). None names a file this
+session touched.
+
+**`/review` 2026-11-07 (high-risk tier; three lenses: correctness, data and contract, regression and security). Fixed:**
+- **Critical:** the "backfill complete" lookup passed a JS array to postgrest-js `.contains`. That builds a Postgres array literal
+  (`cs.{[object Object]}`), which the jsonb column refuses, so EVERY sales read would have failed. It now passes a JSON string
+  (`backfillCompleteMarker`, in the engine so it is tested).
+- **Medium:** the marker now carries the Stripe mode (`live`, written by the job and matched by the reader), so a test-key run never vouches
+  for the live record.
+- **Medium:** a recovery of a foreign write-off with no rate silently read 104 = $0. It is now listed.
+- **Medium:** "dates to review" listed unconfirmed expenses from other years in every period, so 106 could never be complete. It now lists
+  only rows with no incurred date or one inside the period.
+- **Low:** a credit note after a write-off, then the payment, added back the whole relief (over-remit). A recovery now adds back the tax
+  fraction of what was actually paid (s.231(3)).
+- **Low:** the province groups counted tax lines, not invoices.
+- **Low:** the readers now refuse a malformed period before reading.
+- Tests added for each fix, and for a write-off that is itself capped (45/45). Typecheck clean.
+
+**Recorded, not fixed:**
+- One-cent rounding can mark a last foreign credit note "capped" (foreign GST/HST is zero today).
+- A part payment before a write-off that was later paid in full is invisible (the record keeps only the final payment).
+- "Nothing sold" stays true when only an older invoice's relief lands in the period. The drawn sentence stays right.
+- A "complete" backfill counts a document Stripe gives with no customer as done (it records nothing for one, by design).
+- **Accounting question:** an invoice both written off AND later voided gets 107 relief while "Voided, no credit note: its tax stays in line
+  103" is listed. The two sentences disagree; ask `/accounting` or the accountant before the first such case.
+- **For Session B:** the route must call `requirePlatformPower` before `readGstReturnWorksheet` (the read is platform-wide, service role).
+- **For Session B:** the registration date reads null both when it is unset and when the store failed.
