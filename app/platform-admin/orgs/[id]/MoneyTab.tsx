@@ -89,7 +89,11 @@ export function useNeedsLook(orgId: string, enabled: boolean) {
     let live = true;
     void sendJson(`/api/platform-admin/orgs/${orgId}/money/needs-look`, 'GET').then(({ ok, data }) => {
       // A re-read that fails keeps the last good answer: a flagged club must not turn clean-looking because one request dropped.
-      if (live) setAnswer(prev => ({ ask: asked, look: ok ? (data as unknown as NeedsLookAnswer) : prev?.look?.state === 'read' ? prev.look : { state: 'failed' } }));
+      // (The server reports its own failed read as a 200 `{ state: 'failed' }`, so both kinds of failure are caught here.)
+      if (live) {
+        const next: NeedsLookAnswer = ok ? (data as unknown as NeedsLookAnswer) : { state: 'failed' };
+        setAnswer(prev => ({ ask: asked, look: next?.state === 'failed' && prev?.look?.state === 'read' ? prev.look : next }));
+      }
     });
     return () => { live = false; };
   }, [enabled, asked, answeredAsk, orgId]);

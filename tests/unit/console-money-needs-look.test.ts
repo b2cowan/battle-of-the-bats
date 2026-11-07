@@ -141,6 +141,10 @@ describe('never on the list', () => {
   it('the registration day itself is on it (Toronto day)', () => {
     assert.equal(codes({ ...missing('canadian_buyer_not_charged'), issued_at: '2026-09-26T05:00:00.000Z' }).length, 1);
   });
+  it('the day is Toronto’s, not UTC’s: 02:00 UTC on the 26th is still the evening of the 25th there', () => {
+    assert.deepEqual(codes({ ...missing('canadian_buyer_not_charged'), issued_at: '2026-09-26T02:00:00.000Z' }), []);
+    assert.equal(codes({ ...missing('canadian_buyer_not_charged'), issued_at: '2026-09-26T04:00:00.000Z' }).length, 1, 'midnight in Toronto starts the 26th');
+  });
   it('open and written-off sales ARE on it (undrawn state (c))', () => {
     assert.equal(codes({ ...missing('canadian_buyer_not_charged'), status: 'open' }).length, 1);
     assert.equal(codes({ ...missing('canadian_buyer_not_charged'), status: 'uncollectible' }).length, 1);

@@ -530,3 +530,25 @@ records survive; refund in the Stripe dashboard → the credit note appears; the
   compares the nominal rate of each line (a genuinely reduced-rate line would be flagged); (6) the Nova Scotia 15% branch is unreachable in
   practice (everything before 2026-05-01 is pre-registration), tests only; (7) `readNeedsLook`'s single pass is pinned by a source test
   and the pure rules, not by a database-backed run; (8) the stage-3 guard's "stores nothing" list names the Money routes, not this one.
+- **2026-11-06 · Part 3a COMMITTED `88d4e899e`** on `dev` (not pushed): 9 files, partial for `MoneyTab.tsx`, `money.module.css`, `ClubRecord.tsx`
+  (Download PDF button, `.pdfButton` and the "Ended / data kept until" cell left in the working tree for their own session; confirmed absent
+  from the commit and present in the tree). Private-index commit via `.probe/gst3/commit-3a.cjs`, hook green, compare-and-swap on `dev`.
+  Final proof before the commit: typecheck clean; the listed unit set 260 run / 259 pass (the failure is `ExpenseFormWindow.tsx`'s footer,
+  another session's); spelling clean; focused lint 0 errors. Not browser-walked; `check:layout` not run. New route + module: restart the dev
+  server before browser testing. **Next = 3b in its own session** (the mark + migration 452, dev only; Today's "Sales tax" row; the Clubs
+  filter; the looked-at-stays-in-the-return guard), then the full `/accounting` review before Part 3's hand-off.
+- **2026-11-06 · Part 3a second pass** (the same prompt was run in a parallel session that committed `88d4e899e` while this one's
+  /simplify and /review were open; no second 3a commit was made). Four cleanup lenses and three review lenses over the same hunks found the
+  same set and one more case: the server reports its own failed read as a 200 `{ state: 'failed' }`, which the failed-re-read guard (keyed on
+  a failed REQUEST only) let through, so a flagged club's dot, strip and flag lines still vanished on a database blip. **Fixed**: both kinds of
+  failure keep the last good answer. Test added: the registration day is Toronto's, not UTC's (02:00 UTC on the 26th is still the 25th there;
+  04:00 UTC is the 26th). **New Lows / owner questions, recorded not fixed:** (a) ⚖ OWNER / `/accounting`: a sale Stripe zero-rated on a
+  CANADIAN line to a buyer with a Canadian address is `zero_rated` (the position rule puts a Stripe zero-rated line before the place), so none
+  of the seven checks lists it; the 3a rules were drawn for taxed, missing and refunded sales, so say if a Canadian address on a zero-rated
+  sale should be an eighth check; (b) check 4 adds the rate of every rated line, so two rated lines at the same rate (standard plus
+  portion-standard) would read double, and a rated line with no rate drops out of the sum; no current invoice has either shape; (c) a filter
+  on Needs a look stays chosen underneath while the choice is hidden (our records failed) and comes back with it; (d) the strip's quiet
+  registration note comes from the needs-look read and the Tax column's from the Money read, two 4-second reads that can disagree for one
+  render; (e) the refund clause shows on every dashboard refund line of a flagged sale, not only the one without a note; (f) `readAllPages`
+  asks one page past the end and is proved with fakes only: confirm a real project answers `[]` there (a 416 would read as "could not be
+  read") in the first 3b dev run; (g) a failed read leaves a console warning but no error event, as the Money route's records read does.
