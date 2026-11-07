@@ -36,9 +36,14 @@ Every outstanding piece of work in this plan has a home in one of these stages. 
   Sept 26, 2026 with a CRA backdate to May 1 pending, so the date is a changeable setting; annual filer; no quick method) —
   drawings https://claude.ai/artifact/LbCjjVcnZeTP8uUT3yVZan (source `GST_HST_STAGE4_DRAWINGS.html`); return lines in
   `docs/agents/accounting/GST_HST_RETURN_LINES.md`. **4a (what we pay) BUILT: Sessions A–E committed 2026-11-06 (f68ebf9fe, 7fac17654, a9a22921e, 0f16bf9a3, f83cbe24e, be2316ef0; reviewed + `/accounting` before hand-off); Bookkeeping migration 006 applied to development 2026-11-06; owner walk §474 owed (https://claude.ai/artifact/QGGWeuRKiD2HKehdbH3pQb). Record: `GST_HST_STAGE4A_BUILD_PROMPT.md` Progress.**
-  **4b (the worksheet)** waits on Stage 3 (its Part 0 now carries the rulings: Ask 11 backfill since registration, Ask 4 Bank of
-  Canada rate columns) and on the Bookkeeping Reports redesign (the worksheet is a Reports view, Ask 7). Bookkeeping ladder rows
-  4a/4b added. Must exist before the first return with sales on it.
+  **4b (the worksheet): BUILD PROMPT WRITTEN 2026-11-07, not built.** Stage 3 is closed (§477–§479, `3bc1457e0`). The kickoff audit found the
+  Reports View control does not exist in code (ladder row 3 is drawn and ruled, not built; Stage 2 accounts and the Q13 mapping are also unbuilt), so
+  waiting for the whole redesign would hold 4b behind them. **Owner ruling 2026-11-07: build a thin View control first** (hidden until a second view
+  exists; Reports looks unchanged until 4b adds "GST/HST return"), then 4b. Prompts: `BOOKKEEPING_REPORTS_VIEW_CONTROL_BUILD_PROMPT.md` (one
+  session, may run beside 4b Session A) and `GST_HST_STAGE4B_BUILD_PROMPT.md` (A the numbers, B the view, C Mark as filed, D the package; PM brief
+  `GST_HST_STAGE4B_PM_BRIEF.md`). `/accounting` reviewed 2026-11-07 (`GST_HST_RETURN_LINES.md` §8): a bare void earns no line 107 adjustment (the
+  drawings' "reversal on 107" is withdrawn), invoices before the registration date sit outside the return, a USD credit note's tax uses the original
+  invoice's rate. Must exist before the first return with sales on it.
 - **Stage 5 — The online-payment fee:** NOT STARTED — tax on the fee, monthly statement per club. (Its address step is
   done: brought forward as Stage 2 Part 2b, committed `947fd8192` 2026-11-05.) Depends on Club Stage 12,
   T2/T3, and **closes with Club Stage 12** (a required stage, not a trigger).
