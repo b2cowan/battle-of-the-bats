@@ -55,10 +55,10 @@ const familiesHelp: HelpPageContent = {
       heading: 'The Families tab: Show and Search',
       summary: 'One Show pill picks the list — owed money, missing forms, missing consent, children with no family on file.',
       keywords: ['show', 'worklist', 'owes money', 'missing forms', 'no consent', 'not back', 'no family on file', 'all families', 'chased', 'search', 'former email', 'tabs', 'duplicates tab'],
-      searchText: 'families page two tabs families duplicates show pill question list count lens filter chip reminded never not tracked fee not paid registration unpaid search phone former old email address find family search all families load more show more',
+      searchText: 'families page three tabs families duplicates emails show pill question list count lens filter chip reminded never not tracked fee not paid registration unpaid search phone former old email address find family search all families load more show more',
       content: (
         <p>
-          Families is one page with two tabs, <strong>Families</strong> and <strong>Duplicates</strong>.
+          Families is one page with three tabs, <strong>Families</strong>, <strong>Duplicates</strong> and <strong>Emails</strong>.
           The Families tab answers one question at a time, picked from the <strong>Show</strong> pill.
         </p>
       ),
@@ -619,7 +619,7 @@ const familiesHelp: HelpPageContent = {
           </p>
           <ul>
             <li><strong>The club can send 3 emails in any 24 hours.</strong> The window&rsquo;s foot says how many it has sent in the last 24 hours; once all 3 are sent, it says when the next can go.</li>
-            <li><strong>A house league season counts toward its own 3</strong>, not the club&rsquo;s. The season choice lists every season with families, whatever its state. For a division, a team or a status, use the season&rsquo;s own <strong>Email families</strong>, in the season&rsquo;s menu.</li>
+            <li><strong>A house league season counts toward its own 3</strong>, not the club&rsquo;s. The season choice lists every season with families, whatever its state. For a division, a team or a status, use the season&rsquo;s own <strong>Email families</strong> tab.</li>
             <li><strong>Message this family never counts</strong> toward either; a family has its own 3.</li>
           </ul>
           <p>

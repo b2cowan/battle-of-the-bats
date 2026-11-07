@@ -1496,7 +1496,9 @@ export const SCREENS = [
   { id: 'admin-notifications', area: 'hub', session: 'repClubOwner',  ready: 'h1', path: (c) => `/${c.clubSlug}/admin/notifications` },
 
   // ── Organization ──
-  { id: 'admin-org',                   area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org` },
+  // The Organization hub retired (Club Tier Stage 13i, A5): `/org` forwards to the first tab, so it has no screen of its
+  // own to measure. Its slot measures the tab 13i added in Members' place for someone without Members: The board.
+  { id: 'admin-org-board',             area: 'org', session: 'repClubRegistrar', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/board` },
   // ⚠ The member list has NO defined order — the members API selects without an ORDER BY, so rows
   // come back in storage order and move whenever a member row is touched (two loads of the same
   // unchanged screen, minutes apart, drew the eight rows in two orders). A product defect, handed to

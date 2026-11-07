@@ -11,7 +11,7 @@ const registrationsHelp: HelpPageContent = {
       heading: 'What each registration status means',
       summary: 'To review, Active, Waitlisted, Declined, and Withdrawn — what each one does, and where it shows.',
       keywords: ['status', 'to review', 'pending review', 'active', 'waitlisted', 'declined', 'withdrawn', 'released', 'spot released', 'ended', 'accepted', 'received', 'what families see'],
-      searchText: 'accepted received holds a spot family word registration status to review pending review active waitlisted declined withdrawn ended tab release the spot spot released reads withdrawn capacity queue position decline email approved',
+      searchText: 'accepted received holds a spot family word registration status to review pending review active waitlisted declined withdrawn ended view ended tab release the spot spot released reads withdrawn capacity queue position decline email approved',
       content: (
         <>
           <p>Every registration sits in one of five states:</p>
@@ -22,7 +22,7 @@ const registrationsHelp: HelpPageContent = {
             <li><strong>Declined</strong> — you declined the registration; a decline email goes to the family. The player does not count against capacity.</li>
             <li><strong>Withdrawn</strong> — the registration ended after approval, or you released the spot of an accepted family that hadn&apos;t paid (the family reads <strong>Withdrawn</strong> for both). It&apos;s kept for your records but the player is no longer active.</li>
           </ul>
-          <p>Declined, withdrawn and released registrations show together on the <strong>Ended</strong> tab, with what happened to any money. Setting a player to Active, Waitlisted, or Declined emails the family, so they always know where they stand. A withdrawal emails them only when money was refunded or kept, and a released spot always does.</p>
+          <p>Declined, withdrawn and released registrations show together in the <strong>Ended</strong> view, with what happened to any money. Setting a player to Active, Waitlisted, or Declined emails the family, so they always know where they stand. A withdrawal emails them only when money was refunded or kept, and a released spot always does.</p>
         </>
       ),
     },
@@ -32,12 +32,12 @@ const registrationsHelp: HelpPageContent = {
       heading: 'How to work the daily registration review queue',
       summary: 'Review pending players, confirm details, and keep the queue from backing up.',
       keywords: ['daily review', 'to review', 'pending registrations', 'approve', 'decline', 'mark received', 'pay by card', 'pay link', 'fee', 'review queue', 'division full', 'add to the waitlist instead', 'select several', 'bulk approve'],
-      searchText: 'division is full add to the waitlist instead one needs attention notice per sign-up several children one reference daily review queue to review pending registrations approve waitlist decline mark received fee owing payment search player name parent email status tabs duplicate confirm tick several rows approve promote waitlist mark received move division email one at a time decline withdraw',
+      searchText: 'division is full add to the waitlist instead one needs attention notice per sign-up several children one reference daily review queue to review pending registrations approve waitlist decline mark received fee owing payment search player name parent email status views view switch status tabs duplicate confirm tick several rows approve promote waitlist mark received move division email one at a time decline withdraw',
       content: (
         <>
-          <p>Use this routine when registrations are actively coming in. The page is a single table — actions sit right on each row, and the tabs (To review, Active, Waitlist, Ended) plus the search box are how you move through it. Tick several rows and a bar offers Approve, Promote, Waitlist, Mark received, Move division and Email for all of them at once.</p>
+          <p>Use this routine when registrations are actively coming in. The page is a single table — actions sit right on each row, and the view switch at the left of the toolbar (To review, Active, Waitlist, Ended) plus the search box are how you move through it. Tick several rows and a bar offers Approve, Promote, Waitlist, Mark received, Move division and Email for all of them at once.</p>
           <ol>
-            <li>Open <strong>Registrations</strong> and start on the <strong>To review</strong> tab.</li>
+            <li>Open <strong>Registrations</strong> and start on the <strong>To review</strong> view.</li>
             <li>Use the <strong>search box</strong> (player name or parent email, including a second parent&apos;s) to find a specific family or spot duplicates.</li>
             <li>Check each row&apos;s player, guardian contact, and division before acting.</li>
             <li>Click <strong>Approve</strong>, <strong>Waitlist</strong>, or <strong>Decline</strong> on the row. If the division is full, Approve is refused with <em>Add to the waitlist instead</em>.</li>
@@ -70,7 +70,7 @@ const registrationsHelp: HelpPageContent = {
         <>
           <p>Promote from the waitlist when a division has room and you&apos;re ready to offer the spot. Promotion happens only when a spot frees, and a new sign-up never jumps the queue.</p>
           <ol>
-            <li>Open the <strong>Waitlist</strong> tab.</li>
+            <li>Choose <strong>Waitlist</strong> at the left of the toolbar.</li>
             <li>Start with position #1 unless your organization has a documented exception.</li>
             <li>Click <strong>Promote</strong> on that player&apos;s row.</li>
             <li>Confirm the player moved to <strong>Active</strong> and that the queue positions compacted.</li>
@@ -106,7 +106,7 @@ const registrationsHelp: HelpPageContent = {
             <li>Enter player and guardian details exactly as you want them in exports and communications. The optional <strong>Second parent&apos;s email</strong> box adds a second address for the sign-up; it can&apos;t be the same as the first, and an address whose owner pressed <strong>Stop these emails</strong> is refused in words.</li>
             <li>Select the correct season division.</li>
             <li>Choose the starting status — <strong>Active</strong>, <strong>To review</strong>, or <strong>Waitlisted</strong>.</li>
-            <li>Save and confirm the player appears in the expected tab.</li>
+            <li>Save and confirm the player appears in the expected view.</li>
             <li>If payment has already been received, click <strong>Mark received</strong> on their row.</li>
           </ol>
           <p>A full division refuses a hand-added registration with <em>Add to the waitlist instead</em>, and moving a child into a full division is refused too, so a manual entry can&apos;t take a spot that isn&apos;t there. Add the player as waitlisted, or free a spot first. A manual entry creates no fee line on its own; marking its fee received writes one income line into the season&apos;s book. Add registration isn&apos;t offered once the season is finished; the season&apos;s registrations are locked then.</p>
@@ -174,7 +174,7 @@ const registrationsHelp: HelpPageContent = {
         <>
           <p>Before sending email or exporting data, narrow to the group you actually need.</p>
           <ol>
-            <li>Use the status tabs and the search box to confirm the target group.</li>
+            <li>Use the views and the search box to confirm the target group.</li>
             <li>For email, tick the rows of the families you want and click <strong>Email</strong>. To write to everyone in the season, a division, a team or a status, open the season&apos;s <strong>Email families</strong> page instead.</li>
             <li>Check the count of families in the window&apos;s foot before sending. If it looks off, change Who.</li>
             <li>For exports, use the <strong>Export</strong> action on the table. The standard Excel/CSV omits contact details for privacy; a separate &quot;with contact details&quot; option is there when you need them.</li>
@@ -189,11 +189,11 @@ const registrationsHelp: HelpPageContent = {
       heading: 'Handling pending registrations day-to-day',
       summary: 'The page opens on To review; act on each row and take fees with Mark received.',
       keywords: ['pending', 'to review', 'review', 'search', 'mark received', 'fee', 'add registration', 'pay by card', 'pay link', 'email the pay link', 'online, card', 'refund to the card', 'bank debit', 'clearing', 'record the refund sent another way'],
-      searchText: 'pay by card card payment records itself bank debit clearing online bank debit email the pay link refund to the card record the refund sent another way to review pending review default tab search box player name parent email mark received fee owing days amber add registration walk-in row actions decline withdraw release the spot refunded kept by the club confirm finished season locked registrations locked mark received undo correct the price stay open',
+      searchText: 'pay by card card payment records itself bank debit clearing online bank debit email the pay link refund to the card record the refund sent another way to review pending review default view default tab search box player name parent email mark received fee owing days amber add registration walk-in row actions decline withdraw release the spot refunded kept by the club confirm finished season locked registrations locked mark received undo correct the price stay open',
       content: (
         <>
-          <p>The Registrations page opens on the <strong>To review</strong> tab. Work the list by approving, waitlisting, or declining each row — declining opens a window that asks what happened to any money, and tells you whether the waitlist will move up on its own to fill the spot.</p>
-          <p>The <strong>search box</strong> finds a player or parent email across all tabs when a family contacts you directly. When a family pays by hand, click <strong>Mark received</strong> on their row: it records the whole amount still owing, with the date and how. A family who pays by card from their sign-up page needs nothing from you (the Fee cell reads <em>Online, card</em> with a receipt number; a bank debit reads <em>clearing</em> until it clears, then <em>Online, bank debit</em>), and <strong>Email the pay link</strong> in the row&rsquo;s menu sends a family who owes their link. If you marked one by mistake, <strong>Undo: marked received by mistake</strong> takes it back; if the money is going back to the family, decline or withdraw the registration and choose <strong>Refunded</strong>. To add a player outside the public form, use <strong>Add registration</strong>.</p>
+          <p>The Registrations page opens on the <strong>To review</strong> view. Work the list by approving, waitlisting, or declining each row — declining opens a window that asks what happened to any money, and tells you whether the waitlist will move up on its own to fill the spot.</p>
+          <p>The <strong>search box</strong> finds a player or parent email across all views when a family contacts you directly. When a family pays by hand, click <strong>Mark received</strong> on their row: it records the whole amount still owing, with the date and how. A family who pays by card from their sign-up page needs nothing from you (the Fee cell reads <em>Online, card</em> with a receipt number; a bank debit reads <em>clearing</em> until it clears, then <em>Online, bank debit</em>), and <strong>Email the pay link</strong> in the row&rsquo;s menu sends a family who owes their link. If you marked one by mistake, <strong>Undo: marked received by mistake</strong> takes it back; if the money is going back to the family, decline or withdraw the registration and choose <strong>Refunded</strong>. To add a player outside the public form, use <strong>Add registration</strong>.</p>
           <p>When the season is finished (completed or archived), its registrations are locked: the row actions and <strong>Add registration</strong> are gone, and a line at the top says so. <strong>Mark received</strong>, <strong>Undo</strong>, <strong>Correct the price</strong> and <strong>Email families</strong> stay, because fees still arrive after the last game.</p>
           <p>The full day-to-day workflow, including the Fee column, ending a registration, correcting a price and moving a child to another division, is in <em>Managing registrations day to day</em> in the House league guide.</p>
         </>
@@ -205,10 +205,10 @@ const registrationsHelp: HelpPageContent = {
       heading: 'Waitlist management',
       summary: 'The waitlist is ordered by queue position; promoting emails the family their move.',
       keywords: ['waitlist', 'queue position', 'auto-promote', 'promote'],
-      searchText: 'waitlist tab queue position number auto promote from waitlist decline withdrawal manual promote notification email next in line',
+      searchText: 'waitlist view waitlist tab queue position number auto promote from waitlist decline withdrawal manual promote notification email next in line',
       content: (
         <>
-          <p>The <strong>Waitlist</strong> tab shows waitlisted players in queue order — position #1 is next in line, and each player&apos;s waitlist position is shown on their row.</p>
+          <p>The <strong>Waitlist</strong> view shows waitlisted players in queue order — position #1 is next in line, and each player&apos;s waitlist position is shown on their row.</p>
           <p>If <strong>Auto-promote from waitlist</strong> is on for the season, a spot that opens from a decline or withdrawal advances the next waitlisted player automatically — you&apos;ll see a notice in the confirmation message when it happens. If it&apos;s off, the spot stays open and you click <strong>Promote</strong> to move a player from Waitlisted to Active. Either way, the family is emailed. A division that is still full leaves the child on the waitlist.</p>
         </>
       ),
@@ -228,7 +228,7 @@ const registrationsHelp: HelpPageContent = {
             <li><strong>On Registrations, tick rows, then Email</strong> — just the families you ticked.</li>
             <li><strong>A row&apos;s &#8943; &rsaquo; Email this family</strong> — one family.</li>
           </ul>
-          <p>The window counts families, so siblings get one email. A second parent added to a sign-up gets their own copy of each of these emails when the first parent&apos;s goes, and is not counted separately. Each season can send <strong>3 emails in any 24 hours</strong>; a message to one family, and the automatic emails Publish teams sends, never count. An email goes as soon as you press Send, so check the count first. The season&apos;s <strong>Email families</strong> page, in its menu beside Money, lists what was sent. More in <em>Money and Email families</em> in the House league guide.</p>
+          <p>The window counts families, so siblings get one email. A second parent added to a sign-up gets their own copy of each of these emails when the first parent&apos;s goes, and is not counted separately. Each season can send <strong>3 emails in any 24 hours</strong>; a message to one family, and the automatic emails Publish teams sends, never count. An email goes as soon as you press Send, so check the count first. The season&apos;s <strong>Email families</strong> tab, beside Money, lists what was sent. More in <em>Money and Email families</em> in the House league guide.</p>
         </>
       ),
     },

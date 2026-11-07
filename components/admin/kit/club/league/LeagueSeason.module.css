@@ -61,7 +61,9 @@
 .stepOpen { color: var(--text-secondary); }
 
 /* ── Divisions: a table on the kit, the players as a meter and words ── */
-.tableWrap { overflow-x: auto; }
+/* `position: relative` makes the scroller the containing block of the header cells' 1px screen-reader labels; without it
+   they escaped the clip and the whole season Overview scrolled sideways by 88px on a phone (13i Session C's sweep). */
+.tableWrap { overflow-x: auto; position: relative; }
 .meter { display: inline-block; vertical-align: middle; width: 4.5rem; height: 6px; margin-right: 0.5rem; border-radius: 999px; background: var(--home-line); overflow: hidden; }
 .meterFill { display: block; height: 100%; background: var(--home-olive); }
 .meterFull { background: var(--badge-warning-ink); }

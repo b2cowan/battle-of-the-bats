@@ -534,13 +534,13 @@ const repTeamsHelp: HelpPageContent = {
       heading: 'Team URLs and past seasons',
       summary: 'Rename team URLs in bulk, and review archived program years from past seasons.',
       keywords: ['rename team url', 'slug', 'past teams', 'archived', 'history'],
-      searchText: 'rename team url slug bulk rename past teams archived program years history previous seasons',
+      searchText: 'rename team url slug bulk rename past teams archived program years past seasons tab history previous seasons',
       content: (
         <>
-          <p>Two housekeeping tools live alongside the team list:</p>
+          <p>Two housekeeping tools sit with the team list:</p>
           <ul>
-            <li><strong>Rename Team URLs</strong> — update team URL slugs (in bulk) when names or branding change, so public links stay tidy.</li>
-            <li><strong>Past program years</strong> — review archived seasons. Completed and archived program years keep their rosters, schedules, and finances as history. On a past season&rsquo;s roster, a player&rsquo;s name opens the child&rsquo;s page for anyone who can open Families.</li>
+            <li><strong>Rename Team URLs</strong>, in the Teams tab&rsquo;s toolbar — update team URL slugs (in bulk) when names or branding change, so public links stay tidy.</li>
+            <li><strong>Past seasons</strong>, a tab of Rep teams — review archived seasons. Completed and archived program years keep their rosters, schedules, and finances as history. On a past season&rsquo;s roster, a player&rsquo;s name opens the child&rsquo;s page for anyone who can open Families.</li>
           </ul>
         </>
       ),

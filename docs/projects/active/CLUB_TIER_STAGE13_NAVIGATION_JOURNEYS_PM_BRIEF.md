@@ -52,7 +52,7 @@ doesn't exist). It is fixed first, because the registrar's waiting count depends
 **Priority:** High: it sets the rules every later stage follows. **Success:** each of the five people, on a fresh club, sees only
 doors they can open, finds their own work first, and never meets a dead end. Built in two sessions, one walk.
 
-## Stage 13i · The sidebar's shape (ruled and build prompt written 2026-11-06; builds after 13a)
+## Stage 13i · The sidebar's shape (ruled 2026-11-06; built in three sessions, committed `f279e6963` and `403341b71` 2026-11-06 with the help words in Session C; owner walk §476 published 2026-11-06)
 
 **What changes for people:** the sidebar lists places, and a place's pages are tabs across the top of its page, the way Accounting
 already works. The sidebar never grows: the owner sees the same ten rows on every screen (today up to 21 inside a team, with

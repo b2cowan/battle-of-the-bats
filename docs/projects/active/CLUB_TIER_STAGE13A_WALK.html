@@ -1,0 +1,312 @@
+<title>Stage 13a Doors Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box (the house walk frame). */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .facts { grid-template-columns: 1fr; } .facts dd { margin-bottom: 6px; } }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.callnote { font-size: 13px; color: var(--warn); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+</style>
+
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · Club Tier Stage 13a · Doors by person · §475</span>
+    <h1>Each person sees only their doors</h1>
+    <p class="sub">Written 2026-11-06, after Stage 13a Session A (committed <code>2cebde79c</code>) and Session B (committed <code>87ddc358e</code>). One purpose: each of the five people (owner, admin, league admin, registrar, treasurer) sees the doors they hold, finds their own work first, and meets one honest screen, never a dead end, when a page isn’t theirs.</p>
+  </header>
+  <section class="card"><h2>What this walk is for</h2><p>Stage 13a made every surface list the doors a person holds. A page that isn’t yours says so the same way everywhere: what it is, who opens it by name, and a button back to your own home. The Organization page shows only what you can open. The league admin and the registrar see House league first from day one. The registrations waiting for review show as a real number where the desk looks (that line could never appear before: it counted a state no registration has). The header button reads “View site”, and the live site’s way back has a word.</p></section>
+  <section class="card"><h2>It passes when</h2><ul>
+    <li><strong>1</strong> The three new uses of shipped pieces look right: the House league card for a registrar, the waiting-count pill, and the live site’s labelled way back.</li>
+    <li><strong>2–6</strong> For each person on the club with a season: the header says “View site”, the sidebar foot has no “Public site”, the Organization page lists only their doors, a page that isn’t theirs shows the one screen naming Morgan Ellis, and the desk (owner, admin, league admin, registrar) sees <strong>12</strong> waiting on the Overview, the House league card, the sidebar row and the phone tab. The treasurer sees no House league at all.</li>
+    <li><strong>7</strong> On the club with no season, the league admin and the registrar still find House league first (sidebar programs, the phone bar’s third tab, an Overview card that says who starts the season). The owner and treasurer are unchanged.</li>
+  </ul></section>
+  <section class="card"><h2>Known before the walk (not defects of this walk)</h2><ul>
+    <li><strong>“View site” opens the live site in the same tab.</strong> The drawing’s caption said a new tab; the build changed the word only. That is your call (see below).</li>
+    <li><strong>The phone’s More sheet program tiles still stop at “9+”</strong> (for the owner, House league is a tile there). That tile is shared with the coaches portal, which this stage does not touch. Everything else shows the real number to 99.</li>
+    <li><strong>The tournaments list and a tournament’s Public site settings page keep “Public site”</strong> on the header button: tournament screens keep their words.</li>
+    <li><strong>Right after you come back from the live site</strong>, the first admin page’s button can read “Public site” (it is the way back to the exact page you came from). Move to another page and it reads “View site”.</li>
+    <li><strong>The sidebar’s shape</strong> (groups, chevrons, how long it is) is 13i, next. Do not judge it here.</li>
+  </ul></section>
+  <section class="card"><h2>Before you start</h2><dl class="facts">
+    <dt>Dev server</dt><dd>Claude restarts it for this walk (new files and shared modules). Part S checks it is the new build.</dd>
+    <dt>Two clubs</dt><dd>Two fresh copies of <strong>Harbourtown Minor Ball</strong>, made for this walk, so nothing touches the walk’s read-only club. <strong>Copy 1</strong> <code>navj-club-13a</code>: its <strong>2026 Fall House League</strong> is open for registration with <strong>12 registrations waiting for review</strong>. <strong>Copy 2</strong> <code>navj-club-13a-new</code>: no house league season at all.</dd>
+    <dt>Sign in</dt><dd><code>http://localhost:3000/login</code> · password <code>devpass123</code> for every account. Use a private window per person (or sign out between).</dd>
+    <dt>Copy 1 accounts</dt><dd><code>navj-club-13a-owner@dev.local</code> (Morgan Ellis, owner) · <code>navj-club-13a-admin@dev.local</code> (Dana Kowalski, admin) · <code>navj-club-13a-leagueadmin@dev.local</code> (Jules Moreau, league admin) · <code>navj-club-13a-registrar@dev.local</code> (Riley Okonkwo, league registrar) · <code>navj-club-13a-treasurer@dev.local</code> (Avery Chen, treasurer)</dd>
+    <dt>Copy 2 accounts</dt><dd>The same five with <code>navj-club-13a-new-</code> in front: <code>navj-club-13a-new-owner@dev.local</code>, <code>…-new-admin@</code>, <code>…-new-leagueadmin@</code>, <code>…-new-registrar@</code>, <code>…-new-treasurer@</code> (all <code>@dev.local</code>)</dd>
+    <dt>Widths</dt><dd>“Desk” = a full browser window. “Phone” = the browser’s device view at <strong>390 px</strong>.</dd>
+    <dt>Emails</dt><dd>Nothing here emails a family. Do not press any button on a registration (Accept, Waitlist, Decline): the count is the thing being walked.</dd>
+    <dt>Keep private</dt><dd>Dev-only accounts; the page carries the password, so do not share the link.</dd>
+    <dt>When done</dt><dd>Part Z: tell Claude “13a walk done” and it removes both copies.</dd>
+  </dl></section>
+  <section class="card"><h2>Calls to make as you go</h2><ul>
+    <li><strong>“View site” in a new tab?</strong> The drawing captioned it as opening the live site in a new tab with a ↗. Built: same tab, word only. New tab changes the button on every club screen.</li>
+    <li><strong>The House league card’s line before a season (1, 7).</strong> Registrar: “No season yet · Jules Moreau or Morgan Ellis starts one”. League admin: “No season yet · start the first one here”. Right words?</li>
+    <li><strong>The labelled way back on the live site (1).</strong> Does the word fit beside Account at a desk, and is the icon alone right on a tablet (it shows its word only above 900 px)?</li>
+    <li><strong>Real numbers to 99 (2).</strong> The amber counts used to stop at “9+”. Now 12 reads 12. Right?</li>
+  </ul></section>
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+</main>
+
+<script>
+(function () {
+  var KEY = "club-stage13a-doors-walk-v1";
+  var TITLE = "Stage 13a walk §475 · Each person sees only their doors (2026-11-06)";
+  var C1 = "<code>http://localhost:3000/navj-club-13a/admin</code>";
+  var C2 = "<code>http://localhost:3000/navj-club-13a-new/admin</code>";
+  var OWNER = "Owner · navj-club-13a-owner@dev.local";
+  var ADMIN = "Admin · navj-club-13a-admin@dev.local";
+  var LA = "League admin · navj-club-13a-leagueadmin@dev.local";
+  var REG = "Registrar · navj-club-13a-registrar@dev.local";
+  var TRE = "Treasurer · navj-club-13a-treasurer@dev.local";
+  var N_OWNER = "Owner · navj-club-13a-new-owner@dev.local";
+  var N_LA = "League admin · navj-club-13a-new-leagueadmin@dev.local";
+  var N_REG = "Registrar · navj-club-13a-new-registrar@dev.local";
+  var N_TRE = "Treasurer · navj-club-13a-new-treasurer@dev.local";
+  var PARTS = [
+ { id: "S", title: "Get ready: the new build", steps: [
+  { who: "You → Claude", do: "Check Claude has said the dev server was restarted for this walk (it was asked to). The two copies are already made.",
+    see: "Claude confirms the restart and names the two copies." },
+  { who: OWNER + " · desk", do: "Sign in. Look at the top right of the header and the bottom of the sidebar.",
+    see: "The header button reads <strong>View site</strong>. The sidebar’s foot has Plan &amp; billing, Help and Collapse sidebar, and <strong>no “Public site”</strong>. If it still says “Public site”, the server is the old build: tell Claude." }
+ ]},
+ { id: "1", title: "Look first: three new uses of pieces you already have", steps: [
+  { who: N_REG + " · desk", do: "Sign in to copy 2 (no season). Open the <strong>Overview</strong> (" + C2 + ").",
+    see: "Under <strong>Your programs</strong>, a <strong>House league</strong> card (the same card the owner’s Overview has) whose line reads <strong>“No season yet · Jules Moreau or Morgan Ellis starts one”</strong>. Before 13a the registrar had no program card here at all.",
+    call: "Call: the card’s line." },
+  { who: REG + " · desk", do: "Sign in to copy 1. Open the Overview (" + C1 + ") and look at the House league card and the sidebar’s House league row.",
+    see: "The card and the row each wear an amber pill reading <strong>12</strong>, the rail’s own count pill. Not “9+”.",
+    call: "Call: real numbers to 99." },
+  { who: OWNER + " · desk", do: "Press <strong>View site</strong>. On the live club site, look at the top right of the club’s colour band.",
+    see: "Account (the person icon), then a door with a word: <strong>Admin</strong> (or <strong>Roles</strong> if you hold more than one place in this club). Before, it was an icon alone. Narrow the window to about 1,000 px: the club’s tabs may scroll but the page never scrolls sideways.",
+    call: "Call: the word fits beside Account?" },
+  { who: OWNER + " · narrow the window under 900 px", do: "Keep narrowing.",
+    see: "The door steps aside (it is in the account menu’s <strong>Go to</strong>). Open Account: <strong>Go to</strong> lists Admin. Press it: back in the club admin." }
+ ]},
+ { id: "2", title: "The owner (copy 1)", steps: [
+  { who: OWNER + " · desk", do: "Open the Overview (" + C1 + "). Read <strong>This morning</strong>.",
+    see: "A <strong>League registrations</strong> card: <strong>12</strong>, waiting for review. (This line has never appeared before: it was counting a state no registration has. A defect found and fixed in 13a.)" },
+  { who: OWNER, do: "Press that League registrations card.",
+    see: "The <strong>2026 Fall House League</strong> Registrations page, on <strong>To review</strong>, whose tab pill reads 12." },
+  { who: OWNER, do: "Look at the sidebar: the <strong>Public site</strong> row under Programs, and the foot.",
+    see: "Public site is still a row, and it opens the <strong>site editor</strong>. The header’s View site opens the live site. No second “Public site” anywhere." },
+  { who: OWNER, do: "Open <strong>Organization</strong>.",
+    see: "Tiles: Members, Tournaments, Venue library, PDF settings, Plan &amp; billing, Settings, Audit log. Every tile opens its page." },
+  { who: OWNER + " · phone (390 px)", do: "Look at the bottom bar, then open <strong>More</strong> and scroll to its foot.",
+    see: "The bar: Overview · Calendar · Rep teams · Accounting · More (unchanged). The sheet’s foot has Help, Send feedback, Download app and Sign out, and <strong>no “Public site”</strong> row. The header’s globe is the way to the live site. (House league’s tile in the sheet still says 9+: known.)" }
+ ]},
+ { id: "3", title: "The admin (copy 1)", steps: [
+  { who: ADMIN + " · desk", do: "Open the Overview. Look at <strong>This morning</strong> and the House league card.",
+    see: "League registrations <strong>12</strong>, and the House league card’s pill 12 (an admin works registrations too)." },
+  { who: ADMIN, do: "Read the Overview’s <strong>Organization</strong> section.",
+    see: "Plan &amp; billing and Settings as locked rows, each with a chip <strong>Ask Morgan Ellis</strong>." },
+  { who: ADMIN, do: "Open <strong>Organization</strong>.",
+    see: "Tiles: Members, Tournaments, Venue library, PDF settings. No Plan &amp; billing, Settings or Audit log tile." },
+  { who: ADMIN, do: "Type the address <code>http://localhost:3000/navj-club-13a/admin/org/settings</code>.",
+    see: "<strong>Settings isn’t one of your pages</strong> · “It holds the club’s name, web address, contact email and logo.” · “Only Morgan Ellis, the owner, opens it.” · a button <strong>Back to Overview</strong>." },
+  { who: ADMIN, do: "Look at the header and the sidebar foot.",
+    see: "View site; no “Public site” in the foot." }
+ ]},
+ { id: "4", title: "The league admin (copy 1)", steps: [
+  { who: LA + " · desk", do: "Sign in. Look at where you land.",
+    see: "House league (its Seasons page with the 2026 Fall House League). The sidebar’s <strong>House league</strong> row carries <strong>12</strong>." },
+  { who: LA, do: "Open the Overview.",
+    see: "League registrations <strong>12</strong> under This morning, and the House league card with its 12 pill." },
+  { who: LA, do: "Open <strong>Organization</strong>.",
+    see: "Tiles: Members and Venue library. No Tournaments tile (it used to lead into a tournament admin of failing pages)." },
+  { who: LA, do: "Type <code>http://localhost:3000/navj-club-13a/admin/accounting</code>.",
+    see: "<strong>Accounting isn’t one of your pages</strong> · “It’s the club’s books: the ledger, the budget and the money sent to teams.” · “Morgan Ellis (owner) can give a league admin access.” · <strong>Back to House league</strong>, which takes you there." },
+  { who: LA + " · phone (390 px)", do: "Look at the bottom bar.",
+    see: "Overview · Calendar · <strong>House league</strong> · More, and House league’s tab wears <strong>12</strong>. The header’s globe; no live-site row in More." }
+ ]},
+ { id: "5", title: "The registrar (copy 1)", steps: [
+  { who: REG + " · desk", do: "Sign in. Look at where you land and at the sidebar.",
+    see: "House league, with <strong>12</strong> on its sidebar row. Inside the 2026 Fall House League, its Registrations row says 12 as well." },
+  { who: REG, do: "Open the Overview.",
+    see: "League registrations <strong>12</strong>, waiting for review. Pressing it opens the season’s Registrations on To review." },
+  { who: REG, do: "Open <strong>Organization</strong>.",
+    see: "A <strong>Venue library</strong> tile and <strong>The board</strong>: “Who runs what: Morgan Ellis (owner), Dana Kowalski (admin), Jules Moreau (league admin), Riley Okonkwo (league registrar), Avery Chen (treasurer)”. Names only: no email or phone. No Members tile." },
+  { who: REG, do: "Type <code>http://localhost:3000/navj-club-13a/admin/rep-teams</code>.",
+    see: "<strong>Rep teams isn’t one of your pages</strong> · “Morgan Ellis (owner) can give a league registrar access.” · <strong>Back to House league</strong>." },
+  { who: REG + " · phone (390 px)", do: "Look at the bottom bar.",
+    see: "Overview · Calendar · House league (12) · More." }
+ ]},
+ { id: "6", title: "The treasurer (copy 1)", steps: [
+  { who: TRE + " · desk", do: "Sign in. Look at where you land and at the whole sidebar.",
+    see: "Accounting. No House league row anywhere, and no league count on any screen." },
+  { who: TRE, do: "Open the Overview.",
+    see: "No League registrations line (the count is only for the people who work registrations)." },
+  { who: TRE, do: "Open <strong>Organization</strong>.",
+    see: "Tiles: Members and Venue library." },
+  { who: TRE, do: "Type <code>http://localhost:3000/navj-club-13a/admin/house-league</code>.",
+    see: "<strong>House league isn’t one of your pages</strong> · “Morgan Ellis (owner) can give a treasurer access.” · <strong>Back to Accounting</strong>." },
+  { who: TRE, do: "Look at the header and the sidebar foot.",
+    see: "View site; no “Public site” in the foot." }
+ ]},
+ { id: "7", title: "Before the club has a season (copy 2)", steps: [
+  { who: N_LA + " · desk", do: "Sign in to copy 2. Look at the sidebar and the Overview (" + C2 + ").",
+    see: "House league sits with the programs, <strong>not</strong> under “Also on your plan”. The Overview’s House league card reads <strong>“No season yet · start the first one here”</strong> and opens House league.",
+    call: "Call: the league admin’s line." },
+  { who: N_LA, do: "Open House league.",
+    see: "<strong>Run your first season</strong>, ending “Create one to get started.”, with a <strong>Create your first season</strong> button." },
+  { who: N_LA + " · phone (390 px)", do: "Look at the bottom bar.",
+    see: "Overview · Calendar · <strong>House league</strong> · More. Before 13a it was Overview · Calendar · More." },
+  { who: N_REG + " · desk", do: "Open House league.",
+    see: "<strong>No seasons yet.</strong> ending “Jules Moreau (league admin), Morgan Ellis (owner) or Dana Kowalski (admin) creates the season. Registrations arrive here once it exists.” No Create button." },
+  { who: N_REG + " · phone (390 px)", do: "Look at the bottom bar.",
+    see: "Overview · Calendar · House league · More." },
+  { who: N_OWNER + " · desk", do: "Look at the sidebar and the Overview’s quiet rows.",
+    see: "Unchanged for the owner: House league is under <strong>Also on your plan</strong>, and the quiet row reads “House league: not running · <strong>Start a season</strong>”. Phone bar: Overview · Calendar · Rep teams · Accounting · More." },
+  { who: N_TRE + " · desk", do: "Look at the sidebar and the Overview.",
+    see: "Unchanged: no House league anywhere." }
+ ]},
+ { id: "Z", title: "Put back", steps: [
+  { who: "You → Claude", do: "Tell Claude <strong>“13a walk done”</strong> with the build summary. It removes both copies (<code>navj-club-13a</code>, <code>navj-club-13a-new</code>) and their accounts.",
+    see: "Claude reports both copies gone." }
+ ]}
+];
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+      if (s.call) t.appendChild(el('span', 'callnote', s.call));
+      var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+      cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+      boxes.push({ part: p.id, step: id, cb: cb });
+      var row = el('label', 'step'); row.appendChild(cb); row.appendChild(t); body.appendChild(row);
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function doneSteps(partId) {
+    return boxes.filter(function (b) { return (!partId || b.part === partId) && b.cb.checked; }).map(function (b) { return b.step; });
+  }
+  var totalSteps = boxes.length;
+
+  function refresh() {
+    PARTS.forEach(function (p) {
+      var n = doneSteps(p.id).length;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + p.steps.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    var done = doneSteps(null).length;
+    document.getElementById('total').textContent = done + ' of ' + totalSteps + ' checked';
+    document.getElementById('barfill').style.width = (totalSteps ? Math.round(done * 100 / totalSteps) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [TITLE, 'Checked ' + doneSteps(null).length + ' of ' + totalSteps + ' steps'];
+    PARTS.forEach(function (p) {
+      var ticked = doneSteps(p.id);
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + p.steps.length + (ticked.length ? ' (' + ticked.join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>
