@@ -63,7 +63,7 @@ export default function GstRegistrationQuestion({ onClose, onSaved }: { onClose:
       <button type="submit" form={id} className={styles.quietButton} disabled={busy || !history?.length}>{busy ? 'Saving…' : REGISTRATION_QUESTION.confirm}</button></>}>
     <p>{REGISTRATION_QUESTION.lead}</p>
     <form id={id} className={styles.form} onSubmit={event => { event.preventDefault(); void save(); }}>
-      <label>{REGISTRATION_QUESTION.dateLabel}<DateInput value={date} {...invalid('effectiveDate')}
+      <label>{REGISTRATION_QUESTION.dateLabel}<DateInput className={kit.field} value={date} {...invalid('effectiveDate')}
         onChange={value => { setTyped(value); clear('effectiveDate'); }} /></label>
       {refusal?.field === 'effectiveDate' && <DialogReason inPlace className={kit.fieldError}>{refusal.error}</DialogReason>}
       <label>Reason<textarea className={kit.textarea} maxLength={500} value={reason} {...invalid('reason')}

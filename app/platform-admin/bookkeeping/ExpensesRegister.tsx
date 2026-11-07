@@ -4,6 +4,7 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import DateInput from '@/components/shared/DateInput';
+import SearchField from '@/components/shared/SearchField';
 import { attentionReasons, businessCents, currentExpenses, hasConfirmedDates, needsSupplierTaxNumber, summarizeExpenses, type ExpenseRevision } from '@/lib/bookkeeping-expenses';
 import { matchesExpenseFilters, type ExpenseFilters } from '@/lib/bookkeeping-filters';
 import { formatCad, taxPaidRowLabel } from '@/lib/bookkeeping-gst';
@@ -38,14 +39,15 @@ function ExpenseExportMenu({ disabled, onExport }: { disabled: boolean; onExport
     <button ref={trigger} type="button" className={styles.quietButton} disabled={disabled} aria-label="Export" aria-haspopup="menu" aria-expanded={open} aria-controls={open ? id : undefined}
       onClick={() => open ? setOpen(false) : show(0)} onKeyDown={event => {
         if (event.key === 'ArrowDown' || event.key === 'ArrowUp') { event.preventDefault(); show(event.key === 'ArrowUp' ? 1 : 0); }
-      }}>Export ▾</button>
+      }}>Export</button>
     {open && <div id={id} ref={panel} role="menu" aria-label="Export expenses" className={styles.expenseExportMenu}
       style={{ ...placement, visibility: placement ? 'visible' : 'hidden' }} onKeyDown={event => {
         rovingMenuKey(event, Array.from(panel.current?.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? []));
         if (event.key === 'Tab') { setOpen(false); trigger.current?.focus({ preventScroll: true }); }
       }}>
-      {([['csv', 'Export CSV'], ['package', 'Accountant package']] as const).map(([kind, label]) =>
-        <button key={kind} type="button" role="menuitem" tabIndex={-1} onClick={() => { setOpen(false); trigger.current?.focus({ preventScroll: true }); onExport(kind); }}>{label}</button>)}
+      {([['csv', 'Export CSV', ''], ['package', 'Accountant package', 'Follows these filters']] as const).map(([kind, label, hint]) =>
+        <button key={kind} type="button" role="menuitem" tabIndex={-1} onClick={() => { setOpen(false); trigger.current?.focus({ preventScroll: true }); onExport(kind); }}>
+          {label}{hint && <small>{hint}</small>}</button>)}
     </div>}
   </div>;
 }
@@ -67,6 +69,8 @@ export default function ExpensesRegister({ expenses, registrationDate, loading, 
     matchesExpenseFilters(row, { ...filters, status: 'active', review: 'all' }, registrationDate) && attentionReasons(row, registrationDate).length > 0).length : 0;
   const legacyCount = visible.filter(row => !row.void_reason && !hasConfirmedDates(row)).length;
   const total = summarizeExpenses(visible.filter(hasConfirmedDates)).recordedSpendCents;
+  // Every row on screen is waiting on a date: there is no honest total yet, so the figure is a dash, never $0.00.
+  const allUndated = visible.length > 0 && !visible.some(hasConfirmedDates);
   const attention = filters?.review === 'attention';
   const currentCategory = params.get('category') ?? '';
   const open = (row: ExpenseRevision) => attention && needsSupplierTaxNumber(row, registrationDate) ? onAddNumber(row, visible) : onOpenExpense(row, visible);
@@ -91,8 +95,16 @@ export default function ExpensesRegister({ expenses, registrationDate, loading, 
         onChange={event => update({ period: event.target.value, ...(event.target.value === 'custom' ? {} : { from: null, to: null }) })}>
         {EXPENSE_PERIODS.map(value => <option key={value} value={value}>{expensePeriodRange(value, today).label}</option>)}
       </select>
-      <span className={kit.count} aria-live="polite">{visible.length} {filters?.status === 'voided' ? 'voided ' : ''}{visible.length === 1 ? 'expense' : 'expenses'}
-        {filters?.status !== 'voided' && <> · {money(total)}{filters?.status === 'all' ? ' active spend' : ''}</>}</span>
+      <span className={kit.countQuiet} aria-live="polite">{visible.length} {filters?.status === 'voided' ? 'voided ' : ''}{visible.length === 1 ? 'expense' : 'expenses'}</span>
+      <div className={`${kit.toolbarEnd} ${styles.expenseToolbarEnd}`}>
+        <div className={styles.expenseSearch}>
+          <SearchField label="Search expenses" value={params.get('q') ?? ''} onChange={next => update({ q: next })} />
+        </div>
+        <ExpenseExportMenu disabled={exporting || !filters || !visible.length} onExport={kind => { if (filters) onExport(kind, filters); }} />
+      </div>
+    </div>
+    {/* The register's filter row (Rule 7: three-plus named filters AND a running figure they change). */}
+    <div className={`${kit.toolbar} ${styles.expenseToolbar} ${styles.expenseFilterRow}`} role="group" aria-label="Filter expenses">
       <select aria-label="Category" className={`${kit.select} ${styles.filterPill}`} value={currentCategory} onChange={event => update({ category: event.target.value })}>
         <option value="">Category</option>{currentCategory && !categories.includes(currentCategory) && <option>{currentCategory}</option>}
         {categories.map(value => <option key={value}>{value}</option>)}
@@ -101,33 +113,31 @@ export default function ExpensesRegister({ expenses, registrationDate, loading, 
         <option value="">Paid from</option>{Object.entries(SOURCES).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
       </select>
       <select aria-label="Status" className={`${kit.select} ${styles.filterPill}`} value={filters?.status ?? 'active'} onChange={event => update({ status: event.target.value })}>
-        <option value="active">Active</option><option value="voided">Voided</option><option value="all">All</option>
+        <option value="active">Status: Active</option><option value="voided">Status: Voided</option><option value="all">Status: All</option>
       </select>
       <button type="button" className={styles.attentionPill} aria-pressed={attention}
         onClick={() => update({ attention: attention ? null : '1', review: null, ...(attention ? {} : { status: 'active' }) })}>
         Needs attention <span className={styles.attentionCount}>{attentionCount}</span>
       </button>
-      <div className={`${kit.toolbarEnd} ${styles.expenseToolbarEnd}`}>
-        <input aria-label="Search expenses" className={kit.search} type="search" maxLength={160} placeholder="Search expenses…" value={params.get('q') ?? ''} onChange={event => update({ q: event.target.value })} />
-        <ExpenseExportMenu disabled={exporting || !filters || !visible.length} onExport={kind => { if (filters) onExport(kind, filters); }} />
-      </div>
+      {filters?.status !== 'voided' && <span className={styles.spendFigure} aria-live="polite">
+        {filters?.status === 'all' ? 'Active spend' : 'Period spend'} <strong>{allUndated ? '—' : money(total)}</strong></span>}
     </div>
     {period === 'custom' && <div className={styles.registerDates}>
-      <label>From · incurred date<DateInput value={filters?.from ?? ''} onChange={value => update({ from: value })} /></label>
-      <label>To · incurred date<DateInput value={filters?.to ?? ''} onChange={value => update({ to: value })} /></label>
+      <label>From · incurred date<DateInput className={kit.field} value={filters?.from ?? ''} onChange={value => update({ from: value })} /></label>
+      <label>To · incurred date<DateInput className={kit.field} value={filters?.to ?? ''} onChange={value => update({ to: value })} /></label>
     </div>}
     {(!filters || filters.supplier || filters.taxType || (filters.dateStatus === 'confirmed') || (filters.review !== 'all' && filters.review !== 'attention')) && <div className={styles.registerNote}>
       {!filters ? <span role="alert">These filters are invalid. Choose valid dates and filters, or reset them.</span> : <span>Additional filters: {filters.supplier && `Supplier ${filters.supplier} · `}{filters.taxType && `${taxPaidRowLabel(filters.taxType)} · `}{filters.dateStatus === 'confirmed' && 'Confirmed dates · '}{filters.review !== 'all' && filters.review !== 'attention' ? filters.review.replaceAll('_', ' ') : ''}</span>}
       <button type="button" className={styles.textButton} onClick={clearFilters}>Reset filters</button>
     </div>}
-    {legacyCount > 0 && <p className={styles.registerNote}>{legacyCount} {legacyCount === 1 ? 'expense has' : 'expenses have'} dates to review and {legacyCount === 1 ? 'is' : 'are'} excluded from the period spending total.</p>}
+    {legacyCount > 0 && <p className={styles.registerNote}>{legacyCount} {legacyCount === 1 ? 'expense has' : 'expenses have'} dates to review. {legacyCount === 1 ? 'It is' : 'They are'} not counted in period spend.</p>}
     {attention && <h3 className="sr-only">Needs attention</h3>}
     <div className={`table-cards ${styles.expenseTableWrap}`}>
       <table className={styles.expensesTable} aria-busy={loading}>
         <thead><tr><th>Date</th><th>Supplier</th><th>What for</th><th>Category</th><th>Paid from</th><th>Receipt</th><th className={kit.num}>Amount</th><th aria-label="Open expense" /></tr></thead>
         <tbody>{!visible.length && <tr><td colSpan={8} className={kit.empty}>{loading ? 'Loading expenses…' : 'No expenses match this view.'}</td></tr>}
           {visible.map(row => <tr key={row.expense_id} className={`${kit.clickableRow} ${row.void_reason ? styles.voidedExpense : ''}`} onClick={() => open(row)}>
-            <td data-label="Date" className={styles.registerDate}>{row.incurred_date ? consoleDay(row.incurred_date) : 'Dates to review'}</td>
+            <td data-label="Date" className={styles.registerDate}>{row.incurred_date ? consoleDay(row.incurred_date) : <span className={`${kit.chip} ${kit.chipWarn}`}>To review</span>}</td>
             <td className={`table-cards-title ${styles.supplierCell}`}>
               <Link className={styles.expenseName} href={bookkeepingAddress(params, { view: 'expenses', record: row.expense_id, form: attention && needsSupplierTaxNumber(row, registrationDate) ? 'correct' : null })}
                 onClick={event => { event.stopPropagation(); if (!event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey && event.button === 0) { event.preventDefault(); open(row); } }} title={row.supplier}>{row.supplier}</Link>
@@ -146,6 +156,5 @@ export default function ExpensesRegister({ expenses, registrationDate, loading, 
         </tbody>
       </table>
     </div>
-    <p className={styles.registerNote}>Accountant package follows these filters. Use Reports for a full-period package.</p>
   </section>;
 }

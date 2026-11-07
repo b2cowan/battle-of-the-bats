@@ -232,7 +232,7 @@ export default function ExpenseFormWindow({ expense, expenses, categories, asVoi
       </div>
       <label>What was it for? *<textarea ref={purposeRef} className={`${kit.textarea} ${styles.purposeField}`} name="businessPurpose" rows={1} required maxLength={500} value={purpose} {...fieldFor('businessPurpose')} onChange={event => setPurpose(event.target.value)} /></label>
       <div className={styles.pair}>
-        <label>Expense date *<DateInput name="incurredDate" required value={incurredDate} {...fieldFor('incurredDate')}
+        <label>Expense date *<DateInput className={kit.field} name="incurredDate" required value={incurredDate} {...fieldFor('incurredDate')}
           onChange={value => { setDirty(true); setIncurredDate(value); if (!differentDate) setPaidDate(value); }} /></label>
         <div className={styles.fieldStack}><label htmlFor="bk-originalAmount">{currency === 'USD' ? 'Receipt shows *' : 'Amount *'}</label>
           <div className={styles.moneyField}><select aria-label="Currency" value={currency} {...fieldFor('originalCurrency')}
@@ -249,7 +249,7 @@ export default function ExpenseFormWindow({ expense, expenses, categories, asVoi
         <label>Note (optional)<input className={kit.field} name="conversionNote" maxLength={500} value={conversionNote} onChange={event => setConversionNote(event.target.value)} {...fieldFor('conversionNote')} /></label>
       </>}
       <label className={styles.inlineCheck}><input type="checkbox" checked={differentDate} onChange={event => { setDifferentDate(event.target.checked); if (!event.target.checked) setPaidDate(incurredDate); }} />Paid on a different date</label>
-      {differentDate && <label>Payment date *<DateInput name="paidDate" required value={paidDate} {...fieldFor('paidDate')} onChange={value => { setDirty(true); setPaidDate(value); }} /></label>}
+      {differentDate && <label>Payment date *<DateInput className={kit.field} name="paidDate" required value={paidDate} {...fieldFor('paidDate')} onChange={value => { setDirty(true); setPaidDate(value); }} /></label>}
       {differentDate && paidDate > tournamentToday() && <p className={styles.hint}>{FUTURE_DATE_NOTE}</p>}
       <div className={styles.pair}>
         <label>How did you pay? *<select className={kit.select} required value={paymentSource} {...fieldFor('paymentSource')} onChange={event => { setPaymentSource(event.target.value); if (!expense || !conversionSource) setConversionSource(lastConversionSource(expenses, event.target.value)); }}>

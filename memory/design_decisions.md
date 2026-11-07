@@ -7,6 +7,19 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-11-06 — THE OWNER BOOKKEEPING EXPENSES TAB IS A THIRD REGISTER (Rule 7) (owner, "A", /design review of the Expenses toolbar)
+
+**Decision (as ruled):** the platform-admin Bookkeeping → Expenses toolbar follows the Rule 7 register shape the two Ledgers use,
+not the plain Rule 2 toolbar: row 1 is the list choice (period pill, count) on the left with Search and Export on the right;
+row 2 is the named filters (Category, Paid from, Status, Needs attention) with the running spend figure at its right end.
+**Rationale:** it meets both written tests for the exception: three or more named filter kinds AND a running figure the filters
+change. As built it was neither shape (filters left of the gap, Export alone on a second row), which is the defect.
+**Applies to:** Bookkeeping Expenses only. Extends the Rule 7 register list (K-31) from the two Ledgers to three. Mockup for the
+fine details (Export as the shared plain button, count/figure wording, "To review" date chip, phone) is
+https://claude.ai/artifact/DPsNEJ4gLV7yiL34gQYN4f, ruled "looks good" the same day. Same session: every Bookkeeping date field
+wears the shared field class (`kit.field`), as the other platform-admin date fields already did; without it the browser's own
+two-tone border showed. The phone's single "Filters" button in the mockup was NOT built (filters wrap as native selects).
+
 ### 2026-11-05 — A CHILD'S DOCUMENTS: ONE "LAST SIGNED" A ROW, EVERY COPY BEHIND "+N EARLIER" (owner, "proceed as recommended", asks A1–A5 on https://claude.ai/artifact/58oV67ka48y4yCFPqWneya; raised from the S5 child page: *"putting a list of past documents could make this too much of a jumble of words … maybe something to click to see a whole list?"*)
 
 **Decision (as ruled):** the child page's Documents card replaces the History column (every earlier copy joined with
