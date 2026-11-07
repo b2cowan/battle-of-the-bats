@@ -4421,7 +4421,6 @@ a.oneChip:hover { border-color: currentColor; }
   .contactCopy { width: var(--tap-min, 44px); height: var(--tap-min, 44px); }
 }
 
-
 /* ── Off the roster ──────────────────────────────────────────────────────────────────────
    ⚠ A SHELF, NOT ROWS (owner ruling 2026-08-26). These players used to sit INLINE among the team
    in batting order, told apart from a playing player by a grey pill in a column nobody reads —
@@ -16546,28 +16545,29 @@ button.lineupRulesToggle {
 
 /* ── Bring back a past player · "Same child?" (Club Tier Stage 14 S3, drawn + ruled 2026-11-04, tabs 3, 4, 8) ──────
    The picker is the 640 window (each row carries a trailing chip) and reuses the Pay out sheet's tick list above
-   (`.debtList` / `.debtRow`, the /design round's pick-many idiom). Chips are sentence-case and mono: a state ("2026
+   (`.debtList` / `.debtRow`, the /design round's pick-many idiom). Chips are sentence-case pills (see `.pastChip`): a state ("2026
    dues settled", "$120.00 owing from 2025", "Born 2014"), never a label. A phone row drops the born date and the
    family, and its warning moves to an amber second line instead of a chip. The question is an amber callout under the
    names; the window's buttons wait with the reason in the foot. ⚠ TOKENS ONLY (warm theme). */
 .pastSearch { width: 100%; margin-bottom: 0.6rem; }
 .pastHint { margin: 0 0 0.75rem; font-size: var(--type-support); line-height: 1.45; color: var(--text-tertiary); }
 .pastRowName { display: inline-flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
+/* ONE SHAPE (owner 2026-11-05): the portal's state-chip pill — body face, fully rounded, no outline, the same size as
+   `.stateChip` (DevelopmentSession) and `.chipQuiet`. It was a mono 4px rectangle; only the tint carries good / warn. */
 .pastChip {
   flex: none;
-  font-family: var(--font-data, monospace);
   font-size: var(--type-support);
   font-weight: 600;
   white-space: nowrap;
-  border-radius: 4px;
-  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  padding: 0.18rem 0.5rem;
 }
-.pastChipGood { background: rgba(var(--success-rgb), 0.12); color: var(--badge-success-ink); border: 1px solid rgba(var(--success-rgb), 0.25); }
-.pastChipWarn { background: rgba(var(--warning-rgb), 0.12); color: var(--badge-warning-ink); border: 1px solid rgba(var(--warning-rgb), 0.25); }
+.pastChipGood { background: rgba(var(--success-rgb), 0.12); color: var(--badge-success-ink); }
+.pastChipWarn { background: rgba(var(--warning-rgb), 0.12); color: var(--badge-warning-ink); }
 .pastChips { display: inline-flex; flex-direction: column; align-items: flex-end; gap: 0.25rem; }
 
 /* A child's papers for the working season (Club Tier Stage 14 S4, drawings tab 3 + 5B): one row per form, the state chip
-   beside its name (the picker's sentence-case mono chips above), the line under it, and an Upload on a row that needs one.
+   beside its name (the same pill chips as the picker above), the line under it, and an Upload on a row that needs one.
    On a phone the Upload is the glyph alone at the 44px tap floor. */
 .docStateList {
   list-style: none;
