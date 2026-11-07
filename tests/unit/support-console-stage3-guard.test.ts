@@ -381,7 +381,8 @@ describe('5 · nothing we write carries a card number, expiry, holder name, bill
   it('the Story’s console refund says "to the card it came from", never the card', () => {
     const story = readCode('lib/platform-story.ts');
     // GST/HST Part 6b: the sub names the credit note (or says there is none), still never the card.
-    assert.match(story, /sub: `To the card it came from · \$\{f\.stripe_credit_note_number \? `credit note \$\{f\.stripe_credit_note_number\}` : 'no credit note'\} · the plan did not change`/);
+    // Part 4 adds the note's tax split after the number (", $44.25 + $5.75 tax") only when our record of the note holds one.
+    assert.match(story, /sub: `To the card it came from · \$\{f\.stripe_credit_note_number \? `credit note \$\{f\.stripe_credit_note_number\}\$\{split \? `, \$\{split\}` : ''\}` : 'no credit note'\} · the plan did not change`/);
     const select = /from\('platform_refunds'\)\.select\('([^']*)'\)/.exec(story)?.[1] ?? '';
     assert.doesNotMatch(select, /card|last4|exp/);
     assert.doesNotMatch(readSource('supabase/migrations/380_support_console_money.sql').replace(/--.*$/gm, '').replace(/COMMENT ON[\s\S]*?;/g, ''), /last4|exp_month|fingerprint|card_/);

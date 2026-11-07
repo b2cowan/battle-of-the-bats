@@ -149,7 +149,7 @@ export default async function TodayPage() {
         <span><strong>{stats.totals.users}</strong> people</span>
         <span><strong>{stats.totals.tournaments}</strong> tournaments</span>
         <span><strong>{stats.totals.teams}</strong> teams</span>
-        <span>about <strong>${stats.totals.estimatedMrr.toLocaleString('en-CA')}</strong> a month at list price</span>
+        <span>about <strong>${stats.totals.estimatedMrr.toLocaleString('en-CA')}</strong> a month at list price, before tax</span>
         <Link href="/platform-admin/business-numbers" className={`${kit.door} ${styles.numbersDoor}`}>
           Business numbers: plan mix, billing, growth and usage ›
         </Link>

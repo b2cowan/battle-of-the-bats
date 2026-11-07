@@ -13,7 +13,7 @@ import { planLabel, subscriptionStatusLabel } from './platform-labels';
 import { STRIPE_FEE_WORDS, brandLabel } from './online-payment-words';
 import { parseCents } from './bookkeeping-expenses';
 import { isEndedSubscriptionStatus } from './stripe-billing-state';
-import { joinWithAnd } from './utils';
+import { joinWithAnd, pluralize } from './utils';
 import { PLAN_RANK } from './plan-features';
 import type { OrgPlan } from './types';
 
@@ -479,31 +479,67 @@ export function agreeLine(rows: CompareRow[], patterns: Patterns, ourSubscriptio
   return { tone: 'ok', text: 'Stripe and our record agree.' };
 }
 
-/** The joined money band (drawing A): paid 12 months · refunded · next charge. */
-export function moneyBand(read: MoneyRead, since: string): Array<{ label: string; value: string; note: string; tone?: 'warn' }> {
+/** A refund the band counts: made (or on its way), not failed or cancelled. One rule for both bands. */
+export const isCountedRefund = (r: Pick<MoneyRefund, 'status'>): boolean => r.status === 'succeeded' || r.status === 'pending';
+
+export type BandCell = { label: string; value: string; note: string; tone?: 'warn' };
+
+/**
+ * The words of the revenue band, in one home (GST/HST Stage 3 Part 4; owner ruling 2026-11-06, the drawings' tab 1 and tab 4).
+ * "Before tax" is only ever said when the figure IS before tax, read from our kept record; the shipped Stripe-only band (our
+ * record could not be read) says it includes tax instead.
+ */
+const NO_CREDIT_NOTE = 'no credit note, so no tax split';
+
+export const BAND_WORDS = {
+  paid: 'Paid, last 12 months',
+  paidBeforeTax: 'Paid, last 12 months, before tax',
+  refunded: 'Refunded',
+  refundedBeforeTax: 'Refunded, before tax',
+  none: 'none in 12 months',
+  ourRecord: ' · our record',
+  /** The Stripe-only band: our record could not be read, so Stripe's totals (tax included) are all there is. */
+  recordsUnreadable: ' · includes tax; our records could not be read',
+  noCreditNote: NO_CREDIT_NOTE,
+  sales: (n: number) => pluralize(n, 'paid sale'),
+  charges: (n: number) => pluralize(n, 'paid charge'),
+  asCharged: (n: number) => `${pluralize(n, 'charge')} with no tax record, counted as charged`,
+  refunds: (n: number) => pluralize(n, 'refund'),
+  someUnsplit: (n: number) => `${n} with ${NO_CREDIT_NOTE}`,
+} as const;
+
+/**
+ * The joined money band when OUR RECORD COULD NOT BE READ but Stripe was (Part 4, undrawn state 2): Stripe's own totals, tax
+ * included, and the words say so. The ordinary band is built from the sales (`moneyBandFromSales`, console-money-sales.ts).
+ */
+export function moneyBand(read: MoneyRead, since: string): BandCell[] {
   const window = read.charges.filter(c => c.createdAt >= since);
   const paid = window.filter(c => c.status === 'succeeded');
   const currency = paid[0]?.currency ?? read.charges[0]?.currency ?? 'cad';
-  const refunds = read.charges.flatMap(c => c.refunds).filter(r => r.createdAt >= since && (r.status === 'succeeded' || r.status === 'pending'));
+  const refunds = read.charges.flatMap(c => c.refunds).filter(r => r.createdAt >= since && isCountedRefund(r));
   const firstPaid = paid[paid.length - 1];
   return [
-    { label: 'Paid, last 12 months', value: formatCents(paid.reduce((s, c) => s + c.amountCents, 0), currency),
-      note: paid.length ? `${paid.length} paid charge${paid.length === 1 ? '' : 's'} since ${consoleDay(firstPaid.createdAt)}` : 'none in 12 months' },
-    { label: 'Refunded', value: formatCents(refunds.reduce((s, r) => s + r.amountCents, 0), currency),
-      note: refunds.length === 0 ? 'none in 12 months' : refunds.length === 1 ? `1 refund, ${consoleDay(refunds[0].createdAt)}` : `${refunds.length} refunds`,
+    { label: BAND_WORDS.paid, value: formatCents(paid.reduce((s, c) => s + c.amountCents, 0), currency),
+      note: paid.length ? `${BAND_WORDS.charges(paid.length)} since ${consoleDay(firstPaid.createdAt)}${BAND_WORDS.recordsUnreadable}` : `${BAND_WORDS.none}${BAND_WORDS.recordsUnreadable}` },
+    { label: BAND_WORDS.refunded, value: formatCents(refunds.reduce((s, r) => s + r.amountCents, 0), currency),
+      note: refunds.length === 0 ? BAND_WORDS.none : refunds.length === 1 ? `${BAND_WORDS.refunds(1)}, ${consoleDay(refunds[0].createdAt)}` : BAND_WORDS.refunds(refunds.length),
       ...(refunds.length ? { tone: 'warn' as const } : {}) },
     nextChargeCell(read),
   ];
 }
 
-function nextChargeCell(read: MoneyRead): ReturnType<typeof moneyBand>[number] {
+/** The band's third cell when Stripe could not be asked for the next charge (also the third cell of the whole band when Stripe is unreachable). */
+export const UNREAD_NEXT_CHARGE: BandCell = { label: 'Next charge', value: 'Not read', note: 'Stripe could not be asked for the next charge. Read again.', tone: 'warn' };
+
+/** The band's third cell: Stripe's quote of the next charge, tax included (never changed by Part 4). */
+export function nextChargeCell(read: MoneyRead): BandCell {
   const next = read.nextCharge;
   const cell = (value: string, note: string, tone?: 'warn') => ({ label: 'Next charge', value, note, ...(tone ? { tone } : {}) });
   switch (next.kind) {
     // The total, tax included: the figure Stripe will charge (GST/HST Stage 2 Part 3).
     case 'charge': return cell(formatCents(next.amountCents, next.currency),
       `on ${formatStoredDate(next.at)}${next.taxCents ? `, includes ${formatCents(next.taxCents, next.currency)} tax` : ''}`);
-    case 'unread': return cell('Not read', 'Stripe could not be asked for the next charge. Read again.', 'warn');
+    case 'unread': return UNREAD_NEXT_CHARGE;
     case 'none': return cell('None',
       read.subscriptions.some(s => isLiveSubscription(s.status) && s.cancelAtPeriodEnd) ? 'it ends at the period end' : 'no live subscription');
   }

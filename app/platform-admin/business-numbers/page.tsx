@@ -84,7 +84,7 @@ export default async function BusinessNumbersPage() {
       <AdminPageHeader title="Business numbers" />
       <p className={`${kit.caption} ${kit.captionTight}`}>
         {stats.totals.organizations} clubs and portals · {stats.totals.users} people · {stats.totals.tournaments} tournaments
-        {' '}· {stats.totals.teams} teams · about ${stats.totals.estimatedMrr.toLocaleString('en-CA')} a month at list price
+        {' '}· {stats.totals.teams} teams · about ${stats.totals.estimatedMrr.toLocaleString('en-CA')} a month at list price, before tax
         {' '}(${stats.totals.estimatedArr.toLocaleString('en-CA')} a year)
       </p>
 

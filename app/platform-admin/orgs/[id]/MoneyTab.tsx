@@ -18,13 +18,13 @@ import { possessive } from '@/lib/utils';
 import {
   agreeLine, cardWords, centsFromTyped, chargeFailureWords, compareRecord, creditSplitWords, differsWords, failedBillOf, failedBills,
   failedStoryWords, findPatterns, flagWords, formatCents, triesWords, FAILED_WORDS,
-  moneyBand, refundDoorRefusal, remainingCents, subscriptionsMoreWords, yearBefore, REFUND_REASON_MAX, REFUND_WORDS,
+  UNREAD_NEXT_CHARGE, moneyBand, nextChargeCell, refundDoorRefusal, remainingCents, subscriptionsMoreWords, yearBefore, REFUND_REASON_MAX, REFUND_WORDS,
   type ChargeCreditNote, type ChargeFlag, type CompareRow, type MoneyCharge, type MoneyInvoice, type MoneyRead, type OurMoneyRecord,
 } from '@/lib/console-money';
 import type { LookedMark, LookReason, NeedsLookRead } from '@/lib/console-money-needs-look';
 import {
   NEEDS_LOOK_WORDS, SALES_WORDS, addressChangedSince, asItStoodLabel, cadRateWords, creditNoteTaxWords, evidenceLines, gstAnswerWords, isUnpaidSale,
-  isVoidSale, joinSales, keptWords, recordMoneyBand, saleAmount, saleCardCell, saleCents, saleFlag, saleRecordSays,
+  isVoidSale, joinSales, keptWords, moneyBandFromSales, saleAmount, saleCardCell, saleCents, saleFlag, saleRecordSays,
   saleStripeSays, saleTaxCell, saleWhatWords, saleWindowBand, taxLineWords, taxedForWords,
   type SaleNoteRecord, type SaleRecord, type SaleRow, type SalesRecords,
 } from '@/lib/console-money-sales';
@@ -325,7 +325,11 @@ export default function MoneyTab({
 
   const gate = m.state === 'read' ? m.refundGate : null;
   const since = firstAt ? yearBefore(firstAt) : '';
-  const band = read ? moneyBand({ ...read, charges: allCharges }, since) : m.state === 'unreachable' && recordsRead ? recordMoneyBand(rows, since) : null;
+  // Part 4: one rule over the sales for both bands (before tax, from our record). Our record unreadable = Stripe's own totals, said to include tax.
+  const bandNotes = records?.state === 'read' ? records.bandNotes : undefined;
+  const band = read
+    ? recordsRead ? moneyBandFromSales(rows, { since, bandNotes, stripeRead: true, next: nextChargeCell(read) }) : moneyBand({ ...read, charges: allCharges }, since)
+    : m.state === 'unreachable' && recordsRead ? moneyBandFromSales(rows, { since, bandNotes, stripeRead: false, next: UNREAD_NEXT_CHARGE }) : null;
   // The list shows when there is something to list from: Stripe, or (Stripe down) our records.
   const listed = stripeRead || (m.state === 'unreachable' && recordsRead);
   const open = (row: SaleRow, opts: { refund?: boolean; atTax?: boolean; chargeId?: string } = {}) =>

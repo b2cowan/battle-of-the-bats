@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { consoleDate, consoleDay } from '../../lib/console-dates.ts';
-import { findPatterns, type MoneyCharge, type MoneyInvoice } from '../../lib/console-money.ts';
+import { findPatterns, moneyBand, UNREAD_NEXT_CHARGE, type MoneyCharge, type MoneyInvoice, type MoneyRead, type MoneyRefund } from '../../lib/console-money.ts';
 import {
   addressChangedSince, beforeRegistration, creditNoteTaxWords, evidenceLines, gstAnswerWords, isUnpaidSale, isVoidSale, joinSales,
-  keptWords, recordMoneyBand, saleCardCell, saleCents, saleFlag, saleRecordSays, saleStripeSays, saleTaxCell, saleWhatWords,
+  keptWords, moneyBandFromSales, paidSaleBeforeTax, saleCardCell, saleCents, saleFlag, saleRecordSays, saleStripeSays, saleTaxCell, saleWhatWords,
   saleWindowBand, taxLineWords, taxReasonWords, taxedForWords, SALES_WORDS,
   type SaleNoteRecord, type SaleRecord, type SaleRow,
 } from '../../lib/console-money-sales.ts';
@@ -262,10 +262,12 @@ describe('the join: one row per sale', () => {
     assert.equal(saleRecordSays(one(rows, 'in_2')).text, `Paid ${consoleDay('2026-10-01T10:01:00.000Z')} · $50.00 refunded`);
     assert.equal(saleRecordSays(one(rows, 'in_3')).text, 'Open');
     assert.equal(saleWhatWords(one(rows, 'in_1')).main, 'The subscription · invoice 7C1E-0002', 'what the record knows (gap 1)');
-    const band = recordMoneyBand(rows, '2025-11-06T00:00:00.000Z');
-    assert.equal(band[0].value, '$200.02');
+    const band = moneyBandFromSales(rows, { since: '2025-11-06T00:00:00.000Z', stripeRead: false, next: UNREAD_NEXT_CHARGE });
+    // Part 4: BEFORE TAX (2 x $88.50), not the $200.02 of totals; the $50.00 refund has no credit note, so it is not split.
+    assert.equal(band[0].label, 'Paid, last 12 months, before tax');
+    assert.equal(band[0].value, '$177.00');
     assert.match(band[0].note, /^2 paid sales since .* · our record$/);
-    assert.deepEqual([band[1].value, band[1].note], ['$50.00', '1 sale refunded · our record']);
+    assert.deepEqual([band[1].label, band[1].value, band[1].note], ['Refunded', '$50.00', '1 refund · no credit note, so no tax split · our record']);
     assert.deepEqual([band[2].value, band[2].tone], ['Not read', 'warn']);
     assert.equal(SALES_WORDS.refundsWait, 'Refunds wait until Stripe answers.');
   });
@@ -280,7 +282,7 @@ describe('the join: one row per sale', () => {
   it('a credit note nets each figure of the window’s band, and its line names the GST/HST it took back', () => {
     const r = rec('in_cn');
     const note: SaleNoteRecord = { stripe_credit_note_id: 'cn_1', stripe_invoice_id: 'in_cn', note_number: 'CN-0001', issued_at: '2026-11-04T19:10:00.000Z', currency: 'cad',
-      amount_before_tax_cents: 4425, tax_total_cents: 575, total_cents: 5000, tax_lines: [line({ cents: 575, taxable_cents: 4425 })], status: 'issued' };
+      amount_before_tax_cents: 4425, tax_total_cents: 575, total_cents: 5000, tax_lines: [line({ cents: 575, taxable_cents: 4425 })], status: 'issued', note_type: 'post_payment', refund_cents: 5000 };
     const row = one(joinSales({ records: [r], notes: [note, { ...note, stripe_credit_note_id: 'cn_void', status: 'void' }], charges: null, invoices: [], shownFrom: null }), 'in_cn');
     assert.equal(row.notes.length, 1, 'a void note nets nothing');
     assert.deepEqual(saleWindowBand(r, row.notes), [
@@ -349,5 +351,166 @@ describe('wiring (Ask 7: the Stripe-reading roles only; no migration; read-only)
     // Part 3b: the one write is a mark, into its own table beside the records (never into them).
     assert.equal((store.match(/\.insert\(/g) ?? []).length, 1);
     assert.match(store, /supabaseAdmin\.from\(LOOKS\)\.insert\(row\)/);
+  });
+});
+
+// ── GST/HST Stage 3 Part 4: the revenue band, BEFORE TAX, from our record (owner 2026-11-06; undrawn states 1–7 as recommended) ──
+
+describe('the revenue band: before tax, one rule for both states', () => {
+  const SINCE = '2025-11-06T00:00:00.000Z';
+  const refund = (id: string, amountCents: number, createdAt: string): MoneyRefund => ({ id, amountCents, createdAt, status: 'succeeded', ourRefundId: null });
+  const note = (id: string, invoiceId: string, over: Partial<SaleNoteRecord> = {}): SaleNoteRecord => ({
+    stripe_credit_note_id: id, stripe_invoice_id: invoiceId, note_number: `CN-${id}`, issued_at: '2026-11-04T19:10:00.000Z', currency: 'cad',
+    amount_before_tax_cents: 4425, tax_total_cents: 575, total_cents: 5000, tax_lines: [line({ cents: 575, taxable_cents: 4425 })], status: 'issued',
+    note_type: 'post_payment', refund_cents: 5000, ...over,
+  });
+  const NEXT = { label: 'Next charge', value: '$100.01', note: 'on Dec 1, 2026, includes $11.51 tax' };
+  const sales = (input: { records: SaleRecord[]; notes?: SaleNoteRecord[]; charges?: MoneyCharge[] | null }) => {
+    const charges = input.charges === undefined ? [] : input.charges;
+    const invoices = (charges ?? []).flatMap(c => (c.invoice ? [c.invoice] : []));
+    return joinSales({ records: input.records, notes: input.notes ?? [], charges, invoices, shownFrom: null });
+  };
+
+  it('the drawn Stripe-read band: Paid is before tax; a refund with no credit note keeps its amount and says why it is not split', () => {
+    const i = inv('in_a');
+    const rows = sales({ records: [rec('in_a', { refunded_cents: 5000 })], charges: [charge('ch_a', i, { refunds: [refund('re_1', 5000, '2026-10-09T15:00:00.000Z')] })] });
+    const band = moneyBandFromSales(rows, { since: SINCE, stripeRead: true, next: NEXT });
+    assert.deepEqual(band[0], { label: 'Paid, last 12 months, before tax', value: '$88.50', note: `1 paid sale since ${consoleDay('2026-11-01T10:02:00.000Z')}` });
+    assert.deepEqual(band[1], { label: 'Refunded', value: '$50.00', note: `1 refund, ${consoleDay('2026-10-09T15:00:00.000Z')} · no credit note, so no tax split`, tone: 'warn' });
+    assert.equal(band[2], NEXT, 'Next charge is Stripe’s quote and is not touched');
+  });
+
+  it('a part refund WITH a credit note counts at the note’s before-tax figure, on the day the note was issued; every refund split = "Refunded, before tax"', () => {
+    const i = inv('in_a');
+    const rows = sales({
+      records: [rec('in_a', { refunded_cents: 5000 })], notes: [note('cn_1', 'in_a')],
+      charges: [charge('ch_a', i, { refunds: [refund('re_1', 5000, '2026-11-04T19:10:00.000Z')] })],
+    });
+    const band = moneyBandFromSales(rows, { since: SINCE, stripeRead: true, next: NEXT });
+    assert.deepEqual([band[1].label, band[1].value, band[1].note], ['Refunded, before tax', '$44.25', `1 refund, ${consoleDay('2026-11-04T19:10:00.000Z')}`]);
+  });
+
+  it('some refunds with a note and some without: the figure adds what each took off, the label stays "Refunded", the note counts the unsplit', () => {
+    const a = inv('in_a'); const b = inv('in_b', { issuedAt: '2026-10-01T10:00:00.000Z' });
+    const rows = sales({
+      records: [rec('in_a', { refunded_cents: 5000 }), rec('in_b', { issued_at: '2026-10-01T10:00:00.000Z', paid_at: '2026-10-01T10:00:00.000Z', refunded_cents: 3000 })],
+      notes: [note('cn_1', 'in_a')],
+      charges: [
+        charge('ch_a', a, { refunds: [refund('re_1', 5000, '2026-11-04T19:10:00.000Z')] }),
+        charge('ch_b', b, { createdAt: '2026-10-01T10:01:00.000Z', refunds: [refund('re_2', 3000, '2026-10-09T15:00:00.000Z')] }),
+      ],
+    });
+    const band = moneyBandFromSales(rows, { since: SINCE, stripeRead: true, next: NEXT });
+    assert.equal(band[0].value, '$177.00');
+    assert.deepEqual([band[1].label, band[1].value, band[1].note], ['Refunded', '$74.25', '2 refunds, 1 with no credit note, so no tax split']);
+  });
+
+  it('a note explains the sale’s OLDEST refunds first; the rest of the money refunded is not split', () => {
+    const a = inv('in_a');
+    const rows = sales({
+      records: [rec('in_a', { refunded_cents: 7000 })], notes: [note('cn_1', 'in_a')],
+      charges: [charge('ch_a', a, { refunds: [refund('re_1', 5000, '2026-11-04T19:10:00.000Z'), refund('re_2', 2000, '2026-11-05T09:00:00.000Z')] })],
+    });
+    const band = moneyBandFromSales(rows, { since: SINCE, stripeRead: true, next: NEXT });
+    assert.deepEqual([band[1].value, band[1].note], ['$64.25', '2 refunds, 1 with no credit note, so no tax split']);
+  });
+
+  it('a $0 sale, a void sale, an unpaid sale and a sale paid before the window add nothing to Paid', () => {
+    const rows = sales({ records: [
+      rec('in_zero', { total_cents: 0, amount_before_tax_cents: 0, tax_total_cents: 0 }),
+      rec('in_void', { status: 'void', paid_at: null }),
+      rec('in_open', { status: 'open', paid_at: null }),
+      rec('in_old', { issued_at: '2025-09-01T10:00:00.000Z', paid_at: '2025-09-01T10:00:00.000Z' }),
+      rec('in_ok'),
+    ] });
+    const band = moneyBandFromSales(rows, { since: SINCE, stripeRead: false, next: UNREAD_NEXT_CHARGE });
+    assert.deepEqual([band[0].value, band[0].note.startsWith('1 paid sale since')], ['$88.50', true]);
+    assert.equal(paidSaleBeforeTax(one(rows, 'in_zero')), null);
+    assert.equal(paidSaleBeforeTax(one(rows, 'in_void')), null);
+  });
+
+  it('a credit note on an OLDER sale counts in the period it was issued (read by its own date, not with the sale)', () => {
+    const rows = sales({ records: [rec('in_old', { issued_at: '2025-09-01T10:00:00.000Z', paid_at: '2025-09-01T10:00:00.000Z', refunded_cents: 5000 })] });
+    const band = moneyBandFromSales(rows, { since: SINCE, stripeRead: false, bandNotes: [note('cn_old', 'in_old', { issued_at: '2026-10-20T12:00:00.000Z' })], next: UNREAD_NEXT_CHARGE });
+    assert.equal(band[0].value, '$0.00', 'the old sale is not paid in the window');
+    assert.deepEqual([band[1].label, band[1].value], ['Refunded, before tax', '$44.25']);
+    // A note issued BEFORE the window counts in no band.
+    const earlier = moneyBandFromSales(rows, { since: SINCE, stripeRead: false, bandNotes: [note('cn_x', 'in_old', { issued_at: '2025-10-01T12:00:00.000Z' })], next: UNREAD_NEXT_CHARGE });
+    assert.equal(earlier[1].value, '$0.00');
+  });
+
+  it('a note issued before the bill was paid takes its amount off Paid and is NOT a refund', () => {
+    const pre = note('cn_pre', 'in_pp', { note_type: 'pre_payment', amount_before_tax_cents: 1000, tax_total_cents: 130, total_cents: 1130, refund_cents: 0 });
+    const rows = sales({ records: [rec('in_pp')], notes: [pre] });
+    const band = moneyBandFromSales(rows, { since: SINCE, bandNotes: [pre], stripeRead: false, next: UNREAD_NEXT_CHARGE });
+    assert.equal(band[0].value, '$78.50');
+    assert.deepEqual([band[1].value, band[1].note], ['$0.00', 'none in 12 months · our record']);
+  });
+
+  it('with no record: Stripe’s own invoice less the tax Stripe reports; a charge with no invoice counts as charged and says so', () => {
+    const noRecord = inv('in_nr', { totalCents: 11300, taxCents: 1300 });
+    const rows = sales({ records: [], charges: [charge('ch_nr', noRecord), charge('ch_bare', null, { createdAt: '2026-11-02T10:00:00.000Z' })] });
+    const band = moneyBandFromSales(rows, { since: SINCE, stripeRead: true, next: NEXT });
+    assert.equal(band[0].value, '$125.00', '$100.00 from the invoice + $25.00 as charged');
+    assert.match(band[0].note, /^2 paid sales since .* · 1 charge with no tax record, counted as charged$/);
+  });
+
+  it('Stripe unreachable: the same rule from our record alone, every note ends "· our record" (the drawn tab 4)', () => {
+    const rows = sales({ records: [rec('in_a', { refunded_cents: 5000 })], notes: [note('cn_1', 'in_a', { refund_cents: 3000 })], charges: null });
+    const band = moneyBandFromSales(rows, { since: SINCE, stripeRead: false, next: UNREAD_NEXT_CHARGE });
+    assert.deepEqual([band[0].label, band[0].value, band[0].note.endsWith(' · our record')], ['Paid, last 12 months, before tax', '$88.50', true]);
+    // $30.00 of the $50.00 refunded is explained by the note ($44.25 before tax); the other $20.00 has no note.
+    assert.deepEqual([band[1].label, band[1].value, band[1].note], ['Refunded', '$64.25', '2 refunds, 1 with no credit note, so no tax split · our record']);
+    assert.deepEqual([band[2].value, band[2].tone], ['Not read', 'warn']);
+  });
+
+  it('our records unreadable but Stripe read: Stripe’s totals, tax included, and the label no longer says "before tax"', () => {
+    const i = inv('in_a');
+    const read = { charges: [charge('ch_a', i)], nextCharge: { kind: 'none' }, subscriptions: [] } as unknown as MoneyRead;
+    const band = moneyBand(read, SINCE);
+    assert.deepEqual([band[0].label, band[0].value], ['Paid, last 12 months', '$100.01']);
+    assert.match(band[0].note, /^1 paid charge since .* · includes tax; our records could not be read$/);
+  });
+});
+
+describe('the revenue band: review fixes (Part 4 /review)', () => {
+  const SINCE = '2025-11-06T00:00:00.000Z';
+  const NEXT = { label: 'Next charge', value: '$100.01', note: 'on Dec 1, 2026, includes $11.51 tax' };
+  const refund = (id: string, amountCents: number, createdAt: string, ourRefundId: string | null = null): MoneyRefund => ({ id, amountCents, createdAt, status: 'succeeded', ourRefundId });
+  const note = (id: string, invoiceId: string, over: Partial<SaleNoteRecord> = {}): SaleNoteRecord => ({
+    stripe_credit_note_id: id, stripe_invoice_id: invoiceId, note_number: `CN-${id}`, issued_at: '2026-11-04T19:10:00.000Z', currency: 'cad',
+    amount_before_tax_cents: 4425, tax_total_cents: 575, total_cents: 5000, tax_lines: [line({ cents: 575, taxable_cents: 4425 })], status: 'issued',
+    note_type: 'post_payment', refund_cents: 5000, ...over,
+  });
+
+  it('a note known only by its issue date still explains its sale’s refund (no double count when the sale’s record is not listed)', () => {
+    const i = inv('in_n');
+    const rows = joinSales({ records: [], notes: [], charges: [charge('ch_n', i, { refunds: [refund('re_1', 5000, '2026-11-04T19:10:00.000Z', 'our_1')] })], invoices: [i], shownFrom: null });
+    const band = moneyBandFromSales(rows, { since: SINCE, bandNotes: [note('cn_n', 'in_n')], stripeRead: true, next: NEXT });
+    assert.deepEqual([band[1].label, band[1].value], ['Refunded, before tax', '$44.25']);
+  });
+
+  it('a pre-payment note known only by its issue date still comes off Paid', () => {
+    const pre = note('cn_pp', 'in_pp', { note_type: 'pre_payment', amount_before_tax_cents: 1000, tax_total_cents: 130, total_cents: 1130, refund_cents: 0 });
+    const rows = joinSales({ records: [rec('in_pp')], notes: [], charges: null, invoices: [], shownFrom: null });
+    assert.equal(moneyBandFromSales(rows, { since: SINCE, bandNotes: [pre], stripeRead: false, next: NEXT })[0].value, '$78.50');
+  });
+
+  it('a note explains the refunds the CONSOLE made before a dashboard refund, whatever their order', () => {
+    const i = inv('in_a');
+    const rows = joinSales({
+      records: [rec('in_a', { refunded_cents: 7000 })], notes: [note('cn_1', 'in_a')], invoices: [i], shownFrom: null,
+      charges: [charge('ch_a', i, { refunds: [refund('re_dash', 2000, '2026-11-02T09:00:00.000Z'), refund('re_console', 5000, '2026-11-04T19:10:00.000Z', 'our_1')] })],
+    });
+    const items = moneyBandFromSales(rows, { since: SINCE, stripeRead: true, next: NEXT });
+    assert.deepEqual([items[1].value, items[1].note], ['$64.25', '2 refunds, 1 with no credit note, so no tax split']);
+    // The dashboard refund keeps ITS day: made before the window it counts nowhere, and the noted refund is not counted twice.
+    const edge = moneyBandFromSales(rows, { since: '2026-11-03T00:00:00.000Z', stripeRead: true, next: NEXT });
+    assert.equal(edge[1].value, '$44.25');
+  });
+
+  it('the database’s "+00:00" timestamps and our "Z" ones are compared as instants', () => {
+    const rows = joinSales({ records: [rec('in_a', { issued_at: '2025-11-06T00:00:00+00:00', paid_at: '2025-11-06T00:00:00+00:00' })], notes: [], charges: null, invoices: [], shownFrom: null });
+    assert.equal(moneyBandFromSales(rows, { since: SINCE, stripeRead: false, next: UNREAD_NEXT_CHARGE })[0].value, '$88.50');
   });
 });

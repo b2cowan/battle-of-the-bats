@@ -26,7 +26,7 @@ import { obj, planName, putBackOf, str, whyFields, type AuditRow, type PutBack, 
 import { possessive } from './utils';
 import { freeTimeStoryEntries, type PortalCopySummary } from './free-time-story';
 import { formatCents } from './console-money';
-import { CONSOLE_REFUND_TAIL } from './console-money-story';
+import { CONSOLE_REFUND_TAIL, DISPUTE_TAX_WORDS, refundSplitWords } from './console-money-story';
 import { disputeReasonWords, disputeStatusWords } from './stripe-subscription-charges';
 import { hasPlatformPower } from './platform-areas';
 import { LEAD_ACTIONS } from './platform-audit-reason';
@@ -80,9 +80,33 @@ function chargeStoryEntry(type: string, m: Record<string, unknown> | null): Pick
   const cents = typeof m?.disputeAmountCents === 'number' ? m.disputeAmountCents : typeof m?.amountCents === 'number' ? m.amountCents : null;
   const amount = cents === null ? 'a charge' : formatCents(cents, str(m?.currency) ?? 'cad');
   const reason = disputeReasonWords(str(m?.reason));
+  // Part 4: the amount is Stripe's whole charge, tax included; said only when there is an amount to say it of.
+  const taxed = cents === null ? '' : DISPUTE_TAX_WORDS;
   return type === 'subscription_charge_disputed'
-    ? { title: `Disputed ${amount} with their bank`, sub: `${reason} · nothing on the account changed` }
-    : { title: `Dispute closed: ${disputeStatusWords(str(m?.status))}`, sub: `${amount} · ${reason}` };
+    ? { title: `Disputed ${amount} with their bank`, sub: `${reason}${taxed && ` · amount ${taxed}`} · nothing on the account changed` }
+    : { title: `Dispute closed: ${disputeStatusWords(str(m?.status))}`, sub: `${amount}${taxed && ` ${taxed}`} · ${reason}` };
+}
+
+/**
+ * The tax split of the credit notes the console's refunds name, as words ("$44.25 + $5.75 tax"), from our record of each note and keyed
+ * by the note's id (the refund keeps it, write-once; the refund is already this club's, so no club filter is needed). A note we hold no
+ * record of, or that carried no tax, has no entry and the line says nothing more. A failed read leaves the Story as it was.
+ */
+async function creditNoteSplits(noteIds: readonly string[]): Promise<Map<string, string>> {
+  const out = new Map<string, string>();
+  if (!noteIds.length) return out;
+  try {
+    const { data, error } = await supabaseAdmin.from('platform_credit_note_tax_records').select('stripe_credit_note_id, amount_before_tax_cents, tax_total_cents, currency')
+      .eq('status', 'issued').in('stripe_credit_note_id', [...noteIds]);
+    if (error) throw error;
+    for (const n of (data ?? []) as Array<{ stripe_credit_note_id: string; amount_before_tax_cents: number; tax_total_cents: number; currency: string }>) {
+      const words = refundSplitWords({ amountBeforeTaxCents: n.amount_before_tax_cents, taxCents: n.tax_total_cents, currency: n.currency });
+      if (words) out.set(n.stripe_credit_note_id, words);
+    }
+  } catch (err) {
+    console.warn('[platform-admin] story credit note read failed:', (err as { code?: string }).code ?? 'error');
+  }
+  return out;
 }
 
 /**
@@ -124,7 +148,7 @@ export async function buildClubStory(orgId: string, opts: { money?: boolean; lea
     supabaseAdmin.from('feedback_submissions').select('id, user_email, submitter_name, type, title, body, status, triaged_by, created_at')
       .eq('org_id', orgId).order('created_at', { ascending: false }).limit(SOURCE_CAP),
     opts.money
-      ? supabaseAdmin.from('platform_refunds').select('id, stripe_charge_id, stripe_refund_id, stripe_credit_note_number, amount_cents, currency, actor_email, reason, completed_at, created_at')
+      ? supabaseAdmin.from('platform_refunds').select('id, stripe_charge_id, stripe_refund_id, stripe_credit_note_id, stripe_credit_note_number, amount_cents, currency, actor_email, reason, completed_at, created_at')
         .eq('org_id', orgId).eq('status', 'done').order('created_at', { ascending: false }).limit(SOURCE_CAP)
       : Promise.resolve({ data: [] as unknown[] }),
     // A Coaches Portal staff gave free time (Stage 4b): its mark (mig 406, never cleared) and what the copy brought across.
@@ -374,11 +398,15 @@ export async function buildClubStory(orgId: string, opts: { money?: boolean; lea
   // GST/HST Part 6b (mig 446): a refund of an invoice charge names its credit note (the PDF is in the charge window it opens).
   // One without (a charge that paid no invoice, R3, or a refund from before credit notes) says so, never "no invoice":
   // a row from before mig 446 does not record whether it had one.
-  for (const f of (refundsRes.data ?? []) as Array<{ id: string; stripe_charge_id: string; stripe_refund_id: string | null; stripe_credit_note_number: string | null; amount_cents: number; currency: string; actor_email: string; reason: string; completed_at: string | null; created_at: string }>) {
+  // GST/HST Stage 3 Part 4: a refund whose credit note we hold a record of also says its split ("$44.25 + $5.75 tax").
+  const consoleRefunds = (refundsRes.data ?? []) as Array<{ id: string; stripe_charge_id: string; stripe_refund_id: string | null; stripe_credit_note_id: string | null; stripe_credit_note_number: string | null; amount_cents: number; currency: string; actor_email: string; reason: string; completed_at: string | null; created_at: string }>;
+  const splits = await creditNoteSplits(consoleRefunds.map(f => f.stripe_credit_note_id).filter((n): n is string => !!n));
+  for (const f of consoleRefunds) {
+    const split = (f.stripe_credit_note_id && splits.get(f.stripe_credit_note_id)) || '';
     entries.push({
       key: `refund:${f.stripe_refund_id ?? f.id}`, at: f.completed_at ?? f.created_at, kind: 'billing',
       title: `Refunded ${formatCents(f.amount_cents, f.currency)}${CONSOLE_REFUND_TAIL}`,
-      sub: `To the card it came from · ${f.stripe_credit_note_number ? `credit note ${f.stripe_credit_note_number}` : 'no credit note'} · the plan did not change`,
+      sub: `To the card it came from · ${f.stripe_credit_note_number ? `credit note ${f.stripe_credit_note_number}${split ? `, ${split}` : ''}` : 'no credit note'} · the plan did not change`,
       who: f.actor_email, why: f.reason, chargeId: f.stripe_charge_id,
     });
   }

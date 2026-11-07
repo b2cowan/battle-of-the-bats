@@ -588,3 +588,58 @@ records survive; refund in the Stripe dashboard → the credit note appears; the
   GST/HST answer as unresolved items whether or not they are marked looked at (a mark means reviewed, not corrected; the tax still collectible is
   owed). **/legal:** nothing due (internal tax-review notes under the six-year retention the privacy draft already states); owner choice:
   staff guidance to keep the "why" about the sale, not the person. **/docs:** none (platform-admin only).
+- **Part 4 RULED 2026-11-07 (owner, "yes built with your recommendations").** The UX summary was presented before any code and every
+  recommendation was accepted: (1) Refunded adds each refund at what it took off revenue (a credit note at its before-tax figure on the day the
+  note was ISSUED, else the amount refunded) and the label says "Refunded, before tax" only when every refund in the window is split, else
+  "N refunds, K with no credit note, so no tax split"; (2) our records unreadable but Stripe read: the Paid label drops "before tax" and the note
+  says "includes tax; our records could not be read"; (3) a charge with no invoice and no record counts at its amount and the note says so;
+  (4) the Story adds the split ("$44.25 + $5.75 tax") to a console refund whose credit note we hold, and a dispute says "including tax"; (5) non-CAD
+  sales stay as shipped (summed in the first sale's currency); plus two states the prompt had not listed: (6) a "paid sale" is a sale marked paid,
+  the same in both band states ($0 and void never; a sale paid from credit does); (7) a credit note issued BEFORE the bill was paid takes its
+  amount off Paid and is not a refund.
+- **Part 4 BUILT 2026-11-07 (no migration; the record tables are only read).** ONE function over the sales rows builds the band in both the
+  Stripe-read and Stripe-unreachable states (`moneyBandFromSales`, with `paidSaleBeforeTax` and `refundItems`, lib/console-money-sales.ts; the old
+  `recordMoneyBand` is deleted); source order is our kept record, then Stripe's invoice total less the tax Stripe reports, then the charge as
+  charged. Words in one home (`BAND_WORDS`, lib/console-money.ts). `moneyBand` remains only for "our records could not be read". Credit notes
+  issued in the twelve months are read by their own issue date on the first page only (`notesIssuedSince`, run beside the sales read; a failure
+  fails the records read, so the band says so rather than undercounting). Story: `creditNoteSplits` reads our note record by the note id the
+  refund keeps (write-once); disputes say "including tax". Business numbers and Today: "a month at list price, before tax"; guard test
+  `platform-metrics-before-tax-guard.test.ts` keeps tax-inclusive amounts out of lib/platform-metrics.ts. Help: lib/help-content/platform-admin.tsx
+  (the band, the Story, the Today totals line). New tests: the Part 4 block of console-money-sales.test.ts (part refund with a note, one with none,
+  $0, void, unpaid, before-window, a note on an older sale, pre-payment note, no-record sale, unreachable, records unreadable, the review fixes),
+  console-money-story-split.test.ts, and one pinned regex updated on purpose in support-console-stage3-guard.test.ts (the Story refund sub-line).
+  Checks: `NODE_OPTIONS=--max-old-space-size=8192 npm run typecheck` clean; the console-money*, support-console-stage3-guard, table-recipe-guard,
+  platform-audit*, plan-reader-door-guard, support-console-stage4b-inforce-guard and metrics-guard tests pass except the two known failures that are
+  other sessions' (ExpenseFormWindow footer; workspace-upgrade-status in-force census); `check:spelling`, `check:dictionary`, `lint:focused` clean.
+  `verify:changed` also lists failures in other sessions' files (help content for coaches and org, practice plans, the Stage 6 walk summary, the team
+  move census, the Today sales-tax wait file's workspace census); none names a Part 4 file.
+- **Part 4 /simplify 2026-11-07.** Four lenses. Applied: shared pluralize and `readCode`/`readSource` instead of hand-rolled copies; one flat
+  Refunded-note expression; `paidSaleBeforeTax` resolves its source once; named `PaidSale`; the "Next charge: Not read" cell defined once
+  (`UNREAD_NEXT_CHARGE`) and one `isCountedRefund` rule for both bands; the notes read runs beside the sales read; the Story matches a credit note
+  by the id the refund keeps, not by number plus club; the `moneyBand` fallback uses `BAND_WORDS`. Skipped: a useMemo for the band (negligible),
+  a test-helper refactor.
+- **Part 4 /review (high, money) 2026-11-07.** Three lenses (arithmetic and periods, data and tenant scoping, regression and blast radius). Fixed:
+  (M) a refund double counted when a note was known by its issue date but its sale's record was not listed; the same gap meant a pre-payment note
+  did not come off Paid; (M) the oldest-first allocation now gives a note to the refunds the CONSOLE made (they carry `ourRefundId`) before
+  Stripe-dashboard ones; (L) timestamps compared as instants, not as text. Confirmed sound: a note in both reads counts once; pre-payment note;
+  $0, void and failed refunds; balance-credit and mixed notes; tenant scoping (the route's `find_stripe` gate; the Story reads notes only for this club's
+  own refund rows). Accepted and recorded: **(a)** non-CAD sales are summed in the first sale's currency (owner-ruled; see the /accounting entry);
+  **(b)** a refund of a sale older than the window is not seen (Stripe refunds on cards stop at about 180 days, so it needs a charge over a year old);
+  **(c)** Stripe-unread refunds with no note are dated by the sale's issue date (our record keeps no refund date); **(d)** the sales and notes reads are
+  capped at 300 with no "partial" signal (about twelve sales a year per club); **(e)** the notes table has no index on the customer, so the read
+  scans the window's notes in that mode (fine at this volume; an index `(stripe_customer_id, issued_at)` if the table grows); **(f)** a stored
+  credit note's `refund_cents` is write-once, so if Stripe ever delivered a note before attaching its refund the band would count that refund twice
+  (note, then unsplit): check on Part 5's walk that a part refund with a note shows once; **(g)** a sale issued before the window and paid inside it
+  shows in the Stripe-read band but not in the unreachable one.
+- **Part 4 /accounting 2026-11-07.** Nothing here misstates revenue, a refund or the return's rules: line 101 is sales before tax; a credit note
+  adjusts line 107 in the period it is issued (the band counts a note on its issue day); credit notes never reduce line 103. A blended Refunded cell
+  (before-tax notes plus tax-included unsplit refunds) is acceptable only because the label drops "before tax" and the note counts the unsplit; never feed
+  it to the return worksheet. The band counts by PAYMENT date; the return counts by INVOICE date: the help now says the band is not the return.
+  ⚖ OWNER (open): **before the first US club is billed in US dollars**, the band must either sum the stored Canadian-dollar valuation or say more than
+  one currency is present (today it labels a mixed sum with the first sale's currency; the return's rule is the Bank of Canada rate for the invoice
+  date and our records already store it). STAGE 4 NOTE: a lost card dispute has no credit note, so its tax stays remitted unless written off (line 107).
+  Annual-billed clubs: the yearly figure is monthly x 12 whatever the annual price; a metrics matter, not tax. No professional sign-off for this view.
+- **Part 4 /docs 2026-11-07.** lib/help-content/platform-admin.tsx: the band definition (before tax, by payment date, not the GST/HST return, the
+  unreadable and unreachable wordings), the Story paragraph (the credit note's split; a dispute's amount includes tax), the Today totals line, and the
+  matching keywords and searchText. **/legal:** none due (no data collected, no email, no terms or policy promise changed; the Story reads the same
+  note records already kept for six years).

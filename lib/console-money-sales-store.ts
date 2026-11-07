@@ -27,6 +27,15 @@ async function notesFor(invoiceIds: readonly string[]): Promise<SaleNoteRecord[]
   return (data ?? []) as unknown as SaleNoteRecord[];
 }
 
+/** This customer's issued credit notes from `since` on, whatever invoice they are on (the revenue band, Part 4). Failing throws: the caller's records then read as failed. */
+async function notesIssuedSince(customerId: string, live: boolean, since: string): Promise<SaleNoteRecord[]> {
+  const { data, error } = await supabaseAdmin.from('platform_credit_note_tax_records').select(SALE_NOTE_COLUMNS)
+    .eq('stripe_customer_id', customerId).eq('livemode', live).eq('status', 'issued').gte('issued_at', since)
+    .order('issued_at', { ascending: false }).limit(WINDOW_MAX);
+  if (error) throw error;
+  return (data ?? []) as unknown as SaleNoteRecord[];
+}
+
 /**
  * A paging cursor from a stored instant: always `…Z` to the millisecond (the route only accepts that shape, and the screen
  * compares cursors as text), and a millisecond LATER so the record it names is read again rather than skipped by rounding
@@ -49,12 +58,16 @@ export async function readSaleRecords(customerId: string, live: boolean, window:
       .eq('stripe_customer_id', customerId).eq('livemode', live).gte('issued_at', window.since)
       .order('issued_at', { ascending: false }).limit(WINDOW_MAX);
     if (window.before) q = q.lt('issued_at', window.before);
-    const [{ data, error }, older] = await Promise.all([
+    const [{ data, error }, older, bandNotes] = await Promise.all([
       q,
       // The newest record before the window: when the window is empty (a quiet year) the next page jumps straight to it.
       supabaseAdmin.from('platform_charge_tax_records').select('issued_at')
         .eq('stripe_customer_id', customerId).eq('livemode', live).lt('issued_at', window.since)
         .order('issued_at', { ascending: false }).limit(1),
+      // Part 4: the revenue band counts a refund in the period its credit note was ISSUED, so the notes issued in the twelve months are
+      // read by their own date (a note on a sale older than the window still falls inside it). First page only; read only; it fails
+      // the whole read when it errors (the band then says our records could not be read), so it runs beside the others.
+      window.before ? Promise.resolve(undefined) : notesIssuedSince(customerId, live, window.since),
     ]);
     if (error) throw error;
     if (older.error) throw older.error;
@@ -62,7 +75,7 @@ export async function readSaleRecords(customerId: string, live: boolean, window:
     const notes = await notesFor(sales.map(s => s.stripe_invoice_id));
     const newestOlder = (older.data?.[0] as { issued_at?: string } | undefined)?.issued_at;
     const olderBefore = sales.length >= WINDOW_MAX ? cursorAt(sales[sales.length - 1].issued_at) : (newestOlder ? cursorAt(newestOlder) : null);
-    return { state: 'read', sales, notes, olderBefore };
+    return { state: 'read', sales, notes, olderBefore, bandNotes };
   } catch (err) {
     return failed(err);
   }

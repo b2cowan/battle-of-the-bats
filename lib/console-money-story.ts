@@ -14,6 +14,18 @@ import { cap } from './platform-labels';
 const HOUR = 3_600_000;
 const near = (a: string, b: string, ms: number) => Math.abs(Date.parse(a) - Date.parse(b)) <= ms;
 
+/**
+ * A console refund's credit note, split (GST/HST Stage 3 Part 4; owner ruling 2026-11-06): "$44.25 + $5.75 tax", from our record of
+ * the note. Empty when the note carried no tax (nothing to split) so the line never says "$50.00 + $0.00 tax".
+ */
+export function refundSplitWords(note: { amountBeforeTaxCents: number; taxCents: number; currency: string }): string {
+  if (note.taxCents <= 0) return '';
+  return `${formatCents(note.amountBeforeTaxCents, note.currency)} + ${formatCents(note.taxCents, note.currency)} tax`;
+}
+
+/** A dispute's amount is Stripe's, tax included (it is the whole charge): the Story says so (Part 4). */
+export const DISPUTE_TAX_WORDS = 'including tax';
+
 /** How a console refund's title ends until Stripe is read; the screen then names the charge by its moment. */
 export const CONSOLE_REFUND_TAIL = ' of a charge';
 export const STRIPE_WHO = 'Stripe';

@@ -18,8 +18,8 @@ import {
   type ChargeTaxRecordRow, type CreditNoteTaxRecordRow, type StoredTaxLine,
 } from './charge-tax-record';
 import {
-  chargeFailureWords, failedBillOf, invoicePaidForWords, nextTryShort, stripeSaysWords,
-  type ChargeCreditNote, type ChargeFlag, type MoneyCharge, type MoneyInvoice, type Patterns,
+  BAND_WORDS, isCountedRefund, chargeFailureWords, failedBillOf, invoicePaidForWords, nextTryShort, stripeSaysWords,
+  type BandCell, type ChargeCreditNote, type ChargeFlag, type MoneyCharge, type MoneyInvoice, type Patterns,
 } from './console-money';
 
 // ── The shapes the route hands the screen (our record; read for the Stripe-reading roles only, Ask 7) ─────────────
@@ -45,14 +45,21 @@ export type SaleRecord = Pick<ChargeTaxRecordRow,
   | 'fx_rate' | 'fx_rate_date' | 'cad_amount_before_tax_cents' | 'cad_tax_total_cents' | 'cad_total_cents'
 > & { refunded_cents: number };
 
-export const SALE_NOTE_COLUMNS = 'stripe_credit_note_id, stripe_invoice_id, note_number, issued_at, currency, amount_before_tax_cents, tax_total_cents, total_cents, tax_lines, status';
+// `note_type` and `refund_cents` (Part 4): a note issued before the sale was paid reduces the bill, not the refunds; the cents a note
+// sent back through Stripe say how much of a sale's Stripe refunds the note already explains.
+export const SALE_NOTE_COLUMNS = 'stripe_credit_note_id, stripe_invoice_id, note_number, issued_at, currency, amount_before_tax_cents, tax_total_cents, total_cents, tax_lines, status, note_type, refund_cents';
 
 export type SaleNoteRecord = Pick<CreditNoteTaxRecordRow,
-  'stripe_credit_note_id' | 'stripe_invoice_id' | 'note_number' | 'issued_at' | 'currency' | 'amount_before_tax_cents' | 'tax_total_cents' | 'total_cents' | 'tax_lines' | 'status'>;
+  'stripe_credit_note_id' | 'stripe_invoice_id' | 'note_number' | 'issued_at' | 'currency' | 'amount_before_tax_cents' | 'tax_total_cents' | 'total_cents' | 'tax_lines' | 'status' | 'note_type' | 'refund_cents'>;
 
-/** Our records for the tab, or `failed` (the screen then shows Stripe's charges as shipped, Tax "Not read"). */
+/**
+ * Our records for the tab, or `failed` (the screen then shows Stripe's charges as shipped, Tax "Not read").
+ * `bandNotes` (Part 4, the first page only): every credit note ISSUED in the twelve months, whatever sale it is on, so a note on an
+ * older sale still counts in the period it was issued (the GST/HST return's rule). Optional so a page of older sales, which does
+ * not read it, still fits.
+ */
 export type SalesRecords =
-  | { state: 'read'; sales: SaleRecord[]; notes: SaleNoteRecord[]; olderBefore: string | null }
+  | { state: 'read'; sales: SaleRecord[]; notes: SaleNoteRecord[]; olderBefore: string | null; bandNotes?: SaleNoteRecord[] }
   | { state: 'failed' };
 
 // ── The join ────────────────────────────────────────────────────────────────────────────────────
@@ -337,22 +344,102 @@ export function saleCardCell(row: SaleRow, stripeRead: boolean): { text: string;
   return saleStatus(row) === 'open' ? { text: 'Not charged yet', quiet: true } : { text: '—', quiet: true };
 }
 
-// ── The band from our record (Stripe unreachable, Ask 2 = A; gap 2 = A) ─────────────────────────────────
+// ── The revenue band: before tax, from our record (GST/HST Stage 3 Part 4; owner ruling 2026-11-06) ────────────
+// ONE function over the sales rows serves both the Stripe-read and the Stripe-unreachable band, so the two cannot drift. The
+// source order is the plan's: our kept record first; where a sale has none, Stripe's own invoice (its total less the tax Stripe
+// itself reports); a charge with no invoice at all counts at its amount and the note says so. Never "the total minus a guess".
 
-export function recordMoneyBand(rows: readonly SaleRow[], since: string): Array<{ label: string; value: string; note: string; tone?: 'warn' }> {
-  const records = rows.map(r => r.record).filter((r): r is SaleRecord => !!r && r.status !== 'void');
-  const currency = records[0]?.currency ?? 'cad';
-  const paid = records.filter(r => r.status === 'paid' && (r.paid_at ?? r.issued_at) >= since);
-  const refunded = records.filter(r => r.refunded_cents > 0 && r.issued_at >= since);
-  const firstPaid = [...paid].sort((a, b) => (a.paid_at ?? a.issued_at).localeCompare(b.paid_at ?? b.issued_at))[0];
-  const sales = (n: number) => `${n} sale${n === 1 ? '' : 's'}`;
+/** A paid sale at its before-tax figure; `asCharged` = no record or invoice holds its tax, so it counts at the amount charged. */
+type PaidSale = { cents: number; currency: string; at: string; asCharged: boolean };
+
+/** An instant on or after another, compared as instants: the database's `+00:00` and our `Z` spellings must not sort apart. */
+const onOrAfter = (a: string, b: string): boolean => Date.parse(a) >= Date.parse(b);
+
+/**
+ * A paid sale at its before-tax figure, or null when it is not a paid sale of value (unpaid, void, or a $0 sale). `notes` = this
+ * sale's issued credit notes; the band passes every note it knows (a note can be known when its sale's record was not listed).
+ */
+export function paidSaleBeforeTax(row: SaleRow, notes: readonly SaleNoteRecord[] = row.notes): PaidSale | null {
+  if (isVoidSale(row)) return null;
+  const record = row.record;
+  const paidCharge = row.paid && row.paid.status === 'succeeded' ? row.paid : null;
+  if (row.bare ? !paidCharge : saleStatus(row) !== 'paid') return null;
+  // One date rule for both states: the record's, else the paid charge's, else the sale's.
+  const at = record?.paid_at ?? paidCharge?.createdAt ?? record?.issued_at ?? row.invoice?.issuedAt ?? row.at;
+  // A note issued before the bill was paid took that much off what was billed (it is not a refund of money).
+  const billedLess = notes.filter(n => n.note_type === 'pre_payment').reduce((s, n) => s + n.amount_before_tax_cents, 0);
+  // Our record first; else Stripe's own invoice less the tax Stripe itself reports; else (below) the charge as charged.
+  const invoice = row.invoice;
+  const source = record ? { total: record.total_cents, beforeTax: record.amount_before_tax_cents, currency: record.currency }
+    : invoice?.totalCents != null ? { total: invoice.totalCents, beforeTax: invoice.totalCents - (invoice.taxCents ?? 0), currency: invoice.currency ?? paidCharge?.currency ?? 'cad' }
+      : null;
+  if (source) return source.total === 0 ? null : { cents: Math.max(0, source.beforeTax - billedLess), currency: source.currency, at, asCharged: false };
+  return paidCharge ? { cents: paidCharge.amountCents, currency: paidCharge.currency, at, asCharged: true } : null;
+}
+
+/** One refund as the band counts it: `split` = its before-tax figure comes from a credit note; `at` null = no real refund date is known. */
+type RefundItem = { cents: number; currency: string; at: string | null; split: boolean };
+
+/**
+ * Each refund counts at what it took off the revenue, in the period it was recorded. A credit note counts at its before-tax figure
+ * on the day the note was issued (the return's rule), whatever sale it is on. Money Stripe refunded that no note explains counts at
+ * the amount refunded and is not split: with Stripe read, a sale's notes are taken to explain the refunds the console made first (a
+ * note is made with its refund, and Stripe's dashboard refunds never have one), then the oldest of the rest, each dated by the
+ * refund's own day; with Stripe unread our record keeps no refund day, so the sale's. `notes` = every issued note known, however
+ * it was read (the sale's own, or by its issue date), once each; `byInvoice` groups them.
+ */
+function refundItems(rows: readonly SaleRow[], since: string, notes: readonly SaleNoteRecord[], byInvoice: ReadonlyMap<string, SaleNoteRecord[]>, stripeRead: boolean): RefundItem[] {
+  const items: RefundItem[] = [];
+  for (const n of notes) {
+    if (n.note_type !== 'pre_payment' && onOrAfter(n.issued_at, since) && n.total_cents > 0) items.push({ cents: n.amount_before_tax_cents, currency: n.currency, at: n.issued_at, split: true });
+  }
+  for (const row of rows) {
+    if (isVoidSale(row)) continue;
+    let explained = (byInvoice.get(row.key) ?? []).reduce((s, n) => s + n.refund_cents, 0);
+    if (stripeRead && row.charges.length) {
+      const refunds = row.charges.flatMap(c => c.refunds.filter(isCountedRefund).map(r => ({ r, currency: c.currency })))
+        .sort((a, b) => Number(!a.r.ourRefundId) - Number(!b.r.ourRefundId) || a.r.createdAt.localeCompare(b.r.createdAt));
+      for (const { r, currency } of refunds) {
+        const covered = Math.min(explained, r.amountCents);
+        explained -= covered;
+        if (r.amountCents - covered > 0 && onOrAfter(r.createdAt, since)) items.push({ cents: r.amountCents - covered, currency, at: r.createdAt, split: false });
+      }
+    } else if (row.record && row.record.refunded_cents > explained && onOrAfter(row.record.issued_at, since)) {
+      items.push({ cents: row.record.refunded_cents - explained, currency: row.record.currency, at: null, split: false });
+    }
+  }
+  return items;
+}
+
+/**
+ * The revenue band: Paid before tax · Refunded · Next charge. `next` is the third cell (Stripe's quote, or "Not read"); the caller
+ * supplies it because it comes from Stripe, not from the sales. `stripeRead` false = every figure is from our record alone and
+ * says so. `bandNotes` = the credit notes issued in the twelve months (see SalesRecords).
+ */
+export function moneyBandFromSales(rows: readonly SaleRow[], ctx: { since: string; bandNotes?: readonly SaleNoteRecord[]; stripeRead: boolean; next: BandCell }): BandCell[] {
+  const { since, stripeRead } = ctx;
+  const ours = stripeRead ? '' : BAND_WORDS.ourRecord;
+  // Every issued note once, however it was read; grouped by the sale it is on (a sale's record may not be listed though its note is).
+  const notes = [...new Map([...rows.flatMap(r => r.notes), ...(ctx.bandNotes ?? [])].filter(n => n.status === 'issued').map(n => [n.stripe_credit_note_id, n] as const)).values()];
+  const byInvoice = new Map<string, SaleNoteRecord[]>();
+  for (const n of notes) byInvoice.set(n.stripe_invoice_id, [...(byInvoice.get(n.stripe_invoice_id) ?? []), n]);
+  const paid = rows.flatMap(r => { const p = paidSaleBeforeTax(r, byInvoice.get(r.key) ?? []); return p && onOrAfter(p.at, since) ? [p] : []; });
+  const asCharged = paid.filter(p => p.asCharged).length;
+  const oldest = [...paid].sort((a, b) => a.at.localeCompare(b.at))[0];
+  const paidNote = [paid.length ? `${BAND_WORDS.sales(paid.length)} since ${consoleDay(oldest.at)}` : BAND_WORDS.none, ...(asCharged ? [BAND_WORDS.asCharged(asCharged)] : [])].join(' · ');
+
+  const refunds = refundItems(rows, since, notes, byInvoice, stripeRead);
+  const unsplit = refunds.filter(r => !r.split).length;
+  // One refund names its day (when a real one is known); a mix says how many have no credit note.
+  const dated = refunds.length === 1 && refunds[0].at ? `, ${consoleDay(refunds[0].at)}` : '';
+  const unsplitTail = unsplit === 0 ? '' : unsplit === refunds.length ? ` · ${BAND_WORDS.noCreditNote}` : `, ${BAND_WORDS.someUnsplit(unsplit)}`;
+  const refundNote = refunds.length ? `${BAND_WORDS.refunds(refunds.length)}${dated}${unsplitTail}` : BAND_WORDS.none;
   return [
-    { label: 'Paid, last 12 months', value: saleCents(paid.reduce((s, r) => s + r.total_cents, 0), currency),
-      note: paid.length ? `${paid.length} paid ${paid.length === 1 ? 'sale' : 'sales'} since ${consoleDay(firstPaid.paid_at ?? firstPaid.issued_at)} · our record` : 'none in 12 months · our record' },
-    { label: 'Refunded', value: saleCents(refunded.reduce((s, r) => s + r.refunded_cents, 0), currency),
-      note: refunded.length ? `${sales(refunded.length)} refunded · our record` : 'none in 12 months · our record',
-      ...(refunded.length ? { tone: 'warn' as const } : {}) },
-    { label: 'Next charge', value: 'Not read', note: 'Stripe could not be asked for the next charge. Read again.', tone: 'warn' },
+    { label: BAND_WORDS.paidBeforeTax, value: saleCents(paid.reduce((s, p) => s + p.cents, 0), paid[0]?.currency ?? 'cad'), note: `${paidNote}${ours}` },
+    { label: refunds.length > 0 && unsplit === 0 ? BAND_WORDS.refundedBeforeTax : BAND_WORDS.refunded,
+      value: saleCents(refunds.reduce((s, r) => s + r.cents, 0), refunds[0]?.currency ?? paid[0]?.currency ?? 'cad'),
+      note: `${refundNote}${ours}`, ...(refunds.length ? { tone: 'warn' as const } : {}) },
+    ctx.next,
   ];
 }
 
