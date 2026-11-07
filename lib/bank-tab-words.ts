@@ -287,6 +287,12 @@ export const BANK_WORDS = {
   coachNoChecksYet: 'No statements checked this season yet.',
   coachLoadFailed: 'The bank checks couldn’t be loaded.',
   coachLoading: 'Loading the bank checks…',
+  // ── the coach's phone (BC7b; drawing tab 2). Drafts for BC8's `/marketing` too. ──
+  // The band's middle tile on a phone when the cash is the only thing taken off (drawn "your books, less $180.00 cash");
+  // with lines marked Not in the bank yet as well, the club's short caption says it.
+  coachShouldCashPhone: (amount: string) => `Your books, less ${amount} cash`,
+  // Find's group head over the cards when no check this season has matched (shorter, no year, as the club's phone).
+  coachFindSinceSeasonPhone: (date: string) => `Since the season started · ${date}`,
   // The portal's record windows end on Close (the Ledger's own line window does).
   close: 'Close',
 } as const;

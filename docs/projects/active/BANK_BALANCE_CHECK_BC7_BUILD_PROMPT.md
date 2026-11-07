@@ -1,8 +1,8 @@
 # Bank balance check BC7: the coach's Bank view in the Ledger, desk and phone (build prompt, two sessions)
 
-> **BC7a done 2026-11-06** (desk view built + `/review` standard; plan §9 BC7 has the anchors, §0 "Coach desk and reader" /
-> "Coach sharing"). **Next BC7b** — start at "BC7b — the phone, the walks and the finishing passes". Commit state: see the
-> plan's BC7a line and `git log -- components/coaches/bank`.
+> **✅ BC7 DONE 2026-11-06.** BC7a (desk) committed `d5c9a4dbc`; BC7b (the phone, the walk 95/95, `/design`, `/simplify`,
+> `/review`) built 2026-11-06 — plan §9 BC7 has the anchors and the commit; `git log -- components/coaches/bank`. Nothing
+> left to execute here; next is BC8 after Stage 14.
 
 > **Written 2026-11-06**, after BC6 was committed (BC6a `60947d02c`, BC6b `4adaab834`; plan §9 BC6). **Paste
 > `execute @docs/projects/active/BANK_BALANCE_CHECK_BC7_BUILD_PROMPT.md` into a new chat on `dev`.** The first session

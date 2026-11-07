@@ -109,7 +109,13 @@ export default function CoachBankCheck({ orgSlug, teamId, view, active = true, a
   const band = fresh && fresh.booksCents !== null
     ? figureCheck({ bankCents: typed ?? 0, booksCents: fresh.booksCents, onItsWayCents: null, waiting: items, cashCents })
     : null;
-  const tiles = band ? bankBandTiles({ date, figure: band, typed: typed !== null, isPhone }) : null;
+  const shared = band ? bankBandTiles({ date, figure: band, typed: typed !== null, isPhone }) : null;
+  // The coach's phone (drawn): "Your books, less $X cash" on the middle tile when the cash is all that is taken off; the
+  // shared (club's, settled) short caption otherwise. Overridden here only, never in the shared tiles (BC7b).
+  const cashOnly = cashCents !== null && items.length === 0;
+  const tiles = shared && cashOnly
+    ? { ...shared, tiles: shared.tiles.map(t => (t.key === 'should' ? { ...t, captionShort: W.coachShouldCashPhone(cents(cashCents)) } : t)) }
+    : shared;
 
   const touch = () => { setError(''); onTouched(); };
   const mark = (w: WaitingItem) => { setMarked(m => new Map(m).set(w.key, w)); touch(); };
@@ -141,6 +147,24 @@ export default function CoachBankCheck({ orgSlug, teamId, view, active = true, a
     setBalance(''); setCash(''); setDate(today); setAsOf(today); setMarked(new Map()); setDropped(new Set());
   }
 
+  // Save and what saving it means: inline after the fields at a desk; on a phone the card's last thing, full width, with
+  // its notes and the season's line under it (drawn: type, read the band, fix in Find, then save, no scroll back up).
+  const saveButton = (
+    <div className={b.save}>
+      <button type="button" className={styles.btnPrimary} onClick={() => void save()} disabled={busy || !fresh}>
+        {busy ? W.saving : W.saveCheck}
+      </button>
+    </div>
+  );
+  const saveNotes = (
+    <>
+      {error && <p className={`${styles.errorText} ${b.note}`} role="alert">{error}</p>}
+      {band && band.result === 'off' && typed !== null && <p className={`${styles.formHint} ${b.note}`}>{W.saveOffNote(cents(band.offByCents))}</p>}
+      {fresh?.replaces && <p className={`${styles.formHint} ${b.note}`}>{W.replacesNote}</p>}
+      <p className={`${styles.formHint} ${b.since}`}>{W.coachSince(dayYear(view.season.start))}</p>
+    </>
+  );
+
   return (
     <section className={b.card} aria-labelledby="coach-bank-check-title">
       <h2 id="coach-bank-check-title" className={b.cardTitle}>{W.checkTitle}</h2>
@@ -162,16 +186,9 @@ export default function CoachBankCheck({ orgSlug, teamId, view, active = true, a
           {/* Said under the field as it is typed, not only at Save: the band leaves an unreadable figure out (/review). */}
           {cashBad && <p id="coach-bank-cash-bad" className={styles.errorText}>{BANK_REFUSAL.bad_amount}</p>}
         </div>
-        <div className={b.save}>
-          <button type="button" className={styles.btnPrimary} onClick={() => void save()} disabled={busy || !fresh}>
-            {busy ? W.saving : W.saveCheck}
-          </button>
-        </div>
+        {!isPhone && saveButton}
       </div>
-      {error && <p className={`${styles.errorText} ${b.note}`} role="alert">{error}</p>}
-      {band && band.result === 'off' && typed !== null && <p className={`${styles.formHint} ${b.note}`}>{W.saveOffNote(cents(band.offByCents))}</p>}
-      {fresh?.replaces && <p className={`${styles.formHint} ${b.note}`}>{W.replacesNote}</p>}
-      <p className={`${styles.formHint} ${b.since}`}>{W.coachSince(dayYear(view.season.start))}</p>
+      {!isPhone && saveNotes}
 
       <Status figure={figure} date={date} readError={readError} fresh={!!fresh} onRetry={() => setAgain(n => n + 1)} />
 
@@ -213,6 +230,8 @@ export default function CoachBankCheck({ orgSlug, teamId, view, active = true, a
             }) : undefined} />
         </>
       )}
+      {isPhone && saveButton}
+      {isPhone && saveNotes}
     </section>
   );
 }

@@ -7,6 +7,7 @@
  *   3 · rule 6: the screen sends intent; the band is the engine's; a saved check's figures are the server's.
  *   4 · the coach's season: "Statements from this season only", Q1's divider by the season's NAME, no year parameter.
  *   5 · sharing: the look-free module both portals use, the coach view drawn in the portal's own look.
+ *   6 · the phone (BC7b): Save last, the cash caption, Find in the portal's one framed list 10 at a time, signed amounts.
  */
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
@@ -117,5 +118,32 @@ describe('5 · one look-free module shared, each portal its own look', () => {
   });
   it('an off check is amber, never red', () => {
     assert.doesNotMatch(ALL, /tone="danger"|tone: 'danger'/);
+  });
+});
+
+describe('6 · the phone (BC7b: drawing tab 2, the club\'s BC4b recipe in the portal\'s own list)', () => {
+  it('Save is inline at a desk and the card\'s last thing on a phone, its notes and the season\'s line under it', () => {
+    const check = code('CoachBankCheck.tsx');
+    assert.match(check, /\{!isPhone && saveButton\}\s*<\/div>\s*\{!isPhone && saveNotes\}/);
+    assert.match(check, /\{isPhone && saveButton\}\s*\{isPhone && saveNotes\}\s*<\/section>/);
+    assert.match(check, /const saveNotes = \([\s\S]*W\.coachSince\(dayYear\(view\.season\.start\)\)[\s\S]*?\);\n\n  return/);
+  });
+  it('the phone band says "Your books, less $X cash" when the cash is all that is taken off, in the coach view only', () => {
+    assert.equal(BANK_WORDS.coachShouldCashPhone('$180.00'), 'Your books, less $180.00 cash');
+    assert.match(code('CoachBankCheck.tsx'), /const cashOnly = cashCents !== null && items\.length === 0;/);
+    assert.doesNotMatch(readCode('lib/bank-screen.ts'), /coachShouldCashPhone/, 'the shared (club) tiles keep their settled caption');
+  });
+  it('Find on a phone: the portal\'s framed list (never the table cards), 10 at a time, signed amounts, the action under the row', () => {
+    const find = code('CoachBankFind.tsx');
+    assert.match(find, /const PAGE_PHONE = 10;/);
+    assert.match(find, /const page = isPhone \? PAGE_PHONE : PAGE;/);
+    assert.match(find, /<CoachRowList label=\{sinceTitle\}/);
+    assert.match(find, /moved\(signed\(l\.direction, l\.amountCents\)\)/);
+    assert.match(find, /actions=\{<LineAction name=\{name\} onMark=\{onMark\} undo=\{undo\} shown quiet=\{!chip\} \/>\}/,
+      'the bordered button on a hinted phone row only; the rest say it as the quiet link (owner 2026-11-06)');
+    assert.doesNotMatch(ALL, /tableAsCards/, 'the phone draws its own list; no label/value table cards');
+  });
+  it('the saved checks on a phone are rows of the framed list, each the door to its check', () => {
+    assert.match(code('CoachBankView.tsx'), /<CoachRow key=\{c\.id\} as="button" door="chevron" aria-haspopup="dialog" onClick=\{\(\) => setOpenId\(c\.id\)\}/);
   });
 });

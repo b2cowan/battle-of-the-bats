@@ -12441,6 +12441,17 @@ ul.rowListInset { border: 0; border-radius: 0; background: none; }
   .rowListItem:has(> .rowListBeside) .rowListChevron { display: none; }
   .rowListItem:has(> .rowListBeside) .rowListRow { padding-right: 0.85rem; }
 }
+/* The controls UNDER a row (Bank balance check BC7b, owner 2026-11-06: Find's "Not in the bank yet" on a phone): a sibling
+   of the row inside its <li>, as `beside` is, on its own line under the row's words, each control a full tap. The row
+   keeps being one target (or a plain record); the controls never nest in it. */
+.rowListItem:has(> .rowListActions) > .rowListRow { padding-bottom: 0.3rem; }
+.rowListActions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; padding: 0 1rem var(--table-pad-compact); }
+@media (max-width: 768px) {
+  .rowListActions button, .rowListActions a { min-height: var(--tap-min, 44px); }
+}
+@media (max-width: 640px) {
+  .rowListActions { padding: 0 0.85rem 0.65rem; }
+}
 
 /* Touch (K-12): a row that is a control clears the floor; the worded door's box already does;
    a control in the trail (Apply · Rename · Delete on a template row) clears it both ways. */

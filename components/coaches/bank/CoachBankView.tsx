@@ -18,13 +18,16 @@ import { ChevronRight } from 'lucide-react';
 import LoadingState from '@/components/shared/LoadingState';
 import CoachLoadError from '@/components/coaches/CoachLoadError';
 import { CoachChip, ledgerKit } from '@/components/coaches/kit';
+import { CoachRow, CoachRowList } from '@/components/coaches/CoachRowList';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
+import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { useMoneyRevision } from '@/lib/coach-money-refresh';
 import { BANK_WORDS as W } from '@/lib/bank-tab-words';
 import { cents, dayYear } from '@/lib/bank-screen';
 import { readTeamBank, type TeamBank, type TeamCheck } from './coachBank';
 import CoachBankCheck, { type MissingLine } from './CoachBankCheck';
 import CoachBankWindow from './CoachBankWindow';
+import { DotPart } from './CoachBankFind';
 import b from './CoachBank.module.css';
 
 export default function CoachBankView({ orgSlug, teamId, active = true, onAddLine }: {
@@ -42,6 +45,7 @@ export default function CoachBankView({ orgSlug, teamId, active = true, onAddLin
   // "Check this statement again": the form starts again on that day (re-keyed, so it scrolls to it with the balance empty).
   const [again, setAgain] = useState<{ date: string; n: number } | null>(null);
   const revision = useMoneyRevision();
+  const isPhone = useIsPhone();
   const [retry, setRetry] = useState(0);
   const load = () => setRetry(n => n + 1);
   // A write's answer is the newest read there is: a plain read already in flight when it lands must not replace it (/review).
@@ -75,20 +79,22 @@ export default function CoachBankView({ orgSlug, teamId, active = true, onAddLin
     <div>
       {/* The head line (tab 2, ask 4): the account, how far it is checked, its result; the amber chip opens the latest. */}
       <p className={b.head}>
+        {/* Each part keeps its dot: a phone wraps between the parts, never leaving "·" to start a line (BC7b walk). */}
         <b>{accountName}</b>
-        <span aria-hidden>·</span>
         {through ? (
           <>
-            <span>{W.overviewThrough} <b>{dayYear(through.date)}</b></span>
-            <span aria-hidden>·</span>
-            {through.result === 'matches' ? <span>{W.matches}</span> : latestCheck && (
-              <button type="button" className={b.chipDoor} aria-label={W.openOffCheck(cents(through.offByCents), dayYear(through.date))}
-                onClick={() => setOpenId(latestCheck.id)}>
-                <CoachChip tone="warn">{W.offBy(cents(through.offByCents))}</CoachChip>
-              </button>
+            <DotPart lead><span>{W.overviewThrough} <b>{dayYear(through.date)}</b></span></DotPart>
+            {/* The result, with its dot only when there is one to show (/review: never a lone "·"). */}
+            {through.result === 'matches' ? <DotPart><span>{W.matches}</span></DotPart> : latestCheck && (
+              <DotPart>
+                <button type="button" className={b.chipDoor} aria-label={W.openOffCheck(cents(through.offByCents), dayYear(through.date))}
+                  onClick={() => setOpenId(latestCheck.id)}>
+                  <CoachChip tone="warn">{W.offBy(cents(through.offByCents))}</CoachChip>
+                </button>
+              </DotPart>
             )}
           </>
-        ) : <span>{W.notChecked}</span>}
+        ) : <DotPart lead><span>{W.notChecked}</span></DotPart>}
       </p>
       {/* A re-read that failed once the view is up: say so above the figures it couldn't refresh (/review). */}
       {error && <CoachLoadError message={error} onRetry={load} />}
@@ -104,8 +110,22 @@ export default function CoachBankView({ orgSlug, teamId, active = true, onAddLin
       <h3 className={`${styles.panelSubhead} ${b.listHead}`}>{W.listTitle}</h3>
       {view.checks.length === 0 ? (
         <p className={`${styles.formHint} ${b.empty}`}>{W.coachNoChecksYet}</p>
+      ) : isPhone ? (
+        // On a phone each check is a row of the portal's framed list, the whole row its door (the club's BC4b cards):
+        // "Oct 31, 2026 · $3,060.00", its result, who checked it and when.
+        <CoachRowList label={W.listTitle}>
+          {view.checks.map(c => (
+            // No aria-label: the row's own words (date, balance, result, who) are its name, as the desk's cells read (/review).
+            <CoachRow key={c.id} as="button" door="chevron" aria-haspopup="dialog" onClick={() => setOpenId(c.id)}
+              title={W.cardTitle(dayYear(c.date), cents(c.bankCents))}
+              caption={<>
+                <span className={b.cardLine}><Result c={c} /></span>
+                <span className={b.cardLine}>{W.checkedCell(c.checkedBy, dayYear(c.checkedAt))}</span>
+              </>} />
+          ))}
+        </CoachRowList>
       ) : (
-        <div className={`${styles.tableWrap} ${styles.tableAsCards}`}>
+        <div className={styles.tableWrap}>
           <table className={styles.table}>
             <thead>
               <tr>

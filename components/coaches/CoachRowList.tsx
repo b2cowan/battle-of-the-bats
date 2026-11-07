@@ -116,13 +116,20 @@ type RowBase = {
   'data-day'?: string;
 };
 
+/** Controls UNDER the row, on their own line inside its <li> (a sibling of the row, as `beside` is): a phone list whose
+ *  rows each carry a worded action too long to sit beside them (Bank balance check BC7b's Find). A STATIC row's only, and
+ *  never with `beside` or a `door`: `beside` makes the <li> a flex row (the actions would land to its right), and a
+ *  door's chevron spans the whole <li> on a phone (it would sit over the actions' line) — /design and /review BC7b. */
+type RowActions = { actions: ReactNode; beside?: never; door?: never };
+
 export type CoachRowProps =
-  | (RowBase & { as: 'link'; href: string })
-  | (RowBase & { as: 'button'; onClick: MouseEventHandler<HTMLButtonElement>; 'aria-expanded'?: boolean; 'aria-haspopup'?: 'dialog' | 'menu'; disabled?: boolean })
-  | (RowBase & { as?: 'static' });
+  | (RowBase & { as: 'link'; href: string; actions?: never })
+  | (RowBase & { as: 'button'; onClick: MouseEventHandler<HTMLButtonElement>; 'aria-expanded'?: boolean; 'aria-haspopup'?: 'dialog' | 'menu'; disabled?: boolean; actions?: never })
+  | (RowBase & { as?: 'static'; actions?: never })
+  | (Omit<RowBase, 'beside' | 'door'> & RowActions & { as?: 'static' });
 
 export function CoachRow(props: CoachRowProps) {
-  const { mark, lead, leadKind = 'date', title, titleWeight, caption, note, trail, door, className, beside } = props;
+  const { mark, lead, leadKind = 'date', title, titleWeight, caption, note, trail, door, className, beside, actions } = props;
   const opens = props.as === 'link' || props.as === 'button';
   const rowClass = `${styles.rowListRow}${opens ? ` ${styles.rowListDoor}` : ''}${className ? ` ${className}` : ''}`;
   const inner = (
@@ -177,6 +184,7 @@ export function CoachRow(props: CoachRowProps) {
         <div className={rowClass} title={props.tooltip}>{inner}</div>
       )}
       {beside != null && <span className={styles.rowListBeside}>{beside}</span>}
+      {actions != null && <span className={styles.rowListActions}>{actions}</span>}
     </li>
   );
 }

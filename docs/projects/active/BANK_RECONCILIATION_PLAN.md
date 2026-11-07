@@ -320,6 +320,9 @@ money table or a book line.** A guard test pins this: no bank code writes `accou
 - [ ] *new, BC7a drafts* (coach Bank view, `BANK_WORDS.coach*`, for BC8's pass): "Team bank account" · "Lines since the
   season started ({date}): n" / "Lines since the season started · {date}" (Find's head before any match) · "No statements
   checked this season yet." · "The bank checks couldn't be loaded." · "Loading the bank checks…" · "Close"
+- [ ] *new, BC7b drafts* (the coach's phone, for BC8's pass): "Your books, less {$X} cash" (the middle tile's phone caption
+  when the cash is the only thing taken off; drawn lowercase "your books, less $180.00 cash", written capitalized as the
+  club's phone caption is) · "Since the season started · {Oct 18}" (Find's group head over the phone rows before any match)
 - [ ] *new* "Statements from this season only, since {date}." (drawn) · *new* refusal "This statement is before the
   {2026 Season} started on {date}. Check it from last season before you start a new one." — coach
 - [ ] "Bank: {account} checked through {date} ›" · "Bank: not checked yet ›" · coach "Bank checked through {date} ›" ·
@@ -992,8 +995,8 @@ guard and a dev probe). Mig 447 already carries the team account (`owner_kind = 
 ### BC7 — Coach: the Ledger's Bank view (desk + phone)
 Build prompt written 2026-11-06: `BANK_BALANCE_CHECK_BC7_BUILD_PROMPT.md` (two sessions: BC7a the desk view, BC7b the
 phone, the walks and the finishing passes).
-- [ ] The fourth View pill option; the check with Cash not deposited yet; Find; saved checks; the read-only form for money
-  read (K7). Walk probes both widths. *(BC7a built the desk; BC7b owes the phone and the walks.)*
+- [x] The fourth View pill option; the check with Cash not deposited yet; Find; saved checks; the read-only form for money
+  read (K7). Walk probes both widths. *(BC7a the desk, BC7b the phone and the walk, both 2026-11-06.)*
 - [x] **BC7a — the Bank view on a desk, built 2026-11-06** (owner: §0 "Coach desk and reader" and "Coach sharing" ruled as
   recommended; yes to the UX summary; asks 3–6 dropped as already ruled: cash = ask 1 C, no print = BC8's team report,
   the divider = Q1-A, "Add the missing line" = §6 tab 3). No migration, no route change. Anchors:
@@ -1035,9 +1038,54 @@ phone, the walks and the finishing passes).
   differently; the Ledger's "Loading the bills…" on Bank. Kept: "Check this statement again" starts with the balance, cash
   and marks empty (as the club's); a Ledger remembered on Bank opens on Bank (as Bills and Payment schedule do); the band's
   live region announces as the coach types (as the club's).
-- [ ] **BC7b next:** the phone (≤600: one column, the fields side by side, the cash field wide, the caption "your books, less
-  $X cash", Find as row cards 10 at a time with signed amounts, Save last), the walk probe at 1440/390/361 as money write
-  and money read, `/design`, `/simplify`, `/review`, records.
+- [x] **BC7b — the phone, the walk and the finishing passes, built 2026-11-06** (owner: yes to the UX summary; **"Not in the
+  bank yet" goes UNDER each Find row on a phone**, through a new slot on the portal's shared row list, over "beside the row"
+  or the portal's label/value table cards). No migration, no route change, no admin-kit change. Anchors:
+  - **The phone is the portal's ≤640** (`useIsPhone`, the coaches portal's content breakpoint), not the club's ≤600.
+  - `CoachBankCheck`: Save (`saveButton`) and its notes, the error and the season's line (`saveNotes`) inline at a desk,
+    the card's last things on a phone, full width (`.card > .save`). The phone's middle tile says
+    `coachShouldCashPhone` ("Your books, less $X cash") when the cash is the only adjustment (`cashOnly`), overridden in
+    the coach view only; the shared `bankBandTiles` (the club's settled caption) is untouched.
+  - `CoachBankFind`: on a phone the search is its own full-width row, the lines one `CoachRowList` (`.findCards`, built
+    lazily) under `CoachRowBand` heads ("Since your last match · Oct 18" / `coachFindSinceSeasonPhone`, and "From the
+    {season}"), `LineCard` (title what · caption date + chip · trail the signed amount `moved(signed(…))`, money in green ·
+    the shared `LineAction` under the row), 10 at a time (`PAGE_PHONE`; pages counted, so a width change keeps its place),
+    "Show N more" in the list's foot. A hinted row tints amber-soft (`li:has(> .hitCard)`), a marked one greys
+    (`.markedCard`). `DotPart`: a part of a line that keeps its dot (`lead` drops it on a phone where it starts a line).
+  - `CoachBankView`: the head line in `DotPart`s (the account its own line on a phone); the saved checks a `CoachRowList` of
+    `CoachRow as="button"` rows on a phone ("Oct 31, 2026 · $3,060.00", the result, who and when; the row's words are its
+    name). `tableAsCards` left both desk tables (the phone never draws them).
+  - **Shared:** `CoachRow` `actions` (components/coaches/CoachRowList.tsx + `.rowListActions` in coaches.module.css): controls
+    on their own line under a row, typed static-only and never with `beside` or a `door` (/design + /review).
+  - Guard: `bank-coach-view-guard.test.ts` §6 (Save last, the cash caption coach-only, the phone list paging and signs, the
+    saved-check rows). Walk probe `.probe/bank-bc7/walk.mjs` (+ `reader-debug.mjs`).
+- [x] **Walked 2026-11-06 on dev** (`.probe/bank-bc7/walk.mjs`, 95/95 at 1440, 390 and 361; screenshots
+  `.probe/bank-bc7/shots/`): View: Bank opens; a date before the season says its sentence; before any match Find lists the
+  season, off by exactly one line → "Find the $100.00", its chip, 10 rows and "Show 10 more", marking it → Matches with
+  Undo, a search finding nothing says so; a matching first check saves; an off check with $25.00 cash and a line Not in the
+  bank yet saves (the phone band "Your books, less $25.00 cash"); the saved check opens and deletes; money read sees no form
+  and an opened check with no Delete or Check again; no sideways scroll; every control ≥44px at 390/361. ⚠ A money-read
+  test coach needs BOTH rows: `rep_team_coaches` (the bank route's `resolveLiveCoachTeamContext`) AND an active
+  `rep_team_staff_memberships` (every other portal read's `resolveCoachTeamRead`) — BC6b's probe added only the first, and
+  the Money hub said "Forbidden". Not a product gap (an invite writes both). Not walked: last season's lines (the team has
+  no carried cash, so no `lastSeason`).
+- [x] **Proved 2026-11-06:** 457 bank + Ledger + table-recipe + history-guard tests; `tsc` clean (whole tree); focused lint,
+  `check:spelling`, `check:css-purity`, `check:tokens` clean; `check:layout --only=coach-ledger-bank,coach-transactions`
+  no new findings at 1440/768/390/361.
+- [x] **`/design` 2026-11-06:** fixed: `actions` typed static-only and never with `beside`; a hinted row's chip kept its 44px
+  tap box without a 44px caption line; "· Show them" no longer strands its dot; the "since" band's heading level when Find
+  opens by "Show them". **Owner ruled 2026-11-06 (from /design):** on a phone only a HINTED row carries the bordered
+  "Not in the bank yet" button; every other row says it as the quiet underlined link, still a 44px tap (`LineAction`
+  `quiet`). Kept: the head line spends a line on "not checked yet" at a phone.
+- [x] **`/simplify` 2026-11-06 (4 lenses):** one `LineAction` for both renderers; `DotPart`; the marked greying one row class;
+  the money-in green one rule; the phone list built only when drawn; `.savePhone` folded into `.save`; the dead `.sumNote`.
+  Skipped: a `CoachRow` item-class prop for the tint (one more shared prop for one list); a pseudo-element tap box for the
+  chip (the tap-floor checks measure the element's box); merging Save's two placements (the desk's sits in the fields'
+  grid); a `bankBandTiles` caption argument (the guard keeps the coach override out of the shared tiles).
+- [x] **`/review` standard (2 lenses: correctness, blast radius) 2026-11-06:** no Critical/High/Medium. Lows fixed: `actions`
+  also never with a `door` (the chevron would cover it); a phone saved-check row no longer hides its result behind an
+  aria-label; a hinted row's action line starts below the chip's tap box; no lone "·" when the result has nothing to show.
+  Kept: Save remounts (loses focus) when a phone rotates across 640px.
 
 ### BC8 — Coach touchpoints and the club's read (after Stage 14)
 - [ ] The Money Overview line; the Start next season / Close the season warnings (the modal's list only, never

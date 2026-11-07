@@ -19,17 +19,21 @@
 import { useState, type ReactNode } from 'react';
 import SearchField from '@/components/shared/SearchField';
 import { CoachChip } from '@/components/coaches/kit';
+import { CoachRow, CoachRowBand, CoachRowList, CoachRowListFoot } from '@/components/coaches/CoachRowList';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
-import { type BankLine, type CheckFigure, type Hint, type WaitingItem } from '@/lib/bank-check';
+import { useIsPhone } from '@/lib/hooks/useIsPhone';
+import { signed, type BankLine, type CheckFigure, type Hint, type WaitingItem } from '@/lib/bank-check';
 import { coachHints } from '@/lib/bank-coach-map';
 import { lineMatches, pickerSearch } from '@/lib/bank-club-rules';
 import { BANK_WORDS as W } from '@/lib/bank-tab-words';
-import { cents, dayShort, dayYear, nameOf } from '@/lib/bank-screen';
+import { cents, dayShort, dayYear, moved, nameOf } from '@/lib/bank-screen';
 import type { TeamFigure } from './coachBank';
 import b from './CoachBank.module.css';
 
-/** Lines shown at a time at a desk ("Show 50 more"); BC7b gives the phone its 10. */
+/** Lines shown at a time ("Show N more"): 50 at a desk, 10 on a phone (BC7b, the club's BC4b recipe: Save is the card's
+ *  last thing, so the list mustn't push it a screenful away). */
 const PAGE = 50;
+const PAGE_PHONE = 10;
 
 /** A line as a Not-in-the-bank-yet item: its own key, date, direction, amount and words (the server re-reads them). */
 const itemOf = (l: BankLine): WaitingItem =>
@@ -51,6 +55,8 @@ export default function CoachBankFind({ figure, band, typed, marked, onMark, onU
   const [query, setQuery] = useState('');
   const [pages, setPages] = useState(1);
   const [lastPages, setLastPages] = useState(1);
+  const isPhone = useIsPhone();
+  const page = isPhone ? PAGE_PHONE : PAGE; // pages are counted, not lines, so a width change keeps its place
 
   const suspects = figure.suspects;
   const last = figure.lastSeason;
@@ -85,29 +91,56 @@ export default function CoachBankFind({ figure, band, typed, marked, onMark, onU
   const search = pickerSearch(query);
   const matches = (l: BankLine) => lineMatches(search, { amountCents: l.amountCents, label: l.label });
   const found = suspects.lines.filter(matches);
-  const shown = found.slice(0, pages * PAGE);
-  const more = Math.min(PAGE, found.length - shown.length);
+  const shown = found.slice(0, pages * page);
+  const more = Math.min(page, found.length - shown.length);
   const foundLast = (last?.lines ?? []).filter(matches);
   // Last season's lines page too, once this season's are all shown (/review: up to the reader's cap of 1,000).
-  const lastShown = more > 0 ? [] : foundLast.slice(0, lastPages * PAGE);
-  const lastMore = more > 0 ? 0 : Math.min(PAGE, foundLast.length - lastShown.length);
+  const lastShown = more > 0 ? [] : foundLast.slice(0, lastPages * page);
+  const lastMore = more > 0 ? 0 : Math.min(page, foundLast.length - lastShown.length);
   const searchedEmpty = (suspects.lines.length > 0 || lastCount > 0) && found.length === 0 && foundLast.length === 0;
   const listOpen = off || open;
   const when = dayYear(suspects.since);
   const sinceHint = suspects.sinceMatch ? W.linesSinceMatch(when, suspects.total) : W.coachLinesSinceSeason(when, suspects.total);
   const sinceTitle = suspects.sinceMatch ? W.findSinceMatch(when) : W.coachFindSinceSeason(when);
 
+  const searchFor = (q: string) => { setQuery(q); setPages(1); setLastPages(1); };
+  // Each line once: a table row at a desk, a row of the portal's one framed list on a phone, with the same action.
+  const LineView = isPhone ? LineCard : LineRow;
   const row = (l: BankLine) => (
-    <LineRow key={l.key} line={l} chip={chipFor(l.key)} onMark={() => onMark(itemOf(l))}
+    <LineView key={l.key} line={l} chip={chipFor(l.key)} onMark={() => onMark(itemOf(l))}
       undo={marked.has(l.key) ? () => onUndo(l.key) : undefined} />
+  );
+  const showMore = (more > 0 || lastMore > 0) && (
+    <button type="button" className={b.link}
+      onClick={() => (more > 0 ? setPages(n => n + 1) : setLastPages(n => n + 1))}>{W.showMore(more > 0 ? more : lastMore)}</button>
+  );
+  // ON A PHONE (drawing tab 3's recipe, BC4b's for the club, in the portal's own list): one frame, this season's lines
+  // under their head (shorter, no year), last season's under its name; the amount at the right with the line's own
+  // sign; "Show N more" under the frame (the portal's foot, §3.5). Built only when it is the one drawn.
+  const phoneList = () => (
+    <>
+      <CoachRowList label={sinceTitle} className={b.findCards}>
+        {/* Under "Find the $X" (an h3) while off; the section's first heading when opened by "Show them". */}
+        {shown.length > 0 && <CoachRowBand level={off ? 4 : 3}>
+          {(suspects.sinceMatch ? W.findSinceMatchPhone : W.coachFindSinceSeasonPhone)(dayShort(suspects.since))}
+        </CoachRowBand>}
+        {shown.map(row)}
+        {last && lastShown.length > 0 && <CoachRowBand level={off ? 4 : 3}>{W.coachLastSeason(last.name)}</CoachRowBand>}
+        {lastShown.map(row)}
+      </CoachRowList>
+      {showMore && <CoachRowListFoot>{showMore}</CoachRowListFoot>}
+    </>
   );
 
   return (
     <section className={b.find} aria-labelledby={off ? 'coach-bank-find-title' : undefined}>
       {off ? <h3 id="coach-bank-find-title" className={b.findTitle}>{W.findTitle(cents(band.offByCents))}</h3> : (
         <p className={`${styles.formHint} ${b.hint}`}>
-          {sinceHint}{' · '}
-          <button type="button" className={b.link} aria-expanded={open} onClick={() => setOpen(o => !o)}>{open ? W.hideThem : W.showThem}</button>
+          {sinceHint}{' '}
+          {/* `lead`: a phone drops the dot (the door wraps to its own 44px line there; /design BC7b). */}
+          <DotPart lead>
+            <button type="button" className={b.link} aria-expanded={open} onClick={() => setOpen(o => !o)}>{open ? W.hideThem : W.showThem}</button>
+          </DotPart>
         </p>
       )}
 
@@ -129,13 +162,18 @@ export default function CoachBankFind({ figure, band, typed, marked, onMark, onU
 
       {listOpen && (
         <>
-          <div className={b.findBar}>
-            <span className={b.findSince}>{sinceTitle}</span>
-            <SearchField room="coach" value={query} onChange={q => { setQuery(q); setPages(1); setLastPages(1); }} label={W.findSearch} />
-          </div>
+          {/* The search: at the bar's right at a desk; its own full-width row above the list on a phone (the list's head
+              carries the "since" words there). */}
+          {isPhone ? <SearchField room="coach" value={query} onChange={searchFor} label={W.findSearch} layout="fill" /> : (
+            <div className={b.findBar}>
+              <span className={b.findSince}>{sinceTitle}</span>
+              <SearchField room="coach" value={query} onChange={searchFor} label={W.findSearch} />
+            </div>
+          )}
           {suspects.lines.length === 0 && lastCount === 0 ? <p className={`${styles.formHint} ${b.hint}`}>{W.noLinesSince}</p>
-            : searchedEmpty ? <p className={`${styles.formHint} ${b.hint}`}>{W.noLinesMatch}</p> : (
-            <div className={`${styles.tableWrap} ${styles.tableAsCards}`}>
+            : searchedEmpty ? <p className={`${styles.formHint} ${b.hint}`}>{W.noLinesMatch}</p>
+            : isPhone ? phoneList() : (
+            <div className={styles.tableWrap}>
               <table className={styles.table}>
                 <thead>
                   <tr>
@@ -157,12 +195,7 @@ export default function CoachBankFind({ figure, band, typed, marked, onMark, onU
               </table>
             </div>
           )}
-          {(more > 0 || lastMore > 0) && (
-            <p className={b.hint}>
-              <button type="button" className={b.link}
-                onClick={() => (more > 0 ? setPages(n => n + 1) : setLastPages(n => n + 1))}>{W.showMore(more > 0 ? more : lastMore)}</button>
-            </p>
-          )}
+          {!isPhone && showMore && <p className={b.hint}>{showMore}</p>}
         </>
       )}
     </section>
@@ -229,11 +262,49 @@ function LineRow({ line: l, chip, onMark, undo }: { line: BankLine; chip: ReactN
       <td className={`${styles.td} ${styles.tdNum}`} data-label={W.findCol.out}>{l.direction === 'out' ? cents(l.amountCents) : ''}</td>
       <td className={`${styles.td} ${styles.tdNum} ${b.moneyIn}`} data-label={W.findCol.in}>{l.direction === 'in' ? cents(l.amountCents) : ''}</td>
       <td className={`${styles.td} ${b.actCell}`}>
-        {isMarked
-          ? <button type="button" className={b.link} aria-label={W.undoLine(name)} onClick={undo}>{W.undo}</button>
-          : <button type="button" className={`${b.markBtn}${chip ? ` ${b.markShown}` : ''}`} aria-label={W.markLine(name)}
-              onClick={onMark}>{W.notInBankYet}</button>}
+        <LineAction name={name} onMark={onMark} undo={undo} shown={!!chip} />
       </td>
     </tr>
+  );
+}
+
+/** A line's one action, at a desk and on a phone: "Not in the bank yet", or Undo once marked. `shown`: the bordered button
+ *  always visible (a hinted row), where an unhinted desk row shows it under the pointer or the keyboard's focus. `quiet`:
+ *  an unhinted PHONE row says it as the underlined link (still a full tap), so ten rows don't each carry a bordered button
+ *  and the hinted one stands out (owner 2026-11-06, from /design BC7b). */
+function LineAction({ name, onMark, undo, shown, quiet = false }: {
+  name: string; onMark: () => void; undo?: () => void; shown: boolean; quiet?: boolean;
+}) {
+  if (undo) return <button type="button" className={b.link} aria-label={W.undoLine(name)} onClick={undo}>{W.undo}</button>;
+  const cls = quiet ? b.link : `${b.markBtn}${shown ? ` ${b.markShown}` : ''}`;
+  return <button type="button" className={cls} aria-label={W.markLine(name)} onClick={onMark}>{W.notInBankYet}</button>;
+}
+
+/** "· {part}": a part of a line that keeps its dot, so a narrow screen wraps before both and never starts or ends a line
+ *  on a lone "·" (the head line, "Lines since …: n · Show them"; /design BC7b). `lead`: a part whose dot a phone drops,
+ *  because it starts its own line there (after the account name; the "Show them" door). */
+export function DotPart({ children, lead = false }: { children: ReactNode; lead?: boolean }) {
+  return (
+    <span className={`${b.headPart}${lead ? ` ${b.headLead}` : ''}`}>
+      <span aria-hidden className={b.dot}>·</span>
+      {children}
+    </span>
+  );
+}
+
+/** The same line on a phone (BC7b): a row of the portal's framed list — title what · caption its date, with its chip ·
+ *  the amount at the right with the line's own sign (−$40.00 out, +$60.00 in green: the engine's `signed`, plan §6's
+ *  phone rule) · its action on its own line under the row, a full tap (owner 2026-11-06). The row itself is not a
+ *  button. A hinted line tints amber-soft; a marked one greys and offers Undo. */
+function LineCard({ line: l, chip, onMark, undo }: Parameters<typeof LineRow>[0]) {
+  const isMarked = undo !== undefined;
+  const name = nameOf(l);
+  return (
+    // One row class says the line's state (as the desk's row does): a marked line greys its title and amount in CSS.
+    <CoachRow className={isMarked ? b.markedCard : chip ? b.hitCard : undefined}
+      title={name}
+      caption={<span className={b.findWhat}><span>{dayShort(l.date)}{isMarked && ` · ${W.markedDetail}`}</span>{!isMarked && chip}</span>}
+      trail={<span className={`${b.cardAmt}${l.direction === 'in' ? ` ${b.moneyIn}` : ''}`}>{moved(signed(l.direction, l.amountCents))}</span>}
+      actions={<LineAction name={name} onMark={onMark} undo={undo} shown quiet={!chip} />} />
   );
 }
