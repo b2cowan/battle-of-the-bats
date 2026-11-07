@@ -20,21 +20,20 @@ describe('proprietor expense revisions', () => {
     assert.equal(summarizeExpenses([base, corrected]).recordedSpendCents, 107);
     const voided = { ...corrected, revision: 3, void_reason: 'Duplicate' };
     assert.deepEqual(summarizeExpenses([base, corrected, voided]), {
-      count: 0, recordedSpendCents: 0, pendingTaxCents: 0, byCategory: [], bySupplier: [], unknownTaxCount: 0,
-      taxByStatus: [['pending', 0], ['reviewed', 0], ['none', 0]], byPaymentSource: [],
+      count: 0, recordedSpendCents: 0, byCategory: [], bySupplier: [],
+      taxPaid: { gstHstCents: 0, gstHstCount: 0, simplifiedCents: 0, simplifiedCount: 0, unknownCount: 0, rows: [] }, byPaymentSource: [],
       missingReceiptCount: 0, missingConversionCount: 0, personallyPaidCents: 0,
     });
   });
-  it('rounds business share once in cents and keeps purchase tax pending', () => {
+  it('rounds business share once in cents', () => {
     assert.equal(businessCents(base), 57);
-    assert.equal(summarizeExpenses([base]).pendingTaxCents, 7);
   });
-  it('applies business use consistently to tax and payment-source reports', () => {
+  it('applies business use to spend and payment-source reports, and reports purchase tax in full (Stage 4a)', () => {
     const reviewed = { ...base, expense_id: '22222222-2222-4222-8222-222222222222', tax_status: 'reviewed' as const, payment_source: 'business_card' as const, tax_cad_cents: 21 };
     const summary = summarizeExpenses([base, reviewed]);
     assert.equal(summary.recordedSpendCents, 114);
-    assert.equal(summary.pendingTaxCents, 7);
-    assert.deepEqual(summary.taxByStatus, [['pending', 7], ['reviewed', 11], ['none', 0]]);
+    // The full receipt tax (13 + 21), never the 50% business-use share; legacy amounts read as "Type not set".
+    assert.deepEqual(summary.taxPaid.rows, [{ type: 'unset', label: 'Type not set', count: 2, cents: 34 }]);
     assert.equal(summary.personallyPaidCents, 57);
     assert.deepEqual(summary.byPaymentSource, [['business_card', 57], ['personal', 57]]);
   });

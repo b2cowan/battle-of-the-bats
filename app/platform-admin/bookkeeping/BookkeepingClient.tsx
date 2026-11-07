@@ -8,6 +8,8 @@ import { BOOKKEEPING_VIEWS, bookkeepingAddress, bookkeepingPlace } from '@/lib/b
 import { consoleDate, consoleDay } from '@/lib/console-dates';
 import kit from '../console.module.css';
 import { attentionReasons, businessCents, currentExpenses, hasConfirmedDates, summarizeExpenses, type ExpenseRevision, type ReviewFilter } from '@/lib/bookkeeping-expenses';
+import { formatCad, REGISTRATION_LINE, REGISTRATION_QUESTION, TAX_PAID_NOTE, TAX_PAID_ROW_LABELS, TAX_PAID_TITLE, taxTypesPaid, type TaxType } from '@/lib/bookkeeping-gst';
+import GstRegistrationQuestion from './GstRegistrationQuestion';
 import { reportPeriodRange, type NamedReportPeriod } from '@/lib/bookkeeping-export';
 import type { OwnerMovementRevision } from '@/lib/bookkeeping-owner-movements';
 import { downloadCSVBlob } from '@/lib/export';
@@ -29,13 +31,14 @@ const STARTER_CATEGORIES = [
 ];
 type BookkeepingView = typeof BOOKKEEPING_VIEWS[number] | 'attention';
 type ReportPeriod = 'all' | NamedReportPeriod | 'custom';
-type ReportDrilldown = { kind: 'all' | 'category' | 'supplier' | 'personal'; key?: string };
+type ReportDrilldown = { kind: 'all' | 'personal' } | { kind: 'category' | 'supplier'; key: string } | { kind: 'tax'; key: TaxType };
 const today = () => {
   const date = new Date();
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 };
-const money = (cents: number) => new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD' }).format(cents / 100);
+const money = formatCad;
 const amount = (cents: number) => (cents / 100).toFixed(2);
+const expenseCount = (count: number) => `${count} ${count === 1 ? 'expense' : 'expenses'}`;
 function BookkeepingOverview({ expenses, params, registrationDate, onOpenExpense }: {
   expenses: ExpenseRevision[]; params: URLSearchParams; registrationDate: string | null; onOpenExpense: (row: ExpenseRevision, list?: ExpenseRevision[]) => void;
 }) {
@@ -122,6 +125,7 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
   const [review, setReview] = useState<ReviewFilter>('all');
   const [reportPeriod, setReportPeriod] = useState<ReportPeriod>('all');
   const [reportDrilldown, setReportDrilldown] = useState<ReportDrilldown>({ kind: 'all' });
+  const [changingRegistration, setChangingRegistration] = useState(false);
   const invalidPeriod = Boolean(from && to && from > to);
 
   function setView(next: BookkeepingView) {
@@ -157,7 +161,8 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
     reportDrilldown.kind === 'all' ||
     (reportDrilldown.kind === 'category' && row.category === reportDrilldown.key) ||
     (reportDrilldown.kind === 'supplier' && row.supplier === reportDrilldown.key) ||
-    (reportDrilldown.kind === 'personal' && row.payment_source === 'personal')
+    (reportDrilldown.kind === 'personal' && row.payment_source === 'personal') ||
+    (reportDrilldown.kind === 'tax' && taxTypesPaid(row).includes(reportDrilldown.key))
   )), [datedVisible, reportDrilldown]);
   const selectedExpense = expenses.find(row => row.expense_id === selectedExpenseId) ?? null;
   const addressedExpenseMissing = Boolean(place.record && !expenses.some(row => row.expense_id === place.record));
@@ -166,8 +171,8 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
   const reportPeriodLabel = reportPeriod === 'all' ? 'All confirmed dates'
     : reportPeriod === 'custom' ? `${from ? consoleDate(from) : 'Any start'} to ${to ? consoleDate(to) : 'Any end'}`
     : reportPeriodRange(reportPeriod, today()).label;
-  const drilldownLabel = reportDrilldown.kind === 'category' ? reportDrilldown.key
-    : reportDrilldown.kind === 'supplier' ? reportDrilldown.key
+  const drilldownLabel = reportDrilldown.kind === 'category' || reportDrilldown.kind === 'supplier' ? reportDrilldown.key
+    : reportDrilldown.kind === 'tax' ? TAX_PAID_ROW_LABELS[reportDrilldown.key]
     : reportDrilldown.kind === 'personal' ? 'Paid personally' : 'All recorded expenses';
 
   function chooseReportPeriod(value: ReportPeriod) {
@@ -210,9 +215,10 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
       const params = expenseFilterParams(filters ?? { from: from || null, to: to || null, category, query, review });
       if (!filters && view === 'reports' && reportDrilldown.kind !== 'all') {
         params.set('dateStatus', 'confirmed');
-        if (reportDrilldown.kind === 'category') params.set('category', reportDrilldown.key ?? '');
-        if (reportDrilldown.kind === 'supplier') params.set('supplier', reportDrilldown.key ?? '');
+        if (reportDrilldown.kind === 'category') params.set('category', reportDrilldown.key);
+        if (reportDrilldown.kind === 'supplier') params.set('supplier', reportDrilldown.key);
         if (reportDrilldown.kind === 'personal') params.set('paymentSource', 'personal');
+        if (reportDrilldown.kind === 'tax') params.set('taxType', reportDrilldown.key);
       }
       const route = kind === 'csv' ? 'export' : 'package';
       const response = await fetch(`/api/platform-admin/bookkeeping/${route}?${params}`, { cache: 'no-store' });
@@ -271,7 +277,7 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
             <label>To · incurred date<DateInput value={to} onChange={v => { setTo(v); setReportPeriod('custom'); }} /></label>
             <label>Category<select className={kit.select} value={category} onChange={event => setCategory(event.target.value)}><option value="">All categories</option>{categories.map(value => <option key={value}>{value}</option>)}</select></label>
             <label>Find<input className={kit.field} type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder="Supplier or purpose" /></label>
-          <label>Review view<select className={kit.select} value={review} onChange={event => setReview(event.target.value as ReviewFilter)}><option value="all">All expenses</option><option value="missing_receipt">Missing receipt</option><option value="missing_conversion">USD source not picked</option><option value="personal">Paid personally</option><option value="foreign">USD invoices</option></select></label>
+          <label>Review view<select className={kit.select} value={review} onChange={event => setReview(event.target.value as ReviewFilter)}><option value="all">All expenses</option><option value="missing_receipt">Missing receipt</option><option value="missing_conversion">USD source not picked</option><option value="personal">Paid personally</option><option value="foreign">USD invoices</option><option value="tax_pending">Tax review pending</option></select></label>
           </div>
           {invalidPeriod && <p role="alert" className={styles.dateWarning}>Choose a From date on or before the To date before exporting this report.</p>}
           <div className={styles.metrics}>
@@ -288,8 +294,30 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
             <div><h3>By category</h3>{summary.byCategory.length ? summary.byCategory.map(([name, cents]) => <button key={name} type="button" className={styles.reportDoor} onClick={() => setReportDrilldown({ kind: 'category', key: name })}><span>{name}</span><strong>{money(cents)} ›</strong></button>) : <p>No confirmed expenses in this period.</p>}</div>
             <div><h3>By supplier</h3>{summary.bySupplier.length ? summary.bySupplier.map(([name, cents]) => <button key={name} type="button" className={styles.reportDoor} onClick={() => setReportDrilldown({ kind: 'supplier', key: name })}><span>{name}</span><strong>{money(cents)} ›</strong></button>) : <p>No confirmed expenses in this period.</p>}</div>
           </div>
-          <div className={styles.reportGrid}>
-            <div><h3>Purchase tax recorded</h3><p><span>Amount unknown</span><strong>{summary.unknownTaxCount} expense(s)</strong></p>{summary.taxByStatus.map(([status, cents]) => <p key={status}><span>{status === 'none' ? 'Confirmed no tax' : status === 'pending' ? 'Known amount · review pending' : 'Reviewed'}</span><strong>{money(cents)}</strong></p>)}</div>
+          <section className={styles.taxPaid} aria-labelledby="tax-paid-title">
+            <h3 id="tax-paid-title" className={kit.sectionTitle}>{TAX_PAID_TITLE}</h3>
+            <div className={`${kit.band} ${styles.taxPaidBand}`}>
+              <div className={kit.bandCell}><span className={kit.bandLabel}>GST/HST paid</span><strong className={kit.bandValue}>{money(summary.taxPaid.gstHstCents)}</strong><span className={kit.bandNote}>{expenseCount(summary.taxPaid.gstHstCount)}</span></div>
+              <div className={kit.bandCell}><span className={kit.bandLabel}>Charged by simplified sellers</span><strong className={kit.bandValue}>{money(summary.taxPaid.simplifiedCents)}</strong><span className={kit.bandNote}>{expenseCount(summary.taxPaid.simplifiedCount)}</span></div>
+              <div className={kit.bandCell}><span className={kit.bandLabel}>Tax unknown</span><strong className={kit.bandValue}>{summary.taxPaid.unknownCount}</strong><span className={kit.bandNote}>{summary.taxPaid.unknownCount === 1 ? 'expense' : 'expenses'}</span></div>
+            </div>
+            <div className={`table-cards ${styles.taxPaidFrame}`}><table className={styles.taxPaidTable}>
+              <thead><tr><th>Tax type</th><th className={kit.num}>Expenses</th><th className={kit.num}>Tax paid</th><th aria-label="Show these expenses" /></tr></thead>
+              <tbody>{summary.taxPaid.rows.length ? summary.taxPaid.rows.map(row => <tr key={row.type}
+                className={`${kit.clickableRow} ${reportDrilldown.kind === 'tax' && reportDrilldown.key === row.type ? styles.taxPaidOn : ''}`}
+                onClick={() => setReportDrilldown({ kind: 'tax', key: row.type })}>
+                <td className="table-cards-title"><button type="button" className={styles.taxPaidDoor}
+                  onClick={event => { event.stopPropagation(); setReportDrilldown({ kind: 'tax', key: row.type }); }}>{row.label}</button></td>
+                <td data-label="Expenses" className={kit.num}>{row.count}</td>
+                <td data-label="Tax paid" className={kit.num}>{money(row.cents)}</td>
+                <td className={kit.rowDoor} aria-hidden>›</td>
+              </tr>) : <tr><td colSpan={4} className={kit.empty}>No purchase tax recorded in this period.</td></tr>}</tbody>
+            </table></div>
+            <p className={styles.hint}>{TAX_PAID_NOTE}</p>
+            {registrationDate && <p className={styles.hint}>{REGISTRATION_LINE(registrationDate)} · <button type="button" className={styles.inlineDoor}
+              onClick={() => setChangingRegistration(true)} disabled={!gstSchemaReady}>{REGISTRATION_QUESTION.confirm}</button></p>}
+          </section>
+          <div className={`${styles.reportGrid} ${styles.reportGridWhole}`}>
             <div><h3>Recorded spend by payment source</h3>{summary.byPaymentSource.length ? summary.byPaymentSource.map(([source, cents]) => source === 'personal' ? <button type="button" className={styles.reportDoor} key={source} onClick={() => setReportDrilldown({ kind: 'personal' })}><span>{SOURCES[source]}</span><strong>{money(cents)} ›</strong></button> : <p key={source}><span>{SOURCES[source]}</span><strong>{money(cents)}</strong></p>) : <p>No active expenses.</p>}</div>
           </div>
           <section className={styles.reviewList} aria-labelledby="report-lines-title"><div className={styles.subHeading}><h3 id="report-lines-title">{drilldownLabel} · {money(reportRows.reduce((total, row) => total + businessCents(row), 0))}</h3>
@@ -311,6 +339,8 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
     {view === 'expenses' && <ExpensesRegister expenses={expenses} registrationDate={registrationDate} loading={loading} exporting={Boolean(exporting)}
       onOpenExpense={openRecord} onAddNumber={(row, list) => { setRecordIds(list.map(item => item.expense_id)); openForm(row, false, null, true); }} onExport={exportExpenses} />}
 
+    {changingRegistration && <GstRegistrationQuestion onClose={() => setChangingRegistration(false)}
+      onSaved={() => { setNotice(REGISTRATION_QUESTION.saved); void load(); }} />}
     {(formOpen || selectedExpense) && !addressedExpenseMissing && <ExpenseFormWindow key={windowExpense?.expense_id ?? `new-${copyFrom?.expense_id ?? 'blank'}`}
       expense={windowExpense} expenses={expenses} categories={categories} revisions={revisions} copyFrom={copyFrom}
       startEditing={Boolean(formOpen && editing && !voidMode)} asVoid={voidMode} steps={recordSteps}

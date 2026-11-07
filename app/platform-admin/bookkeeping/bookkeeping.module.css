@@ -109,6 +109,21 @@
 .reportDoor strong { white-space: nowrap; color: var(--text-primary); }
 .subHeading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .5rem; margin-bottom: .3rem; }
 .subHeading h3 { margin: 0; }
+/* Reports' Purchase tax paid (GST/HST Stage 4a, drawings tab 4 After): full width under By category | By supplier. */
+.taxPaid { display: grid; gap: .75rem; margin-top: .9rem; min-width: 0; }
+.taxPaidFrame { border: 1px solid var(--home-line); border-radius: 9px; background: var(--home-card); overflow: hidden; }
+.taxPaidTable { width: 100%; }
+.taxPaidTable th, .taxPaidTable td { padding: var(--table-pad-compact) .75rem; font-size: var(--type-body); }
+.taxPaidTable td:last-child { padding-inline: .2rem; }
+.taxPaidOn { background: var(--home-olive-soft); }
+.taxPaidDoor, .inlineDoor { display: inline-flex; align-items: center; min-height: 44px; padding: 0; border: 0; background: transparent; color: var(--home-olive); font: 650 var(--type-body) var(--font-sans, system-ui, sans-serif); text-align: left; cursor: pointer; }
+.inlineDoor { min-height: 0; font-size: var(--type-support); }
+.inlineDoor:disabled { color: var(--text-tertiary); cursor: default; }
+.taxPaid .hint { margin: 0; }
+.taxPaidDoor:focus-visible, .inlineDoor:focus-visible { outline: 3px solid var(--home-olive); outline-offset: 2px; }
+.reportGridWhole { grid-template-columns: 1fr; }
+.registrationChanges ul { margin: 0; padding-left: 1.1rem; color: var(--text-secondary); font-size: var(--type-support); line-height: 1.55; }
+.registrationChanges .hint { margin: .6rem 0 .2rem; }
 .error, .notice { padding: .75rem; margin: 0 0 1rem; font-size: var(--type-body); border-radius: 8px; }
 .error { background: rgba(var(--danger-rgb), .1); color: var(--danger-text); border: 1px solid var(--danger); }
 .notice { background: var(--home-olive-soft); color: var(--text-primary); border: 1px solid var(--home-line-strong); }
@@ -203,4 +218,6 @@
   .expensesTable .registerPurpose::before { display: block; margin-bottom: .25rem; }
   .registerNote { padding-inline: 0; }
   .taxLine { grid-template-columns: minmax(0, 1fr) 7rem 44px; }
+  .taxPaidBand { grid-template-columns: 1fr; }
+  .taxPaidFrame { border: 0; background: transparent; overflow: visible; }
 }

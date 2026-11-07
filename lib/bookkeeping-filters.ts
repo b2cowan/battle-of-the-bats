@@ -1,9 +1,12 @@
+import { taxTypesPaid, type TaxType } from './bookkeeping-gst';
 import { businessCents, hasConfirmedDates, hasKnownTaxAmount, matchesReviewFilter, parseCents, type ExpenseRevision, type ReviewFilter } from './bookkeeping-expenses';
 
 export type ExpenseStatus = 'active' | 'voided' | 'all';
 export type ExpenseFilters = {
   from: string | null; to: string | null; category: string; supplier?: string;
   paymentSource?: string; dateStatus?: 'all' | 'confirmed'; query: string; review: ReviewFilter;
+  /** Reports' tax-type door (GST/HST Stage 4a): expenses that paid this type. */
+  taxType?: TaxType;
   /** Absent preserves the existing export contract; the Expenses screen explicitly selects active. */
   status?: ExpenseStatus;
 };
@@ -27,6 +30,7 @@ export function matchesExpenseFilters(row: ExpenseRevision, filters: ExpenseFilt
     (!filters.category || row.category === filters.category) &&
     (!filters.supplier || row.supplier === filters.supplier) &&
     (!filters.paymentSource || row.payment_source === filters.paymentSource) &&
+    (!filters.taxType || taxTypesPaid(row).includes(filters.taxType)) &&
     (filters.status !== 'active' || !row.void_reason) &&
     (filters.status !== 'voided' || Boolean(row.void_reason)) &&
     matchesExpenseSearch(row, filters.query) && matchesReviewFilter(row, filters.review, registrationDate);
@@ -35,7 +39,7 @@ export function matchesExpenseFilters(row: ExpenseRevision, filters: ExpenseFilt
 export function expenseFilterParams(filters: ExpenseFilters): URLSearchParams {
   const params = new URLSearchParams();
   const values = { from: filters.from, to: filters.to, category: filters.category, supplier: filters.supplier,
-    paymentSource: filters.paymentSource, q: filters.query, review: filters.review, status: filters.status, dateStatus: filters.dateStatus };
+    paymentSource: filters.paymentSource, taxType: filters.taxType, q: filters.query, review: filters.review, status: filters.status, dateStatus: filters.dateStatus };
   for (const [key, value] of Object.entries(values)) if (value) params.set(key, value);
   return params;
 }

@@ -307,3 +307,44 @@ hashes, never “uncommitted”.
 - **For Session D / Part 7:** `/simplify` should take the money formatters (form, record, register, client still have their own;
   `formatCad` is now exported from the rules module). The legacy record's kind line and the four "calls not drawn" above are for the
   owner walk.
+
+### Session D (2026-11-06, Opus): Part 6 (Reports + the registration date); no DDL
+- **Step 0 [V 2026-11-06]:** `BookkeepingClient.tsx`:103–148 holds `registrationDate` + `gstSchemaReady` and `load()` refreshes both; the
+  registration route is as Session B recorded; the review-value list was hard-coded at `bookkeeping-export.ts`:47. Nothing in Part 6 was
+  undrawn (tab 4 After + the window at its end), so no drawing addition.
+- **`/accounting` (asked first, answered from `ITC_RULES_FOR_EXPENSE_FORM.md`, verified today; new §8 + index note):** Reports shows the
+  **full** tax on each receipt. A business-use share of the tax is neither the tax paid nor the credit (the credit uses 90/10, the >50%
+  equipment rule and meals' 50%), so it answers nothing CRA or the accountant asks. It asked for a basis sentence because the spend figures
+  above are business-use shares.
+- **RULED by the owner 2026-11-06 (as recommended):** the drawn second quiet line ("Your credit is worked out on the GST/HST return view.")
+  is NOT shipped: that view is 4b. The line is `TAX_PAID_NOTE`: "Tax as charged on your receipts, in full. Spending figures above show only
+  the business-use share." 4b may add the return-view pointer back when the view exists.
+- **Rules module** (`lib/bookkeeping-gst.ts`): `summarizeTaxPaid()` (band + by-type rows, full tax, GST/HST rows sum to the band,
+  simplified = a part of GST/HST paid, unknown = a count; only types paid, so "Type not set" shows while any exist), `taxTypesPaid()`,
+  `isTaxReviewPending()` (answer resolves to Shown + status pending; a pre-4a amount counts), `TAX_PAID_ROW_LABELS`, `TAX_PAID_TITLE`,
+  `TAX_PAID_NOTE`, `REGISTRATION_LINE`, `REGISTRATION_QUESTION`.
+- **Summary** (`summarizeExpenses`): `taxPaid` replaces `taxByStatus` / `pendingTaxCents` / `unknownTaxCount` (the old box's pro-rated
+  figures; no other reader). Same active current rows as By category.
+- **Review view:** `REVIEW_FILTERS` + `isReviewFilter()` in `lib/bookkeeping-expenses.ts` are now the one list (the export/package parser
+  reads it); `tax_pending` added to `matchesReviewFilter` and the screen's select.
+- **Tax-type doors:** drilldown kind `tax`; `ExpenseFilters.taxType` (`matchesExpenseFilters`, `expenseFilterParams`, the parser refuses
+  an unknown type), so Export CSV / the package follow a tax row as they follow a category. **Call not drawn:** the package's narrowing
+  rule (owner-transfers.csv keeps only linked reimbursements) counts a tax type as narrowing, and `package-scope.txt` names it ("tax type"
+  in the filter sentence, and in the status line when set). That is the scope file describing a filter that now exists, not a 4b change.
+- **Screen** (`BookkeepingClient.tsx` + `bookkeeping.module.css`): the half-width box is gone; full-width section (kit section title, kit
+  joined band, framed by-type table with row doors, the selected row tinted, the line-list heading names the type), the two quiet lines,
+  then "Recorded spend by payment source" full width (`reportGridWhole`). Phone ≤ 640: band stacks to one column; the table is
+  `table-cards`. `money` in the client is now `formatCad`.
+- **Change date** (`GstRegistrationQuestion.tsx`, new): KitDialog question, the shipped BookkeepingQuestion recipe (two quiet answers,
+  "Keep it" / "Change date"; the drawing's lime button is not the shipped recipe). Lead sentence, "Registered from" (DateInput, starts at
+  the current date), Reason (required, ≤ 500), "Changes · n" list from GET history. POST with `expectedRevision`; date/reason refusals
+  in place under their field, others in the foot; on 409 the history is re-read and the typed values kept. On save: notice
+  `REGISTRATION_QUESTION.saved` and `load()`, so every credit and Needs attention reason re-works. Hidden when no date is on record;
+  disabled until `gstSchemaReady`. Owner-only through the route.
+- **Tests:** `bookkeeping-gst-reports.test.ts` (new, 13): full tax not pro-rated, rows = band, simplified ⊂ band, order + only-present +
+  Type not set, BC counted once in band and in both rows, current/active only, tax door filter, screen = address = export for a tax type
+  and for Tax review pending, every `REVIEW_FILTERS` value parses, unknown type refused, the Overview source has no tax word or figure,
+  Reports never works out a credit, the window posts `expectedRevision` and re-reads on 409, save calls `load()`. `bookkeeping-expenses`
+  summary tests updated. Bookkeeping 140/140; typecheck clean; lint clean; `check:spelling` passes.
+- **Full suite:** 14,740 / 14,749; the 9 failures are the expected set. verify:changed's other checks: the same 7 (admin old look, admin
+  type, schema parity, index coverage, org-slug callers, CSS selectors, export catalog), none naming a bookkeeping file.

@@ -1,5 +1,5 @@
-import { businessCents, csvCell, currentExpenses, hasKnownTaxAmount, isExpenseDate, type ExpenseRevision, type ReviewFilter } from './bookkeeping-expenses';
-import { expenseCredit, resolveTaxState, TAX_TYPES, type TaxLine } from './bookkeeping-gst';
+import { businessCents, csvCell, currentExpenses, hasKnownTaxAmount, isExpenseDate, isReviewFilter, type ExpenseRevision, type ReviewFilter } from './bookkeeping-expenses';
+import { expenseCredit, isTaxType, resolveTaxState, TAX_TYPES, type TaxLine } from './bookkeeping-gst';
 import { currentOwnerMovements, type OwnerMovementRevision } from './bookkeeping-owner-movements';
 import { matchesExpenseFilters, type ExpenseFilters, type ExpenseStatus } from './bookkeeping-filters';
 export type { ExpenseFilters } from './bookkeeping-filters';
@@ -35,6 +35,7 @@ export function parseExpenseFilters(params: URLSearchParams): ExpenseFilters | n
   const category = params.get('category') ?? '';
   const supplier = params.get('supplier') ?? '';
   const paymentSource = params.get('paymentSource') ?? '';
+  const taxType = params.get('taxType') ?? '';
   const dateStatus = params.get('dateStatus') ?? 'all';
   const query = (params.get('q') ?? '').trim().toLowerCase();
   const review = params.get('review') ?? 'all';
@@ -44,9 +45,9 @@ export function parseExpenseFilters(params: URLSearchParams): ExpenseFilters | n
     (from && to && from > to) || category.length > 80 || supplier.length > 160 || query.length > 160 ||
     !['', 'business_bank', 'business_card', 'personal', 'other'].includes(paymentSource) ||
     !['all', 'confirmed'].includes(dateStatus) ||
-    !['all', 'attention', 'missing_receipt', 'missing_conversion', 'personal', 'foreign'].includes(review) ||
+    (taxType && !isTaxType(taxType)) || !isReviewFilter(review) ||
     !['active', 'voided', 'all'].includes(status) || (attention !== null && !['0', '1'].includes(attention))) return null;
-  return { from, to, category, supplier, paymentSource, dateStatus: dateStatus as ExpenseFilters['dateStatus'], query,
+  return { from, to, category, supplier, paymentSource, ...(taxType && isTaxType(taxType) ? { taxType } : {}), dateStatus: dateStatus as ExpenseFilters['dateStatus'], query,
     review: attention === '1' ? 'attention' : review as ReviewFilter, status: status as ExpenseStatus };
 }
 
@@ -118,7 +119,7 @@ export function expenseCsv(selected: ExpenseRevision[], filters: ExpenseFilters 
 /** Owner transfers are dated by transfer date; narrowed expense exports include linked reimbursements only. */
 export function selectOwnerMovementRevisions(revisions: OwnerMovementRevision[], filters: ExpenseFilters, selectedExpenses: ExpenseRevision[]): OwnerMovementRevision[] {
   const selectedExpenseIds = new Set(selectedExpenses.map(row => row.expense_id));
-  const narrowedExpenses = Boolean(filters.category || filters.supplier || filters.paymentSource || filters.query || filters.review !== 'all' ||
+  const narrowedExpenses = Boolean(filters.category || filters.supplier || filters.paymentSource || filters.taxType || filters.query || filters.review !== 'all' ||
     (filters.status && filters.status !== 'all'));
   const ids = new Set(currentOwnerMovements(revisions).filter(row =>
     (!filters.from || row.movement_date >= filters.from) && (!filters.to || row.movement_date <= filters.to) &&

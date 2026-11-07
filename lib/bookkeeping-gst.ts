@@ -288,6 +288,78 @@ export function purchaseTaxCell(answer: TaxAnswer, lines: readonly TaxLine[], st
   return { lines: each, note: `${formatCad(sumTaxLines(lines))} in all · ${TAX_STATUS_LABELS[status]}` };
 }
 
+/**
+ * Reports' "Purchase tax paid" rows (drawings tab 4, After), in this order. Only PST says "part of the cost" because
+ * the drawing names it; every non-GST/HST row is a cost all the same, and none of them is in the band.
+ */
+export const TAX_PAID_ROW_LABELS: Record<TaxType, string> = {
+  gst5: 'GST 5%', hst13: 'HST 13%', hst14: 'HST 14%', hst15: 'HST 15%',
+  pst: 'PST · part of the cost', qst: 'QST', other: 'Other', unset: 'Type not set',
+};
+export const TAX_PAID_TITLE = 'Purchase tax paid';
+/** /accounting 2026-11-06 (ITC_RULES_FOR_EXPENSE_FORM.md §8) + owner: the full receipt tax, and which basis the spend figures use. */
+export const TAX_PAID_NOTE = 'Tax as charged on your receipts, in full. Spending figures above show only the business-use share.';
+export const REGISTRATION_LINE = (date: string) => `Registered for GST/HST from ${formatStoredDate(date, { longMonth: true })}`;
+export const REGISTRATION_QUESTION = {
+  eyebrow: 'GST/HST',
+  title: 'Change your registration date?',
+  lead: 'Credits are worked out from this date. A service bought before it gets no credit.',
+  dateLabel: 'Registered from',
+  keep: 'Keep it',
+  confirm: 'Change date',
+  saved: 'Registration date changed. Every credit is worked out from the new date.',
+} as const;
+
+type TaxPaidRow = TaxFacts & { tax_lines?: readonly TaxLine[]; supplier_registration?: SupplierRegistration | null };
+
+/** The tax types one expense paid, from its resolved lines (a pre-4a amount reads as "Type not set"). */
+export function taxTypesPaid(row: TaxPaidRow): TaxType[] {
+  return [...new Set(resolveTaxState(row, row.tax_lines ?? []).lines.filter(line => line.cents > 0).map(line => line.type))];
+}
+
+export type TaxPaidSummary = {
+  gstHstCents: number; gstHstCount: number;
+  /** GST/HST charged under CRA's simplified registration: a part of gstHstCents, never claimable. */
+  simplifiedCents: number; simplifiedCount: number;
+  unknownCount: number;
+  rows: { type: TaxType; label: string; count: number; cents: number }[];
+};
+
+/**
+ * Tax paid, by type, on the rows given (the caller passes the same active, dated, in-period expenses as By category).
+ * The full tax on each receipt, not a business-use share and never a credit. The GST/HST rows add up to gstHstCents.
+ * A type shows only when paid; "Type not set" shows while any expense has it.
+ */
+export function summarizeTaxPaid(rows: readonly TaxPaidRow[]): TaxPaidSummary {
+  const byType = new Map<TaxType, { count: number; cents: number }>();
+  let gstHstCents = 0, gstHstCount = 0, simplifiedCents = 0, simplifiedCount = 0, unknownCount = 0;
+  for (const row of rows) {
+    const { answer, lines } = resolveTaxState(row, row.tax_lines ?? []);
+    if (answer === 'unknown') { unknownCount += 1; continue; }
+    const paid = lines.filter(line => line.cents > 0);
+    for (const type of new Set(paid.map(line => line.type))) {
+      const entry = byType.get(type) ?? { count: 0, cents: 0 };
+      byType.set(type, { count: entry.count + 1, cents: entry.cents + sumTaxLines(paid.filter(line => line.type === type)) });
+    }
+    const gstHst = sumTaxLines(paid.filter(line => TAX_TYPES[line.type].gstHst));
+    if (!gstHst) continue;
+    gstHstCents += gstHst; gstHstCount += 1;
+    if (row.supplier_registration === 'simplified') { simplifiedCents += gstHst; simplifiedCount += 1; }
+  }
+  return {
+    gstHstCents, gstHstCount, simplifiedCents, simplifiedCount, unknownCount,
+    rows: (Object.keys(TAX_PAID_ROW_LABELS) as TaxType[]).flatMap(type => {
+      const entry = byType.get(type);
+      return entry ? [{ type, label: TAX_PAID_ROW_LABELS[type], ...entry }] : [];
+    }),
+  };
+}
+
+/** Review view "Tax review pending": an amount shown on the receipt whose review is still pending (the old box's status row). */
+export function isTaxReviewPending(row: TaxFacts & { tax_lines?: readonly TaxLine[] }): boolean {
+  return row.tax_status === 'pending' && resolveTaxState(row, row.tax_lines ?? []).answer === 'shown';
+}
+
 /** The register's fifth reason: a credit that would count but waits on the supplier's number. */
 export function needsSupplierNumber(credit: Credit): boolean {
   return credit.state === 'held';

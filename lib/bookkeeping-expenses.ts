@@ -1,6 +1,6 @@
 import {
-  expenseCredit, isPurchaseKind, isSupplierRegistration, isTaxAnswer, isTaxType, needsSupplierNumber, NUMBER_MISSING_REASON,
-  resolveTaxState, taxLinesMatchTotal,
+  expenseCredit, isPurchaseKind, isSupplierRegistration, isTaxAnswer, isTaxReviewPending, isTaxType, needsSupplierNumber, NUMBER_MISSING_REASON,
+  resolveTaxState, summarizeTaxPaid, taxLinesMatchTotal,
   type PurchaseKind, type SupplierRegistration, type TaxAnswer, type TaxLine,
 } from './bookkeeping-gst';
 
@@ -124,7 +124,10 @@ export function attentionReasons(row: ExpenseRevision, registrationDate: string 
   ].filter(Boolean);
 }
 
-export type ReviewFilter = 'all' | 'attention' | 'missing_receipt' | 'missing_conversion' | 'personal' | 'foreign';
+/** Every Review view value, in one list: the screen's select, the export/package parser and the filter read it. */
+export const REVIEW_FILTERS = ['all', 'attention', 'missing_receipt', 'missing_conversion', 'personal', 'foreign', 'tax_pending'] as const;
+export type ReviewFilter = typeof REVIEW_FILTERS[number];
+export const isReviewFilter = (value: unknown): value is ReviewFilter => typeof value === 'string' && (REVIEW_FILTERS as readonly string[]).includes(value);
 
 export function matchesReviewFilter(row: ExpenseRevision, filter: ReviewFilter, registrationDate: string | null): boolean {
   if (row.void_reason) return filter === 'all';
@@ -134,6 +137,7 @@ export function matchesReviewFilter(row: ExpenseRevision, filter: ReviewFilter, 
     case 'missing_conversion': return row.original_currency === 'USD' && !isConversionSource(row.conversion_source);
     case 'personal': return row.payment_source === 'personal';
     case 'foreign': return row.original_currency === 'USD';
+    case 'tax_pending': return isTaxReviewPending(row);
     default: return true;
   }
 }
@@ -143,25 +147,21 @@ export function summarizeExpenses(rows: ExpenseRevision[]) {
   const byCategory = new Map<string, number>();
   const bySupplier = new Map<string, number>();
   let recordedSpendCents = 0;
-  let pendingTaxCents = 0;
-  const taxByStatus = new Map<TaxStatus, number>([['pending', 0], ['reviewed', 0], ['none', 0]]);
   const byPaymentSource = new Map<PaymentSource, number>();
   for (const row of active) {
     const amount = businessCents(row);
     recordedSpendCents += amount;
     byCategory.set(row.category, (byCategory.get(row.category) ?? 0) + amount);
     bySupplier.set(row.supplier, (bySupplier.get(row.supplier) ?? 0) + amount);
-    const taxAmount = Math.floor((row.tax_cad_cents * row.business_use_percent + 50) / 100);
-    taxByStatus.set(row.tax_status, (taxByStatus.get(row.tax_status) ?? 0) + taxAmount);
-    if (row.tax_status === 'pending' && hasKnownTaxAmount(row)) pendingTaxCents += taxAmount;
     byPaymentSource.set(row.payment_source, (byPaymentSource.get(row.payment_source) ?? 0) + amount);
   }
   return {
-    count: active.length, recordedSpendCents, pendingTaxCents,
+    count: active.length, recordedSpendCents,
     byCategory: [...byCategory].sort(([a], [b]) => a.localeCompare(b)),
     bySupplier: [...bySupplier].sort(([a], [b]) => a.localeCompare(b)),
-    unknownTaxCount: active.filter(row => !hasKnownTaxAmount(row)).length,
-    taxByStatus: [...taxByStatus], byPaymentSource: [...byPaymentSource].sort(([a], [b]) => a.localeCompare(b)),
+    /** Reports' "Purchase tax paid": the full tax on each receipt, by type (GST/HST Stage 4a). Never a credit. */
+    taxPaid: summarizeTaxPaid(active),
+    byPaymentSource: [...byPaymentSource].sort(([a], [b]) => a.localeCompare(b)),
     missingReceiptCount: active.filter(row => !row.receipt_path).length,
     missingConversionCount: active.filter(row => row.original_currency === 'USD' && !isConversionSource(row.conversion_source)).length,
     personallyPaidCents: byPaymentSource.get('personal') ?? 0,
