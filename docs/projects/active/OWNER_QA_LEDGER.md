@@ -27804,3 +27804,18 @@ performed over the shared working tree. The original walk result is not claimed 
 
 **Known before the walk:** F-O4-3 (item 7) was not reproduced in this session (no browser); the fix keeps each window busy until the reload lands, and Part 7 is the reproduction. The New schedule Slots column still shows each team's share at 1 a day (the hint gives the real figure; 13c). The house league time window's own league-admin sentence ("… in Schedules.") is unchanged; only the season Overview's line changed. The per-day "can use" figure is not said when teams share a facility (a shared slot holds two teams).
 <!-- /§473 -->
+
+## §474 · GST/HST · Stage 4a · Record GST/HST on what you buy — **each expense says which tax it paid, the supplier's number and registration, and the kind of purchase; the form and the record show the credit in one sentence with its reason; a missing number from $100 holds the credit and shows in Needs attention without ever blocking a save; Reports shows the full tax paid by type; the registration date is a changeable setting every credit follows**
+<!-- §474 -->
+**Built + reviewed 2026-11-06 (Sessions A–E):** committed f68ebf9fe, 7fac17654, a9a22921e, 0f16bf9a3, f83cbe24e and be2316ef0 (the Session E `/review` + `/accounting` fixes: Not checked keeps its reason, equipment before the date is amber, a Reports door's export leaves out voids, Reset filters clears a tax type, "I can't get the number" no longer comes back ticked, a held credit exports 0.00 so the credit column can be summed). Bookkeeping migration 006 applied to development 2026-11-06; no production store exists. Record: [GST_HST_STAGE4A_BUILD_PROMPT.md](GST_HST_STAGE4A_BUILD_PROMPT.md) Progress.
+
+**The walk (checkable):** https://claude.ai/artifact/QGGWeuRKiD2HKehdbH3pQb (source [GST_HST_STAGE4A_WALK.html](GST_HST_STAGE4A_WALK.html)). One purpose, 55 steps in fourteen parts: A stop check (1) · B an everyday cost, number blank then added, 100/50/8% (7) · C equipment and meals, equipment before the date (6) · D simplified and not registered (4) · E the missing-number round trip (7) · F under $100 (2) · G BC GST + PST and the same-supplier prefill (4) · H Not checked at 33% (3) · I an expense saved before 4a, its correction and Copy as new (3) · J Reports by type with Find `G4A`, a PST door and its export, Tax review pending (6) · K the registration date to May 1 and back (6) · L the CSV and the package (3) · M phone (2) · N put back (1).
+
+**How:** your own allowlisted sign-in on `http://localhost:3000/platform-admin/bookkeeping`, development store, suppliers prefixed `G4A-`, 1440 wide then 390.
+
+**Calls to make on the walk:** a held credit's export reads 0.00 (L2); Not checked's reason + warning (H2); equipment-before-date amber (C5); the quiet line is the full-tax sentence, no return-view pointer (J3, as ruled); Change date's two quiet answers (K3); four undrawn form calls (G2, B2, E4, I3); the kind under business use on an older record (I1).
+
+**Known before the walk:** the worksheet, Before you file and Mark as filed are 4b; a deemed credit on equipment held at registration is never computed (C5 reads its sentence); two tabs racing a date change is covered by tests only. Low follow-ups (a typo guard on the registration date, a number format check, Stage 5 backup items) are listed in the build prompt's Session E notes.
+
+**Owner result:** pending. Paste the checklist result into the chat.
+<!-- /§474 -->

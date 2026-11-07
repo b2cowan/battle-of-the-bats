@@ -371,3 +371,39 @@ hashes, never “uncommitted”.
   is the full-tax sentence, not the drawn return-view pointer; Change date's window uses the two quiet answers); grep every other walk
   for the old checkbox / "does not claim a tax credit" / the old tax box; then this Progress, the GST/HST plan §Stage 4 status, the
   Bookkeeping ladder row 4a, TODO.md, and a new OWNER_QA_LEDGER entry. The dev server was restarted at the end of Session D.
+
+### Session E (2026-11-06, Opus): Part 7 steps 2–6; review + accounting fixes committed be2316ef0 2026-11-06; no DDL
+- **`/review`** (high-risk tier; scope f68ebf9fe rules module + 7fac17654, a9a22921e, 0f16bf9a3, f83cbe24e; 5 lenses: credit rules,
+  security, data/contract, client state, blast radius). Gate: typecheck clean, lint clean on the 28 files, Bookkeeping 140/140;
+  `verify:changed` exits 1 on other sessions' files only (bank report table sizes, billing webhook, GST/HST Stage 3 Part 1 tax record,
+  help tax words, plus the known `footerStart` / practice plans / stage 6 walk / census set); `check:layout` n/a (platform admin is
+  not in the sweep). **No Critical or High.** Applied in be2316ef0: Not checked appends `NOT_CHECKED_SENTENCE` after the business-use
+  reason instead of replacing it (a 33% credit said nothing about 33%; every pre-4a row reads Not checked); equipment before the
+  registration date is amber (note #1; a service stays neutral); a Reports door's export sends `status: 'active'` (voids were in the
+  file but not the list); Reset filters clears `taxType` and the filter note names it; typing a number clears "can't get"; the
+  registration POST maps DSQL's 40001 to 409 like 23505; the store refuses a stated answer whose lines break the sum rule and
+  "shown" with no lines; backup verify refuses a "shown" revision with no lines; the 006 seed comment says 2026-09-26. Tests for each.
+- **`/accounting`** (`ITC_RULES_FOR_EXPENSE_FORM.md` #9–#11, index row; no new research, both topics verified today): `credit_cad`
+  is only the credit that **counts** (summable toward line 106); a held credit exports **0.00** with `held` (it exported the waiting
+  figure; an ITC claimed without the ≥ $100 paper is disallowed, and the credit stays claimable for four years). `_cad` naming,
+  `hst_rate` "13/15", Type not set only in `recorded_tax_cad`, and `counted_registration_unchecked` confirmed. Session C's four
+  undrawn calls have no tax consequence ("Work out from the total" for one rate only is required, not just tidy). The registration
+  date's missing range is a product call (recorded below), not a tax rule. Reports' full tax (#8) unchanged.
+- **Help:** `lib/help-content` has no "tax credit" / "purchase tax" / old checkbox / old box wording [V grep]; `/docs` not needed.
+- **Other walks:** §431 (`BOOKKEEPING_STAGE1_OWNER_WALK.html`, result pending) named the old checkbox, "No tax recorded" and the
+  old Reports box in four places: rewritten to "Tax on this receipt → No tax charged", "Not sure yet" and Purchase tax paid's Tax
+  unknown, and its review finding 2 marked resolved. §382 and §383 (passed 2026-10-27) keep the old words as their record.
+- **Owner walk §474 published:** https://claude.ai/artifact/QGGWeuRKiD2HKehdbH3pQb (source `GST_HST_STAGE4A_WALK.html`): one purpose,
+  55 steps in 14 parts (stop check; every tab-2 row; equipment + meals; simplified + not registered; the missing-number round trip;
+  under $100; BC two-tax + the same-supplier prefill; Not checked at 33%; a pre-4a expense, its correction and Copy as new; Reports by
+  type with Find `G4A`, a PST door and its export, Tax review pending; May 1 and back with a June service; the CSV and package; phone;
+  put back). Figures are worked out from the walk's own receipts.
+- **Recorded, not fixed (Low / Advisory):** the registration date takes any real date (a far-future typo moves every credit; year
+  0000 is a 500; it shows in Changes and a new revision fixes it) → a typo guard is an owner call; the supplier number is free text
+  ("n/a" releases a hold) → a format check belongs to 4b's Before you file; the prefill reads the latest same-name expense only (as
+  ruled 6); after a 409 the Change date window re-reads its history but the page behind keeps the old date until a save; two
+  `load()` calls can resolve out of order (pre-existing); the expenses route's 23505-only mapping and `allowUnsetType` being
+  per-post (pre-existing / owner-only); a format-3 backup of a store without 006 cannot `restore-dev` into a 006 store, verify does
+  not check the 006 enum columns, `create` reads revisions and lines without one snapshot (loud, not silent), restore runs without a
+  transaction (pre-existing) → all Bookkeeping Stage 5 (production store) items; the package 500s if the registration read fails.
+- **Owed:** the owner walk §474. Production: none (no production Bookkeeping store; 006 is development-only).

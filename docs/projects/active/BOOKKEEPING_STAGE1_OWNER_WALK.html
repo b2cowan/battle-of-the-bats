@@ -23,7 +23,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 </header>
 <nav aria-label="Walk parts" id="nav"><span id="progress" aria-live="polite"></span></nav>
 <div id="parts"></div>
-<section class="stop"><h2>Two review findings (not blockers for this walk)</h2><p>1 · On a new USD expense, choosing How did you pay? after Where the CAD figure came from resets that source to the last one used with that card, or to blank; Save is then refused until you choose it again. 2 · Reports’ Purchase tax block labels unknown-tax expenses’ $0.00 as “Known amount · review pending”. Both are product calls for you; neither changes a saved record.</p></section>
+<section class="stop"><h2>Two review findings (not blockers for this walk)</h2><p>1 · On a new USD expense, choosing How did you pay? after Where the CAD figure came from resets that source to the last one used with that card, or to blank; Save is then refused until you choose it again. 2 · <i>Resolved 2026-11-06 by GST/HST Stage 4a:</i> Reports’ old Purchase tax block is replaced by <b>Purchase tax paid</b>, where an unknown-tax expense counts only under Tax unknown. Neither changes a saved record.</p></section>
 <section class="stop"><h2>What the builder proved separately</h2><p>Changed-value expense and transfer voids are refused by the server, with no added revision; replacing a receipt during Void is refused before upload. Signed-out calls are refused. Legacy unknown dates, tax, source and rate survive Void. These have handler tests and prior live development proof; this walk does not ask you to forge requests or alter older records.</p><p class="hint">Review limit: repayment checks currently read before writing. Simultaneous reimbursements or an expense change racing a reimbursement are an existing risk to resolve before real books go live. This sequential owner walk does not prove concurrent safety. Empty Overview states were reviewed in source; the earlier attempted browser fixture did not take effect. Browser checks are builder evidence, separate from your acceptance.</p></section>
 <section id="paste"><h2>Paste your result back into the chat</h2><p>Your ticks, verdicts and notes stay in this browser when local storage is available. Copy rebuilds the result every time. Nothing is sent automatically.</p><button id="copy" type="button">Copy my result</button><button id="reset" type="button">Reset this checklist</button><p id="copy-status" role="status"></p><label class="notes">Current result<textarea id="answers" readonly></textarea></label></section>
 </main>
@@ -40,7 +40,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     ]],
     ['B', 'Journey 1 · an ordinary CAD purchase', [
       'Add an expense: supplier prefix-CAD; category Equipment & supplies; purpose Printer paper; today as Expense date; CAD Amount 42.00; How did you pay? Paid personally. Leave the receipt empty and More details closed.',
-      'Save expense stays on screen. Save once; the read-first record shows Amount $42.00, Paid from Paid personally, today, Payment date Same day, Purchase tax Unknown and Business use 100%.',
+      'Save expense stays on screen. Save once; the read-first record shows Amount $42.00, Paid from Paid personally, today, Payment date Same day, Purchase tax Not sure yet and Business use 100%.',
       'The record says No receipt attached yet. Changes shows its first entry. Close the record: Expenses, All dates, Active, search your unique prefix; the CAD entry appears with Missing.',
       'Overview spending has risen by exactly $42.00 from your noted baseline, provided no other session added expenses meanwhile. Needs attention → See all, search the prefix: CAD carries Receipt missing and Tax amount unknown.',
       'Opening CAD reads the record first, without editable fields. A pencil is available, and Copy as new and Void this expense… are buttons that open only when pressed; there is no permanently open correction or Void form.'
@@ -59,8 +59,8 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     ]],
     ['E', 'Journey 4 · paid on another day', [
       'Add prefix-DATED, Equipment & supplies, Paper paid the following day, CAD 25.00 and Paid personally. Set Expense date to yesterday, tick Paid on a different date and set Payment date to today.',
-      'Open More details: tick I know the purchase tax amount, leave 0.00 and choose No tax recorded. Leave 100% business use and no receipt. Save once.',
-      'The read record shows yesterday as Expense date and today as Payment date, Amount $25.00 and Purchase tax $0.00 · No tax recorded. Confirmed zero is visibly different from Unknown.',
+      'Open More details: set Tax on this receipt to No tax charged. Leave 100% business use and no receipt. Save once.',
+      'The read record shows yesterday as Expense date and today as Payment date, Amount $25.00 and Purchase tax No tax charged. Confirmed no tax is visibly different from Not sure yet.',
       'In Expenses choose All dates and search the prefix so a month boundary cannot hide yesterday; DATED shows Missing in the Receipt column. Turn Needs attention on: DATED shows Receipt missing only, with no Tax amount unknown. Its expense date, not its payment date, controls the period selection.'
     ]],
     ['F', 'Journey 5 · hold a correction until its reason', [
@@ -89,7 +89,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
       'Reports: All confirmed dates, All categories, All expenses in Review view, Find your prefix. Recorded spend is $133.08 across four confirmed-date expenses, with no dates to review for this run.',
       'By category: Equipment & supplies $115.00 and Software & online services $18.08. Open each figure: its contributing expense amounts add to that figure; an entry opens its record, receipt and Changes.',
       'Open a By supplier figure and Paid personally. The supplier drill-down selects its own entry; Paid personally totals $115.00 across CAD, DATED and COPY. Show all entries restores all four.',
-      'Unknown tax and confirmed $0 stay distinct. In Purchase tax recorded, Amount unknown reads 3 expenses (CAD, USD, COPY) and Confirmed no tax reads $0.00 (DATED); ignore the Known amount · review pending $0.00 line, which also counts the unknown ones (recorded as a review finding). No report claims a tax credit, a profit or a reconciled bank balance. Transfers in the next part must not increase expense spend.',
+      'Unknown tax and confirmed no tax stay distinct. In Purchase tax paid, Tax unknown reads 3 expenses (CAD, USD, COPY); DATED adds nothing to any tax figure. No report claims a tax credit, a profit or a reconciled bank balance. Transfers in the next part must not increase expense spend.',
       'With Show all entries and the prefix filter, Export CSV and Accountant package carry the same four selected expense IDs and every revision. A filtered package is not evidence that unrelated owner transfers are missing from the books.'
     ]],
     ['J', 'Ledger and the three transfer windows', [

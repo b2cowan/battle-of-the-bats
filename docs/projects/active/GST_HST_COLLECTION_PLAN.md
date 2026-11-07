@@ -31,8 +31,13 @@ Every outstanding piece of work in this plan has a home in one of these stages. 
   preview, "plus applicable taxes", province test matrix; exit step re-runs the Stripe audit. Needs Stage 1, T4, T5.
 - **Stage 3 — Every tax result has a reason, and staff can see it:** NOT STARTED — charge-level tax record and the Money
   tab. Needs Stage 2.
-- **Stage 4 — The books carry the sales side of GST/HST:** NOT STARTED — built in the Bookkeeping ladder; can run beside
-  Stages 1–3; must exist before the first return with sales on it.
+- **Stage 4 — The books carry the sales side of GST/HST:** DRAWN + RULED 2026-11-06 (every ask A; facts: registered from
+  Sept 26, 2026 with a CRA backdate to May 1 pending, so the date is a changeable setting; annual filer; no quick method) —
+  drawings https://claude.ai/artifact/LbCjjVcnZeTP8uUT3yVZan (source `GST_HST_STAGE4_DRAWINGS.html`); return lines in
+  `docs/agents/accounting/GST_HST_RETURN_LINES.md`. **4a (what we pay) BUILT: Sessions A–E committed 2026-11-06 (f68ebf9fe, 7fac17654, a9a22921e, 0f16bf9a3, f83cbe24e, be2316ef0; reviewed + `/accounting` before hand-off); Bookkeeping migration 006 applied to development 2026-11-06; owner walk §474 owed (https://claude.ai/artifact/QGGWeuRKiD2HKehdbH3pQb). Record: `GST_HST_STAGE4A_BUILD_PROMPT.md` Progress.**
+  **4b (the worksheet)** waits on Stage 3 (its Part 0 now carries the rulings: Ask 11 backfill since registration, Ask 4 Bank of
+  Canada rate columns) and on the Bookkeeping Reports redesign (the worksheet is a Reports view, Ask 7). Bookkeeping ladder rows
+  4a/4b added. Must exist before the first return with sales on it.
 - **Stage 5 — The online-payment fee:** NOT STARTED — tax on the fee, monthly statement per club. (Its address step is
   done: brought forward as Stage 2 Part 2b, committed `947fd8192` 2026-11-05.) Depends on Club Stage 12,
   T2/T3, and **closes with Club Stage 12** (a required stage, not a trigger).
@@ -240,10 +245,19 @@ that input tax credits are claimable.*
 - Tax **paid** on expenses (input tax credits), with the supplier's number — Bookkeeping Stage 4 as drawn.
 - A **GST/HST return worksheet** for any period: sales, tax collected, credits, net owed — the figures that go on the
   return, each traceable to its charges (this is the accountant review's ask marked "New").
-- Revenue rows from Stripe (Bookkeeping Stage 6) bring tax and pre-tax amounts separately; fees and payouts are never
-  counted as revenue.
-- USD amounts converted by one consistent method (Bank of Canada daily rate, or Stripe's conversion) — the stored rate
-  already ruled for Bookkeeping.
+- ~~Revenue rows from Stripe (Bookkeeping Stage 6) bring tax and pre-tax amounts separately~~ **Ruled 2026-11-06 (Stage 4
+  Ask 2 = A): the worksheet's sales and tax come ONLY from Stage 3's per-invoice record**; Bookkeeping Stage 6 keeps fees,
+  refunds as money movements and payouts. Fees and payouts are never counted as revenue.
+- ~~USD amounts converted by one consistent method (Bank of Canada daily rate, or Stripe's conversion)~~ **Ruled 2026-11-06
+  (Ask 4 = A): a USD sale is valued at the Bank of Canada daily rate on the invoice's issue date**, stored on Stage 3's
+  record with the rate and date; Stripe's CAD figure is a cross-check only. Expenses keep the Bookkeeping rule (the CAD
+  actually charged, with its source).
+- **Rulings 2026-11-06 (drawings tab 10):** 1 build 4a now, 4b after Stage 3 · 2 one source (above) · 3 a credit shows on the
+  worksheet and on each expense, never the Overview; Reports shows tax paid · 4 Bank of Canada (above) · 5 a missing number
+  from $100 holds the credit, never blocks, with an “I can't get the number” exit · 6 “Supplier's registration” per expense,
+  filled in from the last same-name expense; Not checked counts but is listed before filing · 7 the worksheet is a Reports
+  view · 8 “Kind of purchase” + CRA's rules · 10 tax paid by type on today's Reports in 4a · 11 Stage 3 backfills since
+  registration · 12 “Mark as filed” freezes a period.
 
 ### Stage 5 — The online-payment fee
 *Owner: Club Stage 12. Gated on T2/T3 (counsel no longer a gate, owner 2026-11-04). Online payments stay off in production until the owner switches them on.

@@ -1,0 +1,376 @@
+<title>Purchase Tax Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box (the house walk frame, as GST_HST_STAGE2_WALK.html). */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .facts { grid-template-columns: 1fr; } .facts dd { margin-bottom: 6px; } }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.call { font-size: 13px; color: var(--warn); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; min-height: 36px; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+.opts { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; }
+.opt { display: flex; gap: 8px; align-items: flex-start; font-size: 0.95em; }
+.opt input { margin-top: 3px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · GST/HST · Stage 4a · §474</span>
+    <h1>Record GST/HST on what you buy, and see the credit each purchase earns</h1>
+    <p class="sub">Written 2026-11-06 for the Stage 4a closeout (Sessions A–E). It runs on your own Bookkeeping, on the development store, against the build as committed. The automated tests prove the credit rules row by row; your ticks prove what you see and type.</p>
+  </header>
+  <section class="card"><h2>What this walk is for</h2><p>An expense now says <strong>which</strong> tax it paid (GST, HST at its rate, PST, QST, other), the supplier’s GST/HST number, how the supplier is registered with CRA, and the <strong>kind</strong> of purchase. From those, the form and the record show the credit on your GST/HST return in one sentence with its reason. You never type a credit. A receipt of $100 or more with no supplier number holds its credit and shows in Needs attention, and saving is never blocked. Reports shows the tax you <strong>paid</strong>, by type, never a credit. The registration date is a setting you can change, and every credit follows it.</p></section>
+  <section class="card"><h2>It passes when</h2><ul>
+    <li>Each row of the drawing’s credit table gives the figure and the sentence the walk names.</li>
+    <li>A missing number goes round the full loop: saved without it, listed in Needs attention, opened at the number, added, and the credit counts.</li>
+    <li>Simplified sellers, a BC two-tax receipt and an expense saved before this change all read as drawn.</li>
+    <li>Reports’ Purchase tax paid shows the full tax by type, each row opens its expenses, and the export follows it.</li>
+    <li>Moving the registration date to May 1 gives a June service its credit, and moving it back takes the credit away again.</li>
+  </ul></section>
+  <section class="card"><h2>Not in this walk</h2><ul>
+    <li><strong>The GST/HST return worksheet, “Before you file” and Mark as filed.</strong> They are Stage 4b.</li>
+    <li><strong>A deemed credit on equipment you held when you registered.</strong> The form never works it out; it says to ask your accountant (C5 reads that sentence).</li>
+    <li><strong>The production Bookkeeping store.</strong> There isn’t one yet (Bookkeeping Stage 5).</li>
+    <li><strong>Two tabs changing the registration date at the same moment.</strong> The tests cover it; the second save is told the date changed.</li>
+  </ul></section>
+  <section class="card"><h2>Before you start</h2><dl class="facts">
+    <dt>Where</dt><dd><code>http://localhost:3000/platform-admin/bookkeeping</code>, signed in as yourself (the Bookkeeping allowlist). The dev server is already running this build.</dd>
+    <dt>Prefix</dt><dd>Every supplier in this walk starts with <code>G4A-</code>. Reports’ <strong>Find</strong> box narrows every figure to the walk’s own expenses with it.</dd>
+    <dt>Dates</dt><dd>Today’s date for every expense except the June service in Part K. On Reports keep a period that includes today (This month is fine).</dd>
+    <dt>Receipts</dt><dd>None needed. Leave each receipt empty; “Receipt missing” in Needs attention is expected and not part of this walk.</dd>
+    <dt>Numbers</dt><dd>Any made-up number works, for example <code>812345678RT0001</code>. The form stores it as printed.</dd>
+    <dt>Registration date</dt><dd>It should read <strong>September 26, 2026</strong> when you start (A1). Part K changes it and puts it back.</dd>
+  </dl></section>
+  <section class="card"><h2>Calls to make as you go</h2><ul>
+    <li><strong>The export’s credit column (L2).</strong> Changed today on the <code>/accounting</code> review: <code>credit_cad</code> holds only the credit that counts on the return, so a held credit reads 0.00 with the state <code>held</code>. The record still shows the figure it waits on. Say if you want the waiting figure in its own column.</li>
+    <li><strong>Not checked keeps its reason (H2).</strong> Changed today on <code>/review</code>: the “Counted for now…” warning is added after the business-use sentence instead of replacing it, so a part-use figure always says why.</li>
+    <li><strong>Equipment bought before the registration date is amber (C5).</strong> Changed today: it asks you to see your accountant, which is an action, so it wears amber. A service before the date stays neutral.</li>
+    <li><strong>The quiet lines under Purchase tax paid (J3).</strong> As you ruled: the full-tax sentence, and no pointer to a return view until 4b builds one.</li>
+    <li><strong>Change date’s window (K3).</strong> It uses the shipped question with two quiet answers, “Keep it” and “Change date”, not the drawing’s lime button.</li>
+    <li><strong>Four form calls the drawing did not show (G2, B2, E4, I3).</strong> The × to remove a tax shows only with two or more lines. “Work out from the total” shows only for one line with a rate. A held credit’s closed row says “credit $x held”. Copy as new of a “Type not set” expense refuses at Save until you choose a type.</li>
+    <li><strong>The kind on an older record (I1).</strong> An expense saved before this change still shows its kind under Business use (from its category).</li>
+  </ul></section>
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+</main>
+
+<script>
+(function () {
+  var KEY = "gst-hst-stage4a-walk-v1";
+  var TITLE = "GST/HST · Stage 4a walk §474 · Record GST/HST on what you buy, and see the credit each purchase earns (2026-11-06)";
+  var BK = "Bookkeeping";
+  var FORM = "Add an expense";
+  var NUM = "<code>812345678RT0001</code>";
+  var MORE = "open <strong>More details</strong>, set <strong>Tax on this receipt</strong> to <strong>Shown on the receipt</strong>";
+  var PARTS = [
+ { id: "A", title: "The build is there (stop check)", steps: [
+  { who: BK, do: "Open <strong>Reports</strong>.",
+    see: "A full-width section titled <strong>Purchase tax paid</strong> (the old half-width “Purchase tax recorded” box is gone), and under it the quiet line “Registered for GST/HST from <strong>September 26, 2026</strong> · Change date”.",
+    options: ["Both are there, and the date is September 26, 2026", "The section is there but the date is different (tell me which; Part K starts from it)", "The old box is still there: STOPPED, tell me"] }
+ ]},
+ { id: "B", title: "An everyday cost, fully used: the whole HST (G4A-Hollis Law)", steps: [
+  { who: FORM, do: "<strong>+ Add expense</strong>. Supplier <code>G4A-Hollis Law</code>, category <strong>Professional services</strong>, purpose <code>Contract review</code>, today, CAD amount <code>650.00</code>, any way you paid. Then " + MORE + ".",
+    see: "A tax line with a <strong>Tax type</strong> and an amount, a <strong>Tax review status</strong> beside the answer, and <strong>Business use %</strong> visible." },
+  { who: FORM, do: "Choose tax type <strong>HST 13%</strong> and press <strong>Work out from the total</strong>.",
+    see: "The amount fills as <strong>74.78</strong> and stays editable. <strong>Kind of purchase</strong> reads <strong>Everyday cost</strong> beside Business use." },
+  { who: FORM, do: "Leave Business use at 100 and the number blank.",
+    see: "The credit callout: <strong>$74.78</strong> in amber, “Waiting for the supplier’s number. Receipts of $100 or more need it, so this stays off the worksheet until it’s added.” Under the number field, in amber: “You can save without it. It shows in Needs attention.” The field’s own border stays normal." },
+  { who: FORM, do: "Type " + NUM + " as <strong>Supplier’s GST/HST number</strong> and set <strong>Supplier’s registration</strong> to <strong>Registered the usual way</strong>. Read the hint under the registration.",
+    see: "Callout: <strong>$74.78</strong>, neutral edge, “All of the HST, because business use is 90% or more.” Only the figure is bold. The hint reads “Foreign online services are often on CRA’s simplified list.”" },
+  { who: FORM, do: "Change Business use to <code>50</code>, then <code>8</code>, then back to <code>100</code>.",
+    see: "50: <strong>$37.39</strong>, “50% of the HST, because business use is 50%.” 8: <strong>No credit</strong>, “Business use of 10% or less gets no credit.” 100: back to $74.78.",
+    options: ["All three read as written", "A figure or sentence differs (tell me which)"] },
+  { who: FORM, do: "Close More details without saving.",
+    see: "The closed row reads <strong>HST $74.78 · credit $74.78</strong>, then the business share." },
+  { who: BK, do: "Press <strong>Save expense</strong> once and read the record.",
+    see: "Purchase tax <strong>HST 13% · $74.78 · Pending review</strong>. Business use <strong>100% · Everyday cost</strong>. Supplier’s GST/HST number as typed. Supplier’s registration <strong>Registered the usual way</strong>. <strong>Credit on your GST/HST return</strong>: $74.78 and one quiet line with the reason." }
+ ]},
+ { id: "C", title: "Equipment and meals (the form only; cancel each)", steps: [
+  { who: FORM, do: "<strong>+ Add expense</strong>. Supplier <code>G4A-Best Buy</code>, category <strong>Equipment &amp; supplies</strong>, purpose <code>Laptop</code>, today, CAD <code>1694.99</code>. " + MORE.slice(0, 1).toUpperCase() + MORE.slice(1) + ", HST 13%, <strong>Work out from the total</strong>, number " + NUM + ", Registered the usual way.",
+    see: "Amount <strong>195.00</strong>. <strong>Kind of purchase</strong> starts at <strong>Equipment you keep</strong> (from the category)." },
+  { who: FORM, do: "Business use <code>70</code>, then <code>50</code>.",
+    see: "70: <strong>$195.00</strong>, “All of the HST, because equipment used more than 50% for the business gets the full credit.” 50: <strong>No credit</strong>, “Equipment used 50% or less for the business gets no credit.” (No part credit for equipment.)" },
+  { who: FORM, do: "Change the kind to <strong>Meal or entertainment</strong>, the CAD amount to <code>79.10</code>, Work out from the total again, Business use <code>100</code>.",
+    see: "Amount <strong>9.10</strong>. Credit <strong>$4.55</strong>, “Half of the HST. Meals and entertainment get half.”" },
+  { who: FORM, do: "Business use <code>50</code>.",
+    see: "<strong>$2.28</strong>, “Half of 50% of the HST, because business use is 50%. Meals and entertainment get half.”" },
+  { who: FORM, do: "Kind back to <strong>Equipment you keep</strong>, Business use <code>70</code>, and set the expense date to <code>2026-09-01</code> (payment date too if asked).",
+    see: "<strong>No credit</strong> in <strong>amber</strong>: “Bought before your GST/HST registration began on September 26, 2026. Equipment you still used for the business on that date may qualify for a credit based on its value then. It isn’t counted here; ask your accountant.”",
+    options: ["Amber, with that sentence", "Neutral edge (tell me)", "A different sentence (tell me)"] },
+  { who: FORM, do: "<strong>Cancel</strong> and leave without saving.",
+    see: "Nothing saved: no G4A-Best Buy in Expenses." }
+ ]},
+ { id: "D", title: "A foreign online seller under CRA’s simplified registration (G4A-Canva)", steps: [
+  { who: FORM, do: "<strong>+ Add expense</strong>. Supplier <code>G4A-Canva</code>, category <strong>Software &amp; online services</strong>, purpose <code>Design plan</code>, today, CAD <code>18.08</code>. " + MORE.slice(0, 1).toUpperCase() + MORE.slice(1) + ", HST 13%, Work out from the total.",
+    see: "Amount <strong>2.08</strong>. Credit $2.08 (under $100, so no number is needed: the field says “Not needed under $100”)." },
+  { who: FORM, do: "Set Supplier’s registration to <strong>Simplified (foreign online seller)</strong>.",
+    see: "<strong>No credit</strong> in amber: “G4A-Canva charged HST under CRA’s simplified registration, which can’t be claimed on your return. Give G4A-Canva your GST/HST number (usually in its billing settings) so it stops charging it, and ask for a refund of the $2.08. If you get one, correct this expense: remove the tax line and lower the amount by the refund.”" },
+  { who: FORM, do: "Set it to <strong>Not registered</strong> for a moment.",
+    see: "<strong>No credit</strong> in amber: “G4A-Canva is marked as not registered for GST/HST, so the HST it charged can’t be claimed. Check its number on CRA’s registry, or ask it for a refund.”" },
+  { who: BK, do: "Set it back to <strong>Simplified</strong> and Save once.",
+    see: "The record’s credit cell reads <strong>No credit</strong> with the simplified sentence. Needs attention does <strong>not</strong> list it for a GST/HST number." }
+ ]},
+ { id: "E", title: "The missing number, round trip (G4A-Missing Number)", steps: [
+  { who: FORM, do: "<strong>+ Add expense</strong>. Supplier <code>G4A-Missing Number</code>, category <strong>Professional services</strong>, purpose <code>Consult</code>, today, CAD <code>650.00</code>. " + MORE.slice(0, 1).toUpperCase() + MORE.slice(1) + ", HST 13%, Work out from the total. Leave the number blank.",
+    see: "Credit <strong>$74.78</strong> in amber, waiting. Under it a box: “I can’t get the number: don’t claim this credit”." },
+  { who: FORM, do: "Tick the box.",
+    see: "<strong>Not claimed</strong>, “You chose not to claim this credit.”" },
+  { who: FORM, do: "With the box ticked, type any number, then delete it again.",
+    see: "While a number is there the box is gone. When the field is empty again the box is back <strong>unticked</strong> and the credit is waiting again ($74.78, amber), not “Not claimed”.",
+    call: "Fixed today on /review: the tick used to come back by itself.",
+    options: ["Back unticked, credit waiting", "It came back ticked (tell me)"] },
+  { who: BK, do: "Close More details, read the closed row, then Save once.",
+    see: "Closed row: <strong>HST $74.78 · credit $74.78 held</strong>. Saved record: the number cell shows a <strong>MISSING</strong> chip (not a button); the credit cell shows <strong>$74.78</strong> and “Held until the number is added”." },
+  { who: BK, do: "Open <strong>Expenses</strong>, turn on <strong>Needs attention</strong>, search <code>G4A</code>.",
+    see: "G4A-Missing Number is listed with the chip <strong>GST/HST number missing</strong>. G4A-Hollis Law and G4A-Canva are not listed for it. The Overview’s Needs attention count includes it, with no tax figure on the Overview." },
+  { who: BK, do: "Click the G4A-Missing Number row in that list.",
+    see: "The <strong>correction</strong> form opens with More details already open and the cursor in <strong>Supplier’s GST/HST number</strong>." },
+  { who: BK, do: "Type " + NUM + ", set Registered the usual way, give a reason if asked (<code>Added the supplier’s number</code>), and save the correction.",
+    see: "The credit cell now reads <strong>$74.78</strong> with “All of the HST, because business use is 90% or more.” Needs attention no longer lists it for the number. Both versions stay in Changes." }
+ ]},
+ { id: "F", title: "Under $100: no number needed (G4A-Small Supply)", steps: [
+  { who: FORM, do: "<strong>+ Add expense</strong>. Supplier <code>G4A-Small Supply</code>, category <strong>Other</strong>, purpose <code>Cables</code>, today, CAD <code>42.00</code>. " + MORE.slice(0, 1).toUpperCase() + MORE.slice(1) + ", HST 13%, Work out from the total, registration <strong>Registered the usual way</strong>. Leave the number blank.",
+    see: "Amount <strong>4.83</strong>. Credit <strong>$4.83</strong>, neutral, “All of the HST, because business use is 90% or more.” The number field says “Not needed under $100”. No “I can’t get the number” box." },
+  { who: BK, do: "Save once, then check Needs attention (search <code>G4A</code>).",
+    see: "The record’s number cell reads <strong>Not needed under $100</strong>. It is not listed for a GST/HST number." }
+ ]},
+ { id: "G", title: "A BC receipt with GST and PST, and the same supplier again (G4A-Hollis Law)", steps: [
+  { who: FORM, do: "<strong>+ Add expense</strong>. Supplier <code>G4A-Hollis Law</code> (exactly as in Part B), category <strong>Professional services</strong>, purpose <code>Filing</code>, today, CAD <code>67.20</code>. " + MORE.slice(0, 1).toUpperCase() + MORE.slice(1) + ", and set the first line to <strong>GST 5%</strong> and <code>3.00</code>.",
+    see: "The number and registration are already filled in from Part B, with the hint “Same as your last G4A-Hollis Law expense.” (The match is the exact name, ignoring capitals and spaces at the ends.)" },
+  { who: FORM, do: "Press <strong>+ Add another tax</strong> and give the new line <code>4.20</code>.",
+    see: "The new line starts as <strong>PST</strong>. Each line now has a × to remove it, and <strong>Work out from the total</strong> is gone (one rate can’t split a two-tax total)." },
+  { who: FORM, do: "Read the callout.",
+    see: "<strong>$3.00</strong>, “All of the GST, because business use is 90% or more. PST isn’t claimed on this return; it stays part of the cost.”" },
+  { who: BK, do: "Save once and read the record.",
+    see: "Purchase tax on two lines, <strong>GST 5% · $3.00</strong> and <strong>PST · $4.20</strong>, then the quiet line “$7.20 in all · Pending review”. Credit $3.00." }
+ ]},
+ { id: "H", title: "Registration Not checked, at part business use (G4A-Unchecked Co)", steps: [
+  { who: FORM, do: "<strong>+ Add expense</strong>. Supplier <code>G4A-Unchecked Co</code>, category <strong>Advertising &amp; marketing</strong>, purpose <code>Flyers</code>, today, CAD <code>226.00</code>. " + MORE.slice(0, 1).toUpperCase() + MORE.slice(1) + ", HST 13%, Work out from the total, number " + NUM + ". Leave the registration at <strong>Not checked</strong>.",
+    see: "Amount <strong>26.00</strong>. Credit $26.00, “All of the HST, because business use is 90% or more. Counted for now. Check the supplier’s registration before you file.”" },
+  { who: FORM, do: "Business use <code>33</code>.",
+    see: "<strong>$8.58</strong>, “33% of the HST, because business use is 33%. Counted for now. Check the supplier’s registration before you file.”",
+    call: "Changed today on /review: the warning used to replace the reason, so $8.58 showed with no word about 33%.",
+    options: ["Reason, then the warning", "Only the warning (tell me)"] },
+  { who: BK, do: "Save once, then check Needs attention.",
+    see: "It is not listed for a GST/HST number (Not checked is listed before filing, in 4b, not in the register)." }
+ ]},
+ { id: "I", title: "An expense saved before this change (B2 QA Seed 2026-10-23 Personal CAD)", steps: [
+  { who: BK, do: "In Expenses choose <strong>All dates</strong>, search <code>B2 QA Seed</code>, and open <strong>B2 QA Seed 2026-10-23 Personal CAD</strong> ($20.00 with a $2.00 tax amount).",
+    see: "Purchase tax <strong>Type not set · $2.00 · Pending review</strong>. Business use <strong>50% · Everyday cost</strong>. No number or registration rows. Credit cell, plain (not amber): <strong>Not worked out</strong>, “Choose the tax type when you correct this expense.”" },
+  { who: BK, do: "Choose <strong>Correct expense</strong> and open More details.",
+    see: "Tax on this receipt is <strong>Shown on the receipt</strong>, one line of $2.00 whose type reads <strong>Choose a type</strong> in amber. Nothing else changed. Press Cancel (save nothing)." },
+  { who: BK, do: "On the same expense choose <strong>Copy as new</strong>, change nothing, and press Save.",
+    see: "Save is refused with “Choose the tax type.” on the type field. Cancel; nothing is saved." }
+ ]},
+ { id: "J", title: "Reports: the tax you paid, by type", steps: [
+  { who: BK, do: "Open <strong>Reports</strong>, keep a period that includes today, and type <code>G4A</code> in <strong>Find</strong>.",
+    see: "The band: <strong>GST/HST paid $185.47</strong> · 6 expenses; <strong>Charged by simplified sellers $2.08</strong> · 1 expense; <strong>Tax unknown 0</strong>.",
+    options: ["The band reads exactly that", "Different figures (tell me which)"] },
+  { who: BK, do: "Read the table under it.",
+    see: "<strong>HST 13%</strong> $182.47 (5), <strong>GST 5%</strong> $3.00 (1), <strong>PST · part of the cost</strong> $4.20 (1). No other rows. G4A-Unchecked Co counts its full $26.00, not the 33% share." },
+  { who: BK, do: "Read the two quiet lines under the table.",
+    see: "“Tax as charged on your receipts, in full. Spending figures above show only the business-use share.” and “Registered for GST/HST from September 26, 2026 · Change date”. No credit figure anywhere on Reports." },
+  { who: BK, do: "Click the <strong>PST · part of the cost</strong> row.",
+    see: "The row is tinted, and the line list below is headed for PST and shows only the G4A-Hollis Law filing expense." },
+  { who: BK, do: "With the PST row selected, Export CSV.",
+    see: "The file holds only that expense (no voided rows). Its <code>gst_cad</code> is 3.00, <code>pst_cad</code> 4.20, <code>credit_cad</code> 3.00, <code>credit_state</code> counted." },
+  { who: BK, do: "Clear the row, set <strong>Review view</strong> to <strong>Tax review pending</strong>.",
+    see: "The walk’s six saved expenses are listed (all left at Pending review), and the Purchase tax paid figures still read as in J1." }
+ ]},
+ { id: "K", title: "Change the registration date to May 1 and back (G4A-June Service)", steps: [
+  { who: FORM, do: "<strong>+ Add expense</strong>. Supplier <code>G4A-June Service</code>, category <strong>Professional services</strong>, purpose <code>June bookkeeping help</code>, expense and payment date <code>2026-06-15</code>, CAD <code>650.00</code>. " + MORE.slice(0, 1).toUpperCase() + MORE.slice(1) + ", HST 13%, Work out from the total, number " + NUM + ", Registered the usual way.",
+    see: "<strong>No credit</strong>, neutral: “Bought before your GST/HST registration began on September 26, 2026. If it paid for time after that date, such as a yearly plan, that part may be claimed. Ask your accountant.” Save once." },
+  { who: BK, do: "On Reports press <strong>Change date</strong>.",
+    see: "A window “Change your registration date?” with “Credits are worked out from this date. A service bought before it gets no credit.”, <strong>Registered from</strong> showing September 26, 2026, a <strong>Reason</strong> box, and <strong>Changes · 1</strong> listing the first entry." },
+  { who: BK, do: "Press <strong>Change date</strong> with no reason.",
+    see: "Refused under the reason: “Say why the date changed.” Nothing saved. The two answers at the foot are <strong>Keep it</strong> and <strong>Change date</strong>, both quiet." },
+  { who: BK, do: "Set Registered from to <strong>May 1, 2026</strong>, reason <code>Walk: CRA backdate test</code>, Change date.",
+    see: "The notice “Registration date changed. Every credit is worked out from the new date.” The quiet line now reads “Registered for GST/HST from May 1, 2026”." },
+  { who: BK, do: "Open G4A-June Service (Expenses, All dates, search G4A).",
+    see: "Its credit is now <strong>$74.78</strong>, “All of the HST, because business use is 90% or more.”",
+    options: ["$74.78 with that reason", "Still No credit (tell me)"] },
+  { who: BK, do: "Back on Reports, Change date to <strong>September 26, 2026</strong>, reason <code>Walk: back to Sept 26</code>.",
+    see: "The quiet line reads September 26, 2026 again; the window’s list now shows <strong>Changes · 3</strong>. G4A-June Service is back to <strong>No credit</strong> with the before-registration sentence." }
+ ]},
+ { id: "L", title: "The export and the accountant package", steps: [
+  { who: BK, do: "In Expenses, All dates, search <code>G4A</code>, Export CSV. Open it in a spreadsheet.",
+    see: "After <code>tax_status</code>: <code>tax_answer, gst_cad, hst_cad, hst_rate, pst_cad, qst_cad, other_cad, supplier_tax_number, supplier_registration, purchase_kind, credit_cad, credit_state</code>. G4A-Unchecked Co reads <code>counted_registration_unchecked</code> and 8.58; G4A-Canva <code>not_claimable</code> and 0.00; G4A-June Service <code>before_registration</code> and 0.00." },
+  { who: BK, do: "Find the G4A-Missing Number rows.",
+    see: "The older (superseded) version has blank credit columns; the current one reads 74.78, <code>counted</code>. A credit still waiting on a number would read <strong>0.00</strong> with <code>held</code>: <code>credit_cad</code> is only what counts on the return.",
+    call: "Changed today on the /accounting review (see Calls). Say if you want the waiting figure in its own column." },
+  { who: BK, do: "Download the accountant package and open its <code>expenses.csv</code> and <code>package-scope.txt</code>.",
+    see: "expenses.csv has the same columns as L1. package-scope.txt is unchanged except that it names a tax type when one is set." }
+ ]},
+ { id: "M", title: "On a phone (390 wide)", steps: [
+  { who: "Phone · " + FORM, do: "At 390 wide, + Add expense, open More details, Shown on the receipt, + Add another tax. Leave the number blank on a CAD 650.00 receipt with HST.",
+    see: "The window fills the screen. Each × is a full-size tap target. The blank number field keeps a normal border; only the hint under it is amber. Cancel." },
+  { who: "Phone · Reports", do: "Open Reports with <code>G4A</code> in Find.",
+    see: "The band stacks to one column, the by-type table reads as cards, and nothing scrolls sideways." }
+ ]},
+ { id: "N", title: "Put back", steps: [
+  { who: BK, do: "Check the registration date reads <strong>September 26, 2026</strong> (K6).",
+    see: "It does. The walk’s G4A expenses can stay in the development store, or void them if you prefer; tell me in the notes if you want them voided for you." }
+ ]}
+];
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var steps = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+      if (s.call) t.appendChild(el('span', 'call', s.call));
+      var rec = { part: p.id, step: id, boxes: [], options: s.options || null };
+      if (s.options) {
+        // One box per answer: the tick IS the answer, and the summary prints which one.
+        var opts = el('span', 'opts');
+        s.options.forEach(function (label, k) {
+          var oid = id + String.fromCharCode(97 + k);
+          var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + oid; cb.checked = !!state.ticks[oid];
+          cb.addEventListener('change', function () { state.ticks[oid] = cb.checked; save(); refresh(); });
+          rec.boxes.push({ cb: cb, label: label });
+          var o = el('label', 'opt'); o.appendChild(cb); o.appendChild(el('span', null, label)); opts.appendChild(o);
+        });
+        t.appendChild(opts);
+        var row = el('div', 'step'); row.appendChild(el('span', null, '')); row.appendChild(t); body.appendChild(row);
+      } else {
+        var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+        cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+        rec.boxes.push({ cb: cb, label: null });
+        var row2 = el('label', 'step'); row2.appendChild(cb); row2.appendChild(t); body.appendChild(row2);
+      }
+      steps.push(rec);
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function isDone(r) { return r.boxes.some(function (b) { return b.cb.checked; }); }
+  function doneSteps(partId) { return steps.filter(function (r) { return (!partId || r.part === partId) && isDone(r); }); }
+  var totalSteps = steps.length;
+
+  function refresh() {
+    PARTS.forEach(function (p) {
+      var n = doneSteps(p.id).length;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + p.steps.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    var done = doneSteps(null).length;
+    document.getElementById('total').textContent = done + ' of ' + totalSteps + ' checked';
+    document.getElementById('barfill').style.width = (totalSteps ? Math.round(done * 100 / totalSteps) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [TITLE, 'Checked ' + doneSteps(null).length + ' of ' + totalSteps + ' steps'];
+    PARTS.forEach(function (p) {
+      var ticked = doneSteps(p.id);
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + p.steps.length
+        + (ticked.length ? ' (' + ticked.map(function (r) { return r.step; }).join(', ') + ')' : ''));
+      ticked.filter(function (r) { return r.options; }).forEach(function (r) {
+        lines.push('  ' + r.step + ': ' + r.boxes.filter(function (b) { return b.cb.checked; }).map(function (b) { return b.label; }).join(' + '));
+      });
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    steps.forEach(function (r) { r.boxes.forEach(function (b) { b.cb.checked = false; }); });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>
