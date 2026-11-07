@@ -144,6 +144,22 @@ and that the club sees none of it. Say what is drawn and what is built from the 
 
 ## BC7b — the phone, the walks and the finishing passes (session 2)
 
+**Carried from BC7a (committed `d5c9a4dbc`; read plan §9 BC7's BC7a line first):**
+- The screens are `components/coaches/bank/` (`CoachBankView`, `CoachBankCheck`, `CoachBankFind`, `CoachBankWindow`,
+  `coachBank.ts`, `CoachBank.module.css`); the guard is `tests/unit/bank-coach-view-guard.test.ts`; the layout id is
+  `coach-ledger-bank`. At ≤760 the fields only stack two-up today and Find/saved checks fall back to the portal's
+  `tableAsCards`: BC7b replaces that with the drawn phone frame.
+- The band's tiles come from `bankBandTiles` (`lib/bank-screen.ts`, shared with the club): its phone `captionShort` for the
+  middle tile is the CLUB's ("Your books, adjusted for what's pending"). The coach frame draws "your books, less $X cash"
+  — override it in the coach view only (the club's caption is settled; don't change the shared one).
+- Phone row cards: the coaches portal has `CoachRowList` / `CoachRow` (`components/coaches/CoachRowList.tsx`), not the
+  club's `ClubRow`; no money screen uses it yet, so check `/design` agrees before building Find's cards on it.
+- The walk needs a team with money and a live season: BC6b's probe used uat-rep-club "UAT Test Team" (2026 Season) with
+  `UAT_COACH` as writer and a money-read assistant added for the run (`.probe/bank-bc6/bc6.mjs`).
+- Kept at BC7a's `/review` (say so to `/design` if it raises them): "Check this statement again" starts with balance, cash
+  and marks empty; a Ledger remembered on Bank reopens on Bank; the band's live region announces as the coach types.
+- The dev server was not restarted after BC7a (shared); restart before the owner looks, per AGENTS.md.
+
 1. **The phone** (≤ 600px, the club's BC4b recipe): one column, the fields side by side where the frame draws them, the
    cash field wide, the caption "your books, less $X cash", Find as row cards 10 at a time with signed amounts, Save full
    width and last; no sideways scroll at 390 and 361; tap floors (the portal's rule).
