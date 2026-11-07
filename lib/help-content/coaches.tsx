@@ -134,113 +134,6 @@ const coachesHelp: HelpPageContent = {
       ],
     },
     {
-      group: 'Premium Coaches Portal',
-      id: 'premium-money-bank',
-      heading: 'Checking the bank statement: the Bank view',
-      summary: 'Type a statement’s date and balance; the Bank view says whether the team’s books agree with the bank that day, and helps you find what’s missing when they don’t.',
-      keywords: ['bank', 'bank view', 'bank statement', 'statement', 'bank balance', 'reconcile', 'reconciliation', 'bank reconciliation', 'check a statement', 'statement balance', 'matches', 'off by', 'find the difference', 'not in the bank yet', 'still waiting', 'outstanding cheque', 'cheque not cashed', 'deposit', 'deposit not in the bank', 'cash not deposited yet', 'books now say', 'checked through', 'print this check', 'print', 'bank check report', 'treasurer', 'club treasurer', 'association', 'team bank account', 'ledger bank view'],
-      searchText: 'bank view bank statement bank balance reconcile reconciliation bank reconciliation reconcile the bank statement check the bank statement against the books money ledger view bank fourth view of the ledger statement date bank balance on that date cash not deposited yet statements from this season only since the season opening balance team bank account check a statement save this check the bank says should be in the bank difference matches off by the bank shows more less than your books find the find an amount or a name lines since the last match lines since the season started not in the bank yet outstanding cheque cheque not cashed deposit not landed deposit not in the bank add the missing line bank fee interest from the 2025 season last season’s lines opening cash carried still waiting on yes no checked statements the bank said should have been result checked by books now say figures stay as they were delete this check check this statement again checked through bank checked through not checked yet cash on hand card off by chip overview line print this check one page letter prepared by reviewed by club treasurer association monthly form sign phone desk computer money access edit access view only read only assistant coach start next season close the season your bank check was off warns never blocks closed season has no bank view opening balance',
-      content: (
-        <>
-          <p>The <strong>Bank</strong> view checks the team’s bank statement against the team’s books. You type a statement’s date and its ending balance; the view says whether your books agree with the bank that day, and when they don’t, it helps you find what’s missing. Every check you save stays, so you can show which statements were checked and when.</p>
-          <p>It checks the bank against the Ledger; it doesn’t second-guess the Ledger. Every Ledger line is taken as true.</p>
-        </>
-      ),
-      subtopics: [
-        {
-          id: 'premium-money-bank-where',
-          title: 'Where the Bank view is, and who can use it',
-          content: (
-            <>
-              <p>Open <strong>Money</strong>, then <strong>Ledger</strong>, then choose <strong>Bank</strong> from the <strong>View</strong> switch (it sits beside Timeline, Bills and Payment schedule). The team has one bank account and there is nothing to set up: the season’s opening balance is where checking starts.</p>
-              <p>The <strong>Cash on hand</strong> card on the Money Overview shows a small line under its bars: <em>Bank: checked through {'{date}'} ›</em>, or <em>Bank: not checked yet ›</em>. It opens the Bank view. When the latest check was off, an amber <strong>Off by $X</strong> chip beside it opens that check.</p>
-              <HelpDefs>
-                <HelpDef term="Money edit access">Checks a statement, deletes a check, checks a statement again, and prints a check.</HelpDef>
-                <HelpDef term="Money view-only access">Sees the line at the top, the list of saved checks and any check opened, and can print one. There is no form and no <strong>Delete this check</strong>.</HelpDef>
-                <HelpDef term="No money access">Doesn’t see Money at all, so there is no Bank view.</HelpDef>
-              </HelpDefs>
-            </>
-          ),
-        },
-        {
-          id: 'premium-money-bank-check',
-          title: 'Check a statement',
-          content: (
-            <>
-              <HelpSteps>
-                <li>Under <strong>Check a statement</strong>, pick the <strong>Statement date</strong> and type the <strong>Bank balance on that date</strong>.</li>
-                <li>If some cash is in hand and not yet at the bank, type it in <strong>Cash not deposited yet</strong>. It is optional, and it counts for this check only.</li>
-                <li>Read the three figures: <strong>The bank says</strong>, <strong>Should be in the bank</strong> (your books on that date, less what hasn’t reached the bank yet) and the <strong>Difference</strong>.</li>
-                <li>Press <strong>Save this check</strong>.</li>
-              </HelpSteps>
-              <p>Under the fields: <em>Statements from this season only, since {'{date}'}.</em> A statement dated before the season started can’t be checked here, and neither can one dated after today.</p>
-              <HelpDefs>
-                <HelpDef term="Matches">The bank and your books agree on that date, shown in green.</HelpDef>
-                <HelpDef term="Off by $X">They don’t, shown in amber, with a sentence that says which way: <em>The bank shows $X more than your books</em>, or less.</HelpDef>
-              </HelpDefs>
-              <p><strong>How “Should be in the bank” is worked out</strong> sits under the figures, always open: your books on the date, less any <strong>Cash not deposited yet</strong>, plus or minus each line you marked <strong>Not in the bank yet</strong>.</p>
-              <HelpNote variant="info" title="A check saves even when it’s off">Saving never waits for a match. When it’s off, a note says <em>It saves as off by $X. You can check this statement again later.</em> Saving a date that’s already checked replaces that check.</HelpNote>
-            </>
-          ),
-        },
-        {
-          id: 'premium-money-bank-find',
-          title: 'Find what’s missing',
-          content: (
-            <>
-              <p>When a check is off, <strong>Find the $X</strong> lists the Ledger lines since the last check that matched, or since the season started when none has. <strong>Find an amount or a name</strong> searches them.</p>
-              <ul>
-                <li><strong>Hints</strong> point at the likely cause: a line that is exactly the difference, one that is half of it (entered the wrong way round?), or a few that add up to it. <strong>Next possibility</strong> moves to the next one.</li>
-                <li><strong>Not in the bank yet</strong> on a line (a cheque that hasn’t been cashed, a deposit that hasn’t landed) counts it in the sums; <strong>Undo</strong> takes it back out.</li>
-                <li><strong>Add the missing line</strong> opens the Ledger’s ordinary add window with the amount and the statement’s date filled in, for a bank fee or interest the books don’t have yet. Save it there and the check re-figures.</li>
-                <li>If the season opened with cash carried from last season, and no check this season has matched yet, last season’s lines follow under <strong>From the {'{season name}'}</strong> (<em>2025 Season</em>, say). A cheque written last season that clears this season is the usual reason.</li>
-              </ul>
-              <p>The next check asks once about each line the last check marked: <em>Still waiting on {'{line}'}?</em> <strong>Yes</strong> keeps it waiting; <strong>No</strong> means it reached the bank, and it drops off.</p>
-            </>
-          ),
-        },
-        {
-          id: 'premium-money-bank-saved',
-          title: 'Saved checks, and what changed since',
-          content: (
-            <>
-              <p>At the top of the view, one line says how far the team is checked: <strong>Team bank account</strong> · <strong>checked through {'{date}'}</strong> · <strong>Matches</strong>, or an amber <strong>Off by $X</strong> chip that opens the latest check. Until the first save it reads <strong>not checked yet</strong>. Below the form, <strong>Checked statements</strong> lists every saved check (Statement date · The bank said · Should have been · Result · Checked by). Click one to open it.</p>
-              <ul>
-                <li>An opened check shows its figures exactly as they were saved, and who checked it and when.</li>
-                <li><strong>Books now say $X</strong> appears when a Ledger line dated on or before the statement changed after the check was saved. The check’s own figures stay as they were; <strong>Check this statement again</strong> puts its date back in the form so you can save an up-to-date one.</li>
-                <li><strong>Delete this check</strong> asks once. Its figures go; who deleted it and when is kept.</li>
-              </ul>
-            </>
-          ),
-        },
-        {
-          id: 'premium-money-bank-print',
-          title: 'Print a check for a treasurer or the association',
-          content: (
-            <>
-              <p><strong>Print this check</strong>, in an opened check, prints it on one Letter page. It is there on every saved check, one that matched included, for anyone who can open it. It is on a computer only, not on a phone.</p>
-              <p>The page puts the bank first, the way an association’s monthly form runs: the bank’s balance on the statement, each line not in the bank yet, any cash not deposited, <strong>What your books should say</strong>, <strong>Your books</strong> on that date and the result. Under it: who checked it, with their role on the team, and when; <strong>Books now say $X</strong> if the books changed since; and two lines to sign and date, <strong>Prepared by</strong> and <strong>Reviewed by</strong>, to hand to a club treasurer or an association.</p>
-              <p>It never carries an account number or the full list of Ledger lines.</p>
-            </>
-          ),
-        },
-        {
-          id: 'premium-money-bank-season',
-          title: 'When the season ends',
-          content: (
-            <>
-              <p><strong>Start next season</strong> and <strong>Close the season</strong> both mention the season’s latest check, when there is one. A team that never checked a statement isn’t told anything. Neither one is ever stopped by it.</p>
-              <HelpDefs>
-                <HelpDef term="The latest check was off">An amber warning: <em>Your bank check was off by $X on {'{date}'}. Check the season’s last statement before you…</em> start the new season or close. In Close the season it sits with the other things to look at first.</HelpDef>
-                <HelpDef term="The latest check matched">A plain line, no warning: <em>The bank matches through {'{date}'}. If you have a later statement, check it before you…</em></HelpDef>
-              </HelpDefs>
-              <p>A closed season has no Bank view, and the new season’s Bank view starts from its own opening balance. Print a check you want to keep while the season is still open.</p>
-            </>
-          ),
-        },
-      ],
-    },
-    {
       id: 'collapse-sidebar',
       group: 'Getting started',
       heading: 'How to collapse the sidebar',
@@ -3132,6 +3025,113 @@ const coachesHelp: HelpPageContent = {
           ),
           answerText: 'Tap any tab — Budget, Player dues, Fundraising, Ledger, and the rest — in the tab bar across the top of Money, or any link on the Overview tab: every card’s footer links and every row in the More in Money list lead to the screen that owns the number. Either way you switch in place; the tab bar stays put, so getting from one Money screen to another is one tap, not a trip back to Money first. Overview lists Fundraisers and Sponsorships as two rows — both open Fundraising, each showing just that kind.',
           keywords: ['tab bar', 'money tabs', 'switch tabs', 'switch between money screens', 'back to money', 'navigate money', 'change tabs'],
+        },
+      ],
+    },
+    {
+      group: 'Premium Coaches Portal',
+      id: 'premium-money-bank',
+      heading: 'Checking the bank statement: the Bank view',
+      summary: 'Type a statement’s date and balance; the Bank view says whether the team’s books agree with the bank that day, and helps you find what’s missing when they don’t.',
+      keywords: ['bank', 'bank view', 'bank statement', 'statement', 'bank balance', 'reconcile', 'reconciliation', 'bank reconciliation', 'check a statement', 'statement balance', 'matches', 'off by', 'find the difference', 'not in the bank yet', 'still waiting', 'outstanding cheque', 'cheque not cashed', 'deposit', 'deposit not in the bank', 'cash not deposited yet', 'books now say', 'checked through', 'print this check', 'print', 'bank check report', 'treasurer', 'club treasurer', 'association', 'team bank account', 'ledger bank view'],
+      searchText: 'bank view bank statement bank balance reconcile reconciliation bank reconciliation reconcile the bank statement check the bank statement against the books money ledger view bank fourth view of the ledger statement date bank balance on that date cash not deposited yet statements from this season only since the season opening balance team bank account check a statement save this check the bank says should be in the bank difference matches off by the bank shows more less than your books find the find an amount or a name lines since the last match lines since the season started not in the bank yet outstanding cheque cheque not cashed deposit not landed deposit not in the bank add the missing line bank fee interest from the 2025 season last season’s lines opening cash carried still waiting on yes no checked statements the bank said should have been result checked by books now say figures stay as they were delete this check check this statement again checked through bank checked through not checked yet cash on hand card off by chip overview line print this check one page letter prepared by reviewed by club treasurer association monthly form sign phone desk computer money access edit access view only read only assistant coach start next season close the season your bank check was off warns never blocks closed season has no bank view opening balance',
+      content: (
+        <>
+          <p>The <strong>Bank</strong> view checks the team’s bank statement against the team’s books. You type a statement’s date and its ending balance; the view says whether your books agree with the bank that day, and when they don’t, it helps you find what’s missing. Every check you save stays, so you can show which statements were checked and when.</p>
+          <p>It checks the bank against the Ledger; it doesn’t second-guess the Ledger. Every Ledger line is taken as true.</p>
+        </>
+      ),
+      subtopics: [
+        {
+          id: 'premium-money-bank-where',
+          title: 'Where the Bank view is, and who can use it',
+          content: (
+            <>
+              <p>Open <strong>Money</strong>, then <strong>Ledger</strong>, then choose <strong>Bank</strong> from the <strong>View</strong> switch (it sits beside Timeline, Bills and Payment schedule). The team has one bank account and there is nothing to set up: the season’s opening balance is where checking starts.</p>
+              <p>The <strong>Cash on hand</strong> card on the Money Overview shows a small line under its bars: <em>Bank: checked through {'{date}'} ›</em>, or <em>Bank: not checked yet ›</em>. It opens the Bank view. When the latest check was off, an amber <strong>Off by $X</strong> chip beside it opens that check.</p>
+              <HelpDefs>
+                <HelpDef term="Money edit access">Checks a statement, deletes a check, checks a statement again, and prints a check.</HelpDef>
+                <HelpDef term="Money view-only access">Sees the line at the top, the list of saved checks and any check opened, and can print one. There is no form and no <strong>Delete this check</strong>.</HelpDef>
+                <HelpDef term="No money access">Doesn’t see Money at all, so there is no Bank view.</HelpDef>
+              </HelpDefs>
+            </>
+          ),
+        },
+        {
+          id: 'premium-money-bank-check',
+          title: 'Check a statement',
+          content: (
+            <>
+              <HelpSteps>
+                <li>Under <strong>Check a statement</strong>, pick the <strong>Statement date</strong> and type the <strong>Bank balance on that date</strong>.</li>
+                <li>If some cash is in hand and not yet at the bank, type it in <strong>Cash not deposited yet</strong>. It is optional, and it counts for this check only.</li>
+                <li>Read the three figures: <strong>The bank says</strong>, <strong>Should be in the bank</strong> (your books on that date, less what hasn’t reached the bank yet) and the <strong>Difference</strong>.</li>
+                <li>Press <strong>Save this check</strong>.</li>
+              </HelpSteps>
+              <p>Under the fields: <em>Statements from this season only, since {'{date}'}.</em> A statement dated before the season started can’t be checked here, and neither can one dated after today.</p>
+              <HelpDefs>
+                <HelpDef term="Matches">The bank and your books agree on that date, shown in green.</HelpDef>
+                <HelpDef term="Off by $X">They don’t, shown in amber, with a sentence that says which way: <em>The bank shows $X more than your books</em>, or less.</HelpDef>
+              </HelpDefs>
+              <p><strong>How “Should be in the bank” is worked out</strong> sits under the figures, always open: your books on the date, less any <strong>Cash not deposited yet</strong>, plus or minus each line you marked <strong>Not in the bank yet</strong>.</p>
+              <HelpNote variant="info" title="A check saves even when it’s off">Saving never waits for a match. When it’s off, a note says <em>It saves as off by $X. You can check this statement again later.</em> Saving a date that’s already checked replaces that check.</HelpNote>
+            </>
+          ),
+        },
+        {
+          id: 'premium-money-bank-find',
+          title: 'Find what’s missing',
+          content: (
+            <>
+              <p>When a check is off, <strong>Find the $X</strong> lists the Ledger lines since the last check that matched, or since the season started when none has. <strong>Find an amount or a name</strong> searches them.</p>
+              <ul>
+                <li><strong>Hints</strong> point at the likely cause: a line that is exactly the difference, one that is half of it (entered the wrong way round?), or a few that add up to it. <strong>Next possibility</strong> moves to the next one.</li>
+                <li><strong>Not in the bank yet</strong> on a line (a cheque that hasn’t been cashed, a deposit that hasn’t landed) counts it in the sums; <strong>Undo</strong> takes it back out.</li>
+                <li><strong>Add the missing line</strong> opens the Ledger’s ordinary add window with the amount and the statement’s date filled in, for a bank fee or interest the books don’t have yet. Save it there and the check re-figures.</li>
+                <li>If the season opened with cash carried from last season, and no check this season has matched yet, last season’s lines follow under <strong>From the {'{season name}'}</strong> (<em>2025 Season</em>, say). A cheque written last season that clears this season is the usual reason.</li>
+              </ul>
+              <p>The next check asks once about each line the last check marked: <em>Still waiting on {'{line}'}?</em> <strong>Yes</strong> keeps it waiting; <strong>No</strong> means it reached the bank, and it drops off.</p>
+            </>
+          ),
+        },
+        {
+          id: 'premium-money-bank-saved',
+          title: 'Saved checks, and what changed since',
+          content: (
+            <>
+              <p>At the top of the view, one line says how far the team is checked: <strong>Team bank account</strong> · <strong>checked through {'{date}'}</strong> · <strong>Matches</strong>, or an amber <strong>Off by $X</strong> chip that opens the latest check. Until the first save it reads <strong>not checked yet</strong>. Below the form, <strong>Checked statements</strong> lists every saved check (Statement date · The bank said · Should have been · Result · Checked by). Click one to open it.</p>
+              <ul>
+                <li>An opened check shows its figures exactly as they were saved, and who checked it and when.</li>
+                <li><strong>Books now say $X</strong> appears when a Ledger line dated on or before the statement changed after the check was saved. The check’s own figures stay as they were; <strong>Check this statement again</strong> puts its date back in the form so you can save an up-to-date one.</li>
+                <li><strong>Delete this check</strong> asks once. Its figures go; who deleted it and when is kept.</li>
+              </ul>
+            </>
+          ),
+        },
+        {
+          id: 'premium-money-bank-print',
+          title: 'Print a check for a treasurer or the association',
+          content: (
+            <>
+              <p><strong>Print this check</strong>, in an opened check, prints it on one Letter page. It is there on every saved check, one that matched included, for anyone who can open it. It is on a computer only, not on a phone.</p>
+              <p>The page puts the bank first, the way an association’s monthly form runs: the bank’s balance on the statement, each line not in the bank yet, any cash not deposited, <strong>What your books should say</strong>, <strong>Your books</strong> on that date and the result. Under it: who checked it, with their role on the team, and when; <strong>Books now say $X</strong> if the books changed since; and two lines to sign and date, <strong>Prepared by</strong> and <strong>Reviewed by</strong>, to hand to a club treasurer or an association.</p>
+              <p>It never carries an account number or the full list of Ledger lines.</p>
+            </>
+          ),
+        },
+        {
+          id: 'premium-money-bank-season',
+          title: 'When the season ends',
+          content: (
+            <>
+              <p><strong>Start next season</strong> and <strong>Close the season</strong> both mention the season’s latest check, when there is one. A team that never checked a statement isn’t told anything. Neither one is ever stopped by it.</p>
+              <HelpDefs>
+                <HelpDef term="The latest check was off">An amber warning: <em>Your bank check was off by $X on {'{date}'}. Check the season’s last statement before you…</em> start the new season or close. In Close the season it sits with the other things to look at first.</HelpDef>
+                <HelpDef term="The latest check matched">A plain line, no warning: <em>The bank matches through {'{date}'}. If you have a later statement, check it before you…</em></HelpDef>
+              </HelpDefs>
+              <p>A closed season has no Bank view, and the new season’s Bank view starts from its own opening balance. Print a check you want to keep while the season is still open.</p>
+            </>
+          ),
         },
       ],
     },
