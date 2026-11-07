@@ -114,8 +114,9 @@ export const BILLING_ADDRESS_FORM_WORDS = {
 /** Platform admin's read-only block on the organization record's Money tab (Part 3). Staff read it; nobody edits it there. */
 export const BILLING_LOCATION_CONSOLE_WORDS = {
   heading: 'Billing address',
-  club: 'Where the club is billed. Read only: the club changes it on Plan & billing.',
-  person: 'A coach buys Premium as a person, so this is the coach’s own home address. It covers every portal they pay for.',
+  // GST/HST Stage 3 Part 2: "today", so nobody reads it as the address a past sale was taxed on (each sale keeps its own copy).
+  club: 'Where the club is billed today. Read only: the club changes it on Plan & billing. Each sale keeps the address as it stood when it was sold; open a sale to see it.',
+  person: 'A coach buys Premium as a person, so this is the coach’s own home address today. It covers every portal they pay for. Each sale keeps the address as it stood when it was sold; open a sale to see it.',
   none: 'No billing address yet. The buyer is asked for one before their first paid checkout.',
   noOwner: 'This portal isn’t billed to a coach, so there is no address to show here.',
   readFailed: 'The billing address couldn’t be read.',

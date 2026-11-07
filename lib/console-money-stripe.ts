@@ -89,6 +89,14 @@ export function toMoneyInvoice(inv: Stripe.Invoice, prices: PriceMap): MoneyInvo
     description: subscriptionId ? null : (charged?.description ?? null),
     feeInvoice: !!inv.metadata?.[FEE_INVOICE_META],
     taxCents: taxOf(inv),
+    status: inv.status ?? null,
+    issuedAt: iso(inv.status_transitions?.finalized_at) ?? iso(inv.created),
+    currency: inv.currency,
+    totalCents: inv.total,
+    amountDueCents: inv.amount_due,
+    amountRemainingCents: inv.amount_remaining,
+    dueDate: iso(inv.due_date),
+    markedUncollectibleAt: iso(inv.status_transitions?.marked_uncollectible_at),
   };
 }
 
@@ -124,6 +132,7 @@ export function toMoneyCharge(c: Stripe.Charge, invoice: MoneyInvoice | null): M
     otherMethod: other,
     refunds: (c.refunds?.data ?? []).map(toMoneyRefund),
     invoice,
+    paymentIntentId: idOf(c.payment_intent ?? null),
   };
 }
 
@@ -218,8 +227,11 @@ export async function readClubMoney(stripe: Stripe, customerId: string, opts: { 
 
   const byCharge = new Map<string, MoneyInvoice>();
   const byIntent = new Map<string, MoneyInvoice>();
+  const moneyInvoices: MoneyInvoice[] = [];
   for (const inv of invoices.items) {
+    if (inv.status === 'draft') continue; // not issued: no sale yet, and nothing has paid it
     const m = toMoneyInvoice(inv, opts.prices);
+    moneyInvoices.push(m);
     for (const p of inv.payments?.data ?? []) {
       const ch = idOf(p.payment.charge ?? null);
       const pi = idOf(p.payment.payment_intent ?? null);
@@ -261,7 +273,9 @@ export async function readClubMoney(stripe: Stripe, customerId: string, opts: { 
     otherMethod,
     subscriptions,
     charges: moneyCharges,
+    invoices: moneyInvoices,
     olderBefore: charges.more && oldest ? oldest.createdAt : (oldest ? new Date(sinceMs).toISOString() : null), // utc-intentional
+    chargesFrom: charges.more && oldest ? oldest.createdAt : new Date(sinceMs).toISOString(), // utc-intentional
     subscriptionsMore: subs.more,
     nextCharge,
   };
@@ -294,18 +308,38 @@ export type FoundStripeItem = { customerId: string; livemode: boolean; amountCen
 
 const isMissing = (err: unknown) => (err as { statusCode?: number }).statusCode === 404 || (err as { code?: string }).code === 'resource_missing';
 
+/** The charge that paid an invoice (its paid payment, else its newest try), or null when nothing has charged it. */
+async function chargeOfInvoice(stripe: Stripe, inv: Stripe.Invoice): Promise<string | null> {
+  const pay = inv.payments?.data?.find(p => p.status === 'paid') ?? inv.payments?.data?.[0];
+  if (pay?.payment.charge) return idOf(pay.payment.charge);
+  if (!pay?.payment.payment_intent) return null;
+  const pi = typeof pay.payment.payment_intent === 'string'
+    ? await stripe.paymentIntents.retrieve(pay.payment.payment_intent, {}, READ_OPTS) : pay.payment.payment_intent;
+  return idOf(pi.latest_charge as string | { id: string } | null);
+}
+
 async function invoiceItem(stripe: Stripe, inv: Stripe.Invoice): Promise<FoundStripeItem | null> {
   const customerId = idOf(inv.customer as string | { id: string } | null);
   if (!customerId) return null;
-  let chargeId: string | null = null;
-  const pay = inv.payments?.data?.find(p => p.status === 'paid') ?? inv.payments?.data?.[0];
-  if (pay?.payment.charge) chargeId = idOf(pay.payment.charge);
-  else if (pay?.payment.payment_intent) {
-    const pi = typeof pay.payment.payment_intent === 'string'
-      ? await stripe.paymentIntents.retrieve(pay.payment.payment_intent, {}, READ_OPTS) : pay.payment.payment_intent;
-    chargeId = idOf(pi.latest_charge as string | { id: string } | null);
-  }
+  const chargeId = await chargeOfInvoice(stripe, inv);
   return { customerId, livemode: inv.livemode, amountCents: inv.amount_paid || inv.total, currency: inv.currency, at: iso(inv.created)!, chargeId };
+}
+
+/**
+ * One sale's invoice, ownership- and mode-checked like a charge (GST/HST Stage 3 Part 2: the sale window opens by invoice):
+ * null when it is not this club's or not found; with the charge that paid it (or its newest try), if any.
+ */
+export async function readClubInvoice(stripe: Stripe, invoiceId: string, club: ClubStripe, live: boolean, prices: PriceMap): Promise<{ invoice: MoneyInvoice; chargeId: string | null } | null> {
+  if (!/^in_[A-Za-z0-9]+$/.test(invoiceId)) return null;
+  let inv: Stripe.Invoice;
+  try {
+    inv = await stripe.invoices.retrieve(invoiceId, { expand: ['payments'] }, READ_OPTS);
+  } catch (err) {
+    if (isMissing(err)) return null;
+    throw err;
+  }
+  if (!ownsObject(club, { customer: inv.customer as string | { id: string } | null, livemode: inv.livemode }, live) || inv.status === 'draft') return null;
+  return { invoice: toMoneyInvoice(inv, prices), chargeId: await chargeOfInvoice(stripe, inv) };
 }
 
 /**

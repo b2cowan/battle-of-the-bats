@@ -48,6 +48,20 @@ export type MoneyInvoice = {
    * The amount only: WHY a charge was taxed the way it was is Stage 3's record.
    */
   taxCents?: number | null;
+  // GST/HST Stage 3 Part 2: the sale's own state as Stripe holds it (the list is one row per sale, an invoice). Optional so an
+  // older shape (a test's literal) still reads; the server always fills them.
+  /** Stripe's status: open · paid · void · uncollectible (a draft is never listed). */
+  status?: string | null;
+  /** When it was issued (finalized; else made). */
+  issuedAt?: string | null;
+  currency?: string;
+  totalCents?: number;
+  /** What was left to pay after credit and the customer's balance (0 = nothing to pay by card). */
+  amountDueCents?: number;
+  amountRemainingCents?: number;
+  /** A sent invoice's due date (a club's fee invoice); null for one charged automatically. */
+  dueDate?: string | null;
+  markedUncollectibleAt?: string | null;
 };
 
 export type MoneyCharge = {
@@ -64,6 +78,8 @@ export type MoneyCharge = {
   otherMethod?: string | null;
   refunds: MoneyRefund[];
   invoice: MoneyInvoice | null;
+  /** Its payment (GST/HST Stage 3 Part 2): our tax record keeps it, so a charge joins its sale by it. */
+  paymentIntentId?: string | null;
 };
 
 /** GST/HST Part 6b: a credit note on the invoice a charge paid, as the charge window lists it (read live, never stored). */
@@ -108,8 +124,15 @@ export type MoneyRead = {
   subscriptions: MoneySubscription[];
   /** Newest first. */
   charges: MoneyCharge[];
+  /** GST/HST Stage 3 Part 2: every invoice read (the window's, and 45 days before it), so a sale with no charge still shows. */
+  invoices?: MoneyInvoice[];
   /** Where "Show older charges" reads from (the oldest charge read), or null when there are no older ones. */
   olderBefore: string | null;
+  /**
+   * The instant this read's charges are complete down to: the window's start, or, when the read was capped, the oldest charge
+   * it reached. A sale older than this with no charge may simply have its charge unread (so the list never calls it "outside Stripe").
+   */
+  chargesFrom?: string;
   /** True when Stripe holds more subscriptions than the read pages through (the newest are read). */
   subscriptionsMore: boolean;
   nextCharge: NextCharge;
@@ -135,6 +158,9 @@ export type OurMoneyRecord = {
   /** A running whole-plan free time, shown on our side only (it is not Stripe's to agree with). */
   freeThrough: { lastDay: string; what: string } | null;
 };
+
+/** The start of the twelve months that end at `at` (an instant): the one window Stripe's read, our records and the screen share. */
+export const yearBefore = (at: string | number): string => new Date(new Date(at).getTime() - 365 * 86_400_000).toISOString(); // utc-intentional: a 12-month window of instants
 
 // ── Words ───────────────────────────────────────────────────────────────────────────────────────
 
@@ -188,8 +214,16 @@ function withTax(period: string | null, taxCents: number | null | undefined, cur
 
 /** What a charge paid for, in two lines: the main words and the period. */
 export function paidForWords(c: MoneyCharge): { main: string; period: string | null } {
-  const inv = c.invoice;
-  if (!inv) return { main: 'A charge made in Stripe, not by an invoice', period: null };
+  if (!c.invoice) return { main: 'A charge made in Stripe, not by an invoice', period: null };
+  return invoicePaidForWords(c.invoice, c.currency, { withTax: true });
+}
+
+/**
+ * What an invoice paid for. `withTax`: the period line carries "includes $X tax" (the shipped charge list). A sale row does not
+ * (GST/HST Stage 3 Part 2, Ask 3): its Tax column names the tax, so the phrase leaves the period line.
+ */
+export function invoicePaidForWords(inv: MoneyInvoice, currency: string, opts: { withTax: boolean }): { main: string; period: string | null } {
+  const tax = (period: string | null) => (opts.withTax ? withTax(period, inv.taxCents, currency) : period);
   if (inv.feeInvoice) return { main: STRIPE_FEE_WORDS.paCharge(inv.number), period: null };
   if (!inv.subscriptionId) return { main: `Invoice made in Stripe${inv.description ? ` “${inv.description}”` : ''}`, period: null };
   const period = periodWords(inv.periodStart, inv.periodEnd);
@@ -197,10 +231,10 @@ export function paidForWords(c: MoneyCharge): { main: string; period: string | n
     const main = inv.fromPlanId && inv.planId
       ? `${(PLAN_RANK[inv.planId as OrgPlan] ?? 0) >= (PLAN_RANK[inv.fromPlanId as OrgPlan] ?? 0) ? 'Moved up' : 'Moved down'}: ${planLabel(inv.fromPlanId)} to ${planLabel(inv.planId)}`
       : `Plan moved${inv.planId ? ` to ${planLabel(inv.planId)}` : ''}`;
-    return { main, period: withTax(period ? `${period}, part month` : null, inv.taxCents, c.currency) };
+    return { main, period: tax(period ? `${period}, part month` : null) };
   }
   const first = inv.billingReason === 'subscription_create' ? ' · first charge' : '';
-  return { main: `${planCycleWords(inv.planId, inv.cycle)}${first}`, period: withTax(period, inv.taxCents, c.currency) };
+  return { main: `${planCycleWords(inv.planId, inv.cycle)}${first}`, period: tax(period) };
 }
 
 /** What Stripe says about a charge, in the console's words. */
@@ -533,6 +567,8 @@ export const REFUND_WORDS = {
   noAnswer: 'Stripe did not answer. The refund may or may not have gone through. Opening the charge checks with Stripe; it never offers a second refund until it knows.',
   readFailed: 'Stripe could not be read, so nothing was sent. No money moved. Try again in a moment.',
   readerRole: 'Refunds are made by Billing or a Super admin. Hand this charge on with its number.',
+  // The tab's own read has not succeeded yet, so who may refund is not known: say so rather than naming a role.
+  tabNotRead: 'Read this tab again to see whether this charge can be refunded.',
   // GST/HST Stage 2 Part 6b: a charge that paid an invoice is refunded through a credit note (owner R1–R3 2026-11-05).
   manyInvoices: 'This charge paid more than one invoice, so it cannot be refunded here. Refund it in Stripe. No money moved.',
   invoiceNotPaid: 'Stripe does not show this charge’s invoice as paid, so it cannot be refunded here. Refund it in Stripe. No money moved.',

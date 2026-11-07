@@ -59,3 +59,23 @@ tr.differsRow > td {
   .lines { grid-template-columns: minmax(0, 1fr); gap: 0.2rem; }
   .lines dd { margin-bottom: 0.45rem; }
 }
+
+/* GST/HST Stage 3 Part 2: the sales list and the sale's window (drawings tabs 1–4). */
+/* A void sale: struck through and counted nowhere (the Void chip says so). */
+.struck { text-decoration: line-through; color: var(--text-tertiary); }
+.warnText { color: var(--warning); }
+/* The Show dropdown is quiet until it filters; olive while it does. */
+.filterOn { border-color: var(--home-olive); color: var(--home-olive); font-weight: 650; }
+/* The window's groups (Tax, Where it was taxed, The payment), each under a hairline. */
+.group {
+  margin: 0.2rem 0 0;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--home-line);
+  font-size: var(--type-body);
+  font-weight: 650;
+  color: var(--text-primary);
+  scroll-margin-top: 1rem;
+}
+/* "Taxed." / "Missing." leads its answer. */
+.lead { font-weight: 650; }
+.warnLead { font-weight: 650; color: var(--warning); }

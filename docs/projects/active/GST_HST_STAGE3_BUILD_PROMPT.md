@@ -323,3 +323,136 @@ records survive; refund in the Stripe dashboard → the credit note appears; the
     and `tests/unit/stripe-billing-events.test.ts` (seam tests re-pointed). ⚠ The snapshot hook refreshed the shared schema
     snapshots after the dev re-apply; those files also carry other sessions' changes — stage them only with a partial commit.
   - Next: `/accounting` flags above go with Part 5; Part 2 needs the owner mockup session.
+- **2026-11-06 · Part 2 DRAWN, rulings OWED (no code).** `/design` + `/ux` run; drawings published
+  https://claude.ai/artifact/NwkZe2YiwiN7Ydua9JVntA (source `GST_HST_STAGE3_PART2_DRAWINGS.html`): whole Money tab before/after,
+  every row kind, three sale windows + the shipped one, Stripe unreachable before/after, needs a look (club, empty, Today, mark),
+  who sees it, 8 Asks. Recommended: (1) the list becomes ONE ROW PER SALE (invoice) from our record, Stripe's payment joined;
+  (2) unreachable keeps the sales from our record; (3) row = tax name + rate + amount + province, window = the rest; (4) the
+  shipped strip + tab dot + a Show dropdown + the shipped flag line; (5) [V platform-waiting.ts:62] there is NO cross-club
+  needs-review count today — recommend a new Today Customers queue row "Sales tax"; (6) NEW, not in the plan: "Mark as looked at"
+  (required why, kept BESIDE the record = a new table + migration, Super admin + Billing) or the list only grows; (7) find_stripe
+  roles only; (8) refund with no credit note = the shipped flag line. Part 4's before-tax band is drawn on the after frame.
+- **2026-11-06 · Part 2 RULED by the owner: all eight Asks A (paste-back).** Recorded in `memory/design_decisions.md` (2026-11-06,
+  "The club record's Money tab lists sales, not charges") and at the top of `GST_HST_STAGE3_PART2_PROMPT.md`, which now carries the
+  split: Part 2 = the sales list, Tax column, window, unreachable state, roles; Part 3 gains the strip/dot/dropdown/flag-line wiring,
+  Today's "Sales tax" row and **"Mark as looked at" (Ask 6 = A: a new table beside the records + a migration; Part 3's `/review` and
+  `/accounting`)**; Part 4 = the before-tax band as drawn. Owner did not yet say "build": Part 2's build is the next session.
+  Build prompt for that session: [GST_HST_STAGE3_PART2_BUILD_PROMPT.md](GST_HST_STAGE3_PART2_BUILD_PROMPT.md).
+- **2026-11-06 · Part 2 BUILT. The Money tab lists sales with their kept tax.** Built to the
+  ruled drawings (all eight Asks A) plus the owner's nine gap rulings of this session ("all as recommended", 2026-11-06): (1) with
+  Stripe unread, "What it paid for" says what the record knows by kind ("The subscription · invoice …", "Coach Premium · invoice
+  …", the fee words, "Invoice made in Stripe · …"), the state reads "Open" with no due date; (2) the unreachable band: "Paid, last
+  12 months" = record totals, "{n} paid sales since … · our record", Refunded "{n} sale(s) refunded · our record" (before tax = Part
+  4); (3) a record not written yet: quiet "No tax record / not written yet" (before the registration date: "Before we registered");
+  (4) "Paid from credit"; (5) "Not paid" = open + written off, never void, "{n} sales not paid, newest first" / "Every sale in these
+  12 months is paid."; (6) the window's answer for a pre-registration sale names the setting's date; (7) both failing: "Stripe and our
+  tax records could not be read at {clock}. Our subscription record is below; the sales, charges and refunds wait until they
+  answer."; (8) unreachable window foot "Not read from Stripe · tax from our record"; (9) "Failed tries" lines in the window.
+  - Pure `lib/console-money-sales.ts` (the join `joinSales` + every word: Tax cell, Stripe says / Our record says, Card, the
+    record band, the window band netting credit notes, the GST/HST answer per position/why, `taxReasonWords` with an unknown reason
+    shown as Stripe's code, the three "Kept" wordings, the evidence lines, the changed-address check, the credit note's GST/HST);
+    server read `lib/console-money-sales-store.ts` (records BY STRIPE CUSTOMER + livemode, the same set Stripe's side shows — tab 5:
+    a coach paying for several portals has one set of sales; plus the records of invoices the window's charges name; and
+    `registrationDateOrNull`, the Stage 4a setting from the Bookkeeping store with a 4 s limit, null on any failure).
+  - The money route reads records + the registration date beside Stripe and returns them in `read` AND `unreachable`; the charge
+    route also opens a sale by `in_…` (ownership: record by customer + mode, invoice by `ownsObject`) and, with Stripe down, still
+    answers from the record (`stripe: 'unreachable'`). `readClubInvoice` + a shared `chargeOfInvoice` (Find's invoice step reuses it).
+    `MoneyInvoice` gains state fields (status, issued, totals, due, written off), `MoneyCharge.paymentIntentId`, `MoneyRead.invoices`
+    (drafts skipped); `invoicePaidForWords` (the row drops "includes $X tax"); `isRatedTaxReason` exported from the pure record module.
+  - Screen: one row per sale, Tax column, Show dropdown (All sales / Not paid), void struck + Void chip + uncounted, failed tries
+    folded, "Show older sales" pages Stripe AND our records (joined over every page read, deduped), the amber "Tax missing" chip opens
+    the window at its Tax group; window = joined band, Tax / Where it was taxed / The payment, "Stripe invoice" beside "Stripe charge",
+    the changed-address line with a door to today's block, unreachable "Refunds wait until Stripe answers."; Billing address caption
+    says "today". Records failing: the rows come from Stripe's invoices + charges (folded as sales), Tax "Not read", the amber line;
+    the dropdown stays (All / Not paid — Needs a look is Part 3's). Shipped orphan class `money.compare` (never declared) removed.
+  - Proof: typecheck clean; unit `tests/unit/console-money-sales.test.ts` **22/22** (every tab-2 row kind, BC, zero-rated + CAD,
+    missing vs before registration incl. the Toronto day and a moved date, registration unread, open/paid after failure, duplicate,
+    written off, void, $0, outside Stripe, credit, fee owed, bare, not written yet, unreachable, records failing, credit-note netting,
+    Kept, evidence, address changed, words for every why); focused money + guard files 279 run, 278 pass (the one failure is
+    `ExpenseFormWindow.tsx`'s footer, another session's, pre-existing). `support-console-stage3-guard` re-pointed at the ruled
+    unreachable words (intent kept). `check:spelling` clean; focused lint clean. `verify:changed` (`.probe/gst3/part2-verify-changed-run1.txt`):
+    14,871/14,880, the 9 failures all other sessions' files (help-content tax words, practice plans phone, billing free time ×2,
+    Stage 6 walk, series date groups, console footers [ExpenseFormWindow], workspace in-force, plan census); the post-test checks run
+    by hand (`.probe/gst3/part2-verify-rest-run1.txt`): admin-old-look (schedule CSS), admin-type (BankReport / SystemScreen / lead),
+    css-selectors (other files) and index-coverage (three tables) red on other sessions' files only.
+  - Not built, on purpose: Part 3 (needs-a-look query, flag lines for tax, the strip / dot / dropdown choice, Today's row, Mark as
+    looked at) and Part 4 (the before-tax band). No migration; the record tables are only read.
+  - Next: `/simplify` then `/review` (owner offered); `/docs` = none (platform-admin only); owner commit; Part 5's walk.
+- **2026-11-06 · Part 2 `/simplify` DONE (four angles: reuse, simplification, efficiency, altitude; no wording or behaviour change).**
+  Applied: `gstHstPosition` now calls `isRatedTaxReason` (one rule for the stored position and the Tax column, as its comment
+  claimed); one 12-month helper `yearBefore` in `lib/console-money.ts`, used by the money route and `MoneyTab` (was written twice;
+  `readClubMoney`'s own `365 * DAY` left as shipped); MoneyTab's "older pages" empty value is memoised (it was rebuilt every render,
+  so the join and `findPatterns` re-ran on every filter change or window open until "Show older sales" was used); the 4 s timer in
+  `registrationDateOrNull` is cleared once the read answers; the charge route's three hand-built answers are one `answer()` builder
+  and the `kept` undefined-sentinel is `= null` with `if (!bySale)`; `saleStatus`, `placeName`, `taxLineName` are no longer
+  exported; one import merged in `console-money-sales.ts`.
+  Skipped on purpose: `saleCents` vs `formatCents` (differ for non-CAD: "US$" vs "$"); dropping credit notes from the list read
+  (needs a payload and type change, and the window's use of them is not proven); reading the invoice once on the by-`in_` path and
+  starting the credit-note read earlier (Stripe-call changes on a money route, medium confidence); `listed` vs `band` (equal today,
+  but the flag reads clearer); the `pages`/`exhausted` state fields; a shared `SaleAnswer` type; `MoneyInvoice` optional fields made
+  required (test-literal churn); `triesSub`/`byNewest`/`rateText` (single-use but clear).
+  Proof after the edits: `npm run typecheck` clean; focused lint clean; `check:spelling` clean; the eight named test files 191 run,
+  190 pass (the one failure is `ExpenseFormWindow.tsx`'s footer, the known other-session baseline).
+- **2026-11-06 · Part 2 `/review` DONE (high-risk tier; five lenses: security and tenancy, paging and join, charge route and
+  Stripe-down, data and contract, regression and blast radius). No Critical or High. The six Mediums were fixed
+  on the owner's word the same day (fixes listed after the findings).**
+  Gate: `typecheck` clean; `verify:changed` (`.probe/gst3/part2-review-verify-changed.txt`) 14,894 run, 10 fail = the 9 on the
+  baseline plus `club-stage1-server-guard` ("attention counts ask the plan too", `module_house_league`), which is another
+  session's (`app/api/admin/attention-summary/route.ts` and that test, both in the shared tree); none is a Part 2 file.
+  Confirmed against the code:
+  1. **[Medium] `money/route.ts` `getStripe()` now throws outside any `try`.** It sat inside the `try` before and answered
+     `unreachable` with our records; with `STRIPE_SECRET_KEY` unset it is now a 500 and the tab shows both reads failed. Fix: build the
+     read lazily (`Promise.resolve().then(() => readClubMoney(getStripe(), …))`).
+  2. **[Medium] The sale window cannot tell "tax record failed to read" from "no record".** `readSaleRecord` returns null on a
+     database error and `saleInvoiceForIntent` ignores its error; the window calls `saleTaxCell(row, registration)` with
+     `recordsRead` defaulted true, so it says "No tax record · not written yet" (or "Before we registered") when the honest word is
+     "Not read". The list is right. Fix: return a "failed" signal from the record read through the route answer.
+  3. **[Medium] `MoneyTab` `exhausted: got === 0 || !before` ends paging across a gap year.** Stripe's cursor is null for a window
+     with no charges, our records' cursor is not; an empty page then stops "Show older sales" with older sales unreachable.
+  4. **[Medium] A half-failed older page is accepted silently.** A page counts as good when Stripe OR the records answered; the
+     other half's window is skipped for good (rows then read "Paid outside Stripe" or "not written yet") and no error shows.
+     Fix: treat a page where either source failed as failed (retry on the same cursor).
+  5. **[Medium] "Paid outside Stripe" / "Paid from credit" is inferred from a charge or invoice missing from what was loaded.**
+     Stripe's read is capped (3 × 100); a sale newer than the cap's cursor can lose its charge and be mislabelled until older
+     sales are shown. Fix: say "Not read" when the loaded set is capped.
+  6. **[Medium] Refund-door refusal wording when the tab's first read failed.** With no good read ever seen, a Super admin
+     opening a record-only sale is told "Refunds are made by Billing or a Super admin." No refund is possible either way; only the
+     reason is wrong ("read the tab again" is the true one).
+  Lows (listed, not ruled): the 300-record cursor is a raw `+00:00` timestamp that the route's `…Z` check rejects (paging stalls at
+  300+ sales in a window), and mixed `Z`/`+00:00` strings compare lexically; `withSalesFor` keeps only 100 invoices and one failed
+  extra read turns a good records read into "failed"; a tie at the cap's timestamp is skipped; a partial Stripe outage on the
+  by-`in_` path is a 503 where the record could answer; `recordMoneyBand` counts differently from the shipped band (labelled "our
+  record"); `REASON_WORDS[reason]` would return a function for a reason named `constructor`; a $0 invoice where Stripe returns no
+  Canadian line might show "Tax missing" (unverified); Bookkeeping's pool has 2 slots and the abandoned registration read can hold
+  one for up to its connect timeout; the money payload can carry 300 full records (about 450 KB, inside Amplify's ceiling).
+  Refuted: ownership on the `in_…` path (shared customer, draft, test record on a live key, another club's id all answer
+  "nothing"); gating order (`find_stripe` first, `no_customer`/`shared` return before any record read); filter injection; RLS;
+  every column exists in the dev dump; a null registration date never reads "Tax missing"; paging cannot loop (the cursor strictly
+  decreases); Story tab and refund routes unaffected; `money.compare` was never declared; the cleanup edits are behaviour-neutral.
+  `/accounting`: not due (display only, no new charge, invoice, record or report). `/legal`: not due as a gate (nothing new
+  collected, emailed or promised). One owner question: Support (no `refund` power) now sees the buyer's street address in plain
+  fields, while the credit-note PDF that carries the same address is hidden from that role (Stage 2 Part 7 Q2). Ask 7 = A ruled
+  "only `find_stripe` roles see any of it", so it is as ruled; say if Q2's reasoning should reach the address lines.
+  **Fixes applied (owner: "yes fix them then commit", 2026-11-06):** (1) the money route builds the Stripe client inside the
+  promise, so a missing key reads "unreachable" again; (2) `readSaleRecord` / `saleInvoiceForIntent` say `'failed'`, the charge
+  route returns `recordFailed`, and the window passes it so the tax cell says "Not read" (a failed record read with no invoice
+  answers 503 "Our tax record could not be read. Try again in a moment."); (3) the records cursor jumps to the newest record before
+  an empty window (a quiet year no longer ends "Show older sales"), cursors are always `…Z` to the millisecond (also fixes the
+  300-record `+00:00` cursor the route rejected), and a page ends only when the cursor stops falling; (4) an older page is
+  accepted only when every source the list was built from answered, else it fails and asks again from the same place; (5)
+  `MoneyRead.chargesFrom` says how far back Stripe's charges are complete, `SaleRow.chargeUnread` flags a charge-less sale older
+  than that, and such a row speaks from our record instead of "Paid outside Stripe"; (6) with no good tab read the refusal says
+  "Read this tab again to see whether this charge can be refunded." (new line, `REFUND_WORDS.tabNotRead`; the owner may reword).
+  Proof: `typecheck` clean; `console-money-sales.test.ts` 23/23 (one new test, charge-unread); the nine named guard files 208
+  run, 207 pass (the one failure is `ExpenseFormWindow.tsx`'s footer, the known other-session baseline); focused lint and
+  `check:spelling` clean. Not browser-walked: paging across a gap year and a half-failed older page need the owner's walk (Part 5).
+  Left as Lows: `withSalesFor` keeps 100 invoices; a partial Stripe outage on the by-`in_` path is a 503 where the record could
+  answer; `recordMoneyBand` counts differently from the shipped band; the invoice list's own 300 cap can still lose an invoice.
+  Commit pathspecs (never `git add -A`): whole files: `lib/console-money-sales.ts`, `lib/console-money-sales-store.ts`,
+  `tests/unit/console-money-sales.test.ts`, `lib/charge-tax-record.ts`, `lib/console-money-stripe.ts`,
+  `app/api/platform-admin/orgs/[id]/money/route.ts`, `app/api/platform-admin/orgs/[id]/money/charges/[chargeId]/route.ts`,
+  `tests/unit/support-console-stage3-guard.test.ts`, this plan file. Partial (other sessions' hunks share the file):
+  `lib/console-money.ts` (leave out the "A Coaches Portal this club pays for" words), `app/platform-admin/orgs/[id]/MoneyTab.tsx`
+  (leave out the FileDown "Download PDF" button), `app/platform-admin/orgs/[id]/money.module.css` (leave out `.pdfButton`),
+  `lib/billing-location.ts` (take only the `BILLING_LOCATION_CONSOLE_WORDS` hunk; the `tidyAddressCase`/`capitalizeWord` changes
+  are another session's).

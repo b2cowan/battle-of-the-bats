@@ -35,6 +35,8 @@ export type ChargeRecordStatus = (typeof CHARGE_RECORD_STATUSES)[number];
 const RATED_REASONS = new Set([
   'standard_rated', 'reduced_rated', 'proportionally_rated', 'portion_standard_rated', 'portion_reduced_rated', 'taxable_basis_reduced',
 ]);
+/** A line Stripe RATED (charged, even at $0): the one rule the position and the console's Tax column share. */
+export const isRatedTaxReason = (reason: string | null | undefined): boolean => !!reason && RATED_REASONS.has(reason);
 
 /** One tax line as stored (jsonb, snake_case so Stage 4 can sum it in SQL). */
 export type StoredTaxLine = {
@@ -141,7 +143,7 @@ export function gstHstPosition(facts: {
 }): { position: GstHstPosition; why: GstHstPositionWhy | null } {
   if (!facts.taxWorkedOut) return { position: 'missing', why: 'stripe_did_not_work_out' };
   const canadian = facts.lines.filter(isCanadianGstHst);
-  if (canadian.some(l => l.taxability_reason && RATED_REASONS.has(l.taxability_reason))) return { position: 'taxed', why: null };
+  if (canadian.some(l => isRatedTaxReason(l.taxability_reason))) return { position: 'taxed', why: null };
   if (canadian.some(l => l.taxability_reason === 'zero_rated')) return { position: 'zero_rated', why: null };
   const place = upper(facts.placeCountry);
   if (!place || place === 'CA') {

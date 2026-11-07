@@ -748,7 +748,8 @@ describe('6 · Stripe is read only for its readers, never stored, and its outage
 
   it('Stripe down renders our record and one line, not an error page', () => {
     assert.match(readCode('app/api/platform-admin/orgs/[id]/money/route.ts'), /state: 'unreachable'/);
-    assert.match(readCode('app/platform-admin/orgs/[id]/MoneyTab.tsx'), /Stripe could not be read at \{consoleClock\(m\.readAt\)\}\. Our record is below/);
+    // GST/HST Stage 3 Part 2 (Ask 2 = A): the line now says what IS here (the sales, from our record), then what waits.
+    assert.match(readCode('app/platform-admin/orgs/[id]/MoneyTab.tsx'), /SALES_WORDS\.unreachable\(consoleClock\(m\.readAt\)\)/);
   });
   it('our record beside Stripe’s: free time is ours only, and a club on free time never reads as "Differs" on its plan', () => {
     const read: MoneyRead = { readAt: NOW.toISOString(), testMode: true, customer: { id: 'cus_1', email: null }, card: null, charges: [], olderBefore: null, subscriptionsMore: false, nextCharge: { kind: 'none' },

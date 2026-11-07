@@ -2,22 +2,30 @@
 /**
  * The Money tab (Support console Stage 3, owner rulings 2026-10-26; drawings A, B, C, G): Stripe beside our record, read
  * when the tab opens and never kept (R7, Q4 A). The first line says whether they agree — or names a double charge — then
- * the joined money band, the subscription twice (ours, Stripe's; a difference marked on its row), and the charges.
- * A charge opens as a record that reads first; "Refund this charge" opens the refund window for the refund power only.
+ * the joined money band, the subscription twice (ours, Stripe's; a difference marked on its row), and the sales.
+ * GST/HST Stage 3 Part 2 (owner 2026-11-06, all eight Asks A): the list is one row per SALE (an invoice) from our kept tax
+ * record, with Stripe's payments joined in, and a Tax column; a sale opens as a record window with its tax, where it was taxed
+ * and its payment. When Stripe cannot be read the sales stay, from our record. The rules are lib/console-money-sales.ts.
+ * A sale's charge refunds through "Refund this charge", for the refund power only.
  * A role without the Stripe-reading power never asks: it sees our record and one line. The rules are lib/console-money.ts.
  */
-import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Flag } from 'lucide-react';
 import KitDialog, { DialogCancel } from '@/components/admin/kit/club/KitDialog';
 import { consoleClock, consoleWhen } from '@/lib/console-dates';
 import { formatStoredDate } from '@/lib/timezone';
 import { possessive } from '@/lib/utils';
 import {
-  agreeLine, cardWords, centsFromTyped, compareRecord, creditSplitWords, differsWords, findPatterns, flagWords, formatCents,
-  moneyBand, paidForWords, refundDoorRefusal, remainingCents, stripeSaysWords, subscriptionsMoreWords, REFUND_REASON_MAX, REFUND_WORDS,
-  type ChargeCreditNote, type ChargeFlag, type CompareRow, type MoneyCharge, type MoneyRead, type OurMoneyRecord,
+  agreeLine, cardWords, centsFromTyped, compareRecord, creditSplitWords, differsWords, failureWords, findPatterns, flagWords, formatCents,
+  moneyBand, refundDoorRefusal, remainingCents, subscriptionsMoreWords, yearBefore, REFUND_REASON_MAX, REFUND_WORDS,
+  type ChargeCreditNote, type ChargeFlag, type CompareRow, type MoneyCharge, type MoneyInvoice, type MoneyRead, type OurMoneyRecord,
 } from '@/lib/console-money';
-import { brandLabel } from '@/lib/online-payment-words';
+import {
+  SALES_WORDS, addressChangedSince, asItStoodLabel, cadRateWords, creditNoteTaxWords, evidenceLines, gstAnswerWords, isUnpaidSale,
+  isVoidSale, joinSales, keptWords, recordMoneyBand, saleAmount, saleCardCell, saleCents, saleFlag, saleRecordSays,
+  saleStripeSays, saleTaxCell, saleWhatWords, saleWindowBand, taxLineWords, taxedForWords,
+  type SaleNoteRecord, type SaleRecord, type SaleRow, type SalesRecords,
+} from '@/lib/console-money-sales';
 import type { ConsoleRefund } from '@/lib/console-money-store';
 import RecordWindow from '../../RecordWindow';
 import { errorOf, sendJson } from '../../console-fetch';
@@ -30,15 +38,17 @@ import { BILLING_LOCATION_CONSOLE_WORDS } from '@/lib/billing-location';
 
 /** What the server knows of this person and club before any click (the refund route asks the same rule with them). */
 type RefundGate = { role: string; ownClub: boolean; demoClub: boolean; refundsLast24h: number };
+/** GST/HST Stage 3 Part 2: our kept records and the registration date ride beside Stripe in every state (null = not readable). */
+type OurSales = { records?: SalesRecords; registrationDate?: string | null };
 export type MoneyResponse =
   | { state: 'no_customer' }
   | { state: 'shared' }
-  | { state: 'unreachable'; readAt: string }
-  | { state: 'read'; read: MoneyRead; portalSubscriptionIds: string[]; coversOtherPortals?: boolean; refundGate: RefundGate | null };
+  | ({ state: 'unreachable'; readAt: string } & OurSales)
+  | ({ state: 'read'; read: MoneyRead; portalSubscriptionIds: string[]; coversOtherPortals?: boolean; refundGate: RefundGate | null } & OurSales);
 
 /** Why this charge's refund door is absent, known before the click (drawing G), or null when it shows. */
 function doorRefusal(gate: RefundGate | null, c: MoneyCharge, inFlight: string | null = null): { text: string; bad: boolean } | null {
-  if (!gate) return { text: REFUND_WORDS.readerRole, bad: false };
+  if (!gate) return { text: REFUND_WORDS.tabNotRead, bad: false };
   if (inFlight) return { text: inFlight, bad: false };
   return refundDoorRefusal({ ...gate, now: new Date() }, c);
 }
@@ -62,7 +72,19 @@ export function useClubMoney(orgId: string, enabled: boolean) {
   return { money: answer?.money ?? null, loading: enabled && answer?.ask !== asked, readAgain };
 }
 
-const YEAR_MS = 365 * 86_400_000;
+/** The later of two window starts (either may be null): the next page starts where the newer source left off; repeats join once. */
+const laterOf = (a: string | null | undefined, b: string | null | undefined) => (!a ? b ?? null : !b ? a : a > b ? a : b);
+
+type Older = {
+  forRead: string | null; charges: MoneyCharge[]; invoices: MoneyInvoice[]; sales: SaleRecord[]; notes: SaleNoteRecord[];
+  before: string | null; from: string | null; chargesFrom: string | null; pages: number; exhausted: boolean; loading: boolean; failed: boolean;
+};
+const freshOlder = (forRead: string | null): Older => ({ forRead, charges: [], invoices: [], sales: [], notes: [], before: null, from: null, chargesFrom: null, pages: 0, exhausted: false, loading: false, failed: false });
+
+/** Which sales the list shows (Ask 1/4 = A: one dropdown, quiet until it filters; Needs a look joins it in Part 3). */
+type SaleFilter = 'all' | 'unpaid';
+/** A sale to open: by its invoice (a row), or by a charge (a bare charge, or Find's `?charge=`). */
+type OpenSale = { number: string; refund: boolean; atTax: boolean };
 
 export default function MoneyTab({
   orgId, orgName, ours, readsStripe, billsClub = false, stripeBase, club, billing, openChargeId, onChargeClosed, onRefunded,
@@ -84,32 +106,57 @@ export default function MoneyTab({
 }) {
   const m = club.money;
   const read = m?.state === 'read' ? m.read : null;
-  // The last good read: an open charge window outlives a later read that failed (its refund notice is not lost).
+  const firstAt = m?.state === 'read' ? m.read.readAt : m?.state === 'unreachable' ? m.readAt : null;
+  // The last good read: an open sale window outlives a later read that failed (its refund notice is not lost).
   const [lastGood, setLastGood] = useState<Extract<MoneyResponse, { state: 'read' }> | null>(null);
   if (m?.state === 'read' && m !== lastGood) setLastGood(m);
-  // Older charges belong to the read they were asked from: a new read starts again from its own twelve months.
-  type Older = { forRead: string | null; charges: MoneyCharge[]; before: string | null; exhausted: boolean; loading: boolean; failed: boolean };
-  const fresh = (forRead: string | null): Older => ({ forRead, charges: [], before: null, exhausted: false, loading: false, failed: false });
-  const [olderState, setOlder] = useState<Older>(fresh(null));
-  const older = olderState.forRead === (read?.readAt ?? null) ? olderState : fresh(read?.readAt ?? null);
+  // Older sales belong to the read they were asked from: a new read starts again from its own twelve months.
+  const [olderState, setOlder] = useState<Older>(() => freshOlder(null));
+  // Memoised: a stable empty value keeps the join below from re-running on every render until "Show older sales" is used.
+  const older = useMemo(() => (olderState.forRead === firstAt ? olderState : freshOlder(firstAt)), [olderState, firstAt]);
   const [explain, setExplain] = useState<CompareRow['key'] | null>(null); // the one "Differs" chip open
-  const [openCharge, setOpenCharge] = useState<{ id: string; refund: boolean } | null>(openChargeId ? { id: openChargeId, refund: false } : null);
+  const [openSale, setOpenSale] = useState<OpenSale | null>(openChargeId ? { number: openChargeId, refund: false, atTax: false } : null);
+  const [filter, setFilter] = useState<SaleFilter>('all');
+
+  const records = m?.state === 'read' || m?.state === 'unreachable' ? m.records : undefined;
+  const recordsRead = records?.state === 'read';
+  const registration = m?.state === 'read' || m?.state === 'unreachable' ? m.registrationDate ?? null : null;
+  const stripeRead = !!read;
 
   const allCharges = useMemo(() => (read ? [...read.charges, ...older.charges] : []), [read, older.charges]);
   const portalSubs = m?.state === 'read' ? m.portalSubscriptionIds : null;
   const patterns = useMemo(() => findPatterns({ charges: allCharges, subscriptions: read?.subscriptions ?? [] }, ours.subscriptionId, portalSubs ?? []),
     [allCharges, read, ours.subscriptionId, portalSubs]);
-  const rows = compareRecord(ours, read);
-  const nextBefore = older.exhausted ? null : older.charges.length ? older.before : read?.olderBefore ?? null;
+  const rows = useMemo(() => joinSales({
+    records: records?.state === 'read' ? [...records.sales, ...older.sales] : [],
+    notes: records?.state === 'read' ? [...records.notes, ...older.notes] : [],
+    charges: read ? allCharges : null,
+    invoices: read ? [...(read.invoices ?? []), ...older.invoices] : [],
+    shownFrom: older.from ?? (firstAt ? yearBefore(firstAt) : null),
+    chargesFrom: older.pages ? older.chargesFrom : read?.chargesFrom ?? null,
+  }), [records, older.sales, older.notes, older.invoices, older.from, older.pages, older.chargesFrom, read, allCharges, firstAt]);
+  const shown = rows.filter(r => filter === 'all' || isUnpaidSale(r));
+  const counted = shown.filter(r => !isVoidSale(r)).length;
+  const compare = compareRecord(ours, read);
+  const firstBefore = laterOf(read?.olderBefore, records?.state === 'read' ? records.olderBefore : null);
+  const nextBefore = older.exhausted ? null : older.pages ? older.before : firstBefore;
 
   async function showOlder() {
     if (!nextBefore) return;
     setOlder({ ...older, loading: true, failed: false });
     const { ok, data } = await sendJson(`/api/platform-admin/orgs/${orgId}/money?before=${encodeURIComponent(nextBefore)}`, 'GET');
     const res = data as unknown as MoneyResponse;
-    if (ok && res.state === 'read') {
-      setOlder({ ...older, charges: [...older.charges, ...res.read.charges], before: res.read.olderBefore,
-        exhausted: res.read.charges.length === 0 || !res.read.olderBefore, loading: false, failed: false });
+    const page = ok && (res.state === 'read' || res.state === 'unreachable') ? res : null;
+    const pageRecords = page?.records?.state === 'read' ? page.records : null;
+    // A page is good only when EVERY source this list is built from answered (Stripe if it was read, our records if they were):
+    // a half-answered page would skip that window for good, so it fails and asks again from the same place.
+    if (page && (!stripeRead || page.state === 'read') && (!recordsRead || pageRecords)) {
+      const pageRead = page.state === 'read' ? page.read : null;
+      const before = laterOf(pageRead?.olderBefore, pageRecords?.olderBefore);
+      setOlder({ ...older, chargesFrom: pageRead?.chargesFrom ?? older.chargesFrom,
+        charges: [...older.charges, ...(pageRead?.charges ?? [])], invoices: [...older.invoices, ...(pageRead?.invoices ?? [])],
+        sales: [...older.sales, ...(pageRecords?.sales ?? [])], notes: [...older.notes, ...(pageRecords?.notes ?? [])],
+        before, from: yearBefore(nextBefore), pages: older.pages + 1, exhausted: !before || before >= nextBefore, loading: false, failed: false });
     } else setOlder({ ...older, loading: false, failed: true });
   }
 
@@ -141,7 +188,7 @@ export default function MoneyTab({
       )}
     </div>
   );
-  if (!m || (club.loading && !read)) {
+  if (!m || (club.loading && !read && m.state !== 'unreachable')) {
     return <section className={kit.section}>{reviewStripWith(false)}<p className={kit.caption}>Reading Stripe…</p></section>;
   }
   const reviewStrip = reviewStripWith(true);
@@ -149,6 +196,12 @@ export default function MoneyTab({
   const testChip = read?.testMode ? <span className={`${kit.chip} ${kit.chipInfo}`}>Test mode</span> : null;
   const readAt = read ? consoleClock(read.readAt) : null;
   const again = <button type="button" className={`${kit.door} ${kit.doorSm}`} onClick={club.readAgain} disabled={club.loading}>{club.loading ? 'Reading…' : 'Read again'}</button>;
+  const amber = (text: string) => (
+    <div className={`${kit.callout} ${kit.calloutWarn}`}>
+      <span>{text}</span>
+      <span className={kit.calloutEnd}>{again}</span>
+    </div>
+  );
 
   let head;
   if (m.state === 'no_customer') {
@@ -156,28 +209,32 @@ export default function MoneyTab({
   } else if (m.state === 'shared') {
     head = <p className={`${kit.callout} ${kit.calloutBad}`}>Another club uses this Stripe customer, so nothing from Stripe is shown or refunded here. Tell the product team.</p>;
   } else if (m.state === 'unreachable') {
-    head = (
-      <div className={`${kit.callout} ${kit.calloutWarn}`}>
-        <span>Stripe could not be read at {consoleClock(m.readAt)}. Our record is below; Stripe’s side, the charges and refunds wait until it answers.</span>
-        <span className={kit.calloutEnd}>{again}</span>
-      </div>
-    );
+    // Ask 2 = A: the callout says what IS here (our record's sales), then what waits; both failing names both (gap 7 = A).
+    head = amber(recordsRead ? SALES_WORDS.unreachable(consoleClock(m.readAt)) : SALES_WORDS.bothFailed(consoleClock(m.readAt)));
   } else {
-    const line = agreeLine(rows, patterns, ours.subscriptionId);
+    const line = agreeLine(compare, patterns, ours.subscriptionId);
     head = (
-      <div className={`${kit.callout}${line.tone === 'warn' ? ` ${kit.calloutWarn}` : line.tone === 'bad' ? ` ${kit.calloutBad}` : ''}`}>
-        <span>
-          {line.text}
-          {line.secondSubscriptionId && <> <a className={kit.door} href={`${stripeBase}/subscriptions/${line.secondSubscriptionId}`} target="_blank" rel="noreferrer">Open it in Stripe</a></>}
-          {read?.testMode && <> Test payment: no money moves.</>}
-        </span>
-      </div>
+      <>
+        <div className={`${kit.callout}${line.tone === 'warn' ? ` ${kit.calloutWarn}` : line.tone === 'bad' ? ` ${kit.calloutBad}` : ''}`}>
+          <span>
+            {line.text}
+            {line.secondSubscriptionId && <> <a className={kit.door} href={`${stripeBase}/subscriptions/${line.secondSubscriptionId}`} target="_blank" rel="noreferrer">Open it in Stripe</a></>}
+            {read?.testMode && <> Test payment: no money moves.</>}
+          </span>
+        </div>
+        {!recordsRead && amber(SALES_WORDS.recordsFailed(consoleClock(m.read.readAt)))}
+      </>
     );
   }
 
   const gate = m.state === 'read' ? m.refundGate : null;
-  const since = read ? new Date(Date.parse(read.readAt) - YEAR_MS).toISOString() : ''; // utc-intentional: a 12-month window
-  const openWith = (id: string, refund: boolean) => setOpenCharge({ id, refund });
+  const since = firstAt ? yearBefore(firstAt) : '';
+  const band = read ? moneyBand({ ...read, charges: allCharges }, since) : m.state === 'unreachable' && recordsRead ? recordMoneyBand(rows, since) : null;
+  // The list shows when there is something to list from: Stripe, or (Stripe down) our records.
+  const listed = stripeRead || (m.state === 'unreachable' && recordsRead);
+  const open = (row: SaleRow, opts: { refund?: boolean; atTax?: boolean; chargeId?: string } = {}) =>
+    setOpenSale({ number: opts.chargeId ?? row.key, refund: !!opts.refund, atTax: !!opts.atTax });
+  const openRow = openSale ? rows.find(r => r.key === openSale.number || r.charges.some(c => c.id === openSale.number)) ?? null : null;
 
   return (
     <section className={kit.section}>
@@ -187,9 +244,9 @@ export default function MoneyTab({
         <p className={kit.caption}>This is the coach’s own Stripe customer, so it also covers other portals they pay for. A charge below may belong to one of them.</p>
       )}
 
-      {read && (
+      {band && (
         <div className={kit.band}>
-          {moneyBand({ ...read, charges: allCharges }, since).map(b => (
+          {band.map(b => (
             <div key={b.label} className={`${kit.bandCell}${b.tone === 'warn' ? ` ${kit.bandWarn}` : ''}`}>
               <span className={kit.bandLabel}>{b.label}</span>
               <span className={kit.bandValue}>{b.value}</span>
@@ -206,10 +263,10 @@ export default function MoneyTab({
       </div>
       <div className={kit.card}>
         <div className={kit.tableWrap}>
-          <table className={`${kit.comfortable} ${money.compare}`}>
+          <table className={kit.comfortable}>
             <thead><tr><th aria-label="What" /><th>Our record</th><th>Stripe</th></tr></thead>
             <tbody>
-              {rows.map(r => (
+              {compare.map(r => (
                 <Fragment key={r.key}>
                   <tr>
                     <th scope="row" className={`${kit.eye} ${money.rowHead}`}>{r.label}</th>
@@ -222,7 +279,7 @@ export default function MoneyTab({
                   </tr>
                   {r.differs && explain === r.key && (
                     <tr id={`differs-${r.key}`} className={money.differsRow}>
-                      <td colSpan={3}>{differsWords(r, rows)}</td>
+                      <td colSpan={3}>{differsWords(r, compare)}</td>
                     </tr>
                   )}
                 </Fragment>
@@ -232,48 +289,70 @@ export default function MoneyTab({
         </div>
       </div>
       {read?.subscriptionsMore && <p className={kit.caption}>{subscriptionsMoreWords(read.subscriptions.length)}</p>}
-      {rows.some(r => r.differs) && (
+      {compare.some(r => r.differs) && (
         <p className={kit.caption}>Nothing here changes our record. A difference usually clears when Stripe’s next update arrives. If it is still there tomorrow, tell the product team.</p>
       )}
 
-      {read && (
+      {listed && (
         <>
           <div className={kit.toolbar}>
             <span className={kit.count}>
-              {allCharges.length} charge{allCharges.length === 1 ? '' : 's'} {older.charges.length ? 'read' : 'in the last 12 months'}, newest first
+              {counted === 0 && filter === 'unpaid' ? SALES_WORDS.emptyUnpaid : SALES_WORDS.count(counted, filter, older.pages > 0)}
+            </span>
+            <span className={kit.toolbarEnd}>
+              <select className={`${kit.select}${filter !== 'all' ? ` ${money.filterOn}` : ''}`} value={filter} aria-label="Show"
+                onChange={e => setFilter(e.target.value as SaleFilter)}>
+                <option value="all">{SALES_WORDS.filters.all}</option>
+                <option value="unpaid">{SALES_WORDS.filters.unpaid}</option>
+              </select>
             </span>
           </div>
           <div className={kit.card}>
             <div className={`${kit.tableWrap} table-cards`}>
               <table className={kit.comfortable}>
-                <thead><tr><th>When</th><th>What it paid for</th><th>Card</th><th>Stripe says</th><th className={kit.num}>Amount</th><th aria-label="Open" /></tr></thead>
+                <thead><tr><th>When</th><th>What it paid for</th><th>Tax</th><th>Card</th><th>{stripeRead ? 'Stripe says' : 'Our record says'}</th><th className={kit.num}>Amount</th><th aria-label="Open" /></tr></thead>
                 <tbody>
-                  {allCharges.length === 0 && <tr><td colSpan={6} className={kit.empty}>No charges in these 12 months.</td></tr>}
-                  {allCharges.map(c => {
-                    const paid = paidForWords(c);
-                    const says = stripeSaysWords(c);
-                    const flag = patterns.flags.get(c.id);
-                    const fw = flag ? flagWords(flag) : null;
-                    const canRefundThis = !doorRefusal(gate, c);
+                  {shown.length === 0 && <tr><td colSpan={7} className={kit.empty}>{filter === 'unpaid' ? SALES_WORDS.emptyUnpaid : SALES_WORDS.emptyAll}</td></tr>}
+                  {shown.map(row => {
+                    const what = saleWhatWords(row);
+                    const tax = saleTaxCell(row, registration, recordsRead);
+                    const fromStripe = stripeRead && !row.chargeUnread;
+                    const says = fromStripe ? saleStripeSays(row) : saleRecordSays(row);
+                    const card = saleCardCell(row, fromStripe);
+                    const amount = saleAmount(row);
+                    const sf = stripeRead ? saleFlag(row, patterns) : null;
+                    const fw = sf ? flagWords(sf.flag) : null;
+                    const flagged = sf ? row.charges.find(c => c.id === sf.chargeId) : undefined;
+                    const canRefundFlagged = !!flagged && !doorRefusal(gate, flagged);
+                    const struck = says.void ? money.struck : undefined;
                     return (
-                      <tr key={c.id} className={kit.clickableRow} onClick={() => openWith(c.id, false)}>
-                        <td className={`${kit.nowrap} table-cards-title`}>{consoleWhen(c.createdAt)}</td>
+                      <tr key={row.key} className={kit.clickableRow} onClick={() => open(row)}>
+                        <td className={`${kit.nowrap} table-cards-title`}>{consoleWhen(row.at)}</td>
                         <td data-label="What it paid for">
-                          {paid.main}
-                          {paid.period && <span className={kit.sub}>{paid.period}</span>}
+                          <span className={struck}>{what.main}</span>
+                          {what.period && <span className={kit.sub}>{what.period}</span>}
                           {fw && (
                             <span className={`${money.flag}${fw.tone === 'bad' ? ` ${money.bad}` : ''}`}>
                               {fw.text}
-                              {flag?.kind === 'duplicate' && canRefundThis && (
-                                <> · <button type="button" className={`${kit.door} ${kit.doorSm}`} onClick={e => { e.stopPropagation(); openWith(c.id, true); }}>Refund the later one</button></>
+                              {sf?.flag.kind === 'duplicate' && canRefundFlagged && (
+                                <> · <button type="button" className={`${kit.door} ${kit.doorSm}`} onClick={e => { e.stopPropagation(); open(row, { refund: true, chargeId: sf.chargeId }); }}>Refund the later one</button></>
                               )}
                             </span>
                           )}
                         </td>
-                        <td data-label="Card" className={kit.nowrap}>{c.card ? `${brandLabel(c.card.brand)} ${c.card.last4}` : (c.otherMethod ?? '—')}</td>
-                        <td data-label="Stripe says" className={says.tone === 'bad' ? money.bad : says.tone === 'quiet' ? kit.muted : undefined}>{says.text}</td>
-                        <td data-label="Amount" className={kit.num}>{formatCents(c.amountCents, c.currency)}</td>
-                        <td className={kit.rowDoor}><button type="button" className={money.openBtn} aria-label={`Open the ${consoleWhen(c.createdAt)} charge`} onClick={e => { e.stopPropagation(); openWith(c.id, false); }}>›</button></td>
+                        <td data-label="Tax" className={tax.tone === 'quiet' ? kit.muted : undefined}>
+                          {tax.tone === 'missing'
+                            ? <button type="button" className={`${kit.chip} ${kit.chipWarn} ${money.chipButton}`} onClick={e => { e.stopPropagation(); open(row, { atTax: true }); }}>{tax.main}</button>
+                            : tax.main}
+                          {tax.sub && <span className={kit.sub}>{tax.sub}</span>}
+                        </td>
+                        <td data-label="Card" className={`${kit.nowrap}${card.quiet ? ` ${kit.muted}` : ''}`}>{card.text}</td>
+                        <td data-label={stripeRead ? 'Stripe says' : 'Our record says'} className={says.tone === 'bad' ? money.bad : says.tone === 'quiet' ? kit.muted : says.tone === 'warn' ? money.warnText : undefined}>
+                          {says.void ? <span className={`${kit.chip} ${kit.chipQuiet}`}>Void</span> : says.text}
+                          {says.sub && <span className={kit.sub}>{says.sub}</span>}
+                        </td>
+                        <td data-label="Amount" className={kit.num}><span className={struck}>{saleCents(amount.cents, amount.currency)}</span></td>
+                        <td className={kit.rowDoor}><button type="button" className={money.openBtn} aria-label={`Open the ${consoleWhen(row.at)} sale`} onClick={e => { e.stopPropagation(); open(row); }}>›</button></td>
                       </tr>
                     );
                   })}
@@ -281,9 +360,10 @@ export default function MoneyTab({
               </table>
             </div>
           </div>
+          {recordsRead && registration === null && <p className={kit.caption}>{SALES_WORDS.registrationUnread}</p>}
           {nextBefore && (
             <div className={styles.more}>
-              <button type="button" className="btn btn-secondary btn-sm" onClick={() => void showOlder()} disabled={older.loading}>{older.loading ? 'Reading…' : 'Show older charges'}</button>
+              <button type="button" className="btn btn-secondary btn-sm" onClick={() => void showOlder()} disabled={older.loading}>{older.loading ? 'Reading…' : SALES_WORDS.showOlder}</button>
               {older.failed && <span className={kit.fieldError} role="alert">Stripe could not be read. Try again in a moment.</span>}
             </div>
           )}
@@ -298,18 +378,23 @@ export default function MoneyTab({
 
       <p className={kit.caption}>Families’ payments to this club are the club’s own money, on its own Stripe account. They are never shown or refunded here.</p>
 
-      {openCharge && lastGood && (
-        <ChargeWindows
-          key={openCharge.id}
+      {openSale && (lastGood || m.state === 'unreachable') && (
+        <SaleWindow
+          key={openSale.number}
           orgId={orgId}
           orgName={orgName}
-          chargeId={openCharge.id}
-          startWithRefund={openCharge.refund}
-          flag={patterns.flags.get(openCharge.id)}
-          gate={lastGood.refundGate}
-          read={lastGood.read}
+          number={openSale.number}
+          startWithRefund={openSale.refund}
+          atTax={openSale.atTax}
+          listRow={openRow}
+          flag={openRow && stripeRead ? saleFlag(openRow, patterns)?.flag : undefined}
+          gate={lastGood?.refundGate ?? null}
+          read={lastGood?.read ?? null}
+          registration={registration}
+          billing={billing}
           stripeBase={stripeBase}
-          onClose={() => { setOpenCharge(null); onChargeClosed(); }}
+          onSeeAddress={() => { setOpenSale(null); onChargeClosed(); setTimeout(() => document.getElementById(BILLING_ADDRESS_ANCHOR)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0); }}
+          onClose={() => { setOpenSale(null); onChargeClosed(); }}
           onRefunded={() => { club.readAgain(); onRefunded(); }}
         />
       )}
@@ -321,7 +406,7 @@ function OursOnly({ rows }: { rows: ReturnType<typeof compareRecord> }) {
   return (
     <div className={kit.card}>
       <div className={kit.tableWrap}>
-        <table className={`${kit.comfortable} ${money.compare}`}>
+        <table className={kit.comfortable}>
           <thead><tr><th aria-label="What" /><th>Our record</th></tr></thead>
           <tbody>{rows.map(r => <tr key={r.key}><th scope="row" className={`${kit.eye} ${money.rowHead}`}>{r.label}</th><td>{r.ours}</td></tr>)}</tbody>
         </table>
@@ -330,42 +415,72 @@ function OursOnly({ rows }: { rows: ReturnType<typeof compareRecord> }) {
   );
 }
 
-// ── The charge window, then the refund window (drawing C; every refusal drawing G) ───────────────────────────────────
+// ── The sale's window, then the refund window (drawing C, Part 2 tab 3; every refusal drawing G) ─────────────────────
 
-type ChargeAnswer = { charge: MoneyCharge; ourRefunds: ConsoleRefund[]; inFlight: string | null; creditNotes?: ChargeCreditNote[] | null };
+type SaleAnswer = {
+  stripe: 'read' | 'unreachable';
+  sale: SaleRecord | null;
+  notes: SaleNoteRecord[];
+  invoice: MoneyInvoice | null;
+  charge: MoneyCharge | null;
+  ourRefunds: ConsoleRefund[];
+  inFlight: string | null;
+  creditNotes: ChargeCreditNote[] | null;
+  /** Our tax record could not be read (as opposed to there being none): the window then says "Not read". */
+  recordFailed?: boolean;
+};
 
-function ChargeWindows({ orgId, orgName, chargeId, startWithRefund, flag, gate, read, stripeBase, onClose, onRefunded }: {
-  orgId: string; orgName: string; chargeId: string; startWithRefund: boolean; flag: ChargeFlag | undefined;
-  gate: RefundGate | null;
-  read: MoneyRead; stripeBase: string; onClose: () => void; onRefunded: () => void;
+/** The sale as the window shows it: the answer's fresh charge and record joined (with the list's failed tries, when it has them). */
+function windowRow(answer: SaleAnswer, listRow: SaleRow | null): SaleRow | null {
+  const stripe = answer.stripe === 'read';
+  const charges = stripe ? [...(listRow?.charges ?? []).filter(c => c.id !== answer.charge?.id), ...(answer.charge ? [answer.charge] : [])] : null;
+  const joined = joinSales({
+    records: answer.sale ? [answer.sale] : [], notes: answer.notes, charges,
+    invoices: answer.invoice ? [answer.invoice] : [], shownFrom: null,
+  });
+  const key = answer.sale?.stripe_invoice_id ?? answer.invoice?.id ?? answer.charge?.id;
+  return joined.find(r => r.key === key) ?? joined[0] ?? null;
+}
+
+function SaleWindow({ orgId, orgName, number, startWithRefund, atTax, listRow, flag, gate, read, registration, billing, stripeBase, onSeeAddress, onClose, onRefunded }: {
+  orgId: string; orgName: string; number: string; startWithRefund: boolean; atTax: boolean; listRow: SaleRow | null; flag: ChargeFlag | undefined;
+  gate: RefundGate | null; read: MoneyRead | null; registration: string | null; billing: BillingAddressRead; stripeBase: string;
+  onSeeAddress: () => void; onClose: () => void; onRefunded: () => void;
 }) {
-  const [answer, setAnswer] = useState<ChargeAnswer | null>(null);
+  const [answer, setAnswer] = useState<SaleAnswer | null>(null);
   const [failed, setFailed] = useState<string | null>(null);
   const [readAt, setReadAt] = useState<string | null>(null);
   const [refunding, setRefunding] = useState(startWithRefund);
   const [done, setDone] = useState<string | null>(null);
+  const taxRef = useRef<HTMLHeadingElement>(null);
 
-  // Opened, and read again after a refund: the charge is read from Stripe each time (and recovery runs on the server).
+  // Opened, and read again after a refund: the sale is read each time (and recovery runs on the server). A row opens by its
+  // invoice; a refund door (and Find) by the charge.
   const [version, setVersion] = useState(0);
   useEffect(() => {
     let live = true;
-    void sendJson(`/api/platform-admin/orgs/${orgId}/money/charges/${encodeURIComponent(chargeId)}`, 'GET').then(({ ok, data }) => {
+    void sendJson(`/api/platform-admin/orgs/${orgId}/money/charges/${encodeURIComponent(number)}`, 'GET').then(({ ok, data }) => {
       if (!live) return;
-      if (ok) { setAnswer(data as unknown as ChargeAnswer); setReadAt(new Date().toISOString()); setFailed(null); } // utc-intentional
+      if (ok) { setAnswer(data as unknown as SaleAnswer); setReadAt(new Date().toISOString()); setFailed(null); } // utc-intentional
       else setFailed(errorOf(data, 'Stripe could not be read. Try again in a moment.'));
     });
     return () => { live = false; };
-  }, [orgId, chargeId, version]);
+  }, [orgId, number, version]);
+  // The amber "Tax missing" chip opens the window at its tax.
+  useEffect(() => { if (atTax && answer) taxRef.current?.scrollIntoView({ block: 'start' }); }, [atTax, answer]);
 
+  const row = answer ? windowRow(answer, listRow) : null;
+  const stripeRead = answer?.stripe === 'read';
   const c = answer?.charge ?? null;
+  const record = row?.record ?? null;
   // What the console knows before the click: the door is absent and one line says why (drawing G).
-  const refusal = c ? doorRefusal(gate, c, answer?.inFlight) : null;
-  const canRefund = !!c && !refusal;
-  const paid = c ? paidForWords(c) : null;
+  const refusal = c && stripeRead ? doorRefusal(gate, c, answer?.inFlight) : null;
+  const canRefund = !!c && stripeRead && !!read && !refusal;
+  const what = row ? saleWhatWords(row) : null;
   const fw = flag ? flagWords(flag) : null;
-  const title = c ? `${paid!.main.replace(/ · first charge$/, '')} · ${consoleWhen(c.createdAt)}` : 'A charge';
+  const title = row && what ? `${what.main.replace(/ · first charge$/, '')} · ${consoleWhen(row.at)}` : 'A sale';
 
-  if (refunding && c && canRefund) {
+  if (refunding && c && canRefund && read) {
     return (
       <RefundWindow
         orgId={orgId} orgName={orgName} charge={c} read={read} flaggedDuplicate={flag?.kind === 'duplicate'}
@@ -376,6 +491,10 @@ function ChargeWindows({ orgId, orgName, chargeId, startWithRefund, flag, gate, 
   }
 
   const refundsSoFar = c?.refunds.filter(r => r.status === 'succeeded' || r.status === 'pending') ?? [];
+  const today = billing && billing !== 'failed' && billing.buyer !== 'none' ? billing.location : null;
+  const amount = row ? saleAmount(row) : null;
+  const says = row ? (stripeRead ? saleStripeSays(row) : saleRecordSays(row)) : null;
+  const invoiceId = record?.stripe_invoice_id ?? answer?.invoice?.id ?? null;
   return (
     <KitDialog
       kind="form"
@@ -383,7 +502,7 @@ function ChargeWindows({ orgId, orgName, chargeId, startWithRefund, flag, gate, 
       record
       title={title}
       onClose={onClose}
-      footerStart={readAt ? <span>Read from Stripe at {consoleClock(readAt)}</span> : undefined}
+      footerStart={readAt ? <span>{stripeRead ? `Read from Stripe at ${consoleClock(readAt)}${record ? ' · tax from our record' : ''}` : `${SALES_WORDS.notReadFromStripe} · tax from our record`}</span> : undefined}
       footer={(
         <>
           <DialogCancel className="btn btn-secondary">Close</DialogCancel>
@@ -394,47 +513,132 @@ function ChargeWindows({ orgId, orgName, chargeId, startWithRefund, flag, gate, 
       <div className={styles.windowBody}>
         {done && <p className={`${kit.notice} ${kit.noticeGood}`} role="status">{done}</p>}
         {failed && <p className={kit.fieldError} role="alert">{failed}</p>}
-        {!c && !failed && <p className={kit.caption}>Reading the charge from Stripe…</p>}
-        {c && (
+        {!answer && !failed && <p className={kit.caption}>Reading the sale…</p>}
+        {row && what && amount && says && (
           <>
             {fw && <p className={`${money.flag}${fw.tone === 'bad' ? ` ${money.bad}` : ''}`}>{fw.text}</p>}
+            {record ? (
+              <div className={kit.band}>
+                {saleWindowBand(record, row.notes).map(b => (
+                  <div key={b.label} className={kit.bandCell}>
+                    <span className={kit.bandLabel}>{b.label}</span>
+                    <span className={kit.bandValue}>{b.value}</span>
+                    {b.note && <span className={kit.bandNote}>{b.note}</span>}
+                  </div>
+                ))}
+              </div>
+            ) : null}
             <dl className={money.lines}>
-              <dt className={kit.eye}>Amount</dt><dd>{formatCents(c.amountCents, c.currency)}</dd>
-              <dt className={kit.eye}>Paid for</dt><dd>{paid!.main}{paid!.period ? `, ${paid!.period}` : ''}</dd>
-              <dt className={kit.eye}>Card</dt><dd>{c.card ? cardWords(c.card) : '—'}</dd>
-              <dt className={kit.eye}>Stripe says</dt><dd>{stripeSaysWords(c).text}</dd>
-              <dt className={kit.eye}>Refunded so far</dt>
-              <dd>
-                {refundsSoFar.length === 0 ? 'Nothing' : refundsSoFar.map(r => {
-                  const ours = answer?.ourRefunds.find(o => o.stripeRefundId === r.id);
-                  return (
-                    <span key={r.id} className={money.refundLine}>
-                      {formatCents(r.amountCents, c.currency)} · {consoleWhen(r.createdAt)} · {ours ? ours.actorEmail : 'in Stripe’s dashboard'}
-                      {ours?.creditNoteNumber ? ` · credit note ${ours.creditNoteNumber}` : ''}
-                      {r.status === 'pending' ? ' · on its way' : ''}
-                    </span>
-                  );
-                })}
-              </dd>
-              {c.invoice && (
-                <>
-                  <dt className={kit.eye}>Credit notes</dt>
-                  <dd>
-                    {answer?.creditNotes == null ? 'Not read from Stripe' : answer.creditNotes.length === 0 ? 'None' : answer.creditNotes.map(n => (
-                      <span key={n.id} className={money.refundLine}>
-                        {n.number} · {formatCents(n.totalCents, n.currency)} · {consoleWhen(n.createdAt)}
-                        {n.pdf && <>{' '}<a className={`${kit.door} ${kit.doorSm}`} href={n.pdf} target="_blank" rel="noreferrer">PDF</a></>}
-                      </span>
-                    ))}
-                  </dd>
-                </>
-              )}
-              <dt className={kit.eye}>Stripe charge</dt>
-              <dd className={styles.factLine}>
-                <code className={kit.code}>{c.id}</code>
-                <a className={`${kit.door} ${kit.doorSm}`} href={`${stripeBase}/payments/${c.id}`} target="_blank" rel="noreferrer">Open in Stripe</a>
-              </dd>
+              {!record && <><dt className={kit.eye}>Amount</dt><dd>{saleCents(amount.cents, amount.currency)}</dd></>}
+              <dt className={kit.eye}>Paid for</dt><dd>{what.main}{what.period ? `, ${what.period}` : ''}</dd>
+              {record && cadRateWords(record) && <><dt className={kit.eye}>In Canadian dollars</dt><dd>{cadRateWords(record)}</dd></>}
             </dl>
+
+            <h3 ref={taxRef} className={money.group}>Tax</h3>
+            <dl className={money.lines}>
+              {record ? (() => {
+                const answerWords = gstAnswerWords(record, registration);
+                return (
+                  <>
+                    <dt className={kit.eye}>Our GST/HST answer</dt>
+                    <dd><span className={answerWords.tone === 'warn' ? money.warnLead : money.lead}>{answerWords.lead}</span> {answerWords.text}</dd>
+                    <dt className={kit.eye}>Tax lines</dt>
+                    <dd>{record.tax_lines.length === 0 ? 'None' : record.tax_lines.map((l, i) => <span key={i} className={money.refundLine}>{taxLineWords(l, record.currency)}</span>)}</dd>
+                  </>
+                );
+              })() : (() => {
+                const cell = saleTaxCell(row, registration, !answer?.recordFailed);
+                return <><dt className={kit.eye}>Our GST/HST answer</dt><dd>{cell.main}{cell.sub ? `: ${cell.sub}` : ''}</dd></>;
+              })()}
+            </dl>
+
+            {record && (
+              <>
+                <h3 className={money.group}>Where it was taxed</h3>
+                <dl className={money.lines}>
+                  <dt className={kit.eye}>Taxed for</dt><dd>{taxedForWords(record)}</dd>
+                  <dt className={kit.eye}>{asItStoodLabel(record)}</dt>
+                  <dd>
+                    {evidenceLines(record).map((l, i) => <span key={i} className={money.refundLine}>{l}</span>)}
+                    {addressChangedSince(record, today) && (
+                      <span className={money.refundLine}>
+                        {SALES_WORDS.addressChanged}{' '}
+                        <button type="button" className={`${kit.door} ${kit.doorSm}`} onClick={onSeeAddress}>See billing address</button>
+                      </span>
+                    )}
+                  </dd>
+                  <dt className={kit.eye}>Kept</dt>
+                  <dd className={keptWords(record).warn ? money.warnText : undefined}>{keptWords(record).text}</dd>
+                </dl>
+              </>
+            )}
+
+            <h3 className={money.group}>The payment</h3>
+            {!stripeRead ? <p className={kit.caption}>{SALES_WORDS.notReadFromStripe}</p> : (
+              <dl className={money.lines}>
+                <dt className={kit.eye}>Card</dt><dd>{c?.card ? cardWords(c.card) : (c?.otherMethod ?? '—')}</dd>
+                <dt className={kit.eye}>Stripe says</dt>
+                <dd>{says.text}{says.sub ? ` · ${says.sub}` : ''}</dd>
+                {row.failed.length > 0 && (
+                  <>
+                    <dt className={kit.eye}>Failed tries</dt>
+                    <dd>{row.failed.map(f => (
+                      <span key={f.id} className={money.refundLine}>{consoleWhen(f.createdAt)} · {f.card ? cardWords(f.card) : (f.otherMethod ?? '—')} · {failureWords(f.failureCode)}</span>
+                    ))}</dd>
+                  </>
+                )}
+                {c && (
+                  <>
+                    <dt className={kit.eye}>Refunded so far</dt>
+                    <dd>
+                      {refundsSoFar.length === 0 ? 'Nothing' : refundsSoFar.map(r => {
+                        const ours = answer?.ourRefunds.find(o => o.stripeRefundId === r.id);
+                        return (
+                          <span key={r.id} className={money.refundLine}>
+                            {formatCents(r.amountCents, c.currency)} · {consoleWhen(r.createdAt)} · {ours ? ours.actorEmail : 'in Stripe’s dashboard'}
+                            {ours?.creditNoteNumber ? ` · credit note ${ours.creditNoteNumber}` : ''}
+                            {r.status === 'pending' ? ' · on its way' : ''}
+                          </span>
+                        );
+                      })}
+                    </dd>
+                  </>
+                )}
+                {invoiceId && (
+                  <>
+                    <dt className={kit.eye}>Credit notes</dt>
+                    <dd>
+                      {answer?.creditNotes == null ? 'Not read from Stripe' : answer.creditNotes.length === 0 ? 'None' : answer.creditNotes.map(n => (
+                        <span key={n.id} className={money.refundLine}>
+                          {n.number} · {formatCents(n.totalCents, n.currency)}{creditNoteTaxWords(n, row.notes)} · {consoleWhen(n.createdAt)}
+                          {n.pdf && <>{' '}<a className={`${kit.door} ${kit.doorSm}`} href={n.pdf} target="_blank" rel="noreferrer">PDF</a></>}
+                        </span>
+                      ))}
+                    </dd>
+                    <dt className={kit.eye}>Stripe invoice</dt>
+                    <dd className={styles.factLine}>
+                      <code className={kit.code}>{invoiceId}</code>
+                      <a className={`${kit.door} ${kit.doorSm}`} href={`${stripeBase}/invoices/${invoiceId}`} target="_blank" rel="noreferrer">Open in Stripe</a>
+                    </dd>
+                  </>
+                )}
+                {c && (
+                  <>
+                    <dt className={kit.eye}>Stripe charge</dt>
+                    <dd className={styles.factLine}>
+                      <code className={kit.code}>{c.id}</code>
+                      <a className={`${kit.door} ${kit.doorSm}`} href={`${stripeBase}/payments/${c.id}`} target="_blank" rel="noreferrer">Open in Stripe</a>
+                    </dd>
+                  </>
+                )}
+              </dl>
+            )}
+            {!stripeRead && (
+              <p className={styles.refuseLine}>
+                <Flag size={15} aria-hidden className={styles.refuseIcon} />
+                <span className={money.warnText}>{SALES_WORDS.refundsWait}</span>
+              </p>
+            )}
             {refusal && (
               <p className={`${styles.refuseLine}${refusal.bad ? ` ${styles.refuseLineBad}` : ''}`}>
                 <Flag size={15} aria-hidden className={styles.refuseIcon} />
