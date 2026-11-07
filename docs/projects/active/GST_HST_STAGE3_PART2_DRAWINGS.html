@@ -1,0 +1,802 @@
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Money Tab Tax Record</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;650;700&display=swap">
+<style>
+/* Layout: a review document (cool grey chrome, Plex) holding true-size specimens of the console's Warm kit. Sticky tabs, one
+   section at a time, a Before / After switch and an Everything / Show only what differs switch where a tab compares. */
+:root{
+  --bg:#E8EBEE; --surface:#FFFFFF; --surface-2:#F3F5F7; --ink:#1A1F24; --muted:#56606B; --line:#D2D7DD;
+  --accent:#24584B; --fix:#2B672A; --fix-soft:#DFEEDB; --flag:#A8361F;
+  --t-new:#4B2E83; --t-res:#1D4A6E; --t-unc:#5E646B; --ask:#8A5A00;
+  --shadow:0 1px 2px rgba(20,30,40,.06),0 6px 20px rgba(20,30,40,.07);
+  --f-doc:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --fix:#93CF8B; --fix-soft:#1E321F; --flag:#F0907A;
+  --t-new:#BBA6EE; --t-res:#8FC2E7; --t-unc:#AAB0B7; --ask:#E8B75A;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --fix:#93CF8B; --fix-soft:#1E321F; --flag:#F0907A;
+  --t-new:#BBA6EE; --t-res:#8FC2E7; --t-unc:#AAB0B7; --ask:#E8B75A;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--f-doc);margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--bg)}
+.doc{max-width:1240px;margin:0 auto;padding-block:16px 90px}
+a{color:var(--accent)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+h1,h2,h3,h4{text-wrap:balance;line-height:1.2}
+.doc h1{font-size:30px;margin:6px 0 6px;letter-spacing:-.01em}
+.doc h2{font-size:22px;margin:6px 0 8px;letter-spacing:-.01em}
+.doc h3{font-size:17px;margin:18px 0 6px}
+.doc p,.doc li{max-width:84ch}
+.muted{color:var(--muted)}
+.eyebrow{font:600 11.5px/1.3 var(--f-mono);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.lede{font-size:16px;max-width:84ch}
+.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);display:flex;gap:4px;flex-wrap:wrap;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);margin:14px 0 8px}
+.tabs button{font:600 14px/1 var(--f-doc);min-height:40px;padding:0 14px;border-radius:8px;border:1px solid transparent;background:none;color:var(--muted);cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--surface);border-color:var(--line);color:var(--ink);box-shadow:var(--shadow)}
+section.pane[hidden]{display:none}
+.viewrow{display:flex;align-items:center;gap:10px 18px;margin:8px 0 12px;flex-wrap:wrap}
+.viewrow .grp{display:flex;align-items:center;gap:10px}
+.viewrow .lab{font:600 11.5px/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.sw{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:3px;gap:2px;flex-wrap:wrap}
+.sw button{font:600 13.5px/1 var(--f-doc);min-height:36px;padding:0 14px;border-radius:7px;border:0;background:none;color:var(--muted);cursor:pointer}
+.sw button[aria-pressed="true"]{background:var(--surface-2);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 18px;box-shadow:var(--shadow);margin:12px 0}
+.card h3{margin-top:0}
+.card ul{margin:6px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:10px;margin:10px 0;background:var(--surface)}
+table.t{border-collapse:collapse;width:100%;font-size:14px;min-width:760px}
+table.t th{font:600 11px/1.3 var(--f-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+table.t td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+table.t tr:last-child td{border-bottom:0}
+table.t td.y{color:var(--fix);font-weight:600} table.t td.n{color:var(--muted)}
+.mk{font:700 10.5px/1 var(--f-mono);letter-spacing:.04em;border-radius:5px;padding:4px 6px;cursor:pointer;border:1.5px solid currentColor;background:var(--surface);white-space:nowrap;min-height:24px;vertical-align:middle}
+.mk.new{color:var(--t-new)} .mk.res{color:var(--t-res)} .mk.unc{color:var(--t-unc)} .mk.ask{color:var(--ask)}
+.cap{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 6px;font:600 12px/1.3 var(--f-mono);color:var(--muted)}
+.cap b{color:var(--ink)}
+.pair{display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;margin:8px 0}
+.pair>div{min-width:0;max-width:100%}
+.fr{border-radius:12px;outline:1px solid var(--line);box-shadow:var(--shadow);overflow:hidden}
+.scroll{overflow-x:auto;max-width:100%;padding:2px 2px 6px}
+.samebar{display:none;border:1px dashed rgba(120,110,90,.45);border-radius:8px;padding:8px 12px;font:600 12px/1.4 var(--f-mono);color:#6b6358;text-align:center}
+body[data-view="diff"] .same{display:none}
+body[data-view="diff"] .samebar{display:block}
+body[data-view="diff"] .chg{outline:2px solid var(--t-res);outline-offset:3px;border-radius:6px}
+[data-frame][hidden]{display:none}
+
+/* ---------- the console kit (Warm), drawn from console.module.css / record.module.css / money.module.css ---------- */
+.ak{--paper:#F8F4ED;--card:#FFFFFF;--ink:#241E15;--soft:#4A4235;--dim:#615A54;--line:rgba(70,55,30,.12);--line2:rgba(70,55,30,.20);
+  --olive:#57651E;--olive-soft:rgba(87,101,30,.10);--cta:#D9F99D;--cta-ink:#241E15;--red:#B03A22;--amber:#835006;--info:#134FD3;
+  --hover:rgba(87,101,30,.05);--scrim:rgba(36,30,21,.34);--new:rgba(75,46,131,.07);
+  background:var(--paper);color:var(--ink);font:14px/1.5 'Inter',system-ui,sans-serif;text-align:left}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ak{--paper:#0A0A0A;--card:#111827;--ink:#F1F5F9;--soft:rgba(255,255,255,.7);--dim:rgba(255,255,255,.5);--line:rgba(255,255,255,.08);--line2:rgba(255,255,255,.16);--olive:#D9F99D;--olive-soft:rgba(217,249,157,.10);--red:#EF4444;--amber:#F59E0B;--info:#3B82F6;--hover:rgba(217,249,157,.05);--scrim:rgba(0,0,0,.55);--new:rgba(187,166,238,.10)}}
+:root[data-theme="dark"] .ak{--paper:#0A0A0A;--card:#111827;--ink:#F1F5F9;--soft:rgba(255,255,255,.7);--dim:rgba(255,255,255,.5);--line:rgba(255,255,255,.08);--line2:rgba(255,255,255,.16);--olive:#D9F99D;--olive-soft:rgba(217,249,157,.10);--red:#EF4444;--amber:#F59E0B;--info:#3B82F6;--hover:rgba(217,249,157,.05);--scrim:rgba(0,0,0,.55);--new:rgba(187,166,238,.10)}
+.ak *{box-sizing:border-box}
+.ak.page{padding:20px 24px 26px;display:grid;gap:17px}
+.ak.w1100{width:1100px} .ak.w860{width:860px}
+.ak .sec{display:grid;gap:10px;min-width:0}
+.ak h5{margin:0;font:700 16px/1.3 'Inter';color:var(--ink)}
+.ak .eye{font:700 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--dim)}
+.ak .capn{font-size:12px;line-height:1.4;color:var(--dim);margin:0}
+.ak .kc{background:var(--card);border:1px solid var(--line);border-radius:8px;min-width:0}
+.ak .callout{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--card);border:1px solid var(--line);border-left:3px solid var(--olive);border-radius:8px;padding:12px 16px;font-size:14px;color:var(--soft)}
+.ak .callout.warn{border-left-color:var(--amber)} .ak .callout.bad{border-left-color:var(--red)}
+.ak .callout .end{margin-left:auto;display:inline-flex;gap:8px}
+.ak .callout .two{display:grid;gap:6px}
+.ak .chip{display:inline-flex;align-items:center;padding:1.5px 7px;border-radius:999px;font:700 10px/1.4 'IBM Plex Mono',monospace;letter-spacing:.04em;white-space:nowrap;color:var(--soft);background:var(--olive-soft);border:1px solid var(--line2);vertical-align:1px}
+.ak .chip.warn{color:var(--amber);background:color-mix(in srgb,var(--amber) 9%,transparent);border-color:color-mix(in srgb,var(--amber) 32%,transparent)}
+.ak .chip.bad{color:var(--red);background:color-mix(in srgb,var(--red) 9%,transparent);border-color:color-mix(in srgb,var(--red) 32%,transparent)}
+.ak .chip.info{color:var(--info);background:color-mix(in srgb,var(--info) 9%,transparent);border-color:color-mix(in srgb,var(--info) 30%,transparent)}
+.ak .chip.ok{color:var(--olive);background:color-mix(in srgb,var(--olive) 8%,transparent);border-color:color-mix(in srgb,var(--olive) 28%,transparent)}
+.ak .chip.quiet{background:transparent;color:var(--dim)}
+.ak button.chip{cursor:pointer;font-family:'IBM Plex Mono',monospace}
+.ak .pill{display:inline-flex;align-items:center;justify-content:center;min-width:20px;padding:1px 7px;border-radius:999px;background:var(--amber);color:#fff;font:700 11px/1.5 'Inter';font-variant-numeric:tabular-nums}
+.ak .door{color:var(--olive);font-weight:650;font-size:14px;background:none;border:0;padding:0;cursor:pointer;font-family:inherit}
+.ak .door.sm{font-size:12px}
+.ak .btn{font:650 14px/1.25 'Inter';border-radius:6px;padding:7px 14px;min-height:34px;display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;background:var(--card);color:var(--soft);border:1px solid var(--line2);cursor:pointer}
+.ak .btn.sm{font-size:12px;min-height:28px;padding:4px 10px}
+.ak .btn.lime{background:var(--cta);color:var(--cta-ink);border-color:transparent}
+.ak .btn.red{background:var(--red);color:#fff;border-color:transparent}
+/* the record head */
+.ak .back{font-size:12px;color:var(--olive);font-weight:650}
+.ak .rh{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.ak .rh h4{margin:0;font:700 20px/1.2 'Inter'}
+.ak .info{display:flex;align-items:center;gap:8px 16px;flex-wrap:wrap;margin-top:-10px;font-size:12px;color:var(--dim)}
+.ak .info .acts{margin-left:auto;display:flex;gap:8px}
+.ak .pencil{width:34px;height:34px;border-radius:8px;border:1px solid var(--line2);display:inline-flex;align-items:center;justify-content:center;color:var(--soft);background:var(--card)}
+/* band */
+.ak .band{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.ak .band>div{background:var(--card);padding:13.6px 16px;display:grid;gap:3px;align-content:start;min-width:0}
+.ak .band .v{font:700 24px/1.1 'Inter';font-variant-numeric:tabular-nums;color:var(--ink)}
+.ak .band .v.sm{font-size:20px}
+.ak .band .v.q{font-weight:400;color:var(--dim);font-size:20px}
+.ak .band .n{font-size:12px;color:var(--dim)}
+.ak .band .warn .v{color:var(--amber)}
+.ak .band.win3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.ak .band.win3 .v{font-size:20px}
+/* record tabs */
+.ak .rtabs{display:flex;gap:4px;border-bottom:1px solid var(--line)}
+.ak .rtabs span{padding:10.4px 14.4px;font-weight:600;color:var(--soft);display:inline-flex;align-items:baseline;gap:6px;margin-bottom:-1px;border-bottom:2px solid transparent}
+.ak .rtabs span.on{color:var(--olive);border-bottom-color:var(--olive)}
+.ak .rtabs i{font-style:normal;font-size:12px;opacity:.7}
+.ak .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--amber);margin-left:2px;vertical-align:middle}
+/* head row + stamp */
+.ak .hrow{display:flex;align-items:center;flex-wrap:wrap;gap:6px 16px}
+.ak .stamp{margin-left:auto;display:inline-flex;align-items:center;gap:8px;font-size:12px;color:var(--dim)}
+/* tables */
+.ak .tbw{overflow-x:auto}
+.ak table{border-collapse:collapse;width:100%;font-size:14px}
+.ak th{font:700 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.07em;text-transform:uppercase;color:var(--dim);text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+.ak td{padding:11.2px 12px;border-bottom:1px solid var(--line);vertical-align:top;color:var(--ink)}
+.ak tr:last-child td{border-bottom:0}
+.ak tbody tr.click:hover{background:var(--hover);cursor:pointer}
+.ak th.rowh{font:700 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);width:176px;border-bottom:1px solid var(--line);vertical-align:top;padding-top:13px}
+.ak .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.ak .nw{white-space:nowrap}
+.ak .sub{display:block;font-size:12px;color:var(--dim)}
+.ak .muted{color:var(--dim)}
+.ak .badtx{color:var(--red)}
+.ak .warntx{color:var(--amber)}
+.ak .flag{display:block;margin-top:3px;font-size:12px;color:var(--dim)}
+.ak .flag.warn{color:var(--amber)}
+.ak .flag.bad{color:var(--red)}
+.ak .open{color:var(--olive);font-size:16px;text-align:right;width:40px}
+.ak .code{font:500 12px/1.4 'IBM Plex Mono',monospace;color:var(--soft)}
+.ak tr.void td{color:var(--dim)} .ak tr.void .st{text-decoration:line-through}
+.ak .toolbar{display:flex;align-items:center;gap:8px 10px;flex-wrap:wrap;padding:11px 16px;border-bottom:1px solid var(--line)}
+.ak .toolbar .end{margin-left:auto;display:inline-flex;gap:8px;align-items:center}
+.ak .count{font-size:14px;color:var(--soft)}
+.ak .sel{min-height:34px;border:1px solid var(--line2);border-radius:8px;padding:0 30px 0 10px;display:inline-flex;align-items:center;font-size:14px;color:var(--ink);background:var(--card);position:relative;white-space:nowrap}
+.ak .sel::after{content:"";position:absolute;right:12px;top:50%;width:6px;height:6px;border-right:1.5px solid var(--dim);border-bottom:1.5px solid var(--dim);transform:translateY(-70%) rotate(45deg)}
+.ak .sel.on{border-color:var(--olive);background:var(--olive-soft);font-weight:600}
+.ak .more{display:flex;justify-content:center;padding:10px 16px;border-top:1px solid var(--line)}
+.ak .empty{padding:32px 16px;text-align:center;color:var(--dim)}
+.ak .empty b{display:block;color:var(--ink);font-weight:650;margin-bottom:4px}
+.ak .ghost{border:1px dashed var(--line2);border-radius:8px;padding:12px 14px;color:var(--dim);font-size:12.5px}
+.ak .newbox{background:var(--new);outline:2px solid var(--t-new);outline-offset:3px;border-radius:6px}
+/* window (KitDialog record, 640) */
+.ak.scrimbg{background:var(--scrim);padding:28px 40px;display:flex;justify-content:center}
+.ak .win{width:640px;max-width:100%;background:var(--card);border:1px solid color-mix(in srgb,var(--olive) 30%,transparent);border-radius:12px;display:flex;flex-direction:column}
+.ak .win.w520{width:520px}
+.ak .wh{display:flex;align-items:flex-start;gap:10px;padding:18px 24px 6px}
+.ak .wh h4{margin:0;flex:1;font:700 16px/1.25 'Inter';color:var(--ink)}
+.ak .wh .x{width:32px;height:32px;display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:20px;line-height:1}
+.ak .wb{padding:10px 24px 18px;color:var(--soft);display:grid;gap:14px}
+.ak .wb p{margin:0}
+.ak .wf{display:flex;align-items:center;gap:10px;padding:14px 24px;border-top:1px solid var(--line)}
+.ak .wf .fs{flex:1;font-size:12px;color:var(--dim);min-width:0}
+.ak .wf .fe{display:flex;gap:8px}
+.ak dl.lines{display:grid;grid-template-columns:minmax(8rem,max-content) minmax(0,1fr);gap:8.8px 20px;margin:0}
+.ak dl.lines dt{padding-top:2px}
+.ak dl.lines dd{margin:0;color:var(--ink);overflow-wrap:anywhere}
+.ak dl.lines dd .ln{display:block}
+.ak .grp{font:700 14px/1.3 'Inter';color:var(--ink);margin:6px 0 -4px;padding-top:12px;border-top:1px solid var(--line)}
+.ak .grp .sub{display:inline;margin-left:6px;font-weight:400}
+.ak .pdf{display:inline-flex;align-items:center;gap:5px;margin-left:6px;padding:2px 9px;border:1px solid var(--olive);border-radius:6px;color:var(--olive);font-size:12px;font-weight:650;white-space:nowrap;vertical-align:middle}
+.ak .refuse{display:flex;gap:9px;align-items:flex-start;padding:10px 13px;border-radius:8px;font-size:14px;line-height:1.45;color:var(--soft);background:color-mix(in srgb,var(--amber) 8%,transparent);border:1px solid color-mix(in srgb,var(--amber) 32%,transparent)}
+.ak .sentence{padding:12px 14px;border-radius:8px;background:var(--olive-soft);font-size:14px;line-height:1.5;color:var(--soft)}
+.ak .sentence b{color:var(--ink)}
+.ak .fld{display:grid;gap:5px}
+.ak .lb{font:650 12px/1.3 'Inter';color:var(--soft)}
+.ak .ta{min-height:76px;border:1px solid var(--line2);border-radius:6px;padding:9px 12px;color:var(--dim);font-size:14px;background:var(--card)}
+.ak .rare{display:flex;gap:20px;flex-wrap:wrap;padding-top:4px}
+/* Today queue */
+.ak .q{display:flex;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid var(--line)}
+.ak .q:first-child{border-top:0}
+.ak .q .nm{font-weight:650;color:var(--ink);min-width:150px;display:inline-flex;gap:8px;align-items:center}
+.ak .q .why{flex:1;color:var(--dim);font-size:12px}
+
+/* asks */
+.ask{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--t-res);border-radius:0 12px 12px 0;padding:14px 18px;margin:14px 0;box-shadow:var(--shadow)}
+.ask h3{margin:0 0 4px;font-size:17px}
+.ask h3 .no{font:700 13px/1 var(--f-mono);color:var(--muted);margin-right:8px}
+.ask .opts{display:flex;flex-direction:column;gap:4px;margin:10px 0}
+.ask .opts label{display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.45;padding:10px;border-radius:8px;min-height:44px;cursor:pointer}
+.ask .opts label:hover{background:var(--surface-2)}
+.ask .opts label.rec{background:var(--fix-soft)}
+.ask .opts label.rec::after{content:"Recommended";margin-left:auto;font:700 10.5px/1.6 var(--f-mono);color:var(--fix);white-space:nowrap;padding-left:8px}
+.ask .opts input{width:20px;height:20px;flex:none;margin:0;accent-color:var(--accent)}
+.ask .rides{font-size:13.5px;color:var(--muted);margin:4px 0}
+.ask .push{font-size:13.5px;margin:6px 0;padding:8px 12px;border-radius:8px;background:var(--surface-2);border-left:3px solid var(--ask)}
+.ask textarea,.paste textarea{width:100%;box-sizing:border-box;min-height:48px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:14px/1.45 var(--f-doc);background:var(--surface);color:var(--ink);resize:vertical}
+.paste{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow);margin-top:16px;display:flex;flex-direction:column;gap:8px}
+.paste textarea{min-height:220px;font:12.5px/1.5 var(--f-mono)}
+.btn-d{font:600 14px/1 var(--f-doc);min-height:40px;padding:0 14px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.btn-d.pri{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+dialog.note{border:1px solid var(--line);border-radius:14px;padding:0;max-width:min(560px,calc(100vw - 32px));background:var(--surface);color:var(--ink);box-shadow:0 20px 60px rgba(0,0,0,.3)}
+dialog.note::backdrop{background:rgba(10,15,20,.45)}
+dialog.note .nh{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line)}
+dialog.note .nh h3{margin:0;font-size:16px;flex:1}
+dialog.note .nh button{font-size:22px;background:none;border:0;color:var(--muted);cursor:pointer;min-width:44px;min-height:44px}
+dialog.note .nb{padding:12px 16px 16px;font-size:14.5px}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+
+<div class="doc">
+<div class="eyebrow">GST/HST · Stage 3 · Part 2 · drawings · 2026-11-06</div>
+<h1>The Money tab shows each sale’s tax</h1>
+<p class="lede">Since Part 1, every invoice we issue keeps a tax record: the tax by name, our GST/HST answer and the buyer’s address as it stood that day. This page draws where platform staff read it on a club’s Money tab. Nothing here changes what is charged or what the records hold. The club, people and amounts are made-up examples. Everything is a proposal until you rule on the asks in tab 7.</p>
+
+<div class="tabs" role="tablist" id="tabs">
+  <button role="tab" aria-selected="true" data-t="p1">1 · Whole tab, before / after</button>
+  <button role="tab" aria-selected="false" data-t="p2">2 · One row per sale</button>
+  <button role="tab" aria-selected="false" data-t="p3">3 · A sale’s window</button>
+  <button role="tab" aria-selected="false" data-t="p4">4 · Stripe can’t be read</button>
+  <button role="tab" aria-selected="false" data-t="p5">5 · Needs a look</button>
+  <button role="tab" aria-selected="false" data-t="p6">6 · Who sees it</button>
+  <button role="tab" aria-selected="false" data-t="p7">7 · Asks</button>
+</div>
+
+<!-- ============ 1 ============ -->
+<section class="pane" id="p1">
+  <h2>The whole Money tab, as shipped and as proposed</h2>
+  <p>Same club, same day, at true size (the record’s column at a 1440 screen). Three things change: the charges list becomes a list of <b>sales</b> with a Tax column (an unpaid invoice now shows too), the strip at the top names a sale that needs a look, and the band’s figures are before tax. Everything else is the shipped tab. Each tag opens a note.</p>
+  <div class="viewrow">
+    <div class="grp"><span class="lab">Show</span><div class="sw" role="group" aria-label="Before or after" data-sw="frame1"><button data-v="before" aria-pressed="false">Before (shipped)</button><button data-v="after" aria-pressed="true">After</button></div></div>
+    <div class="grp"><span class="lab">View</span><div class="sw" role="group" aria-label="View" data-sw="view"><button data-v="all" aria-pressed="true">Everything</button><button data-v="diff" aria-pressed="false">Show only what differs</button></div></div>
+  </div>
+
+  <!-- BEFORE -->
+  <div data-frame="frame1" data-v="before" hidden>
+  <div class="cap"><b>Before</b> · shipped today · Guelph Storm Softball · desktop</div>
+  <div class="scroll"><div class="fr" style="width:max-content"><div class="ak page w1100">
+    <div class="same" style="display:grid;gap:17px">
+      <span class="back">← Clubs &amp; portals</span>
+      <div class="rh"><h4>Guelph Storm Softball</h4><span class="chip">CLUB</span><span class="chip ok">ACTIVE</span></div>
+      <div class="info"><span>Owner jordan@guelphstorm.example · guelph-storm · Created Mar 14, 2026</span><span class="acts"><span class="pencil">✎</span><span class="btn">Email the owner</span><span class="btn">Add a note</span></span></div>
+      <div class="band"><div><span class="eye">Members</span><span class="v">6</span><span class="n">owner signed in Nov 5</span></div><div><span class="eye">Teams</span><span class="v">9</span></div><div><span class="eye">Tournaments</span><span class="v">2</span></div><div><span class="eye">Free time</span><span class="v q">None</span></div><div><span class="eye">Renews</span><span class="v sm">Dec 1, 2026</span><span class="n">monthly · from Stripe</span></div></div>
+      <div class="rtabs"><span>Story <i>12</i></span><span class="on">Money</span><span>Access</span><span>People &amp; tournaments <i>8</i></span></div>
+    </div>
+    <div class="callout">Stripe and our record agree.</div>
+    <div class="band"><div><span class="eye">Paid, last 12 months</span><span class="v">$377.02</span><span class="n">4 paid charges since Nov 6, 2025</span></div><div class="warn"><span class="eye">Refunded</span><span class="v">$50.00</span><span class="n">1 refund, Oct 9</span></div><div><span class="eye">Next charge</span><span class="v">$100.01</span><span class="n">on Dec 1, 2026, includes $11.51 tax</span></div></div>
+    <div class="sec">
+      <div class="hrow"><h5>The subscription</h5><span class="stamp">Read from Stripe at 2:14 p.m. <span class="btn sm">Read again</span></span></div>
+      <div class="kc"><table><thead><tr><th></th><th>Our record</th><th>Stripe</th></tr></thead><tbody>
+        <tr><th class="rowh">Plan</th><td>Club · monthly</td><td>Club · monthly</td></tr>
+        <tr><th class="rowh">Billing status</th><td>Active</td><td>Active</td></tr>
+        <tr><th class="rowh">Renews</th><td>Dec 1, 2026</td><td>Dec 1, 2026</td></tr>
+        <tr><th class="rowh">Stripe subscription</th><td><span class="code">sub_1QxR7d</span></td><td><span class="code">sub_1QxR7d</span> · the only live one · <span class="door sm">Open in Stripe</span></td></tr>
+        <tr><th class="rowh">Payment method</th><td>Not kept here</td><td>Visa ending 4242 · expires 04/2028</td></tr>
+      </tbody></table></div>
+    </div>
+    <div class="kc">
+      <div class="toolbar"><span class="count">4 charges in the last 12 months, newest first</span></div>
+      <table><thead><tr><th>When</th><th>What it paid for</th><th>Card</th><th>Stripe says</th><th class="num">Amount</th><th></th></tr></thead><tbody>
+        <tr class="click"><td class="nw">Nov 1, 6:02 a.m.</td><td>Club, monthly<span class="sub">Nov 1 to Dec 1, 2026 · includes $11.51 tax</span></td><td class="nw">Visa 4242</td><td>Paid</td><td class="num">$100.01</td><td class="open">›</td></tr>
+        <tr class="click"><td class="nw">Oct 1, 6:01 a.m.</td><td>Club, monthly<span class="sub">Oct 1 to Nov 1, 2026 · includes $11.51 tax</span></td><td class="nw">Visa 4242</td><td class="warntx">Part refunded · $50.00 back</td><td class="num">$100.01</td><td class="open">›</td></tr>
+        <tr class="click"><td class="nw">Sep 1, 6:00 a.m.</td><td>Club, monthly<span class="sub">Sep 1 to Oct 1, 2026</span></td><td class="nw">Visa 4242</td><td>Paid</td><td class="num">$88.50</td><td class="open">›</td></tr>
+        <tr class="click"><td class="nw">Aug 1, 9:12 a.m.</td><td>Club, monthly · first charge<span class="sub">Aug 1 to Sep 1, 2026</span></td><td class="nw">Visa 4242</td><td>Paid</td><td class="num">$88.50</td><td class="open">›</td></tr>
+      </tbody></table>
+    </div>
+    <div class="sec">
+      <h5>Fees billed to the club</h5>
+      <div class="kc"><table><thead><tr><th>For</th><th>Billed</th><th>Date</th><th class="num">Fee</th></tr></thead><tbody>
+        <tr><td>Online payments, October<span class="sub">From the published rate</span></td><td>Invoice 7C1E-0003 · due Dec 2</td><td class="nw">Nov 2, 2026</td><td class="num">$23.40</td></tr>
+      </tbody></table></div>
+    </div>
+    <div class="sec">
+      <h5>Billing address</h5>
+      <p class="capn">Where the club is billed. Read only: the club changes it on Plan &amp; billing.</p>
+      <div class="kc"><table><tbody>
+        <tr><th class="rowh">Address</th><td>120 Elm Street, Guelph, Ontario N1H 4H2</td></tr>
+        <tr><th class="rowh">Country</th><td>Canada</td></tr>
+      </tbody></table></div>
+    </div>
+    <p class="capn">Families’ payments to this club are the club’s own money, on its own Stripe account. They are never shown or refunded here.</p>
+  </div></div></div>
+  <div class="card"><h3>What the shipped tab cannot say</h3><ul>
+    <li>The fee invoice issued Nov 2 is <b>owed and not paid</b>. It has no charge yet, so it is not in the charges list at all; only the fees panel mentions it. It already owes its HST.</li>
+    <li>Tax is a figure inside a sentence (“includes $11.51 tax”): no name, no rate, no province, no reason.</li>
+    <li>The Oct 1 refund was made in Stripe’s dashboard with no credit note. Nothing says the tax on it was never reduced.</li>
+    <li>The address shown is <b>today’s</b>. If the club moved, nothing shows where it was billed when each sale was made.</li>
+  </ul></div>
+  </div>
+
+  <!-- AFTER -->
+  <div data-frame="frame1" data-v="after">
+  <div class="cap"><b>After</b> · proposed · the same club, the same day · desktop</div>
+  <div class="scroll"><div class="fr" style="width:max-content"><div class="ak page w1100">
+    <div class="same" style="display:grid;gap:17px">
+      <span class="back">← Clubs &amp; portals</span>
+      <div class="rh"><h4>Guelph Storm Softball</h4><span class="chip">CLUB</span><span class="chip ok">ACTIVE</span></div>
+      <div class="info"><span>Owner jordan@guelphstorm.example · guelph-storm · Created Mar 14, 2026</span><span class="acts"><span class="pencil">✎</span><span class="btn">Email the owner</span><span class="btn">Add a note</span></span></div>
+      <div class="band"><div><span class="eye">Members</span><span class="v">6</span><span class="n">owner signed in Nov 5</span></div><div><span class="eye">Teams</span><span class="v">9</span></div><div><span class="eye">Tournaments</span><span class="v">2</span></div><div><span class="eye">Free time</span><span class="v q">None</span></div><div><span class="eye">Renews</span><span class="v sm">Dec 1, 2026</span><span class="n">monthly · from Stripe</span></div></div>
+    </div>
+    <div class="samebar">The record’s head and band are unchanged</div>
+    <div class="rtabs chg"><span>Story <i>12</i></span><span class="on">Money <span class="dot" title="Needs review"></span></span><span>Access</span><span>People &amp; tournaments <i>8</i></span>
+      <button class="mk res" data-note="RESTYLED, no new part. The Money tab’s amber dot already lights for a billing-address review. It now also lights when a sale on this tab needs a look at its tax. Ask 4.">RESTYLED · ask 4</button></div>
+    <div class="callout warn chg"><span><span class="chip warn">NEEDS REVIEW</span> 1 sale needs a look at its tax. The Oct 1 charge was refunded in Stripe’s dashboard with no credit note, so its tax was not reduced.</span><span class="end"><span class="btn sm">Show it</span> <button class="mk res" data-note="RESTYLED: the SAME amber strip the tab shows today for a billing-address review (no second strip). Its sentence names the sale; “Show it” sets the list’s Show choice to Needs a look and scrolls to it. With both kinds at once, the strip holds two lines, each with its own door. Ask 4.">RESTYLED · ask 4</button></span></div>
+    <div class="callout same">Stripe and our record agree.</div>
+    <div class="band chg"><div><span class="eye">Paid, last 12 months, before tax</span><span class="v">$354.00</span><span class="n">4 paid sales since Nov 6, 2025</span></div><div class="warn"><span class="eye">Refunded</span><span class="v">$50.00</span><span class="n">1 refund, Oct 9 · no credit note, so no tax split</span></div><div><span class="eye">Next charge</span><span class="v">$100.01</span><span class="n">on Dec 1, 2026, includes $11.51 tax</span></div>
+    </div>
+    <div style="margin-top:-10px"><button class="mk res" data-note="RESTYLED by Part 4 (already in the plan, not an ask here): the paid figure is before tax, read from our record, and its label says so. A refund with no credit note has no tax split, so the Refunded cell keeps the amount refunded and says why it is not split. Next charge is a quote of what Stripe will take, so it keeps its total and its tax.">RESTYLED · Part 4</button></div>
+    <div class="sec same">
+      <div class="hrow"><h5>The subscription</h5><span class="stamp">Read from Stripe at 2:14 p.m. <span class="btn sm">Read again</span></span></div>
+      <div class="kc"><table><thead><tr><th></th><th>Our record</th><th>Stripe</th></tr></thead><tbody>
+        <tr><th class="rowh">Plan</th><td>Club · monthly</td><td>Club · monthly</td></tr>
+        <tr><th class="rowh">Billing status</th><td>Active</td><td>Active</td></tr>
+        <tr><th class="rowh">Renews</th><td>Dec 1, 2026</td><td>Dec 1, 2026</td></tr>
+        <tr><th class="rowh">Stripe subscription</th><td><span class="code">sub_1QxR7d</span></td><td><span class="code">sub_1QxR7d</span> · the only live one · <span class="door sm">Open in Stripe</span></td></tr>
+        <tr><th class="rowh">Payment method</th><td>Not kept here</td><td>Visa ending 4242 · expires 04/2028</td></tr>
+      </tbody></table></div>
+    </div>
+    <div class="samebar">The subscription, ours beside Stripe’s, is unchanged</div>
+    <div class="kc chg">
+      <div class="toolbar"><span class="count">5 sales in the last 12 months, newest first</span><span class="end"><span class="sel">All sales</span> <button class="mk new" data-note="NEW. One dropdown (D5: a one-of-several choice is a dropdown): All sales · Needs a look · Not paid. Quiet until it filters; olive while it does. Asks 1 and 4.">NEW · asks 1, 4</button></span></div>
+      <table><thead><tr><th>When</th><th>What it paid for</th><th>Tax <button class="mk new" data-note="NEW column, from OUR record (it shows even when Stripe cannot be read). The tax named as Stripe names it, with the rate, then the amount and the province it was taxed for. Zero-rated and Tax missing are words, not colours. Ask 3.">NEW · ask 3</button></th><th>Card</th><th>Stripe says</th><th class="num">Amount</th><th></th></tr></thead><tbody>
+        <tr class="click"><td class="nw">Nov 2, 9:00 a.m.</td><td>Stripe fees on online payments · invoice 7C1E-0003<span class="sub">Issued Nov 2 · due Dec 2</span> <button class="mk new" data-note="NEW row. An invoice with no payment yet: it was never a charge, so the shipped list could not show it. It owes its HST from the day it was issued. Ask 1.">NEW · ask 1</button></td><td>HST 13%<span class="sub">$3.04 · Ontario</span></td><td class="muted">Not charged yet</td><td>Owes $26.44 · due Dec 2</td><td class="num">$26.44</td><td class="open">›</td></tr>
+        <tr class="click"><td class="nw">Nov 1, 6:02 a.m.</td><td>Club, monthly<span class="sub">Nov 1 to Dec 1, 2026</span></td><td>HST 13%<span class="sub">$11.51 · Ontario</span></td><td class="nw">Visa 4242</td><td>Paid</td><td class="num">$100.01</td><td class="open">›</td></tr>
+        <tr class="click"><td class="nw">Oct 1, 6:01 a.m.</td><td>Club, monthly<span class="sub">Oct 1 to Nov 1, 2026</span><span class="flag warn">Needs a look: refunded $50.00 in Stripe’s dashboard with no credit note, so the tax was not reduced. <button class="mk ask" data-note="The flag line is the shipped recipe (the line under a flagged charge, as for “Charged twice”), amber here because it waits for a person. Ask 8.">ask 8</button></span></td><td>HST 13%<span class="sub">$11.51 · Ontario</span></td><td class="nw">Visa 4242</td><td class="warntx">Part refunded · $50.00 back</td><td class="num">$100.01</td><td class="open">›</td></tr>
+        <tr class="click"><td class="nw">Sep 1, 6:00 a.m.</td><td>Club, monthly<span class="sub">Sep 1 to Oct 1, 2026</span></td><td class="muted">Before we registered<span class="sub">no GST/HST owed</span> <button class="mk new" data-note="NEW. A sale issued before our GST/HST registration took effect (Sep 26, 2026 today; May 1, 2026 if CRA approves the backdate) owed no GST/HST. It is quiet, never “Tax missing”, and never on the needs-a-look list. The date is the changeable setting from Stage 4a, never written into the screen.">NEW</button></td><td class="nw">Visa 4242</td><td>Paid</td><td class="num">$88.50</td><td class="open">›</td></tr>
+        <tr class="click"><td class="nw">Aug 1, 9:12 a.m.</td><td>Club, monthly · first charge<span class="sub">Aug 1 to Sep 1, 2026</span></td><td class="muted">Before we registered<span class="sub">no GST/HST owed</span></td><td class="nw">Visa 4242</td><td>Paid</td><td class="num">$88.50</td><td class="open">›</td></tr>
+      </tbody></table>
+    </div>
+    <div class="sec same">
+      <h5>Fees billed to the club</h5>
+      <div class="kc"><table><thead><tr><th>For</th><th>Billed</th><th>Date</th><th class="num">Fee</th></tr></thead><tbody>
+        <tr><td>Online payments, October<span class="sub">From the published rate</span></td><td>Invoice 7C1E-0003 · due Dec 2</td><td class="nw">Nov 2, 2026</td><td class="num">$23.40</td></tr>
+      </tbody></table></div>
+    </div>
+    <div class="samebar">Fees billed to the club: unchanged</div>
+    <div class="sec chg">
+      <h5>Billing address</h5>
+      <p class="capn">Where the club is billed today. Read only: the club changes it on Plan &amp; billing. Each sale keeps the address as it stood when it was sold; open a sale to see it. <button class="mk res" data-note="RESTYLED caption only. The block keeps showing today’s address and review; the words now say “today” so nobody reads it as the address a past sale was taxed on.">RESTYLED</button></p>
+      <div class="kc"><table><tbody>
+        <tr><th class="rowh">Address</th><td>120 Elm Street, Guelph, Ontario N1H 4H2</td></tr>
+        <tr><th class="rowh">Country</th><td>Canada</td></tr>
+      </tbody></table></div>
+    </div>
+    <p class="capn same">Families’ payments to this club are the club’s own money, on its own Stripe account. They are never shown or refunded here.</p>
+  </div></div></div>
+  <div class="card"><h3>What changed, in one list</h3><ul>
+    <li><b>The list is one row per sale</b> (Stripe calls it an invoice), read from our own record, with Stripe’s payment details joined in when Stripe answers. An unpaid, written-off or $0 invoice now shows. A charge Stripe holds with no invoice still shows, marked “No tax record” (tab 2). <b>Ask 1.</b></li>
+    <li><b>A Tax column</b>: “HST 13%”, the amount, the province. Everything else lives in the sale’s window (tab 3). <b>Ask 3.</b></li>
+    <li><b>Needs a look</b> uses what is there: the Money tab’s amber dot, the amber strip at the top, and the shipped flag line under a row. <b>Ask 4.</b></li>
+    <li>The band reads before tax (Part 4). The subscription, the fees panel and the families line do not change.</li>
+    <li>The screen is 1 row taller for the extra sale and 1 line taller for the strip. The list stays where it was: band, subscription, then sales.</li>
+  </ul></div>
+  </div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="pane" id="p2" hidden>
+  <h2>One row per sale: every kind of row</h2>
+  <p>The record is kept per <b>invoice</b>, because GST/HST is owed when an invoice is issued, paid or not. The shipped list is per <b>charge</b>, so an unpaid invoice, a $0 trial or one paid outside Stripe never appeared. Option A (drawn) makes the row the sale and folds its payments into it. Option B keeps the charges and adds a second card. <button class="mk ask" data-note="Ask 1. The disagreement: the build prompt said “a Tax treatment on each charge row”, but the tax belongs to the invoice, and some invoices have no charge. Hanging tax on charge rows leaves exactly the invoices that still owe tax off the screen.">Ask 1</button></p>
+  <div class="viewrow"><div class="grp"><span class="lab">Show</span><div class="sw" role="group" aria-label="Option" data-sw="frame2"><button data-v="a" aria-pressed="true">A · one list of sales (recommended)</button><button data-v="b" aria-pressed="false">B · charges, plus a second card</button></div></div></div>
+
+  <div data-frame="frame2" data-v="a">
+  <div class="cap"><b>Option A</b> · every row kind on one example list (no real club has all of these) · desktop</div>
+  <div class="scroll"><div class="fr" style="width:max-content"><div class="ak page w1100">
+    <div class="kc">
+      <div class="toolbar"><span class="count">12 sales in the last 12 months, newest first</span><span class="end"><span class="sel">All sales</span></span></div>
+      <table><thead><tr><th>When</th><th>What it paid for</th><th>Tax</th><th>Card</th><th>Stripe says</th><th class="num">Amount</th><th></th></tr></thead><tbody>
+        <tr class="click"><td class="nw">Nov 1, 6:02 a.m.</td><td>Club, monthly<span class="sub">Nov 1 to Dec 1, 2026</span></td><td>HST 13%<span class="sub">$11.51 · Ontario</span> <button class="mk new" data-note="1 · Taxed. Stripe’s line name and rate (“HST 13%”), the tax amount and the province Stripe taxed it for. Stripe never names the province on an HST line, so the province comes from the address Stripe taxed on, which the record keeps.">1</button></td><td class="nw">Visa 4242</td><td>Paid</td><td class="num">$100.01</td><td class="open">›</td></tr>
+        <tr class="click"><td class="nw">Oct 28, 4:40 p.m.</td><td>Club, monthly · first charge<span class="sub">Oct 28 to Nov 28, 2026</span></td><td>GST 5%<span class="sub">$4.43 · British Columbia</span> <button class="mk new" data-note="2 · Taxed, with a line not collected. BC: GST 5% is charged; PST 7% is a line Stripe reports as not collected (we are not registered for PST). The row names only what was charged. The window lists both lines.">2</button></td><td class="nw">Mastercard 0005</td><td>Paid</td><td class="num">$92.93</td><td class="open">›</td></tr>
+        <tr class="click"><td class="nw">Oct 12, 9:40 a.m.</td><td>Coach Premium, yearly<span class="sub">Oct 12, 2026 to Oct 12, 2027</span></td><td>Zero-rated<span class="sub">United States</span> <button class="mk new" data-note="3 · Zero-rated. Our answer, not Stripe’s: a US buyer with a US address and the US declaration. Stripe reports only the US state tax it is not collecting; we add our own 0% Canadian line so Stage 4 can count zero-rated sales. Only on the dev site until US sales open.">3</button></td><td class="nw">Visa 1881</td><td>Paid</td><td class="num">US$99.00</td><td class="open">›</td></tr>
+        <tr class="click"><td class="nw">Oct 1, 6:00 a.m.</td><td>Club, monthly<span class="sub">Oct 1 to Nov 1, 2026</span><span class="flag warn">Needs a look: a Canadian buyer was not charged GST/HST.</span></td><td><button class="chip warn" data-note="4 · Tax missing. An amber chip, because a person has to act. It is a button: it opens the sale’s window at its tax. The flag line under the sale says why, in one sentence (tab 5 lists them).">TAX MISSING</button><span class="sub">Alberta</span></td><td class="nw">Visa 4242</td><td>Paid</td><td class="num">$88.50</td><td class="open">›</td></tr>
+        <tr class="click"><td class="nw">Nov 1, 6:00 a.m.</td><td>Club, yearly<span class="sub">Nov 1, 2026 to Nov 1, 2027</span></td><td>HST 13%<span class="sub">$123.37 · Ontario</span></td><td class="nw">Visa 0341</td><td class="badtx">Owes $1,072.37 · card declined Nov 1 <button class="mk new" data-note="5 · Not paid. The invoice is open after a failed try. Today this shows as a “Failed · card declined” CHARGE row; now the failed try folds into its sale and the sale says what is owed. A failed try on a sale that later paid shows under “Paid” as “after 1 failed try” (row 9).">5</button></td><td class="num">$1,072.37</td><td class="open">›</td></tr>
+        <tr class="click"><td class="nw">Sep 30, 6:00 a.m.</td><td>Club, monthly<span class="sub">Sep 30 to Oct 30, 2026</span></td><td>HST 13%<span class="sub">$11.51 · Ontario</span></td><td class="muted">—</td><td class="muted">Written off Nov 3 <button class="mk new" data-note="6 · Written off (Stripe: uncollectible). The tax stays on the sale; Stage 4 claims the relief in the write-off’s period, which is why the record keeps that date. Quiet: nothing for a person to do here.">6</button></td><td class="num">$100.01</td><td class="open">›</td></tr>
+        <tr class="click void"><td class="nw">Sep 30, 5:58 a.m.</td><td><span class="st">Club, monthly</span><span class="sub">Replaced 2 minutes later</span></td><td class="muted">—</td><td class="muted">—</td><td><span class="chip quiet">VOID</span> <button class="mk new" data-note="7 · Void. The house rule for a void row: struck through, a Void chip, counted nowhere (not in the count line, not in the band). A void invoice owed no tax.">7</button></td><td class="num st">$100.01</td><td class="open">›</td></tr>
+        <tr class="click"><td class="nw">Sep 2, 3:15 p.m.</td><td>Club, monthly · trial<span class="sub">Sep 2 to Oct 2, 2026</span></td><td>HST 13%<span class="sub">$0.00 · Ontario</span> <button class="mk new" data-note="8 · A $0 trial invoice. Stripe works the tax out at $0 and marks it paid at once. It is a sale on the record (it carries the evidence), so it shows; $0.00 tax is the true figure.">8</button></td><td class="muted">—</td><td>Nothing to pay</td><td class="num">$0.00</td><td class="open">›</td></tr>
+        <tr class="click"><td class="nw">Aug 3, 10:20 a.m.</td><td>Club, monthly<span class="sub">Aug 3 to Sep 3, 2026</span></td><td class="muted">Before we registered<span class="sub">no GST/HST owed</span></td><td class="nw">Visa 4242</td><td>Paid<span class="sub">after 1 failed try, Aug 3</span> <button class="mk new" data-note="9 · Paid after a failed try. The failed charge is a line under its sale instead of a red row of its own. The window still lists every try with its card and reason.">9</button></td><td class="num">$88.50</td><td class="open">›</td></tr>
+        <tr class="click"><td class="nw">Jul 14, 11:05 a.m.</td><td>Invoice made in Stripe “Setup help”<span class="sub">Not the subscription’s</span></td><td class="muted">Before we registered<span class="sub">no GST/HST owed</span></td><td class="muted">—</td><td>Paid outside Stripe <button class="mk new" data-note="10 · Paid outside Stripe (marked paid in Stripe’s dashboard, e.g. an e-transfer). It has a record and no charge, so the shipped list never showed it.">10</button></td><td class="num">$150.00</td><td class="open">›</td></tr>
+        <tr class="click"><td class="nw">Jun 20, 1:30 p.m.</td><td>A charge made in Stripe, not by an invoice</td><td class="muted">No tax record<span class="sub">not an invoice</span> <button class="mk new" data-note="11 · A charge with no invoice. Records are kept per invoice, so a bare charge made in Stripe’s dashboard has none. It still shows, from Stripe, so the payment is not lost. Part 0 found no path in our product that makes one; this is for a hand-made charge. Part 3 can list one after registration as needs-a-look.">11</button></td><td class="nw">Visa 4242</td><td>Paid</td><td class="num">$25.00</td><td class="open">›</td></tr>
+      </tbody></table>
+      <div class="more"><span class="btn sm">Show older sales</span></div>
+    </div>
+  </div></div></div>
+  <div class="card"><h3>How the rows are put together</h3><ul>
+    <li><b>Where each column comes from.</b> When, What it paid for, Tax, Amount and the sale’s state come from our record. Card, failure reasons, disputes and refund state come from Stripe when it answers. A sale whose record is not written yet (an invoice issued a minute ago) shows from Stripe and fills in on the next read.</li>
+    <li><b>The count and the band skip void sales.</b> “Show older sales” pages through our records, newest first; the records begin May 1, 2026, so before that the list is Stripe’s charges, as today.</li>
+    <li><b>The duplicate check keeps working.</b> “Charged twice” compares two paid sales for the same month, the same as today’s two paid charges.</li>
+    <li><b>A phone</b> keeps the shipped card layout (one card per row, the When as its title): Tax becomes one more labelled line.</li>
+    <li><b>Empty:</b> “No sales in these 12 months.” (today: “No charges in these 12 months.”). <b>While it reads:</b> the one shipped line, “Reading Stripe…”, until the answer arrives; our record and Stripe come back together, so nothing jumps.</li>
+    <li><b>A link to a charge</b> (Find’s “open this charge”) opens the sale that charge paid, at the same window. The Story tab’s charge entries do not change.</li>
+  </ul></div>
+  </div>
+
+  <div data-frame="frame2" data-v="b" hidden>
+  <div class="cap"><b>Option B</b> · the shipped charges list with a Tax column, then a second card for invoices with no payment · desktop</div>
+  <div class="scroll"><div class="fr" style="width:max-content"><div class="ak page w1100">
+    <div class="kc">
+      <div class="toolbar"><span class="count">4 charges in the last 12 months, newest first</span></div>
+      <table><thead><tr><th>When</th><th>What it paid for</th><th>Tax</th><th>Card</th><th>Stripe says</th><th class="num">Amount</th><th></th></tr></thead><tbody>
+        <tr><td class="nw">Nov 1, 6:02 a.m.</td><td>Club, monthly<span class="sub">Nov 1 to Dec 1, 2026</span></td><td>HST 13%<span class="sub">$11.51 · Ontario</span></td><td>Visa 4242</td><td>Paid</td><td class="num">$100.01</td><td class="open">›</td></tr>
+        <tr><td class="nw">Nov 1, 6:00 a.m.</td><td>Club, yearly<span class="sub">Nov 1, 2026 to Nov 1, 2027</span></td><td>HST 13%<span class="sub">$123.37 · Ontario</span></td><td>Visa 0341</td><td class="badtx">Failed · card declined</td><td class="num">$1,072.37</td><td class="open">›</td></tr>
+        <tr><td colspan="7" class="muted">…</td></tr>
+      </tbody></table>
+    </div>
+    <div class="sec">
+      <h5>Invoices with no payment</h5>
+      <div class="kc"><table><thead><tr><th>Issued</th><th>What it is for</th><th>Tax</th><th>State</th><th class="num">Amount</th></tr></thead><tbody>
+        <tr><td class="nw">Nov 2</td><td>Stripe fees on online payments · invoice 7C1E-0003</td><td>HST 13% · $3.04</td><td>Owes · due Dec 2</td><td class="num">$26.44</td></tr>
+        <tr><td class="nw">Nov 1</td><td>Club, yearly</td><td>HST 13% · $123.37</td><td>Owes</td><td class="num">$1,072.37</td></tr>
+        <tr><td class="nw">Sep 2</td><td>Club, monthly · trial</td><td>HST 13% · $0.00</td><td>Nothing to pay</td><td class="num">$0.00</td></tr>
+      </tbody></table></div>
+    </div>
+  </div></div></div>
+  <div class="card"><h3>Why B is not recommended</h3><ul>
+    <li>The Nov 1 yearly sale shows <b>twice</b>: once as a failed charge, once as an invoice owing. Staff must work out that they are the same sale.</li>
+    <li>When Stripe cannot be read, the top list is gone and only the second card is left (tab 4): the tab looks emptier exactly when our own record could answer.</li>
+    <li>It is the smaller build: the shipped list and its window stay as they are. If you want the smallest change now, B is safe; A can follow.</li>
+  </ul></div>
+  </div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="pane" id="p3" hidden>
+  <h2>A sale’s window: the tax, where, and the evidence as it stood</h2>
+  <p>The shipped charge window, at its shipped width (640, a record window that reads first). It gains three groups under a hairline each: <b>Tax</b>, <b>Where it was taxed</b> and <b>The payment</b>, and its Amount line becomes a small joined band. The evidence is the copy kept that day, never today’s address. <button class="mk ask" data-note="Ask 3: what is in the row and what only here. Recommendation: the row has the tax name, rate, amount and province (tab 2); everything else is here, always open (no “Show the evidence” fold), because reading the evidence is why staff open a sale.">Ask 3</button></p>
+  <div class="viewrow"><div class="grp"><span class="lab">Show</span><div class="sw" role="group" aria-label="Which sale" data-sw="frame3"><button data-v="w1" aria-pressed="true">Taxed, with a credit note</button><button data-v="w2" aria-pressed="false">Zero-rated, a US coach</button><button data-v="w3" aria-pressed="false">Tax missing, copied later</button><button data-v="w0" aria-pressed="false">Before (shipped)</button></div></div></div>
+
+  <div data-frame="frame3" data-v="w1">
+  <div class="scroll"><div class="fr" style="width:max-content"><div class="ak scrimbg" style="width:760px"><div class="win">
+    <div class="wh"><h4>Club, monthly · Nov 1, 6:02 a.m.</h4><span class="x">×</span></div>
+    <div class="wb">
+      <div class="band win3"><div><span class="eye">Before tax</span><span class="v">$88.50</span><span class="n">$44.25 credited · $44.25 left</span></div><div><span class="eye">HST 13%</span><span class="v">$11.51</span><span class="n">$5.75 credited · $5.76 left</span></div><div><span class="eye">Total</span><span class="v">$100.01</span><span class="n">$50.00 credited · $50.01 left</span></div></div>
+      <div style="margin-top:-6px"><button class="mk new" data-note="NEW in this window: the money as one joined band (the house rule for a money summary, in a window too). Each figure is the sale’s own; its note nets the credit notes. The tax cell is named as Stripe names it. Every figure is from the record, never worked out in the browser. Replaces the single Amount line.">NEW · band</button></div>
+      <dl class="lines">
+        <dt class="eye">Paid for</dt><dd>Club, monthly, Nov 1 to Dec 1, 2026</dd>
+      </dl>
+      <div class="grp">Tax</div>
+      <dl class="lines">
+        <dt class="eye">Our GST/HST answer</dt><dd>Taxed. Stripe charged HST to a buyer in Ontario.</dd>
+        <dt class="eye">Tax lines</dt><dd><span class="ln">HST 13% · Canada · $11.51 · charged</span></dd>
+      </dl>
+      <div class="grp">Where it was taxed</div>
+      <dl class="lines">
+        <dt class="eye">Taxed for</dt><dd>Ontario, Canada · N1H 4H2</dd>
+        <dt class="eye">As it stood Nov 1</dt><dd><span class="ln">120 Elm Street, Guelph, Ontario N1H 4H2</span><span class="ln">Card from Canada · payouts to Canada</span><span class="ln">No review open</span></dd>
+        <dt class="eye">Kept</dt><dd>At the sale, when the invoice was issued <button class="mk new" data-note="How the record was written, in plain words. “At the sale” is the only kind that is evidence as at the sale. The two others say so in their own words (see the third window). The screen must not claim more than the record does.">NEW</button></dd>
+      </dl>
+      <div class="grp">The payment</div>
+      <dl class="lines">
+        <dt class="eye">Card</dt><dd>Visa ending 4242</dd>
+        <dt class="eye">Stripe says</dt><dd>Part refunded · $50.00 back</dd>
+        <dt class="eye">Refunded so far</dt><dd>$50.00 · Nov 4, 3:10 p.m. · sam@fieldlogichq.example · credit note CN-0001</dd>
+        <dt class="eye">Credit notes</dt><dd>CN-0001 · $50.00, of it $5.75 HST · Nov 4, 3:10 p.m. <span class="pdf">⤓ Download PDF</span></dd>
+        <dt class="eye">Stripe invoice</dt><dd><span class="code">in_1QzK2v</span> &nbsp;<span class="door sm">Open in Stripe</span></dd>
+        <dt class="eye">Stripe charge</dt><dd><span class="code">ch_3QzK2x</span> &nbsp;<span class="door sm">Open in Stripe</span></dd>
+      </dl>
+    </div>
+    <div class="wf"><span class="fs">Read from Stripe at 2:14 p.m. · tax from our record</span><span class="fe"><span class="btn">Close</span><span class="btn">Refund this charge</span></span></div>
+  </div></div></div></div>
+  <div class="card"><h3>Notes</h3><ul>
+    <li><b>“As it stood Nov 1”</b> is the copy kept with the sale: address, card country, payout country (a club that takes online payments), the US declaration when there is one, and any review open at the time. If the club has moved since, one more line says “The billing address has changed since” with a door to today’s block.</li>
+    <li>Tax lines read Stripe’s reason in plain words: “charged”, “not collected: we are not registered there”, “zero-rated (our line)”, “exempt”, “reverse charge”. A reason we have no words for shows Stripe’s own code, so nothing is hidden.</li>
+    <li>“Stripe invoice” is new beside “Stripe charge”: the record is the invoice, so staff can open either. The foot names both sources.</li>
+  </ul></div>
+  </div>
+
+  <div data-frame="frame3" data-v="w2" hidden>
+  <div class="scroll"><div class="fr" style="width:max-content"><div class="ak scrimbg" style="width:760px"><div class="win">
+    <div class="wh"><h4>Coach Premium, yearly · Oct 12, 9:40 a.m.</h4><span class="x">×</span></div>
+    <div class="wb">
+      <div class="band win3"><div><span class="eye">Before tax</span><span class="v">US$99.00</span><span class="n">$137.73 in Canadian dollars</span></div><div><span class="eye">Tax</span><span class="v">US$0.00</span><span class="n">zero-rated</span></div><div><span class="eye">Total</span><span class="v">US$99.00</span><span class="n">$137.73 in Canadian dollars</span></div></div>
+      <dl class="lines">
+        <dt class="eye">Paid for</dt><dd>Coach Premium, yearly, Oct 12, 2026 to Oct 12, 2027</dd>
+        <dt class="eye">In Canadian dollars</dt><dd>At 1.3912, the Bank of Canada rate for Oct 12, 2026 <button class="mk new" data-note="Only a sale in another currency shows this line: the CAD figures the GST/HST return uses and the rate they came from. Only US sales need it, and US sales are closed, so it shows on the dev site only for now.">NEW</button></dd>
+      </dl>
+      <div class="grp">Tax</div>
+      <dl class="lines">
+        <dt class="eye">Our GST/HST answer</dt><dd>Zero-rated. A buyer outside Canada: a US address and the US declaration, so the service is sold to a non-resident at 0%.</dd>
+        <dt class="eye">Tax lines</dt><dd><span class="ln">GST/HST 0% · Canada · $0.00 · zero-rated (our line)</span><span class="ln">Sales Tax 8.875% · New York · $0.00 · not collected: we are not registered there</span></dd>
+      </dl>
+      <div class="grp">Where it was taxed</div>
+      <dl class="lines">
+        <dt class="eye">Taxed for</dt><dd>New York, United States · 14202</dd>
+        <dt class="eye">As it stood Oct 12</dt><dd><span class="ln">88 Delaware Avenue, Suite 400, Buffalo, New York 14202</span><span class="ln">US declaration ticked Oct 3, 2026 (wording us-2026-11-v2)</span><span class="ln">Card from the United States</span><span class="ln">No review open</span></dd>
+        <dt class="eye">Kept</dt><dd>At the sale, when the invoice was issued</dd>
+      </dl>
+      <div class="grp">The payment</div>
+      <dl class="lines">
+        <dt class="eye">Card</dt><dd>Visa ending 1881</dd>
+        <dt class="eye">Stripe says</dt><dd>Paid</dd>
+        <dt class="eye">Refunded so far</dt><dd>Nothing</dd>
+        <dt class="eye">Stripe invoice</dt><dd><span class="code">in_1QyA8m</span> &nbsp;<span class="door sm">Open in Stripe</span></dd>
+      </dl>
+    </div>
+    <div class="wf"><span class="fs">Read from Stripe at 2:14 p.m. · tax from our record</span><span class="fe"><span class="btn">Close</span><span class="btn">Refund this charge</span></span></div>
+  </div></div></div></div>
+  <div class="card"><h3>Notes</h3><ul>
+    <li>A coach buys Premium as a person, so “As it stood” is the coach’s own home address, and there is no payout line.</li>
+    <li>Stripe’s New York line is shown on purpose: it is what Stripe said. Our 0% Canadian line is marked “our line” so nobody thinks Stripe decided the zero-rating.</li>
+  </ul></div>
+  </div>
+
+  <div data-frame="frame3" data-v="w3" hidden>
+  <div class="scroll"><div class="fr" style="width:max-content"><div class="ak scrimbg" style="width:760px"><div class="win">
+    <div class="wh"><h4>Club, monthly · Oct 1, 6:00 a.m.</h4><span class="x">×</span></div>
+    <div class="wb">
+      <p class="flag warn" style="margin:0;font-size:14px">Needs a look: a Canadian buyer was not charged GST/HST. Stripe reported GST 5% as not collected.</p>
+      <div class="band win3"><div><span class="eye">Before tax</span><span class="v">$88.50</span></div><div><span class="eye">Tax</span><span class="v">$0.00</span><span class="n">none charged</span></div><div><span class="eye">Total</span><span class="v">$88.50</span></div></div>
+      <dl class="lines">
+        <dt class="eye">Paid for</dt><dd>Club, monthly, Oct 1 to Nov 1, 2026</dd>
+      </dl>
+      <div class="grp">Tax</div>
+      <dl class="lines">
+        <dt class="eye">Our GST/HST answer</dt><dd><span class="warntx" style="font-weight:600">Missing.</span> A Canadian buyer was not charged GST/HST.</dd>
+        <dt class="eye">Tax lines</dt><dd>GST 5% · Canada · $0.00 · not collected: Stripe had no registration for it</dd>
+      </dl>
+      <div class="grp">Where it was taxed</div>
+      <dl class="lines">
+        <dt class="eye">Taxed for</dt><dd>Alberta, Canada · T2P 1J9</dd>
+        <dt class="eye">As it stood Nov 6</dt><dd><span class="ln">400 4 Avenue SW, Calgary, Alberta T2P 1J9</span><span class="ln">Card from Canada</span><span class="ln">No review open</span></dd>
+        <dt class="eye">Kept</dt><dd class="warntx">Copied from Stripe on Nov 6, 2026, when the tax records began. The address and card are as they stood that day, not on the day of the sale. <button class="mk new" data-note="The backfill’s own words (the daily catch-up has its own: “Caught up by the daily job on {day}: the address and card are as they stood that day, not at the sale”). Amber because the record is weaker evidence, and the eyebrow says “As it stood Nov 6”, the day it was copied, never the sale’s day.">NEW</button></dd>
+      </dl>
+      <div class="grp">The payment</div>
+      <dl class="lines">
+        <dt class="eye">Card</dt><dd>Visa ending 4242</dd>
+        <dt class="eye">Stripe says</dt><dd>Paid</dd>
+        <dt class="eye">Stripe invoice</dt><dd><span class="code">in_1QwD4p</span> &nbsp;<span class="door sm">Open in Stripe</span></dd>
+      </dl>
+      <div class="rare"><span class="door">Mark as looked at</span> <button class="mk ask" data-note="Ask 6. A rare door, so it ends the body (never a foot row). It opens the small window drawn on tab 5. Shown only to Super admin and Billing, and only on a sale that needs a look.">ask 6</button></div>
+    </div>
+    <div class="wf"><span class="fs">Read from Stripe at 2:14 p.m. · tax from our record</span><span class="fe"><span class="btn">Close</span><span class="btn">Refund this charge</span></span></div>
+  </div></div></div></div>
+  </div>
+
+  <div data-frame="frame3" data-v="w0" hidden>
+  <div class="scroll"><div class="fr" style="width:max-content"><div class="ak scrimbg" style="width:760px"><div class="win">
+    <div class="wh"><h4>Club, monthly · Nov 1, 6:02 a.m.</h4><span class="x">×</span></div>
+    <div class="wb">
+      <dl class="lines">
+        <dt class="eye">Amount</dt><dd>$100.01</dd>
+        <dt class="eye">Paid for</dt><dd>Club, monthly, Nov 1 to Dec 1, 2026 · includes $11.51 tax</dd>
+        <dt class="eye">Card</dt><dd>Visa ending 4242</dd>
+        <dt class="eye">Stripe says</dt><dd>Part refunded · $50.00 back</dd>
+        <dt class="eye">Refunded so far</dt><dd>$50.00 · Nov 4, 3:10 p.m. · sam@fieldlogichq.example · credit note CN-0001</dd>
+        <dt class="eye">Credit notes</dt><dd>CN-0001 · $50.00 · Nov 4, 3:10 p.m. <span class="pdf">⤓ Download PDF</span></dd>
+        <dt class="eye">Stripe charge</dt><dd><span class="code">ch_3QzK2x</span> &nbsp;<span class="door sm">Open in Stripe</span></dd>
+      </dl>
+    </div>
+    <div class="wf"><span class="fs">Read from Stripe at 2:14 p.m.</span><span class="fe"><span class="btn">Close</span><span class="btn">Refund this charge</span></span></div>
+  </div></div></div></div>
+  <p class="muted">The shipped window, for comparison. Everything in it stays; “Amount” becomes the band, and “includes $11.51 tax” moves into the band.</p>
+  </div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="pane" id="p4" hidden>
+  <h2>When Stripe can’t be read, our own record still shows</h2>
+  <p>Today a failed Stripe read leaves the tab with no charges at all. The sales and their tax now come from our table, so they stay. Only what is Stripe’s waits: the card, Stripe’s latest word on each payment, the next charge and refunds. <button class="mk ask" data-note="Ask 2.">Ask 2</button></p>
+  <div class="viewrow"><div class="grp"><span class="lab">Show</span><div class="sw" role="group" aria-label="Before or after" data-sw="frame4"><button data-v="before" aria-pressed="false">Before (shipped)</button><button data-v="after" aria-pressed="true">After</button></div></div></div>
+  <div data-frame="frame4" data-v="before" hidden>
+  <div class="scroll"><div class="fr" style="width:max-content"><div class="ak page w1100">
+    <div class="callout warn"><span>Stripe could not be read at 2:14 p.m. Our record is below; Stripe’s side, the charges and refunds wait until it answers.</span><span class="end"><span class="btn sm">Read again</span></span></div>
+    <div class="sec"><div class="hrow"><h5>The subscription</h5></div>
+      <div class="kc"><table><thead><tr><th></th><th>Our record</th><th>Stripe</th></tr></thead><tbody>
+        <tr><th class="rowh">Plan</th><td>Club · monthly</td><td class="muted">Not read</td></tr>
+        <tr><th class="rowh">Billing status</th><td>Active</td><td class="muted">Not read</td></tr>
+        <tr><th class="rowh">Renews</th><td>Dec 1, 2026</td><td class="muted">Not read</td></tr>
+      </tbody></table></div></div>
+    <div class="ghost">No band and no charges list. Then “Fees billed to the club” and “Billing address”, from our own rows.</div>
+  </div></div></div>
+  </div>
+  <div data-frame="frame4" data-v="after">
+  <div class="scroll"><div class="fr" style="width:max-content"><div class="ak page w1100">
+    <div class="callout warn"><span>Stripe could not be read at 2:14 p.m. The sales below are from our own record. The card, Stripe’s latest word on each payment, the next charge and refunds wait until it answers.</span><span class="end"><span class="btn sm">Read again</span> <button class="mk res" data-note="RESTYLED words in the shipped amber callout: it now says what IS here, then what waits.">RESTYLED</button></span></div>
+    <div class="band"><div><span class="eye">Paid, last 12 months, before tax</span><span class="v">$354.00</span><span class="n">4 paid sales since Nov 6, 2025 · our record</span></div><div class="warn"><span class="eye">Refunded</span><span class="v">$50.00</span><span class="n">1 refund · our record</span></div><div class="warn"><span class="eye">Next charge</span><span class="v q">Not read</span><span class="n">Stripe could not be asked for the next charge. Read again.</span></div></div>
+    <div class="sec"><div class="hrow"><h5>The subscription</h5></div>
+      <div class="kc"><table><thead><tr><th></th><th>Our record</th><th>Stripe</th></tr></thead><tbody>
+        <tr><th class="rowh">Plan</th><td>Club · monthly</td><td class="muted">Not read</td></tr>
+        <tr><th class="rowh">Billing status</th><td>Active</td><td class="muted">Not read</td></tr>
+        <tr><th class="rowh">Renews</th><td>Dec 1, 2026</td><td class="muted">Not read</td></tr>
+      </tbody></table></div></div>
+    <div class="kc">
+      <div class="toolbar"><span class="count">5 sales in the last 12 months, newest first</span><span class="end"><span class="sel">All sales</span></span></div>
+      <table><thead><tr><th>When</th><th>What it paid for</th><th>Tax</th><th>Card</th><th>Our record says <button class="mk new" data-note="NEW heading for this state only. The column’s words come from our record (open, paid, void, written off, each with its date) instead of Stripe, and the heading says so, so nobody reads them as Stripe’s live answer.">NEW</button></th><th class="num">Amount</th><th></th></tr></thead><tbody>
+        <tr class="click"><td class="nw">Nov 2, 9:00 a.m.</td><td>Stripe fees on online payments · invoice 7C1E-0003</td><td>HST 13%<span class="sub">$3.04 · Ontario</span></td><td class="muted">Not read</td><td>Open · due Dec 2</td><td class="num">$26.44</td><td class="open">›</td></tr>
+        <tr class="click"><td class="nw">Nov 1, 6:02 a.m.</td><td>Club, monthly<span class="sub">Nov 1 to Dec 1, 2026</span></td><td>HST 13%<span class="sub">$11.51 · Ontario</span></td><td class="muted">Not read</td><td>Paid Nov 1</td><td class="num">$100.01</td><td class="open">›</td></tr>
+        <tr class="click"><td class="nw">Oct 1, 6:01 a.m.</td><td>Club, monthly<span class="sub">Oct 1 to Nov 1, 2026</span><span class="flag warn">Needs a look: refunded $50.00 in Stripe’s dashboard with no credit note, so the tax was not reduced.</span></td><td>HST 13%<span class="sub">$11.51 · Ontario</span></td><td class="muted">Not read</td><td>Paid Oct 1 · $50.00 refunded</td><td class="num">$100.01</td><td class="open">›</td></tr>
+        <tr class="click"><td class="nw">Sep 1, 6:00 a.m.</td><td>Club, monthly</td><td class="muted">Before we registered</td><td class="muted">Not read</td><td>Paid Sep 1</td><td class="num">$88.50</td><td class="open">›</td></tr>
+        <tr class="click"><td class="nw">Aug 1, 9:12 a.m.</td><td>Club, monthly · first charge</td><td class="muted">Before we registered</td><td class="muted">Not read</td><td>Paid Aug 1</td><td class="num">$88.50</td><td class="open">›</td></tr>
+      </tbody></table>
+    </div>
+  </div></div></div>
+  <div class="card"><h3>Notes</h3><ul>
+    <li>A sale’s window still opens, from the record: the band, Tax and Where it was taxed are whole. “The payment” reads “Not read from Stripe”, and in place of the Refund button one amber line says “Refunds wait until Stripe answers.” (the house rule: absent with a line, never a dead button).</li>
+    <li>“Not read” in the Card column is quieter than an em dash on purpose: an em dash means “nothing here”, which would be wrong.</li>
+    <li>“Show older sales” still works: it pages our records, not Stripe.</li>
+    <li><b>The other way round</b> (Stripe answers, our records cannot be read): the list falls back to Stripe’s charges as shipped, the Tax column reads “Not read”, Needs a look is left out of the dropdown, and one amber line says “Our tax records could not be read at 2:14 p.m. The charges below are Stripe’s.” with Read again. Both failing: the amber line names both, and our subscription record still shows.</li>
+    <li>The duplicate check (“Charged twice”) waits for Stripe; it never runs on our record alone.</li>
+  </ul></div>
+  </div>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="pane" id="p5" hidden>
+  <h2>Needs a look: on the club, across clubs, and how a sale leaves the list</h2>
+  <p>Part 3 builds the check; this tab draws where it shows. On a club it reuses what is there. Across clubs there is <b>nothing to reuse</b>: no screen counts billing reviews across clubs today. And nothing lets a person say “I’ve looked at this one”, so a past sale would stay on the list for good. <button class="mk ask" data-note="Asks 4, 5 and 6.">Asks 4–6</button></p>
+  <div class="viewrow"><div class="grp"><span class="lab">Show</span><div class="sw" role="group" aria-label="Part" data-sw="frame5"><button data-v="club" aria-pressed="true">On the club</button><button data-v="empty" aria-pressed="false">Nothing needs a look</button><button data-v="today" aria-pressed="false">Across clubs (Today)</button><button data-v="mark" aria-pressed="false">Mark as looked at</button></div></div></div>
+
+  <div data-frame="frame5" data-v="club">
+  <div class="cap"><b>On the club</b> · the strip’s “Show them” has set the list to Needs a look · desktop</div>
+  <div class="scroll"><div class="fr" style="width:max-content"><div class="ak page w1100">
+    <div class="rtabs"><span>Story <i>12</i></span><span class="on">Money <span class="dot"></span></span><span>Access</span><span>People &amp; tournaments <i>8</i></span></div>
+    <div class="callout warn"><span class="two"><span><span class="chip warn">NEEDS REVIEW</span> 2 sales need a look at their tax.</span><span><span class="chip warn">NEEDS REVIEW</span> The address is in the United States, but the card was issued in Canada. Until this is looked at, the buyer is treated as Canadian.</span></span><span class="end"><span class="btn sm">Show them</span><span class="btn sm">See billing address</span></span></div>
+    <div class="ghost">The agree line, the band and the subscription, unchanged</div>
+    <div class="kc">
+      <div class="toolbar"><span class="count">2 sales need a look, newest first</span><span class="end"><span class="sel on">Needs a look</span></span></div>
+      <table><thead><tr><th>When</th><th>What it paid for</th><th>Tax</th><th>Card</th><th>Stripe says</th><th class="num">Amount</th><th></th></tr></thead><tbody>
+        <tr class="click"><td class="nw">Oct 14, 6:00 a.m.</td><td>Club, monthly<span class="sub">Oct 14 to Nov 14, 2026</span><span class="flag warn">Needs a look: flagged for review when it was sold. The address is in the United States, but the card was issued in Canada.</span></td><td>HST 13%<span class="sub">$11.51 · Ontario</span></td><td>Visa 4242</td><td>Paid</td><td class="num">$100.01</td><td class="open">›</td></tr>
+        <tr class="click"><td class="nw">Oct 1, 6:01 a.m.</td><td>Club, monthly<span class="sub">Oct 1 to Nov 1, 2026</span><span class="flag warn">Needs a look: refunded $50.00 in Stripe’s dashboard with no credit note, so the tax was not reduced.</span></td><td>HST 13%<span class="sub">$11.51 · Ontario</span></td><td>Visa 4242</td><td class="warntx">Part refunded · $50.00 back</td><td class="num">$100.01</td><td class="open">›</td></tr>
+      </tbody></table>
+    </div>
+  </div></div></div>
+  <div class="card"><h3>The one sentence each check says (Part 3 defines and tests them; wording drawn here)</h3><ul>
+    <li>Needs a look: Stripe did not work out the tax on this invoice.</li>
+    <li>Needs a look: a Canadian buyer was not charged GST/HST.</li>
+    <li>Needs a look: zero-rated, but there is no proof the buyer is outside Canada (no US address or no US declaration).</li>
+    <li>Needs a look: taxed at HST 13%, but the address kept with the sale is in Alberta (GST 5%).</li>
+    <li>Needs a look: flagged for review when it was sold. {the review’s own sentence}</li>
+    <li>Needs a look: no billing address could be read when it was sold.</li>
+    <li>Needs a look: refunded {amount} in Stripe’s dashboard with no credit note, so the tax was not reduced.</li>
+  </ul>
+  <p class="muted" style="margin-top:8px">A sale issued before our registration date (Sep 26, 2026 today; May 1 if CRA approves the backdate) is never on the list. Each sale shows once, with its first reason; the window lists all of them. Needs a look reaches every sale on record, whatever its date, not only the 12 months the list first shows. A coach who pays for several portals has one set of sales: each portal’s Money tab shows them, and Today counts each sale once.</p></div>
+  </div>
+
+  <div data-frame="frame5" data-v="empty" hidden>
+  <div class="cap"><b>Nothing needs a look</b> · Needs a look chosen, none left · desktop</div>
+  <div class="scroll"><div class="fr" style="width:max-content"><div class="ak page w1100">
+    <div class="kc">
+      <div class="toolbar"><span class="count">No sales need a look</span><span class="end"><span class="sel on">Needs a look</span></span></div>
+      <div class="empty"><b>Nothing needs a look.</b>Every sale since Sep 26, 2026, when our GST/HST registration took effect, has a GST/HST answer that matches what was kept with it. <span class="door">Show all sales</span></div>
+    </div>
+  </div></div></div>
+  <div class="card"><h3>Notes</h3><ul>
+    <li>With nothing waiting, the strip and the tab’s dot are gone. “Needs a look” stays in the dropdown so the choice does not appear and disappear.</li>
+    <li>The date in the sentence is the changeable registration setting, read when the tab opens.</li>
+  </ul></div>
+  </div>
+
+  <div data-frame="frame5" data-v="today" hidden>
+  <div class="cap"><b>Across clubs</b> · one new row in Today’s Customers queue (Ask 5, option A) · desktop</div>
+  <div class="scroll"><div class="fr" style="width:max-content"><div class="ak page w860">
+    <div class="sec"><h5>Customers</h5>
+    <div class="kc">
+      <div class="q"><span class="nm">Past due <span class="pill">2</span></span><span class="why">A subscription Stripe could not charge</span><span class="open">›</span></div>
+      <div class="q"><span class="nm">Trials ending <span class="pill">1</span></span><span class="why">A trial that ends in the next 14 days</span><span class="open">›</span></div>
+      <div class="q newbox"><span class="nm">Sales tax <span class="pill">3</span></span><span class="why">A sale whose GST/HST answer is missing or doesn’t match what was kept with it</span><span class="open">›</span> <button class="mk new" data-note="NEW row in the shipped Today queues (the same recipe as Past due: a name, the amber pill count, one line of why, and the row opens a filtered Clubs & portals list). The count is sales, not clubs. Drawn from the queue list’s words; the exact row face is checked against Today at build time. Only roles that read Stripe see it.">NEW · ask 5</button></div>
+    </div></div>
+  </div></div></div>
+  <div class="card"><h3>Why a row on Today, and not a strip</h3><ul>
+    <li>The prompt said “join the existing needs-review strip”. That strip is on one club’s Money tab; there is no count across clubs anywhere today, so there is nothing to join.</li>
+    <li>Today already holds every “someone should look at this” queue. Its row opens Clubs &amp; portals filtered to clubs with a sale to look at; each opens on its Money tab with Needs a look chosen.</li>
+    <li>Stage 4’s worksheet can show the same count before a return is filed. That is Stage 4’s drawing, not this one.</li>
+  </ul></div>
+  </div>
+
+  <div data-frame="frame5" data-v="mark" hidden>
+  <div class="cap"><b>Mark as looked at</b> · from a sale’s window (tab 3, third sale) · the shipped record-window recipe</div>
+  <div class="scroll"><div class="fr" style="width:max-content"><div class="ak scrimbg" style="width:640px"><div class="win w520">
+    <div class="wh"><h4>Mark the Oct 1 sale as looked at</h4><span class="x">×</span></div>
+    <div class="wb">
+      <div class="sentence">The <b>Oct 1</b> sale leaves the list of sales that need a look. <b>Its record and its tax do not change</b>, and the GST/HST return still counts it as it stands.</div>
+      <div class="fld"><span class="lb">Why *</span><div class="ta">What did you find, and what was done? Never a card number.</div></div>
+    </div>
+    <div class="wf"><span class="fs">Goes in the audit log and on the sale’s window.</span><span class="fe"><span class="btn">Cancel</span><span class="btn lime">Mark as looked at</span></span></div>
+  </div></div></div></div>
+  <div class="card"><h3>Why this is needed (it is not in the plan)</h3><ul>
+    <li>Every check is about a sale that already happened. A sale from October does not change, so without a mark it stays on the list, on the strip, on the dot and in Today’s count for good. Within weeks the count is noise.</li>
+    <li>The mark is kept <b>beside</b> the record, never in it (the record stays exactly as Part 1 wrote it): who, when, why. The window then shows “Looked at Nov 8 by sam@… : {why}” where the flag line was.</li>
+    <li>It is a small new table and a migration, so it is a build cost Part 2 did not have. It needs <code>/review</code> and an <code>/accounting</code> check that a looked-at sale is never left out of the return.</li>
+    <li>Shown to Super admin and Billing only (the people who refund). A new problem on the same sale (say, a later refund with no credit note) puts it back on the list.</li>
+    <li><b>After the click:</b> the small window closes back to the sale’s window, which says “Marked as looked at.” in the shipped green notice; the flag line becomes “Looked at Nov 8, 10:15 a.m. by sam@fieldlogichq.example: {why}”, and the list, the strip, the dot and Today’s count drop by one. <b>A mistake</b> is undone from that same line: a quiet “Put it back on the list” door, which asks for a why too.</li>
+    <li><b>Support</b> sees the list and Today’s count but not the door: they pass it to Billing. The window says so in one line where the door would be (“Billing or Super admin marks a sale as looked at.”), never a dead button.</li>
+  </ul></div>
+  </div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="pane" id="p6" hidden>
+  <h2>Who sees it</h2>
+  <p>The tab already splits on one power, reading Stripe, which Super admin, Billing and Support hold. The tax record carries a person’s or club’s address, so it follows the same line. <button class="mk ask" data-note="Ask 7.">Ask 7</button></p>
+  <div class="tw"><table class="t">
+    <thead><tr><th>What</th><th>Super admin</th><th>Billing</th><th>Support</th><th>Product · Growth · Read only</th></tr></thead>
+    <tbody>
+      <tr><td>Sales with their Tax column, the window’s tax and evidence</td><td class="y">Yes</td><td class="y">Yes</td><td class="y">Yes</td><td class="n">No: unchanged screen (below)</td></tr>
+      <tr><td>The strip, the tab’s dot, Needs a look</td><td class="y">Yes</td><td class="y">Yes</td><td class="y">Yes</td><td class="n">No</td></tr>
+      <tr><td>Today’s Sales tax row</td><td class="y">Yes</td><td class="y">Yes</td><td class="y">Yes</td><td class="n">No</td></tr>
+      <tr><td>Mark as looked at</td><td class="y">Yes</td><td class="y">Yes</td><td class="n">No: the door is absent</td><td class="n">No</td></tr>
+      <tr><td>Refund (unchanged)</td><td class="y">Yes</td><td class="y">Yes</td><td class="n">No</td><td class="n">No</td></tr>
+    </tbody></table></div>
+  <div class="cap" style="margin-top:14px"><b>Product, Growth, Read only</b> · the shipped screen, UNCHANGED</div>
+  <div class="scroll"><div class="fr" style="width:max-content"><div class="ak page w860">
+    <div class="callout">Stripe’s side is read by Super admin, Billing and Support. Your role sees our record: plan, billing status and renewal date.</div>
+    <div class="kc"><table><thead><tr><th></th><th>Our record</th></tr></thead><tbody>
+      <tr><th class="rowh">Plan</th><td>Club · monthly</td></tr><tr><th class="rowh">Billing status</th><td>Active</td></tr><tr><th class="rowh">Renews</th><td>Dec 1, 2026</td></tr>
+    </tbody></table></div>
+  </div></div></div>
+  <div class="card"><h3>Notes</h3><ul>
+    <li>The tax record is ours, not Stripe’s, so the power is not strictly about Stripe. It is still the right line: what a club paid us, its tax and its address are billing facts, and these roles do not read billing today.</li>
+    <li>The callout’s words stay as they are: “plan, billing status and renewal date” is still exactly what they see.</li>
+  </ul></div>
+</section>
+
+<!-- ============ 7 ============ -->
+<section class="pane" id="p7" hidden>
+  <h2>Asks</h2>
+  <p class="muted">Pick one per ask. The green row is my recommendation. Notes are optional. Already applied from the design check: the strip, the dot and the flag line are the shipped parts (no second strip); a void sale is struck through and counted nowhere; the window’s money is one joined band; a rare door ends the window’s body; a filter is a dropdown, quiet until it filters; dates and times are the house format. From the flow check, now written on the tabs: the empty list and the loading line (tab 2), a link to a charge opens its sale (tab 2), our records failing while Stripe answers (tab 4), what you see after marking a sale and how a mistaken mark is undone, and what Support sees in place of the door (tab 5), Needs a look reaching sales older than 12 months (tab 5).</p>
+  <div id="asks"></div>
+  <div class="paste"><div class="row"><button class="btn-d pri" id="mk">Make my answers</button><button class="btn-d" id="cp">Copy</button><span class="muted" id="cpmsg"></span></div>
+    <textarea id="out" aria-label="Your answers" readonly placeholder="Press Make my answers, then Copy, and paste it back into the chat."></textarea></div>
+</section>
+
+<dialog class="note" id="nd"><div class="nh"><h3>About this</h3><button id="nx" aria-label="Close">×</button></div><div class="nb" id="nt"></div></dialog>
+</div>
+
+<script>
+(function(){
+  var ASKS=[
+   {id:1,t:"Invoices that are not charges: where do they show?",
+    r:"Tab 2. The record is kept per invoice; the shipped list is per charge. An unpaid, written-off or $0 invoice, or one paid outside Stripe, has a record and no charge, and an unpaid one still owes its tax.",
+    p:"I disagree with the build prompt’s wording here: it says “a Tax treatment on each charge row”. That leaves the invoices that still owe tax off the screen.",
+    o:[["A","One list of sales, one row per invoice, from our record, with Stripe’s payment details joined in. Failed tries fold under their sale; a bare charge with no invoice still shows as “No tax record”","rec"],["B","Keep the charges list, add a Tax column, and add a second card “Invoices with no payment” under it (smaller build; the same sale can show twice)",""]]},
+   {id:2,t:"When Stripe can’t be read, what does the tab show?",
+    r:"Tab 4. Today it shows no charges at all.",
+    o:[["A","The sales list from our record, with the Tax column whole; Card says “Not read”, the state column is headed “Our record says”, the band’s paid and refunded figures come from our record, refunds wait with one line","rec"],["B","Keep today’s screen and add a plain list of kept tax records under the amber line",""]]},
+   {id:3,t:"What is in the row, and what only in the window?",
+    r:"Tabs 2 and 3.",
+    o:[["A","Row: the tax name and rate (“HST 13%”), the amount and the province, or “Zero-rated” / “Tax missing” / “Before we registered”. Window: the money as a joined band, our answer in words, every tax line with Stripe’s reason, Taxed for, the evidence as it stood, how it was kept, credit notes netted; always open","rec"],["B","Row: only a chip when something is wrong; everything else in the window",""]]},
+   {id:4,t:"On a club, where does “needs a look” show?",
+    r:"Tabs 1 and 5. No second strip, as the prompt asked.",
+    o:[["A","The same amber strip at the top (one more line, a “Show them” door), the Money tab’s existing dot, a “Needs a look” choice in the list’s Show dropdown, and the shipped flag line under each sale","rec"],["B","Its own card “Needs a look” above the sales list",""]]},
+   {id:5,t:"Across clubs, where does the count show?",
+    r:"Tab 5. The prompt said to join an existing needs-review count across clubs; there is none. The only strip is on one club’s tab.",
+    p:"Re-framing: the question is not which strip to join but whether a count across clubs exists at all before Stage 4.",
+    o:[["A","One new row in Today’s Customers queues, “Sales tax”, with the amber pill (count of sales), opening Clubs & portals filtered to the clubs that have one","rec"],["B","Nothing across clubs in Stage 3; Stage 4’s worksheet shows the count before a return is filed",""]]},
+   {id:6,t:"How does a sale leave the needs-a-look list?",
+    r:"Tab 5. Not in the plan. Every check is about a past sale, which never changes, so without a mark the list and every count only grow.",
+    p:"This adds a small table beside the records (the records stay as Part 1 wrote them), a migration, and a /review.",
+    o:[["A","“Mark as looked at”, with a required why, kept beside the record; the sale leaves the list, its window shows who, when and why; a new problem puts it back. Super admin and Billing only","rec"],["B","No mark: a sale stays on the list until its facts change",""],["C","No mark, but the list only looks at the current filing period",""]]},
+   {id:7,t:"Who sees the tax and the evidence?",
+    r:"Tab 6. Product, Growth and Read only see “ours only” today.",
+    o:[["A","The roles that read Stripe (Super admin, Billing, Support) see all of it; Product, Growth and Read only see neither tax nor location, and their screen does not change","rec"],["B","Everyone sees the Tax column; only the roles that read Stripe see the address and evidence",""]]},
+   {id:8,t:"A refund with no credit note: how is it said?",
+    r:"Tabs 1 and 5. The tax on that sale was never reduced.",
+    o:[["A","The shipped flag line under the sale (“Needs a look: refunded $50.00 in Stripe’s dashboard with no credit note, so the tax was not reduced.”), the same clause on the window’s refund line, and the sale goes on Needs a look","rec"],["B","A “Tax not reduced” chip in the Tax column, and it goes on Needs a look",""]]}
+  ];
+  var host=document.getElementById("asks");
+  ASKS.forEach(function(a){
+    var d=document.createElement("div");d.className="ask";
+    var h="<h3><span class=\"no\">Ask "+a.id+"</span>"+a.t+"</h3><p class=\"rides\">"+a.r+"</p>"+(a.p?"<p class=\"push\">"+a.p+"</p>":"")+"<div class=\"opts\">";
+    a.o.forEach(function(o){h+="<label class=\""+o[2]+"\"><input type=\"radio\" name=\"a"+a.id+"\" value=\""+o[0]+"\""+(o[2]?" checked":"")+"><span><b>"+o[0]+".</b> "+o[1]+"</span></label>";});
+    h+="</div><textarea id=\"n"+a.id+"\" aria-label=\"Note for ask "+a.id+"\" placeholder=\"Note (optional)\"></textarea>";
+    d.innerHTML=h;host.appendChild(d);
+  });
+  var tabs=document.getElementById("tabs");
+  tabs.addEventListener("click",function(e){var b=e.target.closest("button[data-t]");if(!b)return;
+    [].forEach.call(tabs.querySelectorAll("button"),function(x){x.setAttribute("aria-selected",x===b?"true":"false")});
+    [].forEach.call(document.querySelectorAll("section.pane"),function(s){s.hidden=s.id!==b.getAttribute("data-t")});
+    window.scrollTo(0,0);});
+  document.addEventListener("click",function(e){
+    var v=e.target.closest(".sw button");
+    if(v){var sw=v.parentNode;var key=sw.getAttribute("data-sw");var val=v.getAttribute("data-v");
+      [].forEach.call(sw.querySelectorAll("button"),function(x){x.setAttribute("aria-pressed",x===v?"true":"false")});
+      if(key==="view"){document.body.setAttribute("data-view",val);}
+      else{[].forEach.call(document.querySelectorAll("[data-frame=\""+key+"\"]"),function(f){f.hidden=f.getAttribute("data-v")!==val});}
+      return;}
+    var m=e.target.closest("[data-note]");
+    if(m){document.getElementById("nt").textContent=m.getAttribute("data-note");var d=document.getElementById("nd");if(d.showModal)d.showModal();}
+  });
+  document.getElementById("nx").onclick=function(){document.getElementById("nd").close()};
+  document.getElementById("mk").onclick=function(){
+    var L=["GST/HST Stage 3 Part 2 drawings, my answers:"];
+    ASKS.forEach(function(a){var c=document.querySelector("input[name=a"+a.id+"]:checked");var n=document.getElementById("n"+a.id).value.trim();
+      L.push("Ask "+a.id+": "+(c?c.value:"(none)")+(n?" — "+n:""));});
+    document.getElementById("out").value=L.join("\n");};
+  document.getElementById("cp").onclick=function(){
+    var t=document.getElementById("out");var msg=document.getElementById("cpmsg");
+    function sel(){t.select();msg.textContent="Selected. Press Ctrl+C.";}
+    if(navigator.clipboard&&t.value){navigator.clipboard.writeText(t.value).then(function(){msg.textContent="Copied."},sel);}else{sel();}};
+})();
+</script>

@@ -233,8 +233,8 @@ A slot you replace is not forgotten: a subscription already on the old price is 
     Premium, fee invoices): `invoice.finalized` is when the tax becomes owed.
   - `credit_note.created`, `credit_note.updated`, `credit_note.voided` — GST/HST Stage 3 Part 1: each credit note's tax record, so
     a refund made in Stripe's own dashboard lands in our records too (our console refund and the fee credit also write it at once).
-    ⚠ Owner step OWED for both endpoints (test and live): MANUAL_PROD_STEPS 451. Until it is done the daily
-    online-payments job's catch-up writes them (up to a day late).
+    Added by the owner 2026-11-07 on BOTH endpoints (test and live), MANUAL_PROD_STEPS 451. The daily online-payments
+    job's catch-up still writes any note an event missed (up to a day late).
 
 > **Stripe-fees invoices (Club Tier Stage 12d-1).** A club with no subscription invoice to carry its Stripe fees (a
 > comped or free club, or a discounted subscription) gets its own monthly invoice on the 1st, raised on the **platform**

@@ -1,12 +1,12 @@
 ---
 name: reference_db_schema
-description: Complete public schema table+column list — auto-generated 2026-11-05 from live fieldlogichq-dev Supabase project.
+description: Complete public schema table+column list — auto-generated 2026-11-07 from live fieldlogichq-dev Supabase project.
 metadata:
   node_type: memory
   type: reference
 ---
 
-# DB Schema Reference — 2026-11-05
+# DB Schema Reference — 2026-11-07
 
 **Auto-generated** from live `fieldlogichq-dev` project (ref `npgnrxaitgbtbtvvykto`) via Management API.
 Run `node scripts/refresh-db-schema.mjs` to refresh after applying migrations.
@@ -655,6 +655,18 @@ id (uuid), change_request_id (uuid) → platform_catalog_change_requests.id NOT 
 id (uuid), request_type NOT NULL, title NOT NULL, description, status, priority, target_plan_id, target_addon_key, target_version_id (uuid) → platform_plan_versions.id, effective_at, impact_summary, proposal (jsonb), submitted_by_email, submitted_at, reviewed_by_email, reviewed_at, implementation_notes, created_by_email NOT NULL, updated_by_email, created_at, updated_at
 - Indexes: idx_platform_catalog_change_requests_effective, idx_platform_catalog_change_requests_status_time, platform_catalog_change_requests_target_version_id_idx
 
+### platform_charge_tax_looks
+id (uuid), seq (bigint) NOT NULL, stripe_invoice_id NOT NULL, livemode (boolean) NOT NULL, org_id (uuid), looked_keys, put_back_of (uuid) → platform_charge_tax_looks.id, after_id (uuid) → platform_charge_tax_looks.id, looked_by NOT NULL, looked_at, why NOT NULL
+- Indexes: platform_charge_tax_looks_chain_idx, platform_charge_tax_looks_invoice_idx, platform_charge_tax_looks_put_back_once_idx
+
+### platform_charge_tax_records
+id (uuid), stripe_invoice_id NOT NULL, livemode (boolean) NOT NULL, kind NOT NULL, org_id (uuid), user_id (uuid), buyer_kind NOT NULL, buyer_name, stripe_customer_id NOT NULL, stripe_subscription_id, stripe_payment_intent_id, invoice_number, issued_at NOT NULL, currency NOT NULL, amount_before_tax_cents (integer) NOT NULL, tax_total_cents (integer) NOT NULL, total_cents (integer) NOT NULL, tax_lines (jsonb), stripe_tax_status, gst_hst_position NOT NULL, gst_hst_position_why, taxed_country, taxed_region, taxed_postal_code, evidence_missing (boolean) NOT NULL, evidence_country, evidence_region, evidence_line1, evidence_line2, evidence_city, evidence_postal_code, evidence_confirmed_at, us_declaration_version, us_declaration_at, card_country, payout_country, review_reason, review_note, evidence_read_at NOT NULL, evidence_captured NOT NULL, fx_rate (numeric), fx_rate_date, fx_source, cad_amount_before_tax_cents (integer), cad_tax_total_cents (integer), cad_total_cents (integer), stripe_cad_total_cents (integer), status NOT NULL, paid_at, voided_at, uncollectible_at, refunded_cents (integer), created_at, updated_at
+- Indexes: platform_charge_tax_records_customer_idx, platform_charge_tax_records_org_idx, platform_charge_tax_records_period_idx, platform_charge_tax_records_stripe_invoice_id_key, platform_charge_tax_records_user_idx
+
+### platform_credit_note_tax_records
+id (uuid), stripe_credit_note_id NOT NULL, stripe_invoice_id NOT NULL, livemode (boolean) NOT NULL, kind, org_id (uuid), user_id (uuid), stripe_customer_id NOT NULL, note_number, note_type NOT NULL, stripe_reason, issued_at NOT NULL, currency NOT NULL, amount_before_tax_cents (integer) NOT NULL, tax_total_cents (integer) NOT NULL, total_cents (integer) NOT NULL, tax_lines (jsonb), refund_cents (integer), out_of_band_cents (integer), evidence_captured NOT NULL, fx_rate (numeric), fx_rate_date, fx_source, cad_amount_before_tax_cents (integer), cad_tax_total_cents (integer), cad_total_cents (integer), status NOT NULL, voided_at, created_at, updated_at
+- Indexes: platform_credit_note_tax_records_invoice_idx, platform_credit_note_tax_records_org_idx, platform_credit_note_tax_records_period_idx, platform_credit_note_tax_records_stripe_credit_note_id_key, platform_credit_note_tax_records_user_idx
+
 ### platform_email_templates
 key NOT NULL, label NOT NULL, description NOT NULL, subject NOT NULL, heading NOT NULL, body NOT NULL, cta_label, cta_url_pattern, variables (jsonb), category, is_customised (boolean), updated_at, updated_by, planned_send_date
 
@@ -686,8 +698,8 @@ id (bigint) NOT NULL, actor_user_id (uuid) NOT NULL, actor_email NOT NULL, recor
 - Indexes: platform_record_opens_opened_at_idx
 
 ### platform_refunds
-id (uuid), org_id (uuid) → organizations.id, stripe_customer_id NOT NULL, stripe_charge_id NOT NULL, stripe_refund_id, amount_cents (integer) NOT NULL, currency NOT NULL, remaining_seen_cents (integer) NOT NULL, stripe_reason NOT NULL, status, stripe_error_code, stripe_request_id, reason NOT NULL, actor_email NOT NULL, actor_role NOT NULL, livemode (boolean) NOT NULL, created_at, completed_at
-- Indexes: platform_refunds_actor_idx, platform_refunds_charge_idx, platform_refunds_one_open_per_charge, platform_refunds_org_idx, platform_refunds_stripe_refund_id_key
+id (uuid), org_id (uuid) → organizations.id, stripe_customer_id NOT NULL, stripe_charge_id NOT NULL, stripe_refund_id, amount_cents (integer) NOT NULL, currency NOT NULL, remaining_seen_cents (integer) NOT NULL, stripe_reason NOT NULL, status, stripe_error_code, stripe_request_id, reason NOT NULL, actor_email NOT NULL, actor_role NOT NULL, livemode (boolean) NOT NULL, created_at, completed_at, stripe_invoice_id, stripe_credit_note_id, stripe_credit_note_number
+- Indexes: platform_refunds_actor_idx, platform_refunds_charge_idx, platform_refunds_credit_note_uniq, platform_refunds_one_open_per_charge, platform_refunds_org_idx, platform_refunds_stripe_refund_id_key
 
 ### platform_sent_email_searches
 id (bigint) NOT NULL, actor_user_id (uuid) NOT NULL, searched_at
@@ -752,36 +764,16 @@ ledger_id (uuid) → accounting_ledgers.id NOT NULL, bank_account_id (uuid) → 
 - Indexes: bank_account_books_account_idx, bank_account_books_moved_by_idx
 
 ### bank_accounts
-id (uuid), org_id (uuid) → organizations.id NOT NULL, owner_kind NOT NULL, team_id (uuid) → rep_teams.id, name NOT NULL, opening_date, opening_balance_cents (bigint), set_up_by (uuid), set_up_at, created_by (uuid), created_at, archived_at
-- Indexes: bank_accounts_club_name, bank_accounts_created_by_idx, bank_accounts_one_per_team, bank_accounts_org_idx, bank_accounts_set_up_by_idx
+id (uuid), org_id (uuid) → organizations.id NOT NULL, owner_kind NOT NULL, team_id (uuid) → rep_teams.id, name NOT NULL, created_by (uuid), created_at, archived_at
+- Indexes: bank_accounts_club_name, bank_accounts_created_by_idx, bank_accounts_one_per_team, bank_accounts_org_idx
 
-### bank_check_added_lines
-id (uuid), check_id (uuid) → bank_checks.id NOT NULL, line_key NOT NULL, kind NOT NULL, added_by (uuid), added_at
-- Indexes: bank_check_added_lines_by_idx, bank_check_added_lines_once
-
-### bank_check_changes
-id (uuid), check_id (uuid) → bank_checks.id NOT NULL, line_key NOT NULL, was_date NOT NULL, was_direction NOT NULL, was_amount_cents (bigint) NOT NULL, now_date, now_direction, now_amount_cents (bigint), removed (boolean), changed_by (uuid), changed_at, cleared_by (uuid), cleared_at
-- Indexes: bank_check_changes_changed_by_idx, bank_check_changes_check_idx, bank_check_changes_cleared_by_idx, bank_check_changes_open_idx
-
-### bank_check_events
-id (uuid), check_id (uuid) → bank_checks.id NOT NULL, kind NOT NULL, reason, by_user (uuid), at
-- Indexes: bank_check_events_by_idx, bank_check_events_check_idx
-
-### bank_check_marks
-id (uuid), bank_account_id (uuid) → bank_accounts.id NOT NULL, check_id (uuid) → bank_checks.id NOT NULL, line_key NOT NULL, line_date NOT NULL, direction NOT NULL, amount_cents (bigint) NOT NULL, payout_key, marked_by (uuid), marked_at
-- Indexes: bank_check_marks_by_idx, bank_check_marks_check_idx, bank_check_marks_one_tick
+### bank_check_waiting
+id (uuid), check_id (uuid) → bank_checks.id NOT NULL, line_key NOT NULL, line_date NOT NULL, label, amount_cents (bigint) NOT NULL, direction NOT NULL, at_start (boolean), added_by (uuid), added_at
+- Indexes: bank_check_waiting_added_by_idx, bank_check_waiting_once
 
 ### bank_checks
-id (uuid), bank_account_id (uuid) → bank_accounts.id NOT NULL, statement_end_date NOT NULL, statement_ending_balance_cents (bigint) NOT NULL, status, checked_by (uuid), checked_at, outstanding_snapshot (jsonb), created_by (uuid), created_at
-- Indexes: bank_checks_checked_by_idx, bank_checks_created_by_idx, bank_checks_id_account, bank_checks_one_per_end_date
-
-### bank_line_exclusions
-id (uuid), bank_account_id (uuid) → bank_accounts.id NOT NULL, line_key NOT NULL, excluded_by (uuid), excluded_at
-- Indexes: bank_line_exclusions_by_idx, bank_line_exclusions_once
-
-### bank_saved_lines
-id (uuid), bank_account_id (uuid) → bank_accounts.id NOT NULL, kind NOT NULL, line_key NOT NULL, line_date NOT NULL, direction NOT NULL, amount_cents (bigint) NOT NULL, description, saved_by (uuid), saved_at
-- Indexes: bank_saved_lines_by_idx, bank_saved_lines_once
+id (uuid), bank_account_id (uuid) → bank_accounts.id NOT NULL, statement_end_date NOT NULL, statement_ending_balance_cents (bigint) NOT NULL, created_by (uuid), created_at, kind, books_cents (bigint) NOT NULL, on_its_way_cents (bigint), cash_not_deposited_cents (bigint), book_ids, deleted_by (uuid), deleted_at, corrected_at, corrected_by (uuid)
+- Indexes: bank_checks_account_idx, bank_checks_corrected_by_idx, bank_checks_created_by_idx, bank_checks_deleted_by_idx, bank_checks_one_live_per_date, bank_checks_one_live_start
 
 ### basic_coach_team_announcements
 id (uuid), basic_coach_team_id (uuid) → basic_coach_teams.id NOT NULL, subject NOT NULL, body NOT NULL, recipient_count (integer), sent_count (integer), failed_count (integer), status, sent_at, created_by_user_id (uuid), created_at, updated_at
@@ -896,8 +888,8 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, sent_by (uuid), sent_at,
 - Indexes: family_email_sends_org_sent_idx, family_email_sends_season_sent_idx
 
 ### family_links
-id (uuid), org_id (uuid) → organizations.id NOT NULL, rep_team_id (uuid) → rep_teams.id NOT NULL, role NOT NULL, player_id (uuid) → rep_roster_players.id, user_id (uuid), invited_email NOT NULL, relationship, status, verified_via, claim_token_hash, claim_expires_at, invited_by_user_id (uuid), calendar_token_hash, consent_recorded_at, consent_ip, approved_by_user_id (uuid), approved_at, declined_at, revoked_at, created_at, updated_at, claimed_email, person_id (uuid) → org_people.id
-- Indexes: family_links_calendar_token_hash_key, family_links_claim_token_hash_key, family_links_email_idx, family_links_live_uniq, family_links_org_idx, family_links_person_id_idx, family_links_player_id_idx, family_links_team_status_idx, family_links_user_idx
+id (uuid), org_id (uuid) → organizations.id NOT NULL, rep_team_id (uuid) → rep_teams.id NOT NULL, role NOT NULL, player_id (uuid) → rep_roster_players.id, user_id (uuid), invited_email NOT NULL, relationship, status, verified_via, claim_token_hash, claim_expires_at, invited_by_user_id (uuid), calendar_token_hash, consent_recorded_at, consent_ip, approved_by_user_id (uuid), approved_at, declined_at, revoked_at, created_at, updated_at, claimed_email, person_id (uuid) → org_people.id, child_id (uuid) → org_children.id NOT NULL
+- Indexes: family_links_calendar_token_hash_key, family_links_child_id_idx, family_links_claim_token_hash_key, family_links_email_idx, family_links_live_child_uniq, family_links_org_idx, family_links_person_id_idx, family_links_player_id_idx, family_links_team_status_idx, family_links_user_idx
 
 ### family_messages
 id (uuid), org_id (uuid) → organizations.id NOT NULL, person_id (uuid) → org_people.id NOT NULL, sent_by (uuid), sent_at, season_id (uuid)
@@ -1060,6 +1052,10 @@ id (uuid), bucket_start NOT NULL, env, route, org_id (uuid), call_count (bigint)
 id (uuid), tournament_id (uuid) → tournaments.id NOT NULL, division_id (uuid) → divisions.id NOT NULL, label NOT NULL, sort_order (integer), resolved_venue_id (uuid) → diamonds.id, resolved_venue_facility_id (uuid) → venue_facilities.id, created_at, updated_at
 - Indexes: schedule_facility_lanes_division_id_idx, schedule_facility_lanes_resolved_venue_facility_id_idx, schedule_facility_lanes_resolved_venue_id_idx, schedule_facility_lanes_tournament_id_idx, schedule_facility_lanes_unique_label
 
+### second_parent_stops
+id (uuid), org_id (uuid) → organizations.id NOT NULL, email NOT NULL, stopped_at, source, registration_ids
+- Indexes: second_parent_stops_org_email_uniq, second_parent_stops_registration_ids_idx
+
 ### tournament_fee_book_settings
 tournament_id (uuid) → tournaments.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, category_id (uuid) → budget_categories.id NOT NULL, item_id (uuid) → budget_items.id NOT NULL, created_at
 - Indexes: tournament_fee_book_settings_org_id_idx
@@ -1097,7 +1093,7 @@ user_id (uuid) NOT NULL, theme, created_at, updated_at, coach_tour_dismissed_at,
 
 ## Tables by count
 
-Total: **268 tables** across 10 modules.
+Total: **267 tables** across 10 modules.
 
 - Tournament: 17 tables
 - League: 23 tables
@@ -1106,6 +1102,6 @@ Total: **268 tables** across 10 modules.
 - Accounting: 9 tables
 - Stripe / Billing: 5 tables
 - Organization / Platform Core: 8 tables
-- Platform Admin: 29 tables
+- Platform Admin: 32 tables
 - CRM / Leads: 6 tables
-- Other: 89 tables
+- Other: 85 tables

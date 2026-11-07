@@ -141,6 +141,8 @@ export const EMAIL_KINDS = {
   unrecognised_price_alert:             { klass: 'inbox', label: 'Subscription on a price we do not know' },
   // GST/HST Stage 2 Part 6b Part 3: the club's name could not be put back on its Stripe customer after Checkout (once per session).
   buyer_name_alert:                     { klass: 'inbox', label: 'Club name not put back on its Stripe customer' },
+  // GST/HST Stage 3 Part 1: an invoice's or credit note's tax record could not be written (once per document; the daily job retries).
+  tax_record_alert:                     { klass: 'inbox', label: 'A tax record could not be written' },
   // Part 11: the daily comparison with Stripe found a difference, or could not compare (at most once a day per outcome).
   billing_drift_alert:                  { klass: 'inbox', label: 'Stripe and our billing records disagree' },
   // Part 10: after every bulk change and Production price switch (the run that asked for the password again).

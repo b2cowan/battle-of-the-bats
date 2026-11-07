@@ -90,7 +90,7 @@ ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 
     <li><strong>Sales in another currency.</strong> Ruled 2026-11-07: recorded, not built, until before the first US club is billed in US dollars.</li>
   </ul></section>
   <section class="card"><h2>Known before the walk</h2><ul>
-    <li><strong>⚠ As read 2026-11-07, the deployed dev site does not run Stage 3 yet.</strong> Its own daily job that morning had no tax steps, and in the scripted run it wrote no record. Two ways to walk: (1) the dev site is redeployed first (ask me; it needs your yes to push), and then records appear by themselves within seconds and <strong>Kept</strong> reads “At the sale”; or (2) walk now. After every step that acts in Stripe, say <strong>catch up</strong> in the chat and wait for my OK: I run the daily catch-up, and the record appears with <strong>Kept</strong> in amber (“Caught up by the daily job …”). Choose the amber option where a step offers one.</li>
+    <li><strong>The dev site was redeployed 2026-11-07</strong> (its 2026-11-06 build had failed on a Google Fonts download, so it had stayed on a build from before Stage 3). It now writes each record a few seconds after Stripe acts, and <strong>Kept</strong> should read “At the sale”. If a record still has not appeared after two minutes, say <strong>catch up</strong> in the chat: I run the daily catch-up, and that record’s Kept line reads amber.</li>
     <li><strong>Stop check A1 first:</strong> Walk A must have reached Part F.</li>
     <li>Walk B’s New Brunswick invoice was never paid (then voided), so it is in neither figure.</li>
     <li>Step D is optional and needs me: say “Stripe off” and I restart your local server without the Stripe key for a few minutes, then “Stripe on”.</li>
@@ -102,7 +102,7 @@ ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 
   </dl></section>
   <section class="card"><h2>Where and on what</h2><dl class="facts">
     <dt>Screens</dt><dd>Your local server, <code>http://localhost:3000</code>, which already runs Parts 2 to 5. The deployed dev site has only Part 1, so do not use it for these screens.</dd>
-    <dt>Records</dt><dd>Stripe test mode sends its events to the deployed dev site, which shares the dev database with your local server. Once that site runs Stage 3, a record appears a few seconds after Stripe acts. Until then the records come from the catch-up I run when you say <strong>catch up</strong> (see Known before the walk).</dd>
+    <dt>Records</dt><dd>Stripe test mode sends its events to the deployed dev site, which shares the dev database with your local server. It runs Stage 3 (redeployed 2026-11-07), so a record appears a few seconds after Stripe acts.</dd>
     <dt>Stripe</dt><dd>The test dashboard, <code>https://dashboard.stripe.com/test</code>. Nothing here touches live Stripe or production.</dd>
     <dt>Width</dt><dd>A desktop window is fine; nothing here is phone-specific.</dd>
   </dl></section>

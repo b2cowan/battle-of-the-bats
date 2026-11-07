@@ -92,8 +92,8 @@ ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 
     <li><strong>Records copied by the daily job.</strong> The one dev run of the catch-up is read from its own log, not walked.</li>
   </ul></section>
   <section class="card"><h2>Known before the walk</h2><ul>
-    <li><strong>⚠ As read 2026-11-07, the deployed dev site does not run Stage 3 yet.</strong> Its own daily job that morning had no tax steps, and in the scripted run it wrote no record. Two ways to walk: (1) the dev site is redeployed first (ask me; it needs your yes to push), and then records appear by themselves within seconds and <strong>Kept</strong> reads “At the sale”; or (2) walk now. After every step that acts in Stripe, say <strong>catch up</strong> in the chat and wait for my OK: I run the daily catch-up, and the record appears with <strong>Kept</strong> in amber (“Caught up by the daily job …”). Choose the amber option where a step offers one.</li>
-    <li><strong>Before you start: add three events to Stripe’s TEST billing webhook</strong> (Developers → Webhooks → the destination for <code>dev.fieldlogichq.ca/api/billing/webhook</code> → add <code>credit_note.created</code>, <code>credit_note.updated</code>, <code>credit_note.voided</code>). Without them, a credit note made in Stripe’s dashboard reaches our records only through the daily catch-up. Step E2 then asks you to tell me, and I run the catch-up for you.</li>
+    <li><strong>The dev site was redeployed 2026-11-07</strong> (its 2026-11-06 build had failed on a Google Fonts download, so it had stayed on a build from before Stage 3). It now writes each record a few seconds after Stripe acts, and <strong>Kept</strong> should read “At the sale”. If a record still has not appeared after two minutes, say <strong>catch up</strong> in the chat: I run the daily catch-up, and that record’s Kept line reads amber.</li>
+    <li><strong>The three credit-note events are on Stripe’s TEST billing webhook</strong> (owner, 2026-11-07), so a credit note made in Stripe’s dashboard reaches our records within seconds.</li>
     <li>If Stripe’s refund event reaches us before the sale’s record exists, the record can show $0 refunded until the next refund event. You will not meet it in this walk, because the sale is recorded first.</li>
     <li>Our record copies the address when the invoice is issued. If the deployed dev site missed the event, the daily job writes the record later and its <strong>Kept</strong> line says so in amber. Step C3 asks which one you see.</li>
   </ul></section>
@@ -104,7 +104,7 @@ ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 
   </dl></section>
   <section class="card"><h2>Where and on what</h2><dl class="facts">
     <dt>Screens</dt><dd>Your local server, <code>http://localhost:3000</code>, which already runs Parts 2 to 5. The deployed dev site has only Part 1, so do not use it for these screens.</dd>
-    <dt>Records</dt><dd>Stripe test mode sends its events to the deployed dev site, which shares the dev database with your local server. Once that site runs Stage 3, a record appears a few seconds after Stripe acts. Until then the records come from the catch-up I run when you say <strong>catch up</strong> (see Known before the walk).</dd>
+    <dt>Records</dt><dd>Stripe test mode sends its events to the deployed dev site, which shares the dev database with your local server. It runs Stage 3 (redeployed 2026-11-07), so a record appears a few seconds after Stripe acts.</dd>
     <dt>Stripe</dt><dd>The test dashboard, <code>https://dashboard.stripe.com/test</code>. Nothing here touches live Stripe or production.</dd>
     <dt>Width</dt><dd>A desktop window is fine; nothing here is phone-specific.</dd>
   </dl></section>
