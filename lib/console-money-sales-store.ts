@@ -5,6 +5,8 @@ import {
   SALE_NOTE_COLUMNS, SALE_RECORD_COLUMNS,
   type SaleNoteRecord, type SaleRecord, type SalesRecords,
 } from './console-money-sales';
+import { needsLook, readAllPages, type LookReason, type NeedsLookRead } from './console-money-needs-look';
+import { chunked } from './supabase-paging';
 
 /**
  * The Money tab's read of OUR kept tax records (GST/HST Stage 3 Part 2). Read, never written: the records are Part 1's
@@ -111,6 +113,54 @@ export async function saleInvoiceForIntent(paymentIntentId: string, customerId: 
     return 'failed';
   }
   return (data?.[0] as { stripe_invoice_id?: string } | undefined)?.stripe_invoice_id ?? null;
+}
+
+/** Ids per `.in(...)`: half of supabase-paging's default, so a long list of Stripe ids keeps the request address short; each chunk is paged too. */
+const IN_CHUNK = 100;
+
+/** Every credit note of these invoices, however many: chunked by invoice, each chunk read page by page. */
+async function allNotesFor(invoiceIds: readonly string[]): Promise<SaleNoteRecord[]> {
+  const pages = await Promise.all(chunked([...new Set(invoiceIds)], IN_CHUNK).map(chunk => readAllPages<SaleNoteRecord>((from, to) =>
+    supabaseAdmin.from('platform_credit_note_tax_records').select(SALE_NOTE_COLUMNS).in('stripe_invoice_id', chunk)
+      .order('stripe_credit_note_id').range(from, to) as unknown as PromiseLike<{ data: SaleNoteRecord[] | null; error: unknown }>)));
+  return pages.flat();
+}
+
+/**
+ * GST/HST Stage 3 Part 3a: EVERY record of this customer in this mode, whatever its date (owner Ask 4: Needs a look reaches every
+ * sale on record, not the twelve months the list first shows), run through the pure checks. Void sales are never read. Credit
+ * notes are read only for the sales that could need them (refunded, or already flagged) — check 7 asks whether one was issued.
+ */
+export async function readNeedsLook(customerId: string, live: boolean, registration: string | null): Promise<NeedsLookRead> {
+  try {
+    const paged = await readAllPages<SaleRecord>((from, to) =>
+      supabaseAdmin.from('platform_charge_tax_records').select(SALE_RECORD_COLUMNS)
+        .eq('stripe_customer_id', customerId).eq('livemode', live).neq('status', 'void')
+        .order('issued_at', { ascending: false }).order('stripe_invoice_id').range(from, to) as unknown as PromiseLike<{ data: SaleRecord[] | null; error: unknown }>);
+    // A sale written while the pages are being read can shift a row onto two pages: one row per invoice, so the count is never inflated.
+    const records = [...new Map(paged.map(r => [r.stripe_invoice_id, r])).values()];
+    // Judged once as if no credit note had been issued, the worst case: the only reason a credit note can clear is check 7, so
+    // whatever this leaves empty can never be on the list (a void or pre-registration sale never reaches the notes read), and a
+    // sale it flags only loses its refund line when an issued note turns up.
+    const candidates = records.map(r => ({ r, worst: needsLook(r, { registration, hasCreditNote: false }) })).filter(c => c.worst.length > 0);
+    const notes = await allNotesFor(candidates.map(c => c.r.stripe_invoice_id));
+    const issued = new Set(notes.filter(n => n.status === 'issued').map(n => n.stripe_invoice_id));
+    const reasons: Record<string, LookReason[]> = {};
+    for (const { r, worst } of candidates) {
+      const found = issued.has(r.stripe_invoice_id) ? worst.filter(x => x.code !== 'refund_no_note') : worst;
+      if (found.length) reasons[r.stripe_invoice_id] = found;
+    }
+    return {
+      state: 'read',
+      sales: candidates.map(c => c.r).filter(r => reasons[r.stripe_invoice_id]),
+      notes: notes.filter(n => reasons[n.stripe_invoice_id]),
+      reasons,
+      registrationDate: registration,
+    };
+  } catch (err) {
+    console.warn('[platform-admin] needs-a-look read failed:', (err as { code?: string }).code ?? 'error');
+    return { state: 'failed' };
+  }
 }
 
 /**

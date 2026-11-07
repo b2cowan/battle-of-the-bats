@@ -456,3 +456,77 @@ records survive; refund in the Stripe dashboard → the credit note appears; the
   (leave out the FileDown "Download PDF" button), `app/platform-admin/orgs/[id]/money.module.css` (leave out `.pdfButton`),
   `lib/billing-location.ts` (take only the `BILLING_LOCATION_CONSOLE_WORDS` hunk; the `tidyAddressCase`/`capitalizeWord` changes
   are another session's).
+- **2026-11-06 · Part 3 BUILD PROMPT written** (Part 2 committed `e8b51380c`): [GST_HST_STAGE3_PART3_BUILD_PROMPT.md](GST_HST_STAGE3_PART3_BUILD_PROMPT.md).
+  Split recommended: **3a** = the seven checks as pure rules, the all-dates server read, the strip / dot / Show choice / flag lines / both
+  empty states (no migration); **3b** = "Mark as looked at" (new table + migration 452, dev only), the window door, Today's "Sales tax" row
+  (needs a `power` on the queue definition), the Clubs filter it opens, and the guard that a mark never leaves a sale out of the return.
+  Open before building: check 4 needs a province → GST/HST rate table that does not exist in the repo (`/accounting` supplies it, dated);
+  four undrawn states with a recommendation each (unexpected-reason sentence, empty state with the registration date unread, written-off
+  and open sales on the list, the looked-at row in All sales). `/accounting` is required BEFORE hand-off.
+- **2026-11-06 · Part 3a BUILT** (rules, the all-dates read, the club surfaces; no migration). Owner rulings this session, all as
+  recommended: (a) `unexpected_reason` reuses the window's own sentence ("Stripe gave the GST/HST line a reason we do not expect."),
+  after check 1; (b) the empty state with the registration date unread drops the date ("Every sale has a GST/HST answer that matches
+  what was kept with it."); (c) open and written-off sales ARE on the list, void never; check 7 = no issued credit note at all (a
+  partial note clears it). Check 4's rate table cites `docs/agents/accounting/GST_HST_ON_SUBSCRIPTIONS_CANADA.md` (CRA page dated
+  2025-04-01, file verified 2026-11-05; NS 15% → 14% on 2025-04-01 is dated in the code); a guard test fails when that file's rate
+  line or dates change. No fresh `/accounting` run was needed for the table (its own research holds it); the full `/accounting`
+  review stays owed before Part 3's hand-off.
+  Built: `lib/console-money-needs-look.ts` (pure: `needsLook`, `gstHstRateFor`, `readAllPages`, `NeedsLookRead`); the words
+  `NEEDS_LOOK_WORDS` beside `SALES_WORDS` in `lib/console-money-sales.ts`; `readNeedsLook` in `lib/console-money-sales-store.ts`
+  (every non-void record of the customer + mode, paged 1000 at a time and stopping only on an EMPTY page so a lower project cap
+  loses nothing, ordered `issued_at, stripe_invoice_id`; credit notes read only for refunded or already-flagged sales, chunked 100
+  ids and paged); route `GET /api/platform-admin/orgs/[id]/money/needs-look` (`find_stripe`, refuses a shared customer, no Stripe
+  call); `useNeedsLook` + `lookCount` in `MoneyTab.tsx`, read by `ClubRecord.tsx` on open so the Money dot lights before the tab is
+  opened; the strip's first line "{n} sales need a look at their tax." + **Show them** (sets the Show dropdown, scrolls to the list);
+  the dropdown's **Needs a look** (All sales · Needs a look · Not paid; it stays with none left, and is left out when the read failed
+  or our records failed, as drawn on tab 4); the amber flag line "Needs a look: {first reason}" under "What it paid for" in every
+  filter; the window lists every reason at the top, and Ask 8's clause "· no credit note, so the tax was not reduced" on a dashboard
+  refund's "Refunded so far" line; both empty states; "Show older sales" hidden on Needs a look (it is already every sale).
+  ⚠ **Deviation from this prompt, on purpose:** the Money route does NOT also return the count. One route feeds the dot, the strip
+  and the list, so they cannot disagree (the prompt's two reads could, mid-refund). ⚖ **"Registration unread" reading:** checks 1–3
+  (the missing answers) do not fire, Part 2's rule; checks 4–7 still run (they do not turn on the date) — this is what makes ruling
+  (b)'s empty state reachable. Today (3b) must read it the same way or say "Not read" for the whole count; decide in 3b.
+  **Undrawn words added (owner may reword):** "1 sale needs a look at its tax." (singular); the strip's quiet sub-line reuses
+  `SALES_WORDS.registrationUnread`; "Which sales need a look could not be read." (caption when the read fails); the refund clause.
+  Not added: tab 3's extra "Stripe reported GST 5% as not collected." after a check 2 line (the window's Tax lines already say it).
+  `needsLook` takes no `looked` set yet: 3b applies the marks in the reader, not in the rules.
+  Proof: `typecheck` clean for these files (the 2 errors are `club-stage13a-doors-guard.test.ts`, another session's);
+  `console-money-needs-look.test.ts` 35/35 + `console-money-sales.test.ts` 23/23; `console-money*`, `support-console-stage3-guard`,
+  `table-recipe-guard`, `billing-location-evidence`, `platform-audit*`: 260 run, 259 pass (the failure is `ExpenseFormWindow.tsx`'s
+  footer, the known other-session baseline); `check:spelling` clean; focused lint 0 errors (3 shipped warnings in ClubRecord.tsx).
+  `verify:changed` failures, none in these files: `billing-plus-tax-words` (`components/PricingSection.tsx`, `lib/help-content/*`),
+  the admin kit nav test (Stage 13a), the dropdown groups test (`SingleSelectDropdown.tsx`, another session's). Not browser-walked.
+  Commit pathspecs: whole files `lib/console-money-needs-look.ts`, `lib/console-money-sales.ts`, `lib/console-money-sales-store.ts`,
+  `app/api/platform-admin/orgs/[id]/money/needs-look/route.ts`, `tests/unit/console-money-needs-look.test.ts`, this plan file.
+  Partial: `MoneyTab.tsx` (leave out the FileDown "Download PDF" button + its import), `money.module.css` (leave out `.pdfButton`),
+  `ClubRecord.tsx` (leave out the "Ended / data kept until" cell). New route + module: restart the dev server before the owner tests.
+- **2026-11-06 · Part 3a /simplify** (four cleanup lenses over the 3a hunks; rulings, drawn wording and both deviations kept). Applied:
+  `LookReasonCode` is a literal union (the unused runtime array is gone); `GstHstRate` and `NeedsLookAnswer` no longer exported; check 7's
+  trigger has ONE home (`mayNeedCreditNote` in the rules file, read by the rules and the reader); `allNotesFor` splits with the shared
+  `chunked()`; the route reads the club and the registration date together (as the Money route does); `readNeedsLook` judges each sale once
+  (worst case, no credit note) and only drops the refund line when an issued note turns up; one `openRow` lookup instead of two; the strip
+  count reads the narrowed answer. Skipped on purpose: one paging helper for all of it (the shared `fetchAll` stops on a SHORT page, which
+  loses rows on a lower project cap; changing the shared stop rule is its own decision, so `readAllPages` stays with its tests); narrower
+  selects for the all-time scan (one more round trip for the flagged few); restating `MISSING_WHY` (the drawn sentences differ on purpose);
+  a shared "Stripe customer, not shared" route prelude and a shared ask/answer hook (a refactor of existing files, not 3a's).
+  Also fixed a type error in the 3a test's default context (`registration` inferred as a string only).
+- **2026-11-06 · Part 3a /review (HIGH)** (gate: typecheck clean; focused lint 0 errors, the 3 shipped `ClubRecord.tsx` warnings;
+  `check:spelling` clean; the listed tests 260 run / 259 pass, the failure is `ExpenseFormWindow.tsx`'s footer, another session's;
+  `verify:changed` fails only in files that are not 3a's; `check:layout` SKIPPED, no dev server, nothing here is rendered yet. Four lenses:
+  tax-rule correctness, route security parity, UI state and hooks, data contract and blast radius.) Confirmed and fixed: (Medium) a failed
+  RE-read replaced the last good answer, so a flagged club's dot, strip and flag lines all vanished at once and a filter on Needs a look fell
+  back to All: a failed re-read now keeps the last good answer; (Low-Medium) a sale opened by an old charge number (Find) lost its reasons and
+  the refund clause because the lookup ran on the charge id: the window now asks by the invoice it read itself; (Low) the route had no
+  `maxDuration` while it walks a customer's whole history: 60, as the Money route; (Low) a sale written mid-read could repeat a row across
+  two pages and inflate the count: one row per invoice. Cleared: gate, shared-customer refusal and `find_stripe` match the Money route; no
+  write or Stripe call anywhere (a test pins it); both page orders are unique keys; `status` is NOT NULL so `.neq('void')` loses nothing;
+  void and pre-registration never listed; rates match the accounting file; hooks all sit before the first early return; the dot, strip,
+  dropdown and list read the one answer; old sales speak from our record. **Lows recorded, not fixed:** (1) with the registration date unread
+  the empty state still says "Every sale has a GST/HST answer that matches what was kept with it." although checks 1–3 did not run: that is
+  owner ruling (b) and the "registration unread" sentence sits beside it — an OWNER QUESTION if he wants it to say "not checked"; (2) a
+  Stripe-void invoice whose record has not caught up counts in the strip but not in the list header until the record catches up; (3) a
+  refund made in Stripe's dashboard with its credit note arriving a moment later shows "no credit note" until the next read (a console
+  refund writes its note at once); (4) `allNotesFor` has no cap on parallel chunks (only for tens of thousands of flagged sales); (5) check 4
+  compares the nominal rate of each line (a genuinely reduced-rate line would be flagged); (6) the Nova Scotia 15% branch is unreachable in
+  practice (everything before 2026-05-01 is pre-registration), tests only; (7) `readNeedsLook`'s single pass is pinned by a source test
+  and the pure rules, not by a database-backed run; (8) the stage-3 guard's "stores nothing" list names the Money routes, not this one.

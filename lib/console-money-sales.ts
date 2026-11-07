@@ -388,6 +388,39 @@ const MISSING_WHY: Record<string, string> = {
   unexpected_reason: 'Stripe gave the GST/HST line a reason we do not expect.',
 };
 
+/**
+ * "Needs a look" (GST/HST Stage 3 Part 3; drawing tab 5, owner Asks 4 and 8 = A): the sentence each check says, in priority order
+ * (the rules are lib/console-money-needs-look.ts), and the strip, count and empty-state lines. A row says "Needs a look: " + one.
+ * `unexpected` reuses the window's own words for that reason (owner 2026-11-06, undrawn state (a) = as recommended).
+ */
+export const NEEDS_LOOK_WORDS = {
+  lead: 'Needs a look: ',
+  filter: 'Needs a look',
+  reasons: {
+    not_worked_out: 'Stripe did not work out the tax on this invoice.',
+    unexpected: MISSING_WHY.unexpected_reason,
+    buyer_not_charged: 'a Canadian buyer was not charged GST/HST.',
+    no_zero_rating_proof: 'zero-rated, but there is no proof the buyer is outside Canada (no US address or no US declaration).',
+    rate_mismatch: (taxedAt: string, place: string, expected: string) => `taxed at ${taxedAt}, but the address kept with the sale is in ${place} (${expected}).`,
+    review: (note: string | null) => `flagged for review when it was sold.${note ? ` ${note}` : ''}`,
+    no_evidence: 'no billing address could be read when it was sold.',
+    refund_no_note: (amount: string) => `refunded ${amount} in Stripe’s dashboard with no credit note, so the tax was not reduced.`,
+  },
+  /** Ask 8: the same clause on the window's "Refunded so far" line, after a refund made in Stripe's dashboard. */
+  refundClause: 'no credit note, so the tax was not reduced',
+  strip: (n: number) => (n === 1 ? '1 sale needs a look at its tax.' : `${n} sales need a look at their tax.`),
+  showThem: 'Show them',
+  count: (n: number) => (n === 0 ? 'No sales need a look' : `${n} sale${n === 1 ? ' needs' : 's need'} a look, newest first`),
+  emptyTitle: 'Nothing needs a look.',
+  /** Undrawn state (b) = as recommended: with the registration date unread, the same line without the date. */
+  emptyText: (registration: string | null) => (registration
+    ? `Every sale since ${consoleDate(registration)}, when our GST/HST registration took effect, has a GST/HST answer that matches what was kept with it.`
+    : 'Every sale has a GST/HST answer that matches what was kept with it.'),
+  showAll: 'Show all sales',
+  /** Undrawn: the needs-a-look read itself failed (the choice is then left out, as when our records fail; drawing tab 4). */
+  readFailed: 'Which sales need a look could not be read.',
+} as const;
+
 /** "Our GST/HST answer", in words: a lead word, then the sentence (gap 6 = A for a sale before we registered). */
 export function gstAnswerWords(record: SaleRecord, registration: string | null): { lead: string; text: string; tone: 'plain' | 'warn' } {
   const place = placeName(record.taxed_country, record.taxed_region) ?? 'Canada';

@@ -64,6 +64,10 @@ tr.differsRow > td {
 /* A void sale: struck through and counted nowhere (the Void chip says so). */
 .struck { text-decoration: line-through; color: var(--text-tertiary); }
 .warnText { color: var(--warning); }
+/* The amber strip's lines, one under the other (Needs a look, then the billing-address review), its doors at the end. */
+.stripLines { display: flex; flex-direction: column; gap: 0.35rem; }
+/* The empty state's lead line ("Nothing needs a look."), above its sentence. */
+.emptyTitle { display: block; margin-bottom: 0.25rem; color: var(--text-primary); font-weight: 650; }
 /* The Show dropdown is quiet until it filters; olive while it does. */
 .filterOn { border-color: var(--home-olive); color: var(--home-olive); font-weight: 650; }
 /* The window's groups (Tax, Where it was taxed, The payment), each under a hairline. */

@@ -20,8 +20,9 @@ import {
   moneyBand, refundDoorRefusal, remainingCents, subscriptionsMoreWords, yearBefore, REFUND_REASON_MAX, REFUND_WORDS,
   type ChargeCreditNote, type ChargeFlag, type CompareRow, type MoneyCharge, type MoneyInvoice, type MoneyRead, type OurMoneyRecord,
 } from '@/lib/console-money';
+import type { LookReason, NeedsLookRead } from '@/lib/console-money-needs-look';
 import {
-  SALES_WORDS, addressChangedSince, asItStoodLabel, cadRateWords, creditNoteTaxWords, evidenceLines, gstAnswerWords, isUnpaidSale,
+  NEEDS_LOOK_WORDS, SALES_WORDS, addressChangedSince, asItStoodLabel, cadRateWords, creditNoteTaxWords, evidenceLines, gstAnswerWords, isUnpaidSale,
   isVoidSale, joinSales, keptWords, recordMoneyBand, saleAmount, saleCardCell, saleCents, saleFlag, saleRecordSays,
   saleStripeSays, saleTaxCell, saleWhatWords, saleWindowBand, taxLineWords, taxedForWords,
   type SaleNoteRecord, type SaleRecord, type SaleRow, type SalesRecords,
@@ -72,6 +73,34 @@ export function useClubMoney(orgId: string, enabled: boolean) {
   return { money: answer?.money ?? null, loading: enabled && answer?.ask !== asked, readAgain };
 }
 
+/** GST/HST Stage 3 Part 3a: the needs-a-look route's answer (null while it is read). */
+type NeedsLookAnswer = NeedsLookRead | { state: 'no_customer' } | { state: 'shared' } | null;
+
+/**
+ * The sales that need a look, read by the club record on open (like the billing address) so the Money tab's dot lights before
+ * the tab is opened; the strip, the dot and the list all read this one answer. Never runs for a role without the Stripe power.
+ */
+export function useNeedsLook(orgId: string, enabled: boolean) {
+  const [asked, setAsked] = useState(0);
+  const [answer, setAnswer] = useState<{ ask: number; look: NeedsLookAnswer } | null>(null);
+  const answeredAsk = answer?.ask ?? -1;
+  useEffect(() => {
+    if (!enabled || answeredAsk === asked) return;
+    let live = true;
+    void sendJson(`/api/platform-admin/orgs/${orgId}/money/needs-look`, 'GET').then(({ ok, data }) => {
+      // A re-read that fails keeps the last good answer: a flagged club must not turn clean-looking because one request dropped.
+      if (live) setAnswer(prev => ({ ask: asked, look: ok ? (data as unknown as NeedsLookAnswer) : prev?.look?.state === 'read' ? prev.look : { state: 'failed' } }));
+    });
+    return () => { live = false; };
+  }, [enabled, asked, answeredAsk, orgId]);
+  const readAgain = useCallback(() => setAsked(n => n + 1), []);
+  // The last answer stays on screen while a re-read is out (the dot does not blink off and on).
+  return { look: enabled ? answer?.look ?? null : null, readAgain };
+}
+
+/** How many sales need a look: a number only when it was read. */
+export const lookCount = (look: NeedsLookAnswer): number => (look?.state === 'read' ? look.sales.length : 0);
+
 /** The later of two window starts (either may be null): the next page starts where the newer source left off; repeats join once. */
 const laterOf = (a: string | null | undefined, b: string | null | undefined) => (!a ? b ?? null : !b ? a : a > b ? a : b);
 
@@ -81,17 +110,19 @@ type Older = {
 };
 const freshOlder = (forRead: string | null): Older => ({ forRead, charges: [], invoices: [], sales: [], notes: [], before: null, from: null, chargesFrom: null, pages: 0, exhausted: false, loading: false, failed: false });
 
-/** Which sales the list shows (Ask 1/4 = A: one dropdown, quiet until it filters; Needs a look joins it in Part 3). */
-type SaleFilter = 'all' | 'unpaid';
+/** Which sales the list shows (Ask 1/4 = A: one dropdown, quiet until it filters). "look" = Needs a look (Part 3a). */
+type SaleFilter = 'all' | 'unpaid' | 'look';
 /** A sale to open: by its invoice (a row), or by a charge (a bare charge, or Find's `?charge=`). */
 type OpenSale = { number: string; refund: boolean; atTax: boolean };
 
 export default function MoneyTab({
-  orgId, orgName, ours, readsStripe, billsClub = false, stripeBase, club, billing, openChargeId, onChargeClosed, onRefunded,
+  orgId, orgName, ours, readsStripe, billsClub = false, stripeBase, club, billing, needsLook, openChargeId, onChargeClosed, onRefunded,
 }: {
   orgId: string;
   /** GST/HST Stage 1 Part 3: the billing address, read once by the club record (it also drives the tab's dot). */
   billing: BillingAddressRead;
+  /** GST/HST Stage 3 Part 3a: the sales that need a look, read once by the club record (they drive the dot too). */
+  needsLook: ReturnType<typeof useNeedsLook>;
   /** 12d-1 Part 4: may bill the club (`club_billing`), so the fees panel's Retry shows. */
   billsClub?: boolean;
   orgName: string;
@@ -135,8 +166,27 @@ export default function MoneyTab({
     shownFrom: older.from ?? (firstAt ? yearBefore(firstAt) : null),
     chargesFrom: older.pages ? older.chargesFrom : read?.chargesFrom ?? null,
   }), [records, older.sales, older.notes, older.invoices, older.from, older.pages, older.chargesFrom, read, allCharges, firstAt]);
-  const shown = rows.filter(r => filter === 'all' || isUnpaidSale(r));
+  // Needs a look (Part 3a): the server's list of every sale on record that needs one, whatever its date, joined with the Stripe
+  // charges loaded so far. A sale older than those speaks from our record (`chargesFrom`), never "Paid outside Stripe".
+  const look = needsLook.look?.state === 'read' ? needsLook.look : null;
+  const lookRows = useMemo(() => {
+    if (!look) return [];
+    const keys = new Set(look.sales.map(s => s.stripe_invoice_id));
+    return joinSales({
+      records: look.sales, notes: look.notes, charges: read ? allCharges : null,
+      invoices: read ? [...(read.invoices ?? []), ...older.invoices] : [], shownFrom: null,
+      chargesFrom: older.pages ? older.chargesFrom : read?.chargesFrom ?? null,
+    }).filter(r => keys.has(r.key));
+  }, [look, read, allCharges, older.invoices, older.pages, older.chargesFrom]);
+  const reasonsOf = (key: string): LookReason[] => look?.reasons[key] ?? [];
+  // The choice shows whenever the answer was read, even with none left (it never appears and disappears); it is left out when
+  // it could not be read, as when our records fail (drawing tab 4).
+  const lookChoice = !!look && recordsRead;
+  const shownFilter: SaleFilter = filter === 'look' && !lookChoice ? 'all' : filter;
+  const shown = shownFilter === 'look' ? lookRows : rows.filter(r => shownFilter === 'all' || isUnpaidSale(r));
   const counted = shown.filter(r => !isVoidSale(r)).length;
+  const listRef = useRef<HTMLDivElement>(null);
+  const showThem = () => { setFilter('look'); listRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
   const compare = compareRecord(ours, read);
   const firstBefore = laterOf(read?.olderBefore, records?.state === 'read' ? records.olderBefore : null);
   const nextBefore = older.exhausted ? null : older.pages ? older.before : firstBefore;
@@ -171,19 +221,31 @@ export default function MoneyTab({
   // A flag that needs a person goes FIRST on the tab, above the Stripe comparison: the green "agree" line below it is about the
   // subscription only, and must never read as an all-clear while a buyer's tax is being held at Canadian.
   const review = reviewOf(billing);
-  // The door to the address block only shows once that block is on the page (it is not while Stripe is still being read).
-  const reviewStripWith = (door: boolean) => review && (
+  // Part 3a (Ask 4 = A, no second strip): the sales that need a look are one more line in the same strip, first, with "Show them".
+  const looking = lookCount(needsLook.look);
+  const chip = <span className={`${kit.chip} ${kit.chipWarn}`}>{BILLING_LOCATION_CONSOLE_WORDS.needsReview}</span>;
+  // The doors only show once the list and the address block are on the page (they are not while Stripe is still being read).
+  const reviewStripWith = (door: boolean) => (review || looking > 0) && (
     <div className={`${kit.callout} ${kit.calloutWarn}`} role="status">
-      <span>
-        <span className={`${kit.chip} ${kit.chipWarn}`}>{BILLING_LOCATION_CONSOLE_WORDS.needsReview}</span>{' '}
-        <ReviewText review={review} />
+      <span className={money.stripLines}>
+        {looking > 0 && (
+          <span>
+            {chip} {NEEDS_LOOK_WORDS.strip(looking)}
+            {/* With the registration date unread, nothing is called missing: said quietly (Part 2's rule). */}
+            {look && look.registrationDate === null && <span className={kit.sub}>{SALES_WORDS.registrationUnread}</span>}
+          </span>
+        )}
+        {review && <span>{chip} <ReviewText review={review} /></span>}
       </span>
       {door && (
         <span className={kit.calloutEnd}>
-          <button type="button" className={`${kit.door} ${kit.doorSm}`}
-            onClick={() => document.getElementById(BILLING_ADDRESS_ANCHOR)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>
-            See billing address
-          </button>
+          {looking > 0 && lookChoice && <button type="button" className={`${kit.door} ${kit.doorSm}`} onClick={showThem}>{NEEDS_LOOK_WORDS.showThem}</button>}
+          {review && (
+            <button type="button" className={`${kit.door} ${kit.doorSm}`}
+              onClick={() => document.getElementById(BILLING_ADDRESS_ANCHOR)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>
+              See billing address
+            </button>
+          )}
         </span>
       )}
     </div>
@@ -195,7 +257,8 @@ export default function MoneyTab({
 
   const testChip = read?.testMode ? <span className={`${kit.chip} ${kit.chipInfo}`}>Test mode</span> : null;
   const readAt = read ? consoleClock(read.readAt) : null;
-  const again = <button type="button" className={`${kit.door} ${kit.doorSm}`} onClick={club.readAgain} disabled={club.loading}>{club.loading ? 'Reading…' : 'Read again'}</button>;
+  const readBoth = () => { club.readAgain(); needsLook.readAgain(); };
+  const again = <button type="button" className={`${kit.door} ${kit.doorSm}`} onClick={readBoth} disabled={club.loading}>{club.loading ? 'Reading…' : 'Read again'}</button>;
   const amber = (text: string) => (
     <div className={`${kit.callout} ${kit.calloutWarn}`}>
       <span>{text}</span>
@@ -234,7 +297,8 @@ export default function MoneyTab({
   const listed = stripeRead || (m.state === 'unreachable' && recordsRead);
   const open = (row: SaleRow, opts: { refund?: boolean; atTax?: boolean; chargeId?: string } = {}) =>
     setOpenSale({ number: opts.chargeId ?? row.key, refund: !!opts.refund, atTax: !!opts.atTax });
-  const openRow = openSale ? rows.find(r => r.key === openSale.number || r.charges.some(c => c.id === openSale.number)) ?? null : null;
+  const isOpened = (r: SaleRow) => !!openSale && (r.key === openSale.number || r.charges.some(c => c.id === openSale.number));
+  const openRow = openSale ? rows.find(isOpened) ?? lookRows.find(isOpened) ?? null : null;
 
   return (
     <section className={kit.section}>
@@ -295,14 +359,16 @@ export default function MoneyTab({
 
       {listed && (
         <>
-          <div className={kit.toolbar}>
+          <div className={kit.toolbar} ref={listRef}>
             <span className={kit.count}>
-              {counted === 0 && filter === 'unpaid' ? SALES_WORDS.emptyUnpaid : SALES_WORDS.count(counted, filter, older.pages > 0)}
+              {shownFilter === 'look' ? NEEDS_LOOK_WORDS.count(counted)
+                : counted === 0 && shownFilter === 'unpaid' ? SALES_WORDS.emptyUnpaid : SALES_WORDS.count(counted, shownFilter, older.pages > 0)}
             </span>
             <span className={kit.toolbarEnd}>
-              <select className={`${kit.select}${filter !== 'all' ? ` ${money.filterOn}` : ''}`} value={filter} aria-label="Show"
+              <select className={`${kit.select}${shownFilter !== 'all' ? ` ${money.filterOn}` : ''}`} value={shownFilter} aria-label="Show"
                 onChange={e => setFilter(e.target.value as SaleFilter)}>
                 <option value="all">{SALES_WORDS.filters.all}</option>
+                {lookChoice && <option value="look">{NEEDS_LOOK_WORDS.filter}</option>}
                 <option value="unpaid">{SALES_WORDS.filters.unpaid}</option>
               </select>
             </span>
@@ -312,8 +378,19 @@ export default function MoneyTab({
               <table className={kit.comfortable}>
                 <thead><tr><th>When</th><th>What it paid for</th><th>Tax</th><th>Card</th><th>{stripeRead ? 'Stripe says' : 'Our record says'}</th><th className={kit.num}>Amount</th><th aria-label="Open" /></tr></thead>
                 <tbody>
-                  {shown.length === 0 && <tr><td colSpan={7} className={kit.empty}>{filter === 'unpaid' ? SALES_WORDS.emptyUnpaid : SALES_WORDS.emptyAll}</td></tr>}
+                  {shown.length === 0 && (
+                    <tr><td colSpan={7} className={kit.empty}>
+                      {shownFilter === 'look' ? (
+                        <>
+                          <strong className={money.emptyTitle}>{NEEDS_LOOK_WORDS.emptyTitle}</strong>
+                          {NEEDS_LOOK_WORDS.emptyText(look?.registrationDate ?? null)}{' '}
+                          <button type="button" className={kit.door} onClick={() => setFilter('all')}>{NEEDS_LOOK_WORDS.showAll}</button>
+                        </>
+                      ) : shownFilter === 'unpaid' ? SALES_WORDS.emptyUnpaid : SALES_WORDS.emptyAll}
+                    </td></tr>
+                  )}
                   {shown.map(row => {
+                    const lookReason = reasonsOf(row.key)[0];
                     const what = saleWhatWords(row);
                     const tax = saleTaxCell(row, registration, recordsRead);
                     const fromStripe = stripeRead && !row.chargeUnread;
@@ -339,6 +416,7 @@ export default function MoneyTab({
                               )}
                             </span>
                           )}
+                          {lookReason && <span className={`${money.flag} ${money.warnText}`}>{NEEDS_LOOK_WORDS.lead}{lookReason.text}</span>}
                         </td>
                         <td data-label="Tax" className={tax.tone === 'quiet' ? kit.muted : undefined}>
                           {tax.tone === 'missing'
@@ -361,7 +439,9 @@ export default function MoneyTab({
             </div>
           </div>
           {recordsRead && registration === null && <p className={kit.caption}>{SALES_WORDS.registrationUnread}</p>}
-          {nextBefore && (
+          {recordsRead && needsLook.look?.state === 'failed' && <p className={kit.caption}>{NEEDS_LOOK_WORDS.readFailed}</p>}
+          {/* Needs a look is already every sale on record: there is nothing older to show. */}
+          {nextBefore && shownFilter !== 'look' && (
             <div className={styles.more}>
               <button type="button" className="btn btn-secondary btn-sm" onClick={() => void showOlder()} disabled={older.loading}>{older.loading ? 'Reading…' : SALES_WORDS.showOlder}</button>
               {older.failed && <span className={kit.fieldError} role="alert">Stripe could not be read. Try again in a moment.</span>}
@@ -391,11 +471,12 @@ export default function MoneyTab({
           gate={lastGood?.refundGate ?? null}
           read={lastGood?.read ?? null}
           registration={registration}
+          reasonsOf={reasonsOf}
           billing={billing}
           stripeBase={stripeBase}
           onSeeAddress={() => { setOpenSale(null); onChargeClosed(); setTimeout(() => document.getElementById(BILLING_ADDRESS_ANCHOR)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0); }}
           onClose={() => { setOpenSale(null); onChargeClosed(); }}
-          onRefunded={() => { club.readAgain(); onRefunded(); }}
+          onRefunded={() => { readBoth(); onRefunded(); }}
         />
       )}
     </section>
@@ -442,9 +523,13 @@ function windowRow(answer: SaleAnswer, listRow: SaleRow | null): SaleRow | null 
   return joined.find(r => r.key === key) ?? joined[0] ?? null;
 }
 
-function SaleWindow({ orgId, orgName, number, startWithRefund, atTax, listRow, flag, gate, read, registration, billing, stripeBase, onSeeAddress, onClose, onRefunded }: {
+function SaleWindow({ orgId, orgName, number, startWithRefund, atTax, listRow, flag, gate, read, registration, reasonsOf, billing, stripeBase, onSeeAddress, onClose, onRefunded }: {
   orgId: string; orgName: string; number: string; startWithRefund: boolean; atTax: boolean; listRow: SaleRow | null; flag: ChargeFlag | undefined;
-  gate: RefundGate | null; read: MoneyRead | null; registration: string | null; billing: BillingAddressRead; stripeBase: string;
+  gate: RefundGate | null; read: MoneyRead | null; registration: string | null;
+  /** Part 3a: every reason a sale needs a look, in priority order (the row shows the first), by invoice. Asked with the invoice
+   *  the window itself read, so a sale opened by an old charge number (Find) still shows them. */
+  reasonsOf: (invoiceId: string) => readonly LookReason[];
+  billing: BillingAddressRead; stripeBase: string;
   onSeeAddress: () => void; onClose: () => void; onRefunded: () => void;
 }) {
   const [answer, setAnswer] = useState<SaleAnswer | null>(null);
@@ -473,6 +558,7 @@ function SaleWindow({ orgId, orgName, number, startWithRefund, atTax, listRow, f
   const stripeRead = answer?.stripe === 'read';
   const c = answer?.charge ?? null;
   const record = row?.record ?? null;
+  const reasons = reasonsOf(record?.stripe_invoice_id ?? row?.key ?? number);
   // What the console knows before the click: the door is absent and one line says why (drawing G).
   const refusal = c && stripeRead ? doorRefusal(gate, c, answer?.inFlight) : null;
   const canRefund = !!c && stripeRead && !!read && !refusal;
@@ -491,6 +577,7 @@ function SaleWindow({ orgId, orgName, number, startWithRefund, atTax, listRow, f
   }
 
   const refundsSoFar = c?.refunds.filter(r => r.status === 'succeeded' || r.status === 'pending') ?? [];
+  const noNoteRefund = reasons.some(r => r.code === 'refund_no_note');
   const today = billing && billing !== 'failed' && billing.buyer !== 'none' ? billing.location : null;
   const amount = row ? saleAmount(row) : null;
   const says = row ? (stripeRead ? saleStripeSays(row) : saleRecordSays(row)) : null;
@@ -517,6 +604,7 @@ function SaleWindow({ orgId, orgName, number, startWithRefund, atTax, listRow, f
         {row && what && amount && says && (
           <>
             {fw && <p className={`${money.flag}${fw.tone === 'bad' ? ` ${money.bad}` : ''}`}>{fw.text}</p>}
+            {reasons.map(r => <p key={r.code} className={`${money.flag} ${money.warnText}`}>{NEEDS_LOOK_WORDS.lead}{r.text}</p>)}
             {record ? (
               <div className={kit.band}>
                 {saleWindowBand(record, row.notes).map(b => (
@@ -596,6 +684,7 @@ function SaleWindow({ orgId, orgName, number, startWithRefund, atTax, listRow, f
                         return (
                           <span key={r.id} className={money.refundLine}>
                             {formatCents(r.amountCents, c.currency)} · {consoleWhen(r.createdAt)} · {ours ? ours.actorEmail : 'in Stripe’s dashboard'}
+                            {!ours && noNoteRefund ? ` · ${NEEDS_LOOK_WORDS.refundClause}` : ''}
                             {ours?.creditNoteNumber ? ` · credit note ${ours.creditNoteNumber}` : ''}
                             {r.status === 'pending' ? ' · on its way' : ''}
                           </span>

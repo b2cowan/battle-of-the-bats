@@ -26,7 +26,7 @@ import StoryTable from '../../StoryTable';
 import { mergeMoneyIntoStory } from '@/lib/console-money-story';
 import type { OurMoneyRecord } from '@/lib/console-money';
 import { PAYING_CLUB_PLAN_REFUSAL } from '@/lib/stripe-billing-state';
-import MoneyTab, { useClubMoney } from './MoneyTab';
+import MoneyTab, { lookCount, useClubMoney, useNeedsLook } from './MoneyTab';
 import { reviewOf, useBillingAddress } from './BillingAddressPanel';
 import RecordWindow from '../../RecordWindow';
 import { BlockLine, ChangeEndWindow, EndNowWindow, GiveWindow, freeTimeSubject, freeTimeTitle } from './FreeTimeWindows';
@@ -330,7 +330,9 @@ export default function ClubRecord(props: ClubRecordProps) {
   const moneyRead = club.money?.state === 'read' ? club.money : null;
   // Our own billing-address record, read on every tab so a "Needs review" shows as a dot on Money before anyone opens it.
   const billing = useBillingAddress(org.id, props.money.readsStripe);
-  const moneyNeedsReview = !!reviewOf(billing);
+  // GST/HST Stage 3 Part 3a: the sales that need a look, read on open too, so the same dot lights for them (one dot, Ask 4).
+  const needsLook = useNeedsLook(org.id, props.money.readsStripe);
+  const moneyNeedsReview = !!reviewOf(billing) || lookCount(needsLook.look) > 0;
   // Merging Stripe's charges needs the whole Story: it is asked for alongside the Stripe read, not after it.
   const wantsWhole = !!storyWords.trim() || !!storyKind || storyShown > STORY_PAGE || moneyWanted;
   useEffect(() => {
@@ -725,6 +727,7 @@ export default function ClubRecord(props: ClubRecordProps) {
               stripeBase={props.stripeBase}
               club={club}
               billing={billing}
+              needsLook={needsLook}
               openChargeId={chargeParam}
               onChargeClosed={() => {
                 if (!chargeParam) return;
