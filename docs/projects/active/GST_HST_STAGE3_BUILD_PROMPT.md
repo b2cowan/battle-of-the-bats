@@ -263,7 +263,8 @@ records survive; refund in the Stripe dashboard → the credit note appears; the
     handler; reading the refunded figure inside `recordInvoiceTax` would close the Known gap above. (b) `orgOfInvoice` re-implements
     the webhook's `ownerOf` and they DIFFER (exactly one match vs the first match), so a charge alert and its tax record can name
     different clubs.
-- **2026-11-06 · Part 1 `/review` DONE (uncommitted).** High-risk funnel: gate (typecheck, focused lint clean; `check:migrations` red
+- **2026-11-06 · Part 1 `/review` DONE; Part 1 COMMITTED `976a6a7b3` 2026-11-06 (owner "commit"; 20 files, the dictionary's
+  two-table hunk only; schema snapshots left for the next refresh commit, they carry other sessions' tables).** High-risk funnel: gate (typecheck, focused lint clean; `check:migrations` red
   only for prod-owed schema, 451 among it, expected) + four lenses (pure rules vs the Part 0 probes, data & contract, webhook blast
   radius, security / retention / livemode). No Critical, no High. **Every `gstHstPosition` branch matches the Part 0 probes** (ON, AB, BC
   GST + PST not collecting, QC, US NY, the $0 trial, tax off); no cascade anywhere (dev snapshot: zero FKs; no delete path touches
