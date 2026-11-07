@@ -328,7 +328,7 @@ describe('9 · the menu by job', () => {
       // Stage 4 renamed Founding season → Free time, in the same place (owner ruling Q4).
       'Customers: Clubs & portals, People, Free time, Retention',
       // Stage 5 joined Status (first) and Sent emails to the group; it made no new group (drawing A).
-      'Health: Status, Errors, Feedback, Sent emails, Online payments',
+      'Health: Status, Errors, Feedback, Sent emails, Online payments, Stripe',
       'Growth: Leads, Campaigns, Pitch decks, Business numbers',
       'Product: Plans & pricing, Approval queue, Bulk changes, Email templates, Export registry',
       'Records: Staff, Audit log',
@@ -367,10 +367,10 @@ describe('9 · the menu by job', () => {
     assert.deepEqual(eyes('super_admin'), []);
     // Stage 4: Free time's write side is the plan-and-billing power (it is given on the record), so Support and Product
     // read it with the eye.
-    assert.deepEqual(eyes('support'), ['Free time', 'Retention', 'Errors']);
+    assert.deepEqual(eyes('support'), ['Free time', 'Retention', 'Errors', 'Stripe']);
     // Stage 4b: Billing gives a Coaches Portal free time from a person's record, so People is no longer read-only for it.
-    assert.deepEqual(eyes('billing'), ['Plans & pricing', 'Approval queue']);
-    assert.deepEqual(eyes('product'), ['People', 'Free time']);
+    assert.deepEqual(eyes('billing'), ['Stripe', 'Plans & pricing', 'Approval queue']);
+    assert.deepEqual(eyes('product'), ['People', 'Free time', 'Stripe']);
     assert.deepEqual(eyes('growth'), ['Clubs & portals', 'People']);
     assert.deepEqual(eyes('read_only'), ['Clubs & portals', 'People']);
   });

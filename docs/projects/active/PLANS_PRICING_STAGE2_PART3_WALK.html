@@ -1,0 +1,227 @@
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Stripe Page Walk</title><style>
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+
+.stop { border-left: 4px solid var(--warn); }
+.step.opt { flex-direction: column; gap: 4px; }
+.step .optrow { display: flex; gap: 10px; align-items: flex-start; }
+.step .txt span { white-space: pre-wrap; overflow-wrap: anywhere; }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · Plans & pricing Stage 2 · Part 3</span>
+    <h1>The Stripe page in Health</h1>
+    <p class="sub">Written 2026-11-07. One purpose: staff open one page and are told, in plain words, whether Stripe and the product still agree: updates arriving, updates failing, the morning comparison of every plan, and our billing page’s settings. Read only: nothing on this page can change money, Stripe or a club.</p>
+  </header>
+
+  <section class="card">
+    <h2>What this walk is for</h2>
+<p>Before this page, finding out that Stripe and the product had stopped agreeing meant opening Stripe’s dashboard and our own tables. Now Health has a “Stripe” page with four parts: <strong>Updates from Stripe</strong> (when each feed last spoke, and any update still failing), <strong>Our records against Stripe</strong> (the result of the morning check), <strong>Stripe settings</strong> (our billing page against what Stripe reports) and a row that says plainly it cannot read the failed-payment setting.</p>
+<p>You will make one update look failed and put it back, make the morning check look old and put it back, and check what each role sees.</p>
+<div><strong>It passes when</strong></div>
+<ul>
+  <li>The page opens from Health › Stripe and has no button that changes anything.</li>
+  <li>A failed update shows in the row, the figure, the list and the chip, and all of it goes when it is removed.</li>
+  <li>The morning check’s section shows its last result, agrees with itself, and warns when the check has gone stale.</li>
+  <li>The settings all read OK, and the failed-payment row says it cannot be read: not a pass, not a fail.</li>
+  <li>Support and Product read the page with an eye beside it; Growth cannot.</li>
+</ul>
+  </section>
+
+  <section class="card">
+    <h2>Before you start</h2>
+    <p>Setup, not checked. Keep this page private: it holds dev passwords.</p>
+    <dl class="facts"><dt>Where</dt><dd><strong>http://localhost:3000</strong> (the dev server is up; if the Stripe entry is missing from the menu, restart it first: the build added a page).</dd><dt>Also</dt><dd>A terminal open in the project folder, for the four <code>db-query</code> commands in Parts B and C. They change only dev data and each is put back.</dd><dt>Windows</dt><dd>One normal window for the platform admin. Part E needs a <strong>private window per role</strong>.</dd><dt>Time</dt><dd>About 20 minutes.</dd></dl>
+  </section>
+
+  <section class="card">
+    <h2>Sign in as</h2>
+    <dl class="facts"><dt>Platform admin</dt><dd><code>uat-platform@fieldlogichq.ca</code> · <code>UATPassword2026!</code></dd><dt>Support</dt><dd><code>support@dev.local</code> · <code>devpass123</code></dd><dt>Product</dt><dd><code>product@dev.local</code> · <code>devpass123</code></dd><dt>Growth</dt><dd><code>growth@dev.local</code> · <code>devpass123</code></dd></dl>
+    <p class="sub">All at <strong>http://localhost:3000/platform-admin/login</strong>. Dev-only accounts. If a sign-in is refused, stop and tell me.</p>
+  </section>
+
+  <section class="card stop">
+    <h2>Stop check</h2>
+    <p>Before Part B, the Stripe page must open and show the Plan billing row with a “Last received” time. If it shows “Could not read this just now” for a part, reload once; if it persists, stop and tell me. Part B’s and C’s commands write to <strong>dev</strong> data only. If you stop partway through either part, run its PUT IT BACK command before anything else.</p>
+  </section>
+
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+
+  <section class="card">
+    <h2>Not in this walk</h2>
+<ul>
+  <li><strong>A setting that fails.</strong> It needs Stripe’s own settings changed, and those stay yours. The shared check that decides is the one the audit scripts already run, and the automatic tests pin every check’s label.</li>
+  <li><strong>A wrong-mode update, an update taken and never finished, a second feed failing.</strong> Covered by the automatic tests; dev has none of them.</li>
+  <li><strong>“Send again” and replay.</strong> Part 5, and the only part that writes.</li>
+  <li><strong>Reports, the “This month” card and “Export for the accountant”.</strong> Part 4, after its own drawing session.</li>
+  <li><strong>Club payouts and a third feed.</strong> That feed keeps no log today.</li>
+  <li><strong>A number in Today’s menu for this page.</strong> Not built.</li>
+  <li><strong>A phone.</strong> Computer only.</li>
+</ul>
+  </section>
+</main>
+<script>
+(function () {
+  var DATA = {"key":"plans-pricing-stage2-part3-walk-v1","title":"Plans & pricing Stage 2 Part 3: the Stripe page in Health","parts":[{"id":"A","title":"Opening the page","steps":[{"who":"Platform admin · http://localhost:3000/platform-admin/login","do":"Sign in as the platform admin (card above). In the left menu, under Health, find the last entry and press it.","see":"An entry called “Stripe” sits last in Health, after Online payments. It opens a page titled “Stripe”. (There is no small eye beside it for this account.)"},{"who":"Platform admin · the Stripe page","do":"Read the top of the page: the title’s chip, the sentence under it, and the strip of four figures.","see":"A chip that reads “All clear” or “N need(s) a look”. The sentence says the page reads and reports and never repairs anything by itself, and ends “Reading Stripe’s test account”. Four figures in one band, in this order: Last update from Stripe · Updates still failing · Records that disagree · Settings to check."},{"who":"Platform admin · the whole page","do":"Scroll the whole page looking for any button that would change something.","see":"There is none. No “Check now”, no “Send again”, no form. The only links go to a club, or out to Stripe’s own dashboard in a new tab.","options":["No buttons that change anything","I found a button. Say which"]}]},{"id":"B","title":"Updates from Stripe","steps":[{"who":"Platform admin · “Updates from Stripe”","do":"Read the two rows: Plan billing and Family payments.","see":"Each has a “Last received” day and time. Plan billing also says how many updates were set aside in the last 7 days (for example “96 not ours”); that is normal, not a fault, and the figure is as of today so it is not the pass condition. Family payments shows “Not recorded” under “Set aside” and “Wrong mode”, because that feed does not keep those two facts. It must not read “None” or 0 there.","options":["Both rows present, and Family payments says “Not recorded” twice","Something differs. Say what"]},{"who":"You · a terminal in the project folder","do":"Make one plan billing update look failed. Run this, then reload the Stripe page:\nnode scripts/db-query.mjs --dev -q \"insert into stripe_billing_events (id,type,livemode,received_at,error) values ('evt_walk_fail','invoice.payment_failed',false,now(),'Walk: the club could not be found for this subscription') returning id\"","see":"The command prints the id evt_walk_fail. Nothing else changes yet."},{"who":"Platform admin · the Stripe page, reloaded","do":"Read “Updates still failing”, the tile at the top, the Plan billing row, the title chip, and the new list under the table.","see":"The Plan billing row shows a red 1 under “Still failing”. The tile reads 1 (amber). The title chip counts one more than before. A list headed “What failed in Plan billing” shows invoice.payment_failed, the time, and the words “Walk: the club could not be found for this subscription”.","options":["All four changes appeared","Some did not. Say which"]},{"who":"You · the terminal (PUT IT BACK)","do":"Remove the failed update, then reload the page:\nnode scripts/db-query.mjs --dev -q \"delete from stripe_billing_events where id='evt_walk_fail' returning id\"","see":"The command prints evt_walk_fail. The red 1, the list, the tile’s amber and the extra chip count are all gone again.","options":["Put back, and the page is as it was","Something stayed. Say what"]}]},{"id":"C","title":"Our records against Stripe (the morning check)","steps":[{"who":"Platform admin · “Our records against Stripe”","do":"Read the section.","see":"It says the check runs by itself every morning and that this page shows the last result and cannot run it again. It says when it was checked, and then either “Every record agrees with Stripe” or “N differences across M records compared” with a table of Club and What differs. There is no button to run the check."},{"who":"Platform admin · the table","do":"Count the rows and compare with the sentence above the table.","see":"The rows match “N differences” (the page shows at most 25 and then says “and N more are in the check’s record”). On the dev site many differences are expected: they come from old test clubs. Do not judge the number; judge that the rows and the sentence agree.","options":["Rows and sentence agree","They disagree. Say both"]},{"who":"Platform admin · the table","do":"Press a club’s name in the table.","see":"That club’s Money tab opens in the platform admin. A row about a subscription that is not one of our clubs says “Not one of our clubs” and opens that subscription in Stripe’s dashboard in a new tab instead."},{"who":"Platform admin · a “Renews” row, and Stripe","do":"Find a row that starts “Renews: ours says … Stripe says …” (for example Riverside Royals U13). Open that club’s Money tab and Stripe’s dashboard for the same subscription.","see":"The date after “Stripe says” is the renewal date Stripe shows for that subscription. If the club’s Money tab disagrees with the row today, that is the morning check being a day behind, not a defect: say so in the notes.","options":["Stripe shows the date the row says","Stripe shows a different date. Say both","No Renews row today, so I skipped this"]},{"who":"You · the terminal","do":"Make the morning check look old. The page shows the newest check, so every check is moved back together. Run this, then reload the Stripe page:\nnode scripts/db-query.mjs --dev -q \"update stripe_billing_drift_checks set checked_at = checked_at - interval '3 days' where environment = 'sandbox' returning id\"","see":"The command prints one id per check (about seven). On the page, an amber line says it was last checked (a date three days ago) and that it should run every morning, so something has stopped it. The title chip counts one more.","options":["The amber line appeared and the chip went up","Nothing changed. Say what the section shows"]},{"who":"You · the terminal (PUT IT BACK)","do":"Move the same checks forward again, then reload the page. (The condition leaves out any check made in the last two days, such as the morning run if it happened meanwhile.)\nnode scripts/db-query.mjs --dev -q \"update stripe_billing_drift_checks set checked_at = checked_at + interval '3 days' where environment = 'sandbox' and checked_at < now() - interval '2 days' returning id\"","see":"The command prints the same number of ids. The amber line is gone and the chip is back to where it was.","options":["Put back","The amber line stayed. Say what"]}]},{"id":"D","title":"Stripe settings","steps":[{"who":"Platform admin · “Stripe settings”","do":"Read the checklist.","see":"Rows for: our billing page exists in Stripe; customers can update their card; can see their invoices; can update name, email and tax ID; cannot switch plans there; cancelling ends the plan at its renewal date with no refund; pausing is off. Each has a green “OK” and a short sentence. The figure “Settings to check” at the top reads 0.","options":["All rows OK and the figure reads 0","A row is not OK. Say which"]},{"who":"Platform admin · the last row","do":"Read the last row, “What happens after the last failed payment try”.","see":"Its chip is blue-grey and reads “Cannot be read from here”. It is not green and not red. The sentence says Stripe does not let the product read this setting, the product expects the plan to be cancelled after the last failed try, and a club that never pays would stay on its plan if Stripe is set to mark it unpaid instead.","options":["Neutral chip and that sentence","It shows a pass or a fail. Say which"]},{"who":"Platform admin · the last row","do":"Press “Check it in Stripe ›”.","see":"A new tab opens on Stripe’s dashboard (test mode). The target page is a guess I have not been able to open for you: it should be the page where Stripe sets what happens after the last failed retry.","options":["It opens that Stripe settings page","It opens another Stripe page. Say which","Page not found"]}]},{"id":"E","title":"Who sees it, and who does not","steps":[{"who":"Support · PRIVATE window · http://localhost:3000/platform-admin/login","do":"Sign in as Support (card above) and open Health › Stripe.","see":"The same four parts as the platform admin saw. In the menu, a small eye sits beside “Stripe” (the page reads only for this role).","options":["Same page, and an eye beside Stripe","Something differs. Say what"]},{"who":"Product · another PRIVATE window","do":"Sign in as Product (card above) and open Health › Stripe.","see":"The same page, with the eye beside the entry.","options":["Same page, and an eye beside Stripe","Something differs. Say what"]},{"who":"Growth · another PRIVATE window","do":"Sign in as Growth (card above). Look in the Health group, then type http://localhost:3000/platform-admin/watching-stripe in the address bar.","see":"There is no “Stripe” entry in the menu for Growth. Typing the address sends the person to Today and shows no Stripe page.","options":["No entry, and the address bounces to Today","Growth can see the page. Say what"]}]}]};
+  var KEY = DATA.key, PARTS = DATA.parts;
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  function txt(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; n.textContent = text; return n; }
+  function box(id, partId, label) {
+    var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+    cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+    boxes.push({ part: partId, id: id, cb: cb, label: label });
+    return cb;
+  }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(txt('strong', null, p.id + ' \u00b7 ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(txt('span', 'who', id + ' \u00b7 ' + s.who));
+      t.appendChild(txt('span', null, s['do']));
+      t.appendChild(txt('span', 'see', 'You should see: ' + s.see));
+      if (s.options && s.options.length) {
+        var wrap = el('div', 'step opt'); wrap.appendChild(t);
+        s.options.forEach(function (o, k) {
+          var row = el('label', 'optrow'); var cb = box(id + '-' + (k + 1), p.id, id + ' = ' + o);
+          row.appendChild(cb); row.appendChild(txt('span', null, o)); wrap.appendChild(row);
+        });
+        body.appendChild(wrap);
+      } else {
+        var row2 = el('label', 'step'); var cb2 = box(id, p.id, id);
+        row2.appendChild(cb2); row2.appendChild(t); body.appendChild(row2);
+      }
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function refresh() {
+    var done = 0;
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var n = mine.filter(function (b) { return b.cb.checked; }).length;
+      done += n;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' \u00b7 ' : '') + n + ' of ' + mine.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    document.getElementById('total').textContent = done + ' of ' + boxes.length + ' checked';
+    document.getElementById('barfill').style.width = (boxes.length ? Math.round(done * 100 / boxes.length) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [DATA.title + ' (written 2026-11-07)'];
+    var done = boxes.filter(function (b) { return b.cb.checked; }).length;
+    lines.push('Checked ' + done + ' of ' + boxes.length + ' (a step with options counts one box per option)');
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var ticked = mine.filter(function (b) { return b.cb.checked; }).map(function (b) { return b.label; });
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + mine.length + (ticked.length ? ' (' + ticked.join('; ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

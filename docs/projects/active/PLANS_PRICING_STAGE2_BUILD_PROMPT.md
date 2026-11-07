@@ -97,7 +97,18 @@ that is the owner's dashboard work.
       do-not-retry line to "runs only on a new card" and dropped a retry date already past on it), built from the tab's existing read (no new
       Stripe call, nothing stored): the notice above the agree line, the row's next-try line, the bill window's Tries line, the
       bank's decline code named in fixed words everywhere a failed charge is named. Tests `console-money-failed-payment.test.ts`.
-      Walk owed (owner checklist in the session hand-off).
+      Owner walk §483 PASSED 22 of 22 steps 2026-11-07, no defect.
+- [x] Part 3 Watching Stripe: owner go 2026-11-07 on the PM summary (recommendations taken as written): last morning result only, NO "Check now"
+      (the morning job stays the only thing that writes a check); the failed-try outcome is a neutral "Cannot be read from here" row with a link
+      to check it in Stripe, never a pass or a fail; two feeds (plan billing, family payments; the payout-accounts feed keeps no log);
+      no club-payouts card, no "This month" card or export (Part 4); no "Send again" (Part 5); the sales-tax "?" row dropped (a decision,
+      not a Stripe setting). BUILT and committed 2026-11-07 (hash on the follow-up line): a new Health › Stripe page (Super admin, Billing, Support, Product read; the
+      eye for all but Super admin), no migration, no new Stripe write. The settings rows come from the SAME audit the scripts run
+      (`scripts/lib/stripe-portal-audit.mjs`, imported, not copied). Tests `watching-stripe.test.ts`; two menu guards updated.
+      Proven on dev with a signed-in probe (all three reading roles 200, Growth bounced to Today; a planted failed update showed in the
+      row, tile, list and chip and was removed; the morning check aged and restored). Owner walk §484 PASSED 19 of 19 steps 2026-11-07. /simplify (one shared feed reader, the four top figures moved into the tested words module, one clock for the chip and the stale warning) and /review (a Stripe key fragment in a stored error is masked before it is shown; a missing count now reads as "could not read") done and applied; owner ruled Product may see the page (/legal question closed); platform-admin help entry owed (/docs). Local production build proved the audit import resolves. Open: the failed-try link `/settings/billing/automatic` is UNVERIFIED (walk step D3 asked the owner); a failing feed has no count on the menu or Today (Part 3 scope); "Still failing" and "Last update" show the readable feed alone when the other cannot be read.
+      ⚠ Found on dev: the morning comparison reads "differs" on every run (11 clubs on 2026-11-07), mostly Coaches Portals whose
+      billing cycle we hold as blank while Stripe says monthly. A report only; the check's logic and the daily job were not touched.
       **For Part 6:** `/legal`: staff with the Stripe power now see the bank's decline reason in fixed words ("not enough funds";
       "card reported lost/stolen" were already shown; `fraudulent`/`pickup_card` read as "declined by the bank"); viewing is NOT
       logged (the drawings do not ask for it). `/accounting`: nothing charged, recorded or invoiced changed; the notice says the

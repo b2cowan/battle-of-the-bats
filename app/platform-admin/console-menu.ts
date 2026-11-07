@@ -16,7 +16,7 @@ import type { PlatformRole } from '../../lib/platform-auth';
 /** A lucide icon, by name — the rail maps each to its component. */
 export type MenuIcon =
   | 'today' | 'clubs' | 'people' | 'free_time' | 'retention' | 'status' | 'errors' | 'feedback' | 'sent' | 'leads' | 'campaigns' | 'decks'
-  | 'plans' | 'approval' | 'bulk' | 'templates' | 'export' | 'staff' | 'audit' | 'terminal' | 'wallet' | 'numbers' | 'payments';
+  | 'plans' | 'approval' | 'bulk' | 'templates' | 'export' | 'staff' | 'audit' | 'terminal' | 'wallet' | 'numbers' | 'payments' | 'stripe';
 
 export type MenuItem = { href: string; label: string; icon: MenuIcon; area: PlatformArea };
 export type MenuGroup = { label: string; items: MenuItem[] };
@@ -50,6 +50,8 @@ export function baseMenuGroups(devTools: boolean): MenuGroup[] {
         { href: '/platform-admin/sent-emails', label: 'Sent emails', icon: 'sent', area: 'sent_emails' },
         // Every club's online payments that need a look (Club Tier 12d-2, words §6.2): read only.
         { href: '/platform-admin/online-payments', label: 'Online payments', icon: 'payments', area: 'online_payments' },
+        // Where Stripe and the product stop agreeing (Plans & pricing Stage 2 Part 3): read only; replay (Part 5) is Super admin's.
+        { href: '/platform-admin/watching-stripe', label: 'Stripe', icon: 'stripe', area: 'watching_stripe' },
       ],
     },
     {
