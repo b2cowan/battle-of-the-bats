@@ -271,4 +271,22 @@ export const BANK_WORDS = {
   save: 'Save',
   added: (name: string) => `${name} is added. Start it from a statement.`,
   saved: 'Saved.',
+
+  // ── the COACH's Bank view, Money → Ledger → View: Bank (BC7a; drawing tab 2, the coach phone frame). Drafts for BC8's
+  // `/marketing` (plan §5). A team has one account and no starting statement: its season's opening balance is the start. ──
+  coachAccount: 'Team bank account',
+  // Under the statement date (drawn): the working season only (O5).
+  coachSince: (date: string) => `Statements from this season only, since ${date}.`,
+  // The cash figure (ask 1, option C): one optional field, saved with this check only.
+  coachCash: 'Cash not deposited yet',
+  // Find's head when no check this season has matched: every line of the season counts.
+  coachLinesSinceSeason: (date: string, n: number) => `Lines since the season started (${date}): ${n}`,
+  coachFindSinceSeason: (date: string) => `Lines since the season started · ${date}`,
+  // Q1-A: the divider above last season's lines (the season's own name, "2025 Season").
+  coachLastSeason: (season: string) => `From the ${season}`,
+  coachNoChecksYet: 'No statements checked this season yet.',
+  coachLoadFailed: 'The bank checks couldn’t be loaded.',
+  coachLoading: 'Loading the bank checks…',
+  // The portal's record windows end on Close (the Ledger's own line window does).
+  close: 'Close',
 } as const;

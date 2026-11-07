@@ -17,6 +17,8 @@ const FILES = [...filesUnder(DIR, '.tsx'), ...filesUnder(DIR, '.ts')];
 const PAGE = 'app/[orgSlug]/admin/accounting/bank/page.tsx';
 const CSS = `${DIR}/Bank.module.css`;
 const BASE = '/club/admin';
+/** The band's tiles live in the look-free module both portals' Bank screens share (BC7a, owner "Coach sharing"). */
+const TILES = 'lib/bank-screen.ts';
 
 describe('1 · the tab', () => {
   it('Bank is right after the Ledger, with or without rep teams, and never behind a flag', () => {
@@ -98,13 +100,14 @@ describe('5 · the check form: a balance, not a tick-off', () => {
     const fig = code('BankFigure.tsx');
     assert.match(fig, /import MoneySummaryBand/);
     assert.match(fig, /<MoneySummaryBand /);
-    assert.match(fig, /key: 'bank'[\s\S]*key: 'should'[\s\S]*\bdiff,/, 'The bank says · Should be in the bank · Difference, in that order');
+    assert.match(fig, /bankBandTiles\(\{ date, figure, typed, saved, isPhone \}\)/);
+    assert.match(readCode(TILES), /key: 'bank'[\s\S]*key: 'should'[\s\S]*\bdiff,/, 'The bank says · Should be in the bank · Difference, in that order');
     assert.doesNotMatch(readSource(CSS), /\.(bandTile|moneyTile|bandCard)\b/, 'no second band in the sheet');
   });
   it('an off check is AMBER, never red; a direction is said in words, never a minus sign', () => {
     const fig = code('BankFigure.tsx');
-    assert.match(fig, /tone: !settled \? 'plain' : figure\.result === 'matches' \? 'good' : 'warn'/);
-    assert.doesNotMatch(fig + code('BankCheckForm.tsx') + code('BankStatements.tsx'), /tone="(bad|danger)"|tone: 'danger'/);
+    assert.match(readCode(TILES), /tone: !settled \? 'plain' : figure\.result === 'matches' \? 'good' : 'warn'/);
+    assert.doesNotMatch(fig + readCode(TILES) + code('BankCheckForm.tsx') + code('BankStatements.tsx'), /tone="(bad|danger)"|tone: 'danger'/);
     for (const k of ['bandBankMore', 'bandBankLess'] as const) {
       const sentence = BANK_WORDS[k]('$75.00');
       assert.doesNotMatch(sentence, /[-−]\s?\$|\(\$/, k);
@@ -323,7 +326,7 @@ describe('8 · a saved check, opened', () => {
     const win = code('BankCheckWindow.tsx');
     assert.match(win, /<BankBand date=\{check\.date\} figure=\{check\.figure\} typed saved \/>/);
     assert.match(win, /import KitDialog from '\.\.\/\.\.\/KitDialog'/);
-    assert.match(code('BankFigure.tsx'), /label: saved \? W\.savedBank : W\.bandBank[\s\S]*label: saved \? W\.savedShould : isPhone \? W\.bandShouldPhone : W\.bandShould/);
+    assert.match(readCode(TILES), /label: saved \? W\.savedBank : W\.bandBank[\s\S]*label: saved \? W\.savedShould : isPhone \? W\.bandShouldPhone : W\.bandShould/);
   });
   it('Delete and Check this statement again are a writer\'s only (B7)', () => {
     const win = code('BankCheckWindow.tsx');
@@ -430,8 +433,8 @@ describe('11 · the phone: Find as row cards, the callout\'s row, the two phone 
     assert.equal(BANK_WORDS.bandBankCaptionPhone('Nov 1'), 'On Nov 1');
     assert.equal(BANK_WORDS.bandShouldCaptionPhone, 'Your books, adjusted for what’s pending');
     assert.equal(BANK_WORDS.findSinceMatchPhone('Sep 30'), 'Since your last match · Sep 30');
-    assert.match(code('BankFigure.tsx'), /captionShort: saved \? undefined : W\.bandBankCaptionPhone\(day\(date\)\)/);
-    assert.match(code('BankFigure.tsx'), /captionShort: saved \? undefined : W\.bandShouldCaptionPhone/);
+    assert.match(readCode(TILES), /captionShort: saved \? undefined : W\.bandBankCaptionPhone\(dayShort\(date\)\)/);
+    assert.match(readCode(TILES), /captionShort: saved \? undefined : W\.bandShouldCaptionPhone/);
     assert.match(code('BankFind.tsx'), /<ClubRowBand>\{sinceHead\}<\/ClubRowBand>/);
     assert.match(code('BankCheckForm.tsx'), /label=\{isPhone \? W\.checkBalancePhone : W\.checkBalance\}/);
     const css = readSource(CSS);

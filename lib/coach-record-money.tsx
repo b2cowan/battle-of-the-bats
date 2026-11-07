@@ -148,7 +148,10 @@ export interface RecordMoneyIntent {
   amount?: string;
   /** Pre-answers the door already knows beside the amount — the day it came, how, a note. Each stays the coach's to
    *  change; a method outside the dues list is ignored. */
-  prefill?: { receivedDate?: string; method?: string; note?: string };
+  prefill?: { receivedDate?: string; method?: string; note?: string;
+    /** The day money LEFT (the spend branch's own date): the Bank view's "Add the missing line" (BC7a) opens on the
+     *  statement's day. */
+    paidDate?: string };
   /**
    * A record the save settles with the payment: a payment the CLUB received and handed to this team's head coach (Club
    * Tier Stage 5c, Ask 26 — the bell's Record it). The save carries its id, so the club's record learns it was recorded;

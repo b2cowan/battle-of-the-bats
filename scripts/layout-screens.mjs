@@ -1143,6 +1143,8 @@ export const SCREENS = [
   { id: 'coach-transactions',      session: 'coach', path: (c) => `${team(c)}/accounting?section=ledger&view=timeline`, ready: 'h1' },
   { id: 'coach-payables',          session: 'coach', path: (c) => `${team(c)}/accounting?section=ledger&view=bills`,    ready: 'h1' },
   { id: 'coach-payables-schedule', session: 'coach', path: (c) => `${team(c)}/accounting?section=ledger&view=due`,      ready: 'h1' },
+  /* The fourth view, Bank (Bank balance check BC7a): the head line, the check, the saved checks. */
+  { id: 'coach-ledger-bank',       session: 'coach', path: (c) => `${team(c)}/accounting?section=ledger&view=bank`,     ready: 'h1' },
   /* The team's Payees — a WINDOW over the Ledger since round 3 (Ledger Parity D8, owner 2026-10-02; the page it
      replaced was built the same day and never shipped), opened from Tools; and one payee inside it (D9), the
      record that reads first with its entries as the Ledger's own rows. The id is the page's, kept. */

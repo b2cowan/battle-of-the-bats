@@ -40,6 +40,7 @@ import DateField from '../DateField';
 import DateInput from '@/components/shared/DateInput';
 import CommitmentView from '../CommitmentView';
 import MoneyExportButton from '@/components/coaches/MoneyExportButton';
+import CoachBankView from '@/components/coaches/bank/CoachBankView';
 import { moneySectionHref } from '@/lib/coach-money-links';
 import {
   EXPENSE_COLUMNS, expenseRows,
@@ -352,7 +353,7 @@ function readSavedDatePreset(teamId: string): DateRangeSelection {
  * schedule) — promoted from the owed list's own `Group by`. One mounted instance now serves all
  * three, which also retires the double-mount hazards this file used to guard against by face.
  */
-type LedgerView = 'timeline' | 'bills' | 'due';
+type LedgerView = 'timeline' | 'bills' | 'due' | 'bank';
 /* ⚖ PLACE-NAMES, NOT SORT ORDERS (owner, fold round 3, 2026-08-28 — "I kind of like A and C").
    "By bill" read like an arrangement; "Bills" reads like the home it actually is — where owed
    money is added, imported, chased and opened. "Payment schedule" is the phrase the product has
@@ -361,13 +362,15 @@ const LEDGER_VIEW_LABEL: Record<LedgerView, string> = {
   timeline: 'Timeline',
   bills: 'Bills',
   due: 'Payment schedule',
+  /* The fourth view (Bank balance check BC7a; B8 as approved): the team's bank account checked against this book. */
+  bank: 'Bank',
 };
 /** The view is REMEMBERED per team on this device (fold decision 3, owner 2026-08-28) — exactly
  *  the Date preset's storage pattern: a treasurer-ish coach who lives in By bill lands there next
  *  visit, which is most of the answer to retiring the dedicated Payables tab. */
 const ledgerViewStorageKey = (teamId: string) => `flhq-coach-ledger-view:${teamId}`;
 function isLedgerView(v: string | null): v is LedgerView {
-  return v === 'timeline' || v === 'bills' || v === 'due';
+  return v === 'timeline' || v === 'bills' || v === 'due' || v === 'bank';
 }
 
 /**
@@ -977,7 +980,11 @@ function MoneyRecordsPanel({
    *  era's `onPayables` face flag, and every branch below still reads it: the owed views render
    *  the bills list, the timeline renders the register. The NAME survives the fold on purpose —
    *  renaming 35 sites while folding them is how a subtle miss ships. */
+  /* ⚠ AND THE BANK VIEW (BC7a) COUNTS HERE AS "NOT THE REGISTER" ON PURPOSE: none of the register's machinery (its read
+     window, its pinned toolbar, its sticky deck) runs behind it. Its own screen replaces the toolbar's other controls, the
+     strip and the list (`onBank` below), so nothing of the owed views shows either. */
   const onPayables = view !== 'timeline';
+  const onBank = view === 'bank';
 
   const [expenses, setExpenses] = useState<RepTeamExpense[]>([]);
   const [loading, setLoading] = useState(true);
@@ -2063,8 +2070,10 @@ function MoneyRecordsPanel({
     /* A door's other pre-answers (the club's hand-off, Stage 5c: the day it came, how, a note) go in like the amount —
        into the baseline too, so a form nobody touched never asks "discard this?". */
     if (intent.prefill) {
-      const { receivedDate, method, note } = intent.prefill;
-      const seed = { ...(receivedDate ? { receivedDate } : {}), ...(note !== undefined ? { notes: note } : {}) };
+      const { receivedDate, paidDate, method, note } = intent.prefill;
+      const seed = {
+        ...(receivedDate ? { receivedDate } : {}), ...(paidDate ? { paidDate } : {}), ...(note !== undefined ? { notes: note } : {}),
+      };
       setForm(f => ({ ...f, ...seed }));
       setFormOpenedWith(f => ({ ...f, ...seed }));
       if (method && (DUES_PAYMENT_METHODS as readonly string[]).includes(method)) {
@@ -6292,7 +6301,7 @@ function MoneyRecordsPanel({
     }
   }
 
-  if (ctxLoading) return <LoadingState label={onPayables ? 'Loading the bills…' : 'Loading the register…'} />;
+  if (ctxLoading) return <LoadingState label={onBank ? 'Loading the bank checks…' : onPayables ? 'Loading the bills…' : 'Loading the register…'} />;
   if (!page.hasAccess) {
     return (
       <div className={styles.notAssigned}>
@@ -7111,7 +7120,7 @@ function MoneyRecordsPanel({
       label="View"
       lead
       value={view}
-      options={(['timeline', 'bills', 'due'] as const).map(id => ({ id, label: LEDGER_VIEW_LABEL[id] }))}
+      options={(['timeline', 'bills', 'due', 'bank'] as const).map(id => ({ id, label: LEDGER_VIEW_LABEL[id] }))}
       onChange={next => setView(next as LedgerView)}
     />
   );
@@ -7191,7 +7200,9 @@ function MoneyRecordsPanel({
             control type. Nothing here may wrap between decks — each row has a fixed cast. */}
         <div className={styles.panelDeck}>
           {viewPill}
-        <div className={kit.toolbarActions}>
+        {/* ⚖ ON THE BANK VIEW THE TOOLBAR IS THE VIEW PILL ALONE (drawing tab 2, coach phone frame): Export, Tools and
+            the create are the book's, and the bank view writes nothing to it (ask 1). */}
+        {!onBank && (<div className={kit.toolbarActions}>
           {/* ⚠ EXPORTS THE SUB-TAB YOU ARE ON, honouring the tag filter beside it — which is
               the whole argument for Export living down here. A hub-wide menu could only ever
               have offered "expenses and payables" as one undifferentiated lump. */}
@@ -7292,9 +7303,9 @@ function MoneyRecordsPanel({
               <span className={styles.headerBtnLabel}>Record</span>
             </button>
           )}
+        </div>)}
         </div>
-        </div>
-        <div className={styles.panelFilterStrip}>
+        {!onBank && (<div className={styles.panelFilterStrip}>
         {onPayables ? (
           /* ⚠⚠ THE `Schedule | Commitments` TOGGLE IS GONE (Payables Rebuild P3, plan §3.1). It
              presented a parent and its children as two reports — the framing defect underneath all
@@ -7472,7 +7483,7 @@ function MoneyRecordsPanel({
               Cash on hand <b>{fmt(book.cashOnHand)}</b>
             </span>
           )}
-        </div>
+        </div>)}
       </CoachListToolbar>
       {/* ⚠ THE ORG/TEAM COLOUR LEGEND IS GONE, and nothing was lost with it: the swatch now sits in
           each option of the tag pill, where the distinction is actually being used. The legend
@@ -7493,7 +7504,7 @@ function MoneyRecordsPanel({
           ⚠ THE MONEY LEADS. This read "vs {tag}: 3 commitments, $900.00 total" — figure last,
           and "vs" was left over from the game-tag report it was copied from. The dollars are the
           answer to the question a coach came here with. */}
-      {tagFilterSummary && showTagFilter && (
+      {!onBank && tagFilterSummary && showTagFilter && (
         <div className={styles.moneyTagSummary}>
           <span className={styles.moneyTagSummaryFigure}>{fmt(tagFilterSummary.total)}</span>
           {' '}across {tagFilterSummary.count}{' '}
@@ -7543,7 +7554,16 @@ function MoneyRecordsPanel({
       {readRow && (
         <LedgerLineWindow row={readRow} base={base} open={readVisible} onClose={() => setReadRow(null)} />
       )}
-      {loading ? (
+      {onBank ? (
+        /* ── THE BANK VIEW (Bank balance check BC7a, plan §6 tab 2) ── the team's one bank account checked against this
+           book. Its own reads and writes (the coach bank routes); "Add the missing line" opens THIS Ledger's own Record
+           money window, filled with the gap (§6 tab 3: the ordinary coach add), so the line is written by the Ledger's
+           routes, never by bank code; its save bumps the money revision, which the view reads again on. */
+        <CoachBankView orgSlug={orgSlug} teamId={teamId} active={tabActive}
+          onAddLine={canWriteMoney ? line => openConversationFrom(line.direction === 'in'
+            ? { branch: 'other-in', amount: line.amount, prefill: { receivedDate: line.date } }
+            : { branch: 'spend', amount: line.amount, prefill: { paidDate: line.date } }) : undefined} />
+      ) : loading ? (
         <LoadingState label={onPayables ? 'Loading the bills…' : 'Loading the register…'} />
       ) : error ? (
         <CoachLoadError message={error} onRetry={() => { void load(); }} />

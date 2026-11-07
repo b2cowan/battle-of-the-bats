@@ -1,0 +1,175 @@
+/*
+ * THE COACH'S BANK VIEW (Bank balance check BC7a — Money → Ledger → View: Bank; drawing BANK_BALANCE_CHECK_DRAWINGS.html
+ * tab 2, the coach phone frame, laid out as the club's walked desk Bank tab: owner 2026-11-06, plan §0 "Coach desk and
+ * reader"). Drawn in the coaches portal's own look: its window (QuestionShell), fields, table, chips and buttons come from
+ * coaches.module.css and the coach kit; this sheet lays the view out and draws only what they don't (the check's card,
+ * the sums under the joined band, Find's bar, callout and row action). Tokens only, the `--type-*` ladder only.
+ */
+
+/* ── the head line: "Team bank account · checked through {date} · Matches / Off by $X" ── */
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+  margin: 0 0 1rem;
+  font-size: var(--type-body);
+  color: var(--text-secondary);
+}
+.head b { color: var(--text-primary); font-weight: 600; }
+.notice { margin: 0 0 1rem; font-size: var(--type-body); color: var(--text-primary); }
+
+/* A chip that opens what it names (every highlight is clickable). */
+.chipDoor { display: inline-flex; align-items: center; padding: 0; border: 0; background: none; font: inherit; cursor: pointer; border-radius: 999px; }
+.chipDoor:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+@media (max-width: 768px) {
+  .chipDoor { min-height: var(--tap-min, 44px); }
+}
+
+/* A text button: underlined, olive ("Show them", "Undo", "Yes", "Try again"). */
+.link {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-size: var(--type-support);
+  color: var(--home-olive);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.link:hover { color: var(--text-primary); }
+.link:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; border-radius: 2px; }
+.link:disabled { cursor: progress; opacity: 0.6; }
+
+/* ── the check (tab 2): one card above the saved checks ── */
+.card {
+  margin: 0 0 1.5rem;
+  padding: 1.1rem 1.25rem 1.2rem;
+  border: 1px solid var(--home-line);
+  border-radius: 10px;
+  background: var(--home-card);
+}
+.cardTitle { margin: 0 0 0.75rem; font-size: var(--type-heading); font-weight: 700; color: var(--text-primary); }
+/* Statement date · Bank balance · Cash not deposited yet · Save, on one line at a desk; Save level with the inputs. */
+.fields {
+  display: grid;
+  grid-template-columns: minmax(150px, 200px) minmax(150px, 200px) minmax(170px, 220px) auto;
+  align-items: end;
+  gap: 0.75rem 1rem;
+}
+.save { display: flex; align-items: flex-end; }
+.since { margin: 0.5rem 0 0; }
+.note { margin: 0.5rem 0 0; }
+.status { margin: 0.75rem 0 0; font-size: var(--type-support); color: var(--text-secondary); line-height: 1.45; }
+
+/* The band (the shipped joined band, three tiles) with the drawing's gap above it. */
+.band { margin: 0.75rem 0 0.25rem; }
+
+/* The sums under the band, always open: label left, amount right, the total ruled off. */
+.sums { margin: 0.25rem 0 0; border: 1px solid var(--home-line); border-radius: 8px; background: var(--home-card); }
+.sumRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.55rem 0.9rem;
+  border-top: 1px solid var(--home-line);
+  font-size: var(--type-body);
+  color: var(--text-primary);
+}
+.sumRow:first-child { border-top: 0; }
+.sumRow > span:first-child { min-width: 0; overflow-wrap: anywhere; }
+.sumQuiet { color: var(--text-secondary); }
+.sumAmt { font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; }
+.sumTotal { font-weight: 700; background: var(--surface-2); border-radius: 0 0 8px 8px; }
+.sumNote { margin: 0; padding: 0.4rem 0.9rem 0.6rem; font-size: var(--type-support); color: var(--text-secondary); line-height: 1.45; }
+.askActs { display: inline-flex; gap: 0.75rem; }
+
+/* ── Find (drawing tab 3): under the sums ── */
+.find { display: flex; flex-direction: column; gap: 0.75rem; margin: 0.75rem 0 0; }
+.findTitle { margin: 0.25rem 0 0; font-size: var(--type-heading); font-weight: 700; color: var(--text-primary); }
+.hint { margin: 0; }
+/* The callout: amber (never red), one possibility, its answers. */
+.callout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem 1rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--warning) 32%, transparent);
+  border-left: 3px solid var(--warning);
+  border-radius: var(--home-radius-sm, 9px);
+  background: rgba(var(--warning-rgb), 0.08);
+  font-size: var(--type-body);
+  line-height: 1.45;
+  color: var(--text-primary);
+}
+.calloutWords { flex: 1 1 22rem; min-width: 0; }
+.calloutSub { display: block; margin-top: 0.3rem; font-size: var(--type-support); color: var(--text-secondary); }
+.calloutActs { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; }
+.hintNext { display: inline-flex; align-items: center; gap: 0.4rem; color: var(--text-secondary); font-size: var(--type-support); }
+/* The lines' bar: "Lines since your last match · {date}", then the search at the right. */
+.findBar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem 1rem; }
+.findSince { font-size: var(--type-body); font-weight: 600; color: var(--text-primary); }
+.findWhat { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.5rem; }
+.findDetail { color: var(--text-secondary); font-size: var(--type-support); }
+.nowrap { white-space: nowrap; }
+td.moneyIn { color: var(--badge-success-ink); }
+td.actCell, th.actCell { width: 11rem; text-align: right; white-space: nowrap; }
+/* A hinted line: amber-soft (never red). A marked line: greyed, no tint. Last season's divider: the season's name. */
+tr.hitRow > td { background: rgba(var(--warning-rgb), 0.08); }
+tr.markedRow > td, tr.markedRow > td.moneyIn { color: var(--text-tertiary); }
+tr.divider > td {
+  padding-top: 0.9rem;
+  font-size: var(--type-support);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--text-secondary);
+  background: var(--surface-2);
+}
+/* "Not in the bank yet" on any row: shown on a hinted row, and under the pointer or the keyboard's focus on the rest —
+   never hover-only (focus shows it; a touch screen, which has no pointer to hover, shows it always). */
+.markBtn {
+  padding: 0.3rem 0.65rem;
+  border: 1px solid var(--home-line);
+  border-radius: 6px;
+  background: var(--home-card);
+  font: inherit;
+  font-size: var(--type-support);
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+  opacity: 0;
+}
+.markBtn:hover { border-color: var(--home-olive); }
+.markBtn:focus-visible { opacity: 1; outline: 2px solid var(--home-olive); outline-offset: 2px; }
+.markShown,
+tr:hover .markBtn,
+tr:focus-within .markBtn { opacity: 1; }
+@media (hover: none) {
+  .markBtn { opacity: 1; }
+}
+
+/* ── the saved checks (tab 5) ── */
+.listHead { margin: 0 0 0.6rem; }
+.resultCell { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 0.5rem; }
+.empty { margin: 0.6rem 0 0; }
+
+/* ── a saved check, opened: the lines under its band ── */
+.savedNote { margin: 0.75rem 0 0; font-size: var(--type-support); color: var(--text-secondary); line-height: 1.45; }
+.savedNote b { color: var(--text-primary); font-weight: 600; }
+
+/* A touch width: every door a full tap (the portal's floor), as the club's Bank tab does. */
+@media (max-width: 768px) {
+  .link { display: inline-flex; align-items: center; justify-content: center; min-height: var(--tap-min, 44px); min-width: var(--tap-min, 44px); }
+  .markBtn { min-height: var(--tap-min, 44px); }
+  .fields input, .save button { min-height: var(--tap-min, 44px); }
+}
+
+/* A desk lays the fields out in a row; a narrow screen stacks them (BC7b draws the phone frame). */
+@media (max-width: 760px) {
+  .fields { grid-template-columns: 1fr 1fr; }
+  .fields > :nth-child(3), .fields > .save { grid-column: 1 / -1; }
+}

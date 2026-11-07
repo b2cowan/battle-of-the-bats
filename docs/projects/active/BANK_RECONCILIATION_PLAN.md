@@ -83,6 +83,8 @@ need to type a statement balance, see the difference from the books on that date
 | O5: season start | **A season Start next season handed cash starts the day it was rolled into; any other season (a team's first, or one opened without carrying cash) starts on the earlier of the day it was created and its first recorded money.** (Owner, 2026-11-06, BC6a, "Two cases".) |
 | Q1 look-back | **"Last season" is the season the opening cash was carried from; with no cash carried there is no look-back. With no matched check last season, Find looks over its final 60 days. The look-back stops once this season has a matched check.** (Owner, 2026-11-06, BC6a.) |
 | Still waiting across the rollover | **The new season's first check asks "Still waiting?" about whatever last season's final check left Not in the bank yet.** (Owner, 2026-11-06, BC6a.) |
+| Coach desk and reader | **The coach's desk Bank view is built from the phone frame laid out as the club's walked desk Bank tab, and the money-read view as the club reader's: the head line, the saved checks and the opened check, no form (so no Find) and no Delete.** The BC7b walk shows both widths to the owner before the commit. (Owner, 2026-11-06, BC7a.) |
+| Coach sharing | **Only look-free pieces are shared between the club's and the coach's Bank screens** (the money and date wording, the band's three tiles from a figure); the coach view is drawn in the coaches portal's own look; no admin-kit component changes. (Owner, 2026-11-06, BC7a.) |
 
 ### Tick-off rulings that still stand (Appendix A §4)
 
@@ -315,6 +317,9 @@ money table or a book line.** A guard test pins this: no bank code writes `accou
   account, be dated on or before your starting statement, and not be waiting there already. Online payments can’t wait at
   the start." (`bad_item`'s sentence said "dated after your starting statement", the opposite of this door).
 - [ ] *new, Q1-A* "From the {2025 Season}" — the divider above last season's lines in the coach's Find
+- [ ] *new, BC7a drafts* (coach Bank view, `BANK_WORDS.coach*`, for BC8's pass): "Team bank account" · "Lines since the
+  season started ({date}): n" / "Lines since the season started · {date}" (Find's head before any match) · "No statements
+  checked this season yet." · "The bank checks couldn't be loaded." · "Loading the bank checks…" · "Close"
 - [ ] *new* "Statements from this season only, since {date}." (drawn) · *new* refusal "This statement is before the
   {2026 Season} started on {date}. Check it from last season before you start a new one." — coach
 - [ ] "Bank: {account} checked through {date} ›" · "Bank: not checked yet ›" · coach "Bank checked through {date} ›" ·
@@ -985,8 +990,54 @@ guard and a dev probe). Mig 447 already carries the team account (`owner_kind = 
     `account === null` (kept-edge a); a POST answers the bank read again, not the new check's id (as the club's).
 
 ### BC7 — Coach: the Ledger's Bank view (desk + phone)
+Build prompt written 2026-11-06: `BANK_BALANCE_CHECK_BC7_BUILD_PROMPT.md` (two sessions: BC7a the desk view, BC7b the
+phone, the walks and the finishing passes).
 - [ ] The fourth View pill option; the check with Cash not deposited yet; Find; saved checks; the read-only form for money
-  read (K7). Walk probes both widths.
+  read (K7). Walk probes both widths. *(BC7a built the desk; BC7b owes the phone and the walks.)*
+- [x] **BC7a — the Bank view on a desk, built 2026-11-06** (owner: §0 "Coach desk and reader" and "Coach sharing" ruled as
+  recommended; yes to the UX summary; asks 3–6 dropped as already ruled: cash = ask 1 C, no print = BC8's team report,
+  the divider = Q1-A, "Add the missing line" = §6 tab 3). No migration, no route change. Anchors:
+  - **The view** (`LedgerView` + 'bank', `LEDGER_VIEW_LABEL.bank` "Bank", `isLedgerView`, the View pill's options; `?view=bank`
+    and the per-team memory take it). `onBank` hides the toolbar's actions (Export, Tools, Add a bill, the pinned Record),
+    the filter strip and the tag total (drawn: the View pill alone); `onPayables` still counts Bank as "not the register",
+    so none of the register's machinery runs behind it. The body mounts `CoachBankView` first.
+  - **Screens** `components/coaches/bank/`: `CoachBankView` (head line "Team bank account · checked through {date} ·
+    Matches" or the amber chip door; the form behind the server's `canWrite`; Checked statements as the portal's table;
+    reads only while `active`, again on the money revision; a write's answer outranks a read in flight); `CoachBankCheck`
+    (Statement date · Bank balance · Cash not deposited yet · Save inline; "Statements from this season only, since
+    {season.start}."; the day's figure debounced; a refused day's own sentence; the band through the shipped
+    `MoneySummaryBand`; the sums Your books · Not in the bank yet + Undo · Still waiting? Yes/No · Cash − · Should be in the
+    bank); `CoachBankFind` (`coachHints`; the callout; this season's lines, then "From the {season}" and last season's, both
+    paged by 50; any line Not in the bank yet; "Add the missing line"); `CoachBankWindow` (QuestionShell 640: the saved
+    band, `savedTerms` less on-its-way, Books now say, who and when; Delete docked as the Ledger's record window does, Close,
+    Check this statement again; a reader sees no Delete and no Check again; no print); `coachBank.ts` (the routes, the
+    response type from `teamBankView` as a type only); `CoachBank.module.css` (tokens; ≤768 the tap floor).
+  - **"Add the missing line"** opens the Ledger's own Record money window: money in → `other-in` with `receivedDate`, money
+    out → `spend` with the new `RecordMoneyIntent.prefill.paidDate` (seeded into the form and its baseline); its save bumps
+    the money revision, and the view reads the day again.
+  - **Shared, look-free** (`lib/bank-screen.ts`): `cents`, `fieldAmount`, `moved`, `dayYear`, `dayShort`, `nameOf`,
+    `throughWords`, `bankBandTiles`. The club's `BankShared` re-exports the formatting and `BankBand` draws the shared
+    tiles; the club tab renders as before. No admin-kit component changed.
+  - **Words** (`lib/bank-tab-words.ts`, drafts for BC8's `/marketing`, §5): `coachAccount`, `coachSince`, `coachCash`,
+    `coachLinesSinceSeason`, `coachFindSinceSeason`, `coachLastSeason`, `coachNoChecksYet`, `coachLoadFailed`,
+    `coachLoading`, `close`.
+  - **Guards**: `tests/unit/bank-coach-view-guard.test.ts` (new: the view, K7, rule 6, the season, the sharing, the save
+    notice); `bank-r2c-screens-guard.test.ts`'s band pins read `lib/bank-screen.ts`. Layout screen `coach-ledger-bank`.
+- [x] **Proved 2026-11-06:** 462 bank + Ledger + band + toolbar + history-guard tests; tsc clean for these files (other
+  sessions' files fail on their own); focused lint, `check:spelling`, `check:tokens`, `check:css-purity` clean;
+  `check:layout --only=coach-ledger-bank,coach-transactions` clean at 1440/768/390/361 (the first run caught the fields, Save
+  and "Show them" under the tap floor at ≤768). `verify:changed`'s 21 failures are other sessions' files. Not walked in a
+  browser yet (BC7b's walk).
+- [x] **`/review` standard (3 lenses) 2026-11-06:** 1 Medium fixed (the save notice cleared in the same batch it was set).
+  Lows fixed: the hidden form read on every money revision; a read in flight could overwrite a save's answer; a stale
+  date's read error; a failed re-read invisible once loaded; an unreadable 2xx body taken as a read; cash "0" refused (the
+  server takes it as none) and a bad cash figure said only at Save; last season's lines unpaged; a saved unnamed line read
+  differently; the Ledger's "Loading the bills…" on Bank. Kept: "Check this statement again" starts with the balance, cash
+  and marks empty (as the club's); a Ledger remembered on Bank opens on Bank (as Bills and Payment schedule do); the band's
+  live region announces as the coach types (as the club's).
+- [ ] **BC7b next:** the phone (≤600: one column, the fields side by side, the cash field wide, the caption "your books, less
+  $X cash", Find as row cards 10 at a time with signed amounts, Save last), the walk probe at 1440/390/361 as money write
+  and money read, `/design`, `/simplify`, `/review`, records.
 
 ### BC8 — Coach touchpoints and the club's read (after Stage 14)
 - [ ] The Money Overview line; the Start next season / Close the season warnings (the modal's list only, never
