@@ -227,6 +227,38 @@ export function savedTerms(c: SavedCheck): { terms: SavedTerm[]; totalCents: num
   return { terms, totalCents: start ? c.booksCents : figureOfSaved(c).shouldBeCents };
 }
 
+/**
+ * THE PRINTED REPORT's sum (BC5b, owner "Report order"): the same saved check, written BANK FIRST as an association's
+ * monthly form runs — the bank's balance · each Not-in-the-bank-yet item (a money-in line +, a cheque −) · online payments
+ * on their way (+, or not counted) · cash (+) = what the books should say, beside the books themselves. It is `figureCheck`
+ * solved the other way: books + difference (so the gap between this total and the books is the screen's own Off by). The
+ * items move the bank their own line's way (`waitingOnStart`, the one home of that sign). A zero on-its-way and zero cash
+ * are left out; a not-counted one stays. `totalCents` comes from the saved figure, never the terms re-added. A check only:
+ * a starting statement has no result and no report.
+ */
+export function reportTerms(c: SavedCheck): { terms: SavedTerm[]; totalCents: number } {
+  if (c.kind !== 'check') throw new Error('bank-check: a report is figured from a check, never the starting statement');
+  const terms: SavedTerm[] = [{ kind: 'base', key: 'base', cents: c.bankCents }];
+  for (const w of c.waiting) terms.push({ kind: 'waiting', key: `w-${w.key}`, cents: waitingOnStart(w), item: w });
+  if (c.onItsWayCents === null) terms.push({ kind: 'onItsWay', key: 'onItsWay', cents: null });
+  else if (c.onItsWayCents !== 0) terms.push({ kind: 'onItsWay', key: 'onItsWay', cents: c.onItsWayCents });
+  if (c.cashCents) terms.push({ kind: 'cash', key: 'cash', cents: c.cashCents });
+  const f = figureOfSaved(c);
+  return { terms, totalCents: f.booksCents + f.differenceCents };
+}
+
+/**
+ * The report's "Your books" line (BC5b, owner "Report extras"): the starting point and the book movement since, from the
+ * SAVED figures — the start's books and this check's books. Null (the line is left off) when there is no start, the start
+ * isn't before this check, or the start was corrected after this check was saved: its books are no longer the ones this
+ * check was figured from, and the "Books now say" note explains that case.
+ */
+export function startingPoint(check: Pick<SavedCheck, 'kind' | 'date' | 'booksCents'>,
+  start: Pick<SavedCheck, 'kind' | 'date' | 'booksCents'> | null, startCorrected: boolean): { date: string; cents: number; sinceCents: number } | null {
+  if (check.kind !== 'check' || !start || start.kind !== 'start' || start.date >= check.date || startCorrected) return null;
+  return { date: start.date, cents: start.booksCents, sinceCents: check.booksCents - start.booksCents };
+}
+
 /** Ask 3's "matched": matched WHEN SAVED. A later "Books now say" doesn't un-match it. A start is a starting point, not a
  *  match. */
 export const matchedWhenSaved = (c: SavedCheck): boolean => c.kind === 'check' && figureOfSaved(c).differenceCents === 0;

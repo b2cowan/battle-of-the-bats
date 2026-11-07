@@ -30,9 +30,9 @@ const accountingHelp: HelpPageContent = {
       id: 'accounting-tabs',
       group: 'Getting started',
       heading: 'Finding your way: one page, its tabs across the top',
-      summary: 'Overview, Budget, Teams, Ledger, Allocations, Payment requests, Budget vs. Actual and Payouts — tabs across the top of one page.',
-      keywords: ['tabs', 'overview', 'board summary', 'teams tab', 'ledger tab', 'allocations tab', 'payment requests tab', 'budget', 'budget vs actual', 'navigation', 'where is', 'payouts tab', 'payouts', 'bank statement'],
-      searchText: 'payouts tab payouts match a payout to the bank statement stripe payouts only for a club that has connected payouts accounting tabs overview teams ledger allocations payment requests budget budget vs actual one page tab bar rail where is the ledger where are the teams where are allocations where are payment requests team account inside the teams tab team dropdown payees payees window allocation window opens over the tab where did the payees page go where did the allocation page go where did the back arrow go',
+      summary: 'Overview, Budget, Teams, Ledger, Bank, Allocations, Payment requests, Budget vs. Actual and Payouts — tabs across the top of one page.',
+      keywords: ['tabs', 'overview', 'board summary', 'teams tab', 'ledger tab', 'bank tab', 'allocations tab', 'payment requests tab', 'budget', 'budget vs actual', 'navigation', 'where is', 'payouts tab', 'payouts', 'bank statement'],
+      searchText: 'bank tab check the bank statement against the books payouts tab payouts match a payout to the bank statement stripe payouts only for a club that has connected payouts accounting tabs overview teams ledger bank allocations payment requests budget budget vs actual one page tab bar rail where is the ledger where are the teams where are allocations where are payment requests team account inside the teams tab team dropdown payees payees window allocation window opens over the tab where did the payees page go where did the allocation page go where did the back arrow go',
       content: (
         <>
           <p>Accounting is one page, and its tabs run across the top:</p>
@@ -40,6 +40,7 @@ const accountingHelp: HelpPageContent = {
             <HelpDef term="Overview">The board summary: where the club stands today, the year against the budget, how many teams need you, and the club’s books.</HelpDef>
             <HelpDef term="Teams">Every team’s money with the club for the year, and each team’s account inside it.</HelpDef>
             <HelpDef term="Ledger">One book at a time, read like a bank statement. The <strong>Book</strong> pill switches between the club’s books.</HelpDef>
+            <HelpDef term="Bank">The club’s bank statement checked against its books, statement by statement. See <a href="#bank-tab">Checking the bank statement</a>.</HelpDef>
             <HelpDef term="Allocations">What the club bills its teams, and what is coming due.</HelpDef>
             <HelpDef term="Payment requests">What the teams ask of the club, waiting for your answer.</HelpDef>
             <HelpDef term="Budget">The year’s plan, revenue first and then expenses, line by line.</HelpDef>
@@ -56,7 +57,7 @@ const accountingHelp: HelpPageContent = {
       id: 'ledgers',
       summary: 'Every dollar lives in a book: the General ledger, a tournament’s book, or a fund you keep apart.',
       keywords: ['payouts status', 'house league card payments', 'families pay by card', 'online payments', 'payment processing', 'card refunds', 'ledger', 'book', 'general ledger', 'tournament ledger', 'tournament entry fees', 'filed under', 'entry fee income', 'org sub-ledger', 'overview', 'board summary', 'where the club stands', 'cash on hand', 'owed by the teams', 'waiting on you', 'held by the team', 'board report', 'fiscal year pill', 'still open', 'year-end report'],
-      searchText: 'ledger book general ledger tournament ledger tournament entry fees entry fee income posts by itself visiting team payment filed under event settings fees and payments void replacement not back-filled house league book house league registration fees row season under it mark received refund org sub-ledger reserve fund overview board summary board report where the club stands today cash on hand owed by the teams waiting on you fiscal year pill year pill the year against the budget the teams teams card teams with money late request waiting teams table moved to the teams tab held by the teams held by the team lock team cash is the coaches never added to the club figures export board report excel pdf still open from last year from 2025–26 still open unpaid installments waiting requests from a closed year year-end report close the year ended still open',
+      searchText: 'ledger book general ledger tournament ledger tournament entry fees entry fee income posts by itself visiting team payment filed under event settings fees and payments void replacement not back-filled house league book house league registration fees row season under it mark received refund org sub-ledger reserve fund overview board summary board report where the club stands today cash on hand owed by the teams waiting on you fiscal year pill year pill the year against the budget the teams teams card teams with money late request waiting teams table moved to the teams tab held by the teams held by the team lock team cash is the coaches never added to the club figures export board report excel pdf still open from last year from 2025–26 still open unpaid installments waiting requests from a closed year year-end report close the year ended still open bank line bank checked through not checked yet',
       content: (
         <>
           <p>The club’s money is kept in <strong>books</strong> (ledgers). Each has a kind:</p>
@@ -67,7 +68,7 @@ const accountingHelp: HelpPageContent = {
           </HelpDefs>
           <p>The <strong>Overview</strong> tab is the board summary. The <strong>Fiscal year</strong> pill picks the year; <strong>Export</strong> writes the whole summary as a board report (Excel first, then PDF or CSV), or on a closed year the <a href="#fiscal-year-papers">year-end report</a>. After a year ends, one line at the top offers to <a href="#fiscal-year-close">close it</a>. Top to bottom:</p>
           <HelpDefs>
-            <HelpDef term="Where the club stands · today">Three figures: <strong>Cash on hand</strong> (the club’s own books, never a team’s), <strong>Owed by the teams</strong> (what is overdue, and what a team says it has sent that you haven’t confirmed) and <strong>Waiting on you</strong> (payment requests, and how many are holding up a payout).</HelpDef>
+            <HelpDef term="Where the club stands · today">Beside the heading, one line per bank account says how far it is <a href="#bank-tab">checked</a>. Then three figures: <strong>Cash on hand</strong> (the club’s own books, never a team’s), <strong>Owed by the teams</strong> (what is overdue, and what a team says it has sent that you haven’t confirmed) and <strong>Waiting on you</strong> (payment requests, and how many are holding up a payout).</HelpDef>
             <HelpDef term="From 2025–26, still open">After a year is closed, what it left unpaid or waiting, each row opening the page that settles it, until the last is settled.</HelpDef>
             <HelpDef term="The year against the budget">Revenue (with what came from the teams, on allocations and on request), expenses (with what was paid to teams on request, and any <strong>off-plan</strong> spending), and the <strong>net for the year</strong>, each against its plan. One sentence says how much <strong>headroom</strong> is left. <strong>Budget vs. Actual</strong> below it opens the full report. On a phone this is one row that opens Budget vs. Actual.</HelpDef>
             <HelpDef term="The teams">How many teams have money late (on any year’s bills, as <strong>Owed by the teams</strong> counts it) and how many have a request waiting for you, then <strong>Teams</strong>, the door to the <a href="#teams-tab">Teams tab</a>, where every team’s figures are. On a phone this is one row.</HelpDef>
@@ -274,6 +275,113 @@ const accountingHelp: HelpPageContent = {
           <p>The Ledger shows both halves of the word, <strong>Category</strong> and <strong>Item</strong>, and filters by either. Its export carries both columns.</p>
         </>
       ),
+    },
+    {
+      group: 'How accounting works',
+      id: 'bank-tab',
+      heading: 'Checking the bank statement: the Bank tab',
+      summary: 'Type a statement’s date and balance; the Bank tab says whether the club’s books agree, and helps you find the difference when they don’t.',
+      keywords: ['bank', 'bank tab', 'bank statement', 'reconcile', 'reconciliation', 'bank reconciliation', 'check a statement', 'statement balance', 'starting statement', 'matches', 'off by', 'find the difference', 'not in the bank yet', 'still waiting', 'waiting at the start', 'outstanding cheque', 'deposit not in the bank', 'books now say', 'checked through', 'print this check', 'bank check report', 'second bank account', 'treasurer'],
+      searchText: 'bank tab reconcile reconciliation bank reconciliation reconcile the bank statement check the bank statement against the books statement date bank balance on that date start here start checking the club’s bank account starting statement starting point checks start from this balance books in this account add an account name and books second account account pill move a book check a statement save this check the bank says should be in the bank difference matches off by the bank shows more less than your books how should be in the bank is worked out your books on online payments on their way to your bank stripe pays them out not counted stripe didn’t answer start anyway try again find the find an amount or a name lines since your last match exactly half of part of next possibility not in the bank yet outstanding cheque cheque not cashed deposit not landed add the missing line bank fee interest still waiting on yes no waiting at the start before your starting statement take it off checked statements the bank said should have been result checked by statement ending books now say figures stay as they were delete this check delete the starting statement later checks start from this statement check this statement again checked through off by chip overview line bank checked through not checked yet where the club stands fiscal year close still open not checked in the last month off by last checked print this check printed report one page letter association monthly form board signature prepared by reviewed by phone show 10 more read only',
+      content: (
+        <>
+          <p>The <strong>Bank</strong> tab checks the club’s bank statement against the club’s books. You type a statement’s date and its ending balance; the tab says whether the books agree, and when they don’t, it helps you find the difference. Every check you save stays, so the board can see which statements were checked and when.</p>
+          <p>Everyone who can open Accounting can open the Bank tab and its saved checks. Starting, checking, deleting and moving books are for someone who can move the club’s money; anyone else sees the same tab with those controls gone.</p>
+        </>
+      ),
+      subtopics: [
+        {
+          id: 'bank-tab-start',
+          title: 'Start checking the club’s bank account',
+          content: (
+            <>
+              <p>Checking starts from a bank statement you already have. Pick one, then:</p>
+              <HelpSteps>
+                <li>Give the account a name (<em>Club chequing</em>, say). A name only — never the account number.</li>
+                <li>Type the <strong>Statement date</strong> and the <strong>Bank balance on that date</strong>.</li>
+                <li>Press <strong>Start here</strong>. Every check after it starts from this balance.</li>
+              </HelpSteps>
+              <p>The first account holds all of the club’s books (<strong>Books in this account</strong>). Teams keep their own accounts, so a team’s money is never here.</p>
+              <p>If the club takes card payments, online payments that Stripe hasn’t paid out yet are counted at the start. When Stripe doesn’t answer, an amber note says those payments aren’t counted yet: <strong>Try again</strong> in a few minutes, or <strong>Start anyway</strong> (later checks may then be off by those payments).</p>
+              <p><strong>A second account.</strong> <strong>Add an account</strong> names another one (a gaming account, say) and the books whose money it holds; ticking a book moves it there. Start it from a statement the same way. With two or more, the <strong>Account</strong> pill switches between them, and <strong>Name and books</strong> renames the account or moves a book into it. Saved checks keep the books they counted; the next check of each account counts a book where it is now.</p>
+            </>
+          ),
+        },
+        {
+          id: 'bank-tab-check',
+          title: 'Check a statement',
+          content: (
+            <>
+              <HelpSteps>
+                <li>Under <strong>Check a statement</strong>, type the <strong>Statement date</strong> and the <strong>Bank balance on that date</strong>.</li>
+                <li>Read the three figures: <strong>The bank says</strong>, <strong>Should be in the bank</strong> (your books on that date, less what hasn’t reached the bank yet) and the <strong>Difference</strong>.</li>
+                <li>Press <strong>Save this check</strong>. It saves whether it matches or not.</li>
+              </HelpSteps>
+              <HelpDefs>
+                <HelpDef term="Matches">The bank and your books agree on that date.</HelpDef>
+                <HelpDef term="Off by $X">They don’t, and a sentence says which way: <em>The bank shows $X more than your books</em>, or less. Shown in amber, never red: a gap is something to look into, not an error.</HelpDef>
+              </HelpDefs>
+              <p><strong>How “Should be in the bank” is worked out</strong> sits under the figures, always open: your books on the date, minus <strong>Online payments on their way to your bank</strong> (card payments Stripe hasn’t paid out yet, with the date it will), plus or minus each line you marked <strong>Not in the bank yet</strong>.</p>
+              <p>The next check asks about each line the last check marked <strong>Not in the bank yet</strong>: <em>Still waiting on {'{line}'}?</em> <strong>Yes</strong> keeps it waiting on this check too; <strong>No</strong> means it reached the bank, and it drops off.</p>
+              <HelpNote variant="info" title="Saving the same date again">A statement already checked is checked again by saving the same date: the new check replaces the old one. <strong>Check this statement again</strong>, in a saved check’s window, puts its date in the form for you.</HelpNote>
+            </>
+          ),
+        },
+        {
+          id: 'bank-tab-find',
+          title: 'Find the difference',
+          content: (
+            <>
+              <p>When a check is off, <strong>Find the $X</strong> lists the lines in the account’s books since the last check that matched (or since the starting statement). <strong>Find an amount or a name</strong> searches them.</p>
+              <ul>
+                <li><strong>Hints</strong> point at the likely cause: a line that is exactly the difference, one that is half of it (entered the wrong way round?), or a few that add up to it. <strong>Next possibility</strong> moves to the next one.</li>
+                <li><strong>Not in the bank yet</strong> on a line (a cheque not cashed yet, a deposit that hasn’t landed) counts it in the sums; <strong>Undo</strong> takes it back out.</li>
+                <li><strong>Add the missing line</strong> opens the Ledger’s own add window with the difference, the date and the direction filled in, for a bank fee or interest your books don’t have yet.</li>
+                <li>Online payments on their way show as one greyed row: they are already counted.</li>
+              </ul>
+              <p><strong>Waiting at the start.</strong> A cheque written before your starting statement can clear after it, and then every check is off by it. While a check is off, in the first months after the start, the lines dated just before the starting statement show under <strong>Before your starting statement</strong>. <strong>Waiting at the start</strong> on one corrects the starting statement, and checks from then on start from the corrected balance. Open the starting statement to see who marked each one, and <strong>Take it off</strong> to undo it.</p>
+            </>
+          ),
+        },
+        {
+          id: 'bank-tab-saved',
+          title: 'Saved checks, and what changed since',
+          content: (
+            <>
+              <p>The top of the tab says how far the account is checked: <strong>Checked through {'{date}'}</strong>, with an amber <strong>Off by $X</strong> chip that opens the latest check when it was off. Below the form, <strong>Checked statements</strong> lists every saved check (Statement date · The bank said · Should have been · Result · Checked by), down to the starting point. Click one to open it.</p>
+              <ul>
+                <li>An opened check shows its figures exactly as saved, and who checked it and when.</li>
+                <li><strong>Books now say $X</strong> appears when a line dated on or before the statement changed after the check was saved, or the starting statement was corrected. The check’s own figures stay as they were; check the statement again to bring it up to date.</li>
+                <li><strong>Delete this check</strong> asks once. Its figures go; who deleted it and when is kept. The starting statement can be deleted only once no later check starts from it.</li>
+              </ul>
+            </>
+          ),
+        },
+        {
+          id: 'bank-tab-print',
+          title: 'Print a check for the board or the association',
+          content: (
+            <>
+              <p><strong>Print this check</strong>, in a saved check’s window, prints it on one Letter page. It is there on every saved check, one that matched included, for everyone who can open it, and on a computer only (not on a phone).</p>
+              <p>The page runs the way an association’s monthly form does: the bank’s balance on the statement, each line not in the bank yet, online payments on their way, <strong>What your books should say</strong>, then <strong>Your books</strong> on that date (the starting point, plus the change in the books since) and the result. Under it: who checked it and when, <strong>Books now say $X</strong> if the books changed since, and two lines to sign, <strong>Prepared by</strong> and <strong>Reviewed by</strong>, each with a date.</p>
+              <p>It never carries the account number, the full list of lines, or budget figures.</p>
+            </>
+          ),
+        },
+        {
+          id: 'bank-tab-elsewhere',
+          title: 'Where the bank shows outside the tab, and on a phone',
+          content: (
+            <>
+              <HelpDefs>
+                <HelpDef term="The Overview">One line per account beside <strong>Where the club stands</strong>: <em>Bank: Club chequing checked through Oct 31, 2026</em>, or <em>not checked yet</em>. It opens the Bank tab on that account; an amber <strong>Off by $X</strong> chip beside it opens the check. It reads today on every year the Year pill shows.</HelpDef>
+                <HelpDef term="Closing the fiscal year">Under <strong>Still open</strong>, a row for each account not checked in the year’s last month (<em>Club chequing not checked · last checked Jun 30, 2026</em>), or whose last check by the year end was off. It warns; it never stops the close. It opens the Bank tab on that account.</HelpDef>
+                <HelpDef term="On a phone">The same tab: the two fields side by side, Find’s lines as cards ten at a time (<strong>Show 10 more</strong>), and Save last. Printing is a computer’s.</HelpDef>
+              </HelpDefs>
+            </>
+          ),
+        },
+      ],
     },
     {
       group: 'The club and its teams',
@@ -723,7 +831,7 @@ const accountingHelp: HelpPageContent = {
                 <HelpDef term="Locks">The year: every line dated in it on every book the club owns, and its plan. A team’s own book is its coaches’ and is never touched.</HelpDef>
                 <HelpDef term="Closing balance">The figure the close fixes, in large type. On a year that was reopened, it says how far it moved since the last close, and a line above it names who reopened the year and why.</HelpDef>
                 <HelpDef term="Carries into">The next year, which opens on the closing balance, locked. What was still open stays the closed year’s own, and the open year’s Overview lists it until it is settled.</HelpDef>
-                <HelpDef term="Still open">Installments the teams still owe, requests waiting on you, lines not filed under a word, and lines not cleared: one line each, with its count and amount, opening the page that settles it. None of them stop the close; a bill a team pays next month is fine to leave open.</HelpDef>
+                <HelpDef term="Still open">Installments the teams still owe, requests waiting on you, lines not filed under a word, and lines not cleared: one line each, with its count and amount, opening the page that settles it. A bank account not checked in the year’s last month, or whose last check was off, adds a row of its own that opens the <a href="#bank-tab">Bank tab</a>. None of them stop the close; a bill a team pays next month is fine to leave open.</HelpDef>
               </HelpDefs>
               <p>Years close oldest first.</p>
             </>

@@ -227,6 +227,30 @@ export const BANK_WORDS = {
   deleted: (date: string) => `The check for ${date} is deleted.`,
   deletedStart: (date: string) => `The starting statement for ${date} is deleted. Start again from a statement.`,
 
+  // ── the printed report (BC5b, ask 9, R0 tab 9; owner "Report door / order / extras"): one US Letter page from a saved
+  // check, BANK FIRST as an association's monthly form runs. Opened from the check's window; a desk's door only. ────────
+  printCheck: 'Print this check',
+  reportEyebrow: (club: string) => `${club} · Bank check`,
+  reportTitle: (account: string, date: string) => `${account} · statement ending ${date}`,
+  reportBooks: (names: readonly string[]) => `Books in this account: ${names.join(' · ')}`,
+  reportBank: 'Bank balance on the statement',
+  reportWaitingHead: 'Not in the bank yet',
+  reportWaitingCol: { date: 'Date', what: 'What', amount: 'Amount' },
+  reportOnItsWay: 'Online payments on their way',
+  reportShould: 'What your books should say',
+  reportBooksOn: (date: string) => `Your books on ${date}`,
+  // `since` is signed ("+ $3,722.00" / "− $410.00"): the change can run either way (BC5b /marketing: "change in the books",
+  // not "book movement").
+  reportStartingPoint: (date: string, balance: string, since: string) => `Starting point ${date}: ${balance} · change in the books since: ${since}`,
+  reportResult: 'Result',
+  // No full stop of our own: the clock ends in one ("8:14 p.m.").
+  reportCheckedBy: (who: string | null, role: string | null, date: string, time: string) =>
+    (who ? `Checked by ${who}${role ? ` (${role})` : ''}, ${date} at ${time}` : `Checked on ${date} at ${time}`),
+  reportPrepared: 'Prepared by',
+  reportReviewed: 'Reviewed by',
+  reportDate: 'Date',
+  reportFoot: (date: string, club: string) => `Printed ${date} from FieldLogicHQ · ${club} · Accounting → Bank`,
+
   // ── a second account (R0 tab 8; Q3) ──────────────────────────────────────────────────────
   addAccount: 'Add an account',
   editAccount: 'Name and books',

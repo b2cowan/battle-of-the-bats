@@ -7,9 +7,11 @@ asks (Q1–Q3) ruled as recommended 2026-11-05. BC1–BC3 built on dev by 2026-1
 desk, its saved checks, and Find (what's missing, Not in the bank yet, Still waiting?, Add the missing line, and Waiting
 at the start for a cheque written before the starting statement). BC4 built on dev 2026-11-06: an earlier statement
 re-checked after the start was corrected also asks "Still waiting?" about the start's lines (BC4a), and the Bank tab on a
-phone (BC4b, four owner rulings: the sums shown, the search kept, 10 lines at a time, the two fields side by side). Next:
-BC5, the club's touchpoints (the Overview line, the fiscal-year close row, the printable report, help); the
-club's Teams column waits for BC8. The earlier tick-off version (built on dev
+phone (BC4b, four owner rulings: the sums shown, the search kept, 10 lines at a time, the two fields side by side). BC5
+built on dev 2026-11-06: the Overview's bank line and the fiscal-year close's bank row (BC5a), then the printed report,
+the Bank help article and the club words' pass (BC5b, four owner rulings: everyone who can open a check can print it,
+desk only; the saved figures plus "Books now say"; the sum runs bank first as an association's form does; a
+starting-point line and no Book column). Next: BC6, the coach's side; the club's Teams column waits for BC8. The earlier tick-off version (built on dev
 2026-11-04/05) is superseded and was taken apart in BC1.
 
 ## What it does
@@ -58,6 +60,11 @@ they don't, it says **Off by $75.00**, says which way, and helps find it. They s
 - **Elsewhere, quietly:** one line on each Overview ("Bank: Club chequing checked through Oct 31, 2026", with an amber
   "Off by $X" when the latest check is off); each team's mark on the club's Teams tab; a printable one-page report with
   signature lines; a reminder (never a block) at the fiscal-year close and at the coach's season close.
+- **The printed check (club, built BC5b):** "Print this check" in any saved check's window prints one Letter page, bank
+  first as an association's monthly form runs: the statement's balance, each line not in the bank yet, online payments on
+  their way, "What your books should say", the books on that date (from the starting point), Matches or Off by, who
+  checked it (with their role), "Books now say" when the books moved since, and Prepared by / Reviewed by lines to sign.
+  Anyone who can open the check can print it; not on a phone.
 
 ## Who can do what
 

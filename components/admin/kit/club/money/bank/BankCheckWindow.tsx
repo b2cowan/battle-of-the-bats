@@ -8,6 +8,9 @@
  *   · the body's end ........ "Delete this check": RepKit's `RecordDelete` (design 2026-10-09: an admin record's delete is
  *                             the trash icon and red words at body weight, ending the body), one question first; who
  *                             deleted it and when is kept (a soft delete)
+ *   · beside it ............. "Print this check" (BC5b, owner "Report door"): RepKit's `RecordAction`, on every saved check
+ *                             and never the start, a reader's too; it prints `BankCheckReport`, mounted with the window (a
+ *                             hidden copy on <body>, as the tournament summary's paper). A desk's door: hidden at ≤640.
  *   · the foot .............. "Check this statement again" (the form above gets the date; saving replaces this one). No
  *                             Close: a RECORD window closes by its × (design 2026-10-09, the no-Close rule; the drawing's
  *                             Close predates it, /design BC2b).
@@ -20,14 +23,16 @@
  *   re-added or re-signed here.
  */
 import { useState } from 'react';
+import { Printer } from 'lucide-react';
 import KitDialog from '../../KitDialog';
-import { RecordDelete } from '../../RepKit';
+import { RecordAction, RecordDelete } from '../../RepKit';
 import { FormError } from '../MoneyKit';
 import { formatTime } from '@/lib/utils';
 import { utcToZonedInputs } from '@/lib/timezone';
 import { BANK_REFUSAL } from '@/lib/bank-check-words';
 import { BANK_WORDS as W } from '@/lib/bank-tab-words';
 import { BankBand, BankSavedSums, type SavedSumRow } from './BankFigure';
+import BankCheckReport from './BankCheckReport';
 import { savedTerms, type WaitingItem } from '@/lib/bank-check';
 import { bankUrl, bankWrite, cents, dayYear, isStaleView, moved, patchStart, type AccountView, type SavedCheckView } from './BankShared';
 import s from './Bank.module.css';
@@ -138,14 +143,23 @@ export default function BankCheckWindow({ orgSlug, view, check, canMove, onClose
             {check.startCorrected ? W.booksNowSayStartWhy : W.booksNowSayWhy(when)}</p>
         )}
         <p className={s.savedNote}>{checkedLine}</p>
-        {canMove && (
-          <div className={s.recordDoor}>
-            {startHeld
+        {(canMove || !start) && (
+          // A reader's row holds Print alone: on a phone (no Print) the whole row goes, its rule with it.
+          <div className={canMove ? s.recordDoor : `${s.recordDoor} ${s.printOnly}`}>
+            {/* The printed report (BC5b, owner "Report door"): every saved check, never the start; a reader's too (a read,
+                not a write); a desk's door only (R0: no phone version), so hidden at 640 and under. */}
+            {!start && (
+              <span className={s.printDoor}>
+                <RecordAction icon={<Printer size={16} aria-hidden />} onClick={() => window.print()} disabled={busy}>{W.printCheck}</RecordAction>
+              </span>
+            )}
+            {canMove && (startHeld
               ? <p className={s.statusNote}>{BANK_REFUSAL.start_has_checks}</p>
-              : <RecordDelete onClick={() => { setError(''); setAsking(true); }} disabled={busy}>{start ? W.deleteStart : W.deleteCheck}</RecordDelete>}
+              : <RecordDelete onClick={() => { setError(''); setAsking(true); }} disabled={busy}>{start ? W.deleteStart : W.deleteCheck}</RecordDelete>)}
           </div>
         )}
       </KitDialog>
+      {!start && <BankCheckReport view={view} check={check} />}
       {asking && (
         <KitDialog
           kind="question"

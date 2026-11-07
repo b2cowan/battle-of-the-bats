@@ -643,7 +643,7 @@ export function CloseYearQuestion({ q, year, accountingBase, onClosed, onClose }
                   <OpenRow
                     key={r.accountId}
                     noun={r.kind === 'off' ? W.bankOffNoun(r.accountName, cents(r.offByCents))
-                      : isPhone ? W.bankUncheckedNounShort(r.accountName) : W.bankUncheckedNoun(r.accountName, year.name)}
+                      : W.bankUncheckedNoun(r.accountName)}
                     detail={r.lastChecked ? W.bankLastChecked(r.lastChecked) : W.bankNoCheckBy(question.year.lastDay)}
                     href={bankTabHref(accountingBase, r.accountId, r.kind === 'off' ? r.checkId : undefined)}
                   />

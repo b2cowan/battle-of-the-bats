@@ -1,0 +1,79 @@
+/* ── THE PRINTED BANK CHECK (BankCheckReport.tsx, BC5b, R0 tab 9): what sits inside the shipped PrintedPage frame. Paper's
+   inks, fixed whatever the admin's theme (PrintedPage's own rule) — the literals below are deliberate. ── */
+.sums {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+/* The app's global th/td (globals.css: screen inks, uppercase headings) are put back to the paper's here, whatever the
+   admin's theme: on a dark theme the screen's text-primary is white on this white sheet. */
+.sums th, .sums td {
+  font-family: inherit;
+  font-size: inherit;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #1F1B14; /* token-exempt: print ink, independent of the screen's theme */
+  background: transparent;
+}
+.sums > tbody > tr > th,
+.sums > tbody > tr > td {
+  padding: 7px 0;
+  border-bottom: 1px solid #E4DFD5; /* token-exempt: print rule, independent of the screen's theme */
+  vertical-align: top;
+  text-align: left;
+  font-weight: 400;
+}
+.sums > tbody > tr > td.num { text-align: right; white-space: nowrap; padding-left: 24px; }
+.num { text-align: right; white-space: nowrap; }
+.note {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  font-weight: 400;
+  color: #5A5348; /* token-exempt: print ink, independent of the screen's theme */
+}
+/* What your books should say: ruled off, as a sum's total. */
+.total > th, .total > td {
+  font-weight: 700 !important;
+  border-top: 1.5px solid #1F1B14 !important; /* token-exempt: print ink, independent of the screen's theme */
+}
+.result > th, .result > td { font-weight: 700 !important; border-bottom: none !important; }
+
+/* Not in the bank yet: its own small table under the bank's balance. */
+.itemsCell { padding: 4px 0 10px !important; }
+.itemsHead { margin: 0 0 4px; font-weight: 600; }
+.items { width: 100%; border-collapse: collapse; }
+.items td { font-size: var(--type-support); }
+.items th, .items td {
+  padding: 4px 0;
+  border-bottom: 1px solid #EFEBE3; /* token-exempt: print rule, independent of the screen's theme */
+  text-align: left;
+  vertical-align: top;
+}
+.items th {
+  font-family: var(--font-display); /* the Summary paper's column heads (summary.module.css .paperTable th) */
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #5A5348; /* token-exempt: print ink, independent of the screen's theme */
+}
+.items th.num, .items td.num { text-align: right; padding-left: 16px; }
+.items .date { width: 1%; white-space: nowrap; padding-right: 16px; }
+.items td { overflow-wrap: anywhere; }
+/* A long list runs onto a second sheet between rows, never through one; its head repeats; the sign-off stays whole. */
+.items thead { display: table-header-group; }
+.items tr, .sums > tbody > tr { break-inside: avoid; }
+
+.line { margin: 14px 0 0; }
+.line b { font-weight: 700; }
+
+/* The two signature lines (R0 ask 14): a rule to sign on, its name under it; the date beside each. */
+.signs { break-inside: avoid; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 56px; }
+.sign { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
+.signLine {
+  padding-top: 6px;
+  border-top: 1px solid #1F1B14; /* token-exempt: print ink, independent of the screen's theme */
+  font-size: 11px;
+  color: #5A5348; /* token-exempt: print ink, independent of the screen's theme */
+}

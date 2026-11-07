@@ -833,9 +833,10 @@ export const CLOSE_YEAR_WORDS = {
   unfiledWhyShort: 'off-plan',
   pendingWhy: (next: string) => `counts in ${next} when it clears`,
   pendingWhyShort: (next: string) => `clears in ${next}`,
-  // The bank's row (Bank balance check BC5a, owner 2026-11-06 "Close row"): one per account, no count; BC5b's /marketing.
-  bankUncheckedNoun: (account: string, name: string) => `${account} not checked in the last month of ${name}`,
-  bankUncheckedNounShort: (account: string) => `${account} not checked`,
+  // The bank's row (Bank balance check BC5a, owner 2026-11-06 "Close row"): one per account, no count. BC5b /marketing
+  // 2026-11-06: one short noun on a desk and a phone, as long as its siblings ("{account} not checked in the last month of
+  // {year}" ran past them); the detail beside it says when ("last checked {date}" / "no check by {date}").
+  bankUncheckedNoun: (account: string) => `${account} not checked`,
   bankOffNoun: (account: string, amount: string) => `${account} off by ${amount}`,
   bankLastChecked: (date: string) => `last checked ${formatStoredDate(date)}`,
   bankNoCheckBy: (lastDay: string) => `no check by ${formatStoredDate(lastDay)}`,

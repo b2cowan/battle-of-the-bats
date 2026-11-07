@@ -104,9 +104,14 @@ export async function bankAccountView(ctx: AuthContextWithRole, accountId: strin
     canMove && date === null ? loadFiscalSetting(ctx.org.id) : Promise.resolve(null),
   ]);
   if (!read) return null;
-  const { account, all, checks, latest, figure, nameOf } = read;
-  const views = checks.map(c => checkView(c, nameOf));
+  const { account, all, checks, latest, figure, nameOf, roleOf } = read;
   const bookName = new Map(allBooks(all).map(b => [b.id, b.name]));
+  // The printed report (BC5b): who checked, with their role as it reads today, and the books this check covered — its OWN
+  // saved books, by name (a book moved to another account since is still named; one gone is left out).
+  const views = checks.map(c => ({
+    ...checkView(c, nameOf), checkedByRole: roleOf(c.createdBy),
+    bookNames: c.bookIds.map(id => bookName.get(id)).filter((n): n is string => !!n),
+  }));
   const named = <L extends { bookId: string }>(lines: L[]) => lines.map(l => ({ ...l, bookName: bookName.get(l.bookId) ?? null }));
   return {
     // A book's kind and owner: "Add the missing line" opens the Ledger's own add window on it (BC3b).

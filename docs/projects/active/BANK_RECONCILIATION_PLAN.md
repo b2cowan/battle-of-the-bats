@@ -76,6 +76,10 @@ need to type a statement balance, see the difference from the books on that date
 | Overview past year | **The Overview line always reads today, on every year the Year pill shows**, as the "Where the club stands" band beside it does. (Owner, 2026-11-06, BC5a.) |
 | Close row | **The fiscal-year close shows a bank row only when something is open, one row per such account, with no statement count**: its latest check on or before the year end is missing, is before the year's last month, or is off. It warns, never blocks; it opens the Bank tab on that account. (Owner, 2026-11-06, BC5a.) |
 | Close snapshot | **The close does not store the bank's state**: the saved checks are the record; nothing is added to the year-end report. (Owner, 2026-11-06, BC5a.) |
+| Report door | **A quiet "Print this check" in the opened check's window, on every saved check (a matching one included), never on the starting statement; everyone who can open the check can print it, readers too.** It prints from the same screen (as the tournament summary does), no new page; desk only, hidden on a phone. (Owner, 2026-11-06, BC5b.) |
+| Report books changed | **The report prints the figures as saved, plus the "Books now say $X" line and its reason** when it applies. (Owner, 2026-11-06, BC5b.) |
+| Report order | **The report's sum runs bank first, as the association's form does**: Bank balance on the statement · + money in, not in the bank yet · − cheques, not in the bank yet · + online payments on their way · = What your books should say · Your books on {date} · Matches / Off by $X. (Owner, 2026-11-06, BC5b.) |
+| Report extras | **The report keeps the starting-point line** (worked out from the saved figures; left off when the starting statement was corrected after the check) **and has no Book column**: the table is Date · What · Amount, as saved. (Owner, 2026-11-06, BC5b.) |
 
 ### Tick-off rulings that still stand (Appendix A §4)
 
@@ -266,7 +270,8 @@ money table or a book line.** A guard test pins this: no bank code writes `accou
 > Customer-visible wording written during the build, settled in ONE `/marketing` pass per stage, before the walk. Drafts
 > below are the drawings' words unless marked *new*.
 
-- [ ] "Bank" — the club Accounting tab and the coach Ledger view — club treasurer, coach
+- [ ] "Bank" — the club Accounting tab and the coach Ledger view — club treasurer, coach. *Club half settled, BC5b
+  `/marketing` 2026-11-06: keep "Bank" (the treasurer's own word; no "Reconciliation" on a tab). The coach view goes to BC8.*
 - [x] "Check a statement" · "Statement date" · "Bank balance on that date" (phone: "Bank balance") — the check form (settled, BC2 `/marketing` 2026-11-06; the phone word "Bank balance" settled, BC4b `/marketing` 2026-11-06)
 - [x] "The bank says" · "Should be in the bank" (phone band: "Should be there") · "Difference" — the band (settled, BC2 `/marketing` 2026-11-06; the phone word "Should be there" settled, BC4b `/marketing` 2026-11-06)
 - [x] *new, BC4b* the phone band's captions (settled, BC4b `/marketing` 2026-11-06): "On {date}" (the bank tile, no-year date) and "Your books, adjusted for what’s pending" (the middle tile, no date or figure: marked lines and an uncounted Stripe make a single "on its way" amount untrue). The Difference tile keeps its desk captions (full width on a phone).
@@ -310,7 +315,11 @@ money table or a book line.** A guard test pins this: no bank code writes `accou
 - [ ] *new* "Statements from this season only, since {date}." (drawn) · *new* refusal "This statement is before the
   {2026 Season} started on {date}. Check it from last season before you start a new one." — coach
 - [ ] "Bank: {account} checked through {date} ›" · "Bank: not checked yet ›" · coach "Bank checked through {date} ›" ·
-  Teams "bank checked through {date} · Matches" — the mark (ask 4)
+  Teams "bank checked through {date} · Matches" — the mark (ask 4). *Club half settled, BC5b `/marketing` 2026-11-06:
+  kept "Bank: {account} checked through {date} ›" · "Bank: {account} · not checked yet ›" · "Bank: not checked yet ›" and
+  the amber "Off by $X" chip. The fiscal-year close row changed to one short noun on a desk and a phone, "{account} not
+  checked" (was "… not checked in the last month of {year}", which ran past its sibling rows and repeated its detail),
+  with "last checked {date}" / "no check by {date}" beside it; "{account} off by {amount}" kept. Coach and Teams: BC8.*
 - [x] *new, Q3-A* "Saved checks keep the books they counted. The next check of each account counts this book where it
   is now." — Add an account / Name and books (settled, BC2 `/marketing` 2026-11-06)
 - [x] *new, BC2a/BC2b, settled 2026-11-06* — the start and the opened check (`lib/bank-tab-words.ts`, `lib/bank-check-words.ts`):
@@ -332,9 +341,19 @@ money table or a book line.** A guard test pins this: no bank code writes `accou
   on their way aren't counted. The figures now leave them out. Look them over, then save." — a check whose save can't count
   Stripe (the screen reads the figure again without them). `bad_item` settled as "A line marked Not in the bank yet has to
   be one of this account's own lines, dated after your starting statement and on or before the statement you're checking." "Cash not deposited yet" stays in the module for the coach (BC6): the club desk has no cash field (owner).
-- [ ] Report words (§6) — the printable page
-- [ ] Help search words carry "reconcile / reconciliation"; the collision with the coach's "reconcile the estimate" and
-  the export's "RECONCILIATION — SPENDING TO CASH" (Appendix A §5) goes to the same pass.
+- [x] Report words (§6) — the printable page (club, settled BC5b `/marketing` 2026-11-06): "Print this check"; "{club} ·
+  Bank check"; "{account} · statement ending {date}"; "Books in this account: A · B"; "Bank balance on the statement" ·
+  "Not in the bank yet" (Date | What | Amount) · "Online payments on their way" · "What your books should say" · "Your
+  books on {date}" with *changed* "Starting point {date}: {balance} · change in the books since: {± amount}" (was "book
+  movement", jargon) · "Result" Matches / Off by $X + the direction sentence; "Checked by {name} ({role}), {date} at
+  {time}"; "Prepared by" / "Reviewed by" / "Date"; "Printed {date} from FieldLogicHQ · {club} · Accounting → Bank". Note:
+  "Bank check" (verifying) beside "cheque" (the paper) was weighed and kept. The coach report's words go to BC8.
+- [x] Help search words carry "reconcile / reconciliation" (club, BC5b 2026-11-06): the club article "Checking the bank
+  statement: the Bank tab" carries reconcile / reconciliation / bank reconciliation in its search words only, never a
+  visible heading (R-c). The collision: `/marketing` recommends KEEP the coach's export header "RECONCILIATION — SPENDING
+  TO CASH" (a true accounting bridge, another portal) and, later and as a plain-words fix rather than a collision fix,
+  "reconcile the estimate" → "match the estimate to the itemized total" (coach Budget panel). Recommendation only: BC8's
+  coach words pass rules it.
 - [ ] R-c marketing truth: "bank reconciliation" returns to Club copy only after BC9's walk (pricing, Club plan article,
   homepage, in-app plan list, `PRICING_PAGE_COPY.md`). The three overclaims (onboarding, email defaults, module catalog)
   are still routed to `/marketing`, open.
@@ -835,8 +854,44 @@ questions first). The Teams tab's "Bank checked" column (R0 tab 7) reads each te
   `/review` standard (3 lenses): applied the quiet bank read (Overview, Teams tab and Close year no longer depend on
   the bank tables), only the door's two keys dropped from the address, the bank route's gate comment; kept: a no-account
   tab keeps the keys in its address, the Teams tab pays the two small reads, one start per account assumed.
-- [ ] **BC5b:** the report (club, ask 9), help in `lib/help-content/accounting.tsx` (`/docs`), the `/marketing` pass on
-  §5's club words (incl. the Overview line's and the close row's).
+- [x] **BC5b — the printed report, help and the club words, built 2026-11-06** (owner: §0 "Report door", "Report books
+  changed", "Report order", "Report extras" ruled as recommended; yes to the UX summary). ⚠ Two corrections said before
+  the asks: the drafted R0 sum ("Bank balance + Not in the bank yet − on its way = Should be in the bank") added up to the
+  BOOKS, not the bank, with the cheque's sign reversed; and the tournament Summary prints in place, not from a route.
+  Anchors:
+  - **Engine** (`lib/bank-check.ts`): `reportTerms(c)` — the saved check written bank first (bank · each item its own
+    line's way, `waitingOnStart` · on its way + · cash +), total = books + difference from the saved figure, never the
+    terms re-added; `startingPoint(check, start, startCorrected)` — the start's books and the change since, null when
+    there is no earlier start or the start was corrected after the check. 5 new tests.
+  - **Read** (`lib/bank-club-read.ts` / `bank-club-steps.ts`): each check view carries `checkedByRole` (the member's
+    title, else the role's word, as it reads today; one bounded `organization_members` read) and `bookNames` (the check's
+    OWN saved books by name).
+  - **Screens**: `BankCheckReport` (the shipped `PrintedPage` frame, `BankReport.module.css` with paper inks; the app's
+    global th/td put back to the paper's, or a dark theme printed white text); the opened check's door row carries
+    "Print this check" (`RecordAction`, every saved check, never the start, a reader's too) beside Delete, hidden ≤640.
+    Words `BANK_WORDS.printCheck` / `report*`. Screens guard §13; the B7 guard re-pinned (the door row stands for a
+    reader on a saved check; Delete inside it stays a writer's).
+  - **Help** (`/docs`): `lib/help-content/accounting.tsx` `bank-tab` (six answers: start, check, find, saved, print,
+    elsewhere + phone), the tab list's Bank entry, and a line each in the Overview and the close's Still open.
+  - **`/marketing`** (§5 rows above): all kept but two — the close row's noun is "{account} not checked" on a desk too
+    (`CLOSE_YEAR_WORDS.bankUncheckedNoun`, the phone-only short form folded in; this also settles BC5a's /design point
+    "its long bold noun"), and "change in the books since" replaces "book movement since".
+- [x] **Proved 2026-11-06:** 299 bank tests + 45 help tests + the Stage 3c guard; tsc clean for these files (an untracked
+  file of another session's, `app/api/admin/board/route.ts`, fails tsc on its own); focused lint, `check:spelling`,
+  `check:tokens`; `check:layout --only=admin-accounting-bank,admin-accounting-treasurer` clean at 1440/768/390/361. Dev
+  walk `.probe/bank-bc5/bc5b.mjs` → `BANK_BC5B_WALK_PASSED` at 1440 and 390 (an off check with a line not in the bank
+  yet: the door, every line of the copy, What your books should say = books + difference, the checker's role; print
+  media shows only the copy, `page.pdf` is ONE page; a matching check prints Matches and no direction; the start has no
+  door and no copy; no door and no sideways scroll at 390); the walk account ends on its Sep 30 start only.
+- [x] **Finishing passes 2026-11-06:** `/design` (applied: the items table breaks between rows and repeats its head on a
+  second sheet, the sign-off never splits, long labels wrap, the column heads in the Summary paper's face and the type
+  ladder; to the owner: `PrintedPage`'s foot sits under the content, not pinned to the sheet's foot as drawn — a shared
+  frame change that moves Summary and the Staff kit too; the drawing's tinted Result band left plain for black-and-white
+  paper); `/review` standard (3 lenses: correctness, security/contract, regression/print): applied the quiet role read
+  (a failed `organization_members` read names the checker without a role instead of failing the account read), a
+  reader's door row hidden on a phone by a class, not `:has()`, and a keyword typo; kept: a line with no label prints a
+  blank What (its date is beside it), the role as it reads today, Ctrl+P with a check open prints the check. The bank
+  money sums verified by hand (refunds, not counted, cash). `verify:changed`'s failures are other sessions' files.
 
 ### BC6 — Coach: the source and the routes (no screen)
 - [ ] The team account, created at the first save (no setup question; name "Team bank account").

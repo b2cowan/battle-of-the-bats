@@ -2,6 +2,7 @@ import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
 import { fetchAll, fetchAllIn } from './supabase-paging';
 import { getClubOwnedLedgers, resolvePersonNamer } from './db';
+import { roleLabel } from './member-access';
 import { onlinePaymentsOn } from './online-payments-switch';
 import { readPayouts } from './online-payouts';
 import { booksNowSay, stillWaitingOn, suspectsSince, suspectsStart, type BankLine, type WaitingItem } from './bank-check';
@@ -269,13 +270,33 @@ export async function readClubBankAccount(orgId: string, accountId: string, opts
   const account = all.accounts.find(a => a.id === accountId);
   if (!account) return null;
   const saved = byAccount.get(accountId) ?? [];
-  const [checks, figure, nameOf] = await Promise.all([
+  const [checks, figure, nameOf, roleOf] = await Promise.all([
     withBooksNow(saved),
     opts.date ? figureForDate(orgId, account, saved, opts.date, opts.today, { kind: opts.asked }) : Promise.resolve(null),
     resolvePersonNamer(orgId, [...saved.map(c => c.createdBy), ...saved.flatMap(c => c.waiting.map(w => w.addedBy ?? null))]),
+    resolveCheckerRoles(orgId, saved.map(c => c.createdBy)),
   ]);
   const latest = new Map(all.accounts.map(a => [a.id, checkedThrough(byAccount.get(a.id) ?? [])]));
-  return { account, all, checks, latest, figure, nameOf };
+  return { account, all, checks, latest, figure, nameOf, roleOf };
+}
+
+/**
+ * Who checked, as the printed report names them (BC5b: "Checked by {name} ({role})"): the member's own title when the club
+ * gave one ("Treasurer"), else their role's word. As it reads TODAY — a saved check keeps who, not the role they held. Null
+ * for someone no longer a member, and for everyone when the read fails (logged). One bounded read of the checkers' rows.
+ */
+async function resolveCheckerRoles(orgId: string, userIds: readonly (string | null)[]): Promise<(id: string | null) => string | null> {
+  const ids = [...new Set(userIds.filter((v): v is string => !!v))];
+  if (ids.length === 0) return () => null;
+  const { data, error } = await supabaseAdmin.from('organization_members').select('user_id, role, title')
+    .eq('organization_id', orgId).in('user_id', ids);
+  // Quiet, as the namer beside it is (/review BC5b): a role is a parenthetical on the paper, never worth the account read.
+  if (error) {
+    console.error('[bank-club-read] the checkers’ roles read failed; the report names them without a role:', error.message);
+    return () => null;
+  }
+  const roles = new Map((data ?? []).map(r => [r.user_id as string, (r.title as string | null)?.trim() || roleLabel(r.role as string)]));
+  return id => (id ? roles.get(id) ?? null : null);
 }
 
 /**

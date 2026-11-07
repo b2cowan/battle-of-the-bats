@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   HINT_CAP, MAX_COMBOS, booksNowSay, closingDirection, closingDirectionAtStart, coachBooksOnDate, figureCheck, figureOfSaved,
-  findHints, hintsFor, latestBefore, matchedWhenSaved, stillWaitingOn, onItsWayOnCheck, savedTerms, startBooks, suspectsSince, typedCents,
+  findHints, hintsFor, latestBefore, matchedWhenSaved, stillWaitingOn, onItsWayOnCheck, reportTerms, savedTerms, startBooks, startingPoint, suspectsSince, typedCents,
   waitingOnCheck, waitingOnStart,
   type BankLine, type SavedCheck, type WaitingItem,
 } from '../../lib/bank-check.ts';
@@ -454,5 +454,49 @@ describe('savedTerms — an opened check’s sums, line by line (BC2b): the sign
   it('the live sums take the same on-its-way sign: off the books on a check, so a negative (a refund) adds back', () => {
     assert.equal(onItsWayOnCheck(12_000), -12_000);
     assert.equal(onItsWayOnCheck(-2_500), 2_500);
+  });
+});
+
+describe('reportTerms — the printed report runs BANK FIRST (BC5b, owner "Report order"), the association form’s way', () => {
+  const sum = (ts: ReturnType<typeof reportTerms>['terms']) => ts.reduce((n, t) => n + (t.cents ?? 0), 0);
+  const items: WaitingItem[] = [
+    { key: 'entry:chq', date: '2026-10-28', direction: 'out', amountCents: 41_200, label: 'Cheque 214' },
+    { key: 'entry:dep', date: '2026-10-30', direction: 'in', amountCents: 7_500 },
+  ];
+  it('the bank, a deposit not in added, a cheque not cashed off, on its way added, cash added; the lines add to what the books should say', () => {
+    const c = saved({ id: 'c', date: '2026-10-31', bankCents: 500_000, booksCents: 520_000, onItsWayCents: 12_000, cashCents: 3_000, waiting: items });
+    const { terms, totalCents } = reportTerms(c);
+    assert.deepEqual(terms.map(t => [t.kind, t.cents]), [['base', 500_000], ['waiting', -41_200], ['waiting', 7_500], ['onItsWay', 12_000], ['cash', 3_000]]);
+    assert.equal(sum(terms), totalCents);
+    // books + difference: the gap to the books is the screen's own Off by, the same size and the same way.
+    const f = figureOfSaved(c);
+    assert.equal(totalCents - c.booksCents, f.differenceCents);
+  });
+  it('a matching check: the bank-first total IS the books', () => {
+    const c = saved({ id: 'm', date: '2026-10-31', bankCents: 520_000 - 12_000 + 41_200 - 7_500, booksCents: 520_000, onItsWayCents: 12_000, waiting: items });
+    assert.equal(figureOfSaved(c).result, 'matches');
+    assert.equal(reportTerms(c).totalCents, 520_000);
+  });
+  it('a zero on-its-way and zero cash are left out; not counted stays as null; a start has no report', () => {
+    assert.deepEqual(reportTerms(saved({ id: 'z', date: '2026-10-31', bankCents: 100, booksCents: 100, cashCents: 0 })).terms.map(t => t.kind), ['base']);
+    const nc = reportTerms(saved({ id: 'n', date: '2026-10-31', bankCents: 100, booksCents: 100, onItsWayCents: null })).terms;
+    assert.deepEqual(nc.map(t => [t.kind, t.cents]), [['base', 100], ['onItsWay', null]]);
+    assert.throws(() => reportTerms(saved({ id: 's', kind: 'start', date: '2026-09-30', bankCents: 100, booksCents: 100 })));
+  });
+});
+
+describe('startingPoint — the report’s "Your books" line (BC5b, owner "Report extras")', () => {
+  const start = { kind: 'start' as const, date: '2026-09-30', booksCents: 612_045 };
+  const check = { kind: 'check' as const, date: '2026-10-31', booksCents: 840_050 };
+  it('the start’s books and the movement since add to this check’s books', () => {
+    const p = startingPoint(check, start, false)!;
+    assert.deepEqual(p, { date: '2026-09-30', cents: 612_045, sinceCents: 228_005 });
+    assert.equal(p.cents + p.sinceCents, check.booksCents);
+  });
+  it('left off: no start, a start not before the check, a start corrected after the check, or a start asked about', () => {
+    assert.equal(startingPoint(check, null, false), null);
+    assert.equal(startingPoint(check, { ...start, date: '2026-10-31' }, false), null);
+    assert.equal(startingPoint(check, start, true), null);
+    assert.equal(startingPoint({ ...start }, start, false), null);
   });
 });

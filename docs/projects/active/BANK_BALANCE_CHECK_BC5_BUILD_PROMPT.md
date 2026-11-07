@@ -1,5 +1,10 @@
 # Bank balance check BC5: the club's touchpoints (build prompt, two sessions)
 
+> **✅ BC5 DONE. BC5b built 2026-11-06** (the printed check, bank first; the Bank help article; the club words' `/marketing`
+> pass; walked `BANK_BC5B_WALK_PASSED` at 1440 and 390; owner rulings in plan §0 "Report door / Report books changed /
+> Report order / Report extras"; record in plan §9 BC5). Next: BC6 (the coach's source and routes), and BC8's Teams
+> column question for the owner.
+
 > **BC5a done 2026-11-06, committed `0ec285816`** (built, walked `BANK_BC5A_WALK_PASSED` at 1440, 390 and 361, `/design` and `/review` applied;
 > owner rulings in plan §0 "Overview accounts / Overview past year / Close row / Close snapshot"; record in plan §9 BC5).
 > **Next BC5b** (below). For BC5b: the `/marketing` pass also takes the Overview line's words (`BANK_WORDS.overview*`) and

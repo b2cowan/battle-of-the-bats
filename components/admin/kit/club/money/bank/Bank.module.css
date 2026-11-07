@@ -98,6 +98,13 @@ tr > td.nowrap { white-space: nowrap; }
 /* The record's one rare door (RepKit's RecordDelete), ending the body; or the start's sentence in its place. */
 .recordDoor { margin: 1rem 0 0; padding: 0.75rem 0 0; border-top: 1px solid var(--home-line); }
 .recordDoor > .statusNote { margin: 0; }
+/* BC5b: "Print this check" beside Delete's place (a reader sees it alone). The report has no phone version (R0 tab 9). */
+.recordDoor:has(> .printDoor) { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1.5rem; }
+@media (max-width: 640px) {
+  .printDoor { display: none; }
+  /* A reader's row (Print alone) goes whole, its top rule too — a class, not `:has()`, so no browser shows an empty rule. */
+  .recordDoor.printOnly { display: none; }
+}
 
 /* ── the first check: a starting statement (tab 6) ── */
 .card {

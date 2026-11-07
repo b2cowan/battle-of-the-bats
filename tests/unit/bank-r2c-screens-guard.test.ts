@@ -327,7 +327,9 @@ describe('8 · a saved check, opened', () => {
   });
   it('Delete and Check this statement again are a writer\'s only (B7)', () => {
     const win = code('BankCheckWindow.tsx');
-    assert.match(win, /\{canMove && \(\s*<div className=\{s\.recordDoor\}>/);
+    // The door row stands for a writer, or (BC5b) for anyone on a saved check, for Print; Delete inside it is a writer's.
+    assert.match(win, /\{\(canMove \|\| !start\) && \([\s\S]{0,160}?<div className=\{canMove \? s\.recordDoor : `\$\{s\.recordDoor\} \$\{s\.printOnly\}`\}>/);
+    assert.match(win, /\{canMove && \(startHeld\s*\? <p className=\{s\.statusNote\}>/);
     assert.match(win, /<RecordDelete onClick=/, 'an admin record\'s delete is RepKit\'s RecordDelete (design 2026-10-09)');
     assert.match(win, /footer=\{canMove && !start \? \(\s*<button type="button" className="btn btn-lime" onClick=\{\(\) => onAgain\(check\.date\)\}/);
     assert.doesNotMatch(win, /footerStart=|W\.close\b/, 'a record window closes by its ×: no Close, no door in the foot');
@@ -492,5 +494,36 @@ describe('12. BC5a: the Overview line and the fiscal-year close row (ask 4, R0 t
     const rules = readCode('lib/bank-club-rules.ts');
     assert.match(rules, /export function bankCloseRow\(checks: readonly ClubSavedCheck\[\], lastDay: string\)/);
     assert.doesNotMatch(readCode('lib/bank-club-read.ts'), /fiscal|lastDay/i);
+  });
+});
+
+describe('13. BC5b: the printed report (ask 9, R0 tab 9; owner "Report door / books changed / order / extras" 2026-11-06)', () => {
+  const win = readCode(`${DIR}/BankCheckWindow.tsx`);
+  const rep = readCode(`${DIR}/BankCheckReport.tsx`);
+  it('"Print this check" is RepKit\'s RecordAction on every saved check, never the start, a reader\'s too, a desk\'s only', () => {
+    assert.match(win, /\{!start && \(\s*<span className=\{s\.printDoor\}>\s*<RecordAction icon=\{<Printer[^>]*\/>\} onClick=\{\(\) => window\.print\(\)\}/);
+    assert.doesNotMatch(win.slice(win.indexOf('s.printDoor'), win.indexOf('W.printCheck')), /canMove/, 'printing is a read');
+    assert.match(win, /\{!start && <BankCheckReport view=\{view\} check=\{check\} \/>\}/);
+    const css = readSource(CSS);
+    assert.match(css, /@media \(max-width: 640px\) \{\s*\.printDoor \{ display: none; \}/, 'the report has no phone version');
+  });
+  it('the shipped PrintedPage frame; bank first from the engine, the starting point from the engine, no arithmetic on the page', () => {
+    assert.match(rep, /import PrintedPage from '@\/components\/admin\/tournament\/PrintedPage';/);
+    assert.match(rep, /<PrintedPage\s+name="bank-check"/);
+    assert.match(rep, /const \{ terms, totalCents \} = reportTerms\(check\);/);
+    assert.match(rep, /startingPoint\(check, view\.start, check\.startCorrected\)/);
+    assert.doesNotMatch(rep, /Cents\s*[-+*/]\s*\w|\w\s*[-+]\s*\w+Cents\b/, 'no money arithmetic on the page');
+    assert.doesNotMatch(rep, /accountNumber|bookName\b|Book'|budget/i, 'no account number, no Book column, no Budget vs. Actual');
+  });
+  it('prints the saved figures, with "Books now say" and its reason as the window says them; the clock through formatTime', () => {
+    assert.match(rep, /check\.booksNowSayCents !== null && \(/);
+    assert.match(rep, /check\.startCorrected \? W\.booksNowSayStartWhy : W\.booksNowSayWhy\(when\)/);
+    assert.match(rep, /W\.reportCheckedBy\(check\.checkedBy, check\.checkedByRole, dayYear\(at\.date\), formatTime\(at\.time\)\)/);
+  });
+  it('the report\'s words', () => {
+    assert.equal(BANK_WORDS.printCheck, 'Print this check');
+    assert.equal(BANK_WORDS.reportEyebrow('Lakeshore Lynx'), 'Lakeshore Lynx · Bank check');
+    assert.equal(BANK_WORDS.reportCheckedBy('Priya Shah', 'Treasurer', 'Nov 3, 2026', '8:14 p.m.'), 'Checked by Priya Shah (Treasurer), Nov 3, 2026 at 8:14 p.m.');
+    assert.equal(BANK_WORDS.reportFoot('Nov 4, 2026', 'Lakeshore Lynx'), 'Printed Nov 4, 2026 from FieldLogicHQ · Lakeshore Lynx · Accounting → Bank');
   });
 });
