@@ -42,5 +42,12 @@ Medium. Not blocking a launch; it fixes a real gap in a feature that already bil
 
 ## Still to decide
 
-Where the banner sits on a desktop (above the rail, as drawn, or at the top of the page beside the rail, which is simpler and looks the
-same once you scroll), whether a cancelled club also sees it, and the exact words (going to `/marketing`).
+Ruled: the banner sits at the top of the page beside the rail, and a cancelled club's owner sees it too. Parts 1–3 are built and walked
+(the list by invoice, the pill, the page line). Still to decide before Part 4 is built, in one short drawing check:
+
+1. **A cancelled club has only one page (Plan & billing).** Is a banner above that page worth a new data path, or is it simpler to show
+   the same line on that page's own layout? (Recommended: the line on the page.)
+2. **An old unpaid invoice can show on the door's pill but not in the list**, because the list only reads the newest 50 fees. Should the
+   list always show every open invoice, even when its fee lines are older? (Recommended: yes, with a quiet "older fees" line.)
+3. **Should the banner name the invoice and carry a Pay button straight to Stripe, as drawn, or just point to Plan & billing?**
+   (Recommended: name it and pay in one click.)
