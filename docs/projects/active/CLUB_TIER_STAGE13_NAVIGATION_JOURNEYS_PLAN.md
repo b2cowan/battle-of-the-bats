@@ -428,7 +428,7 @@ ahead of the owner's rulings.
   admin-club-more` ✓ (12 screen-widths, no new findings). Not walked. **Next:** the stage's one walk ("each person sees only their
   doors"), then 13i.
 - 2026-11-06 — **13a Session B committed `87ddc358e` 2026-11-06. The stage's one walk published:** Owner QA Ledger §475, https://claude.ai/artifact/QDf94cW4yAH8AE4NscUbBZ ([CLUB_TIER_STAGE13A_WALK.html](CLUB_TIER_STAGE13A_WALK.html)), one purpose ("each person sees only their doors"), 9 parts / 39 steps on two fresh Harbourtown copies: `navj-club-13a` (12 registrations waiting for review) and `navj-club-13a-new` (no house-league season), both with a league admin added (`.probe/nav-journeys/fx-13a.mjs`). Recommended to the owner: walk it before 13i Session A changes the sidebar and retires the Organization tiles; /docs for 13a folded into 13i Session C. Teardown on "13a walk done".
-- 2026-11-06 — **13i Session A BUILT 2026-11-06 (pages on the page; the sidebar not touched yet), not committed, not walked.** Build
+- 2026-11-06 — **13i Session A BUILT 2026-11-06 (pages on the page; the sidebar not touched yet); committed `f279e6963` after /simplify + /review (next entry).** Build
   prompt [CLUB_TIER_STAGE13I_BUILD_PROMPT.md](CLUB_TIER_STAGE13I_BUILD_PROMPT.md) items A0–A7. **Four owner answers in the session**
   (recorded in the prompt's "Settle in the build"): Teams & draft's per-division tab row → **the division picker** Registrations uses,
   at the toolbar's left; the desk season switch → **the title's chevron opens the Year pill's menu** (`SingleSelectDropdown`, new
@@ -449,7 +449,7 @@ ahead of the owner's rulings.
   `club-stage13i-places-guard.test.ts` (18 cases). ⚠ The 13a walk (§475) reads the Organization tiles this session retired: walk it on
   the committed `87ddc358e` state before this session's work reaches the dev server. **Next:** `/simplify` → `/review`, commit on the
   owner's word, then Session B (the sidebar and the More sheet).
-- 2026-11-06 — **13i Session A `/simplify` + `/review` done, not committed.** *Changed by /simplify:* Organization's frame and the `/org`
+- 2026-11-06 — **13i Session A `/simplify` + `/review` done; Session A committed `f279e6963` 2026-11-06 (not walked, not pushed).** *Changed by /simplify:* Organization's frame and the `/org`
   door now read only the Organization links (a small `useOrgLinks`), no longer starting the coach-access fetch the rail already makes;
   the team header reads the team once per team while the layout stands; dead words (Registrations eyebrow, Teams' title and Divisions
   label, the email history eyebrow), the leftover empty-header plumbing on four screens and `PageLoading`'s now-optional header
