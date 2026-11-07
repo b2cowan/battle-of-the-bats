@@ -10,8 +10,12 @@ should flag which topic files need re-checking when a fact changes.
 - **Legal form:** Sole proprietorship (unincorporated). Business income and expenses are reported on
   the owner's personal T1 return via Form T2125 (Statement of Business or Professional Activities).
 - **Owner/operator:** b2cowan — single person, no partners.
-- **Trading name:** FieldLogicHQ. *(Unconfirmed: whether a business name is registered with
-  ServiceOntario under the Business Names Act, and its renewal date — fill in when known.)*
+- **Trading name:** FieldLogicHQ. **Registered** with ServiceOntario (Ontario Business Registry, "Register a
+  Business Name for a Sole Proprietorship") — completed 2026-11-06 per the owner's dashboard; the registry
+  gave the name a number (kept in the owner's records, not here). Primary activity: software publishers
+  (NAICS). *(Renewal date not yet read off the dashboard — a sole-proprietor name registration is understood
+  to run five years, so about 2031-11; confirm and fill in. The dashboard's Business Number field reads
+  N/A, i.e. the CRA number is not linked to the registry profile.)*
 
 ## Jurisdiction
 - **Home province:** Ontario, Canada.
@@ -24,9 +28,10 @@ should flag which topic files need re-checking when a fact changes.
   voluntary registration, made while still a small supplier). **No subscription or other taxable sale has
   ever been made** (owner, 2026-10-31), so there is no past exposure to correct. Once registered, tax
   applies to every taxable supply regardless of the $30,000 threshold, and registration must be kept at
-  least one year. *(Unconfirmed: the exact effective date on CRA's confirmation letter — it can be up to
-  30 days before the request — and the filing frequency. Neither the BN nor dates of returns are stored
-  here; check CRA My Business Account.)* ⚠ The Business Decisions Log entry of 2026-10-26 ("pre-revenue,
+  least one year. **Effective date: September 26, 2026** (owner, 2026-11-06), with a **request pending at CRA to
+  backdate it to May 1, 2026**. Until CRA answers, treat the date as changeable: Bookkeeping stores it as a setting with
+  its history (GST/HST Stage 4a). **Filing frequency: annual** (owner, 2026-11-06). **Quick method: not elected**
+  (owner, 2026-11-06); the regular method applies. *(The BN is not stored here; check CRA My Business Account.)* ⚠ The Business Decisions Log entry of 2026-10-26 ("pre-revenue,
   below the small-supplier threshold" → no GST/HST on the payment fee) rested on not being registered —
   that reason no longer holds; flagged to /strategy.
 - **Payroll (RP) account:** None — no employees.

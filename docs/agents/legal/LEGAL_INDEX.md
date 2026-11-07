@@ -24,6 +24,7 @@ and a pointer here.
 |---|---|---|---|
 | Privacy policy requirements — PIPEDA openness, providers, retention, access, cross-border, breaches, children's age line | `PRIVACY_POLICY_REQUIREMENTS_PIPEDA.md` | 2026-11-05 | Bill C-36 passes; first Québec customer; guardian accounts ship |
 | A second parent's email typed by the first parent — CASL (does s.6(6) reach a non-party?), PIPEDA indirect collection, the stop link (BUILT 2026-11-06, Stage 3b; 5 open flags a–e for the owner; mig 448 prod owed) | `CASL_SECOND_PARENT_EMAIL.md` | 2026-11-06 (CASL text read; PIPEDA 4.3 text not fetched) | Québec customer; Bill C-36; family accounts Stage 4 ships |
+| What a coach is told the club sees (in-club visibility promises) — club-owned team's families are the club's records; old "never your families' payments" line was a broken product promise, not a privacy breach; new wording approved with "other spending" | `IN_CLUB_VISIBILITY_PROMISES.md` | 2026-11-07 | Club on sale; club data-processing terms drafted; family accounts ship |
 | Selling a plan online to an individual in Ontario (CPA 2002 internet agreements; CPA 2023 status) | `ONTARIO_CONSUMER_INTERNET_AGREEMENTS.md` | 2026-11-05 (primary text not fetched) | CPA 2023 proclaimed in force |
 
 ## Open questions — the backlog
@@ -46,6 +47,6 @@ the table above.
 | L10 | The club export's "everything this organization holds" statement is untrue; the family file's statement wants a counsel read | `CLUB_TIER_PRODUCTION_READINESS_PLAN.md` E04, ~L1530 | Club tier on sale |
 | L11 | What a coach on one team may see of a child on another team | `CLUB_TIER_PRODUCTION_READINESS_PLAN.md` ~L3242 | — |
 | L12 | Refund, dispute and cancellation policy | Revenue backlog D16 | L1, L3 |
-| L13 | Business-name registration (Ontario Business Names Act) — is it registered, is it required for "FieldLogicHQ" | `ACCOUNTING_FACTS.md` (unconfirmed) | Naming the seller in L1 |
+| L13 | **DONE 2026-11-06** — business name registered with ServiceOntario (owner's dashboard, status Completed). Left: record the renewal date; name the seller in L1 as "the owner, trading as FieldLogicHQ" | `ACCOUNTING_FACTS.md` | — |
 | L14 | Personal liability as a sole proprietor — incorporation and insurance as a legal question (tax side → `/accounting`) | Revenue backlog (incorporation cutover) | — |
 | L15 | Trademark: file the word mark or not; the search was Canada-only | `docs/agents/brand/VISUAL_IDENTITY.md` ~L195 | — |

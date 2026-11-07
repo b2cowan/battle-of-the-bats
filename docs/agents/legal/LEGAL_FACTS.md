@@ -10,8 +10,8 @@ topic files and drafts it puts at risk.
 Legal form, owner, trading name, province, GST/HST registration, staff and fiscal year live in
 `docs/agents/accounting/ACCOUNTING_FACTS.md` § Structure / Jurisdiction / Registrations / Staffing.
 **Do not copy them here.** The ones that matter most to legal work, as of this date: sole proprietorship
-(not incorporated — the owner is personally liable), Ontario, no employees, **business-name registration
-unconfirmed**.
+(not incorporated — the owner is personally liable), Ontario, no employees, **business name FieldLogicHQ
+registered with ServiceOntario 2026-11-06** (renewal date still to be read off the registry dashboard).
 
 ## Who the customers are
 - **Clubs and leagues** (organizations) buy the tournament / league / club plans.
@@ -36,6 +36,9 @@ unconfirmed**.
 - **About minors:** date of birth, medical notes, emergency contacts (dictionary ~L2057, ~L2261,
   ~L2885–2889); uploaded signed medical and waiver files; tryout consent records including IP address
   (~L4348).
+- **About a person who is not a user:** a second parent's email address, typed by the first parent on a house-league sign-up,
+  unconfirmed; gets copies of sign-up emails with no unsubscribe link (shipped Stage 3, 2026-11-03; see
+  `CASL_SECOND_PARENT_EMAIL.md`). `drafts/PRIVACY_POLICY.md` does not yet mention it.
 - No public sharing of a child's data (`BUSINESS_DECISIONS.md` ~L2871); no one-to-one adult–minor
   messaging (`docs/projects/active/COACH_PORTAL_CHUNK_D_COUNSEL_PACKET.md` ~L188).
 - **Known gaps on file:** no player-information retention or purge rule (TODO, raised 2026-07-17); the

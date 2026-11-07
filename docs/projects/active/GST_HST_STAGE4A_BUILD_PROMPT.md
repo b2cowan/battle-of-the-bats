@@ -406,4 +406,4 @@ hashes, never “uncommitted”.
   per-post (pre-existing / owner-only); a format-3 backup of a store without 006 cannot `restore-dev` into a 006 store, verify does
   not check the 006 enum columns, `create` reads revisions and lines without one snapshot (loud, not silent), restore runs without a
   transaction (pre-existing) → all Bookkeeping Stage 5 (production store) items; the package 500s if the registration read fails.
-- **Owed:** the owner walk §474. Production: none (no production Bookkeeping store; 006 is development-only).
+- **Owed:** nothing for the walk: §474 WALKED 2026-11-06 (55 of 55, all parts Pass). Production: none (no production Bookkeeping store; 006 is development-only).

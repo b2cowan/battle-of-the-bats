@@ -33,6 +33,10 @@ none, knows no customer's location, has no Terms of Service, and prices never sa
   needs its Canada registration and "Include tax in prices: No" (owner steps at the promote).
 - **The owner** sees tax collected by province, sales to US clubs, tax paid on expenses, and a ready-to-file return
   worksheet in Bookkeeping. Staff see each charge's tax and why on the organization's Money tab.
+  *Stage 4, drawn and ruled 2026-11-06:* each expense records its tax by type, the supplier's number and CRA registration, and says
+  in one sentence what credit it earns and why; tax paid by type shows in Reports (never a credit, never on the Overview). The
+  worksheet is a Reports view that sets out lines 101–109 for any dates, with every figure opening what's behind it and a
+  “Mark as filed” that freezes a period. Purchases (4a) build first; the worksheet (4b) follows the per-invoice sales record (Stage 3).
 - **New customers accept Terms of Service** at signup.
 
 ## Why it matters
