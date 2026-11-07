@@ -18,7 +18,7 @@ import {
   type ChargeTaxRecordRow, type CreditNoteTaxRecordRow, type StoredTaxLine,
 } from './charge-tax-record';
 import {
-  failureWords, invoicePaidForWords, stripeSaysWords,
+  chargeFailureWords, failedBillOf, invoicePaidForWords, nextTryShort, stripeSaysWords,
   type ChargeCreditNote, type ChargeFlag, type MoneyCharge, type MoneyInvoice, type Patterns,
 } from './console-money';
 
@@ -212,8 +212,8 @@ export function beforeRegistration(issuedAt: string, registration: string | null
 export const SALES_WORDS = {
   registrationUnread: 'The GST/HST registration date could not be read, so sales without tax are not sorted.',
   recordsFailed: (clock: string) => `Our tax records could not be read at ${clock}. The charges below are Stripe’s.`,
-  bothFailed: (clock: string) => `Stripe and our tax records could not be read at ${clock}. Our subscription record is below; the sales, charges and refunds wait until they answer.`,
-  unreachable: (clock: string) => `Stripe could not be read at ${clock}. The sales below are from our own record. The card, Stripe’s latest word on each payment, the next charge and refunds wait until it answers.`,
+  bothFailed: (clock: string) => `Stripe and our tax records could not be read at ${clock}. Our subscription record is below; the sales, charges, any failed payment and refunds wait until they answer.`,
+  unreachable: (clock: string) => `Stripe could not be read at ${clock}. The sales below are from our own record. The card, Stripe’s latest word on each payment, any failed payment and when Stripe tries again, the next charge and refunds wait until it answers.`,
   refundsWait: 'Refunds wait until Stripe answers.',
   notReadFromStripe: 'Not read from Stripe',
   addressChanged: 'The billing address has changed since.',
@@ -281,8 +281,11 @@ const triesSub = (failed: readonly MoneyCharge[]) => {
 };
 const fromShipped = (s: ReturnType<typeof stripeSaysWords>): SaysCell['tone'] => (s.tone === 'ok' ? 'plain' : s.tone);
 
-/** "Stripe says" for a sale, when Stripe was read. */
-export function saleStripeSays(row: SaleRow): SaysCell {
+/**
+ * "Stripe says" for a sale, when Stripe was read. `readAt` (the list's read): a failed bill's second line says when Stripe
+ * tries next, or that it has none scheduled (Plans & pricing Stage 2 Part 2); without it the line is left out.
+ */
+export function saleStripeSays(row: SaleRow, readAt?: string): SaysCell {
   const status = saleStatus(row);
   const cell = (text: string, tone: SaysCell['tone'], sub: string | null = null): SaysCell => ({ text, tone, sub, void: false });
   if (status === 'void') return { text: 'Void', tone: 'quiet', sub: null, void: true };
@@ -298,7 +301,9 @@ export function saleStripeSays(row: SaleRow): SaysCell {
   if (status === 'open') {
     const owes = `Owes ${saleCents(row.invoice?.amountRemainingCents ?? total, currency)}`;
     const last = row.failed[row.failed.length - 1];
-    if (last) return cell(`${owes} · ${failureWords(last.failureCode)} ${consoleDay(last.createdAt)}`, 'bad');
+    const bill = readAt && row.invoice ? failedBillOf(row.invoice, row.charges, readAt) : null;
+    if (last) return cell(`${owes} · ${chargeFailureWords(last)} ${consoleDay(last.createdAt)}`, 'bad', bill ? nextTryShort(bill.next) : null);
+    if (bill) return cell(`${owes} · not paid`, 'bad', nextTryShort(bill.next));
     return cell(`${owes}${row.invoice?.dueDate ? ` · due ${consoleDay(row.invoice.dueDate)}` : ''}`, 'plain');
   }
   if (status === 'paid') {

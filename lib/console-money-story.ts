@@ -6,7 +6,7 @@
  */
 import { consoleWhen } from './console-dates';
 import {
-  findPatterns, formatCents, periodWords, planCycleWords, failureWords, type MoneyRead,
+  findPatterns, formatCents, periodWords, planCycleWords, chargeFailureWords, type MoneyRead,
 } from './console-money';
 import type { StoryEntry } from './platform-story-view';
 import { cap } from './platform-labels';
@@ -47,7 +47,7 @@ export function mergeMoneyIntoStory(base: readonly StoryEntry[], read: MoneyRead
     const flag = flags.get(c.id);
     if (c.status === 'failed') {
       const missed = claim(e => e.moneyEvent === 'missed', c.createdAt, 72 * HOUR);
-      if (missed) missed.sub = cap(failureWords(c.failureCode));
+      if (missed) missed.sub = cap(chargeFailureWords(c));
       continue;
     }
     if (flag?.kind === 'retry_paid') {

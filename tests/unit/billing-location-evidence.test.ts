@@ -366,7 +366,8 @@ describe('platform admin reads it, read only (Part 3 D)', () => {
     const tab = readCode('app/platform-admin/orgs/[id]/MoneyTab.tsx');
     assert.match(tab, /<BillingAddressPanel answer=\{billing\} \/>/);
     // A flag that needs a person is the FIRST thing on the tab (above Stripe's "agree" line), and shows as a dot on the tab.
-    assert.match(tab, /\{reviewStrip\}\s*\{head\}/);
+    // Plans & pricing Stage 2 Part 2: a failed payment's notice may sit between them (it too goes above the agree line).
+    assert.match(tab, /\{reviewStrip\}\s*(\{failedNotice\}\s*)?\{head\}/);
     assert.match(readCode('app/platform-admin/orgs/[id]/ClubRecord.tsx'), /moneyNeedsReview[\s\S]*kit\.tabDot/);
     const panel = readCode('app/platform-admin/orgs/[id]/BillingAddressPanel.tsx');
     assert.doesNotMatch(panel, /<button|'PUT'|'POST'|'PATCH'|'DELETE'/, 'read only');

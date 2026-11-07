@@ -16,7 +16,8 @@ import { consoleClock, consoleDay, consoleWhen } from '@/lib/console-dates';
 import { formatStoredDate } from '@/lib/timezone';
 import { possessive } from '@/lib/utils';
 import {
-  agreeLine, cardWords, centsFromTyped, compareRecord, creditSplitWords, differsWords, failureWords, findPatterns, flagWords, formatCents,
+  agreeLine, cardWords, centsFromTyped, chargeFailureWords, compareRecord, creditSplitWords, differsWords, failedBillOf, failedBills,
+  failedStoryWords, findPatterns, flagWords, formatCents, triesWords, FAILED_WORDS,
   moneyBand, refundDoorRefusal, remainingCents, subscriptionsMoreWords, yearBefore, REFUND_REASON_MAX, REFUND_WORDS,
   type ChargeCreditNote, type ChargeFlag, type CompareRow, type MoneyCharge, type MoneyInvoice, type MoneyRead, type OurMoneyRecord,
 } from '@/lib/console-money';
@@ -300,6 +301,28 @@ export default function MoneyTab({
     );
   }
 
+  // Plans & pricing Stage 2 Part 2: a failed payment goes first, above the agree line (which is about the subscription only and
+  // must not read as an all-clear). Read only: its door opens the bill's own window. Stripe unread = no notice (the amber line
+  // above says the failed payment waits), never "nothing failed".
+  const failing = read ? failedBills(read) : [];
+  const failedWords = failing[0] ? failedStoryWords(failing[0], { pastDue: ours.status === 'past_due', more: failing.length - 1 }) : null;
+  const failedNotice = failedWords && (
+    <div className={`${kit.callout} ${kit.calloutWarn}`} role="status">
+      <span><b>{failedWords.lead}</b>{failedWords.text}</span>
+      <span className={kit.calloutEnd}>
+        {failing.length > 1 && (
+          <button type="button" className={`${kit.door} ${kit.doorSm}`}
+            onClick={() => { setFilter('unpaid'); listRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}>
+            {FAILED_WORDS.showThem}
+          </button>
+        )}
+        <button type="button" className={`${kit.door} ${kit.doorSm}`} onClick={() => setOpenSale({ number: failing[0].invoiceId, refund: false, atTax: false })}>
+          {FAILED_WORDS.seeBill}
+        </button>
+      </span>
+    </div>
+  );
+
   const gate = m.state === 'read' ? m.refundGate : null;
   const since = firstAt ? yearBefore(firstAt) : '';
   const band = read ? moneyBand({ ...read, charges: allCharges }, since) : m.state === 'unreachable' && recordsRead ? recordMoneyBand(rows, since) : null;
@@ -313,6 +336,7 @@ export default function MoneyTab({
   return (
     <section className={kit.section}>
       {reviewStrip}
+      {failedNotice}
       {head}
       {m.state === 'read' && m.coversOtherPortals && (
         <p className={kit.caption}>This is the coach’s own Stripe customer, so it also covers other portals they pay for. A charge below may belong to one of them.</p>
@@ -404,7 +428,7 @@ export default function MoneyTab({
                     const what = saleWhatWords(row);
                     const tax = saleTaxCell(row, registration, recordsRead);
                     const fromStripe = stripeRead && !row.chargeUnread;
-                    const says = fromStripe ? saleStripeSays(row) : saleRecordSays(row);
+                    const says = fromStripe ? saleStripeSays(row, read?.readAt) : saleRecordSays(row);
                     const card = saleCardCell(row, fromStripe);
                     const amount = saleAmount(row);
                     const sf = stripeRead ? saleFlag(row, patterns) : null;
@@ -637,6 +661,8 @@ function SaleWindow({ orgId, orgName, number, startWithRefund, atTax, listRow, f
   const today = billing && billing !== 'failed' && billing.buyer !== 'none' ? billing.location : null;
   const amount = row ? saleAmount(row) : null;
   const says = row ? (stripeRead ? saleStripeSays(row) : saleRecordSays(row)) : null;
+  // Plans & pricing Stage 2 Part 2: an unpaid bill after a failed try says its tries and the next one (read only).
+  const bill = stripeRead && row?.invoice && readAt ? failedBillOf(row.invoice, row.charges, readAt) : null;
   const invoiceId = record?.stripe_invoice_id ?? answer?.invoice?.id ?? null;
   return (
     <KitDialog
@@ -729,11 +755,12 @@ function SaleWindow({ orgId, orgName, number, startWithRefund, atTax, listRow, f
                 <dt className={kit.eye}>Card</dt><dd>{c?.card ? cardWords(c.card) : (c?.otherMethod ?? '—')}</dd>
                 <dt className={kit.eye}>Stripe says</dt>
                 <dd>{says.text}{says.sub ? ` · ${says.sub}` : ''}</dd>
+                {bill && <><dt className={kit.eye}>Tries</dt><dd>{triesWords(bill)}</dd></>}
                 {row.failed.length > 0 && (
                   <>
                     <dt className={kit.eye}>Failed tries</dt>
                     <dd>{row.failed.map(f => (
-                      <span key={f.id} className={money.refundLine}>{consoleWhen(f.createdAt)} · {f.card ? cardWords(f.card) : (f.otherMethod ?? '—')} · {failureWords(f.failureCode)}</span>
+                      <span key={f.id} className={money.refundLine}>{consoleWhen(f.createdAt)} · {f.card ? cardWords(f.card) : (f.otherMethod ?? '—')} · {chargeFailureWords(f)}</span>
                     ))}</dd>
                   </>
                 )}

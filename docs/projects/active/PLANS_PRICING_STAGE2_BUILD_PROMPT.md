@@ -87,9 +87,20 @@ that is the owner's dashboard work.
 
 - [x] Step 1 verification report to the owner (2026-11-06)
 - [x] Owner's go on the PM summary (2026-11-06, five rulings above)
-- [x] Part 1 foundation, uncommitted: the webhook's handler moved out of the route file into `lib/billing-webhook-handler.ts` (a pure move,
+- [x] Part 1 foundation, committed `21b4d6617` 2026-11-06: the webhook's handler moved out of the route file into `lib/billing-webhook-handler.ts` (a pure move,
       proven line-for-line; the route keeps the signature check and the receive call; ~20 guard tests now read the new file); rulebook
       entries `watching_stripe` + `replay_events` added. No menu entry or page yet (they land with Part 3).
-- [ ] Part 2 failed-payments story on the Money tab · Part 3 Watching Stripe · Part 4 reports (drawing session first) · Part 5 replay · Part 6 closeout
+- [x] Part 2 failed-payment story on the Money tab: owner go 2026-11-06 on the PM summary (no "of 4": Stripe reports tries made and the
+      next try only; a "do not try again" decline says the try runs only on a new card; no next try = "no further try scheduled";
+      a past date = "was due… Read again"; no separate Failed rows (one row per bill, the GST Stage 3 ruling); the drawn
+      "Failed payment ›" door is Stage 3's, replaced by "See the bill"). Built 2026-11-06 from the tab's existing read (no new
+      Stripe call, nothing stored): the notice above the agree line, the row's next-try line, the bill window's Tries line, the
+      bank's decline code named in fixed words everywhere a failed charge is named. Tests `console-money-failed-payment.test.ts`.
+      Walk owed (owner checklist in the session hand-off).
+      **For Part 6:** `/legal`: staff with the Stripe power now see the bank's decline reason in fixed words ("not enough funds";
+      "card reported lost/stolen" were already shown; `fraudulent`/`pickup_card` read as "declined by the bank"); viewing is NOT
+      logged (the drawings do not ask for it). `/accounting`: nothing charged, recorded or invoiced changed; the notice says the
+      amount owed and "It includes $X tax" only when the whole bill is owed.
+- [ ] Part 3 Watching Stripe · Part 4 reports (drawing session first) · Part 5 replay · Part 6 closeout
 - Known red tests NOT from this work: `workspace-flip-guard` and `support-console-stage4b-inforce-guard` (an untracked file from another
   session and a committed one the allowlists do not list), `support-console-stage3-guard` (a modified bookkeeping window file).

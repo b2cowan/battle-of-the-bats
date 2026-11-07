@@ -62,6 +62,12 @@ export type MoneyInvoice = {
   /** A sent invoice's due date (a club's fee invoice); null for one charged automatically. */
   dueDate?: string | null;
   markedUncollectibleAt?: string | null;
+  /**
+   * Plans & pricing Stage 2 Part 2: Stripe's count of tries on this bill (its retry schedule's view), and when it next tries
+   * (null: none scheduled, or a sent invoice). Null count = not read. The schedule's TOTAL is never on the bill.
+   */
+  attemptCount?: number | null;
+  nextAttemptAt?: string | null;
 };
 
 export type MoneyCharge = {
@@ -73,6 +79,10 @@ export type MoneyCharge = {
   refundedCents: number;
   disputed: boolean;
   failureCode: string | null;
+  /** The bank's decline code ("insufficient_funds"), when the bank declined it; a code, never Stripe's own text. */
+  declineCode?: string | null;
+  /** The bank's advice on trying again: `do_not_try_again` means Stripe's next try runs only on a new card. */
+  adviceCode?: string | null;
   card: { brand: string; last4: string } | null;
   /** The words for a charge paid some way other than a card ("Link", "Bank account ending 6789"); absent for a card. */
   otherMethod?: string | null;
@@ -185,9 +195,19 @@ const FAILURES: Record<string, string> = {
   card_declined: 'card declined', expired_card: 'card expired', insufficient_funds: 'not enough funds',
   incorrect_cvc: 'wrong security code', processing_error: 'a processing error', authentication_required: 'needed the card holder',
   lost_card: 'card reported lost', stolen_card: 'card reported stolen',
+  // The bank's decline codes (Plans & pricing Stage 2 Part 2), each in fixed words. `fraudulent` and `pickup_card` read as a
+  // plain bank decline: they are the bank's suspicion, not a fact about the club.
+  do_not_honor: 'declined by the bank', generic_decline: 'card declined', fraudulent: 'declined by the bank',
+  pickup_card: 'declined by the bank', transaction_not_allowed: 'declined by the bank', card_not_supported: 'card not supported',
+  card_velocity_exceeded: 'over the card’s limit', withdrawal_count_limit_exceeded: 'over the card’s limit',
+  invalid_account: 'card account not valid', new_account_information_available: 'card details changed',
 };
 export function failureWords(code: string | null): string {
   return (code && FAILURES[code]) ?? 'not paid';
+}
+/** A failed charge's reason: the bank's own decline code when it gave one we name, else Stripe's failure code. */
+export function chargeFailureWords(c: Pick<MoneyCharge, 'failureCode' | 'declineCode'>): string {
+  return (c.declineCode && FAILURES[c.declineCode]) || failureWords(c.failureCode);
 }
 
 const cycleWord = (cycle: string | null) => (cycle === 'annual' || cycle === 'year' || cycle === 'yearly' ? 'yearly' : 'monthly');
@@ -239,7 +259,7 @@ export function invoicePaidForWords(inv: MoneyInvoice, currency: string, opts: {
 
 /** What Stripe says about a charge, in the console's words. */
 export function stripeSaysWords(c: MoneyCharge): { text: string; tone: 'ok' | 'warn' | 'bad' | 'quiet' } {
-  if (c.status === 'failed') return { text: `Failed · ${failureWords(c.failureCode)}`, tone: 'bad' };
+  if (c.status === 'failed') return { text: `Failed · ${chargeFailureWords(c)}`, tone: 'bad' };
   if (c.disputed) return { text: 'Disputed', tone: 'bad' };
   if (c.status === 'pending') return { text: 'Pending', tone: 'warn' };
   if (c.refundedCents >= c.amountCents) return { text: 'Refunded', tone: 'quiet' };
@@ -492,6 +512,123 @@ function nextChargeCell(read: MoneyRead): ReturnType<typeof moneyBand>[number] {
 /** Under the subscription when Stripe holds more than the read pages through. */
 export function subscriptionsMoreWords(read: number): string {
   return `This customer has more than ${read} subscriptions in Stripe. The newest ${read} were read; open the customer in Stripe to see the rest.`;
+}
+
+// ── A failed payment (Plans & pricing Stage 2 Part 2; drawing tab 9's notice, read only) ─────────────────────────
+// Read from the bills and charges the tab already reads (no second call). Stripe reports the tries made and the next one;
+// the schedule's total is a dashboard setting it never reports, so no "of 4" is ever said.
+
+/** When Stripe tries the bill next, as far as the bill and the bank's advice say. */
+export type NextTry =
+  | { kind: 'at'; at: string }
+  /** The date is already behind the read: never shown as coming. */
+  | { kind: 'was_due'; at: string }
+  /** No try scheduled: whether Stripe used up its tries or retries are off, the bill does not say. */
+  | { kind: 'none' }
+  /** The bank said not to try this card again: Stripe keeps a date but runs it only on a new card (Stripe's own rule). */
+  | { kind: 'new_card'; at: string | null };
+
+export type FailedBill = {
+  invoiceId: string;
+  /** What is still owed on it. */
+  amountCents: number;
+  currency: string;
+  /** The tax inside the amount, only when the amount is the whole bill (a part-paid bill's tax is not the remainder's). */
+  taxCents: number | null;
+  /** The newest failed charge, or null when Stripe tried but no failed charge was read (a card that needed its holder). */
+  failedAt: string | null;
+  reason: string | null;
+  /** Stripe's own count; null when it did not report one (never a count of our own). */
+  tries: number | null;
+  next: NextTry;
+  issuedAt: string | null;
+};
+
+export function nextTry(inv: Pick<MoneyInvoice, 'nextAttemptAt'>, lastFailed: Pick<MoneyCharge, 'adviceCode'> | null, readAt: string): NextTry {
+  const at = inv.nextAttemptAt ?? null;
+  const behind = !!at && Date.parse(at) < Date.parse(readAt);
+  // A date already behind the read is not said on a new-card bill ("the Nov 3 try runs only on a new card" reads as if still ahead).
+  if (lastFailed?.adviceCode === 'do_not_try_again') return { kind: 'new_card', at: behind ? null : at };
+  if (!at) return { kind: 'none' };
+  return behind ? { kind: 'was_due', at } : { kind: 'at', at };
+}
+
+/**
+ * One bill as a failed payment, or null: open, something still owed, nothing on its way, and tried at least once (a failed
+ * charge, or Stripe's count). A sent bill not yet tried is owed, not failed; a written-off or void bill is closed.
+ * `charges`: the bill's own charges.
+ */
+export function failedBillOf(inv: MoneyInvoice, charges: readonly MoneyCharge[], readAt: string): FailedBill | null {
+  if (inv.status !== 'open') return null;
+  const total = inv.totalCents ?? 0;
+  const owed = inv.amountRemainingCents ?? total;
+  if (owed <= 0 || charges.some(c => c.status === 'pending')) return null;
+  const failed = charges.filter(c => c.status === 'failed').sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  const tries = inv.attemptCount != null && inv.attemptCount > 0 ? inv.attemptCount : null;
+  if (!failed.length && !tries) return null;
+  const last = failed[failed.length - 1] ?? null;
+  return {
+    invoiceId: inv.id, amountCents: owed, currency: inv.currency ?? last?.currency ?? 'cad',
+    taxCents: owed === total ? inv.taxCents ?? null : null,
+    failedAt: last?.createdAt ?? null, reason: last ? chargeFailureWords(last) : null,
+    tries, next: nextTry(inv, last, readAt), issuedAt: inv.issuedAt ?? null,
+  };
+}
+
+/** Every failed bill in the read, newest first. */
+export function failedBills(read: Pick<MoneyRead, 'invoices' | 'charges' | 'readAt'>): FailedBill[] {
+  return (read.invoices ?? [])
+    .map(inv => failedBillOf(inv, read.charges.filter(c => c.invoice?.id === inv.id), read.readAt))
+    .filter((b): b is FailedBill => !!b)
+    .sort((a, b) => (b.issuedAt ?? '').localeCompare(a.issuedAt ?? ''));
+}
+
+const timesWord = (n: number) => (n === 1 ? 'once' : n === 2 ? 'twice' : `${n} times`);
+
+/** "Stripe has tried once and tries again on Jan 6.": the tries made and the next one, never a total. */
+export function triesWords(bill: Pick<FailedBill, 'tries' | 'next'>): string {
+  const t = bill.tries ? `Stripe has tried ${timesWord(bill.tries)}` : null;
+  const next = bill.next;
+  switch (next.kind) {
+    case 'at': return `${t ? `${t} and tries` : 'Stripe tries'} again on ${consoleDay(next.at)}.`;
+    case 'was_due': return `${t ? `${t}. It` : 'Stripe'} was due to try again on ${consoleDay(next.at)}. Read again for the result.`;
+    case 'none': return `${t ? `${t}. It has` : 'Stripe has'} no further try scheduled.`;
+    // "Only on a new card" stays true after the club has added one (the bank's advice is on the old card, and the bill cannot say which card is now on file).
+    case 'new_card': return `${t ? `${t}. ` : ''}The bank said not to try this card again, so ${next.at
+      ? `Stripe’s ${consoleDay(next.at)} try runs only on a new card` : 'Stripe tries again only on a new card'}.`;
+  }
+}
+
+/** The sale row's second line under a failed bill. */
+export function nextTryShort(next: NextTry): string {
+  switch (next.kind) {
+    case 'at': return `Stripe tries again ${consoleDay(next.at)}`;
+    case 'was_due': return `Next try was due ${consoleDay(next.at)}`;
+    case 'none': return 'No further try scheduled';
+    case 'new_card': return 'Tries again only on a new card';
+  }
+}
+
+export const FAILED_WORDS = {
+  seeBill: 'See the bill',
+  showThem: 'Show them',
+  // `past_due` keeps working (lib/org-billing-access.ts): said only when our record says Past due.
+  pastDue: 'The club is past due and keeps using everything meanwhile.',
+  more: (n: number) => `${n} more bill${n === 1 ? ' is' : 's are'} unpaid too.`,
+} as const;
+
+/** The notice at the top of the tab: a bold lead, then the rest. `pastDue`: our record's status is past due. */
+export function failedStoryWords(bill: FailedBill, opts: { pastDue: boolean; more: number }): { lead: string; text: string } {
+  const amount = formatCents(bill.amountCents, bill.currency);
+  const lead = bill.failedAt ? `The ${consoleDay(bill.failedAt)} payment of ${amount} failed` : `A payment of ${amount} did not go through`;
+  const parts = [
+    `${bill.reason ? `: ${bill.reason}` : ''}.`,
+    bill.taxCents ? ` It includes ${formatCents(bill.taxCents, bill.currency)} tax.` : '',
+    ` ${triesWords(bill)}`,
+    opts.pastDue ? ` ${FAILED_WORDS.pastDue}` : '',
+    opts.more > 0 ? ` ${FAILED_WORDS.more(opts.more)}` : '',
+  ];
+  return { lead, text: parts.join('') };
 }
 
 // ── A refund's rules (drawing G, H; owner Q1, Q2) ──────────────────────────────────────────────

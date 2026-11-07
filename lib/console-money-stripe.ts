@@ -97,6 +97,10 @@ export function toMoneyInvoice(inv: Stripe.Invoice, prices: PriceMap): MoneyInvo
     amountRemainingCents: inv.amount_remaining,
     dueDate: iso(inv.due_date),
     markedUncollectibleAt: iso(inv.status_transitions?.marked_uncollectible_at),
+    // Plans & pricing Stage 2 Part 2: the retry facts Stripe reports on the bill itself (never the schedule's total: that is
+    // a dashboard setting the API does not return, so no "of 4" is ever printed).
+    attemptCount: typeof inv.attempt_count === 'number' ? inv.attempt_count : null,
+    nextAttemptAt: iso(inv.next_payment_attempt),
   };
 }
 
@@ -128,6 +132,9 @@ export function toMoneyCharge(c: Stripe.Charge, invoice: MoneyInvoice | null): M
     refundedCents: c.amount_refunded ?? 0,
     disputed: !!c.disputed,
     failureCode: c.failure_code ?? null,
+    // The bank's own code for a decline (Stripe puts it in the outcome's reason) and its advice on trying again; codes only.
+    declineCode: c.outcome?.type === 'issuer_declined' ? (c.outcome.reason ?? null) : null,
+    adviceCode: c.outcome?.advice_code ?? null,
     card: card ? { brand: card.brand ?? '', last4: card.last4 ?? '' } : null,
     otherMethod: other,
     refunds: (c.refunds?.data ?? []).map(toMoneyRefund),
