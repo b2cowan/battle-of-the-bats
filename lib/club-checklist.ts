@@ -20,7 +20,9 @@ import { listTeamsWithActiveHeadCoach } from './coach-membership';
  *   2 teams    — at least one active (non-archived) rep team
  *   3 coaches  — every active team has an active HEAD coach (team staff memberships, the access truth
  *                since 2026-08-16 — never the per-season projection); "n of m", naming the gaps
- *   4 public   — a tagline is saved on the public page
+ *   4 public   — a tagline AND a contact email are saved on the public page (F-XR-3: the step asks for both, so it
+ *                ticks on both; the contact email is where families reach the club, and the "Stop these emails"
+ *                page's reply fallback reaches nobody without it)
  *   5 budget   — the club budget has at least one line for the FISCAL year today falls in (Stage 3c — the one
  *                definition, lib/club-fiscal-year.ts; `budgetYear` is that year's NAME, "2026–27")
  *   families   — present (a Club inclusion), never a step that can be "done"
@@ -69,7 +71,7 @@ export async function computeClubChecklist(org: Org): Promise<ClubChecklist> {
       .eq('org_id', org.id).eq('is_archived', false).order('name', { ascending: true }),
     // The access truth, through the module that owns it (the projection guard allows no other door).
     listTeamsWithActiveHeadCoach(org.id),
-    supabaseAdmin.from('org_public_site_content').select('tagline').eq('org_id', org.id).maybeSingle(),
+    supabaseAdmin.from('org_public_site_content').select('tagline, contact_email').eq('org_id', org.id).maybeSingle(),
     fiscal.id
       ? supabaseAdmin.from('org_budget_lines').select('id', { count: 'exact', head: true }).eq('fiscal_year_id', fiscal.id)
       : Promise.resolve({ count: 0, error: null }),
@@ -101,6 +103,9 @@ export async function computeClubChecklist(org: Org): Promise<ClubChecklist> {
     : `${base}/rep-teams`;
 
   const tagline = (siteRes.data?.tagline as string | null | undefined)?.trim() ?? '';
+  // The club's PUBLIC contact email is the public-site editor's “Questions go to” field, saved on the public-site content —
+  // not the account-level contact email on the organization row, which the editor never writes.
+  const contactEmail = (siteRes.data?.contact_email as string | null | undefined)?.trim() ?? '';
 
   const steps: ChecklistStep[] = [
     {
@@ -127,9 +132,9 @@ export async function computeClubChecklist(org: Org): Promise<ClubChecklist> {
     },
     {
       key: 'public',
-      done: tagline.length > 0,
+      done: tagline.length > 0 && contactEmail.length > 0,
       href: `${base}/public-site`,
-      detail: { hasTagline: tagline.length > 0 },
+      detail: { hasTagline: tagline.length > 0, hasContactEmail: contactEmail.length > 0 },
     },
     {
       key: 'budget',

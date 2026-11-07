@@ -1,7 +1,10 @@
 import { isFreeFloorLeague } from './free-floor';
 import { planCarriesModule, type EntitlementOrg } from './module-entitlements';
 import { NOT_YOURS_PAGES, type NotYoursPage } from './not-yours-words';
+import { canOpenModule } from './member-access';
+import { isTeamWorkspaceOrg } from './team-workspace-kind';
 import type { OrgRole } from './types';
+import { volunteerHome } from './volunteer-jobs';
 
 /**
  * WHERE A CLUB MEMBER'S HOME IS — the one rule (Club Tier Stage 13a, A1). Sign-in lands a person here
@@ -48,4 +51,36 @@ export function memberHome(slug: string, role: OrgRole | string | null, org: Ent
     : programHome(slug, role, org);
   if (!home || home.page === refused) return { href: `/${slug}/admin`, label: 'Overview' };
   return { href: home.href, label: home.label };
+}
+
+/**
+ * THE COACHES PORTAL'S WAY BACK TO THE CLUB ADMIN (Club Tier Stage 13, F-XR-2) — decided by the admin's own admission rule,
+ * not a second role list. `/{org}/admin` admits every accepted member except a volunteer (`official`), whom its layout sends
+ * to their job (`volunteerHome`, the rule `app/[orgSlug]/admin/layout.tsx` asks first). So the door is offered to everyone
+ * the admin admits, and it lands on THAT person's home (`memberHome`: the treasurer's Accounting, the league admin's and
+ * registrar's House league, everyone else's Overview), never the owner's.
+ *
+ * Two deliberate narrowings (owner, 2026-11-07): a team workspace has no club admin to go back to, and a member whose only
+ * club role is `coach` is admitted but sees an empty Overview, so a door there would be a dead end.
+ * Null = no door. Client-safe; the sidebar and the phone More sheet both read it.
+ */
+export function adminDoorHome(
+  slug: string,
+  role: OrgRole | string | null | undefined,
+  org: (EntitlementOrg & { accountKind?: string | null }) | null | undefined,
+  capabilities?: Record<string, boolean> | null,
+): Home | null {
+  if (!role || !org || !slug) return null;
+  if (isTeamWorkspaceOrg(org)) return null;
+  if (volunteerHome(slug, role, null) !== null) return null;
+  if (role === 'coach') return null;
+  const home = memberHome(slug, role, org);
+  // A program home the PERSON cannot open (the owner switched it off for them on Members) would answer with the "not yours"
+  // screen, so the door takes them to the Overview instead — the gate every program screen asks (`canOpenModule`).
+  const module = home.href.endsWith('/admin/accounting') ? 'module_accounting'
+    : home.href.endsWith('/admin/house-league') ? 'module_house_league' : null;
+  if (module && !canOpenModule({ role: role as OrgRole, capabilities: capabilities ?? null }, org, module)) {
+    return { href: `/${slug}/admin`, label: 'Overview' };
+  }
+  return home;
 }

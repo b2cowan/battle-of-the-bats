@@ -544,6 +544,7 @@ function WhatTheClubSees() {
                 each line says what it never includes (Ask 4c; the coach's Club tab says the same from their side). */}
             <li>{WHAT_THE_CLUB_SEES_3B.cash}</li>
             <li>{WHAT_THE_CLUB_SEES_3B.sharedPayees}</li>
+            <li>{WHAT_THE_CLUB_SEES_3B.familyDues}</li>
           </ul>
         </div>
         <div>

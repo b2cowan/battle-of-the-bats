@@ -96,6 +96,15 @@ const familiesHelp: HelpPageContent = {
           ),
         },
         {
+          id: 'families-worklist-coaches-told',
+          title: 'What the team’s coaches are told',
+          content: (
+            <p>
+              A rep team&rsquo;s coaches are told that the club sees each family&rsquo;s dues here: what&rsquo;s owed, credited, paid and handed back, and when a reminder last reached them. They are also told it never sees their other spending or the rest of their books.
+            </p>
+          ),
+        },
+        {
           id: 'families-worklist-search',
           title: 'Searching for a family',
           content: (

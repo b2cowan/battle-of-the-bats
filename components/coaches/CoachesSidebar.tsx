@@ -7,7 +7,7 @@ import { useCoaches, resolveLiveSeason, resolveClosedSeason } from '@/lib/coache
 import { isCoachNavItemVisible, withClosedSeasonNav, resolveNavTeamId, SEASON_END_LABEL, coachNavDefaultOpenGroups, isCoachNavGroupOpen } from '@/lib/coach-nav-visibility';
 import { useOrg } from '@/lib/org-context';
 import { coachBillingLink, coachHostedTournamentsLink } from '@/lib/coach-billing-access';
-import { isTeamWorkspaceOrg } from '@/lib/team-workspace-kind';
+import { adminDoorHome } from '@/lib/member-home';
 import { PLAN_BILLING_TITLE } from '@/lib/plan-billing-title';
 import { useIsSandbox } from '@/components/sandbox/SandboxProvider';
 import { useChatUnread } from '@/lib/use-chat-unread';
@@ -181,9 +181,9 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
   const inSandbox = useIsSandbox();
   const billingHref = coachBillingLink(currentOrg, userRole, userCapabilities, inSandbox);
   const tournamentsHref = coachHostedTournamentsLink(currentOrg, userRole, userCapabilities, inSandbox);
-  // The "Admin" door — only for a coach who also administers this org (seeded from the layout's
-  // membership role; a coach-only user has no admin role, so no door). Review P3-4.
-  const isOrgAdmin = (userRole === 'owner' || userRole === 'admin') && !isTeamWorkspaceOrg(currentOrg);
+  // The "Admin" door — for anyone the club admin itself admits, landing on THEIR home (F-XR-2; the rule is
+  // lib/member-home.ts `adminDoorHome`, shared with the phone bar's More sheet). A coach-only user has no door.
+  const adminHome = adminDoorHome(orgSlug, userRole, currentOrg, userCapabilities);
   const chatUnread = useChatUnread();
 
   const teamMatch = pathname.match(/\/coaches\/teams\/([^/]+)/);
@@ -462,8 +462,8 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
             <span className={strip.rowLabel}>Tournaments you run</span>
           </Link>
         )}
-        {isOrgAdmin && (
-          <Link href={`/${orgSlug}/admin`} className={`${styles.sidebarItem} ${styles.sidebarFootItem}`}>
+        {adminHome && (
+          <Link href={adminHome.href} className={`${styles.sidebarItem} ${styles.sidebarFootItem}`}>
             <Shield size={14} />
             <span className={strip.rowLabel}>Admin</span>
           </Link>

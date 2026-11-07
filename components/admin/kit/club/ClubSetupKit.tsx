@@ -74,8 +74,12 @@ function stepFact(step: Step): string | null {
       const named = missing.length <= 3 ? ` · ${joinWithAnd(missing)} ${missing.length === 1 ? 'doesn’t' : 'don’t'}` : '';
       return `${withHead} of ${total} teams have a head coach${named}`;
     }
-    case 'public':
-      return d.hasTagline ? 'Your tagline is saved' : null;
+    case 'public': {
+      // The step ticks on both, so the line says which one is still missing.
+      const need = [!d.hasTagline && 'a tagline', !d.hasContactEmail && 'a contact email'].filter(Boolean);
+      if (need.length === 0) return 'Your tagline and contact email are saved';
+      return need.length === 1 ? `Still needed: ${need[0]}` : null;
+    }
     case 'budget': {
       const lines = (d.lines as number | undefined) ?? 0;
       // The fiscal year's NAME ("2026–27" — Stage 3c), from the server.

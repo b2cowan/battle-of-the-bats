@@ -20,6 +20,13 @@ export function namesCapped(names: readonly string[], cap = 3): string {
   return `${names.slice(0, cap).join(', ')} and ${names.length - cap} more`;
 }
 
+/**
+ * The one quiet line on a house-league coach's team page for someone who ALSO coaches a rep team there (F-XR-4): the
+ * two programs live in two places on purpose (a season team page here, the Coaches Portal for a rep team), and nothing
+ * else says so. Shown only when the portal would let them in; never a nav entry.
+ */
+export const REP_PORTAL_DOOR = { line: 'Your rep team is in the Coaches Portal.', door: 'Open the Coaches Portal' } as const;
+
 /** "Coach Pat Volunteer" / "Coaches Pat Volunteer and Sam Lee" (copy §1.4 teams.card.coach). */
 export function coachesLine(names: readonly string[]): string {
   if (names.length === 0) return '';

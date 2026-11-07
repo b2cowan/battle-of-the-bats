@@ -37,6 +37,32 @@ describe('the setup checklist lets a Club owner go (Stage 13 fix-now 1, F-O1-10)
   });
 });
 
+describe('setup step 4 ticks only when it is done (Stage 13 fix-now 2, F-XR-3)', () => {
+  // The step asks for "a tagline and a contact email", so it ticks on both — it used to tick on the tagline alone.
+  const checklist = readCode('lib/club-checklist.ts');
+  it('reads both fields from the public-site content, and ticks only when both are saved', () => {
+    assert.match(checklist, /\.from\('org_public_site_content'\)\.select\('tagline, contact_email'\)/);
+    assert.match(checklist, /done: tagline\.length > 0 && contactEmail\.length > 0/);
+    assert.match(checklist, /detail: \{ hasTagline: tagline\.length > 0, hasContactEmail: contactEmail\.length > 0 \}/);
+  });
+  it('the tagline alone no longer ticks it', () => {
+    assert.doesNotMatch(checklist, /done: tagline\.length > 0,/);
+  });
+  it('the step says which one is missing, and the ask still names both', () => {
+    const kit = readCode('components/admin/kit/club/ClubSetupKit.tsx');
+    assert.match(kit, /Add a tagline and a contact email to your public page\./);
+    // The missing part is derived, so "Still needed: a contact email" / "Still needed: a tagline" are built from these two.
+    assert.match(kit, /!d\.hasTagline && 'a tagline'/);
+    assert.match(kit, /!d\.hasContactEmail && 'a contact email'/);
+    assert.match(kit, /Still needed: \$\{need\[0\]\}/);
+    assert.match(kit, /Your tagline and contact email are saved/);
+  });
+  it('the Overview’s “Setup: n of 5” reads the same checklist, so it follows', () => {
+    assert.match(readCode('components/admin/kit/club/ClubHubKit.tsx'), /\/api\/admin\/org\/club-checklist/);
+    assert.match(readCode('app/api/admin/org/club-checklist/route.ts'), /computeClubChecklist\(/);
+  });
+});
+
 describe('the switch — the hub', () => {
   it('the hub is the club\'s kit hub; the old hub serves only a tournament-only workspace and the no-org moment', () => {
     // Admin Design Continuity Part B, area 2 (2026-09-29): the switch-off half of the condition is gone —

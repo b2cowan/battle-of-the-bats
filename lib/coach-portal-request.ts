@@ -6,6 +6,8 @@ import { getCoachingAssignmentsForUser, getClosedCoachingAssignmentsForUser } fr
 import { resolveOrgHomeHref } from './module-entitlements';
 import { coachHostedTournamentsLink, type CoachTournamentOrg } from './coach-billing-access';
 import { isTeamWorkspaceOrg } from './team-workspace-kind';
+import { orgPlanCarriesCoachesPortal } from './coach-portal-plan';
+import { isOrgBillingSuspended } from './org-billing-access';
 import { getDemoOrgBySlug } from './demo-org';
 import type { OrgRole } from './types';
 
@@ -47,6 +49,33 @@ export const getCoachPortalClosedAssignments = cache(
   (orgId: string, userId: string, isTeamWorkspace: boolean) =>
     getClosedCoachingAssignmentsForUser(orgId, userId, { isTeamWorkspace }),
 );
+
+/**
+ * THE DOOR FROM A HOUSE-LEAGUE COACH'S TEAM PAGE TO THEIR REP TEAM'S PORTAL (Stage 13 fix-now 2, F-XR-4). The address
+ * `/{org}/coaches` — or null, and a null is the whole point: the line is shown ONLY where the portal would really let this
+ * person in, by the portal layout's own tests, in its own order (so the door can never dead-end on a wall):
+ *   1. a signed-in member of that club (`getCoachPortalAuth`; a house-league coach who was only ever invited to a team
+ *      page is not a member, and the portal answers them "No access to this organization");
+ *   2. the club's billing is not suspended (`isOrgBillingSuspended` — a cancelled club's portal is the subscription-ended
+ *      wall; `getCoachPortalAuth` resolves a suspended org on purpose, so it has to be asked here);
+ *   3. the club's plan carries the Coaches Portal (`orgPlanCarriesCoachesPortal`, B05);
+ *   4. they have a live rep team there (`getCoachPortalAssignments`). Stricter than the portal on purpose: the portal also
+ *      admits a coach whose teams are all closed (to the closed-season page), but "your rep team is in the portal" is
+ *      written for a team in play.
+ * A failed read is "no door", never an error on the coach's team page.
+ */
+export async function getRepPortalDoorForReader(orgSlug: string): Promise<string | null> {
+  try {
+    const auth = await getCoachPortalAuth(orgSlug);
+    if (!auth) return null;
+    if (isOrgBillingSuspended(auth.org)) return null;
+    if (!orgPlanCarriesCoachesPortal(auth.org)) return null;
+    const assignments = await getCoachPortalAssignments(auth.org.id, auth.user.id, isTeamWorkspaceOrg(auth.org));
+    return assignments.length > 0 ? `/${orgSlug}/coaches` : null;
+  } catch {
+    return null;
+  }
+}
 
 /** The retired admin hub, onboarding and sign-in share this standalone landing. */
 export async function getStandaloneAdminHref(

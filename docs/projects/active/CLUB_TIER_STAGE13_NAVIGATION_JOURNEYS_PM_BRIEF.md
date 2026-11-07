@@ -67,3 +67,18 @@ every page in one tap.
 **Priority:** High: the owner finds the side navigation clunky, and every later stage (13c's Permits, 13g's phone, 13h's names) builds
 on this shape. **Success:** each of the five people can tell where they are and get back on every screen, desk and phone; no phone
 bar changes; the nav standard describes what ships. Built in three sessions, one walk.
+
+## An outside review, cross-checked (2026-11-07)
+
+An outside reviewer's first look at the Club tier (23 findings) was checked against the product and our plans (plan §11).
+Most of it confirms work already staged here; several items question rulings we made for stated reasons. **Two new problems
+matter:** (1) coaches are told the club never sees their families' payments, but the club's Families page shows each rep
+family's dues and balance, so the product breaks its own promise; (2) a treasurer, league admin or registrar who also coaches
+has no way back from the Coaches Portal to the club. **Proposed:** a small "fix-now 2" session (the way back, the promise's
+words once the owner rules, a setup step that ticks too early, one explanatory line). Three walk findings nobody owned now have
+homes. **Ruled 2026-11-07:** keep Families as it is and make the coach's sentence true; the new words passed a legal review.
+**Built 2026-11-07 (fix-now 2, awaiting the owner's walk):** the promise now tells coaches what the club sees; every role the
+club admin admits (bar a coach-only member) has a door back from the portal, landing on their own home; setup step 4 ticks only
+with a tagline and a contact email; and someone who coaches house league and rep is told where the rep team lives.
+Fix-now 2 is written and ready to build. **Success:** every person who reaches the club admin can get back to it from the portal; no screen promises what
+another screen contradicts.

@@ -1,0 +1,271 @@
+<title>Fix-now 2 Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box (the house walk frame). */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .facts { grid-template-columns: 1fr; } .facts dd { margin-bottom: 6px; } }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.callnote { font-size: 13px; color: var(--warn); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+</style>
+
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · Club Tier Stage 13 · Fix now 2 · §480</span>
+    <h1>The club’s promise, the way back, setup step 4 and the two programs</h1>
+    <p class="sub">Written 2026-11-07, after the second fix-now build (built, simplified and reviewed). One purpose: four things the external review found are now true on screen. No migration, no new screen.</p>
+  </header>
+  <section class="card"><h2>What this walk is for</h2><p>(1) A rep coach is told the truth about what the club sees of their money: each family’s dues, never their other spending or the rest of their books. (2) A treasurer, registrar or club admin who also coaches can get back to the club’s admin from the Coaches Portal, and lands on their own page, not the owner’s. (3) Setup step 4 (“Put your club online”) ticks only when both the tagline and the contact email are saved, and says which is missing. (4) Someone who coaches a house league team and a rep team is told, once and quietly, that the rep team is in the Coaches Portal.</p></section>
+  <section class="card"><h2>It passes when</h2><ul>
+    <li><strong>1</strong> The coach’s Money › Club screen ends with the new sentence naming Families and “other spending”, and the club’s rep team page has a third money row, “What each family owes and has paid (on Families)”.</li>
+    <li><strong>2</strong> A treasurer who coaches finds <strong>Admin</strong> at the foot of the Coaches Portal sidebar and, on a phone, under More › You, and it opens <strong>Accounting</strong>. The registrar lands on <strong>House league</strong>. The club admin lands on the <strong>Overview</strong>.</li>
+    <li><strong>3</strong> A member whose only club role is coach sees no Admin door anywhere.</li>
+    <li><strong>4</strong> If the owner has switched a person’s own Accounting access off, their Admin door opens the Overview, not a “not yours” screen.</li>
+    <li><strong>5</strong> Setup step 4 stays unticked with only a tagline and says “Still needed: a contact email”; it ticks, with “Your tagline and contact email are saved”, once both are saved; “Setup: n of 5” follows.</li>
+    <li><strong>6</strong> A house league coach who also has a rep team sees “Your rep team is in the Coaches Portal. Open the Coaches Portal” on their team page and the link works; a house league coach with no rep team sees nothing.</li>
+  </ul></section>
+  <section class="card"><h2>Not in this walk</h2><ul>
+    <li><strong>A league admin who also coaches.</strong> The fixture has no league admin who coaches; the registrar takes the same House league landing (same rule), and a unit test pins the league admin. Not walked in a browser.</li>
+    <li><strong>The owner’s own door.</strong> The owner (Morgan Ellis) does not coach in this fixture; the club admin takes the same Overview landing.</li>
+    <li><strong>A cancelled club’s rep line.</strong> A club whose billing is suspended shows no line; there is no safe way to cancel the copy, so it is covered by a unit test only.</li>
+    <li><strong>The Families page itself.</strong> Unchanged: the walk does not re-test it.</li>
+  </ul></section>
+  <section class="card"><h2>Before you start</h2><dl class="facts">
+    <dt>Dev server</dt><dd>It is running. The change is to shared code and hot-reloads, but if a step looks like the old behaviour, stop the server, delete <code>.next</code>, run <code>npm run dev</code> and wait for “Ready”. Part S shows whether it is the new build.</dd>
+    <dt>The club</dt><dd>A fresh copy of the walk’s club, <strong>Harbourtown</strong>, at slug <code>navj-club-fx2</code>. <strong>Claude has already made it</strong> (Part S only confirms it). Nothing here touches any other club.</dd>
+    <dt>Sign-ins</dt><dd>Every account is <code>…@dev.local</code> with password <code>devpass123</code>, at <code>http://localhost:3000/login</code>. Use a private window per person. <code>navj-club-fx2-owner</code> (Morgan Ellis) · <code>-admin</code> (Dana Kowalski, also an assistant coach of 15U AA) · <code>-treasurer</code> (Avery Chen, also head coach of 12U AA) · <code>-registrar</code> (Riley Okonkwo, also an assistant coach of 11U AA) · <code>-coach-15aaa</code> (Jordan Reyes, a coach only) · <code>-coach-13aaa</code> (Priya Nair, head coach of 13U AAA and coach of the house league team Reds) · <code>-hlcoach</code> (Chris Doyle, coach of the house league team Blues, not a club member).</dd>
+    <dt>Emails</dt><dd>Nothing here emails anyone.</dd>
+    <dt>Keep private</dt><dd>These are dev-only accounts; the page carries the password, so do not share the link.</dd>
+    <dt>When done</dt><dd>Part Z: tell Claude “fix-now 2 walk done” and it removes the copy.</dd>
+  </dl></section>
+  <section class="card"><h2>Calls to make as you go</h2><ul>
+    <li><strong>The coach’s sentence (1).</strong> It says the club sees each family’s dues, and that the family’s record lists each payment’s date and amount. The sentence does not say the second part. The words were checked for the legal position, so this is only about whether a coach would want to be told. Right as it stands, or add “including each payment”?</li>
+    <li><strong>The line on the house league page (6).</strong> “Your rep team is in the Coaches Portal.” with a link. Right place and weight, or too quiet?</li>
+    <li><strong>An Admin door for a registrar who coaches (2).</strong> It lands on House league. Right, or should it land on the Overview?</li>
+  </ul></section>
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+</main>
+
+<script>
+(function () {
+  var KEY = "club-stage13-fixnow2-walk-v1";
+  var TITLE = "Stage 13 fix-now 2 walk §480 · The club’s promise, the way back, setup step 4 and the two programs (2026-11-07)";
+  var BASE = "<code>http://localhost:3000/navj-club-fx2</code>";
+  var OWNER = "Owner · navj-club-fx2-owner@dev.local";
+  var ADMIN = "Club admin · navj-club-fx2-admin@dev.local";
+  var TREAS = "Treasurer who coaches · navj-club-fx2-treasurer@dev.local";
+  var REG = "Registrar who coaches · navj-club-fx2-registrar@dev.local";
+  var COACH = "Coach only · navj-club-fx2-coach-15aaa@dev.local";
+  var BOTH = "Coaches both programs · navj-club-fx2-coach-13aaa@dev.local";
+  var HLONLY = "House league coach only · navj-club-fx2-hlcoach@dev.local";
+  var PARTS = [
+ { id: "S", title: "Get ready: confirm the copy", steps: [
+  { who: "You → Claude", do: "Tell Claude <strong>“fix-now 2 walk: confirm the copy”</strong>. Claude made <code>navj-club-fx2</code> and added: the treasurer, the registrar and the club admin as coaches; Priya as a coach of the house league team Reds; Chris as a house league coach with no club membership; a public site with a tagline and no contact email.",
+    see: "Claude names the house league team page addresses (Reds and Blues) and reads back the public site: tagline saved, contact email empty." }
+ ]},
+ { id: "1", title: "The coach is told what the club sees", steps: [
+  { who: COACH, do: "Sign in. In the Coaches Portal sidebar open <strong>Money</strong>, then the <strong>Club</strong> tab. Read the quiet line at the foot of the screen.",
+    see: "“[Club name] sees what you owe it, your requests, your cash on hand and what you pay the payees it shares. On its Families page it also sees each family’s dues: what’s owed, credited, paid and handed back, and when a reminder last reached them. It never sees your other spending or the rest of your books.” The old words “never your families’ payments” are gone." },
+  { who: OWNER, do: "Sign in (you land on the setup checklist; that is expected). Open <strong>Rep teams</strong> in the sidebar, open <strong>15U AAA</strong>, and find the <strong>What the club sees</strong> panel.",
+    see: "In the coach’s-and-you-can-read-it list, three money rows: “The team’s cash on hand (one figure; never its other spending or the rest of its books)”, “What it recorded paying the payees you share”, and the new “What each family owes and has paid (on Families)”." },
+  { who: OWNER + " · Families", do: "Open <strong>Families</strong> and open any 15U AAA family.",
+    see: "You do see each child’s dues there (owed, paid), so the sentence you just read is true. (You are not re-testing Families; just confirming the promise matches the page.)" }
+ ]},
+ { id: "2", title: "The way back: Admin on a computer", steps: [
+  { who: TREAS, do: "Sign in (you land on Accounting). Go to " + BASE + "/coaches. Look at the foot of the sidebar.",
+    see: "The sidebar foot has Help, then <strong>Admin</strong>. Click <strong>Admin</strong>." },
+  { who: TREAS, do: "After clicking Admin, read the page title.",
+    see: "<strong>Accounting</strong> opens (the treasurer’s own page), not the Overview." },
+  { who: REG, do: "Sign in (you land on House league). Go to " + BASE + "/coaches and click <strong>Admin</strong> at the sidebar foot.",
+    see: "<strong>House league</strong> opens." },
+  { who: ADMIN, do: "Sign in. Go to " + BASE + "/coaches and click <strong>Admin</strong> at the sidebar foot.",
+    see: "The club <strong>Overview</strong> opens." }
+ ]},
+ { id: "3", title: "The way back: Admin on a phone", steps: [
+  { who: TREAS + " · phone width", do: "Narrow the window to a phone width (or use the phone). Go to " + BASE + "/coaches. Tap <strong>More</strong> in the bottom bar, then look at the <strong>You</strong> group.",
+    see: "The group lists Account, Home and <strong>Admin</strong> (plus Plan &amp; billing and the others the person has). Tap <strong>Admin</strong>." },
+  { who: TREAS + " · phone width", do: "Read where it took you.",
+    see: "<strong>Accounting</strong>, not the Overview." },
+  { who: REG + " · phone width", do: "Same: More › You › Admin.",
+    see: "<strong>House league</strong>." }
+ ]},
+ { id: "4", title: "A coach-only member has no door", steps: [
+  { who: COACH, do: "Go to " + BASE + "/coaches. Look at the foot of the sidebar. Then, at phone width, open More and read the You group.",
+    see: "<strong>No Admin</strong> row in either place. (This person is a club member, but their only club role is coach.)" }
+ ]},
+ { id: "5", title: "A person whose own access is switched off", steps: [
+  { who: OWNER, do: "Open <strong>Organization › Members</strong>, find Avery Chen (treasurer), choose <strong>Manage</strong>, and switch <strong>Accounting</strong> off for them. Save.",
+    see: "Saved. Avery now cannot open Accounting." },
+  { who: TREAS, do: "In another private window, reload " + BASE + "/coaches and click <strong>Admin</strong>.",
+    see: "The <strong>Overview</strong> opens, not a “this page isn’t yours” screen." },
+  { who: OWNER, do: "Put it back: switch Accounting on again for Avery. Save.",
+    see: "Saved. (The next Admin click by Avery lands on Accounting again.)" }
+ ]},
+ { id: "6", title: "Setup step 4 needs both", steps: [
+  { who: OWNER, do: "Sign in again in a fresh private window (the setup-finished mark is empty, so you land on the Set up your club checklist). Look at step 4, <strong>Put your club online</strong>, and the Overview’s “Setup: n of 5” line.",
+    see: "Step 4 is <strong>not ticked</strong> and says <strong>Still needed: a contact email</strong>. (This copy has a tagline saved and no email: it is the “existing club that ticked on the tagline alone” case, now unticked.) The Overview’s count matches the ticks you see." },
+  { who: OWNER, do: "Click the step’s <strong>Public site</strong> button. Open the About card and fill <strong>Questions go to</strong> with <code>hello@navj-club-fx2.dev.local</code>. Save. Go back to the setup checklist.",
+    see: "Step 4 is now <strong>ticked</strong> and reads <strong>Your tagline and contact email are saved</strong>. “Setup: n of 5” has gone up by one." },
+  { who: OWNER, do: "Empty the email again (clear the field, Save) and go back to the checklist.",
+    see: "Step 4 is unticked again and says “Still needed: a contact email”. (Leave it saved or empty, as you like.)" }
+ ]},
+ { id: "7", title: "A coach of both programs is told where the rep team is", steps: [
+  { who: BOTH, do: "Sign in. In the same window, open the house league team page Claude gave you for <strong>Reds</strong> (Part S).",
+    see: "The team page shows one quiet line under the title: <strong>Your rep team is in the Coaches Portal.</strong> with a link <strong>Open the Coaches Portal</strong>." },
+  { who: BOTH, do: "Click <strong>Open the Coaches Portal</strong>.",
+    see: "The Coaches Portal opens on Priya’s 13U AAA team." },
+  { who: HLONLY, do: "Sign in (a private window). Open the house league team page Claude gave you for <strong>Blues</strong>.",
+    see: "The team page shows <strong>no such line</strong>. (This person is not a club member and has no rep team.)" },
+  { who: BOTH + " · phone width", do: "At phone width, look at the Reds page again.",
+    see: "The line wraps onto its own line under the title and the link is easy to tap; nothing runs off the screen." }
+ ]},
+ { id: "Z", title: "Put back", steps: [
+  { who: "You → Claude", do: "Tell Claude <strong>“fix-now 2 walk done”</strong>. It removes the <code>navj-club-fx2</code> copy and its accounts.",
+    see: "Claude reports the copy gone." }
+ ]}
+];
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+      if (s.call) t.appendChild(el('span', 'callnote', s.call));
+      var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+      cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+      boxes.push({ part: p.id, step: id, cb: cb });
+      var row = el('label', 'step'); row.appendChild(cb); row.appendChild(t); body.appendChild(row);
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function doneSteps(partId) {
+    return boxes.filter(function (b) { return (!partId || b.part === partId) && b.cb.checked; }).map(function (b) { return b.step; });
+  }
+  var totalSteps = boxes.length;
+
+  function refresh() {
+    PARTS.forEach(function (p) {
+      var n = doneSteps(p.id).length;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + p.steps.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    var done = doneSteps(null).length;
+    document.getElementById('total').textContent = done + ' of ' + totalSteps + ' checked';
+    document.getElementById('barfill').style.width = (totalSteps ? Math.round(done * 100 / totalSteps) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [TITLE, 'Checked ' + doneSteps(null).length + ' of ' + totalSteps + ' steps'];
+    PARTS.forEach(function (p) {
+      var ticked = doneSteps(p.id);
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + p.steps.length + (ticked.length ? ' (' + ticked.join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

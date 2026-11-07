@@ -15,7 +15,7 @@ import WhatsNewSheetRow from '@/components/whats-new/WhatsNewSheetRow';
 import { useIsSandbox } from '@/components/sandbox/SandboxProvider';
 import { useOrg } from '@/lib/org-context';
 import { coachBillingLink, coachHostedTournamentsLink } from '@/lib/coach-billing-access';
-import { isTeamWorkspaceOrg } from '@/lib/team-workspace-kind';
+import { adminDoorHome } from '@/lib/member-home';
 import { PLAN_BILLING_TITLE } from '@/lib/plan-billing-title';
 import { useCoaches, resolveLiveSeason, resolveClosedSeason } from '@/lib/coaches-context';
 import { isCoachNavItemVisible, withClosedSeasonNav, resolveNavTeamId, SEASON_END_LABEL } from '@/lib/coach-nav-visibility';
@@ -148,9 +148,9 @@ export default function CoachesBottomNav() {
   const { assignments, closedAssignments } = useCoaches();
   const orgSlug  = currentOrg?.slug ?? '';
   const base     = `/${orgSlug}/coaches`;
-  // The "Admin" door — only for a coach who also administers this org (seeded from the layout's
-  // membership role; a coach-only user has no admin role, so no door). Review P3-4.
-  const isOrgAdmin = (userRole === 'owner' || userRole === 'admin') && !isTeamWorkspaceOrg(currentOrg);
+  // The "Admin" door — for anyone the club admin itself admits, landing on THEIR home (F-XR-2; the rule is
+  // lib/member-home.ts `adminDoorHome`, shared with the desktop sidebar). A coach-only user has no door.
+  const adminHome = adminDoorHome(orgSlug, userRole, currentOrg, userCapabilities);
 
   const [moreOpen, setMoreOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
@@ -458,9 +458,9 @@ export default function CoachesBottomNav() {
                   <span>Tournaments you run</span>
                 </Link>
               )}
-              {isOrgAdmin && (
+              {adminHome && (
                 <Link
-                  href={`/${orgSlug}/admin`}
+                  href={adminHome.href}
                   className={styles.dropItem}
                   role="menuitem"
                   id="coaches-mob-back-to-admin"

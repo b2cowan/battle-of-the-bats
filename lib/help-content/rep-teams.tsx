@@ -12,13 +12,13 @@ const repTeamsHelp: HelpPageContent = {
       heading: 'What the club runs, and what the coach runs',
       summary: 'The club owns each team, its seasons and its coaches; the team’s coaches run it day-to-day in their portal.',
       keywords: ['franchise model', 'what the club sees', 'club owns', 'coach runs', 'rep team', 'oversight', 'attendance', 'lineups', 'what can the club see', 'team cash on hand', 'shared payees', 'what the club reads'],
-      searchText: 'franchise model what the club sees yours to run the coach’s and you can read it the coach’s alone club owns team name division colour group seasons coaches tryout sign-ups documents allocations payment requests roster schedule results attendance lineups awards development opponents scouting practice plans cannot see attendance cash on hand one figure families payments other spending payees you share what it recorded paying the club reads the team cash',
+      searchText: 'franchise model what the club sees yours to run the coach’s and you can read it the coach’s alone club owns team name division colour group seasons coaches tryout sign-ups documents allocations payment requests roster schedule results attendance lineups awards development opponents scouting practice plans cannot see attendance cash on hand one figure other spending rest of its books payees you share what it recorded paying what each family owes and has paid on families the club reads the team cash',
       content: (
         <>
           <p>Every team page has a <strong>What the club sees</strong> panel that says this in three columns:</p>
           <ul>
             <li><strong>Yours to run</strong> — the team&apos;s name, division, colour and group; its seasons (start, close, reopen); its coaches; tryout sign-ups; the documents families sign; allocations and payment-request decisions.</li>
-            <li><strong>The coach&apos;s, and you can read it</strong> — the roster, the schedule and results, payment requests, how many families are connected, and a closed season&apos;s record, roster and staff. Two money lines sit here too: the team&apos;s cash on hand (one figure; never its families&apos; payments or its other spending) and what it recorded paying the payees you share.</li>
+            <li><strong>The coach&apos;s, and you can read it</strong> — the roster, the schedule and results, payment requests, how many families are connected, and a closed season&apos;s record, roster and staff. Three money lines sit here too: the team&apos;s cash on hand (one figure; never its other spending or the rest of its books), what it recorded paying the payees you share, and what each family owes and has paid (on Families). The team&apos;s coaches are told the club sees these.</li>
             <li><strong>The coach&apos;s alone</strong> — attendance, lineups, awards, player development, opponents and scouting, and practice plans.</li>
           </ul>
           <p>A team&apos;s coaches never get season buttons: the club starts and closes a club team&apos;s seasons, and the coaches are told each time.</p>

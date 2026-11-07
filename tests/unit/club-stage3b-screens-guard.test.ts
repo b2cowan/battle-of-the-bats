@@ -22,6 +22,7 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { describe, it } from 'node:test';
 import { readCode, functionBody } from './_source-code.ts';
+import { WHAT_THE_CLUB_SEES_3B, coachWhatTheClubReads } from '../../lib/club-money-words.ts';
 
 const REPO = path.join(import.meta.dirname, '..', '..');
 const BVA = 'app/[orgSlug]/admin/accounting/budget-vs-actual/page.tsx';
@@ -137,6 +138,31 @@ describe('6. the coach is told what the club reads (Ask 4c)', () => {
   it('the empty tab’s stale lines are gone', () => {
     assert.doesNotMatch(code, /owner or treasurer/);
     assert.doesNotMatch(code, /mark each installment paid/);
+  });
+  // F-XR-1: the club's Families page shows each child's season dues, so "never your families' payments" was false.
+  // The promise now names Families and "other spending", and the old clause is gone from every place that said it.
+  it('the coach line names Families and "other spending", and no longer says "families’ payments"', () => {
+    const line = coachWhatTheClubReads('Riverdale');
+    assert.match(line, /Families page/);
+    assert.match(line, /other spending/);
+    assert.match(line, /owed, credited, paid and handed back/);
+    assert.match(line, /when a reminder last reached them/);
+    assert.doesNotMatch(line, /families[’'] payments/i);
+  });
+  it('the club team page says the same from its side: one cash figure, and a row for what each family owes and has paid', () => {
+    assert.match(WHAT_THE_CLUB_SEES_3B.cash, /never its other spending or the rest of its books/);
+    assert.doesNotMatch(WHAT_THE_CLUB_SEES_3B.cash, /payments/);
+    assert.equal(WHAT_THE_CLUB_SEES_3B.familyDues, 'What each family owes and has paid (on Families)');
+    assert.doesNotMatch(WHAT_THE_CLUB_SEES_3B.familyDues, /payments/);
+    assert.match(readCode('app/[orgSlug]/admin/rep-teams/teams/[teamId]/page.tsx'), /WHAT_THE_CLUB_SEES_3B\.familyDues/);
+  });
+  it('the false clause is gone from the help on both sides, and the Families help tells the club the coaches are told', () => {
+    for (const file of ['lib/help-content/rep-teams.tsx', 'lib/help-content/coaches.tsx']) {
+      assert.doesNotMatch(readCode(file), /families(?:[’']|&apos;|&rsquo;) payments/i, `${file} still says "families’ payments"`);
+    }
+    assert.match(readCode('lib/help-content/coaches.tsx'), /on its families page it also sees each family’s dues/);
+    assert.match(readCode('lib/help-content/rep-teams.tsx'), /what each family owes and has paid on families/);
+    assert.match(readCode('lib/help-content/families.tsx'), /coaches are told that the club sees each family/);
   });
 });
 

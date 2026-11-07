@@ -465,3 +465,116 @@ ahead of the owner's rulings.
   (as the old hub). *Gate:* typecheck and the 13-file guard set clean; `check:layout` not run (no staging; dev server is not for a ~50-screen sweep).
 - 2026-11-06 — **13i Session B BUILT 2026-11-06 (the sidebar and the More sheet); committed `403341b71` 2026-11-06 after /simplify + /review (not walked, not pushed).** Build prompt items B1–B7 (Ask 4 = B: the foot untouched). *Built:* the club sidebar lists places only — Overview · Calendar · Schedules, then Programs (Rep teams, House league, Tournaments), "Also on your plan", then Club (Accounting, Families, Public site, Organization); owner 10 rows on every screen, admin 9, league admin 4, registrar 4, treasurer 3. Nothing renders under a row (team block, season block and its switcher, program pages, "Site editor", Organization's rows gone), no chevrons, one lit row at any depth (`litClubPlace`; none on Plan & billing's page, whose foot row lights); a heading only over two or more rows, a lone row keeps the space ("Also on your plan" always said — a build reading, not ruled). The groups are a map beside `LEAD_ORDER` (`PLACE_GROUP`, `clubPlaceGroups`), built once in `useAdminKitNav`. Collapsed sidebar: every club icon a straight link, the program and Organization menus gone. A place's row always carries its count, the sum of its tabs' (`briefPlaceCount`); the Assistant coaches tab now carries its own. Phone: bar and tiles identical for all five (snapshot `.probe/13i-b-phone-snapshot.json`, pinned in `nav-standard-guard`); the More sheet lists the sidebar's places under its names, Organization once, a one-row group unheaded — the owner's sheet 19 → 14; not-yet-run programs list under "Also on your plan" (were under Programs). Both Session A leftovers fixed: the rail's team page list and `useRailTeam` (and the five pages' publish calls) deleted; Organization lights on every tab, Plan & billing on its foot row. NAV_STANDARD N2, N3, N4, N7, N9, N10 rewritten and N11 added (the 2026-09-30 reversal noted), "chevron follows the pages" exception retired, Built line names 13i. *Changed by /simplify:* one list of places shared by both navs, one place-count rule (Rep teams summed from its tabs), More lit on Plan & billing by its own row rather than its address, the Families badge reused on the tab, two dead cancelled-club checks and stale comments removed, one five-person test fixture (`tests/unit/_club-people.ts`). *Changed by /review (three lenses, high-risk tier, no Critical/High):* a dangling class reference in the strip stylesheet's comment; a header line wrapped. *Disclosed:* a cancelled club's More sheet no longer lists "Also on your plan" (the sidebar already hid them); "The board" still has no entrance for someone with no other Organization tab (as before; no club plan hits it, every role holds Venue library). *Left for Session C:* the house-league help article (season block, switcher) and the collapse-sidebar article (strip menus) are now wrong (C1, `/docs`); the layout sweep (C3) — `check:layout` not run here (the rail is every admin screen, a whole-product sweep is not for the dev server). *Gate:* typecheck clean but for another session's files; lint and spelling clean; unit suite 15,059 pass, 11 fail, all in other sessions' files (console, billing words, team-move coverage, portal-tag census, practice plans, series dates, public tournament walk). **Next:** Session C (help words, the demo check, the layout sweep, the walk).
 - 2026-11-06 — **13i Session C BUILT 2026-11-06 (words, checks, the walk); committed `17019d266` 2026-11-07 on the owner's word (with ledger §475 and the 13a walk page, both uncommitted until then).** Build prompt items C1–C5. *C1 help (`/docs`, 13a's folded in):* a helper census of every help module, each finding re-opened before editing; ~35 statements fixed in six modules: the collapse-sidebar article (strip "menus" → every icon a straight link; House league's pre-season row is under Also on your plan), the season article (season block, switcher and phone strip → the season header, its tabs and the arrow beside the name, which keeps your tab and shows from two seasons), Registrations' four "tabs" → views at the toolbar's left (house-league + registrations guides), the season's "menu" → its tabs, the Draft tag's place, Families' "two tabs" → three (wrong before today), the sidebar's "New tournament" (gone since 2026-10-19), Rep teams' "Past program years" → the Past seasons tab; one new section, `places-and-tabs` ("Finding your way: places in the sidebar, pages as tabs": the groups, a team, a season, Organization, the foot, record pages, Back/bookmarks, View site, the "not yours" screen), searchable by "where did the team menu go". Search words moved with the prose. No help link pointed at the retired hub; nothing sent anyone through Organization › Tournaments / Coaches Portal / Plan & billing. *C2 demos:* no tour anchor on a sidebar row, no tour destination on `/org`. *C3 layout sweep* (local production build on :3100, owner approved stopping the dev server for it): 111 club screens × 361/390/768/1440; the retired hub's screen `admin-org` (now a redirect, so unmeasurable) re-pointed to `admin-org-board` (the registrar's The board) and its three baseline entries dropped. **Two 13i defects found and fixed:** a season's Overview scrolled 88px sideways on a phone (the divisions table's 1px screen-reader labels escaped `.tableWrap`'s scroller — `position: relative`, the known trap), and Registrations' toolbar spilled 252px at 768 (Export and Add registration past the edge: the phone-only wrap now wraps at every width, the views take their own row below 900); both re-measured clean at 361–1440 on the dev server (the re-run on a production build was blocked by another session's uncompilable `lib/console-money-sales-store.ts`, and a second full sweep by the memory floor while another session typechecked). *Not 13i, left:* Teams & draft's team-card header spills 10px (Session A did not touch it); **the layout baseline is stale for the house-league screens** (pre-Stage-9 wording: "Pending Review", "Add Division", "Save All Renames"), so ~130 of the 136 findings the baseline does not know are renames of known ones or other sessions' uncommitted work (Families duplicates, the help hub's "What's new") — a baseline refresh is its own job, not written from a run over other sessions' work. *C4 walk:* Owner QA Ledger §476, https://claude.ai/artifact/5gewKCeHyZjNXfkVWrRP3h ([CLUB_TIER_STAGE13I_WALK.html](CLUB_TIER_STAGE13I_WALK.html)), one purpose, 10 parts / 34 steps, owner + registrar + treasurer, desk + phone, on a fresh Harbourtown copy `navj-club-13i` (12 waiting, a finished 2026 Spring House League added for the switch; `.probe/nav-journeys/fx-13i.mjs --waiting=12 --past-season`); teardown on "13i walk done". Every other walk naming the old sidebar is already walked (the 9a walk §372, 2026-10-25), so none re-pointed. *Gate:* spelling ✓; help tests 19/19; the two screen-list guards 12/12; lint clean on the edited help (8 warnings, all on untouched lines). PM brief's 13i heading updated. **Next:** the owner walks §476; then 13c.
+- 2026-11-07 — **An external product and IA review of the Club tier was cross-checked against the code and this plan**
+  (`CLUB_TIER_PRODUCT_IA_REVIEW.md`, 23 findings + 5 challenges + 5 owner questions). Read-only; no code changed. Result in
+  §11: about a third of the review is this stage's own walk handed back (it cites hub IDs), so agreement is not a second
+  opinion; seven findings treat a ruled trade-off as a defect; three are wrong on the code. **New here: F-XR-1 to F-XR-9**,
+  two of them High (the coach's "never your families' payments" promise against the Families page; a treasurer, league
+  admin or registrar who coaches has no door back from the Coaches Portal). Three walk findings that no stage owned are
+  given a home. **Next:** the owner rules §11.4's first decision (F-XR-1); then a fix-now 2 build prompt.
+- 2026-11-07 — **F-XR-1 ruled by the owner as recommended:** keep the Families page as it is and make the coach's promise
+  true. `/legal` reviewed the new words (`docs/agents/legal/IN_CLUB_VISIBILITY_PROMISES.md`): low exposure. The families of a
+  club-owned team are the club's own records. Club is not on sale and no family-facing text made the promise. Approved with
+  one correction: "never sees your **other** spending", because the club does see what the team pays shared payees. **Fix-now 2
+  build prompt written:** [CLUB_TIER_STAGE13_FIXNOW2_BUILD_PROMPT.md](CLUB_TIER_STAGE13_FIXNOW2_BUILD_PROMPT.md) (F-XR-1 to
+  F-XR-4, one session, no drawing; item 3's "tick needs both fields" goes to the owner in the build's summary).
+- 2026-11-07 — **Fix-now 2 BUILT (F-XR-1 to F-XR-4); `/simplify`, `/review` (high) and `/docs` done; the owner's walk §480 is published and owed.** Owner ruled in the
+  build's summary: item 3 **both required**; item 2 **no door for a member whose only club role is `coach`**.
+  - **F-XR-1:** the coach's Money › Club foot line, the club team page's cash line plus a new row ("What each family owes and
+    has paid (on Families)"), the rep-teams help, the coach help (prose and search words) and the Families help now say what
+    the club really sees. Checked first-hand: Money › Club opens only on a team owned by a club (not a team workspace), and the
+    Families page reads exactly those teams, so the sentence is true wherever it shows. Guard: stage-3b screens guard §6.
+  - **F-XR-2:** one rule, `adminDoorHome` (`lib/member-home.ts`): the club admin admits every accepted member except a
+    volunteer (`official`); the door follows that, lands on the person's own home (treasurer → Accounting, league admin and
+    registrar → House league, others → Overview), and skips a team workspace and a coach-only member (an empty Overview).
+    Sidebar and the phone More sheet both read it. **/review fix:** it also takes the person's own access overrides, so a
+    treasurer whose Accounting the owner switched off gets the Overview, not the "not yours" screen. Guard:
+    `coaches-admin-door-guard.test.ts`; `lib/member-home.ts` joined the portal-tag census in `workspace-flip-guard.test.ts`.
+  - **F-XR-3:** step 4 ticks on tagline AND contact email (`org_public_site_content.contact_email`) and says which is missing.
+    **A club that ticked on the tagline alone un-ticks, and "Continue setup" returns: the honest state, not a regression.**
+    Guard: stage-1 screens guard.
+  - **F-XR-4:** the house-league coach's team page is signed in, so it carries one quiet line, "Your rep team is in the Coaches
+    Portal", with the door, only when the portal would really admit them (club member, **billing not suspended** — added by
+    /review —, plan carries the portal, a live rep team: `getRepPortalDoorForReader`, stricter than the portal on purpose). The
+    read starts beside the team read, not after it. Help in both articles. Guard: `coach-both-programs-guard.test.ts`.
+  - **/review noted, left as built:** the family record's History lists each payment's date and amount, so the coach's sentence
+    is true but does not name that (owner's call, walk §480); Families opens only for a member given that access; the review's
+    suggestions to extract one shared admission predicate for the admin layout and the portal layout were left (they would
+    edit both layouts; the guard tests pin both rules). **Walk:** [CLUB_TIER_STAGE13_FIXNOW2_WALK.html](CLUB_TIER_STAGE13_FIXNOW2_WALK.html),
+    Owner QA Ledger §480, on `navj-club-fx2` (fixture scripts `.probe/nav-journeys/fx-fixnow2.mjs`; no league admin or owner
+    who coaches exists in it, said in the walk).
+
+## 11. The external review, cross-checked (2026-11-07)
+
+Source: `CLUB_TIER_PRODUCT_IA_REVIEW.md` (an outside reviewer's first look; its IDs are written **R-F-nn** here so they
+never collide with the hub's F-IDs). Each claim was read against the cited code, this plan, the hub, the readiness plan, the
+Stage 9 and 12 plans, `SIGNED_IN_FAMILY_ACCOUNTS_PLAN.md` and the Business Decisions Log; the claims the verdicts turn on
+were reopened first-hand.
+
+### 11.1 New findings (not in any plan before today)
+
+| ID | Sev | Finding | Review | Goes to |
+|---|---|---|---|---|
+| F-XR-1 | High | The coach is told the club **never** sees their families' payments (the coach Money › Club foot line, Rep teams' "What the club sees", the rep-teams help), while the club's **Families** page shows every club-owned rep family's dues, paid and balance to anyone with Families access. D1 (2026-11-06) ruled the *books*; Families (Stage 5, 2026-10-17) was never weighed against the sentence. A promise the product doesn't keep is a defect, not wording to soften. | R-F-08, Ch. 4, Q2 | Owner ruling (§11.4 #1), then `/legal` (a promise about families' information), then fix-now 2 — **BUILT 2026-11-07** |
+| F-XR-2 | High | Only an owner or admin who coaches gets the Coaches Portal's **Admin** door back. A treasurer, league admin or registrar who coaches gets none, on the desktop sidebar, the phone bar and the More sheet. The workspace switcher, the review's workaround, appears only with two or more places, so a one-club treasurer-coach has no way back at all. (The hub's could-not-assess list named it "unconfirmed live"; it never became a finding.) | R-F-16 | fix-now 2 — **BUILT 2026-11-07** (committed hash in the log) |
+| F-XR-3 | Low | Setup step 4 asks for "a tagline and a contact email" and ticks itself on the tagline alone. Either the tick checks the email or the step stops asking for it. | R-F-22 | fix-now 2 — **BUILT 2026-11-07** (owner ruled: the tick needs both) |
+| F-XR-4 | Low | Nothing tells a person who coaches in both programs why house league opens a team page and rep opens the Coaches Portal (both destinations are ruled, 9c·1). One line. | R-F-06 | fix-now 2 — **BUILT 2026-11-07** |
+| F-XR-5 | Med | Ask 12 ruled that "cancel this day across programs" would get its own plan. That plan was never written. (Rainout cancelling games only is ruled, 9e·10, and is not this.) | R-F-04 | `/plan` — its own plan; 13c references it |
+| F-XR-6 | Med | F-O6-12 (an empty Calendar week names the next event) was recommended in the hub and never given a stage. | R-F-19 | 13c |
+| F-XR-7 | Med | F-O4-1 (no club-level "next season" door; no roll-all for the rep teams) was ruled "a rep teams item, not in Stage 13" and no plan owns it. | R-F-13 (first half) | `/plan` — a rep-teams item |
+| F-XR-8 | Low | From Families, an admin who is also that rep team's head coach finds the rep half of a payment disabled and is sent to Player dues. Owner question: let the record through in that one case? | R-F-15 | Owner question, later |
+| F-XR-9 | Low | Owner question never asked: may the club supply a **missing guardian contact** on a rep player (distinct from the coach's player data)? Today only "Ask the coaches" (Stage 2/5 ruling). | R-F-14 | Owner question, later |
+
+Unverified lead, not a finding yet: a tournament's "+ New venue" may write a venue outside the club's venue book (R-F-05). Check
+it in 13c. The single-row Approve with no confirm (R-F-07's aside) is already the hub's own (L-walk; see the 2026-11-06 walk slip).
+
+### 11.2 Already on our list (the review agrees; nothing to add)
+
+| Review | Ours | Where |
+|---|---|---|
+| R-F-01 signed-in family app | `SIGNED_IN_FAMILY_ACCOUNTS_PLAN.md` Stages 4–5 | Open: consent words, the owner's switch, re-check the guardian link after Stage 14 S6 |
+| R-F-02 permits hidden; dates-off strands bookings | F-A4-3, F-A4-4, F-O6-3 → Asks 1 + 13 | 13c, ruled |
+| R-F-03 league admin dead end, silent hand-off | F-L4-1 → Ask 14 | 13d, ruled (Tools ⋯ itself ruled 9d-2) |
+| R-F-09 Accounting Overview omits house league owed | F-T5-1, F-T5-7, F-O6-8 | 13d + 13b's club band |
+| R-F-10 double bill; two "Outstanding" figures | F-T2-4 (High); F-O6-5 (labelling, not money) | 13d; 13e |
+| R-F-11 invited admin and the checklist | F-A1-4 | 13b (owner's steps read-only, not "admin completes them") |
+| R-F-12 self-serve signup can't buy Club | Readiness item 1b; this log's session-3 entry | `/plan` + `/strategy`; Club not on sale |
+| R-F-17 receipts | F-T3-2, F-T4-2 | New item, shape question open (file storage) |
+| R-F-21 reminders; offline part refunds | F-R3-7, F-R4-2 | Shape questions open |
+| R-F-23 Overview pulse | F-O6-1 | 13b, drawn and ruled |
+
+### 11.3 Where the review is wrong or meets a ruling
+
+- **Wrong on the code:** R-F-18 (a calendar event opens a read window with both sides of a clash, a "From" link to the club
+  schedule and a door to the team's schedule); R-F-20's redirect (`/{org}/schedule` goes to the running tournament or "not
+  found", never the rep-teams page); R-F-11's second half (fixed in fix-now, `2a33cc98a`, walk §473).
+- **Ruled, with reasons the review didn't know:** tryout emails removed (2026-08-26); clashes between programs warn, never
+  block (Stage 6a: no volunteer gets a veto over another program); rainout = games only (9e·10); practices never public (Stage 9);
+  the coach owns the roster and dues (D1/D3, Stage 5c); house league part-payments cut (2026-10-19); house league coaches get a
+  team page, not the portal (9c·1); a family's account comes at team placement and the pay link stays (2026-10-31); the fiscal
+  year and the season meet on a split's season (D2, Stage 3c); a tryout runs on the working season, cost written on the ask
+  ("roll early or wait", readiness Stage 2 Ask 1(a), 2026-09-28).
+- **Misplaced:** Challenge 5's "parked" item is the *public* top-tab frame, not the admin sidebar; the admin keeps "Club
+  overview" first in a tournament (13i).
+
+### 11.4 Owner decisions, in the order they unblock work
+
+1. **F-XR-1 — make the coach's promise true. RULED 2026-11-07 as recommended; `/legal` approved the words with one correction.** Recommended: keep Families (chasing is why it exists) and rewrite the coach
+   lines to say what the club sees. The alternative, hiding rep dues in Families, undoes Stage 5's Chased and Owes views. Blocks
+   fix-now 2's copy item; `/legal` reviews the new words.
+2. **Spring tryouts (review Q4 / Ch. 2) — reopen Ask 1(a) or not.** Recommended: not on the review's word; the evidence on file
+   puts tryouts after the season. Reopen if a real customer's sport runs tryouts before its playoffs, and then frame it as "which
+   season do tryouts belong to", never a second live season (the two-state ruling and the history guard both forbid it).
+3. **Rep dues online (review Q1) — where it sits in the billing sequence.** Already ruled "a possible 12e, its own drawing
+   round". Design catch to state on the ask: club-collected money landing in a team's own book meets D1.
+
+Not owed: review Q3 and Q5 are ruled; re-check Q5's *reason* only if the owner doubts it.
+
+### 11.5 Where the new items go
+
+- **Fix-now 2** (one session, no drawing; build prompt after decision 1): F-XR-2, F-XR-3, F-XR-4, and F-XR-1's copy. It touches
+  the Coaches Portal's doors and one checklist rule. It does not sit on 13i's admin sidebar.
+- **13c** gains F-XR-6 and the "+ New venue" check, and references F-XR-5's plan.
+- **13b, 13d, 13e** unchanged; the review confirms them.
+- **Owned elsewhere:** F-XR-5 and F-XR-7 (`/plan`), Club self-serve (`/plan` + `/strategy`), rep dues online (Stage 12 → 12e),
+  the signed-in family app (`SIGNED_IN_FAMILY_ACCOUNTS_PLAN.md` Stage 4 — the thing that actually fixes the review's Journey H).

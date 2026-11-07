@@ -6,7 +6,8 @@ import { getAuthenticatedUser } from '@/lib/api-auth';
 import { readCoachTeamPage } from '@/lib/house-league-coach';
 import { coachTeamPath } from '@/lib/house-league-coach-invites';
 import { formatStoredDate } from '@/lib/timezone';
-import { coachesLine } from '@/lib/house-league-teams-words';
+import { coachesLine, REP_PORTAL_DOOR } from '@/lib/house-league-teams-words';
+import { getRepPortalDoorForReader } from '@/lib/coach-portal-request';
 import { householdRecipients } from '@/lib/league-second-parent';
 import CopyEmails from './CopyEmails';
 import CoachSchedule from './CoachSchedule';
@@ -37,6 +38,8 @@ export default async function CoachTeamPage({ params }: { params: Promise<{ orgS
   const { orgSlug, seasonSlug, teamId } = await params;
   const user = await getAuthenticatedUser();
   if (!user) redirect(`/auth/login?next=${encodeURIComponent(coachTeamPath(orgSlug, seasonSlug, teamId))}`);
+  // F-XR-4's door check never throws and depends only on who is reading, so it runs beside the team read, not after it.
+  const repDoorRead = getRepPortalDoorForReader(orgSlug);
   const page = await readCoachTeamPage(user.id, orgSlug, teamId);
   if (!page || page.team.seasonSlug !== seasonSlug) notFound();
   const { team, view } = page;
@@ -62,6 +65,9 @@ export default async function CoachTeamPage({ params }: { params: Promise<{ orgS
   }
 
   const others = page.myTeams.filter(t => t.teamId !== team.teamId);
+  // F-XR-4: someone who also coaches a rep team here is told, once and quietly, where it lives. Null unless the Coaches
+  // Portal would really admit them — a door that opened a wall would be worse than no line.
+  const repDoor = await repDoorRead;
   const scheduleHref = `/${orgSlug}/league/${seasonSlug}/schedule`;
   return (
     <div className={`container ${column.column} ${styles.page}`}>
@@ -81,6 +87,9 @@ export default async function CoachTeamPage({ params }: { params: Promise<{ orgS
       {page.coaches.length > 0 && <p className={kit.sub}>{coachesLine(page.coaches)}</p>}
       {view === 'finished' && page.openUntil && (
         <p className={styles.notice}>{team.seasonName} has finished. This page stays until {formatStoredDate(page.openUntil, { withYear: false })}.</p>
+      )}
+      {repDoor && (
+        <p className={kit.sub} id="coach-rep-portal-door">{REP_PORTAL_DOOR.line} <Link href={repDoor} className={styles.link}>{REP_PORTAL_DOOR.door}</Link></p>
       )}
 
       {/* A finished season's page has no Schedule section, link included (9f·6): nothing is ahead, and the schedule stays

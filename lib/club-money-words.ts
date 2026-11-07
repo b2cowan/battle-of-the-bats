@@ -601,13 +601,17 @@ export const TEAM_ACCOUNT_WORDS = {
 
 /** The Rep Teams team page's "What the club sees" — the two lines 3b and Ledger Parity add. */
 export const WHAT_THE_CLUB_SEES_3B = {
-  cash: 'The team’s cash on hand (one figure; never its families’ payments or its other spending)',
+  cash: 'The team’s cash on hand (one figure; never its other spending or the rest of its books)',
   sharedPayees: 'What it recorded paying the payees you share',
+  // The club's Families page shows each child's season dues on a club-owned rep team (F-XR-1): owed, paid and the rest of
+  // the ladder, and the family record's History lists each payment's date and amount. So this row is about dues, never
+  // "payments" in the sense of the team's own books, which the club does not read.
+  familyDues: 'What each family owes and has paid (on Families)',
 } as const;
 
 /** The coach's Money › Club tab, one quiet line at its foot (Ask 4c): what the club reads, and never. */
 export const coachWhatTheClubReads = (orgName: string) =>
-  `${orgName} sees what you owe it, your requests, your cash on hand, and what you pay the payees it shares. Never your families’ payments or the rest of your books.`;
+  `${orgName} sees what you owe it, your requests, your cash on hand and what you pay the payees it shares. On its Families page it also sees each family’s dues: what’s owed, credited, paid and handed back, and when a reminder last reached them. It never sees your other spending or the rest of your books.`;
 
 /** The shared-payee report (specimen 5): the door on the payee's window, the callout, the bands. */
 export const PAYEE_REPORT_WORDS = {

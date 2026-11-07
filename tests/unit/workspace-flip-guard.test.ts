@@ -507,6 +507,8 @@ const LIVE_ROW_FILES: string[] = [
   'lib/founding-season-desk.ts',
   'lib/free-time.ts',
   'lib/invite-acceptance.ts',
+  // Stage 13 fix-now 2: the Coaches Portal's Admin door asks "is this a team workspace?" of the club row its caller holds.
+  'lib/member-home.ts',
   'lib/org-membership-policy.ts',
   'lib/platform-people-lookup.ts',
   'lib/platform-stripe-fees.ts',
