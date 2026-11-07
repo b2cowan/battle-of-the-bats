@@ -13,6 +13,24 @@ binding — weight them accordingly, and say so when citing one.
 **Rationale:** the dot on Help was on nearly all the time, so it carried no information, and it put a push signal on a pull door. The 2026-09-01 clause "Help stays out of the menu" is unchanged; only its ReleaseDot mention is superseded.
 **Applies to:** the admin and coach rails, AccountMenu, the three phone More sheets, the club admin Overview. Extension flagged: a soft olive "New" tag chip and a dismiss X on the notice (neither exists in the design system today). Plan: `docs/projects/active/WHATS_NEW_HOME_PLAN.md`.
 
+### 2026-11-06 — THE CLUB RECORD'S MONEY TAB LISTS SALES, NOT CHARGES (owner, all eight asks "A", GST/HST Stage 3 Part 2 drawings)
+
+**Decision (as ruled):** drawings https://claude.ai/artifact/NwkZe2YiwiN7Ydua9JVntA (`docs/projects/active/GST_HST_STAGE3_PART2_DRAWINGS.html`).
+(1) The Money tab's list is ONE ROW PER SALE (a Stripe invoice), read from our kept tax record with Stripe's payment details joined
+in; failed tries fold under their sale; a bare charge with no invoice still shows as "No tax record"; a void sale is struck through and
+counted nowhere. (2) When Stripe can't be read, the sales still show from our record; Card reads "Not read", the state column is headed
+"Our record says", refunds wait with one line. (3) The row carries a Tax column (Stripe's name + rate, amount, province, or
+"Zero-rated" / a "Tax missing" amber chip / "Before we registered"); the sale's window holds the rest, always open: a joined band
+(before tax · tax · total, credit notes netted in the notes), our GST/HST answer in words, every tax line with Stripe's reason, Taxed
+for, the evidence "as it stood {day}", how it was kept. (4) Needs a look on a club = the SHIPPED amber strip + the Money tab's dot + a
+"Needs a look" choice in the list's Show dropdown + the shipped flag line under the sale; no second strip. (5) Across clubs = a new
+"Sales tax" row in Today's Customers queues (amber pill, count of sales). (6) "Mark as looked at" with a required why, kept beside the
+record, Super admin + Billing; undo = "Put it back on the list". (7) Only the Stripe-reading roles see tax and evidence. (8) A refund
+with no credit note = the shipped flag line.
+**Rationale:** the tax is owed per invoice when it is issued, so a charge list hides exactly the invoices that still owe it; our own
+record answers when Stripe does not; every needs-a-look check is about a past sale that never changes, so without a mark the list only
+grows. Reuse the shipped strip, dot, flag line and queue recipe rather than new parts.
+**Applies to:** platform admin → club / portal record → Money tab, its sale window, Today's queues.
 
 ### 2026-11-06 — THE OWNER BOOKKEEPING EXPENSES TAB IS A THIRD REGISTER (Rule 7) (owner, "A", /design review of the Expenses toolbar)
 
@@ -26,6 +44,40 @@ fine details (Export as the shared plain button, count/figure wording, "To revie
 https://claude.ai/artifact/DPsNEJ4gLV7yiL34gQYN4f, ruled "looks good" the same day. Same session: every Bookkeeping date field
 wears the shared field class (`kit.field`), as the other platform-admin date fields already did; without it the browser's own
 two-tone border showed. The phone's single "Filters" button in the mockup was NOT built (filters wrap as native selects).
+
+### 2026-11-06 — THE CLUB SIDEBAR LISTS PLACES; A PLACE'S PAGES ARE TABS ON ITS PAGE (owner, "this looks good, i agree with your recommendations", Club Tier Stage 13i Asks 1–3 and 5–9 A, then Ask 4 changed to B the same day: "the sidebar footer should remain the same as before (plan an billing stays there along with the other nav footer elements)" — https://claude.ai/artifact/T42raG41vUxt7gjdJEjQMR)
+
+**Decision (as ruled):** (1) The club admin sidebar lists places only; every place's pages are tabs on its page (Accounting's
+tab row), so the sidebar never grows: the owner sees the same ten rows on every screen. (2) No arrows on club sidebar rows;
+the collapsed sidebar's program menus go. (3) Organization is a place with tabs (Members, Audit log, Settings, Venue library,
+PDF settings); the tile hub retires; Tournaments and My Coaches Portal leave Organization. (4) **The sidebar's foot stays as
+it was** (Ask 4 B): Plan & billing, Help, the other portal, Collapse sidebar; Plan & billing is not an Organization tab, stays
+under You on a phone, and keeps its fee-invoice pill. (5) Two headings, Programs (Rep
+teams, House league, Tournaments) and Club (Accounting, Families, Public site, Organization), a heading only over two or more
+rows. (6) A page's own filter tabs (Registrations' To review / Active / Waitlist / Ended) become the view switch at the
+toolbar's left. (7) Below 900 the tab row scrolls sideways with its edge cue, the current tab in view. (8) Tournament mode is
+unchanged. (9) The coach portals are unchanged; this is club-only.
+**Rationale:** a program's pages were handled three ways (rows under the program, tabs on the page, a tile hub plus rows),
+so a row did not tell you what a click would do, and inside a team the sidebar reached 21 rows with Organization below a
+900 px screen. The phone has no sidebar, so only tabs on the page give the desk and the phone one shape. This **reverses the
+second half of the 2026-09-30 Accounting ruling** ("separate jobs are listed in the rail; Rep teams stays in the rail") for
+that ruling's own phone reason: a tab row reaches every page in one tap. Its other clause stands: a record's page one level
+down keeps its back arrow and has no tab row. Also re-opens NAV_STANDARD N3 (2026-10-17 Ask A2), the strip's program menus
+(Ask 3) and N7's Ask B3.
+**Applies to:** the club admin sidebar, its phone More sheet, every club place's page header; NAV_STANDARD N2, N3, N4, N7,
+N9, N10 rewritten and N11 added at the build (`docs/projects/active/CLUB_TIER_STAGE13I_BUILD_PROMPT.md`). Not the tournament
+sidebar, the coach portals or the support console.
+
+### 2026-11-06 — STRIPE'S PAGES: OLIVE TILE, CREAM BRAND COLOUR, OLIVE ACCENT (owner, "looks good" on a screenshot of the real sandbox Checkout; Stripe branding pass Q-D1)
+
+**Decision (as ruled):** Stripe Branding uses the olive rounded tile with the cream FL as the Icon, `#F8F4ED` as the Brand
+colour and `#57651E` as the Accent. The Logo slot stays empty until a wordmark image exists.
+**Rationale:** Stripe has ONE accent for the Pay button, every link and the focus ring. Lime fails as a link and a ring
+(1.17:1 on white); olive passes everywhere (white label on olive 6.39:1, olive link on white 6.39:1). The 2026-07-22
+"olive is never a button fill" rule is scoped to the product's own buttons: its reasons (a collapsed button hierarchy,
+muddy on cream) do not hold for Stripe's single button on a white panel. The owner judged it from the real page.
+**Applies to:** Stripe dashboard Branding, live and test sandbox (`docs/projects/active/STRIPE_BRANDING_PASS.md` D1–D10).
+Not to the product's own buttons, which stay ink-on-lime.
 
 ### 2026-11-05 — A CHILD'S DOCUMENTS: ONE "LAST SIGNED" A ROW, EVERY COPY BEHIND "+N EARLIER" (owner, "proceed as recommended", asks A1–A5 on https://claude.ai/artifact/58oV67ka48y4yCFPqWneya; raised from the S5 child page: *"putting a list of past documents could make this too much of a jumble of words … maybe something to click to see a whole list?"*)
 
@@ -66,17 +118,31 @@ the state so colour never does alone. A plain dot would be a new shape that says
 **Applies to:** Plan & billing (club admin), the club admin shell (rail, phone bottom nav "More" and its sheet, the banner), the
 `StripeFeesList` section. Not built at the time of this entry; plan `docs/projects/active/FEE_INVOICE_ALERTS_PLAN.md`.
 
+### 2026-11-05 — TAX ON EVERY QUOTE: A WINDOW THAT CHARGES SHOWS THE TAX ROW; A PRICE BEFORE STRIPE'S PAGE SAYS "PLUS APPLICABLE TAXES" (owner, drawing asks 1–3 all A on https://claude.ai/artifact/9Sw8VvzwCk4bW5ccDVc9o3; GST/HST Stage 2)
+
+**Decision (as ruled):** Ask 1 A: "Due today" is the total, with one tax row (named as Stripe names it, "HST 13%") right above
+it; no separate "Total" row anywhere. Ask 2 A: in "Start your club" the charge loads again once the address is complete with a
+changed country or province; the button waits; pressing works it out once more and charges nothing if it changed (the window
+shows the new figures and asks for a second press). Ask 3 A: the monthly-or-yearly question shows "plus applicable taxes" under
+each price; the tax itself is on Stripe's payment page.
+**Rationale:** the figures are Stripe's own for the buyer's address, never our arithmetic; one word ("Due today") for what the
+card is charged now; the question before Stripe's page charges nothing, so a Stripe call per open buys nothing the buyer doesn't
+see on Stripe's page before paying.
+**Applies to:** the plan-move window, Start your club, the checkout quote, the monthly-or-yearly question, the plan card. The
+drawing's "applied" list (renewal phrase under the figure, name and address stay mounted while the charge loads, the no-place
+"couldn't work out the tax" sentence) came from the `/design` + `/ux` pass, not from an owner ask.
+
 ### 2026-11-05 — THE CLUB'S PUBLIC PAGES JOIN THE LAYOUT STANDARD; THE HOP INTO A TOURNAMENT MOVES ONLY THE NAVIGATION (owner, "i agree with your recommendations, go ahead and write the build prompt", C1–C7 on https://claude.ai/artifact/96Jaq1JZNr8EgGaV3dxmLt)
 
 **Decision (as ruled):** C1 one band height on both sites: the tournament's desk band comes down from 88 to the club's 72 px (a minimum; a two-line name grows it). C2 every club public page is one 960 px column starting under the club's logo, never centred; forms are 640 on both sites (the tournament's Register comes in from 680); the club home and a team's page split the 960 like the tournament's two-column pages (about 540 + 392); this replaces the per-page reading widths the 2026-08-01 repair ruling allowed (prose held to 720 inside its box instead). C3 no title on a club page whose lit tab already names it (Teams, Tryouts, House league, Tournaments); the line under it (Teams' count, Tryouts' season) stays. C4 a page about one thing (a team, a tryout, a season, a form, About, Tryouts out of season) shows its name at 24 px in the title face, on both sites. C5 24 px between sections on every club page, the home included (reverses the 2026-10-20 team-page 20). C6 the host club's own team's club page and its tournament team page link to each other. C7 the house league's Schedule and Standings pages stay public for this build.
 **Rationale:** clicking from a club into its tournament grew the band 16 px, widened the content, dropped the titles and changed the rhythm; club pages had nine right edges and three centred outliers that broke the 08-01 rule. The one difference kept on purpose is the navigation (club tabs in the band, the tournament's menu on the left), answered by rulings on both sides with one reason: each site's navigation lines up with its own page. The 10-20 team-page 20 px existed to match the home; the home moves to 24 too.
-**Applies to:** the club's public pages (home, Teams, a team, Tryouts, a tryout and its sign-up, House league, a season and its sign-up, Your sign-up, Tournaments, a past tournament's record, About, the in-club not-found) and, for C1, C2's form width, C4 and C6, the tournament frame and pages. Kept as ruled and registered as exceptions: the Born in pill (10-22), a phone's bare secondary symbols (10-20), the team page's calendar rows (10-19/10-20), the home's team grid (DC-01), the pay block's information blue (12c). Standard: `docs/agents/design/PUBLIC_PAGE_LAYOUT_STANDARD.md`; plan §5b; build `docs/projects/active/PUBLIC_CLUB_PAGE_LAYOUT_BUILD_PROMPT.md`.
+**Applies to:** the club's public pages (home, Teams, a team, Tryouts, a tryout and its sign-up, House league, a season and its sign-up, Your sign-up, Tournaments, a past tournament's record, About, the in-club not-found) and, for C1, C2's form width, C4 and C6, the tournament frame and pages. Kept as ruled and registered as exceptions: the Born in pill (10-22), a phone's bare secondary symbols (10-20), the team page's calendar rows (10-19/10-20), the home's team grid (DC-01), the pay block's information blue (12c). Standard: `docs/agents/design/PUBLIC_PAGE_LAYOUT_STANDARD.md`; plan §5b; build `docs/projects/archive/PUBLIC_CLUB_PAGE_LAYOUT_BUILD_PROMPT.md`.
 
 ### 2026-11-04 — PUBLIC TOURNAMENT PAGES: ONE LAYOUT STANDARD (owner, "I agree with your recommendations", A1–A9 on https://claude.ai/artifact/NC6Y7ijjYtd3Kr4cGPgbep)
 
 **Decision (as ruled):** A1 every public tournament page's content is one 960 px column beside the menu. A2 wide desk lists (Schedule, Playoffs) keep the one-line game row, and the live game moves onto the same 104 · rest · 104 grid as every other row. A3 the Overview's game lists use the stacked form (the phone row). A4 live is green everywhere, the today's-games line included (its words unchanged). A5 the bracket link is called "The playoff bracket" everywhere. A6 the Overview's bracket link moves to the right column under Latest results. A7 "Visit the club" becomes the white outlined button. A8 Rules and Teams become joined lists, a team row is two lines, and pools are band rows. A9 the eleven rules are written as a standard with an exceptions list.
 **Rationale:** each stage built its page alone, so pages had five right edges, three left edges, eight game recipes and nine live looks; moving between pages felt jumbled. The two game forms are the two already ruled on 10-29.
-**Applies to:** public tournament pages (desk and the shared parts on phone); the club's public pages are reviewed against the same standard after this is built. Plan: `docs/projects/active/PUBLIC_PAGE_LAYOUT_STANDARD_PLAN.md`. Same day, A10 (the owner asked whether the Overview needs three ways to the club, and left it to the assessment: "we can leave it if you don't think its too much"): the band link and the footer line stay; the host card shows only when the club has something open now, since with nothing open it says only "runs teams and programs all year" and is a third copy of the same link. Same day, round 2 (a game's page and a team's page), A11–A14 ruled as recommended ("I agree with your recommendations"): A11 on a desk a game's page puts the score card left and when-and-where right, the time 28 px; on a phone the Stage 3 order stays (when and where first). A12 division and round said once; the facts list goes, the game length joins when-and-where. A13 a team's Up next / Next games use the stacked row (that team first and bold, the day leading the time); its Results keep their own team-view row. A14 "‹ Schedule" and "‹ All Teams" go, by the club pages' 10-20 back-link rule.
+**Applies to:** public tournament pages (desk and the shared parts on phone); the club's public pages are reviewed against the same standard after this is built. Plan: `docs/projects/archive/PUBLIC_PAGE_LAYOUT_STANDARD_PLAN.md`. Same day, A10 (the owner asked whether the Overview needs three ways to the club, and left it to the assessment: "we can leave it if you don't think its too much"): the band link and the footer line stay; the host card shows only when the club has something open now, since with nothing open it says only "runs teams and programs all year" and is a third copy of the same link. Same day, round 2 (a game's page and a team's page), A11–A14 ruled as recommended ("I agree with your recommendations"): A11 on a desk a game's page puts the score card left and when-and-where right, the time 28 px; on a phone the Stage 3 order stays (when and where first). A12 division and round said once; the facts list goes, the game length joins when-and-where. A13 a team's Up next / Next games use the stacked row (that team first and bold, the day leading the time); its Results keep their own team-view row. A14 "‹ Schedule" and "‹ All Teams" go, by the club pages' 10-20 back-link rule.
 
 ### 2026-11-03 — THE BILLING ADDRESS STEP: ASKED ONCE BEFORE THE FIRST PAID CHECKOUT (owner, all six drawing asks A on https://claude.ai/artifact/UQoWJNs62uta61rmLNfUjV; GST/HST Stage 1)
 

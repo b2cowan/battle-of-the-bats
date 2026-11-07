@@ -158,7 +158,7 @@
     failure, `house-league-gate-guard`, is another session's in-flight edit to `seasons/[seasonId]/route.ts` (a role read),
     not this stage's.
 
-- **Walk (Part 6 item 7) written 2026-11-04, owed:** §457, [interactive walk](https://claude.ai/artifact/6fWss4wUZjeFEAx8Pep7eD) · [repository HTML](SIGNED_IN_FAMILY_STAGE3_WALK.html). Runs on the UAT Rep Club's open 2026 Fall House League. Words in the walk are the SHIPPED words (`lib/league-second-parent.ts`), which differ from the drawing's draft (the hint, the added-you line, the sentence under "Your sign-up"). "Will be sent" is not a string in the code: the walk reads the "N families get it (M children)" reach line instead.
+- **Walk (Part 6 item 7) PASSED 39/39 2026-11-06, put back 2026-11-06 (season back at 56):** §457, [interactive walk](https://claude.ai/artifact/6fWss4wUZjeFEAx8Pep7eD) · [repository HTML](SIGNED_IN_FAMILY_STAGE3_WALK.html). Runs on the UAT Rep Club's open 2026 Fall House League. Words in the walk are the SHIPPED words (`lib/league-second-parent.ts`), which differ from the drawing's draft (the hint, the added-you line, the sentence under "Your sign-up"). "Will be sent" is not a string in the code: the walk reads the "N families get it (M children)" reach line instead.
 
 ## Gate (blocking, before any code)
 

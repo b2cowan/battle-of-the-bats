@@ -8,6 +8,63 @@
 
 ---
 
+### 2026-11-06 — Club's headline promise to a president: ONE PLACE THAT PULLS THE WHOLE CLUB TOGETHER; it FOLLOWS the Club release, League Plus carries it too, and the coach's books stay the team's (all Decided)
+**Status:** **Decided** for the direction (owner, 2026-11-06, Club Tier Stage 13 expanded: "yes that should be our direction,
+record it"). **Open questions 1–3 below RULED by the owner the same day** (see "Ruled"). One item still open: each team's
+tournament list (below).
+**Decision:** The Club plan is sold to a club president on one promise: **the whole club, synthesized and summarized in one
+place** — money, permits and free time, teams, schedules and what is at risk — so the president does not have to assemble
+it. The owner's words: *"this summary level reporting and views will be key to sell to club presidents who have to deal with
+so much information that they want the ability to have that synthesized and summarized with minimal effort on their part."*
+This sharpens the Club segment's existing line in `docs/agents/brand/BRAND_STRATEGY.md` ("the president gets control and
+visibility; the coach gets independence and tools") — visibility becomes the headline; it replaces nothing.
+**Rationale:** Walked on real screens the same day (journey O6, `docs/projects/active/CLUB_TIER_STAGE13_NAVIGATION_JOURNEYS_PLAN.md`):
+the club Overview answers none of ten president questions directly. The finances and this week are one click below it
+(Accounting overview, Calendar) with nothing pointing there; free time across permits, what is at risk, players against last
+season, and the dome and house league season together are assembled by hand or absent; which tournaments each team entered
+is not answerable from the club; each team's budget against spending is withheld by a standing ruling (D1, Ask 4e). The
+pieces mostly exist; the synthesis does not. That synthesis is the thing a president buys.
+**Open (not decided here):**
+1. **Sequencing:** do the missing summary pieces (a free-time view across permits, a club player count against last season,
+   each team's tournaments, a whole-club board summary) **gate the Club release**, or follow it? Surfacing what already exists
+   onto the Overview is navigation and rides Club Tier Stage 13's ladder either way.
+2. **Packaging:** is the summary layer Club-only, or does League Plus (house-league-only clubs, also sold to a president)
+   carry the house league half of it?
+3. **The team-books boundary (D1, Ask 4e):** a president seeing each team's budget against spending re-opens D1, which keeps
+   the coach's books the team's own (the club sees one cash figure). Counterweight to weigh with it: the brand's own promise
+   that "the coach gets independence". Each team's tournament list has no ruling behind it — a separate, simpler question.
+
+**Ruled (owner, 2026-11-06, same session):**
+1. **It follows the Club release** — it does not gate it. Owner: "it can follow the club release". Surfacing what exists
+   onto the Overview still rides Club Tier Stage 13.
+2. **League Plus carries it too**, for what a house-league-only club runs. Owner: "i would think that would be good for league
+   plus too". Which pieces apply on League Plus is the summary-layer plan's to draw.
+3. **D1 is NOT re-opened.** Owner: "disregard this, i was misinterpreted, the club visibility into coaches account is at a good
+   place right now, we want to maintain that independence." "Where is each coach with their budget" means **each team's
+   standing with the CLUB** — allocated, collected, outstanding, overdue, and the one "Held by the team" cash figure — which
+   the club already sees (Accounting › Teams); the summary surfaces that. The coach's own budget and spending stay the
+   team's. Reinforces the brand's "the coach gets independence and tools".
+**Still open:** each team's **tournament list** (owner's original question "what tournaments are each coach signed up for?").
+It lives in each coach's portal, like their books. Asked of the owner whether ruling 3's independence covers it too.
+**Affects:** positioning (Club persona, pricing card, `/for-clubs`), roadmap (a summary-layer plan; possibly the Club
+release's scope), the demo sandbox's story, Club Tier Stage 13's hub (the president's view is its first tab).
+**Handoff:**
+```
+HANDOFF → /plan: a plan + PM brief for the club's summary layer (a free-time view across permits, a club player count
+  against last season, a whole-club board summary, each team's standing with the club on the president's front page, and
+  each team's tournaments only if the owner says yes), drawn from O6's walk file. It is sequenced AFTER the Club release
+  (ruling 1) and draws the League Plus version too (ruling 2). Coordinate with Club Tier Stage 13 so the Overview's
+  navigation half isn't built twice. Never a view into a coach's own books (ruling 3).
+HANDOFF → /marketing: record the sharpened Club promise in the brand canon now; change NO customer copy until the summary
+  layer exists — a pricing card must not promise a view the product doesn't have (the policy-vs-product rule). When it
+  ships: the Club pricing card and /for-clubs lead with the president's view.
+HANDOFF → /demos: when the summary layer ships, the demo club's tour opens on it (a release-cycle decision for /demos).
+HANDOFF → /strategy (owner): each team's tournament list — does ruling 3's independence cover it?
+```
+**Supersedes:** nothing.
+
+---
+
 ### 2026-11-06 — League Plus goes on sale at the same time as the Club release; whether the free League floor should exist at all is OPEN, leaning remove
 **Status:** **Decided** for the timing (owner, 2026-11-06, in the Stripe set-up session: "league plus will go on sale at the same time as the club release since all of its functionality will be available"). **Proposed / open** for the free floor (owner: "we will need to talk about the need for the free league, i am thinking we don't need it and just keep the paid offering"): not ruled; no change is made to the floor.
 **Decision:** League Plus ($89 / $890, unchanged) is purchasable from the Club release, not before and not separately from it. The free League floor (1 season / 1 division / 8 teams, internal key `league_starter`) stays as it is until its own conversation; the owner's lean is to drop it and keep the paid offering only.
@@ -43,7 +100,7 @@ HANDOFF → /strategy (owner conversation, not yet scheduled): the free League f
 | Free plans (Tournament, League floor) | | | **no product, no price** |
 
    - **Names a customer reads** (on Checkout, invoices, receipts and the portal) must follow the naming canon: "Premium Coaches Portal", never "Coaches Portal Premium" (the audit's accepted-name list currently allows it), "League Plus" (the audit expects "League"), "Club · Association". The exact product names are `/marketing`'s to write. Any product still named from the old list is renamed, not recreated.
-   - **Price slots:** each plan and cycle in `stripe_prices` points at exactly one active price of that amount and interval; the test environment's slots at test prices, production's at live prices; lookup keys follow the existing pattern, with Club · Association's added (the audit script has none).
+   - **Price slots:** each plan and cycle in `stripe_prices` points at exactly one active price of that amount and interval; the test environment's slots at test prices, production's at live prices; lookup keys are NOT part of the target (owner 2026-11-06: the app never reads them, and Stripe would not keep them when the owner tried to set them; the audit no longer checks them).
    - **Webhooks (billing endpoint, www host):** the 17 events the audit lists (corrected 2026-11-06 from eleven; see the audit results below), one enabled endpoint, no stale or duplicate endpoints. The two Connect endpoints for family payments get their own written list in the same pass (their events are not in this record).
    - **Rows the target OWES, filled in when their own work lands** (owner 2026-11-06: they belong in the target, and this is where they are tracked, not a separate list): tax settings and a tax code on each product (GST/HST Stage 2, `/accounting`); any USD price (none decided); the written event list for the two Connect (family payments) endpoints. The cleanup does not start until the tax rows are filled, which is why it follows the tax work.
    - **One name everywhere (owner 2026-11-06, "the more important thing"):** a plan has one name across the portals, marketing, the help and Stripe. The plan's label in `lib/plan-config.ts` is the source, and the audit script reads the expected Stripe product name from it, so a rename there is caught in Stripe.
@@ -52,7 +109,7 @@ HANDOFF → /strategy (owner conversation, not yet scheduled): the free League f
    - **Production zero-use check: nobody is on the retired products** (0 workspaces on the add-on billing mode); the four live slot rows still point at the four retired prices. The Stripe dashboard's own subscription count on those two products is still to be eyeballed before deleting.
    - **Webhook event list CORRECTED to 17** (the original seven, the four dispute/refund events, `payment_method.attached` / `.detached`, which keep a customer's card on file, and `invoice.paid` / `.voided` / `.marked_uncollectible` / `.finalized`, which carry a club's own Stripe-fees invoice; the first list, and the audit's, left the last six out; the setup guide's Step 5 already had them). Live therefore lacks those six as well as the four dispute/refund events: **ten events to add in live**. Test matches the 17 and also sends `invoice.payment_action_required`, which the guide does not list (harmless; the audit flags it as an extra). *(An earlier note of the same day called the invoice events unhandled; wrong, the webhook routes any invoice event carrying the fee-invoice marker.)*
    - **Live has ONE webhook endpoint (billing).** Test also has the Connect (family payments) endpoint, with 12 events: that is the written template for the live Connect endpoint, which is created when family payments go live, not before.
-   - **Test sandbox has a real defect: the League YEARLY slot points at a MONTHLY price** (the audit's only test-side price failure); test also has the old "Team" and "League" product names, blank lookup keys on every price, and the four retired prices active.
+   - **Test sandbox has a real defect: the League YEARLY slot points at a MONTHLY price** (the audit's only test-side price failure); test also has the old "Team" and "League" product names and the four retired prices active (blank lookup keys were also reported then; that check was removed the same day).
 **Rationale:** Test and live are two separate Stripe accounts that have drifted for weeks (many changes in test only, per the owner's 2026-11-03 ask). Fixing live pieces one at a time against an audit that is itself out of date would copy the drift into live. Cleaning the cheap, reversible environment first and then mirroring it is lower risk, and doing the end-to-end tests last means they run once, against the final set-up. The deadline is tied to Club going on sale because that is when the retired products and the Club prices start to matter; the tripwire exists because the "no customers yet" assumption is the only thing making the delay safe.
 **Affects:** the Stripe test-to-live reconciliation (R) in `STRIPE_FROM_OUR_OWN_ADMIN_PLAN.md`; Stage 0's O3, O6 and O12/O13 in `PLANS_PRICING_STAGE0_BUILD_PROMPT.md`; the audit script's expected list; no price, plan name, band, gate or limit moves, and `lib/plan-config.ts` is untouched.
 **Handoff:**

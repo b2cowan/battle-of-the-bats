@@ -2765,8 +2765,13 @@ Small; it fills any gap in the sequence. **Holds the release?** ⚖ Yes since 20
 does the same with the team's Ledger.
 **Planned 2026-11-04:** `BANK_RECONCILIATION_PLAN.md` + `BANK_RECONCILIATION_PM_BRIEF.md`. The plan's premise P1 corrects
 the index's words: the unit is a bank account, not a book. Asks B1–B12 ruled 2026-11-04 (all A); stages R0–R7.
+**Re-planned 2026-11-05 (owner) as THE BALANCE CHECK:** type a statement's date and balance, see the difference, find
+what's missing, save while "Off by $X"; no ticking; one model, both portals. Drawings `BANK_BALANCE_CHECK_DRAWINGS.html`
+(asks 1–10 ruled 2026-11-05). Plan rewritten 2026-11-05, stages BC1–BC9 (the tick-off R1–R2, committed on dev through
+`d4ca80052`, is the plan's Appendix A); owner asks Q1–Q3 ruled A 2026-11-05 on `BANK_BALANCE_CHECK_ASKS.html`. Next: BC1.
 - [x] Planned (its own PLAN/PM brief) — ✅ 2026-11-04, asks ruled · drawn (owner mockup session) — before Stage 8. ✅
-  Drawn and **approved 2026-11-04** (`BANK_RECONCILIATION_DRAWINGS.html`; 14 drawing asks ruled A). Build R1–R7 next.
+  Drawn and **approved 2026-11-04** (`BANK_RECONCILIATION_DRAWINGS.html`; 14 drawing asks ruled A); **re-drawn
+  2026-11-05** as the balance check (`BANK_BALANCE_CHECK_DRAWINGS.html`, 10 asks ruled). Build BC1–BC9 next.
 - [ ] Built for the club (Accounting) and for the coach (the team's Ledger).
 - [ ] Walked (its own checkable page, a § in the Owner QA Ledger).
 - [ ] **Marketing truth:** "payment reconciliation" comes back into the Club copy (pricing section, Club plan article, homepage,
@@ -2775,6 +2780,10 @@ the index's words: the unit is a bank account, not a book. Asks B1–B12 ruled 2
 **Until it exists, no page may claim it.**
 
 ### Stage 9 — House league (last; ⚖ inside the Club release since 2026-10-12, §7)
+> **✅ STAGE 9 CLOSED by the owner, 2026-11-06.** Record at that date (`HOUSE_LEAGUE_STAGE9_PLAN.md` holds the detail):
+> 9a through 9f and the public season page are built and walked — 9d-2b Parts 1–7 committed 2026-10-28; 9e-1/-2/-3 walks §442, §445, §447;
+> 9f-1 walk §449; 9f-2 committed `d907b02b7`, walk §450 passed 60/60; the public season page committed `aa6d1e72c`, walk §451 passed 20/20.
+> What still travels with it to Stage 8 is production work, not build work: its migrations (e.g. 423, 427, 428, 432) apply to prod in order.
 > **💳 Owner ask 2026-10-19 (raised with the Stage 4 ruling): research, in this stage, what it takes for families to PAY for a
 > house-league sign-up on the site.** Not a fresh investigation: the 2026-07-28 facilitated-payments decisions stand (direct
 > charges on the club's own Stripe Express account, the club nets the full fee, family-pays rates cards 3.5% + $1.50 / bank debit
@@ -3063,6 +3072,12 @@ page, a § in the Owner QA Ledger) passed.
 > the tournament case), while the phone's tournament bar never showed them. Fixed 2026-10-20 (the sidebar hides both inside a
 > tournament; Overview alone is the way back; build-guarded). A second, still open: that way back is **"Overview"** on the desktop
 > sidebar and **"Club overview"** in the phone's More sheet (N6, Ask A5) — one door, two names.
+>
+> **⚖ EXPANDED by the owner 2026-11-06 — plan of record now `CLUB_TIER_STAGE13_NAVIGATION_JOURNEYS_PLAN.md`** (+ PM brief).
+> The stage becomes a review of how each person who runs a club gets their work done: five people (owner, club admin, league
+> admin, registrar, treasurer — R1 added the league admin because the registrar cannot schedule), five journeys each, walked on
+> real screens by the agent (R2), plus the nav per person. Everything in the checklist below is inside it (that plan's §1);
+> the checklist stays here as the definition of done.
 
 **Closes:** the crossings · desktop ↔ phone parity, everywhere · the club sidebar at its full length · a standard with no
 unwritten departures.
