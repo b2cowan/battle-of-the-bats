@@ -102,7 +102,7 @@ that is the owner's dashboard work.
       (the morning job stays the only thing that writes a check); the failed-try outcome is a neutral "Cannot be read from here" row with a link
       to check it in Stripe, never a pass or a fail; two feeds (plan billing, family payments; the payout-accounts feed keeps no log);
       no club-payouts card, no "This month" card or export (Part 4); no "Send again" (Part 5); the sales-tax "?" row dropped (a decision,
-      not a Stripe setting). BUILT and committed 2026-11-07 (hash on the follow-up line): a new Health › Stripe page (Super admin, Billing, Support, Product read; the
+      not a Stripe setting). BUILT and committed `514d3a2d0` 2026-11-07: a new Health › Stripe page (Super admin, Billing, Support, Product read; the
       eye for all but Super admin), no migration, no new Stripe write. The settings rows come from the SAME audit the scripts run
       (`scripts/lib/stripe-portal-audit.mjs`, imported, not copied). Tests `watching-stripe.test.ts`; two menu guards updated.
       Proven on dev with a signed-in probe (all three reading roles 200, Growth bounced to Today; a planted failed update showed in the
