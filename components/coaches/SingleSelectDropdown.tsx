@@ -51,7 +51,15 @@ export default function SingleSelectDropdown({
   restQuiet = false,
   restValue,
   labelSuffix,
+  face = 'pill',
 }: {
+  /**
+   * What the closed control LOOKS like. `pill` (every caller but one) is the reporting family's pill. `chevron` is the
+   * chevron alone, a 44px square spoken by `label`, set beside a title it switches: a house-league season's name (Club
+   * Tier Stage 13i, owner 2026-11-06 — the drawing's title chevron, opening this same menu, so no second pick-one control
+   * exists). The panel, the phone's sheet and the rows are the pill's own, unchanged.
+   */
+  face?: 'pill' | 'chevron';
   /** Sits to the left of the chosen value — "Group by", "View", "Showing". */
   label: string;
   /** `detail` is a quiet figure at the option's end (a book's balance — the club's Book pill, Stage 3a). `mark` is a
@@ -239,7 +247,8 @@ export default function SingleSelectDropdown({
         <summary
           ref={summaryRef}
           data-pill="summary"
-          className={`${styles.multiSelectSummary}${restQuiet && !atRest ? ` ${styles.multiSelectActive}` : ''}`}
+          className={face === 'chevron' ? styles.multiSelectChevronFace : `${styles.multiSelectSummary}${restQuiet && !atRest ? ` ${styles.multiSelectActive}` : ''}`}
+          aria-label={face === 'chevron' ? label : undefined}
           aria-haspopup={isPhone ? 'dialog' : undefined}
           aria-expanded={isPhone ? asSheet : undefined}
           onClick={ev => {
@@ -251,9 +260,13 @@ export default function SingleSelectDropdown({
             setSheetOpen(v => !v);
           }}
         >
-          <span className={styles.multiSelectLabel}>{atRest ? label : `${label}${labelSuffix ?? ''}`}</span>
-          {!atRest && <span className={styles.multiSelectValue}>{chosenLabel}{chosen?.mark}{chosen?.pillMark}</span>}
-          <ChevronDown size={14} aria-hidden />
+          {face === 'chevron' ? <ChevronDown size={18} aria-hidden /> : (
+            <>
+              <span className={styles.multiSelectLabel}>{atRest ? label : `${label}${labelSuffix ?? ''}`}</span>
+              {!atRest && <span className={styles.multiSelectValue}>{chosenLabel}{chosen?.mark}{chosen?.pillMark}</span>}
+              <ChevronDown size={14} aria-hidden />
+            </>
+          )}
         </summary>
         <div data-pill="panel" className={styles.multiSelectPanel} role="group" aria-label={label}>
           {choices}

@@ -24,7 +24,7 @@ import Link from 'next/link';
 import { ChevronRight, Copy, Lock, Plus } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
-import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { TabActions } from '@/components/admin/kit/club/PlaceFrame';
 import ExportMenu from '@/components/admin/ExportMenu';
 import PageNotice, { useNotice } from '@/components/admin/kit/club/PageNotice';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
@@ -39,6 +39,7 @@ import {
 import { TRYOUT_STATUS_LABEL, TRYOUT_STATUS_TONE, tryoutNotice, type AddApplicantForm } from '@/components/admin/kit/club/TryoutDialogs';
 import type { SeasonPreflight } from '@/components/admin/kit/club/SeasonDialogs';
 import { usePublishRailTeam } from '@/components/admin/kit/useRailTeam';
+import { teamHeadOf, usePublishTeamHead } from '@/components/admin/kit/club/TeamFrame';
 import {
   downloadXLSX, generateCSV, downloadCSVBlob, buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
   downloadPDF, fetchResolvedPdfSettings, DEFAULT_PDF_SETTINGS, type OrgPdfSettings,
@@ -167,6 +168,7 @@ export default function TeamTryoutsPage({ params }: { params: Promise<{ orgSlug:
   const team = read?.team ?? null;
   usePageTitle(team ? `Tryouts · ${team.name}` : 'Tryouts');
   usePublishRailTeam(teamId, team?.name);
+  usePublishTeamHead(teamId, read ? teamHeadOf(read.team, read.programYears) : null);
 
   const counts = useMemo(() => {
     const out = {} as Record<View, number>;
@@ -299,20 +301,16 @@ export default function TeamTryoutsPage({ params }: { params: Promise<{ orgSlug:
     );
   }
 
-  const seasonChip = season ? <RepChip tone={isLive ? 'good' : 'neutral'}>{season.name} · {isLive ? 'Live' : 'Closed'}</RepChip> : null;
+  // ⚖ No title of its own: the team's frame names the team and lights this tab (Club Tier Stage 13i, A3 — the "← {team}"
+  // link went: the tab row reaches the team's pages).
   const header = (
-    <AdminPageHeader
-      backTo={{ href: teamBase, label: team?.name ?? 'Team' }}
-      crumbs={[{ label: 'Rep teams' }, team?.groupName ? { label: team.groupName } : null]}
-      title="Tryouts"
-      titleChips={seasonChip}
-      inlineActions
-      actions={canWrite && isLive ? (
+    <TabActions>
+      {canWrite && isLive ? (
         <button type="button" className={`btn btn-lime ${ck.iconOnlyPhone}`} onClick={() => setAdding(true)} aria-label="Add applicant">
           <Plus size={15} aria-hidden /><span className={ck.btnWord}>Add applicant</span>
         </button>
-      ) : undefined}
-    />
+      ) : null}
+    </TabActions>
   );
 
   if (orgLoading || loading) return <PageLoading header={header} label="Loading this team’s tryouts…" />;

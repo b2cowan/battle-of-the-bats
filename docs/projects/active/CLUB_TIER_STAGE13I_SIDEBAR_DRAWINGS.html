@@ -1,0 +1,954 @@
+<title>Club Sidebar Shape</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: sticky numbered tab row + a View row; one section at a time. Product frames are drawn at TRUE SIZE in the
+   product's own warm palette (fixed light whatever the viewer's theme), on the document's cool-grey ground, with a
+   numbered, clickable note list beside or under them. */
+:root {
+  --bg: #E9EDF4; --panel: #FFFFFF; --ink: #1B2230; --dim: #566078; --line: #CDD4E2;
+  --accent: #3446C9; --accent-ink: #FFFFFF; --soft: #E3E8D3; --mark: #E8590C;
+  --new: #1E6B3A; --new-bg: #DDF0E2; --chg: #8A5300; --chg-bg: #F8E9CC; --same: #4A5468; --same-bg: #E4E8F0;
+  --gone: #9B2C1C; --gone-bg: #F8DDD7; --fold: #C0392B;
+  --font-doc: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11151D; --panel: #1A202C; --ink: #E7EBF3; --dim: #98A3BA; --line: #2B3447; --accent: #8F9CFF; --accent-ink: #0F1320;
+    --soft: #34402B; --mark: #FF8A47; --new: #7FD39B; --new-bg: #17301F; --chg: #F0C46A; --chg-bg: #3A2E12;
+    --same: #AAB4C8; --same-bg: #262E3E; --gone: #FF9F8E; --gone-bg: #3D1C17; --fold: #FF7B6B; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11151D; --panel: #1A202C; --ink: #E7EBF3; --dim: #98A3BA; --line: #2B3447; --accent: #8F9CFF; --accent-ink: #0F1320;
+  --soft: #34402B; --mark: #FF8A47; --new: #7FD39B; --new-bg: #17301F; --chg: #F0C46A; --chg-bg: #3A2E12;
+  --same: #AAB4C8; --same-bg: #262E3E; --gone: #FF9F8E; --gone-bg: #3D1C17; --fold: #FF7B6B; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 400 14px/1.5 var(--font-doc); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 50; background: var(--panel); }
+h1, h2, h3, p { margin: 0; }
+button { font: inherit; color: inherit; }
+
+/* ── Document chrome ─────────────────────────────────────────────────────────── */
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 40; margin-left: calc(-1 * max(16px, env(safe-area-inset-left, 0px))); margin-right: calc(-1 * max(16px, env(safe-area-inset-right, 0px))); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); background: var(--panel); border-bottom: 1px solid var(--line); }
+.title { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; padding-top: 12px; }
+.title h1 { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
+.title p { color: var(--dim); font-size: 12px; }
+.tabs-doc { display: flex; gap: 2px; overflow-x: auto; margin-top: 6px; scrollbar-width: none; }
+.tabs-doc::-webkit-scrollbar { display: none; }
+.tab { flex: none; padding: 9px 12px; border: 0; background: none; border-bottom: 3px solid transparent; font-weight: 600; font-size: 13px; color: var(--dim); cursor: pointer; white-space: nowrap; }
+.tab .num { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: var(--same-bg); color: var(--same); font-size: 11px; margin-right: 6px; }
+.tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+.tab[aria-selected="true"] .num { background: var(--accent); color: var(--accent-ink); }
+.tab:focus-visible, .opt:focus-visible, .mk:focus-visible, .copy:focus-visible, .notes .n:focus-visible, .pick-b:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.viewrow { display: flex; align-items: center; gap: 10px; padding: 8px 0 10px; flex-wrap: wrap; }
+.viewrow .cap { font-size: 11px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--dim); }
+.track { display: inline-flex; padding: 3px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; gap: 2px; flex-wrap: wrap; }
+.track .opt { border: 0; background: none; padding: 5px 12px; border-radius: 7px; font-size: 13px; font-weight: 600; color: var(--dim); cursor: pointer; }
+.track .opt[aria-checked="true"] { background: var(--soft); color: var(--ink); }
+
+main { padding-block: 18px 72px; max-width: 1500px; margin-inline: auto; }
+section[hidden] { display: none; }
+.lede { max-width: 78ch; font-size: 15px; margin-bottom: 16px; text-wrap: pretty; }
+.lede b { font-weight: 700; }
+.sub-h { font-size: 13px; font-weight: 700; margin: 22px 0 8px; letter-spacing: .01em; }
+.ctl { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+.ctl .cap { font-size: 11px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--dim); }
+.stage { min-width: 0; max-width: 100%; overflow-x: auto; padding: 14px 14px 18px; background: color-mix(in srgb, var(--panel) 40%, transparent); border: 1px solid var(--line); border-radius: 12px; }
+.frames { display: flex; gap: 22px; align-items: flex-start; }
+.col { display: flex; flex-direction: column; gap: 8px; flex: none; }
+.col > .lab { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; color: var(--ink); flex-wrap: wrap; }
+.col > .lab .fig { color: var(--mark); }
+.tag { display: inline-block; font-size: 10px; font-weight: 800; letter-spacing: 0.08em; padding: 2px 6px; border-radius: 4px; vertical-align: 1px; }
+.tag.new { background: var(--new-bg); color: var(--new); }
+.tag.chg { background: var(--chg-bg); color: var(--chg); }
+.tag.same { background: var(--same-bg); color: var(--same); }
+.tag.gone { background: var(--gone-bg); color: var(--gone); }
+.notes { margin: 16px 0 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 1fr)); gap: 8px; }
+.notes li { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 10px; padding: 10px 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; transition: box-shadow .15s, border-color .15s; }
+.notes li.on { border-color: var(--mark); box-shadow: 0 0 0 2px color-mix(in srgb, var(--mark) 35%, transparent); }
+.notes .n { width: 24px; height: 24px; border-radius: 50%; background: var(--mark); color: #fff; font-size: 12px; font-weight: 700; display: grid; place-items: center; border: 0; cursor: pointer; padding: 0; }
+.notes b { display: block; font-size: 13px; margin-bottom: 2px; }
+.notes p { font-size: 13px; color: var(--dim); text-wrap: pretty; }
+.notes p + p { margin-top: 4px; }
+.notes .src { font-size: 11px; color: var(--dim); font-family: ui-monospace, Consolas, monospace; }
+.fig { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--ink); }
+.mk { position: absolute; z-index: 20; width: 24px; height: 24px; border-radius: 50%; border: 2px solid #fff; background: var(--mark); color: #fff; font: 700 12px/1 'Inter', sans-serif; display: grid; place-items: center; padding: 0; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,.35); }
+.mk.on { transform: scale(1.25); }
+.same-dim { transition: opacity .15s, filter .15s; }
+body.diff-only .same-dim { opacity: 0.16; filter: grayscale(1); }
+
+table.t { width: 100%; border-collapse: collapse; font-size: 13px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.tw { overflow-x: auto; max-width: 100%; }
+.t th { text-align: left; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--dim); padding: 8px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; vertical-align: bottom; }
+.t td { padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; text-wrap: pretty; }
+.t tr:last-child td { border-bottom: 0; }
+.t td.num { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.t td.hot { color: var(--gone); font-weight: 700; }
+.t td.good { color: var(--new); font-weight: 700; }
+.t .rule { font-weight: 700; white-space: nowrap; }
+.t .old { color: var(--dim); }
+.t .old s { text-decoration-color: var(--gone); }
+.ways { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 10px; max-width: 980px; }
+.way { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+.way b { display: block; font-size: 13px; }
+.way p { font-size: 13px; color: var(--dim); }
+.way .who { font-size: 12px; margin-top: 6px; color: var(--ink); font-weight: 600; }
+.callout { max-width: 920px; background: var(--panel); border: 1px solid var(--line); border-left: 4px solid var(--mark); border-radius: 10px; padding: 12px 14px; margin: 0 0 14px; font-size: 13px; }
+.callout b { font-weight: 700; }
+.callout p + p { margin-top: 6px; }
+
+.ask { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; margin-bottom: 12px; max-width: 860px; }
+.ask h3 { font-size: 14px; margin-bottom: 4px; display: flex; gap: 8px; align-items: center; }
+.ask h3 .n { width: 24px; height: 24px; border-radius: 50%; background: var(--mark); color: #fff; font-size: 12px; display: grid; place-items: center; flex: none; }
+.ask p { color: var(--dim); font-size: 13px; margin-bottom: 8px; text-wrap: pretty; }
+.ask label { display: flex; gap: 8px; align-items: flex-start; padding: 6px 0; font-size: 13px; cursor: pointer; }
+.ask input { margin-top: 3px; accent-color: var(--accent); }
+.ask .rec { font-size: 10px; font-weight: 800; letter-spacing: .08em; color: var(--new); background: var(--new-bg); padding: 1px 6px; border-radius: 4px; margin-left: 6px; }
+.copy { padding: 9px 14px; border-radius: 9px; border: 0; background: var(--accent); color: var(--accent-ink); font-weight: 700; font-size: 13px; cursor: pointer; }
+.copybox { margin-top: 10px; max-width: 860px; width: 100%; min-height: 90px; padding: 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--ink); font: 12px/1.5 ui-monospace, Consolas, monospace; }
+
+/* ═══ PRODUCT FRAMES — the admin's warm palette (globals.css --home-*), fixed light ═══ */
+.pf {
+  --g: #F6F2EA; --card: #FFFFFF; --tx: #1F1B16; --sf: #4E473D; --dm: #615A54;
+  --ln: rgba(70, 55, 30, 0.12); --ln2: rgba(70, 55, 30, 0.20); --ol: #57651E; --ols: rgba(87, 101, 30, 0.10);
+  --am: #835006; --ams: rgba(131, 80, 6, 0.10); --lime: #D6F28B; --live: #B03A22; --win: #34662A;
+  position: relative; flex: none; color: var(--tx); font: 400 14px/1.4 'Inter', system-ui, sans-serif; background: var(--g); isolation: isolate; border: 1px solid var(--line);
+}
+.pf svg.i { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; display: block; }
+.pf .gridg { background-color: var(--g); background-image: linear-gradient(rgba(70,55,30,.045) 1px, transparent 1px), linear-gradient(90deg, rgba(70,55,30,.045) 1px, transparent 1px); background-size: 40px 40px; }
+/* desktop frame */
+.dk { width: 1440px; min-height: 900px; display: flex; flex-direction: column; }
+.ts { height: 48px; flex: none; display: flex; align-items: center; gap: 14px; padding: 0 20px; background: #fff; border-bottom: 1px solid var(--ln); }
+.ts .logo { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 15px; letter-spacing: -.01em; }
+.ts .logo i { width: 16px; height: 16px; border-radius: 3px; background: var(--ol); display: block; }
+.ts .logo em { font-style: normal; color: var(--ol); }
+.ts .div { width: 1px; height: 18px; background: var(--ln2); }
+.ts .area { font: 700 11px/1 'Inter'; letter-spacing: .1em; color: var(--sf); }
+.ts .tsr { margin-left: auto; display: flex; gap: 22px; color: var(--sf); }
+.dkb { display: flex; flex: 1; align-items: stretch; }
+.rail { width: 240px; flex: none; background: #fff; border-right: 1px solid var(--ln); display: flex; flex-direction: column; min-height: 852px; }
+.rtop { padding-top: 12px; }
+.r { position: relative; display: flex; align-items: center; gap: 10px; height: 38px; padding: 0 20px; font-size: 14px; color: #3A342C; white-space: nowrap; }
+.r .lb { overflow: hidden; text-overflow: ellipsis; }
+.r.sub { height: 35px; font-size: 13px; padding-left: 42px; }
+.r.open { font-weight: 600; color: var(--tx); }
+.r.lit { background: var(--ols); color: var(--ol); font-weight: 600; }
+.r .cnt, .tb .cnt, .ptab .cnt, .bn .cnt, .tile .cnt, .vs .cnt { display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 9px; background: var(--ams); border: 1px solid rgba(131,80,6,.30); color: var(--am); font: 600 10px/1 'Inter'; }
+.r .cnt { margin-left: auto; }
+.r .chev { margin-left: auto; color: rgba(70,55,30,.55); }
+.r .cnt + .chev { margin-left: 8px; }
+.r .mk { right: -13px; top: 50%; margin-top: -12px; }
+.h { position: relative; font: 700 11px/1 'Inter'; letter-spacing: .1em; text-transform: uppercase; color: var(--dm); padding: 14px 20px 12px; display: flex; align-items: center; }
+.h .chev { margin-left: auto; color: rgba(70,55,30,.55); }
+.h .mk { right: -13px; top: 50%; margin-top: -12px; }
+/* A run break with no heading: the heading's own space (12px), no line, so no new element in the sidebar. */
+.hair { position: relative; height: 12px; }
+.hair .mk { right: -13px; top: -6px; }
+.lab { position: relative; font: 700 12px/1 'Inter'; color: var(--ol); padding: 0 20px 0 42px; height: 35px; display: flex; align-items: center; }
+.lab .mk { right: -13px; top: 50%; margin-top: -12px; }
+.sblock { margin-left: 28px; border-left: 1px solid var(--ln2); }
+.sblock .r.sub { padding-left: 20px; }
+.sblock .lab { padding-left: 20px; color: var(--dm); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; }
+.pick { position: relative; margin: 2px 14px 8px 10px; height: 34px; border: 1px solid var(--ln2); border-radius: 8px; display: flex; align-items: center; justify-content: space-between; padding: 0 10px 0 13px; font: 600 14px 'Inter'; background: #fff; }
+.pick .mk { right: -27px; top: 4px; }
+.tname { position: relative; padding: 10px 20px 14px; font: 600 14px 'Inter'; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rfoot { margin-top: auto; border-top: 1px solid var(--ln); padding: 8px 0 6px; }
+.fr { position: relative; display: flex; align-items: center; gap: 10px; height: 35px; padding: 0 20px; font-size: 12px; color: #3A342C; }
+.fr .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ol); margin-left: 8px; }
+.fr .mk { right: -13px; top: 50%; margin-top: -12px; }
+.rcol { border-top: 1px solid var(--ln); padding: 4px 0 2px; }
+.mn { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.band { height: 50px; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 0 32px; background: #fff; border-bottom: 1px solid var(--ln); }
+.band b { font-size: 20px; font-weight: 700; letter-spacing: -.01em; }
+.pill { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 12px; border-radius: 14px; border: 1px solid var(--ln2); background: var(--g); font: 600 13px 'Inter'; }
+.pg { flex: 1; padding: 30px 32px 40px; }
+.fold { position: absolute; left: 0; right: 0; top: 900px; bottom: 0; border-top: 2px dashed var(--fold); background: repeating-linear-gradient(135deg, rgba(192,57,43,.06) 0 8px, transparent 8px 16px); pointer-events: none; z-index: 5; }
+.fold span { position: absolute; left: 250px; top: -22px; font: 700 11px 'Inter'; color: var(--fold); background: var(--bg); padding: 1px 6px; border-radius: 4px; white-space: nowrap; }
+.dk.fits .fold { display: none; }
+/* page parts */
+.phd { position: relative; display: flex; align-items: flex-start; gap: 18px; margin-bottom: 14px; }
+.bk { display: inline-flex; align-items: center; gap: 6px; font: 500 15px 'Inter'; padding-top: 12px; white-space: nowrap; }
+.vr { width: 1px; align-self: stretch; background: var(--ln2); }
+.ey { font: 600 11px/1.2 'IBM Plex Mono', ui-monospace, monospace; letter-spacing: .08em; text-transform: uppercase; color: var(--sf); margin-bottom: 4px; }
+.ttl { display: flex; align-items: center; gap: 10px; font: 700 22px/1.2 'Inter'; letter-spacing: -.01em; flex-wrap: wrap; }
+.ttl .caret { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 7px; border: 1px solid var(--ln2); background: #fff; }
+.chip { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 10px; border: 1px solid rgba(52,102,42,.35); background: rgba(52,102,42,.08); color: var(--win); font: 600 10px/1 'IBM Plex Mono', monospace; letter-spacing: .08em; text-transform: uppercase; }
+.acts { margin-left: auto; display: flex; gap: 10px; }
+.btn { display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--ln2); background: #fff; font: 600 14px 'Inter'; white-space: nowrap; }
+.btn.lime { background: var(--lime); border-color: transparent; }
+.tabs { position: relative; display: flex; border-bottom: 1px solid var(--ln); overflow-x: auto; scrollbar-width: none; margin-bottom: 18px; }
+.tabs::-webkit-scrollbar { display: none; }
+.tb { flex: none; display: inline-flex; align-items: center; gap: 6px; padding: 9px 13px 11px; font: 500 15px 'Inter'; color: var(--sf); border-bottom: 2px solid transparent; white-space: nowrap; }
+.tb.on { color: var(--ol); font-weight: 600; border-bottom-color: var(--ol); }
+.tabwrap { position: relative; }
+.tabwrap .mk { left: -12px; top: -12px; }
+.tabwrap .cue { position: absolute; right: 0; top: 0; bottom: 19px; width: 38px; display: none; align-items: center; justify-content: flex-end; background: linear-gradient(90deg, rgba(246,242,234,0), var(--g) 55%); color: var(--sf); pointer-events: none; }
+.tabwrap.over .cue { display: flex; }
+.vs { display: inline-flex; padding: 3px; background: #fff; border: 1px solid var(--ln2); border-radius: 10px; gap: 2px; }
+.vs span { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 7px; font: 600 13px 'Inter'; color: var(--dm); white-space: nowrap; }
+.vs span.on { background: var(--ols); color: var(--tx); }
+.vs .lc { font-weight: 500; color: var(--dm); font-variant-numeric: tabular-nums; }
+.ptabs { display: flex; gap: 0; border-bottom: 1px solid var(--ln); margin-bottom: 14px; }
+.ptab { display: inline-flex; align-items: center; gap: 6px; padding: 10px 14px 12px; font: 500 15px 'Inter'; color: var(--sf); border-bottom: 2px solid transparent; white-space: nowrap; }
+.ptab.on { color: var(--ol); border-bottom-color: var(--ol); font-weight: 600; }
+.pills { display: flex; gap: 8px; overflow: hidden; }
+.pills span { flex: none; display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; border-radius: 18px; border: 1px solid var(--ln2); background: #fff; font: 600 14px 'Inter'; white-space: nowrap; }
+.pills span.on { background: #24201A; color: #fff; border-color: #24201A; }
+.ghost { background: var(--card); border: 1px solid var(--ln); border-radius: 12px; }
+.ghostrow { height: 46px; border-bottom: 1px solid var(--ln); display: flex; align-items: center; gap: 18px; padding: 0 16px; }
+.ghostrow:last-child { border-bottom: 0; }
+.bar-x { height: 10px; border-radius: 5px; background: rgba(70,55,30,.12); }
+.bar-x.dk2 { background: rgba(70,55,30,.22); }
+.kv { display: grid; gap: 12px; }
+.tiles4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 10px 0 26px; }
+.tiles2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+.t4 { background: var(--card); border: 1px solid var(--ln); border-radius: 10px; padding: 16px 18px; min-height: 118px; }
+.t4 .ey { font-size: 11px; }
+.t4 .big { font: 700 24px 'Inter'; margin: 6px 0 6px; }
+.hub { display: grid; grid-template-columns: repeat(2, 438px); gap: 16px; }
+.hub .ht { position: relative; background: var(--card); border: 1px solid var(--ln); border-radius: 10px; padding: 22px 24px; display: flex; gap: 16px; min-height: 104px; }
+.hub .ht b { display: block; font-size: 16px; margin-bottom: 4px; }
+.hub .ht p { font-size: 14px; color: var(--sf); }
+.hub .ht .i { color: var(--ol); }
+.hub .ht .mk { right: -10px; top: -10px; }
+.pos { position: relative; }
+.pos > .mk { left: -14px; top: -10px; }
+/* phone frame */
+.ph { width: 390px; height: 844px; overflow: hidden; border-radius: 24px; display: flex; flex-direction: column; }
+.ph .pb { height: 64px; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; background: #fff; font: 700 16px 'Inter'; }
+.ph .pgp { flex: 1; overflow: hidden; padding: 16px; position: relative; }
+.ph .bnav { position: absolute; left: 0; right: 0; bottom: 0; height: 74px; background: #F4EFE6; border-top: 1px solid var(--ln); display: flex; justify-content: space-around; align-items: flex-start; padding-top: 8px; z-index: 6; }
+.bn { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; font: 600 11px 'Inter'; color: var(--sf); width: 72px; }
+.bn .ic { width: 48px; height: 30px; border-radius: 15px; display: grid; place-items: center; position: relative; }
+.bn.on { color: var(--ol); }
+.bn.on .ic { background: rgba(87,101,30,.14); }
+.bn .cnt { position: absolute; top: -4px; right: 2px; background: var(--ol); color: #fff; border: 0; }
+.ph .ttl { font-size: 20px; }
+.ph .tb { font-size: 15px; padding: 9px 12px 11px; }
+.ph .tabwrap { margin-left: -16px; margin-right: -16px; }
+.ph .tabs { padding-left: 4px; }
+.ph .tabwrap .mk { left: 4px; }
+.disc { background: #fff; border: 1px solid var(--ln); border-radius: 12px; margin-bottom: 14px; position: relative; }
+.disc .dh { padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; }
+.disc .dh b { font-size: 14px; display: block; }
+.disc .dh small { font-size: 12px; color: var(--sf); }
+.disc .dr { padding: 12px 14px; border-top: 1px solid var(--ln); font-size: 15px; }
+.disc .mk { right: -8px; top: -10px; }
+.scard { background: #fff; border-bottom: 1px solid var(--ln); padding: 12px 16px 12px; margin: -16px -16px 14px; position: relative; }
+.scard .mk { right: 8px; top: 6px; }
+.dimback { position: absolute; inset: 0; background: rgba(36,30,21,.28); z-index: 7; }
+.sheet { position: absolute; left: 0; right: 0; bottom: 74px; background: #fff; border-radius: 22px 22px 0 0; z-index: 8; padding: 8px 16px 10px; max-height: 720px; overflow: hidden; }
+.sheet .hd { width: 36px; height: 4px; border-radius: 2px; background: rgba(70,55,30,.4); margin: 4px auto 10px; }
+.sheet .srow { position: relative; display: flex; align-items: center; gap: 12px; height: 44px; font: 500 16px 'Inter'; color: var(--tx); }
+.sheet .grid2 { display: grid; grid-template-columns: 1fr 1fr; column-gap: 12px; }
+.sheet .scap { position: relative; font: 700 11px 'Inter'; letter-spacing: .1em; text-transform: uppercase; color: var(--dm); padding: 10px 0 2px; }
+.sheet .scap .mk { right: 0; top: 2px; }
+.sheet .ssep { border-top: 1px solid var(--ln); margin: 6px 0; position: relative; }
+.sheet .ssep .mk { right: 0; top: -12px; }
+.sheet .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 4px 0 8px; position: relative; }
+.sheet .tiles .mk { right: -6px; top: -8px; }
+.tile { background: #FAF6EE; border: 1px solid var(--ln); border-radius: 10px; padding: 10px; height: 64px; display: flex; flex-direction: column; justify-content: space-between; font: 700 12px 'Inter'; position: relative; }
+.tile .cnt { position: absolute; right: 8px; top: 8px; }
+.tile .i { color: var(--ol); }
+.sheet .out { color: var(--live); }
+.crop { overflow: hidden; }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></symbol>
+    <symbol id="i-calclock" viewBox="0 0 24 24"><path d="M21 7.5V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3.5"/><path d="M16 2v4M8 2v4M3 10h5"/><circle cx="16" cy="16" r="6"/><path d="M16 14v2.2l1.5 1"/></symbol>
+    <symbol id="i-gantt" viewBox="0 0 24 24"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M10 6h8M8 11h7M12 16h6"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+    <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></symbol>
+    <symbol id="i-dollar" viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></symbol>
+    <symbol id="i-idcard" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><circle cx="12" cy="10" r="3"/><path d="M7.5 18a4.5 4.5 0 0 1 9 0"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20M2 12h20"/></symbol>
+    <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22M18 2H6v7a6 6 0 0 0 12 0V2Z"/></symbol>
+    <symbol id="i-building" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4M8 6h.01M12 6h.01M16 6h.01M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h.01"/></symbol>
+    <symbol id="i-card" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></symbol>
+    <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/></symbol>
+    <symbol id="i-panel" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.94 1.94 0 0 0 3.4 0"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+    <symbol id="i-chev" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+    <symbol id="i-chevd" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-chevu" viewBox="0 0 24 24"><path d="m18 15-6-6-6 6"/></symbol>
+    <symbol id="i-left" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7M19 12H5"/></symbol>
+    <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10a2 2 0 0 1 .7-1.5l7-6a2 2 0 0 1 2.6 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/></symbol>
+    <symbol id="i-dl" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></symbol>
+    <symbol id="i-out" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></symbol>
+    <symbol id="i-msg" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2zM12 7v6M9 10h6"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></symbol>
+    <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4M10 13h4M10 17h4"/></symbol>
+    <symbol id="i-scroll" viewBox="0 0 24 24"><path d="M8 21h12a2 2 0 0 0 2-2v-2H10v2a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v3h4"/><path d="M19 17V5a2 2 0 0 0-2-2H4M15 8h-5M15 12h-5"/></symbol>
+    <symbol id="i-idbadge" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="8" cy="11" r="2"/><path d="M5.2 16a3 3 0 0 1 5.6 0M15 10h3M15 14h3"/></symbol>
+    <symbol id="i-gauge" viewBox="0 0 24 24"><path d="m12 14 4-4M3.34 19a10 10 0 1 1 17.32 0"/></symbol>
+    <symbol id="i-medal" viewBox="0 0 24 24"><circle cx="12" cy="15" r="6"/><path d="M8.2 10.3 5 3h4l3 6 3-6h4l-3.2 7.3"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="m16 11 2 2 4-4"/></symbol>
+    <symbol id="i-kit" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM18 18h3v3h-3z"/></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></symbol>
+    <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M14 2v4M8 10v4M16 18v4"/></symbol>
+    <symbol id="i-tag" viewBox="0 0 24 24"><path d="M12.6 2.6A2 2 0 0 0 11.2 2H4a2 2 0 0 0-2 2v7.2a2 2 0 0 0 .6 1.4l8.7 8.7a2.4 2.4 0 0 0 3.4 0l6.6-6.6a2.4 2.4 0 0 0 0-3.4z"/><circle cx="7.5" cy="7.5" r=".5"/></symbol>
+    <symbol id="i-book" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2zM22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></symbol>
+    <symbol id="i-ext" viewBox="0 0 24 24"><path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></symbol>
+  </defs>
+</svg>
+
+<div class="top">
+  <div class="title"><h1>The club sidebar's shape</h1><p>Club Tier Stage 13i · drawing for the owner · 2026-11-06 · baseline = today plus 13a as ruled (Asks 6–9)</p></div>
+  <div class="tabs-doc" role="tablist" aria-label="Sections">
+    <button class="tab" role="tab" data-t="why" aria-selected="true"><span class="num">1</span>Why it feels clunky</button>
+    <button class="tab" role="tab" data-t="owner" aria-selected="false"><span class="num">2</span>The owner, after</button>
+    <button class="tab" role="tab" data-t="short" aria-selected="false"><span class="num">3</span>Registrar &amp; treasurer</button>
+    <button class="tab" role="tab" data-t="phone" aria-selected="false"><span class="num">4</span>Phone</button>
+    <button class="tab" role="tab" data-t="strip" aria-selected="false"><span class="num">5</span>The tab strip</button>
+    <button class="tab" role="tab" data-t="rules" aria-selected="false"><span class="num">6</span>Rules, old and new</button>
+    <button class="tab" role="tab" data-t="asks" aria-selected="false"><span class="num">7</span>Asks</button>
+  </div>
+  <div class="viewrow">
+    <span class="cap">View</span>
+    <div class="track" role="radiogroup" aria-label="View">
+      <button class="opt" role="radio" aria-checked="true" data-view="all">Everything</button>
+      <button class="opt" role="radio" aria-checked="false" data-view="diff">Show only what differs</button>
+    </div>
+    <span class="cap">Size</span>
+    <div class="track" role="radiogroup" aria-label="Size">
+      <button class="opt" role="radio" aria-checked="true" data-size="true">True size</button>
+      <button class="opt" role="radio" aria-checked="false" data-size="fit">Fit to screen</button>
+    </div>
+  </div>
+</div>
+
+<main>
+<!-- 1 · WHY -->
+<section id="s-why" data-sec="why">
+  <p class="lede">The owner's sidebar on five screens today, each at true size. The red dashed line is the bottom of a 900&nbsp;px laptop screen. <b>The sidebar's length changes with where you are: 10, 21, 18, 15 and 10 rows.</b> The cause is that a program's pages are handled three different ways, so a row doesn't tell you what a click on it will do.</p>
+  <div class="ways">
+    <div class="way"><b>1 · Rows stacked under the program</b><p>The program's pages appear under its row while you are inside it, and a team's or season's pages stack below those.</p><div class="who">Rep teams · House league · Public site (one "Site editor" row)</div></div>
+    <div class="way"><b>2 · Tabs on the page</b><p>No rows under the program. Its pages are tabs under the page title, on a desk and on a phone.</p><div class="who">Accounting · Families</div></div>
+    <div class="way"><b>3 · A tile hub plus rows</b><p>A page of tiles, and the same pages again as rows under it, in a different order and not quite the same set.</p><div class="who">Organization</div></div>
+  </div>
+  <div class="sub-h">The owner's sidebar, today</div>
+  <div class="stage"><div class="scale"><div class="frames" id="why-rails"></div></div></div>
+  <ol class="notes" id="why-notes"></ol>
+  <div class="sub-h">Rows in each person's sidebar (clickable rows, not counting headings or the foot)</div>
+  <div class="tw"><table class="t" id="counts"></table></div>
+  <p style="font-size:12px;color:var(--dim);margin-top:6px;max-width:90ch">Owner, league admin and registrar counted from the captures (<span class="src">NAV-owner-d-01/21/22/25, NAV-owner-x-org-members, NAV-owner-x-accounting, NAV-leagueadmin-d-24, NAV-registrar-d-24</span>). Club admin and treasurer Organization counts come from the walk's capture log, not opened here. The fixture's admin holds an explicit Families grant; a default admin has one row fewer everywhere.</p>
+</section>
+
+<!-- 2 · OWNER AFTER -->
+<section id="s-owner" data-sec="owner" hidden>
+  <p class="lede"><b>Places in the sidebar, pages on the page.</b> The sidebar lists places only, and never grows. One row is lit: the place you are in, however deep you go. A place with more than one page shows them as tabs under its title, the way Accounting already does. A team or a season is a place inside a program, so its tabs replace the program's.</p>
+  <div class="ctl">
+    <span class="cap">Screen</span>
+    <div class="track" role="radiogroup" aria-label="Screen" id="owner-screen">
+      <button class="opt" role="radio" aria-checked="false" data-scr="overview">Overview</button>
+      <button class="opt" role="radio" aria-checked="true" data-scr="team">In a rep team (Roster)</button>
+      <button class="opt" role="radio" aria-checked="false" data-scr="season">In a season (Registrations)</button>
+      <button class="opt" role="radio" aria-checked="false" data-scr="org">Organization</button>
+      <button class="opt" role="radio" aria-checked="false" data-scr="acct">Accounting</button>
+    </div>
+    <span class="cap">State</span>
+    <div class="track" role="radiogroup" aria-label="State" id="owner-state">
+      <button class="opt" role="radio" aria-checked="false" data-st="today">Today</button>
+      <button class="opt" role="radio" aria-checked="true" data-st="after">After</button>
+    </div>
+  </div>
+  <div class="stage"><div class="scale"><div id="owner-frame"></div></div></div>
+  <ol class="notes" id="owner-notes"></ol>
+</section>
+
+<!-- 3 · SHORT -->
+<section id="s-short" data-sec="short" hidden>
+  <p class="lede">The shortest sidebars, so a one-door person isn't lost behind a shape built for the owner. <b>After, each person sees the same rows on every screen:</b> the registrar 4, the treasurer 3. Today the registrar's grows from 4 to 12 inside a season.</p>
+  <div class="sub-h">Registrar (League registrar: House league registrations, Venue library)</div>
+  <div class="stage"><div class="scale"><div class="frames" id="reg-rails"></div></div></div>
+  <div class="sub-h">Treasurer (Accounting, Members, Venue library)</div>
+  <div class="stage"><div class="scale"><div class="frames" id="tre-rails"></div></div></div>
+  <ol class="notes" id="short-notes"></ol>
+</section>
+
+<!-- 4 · PHONE -->
+<section id="s-phone" data-sec="phone" hidden>
+  <p class="lede">The same shape at 390&nbsp;px. The phone has no sidebar, so <b>a place's pages being tabs on its page is what makes the phone and the desk agree</b>. Today the phone needs its own answer for every program. The bottom bar doesn't change.</p>
+  <div class="ctl">
+    <span class="cap">Screen</span>
+    <div class="track" role="radiogroup" aria-label="Phone screen" id="phone-screen">
+      <button class="opt" role="radio" aria-checked="true" data-ps="rep">Rep teams' first page</button>
+      <button class="opt" role="radio" aria-checked="false" data-ps="repsub">A Rep teams page</button>
+      <button class="opt" role="radio" aria-checked="false" data-ps="team">Inside a team</button>
+      <button class="opt" role="radio" aria-checked="false" data-ps="season">Registrar in a season</button>
+      <button class="opt" role="radio" aria-checked="false" data-ps="more">The More sheet</button>
+    </div>
+  </div>
+  <div class="stage"><div class="scale"><div class="frames" id="phone-frames"></div></div></div>
+  <ol class="notes" id="phone-notes"></ol>
+</section>
+
+<!-- 5 · STRIP -->
+<section id="s-strip" data-sec="strip" hidden>
+  <p class="lede">The objection to "pages on the page" is width. Here is the longest strip: <b>Rep teams' six pages</b>, drawn with the shipped Accounting tabs at 1440, 768 and 390. Tab widths are measured from the drawn tabs, not estimated. Below that is the one real conflict: a page that already has tabs of its own.</p>
+  <div class="sub-h">1440 · a laptop</div>
+  <div class="stage"><div class="scale"><div id="strip-1440"></div></div></div>
+  <div class="sub-h">768 · a tablet held upright (below 900 the admin uses its phone layout: no sidebar, the bottom bar)</div>
+  <div class="stage"><div class="scale"><div id="strip-768"></div></div></div>
+  <div class="sub-h">390 · a phone</div>
+  <div class="stage"><div class="scale"><div id="strip-390"></div></div></div>
+  <div class="sub-h">Tabs inside tabs: a season's Registrations page (Ask 6)</div>
+  <div class="stage"><div class="scale"><div class="frames" id="strip-clash" style="flex-direction:column"></div></div></div>
+  <ol class="notes" id="strip-notes"></ol>
+</section>
+
+<!-- 6 · RULES -->
+<section id="s-rules" data-sec="rules" hidden>
+  <p class="lede">Changing the screens without changing <b>the nav standard</b> would leave it describing a shape that no longer exists, so each rule this changes is redrawn here, old beside new. Wording is as it will be written into the standard, as ruled on 2026-11-06 (Asks 1–3 and 5–9 A, Ask 4 B).</p>
+  <div class="callout">
+    <p><b>This reverses half of a ruling, and says so.</b> On 2026-09-30 (Club Stage 3a Ask 2) the owner ruled: <i>"a program whose pages are views of one body of records is one page with tabs; a program whose pages are separate jobs lists them in the rail… Rep teams stays in the rail."</i> 13i keeps the first half and drops the second. That ruling's own reason is why: on a phone, the sidebar shape reached a sibling page only through the program's first page (three taps), and a tab row reaches every one in one. That holds for Rep teams’ separate jobs as much as for Accounting’s views, and the split it created is the "three ways" the owner now finds clunky. Its other clause stays: a record’s own page one level down (an allocation, a team’s account) has a back arrow and no tab row.</p>
+    <p><b>It also re-opens three rulings on purpose.</b> N3, the arrow rule (Nav Consistency Review Ask A2, 2026-10-17). The collapsed sidebar's program menus (Ask 3 of the same review): with no pages under a row there is nothing for a menu to hold, so every icon in the collapsed sidebar becomes a straight link. N7's "the club sheet's Organization group opens with the Organization page itself" (Ask B3).</p>
+    <p><b>The Stage 13 plan contradicts itself, and the later entry wins.</b> Its ladder note says <i>"Not on it on purpose: regrouping the sidebar's headings"</i>; the owner's 13i entry of the same day brings the PROGRAMS regroup in. The ladder line is superseded; the plan's status log will say so, so a builder isn't misled.</p>
+  </div>
+  <div class="tw"><table class="t" id="rules-t"></table></div>
+  <div class="sub-h">One lit row, and the way back</div>
+  <div class="tw"><table class="t" id="way-t"></table></div>
+  <div class="sub-h">What does not change</div>
+  <div class="tw"><table class="t" id="same-t"></table></div>
+</section>
+
+<!-- 7 · ASKS -->
+<section id="s-asks" data-sec="asks" hidden>
+  <p class="lede"><b>Ruled 2026-11-06:</b> Asks 1–3 and 5–9 as recommended (A); <b>Ask 4 = B</b>, the sidebar’s foot stays as it is, Plan & billing included. The drawings on the other tabs show the ruled shape.</p>
+  <div id="asks"></div>
+  <button class="copy" type="button" id="copyAnswers">Copy my answers</button>
+  <textarea class="copybox" id="answersBox" hidden aria-label="Your answers" readonly></textarea>
+</section>
+</main>
+
+<script>
+(function () {
+  function I(n, s) { s = s || 14; return '<svg class="i" width="' + s + '" height="' + s + '" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-' + n + '"/></svg>'; }
+  function MK(n) { return '<button class="mk" type="button" data-n="' + n + '" aria-label="Note ' + n + '">' + n + '</button>'; }
+  function D(o) { return o && o.d ? '' : ' same-dim'; }
+
+  /* ── rail ── */
+  function row(o) {
+    var cls = 'r' + (o.sub ? ' sub' : '') + (o.lit ? ' lit' : '') + (o.open ? ' open' : '') + D(o);
+    var h = '<div class="' + cls + '">' + (o.sub ? '' : I(o.i)) + '<span class="lb">' + o.l + '</span>';
+    if (o.cnt) h += '<span class="cnt">' + o.cnt + '</span>';
+    if (o.chev) h += '<span class="chev">' + I(o.chev === 'd' ? 'chevd' : 'chev', 13) + '</span>';
+    if (o.mk) h += MK(o.mk);
+    return h + '</div>';
+  }
+  function items(list) {
+    return list.map(function (o) {
+      if (o.h) return '<div class="h' + D(o) + '">' + o.h + (o.fold ? '<span class="chev">' + I(o.fold === 'd' ? 'chevd' : 'chev', 13) + '</span>' : '') + (o.mk ? MK(o.mk) : '') + '</div>';
+      if (o.hair) return '<div class="hair' + D(o) + '">' + (o.mk ? MK(o.mk) : '') + '</div>';
+      if (o.label) return '<div class="lab' + D(o) + '">' + o.label + (o.mk ? MK(o.mk) : '') + '</div>';
+      if (o.pick) return '<div class="pick' + D(o) + '"><span>' + o.pick + '</span>' + I('chevd', 14) + (o.mk ? MK(o.mk) : '') + '</div>';
+      if (o.tname) return '<div class="tname' + D(o) + '">' + o.tname + '</div>';
+      if (o.block) return '<div class="sblock' + D(o) + '">' + items(o.block) + '</div>';
+      return row(o);
+    }).join('');
+  }
+  function foot(list) {
+    var main = list.filter(function (f) { return !f.col; }), col = list.filter(function (f) { return f.col; });
+    function fr(f) { return '<div class="fr' + D(f) + '">' + I(f.i, 14) + '<span>' + f.l + '</span>' + (f.dot ? '<span class="dot"></span>' : '') + (f.mk ? MK(f.mk) : '') + '</div>'; }
+    return '<div class="rfoot">' + main.map(fr).join('') + '</div><div class="rcol">' + col.map(fr).join('') + '</div>';
+  }
+  function rail(list, ft) { return '<nav class="rail"><div class="rtop">' + items(list) + '</div>' + foot(ft) + '</nav>'; }
+  function tstrip() { return '<div class="ts same-dim"><span class="logo"><i></i><span>FieldLogic<em>HQ</em></span></span><span class="div"></span><span class="area">ADMIN AREA</span><span class="tsr">' + I('bell', 17) + I('user', 17) + '</span></div>'; }
+  // A sidebar-only frame: the top strip's left end, the sidebar, and the 900 px line.
+  function rf(railHtml) { return '<div class="pf dk" style="width:240px"><div class="ts same-dim"><span class="logo"><i></i><span>FieldLogic<em>HQ</em></span></span></div><div class="dkb">' + railHtml + '</div><div class="fold"><span style="left:6px">900 px</span></div></div>'; }
+  function desk(r, page, opt) {
+    opt = opt || {};
+    return '<div class="pf dk">' + tstrip() + '<div class="dkb">' + r + '<div class="mn"><div class="band same-dim"><b>Harbourtown Minor Ball</b><span class="pill">' + I('globe', 14) + 'View site</span></div><div class="pg gridg">' + page + '</div></div></div><div class="fold"><span>900 px · the bottom of a laptop screen</span></div></div>';
+  }
+
+  /* ── shared rail definitions (owner) ── */
+  var FOOT_TODAY = [{ i: 'card', l: 'Plan & billing' }, { i: 'help', l: 'Help', dot: true }, { i: 'panel', l: 'Collapse sidebar', col: true }];
+  var TOP3 = function (lit) { return [{ i: 'grid', l: 'Overview', lit: lit === 'overview' }, { i: 'calclock', l: 'Calendar' }, { i: 'gantt', l: 'Schedules' }]; };
+  var REP_PAGES = ['Teams', 'Assistant coaches', 'Document templates', 'Shared library', 'Past seasons', 'Bring in a coach’s team'];
+  var TEAM_PAGES = ['Team page', 'Roster', 'Schedule', 'Tryouts', 'Coaches'];
+  var SEASON_PAGES = ['Overview', 'Registrations', 'Teams & draft', 'Schedule', 'Standings', 'Money', 'Email families'];
+  var ORG_PAGES = ['Members', 'Audit log', 'Settings', 'Venue library', 'PDF settings'];
+
+  function ownerToday(scr, mk) {
+    mk = mk || {};
+    var l = TOP3(scr);
+    l.push({ h: 'Programs', d: !!mk.prog, mk: mk.prog });
+    if (scr === 'team') {
+      l.push({ i: 'users', l: 'Rep teams', open: true, chev: 'd', d: true, mk: mk.arrow });
+      REP_PAGES.forEach(function (p) { l.push({ sub: true, l: p, d: true }); });
+      l.push({ label: '14U AA', d: true, mk: mk.teamlabel });
+      TEAM_PAGES.forEach(function (p) { l.push({ sub: true, l: p, lit: p === 'Roster', d: true }); });
+    } else l.push({ i: 'users', l: 'Rep teams', chev: 'r', d: !!mk.arrow2, mk: mk.arrow2 });
+    if (scr === 'season') {
+      l.push({ i: 'cal', l: 'House league', open: true, chev: 'd', d: true });
+      var b = [{ sub: true, l: 'Seasons', d: true, mk: mk.seasons }, { label: 'Season', d: true }, { pick: '2026 Fall House Le…', d: true, mk: mk.pick }];
+      SEASON_PAGES.forEach(function (p) { b.push({ sub: true, l: p, lit: p === 'Registrations', cnt: p === 'Registrations' ? '9+' : '', d: true, mk: p === 'Overview' ? mk.twoov : undefined }); });
+      l.push({ block: b, d: true });
+    } else l.push({ i: 'cal', l: 'House league', chev: 'r', cnt: '9+' });
+    l.push({ i: 'dollar', l: 'Accounting', cnt: '3', lit: scr === 'acct', d: !!mk.acct, mk: mk.acct });
+    l.push({ i: 'idcard', l: 'Families', cnt: '2' });
+    l.push({ i: 'globe', l: 'Public site' });
+    l.push({ i: 'trophy', l: 'Tournaments' });
+    l.push({ h: 'Organization', d: !!mk.orgh, mk: mk.orgh });
+    if (scr === 'org') {
+      l.push({ i: 'building', l: 'Organization', open: true, lit: true, chev: 'd', d: true, mk: mk.org });
+      ORG_PAGES.forEach(function (p) { l.push({ sub: true, l: p, d: true }); });
+    } else l.push({ i: 'building', l: 'Organization', chev: 'r' });
+    var f = FOOT_TODAY.map(function (x) { return Object.assign({}, x); });
+    if (mk.foot) { f[0].d = true; f[0].mk = mk.foot; }
+    return rail(l, f);
+  }
+  function ownerAfter(scr, mk) {
+    mk = mk || {};
+    var lit = { overview: 'Overview', team: 'Rep teams', season: 'House league', org: 'Organization', acct: 'Accounting' }[scr];
+    // A row differs (stays bright in "show only what differs") when it carries a marker or is marked d; the lit row always does.
+    function R(i, l, x) {
+      x = x || {};
+      var o = { i: i, l: l, cnt: x.cnt, mk: x.mk, d: !!x.mk || !!x.d };
+      if (l === lit) { o.lit = true; o.d = true; o.mk = mk.lit; }
+      return o;
+    }
+    var l = [R('grid', 'Overview'), R('calclock', 'Calendar'), R('gantt', 'Schedules', { mk: mk.ten })];
+    l.push({ h: 'Programs', d: true, mk: mk.prog });
+    l.push(R('users', 'Rep teams', { mk: mk.arrow, d: true }));
+    l.push(R('cal', 'House league', { cnt: '9+', mk: mk.hlc }));
+    l.push(R('trophy', 'Tournaments', { d: true }));
+    l.push({ h: 'Club', d: true, mk: mk.club });
+    l.push(R('dollar', 'Accounting', { cnt: '3' }));
+    l.push(R('idcard', 'Families', { cnt: '2' }));
+    l.push(R('globe', 'Public site'));
+    l.push(R('building', 'Organization', { mk: lit === 'Rep teams' ? mk.arrow : undefined }));
+    // Ask 4 ruled B (owner, 2026-11-06): the foot stays as it is today, Plan & billing included.
+    return rail(l, [{ i: 'card', l: 'Plan & billing', mk: mk.foot }, { i: 'help', l: 'Help', dot: true }, { i: 'panel', l: 'Collapse sidebar', col: true }]);
+  }
+
+  /* ── page parts ── */
+  function tabs(list, on, opt) {
+    opt = opt || {};
+    return '<div class="tabwrap' + (opt.d ? '' : ' same-dim') + '"' + (opt.id ? ' id="' + opt.id + '"' : '') + '><div class="tabs">' + list.map(function (t) {
+      var lab = typeof t === 'string' ? t : t[0], c = typeof t === 'string' ? '' : t[1];
+      return '<span class="tb' + (lab === on ? ' on' : '') + '">' + lab + (c ? '<span class="cnt">' + c + '</span>' : '') + '</span>';
+    }).join('') + '</div><span class="cue">' + I('chev', 16) + '</span>' + (opt.mk ? MK(opt.mk) : '') + '</div>';
+  }
+  function hdr(o) {
+    var h = '<div class="phd' + (o.d ? '' : ' same-dim') + '">';
+    if (o.back) h += '<span class="bk pos">' + I('left', 16) + o.back + (o.mkBack ? MK(o.mkBack) : '') + '</span><span class="vr"></span>';
+    h += '<div class="pos"><div class="ey">' + (o.ey || '') + '</div><div class="ttl">' + o.title + (o.caret ? '<span class="caret">' + I('chevd', 15) + '</span>' : '') + (o.chip ? '<span class="chip">' + o.chip + '</span>' : '') + '</div>' + (o.mkTitle ? MK(o.mkTitle) : '') + '</div>';
+    if (o.acts) h += '<div class="acts">' + o.acts + '</div>';
+    return h + '</div>';
+  }
+  function ghostTable(n, w) {
+    var r = '';
+    for (var k = 0; k < n; k++) r += '<div class="ghostrow"><span class="bar-x dk2" style="width:' + (120 + (k * 37) % 90) + 'px"></span><span class="bar-x" style="width:' + (w || 160) + 'px"></span><span class="bar-x" style="width:90px;margin-left:auto"></span></div>';
+    return '<div class="ghost same-dim">' + r + '</div>';
+  }
+  function roster() {
+    var names = ['Gavin Gagnon', 'Miles Fraser', 'Liam Martin', 'Mason Campbell', 'Ethan Grant', 'Owen Bouchard', 'Caleb Hughes', 'Leo Singh', 'Ryan Lee', 'Theo Roy', 'Jack Morin', 'Evan Kaur'];
+    return '<div class="ghost same-dim">' + names.map(function (n, k) { return '<div class="ghostrow" style="height:38px"><span style="width:220px;text-align:right;font-variant-numeric:tabular-nums">' + (k + 2) + '</span><b style="width:540px;font-weight:600">' + n + '</b><span class="chip">Active</span></div>'; }).join('') + '</div>';
+  }
+  function pageOverview() {
+    return '<div class="same-dim" style="max-width:960px;margin-left:88px"><div class="ttl" style="margin-bottom:14px">Overview</div><div class="ey">This morning</div><div class="tiles4">' +
+      [['Tryout applications', '0', 'nothing waiting'], ['Payment requests', '3', 'oldest waiting 86 days'], ['Installments due', '12', 'in the next 14 days · 7 overdue'], ['Assistant coaches', '0', 'nothing waiting']].map(function (t) { return '<div class="t4"><div class="ey">' + t[0] + '</div><div class="big">' + t[1] + '</div><div style="font-size:13px;color:#4E473D">' + t[2] + '</div></div>'; }).join('') +
+      '</div><div class="ey">Your programs</div><div class="tiles2" style="margin-top:10px">' +
+      ['Rep teams', 'House league', 'Accounting', 'Families', 'Public site', 'Tournaments'].map(function (p) { return '<div class="t4" style="min-height:76px"><div class="ey">' + p + '</div><div class="bar-x" style="width:70%;margin-top:12px"></div></div>'; }).join('') + '</div></div>';
+  }
+  function pageTeam(after, mk) {
+    mk = mk || {};
+    if (!after) return hdr({ back: '14U AA', ey: 'Rep teams · Senior', title: 'Roster', chip: '2027 Season · Live', d: true, mkBack: mk.back }) +
+      '<div class="same-dim" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><span style="font-size:13px;color:#4E473D">12 players on the 2027 Season</span><span class="btn">' + I('dl', 15) + 'Export</span></div>' + roster();
+    return hdr({ back: 'Teams', ey: 'Rep teams · Senior', title: '14U AA', chip: '2027 Season · Live', d: true, mkBack: mk.back }) +
+      tabs(TEAM_PAGES, 'Roster', { d: true, mk: mk.tabs }) +
+      '<div class="same-dim" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><span style="font-size:13px;color:#4E473D">12 players on the 2027 Season</span><span class="btn">' + I('dl', 15) + 'Export</span></div>' + roster();
+  }
+  // The view switch with counts: only a waiting count is amber; the others are the lighter ink (2026-10-17 toolbar rule).
+  function VS() {
+    return [['To review', '9+'], ['Active', '19'], ['Waitlist', '3'], ['Ended', '1']].map(function (v, k) {
+      return '<span class="' + (k ? '' : 'on') + '">' + v[0] + ' ' + (k ? '<span class="lc">' + v[1] + '</span>' : '<span class="cnt">' + v[1] + '</span>') + '</span>';
+    }).join('');
+  }
+  function statusTabs() { return tabs([['To review', '9+'], ['Active', '19'], ['Waitlist', '3'], ['Ended', '1']], 'To review'); }
+  function pageSeason(after, mk) {
+    mk = mk || {};
+    if (!after) return hdr({ back: '2026 Fall House League', ey: 'House league · 2026 Fall House League', title: 'Registrations', d: true, mkBack: mk.back, acts: '<span class="btn lime">' + I('plus', 15) + 'Add registration</span>' }) +
+      statusTabs() + '<div class="same-dim" style="display:flex;gap:10px;margin-bottom:12px"><span class="btn">All divisions ' + I('chevd', 14) + '</span><span class="btn" style="margin-left:auto">Filter</span><span class="btn">Export</span></div>' + ghostTable(8, 200);
+    return hdr({ back: 'Seasons', ey: 'House league', title: '2026 Fall House League', caret: true, chip: 'Registration open', d: true, mkBack: mk.back, mkTitle: mk.title }) +
+      tabs(SEASON_PAGES.map(function (p) { return p === 'Registrations' ? [p, '9+'] : p; }), 'Registrations', { d: true, mk: mk.tabs }) +
+      '<div style="display:flex;gap:10px;margin-bottom:12px;align-items:center"><span class="vs pos">' + VS() + (mk.vs ? MK(mk.vs) : '') + '</span><span class="btn same-dim">All divisions ' + I('chevd', 14) + '</span><span class="btn same-dim" style="margin-left:auto">Filter</span><span class="btn same-dim">Export</span><span class="btn lime same-dim">' + I('plus', 15) + 'Add registration</span></div>' + ghostTable(8, 200);
+  }
+  function pageOrg(after, mk) {
+    mk = mk || {};
+    if (!after) {
+      var tl = [['idbadge', 'Members', 'Manage org members, roles, and invitations'], ['trophy', 'Tournaments', 'Every tournament in one list'], ['pin', 'Venue library', 'The club’s venues and their facilities'], ['file', 'PDF settings', 'Header, logo, footer for all PDF exports'], ['card', 'Plan & billing', 'Your plan, subscription and payment method'], ['gear', 'Settings', 'Organization name, slug, contact email, logo'], ['scroll', 'Audit log', 'Added by 13a (Ask 7): the owner’s hub gains it']];
+      return '<div style="margin-left:120px"><div class="ey same-dim">Organization</div><div class="ttl same-dim" style="margin-bottom:14px">Harbourtown Minor Ball</div><div class="hub">' +
+        tl.map(function (t, k) { return '<div class="ht' + (k === 6 || k === 1 || k === 4 ? '' : ' same-dim') + '">' + I(t[0], 26) + '<div><b>' + t[1] + '</b><p>' + t[2] + '</p></div>' + (k === 1 && mk.tiles ? MK(mk.tiles) : '') + '</div>'; }).join('') + '</div></div>';
+    }
+    return hdr({ title: 'Organization', d: false }) + tabs(ORG_PAGES, 'Members', { d: true, mk: mk.tabs }) +
+      '<div class="same-dim" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><span class="ey" style="margin:0">The board · 5 people</span><span style="display:flex;gap:10px"><span class="btn">Export</span><span class="btn lime">Invite</span></span></div>' + ghostTable(5, 260);
+  }
+  function pageAcct() {
+    return '<div class="ttl same-dim" style="margin-bottom:14px">Accounting</div>' + tabs(['Overview', 'Budget', 'Teams', 'Ledger', 'Bank', 'Allocations', 'Payment requests', 'Budget vs. Actual'], 'Overview') +
+      '<div class="same-dim"><div style="margin-bottom:12px"><span class="pill">Fiscal year 2026–27 ' + I('chevd', 13) + '</span></div><div class="ghost" style="height:96px;margin-bottom:12px"></div>' + ghostTable(4, 300) + '</div>';
+  }
+
+  /* ════ 1 · WHY ════ */
+  var why = document.getElementById('why-rails');
+  var whyCols = [
+    ['Overview', 'overview', 10, { arrow2: 1, prog: 7, orgh: 7 }],
+    ['In 14U AA › Roster', 'team', 21, { arrow: 1, teamlabel: 2 }],
+    ['In a season › Registrations', 'season', 18, { seasons: 4, pick: 3, twoov: 3 }],
+    ['Organization (the hub)', 'org', 15, { org: 5 }],
+    ['Accounting', 'acct', 10, { acct: 6, foot: 7 }]
+  ];
+  why.innerHTML = whyCols.map(function (c) {
+    return '<div class="col"><div class="lab">' + c[0] + ' · <span class="fig">' + c[2] + ' rows</span></div>' + rf(ownerToday(c[1], c[3])) + '</div>';
+  }).join('') +
+    '<div class="col"><div class="lab">A tournament · <span class="fig">13 rows</span> (15 with Admin open)</div>' + rf(rail([
+      { i: 'grid', l: 'Club overview', d: true, mk: 8 }, { h: 'Tournament' }, { tname: 'Harbourtown Invitational 2…' },
+      { h: 'Operations', fold: 'd' }, { i: 'gauge', l: 'Dashboard', lit: true }, { i: 'users', l: 'Teams' }, { i: 'cal', l: 'Schedule' }, { i: 'medal', l: 'Results' }, { i: 'check', l: 'Check-in' }, { i: 'kit', l: 'Staff kit' }, { i: 'mail', l: 'Communications' },
+      { h: 'Setup', fold: 'd' }, { i: 'sliders', l: 'Event settings' }, { i: 'pin', l: 'Venues & facilities' }, { i: 'tag', l: 'Divisions' }, { i: 'book', l: 'Rules & resources' }, { i: 'globe', l: 'Public site' },
+      { h: 'Admin', fold: 'r' }], FOOT_TODAY)) + '</div>';
+
+  var WHY_NOTES = [
+    ['The arrow promises a fold and delivers a link.', 'Rep teams, House league and Organization carry an arrow. Clicking anywhere on the row, the arrow included, opens the program’s first page; nothing opens or closes. From inside 14U AA, Rep teams throws you back to the Teams list. The code confirms it: the row is one link and the arrow is a drawing inside it.', 'AdminKitRail.tsx:95-113, 161'],
+    ['Inside a team, 21 rows, and Organization falls off the screen.', 'The program’s six pages stay, the team’s five stack under them, then the other programs. Organization’s row is below 900 px; only its heading shows. "Roster" sits two rows under "Past seasons" and reads as its sibling. The team’s rows are added under the program’s, never in place of them.', 'NAV-owner-d-22 · AdminKitRail.tsx:185-187'],
+    ['Inside a season, two of everything.', 'The sidebar carries a season picker and the page carries "← 2026 Fall House League" plus the season in its eyebrow. Two rows read "Overview" (the club’s and the season’s). The page’s own Registrations tabs sit under all of it.', 'NAV-owner-d-25 · NAV-leagueadmin-d-24'],
+    ['House league’s only page row is "Seasons", the page its row already opens.', 'A layer with nothing in it. Public site does the same with a lone "Site editor" row while you are inside it. (The double highlight that used to light Seasons and the page together was fixed in the Stage 13 fix-now, commit 2a33cc98a; it is not drawn here.)', 'admin-kit-nav.ts:140, 152'],
+    ['Organization is a hub and a list at once.', 'After 13a the hub shows only the doors you hold and gains Audit log, but it is still the same pages twice, in a different order, and the hub also carries Tournaments and Plan & billing, which live elsewhere in the sidebar. Members is two clicks through the hub, one through the row.', 'NAV-owner-d-11 · org/page.tsx:31-81 · 13a Ask 7'],
+    ['Accounting does it the third way.', 'No rows: eight tabs under the page title, on a desk and on a phone. Families works the same way. This is the shape the rest of the drawing proposes for every place.', 'NAV-owner-x-accounting'],
+    ['"Programs" over things that aren’t programs; Plan & billing in the foot.', 'Accounting, Families and Public site sit under PROGRAMS. The ORGANIZATION heading holds one row. Plan & billing lives at the foot, away from Organization, and on the phone it sits under You.', 'NAV-owner-d-01'],
+    ['A tournament swaps the whole sidebar.', 'Calendar, Schedules, every program and Organization leave; "Club overview" is the way back. This one is different on purpose (an event has about 17 pages in three folding groups, and its own phone bar), and the drawing keeps it (Ask 8).', 'NAV-owner-c-d-03b · NAV_STANDARD exceptions']
+  ];
+  function notesHtml(list) {
+    return list.map(function (n, k) { return '<li data-n="' + (k + 1) + '"><button class="n" type="button" data-n="' + (k + 1) + '">' + (k + 1) + '</button><div><b>' + n[0] + '</b><p>' + n[1] + '</p>' + (n[2] ? '<p class="src">' + n[2] + '</p>' : '') + '</div></li>'; }).join('');
+  }
+  document.getElementById('why-notes').innerHTML = notesHtml(WHY_NOTES);
+
+  var COUNTS = [
+    ['Owner', '10', '21', '18 + picker', '15', '10', '10'],
+    ['Club admin', '10', '21', '18 + picker', '13', '10', '10 (9 without Families)'],
+    ['League admin', '4', '—', '12 + picker', '6', '—', '4'],
+    ['Registrar', '4', '—', '12 + picker', '5', '—', '4'],
+    ['Treasurer', '3', '—', '—', '5', '3', '3']
+  ];
+  document.getElementById('counts').innerHTML = '<thead><tr><th>Person</th><th>Overview</th><th>In a rep team</th><th>In a season</th><th>Organization</th><th>Accounting</th><th>After, on every screen</th></tr></thead><tbody>' +
+    COUNTS.map(function (r) { return '<tr><td><b>' + r[0] + '</b></td>' + r.slice(1, 6).map(function (c) { return '<td class="num' + (parseInt(c, 10) > 10 ? ' hot' : '') + '">' + c + '</td>'; }).join('') + '<td class="num good">' + r[6] + '</td></tr>'; }).join('') + '</tbody>';
+
+  /* ════ 2 · OWNER ════ */
+  var OWNER_NOTES = [
+    ['The same ten rows on every screen.', '<span class="tag new">NEW</span> The sidebar never grows: Overview, Calendar, Schedules, three programs, four club places. Organization is always on screen, at a desk of any height.'],
+    ['One lit row: the place you are in.', '<span class="tag chg">RESTYLED</span> Inside 14U AA’s Roster, Rep teams is lit. Today the open program goes bold while a page row is tinted, two signals for one answer. The page’s tab says which page.'],
+    ['"Programs": Rep teams, House league, Tournaments.', '<span class="tag chg">RESTYLED</span> The three things a club runs. Tournaments moves up to sit with them (13a left it to 13i). Ask 5.'],
+    ['"Club": Accounting, Families, Public site, Organization.', '<span class="tag chg">RESTYLED</span> Things the whole club has. The ORGANIZATION heading over one row goes. A heading is drawn over two or more rows only.'],
+    ['No arrows.', '<span class="tag gone">GONE</span> Nothing opens under a row, so nothing promises to. Every row goes to its place’s front door. Ask 2.'],
+    ['The foot does not change.', '<span class="tag same">UNCHANGED</span> Plan & billing, Help, the other portal (when you hold one), Collapse sidebar, as today. Ruled 2026-11-06 (Ask 4 B): the foot stays as it is, and the fee-invoice pill stays on Plan & billing.'],
+    ['A place’s pages are tabs under its title.', '<span class="tag new">NEW</span> for Rep teams, a team, a season and Organization; <span class="tag same">UNCHANGED</span> for Accounting and Families, which already work this way. One component everywhere: Accounting’s tabs. Every tab is its own page address, as Accounting’s are, so Back, a bookmark or a link in a notification lands on the right tab with the right row lit. The trade: a program’s pages no longer show in the sidebar before you go in; its first page shows them all at once.'],
+    ['A team: one door up, five tabs.', '<span class="tag new">NEW</span> "← Teams" goes one level up, named by where it goes. The team’s five tabs replace Rep teams’ six. Today Roster’s door says "← 14U AA" and the team page’s says "← Teams": two back doors depending on the page. A team has no switcher today and gets none: from 14U AA to 15U AA is through Teams, as now. Only a season has one, because the season picker exists today and moves.'],
+    ['A season: one back door, one switcher.', '<span class="tag chg">RESTYLED</span> The season switcher moves from the sidebar into the title (the chevron opens the season list, as the phone’s switch sheet does today). "← Seasons" on every season page.'],
+    ['A page’s own tabs become the view switch.', '<span class="tag chg">RESTYLED</span> Registrations’ To review / Active / Waitlist / Ended move from tabs to the one-white-track view switch, so there are never two rows of tabs. Ask 6.'],
+    ['Organization: tabs, not a hub.', '<span class="tag new">NEW</span> Members, Audit log, Settings, Venue library, PDF settings. The row opens the first one you hold; a one-door person gets that page with no tabs (13a’s rule, carried over). Tournaments, My Coaches Portal and Plan & billing leave Organization: each has its own door already (Plan & billing in the foot, Ask 4 B). Ask 3.'],
+    ['House league carries 9+.', '<span class="tag same">UNCHANGED</span> from 13a (Ask 8 / B2): a place’s row carries its pages’ waiting total, each tab carries its own.']
+  ];
+  document.getElementById('owner-notes').innerHTML = notesHtml(OWNER_NOTES);
+  var ownerScr = 'team', ownerSt = 'after';
+  function drawOwner() {
+    var after = ownerSt === 'after';
+    var mkR = after ? { lit: 2, prog: 3, club: 4, foot: 6, hlc: 12, arrow: 5, ten: 1 } : {};
+    var r = after ? ownerAfter(ownerScr, mkR) : ownerToday(ownerScr, {});
+    var p = { overview: function () { return pageOverview(); }, team: function () { return pageTeam(after, after ? { back: 8, tabs: 7 } : {}); }, season: function () { return pageSeason(after, after ? { back: 9, title: 9, tabs: 7, vs: 10 } : {}); }, org: function () { return pageOrg(after, after ? { tabs: 11 } : {}); }, acct: function () { return pageAcct(); } }[ownerScr]();
+    document.getElementById('owner-frame').innerHTML = desk(r, p);
+    finish(document.getElementById('s-owner'));
+  }
+
+  /* ════ 3 · SHORT ════ */
+  function regToday(scr) {
+    var l = [{ i: 'grid', l: 'Overview', lit: scr === 'overview' }, { i: 'calclock', l: 'Calendar' }, { h: 'Programs', d: true, mk: scr === 'overview' ? 3 : undefined }];
+    if (scr === 'season') {
+      l.push({ i: 'cal', l: 'House league', open: true, chev: 'd', d: true });
+      var b = [{ sub: true, l: 'Seasons', d: true }, { label: 'Season', d: true }, { pick: '2026 Fall House Le…', d: true }];
+      SEASON_PAGES.forEach(function (p) { b.push({ sub: true, l: p, lit: p === 'Overview', cnt: p === 'Registrations' ? '9+' : '', d: true }); });
+      l.push({ block: b, d: true, mk: 1 });
+      l[l.length - 1].block[0].mk = 1;
+    } else l.push({ i: 'cal', l: 'House league', chev: 'r', cnt: '9+' });
+    l.push({ h: 'Organization' });
+    if (scr === 'org') { l.push({ i: 'building', l: 'Organization', open: true, chev: 'd', d: true }); l.push({ sub: true, l: 'Venue library', lit: true, d: true, mk: 2 }); }
+    else l.push({ i: 'building', l: 'Organization', chev: 'r' });
+    return rail(l, [{ i: 'help', l: 'Help', dot: true }, { i: 'panel', l: 'Collapse sidebar', col: true }]);
+  }
+  function regAfter() {
+    return rail([{ i: 'grid', l: 'Overview' }, { i: 'calclock', l: 'Calendar' }, { hair: true, d: true, mk: 3 }, { i: 'cal', l: 'House league', cnt: '9+', lit: true, d: true }, { hair: true, d: true }, { i: 'building', l: 'Organization', d: true, mk: 2 }],
+      [{ i: 'help', l: 'Help', dot: true }, { i: 'panel', l: 'Collapse sidebar', col: true }]);
+  }
+  function treToday(scr) {
+    var l = [{ i: 'grid', l: 'Overview', lit: scr === 'overview' }, { h: 'Programs', d: true, mk: scr === 'overview' ? 4 : undefined }, { i: 'dollar', l: 'Accounting', cnt: '3', lit: scr === 'acct' }, { h: 'Organization' }];
+    if (scr === 'org') { l.push({ i: 'building', l: 'Organization', open: true, chev: 'd', d: true }); l.push({ sub: true, l: 'Members', lit: true, d: true }); l.push({ sub: true, l: 'Venue library', d: true }); }
+    else l.push({ i: 'building', l: 'Organization', chev: 'r' });
+    return rail(l, [{ i: 'help', l: 'Help', dot: true }, { i: 'panel', l: 'Collapse sidebar', col: true }]);
+  }
+  function treAfter() {
+    return rail([{ i: 'grid', l: 'Overview' }, { h: 'Club', d: true, mk: 4 }, { i: 'dollar', l: 'Accounting', cnt: '3', lit: true, d: true }, { i: 'building', l: 'Organization', d: true }],
+      [{ i: 'help', l: 'Help', dot: true }, { i: 'panel', l: 'Collapse sidebar', col: true }]);
+  }
+  document.getElementById('reg-rails').innerHTML =
+    '<div class="col"><div class="lab"><span class="tag same">TODAY</span> Overview · <span class="fig">4 rows</span></div>' + rf(regToday('overview')) + '</div>' +
+    '<div class="col"><div class="lab"><span class="tag same">TODAY</span> In a season · <span class="fig">12 rows</span></div>' + rf(regToday('season')) + '</div>' +
+    '<div class="col"><div class="lab"><span class="tag same">TODAY</span> Organization · <span class="fig">5 rows</span></div>' + rf(regToday('org')) + '</div>' +
+    '<div class="col"><div class="lab"><span class="tag new">AFTER</span> Every screen (drawn in a season) · <span class="fig">4 rows</span></div>' + rf(regAfter()) + '</div>';
+  document.getElementById('tre-rails').innerHTML =
+    '<div class="col"><div class="lab"><span class="tag same">TODAY</span> Overview · <span class="fig">3 rows</span></div>' + rf(treToday('overview')) + '</div>' +
+    '<div class="col"><div class="lab"><span class="tag same">TODAY</span> Accounting · <span class="fig">3 rows</span></div>' + rf(treToday('acct')) + '</div>' +
+    '<div class="col"><div class="lab"><span class="tag same">TODAY</span> Organization · <span class="fig">5 rows</span></div>' + rf(treToday('org')) + '</div>' +
+    '<div class="col"><div class="lab"><span class="tag new">AFTER</span> Every screen (in Accounting) · <span class="fig">3 rows</span></div>' + rf(treAfter()) + '</div>';
+  document.getElementById('short-notes').innerHTML = notesHtml([
+    ['The registrar’s sidebar triples inside a season, then shrinks back.', '<span class="tag gone">GONE</span> 4 rows, then 12 plus a picker, then 4. After, it is 4 everywhere: the season’s seven pages are tabs on the season page, exactly as the owner’s are.', 'NAV-registrar-d-24'],
+    ['Organization is one door for the registrar.', '<span class="tag same">UNCHANGED</span> from 13a (Ask 7): a one-door person goes straight to it, so the registrar’s Organization row opens Venue library, with no tabs because there is only one page. No arrow, no row opening under it.'],
+    ['A heading over one row is noise.', '<span class="tag chg">RESTYLED</span> The registrar holds one program and one club place, so no headings are drawn: a heading’s space, with no word, separates the runs. 13a moves House league up to lead for the registrar and league admin; that stays.'],
+    ['The treasurer stops seeing "Programs" over Accounting.', '<span class="tag chg">RESTYLED</span> Accounting and Organization sit under "Club", which is what they are. Three rows on every screen, today and after; what changes is that the heading tells the truth.'],
+    ['What a one-door person never sees.', 'No row they cannot open, no arrow, no list of pages they cannot use. A page they reach by a link they don’t hold is 13a’s one "not yours" screen, inside the same frame, with this same sidebar beside it.']
+  ]);
+
+  /* ════ 4 · PHONE ════ */
+  function bnav(keys, on) {
+    var ICO = { Overview: 'grid', Calendar: 'calclock', 'Rep teams': 'users', 'House league': 'cal', Accounting: 'dollar', More: 'more' };
+    return '<div class="bnav same-dim">' + keys.map(function (k) { var c = k === 'Accounting' ? '<span class="cnt">3</span>' : ''; return '<div class="bn' + (k === on ? ' on' : '') + '"><span class="ic">' + I(k === 'More' && on === 'More' ? 'x' : ICO[k], 21) + c + '</span>' + k + '</div>'; }).join('') + '</div>';
+  }
+  var OWNER_BAR = ['Overview', 'Calendar', 'Rep teams', 'Accounting', 'More'];
+  var REG_BAR = ['Overview', 'Calendar', 'House league', 'More'];
+  function phone(page, bar, on, extra) { return '<div class="pf ph"><div class="pb same-dim">Harbourtown Minor Ball' + I('globe', 22) + '</div><div class="pgp gridg">' + page + '</div>' + (extra || '') + bnav(bar, on) + '</div>'; }
+  function ptitle(o) {
+    return '<div class="' + (o.d ? 'pos' : 'pos same-dim') + '" style="display:flex;gap:12px;align-items:flex-start;margin-bottom:12px">' + (o.back ? '<span style="padding-top:18px">' + I('left', 18) + '</span><span class="vr" style="width:1px;align-self:stretch;background:rgba(70,55,30,.2)"></span>' : '') + '<div style="min-width:0"><div class="ey">' + (o.ey || '') + '</div><div class="ttl">' + o.title + (o.caret ? '<span class="caret">' + I('chevd', 15) + '</span>' : '') + '</div>' + (o.chip ? '<div style="margin-top:6px"><span class="chip">' + o.chip + '</span></div>' : '') + '</div>' + (o.mk ? MK(o.mk) : '') + '</div>';
+  }
+  function repList() {
+    return '<div class="same-dim"><div style="font-size:13px;color:#4E473D;margin-bottom:10px">8 teams in 2 groups · 8 of 15 on your plan</div><div class="ghost">' +
+      [['14U AA', '2027 · Live', 'Taylor Brooks · 12 players'], ['15U AA', '2026 · Live', 'Sam Whitford · 12 players'], ['15U AAA', '2026 · Live', 'Jordan Reyes · 12 players'], ['16U AA', '2025 · Closed', 'Casey Morgan'], ['11U AA', '2026 · Live', 'Marcus Bell · 12 players']].map(function (t) { return '<div style="padding:12px 14px;border-bottom:1px solid rgba(70,55,30,.12)"><b>' + t[0] + '</b> <span class="chip">' + t[1] + '</span><div style="font-size:13px;color:#4E473D;margin-top:4px">' + t[2] + '</div></div>'; }).join('') + '</div></div>';
+  }
+  function assistBody() {
+    return '<div class="same-dim"><div style="font-size:14px;color:#4E473D;margin-bottom:12px">Oversight across your teams. Head coaches invite and set their own staff; this is your view and override.</div><div class="ghost" style="padding:16px;margin-bottom:12px"><b>Require admin approval</b><div class="bar-x" style="width:90%;margin-top:10px"></div><div class="bar-x" style="width:70%;margin-top:8px"></div></div><div class="ghost" style="padding:16px"><b>Invited, awaiting acceptance (1)</b><div class="bar-x" style="width:80%;margin-top:10px"></div></div></div>';
+  }
+  function seasonStats() {
+    return '<div class="same-dim"><div style="font-size:13px;color:#4E473D;margin-bottom:10px">Nov 27, 2026 – Feb 4, 2027 · Baseball</div><div class="ghost" style="display:grid;grid-template-columns:1fr 1fr">' +
+      [['Players', '19', 'of 48 spots'], ['To review', '15', 'Registrations'], ['Waitlist', '3', ''], ['Teams', '9', '8 players unplaced'], ['Owed', '$2,895', '19 players'], ['Still owing', '$1,740', '12 players']].map(function (s) { return '<div style="padding:12px 14px;border-bottom:1px solid rgba(70,55,30,.12)"><div class="ey">' + s[0] + '</div><div style="font:700 22px Inter">' + s[1] + '</div><div style="font-size:12px;color:#4E473D">' + s[2] + '</div></div>'; }).join('') + '</div></div>';
+  }
+  function sheetToday() {
+    return '<div class="dimback"></div><div class="sheet"><div class="hd"></div><div class="srow same-dim">' + I('bell', 18) + 'Notifications</div>' +
+      '<div class="tiles same-dim"><div class="tile">' + I('gantt', 18) + 'Schedules</div><div class="tile">' + I('cal', 18) + 'House league<span class="cnt">9+</span></div><div class="tile">' + I('idcard', 18) + 'Families<span class="cnt">2</span></div></div>' +
+      '<div class="scap">Programs' + MK(6) + '</div><div class="grid2"><div class="srow">' + I('globe', 18) + 'Public site</div><div class="srow">' + I('trophy', 18) + 'Tournaments</div></div>' +
+      '<div class="scap">Organization' + MK(6) + '</div><div class="grid2"><div class="srow">' + I('building', 18) + 'Organization</div><div class="srow">' + I('idbadge', 18) + 'Members</div><div class="srow">' + I('scroll', 18) + 'Audit log</div><div class="srow">' + I('gear', 18) + 'Settings</div><div class="srow">' + I('pin', 18) + 'Venue library</div><div class="srow">' + I('file', 18) + 'PDF settings</div></div>' +
+      '<div class="ssep"></div><div class="scap same-dim">You</div><div class="grid2"><div class="srow same-dim">' + I('user', 18) + 'Account</div><div class="srow same-dim">' + I('home', 18) + 'Home</div><div class="srow">' + I('card', 18) + 'Plan &amp; billing</div></div>' +
+      '<div class="ssep"></div><div class="grid2 same-dim"><div class="srow">' + I('help', 18) + 'Help</div><div class="srow">' + I('msg', 18) + 'Send feedback</div><div class="srow">' + I('dl', 18) + 'Download app</div><div class="srow out">' + I('out', 18) + 'Sign out</div></div></div>';
+  }
+  function sheetAfter() {
+    return '<div class="dimback"></div><div class="sheet"><div class="hd"></div><div class="srow same-dim">' + I('bell', 18) + 'Notifications</div>' +
+      '<div class="tiles same-dim"><div class="tile">' + I('gantt', 18) + 'Schedules</div><div class="tile">' + I('cal', 18) + 'House league<span class="cnt">9+</span></div><div class="tile">' + I('idcard', 18) + 'Families<span class="cnt">2</span></div></div>' +
+      '<div class="ssep">' + MK(6) + '</div><div class="grid2"><div class="srow">' + I('trophy', 18) + 'Tournaments</div></div>' +
+      '<div class="scap">Club' + MK(6) + '</div><div class="grid2"><div class="srow">' + I('globe', 18) + 'Public site</div><div class="srow">' + I('building', 18) + 'Organization</div></div>' +
+      '<div class="ssep"></div><div class="scap same-dim">You</div><div class="grid2 same-dim"><div class="srow">' + I('user', 18) + 'Account</div><div class="srow">' + I('home', 18) + 'Home</div><div class="srow">' + I('card', 18) + 'Plan &amp; billing</div></div>' +
+      '<div class="ssep"></div><div class="grid2 same-dim"><div class="srow">' + I('help', 18) + 'Help</div><div class="srow">' + I('msg', 18) + 'Send feedback</div><div class="srow">' + I('dl', 18) + 'Download app</div><div class="srow out">' + I('out', 18) + 'Sign out</div></div></div>';
+  }
+  function ptabs(list, on, mk) { return tabs(list, on, { d: true, mk: mk }); }
+  var PHONE = {
+    rep: ['Rep teams’ first page (<span class="src">NAV-owner-p-21</span>)',
+      phone('<div class="disc pos"><div class="dh"><span><b>In Rep teams</b><small>Assistant coaches · Document templates · Shared …</small></span>' + I('chevu', 18) + '</div>' + REP_PAGES.slice(1).map(function (p) { return '<div class="dr">' + p + '</div>'; }).join('') + MK(2) + '</div>' + ptitle({ title: 'Rep teams' }) + repList(), OWNER_BAR, 'Rep teams'),
+      phone(ptitle({ title: 'Rep teams', d: false }) + ptabs(REP_PAGES, 'Teams', 1) + repList(), OWNER_BAR, 'Rep teams'), 'Rep teams · Teams'],
+    repsub: ['A Rep teams page (<span class="src">NAV-owner-p-20</span>)',
+      phone(ptitle({ ey: 'Rep teams · Harbourtown Minor Ball', title: 'Assistant coaches', d: true, mk: 3 }) + assistBody(), OWNER_BAR, 'Rep teams'),
+      phone(ptitle({ title: 'Rep teams', d: false }) + ptabs(REP_PAGES, 'Assistant coaches', 3) + assistBody(), OWNER_BAR, 'Rep teams'), 'Rep teams · Assistant coaches'],
+    team: ['Inside a team (no capture: today a team’s pages are door cards on the team page, from the code)',
+      phone(ptitle({ back: true, ey: 'Rep teams · Senior', title: 'Roster', chip: '2027 Season · Live', d: true, mk: 7 }) + '<div class="same-dim">' + roster().replace(/width:220px/g, 'width:26px').replace(/width:540px/g, 'width:200px') + '</div>', OWNER_BAR, 'Rep teams'),
+      phone(ptitle({ back: true, ey: 'Rep teams · Senior', title: '14U AA', chip: '2027 Season · Live', d: false }) + ptabs(TEAM_PAGES, 'Roster', 7) + '<div class="same-dim">' + roster().replace(/width:220px/g, 'width:26px').replace(/width:540px/g, 'width:200px') + '</div>', OWNER_BAR, 'Rep teams'), '14U AA · Roster'],
+    season: ['Registrar in a season (<span class="src">NAV-owner-p-08, NAV-registrar-p-07</span>)',
+      phone('<div class="scard"><div class="ey">Season</div><div style="display:flex;align-items:center;gap:8px;font:700 18px Inter">2026 Fall House …<span class="chip">Registration open</span><span style="margin-left:auto">' + I('chevd', 18) + '</span></div><div class="pills" style="margin-top:10px"><span class="on">Overview</span><span>Registrations <span class="cnt" style="display:inline-grid;place-items:center;min-width:18px;height:18px;border-radius:9px;background:rgba(131,80,6,.1);color:#835006;font:600 10px Inter">9+</span></span><span>Teams &amp; d…</span></div>' + MK(4) + '</div>' + ptitle({ back: true, ey: 'House league · Season', title: '2026 Fall House League', d: true, mk: 4 }) + seasonStats(), REG_BAR, 'House league'),
+      phone(ptitle({ back: true, ey: 'House league', title: '2026 Fall House League', caret: true, chip: 'Registration open', d: true, mk: 4 }) + ptabs(SEASON_PAGES.map(function (p) { return p === 'Registrations' ? [p, '9+'] : p; }), 'Overview', 1) + seasonStats(), REG_BAR, 'House league'), 'Season · Overview'],
+    more: ['The owner’s More sheet (<span class="src">NAV-owner-p-05</span>) · <span class="fig">19</span> entries today, <span class="fig">14</span> after',
+      phone(pageOverview().replace('margin-left:88px', 'margin-left:0'), OWNER_BAR, 'More', sheetToday()),
+      phone(pageOverview().replace('margin-left:88px', 'margin-left:0'), OWNER_BAR, 'More', sheetAfter()), 'More, open']
+  };
+  var phoneScr = 'rep';
+  function drawPhone() {
+    var p = PHONE[phoneScr];
+    document.getElementById('phone-frames').innerHTML = '<div class="col"><div class="lab"><span class="tag same">TODAY</span> ' + p[0] + '</div>' + p[1] + '</div><div class="col"><div class="lab"><span class="tag new">AFTER</span> ' + p[3] + '</div>' + p[2] + '</div>';
+    finish(document.getElementById('s-phone'));
+  }
+  document.getElementById('phone-notes').innerHTML = notesHtml([
+    ['The same tabs as the desk, scrolling sideways.', '<span class="tag same">UNCHANGED</span> component, <span class="tag new">NEW</span> places. Accounting’s tabs already do this at 390: a strip that scrolls, with a › cue at the edge. The current tab is scrolled into view when the page opens.', 'NAV-owner-p-04'],
+    ['The "In Rep teams" disclosure retires.', '<span class="tag gone">GONE</span> It lists five of the six pages (not Teams, the one you are on), it shows on the first page only, and it starts closed on every visit. The code confirms it shows only on the program’s first page.', 'AdminKitProgramRow.tsx:200'],
+    ['The tabs stay on every page of the place.', '<span class="tag new">NEW</span> Today, on Assistant coaches, the only way to a sibling page is back to the Rep teams tab in the bar, then the disclosure. After, the strip is on every Rep teams page.'],
+    ['A season has one header.', '<span class="tag chg">RESTYLED</span> Today a season shows its name twice: the season card with its pill strip, then the page title with its own back arrow. After: one header, the switcher on the title’s chevron (the shipped switch sheet), the same tabs as the desk. The pill strip becomes Accounting’s tabs (Ask 6).'],
+    ['The bottom bar does not change.', '<span class="tag same">UNCHANGED</span> Overview · Calendar · Rep teams · Accounting · More for the owner; 13a’s House league lead for the registrar and league admin. The tab still lights by place, which now matches the sidebar’s one lit row.'],
+    ['The More sheet holds places only.', '<span class="tag chg">RESTYLED</span> The sidebar’s groups under the sidebar’s names: Tournaments on its own line (one row, no heading), then Club. Organization’s five pages leave the sheet (they are Organization’s tabs). Plan & billing stays under You (Ask 4 B). 19 entries become 14. The league admin’s sheet loses 2 rows, the registrar’s 1, the treasurer’s 2.'],
+    ['Inside a team on a phone.', '<span class="tag new">NEW</span> Today a team’s pages are reached only through door cards on the team page, and each sub-page’s back arrow returns to it. The team’s Coaches page appears to have no card there (read from the code, not captured). After, the five tabs are on every team page.', 'teams/[teamId]/page.tsx:292-306']
+  ]);
+
+  /* ════ 5 · STRIP ════ */
+  function stripHead() { return hdr({ title: 'Rep teams', d: false }); }
+  // 2026-09-30: in a program with tabs, a create belongs to its tab's own toolbar, not the page header.
+  var TEAMS_TOOLBAR = '<div style="display:flex;gap:10px;align-items:center"><span class="pos" style="font-size:13px;color:#4E473D">8 teams in 2 groups · 8 of 15 on your plan' + MK(4) + '</span><span class="btn same-dim" style="margin-left:auto">Team groups</span><span class="btn lime">' + I('plus', 15) + 'Add team</span></div>';
+  document.getElementById('strip-1440').innerHTML = '<div class="pf dk crop" style="min-height:0;height:300px">' + tstrip() + '<div class="dkb">' + rail([{ i: 'grid', l: 'Overview' }, { i: 'calclock', l: 'Calendar' }, { i: 'gantt', l: 'Schedules' }, { h: 'Programs' }, { i: 'users', l: 'Rep teams', lit: true }], []) + '<div class="mn"><div class="band same-dim"><b>Harbourtown Minor Ball</b><span class="pill">' + I('globe', 14) + 'View site</span></div><div class="pg gridg">' + stripHead() + tabs(REP_PAGES, 'Teams', { d: true, mk: 1, id: 'w1440' }) + TEAMS_TOOLBAR + '</div></div></div></div>';
+  function narrow(w, id, mk) {
+    return '<div class="pf crop" style="width:' + w + 'px;height:230px"><div class="pb same-dim" style="height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;background:#fff;font:700 16px Inter">Harbourtown Minor Ball' + I('globe', 22) + '</div><div class="gridg" style="padding:16px">' + ptitle({ title: 'Rep teams' }) + '<div style="margin-left:-16px;margin-right:-16px;padding-left:4px">' + tabs(REP_PAGES, 'Teams', { d: true, mk: mk, id: id }) + '</div></div></div>';
+  }
+  document.getElementById('strip-768').innerHTML = narrow(768, 'w768', 2);
+  document.getElementById('strip-390').innerHTML = narrow(390, 'w390', 3);
+  function clashA() {
+    return '<div class="pf crop" style="width:1200px;height:270px"><div class="gridg pg" style="padding:24px 32px">' + hdr({ back: 'Seasons', ey: 'House league', title: '2026 Fall House League', caret: true, chip: 'Registration open', d: false }) +
+      tabs(SEASON_PAGES.map(function (p) { return p === 'Registrations' ? [p, '9+'] : p; }), 'Registrations', { d: true }) +
+      '<div style="display:flex;gap:10px;align-items:center"><span class="vs pos">' + VS() + MK(5) + '</span><span class="btn same-dim" style="margin-left:auto">Filter</span><span class="btn lime same-dim">' + I('plus', 15) + 'Add registration</span></div></div></div>';
+  }
+  function clashB() {
+    return '<div class="pf crop" style="width:1200px;height:270px"><div class="gridg pg" style="padding:24px 32px">' + hdr({ back: 'Seasons', ey: 'House league', title: '2026 Fall House League', caret: true, chip: 'Registration open', d: false }) +
+      '<div class="pills pos" style="margin-bottom:16px">' + SEASON_PAGES.map(function (p) { return '<span class="' + (p === 'Registrations' ? 'on' : '') + '">' + p + '</span>'; }).join('') + MK(6) + '</div>' + tabs([['To review', '9+'], ['Active', '19'], ['Waitlist', '3'], ['Ended', '1']], 'To review', { d: true }) + '</div></div>';
+  }
+  document.getElementById('strip-clash').innerHTML = '<div class="col"><div class="lab"><span class="tag new">ASK 6 · A, RECOMMENDED</span> The place’s pages: Accounting’s tabs. The page’s own filter: the view switch.</div>' + clashA() + '</div><div class="col"><div class="lab"><span class="tag chg">ASK 6 · B</span> The place’s pages: the season’s pill strip, everywhere. The page’s own tabs stay.</div>' + clashB() + '</div>';
+  var STRIP_NOTES = [
+    ['1440: fits on one line.', 'Measured: <span id="m1440" class="fig">…</span>. No scrolling, no menu. A laptop is the place an owner spends most time in Rep teams.'],
+    ['768: does not fit; it scrolls.', 'Measured: <span id="m768" class="fig">…</span>. Below 900 the admin already uses its phone layout, so a tablet gets the phone’s strip: sideways scroll, a › cue at the edge, the current tab scrolled into view. Accounting’s eight tabs behave this way today.'],
+    ['390: about two and a half tabs show.', 'Measured: <span id="m390" class="fig">…</span>. This is the worst case in the product, and it is the same as Accounting’s strip on a phone today (NAV-owner-p-04). A season’s seven are similar. The alternative, a "Pages" menu button below 900 (Ask 7 B), hides the pages behind a tap and is a new control.'],
+    ['Add team moves under the tabs.', '<span class="tag chg">RESTYLED</span> Today Rep teams puts Add team in its page header. Once Rep teams has tabs, a create belongs to its tab’s own toolbar (the Accounting ruling, 2026-09-30): Add team sits on Teams, at the toolbar’s right end.'],
+    ['Tabs inside tabs, answered by restyling the inner set.', '<span class="tag chg">RESTYLED</span> A place’s pages are Accounting’s underline tabs on every place. Where a page already had its own tabs that are really a filter of one list (Registrations’ To review / Active / Waitlist / Ended), they become the view switch at the toolbar’s left, the "which list" place (2026-10-17). Only the waiting count is amber; the others are the lighter ink. Two rows of the same tabs never stack. The build lists every page that has its own tabs and becomes a tab of a place.'],
+    ['The alternative keeps the inner tabs, and moves every place to pills.', 'The season’s phone pill strip becomes the place strip on every screen, so Accounting and Families restyle from tabs to pills, and pages keep their own underline tabs. It looks distinct, but it changes two shipped places to fix one page, and the pills at 1440 read as filters, not pages.'],
+    ['Long names are 13h’s, not 13i’s.', '"Bring in a coach’s team" and "Document templates" make the strip long. 13h (one name per thing) may shorten them; 13i draws today’s names and does not rename anything.']
+  ];
+  document.getElementById('strip-notes').innerHTML = notesHtml(STRIP_NOTES);
+
+  /* ════ 6 · RULES ════ */
+  var RULES = [
+    ['N2 · Headings', 'A heading over <b>pages</b> folds (the chevron at its right), and the group holding the page you’re on is always open. A heading over <b>places</b> (Programs, Organization, Tournament) never folds; a place opens because you’re in it. 12px above, 6px below.',
+      'The <b>club sidebar lists places only</b>, never a place’s pages, so nothing opens under a row and no club heading folds. Overview, Calendar and Schedules sit unheaded at the top; then <b>Programs</b> (Rep teams, House league, Tournaments) and <b>Club</b> (Accounting, Families, Public site, Organization), with "Also on your plan" after Programs as today. A heading is drawn over two or more rows; a lone row keeps the heading’s space with no word. The coach sidebar’s page groups and a tournament’s Operations, Setup and Admin fold as before: a heading over pages folds and the group holding your page is always open. 12px above, 6px below.'],
+    ['N3 · Chevrons', 'A sidebar row carries a chevron only when it can open pages under it: Rep teams, House league (a season’s pages), Families, Organization. Public site opens one page and carries none. One strength everywhere: 55%.',
+      '<b>A chevron means a fold, and only a fold carries one</b>: a coach sidebar’s page group and a tournament’s group headings. A club sidebar row carries none: every row opens its place’s front door, and a place’s pages are its tabs (N11). The collapsed sidebar follows: every icon is a straight link, no program menus. One strength everywhere: 55%.'],
+    ['N4 · The foot', 'Help, then the other portal, then Collapse sidebar, last. (As built since: Plan & billing first, then Help.) "Public site" appears once per screen.',
+      '<b>Unchanged in substance, now written as built</b> (Ask 4 B): Plan & billing (owner), then Help, then the other portal (when you hold one), then Collapse sidebar, last. The site door follows 13a (Ask 9): the header pill "View site", and a foot door only where the pill is not. Plan & billing is not an Organization tab, and its page draws no Organization tabs.'],
+    ['N7 · The More sheet', '(4) the sidebar’s groups, under the sidebar’s names, in the sidebar’s order, two columns, never folded; (5) You: Account, Home, the other portal. The club sheet’s Organization group opens with the Organization page itself (Ask B3).',
+      '(4) the sidebar’s places, under the sidebar’s names, in the sidebar’s order, two columns, never folded. <b>A place’s pages are never sheet rows</b>: they are its tabs, so the club sheet lists Organization once. (5) You: Account, Home, the other portal, Plan & billing (owner), as today. (1)–(3) and (6) unchanged.'],
+    ['N9 · The row’s end', 'The view-only eye first, then the amber waiting count. A folded heading carries one amber pill, the sum of its rows’ counts.',
+      'Unchanged, plus: <b>a place’s row carries the sum of its pages’ waiting counts, and each tab carries its own</b> (House league 9+ in the sidebar; Registrations 9+ on its tab). The eye, where a person can read a place but not change it, sits on the row and on each tab it applies to.'],
+    ['N10 · The phone bar', 'A door this person or plan cannot open is filled by the next program the club runs, <b>in the sidebar’s order</b>.',
+      'Unchanged in effect. The fill follows <b>the programs’ own order</b> (Rep teams, House league, Accounting, Families, Public site, Tournaments), written out, so moving Tournaments up into Programs in the sidebar does not change any club’s bar or tiles. 13a’s House league exception stays.'],
+    ['N11 · Pages on the page (new)', 'Not in the standard. The 2026-09-30 ruling (Accounting): views of one body of records are one page with tabs; separate jobs are listed in the rail; a page one level down has a back arrow and no tab row.',
+      '<b>A place with more than one page shows them as tabs under its title</b>: one component everywhere (Accounting’s tabs), a sideways-scrolling strip below 900 with a › cue and the current tab in view. One tab is lit. A tab a person cannot open is not drawn; a place with one page draws no strip. A place inside a place (a team, a season) replaces the strip with its own, and its header names the way up by destination ("← Teams", "← Seasons"). A <b>record’s</b> own page one level down (an allocation, a team’s account, a registration) keeps its back arrow and has no tab row (2026-09-30, kept). A page’s own filters are the toolbar’s left-hand view choice (2026-10-17), never a second row of tabs. A create button sits in its tab’s toolbar, never the place’s header. A tab’s own actions stay on that tab. <b>Every tab is its own page address</b> (Back, bookmarks and notification links keep working), and the strip is drawn with the page frame, before the page’s data arrives, so nothing shifts.']
+  ];
+  document.getElementById('rules-t').innerHTML = '<thead><tr><th>Rule</th><th>Today (2026-10-17 and since)</th><th>After 13i</th></tr></thead><tbody>' + RULES.map(function (r) { return '<tr><td class="rule">' + r[0] + '</td><td class="old">' + r[1] + '</td><td>' + r[2] + '</td></tr>'; }).join('') + '</tbody>';
+  document.getElementById('way-t').innerHTML = '<thead><tr><th>Where you are</th><th>The lit row</th><th>The lit tab</th><th>The way back</th></tr></thead><tbody>' + [
+    ['Rep teams › Assistant coaches', 'Rep teams', 'Assistant coaches', 'Any tab; the Rep teams row returns to Teams'],
+    ['14U AA › Roster', 'Rep teams', 'Roster (the team’s tabs)', '"← Teams" in the header, or the Rep teams row: both land on Teams'],
+    ['2026 Fall House League › Registrations', 'House league', 'Registrations', '"← Seasons" in the header, or the House league row: both land on Seasons; the title’s chevron switches season'],
+    ['Organization › Audit log', 'Organization', 'Audit log', 'Any tab; the row returns to the first page you hold'],
+    ['A tournament › Dashboard', 'Dashboard (the tournament sidebar, unchanged)', '—', '"Club overview", the first row, as today (Ask 8)']
+  ].map(function (r) { return '<tr><td><b>' + r[0] + '</b></td><td>' + r[1] + '</td><td>' + r[2] + '</td><td>' + r[3] + '</td></tr>'; }).join('') + '</tbody>';
+  document.getElementById('same-t').innerHTML = '<thead><tr><th>Surface</th><th>Why it stays</th></tr></thead><tbody>' + [
+    ['The tournament sidebar', 'An event is its own workspace: about 17 pages in three folding groups, its own phone bar by phase. The written exception stands (Ask 8).'],
+    ['Both coach portals', 'Their sidebars are separate components from the club’s. A coach runs one team; its pages are grouped and fold, which is right for them. A coach sees no change (Ask 9).'],
+    ['The support console', 'Its own menu; it only shares the row styling, which 13i does not change (N9 holds).'],
+    ['The bottom bars and tiles', 'N8 and N10 unchanged; the bar keeps its doors and the tiles their set.'],
+    ['Row type, icons, widths, highlight colour', 'N1, N5 and N9’s olive tint, 600 weight, full row. The admin sidebar stays 240 px.'],
+    ['13a’s screens', 'The "not yours" screen, House league leading for the league admin and registrar, the "View site" pill. 13c adds a Permits place after 13i, by N11.']
+  ].map(function (r) { return '<tr><td><b>' + r[0] + '</b></td><td>' + r[1] + '</td></tr>'; }).join('') + '</tbody>';
+
+  /* ════ 7 · ASKS ════ */
+  var ASKS = [
+    { id: '1', q: 'The shape: does the club sidebar list places only?', p: 'The direction says "pages on the page" and also "a team’s pages replace the program’s in the sidebar". Those are two different rules. Only the first works on a phone, because the phone has no sidebar to put pages in. A reverses the second half of your 2026-09-30 Accounting ruling ("separate jobs are listed in the rail; Rep teams stays in the rail"), for the reason that ruling gave for Accounting: on a phone a tab row reaches every page in one tap.',
+      o: [['A', 'Places only. Every place’s pages are tabs on its page. Ten rows for the owner on every screen, and the phone and desk get the same shape.', 1], ['B', 'The sidebar keeps the open program’s pages; a team or season replaces them (about 15 rows inside a team). The phone still needs its own answer.', 0], ['C', 'Keep today’s shape and only make the arrow a real fold.', 0]] },
+    { id: '2', q: 'The arrow on a sidebar row', p: 'Today it looks like a fold and is a link.',
+      o: [['A', 'Remove it from the club sidebar. Nothing opens under a row, so nothing promises to. The collapsed sidebar’s program menus go with it.', 1], ['B', 'Make it a real fold button that opens the pages under the row (only makes sense with 1 B or C).', 0]] },
+    { id: '3', q: 'Organization: a hub or tabs?', p: '13a is making the hub honest (only the doors you hold). Tabs reuse 13a’s same door list, so little is wasted, but the hub page 13a draws would be replaced a stage later.',
+      o: [['A', 'Tabs, like every other place: Members, Audit log, Settings, Venue library, PDF settings (and Plan & billing, Ask 4). The tile hub retires. Tournaments and My Coaches Portal leave Organization; both have their own place.', 1], ['B', 'Keep 13a’s hub; the sidebar loses Organization’s rows; each Organization page is two clicks, with "← Organization".', 0]] },
+    { id: '4', q: 'Where Plan & billing lives', p: 'Today: the sidebar’s foot on a desk, under You on a phone, and a tile in the Organization hub.',
+      o: [['A', 'Organization’s last tab, owner only. It leaves the foot and the phone’s You group.', 0], ['B', 'Stays in the foot and under You. RULED (owner, 2026-11-06): "the sidebar footer should remain the same as before".', 1]] },
+    { id: '5', q: 'The headings', p: '"Programs" sits over Accounting, Families and Public site, which are not programs; "Organization" heads one row.',
+      o: [['A', 'Two headings: Programs (Rep teams, House league, Tournaments) and Club (Accounting, Families, Public site, Organization). A heading only over two or more rows.', 1], ['B', 'No headings at all; a space between the three runs.', 0]] },
+    { id: '6', q: 'When a page already has its own tabs', p: 'A season’s Registrations page has To review / Active / Waitlist / Ended as tabs. With pages on the page it would carry two rows of tabs.',
+      o: [['A', 'Places use Accounting’s tabs everywhere; a page’s own filters become the view switch (one white track).', 1], ['B', 'Places use the season’s pill strip everywhere (Accounting and Families restyle to pills); a page keeps its own tabs.', 0]] },
+    { id: '7', q: 'A long tab strip on a tablet or phone', p: 'Rep teams’ six pages fit at 1440 but not at 768 or 390.',
+      o: [['A', 'It scrolls sideways with the › cue, the current tab in view, as Accounting does today.', 1], ['B', 'Below 900 it becomes a "Pages" menu button.', 0]] },
+    { id: '8', q: 'A tournament', p: 'It swaps the whole sidebar for its own (about 17 pages in three folding groups); "Club overview" is the way back.',
+      o: [['A', 'Keep it. The written exception stands; nothing changes in tournament mode.', 1], ['B', 'Open a tournament as a place in the club sidebar, its pages as tabs (a much bigger change, and it reaches tournament-only clubs and coach-hosted events).', 0]] },
+    { id: '9', q: 'The coach portals', p: 'Their sidebars are separate components; nothing here reaches them unless asked. A coach runs one team, and its sidebar groups that team’s pages under folding headings.',
+      o: [['A', 'Club only. A coach sees no change.', 1], ['B', 'Draw the same rule for the Premium coach sidebar as its own stage later.', 0]] }
+  ];
+  document.getElementById('asks').innerHTML = ASKS.map(function (a) {
+    return '<div class="ask"><h3><span class="n">' + a.id + '</span>' + a.q + '</h3><p>' + a.p + '</p>' +
+      a.o.map(function (o) { return '<label><input type="radio" name="ask' + a.id + '" value="' + o[0] + '"' + (o[2] ? ' checked' : '') + '><span><b>' + o[0] + '</b> · ' + o[1] + (o[2] ? '<span class="rec">RULED</span>' : '') + '</span></label>'; }).join('') + '</div>';
+  }).join('');
+  document.getElementById('copyAnswers').addEventListener('click', function () {
+    var line = ASKS.map(function (a) { var c = document.querySelector('input[name="ask' + a.id + '"]:checked'); return a.id + (c ? c.value : '-'); }).join(' ');
+    var text = '13i asks: ' + line;
+    var box = document.getElementById('answersBox');
+    box.hidden = false; box.value = text; box.focus(); box.select();
+    try { navigator.clipboard.writeText(text).catch(function () {}); } catch (e) {}
+  });
+
+  /* ── wiring ── */
+  function measure() {
+    [['w1440', 'm1440', 1136], ['w768', 'm768', 768], ['w390', 'm390', 390]].forEach(function (m) {
+      var w = document.getElementById(m[0]), out = document.getElementById(m[1]);
+      if (!w || !out) return;
+      var t = w.querySelector('.tabs');
+      var need = 0;
+      t.querySelectorAll('.tb').forEach(function (tb) { need += tb.offsetWidth; });
+      var have = t.clientWidth;
+      if (!have) return;
+      out.textContent = 'the six tabs need ' + need + ' px; ' + have + ' px are free' + (need > have ? ' (' + Math.round(have / need * 100) + '% visible)' : '');
+    });
+  }
+  // Measure at true size first (zoom off), then apply the chosen size.
+  function finish(sec) {
+    if (!sec) return;
+    document.querySelectorAll('.scale').forEach(function (s) { s.style.zoom = ''; });
+    sec.querySelectorAll('.tabwrap').forEach(function (w) { var t = w.querySelector('.tabs'); w.classList.toggle('over', t.scrollWidth > t.clientWidth + 1); });
+    sec.querySelectorAll('.dk').forEach(function (d) { d.classList.toggle('fits', d.scrollHeight <= 902); });
+    if (sec.id === 's-strip') measure();
+    applySize();
+  }
+  var size = 'true';
+  function applySize() {
+    document.querySelectorAll('.scale').forEach(function (s) {
+      s.style.zoom = '';
+      if (size !== 'fit') return;
+      var stage = s.parentElement, inner = s.firstElementChild;
+      if (!inner || !stage.clientWidth) return;
+      var need = inner.scrollWidth, have = stage.clientWidth - 30;
+      if (need > have) s.style.zoom = String(Math.max(0.3, have / need));
+    });
+  }
+  function selectRadio(group, btn) { group.querySelectorAll('.opt').forEach(function (b) { b.setAttribute('aria-checked', b === btn ? 'true' : 'false'); }); }
+  document.getElementById('owner-screen').addEventListener('click', function (e) { var b = e.target.closest('.opt'); if (!b) return; selectRadio(this, b); ownerScr = b.dataset.scr; drawOwner(); });
+  document.getElementById('owner-state').addEventListener('click', function (e) { var b = e.target.closest('.opt'); if (!b) return; selectRadio(this, b); ownerSt = b.dataset.st; drawOwner(); });
+  document.getElementById('phone-screen').addEventListener('click', function (e) { var b = e.target.closest('.opt'); if (!b) return; selectRadio(this, b); phoneScr = b.dataset.ps; drawPhone(); });
+  document.querySelectorAll('[data-view]').forEach(function (b) { b.addEventListener('click', function () { selectRadio(b.parentElement, b); document.body.classList.toggle('diff-only', b.dataset.view === 'diff'); }); });
+  document.querySelectorAll('[data-size]').forEach(function (b) { b.addEventListener('click', function () { selectRadio(b.parentElement, b); size = b.dataset.size; applySize(); }); });
+  window.addEventListener('resize', applySize);
+
+  // markers <-> notes, per section
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('.mk, .notes .n');
+    if (!b) return;
+    var sec = b.closest('section'), n = b.dataset.n;
+    sec.querySelectorAll('.notes li').forEach(function (li) { li.classList.toggle('on', li.dataset.n === n); });
+    sec.querySelectorAll('.mk').forEach(function (m) { m.classList.toggle('on', m.dataset.n === n); });
+    if (b.classList.contains('mk')) { var li = sec.querySelector('.notes li[data-n="' + n + '"]'); if (li) li.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+    else { var m = sec.querySelector('.mk[data-n="' + n + '"]'); if (m) m.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' }); }
+  });
+
+  var NAMES = ['why', 'owner', 'short', 'phone', 'strip', 'rules', 'asks'];
+  function show(name) {
+    if (NAMES.indexOf(name) < 0) name = 'why';
+    document.querySelectorAll('.tab').forEach(function (t) { t.setAttribute('aria-selected', t.dataset.t === name ? 'true' : 'false'); });
+    document.querySelectorAll('main > section').forEach(function (s) { s.hidden = s.dataset.sec !== name; });
+    finish(document.getElementById('s-' + name));
+  }
+  document.querySelectorAll('.tab').forEach(function (t) { t.addEventListener('click', function () { try { history.replaceState(null, '', '#' + t.dataset.t); } catch (e) {} show(t.dataset.t); }); });
+  window.addEventListener('hashchange', function () { show(location.hash.slice(1)); });
+  drawOwner(); drawPhone();
+  show(location.hash.slice(1) || 'why');
+})();
+</script>

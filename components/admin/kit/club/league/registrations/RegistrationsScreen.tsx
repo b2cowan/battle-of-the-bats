@@ -21,12 +21,11 @@
  */
 import { useCallback, useMemo, useState } from 'react';
 import { kitCountText } from '@/lib/admin-kit-nav';
-import { useParams, useSearchParams } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Plus } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { isFreeFloorLeague } from '@/lib/free-floor';
-import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import ExportMenu from '@/components/admin/ExportMenu';
 import { announceSeasonsChanged, useHouseLeagueAccess, useSeasonAccess } from '@/components/admin/kit/useHouseLeagueSeasons';
 import KitDialog, { DialogCancel, type KitStep } from '../../KitDialog';
@@ -34,7 +33,7 @@ import ck from '../../ClubKit.module.css';
 import { Callout, EmptyCard, LoadFailed, NoticePill, PageLoading, repKit, useDeferredLoad, useLatestRead } from '../../RepKit';
 import { NotYours } from '../../NotYours';
 import { moneyFetch } from '../../money/MoneyKit';
-import HubTabBar from '@/components/shared/HubTabBar';
+import ViewSwitch from '@/components/coaches/kit/ViewSwitch';
 import DivisionPicker from '@/components/admin/tournament/DivisionPicker';
 import FilterMenu, { FilterLine, pickedLabels } from '@/components/admin/tournament/FilterMenu';
 import { useToolbarSearch } from '@/components/admin/tournament/useToolbarSearch';
@@ -114,6 +113,7 @@ export default function RegistrationsScreen() {
   const orgSlug = currentOrg?.slug ?? '';
   // J3-012: every /api/admin fetch carries the org slug so the server resolves the URL's org.
   const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
+  const router = useRouter();
   const base = `/${orgSlug}/admin/house-league/seasons/${seasonId}/registrations`;
 
   const [season, setSeason] = useState<RegsSeason | null>(null);
@@ -600,40 +600,31 @@ export default function RegistrationsScreen() {
   const freeFloor = !!currentOrg && isFreeFloorLeague(currentOrg);
 
   // ── The header ─────────────────────────────────────────────────────────────────────────────────
-  const header = (
-    <AdminPageHeader
-      eyebrow={season ? REGS_WORDS.eyebrow(season.name) : 'House league'}
-      title={REGS_WORDS.title}
-      backTo={{ href: `/${orgSlug}/admin/house-league/seasons/${seasonId}`, label: season?.name ?? 'Season' }}
-      inlineActions
-      actions={access?.register ? (
-        <button type="button" className={`btn btn-lime ${ck.iconOnlyPhone}`} aria-label={REGS_WORDS.add} onClick={() => setAct({ kind: 'add' })}>
-          <Plus size={14} aria-hidden /><span className={ck.btnWord}>{REGS_WORDS.add}</span>
-        </button>
-      ) : undefined}
-    />
-  );
-
-  if (orgLoading || !gate) return <PageLoading header={header} label={REGS_WORDS.loading} />;
+  // ⚖ None of its own (Club Tier Stage 13i, A4): Registrations is a tab of its season, whose frame draws the one header
+  // ("← Seasons", the season's name and its switch, the status chip) and the season's tab row above it. Add registration
+  // is the toolbar's last control (the 2026-10-17 toolbar rule: a create at the right end).
+  if (orgLoading || !gate) return <PageLoading label={REGS_WORDS.loading} />;
   if (!gate.read) return <NotYours page="houseLeague" />;
-  if (!read && !failed) return <PageLoading header={header} label={REGS_WORDS.loading} />;
+  if (!read && !failed) return <PageLoading label={REGS_WORDS.loading} />;
   if (failed || !season || !read) {
     return (
       <div className={repKit.page}>
-        {header}
         <LoadFailed title={REGS_WORDS.failed} onRetry={() => { setFailed(null); void load(); }} />
       </div>
     );
   }
 
-  // ── The tabs ───────────────────────────────────────────────────────────────────────────────────
-  const tabs = REG_TABS.map(id => ({
+  // ── The views ──────────────────────────────────────────────────────────────────────────────────
+  // ⚖ THE VIEW SWITCH, NOT A SECOND TAB ROW (Club Tier Stage 13i, Ask 6 = A, owner 2026-11-06): To review · Active ·
+  // Waitlist · Ended are four views of one list, so they are the toolbar's left-hand view choice under the season's own tab
+  // row. Only To review's count is amber; the others are the lighter ink. Each view keeps its own address (`?tab=`), so
+  // Back, a bookmark and a notification's link land on the same view.
+  const views = REG_TABS.map(id => ({
     id,
     label: REGS_WORDS.tab[id],
-    href: `${base}?tab=${id}`,
     mark: counts[id] > 0
       ? (id === 'review'
-        ? <span className={frame.count} style={{ marginLeft: 0 }} aria-label={REGS_WORDS.reviewAria(counts[id])}>{kitCountText(counts[id])}</span>
+        ? <span className={frame.count} aria-label={REGS_WORDS.reviewAria(counts[id])}>{kitCountText(counts[id])}</span>
         : <span className={css.tabCount}>{counts[id]}</span>)
       : undefined,
   }));
@@ -681,10 +672,10 @@ export default function RegistrationsScreen() {
 
   return (
     <div className={`${repKit.page} ${repKit.moneyFrame} ${css.screen}`} data-selecting={picked > 0 || undefined}>
-      {header}
-      <HubTabBar tabs={tabs} activeId={tab} ariaLabel={REGS_WORDS.tabsLabel} remeasureKey={`${counts.review}-${counts.active}-${counts.waitlist}-${counts.ended}`} />
-
-      <div className={tb.toolbar}>
+      <div className={`${tb.toolbar} ${css.toolbarWrap}`}>
+        <div className={css.views}>
+          <ViewSwitch views={views} value={tab} label={REGS_WORDS.tabsLabel} onChange={id => router.push(`${base}?tab=${id}`, { scroll: false })} />
+        </div>
         <DivisionPicker
           divisions={[{ id: '', name: REGS_WORDS.scopeAll, waiting: 0 }, ...divisions.map(d => ({ id: d.id, name: d.name, waiting: reviewByDivision.get(d.id) ?? 0 }))]}
           value={scope}
@@ -721,6 +712,11 @@ export default function RegistrationsScreen() {
             planId={currentOrg?.planId}
             disabled={tabRegs.length === 0}
           />
+        )}
+        {access?.register && (
+          <button type="button" className={`btn btn-lime ${ck.iconOnlyPhone}`} aria-label={REGS_WORDS.add} onClick={() => setAct({ kind: 'add' })}>
+            <Plus size={14} aria-hidden /><span className={ck.btnWord}>{REGS_WORDS.add}</span>
+          </button>
         )}
       </div>
       {searchField.row}

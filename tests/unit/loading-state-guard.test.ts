@@ -135,6 +135,6 @@ describe('the line itself', () => {
   it('announces itself and is drawn by the club kit\'s page wait', () => {
     assert.match(readSource('components/shared/LoadingState.tsx'), /role="status"/);
     assert.match(stripComments(readSource('components/admin/kit/club/RepKit.tsx')),
-      /export function PageLoading\(\{ header, label \}: \{ header: ReactNode; label: string \}\) \{\n\s*return <div className=\{styles\.page\}>\{header\}<LoadingState label=\{label\} \/><\/div>;/);
+      /export function PageLoading\(\{ header, label \}: \{ header\?: ReactNode; label: string \}\) \{\n\s*return <div className=\{styles\.page\}>\{header\}<LoadingState label=\{label\} \/><\/div>;/);
   });
 });

@@ -20,14 +20,39 @@ import { kitPrograms, kitOrgLinks, kitBillingLink, activeKitSection, clubProgram
 import { kitTournamentGroups } from './kit-tournament-groups';
 import { useClubBrief } from './club/ClubBriefProvider';
 
+/**
+ * The Organization links alone — what `useAdminKitNav` builds for the rail, without the rest of it. Organization's frame and
+ * the `/org` door read this: they must not pay for the coach-access fetch and the program lists the full hook starts.
+ */
+export function useOrgLinks() {
+  const { currentOrg, userRole, userCapabilities, canOpen } = useOrg();
+  const orgSlug = currentOrg?.slug ?? '';
+  const base = `/${orgSlug}/admin`;
+  const isCanceled = currentOrg?.subscriptionStatus === 'canceled';
+  const canSeeMembers = Boolean(userRole)
+    && (userRole === 'owner' || hasCapability(userRole!, userCapabilities, 'module_members'))
+    && canOpen('module_members');
+  // ⚠ A Tournament-plan organization has NO /admin/org at all (its layout redirects every page of
+  // it), so it gets no Organization rows — today's rail hides that section for it too. A one-team
+  // workspace on a tournament plan is the exception: it keeps /admin/org (staff and access).
+  const isTeamWorkspace = isTeamWorkspaceOrg(currentOrg);
+  const orgLinks = isTournamentTier(currentOrg?.planId) && !isTeamWorkspace ? [] : kitOrgLinks({
+    base,
+    role: userRole,
+    isCanceled,
+    canSeeMembers,
+    hasVenueLibrary: hasOrgVenueLibrary(currentOrg?.planId),
+    isTeamWorkspace,
+  });
+  return { orgSlug, base, isCanceled, isTeamWorkspace, orgLinks };
+}
+
 export function useAdminKitNav() {
   const pathname = usePathname();
   const { currentOrg, userRole, userCapabilities, canOpen } = useOrg();
   const { currentTournament } = useTournament();
   const isSandbox = useIsSandbox();
-  const orgSlug = currentOrg?.slug ?? '';
-  const base = `/${orgSlug}/admin`;
-  const isCanceled = currentOrg?.subscriptionStatus === 'canceled';
+  const { orgSlug, base, isCanceled, isTeamWorkspace, orgLinks } = useOrgLinks();
 
   // The role holds the capability AND the plan carries the module — `canOpen`, the ONE gate every
   // route asks (Club Stage 1, lib/member-access.ts), so the rail can never offer a door the server
@@ -47,21 +72,6 @@ export function useAdminKitNav() {
   // helper the hub, today's sidebar and the post-login resolver call, so a club's staff member is
   // not tournament-only here while being a club member there.
   const tournamentOnly = canUse('module_tournaments') && !!currentOrg && isTournamentOnlyWorkspace(currentOrg);
-  const canSeeMembers = Boolean(userRole)
-    && (userRole === 'owner' || hasCapability(userRole!, userCapabilities, 'module_members'))
-    && canUse('module_members');
-  // ⚠ A Tournament-plan organization has NO /admin/org at all (its layout redirects every page of
-  // it), so it gets no Organization rows — today's rail hides that section for it too. A one-team
-  // workspace on a tournament plan is the exception: it keeps /admin/org (staff and access).
-  const isTeamWorkspace = isTeamWorkspaceOrg(currentOrg);
-  const orgLinks = isTournamentTier(currentOrg?.planId) && !isTeamWorkspace ? [] : kitOrgLinks({
-    base,
-    role: userRole,
-    isCanceled,
-    canSeeMembers,
-    hasVenueLibrary: hasOrgVenueLibrary(currentOrg?.planId),
-    isTeamWorkspace,
-  });
   // The club calendar (Club Tier 6b): under Overview in the rail, the More sheet's first row — one gate for both.
   const calendarLink = kitCalendarLink({ base, canUse, isCanceled, tournamentTier: isTournamentTier(currentOrg?.planId) });
   // The club scheduler (Club Tier 11a): directly under Calendar in both navs — one gate for both.
@@ -102,13 +112,13 @@ export function useAdminKitNav() {
     alsoOnPlan,
     brief: club.brief,
     tournamentOnly,
+    /** A one-team workspace (Organization's frame leaves its staff page as it was — Club Tier Stage 13i, Ask 9). */
+    isTeamWorkspace,
     orgLinks,
     billingLink,
     calendarLink,
     schedulesLink,
     coachDoor,
-    /** Rep (paid) coaching assignment in THIS org — the Organization hub's "My Coaches Portal" tile reads it. */
-    hasRepAccess: coachAccess.hasRepAccess,
     tournamentGroups,
     section,
     onTournaments,

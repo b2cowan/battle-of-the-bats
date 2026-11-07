@@ -307,7 +307,8 @@ describe('the admin kit nav — where you are', () => {
 
 describe('the admin kit nav — one model, two navs', () => {
   it('the rail and the phone bar both read the shared hook and none holds its own program list', () => {
-    for (const file of ['components/admin/kit/AdminKitRail.tsx', 'components/admin/kit/AdminKitBottomNav.tsx', 'components/admin/kit/AdminKitProgramRow.tsx']) {
+    // ⚰ The phone's "In <program>" row (`AdminKitProgramRow`) retired with Club Tier Stage 13i (A6): its pages are tabs now.
+    for (const file of ['components/admin/kit/AdminKitRail.tsx', 'components/admin/kit/AdminKitBottomNav.tsx']) {
       const code = readCode(file);
       assert.match(code, /useAdminKitNav\(\)/, `${file} must read the shared nav`);
       assert.doesNotMatch(code, /['"]\/rep-teams\/(allocations|documents|past)['"]/, `${file} hand-writes a program page`);

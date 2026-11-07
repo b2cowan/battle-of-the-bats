@@ -23,7 +23,6 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ChevronRight, Repeat } from 'lucide-react';
-import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import PageNotice, { useNotice } from '@/components/admin/kit/club/PageNotice';
 import KitDialog from '@/components/admin/kit/club/KitDialog';
 import type { TeamCapRefusal } from '@/components/admin/kit/club/TeamCapDialog';
@@ -214,23 +213,16 @@ export default function BringInACoachsTeamPage({ params }: { params: Promise<{ o
     }
   }
 
-  const header = (
-    <AdminPageHeader
-      // Plain words, as drawn: an eyebrow link is a 14px tap target (the tournament eyebrow's ruling).
-      crumbs={[{ label: 'Rep teams' }, { label: currentOrg?.name ?? '' }]}
-      title={BRING_IN_PAGE_TITLE}
-    />
-  );
+  // ⚖ No title of its own: Rep teams' frame names the place and lights this tab (Club Tier Stage 13i, A2).
 
   // A member who cannot act never loads the list, so they never wait on it.
   if (orgLoading || (canAct && loading)) {
-    return <div className={styles.page}>{header}<LoadingState label="Loading the coaches’ teams…" /></div>;
+    return <div className={styles.page}><LoadingState label="Loading the coaches’ teams…" /></div>;
   }
 
   if (!canAct) {
     return (
       <div className={styles.page}>
-        {header}
         <div className={styles.callout}>
           <div>Bringing a coach’s team into the club is for the club’s owner and admins.</div>
         </div>
@@ -248,8 +240,6 @@ export default function BringInACoachsTeamPage({ params }: { params: Promise<{ o
 
   return (
     <div className={styles.page}>
-      {header}
-
       <div className={styles.callout}>
         <Repeat size={16} aria-hidden />
         <div>

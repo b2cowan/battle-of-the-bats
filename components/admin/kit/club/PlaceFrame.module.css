@@ -1,0 +1,14 @@
+/* A club place's frame (Club Tier Stage 13i): the tab page's own actions, once the place's header has taken its title.
+   They sit at the right end of a row of their own above the tab's body, as the drawing's Members tab shows (Export and
+   Invite at the right); on a phone they wrap rather than push the screen sideways. */
+.tabActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.85rem;
+  min-width: 0;
+}
+/* A fact the page's title used to carry, at the row's left; the actions keep the right end. */
+.tabLede { margin-right: auto; display: inline-flex; align-items: center; gap: 0.5rem; min-width: 0; }

@@ -26,7 +26,6 @@ import styles from './admin.module.css';
 // Still server-rendered, so the first paint is the frame with no flash.
 const AdminKitRail = dynamic(() => import('@/components/admin/kit/AdminKitRail'));
 const AdminKitBottomNav = dynamic(() => import('@/components/admin/kit/AdminKitBottomNav'));
-const AdminKitProgramRow = dynamic(() => import('@/components/admin/kit/AdminKitProgramRow'));
 // Club Tier Stage 1 — the morning brief, read once for the hub, the rail and the phone bar (and the
 // plan-aware program order they share).
 const ClubBriefProvider = dynamic(() => import('@/components/admin/kit/club/ClubBriefProvider').then(m => m.ClubBriefProvider));
@@ -77,7 +76,7 @@ export default function AdminChrome({
   }
   // ⚖ A CANCELLED ACCOUNT HAS ONE PAGE (owner 2026-11-05): Plan & billing, with the reactivate control. Past the
   // guard above, a cancelled org is standing on it — so the tools' frame is not drawn at all (no rail, no phone bar,
-  // no program row, no flip to a public site whose pages are suspended), rather than drawn and bounced back. Only the
+  // no flip to a public site whose pages are suspended), rather than drawn and bounced back. Only the
   // strip stays, on a phone too: the account menu and Workspaces are the exits. Mirrors the Coaches Portal's one door
   // for a team with no live season (`CoachTeamSeasonGate`). Every nav reads THIS one flag.
   const suspended = isCanceled;
@@ -142,7 +141,7 @@ export default function AdminChrome({
               <AdminEventHeader suspended={suspended} />
               <div className={styles.mainPad}>
                 {!suspended && <EnablePushBanner />}
-                {!suspended && <AdminKitProgramRow key={pathname} />}
+                {/* ⚰ The phone's "In <program>" row retired (Club Tier Stage 13i, A6): every place's pages are its own tab row. */}
                 {children}
               </div>
             </>

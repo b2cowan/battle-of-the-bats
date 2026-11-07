@@ -5,6 +5,7 @@ import { hasCapability } from '@/lib/roles';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import { notYoursScreenProps } from '@/lib/not-yours-server';
 import { NotYoursScreen } from '@/components/admin/kit/club/NotYoursScreen';
+import RepTeamsFrame from '@/components/admin/kit/club/RepTeamsFrame';
 
 export default async function RepTeamsLayout({
   children,
@@ -40,5 +41,7 @@ export default async function RepTeamsLayout({
     return <NotYoursScreen {...await notYoursScreenProps(ctx, 'repTeams')} />;
   }
 
-  return <>{children}</>;
+  // ⚖ Rep teams is a place with tabs (Club Tier Stage 13i, A2): its title and tab row over every page but a team's (a place of
+  // its own) and a record page one level down.
+  return <RepTeamsFrame orgSlug={ctx.org.slug}>{children}</RepTeamsFrame>;
 }

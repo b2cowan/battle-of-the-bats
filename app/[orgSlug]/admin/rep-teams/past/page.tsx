@@ -3,7 +3,6 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { Archive } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
-import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import styles from '../rep-teams.module.css';
 import type { RepPastProgramYear } from '@/lib/types';
 import LoadingState from '@/components/shared/LoadingState';
@@ -58,10 +57,7 @@ export default function PastProgramYearsPage() {
       {/* Header — "Rep Teams" is the eyebrow (a link) beside the organization's name. The old subtitle
           "completed and archived program years" described the page and was not re-homed — each season's
           chip says which it is (F3). */}
-      <AdminPageHeader
-        crumbs={[{ href: `${base}/rep-teams`, label: 'Rep teams' }, { label: currentOrg?.name ?? '' }]}
-        title="Past seasons"
-      />
+      {/* ⚖ No title of its own: Rep teams' frame names the place and lights this tab (Club Tier Stage 13i, A2). */}
 
       {error && <p style={{ color: 'var(--danger-light)', marginBottom: '1rem' }}>{error}</p>}
 

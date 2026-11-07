@@ -25,7 +25,8 @@ import { formatStoredDate, orgDayKey, tournamentToday, utcToZonedInputs } from '
 import {
   downloadXLSX, generateCSV, downloadCSVBlob, buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
 } from '@/lib/export';
-import AdminPageHeader from '@/components/admin/AdminPageHeader';
+// ⚖ Inside Organization (Club Tier Stage 13i, A5) the place names this tab, so only its actions remain (TabPageHeader).
+import { TabPageHeader } from '@/components/admin/kit/club/PlaceFrame';
 import ExportMenu from '@/components/admin/ExportMenu';
 import ck from './ClubKit.module.css';
 import styles from './AuditLog.module.css';
@@ -122,7 +123,7 @@ export default function AuditLogKit() {
 
   return (
     <div className={ck.pageWide}>
-      <AdminPageHeader
+      <TabPageHeader
         eyebrow={eyebrow}
         title="Audit log"
         backTo={{ href: membersHref, label: membersName }}

@@ -7,11 +7,9 @@ import { emails, families, namesCapped, players } from './house-league-teams-wor
  * say. No "the" before a team name in a template (copy §15). Client-safe.
  */
 export const TEAMS_WORDS = {
-  title: 'Teams & draft',
   loading: 'Loading teams & draft…',
   failed: 'Teams & draft didn’t load.',
   noDivisions: { title: 'No divisions yet', body: 'Add divisions to the season first. Each division makes its own teams.' },
-  tabsLabel: 'Divisions',
   divisionLabel: 'Division',
   sub: (season: string, divisions: number, published: number) =>
     `${season} · ${divisions} ${divisions === 1 ? 'division' : 'divisions'} · ${

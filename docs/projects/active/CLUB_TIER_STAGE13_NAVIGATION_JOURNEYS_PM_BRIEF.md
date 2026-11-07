@@ -51,3 +51,19 @@ league row. The header button on the club's screens reads "View site", and the l
 doesn't exist). It is fixed first, because the registrar's waiting count depends on it.
 **Priority:** High: it sets the rules every later stage follows. **Success:** each of the five people, on a fresh club, sees only
 doors they can open, finds their own work first, and never meets a dead end. Built in two sessions, one walk.
+
+## Stage 13i · The sidebar's shape (ruled and build prompt written 2026-11-06; builds after 13a)
+
+**What changes for people:** the sidebar lists places, and a place's pages are tabs across the top of its page, the way Accounting
+already works. The sidebar never grows: the owner sees the same ten rows on every screen (today up to 21 inside a team, with
+Organization falling off a laptop screen), the registrar four, the treasurer three. One row is lit, the place you are in. Rows have
+no arrows that look like folds. Inside a team or a season there is one way back, named ("← Teams", "← Seasons"), and the season
+switch sits on the season's title. Organization becomes tabs instead of a page of tiles. The sidebar's foot (Plan & billing, Help,
+Collapse sidebar) stays exactly as it is. The headings become "Programs" and "Club". On a phone the same tabs scroll sideways, the
+bottom bar is unchanged, and the More sheet shrinks from 19 entries to 14. Tournaments and both coach portals don't change.
+**Tradeoff:** a program's pages are no longer visible in the sidebar before you go in; its first page shows them all at once. This
+reverses half of a 2026-09-30 ruling (Rep teams' pages stayed in the sidebar) for that ruling's own reason: on a phone, tabs reach
+every page in one tap.
+**Priority:** High: the owner finds the side navigation clunky, and every later stage (13c's Permits, 13g's phone, 13h's names) builds
+on this shape. **Success:** each of the five people can tell where they are and get back on every screen, desk and phone; no phone
+bar changes; the nav standard describes what ships. Built in three sessions, one walk.

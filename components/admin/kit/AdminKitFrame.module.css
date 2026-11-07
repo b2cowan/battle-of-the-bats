@@ -276,57 +276,5 @@
 /* The phone bar's labels are the coach bar's own `.label`: mixed case in both portals since
    2026-09-27 (owner) — the admin's override that did this here is gone. */
 
-/* ── The phone's "In <program>" row (club Stage 1 specimen 4, third phone) ─────────────────────
-   Inside a program the phone bar does not change; the program's own pages are one tap away at the
-   top of its first screen — the same list the desktop rail opens. Phone only: the rail carries
-   them above 900. */
-.programRow { display: none; }
-@media (max-width: 900px) {
-  .programRow {
-    display: block;
-    margin: 0 0 0.9rem;
-    border: 1px solid var(--home-line);
-    border-radius: 12px;
-    background: var(--card-bg);
-    overflow: hidden;
-  }
-}
-.programRowHead {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  width: 100%;
-  min-height: 52px;
-  padding: 0.4rem 0.9rem;
-  border: none;
-  background: none;
-  text-align: left;
-  font-family: inherit;
-  color: inherit;
-  cursor: pointer;
-}
-.programRowText { flex: 1; min-width: 0; }
-.programRowTitle { display: block; font-size: var(--type-body); font-weight: 650; color: var(--text-primary); }
-.programRowPages {
-  display: block;
-  font-size: var(--type-support);
-  color: var(--text-tertiary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.programRowChevron { flex-shrink: 0; color: var(--text-tertiary); transition: transform 0.2s ease; }
-.programRowChevronOpen { transform: rotate(180deg); }
-.programRowList { border-top: 1px solid var(--home-line); }
-.programRowLink {
-  display: flex;
-  align-items: center;
-  min-height: var(--tap-min, 44px);
-  padding: 0 0.9rem;
-  font-size: var(--type-body);
-  color: var(--text-secondary);
-  text-decoration: none;
-  border-top: 1px solid var(--home-line);
-}
-.programRowLink:first-child { border-top: 0; }
-.programRowLinkActive { color: var(--blueprint-light); font-weight: 600; }
+/* ⚰ The phone's "In <program>" row (`.programRow…`, club Stage 1 specimen 4) retired with Club Tier Stage 13i (A6, 2026-11-06):
+   every place now shows its pages as its own tab row, on a phone too, which this row would only repeat. */

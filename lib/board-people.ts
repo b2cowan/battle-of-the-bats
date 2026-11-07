@@ -36,10 +36,14 @@ function boardRank(role: OrgRole): number {
   return i < 0 ? BOARD_ROLES.length : i;
 }
 
-/** The board tile's line: "Morgan Ellis (owner), Dana Kowalski (admin), Jules Moreau (league admin)". */
+/** The board in rank order: the owner first, then the admins, the league admin, the registrar, the treasurer. */
+export function boardInRankOrder(people: readonly BoardPerson[]): BoardPerson[] {
+  return [...people].sort((a, b) => boardRank(a.role) - boardRank(b.role));
+}
+
+/** The board as one line: "Morgan Ellis (owner), Dana Kowalski (admin), Jules Moreau (league admin)". */
 export function boardLine(people: readonly BoardPerson[]): string {
-  return [...people].sort((a, b) => boardRank(a.role) - boardRank(b.role))
-    .map(p => `${p.name} (${roleNoun(p.role)})`).join(', ');
+  return boardInRankOrder(people).map(p => `${p.name} (${roleNoun(p.role)})`).join(', ');
 }
 
 /** "A", "A or B", "A, B or C". */

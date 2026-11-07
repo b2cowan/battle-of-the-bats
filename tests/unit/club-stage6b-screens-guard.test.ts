@@ -35,7 +35,7 @@ const CAL_READ = 'lib/club-calendar.ts';
 const LIB_PAGE = 'app/[orgSlug]/admin/org/venues/page.tsx';
 const LIB_WINDOWS = 'components/admin/kit/club/VenueLibraryWindows.tsx';
 const LIB_ROUTE = 'app/api/admin/org/venues/route.ts';
-const ORG_PAGE = 'app/[orgSlug]/admin/org/page.tsx';
+const ORG_FRAME = 'components/admin/kit/club/OrgFrame.tsx';
 const MIG = 'supabase/migrations/321_the_venue_library_is_written_by_the_server.sql';
 
 describe('1. the Calendar door — under Overview, first in More, one gate', () => {
@@ -217,12 +217,14 @@ describe('5. the Venue library — who saves, Archive vs Delete, archived out of
   });
 });
 
-describe('6. the Organization tile', () => {
-  // ⚖ Club Tier Stage 13a (Ask 7 = A): the hub's tiles ARE the rail's Organization doors (`orgHubDoors` over `kitOrgLinks`),
-  // so the one name and the plan's gate are asserted where the door is built.
+describe('6. the Organization tab', () => {
+  // ⚖ Club Tier Stage 13i (Ask 3 = A): the hub's tiles retired; Organization's TABS are the rail's Organization doors
+  // (`orgTabs` over `kitOrgLinks`), so the one name and the plan's gate are asserted where the door is built.
   it('is called "Venue library" and shows only on a plan that carries it (S6-11)', () => {
-    const code = readCode(ORG_PAGE);
-    assert.match(code, /orgHubDoors\(\{\s*base: nav\.base,\s*orgLinks: nav\.orgLinks,/);
+    const code = readCode(ORG_FRAME);
+    assert.match(code, /orgTabs\(\{\s*base,\s*orgLinks,/);
+    assert.match(code, /useOrgLinks\(\)/, 'the frame reads the Organization links alone, never the full rail hook');
+    assert.doesNotMatch(code, /useAdminKitNav\(/);
     assert.match(readCode('lib/admin-kit-nav.ts'), /!isCanceled && hasVenueLibrary && \{ key: 'org\/venues', label: 'Venue library'/);
     assert.match(readCode('components/admin/kit/useAdminKitNav.ts'), /hasVenueLibrary: hasOrgVenueLibrary\(currentOrg\?\.planId\)/);
     assert.doesNotMatch(code, /label: 'Venues'/);

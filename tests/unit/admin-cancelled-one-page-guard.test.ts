@@ -16,11 +16,12 @@ const header = readFileSync('components/admin/AdminEventHeader.tsx', 'utf8');
 const stripCss = readFileSync('components/coaches/CoachTopStrip.module.css', 'utf8');
 const adminCss = readFileSync('app/[orgSlug]/admin/admin.module.css', 'utf8');
 
-test('the cancelled shell draws no rail, no phone bar, no program row and no push banner', () => {
+// ⚰ The phone's "In <program>" row retired with Club Tier Stage 13i (A6): every place's pages are its own tab row.
+test('the cancelled shell draws no rail, no phone bar and no push banner', () => {
   assert.match(chrome, /const suspended = isCanceled;/);
   assert.match(chrome, /!isFocused && !suspended && <AdminKitRail \/>/);
   assert.match(chrome, /!isFocused && !suspended && <AdminKitBottomNav/);
-  assert.match(chrome, /!suspended && <AdminKitProgramRow/);
+  assert.doesNotMatch(chrome, /AdminKitProgramRow/);
   assert.match(chrome, /!suspended && <EnablePushBanner/);
 });
 

@@ -22,7 +22,7 @@ import { useSearchParams } from 'next/navigation';
 import { AlertTriangle, UserPlus } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
-import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { TabActions } from '@/components/admin/kit/club/PlaceFrame';
 import PageNotice, { useNotice } from '@/components/admin/kit/club/PageNotice';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import {
@@ -63,7 +63,6 @@ export default function TeamCoachesPage({ params }: { params: Promise<{ orgSlug:
   const { loading: orgLoading } = useOrg();
   const search = useSearchParams();
   const q = `orgSlug=${encodeURIComponent(orgSlug)}`;
-  const teamBase = `/${orgSlug}/admin/rep-teams/teams/${teamId}`;
 
   const [read, setRead] = useState<CoachesRead | null>(null);
   const [loading, setLoading] = useState(true);
@@ -130,18 +129,16 @@ export default function TeamCoachesPage({ params }: { params: Promise<{ orgSlug:
     }
   }
 
+  // ⚖ No title of its own: the team's frame names the team and lights this tab (Club Tier Stage 13i, A3 — the "← {team}"
+  // link went: the tab row reaches the team's pages).
   const header = (
-    <AdminPageHeader
-      backTo={{ href: teamBase, label: teamName ?? 'Team' }}
-      crumbs={[{ label: 'Rep teams' }, read?.team.groupName ? { label: read.team.groupName } : null]}
-      title="Coaches"
-      inlineActions
-      actions={read?.canWrite ? (
+    <TabActions>
+      {read?.canWrite ? (
         <button type="button" className={`btn btn-lime ${ck.iconOnlyPhone}`} onClick={() => setInviting(true)} aria-label="Invite a coach">
           <UserPlus size={15} aria-hidden /><span className={ck.btnWord}>Invite a coach</span>
         </button>
-      ) : undefined}
-    />
+      ) : null}
+    </TabActions>
   );
 
   if (orgLoading || loading) return <PageLoading header={header} label="Loading this team’s coaches…" />;

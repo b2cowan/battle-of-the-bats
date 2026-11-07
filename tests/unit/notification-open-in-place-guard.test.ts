@@ -31,6 +31,7 @@ import { accountingTabs, kitBillingLink, kitPrograms } from '../../lib/admin-kit
 import { TOUR_GROUPS } from '../../components/admin/admin-nav-config.ts';
 import { BRING_IN_PAGE_TITLE } from '../../lib/team-move-words.ts';
 import { REGS_WORDS } from '../../lib/house-league-money-words.ts';
+import { SEASON_PAGES } from '../../lib/house-league-season.ts';
 
 const ROUTE = 'app/api/notifications/route.ts';
 const FEED = 'components/notifications/useNotificationFeed.ts';
@@ -193,11 +194,12 @@ describe('D4 · the admin button words are the admin\'s own page names', () => {
     assert.equal(ADMIN_PAGE.bringIn, BRING_IN_PAGE_TITLE);
   });
 
-  it('a house league\'s registrations page titles itself Registrations', () => {
-    // The route is thin (Club Tier 9b-2 Part 3): it mounts the screen, which words its own title.
+  it('a house league\'s registrations page is named Registrations', () => {
+    // The route is thin (Club Tier 9b-2 Part 3): it mounts the screen. ⚖ Since Club Tier Stage 13i (A4) the page is named by
+    // its lit tab in the season's tab row (the season's frame draws the one header), so the tab's label is the page's name.
     assert.match(readCode('app/[orgSlug]/admin/house-league/seasons/[seasonId]/registrations/page.tsx'), /<RegistrationsScreen \/>/);
     assert.equal(REGS_WORDS.title, ADMIN_PAGE.leagueRegistrations);
-    assert.match(readCode('components/admin/kit/club/league/registrations/RegistrationsScreen.tsx'), /title=\{REGS_WORDS\.title\}/);
+    assert.equal(SEASON_PAGES.find(p => p.key === 'registrations')?.label, REGS_WORDS.title);
   });
 
   it('the holding-up-the-payout notice opens its request when exactly one is held', () => {

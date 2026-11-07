@@ -37,7 +37,8 @@ import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { hasOrgVenueLibrary } from '@/lib/plan-features';
 import { jsonInit, moneyFetch, refusalText } from '@/lib/money-fetch';
 import { formatEventDateRange, formatStoredDate, tournamentToday } from '@/lib/timezone';
-import AdminPageHeader from '@/components/admin/AdminPageHeader';
+// ⚖ Inside Organization (Club Tier Stage 13i, A5) the place names this tab, so only its actions remain (TabPageHeader).
+import { TabPageHeader } from '@/components/admin/kit/club/PlaceFrame';
 import { CoachListToolbar, kit } from '@/components/coaches/kit';
 import { ViewSwitch } from '@/components/coaches/kit';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
@@ -181,7 +182,7 @@ export default function VenueLibraryPage() {
     </>
   );
   const header = (
-    <AdminPageHeader
+    <TabPageHeader
       eyebrow="Organization"
       title="Venue library"
       inlineActions

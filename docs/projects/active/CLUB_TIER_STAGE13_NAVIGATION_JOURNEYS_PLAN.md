@@ -207,7 +207,7 @@ ahead of the owner's rulings.
   each team's tournament list is Ask 5. **The ladder:** a fix-now session, then 13a doors by person · 13b each person's home
   and first day · 13c the club's time in one place · 13d hand-offs between people · 13e numbers open their lines · 13f actions
   that reach a family say so · 13g the phone · 13h one name per thing. Not on it on purpose: regrouping the sidebar's
-  headings. `/design` ran before the hand-off (10 fixes applied: phone site button symbol-only per the 2026-10-20 ruling, the
+  headings *(superseded 2026-11-06: the owner's 13i entry below brings the regroup into 13i; see the status log)*. `/design` ran before the hand-off (10 fixes applied: phone site button symbol-only per the 2026-10-20 ruling, the
   phone bar keeps N10's order, unchanged parts drawn at shipped sizes, white callouts, the permit window redrawn from its
   capture). **Next:** the owner rules the 24 asks; then the fix-now session, `/plan` for the summary layer (its hand-off is
   in the decisions log), and 13a.
@@ -274,6 +274,28 @@ ahead of the owner's rulings.
   season (runners = owner, admin, league admin); only the registrar cannot — a helper's map said otherwise and is not followed.
   **Next:** Session A, then Session B, one walk for the stage, then the 13i drawing session (it can run alongside the 13a build, since
   it touches no code).
+- 2026-11-06 — **13i drawing PUBLISHED** (no code changed): https://claude.ai/artifact/T42raG41vUxt7gjdJEjQMR (source
+  [CLUB_TIER_STAGE13I_SIDEBAR_DRAWINGS.html](CLUB_TIER_STAGE13I_SIDEBAR_DRAWINGS.html); prompt
+  [CLUB_TIER_STAGE13I_DRAWING_PROMPT.md](CLUB_TIER_STAGE13I_DRAWING_PROMPT.md)). Baseline drawn = today + 13a as ruled. **Recommended:
+  places in the sidebar, pages on the page**: the club sidebar lists places only (owner 10 rows on every screen; registrar 4; treasurer
+  3; today the owner's runs 10 / 21 in a team / 18 in a season / 15 in Organization), every place's pages are Accounting's tabs
+  (one component; scrolls sideways below 900, measured: Rep teams' six tabs need 845 px, fit at 1440, 90% visible at 768, 45% at 390),
+  one lit row, no club chevrons, headings Programs (Rep teams, House league, Tournaments) + Club (Accounting, Families, Public site,
+  Organization), Organization as tabs (the hub retires; Plan & billing its last tab, owner only), a page's own filters become the
+  toolbar's view choice (Registrations), tournament mode and both coach portals unchanged. **Pushed back in the drawing:** the brief's
+  "a team's block replaces the program's pages in the rail" contradicts "pages on the page" and fails the phone (Ask 1 B is that
+  version); finding 7 corrected from the code — a team's pages on a phone are door cards, the only disclosure is Rep teams' own, first
+  page only (`AdminKitProgramRow.tsx:200`); the club rail is `AdminKitRail` (club + tournament mode only), the coach portals and the
+  support console have their own sidebars, so 13i is club-only by construction. **It reverses half of the 2026-09-30 Accounting ruling**
+  ("separate jobs are listed in the rail; Rep teams stays in the rail", design_decisions) for that ruling's own phone reason, and re-opens
+  N3 (2026-10-17 Ask A2), the collapsed sidebar's program menus (Ask 3) and N7's Ask B3; NAV_STANDARD rewrites drawn for N2/N3/N4/N7/N9/N10
+  and a new N11. **The ladder note above ("Not on it on purpose: regrouping the sidebar's headings") is SUPERSEDED** by the owner's 13i
+  entry; marked in place. Build guards named: the phone bar's fill order is written out so the regroup moves no bar (N10); if Ask 3 is A,
+  13a Session A's hub tiles are replaced a stage later by tabs on the same door list. `/ux` (5 applied: tabs are real addresses, the
+  hidden-pages trade named, no team switcher stated, strip drawn with the frame, a caption) and `/design` (5 applied: the 09-30 reversal
+  named, its record-page clause kept in N11, only waiting counts amber, Add team into the Teams toolbar, no new hairline) ran before
+  publishing. **Next:** the owner rules Asks 1–9 (paste-back "13i asks: 1A 2A …"); then the 13i build prompt. Order unchanged: 13a, then
+  13i, then 13c.
 - 2026-11-06 — **13a Session A BUILT 2026-11-06** (Asks 6 + 7, items A1–A6; build prompt
   `CLUB_TIER_STAGE13A_BUILD_PROMPT.md`). *A1:* one "not yours" screen (`NotYoursScreen` / `NotYours`, words in
   `lib/not-yours-words.ts`) — what the page is, who opens it by name, a door to the person's own home (the sign-in landing,
@@ -345,6 +367,20 @@ ahead of the owner's rulings.
   (admin old-look on the tournament schedule sheet, admin type, schema parity, index coverage, org-slug callers on Public site
   address and the ledger window, unused selectors, export registry) all name other sessions' files. `check:layout` NOT run (no
   dev server). Not walked. Next: Session B in a fresh session; the stage's one walk comes after B.
+- 2026-11-06 — **13i ruled: the owner, "this looks good, i agree with your recommendations" — Asks 1–9 all A** on
+  https://claude.ai/artifact/T42raG41vUxt7gjdJEjQMR. 1A places-only club sidebar, every place's pages as tabs on its page; 2A no
+  arrows, the strip's program menus go; 3A Organization as tabs, the tile hub retires; 4A Plan & billing is Organization's last
+  tab, owner only; 5A headings Programs + Club, a heading only over two or more rows; 6A a page's own filter tabs become the
+  toolbar's view switch; 7A the tab row scrolls below 900; 8A tournament mode unchanged; 9A coach portals unchanged, club-only.
+  Logged in `memory/design_decisions.md` (2026-11-06, names the reversal of the 2026-09-30 Accounting ruling's second half).
+  **13i build prompt written:** [CLUB_TIER_STAGE13I_BUILD_PROMPT.md](CLUB_TIER_STAGE13I_BUILD_PROMPT.md) (three sessions). Order
+  unchanged: 13a (Session B, then its walk) first, then 13i, then 13c.
+- 2026-11-06 — **13i Ask 4 changed to B by the owner:** *"sorry i missed that, the sidebar footer should remain the same as before (plan
+  an billing stays there along with the other nav footer elements)"*. Plan & billing stays in the sidebar's foot (and in the phone's You
+  group, with the fee-invoice pill, both unchanged); it is not an Organization tab. Consequences carried into the drawing (republished,
+  version 2, same link), the build prompt, the design decision and the PM brief: Organization's tabs are its five pages; the Plan &
+  billing page draws no Organization tabs; N4 is rewritten as built (Plan & billing first) rather than changed; the owner's More sheet
+  goes 19 → 14 (not 13); the build prompt's open question on the fee pill's new home is gone.
 - 2026-11-06 — **13a Session A committed `2cebde79c` 2026-11-06** (59 files, Session A's hunks only; the shared plan, PM
   brief, TODO line and Public-site words/page went in partially, the 13i entries and the "About us" rename left to their sessions).
 - 2026-11-06 — **13a Session B BUILT 2026-11-06, `/simplify` + `/review` DONE** (Asks 8 + 9, items B1–B5; build prompt
@@ -391,3 +427,39 @@ ahead of the owner's rulings.
   callers, unused selectors, export registry), none naming a Session B file; `check:layout --only=admin-hub,admin-hub-treasurer,
   admin-club-more` ✓ (12 screen-widths, no new findings). Not walked. **Next:** the stage's one walk ("each person sees only their
   doors"), then 13i.
+- 2026-11-06 — **13a Session B committed `87ddc358e` 2026-11-06. The stage's one walk published:** Owner QA Ledger §475, https://claude.ai/artifact/QDf94cW4yAH8AE4NscUbBZ ([CLUB_TIER_STAGE13A_WALK.html](CLUB_TIER_STAGE13A_WALK.html)), one purpose ("each person sees only their doors"), 9 parts / 39 steps on two fresh Harbourtown copies: `navj-club-13a` (12 registrations waiting for review) and `navj-club-13a-new` (no house-league season), both with a league admin added (`.probe/nav-journeys/fx-13a.mjs`). Recommended to the owner: walk it before 13i Session A changes the sidebar and retires the Organization tiles; /docs for 13a folded into 13i Session C. Teardown on "13a walk done".
+- 2026-11-06 — **13i Session A BUILT 2026-11-06 (pages on the page; the sidebar not touched yet), not committed, not walked.** Build
+  prompt [CLUB_TIER_STAGE13I_BUILD_PROMPT.md](CLUB_TIER_STAGE13I_BUILD_PROMPT.md) items A0–A7. **Four owner answers in the session**
+  (recorded in the prompt's "Settle in the build"): Teams & draft's per-division tab row → **the division picker** Registrations uses,
+  at the toolbar's left; the desk season switch → **the title's chevron opens the Year pill's menu** (`SingleSelectDropdown`, new
+  opt-in `face="chevron"`); a team's History and one past season, Rename team addresses and a club schedule read from a season →
+  **record pages** (own back arrow, no tab row); and a conflict the drawing missed, raised before code — retiring the Organization
+  hub removed 13a's "The board" card (R1) → **a read-only "The board" tab** in Members' place for anyone without Members
+  (`/org/board`). *Built:* one tab list per place in `lib/admin-kit-nav.ts` (`repTeamsTabs`, `teamTabs`, `seasonTabs`, `orgTabs`,
+  `placeTabFor`); one frame (`PlaceFrame`, over the shared `HubTabBar`, unrestyled) worn by Rep teams, a team (new layout: "← Teams",
+  "Rep teams · {group}", name, season chip), a season ("← Seasons", "House league", name + switch, status pill) and Organization; the
+  tab pages lost their titles and "← {team}" / "← {season}" links, their buttons kept in a tab action row; Add team at the Teams
+  toolbar's end, Add registration at Registrations'; Registrations' four views are the `ViewSwitch` (new opt-in `mark`); `/org`
+  goes to the first tab, its tile array deleted; `AdminKitProgramRow` and `SeasonPhoneFrame` deleted. The frame owns the width (the
+  wide column; a page's narrower cap gives way inside it, Accounting's rule). *Disclosed:* on a phone the season chevron opens the
+  standard pick-one sheet (the same menu's own sheet), not the retired phone frame's sheet; Teams & draft's picker no longer shows
+  each division's accepted count (the amber mark means waiting). *Checks:* typecheck clean for these files (two errors are another
+  session's platform-admin money work); lint clean; unit suite 14,960 pass, 9 fail, all in other sessions' files; guards re-pointed
+  (season frame, 13a doors/yours, 6b, notifications, accounting teams, cancelled shell, kit nav, workspace flip) and a new
+  `club-stage13i-places-guard.test.ts` (18 cases). ⚠ The 13a walk (§475) reads the Organization tiles this session retired: walk it on
+  the committed `87ddc358e` state before this session's work reaches the dev server. **Next:** `/simplify` → `/review`, commit on the
+  owner's word, then Session B (the sidebar and the More sheet).
+- 2026-11-06 — **13i Session A `/simplify` + `/review` done, not committed.** *Changed by /simplify:* Organization's frame and the `/org`
+  door now read only the Organization links (a small `useOrgLinks`), no longer starting the coach-access fetch the rail already makes;
+  the team header reads the team once per team while the layout stands; dead words (Registrations eyebrow, Teams' title and Divisions
+  label, the email history eyebrow), the leftover empty-header plumbing on four screens and `PageLoading`'s now-optional header
+  tidied; stale header comments fixed. *Changed by /review (five lenses, high-risk tier):* Registrations' four views get their own
+  full-width row on a phone (the admin toolbar never wrapped, and the shared switch's phone rules do not reach it) and a gap before
+  each count; Settings keeps a 44rem reading width inside Organization's frame; Roster, Schedule and Tryouts now publish the team
+  header from their own read, so its season chip cannot lag behind a season closed elsewhere; a failed header read is retried;
+  "The board" says "no names to show" (and to refresh) rather than claiming nobody has a name when the read may have failed; the dead
+  `hasRepAccess` field removed. Three guards re-pointed (not loosened) for the new shapes. *Left, for the owner/Session B:* the rail's
+  own copy of the team page list and its two "you are here" rows on `/org` (Session B's files); `scripts/layout-screens.mjs` `admin-org`
+  now measures a redirect; the shipped house-league help article still describes the retired phone season strip (`/docs`); an empty
+  action row leaves a 0.85rem gap on desk team/season Schedule; "The board" has no entrance for someone with no other Organization tab
+  (as the old hub). *Gate:* typecheck and the 13-file guard set clean; `check:layout` not run (no staging; dev server is not for a ~50-screen sweep).

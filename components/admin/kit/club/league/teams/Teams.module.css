@@ -6,8 +6,8 @@
 /* The player row's column sizes (A2), on the screen so every row reads them: the board, a phone's open group, and the
    drag's floating copy, which renders outside the board. */
 .screen { min-width: 0; --col-rating: 26px; --col-age: 34px; --col-more: 36px; }
-.headSub { margin: -0.5rem 0 1rem; font-size: var(--type-support); color: var(--text-secondary); }
-.tabCount { margin-left: 0.35rem; font-size: var(--type-support); color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
+/* Under the season's tab row (Club Tier Stage 13i), so it no longer tucks up under a page title of its own. */
+.headSub { margin: 0 0 1rem; font-size: var(--type-support); color: var(--text-secondary); }
 
 /* ── The division ── */
 .panel {

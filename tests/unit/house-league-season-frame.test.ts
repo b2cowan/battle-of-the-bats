@@ -95,31 +95,33 @@ describe('2 · the frame is wired', () => {
     assert.match(rail, /seasonPagesFor\(access\)/, 'the rail lists the pages the gate opens');
     assert.match(rail, /seasons\.some\(s => s\.id === seasonId\) && \(/, 'the switcher shows whenever the season is in the list');
   });
-  it('every season page sits under the season layout, which mounts the phone frame', () => {
+  // ⚖ Club Tier Stage 13i (A4, owner 2026-11-06): a season is a place. Its frame draws the one header and the tab row on a
+  // desk and a phone alike; the phone's season card and pill strip (`SeasonPhoneFrame`) retired, its switch moved to the title.
+  it('every season page sits under the season layout, which mounts the season frame', () => {
     const layout = readCode('app/[orgSlug]/admin/house-league/seasons/[seasonId]/layout.tsx');
-    assert.match(layout, /<SeasonPhoneFrame \/>/);
-    const frame = readCode('components/admin/kit/club/SeasonPhoneFrame.tsx');
-    assert.match(frame, /aria-label="Switch season"/);
-    assert.match(frame, /seasonPagesFor\(access\)/);
-    assert.match(frame, /scrollLeft/, 'the page you are on is scrolled into view');
+    assert.match(layout, /<SeasonFrame>/);
+    assert.ok(!existsSync(join(process.cwd(), 'components/admin/kit/club/SeasonPhoneFrame.tsx')), 'the phone strip is back');
+    const frame = readCode('components/admin/kit/club/SeasonFrame.tsx');
+    assert.match(frame, /seasonTabs\(seasonPath, access\)/, 'the tabs are the pages the gate opens');
+    assert.match(frame, /backTo=\{\{ href: league, label: 'Seasons' \}\}/, '"← Seasons", named by where it goes');
+    assert.match(frame, /face="chevron"\s*label="Switch season"/, 'the switch is the title’s chevron, the shipped pick-one menu');
+    assert.match(frame, /seasons\.length > 1 && \(/, 'drawn only when there is another season');
+    assert.match(frame, /seasonPageHref\(`\$\{league\}\/seasons\/\$\{id\}`, seasonSegment\(pathname\)\)/, 'a pick keeps the page you are on');
   });
-  it('the phone frame is phone-only, its pills and switch at the 44 px floor', () => {
-    const css = readCode('components/admin/kit/club/SeasonPhoneFrame.module.css');
-    assert.match(css, /^\.frame \{ display: none; \}/m);
-    assert.match(css, /@media \(max-width: 900px\) \{\s*\.frame \{\s*display: block;/);
-    assert.match(css, /\.pill \{[^}]*min-height: var\(--tap-min, 44px\);/);
-    assert.match(css, /\.switch \{[^}]*width: var\(--tap-min, 44px\);[^}]*height: var\(--tap-min, 44px\);[^}]*border: none;[^}]*background: none;/);
+  it('the switch’s chevron is a 44 px square at every width', () => {
+    const css = readCode('components/shared/FilterPill.module.css');
+    assert.match(css, /\.multiSelectChevronFace \{[^}]*width: var\(--tap-min, 44px\); height: var\(--tap-min, 44px\); border: none; background: none;/);
   });
   it('Money is the old Ledger, and the old path redirects', () => {
-    // 9b-2 rebuilt the page; its title is the words module's (MONEY_PAGE_WORDS.title).
-    assert.match(readCode('app/[orgSlug]/admin/house-league/seasons/[seasonId]/money/page.tsx'), /title=\{W\.title\}/);
+    // 9b-2 rebuilt the page; 13i: its name is its tab's (SEASON_PAGES), the same word as the words module's title.
+    assert.equal(SEASON_PAGES.find(p => p.key === 'money')?.label, 'Money');
     assert.match(readCode('lib/house-league-money-words.ts'), /MONEY_PAGE_WORDS = \{[\s\S]*?title: 'Money',/);
     assert.match(readCode('app/[orgSlug]/admin/house-league/seasons/[seasonId]/ledger/page.tsx'), /redirect\(`\/\$\{orgSlug\}\/admin\/house-league\/seasons\/\$\{seasonId\}\/money`\)/);
   });
   it('Email families is the composer’s one name (Q12)', () => {
-    // 9d-1: the rail's page is the season's sent history, a thin route over its screen; the words module names it.
+    // 9d-1: the season's page is its sent history, a thin route over its screen; 13i: the tab names it.
     assert.match(readCode('app/[orgSlug]/admin/house-league/seasons/[seasonId]/notifications/page.tsx'), /<SeasonEmailsScreen \/>/);
-    assert.match(readCode('components/admin/kit/club/league/email/SeasonEmailsScreen.tsx'), /title=\{SW\.historyTitle\}/);
+    assert.equal(SEASON_PAGES.find(p => p.key === 'notifications')?.label, 'Email families');
     assert.match(readCode('lib/families-words.ts'), /historyTitle: 'Email families',/);
     const regs = readCode(REGISTRATIONS_SCREEN);
     assert.doesNotMatch(regs, /Message registrants/);

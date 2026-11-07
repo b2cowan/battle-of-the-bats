@@ -24,7 +24,8 @@ import { AlertTriangle, Book, Building2, CalendarCheck, CalendarPlus, ExternalLi
 import { useOrg } from '@/lib/org-context';
 import { WHAT_THE_CLUB_SEES_3B } from '@/lib/club-money-words';
 import { usePageTitle } from '@/lib/usePageTitle';
-import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { TabActions } from '@/components/admin/kit/club/PlaceFrame';
+import { teamHeadOf, usePublishTeamHead } from '@/components/admin/kit/club/TeamFrame';
 import PageNotice, { useNotice } from '@/components/admin/kit/club/PageNotice';
 import KitDialog from '@/components/admin/kit/club/KitDialog';
 import type { TeamCapRefusal } from '@/components/admin/kit/club/TeamCapDialog';
@@ -162,16 +163,12 @@ export default function TeamPage({ params }: { params: Promise<{ orgSlug: string
   const team = read?.team ?? null;
   usePageTitle(team?.name ?? 'Team');
   usePublishRailTeam(teamId, team?.name);
+  // The team's frame draws the header (Club Tier Stage 13i, A3); this page tells it what it read, so a rename, a season
+  // closed or started, or an archive shows there at once.
+  usePublishTeamHead(teamId, read ? teamHeadOf(read.team, read.programYears) : null);
 
-  const header = (chip?: React.ReactNode, actions?: React.ReactNode) => (
-    <AdminPageHeader
-      backTo={{ href: base, label: 'Teams' }}
-      crumbs={[{ label: 'Rep teams' }, team?.groupName ? { label: team.groupName } : null]}
-      title={team?.name ?? 'Team'}
-      titleChips={chip}
-      actions={actions}
-    />
-  );
+  // ⚖ The Team page tab keeps its OWN actions (Close the season, Start next season), at its row's right end.
+  const header = (actions?: React.ReactNode) => <TabActions>{actions}</TabActions>;
 
   if (orgLoading || loading) {
     return <PageLoading header={header()} label="Loading this team…" />;
@@ -182,7 +179,6 @@ export default function TeamPage({ params }: { params: Promise<{ orgSlug: string
   if (loadError || !read || !team) {
     return (
       <div className={repKit.page}>
-        <AdminPageHeader backTo={{ href: base, label: 'Teams' }} crumbs={[{ label: 'Rep teams' }]} title="Team" />
         {loadError?.notFound ? (
           <LoadFailed
             title={`This team isn’t in ${currentOrg?.name ?? 'your club'}.`}
@@ -240,10 +236,6 @@ export default function TeamPage({ params }: { params: Promise<{ orgSlug: string
     }
   }
 
-  const titleChip = team.isArchived ? <RepChip>Archived</RepChip>
-    : live ? <RepChip tone="good">{live.name} · Live</RepChip>
-    : lastClosed ? <RepChip>{lastClosed.name} · Closed</RepChip>
-    : null;
   // The two season doors sit in the header only while a season runs; with none running, the closed-
   // season card below holds Start (the page's one lime). Two open seasons: Close is the way out.
   const seasonDoors = canWrite && !team.isArchived && live ? (
@@ -261,7 +253,7 @@ export default function TeamPage({ params }: { params: Promise<{ orgSlug: string
 
   return (
     <div className={`${repKit.page}${canWrite && !team.isArchived ? ` ${repKit.savePillPage}` : ''}`}>
-      {header(titleChip, seasonDoors)}
+      {header(seasonDoors)}
       {notice && <PageNotice notice={notice} />}
 
       {team.isArchived ? (

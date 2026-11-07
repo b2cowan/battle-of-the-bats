@@ -78,7 +78,8 @@ describe('B2 · the one waiting count', () => {
   it('no club-kit waiting pill stops at "9+" any more (chat, notifications and the coaches portal keep theirs)', () => {
     const pills = [
       'components/admin/kit/AdminKitRail.tsx', 'components/admin/kit/club/ClubHubKit.tsx',
-      'components/admin/kit/club/league/registrations/RegistrationsScreen.tsx', 'components/admin/kit/club/SeasonPhoneFrame.tsx',
+      // Club Tier Stage 13i: the season's phone frame retired; the season's own frame wears the count on its Registrations tab.
+      'components/admin/kit/club/league/registrations/RegistrationsScreen.tsx', 'components/admin/kit/club/SeasonFrame.tsx',
       'components/admin/kit/club/money/MoneyKit.tsx', 'app/[orgSlug]/admin/house-league/page.tsx',
     ];
     for (const f of pills) {

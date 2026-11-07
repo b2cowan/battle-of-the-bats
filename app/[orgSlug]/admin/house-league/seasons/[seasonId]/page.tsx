@@ -22,12 +22,11 @@ import { useCallback, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Check, ExternalLink, Minus } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
-import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { TabActions } from '@/components/admin/kit/club/PlaceFrame';
 import { LeagueCapUpgradeModal } from '@/components/admin/LeagueCapUpgrade';
 import { ClubSection, EmptyCard, LoadFailed, PageLoading, repKit, useDeferredLoad } from '@/components/admin/kit/club/RepKit';
 import { NotYours } from '@/components/admin/kit/club/NotYours';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
-import SeasonStatePill from '@/components/admin/kit/club/SeasonStatePill';
 import SeasonStatusWindow from '@/components/admin/kit/club/league/SeasonStatusWindow';
 import DeleteSeasonWindow from '@/components/admin/kit/club/league/DeleteSeasonWindow';
 import DivisionsBlock, { type SeasonDivision } from '@/components/admin/kit/club/league/DivisionsBlock';
@@ -114,13 +113,11 @@ export default function SeasonOverviewPage() {
   const changed = useCallback(() => { void load(); announceSeasonsChanged(); }, [load]);
 
   const season = detail?.season;
+  // ⚖ The season's frame names the season (Club Tier Stage 13i, A4: "← Seasons", its name and switch, the status pill),
+  // so the Overview tab keeps only its own action, View public page.
   const header = (
-    <AdminPageHeader
-      eyebrow="House league · season"
-      title={season?.name ?? 'Season'}
-      backTo={{ href: `/${orgSlug}/admin/house-league`, label: 'Seasons' }}
-      inlineActions
-      actions={season && season.status !== 'draft' && orgSlug ? (
+    <TabActions>
+      {season && season.status !== 'draft' && orgSlug ? (
         <a
           href={`/${orgSlug}/league/${season.slug}`}
           target="_blank"
@@ -136,8 +133,8 @@ export default function SeasonOverviewPage() {
         >
           <ExternalLink size={14} aria-hidden /><span className={ck.btnWord}>View public page</span>
         </a>
-      ) : undefined}
-    />
+      ) : null}
+    </TabActions>
   );
 
   if (orgLoading || loading) return <PageLoading header={header} label="Loading the season…" />;
@@ -225,7 +222,6 @@ export default function SeasonOverviewPage() {
       {header}
       <p className={s.sub}>
         <span>{[dates ?? 'Dates not set', sport].join(' · ')}</span>
-        <SeasonStatePill season={season} />
       </p>
       {startedFrom && (
         <p className={s.startedLine}>

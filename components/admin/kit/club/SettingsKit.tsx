@@ -18,7 +18,8 @@ import { AlertTriangle, CheckCircle2, Globe } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { usePageTitle } from '@/lib/usePageTitle';
-import AdminPageHeader from '@/components/admin/AdminPageHeader';
+// ⚖ Inside Organization (Club Tier Stage 13i, A5) the place names this tab, so only its actions remain (TabPageHeader).
+import { TabPageHeader } from '@/components/admin/kit/club/PlaceFrame';
 import { stepOf } from '@/components/coaches/backStep';
 import KitDialog from './KitDialog';
 import BirthdayCutoffCard, { loadBirthdayCutoffs, type CardData } from './BirthdayCutoffCard';
@@ -226,8 +227,8 @@ export default function SettingsKit() {
   }
 
   return (
-    <div className={ck.page}>
-      <AdminPageHeader eyebrow="Organization" title="Settings" />
+    <div className={`${ck.page} ${styles.narrow}`}>
+      <TabPageHeader eyebrow="Organization" title="Settings" />
 
       {notice && <PageNotice notice={notice} />}
       {loadFailed && (

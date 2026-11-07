@@ -16,7 +16,7 @@ import dynamic from 'next/dynamic';
 import { ChevronRight, FileText, Upload } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
-import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { TabActions } from '@/components/admin/kit/club/PlaceFrame';
 import PageNotice, { useNotice } from '@/components/admin/kit/club/PageNotice';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import { CoachListToolbar } from '@/components/coaches/kit';
@@ -134,17 +134,15 @@ export default function DocumentTemplatesPage() {
     }
   }
 
+  // ⚖ No title of its own: Rep teams' frame names the place and lights this tab (Club Tier Stage 13i, A2). Upload template keeps its row.
   const header = (
-    <AdminPageHeader
-      crumbs={[{ label: 'Rep teams' }, { label: currentOrg?.name ?? '' }]}
-      title="Document templates"
-      inlineActions
-      actions={canWrite ? (
+    <TabActions>
+      {canWrite ? (
         <button type="button" className={`btn btn-lime ${ck.iconOnlyPhone}`} onClick={() => setUploading(true)} aria-label="Upload template">
           <Upload size={15} aria-hidden /><span className={ck.btnWord}>Upload template</span>
         </button>
-      ) : undefined}
-    />
+      ) : null}
+    </TabActions>
   );
 
   if (orgLoading || loading) return <PageLoading header={header} label="Loading the templates…" />;

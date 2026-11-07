@@ -24,7 +24,7 @@ import { use, useCallback, useMemo, useRef, useState } from 'react';
 import { CalendarDays, CalendarRange, List } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
-import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { TabActions } from '@/components/admin/kit/club/PlaceFrame';
 import KitDialog from '@/components/admin/kit/club/KitDialog';
 import { CoachCard, CoachEyebrow, CoachFigure, CoachListToolbar, kit } from '@/components/coaches/kit';
 import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
@@ -34,9 +34,10 @@ import {
 } from '@/components/coaches/ScheduleCalendarViews';
 import { useScheduleOpensOnToday } from '@/components/coaches/useScheduleOpensOnToday';
 import {
-  EmptyCard, LoadFailed, PageLoading, RepChip, repKit, TwoOpenNote, useDeferredLoad, useLatestRead,
+  EmptyCard, LoadFailed, PageLoading, repKit, TwoOpenNote, useDeferredLoad, useLatestRead,
 } from '@/components/admin/kit/club/RepKit';
 import { usePublishRailTeam } from '@/components/admin/kit/useRailTeam';
+import { teamHeadOf, usePublishTeamHead } from '@/components/admin/kit/club/TeamFrame';
 import { EVENT_LABELS, SCRIMMAGE_LABEL } from '@/lib/coach-schedule-vocab';
 import { mondayOfDay, tournamentToday } from '@/lib/timezone';
 import { STATE_WORDS, dayHeading, eventWhenWords } from '@/lib/calendar-recipe';
@@ -109,8 +110,8 @@ export default function TeamSchedulePage({ params }: { params: Promise<{ orgSlug
   const team = read?.team ?? null;
   usePageTitle(team ? `Schedule · ${team.name}` : 'Schedule');
   usePublishRailTeam(teamId, team?.name);
+  usePublishTeamHead(teamId, read ? teamHeadOf(read.team, read.programYears) : null);
   const season = useMemo(() => (read ? liveSeasonOf(read.programYears) ?? latestClosedSeasonOf(read.programYears) : null), [read]);
-  const isLive = !!season && (season.status === 'draft' || season.status === 'active');
   const record = seasonRecordOf(events);
 
   // The List opens on today in its own frame, at every width — the coach's hook and frame (C3).
@@ -126,14 +127,11 @@ export default function TeamSchedulePage({ params }: { params: Promise<{ orgSlug
   };
 
   const ViewGlyph = VIEW_GLYPH[view];
+  // ⚖ No title of its own: the team's frame names the team and lights this tab (Club Tier Stage 13i, A3 — the "← {team}"
+  // link went: the tab row reaches the team's pages).
   const header = (
-    <AdminPageHeader
-      backTo={{ href: teamBase, label: team?.name ?? 'Team' }}
-      crumbs={[{ label: 'Rep teams' }, team?.groupName ? { label: team.groupName } : null]}
-      title="Schedule"
-      titleChips={season ? <RepChip tone={isLive ? 'good' : 'neutral'}>{season.name} · {isLive ? 'Live' : 'Closed'}</RepChip> : null}
-      inlineActions
-      actions={
+    <TabActions>
+      {
         // THE VIEW MENU on a phone (the coach's, stage 2 · C1): the current view's glyph opening List, Week and Month in
         // a drawer titled View. Hidden above 640, where the line's switch leads instead.
         <span className={cal.viewPhone}>
@@ -145,7 +143,7 @@ export default function TeamSchedulePage({ params }: { params: Promise<{ orgSlug
           </CoachToolbarMenu>
         </span>
       }
-    />
+    </TabActions>
   );
 
   if (orgLoading || loading) return <PageLoading header={header} label="Loading this team’s schedule…" />;

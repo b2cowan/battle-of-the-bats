@@ -160,7 +160,6 @@ export type EndMode = 'declined' | 'withdrawn' | 'released';
 
 /** Registrations: the head, tabs, toolbar, columns, the Fee cell and the row's menu (copy §1). */
 export const REGS_WORDS = {
-  eyebrow: (season: string) => `House league · ${season}`,
   title: 'Registrations',
   add: 'Add registration',
   loading: 'Loading registrations…',

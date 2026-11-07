@@ -15,7 +15,7 @@ import { useParams } from 'next/navigation';
 import { Mail } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
-import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { TabActions } from '@/components/admin/kit/club/PlaceFrame';
 import { useHouseLeagueAccess } from '@/components/admin/kit/useHouseLeagueSeasons';
 import { ALLOWANCE_WORDS, FAMILY_EMAIL_WORDS as EW, SEASON_EMAIL_WORDS as SW } from '@/lib/families-words';
 import { isFinishedLeagueSeason } from '@/lib/house-league-access';
@@ -71,15 +71,8 @@ export default function SeasonEmailsScreen() {
       <Mail size={14} aria-hidden /><span className={ck.btnWord}>{isPhone ? SW.historyButtonPhone : SW.historyTitle}</span>
     </button>
   ) : undefined;
-  const header = (
-    <AdminPageHeader
-      eyebrow={season ? SW.historyEyebrow(season.name) : 'House league'}
-      title={SW.historyTitle}
-      backTo={{ href: seasonHref, label: season?.name ?? 'Season' }}
-      inlineActions
-      actions={door}
-    />
-  );
+  // ⚖ The season's frame names the page (Club Tier Stage 13i, A4); Email families keeps its own door, at its row's right.
+  const header = <TabActions>{door}</TabActions>;
 
   if (orgLoading || !gate) return <PageLoading header={header} label="Loading Email families…" />;
   if (!gate.email) return <NotYours page="seasonEmails" />;

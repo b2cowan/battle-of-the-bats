@@ -33,7 +33,8 @@ import { formatStoredDate, orgDayKey, tournamentToday } from '@/lib/timezone';
 import {
   downloadXLSX, generateCSV, downloadCSVBlob, buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
 } from '@/lib/export';
-import AdminPageHeader from '@/components/admin/AdminPageHeader';
+// ⚖ Inside Organization (Club Tier Stage 13i, A5) the place names this tab, so only its actions remain (TabPageHeader).
+import { TabPageHeader } from '@/components/admin/kit/club/PlaceFrame';
 import ExportMenu from '@/components/admin/ExportMenu';
 import { kit } from '@/components/coaches/kit';
 import { useClubBrief } from './ClubBriefProvider';
@@ -297,7 +298,7 @@ export default function MembersKit() {
 
   return (
     <div className={ck.pageWide}>
-      <AdminPageHeader
+      <TabPageHeader
         eyebrow={tournamentTier ? 'Tournament settings' : 'Organization'}
         title={pageTitle}
         actions={

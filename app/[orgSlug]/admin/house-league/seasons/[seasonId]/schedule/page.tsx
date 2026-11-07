@@ -67,7 +67,7 @@ import PracticeTimeWindow from '@/components/admin/kit/club/league/time/Practice
 import PracticeTellWindow, { PracticeTellReminder } from '@/components/admin/kit/club/league/time/PracticeTellWindow';
 import PracticeWindow from '@/components/admin/kit/club/league/practices/PracticeWindow';
 import { PRACTICE_TIME_WORDS, PRACTICE_WINDOW_WORDS } from '@/lib/league-practice-time';
-import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { TabActions } from '@/components/admin/kit/club/PlaceFrame';
 import { LoadFailed, NoticePill, useDeferredLoad, useLatestRead } from '@/components/admin/kit/club/RepKit';
 import { NotYours } from '@/components/admin/kit/club/NotYours';
 import { useKitButtons, useKitStyle } from '@/components/admin/AdminKitProvider';
@@ -1225,7 +1225,6 @@ export default function SchedulePage() {
 
   if (!hasAccess) return <NotYours page="houseLeague" />;
 
-  const backHref = `/${orgSlug}/admin/house-league/seasons/${seasonId}`;
   const divName = selectedDiv?.name ?? '';
   const freeFloor = !!currentOrg && isFreeFloorLeague(currentOrg);
   // ⚖ GENERATE GAMES (step 5): a club with the club's schedule generates into the time it gave house league; the free
@@ -1361,15 +1360,12 @@ export default function SchedulePage() {
   return (
     <>
     <div className={styles.page}>
-      {/* Header — today's as `legacy` while the switch is off. On the kit (F3) the season's name (the
-          subtitle) is the way up, in the leading corner. On a phone the view's glyph opens the View drawer (Week, Month). */}
-      <AdminPageHeader
-        eyebrow="House league"
-        title="Schedule"
-        backTo={{ href: backHref, label: season?.name ?? 'Season' }}
-        inlineActions
-        titleChips={selectedDiv && scheduleRead === 'ok' && divGames.length > 0 ? <SchedulePublishTag published={!!divPublishing} /> : undefined}
-        actions={<>
+      {/* ⚖ The season's frame names the page (Club Tier Stage 13i, A4: "← Seasons", the season and its switch, the tab row
+          with Schedule lit), so the tab keeps its own row: the published tag at its left (the title's chip, moved), the
+          schedule's actions at its right. On a phone the view's glyph opens the View drawer (Week, Month). */}
+      <TabActions
+        lede={selectedDiv && scheduleRead === 'ok' && divGames.length > 0 ? <SchedulePublishTag published={!!divPublishing} /> : undefined}
+      >
           <span className={cal.viewPhone}>
             <CoachToolbarMenu label={`Change view · ${VIEW_WORD[shownView]}`} icon={<ViewGlyph size={20} aria-hidden />} variant="glyph" drawerOnPhone drawerTitle="View">
               {PHONE_VIEWS.map(v => {
@@ -1408,8 +1404,7 @@ export default function SchedulePage() {
             </button>
           )}
           {phone && addMenu}
-        </>}
-      />
+      </TabActions>
 
       {/* The header's block, loudest first (redrawn 2026-10-31): the one thing owed, then the quiet facts. The state (Draft ·
           Published) is the chip beside the title. */}

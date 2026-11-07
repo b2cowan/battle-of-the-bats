@@ -344,7 +344,7 @@ export function TwoOpenNote({ teamName, seasons, showingName, teamHref }: {
 
 /** A screen's first read in flight: its header, and the product's one loading line, naming what the
  *  screen shows ("Loading the roster…" — see components/shared/LoadingState). */
-export function PageLoading({ header, label }: { header: ReactNode; label: string }) {
+export function PageLoading({ header, label }: { header?: ReactNode; label: string }) {
   return <div className={styles.page}>{header}<LoadingState label={label} /></div>;
 }
 

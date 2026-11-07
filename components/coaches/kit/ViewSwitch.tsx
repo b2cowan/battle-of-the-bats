@@ -8,10 +8,16 @@
  * portal's stylesheet (Toolbar Rules Stage 2). `toolbarView` gives it equal columns and the touch floor inside
  * `CoachListToolbar`.
  */
+import type { ReactNode } from 'react';
 import kit from './CoachKit.module.css';
 
 export default function ViewSwitch<V extends string>({ views, value, onChange, label, fill = false }: {
-  views: readonly { id: V; label: string }[]; value: V; onChange: (view: V) => void; label: string;
+  views: readonly {
+    id: V; label: string;
+    /** A count after the label, passed whole with its own spoken name (Club Tier Stage 13i, Ask 6: Registrations' four views,
+     *  To review's amber, the others in the lighter ink). Opt-in; every other caller draws words alone, as before. */
+    mark?: ReactNode;
+  }[]; value: V; onChange: (view: V) => void; label: string;
   /** The switch takes its whole row on a phone, in equal parts (the player record's, whose write doors stack under it). */
   fill?: boolean;
 }) {
@@ -19,7 +25,7 @@ export default function ViewSwitch<V extends string>({ views, value, onChange, l
     <div className={`${kit.calViews} ${kit.toolbarView}${fill ? ` ${kit.toolbarViewFill}` : ''}`} role="group" aria-label={label}>
       {views.map(v => (
         <button key={v.id} type="button" className={`${kit.calView}${value === v.id ? ` ${kit.calViewOn}` : ''}`} aria-pressed={value === v.id} onClick={() => onChange(v.id)}>
-          {v.label}
+          {v.label}{v.mark}
         </button>
       ))}
     </div>

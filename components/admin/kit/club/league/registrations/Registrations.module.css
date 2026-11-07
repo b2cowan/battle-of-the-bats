@@ -12,6 +12,16 @@
 /* ── A tab's quiet count (the amber waiting count is the rail's own, drawn by the tab row) ── */
 .tabCount { margin-left: 0.35rem; font-size: var(--type-support); color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
 
+/* ── The four views (13i, Ask 6): the switch is wider than a phone's toolbar line (it is not in the kit's own `.toolbar`,
+   whose equal-column rules never reach the admin one), so on a phone the toolbar wraps and the switch takes the first row
+   whole, scrolling sideways inside itself if a count grows. Its counts sit a word-space after the label. ── */
+.views button > span { margin-left: 0.35rem; }
+@media (max-width: 640px) {
+  .toolbarWrap { flex-wrap: wrap; }
+  .views { flex: 1 1 100%; min-width: 0; overflow-x: auto; }
+  .views > div { width: max-content; }
+}
+
 /* A partial batch result's second line */
 .resultSub { display: block; margin-top: 0.15rem; font-size: var(--type-support); color: var(--text-secondary); }
 

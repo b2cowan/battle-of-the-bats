@@ -3,7 +3,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { Trash2, Check, X, ShieldCheck } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { STAFF_KIND_COPY, staffKindWord, type CoachCapabilities, type StaffKind } from '@/lib/coach-capabilities';
-import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import KitDialog from '@/components/shared/KitDialog';
 import styles from '../rep-teams.module.css';
 import LoadingState from '@/components/shared/LoadingState';
@@ -77,7 +76,6 @@ export default function AdminAssistantCoachesPage() {
   const { currentOrg } = useOrg();
   const orgSlug = currentOrg?.slug ?? '';
   const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
-  const base = `/${orgSlug}/admin/rep-teams`;
 
   const [assistants, setAssistants] = useState<Assistant[]>([]);
   const [pending, setPending] = useState<PendingInvite[]>([]);
@@ -150,10 +148,7 @@ export default function AdminAssistantCoachesPage() {
       {/* Header — the way back is the eyebrow's "Rep Teams" (the same door as on every Rep Teams page);
           the page's framing, which tells an owner that head coaches set their own staff and this is the
           override, sits word for word at the top of the body it frames (F3). */}
-      <AdminPageHeader
-        crumbs={[{ href: base, label: 'Rep teams' }, { label: currentOrg?.name ?? '' }]}
-        title="Assistant coaches"
-      />
+      {/* ⚖ No title of its own: Rep teams' frame names the place and lights this tab (Club Tier Stage 13i, A2). */}
       <p className={styles.kitLede}>Oversight across your teams. Head coaches invite and set their own staff — assistant coaches, team managers, treasurers and helpers — and this is your view + override.</p>
 
       {error && <p className={styles.errorText}>{error}</p>}

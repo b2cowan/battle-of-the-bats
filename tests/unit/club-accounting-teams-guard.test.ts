@@ -154,7 +154,9 @@ describe('6 · the dropdown’s groups and its list-only mark are opt-in', () =>
     // The heading's id is spelt per copy (the closed panel's and the phone sheet's), never shared — /review 2026-10-18.
     assert.match(dd, /role="group" aria-labelledby=\{`\$\{groupId\}-\$\{inSheet \? 's' : 'p'\}\$\{i\}`\}/);
   });
-  it('only the Team pill passes a group or a list-only mark — no other caller’s list moves', () => {
+  // ⚖ Club Tier Stage 13i (2026-11-06): the season switch (`SeasonFrame`, the title's chevron) is the second caller of the
+  // list-only mark — a finished season marked in its row, on a face that shows no words. Each builds its options apart.
+  it('only the Team pill and the season switch pass a list-only mark — no other caller’s list moves', () => {
     const callers = [...walk('app'), ...walk('components')].filter(f => f !== DROPDOWN && /<SingleSelectDropdown\b/.test(readCode(f)));
     // Inside each call (to its closing "/>"), no `group:` — the Team pill builds its options apart (`teamPillOptions`).
     for (const f of callers) {
@@ -163,7 +165,8 @@ describe('6 · the dropdown’s groups and its list-only mark are opt-in', () =>
         assert.doesNotMatch(code.slice(m.index, code.indexOf('/>', m.index)), /\bgroup: |\browMark: /, `${f} passes a group inside the call`);
       }
     }
-    assert.deepEqual(callers.filter(f => /\browMark: /.test(readCode(f))), [ACCOUNT]);
+    const marks = callers.filter(f => /\browMark: /.test(readCode(f))).map(f => f.replace(/\\/g, '/')).sort();
+    assert.deepEqual(marks, [ACCOUNT, 'components/admin/kit/club/SeasonFrame.tsx'].sort());
     assert.match(readCode(ACCOUNT), /function teamPillOptions\(/);
   });
   it('the panel scrolls inside itself (a 30-team list stays in the viewport)', () => {

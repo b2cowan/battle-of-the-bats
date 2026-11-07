@@ -6,10 +6,10 @@
  * J4-035). It replaced a grid of cards whose roster added up every season a team ever had.
  *
  * Built to the Coaches Portal benchmark (plan §6 "Across every stage — formatting"):
- *   · the header carries the page's one create, lime, with the team-cap window (Stage 1b);
+ *   · Add team is the toolbar's last control (lime), with the team-cap window (Stage 1b; 13i);
  *   · the toolbar: a lede that is a count, never a verdict; Team groups, Rename team URLs and the
  *     group filter (with Ungrouped — B06, fixed in Stage 0) pinned right. The five door tiles are gone:
- *     the rail carries every one of them (and the phone's "In Rep Teams" row);
+ *     the rail carries every one of them;
  *   · the table: display-face uppercase headings in secondary ink (NOT the admin restyle's S2-06
  *     override), figures right with their headings, groups as band rows, the NAME is the link, the
  *     whole row opens (owner 2026-09-29) and ONE chevron closes it — no links or buttons in cells
@@ -33,7 +33,6 @@ import { useRouter } from 'next/navigation';
 import { ChevronRight, Layers, Link2, Plus, Users } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
-import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import PageNotice, { useNotice } from '@/components/admin/kit/club/PageNotice';
 import { CoachListToolbar } from '@/components/coaches/kit';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
@@ -146,24 +145,12 @@ export default function RepTeamsBoardPage() {
   const lede = boardLede({ teams: active.length, groups: groups.length, used: active.length, limit });
   const hasArchived = teams.some(t => t.team.isArchived);
 
-  const header = (
-    // No eyebrow: the club's name is already in the bar above (owner, 2026-10-01).
-    <AdminPageHeader
-      title="Rep teams"
-      inlineActions
-      actions={canWrite ? (
-        <button type="button" className={`btn btn-lime ${ck.iconOnlyPhone}`} onClick={() => setAdding(true)} aria-label="Add team">
-          <Plus size={15} aria-hidden /><span className={ck.btnWord}>Add team</span>
-        </button>
-      ) : undefined}
-    />
-  );
-
-  if (orgLoading || loading) return <PageLoading header={header} label="Loading your teams…" />;
+  // ⚖ No header of its own: Rep teams' frame draws the title and the tab row (Club Tier Stage 13i, A2). Add team is the Teams
+  // tab's toolbar's LAST control (2026-09-30: a create belongs to its tab's toolbar, at the right end).
+  if (orgLoading || loading) return <PageLoading label="Loading your teams…" />;
 
   return (
     <div className={repKit.page}>
-      {header}
       {notice && <PageNotice notice={notice} />}
       {loadError && <LoadFailed title="We couldn’t load your teams." onRetry={() => { setLoading(true); void load(); }} />}
 
@@ -196,6 +183,11 @@ export default function RepTeamsBoardPage() {
                   {groups.length > 0 && <option value={UNGROUPED}>Ungrouped</option>}
                   {hasArchived && <option value={ARCHIVED}>Archived</option>}
                 </select>
+              )}
+              {canWrite && (
+                <button type="button" className={`btn btn-lime ${ck.iconOnlyPhone}`} onClick={() => setAdding(true)} aria-label="Add team">
+                  <Plus size={15} aria-hidden /><span className={ck.btnWord}>Add team</span>
+                </button>
               )}
             </>
           }

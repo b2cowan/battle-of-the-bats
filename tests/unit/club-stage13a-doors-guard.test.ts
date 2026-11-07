@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { readCode, filesUnder, functionBody } from './_source-code.ts';
-import { kitOrgLinks, kitBillingLink, orgHubDoors } from '../../lib/admin-kit-nav.ts';
+import { kitOrgLinks, orgTabs, showsOrgBoard } from '../../lib/admin-kit-nav.ts';
 import { canOpenModule } from '../../lib/member-access.ts';
 import { hasCapability } from '../../lib/roles.ts';
 import { memberHome, programHomePath } from '../../lib/member-home.ts';
@@ -147,39 +147,44 @@ describe('⚖ the board by name is NAMES ONLY', () => {
   });
 });
 
-describe('A2 · the Organization hub lists the doors the person holds', () => {
-  // The person, as the rail sees them: their role's defaults on a Club plan (League for the venue-less case below).
-  const doorsFor = (role: OrgRole, planId = 'club') => {
+// ⚖ Club Tier Stage 13i (Ask 3 = A, Ask 4 = B, owner 2026-11-06): the tile hub RETIRED. 13a's rule — one list of doors per
+// person, a tile only where its page opens — is now Organization's TAB list (`orgTabs` over the same `kitOrgLinks`), minus
+// Tournaments (a program), Plan & billing (the foot) and the Coaches Portal (the foot). The board by name (R1) moved to a
+// "The board" tab for anyone without Members (owner 2026-11-06). `/org` goes to the first tab; none is the "not yours" screen.
+describe('A2 · Organization lists the doors the person holds, as its tabs', () => {
+  // The person, as the rail sees them: their role's defaults on a Club plan.
+  const tabsFor = (role: OrgRole, planId = 'club') => {
     const org = ORG(planId);
     const member = { role, capabilities: null };
     const canSeeMembers = (role === 'owner' || hasCapability(role, null, 'module_members')) && canOpenModule(member, org, 'module_members');
     const orgLinks = kitOrgLinks({ base: BASE, role, isCanceled: false, canSeeMembers, hasVenueLibrary: true });
-    return orgHubDoors({
-      base: BASE, orgLinks,
-      billingLink: kitBillingLink({ orgSlug: SLUG, planId: planId as never, role, capabilities: null }),
-      canOpenTournaments: canOpenModule(member, org, 'module_tournaments'),
-      coachPortalHref: null,
-    }).map(d => d.label);
+    return orgTabs({ base: BASE, orgLinks, showsBoard: showsOrgBoard({ role, orgLinks, isTeamWorkspace: false }) }).map(t => t.label);
   };
 
-  it('role × tile, Club plan', () => {
-    assert.deepEqual(doorsFor('owner'), ['Members', 'Tournaments', 'Venue library', 'PDF settings', 'Plan & billing', 'Settings', 'Audit log'],
-      'F-O1-15: the owner’s hub has the Audit log');
-    assert.deepEqual(doorsFor('admin'), ['Members', 'Tournaments', 'Venue library', 'PDF settings']);
-    assert.deepEqual(doorsFor('league_admin'), ['Members', 'Venue library'], 'F-NAV-7: no Tournaments into a failing tournament admin');
-    assert.deepEqual(doorsFor('league_registrar'), ['Venue library'], 'F-NAV-8: no Members tile that refuses them');
-    assert.deepEqual(doorsFor('treasurer'), ['Members', 'Venue library']);
+  it('role × tab, Club plan', () => {
+    assert.deepEqual(tabsFor('owner'), ['Members', 'Audit log', 'Settings', 'Venue library', 'PDF settings'],
+      'F-O1-15: the owner keeps the Audit log; no Tournaments, no Plan & billing (Ask 4 B: the foot)');
+    assert.deepEqual(tabsFor('admin'), ['Members', 'Venue library', 'PDF settings']);
+    assert.deepEqual(tabsFor('league_admin'), ['Members', 'Venue library'], 'F-NAV-7: no Tournaments into a failing tournament admin');
+    assert.deepEqual(tabsFor('league_registrar'), ['The board', 'Venue library'], 'F-NAV-8: no Members tab that refuses them; the board in its place (R1)');
+    assert.deepEqual(tabsFor('treasurer'), ['Members', 'Venue library']);
   });
 
-  it('the hub reads the shared list, sends a one-door person straight in, shows the board to someone with no Members door', () => {
-    const hub = readCode('app/[orgSlug]/admin/org/page.tsx');
-    assert.match(hub, /orgHubDoors\(\{\s*base: nav\.base,\s*orgLinks: nav\.orgLinks,\s*billingLink: nav\.billingLink,/);
-    assert.doesNotMatch(hub, /Manage org members|label: 'Tournaments'|label: 'PDF settings'/, 'no tile listed by hand');
-    assert.match(hub, /doors\.length === 1 && !showsBoard \? doors\[0\]\.href : null/);
-    assert.match(hub, /router\.replace\(onlyDoor\)/);
-    assert.match(hub, /!doors\.some\(d => d\.key === 'org\/members'\)/);
-    assert.match(hub, /boardLine\(people\)/);
-    assert.doesNotMatch(hub, /Lock\b|rowLocked/, 'locked tiles are never added to the hub');
+  it('the door reads the shared list, sends the person to their first tab, and never lists a tile by hand', () => {
+    const door = readCode('app/[orgSlug]/admin/org/page.tsx');
+    assert.match(door, /useOrgTabs\(\)/);
+    assert.match(door, /tabs\[0\]\?\.href/);
+    assert.match(door, /router\.replace\(first\)/);
+    assert.match(door, /<NotYours page="organization" \/>/);
+    assert.doesNotMatch(door, /Manage org members|label: 'Tournaments'|label: 'PDF settings'|className="card/, 'no tile left');
+    assert.doesNotMatch(door, /Lock\b|rowLocked/, 'locked tiles are never added');
+  });
+
+  it('the board tab says names and roles only', () => {
+    const board = readCode('app/[orgSlug]/admin/org/board/page.tsx');
+    assert.match(board, /useBoardPeople\(/);
+    assert.match(board, /boardInRankOrder\(people\)/);
+    assert.doesNotMatch(board, /email|phone/i, 'names only (R1)');
   });
 });
 

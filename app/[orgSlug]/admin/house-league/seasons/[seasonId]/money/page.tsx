@@ -17,7 +17,7 @@ import { useCallback, useState } from 'react';
 import { DISPUTE_WORDS, disputeWhyShort, reasonShort } from '@/lib/online-payment-words';
 import { useParams } from 'next/navigation';
 import { useOrg } from '@/lib/org-context';
-import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { TabActions } from '@/components/admin/kit/club/PlaceFrame';
 import ExportMenu from '@/components/admin/ExportMenu';
 import MoneySummaryBand from '@/components/coaches/MoneySummaryBand';
 import { EmptyCard, LoadFailed, PageLoading, repKit, useDeferredLoad } from '@/components/admin/kit/club/RepKit';
@@ -92,15 +92,8 @@ export default function MoneyPage() {
   }, [slug, seasonId, canView]);
   useDeferredLoad(!!currentOrg && canView, load);
 
-  const header = (actions?: React.ReactNode) => (
-    <AdminPageHeader
-      eyebrow={read ? W.eyebrow(read.season.name) : 'House league'}
-      title={W.title}
-      backTo={read && access?.read ? { href: `/${orgSlug}/admin/house-league/seasons/${seasonId}`, label: read.season.name } : undefined}
-      inlineActions
-      actions={actions}
-    />
-  );
+  // ⚖ The season's frame names the page (Club Tier Stage 13i, A4); Money keeps its own actions, at its row's right end.
+  const header = (actions?: React.ReactNode) => <TabActions>{actions}</TabActions>;
 
   if (!user) return null;
   if (access && !canView) return <NotYours page="seasonMoney" />;

@@ -13,6 +13,9 @@
 /* Centred, at one of the portal's two widths, like every club page (owner 2026-10-07; the rule and its reason:
    components/admin/kit/club/ClubKit.module.css). */
 .page { max-width: 960px; margin-inline: auto; }
+/* Inside a club place's frame (Club Tier Stage 13i) the place owns the width, as Accounting's frame does: this cap gives way so
+   the place's header and tab row never jump between tabs (components/admin/kit/club/PlaceFrame.tsx). */
+:global([data-place-frame]) .page { max-width: none; }
 
 /* ⚰ The money pages' OLD header (`.pageHeader` … `.pageSub`) and the summary cards went with admin type sweep
    Stage 5 (2026-10-20): nothing wore them. */

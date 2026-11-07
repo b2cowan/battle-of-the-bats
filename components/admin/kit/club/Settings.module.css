@@ -5,6 +5,11 @@
    site's Look row) still reads its tiles from here.
    ═══════════════════════════════════════════════════════════════════════════════════════════════ */
 
+/* Settings is a form of single-column cards, not a list: inside Organization's frame (which lifts every page's cap, 13i) it
+   keeps a reading width of its own, from the left edge like the title above it. Doubled so the frame's release (0,2,0, in
+   the kit sheet) can never win on stylesheet order. */
+:global([data-place-frame]) .narrow.narrow { max-width: 44rem; margin-inline: 0; }
+
 .card {
   background: var(--card-bg);
   border: 1px solid var(--home-line);

@@ -68,6 +68,15 @@
 .multiSelectValue { font-weight: 600; color: var(--text-primary); min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .multiSelectSummary > svg { flex-shrink: 0; }
 .multiSelect[open] .multiSelectSummary { border-color: var(--logic-lime); }
+/* `face="chevron"` — the chevron alone, beside the title it switches (a house-league season's name, Club Tier Stage 13i).
+   A 44px square at every width, as the season's phone switch was; no pill face. The panel below is the pill's own. */
+.multiSelectChevronFace {
+  display: inline-flex; align-items: center; justify-content: center; list-style: none; cursor: pointer;
+  width: var(--tap-min, 44px); height: var(--tap-min, 44px); border: none; background: none; border-radius: 8px;
+  color: var(--text-secondary);
+}
+.multiSelectChevronFace::-webkit-details-marker { display: none; }
+.multiSelectChevronFace:hover, .multiSelect[open] .multiSelectChevronFace { color: var(--text-primary); background: var(--white-8); }
 .multiSelectPanel {
   position: absolute; top: calc(100% + 4px); left: 0; z-index: 70; min-width: 190px;
   background: var(--home-card); border: 1px solid var(--border-2); border-radius: 10px;

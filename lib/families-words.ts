@@ -613,7 +613,6 @@ export const SEASON_EMAIL_WORDS = {
   /** A build word (9d-2b review): the press took no one — another send still holds them. */
   stillSending: 'Those families are still being sent to. Try again in a few minutes.',
   /** The season's sent history (frame e). The allowance is the page's first line (the admin header has no subtitle, F3). */
-  historyEyebrow: (season: string) => season,
   historyTitle: 'Email families',
   historyButtonPhone: 'Email',
   historyLede: (season: string, allowance: string) => `${season} · ${allowance}`,

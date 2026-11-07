@@ -396,7 +396,8 @@ describe('the screens share the kit\'s notices and first read (/simplify)', () =
     for (const rel of Object.values(PAGE)) {
       const src = readCode(rel);
       assert.match(src, /useDeferredLoad\(/, `${rel} runs its own first-read effect`);
-      assert.match(src, /<PageLoading header=/, `${rel} draws its own loading line`);
+      // A page inside a place frame has no header of its own (13i): the wait takes only its label.
+      assert.match(src, /<PageLoading (header=\{[^\n]*\} )?label=/, `${rel} draws its own loading line`);
       assert.doesNotMatch(src, /requestAnimationFrame/, `${rel} defers its read by hand`);
     }
   });

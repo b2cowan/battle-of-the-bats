@@ -308,7 +308,7 @@ describe('2 · a flipped workspace is a club everywhere a portal test is asked',
     const stray = { ...after.ws, stripe_subscription_id: 'sub_1' };
     assert.equal(stray.stripe_subscription_id === 'sub_1' && stray.workspace_state !== 'org_owned', false);
     // The webhook enters the portal's retention and email ONLY when that sync matched; otherwise the Club path runs.
-    const webhook = readCode('app/api/billing/webhook/route.ts');
+    const webhook = readCode('lib/billing-webhook-handler.ts');
     const deleted = webhook.slice(webhook.indexOf("case 'customer.subscription.deleted'"));
     assert.ok(deleted.indexOf('syncTeamWorkspaceSubscription') < deleted.indexOf('if (syncedTeamWorkspace)'));
     assert.ok(deleted.indexOf('if (syncedTeamWorkspace)') < deleted.indexOf('endingForDeletedSubscription('));
@@ -350,7 +350,7 @@ describe('3 · every entry that can put a workspace on Club meets the one hook',
 
   it('the move apply, the webhook, the operator route and the mock checkout all call it', () => {
     assert.match(readCode('lib/plan-move.ts'), /await applyPlanChangeSideEffects\(\{ orgId: org\.id, fromPlan: ownPlanOf\(org\), toPlan, actor: opts\.actor, clubName \}\)/);
-    assert.match(readCode('app/api/billing/webhook/route.ts'), /await applyPlanChangeSideEffects\(\{/);
+    assert.match(readCode('lib/billing-webhook-handler.ts'), /await applyPlanChangeSideEffects\(\{/);
     assert.match(readCode('lib/operator-plan-change.ts'), /sideEffects = await applyPlanChangeSideEffects\(\{/);
     const checkout = readCode('app/api/billing/create-checkout/route.ts');
     const mock = checkout.slice(checkout.indexOf('if (shouldApplyDirectly)'));
@@ -450,7 +450,7 @@ const LIVE_ROW_FILES: string[] = [
   'app/api/billing/cancel/confirm/route.ts',
   'app/api/billing/create-checkout/route.ts',
   'app/api/billing/portal/route.ts',
-  'app/api/billing/webhook/route.ts',
+  'lib/billing-webhook-handler.ts',
   'app/api/coaches/[orgSlug]/assignments/route.ts',
   'app/api/coaches/[orgSlug]/teams/[teamId]/hosted-tournaments/route.ts',
   'app/api/coaches/[orgSlug]/teams/[teamId]/money-summary/route.ts',
@@ -474,7 +474,6 @@ const LIVE_ROW_FILES: string[] = [
   'app/[orgSlug]/admin/families/layout.tsx',
   'app/[orgSlug]/admin/org/billing/page.tsx',
   'app/[orgSlug]/admin/org/layout.tsx',
-  'app/[orgSlug]/admin/org/page.tsx',
   'app/[orgSlug]/admin/org/settings/pdf/page.tsx',
   'app/[orgSlug]/admin/rep-teams/layout.tsx',
   'app/[orgSlug]/admin/tournaments/dashboard/page.tsx',

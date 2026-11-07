@@ -8,7 +8,6 @@ import {
   buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
 } from '@/lib/export';
 import ExportMenu from '@/components/admin/ExportMenu';
-import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { useKitStyle } from '@/components/admin/AdminKitProvider';
 import { KIT_INK, KIT_SURFACE } from '@/components/admin/kit/kit-inline';
 import styles from '../../../house-league.module.css';
@@ -41,7 +40,7 @@ interface SeasonInfo { id: string; name: string; }
 interface DivisionState { name: string; published: boolean; showStandings: boolean }
 
 export default function StandingsPage() {
-  const { orgSlug, seasonId } = useParams<{ orgSlug: string; seasonId: string }>();
+  const { seasonId } = useParams<{ seasonId: string }>();
   const { currentOrg, user } = useOrg();
   // Admin Design Continuity slice 2: the kit's patch over each hand-set style while the switch is on.
   const kx = useKitStyle();
@@ -170,13 +169,7 @@ export default function StandingsPage() {
 
   return (
     <div className={styles.page}>
-      {/* Header — today's as `legacy` while the switch is off. On the kit the breadcrumb becomes the
-          eyebrow (still a link to House league) and the way up to the season (F3). */}
-      <AdminPageHeader
-        crumbs={[{ href: `/${orgSlug}/admin/house-league`, label: 'House league' }]}
-        title="Standings"
-        backTo={season ? { href: `/${orgSlug}/admin/house-league/seasons/${seasonId}`, label: season.name } : undefined}
-      />
+      {/* No header of its own: the season's frame names the page (Club Tier Stage 13i, A4). */}
 
       {/* Toolbar */}
       <div className={styles.scheduleToolbar}>

@@ -23,6 +23,9 @@
    old 68rem retired here; six measured widths became two. */
 .page { max-width: 960px; margin-inline: auto; }
 .pageWide { max-width: 1200px; margin-inline: auto; }
+/* Inside a club place's frame (Club Tier Stage 13i) the place owns the width, as Accounting's frame does: this cap gives way so
+   the place's header and tab row never jump between tabs (components/admin/kit/club/PlaceFrame.tsx). */
+:global([data-place-frame]) .page, :global([data-place-frame]) .pageWide { max-width: none; }
 
 /* ── A section: its eyebrow row, then its body ── */
 .section { margin: 0 0 1.75rem; }

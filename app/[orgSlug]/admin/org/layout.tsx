@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { getAuthContextWithRole } from '@/lib/api-auth';
 import { isTournamentTier } from '@/lib/billing-urls';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-kind';
+import OrgFrame from '@/components/admin/kit/club/OrgFrame';
 
 /**
  * Org-admin tier boundary.
@@ -35,5 +36,6 @@ export default async function OrgAdminLayout({
     redirect(`/${orgSlug}/admin/tournaments`);
   }
 
-  return <>{children}</>;
+  // ⚖ Organization is a place with tabs (Club Tier Stage 13i, A5): its title and the person's tabs over each tab's page.
+  return <OrgFrame>{children}</OrgFrame>;
 }

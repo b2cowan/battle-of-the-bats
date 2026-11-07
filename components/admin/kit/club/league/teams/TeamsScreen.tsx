@@ -4,8 +4,8 @@
  * §1-8; drawings HOUSE_LEAGUE_STAGE9C_DRAWINGS.html a-i). The 1,074-line old-look page, with its Draft mode and Randomize
  * (both retired, 9c·5), rebuilt once:
  *
- *   the head      — "Teams & draft" under the season, its sub line counting what is published;
- *   the tabs      — one a division, with its accepted count (9c·6: each division is drafted and published on its own);
+ *   the head      — none of its own (13i): the season's frame names the page; a sub line counts what is published;
+ *   the divisions — a picker (13i; the old tabs' accepted count is not shown there); 9c·6: each division is drafted and published on its own;
  *   the division  — its state pill (click: what is left), Run the draft / Draft again / Publish teams (absent until they
  *                   can be pressed), Tools ⋯ (Export; Take all players off teams, before publishing);
  *   the steps     — Teams · Ratings · Draft · Publish, each a line that says where it stands;
@@ -17,17 +17,16 @@
  */
 import { useCallback, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { useParams, useSearchParams } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Check, ChevronUp, MoreHorizontal, Plus } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
-import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { useHouseLeagueAccess, useSeasonAccess } from '@/components/admin/kit/useHouseLeagueSeasons';
 import ck from '../../ClubKit.module.css';
 import { Callout, EmptyCard, LoadFailed, NoticePill, PageLoading, repKit, useDeferredLoad, useLatestRead } from '../../RepKit';
 import { NotYours } from '../../NotYours';
 import { moneyFetch } from '../../money/MoneyKit';
-import HubTabBar from '@/components/shared/HubTabBar';
+import DivisionPicker from '@/components/admin/tournament/DivisionPicker';
 import tb from '@/components/admin/tournament/AdminToolbar.module.css';
 import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
 import { dayOf } from './api';
@@ -79,6 +78,7 @@ export default function TeamsScreen() {
   const { currentOrg, loading: orgLoading } = useOrg();
   const { seasonId } = useParams<{ seasonId: string }>();
   const search = useSearchParams();
+  const router = useRouter();
   const isPhone = useIsPhone();
   const orgSlug = currentOrg?.slug ?? '';
   const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
@@ -134,24 +134,17 @@ export default function TeamsScreen() {
   const published = !!board?.division.publishedAt;
   const teamName = useCallback((id: string | null) => board?.teams.find(t => t.id === id)?.name ?? W.pool.title, [board]);
 
-  const header = (
-    <AdminPageHeader
-      eyebrow={season?.name ?? 'House league'}
-      title={W.title}
-      backTo={{ href: base, label: season?.name ?? 'Season' }}
-      inlineActions
-    />
-  );
-  if (orgLoading || !gate) return <PageLoading header={header} label={W.loading} />;
+  // No header of its own: the season's frame names the page (Club Tier Stage 13i, A4).
+  if (orgLoading || !gate) return <PageLoading label={W.loading} />;
   if (!gate.read) return <NotYours page="houseLeague" />;
-  if (!read && !failed) return <PageLoading header={header} label={W.loading} />;
+  if (!read && !failed) return <PageLoading label={W.loading} />;
   if (failed || !read || !season) {
-    return <div className={repKit.page}>{header}<LoadFailed title={W.failed} onRetry={() => { setFailed(false); void load(); }} /></div>;
+    return <div className={repKit.page}><LoadFailed title={W.failed} onRetry={() => { setFailed(false); void load(); }} /></div>;
   }
   const tabs = read.tabs;
   const sub = <p className={css.headSub}>{W.sub(season.name, tabs.length, tabs.filter(t => t.publishedAt).length)}</p>;
   if (!board || tabs.length === 0) {
-    return <div className={repKit.page}>{header}{sub}<EmptyCard title={W.noDivisions.title}>{W.noDivisions.body}</EmptyCard></div>;
+    return <div className={repKit.page}>{sub}<EmptyCard title={W.noDivisions.title}>{W.noDivisions.body}</EmptyCard></div>;
   }
 
   // ── Derived ──────────────────────────────────────────────────────────────────────────────────
@@ -287,14 +280,17 @@ export default function TeamsScreen() {
 
   return (
     <div className={`${repKit.page} ${repKit.moneyFrame} ${css.screen}`}>
-      {header}
       {sub}
-      <HubTabBar
-        tabs={tabs.map(t => ({ id: t.id, label: t.name, href: `${base}/teams?d=${t.id}`, mark: <span className={css.tabCount}>{t.accepted}</span> }))}
-        activeId={division.id}
-        ariaLabel={W.tabsLabel}
-        remeasureKey={tabs.map(t => t.accepted).join('-')}
-      />
+      {/* ⚖ THE DIVISION IS THE TOOLBAR'S SCOPE, NOT A SECOND TAB ROW (Club Tier Stage 13i, owner 2026-11-06, Settle 2): the
+          season's own tab row sits above, so the division is picked with the pick-one box Registrations uses, at the
+          toolbar's left. Each division keeps its own address (`?d=`), so Back and a bookmark land on it. */}
+      <div className={tb.toolbar}>
+        <DivisionPicker
+          divisions={tabs.map(t => ({ id: t.id, name: t.name, waiting: 0 }))}
+          value={division.id}
+          onChange={id => router.push(`${base}/teams?d=${id}`, { scroll: false })}
+        />
+      </div>
 
       <section className={css.panel} aria-labelledby="division-name">
         <div className={css.divHead}>

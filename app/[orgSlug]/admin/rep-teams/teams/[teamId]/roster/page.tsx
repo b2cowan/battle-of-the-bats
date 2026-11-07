@@ -14,13 +14,13 @@ import { use, useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
-import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import ExportMenu from '@/components/admin/ExportMenu';
 import { CoachListToolbar } from '@/components/coaches/kit';
 import {
   EmptyCard, LoadFailed, PageLoading, RepChip, repKit, TwoOpenNote, useDeferredLoad, useLatestRead,
 } from '@/components/admin/kit/club/RepKit';
 import { usePublishRailTeam } from '@/components/admin/kit/useRailTeam';
+import { teamHeadOf, usePublishTeamHead } from '@/components/admin/kit/club/TeamFrame';
 import {
   downloadXLSX, generateCSV, downloadCSVBlob, buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
   downloadPDF, fetchResolvedPdfSettings, DEFAULT_PDF_SETTINGS, type OrgPdfSettings,
@@ -92,6 +92,7 @@ export default function TeamRosterPage({ params }: { params: Promise<{ orgSlug: 
   const team = read?.team ?? null;
   usePageTitle(team ? `Roster · ${team.name}` : 'Roster');
   usePublishRailTeam(teamId, team?.name);
+  usePublishTeamHead(teamId, read ? teamHeadOf(read.team, read.programYears) : null);
   const season = useMemo(() => (read ? liveSeasonOf(read.programYears) ?? latestClosedSeasonOf(read.programYears) : null), [read]);
   const isLive = !!season && (season.status === 'draft' || season.status === 'active');
   const active = players.filter(p => p.status === 'active').length;
@@ -118,20 +119,13 @@ export default function TeamRosterPage({ params }: { params: Promise<{ orgSlug: 
       { groups, identity: currentOrg?.name ?? undefined, shape: { orientation: 'portrait' } });
   }
 
-  const header = (
-    <AdminPageHeader
-      backTo={{ href: teamBase, label: team?.name ?? 'Team' }}
-      crumbs={[{ label: 'Rep teams' }, team?.groupName ? { label: team.groupName } : null]}
-      title="Roster"
-      titleChips={season ? <RepChip tone={isLive ? 'good' : 'neutral'}>{season.name} · {isLive ? 'Live' : 'Closed'}</RepChip> : null}
-    />
-  );
+  // ⚖ No title of its own: the team's frame names the team and lights this tab (Club Tier Stage 13i, A3 — the "← {team}"
+  // link went: the tab row reaches the team's pages).
 
-  if (orgLoading || loading) return <PageLoading header={header} label="Loading this team’s roster…" />;
+  if (orgLoading || loading) return <PageLoading label="Loading this team’s roster…" />;
   if (loadError || !team) {
     return (
       <div className={repKit.page}>
-        {header}
         <LoadFailed title="We couldn’t load this team’s roster." onRetry={() => { setLoading(true); void load(); }} />
       </div>
     );
@@ -139,7 +133,6 @@ export default function TeamRosterPage({ params }: { params: Promise<{ orgSlug: 
   if (!season) {
     return (
       <div className={repKit.page}>
-        {header}
         <EmptyCard title="No season yet">A roster belongs to a season. Start {possessive(team.name)} first season from its team page.</EmptyCard>
       </div>
     );
@@ -147,7 +140,6 @@ export default function TeamRosterPage({ params }: { params: Promise<{ orgSlug: 
 
   return (
     <div className={repKit.page}>
-      {header}
       <TwoOpenNote teamName={read!.team.name} seasons={read!.programYears} showingName={season.name} teamHref={teamBase} />
       <CoachListToolbar
         lede={`${pluralize(active, 'player')} on the ${season.name}`}

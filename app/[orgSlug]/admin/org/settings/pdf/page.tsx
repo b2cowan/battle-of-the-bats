@@ -7,7 +7,8 @@ import { DEFAULT_PDF_SETTINGS, downloadPDF, fetchResolvedPdfSettings, type OrgPd
 import HelpCallout from '@/components/help/HelpCallout';
 import KitDialog from '@/components/admin/kit/club/KitDialog';
 import s from '@/app/[orgSlug]/admin/admin-common.module.css';
-import AdminPageHeader from '@/components/admin/AdminPageHeader';
+// ⚖ Inside Organization (Club Tier Stage 13i, A5) the place names this tab, so only its actions remain (TabPageHeader).
+import { TabPageHeader } from '@/components/admin/kit/club/PlaceFrame';
 import { tournamentToday } from '@/lib/timezone';
 import LoadingState from '@/components/shared/LoadingState';
 import { NoticePill, repKit } from '@/components/admin/kit/club/RepKit';
@@ -176,7 +177,7 @@ export default function PdfSettingsPage() {
   return (
     <div className={s.page}>
       {/* ── Page header (F3): no description line — every section below names what it sets. ── */}
-      <AdminPageHeader
+      <TabPageHeader
         eyebrow="Organization"
         title="PDF settings"
         backTo={{ href: `/${currentOrg?.slug ?? ''}/admin/org/settings`, label: 'Settings' }}

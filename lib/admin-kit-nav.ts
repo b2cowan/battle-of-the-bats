@@ -1,8 +1,8 @@
 /**
  * lib/admin-kit-nav.ts — THE CLUB'S NAVIGATION, ONCE, for the admin's kit frame (Admin Design
  * Continuity slice 1). The desktop rail (`AdminKitRail`), the phone bar and its More menu
- * (`AdminKitBottomNav`) and the phone's "In <program>" row (`AdminKitProgramRow`) all read the
- * programs, their pages and the Organization links from here, so the three cannot tell different
+ * (`AdminKitBottomNav`) and each place's tab row (Club Tier Stage 13i: `repTeamsTabs`, `teamTabs`, `seasonTabs`, `orgTabs`)
+ * all read the programs, their pages and the Organization links from here, so they cannot tell different
  * stories — the coaches portal learned that with its two navs (`coach-nav-groups.test.ts`), and
  * `tests/unit/admin-kit-nav.test.ts` pins the same thing here.
  *
@@ -41,6 +41,8 @@ import { hasBillingAccess } from './roles';
 import { membersLabel } from './member-access';
 import type { OrgRole } from './types';
 import { PLAN_BILLING_TITLE } from './plan-billing-title';
+import { seasonPageHref, seasonPagesFor, type SeasonPageKey } from './house-league-season';
+import type { HouseLeagueAccess } from './house-league-access';
 
 export type AdminProgramKey =
   | 'rep-teams'
@@ -476,50 +478,63 @@ export function isFamiliesChildPage(pathname: string, base: string): boolean {
   return /^[^/]+$/.test(pathname.startsWith(`${base}/families/children/`) ? pathname.slice(`${base}/families/children/`.length) : '');
 }
 
-/** One tile on the Organization hub: a door the person holds, and the sentence under its name. */
-export type OrgHubDoor = { key: string; label: string; href: string; desc: string };
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+ * ⚖ PAGES ON THE PAGE (Club Tier Stage 13i, Asks 1 and 3 = A, owner 2026-11-06; drawing tab 6, N11). Every club place
+ * with more than one page shows them as THE shared tab row (`HubTabBar`) under its title, as Accounting and Families
+ * already do. The lists below are the one statement of each place's tabs: the place's layout draws them and, from
+ * Session B, the More sheet reads them. A tab a person cannot open is not in the list; a list of one draws no row (the
+ * component's own rule). Each tab lights on its OWN address only (`litTab`, no `views`): an address under a place that is
+ * no tab is a RECORD page one level down (a team's History, Rename team addresses, a club schedule read from a season —
+ * owner 2026-11-06, the 2026-09-30 rule kept): it keeps its own back arrow and the place draws no tab row over it.
+ * ⚰ The Organization hub's tiles (`orgHubDoors`) retired with this: `/org` goes to the first tab the person holds.
+ * ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
 
-/**
- * What each door on the Organization hub is, one sentence each (the hub's own words; the rail draws names only). The
- * ORDER of these keys is the hub's order: people first, then the club's programs and tools, the owner's own pages last.
- */
-const ORG_HUB_DESC: Record<string, string> = {
-  'org/members': 'Manage org members, roles, and invitations',
-  tournaments: 'Every tournament in one list: start one, reuse a setup, or change its status',
-  // Copy for /marketing (Club Tier Stage 6b, S6-11): one name, "Venue library", on the rail, the page and this tile.
-  'org/venues': 'The club’s venues and their facilities, booked by every program',
-  'org/pdf': 'Configure header, logo, footer, and branding for all PDF exports',
-  coaches: 'Open the team workspace assigned to you in this organization',
-  'org/billing': 'Manage your plan, subscription, and payment method',
-  'org/settings': 'Organization name, slug, contact email, and logo',
-  'org/audit': 'Who changed what on the board, and when',
-};
+/** A place's tab, as the shared tab row draws it. */
+export type PlaceTab = { id: string; label: string; href: string };
 
-const ORG_HUB_ORDER = Object.keys(ORG_HUB_DESC);
+/** Which tab of a place a path is, or null for an address that is no tab (a record page, or a place inside it). */
+export function placeTabFor(tabs: readonly PlaceTab[], pathname: string): string | null {
+  return litTab(tabs, pathname);
+}
 
-/**
- * THE ORGANIZATION HUB'S DOORS — ⚖ Club Tier Stage 13a, Ask 7 = A (owner 2026-11-06): ONE LIST OF DOORS PER PERSON. The
- * hub lists the SAME doors the rail's Organization group does (`kitOrgLinks`, already gated per person) plus the three the
- * rail keeps elsewhere — Tournaments (`canOpen('module_tournaments')`: the league admin, the registrar and the treasurer
- * hold none, and the tile took them into a tournament admin of failing pages, F-NAV-7), Plan & billing (`kitBillingLink`)
- * and the person's own Coaches Portal. Nothing here is a second gate: a tile exists exactly when its page opens.
- * F-O1-15: the owner's hub gains the Audit log tile it omitted (it came with `kitOrgLinks`).
- */
-export function orgHubDoors({ base, orgLinks, billingLink, canOpenTournaments, coachPortalHref }: {
-  base: string;
-  orgLinks: readonly KitLink[];
-  billingLink: KitLink | null;
-  canOpenTournaments: boolean;
-  /** The person's own team workspace in this org, when they have one (the owner or an admin with a rep team). */
-  coachPortalHref: string | null;
-}): OrgHubDoor[] {
-  const links: { key: string; label: string; href: string }[] = [
-    ...orgLinks,
-    ...(canOpenTournaments ? [{ key: 'tournaments', label: 'Tournaments', href: `${base}/tournaments/manage` }] : []),
-    ...(billingLink ? [billingLink] : []),
-    ...(coachPortalHref ? [{ key: 'coaches', label: 'My Coaches Portal', href: coachPortalHref }] : []),
+/** Rep teams' six tabs: the program's own pages, in their order (Teams · Assistant coaches · Document templates · Shared
+ *  library · Past seasons · Bring in a coach's team). A team under Teams is its own place (`teamTabs`). */
+export function repTeamsTabs(base: string): PlaceTab[] {
+  return programDef('rep-teams', base).pages.map(p => ({ id: p.key, label: p.label, href: p.href }));
+}
+
+/** A rep team's five tabs (moved here from the rail, 13i A1): Team page · Roster · Schedule · Tryouts · Coaches. */
+export function teamTabs(teamPath: string): PlaceTab[] {
+  return [
+    { id: 'team', label: 'Team page', href: teamPath },
+    { id: 'roster', label: 'Roster', href: `${teamPath}/roster` },
+    { id: 'schedule', label: 'Schedule', href: `${teamPath}/schedule` },
+    { id: 'tryouts', label: 'Tryouts', href: `${teamPath}/tryouts` },
+    { id: 'coaches', label: 'Coaches', href: `${teamPath}/coaches` },
   ];
-  return links
-    .map(l => ({ key: l.key, label: l.label, href: l.href, desc: ORG_HUB_DESC[l.key] ?? '' }))
-    .sort((a, b) => ORG_HUB_ORDER.indexOf(a.key) - ORG_HUB_ORDER.indexOf(b.key));
+}
+
+/** A house-league season's tabs: the pages this person can open (`seasonPagesFor`, the one season gate), in its order. */
+export function seasonTabs(seasonPath: string, access: Pick<HouseLeagueAccess, 'read' | 'readMoney' | 'email'>): (PlaceTab & { key: SeasonPageKey })[] {
+  return seasonPagesFor(access).map(p => ({ id: p.key, key: p.key, label: p.label, href: seasonPageHref(seasonPath, p.segment) }));
+}
+
+/** The Organization tab a person without Members reads in its place: who runs the club, names and roles only (13a R1). */
+export const ORG_BOARD_TAB_LABEL = 'The board';
+
+/**
+ * Organization's tabs (13i Ask 3 = A, Ask 4 = B): the person's `kitOrgLinks` in their order and nothing else — Plan &
+ * billing stays a foot row, Tournaments a program, the Coaches Portal a foot door. ⚖ THE BOARD (owner 2026-11-06, 13i
+ * Session A): a person with no Members tab (anyone but the owner on a club, once Members is not theirs) reads "The board"
+ * in Members' place, so 13a's R1 ("who runs the board, names only") keeps the home the retired hub gave it.
+ */
+export function orgTabs({ base, orgLinks, showsBoard }: { base: string; orgLinks: readonly KitLink[]; showsBoard: boolean }): PlaceTab[] {
+  const tabs = orgLinks.map(l => ({ id: l.key, label: l.label, href: l.href }));
+  return showsBoard ? [{ id: 'org/board', label: ORG_BOARD_TAB_LABEL, href: `${base}/org/board` }, ...tabs] : tabs;
+}
+
+/** Does this person read "The board" tab? Not the owner (Members is always theirs), not a one-team workspace (its staff
+ *  page is its own), and only when Members is not among their tabs. */
+export function showsOrgBoard({ role, orgLinks, isTeamWorkspace }: { role: string | null | undefined; orgLinks: readonly KitLink[]; isTeamWorkspace: boolean }): boolean {
+  return !!role && role !== 'owner' && !isTeamWorkspace && !orgLinks.some(l => l.key === 'org/members');
 }

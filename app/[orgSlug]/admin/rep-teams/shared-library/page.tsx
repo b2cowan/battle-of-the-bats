@@ -4,7 +4,6 @@ import { Pencil, Trash2, GitMerge, Plus, Check, X, Archive, RotateCcw, Library }
 import { useOrg } from '@/lib/org-context';
 import AwardIconPicker from '@/components/coaches/AwardIconPicker';
 import type { RepTeamTag, RepTeamAwardType, RepTeamDrill } from '@/lib/types';
-import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import KitDialog from '@/components/shared/KitDialog';
 import styles from '../rep-teams.module.css';
 import LoadingState from '@/components/shared/LoadingState';
@@ -631,7 +630,6 @@ export default function AdminSharedLibraryPage() {
   const { currentOrg, userRole } = useOrg();
   const orgSlug = currentOrg?.slug ?? '';
   const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
-  const base = `/${orgSlug}/admin/rep-teams`;
   const canWrite = userRole === 'owner' || userRole === 'admin';
 
   if (!orgSlug) return <div className={styles.page}><LoadingState label="Loading the shared library…" /></div>;
@@ -641,10 +639,7 @@ export default function AdminSharedLibraryPage() {
       {/* Header — the way back is the eyebrow's "Rep Teams" (the same door). The old subtitle described the
           page and was not re-homed — the paragraph below says it at length, and each section is one of
           the three (F3). */}
-      <AdminPageHeader
-        crumbs={[{ href: base, label: 'Rep teams' }, { label: currentOrg?.name ?? '' }]}
-        title="Shared library"
-      />
+      {/* ⚖ No title of its own: Rep teams' frame names the place and lights this tab (Club Tier Stage 13i, A2). */}
 
       <p className={styles.muted} style={{ margin: '0 0 1.25rem', fontSize: '0.85rem', maxWidth: 640 }}>
         Curate a small set of tags, award types and drills shared across every team in your organization. They appear in each team&rsquo;s picker alongside that team&rsquo;s own private ones. Teams can use them but can&rsquo;t rename or delete them — that stays here.
