@@ -1,17 +1,18 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
-import { BOOKKEEPING_VIEWS, bookkeepingAddress, bookkeepingPlace } from '@/lib/bookkeeping-navigation';
+import { BOOKKEEPING_VIEWS, bookkeepingAddress, bookkeepingPlace, reportViewControl, type ReportView } from '@/lib/bookkeeping-navigation';
 import { consoleDate, consoleDay } from '@/lib/console-dates';
 import kit from '../console.module.css';
 import { attentionReasons, businessCents, currentExpenses, hasConfirmedDates, summarizeExpenses, type ExpenseRevision, type ReviewFilter } from '@/lib/bookkeeping-expenses';
-import { formatCad, REGISTRATION_LINE, REGISTRATION_QUESTION, TAX_PAID_NOTE, TAX_PAID_TITLE, taxPaidRowLabel } from '@/lib/bookkeeping-gst';
-import { pluralize } from '@/lib/utils';
+import { formatCad, REGISTRATION_QUESTION } from '@/lib/bookkeeping-gst';
 import GstRegistrationQuestion from './GstRegistrationQuestion';
-import { reportPeriodRange, type NamedReportPeriod } from '@/lib/bookkeeping-export';
+import { reportPeriodRange } from '@/lib/bookkeeping-export';
+import SingleSelectDropdown from '@/components/coaches/SingleSelectDropdown';
+import ReportsSpending, { type ReportDrilldown, type ReportPeriod } from './ReportsSpending';
 import type { OwnerMovementRevision } from '@/lib/bookkeeping-owner-movements';
 import { downloadCSVBlob } from '@/lib/export';
 import OwnerLedger from './OwnerLedger';
@@ -20,7 +21,6 @@ import ExpensesRegister from './ExpensesRegister';
 import { expenseFilterParams, matchesExpenseFilters, type ExpenseFilters } from '@/lib/bookkeeping-filters';
 import { expensePeriodRange, expenseRegisterSelection } from '@/lib/bookkeeping-register';
 import { tournamentToday } from '@/lib/timezone';
-import DateInput from '@/components/shared/DateInput';
 import styles from './bookkeeping.module.css';
 
 const SOURCES: Record<string, string> = {
@@ -31,20 +31,12 @@ const STARTER_CATEGORIES = [
   'Professional services', 'Travel & meals', 'Bank charges', 'Other',
 ];
 type BookkeepingView = typeof BOOKKEEPING_VIEWS[number] | 'attention';
-type ReportPeriod = 'all' | NamedReportPeriod | 'custom';
-/** A Reports door narrows the line list with the same filter fields the export reads, so the screen and the export are one object. */
-type ReportDrilldown = Partial<Pick<ExpenseFilters, 'category' | 'supplier' | 'paymentSource' | 'taxType'>>;
 const NO_FILTERS: ExpenseFilters = { from: null, to: null, category: '', query: '', review: 'all' };
-function drilldownLabel(drill: ReportDrilldown): string {
-  if (drill.taxType) return taxPaidRowLabel(drill.taxType);
-  return drill.category || drill.supplier || (drill.paymentSource === 'personal' ? 'Paid personally' : 'All recorded expenses');
-}
 const today = () => {
   const date = new Date();
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 };
 const money = formatCad;
-const amount = (cents: number) => (cents / 100).toFixed(2);
 function BookkeepingOverview({ expenses, params, registrationDate, onOpenExpense }: {
   expenses: ExpenseRevision[]; params: URLSearchParams; registrationDate: string | null; onOpenExpense: (row: ExpenseRevision, list?: ExpenseRevision[]) => void;
 }) {
@@ -181,9 +173,30 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
     else if (value !== 'custom') { const range = reportPeriodRange(value, today()); setFrom(range.from); setTo(range.to); }
   }
 
+  /* Reports' views (owner 2026-11-07, BOOKKEEPING_REPORTS_VIEW_CONTROL_BUILD_PROMPT.md): one entry per view — its key,
+     whether it is available, and its screen. The labels and the default live with the address contract
+     (`REPORT_VIEWS` in lib/bookkeeping-navigation.ts). The period (from/to) and the export are the page's, so every view
+     reads the same ones. The View pill appears only once two entries are available. A new view that has its own line
+     list or drill-down passes its list to openRecord and its filters to exportExpenses; Spending's narrow them only
+     while Spending is open (`spendingOpen`). */
+  const reportViews: { key: ReportView; available: boolean; render: () => ReactNode }[] = [
+    { key: 'spending', available: true, render: () => <ReportsSpending
+      reportPeriod={reportPeriod} reportPeriodLabel={reportPeriodLabel} onChooseReportPeriod={chooseReportPeriod} onCustomPeriod={() => setReportPeriod('custom')}
+      from={from} to={to} onFrom={setFrom} onTo={setTo} invalidPeriod={invalidPeriod}
+      category={category} categories={categories} onCategory={setCategory} query={query} onQuery={setQuery} review={review} onReview={setReview}
+      visible={visible} legacyVisible={legacyVisible} summary={summary} reportRows={reportRows}
+      drilldown={reportDrilldown} drilled={drilled} onDrilldown={setReportDrilldown}
+      exporting={exporting} onExport={kind => exportExpenses(kind)} onOpenExpense={row => openRecord(row)}
+      attentionCount={attention.length} onOpenAttention={() => setView('attention')}
+      registrationDate={registrationDate} gstSchemaReady={gstSchemaReady} onChangeRegistration={() => setChangingRegistration(true)} /> },
+  ];
+  const reportControl = reportViewControl(place.report, reportViews);
+  /** Spending's drill-down and line list narrow the export and the record window only while Spending is the view on screen. */
+  const spendingOpen = view === 'reports' && reportControl.current === 'spending';
+
   const registerFilter = expenseRegisterSelection(params, tournamentToday()).filters;
   const defaultRecordRows = view === 'expenses' && registerFilter ? currentExpenses(expenses).filter(row => matchesExpenseFilters(row, registerFilter, registrationDate))
-    : view === 'reports' ? reportRows : currentExpenses(expenses).filter(row => !row.void_reason);
+    : spendingOpen ? reportRows : currentExpenses(expenses).filter(row => !row.void_reason);
   const windowExpense = formOpen ? editing : selectedExpense;
   const recordRows = recordIds ? recordIds.flatMap(id => expenses.find(row => row.expense_id === id) ?? []) : [...defaultRecordRows];
   if (windowExpense && !recordRows.some(row => row.expense_id === windowExpense.expense_id)) recordRows.push(windowExpense);
@@ -212,7 +225,7 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
     setExporting(kind); setError('');
     try {
       const screen: ExpenseFilters = { from: from || null, to: to || null, category, query, review };
-      const params = expenseFilterParams(filters ?? (view === 'reports' && drilled
+      const params = expenseFilterParams(filters ?? (spendingOpen && drilled
         ? { ...screen, ...Object.fromEntries(Object.entries(reportDrilldown).filter(([, value]) => value)), dateStatus: 'confirmed', status: 'active' } : screen));
       const route = kind === 'csv' ? 'export' : 'package';
       const response = await fetch(`/api/platform-admin/bookkeeping/${route}?${params}`, { cache: 'no-store' });
@@ -234,6 +247,7 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'Unable to export expenses'); }
     finally { setExporting(null); }
   }
+
   return <div className={styles.page}>
     <AdminPageHeader eyebrow="Private finance" title="Bookkeeping" inlineActions actions={
       <button type="button" className={`${styles.primaryAction} ${styles.phoneAdd}`} aria-label="Add expense" onClick={() => openForm()} disabled={!storageReady}>+</button>
@@ -260,76 +274,14 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
       schemaReady={initialOwnerSchemaReady} onOpenExpense={openRecord} />}
 
     {view === 'overview' && <BookkeepingOverview expenses={expenses} params={params} registrationDate={registrationDate} onOpenExpense={openRecord} />}
-    {view === 'reports' && <section className={styles.panel} aria-labelledby="report-title">
-          <div className={styles.viewHeading}><div><p className={styles.eyebrow}>Recorded expenses</p><h2 id="report-title">Expense report</h2>
-            <p>{reportPeriodLabel} · Period totals use confirmed incurred dates. Older dates to review appear separately.</p></div>
-            <div className={styles.exportActions}><button type="button" className={styles.export} onClick={() => exportExpenses('csv')} disabled={!!exporting || invalidPeriod}>{exporting === 'csv' ? 'Preparing CSV…' : 'Export CSV'}</button>
-              <button type="button" className={styles.export} onClick={() => exportExpenses('package')} disabled={!!exporting || invalidPeriod}>{exporting === 'package' ? 'Preparing package…' : 'Accountant package'}</button></div></div>
-          <div className={styles.filters}>
-            <label>Period<select className={kit.select} value={reportPeriod} onChange={event => chooseReportPeriod(event.target.value as ReportPeriod)}><option value="all">All confirmed dates</option><option value="month">This month to date</option><option value="year">This year to date</option><option value="last_month">Last month</option><option value="last_quarter">Last quarter</option><option value="last_year">Last calendar year</option><option value="custom">Custom dates</option></select></label>
-            <label>From · incurred date<DateInput className={kit.field} value={from} onChange={v => { setFrom(v); setReportPeriod('custom'); }} /></label>
-            <label>To · incurred date<DateInput className={kit.field} value={to} onChange={v => { setTo(v); setReportPeriod('custom'); }} /></label>
-            <label>Category<select className={kit.select} value={category} onChange={event => setCategory(event.target.value)}><option value="">All categories</option>{categories.map(value => <option key={value}>{value}</option>)}</select></label>
-            <label>Find<input className={kit.field} type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder="Supplier or purpose" /></label>
-          <label>Review view<select className={kit.select} value={review} onChange={event => setReview(event.target.value as ReviewFilter)}><option value="all">All expenses</option><option value="missing_receipt">Missing receipt</option><option value="missing_conversion">USD source not picked</option><option value="personal">Paid personally</option><option value="foreign">USD invoices</option><option value="tax_pending">Tax review pending</option></select></label>
-          </div>
-          {invalidPeriod && <p role="alert" className={styles.dateWarning}>Choose a From date on or before the To date before exporting this report.</p>}
-          <div className={styles.metrics}>
-            <div><span>Recorded spend · {reportPeriodLabel}</span><strong>{money(summary.recordedSpendCents)}</strong></div>
-            <div><span>Expenses with confirmed dates</span><strong>{summary.count}</strong></div>
-            <div><span>Dates to review</span><strong>{legacyVisible.length}</strong></div>
-          </div>
-          <p className={styles.hint}>Spend includes purchase tax and the recorded business-use share. It is not a tax-credit or profit calculation.</p>
-          <p className={styles.hint}>Expense CSV and the accountant package use the same expense filters. The package also includes owner transfers dated in the selected period; a narrowed expense view includes only linked reimbursements. Unconfirmed older expense dates stay labelled for review.</p>
-          {legacyVisible.length > 0 && <section className={styles.reviewList} aria-labelledby="legacy-dates-title"><h3 id="legacy-dates-title">Dates to review · {money(legacyVisible.reduce((total, row) => total + businessCents(row), 0))}</h3>
-            <p className={styles.hint}>These expenses have a recorded date whose meaning was not established. They are excluded from the incurred-date total until confirmed.</p>
-            {legacyVisible.map(row => <button type="button" className={styles.listDoor} key={row.expense_id} onClick={() => openRecord(row)}><span><strong>{row.supplier}</strong><small>Recorded date {consoleDate(row.expense_date)} · meaning unconfirmed</small></span><b>{money(businessCents(row))}</b></button>)}</section>}
-          <div className={styles.reportGrid}>
-            <div><h3>By category</h3>{summary.byCategory.length ? summary.byCategory.map(([name, cents]) => <button key={name} type="button" className={styles.reportDoor} onClick={() => setReportDrilldown({ category: name })}><span>{name}</span><strong>{money(cents)} ›</strong></button>) : <p>No confirmed expenses in this period.</p>}</div>
-            <div><h3>By supplier</h3>{summary.bySupplier.length ? summary.bySupplier.map(([name, cents]) => <button key={name} type="button" className={styles.reportDoor} onClick={() => setReportDrilldown({ supplier: name })}><span>{name}</span><strong>{money(cents)} ›</strong></button>) : <p>No confirmed expenses in this period.</p>}</div>
-          </div>
-          <section className={styles.taxPaid} aria-labelledby="tax-paid-title">
-            <h3 id="tax-paid-title" className={kit.sectionTitle}>{TAX_PAID_TITLE}</h3>
-            <div className={`${kit.band} ${styles.taxPaidBand}`}>
-              <div className={kit.bandCell}><span className={kit.bandLabel}>GST/HST paid</span><strong className={kit.bandValue}>{money(summary.taxPaid.gstHstCents)}</strong><span className={kit.bandNote}>{pluralize(summary.taxPaid.gstHstCount, 'expense')}</span></div>
-              <div className={kit.bandCell}><span className={kit.bandLabel}>Charged by simplified sellers</span><strong className={kit.bandValue}>{money(summary.taxPaid.simplifiedCents)}</strong><span className={kit.bandNote}>{pluralize(summary.taxPaid.simplifiedCount, 'expense')}</span></div>
-              <div className={kit.bandCell}><span className={kit.bandLabel}>Tax unknown</span><strong className={kit.bandValue}>{summary.taxPaid.unknownCount}</strong><span className={kit.bandNote}>{summary.taxPaid.unknownCount === 1 ? 'expense' : 'expenses'}</span></div>
-            </div>
-            <div className={`table-cards ${styles.taxPaidFrame}`}><table className={styles.taxPaidTable}>
-              <thead><tr><th>Tax type</th><th className={kit.num}>Expenses</th><th className={kit.num}>Tax paid</th><th aria-label="Show these expenses" /></tr></thead>
-              <tbody>{summary.taxPaid.rows.length ? summary.taxPaid.rows.map(row => <tr key={row.type}
-                className={`${kit.clickableRow} ${reportDrilldown.taxType === row.type ? styles.taxPaidOn : ''}`}
-                onClick={() => setReportDrilldown({ taxType: row.type })}>
-                <td className="table-cards-title"><button type="button" className={styles.taxPaidDoor}
-                  onClick={event => { event.stopPropagation(); setReportDrilldown({ taxType: row.type }); }}>{row.label}</button></td>
-                <td data-label="Expenses" className={kit.num}>{row.count}</td>
-                <td data-label="Tax paid" className={kit.num}>{money(row.cents)}</td>
-                <td className={kit.rowDoor} aria-hidden>›</td>
-              </tr>) : <tr><td colSpan={4} className={kit.empty}>No purchase tax recorded in this period.</td></tr>}</tbody>
-            </table></div>
-            <p className={styles.hint}>{TAX_PAID_NOTE}</p>
-            {registrationDate && <p className={styles.hint}>{REGISTRATION_LINE(registrationDate)} · <button type="button" className={styles.inlineDoor}
-              onClick={() => setChangingRegistration(true)} disabled={!gstSchemaReady}>{REGISTRATION_QUESTION.confirm}</button></p>}
-          </section>
-          <div className={`${styles.reportGrid} ${styles.reportGridWhole}`}>
-            <div><h3>Recorded spend by payment source</h3>{summary.byPaymentSource.length ? summary.byPaymentSource.map(([source, cents]) => source === 'personal' ? <button type="button" className={styles.reportDoor} key={source} onClick={() => setReportDrilldown({ paymentSource: 'personal' })}><span>{SOURCES[source]}</span><strong>{money(cents)} ›</strong></button> : <p key={source}><span>{SOURCES[source]}</span><strong>{money(cents)}</strong></p>) : <p>No active expenses.</p>}</div>
-          </div>
-          <section className={styles.reviewList} aria-labelledby="report-lines-title"><div className={styles.subHeading}><h3 id="report-lines-title">{drilldownLabel(reportDrilldown)} · {money(reportRows.reduce((total, row) => total + businessCents(row), 0))}</h3>
-            {drilled && <button type="button" className={styles.textButton} onClick={() => setReportDrilldown({})}>Show all entries</button>}</div>
-            <p className={styles.hint}>{reportRows.length} contributing expense(s) · {reportPeriodLabel}. Open a row to see its receipt and revisions.</p>
-            {reportRows.map(row => <button key={row.expense_id} type="button" className={styles.listDoor} onClick={() => openRecord(row)}><span><strong>{row.supplier}</strong><small>{consoleDate(row.incurred_date)} · {row.category} · {SOURCES[row.payment_source]}</small></span><b>{money(businessCents(row))} ›</b></button>)}
-            {!reportRows.length && <p className={styles.empty}>No expenses contribute to this figure.</p>}
-          </section>
-          <p className={styles.hint}>Paid personally: {money(summary.personallyPaidCents)} across active expenses. A later reimbursement or owner movement is a separate record and must not be entered as another expense here.</p>
-          <section className={styles.reviewList} aria-labelledby="evidence-review-title">
-            <div className={styles.subHeading}><h3 id="evidence-review-title">Needs attention</h3><button type="button" className={styles.textButton} onClick={() => setView('attention')}>Open worklist · {attention.length}</button></div>
-            <p className={styles.hint}>Missing receipts, unknown dates or tax amounts, missing GST/HST numbers and unpicked USD sources appear in one worklist. Each item opens its expense record.</p>
-          </section>
-          <section className={styles.reviewList} aria-labelledby="usd-review-title">
-            <h3 id="usd-review-title">USD invoices</h3>
-            {visible.filter(row => !row.void_reason && row.original_currency === 'USD').length ? visible.filter(row => !row.void_reason && row.original_currency === 'USD').map(row => <p key={row.expense_id}><strong>{row.supplier}</strong> · USD {amount(row.original_cents)} → CAD {amount(row.cad_cents)} · {row.conversion_note || 'USD source not picked'}</p>) : <p>No active USD invoices in this view.</p>}
-          </section>
-        </section>}
+    {view === 'reports' && <>
+      {reportControl.options && <div className={styles.reportViewBar}>
+        <SingleSelectDropdown lead label="View" options={reportControl.options} value={reportControl.current}
+          onChange={next => { if (next !== reportControl.current) router.push(bookkeepingAddress(params, { report: next as ReportView,
+            record: null, form: null, movement: null, transfer: null }), { scroll: false }); }} />
+      </div>}
+      {reportViews.find(entry => entry.key === reportControl.current && entry.available)?.render()}
+    </>}
     {view === 'expenses' && <ExpensesRegister expenses={expenses} registrationDate={registrationDate} loading={loading} exporting={Boolean(exporting)}
       onOpenExpense={openRecord} onAddNumber={(row, list) => { setRecordIds(list.map(item => item.expense_id)); openForm(row, false, null, true); }} onExport={exportExpenses} />}
 

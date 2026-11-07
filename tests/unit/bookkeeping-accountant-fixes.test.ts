@@ -101,7 +101,7 @@ describe('C3 · Permanently delete is gone (R1)', () => {
   it('no route, store function or screen can delete a record', () => {
     assert.doesNotMatch(read('app/api/platform-admin/bookkeeping/expenses/route.ts'), /export const DELETE/);
     assert.doesNotMatch(read('lib/bookkeeping-store.ts'), /DELETE FROM|deleteExpenseRevisions/);
-    for (const screen of ['BookkeepingClient.tsx', 'OwnerLedger.tsx']) {
+    for (const screen of ['BookkeepingClient.tsx', 'ReportsSpending.tsx', 'OwnerLedger.tsx']) {
       const source = read(`app/platform-admin/bookkeeping/${screen}`);
       assert.doesNotMatch(source, /Permanently delete|Delete permanently|method: 'DELETE'/, screen);
     }

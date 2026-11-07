@@ -11,6 +11,9 @@
 .exportActions, .recordActions { display: flex; flex-wrap: wrap; gap: .6rem; }
 .exportActions { justify-content: flex-end; }
 .eyebrow { text-transform: uppercase; letter-spacing: .08em; color: var(--home-olive); font: 700 var(--type-label) var(--font-data); margin: 0 0 .35rem; /* type-ok: eyebrow */ }
+/* Reports' View pill (owner 2026-11-07): the shipped olive lead pill, left, above the view it picks. It renders only once
+   two views exist; the row never wraps, so on a phone the pill keeps its line. */
+.reportViewBar { display: flex; align-items: center; flex-wrap: nowrap; gap: .6rem; margin-bottom: 1rem; min-width: 0; }
 .panel { min-width: 0; background: var(--card-bg); border: 1px solid var(--home-line); border-radius: 12px; padding: 1.3rem; box-shadow: var(--home-shadow); }
 .panel h2 { font-size: var(--type-title); margin: 0 0 .8rem; }
 .panel h3 { font-size: var(--type-heading); }

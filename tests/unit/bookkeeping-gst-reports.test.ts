@@ -130,6 +130,9 @@ describe('Review view · Tax review pending', () => {
 
 describe('No credit figure on Reports or the Overview (ruling 3)', () => {
   const client = readFileSync('app/platform-admin/bookkeeping/BookkeepingClient.tsx', 'utf8');
+  // Reports' Spending view moved out of the page into its own file (View control, 2026-11-07); a Reports rule reads both.
+  const spending = readFileSync('app/platform-admin/bookkeeping/ReportsSpending.tsx', 'utf8');
+  const reports = `${client}\n${spending}`;
   const overview = client.slice(client.indexOf('function BookkeepingOverview'), client.indexOf('export default function BookkeepingClient'));
 
   it('the Overview renders no tax figure and no tax word', () => {
@@ -138,14 +141,14 @@ describe('No credit figure on Reports or the Overview (ruling 3)', () => {
   });
 
   it('Reports never works out a credit', () => {
-    assert.doesNotMatch(client, /expenseCredit|workOutCredit|creditCents|countsOnReturn/);
-    assert.doesNotMatch(client, /Purchase tax recorded/);
+    assert.doesNotMatch(reports, /expenseCredit|workOutCredit|creditCents|countsOnReturn/);
+    assert.doesNotMatch(reports, /Purchase tax recorded/);
   });
 
   it('the Review view offers Tax review pending, and Change date re-reads after saving', () => {
-    assert.match(client, /<option value="tax_pending">Tax review pending<\/option>/);
+    assert.match(spending, /<option value="tax_pending">Tax review pending<\/option>/);
     assert.match(client, /<GstRegistrationQuestion[\s\S]*?onSaved=\{\(\) => \{[^}]*void load\(\)/);
-    assert.match(client, /disabled=\{!gstSchemaReady\}/);
+    assert.match(spending, /disabled=\{!gstSchemaReady\}/);
     const question = readFileSync('app/platform-admin/bookkeeping/GstRegistrationQuestion.tsx', 'utf8');
     assert.match(question, /expectedRevision: history\[0\]\.revision/);
     assert.match(question, /response\.status === 409\) await readHistory\(\)\.then\(setHistory\)/);
