@@ -136,8 +136,8 @@ export default function AdminChrome({
                   line itself (Q4), because the brief is never read for it. */}
               {!suspended && <FeeOverdueBanner />}
               {/* The Flip: one persistent shell header (event/org identity + status + pill), desktop
-                  and mobile. Sticky; collapses on scroll. Supersedes the old mobile top bar + the
-                  floating desktop pill. */}
+                  and mobile. Sticky, and never shrinks on scroll (Admin header bar, 2026-11-07).
+                  Supersedes the old mobile top bar + the floating desktop pill. */}
               <AdminEventHeader suspended={suspended} />
               <div className={styles.mainPad}>
                 {!suspended && <EnablePushBanner />}

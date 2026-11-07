@@ -342,13 +342,108 @@ body::before {
 .bt.on .w { background: var(--p-olive-soft); }
 .bt .lb { font: 700 10px/1 var(--p-sans); letter-spacing: 0.01em; }
 .bt .bc { position: absolute; top: -2px; right: 2px; min-width: 14px; height: 14px; padding: 0 4px; border-radius: 999px; background: var(--p-olive); color: var(--p-paper); font: 700 10px/14px var(--p-sans); text-align: center; }
+
+/* ── round 3 ── */
+.vgroup.r3 > span { color: var(--accent); }
+/* AdminPageHeader at ≤640: one column, its actions on their own row */
+.ph .ph1.stack { flex-wrap: wrap; row-gap: 0.75rem; }
+.ph .ph1.stack .acts { margin-left: 0; flex-basis: 100%; }
+/* a page's own buttons, on the paper (PlaceFrame's TabActions: right-aligned, 0.5rem gap, 0 0 0.85rem) */
+.tact { gap: 0.5rem; }
+.ph .tact .btn.io { width: 44px; min-height: 44px; padding: 0; justify-content: center; }
+.ph .tact .btn.io .w { display: none; }
+/* section heads (RepKit: 16px/700 title, 11px mono meta) */
+.sech { display: flex; align-items: center; flex-wrap: wrap; gap: 0.35rem 0.75rem; margin: 1.6rem 0 0.6rem; }
+.sech.first { margin-top: 0; }
+.sech h2 { margin: 0; font: 700 16px/1.2 var(--p-sans); }
+.sech .mm { font: 600 11px/1 var(--p-mono); color: var(--p-dim); }
+.sech .end { margin-left: auto; }
+/* team page */
+.cards4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.75rem; }
+.ph .cards4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.bcard .tv { font-weight: 800; }
+.bcard .tv.w { font-size: 16px; font-weight: 700; color: var(--p-dim); }
+.see { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.75rem; }
+.ph .see { grid-template-columns: minmax(0, 1fr); }
+.see ul { margin: 0.35rem 0 0; padding-left: 1.05rem; font-size: 13px; color: var(--p-ink2); }
+.see li { margin-bottom: 0.3rem; }
+.pline { background: var(--p-card); border: 1px solid var(--p-line); border-radius: 10px; padding: 12px 16px; display: grid; gap: 3px; }
+/* money summary */
+.band.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.ph .band.three { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.mt { background: var(--p-card); border: 1px solid var(--p-line); border-radius: 10px; overflow: hidden; }
+.mrow { display: grid; grid-template-columns: minmax(0, 1fr) 150px 150px; gap: 12px; padding: 10px 16px; border-bottom: 1px solid var(--p-line); align-items: center; }
+.mrow.four { grid-template-columns: minmax(0, 1fr) 160px 150px 28px; }
+.mrow:last-child { border-bottom: 0; }
+.mrow.h { min-height: 40px; font: 700 11px/1 var(--p-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--p-ink2); }
+.mrow .r { text-align: right; }
+.mrow.sub > span:first-child { padding-left: 1rem; color: var(--p-ink2); }
+.mrow.tot { font-weight: 700; background: var(--p-paper); }
+.mfoot { padding: 10px 16px; font-size: 13px; color: var(--p-ink2); display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: center; border-top: 1px solid var(--p-line); }
+.mfoot a { margin-left: auto; color: var(--p-olive); font-weight: 600; }
+.link1 { background: var(--p-card); border: 1px solid var(--p-line); border-radius: 10px; padding: 12px 14px; display: flex; align-items: center; gap: 10px; }
+.link1 .l { flex: 1; min-width: 0; display: grid; gap: 3px; }
+.yp { display: inline-flex; align-items: center; gap: 0.45rem; min-height: 38px; padding: 0 0.7rem; border-radius: 8px; background: var(--p-card); border: 1px solid var(--p-line2); font-size: 14px; white-space: nowrap; }
+.yp .k { color: var(--p-dim); }
+.yp .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--p-olive); }
+/* calendar toolbar: the shipped segmented control (.segChoice: one 1px track, 7px radius, lime when chosen) */
+.segc { display: inline-grid; grid-auto-flow: column; grid-auto-columns: 1fr; border: 1px solid var(--p-line2); border-radius: 7px; overflow: hidden; }
+.segc span { padding: 0.42rem 1rem; background: rgba(70,55,30,0.05); border-right: 1px solid var(--p-line); color: var(--p-dim); font: 600 14px/1.4 var(--p-sans); text-align: center; }
+.segc span:last-child { border-right: 0; }
+.segc span.on { background: var(--p-lime); color: var(--p-ink); }
+.dnav { display: inline-flex; align-items: center; gap: 0.25rem; }
+.dnav .ar { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 8px; border: 1px solid var(--p-line2); background: var(--p-card); color: var(--p-ink2); }
+.ph .dnav .ar { width: 44px; height: 44px; }
+.dnav b { font: 600 14px/1 var(--p-sans); padding: 0 0.45rem; white-space: nowrap; }
+.clash { display: inline-flex; align-items: center; gap: 0.3rem; min-height: 28px; padding: 0 0.6rem; border-radius: 999px; font: 700 10px/1 var(--p-sans); color: var(--p-amber); background: rgba(131,80,6,0.11); border: 1px solid rgba(131,80,6,0.32); white-space: nowrap; }
+.ph .clash { min-height: 44px; padding: 0 0.85rem; }
+.daterow { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem 0.75rem; margin: 0 0 0.9rem; }
+.ph .tbar .ibtn.out, .tbar .ibtn.out { background: var(--p-card); border-color: var(--p-line2); }
+.week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0.5rem; }
+.day { min-height: 420px; border-radius: 8px; border: 1px solid var(--p-line); background: var(--p-card); padding: 0.5rem; display: flex; flex-direction: column; gap: 0.4rem; }
+.day.today { border-color: var(--p-olive); box-shadow: inset 0 2px 0 var(--p-olive); }
+.dh { font: 700 11px/1.25 var(--p-sans); letter-spacing: 0.04em; text-transform: uppercase; color: var(--p-ink2); padding: 0.15rem 0.1rem 0.25rem; }
+.day.today .dh { color: var(--p-olive); }
+.day .none { color: var(--p-dim); padding: 0 0.1rem; }
+.bk { border-left: 3px solid var(--tc); border-radius: 6px; padding: 0.4rem 0.5rem 0.45rem; background: rgba(70,55,30,0.045); font-size: 12px; display: flex; flex-direction: column; gap: 2px; position: relative; }
+.bk b { font-weight: 700; }
+.bk .t { font-weight: 650; color: var(--p-ink); }
+.bk small { font-size: 11px !important; }
+.bk.cl { box-shadow: inset 0 0 0 1px rgba(131,80,6,0.6); }
+.bk.cl .fl { position: absolute; top: 4px; right: 4px; color: var(--p-amber); }
+.dstack { display: grid; gap: 0.6rem; }
+.dfr { background: var(--p-card); border: 1px solid var(--p-line); border-radius: 10px; overflow: hidden; }
+.dfr.today { border-color: var(--p-olive); }
+.dfr h3 { margin: 0; padding: 0.6rem 0.9rem 0.55rem; font: 700 11px/1.25 var(--p-sans); letter-spacing: 0.04em; text-transform: uppercase; color: var(--p-ink2); border-bottom: 1px solid var(--p-line); }
+.dfr.today h3 { color: var(--p-olive); }
+.brow { position: relative; min-height: 44px; padding: 0.55rem 2.2rem 0.6rem 0.9rem; border-left: 3px solid var(--tc); border-bottom: 1px solid var(--p-line); display: flex; flex-direction: column; gap: 2px; font-size: 13px; }
+.brow:last-child { border-bottom: 0; }
+.brow .cv { position: absolute; right: 0.7rem; top: 50%; transform: translateY(-50%); }
+.brow .amb { color: var(--p-amber); font-weight: 600; font-size: 12px; }
+.qline { border: 1px dashed var(--p-line2); border-radius: 10px; padding: 0.6rem 0.9rem; font-size: 13px; color: var(--p-dim); }
+/* child page */
+.ctbl .mrow { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) 40px 110px minmax(0, 1.1fr); }
+.twocol { display: grid; grid-template-columns: 3fr 2fr; gap: 0 1.25rem; }
+.ph .twocol { grid-template-columns: minmax(0, 1fr); }
+.kv { background: var(--p-card); border: 1px solid var(--p-line); border-radius: 10px; overflow: hidden; }
+.kv > div { display: grid; gap: 3px; padding: 11px 16px; border-bottom: 1px solid var(--p-line); }
+.kv > div:last-child { border-bottom: 0; }
+.kv .k { font: 700 11px/1.2 var(--p-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--p-ink2); }
+.blk { padding: 9px 16px; font: 700 11px/1 var(--p-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--p-ink2); background: var(--p-paper); border-bottom: 1px solid var(--p-line); }
+/* tournaments list */
+.bandh { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.3rem 0.6rem; margin: 1.4rem 0 0.5rem; }
+.bandh.first { margin-top: 0.4rem; }
+.bandh b { font: 700 11px/1 var(--p-mono); letter-spacing: 0.09em; text-transform: uppercase; color: var(--p-ink2); }
+.tlist .lrow { grid-template-columns: minmax(0, 1.5fr) 1fr 0.6fr 110px 20px; }
+.ph .tlist .lrow { grid-template-columns: minmax(0, 1fr) auto 20px; }
+.lrow .lk { color: var(--p-olive); font-weight: 600; font-size: 13px; }
 </style>
 
 <div class="doc">
   <header class="dochead">
-    <span class="eyebrow">Club admin · drawings, round 2 · Nov 7, 2026</span>
+    <span class="eyebrow">Club admin · drawings, round 3 · Nov 7, 2026</span>
     <h1>Admin header rows</h1>
-    <p>Option 4 from round 1, your pick, carried across four screens: the club’s Overview, Rep teams, a season one level down, and a tournament. The pinned bar names where you are, tabs pin inside it, and it never shrinks. Every frame is live: scroll inside it, and the numbers under it are measured from the drawing. Round 1’s other options are in this page’s version history.</p>
+    <p>Option 4, which you ruled, carried onto the five screens not drawn yet: a team inside Rep teams, Accounting, Calendar, a record page one level down (a child’s page in Families), and an organization that runs only tournaments. Round 2’s four screens are still in the Screen switch for comparison. Every frame is live: scroll inside it, and the numbers under it are measured from the drawing. Rounds 1 and 2 are in this page’s version history.</p>
   </header>
 
   <nav class="stabs" role="tablist" aria-label="Sections" id="stabs"></nav>
@@ -360,8 +455,8 @@ body::before {
 
 <script>
 (function () {
-  var S = { tab: 'four', screen: 'season', dev: 'ph', scroll: 'rest', view: 'all', line: 'two' };
-  try { var saved = JSON.parse(localStorage.getItem('adminHeaderRows2') || '{}'); for (var k in saved) S[k] = saved[k]; } catch (e) {}
+  var S = { tab: 'four', screen: 'team', dev: 'ph', scroll: 'rest', view: 'all', line: 'two' };
+  try { var saved = JSON.parse(localStorage.getItem('adminHeaderRows3') || '{}'); for (var k in saved) S[k] = saved[k]; } catch (e) {}
 
   var TABS = [
     ['today', '1 · Today'],
@@ -369,7 +464,10 @@ body::before {
     ['side', '3 · Before / after'],
     ['asks', '4 · Asks']
   ];
-  var SCREENS = [['ov', 'Overview'], ['rep', 'Rep teams'], ['season', 'A season, one level down'], ['tour', 'A tournament']];
+  var SCREENS = [['ov', 'Overview'], ['rep', 'Rep teams'], ['season', 'A season'], ['tour', 'A tournament']];
+  var SCREENS3 = [['team', 'A team'], ['acct', 'Accounting'], ['cal', 'Calendar'], ['rec', 'A child’s page'], ['tonly', 'Tournament-only org']];
+  /* the line switch (A2) applies wherever the phone bar carries facts beside the name */
+  var TWO_LINE = { season: 1, tour: 1, team: 1, rec: 1 };
 
   var P = {
     arrowL: '<path d="M19 12H5"/><path d="m12 19-7-7 7-7"/>',
@@ -405,7 +503,18 @@ body::before {
     check: '<path d="M20 6 9 17l-5-5"/>',
     mail: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 5L2 7"/>',
     chat: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
-    brief: '<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>'
+    brief: '<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>',
+    chevL: '<path d="m15 18-6-6 6-6"/>',
+    calCheck: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="m9 16 2 2 4-4"/>',
+    calPlus: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M12 14v6M9 17h6"/>',
+    calRange: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M17 14h-6M13 18H7M7 14h.01M17 18h.01"/>',
+    calClock: '<path d="M21 7.5V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3.5"/><path d="M16 2v4M8 2v4M3 10h5"/><circle cx="16" cy="16" r="6"/><path d="M16 14v2l1 1"/>',
+    alert: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4M12 17h.01"/>',
+    lock: '<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+    book: '<path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>',
+    split: '<path d="M16 3h5v5M8 3H3v5M12 22v-8.3a4 4 0 0 0-1.17-2.83L3 3M15 9l6-6"/>',
+    msg: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 5L2 7"/>',
+    site: '<circle cx="12" cy="12" r="10"/><path d="M2 12h20"/>'
   };
   function ic(n, size, sw) {
     size = size || 16; sw = sw || 1.8;
@@ -416,6 +525,11 @@ body::before {
   var CLUB = 'Harbourtown Minor Ball';
   var EVENT = 'Harbourtown Invitational';
   var DATES = 'Nov 28–29, 2026';
+  /* the tournament-only organization (Tournament Plus) */
+  var ORG2 = 'Lakeshore Tournament Series';
+  var EVENT2 = 'Lakeshore Fall Classic';
+  var TEAM = { name: '14U AA', group: 'Senior', chip: '2026 Season · Live' };
+  var CHILD = { name: 'Ava Thompson', back: 'Jordan Thompson', born: 'Born Mar 14, 2015', chip: '12U AA · 2026' };
 
   var TEAMS = [
     { g: 'Senior · 4 teams' },
@@ -448,35 +562,58 @@ body::before {
     return '<div class="it' + (on ? ' on' : '') + '">' + ic(icon, 14) + label + (cnt ? '<span class="cnt">' + cnt + '</span>' : '') + '</div>';
   }
   var FOOT = '<div class="foot">' + it('card', 'Plan & billing') + it('help', 'Help') + it('swap', 'Coaches Portal') + it('panel', 'Collapse sidebar') + '</div>';
+  /* which sidebar row / bottom-bar tab is lit on each screen */
+  var LIT = { ov: 'Overview', rep: 'Rep teams', team: 'Rep teams', season: 'House league', acct: 'Accounting', cal: 'Calendar', rec: 'Families' };
+  var LITB = { ov: 'Overview', rep: 'Rep teams', team: 'Rep teams', acct: 'Accounting', cal: 'Calendar', season: 'More', rec: 'More' };
+  function tourGroups(teamsOn, adminOpen) {
+    // Chat is paused for every plan (2026-10-18), so the rail has no Chat row.
+    return '<div class="grh">Operations ' + ic('chevD', 14) + '</div>' +
+      it('grid', 'Dashboard') + it('users', 'Teams', teamsOn, 2) + it('cal', 'Schedule') + it('trophy', 'Results') + it('check', 'Check-in') + it('brief', 'Staff kit') + it('mail', 'Communications') +
+      '<div class="grh">Setup ' + ic('chevR', 14) + '</div>' +
+      (adminOpen
+        ? '<div class="grh">Admin ' + ic('chevD', 14) + '</div>' + it('building', 'Settings & access') + it('trophy', 'Tournaments', true)
+        : '<div class="grh">Admin ' + ic('chevR', 14) + '</div>');
+  }
   function rail(screen) {
     if (screen === 'tour') {
       return '<aside class="rail" data-same>' + it('grid', 'Club overview') +
         '<div class="sec">Tournament</div><div class="tsel">' + EVENT + ic('chevD', 14) + '</div>' +
-        '<div class="grh">Operations ' + ic('chevD', 14) + '</div>' +
-        it('grid', 'Dashboard') + it('users', 'Teams', true, 2) + it('cal', 'Schedule') + it('trophy', 'Results') + it('check', 'Check-in') + it('brief', 'Staff kit') + it('mail', 'Communications') + it('chat', 'Chat') +
-        '<div class="grh">Setup ' + ic('chevR', 14) + '</div><div class="grh">Admin ' + ic('chevR', 14) + '</div>' +
-        FOOT + '</aside>';
+        tourGroups(true, false) + FOOT + '</aside>';
     }
+    if (screen === 'tonly') {
+      // A tournament-only org: no Overview row, no "Tournament" heading; the picker sits at the top.
+      return '<aside class="rail" data-same><div class="tsel" style="margin-top:0.4rem">' + EVENT2 + ic('chevD', 14) + '</div>' +
+        tourGroups(false, true) + '<div class="foot">' + it('card', 'Plan & billing') + it('help', 'Help') + it('panel', 'Collapse sidebar') + '</div></aside>';
+    }
+    var on = LIT[screen];
     return '<aside class="rail" data-same>' +
-      it('grid', 'Overview', screen === 'ov') + it('cal', 'Calendar') + it('list', 'Schedules') +
+      it('grid', 'Overview', on === 'Overview') + it('calClock', 'Calendar', on === 'Calendar') + it('list', 'Schedules') +
       '<div class="sec">Programs</div>' +
-      it('users', 'Rep teams', screen === 'rep') + it('home', 'House league', screen === 'season', 12) + it('trophy', 'Tournaments') +
+      it('users', 'Rep teams', on === 'Rep teams') + it('home', 'House league', on === 'House league', 12) + it('trophy', 'Tournaments') +
       '<div class="sec">Club</div>' +
-      it('dollar', 'Accounting', false, 3) + it('family', 'Families', false, 1) + it('globe', 'Public site') + it('building', 'Organization') +
+      it('dollar', 'Accounting', on === 'Accounting', 3) + it('family', 'Families', on === 'Families', 1) + it('globe', 'Public site') + it('building', 'Organization') +
       FOOT + '</aside>';
   }
   function bnav(screen) {
     function t(icon, label, on, bc) {
       return '<div class="bt' + (on ? ' on' : '') + '"><span class="w">' + ic(icon, 22, on ? 2.5 : 1.8) + (bc ? '<span class="bc">' + bc + '</span>' : '') + '</span><span class="lb">' + label + '</span></div>';
     }
-    if (screen === 'tour') return '<nav class="bnav" data-same>' + t('grid', 'Dashboard') + t('users', 'Teams', true, 2) + t('cal', 'Schedule') + t('chat', 'Chat') + t('menu', 'More') + '</nav>';
-    return '<nav class="bnav" data-same>' + t('grid', 'Overview', screen === 'ov') + t('cal', 'Calendar') + t('users', 'Rep teams', screen === 'rep') + t('dollar', 'Accounting', false, 3) + t('menu', 'More', screen === 'season') + '</nav>';
+    // An open event's phone bar: Dashboard · Teams · Schedule · Chat, and Chat reads "Messages" while chat is paused.
+    if (screen === 'tour') return '<nav class="bnav" data-same>' + t('grid', 'Dashboard') + t('users', 'Teams', true, 2) + t('cal', 'Schedule') + t('msg', 'Messages') + t('menu', 'More') + '</nav>';
+    if (screen === 'tonly') return '<nav class="bnav" data-same>' + t('grid', 'Dashboard') + t('users', 'Teams', false, 2) + t('cal', 'Schedule') + t('msg', 'Messages') + t('menu', 'More', true) + '</nav>';
+    var on = LITB[screen];
+    return '<nav class="bnav" data-same>' + t('grid', 'Overview', on === 'Overview') + t('calClock', 'Calendar', on === 'Calendar') + t('users', 'Rep teams', on === 'Rep teams') + t('dollar', 'Accounting', on === 'Accounting', 3) + t('menu', 'More', on === 'More') + '</nav>';
   }
 
   function tabsRow(screen, ph, inBar) {
-    var list = screen === 'rep'
-      ? [['Teams'], ['Assistant coaches'], ['Document templates'], ['Shared library'], ['Past seasons'], ['Bring in a coach’s team']]
-      : [['Overview'], ['Registrations', 12], ['Teams & draft'], ['Schedule'], ['Standings'], ['Money'], ['Email families']];
+    var TABLIST = {
+      rep: [['Teams'], ['Assistant coaches'], ['Document templates'], ['Shared library'], ['Past seasons'], ['Bring in a coach’s team']],
+      season: [['Overview'], ['Registrations', 12], ['Teams & draft'], ['Schedule'], ['Standings'], ['Money'], ['Email families']],
+      team: [['Team page'], ['Roster'], ['Schedule'], ['Tryouts'], ['Coaches']],
+      // all nine: a club that runs rep teams and has connected payouts
+      acct: [['Overview'], ['Budget'], ['Teams'], ['Ledger'], ['Bank'], ['Allocations'], ['Payment requests'], ['Budget vs. Actual'], ['Payouts']]
+    };
+    var list = TABLIST[screen];
     var h = '<div class="tabs' + (inBar ? ' inbar' : '') + '"><div class="tabrow">';
     list.forEach(function (t, i) {
       h += '<span class="tab' + (i === 0 ? ' on' : '') + '">' + t[0] + (t[1] ? '<span class="cnt">' + t[1] + '</span>' : '') + '</span>';
@@ -492,11 +629,23 @@ body::before {
       : '<span class="btn">' + ic('activity', 15) + '<span class="score">86</span>Registration health<span class="cnt">2</span></span><span class="btn">Export ' + ic('chevD', 14) + '</span><span class="btn out">Add our teams</span><span class="btn pri">' + ic('plus', 15) + 'Add team</span><span class="ibtn bare">' + ic('help', 18) + '</span>';
     return '<div class="ph1"><h1>Teams</h1><div class="acts" data-same>' + acts + '</div></div>';
   }
+  /* the Tournaments list's own title (a page of the organization; it stays on the paper in both versions) */
+  function listTitle(ph) {
+    var acts = ph
+      ? '<span class="ibtn pri">' + ic('plus', 18) + '</span><span class="ibtn bare">' + ic('help', 18) + '</span>'
+      : '<span class="btn pri">' + ic('plus', 15) + 'New tournament</span><span class="ibtn bare">' + ic('help', 18) + '</span>';
+    return '<div class="ph1"><h1>Tournaments</h1><div class="acts" data-same>' + acts + '</div></div>';
+  }
+  function backLink(label, ph) {
+    return ph
+      ? '<span class="back sq">' + ic('arrowL', 18) + '</span><i class="vr"></i>'
+      : '<span class="back">' + ic('arrowL', 15) + label + '</span><i class="vr"></i>';
+  }
 
   /* ── the header stack, per version ── */
   function headerParts(v, screen, ph) {
     var season = screen === 'season', tour = screen === 'tour';
-    var pillWord = tour ? 'Public site' : 'View site';
+    var pillWord = (tour || screen === 'tonly') ? 'Public site' : 'View site';
     var pill = ph ? '<span class="gl">' + ic('globe', 22) + '</span>' : '<span class="pill">' + ic('globe', 15) + pillWord + '</span>';
     var regOpen = '<span class="chip good">Registration open</span>';
     var open = '<span class="chip good">Open</span>';
@@ -505,45 +654,78 @@ body::before {
       ? '<span class="back sq">' + ic('arrowL', 18) + '</span><i class="vr"></i>'
       : '<span class="back">' + ic('arrowL', 15) + 'Seasons</span><i class="vr"></i>';
 
+    var teamChip = '<span class="chip good">' + TEAM.chip + '</span>';
+    var childChip = '<span class="chip good">' + CHILD.chip + '</span>';
+    var splitBtn = '<span class="btn out">Split records</span>';
+
     if (v === 'today') {
       var col = ph ? '1' : '0';
-      if (tour) {
-        var eb = '<div class="eb2">' + (ph ? '' : '<span>' + CLUB + '</span><span style="opacity:.45">·</span>') + '<span>' + DATES + '</span>' + open + '</div>';
-        var tbar = '<div class="hb" data-pin data-collapse="' + col + '"><div class="row"><div class="id">' + eb + '<div class="tr"><span class="nm">' + EVENT + '</span><span class="chipc">' + open + '</span></div></div>' + pill + '</div></div>';
-        return { bar: tbar, inPage: tourTitle(ph), padClass: '' };
+      if (tour || screen === 'tonly') {
+        // today the bar names the event; on the Tournaments list it is whichever event the organization last had open
+        var evName = tour ? EVENT : EVENT2, evOrg = tour ? CLUB : ORG2;
+        var eb = '<div class="eb2">' + (ph ? '' : '<span>' + evOrg + '</span><span style="opacity:.45">·</span>') + '<span>' + DATES + '</span>' + open + '</div>';
+        var tbar = '<div class="hb" data-pin data-collapse="' + col + '"><div class="row"><div class="id">' + eb + '<div class="tr"><span class="nm">' + evName + '</span><span class="chipc">' + open + '</span></div></div>' + pill + '</div></div>';
+        return { bar: tbar, inPage: tour ? tourTitle(ph) : listTitle(ph), padClass: '' };
       }
       var bar = '<div class="hb" data-pin data-collapse="' + col + '"><div class="row"><div class="id"><div class="nm">' + CLUB + '</div></div>' + pill + '</div></div>';
       if (screen === 'ov') return { bar: bar, inPage: '<div class="ph1"><h1>Overview</h1></div>', padClass: '' };
-      var place = !season
-        ? '<div class="ph1"><h1>Rep teams</h1></div>'
-        : '<div class="ph1">' + back + '<div class="id"><div class="eb">House league</div><div class="tr"><h1>2026 Fall House League</h1>' + chev + regOpen + '</div></div></div>';
+      if (screen === 'cal') {
+        var calAct = ph ? '<div class="acts"><span class="ibtn bare">' + ic('calRange', 20) + '</span></div>' : '';
+        return { bar: bar, inPage: '<div class="ph1"><h1>Calendar</h1>' + calAct + '</div>', padClass: '' };
+      }
+      if (screen === 'rec') {
+        var recHead = '<div class="ph1 stack">' + backLink(CHILD.back, ph) + '<div class="id"><div class="tr"><h1>' + CHILD.name + '</h1><span class="chip neutral">' + CHILD.born + '</span>' + childChip + '</div></div><div class="acts">' + splitBtn + '</div></div>';
+        return { bar: bar, inPage: recHead, padClass: '' };
+      }
+      var place;
+      if (screen === 'rep') place = '<div class="ph1"><h1>Rep teams</h1></div>';
+      else if (screen === 'acct') place = '<div class="ph1"><h1>Accounting</h1></div>';
+      else if (screen === 'team') place = '<div class="ph1 stack">' + backLink('Teams', ph) + '<div class="id"><div class="eb">Rep teams · ' + TEAM.group + '</div><div class="tr"><h1>' + TEAM.name + '</h1>' + teamChip + '</div></div></div>';
+      else place = '<div class="ph1">' + back + '<div class="id"><div class="eb">House league</div><div class="tr"><h1>2026 Fall House League</h1>' + chev + regOpen + '</div></div></div>';
       return { bar: bar, inPage: place + tabsRow(screen, ph, false), padClass: '' };
     }
 
     // option 4: the bar names where you are; the club rides the small line under the name on desktop
-    var title, metaBits = [], lead = '', tabs = false;
-    var oneLine = ph && S.line === 'one' && (season || tour);
+    var title, metaBits = [], lead = '', tabs = false, inPage = '', switcher = false, lineChip = '';
+    var oneLine = ph && S.line === 'one' && TWO_LINE[screen];
     if (screen === 'ov') { title = CLUB; }
     else if (screen === 'rep') { title = 'Rep teams'; if (!ph) metaBits.push(CLUB); tabs = true; }
     else if (season) {
-      title = '2026 Fall House League'; lead = back; tabs = true;
+      title = '2026 Fall House League'; lead = back; tabs = true; switcher = true; lineChip = regOpen;
       if (!ph) metaBits.push(CLUB);
       metaBits.push('House league'); metaBits.push('CHIP' + regOpen);
+    } else if (screen === 'team') {
+      title = TEAM.name; lead = backLink('Teams', ph); tabs = true; lineChip = teamChip;
+      if (!ph) metaBits.push(CLUB);
+      // the group rides the desktop line only: on a phone "Rep teams · Senior" plus the chip measured 13px too long
+      metaBits.push('Rep teams'); if (!ph) metaBits.push(TEAM.group); metaBits.push('CHIP' + teamChip);
+    } else if (screen === 'acct') { title = 'Accounting'; if (!ph) metaBits.push(CLUB); tabs = true; }
+    else if (screen === 'cal') { title = 'Calendar'; if (!ph) metaBits.push(CLUB); }
+    else if (screen === 'rec') {
+      title = CHILD.name; lead = backLink(CHILD.back, ph); lineChip = childChip;
+      // the phone line drops "Families": the back arrow already goes to the household, and the date of birth would be cut
+      if (!ph) { metaBits.push(CLUB); metaBits.push('Families'); }
+      metaBits.push(CHILD.born); metaBits.push('CHIP' + childChip);
+      inPage = '<div class="tact">' + splitBtn + '</div>';
+    } else if (screen === 'tonly') {
+      // the organization's own screens name the organization, as a club's Overview names the club
+      title = ORG2; inPage = listTitle(ph);
     } else {
-      title = EVENT;
+      title = EVENT; lineChip = open;
       if (!ph) metaBits.push(CLUB);
       metaBits.push(DATES); metaBits.push('CHIP' + open);
     }
     var inlineChip = '';
-    if (oneLine) { inlineChip = season ? regOpen : open; metaBits = []; }
+    if (oneLine) { inlineChip = lineChip; metaBits = []; }
     var meta = metaBits.length ? '<div class="meta">' + metaBits.map(function (b) {
       return b.indexOf('CHIP') === 0 ? '<span class="chipwrap">' + b.slice(4) + '</span>' : '<span>' + b + '</span>';
     }).join('') + '</div>' : '';
-    var trow = '<div class="tr"><span class="nm">' + title + '</span>' + (season ? chev : '') + inlineChip + '</div>';
+    var trow = '<div class="tr"><span class="nm">' + title + '</span>' + (switcher ? chev : '') + inlineChip + '</div>';
     var inner = '<div class="row">' + lead + '<div class="id">' + trow + meta + '</div>' + pill + '</div>';
     var fbar = '<div class="hb quiet' + (tabs ? ' withtabs' : '') + '" data-pin>' + inner + (tabs ? tabsRow(screen, ph, true) : '') + '</div>';
     if (tour) return { bar: fbar, inPage: tourTitle(ph), padClass: '' };
-    return { bar: fbar, inPage: '', padClass: (tabs || screen === 'ov') ? 'under' : '' };
+    if (screen === 'tonly') return { bar: fbar, inPage: inPage, padClass: '' };
+    return { bar: fbar, inPage: inPage, padClass: 'under' };
   }
 
   /* ── page bodies ── */
@@ -643,13 +825,172 @@ body::before {
     return h + '</div>';
   }
 
+  /* ── round 3 bodies ── */
+  function sech(title, meta, end, first) {
+    return '<div class="sech' + (first ? ' first' : '') + '"><h2>' + title + '</h2>' + (meta ? '<span class="mm">' + meta + '</span>' : '') + (end ? '<span class="end">' + end + '</span>' : '') + '</div>';
+  }
+  function crow(l, sub, r) {
+    return '<div class="crow"><div class="l"><b>' + l + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</div>' + (r || '') + '<span class="cv">' + ic('chevR', 16) + '</span></div>';
+  }
+  function teamBody(ph) {
+    function card(eb, fig, sub, door, words, day) {
+      return '<div class="bcard"><span class="tl">' + eb + (door ? ic('chevR', 13) : '') + '</span><b class="tv' + (words ? ' w' : '') + '"' + (day ? ' style="font-size:18px"' : '') + '>' + fig + '</b><small>' + sub + '</small></div>';
+    }
+    var h = '<div class="content" data-first data-same>';
+    h += '<div class="tact"><span class="btn out io">' + ic('calCheck', 15) + '<span class="w">Close the season</span></span><span class="btn pri io">' + ic('calPlus', 15) + '<span class="w">Start next season</span></span></div>';
+    h += '<div class="cards4">' + card('Record', 'No games yet', 'League and tournament games', false, true) + card('Roster', '12', 'players', true) +
+      card('Next event', 'Tue, Nov 17', 'Practice · 5:30 p.m.', true, false, true) + card('Tryouts', 'Closed', 'Opens on the next season', true, true) + '</div>';
+    h += sech('With the club') + '<div class="pline"><b>$600.00 outstanding · next $300.00 on Dec 1</b><small>$300.00 overdue · no request waiting</small></div>';
+    h += sech('Coaches', '2 people') + '<div class="cards">' +
+      crow('Taylor Brooks', 'Head coach · taylor.brooks@example.com') +
+      crow('r.ellis@example.com', 'Assistant coach · invited Nov 3', '<span class="chip pend">Invited</span>') + '</div>';
+    function col(icon, title, items) {
+      return '<div class="bcard"><span class="tl" style="justify-content:flex-start;gap:0.4rem">' + ic(icon, 14) + title + '</span><ul>' + items.map(function (x) { return '<li>' + x + '</li>'; }).join('') + '</ul></div>';
+    }
+    h += sech('What the club sees') + '<div class="see">' +
+      col('building', 'Yours to run', ['The team’s name, division, colour and group', 'Its seasons: start, close, reopen', 'Its coaches', 'Tryout sign-ups', 'The documents families sign', 'Allocations and payment-request decisions']) +
+      col('book', 'The coach’s, and you can read it', ['The roster', 'The schedule and results', 'Payment requests', 'How many families are connected', 'A closed season’s record, roster and staff', 'The team’s cash on hand (one figure; never its other spending or the rest of its books)']) +
+      col('lock', 'The coach’s alone', ['Attendance', 'Lineups', 'Awards', 'Player development', 'Opponents and scouting', 'Practice plans']) + '</div>';
+    h += sech('Team details') + '<div class="kv"><div><span class="k">Name</span>14U AA</div><div><span class="k">Group</span>Senior</div><div><span class="k">Division</span>14U<small>Coaches see this in their Team settings. Only the club changes it.</small></div><div><span class="k">Public address</span>harbourtown/teams/14u-aa<small>Rename team URLs on Rep teams changes it.</small></div></div>';
+    h += sech('Seasons', '2 seasons') + '<div class="cards">' +
+      crow('2026 Season', 'No games yet · 12 players · Taylor Brooks', '<span class="chip good">Live</span>') +
+      crow('2025 Season', '18–9–1 · 12 players · Taylor Brooks', '<span class="chip neutral">Closed</span>') + '</div>';
+    return h + '</div>';
+  }
+  function acctBody(ph) {
+    var h = '<div class="content" data-first data-same>';
+    h += '<div class="tbar"><span class="yp"><span class="k">Fiscal year</span>2026–27<span class="dot"></span>' + ic('chevD', 14) + '</span><span class="sp"></span>' +
+      (ph ? '<span class="ibtn out">' + ic('download', 18) + '</span>' : '<span class="btn out">' + ic('download', 15) + 'Export ' + ic('chevD', 14) + '</span>') + '</div>';
+    h += sech('Where the club stands · today, Nov 7', '', '', true);
+    h += '<div class="band three">' + tile('Cash on hand', '$18,420.55', 'the club’s 3 books') +
+      tile('Owed by the teams', '$4,270.00', '$1,290.00 overdue · $450.00 sent, waiting for you') +
+      tile('Waiting on you', '2', '2 requests · 1 holding up a payout', 'amber') + '</div>';
+    if (ph) {
+      h += '<div style="margin-top:1rem" class="link1"><div class="l"><b>2026–27 against the budget</b><small>Spent $27,910.35 of $82,500.00 · collected $31,240.00 of $86,000.00 · headroom $54,589.65</small></div><span class="cv">' + ic('chevR', 16) + '</span></div>';
+      h += '<div style="margin-top:0.6rem" class="link1"><div class="l"><b>The teams</b><small>3 with money late · 2 with a request waiting</small></div><span class="cv">' + ic('chevR', 16) + '</span></div>';
+    } else {
+      function mr(a, b, c, cls) { return '<div class="mrow' + (cls ? ' ' + cls : '') + '"><span>' + a + '</span><span class="r">' + b + '</span><span class="r">' + c + '</span></div>'; }
+      h += sech('2026–27 against the budget', 'To Nov 7') + '<div class="mt">' + mr('', 'Planned', 'So far', 'h') +
+        mr('Revenue', '$86,000.00', '$31,240.00') + mr('From the teams, on allocations', '$24,000.00', '$9,600.00', 'sub') + mr('From the teams, on request', '—', '$1,450.00', 'sub') +
+        mr('Expenses', '$82,500.00', '$27,910.35') + mr('Paid to teams on request', '—', '$2,300.00', 'sub') +
+        mr('Net for 2026–27', '$3,500.00', '$3,329.65', 'tot') +
+        '<div class="mfoot"><span>Headroom: $54,589.65 of the year’s planned spending is left.</span><a>Budget vs. Actual ›</a></div></div>';
+      h += sech('The teams', '8 teams · 2026–27') + '<div class="mt"><div class="mfoot" style="border-top:0"><span><b style="color:var(--p-red)">3 teams have money late</b> · 2 have a request waiting for you</span><a>Teams ›</a></div></div>';
+    }
+    var add = ph ? '<span class="ibtn out">' + ic('plus', 18) + '</span>' : '<span class="btn out">' + ic('plus', 15) + 'Add ledger</span>';
+    h += sech('The club’s books', '3 ledgers', add);
+    if (ph) {
+      h += '<div class="cards">' + crow('General', 'Club · $14,980.25') + crow('2026 Fall House League', 'House league · $2,140.30') + crow('Harbourtown Invitational', 'Tournament · $1,300.00') + '</div>';
+    } else {
+      function lr(a, k, b) { return '<div class="mrow four"><span>' + a + '</span><span>' + (k ? '<span class="chip neutral">' + k + '</span>' : '') + '</span><span class="r">' + b + '</span><span class="cv">' + (k ? ic('chevR', 16) : '') + '</span></div>'; }
+      h += '<div class="mt"><div class="mrow four h"><span>Ledger</span><span>Kind</span><span class="r">Balance</span><span></span></div>' +
+        lr('General', 'Club', '$14,980.25') + lr('2026 Fall House League', 'House league', '$2,140.30') + lr('Harbourtown Invitational', 'Tournament', '$1,300.00') +
+        '<div class="mrow four tot"><span>Cash on hand</span><span></span><span class="r">$18,420.55</span><span></span></div></div>';
+    }
+    return h + '</div>';
+  }
+  var WEEK = [
+    { d: 'Mon, Nov 2', b: [['5:30–7:30 p.m.', '14U AA · Practice', 'Harbourtown Dome · Field 1', '#1F6B4F'], ['6:00–8:00 p.m.', '16U AA · Practice', 'Harbourtown Dome · Field 2', '#8A2B3A']] },
+    { d: 'Tue, Nov 3', b: [['6:00–7:30 p.m.', '12U AAA · Practice', 'Lakeview Park · Diamond 2', '#3F6B7A']] },
+    { d: 'Wed, Nov 4', b: [['5:30–7:00 p.m.', '11U AA · Practice', 'Harbourtown Dome · Field 1', '#7A5A1F'], ['7:00–8:30 p.m.', '13U AA · Practice', 'Harbourtown Dome · Field 1', '#6B4F1F']] },
+    { d: 'Thu, Nov 5', b: [] },
+    { d: 'Fri, Nov 6', b: [['6:00–8:00 p.m.', '15U AAA · Practice', 'Harbourtown Dome · Field 1', '#2B3F7A', 'Clashes with 15U AA'], ['7:00–9:00 p.m.', '15U AA · Practice', 'Harbourtown Dome · Field 1', '#1F7A70', 'Clashes with 15U AAA']] },
+    { d: 'Sat, Nov 7', today: true, b: [['9:00–10:30 a.m.', '13U AA · Practice', 'Harbourtown Dome · Field 2', '#6B4F1F'], ['10:00 a.m.–12:00 p.m.', '11U AA · Game', 'Lakeview Park · Diamond 1', '#7A5A1F'], ['1:00–3:00 p.m.', '12U AA · Game', 'Lakeview Park · Diamond 2', '#5A3F7A']] },
+    { d: 'Sun, Nov 8', b: [] }
+  ];
+  function calBody(ph, v) {
+    // on a phone the toolbar is where option 4 changes something, so only its unchanged parts are marked
+    var h = ph ? '<div class="content" data-first>' : '<div class="content" data-first data-same>';
+    var clash = '<span class="clash">' + ic('alert', 13) + '1 clash</span>';
+    var dnav = '<span class="dnav"><span class="ar">' + ic('chevL', 16) + '</span><b>' + (ph ? 'Nov 2 – 8' : 'Nov 2 – 8, 2026') + '</b><span class="ar">' + ic('chevR', 16) + '</span></span>';
+    if (!ph) {
+      // Toolbar Rules, Rule 2: which week on the left (the switch and the dates); the narrowings right of the gap, then Export
+      h += '<div class="tbar"><span class="segc"><span>List</span><span class="on">Week</span><span>Month</span></span>' + dnav +
+        '<span class="sp"></span><span class="sel">Every venue ' + ic('chevD', 14) + '</span><span class="sel">Every program ' + ic('chevD', 14) + '</span><span class="sel">Every team ' + ic('chevD', 14) + '</span>' + clash +
+        '<span class="btn out">' + ic('download', 15) + 'Export ' + ic('chevD', 14) + '</span></div>';
+      h += '<div class="week">';
+      WEEK.forEach(function (d) {
+        h += '<div class="day' + (d.today ? ' today' : '') + '"><span class="dh">' + (d.today ? 'Today · ' : '') + d.d + '</span>';
+        if (!d.b.length) h += '<span class="none">—</span>';
+        d.b.forEach(function (b) {
+          h += '<div class="bk' + (b[4] ? ' cl' : '') + '" style="--tc:' + b[3] + '">' + (b[4] ? '<span class="fl">' + ic('alert', 12) + '</span>' : '') + '<b>' + b[0] + '</b><span class="t">' + b[1] + '</span><small>' + b[2] + '</small></div>';
+        });
+        h += '</div>';
+      });
+      h += '</div>';
+    } else {
+      // option 4 moves the view menu out of the gone heading, into the toolbar's first slot (where the desk's switch sits)
+      // the shipped glyph trigger: a quiet ghost box, no border, no fill (Schedule view menu, 2026-09-21 C1)
+      var viewBtn = v === 'four' ? '<span class="ibtn bare">' + ic('calRange', 20) + '</span>' : '';
+      // the shipped phone Filter: the pill with its word and chevron
+      h += '<div class="tbar">' + viewBtn + '<span class="sel" style="min-height:44px" data-same>Filter ' + ic('chevD', 14) + '</span><span class="sp"></span><span class="ibtn out" data-same>' + ic('download', 18) + '</span></div>';
+      h += '<div class="daterow" data-same>' + dnav + clash + '</div><div class="dstack" data-same>';
+      WEEK.forEach(function (d) {
+        if (!d.b.length) { h += '<div class="qline">' + d.d + ' · nothing scheduled</div>'; return; }
+        h += '<div class="dfr' + (d.today ? ' today' : '') + '"><h3>' + (d.today ? 'Today · ' : '') + d.d + '</h3>';
+        d.b.forEach(function (b) {
+          h += '<div class="brow" style="--tc:' + b[3] + '"><b>' + b[0] + '</b><span>' + b[1] + '</span><small>' + b[2] + '</small>' + (b[4] ? '<span class="amb">' + b[4] + '</span>' : '') + '<span class="cv">' + ic('chevR', 16) + '</span></div>';
+        });
+        h += '</div>';
+      });
+      h += '</div>';
+    }
+    return h + '</div>';
+  }
+  function recBody(ph) {
+    var h = '<div class="content" data-first data-same>';
+    var SEAS = [
+      ['2026 Fall House League', 'U11', 'House league', '—', 'pend', 'In review', 'Not owed yet'],
+      ['2026 Season', '12U AA', '', '7', 'good', 'Active', '$1,200.00 · $600.00 paid'],
+      ['2025 Season', '11U AA', '', '7', 'neutral', 'Finished', 'Paid in full']
+    ];
+    h += sech('Seasons', '', '', true);
+    if (ph) {
+      h += '<div class="cards">' + SEAS.map(function (s) { return crow(s[0], s[1] + (s[2] ? ' · ' + s[2] : '') + ' · ' + s[6], '<span class="chip ' + s[4] + '">' + s[5] + '</span>'); }).join('') + '</div>';
+    } else {
+      h += '<div class="mt ctbl"><div class="mrow h"><span>Season</span><span>Team or division</span><span class="r">#</span><span>Status</span><span class="r">Fees</span></div>' +
+        SEAS.map(function (s) { return '<div class="mrow"><b>' + s[0] + '</b><span style="display:grid">' + s[1] + (s[2] ? '<small>' + s[2] + '</small>' : '') + '</span><span class="r">' + s[3] + '</span><span><span class="chip ' + s[4] + '">' + s[5] + '</span></span><span class="r">' + s[6] + '</span></div>'; }).join('') + '</div>';
+    }
+    var DOCS = [['Waiver', 'good', 'Signed', 'Sep 2, 2026'], ['Medical form', 'pend', 'To sign', 'Sep 4, 2025'], ['Code of conduct', 'good', 'Signed', 'Sep 2, 2026']];
+    h += '<div class="twocol"><div>' + sech('Documents', '', '<span class="chip pend">1 to sign</span>') + '<div class="mt"><div class="blk">12U AA · 2026 Season</div>' +
+      (ph
+        ? DOCS.map(function (d) { return '<div class="crow"><div class="l"><b>' + d[0] + '</b><small>Last signed ' + d[3] + '</small></div><span class="chip ' + d[1] + '">' + d[2] + '</span></div>'; }).join('')
+        : '<div class="mrow h"><span>Document</span><span>For 2026</span><span class="r">Last signed</span></div>' +
+          DOCS.map(function (d) { return '<div class="mrow"><span>' + d[0] + '</span><span><span class="chip ' + d[1] + '">' + d[2] + '</span></span><span class="r">' + d[3] + '</span></div>'; }).join('')) +
+      '</div></div>' +
+      '<div>' + sech('Health and emergency') + '<div class="kv"><div><span class="k">Medical note</span>Nothing on file</div><div><span class="k">Emergency contact</span>Jordan Thompson · 416-555-0142</div></div></div></div>';
+    h += sech('Parents') + '<div class="cards">' + crow('Jordan Thompson', 'jordan.thompson@example.com · 416-555-0142') + crow('Sam Thompson', 'Typed on the roster · not in the Families book yet') + '</div>';
+    return h + '</div>';
+  }
+  function tonlyBody(ph) {
+    var h = '<div class="content" data-first data-same>';
+    function band(label, n, note, rows, first) {
+      var b = '<div class="bandh' + (first ? ' first' : '') + '"><b>' + label + ' · ' + n + '</b><small>' + note + '</small></div><div class="list tlist">';
+      if (!ph) b += '<div class="lrow" style="font:700 11px/1 var(--p-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--p-ink2)"><span>Tournament</span><span>Dates</span><span>Teams</span><span></span><span></span></div>';
+      rows.forEach(function (r) {
+        b += ph
+          ? '<div class="lrow"><span><b>' + r[0] + '</b><br><small>' + r[1] + ' · ' + r[2] + '</small></span><span></span><span class="cv">' + ic('chevR', 16) + '</span></div>'
+          : '<div class="lrow"><b>' + r[0] + '</b><span>' + r[1] + '</span><span>' + r[2] + '</span><span class="lk">' + (r[3] ? 'Reuse setup' : '') + '</span><span class="cv">' + ic('chevR', 16) + '</span></div>';
+      });
+      return b + '</div>';
+    }
+    h += band('Active', 1, 'public site online', [[EVENT2, 'Nov 28–29, 2026', '8 teams']], true);
+    h += band('Draft', 1, 'private', [['Lakeshore Winter Showcase', 'Dates not set', 'no teams yet']]);
+    h += band('Completed', 4, 'public site online', [['Lakeshore Summer Slam', 'Jul 11–12, 2026', '16 teams', 1], ['Lakeshore Spring Opener', 'May 16–17, 2026', '12 teams', 1], ['2025 Lakeshore Fall Classic', 'Nov 22–23, 2025', '10 teams', 1], ['2025 Lakeshore Summer Slam', 'Jul 12–13, 2025', '14 teams', 1]]);
+    h += '<div class="bandh"><b>Sealed records</b></div><div class="cards">' +
+      crow('2025 Lakeshore Fall Classic', 'Sealed Dec 2, 2025') + crow('2025 Lakeshore Summer Slam', 'Sealed Jul 20, 2025') +
+      '<div class="crow"><span class="lk" style="color:var(--p-olive);font-weight:600">Past tournaments ↗</span></div></div>';
+    return h + '</div>';
+  }
+
   /* ── one frame ── */
   var DESK = { w: 1440, h: 760 }, PHONE = { w: 402, h: 756 };
   var uid = 0;
   function frame(v, screen, dev) {
     var ph = dev === 'ph';
     var hp = headerParts(v, screen, ph);
-    var body = screen === 'ov' ? ovBody(ph) : screen === 'rep' ? repBody(ph) : screen === 'season' ? seasonBody(ph) : tourBody(ph);
+    var BODY = { ov: ovBody, rep: repBody, season: seasonBody, tour: tourBody, team: teamBody, acct: acctBody, cal: calBody, rec: recBody, tonly: tonlyBody };
+    var body = BODY[screen](ph, v);
     var page = hp.bar + '<div class="pad ' + hp.padClass + '">' + hp.inPage + body + '</div>';
     var size = ph ? PHONE : DESK;
     var id = 'f' + (++uid);
@@ -668,7 +1009,12 @@ body::before {
       ov: '<p>The bar names the club and the paper says “Overview”: two titles for one screen, both 20px bold on desktop.</p><ul><li>On a phone the club bar is a tall block, because View site keeps its full 44px tap size inside it, and it shrinks once you scroll past 64px. You had that snap taken out of the coaches portal on Sept 21, 2026.</li></ul><p class="small">Drawn with the short name. Your test club’s “(navj-club-13i)” wraps the phone bar to two lines.</p>',
       rep: '<p>The bar names the club. “Rep teams” sits under it on the paper and scrolls away with the tabs.</p><ul><li>The pinned bar holds the one fact that never changes for a club admin: which club.</li><li>Both names are 20px bold on desktop, so neither reads as the main one.</li></ul>',
       season: '<p>The bar names the club. The season’s header sits on the paper: back arrow, “House league”, the season’s name, its switcher, and the status chip.</p><ul><li>On a phone the header takes three rows: the club bar, the season name with its switcher, and the status chip wrapped onto its own row.</li><li>Scroll down and nothing on screen says which season you are reading.</li></ul>',
-      tour: '<p>Inside a tournament the bar already names the place: the event, with the club, dates and status on a small line above the name. The page you are on, “Teams”, keeps its own title on the paper, because tournament pages are reached from the sidebar, not from tabs.</p><ul><li>On a phone the small line folds away as you scroll and the status chip jumps beside the name.</li><li>The button in the bar says “Public site” here and “View site” on club screens.</li></ul>'
+      tour: '<p>Inside a tournament the bar already names the place: the event, with the club, dates and status on a small line above the name. The page you are on, “Teams”, keeps its own title on the paper, because tournament pages are reached from the sidebar, not from tabs.</p><ul><li>On a phone the small line folds away as you scroll and the status chip jumps beside the name.</li><li>The button in the bar says “Public site” here and “View site” on club screens.</li></ul><p class="small">Corrected in round 3: round 2 drew a Chat row and a Chat tab. Chat is paused, so the sidebar has no Chat row and the phone tab reads Messages.</p>',
+      team: '<p>The bar names the club. The team’s header sits on the paper: “← Teams”, the small “Rep teams · Senior” line above the name, the team’s name and its season chip. Its five tabs sit under it and scroll away with it.</p><ul><li>On a phone the way back is an arrow on its own, and the chip drops under the name when it does not fit.</li><li>Rep teams’ own tabs are gone on this screen. Inside a team, the row is the team’s.</li><li>Close the season and Start next season belong to the Team page tab, at the top right of the page.</li></ul>',
+      acct: '<p>The bar names the club. “Accounting” sits on the paper with up to nine tabs under it. The fiscal year is picked in each tab’s own toolbar, not in the header.</p><ul><li>On a phone about five of the nine tabs show at a time (Overview to Bank). The row scrolls sideways, with an arrow at whichever end hides a tab.</li><li>Drawn with all nine: a club that runs rep teams and has connected payouts. Without rep teams it is six tabs; without payouts, one fewer.</li></ul>',
+      cal: '<p>The bar names the club and “Calendar” sits on the paper. On a phone the view menu (Week or Month) is a button beside that heading. On desktop the List · Week · Month switch leads the toolbar instead, and the heading has no buttons.</p><ul><li>Calendar has no tabs and no place of its own.</li></ul>',
+      rec: '<p>A child’s page in Families, opened from a household. The bar names the club. The page’s header sits on the paper: a way back named after the parent (“← Jordan Thompson”), the child’s name, two chips (date of birth, and where the child plays now), and Split records, which shows when the child has two or more seasons.</p><ul><li>Families’ tabs do not show on this page.</li><li>The other record pages are built the same way, with one exception: <b>Rename team URLs has no back arrow.</b> Its way back is the “Rep teams” link in its small line, although a comment in the code says it has one.</li></ul>',
+      tonly: '<p>An organization on Tournament or Tournament Plus has no Overview. Its home is the Tournaments list, and its other screens are Settings &amp; access, Members, Plan &amp; billing and Notifications.</p><ul><li><b>On those screens the bar names an event already:</b> whichever one the organization last had open, or else the active one. Here that is the Lakeshore Fall Classic, with its dates and “Open”, above a page that lists every tournament.</li><li>The bar names the organization only when it has no tournament at all, or on Notifications.</li><li>The sidebar is the tournament’s own, with the event picker at the top and no Overview row.</li></ul><p class="small">So the question in the plan, “what does the bar say on its non-tournament screens”, had the wrong premise: those screens live inside the tournament area and already show an event. See ask A10.</p>'
     },
     four: {
       head: '<h2>Option 4: the bar names where you are</h2><p>One rule on every screen. On Overview the bar names the club. In a place with tabs, like Rep teams or a season, it names that place and the tabs pin inside it. Inside a tournament it names the event, as it does today. The small line under the name carries the facts: the club (desktop only), the section, dates and status. The bar never shrinks.</p>',
@@ -676,44 +1022,73 @@ body::before {
       rep: '<div class="tags"><span class="tag re">Restyled · the bar says “Rep teams”</span><span class="tag new">New · tabs pinned inside the bar</span><span class="tag">Unchanged · the page</span></div><ul><li>The bar says “Rep teams”, with the club on the small line under it on desktop. On a phone it is one line with no club.</li><li>The heading on the paper goes, and the tabs move into the bar and stay on screen as you scroll.</li></ul>',
       season: '<div class="tags"><span class="tag re">Restyled · the season’s header moves into the bar</span><span class="tag new">New · on a phone, a second line for the status</span><span class="tag new">New · tabs pinned inside the bar</span></div><ul><li>First line: back arrow, the season’s name, its switcher, View site.</li><li>Second line: “House league · Registration open”. It stays on every one of the seven tabs and never scrolls away, the rule tournaments already follow. On desktop it starts with the club.</li><li>On a phone the season header goes from three rows on the paper to two lines in the bar.</li></ul><p class="cost"><b>The phone bar’s second line goes against your Sept 21 ruling</b> for the coaches portal, where you saw one-line and two-line bars at true size and chose one line everywhere. The switch above the frame draws the one-line form: the status sits beside the name and “House league” goes. The season’s name then gets cut short to make room.</p>',
       tour: '<div class="tags"><span class="tag re">Restyled · the small line moves under the name, and it stays</span><span class="tag">Unchanged · the page title “Teams”, its buttons, the tournament sidebar</span></div><ul><li>The same shape as every other screen: the event’s name on top, then the club, dates and status under it. On a phone the club comes off, as it does today.</li><li>No shrink on scroll, so the status chip no longer jumps beside the name.</li><li>“Teams” keeps its title on the paper. Tournament pages come from the sidebar, which became the tournament’s own when you entered it, so the bar names the event and the paper names the page.</li></ul><p class="small">To see before and after together, open <b>3 · Before / after</b> with “A tournament” picked.</p>',
+      team: '<div class="tags"><span class="tag re">Restyled · the team’s header moves into the bar</span><span class="tag new">New · its five tabs pinned inside the bar</span><span class="tag">Unchanged · the page</span></div><ul><li>First line: “← Teams”, the team’s name, View site. Second line: “Rep teams” and the season chip; on desktop it starts with the club and adds the team’s group (“Senior”). The same shape as a season.</li><li>The team’s tabs take the place of Rep teams’ tabs in the bar, as they do on the paper today.</li><li>Close the season and Start next season stay at the top of the Team page tab. A tab’s own buttons stay on the tab.</li><li>The small line moves from above the name to under it, as it did for the season and the tournament.</li></ul><p class="small">On a phone the group comes off the second line. Measured, “Rep teams · Senior” and the chip ran 13px past the room and cut both words. The chip is never cut.</p>',
+      acct: '<div class="tags"><span class="tag re">Restyled · the bar says “Accounting”</span><span class="tag new">New · nine tabs pinned inside the bar</span><span class="tag">Unchanged · the page, the Year pill</span></div><ul><li>The bar says “Accounting”, with the club under it on desktop. On a phone it is one line.</li><li>The tab row is the same sideways row as today, now pinned. The open tab scrolls into view when it opens, and each arrow moves the row by about two thirds of its width.</li><li>The fiscal year stays in the toolbar of the four tabs that read a year (Overview, Budget, Teams, Budget vs. Actual). The bar does not repeat it; see ask A6.</li></ul><p class="cost"><b>Does the sideways row still work on a phone when it is pinned? Yes.</b> Pinning does not change the row: it is the same control at the same width as on the paper today, and as the season’s seven tabs. What pinning adds is that you can switch tabs from the bottom of a long ledger. The cost stays the same as today: on a phone you see about five tabs at a time, so the last four (Allocations to Payouts) take a swipe or a tap on the arrow.</p>',
+      cal: '<div class="tags"><span class="tag re">Restyled · the bar says “Calendar”</span><span class="tag new">Moved · on a phone, the view menu goes into the toolbar</span><span class="tag">Unchanged · desktop below the bar</span></div><ul><li>The bar says “Calendar”, with the club under it on desktop. The heading on the paper goes.</li><li>On a phone the view button moves from beside the heading to the first place in the toolbar, before Filter. That is where the List · Week · Month switch sits on desktop, so the control is in the same place on both. It keeps its look: a 44px button showing the current view, opening the same View drawer.</li><li>No tabs, so Calendar pays only for the bar.</li></ul><p class="small">Schedules follows the same rule. Its heading buttons move into its toolbar the same way; they are checked when Phase 3 builds it.</p>',
+      rec: '<div class="tags"><span class="tag re">Restyled · the bar names the child, with the way back</span><span class="tag new">Moved · Split records goes to the top of the page</span><span class="tag re">Restyled · the date of birth is words, not a chip</span></div><ul><li>First line: “← Jordan Thompson”, the child’s name, View site. Second line on desktop: the club · Families · Born Mar 14, 2015 · the chip “12U AA · 2026”.</li><li>On a phone “Families” comes off the second line, so the date of birth is not cut. The back arrow already goes to the household.</li><li>Split records moves to the top right of the page, where every tab puts its own buttons.</li><li>No tabs. Families’ tabs do not show on a record page today, and this does not add them.</li><li>The same rule covers every record page with its own way back: Rename team URLs (“← Rep teams”, ask A9), a team’s History (“← the team”), and one past season (“← History”). Not a team’s account in Accounting: you ruled on Oct 16 that it is a view of the Teams tab, with the tab row, a Team pill and no back arrow, so it keeps Accounting’s bar.</li></ul><p class="small">A fact (the date of birth) reads as words on the small line; the status (where the child plays) stays a chip. That is the season’s pattern: “House league” as words, “Registration open” as a chip.</p>',
+      tonly: '<div class="tags"><span class="tag re">Restyled · the bar names the organization on its own screens</span><span class="tag">Unchanged · the page title “Tournaments”, its buttons, the sidebar</span></div><ul><li>On the organization’s own screens (the Tournaments list, Settings &amp; access, Members, Plan &amp; billing, Notifications) the bar says the organization’s name, with no small line, as a club’s Overview names the club. Those screens are its home, not an event.</li><li>Inside an event (its Dashboard, Teams, Schedule…) the bar names the event, the round 2 tournament drawing.</li><li>Each page keeps its own title on the paper, as tournament pages do.</li><li>The sidebar’s picker still says which event its Operations rows open, so the event is still on screen.</li></ul><p class="small">A club’s Tournaments list has the same fault today (not drawn). Under option 4 it is one of the club’s places, so its bar would say “Tournaments” with the club under it on desktop.</p>',
       costs: '<div class="cost"><p><b>What option 4 costs, on every screen:</b></p><ul>' +
-        '<li>Pinned space. On a phone a place with tabs keeps the bar, the tab row and the bottom bar on screen; see the figure under the frame. Screens without tabs pay only for the bar.</li>' +
-        '<li>Pinned tabs are every place or none. Some screens only was reversed in the coaches portal on Aug 19, 2026.</li>' +
+        '<li>Pinned space. On a phone a place with tabs keeps the bar, the tab row and the bottom bar on screen; see the figure under the frame. Screens without tabs (Overview, Calendar, a record page) pay only for the bar.</li>' +
+        '<li>Pinned tabs are every place or none. “Some screens only” was reversed in the coaches portal on Aug 19, 2026.</li>' +
         '<li>The two portals work differently. The coaches portal’s bar names the team on every screen; the admin’s changes as you move around. A coach lives inside one team; an admin moves between places.</li>' +
-        '<li>Calendar and Schedules have no place of their own, so their bar would say “Calendar” or “Schedules” and their heading on the paper goes. The buttons beside today’s heading, like Calendar’s view menu, need a new home in the page’s toolbar. Not drawn yet.</li>' +
         '<li>On a phone the club’s name shows only on Overview.</li>' +
-        '<li>Deeper screens follow the season’s pattern but are not drawn here: a team inside Rep teams (its own five tabs), a record page with its own way back, and Accounting with up to nine tabs.</li>' +
-        '<li>Inside a tournament the page’s main heading stays on the paper (“Teams”); on club screens it moves into the bar. The plan will write that rule down.</li>' +
+        '<li>Inside a tournament the page’s main heading stays on the paper (“Teams”); on club screens it moves into the bar. The plan writes that rule down.</li>' +
+        '<li>Buttons that sat beside a heading that goes (Calendar’s phone view menu, a record page’s Split records) move to the top of the page: the toolbar, or the right-hand button row.</li>' +
+        '</ul><p><b>Past design rulings this departs from</b>, found by the design review and not named in round 2:</p><ul>' +
+        '<li><b>Oct 1, “No club name above a page title.”</b> Its reason was that the bar already showed the club. Option 4 takes the club out of the bar, so A4 puts it back on the line under the place’s name. If you rule A4 yes, the build check that pins that rule changes with it.</li>' +
+        '<li><b>Sept 25 F3, “Admin page headers carry no subtitle line.”</b> The small line is the old eyebrow, moved under the name and into the bar. It is still one line of facts, not a sentence about the page.</li>' +
+        '<li><b>Oct 19, the typewriter face only for codes, eyebrows and chips.</b> The small line is set in it, in the coaches portal’s masthead voice. It counts as the eyebrow; the build check that enforces the rule needs to know that.</li>' +
+        '<li><b>Aug 11, a page’s actions sit right of its title</b> (a coaches-portal rule). With the title in the bar, a record page’s Split records moves to the right-hand row at the top of the page, which is where the admin’s tabs already put their buttons.</li>' +
         '</ul></div>'
     }
   };
 
   /* ── asks ── */
   var ASKS = [
-    { id: 'r1', title: 'Tournaments take the same shape?',
-      body: 'The small line moves from above the event’s name to under it, and the bar stops shrinking on a phone. The page title (“Teams”, “Schedule”) stays on the paper.',
-      rec: 'My recommendation: yes. One bar, one shape, everywhere.',
-      opts: ['Yes', 'No, tournaments stay as they are'] },
-    { id: 'r2', title: 'A season on a phone: the status on a second line in the bar?',
-      body: 'Three ways. A second line, “House league · Registration open”, on every tab; this departs from your Sept 21 one-line rule for the portal. One line, with the status beside the name, which cuts the season’s name short. Or the status at the top of the season’s Overview tab only, where it scrolls away. The same choice applies to a tournament’s dates and status. Use the phone-bar switch on the season and tournament screens to compare the first two.',
-      rec: 'My recommendation: the second line. An admin needs the status on every tab, and a cut-off season name is worse than about 15px. The coaches portal’s bar names one team a coach already knows; the admin’s names seasons that look alike.',
-      opts: ['Second line in the bar', 'One line, status beside the name', 'Overview tab only'] },
-    { id: 'r3', title: 'Overview: the club’s name is the title, and the “Overview” heading goes?',
-      body: 'The sidebar and the phone bar still call the screen Overview.',
+    { id: 'a2', n: 'A2', title: 'On a phone, the status on a second line in the bar?',
+      body: 'Still open from round 2, and it now covers four screens: a season (“House league · Registration open”), a tournament (dates · Open), a team (“Rep teams” · its season chip) and a record page (date of birth · where the child plays). The other ways: one line, with the chip beside the name, which cuts the name short; or the status only at the top of the first tab, where it scrolls away. Use the phone-bar switch on any of those four screens to compare the first two. The second line departs from your Sept 21 one-line rule for the coaches portal.',
+      rec: 'My recommendation: the second line. An admin needs the status on every tab, and a cut-off name is worse than about 15px. The coaches portal’s bar names one team a coach already knows; the admin’s names seasons, teams and children that look alike.',
+      opts: ['Second line in the bar', 'One line, chip beside the name', 'First tab only'] },
+    { id: 'a3', n: 'A3', title: 'Overview: the club’s name is the title, and the “Overview” heading goes?',
+      body: 'Still open from round 2. The sidebar and the phone bar still call the screen Overview.',
       rec: 'My recommendation: yes.',
       opts: ['Yes', 'Keep both'] },
-    { id: 'r4', title: 'Desktop: the club’s name on the small line under every place?',
-      body: '“Harbourtown Minor Ball” under “Rep teams”, a season or an event. It helps anyone who works in more than one club, and the platform team when they open yours. Phones leave it off, so on a phone the club’s name shows only on Overview.',
+    { id: 'a4', n: 'A4', title: 'Desktop: the club’s name on the small line under every place?',
+      body: 'Still open from round 2. “Harbourtown Minor Ball” under Rep teams, a team, a season, Accounting, Calendar, a record page or an event. It helps anyone who works in more than one club, and the platform team when they open yours. Phones leave it off, so on a phone the club’s name shows only on Overview.',
       rec: 'My recommendation: yes.',
-      opts: ['Yes', 'No, Overview only'] }
+      opts: ['Yes', 'No, Overview only'] },
+    { id: 'a5', n: 'A5', title: 'Accounting on a phone: keep the sideways tab row, pinned in the bar?',
+      body: 'Nine tabs, about five on screen at a time, with an arrow at whichever end hides a tab. The other way is a menu on a phone only: the open tab’s name with a chevron, which opens the list of nine. That would make Accounting the one place whose tabs work differently on a phone.',
+      rec: 'My recommendation: keep the row. It is the control every place uses, on the paper today and pinned after; the open tab always scrolls into view; and a second kind of tab row for one place is the “shared chrome behaves differently” problem your Aug 19 ruling removed.',
+      opts: ['Keep the sideways row', 'A menu on a phone'] },
+    { id: 'a6', n: 'A6', title: 'Accounting: the bar does not say which fiscal year you are reading?',
+      body: 'Only four of the nine tabs read a year (Overview, Budget, Teams, Budget vs. Actual); each has the Year pill in its own toolbar, and a closed year adds its locked line under it. Both scroll away. Putting “2025–26 · Closed” on the bar’s small line would keep it on screen, but only on four tabs.',
+      rec: 'My recommendation: leave it in the Year pill. A line in the bar that appears on four tabs and not the other five is the same per-tab chrome problem; and a closed year already shows its lock and has no write controls, so it cannot be mistaken for the live one by what you can do.',
+      opts: ['Leave it in the Year pill', 'Put it on the bar’s small line'] },
+    { id: 'a7', n: 'A7', title: 'Calendar on a phone: the view menu moves to the first place in the toolbar?',
+      body: 'Its heading goes, so its one button needs a home. In the toolbar it sits where the List · Week · Month switch sits on desktop. The other place is the bar itself, beside the globe; that would put the first page-specific button in the bar.',
+      rec: 'My recommendation: the toolbar. The bar holds where you are and the way out (View site); a page’s own controls stay on the page.',
+      opts: ['First in the toolbar', 'In the bar, beside the globe'] },
+    { id: 'a8', n: 'A8', title: 'Record pages: the bar names the record, with its way back, and its buttons go to the top of the page?',
+      body: 'A child’s page, a team’s History, one past season, a team’s account in Accounting. The other way: the bar keeps naming the place (“Families”) and the record keeps its own header on the paper. That leaves two titles on these pages, the thing option 4 set out to remove.',
+      rec: 'My recommendation: yes, the bar names the record. Facts (a date of birth) become words on the small line; the status stays a chip. Split records goes to the top right of the page, as a tab’s buttons do. It could instead end the page as a rare door (your Oct 9 ruling for record windows), but it is the page’s only button, and it would land below the parents, out of sight.',
+      opts: ['Yes', 'No, the bar names the place'] },
+    { id: 'a9', n: 'A9', title: 'Rename team URLs gets a back arrow, “← Rep teams”, in the bar?',
+      body: 'Today it has none. The way back is the “Rep teams” link in its small line, and a comment in the code says the page has its own back arrow when it does not. With the small line moving under the name, a link inside it would be the only link on any small line.',
+      rec: 'My recommendation: yes. Every page one level down has the same way back, in the same place.',
+      opts: ['Yes', 'No, keep the link in the small line'] },
+    { id: 'a10', n: 'A10', title: 'A tournament-only organization: on its own screens, the bar names the organization?',
+      body: 'Its Tournaments list, Settings & access, Members, Plan & billing and Notifications. Today those screens show whichever event it last had open, with that event’s dates and status, above a page that lists every event. The other ways: keep that, or have the bar name the page (“Tournaments”) and drop the heading on the paper, the club rule. In a club, the Tournaments list is one of the club’s places, so it follows the club rule either way (“Tournaments”, the club under it).',
+      rec: 'My recommendation: the organization’s name. Those screens are that organization’s home, and a home names the organization, as a club’s Overview does. The event stays on screen in the sidebar’s picker.',
+      opts: ['The organization’s name', 'Keep today: the last-open event', 'The page’s name, heading goes'] }
   ];
   var answers = {};
-  try { answers = JSON.parse(localStorage.getItem('adminHeaderRowsAnswers2') || '{}'); } catch (e) {}
+  try { answers = JSON.parse(localStorage.getItem('adminHeaderRowsAnswers3') || '{}'); } catch (e) {}
 
   function asksHtml() {
-    var h = '<div class="asks"><p class="intro" style="margin:0">Round 1 settled on option 4. These are the four calls it still needs.</p>';
+    var h = '<div class="asks"><p class="intro" style="margin:0"><b>Ruled Nov 7, 2026: all ten as recommended</b> (“proceed with your recommendations”). Kept here as the record of what was asked.</p>';
     ASKS.forEach(function (q, i) {
-      h += '<section class="ask"><h3><span class="n">' + (i + 1) + '</span>' + q.title + '</h3><p>' + q.body + '</p><p class="rec">' + q.rec + '</p><div class="opts">';
+      h += '<section class="ask"><h3><span class="n">' + q.n + '</span>' + q.title + '</h3><p>' + q.body + '</p><p class="rec">' + q.rec + '</p><div class="opts">';
       q.opts.forEach(function (o, j) {
         var oid = q.id + '_' + j;
         h += '<label for="' + oid + '"><input type="radio" id="' + oid + '" name="' + q.id + '" value="' + o + '"' + (answers[q.id] === o ? ' checked' : '') + '><span>' + o + '</span></label>';
@@ -724,29 +1099,30 @@ body::before {
     return h;
   }
   function answerText() {
-    return 'Admin header rows, round 2: answers\n' + ASKS.map(function (q, i) { return (i + 1) + '. ' + q.title + ' → ' + (answers[q.id] || '(no answer)'); }).join('\n');
+    return 'Admin header rows, round 3: answers\n' + ASKS.map(function (q) { return q.n + '. ' + q.title + ' → ' + (answers[q.id] || '(no answer)'); }).join('\n');
   }
 
   /* ── view row ── */
-  function seg(key, label, opts) {
-    var h = '<div class="vgroup" data-g="' + key + '"><span>' + label + '</span><div class="seg" role="group" aria-label="' + label + '">';
+  function seg(key, label, opts, cls) {
+    var h = '<div class="vgroup' + (cls ? ' ' + cls : '') + '" data-g="' + key + '"><span>' + label + '</span><div class="seg" role="group" aria-label="' + label + '">';
     opts.forEach(function (o) { h += '<button type="button" data-k="' + key + '" data-v="' + o[0] + '" aria-pressed="' + (S[key] === o[0]) + '">' + o[1] + '</button>'; });
     return h + '</div></div>';
   }
 
   function render() {
-    try { localStorage.setItem('adminHeaderRows2', JSON.stringify(S)); } catch (e) {}
+    try { localStorage.setItem('adminHeaderRows3', JSON.stringify(S)); } catch (e) {}
     document.getElementById('stabs').innerHTML = TABS.map(function (t) {
       return '<button role="tab" type="button" data-tab="' + t[0] + '" aria-selected="' + (S.tab === t[0]) + '">' + t[1] + '</button>';
     }).join('');
     var asks = S.tab === 'asks';
     document.getElementById('viewrow').innerHTML = asks ? '' :
-      seg('screen', 'Screen', SCREENS) +
+      seg('screen', 'New in round 3', SCREENS3, 'r3') +
+      seg('screen', 'From round 2', SCREENS) +
       seg('dev', 'Device', [['ph', 'Phone'], ['desk', 'Desktop']]) +
       seg('scroll', 'Scroll', [['rest', 'At rest'], ['scrolled', 'Scrolled']]) +
       seg('view', 'View', [['all', 'Everything'], ['diff', 'Show only what differs']]) +
-      ((S.dev === 'ph' && (S.screen === 'season' || S.screen === 'tour') && S.tab !== 'today')
-        ? seg('line', 'Option 4 phone bar', [['two', 'Status on a second line'], ['one', 'One line, status beside the name']]) : '');
+      ((S.dev === 'ph' && TWO_LINE[S.screen] && S.tab !== 'today')
+        ? seg('line', 'Option 4 phone bar (A2)', [['two', 'Status on a second line'], ['one', 'One line, chip beside the name']]) : '');
     document.getElementById('viewrow').hidden = asks;
     var main = document.getElementById('main');
     main.className = S.view === 'diff' ? 'differs' : '';
@@ -758,10 +1134,10 @@ body::before {
     }
     if (S.tab === 'side') {
       var h = '<p class="intro">The same screen before and after. Switch the screen above; scroll either frame, each keeps its own position.</p>';
-      if (S.screen === 'tour') {
-        var bph = S.dev === 'ph';
+      if (S.screen === 'tour' || S.screen === 'tonly') {
+        var bph = S.dev === 'ph', tonly = S.screen === 'tonly';
         var bo = function (v, col) {
-          var bar = headerParts(v, 'tour', bph).bar;
+          var bar = headerParts(v, S.screen, bph).bar;
           if (col) bar = bar.replace('class="hb"', 'class="hb collapsed"');
           return '<div class="fr barspec' + (bph ? ' ph' : '') + '">' + bar + '</div>';
         };
@@ -769,7 +1145,9 @@ body::before {
           '<div class="bcrow"><span class="bclab">Before · at rest</span>' + bo('today', false) + '</div>' +
           (bph ? '<div class="bcrow"><span class="bclab">Before · after you scroll</span>' + bo('today', true) + '</div>' : '') +
           '<div class="bcrow"><span class="bclab">After · at rest and after you scroll</span>' + bo('four', false) + '</div>' +
-          '<p class="small">' + (bph
+          '<p class="small">' + (tonly
+            ? 'Before: the Tournaments list carries the last-open event’s name, dates and status. After: the organization’s name, one line, as a club’s Overview names the club.'
+            : bph
             ? 'Before: the dates and status sit above the name; once you scroll they fold away and the status jumps beside the name. After: the line sits under the name and the bar never changes.'
             : 'On desktop the bar never shrank, so the one change is the small line moving from above the name to under it, in the portal’s quieter style.') +
           '</p></section>';

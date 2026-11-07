@@ -27938,3 +27938,14 @@ performed over the shared working tree. The original walk result is not claimed 
 
 **Calls the walk asks the owner:** the band's cents ($750.00) against the league page's whole dollars ($750); "This week" is the next seven days from today, not Monday to Sunday; "Owed to the club" adds all-years team dues to live-season house league and opens only the teams half; "Ask the owner" replaced the drawn "Waiting on the owner"; "5 players owe" counts a child once per live season they owe in.
 <!-- /§485 -->
+
+## §486 · Admin header bar · Phase 1 owner walk — **inside a tournament the bar shows the event's name on top and a quiet line under it (club · dates · status chip on a computer, dates · chip on a phone); on the club's Overview the bar's club name is the only title (the paper "Overview" heading is gone); the bar never changes when you scroll, phone or computer; the event's name still opens the dashboard; one call (ruled): a long event name is cut to one line**
+<!-- §486 -->
+**WALKED 2026-11-07 — PASSED 12/12 (owner).** Parts A–E all Pass; no defects. **Call E ruled: a long event name is cut to ONE line with "…", as drawn** (the build had kept two; the clamp was changed to one the same day). Walk published 2026-11-07. Build: Admin header bar Phase 1 ([build prompt](ADMIN_HEADER_BAR_PHASE1_BUILD_PROMPT.md); plan [ADMIN_HEADER_BAR_PLAN.md](ADMIN_HEADER_BAR_PLAN.md) Phase 1); built 2026-11-07, /design and /review (standard) applied. No migration. [Interactive walk](https://claude.ai/artifact/FLgmSPS8sDwtGhjhLyYbdY) · [repository HTML](ADMIN_HEADER_BAR_PHASE1_WALK.html). Five parts, 12 steps: A a tournament on a computer · B a tournament on a phone · C Overview on a computer · D Overview and Rep teams on a phone · E the call.
+
+**Sign-in:** the UAT Rep Club owner (`uat-club-owner@uat-rep-club.local`, password `UAT_REP_CLUB_OWNER_PASSWORD` in `.env.local`); the tournament is UAT Rep Club Invitational 2026 (Game day).
+
+**Proved before publishing:** browser probes on the dev server measured the bar at 53px (phone) and 60px (computer) in a tournament, 51px / 44px on Overview, identical at rest and scrolled; Overview's content 16px / 22.4px under the bar; one `<h1>` per page; the name's tap box answers on every on-screen row. `check:layout` shows no new findings on the bar (Overview's new findings are Stage 13b's band links).
+
+**Call the walk asks the owner (E):** the drawing cut the event's name to one line; the build keeps today's two lines so a long name stays readable on a phone. Phase 2 re-decides for places with a season switcher beside the name.
+<!-- /§486 -->

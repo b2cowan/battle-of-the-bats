@@ -1,7 +1,14 @@
 # PM Brief — Admin header: the bar names where you are
 
 > Plan: [ADMIN_HEADER_BAR_PLAN.md](ADMIN_HEADER_BAR_PLAN.md) · Drawings: https://claude.ai/artifact/DXmtj9E1SxcuyfyrcUnsuC
-> Ruled 2026-11-07 (option 4); three small asks still open (see the plan).
+> Ruled 2026-11-07 (option 4), and every follow-up ask the same day, all as recommended (see the plan). Drawings
+> cover every kind of admin screen; building starts with Phase 1.
+
+**Settled details:** on a phone, a season's or team's status rides a second line in the bar. Overview loses its
+"Overview" heading, so the club's name heads it. On desktop the club's name sits under every place's name.
+Accounting keeps its sideways tab row, pinned. A record one level down (a child's page) puts its name and its
+way back in the bar. A tournament-only organization's bar names the event inside an event, and the organization
+on its organization-wide screens (the list, Members, Plan & billing).
 
 **What it does:** The white bar pinned at the top of every admin screen now says where you are, not which club
 you're in. On the Overview it shows the club's name. In Rep teams it says "Rep teams". In a season it shows the

@@ -231,9 +231,16 @@ describe('a page title carries no club name above it', () => {
     assert.deepEqual(offenders, [], 'the club name is already in the bar above');
   });
 
-  it('the hub is titled "Overview", as its rail row and the coaches portal’s overview — never the club’s name', () => {
+  // ⚖ Admin header bar A3 (owner 2026-11-07) reversed the paper "Overview" heading: the pinned bar names the club on the
+  // hub, and its name is the page's one <h1>. "Overview" stays the rail row's word. The 10-01 rule above still holds for
+  // every paper header that remains.
+  it('the hub draws no paper heading, and never titles itself with the club’s name on the paper (A3)', () => {
     const hub = readCode('components/admin/kit/club/ClubHubKit.tsx');
-    assert.match(hub, /<AdminPageHeader title="Overview" \/>/);
+    assert.doesNotMatch(hub, /<AdminPageHeader\b/, 'no paper heading on the hub');
+    assert.doesNotMatch(hub, /<h1\b/, 'the bar holds the hub’s <h1>');
     assert.doesNotMatch(hub, /title=\{currentOrg\.name\}/);
+    const bar = readCode('components/admin/AdminEventHeader.tsx');
+    assert.match(bar, /onOverview\s*\n?\s*\? <h1 className=\{styles\.name\}>\{title\}<\/h1>\s*\n?\s*: <span className=\{styles\.name\}>\{title\}<\/span>/,
+      'the bar’s name is an <h1> on the Overview only (Phase 1: every other club screen still draws its own heading)');
   });
 });

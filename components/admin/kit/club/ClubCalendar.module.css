@@ -127,7 +127,7 @@
 /* The stacked week is the phone's alone — it owns its display, so no later rule can show it on a computer. */
 .stack { display: none; flex-direction: column; gap: 0.6rem; }
 /* Where Month's day lands (a List band, a phone Week day): clear of the sticky chrome above the page — the event
-   header (61px on a phone) under the top strip and the sandbox bar — with a little air. Without it a phone's day
+   header (51–53px on a phone since it stopped shrinking, 2026-11-07; taller with a two-line name) under the top strip and the sandbox bar — with a little air. Without it a phone's day
    heading and its first card's time sat under the header. */
 .jumpTarget { scroll-margin-top: calc(var(--admin-topstrip-h, 0px) + var(--sandbox-chrome-h, 0px) + 4.75rem); }
 /* ⚖ ONE FRAME PER DAY (6c, C13 — the coach's phone week): the day's heading inside its frame, the bookings as hairlined

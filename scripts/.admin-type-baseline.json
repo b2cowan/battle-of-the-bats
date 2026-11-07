@@ -73,8 +73,7 @@
     "face": 1
   },
   "components/admin/kit/AdminKitEventHeader.module.css": {
-    "face": 1,
-    "caps": 2
+    "caps": 1
   },
   "components/admin/kit/AdminKitFrame.module.css": {
     "caps": 3,

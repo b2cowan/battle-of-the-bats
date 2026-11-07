@@ -41,7 +41,6 @@ import { usePageTitle } from '@/lib/usePageTitle';
 import { usePlanGating } from '@/lib/use-plan-gating';
 import { closedProgramPlansSentence } from '@/lib/plan-config';
 import { joinWithAnd, pluralize, possessive } from '@/lib/utils';
-import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { CoachCard, CoachDoorCard, CoachEyebrow, CoachFigure, CoachChip, kit } from '@/components/coaches/kit';
 import { useAdminKitNav } from '../useAdminKitNav';
 import { useClubBrief, briefProgramCount, type BriefKey, type ClubBrief } from './ClubBriefProvider';
@@ -296,11 +295,12 @@ export default function ClubHubKit() {
   const capacity = club && teams && currentOrg.teamLimit < 9999 ? `${teams.active} of ${currentOrg.teamLimit} teams` : null;
 
   return (
-    <div className={ck.page}>
-      {/* "Overview", as the rail row that opens it and as the coaches portal titles its own overview — not
-          the club's name, which the bar directly above already shows (owner, 2026-10-01). No eyebrow. */}
-      <AdminPageHeader title="Overview" />
-      {/* An ANNOUNCED release, one line, dismissible (owner 2026-11-07); nothing when none is unread. */}
+    <div className={`${ck.page} ${styles.hubPage}`} data-club-hub>
+      {/* No paper heading (Admin header bar A3, owner 2026-11-07): the pinned bar names the club here, and its name is
+          this page's <h1> (`AdminEventHeader`). The word "Overview" stays on the rail row that opens it. The first
+          content starts the portal's masthead gap under the bar (`.hubPage`). */}
+      {/* An ANNOUNCED release, one line, dismissible (owner 2026-11-07); nothing when none is unread. It sits
+          directly under the title, which is now the bar (What's new plan, ruling 5). */}
       <WhatsNewNote />
       {showUpgradeSetup && <>
         <CoachCard className={billing.setupCard}>

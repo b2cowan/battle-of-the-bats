@@ -1482,10 +1482,12 @@ export const SCREENS = [
     scope: 'nav[aria-label="Admin mobile navigation"] [role="menu"]' },
 
   // ── Hub + onboarding (the hub is Club Stage 1's to redesign; listed so switch-off stays proven) ──
-  { id: 'admin-hub',           area: 'hub', session: 'repClubOwner',  ready: 'h1', path: (c) => `/${c.clubSlug}/admin` },
+  // ⚠ The hub waits for its BODY, not 'h1': since the Admin header bar's A3 (2026-11-07) the hub's <h1> is the pinned bar's
+  // name, drawn before the hub's own chunk mounts, so 'h1' would release an empty page.
+  { id: 'admin-hub',           area: 'hub', session: 'repClubOwner',  ready: '[data-club-hub]', path: (c) => `/${c.clubSlug}/admin` },
   // The same hub for the other two admin roles — the frame and the hub's doors differ by role, and
   // Club Stage 1 (D8) changes what each role is shown.
-  { id: 'admin-hub-admin',     area: 'hub', session: 'repClubAdmin',  ready: 'h1', path: (c) => `/${c.clubSlug}/admin` },
+  { id: 'admin-hub-admin',     area: 'hub', session: 'repClubAdmin',  ready: '[data-club-hub]', path: (c) => `/${c.clubSlug}/admin` },
   // The wizard exists only for an org that has NOT finished onboarding — the rep club has, so it is
   // redirected to the hub; the plain Club-plan org has not (its owner is the org-owner login). It
   // opens on the house-league step by itself, reading only.
@@ -1512,7 +1514,7 @@ export const SCREENS = [
 
   // ── Club Tier Stage 1's screens and windows (the club setup checklist for a club that finished setup,
   // the open kit windows, the treasurer's hub and board).
-  { id: 'admin-hub-treasurer',         area: 'hub', session: 'repClubTreasurer', ready: 'h1', path: (c) => `/${c.clubSlug}/admin` },
+  { id: 'admin-hub-treasurer',         area: 'hub', session: 'repClubTreasurer', ready: '[data-club-hub]', path: (c) => `/${c.clubSlug}/admin` },
   { id: 'admin-club-setup',            area: 'hub', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/onboarding?plan=club` },
   { id: 'admin-org-members-treasurer', area: 'org', session: 'repClubTreasurer', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/members` },
   { id: 'admin-org-members-invite',    area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/members`,

@@ -1,11 +1,9 @@
 /* ═══════════════════════════════════════════════════════════════════════════════════════════════
-   The admin's event header ON THE KIT (Admin Design Continuity slice 1) — `AdminEventHeader`'s only
-   form since Part B (2026-09-29) deleted the old one. Drawn as ADC specimen 2: "today's event header, drawn as
-   the kit's page header: an eyebrow, a title and one status chip. The same phase rule and the same
-   dates; only the skin changes." The ground and hairline are the coach masthead's (`.teamHeader`:
-   the card tone over the page tone, so scrolled content never ghosts through the pinned bar).
-   Behaviour is the old header's, unchanged: sticky below the strip, and on a phone it condenses
-   on scroll (the eyebrow folds away, the name drops to one line, the pill to its glyph).
+   The admin's pinned bar ON THE KIT — `AdminEventHeader`'s only form. Since the Admin header bar's
+   Phase 1 (option 4, owner 2026-11-07) it is drawn as the coaches portal's masthead: the name on top,
+   a small line of facts UNDER it (`.teamHeaderMeta`'s voice), the portal's padding recipe, and it
+   NEVER shrinks on scroll. The ground and hairline are the coach masthead's (`.teamHeader`: the card
+   tone over the page tone, so scrolled content never ghosts through the pinned bar).
    ⚠ TOKENS ONLY (`scripts/check-public-tokens.mjs`, `checkAdminKit` — the kit folder is held whole).
    ═══════════════════════════════════════════════════════════════════════════════════════════════ */
 
@@ -13,57 +11,25 @@
   position: sticky;
   top: var(--admin-topstrip-h, 0px);
   z-index: 40;
-  padding: calc(0.7rem + env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) 0.7rem max(1rem, env(safe-area-inset-left));
+  /* The portal masthead's recipe: 0.45rem block padding on a phone (0.5rem on desktop, below). The 44px
+     controls in the bar keep their tap size by overhanging it (`.pill` below), so it never grows to the
+     tap floor. */
+  padding: calc(0.45rem + env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) 0.45rem max(1rem, env(safe-area-inset-left));
   background-color: var(--pitch-black);
   background-image: linear-gradient(var(--card-bg), var(--card-bg));
   border-bottom: 1px solid var(--home-line);
-  transition: padding 0.2s ease;
-}
-.collapsed {
-  padding-top: calc(0.5rem + env(safe-area-inset-top));
-  padding-bottom: 0.5rem;
 }
 
-.row { display: flex; align-items: flex-start; gap: 0.75rem; }
-.collapsed .row { align-items: center; }
-.identity { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.2rem; }
+.row { display: flex; align-items: center; gap: 0.75rem; }
+.identity { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.15rem; }
 
-/* The kit eyebrow (`CoachKit` `.eye`): mono, tracked, the label step. Folds away on a phone scroll.
-   Since Tournament admin redesign G1 (2026-09-29) it carries the event's one status chip after the
-   dates; the words ellipsize, the chip never does. */
-.eyebrow {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  min-width: 0;
-  font-family: var(--font-data);
-  font-size: var(--type-label);
-  font-weight: 700;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  color: var(--text-tertiary);
-  overflow: hidden;
-  white-space: nowrap;
-  max-height: 1.4rem;
-  transition: max-height 0.2s ease, opacity 0.16s ease;
-}
-.eyebrow > span:not(.chip) { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-.collapsed .eyebrow { max-height: 0; opacity: 0; }
-/* The organization's name is the desk header's only (a phone header is two lines: dates + chip, name). */
-@media (max-width: 900px) {
-  .eyebrowOrg { display: none; }
-}
-.chipOnDates { flex: none; }
-/* The chip's second copy beside the name — shown only while a phone's header is condensed. */
-.chipCollapsed { display: none; }
-.collapsed .chipCollapsed { display: inline-flex; }
-
-.titleRow { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; min-width: 0; }
-/* The coach masthead's name voice (`.teamHeaderName`): the UI sans at 700 — a name is data. */
+/* The coach masthead's name voice (`.teamHeaderName`): the UI sans at 700 — a name is data. On the club's
+   Overview it is the page's `<h1>`, so the heading's own margins are zeroed here. */
 .header .name {
+  margin: 0;
   min-width: 0;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 1; /* walk §486 E (owner 2026-11-07): one line, cut with "…", as drawn */
   -webkit-box-orient: vertical;
   overflow: hidden;
   font-family: var(--font-sans);
@@ -75,13 +41,45 @@
   color: var(--text-primary);
   text-decoration: none;
 }
-.collapsed .name { -webkit-line-clamp: 1; }
 /* The link around the name (the dashboard's door): the name's own ink until hovered. */
-.nameLink { min-width: 0; color: inherit; text-decoration: none; }
+.nameLink { min-width: 0; align-self: flex-start; max-width: 100%; color: inherit; text-decoration: none; }
 .nameLink:hover .name { color: var(--home-olive); }
-/* Condensed, the name keeps one line and its chip stays beside it. */
-.collapsed .titleRow { flex-wrap: nowrap; }
-.collapsed .nameLink, .collapsed .titleRow > .name { flex: 0 1 auto; }
+
+/* The small line UNDER the name: the portal's masthead meta voice (`.teamHeaderMeta`) — the data face at
+   the label step, normal weight, no tracking, no capitals. It is the old eyebrow moved under the name
+   (A14's allowed role). The words ellipsize; the chip never does. */
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  margin-top: 0.12rem;
+  font-family: var(--font-data); /* type-ok: eyebrow */
+  font-size: var(--type-label);
+  font-weight: 400;
+  /* The drawing's 11px/1.3 line. Left to inherit the body's, the line stood ~2px taller and the desk bar measured 63px,
+     taller than the 61px it replaced (/design, 2026-11-07). */
+  line-height: 1.3;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+.meta > span:not(.chip) { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+/* The separator is drawn BETWEEN the words (never before the chip, which the gap sets apart). ⚠ It inherits
+   its colour and dims with opacity — it must never name a token (`.teamHeaderMeta`'s lesson). */
+.meta > span:not(.chip) + span:not(.chip)::before {
+  content: '·';
+  margin-right: 0.5rem;
+  color: inherit;
+  opacity: 0.45;
+}
+/* The club is the desk bar's only (A4): a phone's line is the dates and the chip. */
+@media (max-width: 900px) {
+  .metaClub { display: none; }
+  /* The same weight as the separator rule above (and later), so it wins: no dot stranded before the dates. */
+  .meta > span.metaClub + span:not(.chip)::before { content: none; }
+}
 
 /* The phase chip's neutral tone (draft / completed / archived); the kit chip carries the others. */
 .chipNeutral {
@@ -89,7 +87,10 @@
   background: var(--home-olive-soft);
   border: 1px solid var(--home-line-strong);
 }
-.chip { text-transform: uppercase; }
+.chip { flex: none; text-transform: uppercase; }
+/* On the small line the chip sits snug to the words' line, so it never makes the line taller (the drawing's
+   `.meta .chip`). */
+.meta .chip { line-height: 1; padding-block: 0.05rem; }
 .dot {
   width: 6px;
   height: 6px;
@@ -103,16 +104,25 @@
 
 .pill { flex-shrink: 0; }
 
-/* On a touch screen the header's two doors are a thumb's targets (G1, measured 2026-09-29: the ⇄ pill
-   was 41×30 and the event's name 19px tall at 768): the pill takes the 44px square it is drawn as, and
-   the name's tap box grows above and below its line without moving it. 0.8rem, not 0.6: a one-line
-   name measured 38px with 0.6 (staging sweep, 2026-10-13), and 0.8 clears 44. */
+/* On a touch screen the bar's two doors are a thumb's targets (G1, measured 2026-09-29): the ⇄ pill takes
+   the 44px square it is drawn as, overhanging the bar by 4px top and bottom so the bar stays at the
+   portal's height (the drawing's `.hb.quiet .gl`), and the name's tap box grows above and below its line
+   without moving it. 0.8rem, not 0.6: a one-line name measured 38px with 0.6 (staging sweep, 2026-10-13),
+   and 0.8 clears 44. */
 @media (max-width: 900px) {
+  .row { min-height: 36px; }
   .pill :is(a, button) { min-width: var(--tap-min, 44px); min-height: var(--tap-min, 44px); justify-content: center; }
-  .nameLink { display: block; padding: 0.8rem 0; margin: -0.8rem 0; }
+  .pill { margin-block: -4px; }
+  /* The grown box reaches over the small line under the name; the link stays on top there, so its whole 44px answers a
+     thumb (a tap on the dates opens the dashboard, as a tap on the old eyebrow above the name did). Left to paint
+     order, the line took ~8px of it back (/review, 2026-11-07). */
+  .nameLink { display: block; position: relative; z-index: 1; padding: 0.8rem 0; margin: -0.8rem 0; }
 }
 
 @media (min-width: 901px) {
-  .header { top: calc(var(--admin-topstrip-h, 0px) + var(--sandbox-chrome-h, 0px)); padding-left: 2rem; padding-right: 2rem; }
+  .header {
+    top: calc(var(--admin-topstrip-h, 0px) + var(--sandbox-chrome-h, 0px));
+    padding: 0.5rem 2rem;
+  }
   .header .name { font-size: var(--type-title); }
 }

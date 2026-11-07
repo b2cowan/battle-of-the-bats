@@ -44,6 +44,14 @@
 
 .orgSection { margin-top: 1.5rem; max-width: 34rem; }
 
+/* The page's first content sits the portal's masthead gap under the pinned bar (Admin header bar A3, 2026-11-07: the
+   paper heading is gone, the bar names the club): 1.4rem on desktop, 1rem on a phone, as drawn. The shell pads every
+   page 2rem / 0.5rem above (`admin.module.css` `.mainPad`); this moves the Overview's own start by the difference. */
+.hubPage { margin-top: -0.6rem; }
+@media (max-width: 900px) {
+  .hubPage { margin-top: 0.5rem; }
+}
+
 /* Still to do (Stage 13b, A2): the owner's setup steps on a club admin's Overview, read-only. One row per step. */
 .todo {
   margin: 0;

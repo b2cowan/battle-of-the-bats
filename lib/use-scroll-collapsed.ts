@@ -26,11 +26,9 @@ import { usePublicPathname } from './use-public-pathname';
  * dock scrolls sideways, a modal body scrolls vertically, and neither should be able to hide the
  * chrome behind them. Only the document, or a container tall enough to BE the page, counts.
  *
- * Intended adopter, not yet migrated: `components/admin/AdminEventHeader.tsx` carries this logic
- * inline (the coach masthead did too until 2026-09-21, when the phone re-evaluation deleted its
- * scroll collapse outright — it no longer collapses at any width). It collapses in place rather
- * than standing down, but the reading half is the same; folding it in is a follow-up that
- * should not ride along with a demo-chrome change.
+ * No other adopter is owed: the coach masthead deleted its scroll collapse 2026-09-21, and the admin's pinned bar
+ * (`components/admin/AdminEventHeader.tsx`) deleted its own 2026-11-07 (Admin header bar Phase 1; it never shrinks
+ * at any width). Only the demo chrome stands down on scroll.
  */
 export function useScrollCollapsed(options: {
   /** Only collapse below this width. Absent = collapse at every width. */
