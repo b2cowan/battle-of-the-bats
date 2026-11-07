@@ -1,7 +1,7 @@
 import { businessCents, csvCell, currentExpenses, hasKnownTaxAmount, isExpenseDate, isReviewFilter, type ExpenseRevision, type ReviewFilter } from './bookkeeping-expenses';
-import { expenseCredit, isTaxType, resolveTaxState, TAX_TYPES, type TaxLine } from './bookkeeping-gst';
+import { expenseCredit, isTaxType, resolveTaxState, sumTaxLines, TAX_TYPES, type TaxLine } from './bookkeeping-gst';
 import { currentOwnerMovements, type OwnerMovementRevision } from './bookkeeping-owner-movements';
-import { matchesExpenseFilters, type ExpenseFilters, type ExpenseStatus } from './bookkeeping-filters';
+import { matchesExpenseFilters, narrowsExpenses, type ExpenseFilters, type ExpenseStatus } from './bookkeeping-filters';
 export type { ExpenseFilters } from './bookkeeping-filters';
 
 export type NamedReportPeriod = 'month' | 'year' | 'last_month' | 'last_quarter' | 'last_year';
@@ -47,7 +47,7 @@ export function parseExpenseFilters(params: URLSearchParams): ExpenseFilters | n
     !['all', 'confirmed'].includes(dateStatus) ||
     (taxType && !isTaxType(taxType)) || !isReviewFilter(review) ||
     !['active', 'voided', 'all'].includes(status) || (attention !== null && !['0', '1'].includes(attention))) return null;
-  return { from, to, category, supplier, paymentSource, ...(taxType && isTaxType(taxType) ? { taxType } : {}), dateStatus: dateStatus as ExpenseFilters['dateStatus'], query,
+  return { from, to, category, supplier, paymentSource, ...(isTaxType(taxType) ? { taxType } : {}), dateStatus: dateStatus as ExpenseFilters['dateStatus'], query,
     review: attention === '1' ? 'attention' : review as ReviewFilter, status: status as ExpenseStatus };
 }
 
@@ -74,7 +74,7 @@ const dollars = (cents: number) => (cents / 100).toFixed(2);
 function taxColumns(lines: readonly TaxLine[]): string[] {
   const sum = (match: (line: TaxLine) => boolean) => {
     const found = lines.filter(match);
-    return found.length ? dollars(found.reduce((total, line) => total + line.cents, 0)) : '';
+    return found.length ? dollars(sumTaxLines(found)) : '';
   };
   const hstRates = [...new Set(lines.filter(line => TAX_TYPES[line.type].gstHst === 'HST').map(line => TAX_TYPES[line.type].rate))];
   return [sum(line => line.type === 'gst5'), sum(line => TAX_TYPES[line.type].gstHst === 'HST'), hstRates.join('/'),
@@ -119,8 +119,7 @@ export function expenseCsv(selected: ExpenseRevision[], filters: ExpenseFilters 
 /** Owner transfers are dated by transfer date; narrowed expense exports include linked reimbursements only. */
 export function selectOwnerMovementRevisions(revisions: OwnerMovementRevision[], filters: ExpenseFilters, selectedExpenses: ExpenseRevision[]): OwnerMovementRevision[] {
   const selectedExpenseIds = new Set(selectedExpenses.map(row => row.expense_id));
-  const narrowedExpenses = Boolean(filters.category || filters.supplier || filters.paymentSource || filters.taxType || filters.query || filters.review !== 'all' ||
-    (filters.status && filters.status !== 'all'));
+  const narrowedExpenses = narrowsExpenses(filters);
   const ids = new Set(currentOwnerMovements(revisions).filter(row =>
     (!filters.from || row.movement_date >= filters.from) && (!filters.to || row.movement_date <= filters.to) &&
     (!narrowedExpenses || (row.movement_kind === 'expense_reimbursement' && row.linked_expense_id && selectedExpenseIds.has(row.linked_expense_id)))

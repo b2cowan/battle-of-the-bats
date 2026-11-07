@@ -142,13 +142,13 @@ describe('expense route · the GST/HST tax section', () => {
     assert.equal(response.status, 503); assert.equal(api.inserted.length, 0);
     const list = await (await api.get()).json();
     assert.equal(list.gstSchemaReady, false); assert.equal(list.registrationDate, null);
-    assert.equal(list.credits[saved.expense_id], null); assert.equal(list.expenses.length, 1);
+    assert.equal(list.expenses.length, 1);
   });
-  it('lists each current expense’s credit, worked out from today’s registration date', async () => {
+  it('sends today’s registration date (every screen works each credit out from it) and no stored or pre-worked credit', async () => {
     const list = await (await expensesRoute({ ...saved, tax_answer: 'shown', tax_lines: [{ type: 'hst13', cents: 7478 }],
       supplier_tax_number: '81234 5678 RT0001', supplier_registration: 'normal' }).get()).json();
     assert.equal(list.gstSchemaReady, true); assert.equal(list.registrationDate, '2026-09-26');
-    assert.equal(list.credits[saved.expense_id].state, 'counted'); assert.equal(list.credits[saved.expense_id].creditCents, 7478);
+    assert.equal('credits' in list, false);
   });
 });
 

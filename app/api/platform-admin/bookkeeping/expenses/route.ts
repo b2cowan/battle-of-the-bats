@@ -41,8 +41,7 @@ export const GET = withObservability(async () => {
     const expenses = currentExpenses(revisions);
     const registrationDate = await gstRegistrationDate();
     // Worked out here on every read, never stored: a change of registration date re-works every credit.
-    const credits = Object.fromEntries(expenses.filter(row => !row.void_reason).map(row => [row.expense_id, expenseCredit(row, registrationDate)]));
-    return NextResponse.json({ expenses, revisions, credits, registrationDate, dateSchemaReady: await hasExpenseDateColumns(), taxSchemaReady: await hasExpenseTaxColumn(),
+    return NextResponse.json({ expenses, revisions, registrationDate, dateSchemaReady: await hasExpenseDateColumns(), taxSchemaReady: await hasExpenseTaxColumn(),
       conversionSchemaReady: await hasExpenseConversionColumns(), gstSchemaReady: await hasGstTaxSchema() }, { headers: { 'Cache-Control': 'no-store' } });
   } catch {
     return NextResponse.json({ error: 'Unable to load expenses' }, { status: 500 });

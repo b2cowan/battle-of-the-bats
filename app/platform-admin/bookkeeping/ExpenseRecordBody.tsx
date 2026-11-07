@@ -1,6 +1,6 @@
 import { businessCents, CONVERSION_SOURCES, hasConfirmedDates, isConversionSource, type ExpenseRevision } from '@/lib/bookkeeping-expenses';
 import {
-  CREDIT_LABEL, CREDIT_NOT_WORKED_OUT, defaultPurchaseKind, expenseCredit, hasGstHstLine, HELD_RECORD_NOTE, NUMBER_NEEDED_FROM_CENTS,
+  CREDIT_LABEL, CREDIT_NOT_WORKED_OUT, defaultPurchaseKind, formatCad as money, expenseCredit, hasGstHstLine, HELD_RECORD_NOTE, NUMBER_NEEDED_FROM_CENTS,
   NUMBER_NOT_NEEDED, NUMBER_NOT_RECORDED, PURCHASE_KINDS, purchaseTaxCell, resolveTaxState, SUPPLIER_REGISTRATIONS, TYPE_NOT_SET_RECORD_NOTE,
 } from '@/lib/bookkeeping-gst';
 import kit from '../console.module.css';
@@ -8,10 +8,9 @@ import { consoleDate, consoleWhen } from '@/lib/console-dates';
 import styles from './bookkeeping.module.css';
 
 const SOURCES = { business_bank: 'Business bank', business_card: 'Business card', personal: 'Paid personally', other: 'Other' };
-const money = (cents: number) => new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD' }).format(cents / 100);
 /**
  * The record's GST/HST cells (GST/HST Stage 4a; drawings tab 3 and owner Asks 13–14, 2026-11-06). The credit is the same
- * worked-out-on-read figure the expenses API returns in `credits`: one function, one registration date, never stored.
+ * worked-out-on-read figure every other reader uses (expenseCredit): one function, one registration date, never stored.
  */
 function GstCells({ expense, registrationDate }: { expense: ExpenseRevision; registrationDate: string | null }) {
   const { lines } = resolveTaxState(expense, expense.tax_lines ?? []);

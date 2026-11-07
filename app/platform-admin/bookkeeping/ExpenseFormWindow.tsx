@@ -14,7 +14,7 @@ import {
 import {
   CANT_GET_NUMBER, CHOOSABLE_TAX_TYPES, CREDIT_LABEL, defaultPurchaseKind, hasGstHstLine, NUMBER_HINT_BLANK, NUMBER_HINT_SAME_AS_LAST,
   NUMBER_NEEDED_FROM_CENTS, NUMBER_NOT_NEEDED, PURCHASE_KINDS, REGISTRATION_HINT, resolveTaxState, SUPPLIER_REGISTRATIONS, supplierPrefill,
-  TAX_ANSWERS, TAX_STATUS_LABELS, TAX_TYPES, taxFromTotal, taxSummary, UNSET_TYPE_PROMPT, workOutCredit,
+  sumTaxLines, TAX_ANSWERS, TAX_STATUS_LABELS, TAX_TYPES, taxFromTotal, taxSummary, UNSET_TYPE_PROMPT, workOutCredit, formatCad as money,
   type PurchaseKind, type SupplierRegistration, type TaxAnswer, type TaxLine, type TaxType,
 } from '@/lib/bookkeeping-gst';
 import { tournamentToday } from '@/lib/timezone';
@@ -28,7 +28,6 @@ import styles from './bookkeeping.module.css';
 
 const SOURCES = { business_bank: 'Business bank', business_card: 'Business card', personal: 'Paid personally', other: 'Other' };
 const dollars = (cents: number) => (cents / 100).toFixed(2);
-const money = (cents: number) => new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD' }).format(cents / 100);
 const ADVANCED_FIELDS = ['taxAnswer', 'taxType', 'taxLines', 'taxStatus', 'businessUsePercent', 'supplierTaxNumber', 'notes'];
 /** One tax line as typed. A pre-4a amount opens as one line of type `unset`, shown as “Choose a type”. */
 type LineDraft = { key: number; type: TaxType; amount: string };
@@ -160,7 +159,7 @@ export default function ExpenseFormWindow({ expense, expenses, categories, asVoi
     // works the credit out itself, so neither is sent. Fields hidden for this answer are sent blank ("not stated").
     form.set('taxAnswer', taxAnswer);
     form.set('taxLines', JSON.stringify(lines));
-    form.set('taxCadAmount', dollars(lines.reduce((total, line) => total + line.cents, 0)));
+    form.set('taxCadAmount', dollars(sumTaxLines(lines)));
     form.set('taxStatus', shown ? taxStatus : taxAnswer === 'none' ? 'none' : 'pending');
     form.set('purchaseKind', gstHst ? kind : '');
     form.set('supplierTaxNumber', gstHst ? number : '');

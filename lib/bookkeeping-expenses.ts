@@ -77,7 +77,7 @@ export function hasConfirmedDates(row: ExpenseRevision): boolean {
 
 /** Before this field existed, pending/zero could mean unknown; other legacy values were explicit. */
 export function hasKnownTaxAmount(row: ExpenseRevision): boolean {
-  return row.tax_amount_known ?? (row.tax_status !== 'pending' || row.tax_cad_cents > 0);
+  return resolveTaxState(row, row.tax_lines ?? []).answer !== 'unknown';
 }
 
 /** The server keeps storage paths; the browser only needs to know whether a file exists. */

@@ -36,6 +36,12 @@ export function matchesExpenseFilters(row: ExpenseRevision, filters: ExpenseFilt
     matchesExpenseSearch(row, filters.query) && matchesReviewFilter(row, filters.review, registrationDate);
 }
 
+/** True when a filter other than the period narrows the expenses (the package then keeps only linked reimbursements). */
+export function narrowsExpenses(filters: ExpenseFilters): boolean {
+  return Boolean(filters.category || filters.supplier || filters.paymentSource || filters.taxType || filters.query || filters.review !== 'all' ||
+    (filters.status && filters.status !== 'all'));
+}
+
 export function expenseFilterParams(filters: ExpenseFilters): URLSearchParams {
   const params = new URLSearchParams();
   const values = { from: filters.from, to: filters.to, category: filters.category, supplier: filters.supplier,

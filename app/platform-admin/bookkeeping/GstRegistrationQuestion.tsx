@@ -26,20 +26,21 @@ async function readHistory(): Promise<GstRegistrationRevision[]> {
 export default function GstRegistrationQuestion({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
   const id = useId();
   const [history, setHistory] = useState<GstRegistrationRevision[] | null>(null);
-  const [date, setDate] = useState('');
+  const [typed, setTyped] = useState<string | null>(null);
+  const date = typed ?? history?.[0]?.effective_date ?? '';
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
   const [refusal, setRefusal] = useState<Refusal | null>(null);
 
   useEffect(() => {
-    readHistory().then(rows => { setHistory(rows); setDate(current => current || rows[0]?.effective_date || ''); })
+    readHistory().then(setHistory)
       .catch(cause => setRefusal({ error: cause instanceof Error ? cause.message : 'Unable to load the registration date' }));
   }, []);
 
   async function save() {
     if (busy || !history?.length) return;
-    if (!date) { setRefusal({ field: 'effectiveDate', error: 'Enter the date your registration began.' }); return; }
-    if (!reason.trim()) { setRefusal({ field: 'reason', error: 'Say why the date changed.' }); return; }
+    if (!date) { setRefusal({ field: 'effectiveDate', error: REGISTRATION_QUESTION.dateMissing }); return; }
+    if (!reason.trim()) { setRefusal({ field: 'reason', error: REGISTRATION_QUESTION.reasonMissing }); return; }
     setBusy(true); setRefusal(null);
     try {
       const response = await fetch('/api/platform-admin/bookkeeping/gst-registration', {
@@ -56,16 +57,17 @@ export default function GstRegistrationQuestion({ onClose, onSaved }: { onClose:
   }
 
   const invalid = (field: Refusal['field']) => refusal?.field === field ? { 'aria-invalid': true as const } : {};
+  const clear = (field: Refusal['field']) => { if (refusal?.field === field) setRefusal(null); };
   return <KitDialog kind="question" eyebrow={REGISTRATION_QUESTION.eyebrow} title={REGISTRATION_QUESTION.title} busy={busy} onClose={onClose}
     footer={<><button type="button" className={styles.quietButton} disabled={busy} onClick={onClose}>{REGISTRATION_QUESTION.keep}</button>
       <button type="submit" form={id} className={styles.quietButton} disabled={busy || !history?.length}>{busy ? 'Saving…' : REGISTRATION_QUESTION.confirm}</button></>}>
     <p>{REGISTRATION_QUESTION.lead}</p>
     <form id={id} className={styles.form} onSubmit={event => { event.preventDefault(); void save(); }}>
       <label>{REGISTRATION_QUESTION.dateLabel}<DateInput value={date} {...invalid('effectiveDate')}
-        onChange={value => { setDate(value); if (refusal?.field === 'effectiveDate') setRefusal(null); }} /></label>
+        onChange={value => { setTyped(value); clear('effectiveDate'); }} /></label>
       {refusal?.field === 'effectiveDate' && <DialogReason inPlace className={kit.fieldError}>{refusal.error}</DialogReason>}
       <label>Reason<textarea className={kit.textarea} maxLength={500} value={reason} {...invalid('reason')}
-        onChange={event => { setReason(event.target.value); if (refusal?.field === 'reason') setRefusal(null); }} /></label>
+        onChange={event => { setReason(event.target.value); clear('reason'); }} /></label>
       {refusal?.field === 'reason' && <DialogReason inPlace className={kit.fieldError}>{refusal.error}</DialogReason>}
       {refusal && !refusal.field && <DialogReason>{refusal.error}</DialogReason>}
     </form>

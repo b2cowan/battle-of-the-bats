@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import DateInput from '@/components/shared/DateInput';
 import { attentionReasons, businessCents, currentExpenses, hasConfirmedDates, needsSupplierTaxNumber, summarizeExpenses, type ExpenseRevision } from '@/lib/bookkeeping-expenses';
 import { matchesExpenseFilters, type ExpenseFilters } from '@/lib/bookkeeping-filters';
+import { formatCad } from '@/lib/bookkeeping-gst';
 import { EXPENSE_PERIODS, expensePeriodRange, expenseRegisterSelection } from '@/lib/bookkeeping-register';
 import { bookkeepingAddress } from '@/lib/bookkeeping-navigation';
 import { consoleDay } from '@/lib/console-dates';
@@ -15,7 +16,7 @@ import kit from '../console.module.css';
 import styles from './bookkeeping.module.css';
 
 const SOURCES: Record<string, string> = { business_bank: 'Business bank', business_card: 'Business card', personal: 'Paid personally', other: 'Other' };
-const money = (cents: number) => new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD' }).format(cents / 100);
+const money = formatCad;
 
 function ExpenseExportMenu({ disabled, onExport }: { disabled: boolean; onExport: (kind: 'csv' | 'package') => void }) {
   const [open, setOpen] = useState(false);

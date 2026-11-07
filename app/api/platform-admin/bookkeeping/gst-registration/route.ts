@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireBookkeepingApi } from '@/lib/bookkeeping-access';
 import { isExpenseDate } from '@/lib/bookkeeping-expenses';
+import { REGISTRATION_QUESTION } from '@/lib/bookkeeping-gst';
 import { hasGstTaxSchema, insertGstRegistrationRevision, listGstRegistrationRevisions } from '@/lib/bookkeeping-store';
 import { withObservability } from '@/lib/observability';
 
@@ -40,8 +41,8 @@ export const POST = withObservability(async (req: NextRequest) => {
   const effectiveDate = input.effectiveDate;
   const reason = typeof input.reason === 'string' ? input.reason.trim() : '';
   const expectedRevision = input.expectedRevision;
-  if (!isExpenseDate(effectiveDate)) return NextResponse.json({ field: 'effectiveDate', error: 'Enter the date your registration began.' }, { status: 400 });
-  if (!reason) return NextResponse.json({ field: 'reason', error: 'Say why the date changed.' }, { status: 400 });
+  if (!isExpenseDate(effectiveDate)) return NextResponse.json({ field: 'effectiveDate', error: REGISTRATION_QUESTION.dateMissing }, { status: 400 });
+  if (!reason) return NextResponse.json({ field: 'reason', error: REGISTRATION_QUESTION.reasonMissing }, { status: 400 });
   if (reason.length > 500) return NextResponse.json({ field: 'reason', error: 'Keep the reason to 500 characters.' }, { status: 400 });
   if (!Number.isInteger(expectedRevision) || (expectedRevision as number) < 1) {
     return NextResponse.json({ error: 'This change could not be read. Reload the page and try again.' }, { status: 400 });

@@ -292,10 +292,8 @@ export function purchaseTaxCell(answer: TaxAnswer, lines: readonly TaxLine[], st
  * Reports' "Purchase tax paid" rows (drawings tab 4, After), in this order. Only PST says "part of the cost" because
  * the drawing names it; every non-GST/HST row is a cost all the same, and none of them is in the band.
  */
-export const TAX_PAID_ROW_LABELS: Record<TaxType, string> = {
-  gst5: 'GST 5%', hst13: 'HST 13%', hst14: 'HST 14%', hst15: 'HST 15%',
-  pst: 'PST · part of the cost', qst: 'QST', other: 'Other', unset: 'Type not set',
-};
+const TAX_PAID_LABEL_OVERRIDES: Partial<Record<TaxType, string>> = { pst: 'PST · part of the cost', other: 'Other' };
+export const taxPaidRowLabel = (type: TaxType) => TAX_PAID_LABEL_OVERRIDES[type] ?? TAX_TYPES[type].label;
 export const TAX_PAID_TITLE = 'Purchase tax paid';
 /** /accounting 2026-11-06 (ITC_RULES_FOR_EXPENSE_FORM.md §8) + owner: the full receipt tax, and which basis the spend figures use. */
 export const TAX_PAID_NOTE = 'Tax as charged on your receipts, in full. Spending figures above show only the business-use share.';
@@ -308,6 +306,8 @@ export const REGISTRATION_QUESTION = {
   keep: 'Keep it',
   confirm: 'Change date',
   saved: 'Registration date changed. Every credit is worked out from the new date.',
+  dateMissing: 'Enter the date your registration began.',
+  reasonMissing: 'Say why the date changed.',
 } as const;
 
 type TaxPaidRow = TaxFacts & { tax_lines?: readonly TaxLine[]; supplier_registration?: SupplierRegistration | null };
@@ -348,9 +348,9 @@ export function summarizeTaxPaid(rows: readonly TaxPaidRow[]): TaxPaidSummary {
   }
   return {
     gstHstCents, gstHstCount, simplifiedCents, simplifiedCount, unknownCount,
-    rows: (Object.keys(TAX_PAID_ROW_LABELS) as TaxType[]).flatMap(type => {
+    rows: (Object.keys(TAX_TYPES) as TaxType[]).flatMap(type => {
       const entry = byType.get(type);
-      return entry ? [{ type, label: TAX_PAID_ROW_LABELS[type], ...entry }] : [];
+      return entry ? [{ type, label: taxPaidRowLabel(type), ...entry }] : [];
     }),
   };
 }

@@ -4,7 +4,7 @@ import { describe, it } from 'node:test';
 import { currentExpenses, hasConfirmedDates, matchesReviewFilter, summarizeExpenses, REVIEW_FILTERS, type ExpenseRevision } from '../../lib/bookkeeping-expenses.ts';
 import { expenseFilterParams, matchesExpenseFilters, type ExpenseFilters } from '../../lib/bookkeeping-filters.ts';
 import { parseExpenseFilters, selectExpenseRevisions } from '../../lib/bookkeeping-export.ts';
-import { isTaxReviewPending, summarizeTaxPaid, TAX_PAID_NOTE, TAX_PAID_ROW_LABELS, TAX_TYPES, taxTypesPaid } from '../../lib/bookkeeping-gst.ts';
+import { isTaxReviewPending, summarizeTaxPaid, TAX_PAID_NOTE, taxPaidRowLabel, TAX_TYPES, taxTypesPaid } from '../../lib/bookkeeping-gst.ts';
 
 // GST/HST Stage 4a Session D, Part 6: Reports' "Purchase tax paid", its doors, and the Review view "Tax review pending".
 const SEPT_26 = '2026-09-26';
@@ -53,7 +53,8 @@ describe('Reports · Purchase tax paid', () => {
     assert.deepEqual(summary.rows.map(row => row.label), ['GST 5%', 'HST 13%', 'HST 15%', 'PST · part of the cost', 'Type not set']);
     assert.deepEqual(summary.rows.find(row => row.type === 'pst'), { type: 'pst', label: 'PST · part of the cost', count: 1, cents: 1400 });
     assert.ok(!summarizeTaxPaid([hst, bc]).rows.some(row => row.type === 'unset'));
-    assert.deepEqual(Object.keys(TAX_PAID_ROW_LABELS), Object.keys(TAX_TYPES));
+    assert.deepEqual((Object.keys(TAX_TYPES) as (keyof typeof TAX_TYPES)[]).map(taxPaidRowLabel),
+      ['GST 5%', 'HST 13%', 'HST 14%', 'HST 15%', 'PST · part of the cost', 'QST', 'Other', 'Type not set']);
   });
 
   it('a BC two-tax receipt counts once in the band and in both its rows; PST is not in the band', () => {

@@ -8,7 +8,8 @@ import { BOOKKEEPING_VIEWS, bookkeepingAddress, bookkeepingPlace } from '@/lib/b
 import { consoleDate, consoleDay } from '@/lib/console-dates';
 import kit from '../console.module.css';
 import { attentionReasons, businessCents, currentExpenses, hasConfirmedDates, summarizeExpenses, type ExpenseRevision, type ReviewFilter } from '@/lib/bookkeeping-expenses';
-import { formatCad, REGISTRATION_LINE, REGISTRATION_QUESTION, TAX_PAID_NOTE, TAX_PAID_ROW_LABELS, TAX_PAID_TITLE, taxTypesPaid, type TaxType } from '@/lib/bookkeeping-gst';
+import { formatCad, REGISTRATION_LINE, REGISTRATION_QUESTION, TAX_PAID_NOTE, TAX_PAID_TITLE, taxPaidRowLabel } from '@/lib/bookkeeping-gst';
+import { pluralize } from '@/lib/utils';
 import GstRegistrationQuestion from './GstRegistrationQuestion';
 import { reportPeriodRange, type NamedReportPeriod } from '@/lib/bookkeeping-export';
 import type { OwnerMovementRevision } from '@/lib/bookkeeping-owner-movements';
@@ -31,14 +32,19 @@ const STARTER_CATEGORIES = [
 ];
 type BookkeepingView = typeof BOOKKEEPING_VIEWS[number] | 'attention';
 type ReportPeriod = 'all' | NamedReportPeriod | 'custom';
-type ReportDrilldown = { kind: 'all' | 'personal' } | { kind: 'category' | 'supplier'; key: string } | { kind: 'tax'; key: TaxType };
+/** A Reports door narrows the line list with the same filter fields the export reads, so the screen and the export are one object. */
+type ReportDrilldown = Partial<Pick<ExpenseFilters, 'category' | 'supplier' | 'paymentSource' | 'taxType'>>;
+const NO_FILTERS: ExpenseFilters = { from: null, to: null, category: '', query: '', review: 'all' };
+function drilldownLabel(drill: ReportDrilldown): string {
+  if (drill.taxType) return taxPaidRowLabel(drill.taxType);
+  return drill.category || drill.supplier || (drill.paymentSource === 'personal' ? 'Paid personally' : 'All recorded expenses');
+}
 const today = () => {
   const date = new Date();
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 };
 const money = formatCad;
 const amount = (cents: number) => (cents / 100).toFixed(2);
-const expenseCount = (count: number) => `${count} ${count === 1 ? 'expense' : 'expenses'}`;
 function BookkeepingOverview({ expenses, params, registrationDate, onOpenExpense }: {
   expenses: ExpenseRevision[]; params: URLSearchParams; registrationDate: string | null; onOpenExpense: (row: ExpenseRevision, list?: ExpenseRevision[]) => void;
 }) {
@@ -124,7 +130,7 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
   const [query, setQuery] = useState('');
   const [review, setReview] = useState<ReviewFilter>('all');
   const [reportPeriod, setReportPeriod] = useState<ReportPeriod>('all');
-  const [reportDrilldown, setReportDrilldown] = useState<ReportDrilldown>({ kind: 'all' });
+  const [reportDrilldown, setReportDrilldown] = useState<ReportDrilldown>({});
   const [changingRegistration, setChangingRegistration] = useState(false);
   const invalidPeriod = Boolean(from && to && from > to);
 
@@ -157,27 +163,20 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
   const datedVisible = useMemo(() => visible.filter(hasConfirmedDates), [visible]);
   const legacyVisible = useMemo(() => visible.filter(row => !hasConfirmedDates(row) && !row.void_reason), [visible]);
   const summary = useMemo(() => summarizeExpenses(datedVisible), [datedVisible]);
-  const reportRows = useMemo(() => datedVisible.filter(row => !row.void_reason && (
-    reportDrilldown.kind === 'all' ||
-    (reportDrilldown.kind === 'category' && row.category === reportDrilldown.key) ||
-    (reportDrilldown.kind === 'supplier' && row.supplier === reportDrilldown.key) ||
-    (reportDrilldown.kind === 'personal' && row.payment_source === 'personal') ||
-    (reportDrilldown.kind === 'tax' && taxTypesPaid(row).includes(reportDrilldown.key))
-  )), [datedVisible, reportDrilldown]);
+  const drilled = Object.values(reportDrilldown).some(Boolean);
+  const reportRows = useMemo(() => datedVisible.filter(row => !row.void_reason &&
+    matchesExpenseFilters(row, { ...NO_FILTERS, ...reportDrilldown }, registrationDate)), [datedVisible, reportDrilldown, registrationDate]);
   const selectedExpense = expenses.find(row => row.expense_id === selectedExpenseId) ?? null;
   const addressedExpenseMissing = Boolean(place.record && !expenses.some(row => row.expense_id === place.record));
-  const attention = expenses.filter(row => !row.void_reason &&
-    attentionReasons(row, registrationDate).length > 0);
+  const attention = useMemo(() => expenses.filter(row => !row.void_reason &&
+    attentionReasons(row, registrationDate).length > 0), [expenses, registrationDate]);
   const reportPeriodLabel = reportPeriod === 'all' ? 'All confirmed dates'
     : reportPeriod === 'custom' ? `${from ? consoleDate(from) : 'Any start'} to ${to ? consoleDate(to) : 'Any end'}`
     : reportPeriodRange(reportPeriod, today()).label;
-  const drilldownLabel = reportDrilldown.kind === 'category' || reportDrilldown.kind === 'supplier' ? reportDrilldown.key
-    : reportDrilldown.kind === 'tax' ? TAX_PAID_ROW_LABELS[reportDrilldown.key]
-    : reportDrilldown.kind === 'personal' ? 'Paid personally' : 'All recorded expenses';
 
   function chooseReportPeriod(value: ReportPeriod) {
     setReportPeriod(value);
-    setReportDrilldown({ kind: 'all' });
+    setReportDrilldown({});
     if (value === 'all') { setFrom(''); setTo(''); }
     else if (value !== 'custom') { const range = reportPeriodRange(value, today()); setFrom(range.from); setTo(range.to); }
   }
@@ -212,14 +211,9 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
   async function exportExpenses(kind: 'csv' | 'package', filters?: ExpenseFilters) {
     setExporting(kind); setError('');
     try {
-      const params = expenseFilterParams(filters ?? { from: from || null, to: to || null, category, query, review });
-      if (!filters && view === 'reports' && reportDrilldown.kind !== 'all') {
-        params.set('dateStatus', 'confirmed');
-        if (reportDrilldown.kind === 'category') params.set('category', reportDrilldown.key);
-        if (reportDrilldown.kind === 'supplier') params.set('supplier', reportDrilldown.key);
-        if (reportDrilldown.kind === 'personal') params.set('paymentSource', 'personal');
-        if (reportDrilldown.kind === 'tax') params.set('taxType', reportDrilldown.key);
-      }
+      const screen: ExpenseFilters = { from: from || null, to: to || null, category, query, review };
+      const params = expenseFilterParams(filters ?? (view === 'reports' && drilled
+        ? { ...screen, ...Object.fromEntries(Object.entries(reportDrilldown).filter(([, value]) => value)), dateStatus: 'confirmed' } : screen));
       const route = kind === 'csv' ? 'export' : 'package';
       const response = await fetch(`/api/platform-admin/bookkeeping/${route}?${params}`, { cache: 'no-store' });
       if (!response.ok) {
@@ -291,23 +285,23 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
             <p className={styles.hint}>These expenses have a recorded date whose meaning was not established. They are excluded from the incurred-date total until confirmed.</p>
             {legacyVisible.map(row => <button type="button" className={styles.listDoor} key={row.expense_id} onClick={() => openRecord(row)}><span><strong>{row.supplier}</strong><small>Recorded date {consoleDate(row.expense_date)} · meaning unconfirmed</small></span><b>{money(businessCents(row))}</b></button>)}</section>}
           <div className={styles.reportGrid}>
-            <div><h3>By category</h3>{summary.byCategory.length ? summary.byCategory.map(([name, cents]) => <button key={name} type="button" className={styles.reportDoor} onClick={() => setReportDrilldown({ kind: 'category', key: name })}><span>{name}</span><strong>{money(cents)} ›</strong></button>) : <p>No confirmed expenses in this period.</p>}</div>
-            <div><h3>By supplier</h3>{summary.bySupplier.length ? summary.bySupplier.map(([name, cents]) => <button key={name} type="button" className={styles.reportDoor} onClick={() => setReportDrilldown({ kind: 'supplier', key: name })}><span>{name}</span><strong>{money(cents)} ›</strong></button>) : <p>No confirmed expenses in this period.</p>}</div>
+            <div><h3>By category</h3>{summary.byCategory.length ? summary.byCategory.map(([name, cents]) => <button key={name} type="button" className={styles.reportDoor} onClick={() => setReportDrilldown({ category: name })}><span>{name}</span><strong>{money(cents)} ›</strong></button>) : <p>No confirmed expenses in this period.</p>}</div>
+            <div><h3>By supplier</h3>{summary.bySupplier.length ? summary.bySupplier.map(([name, cents]) => <button key={name} type="button" className={styles.reportDoor} onClick={() => setReportDrilldown({ supplier: name })}><span>{name}</span><strong>{money(cents)} ›</strong></button>) : <p>No confirmed expenses in this period.</p>}</div>
           </div>
           <section className={styles.taxPaid} aria-labelledby="tax-paid-title">
             <h3 id="tax-paid-title" className={kit.sectionTitle}>{TAX_PAID_TITLE}</h3>
             <div className={`${kit.band} ${styles.taxPaidBand}`}>
-              <div className={kit.bandCell}><span className={kit.bandLabel}>GST/HST paid</span><strong className={kit.bandValue}>{money(summary.taxPaid.gstHstCents)}</strong><span className={kit.bandNote}>{expenseCount(summary.taxPaid.gstHstCount)}</span></div>
-              <div className={kit.bandCell}><span className={kit.bandLabel}>Charged by simplified sellers</span><strong className={kit.bandValue}>{money(summary.taxPaid.simplifiedCents)}</strong><span className={kit.bandNote}>{expenseCount(summary.taxPaid.simplifiedCount)}</span></div>
+              <div className={kit.bandCell}><span className={kit.bandLabel}>GST/HST paid</span><strong className={kit.bandValue}>{money(summary.taxPaid.gstHstCents)}</strong><span className={kit.bandNote}>{pluralize(summary.taxPaid.gstHstCount, 'expense')}</span></div>
+              <div className={kit.bandCell}><span className={kit.bandLabel}>Charged by simplified sellers</span><strong className={kit.bandValue}>{money(summary.taxPaid.simplifiedCents)}</strong><span className={kit.bandNote}>{pluralize(summary.taxPaid.simplifiedCount, 'expense')}</span></div>
               <div className={kit.bandCell}><span className={kit.bandLabel}>Tax unknown</span><strong className={kit.bandValue}>{summary.taxPaid.unknownCount}</strong><span className={kit.bandNote}>{summary.taxPaid.unknownCount === 1 ? 'expense' : 'expenses'}</span></div>
             </div>
             <div className={`table-cards ${styles.taxPaidFrame}`}><table className={styles.taxPaidTable}>
               <thead><tr><th>Tax type</th><th className={kit.num}>Expenses</th><th className={kit.num}>Tax paid</th><th aria-label="Show these expenses" /></tr></thead>
               <tbody>{summary.taxPaid.rows.length ? summary.taxPaid.rows.map(row => <tr key={row.type}
-                className={`${kit.clickableRow} ${reportDrilldown.kind === 'tax' && reportDrilldown.key === row.type ? styles.taxPaidOn : ''}`}
-                onClick={() => setReportDrilldown({ kind: 'tax', key: row.type })}>
+                className={`${kit.clickableRow} ${reportDrilldown.taxType === row.type ? styles.taxPaidOn : ''}`}
+                onClick={() => setReportDrilldown({ taxType: row.type })}>
                 <td className="table-cards-title"><button type="button" className={styles.taxPaidDoor}
-                  onClick={event => { event.stopPropagation(); setReportDrilldown({ kind: 'tax', key: row.type }); }}>{row.label}</button></td>
+                  onClick={event => { event.stopPropagation(); setReportDrilldown({ taxType: row.type }); }}>{row.label}</button></td>
                 <td data-label="Expenses" className={kit.num}>{row.count}</td>
                 <td data-label="Tax paid" className={kit.num}>{money(row.cents)}</td>
                 <td className={kit.rowDoor} aria-hidden>›</td>
@@ -318,10 +312,10 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
               onClick={() => setChangingRegistration(true)} disabled={!gstSchemaReady}>{REGISTRATION_QUESTION.confirm}</button></p>}
           </section>
           <div className={`${styles.reportGrid} ${styles.reportGridWhole}`}>
-            <div><h3>Recorded spend by payment source</h3>{summary.byPaymentSource.length ? summary.byPaymentSource.map(([source, cents]) => source === 'personal' ? <button type="button" className={styles.reportDoor} key={source} onClick={() => setReportDrilldown({ kind: 'personal' })}><span>{SOURCES[source]}</span><strong>{money(cents)} ›</strong></button> : <p key={source}><span>{SOURCES[source]}</span><strong>{money(cents)}</strong></p>) : <p>No active expenses.</p>}</div>
+            <div><h3>Recorded spend by payment source</h3>{summary.byPaymentSource.length ? summary.byPaymentSource.map(([source, cents]) => source === 'personal' ? <button type="button" className={styles.reportDoor} key={source} onClick={() => setReportDrilldown({ paymentSource: 'personal' })}><span>{SOURCES[source]}</span><strong>{money(cents)} ›</strong></button> : <p key={source}><span>{SOURCES[source]}</span><strong>{money(cents)}</strong></p>) : <p>No active expenses.</p>}</div>
           </div>
-          <section className={styles.reviewList} aria-labelledby="report-lines-title"><div className={styles.subHeading}><h3 id="report-lines-title">{drilldownLabel} · {money(reportRows.reduce((total, row) => total + businessCents(row), 0))}</h3>
-            {reportDrilldown.kind !== 'all' && <button type="button" className={styles.textButton} onClick={() => setReportDrilldown({ kind: 'all' })}>Show all entries</button>}</div>
+          <section className={styles.reviewList} aria-labelledby="report-lines-title"><div className={styles.subHeading}><h3 id="report-lines-title">{drilldownLabel(reportDrilldown)} · {money(reportRows.reduce((total, row) => total + businessCents(row), 0))}</h3>
+            {drilled && <button type="button" className={styles.textButton} onClick={() => setReportDrilldown({})}>Show all entries</button>}</div>
             <p className={styles.hint}>{reportRows.length} contributing expense(s) · {reportPeriodLabel}. Open a row to see its receipt and revisions.</p>
             {reportRows.map(row => <button key={row.expense_id} type="button" className={styles.listDoor} onClick={() => openRecord(row)}><span><strong>{row.supplier}</strong><small>{consoleDate(row.incurred_date)} · {row.category} · {SOURCES[row.payment_source]}</small></span><b>{money(businessCents(row))} ›</b></button>)}
             {!reportRows.length && <p className={styles.empty}>No expenses contribute to this figure.</p>}
