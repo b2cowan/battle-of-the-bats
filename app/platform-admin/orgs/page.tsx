@@ -1,11 +1,12 @@
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { requirePlatformAreaView } from '@/lib/platform-auth';
+import { hasPlatformPower, requirePlatformAreaView } from '@/lib/platform-auth';
 import { FOUNDING_SEASON_COMP_EXPIRIES } from '@/lib/plan-config';
 import OrgsClient from './OrgsClient';
 import { clubDomainStore } from '@/lib/club-domain-store';
 import { peopleByIds } from '@/lib/platform-people-lookup';
 import { fetchAll } from '@/lib/supabase-paging';
 import { freeTimePortalOrgIds, runningFreeTimePortalOrgIds } from '@/lib/portal-free-time-server';
+import { readSalesTaxWaiting } from '@/lib/console-money-sales-tax-wait';
 
 /**
  * ⚠ RECOGNITION IS THE SHARED RULE, NEVER A HAND-TYPED DATE (fixed 2026-09-07).
@@ -201,9 +202,21 @@ export default async function OrgsPage({
   // Defensive area guard — `organizations` is currently visible to every platform role
   // (the layout already enforces "is a platform admin"), so this is a no-op today. It
   // future-proofs the page: tightening the access matrix later can't silently leave it ungated.
-  await requirePlatformAreaView('organizations');
+  const auth = await requirePlatformAreaView('organizations');
   const { status, filter } = await searchParams;
-  const orgs = await getOrgs();
+  // Today's "Sales tax" row opens this list filtered (GST/HST Stage 3 Part 3b). Only the roles that read Stripe have the filter.
+  const canFilterSalesTax = hasPlatformPower(auth.role, 'find_stripe');
+  const wantsSalesTax = canFilterSalesTax && filter === 'sales_tax';
+  const [salesTax, rows] = await Promise.all([wantsSalesTax ? readSalesTaxWaiting() : Promise.resolve(null), getOrgs()]);
+  const withSales = new Set(salesTax?.orgIds);
+  const orgs = rows.map(o => ({ ...o, salesTax: withSales.has(o.id) }));
 
-  return <OrgsClient orgs={orgs} initialStatus={status ?? ''} initialFilter={filter ?? ''} />;
+  return (
+    <OrgsClient
+      orgs={orgs}
+      initialStatus={status ?? ''}
+      initialFilter={filter === 'sales_tax' && !canFilterSalesTax ? '' : filter ?? ''}
+      salesTaxUnread={wantsSalesTax && salesTax === null}
+    />
+  );
 }

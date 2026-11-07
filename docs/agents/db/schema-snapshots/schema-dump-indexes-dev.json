@@ -2960,6 +2960,86 @@
     "indexdef": "CREATE INDEX platform_catalog_change_requests_target_version_id_idx ON public.platform_catalog_change_requests USING btree (target_version_id)"
   },
   {
+    "tablename": "platform_charge_tax_looks",
+    "indexname": "platform_charge_tax_looks_chain_idx",
+    "indexdef": "CREATE UNIQUE INDEX platform_charge_tax_looks_chain_idx ON public.platform_charge_tax_looks USING btree (stripe_invoice_id, COALESCE(after_id, '00000000-0000-0000-0000-000000000000'::uuid))"
+  },
+  {
+    "tablename": "platform_charge_tax_looks",
+    "indexname": "platform_charge_tax_looks_invoice_idx",
+    "indexdef": "CREATE INDEX platform_charge_tax_looks_invoice_idx ON public.platform_charge_tax_looks USING btree (stripe_invoice_id, seq DESC)"
+  },
+  {
+    "tablename": "platform_charge_tax_looks",
+    "indexname": "platform_charge_tax_looks_pkey",
+    "indexdef": "CREATE UNIQUE INDEX platform_charge_tax_looks_pkey ON public.platform_charge_tax_looks USING btree (id)"
+  },
+  {
+    "tablename": "platform_charge_tax_looks",
+    "indexname": "platform_charge_tax_looks_put_back_once_idx",
+    "indexdef": "CREATE UNIQUE INDEX platform_charge_tax_looks_put_back_once_idx ON public.platform_charge_tax_looks USING btree (put_back_of) WHERE (put_back_of IS NOT NULL)"
+  },
+  {
+    "tablename": "platform_charge_tax_records",
+    "indexname": "platform_charge_tax_records_customer_idx",
+    "indexdef": "CREATE INDEX platform_charge_tax_records_customer_idx ON public.platform_charge_tax_records USING btree (stripe_customer_id)"
+  },
+  {
+    "tablename": "platform_charge_tax_records",
+    "indexname": "platform_charge_tax_records_org_idx",
+    "indexdef": "CREATE INDEX platform_charge_tax_records_org_idx ON public.platform_charge_tax_records USING btree (org_id, issued_at DESC)"
+  },
+  {
+    "tablename": "platform_charge_tax_records",
+    "indexname": "platform_charge_tax_records_period_idx",
+    "indexdef": "CREATE INDEX platform_charge_tax_records_period_idx ON public.platform_charge_tax_records USING btree (livemode, issued_at)"
+  },
+  {
+    "tablename": "platform_charge_tax_records",
+    "indexname": "platform_charge_tax_records_pkey",
+    "indexdef": "CREATE UNIQUE INDEX platform_charge_tax_records_pkey ON public.platform_charge_tax_records USING btree (id)"
+  },
+  {
+    "tablename": "platform_charge_tax_records",
+    "indexname": "platform_charge_tax_records_stripe_invoice_id_key",
+    "indexdef": "CREATE UNIQUE INDEX platform_charge_tax_records_stripe_invoice_id_key ON public.platform_charge_tax_records USING btree (stripe_invoice_id)"
+  },
+  {
+    "tablename": "platform_charge_tax_records",
+    "indexname": "platform_charge_tax_records_user_idx",
+    "indexdef": "CREATE INDEX platform_charge_tax_records_user_idx ON public.platform_charge_tax_records USING btree (user_id, issued_at DESC)"
+  },
+  {
+    "tablename": "platform_credit_note_tax_records",
+    "indexname": "platform_credit_note_tax_records_invoice_idx",
+    "indexdef": "CREATE INDEX platform_credit_note_tax_records_invoice_idx ON public.platform_credit_note_tax_records USING btree (stripe_invoice_id)"
+  },
+  {
+    "tablename": "platform_credit_note_tax_records",
+    "indexname": "platform_credit_note_tax_records_org_idx",
+    "indexdef": "CREATE INDEX platform_credit_note_tax_records_org_idx ON public.platform_credit_note_tax_records USING btree (org_id, issued_at DESC)"
+  },
+  {
+    "tablename": "platform_credit_note_tax_records",
+    "indexname": "platform_credit_note_tax_records_period_idx",
+    "indexdef": "CREATE INDEX platform_credit_note_tax_records_period_idx ON public.platform_credit_note_tax_records USING btree (livemode, issued_at)"
+  },
+  {
+    "tablename": "platform_credit_note_tax_records",
+    "indexname": "platform_credit_note_tax_records_pkey",
+    "indexdef": "CREATE UNIQUE INDEX platform_credit_note_tax_records_pkey ON public.platform_credit_note_tax_records USING btree (id)"
+  },
+  {
+    "tablename": "platform_credit_note_tax_records",
+    "indexname": "platform_credit_note_tax_records_stripe_credit_note_id_key",
+    "indexdef": "CREATE UNIQUE INDEX platform_credit_note_tax_records_stripe_credit_note_id_key ON public.platform_credit_note_tax_records USING btree (stripe_credit_note_id)"
+  },
+  {
+    "tablename": "platform_credit_note_tax_records",
+    "indexname": "platform_credit_note_tax_records_user_idx",
+    "indexdef": "CREATE INDEX platform_credit_note_tax_records_user_idx ON public.platform_credit_note_tax_records USING btree (user_id, issued_at DESC)"
+  },
+  {
     "tablename": "platform_email_templates",
     "indexname": "platform_email_templates_pkey",
     "indexdef": "CREATE UNIQUE INDEX platform_email_templates_pkey ON public.platform_email_templates USING btree (key)"

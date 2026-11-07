@@ -118,7 +118,7 @@ export type ClubRecordProps = {
    *  connected, or a role without it; 'failed' = the tab shows, its read offers Read again). */
   onlinePayments: ClubOnlinePayments | 'failed' | null;
   /** The Money tab (Stage 3): our record's side, and whether this role reads Stripe's (A2). */
-  money: { readsStripe: boolean; billsClub?: boolean; ours: OurMoneyRecord };
+  money: { readsStripe: boolean; billsClub?: boolean; marksLooks?: boolean; ours: OurMoneyRecord };
   /** Giving free time (a giver only): what the console knows before the click, and the window's bounds. */
   freeTime: {
     block: GiveBlock | null;
@@ -193,6 +193,8 @@ export default function ClubRecord(props: ClubRecordProps) {
   const tab: Tab = TABS.some(t => t.key === asked && (t.key !== 'payments' || props.onlinePayments !== null)) ? (asked as Tab) : 'story';
   /** Find opens a charge on the Money tab: `?tab=money&charge=ch_…` (the charge route checks it is this club's). */
   const chargeParam = search.get('charge');
+  /** The Clubs list's Sales tax filter opens a club here: `?tab=money&show=needs_look` (GST/HST Stage 3 Part 3b). */
+  const startOnLook = search.get('show') === 'needs_look';
   const canEdit = can.support || can.billing || can.sections;
 
   const [editing, setEditing] = useState(false);
@@ -724,6 +726,8 @@ export default function ClubRecord(props: ClubRecordProps) {
               ours={props.money.ours}
               readsStripe={props.money.readsStripe}
               billsClub={props.money.billsClub}
+              marksLooks={props.money.marksLooks}
+              startOnLook={startOnLook}
               stripeBase={props.stripeBase}
               club={club}
               billing={billing}

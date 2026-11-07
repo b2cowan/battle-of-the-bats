@@ -106,9 +106,15 @@ export function needsLook(record: NeedsLookRecord, ctx: { registration: string |
   return reasons;
 }
 
-/** One customer's sales that need a look (lib/console-money-sales-store.ts `readNeedsLook`), reasons keyed by invoice. */
+/** A mark that holds on a sale (Part 3b): who looked, when, and what they wrote. The reason keys it was made for stay on the server. */
+export type LookedMark = { id: string; by: string; at: string; why: string };
+
+/**
+ * One customer's sales that need a look (lib/console-money-sales-store.ts `readNeedsLook`), reasons keyed by invoice. A sale that was
+ * marked as looked at (and has no new problem) is NOT in `sales`/`notes`/`reasons`: it is in `looked`, so its window can say who looked.
+ */
 export type NeedsLookRead =
-  | { state: 'read'; sales: SaleRecord[]; notes: SaleNoteRecord[]; reasons: Record<string, LookReason[]>; registrationDate: string | null }
+  | { state: 'read'; sales: SaleRecord[]; notes: SaleNoteRecord[]; reasons: Record<string, LookReason[]>; looked: Record<string, LookedMark>; registrationDate: string | null }
   | { state: 'failed' };
 
 // ── Reading every page ──────────────────────────────────────────────────────────────────────────

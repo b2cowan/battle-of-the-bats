@@ -419,6 +419,42 @@ export const NEEDS_LOOK_WORDS = {
   showAll: 'Show all sales',
   /** Undrawn: the needs-a-look read itself failed (the choice is then left out, as when our records fail; drawing tab 4). */
   readFailed: 'Which sales need a look could not be read.',
+  /**
+   * "Mark as looked at" (Part 3b; drawing tab 5, owner Ask 6; the re-list ruling 2026-11-06). The put-back window is the same recipe
+   * (the drawing says it "asks for a why too"); its sentence is not drawn and is plain on purpose.
+   */
+  mark: {
+    door: 'Mark as looked at',
+    title: (day: string) => `Mark the ${day} sale as looked at`,
+    sentenceA: 'The ',
+    sentenceB: ' sale leaves the list of sales that need a look. ',
+    sentenceBold: 'Its record and its tax do not change',
+    sentenceC: ', and the GST/HST return still counts it as it stands.',
+    whyPlaceholder: 'What did you find, and what was done? Never a card number.',
+    foot: 'Goes in the audit log and on the sale’s window.',
+    confirm: 'Mark as looked at',
+    done: 'Marked as looked at.',
+    looked: (when: string, by: string, why: string) => `Looked at ${when} by ${by}: ${why}`,
+    putBack: 'Put it back on the list',
+    putBackTitle: (day: string) => `Put the ${day} sale back on the list`,
+    putBackSentence: 'The sale goes back on the list of sales that need a look. Its record and its tax do not change.',
+    putBackPlaceholder: 'Why is it going back on the list? Never a card number.',
+    putBackFoot: 'Goes in the audit log.',
+    putBackDone: 'Put back on the list.',
+    supportLine: 'Billing or Super admin marks a sale as looked at.',
+    refusals: {
+      whyBlank: 'Say why before marking it as looked at.',
+      whyBlankPutBack: 'Say why before putting it back.',
+      whyLong: (max: number) => `Keep the reason under ${max} characters.`,
+      whyCard: 'The reason looks like it holds a card number. Leave card details out.',
+      noSale: 'There is no such sale on this club.',
+      notRead: 'The sale could not be read. Try again in a moment.',
+      noLongerNeeds: 'This sale no longer needs a look. Read again to see what changed.',
+      alreadyMarked: 'This sale was already marked as looked at. Read again to see what changed.',
+      cannotPutBack: 'This mark can no longer be put back. Read again to see what changed.',
+      failed: 'That did not go through. Try again in a moment.',
+    },
+  },
 } as const;
 
 /** "Our GST/HST answer", in words: a lead word, then the sentence (gap 6 = A for a sale before we registered). */

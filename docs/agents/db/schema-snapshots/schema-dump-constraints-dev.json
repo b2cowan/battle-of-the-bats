@@ -5760,6 +5760,76 @@
     "update_rule": "NO ACTION"
   },
   {
+    "table_name": "platform_charge_tax_looks",
+    "constraint_name": "platform_charge_tax_looks_after_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "after_id",
+    "foreign_table": "platform_charge_tax_looks",
+    "foreign_column": "id",
+    "delete_rule": "NO ACTION",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "platform_charge_tax_looks",
+    "constraint_name": "platform_charge_tax_looks_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "platform_charge_tax_looks",
+    "constraint_name": "platform_charge_tax_looks_put_back_of_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "put_back_of",
+    "foreign_table": "platform_charge_tax_looks",
+    "foreign_column": "id",
+    "delete_rule": "NO ACTION",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "constraint_name": "platform_charge_tax_records_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "platform_charge_tax_records",
+    "constraint_name": "platform_charge_tax_records_stripe_invoice_id_key",
+    "constraint_type": "UNIQUE",
+    "column_name": "stripe_invoice_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "platform_credit_note_tax_records",
+    "constraint_name": "platform_credit_note_tax_records_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "platform_credit_note_tax_records",
+    "constraint_name": "platform_credit_note_tax_records_stripe_credit_note_id_key",
+    "constraint_type": "UNIQUE",
+    "column_name": "stripe_credit_note_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
     "table_name": "platform_email_templates",
     "constraint_name": "platform_email_templates_pkey",
     "constraint_type": "PRIMARY KEY",

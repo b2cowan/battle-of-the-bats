@@ -252,6 +252,8 @@ export default async function ClubRecordPage({ params, searchParams }: {
     money: {
       readsStripe,
       billsClub: hasPlatformPower(auth.role, 'club_billing'),
+      // GST/HST Stage 3 Part 3b: marking a sale as looked at is the refund power's (Super admin, Billing); Support only reads the list.
+      marksLooks: hasPlatformPower(auth.role, 'refund'),
       // Our side of the comparison: the plan the club PAYS for and the stored billing columns; free time shown, never compared.
       ours: {
         planId: plan,

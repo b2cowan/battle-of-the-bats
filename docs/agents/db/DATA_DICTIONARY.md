@@ -9901,6 +9901,43 @@ The **platform control plane** — the tables behind `/platform-admin/` that Fie
 
 **The read-only lookup over sign-in records (same migration, functions only — invisible to the column snapshots).** `platform_people_search(p_query, p_status, p_exclude_emails, p_clubs, p_offset, p_limit)` (the People list: ranked, paged, ≤100 a page, `total_count` for the pager), `platform_find_people(p_query, p_exclude_emails)` (Find's People group: 2–120 characters, `LIMIT 8` in SQL), `platform_people_by_ids(p_ids)` (owners/members by account id, ≤1,000 per call — the caller chunks) and `platform_find_clubs(p_query, p_exclude_slugs)` (Find's Clubs group: name, web name, own web address, owner email; `LIMIT 8`). All `SECURITY DEFINER`, `search_path = ''`, schema-qualified; they return **exactly** id, email, name (metadata `display_name` → `full_name` → `name`), last sign-in, created, banned-until, email-confirmed-at (clubs: id, name, slug, plan, status, kind, own address, one owner email). LIKE wildcards in the words are escaped. Staff accounts (`platform_users` + the bootstrap emails the caller passes) are left out. **Execute is revoked from PUBLIC, anon and authenticated and granted to service_role only** (rule 7; `tests/unit/support-console-stage2-guard.test.ts`, and a dev call with the anon key returned 42501 for all four on 2026-10-25). They end the 1,000-account cap the console's single `listUsers` pages had (Customer users, the clubs list's owner sign-ins, Today's owner-inactive count, the Founding Season desk). **Mig 367 (2026-10-25, /review fix)** replaced `platform_find_clubs` with the same signature and grants: a club's matched owner is the EXACT email searched when one of its owners has it, then the alphabetically first containing the words — 365 took the first containing them, so `owner@x` showed `coowner@x` and missed the exact-match rank.
 
+### `platform_charge_tax_looks`
+<!-- dict:table:platform_charge_tax_looks -->
+
+**Purpose:** the **"Mark as looked at"** record for a sale that needs a look (mig 452, GST/HST Stage 3 Part 3b, owner Ask 6 + the 2026-11-06 re-list ruling), kept **beside** `platform_charge_tax_records`, never in it. A person looks at a sale on the Money tab (Super admin or Billing only, the refund power), says what they found and did, and the sale leaves the strip, dot, list and Today's Sales tax count until a **new problem** appears on it. **The GST/HST return still counts a looked-at sale as it stands:** nothing that sums, exports or reports tax reads this table (`tests/unit/console-money-looks.test.ts` holds the importers: only the needs-a-look reader, `lib/console-money-sales-store.ts`, names it).
+
+**Gotchas (read first):**
+1. **Append-only; one chain per sale.** A **mark** row (`put_back_of` NULL) carries the `looked_keys` it was made for; a **put-back** row (`put_back_of` = the mark it undoes) has none and its own `why`. Trigger `platform_charge_tax_looks_guard` refuses every UPDATE and the DELETE of a live row. A sale's **newest row (highest `seq`)** decides: a mark = looked at, a put-back (or no row) = not.
+2. **Looked at only while every reason it has NOW is inside the newest mark's `looked_keys`** (`lib/console-money-looks.ts`). A key is a Needs-a-look reason **code**, never a sentence (rewording never re-lists a sale), plus a fingerprint for two codes: `rate_mismatch:<province>` and `refund_no_note:<cents refunded so far>`, so a changed province or a second dashboard refund is a new problem. The keys are the SERVER's read at the moment of marking, never the browser's.
+3. **Two people at once cannot both win.** `after_id` is the sale's newest row when this one was written, UNIQUE per sale (`platform_charge_tax_looks_chain_idx`); the second writer gets a 409. A put-back must undo the newest row (CHECK `put_back_is_newest`) and a mark is undone at most once (`_put_back_once_idx`).
+4. **Kept: no foreign key to a club or person, on purpose.** `org_id` is a plain id. Nothing cascades.
+5. **Service role only.** RLS on, no policies; `anon`/`authenticated` hold no privilege.
+
+**Fields** (`id` uuid):
+
+<!-- dict:col:platform_charge_tax_looks.id -->
+<!-- dict:col:platform_charge_tax_looks.seq -->
+**`seq`** (bigint identity) orders a sale's rows and the whole table; the newest row of a sale has the highest `seq`.
+
+<!-- dict:col:platform_charge_tax_looks.stripe_invoice_id -->
+<!-- dict:col:platform_charge_tax_looks.livemode -->
+**`stripe_invoice_id`** (`in_…`) names the sale (the same key as `platform_charge_tax_records`; a sale has many rows here, so it is not unique) with **`livemode`** the site's Stripe mode at the time (test-mode rows can be deleted, live ones cannot).
+
+<!-- dict:col:platform_charge_tax_looks.org_id -->
+**`org_id`** — the club record the person marked it from. A plain id, no foreign key.
+
+<!-- dict:col:platform_charge_tax_looks.looked_keys -->
+**`looked_keys`** (text[]) — the reason keys a mark was made for (≤ 8, CHECK `_keys_shape`); empty exactly on a put-back (CHECK `_shape`).
+
+<!-- dict:col:platform_charge_tax_looks.put_back_of -->
+<!-- dict:col:platform_charge_tax_looks.after_id -->
+**`put_back_of`** (the mark this row undoes; NULL on a mark) and **`after_id`** (the sale's newest row when this one was written; NULL for its first; self-FKs, no cascade).
+
+<!-- dict:col:platform_charge_tax_looks.looked_by -->
+<!-- dict:col:platform_charge_tax_looks.looked_at -->
+<!-- dict:col:platform_charge_tax_looks.why -->
+**`looked_by`** (the staff email) / **`looked_at`** / **`why`** — what they found and did: required, non-blank, ≤ 500 characters, and the route refuses anything that looks like a card number. The window prints "Looked at {when} by {email}: {why}". The audit log (`sale_look_mark` / `sale_look_put_back`) carries the same why and is hidden from roles that do not read Stripe, like a refund's.
+
 ### `platform_account_emails`
 <!-- dict:table:platform_account_emails -->
 

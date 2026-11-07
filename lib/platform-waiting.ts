@@ -16,7 +16,7 @@
  * up to Today's group total.
  */
 import { supabaseAdmin } from './supabase-admin';
-import { canViewPlatformArea, type PlatformArea } from './platform-areas';
+import { canViewPlatformArea, hasPlatformPower, type PlatformArea, type PlatformPower } from './platform-areas';
 import type { PlatformRole } from './platform-auth';
 import { getCommandCenterStats } from './platform-metrics';
 import { classifyCampaignSend, UPCOMING_WINDOW_DAYS } from './marketing-schedule';
@@ -26,6 +26,7 @@ import { LIVE_MARKETING_EMAIL_KEYS } from './marketing-email-defaults';
 import { readLeadBook, readOffers } from './lead-book';
 import { followUpDue, needsYou } from './lead-numbers';
 import { readOnlinePaymentsHealth } from './platform-online-payments';
+import { readSalesTaxWaiting } from './console-money-sales-tax-wait';
 
 export type WaitingGroupKey = 'customers' | 'health' | 'growth' | 'product';
 
@@ -56,7 +57,11 @@ export type WaitingQueue = {
   notRead?: boolean;
 };
 
-type QueueDef = Omit<WaitingQueue, 'count' | 'why'> & { why: string | ((ctx: { sinceVisit: number }) => string) };
+type QueueDef = Omit<WaitingQueue, 'count' | 'why'> & {
+  why: string | ((ctx: { sinceVisit: number }) => string);
+  /** A power the role must ALSO hold (GST/HST Stage 3 Part 3b): a queue only the roles that read Stripe see, while its list (`entry`) is open to every role. */
+  power?: PlatformPower;
+};
 
 /** The queues in their drawn order within each group. */
 const QUEUES: QueueDef[] = [
@@ -69,6 +74,9 @@ const QUEUES: QueueDef[] = [
     why: ({ sinceVisit }) => `A subscription Stripe could not charge${sinceVisit > 0 ? ` · ${sinceVisit} since your last visit` : ''}`,
     clearLabel: 'past due', href: '/platform-admin/orgs?status=past_due', entry: 'organizations',
   },
+  // GST/HST Stage 3 Part 3b (owner Ask 5): a SALE whose GST/HST answer is missing or does not match what was kept with it, not
+  // marked as looked at. Counts sales, not clubs; the list it opens (Clubs & portals) is every role's, the row is the Stripe-reading roles'.
+  { key: 'sales_tax', group: 'customers', label: 'Sales tax', why: 'A sale whose GST/HST answer is missing or doesn’t match what was kept with it', clearLabel: 'sales tax', href: '/platform-admin/orgs?filter=sales_tax', entry: 'organizations', power: 'find_stripe' },
   { key: 'trials_ending', group: 'customers', label: 'Trials ending', why: 'A trial that ends in the next 14 days', clearLabel: 'trials ending in 14 days', href: '/platform-admin/orgs?filter=trial_ending', entry: 'organizations' },
   { key: 'new_errors', group: 'health', label: 'New errors', why: 'An error first seen since your last visit', clearLabel: 'new errors', href: '/platform-admin/observability', entry: 'observability' },
   { key: 'new_feedback', group: 'health', label: 'New feedback', why: 'A message from inside the product nobody has triaged', clearLabel: 'new feedback', href: '/platform-admin/feedback', entry: 'feedback' },
@@ -86,7 +94,7 @@ const QUEUES: QueueDef[] = [
 
 /** The queues a role sees (whose list it can open), in order. Pure. */
 function queuesFor(role: PlatformRole): QueueDef[] {
-  return QUEUES.filter(q => canViewPlatformArea(role, q.entry));
+  return QUEUES.filter(q => canViewPlatformArea(role, q.entry) && (!q.power || hasPlatformPower(role, q.power)));
 }
 
 async function campaignAlerts(): Promise<{ pastDue: number; dueSoon: number }> {
@@ -180,6 +188,8 @@ async function countWaiting(role: PlatformRole, since: string | null): Promise<W
   const wantsLeads = wants('new_leads') || wants('follow_ups_due') || wants('signup_to_confirm');
   // Club Tier 12d-2: started beside the other queues (/review). A list that could not be read is "Not read", never 0.
   const onlinePaymentsRead = wants('online_payments') ? readOnlinePaymentsHealth().then(r => r.length).catch(() => null) : Promise.resolve(0);
+  // GST/HST Stage 3 Part 3b: the sales that need a look, platform-wide (null = not read; shares one 30 s read with the Clubs list).
+  const salesTaxRead = wants('sales_tax') ? readSalesTaxWaiting() : Promise.resolve({ sales: 0, orgIds: [] as string[] });
   const [stats, campaigns, approvals, newErrors, newFeedback, freeTimeEnding, leads] = await Promise.all([
     getCommandCenterStats({ since }),
     wants('campaigns_past_due') || wants('campaigns_due_soon') ? campaignAlerts() : Promise.resolve({ pastDue: 0, dueSoon: 0 }),
@@ -196,12 +206,14 @@ async function countWaiting(role: PlatformRole, since: string | null): Promise<W
     wantsLeads ? leadCounts().catch(() => null) : Promise.resolve(null),
   ]);
   const onlinePayments = await onlinePaymentsRead;
+  const salesTax = await salesTaxRead;
 
   const counts: Record<string, number> = {
     owner_inactive: stats.alerts.orgsWithInactiveOwner,
     retention: stats.alerts.retentionAlertCount,
     missing_owner: stats.alerts.orgsWithoutOwner,
     past_due: stats.alerts.pastDue,
+    sales_tax: salesTax?.sales ?? 0,
     trials_ending: stats.alerts.trialEndingSoon,
     free_time_ending: freeTimeEnding,
     new_errors: newErrors,
@@ -224,6 +236,7 @@ async function countWaiting(role: PlatformRole, since: string | null): Promise<W
       count: counts[q.key] ?? 0,
       ...(LEAD_QUEUES.has(q.key) && wantsLeads && !leads ? { notRead: true } : {}),
       ...(q.key === 'online_payments' && onlinePayments === null ? { notRead: true } : {}),
+      ...(q.key === 'sales_tax' && salesTax === null ? { notRead: true } : {}),
     })),
     entryCounts: wantsLeads && leads ? { early_access: leads.needYou } : {},
   };

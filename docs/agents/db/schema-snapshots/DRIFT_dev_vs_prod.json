@@ -1,12 +1,12 @@
 {
-  "generated": "2026-11-06",
-  "total": 226,
+  "generated": "2026-11-07",
+  "total": 402,
   "counts": {
-    "tables": 8,
-    "columns": 96,
-    "indexes": 40,
-    "constraints": 38,
-    "rls": 44
+    "tables": 11,
+    "columns": 191,
+    "indexes": 56,
+    "constraints": 45,
+    "rls": 99
   },
   "items": [
     {
@@ -47,6 +47,226 @@
     },
     {
       "key": "check:only-dev:bank_checks.bank_checks_kind",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_charge_tax_looks.platform_charge_tax_looks_keys_shape",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_charge_tax_looks.platform_charge_tax_looks_looked_by_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_charge_tax_looks.platform_charge_tax_looks_not_itself",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_charge_tax_looks.platform_charge_tax_looks_put_back_is_newest",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_charge_tax_looks.platform_charge_tax_looks_shape",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_charge_tax_looks.platform_charge_tax_looks_stripe_invoice_id_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_charge_tax_looks.platform_charge_tax_looks_why_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_charge_tax_records.platform_charge_tax_records_buyer_kind_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_charge_tax_records.platform_charge_tax_records_buyer_name_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_charge_tax_records.platform_charge_tax_records_buyer_shape",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_charge_tax_records.platform_charge_tax_records_cad_is_itself",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_charge_tax_records.platform_charge_tax_records_card_country_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_charge_tax_records.platform_charge_tax_records_currency_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_charge_tax_records.platform_charge_tax_records_evidence_captured_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_charge_tax_records.platform_charge_tax_records_evidence_country_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_charge_tax_records.platform_charge_tax_records_evidence_region_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_charge_tax_records.platform_charge_tax_records_evidence_shape",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_charge_tax_records.platform_charge_tax_records_fx_rate_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_charge_tax_records.platform_charge_tax_records_fx_shape",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_charge_tax_records.platform_charge_tax_records_fx_source_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_charge_tax_records.platform_charge_tax_records_gst_hst_position_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_charge_tax_records.platform_charge_tax_records_gst_hst_position_why_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_charge_tax_records.platform_charge_tax_records_invoice_number_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_charge_tax_records.platform_charge_tax_records_kind_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_charge_tax_records.platform_charge_tax_records_payout_country_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_charge_tax_records.platform_charge_tax_records_refunded_cents_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_charge_tax_records.platform_charge_tax_records_status_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_charge_tax_records.platform_charge_tax_records_stripe_customer_id_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_charge_tax_records.platform_charge_tax_records_stripe_invoice_id_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_charge_tax_records.platform_charge_tax_records_stripe_payment_intent_id_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_charge_tax_records.platform_charge_tax_records_stripe_subscription_id_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_charge_tax_records.platform_charge_tax_records_stripe_tax_status_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_charge_tax_records.platform_charge_tax_records_tax_lines_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_charge_tax_records.platform_charge_tax_records_taxed_country_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_charge_tax_records.platform_charge_tax_records_taxed_postal_code_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_charge_tax_records.platform_charge_tax_records_taxed_region_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_charge_tax_records.platform_charge_tax_records_why_shape",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_credit_note_tax_records.platform_credit_note_tax_records_cad_is_itself",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_credit_note_tax_records.platform_credit_note_tax_records_currency_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_credit_note_tax_records.platform_credit_note_tax_records_evidence_captured_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_credit_note_tax_records.platform_credit_note_tax_records_fx_rate_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_credit_note_tax_records.platform_credit_note_tax_records_fx_shape",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_credit_note_tax_records.platform_credit_note_tax_records_fx_source_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_credit_note_tax_records.platform_credit_note_tax_records_kind_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_credit_note_tax_records.platform_credit_note_tax_records_note_number_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_credit_note_tax_records.platform_credit_note_tax_records_note_type_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_credit_note_tax_records.platform_credit_note_tax_records_out_of_band_cents_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_credit_note_tax_records.platform_credit_note_tax_records_refund_cents_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_credit_note_tax_records.platform_credit_note_tax_records_status_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_credit_note_tax_records.platform_credit_note_tax_records_stripe_credit_note_id_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_credit_note_tax_records.platform_credit_note_tax_records_stripe_customer_id_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_credit_note_tax_records.platform_credit_note_tax_records_stripe_invoice_id_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_credit_note_tax_records.platform_credit_note_tax_records_stripe_reason_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_credit_note_tax_records.platform_credit_note_tax_records_tax_lines_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:platform_credit_note_tax_records.platform_credit_note_tax_records_void_shape",
       "sig": ""
     },
     {
@@ -275,6 +495,386 @@
     },
     {
       "key": "column:only-dev:org_children.medical_notes",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_looks.after_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_looks.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_looks.livemode",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_looks.looked_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_looks.looked_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_looks.looked_keys",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_looks.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_looks.put_back_of",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_looks.seq",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_looks.stripe_invoice_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_looks.why",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_records.amount_before_tax_cents",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_records.buyer_kind",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_records.buyer_name",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_records.cad_amount_before_tax_cents",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_records.cad_tax_total_cents",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_records.cad_total_cents",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_records.card_country",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_records.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_records.currency",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_records.evidence_captured",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_records.evidence_city",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_records.evidence_confirmed_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_records.evidence_country",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_records.evidence_line1",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_records.evidence_line2",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_records.evidence_missing",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_records.evidence_postal_code",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_records.evidence_read_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_records.evidence_region",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_records.fx_rate",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_records.fx_rate_date",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_records.fx_source",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_records.gst_hst_position",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_records.gst_hst_position_why",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_records.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_records.invoice_number",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_records.issued_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_records.kind",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_records.livemode",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_records.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_records.paid_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_records.payout_country",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_records.refunded_cents",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_records.review_note",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_records.review_reason",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_records.status",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_records.stripe_cad_total_cents",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_records.stripe_customer_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_records.stripe_invoice_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_records.stripe_payment_intent_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_records.stripe_subscription_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_records.stripe_tax_status",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_records.tax_lines",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_records.tax_total_cents",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_records.taxed_country",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_records.taxed_postal_code",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_records.taxed_region",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_records.total_cents",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_records.uncollectible_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_records.updated_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_records.us_declaration_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_records.us_declaration_version",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_records.user_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_charge_tax_records.voided_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_credit_note_tax_records.amount_before_tax_cents",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_credit_note_tax_records.cad_amount_before_tax_cents",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_credit_note_tax_records.cad_tax_total_cents",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_credit_note_tax_records.cad_total_cents",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_credit_note_tax_records.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_credit_note_tax_records.currency",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_credit_note_tax_records.evidence_captured",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_credit_note_tax_records.fx_rate",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_credit_note_tax_records.fx_rate_date",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_credit_note_tax_records.fx_source",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_credit_note_tax_records.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_credit_note_tax_records.issued_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_credit_note_tax_records.kind",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_credit_note_tax_records.livemode",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_credit_note_tax_records.note_number",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_credit_note_tax_records.note_type",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_credit_note_tax_records.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_credit_note_tax_records.out_of_band_cents",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_credit_note_tax_records.refund_cents",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_credit_note_tax_records.status",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_credit_note_tax_records.stripe_credit_note_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_credit_note_tax_records.stripe_customer_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_credit_note_tax_records.stripe_invoice_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_credit_note_tax_records.stripe_reason",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_credit_note_tax_records.tax_lines",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_credit_note_tax_records.tax_total_cents",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_credit_note_tax_records.total_cents",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_credit_note_tax_records.updated_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_credit_note_tax_records.user_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:platform_credit_note_tax_records.voided_at",
       "sig": ""
     },
     {
@@ -598,6 +1198,34 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:platform_charge_tax_looks.platform_charge_tax_looks_after_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:platform_charge_tax_looks.platform_charge_tax_looks_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:platform_charge_tax_looks.platform_charge_tax_looks_put_back_of_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:platform_charge_tax_records.platform_charge_tax_records_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:platform_charge_tax_records.platform_charge_tax_records_stripe_invoice_id_key",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:platform_credit_note_tax_records.platform_credit_note_tax_records_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:platform_credit_note_tax_records.platform_credit_note_tax_records_stripe_credit_note_id_key",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:rep_roster_players.rep_roster_players_health_confirmed_by_fkey",
       "sig": ""
     },
@@ -762,6 +1390,70 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:platform_charge_tax_looks_chain_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:platform_charge_tax_looks_invoice_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:platform_charge_tax_looks_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:platform_charge_tax_looks_put_back_once_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:platform_charge_tax_records_customer_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:platform_charge_tax_records_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:platform_charge_tax_records_period_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:platform_charge_tax_records_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:platform_charge_tax_records_stripe_invoice_id_key",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:platform_charge_tax_records_user_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:platform_credit_note_tax_records_invoice_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:platform_credit_note_tax_records_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:platform_credit_note_tax_records_period_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:platform_credit_note_tax_records_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:platform_credit_note_tax_records_stripe_credit_note_id_key",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:platform_credit_note_tax_records_user_idx",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:platform_refunds_credit_note_uniq",
       "sig": ""
     },
@@ -883,6 +1575,18 @@
     },
     {
       "key": "table:only-dev:bank_check_waiting",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:platform_charge_tax_looks",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:platform_charge_tax_records",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:platform_credit_note_tax_records",
       "sig": ""
     },
     {

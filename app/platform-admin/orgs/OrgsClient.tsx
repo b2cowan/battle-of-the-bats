@@ -51,12 +51,16 @@ interface OrgRow {
   emptyOrg: boolean;
   /** The club's own web address, so support can find who holds one (Club Tier Stage 4e). */
   ownAddress: string | null;
+  /** A sale at this club needs a look and is not marked as looked at (GST/HST Stage 3 Part 3b; Stripe-reading roles only). */
+  salesTax: boolean;
 }
 
 interface Props {
   orgs: OrgRow[];
   initialStatus: string;
   initialFilter: string;
+  /** Which clubs have a sale to look at could not be read. */
+  salesTaxUnread: boolean;
 }
 
 // Attention filters drilled into from the dashboard Action Queue (?filter=…)
@@ -65,6 +69,7 @@ const ATTENTION_LABELS: Record<string, string> = {
   expiring_overrides: 'Overrides expiring soon',
   no_owner:           'Missing owner',
   owner_inactive:     'Owner inactive',
+  sales_tax:          'Sales tax',
 };
 
 function matchesAttentionFilter(org: OrgRow, filter: string): boolean {
@@ -72,6 +77,7 @@ function matchesAttentionFilter(org: OrgRow, filter: string): boolean {
   if (filter === 'expiring_overrides') return org.expiringSoonOverride;
   if (filter === 'no_owner')           return org.missingOwner;
   if (filter === 'owner_inactive')     return org.ownerInactive;
+  if (filter === 'sales_tax')          return org.salesTax;
   return true;
 }
 
@@ -89,7 +95,7 @@ const PLAN_LABELS: Record<string, string> = {
 
 const fmtDate = (iso: string) => fmtAbsoluteDate(iso);
 
-export default function OrgsClient({ orgs, initialStatus, initialFilter }: Props) {
+export default function OrgsClient({ orgs, initialStatus, initialFilter, salesTaxUnread }: Props) {
   const [search,              setSearch]              = useState('');
   const [planFilter,          setPlanFilter]          = useState('');
   const [statusFilter,        setStatusFilter]        = useState(initialStatus);
@@ -99,6 +105,8 @@ export default function OrgsClient({ orgs, initialStatus, initialFilter }: Props
   const [attentionFilter,     setAttentionFilter]     = useState(
     ATTENTION_LABELS[initialFilter] ? initialFilter : '',
   );
+  // A club opened from the Sales tax filter lands on its Money tab with Needs a look chosen.
+  const clubHref = (id: string) => `/platform-admin/orgs/${id}${attentionFilter === 'sales_tax' ? '?tab=money&show=needs_look' : ''}`;
   // Find's "All N in Clubs & portals" door hands its words over through this tab's session storage, never the address
   // (Support console Stage 2): picked up once, after the first paint.
   useEffect(() => {
@@ -345,13 +353,15 @@ export default function OrgsClient({ orgs, initialStatus, initialFilter }: Props
               <tbody>
                 {filteredOrgs.length === 0 && (
                   <tr>
-                    <td colSpan={7} className={kit.empty}>No organizations match the current filter.</td>
+                    <td colSpan={7} className={kit.empty}>
+                      {attentionFilter === 'sales_tax' && salesTaxUnread ? 'Which clubs have a sale to look at could not be read.' : 'No organizations match the current filter.'}
+                    </td>
                   </tr>
                 )}
                 {filteredOrgs.map(org => (
-                  <LinkRow key={org.id} href={`/platform-admin/orgs/${org.id}`}>
+                  <LinkRow key={org.id} href={clubHref(org.id)}>
                     <td className="table-cards-title">
-                      <Link href={`/platform-admin/orgs/${org.id}`} className={kit.nameLink}>{org.name}</Link>
+                      <Link href={clubHref(org.id)} className={kit.nameLink}>{org.name}</Link>
                       {org.internalNotes && (
                         <>{' '}<span className={kit.chip} title="Has internal note">Note</span></>
                       )}
@@ -395,7 +405,7 @@ export default function OrgsClient({ orgs, initialStatus, initialFilter }: Props
                       )}
                     </td>
                     <td data-label="Created" className={kit.nowrap}>{fmtDate(org.createdAt)}</td>
-                    <td className={kit.rowDoor}><Link href={`/platform-admin/orgs/${org.id}`} tabIndex={-1} aria-hidden="true" className={kit.rowDoorLink}>›</Link></td>
+                    <td className={kit.rowDoor}><Link href={clubHref(org.id)} tabIndex={-1} aria-hidden="true" className={kit.rowDoorLink}>›</Link></td>
                   </LinkRow>
                 ))}
               </tbody>

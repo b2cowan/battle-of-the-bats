@@ -552,3 +552,39 @@ records survive; refund in the Stripe dashboard → the credit note appears; the
   render; (e) the refund clause shows on every dashboard refund line of a flagged sale, not only the one without a note; (f) `readAllPages`
   asks one page past the end and is proved with fakes only: confirm a real project answers `[]` there (a 416 would read as "could not be
   read") in the first 3b dev run; (g) a failed read leaves a console warning but no error event, as the Money route's records read does.
+- **Part 3b BUILT 2026-11-06** (on top of 3a `88d4e899e` + `c4851c734`; the owner's three UX answers: the mark holds by reason CODE + a small
+  fingerprint (the province of the address for a rate mismatch, the amount refunded so far for a refund with no note); Today's count does
+  exactly what the club strip does when the registration date is unread (checks 1-3 off, 4-7 run); a looked-at sale shows no flag line in
+  "All sales", its window says who looked). **Table:** migration 452 `platform_charge_tax_looks` (append-only, one chain per sale, a mark has
+  keys, a put-back names the mark it undoes; `after_id` UNIQUE per sale so two simultaneous writers cannot both win; no FK to a club or person;
+  a live row cannot be deleted; RLS on, service role only). Applied to DEV 2026-11-06; prod step `pending` in MANUAL_PROD_STEPS.json; dictionary
+  section added. **Proofs on dev:** `.probe/gst3/part3b-guard-steps.sql` 18/18 (rolled back); `.probe/gst3/part3b-marks.mjs` 23/23 through the real
+  store functions (blank/card/unknown sale refused, mark, mark twice 409, a second dashboard refund re-lists, stale put-back 409, put-back, two
+  simultaneous marks -> exactly one wins, Today rose by exactly the borrowed club's strip, the club is on the filter, a customer two clubs share
+  is not counted), every row it wrote removed. `readAllPages` against a REAL project: one page past the end answered `[]` (the 3a trap (f) is
+  closed). **Code:** the one rule `judgeSales`/`settleLooks` (club read AND Today's count; the pure rules never see a mark); mark/put-back
+  routes (refund power; the reasons come from the server's own read, never the body; audit `sale_look_mark` / `sale_look_put_back`, hidden from
+  roles that do not read Stripe like a refund's); Today's "Sales tax" row (new optional `power` on the queue, `find_stripe`); the Clubs filter
+  `?filter=sales_tax` (Stripe-reading roles only; a club opens on its Money tab with Needs a look chosen, `?tab=money&show=needs_look`);
+  the sale window's door, "Looked at ... by ...: why", "Put it back on the list", Support's one line. **Guard:** only the needs-a-look reader
+  names the looks table or module (`tests/unit/console-money-looks.test.ts`, "a mark never takes a sale out of the return"). 3a's two
+  "the store never writes" pins now say "the one write is a mark".
+- **Part 3b /simplify + /review (high) 2026-11-06.** /simplify applied: the existing power check, the existing uuid check, one "newest row"
+  rule, the filter's availability decided on the server, the platform read narrowed to sales on or after the registration day and run beside
+  the list. Skipped on purpose: merging the two routes; collapsing the two small windows; a narrower notes read on the count path.
+  /review (10 findings) fixed: a put-back was refused when the sale's reasons had since gone (its marks are now read for it alone); a lost race
+  said "already marked" even for a put-back; Today's count fanned out dozens of parallel chunk reads (now one chunk at a time); the Clubs list
+  read the platform count on every load (now only with the filter); the 30-second memo is cleared by a mark or a put-back; a wrong test name in
+  two headers. Recorded, not fixed: (a) a failed re-read after a write keeps the last good answer (3a's rule), so the list can stay stale until
+  "Read again"; (b) the audit row is written after the mark and best-effort (the mark row is itself a complete who/when/why record); (c) a staff
+  account with no email cannot mark (the table wants a 3+ character `looked_by`).
+- **Part 3 /accounting 2026-11-06 (covers 3a + 3b).** Rate table and its source: fine. A mark cannot take a sale out of the return: fine, and the
+  audit trail is adequate. ⚖ OWNER: (1) add an EIGHTH check for a sale Stripe zero-rated on a Canadian line to a buyer with a Canadian address
+  (software to a Canadian-address buyer has no zero-rating route; recommended yes; changes 3a's rules and Today's count). (2) a customer held by
+  two or more organizations (a coach paying as a person for two portals) counts as SHARED, so its sales are on no club list and not in Today's
+  count, which contradicts the 3a drawing ("each portal's Money tab shows them"); it is existing Money-route behaviour, not new in 3b: either
+  count them on Today and list every holder, or change the sharing rule. (3) check 7 clears on ANY issued note, so a note smaller than the refund
+  leaves part of it unreduced; leave as ruled unless tightened. **STAGE 4 REQUIREMENT:** the return worksheet must list sales with a missing
+  GST/HST answer as unresolved items whether or not they are marked looked at (a mark means reviewed, not corrected; the tax still collectible is
+  owed). **/legal:** nothing due (internal tax-review notes under the six-year retention the privacy draft already states); owner choice:
+  staff guidance to keep the "why" about the sale, not the person. **/docs:** none (platform-admin only).

@@ -235,6 +235,10 @@ describe('guards', () => {
     assert.match(reader, /readAllPages<SaleRecord>/);
     assert.match(reader, /\.neq\('status', 'void'\)/);
     assert.match(reader, /\.order\('issued_at', \{ ascending: false \}\)\.order\('stripe_invoice_id'\)\.range\(from, to\)/, 'a unique order under the pages');
-    assert.doesNotMatch(store, /\.insert\(|\.upsert\(|\.update\(|\.delete\(/);
+    // Part 3b: the one write in this file is a mark, into its own table (beside the records, never in them).
+    assert.doesNotMatch(store, /\.upsert\(|\.update\(|\.delete\(/);
+    assert.equal((store.match(/\.insert\(/g) ?? []).length, 1);
+    assert.match(store, /supabaseAdmin\.from\(LOOKS\)\.insert\(row\)/);
+    assert.match(store, /const LOOKS = 'platform_charge_tax_looks';/);
   });
 });

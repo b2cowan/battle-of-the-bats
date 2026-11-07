@@ -12,7 +12,7 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Flag } from 'lucide-react';
 import KitDialog, { DialogCancel } from '@/components/admin/kit/club/KitDialog';
-import { consoleClock, consoleWhen } from '@/lib/console-dates';
+import { consoleClock, consoleDay, consoleWhen } from '@/lib/console-dates';
 import { formatStoredDate } from '@/lib/timezone';
 import { possessive } from '@/lib/utils';
 import {
@@ -20,7 +20,7 @@ import {
   moneyBand, refundDoorRefusal, remainingCents, subscriptionsMoreWords, yearBefore, REFUND_REASON_MAX, REFUND_WORDS,
   type ChargeCreditNote, type ChargeFlag, type CompareRow, type MoneyCharge, type MoneyInvoice, type MoneyRead, type OurMoneyRecord,
 } from '@/lib/console-money';
-import type { LookReason, NeedsLookRead } from '@/lib/console-money-needs-look';
+import type { LookedMark, LookReason, NeedsLookRead } from '@/lib/console-money-needs-look';
 import {
   NEEDS_LOOK_WORDS, SALES_WORDS, addressChangedSince, asItStoodLabel, cadRateWords, creditNoteTaxWords, evidenceLines, gstAnswerWords, isUnpaidSale,
   isVoidSale, joinSales, keptWords, recordMoneyBand, saleAmount, saleCardCell, saleCents, saleFlag, saleRecordSays,
@@ -120,9 +120,13 @@ type SaleFilter = 'all' | 'unpaid' | 'look';
 type OpenSale = { number: string; refund: boolean; atTax: boolean };
 
 export default function MoneyTab({
-  orgId, orgName, ours, readsStripe, billsClub = false, stripeBase, club, billing, needsLook, openChargeId, onChargeClosed, onRefunded,
+  orgId, orgName, ours, readsStripe, billsClub = false, marksLooks = false, startOnLook = false, stripeBase, club, billing, needsLook, openChargeId, onChargeClosed, onRefunded,
 }: {
   orgId: string;
+  /** GST/HST Stage 3 Part 3b: may mark a sale as looked at (`refund`: Super admin, Billing). Support sees the list, never the door. */
+  marksLooks?: boolean;
+  /** Opened from the Clubs list's Sales tax filter (`?show=needs_look`): the list starts on Needs a look. */
+  startOnLook?: boolean;
   /** GST/HST Stage 1 Part 3: the billing address, read once by the club record (it also drives the tab's dot). */
   billing: BillingAddressRead;
   /** GST/HST Stage 3 Part 3a: the sales that need a look, read once by the club record (they drive the dot too). */
@@ -151,7 +155,7 @@ export default function MoneyTab({
   const older = useMemo(() => (olderState.forRead === firstAt ? olderState : freshOlder(firstAt)), [olderState, firstAt]);
   const [explain, setExplain] = useState<CompareRow['key'] | null>(null); // the one "Differs" chip open
   const [openSale, setOpenSale] = useState<OpenSale | null>(openChargeId ? { number: openChargeId, refund: false, atTax: false } : null);
-  const [filter, setFilter] = useState<SaleFilter>('all');
+  const [filter, setFilter] = useState<SaleFilter>(startOnLook ? 'look' : 'all');
 
   const records = m?.state === 'read' || m?.state === 'unreachable' ? m.records : undefined;
   const recordsRead = records?.state === 'read';
@@ -183,6 +187,8 @@ export default function MoneyTab({
     }).filter(r => keys.has(r.key));
   }, [look, read, allCharges, older.invoices, older.pages, older.chargesFrom]);
   const reasonsOf = (key: string): LookReason[] => look?.reasons[key] ?? [];
+  // A sale a mark holds is not in the list; its window says who looked (Part 3b).
+  const lookedOf = (key: string): LookedMark | undefined => look?.looked?.[key];
   // The choice shows whenever the answer was read, even with none left (it never appears and disappears); it is left out when
   // it could not be read, as when our records fail (drawing tab 4).
   const lookChoice = !!look && recordsRead;
@@ -476,6 +482,9 @@ export default function MoneyTab({
           read={lastGood?.read ?? null}
           registration={registration}
           reasonsOf={reasonsOf}
+          lookedOf={lookedOf}
+          canMark={marksLooks}
+          onLooksChanged={needsLook.readAgain}
           billing={billing}
           stripeBase={stripeBase}
           onSeeAddress={() => { setOpenSale(null); onChargeClosed(); setTimeout(() => document.getElementById(BILLING_ADDRESS_ANCHOR)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0); }}
@@ -527,12 +536,16 @@ function windowRow(answer: SaleAnswer, listRow: SaleRow | null): SaleRow | null 
   return joined.find(r => r.key === key) ?? joined[0] ?? null;
 }
 
-function SaleWindow({ orgId, orgName, number, startWithRefund, atTax, listRow, flag, gate, read, registration, reasonsOf, billing, stripeBase, onSeeAddress, onClose, onRefunded }: {
+function SaleWindow({ orgId, orgName, number, startWithRefund, atTax, listRow, flag, gate, read, registration, reasonsOf, lookedOf, canMark, onLooksChanged, billing, stripeBase, onSeeAddress, onClose, onRefunded }: {
   orgId: string; orgName: string; number: string; startWithRefund: boolean; atTax: boolean; listRow: SaleRow | null; flag: ChargeFlag | undefined;
   gate: RefundGate | null; read: MoneyRead | null; registration: string | null;
   /** Part 3a: every reason a sale needs a look, in priority order (the row shows the first), by invoice. Asked with the invoice
    *  the window itself read, so a sale opened by an old charge number (Find) still shows them. */
   reasonsOf: (invoiceId: string) => readonly LookReason[];
+  /** Part 3b: the mark that holds on this sale, if any; whether this role may mark / put back; read the list again after either. */
+  lookedOf: (invoiceId: string) => LookedMark | undefined;
+  canMark: boolean;
+  onLooksChanged: () => void;
   billing: BillingAddressRead; stripeBase: string;
   onSeeAddress: () => void; onClose: () => void; onRefunded: () => void;
 }) {
@@ -540,6 +553,7 @@ function SaleWindow({ orgId, orgName, number, startWithRefund, atTax, listRow, f
   const [failed, setFailed] = useState<string | null>(null);
   const [readAt, setReadAt] = useState<string | null>(null);
   const [refunding, setRefunding] = useState(startWithRefund);
+  const [looking, setLooking] = useState<'mark' | 'putback' | null>(null);
   const [done, setDone] = useState<string | null>(null);
   const taxRef = useRef<HTMLHeadingElement>(null);
 
@@ -563,6 +577,7 @@ function SaleWindow({ orgId, orgName, number, startWithRefund, atTax, listRow, f
   const c = answer?.charge ?? null;
   const record = row?.record ?? null;
   const reasons = reasonsOf(record?.stripe_invoice_id ?? row?.key ?? number);
+  const looked = lookedOf(record?.stripe_invoice_id ?? row?.key ?? number);
   // What the console knows before the click: the door is absent and one line says why (drawing G).
   const refusal = c && stripeRead ? doorRefusal(gate, c, answer?.inFlight) : null;
   const canRefund = !!c && stripeRead && !!read && !refusal;
@@ -576,6 +591,43 @@ function SaleWindow({ orgId, orgName, number, startWithRefund, atTax, listRow, f
         orgId={orgId} orgName={orgName} charge={c} read={read} flaggedDuplicate={flag?.kind === 'duplicate'}
         onClose={() => { setRefunding(false); setVersion(v => v + 1); }}
         onDone={message => { setRefunding(false); setDone(message); setVersion(v => v + 1); onRefunded(); }}
+      />
+    );
+  }
+
+  // Part 3b: the small windows for marking a sale as looked at, and for putting it back (the shipped record-window recipe).
+  if (looking && record && (looking === 'mark' || looked)) {
+    const W = NEEDS_LOOK_WORDS.mark;
+    const day = consoleDay(record.issued_at);
+    const send = async (path: string, extra: Record<string, unknown>, success: string, why: string) => {
+      const { ok, data } = await sendJson(`/api/platform-admin/orgs/${orgId}/money/looks${path}`, 'POST', { invoiceId: record.stripe_invoice_id, why, ...extra });
+      if (!ok) return errorOf(data, W.refusals.failed);
+      setLooking(null);
+      setDone(success);
+      onLooksChanged();
+      return null;
+    };
+    return looking === 'mark' ? (
+      <RecordWindow
+        title={W.title(day)}
+        sentence={<>{W.sentenceA}<b>{day}</b>{W.sentenceB}<b>{W.sentenceBold}</b>{W.sentenceC}</>}
+        confirmLabel={W.confirm}
+        whyPlaceholder={W.whyPlaceholder}
+        footNote={W.foot}
+        whyMax={REFUND_REASON_MAX}
+        onClose={() => setLooking(null)}
+        onConfirm={why => send('', {}, W.done, why)}
+      />
+    ) : (
+      <RecordWindow
+        title={W.putBackTitle(day)}
+        sentence={W.putBackSentence}
+        confirmLabel={W.putBack}
+        whyPlaceholder={W.putBackPlaceholder}
+        footNote={W.putBackFoot}
+        whyMax={REFUND_REASON_MAX}
+        onClose={() => setLooking(null)}
+        onConfirm={why => send('/put-back', { lookId: looked!.id }, W.putBackDone, why)}
       />
     );
   }
@@ -609,6 +661,12 @@ function SaleWindow({ orgId, orgName, number, startWithRefund, atTax, listRow, f
           <>
             {fw && <p className={`${money.flag}${fw.tone === 'bad' ? ` ${money.bad}` : ''}`}>{fw.text}</p>}
             {reasons.map(r => <p key={r.code} className={`${money.flag} ${money.warnText}`}>{NEEDS_LOOK_WORDS.lead}{r.text}</p>)}
+            {looked && (
+              <p className={money.flag}>
+                {NEEDS_LOOK_WORDS.mark.looked(consoleWhen(looked.at), looked.by, looked.why)}
+                {canMark && <>{' '}<button type="button" className={`${kit.door} ${kit.doorSm}`} onClick={() => setLooking('putback')}>{NEEDS_LOOK_WORDS.mark.putBack}</button></>}
+              </p>
+            )}
             {record ? (
               <div className={kit.band}>
                 {saleWindowBand(record, row.notes).map(b => (
@@ -738,6 +796,10 @@ function SaleWindow({ orgId, orgName, number, startWithRefund, atTax, listRow, f
                 <span>{refusal.text}</span>
               </p>
             )}
+            {/* Part 3b: a rare door, so it ends the body. Support sees the sentence, never a dead button. */}
+            {record && reasons.length > 0 && (canMark
+              ? <p className={kit.caption}><button type="button" className={kit.door} onClick={() => setLooking('mark')}>{NEEDS_LOOK_WORDS.mark.door}</button></p>
+              : <p className={kit.caption}>{NEEDS_LOOK_WORDS.mark.supportLine}</p>)}
           </>
         )}
       </div>

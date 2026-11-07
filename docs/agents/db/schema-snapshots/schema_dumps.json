@@ -15824,6 +15824,861 @@
         "column_default": "now()"
       },
       {
+        "table_name": "platform_charge_tax_looks",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "platform_charge_tax_looks",
+        "pos": 2,
+        "column_name": "seq",
+        "data_type": "bigint",
+        "udt_name": "int8",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_looks",
+        "pos": 3,
+        "column_name": "stripe_invoice_id",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_looks",
+        "pos": 4,
+        "column_name": "livemode",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_looks",
+        "pos": 5,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_looks",
+        "pos": 6,
+        "column_name": "looked_keys",
+        "data_type": "ARRAY",
+        "udt_name": "_text",
+        "is_nullable": "NO",
+        "column_default": "'{}'::text[]"
+      },
+      {
+        "table_name": "platform_charge_tax_looks",
+        "pos": 7,
+        "column_name": "put_back_of",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_looks",
+        "pos": 8,
+        "column_name": "after_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_looks",
+        "pos": 9,
+        "column_name": "looked_by",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_looks",
+        "pos": 10,
+        "column_name": "looked_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "platform_charge_tax_looks",
+        "pos": 11,
+        "column_name": "why",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 2,
+        "column_name": "stripe_invoice_id",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 3,
+        "column_name": "livemode",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 4,
+        "column_name": "kind",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 5,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 6,
+        "column_name": "user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 7,
+        "column_name": "buyer_kind",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 8,
+        "column_name": "buyer_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 9,
+        "column_name": "stripe_customer_id",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 10,
+        "column_name": "stripe_subscription_id",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 11,
+        "column_name": "stripe_payment_intent_id",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 12,
+        "column_name": "invoice_number",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 13,
+        "column_name": "issued_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 14,
+        "column_name": "currency",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 15,
+        "column_name": "amount_before_tax_cents",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 16,
+        "column_name": "tax_total_cents",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 17,
+        "column_name": "total_cents",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 18,
+        "column_name": "tax_lines",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "NO",
+        "column_default": "'[]'::jsonb"
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 19,
+        "column_name": "stripe_tax_status",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 20,
+        "column_name": "gst_hst_position",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 21,
+        "column_name": "gst_hst_position_why",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 22,
+        "column_name": "taxed_country",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 23,
+        "column_name": "taxed_region",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 24,
+        "column_name": "taxed_postal_code",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 25,
+        "column_name": "evidence_missing",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 26,
+        "column_name": "evidence_country",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 27,
+        "column_name": "evidence_region",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 28,
+        "column_name": "evidence_line1",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 29,
+        "column_name": "evidence_line2",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 30,
+        "column_name": "evidence_city",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 31,
+        "column_name": "evidence_postal_code",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 32,
+        "column_name": "evidence_confirmed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 33,
+        "column_name": "us_declaration_version",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 34,
+        "column_name": "us_declaration_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 35,
+        "column_name": "card_country",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 36,
+        "column_name": "payout_country",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 37,
+        "column_name": "review_reason",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 38,
+        "column_name": "review_note",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 39,
+        "column_name": "evidence_read_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 40,
+        "column_name": "evidence_captured",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 41,
+        "column_name": "fx_rate",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 42,
+        "column_name": "fx_rate_date",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 43,
+        "column_name": "fx_source",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 44,
+        "column_name": "cad_amount_before_tax_cents",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 45,
+        "column_name": "cad_tax_total_cents",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 46,
+        "column_name": "cad_total_cents",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 47,
+        "column_name": "stripe_cad_total_cents",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 48,
+        "column_name": "status",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 49,
+        "column_name": "paid_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 50,
+        "column_name": "voided_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 51,
+        "column_name": "uncollectible_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 52,
+        "column_name": "refunded_cents",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 53,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "platform_charge_tax_records",
+        "pos": 54,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 2,
+        "column_name": "stripe_credit_note_id",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 3,
+        "column_name": "stripe_invoice_id",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 4,
+        "column_name": "livemode",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 5,
+        "column_name": "kind",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 6,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 7,
+        "column_name": "user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 8,
+        "column_name": "stripe_customer_id",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 9,
+        "column_name": "note_number",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 10,
+        "column_name": "note_type",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 11,
+        "column_name": "stripe_reason",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 12,
+        "column_name": "issued_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 13,
+        "column_name": "currency",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 14,
+        "column_name": "amount_before_tax_cents",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 15,
+        "column_name": "tax_total_cents",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 16,
+        "column_name": "total_cents",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 17,
+        "column_name": "tax_lines",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "NO",
+        "column_default": "'[]'::jsonb"
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 18,
+        "column_name": "refund_cents",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 19,
+        "column_name": "out_of_band_cents",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 20,
+        "column_name": "evidence_captured",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 21,
+        "column_name": "fx_rate",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 22,
+        "column_name": "fx_rate_date",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 23,
+        "column_name": "fx_source",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 24,
+        "column_name": "cad_amount_before_tax_cents",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 25,
+        "column_name": "cad_tax_total_cents",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 26,
+        "column_name": "cad_total_cents",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 27,
+        "column_name": "status",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 28,
+        "column_name": "voided_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 29,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "platform_credit_note_tax_records",
+        "pos": 30,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "platform_email_templates",
         "pos": 1,
         "column_name": "key",
@@ -31776,6 +32631,20 @@
         "constraint_name": "platform_catalog_change_requests_target_version_id_fkey"
       },
       {
+        "table_name": "platform_charge_tax_looks",
+        "column_name": "after_id",
+        "foreign_table": "platform_charge_tax_looks",
+        "foreign_column": "id",
+        "constraint_name": "platform_charge_tax_looks_after_id_fkey"
+      },
+      {
+        "table_name": "platform_charge_tax_looks",
+        "column_name": "put_back_of",
+        "foreign_table": "platform_charge_tax_looks",
+        "foreign_column": "id",
+        "constraint_name": "platform_charge_tax_looks_put_back_of_fkey"
+      },
+      {
         "table_name": "platform_events",
         "column_name": "org_id",
         "foreign_table": "organizations",
@@ -37993,6 +38862,86 @@
         "indexdef": "CREATE INDEX platform_catalog_change_requests_target_version_id_idx ON public.platform_catalog_change_requests USING btree (target_version_id)"
       },
       {
+        "tablename": "platform_charge_tax_looks",
+        "indexname": "platform_charge_tax_looks_chain_idx",
+        "indexdef": "CREATE UNIQUE INDEX platform_charge_tax_looks_chain_idx ON public.platform_charge_tax_looks USING btree (stripe_invoice_id, COALESCE(after_id, '00000000-0000-0000-0000-000000000000'::uuid))"
+      },
+      {
+        "tablename": "platform_charge_tax_looks",
+        "indexname": "platform_charge_tax_looks_invoice_idx",
+        "indexdef": "CREATE INDEX platform_charge_tax_looks_invoice_idx ON public.platform_charge_tax_looks USING btree (stripe_invoice_id, seq DESC)"
+      },
+      {
+        "tablename": "platform_charge_tax_looks",
+        "indexname": "platform_charge_tax_looks_pkey",
+        "indexdef": "CREATE UNIQUE INDEX platform_charge_tax_looks_pkey ON public.platform_charge_tax_looks USING btree (id)"
+      },
+      {
+        "tablename": "platform_charge_tax_looks",
+        "indexname": "platform_charge_tax_looks_put_back_once_idx",
+        "indexdef": "CREATE UNIQUE INDEX platform_charge_tax_looks_put_back_once_idx ON public.platform_charge_tax_looks USING btree (put_back_of) WHERE (put_back_of IS NOT NULL)"
+      },
+      {
+        "tablename": "platform_charge_tax_records",
+        "indexname": "platform_charge_tax_records_customer_idx",
+        "indexdef": "CREATE INDEX platform_charge_tax_records_customer_idx ON public.platform_charge_tax_records USING btree (stripe_customer_id)"
+      },
+      {
+        "tablename": "platform_charge_tax_records",
+        "indexname": "platform_charge_tax_records_org_idx",
+        "indexdef": "CREATE INDEX platform_charge_tax_records_org_idx ON public.platform_charge_tax_records USING btree (org_id, issued_at DESC)"
+      },
+      {
+        "tablename": "platform_charge_tax_records",
+        "indexname": "platform_charge_tax_records_period_idx",
+        "indexdef": "CREATE INDEX platform_charge_tax_records_period_idx ON public.platform_charge_tax_records USING btree (livemode, issued_at)"
+      },
+      {
+        "tablename": "platform_charge_tax_records",
+        "indexname": "platform_charge_tax_records_pkey",
+        "indexdef": "CREATE UNIQUE INDEX platform_charge_tax_records_pkey ON public.platform_charge_tax_records USING btree (id)"
+      },
+      {
+        "tablename": "platform_charge_tax_records",
+        "indexname": "platform_charge_tax_records_stripe_invoice_id_key",
+        "indexdef": "CREATE UNIQUE INDEX platform_charge_tax_records_stripe_invoice_id_key ON public.platform_charge_tax_records USING btree (stripe_invoice_id)"
+      },
+      {
+        "tablename": "platform_charge_tax_records",
+        "indexname": "platform_charge_tax_records_user_idx",
+        "indexdef": "CREATE INDEX platform_charge_tax_records_user_idx ON public.platform_charge_tax_records USING btree (user_id, issued_at DESC)"
+      },
+      {
+        "tablename": "platform_credit_note_tax_records",
+        "indexname": "platform_credit_note_tax_records_invoice_idx",
+        "indexdef": "CREATE INDEX platform_credit_note_tax_records_invoice_idx ON public.platform_credit_note_tax_records USING btree (stripe_invoice_id)"
+      },
+      {
+        "tablename": "platform_credit_note_tax_records",
+        "indexname": "platform_credit_note_tax_records_org_idx",
+        "indexdef": "CREATE INDEX platform_credit_note_tax_records_org_idx ON public.platform_credit_note_tax_records USING btree (org_id, issued_at DESC)"
+      },
+      {
+        "tablename": "platform_credit_note_tax_records",
+        "indexname": "platform_credit_note_tax_records_period_idx",
+        "indexdef": "CREATE INDEX platform_credit_note_tax_records_period_idx ON public.platform_credit_note_tax_records USING btree (livemode, issued_at)"
+      },
+      {
+        "tablename": "platform_credit_note_tax_records",
+        "indexname": "platform_credit_note_tax_records_pkey",
+        "indexdef": "CREATE UNIQUE INDEX platform_credit_note_tax_records_pkey ON public.platform_credit_note_tax_records USING btree (id)"
+      },
+      {
+        "tablename": "platform_credit_note_tax_records",
+        "indexname": "platform_credit_note_tax_records_stripe_credit_note_id_key",
+        "indexdef": "CREATE UNIQUE INDEX platform_credit_note_tax_records_stripe_credit_note_id_key ON public.platform_credit_note_tax_records USING btree (stripe_credit_note_id)"
+      },
+      {
+        "tablename": "platform_credit_note_tax_records",
+        "indexname": "platform_credit_note_tax_records_user_idx",
+        "indexdef": "CREATE INDEX platform_credit_note_tax_records_user_idx ON public.platform_credit_note_tax_records USING btree (user_id, issued_at DESC)"
+      },
+      {
         "tablename": "platform_email_templates",
         "indexname": "platform_email_templates_pkey",
         "indexdef": "CREATE UNIQUE INDEX platform_email_templates_pkey ON public.platform_email_templates USING btree (key)"
@@ -43863,6 +44812,354 @@
       {
         "kind": "RLS",
         "table_name": "platform_catalog_change_requests",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_looks",
+        "detail": "platform_charge_tax_looks_keys_shape",
+        "check_clause": "((cardinality(looked_keys) = 0) OR ((cardinality(looked_keys) <= 8) AND (array_to_string(looked_keys, '|'::text) ~ '^[a-z_]{1,40}(:[A-Za-z0-9_.-]{0,40})?(\\|[a-z_]{1,40}(:[A-Za-z0-9_.-]{0,40})?)*$'::text)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_looks",
+        "detail": "platform_charge_tax_looks_looked_by_check",
+        "check_clause": "((length(looked_by) >= 3) AND (length(looked_by) <= 320))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_looks",
+        "detail": "platform_charge_tax_looks_not_itself",
+        "check_clause": "((after_id IS NULL) OR (after_id <> id))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_looks",
+        "detail": "platform_charge_tax_looks_put_back_is_newest",
+        "check_clause": "((put_back_of IS NULL) OR (put_back_of = after_id))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_looks",
+        "detail": "platform_charge_tax_looks_shape",
+        "check_clause": "((put_back_of IS NULL) = (cardinality(looked_keys) > 0))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_looks",
+        "detail": "platform_charge_tax_looks_stripe_invoice_id_check",
+        "check_clause": "(stripe_invoice_id ~ '^in_[A-Za-z0-9]+$'::text)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_looks",
+        "detail": "platform_charge_tax_looks_why_check",
+        "check_clause": "((btrim(why) <> ''::text) AND (length(why) <= 500))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "platform_charge_tax_looks",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_buyer_kind_check",
+        "check_clause": "(buyer_kind = ANY (ARRAY['club'::text, 'person'::text, 'unknown'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_buyer_name_check",
+        "check_clause": "((buyer_name IS NULL) OR (length(buyer_name) <= 300))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_buyer_shape",
+        "check_clause": "(((buyer_kind = 'club'::text) AND (org_id IS NOT NULL)) OR ((buyer_kind = 'person'::text) AND (user_id IS NOT NULL)) OR (buyer_kind = 'unknown'::text))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_cad_is_itself",
+        "check_clause": "((currency <> 'cad'::text) OR ((NOT (fx_source IS DISTINCT FROM 'same_currency'::text)) AND (NOT (fx_rate IS DISTINCT FROM (1)::numeric))))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_card_country_check",
+        "check_clause": "((card_country IS NULL) OR (card_country ~ '^[A-Z]{2}$'::text))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_currency_check",
+        "check_clause": "(currency ~ '^[a-z]{3}$'::text)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_evidence_captured_check",
+        "check_clause": "(evidence_captured = ANY (ARRAY['event'::text, 'catch_up'::text, 'backfill'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_evidence_country_check",
+        "check_clause": "((evidence_country IS NULL) OR (evidence_country ~ '^[A-Z]{2}$'::text))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_evidence_region_check",
+        "check_clause": "((evidence_region IS NULL) OR (length(evidence_region) <= 10))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_evidence_shape",
+        "check_clause": "(evidence_missing OR (evidence_country IS NOT NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_fx_rate_check",
+        "check_clause": "((fx_rate IS NULL) OR (fx_rate > (0)::numeric))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_fx_shape",
+        "check_clause": "(((fx_rate IS NULL) = (fx_rate_date IS NULL)) AND ((fx_rate IS NULL) = (fx_source IS NULL)) AND ((fx_rate IS NULL) = (cad_total_cents IS NULL)) AND ((fx_rate IS NULL) = (cad_amount_before_tax_cents IS NULL)) AND ((fx_rate IS NULL) = (cad_tax_total_cents IS NULL)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_fx_source_check",
+        "check_clause": "((fx_source IS NULL) OR (fx_source = ANY (ARRAY['same_currency'::text, 'bank_of_canada'::text])))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_gst_hst_position_check",
+        "check_clause": "(gst_hst_position = ANY (ARRAY['taxed'::text, 'zero_rated'::text, 'missing'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_gst_hst_position_why_check",
+        "check_clause": "((gst_hst_position_why IS NULL) OR (gst_hst_position_why = ANY (ARRAY['stripe_did_not_work_out'::text, 'canadian_buyer_not_charged'::text, 'no_evidence_for_zero_rating'::text, 'unexpected_reason'::text])))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_invoice_number_check",
+        "check_clause": "((invoice_number IS NULL) OR ((length(invoice_number) >= 1) AND (length(invoice_number) <= 64)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_kind_check",
+        "check_clause": "(kind = ANY (ARRAY['subscription'::text, 'premium'::text, 'fee'::text, 'one_off'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_payout_country_check",
+        "check_clause": "((payout_country IS NULL) OR (payout_country ~ '^[A-Z]{2}$'::text))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_refunded_cents_check",
+        "check_clause": "(refunded_cents >= 0)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_status_check",
+        "check_clause": "(status = ANY (ARRAY['open'::text, 'paid'::text, 'void'::text, 'uncollectible'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_stripe_customer_id_check",
+        "check_clause": "(stripe_customer_id ~ '^cus_[A-Za-z0-9]+$'::text)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_stripe_invoice_id_check",
+        "check_clause": "(stripe_invoice_id ~ '^in_[A-Za-z0-9]+$'::text)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_stripe_payment_intent_id_check",
+        "check_clause": "((stripe_payment_intent_id IS NULL) OR (stripe_payment_intent_id ~ '^pi_[A-Za-z0-9]+$'::text))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_stripe_subscription_id_check",
+        "check_clause": "((stripe_subscription_id IS NULL) OR (stripe_subscription_id ~ '^sub_[A-Za-z0-9]+$'::text))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_stripe_tax_status_check",
+        "check_clause": "((stripe_tax_status IS NULL) OR (stripe_tax_status = ANY (ARRAY['complete'::text, 'requires_location_inputs'::text, 'failed'::text])))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_tax_lines_check",
+        "check_clause": "(jsonb_typeof(tax_lines) = 'array'::text)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_taxed_country_check",
+        "check_clause": "((taxed_country IS NULL) OR (taxed_country ~ '^[A-Z]{2}$'::text))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_taxed_postal_code_check",
+        "check_clause": "((taxed_postal_code IS NULL) OR (length(taxed_postal_code) <= 20))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_taxed_region_check",
+        "check_clause": "((taxed_region IS NULL) OR (length(taxed_region) <= 100))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_charge_tax_records",
+        "detail": "platform_charge_tax_records_why_shape",
+        "check_clause": "((gst_hst_position = 'missing'::text) = (gst_hst_position_why IS NOT NULL))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "platform_charge_tax_records",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_credit_note_tax_records",
+        "detail": "platform_credit_note_tax_records_cad_is_itself",
+        "check_clause": "((currency <> 'cad'::text) OR ((NOT (fx_source IS DISTINCT FROM 'same_currency'::text)) AND (NOT (fx_rate IS DISTINCT FROM (1)::numeric))))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_credit_note_tax_records",
+        "detail": "platform_credit_note_tax_records_currency_check",
+        "check_clause": "(currency ~ '^[a-z]{3}$'::text)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_credit_note_tax_records",
+        "detail": "platform_credit_note_tax_records_evidence_captured_check",
+        "check_clause": "(evidence_captured = ANY (ARRAY['event'::text, 'catch_up'::text, 'backfill'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_credit_note_tax_records",
+        "detail": "platform_credit_note_tax_records_fx_rate_check",
+        "check_clause": "((fx_rate IS NULL) OR (fx_rate > (0)::numeric))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_credit_note_tax_records",
+        "detail": "platform_credit_note_tax_records_fx_shape",
+        "check_clause": "(((fx_rate IS NULL) = (fx_rate_date IS NULL)) AND ((fx_rate IS NULL) = (fx_source IS NULL)) AND ((fx_rate IS NULL) = (cad_total_cents IS NULL)) AND ((fx_rate IS NULL) = (cad_amount_before_tax_cents IS NULL)) AND ((fx_rate IS NULL) = (cad_tax_total_cents IS NULL)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_credit_note_tax_records",
+        "detail": "platform_credit_note_tax_records_fx_source_check",
+        "check_clause": "((fx_source IS NULL) OR (fx_source = ANY (ARRAY['same_currency'::text, 'bank_of_canada'::text])))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_credit_note_tax_records",
+        "detail": "platform_credit_note_tax_records_kind_check",
+        "check_clause": "((kind IS NULL) OR (kind = ANY (ARRAY['subscription'::text, 'premium'::text, 'fee'::text, 'one_off'::text])))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_credit_note_tax_records",
+        "detail": "platform_credit_note_tax_records_note_number_check",
+        "check_clause": "((note_number IS NULL) OR ((length(note_number) >= 1) AND (length(note_number) <= 64)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_credit_note_tax_records",
+        "detail": "platform_credit_note_tax_records_note_type_check",
+        "check_clause": "(note_type = ANY (ARRAY['pre_payment'::text, 'post_payment'::text, 'mixed'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_credit_note_tax_records",
+        "detail": "platform_credit_note_tax_records_out_of_band_cents_check",
+        "check_clause": "(out_of_band_cents >= 0)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_credit_note_tax_records",
+        "detail": "platform_credit_note_tax_records_refund_cents_check",
+        "check_clause": "(refund_cents >= 0)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_credit_note_tax_records",
+        "detail": "platform_credit_note_tax_records_status_check",
+        "check_clause": "(status = ANY (ARRAY['issued'::text, 'void'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_credit_note_tax_records",
+        "detail": "platform_credit_note_tax_records_stripe_credit_note_id_check",
+        "check_clause": "(stripe_credit_note_id ~ '^cn_[A-Za-z0-9]+$'::text)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_credit_note_tax_records",
+        "detail": "platform_credit_note_tax_records_stripe_customer_id_check",
+        "check_clause": "(stripe_customer_id ~ '^cus_[A-Za-z0-9]+$'::text)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_credit_note_tax_records",
+        "detail": "platform_credit_note_tax_records_stripe_invoice_id_check",
+        "check_clause": "(stripe_invoice_id ~ '^in_[A-Za-z0-9]+$'::text)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_credit_note_tax_records",
+        "detail": "platform_credit_note_tax_records_stripe_reason_check",
+        "check_clause": "((stripe_reason IS NULL) OR (stripe_reason ~ '^[a-z_]{1,64}$'::text))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_credit_note_tax_records",
+        "detail": "platform_credit_note_tax_records_tax_lines_check",
+        "check_clause": "(jsonb_typeof(tax_lines) = 'array'::text)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "platform_credit_note_tax_records",
+        "detail": "platform_credit_note_tax_records_void_shape",
+        "check_clause": "((status = 'void'::text) = (voided_at IS NOT NULL))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "platform_credit_note_tax_records",
         "detail": "ENABLED",
         "check_clause": null
       },

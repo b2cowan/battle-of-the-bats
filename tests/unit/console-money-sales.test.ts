@@ -344,6 +344,10 @@ describe('wiring (Ask 7: the Stripe-reading roles only; no migration; read-only)
     assert.doesNotMatch(readCode('lib/console-money-sales.ts') + readCode('app/platform-admin/orgs/[id]/MoneyTab.tsx'), /2026-09-26|Sep(t)? 26/);
   });
   it('the record store only reads (the records are Part 1’s; nothing here writes them)', () => {
-    assert.doesNotMatch(readCode('lib/console-money-sales-store.ts'), /\.(insert|upsert|update|delete)\(/);
+    const store = readCode('lib/console-money-sales-store.ts');
+    assert.doesNotMatch(store, /\.(upsert|update|delete)\(/);
+    // Part 3b: the one write is a mark, into its own table beside the records (never into them).
+    assert.equal((store.match(/\.insert\(/g) ?? []).length, 1);
+    assert.match(store, /supabaseAdmin\.from\(LOOKS\)\.insert\(row\)/);
   });
 });

@@ -58,6 +58,8 @@ const ACTION_LABELS: Record<string, string> = {
   refund_charge_refused: 'Refund refused by Stripe',
   refund_charge_unknown: 'Refund: no answer from Stripe',
   refund_charge_resolved: 'Refund checked with Stripe',
+  sale_look_mark: 'Marked a sale as looked at',
+  sale_look_put_back: 'Put a sale back on the list',
   revoke_override: 'Revoke override',
   run_bulk_operation: 'Run bulk operation',
   // Stage 0 Part 10 (tab 5): the sign-in-again step's rows, and the owner email that could not be sent.
