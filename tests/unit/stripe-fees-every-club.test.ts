@@ -88,7 +88,7 @@ describe('one billing path for every fee kind', () => {
   });
 
   it('the billing webhook writes a fee invoice to its own row before the subscription cases can read it', () => {
-    const hook = readCode('app/api/billing/webhook/route.ts');
+    const hook = readCode('lib/billing-webhook-handler.ts');
     const intercept = hook.indexOf('syncFeeInvoiceFromEvent(');
     const sw = hook.indexOf('switch (event.type)');
     assert.ok(intercept > 0 && intercept < sw, 'a comped club paying a fee invoice must never turn "active"');

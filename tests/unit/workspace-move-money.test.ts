@@ -277,7 +277,7 @@ describe('1 · the club name: one rule', () => {
     assert.doesNotMatch(operator.slice(operator.indexOf('applyPlanChangeSideEffects({')), /clubName/, 'the operator change names no club');
     // The four entries, each by its source (the routes need a signed-in request, so these read the code):
     assert.match(readCode('lib/plan-move.ts'), /await applyPlanChangeSideEffects\(\{ orgId: org\.id, fromPlan: ownPlanOf\(org\), toPlan, actor: opts\.actor, clubName \}\)/, 'the move');
-    assert.match(readCode('app/api/billing/webhook/route.ts'), /clubName: clubNameFromMetadata\(sub\.metadata\)/, 'the Stripe checkout, read back off the subscription');
+    assert.match(readCode('lib/billing-webhook-handler.ts'), /clubName: clubNameFromMetadata\(sub\.metadata\)/, 'the Stripe checkout, read back off the subscription');
     assert.match(readCode('app/api/billing/create-checkout/route.ts'), /actor: auth\.user\.email \?\? 'mock-checkout', clubName: inPlaceClubName \}\)/, 'the mock checkout');
   });
 });
@@ -749,7 +749,7 @@ describe('6 · the webhook: the reactivation verdict, and the event that follows
   });
 
   it('the flip runs BEFORE reactivation in the webhook, so the suspension the flip clears is never left for it', () => {
-    const webhook = readCode('app/api/billing/webhook/route.ts');
+    const webhook = readCode('lib/billing-webhook-handler.ts');
     const flip = webhook.indexOf("actor: 'stripe-webhook',");
     const restore = webhook.indexOf('await restoreAfterReactivation(updatedOrg.id');
     assert.ok(flip > 0 && restore > flip);
@@ -764,7 +764,7 @@ describe('6 · the webhook: the reactivation verdict, and the event that follows
     assert.equal(merged.planKey, 'club', 'the move overwrote the plan key the Premium checkout wrote');
     assert.ok(isInAppUpMove(merged, 'club'), 'the growth event is not counted twice');
     assert.ok(!('choiceKind' in merged), 'the move never makes it a next-season choice');
-    const webhook = readCode('app/api/billing/webhook/route.ts');
+    const webhook = readCode('lib/billing-webhook-handler.ts');
     const arm = webhook.slice(webhook.indexOf("case 'customer.subscription.created':"), webhook.indexOf("case 'customer.subscription.deleted':"));
     assert.match(arm, /const matchedPlan = await getPlanFromPriceId\(priceId\);/);
     assert.match(arm, /const planKey = matchedPlan\.planId as OrgPlan;/);
@@ -779,7 +779,7 @@ describe('6 · the webhook: the reactivation verdict, and the event that follows
 
   it('the mock checkout skips reactivation for a workspace; the webhook runs it only when the stored status was cancelled', () => {
     assert.match(readCode('app/api/billing/create-checkout/route.ts'), /auth\.org\.subscriptionStatus === 'canceled' && !isTeamWorkspaceOrg\(auth\.org\)/);
-    assert.match(readCode('app/api/billing/webhook/route.ts'), /currentOrg\?\.subscription_status === 'canceled'\s*&& \(sub\.status === 'active' \|\| sub\.status === 'trialing'\)/);
+    assert.match(readCode('lib/billing-webhook-handler.ts'), /currentOrg\?\.subscription_status === 'canceled'\s*&& \(sub\.status === 'active' \|\| sub\.status === 'trialing'\)/);
   });
 });
 

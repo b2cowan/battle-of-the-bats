@@ -79,7 +79,7 @@ describe('the webhook records it', () => {
     assert.deepEqual(subscriptionAmount({ items: { data: [{ price: { unit_amount: null, currency: 'cad' } }] } }),
       { subscription_amount_cents: null, subscription_currency: null });
   });
-  const route = readCode('app/api/billing/webhook/route.ts');
+  const route = readCode('lib/billing-webhook-handler.ts');
   it('the club arm writes it with the plan; a portal path writes it after, on the subscription it follows', () => {
     assert.match(route, /subscription_period: billingCycle,\s*current_period_end: currentPeriodEnd,\s*\.\.\.subscriptionAmount\(sub\),/);
     assert.match(functionBody(route, 'recordSubscriptionAmount'), /\.eq\('stripe_subscription_id', sub\.id\)/);

@@ -626,7 +626,7 @@ const TAX_RECORD: Record<string, { invoice: string } | { none: string }> = {
   'lib/platform-stripe-fees.ts invoices.finalizeInvoice': { invoice: 'the club’s own fee invoice' },
 };
 const NEVER_AN_INVOICE = ['paymentIntents.create', 'paymentLinks.create'];
-const WEBHOOK = 'app/api/billing/webhook/route.ts';
+const WEBHOOK = 'lib/billing-webhook-handler.ts';
 const REPO_ROOT = path.join(import.meta.dirname, '..', '..');
 
 describe('every charge leaves a tax record (GST/HST Stage 3 Part 1)', () => {

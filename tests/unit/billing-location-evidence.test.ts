@@ -383,11 +383,11 @@ describe('platform admin reads it, read only (Part 3 D)', () => {
 describe('the wiring (Part 3 source guards)', () => {
   it('Stripe\'s billing page cannot edit the address, and nothing reads one back', () => {
     assert.match(readCode('lib/stripe-portal-settings.ts'), /allowed_updates: \['name', 'email', 'tax_id'\]/);
-    assert.doesNotMatch(readCode('app/api/billing/webhook/route.ts'), /case 'customer\.updated'/);
+    assert.doesNotMatch(readCode('lib/billing-webhook-handler.ts'), /case 'customer\.updated'/);
   });
 
   it('the webhook\'s card events record the card country; the payouts module knows nothing of billing', () => {
-    const webhook = readCode('app/api/billing/webhook/route.ts');
+    const webhook = readCode('lib/billing-webhook-handler.ts');
     assert.match(webhook, /case 'payment_method\.attached': \{[\s\S]*?recordCardCountry\(customerId\)[\s\S]*?break;/);
     assert.match(webhook, /case 'payment_method\.detached': \{[\s\S]*?recordCardCountry\(customerId\)[\s\S]*?break;/);
     assert.doesNotMatch(readCode('lib/online-payment-landing.ts'), /billing-location/);

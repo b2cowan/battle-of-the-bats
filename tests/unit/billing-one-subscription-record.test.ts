@@ -59,7 +59,7 @@ describe('which events are about the club’s own subscription', () => {
 });
 
 describe('the webhook asks these questions before it writes', () => {
-  const webhook = readCode('app/api/billing/webhook/route.ts');
+  const webhook = readCode('lib/billing-webhook-handler.ts');
   const before = (needle: string, later: string) => {
     const at = webhook.indexOf(needle);
     return at > -1 && at < webhook.indexOf(later, at);

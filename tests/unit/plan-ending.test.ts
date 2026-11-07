@@ -654,7 +654,7 @@ describe('7 · the doors', () => {
   });
 
   it('the webhook: the placeholder block runs before the waiting-cancel record, and its deletion breaks before the ending', () => {
-    const code = readCode('app/api/billing/webhook/route.ts');
+    const code = readCode('lib/billing-webhook-handler.ts');
     const updated = code.slice(code.indexOf("case 'customer.subscription.updated'"), code.indexOf("case 'customer.subscription.deleted'"));
     assert.ok(updated.indexOf("if (state === 'pending') break;") < updated.indexOf('recordStripeSignal('));
     assert.ok(updated.indexOf("if (state === 'withdrawn')") < updated.indexOf('recordStripeSignal('));
@@ -665,7 +665,7 @@ describe('7 · the doors', () => {
   });
 
   it('G5 · no "trial ending — add a card" email while a cancel waits', () => {
-    const code = readCode('app/api/billing/webhook/route.ts');
+    const code = readCode('lib/billing-webhook-handler.ts');
     const trial = code.slice(code.indexOf("case 'customer.subscription.trial_will_end'"));
     assert.ok(trial.indexOf('sub.cancel_at_period_end || sub.cancel_at || await readPendingEnding(org.id)) break;') < trial.indexOf("key: 'trial_ending'"));
   });
@@ -681,12 +681,12 @@ describe('7 · the doors', () => {
     assert.ok(schedule.indexOf("futureMoveAnswer('downgrade'") < schedule.indexOf('deps.insertIntent('));
     assert.match(readCode('lib/billing-reactivation.ts'), /await withdrawPendingEnding\(\{ orgId \}, 'Reactivated'\);/);
     assert.match(readCode('lib/team-ownership-transfer.ts'), /await withdrawPendingEnding\(\{ subscriptionId \}, 'The team moved into a club'\);\s*try \{\s*await stripe\.subscriptions\.cancel\(subscriptionId\);/);
-    const webhook = readCode('app/api/billing/webhook/route.ts');
+    const webhook = readCode('lib/billing-webhook-handler.ts');
     assert.ok(webhook.indexOf("await withdrawPendingEnding({ subscriptionId }, 'Replaced by the club’s subscription');") < webhook.indexOf('await stripe.subscriptions.cancel(subscriptionId);'));
   });
 
   it('one writer of subscription_canceled: no route or webhook arm writes it at the click any more', () => {
-    for (const file of ['app/api/billing/cancel/confirm/route.ts', 'app/api/platform-admin/orgs/[id]/cancel-subscription/route.ts', 'app/api/billing/webhook/route.ts']) {
+    for (const file of ['app/api/billing/cancel/confirm/route.ts', 'app/api/platform-admin/orgs/[id]/cancel-subscription/route.ts', 'lib/billing-webhook-handler.ts']) {
       assert.doesNotMatch(readCode(file), /eventType: 'subscription_canceled'/, file);
     }
     assert.match(readCode('lib/plan-ending.ts'), /sourceEventId: `intent:\$\{intent\.id\}:subscription_canceled`/);

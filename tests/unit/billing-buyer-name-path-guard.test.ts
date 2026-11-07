@@ -18,7 +18,7 @@ import { describe, it } from 'node:test';
 import { TAXED_CHECKOUT } from '../../lib/billing-tax.ts';
 import { between, filesUnder, functionBody, readCode, readSource } from './_source-code.ts';
 
-const WEBHOOK = 'app/api/billing/webhook/route.ts';
+const WEBHOOK = 'lib/billing-webhook-handler.ts';
 const code = readCode(WEBHOOK);
 const arm = between(code, "case 'checkout.session.completed': {", '\n    case ', `${WEBHOOK} checkout.session.completed`);
 const CALL = "if (session.mode === 'subscription') await restoreBuyerName(session, customerId);";

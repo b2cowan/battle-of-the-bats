@@ -77,7 +77,7 @@ describe('2 · the one question (lib/portal-in-force.ts)', () => {
  * the columns anywhere (they keep the Stripe mirror up to date).
  */
 const WORKSPACE_STATUS_READERS: Record<string, string> = {
-  'app/api/billing/webhook/route.ts': 'Stripe sync: finds the row it is about to rewrite',
+  'lib/billing-webhook-handler.ts': 'Stripe sync: finds the row it is about to rewrite',
   'lib/team-checkout.ts': 'reactivation: changes the rows it reads',
   'lib/team-org-billing.ts': 'the club billing move: reads the row it rewrites',
   'lib/team-org-links.ts': "a link summary's stored display (adopted by a club), not liveness",

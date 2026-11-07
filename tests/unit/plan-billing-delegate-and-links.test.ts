@@ -167,8 +167,8 @@ describe('demo sandboxes carry no billing row', () => {
 
 describe('every billing link resolves the tier', () => {
   const sites: [string, RegExp][] = [
-    ['app/api/billing/webhook/route.ts', /getBillingHref\(billingUrlOrgFromRow\(currentOrg, 'past_due'\)\)/],
-    ['app/api/billing/webhook/route.ts', /getBillingHref\(billingUrlOrgFromRow\(org\)\)/],
+    ['lib/billing-webhook-handler.ts', /getBillingHref\(billingUrlOrgFromRow\(currentOrg, 'past_due'\)\)/],
+    ['lib/billing-webhook-handler.ts', /getBillingHref\(billingUrlOrgFromRow\(org\)\)/],
     // (The downgrade confirm route's link left with its email: Plans end at renewal Stage 2 Part C — the move's own "now on"
     // email is built by lib/plan-ending-server.ts, from the plan the club holds.)
     ['lib/billing-retention.ts', /getBillingHref\(billingUrlOrgFromRow\(org\)\)/],
@@ -179,7 +179,7 @@ describe('every billing link resolves the tier', () => {
   ];
   for (const [file, pattern] of sites) it(`${file} builds its billing link with getBillingHref`, () => assert.match(readCode(file), pattern));
   it('no server file hard-codes an organization billing address any more (the one known leftover is named)', () => {
-    for (const file of ['app/api/billing/webhook/route.ts', 'app/api/billing/downgrade/confirm/route.ts', 'app/api/billing/cancel/confirm/route.ts', 'lib/billing-retention.ts', 'lib/online-payment-owner-notices.ts', 'app/api/platform-admin/orgs/[id]/cancel-subscription/route.ts', 'lib/plan-ending-server.ts']) {
+    for (const file of ['lib/billing-webhook-handler.ts', 'app/api/billing/downgrade/confirm/route.ts', 'app/api/billing/cancel/confirm/route.ts', 'lib/billing-retention.ts', 'lib/online-payment-owner-notices.ts', 'app/api/platform-admin/orgs/[id]/cancel-subscription/route.ts', 'lib/plan-ending-server.ts']) {
       assert.doesNotMatch(readCode(file), /admin\/org\/billing/, file);
     }
   });

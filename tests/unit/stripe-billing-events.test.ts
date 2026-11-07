@@ -222,13 +222,17 @@ describe('Stripe\'s current answer, not the event\'s copy', () => {
 });
 
 describe('the webhook wears it', () => {
+  // The route keeps the signature and the receive call; the handler (Stage 2 Part 1 moved it to a lib file, so a replay can
+  // call it) keeps the seam and the plan's own work.
   const route = readCode('app/api/billing/webhook/route.ts');
+  const handler = readCode('lib/billing-webhook-handler.ts');
   // The seam, and the plan's own work it calls (split out by GST/HST Stage 3 so an invoice's tax record is written after it).
-  const seam = functionBody(route, 'runVerifiedBillingEvent') + functionBody(route, 'runPlanWork');
+  const seam = functionBody(handler, 'runVerifiedBillingEvent') + functionBody(handler, 'runPlanWork');
   const arm = (name: string) => seam.slice(seam.indexOf(`case '${name}'`), seam.indexOf('case ', seam.indexOf(`case '${name}'`) + 6));
 
   it('every verified event goes through the record, to the one seam', () => {
     assert.match(route, /return receiveBillingEvent\(event, runVerifiedBillingEvent\)/);
+    assert.match(handler, /export async function runVerifiedBillingEvent/, 'exported: the replay of a stored event (Stage 2 Part 5) calls the same function');
     assert.ok(route.indexOf('constructEvent(') < route.indexOf('receiveBillingEvent(event'), 'the signature is checked first');
   });
   it('the customer-less return and the fee invoice come AFTER the claim, inside the seam', () => {

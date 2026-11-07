@@ -55,7 +55,7 @@ const ALLOWED: Record<string, [Klass, string]> = {
   'lib/user-contexts.ts': ['through', 'membership reads fold through withEffectiveOrgs'],
   'lib/invite-acceptance.ts': ['through', 'folds through withEffectiveOrgs before routing'],
   // ── writers ──
-  'app/api/billing/webhook/route.ts': ['writer', 'Stripe is the source of truth for what the club holds'],
+  'lib/billing-webhook-handler.ts': ['writer', 'Stripe is the source of truth for what the club holds'],
   'app/api/billing/create-checkout/route.ts': ['writer', 'plan change on checkout'],
   'app/api/billing/mock-apply/route.ts': ['writer', 'mock checkout (dev)'],
   'app/api/admin/org/onboarding-plan/route.ts': ['writer', 'onboarding plan write'],

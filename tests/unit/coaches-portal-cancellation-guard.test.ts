@@ -37,7 +37,7 @@ const ENDING = 'lib/plan-ending.ts';
 const SENDER = 'lib/plan-ending-server.ts';
 const DOORS = [
   'app/api/billing/cancel/confirm/route.ts',
-  'app/api/billing/webhook/route.ts',
+  'lib/billing-webhook-handler.ts',
   // Review 2026-09-24: this door still sent the generic ORG email to a Coaches Portal owner.
   'app/api/platform-admin/orgs/[id]/cancel-subscription/route.ts',
 ];
@@ -73,7 +73,7 @@ test('a Stripe-side end retains the workspace before emailing, and never double-
   const deleted = src.slice(src.indexOf('export async function endingForDeletedSubscription'));
   assert.ok(deleted.indexOf("if (applied) return { kind: 'already'") > 0);
   assert.ok(deleted.indexOf("if (applied) return { kind: 'already'") < deleted.lastIndexOf('applyEnding('));
-  assert.match(read('app/api/billing/webhook/route.ts'), /if \(account\) await endingForDeletedSubscription\(account, sub, endingDeps\);/);
+  assert.match(read('lib/billing-webhook-handler.ts'), /if \(account\) await endingForDeletedSubscription\(account, sub, endingDeps\);/);
 });
 
 test('a Coaches Portal is kept 365 days and warned 30 days out; the cancel screen reads the same number', () => {

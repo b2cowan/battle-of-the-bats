@@ -241,7 +241,7 @@ describe('1b — the move between plans (Ask 4, D7) and the second-subscription 
 });
 
 describe('Webhook + reactivation (A07, the band change)', () => {
-  const webhook = read('app/api/billing/webhook/route.ts');
+  const webhook = read('lib/billing-webhook-handler.ts');
 
   it('a plan change the webhook sees clears a stale team limit and revokes the Founding comp', () => {
     assert.match(webhook, /applyPlanChangeSideEffects\(\{/);

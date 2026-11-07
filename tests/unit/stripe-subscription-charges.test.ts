@@ -152,7 +152,7 @@ describe('through the record (Part 2)', () => {
 });
 
 describe('the webhook wears it', () => {
-  const route = readCode('app/api/billing/webhook/route.ts');
+  const route = readCode('lib/billing-webhook-handler.ts');
   const seam = functionBody(route, 'runVerifiedBillingEvent');
   it('handles the four events BEFORE the customer-less early return (a dispute names no customer)', () => {
     for (const t of ['charge.dispute.created', 'charge.dispute.updated', 'charge.dispute.closed', 'charge.refunded']) {

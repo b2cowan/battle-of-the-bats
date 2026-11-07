@@ -30,7 +30,7 @@ import { HttpError } from './http-error';
  * `past_due` keeps working. A failed payment writes `past_due` (never `canceled`) and notifies the
  * org — only Stripe GIVING UP after its full retry window produces `canceled`. That gives the
  * dunning path a real grace period for free, which is why an immediate hard-block is safe here.
- * Verified: app/api/billing/webhook/route.ts `invoice.payment_failed` → 'past_due'.
+ * Verified: lib/billing-webhook-handler.ts `invoice.payment_failed` → 'past_due'.
  */
 
 /**

@@ -83,6 +83,12 @@ export type PlatformPower =
    * sixth-in-a-week Super admin rules; this list says only who may.
    */
   | 'portal_free_time'
+  /**
+   * Replay one Stripe billing event through our own handler, from Health › Watching Stripe (Plans & pricing Stage 2, owner
+   * ruling 2026-11-06): Super admin only (the drawings' matrix gives tab 10 "may" to Super admin alone), with a required
+   * reason and a change-log row. The only write on that page; the page itself only reads.
+   */
+  | 'replay_events'
   /** The dev-only seed console (and only where NEXT_PUBLIC_ENABLE_DEV_TOOLS is on). */
   | 'dev_tools';
 
@@ -117,6 +123,7 @@ export const PLATFORM_POWERS: Record<PlatformPower, readonly PlatformRole[]> = {
   sent_log:         ['super_admin', 'support', 'billing'],
   portal_free_time: ['super_admin', 'billing', 'support'],
   run_jobs:         ['super_admin'],
+  replay_events:    ['super_admin'],
   dev_tools:        ['super_admin'],
 };
 
@@ -144,6 +151,7 @@ export type PlatformArea =
   | 'feedback'
   | 'sent_emails'
   | 'online_payments'
+  | 'watching_stripe'
   | 'email_templates'
   | 'help'
   | 'export_registry'
@@ -213,7 +221,11 @@ export const PLATFORM_AREAS: Record<PlatformArea, AreaAccess> = {
   // 2026-10-27): the roles that already read a club's Stripe records, held equal to that power — one rulebook, never a
   // second list. Nothing on either page writes.
   online_payments: { viewRoles: PLATFORM_POWERS.find_stripe, powers: [] },
-  dev_tools:       { viewRoles: ['super_admin'], powers: ['dev_tools'] },
+  // Health › Watching Stripe (Plans & pricing Stage 2; drawings tab 10 and the roles matrix): Super admin "may", Billing,
+  // Support and Product read, Growth and Read only none. The page reads; its one write is the replay of an event
+  // (Super admin only), so Billing, Support and Product see the eye.
+  watching_stripe: { viewRoles: ['super_admin', 'billing', 'support', 'product'], powers: ['replay_events'] },
+  dev_tools:      { viewRoles: ['super_admin'], powers: ['dev_tools'] },
 };
 
 export function canViewPlatformArea(role: PlatformRole, area: PlatformArea): boolean {

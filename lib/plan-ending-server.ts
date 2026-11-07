@@ -481,7 +481,7 @@ export const endingDeps: EndingDeps = {
   },
 
   async clearEndedSubscription(account, sub) {
-    // What the webhook's `deleted` arm does after its ending (app/api/billing/webhook/route.ts), for an ending finished by
+    // What the webhook's `deleted` arm does after its ending (lib/billing-webhook-handler.ts), for an ending finished by
     // hand because that event never arrived. Not shared code: the arm is pinned by its own guard tests.
     if (account.isCoachesPortal) {
       await syncTeamWorkspaceSubscription({

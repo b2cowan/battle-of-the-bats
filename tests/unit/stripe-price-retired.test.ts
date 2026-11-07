@@ -80,7 +80,7 @@ describe('the Money tab and the webhook recognise it too', () => {
     assert.ok(body.indexOf('retired.data') < body.indexOf('current.data', body.indexOf('retired.data')), 'current rows come last, so they win');
   });
   it('the webhook speaks up about a price no slot has ever used, and changes nothing', () => {
-    const route = readCode('app/api/billing/webhook/route.ts');
+    const route = readCode('lib/billing-webhook-handler.ts');
     assert.match(route, /\} else if \(priceId\) \{\s*await tellOwnerOfUnrecognisedPrice\(sub, priceId, customerId\)/);
     const tell = functionBody(route, 'tellOwnerOfUnrecognisedPrice');
     assert.match(tell, /unrecognised_price:\$\{new Date\(\)\.toISOString\(\)\.slice\(0, 10\)\}/, 'once per subscription per day');

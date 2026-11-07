@@ -87,7 +87,7 @@ describe('1 · the rulebook is total over the Needs-attention kinds', () => {
     assert.match(readCode('app/api/coaches/[orgSlug]/teams/[teamId]/payment-requests/[id]/route.ts'), /kinds: \['team_request_filed', 'team_request_holding_payout'\]/);
     assert.match(readCode('app/api/admin/schedules/[scheduleId]/route.ts'), /kinds: \['club_schedule_review'\]/);
     assert.match(functionBody(readCode('lib/club-schedule-send.ts'), 'sendSchedule'), /kinds: \['club_schedule_review'\]/);
-    assert.equal(readCode('app/api/billing/webhook/route.ts').match(/kinds: \['payment_failed'\]/g)?.length, 2, 'payment succeeded and subscription updated');
+    assert.equal(readCode('lib/billing-webhook-handler.ts').match(/kinds: \['payment_failed'\]/g)?.length, 2, 'payment succeeded and subscription updated');
   });
 });
 
@@ -110,7 +110,7 @@ describe('the /review fixes (2026-10-16)', () => {
     const body = functionBody(LIB.replace('const paymentFailed: Resolver = async rows =>', 'function paymentFailed(rows) '), 'paymentFailed');
     assert.match(body, /if \(status === 'active' \|\| status === 'trialing'\) out\.set\(r\.id, said\(W\.billingGood\)\)/);
     assert.match(body, /else out\.set\(r\.id, 'waiting'\)/);
-    assert.match(readCode('app/api/billing/webhook/route.ts'), /if \(\['active', 'trialing', 'canceled'\]\.includes\(sub\.status\)\) await clearSettled/);
+    assert.match(readCode('lib/billing-webhook-handler.ts'), /if \(\['active', 'trialing', 'canceled'\]\.includes\(sub\.status\)\) await clearSettled/);
   });
 
   it('every read pages (a capped response must never read as "taken back")', () => {
@@ -145,7 +145,7 @@ describe('2 · the four retired kinds are not Needs attention', () => {
 
 describe('3 · the three notices name who can act', () => {
   it('a failed card payment goes to the owners, and never as an empty list', () => {
-    const hook = readCode('app/api/billing/webhook/route.ts');
+    const hook = readCode('lib/billing-webhook-handler.ts');
     assert.match(hook, /const owners = await orgOwnerUserIds\(currentOrg\.id\)/);
     assert.match(hook, /if \(owners\.length\) \{\s*notify\(\{[\s\S]*?eventType: 'payment_failed'[\s\S]*?userIds: owners,/);
   });
