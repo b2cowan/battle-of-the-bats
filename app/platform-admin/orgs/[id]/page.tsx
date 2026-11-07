@@ -105,7 +105,7 @@ export default async function ClubRecordPage({ params, searchParams }: {
   const [orgRes, { memberRows, people }, tournamentsRes, teamCountRes, overridesRes, ownAddress, teamMoves, story, , doorFacts] = await Promise.all([
     supabaseAdmin
       .from('organizations')
-      .select('id, name, slug, plan_id, tournament_limit, team_limit, subscription_status, subscription_period, current_period_end, stripe_customer_id, stripe_subscription_id, created_at, enabled_addons, account_kind')
+      .select('id, name, slug, plan_id, tournament_limit, team_limit, subscription_status, subscription_period, current_period_end, stripe_customer_id, stripe_subscription_id, created_at, enabled_addons, account_kind, billing_suspended_at')
       .eq('id', id)
       .maybeSingle(),
     supabaseAdmin.from('organization_members').select('user_id, role, status, accepted_at').eq('organization_id', id).limit(2000)
@@ -165,6 +165,17 @@ export default async function ClubRecordPage({ params, searchParams }: {
   const overrides = overrideRows((overridesRes.data ?? []) as OverrideRow[]);
 
   const status = org.subscription_status ?? 'active';
+  // An ending that has HAPPENED leaves the waiting-ending read empty, so the record reads its date from the suspension and
+  // the data clock from the applied row. A failed read leaves the date and drops the clock: never a guessed one.
+  const endedAt: string | null = status === 'canceled' ? org.billing_suspended_at ?? null : null;
+  const dataKeptUntil: string | null = endedAt
+    ? await supabaseAdmin
+      .from('billing_retention_intents')
+      .select('retention_until')
+      .eq('org_id', id).eq('intent_type', 'cancellation').eq('status', 'applied')
+      .order('applied_at', { ascending: false }).limit(1).maybeSingle()
+      .then(res => (res.data?.retention_until as string | null | undefined) ?? null, () => null)
+    : null;
   // The Money tab names running free time on our side only (it is not Stripe's to agree with).
   const runningGrant = portalFreeTime?.running
     ? overrides.find(o => o.id === portalFreeTime.running!.id)
@@ -183,6 +194,8 @@ export default async function ClubRecordPage({ params, searchParams }: {
       statusLabel: subscriptionStatusLabel(status),
       createdAt: org.created_at,
       currentPeriodEnd: org.current_period_end,
+      endedAt,
+      dataKeptUntil,
       billingCycle: org.subscription_period === 'annual' || org.subscription_period === 'monthly' ? org.subscription_period : null,
       stripeCustomerId: org.stripe_customer_id,
       stripeSubscriptionId: org.stripe_subscription_id,

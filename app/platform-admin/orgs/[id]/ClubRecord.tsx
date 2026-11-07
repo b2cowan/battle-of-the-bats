@@ -64,7 +64,10 @@ const OLD_TABS: Record<string, Tab> = { billing: 'money', entitlements: 'access'
 export type ClubRecordProps = {
   org: {
     id: string; name: string; slug: string; planId: string; planLabel: string; status: string; statusLabel: string;
-    createdAt: string; currentPeriodEnd: string | null; billingCycle: 'monthly' | 'annual' | null; stripeCustomerId: string | null; stripeSubscriptionId: string | null;
+    createdAt: string; currentPeriodEnd: string | null;
+    /** When a cancelled account ended (the suspension's date) and when its data is kept until: null while it runs. */
+    endedAt: string | null; dataKeptUntil: string | null;
+    billingCycle: 'monthly' | 'annual' | null; stripeCustomerId: string | null; stripeSubscriptionId: string | null;
     /** A subscription not yet cancelled in Stripe: the plan and tournament limit change there, never here (owner Q9). */
     paysThroughStripe: boolean;
     tournamentLimit: number; teamLimit: number | null; storedTeamLimit: number | null; isClubBand: boolean;
@@ -436,6 +439,13 @@ export default function ClubRecord(props: ClubRecordProps) {
       <span className={kit.bandLabel}>{props.ending.movesTo ? 'Moves' : 'Ends'}</span>
       <span className={`${kit.bandValue} ${kit.bandValueSm}`}>{consoleDate(props.ending.endsAt)}</span>
       <span className={kit.bandNote}>{props.ending.movesTo ? `to ${props.ending.movesTo} · from Stripe` : 'cancelled · from Stripe'}</span>
+    </div>
+  ) : org.endedAt ? (
+    // An ending that has happened: its own date, and when the data goes (the waiting-ending cell above is gone by now).
+    <div className={kit.bandCell}>
+      <span className={kit.bandLabel}>Ended</span>
+      <span className={`${kit.bandValue} ${kit.bandValueSm}`}>{consoleDate(org.endedAt)}</span>
+      <span className={kit.bandNote}>{org.dataKeptUntil ? `data kept until ${consoleDate(org.dataKeptUntil)}` : 'suspended'}</span>
     </div>
   ) : (
     <div className={kit.bandCell}>

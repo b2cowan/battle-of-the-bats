@@ -361,7 +361,7 @@ export function flagWords(flag: ChargeFlag): { text: string; tone: 'bad' | 'quie
       ? 'Not the subscription’s: a one-off invoice made in Stripe’s dashboard'
       : 'Not the subscription’s: a charge made in Stripe, not by an invoice', tone: 'quiet' };
     case 'other_subscription': return { text: `From a second subscription, ${flag.subscriptionId}`, tone: 'bad' };
-    case 'portal': return { text: 'Not a duplicate: a Coaches Portal this club pays for', tone: 'quiet' };
+    case 'portal': return { text: 'A Coaches Portal this club pays for', tone: 'quiet' };
   }
 }
 

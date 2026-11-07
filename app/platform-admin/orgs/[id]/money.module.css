@@ -53,6 +53,28 @@ tr.differsRow > td {
 .lines dd { margin: 0; color: var(--text-primary); overflow-wrap: anywhere; }
 .refundLine { display: block; }
 
+/* A document you can open: an outlined button with the download-file icon, so it never reads as part of the sentence. */
+.pdfButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-left: 0.35rem;
+  padding: 0.15rem 0.6rem;
+  border: 1px solid var(--home-olive);
+  border-radius: 6px;
+  color: var(--home-olive);
+  font-size: var(--type-support);
+  font-weight: 650;
+  text-decoration: none;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+.pdfButton:hover { background: color-mix(in srgb, var(--home-olive) 10%, transparent); color: var(--text-primary); }
+.pdfButton:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+@media (max-width: 768px) {
+  .pdfButton { min-height: var(--tap-min, 44px); }
+}
+
 .amount { max-width: 10rem; font-variant-numeric: tabular-nums; }
 
 @media (max-width: 640px) {

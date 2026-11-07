@@ -10,7 +10,7 @@
  * A role without the Stripe-reading power never asks: it sees our record and one line. The rules are lib/console-money.ts.
  */
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Flag } from 'lucide-react';
+import { FileDown, Flag } from 'lucide-react';
 import KitDialog, { DialogCancel } from '@/components/admin/kit/club/KitDialog';
 import { consoleClock, consoleDay, consoleWhen } from '@/lib/console-dates';
 import { formatStoredDate } from '@/lib/timezone';
@@ -796,7 +796,7 @@ function SaleWindow({ orgId, orgName, number, startWithRefund, atTax, listRow, f
                       {answer?.creditNotes == null ? 'Not read from Stripe' : answer.creditNotes.length === 0 ? 'None' : answer.creditNotes.map(n => (
                         <span key={n.id} className={money.refundLine}>
                           {n.number} · {formatCents(n.totalCents, n.currency)}{creditNoteTaxWords(n, row.notes)} · {consoleWhen(n.createdAt)}
-                          {n.pdf && <>{' '}<a className={`${kit.door} ${kit.doorSm}`} href={n.pdf} target="_blank" rel="noreferrer">PDF</a></>}
+                          {n.pdf && <>{' '}<a className={money.pdfButton} href={n.pdf} target="_blank" rel="noreferrer" aria-label={`Download credit note ${n.number} as a PDF`}><FileDown size={14} aria-hidden="true" />Download PDF</a></>}
                         </span>
                       ))}
                     </dd>

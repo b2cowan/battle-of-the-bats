@@ -297,7 +297,7 @@ const platformAdminHelp: HelpPageContent = {
                 <HelpDef term="A plan move">Reads <em>Not a duplicate: a plan move&rsquo;s part month, then the</em> renewal.</HelpDef>
                 <HelpDef term="A retry that paid">Reads <em>Not a duplicate: Stripe tried again after the</em> failure <em>and it paid</em>.</HelpDef>
                 <HelpDef term="Not the subscription&rsquo;s">Reads <em>a one-off invoice made in Stripe&rsquo;s dashboard</em> or <em>a charge made in Stripe, not by an invoice</em>.</HelpDef>
-                <HelpDef term="A Coaches Portal the club pays for">Reads <em>Not a duplicate: a Coaches Portal this club pays for</em>. Such a portal bills on the club&rsquo;s own Stripe customer.</HelpDef>
+                <HelpDef term="A Coaches Portal the club pays for">Reads <em>A Coaches Portal this club pays for</em>. It is never a duplicate of the club&rsquo;s own plan. Such a portal bills on the club&rsquo;s own Stripe customer.</HelpDef>
               </HelpDefs>
               <HelpNote variant="warning" title="Two live subscriptions">
                 A charge from a second live subscription is named too. Cancel the extra subscription in Stripe first (the first line has the door), then refund its charges here.
@@ -350,9 +350,9 @@ const platformAdminHelp: HelpPageContent = {
           id: 'faq-charged-twice',
           question: 'A customer says they were charged twice. What do I do?',
           answer: (
-            <p>Open the club&rsquo;s <strong>Money</strong> tab and read the first line and the note under each charge. If it says <em>Charged twice</em>, Billing or a Super admin can use <strong>Refund the later one</strong>; Support hands the charge number on. If the notes say <em>Not a duplicate</em> (a plan move, a retry that paid, a one-off invoice or a Coaches Portal), explain which and do not refund.</p>
+            <p>Open the club&rsquo;s <strong>Money</strong> tab and read the first line and the note under each charge. If it says <em>Charged twice</em>, Billing or a Super admin can use <strong>Refund the later one</strong>; Support hands the charge number on. If the notes say <em>Not a duplicate</em> (a plan move or a retry that paid), or name a one-off invoice or a Coaches Portal the club pays for, explain which and do not refund.</p>
           ),
-          answerText: 'Open the club Money tab and read the first line and the note under each charge. If it says Charged twice, Billing or a Super admin can use Refund the later one; Support hands the charge number on. If the notes say Not a duplicate (a plan move, a retry that paid, a one-off invoice or a Coaches Portal), explain which and do not refund.',
+          answerText: 'Open the club Money tab and read the first line and the note under each charge. If it says Charged twice, Billing or a Super admin can use Refund the later one; Support hands the charge number on. If the notes say Not a duplicate (a plan move or a retry that paid), or name a one-off invoice or a Coaches Portal the club pays for, explain which and do not refund.',
           keywords: ['double charge', 'duplicate', 'charged twice', 'refund the later one'],
           popular: true,
         },
