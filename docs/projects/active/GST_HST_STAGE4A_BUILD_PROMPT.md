@@ -308,7 +308,7 @@ hashes, never “uncommitted”.
   `formatCad` is now exported from the rules module). The legacy record's kind line and the four "calls not drawn" above are for the
   owner walk.
 
-### Session D (2026-11-06, Opus): Part 6 (Reports + the registration date); no DDL
+### Session D (2026-11-06, Opus): Part 6 committed 0f16bf9a3 2026-11-06; Part 7 step 1 (/simplify) committed f83cbe24e 2026-11-06; no DDL
 - **Step 0 [V 2026-11-06]:** `BookkeepingClient.tsx`:103–148 holds `registrationDate` + `gstSchemaReady` and `load()` refreshes both; the
   registration route is as Session B recorded; the review-value list was hard-coded at `bookkeeping-export.ts`:47. Nothing in Part 6 was
   undrawn (tab 4 After + the window at its end), so no drawing addition.
@@ -348,3 +348,26 @@ hashes, never “uncommitted”.
   summary tests updated. Bookkeeping 140/140; typecheck clean; lint clean; `check:spelling` passes.
 - **Full suite:** 14,740 / 14,749; the 9 failures are the expected set. verify:changed's other checks: the same 7 (admin old look, admin
   type, schema parity, index coverage, org-slug callers, CSS selectors, export catalog), none naming a bookkeeping file.
+- **Part 7 step 1, `/simplify` (4 helper reviews: reuse, simplification, efficiency, altitude), committed f83cbe24e; no screen change.**
+  Applied: `formatCad` in the form, record and register (identical output) and `sumTaxLines` in the form + `taxColumns`; Reports' doors
+  are now `Partial<ExpenseFilters>` fields (the line list = `matchesExpenseFilters`, the export = the same object + `dateStatus:
+  confirmed`; `drilldownLabel()`); `narrowsExpenses()` in `bookkeeping-filters.ts` (the package's narrowing list has one home);
+  `hasKnownTaxAmount` reads `resolveTaxState` (same formula; 4a rows store `tax_amount_known = answer !== unknown`); the expenses GET's
+  per-expense `credits` map removed (no screen read it; its route test now asserts it is absent); registration refusal strings shared
+  by route + window (`REGISTRATION_QUESTION.dateMissing / reasonMissing`); the window derives its date (no effect copy); row labels =
+  `taxPaidRowLabel()` (TAX_TYPES + two overrides); `pluralize`; `attention` memoized. Bookkeeping 140/140, typecheck + lint clean.
+  **Skipped (recorded, not done):** `resolveTaxState(row)` reading `row.tax_lines` itself (9 call sites; churn, no defect); one
+  `edited` state for the form's number + registration prefill (Session C's form logic; risk without a walk); sharing
+  `BookkeepingQuestion` with the registration window (needs per-field refusals and the 409 re-read); a `requireSameOrigin()` helper
+  (3 copies, 2 predate 4a; `lib/bookkeeping-access.ts` is outside this build); efficiency in `lib/bookkeeping-store.ts`
+  (`hasGstTaxSchema` probed 2–3× per request with 2 queries each, `gstRegistrationDate` reads the whole history, probes awaited in
+  series, tax lines inserted one statement each). A module-level "ready" memo would cut the probes but breaks route tests that flip
+  readiness in one process; worth a Stage 5 (production store) item. Dead-for-the-app but tested: `legacy`, `countsOnReturn` (kept for
+  4b's worksheet), POST `credit` (route tests verify the server re-derives it).
+- **Session E (fresh session) starts here: Part 7 steps 2–6.** `/review` (scope: 0f16bf9a3 + f83cbe24e, plus Sessions B–C if the
+  funnel allows); `/accounting` review before hand-off (the CSV credit columns, held keeps its figure, `_cad` naming, Reports' full tax
+  vs the old pro-rated box, Session C's four calls not drawn); grep `lib/help-content` for "tax credit" / "purchase tax"; the owner walk
+  Artifact (steps in Part 7.5 of the Session D prompt, plus: Reports' tax rows open the list and the export follows; the quiet line
+  is the full-tax sentence, not the drawn return-view pointer; Change date's window uses the two quiet answers); grep every other walk
+  for the old checkbox / "does not claim a tax credit" / the old tax box; then this Progress, the GST/HST plan §Stage 4 status, the
+  Bookkeeping ladder row 4a, TODO.md, and a new OWNER_QA_LEDGER entry. The dev server was restarted at the end of Session D.
