@@ -40,8 +40,9 @@ export async function bankBody(req: Request): Promise<Record<string, unknown>> {
   return body && typeof body === 'object' && !Array.isArray(body) ? body as Record<string, unknown> : {};
 }
 
-/** One mig 447 step: its coded refusal, or its answer. `as` re-words a code for this step's own door (one place for it). */
-async function step(fn: string, args: Record<string, unknown>, as: Partial<Record<BankRefusalCode, BankRefusalCode>> = {}):
+/** One mig 447 step: its coded refusal, or its answer. `as` re-words a code for this step's own door (one place for it).
+ *  Shared with the team's steps (lib/bank-coach-steps.ts, BC6b): the same functions, the same refusal shape. */
+export async function step(fn: string, args: Record<string, unknown>, as: Partial<Record<BankRefusalCode, BankRefusalCode>> = {}):
   Promise<Moved<{ data: Record<string, unknown> }>> {
   const refuse = (code: BankRefusalCode) => bankRefusedAs(as[code] ?? code);
   const { data, error } = await supabaseAdmin.rpc(fn, args);

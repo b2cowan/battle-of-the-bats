@@ -47,8 +47,9 @@ export const TEAM_BANK_ACCOUNT_NAME = 'Team bank account';
 
 export interface TeamBankAccount { id: string; name: string }
 
-/** The team's live bank account in its club, or null (none until the first save). */
-async function teamAccountOf(orgId: string, teamId: string): Promise<TeamBankAccount | null> {
+/** The team's live bank account in its club, or null (none until the first save). Exported for the first save's race
+ *  (lib/bank-coach-steps.ts: a racing first save reads the account the other one made). */
+export async function teamAccountOf(orgId: string, teamId: string): Promise<TeamBankAccount | null> {
   const { data, error } = await supabaseAdmin.from('bank_accounts').select('id, name')
     .eq('org_id', orgId).eq('owner_kind', 'team').eq('team_id', teamId).is('archived_at', null).maybeSingle();
   if (error) throw error;

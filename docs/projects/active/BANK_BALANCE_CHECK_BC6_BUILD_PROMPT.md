@@ -1,3 +1,6 @@
+> **✅ BC6 DONE 2026-11-06 — BC6b done** (routes, permissions, the history decision, the D1 guard, dev probe
+> `BANK_BC6B_PASSED`; `/review` high-risk; plan §9 BC6 has the anchors and the kept edges). **Next BC7** (its own prompt).
+>
 > **BC6a done 2026-11-06** (rules + reader + tests, `/review` standard with 1 High fixed; plan §9 BC6 has the anchors,
 > the three owner rulings are in §0 "O5: season start", "Q1 look-back", "Still waiting across the rollover", and the
 > BC6b route notes are under "⚠ For BC6b"). **Next BC6b.** Note for BC6b: `readTeamBank` takes `{ orgId, season,

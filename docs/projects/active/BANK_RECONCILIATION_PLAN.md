@@ -900,7 +900,7 @@ questions first). The Teams tab's "Bank checked" column (R0 tab 7) reads each te
 Build prompt written 2026-11-06: `BANK_BALANCE_CHECK_BC6_BUILD_PROMPT.md` (two sessions: BC6a the coach's figure and Find
 as rules and a reader, owner questions first incl. O5; BC6b the routes, permissions, the history-decision record, a D1
 guard and a dev probe). Mig 447 already carries the team account (`owner_kind = 'team'`, no starting statement).
-- [ ] The team account, created at the first save (no setup question; name "Team bank account").
+- [x] The team account, created at the first save (no setup question; name "Team bank account") — BC6b 2026-11-06.
 - [x] **BC6a built 2026-11-06** (rules + reader, no route, no screen, no migration). The coach figure: opening balance +
   settled cash-moving register rows ≤ D (`coachBooksOnDate`); a date before the season start refused (`before_season`,
   O5 ruled); Find per Q1 and the two BC6a rulings in §0. Anchors: `lib/bank-coach-map.ts` (`seasonStartOf`, `coachFind`,
@@ -933,10 +933,56 @@ guard and a dev probe). Mig 447 already carries the team account (`owner_kind = 
   - Words for BC8: the drafted §5 refusal "…Check it from last season before you start a new one." sends the coach where
     the bank isn't (a closed season is one page, B9); the draft in the code is "This statement is dated before the season
     started. Check a statement from this season."
-- [ ] Routes `app/api/coaches/[orgSlug]/teams/[teamId]/bank/**` with `canWriteMoney` / `canViewMoney`; the statement date
+- [x] Routes `app/api/coaches/[orgSlug]/teams/[teamId]/bank/**` with `canWriteMoney` / `canViewMoney`; the statement date
   is not a year; confirm the `HISTORY_ENDPOINTS` guard stays unchanged (and, with Q1-A, record the previous-season read
   as the decision it is, answering the three questions in `CLAUDE.md`).
-- [ ] Saved checks and the mark read the working season only; the closed-season page shows nothing (B9).
+- [x] Saved checks and the mark read the working season only; the closed-season page shows nothing (B9).
+- [x] **BC6b built 2026-11-06** (routes, permissions, the history decision, a D1 guard, a dev probe; no screen, no
+  migration). Anchors: `lib/bank-coach-steps.ts` (`teamBankView`, `saveTeamCheck`, `deleteTeamCheck`, `openTeamAccount`,
+  `teamBankCaller`, `askedDay`); routes `app/api/coaches/[orgSlug]/teams/[teamId]/bank/route.ts` (GET, `?date=`),
+  `bank/checks/route.ts` (POST, 201), `bank/checks/[checkId]/route.ts` (DELETE); `tests/unit/bank-coach-routes-guard.test.ts`
+  (the gates, rule 6, D1); `bank-r2-server-guard.test.ts` §5 walks the coach steps and routes. Shared with the club:
+  `step` (now exported from `lib/bank-club-steps.ts`), `bankRefusedAs`, `bankBody`, `checkView`, `readDay`.
+  - **Gates.** Every verb resolves the LIVE season first (`resolveLiveCoachTeamContext`): no live season answers the coded
+    `season_not_live` (409) on GET too, nothing past the gate. GET = money read (`canViewMoney`; `canWrite` tells the
+    screen whether to draw the form, K7); POST and DELETE = money write. Nothing is read from the request before both.
+  - **⚖ The history decision, recorded (CLAUDE.md's three questions; `HISTORY_ENDPOINTS` unchanged, the guard passes):**
+    (1) an INSTRUMENT on the working season — only Q1's look-back reads back, last season's money LINES (the season the
+    opening cash was carried from, found from the working season's own row, never the request's) and its final check's
+    open items, never a closed season's checks as checks; (2) the whole subtree is BC7's Bank view, and a look-back line
+    opens nothing of last season; (3) the coach tells the season by the divider "From the {2025 Season}"
+    (`figure.lastSeason.name`). Written in the GET route's header too.
+  - **The save.** `readTeamBank` on the request's day → `coachSavePlan` on that read → the account (the read's, or made
+    now: a plain insert, `owner_kind='team'`, the gate's team, "Team bank account", `created_by` the saver; a racing first
+    save's 23505 on `bank_accounts_one_per_team` uses the other's) → `bank_check_save` with `p_start`/`p_start_books`/
+    `p_book_ids`/`p_on_its_way_cents` NULL, its `bad_item` read as `bad_team_item`. A plan refusal makes no account.
+  - **The delete** reaches only a check on the working view (B10): an older season's check is `check_not_found`.
+  - **Proved 2026-11-06:** 267 bank + history-guard tests; `npm run typecheck` clean; focused lint, `check:spelling`,
+    `check:dictionary`. Dev probe `.probe/bank-bc6/bc6.mjs` → `BANK_BC6B_PASSED` (34/34) on uat-rep-club "UAT Test
+    Team", 2026 Season (start figured 2026-05-10), as its head coach UAT_COACH (money write) and uat-rep-club's coach
+    sign-in added for the run as an assistant with money read: no account before; refusals (before the season, tomorrow,
+    a line not the team's, negative cash) make no account; two racing first saves → 201, 201, ONE "Team bank account";
+    a matching check; Find since the match; an off check with a line Not in the bank yet (its figures the server's) and
+    $25.00 cash; the same date replaces; money read reads (`canWrite` false) and is refused POST/DELETE (403); UAT Between
+    Seasons (uat-test-org, no live season) refused GET and POST (409); every delete soft, who and when kept; cleanup left
+    no account and no added coach row. `verify:changed`'s failures are other sessions' files (billing words, practice
+    plans, the support console's census), none a bank file.
+  - `/simplify` not run: the one shared piece is an existing helper exported, no new abstraction. `/review` high-risk
+    (2026-11-06): 4 lenses (correctness, security/multi-tenant, data/contract/concurrency, regression/guards), 0
+    Critical/High/Medium in the code. Applied: `DATA_DICTIONARY` `bank_accounts` gotcha 5 said accounts are added only by
+    `bank_account_add` (now club only; gotcha 6, the team's first-save insert); the guard now catches a handler not
+    written `export const X = withObservability(`, the multi-line account insert's `await`, and any caller of the shared
+    `step` but the coach steps; a comment that overpromised. Kept, accepted: (a) a save the STEP refuses after the insert
+    (a race, an outage) leaves the account with no check, read as no check yet; (b) a season closed between the gate and
+    the step still saves (the step knows no season); (c) a save dated the rollover day replaces the old season's final
+    check of that day (O5 edge 2, soft, it reads as the working season's); (d) a check left before a moved start (O5 edge
+    1) is neither shown nor deletable; (e) a removed coach's checks name them by their email (`resolvePersonNamer`, the
+    club's too); (f) a register row added between the read and the step's lock saves the books as read (no start to
+    compare-and-swap; Books now say shows it). The no-live-season answer's words say "this change wasn't saved" on a GET
+    too (the shared `season_not_live` sentence; the team layout's gate keeps a coach off the view, so a screen never
+    shows it).
+  - Next: **BC7**, the Ledger's Bank view (desk + phone). ⚠ For BC7: tell "never checked" by `checks.length === 0`, not
+    `account === null` (kept-edge a); a POST answers the bank read again, not the new check's id (as the club's).
 
 ### BC7 — Coach: the Ledger's Bank view (desk + phone)
 - [ ] The fourth View pill option; the check with Cash not deposited yet; Find; saved checks; the read-only form for money

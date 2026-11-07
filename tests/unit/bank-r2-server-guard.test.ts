@@ -305,7 +305,9 @@ describe('4. the steps (mig 447)', () => {
 
 describe('5. ⚖ ask 1 — no bank code writes money', () => {
   // The coach's bank (BC6a) reads the team's register, so it is outside section 2's no-coach-reader list, never outside this.
-  const COACH_BANK_LIBS = ['lib/bank-coach-map.ts', 'lib/bank-coach-rules.ts', 'lib/bank-coach-read.ts'];
+  // BC6b: the team's steps and routes too (their gates and D1 are bank-coach-routes-guard.test.ts's).
+  const COACH_BANK_LIBS = ['lib/bank-coach-map.ts', 'lib/bank-coach-rules.ts', 'lib/bank-coach-read.ts', 'lib/bank-coach-steps.ts',
+    ...filesUnder('app/api/coaches/[orgSlug]/teams/[teamId]/bank', 'route.ts')];
   const BANK_CODE = [...BANK_LIBS, ...COACH_BANK_LIBS, ...ROUTES, ...SCREENS];
   it('the walk reaches every bank file', () => {
     assert.ok(SCREENS.some(f => f.endsWith('BankTab.tsx')) && ROUTES.length === Object.keys(EXPECTED).length);

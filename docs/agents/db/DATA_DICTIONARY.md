@@ -9028,10 +9028,16 @@ by **mig 447**, the balance check; plan `BANK_RECONCILIATION_PLAN.md` §4, §7).
 4. **Service role only** (RLS on, no policies, grants revoked). Access is decided in the routes: club read and write =
    `resolveClubMoney` (whoever can move club money; on the club side read = write today, B7); team read = `canViewMoney`,
    write = money write (BC6).
-5. **Added only by `bank_account_add` (mig 447, R2b-3's lock order):** its own advisory lock
+5. **A club account is added only by `bank_account_add` (mig 447, R2b-3's lock order):** its own advisory lock
    (`bank_accounts_add:{org}`), then every live club account `FOR UPDATE` in id order, then the insert (stamped
    `clock_timestamp()`, so the first account is the one ADDED first), then the moves of the books it names
    (`bank_book_move`). Unique name per club, case-insensitive (`name_taken`).
+6. **A team account is made at the team's first save (BC6b, `lib/bank-coach-steps.ts`):** a plain service-role insert
+   (`owner_kind='team'`, the gate's team, named "Team bank account", `created_by` = the saver; no setup question), made
+   only once the save's plan has passed. A racing first save meets `bank_accounts_one_per_team` (23505) and uses the
+   account the other made. A save the step still refuses after the insert (a race, an outage) leaves the account with no
+   check, which reads the same as none. The club never reads a team account (D1: every club read filters
+   `owner_kind='club'`, pinned by `tests/unit/bank-coach-routes-guard.test.ts`).
 
 **Fields** (boilerplate `id` omitted):
 

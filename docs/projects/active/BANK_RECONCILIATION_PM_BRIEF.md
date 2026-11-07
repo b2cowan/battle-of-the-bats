@@ -11,7 +11,11 @@ phone (BC4b, four owner rulings: the sums shown, the search kept, 10 lines at a 
 built on dev 2026-11-06: the Overview's bank line and the fiscal-year close's bank row (BC5a), then the printed report,
 the Bank help article and the club words' pass (BC5b, four owner rulings: everyone who can open a check can print it,
 desk only; the saved figures plus "Books now say"; the sum runs bank first as an association's form does; a
-starting-point line and no Book column). Next: BC6, the coach's side; the club's Teams column waits for BC8. The earlier tick-off version (built on dev
+starting-point line and no Book column). BC6 built on dev 2026-11-06, the coach's side with no screen yet: the coach's
+figure and Find (BC6a, three owner rulings: the season's start, last season's look-back, Still waiting? across the
+rollover), then the server a screen will call (BC6b): a coach with money write saves and deletes a check, the team's
+"Team bank account" made at the first save; money read sees it all and saves nothing; a team with no live season gets
+nothing; the club reads none of it. Next: BC7, the coach's Bank view; the club's Teams column waits for BC8. The earlier tick-off version (built on dev
 2026-11-04/05) is superseded and was taken apart in BC1.
 
 ## What it does
