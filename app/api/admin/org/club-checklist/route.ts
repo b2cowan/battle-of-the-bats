@@ -11,12 +11,19 @@ import { withObservability, captureAndJson } from '@/lib/observability';
  * The OWNER's page, like the onboarding it replaces (a non-owner is never routed there). Only a club
  * — an org whose plan carries Rep Teams — has one; anything else is answered 404 rather than a
  * checklist of steps it cannot take.
+ *
+ * ⚖ Stage 13b, A2 (Ask 11, F-A1-4): a club ADMIN may READ it, so their Overview can show the owner's open steps as "Still to do".
+ * READ only — this route has no write, and the checklist's steps are unchanged; reading it lets no one tick or change a step.
+ * A treasurer, the league roles and a coach are still refused.
  */
 export const GET = withObservability(async (req: Request) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
-  if (ctx.role !== 'owner') return forbidden();
+  if (ctx.role !== 'owner' && ctx.role !== 'admin') return forbidden();
+  // The checklist is the whole club's (every team's coach gap, the board, the first uncovered team's door): an admin limited to
+  // some team groups is not shown the rest of the club's setup.
+  if (ctx.role === 'admin' && ctx.repGroupIds) return forbidden();
   if (!planCarriesModule(ctx.org, 'module_rep_teams')) {
     return NextResponse.json({ error: 'This checklist is for clubs.', code: 'not_a_club' }, { status: 404 });
   }

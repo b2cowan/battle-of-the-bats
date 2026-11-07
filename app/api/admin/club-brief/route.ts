@@ -19,8 +19,10 @@ import type { OrgRole } from '@/lib/types';
 
 /**
  * GET /api/admin/club-brief — "this morning": the president's brief on the club hub (Stage 1,
- * specimens 1–2). FOUR COUNTS, NO MONEY (C04: the club's money figures are known-wrong until
- * Stage 3, so the brief says how many things wait, never how much).
+ * specimens 1–2). FOUR COUNTS, NO MONEY. (C04's reason, Stage 1's: the club's money figures were known-wrong until Stage 3, so
+ * the brief said how many things wait, never how much. ⚖ Stage 3 has shipped and that reason has EXPIRED — it is no longer why.
+ * The brief stays counts because it loads on every club screen for the nav; the club's money lives on the Overview's own band,
+ * `/api/admin/club-band` (Stage 13b, A1), read once, after This morning has rendered.)
  *
  *   tryoutApplications — tryout registrations waiting for a decision, on a team's open season
  *   paymentRequests    — coaches' payment requests waiting for the club

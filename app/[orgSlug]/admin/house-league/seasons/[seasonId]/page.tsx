@@ -35,6 +35,7 @@ import { RegistrationBlock, SeasonBlock } from '@/components/admin/kit/club/leag
 import s from '@/components/admin/kit/club/league/LeagueSeason.module.css';
 import { announceSeasonsChanged, useHouseLeagueAccess } from '@/components/admin/kit/useHouseLeagueSeasons';
 import { isFreeFloorLeague, type LeagueCapKind } from '@/lib/free-floor';
+import LeagueMorning from '@/components/admin/kit/club/league/LeagueMorning';
 import { fireLeagueEvent } from '@/lib/league-events-client';
 import { checklistFoot, checklistLeft, isPastItsEnd, seasonChecklist, seasonDates } from '@/lib/house-league-season';
 import { registrationState } from '@/lib/league-registration-state';
@@ -64,6 +65,8 @@ interface SeasonDetail {
     activeRegistrationCount: number;
     waitlistCount: number;
     pendingReviewCount: number;
+    /** When the longest-waiting registration came in (null when none waits) — the league roles' "oldest Oct 25". */
+    oldestPendingAt?: string | null;
     unplacedCount: number;
     unpaidFeeCount: number;
   };
@@ -217,6 +220,14 @@ export default function SeasonOverviewPage() {
   const showNoTime = !!clubTime && !clubTime.given;
   const showUndivided = !!clubTime && clubTime.given && !clubTime.divided;
 
+  // The league admin's and the registrar's own This morning (Stage 13b, A3; F-NAV-6): what waits for THEM in this season, above
+  // the season's band. Nobody else gets it (the owner and the admin have the club's), and a getting-ready or finished season has none.
+  // (The block reads the person's role itself: this page decides its controls through the access gate, never a role list.)
+  const morningInput = {
+    seasonStatus: season.status, seasonId: season.id, summary, divisions, base: `/${orgSlug}/admin`,
+    money: charges && detail.money && access?.readMoney ? { owing: detail.money.owing, owingPlayers: detail.money.owingPlayers } : null,
+  };
+
   return (
     <div className={repKit.page}>
       {header}
@@ -299,6 +310,8 @@ export default function SeasonOverviewPage() {
           <p className={s.emptyLine}>{rareDoor('complete', season).sentence} Complete it when the games are done. It moves to Past seasons, and nobody is emailed.</p>
         </ClubSection>
       )}
+
+      <LeagueMorning input={morningInput} />
 
       {season.status !== 'draft' && (
         <div className={s.band} role="group" aria-label="This season">

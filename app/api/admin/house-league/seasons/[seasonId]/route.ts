@@ -145,6 +145,8 @@ export const GET = withObservability(async (_req: Request,
       activeRegistrationCount: regs.filter(r => r.status === 'active').length,
       waitlistCount:           regs.filter(r => r.status === 'waitlisted').length,
       pendingReviewCount:      regs.filter(r => r.status === 'pending_review').length,
+      // The league roles' "This morning" (Stage 13b, A3): the day the longest-waiting registration came in ("oldest Oct 25").
+      oldestPendingAt:         regs.filter(r => r.status === 'pending_review').map(r => r.registeredAt).sort()[0] ?? null,
       // Stage 9a: the Teams figure's hint, and the status windows' "still owe fees" loose end (0 on a free season).
       unplacedCount:           regs.filter(r => r.status === 'active' && !r.teamId).length,
       unpaidFeeCount:          regs.filter(r => r.status === 'active' && !r.registrationFeePaid && (registrationOwes(r, season) ?? 0) > 0).length,

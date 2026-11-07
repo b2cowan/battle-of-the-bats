@@ -1,0 +1,12 @@
+/* THE LEAGUE ROLES' "THIS MORNING" (Club Tier Stage 13b, A3): two or three door cards, side by side at a desk, two by two on a
+   phone with the odd card across. The cards are the coach kit's; this only lays them out. Kit only. TOKENS ONLY. */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(var(--n, 3), minmax(0, 1fr));
+  gap: 0.75rem;
+}
+.card { --card-gap: 0.3rem; }
+@media (max-width: 760px) {
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid > :nth-child(odd):last-child { grid-column: 1 / -1; }
+}

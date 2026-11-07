@@ -1,0 +1,329 @@
+<title>Stage 13b Walk A</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box (the house walk frame). */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .facts { grid-template-columns: 1fr; } .facts dd { margin-bottom: 6px; } }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.callnote { font-size: 13px; color: var(--warn); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+</style>
+
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · Club Tier Stage 13b · Session A · §485</span>
+    <h1>Each person’s home: the club band, “Still to do” and the league mornings</h1>
+    <p class="sub">Written 2026-11-07, after Session A was built, simplified and reviewed. One purpose: the Overview now opens on the club’s day for the owner and the club admin, a new admin is shown what is left to set up, and the league admin and the registrar get a morning list on their season page. Nothing here emails anyone.</p>
+  </header>
+  <section class="card"><h2>What this walk is for</h2><p>(1) <strong>The club band</strong>, “The club today”, sits above “This morning” for the owner and a club admin: Cash on hand, Owed to the club, This week, Needs someone. Each tile opens the lines behind it. A tile the person cannot open is simply not there. (2) <strong>“Still to do”</strong>: a club admin reads the owner’s open setup steps, can open the ones their access allows, and loses the block when setup is done. (3) <strong>The league admin’s and the registrar’s “This morning”</strong> on a live season’s page. (4) <strong>The install banner</strong> on the admin skips a browser’s first visit.</p></section>
+  <section class="card"><h2>It passes when</h2><ul>
+    <li><strong>1–3</strong> The owner’s band shows four tiles above “This morning”, both above the fold on a computer; every tile and line opens the right page; on a phone it is two by two in the same order.</li>
+    <li><strong>4</strong> The club admin sees the same band plus a “Still to do” block of the owner’s open steps.</li>
+    <li><strong>5–6</strong> An admin with Accounting off has no Cash or Owed tile; an admin without Families has no forms line.</li>
+    <li><strong>7</strong> When setup is finished, “Still to do” is gone.</li>
+    <li><strong>8</strong> A brand-new club reads in plain words, never a row of zeros.</li>
+    <li><strong>9–10</strong> The league admin and the registrar see their own morning on the season page, on a computer and on a phone.</li>
+    <li><strong>11</strong> The install banner does not show on a browser’s first visit to the admin and does on the next.</li>
+    <li><strong>12</strong> The treasurer and the league roles see neither the band nor “Still to do” on the Overview.</li>
+  </ul></section>
+  <section class="card"><h2>Not in this walk</h2><ul>
+    <li><strong>The band’s “didn’t load” states.</strong> A broken read cannot be made on a copy. The wording for a failed tile (“Didn’t load”) and a failed band (“The club today didn’t load.” with Try again) is pinned by unit tests.</li>
+    <li><strong>An admin limited to some team groups.</strong> The copy has none. A unit test pins that such an admin is refused the setup list (it is the whole club’s, not their groups’).</li>
+    <li><strong>The “Setup · n of 5” chip in the header</strong> (waits for the admin header bar drawings), <strong>“Club time”</strong> (13d) and <strong>“Find a child or a parent”</strong> (13e). None is built.</li>
+    <li><strong>The invite dialog and invite emails.</strong> Session B.</li>
+  </ul></section>
+  <section class="card"><h2>Before you start</h2><dl class="facts">
+    <dt>Dev server</dt><dd>It is running (restarted today on a clean cache). If a page answers with a plain “404” in the first minutes after an edit, wait a minute and reload once.</dd>
+    <dt>The clubs</dt><dd>Two copies Claude has already made on dev. <strong>Harbourtown</strong> at <code>http://localhost:3000/navj-club-s13ba/admin</code> (lived-in: books, teams owing, a live house league season) and a <strong>brand-new club</strong> at <code>http://localhost:3000/navj-club-s13ba-fresh/admin</code> (Club plan, the owner only). Nothing here touches any other club.</dd>
+    <dt>Sign-ins</dt><dd>Sign in at <code>http://localhost:3000/login</code>, password <code>devpass123</code> for every account, <strong>one private window per person</strong> (and keep Part 11’s window for Part 11). Emails are <code>navj-club-s13ba-…@dev.local</code>: <code>-owner</code> (Morgan Ellis) · <code>-admin</code> (Dana Kowalski, full access) · <code>-admin-noaccounting</code> (Nadia Brandt, Accounting off) · <code>-admin-nofamilies</code> (Theo Marchetti, Families off) · <code>-leagueadmin</code> (Elise Navarro) · <code>-registrar</code> (Riley Okonkwo) · <code>-treasurer</code> (Avery Chen). The brand-new club’s owner is <code>navj-club-s13ba-fresh-owner@dev.local</code> (Alex Rivera).</dd>
+    <dt>The owner lands on setup</dt><dd>Morgan has not finished setup, so signing in lands on the “Set up your club” checklist. That is expected. Use <strong>Overview</strong> in the sidebar to reach the band.</dd>
+    <dt>Dates</dt><dd>The fixture was made on <strong>Saturday 2026-11-07</strong>. The band’s dates (“Next: Mon, Nov 9”) and the 7-day count move with the calendar; if you walk after Monday, ask Claude to re-run the setup first.</dd>
+    <dt>Amounts</dt><dd>The band shows cents; the league tiles show whole dollars. That difference is known (see the calls below).</dd>
+    <dt>Emails</dt><dd>Nothing here emails anyone.</dd>
+    <dt>Keep private</dt><dd>Dev-only accounts; the page carries the password, so do not share the link.</dd>
+    <dt>When done</dt><dd>Part Z: tell Claude “13b walk A done” and it removes both copies.</dd>
+  </dl></section>
+  <section class="card"><h2>Calls to make as you go</h2><ul>
+    <li><strong>Cents on the band, dollars on the league page (1, 9).</strong> The band reads “$750.00”; the season page’s Still owing reads “$750” for the same money. Leave it, or unify later? (Flagged for marketing, not changed.)</li>
+    <li><strong>“This week” is the next seven days (1).</strong> It runs from today, not Monday to Sunday, so on a Saturday it already counts next week. Right, or should the label say “Next 7 days”?</li>
+    <li><strong>“Owed to the club” adds two things (1).</strong> What the teams owe the club (all years) plus house league’s Still owing (live seasons). The tile opens each team’s standing, which shows only the first part. Clear enough, or should the house league part have its own door?</li>
+    <li><strong>“Ask the owner” (5).</strong> A setup step an admin cannot open now reads “Ask the owner” instead of the drawn “Waiting on the owner”, because another admin might be able to do it. Right?</li>
+    <li><strong>A player owing in two live seasons (1).</strong> “5 players owe house league fees” adds each live season’s count, so one child owing in two live seasons would count twice. Rare; leave, or count children once?</li>
+  </ul></section>
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+</main>
+
+<script>
+(function () {
+  var KEY = "club-stage13b-walk-a-v1";
+  var TITLE = "Stage 13b walk A §485 · Each person’s home: the club band, Still to do and the league mornings (2026-11-07)";
+  var BASE = "<code>http://localhost:3000/navj-club-s13ba/admin</code>";
+  var OWNER = "Owner · navj-club-s13ba-owner@dev.local";
+  var ADMIN = "Club admin · navj-club-s13ba-admin@dev.local";
+  var NOACC = "Admin, Accounting off · navj-club-s13ba-admin-noaccounting@dev.local";
+  var NOFAM = "Admin, Families off · navj-club-s13ba-admin-nofamilies@dev.local";
+  var LEAGUE = "League admin · navj-club-s13ba-leagueadmin@dev.local";
+  var REG = "Registrar · navj-club-s13ba-registrar@dev.local";
+  var TREAS = "Treasurer · navj-club-s13ba-treasurer@dev.local";
+  var FRESH = "Brand-new club owner · navj-club-s13ba-fresh-owner@dev.local";
+  var SEASON = "<strong>2026 Fall House League</strong>";
+  var PARTS = [
+ { id: "S", title: "Get ready: confirm the copies", steps: [
+  { who: "You → Claude", do: "Tell Claude <strong>“13b walk A: confirm the copies”</strong>. Claude made <code>navj-club-s13ba</code> and <code>navj-club-s13ba-fresh</code> and set the Harbourtown copy up so that setup is unfinished (3 of 5 steps open), two teams have no head coach, and the Fall House League is live with 5 players owing and a full division.",
+    see: "Claude reads back, from the real routes: the band’s four figures for the owner, the checklist’s open steps, and the league admin’s and registrar’s season figures. They should match what Parts 1, 4, 9 and 10 below say." }
+ ]},
+ { id: "1", title: "The owner’s band (computer)", steps: [
+  { who: OWNER, do: "Sign in (you land on the setup checklist), then click <strong>Overview</strong> in the sidebar. Use a window about 900 px tall. Look at the top of the page.",
+    see: "A section headed <strong>The club today · [today’s weekday and date]</strong> sits <strong>above</strong> “This morning”, with <strong>four joined tiles</strong>. Both the band and “This morning” are visible without scrolling. The Overview still shows “Setup: 2 of 5 steps done” with Continue setup, and “Your programs” below, unchanged." },
+  { who: OWNER, do: "Read the first tile, <strong>Cash on hand</strong>.",
+    see: "<strong>$515.00</strong>, with “in the club’s 2 books” underneath." },
+  { who: OWNER, do: "Read the second tile, <strong>Owed to the club</strong>.",
+    see: "<strong>$11,700.00</strong> in a warm tone (something is overdue). Underneath: “teams $10,950.00 ($3,450.00 overdue) · house league $750.00 · see each team’s standing”." },
+  { who: OWNER, do: "Read the third tile, <strong>This week</strong>.",
+    see: "<strong>2 bookings</strong>, with “Next: Mon, Nov 9 · 13U AAA” underneath." },
+  { who: OWNER, do: "Read the fourth tile, <strong>Needs someone</strong>.",
+    see: "Three lines: “2 teams have no head coach”, “5 players owe house league fees”, “52 rep-team forms missing”. The words “players” and “forms”, never “families”. Nothing in this tile repeats a card from “This morning” below it." }
+ ]},
+ { id: "2", title: "Every tile opens its lines (computer)", steps: [
+  { who: OWNER, do: "Click <strong>Cash on hand</strong>, then come back to the Overview.",
+    see: "Accounting opens (its summary). The back button returns to the Overview with the band again." },
+  { who: OWNER, do: "Click <strong>Owed to the club</strong>.",
+    see: "Accounting › <strong>Teams</strong> opens, each team’s standing with the club. (Coaches’ own books are not shown; the club sees one cash figure per team.)" },
+  { who: OWNER, do: "Click <strong>This week</strong>.",
+    see: "The club <strong>Calendar</strong> opens." },
+  { who: OWNER, do: "Click the first Needs line, <strong>2 teams have no head coach</strong>.",
+    see: "The Coaches page of <strong>12U AA</strong> opens, where a head coach is invited." },
+  { who: OWNER, do: "Click <strong>5 players owe house league fees</strong>.",
+    see: "The <strong>Money</strong> page of the 2026 Fall House League opens, with the players who owe." },
+  { who: OWNER, do: "Click <strong>52 rep-team forms missing</strong>.",
+    see: "<strong>Families</strong> opens already showing the families with a form to sign." }
+ ]},
+ { id: "3", title: "The band on a phone", steps: [
+  { who: OWNER + " · phone width", do: "Narrow the window to a phone (or use the phone) and open the Overview. Look at the band.",
+    see: "<strong>Two by two</strong>, in the same order (Cash, Owed / This week, Needs), still <strong>above “This morning”</strong>. Nothing runs off the screen." },
+  { who: OWNER + " · phone width", do: "Read the captions.",
+    see: "Owed says <strong>$3,450.00 overdue</strong> (the short form); This week says <strong>Next: Mon, Nov 9</strong>; Needs reads “2 teams: no head coach”, “5 players owe”, “52 rep-team forms missing”." },
+  { who: OWNER + " · phone width", do: "Tap a tile and a Needs line.",
+    see: "Each opens its page (as in Part 2) and is easy to tap." }
+ ]},
+ { id: "4", title: "The club admin: the band, plus “Still to do”", steps: [
+  { who: ADMIN, do: "Sign in (private window) and open the Overview.",
+    see: "The <strong>same band</strong> as the owner’s, with the same four figures." },
+  { who: ADMIN, do: "Scroll below “This morning”.",
+    see: "A block headed <strong>Still to do</strong>, with “Morgan Ellis started this · 2 of 5 done”. Five steps: <strong>Staff your board</strong> and <strong>Add your teams</strong> read “Done”; <strong>Name a head coach for every team</strong>, <strong>Put your club online</strong> and <strong>Plan the club’s budget</strong> each have a button (Invite a coach, Public site, Budget)." },
+  { who: ADMIN, do: "Read the line under the list, then click <strong>Invite a coach</strong>.",
+    see: "The line says “The steps with a button are yours to do too.” The button opens the Coaches page of a team that has no head coach. Nothing on the block can be ticked or changed." },
+  { who: ADMIN, do: "Look at the owner’s “Setup: n of 5 · Continue setup” line.",
+    see: "<strong>It is not on the admin’s Overview.</strong> That line is the owner’s alone." }
+ ]},
+ { id: "5", title: "An admin with Accounting off sees no money", steps: [
+  { who: NOACC, do: "Sign in (private window) and open the Overview.",
+    see: "The band has <strong>no Cash on hand and no Owed to the club tile</strong> (they are not greyed, they are not there). It has <strong>This week</strong> and <strong>Needs someone</strong>, and the two tiles fill the width." },
+  { who: NOACC, do: "Look at Needs someone and read “Still to do”.",
+    see: "Needs still shows its three lines (house league and Families are this person’s). In “Still to do”, <strong>Plan the club’s budget</strong> reads <strong>Ask the owner</strong> as plain text (no button); the other two open steps keep their buttons." },
+  { who: NOACC, do: "Check the page for any dollar amount.",
+    see: "<strong>None on the band.</strong> (The house league line says “5 players owe”, not an amount.)" }
+ ]},
+ { id: "6", title: "An admin without Families sees no forms line", steps: [
+  { who: NOFAM, do: "Sign in (private window) and open the Overview.",
+    see: "The band shows all four tiles. <strong>Needs someone</strong> has the head-coach line and the house league line and <strong>no “forms missing” line</strong>." }
+ ]},
+ { id: "7", title: "“Still to do” goes when setup is done", steps: [
+  { who: "You → Claude", do: "Tell Claude <strong>“13b walk A: finish setup”</strong>. It saves the public contact email, gives 12U AA and 9U AA a head coach and puts the budget back.",
+    see: "Claude says setup reads 5 of 5." },
+  { who: ADMIN, do: "Reload the club admin’s Overview.",
+    see: "<strong>The “Still to do” block is gone.</strong> Needs someone no longer has the head-coach line (it keeps the house league and forms lines)." },
+  { who: OWNER, do: "Reload the owner’s Overview.",
+    see: "The owner’s “Setup” line is gone too (or reads finished), and the band’s Needs tile matches the admin’s." },
+  { who: "You → Claude", do: "Tell Claude <strong>“13b walk A: put the setup back”</strong> so the later parts still have something to show.",
+    see: "Claude says setup is back to 2 of 5." }
+ ]},
+ { id: "8", title: "A brand-new club reads plainly", steps: [
+  { who: FRESH, do: "Sign in at <code>http://localhost:3000/login</code> (private window), land on the setup checklist, then click <strong>Overview</strong>.",
+    see: "The band is there, above “This morning”, and reads in <strong>words, not a row of zeros</strong>: Cash on hand says <strong>No books yet</strong>; Owed to the club says <strong>Nothing owed</strong>; This week says <strong>Nothing booked</strong> with “Nothing in the next six weeks”; Needs someone says <strong>Nothing to chase today</strong>." },
+  { who: FRESH, do: "Look for any “$0.00”, “0 bookings” or “0 forms”.",
+    see: "<strong>None.</strong> Nothing looks like a bug." },
+  { who: FRESH, do: "Check the owner’s setup line.",
+    see: "The owner’s “Setup: 0 of 5 steps done · Continue setup” line is still there, unchanged by the band." }
+ ]},
+ { id: "9", title: "League admin and registrar: “This morning” (computer)", steps: [
+  { who: LEAGUE, do: "Sign in (private window). You land on the live season. Look near the top of the season page.",
+    see: "A <strong>This morning</strong> block above the season’s own band, with two tiles: <strong>To review 3</strong> (“registrations · oldest Oct 29”) and <strong>Teams 5</strong> (“5 players not on a team”)." },
+  { who: LEAGUE, do: "Click each tile.",
+    see: "To review opens the season’s registrations on the Review tab; Teams opens the season’s Teams page." },
+  { who: REG, do: "Sign in (private window) and open " + SEASON + ".",
+    see: "<strong>This morning</strong> with three tiles: <strong>To review 3</strong> (“registrations · oldest Oct 29”), <strong>Still owing $750</strong> (“5 players”) and <strong>Waitlist 2</strong> (“U11 Novice is full”). Whole dollars, and the waitlist says 2, not “2+”." },
+  { who: REG, do: "Click Still owing and Waitlist.",
+    see: "Still owing opens the season’s Money page; Waitlist opens the registrations Waitlist tab." },
+  { who: REG, do: "Compare Still owing with the Money page’s own figure.",
+    see: "The same $750 and the same 5 players." }
+ ]},
+ { id: "10", title: "The same mornings on a phone", steps: [
+  { who: REG + " · phone width", do: "At phone width, open the live season’s page.",
+    see: "The three tiles fit without scrolling sideways; with three tiles the last one spans the width. Each is easy to tap." },
+  { who: LEAGUE + " · phone width", do: "At phone width, open the live season’s page.",
+    see: "The two tiles sit side by side or stack cleanly; nothing is clipped." }
+ ]},
+ { id: "11", title: "The install banner waits one visit", steps: [
+  { who: "A fresh private window, as " + OWNER, do: "Open the browser’s developer tools and switch on the phone view (device toolbar) with an <strong>iPhone</strong> preset, so the page says it is an iPhone. <strong>Then</strong> sign in and land on the admin for the first time in this window.",
+    see: "<strong>No “Install FieldLogicHQ” banner</strong> on this first landing." },
+  { who: "Same window", do: "Reload the page (keep the iPhone view on), or open the admin again from the address bar.",
+    see: "The <strong>Add-to-Home-Screen banner now appears</strong> (the iOS instructions). It waited one visit." },
+  { who: "Same window", do: "Dismiss it, then reload.",
+    see: "It stays away (the usual 90 days). The explicit “Download app” choice, if you open it, still works." }
+ ]},
+ { id: "12", title: "The people who must not see it", steps: [
+  { who: TREAS, do: "Sign in (you land on Accounting). Open <strong>Overview</strong> from the sidebar if it is offered.",
+    see: "<strong>No club band and no “Still to do”.</strong> The treasurer’s Overview is as before." },
+  { who: REG + " and " + LEAGUE, do: "Open the club <strong>Overview</strong> (not the season page).",
+    see: "<strong>No club band and no “Still to do”.</strong> Their morning list is on the season page only." }
+ ]},
+ { id: "Z", title: "Put back", steps: [
+  { who: "You → Claude", do: "Tell Claude <strong>“13b walk A done”</strong>. It removes <code>navj-club-s13ba</code>, <code>navj-club-s13ba-fresh</code> and their accounts.",
+    see: "Claude reports both copies gone." }
+ ]}
+];
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+      if (s.call) t.appendChild(el('span', 'callnote', s.call));
+      var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+      cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+      boxes.push({ part: p.id, step: id, cb: cb });
+      var row = el('label', 'step'); row.appendChild(cb); row.appendChild(t); body.appendChild(row);
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function doneSteps(partId) {
+    return boxes.filter(function (b) { return (!partId || b.part === partId) && b.cb.checked; }).map(function (b) { return b.step; });
+  }
+  var totalSteps = boxes.length;
+
+  function refresh() {
+    PARTS.forEach(function (p) {
+      var n = doneSteps(p.id).length;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + p.steps.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    var done = doneSteps(null).length;
+    document.getElementById('total').textContent = done + ' of ' + totalSteps + ' checked';
+    document.getElementById('barfill').style.width = (totalSteps ? Math.round(done * 100 / totalSteps) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [TITLE, 'Checked ' + doneSteps(null).length + ' of ' + totalSteps + ' steps'];
+    PARTS.forEach(function (p) {
+      var ticked = doneSteps(p.id);
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + p.steps.length + (ticked.length ? ' (' + ticked.join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

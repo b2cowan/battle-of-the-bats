@@ -50,7 +50,8 @@ describe('setup step 4 ticks only when it is done (Stage 13 fix-now 2, F-XR-3)',
   });
   it('the step says which one is missing, and the ask still names both', () => {
     const kit = readCode('components/admin/kit/club/ClubSetupKit.tsx');
-    assert.match(kit, /Add a tagline and a contact email to your public page\./);
+    // The step's words live in lib/club-setup-words.ts since Stage 13b (the admin's “Still to do” reads the same names).
+    assert.match(readCode('lib/club-setup-words.ts'), /Add a tagline and a contact email to your public page\./);
     // The missing part is derived, so "Still needed: a contact email" / "Still needed: a tagline" are built from these two.
     assert.match(kit, /!d\.hasTagline && 'a tagline'/);
     assert.match(kit, /!d\.hasContactEmail && 'a contact email'/);

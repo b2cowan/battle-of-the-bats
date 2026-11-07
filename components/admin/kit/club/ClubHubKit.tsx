@@ -4,10 +4,14 @@
  * built to club hub v8). Rendered by `AdminHub` (its old hub branch went with Admin Design Continuity
  * Part B, area 2).
  *
- *   This morning   — the president's brief: COUNTS the person can act on, never money (C04). A card
+ *   The club today — the joined band above This morning (Stage 13b, A1; `ClubBand`): cash, what is owed, this week, who is
+ *                    needed. For the owner and the club admin, from its own route after This morning has rendered.
+ *   This morning   — the president's brief: COUNTS the person can act on. A card
  *                    is a door only where its page opens for this person; the treasurer's two are
  *                    plain counts until Stage 3a gives them their screens (owner, 2026-09-26). When
- *                    every count is zero the strip is one line.
+ *                    every count is zero the strip is one line. (Counts, not money, because the club's figures were
+ *                    known-wrong until Stage 3 — C04, Stage 1's rule. Stage 3 shipped, so that reason has EXPIRED; the
+ *                    money lives in the band above, and this strip is unchanged because it is the right first look.)
  *   Your programs  — the club's programs in the plan-aware order (what it RUNS first — the same
  *                    order the rail and the phone bar read, `useAdminKitNav`).
  *   The quiet rows — what the plan carries but the club does not run yet (never a tile, never a
@@ -48,6 +52,8 @@ import frame from '../AdminKitFrame.module.css';
 import LoadingState from '@/components/shared/LoadingState';
 import PageNotice from '@/components/shared/PageNotice';
 import WhatsNewNote from './WhatsNewNote';
+import ClubBand from './ClubBand';
+import ClubStillToDo, { type StillToDoChecklist } from './ClubStillToDo';
 import { useBoardPeople } from '@/lib/use-board-people';
 import { boardOwnerName, seasonStarterShort } from '@/lib/board-people';
 import { NOT_YOURS_WORDS } from '@/lib/not-yours-words';
@@ -133,7 +139,7 @@ const PROGRAM_ICON: Record<AdminProgramKey, LucideIcon> = {
 };
 
 type Attention = { pendingTournamentCount: number; pendingLeagueCount: number; openLeagueSeasonId: string | null };
-type Checklist = { doneCount: number; totalSteps: number; allDone: boolean; steps: { key: string; done: boolean; href: string }[] };
+type Checklist = StillToDoChecklist;
 
 export default function ClubHubKit() {
   const params = useSearchParams();
@@ -183,17 +189,19 @@ export default function ClubHubKit() {
     return () => { stale = true; };
   }, [slug, wantsAttention]);
 
-  // The owner's setup progress, while it is unfinished (a Club's checklist — A11).
+  // The owner's setup progress, while it is unfinished (a Club's checklist — A11). A club ADMIN reads the same list, read-only,
+  // as "Still to do" (Stage 13b, A2); the owner's "Setup: n of 5" line is theirs alone.
   const [checklist, setChecklist] = useState<Checklist | null>(null);
+  const isAdmin = userRole === 'admin';
   useEffect(() => {
-    if (!slug || !isOwner || !club) return;
+    if (!slug || !(isOwner || isAdmin) || !club) return;
     let stale = false;
     fetch(`/api/admin/org/club-checklist?orgSlug=${encodeURIComponent(slug)}`)
       .then(r => (r.ok ? r.json() : null))
       .then(d => { if (!stale && d) setChecklist(d as Checklist); })
       .catch(() => {});
     return () => { stale = true; };
-  }, [slug, isOwner, club]);
+  }, [slug, isOwner, isAdmin, club]);
 
   // "You also coach 13U AA" — only for someone who really coaches a team HERE (the sidebar door's
   // own check, J4-047): an owner who coaches nothing sees no line and no dead end.
@@ -325,6 +333,12 @@ export default function ClubHubKit() {
         </CoachCard>
       </>}
 
+      {/* Stage 13b, A1 (Ask 2): the club band sits ABOVE This morning, never instead of it. Owner and club admin on a Club
+          plan; it asks only once the brief has answered (or failed), so This morning never waits on it. */}
+      {club && (isOwner || isAdmin) && <ClubBand
+        slug={slug} base={base} ready={status !== 'loading' || !!brief}
+      />}
+
       {hasBriefSection && (
         <section className={ck.section} aria-labelledby="hub-brief">
           <div className={ck.sectionHead}>
@@ -368,6 +382,19 @@ export default function ClubHubKit() {
             </div>
           )}
         </section>
+      )}
+
+      {/* Stage 13b, A2 (Ask 11): the owner's open setup steps, READ-ONLY, on a club admin's Overview — gone when setup is done.
+          A door only on a step whose page this admin can open. */}
+      {isAdmin && club && checklist && (
+        <ClubStillToDo
+          checklist={checklist}
+          ownerName={boardOwnerName(board)}
+          canOpenStep={key => key === 'board' ? canSeeMembers
+            : key === 'public' ? canOpen('module_public_site')
+            : key === 'budget' ? canOpen('module_accounting')
+            : canOpenRepTeams}
+        />
       )}
 
       {programs.length > 0 && (

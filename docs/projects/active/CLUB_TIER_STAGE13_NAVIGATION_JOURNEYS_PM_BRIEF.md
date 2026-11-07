@@ -82,3 +82,25 @@ club admin admits (bar a coach-only member) has a door back from the portal, lan
 with a tagline and a contact email; and someone who coaches house league and rep is told where the rep team lives.
 Fix-now 2 is written and ready to build. **Success:** every person who reaches the club admin can get back to it from the portal; no screen promises what
 another screen contradicts.
+
+**Fix-now 2 walked 2026-11-07 (§480, 23 of 23).**
+
+**13b, each person's home and first day (build prompt written 2026-11-07, two sessions).** The owner opens the club and sees one
+band of today's figures above the morning counts: cash on hand, what is owed to the club, what is booked this week, and who needs
+someone. A new club admin is shown the owner's open setup steps (read only) instead of an empty page. The league admin and the
+registrar get a morning list of their own. A person invited to the club is told what their role opens, in the email as well as on the
+page, chooses a role instead of being given Staff, and lands on their own home from either route. **Why:** today the president's first
+screen shows doors and counts but no figure, a new admin sees nothing to do, and every invite email reads the same. **Open for the
+owner:** the drawing assumed every band figure already existed; two do not (a club-wide house league total, and counts of families
+owing and forms missing), so four choices go to the owner before the build. **Success:** the owner can answer "how is the club today"
+from the Overview without opening a second screen; a new admin knows what is theirs on the first day; no invite arrives with a role the
+inviter did not choose.
+
+**13b Session A, the homes (built 2026-11-07, awaiting the owner's walk §485).** The owner and a club admin now open the Overview on
+"The club today": cash on hand, what is owed to the club (teams plus house league), what is booked in the next seven days, and who needs
+someone (teams with no head coach, players who owe house league fees, rep-team forms missing). A tile a person cannot open is simply not
+there, so an admin with Accounting off sees no money. A new club admin sees the owner's open setup steps as "Still to do", with a button on
+the ones they can do and "Ask the owner" on the rest; it disappears when setup is done. The league admin and the registrar get a morning
+list at the top of the live season's page. The install banner no longer greets a person on their first visit. **Why:** the president's
+first screen showed doors and counts but no figures, and a new admin saw an empty page. **Success:** the owner answers "how is the club
+today" without opening a second screen; a new admin knows what is theirs on day one; nobody sees a figure they cannot open.

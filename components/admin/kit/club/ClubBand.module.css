@@ -1,0 +1,101 @@
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════
+   THE CLUB BAND — "The club today", above "This morning" on the Overview (Club Tier Stage 13b, A1).
+   ONE joined band, the money tabs' geometry (`MoneySummaryBand`): tiles CONNECTED by 1px lines, four across at a desk,
+   two by two on a phone, the odd tile never orphaned. Its tiles are DOORS, which the money band's are not, so the
+   recipe lives here and not in a prop on a shared component with six callers. Kit only. TOKENS ONLY.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+.band {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  background: var(--home-line, var(--border-2));
+  border: 1px solid var(--home-line, var(--border-2));
+  border-radius: 10px;
+  overflow: hidden;
+}
+.band[data-tiles="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.band[data-tiles="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.band[data-tiles="1"] { grid-template-columns: minmax(0, 1fr); }
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.22rem;
+  padding: 0.85rem 1rem;
+  background: var(--home-card, var(--white-4));
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+a.tile:hover { background: var(--home-card-hover, var(--white-8, var(--home-card))); }
+a.tile:focus-visible { outline: 2px solid var(--accent, currentColor); outline-offset: -2px; }
+
+.label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+.arrow { flex: none; color: var(--text-tertiary); }
+
+.figure {
+  font-size: var(--type-figure);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+  color: var(--text-primary);
+}
+/* Colour marks a verdict, never a total: only what is overdue is inked. */
+.figure[data-tone="warn"] { color: var(--badge-warning-ink); }
+.figure[data-tone="muted"] { color: var(--text-tertiary); }
+.figureWords { font-size: var(--type-title); }
+
+.caption {
+  font-size: var(--type-support);
+  line-height: 1.45;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+.capDesk { display: inline; }
+.capPhone { display: none; }
+
+/* Needs someone: a short list of lines, each its own door. */
+.lines { display: flex; flex-direction: column; gap: 0.3rem; margin: 0; padding: 0; list-style: none; }
+.line {
+  font-size: var(--type-support);
+  line-height: 1.4;
+  color: var(--text-secondary);
+}
+.line a { color: inherit; text-decoration: none; }
+.line a:hover { text-decoration: underline; }
+.line a:focus-visible { outline: 2px solid var(--accent, currentColor); outline-offset: 2px; }
+
+.skeleton {
+  height: 5.5rem;
+  border: 1px solid var(--home-line, var(--border-2));
+  border-radius: 10px;
+  background: var(--home-card, var(--white-4));
+}
+
+.retry { margin: 0; font-size: var(--type-support); color: var(--text-tertiary); }
+
+@media (max-width: 760px) {
+  .band, .band[data-tiles="3"], .band[data-tiles="4"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  /* The odd tile is the last one, by position, as the money band does it. */
+  .tile:nth-child(odd):last-child { grid-column: 1 / -1; }
+}
+@media (max-width: 640px) {
+  .tile { padding: 0.7rem 0.75rem; }
+  .figure { font-size: var(--type-title); }
+  .figureWords { font-size: var(--type-body); }
+  .capDesk { display: none; }
+  .capPhone { display: inline; }
+}

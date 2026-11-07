@@ -436,6 +436,27 @@ async function loadFormsData(orgId: string, rows: readonly { id: string; child_i
   };
 }
 
+/**
+ * Club Tier Stage 13b (A1): the club-wide "forms missing" the Overview band's Needs someone tile reads. The SAME rule as the
+ * Families list's per-family `missingFormsCount` (`templatesForTeam` minus `formOnFile`, over this season's live roster rows),
+ * without the money, addresses and duplicate work `buildWorklist` does. Counted once per ROSTER ROW, so a child with two
+ * guardians is not counted twice (the list counts per family). Call-ups are excluded, as the desk excludes them (mig 309).
+ */
+export async function clubFormsMissing(orgId: string): Promise<{ forms: number }> {
+  const rows = (await orgRows<any>('rep_roster_players',
+    'id, child_id, person_id, team_id, status, rep_program_years(status)', orgId, q => q.neq('status', 'callup')))
+    // The list counts a child under their family, so a roster row with no family (the "No family" lens) is not in its number.
+    .filter(r => r.person_id && isCurrentRepYear(r) && isLiveRegStatus(r.status ?? 'active'));
+  if (rows.length === 0) return { forms: 0 };
+  const { templatesForTeam, heldByPlayer } = await loadFormsData(orgId, rows);
+  let forms = 0;
+  for (const r of rows) {
+    const have = heldByPlayer.get(r.id) ?? NOTHING_HELD;
+    forms += templatesForTeam(r.team_id).filter(t => !formOnFile(have, t)).length;
+  }
+  return { forms };
+}
+
 // ── Money: the money module's own rows, the team's own derivation (E03) ───────────────────────────
 
 export interface RepMoneyRows {

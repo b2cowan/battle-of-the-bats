@@ -18,6 +18,8 @@ import AdminChrome from './AdminChrome';
 const MEMBER_INSTALL = {
   appName: 'FieldLogicHQ',
   subtitle: 'Your teams, schedules and scores — one tap away.',
+  // Stage 13b (A4): a person arriving for the first time is shown their home first; the install ask waits for a later visit.
+  skipFirstLanding: true,
 } as const;
 
 export async function generateMetadata({

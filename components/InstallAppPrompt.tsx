@@ -80,6 +80,15 @@ interface Props {
    */
   orgSlug?: string;
   tournamentSlug?: string;
+  /**
+   * Stage 13b (A4, hub tab-11 L1): do not auto-show on the FIRST landing in this browser. A person who has just arrived is
+   * being shown their home, not asked to install anything; the banner comes on a later visit. "First landing" is the
+   * browser's own: a mark in its storage the first time this surface mounts, so no column and no sign-up flag is needed
+   * (a returning person on a new browser, or a member whose browser never held the mark, is spared once; that is the honest
+   * edge of "first"; one mark per surface and browser, not per organization). The explicit "Download app"
+   * ask is never held back.
+   */
+  skipFirstLanding?: boolean;
 }
 
 // Sign-up steps never carry the install banner: a person mid-sign-up is not shopping for a home-screen icon.
@@ -97,8 +106,12 @@ export default function InstallAppPrompt({
   followsUserTheme = false,
   orgSlug,
   tournamentSlug,
+  skipFirstLanding = false,
 }: Props) {
   const pathname = usePublicPathname() ?? '';
+  // Decided ONCE per mount (the host layout stays mounted across navigations), so the later re-runs of the show effect —
+  // e.g. when the native install event arrives a moment after the page — cannot show it within the first landing.
+  const firstLandingRef = useRef<boolean | null>(null);
   const onSignUpStep = SIGN_UP_STEP_PREFIXES.some(p => pathname === p || pathname.startsWith(p + '/'));
   const [mode, setMode] = useState<Mode>('hidden');
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);
@@ -163,6 +176,19 @@ export default function InstallAppPrompt({
     if (mode !== 'hidden') return; // a manual/active prompt is already showing
     const ua = navigator.userAgent;
 
+    if (skipFirstLanding) {
+      if (firstLandingRef.current === null) {
+        const landedKey = `${dismissKey}-landed`;
+        try {
+          firstLandingRef.current = !localStorage.getItem(landedKey);
+          if (firstLandingRef.current) localStorage.setItem(landedKey, String(Date.now()));
+        } catch {
+          firstLandingRef.current = false; // storage blocked: behave as before rather than hide it forever
+        }
+      }
+      if (firstLandingRef.current) return;
+    }
+
     const raw = localStorage.getItem(dismissKey);
     if (raw && Date.now() - parseInt(raw, 10) < DISMISS_MS) return;
 
@@ -200,7 +226,7 @@ export default function InstallAppPrompt({
 
     // Android Chromium: show once the native install event has been captured above.
     if (deferred) setMode('android');
-  }, [mode, deferred, touchPrimary, dismissKey, orgSlug, tournamentSlug]);
+  }, [mode, deferred, touchPrimary, dismissKey, orgSlug, tournamentSlug, skipFirstLanding]);
 
   // A follow made mid-session hides an already-visible auto banner — the My-Team
   // dock takes over as the engaged-fan surface (J6-045). The auto-show gate above

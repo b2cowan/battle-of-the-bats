@@ -27,6 +27,7 @@ import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import ck from './ClubKit.module.css';
 import styles from './ClubSetup.module.css';
 import LoadingState from '@/components/shared/LoadingState';
+import { STEP_COPY } from '@/lib/club-setup-words';
 
 type Step = { key: 'board' | 'teams' | 'coaches' | 'public' | 'budget'; done: boolean; href: string; detail: Record<string, unknown> };
 type Checklist = {
@@ -36,15 +37,6 @@ type Checklist = {
   allDone: boolean;
   families: { available: boolean; href: string };
   optional: { houseLeague: { runs: boolean; href: string }; tournaments: { hosts: boolean; href: string } };
-};
-
-/** The drawn words for each step (specimen 10) — its title, what it asks, its button. */
-const STEP_COPY: Record<Step['key'], { title: string; ask: string; button: string }> = {
-  board: { title: 'Staff your board', ask: 'Invite an admin and a treasurer so the work isn’t all yours.', button: 'Members' },
-  teams: { title: 'Add your teams', ask: 'Each team and the season it is playing.', button: 'Rep teams' },
-  coaches: { title: 'Name a head coach for every team', ask: 'Each coach gets the Premium Coaches Portal, included in your plan.', button: 'Invite a coach' },
-  public: { title: 'Put your club online', ask: 'Add a tagline and a contact email to your public page.', button: 'Public site' },
-  budget: { title: 'Plan the club’s budget', ask: 'What the season costs, and what each team contributes.', button: 'Budget' },
 };
 
 /** The fact line under a step — from its own detail, never a guess. */

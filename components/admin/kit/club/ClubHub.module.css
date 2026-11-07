@@ -43,3 +43,30 @@
 }
 
 .orgSection { margin-top: 1.5rem; max-width: 34rem; }
+
+/* Still to do (Stage 13b, A2): the owner's setup steps on a club admin's Overview, read-only. One row per step. */
+.todo {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--home-line);
+  border-radius: 10px;
+  background: var(--card-bg);
+  overflow: hidden;
+}
+.todoStep {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.7rem 1rem;
+  font-size: var(--type-body);
+  color: var(--text-primary);
+}
+.todoStep + .todoStep { border-top: 1px solid var(--home-line); }
+.todoStep svg { flex: none; color: var(--text-tertiary); }
+.todoStep[data-done="true"] { color: var(--text-tertiary); }
+.todoTitle { flex: 1; min-width: 0; }
+.todoHint { margin: 0.5rem 0 0; font-size: var(--type-support); color: var(--text-tertiary); }
+@media (max-width: 640px) {
+  .todoStep { padding: 0.7rem 0.75rem; flex-wrap: wrap; }
+}
