@@ -53,9 +53,10 @@ describe('bookkeeping accountant export', () => {
       ['123456789 RT0001', 'normal', 'operating', '5.00', 'counted']);
     const hst = { ...bc, tax_cad_cents: 1456, tax_lines: [{ type: 'hst13' as const, cents: 1300 }, { type: 'hst15' as const, cents: 156 }] };
     assert.deepEqual(['hst_cad', 'hst_rate'].map(column => cell(expenseCsv([hst], undefined, '2026-09-26'), 0, column)), ['14.56', '13/15']);
-    // A held credit keeps its figure, as on the record; Not checked is counted and says so.
+    // credit_cad is only what counts on the return, so it can be summed: a held credit reads 0.00 (/accounting
+    // 2026-11-06); Not checked is counted and says so.
     const held = { ...bc, supplier_tax_number: null };
-    assert.deepEqual(['credit_cad', 'credit_state'].map(column => cell(expenseCsv([held], undefined, '2026-09-26'), 0, column)), ['5.00', 'held']);
+    assert.deepEqual(['credit_cad', 'credit_state'].map(column => cell(expenseCsv([held], undefined, '2026-09-26'), 0, column)), ['0.00', 'held']);
     const unchecked = { ...bc, supplier_registration: 'not_checked' as const };
     assert.equal(cell(expenseCsv([unchecked], undefined, '2026-09-26'), 0, 'credit_state'), 'counted_registration_unchecked');
     // The registration date is read, never stored: moving it after the purchase removes the credit.

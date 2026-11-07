@@ -213,7 +213,7 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
     try {
       const screen: ExpenseFilters = { from: from || null, to: to || null, category, query, review };
       const params = expenseFilterParams(filters ?? (view === 'reports' && drilled
-        ? { ...screen, ...Object.fromEntries(Object.entries(reportDrilldown).filter(([, value]) => value)), dateStatus: 'confirmed' } : screen));
+        ? { ...screen, ...Object.fromEntries(Object.entries(reportDrilldown).filter(([, value]) => value)), dateStatus: 'confirmed', status: 'active' } : screen));
       const route = kind === 'csv' ? 'export' : 'package';
       const response = await fetch(`/api/platform-admin/bookkeeping/${route}?${params}`, { cache: 'no-store' });
       if (!response.ok) {

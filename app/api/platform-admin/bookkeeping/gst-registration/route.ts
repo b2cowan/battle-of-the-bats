@@ -53,12 +53,13 @@ export const POST = withObservability(async (req: NextRequest) => {
     const current = history[0];
     if (!current || current.revision !== expectedRevision) return NextResponse.json({ error: 'The registration date changed; reload before saving' }, { status: 409 });
     if (current.effective_date === effectiveDate) return NextResponse.json({ field: 'effectiveDate', error: 'That is already your registration date.' }, { status: 400 });
-    // Two saves racing for the same revision: the primary key refuses the second (23505 below).
+    // Two saves racing for the same revision: the primary key refuses the second (23505), or Aurora DSQL's optimistic
+    // concurrency does (40001), below.
     const registration = await insertGstRegistrationRevision({ revision: current.revision + 1, effective_date: effectiveDate,
       reason, created_by: gate.auth!.user.id });
     return NextResponse.json({ registration, history: [registration, ...history] }, { status: 201 });
   } catch (error) {
-    const conflict = error && typeof error === 'object' && 'code' in error && error.code === '23505';
+    const conflict = error && typeof error === 'object' && 'code' in error && (error.code === '23505' || error.code === '40001');
     return NextResponse.json({ error: conflict ? 'The registration date changed; reload before saving' : 'Unable to save the registration date' }, { status: conflict ? 409 : 500 });
   }
 }, { route: ROUTE });

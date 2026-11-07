@@ -152,7 +152,7 @@ describe('expense route · the GST/HST tax section', () => {
   });
 });
 
-function registrationRoute(history: GstRegistrationRevision[], gstReady = true, authorized = true) {
+function registrationRoute(history: GstRegistrationRevision[], gstReady = true, authorized = true, insertErrorCode?: string) {
   const inserted: Omit<GstRegistrationRevision, 'created_at'>[] = [];
   const load = billingTestLoader({
     'next/server': { NextRequest, NextResponse },
@@ -162,7 +162,10 @@ function registrationRoute(history: GstRegistrationRevision[], gstReady = true, 
     '@/lib/observability': { withObservability: (handler: unknown) => handler },
     '@/lib/bookkeeping-store': {
       hasGstTaxSchema: async () => gstReady, listGstRegistrationRevisions: async () => history,
-      insertGstRegistrationRevision: async (row: Omit<GstRegistrationRevision, 'created_at'>) => { inserted.push(row); return { ...row, created_at: 'now' }; },
+      insertGstRegistrationRevision: async (row: Omit<GstRegistrationRevision, 'created_at'>) => {
+        if (insertErrorCode) throw Object.assign(new Error('refused'), { code: insertErrorCode });
+        inserted.push(row); return { ...row, created_at: 'now' };
+      },
     },
   });
   const handlers = load(REGISTRATION) as { GET: () => Promise<Response>; POST: (req: NextRequest) => Promise<Response> };
@@ -203,6 +206,11 @@ describe('registration date API', () => {
       assert.equal(response.status, status, JSON.stringify(body)); assert.equal((await response.json()).field, field);
       assert.equal(api.inserted.length, 0);
     }
+  });
+  it('a save that loses a race is a 409, whether the key or DSQL optimistic concurrency refused it (Session E /review)', async () => {
+    const body = { effectiveDate: '2026-05-01', reason: 'Backdate', expectedRevision: 1 };
+    for (const code of ['23505', '40001']) assert.equal((await registrationRoute([first], true, true, code).post(body)).status, 409, code);
+    assert.equal((await registrationRoute([first], true, true, '57014').post(body)).status, 500);
   });
   it('is owner-only, same-origin, and paused before migration 006', async () => {
     const outsider = registrationRoute([first], true, false);

@@ -184,6 +184,7 @@ function businessUseRule(kind: PurchaseKind, use: number, word: string): { share
 }
 
 const join = (...parts: (string | null)[]) => parts.filter(Boolean).join(' ') || null;
+export const NOT_CHECKED_SENTENCE = 'Counted for now. Check the supplier’s registration before you file.';
 
 export function workOutCredit(input: CreditInput): Credit {
   const base = { creditCents: 0, countsOnReturn: false, registrationUnchecked: false };
@@ -210,7 +211,8 @@ export function workOutCredit(input: CreditInput): Credit {
   }
   if (input.incurredDate < input.registrationDate) {
     const began = `Bought before your GST/HST registration began on ${formatStoredDate(input.registrationDate, { longMonth: true })}.`;
-    return say('before_registration', 'neutral', 'No credit', input.kind === 'capital'
+    // Equipment asks the owner to act (ask the accountant about a deemed credit), so it is amber (ITC_RULES_FOR_EXPENSE_FORM.md #1).
+    return say('before_registration', input.kind === 'capital' ? 'amber' : 'neutral', 'No credit', input.kind === 'capital'
       ? `${began} Equipment you still used for the business on that date may qualify for a credit based on its value then. It isn’t counted here; ask your accountant.`
       : `${began} If it paid for time after that date, such as a yearly plan, that part may be claimed. Ask your accountant.`);
   }
@@ -227,7 +229,8 @@ export function workOutCredit(input: CreditInput): Credit {
   const unchecked = input.registration === 'not_checked';
   return {
     creditCents, state: 'counted', countsOnReturn: true, registrationUnchecked: unchecked, tone: 'neutral', figure,
-    sentence: unchecked ? 'Counted for now. Check the supplier’s registration before you file.' : join(rule.sentence, elsewhere),
+    // Not checked adds its warning to the reason; it never replaces it (a figure is never shown without its reason).
+    sentence: join(rule.sentence, elsewhere, unchecked ? NOT_CHECKED_SENTENCE : null),
   };
 }
 

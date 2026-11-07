@@ -236,10 +236,12 @@ async function verifyBackup(envelope) {
       if (item.revisions !== rows.length || (meta.format >= 2 && item.owner_movements !== ownerRows.length) ||
         (meta.format >= 3 && (item.tax_lines !== lineRows.length || item.gst_registrations !== registrationRows.length)) ||
         item.receipts !== paths.size || found.size !== paths.size) throw new Error('Backup counts or receipts do not match');
-      // The sum rule: a revision's lines add up to its tax_cad_cents.
+      // The sum rule: a revision's lines add up to its tax_cad_cents, and a receipt that shows tax has its lines
+      // (an archive that lost them would otherwise verify).
       for (const row of rows) {
         const total = lineTotals.get(`${row.expense_id}/${row.revision}`);
         if (total !== undefined && total !== row.tax_cad_cents) throw new Error('Tax lines do not add up to their revision');
+        if (total === undefined && row.tax_answer === 'shown') throw new Error('A revision that shows tax has no tax lines');
       }
       end = item;
     } else throw new Error('Unexpected backup record');

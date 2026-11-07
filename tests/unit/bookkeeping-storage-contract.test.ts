@@ -67,6 +67,9 @@ describe('Bookkeeping USD storage and recovery contract', () => {
     // A record type accepted from format N must stay accepted from every later format (format 3 once rejected owner transfers).
     assert.doesNotMatch(backup, /meta\.format === \d/, 'record types are gated with >=, never ===');
     assert.match(backup, /Tax lines do not add up to their revision/);
+    assert.match(backup, /total === undefined && row\.tax_answer === 'shown'/, 'an archive that lost a receipt’s tax lines does not verify');
+    const store = read('lib/bookkeeping-store.ts');
+    assert.match(store, /row\.tax_answer === 'shown' && !lines\.length/, 'the store refuses a shown answer with no lines');
     assert.match(backup, /registrationsToRestore/, 'the migration-seeded revision 1 does not block a restore');
   });
   it('migration 006 only adds: columns, two tables and the one seed revision', () => {

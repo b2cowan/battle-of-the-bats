@@ -303,7 +303,7 @@ export default function ExpenseFormWindow({ expense, expenses, categories, asVoi
         </p>}
         {gstHst && <div className={styles.pair}>
           <div className={styles.fieldStack}><label>Supplier’s GST/HST number<input className={kit.field} maxLength={MAX_SUPPLIER_TAX_NUMBER} autoComplete="off" value={numberText ?? prefill?.number ?? ''}
-            {...fieldFor('supplierTaxNumber')} onChange={event => { setNumberText(event.target.value); if (registration === null) setRegistration(prefill?.registration ?? ''); }} /></label>
+            {...fieldFor('supplierTaxNumber')} onChange={event => { setNumberText(event.target.value); if (event.target.value.trim()) setNumberUnobtainable(false); if (registration === null) setRegistration(prefill?.registration ?? ''); }} /></label>
             {credit?.state === 'held' ? <p className={`${styles.hint} ${styles.warnHint}`}>{NUMBER_HINT_BLANK}</p>
               : prefilled ? <p className={styles.hint}>{NUMBER_HINT_SAME_AS_LAST(supplier.trim())}</p>
               : !number && (totalCents ?? 0) < NUMBER_NEEDED_FROM_CENTS ? <p className={styles.hint}>{NUMBER_NOT_NEEDED}</p> : null}</div>

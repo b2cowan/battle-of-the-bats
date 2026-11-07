@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import DateInput from '@/components/shared/DateInput';
 import { attentionReasons, businessCents, currentExpenses, hasConfirmedDates, needsSupplierTaxNumber, summarizeExpenses, type ExpenseRevision } from '@/lib/bookkeeping-expenses';
 import { matchesExpenseFilters, type ExpenseFilters } from '@/lib/bookkeeping-filters';
-import { formatCad } from '@/lib/bookkeeping-gst';
+import { formatCad, taxPaidRowLabel } from '@/lib/bookkeeping-gst';
 import { EXPENSE_PERIODS, expensePeriodRange, expenseRegisterSelection } from '@/lib/bookkeeping-register';
 import { bookkeepingAddress } from '@/lib/bookkeeping-navigation';
 import { consoleDay } from '@/lib/console-dates';
@@ -81,7 +81,7 @@ export default function ExpensesRegister({ expenses, registrationDate, loading, 
     window.history.replaceState(null, '', bookkeepingAddress(next, { view: 'expenses' }));
   }
   function clearFilters() {
-    update({ period: 'month', from: null, to: null, category: null, paymentSource: null, status: 'active', q: null, review: null, attention: null, supplier: null, dateStatus: null });
+    update({ period: 'month', from: null, to: null, category: null, paymentSource: null, status: 'active', q: null, review: null, attention: null, supplier: null, taxType: null, dateStatus: null });
   }
 
   return <section className={styles.expenseRegister} aria-labelledby="register-title">
@@ -116,8 +116,8 @@ export default function ExpensesRegister({ expenses, registrationDate, loading, 
       <label>From · incurred date<DateInput value={filters?.from ?? ''} onChange={value => update({ from: value })} /></label>
       <label>To · incurred date<DateInput value={filters?.to ?? ''} onChange={value => update({ to: value })} /></label>
     </div>}
-    {(!filters || filters.supplier || (filters.dateStatus === 'confirmed') || (filters.review !== 'all' && filters.review !== 'attention')) && <div className={styles.registerNote}>
-      {!filters ? <span role="alert">These filters are invalid. Choose valid dates and filters, or reset them.</span> : <span>Additional filters: {filters.supplier && `Supplier ${filters.supplier} · `}{filters.dateStatus === 'confirmed' && 'Confirmed dates · '}{filters.review !== 'all' && filters.review !== 'attention' ? filters.review.replaceAll('_', ' ') : ''}</span>}
+    {(!filters || filters.supplier || filters.taxType || (filters.dateStatus === 'confirmed') || (filters.review !== 'all' && filters.review !== 'attention')) && <div className={styles.registerNote}>
+      {!filters ? <span role="alert">These filters are invalid. Choose valid dates and filters, or reset them.</span> : <span>Additional filters: {filters.supplier && `Supplier ${filters.supplier} · `}{filters.taxType && `${taxPaidRowLabel(filters.taxType)} · `}{filters.dateStatus === 'confirmed' && 'Confirmed dates · '}{filters.review !== 'all' && filters.review !== 'attention' ? filters.review.replaceAll('_', ' ') : ''}</span>}
       <button type="button" className={styles.textButton} onClick={clearFilters}>Reset filters</button>
     </div>}
     {legacyCount > 0 && <p className={styles.registerNote}>{legacyCount} {legacyCount === 1 ? 'expense has' : 'expenses have'} dates to review and {legacyCount === 1 ? 'is' : 'are'} excluded from the period spending total.</p>}

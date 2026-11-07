@@ -84,8 +84,9 @@ function taxColumns(lines: readonly TaxLine[]): string[] {
 /**
  * `registrationDate` is the current GST/HST registration effective date. The credit is worked out on export from it and
  * the revision's facts, never read from storage. It is filled only on each expense's current active revision:
- * superseded and voided revisions leave it blank, and the status column says why. As on the record, a held credit
- * keeps its figure with the state `held`; only the `counted` states reach the return.
+ * superseded and voided revisions leave it blank, and the status column says why. `credit_cad` is only the credit that
+ * counts on the return (the `counted` states), so the column can be summed: a held credit reads 0.00 with the state
+ * `held` (/accounting 2026-11-06, ITC_RULES_FOR_EXPENSE_FORM.md #9). The record still shows the figure it waits on.
  */
 export function expenseCsv(selected: ExpenseRevision[], filters: ExpenseFilters = { from: null, to: null, category: '', query: '', review: 'all' },
   registrationDate: string | null = null): string {
@@ -107,7 +108,7 @@ export function expenseCsv(selected: ExpenseRevision[], filters: ExpenseFilters 
       hasKnownTaxAmount(row) ? 'known' : 'unknown', row.tax_status,
       tax.answer, ...taxColumns(tax.lines),
       row.supplier_tax_number ?? '', row.supplier_registration ?? '', row.purchase_kind ?? '',
-      credit ? dollars(credit.creditCents) : '', creditState,
+      credit ? dollars(credit.countsOnReturn ? credit.creditCents : 0) : '', creditState,
       row.business_use_percent, row.payment_source,
       row.conversion_note, row.conversion_source ?? '', row.conversion_rate ?? '', row.notes, row === latest ? (row.void_reason ? 'void' : 'current') : 'superseded',
       row.change_reason, row.void_reason, row.receipt_name, receiptUrl, row.created_at, row.created_by,

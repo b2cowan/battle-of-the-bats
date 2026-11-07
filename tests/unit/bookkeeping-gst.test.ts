@@ -80,12 +80,21 @@ describe('the credit, row by row of the drawing', () => {
   it('registration Not checked: counted, flagged for before you file', () => {
     const credit = workOutCredit({ ...hollis, registration: 'not_checked' });
     assert.deepEqual([credit.creditCents, credit.state, credit.registrationUnchecked, credit.countsOnReturn], [7478, 'counted', true, true]);
-    assert.equal(credit.sentence, 'Counted for now. Check the supplier’s registration before you file.');
+    assert.equal(credit.sentence, 'All of the HST, because business use is 90% or more. Counted for now. Check the supplier’s registration before you file.');
+  });
+  it('Not checked keeps the business-use reason, so a pro-rated figure is never shown without it (Session E /review)', () => {
+    const credit = workOutCredit({ ...hollis, registration: 'not_checked', businessUsePercent: 33 });
+    assert.equal(credit.creditCents, 2468);
+    assert.equal(credit.sentence, '33% of the HST, because business use is 33%. Counted for now. Check the supplier’s registration before you file.');
   });
   it('a service before the registration date: no credit, with the date', () => {
     const credit = workOutCredit({ ...hollis, incurredDate: '2026-09-25' });
-    assert.deepEqual([credit.creditCents, credit.state, credit.figure], [0, 'before_registration', 'No credit']);
+    assert.deepEqual([credit.creditCents, credit.state, credit.figure, credit.tone], [0, 'before_registration', 'No credit', 'neutral']);
     assert.match(credit.sentence!, /^Bought before your GST\/HST registration began on September 26, 2026\./);
+  });
+  it('equipment before the registration date is amber: it asks the owner to see the accountant', () => {
+    const credit = workOutCredit({ ...hollis, kind: 'capital', incurredDate: '2026-09-25' });
+    assert.deepEqual([credit.creditCents, credit.state, credit.tone], [0, 'before_registration', 'amber']);
   });
   it('an expense saved before 4a: Type not set, amber, no credit until a type is chosen', () => {
     const state = resolveTaxState({ tax_cad_cents: 7478, tax_amount_known: true, tax_status: 'pending', tax_answer: null });

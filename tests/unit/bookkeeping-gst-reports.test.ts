@@ -90,6 +90,15 @@ describe('Reports · a tax-type row is a door, and the export follows it', () =>
     assert.deepEqual(onScreen, [hst.expense_id, canva.expense_id].sort());
   });
 
+  it('a Reports door exports what its line list shows: active expenses only, and Reset filters clears a tax type (Session E /review)', () => {
+    const client = readFileSync('app/platform-admin/bookkeeping/BookkeepingClient.tsx', 'utf8');
+    assert.match(client, /reportRows = useMemo\(\(\) => datedVisible\.filter\(row => !row\.void_reason/);
+    assert.match(client, /dateStatus: 'confirmed', status: 'active' \} : screen/);
+    const register = readFileSync('app/platform-admin/bookkeeping/ExpensesRegister.tsx', 'utf8');
+    assert.match(register, /function clearFilters\(\) \{[^}]*taxType: null/);
+    assert.match(register, /filters\.taxType && `\$\{taxPaidRowLabel\(filters\.taxType\)\} · `/);
+  });
+
   it('refuses a tax type it does not know', () => {
     assert.equal(parseExpenseFilters(new URLSearchParams({ taxType: 'vat' })), null);
     assert.equal(parseExpenseFilters(new URLSearchParams())!.taxType, undefined);

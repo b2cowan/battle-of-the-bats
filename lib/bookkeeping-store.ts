@@ -185,7 +185,10 @@ export async function insertExpenseRevision(row: NewExpenseRevision): Promise<Ex
     throw new Error('Both expense dates are required for a new or corrected expense');
   }
   const lines = row.tax_lines ?? [];
-  if (lines.length && !taxLinesMatchTotal(lines, row.tax_cad_cents)) throw new Error('Tax lines must add up to the tax amount');
+  // A 4a revision (tax_answer stated) always obeys the sum rule, and "shown" always has a line; a pre-4a one has no lines.
+  const stated = row.tax_answer != null;
+  if ((lines.length || stated) && !taxLinesMatchTotal(lines, row.tax_cad_cents)) throw new Error('Tax lines must add up to the tax amount');
+  if (row.tax_answer === 'shown' && !lines.length) throw new Error('A receipt that shows tax needs its tax lines');
   const inserted = await db().begin(async tx => {
     const rows = await tx`INSERT INTO bookkeeping.expense_revisions (
       expense_id, revision, expense_date, incurred_date, paid_date, supplier, category, business_purpose,

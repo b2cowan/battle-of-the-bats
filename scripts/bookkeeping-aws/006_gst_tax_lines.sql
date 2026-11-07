@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS bookkeeping.gst_registration_revisions (
 );
 REVOKE ALL ON bookkeeping.gst_registration_revisions FROM PUBLIC;
 GRANT SELECT, INSERT ON bookkeeping.gst_registration_revisions TO bookkeeping_app;
--- Seed: the owner's registration date (2026-11-06). The nil uuid marks a row written by this migration, not a person.
+-- Seed: the owner's registration date, 2026-09-26 (given 2026-11-06). The nil uuid marks a row written by this migration, not a person.
 INSERT INTO bookkeeping.gst_registration_revisions (revision, effective_date, reason, created_by)
   SELECT 1, DATE '2026-09-26', 'First entry', '00000000-0000-0000-0000-000000000000'::uuid
   WHERE NOT EXISTS (SELECT 1 FROM bookkeeping.gst_registration_revisions);
