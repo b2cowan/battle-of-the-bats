@@ -38,7 +38,6 @@ import {
   SavePill, useDeferredLoad, useLatestRead,
 } from '@/components/admin/kit/club/RepKit';
 import type { SeasonPreflight } from '@/components/admin/kit/club/SeasonDialogs';
-import { usePublishRailTeam } from '@/components/admin/kit/useRailTeam';
 import { money } from '@/components/admin/kit/club/money/MoneyKit';
 import { TEAM_COLOUR_EXAMPLE, nextEventLines } from '@/lib/club-board-view';
 import {
@@ -162,7 +161,6 @@ export default function TeamPage({ params }: { params: Promise<{ orgSlug: string
 
   const team = read?.team ?? null;
   usePageTitle(team?.name ?? 'Team');
-  usePublishRailTeam(teamId, team?.name);
   // The team's frame draws the header (Club Tier Stage 13i, A3); this page tells it what it read, so a rename, a season
   // closed or started, or an archive shows there at once.
   usePublishTeamHead(teamId, read ? teamHeadOf(read.team, read.programYears) : null);

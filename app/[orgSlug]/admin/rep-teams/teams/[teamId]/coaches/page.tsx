@@ -30,7 +30,6 @@ import {
   useLatestRead,
 } from '@/components/admin/kit/club/RepKit';
 import type { ClubStaffRow } from '@/components/admin/kit/club/CoachDialogs';
-import { usePublishRailTeam } from '@/components/admin/kit/useRailTeam';
 import { formatStoredDate } from '@/lib/timezone';
 import { possessive } from '@/lib/utils';
 
@@ -96,7 +95,6 @@ export default function TeamCoachesPage({ params }: { params: Promise<{ orgSlug:
 
   const teamName = read?.team.name ?? null;
   usePageTitle(teamName ? `Coaches · ${teamName}` : 'Coaches');
-  usePublishRailTeam(teamId, teamName);
 
   const openPerson = (membershipId: string | null) => setPersonId(membershipId);
 

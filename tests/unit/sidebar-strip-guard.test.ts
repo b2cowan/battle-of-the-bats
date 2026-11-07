@@ -180,15 +180,16 @@ describe('4. no count, dot or door is lost in the strip', () => {
     assert.match(readCode(ADMIN_RAIL), /<WaitingCount[^>]*className=\{strip\.cornerCount\}/);
   });
 
-  it('an open program keeps its count on the icon in the strip (its pages are in the menu)', () => {
-    assert.match(readCode(ADMIN_RAIL), /open && hasPages \? ` \$\{styles\.countWhenOpen\}`/);
-    const desk = desktopBlocks(readCode(ADMIN_CSS)).join('\n');
-    assert.match(desk, /\.countWhenOpen \{ display: inline-flex; \}/);
-    // …and the hidden count never pulls the FULL sidebar's chevron off the row's right edge (/review): a
-    // display:none sibling still matches `+`.
+  // ⚖ Club Tier Stage 13i (Ask 2 = A, owner 2026-11-06): a club place's row carries its count at every depth, in both
+  // states — nothing opens under it, so there is no "open" count to move onto pages or into a menu.
+  it('a club place keeps its count on the row at every depth, full sidebar and strip alike', () => {
+    const rail = readCode(ADMIN_RAIL);
+    assert.doesNotMatch(rail, /countWhenOpen|hasPages/, 'a count that hides while a place is open is back');
+    assert.match(rail, /const placeRow = \(place: KitLink\) => \{\s*const count = briefPlaceCount\(brief, place\.key\);/);
     const adminCss = readCode(ADMIN_CSS);
-    assert.match(adminCss, /\.count:not\(\.countWhenOpen\) \+ \.chevron \{ margin-left: 0\.25rem; \}/);
-    assert.doesNotMatch(adminCss, /(^|\n)\.count \+ \.chevron/);
+    assert.doesNotMatch(adminCss, /countWhenOpen|programOpen|seasonBlock|subLabelTeam/, 'a retired club rail class is back');
+    // The support console's folded heading (its sum pill, then its chevron) still wears the sheet's spacing between them.
+    assert.match(adminCss, /\n\.count \+ \.chevron \{ margin-left: 0\.25rem; \}/);
   });
 
   it('no stylesheet hides a count or a corner mark in the strip', () => {
@@ -219,10 +220,15 @@ describe('4. no count, dot or door is lost in the strip', () => {
     assert.match(readCode(COACH_RAIL), /<nav className=\{`\$\{styles\.sidebar\} \$\{strip\.stripLayer\}`\}/);
   });
 
-  it('a program with 2+ pages, or the team or season you are inside, opens a menu; Organization leads with its own page', () => {
+  // ⚖ Club Tier Stage 13i (Ask 2 = A, owner 2026-11-06; N3): the program and Organization menus retired with the pages
+  // under the rows. Every club icon is a straight link to its place; the tournament's own tile menu is unchanged (Ask 8).
+  it('every club icon is a straight link — no program or Organization menu; the tournament tile keeps its list', () => {
     const admin = readCode(ADMIN_RAIL);
-    assert.match(admin, /p\.pages\.length > 1 \|\| \(p\.key === 'rep-teams' && !!repTeamId\) \|\| \(p\.key === 'house-league' && !!seasonId\)/);
-    assert.match(admin, /<StripMenuLink href=\{`\$\{base\}\/org`\} active=\{pathname === `\$\{base\}\/org`\}>Organization<\/StripMenuLink>/);
+    assert.doesNotMatch(admin, /stripMenuRowProps|opensMenu|menuFor\(|StripMenuLink|StripMenuGroup|useSidebarStrip/);
+    const club = admin.slice(0, admin.indexOf('function TournamentRail('));
+    assert.doesNotMatch(club, /<SidebarStripMenu\b|useStripMenu\(/, 'the club body opens a menu again');
+    const tour = admin.slice(admin.indexOf('function TournamentRail('));
+    assert.match(tour, /<SidebarStripMenu key=\{openKey \?\? 'closed'\} open=\{openKey === 'tournament'\}/);
   });
 
   it('the pickers become tiles that open their lists — the coach list keeps "No live season"', () => {

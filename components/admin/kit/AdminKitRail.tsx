@@ -3,62 +3,56 @@
  * AdminKitRail — the admin's desktop rail on the coaches portal's kit (Admin Design Continuity
  * slice 1). The admin's only rail since Part B deleted the old console sidebar (2026-09-29).
  *
- * ⚠ ONE RAIL, ALWAYS POPULATED (ratified club Stage 1 specimen 3). The old rail was a set of MODES —
- * empty at the hub, a different rail inside each program, "All Sections" to get out. This is one
- * object: Overview pinned, then the programs, then Organization, and the program you are in opens
- * onto its pages. Inside a TOURNAMENT the middle swaps for the old rail's tournament section (switcher,
- * Operations / Setup / Admin), restyled only, with Overview still pinned above it, so there is always
- * a way back to the club. A tournament-only organization (the Tournament plans have no club hub)
- * sees the tournament section alone, as it always has.
+ * ⚖ PLACES IN THE SIDEBAR, PAGES ON THE PAGE (Club Tier Stage 13i, Asks 1, 2 and 5 = A, Ask 4 = B, owner 2026-11-06;
+ * NAV_STANDARD N2, N3, N11). The club body lists PLACES only and never grows — the owner sees the same ten rows on every
+ * screen: Overview · Calendar · Schedules, then Programs (Rep teams, House league, Tournaments), "Also on your plan" where
+ * the plan carries what the club does not run yet, then Club (Accounting, Families, Public site, Organization). Nothing
+ * renders under a row and no row carries a chevron: a place's pages are the tab row on its page (`PlaceFrame`). ONE row is
+ * lit, the place you are in at any depth (`litClubPlace`). The groups are `useAdminKitNav`'s `placeGroups`, which the
+ * phone's More sheet reads too. ⚰ The team block, the season block (and its `<select>`), the program pages, Public site's lone "Site editor"
+ * row, Organization's rows and the bold "open program" style retired with it; so did the reversed half of the 2026-09-30
+ * Accounting ruling ("separate jobs are listed in the rail").
  *
- * ⚠ The programs, their pages and the Organization links come from `lib/admin-kit-nav.ts`, which the
- * phone bar reads too. Every gate is the old rail's gate — read that file's header before adding a row.
+ * Inside a TOURNAMENT the middle swaps for the old rail's tournament section (switcher, Operations / Setup / Admin),
+ * restyled only and unchanged by 13i (Ask 8), with Overview still pinned above it, so there is always a way back to the
+ * club. A tournament-only organization (the Tournament plans have no club hub) sees the tournament section alone.
  *
- * ⚖ IT FOLDS TO A 64 STRIP OF ICONS, BY CHOICE, PER DEVICE (Sidebar Strip & Grid Width, Stage 2 — the
- * ratified hub's screens 2 and 8; the shared parts and their reasons are `components/shared/SidebarStrip`).
- * "Collapse sidebar" is the last row. The SAME rows render in both states and the stylesheet narrows them
- * under `html[data-sidebar='strip']`, so the server's sidebar is everybody's and nothing snaps on a cold
- * load. In the strip: labels become hairlines; every page is an icon with its name in a bubble on hover
- * and keyboard focus, and in its visually hidden label for a screen reader; counts sit on the icon's
- * corner; a program with 2+ pages — or the team or season block you are inside — opens a menu from its
- * icon instead of going to its first page (`opensMenu`); the tournament picker is an initials tile; a
- * tournament group folded shut in the full sidebar still shows its icons (the strip has no heading to open).
+ * ⚠ The programs, Organization and their gates come from `lib/admin-kit-nav.ts`, which the phone bar reads too. Every
+ * gate is the old rail's gate — read that file's header before adding a row.
+ *
+ * ⚖ IT FOLDS TO A 64 STRIP OF ICONS, BY CHOICE, PER DEVICE (Sidebar Strip & Grid Width, Stage 2 — the ratified hub's
+ * screens 2 and 8; the shared parts and their reasons are `components/shared/SidebarStrip`). "Collapse sidebar" is the
+ * last row. The SAME rows render in both states and the stylesheet narrows them under `html[data-sidebar='strip']`, so
+ * the server's sidebar is everybody's and nothing snaps on a cold load. In the strip: headings become hairlines; every
+ * place is an icon with its name in a bubble on hover and keyboard focus, and in its visually hidden label for a screen
+ * reader; counts sit on the icon's corner. ⚖ Every club icon is a straight link to its place (13i Ask 2 = A: the program
+ * and Organization menus retired with the pages under the rows). The tournament picker is an initials tile with its own
+ * menu; a tournament group folded shut in the full sidebar still shows its icons (the strip has no heading to open).
  */
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, useRef, useState, type ElementType } from 'react';
+import { usePathname } from 'next/navigation';
+import { Fragment, useEffect, useRef, useState, type ElementType } from 'react';
 import {
   LayoutGrid, ChevronRight, Users2, HelpCircle, Trophy,
 } from 'lucide-react';
 import ReleaseDot from '@/components/whats-new/ReleaseDot';
 import ChatUnreadBadge from '@/components/chat/ChatUnreadBadge';
 import {
-  CollapseSidebarRow, SidebarStripMenu, SidebarStripTile, SidebarStripTip, StripMenuButton, StripMenuGroup,
-  StripMenuLink, stripMenuRowProps, useStripMenu, type StripMenuRow,
+  CollapseSidebarRow, SidebarStripMenu, SidebarStripTile, SidebarStripTip, StripMenuButton, useStripMenu,
 } from '@/components/shared/SidebarStrip';
 import strip from '@/components/shared/SidebarStrip.module.css';
-import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
 import { useAdminWorklist } from '@/lib/admin-worklist';
 import { useChatUnread } from '@/lib/use-chat-unread';
-import { useSidebarStrip } from '@/lib/sidebar-strip';
 import { TOUR_GROUPS } from '@/components/admin/admin-nav-config';
-import { isKitLinkActive, isKitLinkActiveAmong, ORGANIZATION_ICON, type KitLink, type KitProgram } from '@/lib/admin-kit-nav';
+import { isKitLinkActive, isKitLinkActiveAmong, kitCountText, placeGroupHeading, type KitLink } from '@/lib/admin-kit-nav';
 import { useAdminKitNav } from './useAdminKitNav';
 import { STATUS_WORD } from '@/lib/tournament-status-words';
-import { useRailTeamName } from './useRailTeam';
-import { briefPageCount, briefProgramCount } from './club/ClubBriefProvider';
-import { kitCountText } from '@/lib/admin-kit-nav';
-import { useHouseLeagueAccess, useHouseLeagueSeasons, type FrameSeason } from './useHouseLeagueSeasons';
-import { seasonGroup, seasonPageHref, seasonPagesFor, seasonSegment, toReviewLabel } from '@/lib/house-league-season';
-import type { HouseLeagueAccess } from '@/lib/house-league-access';
+import { briefPlaceCount } from './club/ClubBriefProvider';
 import { useFeeAlert } from './useFeeAlert';
 import styles from './AdminKitFrame.module.css';
 
-/** A page as both the rail and the strip's menu list it (a season's Registrations carries its waiting count). */
-type PageRow = { href: string; label: string; active: boolean; count?: number; countLabel?: string };
-
-/** The amber waiting count, worn by a rail door and by its row in the strip's menu. */
+/** The amber waiting count, worn by a rail door (and the foot's Plan & billing, in red when a fee invoice is overdue). */
 function WaitingCount({ count, label, className = '', tone = 'amber' }: { count: number; label: string; className?: string; tone?: 'amber' | 'red' }) {
   if (count <= 0) return null;
   return <span className={`${styles.count}${tone === 'red' ? ` ${styles.countRed}` : ''}${className ? ` ${className}` : ''}`} aria-label={label}>{kitCountText(count)}</span>;
@@ -66,14 +60,14 @@ function WaitingCount({ count, label, className = '', tone = 'amber' }: { count:
 
 /** One rail door — the coach rail's row, with the admin's worklist count and chat badge. `stripIcon` is an
  *  icon only the strip draws (a row the full sidebar lists by name alone). */
-function RailRow({ href, label, active, icon: Icon, stripIcon: StripIcon, sub, count = 0, countLabel, chatUnread }: {
-  href: string; label: string; active: boolean; icon?: ElementType; stripIcon?: ElementType; sub?: boolean;
+function RailRow({ href, label, active, icon: Icon, stripIcon: StripIcon, count = 0, countLabel, chatUnread }: {
+  href: string; label: string; active: boolean; icon?: ElementType; stripIcon?: ElementType;
   count?: number; countLabel?: string; chatUnread?: number;
 }) {
   return (
     <Link
       href={href}
-      className={`${styles.item}${sub ? ` ${styles.sub}` : ''}${active ? ` ${styles.itemActive}` : ''}`}
+      className={`${styles.item}${active ? ` ${styles.itemActive}` : ''}`}
       aria-current={active ? 'page' : undefined}
     >
       {Icon && <Icon size={14} aria-hidden />}
@@ -85,170 +79,32 @@ function RailRow({ href, label, active, icon: Icon, stripIcon: StripIcon, sub, c
   );
 }
 
-/** A program (or Organization) row: the door to its first screen, open while you are inside it. In the
- *  strip, `menu` makes it the button that opens the program's menu. `hasPages` (pages listed under it while
- *  open) decides where its count sits; `opensPages` (more than its own one page) decides its chevron. */
-function ProgramRow({ href, label, icon: Icon, open, hasPages, opensPages, count = 0, menu }: {
-  href: string; label: string; icon: ElementType; open: boolean; hasPages: boolean; opensPages: boolean; count?: number;
-  menu?: StripMenuRow;
-}) {
-  return (
-    <Link
-      href={href}
-      className={`${styles.item}${open ? ` ${styles.programOpen}` : ''}`}
-      {...(menu ? stripMenuRowProps(menu) : {})}
-    >
-      <Icon size={14} aria-hidden />
-      <span className={strip.rowLabel}>{label}</span>
-      {/* The morning brief's waiting items for this program (Club Tier Stage 1, specimen 3) — the
-          same number the hub's door and the phone tab show. Hidden while open when its pages carry it;
-          a program with no pages (Accounting, one page with tabs — Stage 3a Ask 2) keeps it inside too.
-          ⚠ In the strip its pages are in the menu, so the icon keeps its count while open
-          (`countWhenOpen` shows only there): no count is lost in the strip. */}
-      <WaitingCount
-        count={count}
-        label={`${count} waiting`}
-        className={`${strip.cornerCount}${open && hasPages ? ` ${styles.countWhenOpen}` : ''}`}
-      />
-      {opensPages && <ChevronRight size={13} className={`${styles.chevron}${open ? ` ${styles.chevronOpen}` : ''}`} aria-hidden />}
-    </Link>
-  );
-}
-
 export default function AdminKitRail() {
   const pathname = usePathname();
   const nav = useAdminKitNav();
   const {
-    base, programs, alsoOnPlan, brief, orgLinks, section, tournamentOnly, isCanceled,
+    base, brief, orgLinks, placeGroups, litPlace, tournamentOnly, isCanceled,
     onTournaments, coachDoor, calendarLink, schedulesLink, billingLink, helpHref,
   } = nav;
   const feeAlert = useFeeAlert();
-  const repTeamId = pathname.match(/\/rep-teams\/teams\/([^/]+)/)?.[1] ?? null;
-  const seasonId = pathname.match(/\/house-league\/seasons\/([^/]+)/)?.[1] ?? null;
-  const repTeamName = useRailTeamName(repTeamId);
-  const seasons = useHouseLeagueSeasons(!!seasonId);
-  const thisSeason = seasons.find(s => s.id === seasonId) ?? null;
-  const leagueAccess = useHouseLeagueAccess(thisSeason);
-
-  // The strip: the setting as rendered (for a menu row's accessibility attributes only — CSS owns the look),
-  // the one open menu, and the rail the name bubble and the menu hang beside.
+  // The rail the strip's name bubble hangs beside.
   const railRef = useRef<HTMLElement>(null);
-  const stripNow = useSidebarStrip();
-  const { openKey, anchorRef, toggle, close } = useStripMenu(pathname);
-  const menuFor = (key: string): StripMenuRow => ({ key, strip: stripNow, openKey, toggle });
 
-
-  const pageRow = (link: KitLink) => (
-    <RailRow
-      key={link.key}
-      href={link.href}
-      label={link.label}
-      active={isKitLinkActiveAmong(pathname, link, orgLinks)}
-      sub
-      count={briefPageCount(brief, link.key)}
-    />
-  );
-
-  const repTeamPath = repTeamId ? `${base}/rep-teams/teams/${repTeamId}` : null;
-  const seasonPath = seasonId ? `${base}/house-league/seasons/${seasonId}` : null;
-
-  // ⚖ Ask 3 (ruled): in the strip a program opens a menu when it has two or more pages — or when you are
-  // inside its team or season, whose block sits in the menu; a one-page program goes straight to its page.
-  const opensMenu = (p: KitProgram) =>
-    p.pages.length > 1 || (p.key === 'rep-teams' && !!repTeamId) || (p.key === 'house-league' && !!seasonId);
-  // ⚖ N3 (the nav standard, Ask A2, 2026-10-17): the full sidebar's chevron promises pages UNDER the row — more than
-  // the one page the row itself opens, or House league, whose seasons' pages open under it. Public site (one page, the
-  // site editor) carries none.
-  const opensPages = (p: KitProgram) => p.pages.length > 1 || p.key === 'house-league';
-
-  // One program's group: its row, and — while you are inside it — its pages.
-  const programGroup = (p: KitProgram) => {
-    const open = section === p.key;
+  // ⚖ N9 (13i B3): a place's row carries the sum of its tabs' waiting counts (`briefPlaceCount`), at every depth.
+  const placeRow = (place: KitLink) => {
+    const count = briefPlaceCount(brief, place.key);
     return (
-      <div key={p.key}>
-        <ProgramRow
-          href={p.href}
-          label={p.label}
-          icon={p.icon}
-          open={open}
-          hasPages={p.pages.length > 0}
-          opensPages={opensPages(p)}
-          count={briefProgramCount(brief, p.key)}
-          menu={opensMenu(p) ? menuFor(p.key) : undefined}
-        />
-        {open && p.key === 'house-league' && seasonId && seasonPath ? (
-          // 9a·2: inside a season, House league's own rows and the season's block are set in under it, one line beside them.
-          <div className={styles.seasonBlock}>
-            {p.pages.map(pageRow)}
-            <SeasonBlock seasonId={seasonId} seasons={seasons} pages={seasonPages(seasonPath, pathname, leagueAccess, thisSeason)} />
-          </div>
-        ) : open && p.pages.map(pageRow)}
-        {open && p.key === 'rep-teams' && repTeamPath && (
-          <RepTeamBlock name={repTeamName} pages={repTeamPages(repTeamPath, pathname)} />
-        )}
-      </div>
+      <RailRow
+        key={place.key}
+        href={place.href}
+        label={place.label}
+        icon={place.icon}
+        active={litPlace === place.key}
+        count={count}
+        countLabel={`${count} waiting`}
+      />
     );
   };
-
-  // The strip's menu for whichever program row (or Organization) is open — the same pages the full rail
-  // lists under it, with their counts, and the team or season block you are inside.
-  const menuProgram = openKey ? [...programs, ...alsoOnPlan].find(p => p.key === openKey) ?? null : null;
-  const pageMenuRow = (link: KitLink) => (
-    <StripMenuLink
-      key={link.key}
-      href={link.href}
-      active={isKitLinkActive(pathname, link)}
-      trailing={<WaitingCount count={briefPageCount(brief, link.key)} label={`${briefPageCount(brief, link.key)} need attention`} />}
-    >
-      {link.label}
-    </StripMenuLink>
-  );
-  const programMenu = menuProgram && (
-    <>
-      {menuProgram.pages.map(pageMenuRow)}
-      {menuProgram.key === 'rep-teams' && repTeamPath && (
-        <StripMenuGroup label={repTeamName ?? 'Team'}>
-          {repTeamPages(repTeamPath, pathname).map(r => (
-            <StripMenuLink key={r.href} href={r.href} active={r.active}>{r.label}</StripMenuLink>
-          ))}
-        </StripMenuGroup>
-      )}
-      {menuProgram.key === 'house-league' && seasonId && seasonPath && (
-        <>
-          <StripMenuGroup label="Season">
-            {seasonPages(seasonPath, pathname, leagueAccess, thisSeason).map(r => (
-              <StripMenuLink
-                key={r.href}
-                href={r.href}
-                active={r.active}
-                trailing={r.count ? <WaitingCount count={r.count} label={r.countLabel ?? ''} /> : undefined}
-              >
-                {r.label}
-              </StripMenuLink>
-            ))}
-          </StripMenuGroup>
-          {/* The full rail's season switcher, as rows: each other season opens on the page you are on. */}
-          {seasons.length > 1 && (
-            <StripMenuGroup label="Other seasons">
-              {seasons.filter(s => s.id !== seasonId).map(s => (
-                <StripMenuLink key={s.id} href={seasonPageHref(`${base}/house-league/seasons/${s.id}`, seasonSegment(pathname))}>
-                  {switcherName(s)}
-                </StripMenuLink>
-              ))}
-            </StripMenuGroup>
-          )}
-        </>
-      )}
-    </>
-  );
-  // ⚠ Organization's own page (the org hub its full-sidebar row opens) is not one of its listed pages, so
-  // its menu leads with it — without that row the strip would lose the page (a door lost; plan §9).
-  const orgMenu = openKey === 'org' && (
-    <>
-      <StripMenuLink href={`${base}/org`} active={pathname === `${base}/org`}>Organization</StripMenuLink>
-      {orgLinks.map(pageMenuRow)}
-    </>
-  );
 
   return (
     <>
@@ -275,41 +131,30 @@ export default function AdminKitRail() {
           <TournamentRail labelled={!tournamentOnly} />
         ) : (
           <>
-            {!tournamentOnly && !isCanceled && programs.length > 0 && (
-              <>
-                <div className={styles.label}>Programs</div>
-                {programs.map(programGroup)}
-              </>
-            )}
-            {/* What the plan carries but the club does not run yet (specimens 1 and 3): quiet, one
-                row each — they join Programs the day the club starts its first season or event. */}
-            {!tournamentOnly && !isCanceled && alsoOnPlan.length > 0 && (
-              <>
-                <div className={styles.label}>Also on your plan</div>
-                {alsoOnPlan.map(programGroup)}
-              </>
-            )}
+            {/* ⚖ The club's places, in their groups (13i Ask 5 = A). A heading is drawn over two or more rows; over a lone
+                row its space stays with no word (N2) — so a registrar's House league and Organization still sit apart. */}
+            {placeGroups.map(group => {
+              const heading = placeGroupHeading(group);
+              return (
+                <Fragment key={group.key}>
+                  <div className={styles.label} aria-hidden={heading ? undefined : true}>{heading ?? '\u00a0'}</div>
+                  {group.places.map(placeRow)}
+                </Fragment>
+              );
+            })}
             {tournamentOnly && !isCanceled && (
               // The one Tournaments list (D7) — `/tournaments` alone opens the selected event's board.
               <RailRow href={`${base}/tournaments/manage`} label="Tournaments" active={false} icon={Trophy} />
             )}
-            {orgLinks.length > 0 && (
+            {tournamentOnly && orgLinks.length > 0 && (
+              // The tournament-only organization's flat Account list (unchanged by 13i; a cancelled club has no Organization
+              // links): listed by name in the full sidebar; the strip draws the icon the phone's More menu gives each (an
+              // icon-less row would be an empty square).
               <>
-                <div className={styles.label}>{tournamentOnly ? 'Account' : 'Organization'}</div>
-                {tournamentOnly || isCanceled
-                  ? orgLinks.map(link => (
-                      // Listed by name in the full sidebar; the strip draws the icon the phone's More menu
-                      // gives each (an icon-less row would be an empty square there).
-                      <RailRow key={link.key} href={link.href} label={link.label} active={isKitLinkActiveAmong(pathname, link, orgLinks)} stripIcon={link.icon} />
-                    ))
-                  : (
-                    <>
-                      <ProgramRow href={`${base}/org`} label="Organization" icon={ORGANIZATION_ICON} open={section === 'org'} hasPages opensPages menu={menuFor('org')} />
-                      {/* Doors only — an owner's area is not listed for anyone else (owner, 2026-10-01;
-                          the hub's Organization section says whose it is, `lib/admin-kit-nav.ts` ⚰). */}
-                      {section === 'org' && orgLinks.map(pageRow)}
-                    </>
-                  )}
+                <div className={styles.label}>Account</div>
+                {orgLinks.map(link => (
+                  <RailRow key={link.key} href={link.href} label={link.label} active={isKitLinkActiveAmong(pathname, link, orgLinks)} stripIcon={link.icon} />
+                ))}
               </>
             )}
           </>
@@ -317,10 +162,11 @@ export default function AdminKitRail() {
 
         <div className={styles.spacer} />
 
-        {/* ⚖ ONE SIDEBAR FOOT (the nav standard's N4, Ask B1, 2026-10-17): Help, then the other portal, then Collapse
-            sidebar last. Send feedback and Sign out live in the top strip's account menu only — the 2026-09-01 one-sign-out
-            rule the coaches portal already kept (the account menu is hidden in the demo sandbox, where a shared demo user
-            must never be signed out, so the sandbox loses nothing it should have). */}
+        {/* ⚖ ONE SIDEBAR FOOT (the nav standard's N4, Ask B1, 2026-10-17; unchanged by 13i, Ask 4 = B): Plan & billing, Help,
+            then the other portal, then Collapse sidebar last. On Plan & billing's page its row is the one lit row (no place
+            is: `litClubPlace`). Send feedback and Sign out live in the top strip's account menu only — the 2026-09-01
+            one-sign-out rule the coaches portal already kept (the account menu is hidden in the demo sandbox, where a
+            shared demo user must never be signed out, so the sandbox loses nothing it should have). */}
         <div className={styles.foot}>
           {billingLink && <Link href={billingLink.href} className={`${styles.item} ${styles.footItem}${isKitLinkActive(pathname, billingLink) ? ` ${styles.itemActive}` : ''}`} aria-current={isKitLinkActive(pathname, billingLink) ? 'page' : undefined}>
             {billingLink.icon && <billingLink.icon size={14} aria-hidden />} <span className={strip.rowLabel}>{billingLink.label}</span>
@@ -341,100 +187,7 @@ export default function AdminKitRail() {
         <CollapseSidebarRow className={`${styles.item} ${styles.footItem}`} />
       </nav>
       <SidebarStripTip scopeRef={railRef} />
-      <SidebarStripMenu
-        key={openKey ?? 'closed'}
-        open={!!(programMenu || orgMenu)}
-        anchorRef={anchorRef}
-        title={menuProgram?.label ?? 'Organization'}
-        onClose={close}
-      >
-        {programMenu || orgMenu}
-      </SidebarStripMenu>
     </aside>
-    </>
-  );
-}
-
-/** A season as the switcher names it: a finished one says so (copy §7; a `<select>` option cannot carry a tag). */
-function switcherName(s: FrameSeason): string {
-  return seasonGroup(s) === 'past' ? `${s.name} · Finished` : s.name;
-}
-
-/** A rep team's five pages, for its block in the rail and in the strip's menu. */
-function repTeamPages(t: string, pathname: string): PageRow[] {
-  const under = (path: string) => pathname === path || pathname.startsWith(`${path}/`);
-  return [
-    { href: t, label: 'Team page', active: pathname === t || under(`${t}/history`) },
-    { href: `${t}/roster`, label: 'Roster', active: under(`${t}/roster`) },
-    { href: `${t}/schedule`, label: 'Schedule', active: under(`${t}/schedule`) },
-    { href: `${t}/tryouts`, label: 'Tryouts', active: under(`${t}/tryouts`) },
-    { href: `${t}/coaches`, label: 'Coaches', active: under(`${t}/coaches`) },
-  ];
-}
-
-/**
- * A house-league season's pages (9a·2: Overview · Registrations · Teams & draft · Schedule · Standings · Money · Email
- * families), the ones this person can open, for its block in the rail and in the strip's menu. Registrations carries the
- * season's waiting count, the amber pill alone.
- */
-function seasonPages(s: string, pathname: string, access: HouseLeagueAccess | null, season: FrameSeason | null): PageRow[] {
-  const at = seasonSegment(pathname);
-  const pages = access ? seasonPagesFor(access) : [];
-  return pages.map(p => {
-    const count = p.key === 'registrations' ? season?.pendingReviewCount ?? 0 : 0;
-    return {
-      href: seasonPageHref(s, p.segment),
-      label: p.label,
-      active: at === p.segment,
-      count,
-      countLabel: count ? toReviewLabel(count) : undefined,
-    };
-  });
-}
-
-/**
- * Inside one rep team — the TEAM's block (Club Tier Stage 2, specimen 2's rail). It used to open only
- * inside a season page and point at that season's screens; the club now works on a team's live season,
- * so the block belongs to the team: its page, then Roster · Schedule · Tryouts · Coaches. Its label is
- * the team's name once the page has read it (`useRailTeamName`), "Team" until then. How the admin rail
- * groups things against the portal's rail is the project's nav review (Stage 8), not redesigned here.
- */
-function RepTeamBlock({ name, pages }: { name: string | null; pages: PageRow[] }) {
-  return (
-    <>
-      <div className={`${styles.subLabel} ${styles.subLabelTeam}`}>{name ?? 'Team'}</div>
-      {pages.map(r => <RailRow key={r.href} href={r.href} label={r.label} active={r.active} sub />)}
-    </>
-  );
-}
-
-/**
- * Inside one house-league season — its block, set in under House league (9a·2): the switcher, then the season's pages.
- * The switcher shows whenever the list has read the season you are in (one season reads as its name), lists live seasons
- * first and finished ones marked, and keeps the page you are on.
- */
-function SeasonBlock({ seasonId, seasons, pages }: { seasonId: string; seasons: FrameSeason[]; pages: PageRow[] }) {
-  const pathname = usePathname();
-  const router = useRouter();
-  const { currentOrg } = useOrg();
-  const base = `/${currentOrg?.slug ?? ''}/admin`;
-  return (
-    <>
-      <div className={styles.subLabel}>Season</div>
-      {seasons.some(s => s.id === seasonId) && (
-        <div className={styles.switcher}>
-          <select
-            className={styles.switcherSelect}
-            value={seasonId}
-            aria-label="Switch season"
-            id="hl-season-select"
-            onChange={e => router.push(seasonPageHref(`${base}/house-league/seasons/${e.target.value}`, seasonSegment(pathname)))}
-          >
-            {seasons.map(o => <option key={o.id} value={o.id}>{switcherName(o)}</option>)}
-          </select>
-        </div>
-      )}
-      {pages.map(r => <RailRow key={r.href} href={r.href} label={r.label} active={r.active} sub count={r.count} countLabel={r.countLabel} />)}
     </>
   );
 }

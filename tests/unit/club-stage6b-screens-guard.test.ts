@@ -62,7 +62,8 @@ describe('1. the Calendar door — under Overview, first in More, one gate', () 
     // The label is "Club overview" inside a tournament, so find the row by its link, not its words.
     const overview = code.indexOf('<RailRow href={base} label=');
     const calendar = code.indexOf('calendarLink.href');
-    const programs = code.indexOf('<div className={styles.label}>Programs</div>');
+    // 13i Session B: the places' groups (Programs, Also on your plan, Club) are drawn from one list.
+    const programs = code.indexOf('placeGroups.map(group =>');
     assert.ok(overview > 0 && calendar > overview && calendar < programs, 'Overview, then Calendar, then the programs');
   });
 

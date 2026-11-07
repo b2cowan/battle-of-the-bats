@@ -19,7 +19,6 @@ import { CoachListToolbar } from '@/components/coaches/kit';
 import {
   EmptyCard, LoadFailed, PageLoading, RepChip, repKit, TwoOpenNote, useDeferredLoad, useLatestRead,
 } from '@/components/admin/kit/club/RepKit';
-import { usePublishRailTeam } from '@/components/admin/kit/useRailTeam';
 import { teamHeadOf, usePublishTeamHead } from '@/components/admin/kit/club/TeamFrame';
 import {
   downloadXLSX, generateCSV, downloadCSVBlob, buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
@@ -91,7 +90,6 @@ export default function TeamRosterPage({ params }: { params: Promise<{ orgSlug: 
 
   const team = read?.team ?? null;
   usePageTitle(team ? `Roster · ${team.name}` : 'Roster');
-  usePublishRailTeam(teamId, team?.name);
   usePublishTeamHead(teamId, read ? teamHeadOf(read.team, read.programYears) : null);
   const season = useMemo(() => (read ? liveSeasonOf(read.programYears) ?? latestClosedSeasonOf(read.programYears) : null), [read]);
   const isLive = !!season && (season.status === 'draft' || season.status === 'active');

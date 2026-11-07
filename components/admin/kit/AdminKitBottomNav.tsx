@@ -36,10 +36,12 @@ import FeedbackWidget from '@/components/feedback/FeedbackWidget';
 import MoreSheetTiles, { type SheetTile } from '@/components/coaches/MoreSheetTiles';
 import MoreSheetFoot from '@/components/coaches/MoreSheetFoot';
 import { clubPhoneNav, tournamentSheetTiles } from '@/lib/nav-tiles';
-import { isKitLinkActive, isKitLinkActiveAmong, tournamentBarKeys, ORGANIZATION_ICON, type KitLink } from '@/lib/admin-kit-nav';
+import {
+  clubSheetGroups, isKitLinkActive, isKitLinkActiveAmong, placeGroupHeading, tournamentBarKeys, type KitLink,
+} from '@/lib/admin-kit-nav';
 import { resolveEventPhase } from '@/lib/tournament-phase';
 import { useAdminKitNav } from './useAdminKitNav';
-import { briefProgramCount } from './club/ClubBriefProvider';
+import { briefPlaceCount } from './club/ClubBriefProvider';
 import { kitCountText } from '@/lib/admin-kit-nav';
 import { MESSAGES_TAB } from '@/lib/invite-only-words';
 import styles from '@/components/coaches/CoachesBottomNav.module.css';
@@ -48,13 +50,16 @@ import { useFeeAlert } from './useFeeAlert';
 
 const badge = (n: number): string => (n > 9 ? '9+' : String(n));
 
+/** One More-sheet section: its heading (none for a club group of one row) and its rows. */
+type SheetGroup = { key: string; heading: string | null; places: KitLink[] };
+
 type Tab = { key: string; href: string; icon: ElementType; label: string; active: boolean; count?: number; chat?: boolean };
 
 export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: number }) {
   const pathname = usePathname();
   const nav = useAdminKitNav();
   const {
-    base, programs, alsoOnPlan, brief, orgLinks, tournamentOnly, onTournaments, isCanceled, coachDoor, tournamentGroups,
+    base, programs, alsoOnPlan, brief, placeGroups, litPlace, tournamentOnly, onTournaments, isCanceled, coachDoor, tournamentGroups,
     calendarLink, schedulesLink, billingLink, helpHref, isSandbox,
   } = nav;
   const { currentOrg } = useOrg();
@@ -110,32 +115,28 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
   const tourTiles = tournamentBar ? tournamentSheetTiles(phase, [...opsByKey.values()].map(tourDoor)) : null;
   const chatIsPrimary = primaryKeys.has('chat');
   // More lists every group row the bar does not already show as a tab — an icon on every row, the sidebar's (N7).
-  const tourMoreGroups: { header: string; items: KitLink[] }[] = tournamentGroups
-    .map(g => ({ header: g.label, items: g.items.filter(i => !primaryKeys.has(i.key)).map(tourDoor) }))
-    .filter(g => g.items.length > 0);
+  const tourMoreGroups: SheetGroup[] = tournamentGroups
+    .map(g => ({ key: g.key, heading: g.label, places: g.items.filter(i => !primaryKeys.has(i.key)).map(tourDoor) }))
+    .filter(g => g.places.length > 0);
 
   // ── The club bar: ONE bar for every club (owner, 2026-10-17 — `lib/nav-tiles.ts` holds the rule and its calls) ─────
   // Overview · Calendar · Rep teams · Accounting · More, and Schedules · House league · Families as the tiles at the top
-  // of More. A door this person or plan cannot open is filled by the next program the club runs, in the sidebar's order;
-  // what the plan carries but the club does not run yet lists in More's Programs only. A cancelled club's bar is More.
+  // of More, in the programs' own order (N10). What the plan carries but the club does not run yet never fills a tab or a
+  // tile: it lists under the sheet's "Also on your plan", as in the sidebar. A cancelled club's bar is More.
   const club = clubPhoneNav<KitLink>({
     calendar: calendarLink, schedules: schedulesLink, programs: isCanceled ? [] : programs, alsoOnPlan,
   });
-  // A program door lights while you are anywhere inside the program; the calendar and the scheduler on their own pages.
-  const programByKey = new Map([...programs, ...alsoOnPlan].map(p => [p.key as string, p]));
-  const doorActive = (d: KitLink) => (programByKey.has(d.key) ? nav.section === d.key : isKitLinkActive(pathname, d));
+  // A place's door (a program, or Organization) lights while you are anywhere inside the place — the sidebar's one lit row
+  // (`litClubPlace`: none on Plan & billing's page); the calendar and the scheduler on their own pages.
+  const placeKeys = new Set(placeGroups.flatMap(g => g.places.map(p => p.key)));
+  const doorActive = (d: KitLink) => (placeKeys.has(d.key) ? litPlace === d.key : isKitLinkActive(pathname, d));
   const underHref = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
-  // The morning brief's waiting count for a program's door — a tab, a tile or a Programs row carries it alike.
+  // The morning brief's waiting count for a place's door — a tab, a tile or a sheet row carries it alike, as the sidebar's.
   // ⚠ Declared before the tabs below read it: a later `const` is a crash on every club render (the design pass caught it).
-  const programCount = (key: string) => {
-    const program = programByKey.get(key);
-    return program ? briefProgramCount(brief, program.key) : 0;
-  };
-  // ⚖ The Organization page's phone door (Ask B3): the first row of its group, where the sidebar's Organization row
-  // opens it — the same gate (a club, not cancelled, with Organization rows to list).
-  const orgPageLink: KitLink | null = !tournamentOnly && !isCanceled && orgLinks.length > 0
-    ? { key: 'org', label: 'Organization', href: `${base}/org`, exact: true, icon: ORGANIZATION_ICON }
-    : null;
+  const programCount = (key: string) => briefPlaceCount(brief, key);
+  // ⚖ The sheet's groups (N7, 13i B5): the sidebar's places under the sidebar's names, less what the bar and the tiles show.
+  // Organization is ONE row (its pages are its tabs); a one-row group draws no heading (the owner's Tournaments).
+  const sheetGroups: SheetGroup[] = clubSheetGroups(placeGroups, club).map(g => ({ ...g, heading: placeGroupHeading(g) }));
 
   const tabs: Tab[] = tournamentBar
     ? tourPrimary.map(i => ({
@@ -155,10 +156,11 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
       ];
 
   const moreLinks: KitLink[] = tournamentBar
-    ? tourMoreGroups.flatMap(g => g.items)
-    : [...(club.schedulesRow ? [club.schedulesRow] : []), ...(club.tiles ?? []), ...club.morePrograms, ...orgLinks];
+    ? tourMoreGroups.flatMap(g => g.places)
+    : [...(club.schedulesRow ? [club.schedulesRow] : []), ...(club.tiles ?? []), ...sheetGroups.flatMap(g => g.places)];
+  // More is lit on any page it holds a row for: its places, Notifications, and Plan & billing (its You row).
   const moreActive = moreLinks.some(doorActive)
-    || (!tournamentBar && nav.section === 'org')
+    || (!tournamentBar && !!billingLink && isKitLinkActive(pathname, billingLink))
     || pathname === `${base}/notifications`;
   const moreChat = tournamentBar && chatInNav && !chatIsPrimary ? chatUnread : 0;
   // Fee invoice alerts, Part 2: the Plan & billing signal rides More's pill (and the sheet's own row) — amber to pay, red overdue.
@@ -174,7 +176,9 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
 
   const row = (l: KitLink, count = 0) => {
     const Icon = l.icon;
-    const active = isKitLinkActiveAmong(pathname, l, [billingLink, ...orgLinks]);
+    // A club row is a place (or the scheduler), lit as the sidebar lights it; a tournament row steps aside for Plan & billing,
+    // which lives under Settings & access's address on the tournament tiers.
+    const active = tournamentBar ? isKitLinkActiveAmong(pathname, l, [billingLink]) : doorActive(l);
     // Chat's row counts unread messages (the 9+ badge); every other row a program's waiting count (Stage 13a: to 99).
     const chat = l.key === 'chat';
     const countText = chat ? badge(count) : kitCountText(count);
@@ -200,13 +204,13 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
     active: tournamentBar ? underHref(t.href) : doorActive(t),
     count: tournamentBar ? worklist[t.key] ?? 0 : programCount(t.key),
   });
-  // Doors only, as the rail: an owner's area is not listed for anyone else (owner, 2026-10-01 —
-  // the hub's Organization section says whose it is; `lib/admin-kit-nav.ts` ⚰).
-  const group = (header: string, items: KitLink[]) => items.length > 0 && (
-    <div key={header} className={styles.dropSection}>
-      <div className={styles.dropSectionLabel}>{header}</div>
-      <div className={styles.dropGrid} data-cols={items.length > 1 ? 2 : 1}>
-        {items.map(l => row(l, l.key === 'chat' ? moreChat : tournamentBar ? 0 : programCount(l.key)))}
+  // Doors only, as the rail: an owner's area is not listed for anyone else (owner, 2026-10-01). A null heading: a club group
+  // of one row, which draws none (N2, 13i).
+  const group = ({ key, heading, places }: SheetGroup) => (
+    <div key={key} className={styles.dropSection}>
+      {heading && <div className={styles.dropSectionLabel}>{heading}</div>}
+      <div className={styles.dropGrid} data-cols={places.length > 1 ? 2 : 1}>
+        {places.map(l => row(l, l.key === 'chat' ? moreChat : tournamentBar ? 0 : programCount(l.key)))}
       </div>
     </div>
   );
@@ -310,7 +314,7 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
                     </div>
                   )}
                   {tourTiles && <MoreSheetTiles tiles={tourTiles.map(sheetTile)} onPick={close} />}
-                  {tourMoreGroups.map(g => group(g.header, g.items))}
+                  {tourMoreGroups.map(group)}
                 </>
               ) : (
                 <>
@@ -319,9 +323,8 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
                       program, so it belongs to no group. The calendar is a tab on the bar. */}
                   {club.tiles && <MoreSheetTiles tiles={club.tiles.map(sheetTile)} onPick={close} />}
                   {club.schedulesRow && row(club.schedulesRow)}
-                  {/* "Programs", the sidebar's word: you are already inside More. */}
-                  {group('Programs', club.morePrograms)}
-                  {group('Organization', orgPageLink ? [orgPageLink, ...orgLinks] : orgLinks)}
+                  {/* The sidebar's places, under its headings (Programs · Also on your plan · Club), in its order. */}
+                  {sheetGroups.map(group)}
                 </>
               )}
 

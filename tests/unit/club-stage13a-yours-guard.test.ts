@@ -60,8 +60,10 @@ describe('B2 · the one waiting count', () => {
     const provider = readCode(PROVIDER);
     assert.match(provider, /'house-league': 'leagueRegistrations',/);
     assert.match(provider, /\| 'leagueRegistrations';/);
-    assert.match(readCode('components/admin/kit/AdminKitRail.tsx'), /count=\{briefProgramCount\(brief, p\.key\)\}/);
-    assert.match(readCode('components/admin/kit/AdminKitBottomNav.tsx'), /return program \? briefProgramCount\(brief, program\.key\) : 0;/);
+    // 13i Session B: the rail's place row (one row per place, at every depth) and the phone's doors read one place count.
+    assert.match(provider, /export function briefPlaceCount\(brief: ClubBrief \| null, placeKey: string\): number \{\s*return isAdminProgramKey\(placeKey\) \? briefProgramCount\(brief, placeKey\) : 0;/);
+    assert.match(readCode('components/admin/kit/AdminKitRail.tsx'), /const count = briefPlaceCount\(brief, place\.key\);/);
+    assert.match(readCode('components/admin/kit/AdminKitBottomNav.tsx'), /const programCount = \(key: string\) => briefPlaceCount\(brief, key\);/);
     const hub = readCode(HUB);
     assert.match(hub, /const waiting = briefProgramCount\(brief, p\.key\);/);
     // Any program with a waiting count wears the pill (one with no count answers 0), the House league card included.

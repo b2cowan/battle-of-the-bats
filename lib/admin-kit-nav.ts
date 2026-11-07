@@ -7,9 +7,9 @@
  * `tests/unit/admin-kit-nav.test.ts` pins the same thing here.
  *
  * ⚠ WHAT IS DRAWN, AND WHAT IS NOT YET. Built to the ratified Club Stage 1 specimens 3–4 (club hub
- * v8): one rail that is always populated, programs as groups, the program you are in open, Overview
- * pinned at the top. Club Stage 1's screens session added the three things the foundation held for
- * it: the PLAN-AWARE ORDER (`clubProgramOrder`, fed through `kitPrograms`' `order`, with the quiet
+ * v8): one rail that is always populated, Overview pinned at the top — and, since Club Tier Stage 13i
+ * (2026-11-06), places only: a place's pages are its tab row, never rows under it (`clubPlaceGroups`).
+ * Club Stage 1's screens session added the three things the foundation held for it: the PLAN-AWARE ORDER (`clubProgramOrder`, fed through `kitPrograms`' `order`, with the quiet
  * "Also on your plan" group), the AUDIT LOG row (its page works again, A04), and the per-program
  * waiting counts (the morning brief's, `useClubBrief`). ONE drawn row is still held: NOTIFICATIONS —
  * the org path redirects to account settings, whose club card lacks the club's programs (specimen 12
@@ -69,7 +69,7 @@ export type KitProgram = {
   icon: LucideIcon;
   /** The program's first screen — where its rail row, its phone tab and its More row go. */
   href: string;
-  /** Its pages, in the order the rail lists them. The first IS `href`. */
+  /** Its pages, in the order its tab row lists them (13i: never rows in the sidebar). The first IS `href`. */
   pages: KitLink[];
 };
 
@@ -86,6 +86,11 @@ export const INTERIM_PROGRAM_ORDER: readonly AdminProgramKey[] = [
   'house-league',
   'tournaments',
 ];
+
+/** Is this key a program's (rather than Organization's, or a page's)? */
+export function isAdminProgramKey(key: string): key is AdminProgramKey {
+  return (INTERIM_PROGRAM_ORDER as readonly string[]).includes(key);
+}
 
 /** The role capability + plan module each program needs (the same pair the hub tile checks). */
 export const PROGRAM_CAPABILITY: Record<AdminProgramKey, Capability> = {
@@ -105,8 +110,7 @@ function programDef(key: AdminProgramKey, base: string): Omit<KitProgram, 'key'>
         // Sentence case, like every other nav label (Ask A4, 2026-10-17; `check:spelling` holds it).
         label: 'Rep teams', icon: Users, href: r,
         pages: [
-          // Exact: inside a team, the rail's TEAM block carries the active row (Club Tier Stage 2,
-          // specimen 2 — "Team page" lit, "Teams" not), and its back arrow leads up to this one.
+          // Exact: a team is a place of its own (13i A3), with its own tab row — Teams is not lit inside it.
           { key: 'rt-teams', label: 'Teams', href: r, exact: true },
           // ⚖ Cost allocation and Payment requests MOVED to Accounting (Club Tier Stage 3a, Ask 2): the
           // treasurer's program holds the treasurer's work, and their old addresses forward there.
@@ -121,11 +125,9 @@ function programDef(key: AdminProgramKey, base: string): Omit<KitProgram, 'key'>
       };
     }
     case 'accounting': {
-      // ⚖ ONE ROW THAT NEVER OPENS (Club Tier Stage 3a, Ask 2 option B, owner 2026-09-30). Accounting is
-      // one page with tabs — Overview · Budget · Teams · Ledger · Bank · Allocations · Payment requests · Budget vs.
-      // Actual — so the rail lists no pages under it (and the phone's "In Accounting" row has nothing to
-      // name): the tab row on the page is how a treasurer moves between them. The tabs' own list is
-      // `accountingTabs` below; the rail row carries the waiting count while you are inside it too.
+      // ⚖ ONE PAGE WITH TABS (Club Tier Stage 3a, Ask 2 option B, owner 2026-09-30 — the rule 13i gave every place).
+      // Overview · Budget · Teams · Ledger · Bank · Allocations · Payment requests · Budget vs. Actual: the tab row on the
+      // page is how a treasurer moves between them. The tabs' own list is `accountingTabs` below.
       const a = `${base}/accounting`;
       return { label: 'Accounting', icon: DollarSign, href: a, pages: [] };
     }
@@ -149,8 +151,8 @@ function programDef(key: AdminProgramKey, base: string): Omit<KitProgram, 'key'>
       // carry a dead door forward; the legacy link is written down as a defect, not fixed here.
       return {
         label: 'House league', icon: CalendarDays, href: h,
-        // No `also` (Stage 13 fix-now 8): inside a season the season's own rail block lights its page, as a rep team's
-        // does — "Seasons" lit as well was a second highlight. There is no page at /house-league/seasons itself.
+        // No `also` (Stage 13 fix-now 8): a season is a place of its own (13i A4), its tab row lights its page. There is
+        // no page at /house-league/seasons itself.
         pages: [{ key: 'hl-seasons', label: 'Seasons', href: h, exact: true }],
       };
     }
@@ -274,7 +276,7 @@ export function kitSchedulesLink({ base, canUse, isCanceled, role, planId }: {
   return canUse('module_rep_teams') || canUse('module_house_league') ? { key: 'schedules', label: 'Schedules', href: `${base}/schedules`, icon: ChartGantt } : null;
 }
 
-/** The Organization group's icon (the rail row and the More section share it). */
+/** Organization's icon (its sidebar row and its More sheet row share it). */
 export const ORGANIZATION_ICON: LucideIcon = Building2;
 
 /** Plan & billing lives beside Help on every admin plan, including a suspended account's comeback path. The demo
@@ -349,13 +351,100 @@ export function isKitLinkActiveAmong(pathname: string, link: KitLink, others: re
   return !others.some(o => o && o.href !== link.href && o.href.startsWith(`${link.href}/`) && isKitLinkActive(pathname, o));
 }
 
-/** Which program (or the Organization group) the page on screen belongs to — the group that opens. */
+/** Which program (or Organization) the page on screen belongs to, by its address alone. */
 export function activeKitSection(pathname: string, base: string): AdminProgramKey | 'org' | null {
   const rest = pathname.startsWith(`${base}/`) ? pathname.slice(base.length + 1) : '';
   const first = rest.split('/')[0];
   if (first === 'org') return 'org';
-  const keys: readonly string[] = INTERIM_PROGRAM_ORDER;
-  return keys.includes(first) ? (first as AdminProgramKey) : null;
+  return isAdminProgramKey(first) ? first : null;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+ * ⚖ PLACES IN THE SIDEBAR (Club Tier Stage 13i Session B, Asks 1, 2 and 5 = A, Ask 4 = B, owner 2026-11-06; NAV_STANDARD
+ * N2, N3, N7, N11). The club sidebar lists PLACES only and never grows: nothing renders under a row, no row carries a
+ * chevron, and one row is lit — the place you are in, at any depth. A place's pages are its tab row (above).
+ * ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * ⚖ THE SIDEBAR'S TWO HEADINGS (Ask 5 = A): Programs (Rep teams, House league, Tournaments) and Club (Accounting, Families,
+ * Public site, then Organization). ⚠ A map BESIDE `LEAD_ORDER`, never a reordered `LEAD_ORDER`: the phone bar and tiles
+ * fill from the programs' own order (N10), so moving Tournaments up into Programs here changes no club's bar or tiles.
+ * Inside each group a program keeps `LEAD_ORDER`'s place.
+ */
+const PLACE_GROUP: Record<AdminProgramKey, 'programs' | 'club'> = {
+  'rep-teams': 'programs',
+  'house-league': 'programs',
+  tournaments: 'programs',
+  accounting: 'club',
+  families: 'club',
+  'public-site': 'club',
+};
+
+export type ClubPlaceGroupKey = 'programs' | 'also' | 'club';
+export type ClubPlaceGroup<T> = { key: ClubPlaceGroupKey; heading: string; places: T[] };
+
+/**
+ * The club body's places, grouped — the sidebar's and the More sheet's one list (N7: the sheet lists the sidebar's places,
+ * under the sidebar's names, in the sidebar's order). Programs, then "Also on your plan" (what the plan carries that the club
+ * does not run yet, as today), then Club with Organization last. A group with no place is not returned.
+ */
+export function clubPlaceGroups<T extends { key: string }>({ programs, alsoOnPlan, organization }: {
+  programs: readonly T[];
+  alsoOnPlan: readonly T[];
+  organization: T | null;
+}): ClubPlaceGroup<T>[] {
+  const of = (group: 'programs' | 'club') => programs.filter(p => PLACE_GROUP[p.key as AdminProgramKey] === group);
+  const groups: ClubPlaceGroup<T>[] = [
+    { key: 'programs', heading: 'Programs', places: of('programs') },
+    { key: 'also', heading: 'Also on your plan', places: [...alsoOnPlan] },
+    { key: 'club', heading: 'Club', places: [...of('club'), ...(organization ? [organization] : [])] },
+  ];
+  return groups.filter(g => g.places.length > 0);
+}
+
+/**
+ * ⚖ N2 (13i): a heading is drawn over two or more rows; over a lone row the heading's space stays with no word (the
+ * registrar's House league, the owner's sheet's Tournaments). "Also on your plan" is the exception: it is not a group's
+ * name but the reason its rows are quiet, so it is said over one row too, as before 13i.
+ */
+export function placeGroupHeading(group: ClubPlaceGroup<unknown>): string | null {
+  return group.key === 'also' || group.places.length > 1 ? group.heading : null;
+}
+
+/**
+ * ⚖ THE CLUB MORE SHEET'S GROUPS (N7, 13i B5): the sidebar's places, under the sidebar's names, in its order, less the doors
+ * the phone bar and its tiles already show (`clubPhoneNav`, unchanged) — so every place is reached once on a phone. A place's
+ * pages are never sheet rows: Organization is one row, its pages are its tabs.
+ */
+export function clubSheetGroups<T extends { key: string }>(
+  groups: readonly ClubPlaceGroup<T>[],
+  phone: { tabs: readonly { key: string }[]; tiles: readonly { key: string }[] | null },
+): ClubPlaceGroup<T>[] {
+  const taken = new Set([...phone.tabs, ...(phone.tiles ?? [])].map(d => d.key));
+  return groups
+    .map(g => ({ ...g, places: g.places.filter(p => !taken.has(p.key)) }))
+    .filter(g => g.places.length > 0);
+}
+
+/** Organization as a place: its one row (the sidebar and the More sheet), for a club that has Organization tabs to show
+ *  (a cancelled club has none: `kitOrgLinks`). Its pages are its tabs (`orgTabs`); `/org` goes to the first one held. */
+export function kitOrgPlace({ base, orgLinks, tournamentOnly }: {
+  base: string; orgLinks: readonly KitLink[]; tournamentOnly: boolean;
+}): KitLink | null {
+  return !tournamentOnly && orgLinks.length > 0
+    ? { key: 'org', label: 'Organization', href: `${base}/org`, icon: ORGANIZATION_ICON }
+    : null;
+}
+
+/**
+ * ⚖ ONE LIT ROW (13i B1): the club place the page on screen is in, at any depth — Rep teams on a team's Roster, House league
+ * on a season's Registrations, Organization on Audit log or The board. ⚠ Plan & billing lives under `/org` but is no
+ * Organization tab (Ask 4 = B): on its page the FOOT row is the lit one, so no place is. Overview, Calendar and Schedules
+ * light on their own addresses (`isKitLinkActive`), none of which is under a place.
+ */
+export function litClubPlace(pathname: string, base: string, billingLink: KitLink | null): AdminProgramKey | 'org' | null {
+  if (billingLink && isKitLinkActive(pathname, billingLink)) return null;
+  return activeKitSection(pathname, base);
 }
 
 /* ⚰ KIT_TOURNAMENT_LABELS / kitTournamentLabel (the map from the old console rail's Title Case to the kit's
@@ -481,8 +570,8 @@ export function isFamiliesChildPage(pathname: string, base: string): boolean {
 /* ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
  * ⚖ PAGES ON THE PAGE (Club Tier Stage 13i, Asks 1 and 3 = A, owner 2026-11-06; drawing tab 6, N11). Every club place
  * with more than one page shows them as THE shared tab row (`HubTabBar`) under its title, as Accounting and Families
- * already do. The lists below are the one statement of each place's tabs: the place's layout draws them and, from
- * Session B, the More sheet reads them. A tab a person cannot open is not in the list; a list of one draws no row (the
+ * already do. The lists below are the one statement of each place's tabs: the place's layout draws them (the More sheet
+ * lists the place once, never its tabs — N7). A tab a person cannot open is not in the list; a list of one draws no row (the
  * component's own rule). Each tab lights on its OWN address only (`litTab`, no `views`): an address under a place that is
  * no tab is a RECORD page one level down (a team's History, Rename team addresses, a club schedule read from a season —
  * owner 2026-11-06, the 2026-09-30 rule kept): it keeps its own back arrow and the place draws no tab row over it.

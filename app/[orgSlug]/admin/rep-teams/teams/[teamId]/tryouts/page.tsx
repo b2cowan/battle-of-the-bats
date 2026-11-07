@@ -38,7 +38,6 @@ import {
 } from '@/components/admin/kit/club/RepKit';
 import { TRYOUT_STATUS_LABEL, TRYOUT_STATUS_TONE, tryoutNotice, type AddApplicantForm } from '@/components/admin/kit/club/TryoutDialogs';
 import type { SeasonPreflight } from '@/components/admin/kit/club/SeasonDialogs';
-import { usePublishRailTeam } from '@/components/admin/kit/useRailTeam';
 import { teamHeadOf, usePublishTeamHead } from '@/components/admin/kit/club/TeamFrame';
 import {
   downloadXLSX, generateCSV, downloadCSVBlob, buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
@@ -167,7 +166,6 @@ export default function TeamTryoutsPage({ params }: { params: Promise<{ orgSlug:
 
   const team = read?.team ?? null;
   usePageTitle(team ? `Tryouts · ${team.name}` : 'Tryouts');
-  usePublishRailTeam(teamId, team?.name);
   usePublishTeamHead(teamId, read ? teamHeadOf(read.team, read.programYears) : null);
 
   const counts = useMemo(() => {

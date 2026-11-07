@@ -16,7 +16,11 @@ import {
 } from 'lucide-react';
 import { TOUR_GROUPS } from '../../components/admin/admin-nav-config.ts';
 import { kitTournamentGroups } from '../../components/admin/kit/kit-tournament-groups.ts';
-import { kitPrograms, kitOrgLinks, kitCalendarLink, kitSchedulesLink, clubProgramOrder, personClubShape } from '../../lib/admin-kit-nav.ts';
+import {
+  kitPrograms, kitOrgLinks, kitCalendarLink, kitSchedulesLink, clubProgramOrder, personClubShape, clubSheetGroups, orgTabs,
+  placeGroupHeading, showsOrgBoard,
+} from '../../lib/admin-kit-nav.ts';
+import { CLUB_BASE, CLUB_PEOPLE, clubNavFor, RUNS_BOTH, RUNS_NEITHER } from './_club-people.ts';
 import { hasCapability } from '../../lib/roles.ts';
 import type { OrgRole } from '../../lib/types.ts';
 import { COACH_TEAM_TOOLS } from '../../lib/coach-team-tools.ts';
@@ -120,9 +124,10 @@ describe('N4 + N7 · one foot, one More-sheet order', () => {
     }
   });
 
-  it('the admin sheet: Notifications, the groups, You (Account, Home, Coaches Portal), then the foot', () => {
+  // 13i (N7): the groups are the sidebar's places, drawn from one list (Programs · Also on your plan · Club).
+  it('the admin sheet: Notifications, the places, You (Account, Home, Coaches Portal, Plan & billing), then the foot', () => {
     order(readCode(ADMIN_SHEET), [
-      'id="admin-mob-notifications"', "group('Programs'", "group('Organization'", '>You</div>',
+      'id="admin-mob-notifications"', '{sheetGroups.map(group)}', '>You</div>',
       'id="admin-mob-account"', 'id="admin-mob-home"', 'id="admin-mob-coaches-portal"', 'id="admin-mob-billing"', '<MoreSheetFoot',
     ], ADMIN_SHEET);
   });
@@ -264,49 +269,42 @@ describe('N8 · the tiles', () => {
   // ⚖ Ask 8 = A (Club Tier Stage 13a, the one exception to N10): a person whose ONLY program is house league sees it lead
   // before the club has a season. The table is role × season state on a Club plan (every program carried), through the
   // same two calls the hook makes (`personClubShape` → `clubProgramOrder`).
-  const asPerson = (role: OrgRole, extra: Record<string, boolean> | null = null) => (c: string) =>
-    hasCapability(role, extra, c as Parameters<typeof hasCapability>[2]);
-  const personNav = (shape: { runsHouseLeague: boolean; hostsTournaments: boolean }, can: (c: string) => boolean) => {
-    const order = clubProgramOrder(personClubShape(shape, can));
-    const programs = kitPrograms({ base: '/o/admin', canUse: can, order: order.lead });
-    const alsoOnPlan = kitPrograms({ base: '/o/admin', canUse: can, order: order.also });
-    return {
-      lead: programs.map(p => p.key),
-      also: alsoOnPlan.map(p => p.key),
-      bar: keys(clubPhoneNav({ calendar: t('calendar'), schedules: null, programs, alsoOnPlan }).tabs),
-    };
+  // The person's nav through the hook's own calls (`_club-people.ts`, the 13i guards' fixture too).
+  const personNav = (shape: { runsHouseLeague: boolean; hostsTournaments: boolean }, role: OrgRole, extra: Record<string, boolean> | null = null) => {
+    const n = clubNavFor(role, shape, extra);
+    return { lead: n.programs.map(p => p.key), also: n.alsoOnPlan.map(p => p.key), bar: keys(n.phone.tabs) };
   };
   const noSeason = { runsHouseLeague: false, hostsTournaments: false };
   const running = { runsHouseLeague: true, hostsTournaments: false };
 
   it('Ask 8: the league admin and the registrar, no season yet → House league leads the rail and takes the bar’s third slot', () => {
     for (const role of ['league_admin', 'league_registrar'] as const) {
-      const n = personNav(noSeason, asPerson(role));
+      const n = personNav(noSeason, role);
       assert.deepEqual(n.lead, ['house-league'], role);
       assert.deepEqual(n.also, [], `${role}: not "Also on your plan"`);
       assert.deepEqual(n.bar, ['calendar', 'house-league'], `${role}: Overview · Calendar · House league · More`);
-      assert.deepEqual(personNav(running, asPerson(role)).lead, ['house-league'], `${role}, season running: unchanged`);
+      assert.deepEqual(personNav(running, role).lead, ['house-league'], `${role}, season running: unchanged`);
     }
   });
 
   it('Ask 8: the owner, an admin and the treasurer with no season → unchanged (N10 as written)', () => {
     for (const role of ['owner', 'admin'] as const) {
-      const n = personNav(noSeason, asPerson(role));
+      const n = personNav(noSeason, role);
       assert.ok(!n.lead.includes('house-league') && n.also.includes('house-league'), `${role}: House league stays a quiet row`);
       assert.deepEqual(n.bar, ['calendar', 'rep-teams', 'accounting'], role);
     }
-    const treasurer = personNav(noSeason, asPerson('treasurer'));
+    const treasurer = personNav(noSeason, 'treasurer');
     assert.deepEqual(treasurer.lead, ['accounting']);
     assert.ok(!treasurer.also.includes('house-league'), 'the treasurer cannot open house league at all');
   });
 
   it('Ask 8 is decided by what the person OPENS, never the role’s name', () => {
     // A league admin who was also given Accounting opens two programs: N10 as written.
-    const both = personNav(noSeason, asPerson('league_admin', { module_accounting: true }));
+    const both = personNav(noSeason, 'league_admin', { module_accounting: true });
     assert.deepEqual(both.lead, ['accounting']);
     assert.deepEqual(both.also, ['house-league']);
     // The club's own shape is never rewritten: the Members role guide reads it as a fact about the org.
-    assert.deepEqual(personClubShape(noSeason, asPerson('owner')), noSeason);
+    assert.deepEqual(personClubShape(noSeason, c => hasCapability('owner', null, c)), noSeason);
     const hook = readCode('components/admin/kit/useAdminKitNav.ts');
     assert.match(hook, /const order = clubProgramOrder\(personClubShape\(club\.shape, canUse\)\);/, 'one place, the hook every surface shares');
     assert.match(readCode('components/admin/kit/club/MembersKit.tsx'), /runsHouseLeague=\{shape\.runsHouseLeague\}/);
@@ -361,5 +359,100 @@ describe('N9 · one row style', () => {
     assert.ok(stripAt > 0);
     assert.doesNotMatch(css.slice(0, stripAt), /\.railLinkActive::before/);
     assert.doesNotMatch(readCode(FREE_SHELL).slice(readCode(FREE_SHELL).indexOf('<nav className={styles.railNav}')), /size=\{17\}/);
+  });
+});
+
+/**
+ * ⚖ CLUB TIER STAGE 13i (owner 2026-11-06: Asks 1–3 and 5–9 = A, Ask 4 = B): places in the sidebar, pages on the page.
+ * N2, N3, N4, N7 and N11 as rewritten that day, and the phone parity the build owes (B7): for each of the five people the
+ * sidebar's places = the bar's tabs + the tiles + the sheet's rows, nothing twice, nothing missing — and the bar and the
+ * tiles are IDENTICAL to before 13i (the snapshot below was taken from the pre-Session-B code, 2026-11-06).
+ */
+describe('13i · places in the sidebar, pages on the page', () => {
+  const rail = readCode(ADMIN_RAIL);
+  const clubBody = rail.slice(rail.indexOf('export default function AdminKitRail('), rail.indexOf('function TournamentRail('));
+  const tourBody = rail.slice(rail.indexOf('function TournamentRail('));
+
+  it('N2: no club heading folds; a heading only over two or more rows (a lone row keeps the space, no word)', () => {
+    assert.doesNotMatch(clubBody, /groupHeader|aria-expanded|toggleGroup/, 'a club heading folds');
+    assert.match(clubBody, /const heading = placeGroupHeading\(group\);/);
+    assert.match(clubBody, /<div className=\{styles\.label\} aria-hidden=\{heading \? undefined : true\}>\{heading \?\? '\\u00a0'\}<\/div>/, 'the lone row’s heading space');
+    // The tournament's own groups still fold (Ask 8: tournament mode unchanged).
+    assert.match(tourBody, /onClick=\{\(\) => toggleGroup\(g\.key\)\}/);
+  });
+
+  it('N3: no chevron anywhere in the club body; the tournament group headings keep theirs', () => {
+    assert.doesNotMatch(clubBody, /<ChevronRight|styles\.chevron|opensPages/);
+    assert.match(tourBody, /<ChevronRight size=\{12\} className=\{`\$\{styles\.chevron\}\$\{open \? ` \$\{styles\.chevronOpen\}` : ''\}`\} aria-hidden \/>/);
+  });
+
+  it('N4: the foot as built, unchanged by 13i — Plan & billing first (its fee pill on it), Help, the other portal, then Collapse', () => {
+    const foot = rail.slice(rail.indexOf('<div className={styles.foot}>'), rail.indexOf('<SidebarStripTip'));
+    const at = ['billingLink.href', 'feeAlert && <WaitingCount', 'helpHref', 'coachDoor.href', '<CollapseSidebarRow'].map(m => foot.indexOf(m));
+    at.forEach((i, n) => assert.ok(i > 0 && (n === 0 || i > at[n - 1]), `foot order at ${n}`));
+  });
+
+  it('N7: the club sheet lists the sidebar’s places once — Organization one row — and You keeps Plan & billing', () => {
+    const sheet = readCode(ADMIN_SHEET);
+    assert.match(sheet, /const sheetGroups: SheetGroup\[\] = clubSheetGroups\(placeGroups, club\)\.map\(g => \(\{ \.\.\.g, heading: placeGroupHeading\(g\) \}\)\);/);
+    assert.match(sheet, /\{sheetGroups\.map\(group\)\}/);
+    assert.doesNotMatch(sheet, /orgPageLink|\.\.\.orgLinks|group\('Organization'/, 'Organization’s pages are sheet rows again');
+    const you = sheet.slice(sheet.indexOf('>You</div>'), sheet.indexOf('<MoreSheetFoot'));
+    assert.match(you, /id="admin-mob-billing"[\s\S]*feeAlert && <span className=\{`\$\{styles\.dropCount\} \$\{feeTone\}`\}/, 'Plan & billing and its fee pill left You');
+  });
+
+  it('N11: every place’s tab row is the shared HubTabBar, through one frame; Organization’s tabs never include Plan & billing', () => {
+    const frame = readCode('components/admin/kit/club/PlaceFrame.tsx');
+    assert.match(frame, /import HubTabBar, \{ type HubTab \} from '@\/components\/shared\/HubTabBar';/);
+    for (const f of ['RepTeamsFrame', 'TeamFrame', 'SeasonFrame', 'OrgFrame']) {
+      assert.match(readCode(`components/admin/kit/club/${f}.tsx`), /<PlaceFrame\b/, f);
+    }
+    for (const [, role] of CLUB_PEOPLE) {
+      const { orgLinks } = clubNavFor(role, RUNS_BOTH);
+      const tabs = orgTabs({ base: CLUB_BASE, orgLinks, showsBoard: showsOrgBoard({ role, orgLinks, isTeamWorkspace: false }) });
+      assert.ok(!tabs.some(t => t.href.includes('/org/billing')), `${role}: Plan & billing is an Organization tab`);
+    }
+  });
+
+  // The snapshot: each person's bar (after Overview) and tiles, read from the code BEFORE Session B changed anything.
+  const BEFORE: Record<string, { bar: string[]; tiles: string[] | null }> = {
+    'both owner': { bar: ['calendar', 'rep-teams', 'accounting'], tiles: ['schedules', 'house-league', 'families'] },
+    'both admin': { bar: ['calendar', 'rep-teams', 'accounting'], tiles: ['schedules', 'house-league', 'public-site'] },
+    'both league admin': { bar: ['calendar', 'house-league'], tiles: null },
+    'both registrar': { bar: ['calendar', 'house-league'], tiles: null },
+    'both treasurer': { bar: ['accounting'], tiles: null },
+    'neither owner': { bar: ['calendar', 'rep-teams', 'accounting'], tiles: ['schedules', 'families', 'public-site'] },
+    'neither admin': { bar: ['calendar', 'rep-teams', 'accounting'], tiles: null },
+    'neither league admin': { bar: ['calendar', 'house-league'], tiles: null },
+    'neither registrar': { bar: ['calendar', 'house-league'], tiles: null },
+    'neither treasurer': { bar: ['accounting'], tiles: null },
+  };
+
+  it('the phone parity: the sidebar’s places = the bar + the tiles + the sheet, nothing twice, nothing missing; the bar and tiles as before 13i', () => {
+    for (const [shapeName, shape] of [['both', RUNS_BOTH], ['neither', RUNS_NEITHER]] as const) {
+      for (const [name, role] of CLUB_PEOPLE) {
+        const who = `${shapeName} ${name}`;
+        const n = clubNavFor(role, shape);
+        const bar = n.phone.tabs.map(d => d.key);
+        const tiles = n.phone.tiles?.map(d => d.key) ?? null;
+        assert.deepEqual({ bar, tiles }, BEFORE[who], `${who}: the bar or the tiles moved`);
+        const sheet = [
+          ...(n.phone.schedulesRow ? [n.phone.schedulesRow.key] : []),
+          ...clubSheetGroups(n.groups, n.phone).flatMap(g => g.places.map(p => p.key)),
+        ];
+        const phone = ['overview', ...bar, ...(tiles ?? []), ...sheet];
+        assert.equal(new Set(phone).size, phone.length, `${who}: a place is reached twice on a phone (${phone.join(', ')})`);
+        assert.deepEqual([...phone].sort(), [...n.sidebarRows].sort(), `${who}: the phone and the sidebar reach different places`);
+      }
+    }
+  });
+
+  it('the owner’s sheet: the place rows are Tournaments (no heading), then Club: Public site, Organization — 19 entries become 14', () => {
+    const n = clubNavFor('owner', RUNS_BOTH);
+    const groups = clubSheetGroups(n.groups, n.phone);
+    assert.deepEqual(groups.map(g => [placeGroupHeading(g), g.places.map(p => p.key)]), [[null, ['tournaments']], ['Club', ['public-site', 'org']]]);
+    // Notifications 1 + tiles 3 + places 3 + You (Account, Home, Plan & billing) 3 + the foot (Help, Send feedback,
+    // Download app, Sign out) 4 = 14; before 13i the Organization group added its five pages and the Programs group was one.
+    assert.equal(1 + n.phone.tiles!.length + groups.flatMap(g => g.places).length + 3 + 4, 14);
   });
 });

@@ -5,8 +5,9 @@ import path from 'node:path';
 import {
   kitPrograms, kitOrgLinks, kitBillingLink, isKitLinkActive, isKitLinkActiveAmong, activeKitSection,
   clubProgramOrder, INTERIM_PROGRAM_ORDER, PROGRAM_CAPABILITY, accountingTabs, accountingTabFor, tournamentBarKeys,
-  familiesTabs, familiesTabFor, familiesChildHref, isFamiliesChildPage,
+  familiesTabs, familiesTabFor, familiesChildHref, isFamiliesChildPage, kitOrgPlace, litClubPlace, orgTabs, placeGroupHeading,
 } from '../../lib/admin-kit-nav.ts';
+import { clubNavFor, RUNS_BOTH, RUNS_NEITHER } from './_club-people.ts';
 import { TOUR_GROUPS } from '../../components/admin/admin-nav-config.ts';
 import { kitTournamentGroups } from '../../components/admin/kit/kit-tournament-groups.ts';
 import { readCode } from './_source-code.ts';
@@ -377,5 +378,87 @@ describe('the admin kit nav — one model, two navs', () => {
     assert.doesNotMatch(code, /opsByKey\.get\('check-in'\)/, 'Check-in is never a tab of the bar');
     assert.match(code, /opsByKey\.get\('chat'\) \?\? relabel\(opsByKey\.get\('communication'\), MESSAGES_TAB\)/, 'Messages takes Chat’s place (M6)');
     assert.match(code, /useChatUnread\(tournamentBar && chatInNav\)/, 'no Chat count where Chat is no door');
+  });
+});
+
+/**
+ * ══════════════════════════════════════════════════════════════════════════════════════════════
+ * ⚖ PLACES IN THE SIDEBAR (Club Tier Stage 13i Session B — Asks 1, 2 and 5 = A, Ask 4 = B, owner 2026-11-06; NAV_STANDARD
+ * N2, N3, N11). The club sidebar lists places only and never grows: the same rows on every screen, one lit — the place you
+ * are in, at any depth. The five people are read through the hook's own calls (`_club-people.ts`).
+ * ══════════════════════════════════════════════════════════════════════════════════════════════
+ */
+describe('13i · the club sidebar lists places only', () => {
+  const rows = (role: OrgRole, shape = RUNS_BOTH) => clubNavFor(role, shape).sidebarRows;
+
+  it('the place lists and their gates: owner 10, admin 9, league admin 4, registrar 4, treasurer 3', () => {
+    assert.deepEqual(rows('owner'), ['overview', 'calendar', 'schedules', 'rep-teams', 'house-league', 'tournaments', 'accounting', 'families', 'public-site', 'org']);
+    assert.deepEqual(rows('admin'), ['overview', 'calendar', 'schedules', 'rep-teams', 'house-league', 'tournaments', 'accounting', 'public-site', 'org'], 'no Families: an explicit grant only');
+    assert.deepEqual(rows('league_admin'), ['overview', 'calendar', 'house-league', 'org']);
+    assert.deepEqual(rows('league_registrar'), ['overview', 'calendar', 'house-league', 'org']);
+    assert.deepEqual(rows('treasurer'), ['overview', 'accounting', 'org']);
+  });
+
+  it('the groups: Programs (Rep teams, House league, Tournaments), then Also on your plan, then Club with Organization last', () => {
+    const owner = clubNavFor('owner', RUNS_BOTH).groups.map(g => [g.key, g.places.map(p => p.key)]);
+    assert.deepEqual(owner, [['programs', ['rep-teams', 'house-league', 'tournaments']], ['club', ['accounting', 'families', 'public-site', 'org']]]);
+    const notYet = clubNavFor('owner', RUNS_NEITHER).groups.map(g => [g.key, g.places.map(p => p.key)]);
+    assert.deepEqual(notYet, [['programs', ['rep-teams']], ['also', ['house-league', 'tournaments']], ['club', ['accounting', 'families', 'public-site', 'org']]]);
+  });
+
+  it('a heading over two or more rows; a lone row keeps its space with no word; "Also on your plan" always said', () => {
+    const headings = (role: OrgRole, shape = RUNS_BOTH) => clubNavFor(role, shape).groups.map(placeGroupHeading);
+    assert.deepEqual(headings('owner'), ['Programs', 'Club']);
+    assert.deepEqual(headings('league_registrar'), [null, null], 'House league and Organization, each alone');
+    assert.deepEqual(headings('treasurer'), ['Club'], 'Accounting and Organization');
+    assert.deepEqual(headings('admin', RUNS_NEITHER), [null, 'Also on your plan', 'Club'], 'Rep teams alone; the quiet group is named');
+  });
+
+  it('one lit row at any depth: Rep teams on a team’s Roster, House league on a season’s Registrations, Organization on Audit log', () => {
+    const billing = kitBillingLink({ orgSlug: 'demo-club', planId: 'club', role: 'owner', capabilities: null });
+    const lit = (p: string) => litClubPlace(`${BASE}${p}`, BASE, billing);
+    assert.equal(lit('/rep-teams/teams/t1/roster'), 'rep-teams');
+    assert.equal(lit('/rep-teams/assistant-coaches'), 'rep-teams');
+    assert.equal(lit('/house-league/seasons/s1/registrations'), 'house-league');
+    assert.equal(lit('/org/members/audit'), 'org');
+    assert.equal(lit('/org/board'), 'org');
+    assert.equal(lit('/accounting/teams/t1'), 'accounting');
+    assert.equal(lit('/calendar'), null, 'Calendar lights its own row, no place');
+    assert.equal(lit(''), null, 'Overview lights its own row');
+    // ⚖ Ask 4 = B: Plan & billing lives under /org but is no Organization tab — its foot row is the lit one, no place.
+    assert.ok(billing && billing.href.startsWith(`${BASE}/org/`), 'the club plan’s billing page is under Organization’s address');
+    assert.equal(lit('/org/billing'), null);
+    assert.equal(litClubPlace(`${BASE}/org/billing`, BASE, null), 'org', 'a person with no billing door: the address alone');
+  });
+
+  it('LEAD_ORDER is unchanged: the groups are a map beside it, so no club’s phone bar or tiles move (N10)', () => {
+    assert.deepEqual(clubProgramOrder(RUNS_BOTH).lead, ['rep-teams', 'house-league', 'accounting', 'families', 'public-site', 'tournaments']);
+    const nav = readCode('lib/admin-kit-nav.ts');
+    assert.match(nav, /const LEAD_ORDER: readonly AdminProgramKey\[\] = \[\n  'rep-teams', 'house-league', 'accounting', 'families', 'public-site', 'tournaments',\n\];/);
+    assert.match(nav, /const PLACE_GROUP: Record<AdminProgramKey, 'programs' \| 'club'> = \{/);
+  });
+
+  it('the rail and the sheet read the one list of places; nothing renders under a row', () => {
+    const rail = readCode('components/admin/kit/AdminKitRail.tsx');
+    assert.match(rail, /\{placeGroups\.map\(group => \{/);
+    assert.doesNotMatch(rail, /clubPlaceGroups\(/, 'the rail builds its own list of places');
+    assert.doesNotMatch(readCode('components/admin/kit/AdminKitBottomNav.tsx'), /clubPlaceGroups\(/, 'the sheet builds its own list of places');
+    assert.match(rail, /active=\{litPlace === place\.key\}/, 'one lit row: the place you are in');
+    assert.doesNotMatch(rail, /RepTeamBlock|SeasonBlock|repTeamPages|seasonPages|\.pages\.map|programOpen|useRailTeam/, 'a row opens pages under it again');
+    assert.ok(!existsSync(path.join(process.cwd(), 'components/admin/kit/useRailTeam.ts')), 'the rail’s team name store is back');
+    const hook = readCode('components/admin/kit/useAdminKitNav.ts');
+    assert.match(hook, /const placeGroups = tournamentOnly \|\| isCanceled \? \[\] : clubPlaceGroups<KitLink>\(\{\s*programs, alsoOnPlan, organization: kitOrgPlace\(\{ base, orgLinks, tournamentOnly \}\),\s*\}\);/);
+    assert.match(hook, /const litPlace = litClubPlace\(pathname, base, billingLink\);/);
+  });
+
+  it('Organization is one place; its pages are its tabs, never Plan & billing (Ask 4 = B)', () => {
+    const owner = clubNavFor('owner', RUNS_BOTH);
+    assert.deepEqual(owner.orgPlace, { key: 'org', label: 'Organization', href: `${BASE}/org`, icon: owner.orgPlace!.icon });
+    const tabs = orgTabs({ base: BASE, orgLinks: owner.orgLinks, showsBoard: false });
+    assert.deepEqual(tabs.map(t => t.label), ['Members', 'Audit log', 'Settings', 'Venue library', 'PDF settings']);
+    assert.ok(!tabs.some(t => t.id === 'org/billing' || /billing/i.test(t.href)), 'Plan & billing became an Organization tab');
+    assert.equal(kitOrgPlace({ base: BASE, orgLinks: [], tournamentOnly: false }), null, 'no tabs to hold, no place');
+    assert.equal(kitOrgPlace({ base: BASE, orgLinks: owner.orgLinks, tournamentOnly: true }), null, 'tournament-only: the flat Account list');
+    assert.deepEqual(kitOrgLinks({ base: BASE, role: 'owner', isCanceled: true, canSeeMembers: true, hasVenueLibrary: true }), [], 'a cancelled club has no Organization links, so no place');
   });
 });

@@ -20,7 +20,7 @@ import { useTournament } from '@/lib/tournament-context';
 import { isTournamentOnlyWorkspace } from '@/lib/module-entitlements';
 import { hasBillingAccess } from '@/lib/roles';
 import type { FeesOwed } from '@/lib/fee-invoice-alert';
-import type { AdminProgramKey, ClubShape } from '@/lib/admin-kit-nav';
+import { isAdminProgramKey, repTeamsTabs, type AdminProgramKey, type ClubShape } from '@/lib/admin-kit-nav';
 
 export type BriefKey = 'tryoutApplications' | 'paymentRequests' | 'installmentsDue' | 'assistantCoaches' | 'familyDuplicates' | 'familyChildDuplicates' | 'leagueRegistrations';
 
@@ -136,15 +136,24 @@ export function briefPageCount(brief: ClubBrief | null, pageKey: string): number
 
 /**
  * ⚖ Payment requests count on ACCOUNTING since Club Tier Stage 3a (Ask 2: the requests moved there,
- * and "Rep Teams' waiting count drops the requests"). Accounting has no rail pages, so its row carries
- * the number itself — inside the program too.
+ * and "Rep Teams' waiting count drops the requests"). ⚖ N9 (Club Tier Stage 13i): a place's row carries the sum of its
+ * tabs' counts, at every depth — Rep teams' is computed from its own tab list, so a tab that gains a count is summed.
  */
 export function briefProgramCount(brief: ClubBrief | null, programKey: AdminProgramKey): number {
-  if (programKey === 'rep-teams') return briefPageCount(brief, 'rt-assistant-coaches');
+  if (programKey === 'rep-teams') return REP_TEAMS_TAB_IDS.reduce((n, id) => n + briefPageCount(brief, id), 0);
   // Families' Duplicates tab is two halves (parents, children — Stage 14 S6): the row wears their sum.
   if (programKey === 'families') return familyDuplicatesTotal(brief);
   const key = PROGRAM_COUNT[programKey];
   return key ? brief?.counts[key] ?? 0 : 0;
+}
+
+/** Rep teams' tab ids (the address part plays no role in a count). */
+const REP_TEAMS_TAB_IDS = repTeamsTabs('').map(t => t.id);
+
+/** A club place's waiting count — a program's (`briefProgramCount`), or 0 for Organization, whose tabs carry none. The
+ *  sidebar's place rows and the phone's tabs, tiles and sheet rows all read this one. */
+export function briefPlaceCount(brief: ClubBrief | null, placeKey: string): number {
+  return isAdminProgramKey(placeKey) ? briefProgramCount(brief, placeKey) : 0;
 }
 
 /** A program that is one page with tabs carries its waiting tab's count on its rail row: Accounting its Payment

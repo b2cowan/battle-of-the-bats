@@ -187,8 +187,7 @@
   text-transform: uppercase;
   color: var(--text-tertiary);
 }
-/* A block inside the menu — the team you are in takes the program's olive, as its label does in the
-   full sidebar (`.subLabelTeam`). */
+/* A block inside the menu (the Premium coach list's "No live season"). */
 .menuSub {
   padding: 9px 10px 4px;
   font-size: var(--type-label);

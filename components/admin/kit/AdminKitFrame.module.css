@@ -92,8 +92,6 @@
   color: var(--blueprint-light);
   font-weight: 600;
 }
-/* A program's own row: the program you are in reads as the place you are, even on a sub-page. */
-.programOpen { color: var(--text-primary); font-weight: 600; }
 /* A program's pages, indented to its name (1.25rem gutter + the 14px icon + the 0.5rem gap). */
 .sub { padding-left: calc(1.25rem + 14px + 0.5rem); font-size: var(--type-support); }
 /* The team / season block inside a program (today's rail's "Team" and "Season" sections). A heading too, so the
@@ -106,23 +104,8 @@
   color: var(--text-tertiary);
   padding: 0.6rem 1.25rem 0.2rem calc(1.25rem + 14px + 0.5rem);
 }
-/* The team block's label is the TEAM's name (Club Tier Stage 2, specimen 2's rail) — read, not a
-   category word, so it keeps its own case and takes the program's olive. */
-.subLabelTeam { text-transform: none; letter-spacing: 0.02em; font-size: var(--type-label); color: var(--home-olive); }
 .chevron { margin-left: auto; opacity: 0.55; flex-shrink: 0; transition: transform 0.2s ease; }
 .chevronOpen { transform: rotate(90deg); }
-/* Inside a house-league season (Club Tier Stage 9a, 9a·2): House league's rows and the season's block are set in under the
-   program, one line beside them — the drawn block. Its rows keep their own indent less the inset, so names line up.
-   (After `.subLabel` and `.sub`, whose own rules a guard reads first.) */
-.seasonBlock {
-  margin-left: calc(1.25rem + 7px);
-  border-left: 2px solid var(--home-line-strong);
-  display: flex;
-  flex-direction: column;
-}
-.seasonBlock .sub,
-.seasonBlock .subLabel { padding-left: calc(14px + 0.5rem - 2px); }
-.seasonBlock .switcher { padding-left: 0.6rem; }
 
 /* A waiting count on a door (today's worklist badge), the coach rail's folded-count weight. */
 .count {
@@ -149,12 +132,9 @@
   background: rgba(var(--danger-rgb), 0.11);
   border-color: rgba(var(--danger-rgb), 0.32);
 }
-/* ⚠ Not after an open program's hidden count (`countWhenOpen`, below): a `display: none` sibling is still a sibling,
-   and the chevron would leave the row's right edge in the FULL sidebar (/review, Sidebar Strip Stage 2). */
-.count:not(.countWhenOpen) + .chevron { margin-left: 0.25rem; }
-/* An open program's own count: its pages carry it in the full sidebar, so only the strip (whose pages are
-   in the menu) shows it on the icon. */
-.countWhenOpen { display: none; }
+/* The chevron after a count keeps a hair of space from it — the support console's folded heading (its sum pill, then its
+   chevron) wears this sheet. No club row carries a chevron since 13i (N3). */
+.count + .chevron { margin-left: 0.25rem; }
 
 /* A tournament group heading — the coach rail's collapsible heading, button and all (the
    tournament rail's groups DO collapse, today and here; the club's programs do not). */
@@ -252,14 +232,7 @@
     border-radius: 8px;
   }
   :global(html[data-sidebar='strip']) .item svg { width: 18px; height: 18px; }
-  /* The program you are in is lit — its pages are in its menu, so the icon is where you are. */
-  :global(html[data-sidebar='strip']) .programOpen {
-    background: rgba(var(--blueprint-blue-rgb), 0.1);
-    color: var(--blueprint-light);
-  }
-  :global(html[data-sidebar='strip']) .countWhenOpen { display: inline-flex; }
   :global(html[data-sidebar='strip']) .sub,
-  :global(html[data-sidebar='strip']) .seasonBlock,
   :global(html[data-sidebar='strip']) .subLabel,
   :global(html[data-sidebar='strip']) .switcher,
   :global(html[data-sidebar='strip']) .groupHeader,

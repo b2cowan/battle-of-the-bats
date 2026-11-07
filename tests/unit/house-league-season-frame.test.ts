@@ -89,11 +89,14 @@ describe('2 · the frame is wired', () => {
     const hook = readCode('components/admin/kit/useHouseLeagueSeasons.ts');
     assert.match(hook, /\(d\.seasons \?\? \[\]\)\.map\(\(\{ season: s, pendingReviewCount \}\)/, 'reads the summaries’ season');
     assert.match(hook, /useSyncExternalStore\(/, 'one shared list per page, not one request per reader');
+    // ⚖ 13i Session B (owner 2026-11-06): the rail lists places only — no season block, no season switcher. The season's
+    // frame reads the same shared list (its title's switch) and lists the pages the gate opens (its tab row).
     const rail = readCode('components/admin/kit/AdminKitRail.tsx');
-    assert.match(rail, /from '\.\/useHouseLeagueSeasons'/);
-    assert.doesNotMatch(rail, /function useHouseLeagueSeasons/, 'the rail grew its own season fetch again');
-    assert.match(rail, /seasonPagesFor\(access\)/, 'the rail lists the pages the gate opens');
-    assert.match(rail, /seasons\.some\(s => s\.id === seasonId\) && \(/, 'the switcher shows whenever the season is in the list');
+    assert.doesNotMatch(rail, /useHouseLeagueSeasons|seasonPagesFor|SeasonBlock|hl-season-select/, 'the rail grew a season block again');
+    const seasonFrame = readCode('components/admin/kit/club/SeasonFrame.tsx');
+    assert.match(seasonFrame, /from '\.\.\/useHouseLeagueSeasons'/);
+    assert.doesNotMatch(seasonFrame, /function useHouseLeagueSeasons/, 'the frame grew its own season fetch');
+    assert.match(seasonFrame, /seasonTabs\(seasonPath, access\)/, 'the tab row lists the pages the gate opens');
   });
   // ⚖ Club Tier Stage 13i (A4, owner 2026-11-06): a season is a place. Its frame draws the one header and the tab row on a
   // desk and a phone alike; the phone's season card and pill strip (`SeasonPhoneFrame`) retired, its switch moved to the title.

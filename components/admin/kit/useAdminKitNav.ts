@@ -16,7 +16,7 @@ import { hasOrgVenueLibrary } from '@/lib/plan-features';
 import { isTournamentTier } from '@/lib/billing-urls';
 import { useCurrentOrgCoachAccess, coachDoorFor } from '@/lib/use-current-org-coach-access';
 import { useIsSandbox } from '@/components/sandbox/SandboxProvider';
-import { kitPrograms, kitOrgLinks, kitBillingLink, activeKitSection, clubProgramOrder, personClubShape, kitCalendarLink, kitSchedulesLink } from '@/lib/admin-kit-nav';
+import { kitPrograms, kitOrgLinks, kitBillingLink, activeKitSection, clubProgramOrder, personClubShape, kitCalendarLink, kitSchedulesLink, kitOrgPlace, litClubPlace, clubPlaceGroups, type KitLink } from '@/lib/admin-kit-nav';
 import { kitTournamentGroups } from './kit-tournament-groups';
 import { useClubBrief } from './club/ClubBriefProvider';
 
@@ -90,6 +90,13 @@ export function useAdminKitNav() {
   }).map(g => ({ ...g, items: g.items.map(i => ({ ...i, href: i.href ?? `${base}/tournaments/${i.key}` })) }));
 
   const section = activeKitSection(pathname, base);
+  // ⚖ 13i Session B: the club's places in their groups (Organization one place, its pages its tabs), built ONCE — the
+  // sidebar and the More sheet read this list. None for a tournament-only organization (its flat Account list) or a
+  // cancelled club. One club row is lit: the place you are in at any depth, none on Plan & billing's page (its foot row).
+  const placeGroups = tournamentOnly || isCanceled ? [] : clubPlaceGroups<KitLink>({
+    programs, alsoOnPlan, organization: kitOrgPlace({ base, orgLinks, tournamentOnly }),
+  });
+  const litPlace = litClubPlace(pathname, base, billingLink);
   const onTournaments = pathname.startsWith(`${base}/tournaments`);
   // The guide for where you are — the sidebar's foot and the phone's More sheet open the same one (N7: Help on every
   // sheet), in a new tab.
@@ -115,12 +122,13 @@ export function useAdminKitNav() {
     /** A one-team workspace (Organization's frame leaves its staff page as it was — Club Tier Stage 13i, Ask 9). */
     isTeamWorkspace,
     orgLinks,
+    placeGroups,
+    litPlace,
     billingLink,
     calendarLink,
     schedulesLink,
     coachDoor,
     tournamentGroups,
-    section,
     onTournaments,
   };
 }

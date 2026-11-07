@@ -36,7 +36,6 @@ import { useScheduleOpensOnToday } from '@/components/coaches/useScheduleOpensOn
 import {
   EmptyCard, LoadFailed, PageLoading, repKit, TwoOpenNote, useDeferredLoad, useLatestRead,
 } from '@/components/admin/kit/club/RepKit';
-import { usePublishRailTeam } from '@/components/admin/kit/useRailTeam';
 import { teamHeadOf, usePublishTeamHead } from '@/components/admin/kit/club/TeamFrame';
 import { EVENT_LABELS, SCRIMMAGE_LABEL } from '@/lib/coach-schedule-vocab';
 import { mondayOfDay, tournamentToday } from '@/lib/timezone';
@@ -109,7 +108,6 @@ export default function TeamSchedulePage({ params }: { params: Promise<{ orgSlug
 
   const team = read?.team ?? null;
   usePageTitle(team ? `Schedule · ${team.name}` : 'Schedule');
-  usePublishRailTeam(teamId, team?.name);
   usePublishTeamHead(teamId, read ? teamHeadOf(read.team, read.programYears) : null);
   const season = useMemo(() => (read ? liveSeasonOf(read.programYears) ?? latestClosedSeasonOf(read.programYears) : null), [read]);
   const record = seasonRecordOf(events);
