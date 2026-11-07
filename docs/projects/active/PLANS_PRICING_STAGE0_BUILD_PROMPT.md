@@ -726,8 +726,8 @@ anchor (date, commit, walk §), never deletes it.
     The target reconciles against `PLAN_PRICING_FACTS.md`; where they disagree that is drift, flagged, not a new number.
   - [x] **O12a-results · First audits 2026-11-06** (live by the owner, test by Claude; detail in `BUSINESS_DECISIONS.md`): live prices all match;
     live needs ten events added: the four dispute/refund events plus `payment_method.attached`/`.detached` and four fee-invoice events (the audit's list was missing those six; it is now 17 and matches the setup guide's Step 5),
-    the Premium Coaches Portal product renamed, the four retired prices deleted (zero workspaces on them in production), and two lookup keys
-    set; test also has a League yearly slot pointing at a monthly price (and one extra, harmless invoice event).
+    the Premium Coaches Portal product renamed, and the four retired prices deleted (zero workspaces on them in production); lookup keys are not part of the target
+    (the audit stopped checking them, owner 2026-11-06); test also has a League yearly slot pointing at a monthly price (and one extra, harmless invoice event).
   - [ ] **O12b · Test cleanup done and audited**, then **live matched** (ticks O3), then **end-to-end done** (ticks O6).
 - [ ] **O13 · Deadline and tripwire for O12, ruled 2026-11-06 (owner, agreeing).** *Deadline:* all of O12 is done **before Club goes on
   sale** (the owner's own 2026-11-03 line; not "when the projects are done", which has no date). *Tripwire:* **the first real paying

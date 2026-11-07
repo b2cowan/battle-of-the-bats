@@ -44,6 +44,15 @@ tax registrations**, all 14 prices `tax_behavior: unspecified`, every product `t
    `exclusive`, every product `txcd_10103001`. Re-count production subscriptions (Ask 7): any sale made before the registration was
    added was untaxed and its GST/HST is owed by us.
 
+**DONE 2026-11-06 (owner, live account; read-only audit `stripe-live-2026-11-06-after-registration.json`):** Canada registration added
+("I've already registered", **standard**, start 2026-11-06 20:17 UTC, no end date; audit: 1 registration, `active`); default tax
+behaviour now **exclusive** (set by Stripe's setup wizard, was "Automatic"); preset SaaS business use (`txcd_10103001`) unchanged; automatic
+tax on for Dashboard-made invoices; the owner's GST/HST number added to the invoice template as the default (owner-confirmed; the number
+ends 002, correct for the account; a printed live invoice or credit note not yet seen). Four unused add-on prices (Additional Rep Team,
+Coaches Portal Org Add-on, monthly + yearly) were archived by the owner the same day: 14 → 10 prices, no code or env reference to them
+(grep). The Locations page still showed "Needs attention" after setup (page data was 20 hours old); filing is "I'll file myself". Still owed:
+re-count production subscriptions made before 2026-11-06 (untaxed, tax owed by us), and re-run the audit at the promote.
+
 **Leave alone:** the 14 live prices. They follow the default; setting each to exclusive gains nothing and cannot be undone.
 
 **Check before the first live invoice (Part 7 walk, W9):** the live account's public business details (name, Ontario address) and that

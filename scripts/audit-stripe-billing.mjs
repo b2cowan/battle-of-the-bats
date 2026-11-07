@@ -39,7 +39,7 @@ Usage:
 
 Checks (against the target in BUSINESS_DECISIONS.md, 2026-11-06 "Stripe set-up order"):
   - Supabase stripe_prices live/sandbox rows
-  - Stripe price active status, amount, CAD currency, recurring interval, lookup key (five paid plans, monthly + yearly)
+  - Stripe price active status, amount, CAD currency, recurring interval (five paid plans, monthly + yearly)
   - Retired plans (team add-on, rep team) are gone (archived is accepted where Stripe refuses a delete)
   - Active prices that no slot uses (leftovers to archive)
   - Stripe product active status and product-name sanity
@@ -112,18 +112,18 @@ function names(planId) {
 }
 
 const EXPECTED_PRICE_SLOTS = [
-  slot('team', 'monthly', 2900, 'flhq_team_monthly_live', names('team')),
-  slot('team', 'annual', 29000, 'flhq_team_annual_live', names('team')),
-  slot('tournament_plus', 'monthly', 3900, 'flhq_tournament_plus_monthly_live', names('tournament_plus')),
-  slot('tournament_plus', 'annual', 39000, 'flhq_tournament_plus_annual_live', names('tournament_plus')),
-  slot('league', 'monthly', 8900, 'flhq_league_monthly_live', names('league')),
-  slot('league', 'annual', 89000, 'flhq_league_annual_live', names('league')),
+  slot('team', 'monthly', 2900, names('team')),
+  slot('team', 'annual', 29000, names('team')),
+  slot('tournament_plus', 'monthly', 3900, names('tournament_plus')),
+  slot('tournament_plus', 'annual', 39000, names('tournament_plus')),
+  slot('league', 'monthly', 8900, names('league')),
+  slot('league', 'annual', 89000, names('league')),
   // Club repriced $179 -> $219 / $1,790 -> $2,190 on 2026-06-22 (Club Repackaging); live prices wired 2026-06-24.
-  slot('club', 'monthly', 21900, 'flhq_club_monthly_live', names('club')),
-  slot('club', 'annual', 219000, 'flhq_club_annual_live', names('club')),
+  slot('club', 'monthly', 21900, names('club')),
+  slot('club', 'annual', 219000, names('club')),
   // The upper Club band, public name "Club · Association" (internal key club_large; slots seeded by migration 146).
-  slot('club_large', 'monthly', 37900, 'flhq_club_large_monthly_live', names('club_large')),
-  slot('club_large', 'annual', 379000, 'flhq_club_large_annual_live', names('club_large')),
+  slot('club_large', 'monthly', 37900, names('club_large')),
+  slot('club_large', 'annual', 379000, names('club_large')),
 ];
 
 // RETIRED plans: the per-team meter and the org-billed team add-on ended with Club Repackaging (2026-06-22). Owner 2026-11-06: nobody
@@ -136,16 +136,13 @@ const RETIRED_PRICE_SLOTS = [
   ['rep_team', 'annual'],
 ];
 
-function slot(planId, billingCycle, unitAmount, liveLookupKey, productNames) {
+function slot(planId, billingCycle, unitAmount, productNames) {
   return {
     planId,
     billingCycle,
     unitAmount,
     currency: 'cad',
     interval: billingCycle === 'annual' ? 'year' : 'month',
-    lookupKey: environment === 'live'
-      ? liveLookupKey
-      : liveLookupKey.replace(/_live$/, '_sandbox'),
     productNames,
   };
 }
@@ -289,10 +286,6 @@ async function auditPrices(stripe, dbRows) {
         ));
       }
 
-      if (price.lookup_key !== expected.lookupKey) {
-        checks.push(check('WARN', 'prices', label, `${row.price_id} lookup_key is ${price.lookup_key ?? 'blank'}; expected ${expected.lookupKey}.`));
-      }
-
       if (product && !product.active) {
         checks.push(check('FAIL', 'products', label, `${product.id} is inactive.`));
       }
@@ -376,7 +369,7 @@ async function auditStrayPrices(stripe, dbRows) {
       'WARN',
       'prices',
       price.id,
-      `Active price not used by any slot: "${productName}", ${amount} ${String(price.currency).toUpperCase()} / ${interval}, lookup key ${price.lookup_key ?? 'none'}. Archive it, or add its plan to the target.`,
+      `Active price not used by any slot: "${productName}", ${amount} ${String(price.currency).toUpperCase()} / ${interval}. Archive it, or add its plan to the target.`,
     ));
   }
   if (stray === 0) {

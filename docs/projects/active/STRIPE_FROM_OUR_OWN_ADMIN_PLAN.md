@@ -151,6 +151,12 @@ in this list the owner has not yet ruled.
 - To be taken on **at the end of the Plan & billing project** (this replaces open question C in that plan, which had left an
   in-app invoice list out of scope).
 
+**A2 (owner, 2026-11-06, Stripe branding pass Q-S2). Our own emails replace Stripe's, one by one.** Until they exist, Stripe
+sends only receipts and expiring-card warnings; its renewal reminder is off and its trial-ending and failed-payment emails
+are off (ours are sent). This program builds our own **receipt**, **card-expiring** and **renewal-reminder** emails; switch
+each Stripe email off the day ours ships, and re-add a renewal-reminder promise to the Terms only with the timing ours
+sends. Record: `docs/projects/active/STRIPE_BRANDING_PASS.md` Q-S2.
+
 **B. A larger effort, possibly combined with A: stop navigating Stripe's dashboards by hand.**
 - Build in the **platform admin** the things that update Stripe through the integration, as workflows that make sense to us.
   The Stripe dashboards hold far more than we use and are hard to navigate.

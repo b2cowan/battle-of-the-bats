@@ -1,0 +1,226 @@
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Failed Payment Notice Walk</title><style>
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+
+.stop { border-left: 4px solid var(--warn); }
+.step.opt { flex-direction: column; gap: 4px; }
+.step .optrow { display: flex; gap: 10px; align-items: flex-start; }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · Plans & pricing Stage 2 · Part 2</span>
+    <h1>The failed-payment notice on a club’s Money tab</h1>
+    <p class="sub">Written 2026-11-06. One purpose: when a club’s payment has failed, the platform admin opens the club’s Money tab and is told, at the top, what is owed, why the bank refused it, how many times Stripe has tried and when it tries next, and every number agrees with Stripe’s own page. Read only: nothing on this tab can charge, refund or change anything.</p>
+  </header>
+
+  <section class="card">
+    <h2>What this walk is for</h2>
+<p>Before this change the Money tab showed a failed payment only as a row in the charges list, and its “Stripe and our record agree” line could read like an all-clear while a bill sat unpaid. Now the tab opens with a notice built from what Stripe already reports about the bill. This walk makes a payment fail on a test card, then checks the notice, the bill’s window and the sales row against Stripe’s invoice page, checks that only the roles that read Stripe see it, and checks that it goes when the club pays.</p>
+<p><strong>The yardstick is Stripe, not a figure in this page.</strong> Amounts, dates and tries change every run, so every step compares the site with what you wrote down from Stripe.</p>
+<div><strong>It passes when</strong></div>
+<ul>
+  <li>The notice is the first thing on the tab, above the agree line, and its amount, reason, tax, tries and next try each match Stripe’s invoice and charge pages.</li>
+  <li>No total is ever printed (never “of 4”), and “no further try scheduled” appears only when Stripe shows no next attempt.</li>
+  <li>“See the bill” opens the bill’s window with a Tries line that repeats the notice; the sales row’s second line agrees.</li>
+  <li>Support sees the same notice; Product, who does not read Stripe, sees none; a club with nothing in Stripe shows none and no error.</li>
+  <li>After the invoice is paid and the tab is read again, the notice is gone.</li>
+</ul>
+  </section>
+
+  <section class="card">
+    <h2>Before you start</h2>
+    <p>Setup, not checked. Keep this page private: it holds dev passwords.</p>
+    <dl class="facts"><dt>Where</dt><dd>Parts B to F run on your local site, <strong>http://localhost:3000</strong> (the dev server is up), because that is where this change lives. Building the failing club (Part A) uses the dev site <strong>https://dev.fieldlogichq.ca</strong> as Walk 3 describes. Both share the same dev database and the same Stripe sandbox.</dd><dt>Also open</dt><dd>The <strong>Stripe dashboard</strong>, sandbox “FieldLogicHQ sandbox”, in test mode: you read the invoice and the charge there.</dd><dt>Windows</dt><dd>One normal window for the platform admin. Part D needs a <strong>private window per role</strong>.</dd><dt>Time</dt><dd>About 25 minutes if the failing club already exists; Walk 3 Parts A and B first if it does not.</dd></dl>
+  </section>
+
+  <section class="card">
+    <h2>Sign in as</h2>
+    <dl class="facts"><dt>Platform admin</dt><dd><code>uat-platform@fieldlogichq.ca</code> · <code>UATPassword2026!</code> at <strong>http://localhost:3000/platform-admin/login</strong></dd><dt>Support</dt><dd><code>support@dev.local</code> · <code>devpass123</code> (Part D, same login address)</dd><dt>Product</dt><dd><code>product@dev.local</code> · <code>devpass123</code> (Part D, same login address). This role does not read Stripe.</dd><dt>The club</dt><dd>The one you build or reuse in Part A, for example <code>Dunning Walk Org</code>. For another run, Walk 3 uses a new address such as <code>+owner2</code>.</dd></dl>
+    <p class="sub">Dev-only accounts. If a sign-in is refused, stop and tell me.</p>
+  </section>
+
+  <section class="card stop">
+    <h2>Stop check</h2>
+    <p><strong>Parts A to E read only.</strong> Part A (if you build the club) and Part F (paying the invoice) write to the Stripe sandbox. Nothing here touches production. Part F is last on purpose: once the bill is paid, the notice you came to see is gone. To put a Walk 3 club back on the free plan afterwards, use Walk 3 Part G.</p>
+  </section>
+
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+
+  <section class="card">
+    <h2>Not in this walk</h2>
+<ul>
+  <li><strong>“Was due to try again … Read again”.</strong> It needs a retry date that has already passed, which takes days in Stripe’s sandbox. The wording is covered by the automatic tests.</li>
+  <li><strong>“The bank said not to try this card again”.</strong> The test card 0341 is a generic decline and may not carry that advice from the bank, so it is not produced here. The wording (“runs only on a new card”) is covered by the automatic tests.</li>
+  <li><strong>Two failed bills at once</strong> (the “Show them” button and “1 more bill is unpaid too”). It needs a second failing bill on the same club.</li>
+  <li><strong>A card that needs its holder to confirm</strong> (a bill with no failed charge). Stripe’s sandbox does not produce it from the site’s checkout.</li>
+  <li><strong>Stripe could not be read.</strong> The amber “waiting” line is not forced here.</li>
+  <li><strong>A phone.</strong> Computer only.</li>
+</ul>
+  </section>
+</main>
+
+<script>
+(function () {
+  var DATA = {"key":"plans-pricing-stage2-part2-walk-v1","title":"Plans & pricing Stage 2 Part 2: the failed-payment notice on the Money tab","parts":[{"id":"A","title":"A club whose payment failed (stop check)","steps":[{"who":"You · Stripe dashboard (sandbox, test mode) › Customers","do":"Get a club whose payment has failed. Easiest: run Walk 3, “A payment fails and the club recovers”, Parts A and B only. It builds a throwaway club on the test card 4000 0000 0000 0341 and ends the trial in Stripe so the first charge fails. If “Dunning Walk Org” from that walk still exists and was not put back (Walk 3 Part G), use it. Write down the club’s name.","see":"In Stripe, the club’s customer has one subscription with status Past due, and its latest invoice is unpaid and shows one failed payment attempt on the card ending 0341. STOP HERE if it says Active, Cancelled or Incomplete: nothing below can play.","options":["Past due, one failed attempt on 0341, invoice unpaid","It is not that. Say what Stripe shows in the notes, and stop"]},{"who":"You · Stripe dashboard › that invoice","do":"Open the unpaid invoice and write down three facts from Stripe’s own page: the amount due, whether it shows tax (and how much), and its “Next payment attempt” (a date, or nothing).","see":"You have the three facts on paper. They are the yardstick for Part B. This walk never quotes a figure, because dates and amounts change from run to run. It checks the site against Stripe."},{"who":"Platform admin · normal window · http://localhost:3000/platform-admin/login","do":"Sign in as the platform admin (card above). Open Clubs & portals, find the club by name, open it, then open the Money tab.","see":"A “Test mode” chip and a line “Read from Stripe at …”. STOP HERE if the tab says Stripe could not be read: tell me, and nothing below can play."}]},{"id":"B","title":"The notice at the top of the Money tab","steps":[{"who":"Platform admin · the club’s Money tab","do":"Look at the very top of the tab, before anything else.","see":"A warning callout comes first, ABOVE the line that says whether Stripe and our record agree. That line is still there underneath; the notice does not replace it. The callout starts with bold words: “The (day) payment of $… failed”."},{"who":"Platform admin · the notice","do":"Compare the amount in the bold words with the amount due you wrote down in A2.","see":"The same amount: what is still owed on the bill.","options":["Same amount","Different. Write both amounts in the notes"]},{"who":"Platform admin · the notice","do":"Read the reason straight after the amount, after the colon. Open the failed charge in Stripe if you want to see the decline reason there.","see":"The bank’s reason in plain words. The test card 0341 is refused as a generic decline, so expect “card declined”.","options":["It reads “card declined”","It reads another plain reason. Write it in the notes","It reads only “not paid” (no reason named). Say what Stripe’s charge page shows"]},{"who":"Platform admin · the notice","do":"Look for a sentence beginning “It includes … tax.” and compare it with the tax you wrote down in A2.","see":"The sentence appears only when Stripe’s invoice shows tax, with the same figure. No tax on the invoice means no such sentence.","options":["Invoice has tax and the notice shows the same figure","Invoice has no tax and the notice has no tax sentence","They disagree. Say how in the notes"]},{"who":"Platform admin · the notice","do":"Read the sentence that starts “Stripe has tried …”. Count the failed attempts on the invoice in Stripe.","see":"One failed attempt reads “Stripe has tried once”, two reads “twice”. It never prints a total such as “of 4” or “attempt 1 of 4”, because Stripe does not tell us the total.","options":["The count matches and no total is printed","The count differs from Stripe. Say both in the notes","A total such as “of 4” appeared. Write the words in the notes"]},{"who":"Platform admin · the notice","do":"Read the end of that sentence and compare it with the “Next payment attempt” you wrote down in A2.","see":"It says “tries again on (day)” with the same day Stripe shows, or “no further try scheduled” when Stripe shows no next attempt. Our day is a Toronto day, so a time near midnight can sit one day apart from Stripe’s dashboard; that is not a defect.","options":["Our day matches Stripe’s next attempt","We say “no further try scheduled” and Stripe shows no next attempt","They disagree. Write both in the notes"]},{"who":"Platform admin · the notice","do":"Read the last sentence of the notice.","see":"“The club is past due and keeps using everything meanwhile.” It is there only when our own record says Past due. If the club’s record is not past due, the sentence is left out, and that is right.","options":["Sentence present, and the club reads Past due in our record","Sentence absent, and the club is not past due in our record","Sentence absent but the club IS past due in our record. Say where you saw Past due"]},{"who":"Platform admin · the notice","do":"Look at the two buttons at the right of the notice.","see":"Only “See the bill”. “Show them” and the words “… more bills are unpaid too” appear only when two or more bills have failed, and this club has one."}]},{"id":"C","title":"The bill’s window and the sales list","steps":[{"who":"Platform admin · the notice","do":"Press “See the bill”.","see":"The bill’s own window opens over the tab (the same window a sales row opens). A line “Stripe says” reads “Owes $… · (the same reason as the notice) (day)”."},{"who":"Platform admin · the bill’s window","do":"Find the line “Tries” and read it next to the notice behind it.","see":"It repeats the notice’s tries-and-next-try sentence in the same words (for example “Stripe has tried once and tries again on …”).","options":["Same sentence as the notice","Different. Write both in the notes","There is no “Tries” line"]},{"who":"Platform admin · the bill’s window","do":"Find “Failed tries”.","see":"One line per failed attempt: a time, the card ending 0341, and the reason in the same plain words as the notice."},{"who":"Platform admin · back on the tab","do":"Close the window and find the bill’s row in the sales list further down.","see":"In its “Stripe says” cell: “Owes $… · (reason) (day)”, and a second quiet line under it: “Stripe tries again (day)”, or “No further try scheduled”, matching what Part B said.","options":["Second line matches Part B","No second line","Second line disagrees with Part B. Write both in the notes"]},{"who":"Platform admin · the sales list","do":"Press the “Not paid” choice above the list.","see":"The list narrows to unpaid sales and this bill’s row is in it."}]},{"id":"D","title":"Who sees it, and who does not","steps":[{"who":"Support · PRIVATE window · http://localhost:3000/platform-admin/login","do":"Sign in as Support (card above), open the same club and its Money tab.","see":"Support is one of the roles that read Stripe, so the notice is there with the same words as in Part B.","options":["Same notice as the platform admin","No notice. Say what the tab shows","A different notice. Write how in the notes"]},{"who":"Product · another PRIVATE window (or sign Support out first)","do":"Sign in as Product (card above), open the same club. Product does not read Stripe. Open the Money tab if it is offered.","see":"No failed-payment notice and no Stripe figures anywhere, and nothing broken. The tab, if shown, offers only our own record.","options":["No notice; the tab shows our record only","There is no Money tab for this role","A notice or Stripe figures appeared. Say what","Something else. Say what"]}]},{"id":"E","title":"A club with nothing to read","steps":[{"who":"Platform admin · normal window","do":"Open a club that has never bought through Stripe, for example UAT Test Org, and its Money tab.","see":"No failed-payment notice and no error. The tab says whatever it said before this change about a club with nothing in Stripe.","options":["No notice, no error, the tab reads as it always did","A notice appeared. That is a defect; say what it said","An error appeared. Say what"]}]},{"id":"F","title":"The club pays and the notice goes","steps":[{"who":"You · Stripe dashboard (or the club’s billing portal)","do":"Pay the unpaid invoice. Walk 3 Part E (steps E2 to E4) has the click paths: add the approved card 4242 4242 4242 4242 as the customer’s default, then charge or pay the invoice.","see":"The invoice shows Paid in Stripe and the subscription is Active.","options":["Paid and Active","Could not get it paid. Say what happened in the notes"]},{"who":"Platform admin · the club’s Money tab","do":"Press “Read again” next to “Read from Stripe at …”.","see":"The failed-payment notice is gone. The line about whether Stripe and our record agree is now the first thing on the tab."},{"who":"Platform admin · the sales list","do":"Find the same bill’s row.","see":"It no longer says “Owes”, and it has no next-try line.","options":["Row reads as paid, no “Owes”, no next-try line","Row still says “Owes”. Say what else it shows"]}]}]};
+  var KEY = DATA.key, PARTS = DATA.parts;
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  function txt(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; n.textContent = text; return n; }
+  function box(id, partId, label) {
+    var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+    cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+    boxes.push({ part: partId, id: id, cb: cb, label: label });
+    return cb;
+  }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(txt('strong', null, p.id + ' \u00b7 ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(txt('span', 'who', id + ' \u00b7 ' + s.who));
+      t.appendChild(txt('span', null, s['do']));
+      t.appendChild(txt('span', 'see', 'You should see: ' + s.see));
+      if (s.options && s.options.length) {
+        var wrap = el('div', 'step opt'); wrap.appendChild(t);
+        s.options.forEach(function (o, k) {
+          var row = el('label', 'optrow'); var cb = box(id + '-' + (k + 1), p.id, id + ' = ' + o);
+          row.appendChild(cb); row.appendChild(txt('span', null, o)); wrap.appendChild(row);
+        });
+        body.appendChild(wrap);
+      } else {
+        var row2 = el('label', 'step'); var cb2 = box(id, p.id, id);
+        row2.appendChild(cb2); row2.appendChild(t); body.appendChild(row2);
+      }
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function refresh() {
+    var done = 0;
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var n = mine.filter(function (b) { return b.cb.checked; }).length;
+      done += n;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' \u00b7 ' : '') + n + ' of ' + mine.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    document.getElementById('total').textContent = done + ' of ' + boxes.length + ' checked';
+    document.getElementById('barfill').style.width = (boxes.length ? Math.round(done * 100 / boxes.length) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [DATA.title + ' (written 2026-11-06)'];
+    var done = boxes.filter(function (b) { return b.cb.checked; }).length;
+    lines.push('Checked ' + done + ' of ' + boxes.length + ' (a step with options counts one box per option)');
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var ticked = mine.filter(function (b) { return b.cb.checked; }).map(function (b) { return b.label; });
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + mine.length + (ticked.length ? ' (' + ticked.join('; ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>
