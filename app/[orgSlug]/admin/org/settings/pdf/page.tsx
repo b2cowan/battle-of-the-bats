@@ -11,6 +11,7 @@ import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { tournamentToday } from '@/lib/timezone';
 import LoadingState from '@/components/shared/LoadingState';
 import { NoticePill, repKit } from '@/components/admin/kit/club/RepKit';
+import { NotYours } from '@/components/admin/kit/club/NotYours';
 import { getBillingHref } from '@/lib/billing-urls';
 
 // ── Placeholder data for the preview PDF ─────────────────────────────────────
@@ -146,17 +147,8 @@ export default function PdfSettingsPage() {
     );
   }
 
-  if (userRole !== 'owner' && userRole !== 'admin') {
-    return (
-      <div className={s.page}>
-        <HelpCallout
-          variant="warning"
-          title="Access restricted"
-          body="PDF settings can only be changed by owners and admins."
-        />
-      </div>
-    );
-  }
+  // ⚖ Ask 6 = A (Club Tier Stage 13a): the ONE "not yours" screen — it used to be a callout with no heading.
+  if (userRole !== 'owner' && userRole !== 'admin') return <NotYours page="pdfSettings" />;
 
   const headerActions = (
     <>

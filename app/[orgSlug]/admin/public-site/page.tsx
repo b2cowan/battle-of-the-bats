@@ -28,7 +28,8 @@ import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
 import { isClubPlan, hasModuleEntitlement } from '@/lib/module-entitlements';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
-import { ClubRow, ClubRowList, LoadFailed, NoticePill, RepChip, SavePill, repKit } from '@/components/admin/kit/club/RepKit';
+import { ClubRow, ClubRowList, EmptyCard, LoadFailed, NoticePill, RepChip, SavePill, repKit } from '@/components/admin/kit/club/RepKit';
+import { NotYours } from '@/components/admin/kit/club/NotYours';
 import KitDialog from '@/components/admin/kit/club/KitDialog';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import { SwitchButton } from '@/components/admin/tournament/SwitchRows';
@@ -440,15 +441,11 @@ export default function PublicSitePage() {
   // The capability AND the plan (Public tournament pages 1a): an owner who types the address on a plan without the site
   // reads that the plan has none, not a page that fails to load (the API refuses without the entitlement).
   const noSite = !!currentOrg && !hasModuleEntitlement(currentOrg, 'module_public_site');
-  if (!userRole || !hasCapability(userRole, userCapabilities, 'module_public_site') || !currentOrg || noSite) {
-    return (
-      <div className={styles.accessDenied}>
-        <Globe size={32} aria-hidden />
-        <h2>{W.noAccessTitle}</h2>
-        <p>{noSite ? W.noSiteOnPlan : W.noAccess}</p>
-      </div>
-    );
-  }
+  if (!currentOrg) return <LoadingState label={W.loading} />;
+  // The plan's card stays its own (not "not yours": the plan has no site, whoever reads it).
+  if (noSite) return <div className={repKit.page}><EmptyCard icon={<Globe size={20} aria-hidden />} title={W.noSiteOnPlan} /></div>;
+  // ⚖ Ask 6 = A (Club Tier Stage 13a): the ONE "not yours" screen, in place of the page.
+  if (!userRole || !hasCapability(userRole, userCapabilities, 'module_public_site')) return <NotYours page="publicSite" />;
 
   const isOwner = userRole === 'owner';
   const on = currentOrg.isPublic;

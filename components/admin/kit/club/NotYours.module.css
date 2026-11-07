@@ -1,0 +1,28 @@
+/* ── "Not yours" (Club Tier Stage 13a, Ask 6; drawing: Stage 13 hub tab 15) — the kit's compact empty card, with the
+   page's name as its eyebrow. Inside the admin frame: the nav still shows. ── */
+.page { max-width: 1200px; min-width: 0; margin-inline: auto; }
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.45rem;
+  padding: 1.1rem 1.2rem;
+  background: var(--card-bg);
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+  margin: 0 0 0.9rem;
+  max-width: 44rem;
+}
+.card > svg { color: var(--text-tertiary); }
+.eyebrow {
+  margin: 0;
+  font-family: var(--font-data); /* type-ok: eyebrow */
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase; /* type-ok: eyebrow */
+  color: var(--text-secondary);
+}
+.title { margin: 0; font-family: var(--font-sans, system-ui, sans-serif); letter-spacing: normal; text-transform: none; font-size: var(--type-heading); font-weight: 700; color: var(--text-primary); }
+.text { margin: 0; font-size: var(--type-body); line-height: 1.5; color: var(--text-secondary); max-width: 62ch; }
+.actions { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.35rem; }

@@ -1,9 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
-import { Archive } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
-import { hasCapability } from '@/lib/roles';
 import { hasDecidedGames, rosterCountOf, seasonRecordOf } from '@/lib/team-season-figures';
 import { SCRIMMAGE_LABEL } from '@/lib/coach-schedule-vocab';
 import { resolveCoachCapabilities, staffKindWord, type AssistantCapabilityGrants } from '@/lib/coach-capabilities';
@@ -65,7 +63,7 @@ export default function PastYearDetailPage({
   params: Promise<{ orgSlug: string; teamId: string; yearId: string }>;
 }) {
   const params = use(paramsPromise);
-  const { currentOrg, userRole, userCapabilities, loading, canOpen } = useOrg();
+  const { currentOrg, loading, canOpen } = useOrg();
   // A name opens the child's page (Club Tier Stage 14 S5) for someone who can open Families; plain words for the rest.
   const childDoor = canOpen('module_families') && !!currentOrg?.slug;
   const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
@@ -116,16 +114,6 @@ export default function PastYearDetailPage({
   useEffect(() => { if (currentOrg) load(); }, [currentOrg, load]);
 
   if (loading || fetching) return <LoadingState label="Loading the season…" />;
-
-  if (!userRole || !hasCapability(userRole, userCapabilities, 'module_rep_teams')) {
-    return (
-      <div className={styles.accessDenied}>
-        <Archive size={32} />
-        <h2>Access restricted</h2>
-        <p>You don&apos;t have access to the Rep teams module.</p>
-      </div>
-    );
-  }
 
   if (!team || !programYear) return <p className={styles.muted}>Program year not found.</p>;
 

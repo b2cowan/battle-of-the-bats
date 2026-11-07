@@ -3,7 +3,6 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { Archive } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
-import { hasCapability } from '@/lib/roles';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import styles from '../rep-teams.module.css';
 import type { RepPastProgramYear } from '@/lib/types';
@@ -25,7 +24,7 @@ function groupByTeam(years: RepPastProgramYear[]): Map<string, RepPastProgramYea
 }
 
 export default function PastProgramYearsPage() {
-  const { currentOrg, userRole, userCapabilities, loading } = useOrg();
+  const { currentOrg, loading } = useOrg();
   const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
   const base = `/${currentOrg?.slug ?? ''}/admin`;
 
@@ -51,16 +50,6 @@ export default function PastProgramYearsPage() {
   useEffect(() => { if (currentOrg) load(); }, [currentOrg, load]);
 
   if (loading) return <LoadingState label="Loading past seasons…" />;
-
-  if (!userRole || !hasCapability(userRole, userCapabilities, 'module_rep_teams')) {
-    return (
-      <div className={styles.accessDenied}>
-        <Archive size={32} />
-        <h2>Access restricted</h2>
-        <p>You don&apos;t have access to the Rep teams module.</p>
-      </div>
-    );
-  }
 
   const grouped = groupByTeam(years);
 

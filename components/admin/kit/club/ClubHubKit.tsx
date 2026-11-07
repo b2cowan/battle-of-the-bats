@@ -47,6 +47,10 @@ import styles from './ClubHub.module.css';
 import frame from '../AdminKitFrame.module.css';
 import LoadingState from '@/components/shared/LoadingState';
 import PageNotice from '@/components/shared/PageNotice';
+import { useBoardPeople } from '@/lib/use-board-people';
+import { boardOwnerName, seasonStarterShort } from '@/lib/board-people';
+import { NOT_YOURS_WORDS } from '@/lib/not-yours-words';
+import { LEAGUE_RUNNER_ROLES } from '@/lib/house-league-access';
 
 /** The org's own word for itself on its hub: a Club is a club; a League Plus org, a league. */
 function orgNoun(planId: string | undefined): string {
@@ -143,6 +147,13 @@ export default function ClubHubKit() {
   const closedPlansLine = gating ? closedProgramPlansSentence(gating) : null;
   const slug = currentOrg?.slug ?? '';
   const isOwner = userRole === 'owner';
+  // The board by name (Club Tier Stage 13a: names only): the locked rows' "Ask Morgan Ellis" and the quiet row's "Jules
+  // Moreau or Morgan Ellis starts one". Read only for the two people who see a sentence that names someone: an admin (the
+  // locked rows) and a non-runner on a plan whose league is not running (the quiet row). Everyone else pays nothing.
+  const board = useBoardPeople(
+    userRole === 'admin'
+    || (!!userRole && !LEAGUE_RUNNER_ROLES.includes(userRole) && alsoOnPlan.some(p => p.key === 'house-league')),
+  );
   const canManageBilling = hasBillingAccess(userRole, userCapabilities);
   const club = isClubPlan(currentOrg?.planId);
   const showUpgradeSetup = arrivedFromUpgrade && isOwner && club;
@@ -208,6 +219,12 @@ export default function ClubHubKit() {
   const canOpenRepTeams = canOpen('module_rep_teams');
   const canSeeMembers = (isOwner || hasCapability(userRole, userCapabilities, 'module_members')) && canOpen('module_members');
   const canManageMembers = hasCapability(userRole, userCapabilities, 'manage_members');
+  const canRunLeague = LEAGUE_RUNNER_ROLES.includes(userRole);
+  const canCreateTournaments = hasCapability(userRole, userCapabilities, 'create_tournaments');
+  // ⚖ J10-016 + Ask 7 = A (Club Tier Stage 13a): an ADMIN keeps the owner's areas as locked rows that name the owner; for
+  // anyone else they go, and the section with them when it would hold nothing but locks (F-NAV-10).
+  // A tournament-plan org (the free League Starter) has no /admin/org pages at all, so there is nothing to lock.
+  const showsLockedRows = userRole === 'admin' && currentOrg.planId !== 'tournament';
 
   // The setup list a coach sees after becoming a club: the board and public-site steps reuse the checklist's own destinations.
   const stepHref = (key: string, fallback: string) => checklist?.steps?.find(step => step.key === key)?.href ?? fallback;
@@ -375,11 +392,16 @@ export default function ClubHubKit() {
           const Icon = PROGRAM_ICON[p.key];
           return p.key === 'house-league' ? (
             <span key={p.key} className={ck.quietItem}>
-              <Icon size={14} aria-hidden />House league: not running · <Link href={p.href} className={ck.link}>Start a season</Link>
+              {/* ⚖ A5 (Club Tier Stage 13a, F-R1-4): "Start a season" only to someone who can start one (the house-league gate's
+                  runners); anyone else is told who does, by name. */}
+              <Icon size={14} aria-hidden />House league: not running ·{' '}
+              {canRunLeague ? <Link href={p.href} className={ck.link}>Start a season</Link> : board ? seasonStarterShort(board) : null}
             </span>
           ) : p.key === 'tournaments' ? (
             <span key={p.key} className={ck.quietItem}>
-              <Icon size={14} aria-hidden />Tournaments: none yet · <Link href={p.href} className={ck.link}>Run a tournament</Link>
+              {/* The same rule (A5): "Run a tournament" only to someone who may create one (`create_tournaments`). */}
+              <Icon size={14} aria-hidden />Tournaments: none yet ·{' '}
+              {canCreateTournaments ? <Link href={p.href} className={ck.link}>Run a tournament</Link> : NOT_YOURS_WORDS.tournamentStarterShort}
             </span>
           ) : null;
         })}
@@ -417,7 +439,7 @@ export default function ClubHubKit() {
 
       {/* ── Organization, for someone who is not the owner (specimen 2): the board they can open,
             and the owner's areas as LOCKED rows that say whose they are (J10-016) ───────────── */}
-      {!isOwner && (canSeeMembers || currentOrg.planId !== 'tournament') && (
+      {!isOwner && (canSeeMembers || showsLockedRows) && (
         <section className={`${ck.section} ${styles.orgSection}`} aria-labelledby="hub-org">
           <div className={ck.sectionHead}>
             <span id="hub-org" className={kit.eye}>Organization</span>
@@ -434,10 +456,10 @@ export default function ClubHubKit() {
             {canManageBilling && <Link href={`${base}/org/billing`} className={ck.row}>
               <span className={ck.rowMain}><span className={ck.rowTitle}>Plan &amp; billing</span></span>
             </Link>}
-            {(canManageBilling ? ['Settings'] : ['Plan & billing', 'Settings']).map(label => (
-              <div key={label} className={`${ck.row} ${ck.rowLocked}`} aria-label={`${label}, owner only`}>
+            {showsLockedRows && (canManageBilling ? ['Settings'] : ['Plan & billing', 'Settings']).map(label => (
+              <div key={label} className={`${ck.row} ${ck.rowLocked}`} aria-label={NOT_YOURS_WORDS.lockedRowLabel(label)}>
                 <span className={ck.rowMain}><span className={`${ck.rowTitle} ${ck.muted}`}>{label}</span></span>
-                <span className={ck.rowEnd}><span className={ck.chip}><Lock size={11} aria-hidden /> Owner only</span></span>
+                <span className={ck.rowEnd}><span className={ck.chip}><Lock size={11} aria-hidden /> {NOT_YOURS_WORDS.askChip(boardOwnerName(board))}</span></span>
               </div>
             ))}
           </div>

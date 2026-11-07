@@ -15,11 +15,16 @@ function metaString(user: User, key: string): string {
   return typeof value === 'string' ? value.trim() : '';
 }
 
-export function getUserDisplayName(user: User): string {
+/** The person's name and NOTHING else: never the email. For a sentence shown to someone else in the club (the board by
+ *  name, Club Tier Stage 13a), where the owner ruled "names only". Empty when the account holds no name. */
+export function getUserPersonName(user: User): string {
   const full = metaString(user, 'full_name') || metaString(user, 'display_name');
   if (full) return full;
-  const parts = [metaString(user, 'first_name'), metaString(user, 'last_name')].filter(Boolean);
-  return parts.join(' ') || user.email || '';
+  return [metaString(user, 'first_name'), metaString(user, 'last_name')].filter(Boolean).join(' ');
+}
+
+export function getUserDisplayName(user: User): string {
+  return getUserPersonName(user) || user.email || '';
 }
 
 export function getUserInitials(user: User): string {

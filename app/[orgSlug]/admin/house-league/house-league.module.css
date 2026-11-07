@@ -8,23 +8,6 @@
   padding: 2rem;
 }
 
-.accessDenied {
-  padding: 4rem 2rem;
-  text-align: center;
-  color: var(--white-40);
-}
-.accessDenied h2 {
-  font-size: 1.1rem;
-  font-weight: 700;
-  margin: 1rem 0 0.5rem;
-  color: var(--white-60);
-}
-.accessDenied p {
-  font-size: 0.9rem;
-  max-width: 360px;
-  margin: 0 auto;
-}
-
 /* ⚰ The home's season cards (.seasonGrid, .seasonCard*, .seasonStats) — retired with the home's move to the kit
    (Club Tier Stage 9a, Part 3: grouped rows, components/admin/kit/club/HouseLeagueHome.module.css). */
 
@@ -705,9 +688,7 @@
 
 /* ── Page frame ── */
 :global([data-admin-kit]) .muted,
-:global([data-admin-kit]) .accessDenied,
 :global([data-admin-kit]) .emptyState { color: var(--text-tertiary); }
-:global([data-admin-kit]) .accessDenied h2 { color: var(--text-secondary); }
 
 /* ── Cards: seasons, divisions, the season's own panel → the kit card ── */
 :global([data-admin-kit]) .seasonName,

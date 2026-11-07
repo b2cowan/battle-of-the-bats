@@ -57,6 +57,7 @@ import {
   type CalendarBooking, type CalendarFilters, type CalendarProgram, type CalendarRead, type CalendarView,
 } from '@/lib/club-calendar-view';
 import LoadingState from '@/components/shared/LoadingState';
+import { NotYours } from '@/components/admin/kit/club/NotYours';
 
 const VIEWS: CalendarView[] = ['list', 'week', 'month'];
 /** The phone's View drawer — no List: on a phone it is the same stack as Week (see the header). */
@@ -82,7 +83,7 @@ export default function ClubCalendarPage() {
   const [teams, setTeams] = useState<Set<string>>(() => new Set());
   const [clashesOnly, setClashesOnly] = useState(false);
   const [read, setRead] = useState<CalendarRead | null>(null);
-  const [failed, setFailed] = useState<{ refused: boolean; text: string } | null>(null);
+  const [failed, setFailed] = useState<{ refused: boolean; text: string; notYours?: boolean } | null>(null);
   const [open, setOpen] = useState<CalendarBooking | null>(null);
   const [seenTeams, setSeenTeams] = useState<Map<string, string>>(() => new Map());
   /** Month's day, opened in its List (its Week on a phone) — scrolled to once that week is drawn. */
@@ -101,7 +102,9 @@ export default function ClubCalendarPage() {
     const r = await moneyFetch<CalendarRead>(`/api/admin/club-calendar?${q}&from=${range.from}&to=${range.to}`).catch(() => null);
     if (!current()) return;
     if (!r?.ok) {
-      setFailed(r?.status === 403 ? { refused: true, text: refusalText(r.data, W.noPrograms) } : { refused: false, text: W.loadFailed });
+      setFailed(r?.status === 403
+        ? { refused: true, text: refusalText(r.data, W.noPrograms), notYours: (r.data as { code?: string } | null)?.code === 'no_programs' }
+        : { refused: false, text: W.loadFailed });
       return;
     }
     setFailed(null);
@@ -203,6 +206,9 @@ export default function ClubCalendarPage() {
     />
   );
 
+  // ⚖ Ask 6 = A (Club Tier Stage 13a, F-NAV-12): a person who opens none of the calendar's programs gets the ONE "not yours"
+  // screen.
+  if (failed?.notYours) return <NotYours page="calendar" />;
   if (failed?.refused) {
     return <div className={ck.pageWide}>{header}<EmptyCard title="Nothing to show">{failed.text}</EmptyCard></div>;
   }

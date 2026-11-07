@@ -10,9 +10,10 @@ import { PLAN_BILLING_WORDS as W } from '@/lib/plan-billing-words';
 import { getBillingHref, isTournamentTier } from '@/lib/billing-urls';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-kind';
 import ck from './ClubKit.module.css';
+import { NotYours } from './NotYours';
 
 export default function BillingKit() {
-  const { currentOrg } = useOrg();
+  const { currentOrg, userRole } = useOrg();
   // After the owner pays in Stripe's tab, the line and the list re-read on return and the door's pill follows (Fee invoice alerts Part 3).
   const { reload, status, brief } = useClubBrief();
   // The pinned banner speaks for anything overdue once the brief says so (or while it is still on its way); if the brief failed or is out
@@ -22,6 +23,9 @@ export default function BillingKit() {
   const slug = currentOrg?.slug ?? '';
   const eyebrow = currentOrg && !isTournamentTier(currentOrg.planId) && !isTeamWorkspaceOrg(currentOrg)
     ? W.page.eyebrow : undefined;
+  // ⚖ Ask 6 = A (Club Tier Stage 13a, F-A5-9): in the admin, the ONE "not yours" screen, the owner's-only voice, in place of
+  // the page. The body's own locked card stays for the Coaches Portal's billing, which shares it.
+  if (currentOrg && userRole && userRole !== 'owner') return <NotYours page="billing" />;
   return <div className={ck.page}>
     <AdminPageHeader eyebrow={eyebrow} title={W.page.title} />
     <BillingBody billingBase={getBillingHref({ slug, planId: currentOrg?.planId }, { host: 'admin' })} teamsHref={`/${slug}/admin/rep-teams`} onFeesMayHaveChanged={reload} bannerCoversOverdue={bannerCoversOverdue} />

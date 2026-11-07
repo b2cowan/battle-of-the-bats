@@ -39,6 +39,7 @@ import NewScheduleWindow from '@/components/admin/kit/club/schedules/NewSchedule
 import { ScheduleStateChip } from '@/components/admin/kit/club/schedules/ScheduleParts';
 import sch from '@/components/admin/kit/club/schedules/Schedules.module.css';
 import { SCHEDULE_REFUSALS as R, SCHEDULE_SCREEN_WORDS as W } from '@/lib/club-schedule-words';
+import { NotYours } from '@/components/admin/kit/club/NotYours';
 import { scheduleDates, type ScheduleListRow } from '@/lib/club-schedule-view';
 
 interface ListRead { schedules: ScheduleListRow[]; nothingToSchedule: boolean; canMoney: boolean }
@@ -56,7 +57,7 @@ export default function SchedulesPage() {
   const q = `orgSlug=${encodeURIComponent(slug)}`;
 
   const [read, setRead] = useState<ListRead | null>(null);
-  const [failed, setFailed] = useState<{ refused: boolean; text: string } | null>(null);
+  const [failed, setFailed] = useState<{ refused: boolean; text: string; notYours?: boolean } | null>(null);
   const [said, setSaid] = useState<string | null>(null);
   // The permit window's door opens New schedule started from that permit (`?new=1&permit=<id>`).
   const startPermit = search.get('new') === '1' ? search.get('permit') : null;
@@ -74,7 +75,9 @@ export default function SchedulesPage() {
     const r = await moneyFetch<ListRead>(`/api/admin/schedules?${q}`).catch(() => null);
     if (!current()) return;
     if (!r?.ok) {
-      setFailed(r?.status === 403 ? { refused: true, text: refusalText(r.data, R.who) } : { refused: false, text: W.loadFailed });
+      setFailed(r?.status === 403
+        ? { refused: true, text: refusalText(r.data, R.who), notYours: (r.data as { code?: string } | null)?.code === 'not_a_builder' }
+        : { refused: false, text: W.loadFailed });
       return;
     }
     setFailed(null);
@@ -94,6 +97,9 @@ export default function SchedulesPage() {
   const header = <AdminPageHeader title={W.title} inlineActions />;
 
   if (orgLoading || (!read && !failed)) return <PageLoading header={header} label="Loading the schedules…" />;
+  // ⚖ Ask 6 = A (Club Tier Stage 13a, F-NAV-12): a person who doesn't build schedules gets the ONE "not yours" screen; a plan
+  // without the scheduler keeps its own card.
+  if (failed?.notYours) return <NotYours page="schedules" />;
   if (failed?.refused) {
     return <div className={ck.pageWide}>{header}<EmptyCard icon={<ClipboardList size={28} aria-hidden />} title="Nothing to show">{failed.text}</EmptyCard></div>;
   }

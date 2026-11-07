@@ -3,14 +3,14 @@
     "kitScope": 11
   },
   "app/[orgSlug]/admin/house-league/house-league.module.css": {
-    "kitScope": 70
+    "kitScope": 68
   },
   "app/[orgSlug]/admin/house-league/seasons/[seasonId]/schedule/page.tsx": {
     "kx": 4,
     "helpers": 6
   },
   "app/[orgSlug]/admin/house-league/seasons/[seasonId]/standings/page.tsx": {
-    "kx": 6,
+    "kx": 5,
     "helpers": 1
   },
   "app/[orgSlug]/admin/tournaments/schedule/components/BracketBuilder.module.css": {

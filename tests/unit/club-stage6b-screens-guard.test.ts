@@ -218,9 +218,13 @@ describe('5. the Venue library — who saves, Archive vs Delete, archived out of
 });
 
 describe('6. the Organization tile', () => {
+  // ⚖ Club Tier Stage 13a (Ask 7 = A): the hub's tiles ARE the rail's Organization doors (`orgHubDoors` over `kitOrgLinks`),
+  // so the one name and the plan's gate are asserted where the door is built.
   it('is called "Venue library" and shows only on a plan that carries it (S6-11)', () => {
     const code = readCode(ORG_PAGE);
-    assert.match(code, /hasOrgVenueLibrary\(currentOrg\?\.planId\) \? \[\{\s*label: 'Venue library'/);
+    assert.match(code, /orgHubDoors\(\{\s*base: nav\.base,\s*orgLinks: nav\.orgLinks,/);
+    assert.match(readCode('lib/admin-kit-nav.ts'), /!isCanceled && hasVenueLibrary && \{ key: 'org\/venues', label: 'Venue library'/);
+    assert.match(readCode('components/admin/kit/useAdminKitNav.ts'), /hasVenueLibrary: hasOrgVenueLibrary\(currentOrg\?\.planId\)/);
     assert.doesNotMatch(code, /label: 'Venues'/);
   });
 });

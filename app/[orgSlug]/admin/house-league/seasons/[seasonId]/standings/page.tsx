@@ -15,6 +15,7 @@ import styles from '../../../house-league.module.css';
 import type { LeagueDivision } from '@/lib/types';
 import { STANDINGS_WORDS as W, diffWords, type LeagueStandings, type StandingsLabels } from '@/lib/league-standings';
 import LoadingState from '@/components/shared/LoadingState';
+import { NotYours } from '@/components/admin/kit/club/NotYours';
 
 // ── Export definition ─────────────────────────────────────────────────────────
 
@@ -152,15 +153,7 @@ export default function StandingsPage() {
   }
 
   if (!user) return null;
-  if (!canView) {
-    return (
-      <div className={styles.page}>
-        <p style={kx({ color: 'var(--white-40)', fontSize: '0.9rem' }, KIT_INK.tertiary)}>
-          You don&apos;t have access to this page.
-        </p>
-      </div>
-    );
-  }
+  if (!canView) return <NotYours page="houseLeague" />;
   if (loading) {
     return (
       <div className={styles.page}>

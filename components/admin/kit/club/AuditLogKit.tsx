@@ -30,6 +30,7 @@ import ExportMenu from '@/components/admin/ExportMenu';
 import ck from './ClubKit.module.css';
 import styles from './AuditLog.module.css';
 import LoadingState from '@/components/shared/LoadingState';
+import { NotYours } from './NotYours';
 
 interface AuditRow extends Record<string, unknown> {
   id: string;
@@ -93,17 +94,8 @@ export default function AuditLogKit() {
   const membersHref = getMembersHref(slug, currentOrg.planId);
   const membersName = membersLabel(isTeamWorkspaceOrg(currentOrg));
 
-  if (userRole !== 'owner') {
-    return (
-      <div className={ck.page}>
-        <AdminPageHeader eyebrow={eyebrow} title="Audit log" backTo={{ href: membersHref, label: membersName }} />
-        <div className={styles.empty}>
-          <h2 className={styles.emptyTitle}>The audit log is the owner’s</h2>
-          <p className={styles.emptyBody}>Only the organization’s owner can read who changed what about the board.</p>
-        </div>
-      </div>
-    );
-  }
+  // ⚖ Ask 6 = A (Club Tier Stage 13a, F-A5-9): the ONE "not yours" screen, the owner's-only voice.
+  if (userRole !== 'owner') return <NotYours page="auditLog" />;
 
   const { status, data } = state;
   const rows = data?.rows ?? [];

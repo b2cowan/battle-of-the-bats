@@ -4,17 +4,6 @@
    preview beside them. The club's own colours reach this file only through inline styles (the Look strip) and the
    preview's frame — never a literal here. ⚠ TOKENS ONLY (checkAdminKit). */
 
-.accessDenied {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 3rem 1rem;
-  text-align: center;
-  color: var(--text-tertiary);
-}
-.accessDenied h2 { color: var(--text-primary); margin: 0; }
-
 /* ── The header: the site's address, Copy link, Open (Preview while offline below the desk) ── */
 .siteHead {
   display: flex;

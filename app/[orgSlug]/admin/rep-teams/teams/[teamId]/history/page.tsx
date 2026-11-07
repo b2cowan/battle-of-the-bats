@@ -3,7 +3,6 @@ import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
 import { Archive } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
-import { hasCapability } from '@/lib/roles';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import styles from '../../../rep-teams.module.css';
 import type { RepTeam, RepTeamHistoryYear } from '@/lib/types';
@@ -23,7 +22,7 @@ export default function TeamHistoryPage({
   params: Promise<{ orgSlug: string; teamId: string }>;
 }) {
   const params = use(paramsPromise);
-  const { currentOrg, userRole, userCapabilities, loading } = useOrg();
+  const { currentOrg, loading } = useOrg();
   const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
   const base = `/${currentOrg?.slug ?? ''}/admin`;
 
@@ -51,16 +50,6 @@ export default function TeamHistoryPage({
   useEffect(() => { if (currentOrg) load(); }, [currentOrg, load]);
 
   if (loading || fetching) return <LoadingState label="Loading this team’s history…" />;
-
-  if (!userRole || !hasCapability(userRole, userCapabilities, 'module_rep_teams')) {
-    return (
-      <div className={styles.accessDenied}>
-        <Archive size={32} />
-        <h2>Access restricted</h2>
-        <p>You don&apos;t have access to the Rep teams module.</p>
-      </div>
-    );
-  }
 
   if (!team) return <p className={styles.muted}>Team not found.</p>;
 

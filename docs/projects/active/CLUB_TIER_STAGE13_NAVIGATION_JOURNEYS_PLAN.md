@@ -258,3 +258,90 @@ ahead of the owner's rulings.
   schedule form guide (per-day hint, closing row) and the House league time guide (three Overview states) updated. *Gate:*
   typecheck clean; touched suites 581/581; the full unit run's only failures are the 9 listed at hand-off, none reading a
   fix-now file; the gate's later scripts were run directly and every red names other sessions' files.
+- 2026-11-06 — **The owner ruled all 25 hub asks as recommended** (reported in conversation; the hub's own summary was not pasted
+  into the plan session). That settles Ask 25 (13i gets its own drawing session, builds right after 13a) and **Asks 6–9 (13a), all A**:
+  one in-frame "not yours" screen naming who opens it; the Organization hub shows only doors the person holds, a one-door person goes
+  straight to it, locked rows stay for admins and name the owner; House league leads for the league admin and registrar from day one
+  (the one exception to N10); the header pill reads "View site", no duplicate foot door, and the live site's way back gets a label.
+  Also ruled with them: the registrar sees who runs the board, names only (ALSO row R1). **Fix-now walk §473 PASSED 30/30** 2026-11-06;
+  its test copy and 14 accounts removed the same day. **13a build prompt written:**
+  [CLUB_TIER_STAGE13A_BUILD_PROMPT.md](CLUB_TIER_STAGE13A_BUILD_PROMPT.md), split into **Session A** (the "not yours" screen, the hub,
+  the Overview's Organization section, empty states — drawn on hub tab 15) and **Session B** (leads, the waiting count, the site label —
+  built from shipped pieces, not redrawn). Planner-verified while writing it: the Organization hub's Members and Tournaments tiles
+  have no role check (`org/page.tsx` 31-43); and **the Overview's "League registrations waiting for review" line has never been able
+  to show** — the attention summary counts status `pending`, the real state is `pending_review` (the tryout count had the same slip,
+  fixed 2026-09-25) — fixed first in Session B (B2) before the registrar's waiting pill is built on it. The league admin CAN create a
+  season (runners = owner, admin, league admin); only the registrar cannot — a helper's map said otherwise and is not followed.
+  **Next:** Session A, then Session B, one walk for the stage, then the 13i drawing session (it can run alongside the 13a build, since
+  it touches no code).
+- 2026-11-06 — **13a Session A BUILT 2026-11-06** (Asks 6 + 7, items A1–A6; build prompt
+  `CLUB_TIER_STAGE13A_BUILD_PROMPT.md`). *A1:* one "not yours" screen (`NotYoursScreen` / `NotYours`, words in
+  `lib/not-yours-words.ts`) — what the page is, who opens it by name, a door to the person's own home (the sign-in landing,
+  now one rule in `lib/member-home.ts`). It replaced the silent returns (Families, Accounting, Rep teams — a plan that lacks
+  the page, or a team workspace, still goes home), the "Access restricted" / "You don’t have access" cards across Public
+  site and seven House league screens, the PDF settings callout, the owner-only voices of Settings, Plan & billing (the
+  admin's page; the body's card stays for the Coaches Portal) and Audit log, Members' "isn’t turned on", and the role
+  refusals of Schedules and Calendar (their plan refusals keep "Nothing to show"). Four unreachable Rep teams sub-page cards
+  and the three `.accessDenied` style blocks were deleted. *Departures from the prompt, with reasons:* (1) the sentence names
+  the OWNER only ("Morgan Ellis (owner) can give a treasurer access", as drawn on tab 15) — only the owner changes what a
+  member opens (the member route refuses a capability change from anyone else), so "or an admin" would be false; (2) Ask 7
+  as ruled says locked rows **go** where the section holds nothing else (the prompt copied "stay only where"); (3) the walk's
+  Audit-log 404 was the address `/admin/org/audit`, which does not exist — the real page now shows the screen, the
+  non-page stays a 404; (4) Allocations never sent the treasurer to Rep teams, so only Teams changed (A6); (5) the
+  Public-site preview's 404 for a non-editor stays (an embedded frame, not a page anyone is sent to). *Owner name (open
+  question 1):* a NEW small read, `GET /api/admin/board` (`boardNames`, names + roles only — a member with no name on the
+  account is left out, never shown by email; the old `orgOwnerDisplayName` falls back to the email and is not used), read
+  only by the screens that name someone — not the club brief, which every club screen calls. *A2:* the hub's tiles are
+  `orgHubDoors` over the rail's own `kitOrgLinks` + Tournaments (`canOpen('module_tournaments')`) + `kitBillingLink` + the
+  person's Coaches Portal; one door → straight to it; none → the screen; the owner gains Audit log (F-O1-15); a person with no
+  Members door sees **The board** (names only, as drawn on tab 15 — R1). *A3:* locked rows for admins only, chip "Ask
+  {owner}" (aria "Plan & billing, the owner’s"); the section shows only when it holds a door or the reader is an admin. *A4:*
+  the empty Seasons page names who creates the season for a non-runner. *A5 (open question 3):* "Start a season" gated on
+  the league's runners, "Run a tournament" on `create_tournaments` (owner and admin by default); everyone else is told who.
+  *A6:* Accounting › Teams tells someone without Rep teams to ask the owner or an admin. *Guard:*
+  `tests/unit/club-stage13a-doors-guard.test.ts` (34 tests: every refusal site, the banned wordings across the club admin,
+  the sentence builders, the names-only read, role × hub tile for the five people, the Overview's rows); two older guards
+  re-pointed (Stage 1 locked rows, Stage 6b Venue library tile). *Gate:* typecheck clean (8 GB heap — the default 4 GB runs
+  out); touched suites 277/277; the full unit run's only failures are 9 in other sessions' work (billing-tax words in help
+  articles, practice plans phone, billing free time, Stage 6 walk page, series dates, support console foot, workspace
+  status census), none reading a 13a file; the gate's later scripts run directly — the admin old-look drops locked in, every
+  other red names other sessions' files. Not walked. Next: `/simplify`, `/review` (high-risk: auth guards), then Session B.
+- 2026-11-06 — **13a Session A `/simplify` + `/review` DONE 2026-11-06.** *`/simplify` applied:* the board hook moved out of
+  the screen file into `lib/use-board-people.ts` (a hub that only wants names no longer pulls the screen in) and keeps a
+  per-club answer for a minute, so the second screen says the name on its first paint (the cold first load still shows
+  "the club's owner" for a tick — not worth a spinner); the refusal layouts ask for the OWNER only (`boardNames(orgId,
+  ['owner'])`: one account read, not one per board member); the Overview and the Seasons empty state read the board only when a
+  sentence will name someone; the Organization hub reads rep access from the rail's own fetch (one request, not two);
+  `programHome` returns href + label (no more `endsWith('/accounting')`), `isFreeFloorLeague` and `LEAGUE_RUNNER_ROLES` are
+  reused, `getUserDisplayName` is `getUserPersonName(user) || email`, the hub's door order is the description list's key order;
+  dead code gone (an import in the season schedule and in Settings, the `home` option, `.empty*`/`.locked*` in the Members,
+  Settings and Audit log style sheets, a test constant). *`/review` (high-risk; 4 lenses: access parity + hooks, security/PII,
+  hub logic, blast radius): no Critical or High; the board route is org-scoped to active members and returns `{name, role}` only,
+  the one-door redirect cannot loop, hooks order holds in every file.* **Fixed from review:** (1) Rep teams layout redirected a
+  team workspace that held the capability and the plan — restored to HEAD's parity (as Families and Accounting); (2) the Overview's
+  locked rows came back for an admin on the free League Starter (a tournament-plan org with no `/admin/org` pages) — the old
+  `planId !== 'tournament'` guard is back on `showsLockedRows`; (3) the "Back to X" door could be the very page just refused
+  (a treasurer whose Accounting was switched off, a registrar without House league, a free-floor staff member) — `memberHome`
+  takes the refused page and falls back to the Overview; (4) Families told a team-limited member to ask the owner for access
+  that cannot be given — a `familiesLimited` page says "It opens only for people who aren't limited to certain teams" and names no
+  one; (5) a name field holding an address (an `@`) is left off the board like an unnamed account; (6) my own cleanup read the
+  clock while rendering (lint) and moved a hook out of reach of a test's stand-in — both fixed. **Recorded, not fixed (owner or
+  later):** the free League Starter OWNER lands on the league at sign-in (`lib/user-contexts.ts`, and the onboarding page holds a
+  third copy) but the door home sends the owner to the Overview — one rule, owner to pick; `scripts/check-layout-invariants.mjs`
+  (`ADMIN_LANDING_FAILURES`) and `scripts/admin-identity.mjs` (`refused`) do not list the new refusal wording ("isn't one of your
+  pages", "Nothing here is open to you yet") — shared sweep automation, changes only when the owner asks; the three server layouts
+  repeat one two-step refusal block and House league has six client refusals for one rule (a shared helper / layout would fold
+  them, and the guard test's source-string pins with it); the hub tiles draw their own icons, not the rail's (changing it changes
+  the pictures); Calendar and Schedules compare the server's refusal codes as strings; `NOT_YOURS_WORDS` carries a few
+  single-use words and the page titles are copied from the sidebar; `orgOwnerDisplayName` (the Coaches Portal layout) still falls
+  back to the email where the board read is names-only; `orList`/`withArticle` have copies in three libs; the board answer is not
+  cleared on sign-out (a minute, names and roles of the same club); the Season money refusal on a phone sits under the season's
+  name strip; a server-layout refusal sets no tab title; the one-door redirect does not wait for the Coaches Portal fetch (cannot
+  fire today); the Overview's quiet row shows a dangling "·" and the locked chip says "Ask the owner" for a tick while the board
+  loads; the Members tile's description says "Manage…" to a view-only role. *Gate:* typecheck clean (8 GB heap); touched suites
+  323/323; `npm test` 14,829/14,838 — the 9 failures are the same other-session ones (billing-tax words ×1, practice plans phone,
+  billing free time ×1, Stage 6 walk ×3, series dates, support console foot, in-force census) and none reads a 13a file; the
+  later `verify:changed` scripts: spelling, public tokens, text/contrast, dictionary, observability and the rest green; reds
+  (admin old-look on the tournament schedule sheet, admin type, schema parity, index coverage, org-slug callers on Public site
+  address and the ledger window, unused selectors, export registry) all name other sessions' files. `check:layout` NOT run (no
+  dev server). Not walked. Next: Session B in a fresh session; the stage's one walk comes after B.

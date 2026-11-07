@@ -452,3 +452,51 @@ export function familiesChildHref(base: string, childId: string, fromPersonId?: 
 export function isFamiliesChildPage(pathname: string, base: string): boolean {
   return /^[^/]+$/.test(pathname.startsWith(`${base}/families/children/`) ? pathname.slice(`${base}/families/children/`.length) : '');
 }
+
+/** One tile on the Organization hub: a door the person holds, and the sentence under its name. */
+export type OrgHubDoor = { key: string; label: string; href: string; desc: string };
+
+/**
+ * What each door on the Organization hub is, one sentence each (the hub's own words; the rail draws names only). The
+ * ORDER of these keys is the hub's order: people first, then the club's programs and tools, the owner's own pages last.
+ */
+const ORG_HUB_DESC: Record<string, string> = {
+  'org/members': 'Manage org members, roles, and invitations',
+  tournaments: 'Every tournament in one list: start one, reuse a setup, or change its status',
+  // Copy for /marketing (Club Tier Stage 6b, S6-11): one name, "Venue library", on the rail, the page and this tile.
+  'org/venues': 'The club’s venues and their facilities, booked by every program',
+  'org/pdf': 'Configure header, logo, footer, and branding for all PDF exports',
+  coaches: 'Open the team workspace assigned to you in this organization',
+  'org/billing': 'Manage your plan, subscription, and payment method',
+  'org/settings': 'Organization name, slug, contact email, and logo',
+  'org/audit': 'Who changed what on the board, and when',
+};
+
+const ORG_HUB_ORDER = Object.keys(ORG_HUB_DESC);
+
+/**
+ * THE ORGANIZATION HUB'S DOORS — ⚖ Club Tier Stage 13a, Ask 7 = A (owner 2026-11-06): ONE LIST OF DOORS PER PERSON. The
+ * hub lists the SAME doors the rail's Organization group does (`kitOrgLinks`, already gated per person) plus the three the
+ * rail keeps elsewhere — Tournaments (`canOpen('module_tournaments')`: the league admin, the registrar and the treasurer
+ * hold none, and the tile took them into a tournament admin of failing pages, F-NAV-7), Plan & billing (`kitBillingLink`)
+ * and the person's own Coaches Portal. Nothing here is a second gate: a tile exists exactly when its page opens.
+ * F-O1-15: the owner's hub gains the Audit log tile it omitted (it came with `kitOrgLinks`).
+ */
+export function orgHubDoors({ base, orgLinks, billingLink, canOpenTournaments, coachPortalHref }: {
+  base: string;
+  orgLinks: readonly KitLink[];
+  billingLink: KitLink | null;
+  canOpenTournaments: boolean;
+  /** The person's own team workspace in this org, when they have one (the owner or an admin with a rep team). */
+  coachPortalHref: string | null;
+}): OrgHubDoor[] {
+  const links: { key: string; label: string; href: string }[] = [
+    ...orgLinks,
+    ...(canOpenTournaments ? [{ key: 'tournaments', label: 'Tournaments', href: `${base}/tournaments/manage` }] : []),
+    ...(billingLink ? [billingLink] : []),
+    ...(coachPortalHref ? [{ key: 'coaches', label: 'My Coaches Portal', href: coachPortalHref }] : []),
+  ];
+  return links
+    .map(l => ({ key: l.key, label: l.label, href: l.href, desc: ORG_HUB_DESC[l.key] ?? '' }))
+    .sort((a, b) => ORG_HUB_ORDER.indexOf(a.key) - ORG_HUB_ORDER.indexOf(b.key));
+}

@@ -25,6 +25,9 @@ import { sportLabel } from '@/lib/sports';
 import type { LeagueCapKind, SeasonSlotHolder } from '@/lib/free-floor';
 import type { LeagueSeasonSummary } from '@/lib/types';
 import styles from '@/components/admin/kit/club/HouseLeagueHome.module.css';
+import { NotYours } from '@/components/admin/kit/club/NotYours';
+import { useBoardPeople } from '@/lib/use-board-people';
+import { seasonCreatorsSentence } from '@/lib/board-people';
 
 export default function HouseLeagueHome() {
   const { currentOrg, loading: orgLoading } = useOrg();
@@ -58,6 +61,8 @@ export default function HouseLeagueHome() {
   useDeferredLoad(!!currentOrg && !!access?.read, load);
 
   const canRun = !!access?.run;
+  // The board by name, read only where a sentence names who starts a season (the empty state, for a non-runner).
+  const board = useBoardPeople(!!access?.read && !canRun && !loading && summaries.length === 0);
   const header = (
     <AdminPageHeader
       eyebrow="House league"
@@ -73,14 +78,8 @@ export default function HouseLeagueHome() {
 
   if (orgLoading || (access?.read && loading)) return <PageLoading header={header} label="Loading seasons…" />;
 
-  if (!access?.read) {
-    return (
-      <div className={repKit.page}>
-        <AdminPageHeader eyebrow="House league" title="Seasons" />
-        <EmptyCard icon={<Users size={20} aria-hidden />} title="You don’t have access to this page." />
-      </div>
-    );
-  }
+  // ⚖ Ask 6 = A (Club Tier Stage 13a): the ONE "not yours" screen, in place of the page — never under its own title.
+  if (!access?.read) return <NotYours page="houseLeague" />;
 
   // One season's row, in whichever group it sits.
   const row = (s: LeagueSeasonSummary) => {
@@ -124,7 +123,10 @@ export default function HouseLeagueHome() {
           title={canRun ? 'Run your first season' : 'No seasons yet.'}
           action={canRun ? <button type="button" className="btn btn-lime" onClick={() => setCreating(true)}>Create your first season</button> : undefined}
         >
-          A season holds your age groups as divisions, with its registrations, teams, schedule and standings. Create one to get started.
+          {/* ⚖ A4 (Club Tier Stage 13a, F-R1-2): "Create one" is said only to someone who can; anyone else is told who
+              creates the season, by name, and what happens next (the board read: names and roles only). */}
+          A season holds your age groups as divisions, with its registrations, teams, schedule and standings.{' '}
+          {canRun ? 'Create one to get started.' : seasonCreatorsSentence(board)}
         </EmptyCard>
       )}
 

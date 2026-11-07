@@ -39,3 +39,15 @@ step. The club owner can hand a role to a new volunteer and trust what that pers
 - A click in the sidebar always does what the row suggests, exactly one row says where you are, and the sidebar fits the
   screen inside a team or a season (stage 13i, added 2026-11-06 after the owner found the side navigation clunky).
 - Every departure from the nav standard is either fixed or written down with its reason.
+
+## Stage 13a · Doors by person (build prompt written 2026-11-06)
+
+**What changes for people:** a page that isn't yours now says so the same way everywhere (what it is, who opens it by name, a button
+back to your own home) instead of bouncing you silently or showing one of eight different refusals. The Organization page lists only
+what you can open, and a person with one door goes straight to it. The league admin and the registrar see House league first, on day
+one, before any season exists. The registrar sees who creates the season, and sees how many registrations are waiting on the House
+league row. The header button on the club's screens reads "View site", and the live site's way back is labelled.
+**Found on the way:** the Overview's "League registrations waiting for review" line has never been able to show (it counted a state that
+doesn't exist). It is fixed first, because the registrar's waiting count depends on it.
+**Priority:** High: it sets the rules every later stage follows. **Success:** each of the five people, on a fresh club, sees only
+doors they can open, finds their own work first, and never meets a dead end. Built in two sessions, one walk.

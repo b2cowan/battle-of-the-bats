@@ -25,6 +25,7 @@ import { useOrg } from '@/lib/org-context';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { LeagueCapUpgradeModal } from '@/components/admin/LeagueCapUpgrade';
 import { ClubSection, EmptyCard, LoadFailed, PageLoading, repKit, useDeferredLoad } from '@/components/admin/kit/club/RepKit';
+import { NotYours } from '@/components/admin/kit/club/NotYours';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import SeasonStatePill from '@/components/admin/kit/club/SeasonStatePill';
 import SeasonStatusWindow from '@/components/admin/kit/club/league/SeasonStatusWindow';
@@ -141,7 +142,7 @@ export default function SeasonOverviewPage() {
 
   if (orgLoading || loading) return <PageLoading header={header} label="Loading the season…" />;
   if (access && !access.read) {
-    return <div className={repKit.page}>{header}<EmptyCard title="You don’t have access to this page." /></div>;
+    return <NotYours page="houseLeague" />;
   }
   if (failed === 'missing') return <div className={repKit.page}>{header}<EmptyCard title="We couldn’t find this season." /></div>;
   if (failed || !detail || !season) {

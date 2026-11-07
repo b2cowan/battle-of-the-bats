@@ -19,6 +19,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Lock } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
+import { NOT_YOURS_WORDS } from '@/lib/not-yours-words';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { CoachListToolbar } from '@/components/coaches/kit';
 import MultiSelectDropdown from '@/components/coaches/MultiSelectDropdown';
@@ -44,7 +45,7 @@ interface Read {
 const NO_GROUP = '__none__';
 
 export default function AccountingTeamsTab() {
-  const { currentOrg, loading: orgLoading } = useOrg();
+  const { currentOrg, loading: orgLoading, canOpen } = useOrg();
   const isPhone = useIsPhone();
   const slug = currentOrg?.slug ?? '';
   const q = `orgSlug=${encodeURIComponent(slug)}`;
@@ -102,7 +103,9 @@ export default function AccountingTeamsTab() {
       </CoachListToolbar>
 
       {summary.teams.length === 0 ? (
-        <p className={moneyKit.lead1}>No teams yet. A team appears here once the club adds it in Rep teams.</p>
+        // ⚖ A6 (Club Tier Stage 13a, F-T1-5): someone who cannot open Rep teams (the treasurer) is told who adds a team, not
+        // sent to a page they cannot open.
+        <p className={moneyKit.lead1}>{canOpen('module_rep_teams') ? NOT_YOURS_WORDS.teamsEmpty : NOT_YOURS_WORDS.teamsEmptyNoRepTeams}</p>
       ) : (
         <>
           <TeamsTable teams={shown} hrefOf={id => `${base}/teams/${id}`} isPhone={isPhone} />

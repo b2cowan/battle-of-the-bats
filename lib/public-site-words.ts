@@ -122,8 +122,6 @@ export const PUBLIC_SITE_WORDS = {
   editNoticeTitle: 'Edit the notice',
   loading: 'Loading the public site…',
   loadFailed: "Couldn't load the public site.",
-  noAccessTitle: 'Access restricted',
-  noAccess: "You don't have access to the public site. Ask the owner.",
   noSiteOnPlan: "Your plan doesn't include a public site.",
   readOnly: 'Only an owner or admin can change the public site.',
 

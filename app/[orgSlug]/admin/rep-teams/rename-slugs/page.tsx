@@ -1,9 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Link2 } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
-import { hasCapability } from '@/lib/roles';
 import KitDialog from '@/components/admin/kit/club/KitDialog';
 import { NoticePill } from '@/components/admin/kit/club/RepKit';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
@@ -26,7 +24,7 @@ interface TeamRow {
 }
 
 export default function RenameSlugPage() {
-  const { currentOrg, userRole, userCapabilities, loading } = useOrg();
+  const { currentOrg, userRole, loading } = useOrg();
   const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
   const orgParam = currentOrg?.slug ? `&orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
   const base = `/${currentOrg?.slug ?? ''}/admin`;
@@ -134,16 +132,6 @@ export default function RenameSlugPage() {
   }
 
   if (loading) return <LoadingState label="Loading teams…" />;
-
-  if (!userRole || !hasCapability(userRole, userCapabilities, 'module_rep_teams')) {
-    return (
-      <div className={styles.accessDenied}>
-        <Link2 size={32} />
-        <h2>Access restricted</h2>
-        <p>You don&apos;t have access to the Rep teams module.</p>
-      </div>
-    );
-  }
 
   const activeRows = rows.filter(r => !r.team.isArchived);
   const archivedRows = rows.filter(r => r.team.isArchived);

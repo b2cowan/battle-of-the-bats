@@ -3,6 +3,8 @@ import { getAuthContextWithRole } from '@/lib/api-auth';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { hasCapability } from '@/lib/roles';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
+import { notYoursScreenProps } from '@/lib/not-yours-server';
+import { NotYoursScreen } from '@/components/admin/kit/club/NotYoursScreen';
 
 export default async function RepTeamsLayout({
   children,
@@ -29,7 +31,13 @@ export default async function RepTeamsLayout({
     !hasCapability(ctx.role, ctx.capabilities, 'module_rep_teams') ||
     !hasModuleEntitlement(ctx.org, 'module_rep_teams')
   ) {
-    redirect(isTeamWorkspaceOrg(ctx.org) ? `/${ctx.org.slug}/coaches` : `/${ctx.org.slug}/admin`);
+    // A plan that does not carry Rep teams (or a cancelled one) and a team workspace go home: that is not "not yours".
+    if (isTeamWorkspaceOrg(ctx.org) || !hasModuleEntitlement(ctx.org, 'module_rep_teams')) {
+      redirect(isTeamWorkspaceOrg(ctx.org) ? `/${ctx.org.slug}/coaches` : `/${ctx.org.slug}/admin`);
+    }
+    // ⚖ Someone who does not hold Rep teams sees the ONE "not yours" screen in place of the page (Club Tier Stage 13a, Ask
+    // 6 = A). Every Rep teams page sits under this layout, so none of them draws a refusal of its own.
+    return <NotYoursScreen {...await notYoursScreenProps(ctx, 'repTeams')} />;
   }
 
   return <>{children}</>;

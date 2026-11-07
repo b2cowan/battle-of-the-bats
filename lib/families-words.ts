@@ -637,7 +637,6 @@ export const SEASON_EMAIL_WORDS = {
   noFamiliesDone: (season: string) => `No families in ${season}`,
   finished: 'This season is finished. Its record is locked; you can still email its families.',
   loadFailed: 'We couldn’t load this season’s emails.',
-  noAccess: 'Emailing this season’s families is for its league admins and registrar.',
   /** Who an email went to, on the history and the window's facts. */
   goingTo: (families: number, children: number | null) => `${pluralize(families, 'family', 'families')}${children ? ` (${pluralize(children, 'child', 'children')})` : ''}`,
   namedFact: (n: number, named: string | null) => (named ? `${n}: ${named}` : String(n)),

@@ -68,7 +68,8 @@ export function useAdminKitNav() {
   });
   const billingLink = kitBillingLink({ orgSlug, planId: currentOrg?.planId, accountKind: currentOrg?.accountKind, role: userRole, capabilities: userCapabilities, isSandbox });
   // The person's own Coaches Portal door — the rail's foot and the More sheet's "You" both show it.
-  const coachDoor = coachDoorFor(useCurrentOrgCoachAccess(currentOrg?.slug, !isCanceled), currentOrg?.slug,
+  const coachAccess = useCurrentOrgCoachAccess(currentOrg?.slug, !isCanceled);
+  const coachDoor = coachDoorFor(coachAccess, currentOrg?.slug,
     isStandaloneCoachOwner(currentOrg, userRole, userCapabilities));
   // The tournament's groups as this person sees them, every row's address resolved ONCE. Every row is an event page:
   // the club's Accounting book is not one (owner 2026-10-30 — a tournament admin manages payments on Teams).
@@ -107,6 +108,8 @@ export function useAdminKitNav() {
     calendarLink,
     schedulesLink,
     coachDoor,
+    /** Rep (paid) coaching assignment in THIS org — the Organization hub's "My Coaches Portal" tile reads it. */
+    hasRepAccess: coachAccess.hasRepAccess,
     tournamentGroups,
     siteInNav,
     section,

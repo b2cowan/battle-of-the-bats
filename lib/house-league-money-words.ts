@@ -72,7 +72,6 @@ export const MONEY_PAGE_WORDS = {
   title: 'Money',
   loading: 'Loading the season’s money…',
   failed: 'We couldn’t load the season’s money.',
-  noAccess: 'You don’t have access to this page.',
   band: {
     owed: 'Owed', received: 'Received', owing: 'Still owing',
     players: (n: number) => pluralize(n, 'player'),
@@ -166,7 +165,6 @@ export const REGS_WORDS = {
   add: 'Add registration',
   loading: 'Loading registrations…',
   failed: 'We couldn’t load the registrations.',
-  noAccess: 'You don’t have access to this page.',
   tabsLabel: 'Registrations',
   tab: { review: 'To review', active: 'Active', waitlist: 'Waitlist', ended: 'Ended' },
   reviewAria: (n: number) => `${pluralize(n, 'registration')} to review`,

@@ -21,6 +21,7 @@ import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import ExportMenu from '@/components/admin/ExportMenu';
 import MoneySummaryBand from '@/components/coaches/MoneySummaryBand';
 import { EmptyCard, LoadFailed, PageLoading, repKit, useDeferredLoad } from '@/components/admin/kit/club/RepKit';
+import { NotYours } from '@/components/admin/kit/club/NotYours';
 import { useHouseLeagueAccess } from '@/components/admin/kit/useHouseLeagueSeasons';
 import s from '@/components/admin/kit/club/league/SeasonMoney.module.css';
 import { formatLeagueMoney, type SeasonMoney } from '@/lib/league-money';
@@ -102,7 +103,7 @@ export default function MoneyPage() {
   );
 
   if (!user) return null;
-  if (access && !canView) return <div className={repKit.page}>{header()}<EmptyCard title={W.noAccess} /></div>;
+  if (access && !canView) return <NotYours page="seasonMoney" />;
   if (loading && !failed) return <PageLoading header={header()} label={W.loading} />;
   if (failed || !read) return <div className={repKit.page}>{header()}<LoadFailed title={W.failed} onRetry={() => { setLoading(true); void load(); }} /></div>;
 

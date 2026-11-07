@@ -23,6 +23,7 @@ import type { EmailLogRow } from '@/lib/families-emails-log';
 import type { EmailAllowance } from '@/lib/families-email';
 import ck from '../../ClubKit.module.css';
 import { EmptyCard, LoadFailed, NoticePill, PageLoading, repKit, useDeferredLoad, useLatestRead } from '../../RepKit';
+import { NotYours } from '../../NotYours';
 import { moneyFetch } from '../../money/MoneyKit';
 import EmailFamiliesWindow, { type EmailSent } from '../../families/EmailFamiliesWindow';
 import { EmailLogList, EmailRecord } from '../../families/EmailLog';
@@ -81,7 +82,7 @@ export default function SeasonEmailsScreen() {
   );
 
   if (orgLoading || !gate) return <PageLoading header={header} label="Loading Email families…" />;
-  if (!gate.email) return <div className={repKit.page}>{header}<EmptyCard title={SW.noAccess} /></div>;
+  if (!gate.email) return <NotYours page="seasonEmails" />;
   if (failed && !history) return <div className={repKit.page}>{header}<LoadFailed title={SW.loadFailed} onRetry={() => void load()} /></div>;
   if (!history || !season) return <PageLoading header={header} label="Loading Email families…" />;
 

@@ -31,6 +31,7 @@ import { announceSeasonsChanged, useHouseLeagueAccess, useSeasonAccess } from '@
 import KitDialog, { DialogCancel, type KitStep } from '../../KitDialog';
 import ck from '../../ClubKit.module.css';
 import { Callout, EmptyCard, LoadFailed, NoticePill, PageLoading, repKit, useDeferredLoad, useLatestRead } from '../../RepKit';
+import { NotYours } from '../../NotYours';
 import { moneyFetch } from '../../money/MoneyKit';
 import HubTabBar from '@/components/shared/HubTabBar';
 import DivisionPicker from '@/components/admin/tournament/DivisionPicker';
@@ -613,7 +614,7 @@ export default function RegistrationsScreen() {
   );
 
   if (orgLoading || !gate) return <PageLoading header={header} label={REGS_WORDS.loading} />;
-  if (!gate.read) return <div className={repKit.page}>{header}<EmptyCard title={REGS_WORDS.noAccess} /></div>;
+  if (!gate.read) return <NotYours page="houseLeague" />;
   if (!read && !failed) return <PageLoading header={header} label={REGS_WORDS.loading} />;
   if (failed || !season || !read) {
     return (

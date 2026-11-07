@@ -46,6 +46,7 @@ import RoleGuide from './RoleGuide';
 import ck from './ClubKit.module.css';
 import styles from './Members.module.css';
 import LoadingState from '@/components/shared/LoadingState';
+import { NotYours } from './NotYours';
 
 const EXPORT_COLS: ExportColumnDef[] = [
   { label: 'Display Name', key: 'displayName', format: 'text' },
@@ -147,17 +148,8 @@ export default function MembersKit() {
 
   if (loading || !currentOrg || !userRole) return <LoadingState label={`Loading ${pageTitle.toLowerCase()}…`} />;
 
-  if (!canSee) {
-    return (
-      <div className={ck.page}>
-        <AdminPageHeader eyebrow="Organization" title={pageTitle} />
-        <div className={styles.empty}>
-          <h2 className={styles.emptyTitle}>{pageTitle} isn’t turned on for you</h2>
-          <p className={styles.emptyBody}>Ask the organization’s owner if you need to see who is on the board.</p>
-        </div>
-      </div>
-    );
-  }
+  // ⚖ Ask 6 = A (Club Tier Stage 13a, F-NAV-8): the ONE "not yours" screen.
+  if (!canSee) return <NotYours page="members" title={pageTitle} />;
 
   const planCfg = PLAN_CONFIG[currentOrg.planId];
   const tournamentTier = isTournamentTier(currentOrg.planId);

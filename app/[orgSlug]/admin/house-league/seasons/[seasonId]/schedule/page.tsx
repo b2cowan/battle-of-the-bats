@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useParams } from 'next/navigation';
-import { Calendar, CalendarClock, CalendarDays, CalendarRange, Clock, CloudRain, List, MoreHorizontal, Plus, X, Wand2 } from 'lucide-react';
+import { CalendarClock, CalendarDays, CalendarRange, Clock, CloudRain, List, MoreHorizontal, Plus, X, Wand2 } from 'lucide-react';
 import Link from 'next/link';
 import { useOrg } from '@/lib/org-context';
 import { ORG_TIME_ZONE, mondayOfDay, orgDayKey, utcToZonedInputs, tournamentToday } from '@/lib/timezone';
@@ -69,6 +69,7 @@ import PracticeWindow from '@/components/admin/kit/club/league/practices/Practic
 import { PRACTICE_TIME_WORDS, PRACTICE_WINDOW_WORDS } from '@/lib/league-practice-time';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { LoadFailed, NoticePill, useDeferredLoad, useLatestRead } from '@/components/admin/kit/club/RepKit';
+import { NotYours } from '@/components/admin/kit/club/NotYours';
 import { useKitButtons, useKitStyle } from '@/components/admin/AdminKitProvider';
 import { KIT_INK, KIT_LINE, KIT_SURFACE } from '@/components/admin/kit/kit-inline';
 import styles from '../../../house-league.module.css';
@@ -1222,15 +1223,7 @@ export default function SchedulePage() {
 
   if (loading) return <><LoadingState label="Loading the schedule…" />{timeWindow}{practiceTimeWindow}{practiceTellWindow}</>;
 
-  if (!hasAccess) {
-    return (
-      <div className={styles.accessDenied}>
-        <Calendar size={32} />
-        <h2>Access restricted</h2>
-        <p>You don&apos;t have access to this page.</p>
-      </div>
-    );
-  }
+  if (!hasAccess) return <NotYours page="houseLeague" />;
 
   const backHref = `/${orgSlug}/admin/house-league/seasons/${seasonId}`;
   const divName = selectedDiv?.name ?? '';

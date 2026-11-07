@@ -25,6 +25,7 @@ import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { useHouseLeagueAccess, useSeasonAccess } from '@/components/admin/kit/useHouseLeagueSeasons';
 import ck from '../../ClubKit.module.css';
 import { Callout, EmptyCard, LoadFailed, NoticePill, PageLoading, repKit, useDeferredLoad, useLatestRead } from '../../RepKit';
+import { NotYours } from '../../NotYours';
 import { moneyFetch } from '../../money/MoneyKit';
 import HubTabBar from '@/components/shared/HubTabBar';
 import tb from '@/components/admin/tournament/AdminToolbar.module.css';
@@ -142,7 +143,7 @@ export default function TeamsScreen() {
     />
   );
   if (orgLoading || !gate) return <PageLoading header={header} label={W.loading} />;
-  if (!gate.read) return <div className={repKit.page}>{header}<EmptyCard title={W.noAccess} /></div>;
+  if (!gate.read) return <NotYours page="houseLeague" />;
   if (!read && !failed) return <PageLoading header={header} label={W.loading} />;
   if (failed || !read || !season) {
     return <div className={repKit.page}>{header}<LoadFailed title={W.failed} onRetry={() => { setFailed(false); void load(); }} /></div>;

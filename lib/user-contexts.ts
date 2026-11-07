@@ -6,11 +6,12 @@ import { getBasicCoachTournamentSummary, countClaimableRegistrationsForUser } fr
 import { getFanFollowSummary } from './fan-follows';
 import { COACHES_CLAIMABLE_CONTEXT_ID, COACHES_HOME_PATH, COACHES_TOURNAMENTS_PATH, coachTeamPath } from './coaches-portal-routes';
 import { isTeamWorkspaceOrg } from './team-workspace-entitlements';
-import { isClubPlan, isTournamentOnlyWorkspace, planCarriesModule, type EntitlementOrg } from './module-entitlements';
+import { isClubPlan, isTournamentOnlyWorkspace, type EntitlementOrg } from './module-entitlements';
 import { WORKSPACE_KIND_LABEL } from './workspace-labels';
 import { getBillingHref } from './billing-urls';
 import { hasBillingAccess } from './roles';
 import { getStandaloneAdminHref, getCoachPortalAssignments } from './coach-portal-request';
+import { programHomePath } from './member-home';
 import { officialHome, volunteerHome, volunteerJobOf } from './volunteer-jobs';
 import { volunteerDuties } from './volunteer-words';
 import { getCoachTeamCards } from './house-league-coach';
@@ -481,13 +482,10 @@ export async function getDestinationForMembership(member: MemberRow, userId: str
   }
 
   // A role that runs ONE program starts in it (Stage 1 specimen 6: "accepting lands Jordan where a
-  // Treasurer starts, Accounting" — J10-011). Everyone else starts on the hub.
-  if (role === 'treasurer' && planCarriesModule(entitlementOrg, 'module_accounting')) {
-    return `/${slug}/admin/accounting`;
-  }
-  if ((role === 'league_admin' || role === 'league_registrar') && planCarriesModule(entitlementOrg, 'module_house_league')) {
-    return `/${slug}/admin/house-league`;
-  }
+  // Treasurer starts, Accounting" — J10-011). Everyone else starts on the hub. ONE rule, shared with the
+  // "not yours" screen's door home (lib/member-home.ts, Club Tier Stage 13a).
+  const programHome = programHomePath(slug, role, entitlementOrg);
+  if (programHome) return programHome;
 
   // A Club owner who has not finished setting up lands on the club's setup checklist (A11,
   // specimen 10) rather than an empty hub. Everyone else — and the owner once setup is done or

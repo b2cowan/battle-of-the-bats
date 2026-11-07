@@ -31,7 +31,7 @@ import styles from './Settings.module.css';
 import { WEB_ADDRESS_WORDS as WA } from '@/lib/web-address-words';
 import { cleanSlugInput } from '@/lib/slug';
 import LoadingState from '@/components/shared/LoadingState';
-import { possessive } from '@/lib/utils';
+import { NotYours } from './NotYours';
 
 interface OrgSettings {
   name: string;
@@ -160,17 +160,8 @@ export default function SettingsKit() {
 
   if (loading || !currentOrg || !userRole) return <LoadingState label="Loading the settings…" />;
 
-  if (userRole !== 'owner') {
-    return (
-      <div className={ck.page}>
-        <AdminPageHeader eyebrow="Organization" title="Settings" />
-        <div className={styles.lockedCard}>
-          <h2 className={styles.lockedTitle}>Settings are the owner’s</h2>
-          <p className={styles.lockedBody}>Only {possessive(currentOrg.name)} owner can change the organization’s name and address.</p>
-        </div>
-      </div>
-    );
-  }
+  // ⚖ Ask 6 = A (Club Tier Stage 13a, F-A5-9): the ONE "not yours" screen, the owner's-only voice.
+  if (userRole !== 'owner') return <NotYours page="settings" />;
 
   async function patch(body: Record<string, unknown>): Promise<{ ok: boolean; data: Record<string, unknown> }> {
     const res = await fetch(`/api/admin/org-settings${orgQuery}`, {

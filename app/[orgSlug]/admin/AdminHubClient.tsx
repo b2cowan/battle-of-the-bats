@@ -9,6 +9,9 @@ import { hasCapability, type Capability } from '@/lib/roles';
 import { isTournamentTier } from '@/lib/billing-urls';
 import LoadingState from '@/components/shared/LoadingState';
 import HelpCallout from '@/components/help/HelpCallout';
+import { useBoardPeople } from '@/lib/use-board-people';
+import { boardOwnerName } from '@/lib/board-people';
+import { NOT_YOURS_WORDS, notYoursWhoSentence } from '@/lib/not-yours-words';
 import s from '@/app/[orgSlug]/admin/admin-common.module.css';
 
 interface StartupProgress {
@@ -24,7 +27,7 @@ interface StartupProgress {
  * The admin home for a workspace with no club hub (`AdminHub` mounts this for a tournament-only plan).
  * There is no home page here: a member who can see tournaments goes to them (or to setup), and a member who
  * cannot goes to the first area they can open. Only someone who can open nothing sees a page — the
- * "Access restricted" card. ⚖ Owner 2026-10-20 (admin type sweep Stage 5, E1): this replaced the
+ * "nothing open to you yet" card. ⚖ Owner 2026-10-20 (admin type sweep Stage 5, E1): this replaced the
  * pre-redesign tile page, the last screen still drawn in the old console lettering.
  */
 export default function AdminHubClient() {
@@ -55,6 +58,8 @@ export default function AdminHubClient() {
     canUseModule('module_house_league') && `${base}/house-league`,
     canUseModule('module_rep_teams') && `${base}/rep-teams`,
   ].find((href): href is string => typeof href === 'string') ?? null;
+  // The owner by name, read only for the one person who sees the card below (nothing open, nothing to go to).
+  const board = useBoardPeople(!loading && !!userRole && !canSeeTournaments && !firstDoor);
 
   const [startupProgress, setStartupProgress] = useState<StartupProgress | null>(null);
   const [startupErrorOrgSlug, setStartupErrorOrgSlug] = useState<string | null>(null);
@@ -177,10 +182,11 @@ export default function AdminHubClient() {
 
   return (
     <div className={s.page}>
+      {/* ⚖ Ask 6 (Club Tier Stage 13a): the "not yours" words, the owner by name. This IS the person's home, so no door back. */}
       <HelpCallout
         variant="warning"
-        title="Access restricted"
-        body="You don't have access to any area here yet. Ask your organization's owner for access."
+        title={NOT_YOURS_WORDS.nothingOpenTitle}
+        body={notYoursWhoSentence('grant', boardOwnerName(board), userRole)}
       />
     </div>
   );

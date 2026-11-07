@@ -22,23 +22,6 @@
   padding: 2rem;
 }
 
-.accessDenied {
-  padding: 4rem 2rem;
-  text-align: center;
-  color: var(--text-tertiary);
-}
-.accessDenied h2 {
-  font-size: 1.1rem;
-  font-weight: 700;
-  margin: 1rem 0 0.5rem;
-  color: var(--text-secondary);
-}
-.accessDenied p {
-  font-size: 0.9rem;
-  max-width: 360px;
-  margin: 0 auto;
-}
-
 /* ── Empty state ──────────────────────────────────────────────────────────── */
 .emptyState {
   text-align: center;

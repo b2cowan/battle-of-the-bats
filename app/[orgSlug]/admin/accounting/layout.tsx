@@ -5,6 +5,8 @@ import { canOpenModule } from '@/lib/member-access';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import AccountingFrame from '@/components/admin/kit/club/money/AccountingFrame';
 import { clubHasPayouts } from '@/lib/online-payouts';
+import { notYoursScreenProps } from '@/lib/not-yours-server';
+import { NotYoursScreen } from '@/components/admin/kit/club/NotYoursScreen';
 
 /**
  * ACCOUNTING — ONE PAGE WITH TABS (⚖ Club Tier Stage 3a, Ask 2 option B, owner 2026-09-30).
@@ -12,7 +14,8 @@ import { clubHasPayouts } from '@/lib/online-payouts';
  * The gate is decided HERE, on the server, before any tab mounts: the member's Accounting capability
  * AND the plan's (`canOpenModule`, the one rule every Accounting route asks — C17: the pages used to
  * check the role alone and show an "Access restricted" card a moment after drawing their chrome).
- * Someone who cannot open Accounting goes back to the club's Overview, as Rep Teams sends them.
+ * ⚖ Someone who cannot open Accounting sees the ONE "not yours" screen in place of the tabs (Club Tier Stage 13a, Ask 6
+ * = A). A plan that does not carry Accounting (or a cancelled one) and a team workspace still go home, as before.
  *
  * The frame (title, tab row) belongs to the tab pages and to a team's account, a view of the Teams tab
  * (Club Accounting · Teams, Ask 2 — `AccountingFrame` decides by the address).
@@ -31,7 +34,10 @@ export default async function AccountingLayout({
   if (!ctx) redirect(`/auth/login?next=/${orgSlug}/admin/accounting`);
   if (ctx.org.slug !== orgSlug) redirect(`/${ctx.org.slug}/admin/accounting`);
   if (!canOpenModule(ctx, ctx.org, 'module_accounting')) {
-    redirect(isTeamWorkspaceOrg(ctx.org) ? `/${ctx.org.slug}/coaches` : `/${ctx.org.slug}/admin`);
+    if (isTeamWorkspaceOrg(ctx.org) || !hasModuleEntitlement(ctx.org, 'module_accounting')) {
+      redirect(isTeamWorkspaceOrg(ctx.org) ? `/${ctx.org.slug}/coaches` : `/${ctx.org.slug}/admin`);
+    }
+    return <NotYoursScreen {...await notYoursScreenProps(ctx, 'accounting')} />;
   }
 
   return (

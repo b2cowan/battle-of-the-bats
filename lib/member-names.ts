@@ -1,6 +1,8 @@
 import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
-import { getUserDisplayName } from './user-display';
+import { getUserDisplayName, getUserPersonName } from './user-display';
+import { BOARD_ROLES, type BoardPerson } from './board-people';
+import type { OrgRole } from './types';
 
 /**
  * The name a member is shown by, to another person — the name they gave this organization
@@ -79,4 +81,43 @@ export async function orgOwnerDisplayName(orgId: string): Promise<string | null>
     .maybeSingle<{ user_id: string }>();
   if (error || !data) return null;
   return memberDisplayName(orgId, data.user_id);
+}
+
+/**
+ * THE BOARD BY NAME (Club Tier Stage 13a, ALSO row R1 + Ask 6): the people who hold a board role in this club, as
+ * `{ name, role }` and nothing more. ⚖ NAMES ONLY (owner 2026-11-06): no email, no phone, no user id leaves this read,
+ * and a member whose account holds no name is left out rather than shown by their email. Every member of the club may
+ * read it (it answers "who creates the season?" and "who can give me access?"); it collects nothing new.
+ *
+ * Cost: one indexed select on the club's members, plus one account read per board member who gave the club no name
+ * (a board is a handful of people). Called only by the screens that name someone, never by the club brief. A refusal that
+ * names only the owner asks for `['owner']`, so it costs one account read, not one per board member.
+ */
+export async function boardNames(orgId: string, roles: readonly OrgRole[] = BOARD_ROLES): Promise<BoardPerson[]> {
+  const { data, error } = await supabaseAdmin
+    .from('organization_members')
+    .select('user_id, role, display_name, invited_at')
+    .eq('organization_id', orgId)
+    .eq('status', 'active')
+    .in('role', [...roles])
+    .order('invited_at', { ascending: true })
+    .returns<{ user_id: string; role: OrgRole; display_name: string | null; invited_at: string | null }[]>();
+  if (error || !data) {
+    if (error) console.error('[member-names] board read failed:', error);
+    return [];
+  }
+  const people = await Promise.all(data.map(async (row): Promise<BoardPerson | null> => {
+    let name = row.display_name?.trim() ?? '';
+    if (!name) {
+      try {
+        const { data: account } = await supabaseAdmin.auth.admin.getUserById(row.user_id);
+        name = account?.user ? getUserPersonName(account.user) : '';
+      } catch {
+        name = '';
+      }
+    }
+    // A name field somebody filled with an address (an '@') is not a name: left out, like an unnamed account.
+    return name && !name.includes('@') ? { name, role: row.role } : null;
+  }));
+  return people.filter((p): p is BoardPerson => p !== null);
 }

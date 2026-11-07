@@ -152,10 +152,13 @@ describe('the hub — a door only where it opens', () => {
     assert.match(hub, /return href\s*\? <CoachDoorCard[\s\S]*?: <CoachCard/, 'no href → a plain card, not a link');
   });
 
-  it('owner-only areas show as locked rows for everyone else, never as links', () => {
-    assert.match(hub, /\(canManageBilling \? \['Settings'\] : \['Plan & billing', 'Settings'\]\)\.map\(label => \(\s*<div key=\{label\}/);
+  // ⚖ Narrowed by Club Tier Stage 13a (Ask 7 = A, owner 2026-11-06): the locked rows are an ADMIN's (J10-016) and name the
+  // owner ("Ask Morgan Ellis"); for anyone else they go, with the section when it would hold only locks. The full role
+  // table is tests/unit/club-stage13a-doors-guard.test.ts.
+  it('owner-only areas show as locked rows for an admin, never as links', () => {
+    assert.match(hub, /\{showsLockedRows && \(canManageBilling \? \['Settings'\] : \['Plan & billing', 'Settings'\]\)\.map\(label => \(\s*<div key=\{label\}/);
     assert.match(hub, /canManageBilling && <Link href=\{`\$\{base\}\/org\/billing`\}/);
-    assert.match(hub, /Owner only/);
+    assert.match(hub, /NOT_YOURS_WORDS\.askChip\(/);
   });
 
   it('the rail and the phone More sheet list doors only — the locked rows live on the hub alone (owner, 2026-10-01)', () => {

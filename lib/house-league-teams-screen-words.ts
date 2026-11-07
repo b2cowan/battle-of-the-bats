@@ -10,7 +10,6 @@ export const TEAMS_WORDS = {
   title: 'Teams & draft',
   loading: 'Loading teams & draft…',
   failed: 'Teams & draft didn’t load.',
-  noAccess: 'You don’t have access to house league teams.',
   noDivisions: { title: 'No divisions yet', body: 'Add divisions to the season first. Each division makes its own teams.' },
   tabsLabel: 'Divisions',
   divisionLabel: 'Division',
