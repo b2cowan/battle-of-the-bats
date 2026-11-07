@@ -166,7 +166,7 @@ describe('N4 + N7 · one foot, one More-sheet order', () => {
   // ⚖ Ask 9 = A (Club Tier Stage 13a, owner 2026-11-06): the header's "View site" pill is on every screen the sidebar and the
   // phone bar are (a cancelled club, which has no pill, has neither nav), so the foot door and the More sheet's door of the
   // same name were the same place twice (F-NAV-5). Neither nav draws a live-site door; the pill names the club case.
-  it('Ask 9: no "Public site" foot door or More-sheet door; the club pill reads "View site", tournament screens keep theirs', () => {
+  it('Ask 9: no "Public site" foot door or More-sheet door; the admin pill reads "View site" on club AND tournament screens (a draft keeps "Preview site")', () => {
     const rail = readCode(ADMIN_RAIL);
     const foot = rail.slice(rail.indexOf('<div className={styles.foot}>'), rail.indexOf('<CollapseSidebarRow'));
     assert.doesNotMatch(foot, /Public site<\/span>/);
@@ -174,8 +174,12 @@ describe('N4 + N7 · one foot, one More-sheet order', () => {
     assert.doesNotMatch(sheet, /admin-mob-view-site|useAdminFlip|siteInNav/);
     assert.doesNotMatch(readCode('components/admin/kit/useAdminKitNav.ts'), /siteInNav/);
     const flip = readCode('lib/use-admin-flip.ts');
-    assert.match(flip, /label: onTournamentScreen \? 'Public site' : 'View site'/);
-    // The tournament pill's own words are untouched (one helper, its two words).
+    assert.match(flip, /label: 'View site' \}/);
+    assert.doesNotMatch(flip, /onTournamentScreen \? 'Public site'/);
+    // A live event's twin is renamed in the admin shell only; a draft keeps "Preview site".
+    assert.match(flip, /resolution\.target\.label === 'Public site'[\s\S]*?label: 'View site'/);
+    assert.match(flip, /const toPublic = viewSiteWord\(resolveFlip\(/);
+    // flip-twins' own words are untouched (the coach / scorekeeper doors still read them).
     assert.match(readCode('lib/flip-twins.ts'), /return ctx\.isDraft \? 'Preview site' : 'Public site';/);
   });
 

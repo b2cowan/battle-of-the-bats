@@ -7,6 +7,13 @@ import { resolveFlip, primaryTarget, HAT_LABEL, type FlipResolution, type FlipTa
 import { isPublicPageEnabled, PUBLIC_PAGE_OPTIONS, type PublicPageKey } from '@/lib/public-pages';
 import { useEventRoleHats } from '@/lib/use-event-role-hats';
 
+/** A live event's page-matched twin reads "View site" in the admin shell; a draft's "Preview site" is left as it is. */
+function viewSiteWord(resolution: FlipResolution): FlipResolution {
+  return resolution.kind === 'single' && resolution.target.label === 'Public site'
+    ? { ...resolution, target: { ...resolution.target, label: 'View site' } }
+    : resolution;
+}
+
 /**
  * The admin shell's FlipPill target for the current screen — consumed by the shared AdminEventHeader:
  *   • on a tournament screen → that tournament's page-matched public (live) or preview (draft) twin;
@@ -53,7 +60,10 @@ export function useAdminFlip(): FlipResolution | null {
           .map(page => page.key)
           .filter((key): key is Exclude<PublicPageKey, 'register'> => key !== 'register');
 
-    const toPublic = resolveFlip({
+    // ⚖ One word for the live-site door on every admin screen: "View site" (the sidebar's "Public site" row is the EDITOR, so
+    // the pill must not share its name — the club's fix, now on tournament screens too). A draft keeps "Preview site": it is
+    // honestly a preview. Only the admin shell's pill is renamed; the coach / scorekeeper doors keep flip-twins' own word.
+    const toPublic = viewSiteWord(resolveFlip({
       pathname,
       direction: 'to-public',
       hat: 'admin',
@@ -63,7 +73,7 @@ export function useAdminFlip(): FlipResolution | null {
         isDraft: currentTournament.status === 'draft',
         hiddenPublicPages,
       },
-    });
+    }));
 
     // Roles not resolved yet → PENDING. The control holds its space and shows nothing until it
     // knows whether it's a plain link or a chooser. Painting a stand-in and rewriting it is what
@@ -98,9 +108,9 @@ export function useAdminFlip(): FlipResolution | null {
   const settlingIntoEvent = onTournamentScreen && tournamentLoading;
   return {
     kind: 'single',
-    // ⚖ Ask 9 = A (Stage 13a): "View site" on the club's own screens — the sidebar's "Public site" row is the editor
-    // (F-NAV-5). The tournaments list keeps the tournament screens' word.
-    target: { href: `/${currentOrg.slug}`, label: onTournamentScreen ? 'Public site' : 'View site' },
+    // ⚖ Ask 9 = A (Stage 13a): "View site" — the sidebar's "Public site" row is the editor (F-NAV-5). The tournaments list
+    // now reads it too (it opens the club's site, so it never was a tournament's "Public site").
+    target: { href: `/${currentOrg.slug}`, label: 'View site' },
     ...(settlingIntoEvent ? { pending: true } : {}),
   };
 }
