@@ -894,6 +894,9 @@ questions first). The Teams tab's "Bank checked" column (R0 tab 7) reads each te
   money sums verified by hand (refunds, not counted, cash). `verify:changed`'s failures are other sessions' files.
 
 ### BC6 — Coach: the source and the routes (no screen)
+Build prompt written 2026-11-06: `BANK_BALANCE_CHECK_BC6_BUILD_PROMPT.md` (two sessions: BC6a the coach's figure and Find
+as rules and a reader, owner questions first incl. O5; BC6b the routes, permissions, the history-decision record, a D1
+guard and a dev probe). Mig 447 already carries the team account (`owner_kind = 'team'`, no starting statement).
 - [ ] The team account, created at the first save (no setup question; name "Team bank account").
 - [ ] The coach figure: opening balance + settled cash-moving register rows ≤ D (`coach-register-book.ts` rows, pure
   cutoff); a date before the season start refused (O5 decides the date); Find per Q1.
