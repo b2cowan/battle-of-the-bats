@@ -1,0 +1,467 @@
+<title>What's New Home Drawings</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: sticky tab row + View switch, one section at a time, framed product specimens on a slate ground so they read as specimens, a numbered note list beside each. */
+:root{
+  --bg:#E8EAEC; --panel:#F6F7F8; --fg:#1B1F23; --fg2:#4B535B; --line:#CDD2D7; --accent:#4F5E1F; --accent-soft:#DDE4C4; --hot:#B4541A;
+  --good:#2F6B3A; --bad:#9B2C2C;
+  /* product frame tokens (warm portal, real values from globals.css) — same in both themes: a frame is a specimen */
+  --f-paper:#F8F4ED; --f-card:#FFFFFF; --f-ink:#241E15; --f-ink2:#4A4235; --f-line:rgba(70,55,30,.12); --f-line2:rgba(70,55,30,.20);
+  --f-olive:#5B6B26; --f-olive-soft:#E6EBD0; --f-gray:#7A7366; --f-danger:#A33A2A; --f-amber:#F2E3B3;
+  --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; --mono:ui-monospace,"Cascadia Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14181C;--panel:#1D2227;--fg:#E8EBEE;--fg2:#A4ADB6;--line:#343B43;--accent:#B9CC72;--accent-soft:#2D3716;--hot:#E58A52;--good:#7CC48A;--bad:#E58B8B;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#14181C;--panel:#1D2227;--fg:#E8EBEE;--fg2:#A4ADB6;--line:#343B43;--accent:#B9CC72;--accent-soft:#2D3716;--hot:#E58A52;--good:#7CC48A;--bad:#E58B8B;color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:14px;line-height:1.5}
+*{box-sizing:border-box}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--bg)}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);border-bottom:1px solid var(--line)}
+.top .wrap{padding-block:10px 0}
+h1{font-size:17px;margin:0 0 8px;font-weight:700;letter-spacing:-.01em}
+h1 span{font-weight:500;color:var(--fg2)}
+.tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:thin}
+.tab{appearance:none;border:0;background:none;color:var(--fg2);font:inherit;font-weight:600;padding:8px 12px;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
+.tab:hover{color:var(--fg)}
+.tab[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accent)}
+.tab:focus-visible,.mk:focus-visible,.btn:focus-visible,.vs button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.viewrow{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line)}
+.viewrow[hidden]{display:none}
+.viewrow b{font-size:12px;color:var(--fg2);text-transform:uppercase;letter-spacing:.08em}
+.vs{display:inline-flex;background:#fff;border:1px solid var(--line);border-radius:9px;padding:2px}
+.vs button{appearance:none;border:0;background:none;font:inherit;font-weight:600;font-size:13px;padding:4px 12px;border-radius:7px;color:#4A4235;cursor:pointer}
+.vs button[aria-pressed="true"]{background:#E6EBD0;color:#3E4A12}
+main{padding-block:18px 60px}
+.panel{display:none}.panel.on{display:block}
+.lead{max-width:70ch;color:var(--fg2);margin:0 0 16px}
+.lead b{color:var(--fg)}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:24px;align-items:start}
+@media(max-width:900px){.grid{grid-template-columns:minmax(0,1fr)}}
+.specs{display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start;min-width:0}
+.spec{min-width:0}
+.cap{font-size:12px;color:var(--fg2);margin-bottom:6px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.cap b{color:var(--fg);letter-spacing:.06em;text-transform:uppercase}
+.tag{font-size:10.5px;font-weight:700;letter-spacing:.06em;padding:1px 6px;border-radius:5px;border:1px solid var(--line)}
+.tag.new{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+.tag.rest{background:#F3E1C8;color:#7A4510;border-color:transparent}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .tag.rest{background:#4A3417;color:#F0B77B}}
+:root[data-theme="dark"] .tag.rest{background:#4A3417;color:#F0B77B}
+.frame{position:relative;background:var(--f-paper);color:var(--f-ink);border:1px solid var(--f-line2);border-radius:10px;overflow:hidden;font-family:var(--sans);font-size:14px;line-height:1.35}
+.frame .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--f-ink2);font-weight:600}
+svg.i{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.same,.chg{transition:opacity .15s}
+body[data-view="diff"] .same{opacity:.2;filter:grayscale(1)}
+body[data-view="diff"] .chg{outline:2px solid var(--hot);outline-offset:2px;border-radius:6px}
+.mk{position:absolute;z-index:3;width:20px;height:20px;border-radius:50%;border:0;background:var(--hot);color:#fff;font:700 11px var(--sans);cursor:pointer;display:grid;place-items:center;box-shadow:0 0 0 2px var(--f-paper)}
+.mk.on{background:var(--fg);color:var(--bg)}
+.notes{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;position:sticky;top:130px}
+@media(max-width:900px){.notes{position:static}}
+.notes li{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:9px 12px 9px 40px;position:relative;cursor:pointer;font-size:13px}
+.notes li::before{content:attr(data-n);position:absolute;left:11px;top:9px;width:20px;height:20px;border-radius:50%;background:var(--hot);color:#fff;font:700 11px var(--sans);display:grid;place-items:center}
+.notes li.on{border-color:var(--hot);box-shadow:0 0 0 1px var(--hot)}
+.notes li b{display:block;margin-bottom:2px}
+.notes li span{color:var(--fg2)}
+/* rail */
+.rail{width:244px;padding:10px 0 0}
+.rail .it{display:flex;align-items:center;gap:10px;padding:9px 14px;color:var(--f-ink);font-size:14px;position:relative}
+.rail .it.dim{color:var(--f-ink2)}
+.rail .it .ph{width:15px;height:15px;border-radius:4px;border:1.5px solid var(--f-gray);flex:none}
+.rail hr{border:0;border-top:1px solid var(--f-line2);margin:8px 0}
+.rail .foot{padding-bottom:8px}
+.ndot{width:7px;height:7px;border-radius:50%;background:var(--f-olive);display:inline-block;margin-left:.4rem;vertical-align:middle;flex:none}
+/* help hub */
+.hub{width:380px;padding:16px 18px 18px}
+.hub h3{margin:0 0 2px;font-size:18px}
+.hub p{margin:0 0 10px;color:var(--f-ink2);font-size:13px}
+.wn{display:inline-flex;align-items:center;gap:.35rem;font-size:12px;font-weight:650;color:var(--f-olive);position:relative}
+/* account popover */
+.pop{width:270px;padding:6px;box-shadow:0 2px 6px rgba(70,55,30,.06),0 14px 36px rgba(70,55,30,.14)}
+.pop .idn{display:flex;gap:10px;align-items:center;padding:8px 10px}
+.av{width:30px;height:30px;border-radius:50%;background:var(--f-olive);color:#fff;display:grid;place-items:center;font-weight:700}
+.cp{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--f-ink2)}
+.pop .seg{display:flex;gap:4px;padding:2px 10px 8px}
+.pop .seg span{flex:1;text-align:center;border:1px solid var(--f-line2);border-radius:8px;padding:3px 0;font-size:13px;font-weight:600}
+.pop .seg span.a{background:rgba(87,101,30,.18);color:var(--f-ink);border-color:transparent}
+.row{display:flex;align-items:center;gap:.55rem;padding:.45rem .65rem;border-radius:7px;font-weight:650;font-size:14px;line-height:1.25;color:var(--f-ink);position:relative}
+.row svg{color:var(--f-gray)}
+.nw{margin-left:auto;font:700 11px var(--sans);letter-spacing:.04em;background:rgba(87,101,30,.14);color:var(--f-olive);border-radius:999px;padding:1px 8px}
+.row.so{color:var(--f-danger)}.row.so svg{color:var(--f-danger)}
+.pop hr{border:0;border-top:1px solid var(--f-line);margin:5px 6px}
+/* phone sheet */
+.sheet{width:340px;padding:14px 14px 16px;border-radius:16px}
+.sheet .grab{width:38px;height:4px;border-radius:2px;background:var(--f-line2);margin:0 auto 10px}
+.sheet h4{margin:0 0 8px;font-size:15px}
+.dg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+/* shipped dropItem: a borderless row, .7rem .5rem, 44px min height, two columns with a 10px gap */
+.dg{column-gap:10px;row-gap:0}
+.di{display:flex;align-items:center;gap:.75rem;padding:.7rem .5rem;min-height:44px;font-weight:600;font-size:15px;color:var(--f-ink2);position:relative;border-radius:8px}
+.di svg{width:17px;height:17px;color:var(--f-gray)}
+.di.so,.di.so svg{color:var(--f-danger)}
+.sheet .you{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--f-gray);padding:.45rem .5rem .1rem}
+.sheet hr{border:0;border-top:1px solid var(--f-line);margin:.2rem 0}
+/* overview */
+.ov{width:380px;padding:14px 14px 16px}
+.ov h3{margin:0 0 10px;font-size:19px}
+.ov .eyebrow{margin:10px 0 6px;display:block}
+.ov .cards{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.card{background:var(--f-card);border:1px solid var(--f-line);border-radius:10px;padding:9px 11px;font-size:12px;color:var(--f-ink2);position:relative}
+.card .eyebrow{margin:0 0 3px;font-size:10px}
+.card strong{display:block;font-size:22px;color:var(--f-ink);line-height:1.1}
+/* shipped ClubKit .notice: .65rem .85rem, 8px radius, line-strong border, olive 10% tint, 12px, .9rem bottom margin */
+.note{display:flex;align-items:flex-start;gap:.5rem;background:rgba(87,101,30,.10);border:1px solid var(--f-line2);border-radius:8px;padding:.65rem .85rem;font-size:12px;line-height:1.45;color:var(--f-ink2);margin:0 0 .9rem;position:relative}
+.note svg{color:var(--f-olive);width:14px;height:14px;margin-top:.1rem}
+.note>span:first-of-type{flex:1;min-width:0}
+.note a{color:var(--f-olive);font-weight:700;white-space:nowrap}
+.note .x{margin:-.2rem -.35rem -.2rem 0;color:var(--f-gray);display:grid;place-items:center;width:22px;height:22px;flex:none}
+.note .x svg{color:var(--f-gray)}
+.cost{font-size:12px;color:var(--fg2);margin-top:6px;max-width:380px}
+/* agent tab */
+.rel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;max-width:620px;margin-bottom:16px}
+.rel h3{margin:0 0 2px;font-size:15px}
+.rel .meta{font-size:12px;color:var(--fg2);margin-bottom:10px}
+.verdict{display:inline-block;font-weight:700;font-size:12px;letter-spacing:.05em;text-transform:uppercase;padding:2px 9px;border-radius:999px;margin-bottom:8px}
+.verdict.y{background:var(--accent-soft);color:var(--accent)}
+.verdict.n{background:var(--line);color:var(--fg2)}
+.line{border-left:3px solid var(--accent);padding:4px 10px;margin:6px 0 10px;background:var(--bg);border-radius:0 6px 6px 0}
+.why{margin:0 0 10px;padding-left:18px;color:var(--fg2);font-size:13px}
+.why li{margin:2px 0}
+.btns{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.btn{appearance:none;font:inherit;font-weight:650;font-size:13px;padding:6px 14px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--fg);cursor:pointer}
+.btn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+.res{font-size:12.5px;color:var(--fg2)}
+.rules{max-width:620px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:640px){.rules{grid-template-columns:1fr}}
+.rules div{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:13px}
+.rules h4{margin:0 0 6px;font-size:13px}
+.rules ul{margin:0;padding-left:18px;color:var(--fg2)}
+.rules .yes h4{color:var(--good)}.rules .no h4{color:var(--bad)}
+/* asks */
+.ask{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px;max-width:760px}
+.ask h3{margin:0 0 4px;font-size:14.5px}
+.ask p{margin:0 0 6px;color:var(--fg2);font-size:13px}
+.ask .rec{font-size:13px}
+.ask .rec b{color:var(--accent)}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></symbol>
+  <symbol id="spark" viewBox="0 0 24 24"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/></symbol>
+  <symbol id="bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></symbol>
+  <symbol id="msg" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M12 7v6M9 10h6"/></symbol>
+  <symbol id="gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></symbol>
+  <symbol id="out" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></symbol>
+  <symbol id="dl" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></symbol>
+  <symbol id="x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="card" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></symbol>
+</svg>
+
+<div class="top">
+  <div class="wrap">
+    <h1>What's new, moved out of Help <span>· drawings for the owner · warm theme shown</span></h1>
+    <div class="tabs" role="tablist" aria-label="Sections">
+      <button class="tab" role="tab" id="tab-dot" data-tab="dot" aria-selected="true">1 · Help loses its dot</button>
+      <button class="tab" role="tab" id="tab-menu" data-tab="menu" aria-selected="false">2 · A home in the account menu</button>
+      <button class="tab" role="tab" id="tab-overview" data-tab="overview" aria-selected="false">3 · The Overview note</button>
+      <button class="tab" role="tab" id="tab-agent" data-tab="agent" aria-selected="false">4 · Who decides what is announced</button>
+      <button class="tab" role="tab" id="tab-asks" data-tab="asks" aria-selected="false">5 · Asks</button>
+    </div>
+    <div class="viewrow" id="viewrow">
+      <b>View</b>
+      <div class="vs" role="group" aria-label="View">
+        <button type="button" id="v-all" aria-pressed="true">Everything</button>
+        <button type="button" id="v-diff" aria-pressed="false">Show only what differs</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<main class="wrap">
+
+<!-- 1 -->
+<section class="panel on" id="p-dot" data-panel="dot" aria-labelledby="tab-dot">
+  <p class="lead">Today the dot sits on <b>Help</b> in the desktop rail and clears only when someone opens the public What's new page. After this change, <b>Help is a plain door</b>. Click a numbered marker or a note to match them up.</p>
+  <div class="grid">
+    <div class="specs">
+      <div class="spec">
+        <div class="cap"><b>Before</b> Rail foot · club admin, desktop <span class="tag">TODAY</span></div>
+        <div class="frame rail">
+          <div class="it dim same"><span class="ph"></span>Organization</div>
+          <hr class="same">
+          <div class="foot">
+            <div class="it same"><svg class="i"><use href="#card"/></svg>Plan &amp; billing</div>
+            <div class="it chg"><svg class="i"><use href="#help"/></svg>Help<span class="ndot"></span><button class="mk" data-n="1" style="left:104px;top:6px" aria-label="Note 1">1</button></div>
+            <div class="it dim same"><span class="ph"></span>Collapse sidebar</div>
+          </div>
+        </div>
+      </div>
+      <div class="spec">
+        <div class="cap"><b>After</b> Same rail foot <span class="tag rest">CHANGED</span></div>
+        <div class="frame rail">
+          <div class="it dim same"><span class="ph"></span>Organization</div>
+          <hr class="same">
+          <div class="foot">
+            <div class="it same"><svg class="i"><use href="#card"/></svg>Plan &amp; billing</div>
+            <div class="it chg"><svg class="i"><use href="#help"/></svg>Help<button class="mk" data-n="2" style="left:104px;top:6px" aria-label="Note 2">2</button></div>
+            <div class="it dim same"><span class="ph"></span>Collapse sidebar</div>
+          </div>
+        </div>
+      </div>
+      <div class="spec">
+        <div class="cap"><b>Before → after</b> Top of the Help center (opens in its own tab)</div>
+        <div class="frame hub chg">
+          <h3>Help</h3>
+          <p>(title and subtitle shown as placeholders; each hub sets its own)</p>
+          <span class="wn"><svg class="i" style="width:13px;height:13px"><use href="#spark"/></svg>What’s new<span class="ndot" title="today only"></span><button class="mk" data-n="3" style="right:-8px;top:-8px" aria-label="Note 3">3</button></span>
+          <span class="res" style="font-size:12px;color:var(--f-ink2);margin-left:8px">← the dot on this link is removed too</span>
+        </div>
+      </div>
+    </div>
+    <ol class="notes">
+      <li data-n="1"><b>Today</b><span>The same dot sits on Help in four desktop rails: club admin, tournament admin, paid coach portal and free coach portal. It is not on any phone, so phone users never saw it.</span></li>
+      <li data-n="2"><b>After</b><span>Help is a plain row. It still opens the guide for the page you are on, in a new tab. Nothing about where Help lives changes.</span></li>
+      <li data-n="3"><b>Inside Help</b><span>The What's new link stays here for anyone browsing, minus the dot. See Ask 1.</span></li>
+    </ol>
+  </div>
+</section>
+
+<!-- 2 -->
+<section class="panel" id="p-menu" data-panel="menu" aria-labelledby="tab-menu">
+  <p class="lead">What's new moves into the <b>account menu</b> on desktop and the <b>More sheet</b> on phones. The row carries a small <b>New</b> tag only when a release the owner chose to announce is unread on this device. Otherwise it is a plain row.</p>
+  <div class="grid">
+    <div class="specs">
+      <div class="spec">
+        <div class="cap"><b>Before</b> Account menu · desktop <span class="tag">TODAY</span></div>
+        <div class="frame pop">
+          <div class="idn same"><span class="av">B</span><div><div class="cp">Signed in</div><div style="font-size:13px">admin@harbourtown.example</div></div></div>
+          <div class="cp same" style="padding:2px 10px 4px">Appearance</div>
+          <div class="seg same"><span class="a">Warm</span><span>Dark</span></div>
+          <hr class="same">
+          <div class="row same"><svg class="i"><use href="#bell"/></svg>Notification settings</div>
+          <div class="row same"><svg class="i"><use href="#msg"/></svg>Send feedback</div>
+          <div class="row same"><svg class="i"><use href="#gear"/></svg>Account settings</div>
+          <hr class="same">
+          <div class="row so same"><svg class="i"><use href="#out"/></svg>Sign out</div>
+        </div>
+      </div>
+      <div class="spec">
+        <div class="cap"><b>After</b> unread announced release <span class="tag new">NEW ROW</span></div>
+        <div class="frame pop">
+          <div class="idn same"><span class="av">B</span><div><div class="cp">Signed in</div><div style="font-size:13px">admin@harbourtown.example</div></div></div>
+          <div class="cp same" style="padding:2px 10px 4px">Appearance</div>
+          <div class="seg same"><span class="a">Warm</span><span>Dark</span></div>
+          <hr class="same">
+          <div class="row chg"><svg class="i"><use href="#spark"/></svg>What’s new<span class="nw">New</span><button class="mk" data-n="1" style="right:-6px;top:-8px" aria-label="Note 1">1</button></div>
+          <div class="row same"><svg class="i"><use href="#bell"/></svg>Notification settings</div>
+          <div class="row same"><svg class="i"><use href="#msg"/></svg>Send feedback</div>
+          <div class="row same"><svg class="i"><use href="#gear"/></svg>Account settings</div>
+          <hr class="same">
+          <div class="row so same"><svg class="i"><use href="#out"/></svg>Sign out</div>
+        </div>
+      </div>
+      <div class="spec">
+        <div class="cap"><b>Before</b> More sheet · phone <span class="tag">TODAY</span></div>
+        <div class="frame sheet">
+          <div class="grab"></div>
+          <div class="you">You</div>
+          <div class="dg same">
+            <div class="di"><svg class="i"><use href="#gear"/></svg>Account</div>
+            <div class="di"><svg class="i"><use href="#card"/></svg>Plan &amp; billing</div>
+          </div>
+          <hr class="same">
+          <div class="dg same">
+            <div class="di"><svg class="i"><use href="#help"/></svg>Help</div>
+            <div class="di"><svg class="i"><use href="#msg"/></svg>Send feedback</div>
+            <div class="di"><svg class="i"><use href="#dl"/></svg>Download app</div>
+            <div class="di so"><svg class="i"><use href="#out"/></svg>Sign out</div>
+          </div>
+        </div>
+      </div>
+      <div class="spec">
+        <div class="cap"><b>After</b> More sheet · phone <span class="tag new">NEW ROW</span></div>
+        <div class="frame sheet">
+          <div class="grab"></div>
+          <div class="you same">You</div>
+          <div class="dg">
+            <div class="di same"><svg class="i"><use href="#gear"/></svg>Account</div>
+            <div class="di chg"><svg class="i"><use href="#spark"/></svg>What’s new<span class="nw">New</span><button class="mk" data-n="2" style="right:-6px;top:-8px" aria-label="Note 2">2</button></div>
+            <div class="di same"><svg class="i"><use href="#card"/></svg>Plan &amp; billing</div>
+          </div>
+          <hr class="same">
+          <div class="dg same">
+            <div class="di"><svg class="i"><use href="#help"/></svg>Help</div>
+            <div class="di"><svg class="i"><use href="#msg"/></svg>Send feedback</div>
+            <div class="di"><svg class="i"><use href="#dl"/></svg>Download app</div>
+            <div class="di so"><svg class="i"><use href="#out"/></svg>Sign out</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <ol class="notes">
+      <li data-n="1"><b>Desktop menu</b><span>One new row at the top of the settings group, in the same row style as its neighbours. It appears on the club admin and coach portals, not on the support console or public pages. The "New" tag shows only when the unread release was announced. No announced release means a plain row.</span></li>
+      <li data-n="2"><b>Phone</b><span>Phones use the More sheet, not the account menu. The row goes in the "You" group with Account, not in the bottom group: that group's order (Help, Send feedback, Download app, Sign out) was ruled on 2026-10-17 and is left alone. Admin, paid coach and free coach phones each get the row. The tag matches desktop. Only the lower part of the sheet is drawn.</span></li>
+      <li data-n="3"><b>Not changing</b><span>Help stays out of the account menu (the 2026-09-01 ruling). This adds one row; it does not move Help. There is deliberately no dot on the avatar. See Ask 3.</span></li>
+    </ol>
+  </div>
+</section>
+
+<!-- 3 -->
+<section class="panel" id="p-overview" data-panel="overview" aria-labelledby="tab-overview">
+  <p class="lead">When the owner approves an announcement, <b>one quiet line</b> shows on the club admin Overview until it is dismissed. The whole screen is drawn so you can judge whether it crowds the morning cards. Example text uses the real rainout feature from the 2026-11-05 release.</p>
+  <div class="grid">
+    <div class="specs">
+      <div class="spec">
+        <div class="cap"><b>Before</b> Club admin Overview <span class="tag">TODAY</span></div>
+        <div class="frame ov">
+          <h3 class="same">Overview</h3>
+          <span class="eyebrow same">This morning</span>
+          <div class="cards same">
+            <div class="card"><span class="eyebrow">Payment requests</span><strong>3</strong>oldest waiting 86 days</div>
+            <div class="card"><span class="eyebrow">Installments due</span><strong>12</strong>in the next 14 days · 7 overdue</div>
+          </div>
+          <span class="eyebrow same">Your programs</span>
+          <div class="cards same">
+            <div class="card"><span class="eyebrow">Rep teams</span>8 teams in 2 groups</div>
+            <div class="card"><span class="eyebrow">House league</span>Seasons, registrations, the draft</div>
+          </div>
+        </div>
+      </div>
+      <div class="spec">
+        <div class="cap"><b>After A</b> note under the title <span class="tag new">RECOMMENDED</span></div>
+        <div class="frame ov">
+          <h3 class="same">Overview</h3>
+          <div class="note chg"><svg class="i"><use href="#spark"/></svg><span>New: a Rainout button on the house league schedule. <a href="#overview" onclick="return false">What’s new ›</a></span><span class="x"><svg class="i"><use href="#x"/></svg></span><button class="mk" data-n="1" style="right:-6px;top:-8px" aria-label="Note 1">1</button></div>
+          <span class="eyebrow same">This morning</span>
+          <div class="cards same">
+            <div class="card"><span class="eyebrow">Payment requests</span><strong>3</strong>oldest waiting 86 days</div>
+            <div class="card"><span class="eyebrow">Installments due</span><strong>12</strong>in the next 14 days · 7 overdue</div>
+          </div>
+          <span class="eyebrow same">Your programs</span>
+          <div class="cards same">
+            <div class="card"><span class="eyebrow">Rep teams</span>8 teams in 2 groups</div>
+            <div class="card"><span class="eyebrow">House league</span>Seasons, registrations, the draft</div>
+          </div>
+        </div>
+        <div class="cost">Cost: everything below the note moves down about 55px (one bordered line plus the standard gap under a notice), and only while an announcement is unread.</div>
+      </div>
+      <div class="spec">
+        <div class="cap"><b>After B</b> note at the bottom <span class="tag rest">ALTERNATIVE</span></div>
+        <div class="frame ov">
+          <h3 class="same">Overview</h3>
+          <span class="eyebrow same">This morning</span>
+          <div class="cards same">
+            <div class="card"><span class="eyebrow">Payment requests</span><strong>3</strong>oldest waiting 86 days</div>
+            <div class="card"><span class="eyebrow">Installments due</span><strong>12</strong>in the next 14 days · 7 overdue</div>
+          </div>
+          <span class="eyebrow same">Your programs</span>
+          <div class="cards same">
+            <div class="card"><span class="eyebrow">Rep teams</span>8 teams in 2 groups</div>
+            <div class="card"><span class="eyebrow">House league</span>Seasons, registrations, the draft</div>
+          </div>
+          <div class="note chg" style="margin-top:10px"><svg class="i"><use href="#spark"/></svg><span>New: a Rainout button on the house league schedule. <a href="#overview" onclick="return false">What’s new ›</a></span><span class="x"><svg class="i"><use href="#x"/></svg></span><button class="mk" data-n="2" style="right:-6px;top:-8px" aria-label="Note 2">2</button></div>
+        </div>
+        <div class="cost">Cost: nothing moves, but on a full Overview it sits below the fold where few will see it.</div>
+      </div>
+    </div>
+    <ol class="notes">
+      <li data-n="1"><b>Under the title (recommended)</b><span>One line, a soft olive tint, a link and an X. The morning cards stay the first thing you read; the note is smaller than a card and gone after one tap. It only exists while an announced release is unread.</span></li>
+      <li data-n="2"><b>At the bottom</b><span>Quieter, but it is the same signal nobody scrolls to. Since announcements are rare, I would accept one line of push-down over being missed.</span></li>
+      <li data-n="3"><b>Rules</b><span>One note at a time, never stacked. The X clears it on this device and also clears the "New" tag in the menu. Opening What's new does the same. The fee-overdue alert always stays above it. The note uses the portal's existing one-line notice look; the X is new, and on a phone it needs a 44px tap area, which this drawing does not show. The frames are narrower than the real desktop content column, where the morning cards sit four across.</span></li>
+    </ol>
+  </div>
+</section>
+
+<!-- 4 -->
+<section class="panel" id="p-agent" data-panel="agent" aria-labelledby="tab-agent">
+  <p class="lead">At the release step where release notes are drafted today, the release agent also <b>proposes whether the release is announced</b>, with a reason, and you answer yes or no. It never decides for you. The cards show what you would see at that moment. Buttons work, but nothing is saved.</p>
+  <div class="rel" id="rel1">
+    <h3>Release of 2026-11-05 · release notes, marketing-reviewed</h3>
+    <div class="meta">Announcement proposal · asked at the same approval as the notes</div>
+    <span class="verdict y">Proposed: announce</span>
+    <div class="line">New: a Rainout button on the house league schedule. Postpone or cancel a day's games in one step.</div>
+    <ul class="why">
+      <li>Changes a task house league admins already do every week.</li>
+      <li>Usable the day it ships, with no setup.</li>
+      <li>The other highlights stay in the list only: the public tournament look is visible on their own pages, and plans ending on the renewal date is billing detail.</li>
+    </ul>
+    <div class="btns">
+      <button class="btn" data-g="rel1" data-v="yes" aria-pressed="false">Yes, announce</button>
+      <button class="btn" data-g="rel1" data-v="no" aria-pressed="false">No, list only</button>
+      <span class="res" id="res-rel1">Your answer will show here.</span>
+    </div>
+  </div>
+  <div class="rel" id="rel2">
+    <h3>Example: a release with only fixes</h3>
+    <div class="meta">Illustration, not a real release</div>
+    <span class="verdict n">Proposed: do not announce</span>
+    <ul class="why">
+      <li>Fixes to uncommon cases, nothing a person does differently.</li>
+      <li>It still appears in the What's new list for anyone who looks.</li>
+    </ul>
+    <div class="btns">
+      <button class="btn" data-g="rel2" data-v="yes" aria-pressed="false">Announce anyway</button>
+      <button class="btn" data-g="rel2" data-v="no" aria-pressed="false">Agree, list only</button>
+      <span class="res" id="res-rel2">Your answer will show here.</span>
+    </div>
+  </div>
+  <div class="rules">
+    <div class="yes"><h4>The agent proposes "announce" when</h4><ul><li>It changes how an everyday task works for existing customers.</li><li>A current customer can use it right away, with no setup or plan change.</li><li>It fixes something customers would have noticed.</li></ul></div>
+    <div class="no"><h4>The agent proposes "don't announce" when</h4><ul><li>It is wording, tidying or a fix to a rare case.</li><li>It needs a plan or setup most customers have not got.</li><li>The thing is obvious on the screen the moment it appears.</li></ul></div>
+  </div>
+  <p class="lead" style="margin-top:14px">At most one line per release. "Don't announce" is a normal answer and will be the common one. Your yes or no is recorded with the release entry, so the Overview note and the "New" tag follow your decision and nothing else.</p>
+</section>
+
+<!-- 5 -->
+<section class="panel" id="p-asks" data-panel="asks" aria-labelledby="tab-asks">
+  <p class="lead">Eight things I need you to rule on. My recommendation is first in each.</p>
+  <div class="ask"><h3>Ask 1 · The What's new link inside Help</h3><p>It is a good place to browse past releases.</p><div class="rec"><b>Recommend:</b> keep it, remove its dot. Alternative: remove the link and rely on the account menu alone.</div></div>
+  <div class="ask"><h3>Ask 2 · Where the row sits</h3><p>Desktop: top of the settings group in the account menu. Phone: in the "You" group next to Account. The phone's bottom group has a fixed order from your 2026-10-17 ruling (Help, Send feedback, Download app, Sign out).</p><div class="rec"><b>Recommend:</b> as drawn. Alternative: put What's new right after Help in the bottom group, which changes that ruled order.</div></div>
+  <div class="ask"><h3>Ask 3 · A dot on the avatar</h3><p>It would repeat the problem we are removing, on a new spot.</p><div class="rec"><b>Recommend:</b> no avatar dot. The Overview note is the signal; the "New" tag only helps once someone opens the menu.</div></div>
+  <div class="ask"><h3>Ask 4 · Where the row leads</h3><p>I said earlier it would open inside the app. I checked: no in-app release page exists today. What's new is a public page that opens in a new tab.</p><div class="rec"><b>Recommend:</b> ship with the public page in a new tab (nothing new to build), and decide on an in-app page separately if you want one. Alternative: build the in-app page as part of this work.</div></div>
+  <div class="ask"><h3>Ask 5 · Note position</h3><p>Under the title costs one line while it shows; at the bottom costs nothing but is easy to miss.</p><div class="rec"><b>Recommend:</b> under the title (After A).</div></div>
+  <div class="ask"><h3>Ask 6 · Coaches portal Overview</h3><p>Only the club admin Overview is drawn. Coaches have a separate Overview.</p><div class="rec"><b>Recommend:</b> same note on the coaches Overview in a second step, after you have seen it work on the club side. The menu row and phone tile cover coaches from day one.</div></div>
+  <div class="ask"><h3>Ask 7 · The agent's rules and the one-line cap</h3><p>The rules on tab 4 are my first draft of what counts as announce-worthy.</p><div class="rec"><b>Recommend:</b> approve them as a starting point; the agent quotes the rule it used each time, so you can tighten them as you go.</div></div>
+  <div class="ask"><h3>Ask 8 · Existing unread state</h3><p>Everyone's browsers currently say "unread" whenever a new release appears. After the change, only announced releases light anything.</p><div class="rec"><b>Recommend:</b> past releases count as already read, so nobody sees a surprise "New" tag on day one.</div></div>
+</section>
+
+</main>
+
+<script>
+(function(){
+  var tabs=[].slice.call(document.querySelectorAll(".tab"));
+  var panels=[].slice.call(document.querySelectorAll(".panel"));
+  var viewrow=document.getElementById("viewrow");
+  var compare={dot:1,menu:1,overview:1,agent:0,asks:0};
+  function show(name){
+    if(!compare.hasOwnProperty(name)) name="dot";
+    tabs.forEach(function(t){t.setAttribute("aria-selected",String(t.dataset.tab===name));});
+    panels.forEach(function(p){p.classList.toggle("on",p.dataset.panel===name);});
+    viewrow.hidden=!compare[name];
+    window.scrollTo(0,0);
+  }
+  tabs.forEach(function(t){t.addEventListener("click",function(){
+    show(t.dataset.tab);
+    try{history.replaceState(null,"","#"+t.dataset.tab);}catch(e){}
+  });});
+  window.addEventListener("hashchange",function(){show(location.hash.slice(1));});
+  show(location.hash.slice(1));
+  var vAll=document.getElementById("v-all"),vDiff=document.getElementById("v-diff");
+  function setView(d){document.body.dataset.view=d?"diff":"all";vAll.setAttribute("aria-pressed",String(!d));vDiff.setAttribute("aria-pressed",String(d));}
+  vAll.addEventListener("click",function(){setView(false);});
+  vDiff.addEventListener("click",function(){setView(true);});
+  function pick(panel,n){
+    panel.querySelectorAll(".mk,.notes li").forEach(function(e){
+      e.classList.toggle("on",e.dataset.n===n && !e.classList.contains("on"));
+    });
+  }
+  document.addEventListener("click",function(e){
+    var el=e.target.closest(".mk,.notes li");
+    if(el){pick(el.closest(".panel"),el.dataset.n);}
+    var b=e.target.closest(".btn");
+    if(b){
+      var g=b.dataset.g;
+      document.querySelectorAll('.btn[data-g="'+g+'"]').forEach(function(x){x.setAttribute("aria-pressed",String(x===b));});
+      document.getElementById("res-"+g).textContent=b.dataset.v==="yes"?"Recorded: announced. The Overview note and the New tag will show.":"Recorded: list only. Nothing lights up.";
+    }
+  });
+})();
+</script>

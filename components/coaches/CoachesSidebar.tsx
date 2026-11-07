@@ -12,7 +12,6 @@ import { PLAN_BILLING_TITLE } from '@/lib/plan-billing-title';
 import { useIsSandbox } from '@/components/sandbox/SandboxProvider';
 import { useChatUnread } from '@/lib/use-chat-unread';
 import ChatUnreadBadge from '@/components/chat/ChatUnreadBadge';
-import ReleaseDot from '@/components/whats-new/ReleaseDot';
 import {
   CollapseSidebarRow, SidebarStripMenu, SidebarStripTile, SidebarStripTip, StripMenuGroup, StripMenuLink, useStripMenu,
 } from '@/components/shared/SidebarStrip';
@@ -450,7 +449,6 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
         >
           <HelpCircle size={14} />
           <span className={strip.rowLabel}>Help</span>
-          <ReleaseDot className={strip.cornerDot} />
         </Link>
         {billingHref && (
           <Link href={billingHref} id="coaches-billing" className={`${styles.sidebarItem} ${styles.sidebarFootItem}${pathname === billingHref ? ` ${styles.sidebarItemActive}` : ''}`}>

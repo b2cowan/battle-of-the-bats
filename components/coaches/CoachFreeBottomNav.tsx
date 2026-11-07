@@ -35,6 +35,7 @@ import {
 } from 'lucide-react';
 import FeedbackWidget from '@/components/feedback/FeedbackWidget';
 import MoreSheetFoot from './MoreSheetFoot';
+import WhatsNewSheetRow from '@/components/whats-new/WhatsNewSheetRow';
 import { useAnyOverlayOpen } from '@/lib/coaches-overlay';
 import { useDismissable } from '@/lib/overlay-hooks';
 import { useNotificationUnread } from '@/lib/use-notification-unread';
@@ -206,6 +207,7 @@ export default function CoachFreeBottomNav({
                   >
                     <User size={17} aria-hidden /><span>Account</span>
                   </Link>
+                  <WhatsNewSheetRow itemClass={styles.dropItem} id="free-mob-whats-new" onClose={close} />
                 </div>
               </div>
 

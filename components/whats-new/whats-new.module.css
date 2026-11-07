@@ -1,14 +1,18 @@
-/* ── Help-nav "new release" dot + What's-New help link ───────────────────── */
-.navDot {
-  display: inline-block;
-  width: 7px;
-  height: 7px;
-  margin-left: 0.4rem;
+/* "New" on a phone sheet's What's new tile while an announced release is unread — the same soft chip the account menu's
+   row wears (AccountMenu.module.css .newTag). */
+.newTag {
+  margin-left: auto;
+  padding: 0 0.5rem;
   border-radius: 999px;
-  background: var(--logic-lime);
-  vertical-align: middle;
-  flex-shrink: 0;
+  background: color-mix(in srgb, var(--logic-lime) 14%, transparent);
+  color: var(--logic-lime);
+  font-size: var(--type-label, 0.6875rem);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.5;
 }
+
+/* ── What's-New help link ───────────────────────────────────────────────── */
 
 .helpLink {
   display: inline-flex;

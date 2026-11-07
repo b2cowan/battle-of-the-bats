@@ -276,7 +276,6 @@ describe('workspace billing stays outside the team nav and season gates', () => 
           '@/lib/use-chat-unread': { useChatUnread: () => 0 },
           '@/lib/use-notification-unread': { useNotificationUnread: () => ({ count: 0 }) },
           '@/lib/coaches-overlay': { useAnyOverlayOpen: () => false },
-          '@/components/whats-new/ReleaseDot': { __esModule: true, default: nothing },
           '@/components/shared/SidebarStrip': {
             CollapseSidebarRow: nothing, SidebarStripMenu: nothing, SidebarStripTile: nothing,
             SidebarStripTip: nothing, StripMenuGroup: pass, StripMenuLink: nothing,

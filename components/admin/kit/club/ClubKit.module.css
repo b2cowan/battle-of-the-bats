@@ -323,7 +323,29 @@ p.noteAbove, div.noteAbove { margin: 0 0 0.75rem; }
 .noticeBad svg { color: var(--home-live); }
 .noticeGood svg { color: var(--home-olive); }
 .noticeBody { flex: 1; min-width: 0; }
+/* The Overview's What's new note (WhatsNewNote): a link at the line's end and an X to dismiss it. */
+.noticeLink { color: var(--home-olive); font-weight: 700; white-space: nowrap; text-decoration: none; }
+.noticeLink:hover { text-decoration: underline; }
+.noticeDismiss {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  margin: -0.2rem -0.35rem -0.2rem 0;
+  padding: 0;
+  border: none;
+  background: none;
+  border-radius: 6px;
+  color: var(--text-tertiary);
+  cursor: pointer;
+}
+.noticeDismiss:hover { color: var(--text-primary); background: color-mix(in srgb, var(--text-primary) 8%, transparent); }
+.noticeDismiss:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 1px; }
 @media (max-width: 768px) {
+  /* A phone's tap floor: the X and the link are 44px to hit, as the rest of the notice's actions are. */
+  .noticeDismiss { width: var(--tap-min, 44px); height: var(--tap-min, 44px); margin: -0.8rem -0.85rem -0.8rem 0; }
+  .noticeLink { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); }
   .noticeBody button.link { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); cursor: pointer; }
 }
 

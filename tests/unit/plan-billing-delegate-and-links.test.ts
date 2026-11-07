@@ -160,7 +160,10 @@ describe('demo sandboxes carry no billing row', () => {
   it('the nav hook passes the sandbox flag, and the More sheet’s You group no longer keys on the link', () => {
     assert.match(readCode('components/admin/kit/useAdminKitNav.ts'), /kitBillingLink\(\{[^}]*isSandbox \}\)/);
     const sheet = readCode('components/admin/kit/AdminKitBottomNav.tsx');
-    assert.match(sheet, /\{\(!isSandbox \|\| coachDoor\.show\) && \(/);
+    // What's new now sits in the You group (owner 2026-11-07) and the sandbox keeps it, so the group always has a row:
+    // it no longer waits on "not a sandbox, or a coach door". Account and Home stay hidden in the sandbox.
+    assert.match(sheet, /<WhatsNewSheetRow itemClass=\{styles\.dropItem\} id="admin-mob-whats-new"/);
+    assert.match(sheet, /\{!isSandbox && \(\s*<Link className=\{styles\.dropItem\} href="\/account"/);
     assert.doesNotMatch(sheet, /coachDoor\.show \|\| billingLink/);
   });
 });

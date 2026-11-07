@@ -102,18 +102,13 @@
   }
 
   /* ⚖ COUNTS KEEP THEIR OWN LOOK ON THE ICON'S CORNER (the /design pass's items 2 and 3, ratified): the
-     amber waiting pill and the lime chat pill at their own 18 and their own type, the Help dot as it is.
+     amber waiting pill and the lime chat pill at their own 18 and their own type. (The Help release dot that
+     used to sit here left on 2026-11-07: What's new lives in the account menu.)
      The host row is `position: relative` in the strip. */
   :global(html[data-sidebar='strip']) .cornerCount {
     position: absolute;
     top: -3px;
     right: -7px;
-    margin: 0;
-  }
-  :global(html[data-sidebar='strip']) .cornerDot {
-    position: absolute;
-    top: 8px;
-    right: 8px;
     margin: 0;
   }
 

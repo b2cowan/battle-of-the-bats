@@ -7,6 +7,13 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-11-07 — WHAT'S NEW LEAVES HELP: NO DOT ON HELP, A ROW IN THE ACCOUNT MENU, AN ANNOUNCED-ONLY NOTE ON OVERVIEW (owner, all eight asks as recommended; raised from: *"why does help always have this dot next to it?"*)
+
+**Decision (as ruled):** drawings https://claude.ai/artifact/45KhvG8ngZeMsy1Pwq26D7 (`docs/projects/active/WHATS_NEW_HOME_DRAWINGS.html`). (1) Help is a plain row on every desktop rail; the Help center's What's new link stays without its dot. (2) What's new is the top row of the account menu's settings group, and on phones a tile in the More sheet's **"You" group** (the bottom group's order, nav standard N7 of 2026-10-17, is untouched). (3) No dot on the avatar. (4) The row opens the public What's new page in a new tab. (5) The Overview note sits under the title, using the shipped one-line notice look plus a new X. (6) Club admin Overview first, coaches Overview second. (7) The release agent proposes announce or don't announce; the owner answers; only an announced release lights the "New" tag and the note. (8) Past releases count as read.
+**Rationale:** the dot on Help was on nearly all the time, so it carried no information, and it put a push signal on a pull door. The 2026-09-01 clause "Help stays out of the menu" is unchanged; only its ReleaseDot mention is superseded.
+**Applies to:** the admin and coach rails, AccountMenu, the three phone More sheets, the club admin Overview. Extension flagged: a soft olive "New" tag chip and a dismiss X on the notice (neither exists in the design system today). Plan: `docs/projects/active/WHATS_NEW_HOME_PLAN.md`.
+
+
 ### 2026-11-06 — THE OWNER BOOKKEEPING EXPENSES TAB IS A THIRD REGISTER (Rule 7) (owner, "A", /design review of the Expenses toolbar)
 
 **Decision (as ruled):** the platform-admin Bookkeeping → Expenses toolbar follows the Rule 7 register shape the two Ledgers use,

@@ -26,7 +26,7 @@ import styles from './SidebarStrip.module.css';
  *     own accessible name, so a row needs nothing beyond the label it already carries.
  *   · `SidebarStripMenu` — a program with 2+ pages opens a menu beside its icon, on click (Ask 3).
  *   · `SidebarStripTile` — the tournament and team pickers as initials tiles that open their lists.
- *   · `styles.rowLabel` / `fullOnly` / `stripRule` / `foldedGroup` / `cornerCount` / `cornerDot` /
+ *   · `styles.rowLabel` / `fullOnly` / `stripRule` / `foldedGroup` / `cornerCount` /
  *     `stripLayer` — the class recipe a sidebar puts on its labels, its full-only furniture, its group
  *     hairlines, a group folded shut, its counts and its own element.
  *

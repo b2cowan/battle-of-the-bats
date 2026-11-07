@@ -178,6 +178,20 @@
   margin: 0.15rem 0;
 }
 
+/* "New" on the What's new row while an announced release is unread: a soft olive chip (a flagged design-system
+   extension, owner 2026-11-07 drawings). The pill-sized type matches the sidebar's count pills. */
+.newTag {
+  margin-left: auto;
+  padding: 0 0.5rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--logic-lime) 14%, transparent);
+  color: var(--logic-lime);
+  font-size: var(--type-label, 0.6875rem);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.5;
+}
+
 .signOut,
 .signOut svg {
   color: var(--danger);

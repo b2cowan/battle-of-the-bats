@@ -18,7 +18,7 @@ Workspaces) already open in place. The avatar becomes the third.
    tournament pages ignore the personal theme, a dead toggle reads as broken) · Notification
    settings (deep-links the org-focused pane, same door as the bell's gear) · Send feedback
    (opens the shared feedback dialog in place) · Account settings (`/account`) · Sign out.
-2. **Help does NOT join the menu.** The sidebar's Help (with its ReleaseDot) stays the one help
+2. **Help does NOT join the menu.** (2026-11-07: the release dot left Help; What's new is now a menu row — `WHATS_NEW_HOME_PLAN.md`.) The sidebar's Help stays the one help
    door; the masthead "?" stays contextual help. No-duplicate-doors holds.
 3. **Sidebar sign-out is REMOVED** (desktop). The menu owns sign-out on desktop; phones keep the
    More sheet's sign-out, whose label unifies "Logout" → "Sign out" (one-spelling rule — three

@@ -47,6 +47,7 @@ import styles from './ClubHub.module.css';
 import frame from '../AdminKitFrame.module.css';
 import LoadingState from '@/components/shared/LoadingState';
 import PageNotice from '@/components/shared/PageNotice';
+import WhatsNewNote from './WhatsNewNote';
 import { useBoardPeople } from '@/lib/use-board-people';
 import { boardOwnerName, seasonStarterShort } from '@/lib/board-people';
 import { NOT_YOURS_WORDS } from '@/lib/not-yours-words';
@@ -291,6 +292,8 @@ export default function ClubHubKit() {
       {/* "Overview", as the rail row that opens it and as the coaches portal titles its own overview — not
           the club's name, which the bar directly above already shows (owner, 2026-10-01). No eyebrow. */}
       <AdminPageHeader title="Overview" />
+      {/* An ANNOUNCED release, one line, dismissible (owner 2026-11-07); nothing when none is unread. */}
+      <WhatsNewNote />
       {showUpgradeSetup && <>
         <CoachCard className={billing.setupCard}>
           <h2 className={billing.sectionTitle}>{W.clubUpgrade.ready}</h2>

@@ -166,7 +166,7 @@ describe('3. every row keeps an accessible name in the strip', () => {
 });
 
 describe('4. no count, dot or door is lost in the strip', () => {
-  it('every chat badge and release dot a rail renders sits on its icon’s corner', () => {
+  it('every chat badge a rail renders sits on its icon’s corner, and no rail carries a release dot', () => {
     for (const f of RAILS) {
       const code = railCode(f);
       for (const badge of code.match(/<ChatUnreadBadge[^>]*\/>/g) ?? []) {
@@ -175,7 +175,8 @@ describe('4. no count, dot or door is lost in the strip', () => {
         if (badge.includes('sidebarGroupBadge')) continue;
         assert.match(badge, /className=\{strip\.cornerCount\}/, `${f}: ${badge}`);
       }
-      for (const dot of code.match(/<ReleaseDot[^>]*\/>/g) ?? []) assert.match(dot, /className=\{strip\.cornerDot\}/, `${f}: ${dot}`);
+      // ⚖ What's new left Help on 2026-11-07 (owner): the dot on a rail's Help row is gone for good.
+      assert.doesNotMatch(code, /<ReleaseDot|cornerDot/, `${f}: a release dot is back on a rail`);
     }
     assert.match(readCode(ADMIN_RAIL), /<WaitingCount[^>]*className=\{strip\.cornerCount\}/);
   });
@@ -195,7 +196,7 @@ describe('4. no count, dot or door is lost in the strip', () => {
   it('no stylesheet hides a count or a corner mark in the strip', () => {
     for (const f of STRIP_CSS) {
       for (const block of desktopBlocks(readCode(f))) {
-        assert.doesNotMatch(block, /\.(count|cornerCount|cornerDot|badge)\b[^{]*\{[^}]*display: none/, f);
+        assert.doesNotMatch(block, /\.(count|cornerCount|badge)\b[^{]*\{[^}]*display: none/, f);
       }
     }
   });

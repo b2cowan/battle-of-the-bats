@@ -35,7 +35,6 @@ import { Fragment, useEffect, useRef, useState, type ElementType } from 'react';
 import {
   LayoutGrid, ChevronRight, Users2, HelpCircle, Trophy,
 } from 'lucide-react';
-import ReleaseDot from '@/components/whats-new/ReleaseDot';
 import ChatUnreadBadge from '@/components/chat/ChatUnreadBadge';
 import {
   CollapseSidebarRow, SidebarStripMenu, SidebarStripTile, SidebarStripTip, StripMenuButton, useStripMenu,
@@ -174,7 +173,7 @@ export default function AdminKitRail() {
             {feeAlert && <WaitingCount count={feeAlert.count} label={feeAlert.label} tone={feeAlert.tone} className={strip.cornerCount} />}
           </Link>}
           <Link href={helpHref} className={`${styles.item} ${styles.footItem}`} target="_blank" rel="noopener noreferrer">
-            <HelpCircle size={14} aria-hidden /> <span className={strip.rowLabel}>Help</span> <ReleaseDot className={strip.cornerDot} />
+            <HelpCircle size={14} aria-hidden /> <span className={strip.rowLabel}>Help</span>
           </Link>
           {coachDoor.show && (
             <Link href={coachDoor.href} className={`${styles.item} ${styles.footItem}`}>

@@ -55,7 +55,8 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePublicPathname } from '@/lib/use-public-pathname';
-import { User, Shirt, Bell, Settings, MessageSquarePlus, LogOut, Check, Building2, Globe } from 'lucide-react';
+import { User, Shirt, Bell, Settings, MessageSquarePlus, LogOut, Check, Building2, Globe, Sparkles } from 'lucide-react';
+import { markReleasesSeen, useReleaseUnread } from '@/components/whats-new/release-seen';
 import { getSession, signOut } from '@/lib/auth';
 import { useDismissable } from '@/lib/overlay-hooks';
 import { useIsPhoneNav } from '@/lib/hooks/useIsPhoneNav';
@@ -87,6 +88,7 @@ export default function AccountMenu({
   warm = false,
   signOutTo = 'sign-in',
   showAccount = true,
+  showWhatsNew = false,
   teams,
   door,
   className,
@@ -106,6 +108,9 @@ export default function AccountMenu({
   signOutTo?: 'sign-in' | 'here' | 'platform';
   /** False in the support console: no Notification settings / Account settings rows. */
   showAccount?: boolean;
+  /** The admin and coach strips: a "What's new" row at the top of the settings group, with a "New" tag while an
+   *  ANNOUNCED release is unread on this device (owner 2026-11-07). Off on the support console and the public bars. */
+  showWhatsNew?: boolean;
   /** A house-league coach's teams at THIS club (the club site passes them): one is a "My team" row, two or more sit under
    *  a "My teams" caption by name, the one being viewed shaded. The phone's way to the team, and a desk coach of two or more
    *  teams' only door from the bar; a desk coach of one also has the bar's own "My team" link. Nothing renders when empty. */
@@ -125,6 +130,7 @@ export default function AccountMenu({
   const [email, setEmail] = useState<string | null>(null);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
+  const releaseUnread = useReleaseUnread();
   const wrapRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   // The phone's sheet attaches inside this element (state, not a ref: the sheet reads it while rendering).
@@ -254,6 +260,22 @@ export default function AccountMenu({
   function settingRows(inSheet: boolean) {
     return (
       <>
+        {showWhatsNew && (
+          // The public release notes, in a new tab (they live outside the portal). Opening them clears the tag and the
+          // Overview note on this device; the sheet closes a beat later so the new tab is not cancelled.
+          <Link
+            href="/changelog"
+            className={rowClass()}
+            role={itemRole(inSheet)}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => { markReleasesSeen(); window.setTimeout(() => setOpen(false)); }}
+          >
+            <Sparkles size={15} aria-hidden />
+            What’s new
+            {releaseUnread && <span className={styles.newTag}>New</span>}
+          </Link>
+        )}
         {showAccount && (
           <Link href={notifHref} className={rowClass()} role={itemRole(inSheet)} onClick={() => setOpen(false)}>
             <Bell size={15} aria-hidden />

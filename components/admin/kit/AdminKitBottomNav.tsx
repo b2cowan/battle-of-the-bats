@@ -35,6 +35,7 @@ import AdminContextStrip from '@/components/admin/AdminContextStrip';
 import FeedbackWidget from '@/components/feedback/FeedbackWidget';
 import MoreSheetTiles, { type SheetTile } from '@/components/coaches/MoreSheetTiles';
 import MoreSheetFoot from '@/components/coaches/MoreSheetFoot';
+import WhatsNewSheetRow from '@/components/whats-new/WhatsNewSheetRow';
 import { clubPhoneNav, tournamentSheetTiles } from '@/lib/nav-tiles';
 import {
   clubSheetGroups, isKitLinkActive, isKitLinkActiveAmong, placeGroupHeading, tournamentBarKeys, type KitLink,
@@ -329,21 +330,22 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
               )}
 
               {/* You: Account and Home lead out of the demo sandbox (it ends the demo on arrival), so the sandbox hides
-                  them, as the top strip hides the account menu. The group shows only with a row to show. */}
-              {(!isSandbox || coachDoor.show) && (
-                <>
+                  them, as the top strip hides the account menu. What's new sits beside Account (owner 2026-11-07); it opens a
+                  public page in a new tab, so the sandbox keeps it and the group always has a row to show. */}
+              <>
                   <div className={styles.dropDivider} />
                   <div className={styles.dropSectionLabel}>You</div>
                   <div className={styles.dropGrid} data-cols="2">
                     {!isSandbox && (
-                      <>
-                        <Link className={styles.dropItem} href="/account" role="menuitem" id="admin-mob-account" onClick={close}>
-                          <User size={17} aria-hidden /><span>Account</span>
-                        </Link>
-                        <Link className={styles.dropItem} href="/discover" role="menuitem" id="admin-mob-home" onClick={close}>
-                          <Home size={17} aria-hidden /><span>Home</span>
-                        </Link>
-                      </>
+                      <Link className={styles.dropItem} href="/account" role="menuitem" id="admin-mob-account" onClick={close}>
+                        <User size={17} aria-hidden /><span>Account</span>
+                      </Link>
+                    )}
+                    <WhatsNewSheetRow itemClass={styles.dropItem} id="admin-mob-whats-new" onClose={close} />
+                    {!isSandbox && (
+                      <Link className={styles.dropItem} href="/discover" role="menuitem" id="admin-mob-home" onClick={close}>
+                        <Home size={17} aria-hidden /><span>Home</span>
+                      </Link>
                     )}
                     {coachDoor.show && (
                       <Link className={styles.dropItem} href={coachDoor.href} role="menuitem" id="admin-mob-coaches-portal" onClick={close}>
@@ -355,8 +357,7 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
                       {feeAlert && <span className={`${styles.dropCount} ${feeTone}`} aria-label={feeAlert.label}>{kitCountText(feeAlert.count)}</span>}
                     </Link>}
                   </div>
-                </>
-              )}
+              </>
 
               <div className={styles.dropDivider} />
               {/* Help (new on the admin phone, N7), Send feedback, Download app, Sign out — the one foot every sheet wears. */}

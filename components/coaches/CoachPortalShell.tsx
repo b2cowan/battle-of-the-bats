@@ -21,7 +21,6 @@ import CoachTopStrip from '@/components/coaches/CoachTopStrip';
 import CoachFreeBottomNav from '@/components/coaches/CoachFreeBottomNav';
 import InstallAppPrompt from '@/components/InstallAppPrompt';
 import ChatUnreadBadge from '@/components/chat/ChatUnreadBadge';
-import ReleaseDot from '@/components/whats-new/ReleaseDot';
 import { useChatDoor } from '@/lib/use-chat-door';
 import type { WorkspaceDoor } from '@/lib/user-contexts';
 import FeedbackRequestIdProvider from '@/components/feedback/FeedbackRequestIdProvider';
@@ -592,11 +591,10 @@ export default function CoachPortalShell({
         )}
 
         <div className={styles.railFooter}>
-          {/* Help at the foot, as in the paid sidebar (owner A3): the coaches guide in a new tab, with the
-              what's-new dot, in this menu's own link style (DC3). */}
+          {/* Help at the foot, as in the paid sidebar (owner A3): the coaches guide in a new tab, in this menu's own
+              link style (DC3). No release dot: What's new lives in the account menu (owner 2026-11-07). */}
           <Link href={COACHES_HELP_PATH} className={styles.railLink} target="_blank" rel="noopener noreferrer">
             <HelpCircle size={14} aria-hidden /><span className={strip.rowLabel}>Help</span>
-            <ReleaseDot className={strip.cornerDot} />
           </Link>
           <span className={`${styles.railLive} ${strip.fullOnly}`}>Live on FieldLogicHQ</span>
           {/* ⚖ The last row (Sidebar Strip Ask 2): a rare door ends the body. */}

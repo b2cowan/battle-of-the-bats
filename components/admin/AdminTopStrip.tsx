@@ -85,6 +85,7 @@ export default function AdminTopStrip({ notifCount, onNotifCountChange, suspende
             the admin follows the account theme (above). */}
         {!inSandbox && (
           <AccountMenu
+            showWhatsNew
             className={styles.iconDoor}
             settingsHref={
               currentOrg?.slug ? getNotificationSettingsHref(currentOrg.slug) : '/account/notifications'

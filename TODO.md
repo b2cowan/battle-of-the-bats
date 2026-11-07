@@ -242,6 +242,7 @@ This file is the **index** of open work for the FieldLogicHQ platform. AI models
 - [ ] UAT Agent — Browser-based acceptance test suite + `/uat` slash command; Playwright scenarios for auth, plan-gating…
 ## 🚀 Active Tasks (Priority Order)
 
+- [ ] 🆕 What's new gets a home (drawings approved, all eight asks as recommended, owner 2026-11-07): dot off Help, What's new row in the account menu + phone More sheet, announced-only note on the club Overview, release agent proposes announce yes/no; Stages A–C built 2026-11-07, browser walk + /review + commit owed, coaches Overview note (Stage D) later (see docs/projects/active/WHATS_NEW_HOME_PLAN.md)
 - [ ] 📐 Release layout sweep OWED for the 2026-10-30 promote (on prod, master job 285, `3ca835a53`; sweep skipped on the owner's word for token cost, due about 2026-11-01): needs the free UAT coach's team unlinked from its staff-given Premium portal on dev (after support-console walks B §415 and C §416), fresh test sign-ins (`auth-setup` against dev.fieldlogichq.ca signs other sessions out), then `check:layout` warm and `--theme=dark` on staging (see the 2026-10-30 entry in the release-history record)
 - [ ] 🎬 Demo check the morning after the 2026-10-30 promote: `npm run check:demos:prod`
 - [ ] 💳 Payouts card redraw (read + edit; owner "go ahead" 2026-11-05, asks A1/A2/A3/A4/A5/A6 as recommended; built + /review + help synced 2026-11-05, typecheck + payments tests pass, browser check owed; A7 two wording slips HELD for /marketing — drawing docs/projects/active/PAYOUTS_CARD_REDRAW_DRAWINGS.html)

@@ -111,6 +111,7 @@ export default function CoachTopStrip({ wall = false, free = false }: {
         {!inSandbox && (
           <AccountMenu
             warm
+            showWhatsNew
             showTheme
             showFeedback={!wall}
             className={styles.iconDoor}
