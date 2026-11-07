@@ -60,7 +60,15 @@ a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visibl
 .tools button[aria-pressed="true"] { background: var(--olive-soft); border-color: var(--olive); color: var(--olive); }
 .empty { color: var(--faint); font-size: 14px; padding: 14px; border: 1px dashed var(--line); border-radius: 10px; }
 
-/* rulings owed */
+/* rulings: folded away by default so the task list is one screen down; opens by itself only while a ruling is owed */
+details.fold { margin: 22px 0 0; }
+details.fold > summary { list-style: none; cursor: pointer; display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; padding: 10px 14px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; min-height: 44px; }
+details.fold > summary::-webkit-details-marker { display: none; }
+details.fold > summary::before { content: "\25B8"; color: var(--muted); }
+details.fold[open] > summary::before { content: "\25BE"; }
+details.fold > summary h2 { font-size: 15px; }
+details.fold > summary .count { font-size: 13px; color: var(--muted); }
+details.fold[open] > summary { margin-bottom: 10px; }
 .conflicts { display: grid; gap: 8px; }
 .conf { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 8px; }
 .conf[data-ruled="true"] { border-color: var(--ruled); }
@@ -132,10 +140,10 @@ details.step[data-standing="true"] .step-no { color: var(--muted); }
     <p class="note-line" id="p-note" hidden></p>
   </header>
 
-  <section aria-labelledby="h-conf">
-    <div class="section-head"><h2 id="h-conf">Rulings owed: where the plans contradict each other</h2><span class="count" id="conf-count"></span></div>
+  <details class="fold" id="conf-fold">
+    <summary><h2 id="h-conf">Rulings: where the plans contradict each other</h2><span class="count" id="conf-count"></span></summary>
     <div class="conflicts" id="conflicts"><p class="empty">The contradictions found across the plans appear here, each with a recommended call.</p></div>
-  </section>
+  </details>
 
   <section aria-labelledby="h-seq">
     <div class="section-head">
@@ -167,7 +175,7 @@ details.step[data-standing="true"] .step-no { color: var(--muted); }
 <script>
 (function () {
   var steps = [], items = [], conflicts = [], fits = [], plans = [], log = [];
-  var db = null, canWrite = true, filter = 'all', openKeys = {}, firstLoad = true;
+  var db = null, canWrite = true, filter = 'all', openKeys = {}, firstLoad = true, confTouched = false;
   try { filter = localStorage.getItem('seq-filter') || 'all'; } catch (e) {}
   try { openKeys = JSON.parse(localStorage.getItem('seq-open') || '{}') || {}; } catch (e) {}
   var $ = function (id) { return document.getElementById(id); };
@@ -195,7 +203,8 @@ details.step[data-standing="true"] .step-no { color: var(--muted); }
   function renderConflicts() {
     var host = $('conflicts'); host.textContent = '';
     var open = conflicts.filter(function (c) { return !c.ruled; }).length;
-    $('conf-count').textContent = conflicts.length ? (open ? open + ' open' : 'All ruled') : '';
+    $('conf-count').textContent = conflicts.length ? (open ? open + ' owed' : 'All ' + conflicts.length + ' ruled') : '';
+    if (open && !confTouched) $('conf-fold').open = true;
     if (!conflicts.length) { host.appendChild(make('p', 'empty', 'The contradictions found across the plans appear here, each with a recommended call.')); return; }
     conflicts.forEach(function (c, n) {
       var box = make('article', 'conf'); box.setAttribute('data-ruled', String(!!c.ruled));
@@ -298,6 +307,7 @@ details.step[data-standing="true"] .step-no { color: var(--muted); }
     });
   }
 
+  $('conf-fold').addEventListener('toggle', function () { confTouched = true; });
   function setFilter(f) { filter = f; try { localStorage.setItem('seq-filter', f); } catch (e) {} renderSteps(); }
   $('f-all').addEventListener('click', function () { setFilter('all'); });
   $('f-open').addEventListener('click', function () { setFilter('open'); });
