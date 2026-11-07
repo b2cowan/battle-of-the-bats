@@ -93,7 +93,8 @@ that is the owner's dashboard work.
 - [x] Part 2 failed-payment story on the Money tab: owner go 2026-11-06 on the PM summary (no "of 4": Stripe reports tries made and the
       next try only; a "do not try again" decline says the try runs only on a new card; no next try = "no further try scheduled";
       a past date = "was due… Read again"; no separate Failed rows (one row per bill, the GST Stage 3 ruling); the drawn
-      "Failed payment ›" door is Stage 3's, replaced by "See the bill"). Built 2026-11-06 from the tab's existing read (no new
+      "Failed payment ›" door is Stage 3's, replaced by "See the bill"). Committed `9f5823655` 2026-11-06 (`/review` reworded the
+      do-not-retry line to "runs only on a new card" and dropped a retry date already past on it), built from the tab's existing read (no new
       Stripe call, nothing stored): the notice above the agree line, the row's next-try line, the bill window's Tries line, the
       bank's decline code named in fixed words everywhere a failed charge is named. Tests `console-money-failed-payment.test.ts`.
       Walk owed (owner checklist in the session hand-off).
