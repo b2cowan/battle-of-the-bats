@@ -8,11 +8,10 @@ import { isPublicPageEnabled, PUBLIC_PAGE_OPTIONS, type PublicPageKey } from '@/
 import { useEventRoleHats } from '@/lib/use-event-role-hats';
 
 /**
- * The admin shell's FlipPill target for the current screen — consumed by the shared AdminEventHeader
- * (and the mobile More mirror row):
+ * The admin shell's FlipPill target for the current screen — consumed by the shared AdminEventHeader:
  *   • on a tournament screen → that tournament's page-matched public (live) or preview (draft) twin;
  *   • on any other admin screen (org admin, house league, rep teams, accounting, public-site editor)
- *     → the org's main public site ("⇄ Public site");
+ *     → the org's main public site, "View site" (Club Tier Stage 13a, Ask 9);
  *   • on the focused draft-preview shell → null (it carries its own Exit-preview control).
  * Returns null only when there's no org context at all.
  */
@@ -99,7 +98,9 @@ export function useAdminFlip(): FlipResolution | null {
   const settlingIntoEvent = onTournamentScreen && tournamentLoading;
   return {
     kind: 'single',
-    target: { href: `/${currentOrg.slug}`, label: 'Public site' },
+    // ⚖ Ask 9 = A (Stage 13a): "View site" on the club's own screens — the sidebar's "Public site" row is the editor
+    // (F-NAV-5). The tournaments list keeps the tournament screens' word.
+    target: { href: `/${currentOrg.slug}`, label: onTournamentScreen ? 'Public site' : 'View site' },
     ...(settlingIntoEvent ? { pending: true } : {}),
   };
 }

@@ -9,6 +9,7 @@
  * Who may create: the one house-league gate's `run` (Q17: the club admin too).
  */
 import { useCallback, useState } from 'react';
+import { kitCountText } from '@/lib/admin-kit-nav';
 import { useRouter } from 'next/navigation';
 import { ChevronRight, Plus, Users } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
@@ -100,7 +101,7 @@ export default function HouseLeagueHome() {
           </>
         }
         trail={s.pendingReviewCount > 0
-          ? <span className={frame.count} style={{ marginLeft: 0 }} aria-label={toReviewLabel(s.pendingReviewCount)}>{s.pendingReviewCount > 9 ? '9+' : s.pendingReviewCount}</span>
+          ? <span className={frame.count} style={{ marginLeft: 0 }} aria-label={toReviewLabel(s.pendingReviewCount)}>{kitCountText(s.pendingReviewCount)}</span>
           : undefined}
         chevron
       />

@@ -13,6 +13,8 @@ import { buildChildProposals } from '@/lib/children-duplicates-read';
 import { tournamentToday } from '@/lib/timezone';
 import { canSeeFeesOwed, type FeesOwed } from '@/lib/fee-invoice-alert';
 import { readFeesOwed } from '@/lib/fee-invoices-owed';
+import { canHouseLeague } from '@/lib/house-league-access';
+import { countLeagueRegistrationsWaiting } from '@/lib/league-registrations-waiting';
 import type { OrgRole } from '@/lib/types';
 
 /**
@@ -45,6 +47,13 @@ import type { OrgRole } from '@/lib/types';
  *            (how many teams have one waiting; the card opens the team with the OLDEST application)
  *            and paymentRequests { oldestDays }. Present only where the count itself is present.
  *
+ * ── House league's waiting registrations (Club Tier Stage 13a Session B, B2, 2026-11-06) ─────────────────────────────
+ *   counts.leagueRegistrations — registrations waiting for review across the club's live seasons, for whoever can WORK
+ *            them (`canHouseLeague(…, 'register')`: the runners and the registrar). The House league rail row, the phone
+ *            bar's House league tab and the Overview's House league card wear it; the Overview's waiting line reads the same
+ *            read through the attention summary. Cost: ONE head count (no rows) per brief, by the registrations' org
+ *            index (lib/league-registrations-waiting.ts). A failed read leaves the key ABSENT (no pill), never a calm 0.
+ *
  * ── Fee invoice alerts, Part 2 (2026-11-05) ─────────────────────────────────────────────────────────
  *   feesOwed — { count, overdue }: FieldLogicHQ fee invoices the club still owes (open), and how many are past due. OWNER ONLY
  *            (`hasBillingAccess`): the key is ABSENT for anyone else and when the read fails. Not a "count" above — it is
@@ -64,7 +73,7 @@ const ACTING_ROLES = {
   assistantCoaches: ['owner', 'admin'],
 } as const satisfies Record<string, readonly OrgRole[]>;
 
-type ClubBriefCounts = Partial<Record<'tryoutApplications' | 'paymentRequests' | 'installmentsDue' | 'assistantCoaches' | 'familyDuplicates' | 'familyChildDuplicates', number>>;
+type ClubBriefCounts = Partial<Record<'tryoutApplications' | 'paymentRequests' | 'installmentsDue' | 'assistantCoaches' | 'familyDuplicates' | 'familyChildDuplicates' | 'leagueRegistrations', number>>;
 type ClubBriefDetail = {
   tryoutApplications?: { teams: number; oldest: { teamId: string; programYearId: string } | null };
   /** `holdingPayout`: waiting requests the club's answer is the one thing between a team and its
@@ -217,6 +226,13 @@ export const GET = withObservability(async (req: Request) => {
     // Stage 14 S6 (Ask 11): the Children half of the same tab, counted on its own; the tab's pill and the rail wear the sum.
     reads.push((async () => {
       try { counts.familyChildDuplicates = (await buildChildProposals(org.id, { detail: false })).length; } catch (e) { console.error('[club-brief] the Children count failed:', e); }
+    })());
+  }
+
+  // ── House league's waiting registrations (Stage 13a, B2): the desk's one number, read once per brief.
+  if (canHouseLeague(ctx, org, 'register')) {
+    reads.push((async () => {
+      try { counts.leagueRegistrations = await countLeagueRegistrationsWaiting(org.id); } catch (e) { console.error('[club-brief] the house league waiting count failed:', e); }
     })());
   }
 

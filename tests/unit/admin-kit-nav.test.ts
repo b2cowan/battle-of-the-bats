@@ -199,7 +199,8 @@ describe('the admin kit nav — the plan-aware order (Club Tier Stage 1)', () =>
 
   it('the rail, the phone bar and the hub read the one order through the one hook', () => {
     const hook = readCode('components/admin/kit/useAdminKitNav.ts');
-    assert.match(hook, /clubProgramOrder\(club\.shape\)/, 'the hook orders by the morning brief\'s shape');
+    // Through Ask 8's one exception (Stage 13a): a person whose only program is house league sees it lead.
+    assert.match(hook, /clubProgramOrder\(personClubShape\(club\.shape, canUse\)\)/, 'the hook orders by the morning brief\'s shape');
     assert.match(readCode('components/admin/kit/club/ClubHubKit.tsx'), /useAdminKitNav\(\)/, 'the hub lists the hook\'s programs');
   });
 });

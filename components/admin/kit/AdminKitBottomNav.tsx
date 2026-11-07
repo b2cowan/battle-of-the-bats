@@ -30,8 +30,6 @@ import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
 import { useAdminWorklist } from '@/lib/admin-worklist';
 import { useChatUnread } from '@/lib/use-chat-unread';
-import { useAdminFlip } from '@/lib/use-admin-flip';
-import { primaryTarget } from '@/lib/flip-twins';
 import { useDismissable } from '@/lib/overlay-hooks';
 import AdminContextStrip from '@/components/admin/AdminContextStrip';
 import FeedbackWidget from '@/components/feedback/FeedbackWidget';
@@ -42,6 +40,7 @@ import { isKitLinkActive, isKitLinkActiveAmong, tournamentBarKeys, ORGANIZATION_
 import { resolveEventPhase } from '@/lib/tournament-phase';
 import { useAdminKitNav } from './useAdminKitNav';
 import { briefProgramCount } from './club/ClubBriefProvider';
+import { kitCountText } from '@/lib/admin-kit-nav';
 import { MESSAGES_TAB } from '@/lib/invite-only-words';
 import styles from '@/components/coaches/CoachesBottomNav.module.css';
 import kit from './AdminKitFrame.module.css';
@@ -56,13 +55,11 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
   const nav = useAdminKitNav();
   const {
     base, programs, alsoOnPlan, brief, orgLinks, tournamentOnly, onTournaments, isCanceled, coachDoor, tournamentGroups,
-    calendarLink, schedulesLink, billingLink, helpHref, siteInNav, isSandbox,
+    calendarLink, schedulesLink, billingLink, helpHref, isSandbox,
   } = nav;
   const { currentOrg } = useOrg();
   const { tournaments, currentTournament, setCurrentTournament } = useTournament();
   const worklist = useAdminWorklist();
-  const flip = useAdminFlip();
-  const mirror = flip ? primaryTarget(flip) : null;
   const tournamentBar = onTournaments || tournamentOnly;
   // Chat's unread count rides the bar only where Chat is a door (an invite-only event has none, R5).
   const chatInNav = tournamentGroups.some(g => g.items.some(i => i.key === 'chat'));
@@ -178,6 +175,9 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
   const row = (l: KitLink, count = 0) => {
     const Icon = l.icon;
     const active = isKitLinkActiveAmong(pathname, l, [billingLink, ...orgLinks]);
+    // Chat's row counts unread messages (the 9+ badge); every other row a program's waiting count (Stage 13a: to 99).
+    const chat = l.key === 'chat';
+    const countText = chat ? badge(count) : kitCountText(count);
     return (
       <Link
         key={l.key}
@@ -188,7 +188,7 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
       >
         {Icon && <Icon size={17} aria-hidden />}
         <span>{l.label}</span>
-        {count > 0 && <span className={styles.dropCount} aria-label={`${badge(count)} unread`}>{badge(count)}</span>}
+        {count > 0 && <span className={styles.dropCount} aria-label={`${countText} ${chat ? 'unread' : 'waiting'}`}>{countText}</span>}
         <ChevronRight size={14} className={styles.dropChevron} aria-hidden />
       </Link>
     );
@@ -227,7 +227,7 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
           <span className={styles.iconWrap}>
             <t.icon size={22} strokeWidth={t.active ? 2.5 : 1.8} aria-hidden />
             {t.active && <span className={styles.activeDot} />}
-            {(t.count ?? 0) > 0 && <span aria-hidden className={styles.tabCount}>{badge(t.count!)}</span>}
+            {(t.count ?? 0) > 0 && <span aria-hidden className={styles.tabCount}>{kitCountText(t.count!)}</span>}
             {t.chat && chatUnread > 0 && <span aria-hidden className={styles.tabCount}>{badge(chatUnread)}</span>}
           </span>
           <span className={styles.label}>{t.label}</span>
@@ -247,7 +247,7 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
           <span className={styles.iconWrap}>
             {moreOpen ? <X size={22} strokeWidth={2} aria-hidden /> : <MoreHorizontal size={22} strokeWidth={moreActive ? 2.5 : 1.8} aria-hidden />}
             {moreActive && !moreOpen && <span className={styles.activeDot} />}
-            {!moreOpen && moreBadge > 0 && <span aria-hidden className={`${styles.tabCount}${feeTone ? ` ${feeTone}` : ''}`}>{badge(moreBadge)}</span>}
+            {!moreOpen && moreBadge > 0 && <span aria-hidden className={`${styles.tabCount}${feeTone ? ` ${feeTone}` : ''}`}>{feeAlert ? kitCountText(moreBadge) : badge(moreBadge)}</span>}
           </span>
           <span className={styles.label}>More</span>
         </button>
@@ -349,7 +349,7 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
                     )}
                     {billingLink && <Link className={styles.dropItem} href={billingLink.href} role="menuitem" id="admin-mob-billing" onClick={close} aria-current={isKitLinkActive(pathname, billingLink) ? 'page' : undefined}>
                       {billingLink.icon && <billingLink.icon size={17} aria-hidden />}<span>{billingLink.label}</span>
-                      {feeAlert && <span className={`${styles.dropCount} ${feeTone}`} aria-label={feeAlert.label}>{badge(feeAlert.count)}</span>}
+                      {feeAlert && <span className={`${styles.dropCount} ${feeTone}`} aria-label={feeAlert.label}>{kitCountText(feeAlert.count)}</span>}
                     </Link>}
                   </div>
                 </>
@@ -358,13 +358,7 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
               <div className={styles.dropDivider} />
               {/* Help (new on the admin phone, N7), Send feedback, Download app, Sign out — the one foot every sheet wears. */}
               <MoreSheetFoot idPrefix="admin-mob" helpHref={helpHref} onClose={close} onFeedback={() => setFeedbackOpen(true)}>
-                {/* "Public site" once per screen (N4): the live site's door only on a club whose nav lists no Public site
-                    program. Inside a tournament it goes: Setup's Public site page opens with "See your public site". */}
-                {mirror && !tournamentBar && !siteInNav && (
-                  <Link className={styles.dropItem} href={mirror.href} role="menuitem" id="admin-mob-view-site" onClick={close}>
-                    <Globe size={17} aria-hidden /><span>{mirror.label}</span>
-                  </Link>
-                )}
+                {/* ⚖ No live-site door in the sheet (Ask 9 = A, Stage 13a): the header's globe ("View site") is on every screen. */}
               </MoreSheetFoot>
             </div>
           </>

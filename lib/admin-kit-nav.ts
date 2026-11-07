@@ -190,6 +190,29 @@ export function clubProgramOrder(shape: ClubShape): { lead: AdminProgramKey[]; a
 }
 
 /**
+ * ⚖ THE ONE EXCEPTION TO N10 (Club Tier Stage 13a, Ask 8 = A, owner 2026-11-06): for a person whose ONLY program is house
+ * league — the league admin and the registrar by default, decided by what they can OPEN, never by the role's name — house
+ * league counts as run for the nav's shape, so it leads the rail and takes the phone bar's third slot before the club has a
+ * season. It is their whole job; "Also on your plan" or the More sheet hid it on a brand-new club (F-L1-2, F-R1-3). Everyone
+ * who can open anything else (the owner, an admin, the treasurer) keeps the club's own shape, unchanged. The club's shape
+ * itself (`useClubBrief().shape`) stays a fact about the ORG: the Members role guide reads it as one.
+ */
+export function personClubShape(shape: ClubShape, canUse: (capability: Capability) => boolean): ClubShape {
+  if (shape.runsHouseLeague) return shape;
+  const opens = LEAD_ORDER.filter(key => canUse(PROGRAM_CAPABILITY[key]));
+  return opens.length === 1 && opens[0] === 'house-league' ? { ...shape, runsHouseLeague: true } : shape;
+}
+
+/**
+ * The amber waiting count's text, one rule for the club admin kit's pills (Stage 13a, B2): the real number up to 99, then
+ * "99+". It used to stop at "9+", which hid the number a registrar works from. The rail, the phone bar's program tabs, the
+ * Overview's program cards and a season's Registrations all wear it. NOT the chat, notification or coaches-portal badges.
+ */
+export function kitCountText(n: number): string {
+  return n > 99 ? '99+' : String(n);
+}
+
+/**
  * The programs this person can open, in order. `canUse` is the caller's role-capability + plan-
  * module check (`hasCapability && hasModuleEntitlement`) — the hub tile's predicate, unchanged.
  */

@@ -41,7 +41,7 @@ import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { CoachCard, CoachDoorCard, CoachEyebrow, CoachFigure, CoachChip, kit } from '@/components/coaches/kit';
 import { useAdminKitNav } from '../useAdminKitNav';
 import { useClubBrief, briefProgramCount, type BriefKey, type ClubBrief } from './ClubBriefProvider';
-import { accountingTabs, type AdminProgramKey } from '@/lib/admin-kit-nav';
+import { accountingTabs, kitCountText, type AdminProgramKey } from '@/lib/admin-kit-nav';
 import ck from './ClubKit.module.css';
 import styles from './ClubHub.module.css';
 import frame from '../AdminKitFrame.module.css';
@@ -147,12 +147,15 @@ export default function ClubHubKit() {
   const closedPlansLine = gating ? closedProgramPlansSentence(gating) : null;
   const slug = currentOrg?.slug ?? '';
   const isOwner = userRole === 'owner';
-  // The board by name (Club Tier Stage 13a: names only): the locked rows' "Ask Morgan Ellis" and the quiet row's "Jules
-  // Moreau or Morgan Ellis starts one". Read only for the two people who see a sentence that names someone: an admin (the
-  // locked rows) and a non-runner on a plan whose league is not running (the quiet row). Everyone else pays nothing.
+  // The board by name (Stage 13a: names only), read only by those who see a named sentence: an admin (the locked rows'
+  // "Ask Morgan Ellis") and a non-runner on a club not running house league yet ("… starts one", on the quiet row or, when
+  // the program leads for them under Ask 8, its card).
+  // From the brief's ANSWER only: before it (or when it fails) the shape is the plan's guess, which reads a Club plan's
+  // running league as "not running" and would say "No season yet" to a registrar whose league has seasons (/review).
+  const leagueNotRunning = !!brief && !brief.shape.runsHouseLeague && canOpen('module_house_league');
   const board = useBoardPeople(
     userRole === 'admin'
-    || (!!userRole && !LEAGUE_RUNNER_ROLES.includes(userRole) && alsoOnPlan.some(p => p.key === 'house-league')),
+    || (!!userRole && !LEAGUE_RUNNER_ROLES.includes(userRole) && leagueNotRunning),
   );
   const canManageBilling = hasBillingAccess(userRole, userCapabilities);
   const club = isClubPlan(currentOrg?.planId);
@@ -269,7 +272,13 @@ export default function ClubHubKit() {
         .filter(t => t.id !== 'overview').map(t => t.label).join(' · ');
       case 'families': return 'Every household on your rosters: who owes, who is missing forms, who cannot be reached';
       case 'public-site': return `Your ${possessive(noun)} page: tagline, contact and links`;
-      case 'house-league': return 'Seasons, registrations, the draft, schedules and standings';
+      // ⚖ Ask 8 (Stage 13a, B1): leading before the club has a season, the card says so and who starts one (by name;
+      // nothing while the names load).
+      case 'house-league': {
+        if (!leagueNotRunning) return 'Seasons, registrations, the draft, schedules and standings';
+        const starter = canRunLeague ? 'start the first one here' : board ? seasonStarterShort(board) : null;
+        return `No season yet${starter ? ` · ${starter}` : ''}`;
+      }
       case 'tournaments': return 'Schedules, results, registrations and game day';
     }
   };
@@ -368,10 +377,11 @@ export default function ClubHubKit() {
               const Icon = PROGRAM_ICON[p.key];
               const waiting = briefProgramCount(brief, p.key);
               // A waiting count is the rail's amber pill — the number, never words (owner ruling 2026-10-01).
-              const chip = (p.key === 'rep-teams' || p.key === 'accounting' || p.key === 'families') && waiting > 0
+              // A program with no waiting count answers 0 (`briefProgramCount`), so the count alone decides the pill.
+              const chip = waiting > 0
                 // The rail's pill, without the rail row's `margin-left: auto` — in the eyebrow's spread row it would
                 // shove the count against the arrow, off where every other card's chip sits (/review 2026-10-01).
-                ? <span className={frame.count} style={{ marginLeft: 0 }} aria-label={`${waiting} waiting`}>{waiting > 9 ? '9+' : waiting}</span>
+                ? <span className={frame.count} style={{ marginLeft: 0 }} aria-label={`${waiting} waiting`}>{kitCountText(waiting)}</span>
                 : p.key === 'public-site'
                   ? <CoachChip tone={currentOrg.isPublic ? 'good' : 'warn'}>{currentOrg.isPublic ? 'Online' : 'Offline'}</CoachChip>
                   : undefined;

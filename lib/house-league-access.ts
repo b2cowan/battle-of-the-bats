@@ -48,9 +48,12 @@ export const LEAGUE_RUNNER_ROLES: readonly OrgRole[] = ['owner', 'admin', 'leagu
 /** The roles that work its registrations, fees and family email: the runners plus the registrar. */
 const LEAGUE_DESK_ROLES: readonly OrgRole[] = [...LEAGUE_RUNNER_ROLES, 'league_registrar'];
 
+/** The states of a season that has ended its life. One list: the gate below and the club's waiting count (B2) read it. */
+export const FINISHED_LEAGUE_SEASON_STATUSES = ['completed', 'archived'] as const satisfies readonly LeagueSeasonStatus[];
+
 /** A season that has ended its life: it reads, and only its money still moves. */
 export function isFinishedLeagueSeason(season: { status: LeagueSeasonStatus | string } | null | undefined): boolean {
-  return season?.status === 'completed' || season?.status === 'archived';
+  return (FINISHED_LEAGUE_SEASON_STATUSES as readonly string[]).includes(season?.status ?? '');
 }
 
 export interface HouseLeagueAccess {

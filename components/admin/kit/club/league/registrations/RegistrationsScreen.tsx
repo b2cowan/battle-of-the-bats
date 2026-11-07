@@ -20,6 +20,7 @@
  * it), `email`. A control the member cannot use is not drawn.
  */
 import { useCallback, useMemo, useState } from 'react';
+import { kitCountText } from '@/lib/admin-kit-nav';
 import { useParams, useSearchParams } from 'next/navigation';
 import { Plus } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
@@ -632,7 +633,7 @@ export default function RegistrationsScreen() {
     href: `${base}?tab=${id}`,
     mark: counts[id] > 0
       ? (id === 'review'
-        ? <span className={frame.count} style={{ marginLeft: 0 }} aria-label={REGS_WORDS.reviewAria(counts[id])}>{counts[id] > 9 ? '9+' : counts[id]}</span>
+        ? <span className={frame.count} style={{ marginLeft: 0 }} aria-label={REGS_WORDS.reviewAria(counts[id])}>{kitCountText(counts[id])}</span>
         : <span className={css.tabCount}>{counts[id]}</span>)
       : undefined,
   }));

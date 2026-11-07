@@ -11,8 +11,11 @@
  * gone too (Ask 8), so Sign in lives here.
  *
  * THE STAFF DOOR (Ask S1, option A): a member of THIS club's staff gets one quiet door back to their side, OUTERMOST,
- * right of Account (the ratified door order: Account is about you, the door is about somewhere else) — a bare icon at
- * every width, like Account beside it (owner 2026-10-20; its destination is its accessible name and its hover tooltip). Staff of another club and every family see none: the everywhere-chooser
+ * right of Account (the ratified door order: Account is about you, the door is about somewhere else). ⚖ Since Club Tier
+ * Stage 13a (Ask 9 = A, owner 2026-11-06) it shows its WORD at a desk — "Admin", "Coaches Portal" or "Roles", the
+ * surface it returns to — because two unlabelled icons did not say which was the way back (F-NAV-5); at 900 px and below
+ * it is the bare icon (the pill's own narrow rule), and the account sheet's "Go to" carries it where the menu is. Its
+ * destination stays its accessible name. Staff of another club and every family see none: the everywhere-chooser
  * (Workspaces) that the old bar fell back to drew a door into Riverbend on Lakeshore's own page.
  *
  * MY TEAM (2026-10-26, drawing CLUB_SITE_MY_TEAM_DRAWING.html): a signed-in house-league coach of THIS club gets a
@@ -101,7 +104,7 @@ export default function ClubBar({ club, preview = false }: { club: ClubFrameClub
           <Link href={signInHref(pathname)} className={styles.word}>Sign in</Link>
         )}
         {/* On a phone the account sheet carries this door ("Go to"), so the bar's own icon steps aside — only where the menu is. */}
-        {door && <FlipPill resolution={door} variant="inline" compact className={`${flipStyles.clubLook} ${accountMounted ? styles.doorInSheet : ''}`} />}
+        {door && <FlipPill resolution={door} variant="inline" className={`${flipStyles.clubLook} ${accountMounted ? styles.doorInSheet : ''}`} />}
       </div>
     </header>
   );

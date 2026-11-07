@@ -16,7 +16,7 @@ import { hasOrgVenueLibrary } from '@/lib/plan-features';
 import { isTournamentTier } from '@/lib/billing-urls';
 import { useCurrentOrgCoachAccess, coachDoorFor } from '@/lib/use-current-org-coach-access';
 import { useIsSandbox } from '@/components/sandbox/SandboxProvider';
-import { kitPrograms, kitOrgLinks, kitBillingLink, activeKitSection, clubProgramOrder, kitCalendarLink, kitSchedulesLink } from '@/lib/admin-kit-nav';
+import { kitPrograms, kitOrgLinks, kitBillingLink, activeKitSection, clubProgramOrder, personClubShape, kitCalendarLink, kitSchedulesLink } from '@/lib/admin-kit-nav';
 import { kitTournamentGroups } from './kit-tournament-groups';
 import { useClubBrief } from './club/ClubBriefProvider';
 
@@ -37,8 +37,10 @@ export function useAdminKitNav() {
   // ⚖ The plan-aware order (Club Tier Stage 1): what the club RUNS leads, what the plan merely
   // carries is the quiet "Also on your plan" group. Read from the morning brief's `shape`, which the
   // hub reads too — so the rail, the phone bar and the hub list the programs in one order.
+  // ⚖ Ask 8 (Stage 13a): a person whose only program is house league sees it lead from day one — the one exception to
+  // N10, decided here ONCE so the rail, the phone bar and the Overview cannot disagree.
   const club = useClubBrief();
-  const order = clubProgramOrder(club.shape);
+  const order = clubProgramOrder(personClubShape(club.shape, canUse));
   const programs = kitPrograms({ base, canUse, order: order.lead });
   const alsoOnPlan = kitPrograms({ base, canUse, order: order.also });
   // ⚖ D8 (Club Stage 1): "tournament-only" is a fact about the PLAN, never the person — the same
@@ -76,9 +78,6 @@ export function useAdminKitNav() {
   const tournamentGroups = kitTournamentGroups({
     status: currentTournament?.status, isSandbox, role: userRole, planId: currentOrg?.planId,
   }).map(g => ({ ...g, items: g.items.map(i => ({ ...i, href: i.href ?? `${base}/tournaments/${i.key}` })) }));
-  // Is the Public site program a row this nav draws (a club, not cancelled)? Then a separate door to the live site would be
-  // the same idea twice (N4: "Public site" once per screen). The sidebar's foot and the phone's More both read this.
-  const siteInNav = !tournamentOnly && !isCanceled && [...programs, ...alsoOnPlan].some(p => p.key === 'public-site');
 
   const section = activeKitSection(pathname, base);
   const onTournaments = pathname.startsWith(`${base}/tournaments`);
@@ -111,7 +110,6 @@ export function useAdminKitNav() {
     /** Rep (paid) coaching assignment in THIS org — the Organization hub's "My Coaches Portal" tile reads it. */
     hasRepAccess: coachAccess.hasRepAccess,
     tournamentGroups,
-    siteInNav,
     section,
     onTournaments,
   };

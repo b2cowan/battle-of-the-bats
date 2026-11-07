@@ -47,9 +47,9 @@
 .publicLook .pill { font-size: 0.72rem; }
 
 /* THE CLUB'S BAR (Club Tier Stage 4b-1, Ask S1 ruled 2026-10-20): the staff door on a club's own colour band, in the bar's
-   own text colour (--club-on-fill, which the club's frame defines). Since 2026-10-20 (owner) the bar always mounts it
-   icon-only, a bare icon beside Account at every width (`.clubLook .pill.compact` below); this labelled outline is what a
-   caller that ever mounts it with its word gets. */
+   own text colour (--club-on-fill, which the club's frame defines). Since Club Tier Stage 13a (Ask 9 = A, owner 2026-11-06)
+   the club bar mounts it WITH its word at a desk — this labelled outline — and the narrow rule below makes it the bare icon
+   at 900 px and under (2026-10-20 had it icon-only at every width; `.clubLook .pill.compact` stays for a compact caller). */
 .clubLook .pill {
   max-width: none;
   min-height: 36px;

@@ -275,9 +275,13 @@ describe('/review 2026-09-26 — what the adversarial review found, pinned', () 
 
   it('the attention counts ask the plan too, not the capability alone (D8 gave admins the program capabilities)', () => {
     const src = read('app/api/admin/attention-summary/route.ts');
-    for (const cap of ['module_tournaments', 'module_house_league', 'module_rep_teams']) {
+    for (const cap of ['module_tournaments', 'module_rep_teams']) {
       assert.ok(src.includes(`canOpenModule(ctx, ctx.org, '${cap}')`), cap);
     }
+    // House league (Club Tier Stage 13a, B2): counted for whoever can WORK the registrations — the house-league gate's
+    // `register`, which is `canOpenModule(…, 'module_house_league')` plus the desk's roles, so the plan is still asked.
+    assert.match(src, /canHouseLeague\(ctx, ctx\.org, 'register'\)/);
+    assert.match(read('lib/house-league-access.ts'), /const opens = canOpenModule\(member, org, 'module_house_league'\);/);
     assert.doesNotMatch(src, /hasCapability\(/);
   });
 

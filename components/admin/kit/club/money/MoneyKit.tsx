@@ -10,6 +10,7 @@
  * guard holds it). A screen formats; it never re-adds.
  */
 import { useState, type ReactNode } from 'react';
+import { kitCountText } from '@/lib/admin-kit-nav';
 import { AlertCircle } from 'lucide-react';
 import KitDialog, { DialogReason } from '../KitDialog';
 import { fmt } from '@/lib/coach-money-summary';
@@ -172,7 +173,7 @@ export { daysLateWords };
 /** A waiting count: the rail's amber pill — the number, never words (owner ruling 2026-10-01). The Overview's still-open
  *  rows, the Teams table, the Team pill's list and a team's Needs you all draw this one. */
 export function WaitingCount({ n }: { n: number }) {
-  return <span className={frame.count} style={{ marginLeft: 0 }} aria-label={`${n} waiting`}>{n > 9 ? '9+' : n}</span>;
+  return <span className={frame.count} style={{ marginLeft: 0 }} aria-label={`${n} waiting`}>{kitCountText(n)}</span>;
 }
 
 /** The red chip that says it: an allocation's team row, Coming due's overdue row, a team's bill. */

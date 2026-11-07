@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { kitCountText } from '@/lib/admin-kit-nav';
 import { useParams, usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
@@ -70,7 +71,7 @@ export default function SeasonPhoneFrame() {
                 aria-current={current ? 'page' : undefined}
               >
                 {p.label}
-                {count > 0 && <span className={styles.count} aria-label={toReviewLabel(count)}>{count > 9 ? '9+' : count}</span>}
+                {count > 0 && <span className={styles.count} aria-label={toReviewLabel(count)}>{kitCountText(count)}</span>}
               </Link>
             );
           })}

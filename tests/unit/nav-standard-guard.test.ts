@@ -16,7 +16,9 @@ import {
 } from 'lucide-react';
 import { TOUR_GROUPS } from '../../components/admin/admin-nav-config.ts';
 import { kitTournamentGroups } from '../../components/admin/kit/kit-tournament-groups.ts';
-import { kitPrograms, kitOrgLinks, kitCalendarLink, kitSchedulesLink, clubProgramOrder } from '../../lib/admin-kit-nav.ts';
+import { kitPrograms, kitOrgLinks, kitCalendarLink, kitSchedulesLink, clubProgramOrder, personClubShape } from '../../lib/admin-kit-nav.ts';
+import { hasCapability } from '../../lib/roles.ts';
+import type { OrgRole } from '../../lib/types.ts';
 import { COACH_TEAM_TOOLS } from '../../lib/coach-team-tools.ts';
 import { clubPhoneNav, tournamentSheetTiles, CLUB_BAR_KEYS, CLUB_TILE_KEYS, TOURNAMENT_TILE_KEYS } from '../../lib/nav-tiles.ts';
 import { readCode } from './_source-code.ts';
@@ -142,19 +144,43 @@ describe('N4 + N7 · one foot, one More-sheet order', () => {
     assert.doesNotMatch(readCode('components/coaches/CoachLiveSchedule.tsx'), /<InstallAppPrompt/);
   });
 
-  it('the admin sidebar’s foot: Help, the Coaches Portal, Public site; no Sign out or Send feedback (the account menu has them)', () => {
+  it('the admin sidebar’s foot: Help, the Coaches Portal; no Public site, Sign out or Send feedback', () => {
     const rail = readCode(ADMIN_RAIL);
     const foot = rail.slice(rail.indexOf('<div className={styles.foot}>'), rail.indexOf('<CollapseSidebarRow'));
-    order(foot, ['billingLink.href', 'helpHref', 'coachDoor.href', 'Public site'], ADMIN_RAIL);
+    order(foot, ['billingLink.href', 'helpHref', 'coachDoor.href'], ADMIN_RAIL);
     assert.match(foot, /billingLink && <Link/);
     assert.match(foot, /styles\.footItem/);
     assert.match(foot, /<billingLink\.icon size=\{14\}/);
     assert.match(readCode(ADMIN_SHEET), /billingLink && <Link[\s\S]*?<billingLink\.icon size=\{17\}/);
     const hook = readCode('components/admin/kit/useAdminKitNav.ts');
     assert.match(hook, /const billingLink = kitBillingLink\(\{ orgSlug, planId: currentOrg\?\.planId, accountKind: currentOrg\?\.accountKind, role: userRole, capabilities: userCapabilities, isSandbox \}\)/);
-    assert.ok(foot.indexOf('helpHref') < foot.indexOf('coachDoor.href') && foot.indexOf('coachDoor.href') < foot.indexOf('Public site'));
+    assert.ok(foot.indexOf('helpHref') < foot.indexOf('coachDoor.href'));
     assert.doesNotMatch(rail, /Sign out|<FeedbackLauncher|signOut/);
-    assert.match(foot, /!siteInNav/, 'the foot’s Public site only where no program row is it');
+  });
+
+  // ⚖ Ask 9 = A (Club Tier Stage 13a, owner 2026-11-06): the header's "View site" pill is on every screen the sidebar and the
+  // phone bar are (a cancelled club, which has no pill, has neither nav), so the foot door and the More sheet's door of the
+  // same name were the same place twice (F-NAV-5). Neither nav draws a live-site door; the pill names the club case.
+  it('Ask 9: no "Public site" foot door or More-sheet door; the club pill reads "View site", tournament screens keep theirs', () => {
+    const rail = readCode(ADMIN_RAIL);
+    const foot = rail.slice(rail.indexOf('<div className={styles.foot}>'), rail.indexOf('<CollapseSidebarRow'));
+    assert.doesNotMatch(foot, /Public site<\/span>/);
+    const sheet = readCode(ADMIN_SHEET);
+    assert.doesNotMatch(sheet, /admin-mob-view-site|useAdminFlip|siteInNav/);
+    assert.doesNotMatch(readCode('components/admin/kit/useAdminKitNav.ts'), /siteInNav/);
+    const flip = readCode('lib/use-admin-flip.ts');
+    assert.match(flip, /label: onTournamentScreen \? 'Public site' : 'View site'/);
+    // The tournament pill's own words are untouched (one helper, its two words).
+    assert.match(readCode('lib/flip-twins.ts'), /return ctx\.isDraft \? 'Preview site' : 'Public site';/);
+  });
+
+  it('Ask 9: the live site’s way back shows its word at a desk, the bare icon at 900 px and under', () => {
+    const bar = readCode('components/public/ClubBar.tsx');
+    assert.match(bar, /\{door && <FlipPill resolution=\{door\} variant="inline" className=/, 'not mounted compact: the word shows where there is room');
+    assert.doesNotMatch(bar, /<FlipPill[^>]*\bcompact\b/);
+    const css = readCode('components/shared/FlipPill.module.css');
+    // The pill's own narrow rule hides the word and draws the 44 px icon door, the club look included.
+    assert.match(css, /@media \(max-width: 900px\) \{\s*\.inline \.labelText \{ display: none; \}\s*\.inline \.pill,\s*\.clubLook \.pill \{/);
   });
 
   it('the demo sandbox never shows Sign out or Send feedback on a sheet (a shared demo user is never signed out)', () => {
@@ -233,6 +259,57 @@ describe('N8 · the tiles', () => {
     assert.deepEqual(keys(n.tabs), ['calendar', 'rep-teams', 'accounting']);
     assert.equal(n.tiles, null);
     assert.equal(n.schedulesRow?.key, 'schedules');
+  });
+
+  // ⚖ Ask 8 = A (Club Tier Stage 13a, the one exception to N10): a person whose ONLY program is house league sees it lead
+  // before the club has a season. The table is role × season state on a Club plan (every program carried), through the
+  // same two calls the hook makes (`personClubShape` → `clubProgramOrder`).
+  const asPerson = (role: OrgRole, extra: Record<string, boolean> | null = null) => (c: string) =>
+    hasCapability(role, extra, c as Parameters<typeof hasCapability>[2]);
+  const personNav = (shape: { runsHouseLeague: boolean; hostsTournaments: boolean }, can: (c: string) => boolean) => {
+    const order = clubProgramOrder(personClubShape(shape, can));
+    const programs = kitPrograms({ base: '/o/admin', canUse: can, order: order.lead });
+    const alsoOnPlan = kitPrograms({ base: '/o/admin', canUse: can, order: order.also });
+    return {
+      lead: programs.map(p => p.key),
+      also: alsoOnPlan.map(p => p.key),
+      bar: keys(clubPhoneNav({ calendar: t('calendar'), schedules: null, programs, alsoOnPlan }).tabs),
+    };
+  };
+  const noSeason = { runsHouseLeague: false, hostsTournaments: false };
+  const running = { runsHouseLeague: true, hostsTournaments: false };
+
+  it('Ask 8: the league admin and the registrar, no season yet → House league leads the rail and takes the bar’s third slot', () => {
+    for (const role of ['league_admin', 'league_registrar'] as const) {
+      const n = personNav(noSeason, asPerson(role));
+      assert.deepEqual(n.lead, ['house-league'], role);
+      assert.deepEqual(n.also, [], `${role}: not "Also on your plan"`);
+      assert.deepEqual(n.bar, ['calendar', 'house-league'], `${role}: Overview · Calendar · House league · More`);
+      assert.deepEqual(personNav(running, asPerson(role)).lead, ['house-league'], `${role}, season running: unchanged`);
+    }
+  });
+
+  it('Ask 8: the owner, an admin and the treasurer with no season → unchanged (N10 as written)', () => {
+    for (const role of ['owner', 'admin'] as const) {
+      const n = personNav(noSeason, asPerson(role));
+      assert.ok(!n.lead.includes('house-league') && n.also.includes('house-league'), `${role}: House league stays a quiet row`);
+      assert.deepEqual(n.bar, ['calendar', 'rep-teams', 'accounting'], role);
+    }
+    const treasurer = personNav(noSeason, asPerson('treasurer'));
+    assert.deepEqual(treasurer.lead, ['accounting']);
+    assert.ok(!treasurer.also.includes('house-league'), 'the treasurer cannot open house league at all');
+  });
+
+  it('Ask 8 is decided by what the person OPENS, never the role’s name', () => {
+    // A league admin who was also given Accounting opens two programs: N10 as written.
+    const both = personNav(noSeason, asPerson('league_admin', { module_accounting: true }));
+    assert.deepEqual(both.lead, ['accounting']);
+    assert.deepEqual(both.also, ['house-league']);
+    // The club's own shape is never rewritten: the Members role guide reads it as a fact about the org.
+    assert.deepEqual(personClubShape(noSeason, asPerson('owner')), noSeason);
+    const hook = readCode('components/admin/kit/useAdminKitNav.ts');
+    assert.match(hook, /const order = clubProgramOrder\(personClubShape\(club\.shape, canUse\)\);/, 'one place, the hook every surface shares');
+    assert.match(readCode('components/admin/kit/club/MembersKit.tsx'), /runsHouseLeague=\{shape\.runsHouseLeague\}/);
   });
 
   it('the tournament: game day only, and only with all three rows (none on a plan without Check-in or Staff kit)', () => {

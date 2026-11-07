@@ -3,6 +3,10 @@ import { getAuthContextWithRole, unauthorized } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { canOpenModule } from '@/lib/member-access';
 import { withObservability } from '@/lib/observability';
+import { canHouseLeague } from '@/lib/house-league-access';
+import { leagueRegistrationsWaitingLine } from '@/lib/league-registrations-waiting';
+
+const NO_LEAGUE_LINE = { count: 0, oldestSeasonId: null };
 
 export const GET = withObservability(async (req: Request) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
@@ -15,13 +19,14 @@ export const GET = withObservability(async (req: Request) => {
   // (Since D8 an admin holds the program capabilities by default, so a capability-only check here
   // counted a club's rep-team and league work for an org whose plan no longer carries them.)
   const canSeeTournaments = canOpenModule(ctx, ctx.org, 'module_tournaments');
-  const canSeeHouseLeague = canOpenModule(ctx, ctx.org, 'module_house_league');
+  // House league's waiting registrations are counted for whoever can WORK them (the desk: the runners and the registrar),
+  // the same answer the registration route gives (Club Tier Stage 13a, B2).
+  const canSeeHouseLeague = canHouseLeague(ctx, ctx.org, 'register');
   const canSeeRepTeams    = canOpenModule(ctx, ctx.org, 'module_rep_teams');
 
   const [
     pendingTournamentCount,
-    pendingLeagueCount,
-    openLeagueSeasonId,
+    league,
     pendingTryoutCount,
   ] = await Promise.all([
     // Pending tournament team registrations
@@ -42,37 +47,12 @@ export const GET = withObservability(async (req: Request) => {
       return count ?? 0;
     })(),
 
-    // Pending house league registrations in registration-open seasons
-    (async () => {
-      if (!canSeeHouseLeague) return 0;
-      const { data: seasons } = await supabaseAdmin
-        .from('league_seasons')
-        .select('id')
-        .eq('org_id', orgId)
-        .eq('status', 'registration_open');
-      const ids = (seasons ?? []).map((s: any) => s.id);
-      if (ids.length === 0) return 0;
-      const { count } = await supabaseAdmin
-        .from('league_registrations')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'pending')
-        .in('season_id', ids);
-      return count ?? 0;
-    })(),
-
-    // First registration-open season ID (for direct link)
-    (async () => {
-      if (!canSeeHouseLeague) return null;
-      const { data } = await supabaseAdmin
-        .from('league_seasons')
-        .select('id')
-        .eq('org_id', orgId)
-        .eq('status', 'registration_open')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      return data?.id ?? null;
-    })(),
+    // House league registrations waiting for review and the season holding the oldest (the line's door), in one query;
+    // the club brief's count reads the same rule (lib/league-registrations-waiting.ts). A failed read leaves the line off
+    // (it shows only above 0) rather than taking the tournament count down with it.
+    canSeeHouseLeague
+      ? leagueRegistrationsWaitingLine(orgId).catch(e => { console.error('[attention-summary] league waiting read failed:', e); return NO_LEAGUE_LINE; })
+      : Promise.resolve(NO_LEAGUE_LINE),
 
     // Pending rep team tryout applications
     (async () => {
@@ -102,8 +82,8 @@ export const GET = withObservability(async (req: Request) => {
 
   return NextResponse.json({
     pendingTournamentCount,
-    pendingLeagueCount,
-    openLeagueSeasonId,
+    pendingLeagueCount: league.count,
+    openLeagueSeasonId: league.oldestSeasonId,
     pendingTryoutCount,
   });
 }, { route: '/api/admin/attention-summary' });

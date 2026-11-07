@@ -345,3 +345,49 @@ ahead of the owner's rulings.
   (admin old-look on the tournament schedule sheet, admin type, schema parity, index coverage, org-slug callers on Public site
   address and the ledger window, unused selectors, export registry) all name other sessions' files. `check:layout` NOT run (no
   dev server). Not walked. Next: Session B in a fresh session; the stage's one walk comes after B.
+- 2026-11-06 — **13a Session A committed `2cebde79c` 2026-11-06** (59 files, Session A's hunks only; the shared plan, PM
+  brief, TODO line and Public-site words/page went in partially, the 13i entries and the "About us" rename left to their sessions).
+- 2026-11-06 — **13a Session B BUILT 2026-11-06, `/simplify` + `/review` DONE** (Asks 8 + 9, items B1–B5; build prompt
+  `CLUB_TIER_STAGE13A_BUILD_PROMPT.md`). **B2 first — a defect FOUND AND FIXED:** the Overview's "League registrations · waiting
+  for review" line could never show: `/api/admin/attention-summary` counted status `'pending'`, which no registration holds (the real
+  state is `pending_review`; the tryout count had the same slip, 2026-09-25). ONE read now, `lib/league-registrations-waiting.ts`:
+  `pending_review` across **every season that is not finished** (open question 2 settled: not completed/archived —
+  `FINISHED_LEAGUE_SEASON_STATUSES`, the house-league gate's own list, so the count covers exactly the seasons where the desk may still
+  work one; wider than the old `registration_open`-only set). The club brief carries it as `counts.leagueRegistrations` (ONE head count
+  per brief, by the registrations' org index, joined to the season's status; absent on a failed read) for whoever holds
+  `canHouseLeague(…, 'register')` (owner, admin, league admin, registrar); the attention summary reads number + door in ONE query (the
+  door is now the season holding the OLDEST waiting registration, not the newest one taking registrations). The House league rail row,
+  the phone bar's House league tab and the Overview's House league card wear it through `briefProgramCount`. The kit's amber count reads
+  the real number to 99, then "99+" (`kitCountText`: rail, phone tabs and sheet rows, the fee-invoice count on both navs, Overview
+  cards, Registrations tab, season rows, Money's pill); chat/notification unread keep "9+". **B1:** `personClubShape` (lib/admin-kit-nav.ts),
+  applied once in `useAdminKitNav`: a person whose ONLY openable program is house league sees it lead from day one (rail, the phone bar's
+  third slot, the Overview card); decided by what they open, not the role; owner, admin and treasurer unchanged (pinned in a role ×
+  season table, nav-standard-guard). The card says "No season yet · {name} starts one" (Session A's `seasonStarterShort`) or, for a
+  league admin, "No season yet · start the first one here"; the board read's enable condition widened to cover it (one fetch).
+  N10 + N8 in NAV_STANDARD carry the exception. **B3:** the hub's Ask 9 drawing re-read before building — it captions the foot door
+  "goes" for people who can't edit the site and draws only Help in every non-owner foot, so the planner's "no duplicate door" reading
+  stands. The club pill reads "View site" (tournament screens keep theirs); the sidebar foot's "Public site" door and the phone More
+  sheet's live-site door are gone (the pill is on every screen the navs are; a cancelled club has neither); the live site's staff way
+  back shows its word ("Admin" / "Coaches Portal" / "Roles") above 900 px and the bare icon at 900 and under. N4 rewritten. Guards:
+  `tests/unit/club-stage13a-yours-guard.test.ts` (new) + nav-standard-guard (Ask 8 table, Ask 9 cases); two older pins re-pointed
+  (Stage 1 attention gate, admin-kit-nav hook order). *`/simplify` applied:* one finished-season list shared with the gate; the
+  Overview line's number + door in one query; the "View site" word inline (its comment had claimed a new tab); one count span in the
+  sheet; the card line and chip simplified; comments trimmed. *`/review` (high-risk, 4 lenses: exposure, query/logic, blast radius,
+  spec):* no Critical or High; counts are org-scoped from the auth context and present only for the desk. **Fixed from review:** the card
+  said "No season yet" while the brief loaded (and for good on a failed brief) for a registrar on a Club plan whose league runs — it now
+  reads the brief's answer only; the fee-invoice count read "12" on the desk and "9+" on the phone. **Recorded, not fixed:** the
+  labelled way-back pill on the live site at 901–1,200 px with a long club name, tabs and My team may squeeze the tabs (the tabs
+  scroll, no page overflow; no layout-sweep screen shows the live site to signed-in staff, so it was not measured — walk it); the word
+  hides at 900 px and under (the pill's own breakpoint, so tablets too); the pill opens the live site in the SAME tab where the drawing's
+  caption said a new tab (owner question); right after a hop back from the live site the first admin page's pill can read "Public site"
+  (the return memory's surface label); the tournaments list and the tournament Public site settings page keep "Public site"; the More
+  sheet's program tiles (`MoreSheetTiles`, shared with the coaches portal) and the season schedule's two team/division counts keep
+  "9+"; one amber-pill component (`WaitingCount` out of MoneyKit) would fold four copies of the pill markup; platform admin's identical
+  99+ rule and the ~9 copies of the unread 9+ rule; the pill's word is pinned by a source assertion, not a table test. *Gate:*
+  typecheck clean (8 GB heap); touched suites 666/666; `npm test` 14,884/14,894 — the 10 failures are the 9 other-session suites
+  Session A recorded (billing-tax words ×2, practice plans phone, billing free time ×2, Stage 6 walk ×3, series dates, support console
+  foot ×2, in-force census ×2) and one of mine (the Stage 1 attention-gate pin), re-pointed and green; spelling ✓; the later
+  `verify:changed` scripts: the same seven reds as Session A (admin old-look, admin type, schema parity, index coverage, org-slug
+  callers, unused selectors, export registry), none naming a Session B file; `check:layout --only=admin-hub,admin-hub-treasurer,
+  admin-club-more` ✓ (12 screen-widths, no new findings). Not walked. **Next:** the stage's one walk ("each person sees only their
+  doors"), then 13i.

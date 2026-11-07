@@ -22,7 +22,7 @@ import { hasBillingAccess } from '@/lib/roles';
 import type { FeesOwed } from '@/lib/fee-invoice-alert';
 import type { AdminProgramKey, ClubShape } from '@/lib/admin-kit-nav';
 
-export type BriefKey = 'tryoutApplications' | 'paymentRequests' | 'installmentsDue' | 'assistantCoaches' | 'familyDuplicates' | 'familyChildDuplicates';
+export type BriefKey = 'tryoutApplications' | 'paymentRequests' | 'installmentsDue' | 'assistantCoaches' | 'familyDuplicates' | 'familyChildDuplicates' | 'leagueRegistrations';
 
 export type ClubBrief = {
   asOf: string;
@@ -148,9 +148,11 @@ export function briefProgramCount(brief: ClubBrief | null, programKey: AdminProg
 }
 
 /** A program that is one page with tabs carries its waiting tab's count on its rail row: Accounting its Payment
- *  requests', Families its Duplicates' (⚖ Club Tier Stage 5b, Ask 14). */
+ *  requests', Families its Duplicates' (⚖ Club Tier Stage 5b, Ask 14). House league carries the registrations waiting for
+ *  review across the club's live seasons (Stage 13a, B2) — the sum of its seasons' own Registrations pills. */
 const PROGRAM_COUNT: Partial<Record<AdminProgramKey, BriefKey>> = {
   accounting: 'paymentRequests',
+  'house-league': 'leagueRegistrations',
 };
 
 /** Everything waiting on Families › Duplicates: the parents' proposals plus the children's. */

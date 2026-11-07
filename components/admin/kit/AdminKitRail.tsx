@@ -28,7 +28,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, type ElementType } from 'react';
 import {
-  LayoutGrid, ChevronRight, Globe, Users2, HelpCircle, Trophy,
+  LayoutGrid, ChevronRight, Users2, HelpCircle, Trophy,
 } from 'lucide-react';
 import ReleaseDot from '@/components/whats-new/ReleaseDot';
 import ChatUnreadBadge from '@/components/chat/ChatUnreadBadge';
@@ -48,6 +48,7 @@ import { useAdminKitNav } from './useAdminKitNav';
 import { STATUS_WORD } from '@/lib/tournament-status-words';
 import { useRailTeamName } from './useRailTeam';
 import { briefPageCount, briefProgramCount } from './club/ClubBriefProvider';
+import { kitCountText } from '@/lib/admin-kit-nav';
 import { useHouseLeagueAccess, useHouseLeagueSeasons, type FrameSeason } from './useHouseLeagueSeasons';
 import { seasonGroup, seasonPageHref, seasonPagesFor, seasonSegment, toReviewLabel } from '@/lib/house-league-season';
 import type { HouseLeagueAccess } from '@/lib/house-league-access';
@@ -60,7 +61,7 @@ type PageRow = { href: string; label: string; active: boolean; count?: number; c
 /** The amber waiting count, worn by a rail door and by its row in the strip's menu. */
 function WaitingCount({ count, label, className = '', tone = 'amber' }: { count: number; label: string; className?: string; tone?: 'amber' | 'red' }) {
   if (count <= 0) return null;
-  return <span className={`${styles.count}${tone === 'red' ? ` ${styles.countRed}` : ''}${className ? ` ${className}` : ''}`} aria-label={label}>{count > 9 ? '9+' : count}</span>;
+  return <span className={`${styles.count}${tone === 'red' ? ` ${styles.countRed}` : ''}${className ? ` ${className}` : ''}`} aria-label={label}>{kitCountText(count)}</span>;
 }
 
 /** One rail door — the coach rail's row, with the admin's worklist count and chat badge. `stripIcon` is an
@@ -118,8 +119,8 @@ export default function AdminKitRail() {
   const pathname = usePathname();
   const nav = useAdminKitNav();
   const {
-    base, orgSlug, programs, alsoOnPlan, brief, orgLinks, section, tournamentOnly, isCanceled,
-    onTournaments, coachDoor, calendarLink, schedulesLink, billingLink, helpHref, siteInNav,
+    base, programs, alsoOnPlan, brief, orgLinks, section, tournamentOnly, isCanceled,
+    onTournaments, coachDoor, calendarLink, schedulesLink, billingLink, helpHref,
   } = nav;
   const feeAlert = useFeeAlert();
   const repTeamId = pathname.match(/\/rep-teams\/teams\/([^/]+)/)?.[1] ?? null;
@@ -334,14 +335,7 @@ export default function AdminKitRail() {
               <Users2 size={14} aria-hidden /> <span className={strip.rowLabel}>Coaches Portal</span>
             </Link>
           )}
-          {/* "Public site" appears once per screen (N4): the foot's door only where the sidebar lists no Public site row
-              (whose page links to the live site). Otherwise today's conditions, kept: not inside a tournament (the
-              header's flip pill owns that door there) and not in org admin. */}
-          {!onTournaments && section !== 'org' && !siteInNav && (
-            <Link href={`/${orgSlug}`} className={`${styles.item} ${styles.footItem}`}>
-              <Globe size={14} aria-hidden /> <span className={strip.rowLabel}>Public site</span>
-            </Link>
-          )}
+          {/* ⚖ No live-site door here (Ask 9, Stage 13a): the header's "View site" pill is on every screen (N4). */}
         </div>
         {/* ⚖ The last row (Ask 2): a rare door ends the body, never a pinned row. */}
         <CollapseSidebarRow className={`${styles.item} ${styles.footItem}`} />
