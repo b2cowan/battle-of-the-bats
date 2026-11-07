@@ -349,15 +349,6 @@
 }
 .footHostText { text-decoration: none; }
 
-/* At a desk the footer keeps the band's own 32 px edge (the club footer centres on the pages' column; here a rail sits
-   beside the page, so the band's edge is the one to line up with). */
-@media (min-width: 1024px) {
-  .frame :global([data-public-frame-footer]) > div {
-    padding-left: 32px;
-    padding-right: 32px;
-  }
-}
-
 /* The free plan's acquisition banner floats over the foot of the page (unchanged, Stage 1). The footer is the last thing
    on a framed page, so it makes room under itself while the banner shows; dismissed, the room goes with it. */
 :global(html):has(.frame):has(:global([data-growth-banner])) :global([data-public-frame-footer]) > div {

@@ -2,7 +2,7 @@ import { publicClubRefusal, type PublicClubAccessOrg } from './public-club-acces
 
 /**
  * lib/team-two-pages.ts — A TEAM'S TWO PAGES LINK TO EACH OTHER (club round C6, ruled 2026-11-05; plan of record
- * docs/projects/active/PUBLIC_PAGE_LAYOUT_STANDARD_PLAN.md §5b). When a club's own rep team plays in the club's own
+ * docs/projects/archive/PUBLIC_PAGE_LAYOUT_STANDARD_PLAN.md §5b). When a club's own rep team plays in the club's own
  * tournament it has two public pages: its club page (`/teams/{slug}`) and its tournament team page
  * (`/{tournament}/teams/{registration}`). Each now links to the other — but only for the host club's OWN team, and only
  * to a page that will open. Pure, so tests/unit/team-two-pages.test.ts pins the decision; the reads are

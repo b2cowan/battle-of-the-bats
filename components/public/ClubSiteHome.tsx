@@ -23,19 +23,19 @@ import PublicSectionHead from './PublicSectionHead';
  * A CLUB'S HOME (Club Tier Stage 4b-2a; End state 1, Ask 3A, ruled 2026-10-19) — the home of an org whose plan carries
  * the public site. The bar, footer and colours are the frame's (ClubFrame, 4b-1); this is everything between them:
  *
- *   Open now → Teams → House league → Tournaments → About the club
+ *   Open now → Teams → House league → Tournaments → About us
  *
  * by default; since Stage 4c-1 in the club's own order and show/hide from its editor, Open now always first. Each is
  * absent when the club has nothing for it — never a "check back soon". The page (app/[orgSlug]/page.tsx) reads the
  * club's data and hands it in already shaped; this only draws, so the order and the absences are decided once
  * (`clubHomeSectionsFor`, unit-tested).
  *
- * Every section is drawn ONCE, in the club's order — the order a phone reads. At a desk About the club stands in the
+ * Every section is drawn ONCE, in the club's order — the order a phone reads. At a desk About us stands in the
  * side column beside the others wherever it sits in that order (a grid places it; the DOM order does not change).
  *
  * What left the home with the old hero: the club's name (the bar carries it), its contact and socials (the footer
  * carries them — one place, 4b-1 leftover), the "Upcoming events" with "Live" on every card (S4-03), the Try out cards
- * (now Open now's rows) and the Past tournaments card (its own tab). The description moved into About the club, and the
+ * (now Open now's rows) and the Past tournaments card (its own tab). The description moved into About us, and the
  * Follow button with it (owner 2026-10-20: the drawings placed it nowhere; the About card keeps it off screen one).
  */
 
@@ -171,13 +171,13 @@ export default async function ClubSiteHome(p: ClubSiteHomeProps) {
 
   const about = sections.includes('about') && (
     <section className={`${kit.section} ${styles.about}`} aria-labelledby="about" {...siteEdit('about')}>
-      <PublicSectionHead id="about" title="About the club" />
+      <PublicSectionHead id="about" title="About us" />
       <div className={kit.list}>
         {p.about && <p className={kit.cardText}>{p.about}</p>}
         {/* The About page's door (Stage 4c-1): only when the page says more than this paragraph. */}
         {p.aboutPageHref && (
           <Link href={p.aboutPageHref} className={kit.row}>
-            <span className={kit.rowMain}><span className={kit.rowName}>About the club</span></span>
+            <span className={kit.rowMain}><span className={kit.rowName}>About us</span></span>
           </Link>
         )}
         {p.showFollow && (

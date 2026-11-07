@@ -121,7 +121,7 @@ reason.
 ## Step 4 · The drawings (house layout; owner rulings on mockups)
 
 - **One HTML Artifact**, never the design canvas; load the `artifact-design` skill first. Source file
-  `docs/projects/active/PUBLIC_CLUB_PAGE_LAYOUT_DRAWINGS.html`, published by file path (keep the path and icon for every
+  `docs/projects/archive/PUBLIC_CLUB_PAGE_LAYOUT_DRAWINGS.html`, published by file path (keep the path and icon for every
   round so the history threads). Sticky numbered tabs, one section at a time, the last tab = Asks. Suggested tabs:
   `1 · Why it jumps` (counters + an edge map of every club page AND the tournament pages on one scale) · `2 · The standard on
   a club page` (R1–R11 with a "club" column: meets / breaks / amend) · `3 · Club ↔ tournament` (the toggle, side by side) ·

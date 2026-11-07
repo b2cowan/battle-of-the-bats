@@ -509,14 +509,15 @@
   }
 }
 
-/* ── Desk (above 900 px): one band, content on the pages' own column ─────────────────────────────────────────────────
-   The bar and footer take the edge of the global `.container` (1,200 px, a 24 px gutter INSIDE it — globals.css), the
-   column every club page sets its content in, so the club's logo stands directly over each page's heading. */
+/* ── Desk (above 900 px): one band, edge to edge ─────────────────────────────────────────────────────────────────────
+   The bar and footer run to the window's own edge — 24 px, then 32 px from 1,024 px, the tournament band's edge — not
+   the pages' centred 1,200 px column (owner 2026-11-06: the centred bar wasted the sides and crowded a long name beside
+   the tabs, with more club pages still to come). The pages' content keeps its centred column, as on a tournament. */
 @media (min-width: 901px) {
   .bar {
     grid-template-columns: auto minmax(0, 1fr) auto;
     grid-template-areas: 'identity tabs actions';
-    padding: 0 max(24px, calc((100% - 1200px) / 2 + 24px));
+    padding: 0 24px;
   }
 
   .identity { padding: 0; }
@@ -531,15 +532,20 @@
     align-items: flex-start;
     justify-content: space-between;
     gap: 20px;
-    padding: 28px max(24px, calc((100% - 1200px) / 2 + 24px)) 22px;
+    padding: 28px 24px 22px;
   }
 
   .credit { flex-basis: 100%; }
 }
 
+@media (min-width: 1024px) {
+  .bar { padding: 0 32px; }
+  .footInner { padding-left: 32px; padding-right: 32px; }
+}
+
 /* ── The club notice (Stage 4c-1, Ask 16; drawings ~L1763): under the bar on every club page, the club's line first. ── */
 .notice {
-  /* The pages' own column and gutter (16 px on a phone; at a desk the bar's 24 px container edge, below), so the notice
+  /* The pages' own column and gutter (16 px on a phone; at a desk the centred 1,200 px column's 24 px edge, below), so the notice
      lines up with the heading under it; 20 px to the first section (the page adds its 16 px top padding). */
   margin: 12px 0 4px;
   padding: 0 16px;

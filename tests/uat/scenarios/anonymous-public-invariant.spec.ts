@@ -346,29 +346,27 @@ test.describe('R3 + R5 — the marketing bar joins the system (top-nav audit D3/
 test.describe('R6 — League pages share the column their own bar aligns to (audit D5)', () => {
   test.use({ viewport: { width: 1440, height: 900 } });
 
-  // The club's bar centres its content at 1,200 px (4b-1; the tabs sit in the bar beside the name at a desk), so the
-  // club's identity — its logo — is what the page's content lines up under. These pages once centred their own
-  // 560-800px columns on the raw viewport — measured 244-304px of left-edge stagger.
+  // The club's bar runs edge to edge at a desk (owner 2026-11-06, the tournament band's 32 px edge); the pages keep
+  // the centred 1,200 px column. These pages once centred their own 560-800px columns on the raw viewport — measured
+  // 244-304px of left-edge stagger — so the page heading must stand on that column's 24 px edge.
   for (const [label, path] of [
     ['League index', `${ORG}/league`],
   ] as const) {
-    test(`${label}: the club's bar and the first heading share a left edge`, async ({ page }) => {
+    test(`${label}: the bar runs to the window's edge and the first heading stands on the pages' column`, async ({ page }) => {
       await page.goto(path, { waitUntil: 'networkidle' });
       await page.waitForTimeout(600);
       const m = await page.evaluate(() => {
-        const tabs = document.querySelector('[data-club-bar] a');
+        const identity = document.querySelector('[data-club-bar] a');
         const heading = document.querySelector('main h1, h1');
         return {
-          tabLeft: tabs ? Math.round(tabs.getBoundingClientRect().left) : null,
+          identityLeft: identity ? Math.round(identity.getBoundingClientRect().left) : null,
           headingLeft: heading ? Math.round(heading.getBoundingClientRect().left) : null,
         };
       });
-      expect(m.tabLeft, 'tab row left edge').not.toBeNull();
-      expect(m.headingLeft, 'content heading left edge').not.toBeNull();
-      expect(
-        Math.abs((m.headingLeft ?? 0) - (m.tabLeft ?? 0)),
-        `stagger between the section row and the page it navigates (tab ${m.tabLeft} vs heading ${m.headingLeft})`,
-      ).toBeLessThanOrEqual(8);
+      expect(m.identityLeft, 'the club\'s name sits on the band\'s own 32 px edge').toBe(32);
+      // 1,440 px window: (1440 - 1200) / 2 + 24 = 144.
+      expect(m.headingLeft, 'content heading on the pages\' centred column').not.toBeNull();
+      expect(Math.abs((m.headingLeft ?? 0) - 144), `heading at ${m.headingLeft}`).toBeLessThanOrEqual(8);
     });
   }
 });

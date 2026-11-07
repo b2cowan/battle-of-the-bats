@@ -30,9 +30,9 @@ describe('1 · the home (End state 1, Ask 3A)', () => {
     assert.match(readCode(`${ORG}/page.tsx`), /loadClubHome\(org, orgSlug(, \{ ownHost: [^}]+ \})?\)/);
     assert.match(readCode('lib/club-home-data.ts'), /tournamentHomeStatus\(t, today, registrationOpen\)/, 'true to its dates');
   });
-  it('the description lives in About the club, and the hero\'s repeated contact is gone (the footer carries it)', () => {
+  it('the description lives in About us, and the hero\'s repeated contact is gone (the footer carries it)', () => {
     const code = readCode(HOME);
-    assert.match(code, /About the club/);
+    assert.match(code, /About us/);
     assert.doesNotMatch(code, /mailto:/);
     assert.doesNotMatch(code, /Contact us/);
   });

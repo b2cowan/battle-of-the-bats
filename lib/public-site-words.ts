@@ -19,7 +19,7 @@ export const PUBLIC_SITE_WORDS = {
   saveFailed: "Couldn't save your changes. Try again.",
 
   // ── The builder (Public site builder, ruled 2026-10-21; drawing https://claude.ai/artifact/LSWvZmV9r1772Zt4etqcaM) ──
-  // The five rows, in order (Look, Home page, About the club, Contacts, documents and sponsors, Visibility). Renamed in
+  // The five rows, in order (Look, Home page, About us, Contacts, documents and sponsors, Visibility). Renamed in
   // Stage 4d so "Change in …" on the sponsor strip names a row that holds sponsors; the PUBLIC footer door keeps
   // "Contacts and documents" (a sponsor alone does not open the About page).
   lists: 'Contacts, documents and sponsors',
@@ -134,8 +134,8 @@ export const PUBLIC_SITE_WORDS = {
   openNowPhoneSub: 'Open tryouts and sign-ups',
   reorderFailed: "Couldn't save the new order. Try again.",
 
-  // About the club
-  aboutCard: 'About the club',
+  // About us
+  aboutCard: 'About us',
   tagline: 'Tagline',
   taglinePlaceholder: 'Rep teams, ages 9 to 16',
   taglineHint: (n: number, max: number) => `One line under your name. ${n} / ${max}`,

@@ -13,7 +13,7 @@
  *   five rows     open in place, one at a time, each saying what is in it while closed:
  *                   Look                   logo, colours ("From your logo" first), type, banner — moved in from Settings
  *                   Home page              the sections in the club's order, a switch each (4c-1, unchanged)
- *                   About the club         tagline, about, the questions address, the social links
+ *                   About us         tagline, about, the questions address, the social links
  *                   Contacts and documents the three About-page lists, each record in its window
  *                   Visibility             the site's switch and the directory listing (the owner's), the address
  *   preview       beside the rows at a desk: the club's home as families see it, computer or phone, redrawn after every

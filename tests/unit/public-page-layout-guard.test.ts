@@ -6,7 +6,7 @@ import { between, cssRule, filesUnder, openingTags, parseProps, readCode, readSo
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  * PUBLIC PAGE LAYOUT STANDARD — PART 1: ONE PAGE, ONE COLUMN (owner ruling 2026-11-04, A1–A14).
  * Standard: docs/agents/design/PUBLIC_PAGE_LAYOUT_STANDARD.md (R1–R11 + the registered exceptions).
- * Plan: docs/projects/active/PUBLIC_PAGE_LAYOUT_STANDARD_PLAN.md; build prompt …_BUILD_PROMPT.md Part 1.
+ * Plan: docs/projects/archive/PUBLIC_PAGE_LAYOUT_STANDARD_PLAN.md; build prompt …_BUILD_PROMPT.md Part 1.
  *
  * Why this exists: each Stage (2–6) built its page on its own, so each picked its own edges — the Schedule started
  * 16 px down, Standings 24, a game's page 0; the Overview filled the window while Standings stopped at 720 and Teams at
@@ -182,7 +182,7 @@ describe('Public page layout standard Part 1 — every public tournament page is
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  * THE CLUB ROUND — EVERY CLUB PUBLIC PAGE ON THE SAME COLUMN (C2 + C5, ruled 2026-11-05).
- * Plan §5b; build prompt docs/projects/active/PUBLIC_CLUB_PAGE_LAYOUT_BUILD_PROMPT.md Part 1.
+ * Plan §5b; build prompt docs/projects/archive/PUBLIC_CLUB_PAGE_LAYOUT_BUILD_PROMPT.md Part 1.
  *
  * Why this exists: the club's pages each picked their own column — the home and a team's page 1,152 wide, Teams 744,
  * the house league 760, Schedule and Standings 800, Your sign-up 560 — and About, a tryout page, the tryout form and
@@ -270,8 +270,12 @@ describe('Public page layout standard, club round — every club public page is 
     for (const f of ['components/public', 'components/rep-teams', 'components/league', 'app/[orgSlug]'].flatMap(d => filesUnder(d, '.module.css'))) {
       assert.doesNotMatch(readSource(f).replace(/\/\*[\s\S]*?\*\//g, ''), /--club-edge\s*:/, `${f} must not redefine the --club-edge colour token`);
     }
-    // The band's own edge is the same expression, so the content stands under the logo at every width.
-    assert.match(readSource('components/public/ClubFrame.module.css'), /max\(24px, calc\(\(100% - 1200px\) \/ 2 \+ 24px\)\)/);
+    // The club notice sits on the pages' column, so it shares the expression. The band and footer do NOT (owner
+    // 2026-11-06): they run edge to edge, 24 px in and 32 px from 1,024 px — the tournament band's edge.
+    const frameCss = readSource('components/public/ClubFrame.module.css');
+    assert.match(frameCss, /\.notice \{ padding: 0 max\(24px, calc\(\(100% - 1200px\) \/ 2 \+ 24px\)\); \}/);
+    assert.match(frameCss, /@media \(min-width: 1024px\) \{\s*\.bar \{ padding: 0 32px; \}\s*\.footInner \{ padding-left: 32px; padding-right: 32px; \}/,
+      'the band and footer: edge to edge at a desk, the tournament band\'s 32 px');
     assert.match(css, /@media \(min-width: 1024px\) \{\s*\.club \.cols \{\s*display: grid;\s*grid-template-columns: minmax\(0, 1\.35fr\) minmax\(0, 1fr\);\s*gap: 24px 28px;/,
       'C2: the club\'s two-column pages split the tournament\'s way, from 1,024 px, 24 between rows');
     assert.match(css, /\.prose \{ max-width: 720px; \}/, 'R1: prose holds to 720');

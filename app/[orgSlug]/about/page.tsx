@@ -18,10 +18,10 @@ import PublicSectionHead from '@/components/public/PublicSectionHead';
 
 export const dynamic = 'force-dynamic';
 
-/** "About the club · Riverbend Girls Softball". */
+/** "About us · Riverbend Girls Softball". */
 export async function generateMetadata({ params }: { params: Promise<{ orgSlug: string }> }): Promise<Metadata> {
   const { orgSlug } = await params;
-  return clubPageMetadata(orgSlug, () => 'About the club', { path: '/about' });
+  return clubPageMetadata(orgSlug, () => 'About us', { path: '/about' });
 }
 
 /**
@@ -57,7 +57,7 @@ export default async function ClubAboutPage({ params }: { params: Promise<{ orgS
   return (
     <PublicPage frame="club">
       {/* About has no tab, so it keeps its name, at 24 (C4). */}
-      <h1 className={kit.pageName}>About the club</h1>
+      <h1 className={kit.pageName}>About us</h1>
 
       {about && <div className={kit.list}><p className={`${kit.cardText} ${styles.about}`}>{about}</p></div>}
 

@@ -4,15 +4,15 @@
 recommendation), A11–A14 ("I agree with your recommendations, go ahead and make the build prompt"). **The club round
 C1–C7 RULED as recommended 2026-11-05** ("i agree with your recommendations, go ahead and write the build prompt"): the
 club's public pages follow this standard with the amendments marked *Club round* below (drawings
-https://claude.ai/artifact/96Jaq1JZNr8EgGaV3dxmLt; build `docs/projects/active/PUBLIC_CLUB_PAGE_LAYOUT_BUILD_PROMPT.md`). A living reference:
+https://claude.ai/artifact/96Jaq1JZNr8EgGaV3dxmLt; build `docs/projects/archive/PUBLIC_CLUB_PAGE_LAYOUT_BUILD_PROMPT.md`). A living reference:
 it evolves in place and is never archived. Part 1 of the build (the page wrapper, the 1,200 px stack, the guard) landed
 2026-11-05; the recipes (R4–R11) land in Parts 2a–4 of
-`docs/projects/active/PUBLIC_PAGE_LAYOUT_STANDARD_BUILD_PROMPT.md`.
+`docs/projects/archive/PUBLIC_PAGE_LAYOUT_STANDARD_BUILD_PROMPT.md`.
 
 - **The drawings are the spec:** https://claude.ai/artifact/NC6Y7ijjYtd3Kr4cGPgbep (source
-  `docs/projects/active/PUBLIC_PAGE_LAYOUT_STANDARD_DRAWINGS.html`; tab 2 holds these rules, tab 3 every game state,
+  `docs/projects/archive/PUBLIC_PAGE_LAYOUT_STANDARD_DRAWINGS.html`; tab 2 holds these rules, tab 3 every game state,
   tab 4 every page today vs. proposed).
-- **Plan and every ask's reason:** `docs/projects/active/PUBLIC_PAGE_LAYOUT_STANDARD_PLAN.md` §2–§3. Design log: in-repo
+- **Plan and every ask's reason:** `docs/projects/archive/PUBLIC_PAGE_LAYOUT_STANDARD_PLAN.md` §2–§3. Design log: in-repo
   `memory/design_decisions.md`, 2026-11-04 "PUBLIC TOURNAMENT PAGES: ONE LAYOUT STANDARD".
 - **Scope today:** the public tournament pages (Overview, Schedule, Standings, Playoffs, Teams, Rules, Champions, a
   game's page, a team's page, News, Register) and, from the club round (ruled 2026-11-05), the club's public pages: the

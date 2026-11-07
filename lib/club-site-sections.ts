@@ -121,7 +121,7 @@ const SECTION_NAME: Record<'openNow' | SiteSectionKey, string> = {
   teams: 'Teams',
   league: 'House league',
   tournaments: 'Tournaments',
-  about: 'About the club',
+  about: 'About us',
   archives: 'Past tournaments',
 };
 
