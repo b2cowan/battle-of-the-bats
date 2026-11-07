@@ -80,6 +80,9 @@ need to type a statement balance, see the difference from the books on that date
 | Report books changed | **The report prints the figures as saved, plus the "Books now say $X" line and its reason** when it applies. (Owner, 2026-11-06, BC5b.) |
 | Report order | **The report's sum runs bank first, as the association's form does**: Bank balance on the statement · + money in, not in the bank yet · − cheques, not in the bank yet · + online payments on their way · = What your books should say · Your books on {date} · Matches / Off by $X. (Owner, 2026-11-06, BC5b.) |
 | Report extras | **The report keeps the starting-point line** (worked out from the saved figures; left off when the starting statement was corrected after the check) **and has no Book column**: the table is Date · What · Amount, as saved. (Owner, 2026-11-06, BC5b.) |
+| O5: season start | **A season Start next season handed cash starts the day it was rolled into; any other season (a team's first, or one opened without carrying cash) starts on the earlier of the day it was created and its first recorded money.** (Owner, 2026-11-06, BC6a, "Two cases".) |
+| Q1 look-back | **"Last season" is the season the opening cash was carried from; with no cash carried there is no look-back. With no matched check last season, Find looks over its final 60 days. The look-back stops once this season has a matched check.** (Owner, 2026-11-06, BC6a.) |
+| Still waiting across the rollover | **The new season's first check asks "Still waiting?" about whatever last season's final check left Not in the bank yet.** (Owner, 2026-11-06, BC6a.) |
 
 ### Tick-off rulings that still stand (Appendix A §4)
 
@@ -898,8 +901,38 @@ Build prompt written 2026-11-06: `BANK_BALANCE_CHECK_BC6_BUILD_PROMPT.md` (two s
 as rules and a reader, owner questions first incl. O5; BC6b the routes, permissions, the history-decision record, a D1
 guard and a dev probe). Mig 447 already carries the team account (`owner_kind = 'team'`, no starting statement).
 - [ ] The team account, created at the first save (no setup question; name "Team bank account").
-- [ ] The coach figure: opening balance + settled cash-moving register rows ≤ D (`coach-register-book.ts` rows, pure
-  cutoff); a date before the season start refused (O5 decides the date); Find per Q1.
+- [x] **BC6a built 2026-11-06** (rules + reader, no route, no screen, no migration). The coach figure: opening balance +
+  settled cash-moving register rows ≤ D (`coachBooksOnDate`); a date before the season start refused (`before_season`,
+  O5 ruled); Find per Q1 and the two BC6a rulings in §0. Anchors: `lib/bank-coach-map.ts` (`seasonStartOf`, `coachFind`,
+  `coachStillWaiting`, `coachMarkable`, `coachHints`, `coachChecksNow`), `lib/bank-coach-rules.ts` (`coachSaveRefusal`,
+  `coachSavePlan`, `coachCheckedThrough`, `coachFigureOn`), `lib/bank-coach-read.ts` (`readTeamBank`,
+  `TEAM_BANK_ACCOUNT_NAME`); `tests/unit/bank-coach.test.ts` (the drawing's Ridge 13U example to the cent);
+  `bank-r2-server-guard.test.ts` §5 now walks the coach libs. Shared: the saved-check shape, `checkView`, `checkedThrough`,
+  `MAX_WAITING` (now exported), two new refusal codes in `bank-check-words.ts` (`before_season`, `bad_team_item`, drafts).
+  - ⚖ **The sign across the rollover is the check's own:** last season's uncashed cheque is already out of the carried
+    opening balance while the bank still holds it, so a look-back line is an ordinary Find candidate, never the club's
+    "Waiting at the start" direction.
+  - ⚖ **A first check's Find is every line of the season through D,** the start's own day and a rolled season's
+    pre-rollover row included (`suspectsSince`'s strictly-after-the-start would drop both).
+  - ⚠ **For BC6b:** `bank_check_save`'s team branch re-checks neither the season window nor the items, and checks the
+    account against the org only (not the team); the route must pass the account id `readTeamBank` returned (never a
+    client's), run `coachSavePlan` (which re-checks the date rules itself) on the server's fresh read on every save, pass
+    `p_start`/`p_start_books` NULL, and map the step's `bad_item` to `bad_team_item`. The account insert leans on
+    `bank_accounts_one_per_team`: a racing first save's 23505 must read again, never a 500 (`refusalOfDbError` doesn't map
+    it yet).
+  - `/review` (standard, 2026-11-06): 3 lenses, 1 High fixed — last season's cheque kept on a MATCHED working check was
+    asked "Still waiting?" on the next check but not markable (`needsLastSeason` now also reads last season while Still
+    waiting? asks about one of its lines; test added). Hardening applied: the reader takes the team from the season, reads
+    checks by the account's id (no embedded filter), skips last season on a refused day; `coachSavePlan` re-checks the
+    date; guard §2 now refuses a club bank file importing `bank-coach-*` (D1). Known edges, kept as ruled: a first
+    season's start follows its earliest money line (deleting that line moves the start later, and a check before the new
+    start leaves the list, kept in the table); an old-season check dated the rollover day reads as the new season's.
+  - ⚠ **Finding (pre-existing, not changed):** `loadSeasonRegisterRows` reads its fundraiser, sponsor, club-request,
+    roster and installment sources without checking the error (a failed read is no rows). The Ledger and Start next
+    season's carry share it; a bank check saved during such a failure keeps a wrong Your books. Owner to decide on a fix.
+  - Words for BC8: the drafted §5 refusal "…Check it from last season before you start a new one." sends the coach where
+    the bank isn't (a closed season is one page, B9); the draft in the code is "This statement is dated before the season
+    started. Check a statement from this season."
 - [ ] Routes `app/api/coaches/[orgSlug]/teams/[teamId]/bank/**` with `canWriteMoney` / `canViewMoney`; the statement date
   is not a year; confirm the `HISTORY_ENDPOINTS` guard stays unchanged (and, with Q1-A, record the previous-season read
   as the decision it is, answering the three questions in `CLAUDE.md`).
@@ -952,9 +985,10 @@ guard and a dev probe). Mig 447 already carries the team account (`owner_kind = 
   waiting, or figure only on blur? (Recommend debounce.)
 - [ ] **O4 (BC3):** Find's search field: amounts in either direction (as built, `pickerSearch`), "12,50" parse finding
   from R2c fixed in the shared cents parser.
-- [ ] **O5 (BC6):** the season's start date for "statements from this season only, since {date}": the earliest of the
-  season's own start field if one exists, else the date the season was created / rolled into. Verify against
-  `rep_program_years` before building.
+- [x] **O5 (BC6):** the season's start date for "statements from this season only, since {date}". Ruled 2026-11-06 (§0
+  "O5: season start"). `rep_program_years` has no start field (dev snapshot, 2026-11-06), and its `created_at` alone
+  misleads: on dev every season was created at the seed run (Oct 7, 2026) while 15U AAA's 2026 Season holds money dated
+  Sep 7.
 - [x] **O6 (BC1):** whether a payout that lists no lines (manual / matching) should make the whole on-its-way line *not
   counted*, or count everything since the last listed payout. Taken as recommended 2026-11-05 (*not counted*); the rule
   is in §9 BC1's build calls.

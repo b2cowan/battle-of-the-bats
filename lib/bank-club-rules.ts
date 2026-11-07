@@ -31,6 +31,8 @@ export const STATUS_OF: Record<BankRefusalCode, number> = {
   bad_name: 400, bad_figures: 400, bad_kind: 400, bad_amount: 400, bad_date: 400, bad_item: 400, bad_start_item: 400, ends_in_future: 400,
   team_book: 409, name_taken: 409, changed: 409, start_exists: 409, start_after_checks: 409, no_start: 409,
   before_start: 409, start_has_checks: 409, not_counted_down: 409, not_counted_unlisted: 409,
+  // A team's (BC6a, lib/bank-coach-rules.ts).
+  before_season: 409, bad_team_item: 400,
 };
 export const statusOfRefusal = (code: BankRefusalCode): number => STATUS_OF[code];
 
@@ -119,8 +121,8 @@ function waitingItemOf(key: string, r: EntryRow): WaitingItem | null {
   return { key, date: r.entry_date, direction: directionOfEntry(r), amountCents, ...(label ? { label } : {}) };
 }
 
-/** At most this many "Not in the bank yet" lines on one check. */
-const MAX_WAITING = 200;
+/** At most this many "Not in the bank yet" lines on one check (a team's too: lib/bank-coach-rules.ts). */
+export const MAX_WAITING = 200;
 
 /** The entry ids a save names as waiting (only `entry:{uuid}` keys are looked up; anything else is `bad_item` below). */
 export function waitingIdsOf(v: unknown): string[] {

@@ -1,3 +1,8 @@
+> **BC6a done 2026-11-06** (rules + reader + tests, `/review` standard with 1 High fixed; plan §9 BC6 has the anchors,
+> the three owner rulings are in §0 "O5: season start", "Q1 look-back", "Still waiting across the rollover", and the
+> BC6b route notes are under "⚠ For BC6b"). **Next BC6b.** Note for BC6b: `readTeamBank` takes `{ orgId, season,
+> today, date }` (the team is the season's).
+
 # Bank balance check BC6: the coach's source and routes, no screen (build prompt, two sessions)
 
 > **Written 2026-11-06**, after BC5 was committed (BC5a `0ec285816`, BC5b `23df998bc`; plan §9 BC5). **Paste

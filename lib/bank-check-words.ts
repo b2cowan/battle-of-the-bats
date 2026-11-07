@@ -36,6 +36,12 @@ export const BANK_REFUSAL = {
   // Settled, BC3b /marketing 2026-11-06. The screen reads the figure again without them, so the sentence says it does.
   not_counted_down: 'Stripe didn’t answer just now, so online payments on their way aren’t counted. The figures now leave them out. Look them over, then save, or try again in a few minutes.',
   not_counted_unlisted: 'One of Stripe’s payouts doesn’t list what’s in it, so online payments on their way aren’t counted. The figures now leave them out. Look them over, then save.',
+  // ── a team's (BC6a, lib/bank-coach-rules.ts): drafts, settled by BC8's /marketing ──
+  // O5: a coach's books start from the season's opening balance, so an earlier statement belongs to last season. ⚠ Not
+  // "check it from last season": a closed season is one page and shows nothing of the bank (B9). The screen names the day
+  // ("Statements from this season only, since {date}.").
+  before_season: 'This statement is dated before the season started. Check a statement from this season.',
+  bad_team_item: 'A line marked Not in the bank yet has to be one of the team’s own money lines, dated on or before the statement you’re checking.',
 } as const;
 
 export type BankRefusalCode = keyof typeof BANK_REFUSAL;

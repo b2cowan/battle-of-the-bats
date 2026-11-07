@@ -158,6 +158,8 @@ describe('2. no year, no season, no coach reader', () => {
       // `coach-register` is imported for `toCents` and Cash on hand's one arithmetic only; nothing else coach-side.
       for (const spec of imports) {
         if (/(^|\/)coach-/.test(spec)) assert.match(spec, /(^|\/)coach-register$/, `${file} imports ${spec}`);
+        // D1: the coach's bank (BC6a) is a coach reader too, though its name starts `bank-` (BC6a /review).
+        assert.doesNotMatch(spec, /(^|\/)bank-coach-/, `${file} imports ${spec}`);
       }
     });
   }
@@ -302,7 +304,9 @@ describe('4. the steps (mig 447)', () => {
 });
 
 describe('5. ⚖ ask 1 — no bank code writes money', () => {
-  const BANK_CODE = [...BANK_LIBS, ...ROUTES, ...SCREENS];
+  // The coach's bank (BC6a) reads the team's register, so it is outside section 2's no-coach-reader list, never outside this.
+  const COACH_BANK_LIBS = ['lib/bank-coach-map.ts', 'lib/bank-coach-rules.ts', 'lib/bank-coach-read.ts'];
+  const BANK_CODE = [...BANK_LIBS, ...COACH_BANK_LIBS, ...ROUTES, ...SCREENS];
   it('the walk reaches every bank file', () => {
     assert.ok(SCREENS.some(f => f.endsWith('BankTab.tsx')) && ROUTES.length === Object.keys(EXPECTED).length);
   });
