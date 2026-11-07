@@ -303,7 +303,8 @@ export default function MembersKit() {
         title={pageTitle}
         actions={
           <>
-            {isOwner && (
+            {/* Club tiers reach the audit log through the Organization tab row; only the tournament tiers still need this door. */}
+            {isOwner && tournamentTier && (
               <Link href={auditHref} className={`btn btn-outline ${ck.iconOnlyPhone}`} aria-label="Audit log">
                 <ScrollText size={15} aria-hidden /> <span className={ck.btnWord}>Audit log</span>
               </Link>
