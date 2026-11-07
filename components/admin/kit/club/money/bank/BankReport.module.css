@@ -64,6 +64,9 @@
 /* A long list runs onto a second sheet between rows, never through one; its head repeats; the sign-off stays whole. */
 .items thead { display: table-header-group; }
 .items tr, .sums > tbody > tr { break-inside: avoid; }
+/* …but not the row holding that table (BC9a, owner "Club findings before the walk"; the team sheet's BC8b rule): a
+   near-page list would jump whole to sheet two. */
+.sums > tbody > tr:has(> .itemsCell) { break-inside: auto; }
 
 .line { margin: 14px 0 0; }
 .line b { font-weight: 700; }

@@ -1,0 +1,307 @@
+<title>Bank Balance Check Asks</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a sticky tab row (the plan, then one tab per ask, each with its worked example); the answers bar stays pinned at the bottom of every tab. */
+:root {
+  --bg: #f4f6f4;
+  --surface: #ffffff;
+  --fg: #1c2521;
+  --muted: #5a6761;
+  --line: #d7ded9;
+  --accent: #1d6b58;
+  --accent-soft: #e2efe9;
+  --warn: #8a5300;
+  --warn-soft: #fbf0dc;
+  --font-body: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Spline Sans Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #111614; --surface: #171e1b; --fg: #e3eae6; --muted: #9aa8a1; --line: #29332e;
+  --accent: #62c3a5; --accent-soft: #1a2d27; --warn: #f0b45a; --warn-soft: #2e2414; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #111614; --surface: #171e1b; --fg: #e3eae6; --muted: #9aa8a1; --line: #29332e;
+  --accent: #62c3a5; --accent-soft: #1a2d27; --warn: #f0b45a; --warn-soft: #2e2414; color-scheme: dark; }
+
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.55; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--surface); }
+.wrap { max-width: 980px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+header.top { padding-block: 20px 12px; }
+.eyebrow { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+h1 { font-size: 24px; line-height: 1.2; margin: 4px 0 6px; text-wrap: balance; }
+h2 { font-size: 19px; margin: 0 0 6px; text-wrap: balance; }
+h3 { font-size: 15px; margin: 0 0 6px; text-wrap: balance; }
+p { margin: 0 0 8px; max-width: 70ch; }
+.lede { color: var(--muted); max-width: 72ch; }
+.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--surface); border-bottom: 1px solid var(--line); }
+.tabs .wrap { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: thin; }
+.tabs button { flex: 0 0 auto; font: inherit; font-size: 14px; font-weight: 500; color: var(--muted); background: none; border: 0; border-bottom: 3px solid transparent; padding: 12px 10px 9px; cursor: pointer; white-space: nowrap; }
+.tabs button[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); }
+button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+main { padding-block: 18px 24px; }
+section.panel { display: grid; gap: 14px; }
+.box { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; min-width: 0; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+ul.plain, ol.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.tag { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; padding: 2px 7px; border-radius: 4px; background: var(--accent-soft); color: var(--accent); }
+.tag.warn { background: var(--warn-soft); color: var(--warn); }
+.muted { color: var(--muted); }
+.num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+/* a worked check: the three-figure band and its sums */
+.band { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface); }
+.band div { padding: 9px 12px; border-left: 1px solid var(--line); min-width: 0; }
+.band div:first-child { border-left: 0; }
+.band .k { font-size: 12px; color: var(--muted); }
+.band .v { font-family: var(--font-mono); font-size: 17px; font-variant-numeric: tabular-nums; }
+.band .ok .v { color: var(--accent); font-weight: 600; }
+.band .off .v { color: var(--warn); font-weight: 600; }
+.sums { display: grid; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface); margin-top: 8px; }
+.sums .row { display: grid; grid-template-columns: 1fr auto; gap: 12px; padding: 7px 12px; border-top: 1px solid var(--line); align-items: baseline; font-size: 14px; }
+.sums .row:first-child { border-top: 0; }
+.sums .row .num { text-align: right; }
+.sums .row.total { font-weight: 700; }
+.sums .row.found { background: var(--warn-soft); }
+.callout { border: 1px solid var(--warn); background: var(--warn-soft); border-radius: 8px; padding: 9px 12px; font-size: 14px; margin-top: 8px; }
+.callout.fixed { border-color: var(--accent); background: var(--accent-soft); }
+.chip { display: inline-block; font-size: 12px; font-weight: 600; padding: 1px 7px; border-radius: 10px; background: var(--warn-soft); color: var(--warn); border: 1px solid var(--warn); white-space: nowrap; }
+.chip.ok { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+.divider { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); padding: 6px 12px; background: var(--bg); border-top: 1px solid var(--line); }
+@media (max-width: 520px) { .band { grid-template-columns: 1fr; } .band div { border-left: 0; border-top: 1px solid var(--line); } .band div:first-child { border-top: 0; } }
+
+.tablewrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; vertical-align: top; padding: 7px 10px; border-top: 1px solid var(--line); }
+th { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; border-top: 0; }
+
+/* asks */
+.ask { background: var(--surface); border: 1px solid var(--accent); border-radius: 8px; padding: 14px 16px; display: grid; gap: 10px; min-width: 0; }
+.ask .q { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.ask .id { font-family: var(--font-mono); font-weight: 600; color: var(--accent); }
+.opts { display: grid; gap: 6px; }
+.opt { display: grid; grid-template-columns: 22px 1fr; gap: 8px; padding: 9px 10px; border: 1px solid var(--line); border-radius: 6px; cursor: pointer; align-items: start; font-size: 14px; }
+.opt:hover { border-color: var(--accent); }
+.opt input { margin: 3px 0 0; accent-color: var(--accent); }
+.opt:has(input:checked) { background: var(--accent-soft); border-color: var(--accent); }
+.opt .rec { font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: .05em; margin-left: 6px; }
+textarea { width: 100%; box-sizing: border-box; font: inherit; font-size: 14px; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; min-height: 38px; resize: vertical; }
+.btn { font: inherit; font-size: 14px; font-weight: 600; border-radius: 6px; padding: 8px 14px; cursor: pointer; border: 1px solid var(--accent); background: var(--accent); color: var(--surface); }
+.btn.ghost { background: transparent; color: var(--accent); }
+.paste { position: sticky; bottom: 0; z-index: 4; background: var(--surface); border-top: 1px solid var(--accent); box-shadow: 0 -6px 18px rgba(0,0,0,.06); padding-block: 10px calc(10px + env(safe-area-inset-bottom, 0px)); }
+.paste .inner { display: grid; gap: 6px; }
+.paste pre { margin: 0; font-family: var(--font-mono); font-size: 13px; white-space: pre-wrap; word-break: break-word; max-height: 96px; overflow: auto; background: var(--bg); border-radius: 6px; padding: 6px 10px; }
+.paste .bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
+.count { font-size: 13px; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<header class="top"><div class="wrap">
+  <div class="eyebrow">Bank reconciliation · both portals · the balance check · plan rewritten 2026-11-05</div>
+  <h1>Three edge cases the balance check needs a ruling on</h1>
+  <p class="lede">The plan is rewritten to the model you ruled today: type the statement's date and balance, see the difference, find what's missing, save while off. Working the examples turned up three cases the rulings don't cover. Each has a recommendation. None of them holds up the first build stage.</p>
+  <p><span class="tag">Ruled 2026-11-05</span> Q1 A, Q2 A, Q3 A, all as recommended, no notes. Recorded in the plan.</p>
+</div></header>
+
+<nav class="tabs" aria-label="Sections"><div class="wrap" role="tablist">
+  <button type="button" role="tab" data-tab="plan" aria-selected="true">The plan</button>
+  <button type="button" role="tab" data-tab="q1" aria-selected="false">Q1 · Cheque across a rollover</button>
+  <button type="button" role="tab" data-tab="q2" aria-selected="false">Q2 · Cheque before the start</button>
+  <button type="button" role="tab" data-tab="q3" aria-selected="false">Q3 · A book moves</button>
+</div></nav>
+
+<main><div class="wrap">
+
+<section class="panel" data-panel="plan">
+  <div class="grid2">
+    <div class="box">
+      <h2>What the rewrite settles</h2>
+      <ul class="plain">
+        <li>Your ten drawing answers and rulings 1 and 3 are recorded as ruled, nothing added. Ask 1 is recorded as the cash-figure option, which the drawing labelled C.</li>
+        <li>What still stands from the tick-off plan is kept: one bank account per check, who may check, where it lives, what shows elsewhere, the plan gating, what stays out.</li>
+        <li>The tick-off is taken apart in the first stage. About half of what was built carries over: the accounts, which books go in which account, the Stripe payouts reader, the Bank tab's frame. The ticking itself is deleted.</li>
+        <li>The superseded tab stays visible on the dev site, as you ruled. A promote is blocked anyway until the new database change reaches production.</li>
+      </ul>
+    </div>
+    <div class="box">
+      <h2>The stages</h2>
+      <ol class="plain">
+        <li><b>The engine and the database</b>, behind the scenes; the tick-off comes out</li>
+        <li>Club Bank tab on a desk: the check, the saved checks, the first check</li>
+        <li>Club: Find (the hints, the list, "Not in the bank yet")</li>
+        <li>Club Bank tab on a phone</li>
+        <li>Club: Overview line, year-end reminder, the report, help</li>
+        <li>Coach: the figures and the rules, behind the scenes</li>
+        <li>Coach: the Ledger's Bank view, desk and phone</li>
+        <li>Coach: Overview line, season-close reminder, the club's Teams column (after Stage 14)</li>
+        <li>Your walk, then "bank reconciliation" goes back on the Club pages</li>
+      </ol>
+      <p class="muted" style="margin-top:8px">Find gets its own stage because the hints, the waiting cheques and "Still waiting?" are the riskiest part.</p>
+    </div>
+  </div>
+  <div class="box">
+    <h3>Decided in the plan, no ruling needed</h3>
+    <ul class="plain">
+      <li><b>Find's hints stay quick:</b> they look at the 400 most recent lines at most, and show three combinations at most.</li>
+      <li><b>"Books now say $X"</b> is worked out each time the list opens. A saved check's own figures never change.</li>
+      <li><b>Stripe can't be reached:</b> the online-payments line reads "not counted", with a quiet sentence, and the check still saves. The saved check remembers that it wasn't counted.</li>
+      <li><b>"Still waiting?"</b> (your ask 2, not drawn) shows as one row per waiting cheque in the next check's sums, with Yes and No.</li>
+      <li><b>Deleting a check keeps a record</b> of who deleted it and when. Checking a statement again keeps the earlier record too.</li>
+    </ul>
+  </div>
+</section>
+
+<section class="panel" data-panel="q1" hidden>
+  <div class="box">
+    <h2>Ridge 13U: a cheque written in August, cashed in September</h2>
+    <p>On Aug 28, in the 2025 Season, the coach writes Cheque #212 to the umpires for $75.00. On Sep 1 they start the 2026 Season. Its opening balance already has the $75.00 taken off, so the books are right. The umpires cash the cheque on Oct 3. The coach checks the Sep 30 statement:</p>
+    <div class="band">
+      <div><div class="k">The bank says</div><div class="v">$3,315.00</div></div>
+      <div><div class="k">Should be in the bank</div><div class="v">$3,240.00</div></div>
+      <div class="off"><div class="k">Difference</div><div class="v">Off by $75.00</div></div>
+    </div>
+    <div class="callout"><b>The gap:</b> Find looks at this season's lines only (your ask 3), and none of them is $75.00. The coach sees "Off by $75.00" with nothing named, until the cheque clears.</div>
+  </div>
+  <div class="ask" data-ask="Q1">
+    <div class="q"><span class="id">Q1</span><h3>How does Find reach a cheque from last season?</h3></div>
+    <div class="opts">
+      <label class="opt"><input type="radio" name="Q1" value="A" id="Q1-A"><span><b>Find also looks at the end of last season</b><span class="rec">Recommended</span><br>Below this season's lines, under a divider "From the 2025 Season", Find shows last season's lines dated after its last check that matched. "Cheque #212 · Umpires (Aug 28) is exactly $75.00" can then be marked Not in the bank yet. The page never picks a year: the server reads the season before this one by itself. This is a new decision against the "one season at a time" rule, so it is written down as one.</span></label>
+      <label class="opt"><input type="radio" name="Q1" value="B" id="Q1-B"><span><b>Last season's waiting cheques carry over</b><br>Cheques marked Not in the bank yet on last season's final check show on the first check of the new season. This misses the example: a cheque written after that final check was never marked.</span></label>
+      <label class="opt"><input type="radio" name="Q1" value="C" id="Q1-C"><span><b>Nothing</b><br>The check reads off until the cheque clears. Simple, and confusing for the one coach it happens to.</span></label>
+    </div>
+    <textarea id="Q1-note" placeholder="Note (optional)" aria-label="Q1 note"></textarea>
+  </div>
+</section>
+
+<section class="panel" data-panel="q2" hidden>
+  <div class="box">
+    <h2>Lakeshore Lynx: a cheque written before the starting statement</h2>
+    <p>The treasurer starts checking Club chequing from the Jun 30 statement: $5,000.00. Cheque #188 for $75.00 was written Jun 20 and the bank cashed it Jul 3. The books have it in June, so it is not in the movement since the start. The bank's $5,000.00 still had it. The Jul 31 check:</p>
+    <div class="band">
+      <div><div class="k">The bank says</div><div class="v">$6,125.00</div></div>
+      <div><div class="k">Should be in the bank</div><div class="v">$6,200.00</div></div>
+      <div class="off"><div class="k">Difference</div><div class="v">Off by $75.00</div></div>
+    </div>
+    <div class="callout"><b>The gap:</b> the drawing says Find names the cheque, but naming it doesn't fix it. "Not in the bank yet" is wrong (it has cleared), and adding a line would count it twice. Every later check reads "Off by $75.00", for good.</div>
+    <div class="sums" aria-label="With option A">
+      <div class="row found"><span>Cheque #188 · Referee fees · Jun 20 <span class="chip">Exactly $75.00</span><br><span class="muted">Written before your starting statement and cashed after it.</span></span><span class="num">−$75.00</span></div>
+      <div class="row"><span>Starting point · Jun 30, 2026, less Cheque #188 waiting at the start</span><span class="num">$4,925.00</span></div>
+      <div class="row total"><span>Jul 31 · Should be in the bank</span><span class="num">$6,125.00 <span class="chip ok">Matches</span></span></div>
+    </div>
+  </div>
+  <div class="ask" data-ask="Q2">
+    <div class="q"><span class="id">Q2</span><h3>How does a club fix a cheque that was out at the start?</h3></div>
+    <div class="opts">
+      <label class="opt"><input type="radio" name="Q2" value="A" id="Q2-A"><span><b>Find looks back 60 days before the start, and offers "Waiting at the start"</b><span class="rec">Recommended</span><br>Only while no check since the start has matched. One tap attaches the cheque to the starting statement, and this check and every later one come out right. It is your ruled "no picker at the start", applied after the fact, only for a line Find has named.</span></label>
+      <label class="opt"><input type="radio" name="Q2" value="B" id="Q2-B"><span><b>The starting statement can be corrected</b><br>The greyed "Starting point" row opens, and its date and balance can be changed. It works if the treasurer knows to type $4,925.00, but it names no cheque, and the report can't show why.</span></label>
+      <label class="opt"><input type="radio" name="Q2" value="C" id="Q2-C"><span><b>As drawn: Find names it, nothing more</b><br>The account reads off by $75.00 for good, unless the treasurer starts over from a later statement.</span></label>
+    </div>
+    <textarea id="Q2-note" placeholder="Note (optional)" aria-label="Q2 note"></textarea>
+  </div>
+</section>
+
+<section class="panel" data-panel="q3" hidden>
+  <div class="box">
+    <h2>Lakeshore Lynx opens a gaming account in November</h2>
+    <p>Club chequing has four saved checks, Jul 31 to Oct 31, all Matches, and they counted the Bingo book. In November the club opens a Gaming account and moves the Bingo book to it.</p>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Club chequing</th><th>Option A: keep what it counted</th><th>Option B: count today's books</th></tr></thead>
+      <tbody>
+        <tr><td>Oct 31</td><td><span class="chip ok">Matches</span></td><td><span class="chip ok">Matches</span> <span class="chip">Books now say $6,410.00</span></td></tr>
+        <tr><td>Sep 30</td><td><span class="chip ok">Matches</span></td><td><span class="chip ok">Matches</span> <span class="chip">Books now say $5,980.00</span></td></tr>
+        <tr><td>Aug 31</td><td><span class="chip ok">Matches</span></td><td><span class="chip ok">Matches</span> <span class="chip">Books now say $5,200.00</span></td></tr>
+        <tr><td>Next check, Nov 30</td><td>Counts the club's books without Bingo</td><td>The same</td></tr>
+      </tbody>
+    </table></div>
+    <p class="muted" style="margin-top:8px">Either way, the Nov 30 check of each account can be off until the bank moves the Bingo money too. That is the bank's real state, and Find shows it.</p>
+  </div>
+  <div class="ask" data-ask="Q3">
+    <div class="q"><span class="id">Q3</span><h3>When a book moves, do earlier checks change?</h3></div>
+    <div class="opts">
+      <label class="opt"><input type="radio" name="Q3" value="A" id="Q3-A"><span><b>No: a saved check keeps the books it counted</b><span class="rec">Recommended</span><br>"Books now say" then means one thing only: a line in those books changed. The move window says so in one sentence: "Saved checks keep the books they counted. The next check of each account counts this book where it is now."</span></label>
+      <label class="opt"><input type="radio" name="Q3" value="B" id="Q3-B"><span><b>Yes: every check is worked out with today's books</b><br>Right when a book was set up in the wrong account by mistake, but one move puts an amber chip on every earlier check of both accounts.</span></label>
+    </div>
+    <textarea id="Q3-note" placeholder="Note (optional)" aria-label="Q3 note"></textarea>
+  </div>
+</section>
+
+</div></main>
+
+<div class="paste" aria-live="polite"><div class="wrap inner">
+  <div class="bar"><b>Your answers</b><span class="count" id="count">0 of 3 ruled</span><button class="btn ghost" type="button" id="take-rec">Take the recommendations</button></div>
+  <pre id="out">Bank balance check asks: nothing picked yet.</pre>
+  <div class="bar"><span class="muted" style="font-size:13px" id="copied"></span><button class="btn" type="button" id="copy">Copy answers</button></div>
+</div></div>
+
+<script>
+(function () {
+  var TABS = ["plan", "q1", "q2", "q3"];
+  var REC = { Q1: "A", Q2: "A", Q3: "A" };
+  var ASKS = Object.keys(REC);
+  var KEY = "flhq-bank-balance-asks-v1";
+
+  function show(name) {
+    if (TABS.indexOf(name) < 0) name = "plan";
+    document.querySelectorAll("[data-panel]").forEach(function (p) { p.hidden = p.getAttribute("data-panel") !== name; });
+    document.querySelectorAll("[data-tab]").forEach(function (b) { b.setAttribute("aria-selected", b.getAttribute("data-tab") === name ? "true" : "false"); });
+  }
+  document.querySelectorAll("[data-tab]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var t = b.getAttribute("data-tab");
+      if (location.hash !== "#" + t) location.hash = t; else show(t);
+      window.scrollTo(0, 0);
+    });
+  });
+  window.addEventListener("hashchange", function () { show(location.hash.slice(1)); });
+  show(location.hash.slice(1));
+
+  function readState() {
+    var s = {};
+    ASKS.forEach(function (id) {
+      var r = document.querySelector('input[name="' + id + '"]:checked');
+      var n = document.getElementById(id + "-note");
+      s[id] = { v: r ? r.value : "", n: n ? n.value.trim() : "" };
+    });
+    return s;
+  }
+  function render() {
+    var s = readState(); var lines = []; var done = 0;
+    ASKS.forEach(function (id) {
+      if (s[id].v) done++;
+      if (s[id].v || s[id].n) lines.push(id + ": " + (s[id].v || "?") + (s[id].n ? " - " + s[id].n : ""));
+    });
+    document.getElementById("count").textContent = done + " of 3 ruled";
+    document.getElementById("out").textContent = lines.length ? "Bank balance check asks\n" + lines.join("\n") : "Bank balance check asks: nothing picked yet.";
+    try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) {}
+  }
+  try {
+    var saved = JSON.parse(localStorage.getItem(KEY) || "null");
+    if (saved) ASKS.forEach(function (id) {
+      if (!saved[id]) return;
+      if (saved[id].v) { var el = document.getElementById(id + "-" + saved[id].v); if (el) el.checked = true; }
+      var n = document.getElementById(id + "-note"); if (n && saved[id].n) n.value = saved[id].n;
+    });
+  } catch (e) {}
+  document.querySelectorAll("[data-ask] input, [data-ask] textarea").forEach(function (el) {
+    el.addEventListener("input", render); el.addEventListener("change", render);
+  });
+  document.getElementById("take-rec").addEventListener("click", function () {
+    ASKS.forEach(function (id) {
+      if (!document.querySelector('input[name="' + id + '"]:checked')) { var el = document.getElementById(id + "-" + REC[id]); if (el) el.checked = true; }
+    });
+    render();
+  });
+  document.getElementById("copy").addEventListener("click", function () {
+    var text = document.getElementById("out").textContent; var msg = document.getElementById("copied");
+    function fallback() {
+      var range = document.createRange(); range.selectNodeContents(document.getElementById("out"));
+      var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+      msg.textContent = "Selected. Press Ctrl+C (or Cmd+C) to copy.";
+    }
+    try {
+      navigator.clipboard.writeText(text).then(function () { msg.textContent = "Copied. Paste it into the chat."; }, fallback);
+    } catch (e) { fallback(); }
+  });
+  render();
+})();
+</script>

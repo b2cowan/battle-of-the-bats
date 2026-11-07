@@ -1,0 +1,367 @@
+<title>A Coach’s Month End</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column; a walk index of cards, one walk open at a time; steps as Do / You should see rows with a tick. */
+:root {
+  --bg: #f4f6f5; --surface: #ffffff; --ink: #18211d; --muted: #5b6862; --line: #d5ddd9;
+  --accent: #1f6b4f; --accent-soft: #e2efe9; --warn: #9a5b00; --warn-soft: #fbefd9; --bad: #a3322b; --bad-soft: #f8e3e1;
+  --font-body: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font-body); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+.wrap { max-width: 860px; margin: 0 auto; display: grid; gap: 20px; }
+h1 { font-size: 30px; line-height: 1.15; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-size: 19px; margin: 0; text-wrap: balance; }
+h3 { font-size: 13px; margin: 0; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font: 600 12px/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.lead { color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 12px; min-width: 0; }
+.signin { border-color: var(--accent); }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+.amt { font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.note { background: var(--warn-soft); border-radius: 8px; padding: 10px 12px; }
+ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.index { display: grid; gap: 8px; }
+.wcard { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font: inherit; color: inherit; cursor: pointer; }
+.wcard[aria-expanded="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.wcard:focus-visible, button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wcard .t { font-weight: 600; }
+.wcard .j { grid-column: 1; color: var(--muted); font-size: 14px; }
+.chip { grid-row: 1 / span 2; grid-column: 2; font: 600 12px/1 var(--font-body); padding: 6px 9px; border-radius: 999px; background: var(--bg); color: var(--muted); border: 1px solid var(--line); white-space: nowrap; }
+.chip.prog { color: var(--accent); border-color: var(--accent); }
+.chip.pass { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.chip.issue { background: var(--bad-soft); color: var(--bad); border-color: transparent; }
+.chip.call, .chip.thin { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+.walk { display: grid; gap: 14px; }
+.meta { display: grid; gap: 10px; }
+.meta div { display: grid; gap: 2px; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.step { display: grid; grid-template-columns: 28px 1fr; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.step.done { border-color: var(--accent); background: var(--accent-soft); }
+.step.stop { border-style: dashed; border-color: var(--warn); }
+.step input[type="checkbox"] { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); }
+.step .body { display: grid; gap: 6px; min-width: 0; }
+.step .who { font: 600 11px/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.07em; color: var(--warn); }
+.step .lab { font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.opts { display: grid; gap: 6px; }
+.opts label { display: flex; gap: 8px; align-items: flex-start; }
+.verdict { display: flex; flex-wrap: wrap; gap: 8px; }
+.verdict button, .btn { font: 600 14px/1 var(--font-body); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.verdict button.on[data-v="pass"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+.verdict button.on[data-v="issue"] { background: var(--bad); color: var(--surface); border-color: var(--bad); }
+.verdict button.on[data-v="call"] { background: var(--warn); color: var(--surface); border-color: var(--warn); }
+textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5 var(--font-body); padding: 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.out { font: 13px/1.5 var(--font-mono); white-space: pre-wrap; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.progress { font-weight: 600; }
+@media (max-width: 520px) { .kv { grid-template-columns: 1fr; } .kv dt { margin-top: 6px; } h1 { font-size: 25px; } }
+@media (prefers-reduced-motion: no-preference) { .step { transition: background-color 0.15s, border-color 0.15s; } }
+</style>
+
+<div class="wrap">
+  <header class="card" style="gap:8px">
+    <span class="eyebrow">Bank balance check · BC9 · Owner QA Ledger §482</span>
+    <h1>A coach’s month end</h1>
+    <p class="lead">The coach side of the bank check, walked by you: the Money Overview’s line, a matching month, an off month you find the gap in, the same on a phone, the printed check, an assistant who can only read money, a standalone team’s season windows, and what the club does not see. About 45 minutes. The club side is its own page (§481); the two pages don’t depend on each other.</p>
+    <p class="lead">Written Nov 7, 2026 against the dev site. The dates you type are fixed and never drift. The balances are not pinned: every step tells you what to type relative to the band’s <b>Should be in the bank</b> figure, which you read off the screen.</p>
+    <p class="progress" id="progress">Checked 0 of 0</p>
+  </header>
+
+  <section class="card signin" aria-labelledby="signin-h">
+    <h2 id="signin-h">Sign in as</h2>
+    <dl class="kv">
+      <dt>Where</dt><dd><code>http://localhost:3000</code> (dev; the dev server must be running). Password for every account: <code>UATPassword2026!</code></dd>
+      <dt>Head coach</dt><dd><code>uat-coach@uat-test-org.local</code> · money write. Walks 1–4 on <b>UAT Test Team</b> (org UAT Rep Club, a club team), walk 6 on <b>UAT Standalone Team</b> (org uat-standalone, the team runs its own seasons).</dd>
+      <dt>Money read</dt><dd><code>uat-club-coach-15aaa@uat-rep-club.local</code> · added by the setup as an assistant on UAT Test Team who can read money but not change it. Walk 5.</dd>
+      <dt>Treasurer</dt><dd><code>uat-club-treasurer@uat-rep-club.local</code> · UAT Rep Club’s treasurer. Walk 7.</dd>
+      <dt>UAT Test Team</dt><dd>Money Overview: <code>/uat-rep-club/coaches/teams/0c656d0b-3f8d-494c-8b12-f1b0b9d670fe/accounting</code><br>Bank view: the same address plus <code>?section=ledger&amp;view=bank</code> (Money → Ledger → View: Bank)</dd>
+      <dt>UAT Standalone Team</dt><dd><code>/uat-standalone/coaches/teams/b2df96c6-1de9-4f1d-aa62-26dd9d4ba4e1</code> (team home); add <code>/accounting?section=ledger&amp;view=bank</code> for the Bank view, <code>/settings</code> for Team settings</dd>
+      <dt>Phone</dt><dd>Walk 3 is a phone walk: your desk browser’s device toolbar at <b>390 px</b> wide.</dd>
+    </dl>
+    <p class="lead">Dev-only sign-ins. Keep this page private. Switch accounts only where a walk says so (walks are grouped so you sign in three times).</p>
+  </section>
+
+  <section class="card" aria-labelledby="before-h">
+    <h2 id="before-h">Before you start</h2>
+    <ul class="plain">
+      <li><b>The setup is in place</b> (I ran it). On UAT Test Team’s 2026 Season: <b>Bottle drive deposit</b>, <span class="amt">$180.00</span> in, Oct 29, 2026 (money the bank hasn’t received yet), and 25 × <b>Concession float 1–25 of 25</b>, <span class="amt">$10.00</span> in each, Nov 6, 2026 (the long printed check).</li>
+      <li>On UAT Standalone Team: its 2026 Season now reads as carried from its 2025 Season, and the 2025 Season has <b>Tournament refund deposit</b>, <span class="amt">$260.00</span> in, May 15, 2026. That is what makes <b>From the 2025 Season</b> appear in Find; no walk has seen it on screen yet.</li>
+      <li>Neither team has a bank check yet. <b>Walk the walks in order, 1 to 7.</b> Each one starts from what the one before saved, and opens with a stop check.</li>
+      <li>When a walk asks you to add a bank fee, name it <b>Walk: bank fee</b>, so the clean-up finds it. ⚠ In walk 6 you <b>open</b> Start next season and Close the season, and close them again. <b>Never press the final Start or Close the season button.</b></li>
+    </ul>
+  </section>
+
+  <section class="card" aria-labelledby="proved-h">
+    <h2 id="proved-h">Already proved by scripts (don’t re-do the arithmetic)</h2>
+    <ul class="plain">
+      <li>The whole story on this page, played through the product’s own server on Nov 7: every figure, match and “Off by” below came out as written, and the From the 2025 Season line was found (38 of 38, with the club page).</li>
+      <li>The team’s printed check with a long list starts the list on sheet one and repeats its heading on sheet two; the chip’s Back stays closed on the coach side (BC8a and today).</li>
+      <li>The sums, the refusals (a date before the season, a future date), and that money read gets no form and no Delete: BC6–BC8’s tests and build guards.</li>
+    </ul>
+    <p class="lead">Your time goes on judgment: does this read right to a coach or a team treasurer who is not an accountant?</p>
+  </section>
+
+  <section aria-labelledby="index-h" style="display:grid;gap:10px">
+    <h2 id="index-h">The walks</h2>
+    <div class="index" id="index"></div>
+  </section>
+
+  <section id="walkHost"></section>
+
+  <section class="card" aria-labelledby="sum-h">
+    <h2 id="sum-h">Paste-back (all walks)</h2>
+    <div class="row">
+      <button class="btn" type="button" id="copyAll">Copy the summary</button>
+      <button class="btn" type="button" id="reset">Clear my ticks</button>
+      <span class="lead" id="copied" aria-live="polite"></span>
+    </div>
+    <div class="card out" id="out" tabindex="0"></div>
+  </section>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var KEY = "bc9-coach-walk-v1";
+  var PAGE = "BC9 · A coach’s month end (coach) · Owner QA Ledger §482";
+  var COACH = "The head coach, <code>uat-coach@uat-test-org.local</code>.";
+  var WALKS = [
+    { id: "K1", title: "The Overview line and a month that matches", job: "UAT Test Team · Oct 20, 2026 · desk", who: COACH,
+      forText: "Where a coach first meets the bank check: one quiet line on the Money Overview. This walk follows it to the Bank view, saves a statement that agrees, and sees the line pick it up.",
+      passes: "The line reads “Bank: not checked yet ›” before, opens the Bank view, and reads “Bank: checked through Oct 20, 2026 ›” with no chip after a matching check.",
+      notIn: "Finding a gap (walk 2). The phone (walk 3).",
+      where: "Desk. Money → Overview, then Money → Ledger → View: Bank.",
+      steps: [
+        { d: "Open UAT Test Team’s Money → Overview.", s: "In the <b>Cash on hand</b> card, under the In and Out bars: <b>Bank: not checked yet ›</b>." },
+        { d: "Click that line.", s: "Money → Ledger with <b>View: Bank</b>: <b>Team bank account</b>, the <b>Check a statement</b> card with “Statements from this season only, since …”, and “No statements checked this season yet.”" },
+        { d: "Statement date <b>Oct 20, 2026</b>; type the <b>Should be in the bank</b> figure as the balance.", s: "The band reads Matches: “The bank and your books agree on Oct 20, 2026.” No Find." },
+        { d: "Press <b>Save this check</b>.", s: "Saved; the saved checks list has Oct 20, 2026 · Matches · Checked by you." },
+        { d: "Go back to Money → Overview.", s: "<b>Bank: checked through Oct 20, 2026 ›</b>, and no amber chip." }
+      ] },
+    { id: "K2", title: "An off month: find the gap", job: "UAT Test Team · Oct 31, 2026 · desk", who: COACH,
+      forText: "The reason a coach opens this: the bank doesn’t agree. You find a deposit that hasn’t landed, say how much cash you’re holding, add the bank fee with the Ledger’s own form, then see Books now say and Delete.",
+      passes: "Oct 31 saves as Matches with Bottle drive deposit not in the bank yet and $40.00 cash; the edited fee shows Books now say; a throwaway check deletes after one question.",
+      notIn: "The phone (walk 3). Printing (walk 4).",
+      where: "Desk. Money → Ledger → View: Bank, and the Ledger’s Timeline once.",
+      steps: [
+        { stop: true, d: "Stop check: the saved checks list holds <b>Oct 20, 2026 · Matches</b>.", s: "If it doesn’t, walk 1 isn’t finished: stop here." },
+        { d: "Statement date <b>Oct 31, 2026</b>. Type the <b>Should be in the bank</b> figure <b>minus $224.50</b>.", s: "“The bank shows $224.50 less than your books.” Find opens with the lines since your last match, Oct 20, 2026." },
+        { d: "Press <b>Not in the bank yet</b> on <b>Bottle drive deposit</b> (Oct 29, 2026, $180.00 in).", s: "The bank now shows $44.50 less than your books." },
+        { d: "Type <b>$40.00</b> in <b>Cash not deposited yet</b>.", s: "$4.50 less, and the callout: “The bank took out $4.50 your books don’t have: a fee or a payment you haven’t entered.”" },
+        { d: "Press <b>Add the missing line</b>. Name it <b>Walk: bank fee</b> and save.", s: "The Ledger’s own add window, filled with $4.50, Oct 31, 2026 and money out (the same form as adding any cost). Back on the check, the band reads Matches." },
+        { d: "Press <b>Save this check</b>.", s: "Oct 31, 2026 · Matches · 1 line not in the bank yet, in the list under Oct 20." },
+        { d: "Open the Oct 31 check.", s: "The bank said · Should have been · Result, Not in the bank yet · Bottle drive deposit, Cash not deposited yet $40.00, Checked by you, and in its foot <b>Print this check</b> and <b>Delete this check</b>. Close it." },
+        { d: "Ledger → View: Timeline: open <b>Walk: bank fee</b>, change it to <b>$5.00</b>, save. Back to View: Bank.", s: "The Oct 31 row shows <b>Books now say $…</b> ($0.50 under its saved books); Oct 20 doesn’t change. No warning appeared on the money form." },
+        { d: "Save a throwaway check: <b>Oct 25, 2026</b>, any balance. Open it and press <b>Delete this check</b>.", s: "One question: “Delete the check for Oct 25, 2026? Its figures go; who deleted it and when is kept.” After Delete, the row is gone." }
+      ] },
+    { id: "K3", title: "On a phone", job: "UAT Test Team · Nov 6, 2026 · 390 px", who: COACH,
+      forText: "A coach checking the statement from the bleachers. The same check sized for a thumb: Find’s rows with the action under each, 10 at a time, Save at the very bottom, and no print door.",
+      passes: "Nov 6 saves as Off by $40.00 with the 25 concession floats not in the bank yet, done entirely at 390 px, with no sideways scroll and no Print this check.",
+      notIn: "Printing (a desk’s door only: walk 4).",
+      where: "Desk browser, device toolbar at 390 px wide. Money → Ledger → View: Bank.",
+      steps: [
+        { stop: true, d: "Stop check: the list holds Oct 20 and Oct 31, both Matches, and no Oct 25.", s: "If it doesn’t, walk 2 isn’t finished: stop here." },
+        { d: "Set the browser to 390 px wide and reload the Bank view.", s: "The check card with the two fields side by side; nothing scrolls sideways." },
+        { d: "Statement date <b>Nov 6, 2026</b>.", s: "<b>Still waiting on Bottle drive deposit?</b> Press <b>No</b>: it’s in the bank now." },
+        { d: "Type the middle tile’s figure (<b>Should be there</b>) <b>minus $290.00</b>.", s: "“The bank shows $290.00 less than your books.” Find opens below with its search full width." },
+        { d: "Type <b>float</b> in the search.", s: "Cards of <b>Concession float n of 25</b>, $10.00, Nov 6, 2026, each with its action under it, 10 at a time, with <b>Show 10 more</b>." },
+        { d: "Mark all 25 <b>Not in the bank yet</b>.", s: "“The bank shows $40.00 less than your books.”" },
+        { d: "Scroll to the very bottom and save.", s: "<b>Save this check</b> is the last thing on the page. It saves as off by $40.00." },
+        { d: "Open the Nov 6 check.", s: "No Print this check in its foot. Close it." }
+      ] },
+    { id: "K4", title: "The chip and the printed check", job: "UAT Test Team · desk", who: COACH,
+      forText: "What a coach hands the club treasurer or the association, and the amber chip that tells them a check is off.",
+      passes: "The chip opens the Nov 6 check and Back after closing it doesn’t reopen it; both printed checks read bank first with “(Head coach)” after your name and no club lines; the long one starts its list on sheet one.",
+      notIn: "The club’s printed check (the club page, walk 5).",
+      where: "Desk width again. Money → Overview, then the Bank view.",
+      steps: [
+        { stop: true, d: "Stop check: the list holds Nov 6, 2026 · Off by $40.00.", s: "If it doesn’t, walk 3 isn’t finished: stop here." },
+        { d: "Back at desk width, open Money → Overview.", s: "<b>Bank: checked through Nov 6, 2026 ›</b> with an amber <b>Off by $40.00</b> chip on the same row." },
+        { d: "Click the chip.", s: "The Bank view with the Nov 6, 2026 check open over it." },
+        { d: "Close it. Wait a couple of seconds, then press the browser’s <b>Back</b>.", s: "It stays closed, and Back doesn’t reopen it." },
+        { d: "Open the Nov 6 check, press <b>Print this check</b>, read the preview, cancel.", s: "“UAT Test Team · Bank check”, “Team bank account · statement ending Nov 6, 2026”, Bank balance on the statement, the <b>Not in the bank yet</b> table (Date · What · Amount) <b>starting on sheet one</b>, What your books should say, Your books on Nov 6, 2026, Result with Off by $40.00, “Checked by … <b>(Head coach)</b>, …”, Prepared by / Reviewed by, and the foot “… from FieldLogicHQ · UAT Test Team · Money → Ledger → Bank”. No starting point line, no online payments, no books list." },
+        { d: "Print the Oct 31 check the same way.", s: "One sheet: Bottle drive deposit in the table, Cash not deposited yet + $40.00, Matches, and the Books now say line with its reason." }
+      ] },
+    { id: "K5", title: "An assistant who can only read money", job: "UAT Test Team · desk · switch account", who: "The money-read assistant, <code>uat-club-coach-15aaa@uat-rep-club.local</code>. Sign out of the head coach first.",
+      forText: "A team treasurer or assistant who may look but not change. They see every check and can print one, and nothing that writes.",
+      passes: "The reader sees the Overview line and its chip, the saved checks, and Print; never the check form, Find, Delete or Check this statement again.",
+      notIn: "Who can be given money read (the staff screens).",
+      where: "Desk. UAT Test Team’s Money → Overview and Bank view (use the addresses in the card at the top).",
+      steps: [
+        { d: "Sign out, sign in as the money-read assistant, open UAT Test Team’s Money → Overview.", s: "<b>Bank: checked through Nov 6, 2026 ›</b> with the amber Off by $40.00 chip." },
+        { d: "Open the Bank view.", s: "The saved checks (Oct 20, Oct 31, Nov 6). <b>No Check a statement form</b>, so no Find." },
+        { d: "Open the Nov 6 check.", s: "<b>Print this check</b> is there; <b>no Delete</b> and no Check this statement again." },
+        { d: "Press Print this check and read the preview, then cancel.", s: "The same paper the head coach printed." }
+      ] },
+    { id: "K6", title: "A standalone team’s season windows", job: "UAT Standalone Team · Jun 30 and Jul 31, 2026 · desk", who: "The head coach again, <code>uat-coach@uat-test-org.local</code>. Sign out of the assistant first.",
+      forText: "A team that runs its own seasons (no club) closes them itself. Before it does, the two season windows say where the bank stands: plain when it matches, amber when it’s off. This walk also shows a cheque or deposit from last season in Find, under “From the 2025 Season”, seen on screen here for the first time.",
+      passes: "Find shows From the 2025 Season with Tournament refund deposit; after a matching check both windows show the plain line; after an off check both show the amber sentence; you never confirm either window.",
+      notIn: "Starting or closing the season. Reopening a season.",
+      where: "Desk. UAT Standalone Team: the Bank view, Team settings (Start next season), the team home (Close the season).",
+      steps: [
+        { d: "Sign in as the head coach and open UAT Standalone Team’s Bank view.", s: "Team bank account, “Statements from this season only, since …”, no checks yet." },
+        { d: "Statement date <b>Jun 30, 2026</b>. Type the <b>Should be in the bank</b> figure <b>minus $260.00</b>.", s: "“The bank shows $260.00 less than your books.” Find lists this season’s lines; below them (press Show more if it’s there) a divider <b>From the 2025 Season</b> with <b>Tournament refund deposit</b>, May 15, 2026, $260.00 in." },
+        { d: "Press <b>Not in the bank yet</b> on Tournament refund deposit, then <b>Save this check</b>.", s: "Matches. Jun 30, 2026 is saved." },
+        { d: "Team settings → <b>Start next season</b>. Read the window, then close it <b>without starting</b>.", s: "Right under “This closes the 2026 Season”, a plain line with no warning icon: “The bank matches through Jun 30, 2026. If you have a later statement, check it before you start the new season: the new season’s Bank view starts from its own opening balance.”" },
+        { d: "Team home → <b>No next season — just close…</b>. Read the window, then close it <b>without confirming</b>.", s: "The same plain line (“… before you close: a closed season has no Bank view.”), outside and under the amber “Before you do” box. (When that box shows, it is for money still owed; a matching bank never opens it.)" },
+        { d: "Back to the Bank view: Statement date <b>Jul 31, 2026</b>.", s: "<b>Still waiting on Tournament refund deposit?</b> Press <b>No</b>." },
+        { d: "Type the <b>Should be in the bank</b> figure <b>minus $25.00</b>, and save.", s: "It saves as off by $25.00." },
+        { d: "Open <b>Start next season</b> again; close it without starting.", s: "Amber, with the warning icon: “Your bank check was off by $25.00 on Jul 31, 2026. Check the season’s last statement before you start the new season: …”. The Start button still works (warns, never blocks)." },
+        { d: "Open <b>Close the season</b> again; close it without confirming.", s: "The amber sentence now sits inside “Before you do”, ending “… before you close: a closed season has no Bank view.”" }
+      ] },
+    { id: "K7", title: "What the club doesn’t see", job: "UAT Rep Club · desk · switch account", who: "The club treasurer, <code>uat-club-treasurer@uat-rep-club.local</code>. Sign out of the head coach first.",
+      forText: "Your ruling of Nov 6: a coach’s books and bank checks stay the team’s. The club sees one figure of what the team holds, never whether the coach checked the bank. This walk confirms the absence; it isn’t a defect.",
+      passes: "Neither the Teams tab nor the club’s Bank tab nor the Overview shows anything of UAT Test Team’s bank checks.",
+      notIn: "The club’s own bank check (the club page).",
+      where: "Desk. UAT Rep Club’s Accounting → Teams, Bank and Overview.",
+      steps: [
+        { d: "Sign in as the treasurer and open Accounting → Teams (<code>/uat-rep-club/admin/accounting/teams</code>).", s: "A row for UAT Test Team with its money figures, and <b>no bank column or mark</b>." },
+        { d: "Open Accounting → Bank.", s: "Only the club’s own accounts. No Team bank account." },
+        { d: "Open Accounting → Overview.", s: "The bank lines name only the club’s accounts. Nothing says UAT Test Team’s bank was off on Nov 6." }
+      ] }
+  ];
+  var state = { ticks: {}, verdict: {}, notes: {}, open: "K1" };
+  try { var raw = localStorage.getItem(KEY); if (raw) { var got = JSON.parse(raw); state.ticks = got.ticks || {}; state.verdict = got.verdict || {}; state.notes = got.notes || {}; state.open = got.open || "K1"; } } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  function plain(html) { var d = document.createElement("div"); d.innerHTML = html; return d.textContent.replace(/\s+/g, " ").trim(); }
+  function sid(w, i) { return w.id + "." + (i + 1); }
+  function counts(w) { var n = 0; w.steps.forEach(function (s, i) { if (state.ticks[sid(w, i)]) n++; }); return { done: n, all: w.steps.length }; }
+  var VWORD = { pass: "Passed", issue: "Issue", call: "Needs a call" };
+  function chipOf(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    if (v === "pass" && c.done < c.all) return ["thin", "Passed · only " + c.done + " of " + c.all + " ticked"];
+    if (v) return [v, VWORD[v] + " · " + c.done + " of " + c.all];
+    if (c.done) return ["prog", "In progress · " + c.done + " of " + c.all];
+    return ["", "Not started · " + c.all + " steps"];
+  }
+
+  var index = document.getElementById("index"), host = document.getElementById("walkHost");
+  var cards = {};
+  WALKS.forEach(function (w, wi) {
+    var b = el("button", "wcard");
+    b.type = "button"; b.id = "card-" + w.id; b.setAttribute("aria-controls", "walk-" + w.id);
+    b.appendChild(el("span", "t", "Walk " + (wi + 1) + " of " + WALKS.length + " · " + w.title));
+    b.appendChild(el("span", "j", w.job));
+    var chip = el("span", "chip"); b.appendChild(chip);
+    b.addEventListener("click", function () { state.open = w.id; save(); render(); document.getElementById("walk-" + w.id).scrollIntoView({ block: "start" }); });
+    index.appendChild(b);
+    cards[w.id] = { b: b, chip: chip };
+  });
+
+  function render() {
+    host.innerHTML = "";
+    WALKS.forEach(function (w, wi) {
+      var open = state.open === w.id;
+      cards[w.id].b.setAttribute("aria-expanded", open ? "true" : "false");
+      var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1];
+      if (!open) return;
+      var sec = el("section", "card walk"); sec.id = "walk-" + w.id;
+      sec.appendChild(el("span", "eyebrow", "Walk " + (wi + 1) + " of " + WALKS.length + " · " + w.job));
+      sec.appendChild(el("h2", null, w.title));
+      var meta = el("div", "meta");
+      [["What this walk is for", w.forText], ["It passes when", w.passes], ["Not in this walk", w.notIn], ["Sign in as", w.who || "The treasurer (card at the top)."], ["Where and on what", w.where]].forEach(function (m) {
+        var d = el("div"); d.appendChild(el("h3", null, m[0])); d.appendChild(el("p", null, m[1])); meta.appendChild(d);
+      });
+      sec.appendChild(meta);
+      var ol = el("ol", "steps");
+      w.steps.forEach(function (s, i) {
+        var id = sid(w, i);
+        var li = el("li", "step" + (s.stop ? " stop" : "") + (state.ticks[id] ? " done" : ""));
+        var cb = el("input"); cb.type = "checkbox"; cb.id = "cb-" + id; cb.checked = !!state.ticks[id];
+        cb.setAttribute("aria-label", "Step " + (i + 1) + " done");
+        cb.addEventListener("change", function () { state.ticks[id] = cb.checked; save(); li.className = "step" + (s.stop ? " stop" : "") + (cb.checked ? " done" : ""); refresh(); });
+        li.appendChild(cb);
+        var body = el("div", "body");
+        if (s.stop) body.appendChild(el("span", "who", "Stop check"));
+        body.appendChild(el("span", "lab", (i + 1) + " · Do"));
+        body.appendChild(el("p", null, s.d));
+        body.appendChild(el("span", "lab", "You should see"));
+        body.appendChild(el("p", null, s.s));
+        li.appendChild(body);
+        ol.appendChild(li);
+      });
+      sec.appendChild(ol);
+      sec.appendChild(el("h3", null, "Your verdict on this walk"));
+      var vs = el("div", "verdict");
+      [["pass", "Pass"], ["issue", "Issue"], ["call", "Needs a call"]].forEach(function (v) {
+        var btn = el("button", state.verdict[w.id] === v[0] ? "on" : "", v[1]); btn.type = "button"; btn.setAttribute("data-v", v[0]);
+        btn.setAttribute("aria-pressed", state.verdict[w.id] === v[0] ? "true" : "false");
+        btn.addEventListener("click", function () { state.verdict[w.id] = state.verdict[w.id] === v[0] ? "" : v[0]; save(); render(); });
+        vs.appendChild(btn);
+      });
+      sec.appendChild(vs);
+      var lab = el("label", null, "<h3>Notes</h3>"); lab.setAttribute("for", "notes-" + w.id);
+      sec.appendChild(lab);
+      var ta = el("textarea"); ta.id = "notes-" + w.id; ta.value = state.notes[w.id] || "";
+      ta.placeholder = "What you saw, a word you would change, a question for me";
+      ta.addEventListener("input", function () { state.notes[w.id] = ta.value; save(); refresh(); });
+      sec.appendChild(ta);
+      var row = el("div", "row");
+      var cp = el("button", "btn", "Copy this walk’s summary"); cp.type = "button";
+      var msg = el("span", "lead"); msg.setAttribute("aria-live", "polite");
+      var out = el("div", "card out"); out.tabIndex = 0; out.textContent = walkSummary(w);
+      cp.addEventListener("click", function () { copy(walkSummary(w), out, msg); });
+      row.appendChild(cp);
+      if (wi + 1 < WALKS.length) {
+        var nx = el("button", "btn", "Next: walk " + (wi + 2)); nx.type = "button";
+        nx.addEventListener("click", function () { state.open = WALKS[wi + 1].id; save(); render(); document.getElementById("walk-" + WALKS[wi + 1].id).scrollIntoView({ block: "start" }); });
+        row.appendChild(nx);
+      }
+      row.appendChild(msg);
+      sec.appendChild(row);
+      sec.appendChild(out);
+      sec._out = out; sec._w = w;
+      host.appendChild(sec);
+    });
+    refresh();
+  }
+
+  function walkSummary(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    var lines = [w.id + " " + w.title + " · " + (v ? VWORD[v].toUpperCase() : "NO VERDICT") + " · " + c.done + " of " + c.all + " ticked"];
+    w.steps.forEach(function (s, i) { lines.push("  " + (state.ticks[sid(w, i)] ? "[x] " : "[ ] ") + (i + 1) + ". " + plain(s.d)); });
+    var n = (state.notes[w.id] || "").trim();
+    if (n) lines.push("  Notes: " + n.replace(/\n+/g, " / "));
+    return lines.join("\n");
+  }
+  function allSummary() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; });
+    return [PAGE, "Checked " + done + " of " + total, ""].concat(WALKS.map(walkSummary)).join("\n");
+  }
+  function refresh() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1]; });
+    document.getElementById("progress").textContent = "Checked " + done + " of " + total;
+    document.getElementById("out").textContent = allSummary();
+    var sec = host.querySelector(".walk"); if (sec && sec._out) sec._out.textContent = walkSummary(sec._w);
+  }
+  function copy(text, node, msg) {
+    function pick() { try { var r = document.createRange(); r.selectNodeContents(node); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); msg.textContent = "Selected: press Ctrl+C to copy."; } catch (e) {} }
+    try { navigator.clipboard.writeText(text).then(function () { msg.textContent = "Copied."; }, pick); } catch (e) { pick(); }
+  }
+  document.getElementById("copyAll").addEventListener("click", function () { copy(allSummary(), document.getElementById("out"), document.getElementById("copied")); });
+  var armed = false;
+  document.getElementById("reset").addEventListener("click", function () {
+    var b = document.getElementById("reset");
+    if (!armed) { armed = true; b.textContent = "Press again to clear every tick and note"; return; }
+    armed = false; b.textContent = "Clear my ticks";
+    state = { ticks: {}, verdict: {}, notes: {}, open: "K1" }; save(); render();
+  });
+  render();
+})();
+</script>

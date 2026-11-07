@@ -1,0 +1,778 @@
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Bank Balance Check</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;650;700&display=swap">
+<style>
+/* Layout: a review document (cool grey chrome, Plex) holding true-size specimens of the club admin and the coaches
+   portal in the Warm theme (the default every account sees). Sticky numbered tabs, one section at a time, an
+   Everything / Show only what differs switch only where a section compares. Desktop frames are 1440 wide and scroll
+   sideways inside their own box on a narrow window; phone frames are 390. The specimens keep the Warm theme in a
+   dark viewer too: the product has no warm-dark look, and drawing one would invent it. */
+:root{
+  --bg:#E8EBEE; --surface:#FFFFFF; --surface-2:#F3F5F7; --ink:#1A1F24; --muted:#56606B; --line:#D2D7DD;
+  --accent:#24584B; --fix:#2B672A; --fix-soft:#DFEEDB; --flag:#A8361F; --flag-soft:#F7E2DC;
+  --t-new:#4B2E83; --t-res:#1D4A6E; --t-unc:#5E646B; --ask:#8A5A00; --ask-soft:#F6ECD6;
+  --shadow:0 1px 2px rgba(20,30,40,.06),0 6px 20px rgba(20,30,40,.07);
+  --f-doc:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --fix:#93CF8B; --fix-soft:#1E321F; --flag:#F0907A; --flag-soft:#3A221D;
+  --t-new:#BBA6EE; --t-res:#8FC2E7; --t-unc:#AAB0B7; --ask:#E8B75A; --ask-soft:#3A2E17;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --fix:#93CF8B; --fix-soft:#1E321F; --flag:#F0907A; --flag-soft:#3A221D;
+  --t-new:#BBA6EE; --t-res:#8FC2E7; --t-unc:#AAB0B7; --ask:#E8B75A; --ask-soft:#3A2E17;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--f-doc);margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.doc{max-width:1480px;margin:0 auto;padding-block:16px 90px}
+a{color:var(--accent)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+h1,h2,h3,h4{text-wrap:balance;line-height:1.2}
+.doc h1{font-size:30px;margin:6px 0 6px;letter-spacing:-.01em}
+.doc h2{font-size:22px;margin:6px 0 8px;letter-spacing:-.01em}
+.doc h3{font-size:17px;margin:22px 0 6px}
+.doc p,.doc li{max-width:88ch}
+.muted{color:var(--muted)}
+.eyebrow{font:600 11.5px/1.3 var(--f-mono);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.lede{font-size:16px;max-width:92ch}
+.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);display:flex;gap:4px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);margin:14px 0 8px}
+.tabs button{flex:none;font:600 14px/1 var(--f-doc);min-height:40px;padding:0 12px;border-radius:8px;border:1px solid transparent;background:none;color:var(--muted);cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--surface);border-color:var(--line);color:var(--ink);box-shadow:var(--shadow)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--bg)}
+section.pane[hidden]{display:none}
+.viewrow{display:flex;align-items:center;gap:10px;margin:8px 0 12px;flex-wrap:wrap}
+.viewrow .lab{font:600 11.5px/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.sw{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:3px;gap:2px}
+.sw button{font:600 13.5px/1 var(--f-doc);min-height:36px;padding:0 14px;border-radius:7px;border:0;background:none;color:var(--muted);cursor:pointer}
+.sw button[aria-pressed="true"]{background:var(--surface-2);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 18px;box-shadow:var(--shadow);margin:12px 0}
+.card h3{margin-top:0}
+.card ul{margin:6px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.read{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:12px 0}
+.read.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.read.one{grid-template-columns:minmax(0,1fr)}
+@media (max-width:900px){.read,.read.two{grid-template-columns:minmax(0,1fr)}}
+.read>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-width:0}
+.read h4{margin:0 0 6px;font:700 11.5px/1.3 var(--f-mono);letter-spacing:.08em;text-transform:uppercase}
+.read .w h4{color:var(--fix)} .read .g h4{color:var(--flag)} .read .c h4{color:var(--t-res)} .read .a h4{color:var(--ask)}
+.read ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.read p{margin:0;font-size:14px}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:10px;margin:10px 0;background:var(--surface)}
+table.t{border-collapse:collapse;width:100%;font-size:14px;min-width:720px}
+table.t th{font:600 11px/1.3 var(--f-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+table.t td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+table.t tr:last-child td{border-bottom:0}
+table.t td.r{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.mk{font:700 10.5px/1 var(--f-mono);letter-spacing:.04em;border-radius:5px;padding:4px 6px;cursor:pointer;border:1.5px solid currentColor;background:var(--surface);white-space:nowrap;min-height:24px;vertical-align:1px}
+.mk.new{color:var(--t-new)} .mk.res{color:var(--t-res)} .mk.unc{color:var(--t-unc)} .mk.askm{color:var(--ask)}
+.cap{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 6px;font:600 12px/1.3 var(--f-mono);color:var(--muted)}
+.cap b{color:var(--ink)}
+.pair{display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start;margin:10px 0}
+.pair>div{min-width:0;max-width:100%;overflow-x:auto;padding-bottom:4px}
+.fr.w390{max-width:none}
+img.shot{max-width:none}
+.fx{overflow-x:auto;max-width:100%;padding-bottom:6px}
+.fr{border-radius:12px;outline:1px solid var(--line);box-shadow:var(--shadow);overflow:hidden;max-width:100%}
+.fx .fr{max-width:none}
+.w1440{width:1440px} .w1200{width:1200px} .w390{width:390px} .w520{width:520px} .w640{width:640px} .w416{width:416px} .w800{width:800px} .w816{width:816px}
+.side{max-width:540px;min-width:0;flex:1 1 300px}
+.shot{display:block;max-width:none;border-radius:12px;outline:1px solid var(--line)}
+.samebar{display:none;border:1px dashed var(--line);border-radius:8px;padding:8px 12px;margin:2px 0;font:600 12px/1.4 var(--f-mono);color:var(--muted);text-align:center}
+body[data-view="diff"] .same{display:none}
+body[data-view="diff"] .samebar{display:block}
+
+/* ===== the product, Warm theme (club admin kit + coaches portal read one token set) ===== */
+.ak{--paper:#F8F4ED;--card:#FFFFFF;--ink:#241E15;--soft:#4A4235;--dim:#615A54;--line:rgba(70,55,30,.12);--line2:rgba(70,55,30,.20);--fill:rgba(70,55,30,.08);
+  --olive:#57651E;--olive-soft:rgba(87,101,30,.10);--olive-line:rgba(87,101,30,.40);--lime:#D9F99D;--lime-ink:#241E15;
+  --in:#34662A;--good:#2A5222;--good-soft:rgba(52,102,42,.08);--amber:#835006;--amber-ink:#6B4105;--amber-soft:rgba(131,80,6,.08);--amber-line:rgba(131,80,6,.32);
+  --red:#B03A22;--info:#134FD3;--new:rgba(75,46,131,.07);--newl:#4B2E83;--scrim:rgba(36,30,21,.34);
+  background:var(--paper);color:var(--ink);font:14px/1.5 'Inter',system-ui,sans-serif;position:relative;text-align:left;color-scheme:light}
+.ak *{box-sizing:border-box}
+.ak .shell{display:grid;grid-template-columns:240px 1fr}
+.ak .sb{background:var(--card);border-right:1px solid var(--line);padding:14px 10px;display:flex;flex-direction:column;gap:1px}
+.ak .sb .org{font:700 15px/1.2 'Inter';padding:4px 10px 2px}
+.ak .sb .orgs{font:500 12px/1.3 'Inter';color:var(--dim);padding:0 10px 10px}
+.ak .sb .grp{font:700 11px/1 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);padding:12px 10px 5px}
+.ak .sb .it{font:500 14px/1 'Inter';color:var(--soft);padding:9px 10px;border-radius:7px}
+.ak .sb .it.on{background:var(--olive-soft);color:var(--ink);font-weight:650}
+.ak .sb hr{border:0;border-top:1px solid var(--line);margin:8px 10px}
+.ak .main{padding:0 32px;min-width:0}
+.ak .pg{max-width:1200px;margin:0 auto;padding:24px 0 36px;display:flex;flex-direction:column;gap:14px}
+.ak .top{display:flex;align-items:center;gap:14px;height:48px;padding:0 20px;background:var(--card);border-bottom:1px solid var(--line);font:700 15px/1 'Inter'}
+.ak .top>span:not(.b):not(.sp){font:700 11px/1 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);border-left:1px solid var(--line2);padding-left:14px}
+.ak .top .sp,.ak .orghd .sp{flex:1}
+.ak .orghd{display:flex;align-items:center;gap:10px;margin:0 -32px;padding:12px 32px;background:var(--card);border-bottom:1px solid var(--line);font-size:18px}
+.ak .orghd b{font:700 18px/1.2 'Inter'}
+.ak .sb .it{display:flex;align-items:center}
+.ak .ph{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.ak .ph h1{font:700 20px/1.1 'Inter';margin:0}
+.ak .ph .ic{width:34px;height:34px;border-radius:12px;background:var(--olive-soft);color:var(--olive);display:grid;place-items:center;font:700 15px/1 'Inter'}
+.ak .ph .act{margin-left:auto;display:flex;gap:8px}
+/* HubTabBar: underline, olive when on */
+.ak .hub{display:flex;gap:2px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none;margin:0 0 6px}
+.ak .hub span{font:600 14px/1 'Inter';min-height:44px;display:inline-flex;align-items:center;gap:6px;padding:0 13.6px;color:var(--dim);border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
+.ak .hub span.on{color:var(--olive);border-bottom-color:var(--olive)}
+.ak .hub span.nw{background:var(--new);outline:2px solid var(--newl);outline-offset:-3px;border-radius:6px 6px 0 0}
+/* MoneySummaryBand: tiles joined by a hairline */
+.ak .band{display:grid;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.ak .band.t3{grid-template-columns:repeat(3,1fr)} .ak .band.t4{grid-template-columns:repeat(4,1fr)}
+.ak .tile{background:var(--card);padding:13.6px 16px;display:flex;flex-direction:column;gap:3.5px;min-width:0}
+.ak .bl{font:700 11px/1.2 'Inter';letter-spacing:.07em;text-transform:uppercase;color:var(--dim)}
+.ak .bf{font:700 24px/1.1 'Inter';letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.ak .bf.good{color:var(--in)} .ak .bf.warn{color:var(--amber-ink)}
+.ak .bc{font-size:12px;line-height:1.45;color:var(--dim)}
+.ak .bnote{font-size:12px;color:var(--dim);margin:0}
+/* toolbar: lead pill, quiet pills, search field, buttons */
+.ak .tb{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ak .tb .sp{flex:1}
+.ak .lead{display:inline-flex;align-items:center;gap:6px;padding:4.5px 10px;border:1px solid var(--olive-line);background:var(--olive-soft);border-radius:999px;font:12px/1.4 'Inter';white-space:nowrap}
+.ak .lead i{font-style:normal;color:var(--olive)} .ak .lead b{font-weight:600} .ak .lead::after{content:"▾";color:var(--dim);font-size:10px}
+.ak .qp{display:inline-flex;align-items:center;gap:6px;padding:4.5px 10px;border:1px solid var(--line2);border-radius:999px;font:12px/1.4 'Inter';color:var(--soft);white-space:nowrap}
+.ak .qp::after{content:"▾";color:var(--dim);font-size:10px}
+.ak .sf{display:inline-flex;align-items:center;gap:8px;min-height:34px;width:16rem;padding:0 13.6px;border-radius:999px;background:var(--card);box-shadow:inset 0 0 0 1px var(--line2);font-size:14px;color:var(--dim);white-space:nowrap;overflow:hidden}
+.ak .sf::before{content:"⌕";font-size:15px;color:var(--dim)}
+.ak .sf.on{box-shadow:inset 0 0 0 1.5px var(--olive);color:var(--ink)}
+.ak .sf.fill{width:100%}
+.ak .b{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:34px;padding:0 14.4px;border-radius:6px;font:650 14px/1.25 'Inter';white-space:nowrap;border:1px solid var(--line2);background:var(--card);color:var(--soft)}
+.ak .b.lime{background:var(--lime);color:var(--lime-ink);border-color:transparent}
+.ak .b.ghost{border-color:transparent;background:none;color:var(--dim)}
+.ak .b.dis{opacity:.5}
+.ak .b.t44{min-height:44px}
+.ak .b.full{width:100%}
+.ak .lk{font:600 13px/1.3 'Inter';color:var(--olive);white-space:nowrap}
+.ak .door{font:600 14px/1.3 'Inter';color:var(--olive);display:inline-flex;align-items:center;gap:6px}
+.ak .door::after{content:"→"}
+/* register table */
+.ak .tf{border:1px solid var(--line);border-radius:8px;background:var(--card);overflow:hidden}
+.ak table.rg{width:100%;border-collapse:collapse;font-size:12px;line-height:1.25}
+.ak table.rg th{font:700 12px/1.2 'Barlow Condensed',sans-serif;letter-spacing:.05em;text-transform:uppercase;color:var(--soft);text-align:left;padding:6.7px 9.6px;border-bottom:1px solid var(--line2);background:var(--card);white-space:nowrap}
+.ak table.rg td{padding:4.5px 9.6px;border-bottom:1px solid var(--line);vertical-align:middle}
+.ak table.rg tr:last-child td{border-bottom:0}
+.ak table.rg th.r,.ak table.rg td.r{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.ak table.rg td.d{color:var(--dim);white-space:nowrap;width:64px}
+.ak table.rg td.bk{color:var(--dim)}
+.ak table.rg td.cin{color:var(--in)}
+.ak table.rg td.cx{width:34px;padding-right:0}
+.ak table.rg td.ch{width:28px;color:var(--dim);text-align:center}
+.ak table.rg .det{color:var(--dim)}
+.ak table.rg tr.bal td{background:var(--fill);font-weight:700;color:var(--soft)}
+.ak table.rg tr.bal.end td{border-top:2px solid var(--line2);color:var(--ink)}
+.ak table.rg tr.grp td{background:var(--fill);font:700 11px/1.2 'Inter';letter-spacing:.07em;text-transform:uppercase;color:var(--dim);padding-top:7px;padding-bottom:7px}
+.ak table.rg tr.ticked td{background:rgba(87,101,30,.035)}
+.ak table.rg tr.hov td{background:var(--olive-soft)}
+.ak table.rg tr.sub td{background:#FBF9F5;font-size:12px}
+.ak table.rg tr.sub td:nth-child(3){padding-left:26px}
+.ak table.rg tr.gap td{background:var(--amber-soft);color:var(--amber-ink);font-weight:600}
+.ak table.rg tr.out td{color:var(--dim)}
+.ak table.rg.roomy td{padding:9px 12px;font-size:13px} .ak table.rg.roomy th{padding:9px 12px}
+.ak .nb{font:600 12px/1.2 'Inter';color:var(--dim);border:0;background:none;padding:0;white-space:nowrap;text-decoration:underline;text-decoration-color:var(--line2);text-underline-offset:3px}
+/* the global checkbox: 16px, 2px radius, olive tick in Warm */
+.ak i.cb{width:16px;height:16px;border:1px solid rgba(87,101,30,.42);border-radius:2px;background:var(--card);position:relative;display:inline-block;vertical-align:middle;flex:none}
+.ak i.cb.on{background:rgba(87,101,30,.14);border-color:rgba(87,101,30,.85)}
+.ak i.cb.on::after{content:"";position:absolute;left:5px;top:1.5px;width:4px;height:8px;border:solid var(--olive);border-width:0 2px 2px 0;transform:rotate(45deg)}
+.ak i.cb.mix::after{content:"";position:absolute;left:3px;top:6.5px;width:8px;height:2px;background:var(--olive)}
+.ak i.cb.mix{background:rgba(87,101,30,.14);border-color:rgba(87,101,30,.85)}
+/* chips */
+.ak .chip{font:700 10px/1.4 'IBM Plex Mono',monospace;letter-spacing:.06em;text-transform:uppercase;padding:2.2px 8px;border-radius:999px;border:1px solid var(--line2);color:var(--soft);background:var(--olive-soft);white-space:nowrap;display:inline-block;vertical-align:1px}
+.ak .chip.warn{color:var(--amber-ink);background:var(--amber-soft);border-color:rgba(131,80,6,.3)}
+.ak .chip.good{color:var(--good);background:var(--good-soft);border-color:rgba(52,102,42,.28)}
+.ak .chip.info{color:var(--info);background:rgba(19,79,211,.06);border-color:rgba(19,79,211,.25)}
+.ak .rchip{font:500 11px/1.3 'Inter';padding:1px 7px;border-radius:999px;border:1px solid var(--line);background:rgba(70,55,30,.04);color:var(--dim);white-space:nowrap}
+.ak .cnt{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 5px;border-radius:999px;font:700 10px/1 'IBM Plex Mono',monospace;color:var(--amber);background:rgba(131,80,6,.11);border:1px solid rgba(131,80,6,.32)}
+/* callout + notice */
+.ak .call{display:flex;gap:10px;align-items:flex-start;padding:12.8px 16px;background:var(--card);border:1px solid var(--line);border-left:3px solid var(--olive);border-radius:8px;font-size:14px;line-height:1.45}
+.ak .call.warn{border-left-color:#B7791F} .ak .call .ico{color:var(--olive);font-weight:700} .ak .call.warn .ico{color:#B7791F}
+.ak .call .grow{flex:1;min-width:0} .ak .call small{display:block;font-size:12.5px;color:var(--soft);margin-top:2px}
+.ak .call .acts{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.ak .notice{padding:10.4px 13.6px;border-radius:8px;font-size:12px;line-height:1.45;border:1px solid var(--line2);background:var(--olive-soft);color:var(--soft)}
+.ak .notice.warn{border-color:rgba(183,121,31,.35);background:rgba(183,121,31,.08)}
+.ak .before{background:rgba(183,121,31,.10);border:1px solid rgba(183,121,31,.3);border-radius:8px;padding:12.8px 14.4px;display:flex;flex-direction:column;gap:7px}
+.ak .before .h{font:700 12px/1 'Inter';letter-spacing:.06em;text-transform:uppercase;color:#946112}
+.ak .before .r{display:flex;gap:8px;font-size:13.8px;line-height:1.4} .ak .before .r::before{content:"⚠";color:#B7791F}
+.ak .before .f{font-size:12.5px;color:var(--soft)}
+.ak .hint{font-size:12px;line-height:1.45;color:var(--dim);margin:0}
+.ak .faint{color:var(--dim)}
+/* fields */
+.ak .f{display:flex;flex-direction:column;gap:5px;min-width:0}
+.ak .lbl{font:650 12px/1.3 'Inter';color:var(--soft)}
+.ak .lbl em{font-style:normal;color:var(--red)}
+.ak .in{min-height:34px;border:1px solid var(--line2);border-radius:6px;background:var(--card);padding:0 10px;display:flex;align-items:center;font-size:14px;color:var(--ink);min-width:0;white-space:nowrap;overflow:hidden;font-variant-numeric:tabular-nums}
+.ak .in.ph{color:var(--dim)} .ak .in.focus{border-color:var(--olive);box-shadow:0 0 0 2px var(--olive-soft)}
+.ak .in.t44{min-height:44px}
+.ak .in.cal::after{content:"▦";margin-left:auto;color:var(--dim);font-size:12px}
+.ak .in.dd::after{content:"▾";margin-left:auto;color:var(--dim);font-size:11px}
+.ak .g2{display:grid;grid-template-columns:1fr 1fr;gap:12px 14px} .ak .g2>*{min-width:0}
+.ak .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px 14px} .ak .g3>*{min-width:0}
+.ak .seg{display:inline-flex;border:1px solid var(--line2);border-radius:999px;padding:3px;gap:2px;background:var(--card)}
+.ak .seg span{font:600 12px/1 'Inter';min-height:34px;display:inline-flex;align-items:center;padding:0 12px;border-radius:999px;color:var(--soft)}
+.ak .seg span.on{background:var(--olive-soft);color:var(--olive)}
+/* sections and cards inside the product */
+.ak .sect{background:var(--card);border:1px solid var(--line);border-radius:8px}
+.ak .sect-h{display:flex;align-items:center;gap:10px;padding:14px 16px 8px;flex-wrap:wrap}
+.ak .sect-h h3{font:700 16px/1.25 'Inter';margin:0}
+.ak .sect-h .acts{margin-left:auto;display:flex;gap:8px;align-items:center}
+.ak .sect-b{padding:4px 16px 16px;display:flex;flex-direction:column;gap:12px}
+.ak .line1{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:14px;color:var(--soft)}
+.ak .line1 b{color:var(--ink);font-weight:650}
+.ak .newbox{background:var(--new);outline:2px solid var(--newl);outline-offset:3px;border-radius:8px}
+.ak .kv{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:13px;margin:0}
+.ak .kv dt{color:var(--dim)} .ak .kv dd{margin:0;font-variant-numeric:tabular-nums}
+/* KitDialog: question 416 · form 520 · medium 640 · wide 800 */
+.ak .scrim{background:var(--scrim);display:grid;place-items:start center;padding:40px 16px}
+.ak .dlg{background:var(--card);border:1px solid rgba(87,101,30,.3);border-radius:12px;width:520px;max-width:100%;box-shadow:0 18px 40px rgba(36,30,21,.18)}
+.ak .dlg.q{width:416px} .ak .dlg.med{width:640px} .ak .dlg.wide{width:800px}
+.ak .dlg.flat{box-shadow:none;border:0;border-radius:0;width:100%}
+.ak .dh{display:flex;align-items:flex-start;gap:10px;padding:17.6px 24px 6.4px}
+.ak .dh .tt{flex:1;min-width:0}
+.ak .dh .ey{display:block;font:700 11px/1.3 'IBM Plex Mono',monospace;letter-spacing:.09em;text-transform:uppercase;color:var(--soft);margin-bottom:4px}
+.ak .dh b{font:700 16px/1.25 'Inter';display:block}
+.ak .dh .x{width:32px;height:32px;display:grid;place-items:center;color:var(--dim);font-size:16px;border-radius:7px}
+.ak .dh .bk{width:44px;height:44px;display:grid;place-items:center;color:var(--soft);font-size:18px;margin:-10px 0 0 -14px}
+.ak .dh .pill{font:600 12px/1 'Inter';color:var(--dim);padding:6px 0}
+.ak .db{padding:9.6px 24px 16px;display:flex;flex-direction:column;gap:14px;font-size:14px;line-height:1.5;color:var(--soft)}
+.ak .db p{margin:0}
+.ak .df{display:flex;align-items:center;gap:9.6px;padding:13.6px 24px;border-top:1px solid var(--line);flex-wrap:wrap}
+.ak .df .st{margin-right:auto;font-size:12px;color:var(--dim);display:flex;gap:9.6px;align-items:center;flex-wrap:wrap}
+.ak .dlg.sheet{width:390px;border:0;border-radius:0;box-shadow:none;min-height:760px;display:flex;flex-direction:column}
+.ak .dlg.sheet .db{flex:1}
+.ak .dlg.sheet .df .b{min-height:44px}
+/* phone chrome */
+.ak .pbar{display:flex;align-items:center;gap:6px;min-height:52px;padding:0 8px;background:var(--card);border-bottom:1px solid var(--line);font:700 15px/1 'Inter'}
+.ak .pbar .m{width:44px;height:44px;display:grid;place-items:center;color:var(--soft);font-size:18px}
+.ak .pin{padding:14px 16px 20px;display:flex;flex-direction:column;gap:12px}
+.ak .pin .band.t3{grid-template-columns:1fr 1fr} .ak .pin .band.t3 .tile:last-child{grid-column:1 / -1}
+.ak .pin .tile{padding:11.2px 12px} .ak .pin .bf{font-size:20px}
+.ak .pin .hub span{padding:0 9.6px}
+.ak .pin .b{min-height:44px}
+.ak .pin .in{min-height:44px}
+.ak .pin .lead,.ak .pin .qp{min-height:44px;padding:0 14px;font-size:13px}
+.ak .nav{display:flex;justify-content:space-around;background:rgba(248,244,237,.95);border-top:1px solid var(--line);padding:7px 0 12px}
+.ak .nav span{font:700 10px/1 'Inter';color:var(--dim);display:flex;flex-direction:column;align-items:center;gap:5px;min-width:60px}
+.ak .nav span::before{content:"";width:46px;height:30px;border-radius:999px;background:linear-gradient(var(--line2),var(--line2)) center/20px 20px no-repeat}
+.ak .nav span.on{color:var(--olive)} .ak .nav span.on::before{background:var(--olive-soft) linear-gradient(var(--olive),var(--olive)) center/20px 20px no-repeat}
+/* phone tick rows */
+.ak .pl{border:1px solid var(--line);border-radius:10px;background:var(--card);overflow:hidden}
+.ak .pr{display:flex;gap:12px;align-items:flex-start;padding:10px 12px;border-top:1px solid var(--line);min-height:56px}
+.ak .pr:first-child{border-top:0}
+.ak .pr .cbw{width:28px;min-height:36px;display:grid;place-items:center}
+.ak .pr .g{flex:1;min-width:0}
+.ak .pr .t{font:600 14px/1.3 'Inter'}
+.ak .pr .s{font-size:12px;color:var(--dim);margin-top:2px}
+.ak .pr .a{font:600 14px/1.3 'Inter';font-variant-numeric:tabular-nums;white-space:nowrap;text-align:right}
+.ak .pr .a.cin{color:var(--in)}
+.ak .pr.ticked{background:rgba(87,101,30,.035)}
+.ak .pr .nb{display:inline-block;margin-top:8px;min-height:24px}
+.ak .phd{font:700 11px/1.2 'Inter';letter-spacing:.07em;text-transform:uppercase;color:var(--dim);padding:8px 12px;background:var(--fill)}
+.ak .pin .nb,.ak .pr .nb,.ak .pin .lk,.ak .pin .door{min-height:44px;display:inline-flex;align-items:center}
+.ak .pin .seg span,.ak .dlg.sheet .seg span{min-height:44px}
+.ak .pr .cbw{width:44px;min-height:44px;margin:-6px -8px -6px -12px}
+.ak .main{background-image:linear-gradient(rgba(70,55,30,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(70,55,30,.045) 1px,transparent 1px);background-size:24px 24px}
+.ak .newbox{cursor:pointer}
+.ak .dock{position:sticky;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:10px 16px 14px;display:flex;flex-direction:column;gap:6px}
+.ak .stick{position:sticky;top:0;z-index:2;background:var(--paper);padding:6px 0}
+/* the printed page */
+.paper{--new:rgba(75,46,131,.07);--newl:#4B2E83;background:#FFFFFF;color:#1C1C1C;font:12.5px/1.45 'IBM Plex Sans',system-ui,sans-serif;padding:56px 64px;min-height:1056px;display:flex;flex-direction:column;gap:16px;color-scheme:light}
+.paper h4{margin:0;font:700 20px/1.2 'Inter',system-ui,sans-serif}
+.paper .pe{font:600 10.5px/1.3 'IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:#5A5A5A}
+.paper table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.paper td,.paper th{padding:6px 0;border-bottom:1px solid #DDDDDD;text-align:left;vertical-align:top}
+.paper th{font:600 10px/1.3 'IBM Plex Mono',monospace;letter-spacing:.07em;text-transform:uppercase;color:#5A5A5A}
+.paper td.r,.paper th.r{text-align:right;white-space:nowrap}
+.paper tr.tot td{font-weight:700;border-top:1.5px solid #1C1C1C;border-bottom:0}
+.paper tr.zero td{font-weight:700;background:#F2F5EE}
+.paper .sig{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:auto;padding-top:24px}
+.paper .sig div{border-top:1px solid #1C1C1C;padding-top:6px;font-size:11px;color:#444444}
+.paper .foot{font-size:10.5px;color:#666666;border-top:1px solid #DDDDDD;padding-top:8px}
+/* asks */
+.ask{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--t-res);border-radius:0 12px 12px 0;padding:14px 18px;margin:14px 0;box-shadow:var(--shadow)}
+.ask.first{border-left-color:var(--ask)}
+.ask h3{margin:0 0 4px;font-size:17px}
+.ask h3 .no{font:700 13px/1 var(--f-mono);color:var(--muted);margin-right:8px}
+.ask .tag{font:700 10.5px/1 var(--f-mono);letter-spacing:.05em;text-transform:uppercase;border-radius:5px;padding:4px 6px;margin-left:8px;vertical-align:2px;background:var(--ask-soft);color:var(--ask)}
+.ask .opts{display:flex;flex-direction:column;gap:4px;margin:10px 0}
+.ask .opts label{display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.45;padding:10px;border-radius:8px;min-height:44px;cursor:pointer}
+.ask .opts label:hover{background:var(--surface-2)}
+.ask .opts label.rec{background:var(--fix-soft)}
+.ask .opts label.rec::after{content:"Recommended";margin-left:auto;font:700 10.5px/1.6 var(--f-mono);color:var(--fix);white-space:nowrap;padding-left:8px}
+.ask .opts input{width:20px;height:20px;flex:none;margin:0;accent-color:var(--accent)}
+.ask .rides{font-size:13.5px;color:var(--muted);margin:4px 0}
+.ask textarea,.paste textarea{width:100%;box-sizing:border-box;min-height:48px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:14px/1.45 var(--f-doc);background:var(--surface);color:var(--ink);resize:vertical}
+.paste{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow);margin-top:16px;display:flex;flex-direction:column;gap:8px}
+.paste textarea{min-height:240px;font:12.5px/1.5 var(--f-mono)}
+.btn-d{font:600 14px/1 var(--f-doc);min-height:40px;padding:0 14px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.btn-d.pri{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+dialog.note{border:1px solid var(--line);border-radius:14px;padding:0;max-width:min(560px,calc(100vw - 32px));background:var(--surface);color:var(--ink);box-shadow:0 20px 60px rgba(0,0,0,.3)}
+dialog.note::backdrop{background:rgba(10,15,20,.45)}
+dialog.note .nh{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line)}
+dialog.note .nh h3{margin:0;font-size:16px;flex:1}
+dialog.note .nh button{font-size:22px;background:none;border:0;color:var(--muted);cursor:pointer;min-width:44px;min-height:44px}
+dialog.note .nb{padding:12px 16px 16px;font-size:14.5px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+/* ===== the balance check: what this round adds to the kit ===== */
+.ak .sum{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:8px;background:var(--card);overflow:hidden}
+.ak .sum .sr{display:flex;gap:10px;align-items:center;padding:7px 12px;border-top:1px solid var(--line);font-size:13px;color:var(--soft);min-height:36px}
+.ak .sum .sr:first-child{border-top:0}
+.ak .sum .sr .a{margin-left:auto;font-variant-numeric:tabular-nums;font-weight:600;color:var(--ink);white-space:nowrap}
+.ak .sum .sr.tot{background:var(--fill);font-weight:700;color:var(--ink)}
+.ak .sum .sr .lk{font-size:12px}
+.ak .chk{display:grid;grid-template-columns:12rem 12rem 1fr auto;gap:12px 14px;align-items:end}
+.ak .chk.c5{grid-template-columns:12rem 12rem 12rem 1fr auto}
+.ak table.rg tr.hit td{background:var(--amber-soft)}
+.ak table.rg tr.cleared td{color:var(--dim)}
+.ak .stat{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--soft)}
+.ak .stat b{color:var(--ink)}
+.ak .ok{color:var(--in);font-weight:700}
+.ak.hole,.ak .hole{border:1px dashed var(--amber-line);border-radius:8px;padding:10px 12px;background:var(--amber-soft);font-size:13px;color:var(--amber-ink)}
+.ak .pin .chk,.ak .pin .chk.c5{grid-template-columns:1fr 1fr}
+.ak .pin .chk .wide{grid-column:1 / -1}
+.ak .pin .sum .sr{min-height:44px}
+.opt3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:12px 0}
+@media (max-width:1100px){.opt3{grid-template-columns:minmax(0,1fr)}}
+.opt{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;box-shadow:var(--shadow);min-width:0;display:flex;flex-direction:column;gap:10px}
+.opt.rec{outline:2px solid var(--fix);outline-offset:-1px}
+.opt h3{margin:0;font-size:17px}
+.opt .tagline{font:700 11px/1.3 var(--f-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.opt.rec .tagline{color:var(--fix)}
+.opt .fr{max-width:100%}
+.opt ul{margin:0;padding-left:18px;font-size:14px;display:flex;flex-direction:column;gap:5px}
+.math{font:500 13px/1.6 var(--f-mono);background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;overflow-x:auto}
+.math b{font-weight:700}
+body[data-view="diff"] .ak .band:has(.same){display:flex}
+body[data-view="diff"] .ak .band:has(.same) .tile{flex:1}
+.pair>div>.fr,.side>.fr{max-width:none}
+@media (max-width:480px){.opt .band.t3{grid-template-columns:1fr 1fr}.opt .band .tile:last-child{grid-column:1 / -1}}
+.ak.hole{padding:10px 12px}
+.ak .f.newbox{padding:6px 8px}
+@media (max-width:600px){.mk,.tabs button,.sw button{min-height:44px}}
+</style>
+
+<div class="doc">
+<div class="eyebrow">Bank reconciliation · both portals · the balance check · 2026-11-05 · round 1 · <b>asks ruled 2026-11-05</b></div>
+<h1>Type the bank’s balance, see the gap, find what’s missing</h1>
+<p class="lede">The owner ruled on 2026-11-05 that checking the bank should be simpler, in both the club and the coach portals. The person types a statement’s <b>date</b> and <b>balance</b>. Every line in the books up to that date counts automatically. The screen shows what should be in the bank, the difference, and help finding what’s missing. A check can be saved while it’s still off, and it then reads “Off by $X”. Nobody ticks lines they have already entered. This page draws that model and the three ways cash could work, and puts the open choices on the last tab. All words are drafts for <code>/marketing</code>. The club example is the fictional Lakeshore Lynx, and the coach example is the fictional Ridge 13U.</p>
+
+<div class="tabs" role="tablist" id="tabs">
+  <button role="tab" aria-selected="true" data-t="p1">1 · What changes</button>
+  <button role="tab" aria-selected="false" data-t="p2">2 · A check that matches</button>
+  <button role="tab" aria-selected="false" data-t="p3">3 · Off by $75.00</button>
+  <button role="tab" aria-selected="false" data-t="p4">4 · Cash</button>
+  <button role="tab" aria-selected="false" data-t="p5">5 · Saved checks</button>
+  <button role="tab" aria-selected="false" data-t="p6">6 · Club only</button>
+  <button role="tab" aria-selected="false" data-t="p7">7 · Asks</button>
+</div>
+
+<!-- ================= 1 · WHAT CHANGES ================= -->
+<section class="pane" id="p1">
+  <h2>From ticking every line to explaining one difference</h2>
+  <div class="read">
+    <div class="g"><h4>Today (built on dev, club only)</h4><ul>
+      <li>Type the statement’s end date and balance.</li>
+      <li>Tick every line the bank shows: 26 ticks on the example statement.</li>
+      <li>Reach a Difference of exactly $0.00, or you can’t mark it checked.</li>
+      <li>A starting date, a 30-day lookback, statement windows and carried lists decide which lines appear. That’s why Sep 20 showed up on a Sep 30 to Nov 5 statement.</li></ul></div>
+    <div class="w"><h4>The balance check</h4><ul>
+      <li>Type the statement’s date and balance.</li>
+      <li>Every line in the books up to that date counts. Nothing to tick.</li>
+      <li>Read one comparison: what the bank says and what should be there.</li>
+      <li>If it’s off, the screen lists the suspects and names the likely culprit.</li>
+      <li>Save it, matched or off by an amount.</li></ul></div>
+    <div class="c"><h4>What stays from the built work</h4><ul>
+      <li>Bank accounts, more than one per club, and which books use each.</li>
+      <li>“Bank checked through {date}” on the Overview and for the club’s teams (R0 tab 7 as approved).</li>
+      <li>Adding a bank fee becomes “Add the missing line”, the ordinary add form.</li>
+      <li>Stripe payouts: the app now explains them by itself (tab 6).</li>
+      <li>The association report, built from the check (Ask 9).</li></ul></div>
+  </div>
+  <div class="card"><b>What goes away.</b> The tick column and the Ticked figure. Starting-point picks and the 30-day lookback. Statement windows and the carried lists. “Didn’t go through the bank” on each line and its kept-out shelf. Finish later. Mark checked again and “changed since it was checked”. Undo the latest only, with a reason. On a phone, the pinned strip and the bottom dock. The club’s Bank tab is built on dev and has never been on production, so this replaces it with no customer data to move.</div>
+
+  <div class="viewrow"><span class="lab">View</span>
+    <div class="sw" role="group" aria-label="View"><button data-v="all" aria-pressed="true">Everything</button><button data-v="diff" aria-pressed="false">Show only what differs</button></div></div>
+
+  <div class="pair">
+    <div class="same"><div class="cap"><b>Today</b> · phone capture, Nov 5 <button class="mk unc" data-note="Today’s club Bank tab on a phone, captured from the dev site on Nov 5, 2026 (UAT Rep Club’s walk account). A pinned Difference strip, the three-tile band, a search, a filter, the tick list, and the Finish later · Mark checked dock at the foot.">TODAY</button></div>
+      <img class="shot" src="bank-balance-check-shots/today-check-p.png" width="390" height="844" alt="Today’s club Bank tab on a phone: a pinned Difference strip, a three-tile band, search, filter, the start of the tick list, and a dock with Finish later and Mark checked"></div>
+    <div><div class="cap"><b>The balance check</b> · phone, club, a check that matches <button class="mk new" data-note="NEW: the whole check. Two fields, one band, the sums behind the second tile, and one lime button. There is nothing to tick, so nothing pins and there is no dock. Save is the last thing on the card.">NEW</button></div>
+      <div class="fr w390"><div class="ak">
+        <div class="pbar" style="padding-left:16px">Lakeshore Lynx<span style="margin-left:auto" class="m">◍</span></div>
+        <div class="pin">
+          <div class="ph"><h1>Accounting</h1></div>
+          <div class="hub"><span>Teams</span><span>Ledger</span><span class="on">Bank</span><span>Allocations</span><span class="faint">›</span></div>
+          <div class="stat">Club chequing · checked through <b>Sep 30, 2026</b></div>
+          <div class="sect"><div class="sect-h"><h3>Check a statement</h3></div><div class="sect-b">
+            <div class="chk"><div class="f"><span class="lbl">Statement date <em>*</em></span><span class="in cal t44">Oct 31, 2026</span></div><div class="f"><span class="lbl">Bank balance <em>*</em></span><span class="in t44">$7,843.53</span></div></div>
+            <div class="band t3"><div class="tile"><span class="bl">The bank says</span><span class="bf">$7,843.53</span><span class="bc">on Oct 31</span></div><div class="tile"><span class="bl">Should be there</span><span class="bf">$7,843.53</span><span class="bc">your books, less $412.00 on its way</span></div><div class="tile"><span class="bl">Difference</span><span class="bf good">Matches</span><span class="bc">The bank and your books agree on Oct 31.</span></div></div>
+            <span class="b lime full t44">Save this check</span>
+          </div></div>
+          <div class="sect"><div class="sect-h"><h3>Checked statements</h3><span class="acts faint">4</span></div></div>
+        </div>
+        <div class="nav"><span>Overview</span><span>Calendar</span><span>Rep teams</span><span class="on">Accounting</span><span>More</span></div>
+      </div></div></div>
+  </div>
+  <div class="same" style="margin-top:16px"><div class="cap"><b>Today</b> · desktop capture, Nov 5 <button class="mk unc" data-note="Today’s club Bank tab at 1440, captured from the dev site on Nov 5, 2026. 26 lines to tick, a starting-balance row, and lines from before the starting date (Sep 20, Sep 29).">TODAY</button></div>
+    <div class="fx"><img class="shot" src="bank-balance-check-shots/today-check-d.png" width="1440" height="900" alt="Today’s club Bank tab at desktop width: Finish later and Mark this statement checked, the Statement · Ticked · Difference band, search and filter, and the tick list starting with lines dated before the starting balance"></div></div>
+  <div class="samebar">Today’s captures · hidden while showing only what differs</div>
+</section>
+
+<!-- ================= 2 · A CHECK THAT MATCHES ================= -->
+<section class="pane" id="p2" hidden>
+  <h2>A check that matches</h2>
+  <p class="muted">The Bank tab is one page: the check on top, the saved checks under it (tab 5). Typing the balance updates the band as you type. The middle tile is the sum everything else rests on, so it opens to show how it was reached. The band is the shipped money band, three tiles joined.</p>
+
+  <h3>Club · Accounting → Bank · desktop</h3>
+  <div class="cap"><b>Proposed</b> · Oct 31 statement, matches <button class="mk new" data-note="NEW: the check card. Two fields and the band. The sums sit under it, quiet and always open, because they are how a volunteer trusts the middle figure. One lime button. The suspects list (tab 3) appears only when the check is off.">NEW</button> <button class="mk askm" data-note="Ask 10: the check sits on the tab itself, above the saved checks (drawn). The other way is a 'Check a statement' button that opens it on its own screen.">Ask 10</button> <button class="mk askm" data-note="Ask 8: 'Online payments on their way' is worked out by the app from Stripe. The treasurer never types it.">Ask 8</button></div>
+  <div class="fx"><div class="fr w1440"><div class="ak"><div class="top"><b>FieldLogicHQ</b><span>Admin area</span></div><div class="shell">
+    <nav class="sb"><span class="it">Overview</span><span class="it">Calendar</span><span class="it">Schedules</span><div class="grp">Programs</div><span class="it">Rep teams ›</span><span class="it">House league ›</span><span class="it on">Accounting</span><span class="it">Families</span><span class="it">Public site</span><span class="it">Tournaments</span><div class="grp">Organization</div><span class="it">Organization ›</span></nav>
+    <div class="main"><div class="orghd"><b>Lakeshore Lynx</b><span class="sp"></span><span class="b" style="border-radius:999px;min-height:30px">Public site</span></div><div class="pg">
+      <div class="ph"><h1>Accounting</h1></div>
+      <div class="hub"><span>Overview</span><span>Budget</span><span>Teams</span><span>Ledger</span><span class="on">Bank</span><span>Allocations</span><span>Payment requests</span><span>Budget vs. Actual</span><span>Payouts</span></div>
+      <div class="tb"><span class="lead"><i>Account</i><b>Club chequing</b></span><span class="stat">Checked through <b>Sep 30, 2026</b></span><span class="sp"></span><span class="lk">Name and books</span></div>
+      <div class="sect newbox" data-note="NEW: the whole check, on the tab itself. The fields and the band read left to right: the date and balance you type, then the three tiles."><div class="sect-h"><h3>Check a statement</h3></div><div class="sect-b">
+        <div class="chk"><div class="f"><span class="lbl">Statement date <em>*</em></span><span class="in cal">Oct 31, 2026</span></div><div class="f"><span class="lbl">Bank balance on that date <em>*</em></span><span class="in focus">$7,843.53</span></div><span></span><span class="b lime">Save this check</span></div>
+        <div class="band t3">
+          <div class="tile"><span class="bl">The bank says</span><span class="bf">$7,843.53</span><span class="bc">Statement balance on Oct 31, 2026</span></div>
+          <div class="tile"><span class="bl">Should be in the bank</span><span class="bf">$7,843.53</span><span class="bc">Your books on Oct 31, less what hasn’t reached the bank yet</span></div>
+          <div class="tile"><span class="bl">Difference</span><span class="bf good">Matches</span><span class="bc">The bank and your books agree on Oct 31.</span></div>
+        </div>
+        <div class="sum" style="max-width:640px">
+          <div class="sr">Your books on Oct 31 · General, House league · Fall 2026, Lynx Fall Classic 2026<span class="a">$8,255.53</span></div>
+          <div class="sr">Online payments on their way to your bank · 2 · Stripe pays them out Nov 3 <span class="lk">Show</span><span class="a">− $412.00</span></div>
+          <div class="sr tot">Should be in the bank<span class="a">$7,843.53</span></div>
+        </div>
+        <p class="hint">Lines since your last check (Sep 30): 13 · <span class="lk">Show them</span></p>
+      </div></div>
+      <div class="sect"><div class="sect-h"><h3>Checked statements</h3><span class="acts faint" style="font-size:13px">4 · drawn on tab 5</span></div></div>
+    </div></div></div></div></div></div>
+
+  <div class="pair" style="margin-top:18px">
+    <div><div class="cap"><b>Proposed</b> · coach · Money → Ledger, View: Bank · phone <button class="mk new" data-note="NEW: the same check in the coach portal, as the Ledger’s fourth View (B8 as approved). It is the team’s one account, so there is no Account pill. The coach version reads only this season: a statement dated before the season started is refused, with a sentence saying why.">NEW</button> <button class="mk askm" data-note="Ask 1: drawn as option C, one optional 'Cash not deposited yet' figure. Tab 4 draws all three options.">Ask 1</button></div>
+      <div class="fr w390"><div class="ak">
+        <div class="pbar" style="padding-left:16px">Ridge 13U<span style="margin-left:auto" class="m">◍</span></div>
+        <div class="pin">
+          <div class="ph"><h1>Money</h1></div>
+          <div class="hub"><span>Overview</span><span>Budget</span><span>Player dues</span><span class="on">Ledger</span><span class="faint">›</span></div>
+          <div class="tb"><span class="lead"><i>View</i><b>Bank</b></span></div>
+          <div class="stat">Team bank account · checked through <b>Sep 30, 2026</b></div>
+          <div class="sect"><div class="sect-h"><h3>Check a statement</h3></div><div class="sect-b">
+            <div class="chk c5"><div class="f"><span class="lbl">Statement date <em>*</em></span><span class="in cal t44">Oct 31, 2026</span></div><div class="f"><span class="lbl">Bank balance <em>*</em></span><span class="in t44">$3,060.00</span></div><div class="f wide newbox" data-note="Ask 1, option C: one optional figure. The cash in your envelope on the statement date that hasn’t gone to the bank yet. It is saved with this check only; next time the field starts empty."><span class="lbl">Cash not deposited yet</span><span class="in t44">$180.00</span></div></div>
+            <div class="band t3"><div class="tile"><span class="bl">The bank says</span><span class="bf">$3,060.00</span><span class="bc">on Oct 31</span></div><div class="tile"><span class="bl">Should be there</span><span class="bf">$3,060.00</span><span class="bc">your books, less $180.00 cash</span></div><div class="tile"><span class="bl">Difference</span><span class="bf good">Matches</span><span class="bc">The bank and your books agree on Oct 31.</span></div></div>
+            <div class="sum"><div class="sr">Your books on Oct 31<span class="a">$3,240.00</span></div><div class="sr">Cash not deposited yet<span class="a">− $180.00</span></div><div class="sr tot">Should be in the bank<span class="a">$3,060.00</span></div></div>
+            <span class="b lime full t44">Save this check</span>
+            <p class="hint">Statements from this season only, since Sep 1, 2026.</p>
+          </div></div>
+        </div>
+        <div class="nav"><span>Overview</span><span>Schedule</span><span>Roster</span><span>Practice</span><span class="on">More</span></div>
+      </div></div></div>
+    <div class="side"><div class="read one">
+      <div class="w"><h4>Why “Should be in the bank” and not “Your books”</h4><p>The two figures a volunteer compares should mean the same thing. “Your books” would differ from the bank by money everyone knows is in transit, and every check would open off. The middle tile takes out what the app or the person already knows about, and its sums sit right under it.</p></div>
+      <div class="c"><h4>The coach’s season</h4><p>A coach’s books start each season from its opening balance, so the check reads only the working season. That’s the Coaches Portal rule (no year parameter on a live screen), and it needs no starting question: the opening balance is the start.</p></div>
+      <div class="a"><h4>Words</h4><p>The middle tile is “Should be in the bank” everywhere; a phone band shortens it to “Should be there” to fit two-up. “Matches” and “Off by $X” are the two results everywhere they show: this band, the saved list, the Overview line and the club’s Teams view.</p></div>
+    </div></div>
+  </div>
+</section>
+
+<!-- ================= 3 · OFF BY $75.00 ================= -->
+<section class="pane" id="p3" hidden>
+  <h2>Off by $75.00: finding what’s missing</h2>
+  <p class="muted">Same club, same Oct 31 statement, but the bank says <b>$7,918.53</b>. That’s $75.00 more than should be there. The card grows one section, “Find the $75.00”. It names the likely answer first, then lists the suspects: every line since the last check that matched. The difference and the result are amber; nothing is red, because an off check is allowed and can be saved.</p>
+  <div class="viewrow"><span class="lab">View</span>
+    <div class="sw" role="group" aria-label="View"><button data-v="all" aria-pressed="true">Everything</button><button data-v="diff" aria-pressed="false">Show only what differs</button></div></div>
+
+  <h3>Club · desktop, drawn at the page’s content width (the chrome is tab 2’s)</h3>
+  <div class="cap"><b>Proposed</b> · off by $75.00 <button class="mk new" data-note="NEW: 'Find the $75.00'. It appears only while the check is off. The callout says the one thing most likely to explain the gap, with its two answers as buttons. The table under it is the suspects list.">NEW</button> <button class="mk askm" data-note="Ask 3: the suspects are the lines since the last check that matched (Sep 30). The other way is a fixed 30 days.">Ask 3</button> <button class="mk askm" data-note="Ask 2: 'Not in the bank yet' counts for this check only. The next check asks once whether it’s still waiting.">Ask 2</button></div>
+  <div class="fx"><div class="fr w1200"><div class="ak" style="padding:16px 0 20px"><div class="pg" style="padding:0 32px">
+    <div class="sect"><div class="sect-h"><h3>Check a statement</h3></div><div class="sect-b">
+      <div class="chk same"><div class="f"><span class="lbl">Statement date <em>*</em></span><span class="in cal">Oct 31, 2026</span></div><div class="f"><span class="lbl">Bank balance on that date <em>*</em></span><span class="in">$7,918.53</span></div><span></span><span class="b lime">Save this check</span></div>
+      <div class="band t3">
+        <div class="tile same"><span class="bl">The bank says</span><span class="bf">$7,918.53</span><span class="bc">Statement balance on Oct 31, 2026</span></div>
+        <div class="tile same"><span class="bl">Should be in the bank</span><span class="bf">$7,843.53</span><span class="bc">Your books on Oct 31, less what hasn’t reached the bank yet</span></div>
+        <div class="tile newbox" data-note="The Difference, off. Amber, never red. The caption says which way in words (the bank shows more, or less), never a minus sign."><span class="bl">Difference</span><span class="bf warn">Off by $75.00</span><span class="bc">The bank shows $75.00 more than your books.</span></div>
+      </div>
+      <div class="sum same" style="max-width:640px">
+        <div class="sr">Your books on Oct 31 · 3 books<span class="a">$8,255.53</span></div>
+        <div class="sr">Online payments on their way to your bank · 2 <span class="lk">Show</span><span class="a">− $412.00</span></div>
+        <div class="sr tot">Should be in the bank<span class="a">$7,843.53</span></div>
+      </div>
+      <div class="newbox" style="display:flex;flex-direction:column;gap:12px;padding:4px" data-note="NEW: Find the $75.00. The callout first, then the suspects.">
+        <div style="font:700 16px/1.25 Inter">Find the $75.00</div>
+        <div class="call warn"><span class="ico">!</span><div class="grow"><b>Cheque #214 · Umpire clinic</b> (Oct 29) is exactly $75.00. If the bank hasn’t cashed it yet, that’s the gap.<small>Or the bank received $75.00 your books don’t have: a deposit or interest you haven’t entered.</small></div><div class="acts"><span class="b">Not in the bank yet</span><span class="b">Add the missing line</span></div></div>
+        <div class="tb"><span class="bl">Lines since your last match · Sep 30, 2026</span><span class="sp"></span><span class="sf">Find an amount or a name…</span></div>
+        <div class="tf"><table class="rg"><thead><tr><th>Date</th><th>What</th><th>Book</th><th class="r">Money out</th><th class="r">Money in</th><th style="width:170px"></th></tr></thead><tbody>
+          <tr><td class="d">Oct 1</td><td>Cheque #209 · Facility rental, fall</td><td class="bk">General</td><td class="r">$420.00</td><td class="r"></td><td></td></tr>
+          <tr><td class="d">Oct 2</td><td>Sponsor · Lakeside Dental <span class="det">· E-Transfer</span></td><td class="bk">General</td><td class="r"></td><td class="r cin">$400.00</td><td></td></tr>
+          <tr><td class="d">Oct 4</td><td>Concession supplies <span class="det">· debit</span></td><td class="bk">General</td><td class="r">$186.42</td><td class="r"></td><td></td></tr>
+          <tr><td class="d">Oct 5</td><td>Concession, Oct 4 <span class="det">· cash deposit</span></td><td class="bk">General</td><td class="r"></td><td class="r cin">$312.75</td><td></td></tr>
+          <tr><td class="d">Oct 8</td><td><span class="lk" style="font-size:12px">Online payments paid out Oct 8</span> <span class="det">· 8 payments</span></td><td class="bk">2 books</td><td class="r"></td><td class="r cin">$1,284.50</td><td></td></tr>
+          <tr><td class="d">Oct 9</td><td>Fall registration · Nguyen <span class="det">· E-Transfer</span></td><td class="bk">House league · Fall 2026</td><td class="r"></td><td class="r cin">$225.00</td><td></td></tr>
+          <tr><td class="d">Oct 15</td><td>Cheque #211 · Officials, Oct 12–13</td><td class="bk">House league · Fall 2026</td><td class="r">$240.00</td><td class="r"></td><td></td></tr>
+          <tr><td class="d">Oct 16</td><td>Team entry · Ridgeview Hawks <span class="det">· cheque</span></td><td class="bk">Lynx Fall Classic 2026</td><td class="r"></td><td class="r cin">$350.00</td><td></td></tr>
+          <tr><td class="d">Oct 19</td><td>Bake sale <span class="det">· cash deposit</span></td><td class="bk">General</td><td class="r"></td><td class="r cin">$184.50</td><td></td></tr>
+          <tr><td class="d">Oct 22</td><td>Cheque #212 · Trophies</td><td class="bk">Lynx Fall Classic 2026</td><td class="r">$212.25</td><td class="r"></td><td></td></tr>
+          <tr><td class="d">Oct 26</td><td>Sponsor · Cedar Lake Auto Glass <span class="det">· cheque</span></td><td class="bk">General</td><td class="r"></td><td class="r cin">$100.00</td><td></td></tr>
+          <tr class="hit newbox" data-note="The suspect that matches the difference exactly, tinted amber with a chip. Any row can be marked 'Not in the bank yet' from the row under the pointer; this one shows it because it is the match."><td class="d">Oct 29</td><td>Cheque #214 · Umpire clinic <span class="chip warn">Exactly $75.00</span></td><td class="bk">General</td><td class="r">$75.00</td><td class="r"></td><td class="r"><span class="nb">Not in the bank yet</span></td></tr>
+          <tr class="cleared"><td class="d">Oct 30–31</td><td>Online payments · 2 <span class="det">· on their way, counted above</span></td><td class="bk">2 books</td><td class="r"></td><td class="r">$412.00</td><td></td></tr>
+        </tbody></table></div>
+      </div>
+    </div></div>
+  </div></div></div></div>
+
+  <div class="pair" style="margin-top:18px">
+    <div><div class="cap"><b>Proposed</b> · club · phone, off by $75.00</div>
+      <div class="fr w390"><div class="ak">
+        <div class="pbar" style="padding-left:16px">Lakeshore Lynx<span style="margin-left:auto" class="m">◍</span></div>
+        <div class="pin">
+          <div class="hub same"><span>Teams</span><span>Ledger</span><span class="on">Bank</span><span>Allocations</span><span class="faint">›</span></div>
+          <div class="sect"><div class="sect-h"><h3>Check a statement</h3></div><div class="sect-b">
+            <div class="chk same"><div class="f"><span class="lbl">Statement date <em>*</em></span><span class="in cal t44">Oct 31, 2026</span></div><div class="f"><span class="lbl">Bank balance <em>*</em></span><span class="in t44">$7,918.53</span></div></div>
+            <div class="band t3"><div class="tile same"><span class="bl">The bank says</span><span class="bf">$7,918.53</span><span class="bc">on Oct 31</span></div><div class="tile same"><span class="bl">Should be there</span><span class="bf">$7,843.53</span><span class="bc">your books, less $412.00 on its way</span></div><div class="tile"><span class="bl">Difference</span><span class="bf warn">Off by $75.00</span><span class="bc">The bank shows $75.00 more than your books.</span></div></div>
+            <div style="font:700 16px/1.25 Inter">Find the $75.00</div>
+            <div class="call warn" style="flex-wrap:wrap"><span class="ico">!</span><div class="grow"><b>Cheque #214 · Umpire clinic</b> (Oct 29) is exactly $75.00.<small>Not cashed yet? Or $75.00 came in that your books don’t have?</small></div><div class="acts" style="width:100%"><span class="b t44" style="flex:1">Not in the bank yet</span><span class="b t44" style="flex:1">Add the missing line</span></div></div>
+            <div class="phd">Since your last match · Sep 30</div>
+            <div class="pl">
+              <div class="pr" style="background:var(--amber-soft)"><div class="g"><div class="t">Cheque #214 · Umpire clinic</div><div class="s">Oct 29 · General · <span class="chip warn">Exactly $75.00</span></div><span class="nb">Not in the bank yet</span></div><div class="a">−$75.00</div></div>
+              <div class="pr"><div class="g"><div class="t">Sponsor · Cedar Lake Auto Glass</div><div class="s">Oct 26 · General · cheque</div></div><div class="a cin">+$100.00</div></div>
+              <div class="pr"><div class="g"><div class="t">Cheque #212 · Trophies</div><div class="s">Oct 22 · Lynx Fall Classic 2026</div></div><div class="a">−$212.25</div></div>
+              <div class="pr"><div class="g"><div class="t" style="color:var(--dim)">Show 10 more</div></div></div>
+            </div>
+            <span class="b lime full t44">Save this check</span>
+            <p class="hint">It saves as off by $75.00. You can check this statement again later.</p>
+          </div></div>
+        </div>
+        <div class="nav"><span>Overview</span><span>Calendar</span><span>Rep teams</span><span class="on">Accounting</span><span>More</span></div>
+      </div></div></div>
+    <div class="side">
+      <div class="cap"><b>Proposed</b> · after one tap on “Not in the bank yet” <button class="mk new" data-note="NEW: the cheque joins the sums as its own line, with Undo. The Difference turns to Matches. Nothing else on the card changes; the suspects list closes because there is nothing left to find.">NEW</button></div>
+      <div class="fr" style="width:520px"><div class="ak" style="padding:14px;display:flex;flex-direction:column;gap:12px">
+        <div class="band t3"><div class="tile"><span class="bl">The bank says</span><span class="bf">$7,918.53</span></div><div class="tile"><span class="bl">Should be in the bank</span><span class="bf">$7,918.53</span></div><div class="tile"><span class="bl">Difference</span><span class="bf good">Matches</span></div></div>
+        <div class="sum">
+          <div class="sr">Your books on Oct 31<span class="a">$8,255.53</span></div>
+          <div class="sr">Online payments on their way · 2<span class="a">− $412.00</span></div>
+          <div class="sr newbox" data-note="The cheque the bank hadn’t cashed by Oct 31, added back because it left your books but not the bank. Undo takes it out again.">Not in the bank yet · Cheque #214 · Umpire clinic <span class="lk">Undo</span><span class="a">+ $75.00</span></div>
+          <div class="sr tot">Should be in the bank<span class="a">$7,918.53</span></div>
+        </div>
+      </div></div>
+      <div class="read one" style="margin-top:12px">
+        <div class="w"><h4>The hints it can name</h4><p>A line of exactly the difference (drawn). A line of half the difference, the usual sign of money in entered as money out or the other way round. Two or three lines that add up to it. With none of those, the callout drops away and the list stays.</p></div>
+        <div class="c"><h4>“Add the missing line”</h4><p>Opens the ordinary add form for the right portal, with the amount, the date and the direction filled in. A bank fee or interest is just a missing line, so there’s no separate “bank fee” button any more.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 4 · CASH ================= -->
+<section class="pane" id="p4" hidden>
+  <h2>Cash: three ways, one recommended</h2>
+  <p class="muted"><b>The example.</b> On Oct 30, Ridge 13U collects <b>$180.00</b> in cash dues (three families, $60.00 each) and enters them. On Nov 2 the coach pays the umpire <b>$40.00</b> out of the envelope and enters that. On Nov 4 the coach deposits the <b>$140.00</b> left over. The Oct 31 statement shows none of the cash. The Nov 30 statement shows the $140.00 deposit. Each option below runs this example through both checks.</p>
+  <div class="card"><b>Why cash is smaller than it looks.</b> In a balance check, cash that’s collected, partly spent and then deposited adds up by itself: the books say +$180.00 − $40.00 = <b>+$140.00</b>, and the bank says <b>+$140.00</b>. Nobody has to tag the deposit to the dues it carried. The only thing the books can’t know is <b>cash still in the envelope on the statement date</b>. All three options are answers to that one fact. A bill a family paid straight to the vendor is already out of the running balance, so it needs nothing here.</div>
+  <div class="viewrow"><span class="lab">View</span>
+    <div class="sw" role="group" aria-label="View"><button data-v="all" aria-pressed="true">Everything</button><button data-v="diff" aria-pressed="false">Show only what differs</button></div></div>
+  <div class="opt3">
+    <div class="opt">
+      <span class="tagline">Option A · per line</span><h3>Leave a line out of the bank check</h3>
+      <div class="fr"><div class="ak" style="padding:0"><div class="dlg flat"><div class="dh"><div class="tt"><span class="ey">Ridge 13U · Money in</span><b>Dues · Patel</b></div></div><div class="db">
+        <div class="g2 same"><div class="f"><span class="lbl">Date</span><span class="in cal">Oct 30, 2026</span></div><div class="f"><span class="lbl">Amount</span><span class="in">$60.00</span></div></div>
+        <div class="f same"><span class="lbl">Paid by</span><span class="in dd">Cash</span></div>
+        <label class="line1 newbox" data-note="Option A: a checkbox on every money form. Unticked, the line stays in the books and the budget but the bank check skips it."><i class="cb"></i> Count it in the bank check</label>
+      </div></div></div></div>
+      <div class="math">Oct 31: books skip $180 → <b>Matches</b><br>Nov 30: bank has +$140, books skip the cash lines → <b>Off by $140.00</b></div>
+      <div class="fr"><div class="ak hole newbox" data-note="Option A’s hole: once the cash goes into the bank, the lines that were left out are exactly what the bank now shows. The check stays off until someone finds those lines and ticks them back in.">Nov 30 · Off by $140.00. The deposit is in the bank, but the dues and the umpire were left out. The coach has to find those four lines (three dues and the umpire) and switch them back on.</div></div>
+      <ul><li>Your suggestion, and quick to explain.</li><li><b>Breaks when the cash is deposited</b>, which you said clubs and teams must do.</li><li>A checkbox on every money form, in both portals.</li></ul>
+    </div>
+    <div class="opt">
+      <span class="tagline">Option B · a second place</span><h3>A cash box beside the bank account</h3>
+      <div class="fr"><div class="ak" style="padding:0"><div class="dlg flat"><div class="dh"><div class="tt"><span class="ey">Ridge 13U · Money in</span><b>Dues · Patel</b></div></div><div class="db">
+        <div class="g2 same"><div class="f"><span class="lbl">Date</span><span class="in cal">Oct 30, 2026</span></div><div class="f"><span class="lbl">Amount</span><span class="in">$60.00</span></div></div>
+        <div class="f newbox" data-note="Option B: every money form asks where the money is. Team bank account is the default, and the choice only appears once the team has a cash box."><span class="lbl">Where the money is</span><span class="seg"><span>Team bank account</span><span class="on">Cash box</span></span></div>
+      </div></div></div></div>
+      <div class="fr"><div class="ak" style="padding:12px;display:flex;flex-direction:column;gap:10px"><div class="line1 newbox" data-note="Option B: depositing is its own step. It moves money from the cash box to the bank, so the one bank deposit has one matching line."><b>Deposit cash</b><span class="faint" style="width:100%;font-size:13px">Nov 4 · $140.00 from the cash box to the team bank account</span></div>
+        <div class="f"><span class="lbl">Count your cash · Nov 30</span><span class="in">$0.00</span></div><div class="bc faint" style="font-size:12px">The cash box should hold $0.00 · <span class="ok">Matches</span></div></div></div>
+      <div class="math">Oct 31 bank check: $180 is in the cash box → <b>Matches</b><br>Nov 30: deposit moved $140 → <b>Matches</b>, cash box count <b>Matches</b></div>
+      <ul><li>The proper answer: every dollar has a place, and the envelope can be counted.</li><li>A question on every money form, a Deposit cash step, and a second check to do.</li><li>Forgetting to enter the deposit puts both checks off.</li></ul>
+    </div>
+    <div class="opt rec">
+      <span class="tagline">Option C · recommended</span><h3>One figure on the check</h3>
+      <div class="fr"><div class="ak" style="padding:12px;display:flex;flex-direction:column;gap:10px">
+        <div class="g2 same"><div class="f"><span class="lbl">Statement date</span><span class="in cal">Oct 31, 2026</span></div><div class="f"><span class="lbl">Bank balance</span><span class="in">$3,060.00</span></div></div>
+        <div class="f newbox" data-note="Option C: one optional figure on the check, never on the money forms. The cash in hand on the statement date that hasn’t been deposited. It is saved with that check only."><span class="lbl">Cash not deposited yet</span><span class="in">$180.00</span></div>
+        <div class="band t3"><div class="tile same"><span class="bl">The bank says</span><span class="bf">$3,060.00</span></div><div class="tile same"><span class="bl">Should be in the bank</span><span class="bf">$3,060.00</span></div><div class="tile"><span class="bl">Difference</span><span class="bf good">Matches</span></div></div>
+        <div class="sum"><div class="sr">Your books on Oct 31<span class="a">$3,240.00</span></div><div class="sr">Cash not deposited yet<span class="a">− $180.00</span></div><div class="sr tot">Should be in the bank<span class="a">$3,060.00</span></div></div>
+      </div></div>
+      <div class="math">Oct 31: $180 in the envelope → <b>Matches</b><br>Nov 30: envelope empty, field left blank, books +$140 = bank +$140 → <b>Matches</b></div>
+      <ul><li><b>Nothing added to any money form</b>, in either portal.</li><li>Fits your point: cash goes to the bank eventually, so only the envelope on the day needs saying.</li><li>The figure is typed, not counted against lines. The saved check and the report show it, so a reviewer sees it.</li><li>Works for a club’s concession float too.</li></ul>
+    </div>
+  </div>
+  <div class="card"><b>Recommendation: C now.</b> It costs one optional field and handles the deposit that breaks A. B is the right answer for a club that runs a real cash float all season. It can be added later as a second account without changing anything C builds, because the check already works per account.</div>
+</section>
+
+<!-- ================= 5 · SAVED CHECKS ================= -->
+<section class="pane" id="p5" hidden>
+  <h2>Saved checks, and where the mark shows</h2>
+  <p class="muted">A saved check is a record: the date, the bank’s balance, what should have been there, the result, and any “not in the bank yet” or cash figure it used. Each check stands alone. Nothing carries from one to the next, so any of them can be deleted without changing the others.</p>
+  <h3>Club · desktop, under the check (content width)</h3>
+  <div class="cap"><b>Proposed</b> · the list (its Oct 31 row is tab 3’s check, saved after “Not in the bank yet”) <button class="mk new" data-note="NEW: the saved checks. A table, because each column answers a question (when, what the bank said, did it match). The date is the link and the chevron is the row’s one door. Off checks say so in the Result column, once.">NEW</button> <button class="mk askm" data-note="Ask 6: when lines dated on or before a saved check change later, its row says what the books say now (Jul 31 drawn).">Ask 6</button></div>
+  <div class="fx"><div class="fr w1200"><div class="ak" style="padding:16px 32px 20px"><div class="sect"><div class="sect-h"><h3>Checked statements</h3><span class="acts faint" style="font-size:13px">Club chequing</span></div><div class="sect-b">
+    <div class="tf"><table class="rg roomy"><thead><tr><th>Statement date</th><th class="r">The bank said</th><th class="r">Should have been</th><th>Result</th><th>Checked by</th><th style="width:28px"></th></tr></thead><tbody>
+      <tr><td><span class="lk" style="font-size:13px">Oct 31, 2026</span></td><td class="r">$7,918.53</td><td class="r">$7,918.53</td><td><span class="ok">Matches</span> <span class="faint">· 1 cheque not in the bank yet</span></td><td class="bk">Priya Shah · Nov 3</td><td class="ch">›</td></tr>
+      <tr><td><span class="lk" style="font-size:13px">Sep 30, 2026</span></td><td class="r">$6,120.45</td><td class="r">$6,120.45</td><td><span class="ok">Matches</span></td><td class="bk">Priya Shah · Oct 6</td><td class="ch">›</td></tr>
+      <tr><td><span class="lk" style="font-size:13px">Aug 31, 2026</span></td><td class="r">$5,402.10</td><td class="r">$5,414.50</td><td><span class="chip warn">Off by $12.40</span></td><td class="bk">Dan Ruiz · Sep 9</td><td class="ch">›</td></tr>
+      <tr class="newbox" data-note="Ask 6: a line dated on or before Jul 31 was added or changed after this check was saved. The saved figures stay as they were; the row says what the books say now, so nobody is surprised later."><td><span class="lk" style="font-size:13px">Jul 31, 2026</span></td><td class="r">$4,880.00</td><td class="r">$4,880.00</td><td><span class="ok">Matches</span> <span class="chip warn">Books now say $4,905.00</span></td><td class="bk">Dan Ruiz · Aug 4</td><td class="ch">›</td></tr>
+      <tr class="out"><td>Jun 30, 2026</td><td class="r">$4,215.60</td><td class="r"></td><td>Starting point</td><td class="bk">Dan Ruiz · Jul 2</td><td class="ch"></td></tr>
+    </tbody></table></div></div></div></div></div></div>
+
+  <div class="pair" style="margin-top:18px">
+    <div><div class="cap"><b>Proposed</b> · a saved check, opened (form window, 520) <button class="mk new" data-note="NEW: opening a saved check shows exactly what was saved. Two actions: check the same statement again (opens the check above with the date filled in; saving replaces this one) and delete. Delete asks once and records who and when.">NEW</button> <button class="mk askm" data-note="Ask 5: any saved check can be deleted, because nothing chains from one to the next.">Ask 5</button></div>
+      <div class="fr" style="width:600px"><div class="ak"><div class="scrim"><div class="dlg"><div class="dh"><div class="tt"><span class="ey">Club chequing · saved check</span><b>Statement ending Oct 31, 2026</b></div><span class="x">✕</span></div><div class="db">
+        <div class="band t3"><div class="tile"><span class="bl">The bank said</span><span class="bf" style="font-size:20px">$7,918.53</span></div><div class="tile"><span class="bl">Should have been</span><span class="bf" style="font-size:20px">$7,918.53</span></div><div class="tile"><span class="bl">Result</span><span class="bf good" style="font-size:20px">Matches</span></div></div>
+        <div class="sum"><div class="sr">Your books on Oct 31<span class="a">$8,255.53</span></div><div class="sr">Online payments on their way · 2<span class="a">− $412.00</span></div><div class="sr">Not in the bank yet · Cheque #214<span class="a">+ $75.00</span></div><div class="sr tot">Should have been in the bank<span class="a">$7,918.53</span></div></div>
+        <p class="hint">Checked by Priya Shah on Nov 3, 2026.</p>
+      </div><div class="df"><span class="st"><span class="b ghost" style="color:var(--red);padding:0">Delete this check</span></span><span class="b">Close</span><span class="b">Check this statement again</span></div></div></div></div></div></div>
+    <div class="side">
+      <div class="cap"><b>Proposed</b> · where the mark shows <button class="mk res" data-note="RESTYLED: the 'checked through' line is as approved in R0 tab 7 (club Overview, coach Money Overview, the club’s Teams view). Only its words change when the latest check is off.">RESTYLED</button> <button class="mk askm" data-note="Ask 4: when the latest check is off, the line moves to its date and says 'off by'. The other way: the line moves only on a match.">Ask 4</button></div>
+      <div class="fr" style="width:520px"><div class="ak" style="padding:14px;display:flex;flex-direction:column;gap:12px">
+        <span class="bl">Club Overview · the latest check matches</span>
+        <span class="line1" style="font-size:13px">Bank: <b>Club chequing</b> checked through <b>Oct 31, 2026</b> <span class="faint">›</span></span>
+        <span class="bl">The latest check is off</span>
+        <span class="line1 newbox" style="font-size:13px" data-note="Ask 4, drawn as A: the date moves to the latest check and the amber chip says it’s off. The club sees the same line for each team.">Bank: <b>Club chequing</b> checked through <b>Aug 31, 2026</b> <span class="chip warn">Off by $12.40</span> <span class="faint">›</span></span>
+        <span class="bl">Club → Teams, a team’s row</span>
+        <span class="line1" style="font-size:13px">Ridge 13U · bank checked through <b>Oct 31, 2026</b> · <span class="ok">Matches</span></span>
+      </div></div>
+      <div class="read one" style="margin-top:12px"><div class="c"><h4>Phone</h4><p>The list becomes the kit’s white row cards: the date and result on the first line, the two balances under it, a corner chevron. The window opens full screen, as every form window does on a phone.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 6 · CLUB ONLY ================= -->
+<section class="pane" id="p6" hidden>
+  <h2>Club only: the first check, Stripe, a second account</h2>
+  <p class="muted">A coach’s books start each season from the opening balance, so a coach never sees a starting question. A club’s books have no opening balance, so the first check on each account asks for one statement to start from. That replaces today’s set-up step, the 30-day picker and “Add one the books don’t have”.</p>
+  <div class="pair">
+    <div><div class="cap"><b>Proposed</b> · the first time, on a new account <button class="mk new" data-note="NEW: one question replaces the set-up step. Pick a statement you have, type its date and balance. Checking starts from there. A cheque written before that date and cashed after it simply shows up later as 'off by' its amount, and Find names it.">NEW</button> <button class="mk askm" data-note="Ask 7: the club’s first check asks for one statement to start from. The other way: no question, and the club’s books count from their very first line.">Ask 7</button></div>
+      <div class="fr" style="width:640px"><div class="ak" style="padding:16px"><div class="sect"><div class="sect-h"><h3>Start checking Club chequing</h3></div><div class="sect-b">
+        <p class="hint" style="font-size:13px">Pick a bank statement you already have and type its date and ending balance. Checks start from there.</p>
+        <div class="chk"><div class="f"><span class="lbl">Statement date <em>*</em></span><span class="in cal">Jun 30, 2026</span></div><div class="f"><span class="lbl">Bank balance on that date <em>*</em></span><span class="in">$4,215.60</span></div><span></span><span class="b lime">Start here</span></div>
+        <p class="hint">Books in this account: General, House league · Fall 2026, Lynx Fall Classic 2026 · <span class="lk">Change</span></p>
+      </div></div></div></div></div>
+    <div class="side"><div class="read one">
+      <div class="g"><h4>What it gives up</h4><p>Today’s set-up lets the treasurer pick the cheques still outstanding on the start date. Without that, a cheque written before the start and cashed after it shows as “off by” its amount on the next check. Find then names it (“Cheque #188, Sep 20, is exactly $75.00”), and one tap counts it.</p></div>
+    </div></div>
+  </div>
+
+  <div class="pair" style="margin-top:18px">
+    <div><div class="cap"><b>Proposed</b> · “Online payments on their way”, opened <button class="mk new" data-note="NEW: the line the app works out by itself. Each online payment that has landed in the books but not yet in the bank, with the day Stripe pays it out. It reuses what the Payouts tab already reads from Stripe.">NEW</button> <button class="mk askm" data-note="Ask 8: automatic (drawn), or the treasurer marks each payment 'not in the bank yet' by hand.">Ask 8</button></div>
+      <div class="fr" style="width:640px"><div class="ak" style="padding:16px"><div class="sum">
+        <div class="sr">Your books on Oct 31<span class="a">$8,255.53</span></div>
+        <div class="sr">Online payments on their way to your bank · 2 <span class="lk">Hide</span><span class="a">− $412.00</span></div>
+        <div class="sr" style="padding-left:28px;background:#FBF9F5">Oct 30 · Fall registration · Chen · card · House league · Fall 2026<span class="a" style="font-weight:500">$100.00</span></div>
+        <div class="sr" style="padding-left:28px;background:#FBF9F5">Oct 31 · Team entry · Cedar Lake Comets · card · Lynx Fall Classic 2026<span class="a" style="font-weight:500">$312.00</span></div>
+        <div class="sr" style="padding-left:28px;background:#FBF9F5;color:var(--dim)">Stripe pays these out on Nov 3, 2026 · <span class="lk">Payouts tab</span></div>
+        <div class="sr tot">Should be in the bank<span class="a">$7,843.53</span></div>
+      </div></div></div></div>
+    <div class="side"><div class="read one">
+      <div class="w"><h4>Fees and grouped deposits</h4><p>The books record each payment and the club’s processing cost (where the club pays it), so a payout that has landed already matches its books. Only what is still in transit needs explaining, and the app knows that from Stripe. A payout Stripe can’t be reached for shows a quiet notice and leaves the line out, so the check reads off by that amount rather than guessing.</p></div>
+    </div></div>
+  </div>
+
+  <div class="pair" style="margin-top:18px">
+    <div><div class="cap"><b>Proposed</b> · two accounts: the Account pill, open <button class="mk res" data-note="RESTYLED: the shipped pick-one pill, the same one the Bank tab draws today. Each account shows where it’s checked through. 'Add an account' and 'Name and books' stay as built.">RESTYLED</button></div>
+      <div class="fr" style="width:520px"><div class="ak" style="padding:16px;display:flex;flex-direction:column;gap:8px">
+        <div class="tb"><span class="lead"><i>Account</i><b>Club chequing</b></span></div>
+        <div style="background:#FFF;border:1px solid var(--line2);border-radius:10px;box-shadow:0 8px 24px rgba(36,30,21,.18);padding:6px 0;width:340px;font-size:14px">
+          <div style="padding:8px 12px;display:flex;gap:9px;align-items:center;font-weight:600"><span style="width:6px;height:6px;border-radius:50%;background:var(--olive)"></span>Club chequing<span class="faint" style="margin-left:auto;font-weight:500;font-size:12px">Oct 31 · Matches</span></div>
+          <div style="padding:8px 12px 8px 27px;display:flex">Gaming · casino<span class="faint" style="margin-left:auto;font-size:12px">Sep 30 · Matches</span></div>
+          <div style="padding:8px 12px 8px 27px;border-top:1px solid var(--line);color:var(--olive);font-weight:600">Add an account</div>
+        </div>
+      </div></div></div>
+  </div>
+</section>
+
+<!-- ================= 7 · ASKS ================= -->
+<section class="pane" id="p7" hidden>
+  <h2>Asks</h2>
+  <div class="card" style="border-left:5px solid var(--fix)"><b>Ruled 2026-11-05: all ten A, as recommended, no notes.</b> The green rows below are now the rulings. The R2 owner walk is stopped; the plan is being rewritten to this model.</div>
+  <p class="muted">Two of your answers are already ruled and drawn: both portals use the balance check, and a check saves while it’s off. These are the choices the drawing raised. Pick one per ask; the green row is my recommendation. <b>Ask 1 first:</b> it decides whether any money form changes. Press “Make my answers” and paste the text back into the chat.</p>
+  <div id="asks"></div>
+  <div class="paste"><div class="row"><button class="btn-d pri" id="mk">Make my answers</button><button class="btn-d" id="cp">Copy</button><span class="muted" id="cpmsg" role="status"></span></div>
+    <textarea id="out" readonly aria-label="Your answers" placeholder="Press “Make my answers”, then copy this text back into the chat."></textarea></div>
+</section>
+</div>
+
+<dialog class="note" id="nd"><div class="nh"><h3>About this</h3><button id="nx" aria-label="Close">×</button></div><div class="nb" id="nt"></div></dialog>
+<script>
+(function(){
+  var ASKS=[
+   {id:1,first:1,t:"Rule first · cash still in the envelope on the statement date",tag:"tab 4",
+    r:"Tab 4. Cash that is collected, spent and deposited adds up by itself in a balance check. The only thing the books can’t know is cash not yet deposited on the statement date.",
+    o:[["C","One optional “Cash not deposited yet” figure on the check, saved with that check only. No money form changes","rec"],["B","A cash box beside the bank account: every money form asks where the money is, a Deposit cash step moves it, and the cash box gets its own count",""],["A","A “Count it in the bank check” checkbox on every money form (breaks once that cash is deposited)",""]]},
+   {id:2,t:"How long “Not in the bank yet” lasts",tag:"tab 3",
+    r:"Tab 3. A cheque the bank hasn’t cashed by the statement date.",
+    o:[["A","This check only. The next check asks once: “Still waiting on Cheque #214?” with Yes and No","rec"],["B","It stays marked on every later check until someone clears it",""]]},
+   {id:3,t:"Which lines are the suspects",tag:"tab 3",
+    r:"Tab 3. The list under “Find the $75.00”.",
+    o:[["A","Every line since the last check that matched (all lines on a first check)","rec"],["B","The last 30 days before the statement date",""]]},
+   {id:4,t:"The “checked through” line when the latest check is off",tag:"tab 5",
+    r:"Tab 5. The club Overview, the coach Money Overview and the club’s Teams view all show it.",
+    o:[["A","It moves to the latest check’s date and shows an amber “Off by $X” chip","rec"],["B","It moves only when a check matches; an off check is saved but doesn’t move it",""]]},
+   {id:5,t:"Deleting a saved check",tag:"tab 5",
+    r:"Tab 5. Nothing chains from one check to the next any more.",
+    o:[["A","Any saved check can be deleted, after one question. Who and when are recorded","rec"],["B","Only the latest",""]]},
+   {id:6,t:"When the books change after a check was saved",tag:"tab 5",
+    r:"Tab 5. Someone back-dates or edits a line on or before a saved check’s date.",
+    o:[["A","The saved figures stay; the row adds an amber “Books now say $X” chip. Nothing warns on the money forms","rec"],["B","Nothing shows; a saved check is just a record of that day",""],["C","Editing a line on or before a saved check warns first (today’s B4 behaviour)",""]]},
+   {id:7,t:"The club’s first check on an account",tag:"tab 6",
+    r:"Tab 6. Club books have no opening balance; a coach’s season does, so coaches get no question.",
+    o:[["A","One question: a statement date and its balance to start from. No outstanding-cheque picker","rec"],["B","No question: the club’s books count from their first line ever",""]]},
+   {id:8,t:"Online payments on their way (club)",tag:"tab 6",
+    r:"Tab 6. Payments in the books that Stripe hasn’t paid out yet.",
+    o:[["A","Worked out by the app from Stripe and shown as one line under the band","rec"],["B","Not shown; the treasurer marks each one “not in the bank yet”",""]]},
+   {id:9,t:"The association report",tag:"R0 tab 9",
+    r:"R0 tab 9 drew a printable report for associations. Their monthly form is bank balance, plus deposits not yet in, minus cheques not yet cashed, equals the books.",
+    o:[["A","Keep it, built from a saved check: the bank, each item in the sums, the books, Matches or Off by, and the signature lines","rec"],["B","Leave it out of this release",""]]},
+   {id:10,t:"One page or two",tag:"tab 2",
+    r:"Tab 2. Where the check lives.",
+    o:[["A","On the Bank tab (and the Ledger’s Bank view) itself, above the saved checks","rec"],["B","A “Check a statement” button opens the check on its own screen",""]]}
+  ];
+  var host=document.getElementById('asks');
+  ASKS.forEach(function(a){
+    var d=document.createElement('div');d.className='ask'+(a.first?' first':'');d.id='ask-'+a.id;
+    var h='<h3><span class="no">Ask '+a.id+'</span>'+a.t+'<span class="tag">'+a.tag+'</span></h3><p class="rides">'+a.r+'</p><div class="opts">';
+    a.o.forEach(function(o){h+='<label class="'+o[2]+'"><input type="radio" id="a'+a.id+o[0]+'" name="a'+a.id+'" value="'+o[0]+'"'+(o[2]?' checked':'')+'><span><b>'+o[0]+'.</b> '+o[1]+'</span></label>';});
+    h+='</div><textarea id="n'+a.id+'" aria-label="Note for ask '+a.id+'" placeholder="Note"></textarea>';
+    d.innerHTML=h;host.appendChild(d);
+  });
+  var tabs=document.getElementById('tabs');
+  function show(id){
+    [].forEach.call(tabs.querySelectorAll('button'),function(x){x.setAttribute('aria-selected',x.getAttribute('data-t')===id?'true':'false')});
+    [].forEach.call(document.querySelectorAll('section.pane'),function(s){s.hidden=s.id!==id});
+  }
+  tabs.addEventListener('click',function(e){var b=e.target.closest('button[data-t]');if(!b)return;show(b.getAttribute('data-t'));window.scrollTo(0,0);});
+  function note(t){document.getElementById('nt').textContent=t;var d=document.getElementById('nd');if(d.showModal)d.showModal();}
+  document.addEventListener('click',function(e){
+    var v=e.target.closest('.sw button');
+    if(v){var val=v.getAttribute('data-v');document.body.setAttribute('data-view',val);
+      [].forEach.call(document.querySelectorAll('.sw button'),function(x){x.setAttribute('aria-pressed',x.getAttribute('data-v')===val?'true':'false')});return;}
+    var m=e.target.closest('.mk[data-note]');
+    if(m){note(m.getAttribute('data-note'));return;}
+    var nb=e.target.closest('.newbox');
+    if(nb){var t=nb.getAttribute('data-note');
+      if(!t){var hostEl=nb.closest('.pair>div')||nb.closest('section');var c=hostEl&&hostEl.querySelector('.cap .mk[data-note]');t=c?c.getAttribute('data-note'):'NEW: added by this design.';}
+      note(t);}
+  });
+  [].forEach.call(document.querySelectorAll('.newbox'),function(el){el.setAttribute('tabindex','0');el.setAttribute('role','button');});
+  document.addEventListener('keydown',function(e){if((e.key==='Enter'||e.key===' ')&&e.target.classList&&e.target.classList.contains('newbox')){e.preventDefault();e.target.click();}});
+  document.getElementById('nx').onclick=function(){document.getElementById('nd').close()};
+  document.getElementById('mk').onclick=function(){
+    var L=['Bank balance check drawings, round 1, my answers:'];
+    ASKS.slice().sort(function(a,b){return a.id-b.id}).forEach(function(a){var c=document.querySelector('input[name=a'+a.id+']:checked');var n=document.getElementById('n'+a.id).value.trim();
+      L.push('Ask '+a.id+': '+(c?c.value:'(none)')+(n?' — '+n:''));});
+    document.getElementById('out').value=L.join('\n');};
+  document.getElementById('cp').onclick=function(){
+    var t=document.getElementById('out');var msg=document.getElementById('cpmsg');
+    function sel(){t.select();msg.textContent='Selected. Press Ctrl+C.';}
+    if(navigator.clipboard&&t.value){navigator.clipboard.writeText(t.value).then(function(){msg.textContent='Copied.'},sel);}else{sel();}};
+})();
+</script>

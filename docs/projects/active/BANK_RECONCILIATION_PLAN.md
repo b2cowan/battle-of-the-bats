@@ -92,6 +92,9 @@ need to type a statement balance, see the difference from the books on that date
 | Team report role | **The team's printed check names the checker's role on the team, as the team's staff list reads today ("Checked by {name} ({role}), …"); a failed role read drops the role only.** (Owner, 2026-11-07, BC8b.) |
 | Team report start line | **The team's printed check has no starting-point line: "Your books on {date}" stands alone.** (Owner, 2026-11-07, BC8b.) |
 | Season windows, off or matching | **When the season's latest check is off, the windows' sentence says so, amber ("The bank was off by $X on {date}. Check the season's last statement before you …"); when it matches, a plain line with no warning icon, outside Close the season's amber "Before you do" box ("The bank matches through {date}. If you have a later statement, check it before you …").** (Owner, 2026-11-07, BC8b.) |
+| Club findings before the walk | **Fix both club findings BC8 carried before the owner walks:** the club chip door's Back, and the club printed check's long "Not in the bank yet" list. (Owner, 2026-11-07, BC9a.) |
+| Print frame home | **Leave `PrintedPage` where it is.** (Owner, 2026-11-07, BC9a.) |
+| Walk shape | **Two walk pages, a club page and a coach page, each a list of short walks with its own sign-off and paste-back; one Owner QA Ledger § per page.** (Owner, 2026-11-07, BC9a.) |
 
 ### Tick-off rulings that still stand (Appendix A §4)
 
@@ -1224,8 +1227,38 @@ owner's 2026-11-06 independence ruling (`decision_coach_books_stay_the_teams`); 
     saved figure, as the Overview line does.
 
 ### BC9 — The walk and marketing truth
-- [ ] Owner walk, both portals, desk and phone (a checkable page, a § in the Owner QA Ledger). `/marketing` puts "bank
-  reconciliation" back (R-c) and settles the collisions; `/demos` decides on sandbox seeds.
+Build prompt written 2026-11-07: `BANK_BALANCE_CHECK_BC9_BUILD_PROMPT.md` (BC9a the walk pages, their setup and the two
+club findings BC8 carried, owner asks first; the owner walks; BC9b the findings, `/marketing` R-c, `/demos`, then the
+hand-off to `/release` for 447/449/450 with the code).
+- [x] **BC9a — the two club findings fixed, the walk's setup, the two walk pages, built 2026-11-07** (owner: §0 "Club
+  findings before the walk", "Print frame home", "Walk shape", all as recommended; yes to the UX summary).
+  - **The club chip door** (`BankTab.tsx`): the address drops `?account=`/`?check=` first, and the check's window opens only
+    once the search params no longer carry them (BC8a's coach shape). `bank-r2c-screens-guard` pins that the replacing
+    effect opens nothing and the opening one waits for the keys to go.
+  - **The club's printed check** (`BankReport.module.css`): the row holding the Not in the bank yet table may break across
+    sheets (the team sheet's BC8b rule); the guard pins both lines.
+  - **`PrintedPage`:** left where it is (owner). `bank-coach-view-guard` §5's one exception stands.
+  - Probe `.probe/bank-bc9/bc9a-fixes.mjs` (dev, 23/23): the club Overview chip opens the check, the address drops its keys,
+    closed it stays closed, Back (twice) never reopens it, at 1440 and 390; a 45-line check prints on two sheets on BOTH
+    portals with the list starting on sheet one (29 and 30 rows there) and sheet two opening on the repeated
+    "Date · What · Amount" (per-page text read from `page.pdf`). 25 lines fit on one sheet, which is why the probe uses 45.
+  - **The walk's data:** `.probe/bank-bc9/setup.mjs` / `teardown.mjs` (fixed Oct–Nov 2026 dates; refuses when any account
+    or team it would use holds someone else's checks; records what it made in `setup-made.json`). The club: an uncashed
+    $350.00 cheque, 25 × $10.00 cheques on Nov 6, a "Walk gaming book" with a deposit and a cheque before the second
+    account's start. The coach: a $180.00 deposit, 25 × $10.00 floats, the money-read seat. The standalone team: its 2026
+    Season carried from 2025 (the first time "From the {season}" is seen on screen) and a $260.00 deposit in 2025.
+    Teardown also removes what the walk writes (its checks, the second account, lines named "Walk: bank fee").
+  - **The story, proved before publishing:** `.probe/bank-bc9/story.mjs` played both pages' every figure, match, Off by,
+    Still waiting?, Waiting at the start, Books now say, Delete, Check this statement again and From the 2025 Season through
+    the routes, plus a browser look at the starting states (38/38); then teardown and a fresh setup so the owner starts
+    clean.
+  - **The walks:** §481 club, https://claude.ai/artifact/UVU19kcW3KqE7fmXQiPHQb (`BANK_BALANCE_CHECK_BC9_CLUB_WALK.html`, 5
+    walks, 44 steps); §482 coach, https://claude.ai/artifact/HZRso86YazZXeWLsjiKxPQ (`BANK_BALANCE_CHECK_BC9_COACH_WALK.html`,
+    7 walks, 44 steps). §461 marked superseded. Not walkable on dev: the fiscal-year close's bank row (no year to close).
+  - Checks: the bank tests 393/393; typecheck clean; focused lint, spelling, tokens, CSS purity clean;
+    `check:layout --only=admin-accounting-bank` clean at 361/390/768/1440.
+- [ ] **BC9b** — the walk's findings, `/marketing` puts "bank reconciliation" back (R-c) and settles the collisions;
+  `/demos` decides on sandbox seeds.
 
 ### Neighbours
 - **Stage 12:** reuses the Payouts reader (P4 proved). An app-landed club-pays payout seen in a browser is still owed

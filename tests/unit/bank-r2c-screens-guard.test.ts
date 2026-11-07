@@ -478,6 +478,16 @@ describe('12. BC5a: the Overview line and the fiscal-year close row (ask 4, R0 t
     assert.match(tab, /if \(arrived\.current === null\) arrived\.current = \{ account: search\.get\('account'\), check: search\.get\('check'\) \};/);
     assert.match(tab, /arrived\.current = \{ account: null, check: null \};/);
     assert.match(tab, /rest\.delete\('account'\); rest\.delete\('check'\);/);
+    // BC9a (owner "Club findings before the walk" 2026-11-07): the window opens only once the address no longer carries
+    // the keys — never in the effect that replaces it (Back after closing reopened the check on the coach side, BC8a).
+    const strip = tab.slice(tab.indexOf('const pendingCheck = useRef'), tab.indexOf('}, [view, router, pathname]);'));
+    assert.doesNotMatch(strip, /setWin\(/);
+    assert.match(tab, /if \(!id \|\| search\.has\('account'\) \|\| search\.has\('check'\)\) return;\s*pendingCheck\.current = null;\s*setWin\(\{ kind: 'check', id \}\);/);
+  });
+  it('the printed check’s items row may break across sheets (a near-page list never jumps whole to sheet two)', () => {
+    const css = readCode(`${DIR}/BankReport.module.css`);
+    assert.match(css, /\.items tr, \.sums > tbody > tr \{ break-inside: avoid; \}/);
+    assert.match(css, /\.sums > tbody > tr:has\(> \.itemsCell\) \{ break-inside: auto; \}/);
   });
   it('the close row: a fifth kind from the server, no count, no figure, its door the Bank tab; never stored by the close', () => {
     const reads = readCode('lib/club-fiscal-reads.ts');

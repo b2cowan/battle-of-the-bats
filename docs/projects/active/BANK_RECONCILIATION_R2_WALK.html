@@ -1,0 +1,307 @@
+<title>Club Bank Tab Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box (the house walk frame). */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .facts { grid-template-columns: 1fr; } .facts dd { margin-bottom: 6px; } }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.call { font-size: 13px; color: var(--warn); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+.opts { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; }
+.opt { display: flex; gap: 8px; align-items: flex-start; font-size: 0.95em; }
+.opt input { margin-top: 3px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · Bank reconciliation · R2, the club's Bank tab · §461</span>
+    <h1>A treasurer's month end: set up the club's bank account, check a statement to $0.00, undo it, and add a second account</h1>
+    <p class="sub">Written 2026-11-05 for R2 (desk <code>7d7b79cdb</code>, the payout fix <code>aa106bac8</code>, phone <code>d4ca80052</code>). The figures below come from the dev club's own lines and Stripe test payouts as they stood on November 5.</p>
+  </header>
+  <section class="card"><h2>What this walk is for</h2><p>The Bank tab is where a club treasurer checks the books against the bank statement. Until now it has only been driven by scripts. This walk is the human half: you do one treasurer's month end on a phone, the way a volunteer would at the kitchen table. You set up the account, tick the statement line by line (including Stripe payouts that arrive as one deposit), add the bank fee the books don't have, and mark it checked. Then you undo it, add a second account at a desk, and void the fee to see what a checked statement does when the books change under it.</p></section>
+  <section class="card"><h2>It passes when</h2><ul>
+    <li>The first-time setup takes the starting day, the balance then and the lines still outstanding then, and opens a statement.</li>
+    <li>On a phone, the Difference stays pinned at the top and Mark checked stays in reach at the bottom while you tick, and every row ticks with one tap.</li>
+    <li>A Stripe payout is one row that opens to show the lines inside it, and a payout that doesn't add up names why.</li>
+    <li>With everything ticked the Difference is <strong>$12.40</strong>; the bank fee brings it to <strong>$0.00</strong>; only then can you mark it checked.</li>
+    <li>Undo needs a reason, reopens the statement with its ticks, and the list says who undid it and why.</li>
+    <li>A second account takes a book with it, and the Account pill switches between the two.</li>
+    <li>Voiding the fee in the Ledger shows on the checked statement: the line is marked and the Difference goes back to $12.40.</li>
+  </ul></section>
+  <section class="card"><h2>Not in this walk</h2><ul>
+    <li><strong>"Changed since it was checked"</strong> (the amber chip and Look again). Nothing in the product records a change yet; that is R3's job. A script checked the screen with a made-up change.</li>
+    <li><strong>A member who can read the Bank tab but not work in it.</strong> On the club side there is no such member: whoever can open Accounting can also move club money. The read-only view will be walked on the coach side (R5), where read and write are separate permissions.</li>
+    <li><strong>The closed fiscal year fee window.</strong> The scripted walk checked it (a statement ending in the closed 2025–26 year offers today's date).</li>
+    <li><strong>The coach's Bank view</strong> (R4–R6), the help articles and the wording pass (R3).</li>
+  </ul></section>
+  <section class="card"><h2>Before you start</h2><dl class="facts">
+    <dt>Server</dt><dd>The dev server on this computer, <strong>http://localhost:3000</strong>, running <code>npm run dev</code>.</dd>
+    <dt>A phone</dt><dd>A real phone on the same Wi-Fi works best: use this computer's address instead of <code>localhost</code> (for example <code>http://192.168.1.20:3000</code>). Otherwise use Chrome's device toolbar (Ctrl+Shift+M) at <strong>390</strong> wide. Parts B to E are on the phone; F to H are at a desk.</dd>
+    <dt>The club must be empty</dt><dd>The dev club's Bank tab must open on <strong>"Check the club’s books against the bank"</strong> (no account yet). Part A checks it. If it shows an account, another session's script is using the club: stop and tell me.</dd>
+    <dt>Figures</dt><dd>The ending balance you type, <strong>8704.35</strong>, is set so that ticking everything leaves exactly $12.40 for the fee. If the Difference after ticking everything is not $12.40, the dev club's lines changed since November 5: stop at C6 and tell me. Row counts like "0 of 30 ticked" are only examples.</dd>
+    <dt>Each step writes</dt><dd>Account, statement, ticks, the fee, the undo and the void all save as you go. That is fine on dev.</dd>
+    <dt>When done</dt><dd>Tell me, and I'll remove the two walk accounts so the scripted checks can run on the club again. The voided fee line stays in the Ledger, voided.</dd>
+  </dl></section>
+  <section class="card"><h2>Sign in as</h2><dl class="facts">
+    <dt>Treasurer</dt><dd><code>uat-club-treasurer@uat-rep-club.local</code> · <code>UATPassword2026!</code> (Avery Chen, treasurer of UAT Rep Club)</dd>
+    <dt>Sign-in link</dt><dd><code>http://localhost:3000/auth/login?next=/uat-rep-club/admin/accounting/bank</code> (on the phone, your computer's address in place of <code>localhost</code>)</dd>
+    <dt>Keep it private</dt><dd>A dev-only password, and this page carries it.</dd>
+  </dl></section>
+  <section class="card"><h2>Calls to make as you go</h2><ul>
+    <li><strong>Part I</strong> asks two questions that came out of the build: the words shown when Stripe doesn't answer, and whether a statement with a ticked payout may be marked checked while Stripe is down. One box per answer.</li>
+    <li><strong>"Didn't go through the bank"</strong> shows under every unticked line, cheques included, because the screen doesn't yet know how each line was paid. Note it if it gets in your way on the phone. The fix is on the server's list for later.</li>
+    <li><strong>Wording</strong> is R3's to polish. Note only what is wrong or confusing, not what is plain.</li>
+  </ul></section>
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+</main>
+
+<script>
+(function () {
+  var KEY = "qa-461-bank-r2-walk-v1";
+  var TITLE = "Bank reconciliation R2 · the club's Bank tab · walk §461 (written 2026-11-05)";
+  var PH = "Treasurer · phone";
+  var DK = "Treasurer · desk";
+  var PARTS = [
+ { id: "A", title: "The club has no bank account yet", steps: [
+  { who: DK, do: "Sign in with the link above and open <strong>Accounting → Bank</strong> (Bank is right after Ledger).",
+    see: "The tab opens on <strong>“Check the club’s books against the bank”</strong>, the first-time setup. There is no Year pill on this tab. <em>If an account shows instead, stop here and tell me.</em>" }
+ ]},
+ { id: "B", title: "Open the account (phone)", steps: [
+  { who: PH, do: "On the phone, open the same tab (Accounting → Bank; swipe the tab row if Bank is off the edge).",
+    see: "The same setup, in one column. Nothing runs off the side of the screen." },
+  { who: PH, do: "Name it <strong>Walk chequing</strong>. Starting date <strong>Sep 30, 2026</strong>. Balance then <strong>5000.00</strong>.",
+    see: "Below it, the club's lines from the 30 days up to Sep 30 as rows, newest first. Near the top: <strong>Tournament float</strong>, $500.00 out, Sep 29." },
+  { who: PH, do: "Tap anywhere on the <strong>Tournament float</strong> row.",
+    see: "The whole row ticks (not only the small box). Tap again and it unticks; leave it ticked." },
+  { who: PH, do: "Add a typed line: <strong>Cheque #188</strong>, <strong>$75.00</strong>, <strong>Sep 20, 2026</strong>, money out.",
+    see: "It joins the still-outstanding list with a round remove button beside it, big enough for a thumb." },
+  { who: PH, do: "Tap <strong>Save and check a statement</strong>. In the window, the statement ends <strong>Nov 5, 2026</strong>, ending balance <strong>8704.35</strong>. Tap <strong>Start checking</strong>.",
+    see: "The statement opens: “Statement ending Nov 5, 2026”, the joined band <strong>Statement · Ticked · Difference</strong>, and a one-line strip with the Difference and “0 of N ticked”. At the bottom, above the phone bar: <strong>Finish later</strong> and a greyed <strong>Mark checked</strong>, with “The difference must be $0.00 first.” under them." }
+ ]},
+ { id: "C", title: "Tick the statement, payouts included (phone)", steps: [
+  { who: PH, do: "Scroll down the list.",
+    see: "The band scrolls away, but the strip stays pinned under the club header and the two buttons stay at the bottom. Nothing slides under the header." },
+  { who: PH, do: "Tap a few rows anywhere on the row.",
+    see: "Each tap ticks its row; the strip's count and Difference change with each one. Amounts carry their direction as a sign (−$75.00 out, +$… in)." },
+  { who: PH, do: "Under an unticked line, tap <strong>Didn’t go through the bank</strong>. Then above the list tap <strong>Show</strong> beside “Kept out of the bank”, and <strong>Put it back</strong>.",
+    see: "The line leaves the list and “Kept out of the bank: 1 line” appears. Put it back returns it to the list, unticked." },
+  { who: PH, do: "Find the <strong>Stripe payout</strong> row of <strong>+$280.50</strong> (“11 lines inside · arrived Nov 2”). Tap the arrow at its right edge, not the row.",
+    see: "It opens full width below the row: eleven registrations and, at the foot, <strong>“These 11 lines add up to $280.50, the amount Stripe paid in.”</strong> with a check mark. Opening it did not tick it. A tap inside the opened lines doesn't tick either." },
+  { who: PH, do: "Open the other Nov 2 payout, <strong>+$984.75</strong>.",
+    see: "“These 11 lines add up to <strong>+$703.25</strong>.” then <strong>“Not in your books: Stripe paid in $281.50 more than these lines add up to.”</strong> and the reason, <strong>Not from FieldLogicHQ: $281.50</strong>. Also open the Oct 28 payout of +$193.25: its reasons include <strong>Dispute held: $171.75</strong>." },
+  { who: PH, do: "Tick every row that is left, payouts too (a payout ticks as one row). Tip: Show → Unticked lines.",
+    see: "The strip reads <strong>Difference $12.40</strong>. A yellow box says <strong>“The statement shows $12.40 less than you’ve ticked.”</strong> with <strong>Add a bank fee or interest</strong> and <strong>Find by amount</strong> stacked full width. Finish later is not in the box; it stays at the bottom. <em>If the Difference is not $12.40, stop and tell me.</em>" }
+ ]},
+ { id: "D", title: "Add the bank fee and mark it checked (phone)", steps: [
+  { who: PH, do: "Tap <strong>Add a bank fee or interest</strong>.",
+    see: "A full-screen window: Bank fee picked, <strong>$12.40</strong> filled in, dated <strong>Nov 5, 2026</strong>, and a line naming the book it goes into and saying it ticks on this statement." },
+  { who: PH, do: "Type <strong>Monthly account fee</strong> under What, then <strong>Add and tick</strong>.",
+    see: "Back on the statement: the fee line is there, ticked. The Difference reads <strong>$0.00</strong> in green with “Ready to mark checked”. The line under the buttons is gone and <strong>Mark checked</strong> is lit." },
+  { who: PH, do: "Tap <strong>Mark checked</strong>.",
+    see: "<strong>“The Nov 5, 2026 statement is checked.”</strong> The list shows the statement as a card with a chevron: “Nov 5, 2026 · $8,704.35”, and under it <strong>Avery Chen · Nov 5, 2026</strong> (who checked it, and when). Walk chequing reads as checked through Nov 5, 2026." }
+ ]},
+ { id: "E", title: "Undo it, then mark it checked again (phone)", steps: [
+  { who: PH, do: "Tap the card.",
+    see: "The statement opens to read: no tick boxes, no Didn't-go links, no buttons at the bottom. <strong>Undo</strong> sits at the foot of the statement." },
+  { who: PH, do: "Tap <strong>Undo</strong>. In the window, tap <strong>Undo the check</strong> with the reason empty.",
+    see: "“Undo the check of the Nov 5, 2026 statement?” It won't undo without a reason and asks you to say why." },
+  { who: PH, do: "Type <strong>Walk test</strong> and tap <strong>Undo the check</strong>.",
+    see: "<strong>“The Nov 5, 2026 statement is open again, with its ticks.”</strong> Every tick is still there, the Difference is $0.00, and the two buttons are back at the bottom." },
+  { who: PH, do: "Tap <strong>Finish later</strong>.",
+    see: "The list: the card now wears a <strong>Checking</strong> chip, and under it <strong>Undone by Avery Chen</strong>, the time, and <strong>“Walk test”</strong>." },
+  { who: PH, do: "Open the card again and tap <strong>Mark checked</strong>.",
+    see: "Checked again: “The Nov 5, 2026 statement is checked.” The card is back to Avery Chen · Nov 5, 2026, with no Checking chip." }
+ ]},
+ { id: "F", title: "The same statement at a desk", steps: [
+  { who: DK, do: "On the computer, open Accounting → Bank.",
+    see: "The statements as a table: the Nov 5, 2026 row with its ending balance, lines ticked, and who checked it (Avery Chen) and when." },
+  { who: DK, do: "Open the statement.",
+    see: "The same figures as on the phone (Difference $0.00), in a table with money in and money out in two columns, each payout one grouped row, the Monthly account fee among the lines. No strip and no bottom buttons at this width." }
+ ]},
+ { id: "G", title: "A second account takes a book with it (desk)", steps: [
+  { who: DK, do: "Back on the statements list, tap <strong>Add an account</strong> (a quiet link beside the list). Name it <strong>Walk gaming</strong>. In its books, tap <strong>Stripe Walk Invitational</strong>.",
+    see: "The book's row says it moves from Walk chequing. Tapping the book's name ticks it." },
+  { who: DK, do: "Add it.",
+    see: "Walk gaming's own setup (its starting date and balance). An <strong>Account</strong> pill now sits at the top of the tab." },
+  { who: DK, do: "Use the Account pill to switch to <strong>Walk chequing</strong>, then back to Walk gaming.",
+    see: "Walk chequing still shows its checked Nov 5, 2026 statement, unchanged. Leave Walk gaming's setup unfinished; nothing depends on it." }
+ ]},
+ { id: "H", title: "Void the fee: the checked statement shows it (desk)", steps: [
+  { who: DK, do: "Go to <strong>Accounting → Ledger</strong>, find <strong>Monthly account fee</strong> ($12.40, Nov 5) and open it. <strong>Void this line</strong>, reason <strong>Walk clean-up</strong>, then <strong>Void the line</strong>.",
+    see: "The line reads Void with your reason." },
+  { who: DK, do: "Back to <strong>Bank</strong>, account Walk chequing, open the Nov 5, 2026 statement.",
+    see: "The fee line carries <strong>“Voided since it was ticked”</strong>, and the Difference is back to <strong>$12.40</strong> (a voided line stops counting). The statement stays checked: the amber “changed since” marker on the list is R3's, not yet built." }
+ ]},
+ { id: "I", title: "Two calls from the build", steps: [
+  { who: "You", do: "<strong>When Stripe doesn't answer</strong>, the statement says today: “Stripe didn’t answer, so payouts can’t be grouped right now. Their lines show one by one until it does.” That is no longer true of a payout already ticked: it stays grouped as you ticked it. Proposed: “Stripe didn't answer, so new payouts can't be grouped right now: their lines show one by one until it does. A payout you already ticked stays as you ticked it.”",
+    see: "Pick one.",
+    options: ["Use the proposed words", "Keep today's words", "Something else (say what in the notes)"] },
+  { who: "You", do: "<strong>Marking checked while Stripe is down.</strong> A statement holding a ticked payout can be marked checked while Stripe isn't answering (it adds up on the figures saved at the tick). On a phone the Stripe warning scrolls away under the pinned strip, while Mark checked stays in reach at the bottom.",
+    see: "Pick one.",
+    options: ["Leave it as it is", "Show a warning beside Mark checked while Stripe is down", "Refuse to mark it checked until Stripe answers", "Something else (say what in the notes)"] }
+ ]}
+];
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var steps = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', (s.options ? '' : 'You should see: ') + s.see));
+      if (s.call) t.appendChild(el('span', 'call', s.call));
+      var rec = { part: p.id, step: id, boxes: [], options: s.options || null };
+      if (s.options) {
+        // One box per answer: the tick IS the answer, and the summary prints which one.
+        var opts = el('span', 'opts');
+        s.options.forEach(function (label, k) {
+          var oid = id + String.fromCharCode(97 + k);
+          var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + oid; cb.checked = !!state.ticks[oid];
+          cb.addEventListener('change', function () { state.ticks[oid] = cb.checked; save(); refresh(); });
+          rec.boxes.push({ cb: cb, label: label });
+          var o = el('label', 'opt'); o.appendChild(cb); o.appendChild(el('span', null, label)); opts.appendChild(o);
+        });
+        t.appendChild(opts);
+        var row = el('div', 'step'); row.appendChild(el('span', null, '')); row.appendChild(t); body.appendChild(row);
+      } else {
+        var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+        cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+        rec.boxes.push({ cb: cb, label: null });
+        var row2 = el('label', 'step'); row2.appendChild(cb); row2.appendChild(t); body.appendChild(row2);
+      }
+      steps.push(rec);
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function isDone(r) { return r.boxes.some(function (b) { return b.cb.checked; }); }
+  function doneSteps(partId) { return steps.filter(function (r) { return (!partId || r.part === partId) && isDone(r); }); }
+  var totalSteps = steps.length;
+
+  function refresh() {
+    PARTS.forEach(function (p) {
+      var n = doneSteps(p.id).length;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + p.steps.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    var done = doneSteps(null).length;
+    document.getElementById('total').textContent = done + ' of ' + totalSteps + ' checked';
+    document.getElementById('barfill').style.width = (totalSteps ? Math.round(done * 100 / totalSteps) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [TITLE, 'Checked ' + doneSteps(null).length + ' of ' + totalSteps + ' steps'];
+    PARTS.forEach(function (p) {
+      var ticked = doneSteps(p.id);
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + p.steps.length
+        + (ticked.length ? ' (' + ticked.map(function (r) { return r.step; }).join(', ') + ')' : ''));
+      ticked.filter(function (r) { return r.options; }).forEach(function (r) {
+        lines.push('  ' + r.step + ': ' + r.boxes.filter(function (b) { return b.cb.checked; }).map(function (b) { return b.label; }).join(' + '));
+      });
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    steps.forEach(function (r) { r.boxes.forEach(function (b) { b.cb.checked = false; }); });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

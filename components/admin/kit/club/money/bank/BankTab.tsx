@@ -105,12 +105,17 @@ export default function BankTab({ orgSlug }: { orgSlug: string }) {
   }, [accountId, heldAccountId, loadView]);
   useDeferredLoad(!!accountId, loadWanted);
 
-  // The door's check opens once its account is on screen; then the address forgets both (header).
+  // The door's check: once its account is on screen the address forgets both keys (header), and the window opens only
+  // when the address SAYS it forgot them (the search params without either). ⚠ Never in the same step (BC9a, owner
+  // "Club findings before the walk" 2026-11-07; the coach door's BC8a lesson): the window's Back step pushes its entry as
+  // it opens, and a replace still in flight lands on that entry and leaves the key one Back away, so Back after closing
+  // reopened the check.
+  const pendingCheck = useRef<string | null>(null);
   useEffect(() => {
     const a = arrived.current;
     if (!view || !a || (!a.account && !a.check)) return;
     if (a.check && view.account.id === a.account && (view.start?.id === a.check || view.checks.some(c => c.id === a.check))) {
-      setWin({ kind: 'check', id: a.check });
+      pendingCheck.current = a.check;
     }
     arrived.current = { account: null, check: null };
     // Only the door's two keys go; anything else in the address stays (/review BC5a).
@@ -119,6 +124,12 @@ export default function BankTab({ orgSlug }: { orgSlug: string }) {
     const qs = rest.toString();
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
   }, [view, router, pathname]);
+  useEffect(() => {
+    const id = pendingCheck.current;
+    if (!id || search.has('account') || search.has('check')) return;
+    pendingCheck.current = null;
+    setWin({ kind: 'check', id });
+  }, [search, view]);
 
   if (failed) return <LoadFailed title={W.loadFailed} onRetry={() => void loadOverview()} />;
   if (!overview) return <LoadingState label={W.loading} />;

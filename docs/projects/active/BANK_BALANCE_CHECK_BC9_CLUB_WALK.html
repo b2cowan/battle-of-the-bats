@@ -1,0 +1,350 @@
+<title>A Treasurer’s Month End</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column; a walk index of cards, one walk open at a time; steps as Do / You should see rows with a tick. */
+:root {
+  --bg: #f4f6f5; --surface: #ffffff; --ink: #18211d; --muted: #5b6862; --line: #d5ddd9;
+  --accent: #1f6b4f; --accent-soft: #e2efe9; --warn: #9a5b00; --warn-soft: #fbefd9; --bad: #a3322b; --bad-soft: #f8e3e1;
+  --font-body: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font-body); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+.wrap { max-width: 860px; margin: 0 auto; display: grid; gap: 20px; }
+h1 { font-size: 30px; line-height: 1.15; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-size: 19px; margin: 0; text-wrap: balance; }
+h3 { font-size: 13px; margin: 0; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font: 600 12px/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.lead { color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 12px; min-width: 0; }
+.signin { border-color: var(--accent); }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+.amt { font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.note { background: var(--warn-soft); border-radius: 8px; padding: 10px 12px; }
+ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.index { display: grid; gap: 8px; }
+.wcard { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font: inherit; color: inherit; cursor: pointer; }
+.wcard[aria-expanded="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.wcard:focus-visible, button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wcard .t { font-weight: 600; }
+.wcard .j { grid-column: 1; color: var(--muted); font-size: 14px; }
+.chip { grid-row: 1 / span 2; grid-column: 2; font: 600 12px/1 var(--font-body); padding: 6px 9px; border-radius: 999px; background: var(--bg); color: var(--muted); border: 1px solid var(--line); white-space: nowrap; }
+.chip.prog { color: var(--accent); border-color: var(--accent); }
+.chip.pass { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.chip.issue { background: var(--bad-soft); color: var(--bad); border-color: transparent; }
+.chip.call, .chip.thin { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+.walk { display: grid; gap: 14px; }
+.meta { display: grid; gap: 10px; }
+.meta div { display: grid; gap: 2px; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.step { display: grid; grid-template-columns: 28px 1fr; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.step.done { border-color: var(--accent); background: var(--accent-soft); }
+.step.stop { border-style: dashed; border-color: var(--warn); }
+.step input[type="checkbox"] { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); }
+.step .body { display: grid; gap: 6px; min-width: 0; }
+.step .who { font: 600 11px/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.07em; color: var(--warn); }
+.step .lab { font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.opts { display: grid; gap: 6px; }
+.opts label { display: flex; gap: 8px; align-items: flex-start; }
+.verdict { display: flex; flex-wrap: wrap; gap: 8px; }
+.verdict button, .btn { font: 600 14px/1 var(--font-body); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.verdict button.on[data-v="pass"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+.verdict button.on[data-v="issue"] { background: var(--bad); color: var(--surface); border-color: var(--bad); }
+.verdict button.on[data-v="call"] { background: var(--warn); color: var(--surface); border-color: var(--warn); }
+textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5 var(--font-body); padding: 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.out { font: 13px/1.5 var(--font-mono); white-space: pre-wrap; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.progress { font-weight: 600; }
+@media (max-width: 520px) { .kv { grid-template-columns: 1fr; } .kv dt { margin-top: 6px; } h1 { font-size: 25px; } }
+@media (prefers-reduced-motion: no-preference) { .step { transition: background-color 0.15s, border-color 0.15s; } }
+</style>
+
+<div class="wrap">
+  <header class="card" style="gap:8px">
+    <span class="eyebrow">Bank balance check · BC9 · Owner QA Ledger §481</span>
+    <h1>A treasurer’s month end</h1>
+    <p class="lead">The club side of the bank check, walked by you: a matching month, a second account, an off month you find the gap in, the same on a phone, then the printed check and the Overview. About 40 minutes. The coach side is its own page (§482).</p>
+    <p class="lead">Written Nov 7, 2026 against the dev site. The dates you type are fixed (Oct and Nov 2026) and never drift. The balances are not pinned: every step tells you what to type relative to the band’s <b>Should be in the bank</b> figure, which you read off the screen. The club’s Stripe line (“Online payments on their way”) moves with dev’s test payments; it is not the pass condition.</p>
+    <p class="progress" id="progress">Checked 0 of 0</p>
+  </header>
+
+  <section class="card signin" aria-labelledby="signin-h">
+    <h2 id="signin-h">Sign in as</h2>
+    <dl class="kv">
+      <dt>Where</dt><dd><code>http://localhost:3000</code> (dev; the dev server must be running)</dd>
+      <dt>Account</dt><dd><code>uat-club-treasurer@uat-rep-club.local</code> · password <code>UATPassword2026!</code><br>Avery Chen, Treasurer of <b>UAT Rep Club</b> (moves the club’s money). Every walk on this page uses this one account.</dd>
+      <dt>Start here</dt><dd><code>localhost:3000/uat-rep-club/admin/accounting/bank</code></dd>
+      <dt>Phone</dt><dd>Walk 4 is a phone walk: your desk browser’s device toolbar at <b>390 px</b> wide (a real phone can’t reach localhost).</dd>
+    </dl>
+    <p class="lead">Dev-only sign-in. Keep this page private.</p>
+  </section>
+
+  <section class="card" aria-labelledby="before-h">
+    <h2 id="before-h">Before you start</h2>
+    <ul class="plain">
+      <li><b>The setup is in place</b> (I ran it). On <b>UAT Rep Club — General</b>: <b>Cheque 1042 · Diamond groundskeeping</b>, <span class="amt">$350.00</span> out, Oct 28, 2026 (a cheque the bank hasn’t cashed), and 25 × <b>Cheque 2001–2025 · Umpire fee</b>, <span class="amt">$10.00</span> out each, Nov 6, 2026 (the long printed check). A book <b>Walk gaming book</b>: <b>Bingo night deposit</b> <span class="amt">$1,200.00</span> in, Oct 20, 2026, and <b>Cheque 3001 · Hall rent</b> <span class="amt">$275.00</span> out, Oct 25, 2026.</li>
+      <li><b>Walk chequing</b> holds only its starting statement (Sep 30, 2026). Every club book sits in it until you move one.</li>
+      <li><b>Walk the walks in order, 1 to 5.</b> Each one starts from what the one before saved, and opens with a stop check.</li>
+      <li>When the walk asks you to add a bank fee, name it <b>Walk: bank fee</b>, so the clean-up finds it. After you paste the summary back I remove everything the setup and the walk made.</li>
+    </ul>
+  </section>
+
+  <section class="card" aria-labelledby="proved-h">
+    <h2 id="proved-h">Already proved by scripts (don’t re-do the arithmetic)</h2>
+    <ul class="plain">
+      <li>The whole story on this page, played through the product’s own server on Nov 7: every figure, match and “Off by” below came out as written (38 of 38).</li>
+      <li>Today’s two club fixes, in a browser: Back after closing a check opened from the Overview’s chip stays closed (desk and phone), and a check with a long Not in the bank yet list starts the list on sheet one and repeats its heading on sheet two.</li>
+      <li>The sums, the refusals (a future date, a second check on one date, a line before the start) and who may write (a reader sees no form): BC1–BC5’s tests and build guards.</li>
+    </ul>
+    <p class="lead">Your time goes on judgment: do the words, the order and the screens make sense to a treasurer?</p>
+  </section>
+
+  <section aria-labelledby="index-h" style="display:grid;gap:10px">
+    <h2 id="index-h">The walks</h2>
+    <div class="index" id="index"></div>
+  </section>
+
+  <section id="walkHost"></section>
+
+  <section class="card" aria-labelledby="sum-h">
+    <h2 id="sum-h">Paste-back (all walks)</h2>
+    <div class="row">
+      <button class="btn" type="button" id="copyAll">Copy the summary</button>
+      <button class="btn" type="button" id="reset">Clear my ticks</button>
+      <span class="lead" id="copied" aria-live="polite"></span>
+    </div>
+    <div class="card out" id="out" tabindex="0"></div>
+  </section>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var KEY = "bc9-club-walk-v1";
+  var PAGE = "BC9 · A treasurer’s month end (club) · Owner QA Ledger §481";
+  var WALKS = [
+    { id: "W1", title: "A month that matches", job: "Walk chequing · Oct 15, 2026 · desk",
+      forText: "The plainest month end: a statement that agrees with the books. It shows the Bank tab reads right to a treasurer, and that the Overview picks the check up.",
+      passes: "Oct 15 saves as Matches, and the Overview line names Walk chequing checked through Oct 15, 2026, with no chip.",
+      notIn: "Finding a gap (walk 3). The phone (walk 4).",
+      where: "Desk. Accounting → Bank, then Accounting → Overview.",
+      steps: [
+        { d: "Open Accounting → Bank (<code>/uat-rep-club/admin/accounting/bank</code>).", s: "One account, <b>Walk chequing</b>, with <b>Add an account</b> and <b>Name and books</b> beside it. The top line reads <b>Not checked yet</b>. The <b>Check a statement</b> card sits above <b>Checked statements</b>, and the list says <b>No statements checked since the starting point yet.</b> beside the Starting point, Sep 30, 2026." },
+        { d: "In Check a statement, set <b>Statement date</b> to <b>Oct 15, 2026</b>. Leave the balance empty.", s: "The band: <b>The bank says</b> (“Type the balance to see it”) · <b>Should be in the bank</b> (a figure) · <b>Difference</b>. Under it, <b>How “Should be in the bank” is worked out</b>: Your books on Oct 15, 2026, and Online payments on their way to your bank." },
+        { d: "Type the <b>Should be in the bank</b> figure into <b>Bank balance on that date</b>.", s: "Difference reads <b>Matches</b>, with “The bank and your books agree on Oct 15, 2026.” No Find appears." },
+        { d: "Press <b>Save this check</b>.", s: "“Checked Oct 15, 2026. The bank and your books agree.” The top line now reads <b>Checked through Oct 15, 2026</b> · Matches, and Checked statements has an Oct 15, 2026 row: The bank said · Should have been · Matches · Checked by Avery Chen with today’s time." },
+        { d: "Open Accounting → Overview.", s: "Beside “Where the club stands”: <b>Bank: Walk chequing checked through Oct 15, 2026 ›</b>, and no amber chip." },
+        { d: "Click that line.", s: "The Bank tab on Walk chequing, with no window open." },
+        { d: "Read the tab once as a treasurer would.", s: "The words and the order make sense for a month end. Put any word you would change in the notes." }
+      ] },
+    { id: "W2", title: "A second account", job: "Gaming account · start Oct 31 · check Nov 5, 2026 · desk",
+      forText: "A club with gaming money keeps it in its own account. This walk adds that account, moves a book into it, starts it from a statement, and meets the one thing a first check trips on: a cheque written before the start that cleared after it (“Waiting at the start”).",
+      passes: "Gaming account holds the Walk gaming book, starts on Oct 31, 2026 at $1,200.00, and its Nov 5, 2026 check at $925.00 matches once Cheque 3001 is waiting at the start.",
+      notIn: "Moving a book back. Deleting an account (not built: an account stays).",
+      where: "Desk. Accounting → Bank.",
+      steps: [
+        { stop: true, d: "Stop check: Walk chequing’s Checked statements holds <b>Oct 15, 2026 · Matches</b>.", s: "If it doesn’t, walk 1 isn’t finished: stop here." },
+        { d: "Press <b>Add an account</b>. Name it <b>Gaming account</b>. In the books list, tick <b>Walk gaming book</b>.", s: "The ticked book says <b>moves from Walk chequing</b>, and the window says: “Saved checks keep the books they counted. The next check of each account counts this book where it is now.” A name only: the hint warns never to type the account number." },
+        { d: "Press <b>Add and start it</b>.", s: "“Gaming account is added. Start it from a statement.” The card <b>Start checking Gaming account</b>, with Statement date and Bank balance on that date." },
+        { d: "Type <b>Oct 31, 2026</b> and <b>$1,200.00</b>, then <b>Start here</b>.", s: "An <b>Account</b> pill appears (two accounts now), on Gaming account. Its list holds the Starting point, Oct 31, 2026, at $1,200.00." },
+        { d: "Check a statement on Gaming account: <b>Nov 5, 2026</b>, balance <b>$925.00</b>.", s: "Should be in the bank <span class=\"amt\">$1,200.00</span>; “The bank shows $275.00 less than your books.”; <b>Find the $275.00</b> opens." },
+        { d: "Read Find.", s: "Under <b>Before your starting statement · Oct 31, 2026</b>, the callout names <b>Cheque 3001 · Hall rent</b> (Oct 25, 2026): “is exactly $275.00 and dated before your starting statement. If it reached the bank after that statement, that’s the gap.”" },
+        { d: "Press <b>Waiting at the start</b> on Cheque 3001.", s: "“Cheque 3001 · Hall rent is waiting at the start. Checks from now on start from the corrected balance.” Should be in the bank drops to <span class=\"amt\">$925.00</span> and the band reads Matches." },
+        { d: "Press <b>Save this check</b>, then open the <b>Starting point</b> row.", s: "Nov 5, 2026 is saved, Matches. The starting statement’s window lists <b>Waiting at the start · Cheque 3001 · Hall rent</b>, “Marked by Avery Chen on …”, and a <b>Take it off</b> door (don’t press it). Close the window." },
+        { d: "Switch the Account pill to Walk chequing and open <b>Name and books</b>.", s: "Walk gaming book is no longer listed in Walk chequing. Close the window without saving." }
+      ] },
+    { id: "W3", title: "An off month: find the gap", job: "Walk chequing · Oct 31 and Nov 5, 2026 · desk",
+      forText: "The real reason this exists: a statement that doesn’t agree. You find an uncashed cheque, add the bank fee the books are missing, then see what happens when a book line changes after a save, delete a check, and check a statement again.",
+      passes: "Oct 31 saves as Matches with Cheque 1042 not in the bank yet and the fee added; Nov 5 asks “Still waiting?” once; the edited fee shows Books now say; Delete and Check this statement again behave as written.",
+      notIn: "The phone (walk 4). Printing (walk 5).",
+      where: "Desk. Accounting → Bank on Walk chequing, and Accounting → Ledger once.",
+      steps: [
+        { stop: true, d: "Stop check: the Account pill lists <b>Gaming account</b>, checked through Nov 5, 2026.", s: "If it doesn’t, walk 2 isn’t finished: stop here (the gaming book would still count in Walk chequing and every figure below would be off)." },
+        { d: "On Walk chequing, Check a statement: <b>Oct 31, 2026</b>. Note the <b>Should be in the bank</b> figure, then type that figure <b>plus $337.50</b> as the balance.", s: "“The bank shows $337.50 more than your books.” <b>Find the $337.50</b> opens, with the lines since your last match, Oct 15, 2026." },
+        { d: "Type <b>1042</b> in <b>Find an amount or a name</b>. Press <b>Not in the bank yet</b> on <b>Cheque 1042 · Diamond groundskeeping</b> (Oct 28, 2026, $350.00 out).", s: "The line reads “not in the bank yet, counted above” with Undo. The band now says “The bank shows $12.50 less than your books.” and the callout: “The bank took out $12.50 your books don’t have: a fee or a payment you haven’t entered.”" },
+        { d: "Press <b>Add the missing line</b>. In the window, name the line <b>Walk: bank fee</b> and save it.", s: "The Ledger’s own add window, filled with $12.50, Oct 31, 2026 and money out. After the save you’re back on the check and the band reads Matches." },
+        { d: "Press <b>Save this check</b>.", s: "“Checked Oct 31, 2026. The bank and your books agree.” The row reads <b>Matches · 1 line not in the bank yet</b>." },
+        { d: "Check a statement: <b>Nov 5, 2026</b>.", s: "Before anything else: <b>Still waiting on Cheque 1042 · Diamond groundskeeping?</b> with Yes and No." },
+        { d: "Press <b>Yes</b>. Type the <b>Should be in the bank</b> figure as the balance, and save.", s: "Matches. (Should be in the bank already counts the cheque as still out.)" },
+        { d: "Open Accounting → Ledger, find <b>Walk: bank fee</b> (Oct 31, 2026), change it to <b>$15.00</b> and save. Come back to Bank, Walk chequing.", s: "The Oct 31 and Nov 5 rows each show <b>Books now say $…</b>, $2.50 under the books they were saved with. No warning appeared on the Ledger form. Opening Oct 31: “A line dated on or before Oct 31, 2026 changed after this check was saved. This check’s figures stay as they were.”" },
+        { d: "Open the Nov 5 check and press <b>Delete this check</b>.", s: "One question: “Delete the check for Nov 5, 2026? Its figures go; who deleted it and when is kept.” with Keep it and Delete. After Delete: “The check for Nov 5, 2026 is deleted.” and the row is gone." },
+        { d: "Open the Oct 31 check, note <b>The bank said</b>, and press <b>Check this statement again</b>.", s: "The window closes; the form holds Oct 31, 2026 and says “This statement is checked already. Saving replaces that check.”" },
+        { d: "Type the same bank figure. Make sure Cheque 1042 is marked Not in the bank yet (mark it if it isn’t). Save.", s: "“The bank shows $2.50 more than your books.” (the fee is $15.00 now); it saves as off by $2.50. The list holds <b>one</b> Oct 31, 2026 row, Off by $2.50." }
+      ] },
+    { id: "W4", title: "On a phone", job: "Walk chequing · Nov 6, 2026 · 390 px",
+      forText: "A treasurer checking the statement from a phone. The same check and Find, sized for a thumb: the two fields side by side, the sums under the band, Find 10 lines at a time, Save at the very bottom, and no print door.",
+      passes: "Nov 6 saves as Off by $40.00 with the 25 umpire cheques not in the bank yet, done entirely at 390 px, with no sideways scroll and no Print this check.",
+      notIn: "Printing (walk 5, a desk’s door only).",
+      where: "Desk browser, device toolbar at 390 px wide. Accounting → Bank on Walk chequing.",
+      steps: [
+        { stop: true, d: "Stop check: Walk chequing’s list holds Oct 15 (Matches) and one Oct 31 (Off by $2.50), and no Nov 5.", s: "If it doesn’t, walk 3 isn’t finished: stop here." },
+        { d: "Set the browser to 390 px wide and reload the Bank tab.", s: "The Account pill; the Check a statement card with <b>Statement date</b> and <b>Bank balance</b> side by side; nothing scrolls sideways." },
+        { d: "Statement date <b>Nov 6, 2026</b>.", s: "<b>Still waiting on Cheque 1042 · Diamond groundskeeping?</b> Press <b>No</b>: it’s in the bank now." },
+        { d: "Type the middle tile’s figure (<b>Should be there</b>) <b>plus $290.00</b> as the balance.", s: "“The bank shows $290.00 more than your books.” The sums sit under the band, as on a desk. Find opens below, with its search full width." },
+        { d: "Type <b>Umpire</b> in <b>Find an amount or a name</b>.", s: "Cards of <b>Cheque 20NN · Umpire fee</b>, $10.00, Nov 6, 2026, the action under each, <b>10 at a time</b>, with <b>Show 10 more</b>." },
+        { d: "Mark all 25 <b>Not in the bank yet</b> (Show 10 more twice).", s: "“The bank shows $40.00 more than your books.”" },
+        { d: "Scroll to the very bottom.", s: "<b>Save this check</b> is the last thing on the page, under Find, with “It saves as off by $40.00. You can check this statement again later.”" },
+        { d: "Save, then open the Nov 6 check.", s: "Saved, Off by $40.00. The window has <b>no Print this check</b>. Close it." }
+      ] },
+    { id: "W5", title: "The printed check, the Overview, help", job: "Walk chequing and Gaming account · desk",
+      forText: "What a treasurer hands the board or the association, and where the bank shows outside its tab. Includes today’s two fixes: a long list that starts on sheet one, and Back after the Overview’s chip.",
+      passes: "Both printed checks read as the association’s form does (bank first); the long one starts its list on sheet one; the Overview shows one line per account with the amber chip on Walk chequing; Back after closing the chip’s check doesn’t reopen it; help finds “reconciliation”.",
+      notIn: "The fiscal-year close’s bank row: dev has no year to close (2025–26 is closed, 2026–27 ends Aug 31, 2027), so its window can’t open. A BC5a script read its bank row through the server and a build guard pins it.",
+      where: "Desk. Accounting → Bank, Overview, Help.",
+      steps: [
+        { stop: true, d: "Stop check: Walk chequing’s list holds Nov 6, 2026 · Off by $40.00.", s: "If it doesn’t, walk 4 isn’t finished: stop here." },
+        { d: "Back at desk width, open the Nov 6 check and press <b>Print this check</b>. Look at the print preview, then cancel.", s: "“UAT Rep Club · Bank check”, “Walk chequing · statement ending Nov 6, 2026”, Books in this account (no Walk gaming book), then bank first: Bank balance on the statement · the <b>Not in the bank yet</b> table (Date · What · Amount) <b>starting on sheet one</b> · Online payments on their way (the Stripe line) · What your books should say · Your books on Nov 6, 2026 with its starting-point line · Result “The bank shows $40.00 more than your books.” Off by $40.00 · Checked by Avery Chen (Treasurer), with the time · Prepared by / Reviewed by · the foot. No near-empty first sheet; if the list breaks, sheet two repeats its heading." },
+        { d: "Print the Oct 15 check the same way.", s: "One sheet. Result: Matches, with no “The bank shows …” sentence." },
+        { d: "Open the Starting point row.", s: "No Print this check: the starting statement doesn’t print." },
+        { d: "Open Accounting → Overview.", s: "Two lines, in the Bank tab’s account order: <b>Bank: Walk chequing checked through Nov 6, 2026 ›</b> with an amber <b>Off by $40.00</b> chip, and <b>Bank: Gaming account checked through Nov 5, 2026 ›</b> with no chip." },
+        { d: "Click the amber chip.", s: "The Bank tab on Walk chequing, with the Nov 6, 2026 check open over it." },
+        { d: "Close the check. Wait a couple of seconds. Then press the browser’s <b>Back</b>.", s: "It stays closed, and Back takes you to the Overview; the check does <b>not</b> reopen. (Today’s fix.)" },
+        { d: "Open Help → Accounting (<code>/uat-rep-club/admin/help/accounting</code>) and read <b>Checking the bank statement: the Bank tab</b>.", s: "It tells the same story you just walked, in the screen’s words." },
+        { d: "Search help for <b>reconciliation</b>.", s: "The Bank tab article comes up." }
+      ] }
+  ];
+
+  var state = { ticks: {}, verdict: {}, notes: {}, open: "W1" };
+  try { var raw = localStorage.getItem(KEY); if (raw) { var got = JSON.parse(raw); state.ticks = got.ticks || {}; state.verdict = got.verdict || {}; state.notes = got.notes || {}; state.open = got.open || "W1"; } } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  function plain(html) { var d = document.createElement("div"); d.innerHTML = html; return d.textContent.replace(/\s+/g, " ").trim(); }
+  function sid(w, i) { return w.id + "." + (i + 1); }
+  function counts(w) { var n = 0; w.steps.forEach(function (s, i) { if (state.ticks[sid(w, i)]) n++; }); return { done: n, all: w.steps.length }; }
+  var VWORD = { pass: "Passed", issue: "Issue", call: "Needs a call" };
+  function chipOf(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    if (v === "pass" && c.done < c.all) return ["thin", "Passed · only " + c.done + " of " + c.all + " ticked"];
+    if (v) return [v, VWORD[v] + " · " + c.done + " of " + c.all];
+    if (c.done) return ["prog", "In progress · " + c.done + " of " + c.all];
+    return ["", "Not started · " + c.all + " steps"];
+  }
+
+  var index = document.getElementById("index"), host = document.getElementById("walkHost");
+  var cards = {};
+  WALKS.forEach(function (w, wi) {
+    var b = el("button", "wcard");
+    b.type = "button"; b.id = "card-" + w.id; b.setAttribute("aria-controls", "walk-" + w.id);
+    b.appendChild(el("span", "t", "Walk " + (wi + 1) + " of " + WALKS.length + " · " + w.title));
+    b.appendChild(el("span", "j", w.job));
+    var chip = el("span", "chip"); b.appendChild(chip);
+    b.addEventListener("click", function () { state.open = w.id; save(); render(); document.getElementById("walk-" + w.id).scrollIntoView({ block: "start" }); });
+    index.appendChild(b);
+    cards[w.id] = { b: b, chip: chip };
+  });
+
+  function render() {
+    host.innerHTML = "";
+    WALKS.forEach(function (w, wi) {
+      var open = state.open === w.id;
+      cards[w.id].b.setAttribute("aria-expanded", open ? "true" : "false");
+      var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1];
+      if (!open) return;
+      var sec = el("section", "card walk"); sec.id = "walk-" + w.id;
+      sec.appendChild(el("span", "eyebrow", "Walk " + (wi + 1) + " of " + WALKS.length + " · " + w.job));
+      sec.appendChild(el("h2", null, w.title));
+      var meta = el("div", "meta");
+      [["What this walk is for", w.forText], ["It passes when", w.passes], ["Not in this walk", w.notIn], ["Sign in as", w.who || "The treasurer (card at the top)."], ["Where and on what", w.where]].forEach(function (m) {
+        var d = el("div"); d.appendChild(el("h3", null, m[0])); d.appendChild(el("p", null, m[1])); meta.appendChild(d);
+      });
+      sec.appendChild(meta);
+      var ol = el("ol", "steps");
+      w.steps.forEach(function (s, i) {
+        var id = sid(w, i);
+        var li = el("li", "step" + (s.stop ? " stop" : "") + (state.ticks[id] ? " done" : ""));
+        var cb = el("input"); cb.type = "checkbox"; cb.id = "cb-" + id; cb.checked = !!state.ticks[id];
+        cb.setAttribute("aria-label", "Step " + (i + 1) + " done");
+        cb.addEventListener("change", function () { state.ticks[id] = cb.checked; save(); li.className = "step" + (s.stop ? " stop" : "") + (cb.checked ? " done" : ""); refresh(); });
+        li.appendChild(cb);
+        var body = el("div", "body");
+        if (s.stop) body.appendChild(el("span", "who", "Stop check"));
+        body.appendChild(el("span", "lab", (i + 1) + " · Do"));
+        body.appendChild(el("p", null, s.d));
+        body.appendChild(el("span", "lab", "You should see"));
+        body.appendChild(el("p", null, s.s));
+        li.appendChild(body);
+        ol.appendChild(li);
+      });
+      sec.appendChild(ol);
+      sec.appendChild(el("h3", null, "Your verdict on this walk"));
+      var vs = el("div", "verdict");
+      [["pass", "Pass"], ["issue", "Issue"], ["call", "Needs a call"]].forEach(function (v) {
+        var btn = el("button", state.verdict[w.id] === v[0] ? "on" : "", v[1]); btn.type = "button"; btn.setAttribute("data-v", v[0]);
+        btn.setAttribute("aria-pressed", state.verdict[w.id] === v[0] ? "true" : "false");
+        btn.addEventListener("click", function () { state.verdict[w.id] = state.verdict[w.id] === v[0] ? "" : v[0]; save(); render(); });
+        vs.appendChild(btn);
+      });
+      sec.appendChild(vs);
+      var lab = el("label", null, "<h3>Notes</h3>"); lab.setAttribute("for", "notes-" + w.id);
+      sec.appendChild(lab);
+      var ta = el("textarea"); ta.id = "notes-" + w.id; ta.value = state.notes[w.id] || "";
+      ta.placeholder = "What you saw, a word you would change, a question for me";
+      ta.addEventListener("input", function () { state.notes[w.id] = ta.value; save(); refresh(); });
+      sec.appendChild(ta);
+      var row = el("div", "row");
+      var cp = el("button", "btn", "Copy this walk’s summary"); cp.type = "button";
+      var msg = el("span", "lead"); msg.setAttribute("aria-live", "polite");
+      var out = el("div", "card out"); out.tabIndex = 0; out.textContent = walkSummary(w);
+      cp.addEventListener("click", function () { copy(walkSummary(w), out, msg); });
+      row.appendChild(cp);
+      if (wi + 1 < WALKS.length) {
+        var nx = el("button", "btn", "Next: walk " + (wi + 2)); nx.type = "button";
+        nx.addEventListener("click", function () { state.open = WALKS[wi + 1].id; save(); render(); document.getElementById("walk-" + WALKS[wi + 1].id).scrollIntoView({ block: "start" }); });
+        row.appendChild(nx);
+      }
+      row.appendChild(msg);
+      sec.appendChild(row);
+      sec.appendChild(out);
+      sec._out = out; sec._w = w;
+      host.appendChild(sec);
+    });
+    refresh();
+  }
+
+  function walkSummary(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    var lines = [w.id + " " + w.title + " · " + (v ? VWORD[v].toUpperCase() : "NO VERDICT") + " · " + c.done + " of " + c.all + " ticked"];
+    w.steps.forEach(function (s, i) { lines.push("  " + (state.ticks[sid(w, i)] ? "[x] " : "[ ] ") + (i + 1) + ". " + plain(s.d)); });
+    var n = (state.notes[w.id] || "").trim();
+    if (n) lines.push("  Notes: " + n.replace(/\n+/g, " / "));
+    return lines.join("\n");
+  }
+  function allSummary() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; });
+    return [PAGE, "Checked " + done + " of " + total, ""].concat(WALKS.map(walkSummary)).join("\n");
+  }
+  function refresh() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1]; });
+    document.getElementById("progress").textContent = "Checked " + done + " of " + total;
+    document.getElementById("out").textContent = allSummary();
+    var sec = host.querySelector(".walk"); if (sec && sec._out) sec._out.textContent = walkSummary(sec._w);
+  }
+  function copy(text, node, msg) {
+    function pick() { try { var r = document.createRange(); r.selectNodeContents(node); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); msg.textContent = "Selected: press Ctrl+C to copy."; } catch (e) {} }
+    try { navigator.clipboard.writeText(text).then(function () { msg.textContent = "Copied."; }, pick); } catch (e) { pick(); }
+  }
+  document.getElementById("copyAll").addEventListener("click", function () { copy(allSummary(), document.getElementById("out"), document.getElementById("copied")); });
+  var armed = false;
+  document.getElementById("reset").addEventListener("click", function () {
+    var b = document.getElementById("reset");
+    if (!armed) { armed = true; b.textContent = "Press again to clear every tick and note"; return; }
+    armed = false; b.textContent = "Clear my ticks";
+    state = { ticks: {}, verdict: {}, notes: {}, open: "W1" }; save(); render();
+  });
+  render();
+})();
+</script>
