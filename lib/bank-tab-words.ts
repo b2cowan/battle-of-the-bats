@@ -295,4 +295,16 @@ export const BANK_WORDS = {
   coachFindSinceSeasonPhone: (date: string) => `Since the season started · ${date}`,
   // The portal's record windows end on Close (the Ledger's own line window does).
   close: 'Close',
+  // ── the coach's touchpoints (BC8a; R0 tab 7). Drafts for BC8b's `/marketing`. ──
+  // The Money Overview's Cash on hand foot, right of "Ledger": "Bank checked through {date} ›", the amber "Off by $X" chip
+  // beside it when the latest check is off (a door to that check), "Bank not checked yet ›" before the first (owner BC8a).
+  // No "Matches": the line is quiet when all is well, as the club's settled Overview line is.
+  coachOverviewThrough: 'Bank checked through',
+  coachOverviewNotChecked: 'Bank not checked yet',
+  // Start next season / Close the season, only when the season has a check (owner BC8a: never nag a team that doesn't use
+  // it). Drawn R0 tab 7 for Start next season; Close the season starts no season, so its reason is its own (/review BC8a:
+  // the drawn clause promised it a new season's Bank view): a closed season is one page, with no Bank view (B9).
+  coachSeasonWarning: (date: string, verb: 'start' | 'close') => verb === 'start'
+    ? `The bank is checked through ${date}. Check the season’s last statement before you start the new season: the new season’s Bank view starts from its own opening balance.`
+    : `The bank is checked through ${date}. Check the season’s last statement before you close: a closed season has no Bank view.`,
 } as const;

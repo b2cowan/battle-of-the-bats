@@ -252,7 +252,7 @@ export default function CoachesAccountingPage({
      room; `tests/unit/room-address-keys-guard.test.ts` fails the build otherwise. */
   /* ⚠ `handoff` / `handoffAnswer` (Club Tier Stage 5c): the club's hand-off, from its bell or email — `ClubHandoffDoor` opens it
      and scrubs both at once; listed so no other tab's address can ever carry one. */
-  const ONE_SHOT_KEYS = ['starter', 'generate', 'tab', 'view', 'line', 'periods', 'duesView', 'fundraiser', 'kind', 'bill', 'from', 'clubBill', 'handoff', 'handoffAnswer'];
+  const ONE_SHOT_KEYS = ['starter', 'generate', 'tab', 'view', 'line', 'periods', 'duesView', 'fundraiser', 'kind', 'bill', 'from', 'clubBill', 'handoff', 'handoffAnswer', 'bankCheck'];
 
   function sectionHref(id: SectionId, extra?: Record<string, string>) {
     const qp = new URLSearchParams(seasonSearchParams.toString());
@@ -482,6 +482,7 @@ export default function CoachesAccountingPage({
     budgetStarter: sectionHref('budget', { starter: '1' }),
     budgetGenerate: sectionHref('budget', { generate: '1' }),
     payablesSchedule: sectionHref('ledger', { view: 'due' }),
+    bankView: sectionHref('ledger', { view: 'bank' }),
     /* ⚠ `scheduled=1` IS NOT REDUNDANT even though the overlay defaults to on. A coach who turned
        it off would otherwise follow a link about money that has not moved yet and land on a book
        that deliberately excludes it — the link would appear broken, and the row they clicked would
@@ -618,6 +619,7 @@ export default function CoachesAccountingPage({
                  has ended, so there is no archive left to hide it from. */
               payablesApiUrl={`/api/coaches/${orgSlug}/teams/${teamId}/upcoming-payables`}
               hrefs={moneyHrefs}
+              bank={{ orgSlug, teamId }}
             />
           )}
 

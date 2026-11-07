@@ -147,3 +147,44 @@ describe('6 · the phone (BC7b: drawing tab 2, the club\'s BC4b recipe in the po
     assert.match(code('CoachBankView.tsx'), /<CoachRow key=\{c\.id\} as="button" door="chevron" aria-haspopup="dialog" onClick=\{\(\) => setOpenId\(c\.id\)\}/);
   });
 });
+
+describe('7 · the coach\'s touchpoints (BC8a: K6, K7, R0 tab 7; owner BC8a rulings 2026-11-06)', () => {
+  const OVERVIEW = readCode('app/[orgSlug]/coaches/teams/[teamId]/accounting/OverviewDashboard.tsx');
+  const HUB = readCode('app/[orgSlug]/coaches/teams/[teamId]/accounting/page.tsx');
+  const LINE = code('CoachBankOverviewLine.tsx');
+  const CLOSE = readCode('components/coaches/CloseSeasonModal.tsx');
+  const START = readCode('components/coaches/StartNextSeasonModal.tsx');
+  it('the Money Overview line sits in the Cash on hand card above its foot, a door to Ledger → View: Bank', () => {
+    assert.match(OVERVIEW, /\{bank && <CoachBankOverviewLine orgSlug=\{bank\.orgSlug\} teamId=\{bank\.teamId\} href=\{hrefs\.bankView\} \/>\}\s*<div className=\{kit\.foot\}>\s*<Link href=\{hrefs\.transactions\}/,
+      'above the foot, so the three cards\' feet stay one band (the BC8a walk)');
+    assert.match(HUB, /bankView: sectionHref\('ledger', \{ view: 'bank' \}\),/);
+    assert.match(HUB, /bank=\{\{ orgSlug, teamId \}\}/);
+  });
+  it('the line is quiet: a failed read draws nothing, and it never says "Matches" (the club\'s settled line)', () => {
+    assert.match(LINE, /if \(r\.ok\) setView\(r\.view\); else setFailed\(true\);/);
+    assert.match(LINE, /if \(!view\) return failed \? null : /);
+    assert.doesNotMatch(LINE, /W\.matches/);
+    assert.equal(BANK_WORDS.coachOverviewNotChecked, 'Bank not checked yet', 'never checked: the same door (owner BC8a)');
+  });
+  it('every highlight opens what it names: the amber chip opens that check (?bankCheck=, read once)', () => {
+    assert.match(LINE, /<Link href=\{bankCheckHref\(href, t\.id\)\} className=\{b\.chipDoor\}/);
+    assert.match(HUB, /const ONE_SHOT_KEYS = \[[^\]]*'bankCheck'/);
+    const view = code('CoachBankView.tsx');
+    assert.match(view, /useRoomAddress\('bankCheck'\)/);
+    // The address forgets the key BEFORE the window opens (its Back step), on screen only.
+    assert.match(view, /if \(!active\) \{ pendingCheck\.current = null; return; \}\s*if \(askedCheck\) \{ pendingCheck\.current = \{ id: askedCheck, on: view \}; setAskedCheck\(null\); return; \}[^]*?setOpenId\(ask\.id\);[^]*?else if \(view !== ask\.on\) pendingCheck\.current = null;/,
+      'the window opens only once the address no longer carries the key (the BC8a walk: Back reopened it otherwise), waits for a read that has the check, and never opens unasked');
+  });
+  it('the season windows warn only when the season has a check, never block, and the roll knows nothing of the bank', () => {
+    assert.match(code('coachBank.ts'), /if \(current && r\.ok && r\.view\.checkedThrough\) setThrough\(r\.view\.checkedThrough\.date\);/);
+    assert.match(CLOSE, /useSeasonBankWarning\(orgSlug, teamId, 'close'\)/);
+    assert.match(START, /useSeasonBankWarning\(orgSlug, teamId, 'start'\)/);
+    // Start next season holds typed answers: the sentence alone, no door out of the form.
+    assert.doesNotMatch(START, /view=bank/);
+    for (const src of [CLOSE, START]) assert.doesNotMatch(src, /bankWarning[^\n]*disabled|disabled=\{[^}]*bankWarning/, 'warn, never block');
+    assert.doesNotMatch(readCode('lib/rep-season-rollover.ts'), /bank/i);
+  });
+  it('⚖ B (owner BC8a): the club\'s Teams tab shows no bank column — the coach\'s books stay the team\'s', () => {
+    assert.doesNotMatch(readCode('components/admin/kit/club/money/TeamsTable.tsx'), /bank/i);
+  });
+});

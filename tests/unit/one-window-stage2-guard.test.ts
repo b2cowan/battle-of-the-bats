@@ -371,7 +371,8 @@ describe('2c · the hand-built windows with no Tab trap or phone Back move onto 
     assert.doesNotMatch(close, /modalOverlay|useOverlayOpen|addEventListener\('keydown'|useRouter|router\.push/);
     // Its way to Money is a LINK that closes the window as it is clicked: a button that closed and then pushed had
     // its navigation cancelled by the window's Back step (useBackStep's header).
-    assert.match(close, /<Link\s+href=\{`\/\$\{orgSlug\}\/coaches\/teams\/\$\{teamId\}\/accounting`\}[\s\S]*?onClose\(\); \}\}/);
+    // (Bank balance check BC8a: the same link, aimed at the Ledger's Bank view when the bank sentence is the only warning.)
+    assert.match(close, /<Link\s+href=\{`\/\$\{orgSlug\}\/coaches\/teams\/\$\{teamId\}\/accounting(?:\$\{toBankView \? '\?section=ledger&view=bank' : ''\})?`\}[\s\S]*?onClose\(\); \}\}/);
     const budget = readCode('app/[orgSlug]/coaches/teams/[teamId]/accounting/budget/panel.tsx');
     assert.match(budget, /<QuestionShell kind="question" open onClose=\{closeDelete\} busy=\{deleting\}\s+ariaLabel="Delete Budget Line\?"/);
   });

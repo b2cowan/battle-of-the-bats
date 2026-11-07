@@ -5,6 +5,7 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import QuestionShell, { QuestionCancel, QuestionReason } from '@/components/coaches/QuestionShell';
 import { useCoaches } from '@/lib/coaches-context';
 import { possessive } from '@/lib/utils';
+import { useSeasonBankWarning } from '@/components/coaches/bank/coachBank';
 import {
   BRING_ANYWAY_LABEL, DEVELOPMENT_HISTORY_BULLET, documentsWindowLine, ROLL_CHOICE_TITLE, ROLL_LIST_EMPTY, ROLL_LIST_HINT,
   ROLL_LIST_LABEL, ROLL_QUESTION, bornBoxLabel, bornMovedLine, bringAnywayNote, closesLine, comingCount, defaultTicked,
@@ -96,6 +97,8 @@ export default function StartNextSeasonModal({
   // candidates or open scoring exist. Best-effort: a coach without the tryouts grant (or a
   // team that never used tryouts) just sees no line.
   const [tryoutWarning, setTryoutWarning] = useState<string | null>(null);
+  // The bank's sentence (BC8a): a quiet read when the window opens, only when this season has a check.
+  const bankWarning = useSeasonBankWarning(orgSlug, teamId, 'start');
 
   // Only teams that have actually USED tryouts get the check — the nav's own signal. This also
   // skips the fetch for coaches without the tryouts grant (403) and avoids lazily creating a
@@ -540,6 +543,20 @@ export default function StartNextSeasonModal({
             }}>
               <AlertTriangle size={16} style={{ color: 'var(--warning)', flexShrink: 0, marginTop: 2 }} aria-hidden />
               <span style={{ fontSize: '0.85rem', color: 'var(--white-80)', lineHeight: 1.5 }}>{tryoutWarning}</span>
+            </div>
+          )}
+
+          {/* The bank (BC8a; K6, R0 tab 7): when this season has a check, say where it stands before the roll. Warn, never
+              block, and the sentence alone: a door to the Bank view would leave this form and lose what is typed (the
+              one-window rule). The roll itself is untouched (lib/rep-season-rollover.ts knows nothing of the bank). */}
+          {bankWarning && (
+            <div style={{
+              display: 'flex', gap: '0.55rem', alignItems: 'flex-start', marginTop: '1rem',
+              background: 'rgba(var(--warning-rgb), 0.1)', border: '1px solid rgba(var(--warning-rgb), 0.3)',
+              borderRadius: 8, padding: '0.7rem 0.85rem',
+            }}>
+              <AlertTriangle size={16} style={{ color: 'var(--warning)', flexShrink: 0, marginTop: 2 }} aria-hidden />
+              <span style={{ fontSize: '0.85rem', color: 'var(--white-80)', lineHeight: 1.5 }}>{bankWarning}</span>
             </div>
           )}
 

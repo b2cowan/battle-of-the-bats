@@ -7,9 +7,11 @@
  *   it page-wide; this screen shows the server's sentence where the action was, like any refusal.
  * Client-safe.
  */
+import { useEffect, useState } from 'react';
 import type { teamBankView } from '@/lib/bank-coach-steps';
 import { jsonInit, moneyFetch, refusalText } from '@/lib/money-fetch';
 import { BANK_WORDS as W } from '@/lib/bank-tab-words';
+import { dayYear } from '@/lib/bank-screen';
 
 export type TeamBank = Awaited<ReturnType<typeof teamBankView>>;
 export type TeamCheck = TeamBank['checks'][number];
@@ -19,6 +21,13 @@ export type TeamFigure = NonNullable<TeamBank['figure']>;
 export function coachBankUrl(orgSlug: string, teamId: string, path = '', date?: string): string {
   const base = `/api/coaches/${encodeURIComponent(orgSlug)}/teams/${encodeURIComponent(teamId)}/bank${path}`;
   return date ? `${base}?date=${encodeURIComponent(date)}` : base;
+}
+
+/** The Bank view's address (`Money → Ledger → View: Bank`) opened on one saved check: `?bankCheck={id}` (the Overview's
+ *  amber chip, BC8a). The key is CoachBankView's room address — a literal there, so the hub's
+ *  ONE_SHOT_KEYS guard sees it (tests/unit/room-address-keys-guard.test.ts); the view consumes it once it has opened it. */
+export function bankCheckHref(bankViewHref: string, checkId: string): string {
+  return `${bankViewHref}${bankViewHref.includes('?') ? '&' : '?'}bankCheck=${encodeURIComponent(checkId)}`;
 }
 
 /** A read or a write's answer: the bank read (the server's numbers), or its coded refusal in words. */
@@ -42,6 +51,24 @@ async function answer(url: string, init: RequestInit | undefined, fallback: stri
 /** GET the team's bank (with `date`, the figure for that statement day). */
 export const readTeamBank = (orgSlug: string, teamId: string, date?: string, fallback: string = W.coachLoadFailed): Promise<BankAnswer> =>
   answer(coachBankUrl(orgSlug, teamId, '', date), undefined, fallback);
+
+/**
+ * Start next season / Close the season's bank sentence (BC8a; K6, R0 tab 7): "The bank is checked through {date}. Check the
+ * season's last statement before you …", or null. ⚖ Only when the season has a check (owner BC8a: a team that never used
+ * the bank check is not nagged about it), whatever its date. Warn, never block: nothing here touches the roll or the close.
+ * ⚠ QUIET, read when the window OPENS (the windows' own preflight rule): a read that fails says nothing.
+ */
+export function useSeasonBankWarning(orgSlug: string, teamId: string, verb: 'start' | 'close'): string | null {
+  const [through, setThrough] = useState<string | null>(null);
+  useEffect(() => {
+    let current = true;
+    void readTeamBank(orgSlug, teamId).then(r => {
+      if (current && r.ok && r.view.checkedThrough) setThrough(r.view.checkedThrough.date);
+    });
+    return () => { current = false; };
+  }, [orgSlug, teamId]);
+  return through ? W.coachSeasonWarning(dayYear(through), verb) : null;
+}
 
 /** POST a check: the screen sends INTENT (the date, the typed balance, the cash, the marked lines' KEYS); every figure is
  *  the server's read of the books. */

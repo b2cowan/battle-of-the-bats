@@ -162,6 +162,8 @@ export interface DashboardHrefs {
   /** Payables, on its payment-schedule view (the tab's own default, addressed explicitly so a
    *  caller that means "the schedule" survives a change of default). */
   payablesSchedule: string;
+  /** The Ledger on its Bank view (Bank balance check BC8a): the Cash on hand card's bank line. */
+  bankView: string;
   /**
    * The register, opened on one kind with the scheduled overlay ON (money redesign P3, plan §4.5).
    *

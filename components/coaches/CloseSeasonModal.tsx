@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { AlertTriangle } from 'lucide-react';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import QuestionShell, { QuestionCancel, QuestionReason } from '@/components/coaches/QuestionShell';
+import { useSeasonBankWarning } from '@/components/coaches/bank/coachBank';
 
 /**
  * "Close the season" — the quiet door out of a live season (COACH_SEASON_CLOSE_AND_ARCHIVE_PLAN
@@ -23,7 +24,8 @@ import QuestionShell, { QuestionCancel, QuestionReason } from '@/components/coac
  *
  * ⚠ The money block is ABSENT for a coach without the books, rather than zeroed. "0 families still
  * owe" from a screen that cannot see the money is a confident wrong answer; saying nothing is the
- * honest shape, and the same posture the money shelf on Season's End takes.
+ * honest shape, and the same posture the money shelf on Season's End takes. The bank row (BC8a) holds the same: its read
+ * is the coach bank route's, money read and up, so a coach without the books gets no row.
  *
  * ⚖ THE ONE WINDOW'S QUESTION (One Window answer D, Q11/Q12, 2026-10-19): the small centred "are you sure", a small
  * card on a phone too. No ×: Escape, the phone's Back and a tap outside are "no", the same as Cancel; the keyboard
@@ -103,7 +105,13 @@ export default function CloseSeasonModal({
   const money = preflight?.money ?? null;
   const owesDues = !!money && money.familiesOwing > 0 && money.duesOutstanding > 0;
   const owesBack = !!money && money.waitingToReturn > 0;
-  const hasWarnings = owesDues || owesBack;
+  /* The bank (BC8a; K6, R0 tab 7): one sentence when the season has a check, warn never block, its own quiet read. The way
+     back goes to the Bank view when the bank is all there is to see to; with money owed too, to Money's Overview, which
+     carries the bank line as well. Nothing is typed here, so leaving loses nothing (the one-window rule). */
+  const bankWarning = useSeasonBankWarning(orgSlug, teamId, 'close');
+  const hasWarnings = owesDues || owesBack || !!bankWarning;
+  // Only once the money is known (/review BC8a): before the preflight lands, or when it failed, money may be owed.
+  const toBankView = !!bankWarning && !!money && !owesDues && !owesBack;
 
   return (
     <QuestionShell kind="question" open onClose={onClose} busy={submitting}
@@ -115,7 +123,7 @@ export default function CloseSeasonModal({
             and then `router.push`ed had its push cancelled by the step's own Back — `useBackStep`'s header). */}
         {hasWarnings ? (
           <Link
-            href={`/${orgSlug}/coaches/teams/${teamId}/accounting`}
+            href={`/${orgSlug}/coaches/teams/${teamId}/accounting${toBankView ? '?section=ledger&view=bank' : ''}`}
             className={styles.btnSecondary}
             aria-disabled={submitting || undefined}
             onClick={e => { if (submitting) { e.preventDefault(); return; } onClose(); }}
@@ -165,6 +173,12 @@ export default function CloseSeasonModal({
               <span>
                 <strong>{fmtMoney(money!.waitingToReturn)}</strong> is waiting to go back to families
               </span>
+            </p>
+          )}
+          {bankWarning && (
+            <p style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start', margin: '0 0 0.4rem', fontSize: '0.86rem', color: 'var(--white-80)' }}>
+              <AlertTriangle size={15} style={{ color: 'var(--warning)', flexShrink: 0, marginTop: 2 }} aria-hidden />
+              <span>{bankWarning}</span>
             </p>
           )}
           <p style={{ margin: '0.35rem 0 0', fontSize: '0.79rem', color: 'var(--white-55)' }}>

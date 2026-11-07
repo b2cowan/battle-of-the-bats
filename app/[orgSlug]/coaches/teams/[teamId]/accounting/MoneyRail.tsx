@@ -22,7 +22,7 @@ import { CoachRail, kit, type CoachRailDot, type CoachRailGroupSpec } from '@/co
  *  hrefs that are deep-links into a surface rather than the surface itself. Derived
  *  rather than re-listed, so a row can never name a tab that isn't addressable. */
 type RowKey = Exclude<keyof DashboardHrefs,
-  'budgetStarter' | 'budgetGenerate' | 'payablesSchedule' | 'registerFrom'>;
+  'budgetStarter' | 'budgetGenerate' | 'payablesSchedule' | 'bankView' | 'registerFrom'>;
 
 /** Journey order for the setup index; the operate rail keeps the order it shipped with.
  *

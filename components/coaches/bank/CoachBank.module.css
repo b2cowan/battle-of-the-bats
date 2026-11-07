@@ -32,6 +32,35 @@
   .chipDoor { min-height: var(--tap-min, 44px); }
 }
 
+/* ── the Money Overview's bank line (BC8a; R0 tab 7): in the Cash on hand card, under the IN/OUT bars and above its foot
+   (the walk: beside "Ledger →" it can't fit a third-width card). Quieter than the foot's door (support size, secondary
+   ink: the club's Overview line), a full tap. The line and its chip share one row: the sentence wraps, never the chip
+   (/design BC5a), and the date keeps its "›" (no lone chevron on a phone). ── */
+.overviewMark { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; min-width: 0; }
+.overviewDate { white-space: nowrap; display: inline-flex; align-items: center; gap: 0.25rem; }
+.overviewDoor {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 0.25rem;
+  min-width: 0;
+  font-size: var(--type-support);
+  color: var(--text-secondary);
+  text-decoration: none;
+  border-radius: 2px;
+}
+.overviewDoor b { color: var(--text-primary); font-weight: 600; }
+.overviewDoor > svg { color: var(--text-tertiary); flex-shrink: 0; }
+.overviewDoor:hover { color: var(--text-primary); text-decoration: underline; }
+.overviewDoor:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+.overviewMark > .overviewDoor { flex: 0 1 auto; }
+.overviewMark > .chipDoor { flex: none; }
+/* A touch width: the door a full tap (the club's line scopes its floor the same way), and the row held while the read is
+   out so the card doesn't grow under the thumb when it lands (/design BC8a); a failed read still draws nothing. */
+@media (max-width: 768px) {
+  .overviewDoor, .overviewHold { min-height: var(--tap-min, 44px); }
+}
+
 /* A text button: underlined, olive ("Show them", "Undo", "Yes", "Try again"). */
 .link {
   background: none;

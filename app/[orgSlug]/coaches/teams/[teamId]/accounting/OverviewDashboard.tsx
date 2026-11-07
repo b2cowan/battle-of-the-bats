@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { AlertTriangle } from 'lucide-react';
 import MoneyNextThirtyDays from './MoneyNextThirtyDays';
 import MoneyRail from './MoneyRail';
+import CoachBankOverviewLine from '@/components/coaches/bank/CoachBankOverviewLine';
 import { fmt, type MoneySummary, type DashboardHrefs } from '@/lib/coach-money-summary';
 import { CoachCard, CoachEyebrow, CoachFigure, CoachChip, CoachBar, kit } from '@/components/coaches/kit';
 import styles from './overview-dashboard.module.css';
@@ -32,6 +33,8 @@ interface Props {
   /** Org-only rows (Allocations, Payment Requests) render iff their href is
    *  present — one signal, owned by the caller that owns the gating rule. */
   hrefs: DashboardHrefs;
+  /** The team the Cash on hand card's bank line reads (BC8a). Absent: no line. */
+  bank?: { orgSlug: string; teamId: string };
 }
 
 /* A slice a coach should SEE stays visible even when it rounds to a sliver. */
@@ -84,7 +87,7 @@ function PlanBar({ actual, target, scaleMax, overGood }: {
   );
 }
 
-export default function OverviewDashboard({ summary, payablesApiUrl, hrefs }: Props) {
+export default function OverviewDashboard({ summary, payablesApiUrl, hrefs, bank }: Props) {
   const { dues, budget } = summary;
   /* ⚠⚠ THE CARD MEASURES THE BILL, AND SINCE 2026-09-09 IT SAYS SO IN ITS OWN NAME (owner R4).
      `Collected` on the Player dues band became money and only money — uncapped — so a card reading
@@ -195,6 +198,10 @@ export default function OverviewDashboard({ summary, payablesApiUrl, hrefs }: Pr
               that produces it. What is still owed keeps its answers — the Bills settled card for money
               in, the Next-N-days ledger below for everything dated — and the caveat sentence above
               already points at them without spending this link on it. */}
+          {/* The bank line (BC8a, K7): a door to Ledger → View: Bank, a quiet read. ⚖ Under the IN/OUT bars, not in the foot
+              as R0 tab 7 drew it ("right of Ledger"): the BC8a walk found it can't sit beside "Ledger →" in a third-width
+              card, and a second foot row put this card's divider out of line with its siblings' (the feet are one band). */}
+          {bank && <CoachBankOverviewLine orgSlug={bank.orgSlug} teamId={bank.teamId} href={hrefs.bankView} />}
           <div className={kit.foot}>
             <Link href={hrefs.transactions} className={kit.footLink}>Ledger →</Link>
           </div>

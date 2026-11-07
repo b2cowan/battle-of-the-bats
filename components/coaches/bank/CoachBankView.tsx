@@ -22,6 +22,7 @@ import { CoachRow, CoachRowList } from '@/components/coaches/CoachRowList';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { useMoneyRevision } from '@/lib/coach-money-refresh';
+import { useRoomAddress } from '@/components/coaches/useRoomAddress';
 import { BANK_WORDS as W } from '@/lib/bank-tab-words';
 import { cents, dayYear } from '@/lib/bank-screen';
 import { readTeamBank, type TeamBank, type TeamCheck } from './coachBank';
@@ -50,6 +51,26 @@ export default function CoachBankView({ orgSlug, teamId, active = true, onAddLin
   const load = () => setRetry(n => n + 1);
   // A write's answer is the newest read there is: a plain read already in flight when it lands must not replace it (/review).
   const writes = useRef(0);
+  // `?bankCheck={id}` (BC8a: the Overview's amber chip opens the check it names): once the read is in, the address forgets
+  // the key, and the check opens only when the address SAYS it forgot (the search params without it). ⚠ Never sooner: a
+  // window's Back step pushes its entry as it opens, and a replace still in flight lands on that entry, strips the step's
+  // marker (KitDialog's header) and leaves the key one Back away — the BC8a walk's Back reopened the check. A check
+  // deleted since opens nothing. The hub strips the key on the way to any other tab too (ONE_SHOT_KEYS).
+  // The ask remembers the read it arrived on: a Ledger kept mounted holds an older read while a fresh one is under way
+  // (`active` re-reads), so a check saved since waits for the next read; a read after the ask without it drops the ask.
+  // Leaving the view drops it too, so a check never opens later unasked (/review BC8a).
+  const [askedCheck, setAskedCheck] = useRoomAddress('bankCheck');
+  const pendingCheck = useRef<{ id: string; on: TeamBank | null } | null>(null);
+  useEffect(() => {
+    if (!active) { pendingCheck.current = null; return; }
+    if (askedCheck) { pendingCheck.current = { id: askedCheck, on: view }; setAskedCheck(null); return; }
+    const ask = pendingCheck.current;
+    if (!ask || !view) return;
+    if (view.checks.some(c => c.id === ask.id)) {
+      pendingCheck.current = null;
+      setOpenId(ask.id);
+    } else if (view !== ask.on) pendingCheck.current = null;
+  }, [active, askedCheck, view, setAskedCheck]);
 
   useEffect(() => {
     if (!active) return;
