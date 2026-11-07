@@ -10,10 +10,10 @@ import { customerSharing, type CustomerWorkspace } from './console-money-stripe'
  * Platform-wide: how many sales need a look and have not been marked, and which clubs show them.
  *
  * ⚖ THE SAME NUMBER AS THE CLUB'S STRIP, BY CONSTRUCTION. The count runs `judgeSales` (lib/console-money-sales-store.ts), the one
- * rule a club's read uses (the seven checks, the registration date, the credit notes, the marks), and it counts only the sales a
+ * rule a club's read uses (the eight checks, the registration date, the credit notes, the marks), and it counts only the sales a
  * club's Money tab would SHOW: a sale whose Stripe customer belongs to exactly one organization, not shared with another club
  * (the Money route refuses a shared customer, so a sale there could not be looked at anywhere). With the registration date
- * unread, checks 1-3 are off and 4-7 run — exactly the strip's rule — so the two can never differ.
+ * unread, checks 1-3 are off and 4-8 run — exactly the strip's rule — so the two can never differ.
  * ⚖ A coach who pays for several portals has ONE set of sales: a sale counts once (distinct invoice), whichever portal shows it.
  * ⚖ Read only. Nothing here sums, exports or reports tax.
  *

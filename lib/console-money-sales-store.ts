@@ -3,7 +3,7 @@ import { supabaseAdmin } from './supabase-admin';
 import { gstRegistrationDate } from './bookkeeping-store';
 import {
   SALE_NOTE_COLUMNS, SALE_RECORD_COLUMNS,
-  NEEDS_LOOK_WORDS, type SaleNoteRecord, type SaleRecord, type SalesRecords,
+  NEEDS_LOOK_WORDS, notesPaidBackCents, type SaleNoteRecord, type SaleRecord, type SalesRecords,
 } from './console-money-sales';
 import { needsLook, readAllPages, type LookedMark, type LookReason, type NeedsLookRead, type NeedsLookRecord } from './console-money-needs-look';
 import { currentMark, lookKeysOf, looksHold, lookWhyRefusal, newestRow, settleLooks, type LookRow } from './console-money-looks';
@@ -173,19 +173,20 @@ export type Judged<T> = {
 
 /**
  * THE ONE RULE for "needs a look and nobody has looked", used by a club's read AND by Today's count (so the two cannot differ):
- * the pure checks over each record, check 7 settled by the credit notes that exist, then each sale's newest un-undone mark
+ * the pure checks over each record, check 7 settled by what the issued credit notes paid back, then each sale's newest un-undone mark
  * applied — a sale leaves the list only while every reason it has now is inside what the mark was made for. The pure rules
  * never see a mark (lib/console-money-needs-look.ts). `allReasons` holds every sale's reasons BEFORE the marks, for the mark door.
  */
 export async function judgeSales<T extends NeedsLookRecord>(records: readonly T[], registration: string | null): Promise<Judged<T>> {
-  // Judged once as if no credit note had been issued, the worst case: the only reason a credit note can clear is check 7, so
-  // whatever this leaves empty can never be on the list (a void or pre-registration sale never reaches the notes read), and a
-  // sale it flags only loses its refund line when an issued note turns up.
-  const candidates = records.filter(r => needsLook(r, { registration, hasCreditNote: false }).length > 0);
+  // Judged once as if no credit note had paid anything back, the worst case: the only reason a credit note can clear is check 7,
+  // so whatever this leaves empty can never be on the list (a void or pre-registration sale never reaches the notes read), and a
+  // sale it flags only loses its refund line when issued notes pay back all that was refunded.
+  const candidates = records.filter(r => needsLook(r, { registration, notesRefundedCents: 0 }).length > 0);
   const ids = candidates.map(r => r.stripe_invoice_id);
   const [notes, rows] = await Promise.all([allNotesFor(ids), allLooksFor(ids)]);
-  const issued = new Set(notes.filter(n => n.status === 'issued').map(n => n.stripe_invoice_id));
-  return { ...settleLooks(candidates, { registration, issued }, rows), notes };
+  const refunded = new Map<string, number>();
+  for (const id of new Set(notes.map(n => n.stripe_invoice_id))) refunded.set(id, notesPaidBackCents(notes.filter(n => n.stripe_invoice_id === id)));
+  return { ...settleLooks(candidates, { registration, refunded }, rows), notes };
 }
 
 /**

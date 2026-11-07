@@ -28,7 +28,7 @@ const rec = (over: Partial<NeedsLookRecord> = {}): NeedsLookRecord => ({
   ...over,
 });
 
-const ctx: Parameters<typeof needsLook>[1] = { registration: REG, hasCreditNote: false };
+const ctx: Parameters<typeof needsLook>[1] = { registration: REG, notesRefundedCents: 0 };
 const codes = (r: NeedsLookRecord, c = ctx) => needsLook(r, c).map(x => x.code);
 const missing = (why: NonNullable<NeedsLookRecord['gst_hst_position_why']>) =>
   rec({ gst_hst_position: 'missing', gst_hst_position_why: why, tax_lines: [line({ cents: 0, taxability_reason: 'not_collecting' })] });
@@ -113,6 +113,32 @@ describe('check 5 · flagged for review when it was sold', () => {
   });
 });
 
+describe('check 8 · Stripe zero-rated a sale to an address in Canada (owner 2026-11-07, Part 5)', () => {
+  const zeroRatedHere = (over: Partial<NeedsLookRecord> = {}) =>
+    rec({ gst_hst_position: 'zero_rated', tax_lines: [line({ rate: 0, effective_rate: 0, cents: 0, taxability_reason: 'zero_rated' })], ...over });
+  it('fires, naming the province and the rate it owed', () => {
+    assert.deepEqual(needsLook(zeroRatedHere(), ctx),
+      [{ code: 'zero_rated_in_canada', text: 'zero-rated by Stripe, but the address kept with the sale is in Ontario (HST 13%).' }]);
+  });
+  it('a province code we do not know still fires, without a rate', () => {
+    assert.equal(needsLook(zeroRatedHere({ evidence_region: 'XX' }), ctx)[0].text,
+      'zero-rated by Stripe, but the address kept with the sale is in XX.');
+    assert.equal(needsLook(zeroRatedHere({ evidence_region: null }), ctx)[0].text,
+      'zero-rated by Stripe, but the address kept with the sale is in Canada.');
+  });
+  it('a US address (our own zero-rating) and an address outside Canada do not fire', () => {
+    assert.deepEqual(codes(zeroRatedHere({ evidence_country: 'US', evidence_region: 'NY' })), []);
+    assert.deepEqual(codes(zeroRatedHere({ evidence_country: 'GB', evidence_region: null })), []);
+  });
+  it('no address read: check 6 says so, not this one', () => {
+    assert.deepEqual(codes(zeroRatedHere({ evidence_missing: true, evidence_country: null, evidence_region: null })), ['no_evidence']);
+  });
+  it('a taxed sale to the same address does not fire', () => assert.deepEqual(codes(rec()), []));
+  it('it does not turn on the registration date (checks 1 to 3 only do)', () => {
+    assert.deepEqual(codes(zeroRatedHere(), { registration: null, notesRefundedCents: 0 }), ['zero_rated_in_canada']);
+  });
+});
+
 describe('check 6 · no billing address could be read', () => {
   it('fires', () => {
     assert.deepEqual(needsLook(rec({ evidence_missing: true, evidence_country: null, evidence_region: null }), ctx),
@@ -120,13 +146,18 @@ describe('check 6 · no billing address could be read', () => {
   });
 });
 
-describe('check 7 · a refund with no credit note (Ask 8)', () => {
+describe('check 7 · refunded beyond what the credit notes paid back (Ask 8; tightened by the owner 2026-11-07, Part 5)', () => {
   it('fires with no issued note, naming the amount', () => {
     assert.equal(needsLook(rec({ refunded_cents: 5000 }), ctx)[0].text,
       'refunded $50.00 in Stripe’s dashboard with no credit note, so the tax was not reduced.');
   });
-  it('any issued note clears it, a partial one too (owner 2026-11-06, as drawn)', () => {
-    assert.deepEqual(needsLook(rec({ refunded_cents: 5000 }), { ...ctx, hasCreditNote: true }), []);
+  it('notes that paid back the whole refund clear it, and so do notes that paid back more', () => {
+    assert.deepEqual(needsLook(rec({ refunded_cents: 5000 }), { ...ctx, notesRefundedCents: 5000 }), []);
+    assert.deepEqual(needsLook(rec({ refunded_cents: 5000 }), { ...ctx, notesRefundedCents: 7000 }), []);
+  });
+  it('a note smaller than the refund leaves the rest flagged, naming only the part no note covers', () => {
+    assert.equal(needsLook(rec({ refunded_cents: 5000 }), { ...ctx, notesRefundedCents: 2000 })[0].text,
+      'refunded $30.00 in Stripe’s dashboard with no credit note, so the tax was not reduced.');
   });
   it('no refund, no flag', () => assert.deepEqual(codes(rec({ refunded_cents: 0 })), []));
 });
@@ -152,7 +183,7 @@ describe('never on the list', () => {
 });
 
 describe('the registration date could not be read', () => {
-  const unread = { registration: null, hasCreditNote: false };
+  const unread = { registration: null, notesRefundedCents: 0 };
   it('nothing is called missing (checks 1 to 3)', () => {
     for (const why of ['stripe_did_not_work_out', 'unexpected_reason', 'canadian_buyer_not_charged', 'no_evidence_for_zero_rating'] as const) {
       assert.deepEqual(needsLook(missing(why), unread), [], why);
@@ -173,6 +204,8 @@ describe('one reason shows, the window lists all', () => {
       evidence_region: null, refunded_cents: 100 } as NeedsLookRecord;
     assert.deepEqual(codes(r), ['buyer_not_charged', 'review', 'no_evidence', 'refund_no_note']);
     assert.deepEqual(codes(rec({ evidence_region: 'AB', review_reason: 'card_country_mismatch' })), ['rate_mismatch', 'review']);
+    assert.deepEqual(codes(rec({ gst_hst_position: 'zero_rated', tax_lines: [line({ rate: 0, cents: 0, taxability_reason: 'zero_rated' })],
+      review_reason: 'card_country_mismatch', refunded_cents: 100 })), ['zero_rated_in_canada', 'review', 'refund_no_note'], 'check 8 sits after the rate check');
   });
 });
 
@@ -184,7 +217,7 @@ describe('the words', () => {
     assert.equal(NEEDS_LOOK_WORDS.count(0), 'No sales need a look');
     assert.equal(NEEDS_LOOK_WORDS.emptyText(REG),
       'Every sale since Sep 26, 2026, when our GST/HST registration took effect, has a GST/HST answer that matches what was kept with it.');
-    assert.equal(NEEDS_LOOK_WORDS.emptyText(null), 'Every sale has a GST/HST answer that matches what was kept with it.');
+    assert.equal(NEEDS_LOOK_WORDS.emptyText(null), 'No sale needs a look on the checks that could run.', 'checks 1 to 3 did not run (owner 2026-11-07)');
   });
 });
 

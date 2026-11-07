@@ -1,0 +1,369 @@
+<title>Money Tab Tax Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box (the house walk frame). */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .facts { grid-template-columns: 1fr; } .facts dd { margin-bottom: 6px; } }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.call { font-size: 13px; color: var(--warn); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+.opts { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; }
+.opt { display: flex; gap: 8px; align-items: flex-start; font-size: 0.95em; }
+.opt input { margin-top: 3px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · GST/HST · Stage 3 · Walk B of 3 · §478</span>
+    <h1>The Money tab says which sales need a look at their tax, and staff can mark one as looked at</h1>
+    <p class="sub">Written 2026-11-07 for the Stage 3 closeout. Walk B of three: run it after Walk A, on Walk A’s Tax Record Team.</p>
+  </header>
+  <section class="card"><h2>What this walk is for</h2><p>Platform admin reads each sale’s tax from our own record, and checks it against what was kept with the sale. A sale whose answer is missing or contradicts the address is listed under <strong>Needs a look</strong>. Today counts those sales, the club’s Money tab carries a dot before you open it, and staff with refund rights can mark a sale as looked at (with a why) or put it back. A mark never changes the record or the tax return. Support can read the list but cannot mark.</p></section>
+  <section class="card"><h2>It passes when</h2><ul>
+    <li>The Walk A refund with no credit note is flagged, and the flag shows before you open the tab (Today’s row, the Clubs filter, the dot, the strip).</li>
+    <li>A sale Stripe taxed for a province other than the one kept with the sale is flagged with both rates named.</li>
+    <li>Mark as looked at needs a why, takes the sale off the list and off Today’s count, and Put it back returns it.</li>
+    <li>Support sees the same list but not the mark door.</li>
+  </ul></section>
+  <section class="card"><h2>Not in this walk</h2><ul>
+    <li><strong>“Show older sales”, a year with no sales, an older page that half fails to read.</strong> The dev database has no sales older than twelve months (the tax records begin 2026-05-01). The unit tests cover the paging, the gap year and the half-failed read.</li>
+    <li><strong>The eighth check (Stripe zero-rated a sale to an address in Canada, ruled 2026-11-07).</strong> Stripe test mode will not zero-rate a Canadian line on request. Unit tests cover it.</li>
+    <li><strong>A refund covered by a smaller credit note</strong> (check 7 tightened 2026-11-07): Walk A’s sale is that case. Its $11.30 note covers the $11.30 refund, so only the $5.00 is listed.</li>
+    <li><strong>A customer shared by two portals.</strong> Ruled 2026-11-07: recorded, not built. Its sales are on no club’s list; Stage 4 lists them on the return.</li>
+  </ul></section>
+  <section class="card"><h2>Known before the walk</h2><ul>
+    <li><strong>⚠ As read 2026-11-07, the deployed dev site does not run Stage 3 yet.</strong> Its own daily job that morning had no tax steps, and in the scripted run it wrote no record. Two ways to walk: (1) the dev site is redeployed first (ask me; it needs your yes to push), and then records appear by themselves within seconds and <strong>Kept</strong> reads “At the sale”; or (2) walk now. After every step that acts in Stripe, say <strong>catch up</strong> in the chat and wait for my OK: I run the daily catch-up, and the record appears with <strong>Kept</strong> in amber (“Caught up by the daily job …”). Choose the amber option where a step offers one.</li>
+    <li><strong>Stop check B1 first:</strong> this walk reads the sale Walk A made. If Walk A stopped before Part F, stop here.</li>
+    <li>Today’s Sales tax count covers every club on dev, so steps pin how it MOVES (“one more”, “one fewer”), never the number itself.</li>
+    <li>A mark and a put-back both go in the audit log with your email and your why.</li>
+  </ul></section>
+  <section class="card"><h2>Sign in as</h2><dl class="facts">
+    <dt>Platform admin</dt><dd><code>uat-platform@fieldlogichq.ca</code> (Super admin) at <code>http://localhost:3000/platform-admin/login</code>. Password: the shared UAT password, <code>UAT_PLATFORM_ADMIN_PASSWORD</code> in <code>.env.local</code>. A club or portal is under <strong>Clubs &amp; portals</strong>; its tax is on the <strong>Money</strong> tab.</dd>
+    <dt>Support (Part F)</dt><dd><code>support@dev.local</code> (role Support) at the same address, in a private window. Password: the seeded staff password in <code>scripts/seed-platform-staff.mjs</code>.</dd>
+    <dt>Keep it private</dt><dd>Dev-only accounts on the dev database and Stripe test mode. Never a production account.</dd>
+  </dl></section>
+  <section class="card"><h2>Where and on what</h2><dl class="facts">
+    <dt>Screens</dt><dd>Your local server, <code>http://localhost:3000</code>, which already runs Parts 2 to 5. The deployed dev site has only Part 1, so do not use it for these screens.</dd>
+    <dt>Records</dt><dd>Stripe test mode sends its events to the deployed dev site, which shares the dev database with your local server. Once that site runs Stage 3, a record appears a few seconds after Stripe acts. Until then the records come from the catch-up I run when you say <strong>catch up</strong> (see Known before the walk).</dd>
+    <dt>Stripe</dt><dd>The test dashboard, <code>https://dashboard.stripe.com/test</code>. Nothing here touches live Stripe or production.</dd>
+    <dt>Width</dt><dd>A desktop window is fine; nothing here is phone-specific.</dd>
+  </dl></section>
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+</main>
+
+<script>
+(function () {
+  var KEY = "gst-hst-stage3-walk-b-v1";
+  var TITLE = "GST/HST · Stage 3 Walk B §478 · The Money tab says which sales need a look at their tax (2026-11-07)";
+  var PARTS = [
+ {
+  "id": "A",
+  "title": "Walk A is finished (stop check)",
+  "steps": [
+   {
+    "who": "Platform admin",
+    "do": "Open Tax Record Team → Money → its $32.77 sale.",
+    "see": "Refunded so far has the $5.00 line ending <strong>· no credit note, so the tax was not reduced</strong>.",
+    "options": [
+     "It is there",
+     "It is not: Walk A is not finished. STOPPED"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "B",
+  "title": "The flag reaches you before the tab opens",
+  "steps": [
+   {
+    "who": "Platform admin",
+    "do": "Open <strong>Today</strong> (the platform admin home) and find <strong>Sales tax</strong> under Customers. Write its count in the notes.",
+    "see": "A <strong>Sales tax</strong> row, “A sale whose GST/HST answer is missing or doesn’t match what was kept with it”, with a count of at least 1."
+   },
+   {
+    "who": "Platform admin",
+    "do": "Click the Sales tax row.",
+    "see": "Clubs &amp; portals, filtered: a <strong>Sales tax ✕</strong> chip, and Tax Record Team among the clubs listed."
+   },
+   {
+    "who": "Platform admin",
+    "do": "Open Tax Record Team from that list, then click its <strong>Story</strong> tab and look at the tab row.",
+    "see": "It first opened on <strong>Money</strong> with the list showing Needs a look. On the Story tab, the <strong>Money</strong> tab label carries a dot (hover: <strong>Needs review</strong>)."
+   }
+  ]
+ },
+ {
+  "id": "C",
+  "title": "The strip, the list and the Show control",
+  "steps": [
+   {
+    "who": "Platform admin",
+    "do": "Open the Money tab.",
+    "see": "A strip at the top: <strong>Needs review</strong> · <strong>1 sale needs a look at its tax.</strong> · <strong>Show them</strong>."
+   },
+   {
+    "who": "Platform admin",
+    "do": "Press <strong>Show them</strong>.",
+    "see": "<strong>1 sale needs a look, newest first</strong>; under the $32.77 row: <strong>Needs a look: refunded $5.00 in Stripe’s dashboard with no credit note, so the tax was not reduced.</strong>"
+   },
+   {
+    "who": "Platform admin",
+    "do": "Set <strong>Show</strong> to <strong>Not paid</strong>, then back to <strong>All sales</strong>.",
+    "see": "Not paid: <strong>Every sale in these 12 months is paid.</strong> All sales: the $32.77 sale with its Needs a look line."
+   }
+  ]
+ },
+ {
+  "id": "D",
+  "title": "A deliberately contradicted sale: Stripe taxes for New Brunswick, we kept Alberta",
+  "steps": [
+   {
+    "who": "Stripe test dashboard",
+    "do": "Customers → the <code>+gst3a</code> customer → edit its address in Stripe only to <code>1 Main Street</code>, Moncton, New Brunswick, <code>E1C 4M3</code>. (Our kept address stays Calgary, Alberta, from Walk A.)",
+    "see": "Stripe shows the Moncton address on the customer."
+   },
+   {
+    "who": "Stripe test dashboard",
+    "do": "Invoices → <strong>Create invoice</strong> for this customer: one item <strong>Walk B test</strong>, $10.00; collect tax automatically; choose to <strong>email the invoice</strong> (do not charge the card); send it.",
+    "see": "An open invoice for $11.50: $10.00 + HST 15% $1.50 (New Brunswick)."
+   },
+   {
+    "who": "Platform admin",
+    "do": "Wait a minute, open Tax Record Team → Money, Show: All sales.",
+    "see": "The strip says <strong>2 sales need a look at their tax.</strong> The new top row reads <strong>Invoice made in Stripe · …</strong>, Tax <strong>HST 15%</strong>, and under it <strong>Needs a look: taxed at HST 15%, but the address kept with the sale is in Alberta (GST 5%).</strong> Show: Not paid lists it alone. Today’s Sales tax count is one more than in B1.",
+    "options": [
+     "Flagged with both rates named",
+     "No flag (tell me: our kept address may have followed Stripe’s)",
+     "A different line (notes)"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "E",
+  "title": "Mark as looked at, then put it back",
+  "steps": [
+   {
+    "who": "Platform admin",
+    "do": "Open the $32.77 sale → <strong>Mark as looked at</strong>. Leave the why empty and press <strong>Mark as looked at</strong>.",
+    "see": "The window reads “The … sale leaves the list of sales that need a look. <strong>Its record and its tax do not change</strong>, and the GST/HST return still counts it as it stands.” Pressing with no why says <strong>Say why before marking it as looked at.</strong>"
+   },
+   {
+    "who": "Platform admin",
+    "do": "Type the why <strong>Walk B: the $5.00 was a goodwill refund, note to follow</strong> and press <strong>Mark as looked at</strong>.",
+    "see": "<strong>Marked as looked at.</strong> The strip now says <strong>1 sale needs a look at its tax.</strong> (the New Brunswick invoice). Today’s Sales tax count is one fewer than in D3."
+   },
+   {
+    "who": "Platform admin",
+    "do": "Show: All sales → open the $32.77 sale again.",
+    "see": "No Needs a look line under its row. The window says <strong>Looked at</strong> (today) <strong>by uat-platform@fieldlogichq.ca: Walk B: the $5.00 …</strong> and offers <strong>Put it back on the list</strong>."
+   },
+   {
+    "who": "Platform admin",
+    "do": "Press <strong>Put it back on the list</strong>, give the why <strong>Walk B: put back</strong>, confirm.",
+    "see": "<strong>Put back on the list.</strong> The strip is back to <strong>2 sales need a look at their tax.</strong>"
+   }
+  ]
+ },
+ {
+  "id": "F",
+  "title": "Support sees the list, not the mark door",
+  "steps": [
+   {
+    "who": "Support · support@dev.local",
+    "do": "In a private window sign in as Support, open Today, then Tax Record Team → Money → the $32.77 sale.",
+    "see": "Today has the Sales tax row. The Money tab shows the strip and both flagged sales. The sale window says <strong>Billing or Super admin marks a sale as looked at.</strong>, with no Mark as looked at door and no Refund button.",
+    "options": [
+     "Exactly this",
+     "A mark door or Refund button shows (a defect: tell me)",
+     "Could not sign in as Support (Needs a call)"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "G",
+  "title": "Put back (writes to Stripe test mode)",
+  "steps": [
+   {
+    "who": "Stripe test dashboard",
+    "do": "Open the Walk B test invoice → <strong>…</strong> → <strong>Void invoice</strong>.",
+    "see": "The invoice is void."
+   },
+   {
+    "who": "Platform admin",
+    "do": "Wait a minute, open Tax Record Team → Money.",
+    "see": "The strip says <strong>1 sale needs a look at its tax.</strong> A void sale is never on Needs a look; under All sales its Tax cell reads <strong>—</strong>."
+   },
+   {
+    "who": "Stripe test dashboard",
+    "do": "Edit the <code>+gst3a</code> customer’s address back to <code>1 Main Street</code>, Calgary, Alberta, <code>T2P 1J9</code>.",
+    "see": "Stripe shows Calgary again, so the coach’s next renewal is taxed for Alberta."
+   }
+  ]
+ }
+];
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var steps = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+      if (s.call) t.appendChild(el('span', 'call', s.call));
+      var rec = { part: p.id, step: id, boxes: [], options: s.options || null };
+      if (s.options) {
+        // One box per answer: the tick IS the answer, and the summary prints which one.
+        var opts = el('span', 'opts');
+        s.options.forEach(function (label, k) {
+          var oid = id + String.fromCharCode(97 + k);
+          var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + oid; cb.checked = !!state.ticks[oid];
+          cb.addEventListener('change', function () { state.ticks[oid] = cb.checked; save(); refresh(); });
+          rec.boxes.push({ cb: cb, label: label });
+          var o = el('label', 'opt'); o.appendChild(cb); o.appendChild(el('span', null, label)); opts.appendChild(o);
+        });
+        t.appendChild(opts);
+        var row = el('div', 'step'); row.appendChild(el('span', null, '')); row.appendChild(t); body.appendChild(row);
+      } else {
+        var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+        cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+        rec.boxes.push({ cb: cb, label: null });
+        var row2 = el('label', 'step'); row2.appendChild(cb); row2.appendChild(t); body.appendChild(row2);
+      }
+      steps.push(rec);
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function isDone(r) { return r.boxes.some(function (b) { return b.cb.checked; }); }
+  function doneSteps(partId) { return steps.filter(function (r) { return (!partId || r.part === partId) && isDone(r); }); }
+  var totalSteps = steps.length;
+
+  function refresh() {
+    PARTS.forEach(function (p) {
+      var n = doneSteps(p.id).length;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + p.steps.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    var done = doneSteps(null).length;
+    document.getElementById('total').textContent = done + ' of ' + totalSteps + ' checked';
+    document.getElementById('barfill').style.width = (totalSteps ? Math.round(done * 100 / totalSteps) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [TITLE, 'Checked ' + doneSteps(null).length + ' of ' + totalSteps + ' steps'];
+    PARTS.forEach(function (p) {
+      var ticked = doneSteps(p.id);
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + p.steps.length
+        + (ticked.length ? ' (' + ticked.map(function (r) { return r.step; }).join(', ') + ')' : ''));
+      ticked.filter(function (r) { return r.options; }).forEach(function (r) {
+        lines.push('  ' + r.step + ': ' + r.boxes.filter(function (b) { return b.cb.checked; }).map(function (b) { return b.label; }).join(' + '));
+      });
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    steps.forEach(function (r) { r.boxes.forEach(function (b) { b.cb.checked = false; }); });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

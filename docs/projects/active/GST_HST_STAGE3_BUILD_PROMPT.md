@@ -644,3 +644,77 @@ records survive; refund in the Stripe dashboard → the credit note appears; the
   matching keywords and searchText. **/legal:** none due (no data collected, no email, no terms or policy promise changed; the Story reads the same
   note records already kept for six years).
 - **Part 4 COMMITTED `4f74d04eb` 2026-11-07 (dev, not pushed; no migration).** 15 files. Partial commit: `lib/console-money.ts` (6 of 7 hunks), `MoneyTab.tsx` (3 of 5) and `lib/help-content/platform-admin.tsx` (5 of 8) without another session's "Not a duplicate" wording and credit-note PDF button; `TODO.md` carries only the Stage 3 index line (HEAD never had it). Template: `.probe/gst3/commit-4.cjs`. Dev server restarted once at hand-off (HTTP 200). The browser walk is Part 5's: a club with a part refund that has a credit note (shows once, "Refunded, before tax") and one with a Stripe-dashboard refund and no note; Stripe unreachable ("· our record"); Business numbers wording.
+- **Part 5 RULED 2026-11-07 (owner, "yes to all recommendations").** The PM summary went first (blocking), with the nine open items: (1) the
+  EIGHTH Needs-a-look check: YES, built; (2) a customer held by two or more organizations: RECORDED, not built (changing whose sale a shared
+  customer's sale is reopens the ruled "a shared id names no club"; the return reads every record either way; Stage 4 carry below); (3) check 7
+  on ANY issued note: TIGHTENED, built; (4) Support sees the buyer's street address: LEAVE as Ask 7 = A (Stage 2 Part 7 Q2 hid the credit-note PDF
+  because it is a forwardable link, the reasoning the owner extended to the fee pay link; it never was about the address); (5) words: keep
+  "Read this tab again to see whether this charge can be refunded.", "1 sale needs a look at its tax.", "Which sales need a look could not be
+  read.", "· no credit note, so the tax was not reduced"; CHANGE the registration-unread empty line (it claimed checks 1–3 passed when they did
+  not run) to "No sale needs a look on the checks that could run."; (6) USD band: RECORDED, not built, until before the first US club is billed in
+  US dollars; (7) /accounting + /legal: run (below); (8) the known gaps: stated in Walk A's "Known before the walk"; (9) Stage 4 notes: below.
+- **Part 5 BUILT 2026-11-07 (no migration; the record tables, their writer and reader contract are unchanged).**
+  - **Eighth check `zero_rated_in_canada`** (lib/console-money-needs-look.ts `zeroRatedInCanada`): `gst_hst_position` zero_rated, evidence
+    not missing, `evidence_country` CA → "Needs a look: zero-rated by Stripe, but the address kept with the sale is in Ontario (HST 13%)." Placed
+    after the rate check; does not turn on the registration date (checks 1–3 only do). Our own zero-rating can never be this (gstHstPosition
+    step 4 needs a US address in the same kept copy the check reads). The looks table's `looked_keys` shape accepts the new code (no migration;
+    at most 6 keys on a sale against the CHECK's 8).
+  - **Check 7 tightened**: fires when `refunded_cents` exceeds what the sale's ISSUED notes paid back (sum of `refund_cents`); the sentence names
+    only the uncovered part. ONE measure and ONE order for check 7, the Part 4 band and the window: `notesPaidBackCents` + `unexplainedRefunds`
+    (lib/console-money-sales.ts; console refunds explained first, then the oldest). `refundItems` now reads the helper (no behaviour change);
+    `judgeSales` builds the per-sale figure with it; `settleLooks` takes `refunded: Map` instead of `issued: Set`.
+  - **Empty line** `NEEDS_LOOK_WORDS.emptyText(null)` = "No sale needs a look on the checks that could run."
+  - Tests: needs-look (check 8 fires/does not, unknown and blank province, order, partial-note amount, notes paying back more), looks
+    (`settle` takes per-sale amounts), new tests/unit/console-money-refunds-explained.test.ts (void notes excluded, balance-credit notes explain
+    nothing, console-first order, failed/canceled refunds not counted, the band + window + store read the one helper, check 7 through
+    `settleLooks` with partial/full/none). 140/140 across the five money-tax test files; typecheck clean; focused lint clean; check:spelling clean.
+- **Part 5 /review (high) 2026-11-07** (scope: the Part 5 hunks only; three lenses: correctness, blast radius, data contract).
+  `verify:changed` (`.probe/gst3/part5-verify-changed-run1.txt`): one failure, NOT this part's: billing-plus-tax-words (the phrase typed
+  outside BILLING_TAX_WORDS in lib/help-content/coaches.tsx and org.tsx, other sessions' uncommitted help edits). Findings 8 → 6 after dedup.
+  **Fixed (Confirmed):** the window's "no credit note, so the tax was not reduced" clause sat on EVERY dashboard refund line of a flagged sale
+  (3a's recorded Low (e), made likelier by the tightened rule): now only on the refunds no note explains (MoneyTab.tsx `noNoteIds`, same
+  helper as the band); a stale "4-7 run" comment. **Refuted:** a catch-up/backfill record with a later Canadian address false-flagging check 8
+  (position and evidence are computed from the same kept copy, so our zero-rating needs a US one). **Recorded, not fixed:** (a) Medium,
+  uncertain → proven by the matrix: a note's `refund_cents` is write-once, so a note first read before Stripe attached its refund would keep a
+  correct refund flagged (false flag, never a false clear; markable); (b) Low: the mark's fingerprint keys on the total refunded, so voiding a
+  partial note later does not re-list a marked sale (as 3b ruled the fingerprint); (c) Low: a note's `refund_cents` counts a note refund that
+  later failed (rare; fails toward not flagging); (d) Low: the reason says "with no credit note" for the uncovered part of a partly covered
+  refund (accurate for that part; wording kept, item 5). /simplify not run: no new abstraction beyond the one shared helper, which the review
+  pass placed.
+- **Part 5 /accounting 2026-11-07 (item 7; CREDIT_NOTES_ON_REFUNDS.md "GST/HST Stage 3 closeout" section, index updated).** (a) a USD credit note
+  at its own day's rate: fine today (every USD sale is zero-rated, so no USD note carries GST/HST); STAGE 4 RULE: a USD note's tax on line 107
+  is valued at the ORIGINAL invoice's rate (the adjustment cannot exceed the tax first reported); (b) zero-rating on a US address + the
+  declaration: as recorded; the accountant approves the three-part evidence rule before the first US club (existing trigger); (c) the fee-table
+  cascade: no gap, every fee invoice has its own kept record; STAGE 4 reads fees from the records, never from `platform_fee_invoices`; (d) a
+  refund with no note leaves the tax unreduced: correct (s.232 needs the note), the safe over-remit side; remedy = issue a credit note for the
+  refund; (e) our copy survives a Stripe customer deletion: required (six-year rule). The eighth check and the tightened check 7: sound. No new
+  professional sign-off.
+- **Part 5 /legal 2026-11-07 (item 7, retention vs deletion and the six-year copy of a home address).** The privacy draft already said billing
+  and tax records are kept six years; added (drafts/PRIVACY_POLICY.md v0.1 change log 2026-11-07): §3 each sale keeps a copy of the address and
+  card country it was taxed on; §9 that copy is a tax record and closing an account, deleting an organization or asking for deletion does not
+  remove it before the period ends; §11 the delete right names that exception. **NEW FINDING (§9 note 6, → /plan, not urgent):** a LIVE tax
+  record can never be deleted (the guard trigger), so nothing ends it after six years; PIPEDA 4.5.3 (and Québec's Act s.23 once a Québec buyer
+  is real) expects destruction or anonymizing: blank the name and address on records six years after their tax year, keeping amounts, tax and
+  province. Support seeing the address: need-to-know, no policy line contradicts it. No CASL point (nothing emailed).
+- **Part 5 matrix + backfill 2026-11-07:** **74/74 PASS** (`.probe/gst3/part5-matrix-run1.txt`, check `part5-matrix-check.mjs`): after every invoice-creating row (checkout ON / NB / US / ON-with-its-own-number / coach on test clocks; the Part 6 fixtures on, nb, ab, us, num, sk with first, move and renew invoices, ab's fee on its renewal and sk's own fee invoice; Founding; the refund matrix's 17 invoices and 28 credit notes) exactly one record exists with the right position, region and reason, and every refund-backed note stores `refund_cents` equal to Stripe's refund (e.g. `cn_1UZAPnFuSuNtbvsQgjnRxaRM` 9999 = `re_3UZAPiFuSuNtbvsQ10nxgM3r` 9999), which settles the /review Medium in practice. (`part6-renew.mjs` does not exist; renew ran as `part6-moves.mjs --renew`.) **Paths:** the deployed dev site wrote NONE (its own scheduled daily job at 2026-11-07 11:15 UTC has no tax steps although Part 1 `976a6a7b3` is on origin/dev: that site runs an older build; an OWNER finding, not fixed here); 27 test-clock invoices were written by the LOCAL billing webhook from re-signed `invoice.finalized` replays (`evidence_captured` event; the catch-up's invoice list cannot see test-clock invoices: test mode only, Low), and 182 by the catch-up (two runs, the 120 cap). Catch-up records name the CURRENT owner: a coach who moved Premium → Club before the catch-up reads `subscription`/club (as the record's Kept line warns). **Backfill:** the daily route run once on dev (audit row `a6ce727b-ba7b-4219-9692-a38605d29451`, `.probe/gst3/part5-backfill-run1.txt`): every step ok; `tax_records` refreshed 1; `tax_records_backfill` ok with 0 invoices, 0 notes, 0 failed, until 2026-11-07T14:22:08Z: dev Stripe has no invoice older than the catch-up window, so this proves the step RUNS and reports, NOT that it writes (a delete-and-rerun proof was refused by the permission classifier; the production first run is checked by 451's audit-row step). Left behind: `part6-cleanup.mjs` ran; Stripe search still listed 9 test customers (search lag likely); two refund-matrix products archived; all tax records kept.
+- **Part 5 walks PUBLISHED 2026-11-07, OWED (ledger §477–§479).** A, the record is kept: https://claude.ai/artifact/BqrFEyBo7waQi5AwPdvSK3
+  (GST_HST_STAGE3_WALK_A_RECORD.html, 15 steps); B, the Money tab tells the tax story: https://claude.ai/artifact/AQLkz6unbyERBKAoVXfagL
+  (GST_HST_STAGE3_WALK_B_MONEY_TAB.html, 18 steps); C, the band is before tax: https://claude.ai/artifact/9jSL9qqmiPo85yjdpm4HKj
+  (GST_HST_STAGE3_WALK_C_BAND.html, 11 steps). Built by `.probe/gst3/part5-walks/build.cjs` from the Stage 2 walk's engine. Run on localhost
+  (Parts 2–5) while the deployed dev site (Part 1) writes the records from Stripe test events into the same dev database. Walk A labels
+  "Issue a credit note" (a note IS made) and "Refund payment" (NO note) as two parts; Walk C pins $15.00 for Tax Record Team's Refunded (the
+  note's $10.00 before tax + the $5.00 with no note; $26.30 would be the write-once double count) and reads `refund_cents` after the
+  paste-back. Not walkable on dev, stated in each walk: "Show older sales" across a gap year and a half-failed older page (no sales older
+  than twelve months; records start 2026-05-01), the eighth check (test mode will not zero-rate a Canadian line), our records unreadable (no
+  safe switch). Stripe unreachable and the dispute wording are optional steps with Did it / Skipped it boxes. Owner step before Walk A:
+  credit_note.* events on the TEST billing destination.
+- **MANUAL_PROD_STEPS confirmed final 2026-11-07:** 451 (order: before the promote that ships Part 1's code; verify SQL; the backfill audit row;
+  TEST and LIVE Stripe events) now also names `charge.refunded` on the LIVE billing destination (it sets each record's refunded figure, read by
+  check 7 and the band); 452 (after 451, with the code that reads it; no Stripe step).
+- **CARRIED TO STAGE 4 (the return worksheet), not built here:** list every sale with a missing GST/HST answer as an unresolved item, marked
+  looked-at or not, INCLUDING a customer shared by two portals (its sales are on no club's list); sum GST/HST from `tax_lines` (Canadian
+  GST/HST lines), never `tax_total_cents`; a lost card dispute has no credit note, so its tax stays remitted unless written off (line 107); the
+  band counts by payment date and the return by invoice date; a blended Refunded cell never feeds the return; the FX day (a USD invoice issued
+  before the Bank of Canada posts its rate takes the prior day's); a USD credit note's tax on line 107 at the original invoice's rate; fees read
+  from the kept records, never from `platform_fee_invoices`.
+- **Stage 3 is NOT closed:** walks published, owed. It closes when the owner's walks pass (paste-back ticks, writing steps read back).

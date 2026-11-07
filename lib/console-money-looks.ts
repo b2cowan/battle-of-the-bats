@@ -83,13 +83,13 @@ export function lookWhyRefusal(why: unknown, putBack = false): string | null {
 
 /**
  * THE RULE, over what has been read (no database here, so it is tested on fixtures): each record's reasons now (check 7 settled by
- * whether an ISSUED credit note exists), then its newest un-undone mark applied. `standing` = still needs a look; `looked` = a mark
+ * what the ISSUED credit notes paid back, `refunded` keyed by invoice), then its newest un-undone mark applied. `standing` = still needs a look; `looked` = a mark
  * holds (so it is NOT in `standing` / `reasons`, but its window can say who looked); `allReasons` = every reason, marked or not.
  * A club's read and Today's count both come through here (lib/console-money-sales-store.ts `judgeSales`), so they cannot differ.
  */
 export function settleLooks<T extends NeedsLookRecord>(
   records: readonly T[],
-  ctx: { registration: string | null; issued: ReadonlySet<string> },
+  ctx: { registration: string | null; refunded: ReadonlyMap<string, number> },
   rows: ReadonlyMap<string, readonly LookRow[]>,
 ): { standing: T[]; reasons: Record<string, LookReason[]>; allReasons: Record<string, LookReason[]>; looked: Record<string, LookedMark> } {
   const reasons: Record<string, LookReason[]> = {};
@@ -98,7 +98,7 @@ export function settleLooks<T extends NeedsLookRecord>(
   const standing: T[] = [];
   for (const r of records) {
     const id = r.stripe_invoice_id;
-    const found = needsLook(r, { registration: ctx.registration, hasCreditNote: ctx.issued.has(id) });
+    const found = needsLook(r, { registration: ctx.registration, notesRefundedCents: ctx.refunded.get(id) ?? 0 });
     if (!found.length) continue;
     allReasons[id] = found;
     const mark = currentMark(rows.get(id) ?? []);

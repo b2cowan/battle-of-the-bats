@@ -1,7 +1,7 @@
 # Credit notes for refunds of FieldLogicHQ's own invoices: contents, part refunds, no-invoice charges
 **Last verified:** 2026-11-06
 **Re-verify by:** 2027-11-06, or if Stripe changes its credit-note template, the live account's public business details change, or a refund is ever made more than 4 years after the invoice's reporting period
-**Updated:** 2026-11-06 (Part 7: Q1 "step by the gap" built and proven; Q2 PDF link gated; the registration number redacted from this file)
+**Updated:** 2026-11-07 (Stage 3 closeout section: refunds with no or a short note, the eighth check, USD notes, the fee cascade, deletion; earlier 2026-11-06: Part 7: Q1 "step by the gap" built and proven; Q2 PDF link gated; the registration number redacted from this file)
 **Depends on facts:** registered for GST/HST (owner 2026-10-31); refunds made through platform admin's console as Stripe credit notes (GST/HST Stage 2 Part 6b, built 2026-11-05/06)
 
 ## Question(s) this answers
@@ -64,6 +64,31 @@ the move name the coach (the coach was the recipient), after it the club; a late
    access to the club's billing name and address; the club itself still receives the note by email and in Stripe's portal.
 4. Plan & billing's fee list not showing a refunded fee invoice is not a tax gap (the s.232 document is issued and emailed, R2). The
    club's own books need the note, which they have; showing it is a product nicety for `/plan`.
+
+## GST/HST Stage 3 closeout (2026-11-07): what the kept records do with refunds, notes, currency and deletion
+From the facts already on file (Memo 12.2 ¶22-24, Memo 3-6, the six-year rule); no new research was needed.
+1. **A refund with no credit note leaves the GST/HST unreduced: correct, not a defect.** The s.232 deduction exists only once a
+   note is issued (line 107). Refunding the card in Stripe's dashboard without one means we over-remit the tax on it, the safe
+   direction. Remedy when "Needs a look" lists one: issue a credit note in Stripe for the refunded amount (linked to the refund).
+2. **Check 7 measured by what the notes paid back to the card (owner 2026-11-07): sound.** A note that credited the customer's
+   balance pays nothing back, so a separate card refund is rightly still listed; an out-of-band note never touches the charge's
+   refunded figure, so it cannot cause a false flag. A note whose refund Stripe attached late reads as unexplained: a false
+   flag (over-remit side), never a false clear.
+3. **The eighth check (Stripe zero-rated a sale to an address kept in Canada): sound.** Software supplied to a Canadian address
+   has no zero-rating route for us (a zero-rated export needs a non-resident; Schedule VI Part V). It is a look, not a ruling: a
+   genuine non-resident with a Canadian billing address is possible but would fail our own evidence rule anyway.
+4. **A USD credit note valued at its own day's rate: fine today, one Stage 4 rule.** Every USD sale we make is zero-rated, so a
+   USD note carries no GST/HST and nothing reaches line 107. If a USD note ever carries GST/HST, the line 107 adjustment must not
+   exceed the CAD tax first reported on the invoice (Memo 12.2: only "to the extent the tax was in net tax"): value its tax at
+   the ORIGINAL invoice's rate for the return. For line 101 revenue, the note's own-day value is acceptable if used consistently.
+5. **Zero-rating on a US address + the declaration, with card/payout country only feeding "needs a look": as recorded.** The
+   three-part evidence rule in ZERO_RATED_SALES_TO_US_CUSTOMERS.md (address + declaration + one corroborator; a mismatch is held)
+   still needs the accountant's approval before the first US club. Nothing changes while US sales are closed.
+6. **The fee table's cascade on a club delete: no retention gap.** Every fee invoice also has its own kept tax record
+   (`kind = fee`), which has no link to the club and survives; Stripe keeps the invoice too. Stage 4 must read fees from the kept
+   records, never from the cascading fee table.
+7. **Our copy survives a deletion of the Stripe customer: required, not optional.** The six-year retention (ETA s.286, ITA s.230)
+   is not overridden by a deletion request (RECORDS_RETENTION_AND_LOCATION.md). How the privacy policy says so is `/legal`'s.
 
 ## Sources
 - [Credit Note and Debit Note Information (GST/HST) Regulations, SOR/91-44 s.3](https://laws-lois.justice.gc.ca/eng/regulations/SOR-91-44/page-1.html) — accessed 2026-11-06

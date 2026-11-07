@@ -4,11 +4,13 @@
  * reader uses takes its query as a callback). The reader is
  * lib/console-money-sales-store.ts `readNeedsLook`; the words are `NEEDS_LOOK_WORDS` beside the sales words.
  *
- *   · Seven checks over the stored record, in priority order. A sale shows once with its first reason; its window lists all.
+ *   · Eight checks over the stored record, in priority order. A sale shows once with its first reason; its window lists all.
+ *     The eighth (Part 5, owner 2026-11-07) sits after the rate check: Stripe zero-rated a sale to an address in Canada.
  *   · Never on the list: a void sale, and a sale issued before our GST/HST registration took effect (the changeable Stage 4a
  *     setting). With that date unread, nothing is called missing (checks 1–3, Part 2's rule); the others still run.
  *   · Open and written-off sales ARE on it (undrawn state (c) = as recommended: an open invoice still owes its tax).
- *   · Check 7 is "refunded, and no issued credit note at all" (as drawn; a partial note clears it, owner 2026-11-06).
+ *   · Check 7 is "refunded more than the issued credit notes paid back" (owner 2026-11-07, Part 5, tightening 2026-11-06's "any
+ *     issued note clears it"): a note covers a refund only by the money it paid back (its `refund_cents`), the band's own measure.
  *   · "Mark as looked at" (Part 3b) is applied by the reader, never here: these rules say what is wrong with the record.
  */
 import { regionName } from './billing-location';
@@ -54,7 +56,8 @@ export type NeedsLookRecord = Pick<SaleRecord,
   | 'review_reason' | 'review_note' | 'evidence_missing' | 'evidence_country' | 'evidence_region' | 'refunded_cents'>;
 
 export type LookReasonCode =
-  | 'not_worked_out' | 'unexpected' | 'buyer_not_charged' | 'no_zero_rating_proof' | 'rate_mismatch' | 'review' | 'no_evidence' | 'refund_no_note';
+  | 'not_worked_out' | 'unexpected' | 'buyer_not_charged' | 'no_zero_rating_proof' | 'rate_mismatch' | 'zero_rated_in_canada' | 'review'
+  | 'no_evidence' | 'refund_no_note';
 
 /** Check 7's trigger: only a refunded sale can need a credit note, so the reader looks for notes for these alone. */
 export const mayNeedCreditNote = (record: Pick<NeedsLookRecord, 'refunded_cents'>): boolean => record.refunded_cents > 0;
@@ -71,6 +74,18 @@ const MISSING_CODE: Record<GstHstPositionWhy, MissingCode> = {
 
 const W = NEEDS_LOOK_WORDS.reasons;
 
+/**
+ * The eighth check (owner 2026-11-07): Stripe zero-rated a Canadian line, and the address kept with the sale is in Canada. Software
+ * sold to a Canadian address has no zero-rating route (/accounting, Part 3), so the answer contradicts the address. A sale WE
+ * zero-rated is never this: our rule needs a US address (lib/charge-tax-record.ts `gstHstPosition` step 4).
+ */
+function zeroRatedInCanada(record: NeedsLookRecord): LookReason | null {
+  if (record.gst_hst_position !== 'zero_rated' || record.evidence_missing || record.evidence_country !== 'CA') return null;
+  const expected = gstHstRateFor(record.evidence_region, record.issued_at);
+  const place = regionName('CA', record.evidence_region) ?? (record.evidence_region?.trim() || 'Canada');
+  return { code: 'zero_rated_in_canada', text: W.zero_rated_in_canada(place, expected ? `${expected.kind} ${expected.rate}%` : null) };
+}
+
 /** Check 4: taxed, and the GST/HST line's rate is not the rate for the province of the address kept with the sale. */
 function rateMismatch(record: NeedsLookRecord): LookReason | null {
   if (record.gst_hst_position !== 'taxed' || record.evidence_missing || record.evidence_country !== 'CA') return null;
@@ -86,9 +101,10 @@ function rateMismatch(record: NeedsLookRecord): LookReason | null {
 
 /**
  * Every reason this sale needs a look, in priority order; empty when it needs none. `registration` is the `YYYY-MM-DD`
- * effective date, or null when it could not be read. `hasCreditNote`: an ISSUED credit note exists for the invoice.
+ * effective date, or null when it could not be read. `notesRefundedCents`: the money the invoice's ISSUED credit notes paid back
+ * (the sum of their `refund_cents`); check 7 lists what Stripe refunded beyond it.
  */
-export function needsLook(record: NeedsLookRecord, ctx: { registration: string | null; hasCreditNote: boolean }): LookReason[] {
+export function needsLook(record: NeedsLookRecord, ctx: { registration: string | null; notesRefundedCents: number }): LookReason[] {
   if (record.status === 'void' || beforeRegistration(record.issued_at, ctx.registration)) return [];
   const reasons: LookReason[] = [];
   // Checks 1–3 (and the unexpected reason after 1): exclusive, one `why` per missing answer.
@@ -98,10 +114,13 @@ export function needsLook(record: NeedsLookRecord, ctx: { registration: string |
   }
   const rate = rateMismatch(record);
   if (rate) reasons.push(rate);
+  const zeroRated = zeroRatedInCanada(record);
+  if (zeroRated) reasons.push(zeroRated);
   if (record.review_reason) reasons.push({ code: 'review', text: W.review(record.review_note) });
   if (record.evidence_missing) reasons.push({ code: 'no_evidence', text: W.no_evidence });
-  if (mayNeedCreditNote(record) && !ctx.hasCreditNote) {
-    reasons.push({ code: 'refund_no_note', text: W.refund_no_note(saleCents(record.refunded_cents, record.currency)) });
+  const uncovered = record.refunded_cents - Math.max(0, ctx.notesRefundedCents);
+  if (mayNeedCreditNote(record) && uncovered > 0) {
+    reasons.push({ code: 'refund_no_note', text: W.refund_no_note(saleCents(uncovered, record.currency)) });
   }
   return reasons;
 }

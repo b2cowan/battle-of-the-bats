@@ -13,7 +13,7 @@ and a pointer here.
 |---|---|---|---|---|
 | Terms of Service (subscriptions) | `drafts/TERMS_OF_SERVICE.md` | 0.1 | draft — owner decisions O1–O6 + 4 product items before publish | 2026-11-05 |
 | Payments terms (clubs taking online payments) | product placeholder only | placeholder | not started | — |
-| Privacy policy (FieldLogicHQ's own) | `drafts/PRIVACY_POLICY.md` | 0.1 | draft — owner items P1–P6 before publish; 8 product findings | 2026-11-06 |
+| Privacy policy (FieldLogicHQ's own) | `drafts/PRIVACY_POLICY.md` | 0.1 | draft — owner items P1–P6 before publish; 9 product findings (2026-11-07: tax records never end, §9 note 6) | 2026-11-07 |
 | Data-processing terms for clubs (FieldLogicHQ as service provider) | — | — | not started | — |
 | Subprocessor list | — | — | not started | — |
 | Guardian consent wording | product placeholder only | placeholder | not started | — |

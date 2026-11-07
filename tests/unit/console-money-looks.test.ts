@@ -39,20 +39,24 @@ const row = (invoice: string, over: Partial<LookRow> = {}): LookRow => ({
   id: `look-${++seq}`, seq, stripe_invoice_id: invoice, looked_keys: [], put_back_of: null,
   looked_by: 'sam@fieldlogichq.example', looked_at: '2026-11-08T15:15:00.000Z', why: 'Checked with the buyer; the address was wrong.', ...over,
 });
-const markFor = (record: NeedsLookRecord, ctx = { registration: REG, hasCreditNote: false }): LookRow =>
+const markFor = (record: NeedsLookRecord, ctx = { registration: REG, notesRefundedCents: 0 }): LookRow =>
   row(record.stripe_invoice_id, { looked_keys: lookKeysOf(record, needsLook(record, ctx)) });
 const rowsOf = (...rows: LookRow[]) => {
   const m = new Map<string, LookRow[]>();
   for (const r of rows) m.set(r.stripe_invoice_id, [...(m.get(r.stripe_invoice_id) ?? []), r]);
   return m;
 };
-const settle = (records: NeedsLookRecord[], rows: LookRow[] = [], issued: string[] = []) =>
-  settleLooks(records, { registration: REG, issued: new Set(issued) }, rowsOf(...rows));
+/** `issued`: invoices whose issued notes paid back this much (an id alone = the whole refund was paid back by a note). */
+const settle = (records: NeedsLookRecord[], rows: LookRow[] = [], issued: Array<string | [string, number]> = []) =>
+  settleLooks(records, {
+    registration: REG,
+    refunded: new Map(issued.map(i => (Array.isArray(i) ? i : [i, records.find(r => r.stripe_invoice_id === i)?.refunded_cents ?? 0]))),
+  }, rowsOf(...rows));
 
 describe('the key a reason is marked by', () => {
   it('a plain reason is its code', () => {
     const r = rec('in_1', { review_reason: 'country_mismatch', review_note: 'The card was issued in Canada.' });
-    assert.deepEqual(lookKeysOf(r, needsLook(r, { registration: REG, hasCreditNote: false })), ['review']);
+    assert.deepEqual(lookKeysOf(r, needsLook(r, { registration: REG, notesRefundedCents: 0 })), ['review']);
   });
   it('a rate mismatch also keeps the province of the address looked at', () => {
     assert.equal(lookKey({ evidence_region: 'AB', refunded_cents: 0 }, 'rate_mismatch'), 'rate_mismatch:AB');
@@ -66,13 +70,13 @@ describe('the key a reason is marked by', () => {
   });
   it('the keys of a sale are sorted and without repeats', () => {
     const r = rec('in_1', { evidence_region: 'AB', refunded_cents: 1000, review_reason: 'x' });
-    const keys = lookKeysOf(r, needsLook(r, { registration: REG, hasCreditNote: false }));
+    const keys = lookKeysOf(r, needsLook(r, { registration: REG, notesRefundedCents: 0 }));
     assert.deepEqual(keys, [...keys].sort());
     assert.equal(new Set(keys).size, keys.length);
   });
   it('rewording a sentence never changes a key (a key has no sentence in it)', () => {
     const r = albertaAtHst('in_1');
-    const keys = lookKeysOf(r, needsLook(r, { registration: REG, hasCreditNote: false }));
+    const keys = lookKeysOf(r, needsLook(r, { registration: REG, notesRefundedCents: 0 }));
     assert.ok(keys.every(k => !k.includes(' ')), 'no sentence in a key');
   });
 });

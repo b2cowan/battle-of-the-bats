@@ -24,8 +24,8 @@ import {
 import type { LookedMark, LookReason, NeedsLookRead } from '@/lib/console-money-needs-look';
 import {
   NEEDS_LOOK_WORDS, SALES_WORDS, addressChangedSince, asItStoodLabel, cadRateWords, creditNoteTaxWords, evidenceLines, gstAnswerWords, isUnpaidSale,
-  isVoidSale, joinSales, keptWords, moneyBandFromSales, saleAmount, saleCardCell, saleCents, saleFlag, saleRecordSays,
-  saleStripeSays, saleTaxCell, saleWhatWords, saleWindowBand, taxLineWords, taxedForWords,
+  isVoidSale, joinSales, keptWords, moneyBandFromSales, notesPaidBackCents, saleAmount, saleCardCell, saleCents, saleFlag, saleRecordSays,
+  saleStripeSays, saleTaxCell, saleWhatWords, saleWindowBand, taxLineWords, taxedForWords, unexplainedRefunds,
   type SaleNoteRecord, type SaleRecord, type SaleRow, type SalesRecords,
 } from '@/lib/console-money-sales';
 import type { ConsoleRefund } from '@/lib/console-money-store';
@@ -661,7 +661,10 @@ function SaleWindow({ orgId, orgName, number, startWithRefund, atTax, listRow, f
   }
 
   const refundsSoFar = c?.refunds.filter(r => r.status === 'succeeded' || r.status === 'pending') ?? [];
-  const noNoteRefund = reasons.some(r => r.code === 'refund_no_note');
+  // The clause goes only on the refunds the sale's issued notes do not explain (the band's own order), never on every dashboard line.
+  const noNoteIds = reasons.some(r => r.code === 'refund_no_note')
+    ? new Set(unexplainedRefunds(refundsSoFar, notesPaidBackCents(row?.notes ?? [])).filter(u => u.cents > 0).map(u => u.refund.id))
+    : new Set<string>();
   const today = billing && billing !== 'failed' && billing.buyer !== 'none' ? billing.location : null;
   const amount = row ? saleAmount(row) : null;
   const says = row ? (stripeRead ? saleStripeSays(row) : saleRecordSays(row)) : null;
@@ -777,7 +780,7 @@ function SaleWindow({ orgId, orgName, number, startWithRefund, atTax, listRow, f
                         return (
                           <span key={r.id} className={money.refundLine}>
                             {formatCents(r.amountCents, c.currency)} · {consoleWhen(r.createdAt)} · {ours ? ours.actorEmail : 'in Stripe’s dashboard'}
-                            {!ours && noNoteRefund ? ` · ${NEEDS_LOOK_WORDS.refundClause}` : ''}
+                            {!ours && noNoteIds.has(r.id) ? ` · ${NEEDS_LOOK_WORDS.refundClause}` : ''}
                             {ours?.creditNoteNumber ? ` · credit note ${ours.creditNoteNumber}` : ''}
                             {r.status === 'pending' ? ' · on its way' : ''}
                           </span>

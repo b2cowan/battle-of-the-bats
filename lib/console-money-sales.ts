@@ -19,7 +19,7 @@ import {
 } from './charge-tax-record';
 import {
   BAND_WORDS, isCountedRefund, chargeFailureWords, failedBillOf, invoicePaidForWords, nextTryShort, stripeSaysWords,
-  type BandCell, type ChargeCreditNote, type ChargeFlag, type MoneyCharge, type MoneyInvoice, type Patterns,
+  type BandCell, type ChargeCreditNote, type ChargeFlag, type MoneyCharge, type MoneyInvoice, type MoneyRefund, type Patterns,
 } from './console-money';
 
 // ── The shapes the route hands the screen (our record; read for the Stripe-reading roles only, Ask 7) ─────────────
@@ -377,6 +377,30 @@ export function paidSaleBeforeTax(row: SaleRow, notes: readonly SaleNoteRecord[]
   return paidCharge ? { cents: paidCharge.amountCents, currency: paidCharge.currency, at, asCharged: true } : null;
 }
 
+/**
+ * What a sale's issued credit notes paid back (the sum of their `refund_cents`): the measure check 7 and the band both use.
+ */
+export const notesPaidBackCents = (notes: readonly Pick<SaleNoteRecord, 'status' | 'refund_cents'>[]): number =>
+  notes.reduce((sum, n) => (n.status === 'issued' ? sum + n.refund_cents : sum), 0);
+
+/**
+ * The counted refunds of a sale, each with the part of it no credit note explains (`cents`, 0 when a note covers it all). The
+ * notes' paid-back money explains the console's refunds first (a note is made with its refund), then the oldest of the rest. The
+ * band (`refundItems`) and the sale window's "no credit note" clause read it, so they cannot disagree.
+ */
+export function unexplainedRefunds<R extends Pick<MoneyRefund, 'amountCents' | 'createdAt' | 'ourRefundId' | 'status'>>(
+  refunds: readonly R[], paidBackCents: number,
+): Array<{ refund: R; cents: number }> {
+  let left = Math.max(0, paidBackCents);
+  return refunds.filter(isCountedRefund)
+    .sort((a, b) => Number(!a.ourRefundId) - Number(!b.ourRefundId) || a.createdAt.localeCompare(b.createdAt))
+    .map(refund => {
+      const covered = Math.min(left, refund.amountCents);
+      left -= covered;
+      return { refund, cents: refund.amountCents - covered };
+    });
+}
+
 /** One refund as the band counts it: `split` = its before-tax figure comes from a credit note; `at` null = no real refund date is known. */
 type RefundItem = { cents: number; currency: string; at: string | null; split: boolean };
 
@@ -395,14 +419,11 @@ function refundItems(rows: readonly SaleRow[], since: string, notes: readonly Sa
   }
   for (const row of rows) {
     if (isVoidSale(row)) continue;
-    let explained = (byInvoice.get(row.key) ?? []).reduce((s, n) => s + n.refund_cents, 0);
+    const explained = notesPaidBackCents(byInvoice.get(row.key) ?? []);
     if (stripeRead && row.charges.length) {
-      const refunds = row.charges.flatMap(c => c.refunds.filter(isCountedRefund).map(r => ({ r, currency: c.currency })))
-        .sort((a, b) => Number(!a.r.ourRefundId) - Number(!b.r.ourRefundId) || a.r.createdAt.localeCompare(b.r.createdAt));
-      for (const { r, currency } of refunds) {
-        const covered = Math.min(explained, r.amountCents);
-        explained -= covered;
-        if (r.amountCents - covered > 0 && onOrAfter(r.createdAt, since)) items.push({ cents: r.amountCents - covered, currency, at: r.createdAt, split: false });
+      const refunds = row.charges.flatMap(c => c.refunds.map(r => ({ ...r, currency: c.currency })));
+      for (const { refund, cents } of unexplainedRefunds(refunds, explained)) {
+        if (cents > 0 && onOrAfter(refund.createdAt, since)) items.push({ cents, currency: refund.currency, at: refund.createdAt, split: false });
       }
     } else if (row.record && row.record.refunded_cents > explained && onOrAfter(row.record.issued_at, since)) {
       items.push({ cents: row.record.refunded_cents - explained, currency: row.record.currency, at: null, split: false });
@@ -494,6 +515,9 @@ export const NEEDS_LOOK_WORDS = {
     buyer_not_charged: 'a Canadian buyer was not charged GST/HST.',
     no_zero_rating_proof: 'zero-rated, but there is no proof the buyer is outside Canada (no US address or no US declaration).',
     rate_mismatch: (taxedAt: string, place: string, expected: string) => `taxed at ${taxedAt}, but the address kept with the sale is in ${place} (${expected}).`,
+    /** The eighth check (owner 2026-11-07, Part 5). `expected` null = a province code we do not know. */
+    zero_rated_in_canada: (place: string, expected: string | null) =>
+      `zero-rated by Stripe, but the address kept with the sale is in ${place}${expected ? ` (${expected})` : ''}.`,
     review: (note: string | null) => `flagged for review when it was sold.${note ? ` ${note}` : ''}`,
     no_evidence: 'no billing address could be read when it was sold.',
     refund_no_note: (amount: string) => `refunded ${amount} in Stripe’s dashboard with no credit note, so the tax was not reduced.`,
@@ -504,10 +528,13 @@ export const NEEDS_LOOK_WORDS = {
   showThem: 'Show them',
   count: (n: number) => (n === 0 ? 'No sales need a look' : `${n} sale${n === 1 ? ' needs' : 's need'} a look, newest first`),
   emptyTitle: 'Nothing needs a look.',
-  /** Undrawn state (b) = as recommended: with the registration date unread, the same line without the date. */
+  /**
+   * Undrawn state (b). With the registration date unread, checks 1–3 did not run, so the line claims only the checks that did
+   * (owner 2026-11-07, Part 5; the unread-date caption beside it says why).
+   */
   emptyText: (registration: string | null) => (registration
     ? `Every sale since ${consoleDate(registration)}, when our GST/HST registration took effect, has a GST/HST answer that matches what was kept with it.`
-    : 'Every sale has a GST/HST answer that matches what was kept with it.'),
+    : 'No sale needs a look on the checks that could run.'),
   showAll: 'Show all sales',
   /** Undrawn: the needs-a-look read itself failed (the choice is then left out, as when our records fail; drawing tab 4). */
   readFailed: 'Which sales need a look could not be read.',

@@ -5,7 +5,7 @@
 | **Version** | 0.1 (draft) |
 | **Status** | draft — not owner-approved, not published, **not reviewed by a lawyer** |
 | **Effective date** | — (set on publication) |
-| **Last reviewed** | 2026-11-06 |
+| **Last reviewed** | 2026-11-07 |
 | **Backlog** | L2 (with L9 findings); children's consent wording (L5) and CASL lawful basis (L6) are referenced, not settled |
 
 **Change log**
@@ -15,6 +15,10 @@
   (GST/HST Stage 2 Part 2b), also for a club that pays no plan, and it is used to bill and tax the club's Stripe fees.
 - 0.1 · 2026-11-06 · §5 and §12: other people’s email addresses (a second parent typed on a house-league sign-up) and the
   "Stop these emails" link (Signed-in family accounts Stage 3b). Written from the shipped behaviour, not a plan.
+- 0.1 · 2026-11-07 · GST/HST Stage 3 closeout (`/legal` on what each sale keeps): §3 billing row and §9 say each sale keeps a
+  copy of the billing address and card country it was taxed on, and that closing an account or asking for deletion does not
+  remove it before the tax period ends; §11's delete right now names that exception. New §9 finding 6: those records
+  never end today (a live one cannot be deleted at all).
 
 > **How to read this draft.** `[SQUARE BRACKETS]` = a fact the owner fills in. `> NOTE` blocks are for the owner and are
 > deleted before publication. The law this is written to is **PIPEDA** (Canada's federal private-sector privacy law,
@@ -56,7 +60,7 @@ officials, treasurers), and people who buy a plan.
 |---|---|
 | Name, email address and password | To create your account, sign you in and contact you about it. Your password is stored by our sign-in provider in a protected (hashed) form; we never see it. |
 | The organizations and teams you belong to, your role and title | To show you the right screens and let the club control who sees what. |
-| For the account owner who buys a plan, or who turns on online payments for a club: the billing address, and (when a card is used) the card's brand, last four digits and country | To bill you — for your plan, and for the Stripe fees a club's online payments cause — to work out the sales tax that applies, and to show you which card is on file. Your full card number goes to Stripe, never to us. |
+| For the account owner who buys a plan, or who turns on online payments for a club: the billing address, and (when a card is used) the card's brand, last four digits and country | To bill you — for your plan, and for the Stripe fees a club's online payments cause — to work out the sales tax that applies, and to show you which card is on file. Each sale keeps a copy of the address and card country it was taxed on, as our tax record of that sale (see §9). Your full card number goes to Stripe, never to us. |
 | Purchase, plan and invoice history | To run your subscription and keep the business and tax records the law requires. |
 | Settings you choose (for example light or dark display, reminders you have dismissed) | To remember your preferences. |
 | What you send us — support emails, feedback you submit in the product, a request to delete your organization | To answer you and improve FieldLogicHQ. Feedback submitted in the product also records your internet (IP) address, your browser type and the page you were on, so we can find and fix the problem. |
@@ -218,7 +222,9 @@ and email addresses.
   organization and **365 days** for a Premium Coaches Portal, with an email warning before that period ends. After that,
   it **may be permanently deleted**.
 - **Billing, tax and invoice records** are kept as long as Canadian tax law requires — generally **six years** after the
-  end of the tax year they relate to.
+  end of the tax year they relate to. They include, for each sale, the name, billing address and card country it was taxed
+  on. Closing your account, deleting an organization, or asking us to delete your information does not remove these
+  records before that period ends.
 - **Error reports** are deleted after 30 days; logs of which records our staff opened, after 90 days; performance
   measurements, after one year.
 - **Information a club keeps while its plan is active** is kept until the club deletes it or closes its organization. The
@@ -239,7 +245,17 @@ and email addresses.
 > 4. **"When it is closed, we delete it"** — true: staff delete accounts permanently. There is no self-serve delete, so it
 >    happens by request (§11), which PIPEDA allows.
 > 5. Six years: the general CRA books-and-records rule. Confirm with `/accounting` (its records-retention topic) — that
->    agent owns the number; this line points at it.
+>    agent owns the number; this line points at it. (`/accounting` 2026-11-07: required, and a deletion request does not
+>    override it — CREDIT_NOTES_ON_REFUNDS.md closeout §7.)
+> 6. **The tax records never end (GST/HST Stage 3, 2026-11-07).** Each sale's record keeps the buyer's name and billing
+>    address as it stood (for a coach buying as a person, a HOME address) and card country. It survives a club or person
+>    delete and a Stripe customer delete, which is what the law requires. But a live record **cannot be deleted at all**
+>    (a database guard refuses it), so nothing ends it after six years. PIPEDA 4.5.3 (and Québec's private-sector Act,
+>    s. 23, once a Québec buyer is real) expects information to be destroyed or anonymized once its purpose and legal
+>    period are over. → `/plan`: at six years after the tax year, blank the name and address on old records (keeping the
+>    amounts, tax and province the return needs), as a written step. Not urgent (the first record expires after 2032), but
+>    the policy's "six years" is only true once it exists. Support staff see these addresses to answer tax questions
+>    (owner ruled 2026-11-07, need-to-know); no policy line promises otherwise.
 
 ## 10. How we protect information
 
@@ -272,7 +288,7 @@ For information **we** are responsible for (§3, §4), you can:
   product yet;
 - **withdraw your consent** — for example, unsubscribe from promotional email, or close your account — subject to
   information we must keep by law or contract;
-- **ask us to close your account and delete your information.**
+- **ask us to close your account and delete your information**, except the records the law makes us keep (§9).
 
 Email **[PRIVACY CONTACT EMAIL]**. We will answer within **30 days** and tell you if we need longer. We may need to confirm
 who you are first. There is no charge.
