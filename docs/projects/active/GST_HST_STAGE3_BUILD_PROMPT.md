@@ -718,3 +718,4 @@ records survive; refund in the Stripe dashboard → the credit note appears; the
   before the Bank of Canada posts its rate takes the prior day's); a USD credit note's tax on line 107 at the original invoice's rate; fees read
   from the kept records, never from `platform_fee_invoices`.
 - **Stage 3 is NOT closed:** walks published, owed. It closes when the owner's walks pass (paste-back ticks, writing steps read back).
+- **Part 5 COMMITTED `a42af2c45` 2026-11-07 (dev, not pushed; no migration).** 21 files; partial commit (template `.probe/gst3/commit-5.cjs`): MoneyTab.tsx, TODO.md and the two research indexes carry only this part's edits applied to HEAD; the ledger appends §477–§479 to the HEAD bytes. Dev server restarted once at hand-off (HTTP 200, no EACCES). Stage 3 stays OPEN: walks published, owed.
