@@ -21,7 +21,10 @@ missed credit note or an unpaid invoice leaves the return wrong. The worksheet a
   period then reads **FILED**, with "Figures as you filed them" and a "Changed since you filed" box that says what to do with each change: a credit released
   late is claimed on a later return (it appears there on line 106 as "Credits from earlier periods", once), anything that raises the tax for the filed
   period means adjusting the filed return, and a few cases go to the accountant. Marking it again is an amended filing with a reason; the history stays.
-- **The accountant package** gains the worksheet and the lists behind it.
+- **The accountant package** gains three files beside the invoice file it already has (built and committed `b44a22e7a` 2026-11-08; walk §494 owed): the **worksheet** (lines 101 to 109 for the package's dates, the same figures as the screen,
+  "Not available" with its reason and never a zero), the **credits** (every expense behind line 106 and whether its credit counted, is held for a supplier's number or can't be claimed, plus any credit carried from
+  a return already filed, with a note when a credit is not on the return you filed or is smaller than you claimed) and, only when you marked a return as filed inside those dates, the **as-filed** record
+  (every filing and revision exactly as saved, with its reason). Suppliers by name only; no address, email or buyer name. One call for the owner: the as-filed file includes any filed return inside the dates, not only an exact match.
 - **Phone:** each line is a card; only "Copy lines" stays in the toolbar. **Nothing tax-related ever appears on the Overview.**
 
 ## What is built first

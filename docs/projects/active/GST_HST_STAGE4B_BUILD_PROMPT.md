@@ -84,7 +84,7 @@ a period, and adds the worksheet and its sources to the accountant package. It i
 
 ### Session D (Sonnet): the accountant package, wording, records
 
-- Add to the package: `gst-hst-worksheet.csv` (lines 101-109), `gst-hst-sales.csv` (each invoice and credit note with its Canadian-dollar figures and rate), `gst-hst-credits.csv` (each expense's credit and its state), `gst-hst-as-filed.csv` (a filed period only). Reword `package-scope.txt` per tab 8: "Bank statements, processor fees, payouts and bank reconciliation are not in this package. Sales are included only as the GST/HST record of each invoice and credit note." The yearly in-Canada copy takes the same files.
+- Add to the package: `gst-hst-worksheet.csv` (lines 101-109), `gst-hst-sales.csv` (each invoice and credit note with its Canadian-dollar figures and rate; **owner 2026-11-08: ONE invoice file shared with Plans & pricing Part 4 4e, sales and GST/HST figures together; see the Session D prompt**), `gst-hst-credits.csv` (each expense's credit and its state), `gst-hst-as-filed.csv` (a filed period only). Reword `package-scope.txt` per tab 8: "Bank statements, processor fees, payouts and bank reconciliation are not in this package. Sales are included only as the GST/HST record of each invoice and credit note." The yearly in-Canada copy takes the same files.
 - Privacy default: buyers appear as the invoice number plus buyer kind and the club name; an individual coach appears by invoice number only. (`/legal` glance only if the owner wants names.)
 - Platform-admin only, so `/docs` is skipped unless a Bookkeeping help article exists (check). `/accounting` review of the package and the final wording. Update the ladder, the plan and TODO. Write the owner walk (checkable Artifact, one purpose per walk).
 
@@ -398,3 +398,58 @@ remove taps, ExpenseFormWindow's foot, workspace status and portal-tag censuses,
   ([prompt](GST_HST_STAGE4B_SESSION_D_BUILD_PROMPT.md)); the dev rows stay until then.
 - Layout: Bookkeeping is still not on `scripts/layout-screens.mjs` (another session's open work in that file); `check:layout --changed` not run.
 - Session B's carries stand: the captions are unconfirmed against the return screen; the portal-tag census entry is the flip owner's.
+
+### Session D: built and reviewed 2026-11-08 (the accountant package's GST/HST files). Committed `b44a22e7a` 2026-11-08. Walk §494 owed.
+
+Prompt: [GST_HST_STAGE4B_SESSION_D_BUILD_PROMPT.md](GST_HST_STAGE4B_SESSION_D_BUILD_PROMPT.md). **No migration, no screen change, no engine change.**
+
+**Step 1 (the part D question from walk §488).** Run against the dev stores with the app role, every write rolled back (`.probe/refile-probe.ts`, log `.probe/refile-probe.log`):
+October 2026 filed as revision 1; the real worksheet read gives live line 106 = $13.00 (the supplier's number was added after filing); `checkFiling` refuses revision 2
+with no reason (`reason_missing`) and accepts it with one (`periodRevision` 2; the expected revision and the fingerprint both fine); the insert the route builds is accepted
+(filing 2, revision 2, reason saved; 2 rows inside the transaction, 1 after the rollback); "Changed since you filed" reads the $13.00 as `credit_more` / claim it on a later
+return; November's worksheet carries the $13.00 as "Credits from earlier periods" (landing 2026-11-08). The earlier `.probe/filing-check-probe.log` had already shown the table
+accepting revision 2 with a reason. **No defect found, nothing fixed.** Not proved: the signed-in browser POST (only the owner's account passes the gate). The owner's D ticks were
+not backed by the store (it holds ONE October filing); the re-walk of C5 and D3 with the Network tab open is part of walk §494 (parts A and C), C5 first (it only holds until October is
+marked again). **Left in place for that re-walk: the walk's dev rows (the F4 clean-up waits).** **Owed on the owner:** `BOOKKEEPING_BACKUP_PASSPHRASE` is not set in `.env.local`
+(checked by presence only), so the dev backup `create` / `verify` / `restore-drill-dev` (format 4, never run against a real archive) has NOT been run. Run it BEFORE the clean-up so the
+drill proves the two October filings.
+
+**Files.** New: `lib/gst-package-files.ts` (pure rows: `packageWorksheetRows`, `creditsFileRows`, `filingsInside`, `asFiledFileRows`), `tests/unit/gst-package-files.test.ts` (23 tests),
+`docs/projects/active/GST_HST_STAGE4B_SESSION_D_WALK.html`. Changed: `app/api/platform-admin/bookkeeping/package/route.ts` (the three files + their scope lines), `lib/gst-return-worksheet-read.ts`
+(`readPackageWorksheet`), `lib/sales-by-month-read.ts` (the invoice-file read also returns the sales it read, so the worksheet is built from it, never a second pass),
+`lib/gst-return-worksheet-text.ts` (`CREDIT_STATE_WORDS`, `PACKAGE_FILES`; the Worksheet CSV no longer writes "Whole dollars" on a Not-available line 101),
+`lib/export/catalog.ts` (the package's justification and summary), `lib/help-content/platform-admin.tsx` (the Sales / accountant-package article names the three files).
+
+**Facts relied on.** [V] opened this session: the filings route, `checkFiling`, `insertGstReturnFiling`, the question component, the worksheet engine's credit items and states, `readGstReturnWorksheet` /
+`readWorksheetSales`, `readInvoiceFile`, the package route, `csvCell` (a leading `-` becomes text, so every file writes a plain figure plus a word), the catalog entry. [V] The dev probes above, plus
+`.probe/package-gst-probe.log`: the package worksheet equals the screen's worksheet (lines, part 106, Before-you-file list) for Oct 1 to Oct 31, Sept 26 to Dec 31 and the open range.
+
+**The files.** `gst-hst-worksheet.csv` = the Worksheet CSV's rows for the package's dates (plus a row saying how many "Before you file" items are open); built from the very sales and ALL expense revisions the
+route already read (the wider `every_event` sales read gives the same lines: tested), with the filings read once more for line 106. `gst-hst-credits.csv` = each expense behind 106 (this period) and each credit carried from
+a filed return, with its state in words; a credit counted now but not on the filed return covering its date says "Not on the return filed … added or released after it was filed, so it counts on a later return",
+one smaller than the filing claimed says "over-claimed, adjust that filed return" (`/accounting`). `gst-hst-as-filed.csv` = every revision of every return marked filed INSIDE the package's dates (**design call, flagged in
+the walk: the prompt said "a filed period only"**), absent when none; the lines (101 in whole dollars), then the invoices, credit notes, write-offs, recoveries, expense credits, earlier credits and open items as frozen.
+Dates that end before our sales record starts get none of the three (the scope note says so). One scope line each in `package-scope.txt`; none of the existing sentences changed. The yearly in-Canada copy is the same route with year dates:
+there is one code path. No supplier number, address, email or buyer name in any of the three.
+
+**`/accounting` 2026-11-08 (before hand-off).** Applied: the over-claimed note (the one change that means adjusting a filed return); the worksheet scope line says the figures are today's and a filed return keeps its own;
+when no dates were chosen the scope line says the open range "is not a reporting period"; the pre-registration state word says equipment or prepaid time after the date may qualify, ask the accountant; the open-items row says where to look.
+Recorded, not applied: a credit that vanishes after filing (a voided expense) has no row, so the credits scope line points to "Changed since you filed"; the four-year ITC limit is still not enforced (§10); the supplier's number is in expenses.csv by expense ID.
+**Gate:** 309 tests in the GST, sales, filing and Bookkeeping suites pass; `tsc` clean (`.next` left out); ESLint clean on every touched file; spelling clean.
+
+**`/review` (high) 2026-11-08, before the commit.** Each point checked against the code [V], not the description. **Found and fixed (Low, with a test):** `creditsFileRows` compared a credit with the filing covering its date even when
+that filing's sources were unreadable (null), which would have claimed "Not on the return filed…" on a guess; such a filing is now never compared. The route cannot produce it (one unreadable filing fails the whole filings read, so the
+function gets none), so this is the function being safe on its own. **No High, no Medium.** **Refuted:** (1) package worksheet = screen's: `buildWorksheet` applies the period itself on every path (sales by `inPeriod` at
+`gst-return-worksheet.ts` 337 to 436, expenses by `selectExpenseRevisions` over ALL revisions), the wider `every_event` read only adds invoices the engine ignores, and its notes are read for the same invoices; the route passes ALL
+revisions (never the filtered `selected`), so a category, supplier or status filter cannot narrow it; an open-ended range is `SALES_RECORD_FLOOR` to today and the scope line says it is not a reporting period; sales that fail to read and
+more than 1,000 expenses are refused (503) BEFORE any file is built; filings that fail to read leave line 106 "Not available", still build the package, and the scope line says so (tested). (2) `filingsInside` takes only filings whose
+dates lie inside the package's, ordered by period then revision, and "Latest revision" is right because a period's revisions are all inside or all outside together. (3) `creditsFileRows`: filed periods cannot overlap (`checkFiling`
+refuses it), so "the filing covering the date" is one filing; the latest revision of it is used; a held credit has `creditCents` 0 so it earns no note; a carried credit has its own section; credits are never negative (the engine counts
+only positive tax lines), so an unsigned figure hides no sign. (4) CSV: every cell passes `packageCsv`/`csvCell`; the files write plain figures with a word (Refund, You owe, Below zero), never a sign; no supplier number, address, email
+or buyer name is in any header or row (the filing's `Reason` is the owner's own text). (5) The existing `package-scope.txt` sentences are untouched (one `...gstScope` insert); "before our sales record starts" writes one line and none of the three files.
+(6) `worksheetCsvRows`: the "Whole dollars" fix passes the screen's Worksheet CSV tests. **Left (Low, recorded):** the worksheet scope line does not say TEST-MODE when the site is in Stripe test mode (the invoice file's line above it does, and the screen
+reads the same sales); `lib/gst-package-files.ts` rows builders share small helpers with the Worksheet CSV (`/simplify` offered, not run). **Other sessions' failures, not touched:** `npm run verify:changed` stops at `npm test`: 15,490 pass, 16 fail, none in this stage's files (the admin header bar's
+checks, billing free time and the tax words in two help files, practice plans on a phone, the workspace move, the public tournament walk summary, a console foot-note check); the rest of that chain therefore did not run, so spelling, the
+export-catalog check, `tsc` and ESLint were run on their own. The export-catalog check names the founding-season desk (`FoundingSeasonDeskClient.tsx` missing, `FoundingSeasonDesk.tsx` has no entry): not this stage's.
+
+**Owed.** Walk §494 (https://claude.ai/artifact/WHUZF7rT6Na17Ysmh31URS); the owner's passphrase, then the dev backup drill and the F4 clean-up (`.probe/walk488-cleanup.mjs`: its guard expects exactly 2 filings, which is what the walk leaves); the production apply of migration 007 with the code (do not run from here). A fix needed after the walk is its own commit.
