@@ -7,7 +7,7 @@
 > Mark each fact you rely on [V] (verified this session, file:line) or [H] (handed to you). Everything about the code below is
 > [V] as of 2026-11-08 unless marked [H]; **re-open every cited line first.**
 >
-> **Two sessions, in order. Do not merge them.** Session 1 is the engine and its proof, with no screen. Session 2 is the screen.
+> **Two sessions, in order. Do not merge them.** Session 1 committed `3817838e8` 2026-11-08 (/review high done; its fixes in). Session 1 is the engine and its proof, with no screen. Session 2 is the screen.
 > Session 1 changes how a billing event is run, so a mistake there can silently write a wrong plan onto a real club: **run it on
 > the strongest model available and have `/review` (high) read it before Session 2 starts.** Session 2 is ordinary console work.
 
@@ -115,33 +115,75 @@ the owner's yes. Start Part 6.
 8. **Verify:** `npm run verify:changed`; `npm run typecheck` (shared handler change); the Stage 0 event-log suites stay green. Run
    `/review` at high on the diff before reporting. Do not commit; report what to commit.
 
-## Session 2 · the screen (after Session 1 is committed)
+## Session 2 · the screen (Session 1 committed `3817838e8` 2026-11-08)
 
-- **Door:** on each line of "What failed in Plan billing" for Super admin only: the word **Replay** (inline in the row, outlined-button rule
-  does not apply in a list row; **no "›"**: the arrow means leaving the page). Failed lines carry the event id so the door can open the window.
-- **Find by id:** a card under the failures with the heading **"Replay an update by its id"**, a text field (placeholder `evt_…`), an outlined
-  **Find update** button, and the caption "Stripe keeps an update for about N days." (the confirmed figure). It opens the same window.
-- **The window** (`RecordWindow`): title "Replay this update?"; the sentence "Runs Stripe's update through the product again, using what
-  Stripe holds for it now. It does not charge, refund or change anything in Stripe."; facts Update (type + id), Received, Club,
-  Last result, Emails ("No customer email is sent by a replay"); **Why \*** with the placeholder "Say what you are fixing, for the change log.";
-  foot note "Goes in the change log with your name and your reason."; Cancel + lime **Replay**. Dates and clock through
-  `lib/console-dates.ts` (`consoleWhen`, never a year for the current year). Refusals: the six sentences of the drawings, tab 2.
-- **The result** (new): after the run the same window stays open and turns into the answer, four states from the drawings' tab 3
-  (changed with the Before/After table, "Nothing changed", "The replay failed", "Set aside again"), one lime main action each
-  ("Done", "Replay again", "Close"). Extend `RecordWindow` minimally (an optional result state) rather than building a second window;
-  keep every other caller unchanged.
-- **After:** a replayed update leaves the failing list and the "Updates still failing" count drops; the line says "Replayed" with who and when
-  for the rest of the day. The Audit log's Action filter gains "Replayed a Stripe update" and "Replay failed", each line's door back to
-  the Stripe page, the reason shown in full.
-- **Roles:** Super admin sees the door and the find line; Billing, Support, Product read the page as today (menu eye already shown);
-  the server refuses everyone else. Update the file comment on the page and the guard tests that name the page's contents.
-- **Help:** `/docs` adds "How to replay a Stripe update" to the platform-admin guide (when to use it, what it will not do, the
-  refusals), and updates "Stripe" help if it says the page never changes anything.
-- **Verify:** `npm run verify:changed`; `npm run check:layout --changed` on the Stripe page at 1440 and 1280 (the console is desktop-only);
-  a signed-in probe on dev as Super admin (door shown, window opens) and as Billing (no door, route 403). The owner does the browser walk.
-- **Walk C** (checkable Artifact, one purpose: replay): plant one failed update on dev (describe exactly how, and how to put it back, as
-  walk B did), replay it, see Before/After, replay it again (refused as finished), read the Audit log line, read it as Billing (no door).
-  Add the ledger entry (next free §), then the Progress block, the TODO line and the PM brief status.
+**Read first, and argue from the code, not from this list:** the Part 5 block of `PLANS_PRICING_STAGE2_BUILD_PROMPT.md` (the
+audit, owner rulings **A1/A2** of 2026-11-08, "Session 1 BUILT", "Session 2 must change from the drawings"); then
+`lib/billing-event-replay.ts` (every refusal's words, `replayResultWords`, the result kinds), `lib/billing-event-replay-run.ts`
+(the engine) and `app/api/platform-admin/watching-stripe/replay/route.ts` (the POST). Re-open every line you rely on. **A1/A2
+narrow the drawings; where the drawings and this section differ, this section wins** — and where this section and the code
+differ, the code is the truth and the section is wrong (say so).
+
+**What changed from the drawings (all from Session 1, owner-ruled):**
+- **Replayable = the safe list only** (`REPLAYABLE_TYPES`). A subscription created/updated/deleted, a checkout, a card added or a
+  club's Stripe-fees bill is REFUSED with its sentence. The failing list can hold such a line: its Replay door still opens the
+  window, which shows that refusal with no reason asked — do not hide the door per type (a hidden door reads as "nothing failed").
+- **A set-aside (no customer) update is refused** (A2); the drawings' "Set aside again" result does not exist.
+- **The refusals are the code's** (`replayRefusal`): the drawings' six, plus not ours, set aside, not replayable, Stripe-fees bill,
+  a later bill, not a plan bill, another Stripe format, Stripe did not answer, record unread, not claimed, say why first.
+- **The results are the code's** (`ReplayResultKind`): changed (Before/After), unchanged ("Nothing changed"), **ran** (no club
+  record to compare, e.g. a dispute, or the after-read failed: no table), failed ("Replay again"), set_aside (not ours),
+  no_customer. When `marked` is false the foot says the run could not be marked finished.
+- **Stripe keeps an update for 30 days** (Stripe's API reference, confirmed): the caption says "for 30 days", not "about".
+- **Messages, not only emails:** the window's fact is **Messages: "No message is sent to the customer by a replay"** (ruling 1
+  covers the in-app notice too). ⚠ State in help: a replayed failed payment does NOT put the notice on the club owners' Needs
+  attention list (the silenced notice is what feeds it).
+
+**Build:**
+- **A read for the window (new, read-only):** the POST does not offer the facts the window shows before the click (Update type +
+  id, Received, Club, Last result) nor a refusal before the reason is asked. Add `GET /api/platform-admin/watching-stripe/replay?id=evt_…`
+  (same power, `replay_events`) answering the row's facts and `replayRowRefusal` (pure: no Stripe call, no write). Club by the
+  engine's `findClub`. Never the payload.
+- **Door:** on each line of "What failed in Plan billing", Super admin only: the word **Replay** inline in the row (the
+  outlined-button rule does not apply in a list row; **no "›"**). Failed lines already carry the id (`lib/watching-stripe.ts`).
+- **Find by id:** a card under the failures, heading **"Replay an update by its id"**, a text field (placeholder `evt_…`), an
+  outlined **Find update** button, caption "Stripe keeps an update for 30 days." It opens the same window through the GET.
+- **The window** (`RecordWindow`): title "Replay this update?"; the sentence "Runs Stripe's update through the product again, using
+  what Stripe holds for it now. It does not charge, refund or change anything in Stripe."; facts Update, Received, Club, Last
+  result, Messages; **Why \*** (placeholder "Say what you are fixing, for the change log.", `whyMax` 1000 = `REPLAY_REASON_MAX`);
+  foot "Goes in the change log with your name and your reason."; Cancel + lime **Replay**. A refusal = `confirmHidden` +
+  `cancelLabel="Close"` with the refusal's title and body. Dates through `lib/console-dates.ts` (`consoleWhen`, no current year).
+- **The result** (new): the window stays open and turns into the answer (`words` from the POST: title, sentence, foot; the rows
+  for Before/After, unchanged rows dimmed under "Show only what differs"). One lime main action each: "Done"; failed → "Replay
+  again" + Close. Extend `RecordWindow` minimally (an optional result state); every other caller unchanged (a guard proves it).
+- **The change log's Before → After (drawings tab 3's audit line):** the first row is written BEFORE the run and the log cannot be
+  edited (mig 429), so the change is not stored today. Recommended: after the run, a best-effort companion row
+  `replay_billing_event_result` (old = before, new = after, the same reason) written by the engine; the Audit line shows "Status:
+  Past due → Active". It is NOT an audit-first action (the change already happened); it needs the Audit label and door, and
+  `platform-audit-reason-guard` must accept it. Put it to the owner in the PM summary (or drop the line from the Audit view).
+- **After:** a replayed update leaves the failing list and the "Updates still failing" count drops (the row is finished); the line
+  says "Replayed" with who and when for the rest of the day (read from the change log's `replay_billing_event` rows by event id).
+  The Audit log's Action filter shows "Replayed a Stripe update" and "Replay failed" (labels added in Session 1; check the filter's
+  list), each line's door "Open Stripe" (added), the reason in full.
+- **Roles:** Super admin sees the door and the find card; Billing, Support, Product read the page as today; the server refuses
+  everyone else (POST and the new GET). Update the page's file comment ("Part 5's replay … is not here") and the guard tests that
+  name the page's contents.
+- **Help:** `/docs` adds "How to replay a Stripe update" to the platform-admin guide: when to use it (an update Stripe gave up on,
+  or a re-run after we fixed our own fault), what it will not do (charge, refund, change Stripe, message the customer, add a Needs
+  attention notice), which kinds refuse and why (the safe list), the 30 days; and updates "Stripe" help if it says the page never
+  changes anything.
+- **Verify:** `npm run verify:changed` (it stops at the first red step: also run the steps after `npm test` and say which reds are
+  other sessions'); `npm run typecheck` with `NODE_OPTIONS=--max-old-space-size=8192` (the default heap runs out); `npm run
+  check:layout --changed` on the Stripe page at 1440 and 1280; a signed-in probe on dev as Super admin (door shown, GET 200, window
+  opens) and as Billing (no door, GET and POST 403). The owner does the browser walk.
+- **Walk C** (checkable Artifact, one purpose: replay): plant on dev and say exactly how and how to put it back. Plant: a dev
+  `stripe_billing_events` row of a REPLAYABLE type received in the last 30 days (an `invoice.payment_succeeded` whose invoice is
+  still its subscription's latest makes the best walk: Before/After shows); set `processed_at = null, error = 'Planted for walk C',
+  claimed_at = null`. Put back: the replay itself finishes it; if the walk stops early, `processed_at = now(), error = null`. Walk:
+  replay it, see Before/After, replay again (refused as finished), a refused kind (a `customer.subscription.updated` row planted the
+  same way: its refusal, no reason asked), the Audit log line, the page as Billing (no door). Then the ledger entry (next free §),
+  the Progress block, the TODO line and the PM brief status.
+- **Not this session:** making subscription changes replayable (A1's follow-up: drawn first, its own stage item).
 
 ## Closeout notes
 

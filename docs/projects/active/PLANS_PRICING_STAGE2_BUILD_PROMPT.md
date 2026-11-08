@@ -238,7 +238,7 @@ that is the owner's dashboard work.
       next-season clear tied to its subscription, the deletion guard when the record holds none, the portal welcome and pay-page close
       on a replay). (A2) A set-aside (`no_customer`) update refuses with the reason (it names no Stripe customer, so a replay would set
       it aside again); the drawings' "Set aside again" result is dropped and no reclaim of a set-aside row is built.
-      **Session 1 BUILT 2026-11-08, uncommitted (the owner's yes owed):** pure decisions + words `lib/billing-event-replay.ts`; the
+      **Session 1 BUILT 2026-11-08, committed `3817838e8` 2026-11-08; Session 2 (the screen) next, its section of the Part 5 build prompt rewritten for what Session 1 built:** pure decisions + words `lib/billing-event-replay.ts`; the
       engine `lib/billing-event-replay-run.ts` (order: reason → our row → the event re-fetched by id → the latest-invoice check →
       change-log row FIRST → the mig-416 claim → before → run `{ replay: true }` → after → done/fail); the customer-message gate
       `lib/billing-event-customer-messages.ts` (the handler's 3 emails + the payment-failed notice go through it; a live delivery
