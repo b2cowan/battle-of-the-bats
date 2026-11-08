@@ -98,3 +98,35 @@ GRANT SELECT, INSERT ON bookkeeping.gst_registration_revisions TO bookkeeping_ap
 -- Seed (owner fact 2026-11-06). The nil uuid marks a row written by the schema, not a person.
 INSERT INTO bookkeeping.gst_registration_revisions (revision, effective_date, reason, created_by)
   VALUES (1, DATE '2026-09-26', 'First entry', '00000000-0000-0000-0000-000000000000'::uuid);
+
+-- 007: "Mark as filed" (GST/HST Stage 4b Session C). One append-only row per filing: the lines as filed and their sources (JSON kept as
+-- text, read whole by the app). filing_no counts every filing, so two at once collide; the same dates again = period_revision + 1.
+CREATE TABLE bookkeeping.gst_return_filings (
+  filing_no integer NOT NULL CHECK (filing_no > 0),
+  period_from date NOT NULL,
+  period_to date NOT NULL,
+  period_revision integer NOT NULL CHECK (period_revision > 0),
+  filed_on date NOT NULL,
+  registration_date date NOT NULL,
+  line_101_dollars bigint NOT NULL,
+  line_101_cents bigint NOT NULL,
+  line_103_cents bigint NOT NULL,
+  line_104_cents bigint NOT NULL,
+  line_105_cents bigint NOT NULL,
+  line_106_cents bigint NOT NULL,
+  line_107_cents bigint NOT NULL,
+  line_108_cents bigint NOT NULL,
+  line_109_cents bigint NOT NULL,
+  partial boolean NOT NULL,
+  open_items integer NOT NULL CHECK (open_items >= 0),
+  sources text NOT NULL CHECK (octet_length(sources) BETWEEN 2 AND 1000000),
+  reason text CHECK (reason IS NULL OR length(btrim(reason)) BETWEEN 1 AND 500),
+  created_at timestamptz NOT NULL DEFAULT now(),
+  created_by uuid NOT NULL,
+  PRIMARY KEY (filing_no),
+  CHECK (period_from <= period_to),
+  CHECK (filed_on > period_to),
+  CHECK (period_revision = 1 OR reason IS NOT NULL)
+);
+REVOKE ALL ON bookkeeping.gst_return_filings FROM PUBLIC;
+GRANT SELECT, INSERT ON bookkeeping.gst_return_filings TO bookkeeping_app;

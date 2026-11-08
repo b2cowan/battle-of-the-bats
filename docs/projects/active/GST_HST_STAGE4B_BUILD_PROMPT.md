@@ -308,3 +308,93 @@ the portal-tag census (`workspace-flip-guard`) flags `lib/console-money-sales-ta
 entry on that test's list with a reason, which is the flip owner's call. Layout check still owed (above).
 
 **Session B: committed 035f5e965 2026-11-07** (the 14 files above plus the review fix). Review result is the paragraph above.
+
+### Session C: built and reviewed 2026-11-07 ("Mark as filed"; migration 007). Uncommitted, awaiting the owner.
+
+Prompt: [GST_HST_STAGE4B_SESSION_C_BUILD_PROMPT.md](GST_HST_STAGE4B_SESSION_C_BUILD_PROMPT.md).
+
+**Files.** New: `lib/gst-return-filing.ts` (pure: `freezeSources` / `parseSources` (format v1), `latestFilings`, `filingFor`, `filedCredits`,
+`carryContext`, `filingBlock`, `checkFiling`, `linesKey`, `changedSinceFiled`, `filingSummary`), `app/api/platform-admin/bookkeeping/gst-return/filings/route.ts`
+(GET list without sources, POST file), `app/platform-admin/bookkeeping/GstReturnFilingQuestion.tsx`, `scripts/bookkeeping-aws/007_gst_return_filings.sql`,
+`scripts/bookkeeping-dsql-filings-migration.mjs` (dev host only), `tests/unit/gst-return-filing.test.ts` (33 tests). Changed: `lib/gst-return-worksheet.ts`
+(additive, below), `lib/gst-return-worksheet-read.ts` (`readWorksheetFilings`, `filedForEngine`; `readGstReturnWorksheet` also returns `filings`),
+`lib/gst-return-worksheet-text.ts` (`FILING`, `refusalWords`, `CHANGE_EFFECT`, `changeSentence`, `filedFigure`, `longDate`; 106's note in Copy lines and the CSV),
+`lib/bookkeeping-store.ts` (`hasGstReturnFilingsTable`, `listGstReturnFilings`, `insertGstReturnFiling`; no update or delete),
+`app/api/platform-admin/bookkeeping/gst-return/route.ts` (`filing` + `today` in the GET), `ReportsGstReturn.tsx` + `.module.css` (door, state D, FILED tag
+and history window, today's figures folded below, 106's earlier-credits sub-line), `GstReturnWindows.tsx` (the 106 window lists earlier credits),
+`scripts/bookkeeping-aws/schema.sql`, `docs/agents/db/DATA_DICTIONARY.md` (the 007 paragraph after 006's), `docs/agents/accounting/GST_HST_RETURN_LINES.md`
+§10 + index row.
+
+**Facts relied on.** [V] opened this session: the engine, reader, route, view and windows as committed in 035f5e965; `selectExpenseRevisions`,
+`currentExpenses`, `expenseCredit` (held = no number and receipt ≥ $100); 006's SQL, runner and `hasGstTaxSchema`; `GstRegistrationQuestion` and the
+registration route (the patterns copied); `KitDialog`'s `question` kind; the storage contract test; the drawings' state D (tab 6) and that **ruling 12
+chose the option that includes "a late credit moves to your next return's line 106"** (so "Credits from earlier periods" was ruled, not open);
+CRA P-149R (June 2026) and ETA s.232(3) re-opened by the main session. [H] from a helper: RC4022 "How do you change a return?", CRA "After you file",
+s.169(4), s.225(4), s.231 (quotes in §10). **DSQL probed on the dev cluster 2026-11-07 (throwaway tables dropped, every write rolled back):**
+PostgreSQL 16; **3,000 rows per transaction fits, 3,001 is refused (54000)**; DDL and DML in one transaction are refused (0A000); no savepoints;
+one 2.1 MB text value fits. ⚠ **The prompt's [H] "Aurora DSQL has no JSON column type" is FALSE on this cluster: a `jsonb` column was created.**
+The design keeps text anyway (the app reads it whole and checks its own format version); the one-row choice rests on the row limit, which held.
+
+**`/accounting` at the START (Session A's note (e)), `GST_HST_RETURN_LINES.md` §10.** More ITC after filing → a LATER return's line 106 (CRA generally
+refuses an ITC-only amendment, P-149R; four years, s.225(4)). Anything that raises net tax for the filed period (more 101/103/104, less 106/107) →
+adjust the filed return in My Business Account. Credit notes, write-offs and recoveries land by their OWN date, so issuing one after filing never moves a
+filed period (the engine's existing rule is right). A late-recorded note dated inside the period → accountant (s.232(3)(b) names the issue period;
+CRA silent on catching up). A late-recorded write-off → may go on a later return (s.231(1)), NOT carried by the worksheet (the sentence says to add it).
+
+**The design as built.** One table, one append-only row per filing (`filing_no` global PK, so concurrent filings collide and the overlap rule is
+race-safe without a lock; `period_revision` per dates; lines as typed bigint columns; `sources` as JSON text, `octet_length` ≤ 1,000,000). One row,
+not a child table, because of the 3,000-row transaction limit. Refused: any line Not available; a period not yet ended; filed-on on or before the
+period's last day or in the future; overlapping dates unless identical; a stale revision; a missing reason when marking again; **lines the server works
+out that differ from the ones the question showed** (`linesKey` fingerprint, compared, never saved). Warned, never blocked: open "Before you file"
+items, a partial period (both recorded on the filing). The server recomputes the worksheet and freezes that; the browser's body is read for the period,
+the filed-on date, the reason, the revision and the fingerprint only (guard test).
+
+**The engine change (additive).** Optional `filed` input; `parts[106].earlierCredits` + `earlierCents`; line 106 = this period's credits + earlier
+credits; `WorksheetCreditItem.savedOn`; `'filings_unread'` (106/108/109 Not available, the sales lines stand). An earlier credit = a counted credit on an
+expense incurred in a period filed BEFORE this one, less what every OTHER filing claimed for it; it lands in the one period containing
+`landsOn` = the later of the day its current revision was saved and the day of the most recent filing; what a filed return already carried stays with
+it (its frozen `landsOn`), whatever is edited afterwards. Test: no filings (absent or empty) = every line, part and item unchanged.
+
+**/review 2026-11-07 (high-risk tier; gate + four Sonnet lenses: correctness/tax, security/data, concurrency/state, regression; High and Medium
+adjudicated in the main loop). Fixed:** (High) a later edit of a carried expense moved its landing day, so the return that carried it read a false "no
+longer counts / adjust the filed return": carried credits now stay with the return that carried them; (Medium) a credit released without a new revision
+(a registration-date change) could land in a period already filed without it: it now lands no earlier than the most recent filing; (Medium) the 106
+window's rows did not add up to the line with earlier credits: it now shows this period's subtotal, "Credits from earlier periods" (openable, each
+expense listed, in its CSV) and line 106; (Medium) "Copy lines" and the Worksheet CSV now say 106 includes earlier credits; (Medium) the question could
+save lines it never showed: the fingerprint refusal; (Medium) a 409 left the screen stale: it re-reads and reopens the question with the reason;
+(Low) a key collision now reads "another filing was being saved at the same moment", not "changed"; the size cap is bytes; "changed by $0.00" on a
+before-tax-only change reworded; one banner when expenses and filings both fail; today's figures fold resets per period; a ref guard on double submit;
+a sentence when filings can't be read (the door is hidden); `aria-haspopup` on the FILED tag. Two guards caught the first draft and were satisfied
+properly: `possessive()` for the supplier name, and the credit sum carried out of the engine's loop. **Refuted:** a relief-key collision (one write-off
+and one recovery per invoice; every note has an id). **Recorded, not fixed:** filed periods offer no Copy lines / CSV (drawn that way; the as-filed CSV
+is Session D's `gst-hst-as-filed.csv`); every worksheet read loads every filing with its sources (fine at a few filings a year; past 1,000 the read
+fails and 106 reads Not available); the four-year ITC limit is not enforced on a carried credit; "number added" assumes a held credit was released by
+its number; amending a period whose credit was already carried to a later filed return makes both claim it (the later one then reads "no longer
+counts"; ask the accountant before such an amendment); after a successful save, focus returns to the page, not the new FILED tag.
+**Gate:** `tsc` clean (two errors in another session's `tests/unit/renewals.test.ts` only; `.next/dev` left out, as Session B); ESLint clean on every
+touched file; the GST, Bookkeeping, looks, possessive, dues-definition and console foot suites 309/309; spelling and dictionary gates clean.
+`verify:changed` fails only on other sessions' files (BILLING_TAX_WORDS in help content, the schedule door, billing ended state, walk pages, the
+remove taps, ExpenseFormWindow's foot, workspace status and portal-tag censuses, the team move's org_id list).
+
+**Owed.**
+- **Migration 007 applied to development 2026-11-07** (after the owner refreshed the `fieldlogichq` sign-in): inspect, then apply; expense
+  revisions 56 → 56, registration revisions 1 → 1, the table present with 21 columns, the app role granted SELECT and INSERT only, 0 filings
+  (`.probe/migration-007-{inspect,apply}.log`). **Proved after it, with the app role and every write rolled back** (`.probe/filing-flow-probe.log`,
+  `.probe/filing-check-probe.log`): the real worksheet read for Sept 26 to Oct 31, 2026 on dev data (registration set, 0 filings, partial, 20 invoices,
+  28 open items); `checkFiling` accepts it as revision 1 and refuses a mismatched fingerprint; the filing row the route builds inserts (6 KB of sources),
+  reads back and parses; the comparison against the same worksheet is empty; the table refuses revision 2 with no reason and a filed-on date inside the
+  period; the app role is refused UPDATE and DELETE (42501); 0 filings left. **Not proved here:** the signed-in HTTP path (the Bookkeeping gate admits
+  only the owner's account, whose password a session does not hold; the guard tests pin the gate and the body). That is the owner walk.
+- **Production apply is owed with the code** (record it with the promote; do not run it from here).
+- **Owner walk §488 published 2026-11-07** (https://claude.ai/artifact/Bo1sbCpv4HHdtz9EXBAWcn, source `GST_HST_STAGE4B_SESSION_C_WALK.html`;
+  32 boxes; it writes one dev expense and two filings of October 2026, which the app cannot remove; part F asks F1-F4). Every step was checked
+  against the code before publishing; that check fixed line 109's words in "Changed since you filed" ("refund" / "you owe", not "minus").
+- **Owner ruled F3 yes (walk §488, 2026-11-08); built and committed `d6433b20f` 2026-11-08:** the Bookkeeping backup (`scripts/bookkeeping-backup.mjs`) is format 4 with a
+  `gst_return_filing` record, verified (columns, revisions in order, counts), restored and replayed by the drill; format 1-3 archives still verify. Contract test
+  in `tests/unit/bookkeeping-storage-contract.test.ts`. **Not yet run against a real archive** (a dev `create` / `verify` / `restore-drill-dev` is owed once the
+  walk rows are settled). Own commit (automation that runs against production).
+- **Walk §488 result 2026-11-08: 27 of 32.** F1 keep, F2 keep, F3 yes, F4 remove after the walk. **Open: dev holds 1 filing of October, not the 2 part D describes;
+  C5 not walked.** **Owner closed the walk 2026-11-08.** Part D (and C5) are carried to Session D's first step
+  ([prompt](GST_HST_STAGE4B_SESSION_D_BUILD_PROMPT.md)); the dev rows stay until then.
+- Layout: Bookkeeping is still not on `scripts/layout-screens.mjs` (another session's open work in that file); `check:layout --changed` not run.
+- Session B's carries stand: the captions are unconfirmed against the return screen; the portal-tag census entry is the flip owner's.

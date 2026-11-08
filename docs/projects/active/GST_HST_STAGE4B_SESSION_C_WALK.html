@@ -1,0 +1,243 @@
+<title>Mark as Filed Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: one column instrument, a sticky progress bar, parts as cards of Do / You should see steps, the paste-back at the foot. */
+:root {
+  --bg: #f6f6f1; --card: #ffffff; --ink: #1f2420; --muted: #5b6259; --line: #dcdfd6; --accent: #5d6b2f; --accent-soft: #eef1e2;
+  --warn: #8a5a00; --warn-soft: #fbf1dc; --bad: #9b2c2c; --bad-soft: #f8e5e3; --ok: #2f6b3a; --ok-soft: #e4f1e5;
+  --sans: "Public Sans", "Segoe UI", system-ui, sans-serif; --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #161915; --card: #1f231e; --ink: #e8ebe3; --muted: #a3aa9f; --line: #343a32; --accent: #b6c77a; --accent-soft: #2a3120;
+  --warn: #e7b65a; --warn-soft: #33290f; --bad: #f09a92; --bad-soft: #3a1f1d; --ok: #8fd19b; --ok-soft: #1f3322; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #161915; --card: #1f231e; --ink: #e8ebe3; --muted: #a3aa9f; --line: #343a32; --accent: #b6c77a; --accent-soft: #2a3120;
+  --warn: #e7b65a; --warn-soft: #33290f; --bad: #f09a92; --bad-soft: #3a1f1d; --ok: #8fd19b; --ok-soft: #1f3322; color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--sans); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 48px; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.wrap { max-width: 780px; margin: 0 auto; display: grid; gap: 18px; }
+h1 { font-size: 1.6rem; line-height: 1.2; margin: 24px 0 0; text-wrap: balance; }
+h2 { font-size: 1.1rem; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.eye { font: 600 0.75rem/1 var(--sans); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding: 10px 0; border-bottom: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+.meter { flex: 1 1 200px; height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
+.meter i { display: block; height: 100%; background: var(--accent); width: 0; transition: width 0.2s; }
+.count { font: 500 0.85rem var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; display: grid; gap: 10px; min-width: 0; }
+.card.signin { border-color: var(--accent); background: var(--accent-soft); }
+.card.caution { border-color: var(--warn); background: var(--warn-soft); }
+dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 14px; margin: 0; }
+dt { color: var(--muted); } dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+code, .mono { font-family: var(--mono); font-size: 0.86em; }
+ul.plain { margin: 0; padding-left: 1.1rem; display: grid; gap: 4px; }
+.part { display: grid; gap: 12px; }
+.part header { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: baseline; justify-content: space-between; }
+.step { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 10px; padding: 10px 0; border-top: 1px solid var(--line); }
+.step:first-of-type { border-top: 0; }
+.step input { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); }
+.step label { display: grid; gap: 4px; cursor: pointer; }
+.do b, .see b { font-weight: 700; }
+.see { color: var(--muted); }
+.step.done .do { text-decoration: line-through; text-decoration-color: var(--line); }
+.who { font: 600 0.72rem var(--sans); letter-spacing: 0.06em; text-transform: uppercase; color: var(--warn); }
+.verdict { display: flex; flex-wrap: wrap; gap: 8px; }
+.verdict button, .tools button { font: 600 0.85rem var(--sans); padding: 7px 12px; border-radius: 7px; border: 1px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer; }
+.verdict button[aria-pressed="true"][data-v="pass"] { background: var(--ok-soft); border-color: var(--ok); color: var(--ok); }
+.verdict button[aria-pressed="true"][data-v="issue"] { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); }
+.verdict button[aria-pressed="true"][data-v="call"] { background: var(--warn-soft); border-color: var(--warn); color: var(--warn); }
+button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+textarea { width: 100%; box-sizing: border-box; min-height: 64px; font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 7px; padding: 8px; }
+.tools { display: flex; flex-wrap: wrap; gap: 8px; }
+.tools button.primary { background: var(--accent); border-color: var(--accent); color: var(--card); }
+pre.out { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font: 500 0.8rem/1.5 var(--mono); background: var(--bg); border: 1px solid var(--line); border-radius: 7px; padding: 10px; max-height: 360px; overflow: auto; }
+.status { font-size: 0.85rem; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { .meter i { transition: none; } }
+</style>
+
+<div class="wrap">
+  <h1><span class="eye">Owner walk · §488 · GST/HST Stage 4b Session C</span><br>Mark a GST/HST return period as filed</h1>
+
+  <div class="bar" role="status"><div class="meter" aria-hidden="true"><i id="meter"></i></div><span class="count" id="count">0 of 0 checked</span></div>
+
+  <section class="card">
+    <h2>What this walk is for</h2>
+    <p>You finish a return, mark its period as filed, and later something changes: a supplier's GST/HST number arrives for a receipt that was held. This walk checks that the filed figures stay exactly as you filed them, that "Changed since you filed" says what changed and what to do, that the released credit shows up on the next return's line 106 once, and that marking the period again keeps the history.</p>
+    <p><b>It passes when</b> the filed figures never move, every change reads with its "what to do", the released credit appears once on a later return, a period that hasn't ended or overlaps a filed one can't be marked, and nothing tax-related appears anywhere but this view.</p>
+    <p><b>Not in this walk:</b> the accountant package files (Session D), the worksheet's own lines and windows (Session B's walk), anything on the Money tab or a club screen.</p>
+  </section>
+
+  <section class="card signin">
+    <h2>Sign in as</h2>
+    <dl>
+      <dt>Where</dt><dd><span class="mono">http://localhost:3000/platform-admin</span> (the dev server)</dd>
+      <dt>Account</dt><dd>Your own Bookkeeping owner account (<span class="mono">fieldlogichq@gmail.com</span>) with your own password. No UAT account opens Bookkeeping: it is owner-only.</dd>
+      <dt>Then</dt><dd>Bookkeeping › Reports › View: <b>GST/HST return</b></dd>
+      <dt>Period</dt><dd>Custom dates <b>Oct 1, 2026 to Oct 31, 2026</b> unless a step says otherwise</dd>
+      <dt>As of</dt><dd>Written November 7, 2026. Dev figures move as other sessions add invoices and expenses, so steps pin what must hold, never today's dev totals.</dd>
+    </dl>
+  </section>
+
+  <section class="card caution">
+    <h2>Before you start: this walk writes, and a filing can't be deleted</h2>
+    <ul class="plain">
+      <li>It adds one expense ("Walk test supplier") and marks <b>October 2026</b> as filed, twice. The app has no way to remove a filing; that is the point of it.</li>
+      <li>While October 2026 stays filed on dev, any other dates that overlap it (for example the whole of 2026) read "overlaps" there. The last part asks whether to keep or remove the walk's rows; removing them is a one-off clean-up on dev with the database's admin login, never the app.</li>
+      <li>Storage for filings is on dev (applied November 7, 2026). If the question ever says "Bookkeeping storage is being updated", stop and tell me.</li>
+    </ul>
+  </section>
+
+  <div id="parts"></div>
+
+  <section class="card">
+    <h2>Paste-back</h2>
+    <p class="status">Builds plain text with every part's verdict, the ticked count, your notes and the calls you ruled. Paste it into the chat.</p>
+    <div class="tools"><button type="button" class="primary" id="build">Build summary</button><button type="button" id="copy">Copy</button><button type="button" id="reset">Clear my ticks</button></div>
+    <p class="status" id="copyState" role="status"></p>
+    <pre class="out" id="out" hidden></pre>
+  </section>
+</div>
+
+<script>
+(function () {
+  var KEY = 'gst4b-session-c-walk-v1';
+  var PARTS = [
+    { id: 'A', title: 'Before marking: the door and its refusals', steps: [
+      { id: 'A1', do: 'Open the GST/HST return for <b>Oct 1, 2026 to Oct 31, 2026</b> on a computer.', see: 'The toolbar reads Period, Expand all, then at the right end Copy lines, Worksheet CSV and <b>Mark as filed…</b>.' },
+      { id: 'A2', do: 'Add an expense in Bookkeeping: incurred and paid <b>Oct 15, 2026</b>, supplier <b>Walk test supplier</b>, $113.00 with HST 13% of $13.00 shown on the receipt, the supplier\'s GST/HST number <b>left blank</b>. Save it.', see: 'Back on the return for October, "Before you file" counts one more "GST/HST number missing", and line 106 does not include the $13.00 (it is held).' },
+      { id: 'A3', do: 'Switch the period to <b>This month to date</b> and press <b>Mark as filed…</b>.', see: 'A small question opens that says "You can mark a period as filed once it has ended." and offers only <b>Keep it open</b>. Close it.' },
+      { id: 'A4', do: 'Back to <b>Oct 1 to Oct 31, 2026</b>. Press <b>Mark as filed…</b>.', see: 'Titled "Mark October 1, 2026 to October 31, 2026 as filed?". It lists lines 101 to 109 with the same figures as the table, says how many "Before you file" items are still open (it warns, it does not stop you), and "Date you filed" reads today.' },
+      { id: 'A5', do: 'Change "Date you filed" to <b>Oct 31, 2026</b> and press <b>Mark as filed</b>.', see: 'Refused under the date: "Choose a date after the period\'s last day: a return is filed once its period has ended." Nothing is saved.' },
+      { id: 'A6', do: 'Set the date back to <b>today</b> and press <b>Mark as filed</b>.', see: 'The question closes and the period reloads as filed (Part B).' }
+    ]},
+    { id: 'B', title: 'The filed period (state D)', steps: [
+      { id: 'B1', do: 'Look at the top of the October view.', see: 'The toolbar holds the Period and a green tag <b>FILED NOVEMBER 7, 2026</b> (your date). Copy lines, Worksheet CSV and Mark as filed… are not there.' },
+      { id: 'B2', do: 'Read the first box and the table.', see: '"Figures as you filed them. Saved November 7, 2026. They don\'t change when an invoice or expense in this period does." plus how many items were open when you filed. The table\'s column reads <b>As filed</b>, and its figures are the ones the question listed in A4, line for line.' },
+      { id: 'B3', do: 'Look under the table.', see: 'A quiet line: "Nothing has changed since you filed." Below it a folded <b>▸ Today\'s figures for this period</b>.' },
+      { id: 'B4', do: 'Unfold <b>Today\'s figures for this period</b>.', see: 'The full worksheet you know (Before you file, the lines, the windows). Fold it again.' },
+      { id: 'B5', do: 'Press the green <b>FILED</b> tag.', see: 'A window "Filings for this period", "Filings · 1", one row "Filed November 7, 2026 · saved November 7, 2026", and a <b>Mark as filed again…</b> button. Close it.' }
+    ]},
+    { id: 'C', title: 'A change after filing: the number arrives', steps: [
+      { id: 'C1', do: 'Open the <b>Walk test supplier</b> expense, add a GST/HST number (for example <span class="mono">123456789 RT0001</span>) and save.', see: 'The expense now reads its $13.00 credit as counted.' },
+      { id: 'C2', do: 'Back to the return for <b>Oct 1 to Oct 31, 2026</b>.', see: 'The table\'s <b>As filed</b> figures have NOT moved (106 is what you filed). An amber "Changed since you filed" box lists "Line 106: … as filed, … today." (and 108, and 109 in refund / you owe words) and: "$13.00 credit released: Walk test supplier\'s number added November 7, 2026. Claim it on a later return: it shows on line 106 as “Credits from earlier periods” on the return that covers November 7, 2026."' },
+      { id: 'C3', do: 'Switch the period to <b>This month to date</b> (November).', see: 'Line 106 now folds (▸). Unfolded it reads "Credits on this period\'s expenses" and <b>Credits from earlier periods $13.00</b>, and the two add up to line 106.' },
+      { id: 'C4', do: 'Press line 106\'s figure.', see: 'The window ends with "Credits on this period\'s expenses", then "Credits from earlier periods · 1 expense, plus $13.00", then "Credits on line 106" as the total. Pressing "Credits from earlier periods" lists Walk test supplier with "Credits from earlier periods: filed Oct 1, 2026 to Oct 31, 2026".' },
+      { id: 'C5', do: 'Press <b>Copy lines</b> and paste it anywhere.', see: 'The 106 line ends "(includes $13.00 credits from earlier periods)".' }
+    ]},
+    { id: 'D', title: 'Marking it again (an amended return)', steps: [
+      { id: 'D1', do: 'Back to <b>Oct 1 to Oct 31, 2026</b>. Press the FILED tag, then <b>Mark as filed again…</b>.', see: 'Titled "… as filed again?", the lead says the earlier filing stays in the history, the lines now include the $13.00 on 106, and there is a "Why are you marking it again?" box. The quiet answer reads "Keep the filing as it is".' },
+      { id: 'D2', do: 'Leave the reason empty and press <b>Mark as filed</b>.', see: '"Say why you\'re marking it again, for example an amended return." Nothing is saved.' },
+      { id: 'D3', do: 'Type <b>Walk: amended with the supplier\'s number</b> and press <b>Mark as filed</b>.', see: 'The view reloads: "Marked filed 2 times; the latest is shown.", the As filed 106 now includes the $13.00, and "Nothing has changed since you filed." The FILED tag\'s window reads "Filings · 2", the newer row ending with your reason.' },
+      { id: 'D4', do: 'Switch to <b>This month to date</b> (November) again.', see: 'Line 106 no longer carries "Credits from earlier periods": October\'s amended filing claims the $13.00 now, so it is counted once.' }
+    ]},
+    { id: 'E', title: 'Overlaps, the phone, and nowhere else', steps: [
+      { id: 'E1', do: 'Choose Custom dates <b>Oct 15, 2026 to Nov 5, 2026</b>.', see: 'A note: "These dates overlap the period you marked filed, October 1, 2026 to October 31, 2026. The figures here are today\'s…" and no Mark as filed… button.' },
+      { id: 'E2', who: 'Phone (390 wide)', do: 'On a phone, open the return for <b>Last month</b> (October 2026).', see: 'View, then Period with the green FILED tag; the line cards read the figures as filed; the "Changed since you filed" line and the fold for today\'s figures sit below. Nothing runs off the side.' },
+      { id: 'E3', who: 'Phone (390 wide)', do: 'Switch to <b>This month to date</b>.', see: 'The <b>Mark as filed…</b> button sits under the line cards (not in the toolbar). Pressing it opens the "once it has ended" message with only Keep it open.' },
+      { id: 'E4', do: 'Open the Bookkeeping <b>Overview</b>.', see: 'No tax figure, no "filed" wording anywhere on it.' }
+    ]},
+    { id: 'F', title: 'Your calls', calls: true, steps: [
+      { id: 'F1a', group: 'F1 · A period can be marked filed only once it has ended (not in the prompt; added in the build).', do: 'Keep it as built', see: '' },
+      { id: 'F1b', group: 'F1', do: 'Allow marking a period that is still running (say why in the notes)', see: '' },
+      { id: 'F2a', group: 'F2 · A filed period offers no Copy lines or Worksheet CSV in its toolbar (as drawn; the as-filed CSV comes with the accountant package).', do: 'Keep it as drawn', see: '' },
+      { id: 'F2b', group: 'F2', do: 'Add Copy lines of the figures as filed now', see: '' },
+      { id: 'F3a', group: 'F3 · The Bookkeeping backup does not carry filings yet. A restore would lose them.', do: 'Yes: add filings to the backup before the production apply', see: '' },
+      { id: 'F3b', group: 'F3', do: 'Not now', see: '' },
+      { id: 'F4a', group: 'F4 · This walk\'s rows on dev (the October 2026 filing, twice, and the Walk test supplier expense).', do: 'Remove them after the walk (a dev-only clean-up with the admin login)', see: '' },
+      { id: 'F4b', group: 'F4', do: 'Keep them', see: '' }
+    ]}
+  ];
+
+  var state = { ticks: {}, verdicts: {}, notes: {} };
+  try { var saved = JSON.parse(localStorage.getItem(KEY) || 'null'); if (saved) state = Object.assign(state, saved); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var all = [];
+  PARTS.forEach(function (p) { p.steps.forEach(function (s) { all.push(s.id); }); });
+  var root = document.getElementById('parts');
+
+  PARTS.forEach(function (p) {
+    var sec = document.createElement('section');
+    sec.className = 'card part';
+    var head = '<header><h2>' + p.id + ' · ' + p.title + '</h2><span class="count" id="pc-' + p.id + '"></span></header>';
+    var body = '';
+    var lastGroup = '';
+    p.steps.forEach(function (s) {
+      if (p.calls && s.group && s.group.indexOf('·') > 0 && s.group !== lastGroup) { body += '<p><b>' + s.group + '</b></p>'; }
+      lastGroup = s.group || '';
+      body += '<div class="step" id="row-' + s.id + '"><input type="checkbox" id="cb-' + s.id + '" data-id="' + s.id + '">' +
+        '<label for="cb-' + s.id + '">' + (s.who ? '<span class="who">' + s.who + '</span>' : '') +
+        '<span class="do">' + (p.calls ? '' : '<b>Do</b> ') + s.do + '</span>' +
+        (s.see ? '<span class="see"><b>You should see</b> ' + s.see + '</span>' : '') + '</label></div>';
+    });
+    var verdict = p.calls ? '' : '<div class="verdict" role="group" aria-label="Verdict for part ' + p.id + '">' +
+      ['pass', 'issue', 'call'].map(function (v) {
+        return '<button type="button" data-part="' + p.id + '" data-v="' + v + '" aria-pressed="false">' + ({ pass: 'Pass', issue: 'Issue', call: 'Needs a call' })[v] + '</button>';
+      }).join('') + '</div>';
+    var notes = '<label for="nt-' + p.id + '" class="status">Notes for part ' + p.id + '</label><textarea id="nt-' + p.id + '" data-part="' + p.id + '"></textarea>';
+    sec.innerHTML = head + '<div>' + body + '</div>' + verdict + notes;
+    root.appendChild(sec);
+  });
+
+  function render() {
+    var done = 0;
+    all.forEach(function (id) {
+      var on = !!state.ticks[id];
+      var cb = document.getElementById('cb-' + id);
+      cb.checked = on;
+      document.getElementById('row-' + id).classList.toggle('done', on);
+      if (on) done++;
+    });
+    PARTS.forEach(function (p) {
+      var n = p.steps.filter(function (s) { return state.ticks[s.id]; }).length;
+      document.getElementById('pc-' + p.id).textContent = n + ' of ' + p.steps.length;
+      document.querySelectorAll('.verdict button[data-part="' + p.id + '"]').forEach(function (b) { b.setAttribute('aria-pressed', String(state.verdicts[p.id] === b.dataset.v)); });
+      var t = document.getElementById('nt-' + p.id); if (document.activeElement !== t) t.value = state.notes[p.id] || '';
+    });
+    document.getElementById('count').textContent = done + ' of ' + all.length + ' checked';
+    document.getElementById('meter').style.width = (all.length ? (100 * done / all.length) : 0) + '%';
+  }
+
+  root.addEventListener('change', function (e) { if (e.target.dataset && e.target.dataset.id) { state.ticks[e.target.dataset.id] = e.target.checked; save(); render(); } });
+  root.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('.verdict button'); if (!b) return;
+    state.verdicts[b.dataset.part] = state.verdicts[b.dataset.part] === b.dataset.v ? undefined : b.dataset.v; save(); render();
+  });
+  root.addEventListener('input', function (e) { if (e.target.tagName === 'TEXTAREA') { state.notes[e.target.dataset.part] = e.target.value; save(); } });
+
+  function summary() {
+    var done = all.filter(function (id) { return state.ticks[id]; }).length;
+    var lines = ['§488 Mark as filed walk (GST/HST Stage 4b Session C) · checked ' + done + ' of ' + all.length];
+    PARTS.forEach(function (p) {
+      var n = p.steps.filter(function (s) { return state.ticks[s.id]; }).length;
+      lines.push('');
+      lines.push(p.id + ' ' + p.title + (p.calls ? '' : ' [' + (state.verdicts[p.id] ? state.verdicts[p.id].toUpperCase() : 'NO VERDICT') + ']') + ' ' + n + '/' + p.steps.length);
+      p.steps.forEach(function (s) {
+        var tmp = document.createElement('div'); tmp.innerHTML = s.do;
+        lines.push('  ' + (state.ticks[s.id] ? '[x] ' : '[ ] ') + s.id + ' ' + (p.calls ? s.group.split(' · ')[0] + ': ' : '') + tmp.textContent);
+      });
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+  var out = document.getElementById('out');
+  document.getElementById('build').addEventListener('click', function () { out.hidden = false; out.textContent = summary(); });
+  document.getElementById('copy').addEventListener('click', function () {
+    var text = summary(); out.hidden = false; out.textContent = text;
+    var msg = document.getElementById('copyState');
+    try {
+      navigator.clipboard.writeText(text).then(function () { msg.textContent = 'Copied.'; }, function () { selectOut(); msg.textContent = 'Select the text above and copy it.'; });
+    } catch (e) { selectOut(); msg.textContent = 'Select the text above and copy it.'; }
+  });
+  function selectOut() { var r = document.createRange(); r.selectNodeContents(out); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); }
+  var resetArmed = false;
+  document.getElementById('reset').addEventListener('click', function (e) {
+    if (!resetArmed) { resetArmed = true; e.target.textContent = 'Press again to clear'; return; }
+    state = { ticks: {}, verdicts: {}, notes: {} }; save(); render(); resetArmed = false; e.target.textContent = 'Clear my ticks';
+  });
+  render();
+})();
+</script>

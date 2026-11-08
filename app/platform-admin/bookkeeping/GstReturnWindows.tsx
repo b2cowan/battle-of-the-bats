@@ -16,13 +16,13 @@
 import { useMemo, useState } from 'react';
 import KitDialog from '@/components/shared/KitDialog';
 import kit from '../console.module.css';
-import { consoleDay } from '@/lib/console-dates';
+import { consoleDate, consoleDay } from '@/lib/console-dates';
 import { csvCell, type ExpenseRevision } from '@/lib/bookkeeping-expenses';
 import { formatCad, TAX_TYPES } from '@/lib/bookkeeping-gst';
 import { downloadCSVBlob } from '@/lib/export';
 import { pluralize, possessive } from '@/lib/utils';
 import type { LineNumber, NotOnReturnStep, ReliefItem, TaxGroup, UnresolvedItem, UnresolvedKind, Worksheet, WorksheetSaleItem } from '@/lib/gst-return-worksheet';
-import { formatMoney, NOT_ON_RETURN_STEPS, RETURN_LINES, SALE_KINDS, taxGroupLabel, UNRESOLVED } from '@/lib/gst-return-worksheet-text';
+import { FILING, formatMoney, NOT_ON_RETURN_STEPS, RETURN_LINES, SALE_KINDS, taxGroupLabel, UNRESOLVED } from '@/lib/gst-return-worksheet-text';
 import type { ReturnClub } from '@/app/api/platform-admin/bookkeeping/gst-return/route';
 import styles from './ReportsGstReturn.module.css';
 
@@ -149,19 +149,25 @@ function CreditsWindow({ worksheet, step: initialStep, periodLabel, expenses, on
   worksheet: Worksheet; step?: NotOnReturnStep | 'counted'; periodLabel: string; expenses: ExpenseRevision[];
   onOpenExpense: (row: ExpenseRevision, list: ExpenseRevision[]) => void; onClose: () => void;
 }) {
-  const [step, setStep] = useState<NotOnReturnStep | 'counted' | null>(initialStep ?? null);
+  const [step, setStep] = useState<NotOnReturnStep | 'counted' | 'earlier' | null>(initialStep ?? null);
   const [all, setAll] = useState(false);
   const bridge = worksheet.parts[106].notOnReturn!;
   const credits = worksheet.parts[106].credits;
   const counted = credits.filter(c => c.state === 'counted');
   const typeNotSet = worksheet.unresolved.filter(u => u.kind === 'type_not_set');
+  // Session C: credits released after an earlier period was filed are IN line 106 on top of this period's (the engine's).
+  const earlier = worksheet.parts[106].earlierCredits;
+  const earlierCents = worksheet.parts[106].earlierCents;
+  const line106 = worksheet.lines[106].cents;
   type Row = { expenseId: string; on: string; supplier: string; taxes: string; paid: number | null; credit: number };
-  const rows: Row[] = step === 'typeNotSet'
+  const earlierRows: Row[] = earlier.map(c => ({ expenseId: c.expenseId, on: c.incurredOn, supplier: c.supplier,
+    taxes: `${FILING.earlierCredits}: filed ${consoleDate(c.filedPeriod.from)} to ${consoleDate(c.filedPeriod.to)}`, paid: null, credit: c.cents }));
+  const rows: Row[] = step === 'earlier' ? earlierRows : step === 'typeNotSet'
     // The step holds only the expenses whose GST/HST-typed tax it took off (the engine's bridgeCents), at that amount.
     ? typeNotSet.filter(u => u.bridgeCents != null).map(u => ({ expenseId: u.expenseId!, on: u.on ?? '', supplier: u.supplier ?? '', taxes: 'Type not set', paid: u.bridgeCents!, credit: 0 }))
-    : credits.filter(c => step == null ? true : step === 'counted' ? c.state === 'counted' : c.notOnReturn[step] != null)
+    : [...credits.filter(c => step == null ? true : step === 'counted' ? c.state === 'counted' : c.notOnReturn[step] != null)
       .map(c => ({ expenseId: c.expenseId, on: c.incurredOn, supplier: c.supplier, taxes: c.taxTypes.map(t => TAX_TYPES[t]?.label ?? t).join(', '),
-        paid: step && step !== 'counted' ? c.notOnReturn[step]! : c.gstHstPaid, credit: c.creditCents }));
+        paid: step && step !== 'counted' ? c.notOnReturn[step]! : c.gstHstPaid, credit: c.creditCents })), ...(step == null ? earlierRows : [])];
   const shown = all ? rows : rows.slice(0, FIRST);
   const list = rows.flatMap(r => expenses.find(e => e.expense_id === r.expenseId) ?? []);
   function open(id: string) { const row = expenses.find(e => e.expense_id === id); if (row) { onClose(); onOpenExpense(row, list); } }
@@ -171,7 +177,7 @@ function CreditsWindow({ worksheet, step: initialStep, periodLabel, expenses, on
       ...rows.map(r => [r.on, r.supplier, r.taxes, r.paid == null ? '' : (r.paid / 100).toFixed(2), (r.credit / 100).toFixed(2)]),
     ]));
   }
-  const toggle = (next: NotOnReturnStep | 'counted') => { setAll(false); setStep(current => current === next ? null : next); };
+  const toggle = (next: NotOnReturnStep | 'counted' | 'earlier') => { setAll(false); setStep(current => current === next ? null : next); };
   return <KitDialog kind="form" size="medium" record onClose={onClose}
     eyebrow="GST/HST return · line 106" title={RETURN_LINES[106].caption} identity={`${periodLabel} · by expense date`}
     footerStart="Each row opens the expense."
@@ -182,10 +188,17 @@ function CreditsWindow({ worksheet, step: initialStep, periodLabel, expenses, on
         <dt><button type="button" className={`${styles.stepDoor} ${step === s.key ? styles.stepOn : ''}`} aria-pressed={step === s.key} onClick={() => toggle(s.key)}>{s.label} · {bridge[s.key].count}</button></dt>
         <dd>less {formatMoney(bridge[s.key].cents)}</dd>
       </div>)}
-      <div className={styles.total}>
-        <dt><button type="button" className={`${styles.stepDoor} ${step === 'counted' ? styles.stepOn : ''}`} aria-pressed={step === 'counted'} onClick={() => toggle('counted')}>Credits on line 106 · {pluralize(counted.length, 'expense')}</button></dt>
-        <dd>{worksheet.lines[106].cents == null ? 'Not available' : formatMoney(worksheet.lines[106].cents)}</dd>
+      <div className={earlier.length ? undefined : styles.total}>
+        <dt><button type="button" className={`${styles.stepDoor} ${step === 'counted' ? styles.stepOn : ''}`} aria-pressed={step === 'counted'} onClick={() => toggle('counted')}>{earlier.length ? 'Credits on this period’s expenses' : 'Credits on line 106'} · {pluralize(counted.length, 'expense')}</button></dt>
+        <dd>{line106 == null ? 'Not available' : formatMoney(line106 - earlierCents)}</dd>
       </div>
+      {earlier.length > 0 && <>
+        <div>
+          <dt><button type="button" className={`${styles.stepDoor} ${step === 'earlier' ? styles.stepOn : ''}`} aria-pressed={step === 'earlier'} onClick={() => toggle('earlier')}>{FILING.earlierCredits} · {pluralize(earlier.length, 'expense')}</button></dt>
+          <dd>plus {formatMoney(earlierCents)}</dd>
+        </div>
+        <div className={styles.total}><dt>Credits on line 106</dt><dd>{line106 == null ? 'Not available' : formatMoney(line106)}</dd></div>
+      </>}
     </dl>
     <div className={`table-cards ${styles.frame}`}><table className={styles.table}>
       <thead><tr><th>Date</th><th>Supplier</th><th>Tax</th><th className={kit.num}>{step && step !== 'counted' ? 'Not on the return' : 'Tax paid'}</th><th className={kit.num}>Credit</th><th aria-label="Open expense" /></tr></thead>
@@ -263,6 +276,6 @@ export function lineWindow(worksheet: Worksheet, line: LineNumber): ReturnWindow
   if (line === 101 || line === 103) return worksheet.parts[101].invoices.length ? { kind: 'sales', line } : null;
   if (line === 104) return worksheet.parts[104].recoveries.length ? { kind: 'relief', line } : null;
   if (line === 107) return worksheet.parts[107].creditNotes.length || worksheet.parts[107].badDebts.length ? { kind: 'relief', line } : null;
-  if (line === 106) return worksheet.parts[106].notOnReturn && worksheet.parts[106].notOnReturn.gstHstPaid.count ? { kind: 'credits' } : null;
+  if (line === 106) return worksheet.parts[106].notOnReturn && (worksheet.parts[106].notOnReturn.gstHstPaid.count || worksheet.parts[106].earlierCredits.length) ? { kind: 'credits' } : null;
   return null;
 }

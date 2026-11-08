@@ -1,14 +1,15 @@
 import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
 import { stripeKeyIsLive } from './online-payments-switch';
-import { gstRegistrationDate, listExpenseRevisions } from './bookkeeping-store';
+import { gstRegistrationDate, listExpenseRevisions, listGstReturnFilings, type StoredGstReturnFiling } from './bookkeeping-store';
+import { filedCredits, type GstReturnFiling } from './gst-return-filing';
 import { BACKFILL_FLOOR_ISO } from './charge-tax-record';
 import { readAllPages } from './console-money-needs-look';
 import { chunked } from './supabase-paging';
 import { addCalendarDays, isCalendarDate, orgDayKey, zonedWallClockToUtc } from './timezone';
 import {
   backfillCompleteMarker, buildWorksheet, WORKSHEET_NOTE_COLUMNS, WORKSHEET_SALE_COLUMNS,
-  type ExpensesRead, type SalesRead, type Worksheet, type WorksheetNote, type WorksheetPeriod, type WorksheetSale,
+  type ExpensesRead, type FiledRead, type SalesRead, type Worksheet, type WorksheetNote, type WorksheetPeriod, type WorksheetSale,
 } from './gst-return-worksheet';
 
 /**
@@ -131,12 +132,35 @@ export async function readWorksheetRegistrationDate(): Promise<RegistrationRead>
 }
 
 /**
- * The worksheet for these Ontario days, inclusive, and how the registration date read. The caller has checked the
- * Bookkeeping gate (`requireBookkeepingApi`) BEFORE calling: this read is platform-wide, with the service role.
+ * Every "Mark as filed" filing (Session C), newest first; [] before migration 007 (no period is filed there, which is true).
+ * A filing whose sources this code can't read fails the read: what it claimed is unknown, so an earlier-period credit could
+ * be claimed twice, and line 106 must read Not available instead.
  */
-export async function readGstReturnWorksheet(period: WorksheetPeriod): Promise<{ worksheet: Worksheet; registration: RegistrationRead['state'] }> {
+export type FilingsRead = { state: 'read'; filings: StoredGstReturnFiling[] } | { state: 'failed' };
+export async function readWorksheetFilings(): Promise<FilingsRead> {
+  try {
+    const filings = await listGstReturnFilings();
+    if (filings.some(f => !f.sources)) throw new Error('A filing could not be read');
+    return { state: 'read', filings };
+  } catch (err) {
+    warn('filings', err);
+    return { state: 'failed' };
+  }
+}
+
+/** The engine's view of the filings: what each filed period already claimed. */
+export const filedForEngine = (read: FilingsRead): FiledRead => read.state === 'failed' ? { state: 'failed' }
+  : { state: 'read', periods: filedCredits(read.filings as GstReturnFiling[], orgDayKey) };
+
+/**
+ * The worksheet for these Ontario days, inclusive, how the registration date read, and the filings (Session C). The caller has
+ * checked the Bookkeeping gate (`requireBookkeepingApi`) BEFORE calling: this read is platform-wide, with the service role.
+ */
+export async function readGstReturnWorksheet(period: WorksheetPeriod): Promise<{ worksheet: Worksheet; registration: RegistrationRead['state']; filings: FilingsRead }> {
   assertPeriod(period);
-  const [sales, expenses, registration] = await Promise.all([readWorksheetSales(period), readWorksheetExpenses(), readWorksheetRegistrationDate()]);
+  const [sales, expenses, registration, filings] = await Promise.all([
+    readWorksheetSales(period), readWorksheetExpenses(), readWorksheetRegistrationDate(), readWorksheetFilings(),
+  ]);
   const registrationDate = registration.state === 'set' ? registration.date : null;
-  return { worksheet: buildWorksheet({ period, registrationDate, sales, expenses }), registration: registration.state };
+  return { worksheet: buildWorksheet({ period, registrationDate, sales, expenses, filed: filedForEngine(filings) }), registration: registration.state, filings };
 }

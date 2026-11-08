@@ -1,6 +1,6 @@
 # PM brief — GST/HST return worksheet (Stage 4b)
 
-**Build prompt:** [GST_HST_STAGE4B_BUILD_PROMPT.md](GST_HST_STAGE4B_BUILD_PROMPT.md) · **Plan:** [GST_HST_COLLECTION_PLAN.md](GST_HST_COLLECTION_PLAN.md) §Stage 4 · **Status:** build prompt written 2026-11-07, not built
+**Build prompt:** [GST_HST_STAGE4B_BUILD_PROMPT.md](GST_HST_STAGE4B_BUILD_PROMPT.md) · **Plan:** [GST_HST_COLLECTION_PLAN.md](GST_HST_COLLECTION_PLAN.md) §Stage 4 · **Status:** the numbers and the view committed 2026-11-07; "Mark as filed" built and reviewed 2026-11-07, its storage on development the same day (commit and the owner walk owed); the accountant package next
 **Priority:** must exist before the first GST/HST return that has sales on it. Owner-only (platform admin).
 
 ## What the owner gets
@@ -17,7 +17,10 @@ missed credit note or an unpaid invoice leaves the return wrong. The worksheet a
   every sale with no GST/HST answer (even one marked "looked at", and including a customer shared by two portals), and any voided invoice that has no credit note.
 - **It never shows a zero it does not know.** Sales unreadable reads "Not available" with a reason and a Try again; an empty period reads "Nothing sold"; a period that starts before
   the sales record reads "Sales are recorded from…".
-- **"Mark as filed…"** freezes a period. Later changes read "Changed since you filed", and a credit released late moves to the next return.
+- **"Mark as filed…"** freezes a period once it has ended (the lines shown, the date you filed). It warns, never blocks, on open "Before you file" items. The
+  period then reads **FILED**, with "Figures as you filed them" and a "Changed since you filed" box that says what to do with each change: a credit released
+  late is claimed on a later return (it appears there on line 106 as "Credits from earlier periods", once), anything that raises the tax for the filed
+  period means adjusting the filed return, and a few cases go to the accountant. Marking it again is an amended filing with a reason; the history stays.
 - **The accountant package** gains the worksheet and the lists behind it.
 - **Phone:** each line is a card; only "Copy lines" stays in the toolbar. **Nothing tax-related ever appears on the Overview.**
 
@@ -33,4 +36,5 @@ Money position, Tax year) join the same control later, when their own prerequisi
 
 ## Open for the accountant, not for the build
 What tax applies if CRA backdates registration and an invoice exists in the gap (likely none); how a voided invoice without a credit note is handled; which return period the 2026
-stub belongs to; whether a credit note reduces line 101.
+stub belongs to; whether a credit note reduces line 101; a credit note recorded late but dated inside a filed period; the four-year window for a
+carried credit, worked out for an annual filer.

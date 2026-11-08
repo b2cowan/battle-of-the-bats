@@ -56,6 +56,19 @@
 .table th, .table td { padding: var(--table-pad-compact, 0.5rem) 0.75rem; font-size: var(--type-body); }
 .rowName { padding: 0; border: 0; background: none; font: inherit; font-weight: 600; color: var(--text-primary); text-align: left; cursor: pointer; text-decoration: underline; text-decoration-color: var(--home-line-strong); text-underline-offset: 3px; }
 
+/* Mark as filed (Session C, drawing tab 6 state D). The FILED tag is a door to the period's filings, so it is a button that keeps
+   the chip's look; "Changed since you filed" is a plain list in the amber callout; the question lists the lines it saves. */
+.filedChip { font: inherit; font-size: var(--type-support); font-weight: 700; letter-spacing: 0.02em; cursor: pointer; }
+.filedChip:hover { border-color: var(--home-olive); }
+.filedChip:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+.liveBody { display: grid; gap: 0.9rem; min-width: 0; }
+.changes { margin: 0; padding-left: 1.1rem; display: grid; gap: 0.35rem; font-size: var(--type-body); line-height: 1.5; }
+.filingLines { list-style: none; margin: 0; padding: 0; display: grid; border: 1px solid var(--home-line); border-radius: 9px; overflow: hidden; }
+.filingLines li { display: grid; grid-template-columns: 2.6rem minmax(0, 1fr) auto; gap: 0.5rem; align-items: baseline; padding: 0.35rem 0.65rem;
+  border-top: 1px solid var(--home-line); font-size: var(--type-support); }
+.filingLines li:first-child { border-top: 0; }
+.filingLines b { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
 /* Phone: line cards (drawing tab 9). */
 .phoneOnly { display: none; }
 .cards { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }

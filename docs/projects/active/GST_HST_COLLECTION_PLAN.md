@@ -36,7 +36,9 @@ Every outstanding piece of work in this plan has a home in one of these stages. 
   Sept 26, 2026 with a CRA backdate to May 1 pending, so the date is a changeable setting; annual filer; no quick method) —
   drawings https://claude.ai/artifact/LbCjjVcnZeTP8uUT3yVZan (source `GST_HST_STAGE4_DRAWINGS.html`); return lines in
   `docs/agents/accounting/GST_HST_RETURN_LINES.md`. **4a (what we pay) BUILT: Sessions A–E committed 2026-11-06 (f68ebf9fe, 7fac17654, a9a22921e, 0f16bf9a3, f83cbe24e, be2316ef0; reviewed + `/accounting` before hand-off); Bookkeeping migration 006 applied to development 2026-11-06; owner walk §474 owed (https://claude.ai/artifact/QGGWeuRKiD2HKehdbH3pQb). Record: `GST_HST_STAGE4A_BUILD_PROMPT.md` Progress.**
-  **4b (the worksheet): BUILD PROMPT WRITTEN 2026-11-07, not built.** Stage 3 is closed (§477–§479, `3bc1457e0`). The kickoff audit found the
+  **4b (the worksheet): Sessions A and B committed 2026-11-07 (`035f5e965`); Session C ("Mark as filed", Bookkeeping migration 007) built and
+  reviewed 2026-11-07, applied to development 2026-11-07, commit + owner walk owed, production apply with the code; Session D (the package) next. Record: `GST_HST_STAGE4B_BUILD_PROMPT.md`
+  Progress; `/accounting` §10 (after filing: more ITC → a later return's line 106; more tax → adjust the filed return).** Stage 3 is closed (§477–§479, `3bc1457e0`). The kickoff audit found the
   Reports View control does not exist in code (ladder row 3 is drawn and ruled, not built; Stage 2 accounts and the Q13 mapping are also unbuilt), so
   waiting for the whole redesign would hold 4b behind them. **Owner ruling 2026-11-07: build a thin View control first** (hidden until a second view
   exists; Reports looks unchanged until 4b adds "GST/HST return"), then 4b. Prompts: `BOOKKEEPING_REPORTS_VIEW_CONTROL_BUILD_PROMPT.md` (one

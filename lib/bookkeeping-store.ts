@@ -5,6 +5,7 @@ import { DeleteObjectCommand, GetObjectCommand, HeadObjectCommand, PutObjectComm
 import type { ExpenseRevision } from './bookkeeping-expenses';
 import { currentRegistrationDate, isTaxType, taxLinesMatchTotal, type TaxLine } from './bookkeeping-gst';
 import type { OwnerMovementRevision } from './bookkeeping-owner-movements';
+import { MAX_SOURCES_BYTES, parseSources, type FiledSources, type GstReturnFiling } from './gst-return-filing';
 
 type NewExpenseRevision = Omit<ExpenseRevision, 'created_at'>;
 export type GstRegistrationRevision = { revision: number; effective_date: string; reason: string; created_at: string; created_by: string };
@@ -244,6 +245,71 @@ export async function insertGstRegistrationRevision(row: Omit<GstRegistrationRev
     VALUES (${row.revision}, ${row.effective_date}::date, ${row.reason}, ${row.created_by}::uuid)
     RETURNING revision, effective_date, reason, created_at, created_by::text AS created_by`;
   return registration(rows[0]);
+}
+
+// ── GST/HST return filings (Stage 4b Session C, migration 007) ─────────────────────────────────────────────────────────
+
+/**
+ * Migration 007: `bookkeeping.gst_return_filings`. Before it, every read still works (no period is filed) and "Mark as filed" is
+ * refused with the storage-update message, rather than crashing.
+ */
+export async function hasGstReturnFilingsTable(): Promise<boolean> {
+  const rows = await db()`SELECT table_name FROM information_schema.tables
+    WHERE table_schema = 'bookkeeping' AND table_name = 'gst_return_filings'`;
+  return rows.length === 1;
+}
+
+const FILING_LINES = [101, 103, 104, 105, 106, 107, 108, 109] as const;
+const day = (value: unknown) => value instanceof Date ? value.toISOString().slice(0, 10) : String(value).slice(0, 10);
+
+/** A stored filing. `sources` is null when its JSON is not a format this code reads (the screen says it can't compare). */
+function filing(row: Record<string, unknown>): Omit<GstReturnFiling, 'sources'> & { sources: FiledSources | null } {
+  const cents = (n: number) => Number(row[`line_${n}_cents`]);
+  return {
+    filingNo: Number(row.filing_no),
+    period: { from: day(row.period_from), to: day(row.period_to) },
+    periodRevision: Number(row.period_revision),
+    filedOn: day(row.filed_on),
+    registrationDate: day(row.registration_date),
+    lines: Object.fromEntries(FILING_LINES.map(n => [n, cents(n)])) as GstReturnFiling['lines'],
+    wholeDollars101: Number(row.line_101_dollars),
+    partial: Boolean(row.partial),
+    openItems: Number(row.open_items),
+    sources: parseSources(String(row.sources)),
+    reason: row.reason == null ? null : String(row.reason),
+    createdAt: row.created_at instanceof Date ? row.created_at.toISOString() : String(row.created_at),
+    createdBy: String(row.created_by),
+  };
+}
+export type StoredGstReturnFiling = ReturnType<typeof filing>;
+
+/** Every filing, newest first; [] before migration 007. */
+export async function listGstReturnFilings(): Promise<StoredGstReturnFiling[]> {
+  if (!await hasGstReturnFilingsTable()) return [];
+  const rows = await db()`SELECT * FROM bookkeeping.gst_return_filings ORDER BY filing_no DESC LIMIT 1001`;
+  if (rows.length > 1000) throw new Error('GST/HST return filings need pagination');
+  return rows.map(filing);
+}
+
+/**
+ * One filing, appended. Callers check `hasGstReturnFilingsTable()` and the filing rules (`checkFiling`) first. `filingNo` is the
+ * next number after the newest the caller read: a filing saved in between takes it first, and this insert is refused by the key
+ * (23505) or by Aurora DSQL's optimistic concurrency (40001), so the rules are never checked against a stale list.
+ */
+export async function insertGstReturnFiling(row: Omit<GstReturnFiling, 'createdAt'>): Promise<StoredGstReturnFiling> {
+  const sources = JSON.stringify(row.sources);
+  if (new TextEncoder().encode(sources).length > MAX_SOURCES_BYTES) throw new Error('Filing sources are too large to store');
+  const l = row.lines;
+  const rows = await db()`INSERT INTO bookkeeping.gst_return_filings (
+    filing_no, period_from, period_to, period_revision, filed_on, registration_date, line_101_dollars,
+    line_101_cents, line_103_cents, line_104_cents, line_105_cents, line_106_cents, line_107_cents, line_108_cents, line_109_cents,
+    partial, open_items, sources, reason, created_by
+  ) VALUES (
+    ${row.filingNo}, ${row.period.from}::date, ${row.period.to}::date, ${row.periodRevision}, ${row.filedOn}::date, ${row.registrationDate}::date,
+    ${row.wholeDollars101}, ${l[101]}, ${l[103]}, ${l[104]}, ${l[105]}, ${l[106]}, ${l[107]}, ${l[108]}, ${l[109]},
+    ${row.partial}, ${row.openItems}, ${sources}, ${row.reason}, ${row.createdBy}::uuid
+  ) RETURNING *`;
+  return filing(rows[0]);
 }
 
 // Records are append-only: a void is the only way one leaves the totals (owner ruling R1, 2026-10-25).

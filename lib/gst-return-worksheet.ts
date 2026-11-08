@@ -67,12 +67,28 @@ export type ExpensesRead =
   | { state: 'read'; revisions: readonly ExpenseRevision[] }
   | { state: 'failed'; why: 'unreadable' | 'too_many' };
 
+/**
+ * A filed period's credits, as the engine needs them for "Credits from earlier periods" (Session C, ruling 12): the period, the
+ * Ontario day it was marked filed, and per expense the credit that filing already claimed (its own line 106 and any earlier-period
+ * credit it carried). Only the LATEST filing of each period.
+ */
+export type FiledCredits = {
+  period: WorksheetPeriod; filedDay: string;
+  /** Everything this filing claimed per expense: its own line 106 credits plus the earlier-period credits it carried. */
+  claimed: readonly { expenseId: string; cents: number }[];
+  /** The earlier-period credits it carried, with the day each landed on (kept with that return whatever is edited later). */
+  carried: readonly { expenseId: string; cents: number; landsOn: string }[];
+};
+/** The filed periods, read from the Bookkeeping store. Absent = none filed (every total exactly as before Session C). */
+export type FiledRead = { state: 'read'; periods: readonly FiledCredits[] } | { state: 'failed' };
+
 export type WorksheetInput = {
   period: WorksheetPeriod;
   /** 4a's current registration effective date, or null when it could not be read. */
   registrationDate: string | null;
   sales: SalesRead;
   expenses: ExpensesRead;
+  filed?: FiledRead;
 };
 
 // ── What it says ────────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -82,7 +98,7 @@ export const WORKSHEET_LINES: readonly LineNumber[] = [101, 103, 104, 105, 106, 
 const CALCULATED = new Set<LineNumber>([105, 108, 109]);
 const SALES_LINES: readonly LineNumber[] = [101, 103, 104, 107];
 
-export type NotAvailableWhy = 'sales_unread' | 'registration_unread' | 'expenses_unread' | 'expenses_too_many';
+export type NotAvailableWhy = 'sales_unread' | 'registration_unread' | 'expenses_unread' | 'expenses_too_many' | 'filings_unread';
 
 export type WorksheetLine = {
   line: LineNumber;
@@ -139,6 +155,19 @@ export type WorksheetCreditItem = {
   /** What of this expense's GST/HST the bridge took off, by step: the same cents the step's total holds (Session B: the
    *  window's steps filter the list by it, so the screen never sorts an expense into a step itself). */
   notOnReturn: Partial<Record<NotOnReturnStep, number>>;
+  /** The Ontario day this revision was saved (Session C: when a credit released after filing became claimable). */
+  savedOn: string;
+};
+/**
+ * A credit on an expense dated inside a period already marked filed, that the filing did not claim (a supplier's number added later,
+ * an expense entered late). CRA's route is a LATER return's line 106 within four years, not an amendment (P-149R; RC4022; ETA
+ * s.169(4), s.225(4); GST_HST_RETURN_LINES.md §10). It lands in the one period containing `landsOn`: the later of the day its revision
+ * was saved and the day of the most recent filing, so it never lands inside a period already filed without it. Once a filed return
+ * carries it, it stays with that return (its frozen `landsOn`), whatever is edited on the expense afterwards.
+ */
+export type EarlierCreditItem = {
+  expenseId: string; revision: number; supplier: string; incurredOn: string; savedOn: string; landsOn: string;
+  filedPeriod: WorksheetPeriod; cents: number;
 };
 
 export type UnresolvedKind =
@@ -168,7 +197,8 @@ export type Worksheet = {
     101: { wholeDollars: number | null; zeroRatedCad: number; creditNotesIssuedCad: number; invoices: WorksheetSaleItem[] };
     103: { groups: TaxGroup[]; invoices: WorksheetSaleItem[] };
     104: { recoveries: ReliefItem[]; untracked: 'supplier_refunds_and_meals_add_back' };
-    106: { credits: WorksheetCreditItem[]; notOnReturn: NotOnReturn | null };
+    /** `earlierCredits` are IN line 106 (on top of this period's credits); `notOnReturn` bridges this period's expenses only. */
+    106: { credits: WorksheetCreditItem[]; notOnReturn: NotOnReturn | null; earlierCredits: EarlierCreditItem[]; earlierCents: number };
     107: { creditNotes: ReliefItem[]; badDebts: ReliefItem[] };
   };
   unresolved: UnresolvedItem[];
@@ -415,7 +445,7 @@ function creditsSide(revisions: readonly ExpenseRevision[], period: WorksheetPer
     const item: WorksheetCreditItem = {
       ...ref, revision: row.revision, incurredOn: on, receiptCad: row.cad_cents, taxTypes: [...new Set(paid.map(l => l.type))],
       gstHstPaid: gstHst, creditCents: credit.countsOnReturn ? credit.creditCents : 0, state: credit.state, registrationUnchecked: credit.registrationUnchecked,
-      notOnReturn: {},
+      notOnReturn: {}, savedOn: orgDayKey(row.created_at),
     };
     credits.push(item);
     /** One step of the bridge: its total and this expense's part of it move together. */
@@ -449,6 +479,56 @@ function creditsSide(revisions: readonly ExpenseRevision[], period: WorksheetPer
   return { line106, credits, notOnReturn: b };
 }
 
+/**
+ * "Credits from earlier periods" (Session C, ruling 12): for each period filed BEFORE this one, the same expense set Reports totals
+ * for it (`selectExpenseRevisions`, the rule above, no second one), each credit that counts today less what every filing already
+ * claimed for that expense. What is left lands in the one period containing its `landsOn` day. A credit that went DOWN after
+ * filing is not here: that is over-claimed, and the filed return is adjusted ("Changed since you filed" says so).
+ */
+function earlierCreditsSide(revisions: readonly ExpenseRevision[], period: WorksheetPeriod, registration: string, filed: readonly FiledCredits[]): { items: EarlierCreditItem[]; cents: number } {
+  // Claims made by OTHER filings. This period's own filing is what "Changed since you filed" compares against, never a prior claim:
+  // counting it would take a carried credit back out of the very return that carried it.
+  const isOwn = (f: FiledCredits) => f.period.from === period.from && f.period.to === period.to;
+  const claimed = new Map<string, number>();
+  for (const f of filed) {
+    if (isOwn(f)) continue;
+    for (const c of f.claimed) claimed.set(c.expenseId, (claimed.get(c.expenseId) ?? 0) + c.cents);
+  }
+  const own = filed.find(isOwn);
+  const ownCarried = new Map((own?.carried ?? []).map(c => [c.expenseId, c]));
+  // An unclaimed credit lands no earlier than the most recent filing, so it never lands in a period already filed without it
+  // (a registration-date change can release one with no new revision: review 2026-11-07).
+  const floor = filed.reduce((day, f) => (f.filedDay > day ? f.filedDay : day), '');
+  const out: EarlierCreditItem[] = [];
+  let cents = 0;
+  for (const f of [...filed].sort((a, b) => a.period.from.localeCompare(b.period.from))) {
+    if (f.period.to >= period.from) continue; // only periods that ended before this one starts
+    const filters: ExpenseFilters = { ...f.period, category: '', query: '', review: 'all', status: 'active', dateStatus: 'confirmed' };
+    for (const row of currentExpenses(selectExpenseRevisions([...revisions], filters, registration))) {
+      const credit = expenseCredit(row, registration);
+      if (!credit?.countsOnReturn) continue;
+      let left = credit.creditCents - (claimed.get(row.expense_id) ?? 0);
+      if (left <= 0) continue;
+      const savedOn = orgDayKey(row.created_at);
+      const base = { expenseId: row.expense_id, revision: row.revision, supplier: row.supplier, incurredOn: row.incurred_date!, savedOn, filedPeriod: f.period };
+      // What this period's own filing carried stays here, on the day it landed then (a later edit of the expense must not move it).
+      const kept = ownCarried.get(row.expense_id);
+      if (kept) {
+        const stays = Math.min(left, kept.cents);
+        out.push({ ...base, landsOn: kept.landsOn, cents: stays });
+        cents += stays;
+        left -= stays;
+        if (left <= 0) continue;
+      }
+      const landsOn = savedOn > floor ? savedOn : floor;
+      if (landsOn < period.from || landsOn > period.to) continue;
+      out.push({ ...base, landsOn, cents: left });
+      cents += left;
+    }
+  }
+  return { items: out, cents };
+}
+
 // ── The worksheet ───────────────────────────────────────────────────────────────────────────────────────────────────────
 
 export function buildWorksheet(input: WorksheetInput): Worksheet {
@@ -460,12 +540,20 @@ export function buildWorksheet(input: WorksheetInput): Worksheet {
   if (input.sales.state === 'failed') failures.push('sales_unread');
   if (!registration) failures.push('registration_unread');
   if (input.expenses.state === 'failed') failures.push(input.expenses.why === 'too_many' ? 'expenses_too_many' : 'expenses_unread');
+  // Unread filings: a credit released after an earlier filing could be missing from 106, so 106 is not known (never a silent short 106).
+  if (input.filed?.state === 'failed') failures.push('filings_unread');
 
   const salesWhy: NotAvailableWhy | null = input.sales.state === 'failed' ? 'sales_unread' : !registration ? 'registration_unread' : null;
-  const creditsWhy: NotAvailableWhy | null = input.expenses.state === 'failed' ? failures.find(f => f.startsWith('expenses'))! : !registration ? 'registration_unread' : null;
+  const creditsWhy: NotAvailableWhy | null = input.expenses.state === 'failed' ? failures.find(f => f.startsWith('expenses'))!
+    : !registration ? 'registration_unread' : input.filed?.state === 'failed' ? 'filings_unread' : null;
 
   const sales = input.sales.state === 'read' && registration ? salesSide(input, input.sales, registration, unresolved) : null;
-  const credits = input.expenses.state === 'read' && registration ? creditsSide(input.expenses.revisions, period, registration, unresolved) : null;
+  const credits = input.expenses.state === 'read' && registration && input.filed?.state !== 'failed'
+    ? creditsSide(input.expenses.revisions, period, registration, unresolved) : null;
+  const earlier = credits && input.expenses.state === 'read' && input.filed?.state === 'read' && input.filed.periods.length
+    ? earlierCreditsSide(input.expenses.revisions, period, registration!, input.filed.periods) : { items: [], cents: 0 };
+  const earlierCredits = earlier.items;
+  const earlierCents = earlier.cents;
 
   // State C: the part of the period the return covers (from the registration date) starts before the record is complete.
   const recordStart = input.sales.state === 'read' ? input.sales.recordStart : null;
@@ -474,7 +562,7 @@ export function buildWorksheet(input: WorksheetInput): Worksheet {
 
   const figure: Partial<Record<LineNumber, number | null>> = {
     101: sales?.line101 ?? null, 103: sales?.line103 ?? null, 104: sales?.line104 ?? null, 107: sales?.line107 ?? null,
-    106: credits?.line106 ?? null,
+    106: credits ? credits.line106 + earlierCents : null,
   };
   const sum = (a: number | null | undefined, b: number | null | undefined, sign = 1) => (a == null || b == null ? null : a + sign * b);
   figure[105] = sum(figure[103], figure[104]);
@@ -511,7 +599,7 @@ export function buildWorksheet(input: WorksheetInput): Worksheet {
       101: { wholeDollars: sales ? wholeDollars(sales.line101) : null, zeroRatedCad: sales?.zeroRated ?? 0, creditNotesIssuedCad: sales?.notesMemo ?? 0, invoices: sales?.items ?? [] },
       103: { groups: sales?.groups ?? [], invoices: sales?.items ?? [] },
       104: { recoveries: sales?.recoveries ?? [], untracked: 'supplier_refunds_and_meals_add_back' },
-      106: { credits: credits?.credits ?? [], notOnReturn: credits?.notOnReturn ?? null },
+      106: { credits: credits?.credits ?? [], notOnReturn: credits?.notOnReturn ?? null, earlierCredits, earlierCents },
       107: { creditNotes: sales?.creditNotes ?? [], badDebts: sales?.badDebts ?? [] },
     },
     unresolved,

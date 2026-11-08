@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireBookkeepingApi } from '@/lib/bookkeeping-access';
-import { readGstReturnWorksheet } from '@/lib/gst-return-worksheet-read';
+import { readGstReturnWorksheet, type FilingsRead } from '@/lib/gst-return-worksheet-read';
 import { visibleCustomers } from '@/lib/console-money-sales-tax-wait';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { chunked } from '@/lib/supabase-paging';
-import { isCalendarDate } from '@/lib/timezone';
+import { isCalendarDate, orgDayKey } from '@/lib/timezone';
 import { withObservability } from '@/lib/observability';
-import type { Worksheet } from '@/lib/gst-return-worksheet';
+import {
+  carryContext, changedSinceFiled, filingFor, filingSummary, type FilingComparison, type FilingSummary, type GstReturnFiling,
+} from '@/lib/gst-return-filing';
+import type { Worksheet, WorksheetPeriod } from '@/lib/gst-return-worksheet';
 
 /**
  * THE GST/HST RETURN VIEW'S READ (GST/HST Stage 4b Session B). Bookkeeping › Reports › View · GST/HST return.
@@ -25,12 +28,37 @@ const ROUTE = '/api/platform-admin/bookkeeping/gst-return';
 const NO_STORE = { 'Cache-Control': 'no-store' };
 
 export type ReturnClub = { orgId: string; name: string };
+export type { FilingSummary };
+/**
+ * Session C: what these dates are against the filings. `filed` = a filing covers exactly these dates (state D), with its history
+ * newest first and the comparison with today's worksheet; `overlaps` = they overlap a filed period with other dates; `unread` =
+ * the filings could not be read (the figures still stand; the door is closed).
+ */
+export type ReturnFiling =
+  | { state: 'filed'; latest: FilingSummary; history: FilingSummary[]; comparison: FilingComparison }
+  | { state: 'overlaps'; with: WorksheetPeriod[] }
+  | { state: 'open' }
+  | { state: 'unread' };
 export type GstReturnResponse = {
   worksheet: Worksheet;
   registration: 'set' | 'unset' | 'failed';
   /** Invoice id → the club whose Money tab shows it, or null when no club's does (a shared customer). Null = not read. */
   clubs: Record<string, ReturnClub | null> | null;
+  filing: ReturnFiling;
+  /** Today's Ontario day: the question's default filed-on date, and whether the period has ended. */
+  today: string;
 };
+
+function filingOf(worksheet: Worksheet, filings: FilingsRead): ReturnFiling {
+  if (filings.state === 'failed') return { state: 'unread' };
+  const found = filingFor(filings.filings, worksheet.period);
+  if (found.state === 'overlaps') return { state: 'overlaps', with: found.with.map(f => f.period) };
+  if (found.state === 'open') return found;
+  return {
+    state: 'filed', latest: filingSummary(found.latest), history: found.history.map(filingSummary),
+    comparison: changedSinceFiled(found.latest, worksheet, carryContext(filings.filings as GstReturnFiling[], orgDayKey)),
+  };
+}
 
 async function clubsFor(worksheet: Worksheet): Promise<GstReturnResponse['clubs']> {
   const invoices = worksheet.parts[101].invoices;
@@ -62,8 +90,10 @@ export const GET = withObservability(async (req: NextRequest) => {
   if (!isCalendarDate(from) || !isCalendarDate(to)) return NextResponse.json({ error: 'Choose both dates for the return.' }, { status: 400 });
   if (from > to) return NextResponse.json({ error: 'Choose a From date on or before the To date.' }, { status: 400 });
   try {
-    const { worksheet, registration } = await readGstReturnWorksheet({ from, to });
-    const body: GstReturnResponse = { worksheet, registration, clubs: await clubsFor(worksheet) };
+    const { worksheet, registration, filings } = await readGstReturnWorksheet({ from, to });
+    const body: GstReturnResponse = {
+      worksheet, registration, clubs: await clubsFor(worksheet), filing: filingOf(worksheet, filings), today: orgDayKey(new Date().toISOString()),
+    };
     return NextResponse.json(body, { headers: NO_STORE });
   } catch (err) {
     console.warn('[platform-admin] GST/HST return failed:', (err as { code?: string }).code ?? 'error');
