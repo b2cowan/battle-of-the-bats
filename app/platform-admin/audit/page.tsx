@@ -76,6 +76,7 @@ const ACTION_LABELS: Record<string, string> = {
   remove_early_access_note: 'Removed a note from a lead',
   copy_early_access_emails: 'Copied lead emails',
   export_early_access_leads: 'Exported leads',
+  export_renewals: 'Exported renewals',
   update_feedback_status: 'Update feedback status',
   update_internal_note: 'Update internal note',
   update_org_identity: 'Update organization identity',

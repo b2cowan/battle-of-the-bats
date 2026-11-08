@@ -107,6 +107,8 @@ describe('the support console wears the house look (Stage 1)', () => {
     const hrefs = all.filter(h => !extras.includes(h));
     assert.deepEqual(hrefs, [
       '/platform-admin', '/platform-admin/orgs', '/platform-admin/customer-users', '/platform-admin/free-time',
+      // Plans & pricing Stage 2 Part 4 (owner 2026-11-07) added Renewals to Customers, after Free time.
+      '/platform-admin/renewals',
       // Stage 5 (owner Q1/Q3 2026-10-26) added Status and Sent emails to Health.
       '/platform-admin/retention', '/platform-admin/status', '/platform-admin/observability', '/platform-admin/feedback',
       '/platform-admin/sent-emails', '/platform-admin/online-payments', '/platform-admin/watching-stripe', '/platform-admin/early-access', '/platform-admin/email', '/platform-admin/pitch-deck-studio',

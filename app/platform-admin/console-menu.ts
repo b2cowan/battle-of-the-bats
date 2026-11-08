@@ -16,7 +16,8 @@ import type { PlatformRole } from '../../lib/platform-auth';
 /** A lucide icon, by name — the rail maps each to its component. */
 export type MenuIcon =
   | 'today' | 'clubs' | 'people' | 'free_time' | 'retention' | 'status' | 'errors' | 'feedback' | 'sent' | 'leads' | 'campaigns' | 'decks'
-  | 'plans' | 'approval' | 'bulk' | 'templates' | 'export' | 'staff' | 'audit' | 'terminal' | 'wallet' | 'numbers' | 'payments' | 'stripe';
+  | 'plans' | 'approval' | 'bulk' | 'templates' | 'export' | 'staff' | 'audit' | 'terminal' | 'wallet' | 'numbers' | 'payments' | 'stripe'
+  | 'renewals';
 
 export type MenuItem = { href: string; label: string; icon: MenuIcon; area: PlatformArea };
 export type MenuGroup = { label: string; items: MenuItem[] };
@@ -36,6 +37,8 @@ export function baseMenuGroups(devTools: boolean): MenuGroup[] {
         // Everyone with free time running, Founding Season among them (Support console Stage 4; it replaced the Founding
         // season desk's entry, in the same place).
         { href: '/platform-admin/free-time', label: 'Free time', icon: 'free_time', area: 'free_time' },
+        // What renews or ends, and the unpaid bills, across clubs (Plans & pricing Stage 2 Part 4): read only.
+        { href: '/platform-admin/renewals', label: 'Renewals', icon: 'renewals', area: 'renewals' },
         { href: '/platform-admin/retention', label: 'Retention', icon: 'retention', area: 'retention' },
       ],
     },

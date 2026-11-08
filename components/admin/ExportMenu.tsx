@@ -39,6 +39,16 @@ import styles from './ExportMenu.module.css';
 
 export type ExportFormat = 'xlsx' | 'csv' | 'ics' | 'pdf';
 
+/** Start a browser download of a server export URL (the platform-admin export surfaces all hand their menu this). */
+export function triggerDownload(url: string) {
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = '';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
 export interface ExportMenuProps {
   /** Formats available on this surface. Excel is always shown; CSV, iCal and PDF only when listed. */
   formats: ExportFormat[];

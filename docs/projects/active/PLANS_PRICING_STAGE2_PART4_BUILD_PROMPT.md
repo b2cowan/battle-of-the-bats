@@ -36,6 +36,18 @@ address or postal code in `sales.csv`. Add a total that adds price and tax, test
 
 ## Session 1 · the console side (Parts 4a, 4b, 4c)
 
+> **BUILT 2026-11-07, commit owed** (see the stage prompt's Progress block; walk A = Owner QA Ledger §487). Read-back for the
+> next session: `lib/renewals.ts` (rules + words + export rows), `lib/renewals-read.ts`, `app/platform-admin/renewals/`,
+> `app/api/platform-admin/renewals/export/route.ts`. F1 chose "a running `comp_period` override" over "has a Stripe subscription":
+> a Coaches Portal paid through a club add-on has its own org row's subscription NULLed (DATA_DICTIONARY gotcha 2), so the
+> subscription rule alone would have dropped paying portals. Review added the other half: a club that holds a comp AND has a
+> Stripe subscription is paying and stays in the figure (comped = a running comp AND no subscription on file).
+> Review left as owner questions (Low): the "clubs" count on the Unpaid tile counts a coach's bill as a club; a bill marked
+> uncollectible with no write-off date is listed but not counted in "Written off this year"; free-time Coaches Portals are
+> left out of Unpaid bills (the spec's rule) even if they still owe a bill; the staff-free-time and sandbox reads swallow their
+> own failure (as Business numbers did); the audit row stores the raw `plan`/`from`/`to` of the filter unvalidated; the
+> "Plan ends" explanation says "asked for its plan to end" and also covers a move to the free plan (wording call).
+
 ### 4a · The rules, in one pure module, with tests (no screen)
 
 - **Area:** add `renewals` to the `PlatformArea` union and the `PLATFORM_AREAS` table in `lib/platform-areas.ts` with

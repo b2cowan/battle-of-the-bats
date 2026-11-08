@@ -326,7 +326,8 @@ describe('9 · the menu by job', () => {
     const labels = baseMenuGroups(true).map(g => `${g.label}: ${g.items.map(i => i.label).join(', ')}`);
     assert.deepEqual(labels, [
       // Stage 4 renamed Founding season → Free time, in the same place (owner ruling Q4).
-      'Customers: Clubs & portals, People, Free time, Retention',
+      // Plans & pricing Stage 2 Part 4 (owner 2026-11-07) added Renewals after Free time.
+      'Customers: Clubs & portals, People, Free time, Renewals, Retention',
       // Stage 5 joined Status (first) and Sent emails to the group; it made no new group (drawing A).
       'Health: Status, Errors, Feedback, Sent emails, Online payments, Stripe',
       'Growth: Leads, Campaigns, Pitch decks, Business numbers',

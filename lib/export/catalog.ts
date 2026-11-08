@@ -367,6 +367,44 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     helpSummary: 'Owner-only CSV of what stands behind one return line: the invoices on lines 101 and 103, or the expenses and their credits on line 106.',
   },
   {
+    // Plans & pricing Stage 2 Part 4 (owner rulings 2026-11-07); justification as /legal wrote it
+    // (docs/agents/legal/STAFF_CROSS_CLUB_BILLING_LISTS.md, Recommendation 1).
+    id: 'platform-admin-renewals-coming-up',
+    label: 'Renewals · Coming up',
+    module: 'platform_admin',
+    page: 'Renewals',
+    file: 'app/platform-admin/renewals/RenewalsClient.tsx',
+    formats: ['xlsx', 'csv'],
+    defaultFormat: 'xlsx',
+    audiences: ['platform_admin'],
+    includesSensitiveFields: true,
+    sensitiveFieldPolicy: 'included_justified',
+    sensitiveFieldJustification:
+      'Super admin, Billing and Support (need-to-know, billing follow-up). Includes Coaches Portals bought by one coach: the team’s name with its plan and what it owes is that coach’s personal information. No person name, email, address or card details. Audited before the file is sent.',
+    respectsCurrentFilters: true,
+    serverSide: true,
+    helpSummary:
+      'Every plan that renews or ends in the dates picked (and the trials still marked trial after their date): date, what happens, club or portal, plan, and the price on file before tax in its own currency. From our records, no Stripe call. Supports format=xlsx|csv.',
+  },
+  {
+    id: 'platform-admin-renewals-unpaid',
+    label: 'Renewals · Unpaid bills',
+    module: 'platform_admin',
+    page: 'Renewals',
+    file: 'app/platform-admin/renewals/RenewalsClient.tsx',
+    formats: ['xlsx', 'csv'],
+    defaultFormat: 'xlsx',
+    audiences: ['platform_admin'],
+    includesSensitiveFields: true,
+    sensitiveFieldPolicy: 'included_justified',
+    sensitiveFieldJustification:
+      'Super admin, Billing and Support (need-to-know, billing follow-up). Includes Coaches Portals bought by one coach: the team’s name with its plan and what it owes is that coach’s personal information. No person name, email, address or card details. Audited before the file is sent.',
+    respectsCurrentFilters: true,
+    serverSide: true,
+    helpSummary:
+      'Every open (or written-off) bill in our own invoice record, in the site’s Stripe mode: issued, club or portal, bill, before tax, tax and total in the bill’s currency with CAD beside it, and the past-due clubs with no bill in our record. Supports format=xlsx|csv.',
+  },
+  {
     id: 'platform-admin-early-access',
     label: 'Early Access Leads',
     module: 'platform_admin',

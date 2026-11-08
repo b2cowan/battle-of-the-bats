@@ -7,6 +7,8 @@ import { peopleByIds } from '@/lib/platform-people-lookup';
 import { fetchAll } from '@/lib/supabase-paging';
 import { freeTimePortalOrgIds, runningFreeTimePortalOrgIds } from '@/lib/portal-free-time-server';
 import { readSalesTaxWaiting } from '@/lib/console-money-sales-tax-wait';
+import { isTrialEnding } from '@/lib/renewals';
+import { tournamentToday } from '@/lib/timezone';
 
 /**
  * ⚠ RECOGNITION IS THE SHARED RULE, NEVER A HAND-TYPED DATE (fixed 2026-09-07).
@@ -52,6 +54,7 @@ async function getOrgs() {
   // so this list's drill-through filters match the dashboard Action Queue counts.
   const now = new Date().toISOString();
   const trialWindowEnd = new Date(Date.now() + 14 * 86_400_000).toISOString();
+  const today = tournamentToday();
   const inactiveOwnerCutoff = new Date(Date.now() - 30 * 86_400_000).toISOString();
 
   const [orgsResult, foundingSeasonOrgIds, freeTimePortals, runningFreeTimePortals, ownersResult, overridesResult, ownAddressRows] = await Promise.all([
@@ -186,7 +189,8 @@ async function getOrgs() {
       missingOwner:       !ownerOrgIds.has(id),
       ownerInactive:      ownerIds.length > 0 && (!mostRecentOwnerSignIn || mostRecentOwnerSignIn < inactiveOwnerCutoff),
       expiringSoonOverride: expiringSoonOverrideOrgIds.has(id),
-      trialEndingSoon:    status === 'trialing' && Boolean(currentPeriodEnd) && (currentPeriodEnd as string) <= trialWindowEnd,
+      // F2 (Plans & pricing Stage 2 Part 4): Today's count and this filter read the one rule, today to 14 days out.
+      trialEndingSoon:    isTrialEnding(status, currentPeriodEnd as string | null, today),
       // Empty = no content of any kind AND at most the single owner as a member.
       emptyOrg:           !orgsWithContent.has(id) && (memberCounts.get(id) ?? 0) <= 1,
       ownAddress:         ownAddresses.get(id) ?? null,

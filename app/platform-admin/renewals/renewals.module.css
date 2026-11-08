@@ -1,0 +1,27 @@
+/* Customers › Renewals (Plans & pricing Stage 2 Part 4b). The console kit carries the look; these are the page's own few. */
+
+.page { display: grid; gap: 0.9rem; }
+
+.bar { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem 0.65rem; }
+.barEnd { margin-left: auto; display: inline-flex; align-items: center; gap: 0.5rem; }
+.dates { display: inline-flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.dates label { display: inline-flex; align-items: center; gap: 0.35rem; font-size: var(--type-support); color: var(--text-secondary); }
+
+/* A chip that opens its explanation: a button wearing the kit's chip (the Money tab's "Differs" recipe). */
+.chipButton { cursor: pointer; font-family: inherit; }
+.chipButton:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 1px; }
+
+/* An amber row: a trial past its date, a past-due club with no bill in our record. */
+tr.rowWarn > td { background: color-mix(in srgb, var(--warning) 6%, transparent); }
+
+/* The explanation reads as part of its row: no rule between them. */
+tr:has(+ .explainRow), tr:has(+ .explainRow) > * { border-bottom-color: transparent; }
+tr.explainRow > td {
+  padding-top: 0;
+  font-size: var(--type-support);
+  line-height: 1.4;
+  color: var(--text-secondary);
+}
+
+.priceCell { display: inline-flex; align-items: center; justify-content: flex-end; gap: 0.35rem; flex-wrap: wrap; }
+.notes { display: grid; gap: 0.25rem; }

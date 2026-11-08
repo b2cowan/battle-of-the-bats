@@ -4,6 +4,7 @@ import { requirePlatformAreaView } from '@/lib/platform-auth';
 import { canViewPlatformArea } from '@/lib/platform-areas';
 import { getPreviousPlatformAdminVisit } from '@/lib/platform-admin-visits';
 import { getWaitingSnapshot, WAITING_GROUP_LABELS, WAITING_GROUPS, type WaitingQueue } from '@/lib/platform-waiting';
+import { compedNotCountedWords } from '@/lib/renewals';
 import { consoleDay, consoleClock } from '@/lib/console-dates';
 import { readCheapLines } from '@/lib/platform-status';
 import { summarize } from '@/lib/platform-status-lines';
@@ -149,7 +150,7 @@ export default async function TodayPage() {
         <span><strong>{stats.totals.users}</strong> people</span>
         <span><strong>{stats.totals.tournaments}</strong> tournaments</span>
         <span><strong>{stats.totals.teams}</strong> teams</span>
-        <span>about <strong>${stats.totals.estimatedMrr.toLocaleString('en-CA')}</strong> a month at list price, before tax</span>
+        <span>about <strong>${stats.totals.estimatedMrr.toLocaleString('en-CA')}</strong> a month at list price, before tax{compedNotCountedWords(stats.totals.compedNotCounted)}</span>
         <Link href="/platform-admin/business-numbers" className={`${kit.door} ${styles.numbersDoor}`}>
           Business numbers: plan mix, billing, growth and usage ›
         </Link>

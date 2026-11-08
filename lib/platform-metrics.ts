@@ -5,6 +5,7 @@ import type { OrgPlan } from '@/lib/types';
 import { tournamentToday } from './timezone';
 import { countPeople, peopleByIds } from './platform-people-lookup';
 import { freeTimePortalOrgIds } from './portal-free-time-server';
+import { isTrialEnding } from './renewals';
 
 type OrgMetricRow = {
   id: string;
@@ -14,6 +15,7 @@ type OrgMetricRow = {
   current_period_end: string | null;
   created_at: string;
   free_floor: string | null;
+  stripe_subscription_id: string | null;
 };
 
 type MemberRow = {
@@ -26,6 +28,7 @@ type MemberRow = {
 type OverrideRow = {
   id: string;
   org_id: string;
+  type: string;
   expires_at: string | null;
   revoked_at: string | null;
 };
@@ -94,6 +97,20 @@ async function resolveSandboxExclusions(): Promise<{ orgIds: string[]; tournamen
   return { orgIds, tournamentIds: (data ?? []).map(row => row.id as string) };
 }
 
+/**
+ * The orgs every customer count leaves out, as one set: the sandbox demos, and the Coaches Portals staff gave free time
+ * (Support console Stage 4b, T35: stored cancelled for their whole life, so they would read as churn). Business numbers
+ * and Renewals (Plans & pricing Stage 2 Part 4) read this one rule. A free-time read failure leaves the portals counted,
+ * as before.
+ */
+export async function notCustomerOrgIds(sandboxOrgIds?: readonly string[]): Promise<Set<string>> {
+  const [sandbox, freeTimePortals] = await Promise.all([
+    sandboxOrgIds ? Promise.resolve([...sandboxOrgIds]) : listDemoOrgIdsQuietly(),
+    freeTimePortalOrgIds().catch(() => new Set<string>()),
+  ]);
+  return new Set([...sandbox, ...freeTimePortals]);
+}
+
 /** PostgREST's `in` list literal. Returns null when there is nothing to exclude. */
 function notInList(ids: string[]): string | null {
   return ids.length > 0 ? `(${ids.join(',')})` : null;
@@ -113,6 +130,7 @@ export async function getCommandCenterStats(options: { since?: string | null } =
   const ninetyDaysAgo = daysAgo(90);
   const eventWindowStart = options.since && options.since < ninetyDaysAgo ? options.since : ninetyDaysAgo;
   const trialWindowEnd = daysAhead(14);
+  const today = tournamentToday();
   const retentionWindowEnd = daysAhead(30);
   const inactiveOwnerCutoff = thirtyDaysAgo;
 
@@ -149,7 +167,7 @@ export async function getCommandCenterStats(options: { since?: string | null } =
       .from('organizations')
       // No `slug`: the sandbox filter below keys on row id, so fetching the slug would be a column
       // pulled on every platform-admin dashboard load and read by nobody.
-      .select('id, name, plan_id, subscription_status, current_period_end, created_at, free_floor')
+      .select('id, name, plan_id, subscription_status, current_period_end, created_at, free_floor, stripe_subscription_id')
       .order('created_at', { ascending: false })
       .limit(5000),
     ownersRead,
@@ -182,7 +200,7 @@ export async function getCommandCenterStats(options: { since?: string | null } =
     ),
     supabaseAdmin
       .from('org_overrides')
-      .select('id, org_id, expires_at, revoked_at')
+      .select('id, org_id, type, expires_at, revoked_at')
       .is('revoked_at', null)
       .not('expires_at', 'is', null)
       .limit(5000),
@@ -206,10 +224,8 @@ export async function getCommandCenterStats(options: { since?: string | null } =
   // Sandbox orgs are dropped here rather than in the query so the exclusion is stated in one place
   // and reads the same hardcoded allow-list everything else does.
   const sandboxOrgIdSet = new Set(sandboxOrgIds);
-  // A Coaches Portal staff gave free time is not a customer (Support console Stage 4b, T35): it is stored cancelled
-  // for its whole life, so it would read as churn in the status counts. A read failure leaves them counted, as before.
-  const freeTimePortals = await freeTimePortalOrgIds().catch(() => new Set<string>());
-  const orgs = ((orgsRes.data ?? []) as OrgMetricRow[]).filter(org => !sandboxOrgIdSet.has(org.id) && !freeTimePortals.has(org.id));
+  const notCustomers = await notCustomerOrgIds(sandboxOrgIds);
+  const orgs = ((orgsRes.data ?? []) as OrgMetricRow[]).filter(org => !notCustomers.has(org.id));
   const members = ((membersRes.data ?? []) as MemberRow[])
     .filter(member => !sandboxOrgIdSet.has(member.organization_id));
   const overrides = ((overridesRes.data ?? []) as OverrideRow[])
@@ -227,6 +243,12 @@ export async function getCommandCenterStats(options: { since?: string | null } =
   const overridesExpiringSoon = overrides.filter(
     row => row.expires_at && row.expires_at >= now && row.expires_at <= trialWindowEnd,
   ).length;
+  // F1 (Plans & pricing Stage 2 Part 4, owner ruling 8): a comped club pays nothing, so the monthly figure leaves it out
+  // and says how many it left out. Comped = a running comp period (Founding Season, migration 279), the record the
+  // Founding desk reads. Its plan reads active with no subscription, so it added the list price nobody pays. A club that
+  // holds a comp AND has since subscribed through Stripe is paying, so it stays in the figure (a comp is not revoked on a
+  // League purchase); a Coaches Portal paid through a club add-on holds no comp, so it was never at risk.
+  const compedOrgIds = new Set(overrides.filter(row => row.type === 'comp_period' && row.expires_at && row.expires_at > now).map(row => row.org_id));
   // The owners' last sign-in, read by account id with no cap (it was the first 1,000 accounts, so an owner past the
   // first page always read as inactive). Started with the counts above, so it overlaps them.
   const authUserById = await ownerSignIns;
@@ -239,6 +261,7 @@ export async function getCommandCenterStats(options: { since?: string | null } =
   ) as Record<string, Record<string, number>>;
 
   let estimatedMrr = 0;
+  let compedNotCounted = 0;
   let trialEndingSoon = 0;
   let orgsWithoutOwner = 0;
   let orgsWithInactiveOwner = 0;
@@ -257,10 +280,12 @@ export async function getCommandCenterStats(options: { since?: string | null } =
     if (statusByPlan[plan]) statusByPlan[plan][status] = (statusByPlan[plan][status] ?? 0) + 1;
 
     if (status === 'active') {
-      estimatedMrr += PLAN_CONFIG[plan]?.monthlyPrice ?? 0;
+      if (compedOrgIds.has(org.id) && !org.stripe_subscription_id) compedNotCounted += 1;
+      else estimatedMrr += PLAN_CONFIG[plan]?.monthlyPrice ?? 0;
     }
 
-    if (status === 'trialing' && org.current_period_end && org.current_period_end <= trialWindowEnd) {
+    // F2: from today to 14 days out, in Ontario days (a trial whose date has passed is Renewals' amber row, not this).
+    if (isTrialEnding(status, org.current_period_end, today)) {
       trialEndingSoon += 1;
     }
 
@@ -306,6 +331,8 @@ export async function getCommandCenterStats(options: { since?: string | null } =
       teams: teamsTotal,
       estimatedMrr,
       estimatedArr: estimatedMrr * 12,
+      /** Active clubs on a comp period, left out of estimatedMrr (F1). */
+      compedNotCounted,
     },
     subscription: {
       byPlan,

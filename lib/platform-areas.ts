@@ -144,6 +144,7 @@ export type PlatformArea =
   | 'plans_pricing'
   | 'bulk_operations'
   | 'free_time'
+  | 'renewals'
   | 'platform_users'
   | 'audit'
   | 'status'
@@ -185,6 +186,11 @@ export const PLATFORM_AREAS: Record<PlatformArea, AreaAccess> = {
      that is the write side the eye reads. SUPPORT sees it because "when does my free time end" is a support question;
      PRODUCT because "did they choose a plan?" is a roadmap question before it is a billing one. */
   free_time: { viewRoles: ['super_admin', 'billing', 'support', 'product'], powers: ['club_billing'] },
+  /* Customers › Renewals (Plans & pricing Stage 2 Part 4; owner ruling 2, 2026-11-07): what renews or ends, and the unpaid
+     bills, across every club. The roles that read a club's Stripe records (Online payments' readers), held equal to that
+     power: a cross-club list of what customers owe is the find_stripe roles' and nobody else's. Nothing on it writes, so
+     no role sees the eye. */
+  renewals: { viewRoles: PLATFORM_POWERS.find_stripe, powers: [] },
 
   plans_pricing:   { viewRoles: ['super_admin', 'product', 'billing'], powers: ['catalog'] },
   change_requests: { viewRoles: ['super_admin', 'product', 'billing'], powers: ['catalog'] },

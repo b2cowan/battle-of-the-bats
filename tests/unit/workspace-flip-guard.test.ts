@@ -506,6 +506,9 @@ const LIVE_ROW_FILES: string[] = [
   'lib/family-access.ts',
   'lib/founding-season-desk.ts',
   'lib/free-time.ts',
+  // Plans & pricing Stage 2 Part 4: Renewals marks a row "Coaches Portal" from the org row it just read.
+  'lib/renewals-read.ts',
+  'lib/renewals.ts',
   'lib/invite-acceptance.ts',
   // Stage 13 fix-now 2: the Coaches Portal's Admin door asks "is this a team workspace?" of the club row its caller holds.
   'lib/member-home.ts',

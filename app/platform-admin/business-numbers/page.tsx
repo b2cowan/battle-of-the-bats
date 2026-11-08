@@ -27,6 +27,7 @@ import {
   statusLabel,
 } from '@/lib/platform-metrics';
 import MetricSnapshotButton from '../MetricSnapshotButton';
+import { compedNotCountedWords } from '@/lib/renewals';
 import OverviewTabs from '../OverviewTabs';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import kit from '../console.module.css';
@@ -85,7 +86,7 @@ export default async function BusinessNumbersPage() {
       <p className={`${kit.caption} ${kit.captionTight}`}>
         {stats.totals.organizations} clubs and portals · {stats.totals.users} people · {stats.totals.tournaments} tournaments
         {' '}· {stats.totals.teams} teams · about ${stats.totals.estimatedMrr.toLocaleString('en-CA')} a month at list price, before tax
-        {' '}(${stats.totals.estimatedArr.toLocaleString('en-CA')} a year)
+        {' '}(${stats.totals.estimatedArr.toLocaleString('en-CA')} a year){compedNotCountedWords(stats.totals.compedNotCounted)}
       </p>
 
       <OverviewTabs

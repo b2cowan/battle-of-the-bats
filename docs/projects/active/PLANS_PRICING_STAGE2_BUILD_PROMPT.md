@@ -125,6 +125,21 @@ that is the owner's dashboard work.
       rows open the lists; the accountant package gains sales.csv + credit-notes.csv (with Session D); F1 and F2 fixed in Part 4;
       unpaid bills from our own record. Build prompt: `PLANS_PRICING_STAGE2_PART4_BUILD_PROMPT.md` (two sessions; the Bookkeeping
       half's wait is over: GST/HST Stage 4b Session B committed `035f5e965` 2026-11-07).
+      **Session 1 (4a–4c) BUILT 2026-11-07, commit owed:** Customers › Renewals (Coming up + Unpaid bills, the export and its two
+      registry entries, the `export_renewals` audit entry), Today's Past due and Trials ending rows open it for its readers, F2 (one
+      `isTrialEnding` rule for Today, Business numbers and Clubs & portals) and F1 (comped clubs left out of the monthly figure, "· N
+      comped clubs not counted"). No migration, no Stripe call. 35 tests (`renewals.test.ts`); five guards updated (menu ×2, audit
+      reason, plan-reader door, portal tag, the free-time-portal churn rule). Signed-in probe on dev: Billing, Support 200; Product,
+      Growth, Read only 307 / export 403. Built beyond the drawing (recorded in ledger §487): "Plan ends" for a waiting cancellation or a waiting move to the free plan,
+      two extra What happens entries for the band figures, the Bill cell as the bill's kind, "A club no longer on file" / "Not matched
+      to a club". Walk A §487 published https://claude.ai/artifact/4aJRpreh7LuKj2frekaHH5. `/simplify`, `/review` and `/docs` DONE
+      2026-11-07 (help entry "How to read Renewals" in the platform-admin guide, with the /legal staff note). Review changed:
+      the price tile reads "—" when no row has a price on file (was "$0.00"); a Plan pick the rows no longer offer reads as All
+      plans; a waiting move to the free plan counts as "Plan ends"; F1 now needs a running comp AND no Stripe subscription (a
+      Founding comp holder who then paid stays in the monthly figure); the Founding comp read pages past 1,000 rows; the
+      unpaid export labels only a person's bill "Coach"; the download helper is one shared function for four export screens.
+      Owner questions left open: see the review notes in the commit message.
+      Session 2 (4d Sales, 4e the package) not started.
 - [ ] Part 5 replay · Part 6 closeout (Part 3 committed `514d3a2d0`, above)
 - Known red tests NOT from this work: `workspace-flip-guard` and `support-console-stage4b-inforce-guard` (an untracked file from another
   session and a committed one the allowlists do not list), `support-console-stage3-guard` (a modified bookkeeping window file).

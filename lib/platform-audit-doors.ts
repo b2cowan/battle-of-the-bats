@@ -46,6 +46,7 @@ const TARGET_BY_ACTION: Record<string, Target> = {
   remove_early_access_note: LEADS,
   copy_early_access_emails: LEADS,
   export_early_access_leads: LEADS,
+  export_renewals: { label: 'Open Renewals', href: '/platform-admin/renewals', area: 'renewals' },
   update_plan_gating: PLANS,
   update_stripe_price_id: PLANS,
   update_plan_config_override: PLANS,

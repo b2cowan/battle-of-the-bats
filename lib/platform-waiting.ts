@@ -61,6 +61,11 @@ type QueueDef = Omit<WaitingQueue, 'count' | 'why'> & {
   why: string | ((ctx: { sinceVisit: number }) => string);
   /** A power the role must ALSO hold (GST/HST Stage 3 Part 3b): a queue only the roles that read Stripe see, while its list (`entry`) is open to every role. */
   power?: PlatformPower;
+  /**
+   * The dated list this queue opens for a role that can read it (Plans & pricing Stage 2 Part 4, owner ruling 6): Renewals.
+   * A role that cannot keeps `href`. The count, its rule and the menu entry that carries it (`entry`) do not move.
+   */
+  readerDoor?: { area: PlatformArea; href: string };
 };
 
 /** The queues in their drawn order within each group. */
@@ -73,11 +78,13 @@ const QUEUES: QueueDef[] = [
     key: 'past_due', group: 'customers', label: 'Past due',
     why: ({ sinceVisit }) => `A subscription Stripe could not charge${sinceVisit > 0 ? ` · ${sinceVisit} since your last visit` : ''}`,
     clearLabel: 'past due', href: '/platform-admin/orgs?status=past_due', entry: 'organizations',
+    readerDoor: { area: 'renewals', href: '/platform-admin/renewals?view=unpaid' },
   },
   // GST/HST Stage 3 Part 3b (owner Ask 5): a SALE whose GST/HST answer is missing or does not match what was kept with it, not
   // marked as looked at. Counts sales, not clubs; the list it opens (Clubs & portals) is every role's, the row is the Stripe-reading roles'.
   { key: 'sales_tax', group: 'customers', label: 'Sales tax', why: 'A sale whose GST/HST answer is missing or doesn’t match what was kept with it', clearLabel: 'sales tax', href: '/platform-admin/orgs?filter=sales_tax', entry: 'organizations', power: 'find_stripe' },
-  { key: 'trials_ending', group: 'customers', label: 'Trials ending', why: 'A trial that ends in the next 14 days', clearLabel: 'trials ending in 14 days', href: '/platform-admin/orgs?filter=trial_ending', entry: 'organizations' },
+  { key: 'trials_ending', group: 'customers', label: 'Trials ending', why: 'A trial that ends in the next 14 days', clearLabel: 'trials ending in 14 days', href: '/platform-admin/orgs?filter=trial_ending', entry: 'organizations',
+    readerDoor: { area: 'renewals', href: '/platform-admin/renewals?dates=next_14&what=trial_ends' } },
   { key: 'new_errors', group: 'health', label: 'New errors', why: 'An error first seen since your last visit', clearLabel: 'new errors', href: '/platform-admin/observability', entry: 'observability' },
   { key: 'new_feedback', group: 'health', label: 'New feedback', why: 'A message from inside the product nobody has triaged', clearLabel: 'new feedback', href: '/platform-admin/feedback', entry: 'feedback' },
   // Club Tier 12d-2 (words §6.1 `pa.rail`: the count is the length of the Health list).
@@ -230,8 +237,9 @@ async function countWaiting(role: PlatformRole, since: string | null): Promise<W
 
   return {
     stats,
-    queues: visible.map(q => ({
+    queues: visible.map(({ readerDoor, ...q }) => ({
       ...q,
+      href: readerDoor && canViewPlatformArea(role, readerDoor.area) ? readerDoor.href : q.href,
       why: typeof q.why === 'function' ? q.why({ sinceVisit }) : q.why,
       count: counts[q.key] ?? 0,
       ...(LEAD_QUEUES.has(q.key) && wantsLeads && !leads ? { notRead: true } : {}),

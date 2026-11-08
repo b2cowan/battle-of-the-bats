@@ -83,6 +83,10 @@ const ALLOWED: Record<string, [Klass, string]> = {
   'lib/platform-events.ts': ['writer', 'event rows carry the plan and status columns'],
   // ── stored on purpose ──
   'lib/platform-metrics.ts': ['stored', 'revenue and customer counts: free time is never revenue (/billing 2026-10-25)'],
+  // Plans & pricing Stage 2 Part 4: Renewals lists what renews or ends from the club's OWN record (status, period end, price
+  // on file); free time and Founding are read from their own grants, never as the plan in force. Read only.
+  'lib/renewals.ts': ['stored', 'Renewals: a renewal and a trial end are the subscription the club HOLDS; free time is its own row, never a renewal'],
+  'lib/renewals-read.ts': ['stored', 'Renewals: reads the stored status, period end and price on file of every club, and the stored past-due list'],
   'lib/billing-drift-server.ts': ['stored', 'the daily comparison with Stripe (Stage 0 Part 11) compares what the club HOLDS with what Stripe bills: free time is not billed, so it must not be compared; read-only'],
   'lib/lead-book.ts': ['stored', 'Stage 7 "pays now" (owner Q2): the club’s OWN plan, status and subscription, with free time read through the door and never counted as paying; and an offered club’s plan name'],
   'lib/lead-timeline.ts': ['stored', 'Stage 7: the plan named on the subscription-start fact a linked club’s billing records hold'],

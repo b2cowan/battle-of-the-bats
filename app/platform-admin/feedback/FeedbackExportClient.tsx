@@ -1,6 +1,6 @@
 'use client';
 
-import ExportMenu from '@/components/admin/ExportMenu';
+import ExportMenu, { triggerDownload } from '@/components/admin/ExportMenu';
 
 /**
  * Thin client export control for the feedback triage page (server component). Uses the shared
@@ -21,15 +21,6 @@ function buildExportUrl(filters: FeedbackExportClientProps, format: 'xlsx' | 'cs
   p.set('format', format);
   const qs = p.toString();
   return `/api/platform-admin/feedback/export${qs ? `?${qs}` : ''}`;
-}
-
-function triggerDownload(url: string) {
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = '';
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
 }
 
 export default function FeedbackExportClient(props: FeedbackExportClientProps) {

@@ -1,6 +1,6 @@
 'use client';
 
-import ExportMenu from '@/components/admin/ExportMenu';
+import ExportMenu, { triggerDownload } from '@/components/admin/ExportMenu';
 
 /**
  * AuditExportClient.tsx
@@ -28,15 +28,6 @@ function buildExportUrl(filters: AuditExportClientProps, format: 'xlsx' | 'csv')
   p.set('format', format);
   const qs = p.toString();
   return `/api/platform-admin/audit/export${qs ? `?${qs}` : ''}`;
-}
-
-function triggerDownload(url: string) {
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = '';
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
 }
 
 export default function AuditExportClient(props: AuditExportClientProps) {

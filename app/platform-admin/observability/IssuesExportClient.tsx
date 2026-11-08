@@ -1,6 +1,6 @@
 'use client';
 
-import ExportMenu from '@/components/admin/ExportMenu';
+import ExportMenu, { triggerDownload } from '@/components/admin/ExportMenu';
 
 /**
  * Exports the FULL filtered issue set (not just the current page) to Excel / CSV via the shared
@@ -26,15 +26,6 @@ function buildUrl(f: ExportFilters, format: 'xlsx' | 'csv'): string {
   if (f.q) p.set('q', f.q);
   p.set('format', format);
   return `/api/platform-admin/observability/issues/export?${p.toString()}`;
-}
-
-function triggerDownload(url: string) {
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = '';
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
 }
 
 export default function IssuesExportClient({ filters, disabled }: { filters: ExportFilters; disabled?: boolean }) {

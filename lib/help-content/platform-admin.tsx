@@ -144,6 +144,7 @@ const platformAdminHelp: HelpPageContent = {
             <HelpDef term="Staff and roles, and Records opened in the Audit log">Super admin only.</HelpDef>
             <HelpDef term="Find&rsquo;s Stripe numbers">Super admin, Billing and Support.</HelpDef>
             <HelpDef term="Health &rsaquo; Stripe">Super admin, Billing, Support and Product. Growth and Read only do not see the entry. It changes nothing for any role, so Billing, Support and Product see the read-only marker.</HelpDef>
+            <HelpDef term="Customers &rsaquo; Renewals and its export">Super admin, Billing and Support. Product, Growth and Read only see no entry. It changes nothing for any role, so there is no write.</HelpDef>
             <HelpDef term="A club&rsquo;s Online payments tab and Health &rsaquo; Online payments">Super admin, Billing and Support. Both are read only for every role.</HelpDef>
           </HelpDefs>
         </>
@@ -625,6 +626,91 @@ const platformAdminHelp: HelpPageContent = {
           answerText: 'Use overrides for temporary access exceptions. Change the base plan only when the contracted package is changing.',
           keywords: ['plan change', 'base plan', 'subscription'],
           popular: true,
+        },
+      ],
+    },
+    {
+      id: 'renewals',
+      group: 'Billing SOP',
+      heading: 'How to read Renewals',
+      summary: 'Customers › Renewals lists what renews or ends soon and which bills are still unpaid, from our own records, so you can follow up before a plan lapses.',
+      keywords: ['renewals', 'renewal', 'coming up', 'unpaid bills', 'upcoming renewals', 'trial ends', 'trials ending', 'free time ends', 'founding season ends', 'plan ends', 'still marked trial', 'price on file', 'no price on file', 'cycle not on file', 'past due', 'past due since', 'plan ended', 'no bill in our record', 'written off', 'uncollectible', 'export renewals', 'billing follow up', 'who is renewing'],
+      searchText: 'how do i read renewals customers renewals menu coming up unpaid bills super admin billing support product growth read only no entry dates this month from today next month next 14 days next 30 days custom dates what happens plan all plans band tiles renewals trials ending free time ending price on file before tax still marked trial renews trial ends free time ends founding season ends plan ends not renewing no subscription trial ended still marked trial amber price stored on the club record no discount own currency cad usd never added together cycle a month a year cycle not on file no price on file list price dash show unpaid written off all open bills uncollectible bad debt issued club or portal bill before tax tax total clubs plan see the bill money tab past due since past due date not recorded plan ended no bill in our record coach a club no longer on file not matched to a club sandbox clubs left out test account live account stripe mode read only never calls stripe from our records since may 1 2026 export excel csv audit log written first keep off shared drives delete when follow up is done could not read reload',
+      links: [
+        { label: 'Renewals', href: '/platform-admin/renewals' },
+        { label: 'Clubs & portals', href: '/platform-admin/orgs' },
+      ],
+      content: (
+        <p><strong>Customers &rsaquo; Renewals</strong> answers two questions: what renews or ends in the dates you pick, and which bills are still unpaid. It reads our own records only, never calls Stripe, and changes nothing. Super admin, Billing and Support can open it; Product, Growth and Read only see no entry.</p>
+      ),
+      subtopics: [
+        {
+          id: 'renewals-coming-up',
+          title: 'Coming up: what renews or ends',
+          content: (
+            <>
+              <p>The <strong>Coming up</strong> view lists every plan that renews or ends in the dates you pick, soonest first. Pick <strong>Dates</strong> (This month from today, Next month, Next 14 days, Next 30 days or Custom dates), narrow by <strong>What happens</strong> or <strong>Plan</strong>, and click a band tile to narrow to its kind.</p>
+              <HelpDefs>
+                <HelpDef term="Renews">The subscription on file renews on this date.</HelpDef>
+                <HelpDef term="Trial ends">A Stripe trial ends on this date; the price is what the plan will charge then.</HelpDef>
+                <HelpDef term="Free time ends / Founding Season ends">Free time a staff member gave, or a Founding Season comp. There is no subscription and no price. A click on the chip says what happens next.</HelpDef>
+                <HelpDef term="Plan ends">The club has a waiting cancel, or a waiting move to the free plan, on this date, so it does not renew. The Money tab holds the waiting change.</HelpDef>
+                <HelpDef term="Trial ended, still marked trial">The trial&rsquo;s end date has passed and the club still reads as on trial. It shows once, in amber, whatever dates you pick, and is not counted in Trials ending.</HelpDef>
+              </HelpDefs>
+              <p>The band always counts every row in the dates; a pick narrows the list underneath, never the band. A past-due club is not listed here: it is on <strong>Unpaid bills</strong>. Sandbox clubs are left out, as on Business numbers.</p>
+            </>
+          ),
+        },
+        {
+          id: 'renewals-price',
+          title: 'What price on file means',
+          content: (
+            <>
+              <HelpDefs>
+                <HelpDef term="Price on file">The price stored on the club&rsquo;s record, before tax and with no discount, in its own currency. It is not recalculated and not read from Stripe.</HelpDef>
+                <HelpDef term="a month / a year">Shown only when the record holds the billing cycle. Without it the cell says <em>cycle not on file</em>.</HelpDef>
+                <HelpDef term="no price on file">The record holds no price. The plan&rsquo;s list price is never shown in its place.</HelpDef>
+                <HelpDef term="The tile">Adds each currency apart and never adds two currencies together. It reads a dash when none of the rows has a price.</HelpDef>
+              </HelpDefs>
+            </>
+          ),
+        },
+        {
+          id: 'renewals-unpaid',
+          title: 'Unpaid bills',
+          content: (
+            <>
+              <p>The <strong>Unpaid bills</strong> view lists open bills from our own record of every bill since May 1, 2026, in the site&rsquo;s Stripe mode only (the chip says <em>Live account</em> or <em>Test account</em>; there is no switch). <strong>Show</strong> picks Unpaid (the default), Written off, or All. A paid or voided bill is never listed. An unpaid bill is still a sale and still owes its tax.</p>
+              <HelpDefs>
+                <HelpDef term="Past due since">The day the club went past due, from the last past-due notice from Stripe. <em>Past due, date not recorded</em> means we have no notice on file.</HelpDef>
+                <HelpDef term="Plan ended">The bill&rsquo;s club has since cancelled. The bill stays on the list until it is paid, voided or written off.</HelpDef>
+                <HelpDef term="No bill in our record">The club reads past due, but our record holds no open bill for it. The door opens the club&rsquo;s Money tab, which asks Stripe directly.</HelpDef>
+                <HelpDef term="Written off">Stripe marked the bill uncollectible: a bad debt. The band counts the year&rsquo;s write-offs by the day they were written off.</HelpDef>
+                <HelpDef term="Coach / A club no longer on file">A bill an individual bought reads <em>Coach</em>. A Coaches Portal shows the team&rsquo;s name. No person&rsquo;s name or email is shown anywhere.</HelpDef>
+              </HelpDefs>
+            </>
+          ),
+        },
+        {
+          id: 'renewals-export',
+          title: 'Export the list',
+          content: (
+            <>
+              <p>Click <strong>Export</strong> at the right of the toolbar for Excel or CSV. The file holds the list as you have it filtered, with the same columns, each bill&rsquo;s amounts in its own currency and Canadian dollars beside it. Every export is written to the audit log first; if that fails, nothing is sent.</p>
+              <HelpNote variant="warning" title="Handle the file as customer billing">The export holds customers&rsquo; billing. Keep it off shared drives and delete it when the follow-up is done.</HelpNote>
+            </>
+          ),
+        },
+      ],
+      faqs: [
+        {
+          id: 'faq-renewals-could-not-read',
+          question: 'A tile shows a dash, or the page says it could not read this. Is nothing due?',
+          answer: (
+            <p>No. A dash or that sentence means that part could not be read, which is not the same as nothing being due or nothing being owed. Reload to try again. The page never shows a zero for something it could not read.</p>
+          ),
+          answerText: 'No. A dash or the sentence could not read this just now means that part could not be read, which is not the same as nothing due or owed. Reload to try again. The page never shows a zero for something it could not read.',
+          keywords: ['dash', 'could not read', 'zero', 'nothing due', 'reload'],
         },
       ],
     },

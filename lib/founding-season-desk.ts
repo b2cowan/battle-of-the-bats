@@ -7,6 +7,7 @@ import {
 // screens) — a second copy here would drift the next time a plan is renamed.
 import { planLabel } from '@/lib/platform-metrics';
 import { pluralize } from '@/lib/utils';
+import { fetchAll } from '@/lib/supabase-paging';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-kind';
 // The card and the next-season choice live in their own service-role-only table (mig 283) — NOT on
 // `organizations`, which is anon-readable for every public org.
@@ -67,19 +68,28 @@ export type FoundingDeskData = {
   totals: { accounts: number; organizations: number; coachesPortals: number; noCard: number; noChoice: number };
 };
 
-/** Every org id holding a live Founding Season comp, with the expiry that proves it. */
-async function foundingCompExpiryByOrg(): Promise<Map<string, string>> {
-  const { data } = await supabaseAdmin
-    .from('org_overrides')
-    .select('org_id, expires_at')
-    .eq('type', 'comp_period')
-    .in('expires_at', [...FOUNDING_SEASON_COMP_EXPIRIES])
-    .is('revoked_at', null);
+/** Every org id holding a live Founding Season comp, with the expiry that proves it. Renewals reads its endings here too. */
+export async function foundingCompExpiryByOrg(opts: { throwOnError?: boolean } = {}): Promise<Map<string, string>> {
+  let rows: Array<{ org_id: string; expires_at: string }> = [];
+  try {
+    // Every page (a plain select stops at 1,000 rows without saying so).
+    rows = await fetchAll<{ org_id: string; expires_at: string }>((from, to) => supabaseAdmin
+      .from('org_overrides')
+      .select('org_id, expires_at')
+      .eq('type', 'comp_period')
+      .in('expires_at', [...FOUNDING_SEASON_COMP_EXPIRIES])
+      .is('revoked_at', null)
+      .order('id')
+      .range(from, to));
+  } catch (err) {
+    // Renewals says "could not read" rather than showing no Founding endings; the desk keeps reading a failure as none.
+    if (opts.throwOnError) throw err;
+  }
 
   const byOrg = new Map<string, string>();
-  for (const row of data ?? []) {
-    const orgId = row.org_id as string;
-    const expiresAt = row.expires_at as string;
+  for (const row of rows) {
+    const orgId = row.org_id;
+    const expiresAt = row.expires_at;
     // An account with both a legacy and a healed row is one account: keep the later expiry, which is
     // the one that actually governs.
     const held = byOrg.get(orgId);
