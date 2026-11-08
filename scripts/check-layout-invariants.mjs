@@ -1125,8 +1125,29 @@ function probeInPage(opts) {
     const modal = openModal;
     const scope = modal ?? root;
 
-    const atTop = window.scrollY <= 2;
-    const atEnd = Math.abs(window.scrollY + window.innerHeight - document.documentElement.scrollHeight) <= 2;
+    // ⚠ THE PAGE'S SCROLLER IS NOT ALWAYS THE DOCUMENT (2026-11-07). On a phone the club admin
+    // locks its shell to the screen (`data-admin-locked`) and its main column is the one scroller,
+    // so the document never moves. Read from the document, a locked page is "at the end" at rest,
+    // and everything in the bottom bar's band before the first scroll was reported trapped (six
+    // phantoms at 390, each measured clear at the column's end). So: when the document does not
+    // scroll and a locked shell holds a scroller, that scroller is the page. Same finder as the
+    // scroll-to-end driver below (`lockedShellScroller` there); keep the two in step.
+    const de = document.documentElement;
+    let pageScroller = null;
+    const lockedShell = de.scrollHeight <= de.clientHeight + 2 && document.querySelector('[data-admin-locked]');
+    if (lockedShell) {
+      let area = 0;
+      for (const s of Array.from(lockedShell.querySelectorAll('*'))) {
+        if (!/(auto|scroll)/.test(getComputedStyle(s).overflowY) || s.scrollHeight <= s.clientHeight + 2) continue;
+        if (s.closest('[role="dialog"], dialog, [aria-modal="true"]')) continue;
+        const r = s.getBoundingClientRect();
+        if (r.width * r.height > area) { area = r.width * r.height; pageScroller = s; }
+      }
+    }
+    const atTop = pageScroller ? pageScroller.scrollTop <= 2 : window.scrollY <= 2;
+    const atEnd = pageScroller
+      ? Math.abs(pageScroller.scrollTop + pageScroller.clientHeight - pageScroller.scrollHeight) <= 2
+      : Math.abs(window.scrollY + window.innerHeight - de.scrollHeight) <= 2;
     const bars = Array.from(document.querySelectorAll('*')).filter((b) => {
       // The overlay that carries the dialog, and the dialog panel itself, are the modal — not
       // chrome laid over it.
@@ -1542,17 +1563,34 @@ async function runUnit({ session, clock, w, list, ...unit }) {
       // page short of the end (measured: 1496 of 1567), so the second pass was reading an
       // arbitrary mid-page position.
       const wantsBottom = !rulesOnly || rulesOnly.includes('hidden-behind-chrome');
+      //
+      // ⚠ AND THE THING DRIVEN IS THE PAGE'S SCROLLER, which on a phone in the club admin is the
+      // locked shell's main column, not the document (2026-11-07). `lockedShellScroller` is the
+      // same finder the probe's R6 uses to decide `atEnd`; keep the two in step.
       const reachedBottom = wantsBottom && await page.evaluate(async () => {
         const de = document.documentElement;
-        const prev = de.style.scrollBehavior;
-        de.style.scrollBehavior = 'auto';
+        const lockedShellScroller = () => {
+          const shell = de.scrollHeight <= de.clientHeight + 2 && document.querySelector('[data-admin-locked]');
+          if (!shell) return null;
+          let best = null, area = 0;
+          for (const s of Array.from(shell.querySelectorAll('*'))) {
+            if (!/(auto|scroll)/.test(getComputedStyle(s).overflowY) || s.scrollHeight <= s.clientHeight + 2) continue;
+            if (s.closest('[role="dialog"], dialog, [aria-modal="true"]')) continue;
+            const r = s.getBoundingClientRect();
+            if (r.width * r.height > area) { area = r.width * r.height; best = s; }
+          }
+          return best;
+        };
+        const target = lockedShellScroller() ?? de;
+        const prev = target.style.scrollBehavior;
+        target.style.scrollBehavior = 'auto';
         let settled = false;
         for (let i = 0; i < 30; i++) {
-          de.scrollTop = de.scrollHeight;
+          target.scrollTop = target.scrollHeight;
           await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
-          if (Math.abs(de.scrollTop + de.clientHeight - de.scrollHeight) <= 2) { settled = true; break; }
+          if (Math.abs(target.scrollTop + target.clientHeight - target.scrollHeight) <= 2) { settled = true; break; }
         }
-        de.style.scrollBehavior = prev;
+        target.style.scrollBehavior = prev;
         return settled;
       });
       if (wantsBottom && !reachedBottom) console.log(`      ! ${label}: page would not settle at its end — covered-by-chrome skipped`);
