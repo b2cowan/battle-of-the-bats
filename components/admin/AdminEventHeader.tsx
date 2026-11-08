@@ -43,9 +43,7 @@ import { formatEventDateRange } from '@/lib/timezone';
 import { isTournamentOnlyWorkspace } from '@/lib/module-entitlements';
 import { kit as coachKit } from '@/components/coaches/kit';
 import HubTabBar from '@/components/shared/HubTabBar';
-import { clubPlaceAt } from '@/lib/admin-kit-nav';
-import { useHouseLeagueAccess } from '@/components/admin/kit/useHouseLeagueSeasons';
-import { useHandedBarPlace, type AdminBarPlace } from './AdminBarPlace';
+import { useClubPlaceAt, useHandedBarPlace, type AdminBarPlace } from './AdminBarPlace';
 import styles from './kit/AdminKitEventHeader.module.css';
 
 export default function AdminEventHeader({ suspended = false }: {
@@ -54,9 +52,9 @@ export default function AdminEventHeader({ suspended = false }: {
   suspended?: boolean;
 } = {}) {
   const pathname = usePathname();
-  const { currentOrg, canOpen } = useOrg();
+  const { currentOrg } = useOrg();
   const { currentTournament } = useTournament();
-  const seasonAccess = useHouseLeagueAccess(null);
+  const addressPlace = useClubPlaceAt();
   const handed = useHandedBarPlace();
   const flip = useAdminFlip();
   const ref = useRef<HTMLElement>(null);
@@ -105,9 +103,7 @@ export default function AdminEventHeader({ suspended = false }: {
 
   // A club place (Phase 2): known from the address first, then the frame's hand-off for THIS place. The lit
   // tab is always the address's, so a hand-off a beat behind a tab change never lights the old tab.
-  const routePlace = !suspended && !onTournament && currentOrg
-    ? clubPlaceAt(pathname, `/${currentOrg.slug}/admin`, { canUse: canOpen, seasonAccess })
-    : null;
+  const routePlace = !suspended && !onTournament ? addressPlace : null;
   const place: AdminBarPlace | null = routePlace
     ? (handed?.key === routePlace.key ? { ...handed, activeId: routePlace.activeId } : routePlace)
     : null;
@@ -157,10 +153,12 @@ export default function AdminEventHeader({ suspended = false }: {
   // The phase chip keeps its shipped look: red for a live event, olive while open, quiet otherwise.
   const tone = phase === 'gameday' ? coachKit.chipDanger : phase === 'open' ? coachKit.chipGood : styles.chipNeutral;
   const facts = place?.facts ?? [];
-  const moreThanClub = Boolean(facts.length || dates || phaseLabel || place?.chip);
-  const hasMeta = Boolean(club) || moreThanClub;
-  // A line holding only the club (Rep teams) is a desk line: a phone, which leaves the club off, draws no line.
-  const clubOnly = Boolean(club) && !moreThanClub;
+  const deskFacts = place?.deskFacts ?? [];
+  // What a phone's small line holds: the club and the desk facts are the desk's only (A4, a team's group).
+  const phoneLine = Boolean(facts.length || dates || phaseLabel || place?.chip);
+  const hasMeta = Boolean(club) || deskFacts.length > 0 || phoneLine;
+  // A line holding only desk words (Rep teams, Accounting: the club) is a desk line: a phone draws no line.
+  const deskOnly = hasMeta && !phoneLine;
   // A row of one tab is no row (`HubTabBar`'s own rule), and then the bar keeps its bottom padding.
   const tabbed = place && place.tabs.length > 1 ? place : null;
   return (
@@ -184,9 +182,10 @@ export default function AdminEventHeader({ suspended = false }: {
           {hasMeta && (
             // Each fact is its own span and the separator is drawn BETWEEN siblings (the portal's rule), so a
             // missing fact never strands a dot. The club is the desk bar's only (A4: a phone leaves it off).
-            <div className={`${styles.meta}${clubOnly ? ` ${styles.metaClubOnly}` : ''}`}>
-              {club && <span className={styles.metaClub}>{club}</span>}
+            <div className={`${styles.meta}${deskOnly ? ` ${styles.metaDeskOnly}` : ''}`}>
+              {club && <span className={styles.metaDesk}>{club}</span>}
               {facts.map(f => <span key={f}>{f}</span>)}
+              {deskFacts.map(f => <span key={f} className={styles.metaDesk}>{f}</span>)}
               {dates && <span>{dates}</span>}
               {phaseLabel && (
                 <span className={`${coachKit.chip} ${styles.chip} ${tone}`} data-phase={phase ?? undefined}>

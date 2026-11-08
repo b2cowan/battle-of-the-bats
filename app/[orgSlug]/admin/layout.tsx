@@ -7,6 +7,8 @@ import { getOrganizationBySlug } from '@/lib/db';
 import { volunteerHome } from '@/lib/volunteer-jobs';
 import { TournamentProvider } from '@/lib/tournament-context';
 import { OrgProvider } from '@/lib/org-context';
+import { canOpenModule } from '@/lib/member-access';
+import { clubHasPayouts } from '@/lib/online-payouts';
 import InstallAppPrompt from '@/components/InstallAppPrompt';
 import HelpDrawerProvider from '@/components/help/HelpDrawerProvider';
 import PlanPanelHost from '@/components/billing/PlanPanelHost';
@@ -91,11 +93,20 @@ export default async function AdminLayout({
   const volunteer = volunteerHome(orgSlug, authCtx.role, authCtx.capabilities);
   if (volunteer) redirect(volunteer);
 
+  // Accounting's Payouts tab is a server fact (a row in the club's payment accounts): read ONCE here, on a full load and
+  // only for someone who can open Accounting, so the pinned bar names the exact tab row on its first paint (Admin header
+  // bar Phase 2). The Payouts page itself still asks the server (`notFound` without it). A failed read is "no Payouts tab",
+  // never a broken shell: this layout is every admin page's.
+  const hasPayouts = canOpenModule(authCtx, authCtx.org, 'module_accounting')
+    && await clubHasPayouts(authCtx.org.id).catch(() => false);
+
   const shell = (
     <OrgProvider
       initialOrg={authCtx.org}
       initialUserRole={authCtx.role}
       initialUserCapabilities={authCtx.capabilities}
+      clubHasPayouts={hasPayouts}
+      limitedToTeamGroups={!!authCtx.repGroupIds}
     >
       <TournamentProvider orgSlug={orgSlug}>
         <AdminChrome>

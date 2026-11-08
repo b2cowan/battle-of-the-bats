@@ -18,6 +18,7 @@ import { DISPUTE_WORDS, disputeWhyShort, reasonShort } from '@/lib/online-paymen
 import { useParams } from 'next/navigation';
 import { useOrg } from '@/lib/org-context';
 import { TabActions } from '@/components/admin/kit/club/PlaceFrame';
+import { usePublishSeasonName } from '@/components/admin/kit/club/SeasonFrame';
 import ExportMenu from '@/components/admin/ExportMenu';
 import MoneySummaryBand from '@/components/coaches/MoneySummaryBand';
 import { EmptyCard, LoadFailed, PageLoading, repKit, useDeferredLoad } from '@/components/admin/kit/club/RepKit';
@@ -91,6 +92,9 @@ export default function MoneyPage() {
     }
   }, [slug, seasonId, canView]);
   useDeferredLoad(!!currentOrg && canView, load);
+  // The bar names the season from this read too: someone who reads Money without House league (a treasurer) has no
+  // season list to name it from.
+  usePublishSeasonName(seasonId, read?.season.name ?? null);
 
   // ⚖ The season's frame names the page (Club Tier Stage 13i, A4); Money keeps its own actions, at its row's right end.
   const header = (actions?: React.ReactNode) => <TabActions>{actions}</TabActions>;

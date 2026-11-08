@@ -97,7 +97,8 @@ describe('2 · the frame is wired', () => {
     assert.match(seasonFrame, /from '\.\.\/useHouseLeagueSeasons'/);
     assert.doesNotMatch(seasonFrame, /function useHouseLeagueSeasons/, 'the frame grew its own season fetch');
     // The row is `clubPlaceAt`'s (Admin header bar Phase 2), the one statement the pinned bar asks too.
-    assert.match(seasonFrame, /clubPlaceAt\([^)]*seasonAccess: access \}\)/, 'the tab row lists the pages the gate opens');
+    assert.match(seasonFrame, /const place = useClubPlaceAt\(\);/, 'the tab row lists the pages the gate opens');
+    assert.match(readCode('components/admin/AdminBarPlace.tsx'), /const seasonAccess = useHouseLeagueAccess\(null\);/);
     assert.match(readCode('lib/admin-kit-nav.ts'), /seasonTabs\(seasonPath, seasonAccess\)/);
   });
   // ⚖ Club Tier Stage 13i (A4, owner 2026-11-06): a season is a place. Its frame draws the one header and the tab row on a
@@ -107,7 +108,7 @@ describe('2 · the frame is wired', () => {
     assert.match(layout, /<SeasonFrame>/);
     assert.ok(!existsSync(join(process.cwd(), 'components/admin/kit/club/SeasonPhoneFrame.tsx')), 'the phone strip is back');
     const frame = readCode('components/admin/kit/club/SeasonFrame.tsx');
-    assert.match(frame, /clubPlaceAt\([^)]*seasonAccess: access \}\)/, 'the tabs are the pages the gate opens');
+    assert.match(frame, /const place = useClubPlaceAt\(\);/, 'the tabs are the pages the gate opens');
     assert.match(readCode('lib/admin-kit-nav.ts'), /back: \{ href: league, label: 'Seasons' \}/, '"← Seasons", named by where it goes');
     assert.match(frame, /face="chevron"\s*label="Switch season"/, 'the switch is the title’s chevron, the shipped pick-one menu');
     assert.match(frame, /switcher: season && seasons\.length > 1 \? \(/, 'drawn only when there is another season');

@@ -25,7 +25,9 @@ describe('the frame — Accounting is one page with tabs (Ask 2 option B)', () =
     assert.match(layout, /<AccountingFrame/);
   });
   it('the tab row is the coach\'s, PROMOTED: one component both sides render, its rules out of the portal sheet', () => {
-    assert.match(readCode(`${MONEY}/AccountingFrame.tsx`), /import HubTabBar from '@\/components\/shared\/HubTabBar'/);
+    // Since Admin header bar Phase 2 the row is drawn by the pinned bar (`HubTabBar inBar`), Accounting's frame hands it over.
+    assert.match(readCode(`${MONEY}/AccountingFrame.tsx`), /<PlaceFrame place=\{accounting\}>/);
+    assert.match(readCode('components/admin/AdminEventHeader.tsx'), /import HubTabBar from '@\/components\/shared\/HubTabBar'/);
     assert.match(readCode('app/[orgSlug]/coaches/teams/[teamId]/accounting/page.tsx'), /import HubTabBar from '@\/components\/shared\/HubTabBar'/);
     assert.ok(!existsSync('components/coaches/CoachTabBar.tsx'), 'the old file is gone, not left as a second copy');
     assert.match(readCode('components/shared/HubTabBar.tsx'), /from '\.\/HubTabBar\.module\.css'/);
@@ -33,10 +35,14 @@ describe('the frame — Accounting is one page with tabs (Ask 2 option B)', () =
   });
   it('no create in the page header; a page one level down has no tab row', () => {
     const frame = readCode(`${MONEY}/AccountingFrame.tsx`);
-    // No actions (no create in the header) and no eyebrow (the club's name is in the bar above, owner 2026-10-01).
-    assert.match(frame, /<AdminPageHeader title="Accounting" \/>/);
+    // No actions (no create in the header): the place hands the bar only its name and tabs (Admin header bar Phase 2), and
+    // no fiscal year (A6: the Year pill keeps it).
+    const nav = readCode('lib/admin-kit-nav.ts');
+    assert.match(nav, /const tabs = accountingTabs\(base, \{ runsRepTeams, hasPayouts \}\);\s*return flatPlace\('accounting', 'Accounting', tabs, placeTabFor\(tabs, pathname\)\);/);
+    assert.match(nav, /activeId \? \{ key, title, facts: \[\], tabs, activeId, ariaLabel: title \} : null/);
+    assert.doesNotMatch(frame, /AdminPageHeader|actions=|fiscal/i);
     // One level down: the page alone — no header, no tab row — inside the money frame's width (2026-10-07).
-    assert.match(frame, /if \(!tab\) return <div className=\{repKit\.moneyFrame\}>\{children\}<\/div>;/);
+    assert.match(frame, /if \(!accounting\) return <div className=\{repKit\.moneyFrame\}>\{children\}<\/div>;/);
   });
 });
 

@@ -159,20 +159,13 @@
 /* ── IN THE ADMIN'S PINNED BAR (`inBar`, Admin header bar Phase 2, owner 2026-11-07) ─────────────────────────
    ⚠ OPT-IN: only the club admin's bar sets it, so none of these rules reaches the coaches portal. The row sits on the
    bar's own bottom line (no line of its own), the first tab's LABEL lines up with the bar's name (the margin is minus
-   the tab's own padding, which tightens on a phone below), and the edge arrows paint the bar's ground — the card tone
-   over the page tone, as `.header` in `AdminKitEventHeader.module.css` lays them — not the paper's. */
+   the tab's own padding, which tightens on a phone below), and the edge arrows paint the bar's ground, the card tone,
+   not the paper's. ⚠ ONE layer, as drawn: a second page-tone layer under it shows through where both fade (a cream
+   smudge beside each arrow on the white bar). */
 .inBar { margin: 0.45rem -0.85rem 0; }
 .inBar .bar { border-bottom: 0; }
-.inBar .scrollLeft {
-  background:
-    linear-gradient(to right, var(--card-bg) 55%, transparent),
-    linear-gradient(to right, var(--pitch-black) 55%, transparent);
-}
-.inBar .scrollRight {
-  background:
-    linear-gradient(to left, var(--card-bg) 55%, transparent),
-    linear-gradient(to left, var(--pitch-black) 55%, transparent);
-}
+.inBar .scrollLeft { background: linear-gradient(to right, var(--card-bg) 55%, transparent); }
+.inBar .scrollRight { background: linear-gradient(to left, var(--card-bg) 55%, transparent); }
 @media (max-width: 640px) {
   .inBar { margin-inline: -0.6rem; }
 }

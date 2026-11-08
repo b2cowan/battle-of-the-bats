@@ -131,7 +131,12 @@ describe('The screens (Stage 5b) — read from source', () => {
   it('Families has two tabs behind a server gate, and its rail row no pages', () => {
     const nav = readCode('lib/admin-kit-nav.ts');
     assert.match(nav, /case 'families':[\s\S]{0,600}?pages: \[\]/);
-    assert.match(readCode('components/admin/kit/club/families/FamiliesFrame.tsx'), /<HubTabBar tabs=\{tabs\}/);
+    // The row is the pinned bar's since Admin header bar Phase 2 (`HubTabBar inBar`): the frame hands it the tabs.
+    assert.match(readCode('components/admin/kit/club/families/FamiliesFrame.tsx'), /<PlaceFrame place=\{\{ \.\.\.place, tabs \}\}>/);
+    assert.match(readCode('lib/admin-kit-nav.ts'), /const tabs = familiesTabs\(base\);\s*return flatPlace\('families', 'Families',/);
+    // The bar's Families gate is the layout's (`canOpenFamilies`): never a member limited to some team groups (/review).
+    assert.match(readCode('components/admin/AdminBarPlace.tsx'), /opensFamilies: canOpen\('module_families'\) && !limitedToTeamGroups,/);
+    assert.match(readCode('app/[orgSlug]/admin/layout.tsx'), /limitedToTeamGroups=\{!!authCtx\.repGroupIds\}/);
     const layout = readCode('app/[orgSlug]/admin/families/layout.tsx');
     assert.match(layout, /canOpenFamilies\(ctx, ctx\.org\)/, 'the gate is decided on the server');
     // The page's gate and every route's ask one rule.

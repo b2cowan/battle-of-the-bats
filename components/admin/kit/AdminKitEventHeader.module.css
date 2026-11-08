@@ -74,11 +74,13 @@
   color: inherit;
   opacity: 0.45;
 }
-/* The club is the desk bar's only (A4): a phone's line is the dates and the chip. */
+/* The club is the desk bar's only (A4): a phone's line is the dates and the chip. So is a team's group (Phase 2: on a
+   phone "Rep teams · group" plus the chip measured too long). A desk word in the MIDDLE hides its own dot with it; only
+   the first one (the club) leaves the next word holding a dot with nothing before it. */
 @media (max-width: 900px) {
-  .metaClub { display: none; }
+  .metaDesk { display: none; }
   /* The same weight as the separator rule above (and later), so it wins: no dot stranded before the dates. */
-  .meta > span.metaClub + span:not(.chip)::before { content: none; }
+  .meta > span.metaDesk:first-child + span:not(.chip)::before { content: none; }
 }
 
 /* ── A CLUB PLACE IN THE BAR (Phase 2, 2026-11-07): the way up, the switcher, the chip and the tab row ── */
@@ -150,8 +152,8 @@
   .backLabel { display: none; }
   /* The phone name's line is 19.2px (16px × 1.2): the switcher overhangs a hair more so it never grows it. */
   .switcher { margin-block: -13px; }
-  /* A line of the club alone (Rep teams): the phone leaves the club off, so it leaves the line off too. */
-  .metaClubOnly { display: none; }
+  /* A line of desk words alone (Rep teams, Accounting: the club): the phone leaves them off, so it leaves the line off too. */
+  .metaDeskOnly { display: none; }
 }
 
 @media (min-width: 901px) {

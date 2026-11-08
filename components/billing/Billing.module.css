@@ -160,8 +160,9 @@
 }
 .sectionTitle {
   margin: 0;
-  /* "See invoices" (Fee invoice alerts Part 3) scrolls the fees heading to the top: keep it clear of the club admin's fixed strip. */
-  scroll-margin-top: calc(var(--admin-topstrip-h, 0px) + var(--sandbox-chrome-h, 0px) + 1rem);
+  /* "See invoices" (Fee invoice alerts Part 3) scrolls the fees heading to the top: keep it clear of the club admin's fixed
+     strip AND its pinned bar (`--admin-header-h`, unset outside the admin; Admin header bar Phase 2 census). */
+  scroll-margin-top: calc(var(--admin-topstrip-h, 0px) + var(--sandbox-chrome-h, 0px) + var(--admin-header-h, 0px) + 1rem);
   font-family: var(--font-sans, system-ui, sans-serif);
   font-size: var(--type-heading);
   font-weight: 700;

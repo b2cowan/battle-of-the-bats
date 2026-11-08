@@ -39,5 +39,5 @@ export default async function FamiliesLayout({
     return <NotYoursScreen {...await notYoursScreenProps(ctx, limited ? 'familiesLimited' : 'families')} />;
   }
 
-  return <FamiliesFrame orgSlug={ctx.org.slug}>{children}</FamiliesFrame>;
+  return <FamiliesFrame>{children}</FamiliesFrame>;
 }

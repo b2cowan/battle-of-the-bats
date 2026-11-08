@@ -23,41 +23,54 @@
  * chip never are. Nothing on the paper above the page.
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
-import type { ReactNode } from 'react';
+import { useEffect, useSyncExternalStore, type ReactNode } from 'react';
 import { useParams, usePathname, useRouter } from 'next/navigation';
 import SingleSelectDropdown from '@/components/coaches/SingleSelectDropdown';
-import { useOrg } from '@/lib/org-context';
-import { clubPlaceAt, kitCountText } from '@/lib/admin-kit-nav';
+import { markTabs, useClubPlaceAt } from '@/components/admin/AdminBarPlace';
 import { seasonGroup, seasonPageHref, seasonSegment, toReviewLabel } from '@/lib/house-league-season';
 import { useHouseLeagueAccess, useHouseLeagueSeasons } from '../useHouseLeagueSeasons';
-import frame from '../AdminKitFrame.module.css';
+import { WaitingCount } from './money/MoneyKit';
 import PlaceFrame from './PlaceFrame';
 import SeasonStatePill from './SeasonStatePill';
 import { RepChip } from './RepKit';
 
+// ⚖ A PAGE THAT READ ITS SEASON NAMES IT (Admin header bar Phase 2 /review, 2026-11-07). The season list is House league's
+// (`useHouseLeagueSeasons`, its route refuses anyone without House league's read), but a treasurer opens a season's Money
+// through Accounting (`readMoney`), and the bar read "Season" there for good. The Money page's own read carries the
+// season's name, so it publishes it (`usePublishSeasonName`), as a team's pages publish the team's head.
+let named: { seasonId: string; name: string } | null = null;
+const nameListeners = new Set<() => void>();
+const subscribeName = (l: () => void) => { nameListeners.add(l); return () => { nameListeners.delete(l); }; };
+
+/** A season page that read its season without the season list: the bar names the season from this read. */
+export function usePublishSeasonName(seasonId: string | null, name: string | null): void {
+  useEffect(() => {
+    if (!seasonId || !name || (named?.seasonId === seasonId && named.name === name)) return;
+    named = { seasonId, name };
+    nameListeners.forEach(l => l());
+  }, [seasonId, name]);
+}
+
 export default function SeasonFrame({ children }: { children: ReactNode }) {
-  const { orgSlug: urlSlug, seasonId } = useParams<{ orgSlug: string; seasonId: string }>();
+  const { seasonId } = useParams<{ seasonId: string }>();
   const pathname = usePathname();
   const router = useRouter();
-  const { canOpen, currentOrg } = useOrg();
-  // The club's own slug, as the bar reads it: a frame and a bar that spelled the club two ways would key two places.
-  const orgSlug = currentOrg?.slug ?? urlSlug;
-  const seasons = useHouseLeagueSeasons(true);
+  // The season list is House league's read: someone who opens only a season's Money (a treasurer) is never sent to ask.
+  const seasons = useHouseLeagueSeasons(!!useHouseLeagueAccess(null)?.read);
   const season = seasons.find(s => s.id === seasonId) ?? null;
-  // The season's pages do not depend on the season's state (`houseLeagueAccess`'s read, readMoney and email), so the row is
-  // known as soon as the member is.
-  const access = useHouseLeagueAccess(null);
+  const published = useSyncExternalStore(subscribeName, () => named, () => null);
+  const pageName = published?.seasonId === seasonId ? published.name : null;
 
-  const league = `/${orgSlug}/admin/house-league`;
-  // Is this address one of the season's tabs (`seasonTabs(seasonPath, access)` for the row)? The bar asks the same
-  // question from the address alone, so its first paint is this frame's ("Season" until the season loads).
-  const place = clubPlaceAt(pathname, `/${orgSlug}/admin`, { canUse: canOpen, seasonAccess: access });
-  if (!place) return <>{children}</>;
+  // Is this address one of the season's tabs, and which of its pages are this person's (the season gate, `seasonAccess`:
+  // its read, readMoney and email do not depend on the season's state, so the row is known as soon as the member is)? The
+  // bar asks the same question from the address alone, so its first paint is this frame's ("Season" until it loads).
+  const place = useClubPlaceAt();
+  if (!place?.back || !place.key.startsWith('season:')) return <>{children}</>;
+  // The way up (`place.back`) is "← Seasons", the league's season list: the switch keeps you under it.
+  const league = place.back.href;
 
   const count = season?.pendingReviewCount ?? 0;
-  const tabs = place.tabs.map(t => (t.id === 'registrations' && count > 0
-    ? { ...t, mark: <span className={frame.count} style={{ marginLeft: 0 }} aria-label={toReviewLabel(count)}>{kitCountText(count)}</span> }
-    : t));
+  const tabs = markTabs(place.tabs, id => (id === 'registrations' && count > 0 ? <WaitingCount n={count} label={toReviewLabel(count)} /> : null));
 
   // The switch's rows: live seasons first (the list's own order), a finished one marked in its row only — the title beside
   // the chevron already names the season on screen, and its pill says where it stands.
@@ -69,8 +82,7 @@ export default function SeasonFrame({ children }: { children: ReactNode }) {
   return (
     <PlaceFrame place={{
       ...place,
-      // The way up (`place.back`) is "← Seasons", to the league's season list.
-      title: season?.name ?? place.title,
+      title: season?.name ?? pageName ?? place.title,
       tabs,
       switcher: season && seasons.length > 1 ? (
         <SingleSelectDropdown

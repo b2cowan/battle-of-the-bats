@@ -222,9 +222,13 @@ describe('6. the Organization tab', () => {
   // ⚖ Club Tier Stage 13i (Ask 3 = A): the hub's tiles retired; Organization's TABS are the rail's Organization doors
   // (`orgTabs` over `kitOrgLinks`), so the one name and the plan's gate are asserted where the door is built.
   it('is called "Venue library" and shows only on a plan that carries it (S6-11)', () => {
-    const code = readCode(ORG_FRAME);
+    // The person's tabs are `useOrgTabs` (moved next to `useOrgLinks` in Admin header bar Phase 2, so the pinned bar reads
+    // the same list as the frame and the `/org` door).
+    const nav = readCode('components/admin/kit/useAdminKitNav.ts');
+    const code = nav.slice(nav.indexOf('export function useOrgTabs'), nav.indexOf('export function useAdminKitNav'));
     assert.match(code, /orgTabs\(\{\s*base,\s*orgLinks,/);
     assert.match(code, /useOrgLinks\(\)/, 'the frame reads the Organization links alone, never the full rail hook');
+    assert.match(readCode(ORG_FRAME), /useClubPlaceAt\(\)/);
     assert.doesNotMatch(code, /useAdminKitNav\(/);
     assert.match(readCode('lib/admin-kit-nav.ts'), /!isCanceled && hasVenueLibrary && \{ key: 'org\/venues', label: 'Venue library'/);
     assert.match(readCode('components/admin/kit/useAdminKitNav.ts'), /hasVenueLibrary: hasOrgVenueLibrary\(currentOrg\?\.planId\)/);

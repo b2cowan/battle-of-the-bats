@@ -2,7 +2,9 @@
 
 > Plan: [ADMIN_HEADER_BAR_PLAN.md](ADMIN_HEADER_BAR_PLAN.md) · Drawings: https://claude.ai/artifact/DXmtj9E1SxcuyfyrcUnsuC
 > Ruled 2026-11-07 (option 4), and every follow-up ask the same day, all as recommended (see the plan). Drawings
-> cover every kind of admin screen; building starts with Phase 1.
+> cover every kind of admin screen. Phase 1 (the bar's shape) walked and passed 2026-11-07. Phase 2 (all six club places
+> name themselves in the bar, tabs pinned) built 2026-11-07; its owner walk is §492. Phase 3 (Calendar, Schedules,
+> record pages) next.
 
 **Settled details:** on a phone, a season's or team's status rides a second line in the bar. Overview loses its
 "Overview" heading, so the club's name heads it. On desktop the club's name sits under every place's name.

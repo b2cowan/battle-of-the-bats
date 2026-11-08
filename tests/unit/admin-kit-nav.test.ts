@@ -6,8 +6,10 @@ import {
   kitPrograms, kitOrgLinks, kitBillingLink, isKitLinkActive, isKitLinkActiveAmong, activeKitSection,
   clubProgramOrder, INTERIM_PROGRAM_ORDER, PROGRAM_CAPABILITY, accountingTabs, accountingTabFor, tournamentBarKeys,
   familiesTabs, familiesTabFor, familiesChildHref, isFamiliesChildPage, kitOrgPlace, litClubPlace, orgTabs, placeGroupHeading,
+  clubPlaceAt, showsOrgBoard, type ClubPlaceAccess,
 } from '../../lib/admin-kit-nav.ts';
-import { clubNavFor, RUNS_BOTH, RUNS_NEITHER } from './_club-people.ts';
+import { clubNavFor, CLUB_BASE, RUNS_BOTH, RUNS_NEITHER } from './_club-people.ts';
+import { hasCapability, type Capability } from '../../lib/roles.ts';
 import { TOUR_GROUPS } from '../../components/admin/admin-nav-config.ts';
 import { kitTournamentGroups } from '../../components/admin/kit/kit-tournament-groups.ts';
 import { readCode } from './_source-code.ts';
@@ -460,5 +462,83 @@ describe('13i · the club sidebar lists places only', () => {
     assert.equal(kitOrgPlace({ base: BASE, orgLinks: [], tournamentOnly: false }), null, 'no tabs to hold, no place');
     assert.equal(kitOrgPlace({ base: BASE, orgLinks: owner.orgLinks, tournamentOnly: true }), null, 'tournament-only: the flat Account list');
     assert.deepEqual(kitOrgLinks({ base: BASE, role: 'owner', isCanceled: true, canSeeMembers: true, hasVenueLibrary: true }), [], 'a cancelled club has no Organization links, so no place');
+  });
+});
+
+// ⚖ Admin header bar Phase 2 session B (2026-11-07): the six places the pinned bar names from the ADDRESS alone, before a
+// frame has handed it anything. A person refused a place keeps the club's name (null), and the row is only their tabs.
+describe('the place an address is in (the pinned bar, Phase 2)', () => {
+  const B = CLUB_BASE;
+  const accessFor = (role: OrgRole, over: Partial<ClubPlaceAccess> = {}): ClubPlaceAccess => {
+    const { orgLinks } = clubNavFor(role, RUNS_BOTH);
+    return {
+      canUse: (c: Capability) => hasCapability(role, null, c),
+      seasonAccess: null,
+      orgTabs: orgTabs({ base: B, orgLinks, showsBoard: showsOrgBoard({ role, orgLinks, isTeamWorkspace: false }) }),
+      runsRepTeams: true,
+      hasPayouts: false,
+      opensFamilies: hasCapability(role, null, 'module_families'),
+      ...over,
+    };
+  };
+  const owner = accessFor('owner');
+
+  it('a team is its own place inside Rep teams: "← Teams", five tabs, record pages none', () => {
+    const p = clubPlaceAt(`${B}/rep-teams/teams/t1/roster`, B, owner);
+    assert.equal(p?.key, 'team:t1');
+    assert.equal(p?.title, 'Team');
+    assert.deepEqual(p?.back, { href: `${B}/rep-teams`, label: 'Teams' });
+    assert.deepEqual(p?.facts, ['Rep teams']);
+    assert.deepEqual(p?.tabs.map(t => t.label), ['Team page', 'Roster', 'Schedule', 'Tryouts', 'Coaches']);
+    assert.equal(p?.activeId, 'roster');
+    assert.equal(clubPlaceAt(`${B}/rep-teams/teams/t1/history`, B, owner), null, 'History is a record page');
+    assert.equal(clubPlaceAt(`${B}/rep-teams`, B, owner)?.key, 'rep-teams', 'the Teams tab is still Rep teams');
+    assert.equal(clubPlaceAt(`${B}/rep-teams/teams/t1`, B, { ...owner, canUse: () => false }), null, 'refused: the club’s name');
+  });
+
+  it('Accounting: its tabs, a team’s account lights Teams, no fiscal year, Payouts only where the club has payouts', () => {
+    const p = clubPlaceAt(`${B}/accounting/ledger`, B, owner);
+    assert.equal(p?.key, 'accounting');
+    assert.equal(p?.title, 'Accounting');
+    assert.deepEqual(p?.facts, [], 'A6: the bar never says which fiscal year');
+    assert.equal(p?.back, undefined);
+    assert.ok(!p?.tabs.some(t => t.id === 'payouts'), 'no payouts connected: no Payouts tab');
+    assert.equal(clubPlaceAt(`${B}/accounting/teams/t1`, B, owner)?.activeId, 'teams', 'a team’s account is a view of Teams');
+    // The server's fact (the admin layout reads it once): the first paint names the exact row, Payouts last.
+    const paid = clubPlaceAt(`${B}/accounting/ledger`, B, { ...owner, hasPayouts: true });
+    assert.equal(paid?.tabs.at(-1)?.id, 'payouts');
+    assert.equal(clubPlaceAt(`${B}/accounting/payouts`, B, { ...owner, hasPayouts: true })?.activeId, 'payouts');
+    assert.equal(clubPlaceAt(`${B}/accounting/payouts`, B, owner), null, 'no payouts: its address is no tab');
+    assert.equal(clubPlaceAt(`${B}/accounting/allocations`, B, { ...owner, runsRepTeams: false }), null, 'no loop tab without rep teams');
+    assert.equal(clubPlaceAt(`${B}/accounting`, B, accessFor('league_registrar'))?.key, undefined, 'a registrar is refused');
+    assert.equal(clubPlaceAt(`${B}/accounting`, B, accessFor('treasurer'))?.key, 'accounting', 'the treasurer is in');
+  });
+
+  it('Families: three tabs, a family lights Families, a child’s page is a record page', () => {
+    const p = clubPlaceAt(`${B}/families/duplicates`, B, accessFor('owner', { opensFamilies: true }));
+    assert.equal(p?.key, 'families');
+    assert.deepEqual(p?.tabs.map(t => t.id), ['families', 'duplicates', 'emails']);
+    assert.equal(p?.activeId, 'duplicates');
+    assert.equal(clubPlaceAt(`${B}/families/p1`, B, accessFor('owner', { opensFamilies: true }))?.activeId, 'families');
+    assert.equal(clubPlaceAt(familiesChildHref(B, 'c1'), B, accessFor('owner', { opensFamilies: true })), null);
+    assert.equal(clubPlaceAt(`${B}/families`, B, { ...owner, opensFamilies: false }), null, 'refused (or limited to some team groups): the club’s name');
+  });
+
+  it('Organization: only the person’s tabs, never Plan & billing, "The board" for someone without Members', () => {
+    const p = clubPlaceAt(`${B}/org/members`, B, owner);
+    assert.equal(p?.key, 'org');
+    assert.equal(p?.title, 'Organization');
+    assert.ok(!p?.tabs.some(t => t.href.includes('/org/billing')));
+    assert.equal(clubPlaceAt(`${B}/org/billing`, B, owner), null, 'Plan & billing is no tab: its own header');
+    const registrar = clubPlaceAt(`${B}/org/board`, B, accessFor('league_registrar'));
+    assert.equal(registrar?.tabs[0]?.label, 'The board');
+    assert.equal(clubPlaceAt(`${B}/org/members`, B, accessFor('league_registrar')), null, 'not their tab: no place');
+    assert.equal(clubPlaceAt(`${B}/org/members`, B, { ...owner, orgTabs: null }), null, 'a one-team workspace: no place');
+  });
+
+  it('a one-tab person gets a place with ONE tab (the bar then draws no row)', () => {
+    const one = clubPlaceAt(`${B}/org/venues`, B, { ...owner, orgTabs: [{ id: 'org/venues', label: 'Venue library', href: `${B}/org/venues` }] });
+    assert.equal(one?.tabs.length, 1);
+    assert.match(readCode('components/admin/AdminEventHeader.tsx'), /const tabbed = place && place\.tabs\.length > 1 \? place : null;/);
   });
 });

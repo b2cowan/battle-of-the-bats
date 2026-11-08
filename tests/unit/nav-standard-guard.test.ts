@@ -406,9 +406,9 @@ describe('13i · places in the sidebar, pages on the page', () => {
   });
 
   it('N11: every place’s tab row is the shared HubTabBar, through one frame; Organization’s tabs never include Plan & billing', () => {
-    const frame = readCode('components/admin/kit/club/PlaceFrame.tsx');
-    assert.match(frame, /import HubTabBar, \{ type HubTab \} from '@\/components\/shared\/HubTabBar';/);
-    for (const f of ['RepTeamsFrame', 'TeamFrame', 'SeasonFrame', 'OrgFrame']) {
+    // Since Admin header bar Phase 2 the one row is drawn by the pinned bar, every place's frame handing it over.
+    assert.match(readCode('components/admin/AdminEventHeader.tsx'), /import HubTabBar from '@\/components\/shared\/HubTabBar';/);
+    for (const f of ['RepTeamsFrame', 'TeamFrame', 'SeasonFrame', 'OrgFrame', 'money/AccountingFrame', 'families/FamiliesFrame']) {
       assert.match(readCode(`components/admin/kit/club/${f}.tsx`), /<PlaceFrame\b/, f);
     }
     for (const [, role] of CLUB_PEOPLE) {

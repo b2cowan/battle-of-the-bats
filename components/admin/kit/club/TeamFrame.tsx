@@ -15,11 +15,14 @@
  * from tab to tab. Until it answers, the name reads "Team" in the same line, so nothing shifts. A page that CHANGES the team
  * (the Team page: a rename, a season closed or started, archived) publishes what it read (`usePublishTeamHead`), so the chip
  * never says "Live" over a season the page just closed.
+ *
+ * ⚖ THE HEADER AND THE TABS ARE IN THE PINNED BAR (Admin header bar Phase 2, owner 2026-11-07; the drawing's "A team"):
+ * "← Teams", the team's name, the small line (the club and the team's group on desktop · "Rep teams" · the season chip;
+ * a phone drops the group, measured too long) and the five tabs pinned inside the bar. Nothing on the paper above the page.
  */
 import { useEffect, useRef, useSyncExternalStore, type ReactNode } from 'react';
-import { useParams, usePathname } from 'next/navigation';
-import AdminPageHeader from '@/components/admin/AdminPageHeader';
-import { placeTabFor, teamTabs } from '@/lib/admin-kit-nav';
+import { useParams } from 'next/navigation';
+import { useClubPlaceAt } from '@/components/admin/AdminBarPlace';
 import { latestClosedSeasonOf, liveSeasonOf } from '@/lib/season-live';
 import type { RepProgramYear, RepTeam } from '@/lib/types';
 import PlaceFrame from './PlaceFrame';
@@ -90,23 +93,20 @@ function useTeamHead(orgSlug: string, teamId: string, enabled: boolean): TeamHea
 
 export default function TeamFrame({ children }: { children: ReactNode }) {
   const { orgSlug, teamId } = useParams<{ orgSlug: string; teamId: string }>();
-  const pathname = usePathname();
-  const repTeams = `/${orgSlug}/admin/rep-teams`;
-  const tabs = teamTabs(`${repTeams}/teams/${teamId}`);
-  const tab = placeTabFor(tabs, pathname);
-  const head = useTeamHead(orgSlug, teamId, tab != null);
-  if (!tab) return <>{children}</>;
-
-  const header = (
-    <AdminPageHeader
-      backTo={{ href: repTeams, label: 'Teams' }}
-      crumbs={[{ label: 'Rep teams' }, head?.groupName ? { label: head.groupName } : null]}
-      title={head?.name ?? 'Team'}
-      titleChips={head?.chip ? <RepChip tone={head.chip.live ? 'good' : 'neutral'}>{head.chip.label}</RepChip> : null}
-    />
-  );
+  // Is this address one of the team's five tabs (the team's History and a past season are record pages: no)? The bar asks
+  // the same question from the address alone, so its first paint is this frame's ("Team" until the team is read). The way
+  // up (`place.back`) is "← Teams", to Rep teams' Teams tab.
+  const place = useClubPlaceAt();
+  const inTeam = place?.key === `team:${teamId}`;
+  const head = useTeamHead(orgSlug, teamId, inTeam);
+  if (!place || !inTeam) return <>{children}</>;
   return (
-    <PlaceFrame header={header} tabs={tabs} activeId={tab} ariaLabel="Team pages">
+    <PlaceFrame place={{
+      ...place,
+      title: head?.name ?? place.title,
+      deskFacts: head?.groupName ? [head.groupName] : undefined,
+      chip: head?.chip ? <RepChip tone={head.chip.live ? 'good' : 'neutral'}>{head.chip.label}</RepChip> : undefined,
+    }}>
       {children}
     </PlaceFrame>
   );

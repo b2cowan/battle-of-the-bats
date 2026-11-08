@@ -14,23 +14,20 @@
  * the small line on desktop (A4), the six tabs pinned inside the bar. Nothing on the paper above the page.
  */
 import type { ReactNode } from 'react';
-import { usePathname } from 'next/navigation';
-import { useOrg } from '@/lib/org-context';
-import { clubPlaceAt } from '@/lib/admin-kit-nav';
+import { markTabs, useClubPlaceAt } from '@/components/admin/AdminBarPlace';
 import { briefPageCount, useClubBrief } from './ClubBriefProvider';
 import { WaitingCount } from './money/MoneyKit';
 import PlaceFrame from './PlaceFrame';
 
-export default function RepTeamsFrame({ orgSlug, children }: { orgSlug: string; children: ReactNode }) {
-  const pathname = usePathname();
-  const { canOpen } = useOrg();
+export default function RepTeamsFrame({ children }: { children: ReactNode }) {
   const { brief } = useClubBrief();
-  // The bar asks the same question from the address alone, so its first paint is this frame's.
-  const place = clubPlaceAt(pathname, `/${orgSlug}/admin`, { canUse: canOpen, seasonAccess: null });
+  // The bar asks the same question from the address alone, so its first paint is this frame's. A team under Teams is a
+  // place of its own (`TeamFrame`), so this answers 'team:…' there and the frame steps aside.
+  const place = useClubPlaceAt();
   if (place?.key !== 'rep-teams') return <>{children}</>;
-  const tabs = place.tabs.map(t => {
-    const count = briefPageCount(brief, t.id);
-    return count > 0 ? { ...t, mark: <WaitingCount n={count} /> } : t;
+  const tabs = markTabs(place.tabs, id => {
+    const count = briefPageCount(brief, id);
+    return count > 0 ? <WaitingCount n={count} /> : null;
   });
   return <PlaceFrame place={{ ...place, tabs }}>{children}</PlaceFrame>;
 }

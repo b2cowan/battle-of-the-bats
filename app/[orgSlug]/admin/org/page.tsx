@@ -11,7 +11,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useOrg } from '@/lib/org-context';
 import { NotYours } from '@/components/admin/kit/club/NotYours';
-import { useOrgTabs } from '@/components/admin/kit/club/OrgFrame';
+import { useOrgTabs } from '@/components/admin/kit/useAdminKitNav';
 import LoadingState from '@/components/shared/LoadingState';
 
 export default function OrgDoor() {

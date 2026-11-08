@@ -22,6 +22,18 @@ interface OrgContextType {
    * so it can never offer a door the server refuses.
    */
   canOpen: (cap: Capability) => boolean;
+  /**
+   * The club has connected payouts at some time (`clubHasPayouts`, read once by the admin layout on the server, and only
+   * for someone who can open Accounting): Accounting's Payouts tab exists. The admin's pinned bar names that tab on its
+   * first paint from this (Admin header bar Phase 2). False wherever nobody read it (outside the admin).
+   */
+  clubHasPayouts: boolean;
+  /**
+   * The member is limited to some of the club's team groups (`repGroupIds`, read by the admin layout on the server). Such a
+   * member is never given Families (`canOpenFamilies`, Stage 5a Ask 12), whatever their capability says, so the pinned bar
+   * must not name Families over their refusal. False wherever nobody read it.
+   */
+  limitedToTeamGroups: boolean;
 }
 
 type OrgProviderProps = {
@@ -29,6 +41,10 @@ type OrgProviderProps = {
   initialOrg?: Organization | null;
   initialUserRole?: OrgRole | null;
   initialUserCapabilities?: Record<string, boolean> | null;
+  /** See `OrgContextType.clubHasPayouts`: decided by the server, never refetched. */
+  clubHasPayouts?: boolean;
+  /** See `OrgContextType.limitedToTeamGroups`: decided by the server, never refetched. */
+  limitedToTeamGroups?: boolean;
 };
 
 const OrgContext = createContext<OrgContextType>({
@@ -39,6 +55,8 @@ const OrgContext = createContext<OrgContextType>({
   loading: true,
   refresh: async () => {},
   canOpen: () => false,
+  clubHasPayouts: false,
+  limitedToTeamGroups: false,
 });
 
 export function OrgProvider({
@@ -46,6 +64,8 @@ export function OrgProvider({
   initialOrg = null,
   initialUserRole = null,
   initialUserCapabilities = null,
+  clubHasPayouts = false,
+  limitedToTeamGroups = false,
 }: OrgProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [currentOrg, setCurrentOrg] = useState<Organization | null>(initialOrg);
@@ -125,7 +145,7 @@ export function OrgProvider({
     && canOpenModule({ role: userRole, capabilities: userCapabilities }, currentOrg, cap);
 
   return (
-    <OrgContext.Provider value={{ user, currentOrg, userRole, userCapabilities, loading, refresh, canOpen }}>
+    <OrgContext.Provider value={{ user, currentOrg, userRole, userCapabilities, loading, refresh, canOpen, clubHasPayouts, limitedToTeamGroups }}>
       {children}
     </OrgContext.Provider>
   );

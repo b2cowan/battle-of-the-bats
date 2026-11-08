@@ -15,36 +15,20 @@
  *
  * A one-team workspace (a coach's own, on a tournament plan) keeps its staff page as it was: the coaches portal is not
  * touched by 13i (Ask 9).
+ *
+ * ⚖ THE TITLE AND THE TABS ARE IN THE PINNED BAR (Admin header bar Phase 2, owner 2026-11-07): "Organization", the club on
+ * the small line on desktop, the person's tabs pinned inside the bar — Rep teams' shape. A person with one tab gets no row
+ * (`HubTabBar`'s rule, and the bar keeps its bottom padding). The person's tabs are `useOrgTabs` (`useAdminKitNav.ts`),
+ * the one list this frame, the bar and the `/org` door read.
  */
 import type { ReactNode } from 'react';
-import { usePathname } from 'next/navigation';
-import AdminPageHeader from '@/components/admin/AdminPageHeader';
-import { useOrg } from '@/lib/org-context';
-import { orgTabs, placeTabFor, showsOrgBoard } from '@/lib/admin-kit-nav';
-import { useOrgLinks } from '../useAdminKitNav';
+import { useClubPlaceAt } from '@/components/admin/AdminBarPlace';
 import PlaceFrame from './PlaceFrame';
 
-/** The person's Organization tabs — the frame's and the `/org` door's one list. */
-export function useOrgTabs() {
-  const { userRole } = useOrg();
-  // Not `useAdminKitNav`: that hook also fetches the coach's team access and builds every rail list.
-  const { base, orgLinks, isTeamWorkspace } = useOrgLinks();
-  const tabs = orgTabs({
-    base,
-    orgLinks,
-    showsBoard: showsOrgBoard({ role: userRole, orgLinks, isTeamWorkspace }),
-  });
-  return { tabs, isTeamWorkspace };
-}
-
 export default function OrgFrame({ children }: { children: ReactNode }) {
-  const pathname = usePathname();
-  const { tabs, isTeamWorkspace } = useOrgTabs();
-  const tab = isTeamWorkspace ? null : placeTabFor(tabs, pathname);
-  if (!tab) return <>{children}</>;
-  return (
-    <PlaceFrame header={<AdminPageHeader title="Organization" />} tabs={tabs} activeId={tab} ariaLabel="Organization">
-      {children}
-    </PlaceFrame>
-  );
+  // Is this address one of THIS person's Organization tabs (`orgTabs`; a one-team workspace has none)? The bar asks the
+  // same question from the address alone, so its first paint is this frame's.
+  const place = useClubPlaceAt();
+  if (place?.key !== 'org') return <>{children}</>;
+  return <PlaceFrame place={place}>{children}</PlaceFrame>;
 }

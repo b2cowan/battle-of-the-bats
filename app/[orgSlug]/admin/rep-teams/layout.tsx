@@ -43,5 +43,5 @@ export default async function RepTeamsLayout({
 
   // ⚖ Rep teams is a place with tabs (Club Tier Stage 13i, A2): its title and tab row over every page but a team's (a place of
   // its own) and a record page one level down.
-  return <RepTeamsFrame orgSlug={ctx.org.slug}>{children}</RepTeamsFrame>;
+  return <RepTeamsFrame>{children}</RepTeamsFrame>;
 }

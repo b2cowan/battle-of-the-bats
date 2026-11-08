@@ -42,10 +42,10 @@ describe('the admin bar never shrinks on scroll', () => {
 describe('the small line sits under the name', () => {
   it('the name comes first, then the line of facts: club · dates · chip', () => {
     const identity = bar.slice(bar.indexOf('className={styles.identity}'));
-    const metaAt = identity.indexOf('${styles.meta}${clubOnly');
+    const metaAt = identity.indexOf('${styles.meta}${deskOnly');
     assert.ok(metaAt > 0 && identity.indexOf('{nameEl}') < metaAt, 'name above the line');
     const meta = identity.slice(metaAt);
-    assert.ok(meta.indexOf('styles.metaClub') < meta.indexOf('{dates}'), 'club before dates');
+    assert.ok(meta.indexOf('styles.metaDesk') < meta.indexOf('{dates}'), 'club before dates');
     assert.ok(meta.indexOf('{dates}') < meta.indexOf('{phaseLabel}'), 'dates before the chip');
     assert.doesNotMatch(bar, /eyebrow/i, 'no eyebrow above the name');
   });
@@ -58,10 +58,11 @@ describe('the small line sits under the name', () => {
 
   it('the dot is drawn between words, never before the chip, and a phone drops the club without a stranded dot', () => {
     assert.match(css, /\.meta > span:not\(\.chip\) \+ span:not\(\.chip\)::before \{\s*content: '·';/);
-    // ⚠ The phone rule must match the separator rule's weight: a bare `.metaClub + span::before` loses to it and leaves
-    // "· Nov 1–3, 2026" on a phone (caught in the browser, 2026-11-07).
-    assert.match(css, /@media \(max-width: 900px\) \{\s*\.metaClub \{ display: none; \}[^}]*\.meta > span\.metaClub \+ span:not\(\.chip\)::before \{ content: none; \}/);
-    assert.ok(css.indexOf('.meta > span.metaClub + span:not(.chip)::before') > css.indexOf('.meta > span:not(.chip) + span:not(.chip)::before'),
+    // ⚠ The phone rule must match the separator rule's weight: a bare `.metaDesk + span::before` loses to it and leaves
+    // "· Nov 1–3, 2026" on a phone (caught in the browser, 2026-11-07). Only the FIRST desk word (the club) strands a
+    // dot: a desk word in the middle (a team's group, session B) hides its own dot with it.
+    assert.match(css, /@media \(max-width: 900px\) \{\s*\.metaDesk \{ display: none; \}[^}]*\.meta > span\.metaDesk:first-child \+ span:not\(\.chip\)::before \{ content: none; \}/);
+    assert.ok(css.indexOf('.meta > span.metaDesk:first-child + span:not(.chip)::before') > css.indexOf('.meta > span:not(.chip) + span:not(.chip)::before'),
       'the phone rule comes after the separator rule, so it wins');
   });
 
@@ -83,29 +84,37 @@ describe('a club place names itself in the bar, and its tabs pin inside it', () 
   const tabCss = readCode('components/shared/HubTabBar.module.css');
 
   it('no flash: the place comes from the address first, and a hand-off counts only for that place', () => {
-    assert.match(bar, /clubPlaceAt\(pathname, `\/\$\{currentOrg\.slug\}\/admin`, \{ canUse: canOpen, seasonAccess \}\)/);
+    // The bar and every frame ask ONE hook, which builds every gate once (session B: the access object).
+    assert.match(bar, /const addressPlace = useClubPlaceAt\(\);/);
+    assert.match(bar, /const routePlace = !suspended && !onTournament \? addressPlace : null;/);
+    assert.doesNotMatch(bar, /clubPlaceAt\(pathname/, 'the bar must not build its own gates (it would drift from the frames)');
+    assert.match(hand, /return clubPlaceAt\(pathname, `\/\$\{currentOrg\.slug\}\/admin`, \{\s*canUse: canOpen,\s*seasonAccess,/);
     assert.match(bar, /handed\?\.key === routePlace\.key \? \{ \.\.\.handed, activeId: routePlace\.activeId \} : routePlace/);
     // A layout effect, so a client navigation redraws the bar before the browser paints.
-    assert.match(hand, /useLayoutEffect\(\(\) => \{ hand\?\.\(place\); \}\);/);
-    assert.match(hand, /useLayoutEffect\(\(\) => \(\) => hand\?\.\(null\), \[hand\]\);/);
+    assert.match(hand, /useLayoutEffect\(\(\) => \{ mine\.current = place\.key; hand\?\.\(place\); \}\);/);
+    // Withdrawn on unmount only if the bar still holds THIS frame's place (/review, session B): a frame leaving in a later
+    // commit than its successor mounted must never wipe the successor's.
+    assert.match(hand, /useLayoutEffect\(\(\) => \(\) => hand\?\.\(held => \(held\?\.key === mine\.current \? null : held\)\), \[hand\]\);/);
     assert.match(readCode('app/[orgSlug]/admin/AdminChrome.tsx'), /<AdminBarPlaceProvider>\{frame\}<\/AdminBarPlaceProvider>/);
   });
 
-  it('a frame given `place` hands it to the bar and draws nothing above the page', () => {
-    const barFrame = frame.slice(frame.indexOf('function BarPlaceFrame'), frame.indexOf('function PaperPlaceFrame'));
-    assert.match(barFrame, /useHandBarPlace\(place\);/);
-    assert.doesNotMatch(barFrame, /HubTabBar|AdminPageHeader|\{header\}/);
-    for (const f of ['RepTeamsFrame', 'SeasonFrame']) {
+  // Session B: every place or none (the 2026-08-19 reversal) — the paper mode is GONE, and every place hands off.
+  it('every place hands its parts to the bar and draws nothing above the page; the paper mode is gone', () => {
+    const frameFn = frame.slice(frame.indexOf('export default function PlaceFrame'), frame.indexOf('export function TabActions'));
+    assert.match(frameFn, /useHandBarPlace\(place\);/);
+    assert.doesNotMatch(frame, /HubTabBar|PaperPlaceFrame|header: ReactNode|\{header\}/, 'no paper tab row or heading mode');
+    for (const f of ['RepTeamsFrame', 'SeasonFrame', 'TeamFrame', 'money/AccountingFrame', 'families/FamiliesFrame', 'OrgFrame']) {
       const code = readCode(`components/admin/kit/club/${f}.tsx`);
       assert.match(code, /<PlaceFrame place=\{/, `${f} hands its parts to the bar`);
-      assert.doesNotMatch(code, /AdminPageHeader/, `${f} draws a paper heading again (two titles, two <h1>s)`);
+      assert.match(code, /useClubPlaceAt\(\)/, `${f} asks the bar's own question`);
+      assert.doesNotMatch(code, /AdminPageHeader|<HubTabBar/, `${f} draws a paper heading or tab row again (two titles, two <h1>s)`);
     }
   });
 
   it('the bar draws the way up, the switcher, the chip and the tab row, in that order', () => {
     const at = (s: string) => { const i = bar.indexOf(s); assert.ok(i >= 0, s); return i; };
     assert.ok(at('place?.back &&') < at('className={styles.identity}'), 'the way up leads the row');
-    assert.ok(at('className={styles.switcher}') < at('${styles.meta}${clubOnly'), 'the switcher sits beside the name');
+    assert.ok(at('className={styles.switcher}') < at('${styles.meta}${deskOnly'), 'the switcher sits beside the name');
     assert.ok(at('{facts.map(') < at('place?.chip &&'), 'the chip ends the small line');
     assert.ok(at('<HubTabBar inBar') > at('className={styles.pill}'), 'the tab row is under the bar’s row');
     assert.match(css, /\.header\.withTabs \{ padding-bottom: 0; \}/);

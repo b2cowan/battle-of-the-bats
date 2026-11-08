@@ -1444,7 +1444,8 @@ export default function SchedulePage() {
 
       {/* Postponed games wait above every view until they have a date (9d2·10). */}
       {scheduleRead === 'ok' && (
-        <div ref={needsDateRef}>
+        // The jump from a rain-out's New dates lands under the pinned bar's tabs without its scroll margin (Phase 2).
+        <div ref={needsDateRef} className={cal.jumpTarget}>
           <NeedsDateFold key={newDatesKey} bookings={calendar.needsDate} onOpen={openBooking} startOpen={newDatesKey > 0} />
           <ScoresToCheckFold bookings={calendar.bookings} scores={scoreRecords} onOpen={openBooking} />
         </div>

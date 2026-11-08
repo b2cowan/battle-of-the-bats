@@ -16,7 +16,7 @@ import { hasOrgVenueLibrary } from '@/lib/plan-features';
 import { isTournamentTier } from '@/lib/billing-urls';
 import { useCurrentOrgCoachAccess, coachDoorFor } from '@/lib/use-current-org-coach-access';
 import { useIsSandbox } from '@/components/sandbox/SandboxProvider';
-import { kitPrograms, kitOrgLinks, kitBillingLink, activeKitSection, clubProgramOrder, personClubShape, kitCalendarLink, kitSchedulesLink, kitOrgPlace, litClubPlace, clubPlaceGroups, type KitLink } from '@/lib/admin-kit-nav';
+import { kitPrograms, kitOrgLinks, kitBillingLink, activeKitSection, clubProgramOrder, personClubShape, kitCalendarLink, kitSchedulesLink, kitOrgPlace, litClubPlace, clubPlaceGroups, orgTabs, showsOrgBoard, type KitLink } from '@/lib/admin-kit-nav';
 import { kitTournamentGroups } from './kit-tournament-groups';
 import { useClubBrief } from './club/ClubBriefProvider';
 
@@ -45,6 +45,18 @@ export function useOrgLinks() {
     isTeamWorkspace,
   });
   return { orgSlug, base, isCanceled, isTeamWorkspace, orgLinks };
+}
+
+/** The person's Organization tabs — the pinned bar's, Organization's frame's and the `/org` door's one list. */
+export function useOrgTabs() {
+  const { userRole } = useOrg();
+  const { base, orgLinks, isTeamWorkspace } = useOrgLinks();
+  const tabs = orgTabs({
+    base,
+    orgLinks,
+    showsBoard: showsOrgBoard({ role: userRole, orgLinks, isTeamWorkspace }),
+  });
+  return { tabs, isTeamWorkspace };
 }
 
 export function useAdminKitNav() {

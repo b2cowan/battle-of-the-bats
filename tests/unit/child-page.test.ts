@@ -236,8 +236,12 @@ describe('the page and its doors (source guards)', () => {
 
   it('the frame draws no tab row over a child page, and does not overwrite its title', () => {
     const frame = src('components/admin/kit/club/families/FamiliesFrame.tsx');
-    assert.match(frame, /if \(childPage\) return <>\{children\}<\/>;/);
-    assert.match(frame, /usePageTitle\(childPage \? null :/);
+    // A child's page is no place (the bar's own answer), so the frame steps aside and sets no title over it.
+    assert.match(frame, /const tab = place\?\.key === 'families' \? place\.activeId : null;/);
+    assert.match(frame, /if \(!place \|\| !tab\) return <>\{children\}<\/>;/);
+    // The bar asks the same address question, and a child's page is no place there either (Phase 3 gives it its own bar).
+    assert.match(src('lib/admin-kit-nav.ts'), /if \(!opensFamilies \|\| isFamiliesChildPage\(pathname, base\)\) return null;/);
+    assert.match(frame, /usePageTitle\(!tab \? null :/);
   });
 
   it('the doors: the household line, a rep roster name (live and past) for Families access only, the no-family rows', () => {

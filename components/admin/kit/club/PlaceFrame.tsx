@@ -3,30 +3,25 @@
  * A CLUB PLACE'S FRAME (⚖ Club Tier Stage 13i, "Places in the sidebar, pages on the page" — Asks 1, 3 and 6 = A, owner
  * 2026-11-06; drawing tab 6, NAV_STANDARD N11).
  *
- * Every place with more than one page — Rep teams, a team, a season, Organization — draws ONE header and the shared tab
- * row (`HubTabBar`, never a copy: restyling it restyles the coaches portal) above the page you are on, as Accounting's frame
- * does. The tab's own page then drops its title, which would repeat the place's: `TabPageHeader` is the page's header
- * outside a place frame and only its ACTIONS inside one (a tab's own actions stay on that tab, at the right end of its
- * action row — drawing tab 6: "A create button sits in its tab's toolbar, never the place's header").
+ * Every place with more than one page — Rep teams, a team, a season, Accounting, Families, Organization — has ONE header
+ * and the shared tab row (`HubTabBar`, never a copy: restyling it restyles the coaches portal) over the page you are on.
+ * The tab's own page then drops its title, which would repeat the place's: `TabPageHeader` is the page's header outside a
+ * place frame and only its ACTIONS inside one (a tab's own actions stay on that tab, at the right end of its action row —
+ * drawing tab 6: "A create button sits in its tab's toolbar, never the place's header").
  *
  * ⚖ THE FRAME OWNS THE WIDTH (the Accounting frame's rule, `/simplify` 2026-10-07): the place is the wide column, and a
  * page's own narrower cap gives way inside it (`[data-place-frame] .page` in the page sheets), so the header and the tab
  * row never jump between one tab and the next.
  *
- * The header and the tab row draw with the frame, before the page's data arrives; a name still loading shows a
- * placeholder in the same line, so nothing shifts.
- *
  * ⚖ THE PLACE'S NAME AND TABS LIVE IN THE ADMIN'S PINNED BAR (Admin header bar Phase 2, option 4, owner 2026-11-07; plan
- * `docs/projects/active/ADMIN_HEADER_BAR_PLAN.md`). A frame given `place` draws NOTHING on the paper above the page: it
- * hands the bar its name, way up, small line, chip, switcher and tab row (`useHandBarPlace`), and the bar draws them, the
- * tabs pinned inside it. The bar's name is then the page's one `<h1>`. Rep teams and a season moved in session A; a frame
- * still given `header` draws its header and tab row on the paper until session B moves it (Team, Organization). ⚠ The
- * tab row is pinned on every place or none (the 2026-08-19 reversal): the paper mode is a step between the two sessions,
- * not a second kind of place.
+ * `docs/projects/active/ADMIN_HEADER_BAR_PLAN.md`). The frame draws NOTHING on the paper above the page: it hands the bar
+ * its name, way up, small line, chip, switcher and tab row (`useHandBarPlace`), and the bar draws them, the tabs pinned
+ * inside it; before the frame's data arrives the bar draws the same placeholder from the address (`useClubPlaceAt`), so
+ * nothing shifts. The bar's name is then the page's one `<h1>`. ⚠ The tab row is pinned on every place or none (the
+ * 2026-08-19 reversal): there is no paper mode, and a place must never draw its title or tab row on the paper again.
  */
 import { createContext, useContext, type ComponentProps, type ReactNode } from 'react';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
-import HubTabBar, { type HubTab } from '@/components/shared/HubTabBar';
 import { useHandBarPlace, type AdminBarPlace } from '@/components/admin/AdminBarPlace';
 import { repKit } from './RepKit';
 import css from './PlaceFrame.module.css';
@@ -38,38 +33,14 @@ export function useInPlaceFrame(): boolean {
   return useContext(InPlaceFrame);
 }
 
-type PaperFrameProps = {
-  /** The place's header: its title, and for a place inside a place (a team, a season) the way up, named by destination. */
-  header: ReactNode;
-  tabs: readonly HubTab<string>[];
-  activeId: string;
-  /** Names the tab row for a screen reader. */
-  ariaLabel: string;
-  children: ReactNode;
-};
-
-export default function PlaceFrame(props: PaperFrameProps | {
-  /** Everything the pinned bar draws for this place (start from `clubPlaceAt`, so the bar's first paint matches). */
+export default function PlaceFrame({ place, children }: {
+  /** Everything the pinned bar draws for this place (start from `useClubPlaceAt`, so the bar's first paint matches). */
   place: AdminBarPlace;
   children: ReactNode;
 }) {
-  return 'place' in props ? <BarPlaceFrame place={props.place}>{props.children}</BarPlaceFrame> : <PaperPlaceFrame {...props} />;
-}
-
-function BarPlaceFrame({ place, children }: { place: AdminBarPlace; children: ReactNode }) {
   useHandBarPlace(place);
   return (
     <div className={`${repKit.page} ${repKit.moneyFrame} ${css.underBar}`} data-place-frame>
-      <InPlaceFrame.Provider value>{children}</InPlaceFrame.Provider>
-    </div>
-  );
-}
-
-function PaperPlaceFrame({ header, tabs, activeId, ariaLabel, children }: PaperFrameProps) {
-  return (
-    <div className={`${repKit.page} ${repKit.moneyFrame}`} data-place-frame>
-      {header}
-      <HubTabBar tabs={tabs} activeId={activeId} ariaLabel={ariaLabel} />
       <InPlaceFrame.Provider value>{children}</InPlaceFrame.Provider>
     </div>
   );

@@ -4,7 +4,6 @@ import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { canOpenModule } from '@/lib/member-access';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import AccountingFrame from '@/components/admin/kit/club/money/AccountingFrame';
-import { clubHasPayouts } from '@/lib/online-payouts';
 import { notYoursScreenProps } from '@/lib/not-yours-server';
 import { NotYoursScreen } from '@/components/admin/kit/club/NotYoursScreen';
 
@@ -41,8 +40,8 @@ export default async function AccountingLayout({
   }
 
   return (
-    <AccountingFrame orgSlug={ctx.org.slug} runsRepTeams={hasModuleEntitlement(ctx.org, 'module_rep_teams')} hasPayouts={await clubHasPayouts(ctx.org.id)}>
-      {children}
-    </AccountingFrame>
+    // Which tabs (rep teams' loop, Payouts) is the pinned bar's answer, the frame's too (`useClubPlaceAt`): the admin
+    // layout reads the payouts fact once for the whole shell.
+    <AccountingFrame>{children}</AccountingFrame>
   );
 }

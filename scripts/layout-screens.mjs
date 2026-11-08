@@ -1500,43 +1500,43 @@ export const SCREENS = [
   // ── Organization ──
   // The Organization hub retired (Club Tier Stage 13i, A5): `/org` forwards to the first tab, so it has no screen of its
   // own to measure. Its slot measures the tab 13i added in Members' place for someone without Members: The board.
-  { id: 'admin-org-board',             area: 'org', session: 'repClubRegistrar', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/board` },
+  { id: 'admin-org-board',             area: 'org', session: 'repClubRegistrar', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/org/board` },
   // ⚠ The member list has NO defined order — the members API selects without an ORDER BY, so rows
   // come back in storage order and move whenever a member row is touched (two loads of the same
   // unchanged screen, minutes apart, drew the eight rows in two orders). A product defect, handed to
   // Club Stage 1 (it redesigns Members); until it is fixed the identity check masks the list, and
   // the frame and header around it stay checked. The mask comes off with the fix.
-  { id: 'admin-org-members',           area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/members`,
+  { id: 'admin-org-members',           area: 'org', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/org/members`,
     identityMask: ['[class*="tableWrap"]'] },
-  { id: 'admin-org-members-audit',     area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/members/audit` },
+  { id: 'admin-org-members-audit',     area: 'org', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/org/members/audit` },
   { id: 'admin-org-billing',           area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/billing` },
-  { id: 'admin-org-settings',          area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/settings` },
+  { id: 'admin-org-settings',          area: 'org', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/org/settings` },
 
   // ── Club Tier Stage 1's screens and windows (the club setup checklist for a club that finished setup,
   // the open kit windows, the treasurer's hub and board).
   { id: 'admin-hub-treasurer',         area: 'hub', session: 'repClubTreasurer', ready: '[data-club-hub]', path: (c) => `/${c.clubSlug}/admin` },
   { id: 'admin-club-setup',            area: 'hub', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/onboarding?plan=club` },
-  { id: 'admin-org-members-treasurer', area: 'org', session: 'repClubTreasurer', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/members` },
-  { id: 'admin-org-members-invite',    area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/members`,
+  { id: 'admin-org-members-treasurer', area: 'org', session: 'repClubTreasurer', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/org/members` },
+  { id: 'admin-org-members-invite',    area: 'org', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/org/members`,
     interact: openKitInvite, scope: '[data-kit-dialog]' },
-  { id: 'admin-org-members-manage',    area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/members`,
+  { id: 'admin-org-members-manage',    area: 'org', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/org/members`,
     interact: openKitManage, scope: '[data-kit-dialog]' },
   { id: 'admin-org-settings-offline',  area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/public-site`,
     interact: openKitTakeOffline, scope: '[data-kit-dialog]' },
-  { id: 'admin-org-settings-pdf',      area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/settings/pdf` },
-  { id: 'admin-org-venues',            area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/venues` },
+  { id: 'admin-org-settings-pdf',      area: 'org', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/org/settings/pdf` },
+  { id: 'admin-org-venues',            area: 'org', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/org/venues` },
   // Club Tier Stage 6b: the Venue library's read-first venue window and Add venue (it asks), and the club calendar's
   // three views (desk and phone — the sweep's widths). The calendar opens on the sweep clock's week.
-  { id: 'admin-org-venues-window',     area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/venues`,
+  { id: 'admin-org-venues-window',     area: 'org', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/org/venues`,
     interact: (page) => openKitDialogBy(page, page.locator('table button:visible, [data-row-list] button:visible')), scope: '[data-kit-dialog]' },
-  { id: 'admin-org-venues-add',        area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/venues`,
+  { id: 'admin-org-venues-add',        area: 'org', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/org/venues`,
     interact: (page) => openKitDialogBy(page, page.locator('#org-venue-add-btn:visible')), scope: '[data-kit-dialog]' },
   // Club Tier Stage 10a: the Venue library's Permits view (the switch, the year pill, the table in its bands), a permit's
   // read-first window (its time, the cost and use bands, the rows), and Add permit (it asks). Fixture: --club-permits.
-  { id: 'admin-org-permits',           area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/venues?view=permits` },
-  { id: 'admin-org-permit-window',     area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/venues?view=permits`,
+  { id: 'admin-org-permits',           area: 'org', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/org/venues?view=permits` },
+  { id: 'admin-org-permit-window',     area: 'org', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/org/venues?view=permits`,
     interact: (page) => openKitDialogBy(page, page.locator('table button:visible, [data-row-list] button:visible')), scope: '[data-kit-dialog]' },
-  { id: 'admin-org-permit-add',        area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/venues?view=permits`,
+  { id: 'admin-org-permit-add',        area: 'org', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/org/venues?view=permits`,
     interact: (page) => openKitDialogBy(page, page.locator('#org-permit-add-btn:visible')), scope: '[data-kit-dialog]' },
   { id: 'admin-calendar',              area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/calendar` },
   // Club Tier Stage 10a: a booking's read window (the permit's one line sits under Clashes with / Busy then).
@@ -1603,41 +1603,41 @@ export const SCREENS = [
   // Club Tier Stage 2 · session 3: the TEAM is the unit — its page, its Coaches · Tryouts · Roster ·
   // Schedule, and the season windows. The old season ("program year") pages are one redirect now,
   // so they are no longer screens of their own.
-  { id: 'admin-rep-team',              area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubTeamId}` },
-  { id: 'admin-rep-team-start-season', area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubTeamId}`,
+  { id: 'admin-rep-team',              area: 'rep-teams', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubTeamId}` },
+  { id: 'admin-rep-team-start-season', area: 'rep-teams', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubTeamId}`,
     interact: (page) => openKitDialogBy(page, page.locator('button[aria-label="Start next season"]:visible')), scope: '[data-kit-dialog]' },
   // Club Tier Stage 14a: the same window with "the same players" picked — the division box and the inline tick list.
-  { id: 'admin-rep-team-start-season-players', area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubTeamId}`,
+  { id: 'admin-rep-team-start-season-players', area: 'rep-teams', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubTeamId}`,
     interact: (page) => openSeasonWindowMovingUp(page, page.locator('button[aria-label="Start next season"]:visible')), scope: '[data-kit-dialog]' },
-  { id: 'admin-rep-team-closed',       area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubClosedTeamId}` },
-  { id: 'admin-rep-team-coaches',      area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubTeamId}/coaches` },
-  { id: 'admin-rep-team-coach-invite', area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubTeamId}/coaches`,
+  { id: 'admin-rep-team-closed',       area: 'rep-teams', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubClosedTeamId}` },
+  { id: 'admin-rep-team-coaches',      area: 'rep-teams', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubTeamId}/coaches` },
+  { id: 'admin-rep-team-coach-invite', area: 'rep-teams', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubTeamId}/coaches`,
     interact: (page) => openKitDialogBy(page, page.locator('button[aria-label="Invite a coach"]:visible')), scope: '[data-kit-dialog]' },
-  { id: 'admin-rep-team-tryouts',      area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubTeamId}/tryouts` },
-  { id: 'admin-rep-team-tryouts-closed', area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubClosedTeamId}/tryouts` },
-  { id: 'admin-rep-team-roster',       area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubTeamId}/roster` },
-  { id: 'admin-rep-team-schedule',     area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubTeamId}/schedule` },
+  { id: 'admin-rep-team-tryouts',      area: 'rep-teams', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubTeamId}/tryouts` },
+  { id: 'admin-rep-team-tryouts-closed', area: 'rep-teams', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubClosedTeamId}/tryouts` },
+  { id: 'admin-rep-team-roster',       area: 'rep-teams', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubTeamId}/roster` },
+  { id: 'admin-rep-team-schedule',     area: 'rep-teams', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubTeamId}/schedule` },
   // Club Tier 6c (Ask 14): a team's schedule draws the COACH'S views read-only — its Week and its Month (the touch Month
   // at 768 and narrower) are the coach's, measured here in the admin shell; at phone widths the View drawer picks them.
-  { id: 'admin-rep-team-schedule-week', area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubTeamId}/schedule`, interact: (p) => pickScheduleView(p, 'Week') },
-  { id: 'admin-rep-team-schedule-month', area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubTeamId}/schedule`, interact: (p) => pickScheduleView(p, 'Month') },
+  { id: 'admin-rep-team-schedule-week', area: 'rep-teams', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubTeamId}/schedule`, interact: (p) => pickScheduleView(p, 'Week') },
+  { id: 'admin-rep-team-schedule-month', area: 'rep-teams', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubTeamId}/schedule`, interact: (p) => pickScheduleView(p, 'Month') },
   { id: 'admin-rep-documents-upload',  area: 'rep-teams', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/rep-teams/documents`,
     interact: (page) => openKitDialogBy(page, page.locator('button[aria-label="Upload template"]:visible')), scope: '[data-kit-dialog]' },
   { id: 'admin-rep-team-history',      area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubTeamId}/history` },
   { id: 'admin-rep-team-history-year', area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubTeamId}/history/${c.clubPastYearId}` },
 
   // ── Accounting (the heaviest hand-set colour debt — slice 3) ──
-  { id: 'admin-accounting',            area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting` },
+  { id: 'admin-accounting',            area: 'accounting', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/accounting` },
   // The treasurer's own view — the role this area is for, and a frame the owner's does not draw.
-  { id: 'admin-accounting-treasurer',  area: 'accounting', session: 'repClubTreasurer', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting` },
-  { id: 'admin-accounting-budget',     area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/budget` },
-  { id: 'admin-accounting-bva',        area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/budget-vs-actual` },
-  { id: 'admin-accounting-allocate',   area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/budget?line=${c.clubBudgetLineId}` },
+  { id: 'admin-accounting-treasurer',  area: 'accounting', session: 'repClubTreasurer', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/accounting` },
+  { id: 'admin-accounting-budget',     area: 'accounting', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/accounting/budget` },
+  { id: 'admin-accounting-bva',        area: 'accounting', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/accounting/budget-vs-actual` },
+  { id: 'admin-accounting-allocate',   area: 'accounting', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/accounting/budget?line=${c.clubBudgetLineId}` },
   // Club Tier Stage 3a: Accounting is one page with tabs. The Ledger tab IS the book (the Book pill
   // switches it); Allocations and Payment requests moved here from Rep Teams (the old addresses
   // forward, so they are no longer screens of their own). Club Accounting · Teams (2026-10-16): Teams is the second tab, and
   // a team's account is a VIEW of it (the tab row stays; a Team pill switches team).
-  { id: 'admin-accounting-ledger',     area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/ledger?book=${c.clubLedgerId}` },
+  { id: 'admin-accounting-ledger',     area: 'accounting', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/accounting/ledger?book=${c.clubLedgerId}` },
   // Stage 3d: Payees is a WINDOW over the Ledger (its page retired) — the list (`?payees=1`, the retired page's own
   // forward) and a shared payee one level in (`?payee=`, which the retired report page forwards to). Each measures the
   // window, which is what changed; the Ledger under it is `admin-accounting-ledger`'s.
@@ -1647,9 +1647,9 @@ export const SCREENS = [
     path: (c) => `/${c.clubSlug}/admin/accounting/ledger?payee=${c.clubSharedPayeeId}`, scope: '[data-kit-dialog]' },
   // Bank reconciliation R2c: the Bank tab, right after the Ledger (B8), as the treasurer — the role it is for. What it
   // draws is the club's state: the setup card (C1) on a club that never set up, else the open statement or the list.
-  { id: 'admin-accounting-bank',       area: 'accounting', session: 'repClubTreasurer', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/bank` },
-  { id: 'admin-accounting-allocations', area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/allocations` },
-  { id: 'admin-accounting-coming-due', area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/allocations?view=coming-due` },
+  { id: 'admin-accounting-bank',       area: 'accounting', session: 'repClubTreasurer', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/accounting/bank` },
+  { id: 'admin-accounting-allocations', area: 'accounting', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/accounting/allocations` },
+  { id: 'admin-accounting-coming-due', area: 'accounting', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/accounting/allocations?view=coming-due` },
   // Stage 3d: an allocation is a WINDOW over Allocations (its page retired; `?allocation=` is its address) — the
   // allocation, then a team's bill one level in (the first team's, through the window's own row).
   { id: 'admin-accounting-allocation', area: 'accounting', session: 'repClubOwner', ready: '[data-kit-dialog] [role="group"]',
@@ -1664,12 +1664,12 @@ export const SCREENS = [
       await page.waitForTimeout(300);
     },
     note: 'A team\'s bill opens IN PLACE inside the allocation\'s window (Ask 4) — no address of its own to land on without a split id, so the window\'s first team row opens it.' },
-  { id: 'admin-accounting-allocation-new', area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/allocations?new=1` },
-  { id: 'admin-accounting-payment-requests', area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/payment-requests` },
-  { id: 'admin-accounting-teams',      area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/teams` },
-  { id: 'admin-accounting-team',       area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/teams/${c.clubTeamId}` },
+  { id: 'admin-accounting-allocation-new', area: 'accounting', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/accounting/allocations?new=1` },
+  { id: 'admin-accounting-payment-requests', area: 'accounting', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/accounting/payment-requests` },
+  { id: 'admin-accounting-teams',      area: 'accounting', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/accounting/teams` },
+  { id: 'admin-accounting-team',       area: 'accounting', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/accounting/teams/${c.clubTeamId}` },
   // The Team pill open over a team's account: its grouped list must stay inside the screen and scroll inside itself.
-  { id: 'admin-accounting-team-pill',  area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/teams/${c.clubTeamId}`,
+  { id: 'admin-accounting-team-pill',  area: 'accounting', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/accounting/teams/${c.clubTeamId}`,
     interact: (page) => openPickOnePill(page, page.locator('details:has([data-pill="summary"]) > summary:visible').first(), 'Team'),
     // Scoped to the LIST wherever it is (layout upkeep A1): the panel at a desk, the sheet on a phone. Unscoped, a phone
     // measured the page rows under the sheet's dim as "hidden behind chrome" (15 a width) — the closed entry above
@@ -1679,12 +1679,12 @@ export const SCREENS = [
     // as a spill). What an open list must not do, run off the screen's edge, is still measured.
     skip: ['content-overflow'],
     note: 'The Team pill (Club Accounting · Teams, Ask 2) opened: "All teams", then the teams under their group headings.' },
-  { id: 'admin-accounting-team-closed', area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/teams/${c.clubClosedTeamId}` },
+  { id: 'admin-accounting-team-closed', area: 'accounting', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/accounting/teams/${c.clubClosedTeamId}` },
 
   // ── Families (the Okafor household: a child on two teams) — one page with two tabs since Club Tier Stage 5b; a family is a
   //    record window OVER the Families tab (its address lands on the list, which opens it), so that entry measures the window.
-  { id: 'admin-families',              area: 'families', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/families` },
-  { id: 'admin-families-show',         area: 'families', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/families?show=all`,
+  { id: 'admin-families',              area: 'families', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/families` },
+  { id: 'admin-families-show',         area: 'families', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/families?show=all`,
     // The Show pill open (Club Tier Stage 5b, P1): the six questions with their counts — scoped to the list wherever it
     // is, as admin-accounting-team-pill. The closed Families entry measures the page.
     interact: (page) => openPickOnePill(page, page.locator('details summary[data-pill="summary"]').first(), 'Show'),
@@ -1694,11 +1694,11 @@ export const SCREENS = [
   // Club Tier Stage 14 S5: a child's page, opened from that family (its own header, no tab row).
   { id: 'admin-family-child',          area: 'families', session: 'repClubOwner', ready: 'h1',
     path: (c) => `/${c.clubSlug}/admin/families/children/${c.clubChildId}?from=${c.clubPersonId}` },
-  { id: 'admin-families-duplicates',   area: 'families', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/families/duplicates` },
+  { id: 'admin-families-duplicates',   area: 'families', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/families/duplicates` },
   // Club Tier Stage 14 S6: the Children half of that tab (the Parents · Children switch turned over), and Split records open on a child's page.
   // ⚠ Both need `scripts/seed-club-children.mjs` to have run on the club (the seed runs it): a child with two seasons, and one
   // possible-duplicate pair. Without them the first measures the empty state and the second has no Split button to press.
-  { id: 'admin-families-duplicates-children', area: 'families', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/families/duplicates`,
+  { id: 'admin-families-duplicates-children', area: 'families', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/families/duplicates`,
     interact: async (page) => {
       const half = page.getByRole('button', { name: /^Children · \d+$/ }).first();
       if (await half.count() === 0) return;
@@ -1709,8 +1709,8 @@ export const SCREENS = [
     path: (c) => `/${c.clubSlug}/admin/families/children/${c.clubChildId}?from=${c.clubPersonId}`,
     interact: (page) => openKitDialogBy(page, page.getByRole('button', { name: 'Split records', exact: true })), scope: '[data-kit-dialog]' },
   // Club Tier Stage 7c: the Emails tab, and the Email families window open over it — its one door (Send is never pressed).
-  { id: 'admin-families-emails',       area: 'families', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/families/emails` },
-  { id: 'admin-families-email-window', area: 'families', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/families/emails`,
+  { id: 'admin-families-emails',       area: 'families', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/families/emails` },
+  { id: 'admin-families-email-window', area: 'families', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/families/emails`,
     interact: (page) => openKitDialogBy(page, page.getByRole('button', { name: 'Email families', exact: true })), scope: '[data-kit-dialog]' },
 
   // ── Public site builder: five rows that open in place, the club's home beside them at a desk. Only the open row is

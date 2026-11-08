@@ -1,6 +1,6 @@
 # Admin header: the bar names where you are — Implementation Plan
 
-> **Status:** Phase 0 complete (option 4 + asks A2–A10 ruled 2026-11-07); **Phase 1 built 2026-11-07, walk §486 PASSED 12/12 2026-11-07, name clamped to one line per the owner's call**, committed `5451558f9` 2026-11-07; **Phase 2 session A built 2026-11-07** (the hand-off, `HubTabBar inBar`, Rep teams and a season); session B next ([build prompts](ADMIN_HEADER_BAR_PHASE2_BUILD_PROMPT.md)); one walk covers the whole phase after B
+> **Status:** Phase 0 complete (option 4 + asks A2–A10 ruled 2026-11-07); **Phase 1 built 2026-11-07, walk §486 PASSED 12/12 2026-11-07, name clamped to one line per the owner's call**, committed `5451558f9` 2026-11-07; **Phase 2 session A built, simplified and re-reviewed, committed `860ae5b23` 2026-11-07** (the hand-off, `HubTabBar inBar`, Rep teams and a season); **Phase 2 session B built 2026-11-07** (a team, Accounting, Families, Organization; the paper mode deleted; the layout checker reads the locked phone shell), /design + /simplify + /review applied; **walk §492 owed** (the whole phase, with the wide-desktop call); Phase 3 next
 > **Created:** 2026-11-07
 > **Branch:** dev
 > **PM brief:** [ADMIN_HEADER_BAR_PM_BRIEF.md](ADMIN_HEADER_BAR_PM_BRIEF.md)
@@ -170,18 +170,18 @@ Found by the round 3 /design pass (not named in round 2; accepted with the asks 
 - [x] `components/shared/HubTabBar.tsx` + `.module.css`: an **in-bar variant** (no bottom border of its own; the
       overflow fade and chevron paint the card white, not paper). ⚠ Shared with the coaches portal: a new prop,
       the portal's look unchanged. (built 2026-11-07: `inBar`; portal measured identical, below)
-- [ ] Frames, each verified on its own screens:
+- [x] Frames, each verified on its own screens:
   - [x] `RepTeamsFrame.tsx` — "Rep teams"; six tabs + waiting counts (built 2026-11-07)
   - [x] `SeasonFrame.tsx` — back "Seasons", the season's name, the switcher, the status chip; seven tabs (built 2026-11-07)
-  - [ ] `TeamFrame.tsx` — per the Phase 0 drawing
-  - [ ] `money/AccountingFrame.tsx` — per the Phase 0 drawing
-  - [ ] `families/FamiliesFrame.tsx`, `OrgFrame.tsx`
-- [ ] In-page sticky elements re-anchored below the taller bar (`top: var(--admin-header-h)`): census every
+  - [x] `TeamFrame.tsx` — per the Phase 0 drawing (built 2026-11-07, session B)
+  - [x] `money/AccountingFrame.tsx` — per the Phase 0 drawing (built 2026-11-07, session B)
+  - [x] `families/FamiliesFrame.tsx`, `OrgFrame.tsx` (built 2026-11-07, session B)
+- [x] (census 2026-11-07, session B: none of the sticky parts still slid under the bar; two jumps fixed, below) In-page sticky elements re-anchored below the taller bar (`top: var(--admin-header-h)`): census every
       `position: sticky` under the club admin (known: the draft pool bar and column head in
       `league/teams/Teams.module.css`, `LeagueSeason.module.css` `.groupHead`, Accounting's `MoneyMonthGrid`
       head, Schedules' day bands) and fix the ones that sit in the page scroller.
 
-**Phase 2 session A as built (2026-11-07):** (session B builds on these)
+**Phase 2 session A as built (committed `860ae5b23` 2026-11-07):** (session B builds on these)
 - **The mechanism:** `components/admin/AdminBarPlace.tsx` (two contexts: the frames only hand off, so they never re-render
   when the bar's copy changes; `useHandBarPlace` runs in a layout effect every render, withdrawn on unmount) mounted in
   `AdminChrome` inside `ClubBriefProvider`; `clubPlaceAt` in `lib/admin-kit-nav.ts` (see the decision below). To add a
@@ -281,6 +281,64 @@ Found by the round 3 /design pass (not named in round 2; accepted with the asks 
   were never flagged.
 - ⚠ **Between sessions A and B** two places pin their tabs and four still draw them on the paper — against "every place
   or none" (2026-08-19). The build prompt split it this way; session B closes it, and the walk covers the whole phase.
+  **Closed by session B (below).** The layout-checker follow-up above is **fixed** in session B (owner's yes, its own commit).
+
+**Phase 2 session B as built (2026-11-07):** walk §492 covers the whole phase.
+- **The four places:** `clubPlaceAt` gained a team (asked before Rep teams; key `team:{id}`, "Team" until the frame's read,
+  "← Teams", facts "Rep teams", the five tabs; History and a past season stay record pages), Accounting (key `accounting`,
+  no facts — A6), Families (`familiesTabFor ?? 'families'` as the frame lit it; a child's page is no place) and Organization
+  (the person's `orgTabs`; null in a one-team workspace; Plan & billing no tab). `AdminBarPlace` gained `deskFacts` (a
+  team's group: the desk line only, `.metaDesk` — `.metaClub`/`.metaClubOnly` renamed `.metaDesk`/`.metaDeskOnly`, the
+  phone's dot rule now `.metaDesk:first-child + span`). Each frame is `useClubPlaceAt()` → key check → `<PlaceFrame
+  place={…}>`; `PlaceFrame`'s paper mode is **deleted** (no `header`, no `PaperPlaceFrame`).
+- **One question, one access object:** `useClubPlaceAt` (AdminBarPlace.tsx) builds `ClubPlaceAccess` once — `canUse`,
+  `seasonAccess`, `orgTabs` (`useOrgTabs`, moved to `useAdminKitNav.ts`), `runsRepTeams`, `hasPayouts`, `opensFamilies` —
+  and the bar and every frame call it, so they cannot disagree. Two of those are SERVER facts the address cannot know, read
+  once by the admin layout and carried in `OrgProvider`: `clubHasPayouts` (Accounting's Payouts tab; `canOpenModule`
+  accounting-gated, `.catch(() => false)`; the Accounting layout no longer reads it) and `limitedToTeamGroups`
+  (`!!authCtx.repGroupIds`: Families' `canOpenFamilies` refuses such a member, which `canOpen` alone could not see). So the
+  server's first paint names the EXACT tab row (measured: Accounting's nine, Payouts last, with scripts off).
+- **The treasurer's season name** (session A's open defect): the season list is House league's read, refused to a treasurer
+  who opens a season's Money through Accounting, so the bar read "Season" for good. The Money page publishes the season's
+  name from its own read (`usePublishSeasonName`, as a team's pages publish the head); SeasonFrame no longer asks for the
+  list without House league's read. Measured: "2026 Fall House League". (`SeasonLockLine` on that page still asks and gets
+  a 403 in the console — older, not this phase.)
+- **Hand-off safety (/review):** a frame withdraws on unmount only if the bar still holds ITS key (`held?.key ===
+  mine.current ? null : held`), so a frame leaving in a later commit than its successor can never wipe it. Latent today
+  (no Suspense/Activity boundary under a place).
+- **Shared bits (/simplify):** `markTabs` (Rep teams, a season, Families); `flatPlace` and `isAtOrUnder` in `clubPlaceAt`;
+  each list built once; the season's Registrations count is `WaitingCount` (gained an optional spoken `label`); the
+  Families name is one word in `clubPlaceAt` (the frame hands it on).
+- **/design (session B, all six places, 390 / 1280, owner + treasurer + registrar + coach):** matches the drawings (bar
+  95–98 / 103–104px; first content 16 / 22.4px; first tab label under the name/back square; A5: the lit tab in view after a
+  tap, measured on Budget vs. Actual and Payouts; A6 holds; a 66-character team name cut with "…", bar height unchanged; a
+  one-tab person — the treasurer on a season's Money — draws no row and keeps the bottom padding). One defect fixed: the
+  in-bar edge arrows painted two fading layers and left a cream smudge on the white bar; now ONE `--card-bg` layer, as
+  drawn (`HubTabBar.module.css`, under `.inBar` only — the portal untouched).
+- **The census (session B):** no `position: sticky` under the club admin still slid under the bar: the draft pool reads
+  `--admin-header-h` (session A); `.groupHead` and the Schedules day bands sit in dialogs; Accounting's money grids pin
+  only sideways; a rep team's month band sits in its own scroller; `CollapsibleCard` is tournament-only. Two JUMPS missed
+  the bar and are fixed: Plan & billing's "See invoices" (`.sectionTitle` scroll margin adds `--admin-header-h`) and a
+  season schedule's rain-out "New dates" → Needs a date (the wrapper takes `cal.jumpTarget`). Left: public-site
+  `BuilderRow`'s scroll-into-view guesses (`r.top < 0`, no margin; not a place); `.builderPreview` leaves out
+  `--sandbox-chrome-h` (demo only); `useScheduleOpensOnToday` refits `--schedule-frame-top` only on resize.
+- **The layout checker (owner's yes, its own commit):** `hidden-behind-chrome` now treats the locked shell's scroller as the
+  page when the document cannot scroll (`[data-admin-locked]`): `atTop` / `atEnd` read it and the second pass drives it to
+  its end. A/B on the six screens at 390: the committed checker reported 6 phantom "trapped" findings, the fixed one 0, and
+  still caught the real undersized Save button.
+- **Layout sweep:** the team, Accounting, Families and Organization entries wait for `[data-place-frame]`.
+  `check:layout` on the places at 390 (in batches — free memory swung 1–10 GB with other sessions' work; two batches
+  aborted on first compiles and were re-run, never read as passes) and 1440: no new findings of this phase. Two NEW at 390
+  that are not: Families Duplicates' record card spills 2–17px and an 18px input (measured identical with this frame's
+  change removed — reported to Families), and Rename team URLs' Save all renames 38px (baseline drift, session A).
+- **/review (high-risk tier, four lenses):** applied — the Families gate (`opensFamilies`), the payouts read's `.catch`, the
+  owner-checked withdrawal, the treasurer's name. Accepted: the payouts fact is read on a full load only (Stripe Connect's
+  return is a full load); the team place answers a typed id outside a group-limited member's teams with "Team" and the five
+  tab links (the data stays refused); the phone dot rule handles a desk word directly after the club only. Recorded, older
+  than this phase: the season bar lags a rename/new season by the seasons store's debounce; a team's head can show its last
+  read for a beat on return; a failed team-head read is not retried on the Coaches tab (the one tab that publishes no head);
+  `HubTabBar`'s overflow arrows can stay stale when a waiting count widens the row after first paint;
+  `tests/uat/scenarios/plan-gating.spec.ts` looks for an "Accounting Overview" `<h1>` that never existed.
 
 ### Phase 3 — Screens with no place of their own
 
@@ -320,7 +378,7 @@ Found by the round 3 /design pass (not named in round 2; accepted with the asks 
 - **Decision:** the coaches portal is untouched. **Rationale:** its bar names the team a coach lives in; the
   admin moves between places. `HubTabBar` changes only by an opt-in prop.
 - **Decision (settled 2026-11-07, Phase 2 session A): BOTH, in that order — the address first, then the frame's
-  hand-off.** `clubPlaceAt(pathname, base, { canUse, seasonAccess })` in `lib/admin-kit-nav.ts` is the one statement of
+  hand-off.** `clubPlaceAt(pathname, base, access)` in `lib/admin-kit-nav.ts` (every gate in one `ClubPlaceAccess`, built once by `useClubPlaceAt` — session B) is the one statement of
   "is this address a place, which tab, and may this person open it"; the bar asks it on every render and the frame asks
   it too (it replaced each frame's own `placeTabFor` decision). The frame then hands its live parts (the season's name,
   switcher, chip, waiting counts) to the bar through `components/admin/AdminBarPlace.tsx` in a layout effect, and the
@@ -353,7 +411,7 @@ plan's programs; tournament screens follow the Tournament / Tournament Plus plan
 - [x] ~~A2–A10~~ ruled 2026-11-07 as recommended
 - [x] ~~Phase 0's screens raise their own asks~~ → A5–A10 (round 3, 2026-11-07)
 - [x] ~~Accounting's nine tabs on a phone~~ → drawn: the sideways row still serves (A5)
-- [ ] **Owner call (from the session A /design pass, 2026-11-07): a wide desktop.** The bar runs the full width of the
+- [ ] **Owner call (from the session A /design pass, 2026-11-07): a wide desktop** — asked as walk §492 part G. The bar runs the full width of the
       page column with its name and tabs at the left edge (as Phase 1 built it and the walk passed on Overview); a place's
       content is a centred column capped at 1200px. At 1280 they line up exactly; at 1920 the name and the tab row start
       208px left of the content they navigate (measured: tabs at 272px, content at 480px; View site at 1888, content ends

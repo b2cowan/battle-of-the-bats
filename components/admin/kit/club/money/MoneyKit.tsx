@@ -172,8 +172,9 @@ export { daysLateWords };
 
 /** A waiting count: the rail's amber pill — the number, never words (owner ruling 2026-10-01). The Overview's still-open
  *  rows, the Teams table, the Team pill's list and a team's Needs you all draw this one. */
-export function WaitingCount({ n }: { n: number }) {
-  return <span className={frame.count} style={{ marginLeft: 0 }} aria-label={`${n} waiting`}>{kitCountText(n)}</span>;
+/** `label`: the count's spoken name where "waiting" is not the word (a season's registrations to review). */
+export function WaitingCount({ n, label }: { n: number; label?: string }) {
+  return <span className={frame.count} style={{ marginLeft: 0 }} aria-label={label ?? `${n} waiting`}>{kitCountText(n)}</span>;
 }
 
 /** The red chip that says it: an allocation's team row, Coming due's overdue row, a team's bill. */

@@ -618,10 +618,11 @@ const EVERY_SEASON_PAGE = { read: true, readMoney: true, email: true } as const;
  * the waiting counts). The bar is drawn ABOVE the frame, so on the server's first paint it has not heard from the frame
  * yet — it asks this, and draws the same placeholder the frame would (the name "Season" until the season loads), so the
  * club's name never shows and swaps. The frame asks this too, so the bar and the frame cannot disagree about whether an
- * address is a place, which tab it is, or who may open it (Rep teams: `canUse`, `useOrg().canOpen`, the one gate the rail and its layout ask; a
- * season: any of its pages open by the season gate, `seasonAccess`).
- * A record page one level down (Rename team URLs, a club schedule read from a season) and a team (its own place, session
- * B) are null: the bar keeps the club's name there and the page keeps its own heading.
+ * address is a place, which tab it is, or who may open it — every gate is in ONE object (`ClubPlaceAccess`), which the bar
+ * and every frame build the same way (`useClubPlaceAt`, `components/admin/AdminBarPlace.tsx`).
+ * The six places: Rep teams, a team, a season, Accounting, Families, Organization. A record page one level down (Rename
+ * team URLs, a team's History, a club schedule read from a season, a child's page) is null: the bar keeps the club's name
+ * there and the page keeps its own heading (Phase 3 moves those).
  * ⚠ Every place added here is a place the bar titles, so its frame must hand the bar its parts (`PlaceFrame`'s `place`).
  */
 export type ClubPlaceAt = {
@@ -633,22 +634,62 @@ export type ClubPlaceAt = {
   back?: { href: string; label: string };
   /** The small line's words after the club (the club itself is the bar's, desktop only, A4). */
   facts: readonly string[];
-  tabs: PlaceTab[];
+  tabs: readonly PlaceTab[];
   activeId: string;
   /** Names the tab row for a screen reader. */
   ariaLabel: string;
 };
 
-export function clubPlaceAt(pathname: string, base: string, { canUse, seasonAccess }: {
+/** Who may open which place — every gate `clubPlaceAt` asks, in one object. */
+export type ClubPlaceAccess = {
+  /** The rail's one gate, capability AND plan (`useOrg().canOpen`): Rep teams and a team, Accounting, Families. */
   canUse: (capability: Capability) => boolean;
   /** The season gate's answer for the member (`useHouseLeagueAccess(null)`), or null before it is known. */
   seasonAccess: Pick<HouseLeagueAccess, 'read' | 'readMoney' | 'email'> | null;
-}): ClubPlaceAt | null {
-  if (pathname.startsWith(`${base}/rep-teams`)) {
+  /** This person's Organization tabs (`orgTabs`), or null where Organization is no place (a one-team workspace). */
+  orgTabs: readonly PlaceTab[] | null;
+  /** Accounting's club ↔ team loop tabs: the plan carries Rep teams (the Accounting layout's `runsRepTeams`). */
+  runsRepTeams: boolean;
+  /** Accounting's Payouts tab: the club has connected payouts (`clubHasPayouts`, read by the admin layout's server). */
+  hasPayouts: boolean;
+  /** The Families layout's gate (`canOpenFamilies`): the module, and never a member limited to some team groups. */
+  opensFamilies: boolean;
+};
+
+/** Is this address the place's own, or under it (never a sibling that merely starts with the same letters)? */
+const isAtOrUnder = (pathname: string, href: string) => pathname === href || pathname.startsWith(`${href}/`);
+
+/** A place with no way up and no small line beyond the club: its name says what its tab row is. */
+const flatPlace = (key: string, title: string, tabs: readonly PlaceTab[], activeId: string | null): ClubPlaceAt | null =>
+  activeId ? { key, title, facts: [], tabs, activeId, ariaLabel: title } : null;
+
+export function clubPlaceAt(pathname: string, base: string, { canUse, seasonAccess, orgTabs, runsRepTeams, hasPayouts, opensFamilies }: ClubPlaceAccess): ClubPlaceAt | null {
+  // A team is a place of its own inside Rep teams (its five tabs, "← Teams"), so it is asked before Rep teams. Rep teams'
+  // own gate (its layout's): someone who cannot open Rep teams sees the refusal there, under the club's name.
+  const teams = `${base}/rep-teams/teams/`;
+  if (pathname.startsWith(teams)) {
+    const teamId = pathname.slice(teams.length).split('/')[0];
+    if (!teamId || !canUse(PROGRAM_CAPABILITY['rep-teams'])) return null;
+    const tabs = teamTabs(`${teams}${teamId}`);
+    const tab = placeTabFor(tabs, pathname);
+    // The team's History and one past season are record pages: no tab, so no place.
+    if (!tab) return null;
+    return {
+      key: `team:${teamId}`,
+      title: 'Team',
+      back: { href: `${base}/rep-teams`, label: 'Teams' },
+      // The group rides the desk line only and comes from the frame's read (`deskFacts`): on a phone "Rep teams · group"
+      // plus the chip measured too long (the drawing).
+      facts: ['Rep teams'],
+      tabs,
+      activeId: tab,
+      ariaLabel: 'Team pages',
+    };
+  }
+  if (isAtOrUnder(pathname, `${base}/rep-teams`)) {
     if (!canUse(PROGRAM_CAPABILITY['rep-teams'])) return null;
     const tabs = repTeamsTabs(base);
-    const tab = placeTabFor(tabs, pathname);
-    return tab ? { key: 'rep-teams', title: 'Rep teams', facts: [], tabs, activeId: tab, ariaLabel: 'Rep teams' } : null;
+    return flatPlace('rep-teams', 'Rep teams', tabs, placeTabFor(tabs, pathname));
   }
   const league = `${base}/house-league`;
   if (pathname.startsWith(`${league}/seasons/`)) {
@@ -672,6 +713,29 @@ export function clubPlaceAt(pathname: string, base: string, { canUse, seasonAcce
       activeId: tab,
       ariaLabel: 'Season pages',
     };
+  }
+  if (isAtOrUnder(pathname, `${base}/accounting`)) {
+    // The Accounting layout's gate (`canOpenModule`, capability AND plan): someone refused sees the refusal, not the tabs.
+    // No fiscal year in the bar (A6): the Year pill in each tab's toolbar keeps it.
+    if (!canUse(PROGRAM_CAPABILITY.accounting)) return null;
+    // An address that is no tab (no page, or the loop's addresses on a club with no rep teams) renders alone.
+    const tabs = accountingTabs(base, { runsRepTeams, hasPayouts });
+    return flatPlace('accounting', 'Accounting', tabs, placeTabFor(tabs, pathname));
+  }
+  if (isAtOrUnder(pathname, `${base}/families`)) {
+    // A child's page (Stage 14 S5) is a record page with its own header and way back (Phase 3).
+    // Its layout's gate: someone refused (incl. a member limited to some team groups) sees the refusal under the club's name.
+    if (!opensFamilies || isFamiliesChildPage(pathname, base)) return null;
+    // A family's address lights Families (a record OVER the tab, `views`); any other address under it lights Families too.
+    // The name is the place's own (the frame hands it on unchanged): `FAMILY_LIST_WORDS.title`, spelled here so the nav
+    // module does not load the Families word book for one word.
+    const tabs = familiesTabs(base);
+    return flatPlace('families', 'Families', tabs, placeTabFor(tabs, pathname) ?? 'families');
+  }
+  if (pathname.startsWith(`${base}/org/`) && orgTabs) {
+    // Only the person's own tabs: Plan & billing (`/org/billing`) is no tab (13i Ask 4 = B), nor is a page they cannot
+    // open — each renders alone with its own header. One tab draws no row (the bar's rule).
+    return flatPlace('org', 'Organization', orgTabs, placeTabFor(orgTabs, pathname));
   }
   return null;
 }

@@ -1,0 +1,439 @@
+<title>Club Places Bar Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box (the house walk frame). */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .facts { grid-template-columns: 1fr; } .facts dd { margin-bottom: 6px; } }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.call { font-size: 13px; color: var(--warn); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+.opts { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; }
+.opt { display: flex; gap: 8px; align-items: flex-start; font-size: 0.95em; }
+.opt input { margin-top: 3px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · Admin header bar · Phase 2 · §492</span>
+    <h1>Every club place names itself in the pinned bar, its tabs pinned inside it</h1>
+    <p class="sub">Written 2026-11-07. One purpose: the bar on Rep teams, a team, a season, Accounting, Families and Organization, on a computer and a phone, at rest and scrolled, as the owner and as people who see less.</p>
+  </header>
+  <section class="card"><h2>What this walk is for</h2><p>The six places in the club admin used to draw their title and tab row on the page, under a bar that only said the club’s name, and the tabs scrolled away. Now the bar names the place you are in (a team’s name, the season’s name, “Accounting”…), carries its small line of facts, and holds the place’s tabs. The page under it starts with its own content. Scrolling never moves the bar or the tabs, so you can switch tabs from the bottom of a long ledger.</p></section>
+  <section class="card"><h2>It passes when</h2><ul>
+    <li>Each place shows <strong>one</strong> title, in the bar. No place repeats its title or its tab row on the page.</li>
+    <li>The tabs stay pinned when you scroll, on a computer and on a phone, and the open tab is always the one underlined.</li>
+    <li>A team and a season have a way back (“← Teams”, “← Seasons”; the arrow alone on a phone).</li>
+    <li>On a phone, Accounting keeps its sideways tab row, and the open tab is in view without swiping.</li>
+    <li>Someone who sees less sees only their own tabs, never an empty row, and a place they cannot open keeps the club’s name in the bar.</li>
+    <li>Nothing on the page slides under the taller bar.</li>
+  </ul></section>
+  <section class="card"><h2>Not in this walk</h2><ul>
+    <li><strong>Calendar, Schedules and record pages</strong> (a team’s History, a child’s page, Rename team URLs, Plan &amp; billing). They keep their own heading on the page for now; Phase 3 moves them. Part F only checks they are not broken.</li>
+    <li><strong>The pages’ own content.</strong> Only the bar and where the page starts under it.</li>
+    <li><strong>The coaches portal.</strong> Untouched.</li>
+    <li><strong>The season switcher beside a season’s name.</strong> It only shows when a club has two seasons; the test club has one. It was built and measured in session A.</li>
+  </ul></section>
+  <section class="card"><h2>Known before the walk</h2><ul>
+    <li><strong>Accounting’s Payouts tab is there from the first moment.</strong> The test club has connected payouts, so its row has nine tabs, Payouts last.</li>
+    <li><strong>On a phone Families’ Duplicates tab has a record card whose email line runs a little past the card’s edge.</strong> That was there before this change; it is reported to the Families work, not to the bar.</li>
+    <li>On a phone, a team’s small line drops the team’s group (“Senior”) so it fits, as drawn. A computer shows it.</li>
+    <li>The bar never says which fiscal year Accounting is on. The Year pill in each tab’s toolbar keeps that (your ruling A6).</li>
+  </ul></section>
+  <section class="card"><h2>Sign in as</h2><dl class="facts">
+    <dt>The club’s owner</dt><dd><code>uat-club-owner@uat-rep-club.local</code>, password <code>UAT_REP_CLUB_OWNER_PASSWORD</code> in <code>.env.local</code>.</dd>
+    <dt>The treasurer</dt><dd><code>uat-club-treasurer@uat-rep-club.local</code>, password <code>UAT_REP_CLUB_TREASURER_PASSWORD</code>.</dd>
+    <dt>The registrar</dt><dd><code>uat-club-registrar@uat-rep-club.local</code>, password <code>UAT_REP_CLUB_REGISTRAR_PASSWORD</code>.</dd>
+    <dt>A team’s coach</dt><dd><code>uat-club-coach-15aaa@uat-rep-club.local</code>, password <code>UAT_REP_CLUB_COACH_PASSWORD</code>.</dd>
+    <dt>Sign-in page</dt><dd><code>http://localhost:3000/login</code>. Use a private window for each extra person, or sign out between them.</dd>
+    <dt>Keep it private</dt><dd>Dev-only accounts on the dev database. Never production accounts.</dd>
+  </dl></section>
+  <section class="card"><h2>Where and on what</h2><dl class="facts">
+    <dt>The club</dt><dd><strong>UAT Rep Club</strong>: <code>http://localhost:3000/uat-rep-club/admin</code></dd>
+    <dt>The team</dt><dd><strong>15U AAA</strong> (group Senior, 2026 Season · Live): <code>http://localhost:3000/uat-rep-club/admin/rep-teams/teams/638ac88f-e941-41e7-ad3e-50869b7cb379</code></dd>
+    <dt>The season</dt><dd><strong>2026 Fall House League</strong> (Registration open): <code>http://localhost:3000/uat-rep-club/admin/house-league/seasons/0e94976d-4f01-4f5f-b18c-3c4d8b10bb77</code></dd>
+    <dt>Screens</dt><dd>Your local server, restarted for this change on 2026-11-07. If a page shows “We can’t find that page” in the first minute, reload it once: that is the page compiling.</dd>
+    <dt>Computer</dt><dd>A browser window wider than 900px.</dd>
+    <dt>Phone</dt><dd>A real phone on your network, or the browser’s device view at about 390px wide.</dd>
+  </dl></section>
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy walk summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+</main>
+
+<script>
+(function () {
+  var KEY = "admin-header-bar-phase2-walk-v1";
+  var TITLE = "Admin header bar · Phase 2 walk §492 · Every club place names itself in the bar, tabs pinned (2026-11-07)";
+  var PARTS = [
+ {
+  "id": "A",
+  "title": "Rep teams and a team, on a computer",
+  "steps": [
+   {
+    "who": "Club owner · computer",
+    "do": "Click <strong>Rep teams</strong> in the sidebar.",
+    "see": "The bar reads <strong>Rep teams</strong>, with <strong>UAT Rep Club</strong> on the small line under it, and the six tabs (Teams · Assistant coaches · Document templates · Shared library · Past seasons · Bring in a coach’s team) inside the bar, <strong>Teams</strong> underlined. No “Rep teams” heading or tab row on the page: it starts with the teams list."
+   },
+   {
+    "who": "Club owner · computer",
+    "do": "Open <strong>15U AAA</strong> (or the team link above).",
+    "see": "The bar changes to the team: <strong>← Teams</strong> at the left, the name <strong>15U AAA</strong>, and the small line <strong>UAT Rep Club · Rep teams · Senior</strong> with the <strong>2026 Season · Live</strong> chip. The team’s five tabs (Team page · Roster · Schedule · Tryouts · Coaches) replace Rep teams’ six. Nothing repeats on the page.",
+    "options": [
+     "As described",
+     "The team’s name or tabs also show on the page",
+     "The small line is wrong or missing (notes)",
+     "Something else (notes)"
+    ]
+   },
+   {
+    "who": "Club owner · computer",
+    "do": "Click <strong>Roster</strong> in the bar, scroll to the bottom of the roster, then click <strong>Schedule</strong> in the bar without scrolling back up.",
+    "see": "The bar and its tabs stay at the top the whole time; the tab you click opens and becomes the underlined one."
+   },
+   {
+    "who": "Club owner · computer",
+    "do": "Click <strong>← Teams</strong>.",
+    "see": "Back on Rep teams’ Teams tab, the bar reads <strong>Rep teams</strong> again."
+   }
+  ]
+ },
+ {
+  "id": "B",
+  "title": "A season, on a computer",
+  "steps": [
+   {
+    "who": "Club owner · computer",
+    "do": "Open <strong>2026 Fall House League</strong> (the season link above).",
+    "see": "The bar: <strong>← Seasons</strong>, the name <strong>2026 Fall House League</strong>, the small line <strong>UAT Rep Club · House league</strong> and the <strong>Registration open</strong> chip, then the seven tabs, Registrations carrying its waiting count."
+   },
+   {
+    "who": "Club owner · computer",
+    "do": "Open <strong>Teams &amp; draft</strong>, scroll down the draft board.",
+    "see": "The player pool sticks just under the bar’s tabs, never under them.",
+    "options": [
+     "Sticks just under the tabs",
+     "It slides under the bar (notes)"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "C",
+  "title": "Accounting, Families and Organization, on a computer",
+  "steps": [
+   {
+    "who": "Club owner · computer",
+    "do": "Click <strong>Accounting</strong> in the sidebar.",
+    "see": "The bar reads <strong>Accounting</strong> with <strong>UAT Rep Club</strong> under it and nine tabs inside it, from Overview to Payouts. No fiscal year in the bar; the Year pill stays in the page’s toolbar.",
+    "options": [
+     "As described",
+     "A tab is missing, or Payouts appears a moment late",
+     "Something else (notes)"
+    ]
+   },
+   {
+    "who": "Club owner · computer",
+    "do": "Open <strong>Teams</strong>, then a team’s account (any row).",
+    "see": "The bar still reads <strong>Accounting</strong> with <strong>Teams</strong> underlined, no back arrow. A team’s account is a view of the Teams tab, not a page of its own (your Oct 16 ruling)."
+   },
+   {
+    "who": "Club owner · computer",
+    "do": "Open <strong>Ledger</strong>, scroll to the bottom, then click <strong>Budget vs. Actual</strong> in the bar.",
+    "see": "The tabs were in reach at the bottom of the ledger; the report opens with its tab underlined."
+   },
+   {
+    "who": "Club owner · computer",
+    "do": "Click <strong>Families</strong> in the sidebar, then <strong>Duplicates</strong>.",
+    "see": "The bar reads <strong>Families</strong>, with three tabs (Families · Duplicates · Emails); Duplicates carries its amber count. No “Families” heading on the page."
+   },
+   {
+    "who": "Club owner · computer",
+    "do": "Click <strong>Organization</strong> in the sidebar.",
+    "see": "The bar reads <strong>Organization</strong> with five tabs: Members · Audit log · Settings · Venue library · PDF settings. <strong>Plan &amp; billing is not one of them</strong> (it stays in the sidebar’s foot)."
+   }
+  ]
+ },
+ {
+  "id": "D",
+  "title": "The same places on a phone",
+  "steps": [
+   {
+    "who": "Club owner · phone",
+    "do": "Open <strong>Rep teams</strong>, then <strong>15U AAA</strong>.",
+    "see": "Rep teams: one line in the bar (no club), the tabs under it. The team: a square <strong>←</strong> at the left, <strong>15U AAA</strong>, and a second line <strong>Rep teams</strong> · <strong>2026 Season · Live</strong> (the group is left off). The tabs row scrolls sideways with an arrow where tabs are hidden."
+   },
+   {
+    "who": "Club owner · phone",
+    "do": "On the team, scroll the page down to the end and back up.",
+    "see": "The bar and the tabs hold still at the top. The page’s last item clears the bottom bar.",
+    "options": [
+     "Holds still, nothing hidden",
+     "The bar or tabs move (notes)",
+     "Something ends up under a bar (notes)"
+    ]
+   },
+   {
+    "who": "Club owner · phone",
+    "do": "Open <strong>Accounting</strong> from the bottom bar, then open <strong>Budget vs. Actual</strong> by swiping the tab row and tapping it.",
+    "see": "About five tabs show at a time; the row is the same sideways row as before, now pinned. After the tap, <strong>Budget vs. Actual</strong> is underlined and in view without another swipe.",
+    "options": [
+     "As described",
+     "The open tab is off-screen",
+     "Something else (notes)"
+    ]
+   },
+   {
+    "who": "Club owner · phone",
+    "do": "Look closely at the tab row’s left and right edge arrows on Accounting.",
+    "see": "The arrows fade into the white bar cleanly, with no cream patch beside them."
+   },
+   {
+    "who": "Club owner · phone",
+    "do": "Open the season, then <strong>Families</strong> and <strong>Organization</strong> (from More).",
+    "see": "Each names itself in the bar with its tabs pinned. The season shows the square <strong>←</strong>, its name, and a second line <strong>House league</strong> · <strong>Registration open</strong>."
+   }
+  ]
+ },
+ {
+  "id": "E",
+  "title": "People who see less",
+  "steps": [
+   {
+    "who": "Treasurer · computer",
+    "do": "Sign in as the treasurer and open <strong>Accounting</strong>.",
+    "see": "The same nine tabs as the owner, <strong>Accounting</strong> in the bar."
+   },
+   {
+    "who": "Treasurer · computer",
+    "do": "From Accounting’s Overview, open the season’s money (or go to the season link above and add <code>/money</code>).",
+    "see": "The bar shows <strong>← Seasons</strong> and the season’s name, <strong>2026 Fall House League</strong>, after a moment, and <strong>no tab row</strong> (Money is the treasurer’s only season page). The bar keeps its bottom space; no empty strip.",
+    "options": [
+     "As described",
+     "The bar stays on “Season”",
+     "An empty tab strip shows",
+     "Something else (notes)"
+    ]
+   },
+   {
+    "who": "Treasurer · computer",
+    "do": "Open <strong>Organization</strong>.",
+    "see": "Two tabs: <strong>Members · Venue library</strong>."
+   },
+   {
+    "who": "Registrar · computer",
+    "do": "Sign in as the registrar and open <strong>Organization</strong>.",
+    "see": "Two tabs: <strong>The board · Venue library</strong>. The board lists who runs the club."
+   },
+   {
+    "who": "Registrar · computer",
+    "do": "Go to <code>http://localhost:3000/uat-rep-club/admin/accounting</code> and then <code>…/admin/families</code> by typing the addresses.",
+    "see": "Each shows the “not yours” screen, and the bar keeps the club’s name, <strong>UAT Rep Club</strong>, with no tabs.",
+    "options": [
+     "Club’s name, no tabs",
+     "The bar names the place or shows its tabs",
+     "Something else (notes)"
+    ]
+   },
+   {
+    "who": "A team’s coach · computer",
+    "do": "Sign in as the 15U AAA coach and open the admin’s <strong>Organization</strong>.",
+    "see": "Two tabs: <strong>The board · Venue library</strong>."
+   }
+  ]
+ },
+ {
+  "id": "F",
+  "title": "The pages that keep their own heading",
+  "steps": [
+   {
+    "who": "Club owner · computer",
+    "do": "On 15U AAA’s Team page, open its <strong>History</strong>.",
+    "see": "The bar goes back to <strong>UAT Rep Club</strong>; the History page keeps its own “← 15U AAA” and heading, as before."
+   },
+   {
+    "who": "Club owner · computer",
+    "do": "Open <strong>Plan &amp; billing</strong> from the sidebar’s foot, then a child from a family in Families.",
+    "see": "Both keep their own heading under the club’s name in the bar, as before. (Phase 3 moves them.)"
+   }
+  ]
+ },
+ {
+  "id": "G",
+  "title": "Your call: a wide computer screen",
+  "steps": [
+   {
+    "who": "You",
+    "do": "Make the browser as wide as your screen allows (1920px if you have it) and open Rep teams. The bar runs the full width of the page column, its name and tabs at the left edge; the page’s content is a centred column no wider than 1200px. At 1280 the two line up exactly; at 1920 the bar’s name and tabs start about 200px left of the content they belong to.",
+    "see": "Pick one. The build ships the first.",
+    "options": [
+     "Keep it: the bar spans the full width (as built)",
+     "Line the bar’s name and tabs up with the content column",
+     "Something else (notes)"
+    ]
+   }
+  ]
+ }
+];
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var steps = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+      if (s.call) t.appendChild(el('span', 'call', s.call));
+      var rec = { part: p.id, step: id, boxes: [], options: s.options || null };
+      if (s.options) {
+        // One box per answer: the tick IS the answer, and the summary prints which one.
+        var opts = el('span', 'opts');
+        s.options.forEach(function (label, k) {
+          var oid = id + String.fromCharCode(97 + k);
+          var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + oid; cb.checked = !!state.ticks[oid];
+          cb.addEventListener('change', function () { state.ticks[oid] = cb.checked; save(); refresh(); });
+          rec.boxes.push({ cb: cb, label: label });
+          var o = el('label', 'opt'); o.appendChild(cb); o.appendChild(el('span', null, label)); opts.appendChild(o);
+        });
+        t.appendChild(opts);
+        var row = el('div', 'step'); row.appendChild(el('span', null, '')); row.appendChild(t); body.appendChild(row);
+      } else {
+        var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+        cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+        rec.boxes.push({ cb: cb, label: null });
+        var row2 = el('label', 'step'); row2.appendChild(cb); row2.appendChild(t); body.appendChild(row2);
+      }
+      steps.push(rec);
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function isDone(r) { return r.boxes.some(function (b) { return b.cb.checked; }); }
+  function doneSteps(partId) { return steps.filter(function (r) { return (!partId || r.part === partId) && isDone(r); }); }
+  var totalSteps = steps.length;
+
+  function refresh() {
+    PARTS.forEach(function (p) {
+      var n = doneSteps(p.id).length;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + p.steps.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    var done = doneSteps(null).length;
+    document.getElementById('total').textContent = done + ' of ' + totalSteps + ' checked';
+    document.getElementById('barfill').style.width = (totalSteps ? Math.round(done * 100 / totalSteps) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [TITLE, 'Checked ' + doneSteps(null).length + ' of ' + totalSteps + ' steps'];
+    PARTS.forEach(function (p) {
+      var ticked = doneSteps(p.id);
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + p.steps.length
+        + (ticked.length ? ' (' + ticked.map(function (r) { return r.step; }).join(', ') + ')' : ''));
+      ticked.filter(function (r) { return r.options; }).forEach(function (r) {
+        lines.push('  ' + r.step + ': ' + r.boxes.filter(function (b) { return b.cb.checked; }).map(function (b) { return b.label; }).join(' + '));
+      });
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    steps.forEach(function (r) { r.boxes.forEach(function (b) { b.cb.checked = false; }); });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>
