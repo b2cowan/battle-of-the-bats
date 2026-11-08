@@ -36,7 +36,7 @@ address or postal code in `sales.csv`. Add a total that adds price and tax, test
 
 ## Session 1 · the console side (Parts 4a, 4b, 4c)
 
-> **BUILT 2026-11-07, commit owed** (see the stage prompt's Progress block; walk A = Owner QA Ledger §487). Read-back for the
+> **BUILT 2026-11-07, committed `88365b082` 2026-11-07** (see the stage prompt's Progress block; walk A = Owner QA Ledger §487). Read-back for the
 > next session: `lib/renewals.ts` (rules + words + export rows), `lib/renewals-read.ts`, `app/platform-admin/renewals/`,
 > `app/api/platform-admin/renewals/export/route.ts`. F1 chose "a running `comp_period` override" over "has a Stripe subscription":
 > a Coaches Portal paid through a club add-on has its own org row's subscription NULLed (DATA_DICTIONARY gotcha 2), so the

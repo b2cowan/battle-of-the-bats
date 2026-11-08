@@ -125,7 +125,7 @@ that is the owner's dashboard work.
       rows open the lists; the accountant package gains sales.csv + credit-notes.csv (with Session D); F1 and F2 fixed in Part 4;
       unpaid bills from our own record. Build prompt: `PLANS_PRICING_STAGE2_PART4_BUILD_PROMPT.md` (two sessions; the Bookkeeping
       half's wait is over: GST/HST Stage 4b Session B committed `035f5e965` 2026-11-07).
-      **Session 1 (4a–4c) BUILT 2026-11-07, commit owed:** Customers › Renewals (Coming up + Unpaid bills, the export and its two
+      **Session 1 (4a–4c) BUILT 2026-11-07, committed `88365b082` 2026-11-07:** Customers › Renewals (Coming up + Unpaid bills, the export and its two
       registry entries, the `export_renewals` audit entry), Today's Past due and Trials ending rows open it for its readers, F2 (one
       `isTrialEnding` rule for Today, Business numbers and Clubs & portals) and F1 (comped clubs left out of the monthly figure, "· N
       comped clubs not counted"). No migration, no Stripe call. 35 tests (`renewals.test.ts`); five guards updated (menu ×2, audit
