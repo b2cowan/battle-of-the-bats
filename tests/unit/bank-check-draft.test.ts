@@ -1,8 +1,8 @@
 /**
- * THE BANK CHECK'S WORKING DRAFT (WD1; plan docs/projects/active/BANK_CHECK_WORKING_DRAFT_PLAN.md, owner asks 1A–6A
+ * THE BANK CHECK'S WORKING DRAFT (WD1 + WD2; plan docs/projects/active/BANK_CHECK_WORKING_DRAFT_PLAN.md, owner asks 1A–6A
  * 2026-11-07). The pure helpers over an in-memory store, then the guards: the draft touches browser storage only, never a
- * bank route; the club card wires it as ruled (restore at once, figures never restored, Start over, Save clears it,
- * focus re-reads, "+ Add entry" opens the Ledger's own window blank); sign-out clears it.
+ * bank route; the club card and the coach card wire it as ruled (restore at once, figures never restored, Start over, Save
+ * clears it, focus re-reads, "+ Add entry" / "+ Record" open the Ledger's own window blank); sign-out clears it.
  */
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
@@ -83,6 +83,32 @@ describe('3 · restore, and the 14-day idle rule (ask 4 = A)', () => {
       date: '2026-10-31', balance: '5402.10', marked: ['entry:a', 'entry:b'], started, savedOn: '2026-11-05', savedAt: NOW - 2 * DAY,
     });
   });
+  it('the cash (the coach card\'s, WD2) is kept and read back; a card without the field stores what WD1 stored', () => {
+    const s = memoryStore();
+    writeDraft(s, KEY, work({ cash: '120.00' }), ...at());
+    assert.equal(readDraft(s, KEY, NOW)?.cash, '120.00');
+    writeDraft(s, KEY, work(), ...at());
+    assert.equal('cash' in JSON.parse(s.map.get(KEY)!), false, 'no cash typed, no cash key: the club\'s draft is unchanged');
+    writeDraft(s, KEY, work({ cash: '  ' }), ...at());
+    assert.equal('cash' in JSON.parse(s.map.get(KEY)!), false);
+  });
+  it('a WD1 draft (no cash) still reads, as it was; the key version stays v1', () => {
+    const s = memoryStore();
+    s.setItem(KEY, JSON.stringify({ date: '2026-10-31', balance: '5402.10', marked: ['entry:a'], started: null, savedOn: '2026-11-06', savedAt: NOW - DAY }));
+    assert.deepEqual(readDraft(s, KEY, NOW), {
+      date: '2026-10-31', balance: '5402.10', marked: ['entry:a'], started: null, savedOn: '2026-11-06', savedAt: NOW - DAY,
+    });
+    assert.ok(DRAFT_PREFIX.endsWith(':v1:'));
+  });
+  it('cash typed alone is worth keeping, written and read back', () => {
+    assert.equal(isWorthKeeping({ balance: '', cash: '40', marked: [] }), true);
+    assert.equal(isWorthKeeping({ balance: '', cash: ' ', marked: [] }), false);
+    const s = memoryStore();
+    assert.equal(writeDraft(s, KEY, work({ balance: '', cash: '40' }), ...at()), true);
+    assert.deepEqual(readDraft(s, KEY, NOW), { ...work({ balance: '', cash: '40' }), savedOn: '2026-11-07', savedAt: NOW });
+    writeDraft(s, KEY, work({ balance: '', cash: '' }), ...at());
+    assert.equal(s.map.size, 0, 'the cash cleared too: the draft goes');
+  });
   it('a draft idle more than 14 days is gone, and removed; at 14 days it stays', () => {
     const s = memoryStore();
     writeDraft(s, KEY, work(), ...at(NOW - 14 * DAY));
@@ -105,7 +131,8 @@ describe('3 · restore, and the 14-day idle rule (ask 4 = A)', () => {
   it('a stored value that is not a draft is dropped, never trusted', () => {
     const s = memoryStore();
     for (const bad of ['{', '[]', JSON.stringify({ date: 'Oct 31', balance: '1', marked: [], started: null, savedOn: '2026-11-07', savedAt: NOW }),
-      JSON.stringify({ date: '2026-10-31', balance: '1', marked: [3], started: null, savedOn: '2026-11-07', savedAt: NOW })]) {
+      JSON.stringify({ date: '2026-10-31', balance: '1', marked: [3], started: null, savedOn: '2026-11-07', savedAt: NOW }),
+      JSON.stringify({ date: '2026-10-31', balance: '1', cash: 40, marked: [], started: null, savedOn: '2026-11-07', savedAt: NOW })]) {
       s.setItem(KEY, bad);
       assert.equal(readDraft(s, KEY, NOW), null, bad);
     }
@@ -157,6 +184,11 @@ describe('6 · marks are validated against what the books offer now', () => {
     assert.deepEqual([...offered.keys()].sort(), ['entry:a', 'entry:b', 'entry:old']);
     assert.equal(offeredItems({ ...figure, onItsWay: { state: 'not_counted' } }).has('entry:pay'), true,
       'not counted, so Find lists it like any line');
+  });
+  it('the coach\'s figure: no online payments (no onItsWay), and last season\'s lines Find lists are offered too', () => {
+    const coach = { suspects: { lines: [line('entry:a', 22500)] }, lastSeason: { lines: [line('entry:x', 4000), line('entry:a', 22500)] }, stillWaiting: [still] };
+    assert.deepEqual([...offeredItems(coach).keys()], ['entry:a', 'entry:x', 'entry:old'], 'a cheque across the rollover stays marked');
+    assert.deepEqual([...offeredItems({ ...coach, lastSeason: null }).keys()], ['entry:a', 'entry:old']);
   });
   it('a line becomes an item with its own key, figures and words (Find marks with the same helper)', () => {
     assert.deepEqual(itemOfLine(line('entry:a', 22500)), { key: 'entry:a', date: '2026-10-20', direction: 'out', amountCents: 22500, label: 'Line entry:a' });
@@ -271,12 +303,78 @@ describe('10 · sign-out clears every draft in this browser', () => {
 });
 
 describe('11 · the words (plan §4b)', () => {
-  it('the club card\'s settled strings; the coach card\'s gap link is unchanged until WD2', () => {
+  it('the settled strings: the club\'s "entry", the coach\'s "record" (WD2 renamed the coach\'s gap link)', () => {
     assert.equal(W.addEntry, 'Add entry');
     assert.equal(W.addMissingEntry, 'Add the missing entry');
-    assert.equal(W.addMissing, 'Add the missing line');
+    assert.equal(W.record, 'Record');
+    assert.equal(W.recordMissingAmount, 'Record the missing amount');
+    assert.equal('addMissing' in W, false, '"Add the missing line" is retired in both portals');
     assert.equal(W.draftPickedUpOn('Nov 5, 2026'), 'Picked up where you left off · last worked on Nov 5, 2026');
     assert.equal(W.startedOffBy('$412.00'), 'Started off by $412.00');
     assert.equal(W.draftKept, 'Kept in this browser only, until you save this check.');
+  });
+});
+
+const COACH = 'components/coaches/bank/CoachBankCheck.tsx';
+const COACH_VIEW = 'components/coaches/bank/CoachBankView.tsx';
+const COACH_FIND = 'components/coaches/bank/CoachBankFind.tsx';
+const LEDGER = 'app/[orgSlug]/coaches/teams/[teamId]/accounting/expenses/panel.tsx';
+
+describe('12 · the coach card wires it as the club card does (WD2)', () => {
+  const card = readCode(COACH);
+  it('reaches storage only through the helper, and no draft write sits beside a bank call', () => {
+    assert.doesNotMatch(card, /localStorage|sessionStorage/);
+    for (const call of card.match(/(writeDraft|clearDraft|readDraft)\([^)]*\)/g) ?? []) assert.doesNotMatch(call, /saveTeamCheck|readTeamBank|fetch/);
+  });
+  it('the draft is this coach\'s, on this team; read only once the person is known; the view re-keys on the person', () => {
+    assert.match(card, /const draftAt = personId \? draftKey\(\{ club: orgSlug, account: teamId, person: personId \}\) : null;/);
+    assert.match(card, /draftAt && !againDate \? readDraft\(browserDraftStore\(\), draftAt, Date\.now\(\)\)/);
+    const view = readCode(COACH_VIEW);
+    assert.match(view, /const personId = useOrg\(\)\.user\?\.id \?\? null;/);
+    assert.match(view, /<CoachBankCheck key=\{`\$\{teamId\}:\$\{again \? `again-\$\{again\.n\}` : 'check'\}:\$\{personId \?\? ''\}`\}/);
+  });
+  it('keeps the cash with the work, and figures are never restored', () => {
+    assert.match(card, /const \[cash, setCash\] = useState\(restored\?\.cash \?\? ''\);/);
+    assert.match(card, /const draft: DraftContent = \{ date: ISO_DAY\.test\(date\) \? date : today, balance, cash, marked: pending \?\? \[\.\.\.marked\.keys\(\)\], started: anchor \};/);
+    assert.match(card, /!figure\.refused && pending === null \? figure : null/);
+    assert.match(card, /if \(figure && figure !== checkedFor && figure\.date === date && !figure\.refused\) \{\s*setCheckedFor\(figure\);\s*const keys = pending \?\? \[\.\.\.marked\.keys\(\)\];/);
+    assert.match(card, /keepOffered\(keys, offeredItems\(figure\)\)/, 'the shared helper, on the coach\'s own figure, no cast');
+    assert.match(card, /<p className=\{`\$\{b\.callout\} \$\{b\.droppedNote\}`\} role="status">\{W\.draftDropped\(droppedMarks\)\}<\/p>/);
+    assert.match(card, /const hasDraft = canKeep && worthKeeping;/);
+    assert.match(card, /\{hasDraft && <p className=\{`\$\{styles\.formHint\} \$\{b\.note\}`\}>\{W\.draftKept\}<\/p>\}/);
+  });
+  it('Save clears it only once the check saved; Start over clears it at once; the restore line names an earlier day', () => {
+    const save = functionBody(card, 'save');
+    assert.ok(save.indexOf('startOver()') > save.indexOf('if (!r.ok)'), 'after the refusal branch returns');
+    assert.match(functionBody(card, 'startOver'), /if \(draftAt\) clearDraft\(browserDraftStore\(\), draftAt\);/);
+    assert.doesNotMatch(functionBody(card, 'startOver'), /touch\(\)|onTouched/, 'a save\'s notice survives the fresh card');
+    assert.match(card, /restoredOn < today \? W\.draftPickedUpOn\(dayYear\(restoredOn\)\) : W\.draftPickedUp/);
+    assert.match(card, /onClick=\{startOver\}>\{W\.startOver\}<\/button>/);
+  });
+  it('reads on focus only while the Ledger is on screen, debounced, and nothing polls', () => {
+    const at = card.indexOf("window.addEventListener('focus', soon);");
+    const effect = card.slice(card.lastIndexOf('useEffect(() => {', at), at);
+    assert.match(effect, /^useEffect\(\(\) => \{\s*if \(!active\) return;/, 'a hidden card never reads');
+    assert.match(card, /document\.addEventListener\('visibilitychange', soon\);/);
+    assert.match(card, /window\.setTimeout\(\(\) => setAgain\(n => n \+ 1\), DEBOUNCE_MS\)/);
+    // The same effect closes on `[active]`: it re-subscribes when the Ledger shows, never reads while hidden. (The day's
+    // own read gates on `active` too: pinned in bank-coach-view-guard.)
+    const close = card.indexOf('}, [active]);', at);
+    assert.ok(close > at && !card.slice(at, close).includes('useEffect('), 'the listeners\' own effect ends on [active]');
+    assert.doesNotMatch(card, /setInterval/);
+  });
+  it('"+ Record" is always drawn, the word on a phone too, and opens the Record money window blank but for the date', () => {
+    assert.match(card, /className=\{`\$\{styles\.btnSecondary\} \$\{b\.recordBtn\}`\} disabled=\{!canRecord\}/);
+    assert.match(card, /<Plus size=\{15\} aria-hidden \/>\{W\.record\}/);
+    assert.match(card, /const canRecord = !!onRecord && !!fresh && fresh\.booksCents !== null && !busy;/);
+    assert.match(readCode(LEDGER), /onRecord=\{canWriteMoney \? date => openConversationFrom\(\{ prefill: \{ receivedDate: date, paidDate: date \} \}\) : undefined\}/,
+      'no branch, no amount: the coach answers what happened');
+  });
+  it('Find marks with the shared line-to-item helper and says "Record the missing amount"', () => {
+    const find = readCode(COACH_FIND);
+    assert.match(find, /import \{ itemOfLine \} from '@\/lib\/bank-check-draft';/);
+    assert.doesNotMatch(find, /const itemOf\b/);
+    assert.equal((find.match(/\{W\.recordMissingAmount\}/g) ?? []).length, 2, 'the link and the callout button');
+    assert.doesNotMatch(find, /W\.addMissing\b/);
   });
 });

@@ -5,13 +5,14 @@
  * the card as they left it.
  * ⚖ ASK 1 = A: THIS BROWSER ONLY, per club + account + signed-in person. No server draft, no route, no migration. Pure
  *   helpers over an injected store (`DraftStore`), so they test without a browser; `browserDraftStore()` hands the real one.
- * ⚖ WHAT A DRAFT HOLDS: the date, the typed balance, the KEYS of the marked lines and the "Started off by" anchor. Never a
+ * ⚖ WHAT A DRAFT HOLDS: the date, the typed balance, the cash not deposited yet (the coach card's; WD2, optional, so a
+ *   WD1 draft still reads), the KEYS of the marked lines and the "Started off by" anchor. Never a
  *   line's figures: a mark comes back only as a line the books offer NOW, with the books' own amount (`keepOffered`), and
  *   the day's figure is always re-read. The server's `bad_item` refusal on Save stays the backstop.
- * ⚖ WRITTEN ONLY WHEN WORTH KEEPING (a balance typed or a line marked); an empty card removes it. Removed on Save, Start
+ * ⚖ WRITTEN ONLY WHEN WORTH KEEPING (a balance or cash typed, or a line marked); an empty card removes it. Removed on Save, Start
  *   over, 14 days idle (ask 4 = A) and at sign-out (`signOut()` in lib/auth, beside the support console's Recent).
  * ⚖ EVERY STORAGE TOUCH IS WRAPPED: a private window, blocked or full storage just means no draft. The card works without.
- * WD2 (the coach card) reuses these helpers; nothing here knows a portal.
+ * WD2: the coach card reuses these helpers (account = the team); nothing here knows a portal.
  */
 import type { BankLine, WaitingItem } from './bank-check';
 
@@ -30,6 +31,8 @@ export interface StartedAnchor { date: string; balance: string; differenceCents:
 export interface BankCheckDraft {
   date: string;
   balance: string;
+  /** The cash not deposited yet, as typed: the coach card's field, stored only when typed (absent in a WD1 draft). */
+  cash?: string;
   /** The marked lines' keys, in the order marked. */
   marked: string[];
   started: StartedAnchor | null;
@@ -60,9 +63,9 @@ export function browserDraftStore(): DraftStore | null {
   }
 }
 
-/** Something worth keeping: a balance typed, or a line marked. Never an empty card. */
-export const isWorthKeeping = (d: Pick<DraftContent, 'balance' | 'marked'>): boolean =>
-  d.balance.trim() !== '' || d.marked.length > 0;
+/** Something worth keeping: a balance or cash typed, or a line marked. Never an empty card. */
+export const isWorthKeeping = (d: Pick<DraftContent, 'balance' | 'cash' | 'marked'>): boolean =>
+  d.balance.trim() !== '' || (d.cash ?? '').trim() !== '' || d.marked.length > 0;
 
 function isAnchor(v: unknown): v is StartedAnchor {
   const a = v as StartedAnchor;
@@ -78,13 +81,15 @@ export function readDraft(store: DraftStore | null, key: string, now: number): B
     if (!raw) return null;
     const v = JSON.parse(raw) as Partial<BankCheckDraft>;
     const ok = !!v && typeof v === 'object' && typeof v.date === 'string' && ISO_DAY.test(v.date)
-      && typeof v.balance === 'string' && Array.isArray(v.marked) && v.marked.every(k => typeof k === 'string')
+      && typeof v.balance === 'string' && (v.cash === undefined || typeof v.cash === 'string') && Array.isArray(v.marked) && v.marked.every(k => typeof k === 'string')
       && typeof v.savedOn === 'string' && ISO_DAY.test(v.savedOn) && typeof v.savedAt === 'number'
       && (v.started === null || isAnchor(v.started));
     if (!ok) { store.removeItem(key); return null; }
     const d = v as BankCheckDraft;
     if (now - d.savedAt > IDLE_MS || !isWorthKeeping(d)) { store.removeItem(key); return null; }
-    return { date: d.date, balance: d.balance, marked: [...d.marked], started: d.started, savedOn: d.savedOn, savedAt: d.savedAt };
+    return {
+      date: d.date, balance: d.balance, ...(d.cash ? { cash: d.cash } : {}), marked: [...d.marked], started: d.started, savedOn: d.savedOn, savedAt: d.savedAt,
+    };
   } catch {
     return null;
   }
@@ -111,7 +116,10 @@ export function writeDraft(store: DraftStore | null, key: string, d: DraftConten
   if (!store) return false;
   try {
     if (!isWorthKeeping(d)) { store.removeItem(key); return false; }
-    const out: BankCheckDraft = { date: d.date, balance: d.balance, marked: [...d.marked], started: d.started, savedOn: today, savedAt: now };
+    // The cash only when typed: a card without the field stores what WD1 stored.
+    const out: BankCheckDraft = {
+      date: d.date, balance: d.balance, ...(d.cash?.trim() ? { cash: d.cash } : {}), marked: [...d.marked], started: d.started, savedOn: today, savedAt: now,
+    };
     store.setItem(key, JSON.stringify(out));
     return true;
   } catch {
@@ -154,18 +162,20 @@ export const itemOfLine = (l: BankLine): WaitingItem =>
 
 /**
  * What a mark may be on this day's figure: a line Find lists (less online payments on their way, which are counted above
- * and never markable), and the items "Still waiting?" asks about. The server's own rule on Save is the same set.
+ * and never markable), the earlier season's lines Find lists under their own name (a cheque across a rollover), and the
+ * items "Still waiting?" asks about. The server's own rule on Save is the same set. A figure with no online payments
+ * (the coach's team) has no `onItsWay`; one with no earlier season's lines has no `lastSeason`.
  */
 export function offeredItems(figure: {
   suspects: { lines: readonly BankLine[] };
+  lastSeason?: { lines: readonly BankLine[] } | null;
   stillWaiting: readonly WaitingItem[];
-  onItsWay: { state: string; lines?: readonly { key: string }[] };
+  onItsWay?: { state: string; lines?: readonly { key: string }[] };
 }): Map<string, WaitingItem> {
-  const onWay = new Set(figure.onItsWay.state === 'counted' ? (figure.onItsWay.lines ?? []).map(l => l.key) : []);
+  const onWay = new Set(figure.onItsWay?.state === 'counted' ? (figure.onItsWay.lines ?? []).map(l => l.key) : []);
   const out = new Map<string, WaitingItem>();
-  for (const l of figure.suspects.lines) {
-    if (onWay.has(l.key)) continue;
-    out.set(l.key, itemOfLine(l));
+  for (const lines of [figure.suspects.lines, figure.lastSeason?.lines ?? []]) {
+    for (const l of lines) if (!onWay.has(l.key) && !out.has(l.key)) out.set(l.key, itemOfLine(l));
   }
   for (const w of figure.stillWaiting) if (!out.has(w.key)) out.set(w.key, w);
   return out;

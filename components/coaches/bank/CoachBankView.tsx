@@ -11,7 +11,8 @@
  *   (the team layout's season gate sends it to the closed-season page).
  * ⚖ D1: the club never sees any of this (tests/unit/bank-coach-routes-guard.test.ts §3).
  * Mounted by the Ledger panel, which stays mounted hidden under the Money hub: it reads only while it is on screen
- * (`active`), and again on the money revision (a line added through "Add the missing line", or anywhere in Money).
+ * (`active`), and again on the money revision (a line added through "+ Record" or "Record the missing amount", or anywhere
+ * in Money). The check's working draft is the signed-in coach's (WD2): the card re-keys when the person arrives.
  */
 import { useEffect, useRef, useState } from 'react';
 import { ChevronRight } from 'lucide-react';
@@ -23,6 +24,7 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { useMoneyRevision } from '@/lib/coach-money-refresh';
 import { useRoomAddress } from '@/components/coaches/useRoomAddress';
+import { useOrg } from '@/lib/org-context';
 import { BANK_WORDS as W } from '@/lib/bank-tab-words';
 import { cents, dayYear } from '@/lib/bank-screen';
 import { readTeamBank, type TeamBank, type TeamCheck } from './coachBank';
@@ -31,13 +33,15 @@ import CoachBankWindow from './CoachBankWindow';
 import { DotPart } from './CoachBankFind';
 import b from './CoachBank.module.css';
 
-export default function CoachBankView({ orgSlug, teamId, active = true, onAddLine }: {
+export default function CoachBankView({ orgSlug, teamId, active = true, onAddLine, onRecord }: {
   orgSlug: string;
   teamId: string;
   /** The Ledger is on screen (the hub keeps it mounted hidden). */
   active?: boolean;
-  /** "Add the missing line": the Ledger's own Record money window, filled with the gap (money write only). */
+  /** "Record the missing amount": the Ledger's own Record money window, filled with the gap (money write only). */
   onAddLine?: (line: MissingLine) => void;
+  /** "+ Record": the same window, blank but for the check's date (money write only). */
+  onRecord?: (date: string) => void;
 }) {
   const [view, setView] = useState<TeamBank | null>(null);
   const [error, setError] = useState('');
@@ -47,6 +51,8 @@ export default function CoachBankView({ orgSlug, teamId, active = true, onAddLin
   const [again, setAgain] = useState<{ date: string; n: number } | null>(null);
   const revision = useMoneyRevision();
   const isPhone = useIsPhone();
+  // The signed-in coach: the check's draft is theirs (the coach layout wraps OrgProvider; the club tab's own rule, WD1).
+  const personId = useOrg().user?.id ?? null;
   const [retry, setRetry] = useState(0);
   const load = () => setRetry(n => n + 1);
   // A write's answer is the newest read there is: a plain read already in flight when it lands must not replace it (/review).
@@ -122,8 +128,10 @@ export default function CoachBankView({ orgSlug, teamId, active = true, onAddLin
       {notice && <p className={b.notice} role="status">{notice}</p>}
 
       {view.canWrite && (
-        <CoachBankCheck key={again ? `again-${again.n}` : 'check'} orgSlug={orgSlug} teamId={teamId} view={view} active={active}
-          againDate={again?.date} onAddLine={onAddLine}
+        // Keyed on the team and the person too: the draft's key is theirs, so a card never carries one team's (or one
+        // person's) work into another's draft (/review WD2).
+        <CoachBankCheck key={`${teamId}:${again ? `again-${again.n}` : 'check'}:${personId ?? ''}`} orgSlug={orgSlug} teamId={teamId} view={view}
+          personId={personId} active={active} againDate={again?.date} onAddLine={onAddLine} onRecord={onRecord}
           onSaved={(next, text) => { setAgain(null); settle(next, text); }}
           onTouched={() => setNotice('')} />
       )}

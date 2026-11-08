@@ -148,13 +148,15 @@ export const BANK_WORDS = {
   stillYes: (what: string) => `Yes, still waiting on ${what}`,
   stillNo: (what: string) => `No, ${what} is in the bank now`,
 
-  // ── BC3b (not drawn but "Add the missing line"): settled, BC3b /marketing 2026-11-06 ──────────────────────────────
-  // "Add the missing line" (tab 3): the Ledger's own add window, filled with the gap, the statement's date and the direction.
-  // ⚠ The COACH card's words until WD2 renames them ("Record the missing amount"); the club card says `addMissingEntry`.
-  addMissing: 'Add the missing line',
-
-  // ── work it down to zero (WD1; plan BANK_CHECK_WORKING_DRAFT_PLAN.md §4b, settled with /marketing 2026-11-07). The club
-  // card's: a button is named after the window it opens (the Ledger's "Add an entry"). ──
+  // ── work it down to zero (WD1; plan BANK_CHECK_WORKING_DRAFT_PLAN.md §4b, settled with /marketing 2026-11-07). A button
+  // is named after the window it opens, in each portal's own words: the club's Ledger "Add an entry", the coach's Money
+  // "Record money" ("entry" in the coaches portal is a tournament entry, so it is never used there). The coach's two keys
+  // (WD2) come first, then the club's two; the restore line, Start over, "Started off by", the resting sentence and the
+  // dropped-mark callout are both portals'. ──
+  // The coach card's heading-row button, and its gap door (renamed from "Add the missing line": the Record money window,
+  // filled with the gap, the statement's day and the direction).
+  record: 'Record',
+  recordMissingAmount: 'Record the missing amount',
   addEntry: 'Add entry',
   addMissingEntry: 'Add the missing entry',
   draftPickedUp: 'Picked up where you left off',

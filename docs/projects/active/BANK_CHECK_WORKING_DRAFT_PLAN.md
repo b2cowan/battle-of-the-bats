@@ -1,6 +1,6 @@
 # Bank check — work it down to zero (the working draft)
 
-**Status:** PLANNED 2026-11-07; **ALL SIX ASKS RULED 2026-11-07 (1A 2A 3A 4A 5A 6A, every recommendation taken: draft kept in this browser, "Started off by" shown, Add entry always there, 14-day expiry, restore at once, the words on a phone). WD1 committed `2a64a87d8` 2026-11-07 after /simplify and /review (see §7), owner walk owed; WD2 next.** Drawings: `BANK_CHECK_WORKING_DRAFT_DRAWINGS.html`, published https://claude.ai/artifact/HpFPDfFUAPLLeRLZyvTHMT
+**Status:** PLANNED 2026-11-07; **ALL SIX ASKS RULED 2026-11-07 (1A 2A 3A 4A 5A 6A, every recommendation taken: draft kept in this browser, "Started off by" shown, Add entry always there, 14-day expiry, restore at once, the words on a phone). WD1 committed `2a64a87d8` 2026-11-07 after /simplify and /review (see §7), owner walk owed. WD2 (the coach card) built 2026-11-07 after /design, /simplify and /review (see §8), commit on the owner's yes; WD3 next.** Drawings: `BANK_CHECK_WORKING_DRAFT_DRAWINGS.html`, published https://claude.ai/artifact/HpFPDfFUAPLLeRLZyvTHMT
 (round 2: button names and words settled with `/marketing`, see §4b). Asks in §5 ruled; build WD1 next. PM brief: `BANK_CHECK_WORKING_DRAFT_PM_BRIEF.md`.
 Parent: `BANK_RECONCILIATION_PLAN.md` (the balance check, BC1–BC9). This is a sequel to it, not a change to its sum.
 
@@ -181,3 +181,44 @@ Also: "Kept in this browser only…" shows only when this browser will hold a dr
 "Check this statement again" opens that day fresh and leaves the draft until the first keystroke replaces it.
 
 **/simplify + /review (2026-11-07), committed `2a64a87d8`:** Find and the draft helper now share one line-to-item conversion (`itemOfLine`; the coach card's own copy goes in WD2). One defect found and fixed: a date cleared from the calendar was stored as an empty date, which the reader refuses whole, so the typed balance went with it; the draft now keeps the balance and comes back on today. Looked at and left as built: a restored date the server now refuses (the sentence shows, the marks wait, Save is off until another day is picked); "Check this statement again" over a draft (starts fresh, the old draft stays until the first keystroke replaces it); the person arriving after mount (the form re-keys); a focus re-read while Add entry is open (the window keeps what it opened with); a failed Save (the draft is cleared only on success); blocked storage (every touch is wrapped). Checks: bank tests 420/420, spelling, focused lint clean, typecheck clean for WD1 (its only errors are two in `tests/unit/renewals.test.ts`, another session's; the dev server's generated `.next/dev/types/routes.d.ts` also has a syntax error that hides every other error from a plain `npm run typecheck`, so it was run with that folder excluded).
+
+## 8. WD2 build record (2026-11-07)
+
+Built as ruled, on the coach card (`CoachBankCheck`), through the WD1 helper: club = the org slug, account = the **team id**,
+person = the signed-in coach (`useOrg().user.id` in `CoachBankView`; the card is keyed on team + person, so it re-keys when the
+person arrives and never carries one team's work into another's draft). Same storage prefix, so `signOut()` clears coach drafts
+too (both coach sign-out doors use it). The helper grew one optional field, **the cash** (stored only when typed, so a WD1 draft
+and the club's stored shape are unchanged; key version stays `v1`; counted in "worth keeping"; a non-string is refused). Words:
+`record` ("Record") and `recordMissingAmount` ("Record the missing amount"); `addMissing` retired (no reader left). Find uses
+the shared `itemOfLine`; its own copy is gone. "+ Record" opens the Ledger's Record money conversation with no branch and no
+amount, both day fields set to the check's date (the coach answers what happened; picking a branch keeps the day). The focus
+re-read listens only while the Ledger is on screen (`active`); restore still happens at mount. No year parameter, no look-back:
+`HISTORY_ENDPOINTS` unchanged, history guard green.
+
+**One call made in the build, said to the owner (flip on request):** the build prompt said marks are re-checked "through the shared
+`offeredItems`", which counted this season's lines and the Still-waiting items only. **The coach's Find also offers last season's
+lines** (a cheque across the rollover, Q1-A) and the server's save rule accepts them (`coachMarkable`), so as written every such
+mark would have been dropped, with the amber callout, on every re-read. `offeredItems` now also takes the figure's optional
+`lastSeason` lines (and an optional `onItsWay`, as ruled). The club figure has neither change in effect.
+
+**/design (code-only):** no must-fix; order and position match the club frames tab for tab (heading row → restore line → callout →
+fields; band → "Started off by" → sums → Find; under Save: off note, replaces note, "Kept in this browser only…", then the coach's
+own "Statements from this season only…" line). No coach frame needed in the drawings. Applied: a token without a literal
+fallback; `p.note` / `p.since` element-qualified so their margin never depends on sheet order.
+**/simplify:** applied the simpler optional-`cash` type (one stored shape, no casts) and a loop in `offeredItems`. Not applied,
+recorded as a follow-up after the owner walks: one shared draft hook for both cards (≈60 near-identical lines, and a shared
+"tab came back" hook), and a per-portal offered-lines rule beside each server rule; both would rework the walked, committed club
+card, which this session's brief keeps untouched.
+**/review (high-risk tier, 4 lenses: correctness, concurrency/state, regression, security/roles/privacy):** no Critical/High/Medium
+survived. Applied: the card key carries the team (hardening). Refuted: "+ Record off until the day's figure is read" (as ruled);
+"Check again then Save clears the other day's draft" (its first keystroke already replaced it, the WD1 rule, and Save needs a
+typed balance). Left as built, both the same on the club card: a failed background re-read hides the band until "Try again"
+(the work is untouched); the amber dropped-mark note stays until a new day or Start over. Help text still names "Add the missing
+line" (`lib/help-content/coaches.tsx`, and the club's in `accounting.tsx`): WD3.
+Checks: bank tests + history guard 449/449; spelling; focused lint clean (the Ledger panel's 25 warnings are older); typecheck clean
+with `.next` excluded; `check:layout --only=coach-ledger-bank` clean at 361 / 390 / 768 / 1440. `npm test` has one failure in
+another session's files (a GST/HST words guard on `lib/console-money-sales-tax-wait.ts`), not this one's.
+
+**Open owner call (plan §4b):** the shared hint says "a deposit or interest you haven't **entered**", and the coach now reads it
+beside "+ Record". Recommendation: give the coach card its own verb ("…you haven't recorded"), a coach-only key in the words file,
+in WD3's `/marketing` pass, not widened here.

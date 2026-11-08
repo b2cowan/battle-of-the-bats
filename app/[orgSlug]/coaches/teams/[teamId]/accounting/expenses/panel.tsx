@@ -7556,13 +7556,15 @@ function MoneyRecordsPanel({
       )}
       {onBank ? (
         /* ── THE BANK VIEW (Bank balance check BC7a, plan §6 tab 2) ── the team's one bank account checked against this
-           book. Its own reads and writes (the coach bank routes); "Add the missing line" opens THIS Ledger's own Record
-           money window, filled with the gap (§6 tab 3: the ordinary coach add), so the line is written by the Ledger's
-           routes, never by bank code; its save bumps the money revision, which the view reads again on. */
+           book. Its own reads and writes (the coach bank routes); "Record the missing amount" opens THIS Ledger's own
+           Record money window, filled with the gap (§6 tab 3: the ordinary coach add), and "+ Record" (WD2) opens it
+           blank but for the check's date (both date fields: the coach picks the way it went), so the line is written by
+           the Ledger's routes, never by bank code; its save bumps the money revision, which the view reads again on. */
         <CoachBankView orgSlug={orgSlug} teamId={teamId} active={tabActive}
           onAddLine={canWriteMoney ? line => openConversationFrom(line.direction === 'in'
             ? { branch: 'other-in', amount: line.amount, prefill: { receivedDate: line.date } }
-            : { branch: 'spend', amount: line.amount, prefill: { paidDate: line.date } }) : undefined} />
+            : { branch: 'spend', amount: line.amount, prefill: { paidDate: line.date } }) : undefined}
+          onRecord={canWriteMoney ? date => openConversationFrom({ prefill: { receivedDate: date, paidDate: date } }) : undefined} />
       ) : loading ? (
         <LoadingState label={onPayables ? 'Loading the bills…' : 'Loading the register…'} />
       ) : error ? (

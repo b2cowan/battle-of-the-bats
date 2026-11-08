@@ -13,8 +13,8 @@
  * ⚖ ANY LINE can be marked "Not in the bank yet" (ask 2): shown on a hinted row, and on any other under the pointer or the
  *   keyboard's focus (never hover-only). A marked line stays, greyed, with Undo.
  * ⚖ EVERY HIGHLIGHT OPENS: a row's chip brings its possibility into the callout.
- * ⚖ "ADD THE MISSING LINE" sits with the callout's "Or the bank…" sentence (and alone when nothing can be named); it opens
- *   the Ledger's own add window. Nothing here writes a line. A team has no starting statement: no "Waiting at the start".
+ * ⚖ "RECORD THE MISSING AMOUNT" (renamed from "Add the missing line", WD2) sits with the callout's "Or the bank…" sentence
+ *   (and alone when nothing can be named); it opens the Ledger's own Record money window. Nothing here writes a line. A team has no starting statement: no "Waiting at the start".
  */
 import { useState, type ReactNode } from 'react';
 import SearchField from '@/components/shared/SearchField';
@@ -23,6 +23,7 @@ import { CoachRow, CoachRowBand, CoachRowList, CoachRowListFoot } from '@/compon
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { signed, type BankLine, type CheckFigure, type Hint, type WaitingItem } from '@/lib/bank-check';
+import { itemOfLine } from '@/lib/bank-check-draft';
 import { coachHints } from '@/lib/bank-coach-map';
 import { lineMatches, pickerSearch } from '@/lib/bank-club-rules';
 import { BANK_WORDS as W } from '@/lib/bank-tab-words';
@@ -35,10 +36,6 @@ import b from './CoachBank.module.css';
 const PAGE = 50;
 const PAGE_PHONE = 10;
 
-/** A line as a Not-in-the-bank-yet item: its own key, date, direction, amount and words (the server re-reads them). */
-const itemOf = (l: BankLine): WaitingItem =>
-  ({ key: l.key, date: l.date, direction: l.direction, amountCents: l.amountCents, ...(l.label ? { label: l.label } : {}) });
-
 export default function CoachBankFind({ figure, band, typed, marked, onMark, onUndo, onAddLine }: {
   figure: TeamFigure;
   /** The engine's band, figured with the marked items and the cash. */
@@ -47,7 +44,7 @@ export default function CoachBankFind({ figure, band, typed, marked, onMark, onU
   marked: ReadonlyMap<string, WaitingItem>;
   onMark: (item: WaitingItem) => void;
   onUndo: (key: string) => void;
-  /** "Add the missing line" (money write). */
+  /** "Record the missing amount" (money write). */
   onAddLine?: () => void;
 }) {
   const [open, setOpen] = useState(false); // "Show them", while the check isn't off
@@ -107,7 +104,7 @@ export default function CoachBankFind({ figure, band, typed, marked, onMark, onU
   // Each line once: a table row at a desk, a row of the portal's one framed list on a phone, with the same action.
   const LineView = isPhone ? LineCard : LineRow;
   const row = (l: BankLine) => (
-    <LineView key={l.key} line={l} chip={chipFor(l.key)} onMark={() => onMark(itemOf(l))}
+    <LineView key={l.key} line={l} chip={chipFor(l.key)} onMark={() => onMark(itemOfLine(l))}
       undo={marked.has(l.key) ? () => onUndo(l.key) : undefined} />
   );
   const showMore = (more > 0 || lastMore > 0) && (
@@ -146,7 +143,7 @@ export default function CoachBankFind({ figure, band, typed, marked, onMark, onU
 
       {off && current && (
         <HintCallout hint={current} target={target} bankMore={bankMore}
-          onMark={() => onMark(itemOf(current.lines[0]))} onAddLine={onAddLine}
+          onMark={() => onMark(itemOfLine(current.lines[0]))} onAddLine={onAddLine}
           next={hints.length > 1 ? {
             count: W.hintCount(hints.indexOf(current) + 1, hints.length),
             go: () => setPick(hints[(hints.indexOf(current) + 1) % hints.length].key),
@@ -156,7 +153,7 @@ export default function CoachBankFind({ figure, band, typed, marked, onMark, onU
       {off && !current && (
         <p className={`${styles.formHint} ${b.hint}`}>
           {(bankMore ? W.hintOrMore : W.hintOrLess)(target, true)}{' '}
-          {onAddLine && <button type="button" className={b.link} onClick={onAddLine}>{W.addMissing}</button>}
+          {onAddLine && <button type="button" className={b.link} onClick={onAddLine}>{W.recordMissingAmount}</button>}
         </p>
       )}
 
@@ -202,8 +199,8 @@ export default function CoachBankFind({ figure, band, typed, marked, onMark, onU
   );
 }
 
-/** The callout (drawing tab 3): one possibility, its sentence, its answers — "Not in the bank yet" on an exact line, "Add
- *  the missing line" with the "Or the bank…" sentence, and "1 of 3 · Next possibility". */
+/** The callout (drawing tab 3): one possibility, its sentence, its answers — "Not in the bank yet" on an exact line,
+ *  "Record the missing amount" with the "Or the bank…" sentence, and "1 of 3 · Next possibility". */
 function HintCallout({ hint, target, bankMore, onMark, onAddLine, next }: {
   hint: Hint; target: string; bankMore: boolean; onMark: () => void; onAddLine?: () => void;
   next: { count: string; go: () => void } | null;
@@ -232,7 +229,7 @@ function HintCallout({ hint, target, bankMore, onMark, onAddLine, next }: {
       </span>
       <span className={b.calloutActs}>
         {hint.kind === 'exact' && <button type="button" className={styles.btnSecondary} onClick={onMark}>{W.notInBankYet}</button>}
-        {hint.kind !== 'half' && onAddLine && <button type="button" className={styles.btnSecondary} onClick={onAddLine}>{W.addMissing}</button>}
+        {hint.kind !== 'half' && onAddLine && <button type="button" className={styles.btnSecondary} onClick={onAddLine}>{W.recordMissingAmount}</button>}
         {next && (
           <span className={b.hintNext}>
             <span>{next.count}</span>

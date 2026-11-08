@@ -86,6 +86,20 @@
   background: var(--home-card);
 }
 .cardTitle { margin: 0 0 0.75rem; font-size: var(--type-heading); font-weight: 700; color: var(--text-primary); }
+/* The heading row (WD2; the club's drawing tabs 2 and 5, in the coach kit): "Check a statement", "+ Record" at its right. */
+.cardHead { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem 0.75rem; flex-wrap: wrap; margin: 0 0 0.75rem; }
+.cardHead > .cardTitle { margin: 0; }
+.recordBtn { flex: none; }
+/* The kit's outline button has no off state of its own: the lime's (`.btnPrimary:disabled`), and no hover while off. */
+.recordBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+.recordBtn:disabled:hover { background: var(--home-card); }
+/* "Picked up where you left off · Start over": one quiet hint line under the heading; it wraps on a phone. Element-
+   qualified so its margin wins over the kit's `.formHint` whatever order the sheets load in (the club's `p.restoreLine`). */
+p.restoreLine { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem 0.6rem; margin: 0 0 0.75rem; }
+/* A restored mark the books no longer offer: the card's amber callout (Find's), with the card's rhythm under it. */
+p.droppedNote { margin: 0 0 0.75rem; }
+/* "Started off by $X" under the band (the club's `hintLine`). */
+p.startedOff { margin: 0.5rem 0 0; }
 /* Statement date · Bank balance · Cash not deposited yet · Save, on one line at a desk; Save level with the inputs. */
 .fields {
   display: grid;
@@ -94,8 +108,9 @@
   gap: 0.75rem 1rem;
 }
 .save { display: flex; align-items: flex-end; }
-.since { margin: 0.5rem 0 0; }
-.note { margin: 0.5rem 0 0; }
+/* Element-qualified (WD2, /design): their margin wins over the kit's `.formHint` whatever order the sheets load in. */
+p.since { margin: 0.5rem 0 0; }
+p.note { margin: 0.5rem 0 0; }
 .status { margin: 0.75rem 0 0; font-size: var(--type-support); color: var(--text-secondary); line-height: 1.45; }
 
 /* The band (the shipped joined band, three tiles) with the drawing's gap above it. */
@@ -215,6 +230,9 @@ tr:focus-within .markBtn { opacity: 1; }
   .link { display: inline-flex; align-items: center; justify-content: center; min-height: var(--tap-min, 44px); min-width: var(--tap-min, 44px); }
   .markBtn { min-height: var(--tap-min, 44px); }
   .fields input, .save button { min-height: var(--tap-min, 44px); }
+  .recordBtn { min-height: var(--tap-min, 44px); }
+  /* The link's 44px box would push the line's words off their baseline: centre them instead. */
+  p.restoreLine { align-items: center; }
 }
 
 /* A desk lays the fields out in a row; a narrow screen puts Statement date and Bank balance side by side and the cash

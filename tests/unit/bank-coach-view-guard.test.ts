@@ -11,7 +11,7 @@
  */
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { filesUnder, readCode } from './_source-code.ts';
+import { filesUnder, functionBody, readCode } from './_source-code.ts';
 import { BANK_WORDS } from '../../lib/bank-tab-words.ts';
 
 const LEDGER = 'app/[orgSlug]/coaches/teams/[teamId]/accounting/expenses/panel.tsx';
@@ -80,7 +80,12 @@ describe('3 · rule 6: intent in, the server\'s numbers out', () => {
     assert.match(form, /date, bankCents: typed, \.\.\.\(cashCents \? \{ cashCents \} : \{\}\), waiting: \[\.\.\.marked\.keys\(\)\],/);
   });
   it('after a save the form starts fresh WITHOUT clearing the notice it just gave (/review BC7a)', () => {
-    assert.match(form, /setBalance\(''\); setCash\(''\); setDate\(today\); setAsOf\(today\); setMarked\(new Map\(\)\); setDropped\(new Set\(\)\);/);
+    // WD2: the fresh card is Start over's (it clears the draft too), and Start over never touches the notice.
+    assert.match(functionBody(form, 'save'), /\n {4}startOver\(\);\n/);
+    const fresh = functionBody(form, 'startOver');
+    assert.match(fresh, /setBalance\(''\); setCash\(''\); newDay\(today\); setAsOf\(today\);/);
+    assert.match(form, /const newDay = \(v: string\) => \{ setDate\(v\); setMarked\(new Map\(\)\); setDropped\(new Set\(\)\);/);
+    assert.doesNotMatch(fresh, /touch\(\)|onTouched|pickDate/);
     assert.doesNotMatch(form, /pickDate\(today\)/);
     assert.match(form, /if \(!active \|\| !ISO_DAY\.test\(asOf\)\) return;/, 'the hidden Ledger reads nothing');
   });
