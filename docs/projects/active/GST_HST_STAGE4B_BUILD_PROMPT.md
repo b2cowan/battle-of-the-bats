@@ -309,7 +309,7 @@ entry on that test's list with a reason, which is the flip owner's call. Layout 
 
 **Session B: committed 035f5e965 2026-11-07** (the 14 files above plus the review fix). Review result is the paragraph above.
 
-### Session C: built and reviewed 2026-11-07 ("Mark as filed"; migration 007). Uncommitted, awaiting the owner.
+### Session C: built and reviewed 2026-11-07 ("Mark as filed"; migration 007). Committed `27c03ff78` 2026-11-08 (owner yes).
 
 Prompt: [GST_HST_STAGE4B_SESSION_C_BUILD_PROMPT.md](GST_HST_STAGE4B_SESSION_C_BUILD_PROMPT.md).
 

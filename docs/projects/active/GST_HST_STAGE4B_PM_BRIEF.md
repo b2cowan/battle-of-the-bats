@@ -1,6 +1,6 @@
 # PM brief — GST/HST return worksheet (Stage 4b)
 
-**Build prompt:** [GST_HST_STAGE4B_BUILD_PROMPT.md](GST_HST_STAGE4B_BUILD_PROMPT.md) · **Plan:** [GST_HST_COLLECTION_PLAN.md](GST_HST_COLLECTION_PLAN.md) §Stage 4 · **Status:** the numbers and the view committed 2026-11-07; "Mark as filed" built and reviewed 2026-11-07, its storage on development the same day (commit and the owner walk owed); the accountant package next
+**Build prompt:** [GST_HST_STAGE4B_BUILD_PROMPT.md](GST_HST_STAGE4B_BUILD_PROMPT.md) · **Plan:** [GST_HST_COLLECTION_PLAN.md](GST_HST_COLLECTION_PLAN.md) §Stage 4 · **Status:** the numbers and the view committed 2026-11-07; "Mark as filed" built and reviewed 2026-11-07, its storage on development the same day (committed `27c03ff78` 2026-11-08; owner walk §488 closed 2026-11-08); the accountant package next
 **Priority:** must exist before the first GST/HST return that has sales on it. Owner-only (platform admin).
 
 ## What the owner gets
