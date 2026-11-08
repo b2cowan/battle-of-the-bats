@@ -548,7 +548,7 @@ ahead of the owner's rulings.
   `navj-club-s13ba` and `navj-club-s13ba-fresh`; fixtures in `.probe/stage13b-a/`). No migration, no column; no `NAV_STANDARD` change.
   **Next:** the owner walks §485, then Session B.
 - 2026-11-07 — **13b Session B BUILT** (the arrival). `/simplify`, `/review` (high), `/marketing`, `/legal` and `/docs` done;
-  commit owed. **Owner rulings in the summary:** the coach accept-path fix goes in this build; the owner and an admin also see the
+  committed `7d88d591d` 2026-11-07. **Owner rulings in the summary:** the coach accept-path fix goes in this build; the owner and an admin also see the
   other roles' Help paths, folded; every non-board path ends with "What your role can open". **B1** no default role: the invite's
   Role field starts on "Choose a role", Send is off until one is chosen; the line under it is the picker's own sentence with
   **no prefix** (/review: "Written to them: …" was untrue for a volunteer, whose email carries the job note, and an admin); the
