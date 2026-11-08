@@ -70,6 +70,25 @@ function registrationRow(raw) {
     created_at: iso(raw.created_at), created_by: String(raw.created_by) };
 }
 
+// Migration 007 (GST/HST Stage 4b Session C, "Mark as filed"). An archive made before format 4 has no filings.
+const FILING_CENT_COLUMNS = ['line_101_dollars', 'line_101_cents', 'line_103_cents', 'line_104_cents', 'line_105_cents',
+  'line_106_cents', 'line_107_cents', 'line_108_cents', 'line_109_cents'];
+const FILING_SELECT = `filing_no, period_from, period_to, period_revision, filed_on, registration_date, ${FILING_CENT_COLUMNS.join(', ')},
+  partial, open_items, sources, reason, created_at, created_by::text AS created_by`;
+
+function filingRow(raw) {
+  return { filing_no: Number(raw.filing_no), period_from: day(raw.period_from), period_to: day(raw.period_to),
+    period_revision: Number(raw.period_revision), filed_on: day(raw.filed_on), registration_date: day(raw.registration_date),
+    ...Object.fromEntries(FILING_CENT_COLUMNS.map(column => [column, safeCents(raw[column])])),
+    partial: Boolean(raw.partial), open_items: Number(raw.open_items), sources: String(raw.sources),
+    reason: raw.reason ?? null, created_at: iso(raw.created_at), created_by: String(raw.created_by) };
+}
+
+async function hasFilingsTable(sql, schema = 'bookkeeping') {
+  return (await sql`SELECT table_name FROM information_schema.tables
+    WHERE table_schema = ${schema} AND table_name = 'gst_return_filings'`).length === 1;
+}
+
 async function hasGstTables(sql, schema = 'bookkeeping') {
   const tables = await sql`SELECT table_name FROM information_schema.tables
     WHERE table_schema = ${schema} AND table_name IN ('expense_tax_lines', 'gst_registration_revisions')`;
@@ -97,7 +116,9 @@ async function* records(sql, s3, env) {
   const registrationRows = gst ? await sql`SELECT revision, effective_date, reason, created_at, created_by::text AS created_by
     FROM bookkeeping.gst_registration_revisions ORDER BY revision LIMIT 1001` : [];
   if (registrationRows.length > 1000) throw new Error('Backup needs pagination before more than 1000 registration date revisions');
-  yield JSON.stringify({ type: 'header', format: 3, environment: env.name, created_at: new Date().toISOString() }) + '\n';
+  const filingRows = await hasFilingsTable(sql) ? await sql.unsafe(`SELECT ${FILING_SELECT} FROM bookkeeping.gst_return_filings ORDER BY filing_no LIMIT 1001`) : [];
+  if (filingRows.length > 1000) throw new Error('Backup needs pagination before more than 1000 GST/HST filings');
+  yield JSON.stringify({ type: 'header', format: 4, environment: env.name, created_at: new Date().toISOString() }) + '\n';
   const paths = new Set();
   for (const raw of rows) {
     const row = expenseRow(raw);
@@ -110,6 +131,7 @@ async function* records(sql, s3, env) {
   }
   for (const raw of lineRows) yield JSON.stringify({ type: 'tax_line', row: taxLineRow(raw) }) + '\n';
   for (const raw of registrationRows) yield JSON.stringify({ type: 'gst_registration_revision', row: registrationRow(raw) }) + '\n';
+  for (const raw of filingRows) yield JSON.stringify({ type: 'gst_return_filing', row: filingRow(raw) }) + '\n';
   for (const path of [...paths].sort()) {
     const response = await s3.send(new GetObjectCommand({ Bucket: env.bucket, Key: `receipts/${path}` }));
     if (!response.Body) throw new Error(`Receipt body missing: ${path}`);
@@ -119,7 +141,7 @@ async function* records(sql, s3, env) {
       base64: Buffer.from(bytes).toString('base64') }) + '\n';
   }
   yield JSON.stringify({ type: 'end', revisions: rows.length, owner_movements: ownerRows.length, tax_lines: lineRows.length,
-    gst_registrations: registrationRows.length, receipts: paths.size }) + '\n';
+    gst_registrations: registrationRows.length, gst_filings: filingRows.length, receipts: paths.size }) + '\n';
 }
 
 async function createBackup() {
@@ -180,10 +202,13 @@ async function verifyBackup(envelope) {
   const lineIds = new Set();
   const lineTotals = new Map();
   const registrationIds = new Set();
+  const filingRows = [];
+  const filingNos = new Set();
+  const filingLatest = new Map();
   for await (const line of decryptedLines(envelope)) {
     const item = JSON.parse(line);
     if (!meta) {
-      if (item.type !== 'header' || ![1, 2, 3].includes(item.format) || !['dev', 'prod'].includes(item.environment)) throw new Error('Invalid backup header');
+      if (item.type !== 'header' || ![1, 2, 3, 4].includes(item.format) || !['dev', 'prod'].includes(item.environment)) throw new Error('Invalid backup header');
       meta = item;
     } else if (item.type === 'revision' && !end) {
       // Older archives have no 006 keys; give them NULL so a replay compares like with like.
@@ -227,6 +252,25 @@ async function verifyBackup(envelope) {
       if (registrationIds.has(row.revision)) throw new Error('Duplicate registration date revision in backup');
       registrationIds.add(row.revision);
       registrationRows.push(row);
+    } else if (item.type === 'gst_return_filing' && !end && meta.format >= 4) {
+      const row = item.row;
+      const isDay = value => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value);
+      if (!Number.isInteger(row.filing_no) || row.filing_no < 1 || !Number.isInteger(row.period_revision) || row.period_revision < 1 ||
+        ![row.period_from, row.period_to, row.filed_on, row.registration_date].every(isDay) ||
+        row.period_from > row.period_to || row.filed_on <= row.period_to ||
+        !FILING_CENT_COLUMNS.every(column => Number.isSafeInteger(row[column])) ||
+        typeof row.partial !== 'boolean' || !Number.isInteger(row.open_items) || row.open_items < 0 ||
+        typeof row.sources !== 'string' || row.sources.length < 2 || !/^[0-9a-f-]{36}$/i.test(row.created_by) ||
+        (row.reason !== null && (typeof row.reason !== 'string' || !row.reason.trim() || row.reason.trim().length > 500)) ||
+        (row.period_revision > 1 && row.reason === null)) throw new Error('Invalid GST/HST filing');
+      try { JSON.parse(row.sources); } catch { throw new Error('Invalid GST/HST filing sources'); }
+      if (filingNos.has(row.filing_no)) throw new Error('Duplicate GST/HST filing in backup');
+      filingNos.add(row.filing_no);
+      // A period's filings count up one at a time: revision n needs revision n-1 before it, and none repeats.
+      const period = `${row.period_from}/${row.period_to}`;
+      if (row.period_revision !== (filingLatest.get(period) ?? 0) + 1) throw new Error('GST/HST filing revisions are out of order');
+      filingLatest.set(period, row.period_revision);
+      filingRows.push(row);
     } else if (item.type === 'receipt' && !end) {
       if (!paths.has(item.path) || found.has(item.path)) throw new Error('Unexpected or duplicate receipt');
       const bytes = Buffer.from(item.base64, 'base64');
@@ -235,6 +279,7 @@ async function verifyBackup(envelope) {
     } else if (item.type === 'end' && !end) {
       if (item.revisions !== rows.length || (meta.format >= 2 && item.owner_movements !== ownerRows.length) ||
         (meta.format >= 3 && (item.tax_lines !== lineRows.length || item.gst_registrations !== registrationRows.length)) ||
+        (meta.format >= 4 && item.gst_filings !== filingRows.length) ||
         item.receipts !== paths.size || found.size !== paths.size) throw new Error('Backup counts or receipts do not match');
       // The sum rule: a revision's lines add up to its tax_cad_cents, and a receipt that shows tax has its lines
       // (an archive that lost them would otherwise verify).
@@ -247,7 +292,7 @@ async function verifyBackup(envelope) {
     } else throw new Error('Unexpected backup record');
   }
   if (!meta || !end) throw new Error('Backup ended before its manifest');
-  return { meta, rows, ownerRows, lineRows, registrationRows, receiptCount: found.size };
+  return { meta, rows, ownerRows, lineRows, registrationRows, filingRows, receiptCount: found.size };
 }
 
 async function insertExpense(sql, table, row) {
@@ -278,6 +323,19 @@ async function insertTaxLine(sql, table, row) {
 async function insertRegistration(sql, table, row) {
   await sql`INSERT INTO ${sql('bookkeeping')}.${sql(table)} (revision, effective_date, reason, created_at, created_by)
     VALUES (${row.revision}, ${row.effective_date}::date, ${row.reason}, ${row.created_at}::timestamptz, ${row.created_by}::uuid)`;
+}
+
+async function insertFiling(sql, table, row) {
+  await sql`INSERT INTO ${sql('bookkeeping')}.${sql(table)} (
+    filing_no, period_from, period_to, period_revision, filed_on, registration_date,
+    line_101_dollars, line_101_cents, line_103_cents, line_104_cents, line_105_cents, line_106_cents, line_107_cents, line_108_cents, line_109_cents,
+    partial, open_items, sources, reason, created_at, created_by
+  ) VALUES (
+    ${row.filing_no}, ${row.period_from}::date, ${row.period_to}::date, ${row.period_revision}, ${row.filed_on}::date, ${row.registration_date}::date,
+    ${row.line_101_dollars}, ${row.line_101_cents}, ${row.line_103_cents}, ${row.line_104_cents}, ${row.line_105_cents},
+    ${row.line_106_cents}, ${row.line_107_cents}, ${row.line_108_cents}, ${row.line_109_cents},
+    ${row.partial}, ${row.open_items}, ${row.sources}, ${row.reason}, ${row.created_at}::timestamptz, ${row.created_by}::uuid
+  )`;
 }
 
 /**
@@ -326,8 +384,12 @@ async function restoreDev(envelope, verified) {
     const targetRegistrations = (await sql`SELECT revision, effective_date, reason, created_at, created_by::text AS created_by
       FROM bookkeeping.gst_registration_revisions ORDER BY revision`).map(registrationRow);
     const newRegistrations = verified.meta.format >= 3 ? registrationsToRestore(targetRegistrations, verified.registrationRows) : [];
+    // An archive with filings needs migration 007; one without them restores on a store that has not had it.
+    const filingsTable = await hasFilingsTable(sql);
+    if (verified.filingRows.length && !filingsTable) throw new Error('Apply migration 007 (GST/HST filings) before restoring this archive');
+    const filingCount = filingsTable ? (await sql`SELECT count(*)::int AS count FROM bookkeeping.gst_return_filings`)[0].count : 0;
     const objects = await s3.send(new ListObjectVersionsCommand({ Bucket: env.bucket, Prefix: 'receipts/', MaxKeys: 1 }));
-    if (count[0].count !== 0 || ownerCount[0].count !== 0 || lineCount[0].count !== 0 ||
+    if (count[0].count !== 0 || ownerCount[0].count !== 0 || lineCount[0].count !== 0 || filingCount !== 0 ||
       (objects.Versions?.length ?? 0) !== 0 || (objects.DeleteMarkers?.length ?? 0) !== 0) {
       throw new Error('Development database and all receipt versions must be empty before restore');
     }
@@ -341,15 +403,17 @@ async function restoreDev(envelope, verified) {
     for (const row of verified.lineRows) await insertTaxLine(sql, 'expense_tax_lines', row);
     for (const row of verified.ownerRows) await insertOwner(sql, 'owner_movement_revisions', row);
     for (const row of newRegistrations) await insertRegistration(sql, 'gst_registration_revisions', row);
+    for (const row of verified.filingRows) await insertFiling(sql, 'gst_return_filings', row);
+    const restoredFilings = filingsTable ? (await sql`SELECT count(*)::int AS count FROM bookkeeping.gst_return_filings`)[0].count : 0;
     const restored = await sql`SELECT count(*)::int AS count FROM bookkeeping.expense_revisions`;
     const restoredLines = await sql`SELECT count(*)::int AS count FROM bookkeeping.expense_tax_lines`;
     const restoredRegistrations = await sql`SELECT count(*)::int AS count FROM bookkeeping.gst_registration_revisions`;
     const restoredOwners = ownerTable.length ? await sql`SELECT count(*)::int AS count FROM bookkeeping.owner_movement_revisions` : [{ count: 0 }];
     if (restored[0].count !== verified.rows.length || restoredOwners[0].count !== verified.ownerRows.length ||
-      restoredLines[0].count !== verified.lineRows.length ||
+      restoredLines[0].count !== verified.lineRows.length || restoredFilings !== verified.filingRows.length ||
       restoredRegistrations[0].count !== targetRegistrations.length + newRegistrations.length) throw new Error('Restored revision count differs from the archive');
     console.log(`Restored ${restored[0].count} expense revisions, ${restoredLines[0].count} tax lines, ${restoredOwners[0].count} owner movement revisions, ` +
-      `${newRegistrations.length} registration date revisions and ${verified.receiptCount} receipts to development`);
+      `${newRegistrations.length} registration date revisions, ${restoredFilings} GST/HST filings and ${verified.receiptCount} receipts to development`);
   } finally { await sql.end(); s3.destroy(); }
 }
 
@@ -364,6 +428,7 @@ async function restoreDrillDev(envelope, verified) {
   const ownerTable = `recovery_owners_${id}`;
   const lineTable = `recovery_tax_lines_${id}`;
   const registrationTable = `recovery_gst_registrations_${id}`;
+  const filingTable = `recovery_gst_filings_${id}`;
   const sql = database(env.host);
   const s3 = new S3Client({ region: 'us-east-2' });
   const objects = [];
@@ -373,13 +438,17 @@ async function restoreDrillDev(envelope, verified) {
       WHERE table_schema = 'bookkeeping' AND table_name = 'owner_movement_revisions'`;
     if (verified.ownerRows.length && !hasOwnerTable.length) throw new Error('Owner movement table is required for this archive');
     if (!await hasGstTables(sql)) throw new Error('Apply migration 006 (GST/HST tax lines) before a recovery drill');
+    const hasFilings = await hasFilingsTable(sql);
+    if (verified.filingRows.length && !hasFilings) throw new Error('Apply migration 007 (GST/HST filings) before a recovery drill of this archive');
+    const beforeFilings = hasFilings ? (await sql`SELECT count(*)::int AS count FROM bookkeeping.gst_return_filings`)[0].count : 0;
     const beforeExpenses = await sql`SELECT count(*)::int AS count FROM bookkeeping.expense_revisions`;
     const beforeOwners = hasOwnerTable.length ? await sql`SELECT count(*)::int AS count FROM bookkeeping.owner_movement_revisions` : [{ count: 0 }];
     const beforeLines = await sql`SELECT count(*)::int AS count FROM bookkeeping.expense_tax_lines`;
     const beforeRegistrations = await sql`SELECT count(*)::int AS count FROM bookkeeping.gst_registration_revisions`;
     // One DDL statement per transaction (Aurora DSQL); each copy keeps the live table's columns and checks.
     for (const [copy, source] of [[expenseTable, 'expense_revisions'], [lineTable, 'expense_tax_lines'], [registrationTable, 'gst_registration_revisions'],
-      ...(hasOwnerTable.length ? [[ownerTable, 'owner_movement_revisions']] : [])]) {
+      ...(hasOwnerTable.length ? [[ownerTable, 'owner_movement_revisions']] : []),
+      ...(hasFilings ? [[filingTable, 'gst_return_filings']] : [])]) {
       await sql.unsafe(`CREATE TABLE bookkeeping.${copy} (LIKE bookkeeping.${source} INCLUDING ALL)`);
       created.push(copy);
     }
@@ -387,6 +456,7 @@ async function restoreDrillDev(envelope, verified) {
     for (const row of verified.lineRows) await insertTaxLine(sql, lineTable, row);
     for (const row of verified.registrationRows) await insertRegistration(sql, registrationTable, row);
     for (const row of verified.ownerRows) await insertOwner(sql, ownerTable, row);
+    if (hasFilings) for (const row of verified.filingRows) await insertFiling(sql, filingTable, row);
     const replayedExpenses = await sql.unsafe(`SELECT * FROM bookkeeping.${expenseTable} ORDER BY expense_id, revision`);
     deepStrictEqual(replayedExpenses.map(expenseRow), verified.rows);
     const replayedLines = await sql.unsafe(`SELECT expense_id::text AS expense_id, revision, line_no, tax_type, cents, created_at
@@ -395,6 +465,10 @@ async function restoreDrillDev(envelope, verified) {
     const replayedRegistrations = await sql.unsafe(`SELECT revision, effective_date, reason, created_at, created_by::text AS created_by
       FROM bookkeeping.${registrationTable} ORDER BY revision`);
     deepStrictEqual(replayedRegistrations.map(registrationRow), verified.registrationRows);
+    if (hasFilings) {
+      const replayedFilings = await sql.unsafe(`SELECT ${FILING_SELECT} FROM bookkeeping.${filingTable} ORDER BY filing_no`);
+      deepStrictEqual(replayedFilings.map(filingRow), verified.filingRows);
+    }
     if (created.includes(ownerTable)) {
       const replayedOwners = await sql.unsafe(`SELECT * FROM bookkeeping.${ownerTable} ORDER BY movement_id, revision`);
       deepStrictEqual(replayedOwners.map(ownerRow), verified.ownerRows);
@@ -423,12 +497,13 @@ async function restoreDrillDev(envelope, verified) {
     const afterOwners = hasOwnerTable.length ? await sql`SELECT count(*)::int AS count FROM bookkeeping.owner_movement_revisions` : [{ count: 0 }];
     const afterLines = await sql`SELECT count(*)::int AS count FROM bookkeeping.expense_tax_lines`;
     const afterRegistrations = await sql`SELECT count(*)::int AS count FROM bookkeeping.gst_registration_revisions`;
-    if (afterExpenses[0].count !== beforeExpenses[0].count || afterOwners[0].count !== beforeOwners[0].count ||
+    const afterFilings = hasFilings ? (await sql`SELECT count(*)::int AS count FROM bookkeeping.gst_return_filings`)[0].count : 0;
+    if (afterFilings !== beforeFilings || afterExpenses[0].count !== beforeExpenses[0].count || afterOwners[0].count !== beforeOwners[0].count ||
       afterLines[0].count !== beforeLines[0].count || afterRegistrations[0].count !== beforeRegistrations[0].count) {
       throw new Error('Working bookkeeping row counts changed during the recovery drill');
     }
     console.log(`Development recovery drill replayed ${verified.rows.length} expense revisions, ${verified.lineRows.length} tax lines, ` +
-      `${verified.registrationRows.length} registration date revisions, ${verified.ownerRows.length} owner movement revisions and ${receiptCount} receipts; ` +
+      `${verified.registrationRows.length} registration date revisions, ${verified.filingRows.length} GST/HST filings, ${verified.ownerRows.length} owner movement revisions and ${receiptCount} receipts; ` +
       `working row counts stayed at ${afterExpenses[0].count} expenses and ${afterOwners[0].count} owner movements`);
   } finally {
     const cleanupErrors = [];
@@ -455,7 +530,7 @@ else {
   const envelope = await archiveEnvelope();
   const verified = await verifyBackup(envelope);
   console.log(`Verified ${verified.meta.environment} backup: ${verified.rows.length} expense revisions, ${verified.lineRows.length} tax lines, ` +
-    `${verified.registrationRows.length} registration date revisions, ${verified.ownerRows.length} owner movement revisions, ${verified.receiptCount} receipts`);
+    `${verified.registrationRows.length} registration date revisions, ${verified.filingRows.length} GST/HST filings, ${verified.ownerRows.length} owner movement revisions, ${verified.receiptCount} receipts`);
   if (command === 'restore-dev') await restoreDev(envelope, verified);
   if (command === 'restore-drill-dev') await restoreDrillDev(envelope, verified);
 }

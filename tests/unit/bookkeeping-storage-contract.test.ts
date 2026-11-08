@@ -62,8 +62,8 @@ describe('Bookkeeping USD storage and recovery contract', () => {
   it('a backup carries the tax lines and registration history, and checks the sum rule', () => {
     const backup = read('scripts/bookkeeping-backup.mjs');
     for (const type of ['tax_line', 'gst_registration_revision']) assert.match(backup, new RegExp(`type: '${type}'`));
-    assert.match(backup, /format: 3/);
-    assert.match(backup, /\[1, 2, 3\]\.includes\(item\.format\)/, 'older archives still verify');
+    assert.match(backup, /format: 4/);
+    assert.match(backup, /\[1, 2, 3, 4\]\.includes\(item\.format\)/, 'older archives still verify');
     // A record type accepted from format N must stay accepted from every later format (format 3 once rejected owner transfers).
     assert.doesNotMatch(backup, /meta\.format === \d/, 'record types are gated with >=, never ===');
     assert.match(backup, /Tax lines do not add up to their revision/);
@@ -71,6 +71,22 @@ describe('Bookkeeping USD storage and recovery contract', () => {
     const store = read('lib/bookkeeping-store.ts');
     assert.match(store, /row\.tax_answer === 'shown' && !lines\.length/, 'the store refuses a shown answer with no lines');
     assert.match(backup, /registrationsToRestore/, 'the migration-seeded revision 1 does not block a restore');
+  });
+  it('a backup carries every GST/HST filing, column for column, and restores and replays them (Stage 4b Session C)', () => {
+    const backup = read('scripts/bookkeeping-backup.mjs');
+    const sql = read('scripts/bookkeeping-aws/007_gst_return_filings.sql').replace(/^--.*$/gm, '');
+    const body = sql.slice(sql.indexOf('(') + 1, sql.indexOf('PRIMARY KEY'));
+    const columns = body.split('\n').map(line => line.trim().match(/^([a-z_0-9]+) [a-z]+/)?.[1]).filter((name): name is string => Boolean(name));
+    assert.equal(columns.length, 21, 'migration 007 has 21 columns');
+    const [insert] = [...backup.matchAll(/INSERT INTO \$\{sql\('bookkeeping'\)\}\.\$\{sql\(table\)\} \(\s*(filing_no[^)]*)\)/g)].map(match => match[1].split(',').map(name => name.trim()));
+    assert.deepEqual([...insert].sort(), [...columns].sort(), 'the restore insert writes every filing column');
+    assert.match(backup, /type: 'gst_return_filing'/);
+    assert.match(backup, /gst_filings: filingRows\.length/);
+    assert.match(backup, /item\.type === 'gst_return_filing' && !end && meta\.format >= 4/);
+    assert.match(backup, /GST\/HST filing revisions are out of order/);
+    assert.match(backup, /meta\.format >= 4 && item\.gst_filings !== filingRows\.length/, 'an archive that lost a filing does not verify');
+    assert.match(backup, /filingCount !== 0/, 'a restore refuses a store that already holds filings');
+    assert.match(backup, /deepStrictEqual\(replayedFilings\.map\(filingRow\), verified\.filingRows\)/, 'the drill replays filings');
   });
   it('migration 006 only adds: columns, two tables and the one seed revision', () => {
     const statements = read('scripts/bookkeeping-aws/006_gst_tax_lines.sql').replace(/^--.*$/gm, '').split(';').map(value => value.trim()).filter(Boolean);
