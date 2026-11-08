@@ -1,0 +1,249 @@
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Sales and Package Walk</title><style>
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+
+.stop { border-left: 4px solid var(--warn); }
+.step.opt { flex-direction: column; gap: 4px; }
+.step .optrow { display: flex; gap: 10px; align-items: flex-start; }
+.step .txt span { white-space: pre-wrap; overflow-wrap: anywhere; }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · Plans &amp; pricing Stage 2 · Part 4 · Walk B</span>
+    <h1>Sales, and the accountant package's invoice file</h1>
+    <p class="sub">Written 2026-11-08. One purpose: a month's sales figures trace to its bills and agree with the GST/HST return for the same dates, each void and credit note counts in its own month, and the accountant package now carries every invoice and credit note in one file. Read only: nothing on these pages changes money, Stripe or a club.</p>
+  </header>
+
+  <section class="card">
+    <h2>What this walk is for</h2>
+<p>Before this, Bookkeeping had no month-by-month sales figure anywhere, and the accountant package said our sales were not in it. Now <strong>Bookkeeping › Reports</strong> has a third view, <strong>Sales</strong>: what we invoiced in each month, less voids and credit notes, with the GST/HST, the money collected and the bad debts each in their own column. One sentence ties it to line 101 of the GST/HST return for the same dates. The <strong>Accountant package</strong> gains one file, <strong>invoices-and-credit-notes.csv</strong>: one row per invoice and one per credit note, with both the sales and the GST/HST figures.</p>
+<p>You will read October (it no longer changes), trace it to its bills, check it against the return, move one void into November and put it back, and open both files.</p>
+<div><strong>It passes when</strong></div>
+<ul>
+  <li>October's figures are its bills: the kinds add up to Invoiced, and the void and the credit note sit in October.</li>
+  <li>The sentence's line 101 is the GST/HST return's line 101 for the same dates, and the parts add up.</li>
+  <li>Moving a void's date moves it to that month and changes nothing else: the sale stays in its own month.</li>
+  <li>The Sales CSV holds totals only; the package's invoice file has one row per invoice and credit note, no address, and a scope line that says what it holds.</li>
+</ul>
+  </section>
+
+  <section class="card">
+    <h2>Before you start</h2>
+    <p>Setup, not checked.</p>
+    <dl class="facts"><dt>Where</dt><dd><strong>http://localhost:3000</strong> (restarted for this walk 2026-11-08; if Sales is missing from the View list, restart it: the build added a page).</dd><dt>Sign in</dt><dd>As yourself (the owner's account). Bookkeeping opens for the owner's email only.</dd><dt>Also</dt><dd>A terminal in the project folder, for the two <code>db-query</code> commands in Part D. They change one dev test-mode record and put it back.</dd><dt>Dev data</dt><dd>Test-mode bills from other sessions' walks. The page reads <strong>Test sales</strong>. Every month reads <strong>PARTIAL</strong> on dev: the daily catch-up of older invoices has never finished here, so the record is only known complete from Nov 8. That is true, not a defect.</dd><dt>Time</dt><dd>About 20 minutes. Computer only.</dd></dl>
+  </section>
+
+  <section class="card stop">
+    <h2>Stop check</h2>
+    <p>Before Part B, the Sales view must show its band of four figures. If it says "Could not read this just now", press Try again once. If that persists, stop and tell me. Part D writes to <strong>dev</strong> data only; if you stop partway through it, run its PUT IT BACK command before anything else.</p>
+  </section>
+
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+
+  <section class="card">
+    <h2>Not in this walk</h2>
+<ul>
+  <li><strong>A credit note in a later month than its bill, a write-off then voided, a recovered bad debt, a USD sale not yet valued in CAD.</strong> Dev has none of them; the automatic tests cover each (40 tests on Sales and the file).</li>
+  <li><strong>Who sees it.</strong> Bookkeeping's owner gate is unchanged; Sales sits behind it like the GST/HST return.</li>
+  <li><strong>The two help entries</strong> ("How to read Sales", "How to enter Stripe's monthly fees as an expense") in the platform-admin guide. Read them when you like.</li>
+  <li><strong>A phone.</strong> The Accountant package button is on a computer only, as on the return.</li>
+</ul>
+  </section>
+</main>
+<script>
+(function () {
+  var DATA = {"key":"plans-pricing-stage2-part4-walk-b-v1","title":"Plans & pricing Stage 2 Part 4 Walk B: Sales and the package","parts":[
+{"id":"A","title":"Find Sales","steps":[
+{"who":"You · http://localhost:3000/platform-admin/bookkeeping","do":"Sign in as yourself. Open the Reports tab, then open the View list.","see":"View lists Spending, GST/HST return and Sales. Pick Sales. The toolbar reads: Period “This year to date”, a “Test sales” chip, and at the right “Sales CSV” and “Accountant package”. Above the figures: “Sales by month · Jan 1, 2026 to Nov 8, 2026” and a one-line caption that begins “Sales invoiced by the day each bill was issued, paid or not”."},
+{"who":"You · the band","do":"Read the four figures across the top.","see":"One joined band: Net sales, before tax · GST/HST on them (“held for CRA, not revenue”) · Collected (“payments received, with tax”) · Written off (“bad debt, before tax”). No figure adds a price to its tax.","options":["Four figures, each with its line","Something differs. Say what"]},
+{"who":"You · the notes under the band","do":"Read the amber notes.","see":"“Sales are recorded from Nov 8, 2026. Bills issued before that day aren’t in these figures, so those months are marked partial.” and a note that some refunds were made in Stripe’s dashboard with no credit note: they still reduce your income in the month refunded, so net sales are overstated by them, and only a credit note reduces the GST/HST.","options":["Both notes, in those words","Something differs. Say what"]},
+{"who":"You · the months","do":"Read the month column from the top down.","see":"Nov 2026 (with “Nov 1 to Nov 8” under it), Oct 2026, Sep 2026 with a blue “part before registration” chip, Aug to May each with “before registration” and “No sales invoiced”, then ONE quiet row “Jan 2026 to Apr 2026 · Before our record starts”. Each month from May carries a PARTIAL chip (dev). The last row is the period’s total.","options":["As described","Something differs. Say what"]},
+{"who":"You · under the table","do":"Read the two callouts at the foot.","see":"A sentence beginning “Line 101 of the GST/HST return for these dates reads …”, and an amber “Not the figure on Business numbers. That one is the list price of the plans active today, a month, before tax: no history, no discounts, no yearly plans.”"}]},
+{"id":"B","title":"October, traced to its bills","steps":[
+{"who":"You · Sales","do":"Open Period and pick “Last month”.","see":"One month, Oct 2026: Invoiced $1,039.00 · Voided −$22.00 · Credit notes −$15.00 · Net sales $1,002.00 · GST/HST — · Collected $1,017.00 · Written off —. The band reads the same Net sales and Collected.","options":["Those figures","Different figures. Say them"]},
+{"who":"You · Oct 2026","do":"Press “Oct 2026”.","see":"A window titled “Oct 2026”, under it “Oct 1 to Oct 31 · each event in the month it happened”. A table of kinds: Plans, Coach Premium, One-off charges, each with Invoiced, Voided, Credit notes, Net sales, GST/HST. Under it, every bill behind the month in date order, with Date · What · Bill · Buyer · Kind · Amount · GST/HST."},
+{"who":"You · the kinds","do":"Add the three Invoiced figures in the kinds table.","see":"They add to $1,039.00, the month’s Invoiced. One-off charges carries the Voided −$22.00 and the Credit notes −$15.00.","options":["They add to $1,039.00","They do not. Say the three figures"]},
+{"who":"You · the bills","do":"Find the Voided row and the Credit note row.","see":"Oct 27 · Voided · LQMOQ8U2-0002 · $22.00, and Oct 27 · Credit note · XVGVD4JI-0001 with “Credit note XVGVD4JI-0001-CN-01” under it · $15.00. Two rows read “Refunded, no credit note” with “· date not in our record” after the date.","options":["Both rows, and the two refunds","Something differs. Say what"]},
+{"who":"You · Collected","do":"Compare Collected ($1,017.00) with Invoiced ($1,039.00).","see":"The $22.00 bill was voided before it was paid, so it was never collected: 1,039.00 − 22.00 = 1,017.00. Each “Payment received” row is a payment, tax included.","options":["The difference is the voided bill","It is something else. Say what"]},
+{"who":"You · the Buyer column","do":"Read the buyers.","see":"A club’s name (for example Plan Walk Club, UAT Test Org), “Coach” for a bill an individual bought (the Coach Premium rows), or “Buyer not recorded”. No person’s name or email anywhere. Close the window.","options":["As described","A person’s name shows. Say where"]}]},
+{"id":"C","title":"The line-101 sentence against the GST/HST return","steps":[
+{"who":"You · Sales, Last month","do":"Read the sentence under the table.","see":"“Line 101 of the GST/HST return for these dates reads $1,039. It differs by: voids, which line 101 does not take off +$22.00, credit notes, which line 101 does not take off (the return puts them on line 107) +$15.00.” The parts add up: 1,002.00 + 22.00 + 15.00 = 1,039.00."},
+{"who":"You · the View list","do":"Switch View to GST/HST return. Keep Period on Last month.","see":"Line 101 reads $1,039, the same figure the Sales sentence quotes.","options":["Line 101 is $1,039","It differs. Say what it reads"]},
+{"who":"You · back to Sales","do":"Switch View back to Sales.","see":"Period is still Last month (the views share it) and October reads as in B1."}]},
+{"id":"D","title":"A void in its own month (planted and put back)","steps":[
+{"who":"You · a terminal in the project folder","do":"Move that void from Oct 27 to Nov 2. Run this, then come back to Sales and press Try again or reload:\nnode scripts/db-query.mjs --dev -q \"update platform_charge_tax_records set voided_at = '2026-11-02 15:00:00+00' where stripe_invoice_id = 'in_1UVEk6FuSuNtbvsQCvF8BHeY' and livemode = false returning invoice_number, issued_at, voided_at\"","see":"The command prints LQMOQ8U2-0002, issued 2026-10-27, voided 2026-11-02."},
+{"who":"You · Sales, Last month","do":"Read October again.","see":"Invoiced still $1,039.00 (the bill stays a sale in the month it was issued). Voided reads —. Net sales $1,024.00. The sentence still says line 101 reads $1,039, and now differs only by the credit notes +$15.00.","options":["As described","Something differs. Say what"]},
+{"who":"You · Sales, This month to date","do":"Pick Period “This month to date” and press Nov 2026.","see":"In the window, a row Nov 2 · Voided · LQMOQ8U2-0002 · $22.00. November’s Voided is $22.00 more than it was. Close the window.","options":["The void is in November","It is not. Say what you see"]},
+{"who":"You · the terminal (PUT IT BACK)","do":"Put the void back on Oct 27. Run this, then reload Sales on Last month:\nnode scripts/db-query.mjs --dev -q \"update platform_charge_tax_records set voided_at = '2026-10-27 18:05:06+00' where stripe_invoice_id = 'in_1UVEk6FuSuNtbvsQCvF8BHeY' and livemode = false returning invoice_number, voided_at\"","see":"The command prints voided_at 2026-10-27 18:05:06. October reads as in B1 again: Voided −$22.00, Net sales $1,002.00.","options":["Put back, and October is as it was","Something stayed. Say what"]}]},
+{"id":"E","title":"The Sales CSV","steps":[
+{"who":"You · Sales, Last month","do":"Press “Sales CSV” and open the file.","see":"fieldlogichq-sales-2026-10-01-to-2026-10-31.csv. A header row, then “Oct 2026” with 1039.00 · 22.00 · 15.00 · 1002.00 · 0.00 · 1017.00 · 0.00 · 0.00 · 0.00 · 0, a “Period total” row with the same figures, and a last line beginning “Test sales. Line 101 of the GST/HST return for these dates reads $1,039.”","options":["As described","It differs. Say how"]},
+{"who":"You · the CSV","do":"Look for a club, a person or a bill.","see":"None: the Sales CSV holds totals only. The bills are in the accountant package (Part F).","options":["Totals only","A name or a bill number appears. Say which"]}]},
+{"id":"F","title":"The accountant package's invoice file","steps":[
+{"who":"You · Sales, Last month","do":"Press “Accountant package” and open the ZIP.","see":"fieldlogichq-accountant-package.zip holds expenses.csv, owner-transfers.csv, invoices-and-credit-notes.csv, package-scope.txt and receipt-index.csv (and any October receipts).","options":["invoices-and-credit-notes.csv is there","It is missing. Say what is there"]},
+{"who":"You · invoices-and-credit-notes.csv","do":"Open it in Excel and read the rows.","see":"21 rows under the header: 20 “Invoice” rows and 1 “Credit note” row. The credit note’s Invoice number is XVGVD4JI-0001 and its Credit note number XVGVD4JI-0001-CN-01. LQMOQ8U2-0002 reads “Issued; Voided” under Listed for, Status Void. Every row has Before tax, Tax (all kinds), Total, GST/HST, GST/HST treatment, Bank of Canada rate (“1 (same currency)”), Before tax (CAD) and GST/HST (CAD).","options":["21 rows, as described","It differs. Say how"]},
+{"who":"You · the Buyer column","do":"Read the buyers and look for an address.","see":"Club names, “Coach” (the Coach Premium bills) or “Buyer not recorded”. No street address, postal code, email or person’s name in any column.","options":["No address or person’s name","One appears. Say where"]},
+{"who":"You · package-scope.txt","do":"Open it.","see":"A line counting “invoice and credit note rows: 21”; a line beginning “invoices-and-credit-notes.csv: TEST-MODE sales, 2026-10-01 to 2026-10-31 (Ontario days)” that says the buyer is the club’s name or “Coach”, that “Before GST/HST registration” uses the registration date on file, 2026-09-26, and that Status is each bill’s status today; and the line “Bank statements, payouts and bank reconciliation are not in this package; sales and credit notes are. Stripe’s fees to us are included only as the monthly expenses entered from Stripe’s statement (expenses.csv).”","options":["As described","It differs. Say what"]},
+{"who":"Your call (not a check)","do":"If our sales record cannot be read, the package is now refused whole, expenses and receipts included (“Your sales could not be read; the package was not created. Try again.”). Before this build the package never depended on sales.","see":"Pick one. Recommended: keep refusing, so a package never goes to the accountant without its sales while its scope note says they are in it.","options":["Keep refusing (recommended)","Send it anyway, with a header-only invoice file and a scope line saying the sales could not be read"]}]}
+]};
+  var KEY = DATA.key, PARTS = DATA.parts;
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  function txt(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; n.textContent = text; return n; }
+  function box(id, partId, label) {
+    var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+    cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+    boxes.push({ part: partId, id: id, cb: cb, label: label });
+    return cb;
+  }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(txt('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(txt('span', 'who', id + ' · ' + s.who));
+      t.appendChild(txt('span', null, s['do']));
+      t.appendChild(txt('span', 'see', 'You should see: ' + s.see));
+      if (s.options && s.options.length) {
+        var wrap = el('div', 'step opt'); wrap.appendChild(t);
+        s.options.forEach(function (o, k) {
+          var row = el('label', 'optrow'); var cb = box(id + '-' + (k + 1), p.id, id + ' = ' + o);
+          row.appendChild(cb); row.appendChild(txt('span', null, o)); wrap.appendChild(row);
+        });
+        body.appendChild(wrap);
+      } else {
+        var row2 = el('label', 'step'); var cb2 = box(id, p.id, id);
+        row2.appendChild(cb2); row2.appendChild(t); body.appendChild(row2);
+      }
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function refresh() {
+    var done = 0;
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var n = mine.filter(function (b) { return b.cb.checked; }).length;
+      done += n;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + mine.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    document.getElementById('total').textContent = done + ' of ' + boxes.length + ' checked';
+    document.getElementById('barfill').style.width = (boxes.length ? Math.round(done * 100 / boxes.length) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [DATA.title + ' (written 2026-11-08)'];
+    var done = boxes.filter(function (b) { return b.cb.checked; }).length;
+    lines.push('Checked ' + done + ' of ' + boxes.length + ' (a step with options counts one box per option)');
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var ticked = mine.filter(function (b) { return b.cb.checked; }).map(function (b) { return b.label; });
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + mine.length + (ticked.length ? ' (' + ticked.join('; ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

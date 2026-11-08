@@ -12,7 +12,7 @@
  * filed and "Changed since you filed" (all worked out by the route from lib/gst-return-filing.ts), with today's figures folded below.
  * The period is the page's (shared with Spending); a return needs dates, so "All confirmed dates" is not offered here.
  */
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import kit from '../console.module.css';
 import SingleSelectDropdown from '@/components/coaches/SingleSelectDropdown';
 import DateInput from '@/components/shared/DateInput';
@@ -30,17 +30,18 @@ import type { FilingSummary, GstReturnResponse, ReturnFiling } from '@/app/api/p
 import type { ReportPeriod } from './ReportsSpending';
 import GstReturnWindow, { lineWindow, type ReturnWindow } from './GstReturnWindows';
 import GstReturnFilingQuestion from './GstReturnFilingQuestion';
+import { useReportRead } from './useReportRead';
 import bk from './bookkeeping.module.css';
 import styles from './ReportsGstReturn.module.css';
 
-const PERIODS: { id: Exclude<ReportPeriod, 'all'>; label: string }[] = [
+/** The dated views' periods (the return, Sales): "All confirmed dates" is not offered, because a return and a month need dates. */
+export const DATED_PERIODS: { id: Exclude<ReportPeriod, 'all'>; label: string }[] = [
   { id: 'year', label: 'This year to date' }, { id: 'last_year', label: 'Last calendar year' },
   { id: 'last_quarter', label: 'Last quarter' }, { id: 'last_month', label: 'Last month' }, { id: 'month', label: 'This month to date' },
   { id: 'custom', label: 'Custom dates' },
 ];
 const FOLDS: readonly LineNumber[] = [101, 103, 106, 107];
 const SALES_FAILURES = ['sales_unread', 'registration_unread'] as const;
-type Load = { state: 'idle' | 'loading' } | { state: 'ready'; body: GstReturnResponse } | { state: 'error'; error: string };
 
 /** One "can't know" sentence per failure (drawing tab 6, state A, and the registration date's two cases). */
 function failureNote(why: NotAvailableWhy, registration: GstReturnResponse['registration']): { title: string; body: string; retry: boolean } {
@@ -52,6 +53,21 @@ function failureNote(why: NotAvailableWhy, registration: GstReturnResponse['regi
   return { title: 'Your registration date couldn’t be read', body: 'Every line needs it: sales and credits dated before it are outside the return.', retry: true };
 }
 
+/** The Period dropdown and, for Custom dates, the From and To fields: the dated views' shared toolbar lead. */
+export function DatedPeriodPicker({ reportPeriod, onChooseReportPeriod, onCustomPeriod, from, to, onFrom, onTo }: {
+  reportPeriod: ReportPeriod; onChooseReportPeriod: (value: ReportPeriod) => void; onCustomPeriod: () => void;
+  from: string; to: string; onFrom: (value: string) => void; onTo: (value: string) => void;
+}) {
+  return <>
+    <SingleSelectDropdown lead label="Period" options={DATED_PERIODS} value={reportPeriod === 'all' ? 'year' : reportPeriod}
+      onChange={next => onChooseReportPeriod(next as ReportPeriod)} />
+    {reportPeriod === 'custom' && <span className={styles.dates}>
+      <label>From<DateInput className={kit.field} value={from} onChange={v => { onFrom(v); onCustomPeriod(); }} /></label>
+      <label>To<DateInput className={kit.field} value={to} onChange={v => { onTo(v); onCustomPeriod(); }} /></label>
+    </span>}
+  </>;
+}
+
 export default function ReportsGstReturn({
   reportPeriod, onChooseReportPeriod, onCustomPeriod, from, to, onFrom, onTo, invalidPeriod, expenses, onOpenExpense, onAddNumber,
 }: {
@@ -60,8 +76,6 @@ export default function ReportsGstReturn({
   expenses: ExpenseRevision[];
   onOpenExpense: (row: ExpenseRevision, list: ExpenseRevision[]) => void; onAddNumber: (row: ExpenseRevision, list: ExpenseRevision[]) => void;
 }) {
-  const [attempt, setAttempt] = useState(0);
-  const [result, setResult] = useState<{ key: string; body?: GstReturnResponse; error?: string } | null>(null);
   const [open, setOpen] = useState<Set<LineNumber>>(() => new Set([103]));
   const [windowOpen, setWindowOpen] = useState<ReturnWindow | null>(null);
   /** Session C: the "Mark as filed…" question, the filing history window, and today's figures under a filed period. */
@@ -72,24 +86,7 @@ export default function ReportsGstReturn({
   const [liveFor, setLiveFor] = useState<string | null>(null);
   const { copied, copy } = useCopyToClipboard();
   const ready = Boolean(from && to && !invalidPeriod);
-  /** One read per period (and per Try again); the answer is kept only for the read that asked for it. */
-  const key = ready ? `${from}|${to}|${attempt}` : null;
-
-  useEffect(() => {
-    if (!key) return;
-    const abort = new AbortController();
-    fetch(`/api/platform-admin/bookkeeping/gst-return?${new URLSearchParams({ from, to })}`, { cache: 'no-store', signal: abort.signal })
-      .then(async response => {
-        const body = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(body.error ?? 'Unable to work out the return');
-        setResult({ key, body: body as GstReturnResponse });
-      })
-      .catch(cause => { if (!abort.signal.aborted) setResult({ key, error: cause instanceof Error ? cause.message : 'Unable to work out the return' }); });
-    return () => abort.abort();
-  }, [key, from, to]);
-  const retry = useCallback(() => setAttempt(n => n + 1), []);
-  const load: Load = !key ? { state: 'idle' } : result?.key !== key ? { state: 'loading' }
-    : result.body ? { state: 'ready', body: result.body } : { state: 'error', error: result.error ?? 'Unable to work out the return' };
+  const { load, retry } = useReportRead<GstReturnResponse>('/api/platform-admin/bookkeeping/gst-return', from, to, ready, 'Unable to work out the return');
 
   const body = load.state === 'ready' ? load.body : null;
   const worksheet = body?.worksheet ?? null;
@@ -102,14 +99,8 @@ export default function ReportsGstReturn({
       worksheetCsvRows(ws).map(row => row.map(csvCell).join(',')).join('\n'));
   }
 
-  const period = <>
-    <SingleSelectDropdown lead label="Period" options={PERIODS} value={reportPeriod === 'all' ? 'year' : reportPeriod}
-      onChange={next => onChooseReportPeriod(next as ReportPeriod)} />
-    {reportPeriod === 'custom' && <span className={styles.dates}>
-      <label>From<DateInput className={kit.field} value={from} onChange={v => { onFrom(v); onCustomPeriod(); }} /></label>
-      <label>To<DateInput className={kit.field} value={to} onChange={v => { onTo(v); onCustomPeriod(); }} /></label>
-    </span>}
-  </>;
+  const period = <DatedPeriodPicker reportPeriod={reportPeriod} onChooseReportPeriod={onChooseReportPeriod} onCustomPeriod={onCustomPeriod}
+    from={from} to={to} onFrom={onFrom} onTo={onTo} />;
 
   const periodKey = `${from}|${to}`;
   const liveOpen = liveFor === periodKey;

@@ -15,6 +15,24 @@ The owner closed walk §488 but **part D was ticked and dev does not agree.** Re
 4. **Then, and only then, the owner's F4 ruling: remove the walk's dev rows** (the filings of October 2026 and the "Walk test supplier" expense and its tax lines) with the dev admin login. A probe that inspects first, deletes in one transaction, and re-counts. Dev only (`BOOKKEEPING_DSQL_ENDPOINT` must be the dev host); the app role cannot delete, by design. `.probe/walk488-cleanup.mjs` is the inspect/delete probe from the walk (`inspect` or `delete`); it expects exactly 2 filings, so adjust its guard to what is there.
 5. With the passphrase set by the owner (`BOOKKEEPING_BACKUP_PASSPHRASE`), run a dev backup `create`, `verify` and `restore-drill-dev` (format 4 is committed `d6433b20f` and has never run against a real archive). Report the counts the drill prints.
 
+## ⚠ The invoice file already exists (Plans & pricing Part 4 Session 2, built 2026-11-08, commit owed)
+
+The accountant package's ONE invoice file is built: **`invoices-and-credit-notes.csv`** (`INVOICE_FILE_NAME`, `INVOICE_FILE_HEADER`,
+`invoiceFileRows` in `lib/sales-by-month.ts`; `readInvoiceFile` in `lib/sales-by-month-read.ts`; written by
+`app/api/platform-admin/bookkeeping/package/route.ts`). One row per invoice issued, paid, voided or written off in the package's dates
+("Listed for" says which) and one per credit note issued in them, with: invoice and credit note numbers, issue day, kind, buyer (the
+club's name, "Coach" for an individual, "A club no longer on file"), province taxed, GST/HST treatment, status, currency, before tax,
+tax (all kinds), total, GST/HST, GST/HST rate, Bank of Canada rate and its date, before tax (CAD), GST/HST (CAD), paid / voided /
+written-off days, written off (before tax), before GST/HST registration, refunded with no credit note. Its GST/HST is valued by the
+engine's own rules (`saleGstHst`, `noteRate`, `noteGstHst`). **So this session does NOT write `gst-hst-sales.csv`**: reuse this file
+and add nothing that repeats it. Its privacy default differs from this prompt's draft (an individual appears as "Coach", not by
+invoice number only): that is /legal's Recommendation 3 (STAFF_CROSS_CLUB_BILLING_LISTS.md) and the owner's ruling as handed to
+Part 4. `package-scope.txt` already says "Bank statements, payouts and bank reconciliation are not in this package; sales and credit
+notes are. Stripe's fees to us are included only as the monthly expenses entered from Stripe's statement (expenses.csv)." plus a line
+describing the file; the draft sentence below ("Sales are included only as the GST/HST record…") is superseded. The package is
+refused (503) when the sales cannot be read (an owner question in walk §493). The worksheet, credits and as-filed files remain this
+session's.
+
 ## What this session ships
 
 The accountant package (the Bookkeeping export the owner hands to an accountant, in-year and the yearly in-Canada copy) gains the GST/HST files:

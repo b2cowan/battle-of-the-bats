@@ -14,6 +14,7 @@ import { reportPeriodRange } from '@/lib/bookkeeping-export';
 import SingleSelectDropdown from '@/components/coaches/SingleSelectDropdown';
 import ReportsSpending, { type ReportDrilldown, type ReportPeriod } from './ReportsSpending';
 import ReportsGstReturn from './ReportsGstReturn';
+import ReportsSales from './ReportsSales';
 import type { OwnerMovementRevision } from '@/lib/bookkeeping-owner-movements';
 import { downloadCSVBlob } from '@/lib/export';
 import OwnerLedger from './OwnerLedger';
@@ -180,6 +181,13 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
      reads the same ones. The View pill appears only once two entries are available. A new view that has its own line
      list or drill-down passes its list to openRecord and its filters to exportExpenses; Spending's narrow them only
      while Spending is open (`spendingOpen`). */
+  /* The dated views (the return, Sales) need dates: while the shared period is "All confirmed dates" they read this year to date
+     (nothing is changed until the owner picks a period there, which then moves the shared one). */
+  const yearToDate = reportPeriod === 'all' ? reportPeriodRange('year', today()) : null;
+  const datedPeriod = {
+    reportPeriod: yearToDate ? 'year' as const : reportPeriod, onChooseReportPeriod: chooseReportPeriod, onCustomPeriod: () => setReportPeriod('custom'),
+    from: yearToDate?.from ?? from, to: yearToDate?.to ?? to, onFrom: setFrom, onTo: setTo, invalidPeriod,
+  };
   const reportViews: { key: ReportView; available: boolean; render: () => ReactNode }[] = [
     { key: 'spending', available: true, render: () => <ReportsSpending
       reportPeriod={reportPeriod} reportPeriodLabel={reportPeriodLabel} onChooseReportPeriod={chooseReportPeriod} onCustomPeriod={() => setReportPeriod('custom')}
@@ -191,14 +199,13 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
       attentionCount={attention.length} onOpenAttention={() => setView('attention')}
       registrationDate={registrationDate} gstSchemaReady={gstSchemaReady} onChangeRegistration={() => setChangingRegistration(true)} /> },
     // GST/HST Stage 4b Session B: the return's lines for the page's period. Its windows hand their own row list to openRecord.
-    // A return needs dates: while the shared period is "All confirmed dates" it reads this year to date (nothing is changed
-    // until the owner picks a period here, which then moves the shared one).
-    { key: 'gst_return', available: true, render: () => <ReportsGstReturn
-      reportPeriod={reportPeriod === 'all' ? 'year' : reportPeriod} onChooseReportPeriod={chooseReportPeriod} onCustomPeriod={() => setReportPeriod('custom')}
-      from={reportPeriod === 'all' ? reportPeriodRange('year', today()).from : from} to={reportPeriod === 'all' ? reportPeriodRange('year', today()).to : to}
-      onFrom={setFrom} onTo={setTo} invalidPeriod={invalidPeriod} expenses={expenses}
+    { key: 'gst_return', available: true, render: () => <ReportsGstReturn {...datedPeriod} expenses={expenses}
       onOpenExpense={(row, list) => openRecord(row, list)}
       onAddNumber={(row, list) => { setRecordIds(list.map(item => item.expense_id)); openForm(row, false, null, true); }} /> },
+    // Plans & pricing Stage 2 Part 4d: sales by month from the return's own rows, for the page's period. Its Accountant package
+    // is the page's, for the same dates.
+    { key: 'sales', available: true, render: () => <ReportsSales {...datedPeriod} exporting={exporting === 'package'}
+      onPackage={(packageFrom, packageTo) => exportExpenses('package', { ...NO_FILTERS, from: packageFrom, to: packageTo })} /> },
   ];
   const reportControl = reportViewControl(place.report, reportViews);
   /** Spending's drill-down and line list narrow the export and the record window only while Spending is the view on screen. */

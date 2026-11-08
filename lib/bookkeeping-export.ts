@@ -117,6 +117,9 @@ export function expenseCsv(selected: ExpenseRevision[], filters: ExpenseFilters 
   return '\uFEFF' + lines.join('\r\n') + '\r\n';
 }
 
+/** The accountant package's CSV framing: a byte-order mark (Excel reads UTF-8 by it), CRLF line ends, a closing line end. */
+export const packageCsv = (rows: readonly (readonly unknown[])[]): string => '\uFEFF' + rows.map(row => row.map(csvCell).join(',')).join('\r\n') + '\r\n';
+
 /** Owner transfers are dated by transfer date; narrowed expense exports include linked reimbursements only. */
 export function selectOwnerMovementRevisions(revisions: OwnerMovementRevision[], filters: ExpenseFilters, selectedExpenses: ExpenseRevision[]): OwnerMovementRevision[] {
   const selectedExpenseIds = new Set(selectedExpenses.map(row => row.expense_id));

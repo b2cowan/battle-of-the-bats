@@ -139,7 +139,39 @@ that is the owner's dashboard work.
       Founding comp holder who then paid stays in the monthly figure); the Founding comp read pages past 1,000 rows; the
       unpaid export labels only a person's bill "Coach"; the download helper is one shared function for four export screens.
       Owner questions left open: see the review notes in the commit message.
-      Session 2 (4d Sales, 4e the package) not started.
+      **Session 2 (4d Sales, 4e the package) BUILT 2026-11-08, commit owed (the owner's yes):** Bookkeeping › Reports › View ·
+      Sales (owner only; months newest first, Invoiced / Voided / Credit notes / Net sales / GST/HST / Collected / Written off with
+      "recovered" beneath, the chips, "Before our record starts", "not yet valued in CAD", the line-101 sentence quoting the engine's
+      own 101, the Business numbers callout, a month's window split by kind with every bill, "Sales CSV" totals only) and the
+      accountant package's ONE invoice file `invoices-and-credit-notes.csv` (owner ruling 2026-11-08; one row per invoice with
+      anything in the dates and one per credit note, sales and GST/HST figures, buyer = club name / "Coach" / "A club no longer on
+      file", no address) with the new scope lines; two registry entries (Sales by month, totals only; the Accountant package,
+      included_justified, which had no entry before). No migration, no Stripe call, nothing stored. Code: `lib/sales-by-month.ts`
+      (pure rules), `lib/sales-by-month-read.ts`, `app/api/platform-admin/bookkeeping/sales/route.ts`, `ReportsSales.tsx`,
+      `useReportRead.ts` (the dated views' shared read). **Built differently from the spec, said before building:** the return's
+      loader gained rows `every_event` (also voided and every paid bill in the dates; the return's own read is unchanged and its
+      engine ignores the extra rows, tested); a refund with no credit note needs the refunded figure, which a guard keeps out of the
+      return's reader, so it has its own small read with Stage 3's rule (`notesPaidBackCents`); our record holds no refund date, so
+      such a refund is listed on its bill's issue month; the invoice file lists a bill issued earlier when it was paid, voided or
+      written off in the dates ("Listed for"). `/accounting` before hand-off (`REVENUE_REPORT_DEFINITIONS.md` "Build review
+      2026-11-08", all applied): Recovered named apart; the no-note refund sentence says it still reduces income; the 101 sentence
+      reworded ("voids, which line 101 does not take off", "credit notes, which line 101 does not take off (the return puts them on
+      line 107)", the cents beside a rounded 101); GST/HST treatment and Written off (before tax) columns; the registration date used
+      named in the scope; "Stripe's fees to us are included only as the monthly expenses entered from Stripe's statement".
+      `/simplify`: the engine's note-valuation and recovery rules exported and used by the engine itself (figures unchanged, 96
+      tests); one buyer rule and one rate label shared with the return's windows; one club-name read (the return's route uses it);
+      the dated views share one period picker and one read; the Sales view reads sales only (not expenses and filings); the package
+      starts its sales read beside the expense reads. `/review` (high, five lenses): a bill written off then voided came off twice
+      (fixed: the void only); a deleted club read "Club" (fixed: "A club no longer on file"; the record's buyer name is Stripe's
+      customer name, which can be a person, so it is not used); an aborted read could paint an empty answer (fixed in the shared
+      read); scope lines for Status today and the record's start. Kept by design: the Sales CSV writes positive amounts with a "below
+      zero" note (the worksheet CSV's convention); a rare negative amount in the invoice file opens as text (the shared
+      spreadsheet-safety rule). **Owner question:** the package is refused whole when the sales cannot be read (recommended: keep);
+      the walk asks it. `/docs`: platform-admin help "How to read Sales" and "How to enter Stripe's monthly fees as an expense" (new
+      group Private finance). Proved on dev with the routes' own server reads (`.probe/sales-probe.mjs`): year to date reconciles
+      to the cent with the return's own line 101. Not run: `check:layout --changed` (Bookkeeping is not on the layout screen list;
+      the list was not edited). Walk B = Owner QA Ledger §493 (https://claude.ai/artifact/LJoTxy3w69bzXVLapi7Qrq). Known red, not
+      this work: the export registry's founding-season entry (a moved file) and the twelve unit tests listed in the review notes.
 - [ ] Part 5 replay · Part 6 closeout (Part 3 committed `514d3a2d0`, above)
 - Known red tests NOT from this work: `workspace-flip-guard` and `support-console-stage4b-inforce-guard` (an untracked file from another
   session and a committed one the allowlists do not list), `support-console-stage3-guard` (a modified bookkeeping window file).

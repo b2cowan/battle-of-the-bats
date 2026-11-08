@@ -219,7 +219,7 @@ const bucket = (): Bucket => ({ cents: 0, count: 0 });
 const add = (b: Bucket, cents: number) => { b.cents += cents; b.count += 1; };
 
 /** One invoice's Canadian GST/HST lines with their CAD figures, the residue of the per-invoice rounding on the largest line. */
-function saleTaxLines(sale: WorksheetSale, rate: number | null): { lines: SaleTaxLine[]; original: number; cad: number | null } {
+function saleTaxLines(sale: Pick<WorksheetSale, 'tax_lines'>, rate: number | null): { lines: SaleTaxLine[]; original: number; cad: number | null } {
   const found = canadianLines(sale.tax_lines);
   const original = centsOf(found);
   const cad = rate == null ? null : toCad(original, rate);
@@ -234,6 +234,32 @@ function saleTaxLines(sale: WorksheetSale, rate: number | null): { lines: SaleTa
   return { lines, original, cad };
 }
 
+/**
+ * An invoice's rate (CAD = 1; null = a foreign sale with no rate read yet) and its Canadian GST/HST, valued and rounded exactly as
+ * the return values it. Exported so Sales by month and the accountant package's invoice file (Plans & pricing Stage 2 Part 4d/4e)
+ * read the return's rule instead of a copy of it.
+ */
+export function saleGstHst(sale: Pick<WorksheetSale, 'currency' | 'fx_rate' | 'tax_lines'>): { rate: number | null; original: number; cad: number | null; lines: SaleTaxLine[] } {
+  const rate = rateOf(sale);
+  return { rate, ...saleTaxLines(sale, rate) };
+}
+/**
+ * The rate a credit note is valued at: its invoice's (the return's rule: a note's own CAD figures are not read), and only when the
+ * note is in the invoice's currency. A note on a bill with no record can be valued only if it is itself in CAD. Null = not valued.
+ */
+export function noteRate(note: Pick<WorksheetNote, 'currency'>, sale: Pick<WorksheetSale, 'currency' | 'fx_rate'> | undefined): number | null {
+  if (!sale) return note.currency === 'cad' ? 1 : null;
+  return note.currency === sale.currency ? rateOf(sale) : null;
+}
+/** A credit note's Canadian GST/HST in its own currency, and in CAD at the rate `noteRate` gave. */
+export function noteGstHst(note: Pick<WorksheetNote, 'tax_lines'>, rate: number | null): { original: number; cad: number | null } {
+  const original = centsOf(canadianLines(note.tax_lines));
+  return { original, cad: rate == null ? null : toCad(original, rate) };
+}
+/** Paid after Stripe marked it uncollectible: a recovery of the bad debt (line 104; Sales by month's Recovered). */
+export const isRecovery = (sale: Pick<WorksheetSale, 'paid_at' | 'uncollectible_at'>): boolean =>
+  sale.uncollectible_at != null && sale.paid_at != null && Date.parse(sale.paid_at) > Date.parse(sale.uncollectible_at);
+
 // ── The sales side ──────────────────────────────────────────────────────────────────────────────────────────────────────
 
 type ReliefEvent = { at: string; order: number; kind: 'note' | 'write_off' | 'recovery'; note?: WorksheetNote; raw: number | null; share?: ReliefItem['share'] };
@@ -245,16 +271,16 @@ type ReliefEvent = { at: string; order: number; kind: 'note' | 'write_off' | 're
  * before the payment) ÷ written off. `raw` null = it cannot be worked out (the line lists it). A part payment BEFORE a write-off that
  * was later paid in full cannot be seen in the record (only the final payment is kept): known limit, review 2026-11-07.
  */
-function reliefOf(sale: WorksheetSale, notes: readonly WorksheetNote[], tax: number, rate: number) {
+function reliefOf(sale: WorksheetSale, notes: readonly WorksheetNote[], tax: number) {
   const issued = notes.filter(n => n.status === 'issued');
   const events: ReliefEvent[] = issued.map(note => ({
     at: note.issued_at, order: 0, kind: 'note', note,
-    raw: note.currency === sale.currency ? toCad(centsOf(canadianLines(note.tax_lines)), rate) : null,
+    raw: noteGstHst(note, noteRate(note, sale)).cad,
   }));
   const writeOff = sale.uncollectible_at;
   if (writeOff) {
     const at = Date.parse(writeOff);
-    const recovered = sale.paid_at != null && Date.parse(sale.paid_at) > at;
+    const recovered = isRecovery(sale);
     const before = issued.filter(n => Date.parse(n.issued_at) <= at);
     // A payment before the write-off means the record cannot show the unpaid share: the invoice is listed, never guessed.
     // A payment that IS the recovery (paid after the write-off) is not one.
@@ -376,12 +402,12 @@ function salesSide(input: WorksheetInput, sales: Extract<SalesRead, { state: 're
       }
       if (sale.uncollectible_at && inPeriod(sale.uncollectible_at)) unresolved.push({ kind: 'relief_no_rate', affects: [107], on: orgDayKey(sale.uncollectible_at), cents: null, ...ref });
       // A recovery of such a write-off is unknowable too, and must not vanish from line 104 (review 2026-11-07).
-      if (sale.uncollectible_at && sale.paid_at && Date.parse(sale.paid_at) > Date.parse(sale.uncollectible_at) && inPeriod(sale.paid_at)) {
+      if (isRecovery(sale) && inPeriod(sale.paid_at!)) {
         unresolved.push({ kind: 'relief_no_rate', affects: [104], on: orgDayKey(sale.paid_at), cents: null, ...ref });
       }
       continue;
     }
-    for (const e of reliefOf(sale, notes, tax.cad, rate)) {
+    for (const e of reliefOf(sale, notes, tax.cad)) {
       if (!inPeriod(e.at)) continue;
       const day = orgDayKey(e.at);
       if (e.kind === 'note' && e.note) {

@@ -109,11 +109,23 @@ export function worksheetCsvRows(worksheet: Worksheet): string[][] {
   return rows;
 }
 
+/** "HST 13%": a tax line's type and rate, the one spelling for the return's windows, its CSVs and the accountant package. */
+export const taxRateLabel = (line: { taxType: string; rate: number | null }) =>
+  `${line.taxType.toUpperCase()}${line.rate == null ? '' : ` ${Number(line.rate.toFixed(3))}%`}`;
+
+/**
+ * The buyer as staff and the accountant read it (/legal STAFF_CROSS_CLUB_BILLING_LISTS.md Recommendation 3): an individual is
+ * "Coach", never a person's name; a club by its name when it was read, else "Club".
+ */
+export function buyerWords(buyerKind: 'club' | 'person' | 'unknown' | null, clubName: string | null | undefined): string {
+  if (buyerKind === 'person') return 'Coach';
+  return clubName ?? (buyerKind === 'club' ? 'Club' : 'Buyer not recorded');
+}
+
 /** "Ontario · HST 13% on $2,400.00". */
 export function taxGroupLabel(group: TaxGroup): string {
   const where = provinceName(group.region) ?? group.region ?? 'Province not recorded';
-  const rate = group.rate == null ? '' : ` ${Number(group.rate.toFixed(3))}%`;
-  return `${where} · ${group.taxType.toUpperCase()}${rate} on ${formatMoney(group.taxableCad)}`;
+  return `${where} · ${taxRateLabel(group)} on ${formatMoney(group.taxableCad)}`;
 }
 
 /**

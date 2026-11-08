@@ -715,6 +715,108 @@ const platformAdminHelp: HelpPageContent = {
       ],
     },
     {
+      id: 'bookkeeping-sales',
+      group: 'Private finance',
+      heading: 'How to read Sales',
+      summary: 'Bookkeeping › Reports › Sales shows what FieldLogicHQ invoiced each month, less voids and credit notes, with GST/HST, money collected and bad debts each in their own column.',
+      keywords: ['sales', 'sales by month', 'revenue', 'invoiced', 'net sales', 'voided', 'credit notes', 'collected', 'written off', 'bad debt', 'recovered', 'before registration', 'part before registration', 'partial', 'before our record starts', 'not yet valued in CAD', 'refund with no credit note', 'line 101', 'business numbers', 'sales csv', 'accountant package', 'invoices-and-credit-notes.csv', 'a club no longer on file'],
+      searchText: 'how do i read sales bookkeeping reports view sales owner only private finance revenue by month sales invoiced before tax issue day paid or not voided credit notes taken off in the month they happened net sales gst hst held for cra not revenue collected payments received with tax written off bad debt outside net sales recovered paid after write-off yearly plan counts in the month billed band period this year to date last calendar year last quarter last month this month to date custom dates chips before registration part before registration partial live sales test sales stripe mode before our record starts may 1 2026 no sales invoiced not yet valued in cad bank of canada rate usd subtotal refund made in stripe dashboard no credit note listed not taken off still reduces income month refunded credit note reduces gst hst line 101 sentence differs by sales before registration voids which line 101 does not take off credit notes line 107 whole dollars before rounding not the figure on business numbers list price click a month split by kind plans coach premium fees billed back to clubs one-off charges every bill buyer coach sales csv totals only accountant package invoices-and-credit-notes.csv one row per invoice and credit note buyer club name coach no address status today listed for issued paid recovered voided written off gst hst treatment taxed zero-rated a club no longer on file sales could not be read package not created',
+      links: [
+        { label: 'Bookkeeping', href: '/platform-admin/bookkeeping?view=reports&report=sales' },
+        { label: 'Business numbers', href: '/platform-admin/business-numbers' },
+      ],
+      content: (
+        <p><strong>Bookkeeping &rsaquo; Reports &rsaquo; View &middot; Sales</strong> shows what FieldLogicHQ invoiced in each month of the period you pick, less voids and credit notes, with GST/HST, money collected and bad debts each kept apart. It reads the same bills as the GST/HST return, never calls Stripe, changes nothing, and only the owner can open it.</p>
+      ),
+      subtopics: [
+        {
+          id: 'bookkeeping-sales-columns',
+          title: 'What each column means',
+          content: (
+            <>
+              <p>Each row is a calendar month, newest first, with the period&rsquo;s total at the foot. Every event counts in the month it happened, never moved to the bill&rsquo;s month.</p>
+              <HelpDefs>
+                <HelpDef term="Invoiced">Bills issued in the month, before tax, paid or not. A yearly plan counts in the month it was billed.</HelpDef>
+                <HelpDef term="Voided / Credit notes">Taken off in the month the void or the credit note happened. A void takes off only what a credit note left, so nothing comes off twice.</HelpDef>
+                <HelpDef term="Net sales">Invoiced, less voided, less credit notes.</HelpDef>
+                <HelpDef term="GST/HST">The tax on net sales. It is held for CRA and is never revenue.</HelpDef>
+                <HelpDef term="Collected">Payments received in the month, tax included. It is money in, not sales.</HelpDef>
+                <HelpDef term="Written off">Bills Stripe marked uncollectible: a bad debt, outside net sales; the sale stays in its own month. If the bill is paid later, <em>recovered</em> shows beneath it in the month of the payment.</HelpDef>
+              </HelpDefs>
+            </>
+          ),
+        },
+        {
+          id: 'bookkeeping-sales-chips',
+          title: 'Chips, notes and empty months',
+          content: (
+            <HelpDefs>
+              <HelpDef term="Live sales / Test sales">The site&rsquo;s Stripe mode. A figure never mixes the two; there is no switch.</HelpDef>
+              <HelpDef term="before registration / part before registration">The month falls wholly or partly before your GST/HST registration date. Those sales are income and are counted here; they are outside the return. The date is your Bookkeeping setting, so a granted backdate moves the chip.</HelpDef>
+              <HelpDef term="PARTIAL">Part of the month is before the day our sales record is complete from.</HelpDef>
+              <HelpDef term="Before our record starts">The month is before May 1, 2026, when our record of bills begins. It is not $0.</HelpDef>
+              <HelpDef term="No sales invoiced">Nothing happened in the month. The zero is true.</HelpDef>
+              <HelpDef term="not yet valued in CAD">A sale in another currency whose Bank of Canada rate has not been read yet. It is left out of every CAD figure and counted in a note, with its own-currency subtotal.</HelpDef>
+              <HelpDef term="Refunded, no credit note">A refund made in Stripe&rsquo;s dashboard. It is listed in its bill&rsquo;s month and not taken off net sales, because our record holds no refund date. It still reduces your income in the month refunded (Stripe&rsquo;s dashboard has the date); only a credit note can reduce the GST/HST.</HelpDef>
+            </HelpDefs>
+          ),
+        },
+        {
+          id: 'bookkeeping-sales-line-101',
+          title: 'Why it differs from the GST/HST return',
+          content: (
+            <>
+              <p>The sentence under the table sets line 101 of the GST/HST return for the same dates beside these figures and says what makes the difference. The two read the same bills and differ by design:</p>
+              <ul>
+                <li><strong>Sales before registration</strong> count here and are outside the return.</li>
+                <li><strong>Voids</strong> come off net sales here; line 101 does not take them off.</li>
+                <li><strong>Credit notes</strong> come off net sales here; the return puts them on line 107 instead.</li>
+              </ul>
+              <p>Line 101 is in whole dollars; when its cents differ, the figure before rounding shows beside it. The amber note says this is not the Business numbers figure, which is the list price of the plans active today, a month, before tax.</p>
+            </>
+          ),
+        },
+        {
+          id: 'bookkeeping-sales-month-and-files',
+          title: 'A month’s bills, the Sales CSV and the accountant package',
+          content: (
+            <>
+              <p>Click a month to open its window: the split by kind (Plans, Coach Premium, Fees billed back to clubs, One-off charges), then every bill behind the figures, in date order. A bill an individual bought reads <em>Coach</em>.</p>
+              <HelpDefs>
+                <HelpDef term="Sales CSV">One row per month with every column, the period&rsquo;s total and the line-101 sentence. Totals only: no buyer is named. Amounts are positive; a figure below zero says so in the Note column.</HelpDef>
+                <HelpDef term="Accountant package">Now holds <em>invoices-and-credit-notes.csv</em> for the package&rsquo;s dates: one row per invoice issued, paid, voided or written off in them (<em>Listed for</em> says which), and one per credit note, linked to its bill. Each row has the sales and the GST/HST figures in its own currency and in CAD at the Bank of Canada rate, and its GST/HST treatment (taxed or zero-rated). The buyer is the club&rsquo;s name, <em>Coach</em> for an individual, or <em>A club no longer on file</em>; no address is included. <em>Status</em> is each bill&rsquo;s status today.</HelpDef>
+              </HelpDefs>
+              <HelpNote variant="warning" title="The package needs your sales">If your sales cannot be read, the package is not created, so it never goes out without them. Try again in a few minutes.</HelpNote>
+            </>
+          ),
+        },
+      ],
+    },
+    {
+      id: 'bookkeeping-stripe-fees',
+      group: 'Private finance',
+      heading: 'How to enter Stripe’s monthly fees as an expense',
+      summary: 'Stripe’s fees to FieldLogicHQ are not stored anywhere; enter them once a month as one Bookkeeping expense from Stripe’s statement and monthly tax invoice.',
+      keywords: ['stripe fees', 'stripe’s fees to us', 'processing fees', 'billing fees', 'stripe tax fee', 'monthly tax invoice', 'stripe statement', 'expense', 'bank charges', 'input tax credit', 'itc', 'gst/hst on stripe fees', 'payouts are net'],
+      searchText: 'how do i enter stripe fees stripe’s fees to us our cost expense once a month monthly statement monthly tax invoice dashboard documents supplier stripe gst hst number printed on the tax invoice category bank charges date of the tax invoice gst hst only the tax the tax invoice shows billing tax radar sigma fees processing fees card fees carry no gst hst no input tax credit itc never net fees against sales deposits are net sales stay gross keep the statement and tax invoice as the receipt six years fees billed back to clubs are income not this',
+      links: [
+        { label: 'Bookkeeping › Expenses', href: '/platform-admin/bookkeeping?view=expenses' },
+      ],
+      content: (
+        <>
+          <p>FieldLogicHQ does not store what Stripe charges us. Once a month, enter it as one expense from Stripe&rsquo;s monthly statement and its monthly tax invoice (in Stripe&rsquo;s dashboard, under Documents). It then reaches the GST/HST return and the accountant package like every other expense.</p>
+          <HelpSteps>
+            <li>Download the month&rsquo;s statement and tax invoice from Stripe&rsquo;s dashboard.</li>
+            <li>In <strong>Bookkeeping &rsaquo; Expenses</strong>, click <strong>+ Add expense</strong>. Supplier <strong>Stripe</strong>, with the GST/HST number printed on the tax invoice; category <strong>Bank charges</strong>; dated on the tax invoice&rsquo;s date.</li>
+            <li>Enter the month&rsquo;s total fees as the amount.</li>
+            <li>Enter as GST/HST <strong>only the tax the tax invoice shows</strong>: it is on Stripe&rsquo;s Billing, Tax, Radar and Sigma fees. Card-processing fees carry no GST/HST and earn no credit.</li>
+            <li>Attach the statement and the tax invoice as the receipt. Keep them six years.</li>
+          </HelpSteps>
+          <HelpNote variant="warning" title="Never net the fees against sales">Stripe pays out after taking its fees, so a deposit is smaller than the sales behind it. Sales stay at their full amount; the fees are this expense. Fees billed back to clubs are income, not this cost.</HelpNote>
+        </>
+      ),
+    },
+    {
       id: 'module-access',
       group: 'Product SOP',
       heading: 'How to give an unsubscribed account extra features',

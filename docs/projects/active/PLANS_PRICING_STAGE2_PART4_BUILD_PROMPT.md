@@ -114,6 +114,11 @@ address or postal code in `sales.csv`. Add a total that adds price and tax, test
 
 ## Session 2 · the Bookkeeping side (Parts 4d, 4e), AFTER GST/HST Stage 4b Session B is committed
 
+> **BUILT 2026-11-08, commit owed** (the stage prompt's Progress block has what was built, what was built differently and why, and
+> what the reviews changed; walk B = Owner QA Ledger §493). The ONE invoice file is **`invoices-and-credit-notes.csv`**, named once
+> in `lib/sales-by-month.ts` (`INVOICE_FILE_NAME`, `INVOICE_FILE_HEADER`, `invoiceFileRows`) and read by `readInvoiceFile`
+> (`lib/sales-by-month-read.ts`). GST/HST Session D reuses it and adds nothing that repeats it.
+
 Session B committed `035f5e965` 2026-11-07 (the return view in Reports, its windows and the phone half), so this session is
 unblocked. Part 4d edits the same files (`ReportsGstReturn.tsx`, `GstReturnWindows.tsx`, `lib/bookkeeping-navigation.ts`,
 `BookkeepingClient.tsx`, `lib/export/catalog.ts`, `lib/gst-return-worksheet-read.ts`): re-open them at their committed state

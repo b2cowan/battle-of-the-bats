@@ -367,6 +367,40 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     helpSummary: 'Owner-only CSV of what stands behind one return line: the invoices on lines 101 and 103, or the expenses and their credits on line 106.',
   },
   {
+    // Plans & pricing Stage 2 Part 4d (drawings 2026-11-07, "Export registry, three entries").
+    id: 'platform-admin-bookkeeping-sales-by-month',
+    label: 'Sales by month',
+    module: 'platform_admin',
+    page: 'Private Bookkeeping',
+    file: 'app/platform-admin/bookkeeping/ReportsSales.tsx',
+    formats: ['csv'],
+    defaultFormat: 'csv',
+    audiences: ['platform_admin'],
+    includesSensitiveFields: false,
+    respectsCurrentFilters: true,
+    serverSide: false,
+    helpSummary: 'Owner-only CSV of sales by month for the chosen dates: invoiced, voided, credit notes, net sales, GST/HST, collected and written off, in CAD, with the period total and how it differs from line 101 of the GST/HST return. Totals only: no buyer is named.',
+  },
+  {
+    // The accountant package (one ZIP). Plans & pricing Stage 2 Part 4e and the owner ruling of 2026-11-08 added its ONE invoice
+    // file (invoices-and-credit-notes.csv, shared with GST/HST Stage 4b Session D); privacy limits per /legal
+    // STAFF_CROSS_CLUB_BILLING_LISTS.md Recommendation 3.
+    id: 'platform-admin-bookkeeping-accountant-package',
+    label: 'Accountant package',
+    module: 'platform_admin',
+    page: 'Private Bookkeeping',
+    file: 'app/api/platform-admin/bookkeeping/package/route.ts',
+    formats: ['csv'],
+    defaultFormat: 'csv',
+    audiences: ['platform_admin'],
+    includesSensitiveFields: true,
+    sensitiveFieldPolicy: 'included_justified',
+    sensitiveFieldJustification: 'Only the named proprietor can reach this export after an exact-email platform-session check. The expense files name each supplier and keep receipts and correction reasons. The invoice file names the buying club for each invoice and credit note (an individual coach appears only as "Coach"), because the accountant checks the books and the GST/HST return against them. No person’s name, email, billing address or postal code is in it.',
+    respectsCurrentFilters: true,
+    serverSide: true,
+    helpSummary: 'Owner-only ZIP for the accountant: expenses with their receipts, owner transfers, and every invoice and credit note in the chosen dates with its sales and GST/HST figures in CAD, plus a note of what the package does and does not hold.',
+  },
+  {
     // Plans & pricing Stage 2 Part 4 (owner rulings 2026-11-07); justification as /legal wrote it
     // (docs/agents/legal/STAFF_CROSS_CLUB_BILLING_LISTS.md, Recommendation 1).
     id: 'platform-admin-renewals-coming-up',

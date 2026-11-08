@@ -22,7 +22,7 @@ import { formatCad, TAX_TYPES } from '@/lib/bookkeeping-gst';
 import { downloadCSVBlob } from '@/lib/export';
 import { pluralize, possessive } from '@/lib/utils';
 import type { LineNumber, NotOnReturnStep, ReliefItem, TaxGroup, UnresolvedItem, UnresolvedKind, Worksheet, WorksheetSaleItem } from '@/lib/gst-return-worksheet';
-import { FILING, formatMoney, NOT_ON_RETURN_STEPS, RETURN_LINES, SALE_KINDS, taxGroupLabel, UNRESOLVED } from '@/lib/gst-return-worksheet-text';
+import { buyerWords, FILING, formatMoney, NOT_ON_RETURN_STEPS, RETURN_LINES, SALE_KINDS, taxGroupLabel, taxRateLabel, UNRESOLVED } from '@/lib/gst-return-worksheet-text';
 import type { ReturnClub } from '@/app/api/platform-admin/bookkeeping/gst-return/route';
 import styles from './ReportsGstReturn.module.css';
 
@@ -52,14 +52,11 @@ function InvoiceRef({ invoiceId, number, clubs, needsLook }: { invoiceId: string
   }
   return <span>{label}{clubs && club === null && <span className={kit.sub}>On no club’s list (its Stripe customer is shared)</span>}</span>;
 }
-function buyerOf(sale: WorksheetSaleItem, clubs: Clubs): string {
-  if (sale.buyerKind === 'person') return 'Coach';
-  return clubs?.[sale.invoiceId]?.name ?? (sale.buyerKind === 'club' ? 'Club' : 'Buyer not recorded');
-}
+const buyerOf = (sale: WorksheetSaleItem, clubs: Clubs): string => buyerWords(sale.buyerKind, clubs?.[sale.invoiceId]?.name);
 function taxedIn(sale: WorksheetSaleItem): string {
   if (sale.position === 'zero_rated') return 'Zero-rated';
   if (!sale.lines.length) return sale.position === 'missing' ? 'No answer' : 'No GST/HST';
-  return [...new Set(sale.lines.map(l => `${sale.region ?? ''}${sale.region ? ' · ' : ''}${l.taxType.toUpperCase()}${l.rate == null ? '' : ` ${Number(l.rate.toFixed(3))}%`}`))].join(', ');
+  return [...new Set(sale.lines.map(l => `${sale.region ?? ''}${sale.region ? ' · ' : ''}${taxRateLabel(l)}`))].join(', ');
 }
 
 function ShowAll({ count, all, onAll }: { count: number; all: boolean; onAll: () => void }) {

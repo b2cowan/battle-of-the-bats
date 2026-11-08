@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireBookkeepingApi } from '@/lib/bookkeeping-access';
-import { readGstReturnWorksheet, type FilingsRead } from '@/lib/gst-return-worksheet-read';
+import { readClubNames, readGstReturnWorksheet, type FilingsRead } from '@/lib/gst-return-worksheet-read';
 import { visibleCustomers } from '@/lib/console-money-sales-tax-wait';
-import { supabaseAdmin } from '@/lib/supabase-admin';
-import { chunked } from '@/lib/supabase-paging';
 import { isCalendarDate, orgDayKey } from '@/lib/timezone';
 import { withObservability } from '@/lib/observability';
 import {
@@ -65,16 +63,11 @@ async function clubsFor(worksheet: Worksheet): Promise<GstReturnResponse['clubs'
   if (!invoices.length) return {};
   try {
     const shown = await visibleCustomers();
-    const orgIds = [...new Set(invoices.flatMap(i => shown.get(i.customerId) ?? []))];
-    const names = new Map<string, string>();
-    for (const chunk of chunked(orgIds, 100)) {
-      const { data, error } = await supabaseAdmin.from('organizations').select('id, name').in('id', chunk);
-      if (error) throw error;
-      for (const row of (data ?? []) as { id: string; name: string | null }[]) names.set(row.id, row.name ?? 'Club');
-    }
+    const names = await readClubNames(invoices.flatMap(i => shown.get(i.customerId) ?? []));
+    if (!names) return null;
     return Object.fromEntries(invoices.map(i => {
       const orgId = shown.get(i.customerId);
-      return [i.invoiceId, orgId ? { orgId, name: names.get(orgId) ?? 'Club' } : null];
+      return [i.invoiceId, orgId ? { orgId, name: names[orgId] ?? 'Club' } : null];
     }));
   } catch (err) {
     console.warn('[platform-admin] GST/HST return clubs read failed:', (err as { code?: string }).code ?? 'error');

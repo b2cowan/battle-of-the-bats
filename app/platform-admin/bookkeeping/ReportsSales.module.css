@@ -1,0 +1,10 @@
+/* Reports › Sales (Plans & pricing Stage 2 Part 4d; drawings tab "Sales by month"). Tokens only, as the console kit. The frame,
+   table, window figures and row door are the GST/HST return's (ReportsGstReturn.module.css), so the two views read as one family;
+   this file holds only what the month table adds: its chips under the month, the quiet rows and the period's total. */
+
+.months td:not(:first-child), .months th:not(:first-child) { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.chips { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.25rem; }
+.quiet td { color: var(--text-tertiary); background: var(--home-paper); }
+.months td.quietNote { color: var(--text-tertiary); font-style: italic; text-align: left; white-space: normal; }
+.total td { border-top: 2px solid var(--home-line-strong); font-weight: 700; background: var(--home-paper); }
+.bills { margin-top: 0.75rem; }

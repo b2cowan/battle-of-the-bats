@@ -57,8 +57,11 @@ async function recordStart(live: boolean): Promise<string | null> {
   return at ? addCalendarDays(orgDayKey(at), 1) : null;
 }
 
-/** Rows of `table` whose `stripe_invoice_id` is one of these, every page, one chunk at a time. */
-async function byInvoice<T>(table: string, columns: string, order: string, live: boolean, ids: readonly string[]): Promise<T[]> {
+/**
+ * Rows of `table` whose `stripe_invoice_id` is one of these, every page, one chunk at a time. Exported for Sales by month's own
+ * read of the refunded figure (lib/sales-by-month-read.ts), which this file never names.
+ */
+export async function byInvoice<T>(table: string, columns: string, order: string, live: boolean, ids: readonly string[]): Promise<T[]> {
   const out: T[] = [];
   for (const chunk of chunked([...new Set(ids)], IN_CHUNK)) {
     out.push(...await readAllPages<T>((from, to) => supabaseAdmin.from(table).select(columns).eq('livemode', live)
@@ -68,27 +71,38 @@ async function byInvoice<T>(table: string, columns: string, order: string, live:
 }
 
 /**
+ * Which invoices the read gathers, named by what it reads. `return`: issued, written off, or a write-off recovered in the period.
+ * `every_event`: ALSO every invoice voided or paid in the period, issued whenever (Sales by month and the accountant package's
+ * invoice file read this). Same tables, same columns, same pages: a superset the engine ignores (it applies the period itself),
+ * proven in tests/unit/sales-by-month.test.ts.
+ */
+export type SalesReadRows = 'return' | 'every_event';
+
+/**
  * Every invoice the period can need and every credit note of those invoices. Read a day wider on each side than the period's
  * Ontario days (the engine applies the exact day rule, `orgDayKey`, so the edge is decided in one place).
  */
-export async function readWorksheetSales(period: WorksheetPeriod, live: boolean = stripeKeyIsLive()): Promise<SalesRead> {
+export async function readWorksheetSales(period: WorksheetPeriod, live: boolean = stripeKeyIsLive(), rows: SalesReadRows = 'return'): Promise<SalesRead> {
   assertPeriod(period);
   try {
     const since = zonedWallClockToUtc(addCalendarDays(period.from, -1), '00:00')!;
     const before = zonedWallClockToUtc(addCalendarDays(period.to, 2), '00:00')!;
-    const salesWhere = (column: 'issued_at' | 'uncollectible_at' | 'paid_at') => readAllPages<WorksheetSale>((from, to) => {
+    const every = rows === 'every_event';
+    const salesWhere = (column: 'issued_at' | 'uncollectible_at' | 'paid_at' | 'voided_at') => readAllPages<WorksheetSale>((from, to) => {
       let q = supabaseAdmin.from(SALES).select(SALE_COLUMNS).eq('livemode', live).gte(column, since).lt(column, before);
-      if (column === 'paid_at') q = q.not('uncollectible_at', 'is', null); // a recovered write-off is the only payment the return reads
+      // A recovered write-off is the only payment the return reads; every_event reads every payment.
+      if (column === 'paid_at' && !every) q = q.not('uncollectible_at', 'is', null);
       return q.order('stripe_invoice_id').range(from, to) as unknown as Page<WorksheetSale>;
     });
-    const [issued, writtenOff, recovered, periodNotes, start] = await Promise.all([
+    const [issued, writtenOff, recovered, voided, periodNotes, start] = await Promise.all([
       salesWhere('issued_at'), salesWhere('uncollectible_at'), salesWhere('paid_at'),
+      every ? salesWhere('voided_at') : Promise.resolve([] as WorksheetSale[]),
       readAllPages<WorksheetNote>((from, to) => supabaseAdmin.from(NOTES).select(NOTE_COLUMNS).eq('livemode', live)
         .gte('issued_at', since).lt('issued_at', before).order('stripe_credit_note_id').range(from, to) as unknown as Page<WorksheetNote>),
       recordStart(live),
     ]);
     // One row per invoice and per note: a row written while the pages are read can land on two pages.
-    const invoices = new Map([...issued, ...writtenOff, ...recovered].map(s => [s.stripe_invoice_id, s]));
+    const invoices = new Map([...issued, ...writtenOff, ...recovered, ...voided].map(s => [s.stripe_invoice_id, s]));
     const named = periodNotes.map(n => n.stripe_invoice_id).filter(id => !invoices.has(id));
     for (const s of await byInvoice<WorksheetSale>(SALES, SALE_COLUMNS, 'stripe_invoice_id', live, named)) invoices.set(s.stripe_invoice_id, s);
     const notes = new Map(periodNotes.map(n => [n.stripe_credit_note_id, n]));
@@ -163,4 +177,24 @@ export async function readGstReturnWorksheet(period: WorksheetPeriod): Promise<{
   ]);
   const registrationDate = registration.state === 'set' ? registration.date : null;
   return { worksheet: buildWorksheet({ period, registrationDate, sales, expenses, filed: filedForEngine(filings) }), registration: registration.state, filings };
+}
+
+/**
+ * Clubs' names by organization id (`organizations.name`): the return's invoice windows, the Sales window and the accountant
+ * package's invoice file. A person is never named here (the files call an individual "Coach", /legal STAFF_CROSS_CLUB_BILLING_LISTS.md).
+ * Fails on its own (null): the figures never wait on a name.
+ */
+export async function readClubNames(orgIds: readonly string[]): Promise<Record<string, string> | null> {
+  try {
+    const names: Record<string, string> = {};
+    for (const chunk of chunked([...new Set(orgIds)], IN_CHUNK)) {
+      const { data, error } = await supabaseAdmin.from('organizations').select('id, name').in('id', chunk);
+      if (error) throw error;
+      for (const row of (data ?? []) as { id: string; name: string | null }[]) names[row.id] = row.name ?? 'Club';
+    }
+    return names;
+  } catch (err) {
+    warn('club names', err);
+    return null;
+  }
 }
