@@ -15,7 +15,7 @@ The owner closed walk §488 but **part D was ticked and dev does not agree.** Re
 4. **Then, and only then, the owner's F4 ruling: remove the walk's dev rows** (the filings of October 2026 and the "Walk test supplier" expense and its tax lines) with the dev admin login. A probe that inspects first, deletes in one transaction, and re-counts. Dev only (`BOOKKEEPING_DSQL_ENDPOINT` must be the dev host); the app role cannot delete, by design. `.probe/walk488-cleanup.mjs` is the inspect/delete probe from the walk (`inspect` or `delete`); it expects exactly 2 filings, so adjust its guard to what is there.
 5. With the passphrase set by the owner (`BOOKKEEPING_BACKUP_PASSPHRASE`), run a dev backup `create`, `verify` and `restore-drill-dev` (format 4 is committed `d6433b20f` and has never run against a real archive). Report the counts the drill prints.
 
-## ⚠ The invoice file already exists (Plans & pricing Part 4 Session 2, built 2026-11-08, commit owed)
+## ⚠ The invoice file already exists (Plans & pricing Part 4 Session 2, built 2026-11-08, committed `5fe7ad3c7`)
 
 The accountant package's ONE invoice file is built: **`invoices-and-credit-notes.csv`** (`INVOICE_FILE_NAME`, `INVOICE_FILE_HEADER`,
 `invoiceFileRows` in `lib/sales-by-month.ts`; `readInvoiceFile` in `lib/sales-by-month-read.ts`; written by

@@ -139,7 +139,7 @@ that is the owner's dashboard work.
       Founding comp holder who then paid stays in the monthly figure); the Founding comp read pages past 1,000 rows; the
       unpaid export labels only a person's bill "Coach"; the download helper is one shared function for four export screens.
       Owner questions left open: see the review notes in the commit message.
-      **Session 2 (4d Sales, 4e the package) BUILT 2026-11-08, commit owed (the owner's yes):** Bookkeeping › Reports › View ·
+      **Session 2 (4d Sales, 4e the package) BUILT 2026-11-08, committed `5fe7ad3c7` 2026-11-08:** Bookkeeping › Reports › View ·
       Sales (owner only; months newest first, Invoiced / Voided / Credit notes / Net sales / GST/HST / Collected / Written off with
       "recovered" beneath, the chips, "Before our record starts", "not yet valued in CAD", the line-101 sentence quoting the engine's
       own 101, the Business numbers callout, a month's window split by kind with every bill, "Sales CSV" totals only) and the
