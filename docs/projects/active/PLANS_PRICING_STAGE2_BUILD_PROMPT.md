@@ -172,6 +172,94 @@ that is the owner's dashboard work.
       to the cent with the return's own line 101. Not run: `check:layout --changed` (Bookkeeping is not on the layout screen list;
       the list was not edited). Walk B = Owner QA Ledger §493 (https://claude.ai/artifact/LJoTxy3w69bzXVLapi7Qrq). Known red, not
       this work: the export registry's founding-season entry (a moved file) and the twelve unit tests listed in the review notes.
-- [ ] Part 5 replay · Part 6 closeout (Part 3 committed `514d3a2d0`, above)
+- [ ] Part 5 replay: drawing session 2026-11-08, drawings https://claude.ai/artifact/Chw946z38BkoFa91XafRGh
+      (`PLANS_PRICING_STAGE2_PART5_REPLAY_DRAWINGS.html`, PM brief `PLANS_PRICING_STAGE2_PART5_REPLAY_PM_BRIEF.md`), `/design` pass done
+      (main action ink-on-lime, "Why *", console dates without the current year, the row door has no arrow). **Owner ruled all six asks
+      as recommended 2026-11-08** (paste-back): (1) a replay never sends a customer email, and the window and result say so; (2) the door
+      sits on failed updates in the list, plus "Replay an update by its id" for anything else; (3) before/after = the club's billing record
+      (status, plan, paid through, cycle, plan end) read just before and just after, with the limit stated; (4) only updates that did not
+      finish (failed, never finished, set aside) can be replayed, a finished one says so; (5) plan billing only, family payments are not
+      replayable; (6) no Sign in again step: a reason and the change log are enough. Super admin only (ruling 2026-11-06, `replay_events`).
+      **Build notes (from the code, 2026-11-08):** the replay calls the handler's seam (`runVerifiedBillingEvent`) directly, never the
+      receiver (`receiveBillingEvent` answers a finished update as `duplicate`); it must take the SAME atomic claim a live delivery takes
+      so a replay and Stripe's own retry cannot run together; it re-fetches the event by id (nothing is stored) and refuses the wrong mode,
+      an id with no log row, and an event Stripe no longer holds (about 30 days: CONFIRM against Stripe's documentation before building).
+      Only `customer.subscription.trial_will_end` sends a customer email with no guard (both welcome-back sends are guarded by the club
+      having been cancelled), so the handler takes a "send no customer email" input that a replay sets; the owner-alert emails already
+      carry an idempotency key. The change-log row is written FIRST through the audit-first wrapper (`<action>_failed` follows a failed run),
+      so the action joins the audit-first list and the reason-required rule, and gets a door back to the Stripe page in the audit doors map.
+      The result window is new (the confirm window closes on success today). **Gate before code:** prove the second replay harmless with a
+      test (run it twice; second answers "already finished"; a later update that already fixed the club answers "Nothing changed"); if it
+      cannot be shown, stop and say so. Not in scope: a dry-run, replay of a finished update, family payments.
+      **Build prompt (two sessions: the engine and its proof, then the screen): `PLANS_PRICING_STAGE2_PART5_BUILD_PROMPT.md`.**
+      **Session 1 step 1 · the replay-safety audit (2026-11-08, every branch the seam runs; [V] = lines re-opened this session).**
+      A re-fetched event's object is the object AS IT WAS when Stripe made the event (Stripe's docs: "the same as retrieving the
+      object" at that time), so "stale" below means the run writes the event's own copy over what has happened since. Stripe keeps an
+      event for **30 days** (API reference, Retrieve an event: "if it was created in the last 30 days"; Events: "for 30 days") [V].
+      Dev's events and both dev webhook endpoints are on `2026-04-22.dahlia`, the version the handler is pinned to [V, read-only probe].
+      *Safe to run again (fresh reads, keyed or forward-only writes, no Stripe write):*
+      · `credit_note.created|updated|voided`: tax record re-read by id, upsert on the unique note id, a void kept.
+      · `charge.dispute.created|updated|closed`, `charge.refunded`: charge, invoice and owner re-read; the platform event keyed
+        `<evt>:<type>`; refunded cents only rise. The owner alert to OUR inbox re-sends after 24 h (Resend's key window): not a customer.
+      · `invoice.finalized|paid|voided|marked_uncollectible`: no plan work; the tax record re-reads the invoice and moves forward only.
+      · `invoice.payment_failed`: writes `past_due` only after a fresh read says the failure is still current (`:892`); the owners'
+        in-app/email notice (`notify`, `:917-928`, no repeat guard) is a CUSTOMER MESSAGE → suppressed on replay.
+      · `invoice.payment_succeeded`: status from a fresh read (`:826-832`) BUT `current_period_end` from the event's own invoice lines
+        (`:815`, `:837`) → stale when a later invoice exists; and an invoice that bills no subscription writes `active` with no read
+        (`:826-828`). Safe ONLY when the invoice is the subscription's latest invoice → the replay refuses it otherwise.
+      · `payment_method.detached`: clears the card only when a fresh Stripe list has none left.
+      · `customer.subscription.trial_will_end`: its only act is the trial-ending email (`:933-962`, no guard) → suppressed on replay, so a
+        replay just finishes the row.
+      · Any type the switch does not name: no work (`'processed'`).
+      *Not safe → the replay refuses the type, with a sentence:*
+      · `checkout.session.completed`: writes to Stripe (the club's name on the customer `:189`; a setup's default card `:283`; the retired
+        add-on cancels a subscription `:91`); replays a next-season choice from the event's session (a withdrawn choice comes back,
+        `billing-setup.ts:350-408`); the portal reactivation path unsuspends and restores records from old metadata (`team-checkout.ts:391-439`);
+        a fresh provision sends the portal welcome with no key (`team-checkout.ts:661-666` [V]).
+      · `customer.subscription.created|updated`: the subscription is re-read (`:419`) but (a) a next-season subscription that is now
+        `canceled|unpaid` clears the club's CURRENT choice, whatever subscription it is on (`:438-439`, `billing-setup.ts:424-435` [V]),
+        and this runs BEFORE the stale check (`:464`); (b) a plan move off online payments closes the club's open family pay pages in
+        Stripe (`plan-move.ts:362-368` [V]); (c) a move onto Club revokes a Founding comp staff may have re-granted; (d) a fresh provision
+        sends the portal welcome; (e) the retired add-on arm cancels a subscription in Stripe (`:484`).
+      · `customer.subscription.deleted`: from the event's copy. `isTheRecordsSubscription` is TRUE when the record holds no subscription
+        (`stripe-billing-state.ts:49-51` [V]), so a club cleared since (a comp, staff, a later deletion) is ended and suspended again; the
+        waiting cancel applied is whichever the club has NOW (`plan-ending-store.ts:50-59` [V]); a next-season choice is cleared by club;
+        the ending closes pay pages in Stripe (`plan-ending.ts:933` [V]) and sends the ended email.
+      · `payment_method.attached`: brand and last four from the event's card (`:397`): an old card goes back on file over a newer one.
+      · A club's Stripe-fees invoice (`:253`, any `invoice.*` with the fee mark): not plan billing; its own tab retries it; a run also
+        wipes a recorded send failure (`platform-stripe-fees.ts:599-604`).
+      *Rows:* a set-aside (`no_customer`) row is one whose EVENT names no Stripe customer (`:248`, `billingEventFacts`); the event never
+      changes, so a replay always sets it aside again. `done()` stamps `processed_at` on it (`stripe-billing-events.ts:98` [V]), so the
+      prompt's suggested reclaim `… AND processed_at IS NULL` could never match. An event whose customer exists but has no club is not
+      set aside: it runs and finishes having matched nothing (a FINISHED row, refused by ruling 4).
+      **Owner rulings on the audit, 2026-11-08 (both as recommended; these narrow ruling 4):** (A1) Replay runs the SAFE list only; the
+      unsafe types (subscription created/updated/deleted, checkout completed, card added) and a club's Stripe-fees invoice refuse with a
+      sentence. Making subscription changes replayable is its own follow-up item, drawn first (the three handler fixes above: a
+      next-season clear tied to its subscription, the deletion guard when the record holds none, the portal welcome and pay-page close
+      on a replay). (A2) A set-aside (`no_customer`) update refuses with the reason (it names no Stripe customer, so a replay would set
+      it aside again); the drawings' "Set aside again" result is dropped and no reclaim of a set-aside row is built.
+      **Session 1 BUILT 2026-11-08, uncommitted (the owner's yes owed):** pure decisions + words `lib/billing-event-replay.ts`; the
+      engine `lib/billing-event-replay-run.ts` (order: reason → our row → the event re-fetched by id → the latest-invoice check →
+      change-log row FIRST → the mig-416 claim → before → run `{ replay: true }` → after → done/fail); the customer-message gate
+      `lib/billing-event-customer-messages.ts` (the handler's 3 emails + the payment-failed notice go through it; a live delivery
+      gets the real senders unchanged); `POST /api/platform-admin/watching-stripe/replay` (`replay_events`, Super admin). Change-log
+      action `replay_billing_event` (+ `_failed`) joins the audit-first list, has the door "Open Stripe" and the two Audit labels. No
+      migration. Proof `tests/unit/billing-event-replay.test.ts` (53 tests, all seven gate items; mutation-checked: dropping the replay
+      input or the busy check fails it). Guards updated for the new call shape: billing-location-every-path, stripe-subscription-charges,
+      needs-attention-clears-itself; plan-reader-door allowlists the engine (it shows the STORED record). `/review` high run: no
+      Critical/High; fixed: an answer never says "Nothing changed" when nothing was compared ('ran': no club, e.g. a dispute; or the
+      after-read failed); a failed before-read runs nothing and keeps the row's own error; "could not be marked finished" is told; the
+      busy boundary matches the SQL; error cut to 500; a `null` body meets the reason refusal. Accepted, recorded: done/fail are not
+      fenced by the claim (inherited from the receiver; only a run longer than five minutes reaches it, the route stops at 60 s); the
+      latest-invoice check is read seconds before the run; a dispute's change-log row carries no club (the row names none); the format
+      refusal assumes production's events are written in `2026-04-22.dahlia` like dev's (check on the first prod replay); a set-aside
+      `payment_method.detached` from before the 11-05 fix could now find its customer but is refused (safe direction).
+      **Session 2 must change from the drawings:** no "Set aside again" result; the result kinds are changed / unchanged / ran / failed
+      / set_aside (not ours) / no_customer; the refusals add not ours, set aside, not replayable, Stripe-fees bill, a later bill, not a
+      plan bill, another format, Stripe did not answer, record unread, not claimed, reason; a replayed failed payment does NOT put the
+      notice on the owners' Needs attention list (ruling 1 silences the notice that feeds it); the window's facts (Received, Last
+      result) need a read of the row, which the POST does not offer (add a GET lookup); the drawings' audit line "Status: Past due →
+      Active" is not stored (the first row is written before the run): show it from a companion row or drop it.
+- [ ] Part 6 closeout (Part 3 committed `514d3a2d0`, above)
 - Known red tests NOT from this work: `workspace-flip-guard` and `support-console-stage4b-inforce-guard` (an untracked file from another
   session and a committed one the allowlists do not list), `support-console-stage3-guard` (a modified bookkeeping window file).

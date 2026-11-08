@@ -660,7 +660,8 @@ describe('every charge leaves a tax record (GST/HST Stage 3 Part 1)', () => {
     const run = between(code, 'async function runVerifiedBillingEvent(', 'async function runPlanWork(', `${WEBHOOK} runVerifiedBillingEvent`);
     const plan = between(code, 'async function runPlanWork(', 'switch (event.type)', `${WEBHOOK} runPlanWork`);
     const notes = run.indexOf('(CHARGE_TAX_CREDIT_NOTE_EVENTS as readonly string[]).includes(event.type)');
-    const work = run.indexOf('const outcome = await runPlanWork(event, customerId);');
+    // Stage 2 Part 5: the seam passes the replay input on (a live delivery passes none).
+    const work = run.indexOf('const outcome = await runPlanWork(event, customerId, opts);');
     const invoices = run.indexOf('(CHARGE_TAX_INVOICE_EVENTS as readonly string[]).includes(event.type)');
     assert.ok(notes >= 0 && run.indexOf('recordCreditNoteTax(noteId)', notes) > notes, `${WEBHOOK}: every credit-note event must reach recordCreditNoteTax`);
     // The plan's work comes first (a club's plan never waits on our bookkeeping), and nothing between it and the record returns.

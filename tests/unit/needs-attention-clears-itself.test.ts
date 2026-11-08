@@ -147,7 +147,8 @@ describe('3 · the three notices name who can act', () => {
   it('a failed card payment goes to the owners, and never as an empty list', () => {
     const hook = readCode('lib/billing-webhook-handler.ts');
     assert.match(hook, /const owners = await orgOwnerUserIds\(currentOrg\.id\)/);
-    assert.match(hook, /if \(owners\.length\) \{\s*notify\(\{[\s\S]*?eventType: 'payment_failed'[\s\S]*?userIds: owners,/);
+    // Through the customer-message gate (Stage 2 Part 5: a replay sends none; `say.notify` is `notify` on a live delivery).
+    assert.match(hook, /if \(owners\.length\) \{\s*say\.notify\(\{[\s\S]*?eventType: 'payment_failed'[\s\S]*?userIds: owners,/);
   });
   it('an assistant waiting for approval goes to Rep Teams holders for the team’s group', () => {
     const body = functionBody(readCode('lib/assistant-invites.ts'), 'notifyAdminOfPendingInvite');

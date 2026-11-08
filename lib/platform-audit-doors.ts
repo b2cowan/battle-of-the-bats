@@ -47,6 +47,8 @@ const TARGET_BY_ACTION: Record<string, Target> = {
   copy_early_access_emails: LEADS,
   export_early_access_leads: LEADS,
   export_renewals: { label: 'Open Renewals', href: '/platform-admin/renewals', area: 'renewals' },
+  // Plans & pricing Stage 2 Part 5: a replay of a Stripe update goes back to the page it is made from (the menu's "Stripe").
+  replay_billing_event: { label: 'Open Stripe', href: '/platform-admin/watching-stripe', area: 'watching_stripe' },
   update_plan_gating: PLANS,
   update_stripe_price_id: PLANS,
   update_plan_config_override: PLANS,

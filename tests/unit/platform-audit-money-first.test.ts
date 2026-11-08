@@ -42,6 +42,8 @@ const MONEY_FIRST: Site[] = [
   { file: 'lib/portal-free-time-give.ts', fn: 'giveAgain', action: "'give_portal_free_time'", change: /\.from\('org_overrides'\)\.insert/ },
   { file: 'lib/portal-free-time-give.ts', fn: 'changePortalFreeTimeEnd', action: "'change_override_end'", change: /\.update\(\{ expires_at: expiresAt \}\)/ },
   { file: 'app/api/platform-admin/retention/[recordId]/extend/route.ts', action: "'extend_billing_retention'", change: /\.from\('billing_retained_records'\)\s*\.update/ },
+  // Plans & pricing Stage 2 Part 5: a replay's row is written before the claim, so nothing runs when it cannot be written.
+  { file: 'lib/billing-event-replay-run.ts', fn: 'replayBillingEvent', action: "'replay_billing_event'", change: /deps\.claim\(/ },
 ];
 
 /** Best-effort rows that keep a listed action, with why (field, or the function that writes it). */

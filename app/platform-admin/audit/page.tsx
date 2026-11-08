@@ -58,6 +58,9 @@ const ACTION_LABELS: Record<string, string> = {
   refund_charge_refused: 'Refund refused by Stripe',
   refund_charge_unknown: 'Refund: no answer from Stripe',
   refund_charge_resolved: 'Refund checked with Stripe',
+  // Plans & pricing Stage 2 Part 5 (drawings tab 3): a replay, and the row that says it failed.
+  replay_billing_event: 'Replayed a Stripe update',
+  replay_billing_event_failed: 'Replay failed',
   sale_look_mark: 'Marked a sale as looked at',
   sale_look_put_back: 'Put a sale back on the list',
   revoke_override: 'Revoke override',

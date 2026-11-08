@@ -52,6 +52,7 @@ import {
   subscriptionEventIsStale, subscriptionIsPaying,
 } from '@/lib/stripe-billing-state';
 import type { BillingEventOutcome } from '@/lib/stripe-billing-events';
+import { customerSenders, type RunOptions } from '@/lib/billing-event-customer-messages';
 import { getBillingHref, billingUrlOrgFromRow } from '@/lib/billing-urls';
 
 
@@ -220,8 +221,11 @@ function invoiceSubscriptionId(invoice: Stripe.Invoice): string | null {
  * `receiveBillingEvent`, which has already refused the other Stripe mode and a replay; a later replay of a stored event
  * (Stage 2) and Plans end at renewal's webhook work build on this one function. Throwing is the failure answer: the event's
  * row keeps the error, the webhook answers 500 and Stripe sends it again.
+ *
+ * `opts.replay` (Stage 2 Part 5, a staff replay of a stored event) sends no message to a customer and changes nothing else; a live
+ * delivery passes nothing. Every customer message below goes through `customerSenders` (`billing-event-replay.test.ts` guards it).
  */
-export async function runVerifiedBillingEvent(event: Stripe.Event, customerId: string | null): Promise<BillingEventOutcome> {
+export async function runVerifiedBillingEvent(event: Stripe.Event, customerId: string | null, opts: RunOptions = {}): Promise<BillingEventOutcome> {
   // Stage 0 (S9): a dispute names no customer, so these are resolved through their charge BEFORE the early return below.
   if (isSubscriptionChargeEvent(event.type)) return handleSubscriptionChargeEvent(event, subscriptionChargeDeps());
 
@@ -235,7 +239,7 @@ export async function runVerifiedBillingEvent(event: Stripe.Event, customerId: s
     await recordTaxOrReport({ kind: 'credit_note', id: noteId }, () => recordCreditNoteTax(noteId));
     return 'processed';
   }
-  const outcome = await runPlanWork(event, customerId);
+  const outcome = await runPlanWork(event, customerId, opts);
   if ((CHARGE_TAX_INVOICE_EVENTS as readonly string[]).includes(event.type)) {
     const invoiceId = (event.data.object as Stripe.Invoice).id;
     if (invoiceId) await recordTaxOrReport({ kind: 'invoice', id: invoiceId }, () => recordInvoiceTax(invoiceId));
@@ -244,8 +248,10 @@ export async function runVerifiedBillingEvent(event: Stripe.Event, customerId: s
 }
 
 /** The plan's own work for one verified billing event (everything but the tax record above). */
-async function runPlanWork(event: Stripe.Event, customerId: string | null): Promise<BillingEventOutcome> {
+async function runPlanWork(event: Stripe.Event, customerId: string | null, opts: RunOptions): Promise<BillingEventOutcome> {
   if (!customerId) return 'no_customer';
+  // The customer's messages (emails and the in-app notice): silent on a replay (owner ruling 1, 2026-11-08).
+  const say = customerSenders({ email: sendTransactionalEmail, notify }, opts);
 
   // 12d-1 Part 4: a club's own invoice of Stripe fees is written to its own row and NOTHING else. Read before the switch,
   // because the invoice cases below would read its payment as the subscription's (a comped club with no subscription would
@@ -534,7 +540,7 @@ async function runPlanWork(event: Stripe.Event, customerId: string | null): Prom
                   .then(r => r.data),
               ]);
               if (wsOwnerEmail && wsOrg) {
-                await sendTransactionalEmail({
+                await say.email({
                   key: 'welcome_back',
                   to: wsOwnerEmail,
                   vars: { orgName: wsOrg.name, planLabel: 'Team', dashboardUrl: `${SITE_URL}/${wsOrg.slug}/coaches` },
@@ -691,7 +697,7 @@ async function runPlanWork(event: Stripe.Event, customerId: string | null): Prom
               if (ownerEmail) {
                 const planLabel = PLAN_CONFIG[planKey]?.label ?? planKey;
                 const dashboardUrl = `${SITE_URL}/${updatedOrg.slug}/admin`;
-                await sendTransactionalEmail({
+                await say.email({
                   key: 'welcome_back',
                   to: ownerEmail,
                   vars: { orgName: updatedOrg.name, planLabel, dashboardUrl },
@@ -917,7 +923,7 @@ async function runPlanWork(event: Stripe.Event, customerId: string | null): Prom
       if (currentOrg) {
         const owners = await orgOwnerUserIds(currentOrg.id).catch(e => { console.error(e); return [] as string[]; });
         if (owners.length) {
-          notify({
+          say.notify({
             orgId: currentOrg.id,
             eventType: 'payment_failed',
             title: 'Subscription payment failed',
@@ -950,7 +956,7 @@ async function runPlanWork(event: Stripe.Event, customerId: string | null): Prom
         : 'soon';
       const billingUrl = `${SITE_URL}${getBillingHref(billingUrlOrgFromRow(org))}`;
 
-      await sendTransactionalEmail({
+      await say.email({
         key: 'trial_ending',
         to: ownerEmail,
         vars: { orgName: org.name, planLabel, trialEndDate, billingUrl },

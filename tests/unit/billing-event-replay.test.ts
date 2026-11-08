@@ -1,0 +1,497 @@
+import { describe, it } from 'node:test';
+import assert from 'node:assert/strict';
+import type Stripe from 'stripe';
+import {
+  REPLAYABLE_TYPES, REPLAY_REFUSED_TYPES, STRIPE_EVENT_RETENTION_DAYS, recordRows, replayResultWords, replayRowRefusal,
+  type BillingRecord, type ReplayRow,
+} from '../../lib/billing-event-replay.ts';
+import { fetchedEventFacts, replayBillingEvent, type ReplayDeps } from '../../lib/billing-event-replay-run.ts';
+import { customerSenders } from '../../lib/billing-event-customer-messages.ts';
+import { receiveBillingEvent, type BillingEventClaim, type BillingEventOutcome, type BillingEventStore } from '../../lib/stripe-billing-events.ts';
+import { AuditFirstError } from '../../lib/platform-audit.ts';
+import { STRIPE_API_VERSION } from '../../lib/stripe.ts';
+import { FEE_INVOICE_META } from '../../lib/online-payment-words.ts';
+import { functionBody, readCode } from './_source-code.ts';
+
+/**
+ * Plans & pricing Stage 2 Part 5, Session 1: THE GATE ("prove it harmless the second time before it is built", owner ruling
+ * 2026-11-06). Build prompt `docs/projects/active/PLANS_PRICING_STAGE2_PART5_BUILD_PROMPT.md` step 7; the audit and the owner's
+ * A1/A2 are in the stage prompt's Part 5 block. The fakes keep migration 416's claim rules (including the five-minute lease), and a
+ * live delivery and a replay share ONE store, as they share one table. The handler itself needs the server to run; what it does
+ * per type is the audit, and what it may send is pinned by the guards at the bottom.
+ */
+
+const NOW = new Date('2026-11-08T15:00:00Z');
+const LEASE_MS = 5 * 60_000;
+const daysAgo = (n: number) => new Date(NOW.getTime() - n * 86_400_000).toISOString();
+
+type Row = ReplayRow & { attempts: number };
+
+/** One fake world: the event log (mig 416's claim), the club's billing record, Stripe's events and subscription, and every write. */
+function world() {
+  const rows = new Map<string, Row>();
+  const writes: string[] = [];
+  const audit: Array<{ action: string; reason: string | null }> = [];
+  const club: BillingRecord = { status: 'past_due', plan: 'league', paidThrough: '2026-11-08T00:00:00.000Z', cycle: 'monthly', planEnds: null };
+  const events = new Map<string, Stripe.Event>();
+  const stripeSub = { status: 'active', latestInvoice: 'in_2' as string | null, periodEnd: '2026-12-08T00:00:00.000Z' };
+  const runs: Array<{ id: string; replay: boolean }> = [];
+  let auditBroken = false;
+  let failNextRun: Error | null = null;
+  let hold: Promise<void> | null = null;
+  let beforeAudit: (() => Promise<void>) | null = null;
+  const faults = { recordReads: [] as boolean[], noClub: false, doneFails: false };
+
+  const store: BillingEventStore = {
+    async ignore(facts, reason) {
+      if (!rows.has(facts.id)) rows.set(facts.id, { ...base(facts.id, facts.type), livemode: facts.livemode, ignoredReason: reason });
+    },
+    async claim(facts): Promise<BillingEventClaim> {
+      writes.push(`claim:${facts.id}`);
+      const r = rows.get(facts.id);
+      if (!r) { rows.set(facts.id, { ...base(facts.id, facts.type), claimedAt: NOW.toISOString() }); return 'new'; }
+      if (!r.processedAt && !r.ignoredReason && (!r.claimedAt || NOW.getTime() - Date.parse(r.claimedAt) >= LEASE_MS)) {
+        r.claimedAt = NOW.toISOString(); r.attempts += 1; r.error = null;
+        return 'retry';
+      }
+      return r.processedAt || r.ignoredReason ? 'duplicate' : 'busy';
+    },
+    async done(id, outcome) {
+      writes.push(`done:${id}`);
+      const r = rows.get(id)!;
+      Object.assign(r, { processedAt: NOW.toISOString(), claimedAt: null, error: null, ignoredReason: outcome === 'processed' ? null : outcome });
+    },
+    async fail(id, message) {
+      writes.push(`fail:${id}`);
+      Object.assign(rows.get(id)!, { error: message.slice(0, 500), claimedAt: null });
+    },
+  };
+
+  /** The handler, as the audit found it for the replayable types: fresh reads, the club written from Stripe's answer. */
+  const run = async (event: Stripe.Event, _customerId: string | null, opts: { replay?: boolean } = {}): Promise<BillingEventOutcome> => {
+    runs.push({ id: event.id, replay: !!opts.replay });
+    // Only the FIRST run waits, so a second run (the bug these tests catch) shows as two runs, never as a hung test.
+    if (hold && runs.length === 1) await hold;
+    if (failNextRun) { const e = failNextRun; failNextRun = null; throw e; }
+    const object = event.data.object as unknown as { lines?: { data: Array<{ period: { end: number } }> } };
+    if (event.type === 'invoice.payment_succeeded') {
+      club.status = stripeSub.status;
+      const end = Math.max(...(object.lines?.data ?? []).map(l => l.period.end));
+      club.paidThrough = new Date(end * 1000).toISOString();
+    } else if (event.type === 'invoice.payment_failed') {
+      if (stripeSub.status === 'past_due') club.status = 'past_due';
+    } else if (event.type === 'customer.subscription.updated') {
+      club.status = stripeSub.status; club.paidThrough = stripeSub.periodEnd;
+    } else if (event.type === 'charge.refunded') {
+      return 'not_ours';
+    }
+    return 'processed';
+  };
+
+  const deps: ReplayDeps = {
+    live: () => false,
+    now: () => NOW,
+    apiVersion: STRIPE_API_VERSION,
+    async readRow(id) { const r = rows.get(id); return r ? { ...r } : null; },
+    async retrieveEvent(id) { return events.get(id) ?? null; },
+    async latestInvoiceOf() { return stripeSub.latestInvoice; },
+    async findClub() { if (beforeAudit) await beforeAudit(); return faults.noClub ? null : { orgId: 'org_1', name: 'Maple Ridge Ball Association' }; },
+    async readRecord() { if (faults.recordReads.shift()) throw new Error('Couldn’t read the club’s billing record: timeout'); return { ...club }; },
+    auditFirst: (async (_actor: string, _org: string | null, action: string, _f: unknown, _o: unknown, _n: unknown, opts: { reason?: string | null }) => {
+      if (auditBroken) throw new AuditFirstError();
+      writes.push(`audit:${action}`);
+      audit.push({ action, reason: opts.reason ?? null });
+      return async () => { writes.push(`audit:${action}_failed`); audit.push({ action: `${action}_failed`, reason: opts.reason ?? null }); };
+    }) as unknown as ReplayDeps['auditFirst'],
+    claim: f => store.claim(f),
+    done: async (id, o) => { if (faults.doneFails) throw new Error('mark failed'); return store.done(id, o); },
+    fail: (id, m) => store.fail(id, m),
+    run,
+    report: () => {},
+  };
+
+  function base(id: string, type: string): Row {
+    return {
+      id, type, livemode: false, customerId: 'cus_1', subscriptionId: 'sub_1', objectId: 'obj_1', receivedAt: daysAgo(2),
+      claimedAt: null, processedAt: null, error: null, ignoredReason: null, attempts: 1,
+    };
+  }
+
+  /** A stored event Stripe still holds, and its row: failed by default (the error kept, the claim cleared). */
+  function stored(id: string, type: string, row: Partial<Row> = {}, object: Record<string, unknown> = {}) {
+    const invoiceLike = type.startsWith('invoice.');
+    events.set(id, {
+      id, type, livemode: false, api_version: STRIPE_API_VERSION, object: 'event',
+      data: {
+        object: invoiceLike
+          ? { id: 'in_2', object: 'invoice', customer: 'cus_1', parent: { subscription_details: { subscription: 'sub_1' } }, metadata: {},
+            lines: { data: [{ period: { end: Date.parse('2026-12-08T00:00:00Z') / 1000 } }] }, ...object }
+          : { id: 'obj_1', customer: 'cus_1', ...object },
+      },
+    } as unknown as Stripe.Event);
+    rows.set(id, { ...base(id, type), error: 'Stripe did not answer in time', ...row });
+  }
+
+  const replay = (id: string, reason: unknown = 'The club still shows Past due after they paid.') =>
+    replayBillingEvent({ eventId: id, actorEmail: 'super@fieldlogichq.ca', reason }, deps);
+
+  return {
+    rows, writes, audit, club, events, stripeSub, runs, store, deps, run, stored, replay, faults,
+    breakAudit() { auditBroken = true; },
+    failRunOnce(e: Error) { failNextRun = e; },
+    holdRuns() { let release!: () => void; hold = new Promise(r => { release = r; }); return () => { hold = null; release(); }; },
+    onBeforeAudit(fn: () => Promise<void>) { beforeAudit = fn; },
+  };
+}
+
+describe('1 · run twice: the second is refused as finished and writes nothing', () => {
+  it('a failed paid-invoice update replays once, then answers "already finished" with no write and no run', async () => {
+    const w = world();
+    w.stored('evt_paid', 'invoice.payment_succeeded');
+    const first = await w.replay('evt_paid');
+    assert.equal(first.ok, true);
+    assert.deepEqual(w.writes, ['audit:replay_billing_event', 'claim:evt_paid', 'done:evt_paid']);
+    assert.equal(w.club.status, 'active');
+    const club = { ...w.club };
+    const writesBefore = w.writes.length;
+
+    const second = await w.replay('evt_paid');
+    assert.equal(second.ok, false);
+    if (!second.ok) assert.equal(second.refusal.key, 'finished');
+    assert.equal(w.writes.length, writesBefore, 'the second replay wrote nothing (no change-log row, no claim, no outcome)');
+    assert.equal(w.runs.length, 1);
+    assert.deepEqual(w.club, club);
+  });
+});
+
+describe('2 · a later update already fixed the club: "Nothing changed"', () => {
+  it('the failed paid invoice, then the subscription update that fixed it, then the replay: every row unchanged', async () => {
+    const w = world();
+    w.stored('evt_paid', 'invoice.payment_succeeded');
+    // The later live update arrives and runs (through the receiver, as the webhook does).
+    w.stored('evt_sub', 'customer.subscription.updated', { error: null, claimedAt: null });
+    w.rows.delete('evt_sub');
+    const live = await receiveBillingEvent(w.events.get('evt_sub')!, w.run, { store: w.store, live: () => false, report: () => {} });
+    assert.equal(live.status, 200);
+    assert.equal(w.club.status, 'active');
+
+    const answer = await w.replay('evt_paid');
+    assert.equal(answer.ok, true);
+    if (!answer.ok) return;
+    assert.equal(answer.result.kind, 'unchanged');
+    assert.ok(answer.result.rows.length === 5 && answer.result.rows.every(r => !r.changed));
+    assert.equal(replayResultWords(answer.result).title, 'Replayed. Nothing changed.');
+  });
+
+  it('a paid invoice that is no longer the plan’s latest is refused before anything is written (its period would go backwards)', async () => {
+    const w = world();
+    w.stored('evt_old', 'invoice.payment_succeeded', {}, { id: 'in_1' });
+    w.stripeSub.latestInvoice = 'in_2';
+    const answer = await w.replay('evt_old');
+    assert.equal(answer.ok, false);
+    if (!answer.ok) assert.equal(answer.refusal.key, 'later_bill');
+    assert.deepEqual(w.writes, []);
+    assert.equal(w.runs.length, 0);
+  });
+
+  it('the result that changed the record shows Before and After with the changed rows marked', async () => {
+    const w = world();
+    w.stored('evt_paid', 'invoice.payment_succeeded');
+    const answer = await w.replay('evt_paid');
+    assert.equal(answer.ok, true);
+    if (!answer.ok) return;
+    assert.equal(answer.result.kind, 'changed');
+    const changed = answer.result.rows.filter(r => r.changed).map(r => [r.label, r.before, r.after]);
+    assert.deepEqual(changed.map(c => c[0]), ['Status', 'Paid through']);
+    assert.deepEqual(changed[0].slice(1), ['Past due', 'Active']);
+    assert.match(replayResultWords(answer.result).foot, /No message was sent to the customer/);
+  });
+});
+
+describe('3 · a live retry and a replay at the same moment: exactly one runs', () => {
+  it('Stripe’s retry takes the claim while the replay is between its checks and its claim: the replay is busy and runs nothing', async () => {
+    const w = world();
+    w.stored('evt_paid', 'invoice.payment_succeeded');
+    const release = w.holdRuns();
+    let liveDelivery: Promise<Response> | null = null;
+    w.onBeforeAudit(async () => {
+      liveDelivery = receiveBillingEvent(w.events.get('evt_paid')!, w.run, { store: w.store, live: () => false, report: () => {} });
+      await new Promise(r => setImmediate(r)); // the live delivery has claimed and is running
+    });
+    const answer = await w.replay('evt_paid');
+    release();
+    const live = await liveDelivery!;
+    assert.equal(answer.ok, false);
+    if (!answer.ok) assert.equal(answer.refusal.key, 'busy');
+    assert.equal(live.status, 200);
+    assert.deepEqual(w.runs.map(r => r.replay), [false], 'only the live delivery ran');
+    assert.deepEqual(w.audit.map(a => a.action), ['replay_billing_event', 'replay_billing_event_failed']);
+  });
+
+  it('the replay takes the claim first: the live delivery is busy (500, Stripe retries later) and never runs it', async () => {
+    const w = world();
+    w.stored('evt_paid', 'invoice.payment_succeeded');
+    const release = w.holdRuns();
+    const replaying = w.replay('evt_paid');
+    await new Promise(r => setImmediate(r));
+    while (w.runs.length === 0) await new Promise(r => setImmediate(r));
+    const live = await receiveBillingEvent(w.events.get('evt_paid')!, w.run, { store: w.store, live: () => false, report: () => {} });
+    release();
+    const answer = await replaying;
+    assert.equal(live.status, 500);
+    assert.equal(answer.ok, true);
+    assert.deepEqual(w.runs.map(r => r.replay), [true], 'only the replay ran');
+  });
+
+  it('a row claimed under five minutes ago is "being delivered right now" before anything is written', async () => {
+    const w = world();
+    w.stored('evt_paid', 'invoice.payment_succeeded', { error: null, claimedAt: new Date(NOW.getTime() - 60_000).toISOString() });
+    const answer = await w.replay('evt_paid');
+    assert.equal(answer.ok, false);
+    if (!answer.ok) assert.equal(answer.refusal.key, 'busy');
+    assert.deepEqual(w.writes, []);
+  });
+
+  it('a row taken more than five minutes ago and never finished (stuck) is replayed', async () => {
+    const w = world();
+    w.stored('evt_paid', 'invoice.payment_succeeded', { error: null, claimedAt: new Date(NOW.getTime() - 6 * 60_000).toISOString() });
+    const answer = await w.replay('evt_paid');
+    assert.equal(answer.ok, true);
+  });
+});
+
+describe('4 · a replay sends no customer message; a live delivery still does', () => {
+  const spies = () => {
+    const sent: string[] = [];
+    return { sent, real: { email: async (_: unknown) => { sent.push('email'); }, notify: async (_: unknown) => { sent.push('notify'); } } };
+  };
+
+  it('the gate: with { replay: true } neither sender is called; with nothing, both are', async () => {
+    const s = spies();
+    const silent = customerSenders(s.real, { replay: true });
+    await silent.email({}); await silent.notify({});
+    assert.deepEqual(s.sent, []);
+    const live = customerSenders(s.real);
+    await live.email({}); await live.notify({});
+    assert.deepEqual(s.sent, ['email', 'notify']);
+    assert.equal(customerSenders(s.real, {}), s.real, 'a live delivery gets the real senders, unchanged');
+  });
+
+  it('the engine runs the seam with { replay: true }, every time', async () => {
+    const w = world();
+    w.stored('evt_failed', 'invoice.payment_failed');
+    w.stored('evt_trial', 'customer.subscription.trial_will_end');
+    await w.replay('evt_failed');
+    await w.replay('evt_trial');
+    assert.deepEqual(w.runs, [{ id: 'evt_failed', replay: true }, { id: 'evt_trial', replay: true }]);
+  });
+
+  it('the handler reaches a customer only through the gate (both welcome-backs, the trial email, the failed-payment notice)', () => {
+    const code = readCode('lib/billing-webhook-handler.ts');
+    assert.match(code, /const say = customerSenders\(\{ email: sendTransactionalEmail, notify \}, opts\);/);
+    assert.equal((code.match(/sendTransactionalEmail\(/g) ?? []).length, 0, 'no direct customer email');
+    assert.equal((code.match(/(?<![.\w])notify\(/g) ?? []).length, 0, 'no direct in-app notice');
+    assert.equal((code.match(/say\.email\(/g) ?? []).length, 3);
+    assert.equal((code.match(/say\.notify\(/g) ?? []).length, 1);
+    // `sendEmail` here is the owner's own inbox only.
+    for (const m of code.matchAll(/sendEmail\(([^,]+),/g)) assert.equal(m[1].trim(), 'ADMIN_EMAIL');
+    assert.match(code, /export async function runVerifiedBillingEvent\(event: Stripe\.Event, customerId: string \| null, opts: RunOptions = \{\}\)/);
+    assert.match(code, /runPlanWork\(event, customerId, opts\)/);
+  });
+
+  it('a live delivery passes no replay input: the receiver calls the seam with two arguments, the route hands it over as is', () => {
+    assert.match(functionBody(readCode('lib/stripe-billing-events.ts'), 'receiveBillingEvent'), /outcome = await run\(event, facts\.customerId\);/);
+    assert.match(readCode('app/api/billing/webhook/route.ts'), /receiveBillingEvent\(event, runVerifiedBillingEvent\)/);
+  });
+});
+
+describe('5 · refused before any claim or write', () => {
+  const cases: Array<[string, (w: ReturnType<typeof world>) => void, string]> = [
+    ['a wrong-mode row', w => w.stored('evt_x', 'invoice.payment_failed', { error: null, ignoredReason: 'wrong_mode', livemode: true }), 'other_account'],
+    ['a not-ours row', w => w.stored('evt_x', 'charge.refunded', { error: null, processedAt: daysAgo(1), ignoredReason: 'not_ours' }), 'not_ours'],
+    ['a set-aside (no customer) row (A2)', w => w.stored('evt_x', 'invoice.payment_failed', { error: null, processedAt: daysAgo(1), ignoredReason: 'no_customer' }), 'set_aside'],
+    ['an unknown id', () => {}, 'unknown'],
+    ['an event Stripe no longer holds', w => { w.stored('evt_x', 'invoice.payment_failed'); w.events.delete('evt_x'); }, 'too_old'],
+    ['a row older than Stripe keeps', w => w.stored('evt_x', 'invoice.payment_failed', { receivedAt: daysAgo(STRIPE_EVENT_RETENTION_DAYS + 11) }), 'too_old'],
+    ['a type the audit refused (A1)', w => w.stored('evt_x', 'customer.subscription.updated'), 'not_replayable'],
+    ['a club’s Stripe-fees bill', w => w.stored('evt_x', 'invoice.payment_failed', {}, { metadata: { [FEE_INVOICE_META]: 'fee_1' } }), 'fee_invoice'],
+    ['a bill for no plan (made by hand)', w => w.stored('evt_x', 'invoice.payment_succeeded', {}, { parent: null }), 'not_plan_bill'],
+    ['another Stripe format', w => { w.stored('evt_x', 'invoice.payment_failed'); (w.events.get('evt_x') as { api_version: string }).api_version = '2025-01-27.acacia'; }, 'format'],
+    ['no reason', w => w.stored('evt_x', 'invoice.payment_failed'), 'reason'],
+  ];
+  for (const [name, plant, key] of cases) {
+    it(`${name} → ${key}`, async () => {
+      const w = world();
+      plant(w);
+      const answer = await w.replay('evt_x', key === 'reason' ? '   ' : undefined);
+      assert.equal(answer.ok, false);
+      if (!answer.ok) assert.equal(answer.refusal.key, key);
+      assert.deepEqual(w.writes, [], 'nothing written: no change-log row, no claim, no outcome');
+      assert.equal(w.runs.length, 0);
+    });
+  }
+
+  it('the refusal words are the drawings’ (tab 2)', () => {
+    const row = { id: 'evt_x', type: 'invoice.paid', livemode: true, customerId: null, subscriptionId: null, objectId: null, receivedAt: daysAgo(1),
+      claimedAt: null, processedAt: null, error: null, ignoredReason: 'wrong_mode' };
+    assert.equal(replayRowRefusal(row, { live: false, now: NOW })?.body,
+      'It was sent by Stripe’s live account and this site reads the test account, so it was set aside when it arrived. It cannot be replayed here.');
+    assert.match(replayRowRefusal({ ...row, livemode: false, ignoredReason: null, receivedAt: daysAgo(41) }, { live: false, now: NOW })!.body,
+      /Stripe keeps its updates for 30 days and this one is 41 days old\./);
+  });
+});
+
+describe('6 · the change-log row comes first', () => {
+  it('order: change log, claim, run, outcome', async () => {
+    const w = world();
+    w.stored('evt_paid', 'invoice.payment_succeeded');
+    await w.replay('evt_paid', '  Stripe timed out on Nov 6.  ');
+    assert.deepEqual(w.writes, ['audit:replay_billing_event', 'claim:evt_paid', 'done:evt_paid']);
+    assert.deepEqual(w.audit, [{ action: 'replay_billing_event', reason: 'Stripe timed out on Nov 6.' }]);
+  });
+
+  it('when it cannot be written the run never starts and nothing is claimed', async () => {
+    const w = world();
+    w.stored('evt_paid', 'invoice.payment_succeeded');
+    w.breakAudit();
+    const answer = await w.replay('evt_paid');
+    assert.equal(answer.ok, false);
+    if (!answer.ok) { assert.equal(answer.refusal.key, 'change_log'); assert.equal(answer.status, 503); }
+    assert.deepEqual(w.writes, []);
+    assert.equal(w.runs.length, 0);
+  });
+
+  it('a run that throws keeps the error on the row, clears the claim, writes the _failed row and stays replayable', async () => {
+    const w = world();
+    w.stored('evt_paid', 'invoice.payment_succeeded');
+    w.failRunOnce(new Error('Stripe did not answer in time'));
+    const answer = await w.replay('evt_paid');
+    assert.equal(answer.ok, true);
+    if (answer.ok) { assert.equal(answer.result.kind, 'failed'); assert.equal(answer.result.error, 'Stripe did not answer in time'); }
+    const row = w.rows.get('evt_paid')!;
+    assert.equal(row.processedAt, null);
+    assert.equal(row.claimedAt, null);
+    assert.equal(row.error, 'Stripe did not answer in time');
+    assert.deepEqual(w.audit.map(a => a.action), ['replay_billing_event', 'replay_billing_event_failed']);
+    const again = await w.replay('evt_paid');
+    assert.equal(again.ok && again.result.kind, 'changed');
+  });
+});
+
+describe('the answer never claims what it did not see (/review 2026-11-08)', () => {
+  it('a before-read that fails runs nothing, keeps the row’s own error, releases the claim and writes the _failed row', async () => {
+    const w = world();
+    w.stored('evt_paid', 'invoice.payment_succeeded');
+    w.faults.recordReads = [true];
+    const answer = await w.replay('evt_paid');
+    assert.equal(answer.ok, false);
+    if (!answer.ok) assert.equal(answer.refusal.key, 'record_unread');
+    assert.equal(w.runs.length, 0);
+    const row = w.rows.get('evt_paid')!;
+    assert.equal(row.error, 'Stripe did not answer in time', 'the original failure is kept');
+    assert.equal(row.claimedAt, null);
+    assert.deepEqual(w.audit.map(a => a.action), ['replay_billing_event', 'replay_billing_event_failed']);
+  });
+
+  it('an after-read that fails says it could not be read, never "Nothing changed"', async () => {
+    const w = world();
+    w.stored('evt_paid', 'invoice.payment_succeeded');
+    w.faults.recordReads = [false, true];
+    const answer = await w.replay('evt_paid');
+    assert.equal(answer.ok && answer.result.kind, 'ran');
+    if (answer.ok) { assert.equal(answer.result.recordRead, false); assert.match(replayResultWords(answer.result).sentence, /could not be read afterwards/); }
+  });
+
+  it('an update that names no one club (a dispute) ran: no Before and After, and no claim that the record matched', async () => {
+    const w = world();
+    w.stored('evt_d', 'charge.dispute.created', { customerId: null, subscriptionId: null });
+    w.faults.noClub = true;
+    const answer = await w.replay('evt_d');
+    assert.equal(answer.ok && answer.result.kind, 'ran');
+    if (answer.ok) assert.doesNotMatch(replayResultWords(answer.result).sentence, /already matched/);
+  });
+
+  it('a run that finished but could not be marked says so', async () => {
+    const w = world();
+    w.stored('evt_paid', 'invoice.payment_succeeded');
+    w.faults.doneFails = true;
+    const answer = await w.replay('evt_paid');
+    assert.equal(answer.ok && answer.result.marked, false);
+    if (answer.ok) assert.match(replayResultWords(answer.result).foot, /could not be marked finished/);
+  });
+
+  it('a claim of exactly five minutes is still held, as the claim function holds it', () => {
+    const row = { id: 'evt_x', type: 'invoice.paid', livemode: false, customerId: null, subscriptionId: null, objectId: null,
+      receivedAt: daysAgo(1), claimedAt: new Date(NOW.getTime() - 5 * 60_000).toISOString(), processedAt: null, error: null, ignoredReason: null };
+    assert.equal(replayRowRefusal(row, { live: false, now: NOW })?.key, 'busy');
+  });
+});
+
+describe('7 · every replayable type, run twice, leaves the club’s record identical after the second', () => {
+  for (const type of REPLAYABLE_TYPES) {
+    it(type, async () => {
+      const w = world();
+      w.stored('evt_t', type);
+      const first = await w.replay('evt_t');
+      assert.equal(first.ok, true, `${type} replays`);
+      const club = { ...w.club };
+      const writes = w.writes.length;
+      const second = await w.replay('evt_t');
+      assert.equal(second.ok, false);
+      if (!second.ok) assert.ok(['finished', 'not_ours'].includes(second.refusal.key));
+      assert.deepEqual(w.club, club);
+      assert.equal(w.writes.length, writes);
+    });
+  }
+});
+
+describe('the audit, held by the build', () => {
+  it('every type the seam acts on is either audited replayable or refused, never neither (a new type is refused until audited)', () => {
+    const handler = readCode('lib/billing-webhook-handler.ts');
+    const named = [...functionBody(handler, 'runPlanWork').matchAll(/case '([a-z_.]+)':/g)].map(m => m[1]);
+    const lists = readCode('lib/charge-tax-record.ts') + readCode('lib/stripe-subscription-charges.ts');
+    const listed = ['CHARGE_TAX_INVOICE_EVENTS', 'CHARGE_TAX_CREDIT_NOTE_EVENTS', 'SUBSCRIPTION_CHARGE_EVENT_TYPES'].flatMap(name => {
+      const m = new RegExp(`${name}[^=]*=\\s*\\[([^\\]]*)\\]`).exec(lists);
+      assert.ok(m, `${name} is found`);
+      return [...m![1].matchAll(/'([a-z_.]+)'/g)].map(x => x[1]);
+    });
+    assert.ok(named.length >= 9 && listed.length >= 13);
+    for (const type of [...named, ...listed]) {
+      assert.ok(REPLAYABLE_TYPES.has(type) || REPLAY_REFUSED_TYPES.has(type), `${type} has not been audited for replay`);
+      assert.ok(!(REPLAYABLE_TYPES.has(type) && REPLAY_REFUSED_TYPES.has(type)), `${type} is in both lists`);
+    }
+  });
+
+  it('the refused types are the ones the audit found writing Stripe’s old copy (or to Stripe) — the safe list holds none of them', () => {
+    for (const t of ['checkout.session.completed', 'customer.subscription.created', 'customer.subscription.updated',
+      'customer.subscription.deleted', 'payment_method.attached']) assert.ok(REPLAY_REFUSED_TYPES.has(t) && !REPLAYABLE_TYPES.has(t), t);
+  });
+
+  it('the route: Super admin’s power before anything is read; the engine is the only write', () => {
+    const route = readCode('app/api/platform-admin/watching-stripe/replay/route.ts');
+    assert.ok(route.indexOf("requirePlatformPower('replay_events')") > -1);
+    assert.ok(route.indexOf("requirePlatformPower('replay_events')") < route.indexOf('req.json('));
+    assert.doesNotMatch(route, /supabaseAdmin|getStripe|stripe\./);
+  });
+
+  it('the engine stores no copy of the event and writes nothing to Stripe', () => {
+    const engine = readCode('lib/billing-event-replay-run.ts');
+    assert.doesNotMatch(engine, /\.(update|create|cancel|del|pay|finalizeInvoice|expire)\(/i, 'no Stripe or table write of its own');
+    assert.doesNotMatch(engine, /payload|data\.object\)\s*\}/);
+    assert.match(engine, /getStripe\(\)\.events\.retrieve\(id\)/);
+  });
+
+  it('the fetched facts read the handler’s own fee mark and the invoice’s subscription', () => {
+    const facts = fetchedEventFacts({
+      id: 'evt_1', type: 'invoice.payment_failed', livemode: false, api_version: STRIPE_API_VERSION,
+      data: { object: { id: 'in_9', metadata: { [FEE_INVOICE_META]: 'x' }, parent: { subscription_details: { subscription: { id: 'sub_9' } } } } },
+    } as unknown as Stripe.Event);
+    assert.deepEqual([facts.feeInvoice, facts.invoiceSubscriptionId, facts.invoiceId], [true, 'sub_9', 'in_9']);
+  });
+
+  it('two stored instants at the same moment are not a change (Postgres and JS print one differently)', () => {
+    const a: BillingRecord = { status: 'active', plan: 'league', paidThrough: '2026-12-08T00:00:00+00:00', cycle: 'monthly', planEnds: null };
+    const b: BillingRecord = { ...a, paidThrough: '2026-12-08T00:00:00.000Z' };
+    assert.ok(recordRows(a, b).every(r => !r.changed));
+  });
+});

@@ -161,7 +161,7 @@ describe('the webhook wears it', () => {
     // The customer-less return lives in the plan's own work (GST/HST Stage 3 records an invoice after it), which the seam calls
     // only after these four are handled.
     const handled = seam.indexOf('isSubscriptionChargeEvent(event.type)');
-    const planWork = seam.indexOf('await runPlanWork(event, customerId)');
+    const planWork = seam.indexOf('await runPlanWork(event, customerId, opts)'); // Stage 2 Part 5: the replay input passes on
     assert.ok(handled > -1 && planWork > handled, 'the four must be handled before the plan work (and its customer-less return)');
     assert.ok(!seam.includes("if (!customerId) return 'no_customer'"), 'the customer-less return must not come before the four');
     assert.ok(functionBody(route, 'runPlanWork').includes("if (!customerId) return 'no_customer'"));

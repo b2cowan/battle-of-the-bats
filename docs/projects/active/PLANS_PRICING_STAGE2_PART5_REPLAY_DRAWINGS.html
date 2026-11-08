@@ -1,0 +1,445 @@
+<title>Stripe replay drawings</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: a sticky drawing bar (tabs + Everything / Show only what differs) over one section at a time; the one whole screen is true size with Before / After.
+   Single warm look on purpose: the console's default Warm palette at its real values, same as the Part 4 drawings. */
+:root{
+  --paper:#F8F4ED; --card:#FFFFFF; --ink:#241E15; --ink-soft:#4A4235; --dim:#615A54;
+  --line:rgba(70,55,30,.12); --line-strong:rgba(70,55,30,.20);
+  --olive:#57651E; --olive-soft:rgba(87,101,30,.10); --amber:#835006; --red:#B03A22; --blue:#134FD3;
+  --new:#134FD3; --new-soft:rgba(19,79,211,.07);
+  --body:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif; --data:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+  --t-figure:24px; --t-title:20px; --t-heading:16px; --t-body:14px; --t-support:12px; --t-label:11px; --t-token:10px;
+  color-scheme:light;
+}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:var(--t-body);line-height:1.45}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--card)}
+*{box-sizing:border-box}
+button{font-family:inherit}
+/* drawing chrome */
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--card);border-bottom:1px solid var(--line-strong);
+  padding-block:.55rem;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.barRow{display:flex;align-items:center;gap:.8rem;flex-wrap:wrap}
+.barTitle{font-weight:700;font-size:var(--t-heading);margin:0}
+.barSub{font-size:var(--t-support);color:var(--dim)}
+.tabs{display:flex;gap:2px;overflow-x:auto;margin-top:.45rem;scrollbar-width:thin}
+.tab{border:0;background:none;padding:.45rem .7rem;font-size:13px;font-weight:600;color:var(--ink-soft);border-bottom:2px solid transparent;white-space:nowrap;cursor:pointer}
+.tab[aria-selected=true]{color:var(--ink);border-bottom-color:var(--olive)}
+.tab:focus-visible,.vs button:focus-visible,.flag:focus-visible{outline:2px solid var(--olive);outline-offset:2px}
+.vs{display:inline-flex;gap:2px;padding:3px;border:1px solid var(--line-strong);border-radius:999px;background:var(--card)}
+.vs button{border:0;background:none;min-height:30px;padding:.25rem .7rem;border-radius:999px;font-size:13px;font-weight:600;color:var(--ink-soft);cursor:pointer}
+.vs button[aria-pressed=true]{background:var(--olive-soft);color:var(--olive)}
+.spacer{margin-left:auto}
+main{padding-block:1rem 3rem;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.panel{display:grid;gap:.9rem}
+.lede{max-width:72ch;margin:0;color:var(--ink-soft)}
+.lede strong{color:var(--ink)}
+.h2{font-size:var(--t-heading);font-weight:700;margin:0}
+.scroller{overflow-x:auto;border:1px solid var(--line-strong);border-radius:10px;background:var(--paper)}
+.legend{display:flex;gap:1rem;flex-wrap:wrap;font-size:var(--t-support);color:var(--dim)}
+.sw{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:.3rem}
+.sw.n{border:2px solid var(--new);background:var(--new-soft)} .sw.s{background:var(--line-strong)}
+.new{outline:2px solid var(--new);outline-offset:2px;border-radius:6px;background-image:linear-gradient(var(--new-soft),var(--new-soft))}
+.differs .same{opacity:.16;filter:grayscale(1)}
+.flag{cursor:pointer}
+/* true-size console screen */
+.screen{width:1440px;min-height:600px;display:grid;grid-template-columns:240px 1fr;grid-template-rows:48px 1fr;background:var(--paper);
+  background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:40px 40px;background-position:-1px -1px}
+.strip{grid-column:1/3;display:flex;align-items:center;gap:.9rem;padding:0 1rem;background:var(--card);border-bottom:1px solid var(--line)}
+.brand{font-weight:700;letter-spacing:-.01em} .brand b{color:var(--olive)}
+.vr{width:1px;height:20px;background:var(--line-strong)}
+.portal{font-size:13px;color:var(--ink-soft)}
+.find{margin-left:auto;margin-right:auto;width:340px;height:32px;border:1px solid var(--line-strong);border-radius:999px;display:flex;align-items:center;padding:0 .8rem;color:var(--dim);font-size:13px;gap:.5rem}
+.kbd{font-family:var(--data);font-size:var(--t-token);border:1px solid var(--line-strong);border-radius:4px;padding:0 .3rem}
+.avatar{width:28px;height:28px;border-radius:50%;background:var(--olive-soft);color:var(--olive);display:grid;place-items:center;font-size:12px;font-weight:700}
+.side{background:var(--card);border-right:1px solid var(--line);padding:.7rem .55rem;font-size:13px;display:grid;align-content:start;gap:.1rem}
+.grp{font-family:var(--data);font-size:var(--t-label);font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);padding:.7rem .6rem .25rem}
+.item{padding:.38rem .6rem;border-radius:7px;color:var(--ink-soft);display:flex;align-items:center;gap:.4rem}
+.item.on{background:var(--olive-soft);color:var(--olive);font-weight:600}
+.content{padding:2rem;min-width:0}
+.col{max-width:1136px;display:grid;gap:1.1rem}
+.ph{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}
+.ph h1{font-size:var(--t-title);font-weight:700;margin:0}
+.cap{font-size:var(--t-support);color:var(--dim);margin:-.6rem 0 0}
+.chip{display:inline-flex;align-items:center;font-family:var(--data);font-size:var(--t-token);font-weight:700;letter-spacing:.04em;border-radius:999px;padding:.1rem .45rem;border:1px solid;white-space:nowrap}
+.cOk{color:var(--olive);background:rgba(87,101,30,.08);border-color:rgba(87,101,30,.3)}
+.cWarn{color:var(--amber);background:rgba(131,80,6,.08);border-color:rgba(131,80,6,.3)}
+.cBad{color:var(--red);background:rgba(176,58,34,.08);border-color:rgba(176,58,34,.3)}
+.cInfo{color:var(--ink-soft);background:rgba(70,55,30,.06);border-color:var(--line-strong)}
+.cBlue{color:var(--blue);background:rgba(19,79,211,.07);border-color:rgba(19,79,211,.3)}
+.band{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.bc{background:var(--card);padding:.85rem 1rem;display:grid;gap:.2rem;align-content:start}
+.bl{font-family:var(--data);font-size:var(--t-label);font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--dim)}
+.bv{font-size:var(--t-figure);font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums}
+.bv.sm{font-size:var(--t-title)}
+.warnv .bv{color:var(--amber)}
+.btn{display:inline-flex;align-items:center;gap:.35rem;height:36px;padding:0 .85rem;border:1px solid var(--line-strong);border-radius:8px;background:var(--card);font-size:13px;font-weight:600;color:var(--ink);white-space:nowrap;font-family:inherit}
+.btn.main{background:#D9F99D;border-color:#D9F99D;color:var(--ink)}
+.btn[aria-disabled=true]{opacity:.45}
+.toolbar{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}
+.end{margin-left:auto;display:inline-flex;gap:.5rem}
+.door{color:var(--olive);font-weight:600;white-space:nowrap}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;min-width:0}
+.pad{padding:1rem 1.1rem}
+.sec{display:grid;gap:.6rem}
+.sectitle{font-size:var(--t-heading);font-weight:700;margin:0}
+table{border-collapse:collapse;width:100%;font-size:var(--t-body)}
+th{font-family:var(--data);font-size:var(--t-label);font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);text-align:left;padding:.55rem .85rem;border-bottom:1px solid var(--line-strong);white-space:nowrap}
+td{padding:.6rem .85rem;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+.sub2{display:block;font-size:var(--t-support);color:var(--dim)}
+.muted{color:var(--dim)}
+.code{font-family:var(--data);font-size:12px;background:rgba(70,55,30,.06);border-radius:4px;padding:.05rem .3rem}
+.label{font-family:var(--data);font-size:var(--t-label);font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);margin:0}
+.callout{display:flex;align-items:flex-start;gap:.75rem;flex-wrap:wrap;background:var(--card);border:1px solid var(--line);border-left:3px solid var(--olive);border-radius:8px;padding:.75rem 1rem;color:var(--ink-soft)}
+.callout.w{border-left-color:var(--amber)} .callout.b{border-left-color:var(--red)}
+.callout strong{color:var(--ink)}
+.caption{font-size:var(--t-support);color:var(--dim);margin:0}
+.fails{list-style:none;margin:0;padding:0;display:grid;gap:.5rem}
+.fails li{display:flex;gap:.6rem;align-items:baseline;flex-wrap:wrap}
+.fails .door{margin-left:auto}
+.input{height:36px;border:1px solid var(--line-strong);border-radius:8px;padding:0 .7rem;background:var(--card);font-family:var(--data);font-size:12px;color:var(--dim);display:inline-flex;align-items:center;min-width:260px}
+/* window */
+.win{background:var(--card);border:1px solid var(--line-strong);border-radius:12px;box-shadow:0 8px 28px rgba(36,30,21,.12);width:520px;max-width:100%;display:grid;gap:.8rem;padding:1.1rem 1.2rem}
+.win h3{margin:0;font-size:var(--t-heading)}
+.win p{margin:0;color:var(--ink-soft)}
+.facts{display:grid;grid-template-columns:auto 1fr;gap:.3rem .9rem;font-size:13px;margin:0}
+.facts dt{color:var(--dim)} .facts dd{margin:0}
+.why{display:grid;gap:.3rem}
+.why .box{border:1px solid var(--line-strong);border-radius:8px;min-height:64px;padding:.5rem .65rem;color:var(--dim);font-size:13px;background:var(--card)}
+.why .box.filled{color:var(--ink)}
+.foot{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:.8rem}
+.foot .caption{flex:1;min-width:180px}
+.ba2 th,.ba2 td{padding:.4rem .6rem;font-size:13px}
+.ba2 td.to{font-weight:600}
+.arrow{color:var(--dim)}
+.wins{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:1.1rem;align-items:start;justify-items:start}
+.cap2{font-family:var(--data);font-size:var(--t-label);font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin:0 0 .4rem}
+/* asks */
+.points{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:.7rem}
+.pt{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:.8rem 1rem;display:grid;gap:.35rem;min-width:0;align-content:start}
+.pt h3{margin:0;font-size:14px;display:flex;gap:.5rem;align-items:center;flex-wrap:wrap}
+.pt p{margin:0;color:var(--ink-soft);font-size:13px}
+.ask{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:.85rem 1rem;display:grid;gap:.5rem;min-width:0}
+.ask legend{font-weight:700;padding:0;font-size:14px}
+.ask fieldset{border:0;margin:0;padding:0;display:grid;gap:.4rem}
+.opt{display:flex;gap:.55rem;align-items:flex-start;padding:.45rem .6rem;border:1px solid var(--line);border-radius:7px;cursor:pointer}
+.opt:has(input:checked){border-color:rgba(87,101,30,.5);background:var(--olive-soft)}
+.opt input{margin-top:.2rem;accent-color:var(--olive)}
+.opt span{min-width:0}
+.rec{font-family:var(--data);font-size:var(--t-token);font-weight:700;color:var(--olive);margin-left:.3rem}
+.whyask{font-size:13px;color:var(--dim);margin:0}
+textarea{width:100%;min-height:170px;font-family:var(--data);font-size:12px;border:1px solid var(--line-strong);border-radius:8px;padding:.6rem;background:var(--card);color:var(--ink)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:.9rem}
+dialog{border:1px solid var(--line-strong);border-radius:10px;padding:0;max-width:min(520px,calc(100vw - 32px));background:var(--card);color:var(--ink)}
+dialog::backdrop{background:rgba(36,30,21,.25)}
+.dlg{padding:1rem 1.1rem;display:grid;gap:.6rem}
+.dlg h3{margin:0;font-size:var(--t-heading)}
+.dlg p{margin:0;color:var(--ink-soft);white-space:pre-line}
+.xx{justify-self:end}
+@media (prefers-reduced-motion:no-preference){.tab,.vs button{transition:color .15s,background .15s}}
+</style>
+
+<div class="bar">
+  <div class="barRow">
+    <p class="barTitle">Stripe replay · drawings for Part 5</p>
+    <span class="barSub">Plans &amp; pricing Stage 2 · drawn 2026-11-08 · <span class="chip cWarn">Not ruled yet: six asks</span> · not built yet</span>
+    <span class="spacer"></span>
+    <div class="vs" role="group" aria-label="What to show">
+      <button type="button" id="vEvery" aria-pressed="true">Everything</button>
+      <button type="button" id="vDiff" aria-pressed="false">Show only what differs</button>
+    </div>
+  </div>
+  <div class="tabs" role="tablist" aria-label="Drawings">
+    <button class="tab" role="tab" data-t="screen">1 · Where it lives</button>
+    <button class="tab" role="tab" data-t="window">2 · The window</button>
+    <button class="tab" role="tab" data-t="result">3 · The result</button>
+    <button class="tab" role="tab" data-t="record">4 · The record</button>
+    <button class="tab" role="tab" data-t="asks">5 · Asks</button>
+  </div>
+</div>
+
+<main>
+<!-- ═════════════ 1 · WHERE IT LIVES ═════════════ -->
+<section class="panel" data-p="screen" hidden>
+  <div class="toolbar"><p class="lede"><strong>Replay is a door on the Stripe page, not a new page.</strong> Staff already come here to see which updates from Stripe failed. A failed update gets a Replay door; an update that is not listed (set aside, or one a customer asks about) is found by its id. Only Super admin sees either. Click any blue-outlined part to read why it is there.</p>
+    <span class="spacer"></span><div class="vs ba" role="group" aria-label="Before or after"><button type="button" data-ba="before">Before</button><button type="button" data-ba="after" aria-pressed="true">After</button></div></div>
+  <div class="legend"><span><span class="sw n"></span>New or changed</span><span><span class="sw s"></span>Unchanged (dims under “Show only what differs”)</span><span>Names and figures are examples.</span></div>
+
+  <div class="scroller">
+  <div class="screen" data-show="before">
+    <div class="strip"></div><nav class="side" data-on="Stripe"></nav>
+    <div class="content"><div class="col">
+      <div class="ph"><h1>Stripe</h1><span class="chip cWarn">2 need a look</span></div>
+      <p class="cap">Tells you when Stripe and the product stop agreeing, so you open Stripe’s dashboard only to fix a setting. It reads and reports; it never repairs anything by itself. Reading Stripe’s live account.</p>
+      <div class="band" data-fill="band"></div>
+      <h2 class="sectitle">Updates from Stripe</h2>
+      <div class="card" data-fill="feeds"></div>
+      <div class="card pad" data-fill="failsB"></div>
+      <p class="caption">Today: a failed update is listed with its type, time and message. Nothing on the page can act on it.</p>
+      <div class="card pad"><span class="muted">Our records against Stripe · Stripe settings: unchanged below.</span></div>
+    </div></div>
+  </div>
+  <div class="screen" data-show="after">
+    <div class="strip"></div><nav class="side" data-on="Stripe"></nav>
+    <div class="content"><div class="col">
+      <div class="ph same"><h1>Stripe</h1><span class="chip cWarn">2 need a look</span></div>
+      <p class="cap same">Tells you when Stripe and the product stop agreeing, so you open Stripe’s dashboard only to fix a setting. It reads and reports; it never repairs anything by itself. Reading Stripe’s live account.</p>
+      <div class="band same" data-fill="band"></div>
+      <h2 class="sectitle same">Updates from Stripe</h2>
+      <div class="card same" data-fill="feeds"></div>
+      <div class="card pad" data-fill="failsA"></div>
+      <div class="card pad new flag" data-note="Replay an update by its id|For the update that is not in the list above: one set aside with no customer, one a customer asks about, one that already finished. Paste the id from Stripe, press Find, and the same window opens. An id we have no record of, or one Stripe no longer keeps, is refused in that window with a sentence that says which."><div class="toolbar"><strong>Replay an update by its id</strong><span class="input">evt_1QxKd8FuSuNtbvsQ…</span><span class="btn">Find update</span><span class="caption">Stripe keeps an update for about 30 days.</span></div></div>
+      <div class="card pad same"><span class="muted">Our records against Stripe · Stripe settings: unchanged below.</span></div>
+    </div></div>
+  </div>
+  </div>
+
+  <h2 class="h2">Who sees what</h2>
+  <div class="card"><table>
+    <thead><tr><th>Role</th><th>The Stripe page</th><th>Replay door and Find by id</th></tr></thead>
+    <tbody>
+      <tr><td>Super admin</td><td>Reads it, as today</td><td><span class="chip cOk">Shown</span></td></tr>
+      <tr><td>Billing, Support, Product</td><td>Reads it, as today. The menu shows the read-only eye on Stripe</td><td><span class="chip cInfo flag" data-note="Not rendered, not greyed|The ruling is that only Super admin replays. For everyone else the door is not drawn at all, the same way the console drops any control a role cannot use. The server also refuses the request, so a typed address does not get through.">Not drawn</span></td></tr>
+      <tr><td>Growth, Read only</td><td>No Stripe page, as today</td><td class="muted">—</td></tr>
+    </tbody></table></div>
+</section>
+
+<!-- ═════════════ 2 · THE WINDOW ═════════════ -->
+<section class="panel" data-p="window" hidden>
+  <p class="lede"><strong>One window asks the question, built from the console’s existing confirm window.</strong> It says what will run and for which club, asks for a reason, and says what it will not do. The Replay button stays off until a reason is typed. Refusals use the same frame with one Close button, so the reason is never asked for something that cannot run. The list only offers Replay on an update that did not finish, so a click on a row never meets “already finished”; the refusals below are what a lookup by id, a live delivery in progress or the change log can still meet.</p>
+  <div class="wins">
+    <div>
+      <p class="cap2">Ready</p>
+      <div class="win">
+        <h3>Replay this update?</h3>
+        <p>Runs Stripe’s update through the product again, using what Stripe holds for it now. It does not charge, refund or change anything in Stripe.</p>
+        <dl class="facts">
+          <dt>Update</dt><dd><span class="code">invoice.payment_succeeded</span><span class="sub2">evt_1QxKd8FuSuNtbvsQ…</span></dd>
+          <dt>Received</dt><dd>Nov 6, 9:41 p.m.</dd>
+          <dt>Club</dt><dd>Maple Ridge Ball Association</dd>
+          <dt>Last result</dt><dd>Failed: Stripe did not answer in time</dd>
+          <dt>Emails</dt><dd class="new flag" data-note="No customer email|Ask 1. One update type, “trial ending soon”, sends the club’s owner an email every time the product runs it, with nothing to stop a second one. The window says plainly that a replay sends no customer email, and the result repeats it.">No customer email is sent by a replay</dd>
+        </dl>
+        <div class="why"><label class="label" for="r1">Why *</label><div class="box" id="r1">Say what you are fixing, for the change log.</div><span class="caption">0 of 1000</span></div>
+        <div class="foot"><span class="caption">Goes in the change log with your name and your reason.</span><span class="btn">Cancel</span><span class="btn main" aria-disabled="true">Replay</span></div>
+      </div>
+    </div>
+    <div>
+      <p class="cap2">Ready, reason typed</p>
+      <div class="win">
+        <h3>Replay this update?</h3>
+        <p>Runs Stripe’s update through the product again, using what Stripe holds for it now. It does not charge, refund or change anything in Stripe.</p>
+        <dl class="facts">
+          <dt>Update</dt><dd><span class="code">invoice.payment_succeeded</span><span class="sub2">evt_1QxKd8FuSuNtbvsQ…</span></dd>
+          <dt>Club</dt><dd>Maple Ridge Ball Association</dd>
+        </dl>
+        <div class="why"><label class="label" for="r2">Why *</label><div class="box filled" id="r2">Stripe timed out on Nov 6 and the club still shows Past due after they paid. Checked in Stripe: invoice paid.</div><span class="caption">118 of 1000</span></div>
+        <div class="foot"><span class="caption">Goes in the change log with your name and your reason.</span><span class="btn">Cancel</span><span class="btn main">Replay</span></div>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="h2">When it cannot run</h2>
+  <div class="wins">
+    <div><p class="cap2">Already finished</p><div class="win"><h3>This update already finished</h3><p>It was processed on Nov 6, 9:41 p.m. Nothing is waiting to be redone. If the club’s plan looks wrong, the morning check against Stripe lists it on this page.</p><div class="foot"><span class="caption"></span><span class="btn">Close</span></div></div></div>
+    <div><p class="cap2">Live account update on a test site</p><div class="win"><h3>This update came from the other Stripe account</h3><p>It was sent by Stripe’s live account and this site reads the test account, so it was set aside when it arrived. It cannot be replayed here.</p><div class="foot"><span class="caption"></span><span class="btn">Close</span></div></div></div>
+    <div><p class="cap2">Older than Stripe keeps</p><div class="win"><h3>Stripe no longer has this update</h3><p>Stripe keeps its updates for about 30 days and this one is 41 days old. The product does not store a copy, so there is nothing to replay. Open the club’s Money tab to see what Stripe holds today.</p><div class="foot"><span class="caption"></span><span class="btn">Close</span></div></div></div>
+    <div><p class="cap2">Being delivered right now</p><div class="win"><h3>Stripe is sending this one right now</h3><p>The product is already working on it. Wait a minute and look at the list again; if it still shows as failing, replay it then.</p><div class="foot"><span class="caption"></span><span class="btn">Close</span></div></div></div>
+    <div><p class="cap2">Not a record we have</p><div class="win"><h3>No update with that id</h3><p>The product has no record of an update with this id. Check that you copied all of it, from the Events page in Stripe’s dashboard, in the same account this site reads.</p><div class="foot"><span class="caption"></span><span class="btn">Close</span></div></div></div>
+    <div><p class="cap2">Change log unavailable</p><div class="win"><h3>Nothing was replayed</h3><p>The change log could not be written, so nothing was replayed. Try again.</p><div class="foot"><span class="caption"></span><span class="btn">Close</span></div></div></div>
+  </div>
+</section>
+
+<!-- ═════════════ 3 · THE RESULT ═════════════ -->
+<section class="panel" data-p="result" hidden>
+  <div class="toolbar"><p class="lede"><strong>The same window turns into the answer.</strong> The honest answer is often “nothing changed”, because a replay reads what Stripe holds now and an earlier update may have fixed the club already. Before and After are the club’s billing record as we hold it, read just before and just after the run. Under “Show only what differs”, the unchanged rows dim.</p></div>
+  <div class="wins">
+    <div>
+      <p class="cap2">Replayed, record changed</p>
+      <div class="win">
+        <h3>Replayed. The club’s record changed.</h3>
+        <p><span class="code">invoice.payment_succeeded</span> for Maple Ridge Ball Association was processed.</p>
+        <table class="ba2"><thead><tr><th>Billing record</th><th>Before</th><th>After</th></tr></thead><tbody>
+          <tr><td>Status</td><td>Past due</td><td class="to new flag" data-note="Before and after|Read from the club’s own record (the plan, status and dates it holds), one read just before the run and one just after. It shows the club’s plan, status and dates only. The run can also record a bill’s tax figures and a charge; those are not in this table, and the window says so below (Ask 3).">Active</td></tr>
+          <tr class="same"><td>Plan</td><td>League</td><td>League</td></tr>
+          <tr><td>Paid through</td><td>Nov 8, 2026</td><td class="to new">Dec 8, 2026</td></tr>
+          <tr class="same"><td>Billing cycle</td><td>Monthly</td><td>Monthly</td></tr>
+          <tr class="same"><td>Plan ends</td><td>—</td><td>—</td></tr>
+        </tbody></table>
+        <p class="caption">No customer email was sent. Bill and charge records the run keeps are not shown here.</p>
+        <div class="foot"><span class="caption">Logged in the change log.</span><span class="btn main">Done</span></div>
+      </div>
+    </div>
+    <div>
+      <p class="cap2">Replayed, nothing to change</p>
+      <div class="win">
+        <h3>Replayed. Nothing changed.</h3>
+        <p><span class="code">customer.subscription.updated</span> for Fairview U11 Comets was processed. The club’s record already matched what Stripe holds, usually because a later update fixed it first.</p>
+        <table class="ba2"><thead><tr><th>Billing record</th><th>Before and after</th></tr></thead><tbody>
+          <tr class="same"><td>Status</td><td>Active</td></tr>
+          <tr class="same"><td>Plan</td><td>Tournament Plus</td></tr>
+          <tr class="same"><td>Paid through</td><td>Nov 30, 2026</td></tr>
+        </tbody></table>
+        <div class="foot"><span class="caption">Logged in the change log.</span><span class="btn main">Done</span></div>
+      </div>
+    </div>
+    <div>
+      <p class="cap2">Failed again</p>
+      <div class="win">
+        <h3>The replay failed</h3>
+        <p>Stripe did not answer in time. Nothing was changed by this try, and the update stays in the failing list. You can replay it again in a few minutes.</p>
+        <div class="foot"><span class="caption">The attempt is in the change log.</span><span class="btn">Close</span><span class="btn main">Replay again</span></div>
+      </div>
+    </div>
+    <div>
+      <p class="cap2">Set aside again</p>
+      <div class="win">
+        <h3>Set aside again</h3>
+        <p>No club has this Stripe customer yet, so there is nothing to update. Link the customer first (the club’s record, Money tab), then replay this update.</p>
+        <div class="foot"><span class="caption">The attempt is in the change log.</span><span class="btn main">Close</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="callout w"><span><strong>Build note.</strong> The console’s confirm window already has the refusal shape (no main button, Close in place of Cancel). It closes as soon as an action succeeds, so these four result states are new: the same window stays open and turns into the answer. Lime marks the one main action in each.</span></div>
+</section>
+
+<!-- ═════════════ 4 · THE RECORD ═════════════ -->
+<section class="panel" data-p="record" hidden>
+  <p class="lede"><strong>Every replay leaves one line in the change log, written before anything runs.</strong> If the line cannot be written, nothing runs (the last refusal in tab 2). If the run then fails, a second line says so and names the first. The Stripe page also remembers: a replayed update leaves the failing list and says who finished it.</p>
+  <h2 class="h2">Audit log</h2>
+  <div class="card"><table>
+    <thead><tr><th>When</th><th>Who</th><th>What</th><th>Club</th><th>Reason</th></tr></thead>
+    <tbody>
+      <tr class="new"><td>Nov 8, 10:02 a.m.</td><td>Brian C.</td><td>Replayed a Stripe update<span class="sub2">invoice.payment_succeeded · evt_1QxKd8FuSuNtbvsQ…</span></td><td>Maple Ridge Ball Association</td><td>Stripe timed out on Nov 6 and the club still shows Past due after they paid. Checked in Stripe: invoice paid.<span class="sub2">Status: Past due → Active · Paid through: Nov 8, 2026 → Dec 8, 2026</span></td></tr>
+      <tr class="new"><td>Nov 8, 10:14 a.m.</td><td>Brian C.</td><td>Replay failed<span class="sub2">customer.subscription.updated · evt_1QwR3m…</span></td><td>Fairview U11 Comets</td><td>Retrying after the Stripe outage.<span class="sub2">Stripe did not answer in time. Follows the line above it in the log.</span></td></tr>
+    </tbody></table></div>
+  <p class="caption">The audit log’s Action filter gains “Replayed a Stripe update”, and each line’s door goes back to the Stripe page.</p>
+
+  <h2 class="h2">The Stripe page afterwards</h2>
+  <div class="card pad sec">
+    <p class="label">What failed in Plan billing</p>
+    <ul class="fails">
+      <li><span class="code">customer.subscription.updated</span> · Nov 5, 2:07 a.m. · A record the update needed was not there yet <span class="door">Replay</span></li>
+      <li class="new flag" data-note="Finished by a replay|The update is no longer failing, so it leaves the list and the “Updates still failing” count drops by one. The line stays on the page for the rest of the day so the person who looked next sees what happened and who did it." style="display:flex"><span class="code">invoice.payment_succeeded</span> · Nov 6, 9:41 p.m. · <span class="chip cOk">Replayed</span> Nov 8, 10:02 a.m. by Brian C.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ═════════════ 5 · ASKS ═════════════ -->
+<section class="panel" data-p="asks" hidden>
+  <p class="lede"><strong>Replay has a narrower job than the ruling suggests, and one update type is not harmless to run twice.</strong> Stripe already retries a failing delivery on its own for a few days, so a replay is for updates it gave up on, updates set aside because the club was not linked yet, and a re-run after we fixed our own fault. That is worth having, and it is small. I have drawn it small.</p>
+
+  <h2 class="h2">What the code says (checked 2026-11-08)</h2>
+  <div class="points">
+    <div class="pt"><h3>Trial-ending email <span class="chip cBad">Repeats</span></h3><p>When the product runs a “trial ending soon” update it emails the club’s owner, with nothing to stop a second email. The two welcome-back emails only go when the club was cancelled, so a replay after it is active does not repeat them. Ask 1.</p></div>
+    <div class="pt"><h3>No preview exists <span class="chip cWarn">Gap</span></h3><p>The handler runs and writes; it does not offer a “what would change” mode, and reports only a one-word result. Before and After is the club’s record read twice. Ask 3.</p></div>
+    <div class="pt"><h3>Nothing is stored <span class="chip cInfo">As ruled</span></h3><p>A replay fetches the update from Stripe again by its id. Stripe keeps updates for about 30 days, so an older one cannot be replayed. That figure is Stripe’s own limit and I will confirm it against their documentation before building.</p></div>
+    <div class="pt"><h3>The receiver refuses repeats <span class="chip cInfo">Build note</span></h3><p>Live deliveries treat a finished update as a duplicate, which is why a replay cannot go through the same door. It must take the same claim a live delivery takes, so a replay and Stripe’s own retry cannot run at once. This is the “harmless the second time” proof the ruling asks for, and the build stops if it cannot be shown.</p></div>
+  </div>
+
+  <h2 class="h2">Asks (pick one each; the recommendation is marked)</h2>
+  <div class="grid2" id="asks"></div>
+  <div class="card pad sec">
+    <div class="toolbar"><strong>Your answers</strong><span class="end"><button class="btn" type="button" id="copy">Copy answers</button></span></div>
+    <textarea id="out" readonly aria-label="Your answers, to paste back"></textarea>
+    <p class="caption" id="copied" aria-live="polite">Paste them back into the session.</p>
+  </div>
+</section>
+</main>
+
+<dialog id="note"><div class="dlg"><h3 id="nt"></h3><p id="nb"></p><button class="btn xx" type="button" id="nx">Close</button></div></dialog>
+
+<script>
+(function(){
+  var MENU=[['','Today'],['Customers',['Clubs & portals','People','Free time','Renewals','Retention']],['Health',['Status','Errors','Feedback','Sent emails','Online payments','Stripe']],['Growth',['Leads','Campaigns','Pitch decks','Business numbers']],['Product',['Plans & pricing','Approval queue','Bulk changes','Email templates','Export registry']],['Records',['Staff','Audit log']],['Private finance',['Bookkeeping']]];
+  function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')}
+  document.querySelectorAll('.strip').forEach(function(el){
+    el.innerHTML='<span class="brand">Field<b>Logic</b>HQ</span><span class="vr"></span><span class="portal">Support console</span><span class="find">Find a club, person or Stripe id <span class="kbd">/</span></span><span class="avatar">BC</span>';
+    el.classList.add('same');
+  });
+  document.querySelectorAll('nav.side').forEach(function(el){
+    var on=el.getAttribute('data-on'), h='';
+    MENU.forEach(function(g){
+      if(typeof g[1]==='string'){h+='<div class="item">'+esc(g[1])+'</div>';return;}
+      h+='<div class="grp">'+esc(g[0])+'</div>';
+      g[1].forEach(function(n){h+='<div class="item'+(n===on?' on':'')+'">'+esc(n)+'</div>'});
+    });
+    el.innerHTML=h; el.classList.add('same');
+  });
+  /* shared screen pieces */
+  var band='<div class="bc"><span class="bl">Last update from Stripe</span><span class="bv sm">Nov 8, 6:02 a.m.</span></div><div class="bc warnv"><span class="bl">Updates still failing</span><span class="bv">2</span></div><div class="bc"><span class="bl">Records that disagree</span><span class="bv">0</span></div><div class="bc warnv"><span class="bl">Settings to check</span><span class="bv">1</span></div>';
+  var feeds='<table><thead><tr><th>Feed</th><th>Last received</th><th>Still failing</th><th>Set aside, 7 days</th><th>Wrong mode, 7 days</th></tr></thead><tbody><tr><td>Plan billing</td><td>Nov 8, 6:02 a.m.</td><td><span class="chip cWarn">2</span></td><td>3 with no customer</td><td>None</td></tr><tr><td>Family payments</td><td>Nov 8, 5:48 a.m.</td><td>None</td><td>Not recorded</td><td>Not recorded</td></tr></tbody></table>';
+  function fails(withDoor){
+    var door=withDoor?'<span class="door new flag" data-note="Replay|Opens the window in tab 2 for this update. Shown to Super admin only, and only on an update that did not finish. An inline word in the row, as the console’s other row doors that open a window. No arrow, because the arrow means leaving for another place.">Replay</span>':'';
+    return '<p class="label">What failed in Plan billing</p><ul class="fails"><li><span class="code">invoice.payment_succeeded</span> · Nov 6, 9:41 p.m. · Stripe did not answer in time '+door+'</li><li><span class="code">customer.subscription.updated</span> · Nov 5, 2:07 a.m. · A record the update needed was not there yet '+door+'</li></ul>';
+  }
+  document.querySelectorAll('[data-fill=band]').forEach(function(e){e.innerHTML=band});
+  document.querySelectorAll('[data-fill=feeds]').forEach(function(e){e.innerHTML=feeds});
+  document.querySelectorAll('[data-fill=failsB]').forEach(function(e){e.innerHTML=fails(false)});
+  document.querySelectorAll('[data-fill=failsA]').forEach(function(e){e.innerHTML=fails(true)});
+  /* tabs */
+  var tabs=[].slice.call(document.querySelectorAll('.tab')), panels=[].slice.call(document.querySelectorAll('[data-p]'));
+  function show(t){
+    if(!panels.some(function(p){return p.getAttribute('data-p')===t}))t='screen';
+    tabs.forEach(function(b){b.setAttribute('aria-selected',String(b.getAttribute('data-t')===t))});
+    panels.forEach(function(p){p.hidden=p.getAttribute('data-p')!==t});
+  }
+  tabs.forEach(function(b){b.addEventListener('click',function(){location.hash=b.getAttribute('data-t')})});
+  window.addEventListener('hashchange',function(){show(location.hash.slice(1))});
+  show(location.hash.slice(1));
+  /* before / after */
+  document.querySelectorAll('.ba').forEach(function(sw){
+    var panel=sw.closest('[data-p]');
+    function set(v){
+      sw.querySelectorAll('button').forEach(function(b){b.setAttribute('aria-pressed',String(b.getAttribute('data-ba')===v))});
+      panel.querySelectorAll('.screen[data-show]').forEach(function(s){s.hidden=s.getAttribute('data-show')!==v});
+    }
+    sw.querySelectorAll('button').forEach(function(b){b.addEventListener('click',function(){set(b.getAttribute('data-ba'))})});
+    set('after');
+  });
+  /* everything / differs */
+  var ve=document.getElementById('vEvery'), vd=document.getElementById('vDiff');
+  function diff(on){document.body.classList.toggle('differs',on);ve.setAttribute('aria-pressed',String(!on));vd.setAttribute('aria-pressed',String(on))}
+  ve.addEventListener('click',function(){diff(false)}); vd.addEventListener('click',function(){diff(true)});
+  /* notes */
+  var dlg=document.getElementById('note');
+  function openNote(el){var parts=(el.getAttribute('data-note')||'').split('|');document.getElementById('nt').textContent=parts[0];document.getElementById('nb').textContent=parts.slice(1).join('|');if(dlg.showModal)dlg.showModal();else dlg.setAttribute('open','')}
+  document.addEventListener('click',function(e){var el=e.target.closest('[data-note]');if(el){e.preventDefault();e.stopPropagation();openNote(el)}});
+  document.addEventListener('keydown',function(e){if((e.key==='Enter'||e.key===' ')&&e.target.matches&&e.target.matches('[data-note]')){e.preventDefault();openNote(e.target)}});
+  document.querySelectorAll('[data-note]').forEach(function(el){if(!el.hasAttribute('tabindex'))el.setAttribute('tabindex','0');el.setAttribute('role','button')});
+  document.getElementById('nx').addEventListener('click',function(){dlg.close()});
+  dlg.addEventListener('click',function(e){if(e.target===dlg)dlg.close()});
+  /* asks */
+  var ASKS=[
+    ['Customer emails during a replay',['A · A replay never sends a customer email, and the window and result say so','B · A replay sends the email as the first run would (a second “trial ending” email can reach the owner)','C · Same as A, and “trial ending” updates cannot be replayed at all'],0,'Only the trial-ending email repeats. Staff replay to repair our record, not to message a customer; if an email was lost, that is a separate decision.'],
+    ['Which updates get a Replay door',['A · Failed updates in the list, plus Find by id for anything else','B · Failed updates, plus a second list of the ones set aside with no customer','C · Find by id only, no door in the list'],0,'The list already names what failed, so the door belongs there. Set-aside ones are rarer and a customer or a Stripe id usually points at them. B can be added later.'],
+    ['What “before and after” shows',['A · The club’s billing record (status, plan, paid through, cycle, plan end) read just before and just after, with the limit stated','B · Only the one-word result (processed, no customer, not ours)','C · A true preview before you confirm (the handler is split in two so it can show what it would write)'],0,'A is honest about the record staff look at, and cheap. C makes the proof stronger but means rewriting the handler’s write paths; I would only do it if A leaves staff guessing.'],
+    ['Can a finished update be replayed',['A · No. Only updates that did not finish (failed, never finished, set aside) can be replayed; a finished one says so','B · Yes, and it re-reads Stripe and fixes only what differs'],0,'Narrow first: widening later is easy, narrowing after staff rely on it is not. B turns Replay into a “refresh this club from Stripe” button, which is a different tool with its own ruling.'],
+    ['Family payments',['A · Plan billing only; family payments are not replayable','B · Both feeds'],0,'The ruling and the log it relies on are plan billing. Family payments move families’ money, do not record why an update was set aside, and are out of this stage’s read-only-plus-one-write line.'],
+    ['Sign in again before a replay',['A · No: a reason and the change log are enough; one club, no money moves','B · Yes, the same step as the many-customer money actions'],0,'A replay repairs one club’s record and moves no money. The sign-in step is kept for actions that touch many customers or send money.']
+  ];
+  var KEY='p5-asks', saved={}; try{saved=JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch(e){saved={}}
+  var host=document.getElementById('asks');
+  ASKS.forEach(function(a,i){
+    var d=document.createElement('div'); d.className='ask';
+    var h='<fieldset><legend>'+(i+1)+' · '+esc(a[0])+'</legend>';
+    a[1].forEach(function(o,j){var id='a'+i+'_'+j;h+='<label class="opt" for="'+id+'"><input type="radio" name="a'+i+'" id="'+id+'" value="'+j+'"'+(saved[i]===j?' checked':'')+'><span>'+esc(o)+(j===a[2]?'<span class="rec">RECOMMENDED</span>':'')+'</span></label>'});
+    h+='</fieldset><p class="whyask">'+esc(a[3])+'</p>'; d.innerHTML=h; host.appendChild(d);
+  });
+  var out=document.getElementById('out');
+  function render(){
+    var lines=['Part 5 replay drawing, answers:'];
+    ASKS.forEach(function(a,i){var c=document.querySelector('input[name=a'+i+']:checked');lines.push((i+1)+'. '+a[0]+': '+(c?a[1][+c.value]:'(not answered)'))});
+    out.value=lines.join('\n');
+  }
+  host.addEventListener('change',function(e){var m=/^a(\d+)$/.exec(e.target.name);if(m){saved[+m[1]]=+e.target.value;try{localStorage.setItem(KEY,JSON.stringify(saved))}catch(err){}}render()});
+  render();
+  document.getElementById('copy').addEventListener('click',function(){
+    var msg=document.getElementById('copied');
+    try{navigator.clipboard.writeText(out.value).then(function(){msg.textContent='Copied. Paste them back into the session.'},function(){out.select();msg.textContent='Selected. Press Ctrl+C to copy.'})}catch(e){out.select();msg.textContent='Selected. Press Ctrl+C to copy.'}
+  });
+})();
+</script>
