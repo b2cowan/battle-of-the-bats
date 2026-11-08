@@ -3,6 +3,7 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import SingleSelectDropdown from '@/components/coaches/SingleSelectDropdown';
 import DateInput from '@/components/shared/DateInput';
 import SearchField from '@/components/shared/SearchField';
 import { attentionReasons, businessCents, currentExpenses, hasConfirmedDates, needsSupplierTaxNumber, summarizeExpenses, type ExpenseRevision } from '@/lib/bookkeeping-expenses';
@@ -73,6 +74,14 @@ export default function ExpensesRegister({ expenses, registrationDate, loading, 
   const allUndated = visible.length > 0 && !visible.some(hasConfirmedDates);
   const attention = filters?.review === 'attention';
   const currentCategory = params.get('category') ?? '';
+  // The portal's pick-one list: the period's name, with the months or year it covers as a quiet line beneath. The face
+  // keeps the full words ("Last month · October 2026").
+  const periodOptions = EXPENSE_PERIODS.map(id => {
+    const { label } = expensePeriodRange(id, today);
+    const [named, covers] = label.split(' · ');
+    const name = id === 'month' ? 'This month' : id === 'year' ? 'This year' : covers ? named : label;
+    return { id, label: name, faceLabel: label, ...(name === label ? {} : { sub: covers ?? label }) };
+  });
   const open = (row: ExpenseRevision) => attention && needsSupplierTaxNumber(row, registrationDate) ? onAddNumber(row, visible) : onOpenExpense(row, visible);
 
   function update(changes: Record<string, string | null>) {
@@ -91,10 +100,8 @@ export default function ExpensesRegister({ expenses, registrationDate, loading, 
   return <section className={styles.expenseRegister} aria-labelledby="register-title">
     <h2 id="register-title" className="sr-only">Expenses</h2>
     <div className={`${kit.toolbar} ${styles.expenseToolbar}`}>
-      <select aria-label="Period" className={`${kit.select} ${styles.periodPill}`} value={period}
-        onChange={event => update({ period: event.target.value, ...(event.target.value === 'custom' ? {} : { from: null, to: null }) })}>
-        {EXPENSE_PERIODS.map(value => <option key={value} value={value}>{expensePeriodRange(value, today).label}</option>)}
-      </select>
+      <SingleSelectDropdown lead label="Period" value={period} options={periodOptions}
+        onChange={next => update({ period: next, ...(next === 'custom' ? {} : { from: null, to: null }) })} />
       <span className={kit.countQuiet} aria-live="polite">{visible.length} {filters?.status === 'voided' ? 'voided ' : ''}{visible.length === 1 ? 'expense' : 'expenses'}</span>
       <div className={`${kit.toolbarEnd} ${styles.expenseToolbarEnd}`}>
         <div className={styles.expenseSearch}>

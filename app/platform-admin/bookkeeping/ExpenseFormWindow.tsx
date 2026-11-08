@@ -14,7 +14,7 @@ import {
 import {
   CANT_GET_NUMBER, CHOOSABLE_TAX_TYPES, CREDIT_LABEL, defaultPurchaseKind, hasGstHstLine, NUMBER_HINT_BLANK, NUMBER_HINT_SAME_AS_LAST,
   NUMBER_NEEDED_FROM_CENTS, NUMBER_NOT_NEEDED, PURCHASE_KINDS, REGISTRATION_HINT, resolveTaxState, SUPPLIER_REGISTRATIONS, supplierPrefill,
-  sumTaxLines, TAX_ANSWERS, TAX_STATUS_LABELS, TAX_TYPES, taxFromTotal, taxSummary, UNSET_TYPE_PROMPT, workOutCredit, formatCad as money,
+  sumTaxLines, TAX_ANSWERS, TAX_STATUS_LABELS, TAX_TYPES, taxFromTotal, UNSET_TYPE_PROMPT, workOutCredit, formatCad as money,
   type PurchaseKind, type SupplierRegistration, type TaxAnswer, type TaxLine, type TaxType,
 } from '@/lib/bookkeeping-gst';
 import { tournamentToday } from '@/lib/timezone';
@@ -28,7 +28,7 @@ import styles from './bookkeeping.module.css';
 
 const SOURCES = { business_bank: 'Business bank', business_card: 'Business card', personal: 'Paid personally', other: 'Other' };
 const dollars = (cents: number) => (cents / 100).toFixed(2);
-const ADVANCED_FIELDS = ['taxAnswer', 'taxType', 'taxLines', 'taxStatus', 'businessUsePercent', 'supplierTaxNumber', 'notes'];
+const ADVANCED_FIELDS = ['notes'];
 /** One tax line as typed. A pre-4a amount opens as one line of type `unset`, shown as “Choose a type”. */
 type LineDraft = { key: number; type: TaxType; amount: string };
 let lineKeys = 0;
@@ -39,7 +39,7 @@ export default function ExpenseFormWindow({ expense, expenses, categories, asVoi
   startEditing?: boolean; copyFrom?: ExpenseRevision | null; revisions?: ExpenseRevision[];
   /** The current GST/HST registration date: the live credit sentence reads it. Null before migration 006. */
   registrationDate: string | null;
-  /** Open with More details open and the supplier's number focused (a register row waiting on the number). */
+  /** Open with the supplier's number focused (a register row waiting on the number). */
   focusNumber?: boolean;
   steps?: ComponentProps<typeof KitDialog>['steps']; onCopy?: (row: ExpenseRevision) => void;
   address: string; homeAddress: string; disabled: boolean; onClose: () => void;
@@ -67,7 +67,7 @@ export default function ExpenseFormWindow({ expense, expenses, categories, asVoi
   const [purpose, setPurpose] = useState(base?.business_purpose ?? '');
   const [category, setCategory] = useState(base?.category ?? '');
   const [customCategory, setCustomCategory] = useState(false);
-  const [more, setMore] = useState(focusNumber);
+  const [more, setMore] = useState(Boolean(base?.notes));
   // GST/HST Stage 4a: the tax section. A saved expense opens in its mapped state (resolveTaxState), so an older one
   // shows its single amount as one line of type “Type not set”.
   const [savedTax] = useState(() => base ? resolveTaxState(base, base.tax_lines ?? []) : null);
@@ -239,7 +239,7 @@ export default function ExpenseFormWindow({ expense, expenses, categories, asVoi
       <div className={styles.pair}>
         <label>Expense date *<DateInput className={kit.field} name="incurredDate" required value={incurredDate} {...fieldFor('incurredDate')}
           onChange={value => { setDirty(true); setIncurredDate(value); if (!differentDate) setPaidDate(value); }} /></label>
-        <div className={styles.fieldStack}><label htmlFor="bk-originalAmount">{currency === 'USD' ? 'Receipt shows *' : 'Amount *'}</label>
+        <div className={styles.fieldStack}><label htmlFor="bk-originalAmount">{currency === 'USD' ? 'Receipt total (tax included) *' : 'Total paid (tax included) *'}</label>
           <div className={styles.moneyField}><select aria-label="Currency" value={currency} {...fieldFor('originalCurrency')}
             onChange={event => { setCurrency(event.target.value as 'CAD' | 'USD'); if (!conversionSource) setConversionSource(lastConversionSource(expenses, paymentSource)); }}><option>CAD</option><option>USD</option></select>
             <input className={kit.field} inputMode="decimal" required value={originalAmount} {...fieldFor('originalAmount')} onChange={event => setOriginalAmount(event.target.value)} /></div>
@@ -268,10 +268,7 @@ export default function ExpenseFormWindow({ expense, expenses, categories, asVoi
       </div>
       {duplicates[0] && <p className={styles.dateWarning} role="status">{duplicates[0].supplier} · {money(duplicates[0].cad_cents)} is already recorded for <strong>{consoleDate(duplicates[0].incurred_date)}</strong>. Same purchase twice?{' '}
         <Link href={bookkeepingAddress(new URLSearchParams(), { view: 'expenses', record: duplicates[0].expense_id })} target="_blank" rel="noopener noreferrer" aria-label="Open existing expense in a new tab">Open it ›</Link></p>}
-      <button type="button" className={styles.moreButton} aria-expanded={more} onClick={() => setMore(!more)}>
-        <strong>{more ? '▾' : '▸'} More details</strong><span>{taxSummary(taxAnswer, lines, credit)} · {businessUse}% business · {notes.trim() ? 'notes added' : 'no notes'}</span>
-      </button>
-      {more && <div className={styles.advanced}>
+      <div className={styles.advanced}>
         <div className={styles.pair}>
           <label>Tax on this receipt<select className={kit.select} value={taxAnswer} {...fieldFor('taxAnswer')} onChange={event => setTaxAnswer(event.target.value as TaxAnswer)}>
             {Object.entries(TAX_ANSWERS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
@@ -290,6 +287,7 @@ export default function ExpenseFormWindow({ expense, expenses, categories, asVoi
             {drafts.length > 1 && <button type="button" className={styles.removeTax} aria-label={`Remove ${TAX_TYPES[line.type].label} line`}
               onClick={() => { setDrafts(current => current.filter(item => item.key !== line.key)); setDirty(true); }}>×</button>}
           </div>)}
+          {autoRate && totalCents ? <p className={styles.hint}>Worked out from your total.</p> : null}
           <div className={styles.taxDoors}>
             {singleRate && taxTyped && <button type="button" className={styles.textButton} disabled={!totalCents}
               onClick={() => { setTaxTyped(false); setDirty(true); }}>Work out from the total</button>}
@@ -302,10 +300,6 @@ export default function ExpenseFormWindow({ expense, expenses, categories, asVoi
             {Object.entries(PURCHASE_KINDS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
           {businessUseField()}
         </div> : businessUseField())}
-        {credit && credit.state !== 'no_tax' && <p className={`${kit.callout} ${credit.tone === 'amber' ? kit.calloutWarn : styles.creditNeutral}`} aria-live="polite">
-          {credit.creditCents ? <span>{CREDIT_LABEL}: <strong>{credit.figure}</strong></span> : <strong>{credit.figure}</strong>}
-          {credit.sentence && <span className={styles.creditSentence}>{credit.sentence}</span>}
-        </p>}
         {gstHst && <div className={styles.pair}>
           <div className={styles.fieldStack}><label>Supplier’s GST/HST number<input className={kit.field} maxLength={MAX_SUPPLIER_TAX_NUMBER} autoComplete="off" value={numberText ?? prefill?.number ?? ''}
             {...fieldFor('supplierTaxNumber')} onChange={event => { setNumberText(event.target.value); if (event.target.value.trim()) setNumberUnobtainable(false); if (registration === null) setRegistration(prefill?.registration ?? ''); }} /></label>
@@ -318,6 +312,15 @@ export default function ExpenseFormWindow({ expense, expenses, categories, asVoi
             <p className={styles.hint}>{REGISTRATION_HINT}</p></div>
         </div>}
         {gstHst && waiting && <label className={styles.inlineCheck}><input type="checkbox" checked={numberUnobtainable} onChange={event => setNumberUnobtainable(event.target.checked)} />{CANT_GET_NUMBER}</label>}
+        {credit && credit.state !== 'no_tax' && <p className={`${kit.callout} ${credit.tone === 'amber' ? kit.calloutWarn : styles.creditNeutral}`} aria-live="polite">
+          {credit.creditCents ? <span>{CREDIT_LABEL}: <strong>{credit.figure}</strong></span> : <strong>{credit.figure}</strong>}
+          {credit.sentence && <span className={styles.creditSentence}>{credit.sentence}</span>}
+        </p>}
+      </div>
+      <button type="button" className={styles.moreButton} aria-expanded={more} onClick={() => setMore(!more)}>
+        <strong>{more ? '▾' : '▸'} Notes</strong><span>{notes.trim() ? 'notes added' : 'no notes'}</span>
+      </button>
+      {more && <div className={styles.advanced}>
         <label>Notes<textarea className={kit.textarea} maxLength={2000} rows={2} value={notes} {...fieldFor('notes')} onChange={event => setNotes(event.target.value)} /></label>
       </div>}
       {error && <DialogReason><span id="bk-form-error" role="alert">{error.error}</span></DialogReason>}

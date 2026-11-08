@@ -148,7 +148,6 @@
 .expenseRegister { min-width: 0; border: 1px solid var(--home-line); border-radius: 10px; background: var(--card-bg); }
 .expenseToolbar { gap: .5rem; }
 .expenseToolbar select { max-width: 14rem; }
-.expenseToolbar .periodPill { width: 10rem; border-radius: 999px; color: var(--home-olive); border-color: var(--home-olive); background: var(--home-olive-soft); font-weight: 650; }
 .expenseToolbar .filterPill { max-width: 12rem; }
 .expenseToolbar .quietButton { min-height: var(--admin-control-h); border-radius: 8px; padding: .45rem .75rem; }
 .expenseToolbarEnd { min-width: 0; }
