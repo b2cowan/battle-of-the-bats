@@ -311,7 +311,26 @@ describe('11 · the words (plan §4b)', () => {
     assert.equal('addMissing' in W, false, '"Add the missing line" is retired in both portals');
     assert.equal(W.draftPickedUpOn('Nov 5, 2026'), 'Picked up where you left off · last worked on Nov 5, 2026');
     assert.equal(W.startedOffBy('$412.00'), 'Started off by $412.00');
-    assert.equal(W.draftKept, 'Kept in this browser only, until you save this check.');
+    assert.equal(W.draftKept, 'Kept in this browser only, until you save this check or sign out.');
+  });
+  it('Find\'s "you haven\'t…" sentences: the club "entered" (its Ledger), the coach "recorded" (owner, WD3)', () => {
+    assert.equal(W.hintOrMore('$40.00'), 'Or the bank received $40.00 your books don’t have: a deposit or interest you haven’t entered.');
+    assert.equal(W.hintOrLess('$40.00', true), 'The bank took out $40.00 your books don’t have: a fee or a payment you haven’t entered.');
+    assert.equal(W.hintHalf('$20.00', '$40.00'), 'is $20.00, half of the $40.00 gap. Was it entered the wrong way round?');
+    assert.equal(W.coachHintOrMore('$40.00'), 'Or the bank received $40.00 your books don’t have: a deposit or interest you haven’t recorded.');
+    assert.equal(W.coachHintOrLess('$40.00', true), 'The bank took out $40.00 your books don’t have: a fee or a payment you haven’t recorded.');
+    assert.equal(W.coachHintHalf('$20.00', '$40.00'), 'is $20.00, half of the $40.00 gap. Was it recorded the wrong way round?');
+  });
+  it('each portal\'s Find reads its own three, never the other\'s', () => {
+    const club = readCode('components/admin/kit/club/money/bank/BankFind.tsx');
+    const coach = readCode('components/coaches/bank/CoachBankFind.tsx');
+    for (const k of ['hintOrMore', 'hintOrLess', 'hintHalf']) {
+      const coachKey = `coach${k[0].toUpperCase()}${k.slice(1)}`;
+      assert.match(club, new RegExp(`W\\.${k}\\b`), `the club's Find reads ${k}`);
+      assert.doesNotMatch(club, new RegExp(`W\\.${coachKey}\\b`), `the club's Find never reads ${coachKey}`);
+      assert.match(coach, new RegExp(`W\\.${coachKey}\\b`), `the coach's Find reads ${coachKey}`);
+      assert.doesNotMatch(coach, new RegExp(`W\\.${k}\\b`), `the coach's Find never reads the club's ${k}`);
+    }
   });
 });
 

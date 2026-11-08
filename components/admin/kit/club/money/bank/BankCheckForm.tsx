@@ -12,7 +12,7 @@
  *   line's figures itself (rule 6). "Still waiting on {line}?" (ask 2) asks once per item of the latest earlier check, and
  *   per Waiting-at-the-start line of the start as the chain rules (BC4a, the server's `stillWaitingOn`): Yes marks it, No
  *   drops it for this check. A new date clears both.
- * ⚖ THE TWO DOORS OUT OF THE CHECK (BC3b): "Add the missing line" opens the LEDGER'S OWN add window (`AddEntryWindow`), filled
+ * ⚖ THE TWO DOORS OUT OF THE CHECK (BC3b): "Add the missing entry" (named "Add the missing line" until WD1) opens the LEDGER'S OWN add window (`AddEntryWindow`), filled
  *   with the gap, the statement's date and the direction (the bank showing more → money in; less → money out), on the
  *   account's own club book; the line is written by the Ledger's route, never by bank code (ask 1). "Waiting at the start"
  *   corrects the starting statement (`PATCH …/setup`). After either, the day's figure is read again (the typed balance stays).
@@ -106,7 +106,7 @@ export default function BankCheckForm({ orgSlug, view, personId, onSaved, onChan
   // Find (BC3a): the lines marked Not in the bank yet (in the order marked), and the Still-waiting items answered No.
   const [marked, setMarked] = useState<ReadonlyMap<string, WaitingItem>>(new Map());
   const [dropped, setDropped] = useState<ReadonlySet<string>>(new Set());
-  // "Add the missing line": the Ledger's add window, filled with what the screen said when it opened (the gap, the day, the
+  // "Add the missing entry": the Ledger's add window, filled with what the screen said when it opened (the gap, the day, the
   // direction), so a figure read again meanwhile never moves or closes it; the budget words read when it opens.
   // "+ Add entry" opens it blank (no amount: a statement line is rarely the gap, drawing tab 3).
   const [adding, setAdding] = useState<{ entryType?: 'income' | 'expense'; date: string; amount?: string } | null>(null);

@@ -2,7 +2,7 @@
 
 **Plan:** `BANK_CHECK_WORKING_DRAFT_PLAN.md` · **Priority:** a follow-up to the bank balance check, after its owner walks (BC9). Not a launch gate.
 **Status (2026-11-07):** the club card committed `2a64a87d8`; the coach card (the same memory, with the cash not deposited yet, "+ Record"
-and "Record the missing amount") committed `47bd64918`; help articles and the two short owner walks next (WD3).
+and "Record the missing amount") committed `47bd64918`; WD3 built 2026-11-07 (the coach card says "recorded" in Find, owner ruling; "…until you save this check or sign out."; a "Work it down to zero" part in both help articles), commit owed; the two owner walks published, Owner QA Ledger §490 (club) and §491 (coach), owed.
 
 ## The problem
 A treasurer sits down with the bank statement. Today they can type the statement balance and watch "Off by" — but if they

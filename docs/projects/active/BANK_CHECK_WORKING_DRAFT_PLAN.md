@@ -1,6 +1,6 @@
 # Bank check — work it down to zero (the working draft)
 
-**Status:** PLANNED 2026-11-07; **ALL SIX ASKS RULED 2026-11-07 (1A 2A 3A 4A 5A 6A, every recommendation taken: draft kept in this browser, "Started off by" shown, Add entry always there, 14-day expiry, restore at once, the words on a phone). WD1 committed `2a64a87d8` 2026-11-07 after /simplify and /review (see §7), owner walk owed. WD2 (the coach card) committed `47bd64918` 2026-11-07 after /design, /simplify and /review (see §8), owner walk owed; WD3 next.** Drawings: `BANK_CHECK_WORKING_DRAFT_DRAWINGS.html`, published https://claude.ai/artifact/HpFPDfFUAPLLeRLZyvTHMT
+**Status:** PLANNED 2026-11-07; **ALL SIX ASKS RULED 2026-11-07 (1A 2A 3A 4A 5A 6A, every recommendation taken: draft kept in this browser, "Started off by" shown, Add entry always there, 14-day expiry, restore at once, the words on a phone). WD1 committed `2a64a87d8` 2026-11-07 after /simplify and /review (see §7), owner walk owed. WD2 (the coach card) committed `47bd64918` 2026-11-07 after /design, /simplify and /review (see §8), owner walk owed. WD3 (words, help, the two walks) built 2026-11-07 (see §9), commit owed; walks §490 (club) and §491 (coach) owed. The project closes when both walks pass.** Drawings: `BANK_CHECK_WORKING_DRAFT_DRAWINGS.html`, published https://claude.ai/artifact/HpFPDfFUAPLLeRLZyvTHMT
 (round 2: button names and words settled with `/marketing`, see §4b). Asks in §5 ruled; build WD1 next. PM brief: `BANK_CHECK_WORKING_DRAFT_PM_BRIEF.md`.
 Parent: `BANK_RECONCILIATION_PLAN.md` (the balance check, BC1–BC9). This is a sequel to it, not a change to its sum.
 
@@ -222,3 +222,37 @@ another session's files (a GST/HST words guard on `lib/console-money-sales-tax-w
 **Open owner call (plan §4b):** the shared hint says "a deposit or interest you haven't **entered**", and the coach now reads it
 beside "+ Record". Recommendation: give the coach card its own verb ("…you haven't recorded"), a coach-only key in the words file,
 in WD3's `/marketing` pass, not widened here.
+
+## 9. WD3 build record (2026-11-07)
+
+**Owner call (§4b open item), ruled 2026-11-07 as recommended, widened by one:** the coach card's Find says "recorded" in all
+three sentences that said "entered": the two "…you haven't recorded" hints and the half-gap question "Was it recorded the wrong way
+round?" (that third one was found in this session; the plan named only the first two). Coach-only keys beside the shared ones
+(`coachHintOrMore` / `coachHintOrLess` / `coachHintHalf`); the club keeps "entered", its Ledger's word. A test pins both portals'
+six sentences and that each Find reads only its own three.
+
+**`/marketing` pass:** every settled string kept except one defect: the resting sentence promised "until you save this check", but
+signing out also clears the draft (`signOut()`), so it now reads **"Kept in this browser only, until you save this check or sign
+out."** (short form kept; the long form's "won't follow you to another device" is carried by "in this browser only"). Pin moved.
+Noted, not changed: "isn't in your books any more" also covers a line Find no longer offers for another reason (out of the window,
+counted as on its way); deletion is the common case. **Three nouns, reported:** no "item" renders on either card (comments and
+names only); the club card has "line" and "entry" (an entry you add becomes a line you can mark); the coach card has "line" only.
+
+**`/docs`:** both bank articles gained "Work it down to zero" (what it keeps, in this browser only; coming back; "+ Add entry" /
+"+ Record"; "Started off by"; the tab re-reads; Save is the finish line; coach: view-only money access has no form; a warning
+note "On a shared computer, press Start over", with sign-out and the 14 days). Stale "Add the missing line" fixed in both
+(club "Add the missing entry", coach "Record the missing amount", incl. `searchText` / `keywords`); the coach's "(entered the wrong
+way round?)" now "(recorded …)". Checked against the code before keeping.
+
+**Stale comments:** fixed in `LedgerWindows.tsx` (2), `bank-club-steps.ts` (2) and `BankCheckForm.tsx` (2, not on WD2's list).
+**Skipped:** `lib/bank-screen.ts:17` (another session's uncommitted hunk in that file). Data dictionary left (no misstatement).
+
+**Walks:** §490 club ([walk](https://claude.ai/artifact/GhdeWkK19ocGjjB4UfNy1w)) and §491 coach
+([walk](https://claude.ai/artifact/W6qfTFc42cbkzR7Aas3fZ9)), both on the BC9 setup, checked in place 2026-11-07; no new setup.
+**Found while writing them, reported (no behavior change here):** a "No" to "Still waiting?" is not kept in the draft (only marks
+are), so leaving and coming back asks again, on both cards; the figure is the same either way. Goes with the shared draft hook
+follow-up (§8), after the walks.
+
+Checks: bank + help tests 453/453; spelling; focused lint clean; typecheck clean (run without `next-env.d.ts`, because the dev
+server's generated route types have a syntax error: `.probe/tsconfig.wd3.json`). No `/simplify` (no new abstraction); `/review`
+offered (the words file and the coach Find changed).

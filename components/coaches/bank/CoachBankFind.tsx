@@ -152,7 +152,7 @@ export default function CoachBankFind({ figure, band, typed, marked, onMark, onU
       {/* Nothing to name: the callout drops away (drawn); the bank-side reading and its door stay. */}
       {off && !current && (
         <p className={`${styles.formHint} ${b.hint}`}>
-          {(bankMore ? W.hintOrMore : W.hintOrLess)(target, true)}{' '}
+          {(bankMore ? W.coachHintOrMore : W.coachHintOrLess)(target, true)}{' '}
           {onAddLine && <button type="button" className={b.link} onClick={onAddLine}>{W.recordMissingAmount}</button>}
         </p>
       )}
@@ -209,7 +209,7 @@ function HintCallout({ hint, target, bankMore, onMark, onAddLine, next }: {
   const named = (l: BankLine) => <><b>{nameOf(l)}</b> {W.hintDate(dayShort(l.date))}</>;
   let words: ReactNode;
   if (hint.kind === 'half') {
-    words = <>{named(first)} {W.hintHalf(cents(first.amountCents), target)}</>;
+    words = <>{named(first)} {W.coachHintHalf(cents(first.amountCents), target)}</>;
   } else if (hint.kind === 'combo') {
     words = <>
       {W.hintCombo(hint.lines.length, target)}{' '}
@@ -225,7 +225,7 @@ function HintCallout({ hint, target, bankMore, onMark, onAddLine, next }: {
     <div className={b.callout} role="status">
       <span className={b.calloutWords}>
         {words}
-        {hint.kind !== 'half' && <span className={b.calloutSub}>{(bankMore ? W.hintOrMore : W.hintOrLess)(target)}</span>}
+        {hint.kind !== 'half' && <span className={b.calloutSub}>{(bankMore ? W.coachHintOrMore : W.coachHintOrLess)(target)}</span>}
       </span>
       <span className={b.calloutActs}>
         {hint.kind === 'exact' && <button type="button" className={styles.btnSecondary} onClick={onMark}>{W.notInBankYet}</button>}

@@ -97,7 +97,7 @@ const allBooks = (all: { accounts: { books: ClubBook[] }[]; unplacedBooks: ClubB
  */
 export async function bankAccountView(ctx: AuthContextWithRole, accountId: string, date: string | null, asked?: 'start' | 'check') {
   const canMove = canMoveClubMoney(ctx, ctx.org);
-  // The club's fiscal years, for a writer only: "Add the missing line" opens the Ledger's add window, which warns under
+  // The club's fiscal years, for a writer only: "+ Add entry" and "Add the missing entry" open the Ledger's add window, which warns under
   // the date when it falls in a closed year (the Ledger page hands it the same setting, its closers left out).
   const [read, setting] = await Promise.all([
     readClubBankAccount(ctx.org.id, accountId, { today: clubToday(), date, asked }),
@@ -115,7 +115,7 @@ export async function bankAccountView(ctx: AuthContextWithRole, accountId: strin
   }));
   const named = <L extends { bookId: string }>(lines: L[]) => lines.map(l => ({ ...l, bookName: bookName.get(l.bookId) ?? null }));
   return {
-    // A book's kind and owner: "Add the missing line" opens the Ledger's own add window on it (BC3b).
+    // A book's kind and owner: "+ Add entry" and "Add the missing entry" open the Ledger's own add window on it (BC3b, WD1).
     account: { id: account.id, name: account.name, isFirst: account.isFirst,
       books: account.books.map(b => ({ id: b.id, name: b.name, kind: b.entityType, entityId: b.entityId })) },
     accounts: all.accounts.map(a => ({ id: a.id, name: a.name, isFirst: a.isFirst, checkedThrough: latest.get(a.id) ?? null })),

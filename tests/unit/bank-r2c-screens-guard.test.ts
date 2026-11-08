@@ -277,7 +277,7 @@ describe('10 · Add the missing line, Waiting at the start', () => {
     assert.match(form, /setAdding\(\{\s*entryType: band\.direction === 'bank_more' \? 'income' : 'expense', date, amount: fieldAmount\(band\.offByCents\),/,
       'the gap, the statement\'s day, and the direction that closes it');
     assert.match(form, /view\.account\.books\.find\(b => b\.kind === 'org' && !b\.entityId\) \?\? view\.account\.books\[0\]/, 'the account\'s own club book (the Ledger\'s rule)');
-    // Renamed "Add the missing entry" in WD1 (after the window it opens); the coach card's words stay until WD2.
+    // Renamed "Add the missing entry" in WD1 (after the window it opens); the coach card's is "Record the missing amount" (WD2).
     assert.match(code('BankFind.tsx'), /onClick=\{onAddLine\} disabled=\{busy\}>\{W\.addMissingEntry\}<\/button>/, 'a real door, never a dead button; held while a write is on its way');
     // The window keeps what it opened with (a figure read again never moves or closes it) and knows the closed years.
     assert.match(form, /\{adding && ownBook && \(/);

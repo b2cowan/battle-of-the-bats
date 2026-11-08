@@ -111,6 +111,11 @@ export const BANK_WORDS = {
   hintOrMore: (amount: string, alone = false) => `${alone ? 'The' : 'Or the'} bank received ${amount} your books don’t have: a deposit or interest you haven’t entered.`,
   hintOrLess: (amount: string, alone = false) => `${alone ? 'The' : 'Or the'} bank took out ${amount} your books don’t have: a fee or a payment you haven’t entered.`,
   hintHalf: (lineAmount: string, amount: string) => `is ${lineAmount}, half of the ${amount} gap. Was it entered the wrong way round?`,
+  // The coach card's own verb (owner 2026-11-07, Bank check WD3): the coach reads these beside "+ Record" and Money's
+  // "Record money", so "recorded"; the club keeps its Ledger's "entered" in the three above.
+  coachHintOrMore: (amount: string, alone = false) => `${alone ? 'The' : 'Or the'} bank received ${amount} your books don’t have: a deposit or interest you haven’t recorded.`,
+  coachHintOrLess: (amount: string, alone = false) => `${alone ? 'The' : 'Or the'} bank took out ${amount} your books don’t have: a fee or a payment you haven’t recorded.`,
+  coachHintHalf: (lineAmount: string, amount: string) => `is ${lineAmount}, half of the ${amount} gap. Was it recorded the wrong way round?`,
   hintCombo: (n: number, amount: string) => `These ${n} add up to ${amount}:`,
   hintComboOut: 'If the bank hasn’t cashed them yet, that’s the gap.',
   hintComboIn: 'If the bank hasn’t received them yet, that’s the gap.',
@@ -164,7 +169,7 @@ export const BANK_WORDS = {
   draftPickedUpOn: (date: string) => `Picked up where you left off · last worked on ${date}`,
   startOver: 'Start over',
   startedOffBy: (amount: string) => `Started off by ${amount}`,
-  draftKept: 'Kept in this browser only, until you save this check.',
+  draftKept: 'Kept in this browser only, until you save this check or sign out.',
   // A restored mark the books no longer offer: dropped, never silently kept.
   draftDropped: (n: number) => (n === 1
     ? 'One line you marked isn’t in your books any more, so we took it off.'

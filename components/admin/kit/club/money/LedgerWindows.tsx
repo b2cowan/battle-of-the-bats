@@ -80,7 +80,7 @@ export type WordList = BudgetCategoryWithItems[];
 
 /**
  * The club's budget words, read once, the first time a window that files a line is `wanted` (the Ledger page, and the Bank
- * tab's "Add the missing line"). `null` until read; a failed read is an empty list (the window still adds a line).
+ * tab's "+ Add entry" and "Add the missing entry"). `null` until read; a failed read is an empty list (the window still adds a line).
  */
 export function useBudgetWords(q: string, wanted: boolean): WordList | null {
   const [words, setWords] = useState<WordList | null>(null);
@@ -253,8 +253,9 @@ export function AddEntryWindow({ book, q, orgSlug, words, fiscal = null, canMove
   /** Can this reader reopen a year (the refusal's second way out)? */
   canMove?: boolean;
   /**
-   * What the window starts with, when another screen opened it for a reason (the Bank tab's "Add the missing line", Bank
-   * balance check BC3b: the gap's amount, the statement's date, the direction). Every field stays editable; without it the
+   * What the window starts with, when another screen opened it for a reason (the Bank tab's "Add the missing entry", Bank
+   * balance check BC3b: the gap's amount, the statement's date, the direction; its "+ Add entry", WD1: the date and the
+   * direction, no amount). Every field stays editable; without it the
    * window starts as it always has (money out, today, empty).
    */
   prefill?: { entryType?: 'income' | 'expense'; date?: string; amount?: string };

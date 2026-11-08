@@ -3034,8 +3034,8 @@ const coachesHelp: HelpPageContent = {
       id: 'premium-money-bank',
       heading: 'Checking the bank statement: the Bank view',
       summary: 'Type a statement’s date and balance; the Bank view says whether the team’s books agree with the bank that day, and helps you find what’s missing when they don’t.',
-      keywords: ['bank', 'bank view', 'bank statement', 'statement', 'bank balance', 'reconcile', 'reconciliation', 'bank reconciliation', 'check a statement', 'statement balance', 'matches', 'off by', 'find the difference', 'not in the bank yet', 'still waiting', 'outstanding cheque', 'cheque not cashed', 'deposit', 'deposit not in the bank', 'cash not deposited yet', 'books now say', 'checked through', 'print this check', 'print', 'bank check report', 'treasurer', 'club treasurer', 'association', 'team bank account', 'ledger bank view'],
-      searchText: 'bank view bank statement bank balance reconcile reconciliation bank reconciliation reconcile the bank statement check the bank statement against the books money ledger view bank fourth view of the ledger statement date bank balance on that date cash not deposited yet statements from this season only since the season opening balance team bank account check a statement save this check the bank says should be in the bank difference matches off by the bank shows more less than your books find the find an amount or a name lines since the last match lines since the season started not in the bank yet outstanding cheque cheque not cashed deposit not landed deposit not in the bank add the missing line bank fee interest from the 2025 season last season’s lines opening cash carried still waiting on yes no checked statements the bank said should have been result checked by books now say figures stay as they were delete this check check this statement again checked through bank checked through not checked yet cash on hand card off by chip overview line print this check one page letter prepared by reviewed by club treasurer association monthly form sign phone desk computer money access edit access view only read only assistant coach start next season close the season your bank check was off warns never blocks closed season has no bank view opening balance',
+      keywords: ['bank', 'bank view', 'bank statement', 'statement', 'bank balance', 'reconcile', 'reconciliation', 'bank reconciliation', 'check a statement', 'statement balance', 'matches', 'off by', 'find the difference', 'not in the bank yet', 'still waiting', 'outstanding cheque', 'cheque not cashed', 'deposit', 'deposit not in the bank', 'cash not deposited yet', 'work it down to zero', 'record', 'picked up where you left off', 'started off by', 'start over', 'draft', 'books now say', 'checked through', 'print this check', 'print', 'bank check report', 'treasurer', 'club treasurer', 'association', 'team bank account', 'ledger bank view'],
+      searchText: 'bank view bank statement bank balance reconcile reconciliation bank reconciliation reconcile the bank statement check the bank statement against the books money ledger view bank fourth view of the ledger statement date bank balance on that date cash not deposited yet statements from this season only since the season opening balance team bank account check a statement save this check the bank says should be in the bank difference matches off by the bank shows more less than your books find the find an amount or a name lines since the last match lines since the season started not in the bank yet outstanding cheque cheque not cashed deposit not landed deposit not in the bank record the missing amount bank fee interest work it down to zero record picked up where you left off started off by start over kept in this browser draft in progress shared computer sign out from the 2025 season last season’s lines opening cash carried still waiting on yes no checked statements the bank said should have been result checked by books now say figures stay as they were delete this check check this statement again checked through bank checked through not checked yet cash on hand card off by chip overview line print this check one page letter prepared by reviewed by club treasurer association monthly form sign phone desk computer money access edit access view only read only assistant coach start next season close the season your bank check was off warns never blocks closed season has no bank view opening balance',
       content: (
         <>
           <p>The <strong>Bank</strong> view checks the team’s bank statement against the team’s books. You type a statement’s date and its ending balance; the view says whether your books agree with the bank that day, and when they don’t, it helps you find what’s missing. Every check you save stays, so you can show which statements were checked and when.</p>
@@ -3086,12 +3086,32 @@ const coachesHelp: HelpPageContent = {
             <>
               <p>When a check is off, <strong>Find the $X</strong> lists the Ledger lines since the last check that matched, or since the season started when none has. <strong>Find an amount or a name</strong> searches them.</p>
               <ul>
-                <li><strong>Hints</strong> point at the likely cause: a line that is exactly the difference, one that is half of it (entered the wrong way round?), or a few that add up to it. <strong>Next possibility</strong> moves to the next one.</li>
+                <li><strong>Hints</strong> point at the likely cause: a line that is exactly the difference, one that is half of it (recorded the wrong way round?), or a few that add up to it. <strong>Next possibility</strong> moves to the next one.</li>
                 <li><strong>Not in the bank yet</strong> on a line (a cheque that hasn’t been cashed, a deposit that hasn’t landed) counts it in the sums; <strong>Undo</strong> takes it back out.</li>
-                <li><strong>Add the missing line</strong> opens the Ledger’s ordinary add window with the amount and the statement’s date filled in, for a bank fee or interest the books don’t have yet. Save it there and the check re-figures.</li>
+                <li><strong>Record the missing amount</strong> opens the Ledger’s ordinary <strong>Record money</strong> window with the amount and the statement’s date filled in, for a bank fee or interest the books don’t have yet. Save it there and the check re-figures.</li>
                 <li>If the season opened with cash carried from last season, and no check this season has matched yet, last season’s lines follow under <strong>From the {'{season name}'}</strong> (<em>2025 Season</em>, say). A cheque written last season that clears this season is the usual reason.</li>
               </ul>
               <p>The next check asks once about each line the last check marked: <em>Still waiting on {'{line}'}?</em> <strong>Yes</strong> keeps it waiting; <strong>No</strong> means it reached the bank, and it drops off.</p>
+            </>
+          ),
+        },
+        {
+          id: 'premium-money-bank-work-down',
+          title: 'Work it down to zero',
+          content: (
+            <>
+              <p>A check can take several sittings. The card keeps what you typed and marked until you save, so you can leave it, record money and come back.</p>
+              <ul>
+                <li><strong>What it keeps:</strong> the statement date, the balance you typed, <strong>Cash not deposited yet</strong> and the lines you marked <strong>Not in the bank yet</strong>, in this browser only. It won’t follow you to another device.</li>
+                <li><strong>Coming back:</strong> the card says <em>Picked up where you left off</em> (with the day you last worked on it, when that was earlier). A line you marked that is no longer in the books is taken off, with a note.</li>
+                <li><strong>+ Record</strong> opens <strong>Record money</strong> and leaves you on the card. Each amount you record moves <strong>Off by</strong>, and <em>Started off by $X</em> shows how far off you began once the number has moved.</li>
+                <li>Coming back to the browser tab reads the books again, so money recorded in another tab shows up.</li>
+                <li><strong>Save this check</strong> is still the finish line, and it clears the kept work.</li>
+                <li>With <strong>view-only</strong> money access there is no form, so nothing is kept.</li>
+              </ul>
+              <HelpNote variant="warning" title="On a shared computer, press Start over">
+                <strong>Start over</strong> clears what the card kept. Signing out clears it too, and work left untouched for 14 days is let go.
+              </HelpNote>
             </>
           ),
         },

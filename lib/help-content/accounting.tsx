@@ -281,8 +281,8 @@ const accountingHelp: HelpPageContent = {
       id: 'bank-tab',
       heading: 'Checking the bank statement: the Bank tab',
       summary: 'Type a statement’s date and balance; the Bank tab says whether the club’s books agree, and helps you find the difference when they don’t.',
-      keywords: ['bank', 'bank tab', 'bank statement', 'reconcile', 'reconciliation', 'bank reconciliation', 'check a statement', 'statement balance', 'starting statement', 'matches', 'off by', 'find the difference', 'not in the bank yet', 'still waiting', 'waiting at the start', 'outstanding cheque', 'deposit not in the bank', 'books now say', 'checked through', 'print this check', 'bank check report', 'second bank account', 'treasurer'],
-      searchText: 'bank tab reconcile reconciliation bank reconciliation reconcile the bank statement check the bank statement against the books statement date bank balance on that date start here start checking the club’s bank account starting statement starting point checks start from this balance books in this account add an account name and books second account account pill move a book check a statement save this check the bank says should be in the bank difference matches off by the bank shows more less than your books how should be in the bank is worked out your books on online payments on their way to your bank stripe pays them out not counted stripe didn’t answer start anyway try again find the find an amount or a name lines since your last match exactly half of part of next possibility not in the bank yet outstanding cheque cheque not cashed deposit not landed add the missing line bank fee interest still waiting on yes no waiting at the start before your starting statement take it off checked statements the bank said should have been result checked by statement ending books now say figures stay as they were delete this check delete the starting statement later checks start from this statement check this statement again checked through off by chip overview line bank checked through not checked yet where the club stands fiscal year close still open not checked in the last month off by last checked print this check printed report one page letter association monthly form board signature prepared by reviewed by phone show 10 more read only',
+      keywords: ['bank', 'bank tab', 'bank statement', 'reconcile', 'reconciliation', 'bank reconciliation', 'check a statement', 'statement balance', 'starting statement', 'matches', 'off by', 'find the difference', 'not in the bank yet', 'still waiting', 'waiting at the start', 'outstanding cheque', 'deposit not in the bank', 'books now say', 'checked through', 'print this check', 'bank check report', 'second bank account', 'treasurer', 'work it down to zero', 'add entry', 'picked up where you left off', 'started off by', 'start over', 'draft'],
+      searchText: 'bank tab reconcile reconciliation bank reconciliation reconcile the bank statement check the bank statement against the books statement date bank balance on that date start here start checking the club’s bank account starting statement starting point checks start from this balance books in this account add an account name and books second account account pill move a book check a statement save this check the bank says should be in the bank difference matches off by the bank shows more less than your books how should be in the bank is worked out your books on online payments on their way to your bank stripe pays them out not counted stripe didn’t answer start anyway try again find the find an amount or a name lines since your last match exactly half of part of next possibility not in the bank yet outstanding cheque cheque not cashed deposit not landed add the missing entry bank fee interest work it down to zero add entry picked up where you left off started off by start over kept in this browser draft in progress shared computer sign out still waiting on yes no waiting at the start before your starting statement take it off checked statements the bank said should have been result checked by statement ending books now say figures stay as they were delete this check delete the starting statement later checks start from this statement check this statement again checked through off by chip overview line bank checked through not checked yet where the club stands fiscal year close still open not checked in the last month off by last checked print this check printed report one page letter association monthly form board signature prepared by reviewed by phone show 10 more read only',
       content: (
         <>
           <p>The <strong>Bank</strong> tab checks the club’s bank statement against the club’s books. You type a statement’s date and its ending balance; the tab says whether the books agree, and when they don’t, it helps you find the difference. Every check you save stays, so the board can see which statements were checked and when.</p>
@@ -336,10 +336,29 @@ const accountingHelp: HelpPageContent = {
               <ul>
                 <li><strong>Hints</strong> point at the likely cause: a line that is exactly the difference, one that is half of it (entered the wrong way round?), or a few that add up to it. <strong>Next possibility</strong> moves to the next one.</li>
                 <li><strong>Not in the bank yet</strong> on a line (a cheque not cashed yet, a deposit that hasn’t landed) counts it in the sums; <strong>Undo</strong> takes it back out.</li>
-                <li><strong>Add the missing line</strong> opens the Ledger’s own add window with the difference, the date and the direction filled in, for a bank fee or interest your books don’t have yet.</li>
+                <li><strong>Add the missing entry</strong> opens the Ledger’s <strong>Add an entry</strong> window with the difference, the date and the direction filled in, for a bank fee or interest your books don’t have yet.</li>
                 <li>Online payments on their way show as one greyed row: they are already counted.</li>
               </ul>
               <p><strong>Waiting at the start.</strong> A cheque written before your starting statement can clear after it, and then every check is off by it. While a check is off, in the first months after the start, the lines dated just before the starting statement show under <strong>Before your starting statement</strong>. <strong>Waiting at the start</strong> on one corrects the starting statement, and checks from then on start from the corrected balance. Open the starting statement to see who marked each one, and <strong>Take it off</strong> to undo it.</p>
+            </>
+          ),
+        },
+        {
+          id: 'bank-tab-work-down',
+          title: 'Work it down to zero',
+          content: (
+            <>
+              <p>A check can take several sittings. The card keeps what you typed and marked until you save, so you can leave it, book entries in the Ledger and come back.</p>
+              <ul>
+                <li><strong>What it keeps:</strong> the statement date, the balance you typed and the lines you marked <strong>Not in the bank yet</strong>, in this browser only. It won’t follow you to another device.</li>
+                <li><strong>Coming back:</strong> the card says <em>Picked up where you left off</em> (with the day you last worked on it, when that was earlier). A line you marked that is no longer in the books is taken off, with a note.</li>
+                <li><strong>+ Add entry</strong> opens the Ledger’s <strong>Add an entry</strong> window and leaves you on the card. Each entry moves <strong>Off by</strong>, and <em>Started off by $X</em> shows how far off you began once the number has moved.</li>
+                <li>Coming back to the browser tab reads the books again, so an entry booked in another tab shows up.</li>
+                <li><strong>Save this check</strong> is still the finish line, and it clears the kept work.</li>
+              </ul>
+              <HelpNote variant="warning" title="On a shared computer, press Start over">
+                <strong>Start over</strong> clears what the card kept. Signing out clears it too, and work left untouched for 14 days is let go.
+              </HelpNote>
             </>
           ),
         },
