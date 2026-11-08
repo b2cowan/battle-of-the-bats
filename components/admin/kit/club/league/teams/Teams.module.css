@@ -108,8 +108,10 @@
    without the right to move). ── */
 .board {
   /* The pool clears the fixed top strip (and the demo banner) on a desk; ≤900 the app-shell scroller starts below
-     them, so the vars are 0 there and the bottom bar takes its room instead. */
-  --pool-top: calc(var(--admin-topstrip-h, 0px) + var(--sandbox-chrome-h, 0px) + 12px);
+     them, so the vars are 0 there and the bottom bar takes its room instead. ⚠ And the admin's pinned bar, which sticks
+     at that same top on every width (`--admin-header-h`, its measured height): left out, the pool slid under the bar,
+     and the bar grew when the season's tab row moved into it (Admin header bar Phase 2, 2026-11-07). */
+  --pool-top: calc(var(--admin-topstrip-h, 0px) + var(--sandbox-chrome-h, 0px) + var(--admin-header-h, 0px) + 12px);
   --pool-room: calc(100dvh - var(--pool-top) - 12px);
   display: flex;
   gap: 16px;
@@ -522,9 +524,11 @@
   .board:not(.boardFolded) { flex-direction: column; align-items: stretch; }
   .pool { position: static; width: auto; flex: none; max-height: 60vh; }
 }
-/* ≤900 the app shell scrolls `.adminMain` above the bottom bar: the pool's room is the window less that bar. */
+/* ≤900 the app shell scrolls `.adminMain` above the bottom bar: the pool's room is the window less that bar — and less the
+   pinned bar it now sticks under (`--admin-header-h`, ~98px with the season's tabs; left out, the pool's last rows ran
+   under the bottom bar, /review 2026-11-07). */
 @media (max-width: 900px) {
-  .board { --pool-room: calc(100dvh - var(--sandbox-chrome-h, 0px) - var(--coach-foot-clear, 72px) - 24px); }
+  .board { --pool-room: calc(100dvh - var(--sandbox-chrome-h, 0px) - var(--admin-header-h, 0px) - var(--coach-foot-clear, 72px) - 24px); }
 }
 /* A touch width (a tablet gets the desk board): every row and its ⋯ clear the 44px floor. */
 @media (max-width: 768px) {

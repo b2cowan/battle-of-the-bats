@@ -54,6 +54,7 @@ export default function HubTabBar<Id extends string>({
   ariaLabel,
   remeasureKey,
   sticky,
+  inBar,
 }: {
   tabs: readonly HubTab<Id>[];
   activeId: Id;
@@ -72,6 +73,13 @@ export default function HubTabBar<Id extends string>({
    * to P3).
    */
   sticky?: boolean;
+  /**
+   * ⚠ OPT-IN, DEFAULT FALSE — the row drawn INSIDE the club admin's pinned bar (Admin header bar Phase 2, owner
+   * 2026-11-07): no line of its own (it sits on the bar's), the first tab's label lined up with the bar's name, and the
+   * edge arrows painted the bar's white rather than the paper. Only `AdminEventHeader` sets it; the coaches portal's
+   * rows never do, and must look exactly as they did.
+   */
+  inBar?: boolean;
   /* ⚠ NO ACTION SLOT — tried for one day (money centralization P1, per mockup 05's drawing) and
      REMOVED by owner ruling 2026-08-23: on a phone the button crowded the strip down to two
      visible tabs, and a control that belongs to the PAGE was scaling with the tab row. Hub-wide
@@ -137,7 +145,7 @@ export default function HubTabBar<Id extends string>({
 
   return (
     <div
-      className={`${styles.wrap} ${sticky ? styles.sticky : ''}`}
+      className={`${styles.wrap} ${sticky ? styles.sticky : ''}${inBar ? ` ${styles.inBar}` : ''}`}
       /* ⚠ A STABLE ID, ONLY WHEN STICKY — the register's own sticky zone measures this element's
          real rendered height (fonts/zoom/content all vary the estimate) rather than trusting a
          guessed CSS constant, which is what let content peek through a gap between the two sticky

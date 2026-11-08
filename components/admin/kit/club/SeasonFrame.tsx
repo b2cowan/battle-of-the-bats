@@ -16,13 +16,18 @@
  * An address under the season that is no tab — a club schedule read from the season's Schedule — is a RECORD page one
  * level down (owner 2026-11-06): it keeps its own back arrow and this frame draws no header or tab row over it. Whether an
  * address is a tab is decided by the address alone, so the header and the row draw before the season's data arrives.
+ *
+ * ⚖ THE HEADER AND THE TABS ARE IN THE PINNED BAR (Admin header bar Phase 2, owner 2026-11-07): "← Seasons", the season's
+ * name with its switcher, the small line (the club on desktop · "House league" · the status chip — a second line on a
+ * phone too, A2 = a) and the tab row pinned inside the bar. The name is cut to one line with "…"; the switcher and the
+ * chip never are. Nothing on the paper above the page.
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 import type { ReactNode } from 'react';
 import { useParams, usePathname, useRouter } from 'next/navigation';
-import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import SingleSelectDropdown from '@/components/coaches/SingleSelectDropdown';
-import { kitCountText, placeTabFor, seasonTabs } from '@/lib/admin-kit-nav';
+import { useOrg } from '@/lib/org-context';
+import { clubPlaceAt, kitCountText } from '@/lib/admin-kit-nav';
 import { seasonGroup, seasonPageHref, seasonSegment, toReviewLabel } from '@/lib/house-league-season';
 import { useHouseLeagueAccess, useHouseLeagueSeasons } from '../useHouseLeagueSeasons';
 import frame from '../AdminKitFrame.module.css';
@@ -30,13 +35,13 @@ import PlaceFrame from './PlaceFrame';
 import SeasonStatePill from './SeasonStatePill';
 import { RepChip } from './RepKit';
 
-/** Every page a season has — to ask "is this address a tab at all?" before anyone's access is known. */
-const EVERY_PAGE = { read: true, readMoney: true, email: true } as const;
-
 export default function SeasonFrame({ children }: { children: ReactNode }) {
-  const { orgSlug, seasonId } = useParams<{ orgSlug: string; seasonId: string }>();
+  const { orgSlug: urlSlug, seasonId } = useParams<{ orgSlug: string; seasonId: string }>();
   const pathname = usePathname();
   const router = useRouter();
+  const { canOpen, currentOrg } = useOrg();
+  // The club's own slug, as the bar reads it: a frame and a bar that spelled the club two ways would key two places.
+  const orgSlug = currentOrg?.slug ?? urlSlug;
   const seasons = useHouseLeagueSeasons(true);
   const season = seasons.find(s => s.id === seasonId) ?? null;
   // The season's pages do not depend on the season's state (`houseLeagueAccess`'s read, readMoney and email), so the row is
@@ -44,12 +49,13 @@ export default function SeasonFrame({ children }: { children: ReactNode }) {
   const access = useHouseLeagueAccess(null);
 
   const league = `/${orgSlug}/admin/house-league`;
-  const seasonPath = `${league}/seasons/${seasonId}`;
-  const tab = placeTabFor(seasonTabs(seasonPath, EVERY_PAGE), pathname);
-  if (!tab) return <>{children}</>;
+  // Is this address one of the season's tabs (`seasonTabs(seasonPath, access)` for the row)? The bar asks the same
+  // question from the address alone, so its first paint is this frame's ("Season" until the season loads).
+  const place = clubPlaceAt(pathname, `/${orgSlug}/admin`, { canUse: canOpen, seasonAccess: access });
+  if (!place) return <>{children}</>;
 
   const count = season?.pendingReviewCount ?? 0;
-  const tabs = (access ? seasonTabs(seasonPath, access) : []).map(t => (t.key === 'registrations' && count > 0
+  const tabs = place.tabs.map(t => (t.id === 'registrations' && count > 0
     ? { ...t, mark: <span className={frame.count} style={{ marginLeft: 0 }} aria-label={toReviewLabel(count)}>{kitCountText(count)}</span> }
     : t));
 
@@ -60,30 +66,23 @@ export default function SeasonFrame({ children }: { children: ReactNode }) {
     label: s.name,
     rowMark: seasonGroup(s) === 'past' ? <RepChip tone="neutral">Finished</RepChip> : undefined,
   }));
-  const header = (
-    <AdminPageHeader
-      backTo={{ href: league, label: 'Seasons' }}
-      eyebrow="House league"
-      title={season?.name ?? 'Season'}
-      titleChips={season ? (
-        <>
-          {seasons.length > 1 && (
-            <SingleSelectDropdown
-              face="chevron"
-              label="Switch season"
-              value={season.id}
-              options={switchOptions}
-              onChange={id => router.push(seasonPageHref(`${league}/seasons/${id}`, seasonSegment(pathname)))}
-            />
-          )}
-          <SeasonStatePill season={season} />
-        </>
-      ) : null}
-    />
-  );
-
   return (
-    <PlaceFrame header={header} tabs={tabs} activeId={tab} ariaLabel="Season pages">
+    <PlaceFrame place={{
+      ...place,
+      // The way up (`place.back`) is "← Seasons", to the league's season list.
+      title: season?.name ?? place.title,
+      tabs,
+      switcher: season && seasons.length > 1 ? (
+        <SingleSelectDropdown
+          face="chevron"
+          label="Switch season"
+          value={season.id}
+          options={switchOptions}
+          onChange={id => router.push(seasonPageHref(`${league}/seasons/${id}`, seasonSegment(pathname)))}
+        />
+      ) : undefined,
+      chip: season ? <SeasonStatePill season={season} /> : undefined,
+    }}>
       {children}
     </PlaceFrame>
   );

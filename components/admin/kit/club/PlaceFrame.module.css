@@ -1,3 +1,11 @@
+/* A place whose name and tabs are in the pinned bar (Admin header bar Phase 2): its first content sits 1.4rem under the
+   bar on desktop and 1rem on a phone, as drawn (and as the Overview's, `.hubPage`). The shell pads every page 2rem /
+   0.5rem above (`admin.module.css` `.mainPad`); this moves the place's start by the difference. */
+.underBar { margin-top: -0.6rem; }
+@media (max-width: 900px) {
+  .underBar { margin-top: 0.5rem; }
+}
+
 /* A club place's frame (Club Tier Stage 13i): the tab page's own actions, once the place's header has taken its title.
    They sit at the right end of a row of their own above the tab's body, as the drawing's Members tab shows (Export and
    Invite at the right); on a phone they wrap rather than push the screen sideways. */

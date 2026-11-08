@@ -15,21 +15,30 @@
  *
  * The header and the tab row draw with the frame, before the page's data arrives; a name still loading shows a
  * placeholder in the same line, so nothing shifts.
+ *
+ * ⚖ THE PLACE'S NAME AND TABS LIVE IN THE ADMIN'S PINNED BAR (Admin header bar Phase 2, option 4, owner 2026-11-07; plan
+ * `docs/projects/active/ADMIN_HEADER_BAR_PLAN.md`). A frame given `place` draws NOTHING on the paper above the page: it
+ * hands the bar its name, way up, small line, chip, switcher and tab row (`useHandBarPlace`), and the bar draws them, the
+ * tabs pinned inside it. The bar's name is then the page's one `<h1>`. Rep teams and a season moved in session A; a frame
+ * still given `header` draws its header and tab row on the paper until session B moves it (Team, Organization). ⚠ The
+ * tab row is pinned on every place or none (the 2026-08-19 reversal): the paper mode is a step between the two sessions,
+ * not a second kind of place.
  */
 import { createContext, useContext, type ComponentProps, type ReactNode } from 'react';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import HubTabBar, { type HubTab } from '@/components/shared/HubTabBar';
+import { useHandBarPlace, type AdminBarPlace } from '@/components/admin/AdminBarPlace';
 import { repKit } from './RepKit';
 import css from './PlaceFrame.module.css';
 
 const InPlaceFrame = createContext(false);
 
 /** Is this page drawn inside a place's frame (its title already said by the place)? */
-function useInPlaceFrame(): boolean {
+export function useInPlaceFrame(): boolean {
   return useContext(InPlaceFrame);
 }
 
-export default function PlaceFrame({ header, tabs, activeId, ariaLabel, children }: {
+type PaperFrameProps = {
   /** The place's header: its title, and for a place inside a place (a team, a season) the way up, named by destination. */
   header: ReactNode;
   tabs: readonly HubTab<string>[];
@@ -37,7 +46,26 @@ export default function PlaceFrame({ header, tabs, activeId, ariaLabel, children
   /** Names the tab row for a screen reader. */
   ariaLabel: string;
   children: ReactNode;
+};
+
+export default function PlaceFrame(props: PaperFrameProps | {
+  /** Everything the pinned bar draws for this place (start from `clubPlaceAt`, so the bar's first paint matches). */
+  place: AdminBarPlace;
+  children: ReactNode;
 }) {
+  return 'place' in props ? <BarPlaceFrame place={props.place}>{props.children}</BarPlaceFrame> : <PaperPlaceFrame {...props} />;
+}
+
+function BarPlaceFrame({ place, children }: { place: AdminBarPlace; children: ReactNode }) {
+  useHandBarPlace(place);
+  return (
+    <div className={`${repKit.page} ${repKit.moneyFrame} ${css.underBar}`} data-place-frame>
+      <InPlaceFrame.Provider value>{children}</InPlaceFrame.Provider>
+    </div>
+  );
+}
+
+function PaperPlaceFrame({ header, tabs, activeId, ariaLabel, children }: PaperFrameProps) {
   return (
     <div className={`${repKit.page} ${repKit.moneyFrame}`} data-place-frame>
       {header}

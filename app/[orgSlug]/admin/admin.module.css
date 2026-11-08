@@ -109,6 +109,12 @@
        viewport instead of pushing its bottom nav off-screen. 0px for every real customer. */
     height: calc(100dvh - var(--sandbox-chrome-h, 0px));
     overflow: hidden;
+    /* The lock holds only if the shell also anchors what is absolutely placed inside it: with no positioned
+       ancestor, a page's visually-hidden label (`srOnly`, a button's hidden word) is placed against the WINDOW, so
+       `overflow: hidden` here never clipped it and it stretched the document — 721px past the screen on a
+       season's Overview, so a swipe past the page's end took the pinned bar away (Admin header bar Phase 2,
+       measured 2026-11-07). The shell sits at the screen's own corner, so nothing placed against it moves. */
+    position: relative;
   }
 
   .adminMain {

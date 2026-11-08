@@ -81,6 +81,32 @@
   .meta > span.metaClub + span:not(.chip)::before { content: none; }
 }
 
+/* ── A CLUB PLACE IN THE BAR (Phase 2, 2026-11-07): the way up, the switcher, the chip and the tab row ── */
+
+/* The way up, named by where it goes: the paper header's `backTo` (`AdminPageHeader` `.back`), moved into the bar. */
+.back {
+  display: inline-flex; align-items: center; gap: 0.3rem; flex: none;
+  color: var(--text-secondary); text-decoration: none;
+  font-size: var(--type-body); font-weight: 600; line-height: 1;
+  padding: 0.4rem 0.5rem; margin-left: -0.5rem; border-radius: 6px;
+}
+.back:hover { color: var(--text-primary); background: var(--white-8); }
+.backRule { width: 1px; align-self: stretch; margin: 0.15rem 0; flex: none; background: var(--home-line); }
+
+/* The name beside its switcher: the name is cut to ONE line with "…" (walk §486 E) and gives way first; the switcher
+   never does. The switcher's 44px square overhangs the name's line, so the line does not grow (the drawing's `.tr .chev`). */
+.titleRow { display: flex; align-items: center; gap: 0.25rem; min-width: 0; }
+.header .titleRow .name { display: block; flex: 0 1 auto; white-space: nowrap; text-overflow: ellipsis; }
+.switcher { flex: none; display: inline-flex; margin-block: -12px; }
+
+/* The place's status chip, last on the small line: snug to the words' line like the tournament's (`.meta .chip`). */
+.meta .metaChip { display: inline-flex; padding-block: 0; }
+.meta .metaChip > span { line-height: 1; padding-block: 0.05rem; }
+
+/* The tab row pinned inside the bar (`HubTabBar inBar`): it sits on the bar's own bottom line, so the bar gives up its
+   bottom padding. */
+.header.withTabs { padding-bottom: 0; }
+
 /* The phase chip's neutral tone (draft / completed / archived); the kit chip carries the others. */
 .chipNeutral {
   color: var(--text-secondary);
@@ -117,6 +143,15 @@
      thumb (a tap on the dates opens the dashboard, as a tap on the old eyebrow above the name did). Left to paint
      order, the line took ~8px of it back (/review, 2026-11-07). */
   .nameLink { display: block; position: relative; z-index: 1; padding: 0.8rem 0; margin: -0.8rem 0; }
+  /* A place's way up is the arrow alone, a 44px square overhanging the bar like the pill (the drawing's `.back.sq`);
+     its name stays the link's spoken label. */
+  .back { min-width: var(--tap-min, 44px); min-height: var(--tap-min, 44px); justify-content: center; padding: 0; margin-block: -4px; }
+  .back svg { width: 18px; height: 18px; }
+  .backLabel { display: none; }
+  /* The phone name's line is 19.2px (16px × 1.2): the switcher overhangs a hair more so it never grows it. */
+  .switcher { margin-block: -13px; }
+  /* A line of the club alone (Rep teams): the phone leaves the club off, so it leaves the line off too. */
+  .metaClubOnly { display: none; }
 }
 
 @media (min-width: 901px) {

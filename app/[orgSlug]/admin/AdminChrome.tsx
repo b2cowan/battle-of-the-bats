@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { useOrg } from '@/lib/org-context';
 import AdminEventHeader from '@/components/admin/AdminEventHeader';
+import { AdminBarPlaceProvider } from '@/components/admin/AdminBarPlace';
 import AdminTopStrip from '@/components/admin/AdminTopStrip';
 import { AdminKitProvider } from '@/components/admin/AdminKitProvider';
 import { useNotificationUnread } from '@/lib/use-notification-unread';
@@ -101,7 +102,10 @@ export default function AdminChrome({
           92%-opaque bar composited over it — its tab labels fell to 4.40:1. The island below restores
           the public palette only INSIDE `main`; marking the shell as well puts the public ground back
           under everything the preview draws. */}
-      <div className={shellClassName} {...(isTournamentPreview ? { 'data-public-preview': '' } : {})}>
+      {/* `data-admin-locked`: the app-shell form (a phone locks it to the screen, its main the one scroller), so the
+          document's generic bottom-bar reserve stands down for it (globals.css). Not the focused or preview shells,
+          which scroll the document. */}
+      <div className={shellClassName} {...(isTournamentPreview ? { 'data-public-preview': '' } : {})} {...(!isFocused ? { 'data-admin-locked': '' } : {})}>
         {/* Stage C — the operator frame strip: desktop-only fixed top bar (wordmark → Home,
             bell · account · Workspaces). NO chat door: chat is a destination for a fan and a
             SECTION OF THE WORK for an operator, so the strips deliberately don't eject into
@@ -158,7 +162,9 @@ export default function AdminChrome({
         {/* The one setup wizard every door opens (Tournament admin redesign Stage 4, D2): above the pages
             so its notice survives the move to the new draft's board. */}
         <SetupWizardProvider>
-          <ClubBriefProvider>{frame}</ClubBriefProvider>
+          {/* A club place hands the pinned bar its name, facts and tab row (Admin header bar Phase 2) — the bar above
+              the page and the place's frame inside it both sit under this one hand-off. */}
+          <ClubBriefProvider><AdminBarPlaceProvider>{frame}</AdminBarPlaceProvider></ClubBriefProvider>
         </SetupWizardProvider>
       </AdminWorklistProvider>
     </AdminDensityProvider>

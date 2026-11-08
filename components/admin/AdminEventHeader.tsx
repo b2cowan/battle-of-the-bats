@@ -9,22 +9,30 @@
  * `docs/projects/active/ADMIN_HEADER_BAR_PLAN.md`). The name sits on top; a small line UNDER it carries the
  * facts, in the coaches portal's masthead meta voice (`.teamHeaderMeta`). Inside a tournament: the event's
  * name (a link to its dashboard), then the club (desktop only) · the dates · the status chip. On a phone that
- * line is a second line in the bar (A2 = a): dates · chip, and it never folds away. On every other screen
- * the bar shows the organization's name alone (Phase 2 hands it each club place's name, facts and tabs).
+ * line is a second line in the bar (A2 = a): dates · chip, and it never folds away. On the club's Overview it
+ * is the club's name alone.
+ *
+ * IN A CLUB PLACE (Phase 2): the place's name, its way up ("← Seasons"), the switcher beside the name, the
+ * small line (the club on desktop · the section · the status chip), and the place's TAB ROW pinned inside the
+ * bar (`HubTabBar inBar`). The place's frame hands these over (`AdminBarPlace.tsx`); before it has, the bar
+ * knows the place from the address alone (`clubPlaceAt`) and draws the frame's own placeholder, so the club's
+ * name never shows and swaps. Every other screen shows the organization's name alone.
  *
  * ⚠ NO SCROLL COLLAPSE, anywhere (owner 2026-11-07, the portal took it out 2026-09-21): the collapse made
  * content jump under the thumb. The bar's height changes only when you navigate, never on scroll, and
  * `--admin-header-h` publishes it for the in-page sticky toolbars.
  *
- * HEADING SEMANTICS. On club screens the bar's name is the page's `<h1>`; inside a tournament the name stays
- * a link and the page's own title (Teams, Schedule…) stays the `<h1>` on the paper. ⚠ Phase 1: the bar's
- * name is the `<h1>` on the club's Overview ONLY (its paper heading is gone, A3). Every other club screen
- * still draws its own paper heading until Phase 2 hands its title to the bar, and two `<h1>`s on one page
- * is the defect to avoid — so the name is a `<span>` there.
+ * HEADING SEMANTICS. The bar's name is the page's one `<h1>` wherever it IS the page's title: the club's
+ * Overview (its paper heading is gone, A3) and every club place that hands the bar its name (that place's
+ * paper heading went with it). Inside a tournament the name stays a link and the page's own title (Teams,
+ * Schedule…) stays the `<h1>` on the paper; on every other club screen (a team, a record page, a place not
+ * moved yet) the page still draws its own heading, so the name is a `<span>` there. Two `<h1>`s on one
+ * page is the defect to avoid.
  */
 
 import { useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import FlipPill from '@/components/shared/FlipPill';
 import { useOrg } from '@/lib/org-context';
@@ -34,6 +42,10 @@ import { resolveEventPhase, PHASE_LABEL } from '@/lib/tournament-phase';
 import { formatEventDateRange } from '@/lib/timezone';
 import { isTournamentOnlyWorkspace } from '@/lib/module-entitlements';
 import { kit as coachKit } from '@/components/coaches/kit';
+import HubTabBar from '@/components/shared/HubTabBar';
+import { clubPlaceAt } from '@/lib/admin-kit-nav';
+import { useHouseLeagueAccess } from '@/components/admin/kit/useHouseLeagueSeasons';
+import { useHandedBarPlace, type AdminBarPlace } from './AdminBarPlace';
 import styles from './kit/AdminKitEventHeader.module.css';
 
 export default function AdminEventHeader({ suspended = false }: {
@@ -42,8 +54,10 @@ export default function AdminEventHeader({ suspended = false }: {
   suspended?: boolean;
 } = {}) {
   const pathname = usePathname();
-  const { currentOrg } = useOrg();
+  const { currentOrg, canOpen } = useOrg();
   const { currentTournament } = useTournament();
+  const seasonAccess = useHouseLeagueAccess(null);
+  const handed = useHandedBarPlace();
   const flip = useAdminFlip();
   const ref = useRef<HTMLElement>(null);
 
@@ -89,6 +103,15 @@ export default function AdminEventHeader({ suspended = false }: {
     !isTournamentOnlyWorkspace(currentOrg) &&
     pathname.replace(/\/+$/, '') === `/${currentOrg.slug}/admin`;
 
+  // A club place (Phase 2): known from the address first, then the frame's hand-off for THIS place. The lit
+  // tab is always the address's, so a hand-off a beat behind a tab change never lights the old tab.
+  const routePlace = !suspended && !onTournament && currentOrg
+    ? clubPlaceAt(pathname, `/${currentOrg.slug}/admin`, { canUse: canOpen, seasonAccess })
+    : null;
+  const place: AdminBarPlace | null = routePlace
+    ? (handed?.key === routePlace.key ? { ...handed, activeId: routePlace.activeId } : routePlace)
+    : null;
+
   let title: string;
   let club: string | null = null;  // the small line's first fact (desktop only)
   let dates: string | null = null;
@@ -113,14 +136,18 @@ export default function AdminEventHeader({ suspended = false }: {
     phaseLabel = PHASE_LABEL[phase as keyof typeof PHASE_LABEL] ?? null;
     dates = formatEventDateRange(currentTournament.startDate, currentTournament.endDate, true);
     titleHref = `/${currentOrg?.slug ?? ''}/admin/tournaments/dashboard`;
+  } else if (place) {
+    title = place.title;
+    club = currentOrg?.name ?? null;
   } else {
-    // Org-level screens: the org IS the identity, so it's the title (no small line until Phase 2 names a place).
+    // Org-level screens: the org IS the identity, so it's the title, with no small line.
     title = currentOrg?.name ?? 'Admin';
   }
 
   // The link wraps the name rather than being it: the name clamps its lines, and the link's own box is
   // free to grow into a thumb's target on a touch screen without un-clamping them.
-  const name = onOverview
+  const isPageTitle = onOverview || !!place;
+  const name = isPageTitle
     ? <h1 className={styles.name}>{title}</h1>
     : <span className={styles.name}>{title}</span>;
   const nameEl = titleHref
@@ -129,17 +156,37 @@ export default function AdminEventHeader({ suspended = false }: {
 
   // The phase chip keeps its shipped look: red for a live event, olive while open, quiet otherwise.
   const tone = phase === 'gameday' ? coachKit.chipDanger : phase === 'open' ? coachKit.chipGood : styles.chipNeutral;
-  const hasMeta = Boolean(club || dates || phaseLabel);
+  const facts = place?.facts ?? [];
+  const moreThanClub = Boolean(facts.length || dates || phaseLabel || place?.chip);
+  const hasMeta = Boolean(club) || moreThanClub;
+  // A line holding only the club (Rep teams) is a desk line: a phone, which leaves the club off, draws no line.
+  const clubOnly = Boolean(club) && !moreThanClub;
+  // A row of one tab is no row (`HubTabBar`'s own rule), and then the bar keeps its bottom padding.
+  const tabbed = place && place.tabs.length > 1 ? place : null;
   return (
-    <header ref={ref} role="banner" className={styles.header}>
+    <header ref={ref} role="banner" className={`${styles.header}${tabbed ? ` ${styles.withTabs}` : ''}`}>
       <div className={styles.row}>
+        {place?.back && (
+          // The way up, named by where it goes (the paper header's `backTo`, moved in): the arrow alone on a phone.
+          <>
+            <Link href={place.back.href} className={styles.back} aria-label={`Back to ${place.back.label}`}>
+              <ArrowLeft size={15} aria-hidden />
+              <span className={styles.backLabel}>{place.back.label}</span>
+            </Link>
+            <span className={styles.backRule} aria-hidden />
+          </>
+        )}
         <div className={styles.identity}>
-          {nameEl}
+          {place?.switcher
+            // The name is cut to one line with "…"; the switcher beside it never is.
+            ? <div className={styles.titleRow}>{nameEl}<span className={styles.switcher}>{place.switcher}</span></div>
+            : nameEl}
           {hasMeta && (
             // Each fact is its own span and the separator is drawn BETWEEN siblings (the portal's rule), so a
             // missing fact never strands a dot. The club is the desk bar's only (A4: a phone leaves it off).
-            <div className={styles.meta}>
+            <div className={`${styles.meta}${clubOnly ? ` ${styles.metaClubOnly}` : ''}`}>
               {club && <span className={styles.metaClub}>{club}</span>}
+              {facts.map(f => <span key={f}>{f}</span>)}
               {dates && <span>{dates}</span>}
               {phaseLabel && (
                 <span className={`${coachKit.chip} ${styles.chip} ${tone}`} data-phase={phase ?? undefined}>
@@ -147,11 +194,13 @@ export default function AdminEventHeader({ suspended = false }: {
                   {phaseLabel}
                 </span>
               )}
+              {place?.chip && <span className={`${styles.chip} ${styles.metaChip}`}>{place.chip}</span>}
             </div>
           )}
         </div>
         {!suspended && <FlipPill resolution={flip} variant="inline" className={styles.pill} />}
       </div>
+      {tabbed && <HubTabBar inBar tabs={tabbed.tabs} activeId={tabbed.activeId} ariaLabel={tabbed.ariaLabel} />}
     </header>
   );
 }

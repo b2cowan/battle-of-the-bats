@@ -1581,7 +1581,7 @@ export const SCREENS = [
     interact: (page) => openKitDialogBy(page, page.locator('main button:visible:has-text("Bill the teams")')), scope: '[data-kit-dialog]' },
   { id: 'admin-schedule-send',         area: 'org', session: 'repClubOwner', ready: '[aria-label="Read the schedule"], #read-schedule-title', path: (c) => `/${c.clubSlug}/admin/schedules/${c.clubScheduleId ?? 'none-yet'}`,
     interact: (page) => openKitDialogBy(page, page.locator('main button.btn-lime:visible:has-text("Send")')), scope: '[data-kit-dialog]' },
-  { id: 'admin-org-coach-links',       area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/bring-in` },
+  { id: 'admin-org-coach-links',       area: 'org', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/rep-teams/bring-in` },
   { id: 'admin-org-tournaments',       area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/tournaments` },
 
   // ── Rep Teams (15U AAA: a live 2026 season and a finished 2025 one) ──
@@ -1591,12 +1591,15 @@ export const SCREENS = [
   // identical. The rows, lane counts and overdue pill are masked; the panel's frame stays checked.
   // The board's Upcoming bills panel (and its identity masks) left with Club Tier Stage 3a: a team's
   // bills are read on Accounting › Allocations › Coming due now.
-  { id: 'admin-rep-teams',             area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams` },
-  { id: 'admin-rep-assistant-coaches', area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/assistant-coaches` },
-  { id: 'admin-rep-documents',         area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/documents` },
-  { id: 'admin-rep-past',              area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/past` },
+  // ⚠ Rep teams' and a season's tab pages wait for the place's BODY, not 'h1': since the Admin header bar's Phase 2 (2026-11-07)
+  // their <h1> is the pinned bar's name, drawn from the address before the place's frame mounts. Rename team URLs (a record page)
+  // and a team (its own place, still on the paper) keep their own heading, so 'h1' still serves them.
+  { id: 'admin-rep-teams',             area: 'rep-teams', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/rep-teams` },
+  { id: 'admin-rep-assistant-coaches', area: 'rep-teams', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/rep-teams/assistant-coaches` },
+  { id: 'admin-rep-documents',         area: 'rep-teams', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/rep-teams/documents` },
+  { id: 'admin-rep-past',              area: 'rep-teams', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/rep-teams/past` },
   { id: 'admin-rep-rename-slugs',      area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/rename-slugs` },
-  { id: 'admin-rep-shared-library',    area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/shared-library` },
+  { id: 'admin-rep-shared-library',    area: 'rep-teams', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/rep-teams/shared-library` },
   // Club Tier Stage 2 · session 3: the TEAM is the unit — its page, its Coaches · Tryouts · Roster ·
   // Schedule, and the season windows. The old season ("program year") pages are one redirect now,
   // so they are no longer screens of their own.
@@ -1618,7 +1621,7 @@ export const SCREENS = [
   // at 768 and narrower) are the coach's, measured here in the admin shell; at phone widths the View drawer picks them.
   { id: 'admin-rep-team-schedule-week', area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubTeamId}/schedule`, interact: (p) => pickScheduleView(p, 'Week') },
   { id: 'admin-rep-team-schedule-month', area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubTeamId}/schedule`, interact: (p) => pickScheduleView(p, 'Month') },
-  { id: 'admin-rep-documents-upload',  area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/documents`,
+  { id: 'admin-rep-documents-upload',  area: 'rep-teams', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/rep-teams/documents`,
     interact: (page) => openKitDialogBy(page, page.locator('button[aria-label="Upload template"]:visible')), scope: '[data-kit-dialog]' },
   { id: 'admin-rep-team-history',      area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubTeamId}/history` },
   { id: 'admin-rep-team-history-year', area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubTeamId}/history/${c.clubPastYearId}` },
@@ -1726,17 +1729,17 @@ export const SCREENS = [
 
   // ── House league (the 2026 Fall season, registration open) ──
   { id: 'admin-house-league',          area: 'house-league', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/house-league` },
-  { id: 'admin-hl-season',             area: 'house-league', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/house-league/seasons/${c.clubSeasonId}` },
-  { id: 'admin-hl-ledger',             area: 'house-league', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/house-league/seasons/${c.clubSeasonId}/money` },
-  { id: 'admin-hl-notifications',      area: 'house-league', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/house-league/seasons/${c.clubSeasonId}/notifications` },
-  { id: 'admin-hl-registrations',      area: 'house-league', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/house-league/seasons/${c.clubSeasonId}/registrations` },
-  { id: 'admin-hl-registrations-registrar', area: 'house-league', session: 'repClubRegistrar', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/house-league/seasons/${c.clubSeasonId}/registrations` },
-  { id: 'admin-hl-schedule',           area: 'house-league', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/house-league/seasons/${c.clubSeasonId}/schedule` },
+  { id: 'admin-hl-season',             area: 'house-league', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/house-league/seasons/${c.clubSeasonId}` },
+  { id: 'admin-hl-ledger',             area: 'house-league', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/house-league/seasons/${c.clubSeasonId}/money` },
+  { id: 'admin-hl-notifications',      area: 'house-league', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/house-league/seasons/${c.clubSeasonId}/notifications` },
+  { id: 'admin-hl-registrations',      area: 'house-league', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/house-league/seasons/${c.clubSeasonId}/registrations` },
+  { id: 'admin-hl-registrations-registrar', area: 'house-league', session: 'repClubRegistrar', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/house-league/seasons/${c.clubSeasonId}/registrations` },
+  { id: 'admin-hl-schedule',           area: 'house-league', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/house-league/seasons/${c.clubSeasonId}/schedule` },
   // Club Tier Stage 6a — the Add Game window: the Venue field on house league's old look, and where its line sits.
-  { id: 'admin-hl-schedule-add-game', area: 'house-league', session: 'repClubOwner', ready: 'h1', scope: '[role="dialog"][aria-modal="true"]',
+  { id: 'admin-hl-schedule-add-game', area: 'house-league', session: 'repClubOwner', ready: '[data-place-frame]', scope: '[role="dialog"][aria-modal="true"]',
     path: (c) => `/${c.clubSlug}/admin/house-league/seasons/${c.clubSeasonId}/schedule`, interact: openLeagueAddGame },
-  { id: 'admin-hl-standings',          area: 'house-league', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/house-league/seasons/${c.clubSeasonId}/standings` },
-  { id: 'admin-hl-teams',              area: 'house-league', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/house-league/seasons/${c.clubSeasonId}/teams` },
+  { id: 'admin-hl-standings',          area: 'house-league', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/house-league/seasons/${c.clubSeasonId}/standings` },
+  { id: 'admin-hl-teams',              area: 'house-league', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/house-league/seasons/${c.clubSeasonId}/teams` },
 
   // ── Tournaments — the tournament-only frame (uat-plus-org), the Championship pinned by address ──
   ...[

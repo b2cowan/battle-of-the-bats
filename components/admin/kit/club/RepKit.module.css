@@ -46,6 +46,10 @@
   border-radius: 8px;
   margin: 0 0 0.75rem;
   min-width: 0;
+  /* A jump to a section (the season checklist's "Set dates" → Registration) lands clear of the pinned chrome: the top
+     strip and the demo bar on a desk, and the admin's bar at its measured height (Admin header bar Phase 2: taller where
+     a place's tabs pin inside it). */
+  scroll-margin-top: calc(var(--admin-topstrip-h, 0px) + var(--sandbox-chrome-h, 0px) + var(--admin-header-h, 0px) + 0.75rem);
 }
 .sectionHead {
   display: flex;

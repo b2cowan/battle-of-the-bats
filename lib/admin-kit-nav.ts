@@ -608,6 +608,74 @@ export function seasonTabs(seasonPath: string, access: Pick<HouseLeagueAccess, '
   return seasonPagesFor(access).map(p => ({ id: p.key, key: p.key, label: p.label, href: seasonPageHref(seasonPath, p.segment) }));
 }
 
+/** Every page a season has — to ask "is this address a tab at all?" before anyone's access is known. */
+const EVERY_SEASON_PAGE = { read: true, readMoney: true, email: true } as const;
+
+/**
+ * ⚖ THE PLACE AN ADDRESS IS IN, FROM THE ADDRESS ALONE (Admin header bar Phase 2, owner option 4, 2026-11-07; plan
+ * `docs/projects/active/ADMIN_HEADER_BAR_PLAN.md`, "No flash of the wrong name"). The admin's pinned bar names the place
+ * you are in and pins its tab row; the place's frame hands it the live parts (the season's name, its switcher and chip,
+ * the waiting counts). The bar is drawn ABOVE the frame, so on the server's first paint it has not heard from the frame
+ * yet — it asks this, and draws the same placeholder the frame would (the name "Season" until the season loads), so the
+ * club's name never shows and swaps. The frame asks this too, so the bar and the frame cannot disagree about whether an
+ * address is a place, which tab it is, or who may open it (Rep teams: `canUse`, `useOrg().canOpen`, the one gate the rail and its layout ask; a
+ * season: any of its pages open by the season gate, `seasonAccess`).
+ * A record page one level down (Rename team URLs, a club schedule read from a season) and a team (its own place, session
+ * B) are null: the bar keeps the club's name there and the page keeps its own heading.
+ * ⚠ Every place added here is a place the bar titles, so its frame must hand the bar its parts (`PlaceFrame`'s `place`).
+ */
+export type ClubPlaceAt = {
+  /** Which place, and which one of them (`season:{id}`): the frame's hand-off counts only for the same key. */
+  key: string;
+  /** The place's name, or its placeholder until the frame's data names it. */
+  title: string;
+  /** The way up, named by where it goes. */
+  back?: { href: string; label: string };
+  /** The small line's words after the club (the club itself is the bar's, desktop only, A4). */
+  facts: readonly string[];
+  tabs: PlaceTab[];
+  activeId: string;
+  /** Names the tab row for a screen reader. */
+  ariaLabel: string;
+};
+
+export function clubPlaceAt(pathname: string, base: string, { canUse, seasonAccess }: {
+  canUse: (capability: Capability) => boolean;
+  /** The season gate's answer for the member (`useHouseLeagueAccess(null)`), or null before it is known. */
+  seasonAccess: Pick<HouseLeagueAccess, 'read' | 'readMoney' | 'email'> | null;
+}): ClubPlaceAt | null {
+  if (pathname.startsWith(`${base}/rep-teams`)) {
+    if (!canUse(PROGRAM_CAPABILITY['rep-teams'])) return null;
+    const tabs = repTeamsTabs(base);
+    const tab = placeTabFor(tabs, pathname);
+    return tab ? { key: 'rep-teams', title: 'Rep teams', facts: [], tabs, activeId: tab, ariaLabel: 'Rep teams' } : null;
+  }
+  const league = `${base}/house-league`;
+  if (pathname.startsWith(`${league}/seasons/`)) {
+    // In the season when ANY of its pages is this person's — the season gate's own answer, not the program's
+    // capability: a treasurer holds no House league yet reads a season's Money through the club's Accounting
+    // (`readMoney = opens || holdsBooks`), and keeps the season's name and its way back (/review, 2026-11-07).
+    if (!seasonAccess || !(seasonAccess.read || seasonAccess.readMoney || seasonAccess.email)) return null;
+    const seasonId = pathname.slice(`${league}/seasons/`.length).split('/')[0];
+    if (!seasonId) return null;
+    const seasonPath = `${league}/seasons/${seasonId}`;
+    const tab = placeTabFor(seasonTabs(seasonPath, EVERY_SEASON_PAGE), pathname);
+    if (!tab) return null;
+    return {
+      key: `season:${seasonId}`,
+      title: 'Season',
+      back: { href: league, label: 'Seasons' },
+      facts: ['House league'],
+      // The pages this person can open (`seasonPagesFor`, the one season gate). Before the member is known the whole
+      // place is null (above), never a place with no tabs.
+      tabs: seasonTabs(seasonPath, seasonAccess),
+      activeId: tab,
+      ariaLabel: 'Season pages',
+    };
+  }
+  return null;
+}
+
 /** The Organization tab a person without Members reads in its place: who runs the club, names and roles only (13a R1). */
 export const ORG_BOARD_TAB_LABEL = 'The board';
 

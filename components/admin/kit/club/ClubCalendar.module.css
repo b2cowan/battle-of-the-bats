@@ -126,10 +126,11 @@
 .viewDesk { display: contents; }
 /* The stacked week is the phone's alone — it owns its display, so no later rule can show it on a computer. */
 .stack { display: none; flex-direction: column; gap: 0.6rem; }
-/* Where Month's day lands (a List band, a phone Week day): clear of the sticky chrome above the page — the event
-   header (51–53px on a phone since it stopped shrinking, 2026-11-07; taller with a two-line name) under the top strip and the sandbox bar — with a little air. Without it a phone's day
-   heading and its first card's time sat under the header. */
-.jumpTarget { scroll-margin-top: calc(var(--admin-topstrip-h, 0px) + var(--sandbox-chrome-h, 0px) + 4.75rem); }
+/* Where Month's day lands (a List band, a phone Week day, a season schedule's week): clear of the sticky chrome above
+   the page — the admin's pinned bar at its MEASURED height (`--admin-header-h`; it grows where a place's tab row pins
+   inside it, Admin header bar Phase 2 — the 4.75rem guess this replaced fell short there) under the top strip and the
+   sandbox bar — with a little air. Without it a phone's day heading and its first card's time sat under the header. */
+.jumpTarget { scroll-margin-top: calc(var(--admin-topstrip-h, 0px) + var(--sandbox-chrome-h, 0px) + var(--admin-header-h, 4rem) + 0.75rem); }
 /* ⚖ ONE FRAME PER DAY (6c, C13 — the coach's phone week): the day's heading inside its frame, the bookings as hairlined
    rows with the team's colour rail, the clash line, a chevron; a run of empty days one dashed line; an empty today its
    own olive line. It replaced a white card per booking under a heading on the paper (the standard's phone ruling P1). */

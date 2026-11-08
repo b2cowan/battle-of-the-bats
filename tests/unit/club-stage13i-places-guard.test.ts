@@ -59,21 +59,29 @@ describe('1 · one list of tabs per place', () => {
 });
 
 describe('2 · each place draws THE shared tab row, from the model', () => {
-  const frames: [string, RegExp][] = [
-    ['components/admin/kit/club/RepTeamsFrame.tsx', /repTeamsTabs\(/],
-    ['components/admin/kit/club/TeamFrame.tsx', /teamTabs\(/],
-    ['components/admin/kit/club/SeasonFrame.tsx', /seasonTabs\(/],
-    ['components/admin/kit/club/OrgFrame.tsx', /orgTabs\(/],
+  // Rep teams and a season read their list through `clubPlaceAt` (Admin header bar Phase 2): the one statement of "which
+  // place, which tab" that the pinned bar asks too, built from `repTeamsTabs` / `seasonTabs` and lit by `placeTabFor`.
+  const frames: [string, RegExp, RegExp][] = [
+    ['components/admin/kit/club/RepTeamsFrame.tsx', /clubPlaceAt\(/, /clubPlaceAt\(/],
+    ['components/admin/kit/club/TeamFrame.tsx', /teamTabs\(/, /placeTabFor\(/],
+    ['components/admin/kit/club/SeasonFrame.tsx', /clubPlaceAt\(/, /clubPlaceAt\(/],
+    ['components/admin/kit/club/OrgFrame.tsx', /orgTabs\(/, /placeTabFor\(/],
   ];
-  it('every frame reads its list and draws it through PlaceFrame, which draws HubTabBar', () => {
-    for (const [f, list] of frames) {
+  it('every frame reads its list and draws it through PlaceFrame, which draws HubTabBar (on the paper, or in the bar)', () => {
+    for (const [f, list, lights] of frames) {
       const code = readCode(f);
       assert.match(code, list, `${f} reads the model’s list`);
       assert.match(code, /<PlaceFrame /, `${f} draws the shared frame`);
-      assert.match(code, /placeTabFor\(/, `${f} lights by the one rule`);
+      assert.match(code, lights, `${f} lights by the one rule`);
       assert.doesNotMatch(code, /HubTabBar|href: `\$\{[a-z]+\}\/roster`/, `${f} hand-writes a row`);
     }
+    const nav = readCode('lib/admin-kit-nav.ts');
+    const at = nav.slice(nav.indexOf('export function clubPlaceAt('));
+    assert.match(at, /repTeamsTabs\(base\)/);
+    assert.match(at, /seasonTabs\(seasonPath, seasonAccess\)/);
+    assert.match(at, /placeTabFor\(/);
     assert.match(readCode('components/admin/kit/club/PlaceFrame.tsx'), /<HubTabBar tabs=\{tabs\} activeId=\{activeId\} ariaLabel=\{ariaLabel\} \/>/);
+    assert.match(readCode('components/admin/AdminEventHeader.tsx'), /<HubTabBar inBar tabs=\{tabbed\.tabs\} activeId=\{tabbed\.activeId\} ariaLabel=\{tabbed\.ariaLabel\} \/>/);
   });
   it('the layouts mount the frames', () => {
     assert.match(readCode(`${A}/rep-teams/layout.tsx`), /<RepTeamsFrame orgSlug=\{ctx\.org\.slug\}>/);
@@ -146,7 +154,9 @@ describe('3 · a page its tab row reaches has no title or back link of its own',
   });
   it('the team’s header is “← Teams”; the season’s “← Seasons” with the switch in its title', () => {
     assert.match(readCode('components/admin/kit/club/TeamFrame.tsx'), /backTo=\{\{ href: repTeams, label: 'Teams' \}\}/);
-    assert.match(readCode('components/admin/kit/club/SeasonFrame.tsx'), /backTo=\{\{ href: league, label: 'Seasons' \}\}/);
+    // The season's way up is in the pinned bar since Admin header bar Phase 2: `clubPlaceAt` names it, the frame hands it over.
+    assert.match(readCode('lib/admin-kit-nav.ts'), /back: \{ href: league, label: 'Seasons' \}/);
+    assert.match(readCode('components/admin/kit/club/SeasonFrame.tsx'), /<PlaceFrame place=\{\{\s*\.\.\.place,/);
     assert.match(readCode(`${A}/rep-teams/teams/[teamId]/page.tsx`), /usePublishTeamHead\(teamId, read \? teamHeadOf\(read\.team, read\.programYears\) : null\)/,
       'the Team page tells the header what it changed');
   });

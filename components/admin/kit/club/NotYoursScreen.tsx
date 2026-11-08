@@ -12,6 +12,9 @@ export type NotYoursScreenProps = {
   viewerRole: OrgRole | string | null;
   /** The person's own home (lib/member-home.ts); null only while the club is unknown. */
   home: { href: string; label: string } | null;
+  /** Drawn under a place whose name is the pinned bar's `<h1>` (Admin header bar Phase 2): the refusal's title is then a
+   *  second-level heading, so the page keeps ONE `<h1>` (a season's Email families, opened by someone not on the desk). */
+  inPlace?: boolean;
 };
 
 /**
@@ -20,15 +23,16 @@ export type NotYoursScreenProps = {
  * the page's CONTENT, inside the admin frame, so the nav still shows. Server-safe (no hooks): a server layout renders it
  * directly; a client page renders it through `NotYours`, which reads the owner's name and the home.
  */
-export function NotYoursScreen({ page, title, ownerName, viewerRole, home }: NotYoursScreenProps) {
+export function NotYoursScreen({ page, title, ownerName, viewerRole, home, inPlace = false }: NotYoursScreenProps) {
   const words = NOT_YOURS_PAGES[page];
   const name = title ?? words.title;
+  const Heading = inPlace ? 'h2' : 'h1';
   return (
     <div className={styles.page} data-not-yours={page}>
       <div className={styles.card}>
         <Lock size={22} aria-hidden />
         <p className={styles.eyebrow}>{name}</p>
-        <h1 className={styles.title}>{NOT_YOURS_WORDS.heading(name)}</h1>
+        <Heading className={styles.title}>{NOT_YOURS_WORDS.heading(name)}</Heading>
         <p className={styles.text}>{words.what} {notYoursWhoSentence(words.who, ownerName, viewerRole)}</p>
         {home && (
           <div className={styles.actions}>

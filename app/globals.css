@@ -2748,6 +2748,11 @@ tbody tr:last-child td { border-bottom: none; }
      Home scrolled into nothing), and the dark strip peeked out above the bar at the end of a scroll on
      a real phone (owner screenshot, 2026-10-09). Same `#main-content` stand-down as the chat rooms. */
   #main-content:has([data-consumer-shell]) { padding-bottom: 0; }
+  /* The admin's locked phone shell (`AdminChrome`, `data-admin-locked`) is the screen exactly and clears its own bar
+     inside its scroller (`.mainPad`), so this reserve made every admin phone screen 72px taller than the phone: at the
+     end of a page the swipe carried on into the document and took the pinned bar off the top (Admin header bar
+     Phase 2, measured 2026-11-07). The same stand-down. */
+  #main-content:has([data-admin-locked]) { padding-bottom: 0; }
 
   /* The "See it live" demo hides that bar on the FAN side, because every one of its tabs — Home,
      Scores, Chat, Account — walks the visitor out of the sandbox and into the real platform. With

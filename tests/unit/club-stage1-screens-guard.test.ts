@@ -80,7 +80,8 @@ describe('the switch — the hub', () => {
     // Admin Design Continuity Part B (2026-09-29): the frame's switch-off branch is gone, so the provider
     // is unconditional; it stays its own chunk.
     const chrome = readCode('app/[orgSlug]/admin/AdminChrome.tsx');
-    assert.match(chrome, /<ClubBriefProvider>\{frame\}<\/ClubBriefProvider>/);
+    // Admin header bar Phase 2: the bar's place hand-off sits inside it, still around the whole frame.
+    assert.match(chrome, /<ClubBriefProvider><AdminBarPlaceProvider>\{frame\}<\/AdminBarPlaceProvider><\/ClubBriefProvider>/);
     assert.match(chrome, /const ClubBriefProvider = dynamic\(/);
   });
 });
@@ -240,7 +241,10 @@ describe('a page title carries no club name above it', () => {
     assert.doesNotMatch(hub, /<h1\b/, 'the bar holds the hub’s <h1>');
     assert.doesNotMatch(hub, /title=\{currentOrg\.name\}/);
     const bar = readCode('components/admin/AdminEventHeader.tsx');
-    assert.match(bar, /onOverview\s*\n?\s*\? <h1 className=\{styles\.name\}>\{title\}<\/h1>\s*\n?\s*: <span className=\{styles\.name\}>\{title\}<\/span>/,
-      'the bar’s name is an <h1> on the Overview only (Phase 1: every other club screen still draws its own heading)');
+    // Widened in Admin header bar Phase 2 (2026-11-07): the bar's name is the page's one <h1> on the Overview AND on every
+    // club place that hands it a name (that place's paper heading is gone); a <span> everywhere else.
+    assert.match(bar, /const isPageTitle = onOverview \|\| !!place;/);
+    assert.match(bar, /isPageTitle\s*\n?\s*\? <h1 className=\{styles\.name\}>\{title\}<\/h1>\s*\n?\s*: <span className=\{styles\.name\}>\{title\}<\/span>/,
+      'the bar’s name is an <h1> where it is the page’s title, a <span> where the page draws its own heading');
   });
 });
