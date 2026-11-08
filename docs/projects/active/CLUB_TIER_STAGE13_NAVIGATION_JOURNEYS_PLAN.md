@@ -547,6 +547,27 @@ ahead of the owner's rulings.
   season; a member whose browser never held the install mark is spared the banner once. **Walk A: §485** (43 steps on the dev copies
   `navj-club-s13ba` and `navj-club-s13ba-fresh`; fixtures in `.probe/stage13b-a/`). No migration, no column; no `NAV_STANDARD` change.
   **Next:** the owner walks §485, then Session B.
+- 2026-11-07 — **13b Session B BUILT** (the arrival). `/simplify`, `/review` (high), `/marketing`, `/legal` and `/docs` done;
+  commit owed. **Owner rulings in the summary:** the coach accept-path fix goes in this build; the owner and an admin also see the
+  other roles' Help paths, folded; every non-board path ends with "What your role can open". **B1** no default role: the invite's
+  Role field starts on "Choose a role", Send is off until one is chosen; the line under it is the picker's own sentence with
+  **no prefix** (/review: "Written to them: …" was untrue for a volunteer, whose email carries the job note, and an admin); the
+  Staff kit's `?invite=volunteer` still presets Volunteer; setup step 1 links `?invite=open` **only while open** (/review: a done
+  step's outline button must not pop the invite). **B2** both emails carry `memberOpensSentence` (the "added" email turns "You'd"
+  into "You'll"; a volunteer's job note stands in for it) and the product line "FieldLogicHQ is the online system {club} uses for
+  things like registration, schedules and results." (/marketing's nouns, /legal's "for things like"); `ROLE_EMAIL_LABEL` now says
+  "admin" and "league admin"; the "added" email escapes the club name; the resend uses the same sentence. /legal
+  (`docs/agents/legal/CASL_MEMBER_INVITE_EMAILS.md`): not commercial messages so long as no plan, price, offer or buy link joins
+  them (a guard holds it); two pre-existing findings for the owner: the Reply-To reaches no inbox, unaccepted invitations stay.
+  **B3** the "added" email's link is `destinationAfterAccept` (the sign-in resolver) with a this-club fallback; the
+  **coach-branch check came out real**: `getDestinationForMembership` had no coach branch, so a coach re-opening an old
+  invitation landed on the club's empty Overview while sign-in sends them to the Coaches Portal; now both say the portal. **B4**
+  Help: each path names the roles it belongs to; the reader's own opens by default; owner/admin get the others folded under
+  "The first steps of the people you invite"; no own path → all folded as before; the note under the guides no longer claims
+  a role filter (platform admin's hub shows no note). Help: the invite recipe in the org guide split into four sub-topics (no
+  default role, what each email says, where each role lands). Guard: `tests/unit/club-stage13b-arrival-guard.test.ts`.
+  **Walk B: §489** (37 steps; dev copies `navj-club-s13bb` and `navj-club-s13bb-fresh`; fixtures `.probe/stage13b-b/`; sends
+  real email to `fieldlogichq+s13bb-*@gmail.com`). No migration, no column; no `NAV_STANDARD` change.
 
 ## 11. The external review, cross-checked (2026-11-07)
 

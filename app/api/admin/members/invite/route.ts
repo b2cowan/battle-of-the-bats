@@ -4,12 +4,13 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { countsAsSeat, seatExemptRoles } from '@/lib/roles';
 import { checkCrossOrgJoin, crossOrgJoinRefusalForAdmin } from '@/lib/org-membership-policy';
 import { isAssignableRole } from '@/lib/board-roles';
-import { roleEmailLabel } from '@/lib/member-access';
+import { memberOpensSentence, roleEmailLabel } from '@/lib/member-access';
 import { memberDisplayName } from '@/lib/member-names';
 import { acceptInvitePath } from '@/lib/invite-links';
+import { destinationAfterAccept } from '@/lib/invite-acceptance';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import { sendEmail, orgInviteHtml, orgMemberAddedHtml } from '@/lib/email';
-import { parseVolunteerJob, volunteerCapabilitiesFor, volunteerHome, type VolunteerJob } from '@/lib/volunteer-jobs';
+import { parseVolunteerJob, volunteerCapabilitiesFor, type VolunteerJob } from '@/lib/volunteer-jobs';
 import { INVITE_EMAIL_ACTION, VOLUNTEER_EMAIL_NOTE } from '@/lib/volunteer-words';
 import type { OrgRole } from '@/lib/types';
 import { withObservability, captureAndJson } from '@/lib/observability';
@@ -84,12 +85,8 @@ export const POST = withObservability(async (req: Request) => {
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.fieldlogichq.ca';
   const roleLabel = roleEmailLabel(role);
-  // A volunteer's sign-in link opens their job — the same rule as every later sign-in.
-  const volunteerLanding = volunteerHome(org.slug, role, capabilities);
-  // Everyone else lands in THIS club too — a bare sign-in sends a member of several clubs to their default one.
-  const landing = volunteerLanding ?? (role === 'coach' ? `/${org.slug}/coaches` : `/${org.slug}/admin`);
-  const signInPath = `/auth/login?next=${encodeURIComponent(landing)}`;
-  const signInUrl = `${appUrl}${signInPath}`;
+  // What the role opens — the accept page's own sentence, in both emails (Stage 13b B2).
+  const opens = memberOpensSentence(role, capabilities);
 
   if (existingUser) {
     // Check they're not already in THIS org
@@ -143,11 +140,18 @@ export const POST = withObservability(async (req: Request) => {
 
     await writeOrgAudit(org.id, user.id, existingUser.id, 'member_invited', { email, role, ...(job ? { purpose: job } : {}) });
 
+    // ⚖ Both arrival paths end on the role's home (Stage 13b B3): the link lands where the row just written sends them, by the
+    // resolver sign-in and the accept page use. It always names THIS club (a bare sign-in sends a member of several clubs to
+    // their default one), so an answer outside it (the row could not be read back) falls back to the club's Overview.
+    const home = await destinationAfterAccept(existingUser.id, org.slug);
+    const landing = home.startsWith(`/${org.slug}/`) ? home : `/${org.slug}/admin`;
+    const signInUrl = `${appUrl}/auth/login?next=${encodeURIComponent(landing)}`;
+
     // Notify the existing user that they now have access to this org.
     await sendEmail(
       email,
       `You've been added to ${org.name} on FieldLogicHQ`,
-      orgMemberAddedHtml({ orgName: org.name, roleLabel, signInUrl, ctaLabel: INVITE_EMAIL_ACTION.signIn, note: job ? VOLUNTEER_EMAIL_NOTE.added[job] : null }),
+      orgMemberAddedHtml({ orgName: org.name, roleLabel, signInUrl, ctaLabel: INVITE_EMAIL_ACTION.signIn, note: job ? VOLUNTEER_EMAIL_NOTE.added[job] : null, opens }),
       { kind: 'org_member_added', orgId: org.id, askedBy: user.id },
     );
 
@@ -209,7 +213,7 @@ export const POST = withObservability(async (req: Request) => {
   await sendEmail(
     email,
     `You've been invited to ${org.name} on FieldLogicHQ`,
-    orgInviteHtml({ orgName: org.name, roleLabel, inviteUrl: inviteUrl ?? appUrl, ctaLabel: INVITE_EMAIL_ACTION.accept, note: job ? VOLUNTEER_EMAIL_NOTE.invite[job] : null, inviterName }),
+    orgInviteHtml({ orgName: org.name, roleLabel, inviteUrl: inviteUrl ?? appUrl, ctaLabel: INVITE_EMAIL_ACTION.accept, note: job ? VOLUNTEER_EMAIL_NOTE.invite[job] : null, opens, inviterName }),
     { kind: 'org_invite', orgId: org.id, askedBy: user.id },
   );
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { Search, X } from 'lucide-react';
 import WhatsNewHelpLink from '@/components/whats-new/WhatsNewHelpLink';
@@ -29,8 +29,51 @@ interface HelpHubClientProps {
   subtitle: string;
   searchPlaceholder?: string;
   cards: HelpHubCard[];
+  /**
+   * The reader's OWN first-day path (Club Tier Stage 13b B4, F-A1-9). When given, "New to FieldLogicHQ?" opens on it
+   * and `rolePaths` (the other roles') fold away under `otherPathsLabel`; without it, every path sits folded as before.
+   */
+  ownRolePath?: HelpHubRolePath | null;
   rolePaths?: HelpHubRolePath[];
+  /** The fold's name for the other roles' paths (only shown beside an own path). */
+  otherPathsLabel?: string;
+  /** The line under the guides saying what decides which guides show; each hub says its own. */
+  gateNote?: string;
 }
+
+function FoldSummary({ children }: { children: ReactNode }) {
+  return (
+    <summary className={styles.helpHubNewHereSummary}>
+      <span className={styles.helpHubNewHereCaret} aria-hidden="true">&#9654;</span>{' '}
+      {children}
+    </summary>
+  );
+}
+
+function RolePathGrid({ paths }: { paths: HelpHubRolePath[] }) {
+  return (
+    <div className={styles.helpHubRolePaths}>
+      {paths.map(path => (
+        <div key={path.title} className={styles.helpHubRolePath}>
+          <h3 className={styles.helpHubRolePathTitle}>{path.title}</h3>
+          <ol className={styles.helpHubRolePathList}>
+            {path.steps.map(step => (
+              <li key={`${path.title}-${step.href}`}>
+                <Link href={step.href}>{step.label}</Link>
+              </li>
+            ))}
+          </ol>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+const HELP_HUB_FIRST_DAY_WORDS = {
+  heading: 'New to FieldLogicHQ?',
+  allPaths: 'First steps by role',
+  ownPath: 'Your first steps',
+} as const;
 
 function matchesQuery(haystack: string, query: string): boolean {
   if (!query) return true;
@@ -46,9 +89,16 @@ export default function HelpHubClient({
   subtitle,
   searchPlaceholder = 'Search all help — e.g. schedule, registration, payments, exports…',
   cards,
+  ownRolePath = null,
   rolePaths = [],
+  otherPathsLabel,
+  // No default: a hub that filters nothing (platform admin's) says nothing, rather than claiming a filter it lacks.
+  gateNote,
 }: HelpHubClientProps) {
   const [query, setQuery] = useState('');
+  // With an own path, it is shown open and the rest fold under it; without one, every path shows, folded, as before.
+  const shown = ownRolePath ? [ownRolePath] : rolePaths;
+  const folded = ownRolePath ? rolePaths : [];
   const normalizedQuery = query.trim().toLowerCase();
 
   const filteredCards = useMemo(
@@ -115,33 +165,26 @@ export default function HelpHubClient({
           </p>
         )}
 
-        <p className={styles.helpHubGateNote}>
-          You see the guides your plan and role include &mdash; e.g. Accounting and Rep teams appear only for orgs with those modules.
-        </p>
+        {gateNote && <p className={styles.helpHubGateNote}>{gateNote}</p>}
       </section>
 
       {/* ── "New to FieldLogicHQ?" disclosure ─────────────────────────── */}
-      {rolePaths.length > 0 && (
-        <details className={styles.helpHubNewHere}>
-          <summary className={styles.helpHubNewHereSummary}>
-            <span className={styles.helpHubNewHereCaret} aria-hidden="true">&#9654;</span>{' '}
-            New to FieldLogicHQ?
-            <span className={styles.helpHubNewHereHint}>Getting-started paths by role</span>
-          </summary>
-          <div className={styles.helpHubRolePaths}>
-            {rolePaths.map(path => (
-              <div key={path.title} className={styles.helpHubRolePath}>
-                <h3 className={styles.helpHubRolePathTitle}>{path.title}</h3>
-                <ol className={styles.helpHubRolePathList}>
-                  {path.steps.map(step => (
-                    <li key={`${path.title}-${step.href}`}>
-                      <Link href={step.href}>{step.label}</Link>
-                    </li>
-                  ))}
-                </ol>
-              </div>
-            ))}
-          </div>
+      {/* `open` only on the first render's value: React rewrites it only when the prop changes, so the reader's toggle holds. */}
+      {shown.length > 0 && (
+        <details className={styles.helpHubNewHere} open={!!ownRolePath}>
+          <FoldSummary>
+            {HELP_HUB_FIRST_DAY_WORDS.heading}
+            <span className={styles.helpHubNewHereHint}>
+              {ownRolePath ? HELP_HUB_FIRST_DAY_WORDS.ownPath : HELP_HUB_FIRST_DAY_WORDS.allPaths}
+            </span>
+          </FoldSummary>
+          <RolePathGrid paths={shown} />
+          {folded.length > 0 && otherPathsLabel && (
+            <details className={styles.helpHubOtherPaths}>
+              <FoldSummary>{otherPathsLabel}</FoldSummary>
+              <RolePathGrid paths={folded} />
+            </details>
+          )}
         </details>
       )}
     </div>

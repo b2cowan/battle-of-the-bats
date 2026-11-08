@@ -44,7 +44,7 @@ export function planLabel(planId: string): string {
   return PLAN_CONFIG[planId as OrgPlan]?.label ?? planId.replace(/_/g, ' ');
 }
 
-/** A member role inside a sentence, the product's one word for it ("an administrator", "a volunteer"). */
+/** A member role inside a sentence, the product's one word for it ("an admin", "a volunteer"). */
 export function aRole(role: string | null | undefined): string {
   const r = role ? roleEmailLabel(role) : 'member';
   return /^[aeiou]/i.test(r) ? `an ${r}` : `a ${r}`;

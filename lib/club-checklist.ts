@@ -111,7 +111,9 @@ export async function computeClubChecklist(org: Org): Promise<ClubChecklist> {
     {
       key: 'board',
       done: board.length > 0,
-      href: `${base}/org/members`,
+      // While open: Members with the invite open and no role chosen (Stage 13b B1; the step names two roles, so neither is
+      // preset). Once done, the step's outline button is just the board's page (/review: it must not pop the invite).
+      href: board.length > 0 ? `${base}/org/members` : `${base}/org/members?invite=open`,
       detail: { joined: boardNames, count: board.length },
     },
     {

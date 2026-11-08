@@ -434,7 +434,14 @@ export async function getDestinationForMembership(member: MemberRow, userId: str
   const volunteer = volunteerHome(slug, role, member.capabilities);
   if (volunteer) return volunteer;
 
-  if (isTeamWorkspaceOrg({ accountKind, planId: planId ?? 'tournament' })) {
+  const isTeamWorkspace = isTeamWorkspaceOrg({ accountKind, planId: planId ?? 'tournament' });
+  // A coach-only member of a club lands in the Coaches Portal — what sign-in's own card for that row opens
+  // (`buildMembershipContext`, the `coach` branch). Sign-in never asks this function about such a row, but the accept
+  // paths do (`destinationAfterAccept`: a coach who re-opens an old invitation), and sent them to the club's empty
+  // Overview (Stage 13b B3, owner 2026-11-07). A team workspace keeps its own branch below.
+  if (role === 'coach' && !isTeamWorkspace) return `/${slug}/coaches`;
+
+  if (isTeamWorkspace) {
     return getStandaloneAdminHref({
       id: orgId, slug, accountKind, planId: planId ?? 'tournament',
       subscriptionStatus: org?.subscription_status as EntitlementOrg['subscriptionStatus'],

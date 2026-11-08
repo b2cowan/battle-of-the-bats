@@ -1,6 +1,6 @@
 import { supabaseAdmin } from './supabase-admin';
 import { sendEmail, orgInviteHtml } from './email';
-import { roleEmailLabel } from './member-access';
+import { memberOpensSentence, roleEmailLabel } from './member-access';
 import { invitationSender } from './member-names';
 import { volunteerJobOf } from './volunteer-jobs';
 import { INVITE_EMAIL_ACTION, VOLUNTEER_EMAIL_NOTE } from './volunteer-words';
@@ -83,7 +83,7 @@ export async function sendPendingInviteLink(params: {
   await sendEmail(
     email,
     `You've been invited to ${orgName} on FieldLogicHQ`,
-    orgInviteHtml({ orgName, roleLabel, inviteUrl: inviteUrl ?? appUrl, ctaLabel: INVITE_EMAIL_ACTION.accept, note: job ? VOLUNTEER_EMAIL_NOTE.invite[job] : null, inviterName: sender?.name ?? null }),
+    orgInviteHtml({ orgName, roleLabel, inviteUrl: inviteUrl ?? appUrl, ctaLabel: INVITE_EMAIL_ACTION.accept, note: job ? VOLUNTEER_EMAIL_NOTE.invite[job] : null, opens: memberOpensSentence(role, memberRow?.capabilities), inviterName: sender?.name ?? null }),
     { kind: 'org_invite', orgId: memberRow?.organization_id ?? null },
   );
 

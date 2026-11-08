@@ -23,6 +23,13 @@ import shared from '@/app/[orgSlug]/coaches/coaches.module.css';
 import SublinedChoice, { type SublinedOption } from '@/components/coaches/SublinedChoice';
 import LoadingState from '@/components/shared/LoadingState';
 
+/**
+ * The invite's empty role field (Stage 13b B1). The line under it once a role is chosen is the picker's own sentence, as
+ * it always was, with no frame: /review found "Written to them: …" untrue for a volunteer (the email carries the JOB's
+ * note, which follows "Helping with") and for an admin (the email drops "but not its billing or settings").
+ */
+const INVITE_ROLE_WORDS = { choose: 'Choose a role' } as const;
+
 /** "Helping with" — the field the invite and Manage share (one control, one set of words). */
 export function HelpingWithField({ id, value, onChange, hintTail }: {
   id: string;
@@ -54,13 +61,15 @@ export function roleGroupLabel(group: AssignableRoleOption['group'], noun: strin
  *  is subtext below the main text", the coach's Record window). Each role's name, its hint on the line under it, in
  *  its group. It replaced a native `<select>` whose options read "League registrar — league sign-ups": a native list
  *  cannot carry a second line. The closed field wears the kit's own select look, so it sits like the fields around it. */
-export function RolePicker({ id, roles, noun, value, onChange, extra }: {
+export function RolePicker({ id, roles, noun, value, onChange, extra, placeholder }: {
   id: string;
   roles: AssignableRoleOption[];
   noun: string;
-  value: OrgRole;
+  /** Null = nothing chosen yet (the invite, Stage 13b B1: no default role); the field shows `placeholder`. */
+  value: OrgRole | null;
   onChange: (role: OrgRole) => void;
   extra?: { role: OrgRole; label: string };
+  placeholder?: string;
 }) {
   const options: SublinedOption<OrgRole>[] = [
     ...(extra ? [{ value: extra.role, name: extra.label, sub: '' }] : []),
@@ -75,6 +84,7 @@ export function RolePicker({ id, roles, noun, value, onChange, extra }: {
       options={options}
       value={value}
       onChange={onChange}
+      placeholder={placeholder}
       variant="toolbar"
       triggerClassName={`${ck.select} ${shared.convChoiceToolbarField}`}
     />
@@ -107,15 +117,17 @@ export default function InviteMemberDialog({
   onInvited: (notice: string) => void;
 }) {
   const [email, setEmail] = useState('');
-  // Staff was today's default; it stays the default where it is offered (the page's own Invite). The
-  // Staff kit's door opens on the volunteer role instead.
-  const [role, setRole] = useState<OrgRole | ''>(initialRole ?? '');
+  // ⚖ No default role (Stage 13b B1, Ask 10 = A): the field starts on "Choose a role" and Send stays off until one is
+  // chosen. It used to fall back to Staff without a word, so a treasurer could go out as Staff. The Staff kit's door
+  // still opens on the volunteer role (`initialRole`).
+  const [role, setRole] = useState<OrgRole | null>(initialRole);
   const [job, setJob] = useState<VolunteerJob>('both');
   const [sending, setSending] = useState(false);
   const [refusal, setRefusal] = useState<{ text: string; seat: boolean } | null>(null);
 
-  const chosen = role || (roles?.some(r => r.role === 'staff') ? 'staff' : roles?.[0]?.role) || '';
-  const chosenRole = roles?.find(r => r.role === chosen) ?? null;
+  // A role the list no longer offers (the plan changed under an open dialog) is not a choice.
+  const chosenRole = roles?.find(r => r.role === role) ?? null;
+  const chosen = chosenRole?.role ?? null;
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -177,7 +189,8 @@ export default function InviteMemberDialog({
           <label className={ck.label} htmlFor="kit-invite-role">Role<span className={ck.required} aria-hidden>*</span></label>
           {roles ? (
             <>
-              <RolePicker id="kit-invite-role" roles={roles} noun={noun} value={chosen as OrgRole} onChange={setRole} />
+              <RolePicker id="kit-invite-role" roles={roles} noun={noun} value={chosen} onChange={setRole} placeholder={INVITE_ROLE_WORDS.choose} />
+              {/* What they will open (F-A5-7's preview is this line, not a screen), shown once a role is chosen. */}
               {chosenRole?.opens && <p className={ck.hint}>{chosenRole.opens}</p>}
             </>
           ) : rolesFailed ? (

@@ -1466,7 +1466,9 @@
   flex-shrink: 0;
 }
 
-.helpHubNewHere[open] .helpHubNewHereCaret {
+/* Child combinators: each fold turns only its own caret (the other roles' fold sits inside this one). */
+.helpHubNewHere[open] > .helpHubNewHereSummary .helpHubNewHereCaret,
+.helpHubOtherPaths[open] > .helpHubNewHereSummary .helpHubNewHereCaret {
   transform: rotate(90deg);
 }
 
@@ -1475,6 +1477,15 @@
   color: var(--data-gray, rgba(255, 255, 255, 0.42));
   font-size: 0.86rem;
   margin-left: 2px;
+}
+
+/* The other roles' paths, folded under the reader's own (Stage 13b B4) */
+.helpHubOtherPaths {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.helpHubOtherPaths > .helpHubNewHereSummary {
+  font-size: 0.88rem;
 }
 
 /* Role path grid inside the disclosure */
@@ -2388,6 +2399,7 @@
   background: var(--card-bg);
   border-color: var(--home-line);
 }
+:global([data-admin-kit]) .helpHubOtherPaths:where(:not([data-public-preview] *)) { border-top-color: var(--home-line); }
 :global([data-admin-kit]) .helpHubNewHereSummary:where(:not([data-public-preview] *)) { color: var(--text-primary); }
 :global([data-admin-kit]) .helpHubNewHereCaret:where(:not([data-public-preview] *)) { color: var(--home-olive); }
 :global([data-admin-kit]) .helpHubNewHereHint:where(:not([data-public-preview] *)) { color: var(--text-tertiary); }

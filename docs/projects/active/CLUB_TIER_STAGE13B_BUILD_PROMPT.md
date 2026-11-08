@@ -1,6 +1,8 @@
 # Club Tier Stage 13b · Each person's home and first day (build prompt, two sessions)
 
 > Written 2026-11-07, after fix-now 2 was walked (§480, 23/23). The owner chose 13b before 13c because its drawing is already ruled.
+> **Status:** Session A committed `ebb2ca47c`, walk §485 passed 43/43 (2026-11-07). **Session B built 2026-11-07** (commit owed; walk
+> §489 owed); what it built, and where it departed from this prompt, is in the plan's §10 entry of that date.
 > Plan of record: [CLUB_TIER_STAGE13_NAVIGATION_JOURNEYS_PLAN.md](CLUB_TIER_STAGE13_NAVIGATION_JOURNEYS_PLAN.md) §10 (status log).
 > Hub (walk, ladder, findings, drawings): https://claude.ai/artifact/1G7m1CwSX7d3V8Cv2k1AQY. **Tab 12 "Homes" is the drawing**
 > (owner desktop and phone, admin, league admin, registrar, treasurer). The Asks tab holds the rulings. Hub source:

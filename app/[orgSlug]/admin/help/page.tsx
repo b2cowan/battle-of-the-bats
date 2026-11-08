@@ -6,6 +6,31 @@ import { clubSchedulerOn } from '@/lib/club-schedule-gate';
 import { CHAT_PAUSED } from '@/lib/chat-pause';
 import HelpHubClient, { type HelpHubCard, type HelpHubRolePath } from '@/components/help/HelpHubClient';
 import LoadingState from '@/components/shared/LoadingState';
+import type { OrgRole } from '@/lib/types';
+
+/** A first-day path and the roles it is the OWN path of (Club Tier Stage 13b B4, F-A1-9); none = nobody's own. */
+type RolePath = HelpHubRolePath & { roles?: readonly OrgRole[] };
+
+/** The words this hub says about its own paths and guides (Stage 13b B4). */
+const ADMIN_HELP_HUB_WORDS = {
+  // Owner and admin invite the other roles, so theirs is said as the people they invite.
+  othersForBoard: 'The first steps of the people you invite',
+  gateNote: 'You see the guides your plan includes. Accounting and Rep teams, for example, appear only for orgs with those modules. The Org admin & setup card shows for owners and admins.',
+  roleGuideStep: 'What your role can open',
+} as const;
+
+/**
+ * Whose first-day path is whose (Stage 13b B4): the reader's own path opens by default and no role is offered another role's
+ * path as its own. The owner and an admin also see the other roles' paths, folded under theirs, so they can point a new
+ * treasurer to the treasurer's. Every other role sees only their own. A reader with no own path (a role the plan gives no
+ * path, e.g. a treasurer on a plan without Accounting) sees every path folded, as before, none of them called theirs.
+ */
+function splitRolePaths(paths: RolePath[], role: OrgRole): { own: RolePath | null; others: RolePath[] } {
+  const own = paths.find(p => p.roles?.includes(role)) ?? null;
+  if (!own) return { own: null, others: paths };
+  const isBoard = role === 'owner' || role === 'admin';
+  return { own, others: isBoard ? paths.filter(p => p !== own) : [] };
+}
 
 export default function AdminHelpHubPage() {
   const { currentOrg, userRole, loading } = useOrg();
@@ -103,9 +128,13 @@ export default function AdminHelpHubPage() {
     },
   ];
 
-  const rolePaths: HelpHubRolePath[] = [
+  // The guide's role table, for a role with no Org admin card (the page itself opens for every member).
+  const roleGuideStep = { label: ADMIN_HELP_HUB_WORDS.roleGuideStep, href: `${helpBase}/org#roles` };
+
+  const rolePaths: RolePath[] = [
     ...(canOrgAdmin ? [{
       title: 'Owner / Admin',
+      roles: ['owner', 'admin'] as const,
       steps: [
         ...(isClub ? [{ label: 'Set up your club', href: `${helpBase}/org#recipe-set-up-your-club` }] : []),
         { label: 'Invite members and choose roles', href: `${helpBase}/org#recipe-invite-member` },
@@ -126,6 +155,7 @@ export default function AdminHelpHubPage() {
     }] : []),
     {
       title: 'Tournament admin',
+      roles: ['staff'] as const,
       steps: [
         { label: 'Open team registration', href: `${helpBase}/tournaments#recipe-open-tournament-registration` },
         { label: 'Review team registrations', href: `${helpBase}/tournaments#recipe-review-tournament-teams` },
@@ -136,11 +166,13 @@ export default function AdminHelpHubPage() {
         { label: 'Help fans follow a team and get score alerts', href: `${helpBase}/tournaments#public-site-preview` },
         ...(CHAT_PAUSED ? [] : [{ label: 'Chat with your coaches', href: `${helpBase}/tournaments#tournament-chat` }]),
         { label: 'Close out the tournament', href: `${helpBase}/tournaments#recipe-closeout-tournament` },
+        roleGuideStep,
       ],
     },
     ...(canHouseLeague ? [
       {
         title: 'League admin',
+        roles: ['league_admin'] as const,
         steps: [
           { label: 'Launch a house league season', href: `${helpBase}/house-league#recipe-launch-season` },
           { label: 'Open, pause, or close registration', href: `${helpBase}/house-league#recipe-open-close-registration` },
@@ -149,21 +181,25 @@ export default function AdminHelpHubPage() {
           { label: 'Generate games and run the schedule', href: `${helpBase}/house-league#recipe-generate-house-league-schedule` },
           { label: 'Divide the club’s time and hand out practices', href: `${helpBase}/house-league#house-league-time` },
           { label: 'Record scores and update standings', href: `${helpBase}/house-league#recipe-record-house-league-scores` },
+          roleGuideStep,
         ],
       },
       {
         title: 'League registrar',
+        roles: ['league_registrar'] as const,
         steps: [
           { label: 'Work the daily review queue', href: `${helpBase}/registrations#recipe-daily-review-queue` },
           { label: 'Promote a waitlisted player', href: `${helpBase}/registrations#recipe-promote-waitlisted-player` },
           { label: 'Add a manual registration', href: `${helpBase}/registrations#recipe-add-manual-registration` },
           { label: 'Message or export a targeted group', href: `${helpBase}/registrations#recipe-message-and-export-registrants` },
+          roleGuideStep,
         ],
       },
     ] : []),
     ...(canRepTeams ? [
       {
         title: 'Rep program admin',
+        // No roles: nobody's own path (the board runs the rep program, under its own).
         steps: [
           { label: 'Add a team and start its first season', href: `${helpBase}/rep-teams#recipe-create-team-program-year` },
           { label: 'Open tryouts and review applicants', href: `${helpBase}/rep-teams#recipe-open-tryouts-review-applicants` },
@@ -174,6 +210,7 @@ export default function AdminHelpHubPage() {
       },
       {
         title: 'Coach',
+        roles: ['coach'] as const,
         steps: [
           { label: 'Get started as a coach', href: `${helpBase}/coaches#recipe-first-login` },
           { label: 'Add or update a player', href: `${helpBase}/coaches#recipe-add-player` },
@@ -187,22 +224,29 @@ export default function AdminHelpHubPage() {
     ] : []),
     ...(canAccounting ? [{
       title: 'Treasurer',
+      roles: ['treasurer'] as const,
       steps: [
         { label: 'Add an entry', href: `${helpBase}/accounting#recipe-add-income-expense` },
         { label: 'Transfer money between the club’s books', href: `${helpBase}/accounting#recipe-transfer-between-ledgers` },
         { label: 'Bill the teams for a shared cost', href: `${helpBase}/accounting#allocations` },
         { label: 'Answer a payment request', href: `${helpBase}/accounting#payment-requests` },
         { label: 'Prepare a board-ready financial report', href: `${helpBase}/accounting#recipe-board-report` },
+        roleGuideStep,
       ],
     }] : []),
   ];
+
+  const { own, others } = splitRolePaths(rolePaths, userRole);
 
   return (
     <HelpHubClient
       title="Help & guides"
       subtitle="Search for what you need, or browse the guides for your organization."
       cards={cards}
-      rolePaths={rolePaths}
+      ownRolePath={own}
+      rolePaths={others}
+      otherPathsLabel={ADMIN_HELP_HUB_WORDS.othersForBoard}
+      gateNote={ADMIN_HELP_HUB_WORDS.gateNote}
     />
   );
 }

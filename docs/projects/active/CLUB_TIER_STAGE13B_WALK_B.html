@@ -1,0 +1,302 @@
+<title>Stage 13b Walk B</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box (the house walk frame). */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .facts { grid-template-columns: 1fr; } .facts dd { margin-bottom: 6px; } }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.callnote { font-size: 13px; color: var(--warn); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+</style>
+
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · Club Tier Stage 13b · Session B · §489</span>
+    <h1>The arrival: invite each role, read the email, land on the role’s home</h1>
+    <p class="sub">Written 2026-11-07, after Session B was built, simplified, reviewed (high), word-checked and legal-checked. One purpose: a person the club invites is never given a role by accident, is told in the email what the role opens and what FieldLogicHQ is, and lands where their work starts, by either door. Help then opens on their own first steps. <strong>This walk sends real emails</strong>, to plus-addresses of the company inbox.</p>
+  </header>
+  <section class="card"><h2>What this walk is for</h2><p>(1) <strong>No default role</strong>: the invite’s Role field starts empty, Send stays off until a role is chosen, and the role’s sentence shows once one is. The setup checklist’s first step opens Members with the invite already open. (2) <strong>The emails</strong>: the new-account invitation and the “You’ve been added” email both say what the role opens and one line on what FieldLogicHQ is, with the role’s screen name. (3) <strong>Both arrival paths end on the role’s home</strong>: accepting an invitation, and the “added” email’s Sign in button. (4) <strong>Help by role</strong>: “New to FieldLogicHQ?” opens on the reader’s own first steps.</p></section>
+  <section class="card"><h2>It passes when</h2><ul>
+    <li><strong>1</strong> The Role field starts on “Choose a role”, Send invite is off until a role is picked, and each role shows its own one-line sentence; the Staff kit’s door still opens on Volunteer.</li>
+    <li><strong>2</strong> On a club with no board yet, setup step 1 opens Members with the invite open and no role chosen; once the step is done, its button just opens Members.</li>
+    <li><strong>3–4</strong> Each of the six invitations arrives naming the club, Morgan Ellis, the role by its screen name, what the role opens and what FieldLogicHQ is; the volunteer’s carries its job instead of a second sentence.</li>
+    <li><strong>5</strong> Accepting lands each person on their role’s home: admin and staff on the Overview, the treasurer in Accounting, the league admin and the registrar in House league, the volunteer on Check-in.</li>
+    <li><strong>6</strong> Adding someone who already has an account sends “You’ve been added” (with “You’ll …”), and its Sign in button lands a treasurer in Accounting.</li>
+    <li><strong>7</strong> A treasurer and a registrar each see only their own first steps in Help, open, ending with “What your role can open”; the owner sees theirs plus the others folded.</li>
+  </ul></section>
+  <section class="card"><h2>Not in this walk</h2><ul>
+    <li><strong>A coach re-opening an old invitation</strong> (now lands in the Coaches Portal). The copy has no such invitation; a unit test pins it.</li>
+    <li><strong>The resend</strong> builds from the same email as the first invitation; a unit test pins that it carries the same sentence.</li>
+    <li><strong>The invite on a phone.</strong> The dialog is unchanged in shape; only its starting value changed.</li>
+    <li><strong>Session A’s homes</strong> (the club band, “Still to do”, the league mornings) were walked in §485.</li>
+  </ul></section>
+  <section class="card"><h2>Before you start</h2><dl class="facts">
+    <dt>Dev server</dt><dd>Restarted by Claude before this walk was handed over. If a page answers “404” in the first minutes, wait a minute and reload once.</dd>
+    <dt>The clubs</dt><dd>Two dev copies Claude has made. <strong>Harbourtown</strong> at <code>http://localhost:3000/navj-club-s13bb/admin</code> (its name on screen and in the emails is “Harbourtown Minor Ball (navj-club-s13bb)”), and a <strong>bare club</strong> at <code>http://localhost:3000/navj-club-s13bb-fresh/admin</code> (Club plan, the owner only). Nothing here touches any other club.</dd>
+    <dt>Sign-ins</dt><dd>Sign in at <code>http://localhost:3000/login</code>, password <code>devpass123</code>, <strong>one private window per person</strong>. Existing people: <code>navj-club-s13bb-owner@dev.local</code> (Morgan Ellis, owner) · <code>navj-club-s13bb-treasurer@dev.local</code> (Avery Chen) · <code>navj-club-s13bb-registrar@dev.local</code> (Riley Okonkwo) · <code>navj-club-s13bb-fresh-owner@dev.local</code> (Alex Rivera, the bare club’s owner) · <code>fieldlogichq+s13bb-added-treasurer@gmail.com</code> (Priya Raman, has an account, belongs to no club).</dd>
+    <dt>The invitees</dt><dd>New people with no account yet, all delivering to the company inbox <code>fieldlogichq@gmail.com</code>: <code>fieldlogichq+s13bb-admin@gmail.com</code> · <code>…+s13bb-staff@…</code> · <code>…+s13bb-treasurer@…</code> · <code>…+s13bb-leagueadmin@…</code> · <code>…+s13bb-registrar@…</code> · <code>…+s13bb-volunteer@…</code>. Gmail may file them under Promotions or Spam.</dd>
+    <dt>The owner lands on setup</dt><dd>Morgan has not finished setup, so signing in lands on the “Set up your club” checklist. Use <strong>Members</strong> or <strong>Overview</strong> in the sidebar.</dd>
+    <dt>Links expire</dt><dd>An invitation link works for 24 hours. If one has gone stale, ask Claude to reset the invitees (Part S) and send again.</dd>
+    <dt>Keep private</dt><dd>Dev-only accounts; the page carries the password, so do not share the link.</dd>
+    <dt>When done</dt><dd>Part Z: tell Claude “13b walk B done” and it removes both copies and every walk account.</dd>
+  </dl></section>
+  <section class="card"><h2>Calls to make as you go</h2><ul>
+    <li><strong>The product line (4).</strong> “FieldLogicHQ is the online system Harbourtown … uses for things like registration, schedules and results.” /marketing chose the nouns; /legal added “for things like” so it is true of every club. Right, or reuse the family emails’ shorter “the software … uses”?</li>
+    <li><strong>“You’ll” in the added email (6).</strong> The added email says “You’ll run the club’s books…” (they already hold the role); the invitation and the accept page say “You’d…”. Right?</li>
+    <li><strong>The admin’s two sentences (1, 4).</strong> The picker tells the inviter an admin gets “every program on its plan, but not its billing or settings”; the admin’s email and accept page leave off the “but not”. Deliberate (the invitee is told what it opens, never what it withholds). Still right?</li>
+    <li><strong>Staff’s first steps are the Tournament admin path (7).</strong> A staff member’s own path in Help is “Tournament admin”. Right, given staff is the game-day role?</li>
+    <li><strong>Found by /legal, not changed (both predate this build):</strong> the emails’ Reply-To address is not an inbox, so a reply asking “is this real?” reaches nobody; and an invitation nobody accepts stays on file. Both are yours to rule.</li>
+  </ul></section>
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+</main>
+
+<script>
+(function () {
+  var KEY = "club-stage13b-walk-b-v1";
+  var TITLE = "Stage 13b walk B §489 · The arrival: invite each role, the email, the role’s home, Help by role (2026-11-07)";
+  var OWNER = "Owner · navj-club-s13bb-owner@dev.local";
+  var FRESH = "Bare club owner · navj-club-s13bb-fresh-owner@dev.local";
+  var TREAS = "Treasurer · navj-club-s13bb-treasurer@dev.local";
+  var REG = "Registrar · navj-club-s13bb-registrar@dev.local";
+  var INBOX = "The inbox · fieldlogichq@gmail.com";
+  var NEWP = function (who) { return "New " + who + " · a fresh private window"; };
+  var ORG = "<strong>Harbourtown Minor Ball (navj-club-s13bb)</strong>";
+  var ABOUT = "“FieldLogicHQ is the online system Harbourtown Minor Ball (navj-club-s13bb) uses for things like registration, schedules and results.”";
+  var PARTS = [
+ { id: "S", title: "Get ready: confirm the copies", steps: [
+  { who: "You → Claude", do: "Tell Claude <strong>“13b walk B: confirm the copies”</strong>. It re-runs the setup, which takes every invitee address back to “never invited” and leaves the bare club with its owner only.",
+    see: "Claude reads back, from the real routes: the six roles the invite offers in Harbourtown, each with its sentence, and step 1 of the bare club’s checklist open with a link that opens the invite." }
+ ]},
+ { id: "1", title: "No default role (computer)", steps: [
+  { who: OWNER, do: "Sign in, click <strong>Members</strong> in the sidebar, then <strong>Invite</strong>.",
+    see: "The window <strong>Invite someone to Harbourtown…</strong>. The Role field reads <strong>Choose a role</strong>; nothing is chosen. There is no sentence under it yet." },
+  { who: OWNER, do: "Type any email in the Email field and look at <strong>Send invite</strong>.",
+    see: "<strong>Send invite is off</strong> (it cannot be pressed) while no role is chosen." },
+  { who: OWNER, do: "Open the Role field and read the list.",
+    see: "Three groups: <strong>Runs the club</strong> (Admin, Treasurer, Staff), <strong>House league</strong> (League admin, League registrar) and <strong>Volunteers</strong> (Volunteer). No Coach. Each role has a hint line under its name." },
+  { who: OWNER, do: "Choose <strong>Treasurer</strong>.",
+    see: "Under the field: “You'd run the club's books: ledgers, the budget, and allocations to teams.” with nothing in front of it. Send invite is now on." },
+  { who: OWNER, do: "Choose <strong>Admin</strong>, then <strong>Volunteer</strong>.",
+    see: "Admin: “You'd help run the organization: every program on its plan, but not its billing or settings.” Volunteer: the sentence about game day from your phone, and a <strong>Helping with</strong> field appears under it." },
+  { who: OWNER, do: "Close the window. Open <strong>Tournaments</strong> › Harbourtown Invitational 2026 › <strong>Staff kit</strong>, and press <strong>Invite a volunteer</strong>.",
+    see: "Members opens with the invite window already open and the Role field already on <strong>Volunteer</strong> (that door still chooses for you). Close it without sending." }
+ ]},
+ { id: "2", title: "Setup step 1 opens the invite", steps: [
+  { who: FRESH, do: "Sign in (private window). You land on <strong>Set up your club</strong>. Press the button on step 1, <strong>Staff your board</strong>.",
+    see: "Members opens with the <strong>invite window already open</strong>, the Role field on <strong>Choose a role</strong> and Send invite off. Close it without sending." },
+  { who: FRESH, do: "Reload the Members page with the window closed.",
+    see: "Known, not changed: the window opens again, because the address still asks for it (the Staff kit’s door does the same). Note it only if it bothers you." },
+  { who: OWNER, do: "In Morgan’s window, open the setup checklist (Overview › Continue setup). Step 1 is done (Dana Kowalski and Avery Chen joined). Press its outline button <strong>Members</strong>.",
+    see: "Members opens <strong>without</strong> the invite window: a finished step does not pop the invite." }
+ ]},
+ { id: "3", title: "Send the six invitations", steps: [
+  { who: OWNER, do: "On Members, invite <code>fieldlogichq+s13bb-admin@gmail.com</code> as <strong>Admin</strong>.",
+    see: "A notice: “Invite sent to … The setup link expires in 24 hours…”. The person shows as <strong>Invited</strong>." },
+  { who: OWNER, do: "Invite <code>…+s13bb-staff@gmail.com</code> as <strong>Staff</strong>, and <code>…+s13bb-treasurer@gmail.com</code> as <strong>Treasurer</strong>.",
+    see: "Two more “Invite sent” notices; both show as Invited." },
+  { who: OWNER, do: "Invite <code>…+s13bb-leagueadmin@gmail.com</code> as <strong>League admin</strong>, and <code>…+s13bb-registrar@gmail.com</code> as <strong>League registrar</strong>.",
+    see: "Two more; both show as Invited." },
+  { who: OWNER, do: "Invite <code>…+s13bb-volunteer@gmail.com</code> as <strong>Volunteer</strong>, Helping with <strong>The gate</strong>.",
+    see: "Sent; shows as Invited." }
+ ]},
+ { id: "4", title: "Read the six emails", steps: [
+  { who: INBOX, do: "Open the <strong>treasurer’s</strong> invitation (subject “You've been invited to Harbourtown … on FieldLogicHQ”).",
+    see: "“<strong>Morgan Ellis</strong> invited you to join " + ORG + " on <strong>FieldLogicHQ</strong> as a treasurer.” Then “You'd run the club's books: ledgers, the budget, and allocations to teams.” Then " + ABOUT + " Then the Accept invitation button and the 24-hour line." },
+  { who: INBOX, do: "Open the <strong>admin’s</strong>.",
+    see: "“… as <strong>an admin</strong>” (not “administrator”), and “You'd help run the organization: every program on its plan.” (no “but not its billing or settings”). The same product line." },
+  { who: INBOX, do: "Open the <strong>league admin’s</strong> and the <strong>registrar’s</strong>.",
+    see: "“as <strong>a league admin</strong>” with “You'd run the house league: seasons, registrations, teams and schedules.”; “as a league registrar” with “You'd look after house league registrations.” Each has the product line." },
+  { who: INBOX, do: "Open the <strong>staff member’s</strong>.",
+    see: "“as a staff member” with “You'd help on game day: schedules, scores and check-in.” and the product line." },
+  { who: INBOX, do: "Open the <strong>volunteer’s</strong>.",
+    see: "“as a volunteer”, then <strong>one</strong> sentence about the job: checking teams in at the gate from your phone, opening straight to Check-in. Not a second, generic sentence about scores or both. The product line under it." },
+  { who: INBOX, do: "Look for anything that sells: a plan name, a price, “try FieldLogicHQ”, a link to pricing or sign-up.",
+    see: "<strong>None</strong> in any of the six. (That keeps them outside the anti-spam consent rules, /legal.)" }
+ ]},
+ { id: "5", title: "Accept, and land on the role’s home", steps: [
+  { who: NEWP("treasurer"), do: "Copy the treasurer email’s <strong>Accept invitation</strong> link into a fresh private window. On the page, read it, enter a name and a password, and join.",
+    see: "The page says what a treasurer opens, the same sentence as the email. After joining you land in <strong>Accounting</strong>." },
+  { who: NEWP("league admin"), do: "Same, with the league admin’s link.",
+    see: "You land in <strong>House league</strong>." },
+  { who: NEWP("registrar"), do: "Same, with the registrar’s link.",
+    see: "You land in <strong>House league</strong>." },
+  { who: NEWP("admin"), do: "Same, with the admin’s link.",
+    see: "You land on the club’s <strong>Overview</strong> (with “The club today”, Session A’s band)." },
+  { who: NEWP("staff member"), do: "Same, with the staff member’s link.",
+    see: "You land on the club’s <strong>Overview</strong>." },
+  { who: NEWP("volunteer"), do: "Same, with the volunteer’s link.",
+    see: "You land on <strong>Check-in</strong> (their job), not the admin." },
+  { who: OWNER, do: "Reload Members.",
+    see: "All six now show as active members, each with their role." }
+ ]},
+ { id: "6", title: "The “added” email for a treasurer", steps: [
+  { who: OWNER, do: "Invite <code>fieldlogichq+s13bb-added-treasurer@gmail.com</code> as <strong>Treasurer</strong>. (Priya Raman already has a FieldLogicHQ account.)",
+    see: "The notice says “… was added to Harbourtown…. They’ll get an email to sign in…” (added, not invited). Priya shows as an active member straight away." },
+  { who: INBOX, do: "Open the email “You've been added to Harbourtown … on FieldLogicHQ”.",
+    see: "Heading “You've been added to Harbourtown Minor Ball (navj-club-s13bb)”. “You now have access to … as a treasurer.” Then “<strong>You'll</strong> run the club's books: ledgers, the budget, and allocations to teams.”, the product line, “No action is required — just sign in to get started.” and a <strong>Sign in</strong> button." },
+  { who: "Priya · a fresh private window", do: "Copy the <strong>Sign in</strong> link into a fresh private window and sign in as <code>fieldlogichq+s13bb-added-treasurer@gmail.com</code> / <code>devpass123</code>.",
+    see: "You land in Harbourtown’s <strong>Accounting</strong>, not the Overview. (It used to open the Overview for every role.)" }
+ ]},
+ { id: "7", title: "Help by role", steps: [
+  { who: TREAS, do: "Sign in (private window) and open <strong>Help</strong> from the sidebar.",
+    see: "“New to FieldLogicHQ?” is <strong>open</strong>, with the hint <strong>Your first steps</strong>, showing <strong>only the Treasurer</strong> path. No League, Rep, Coach, Tournament or Owner path is offered as theirs, and there is no fold of other roles." },
+  { who: TREAS, do: "Read the last step and press it: <strong>What your role can open</strong>.",
+    see: "The Org admin guide opens at <strong>Roles explained — who can do what</strong>, with the table of what each role can open." },
+  { who: TREAS, do: "Back on Help, read the line under the guide cards.",
+    see: "“You see the guides your plan includes. Accounting and Rep teams, for example, appear only for orgs with those modules. The Org admin & setup card shows for owners and admins.” There is no Org admin & setup card for the treasurer." },
+  { who: REG, do: "Sign in (private window) and open <strong>Help</strong>.",
+    see: "Open on <strong>Your first steps</strong>: only the <strong>League registrar</strong> path, ending with What your role can open." },
+  { who: OWNER, do: "Open <strong>Help</strong>.",
+    see: "Open on the <strong>Owner / Admin</strong> path, and under it a closed fold, <strong>The first steps of the people you invite</strong>. Opening it shows the Tournament admin, League admin, League registrar, Rep program admin, Coach and Treasurer paths. Each fold’s arrow turns on its own." },
+  { who: OWNER, do: "Close “New to FieldLogicHQ?”, then type a word in the Help search box.",
+    see: "It stays closed while you type (your choice holds)." }
+ ]},
+ { id: "Z", title: "Put back", steps: [
+  { who: "You → Claude", do: "Tell Claude <strong>“13b walk B done”</strong>. It removes <code>navj-club-s13bb</code>, <code>navj-club-s13bb-fresh</code>, their accounts and every <code>fieldlogichq+s13bb-…</code> account.",
+    see: "Claude reports both copies and the walk accounts gone. The emails stay in the inbox; delete them there if you like." }
+ ]}
+];
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+      if (s.call) t.appendChild(el('span', 'callnote', s.call));
+      var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+      cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+      boxes.push({ part: p.id, step: id, cb: cb });
+      var row = el('label', 'step'); row.appendChild(cb); row.appendChild(t); body.appendChild(row);
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function doneSteps(partId) {
+    return boxes.filter(function (b) { return (!partId || b.part === partId) && b.cb.checked; }).map(function (b) { return b.step; });
+  }
+  var totalSteps = boxes.length;
+
+  function refresh() {
+    PARTS.forEach(function (p) {
+      var n = doneSteps(p.id).length;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + p.steps.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    var done = doneSteps(null).length;
+    document.getElementById('total').textContent = done + ' of ' + totalSteps + ' checked';
+    document.getElementById('barfill').style.width = (totalSteps ? Math.round(done * 100 / totalSteps) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [TITLE, 'Checked ' + doneSteps(null).length + ' of ' + totalSteps + ' steps'];
+    PARTS.forEach(function (p) {
+      var ticked = doneSteps(p.id);
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + p.steps.length + (ticked.length ? ' (' + ticked.join(', ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

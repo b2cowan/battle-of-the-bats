@@ -90,17 +90,19 @@ export default function MembersKit() {
   const [manageId, setManageId] = useState<string | null>(null);
   const [notice, setNotice] = useNotice();
 
-  // The Staff kit's "Invite a volunteer" door lands here with `?invite=volunteer` and opens the invite
-  // with the volunteer role chosen — once per visit (ref-guarded, as the schedule reads `?tool=`). The
-  // page's own Invite keeps its default.
+  // A door that lands here with the invite open — once per visit (ref-guarded, as the schedule reads `?tool=`):
+  //   `?invite=volunteer` — the Staff kit's "Invite a volunteer", with the volunteer role chosen;
+  //   `?invite=open` — the setup checklist's step 1 (Stage 13b B1), with NO role chosen: the step names two roles.
+  // A reader who cannot manage members lands on the list, as before.
   const inviteParam = useSearchParams().get('invite');
   const inviteDoorRef = useRef(false);
   // Only where the plan hands the role out (none on the free plan, R7 of the free tournament tier): the list decides.
   const volunteersOffered = Boolean(roles?.some(r => r.role === 'official'));
   useEffect(() => {
-    if (inviteParam !== 'volunteer' || inviteDoorRef.current || !canManage || !volunteersOffered) return;
+    const volunteer = inviteParam === 'volunteer' && volunteersOffered;
+    if (inviteDoorRef.current || !canManage || (inviteParam !== 'open' && !volunteer)) return;
     inviteDoorRef.current = true;
-    setInviteRole('official');
+    if (volunteer) setInviteRole('official');
     setInviteOpen(true);
   }, [inviteParam, canManage, volunteersOffered]);
 

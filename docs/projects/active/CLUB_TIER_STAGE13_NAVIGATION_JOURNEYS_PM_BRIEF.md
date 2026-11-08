@@ -104,3 +104,11 @@ the ones they can do and "Ask the owner" on the rest; it disappears when setup i
 list at the top of the live season's page. The install banner no longer greets a person on their first visit. **Why:** the president's
 first screen showed doors and counts but no figures, and a new admin saw an empty page. **Success:** the owner answers "how is the club
 today" without opening a second screen; a new admin knows what is theirs on day one; nobody sees a figure they cannot open.
+
+**13b Session B, the arrival (built 2026-11-07, awaiting the owner's walk §489).** Inviting someone no longer picks a role for you: the
+field starts on "Choose a role" and Send waits for one, so a treasurer can't go out as Staff by accident. Every invitation, and the "You've
+been added" email for someone who already has an account, now says what the role opens and what FieldLogicHQ is, using the role's screen
+name. Both ways in now land a person where their work starts (a treasurer in Accounting, a league role in House league), including the
+"added" email's Sign in, which used to open the Overview for everyone. Help opens on the reader's own first steps. **Why:** a volunteer
+treasurer couldn't tell from the email what this was, and the two arrival paths disagreed. **Success:** no one is invited with the wrong
+role by default; an invitee knows what they are joining before they click; every role's first screen is their own.

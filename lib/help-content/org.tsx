@@ -33,7 +33,7 @@ const orgHelp: HelpPageContent = {
         <>
           <p>When you sign in as a Club owner for the first time, you land on a five-step checklist instead of the admin panel — <strong>Set up your club</strong>. Each step opens the screen that does the job, and a step is marked done only once it genuinely is. The checklist keeps greeting you at sign-in until you press <strong>Go to Overview</strong> or finish every step; after that you sign in straight to the Overview.</p>
           <ol>
-            <li><strong>Staff your board.</strong> Invite an admin and a treasurer so the work isn&rsquo;t all yours.</li>
+            <li><strong>Staff your board.</strong> Invite an admin and a treasurer so the work isn&rsquo;t all yours. Its button opens <strong>Members</strong> with the invite already open; choose each person&rsquo;s role there.</li>
             <li><strong>Add your teams.</strong> Each team, and the season it&rsquo;s playing.</li>
             <li><strong>Name a head coach for every team.</strong> Each coach gets the Premium Coaches Portal, included in your plan. <strong>Invite a coach</strong> opens the first team still without one — its Coaches page, where you enter their email.</li>
             <li><strong>Put your club online.</strong> Add a tagline and a contact email to your public page. The step is done once both are saved; until then it says which one is still needed.</li>
@@ -129,28 +129,63 @@ const orgHelp: HelpPageContent = {
       group: 'How-to recipes',
       heading: 'How to invite a member and choose the right role',
       summary: 'Add a new admin, treasurer, staff member, registrar, or volunteer without over-granting access.',
-      keywords: ['invite member', 'role', 'permissions', 'staff', 'admin', 'treasurer', 'registrar', 'coach', 'volunteer', 'scorekeeper', 'helping with', 'change a volunteer’s job', 'accept invitation', 'email link', 'runs the club', 'house league group', 'volunteers group', 'another organization', 'coach staff page'],
-      searchText: 'invite member choose role permissions owner admin staff treasurer league admin league registrar coach scorekeeper resend pending invite seats invited person signed up created their own organization by mistake wrong organization sign-up recognizes email me my invitation link accept invitation setup link grouped role list runs the club house league volunteers sentence under the field already a member at another club verified network one home organization coaches added on the team staff page invitation names who sent it lands where role starts volunteer helping with scoring the gate both change it any time in members manage at least one job lands on field scores or check-in one home organization',
+      keywords: ['invite member', 'role', 'permissions', 'staff', 'admin', 'treasurer', 'registrar', 'coach', 'volunteer', 'scorekeeper', 'helping with', 'change a volunteer’s job', 'accept invitation', 'email link', 'runs the club', 'house league group', 'volunteers group', 'another organization', 'coach staff page', 'choose a role', 'no default role', 'invitation email', 'you’ve been added', 'added email', 'what is fieldlogichq'],
+      searchText: 'no default role choose a role send invite stays off until a role is chosen what the invitation email says what the role opens what fieldlogichq is already has an account added straight away you have been added email sign in button lands on their own home accounting house league invite member choose role permissions owner admin staff treasurer league admin league registrar coach scorekeeper resend pending invite seats invited person signed up created their own organization by mistake wrong organization sign-up recognizes email me my invitation link accept invitation setup link grouped role list runs the club house league volunteers sentence under the field already a member at another club verified network one home organization coaches added on the team staff page invitation names who sent it lands where role starts volunteer helping with scoring the gate both change it any time in members manage at least one job lands on field scores or check-in one home organization',
       links: [
         { label: 'Members', href: '../org/members' },
       ],
       content: (
         <>
-          <p>Use this when someone needs to help run the club or organization, a tournament, house league, rep teams, accounting, or score entry.</p>
-          <ol>
-            <li>Go to <strong>Members</strong>.</li>
-            <li>Click <strong>Invite</strong>.</li>
-            <li>Enter the person&rsquo;s email address.</li>
-            <li>Choose their role from the one dropdown, grouped as <strong>Runs the club</strong> (or organization), <strong>House league</strong> (shown once your club runs one), and <strong>Volunteers</strong>. A sentence under the field says exactly what that role opens before you send the invite.</li>
-            <li>For a volunteer (Tournament Plus and above; the free Tournament plan has no volunteer role), choose what they&rsquo;re <strong>Helping with</strong>: <strong>Scoring</strong>, <strong>The gate</strong>, or <strong>Both</strong>. The line under it says what they&rsquo;ll be able to do, and they&rsquo;ll land straight on that job. You can change it later in <strong>Manage</strong>.</li>
-            <li>Send the invite, then confirm the person appears as <strong>Invited</strong> until they accept.</li>
-          </ol>
-          <p><strong>Coaches aren&rsquo;t invited from here.</strong> A team&rsquo;s head coach adds and removes their own coaching staff on that team&rsquo;s own staff page — coaching rows never appear in this dropdown.</p>
-          <p><strong>Someone already active at another club or organization can accept your invite too</strong> — the same person can hold roles at more than one, and accepting yours doesn&rsquo;t remove them from anywhere else. The one exception is a volunteer, who keeps a single home organization.</p>
-          <p><strong>Invited members don&rsquo;t get a password</strong> — the email has a setup link they must click to finish creating their account; clicking &ldquo;log in&rdquo; first shows an incorrect-email-or-password error, so ask them to check spam and use the resend option on their pending row if it&rsquo;s missing. If they sign up on their own instead, FieldLogicHQ recognizes their email and offers to email them the invitation link, so they land in your organization rather than starting a new one.</p>
-          <p><strong>Access rule of thumb:</strong> owners hold Settings and Plan &amp; billing, admins run every program the plan carries, staff and volunteers handle day-of work, and each accepted invite names who sent it and opens straight to where that role&rsquo;s work starts — a treasurer in Accounting, a league role in the house league, a volunteer on their job (Field scores or Check-in), everyone else at the admin overview.</p>
+          <p>Use this when someone needs to help run the club or organization, a tournament, house league, rep teams, accounting, or score entry. The answers below cover sending the invite, what the email says, who can be invited here, and where each person lands.</p>
         </>
       ),
+      subtopics: [
+        {
+          id: 'recipe-invite-member-send',
+          title: 'Send the invite',
+          content: (
+            <>
+                <ol>
+                  <li>Go to <strong>Members</strong>.</li>
+                  <li>Click <strong>Invite</strong>.</li>
+                  <li>Enter the person&rsquo;s email address.</li>
+                  <li>Choose their role from the one dropdown, grouped as <strong>Runs the club</strong> (or organization), <strong>House league</strong> (shown once your club runs one), and <strong>Volunteers</strong>. No role is chosen for you: the field starts on <strong>Choose a role</strong> and <strong>Send invite</strong> stays off until you pick one. A sentence under the field then says exactly what that role opens.</li>
+                  <li>For a volunteer (Tournament Plus and above; the free Tournament plan has no volunteer role), choose what they&rsquo;re <strong>Helping with</strong>: <strong>Scoring</strong>, <strong>The gate</strong>, or <strong>Both</strong>. The line under it says what they&rsquo;ll be able to do, and they&rsquo;ll land straight on that job. You can change it later in <strong>Manage</strong>.</li>
+                  <li>Send the invite, then confirm the person appears as <strong>Invited</strong> until they accept.</li>
+                </ol>
+            </>
+          ),
+        },
+        {
+          id: 'recipe-invite-member-email',
+          title: 'What the invitation email says',
+          content: (
+            <>
+                <p>The invitation names your club, who sent it, the role, what that role opens (the same sentence they&rsquo;ll see when they accept), and one line on what FieldLogicHQ is, so a new treasurer knows it&rsquo;s the club&rsquo;s own system and not a payment request. Someone who already has a FieldLogicHQ account is added straight away instead, and gets a &ldquo;You&rsquo;ve been added&rdquo; email with the same lines and a <strong>Sign in</strong> button.</p>
+                <p><strong>Invited members don&rsquo;t get a password</strong> — the email has a setup link they must click to finish creating their account; clicking &ldquo;log in&rdquo; first shows an incorrect-email-or-password error, so ask them to check spam and use the resend option on their pending row if it&rsquo;s missing. If they sign up on their own instead, FieldLogicHQ recognizes their email and offers to email them the invitation link, so they land in your organization rather than starting a new one.</p>
+            </>
+          ),
+        },
+        {
+          id: 'recipe-invite-member-who',
+          title: 'Who can be invited here',
+          content: (
+            <>
+                <p><strong>Coaches aren&rsquo;t invited from here.</strong> A team&rsquo;s head coach adds and removes their own coaching staff on that team&rsquo;s own staff page — coaching rows never appear in this dropdown.</p>
+                <p><strong>Someone already active at another club or organization can accept your invite too</strong> — the same person can hold roles at more than one, and accepting yours doesn&rsquo;t remove them from anywhere else. The one exception is a volunteer, who keeps a single home organization.</p>
+            </>
+          ),
+        },
+        {
+          id: 'recipe-invite-member-lands',
+          title: 'Where each role lands',
+          content: (
+            <>
+                <p>Owners hold Settings and Plan &amp; billing, admins run every program the plan carries, staff and volunteers handle day-of work, and each accepted invite names who sent it and opens straight to where that role&rsquo;s work starts — a treasurer in Accounting, a league role in the house league, a volunteer on their job (Field scores or Check-in), everyone else at the admin overview. The &ldquo;You&rsquo;ve been added&rdquo; email&rsquo;s <strong>Sign in</strong> button lands in the same place, and so does every later sign-in.</p>
+            </>
+          ),
+        },
+      ],
       faqs: [
         {
           id: 'faq-best-role-for-helper',
@@ -488,7 +523,7 @@ const orgHelp: HelpPageContent = {
       searchText: 'seat limit staff seats how many seats do volunteers scorekeepers count toward limit officials free seats free tournament 3 seats upgrade invite member manage role restrict tournaments helping with change a volunteer job resend pending invite export member list staff kit volunteer links qr codes',
       content: (
         <>
-          <p>Go to <strong>Members</strong> and click <strong>Invite</strong>. Enter the person's email and pick their role. They'll receive an invitation email with a link to accept and set up their account.</p>
+          <p>Go to <strong>Members</strong> and click <strong>Invite</strong>. Enter the person's email and choose their role (none is chosen for you). They'll receive an invitation email that says what the role opens, with a link to accept and set up their account.</p>
           <p>Once a member has accepted, click <strong>Manage</strong> on their row to:</p>
           <ul>
             <li>Change their role</li>

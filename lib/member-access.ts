@@ -193,13 +193,16 @@ export const ROLE_LABEL: Record<OrgRole, string> = {
  * The role as a noun inside an email sentence ("…as a treasurer"). ONE table for the invite, the
  * resend and the added-to-org mails — the resend built its own and called a treasurer a
  * "team treasurer" (J10-005).
+ * Each is `ROLE_LABEL` in a sentence's lower case (Stage 13b B2, F-A1-2: the email said "administrator" and
+ * "league administrator" while every screen says Admin and League admin). Staff alone adds "member", because
+ * "as a staff" is not a sentence.
  */
 export const ROLE_EMAIL_LABEL: Record<OrgRole, string> = {
   owner: 'owner',
-  admin: 'administrator',
+  admin: 'admin',
   staff: 'staff member',
   official: 'volunteer',
-  league_admin: 'league administrator',
+  league_admin: 'league admin',
   league_registrar: 'league registrar',
   treasurer: 'treasurer',
   coach: 'coach',
