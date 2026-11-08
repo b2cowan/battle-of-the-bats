@@ -14,7 +14,7 @@
  *   greyed, with Undo, so a search still finds it.
  * ⚖ EVERY HIGHLIGHT OPENS: a row's chip brings its possibility into the callout.
  * ⚖ Online payments on their way are counted above: one greyed row, no action (drawn).
- * ⚖ "ADD THE MISSING LINE" (BC3b, drawn) sits with the callout's "Or the bank…" sentence: the bank holds money the books
+ * ⚖ "ADD THE MISSING ENTRY" (BC3b, drawn; "Add the missing line" until WD1 named it after the window it opens) sits with the callout's "Or the bank…" sentence: the bank holds money the books
  *   don't (or the reverse). With no possibility to name, that sentence and its door stand alone under the title (not drawn).
  *   It opens the Ledger's own add window (`BankCheckForm`); nothing here writes a line.
  * ⚖ "WAITING AT THE START" (Q2-A; look-back ruled 2026-11-06, BC3b): on an OFF check within six months of the start, the
@@ -30,6 +30,7 @@ import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { Callout, ClubRow, ClubRowBand, ClubRowList, RepChip, RowAction, repKit } from '../../RepKit';
 import { day } from '../MoneyKit';
 import { hintsFor, signed, type BankLine, type CheckFigure, type Hint, type WaitingItem } from '@/lib/bank-check';
+import { itemOfLine } from '@/lib/bank-check-draft';
 import { lineMatches, pickerSearch } from '@/lib/bank-club-rules';
 import { BANK_WORDS as W } from '@/lib/bank-tab-words';
 import { cents, dayYear, howWord, moved, nameOf, type Figure } from './BankShared';
@@ -41,10 +42,6 @@ const PAGE = 50;
 const PAGE_PHONE = 10;
 
 type Line = Figure['suspects']['lines'][number];
-
-/** A line as a Not-in-the-bank-yet item: its own key, date, direction, amount and words (the server re-reads them). */
-export const itemOf = (l: BankLine): WaitingItem =>
-  ({ key: l.key, date: l.date, direction: l.direction, amountCents: l.amountCents, ...(l.label ? { label: l.label } : {}) });
 
 
 export default function BankFind({ figure, band, typed, marked, busy, onMark, onUndo, onAtStart, onAddLine }: {
@@ -61,7 +58,7 @@ export default function BankFind({ figure, band, typed, marked, busy, onMark, on
   onUndo: (key: string) => void;
   /** "Waiting at the start" (Q2): correct the starting statement with this line. */
   onAtStart: (line: BankLine) => void;
-  /** "Add the missing line": the Ledger's add window, filled with the gap. */
+  /** "Add the missing entry": the Ledger's add window, filled with the gap. */
   onAddLine: () => void;
 }) {
   const [open, setOpen] = useState(false); // "Show them", while the check isn't off
@@ -131,7 +128,7 @@ export default function BankFind({ figure, band, typed, marked, busy, onMark, on
   const LineView = isPhone ? LineCard : LineRow;
   const lineRows = listOpen ? shown.map(l => (
     <LineView key={l.key} line={l} chip={chipFor(l.key)}
-      action={{ label: W.notInBankYet, aria: W.markLine(nameOf(l)), onClick: () => onMark(itemOf(l)) }}
+      action={{ label: W.notInBankYet, aria: W.markLine(nameOf(l)), onClick: () => onMark(itemOfLine(l)) }}
       undo={marked.has(l.key) ? () => onUndo(l.key) : undefined} />
   )) : null;
   const beforeRows = listOpen && foundBefore.length > 0 ? beforeShown.map(l => (
@@ -202,7 +199,7 @@ export default function BankFind({ figure, band, typed, marked, busy, onMark, on
 
       {off && current && (
         <HintCallout hint={current} target={target} bankMore={bankMore} busy={busy}
-          onMark={() => onMark(itemOf(current.lines[0]))} onAtStart={() => onAtStart(current.lines[0])} onAddLine={onAddLine}
+          onMark={() => onMark(itemOfLine(current.lines[0]))} onAtStart={() => onAtStart(current.lines[0])} onAddLine={onAddLine}
           next={hints.length > 1 ? {
             count: W.hintCount(hints.indexOf(current) + 1, hints.length),
             go: () => setPick(hints[(hints.indexOf(current) + 1) % hints.length].key),
@@ -212,7 +209,7 @@ export default function BankFind({ figure, band, typed, marked, busy, onMark, on
       {off && !current && (
         <p className={`${ck.hint} ${s.hintLine}`}>
           {(bankMore ? W.hintOrMore : W.hintOrLess)(target, true)}{' '}
-          <button type="button" className={s.link} onClick={onAddLine} disabled={busy}>{W.addMissing}</button>
+          <button type="button" className={s.link} onClick={onAddLine} disabled={busy}>{W.addMissingEntry}</button>
         </p>
       )}
 
@@ -243,7 +240,7 @@ export default function BankFind({ figure, band, typed, marked, busy, onMark, on
 }
 
 /** The callout: one possibility, its sentence, and its answers (drawing tab 3): "Not in the bank yet" on an exact line,
- *  "Waiting at the start" on one before the start, "Add the missing line" with the "Or the bank…" sentence. */
+ *  "Waiting at the start" on one before the start, "Add the missing entry" with the "Or the bank…" sentence. */
 function HintCallout({ hint, target, bankMore, busy, onMark, onAtStart, onAddLine, next }: {
   hint: Hint; target: string; bankMore: boolean; busy: boolean; onMark: () => void; onAtStart: () => void; onAddLine: () => void;
   next: { count: string; go: () => void } | null;
@@ -271,7 +268,7 @@ function HintCallout({ hint, target, bankMore, busy, onMark, onAtStart, onAddLin
       <span className={s.calloutActs}>
         {hint.kind === 'exact' && <button type="button" className="btn btn-outline" onClick={onMark}>{W.notInBankYet}</button>}
         {hint.kind === 'atStart' && <button type="button" className="btn btn-outline" onClick={onAtStart} disabled={busy}>{W.atStart}</button>}
-        {hint.kind !== 'half' && <button type="button" className="btn btn-outline" onClick={onAddLine} disabled={busy}>{W.addMissing}</button>}
+        {hint.kind !== 'half' && <button type="button" className="btn btn-outline" onClick={onAddLine} disabled={busy}>{W.addMissingEntry}</button>}
         {next && (
           <span className={s.hintNext}>
             <span className={s.sumQuiet}>{next.count}</span>

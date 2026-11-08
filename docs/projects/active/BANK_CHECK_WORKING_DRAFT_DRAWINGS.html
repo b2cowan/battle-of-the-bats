@@ -1,0 +1,385 @@
+<title>Bank Check Working Draft</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: sticky numbered tabs, one decision per tab, true-size product frames on a cool ground so they read as specimens.
+   Chrome tokens (--c-*) are the drawing sheet; product tokens (--p-*) are the shipped Coaches/Admin warm kit values. */
+:root {
+  --c-bg: #EAEEF2; --c-panel: #FFFFFF; --c-ink: #17212C; --c-mut: #556272; --c-line: #CFD6DE; --c-acc: #2B5B8C;
+  --c-new: #1B7350; --c-new-bg: #DDF1E7; --c-chg: #7A5200; --c-chg-bg: #FBEBC8; --c-same: #4A5565; --c-same-bg: #E3E8EE;
+  --p-paper: #F8F4ED; --p-card: #FFFFFF; --p-line: rgba(70,55,30,.12); --p-strong: rgba(70,55,30,.20);
+  --p-ink: #241E15; --p-soft: #4A4235; --p-dim: #615A54; --p-olive: #57651E; --p-warn-ink: #6B4105; --p-warn: #835006; --p-warn-rgb: 131,80,6;
+  --p-good: #34662A; --p-in: #2A5222; --p-lime: #D9F99D; --p-lime-ink: #241E15; --p-field: #F8F4ED; --p-surface2: #FFFFFF;
+  --f-chrome: "IBM Plex Sans", system-ui, sans-serif; --f-mono: "IBM Plex Mono", ui-monospace, monospace; --f-prod: "Inter", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --c-bg: #0F141A; --c-panel: #171E26; --c-ink: #E7ECF2; --c-mut: #98A5B5; --c-line: #2A3441; --c-acc: #86B6E6;
+  --c-new: #6FD3A2; --c-new-bg: #12342A; --c-chg: #F0C46A; --c-chg-bg: #3A2D0E; --c-same: #A9B4C2; --c-same-bg: #232C37;
+  --p-paper: #0A0A0A; --p-card: #111827; --p-line: rgba(255,255,255,.08); --p-strong: rgba(255,255,255,.16);
+  --p-ink: #F1F5F9; --p-soft: rgba(255,255,255,.72); --p-dim: #888B93; --p-olive: #D9F99D; --p-warn-ink: #F59E0B; --p-warn: #F59E0B; --p-warn-rgb: 245,158,11;
+  --p-good: #4ADE80; --p-in: #22C55E; --p-lime: #D9F99D; --p-lime-ink: #0F1123; --p-field: rgba(255,255,255,.05); --p-surface2: #0F172A;
+  color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --c-bg: #0F141A; --c-panel: #171E26; --c-ink: #E7ECF2; --c-mut: #98A5B5; --c-line: #2A3441; --c-acc: #86B6E6;
+  --c-new: #6FD3A2; --c-new-bg: #12342A; --c-chg: #F0C46A; --c-chg-bg: #3A2D0E; --c-same: #A9B4C2; --c-same-bg: #232C37;
+  --p-paper: #0A0A0A; --p-card: #111827; --p-line: rgba(255,255,255,.08); --p-strong: rgba(255,255,255,.16);
+  --p-ink: #F1F5F9; --p-soft: rgba(255,255,255,.72); --p-dim: #888B93; --p-olive: #D9F99D; --p-warn-ink: #F59E0B; --p-warn: #F59E0B; --p-warn-rgb: 245,158,11;
+  --p-good: #4ADE80; --p-in: #22C55E; --p-lime: #D9F99D; --p-lime-ink: #0F1123; --p-field: rgba(255,255,255,.05); --p-surface2: #0F172A;
+  color-scheme: dark; }
+
+* { box-sizing: border-box; }
+body { background: var(--c-bg); color: var(--c-ink); font-family: var(--f-chrome); font-size: 15px; line-height: 1.5; margin: 0;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 48px; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--c-bg); }
+.wrap { max-width: 1180px; margin: 0 auto; }
+header.top { padding: 22px 0 10px; }
+header.top .eyebrow { font: 600 11px/1 var(--f-mono); letter-spacing: .09em; text-transform: uppercase; color: var(--c-mut); }
+header.top h1 { font: 700 26px/1.2 var(--f-chrome); margin: 8px 0 6px; text-wrap: balance; }
+header.top p { margin: 0; color: var(--c-mut); max-width: 68ch; }
+.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 11; background: var(--c-bg); padding: 8px 0 0; border-bottom: 1px solid var(--c-line); }
+.tabrow { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+.tabrow button { flex: 0 0 auto; font: 600 13px/1 var(--f-chrome); padding: 11px 14px; background: transparent; color: var(--c-mut); border: 0; border-bottom: 3px solid transparent; cursor: pointer; }
+.tabrow button[aria-selected="true"] { color: var(--c-ink); border-bottom-color: var(--c-acc); }
+.tabrow button:focus-visible, .mk:focus-visible, .seg button:focus-visible { outline: 2px solid var(--c-acc); outline-offset: 2px; }
+.viewrow { display: flex; align-items: center; gap: 12px; padding: 10px 0; }
+.viewrow[hidden] { display: none; }
+.viewrow span { font: 600 11px/1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--c-mut); }
+.seg { display: inline-flex; background: var(--c-panel); border: 1px solid var(--c-line); border-radius: 8px; padding: 3px; }
+.seg button { font: 600 13px/1 var(--f-chrome); padding: 8px 12px; border: 0; background: transparent; color: var(--c-mut); border-radius: 6px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: color-mix(in srgb, var(--c-acc) 16%, var(--c-panel)); color: var(--c-ink); box-shadow: inset 0 0 0 1px var(--c-acc); }
+.tab[hidden] { display: none; }
+.tabbody { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 24px; padding-top: 18px; align-items: start; }
+@media (max-width: 1000px) { .tabbody { grid-template-columns: minmax(0, 1fr); } }
+.lead { grid-column: 1 / -1; margin: 0; color: var(--c-mut); max-width: 80ch; }
+.lead b { color: var(--c-ink); }
+.spec { min-width: 0; display: flex; flex-direction: column; gap: 18px; }
+.specbox { background: var(--c-panel); border: 1px solid var(--c-line); border-radius: 12px; padding: 14px; min-width: 0; }
+.speccap { font: 600 11px/1.3 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--c-mut); margin: 0 0 10px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.scroll { overflow-x: auto; }
+.notes { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 10px; position: sticky; top: 108px; }
+@media (max-width: 1000px) { .notes { position: static; } }
+.notes li { background: var(--c-panel); border: 1px solid var(--c-line); border-radius: 10px; padding: 11px 12px; cursor: pointer; }
+.notes li.on { border-color: var(--c-acc); box-shadow: 0 0 0 2px color-mix(in srgb, var(--c-acc) 28%, transparent); }
+.notes h4 { margin: 0 0 4px; font: 600 14px/1.3 var(--f-chrome); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.notes p { margin: 0; font-size: 13.5px; color: var(--c-mut); }
+.num { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--c-acc); color: #fff; font: 700 11px/1 var(--f-mono); flex: none; }
+:root[data-theme="dark"] .num { color: #0F141A; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .num { color: #0F141A; } }
+.tag { font: 600 10px/1 var(--f-mono); letter-spacing: .07em; padding: 4px 6px; border-radius: 4px; text-transform: uppercase; }
+.tag.new { background: var(--c-new-bg); color: var(--c-new); } .tag.chg { background: var(--c-chg-bg); color: var(--c-chg); } .tag.same { background: var(--c-same-bg); color: var(--c-same); }
+.mk { position: absolute; top: -9px; right: -9px; z-index: 2; width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--p-card); background: var(--c-acc); color: #fff; font: 700 11px/1 var(--f-mono); cursor: pointer; padding: 0; }
+:root[data-theme="dark"] .mk { color: #0F141A; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .mk { color: #0F141A; } }
+.mk.on { outline: 3px solid color-mix(in srgb, var(--c-acc) 40%, transparent); }
+.an { position: relative; display: inline-block; max-width: 100%; }
+.an.block { display: block; }
+.stepper { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 4px; }
+.stepper .seg { flex-wrap: wrap; }
+.say { font-size: 13.5px; color: var(--c-mut); margin: 8px 0 0; max-width: 70ch; }
+.say b { color: var(--c-ink); }
+.view-diff .same { opacity: .16; filter: grayscale(1); }
+.same { transition: opacity .15s; }
+@media (prefers-reduced-motion: reduce) { .same { transition: none; } }
+
+/* ---- product frame: shipped admin kit look ---- */
+.pf { font-family: var(--f-prod); font-size: 14px; line-height: 1.5; color: var(--p-ink); background: var(--p-paper); border: 1px solid var(--p-line); border-radius: 8px; padding: 18px 20px 20px; min-width: 760px; }
+.pf.phone { min-width: 0; width: 390px; max-width: 100%; padding: 14px 12px 16px; }
+.pf-title { font-size: 24px; font-weight: 700; margin: 0 0 8px; letter-spacing: -.01em; }
+.pf-tabs { display: flex; gap: 20px; border-bottom: 1px solid var(--p-line); margin-bottom: 14px; font-size: 14px; color: var(--p-dim); overflow-x: auto; }
+.pf-tabs span { padding: 8px 0; white-space: nowrap; } .pf-tabs .lit { color: var(--p-ink); font-weight: 650; border-bottom: 2px solid var(--p-olive); }
+.pf-top { display: flex; flex-wrap: wrap; gap: .5rem 1rem; align-items: center; margin-bottom: 1rem; color: var(--p-soft); }
+.pf-top b { color: var(--p-ink); }
+.pf-link { font-size: 12px; color: var(--p-olive); text-decoration: underline; text-underline-offset: 2px; background: none; border: 0; padding: 0; font-family: inherit; cursor: default; }
+.pf-card { margin: 0 0 1.5rem; padding: 1.1rem 1.25rem 1.2rem; border: 1px solid var(--p-line); border-radius: 10px; background: var(--p-card); }
+.phone .pf-card { padding: 1rem; }
+.pf-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 0 0 .75rem; }
+.pf-head h3 { margin: 0; font-size: 16px; font-weight: 700; }
+.pf-btn { font: 650 14px/1 var(--f-prod); border-radius: 6px; padding: .45rem .9rem; min-height: 34px; border: 1px solid transparent; cursor: default; }
+.pf-btn.lime { background: var(--p-lime); color: var(--p-lime-ink); }
+.pf-btn.out { background: var(--p-card); color: var(--p-soft); border-color: var(--p-strong); }
+.phone .pf-btn { min-height: 44px; }
+.pf-restore { display: flex; gap: .5rem; align-items: baseline; flex-wrap: wrap; margin: 0 0 .75rem; font-size: 12px; color: var(--p-dim); }
+.pf-row { display: grid; grid-template-columns: minmax(150px, 210px) minmax(180px, 260px) auto; align-items: end; gap: 0 1rem; }
+.phone .pf-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 .75rem; }
+.pf-field { display: flex; flex-direction: column; gap: .3rem; margin-bottom: .9rem; }
+.pf-field label { font-size: 12px; font-weight: 650; color: var(--p-soft); }
+.pf-input { min-height: 36px; padding: .5rem .65rem; background: var(--p-field); border: 1px solid var(--p-strong); border-radius: 6px; font-size: 14px; color: var(--p-ink); }
+.pf-input.ph { color: var(--p-dim); }
+.pf-save { margin: 0 0 .9rem; }
+.phone .pf-save { margin: .75rem 0 0; } .phone .pf-save .pf-btn { width: 100%; }
+.pf-band { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--p-line); border: 1px solid var(--p-line); border-radius: 10px; overflow: hidden; margin: .75rem 0 .25rem; }
+.phone .pf-band { grid-template-columns: 1fr 1fr; } .phone .pf-band .t3 { grid-column: 1 / -1; }
+.pf-tile { background: var(--p-card); padding: .85rem 1rem; min-width: 0; }
+.phone .pf-tile { padding: .7rem .75rem; }
+.pf-lab { font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--p-dim); }
+.pf-fig { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; margin: 2px 0; } .phone .pf-fig { font-size: 20px; }
+.pf-fig.warn { color: var(--p-warn-ink); } .pf-fig.good { color: var(--p-good); }
+.pf-cap { font-size: 12px; color: var(--p-dim); }
+.pf-hint { font-size: 12px; color: var(--p-dim); margin: .5rem 0 0; line-height: 1.45; }
+.pf-sums { border: 1px solid var(--p-line); border-radius: 8px; background: var(--p-card); margin: .6rem 0 0; }
+.pf-sums div { display: flex; justify-content: space-between; gap: 12px; padding: .55rem .9rem; border-top: 1px solid var(--p-line); font-variant-numeric: tabular-nums; }
+.pf-sums div:first-child { border-top: 0; } .pf-sums .tot { background: var(--p-surface2); font-weight: 700; }
+.pf-sums .q { color: var(--p-dim); }
+.pf-find { margin: .75rem 0 0; }
+.pf-find h4 { margin: 0 0 .4rem; font-size: 16px; }
+.pf-chip { font: 700 10px/1 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; border-radius: 999px; padding: .2rem .5rem; color: var(--p-warn-ink); background: rgba(var(--p-warn-rgb), .08); border: 1px solid rgba(var(--p-warn-rgb), .3); white-space: nowrap; }
+.pf-list h4 { font-size: 14px; font-weight: 600; margin: 1.2rem 0 .5rem; }
+.pf-table { width: 100%; border-collapse: collapse; font-size: 13px; background: var(--p-card); border: 1px solid var(--p-line); border-radius: 8px; }
+.pf-table th { text-align: left; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--p-dim); padding: .5rem .7rem; }
+.pf-table td { padding: .55rem .7rem; border-top: 1px solid var(--p-line); font-variant-numeric: tabular-nums; }
+.pf-notice { margin: 0 0 .9rem; padding: .6rem .9rem; border: 1px solid var(--p-line); border-left: 3px solid var(--p-good); border-radius: 8px; background: var(--p-card); }
+.pf-call { display: flex; gap: .75rem; justify-content: space-between; align-items: center; flex-wrap: wrap; padding: .8rem 1rem; background: var(--p-card); border: 1px solid var(--p-line); border-left: 3px solid var(--p-olive); border-radius: 8px; margin: 0 0 .75rem; }
+.pf-win { background: var(--p-card); border: 1px solid var(--p-strong); border-radius: 12px; width: 460px; max-width: 100%; box-shadow: 0 12px 32px rgba(0,0,0,.18); }
+.pf-win .hd { padding: 1rem 1.25rem .5rem; } .pf-win .hd small { font: 600 11px/1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--p-dim); }
+.pf-win .hd h3 { margin: 4px 0 0; font-size: 18px; } .pf-win .bd { padding: .5rem 1.25rem; } .pf-win .ft { padding: .75rem 1.25rem 1rem; display: flex; gap: .5rem; justify-content: flex-end; border-top: 1px solid var(--p-line); }
+.pf-input.sel { display: flex; justify-content: space-between; gap: 8px; }
+.pf-call.warn { border-left-color: var(--p-warn); }
+.pf-hint.stub { font-style: italic; }
+.phone .pf-link { display: inline-flex; align-items: center; min-height: 44px; min-width: 44px; }
+.toast { display: inline-block; background: var(--p-ink); color: var(--p-paper); border-radius: 8px; padding: .55rem .9rem; font-size: 13px; }
+
+.asks { display: flex; flex-direction: column; gap: 14px; grid-column: 1 / -1; }
+.ask { background: var(--c-panel); border: 1px solid var(--c-line); border-radius: 12px; padding: 14px 16px; }
+.ask h3 { margin: 0 0 4px; font-size: 16px; } .ask > p { margin: 0 0 10px; color: var(--c-mut); font-size: 14px; max-width: 80ch; }
+.opts { display: grid; gap: 8px; }
+.opt { display: flex; gap: 10px; align-items: flex-start; border: 1px solid var(--c-line); border-radius: 8px; padding: 10px 12px; cursor: pointer; }
+.opt:has(input:checked) { border-color: var(--c-acc); background: color-mix(in srgb, var(--c-acc) 9%, transparent); }
+.opt input { margin-top: 4px; } .opt b { display: block; font-size: 14px; } .opt span { font-size: 13px; color: var(--c-mut); }
+.reco { font: 600 10px/1 var(--f-mono); letter-spacing: .07em; text-transform: uppercase; color: var(--c-new); margin-left: 6px; }
+.answers { grid-column: 1 / -1; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; background: var(--c-panel); border: 1px solid var(--c-line); border-radius: 12px; padding: 12px 16px; }
+.answers code { font: 500 13px/1.4 var(--f-mono); background: var(--c-same-bg); padding: 6px 8px; border-radius: 6px; user-select: all; }
+.answers button { font: 600 13px/1 var(--f-chrome); padding: 9px 14px; border-radius: 8px; border: 1px solid var(--c-acc); background: var(--c-acc); color: #fff; cursor: pointer; }
+:root[data-theme="dark"] .answers button { color: #0F141A; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .answers button { color: #0F141A; } }
+</style>
+
+<div class="wrap">
+<header class="top">
+  <div class="eyebrow">Bank check · follow-up to the balance check · drawings for owner rulings</div>
+  <h1>Work the check down to zero</h1>
+  <p>The card already shows “Off by” live. What it lacks is memory: leave to book a transaction and the card forgets. These drawings show a card that keeps your work, shows how far the number has come, and lets you add an entry without leaving.</p>
+</header>
+
+<nav class="tabs" aria-label="Sections">
+  <div class="tabrow" role="tablist">
+    <button role="tab" id="t-whole" data-tab="whole">1 · Whole screen</button>
+    <button role="tab" id="t-working" data-tab="working">2 · Working it down</button>
+    <button role="tab" id="t-add" data-tab="add">3 · Add entry</button>
+    <button role="tab" id="t-back" data-tab="back">4 · Coming back</button>
+    <button role="tab" id="t-phone" data-tab="phone">5 · Phone</button>
+    <button role="tab" id="t-asks" data-tab="asks">6 · Asks</button>
+  </div>
+  <div class="viewrow" id="viewrow"><span>View</span>
+    <div class="seg" role="group" aria-label="View"><button id="v-all" aria-pressed="true">Everything</button><button id="v-diff" aria-pressed="false">Show only what differs</button></div>
+  </div>
+</nav>
+
+<main id="main"></main>
+</div>
+
+<script>
+var NOTES = {};
+function tag(k) { return '<span class="tag ' + k + '">' + (k === 'new' ? 'New' : k === 'chg' ? 'Changed' : 'Unchanged') + '</span>'; }
+function mk(n) { return '<button class="mk" data-n="' + n + '" aria-label="Note ' + n + '">' + n + '</button>'; }
+function an(n, inner, cls) { return '<span class="an ' + (cls || '') + '">' + inner + mk(n) + '</span>'; }
+
+/* shipped words, from the bank tab words file */
+var S = {
+  s1: { bank: '$5,402.10', books: '$4,990.10', gap: '$412.00', fig: 'Off by $412.00', tone: 'warn', started: null },
+  s2: { bank: '$5,402.10', books: '$5,215.10', gap: '$187.00', fig: 'Off by $187.00', tone: 'warn', started: '$412.00' },
+  s3: { bank: '$5,402.10', books: '$5,402.10', gap: null, fig: 'Matches', tone: 'good', started: '$412.00' }
+};
+
+function band(s, phone, blank, date) {
+  var b = blank ? '—' : s.bank, fig = blank ? '—' : s.fig, tone = blank ? '' : s.tone;
+  var cap3 = blank ? 'Type the balance to see it' : (s.gap ? 'The bank shows ' + s.gap + ' more than your books.' : 'The bank and your books agree on ' + date + '.');
+  return '<div class="pf-band"><div class="pf-tile"><div class="pf-lab">The bank says</div><div class="pf-fig">' + b + '</div><div class="pf-cap">' + (phone ? 'On ' + date.replace(/, \d{4}$/, '') : 'Statement balance on ' + date) + '</div></div>' +
+    '<div class="pf-tile"><div class="pf-lab">' + (phone ? 'Should be there' : 'Should be in the bank') + '</div><div class="pf-fig">' + s.books + '</div><div class="pf-cap">' + (phone ? 'Your books, adjusted for what’s pending' : 'Your books on ' + date + ', less what hasn’t reached the bank yet') + '</div></div>' +
+    '<div class="pf-tile t3"><div class="pf-lab">Difference</div><div class="pf-fig ' + tone + '">' + fig + '</div><div class="pf-cap">' + cap3 + '</div></div></div>';
+}
+function sums(s, date) {
+  return '<div class="pf-sums"><div><span>Your books on ' + date + ' <span class="q">· General</span></span><span>' + s.books + '</span></div><div class="tot"><span>Should be in the bank</span><span>' + s.books + '</span></div></div>';
+}
+/* o: {s, phone, blank, date, restore, restoreToday, addBtn, started, keptNote, markers:{add,started,kept,restore,sums}} */
+function card(o) {
+  var s = S[o.s], ph = !!o.phone, m = o.markers || {}, date = o.date || 'Oct 31, 2026';
+  var addBtn = '<button class="pf-btn out">+ Add entry</button>';
+  var head = '<div class="pf-head"><h3>Check a statement</h3>' + (o.addBtn ? (m.add ? an(m.add, addBtn) : addBtn) : '') + '</div>';
+  var rtext = 'Picked up where you left off' + (o.restoreToday ? '' : ' · last worked on Nov 5, 2026');
+  var restore = o.restore ? '<div class="pf-restore">' + (m.restore ? an(m.restore, '<span>' + rtext + '</span>') : '<span>' + rtext + '</span>') + ' <button class="pf-link">Start over</button></div>' : '';
+  var save = '<div class="pf-save"><button class="pf-btn lime">Save this check</button></div>';
+  var row = '<div class="pf-row same"><div class="pf-field"><label>Statement date *</label><div class="pf-input">' + date + '</div></div>' +
+    '<div class="pf-field"><label>' + (ph ? 'Bank balance' : 'Bank balance on that date') + ' *</label><div class="pf-input ' + (o.blank ? 'ph' : '') + '">' + (o.blank ? '$0.00' : s.bank) + '</div></div>' + (ph ? '' : save) + '</div>';
+  var notes = '';
+  if (!o.blank && s.gap) notes += '<p class="pf-hint">It saves as off by ' + s.gap + '. You can check this statement again later.</p>';
+  if (o.keptNote) { var t = 'Kept in this browser only, until you save this check.'; notes += '<p class="pf-hint">' + (m.kept ? an(m.kept, '<span>' + t + '</span>') : t) + '</p>'; }
+  var started = (o.started && s.started && !o.blank) ? '<p class="pf-hint">' + (m.started ? an(m.started, '<span>Started off by ' + s.started + '</span>') : '<span>Started off by ' + s.started + '</span>') + '</p>' : '';
+  var sm = sums(s, date); if (m.sums) sm = an(m.sums, sm, 'block');
+  var find = (!o.blank && s.gap) ? '<div class="pf-find"><h4>Find the ' + s.gap + '</h4><p class="pf-hint" style="margin:0">The bank received ' + s.gap + ' your books don’t have: a deposit or interest you haven’t entered. <button class="pf-link">Add the missing entry</button></p><p class="pf-hint stub">…then Find’s list of lines, as shipped.</p></div>' : '';
+  return '<div class="pf-card">' + head + restore + row + (ph ? '' : notes) + band(s, ph, o.blank, date) + started + '<div class="same">' + sm + '</div>' + find + (ph ? save + notes : '') + '</div>';
+}
+
+function listBlock(extra) {
+  return '<div class="pf-list"><h4>Checked statements</h4><table class="pf-table"><tr><th>Statement date</th><th>The bank said</th><th>Should have been</th><th>Result</th><th>Checked by</th></tr>' + (extra || '') +
+    '<tr><td>Sep 30, 2026</td><td>$4,118.40</td><td>$4,118.40</td><td>Matches</td><td>Sam Okafor · Oct 2, 2026</td></tr>' +
+    '<tr><td style="color:var(--p-dim)">Aug 31, 2026</td><td style="color:var(--p-dim)">$3,540.00</td><td style="color:var(--p-dim)">—</td><td style="color:var(--p-dim)">Starting point</td><td style="color:var(--p-dim)">Sam Okafor · Sep 4, 2026</td></tr></table></div>';
+}
+function chrome(inner) {
+  return '<div class="pf"><div class="same"><h2 class="pf-title">Accounting</h2><div class="pf-tabs"><span>Overview</span><span>Budget</span><span>Ledger</span><span class="lit">Bank</span><span>Budget vs. Actual</span></div>' +
+    '<div class="pf-top"><span>Club bank account</span><span>Checked through <b>Sep 30, 2026</b></span><button class="pf-link">Name and books</button></div></div>' + inner + '</div>';
+}
+function notesList(items) {
+  return '<ol class="notes">' + items.map(function (it) { return '<li data-n="' + it.n + '"><h4><span class="num">' + it.n + '</span>' + it.h + ' ' + tag(it.t) + '</h4><p>' + it.p + '</p></li>'; }).join('') + '</ol>';
+}
+
+var TABS = {};
+TABS.whole = function () {
+  var before = chrome(card({ s: 's2', blank: true, date: 'Nov 7, 2026' }) + '<div class="same">' + listBlock() + '</div>');
+  var after = chrome(card({ s: 's2', restore: true, addBtn: true, started: true, keptNote: true, markers: { restore: 1, add: 2, started: 3, kept: 4, sums: 5 } }) + '<div class="same">' + listBlock() + '</div>');
+  return '<div class="tabbody"><p class="lead"><b>The same moment, before and after.</b> You typed a balance, went to the Ledger to book one statement line, and came back. Today the card has forgotten you. With the change it is where you left it, and the number has moved.</p>' +
+    '<div class="spec"><div class="specbox"><p class="speccap">Today · coming back from the Ledger</p><div class="scroll">' + before + '</div></div>' +
+    '<div class="specbox"><p class="speccap">With the change · coming back from the Ledger · drawn with the “nothing to name” Find; a named possibility shows the shipped amber callout instead</p><div class="scroll">' + after + '</div></div></div>' +
+    notesList([
+      { n: 1, t: 'new', h: 'Picked up where you left off', p: 'Date, balance and marked lines come back. The figures are re-read from the books as they are now, so “Off by” is current. It names the day you last worked on it only when that was an earlier day. “Start over” clears it at once; all that is lost is a typed balance and marks. Words settled with /marketing 2026-11-07; the exact strings are in the plan.' },
+      { n: 2, t: 'new', h: 'Add entry, any time', p: 'Opens the Ledger’s own Add an entry window without leaving the card. Today the only door is “Add the missing entry”, and only once the check is off. Both stay: “Add entry” is for any statement line, “Add the missing entry” is for the gap and fills the amount in. Both are named after the “Add an entry” window they open. The coach card says “Record” and “Record the missing amount”, after its Record money window.' },
+      { n: 3, t: 'new', h: 'Started off by', p: 'One quiet line showing where the number began, worded like the shipped “Off by”. It appears once the number has moved.' },
+      { n: 4, t: 'new', h: 'Kept in this browser', p: 'Tells a volunteer it is safe to leave. Drawn only while a draft exists. It names the browser, not “this device”, so a treasurer who starts on a laptop is not surprised by an empty card on a phone (Ask 1). At a desk the shipped notes sit under the date and balance row, so this joins them there.' },
+      { n: 5, t: 'same', h: 'Dimmed in “Show only what differs”', p: 'The tabs, top line, date and balance row, Save, the sums and the saved list are as shipped. The band and the Find section change only in what they say, never in how they are built.' }
+    ]) + '</div>';
+};
+TABS.working = function (st) {
+  st = st || 's1';
+  var body = card({ s: st, addBtn: true, started: true, keptNote: true, markers: { add: 1, started: 2, kept: 3, sums: 4 } });
+  var say = {
+    s1: '<b>Just typed.</b> Nothing has been added yet, so there is no “started off by” line: it would only repeat the tile beside it.',
+    s2: '<b>One line added.</b> The $225.00 e-transfer line went in from the card. The number fell from $412.00 to $187.00 and the card shows where it started.',
+    s3: '<b>Lined up.</b> A second line, $187.00, and the tile reads Matches. The card still says where it started. Nothing is saved yet. Save is the finish line, as today, and the Find section has gone because there is nothing to find.'
+  }[st];
+  return '<div class="tabbody"><p class="lead"><b>One check, three moments.</b> Statement dated Oct 31, 2026, bank balance $5,402.10. The books start $412.00 short. Pick a moment.</p>' +
+    '<div class="spec"><div class="stepper"><div class="seg" role="group" aria-label="Moment">' +
+    ['s1:1 · Just typed', 's2:2 · After one line', 's3:3 · After two lines'].map(function (x) { var p = x.split(':'); return '<button data-st="' + p[0] + '" aria-pressed="' + (p[0] === st ? 'true' : 'false') + '">' + p[1] + '</button>'; }).join('') + '</div></div>' +
+    '<div class="specbox"><p class="speccap">Check a statement · club desk</p><div class="scroll"><div class="pf">' + body + '</div></div><p class="say">' + say + '</p></div></div>' +
+    notesList([
+      { n: 1, t: 'new', h: 'Add entry', p: 'Outline button in the card’s heading row, available once a date is set. A heading-row action is an existing pattern in the kit. The gap-sized door in the Find hint stays as it is.' },
+      { n: 2, t: 'new', h: 'Started off by $412.00', p: 'Twelve-pixel hint type, no new tile and no progress bar. A bar breaks when the number overshoots zero or flips sign; words do not.' },
+      { n: 3, t: 'new', h: 'Kept in this browser', p: 'Drawn only while a draft exists. A resting sentence, not a pill that fades. That is my call: it is the one thing that tells a volunteer it is safe to leave. Say if you would rather it show only after the first edit.' },
+      { n: 4, t: 'same', h: 'Band, sums, Find, Save', p: 'Unchanged. Matches still means the totals agree, not that every line was checked. Save works at any difference, as today.' }
+    ]) + '</div>';
+};
+TABS.add = function () {
+  var win = '<div class="pf-win"><div class="hd">' + an(3, '<small>General</small>') + '<h3>Add an entry</h3></div><div class="bd">' +
+    '<div class="pf-row" style="grid-template-columns:1fr 1fr;"><div class="pf-field"><label>Money *</label>' + an(2, '<div class="pf-input sel"><span>In — the club received</span><span>▾</span></div>', 'block') + '</div><div class="pf-field"><label>Date *</label><div class="pf-input">Oct 31, 2026</div></div></div>' +
+    '<div class="pf-field"><label>What *</label><div class="pf-input ph">For example: Diamond permit</div></div>' +
+    '<div class="pf-field"><label>Amount *</label><div class="pf-input ph">$0.00</div></div>' +
+    '<div class="pf-field"><label>Filed under</label><div class="pf-input sel ph"><span>Pick one</span><span>▾</span></div></div><div class="pf-hint" style="margin:0 0 .5rem">Paid by, How it was paid, Reference and Notes follow, as shipped.</div></div>' +
+    '<div class="ft"><button class="pf-btn out">Cancel</button>' + an(4, '<button class="pf-btn lime">Add entry</button>') + '</div></div>';
+  var crop = '<div class="pf"><div class="pf-card" style="margin:0"><div class="pf-head" style="margin:0">' + '<h3>Check a statement</h3>' + an(1, '<button class="pf-btn out">+ Add entry</button>') + '</div><p class="pf-hint stub">…the rest of the card as in tab 2.</p></div></div>';
+  var notice = '<div class="pf"><div class="pf-notice">Fall registration E-Transfers added to General.</div><p class="pf-hint stub" style="margin:0">The notice sits at the top of the Bank tab, above the card, and fades with the page’s other notices. The window closes, the day’s figure is re-read, and the typed balance, date and marks stay. “Off by” falls by the amount.</p></div>';
+  return '<div class="tabbody"><p class="lead"><b>Add entry is the Ledger’s own window.</b> The bank code never writes a book line, and this keeps it that way. Only the trigger is new.</p>' +
+    '<div class="spec"><div class="specbox"><p class="speccap">The button, in the card’s heading row</p><div class="scroll">' + crop + '</div></div>' +
+    '<div class="specbox"><p class="speccap">What it opens ' + tag('same') + ' drawn from the shipped window</p><div class="scroll"><div class="pf" style="padding:18px;display:flex;justify-content:center">' + win + '</div></div></div>' +
+    '<div class="specbox"><p class="speccap">After Add entry</p><div class="scroll">' + notice + '</div></div></div>' +
+    notesList([
+      { n: 1, t: 'new', h: 'Always there, not only when off', p: 'Disabled until the figure for the date has loaded. A writer’s control only; a reader never sees the card.' },
+      { n: 2, t: 'chg', h: 'Opens with Money and Date set, the amount blank', p: 'Money follows the gap (the bank shows more means “In — the club received”). The gap door still prefills the amount, since it knows it. A statement line is rarely the gap, so the plain button does not guess.' },
+      { n: 3, t: 'same', h: 'Which book', p: 'The account’s own club book, else its first, as the gap door already does. The window’s eyebrow names it. If the account holds a second book, lines still go to the club book; the Ledger moves them.' },
+      { n: 4, t: 'same', h: 'One line per visit', p: 'To add twelve lines you press the button twelve times. An “Add another” in the shared window would change the Ledger for everyone, so it is out of this plan.' }
+    ]) + '</div>';
+};
+TABS.back = function () {
+  var restoreA = '<div class="pf-restore">' + an(1, '<span>Picked up where you left off · last worked on Nov 5, 2026</span>') + ' <button class="pf-link">Start over</button></div>';
+  var restoreB = '<div class="pf-call"><span>You have a check in progress for the statement dated Oct 31, 2026.</span><span style="display:flex;gap:.5rem;align-items:center">' + an(2, '<button class="pf-btn out">Continue</button>') + ' <button class="pf-link">Start over</button></span></div>';
+  var dropped = '<div class="pf-call warn">' + an(3, '<span>One line you marked isn’t in your books any more, so we took it off.</span>') + '</div>';
+  var stub = function (n) { return '<p class="pf-hint stub" style="margin:.4rem 0 0">' + (n ? an(n, '<span>…the card as in tab 2 follows.</span>') : '…the card as in tab 2 follows.') + '</p>'; };
+  var shell = function (x, n) { return '<div class="pf"><div class="pf-card" style="margin:0"><div class="pf-head"><h3>Check a statement</h3><button class="pf-btn out">+ Add entry</button></div>' + x + stub(n) + '</div></div>'; };
+  return '<div class="tabbody"><p class="lead"><b>How the card greets you.</b> Option A restores at once and says so. Option B asks first. Both end on the same card. The date shows only when the draft is from an earlier day; on the same day the line reads just “Picked up where you left off”.</p>' +
+    '<div class="spec"><div class="specbox"><p class="speccap">A · Restore at once <span class="reco">Recommended</span></p><div class="scroll">' + shell(restoreA, 4) + '</div></div>' +
+    '<div class="specbox"><p class="speccap">B · Ask first</p><div class="scroll">' + shell(restoreB) + '</div></div>' +
+    '<div class="specbox"><p class="speccap">When the books moved under a marked line</p><div class="scroll">' + shell(restoreA.replace(an(1, '<span>Picked up where you left off · last worked on Nov 5, 2026</span>'), '<span>Picked up where you left off · last worked on Nov 5, 2026</span>') + dropped) + '</div></div></div>' +
+    notesList([
+      { n: 1, t: 'new', h: 'One quiet line', p: 'Twelve-pixel hint type, no colour. It is not a banner: nothing here needs fixing. “Start over” clears the draft at once, with no confirm.' },
+      { n: 2, t: 'new', h: 'Ask first costs a click every time', p: 'Choose B only if a stale draft is likelier than a wanted one. People come back to a check the same day, so A is recommended.' },
+      { n: 3, t: 'new', h: 'A marked line that no longer exists', p: 'A line leaving the sums changes the figure, so this is the shipped white callout with the amber edge, not a grey hint. The server also refuses a bad line on Save, as a second guard.' },
+      { n: 4, t: 'same', h: 'What never restores', p: 'Figures. The books, the on-its-way amount and the “Off by” are always read fresh. Only what you typed and marked comes back.' }
+    ]) + '</div>';
+};
+TABS.phone = function () {
+  var o = { s: 's2', phone: true, addBtn: true, started: true, keptNote: true, restore: true, markers: { add: 1, started: 2, kept: 3, restore: 4 } };
+  return '<div class="tabbody"><p class="lead"><b>Open this page on your phone.</b> The frame is a true 390px wide and does not reflow. Tap targets are 44px, as shipped.</p>' +
+    '<div class="spec"><div class="specbox"><p class="speccap">Check a statement · club phone, 390px · nothing-to-name Find</p><div class="scroll"><div class="pf phone">' + card(o) + '</div></div></div></div>' +
+    notesList([
+      { n: 1, t: 'new', h: 'Add entry, in the heading row', p: 'A 44px outline button at the right, with the word. The phone rule prefers a symbol alone for a familiar action, but a bare “+” next to “Check a statement” could mean adding a check. Ask 6. Save stays last and full width, so the new button never sits beside it.' },
+      { n: 2, t: 'new', h: 'Started off by', p: 'Under the band, same type as the other hints.' },
+      { n: 3, t: 'new', h: 'Kept in this browser', p: 'Under Save with the other notes, as the phone already places them.' },
+      { n: 4, t: 'new', h: 'Picked up where you left off', p: 'Wraps to a second line below 400px. “Start over” is a 44px link here, like the other links on this card.' }
+    ]) + '</div>';
+};
+var ASKS = [
+  { id: 'a1', h: '1 · Where the draft lives', p: 'This is the one with a cost. A is a day’s work with nothing to release. B needs a database change, a production step and a cleanup rule.', o: [
+    ['A', 'This browser, per person', 'Nothing new on the server. It does not follow someone from a laptop to a phone, and clearing site data loses it.', 1],
+    ['B', 'On the server, per person', 'Follows the person across devices. Costs a table, routes, the data dictionary and a production migration, on top of the three bank migrations already waiting.', 0]] },
+  { id: 'a2', h: '2 · “Started off by $X”', p: 'A quiet line that shows where the number began.', o: [
+    ['A', 'Show it once the number has moved', 'Words only, no bar.', 1], ['B', 'Show nothing extra', 'The Off by tile is the only reading.', 0]] },
+  { id: 'a3', h: '3 · Add entry', p: 'The card’s own “Add entry” button, named like the Ledger’s.', o: [
+    ['A', 'Always, once a date is set', 'This is the “work it down” flow.', 1], ['B', 'Only when the check is off, as today', 'Fewer buttons, and no way to add lines while the card shows Matches.', 0]] },
+  { id: 'a4', h: '4 · How long a draft is kept', p: 'Only matters when someone starts a check and never finishes it.', o: [
+    ['A', '14 days idle', 'Then it goes quietly.', 1], ['B', 'Until saved or started over', 'A forgotten draft would greet the next treasurer’s check on the same browser.', 0]] },
+  { id: 'a5', h: '5 · Coming back', p: 'See tab 4.', o: [
+    ['A', 'Restore at once, with one line saying so', 'No extra click.', 1], ['B', 'Ask first: Continue or Start over', 'A click each time.', 0]] },
+  { id: 'a6', h: '6 · Add entry on a phone', p: 'The phone rule prefers a symbol alone for a familiar action. “+” beside “Check a statement” could read as adding a whole check.', o: [
+    ['A', 'The words “+ Add entry”, as drawn', 'Unambiguous. Uses a little more width than a symbol.', 1], ['B', 'A bare + button, 44px', 'Matches the usual phone rule. A volunteer has to guess what it adds.', 0]] }
+];
+TABS.asks = function () {
+  var h = '<div class="tabbody"><p class="lead"><b>Six asks, all with a recommendation.</b> Pick, then copy the answer line into the chat. Ask 1 is the only one that changes how much work this is.</p><div class="asks">';
+  ASKS.forEach(function (a) {
+    h += '<div class="ask"><h3>' + a.h + '</h3><p>' + a.p + '</p><div class="opts">';
+    a.o.forEach(function (o) { h += '<label class="opt"><input type="radio" name="' + a.id + '" value="' + o[0] + '"' + (o[3] ? ' checked' : '') + '><div><b>' + o[0] + ' · ' + o[1] + (o[3] ? '<span class="reco">Recommended</span>' : '') + '</b><span>' + o[2] + '</span></div></label>'; });
+    h += '</div></div>';
+  });
+  h += '<div class="answers"><code id="ans">1A 2A 3A 4A 5A 6A</code><button id="copy">Copy my answers</button><span id="copied" class="say" style="margin:0"></span></div></div></div>';
+  return h;
+};
+
+var cur = 'whole', st = 's1', diff = false;
+function render() {
+  var main = document.getElementById('main');
+  main.className = diff && cur === 'whole' ? 'view-diff' : '';
+  main.innerHTML = TABS[cur](st);
+  Array.prototype.forEach.call(document.querySelectorAll('.tabrow button'), function (b) { b.setAttribute('aria-selected', b.getAttribute('data-tab') === cur ? 'true' : 'false'); });
+  document.getElementById('viewrow').hidden = cur !== 'whole';
+  bind();
+}
+function bind() {
+  var main = document.getElementById('main');
+  Array.prototype.forEach.call(main.querySelectorAll('.mk'), function (b) { b.addEventListener('click', function (e) { e.stopPropagation(); activate(b.getAttribute('data-n')); }); });
+  Array.prototype.forEach.call(main.querySelectorAll('.notes li'), function (li) { li.addEventListener('click', function () { activate(li.getAttribute('data-n')); }); });
+  Array.prototype.forEach.call(main.querySelectorAll('[data-st]'), function (b) { b.addEventListener('click', function () { st = b.getAttribute('data-st'); render(); }); });
+  var asks = main.querySelectorAll('.ask input');
+  Array.prototype.forEach.call(asks, function (r) { r.addEventListener('change', answers); });
+  var c = document.getElementById('copy');
+  if (c) c.addEventListener('click', copyAns);
+}
+function activate(n) {
+  Array.prototype.forEach.call(document.querySelectorAll('.mk, .notes li'), function (x) { x.classList.toggle('on', x.getAttribute('data-n') === n); });
+  var li = document.querySelector('.notes li[data-n="' + n + '"]');
+  if (li && li.scrollIntoView) li.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+function answers() {
+  var out = [];
+  ASKS.forEach(function (a, i) { var r = document.querySelector('input[name="' + a.id + '"]:checked'); out.push((i + 1) + (r ? r.value : '?')); });
+  document.getElementById('ans').textContent = out.join(' ');
+}
+function copyAns() {
+  var t = document.getElementById('ans').textContent, note = document.getElementById('copied');
+  function ok() { note.textContent = 'Copied.'; }
+  function sel() { var r = document.createRange(); r.selectNodeContents(document.getElementById('ans')); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); note.textContent = 'Selected. Copy it.'; }
+  try { navigator.clipboard.writeText(t).then(ok, sel); } catch (e) { sel(); }
+}
+function route() { var h = (location.hash || '').replace('#', ''); cur = TABS[h] ? h : 'whole'; render(); }
+Array.prototype.forEach.call(document.querySelectorAll('.tabrow button'), function (b) { b.addEventListener('click', function () { location.hash = b.getAttribute('data-tab'); }); });
+document.getElementById('v-all').addEventListener('click', function () { diff = false; syncSeg(); render(); });
+document.getElementById('v-diff').addEventListener('click', function () { diff = true; syncSeg(); render(); });
+function syncSeg() { document.getElementById('v-all').setAttribute('aria-pressed', diff ? 'false' : 'true'); document.getElementById('v-diff').setAttribute('aria-pressed', diff ? 'true' : 'false'); }
+window.addEventListener('hashchange', route);
+route();
+</script>

@@ -234,7 +234,8 @@ describe('9 · Find: the hints, the lines, Not in the bank yet, Still waiting?',
     const form = code('BankCheckForm.tsx');
     assert.match(form, /figureCheck\(\{ bankCents: typed \?\? 0, booksCents: fresh\.booksCents, onItsWayCents: fresh\.onItsWay\.cents, waiting: items, cashCents: null \}\)/);
     assert.match(form, /amount: moved\(waitingOnCheck\(w\)\)/);
-    assert.match(form, /const pickDate = \(v: string\) => \{ setDate\(v\); setError\(''\); setMarked\(new Map\(\)\); setDropped\(new Set\(\)\); \};/, 'a new date clears the marks and the answers');
+    // WD1: and the restored marks still waiting on the figure, and the dropped-mark callout.
+    assert.match(form, /const pickDate = \(v: string\) => \{\s*setDate\(v\); setError\(''\); setMarked\(new Map\(\)\); setDropped\(new Set\(\)\); setPending\(null\); setDroppedMarks\(0\);\s*\};/, 'a new date clears the marks and the answers');
   });
   it('Still waiting? asks each of the earlier check\'s items once: Yes marks it, No drops it', () => {
     const form = code('BankCheckForm.tsx');
@@ -276,7 +277,8 @@ describe('10 · Add the missing line, Waiting at the start', () => {
     assert.match(form, /setAdding\(\{\s*entryType: band\.direction === 'bank_more' \? 'income' : 'expense', date, amount: fieldAmount\(band\.offByCents\),/,
       'the gap, the statement\'s day, and the direction that closes it');
     assert.match(form, /view\.account\.books\.find\(b => b\.kind === 'org' && !b\.entityId\) \?\? view\.account\.books\[0\]/, 'the account\'s own club book (the Ledger\'s rule)');
-    assert.match(code('BankFind.tsx'), /onClick=\{onAddLine\} disabled=\{busy\}>\{W\.addMissing\}<\/button>/, 'a real door, never a dead button; held while a write is on its way');
+    // Renamed "Add the missing entry" in WD1 (after the window it opens); the coach card's words stay until WD2.
+    assert.match(code('BankFind.tsx'), /onClick=\{onAddLine\} disabled=\{busy\}>\{W\.addMissingEntry\}<\/button>/, 'a real door, never a dead button; held while a write is on its way');
     // The window keeps what it opened with (a figure read again never moves or closes it) and knows the closed years.
     assert.match(form, /\{adding && ownBook && \(/);
     assert.match(form, /fiscal=\{view\.fiscal\} canMove prefill=\{adding\}/);
@@ -359,8 +361,10 @@ describe('8 · a saved check, opened', () => {
     assert.doesNotMatch(win + code('BankStatements.tsx'), /toLocale(Time|Date)?String|getHours|getMinutes/);
   });
   it('Check this statement again re-keys the form with the date; the form focuses the balance', () => {
-    assert.match(code('BankTab.tsx'), /<BankCheckForm key=\{again\?\.n \?\? 0\} againDate=\{again\?\.date\}/);
-    assert.match(code('BankCheckForm.tsx'), /useState\(againDate \?\? today\)/);
+    // Keyed by the signed-in person too (WD1: their working draft is read as the card mounts).
+    assert.match(code('BankTab.tsx'), /<BankCheckForm key=\{`\$\{again\?\.n \?\? 0\}:\$\{personId \?\? ''\}`\} againDate=\{again\?\.date\}/);
+    // The handed date wins over a working draft's (WD1), which wins over today.
+    assert.match(code('BankCheckForm.tsx'), /useState\(againDate \?\? restored\?\.date \?\? today\)/);
     assert.match(code('BankCheckForm.tsx'), /field\?\.focus\(\{ preventScroll: true \}\)/);
   });
   it('the top line says "Checked through {date}" and an amber chip when the latest check is off (ask 4)', () => {

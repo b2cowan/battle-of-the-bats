@@ -1,0 +1,282 @@
+/**
+ * THE BANK CHECK'S WORKING DRAFT (WD1; plan docs/projects/active/BANK_CHECK_WORKING_DRAFT_PLAN.md, owner asks 1A–6A
+ * 2026-11-07). The pure helpers over an in-memory store, then the guards: the draft touches browser storage only, never a
+ * bank route; the club card wires it as ruled (restore at once, figures never restored, Start over, Save clears it,
+ * focus re-reads, "+ Add entry" opens the Ledger's own window blank); sign-out clears it.
+ */
+import assert from 'node:assert/strict';
+import { describe, it } from 'node:test';
+import {
+  DRAFT_PREFIX, anchorStarted, canKeepDrafts, clearAllDrafts, clearDraft, draftKey, isWorthKeeping, itemOfLine, keepOffered, offeredItems, readDraft,
+  startedOffCents, sweepIdleDrafts, writeDraft, type DraftContent, type DraftStore,
+} from '../../lib/bank-check-draft.ts';
+import type { BankLine, WaitingItem } from '../../lib/bank-check.ts';
+import { BANK_WORDS as W } from '../../lib/bank-tab-words.ts';
+import { functionBody, readCode } from './_source-code.ts';
+
+const DAY = 24 * 60 * 60 * 1000;
+const NOW = Date.UTC(2026, 10, 7, 15);
+
+function memoryStore(): DraftStore & { map: Map<string, string> } {
+  const map = new Map<string, string>();
+  return {
+    map,
+    getItem: k => map.get(k) ?? null,
+    setItem: (k, v) => { map.set(k, v); },
+    removeItem: k => { map.delete(k); },
+    get length() { return map.size; },
+    key: i => [...map.keys()][i] ?? null,
+  };
+}
+/** Storage that refuses everything (a private window, blocked site data). */
+const throwingStore: DraftStore = {
+  getItem: () => { throw new Error('blocked'); },
+  setItem: () => { throw new Error('blocked'); },
+  removeItem: () => { throw new Error('blocked'); },
+  get length(): number { throw new Error('blocked'); },
+  key: () => { throw new Error('blocked'); },
+};
+
+const KEY = draftKey({ club: 'riverdale', account: 'acct-1', person: 'sam' });
+const work = (over: Partial<DraftContent> = {}): DraftContent =>
+  ({ date: '2026-10-31', balance: '5402.10', marked: [], started: null, ...over });
+const at = (now = NOW, today = '2026-11-07'): [string, number] => [today, now];
+
+describe('1 · written only when worth keeping', () => {
+  it('a typed balance or a marked line is worth keeping; an empty card is not', () => {
+    assert.equal(isWorthKeeping({ balance: '5402.10', marked: [] }), true);
+    assert.equal(isWorthKeeping({ balance: '', marked: ['entry:a'] }), true);
+    assert.equal(isWorthKeeping({ balance: '  ', marked: [] }), false);
+  });
+  it('an empty card writes nothing, and emptying a card removes what was kept', () => {
+    const s = memoryStore();
+    assert.equal(writeDraft(s, KEY, work({ balance: '' }), ...at()), false);
+    assert.equal(s.map.size, 0);
+    assert.equal(writeDraft(s, KEY, work(), ...at()), true);
+    assert.equal(s.map.size, 1);
+    writeDraft(s, KEY, work({ balance: '' }), ...at());
+    assert.equal(s.map.size, 0, 'the balance cleared and nothing marked: the draft goes');
+  });
+});
+
+describe('2 · one draft per club, account and person', () => {
+  it('each key is its own; another person or account on the same browser reads nothing', () => {
+    const s = memoryStore();
+    writeDraft(s, KEY, work(), ...at());
+    assert.ok(readDraft(s, KEY, NOW));
+    assert.equal(readDraft(s, draftKey({ club: 'riverdale', account: 'acct-1', person: 'alex' }), NOW), null);
+    assert.equal(readDraft(s, draftKey({ club: 'riverdale', account: 'acct-2', person: 'sam' }), NOW), null);
+    assert.equal(readDraft(s, draftKey({ club: 'other-club', account: 'acct-1', person: 'sam' }), NOW), null);
+  });
+  it('a separator in a part cannot make two keys collide', () => {
+    assert.notEqual(draftKey({ club: 'a:b', account: 'c', person: 'd' }), draftKey({ club: 'a', account: 'b:c', person: 'd' }));
+    assert.ok(KEY.startsWith(DRAFT_PREFIX));
+  });
+});
+
+describe('3 · restore, and the 14-day idle rule (ask 4 = A)', () => {
+  it('reads back what was typed and marked, and the day it was last worked on', () => {
+    const s = memoryStore();
+    const started = { date: '2026-10-31', balance: '5402.10', differenceCents: 41200 };
+    writeDraft(s, KEY, work({ marked: ['entry:a', 'entry:b'], started }), ...at(NOW - 2 * DAY, '2026-11-05'));
+    assert.deepEqual(readDraft(s, KEY, NOW), {
+      date: '2026-10-31', balance: '5402.10', marked: ['entry:a', 'entry:b'], started, savedOn: '2026-11-05', savedAt: NOW - 2 * DAY,
+    });
+  });
+  it('a draft idle more than 14 days is gone, and removed; at 14 days it stays', () => {
+    const s = memoryStore();
+    writeDraft(s, KEY, work(), ...at(NOW - 14 * DAY));
+    assert.ok(readDraft(s, KEY, NOW), 'exactly 14 days: kept');
+    writeDraft(s, KEY, work(), ...at(NOW - 14 * DAY - 1));
+    assert.equal(readDraft(s, KEY, NOW), null);
+    assert.equal(s.map.size, 0, 'removed, not only ignored');
+  });
+  it('the sweep removes idle drafts of other accounts and leaves the rest of storage alone', () => {
+    const s = memoryStore();
+    const other = draftKey({ club: 'riverdale', account: 'acct-9', person: 'sam' });
+    writeDraft(s, KEY, work(), ...at());
+    writeDraft(s, other, work(), ...at(NOW - 30 * DAY));
+    s.setItem('club-money-year:riverdale', '2026-04-01');
+    sweepIdleDrafts(s, NOW);
+    assert.ok(s.map.has(KEY));
+    assert.ok(!s.map.has(other));
+    assert.ok(s.map.has('club-money-year:riverdale'));
+  });
+  it('a stored value that is not a draft is dropped, never trusted', () => {
+    const s = memoryStore();
+    for (const bad of ['{', '[]', JSON.stringify({ date: 'Oct 31', balance: '1', marked: [], started: null, savedOn: '2026-11-07', savedAt: NOW }),
+      JSON.stringify({ date: '2026-10-31', balance: '1', marked: [3], started: null, savedOn: '2026-11-07', savedAt: NOW })]) {
+      s.setItem(KEY, bad);
+      assert.equal(readDraft(s, KEY, NOW), null, bad);
+    }
+  });
+});
+
+describe('4 · Start over, Save and sign-out clear it', () => {
+  it('clearDraft removes this draft only; clearAllDrafts removes every draft and nothing else', () => {
+    const s = memoryStore();
+    const other = draftKey({ club: 'riverdale', account: 'acct-2', person: 'sam' });
+    writeDraft(s, KEY, work(), ...at());
+    writeDraft(s, other, work(), ...at());
+    s.setItem('flhq.console.recent.v1', '[]');
+    clearDraft(s, KEY);
+    assert.ok(!s.map.has(KEY) && s.map.has(other));
+    clearAllDrafts(s);
+    assert.deepEqual([...s.map.keys()], ['flhq.console.recent.v1']);
+  });
+});
+
+describe('5 · storage that throws (the card works with storage blocked)', () => {
+  it('every helper answers quietly: no draft, nothing kept', () => {
+    assert.equal(readDraft(throwingStore, KEY, NOW), null);
+    assert.equal(writeDraft(throwingStore, KEY, work(), ...at()), false);
+    assert.doesNotThrow(() => clearDraft(throwingStore, KEY));
+    assert.doesNotThrow(() => clearAllDrafts(throwingStore));
+    assert.doesNotThrow(() => sweepIdleDrafts(throwingStore, NOW));
+    assert.equal(readDraft(null, KEY, NOW), null);
+    assert.equal(canKeepDrafts(throwingStore), false, 'never "Kept in this browser" over blocked storage');
+    assert.equal(canKeepDrafts(null), false);
+    const s = memoryStore();
+    assert.equal(canKeepDrafts(s), true);
+    assert.equal(s.map.size, 0, 'the probe leaves nothing behind');
+    assert.equal(writeDraft(null, KEY, work(), ...at()), false);
+  });
+});
+
+describe('6 · marks are validated against what the books offer now', () => {
+  const line = (key: string, amountCents: number, direction: 'in' | 'out' = 'out'): BankLine =>
+    ({ key, date: '2026-10-20', direction, amountCents, label: `Line ${key}` });
+  const still: WaitingItem = { key: 'entry:old', date: '2026-09-28', direction: 'out', amountCents: 9000 };
+  const figure = {
+    suspects: { lines: [line('entry:a', 22500), line('entry:b', 18700), line('entry:pay', 5000, 'in')] },
+    stillWaiting: [still],
+    onItsWay: { state: 'counted', lines: [{ key: 'entry:pay' }] },
+  };
+  it('a line Find lists and a Still-waiting item are offered; an online payment on its way is not', () => {
+    const offered = offeredItems(figure);
+    assert.deepEqual([...offered.keys()].sort(), ['entry:a', 'entry:b', 'entry:old']);
+    assert.equal(offeredItems({ ...figure, onItsWay: { state: 'not_counted' } }).has('entry:pay'), true,
+      'not counted, so Find lists it like any line');
+  });
+  it('a line becomes an item with its own key, figures and words (Find marks with the same helper)', () => {
+    assert.deepEqual(itemOfLine(line('entry:a', 22500)), { key: 'entry:a', date: '2026-10-20', direction: 'out', amountCents: 22500, label: 'Line entry:a' });
+    assert.equal('label' in itemOfLine({ key: 'k', date: '2026-10-20', direction: 'in', amountCents: 1 }), false, 'no words, no label key');
+  });
+  it('a mark comes back with the books\' amount NOW,in the order marked; one the books dropped is counted, not kept', () => {
+    const offered = offeredItems({ ...figure, suspects: { lines: [line('entry:a', 23000), line('entry:b', 18700)] } });
+    const { kept, dropped } = keepOffered(['entry:b', 'entry:gone', 'entry:a', 'entry:pay'], offered);
+    assert.deepEqual(kept.map(w => w.key), ['entry:b', 'entry:a']);
+    assert.equal(kept[1].amountCents, 23000, 'the remembered figure is never restored');
+    assert.equal(dropped, 2);
+  });
+  it('the callout says one line, or how many', () => {
+    assert.equal(W.draftDropped(1), 'One line you marked isn’t in your books any more, so we took it off.');
+    assert.equal(W.draftDropped(3), '3 lines you marked aren’t in your books any more, so we took them off.');
+  });
+});
+
+describe('7 · "Started off by" (ask 2 = A)', () => {
+  const where = { date: '2026-10-31', balance: '5402.10' };
+  it('anchors when the balance is typed and keeps while the work moves the number', () => {
+    const a = anchorStarted(null, where, 41200);
+    assert.deepEqual(a, { ...where, differenceCents: 41200 });
+    assert.equal(anchorStarted(a, where, 18700), a, 'a line added or marked is the work: the anchor stays');
+    assert.equal(startedOffCents(a, 18700), 41200);
+    assert.equal(startedOffCents(a, 0), 41200, 'at Matches it still says where it began (drawing tab 2, moment 3)');
+    assert.equal(startedOffCents(a, -5000), 41200, 'overshooting zero');
+  });
+  it('resets on a new date, and on a new balance (typing passes through every keystroke)', () => {
+    const a = anchorStarted(null, where, 41200);
+    assert.deepEqual(anchorStarted(a, { ...where, date: '2026-11-30' }, 9900), { date: '2026-11-30', balance: '5402.10', differenceCents: 9900 });
+    assert.equal(anchorStarted(a, { ...where, date: '2026-11-30' }, null), null, 'a new date with no figure yet: no anchor');
+    assert.deepEqual(anchorStarted(a, { ...where, balance: '5412.10' }, 42200), { date: where.date, balance: '5412.10', differenceCents: 42200 });
+  });
+  it('hidden while it equals the live figure, when it started at a match, and with no live figure', () => {
+    const a = anchorStarted(null, where, 41200);
+    assert.equal(startedOffCents(a, 41200), null);
+    assert.equal(startedOffCents(anchorStarted(null, where, 0), 3000), null);
+    assert.equal(startedOffCents(a, null), null);
+    assert.equal(startedOffCents(null, 100), null);
+    assert.equal(startedOffCents({ ...where, differenceCents: 41200 }, -41200), 41200, 'the same amount the other way has moved');
+  });
+});
+
+// ── the guards ────────────────────────────────────────────────────────────────────────────────────────────────────────
+const HELPER = 'lib/bank-check-draft.ts';
+const FORM = 'components/admin/kit/club/money/bank/BankCheckForm.tsx';
+
+describe('8 · the draft touches browser storage only, never a bank route', () => {
+  it('the helper has no network, no route, no server import; only localStorage', () => {
+    const src = readCode(HELPER);
+    assert.doesNotMatch(src, /\bfetch\(|bankUrl|bankWrite|moneyFetch|readFigure|\/api\/|supabase|import (?!type)[^;]*from '\.\/(db|supabase)/);
+    assert.doesNotMatch(src, /sessionStorage|document\.cookie|indexedDB/, 'one store: the browser\'s localStorage');
+    assert.match(src, /window\.localStorage/);
+    assert.match(src, /^import type \{ BankLine, WaitingItem \} from '\.\/bank-check';$/m, 'its one import is a type');
+  });
+  it('the card reaches storage only through the helper', () => {
+    const form = readCode(FORM);
+    assert.doesNotMatch(form, /localStorage|sessionStorage/);
+  });
+  it('the card\'s draft writes are local: none of them sits beside a bank write', () => {
+    const form = readCode(FORM);
+    for (const call of form.match(/(writeDraft|clearDraft)\([^)]*\)/g) ?? []) assert.doesNotMatch(call, /bankWrite|readFigure|fetch/);
+  });
+});
+
+describe('9 · the club card wires it as ruled', () => {
+  const form = readCode(FORM);
+  it('the draft is this person\'s, and "Check this statement again" starts that day fresh', () => {
+    assert.match(form, /draftKey\(\{ club: orgSlug, account: accountId, person: personId \}\)/);
+    assert.match(form, /draftAt && !againDate \? readDraft\(browserDraftStore\(\), draftAt, Date\.now\(\)\)/);
+    assert.match(readCode('components/admin/kit/club/money/bank/BankTab.tsx'), /const personId = useOrg\(\)\.user\?\.id \?\? null;/);
+  });
+  it('figures are never restored: the band waits for the day, and marks come back only as the day offers them', () => {
+    assert.match(form, /!figure\.refused && pending === null \? figure : null/);
+    // Each new figure for this day checks the marks again, before the band can draw (adjusted while rendering).
+    assert.match(form, /if \(figure && figure !== checkedFor && figure\.date === date && !figure\.refused\) \{\s*setCheckedFor\(figure\);\s*const keys = pending \?\? \[\.\.\.marked\.keys\(\)\];/);
+    assert.match(form, /keepOffered\(keys, offeredItems\(figure\)\)/);
+    assert.match(form, /if \(gone > 0\) setDroppedMarks\(gone\);/);
+    assert.match(form, /const hasDraft = canKeep && worthKeeping;/, '"Kept in this browser" only where the browser keeps it');
+    assert.match(form, /<Callout tone="warn" role="status" flush>\{W\.draftDropped\(droppedMarks\)\}<\/Callout>/);
+  });
+  it('Save clears it only once the check saved; Start over clears it at once', () => {
+    const save = functionBody(form, 'save');
+    assert.ok(save.indexOf('startOver()') > save.indexOf('if (!r.ok)'), 'after the refusal branch returns');
+    assert.match(functionBody(form, 'startOver'), /if \(draftAt\) clearDraft\(browserDraftStore\(\), draftAt\);/);
+    assert.match(form, /onClick=\{startOver\}>\{W\.startOver\}<\/button>/);
+  });
+  it('the restore line names an earlier day through the shipped date helper', () => {
+    assert.match(form, /restoredOn < today \? W\.draftPickedUpOn\(dayYear\(restoredOn\)\) : W\.draftPickedUp/);
+  });
+  it('coming back to the browser tab reads the day again, debounced, and nothing polls', () => {
+    assert.match(form, /window\.addEventListener\('focus', soon\);/);
+    assert.match(form, /document\.addEventListener\('visibilitychange', soon\);/);
+    assert.match(form, /window\.setTimeout\(\(\) => setAgain\(n => n \+ 1\), DEBOUNCE_MS\)/);
+    assert.doesNotMatch(form, /setInterval/);
+  });
+  it('"+ Add entry" opens the Ledger\'s own window blank: the check\'s date, Money after the gap, no amount', () => {
+    const add = form.slice(form.indexOf('const addEntry = '), form.indexOf('const addEntry = ') + 300);
+    assert.match(add, /setAdding\(\{\s*date,/);
+    assert.doesNotMatch(add, /amount/);
+    assert.match(form, /className=\{`btn btn-outline \$\{s\.addEntry\}`\} onClick=\{addEntry\} disabled=\{!canAdd\}/);
+    assert.match(form, /const canAdd = !!fresh && fresh\.booksCents !== null && !!ownBook && !busy;/);
+  });
+});
+
+describe('10 · sign-out clears every draft in this browser', () => {
+  it('the sign-out wrapper clears them beside the support console\'s Recent', () => {
+    const body = functionBody(readCode('lib/auth.ts'), 'signOut');
+    assert.match(body, /clearConsoleRecent\(\);\s*clearAllDrafts\(browserDraftStore\(\)\);/);
+  });
+});
+
+describe('11 · the words (plan §4b)', () => {
+  it('the club card\'s settled strings; the coach card\'s gap link is unchanged until WD2', () => {
+    assert.equal(W.addEntry, 'Add entry');
+    assert.equal(W.addMissingEntry, 'Add the missing entry');
+    assert.equal(W.addMissing, 'Add the missing line');
+    assert.equal(W.draftPickedUpOn('Nov 5, 2026'), 'Picked up where you left off · last worked on Nov 5, 2026');
+    assert.equal(W.startedOffBy('$412.00'), 'Started off by $412.00');
+    assert.equal(W.draftKept, 'Kept in this browser only, until you save this check.');
+  });
+});

@@ -27,6 +27,7 @@ import { Plus } from 'lucide-react';
 import SingleSelectDropdown from '@/components/coaches/SingleSelectDropdown';
 import pill from '@/components/shared/FilterPill.module.css';
 import LoadingState from '@/components/shared/LoadingState';
+import { useOrg } from '@/lib/org-context';
 import PageNotice, { useNotice } from '../../PageNotice';
 import { Callout, LoadFailed, useDeferredLoad, useLatestRead } from '../../RepKit';
 import { moneyFetch } from '../MoneyKit';
@@ -51,6 +52,7 @@ export default function BankTab({ orgSlug }: { orgSlug: string }) {
   // "Check this statement again": the date handed to the form, and a count that re-keys it (the same date twice re-keys too).
   const [again, setAgain] = useState<{ date: string; n: number } | null>(null);
   const [notice, setNotice] = useNotice();
+  const personId = useOrg().user?.id ?? null;
   // The door's account and check, as the address named them on arrival (read once; see the header).
   const search = useSearchParams();
   const router = useRouter();
@@ -194,7 +196,10 @@ export default function BankTab({ orgSlug }: { orgSlug: string }) {
     : <BankStatements view={view} accountLine={accountLine} tools={accountTools || null}
         onOpen={id => setWin({ kind: 'check', id })}
         form={canMove ? (
-          <BankCheckForm key={again?.n ?? 0} againDate={again?.date} orgSlug={orgSlug} view={view} onStale={t => void staleRefresh(t)}
+          // Keyed by the person too: their working draft (WD1) is read when the card mounts, and the signed-in person
+          // reaches the org context just after the page does.
+          <BankCheckForm key={`${again?.n ?? 0}:${personId ?? ''}`} againDate={again?.date} orgSlug={orgSlug} view={view} personId={personId}
+            onStale={t => void staleRefresh(t)}
             onSaved={(v, text) => { setView(v); setNotice({ tone: 'good', text }); }}
             // A line added through the Ledger's window (no account in hand: read it again) or the start corrected.
             onChanged={(v, text) => { if (v) setView(v); else void loadView(view.account.id); setNotice({ tone: 'good', text }); }} />

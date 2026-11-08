@@ -19,16 +19,31 @@
  * Only a writer is given this component (B7): `BankTab` mounts it behind `canMove`.
  * "Check this statement again" (BC2b) re-keys it with `againDate`: the server already replaces a live check of the same
  * date, and the form already says so ("Saving replaces that check").
+ * ⚖ WORK IT DOWN TO ZERO (WD1, plan BANK_CHECK_WORKING_DRAFT_PLAN.md, owner asks 1A–6A 2026-11-07; drawings tabs 1–5):
+ *   · THE CARD REMEMBERS (`lib/bank-check-draft`): the date, the typed balance, the marked lines' keys and the "Started off
+ *     by" anchor, in THIS BROWSER, per club + account + person. Restored at once with "Picked up where you left off" and
+ *     Start over (no confirm). FIGURES ARE NEVER RESTORED: the band waits for the day's figure, and a mark comes back only
+ *     as a line that figure offers, with its amount; one it doesn't is dropped with the amber callout. Every read of the
+ *     figure re-checks the marks the same way (a line deleted in another tab). Save (success) and Start over clear it.
+ *   · "STARTED OFF BY $X": the difference when this date's balance was last typed; hidden while it equals the live one.
+ *   · "+ ADD ENTRY", always there with a date: the Ledger's own window, blank (Money follows the gap, the check's date, no
+ *     amount). The gap door ("Add the missing entry") keeps the gap. Nothing here writes a book line.
+ *   · THE FIGURE STAYS FRESH: coming back to the browser tab (focus / visible) reads the day again. No polling.
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { Plus } from 'lucide-react';
 import { figureCheck, waitingOnCheck, type BankLine, type WaitingItem } from '@/lib/bank-check';
+import {
+  anchorStarted, browserDraftStore, canKeepDrafts, clearDraft, draftKey, isWorthKeeping, keepOffered, offeredItems, readDraft, startedOffCents,
+  sweepIdleDrafts, writeDraft, type DraftContent, type StartedAnchor,
+} from '@/lib/bank-check-draft';
 import type { LedgerKind } from '@/lib/club-ledger';
 import { AddEntryWindow, useBudgetWords } from '../LedgerWindows';
 import { BANK_REFUSAL } from '@/lib/bank-check-words';
 import { BANK_WORDS as W } from '@/lib/bank-tab-words';
 import { tournamentToday } from '@/lib/timezone';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
-import { useLatestRead } from '../../RepKit';
+import { Callout, useLatestRead } from '../../RepKit';
 import { DayField, FormError } from '../MoneyKit';
 import BankMoneyField from './BankMoneyField';
 import { BankBand, BankSums } from './BankFigure';
@@ -44,9 +59,11 @@ const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
 const DEBOUNCE_MS = 350;
 const BALANCE_ID = 'bank-check-balance';
 
-export default function BankCheckForm({ orgSlug, view, onSaved, onChanged, onStale, againDate }: {
+export default function BankCheckForm({ orgSlug, view, personId, onSaved, onChanged, onStale, againDate }: {
   orgSlug: string;
   view: AccountView;
+  /** The signed-in person: the draft is theirs (null until it is known, and then no draft is read or kept). */
+  personId: string | null;
   /** The account read again after a save, and what to tell the treasurer about it. */
   onSaved: (view: AccountView, text: string) => void;
   /** Something outside this check changed (a line added to the books, the start corrected): the account in hand (or, when
@@ -64,10 +81,24 @@ export default function BankCheckForm({ orgSlug, view, onSaved, onChanged, onSta
   // On a phone the date and the balance sit side by side (drawn; owner 2026-11-06, BC4b): the balance takes the short word.
   const isPhone = useIsPhone();
   const accountId = view.account.id;
-  const [date, setDate] = useState(againDate ?? today);
-  const [asOf, setAsOf] = useState(againDate ?? today); // the date the figure is read for: `date`, after it stops changing
-  const [balance, setBalance] = useState('');
+  // The working draft (WD1): this browser's, this person's, this account's. "Check this statement again" starts that day
+  // fresh instead (its first keystroke replaces the draft). The card mounts after the account is read, never on the server.
+  const draftAt = personId ? draftKey({ club: orgSlug, account: accountId, person: personId }) : null;
+  const [restored] = useState(() => (draftAt && !againDate ? readDraft(browserDraftStore(), draftAt, Date.now()) : null));
+  const [date, setDate] = useState(againDate ?? restored?.date ?? today);
+  const [asOf, setAsOf] = useState(againDate ?? restored?.date ?? today); // the date the figure is read for: `date`, after it stops changing
+  const [balance, setBalance] = useState(restored?.balance ?? '');
+  const [started, setStarted] = useState<StartedAnchor | null>(restored?.started ?? null);
+  // "Picked up where you left off": the day the restored draft was last worked on (null when nothing was restored).
+  const [restoredOn, setRestoredOn] = useState<string | null>(restored?.savedOn ?? null);
+  // The restored marks' keys, until the day's figure says which it still offers (the band waits for them).
+  const [pending, setPending] = useState<string[] | null>(restored?.marked.length ? restored.marked : null);
+  const [droppedMarks, setDroppedMarks] = useState(0);
+  // This browser will keep a draft ("Kept in this browser only…" says so only then: never over blocked storage).
+  const [canKeep] = useState(() => !!draftAt && canKeepDrafts(browserDraftStore()));
   const [figure, setFigure] = useState<Figure | null>(null);
+  // The figure the marks were last checked against (each new read checks them again).
+  const [checkedFor, setCheckedFor] = useState<Figure | null>(null);
   const [readError, setReadError] = useState('');
   const [again, setAgain] = useState(0); // "Try again" on a figure Stripe couldn't give
   const [busy, setBusy] = useState(false);
@@ -77,7 +108,8 @@ export default function BankCheckForm({ orgSlug, view, onSaved, onChanged, onSta
   const [dropped, setDropped] = useState<ReadonlySet<string>>(new Set());
   // "Add the missing line": the Ledger's add window, filled with what the screen said when it opened (the gap, the day, the
   // direction), so a figure read again meanwhile never moves or closes it; the budget words read when it opens.
-  const [adding, setAdding] = useState<{ entryType: 'income' | 'expense'; date: string; amount: string } | null>(null);
+  // "+ Add entry" opens it blank (no amount: a statement line is rarely the gap, drawing tab 3).
+  const [adding, setAdding] = useState<{ entryType?: 'income' | 'expense'; date: string; amount?: string } | null>(null);
   const beginRead = useLatestRead();
   // A saved or deleted check, or a corrected start, changes what the day's figure says: re-read after one.
   const checksKey = `${view.checks.map(c => c.id).join(',')}|${view.start?.id ?? ''}:${view.start?.booksCents ?? ''}`;
@@ -107,7 +139,43 @@ export default function BankCheckForm({ orgSlug, view, onSaved, onChanged, onSta
     });
   }, [orgSlug, accountId, asOf, checksKey, again, beginRead]);
 
-  const fresh = figure !== null && figure.date === date && !figure.refused ? figure : null;
+  // Coming back to the browser tab reads the day again (WD1; a line booked in another tab). Focus and visibility often
+  // fire together: one read, after the date read's own pause. No polling.
+  useEffect(() => {
+    let t: number | undefined;
+    const soon = () => {
+      if (document.visibilityState !== 'visible') return;
+      window.clearTimeout(t);
+      t = window.setTimeout(() => setAgain(n => n + 1), DEBOUNCE_MS);
+    };
+    window.addEventListener('focus', soon);
+    document.addEventListener('visibilitychange', soon);
+    return () => {
+      window.clearTimeout(t);
+      window.removeEventListener('focus', soon);
+      document.removeEventListener('visibilitychange', soon);
+    };
+  }, []);
+
+  // A draft idle 14 days goes, this account's or any other's (ask 4 = A).
+  useEffect(() => { sweepIdleDrafts(browserDraftStore(), Date.now()); }, []);
+
+  // The marks, as the books read NOW (WD1), on each new figure for this day: each one the day still offers, with its
+  // amount as the books have it; one it doesn't is dropped and said, never kept (a restored draft's, or a line deleted in
+  // another tab). Adjusted while rendering, so the band never draws with marks the figure hasn't checked. A refused day
+  // keeps restored marks waiting (another date clears them, as a new day does).
+  if (figure && figure !== checkedFor && figure.date === date && !figure.refused) {
+    setCheckedFor(figure);
+    const keys = pending ?? [...marked.keys()];
+    if (keys.length > 0) {
+      const { kept, dropped: gone } = keepOffered(keys, offeredItems(figure));
+      setMarked(new Map(kept.map(w => [w.key, w])));
+      if (gone > 0) setDroppedMarks(gone);
+    }
+    if (pending) setPending(null);
+  }
+  // While restored marks wait for the day's figure, there is no figure to draw (figures are never restored).
+  const fresh = figure !== null && figure.date === date && !figure.refused && pending === null ? figure : null;
   const typed = parseCents(balance, { positive: false });
   const items = [...marked.values()];
   // The band is the ENGINE's: with no balance typed yet only "Should be in the bank" is read from it.
@@ -115,11 +183,41 @@ export default function BankCheckForm({ orgSlug, view, onSaved, onChanged, onSta
     ? figureCheck({ bankCents: typed ?? 0, booksCents: fresh.booksCents, onItsWayCents: fresh.onItsWay.cents, waiting: items, cashCents: null })
     : null;
   const replaces = !!fresh?.replaces;
+  const liveDifference = band && typed !== null ? band.differenceCents : null;
+
+  // "Started off by" (ask 2 = A): anchored when this date's balance is typed; the work (marks, lines) never moves it.
+  const anchor = anchorStarted(started, { date, balance }, liveDifference);
+  if (anchor !== started) setStarted(anchor);
+  const startedOff = startedOffCents(anchor, liveDifference);
+
+  // Keep the work in this browser whenever it changes (never merely for opening the card): written when worth keeping,
+  // removed when the card is emptied. Restored marks still waiting on the figure are kept as they came.
+  // A date cleared from the calendar is not a day a draft can come back to (it would be refused whole, balance and all):
+  // it is kept as today until another is picked.
+  const draft: DraftContent = { date: ISO_DAY.test(date) ? date : today, balance, marked: pending ?? [...marked.keys()], started: anchor };
+  const worthKeeping = isWorthKeeping(draft);
+  const draftText = JSON.stringify(draft);
+  const lastKept = useRef(draftText);
+  useEffect(() => {
+    if (!draftAt || draftText === lastKept.current) return;
+    lastKept.current = draftText;
+    writeDraft(browserDraftStore(), draftAt, JSON.parse(draftText) as DraftContent, today);
+  }, [draftAt, draftText, today]);
+  const hasDraft = canKeep && worthKeeping;
+  // Emptied: what was picked up is gone, so the next thing typed is new work, not "where you left off".
+  if (restoredOn && !worthKeeping) setRestoredOn(null);
 
   const mark = (w: WaitingItem) => { setMarked(m => new Map(m).set(w.key, w)); setError(''); };
   const unmark = (key: string) => { setMarked(m => { const n = new Map(m); n.delete(key); return n; }); setError(''); };
   /** A new day is a new check: its marks and answers go (the lines and the earlier check's items are that day's). */
-  const pickDate = (v: string) => { setDate(v); setError(''); setMarked(new Map()); setDropped(new Set()); };
+  const pickDate = (v: string) => {
+    setDate(v); setError(''); setMarked(new Map()); setDropped(new Set()); setPending(null); setDroppedMarks(0);
+  };
+  /** Start over (no confirm, the owner's call in the drawings): only a typed balance and marks are lost. */
+  function startOver() {
+    if (draftAt) clearDraft(browserDraftStore(), draftAt);
+    setBalance(''); pickDate(today); setAsOf(today); setStarted(null); setRestoredOn(null); setError('');
+  }
   const waitingRows = items.map(w => ({ key: w.key, what: nameOf(w), amount: moved(waitingOnCheck(w)), onUndo: () => unmark(w.key) }));
   const askingRows = (fresh?.stillWaiting ?? []).filter(w => !marked.has(w.key) && !dropped.has(w.key)).map(w => ({
     key: w.key, what: nameOf(w), amount: cents(w.amountCents),
@@ -141,8 +239,8 @@ export default function BankCheckForm({ orgSlug, view, onSaved, onChanged, onSta
     onChanged(r.view, W.atStartDone(nameOf(line)));
   }
 
-  // The book "Add the missing line" writes to: the account's own club book (R0 ask 1; the Ledger's rule: the club's, not an
-  // event's), else its first.
+  // The book "Add entry" and "Add the missing entry" write to: the account's own club book (R0 ask 1; the Ledger's rule:
+  // the club's, not an event's), else its first.
   const ownBook = view.account.books.find(b => b.kind === 'org' && !b.entityId) ?? view.account.books[0] ?? null;
 
   async function save() {
@@ -165,8 +263,16 @@ export default function BankCheckForm({ orgSlug, view, onSaved, onChanged, onSta
     onSaved(r.view, saved
       ? saved.figure.result === 'matches' ? W.savedMatches(dayYear(date)) : W.savedOff(dayYear(date), cents(saved.figure.offByCents))
       : W.saved);
-    setBalance(''); pickDate(today); setAsOf(today);
+    // Saved: the check is the record now, so the draft goes (WD1).
+    startOver();
   }
+
+  // "+ Add entry" (ask 3 = A): the Ledger's window, blank, the check's date; Money follows the gap when there is one.
+  const canAdd = !!fresh && fresh.booksCents !== null && !!ownBook && !busy;
+  const addEntry = () => setAdding({
+    date,
+    ...(band && typed !== null && band.direction ? { entryType: band.direction === 'bank_more' ? 'income' as const : 'expense' as const } : {}),
+  });
 
   // Save and what saving it means: inline after the fields at a desk, the card's last thing on a phone (drawn).
   const saveButton = (
@@ -180,12 +286,28 @@ export default function BankCheckForm({ orgSlug, view, onSaved, onChanged, onSta
     <>
       {band && band.result === 'off' && typed !== null && <p className={ck.hint}>{W.saveOffNote(cents(band.offByCents))}</p>}
       {replaces && <p className={ck.hint}>{W.replacesNote}</p>}
+      {/* The resting sentence while a draft exists (drawing tab 2, note 3): it is what says leaving is safe. */}
+      {hasDraft && <p className={ck.hint}>{W.draftKept}</p>}
     </>
   );
 
   return (
     <section className={s.checkCard} aria-labelledby="bank-check-title">
-      <h2 id="bank-check-title" className={s.checkTitle}>{W.checkTitle}</h2>
+      {/* The heading row's action (drawing tabs 2 and 5): outline, the word on a phone too (ask 6 = A); Save stays the one
+          green button. Disabled until there is a date and its figure is read (always drawn, so the row never jumps). */}
+      <div className={s.checkHead}>
+        <h2 id="bank-check-title" className={s.checkTitle}>{W.checkTitle}</h2>
+        <button type="button" className={`btn btn-outline ${s.addEntry}`} onClick={addEntry} disabled={!canAdd}>
+          <Plus size={15} aria-hidden />{W.addEntry}
+        </button>
+      </div>
+      {restoredOn && hasDraft && (
+        <p className={`${ck.hint} ${s.restoreLine}`} role="status">
+          <span>{restoredOn < today ? W.draftPickedUpOn(dayYear(restoredOn)) : W.draftPickedUp}</span>
+          <button type="button" className={s.link} onClick={startOver}>{W.startOver}</button>
+        </p>
+      )}
+      {droppedMarks > 0 && <div className={s.droppedNote}><Callout tone="warn" role="status" flush>{W.draftDropped(droppedMarks)}</Callout></div>}
       {/* What went wrong sits by Save: at the card's top at a desk (Save is inline there), above Save on a phone (/review). */}
       {!isPhone && <FormError inPlace>{error}</FormError>}
       <div className={s.checkRow}>
@@ -200,6 +322,7 @@ export default function BankCheckForm({ orgSlug, view, onSaved, onChanged, onSta
       {fresh && fresh.booksCents !== null && band && (
         <>
           <BankBand date={date} figure={band} typed={typed !== null} />
+          {startedOff !== null && <p className={`${ck.hint} ${s.hintLine}`}>{W.startedOffBy(cents(startedOff))}</p>}
           <BankSums date={date} bookNames={view.account.books.map(b => b.name)} booksCents={fresh.booksCents}
             shouldBeCents={band.shouldBeCents} onItsWay={fresh.onItsWay} payoutsHref={`/${orgSlug}/admin/accounting/payouts`}
             onRetry={() => setAgain(n => n + 1)} waiting={waitingRows} asking={askingRows} />
@@ -215,6 +338,7 @@ export default function BankCheckForm({ orgSlug, view, onSaved, onChanged, onSta
       {isPhone && <FormError inPlace>{error}</FormError>}
       {isPhone && saveButton}
       {isPhone && saveNotes}
+      {/* After Add: the page notice, the day read again; the typed balance, the date and the marks stay. */}
       {adding && ownBook && (
         <AddEntryWindow book={{ id: ownBook.id, name: ownBook.name, kind: ownBook.kind as LedgerKind, entityId: ownBook.entityId }}
           // The club's fiscal years, as the Ledger hands them: a date in a closed year is said under the field (/review).

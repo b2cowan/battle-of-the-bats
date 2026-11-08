@@ -150,7 +150,23 @@ export const BANK_WORDS = {
 
   // ── BC3b (not drawn but "Add the missing line"): settled, BC3b /marketing 2026-11-06 ──────────────────────────────
   // "Add the missing line" (tab 3): the Ledger's own add window, filled with the gap, the statement's date and the direction.
+  // ⚠ The COACH card's words until WD2 renames them ("Record the missing amount"); the club card says `addMissingEntry`.
   addMissing: 'Add the missing line',
+
+  // ── work it down to zero (WD1; plan BANK_CHECK_WORKING_DRAFT_PLAN.md §4b, settled with /marketing 2026-11-07). The club
+  // card's: a button is named after the window it opens (the Ledger's "Add an entry"). ──
+  addEntry: 'Add entry',
+  addMissingEntry: 'Add the missing entry',
+  draftPickedUp: 'Picked up where you left off',
+  // Only when the draft is from an earlier day; the date through the shipped date helper.
+  draftPickedUpOn: (date: string) => `Picked up where you left off · last worked on ${date}`,
+  startOver: 'Start over',
+  startedOffBy: (amount: string) => `Started off by ${amount}`,
+  draftKept: 'Kept in this browser only, until you save this check.',
+  // A restored mark the books no longer offer: dropped, never silently kept.
+  draftDropped: (n: number) => (n === 1
+    ? 'One line you marked isn’t in your books any more, so we took it off.'
+    : `${n} lines you marked aren’t in your books any more, so we took them off.`),
   // Q2-A "Waiting at the start": a line of the 60 days before the starting statement, on an off check within six months of it.
   atStart: 'Waiting at the start',
   atStartLine: (what: string) => `Waiting at the start: ${what}`,

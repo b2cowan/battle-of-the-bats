@@ -1,6 +1,7 @@
 import { createClient } from './supabase-browser';
 import { getCurrentPushEndpoint, detachAccountPushOnSignOut } from './push-client';
 import { clearConsoleRecent } from './console-recent';
+import { browserDraftStore, clearAllDrafts } from './bank-check-draft';
 
 const AUTH_TIMEOUT_MS = 15000;
 
@@ -56,6 +57,9 @@ export async function signOut(): Promise<void> {
   // through, a shared computer must not show them to the next person (Support console Stage 2, threat T8). A no-op in a
   // browser that never opened the console.
   clearConsoleRecent();
+  // The bank check's working drafts (a statement balance typed, lines marked) are the signed-in person's: a shared
+  // computer starts the next person on an empty card (Bank check working draft WD1). A no-op where none was kept.
+  clearAllDrafts(browserDraftStore());
   // WI-6: stop this device's ACCOUNT push BEFORE the session is destroyed — the unsubscribe API
   // authorizes the delete off the still-live session, so this can't ride the SIGNED_OUT event
   // (session's already gone there; that pattern fits follows, which are local). Best-effort +

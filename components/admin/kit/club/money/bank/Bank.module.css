@@ -146,7 +146,15 @@ tr > td.nowrap { white-space: nowrap; }
   border-radius: 10px;
   background: var(--home-card);
 }
-.checkTitle { margin: 0 0 0.75rem; font-size: var(--type-heading); font-weight: 700; color: var(--text-primary); }
+/* The card's heading row (WD1, drawing tabs 2 and 5): its title, and "+ Add entry" at the right, outline. */
+.checkHead { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem 0.75rem; flex-wrap: wrap; margin: 0 0 0.75rem; }
+.checkTitle { margin: 0; font-size: var(--type-heading); font-weight: 700; color: var(--text-primary); }
+.addEntry { flex: none; }
+/* "Picked up where you left off · Start over": one quiet hint line under the heading (WD1, tab 4); it wraps on a phone.
+   Element-qualified (the kit's `p.noteAbove` idiom) so its margin wins over `.hint`'s whatever order the sheets load in. */
+p.restoreLine { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem 0.6rem; margin: 0 0 0.75rem; }
+/* A restored mark the books no longer offer: the kit's amber-edged callout, with the card's rhythm under it. */
+.droppedNote { margin: 0 0 0.75rem; }
 /* Date · Bank balance · Save, on one line at a desk; the button sits level with the inputs (a field carries a 0.9rem foot). */
 .checkRow { display: grid; grid-template-columns: minmax(150px, 210px) minmax(180px, 260px) auto; align-items: end; gap: 0 1rem; }
 .checkSave { margin: 0 0 0.9rem; }
@@ -255,6 +263,9 @@ tr > td.nowrap { white-space: nowrap; }
 @media (max-width: 768px) {
   .link { display: inline-flex; align-items: center; justify-content: center; min-height: var(--tap-min, 44px); min-width: var(--tap-min, 44px); }
   .markBtn { min-height: var(--tap-min, 44px); }
+  .addEntry { min-height: var(--tap-min, 44px); }
+  /* The link's 44px box would push the line's words off their baseline: centre them instead. */
+  p.restoreLine { align-items: center; }
 }
 
 /* Find on a phone (BC4b, drawing tab 3): the kit's row cards in one white list, never the table. A hinted card is
