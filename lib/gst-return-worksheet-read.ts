@@ -180,6 +180,19 @@ export async function readGstReturnWorksheet(period: WorksheetPeriod): Promise<{
 }
 
 /**
+ * The worksheet for the accountant package (Session D), built from the sales, registration date and expenses the package already
+ * read, so no sale is read twice. The sales may be the wider `every_event` read: the engine applies the period itself, so the
+ * lines are the Reports view's for the same dates (tests/unit/gst-package-files.test.ts). Only the filings are read here.
+ */
+export async function readPackageWorksheet(input: {
+  period: WorksheetPeriod; registration: RegistrationRead; sales: Extract<SalesRead, { state: 'read' }>; expenses: ExpensesRead;
+}): Promise<{ worksheet: Worksheet; filings: FilingsRead }> {
+  const filings = await readWorksheetFilings();
+  const registrationDate = input.registration.state === 'set' ? input.registration.date : null;
+  return { worksheet: buildWorksheet({ period: input.period, registrationDate, sales: input.sales, expenses: input.expenses, filed: filedForEngine(filings) }), filings };
+}
+
+/**
  * Clubs' names by organization id (`organizations.name`): the return's invoice windows, the Sales window and the accountant
  * package's invoice file. A person is never named here (the files call an individual "Coach", /legal STAFF_CROSS_CLUB_BILLING_LISTS.md).
  * Fails on its own (null): the figures never wait on a name.

@@ -8,6 +8,9 @@ import { zipStream, type ZipEntry } from '@/lib/bookkeeping-zip';
 import { withObservability } from '@/lib/observability';
 import { CLUB_GONE, INVOICE_FILE_HEADER, INVOICE_FILE_NAME, SALES_RECORD_FLOOR } from '@/lib/sales-by-month';
 import { readInvoiceFile } from '@/lib/sales-by-month-read';
+import { readPackageWorksheet } from '@/lib/gst-return-worksheet-read';
+import { asFiledFileRows, creditsFileRows, filingsInside, packageWorksheetRows } from '@/lib/gst-package-files';
+import { PACKAGE_FILES } from '@/lib/gst-return-worksheet-text';
 
 export const runtime = 'nodejs';
 
@@ -37,6 +40,21 @@ export const GET = withObservability(async (req: NextRequest) => {
   const invoiceFile = await invoiceRead;
   if (invoiceFile.state === 'failed') return NextResponse.json({ error: 'Your sales could not be read; the package was not created. Try again.' }, { status: 503 });
   const invoiceRows = invoiceFile.state === 'read' ? invoiceFile.rows.length - 1 : 0;
+  // GST/HST Stage 4b Session D: the return's own worksheet for the same dates, built from the sales and expenses already read above
+  // (the engine's rules, never a second set), plus the returns marked filed inside those dates. Dates that end before our sales
+  // record starts have no worksheet to give.
+  let gstRead: Awaited<ReturnType<typeof readPackageWorksheet>> | null = null;
+  if (invoiceFile.state === 'read') {
+    try { gstRead = await readPackageWorksheet({ period: invoiceFile.period, registration: invoiceFile.registration, sales: invoiceFile.sales, expenses: { state: 'read', revisions } }); }
+    catch { return NextResponse.json({ error: 'Unable to prepare accountant package' }, { status: 500 }); }
+  }
+  const gst = gstRead; // a const, so the file loaders below keep its type
+  const asFiled = gst && gst.filings.state === 'read' ? filingsInside(gst.filings.filings, gst.worksheet.period) : [];
+  const gstScope = !gst ? [PACKAGE_FILES.scope.beforeRecord] : [
+    PACKAGE_FILES.scope.worksheet(gst.worksheet.period, !filters.from || !filters.to), PACKAGE_FILES.scope.credits,
+    gst.filings.state === 'failed' ? PACKAGE_FILES.scope.filingsUnread
+      : asFiled.length ? PACKAGE_FILES.scope.asFiled(new Set(asFiled.map(f => `${f.period.from}|${f.period.to}`)).size) : PACKAGE_FILES.scope.noFiled,
+  ];
   const documents = new Map<string, { filename: string; contentType: string }>();
   // Check every referenced object before starting the download. The ZIP itself fetches one file at a time.
   try {
@@ -59,6 +77,11 @@ export const GET = withObservability(async (req: NextRequest) => {
     { name: 'expenses.csv', load: async () => encoder.encode(expenseCsv(selected, filters, registrationDate)) },
     { name: 'owner-transfers.csv', load: async () => encoder.encode(ownerMovementCsv(selectedOwners)) },
     { name: INVOICE_FILE_NAME, load: async () => encoder.encode(packageCsv(invoiceFile.state === 'read' ? invoiceFile.rows : [INVOICE_FILE_HEADER])) },
+    ...(gst ? [
+      { name: PACKAGE_FILES.worksheet, load: async () => encoder.encode(packageCsv(packageWorksheetRows(gst.worksheet))) },
+      { name: PACKAGE_FILES.credits, load: async () => encoder.encode(packageCsv(creditsFileRows(gst.worksheet, gst.filings.state === 'read' ? gst.filings.filings : []))) },
+    ] : []),
+    ...(asFiled.length ? [{ name: PACKAGE_FILES.asFiled, load: async () => encoder.encode(packageCsv(asFiledFileRows(asFiled))) }] : []),
     { name: 'package-scope.txt', load: async () => encoder.encode([
       'FieldLogicHQ private proprietor bookkeeping package',
       `Expense revisions: ${selected.length}; owner transfer revisions: ${selectedOwners.length}; receipt files: ${documents.size}; invoice and credit note rows: ${invoiceRows}.`,
@@ -66,6 +89,7 @@ export const GET = withObservability(async (req: NextRequest) => {
       invoiceFile.state === 'read'
         ? `${INVOICE_FILE_NAME}: ${invoiceFile.live ? 'live' : 'TEST-MODE'} sales, ${invoiceFile.period.from} to ${invoiceFile.period.to} (Ontario days). One row per invoice issued, paid, voided or written off in those dates ("Listed for" says which) and one per credit note issued in them, with its invoice number. Amounts in the bill's own currency, in CAD at the Bank of Canada rate on file, and GST/HST as the return values it. The buyer is the club's name; an individual is "Coach". No address is included. "Before GST/HST registration" uses the registration date on file: ${invoiceFile.registration.state === 'set' ? invoiceFile.registration.date : invoiceFile.registration.state === 'unset' ? 'none recorded' : 'it could not be read, so no bill is marked'} (a changeable setting; a granted backdate changes this column). "Status" is each bill's status today, not at the end of these dates. A club deleted since it was billed reads "${CLUB_GONE}".${invoiceFile.period.from < SALES_RECORD_FLOOR ? ` Our sales record starts ${SALES_RECORD_FLOOR}: nothing before it is in this file.` : ''}${invoiceFile.clubNamesRead ? '' : ' The clubs\u2019 names could not be read just now, so club buyers read "Club".'}`
         : `${INVOICE_FILE_NAME} has a header only: the chosen period ends before ${SALES_RECORD_FLOOR}, when our sales record starts.`,
+      ...gstScope,
       'Legacy expense dates with unknown meaning may appear outside the selected period and are labelled in expenses.csv.',
       `Expense status: ${filters.status ?? 'all'}; review: ${filters.review}${filters.taxType ? `; tax type: ${filters.taxType}` : ''}.`,
       'Expense filters apply to expenses.csv. If an expense category, supplier, payment source, tax type, search, review or status filter narrows the view, owner-transfers.csv includes only reimbursements linked to those expenses.',

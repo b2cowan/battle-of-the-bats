@@ -71,7 +71,8 @@ export async function readSalesReport(period: WorksheetPeriod): Promise<SalesRep
 }
 
 export type InvoiceFileRead =
-  | { state: 'read'; rows: string[][]; live: boolean; period: WorksheetPeriod; registration: RegistrationRead; clubNamesRead: boolean }
+  /** `sales` is the very read the rows came from: the package's GST/HST worksheet is built from it, never from a second pass. */
+  | { state: 'read'; rows: string[][]; live: boolean; period: WorksheetPeriod; registration: RegistrationRead; clubNamesRead: boolean; sales: SalesInputs['sales'] }
   /** The chosen dates end before our sales record starts: the file is a header only. */
   | { state: 'before_record' }
   | { state: 'failed' };
@@ -88,7 +89,7 @@ export async function readInvoiceFile(range: { from?: string | null; to?: string
     const inputs = await readSalesInputs(period, live);
     if (!inputs) return { state: 'failed' };
     const rows = invoiceFileRows(period, inputs.sales, dateOf(inputs.registration), inputs.refunds, inputs.clubNames);
-    return { state: 'read', rows, live, period, registration: inputs.registration, clubNamesRead: inputs.clubNames != null };
+    return { state: 'read', rows, live, period, registration: inputs.registration, clubNamesRead: inputs.clubNames != null, sales: inputs.sales };
   } catch (err) {
     console.warn('[platform-admin] Accountant package invoice file failed:', (err as { code?: string }).code ?? 'error');
     return { state: 'failed' };

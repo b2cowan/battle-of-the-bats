@@ -1,0 +1,246 @@
+<title>Accountant Package Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: one column instrument, a sticky progress bar, parts as cards of Do / You should see steps, the paste-back at the foot. Same house walk as §488. */
+:root {
+  --bg: #f6f6f1; --card: #ffffff; --ink: #1f2420; --muted: #5b6259; --line: #dcdfd6; --accent: #5d6b2f; --accent-soft: #eef1e2;
+  --warn: #8a5a00; --warn-soft: #fbf1dc; --bad: #9b2c2c; --bad-soft: #f8e5e3; --ok: #2f6b3a; --ok-soft: #e4f1e5;
+  --sans: "Public Sans", "Segoe UI", system-ui, sans-serif; --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #161915; --card: #1f231e; --ink: #e8ebe3; --muted: #a3aa9f; --line: #343a32; --accent: #b6c77a; --accent-soft: #2a3120;
+  --warn: #e7b65a; --warn-soft: #33290f; --bad: #f09a92; --bad-soft: #3a1f1d; --ok: #8fd19b; --ok-soft: #1f3322; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #161915; --card: #1f231e; --ink: #e8ebe3; --muted: #a3aa9f; --line: #343a32; --accent: #b6c77a; --accent-soft: #2a3120;
+  --warn: #e7b65a; --warn-soft: #33290f; --bad: #f09a92; --bad-soft: #3a1f1d; --ok: #8fd19b; --ok-soft: #1f3322; color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--sans); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 48px; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.wrap { max-width: 780px; margin: 0 auto; display: grid; gap: 18px; }
+h1 { font-size: 1.6rem; line-height: 1.2; margin: 24px 0 0; text-wrap: balance; }
+h2 { font-size: 1.1rem; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.eye { font: 600 0.75rem/1 var(--sans); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding: 10px 0; border-bottom: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+.meter { flex: 1 1 200px; height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
+.meter i { display: block; height: 100%; background: var(--accent); width: 0; transition: width 0.2s; }
+.count { font: 500 0.85rem var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; display: grid; gap: 10px; min-width: 0; }
+.card.signin { border-color: var(--accent); background: var(--accent-soft); }
+.card.caution { border-color: var(--warn); background: var(--warn-soft); }
+dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 14px; margin: 0; }
+dt { color: var(--muted); } dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+code, .mono { font-family: var(--mono); font-size: 0.86em; overflow-wrap: anywhere; }
+ul.plain { margin: 0; padding-left: 1.1rem; display: grid; gap: 4px; }
+.part { display: grid; gap: 12px; }
+.part header { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: baseline; justify-content: space-between; }
+.step { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 10px; padding: 10px 0; border-top: 1px solid var(--line); }
+.step:first-of-type { border-top: 0; }
+.step input { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); }
+.step label { display: grid; gap: 4px; cursor: pointer; }
+.do b, .see b { font-weight: 700; }
+.see { color: var(--muted); }
+.step.done .do { text-decoration: line-through; text-decoration-color: var(--line); }
+.who { font: 600 0.72rem var(--sans); letter-spacing: 0.06em; text-transform: uppercase; color: var(--warn); }
+.verdict { display: flex; flex-wrap: wrap; gap: 8px; }
+.verdict button, .tools button { font: 600 0.85rem var(--sans); padding: 7px 12px; border-radius: 7px; border: 1px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer; }
+.verdict button[aria-pressed="true"][data-v="pass"] { background: var(--ok-soft); border-color: var(--ok); color: var(--ok); }
+.verdict button[aria-pressed="true"][data-v="issue"] { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); }
+.verdict button[aria-pressed="true"][data-v="call"] { background: var(--warn-soft); border-color: var(--warn); color: var(--warn); }
+button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+textarea { width: 100%; box-sizing: border-box; min-height: 64px; font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 7px; padding: 8px; }
+.tools { display: flex; flex-wrap: wrap; gap: 8px; }
+.tools button.primary { background: var(--accent); border-color: var(--accent); color: var(--card); }
+pre.out { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font: 500 0.8rem/1.5 var(--mono); background: var(--bg); border: 1px solid var(--line); border-radius: 7px; padding: 10px; max-height: 360px; overflow: auto; }
+.status { font-size: 0.85rem; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { .meter i { transition: none; } }
+</style>
+
+<div class="wrap">
+  <h1><span class="eye">Owner walk · §494 · GST/HST Stage 4b Session D</span><br>The accountant package's GST/HST files</h1>
+
+  <div class="bar" role="status"><div class="meter" aria-hidden="true"><i id="meter"></i></div><span class="count" id="count">0 of 0 checked</span></div>
+
+  <section class="card">
+    <h2>What this walk is for</h2>
+    <p>The Accountant package (the ZIP you hand your accountant) now carries the GST/HST return as well: <b>gst-hst-worksheet.csv</b> (lines 101 to 109 for the package's dates), <b>gst-hst-credits.csv</b> (every expense behind line 106 and what happened to its credit) and, when you marked a return as filed inside those dates, <b>gst-hst-as-filed.csv</b> (every filing, every revision, exactly as saved). The package's one invoice file is unchanged.</p>
+    <p>It also settles one thing left open from the last walk (§488): whether marking October 2026 as filed <i>again</i>, with a reason, really saves. Dev holds one October filing, not the two part D described. Code, the real worksheet and the database all accept the second filing when I run them here; the one thing I cannot run is your signed-in browser. So parts A and C use the browser's Network tab, and a failed save will tell us exactly why.</p>
+    <p><b>It passes when</b> the three files read the same as the return screen, the filed return in the package never moves when an expense changes, a credit added after filing is explained in the credits file, and the second filing saves (or the Network tab shows why it did not).</p>
+    <p><b>Not in this walk:</b> the invoice file (walked in §493), the return screen itself, anything on a club or coach screen, and the backup drill (a command, not a screen; see the last part).</p>
+  </section>
+
+  <section class="card signin">
+    <h2>Sign in as</h2>
+    <dl>
+      <dt>Where</dt><dd><span class="mono">http://localhost:3000/platform-admin</span> (the dev server, restarted for this walk)</dd>
+      <dt>Account</dt><dd>Your own Bookkeeping owner account (<span class="mono">fieldlogichq@gmail.com</span>). No UAT account opens Bookkeeping: it is owner-only.</dd>
+      <dt>Then</dt><dd>Bookkeeping › Reports › View. Use <b>GST/HST return</b> for parts A and C, and <b>Sales</b> for the <b>Accountant package</b> button (parts B and D). The package button is on a computer only.</dd>
+      <dt>As of</dt><dd>Written November 8, 2026. Dev figures move as other sessions add invoices, so steps pin what must hold (the Walk test supplier's $13.00, the one October filing), never today's totals.</dd>
+    </dl>
+  </section>
+
+  <section class="card caution">
+    <h2>Before you start: this walk writes once, and a filing can't be deleted</h2>
+    <ul class="plain">
+      <li>Part C marks <b>October 2026</b> as filed a second time (revision 2). The app has no way to remove a filing. Part F asks whether to clear the walk's rows from dev afterwards (October's two filings and the "Walk test supplier" expense).</li>
+      <li><b>Do the parts in order.</b> The credit shows as "carried to a later return" only until October is marked again; part C is what moves it.</li>
+      <li>Open the browser's developer tools (<b>F12</b>, then the <b>Network</b> tab) before part C and leave it open.</li>
+      <li>Each package step downloads a ZIP. Unzip it somewhere and open the files in a spreadsheet or a text editor.</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>The real files, if you want to open them</h2>
+    <ul class="plain">
+      <li><span class="mono">lib/gst-package-files.ts</span> — the rows of the three files</li>
+      <li><span class="mono">lib/gst-return-worksheet-text.ts</span> — the wording (PACKAGE_FILES for the scope lines, CREDIT_STATE_WORDS)</li>
+      <li><span class="mono">app/api/platform-admin/bookkeeping/package/route.ts</span> — what goes in the ZIP</li>
+      <li><span class="mono">tests/unit/gst-package-files.test.ts</span> — 22 tests, one fixture row per file</li>
+      <li><span class="mono">.probe/refile-probe.log</span> and <span class="mono">.probe/package-gst-probe.log</span> — the second-filing proof and the package files built from dev data</li>
+    </ul>
+  </section>
+
+  <div id="parts"></div>
+
+  <section class="card">
+    <h2>Paste-back</h2>
+    <p class="status">Builds plain text with every part's verdict, the ticked count, your notes and the calls you ruled. Paste it into the chat. If part C's save fails, paste the Network request's status and response in that part's notes.</p>
+    <div class="tools"><button type="button" class="primary" id="build">Build summary</button><button type="button" id="copy">Copy</button><button type="button" id="reset">Clear my ticks</button></div>
+    <p class="status" id="copyState" role="status"></p>
+    <pre class="out" id="out" hidden></pre>
+  </section>
+</div>
+
+<script>
+(function () {
+  var KEY = 'gst4b-session-d-walk-v1';
+  var PARTS = [
+    { id: 'A', title: 'Before anything is marked again (the carried credit)', steps: [
+      { id: 'A1', do: 'Open the GST/HST return, choose <b>Custom dates Nov 1, 2026 to Nov 30, 2026</b>, press <b>Copy lines</b> and paste it anywhere.', see: 'The 106 line ends <b>(includes $13.00 credits from earlier periods)</b>. (This is the step from the last walk that was not checked.)' },
+      { id: 'A2', do: 'Choose <b>Oct 1, 2026 to Oct 31, 2026</b>.', see: 'The green <b>FILED</b> tag with the figures <i>as filed</i> (106 is $0.00), and an amber "Changed since you filed" box: "$13.00 credit released: Walk test supplier’s number added … Claim it on a later return…". The filed figures have not moved.' }
+    ]},
+    { id: 'B', title: 'The package for October, before the amend', steps: [
+      { id: 'B1', do: 'Open <b>Reports › View: Sales</b>, choose <b>Custom dates Oct 1, 2026 to Oct 31, 2026</b> and press <b>Accountant package</b>. Unzip it.', see: 'These files: expenses.csv, owner-transfers.csv, <b>invoices-and-credit-notes.csv</b>, <b>gst-hst-worksheet.csv</b>, <b>gst-hst-credits.csv</b>, <b>gst-hst-as-filed.csv</b>, package-scope.txt, receipt-index.csv (and any receipts).' },
+      { id: 'B2', do: 'Open <b>gst-hst-worksheet.csv</b>.', see: 'Header Line, Description, Amount (CAD), Note, then one row for each of lines 101, 103, 104, 105, 106, 107, 108, 109. The figures match the return screen\'s "Today\'s figures for this period": 101 <b>1039</b> (whole dollars), 106 <b>13.00</b>, 109 <b>13.00</b> with the note <b>Refund</b> (a refund is a plain number plus the word, never a minus sign). A last row says how many "Before you file" items are open.' },
+      { id: 'B3', do: 'Open <b>gst-hst-credits.csv</b>.', see: 'One row: Section "This period", Walk test supplier, revision 2, HST 13%, GST/HST paid 13.00, Credit on line 106 <b>13.00</b>, state "Counted on line 106". Its Note says the supplier\'s registration has not been checked <b>and</b> that the credit is <b>"Not on the return filed [November 7] for 2026-10-01 to 2026-10-31: added or released after it was filed, so it counts on a later return"</b>. No supplier number, address or email anywhere in the file.' },
+      { id: 'B4', do: 'Open <b>gst-hst-as-filed.csv</b>.', see: 'Filing number 1, Revision 1, Latest revision Yes, period Oct 1 to Oct 31, filed November 7, no reason. A "Filing" row (it notes the sales lines were partial and how many items were open), eight "Line" rows with line 101 <b>1039</b> and <b>106 = 0.00</b>, then one row per invoice behind 101 and 103, per expense credit (the Walk test supplier row reads 0.00 with its state "Held…"), and per open item.' },
+      { id: 'B5', do: 'Open <b>package-scope.txt</b>.', see: 'All the old sentences are unchanged. Three new lines: the worksheet\'s (it says the figures are today\'s, that a return marked filed keeps its own in gst-hst-as-filed.csv, and that the expense filters don\'t narrow it), the credits\' (supplier names only, the number is in expenses.csv), and the as-filed one ("the return marked as filed inside those dates, every revision…").' },
+      { id: 'B6', do: 'Back in Sales, choose <b>Custom dates Nov 1, 2026 to Nov 30, 2026</b>, press <b>Accountant package</b>, unzip it and open its credits and scope files.', see: 'There is <b>no gst-hst-as-filed.csv</b>, and package-scope.txt says "No return was marked as filed inside those dates, so there is no gst-hst-as-filed.csv." gst-hst-credits.csv has a row in Section <b>"Carried from a filed return"</b>: Walk test supplier, 13.00, state "Counted on line 106 as a credit from an earlier period", filed period 2026-10-01 to 2026-10-31.' }
+    ]},
+    { id: 'C', title: 'Marking October again (an amended return), with the Network tab open', steps: [
+      { id: 'C1', do: 'Open <b>F12 › Network</b>. On the GST/HST return choose <b>Oct 1 to Oct 31, 2026</b>, press the <b>FILED</b> tag, then <b>Mark as filed again…</b>.', see: 'Titled "… as filed again?", the lead says the earlier filing stays in the history, the lines now include the $13.00 on 106, and there is a "Why are you marking it again?" box. The quiet answer reads "Keep the filing as it is".' },
+      { id: 'C2', do: 'Leave the reason empty and press <b>Mark as filed</b>.', see: '"Say why you\'re marking it again, for example an amended return." Nothing is saved, and no request goes out.' },
+      { id: 'C3', who: 'The one that matters', do: 'Type <b>Walk: amended with the supplier\'s number</b> and press <b>Mark as filed</b>. In the Network tab find the request named <b>filings</b> (a POST).', see: 'Its status is <b>201</b>. The view reloads: "Marked filed 2 times; the latest is shown.", As filed 106 now includes the $13.00, and "Nothing has changed since you filed." The FILED tag\'s window reads "Filings · 2", the newer row ending with your reason. <b>If the status is anything else (400, 409, 500), or nothing reloads, copy the status and the response text into this part\'s notes and mark the part Issue.</b>' },
+      { id: 'C4', do: 'Choose <b>Custom dates Nov 1 to Nov 30, 2026</b> again and press <b>Copy lines</b>.', see: 'The 106 line no longer says "includes … credits from earlier periods": October\'s amended filing claims the $13.00 now, so it is counted once.' }
+    ]},
+    { id: 'D', title: 'The package for October, after the amend', steps: [
+      { id: 'D1', do: 'Download the October package again (Sales, Oct 1 to Oct 31, 2026) and open <b>gst-hst-as-filed.csv</b>.', see: 'Both filings are there, oldest first. Filing 1, Revision 1, Latest revision <b>No</b>, 106 = 0.00. Filing 2, Revision 2, Latest revision <b>Yes</b>, the reason "Walk: amended with the supplier\'s number" on every one of its rows, 106 = <b>13.00</b>. Nothing in the filing 1 rows changed.' },
+      { id: 'D2', do: 'Open <b>gst-hst-credits.csv</b>.', see: 'Same single row, still "Counted on line 106", and the Note no longer says "Not on the return filed…": the latest filing now claims the credit. Only the registration-not-checked sentence remains.' },
+      { id: 'D3', do: 'Download the November package again and open its credits file.', see: 'The "Carried from a filed return" row is gone (October claims the credit now), and still no gst-hst-as-filed.csv for November.' }
+    ]},
+    { id: 'E', title: 'Dates left open, and what the files must not contain', steps: [
+      { id: 'E1', do: 'Open the <b>Expenses</b> register, clear its dates if it lets you, and press <b>Accountant package</b>. Open package-scope.txt. <i>(If the register won\'t let you clear the dates, say so in the notes and skip this.)</i>', see: 'The worksheet line says "No start or end was chosen, so this runs from the start of our sales record, or to today, which is not a reporting period: choose the return\'s dates to match a return." The worksheet file\'s period row shows the same dates.' },
+      { id: 'E2', do: 'Search the three new GST/HST files for an email address, a street address, a postal code or a person\'s name.', see: 'None. Suppliers appear by name only (Walk test supplier, G4A-Canva, G4A-Hollis Law); invoices by number; no buyer names at all (the invoice file holds the clubs).' }
+    ]},
+    { id: 'F', title: 'Your calls', calls: true, steps: [
+      { id: 'F1a', group: 'F1 · gst-hst-as-filed.csv holds every return marked filed whose dates fall INSIDE the package\'s dates (the build prompt said "a filed period only"). So a whole-year package carries a filed stub period too.', do: 'Keep it as built (inside the dates)', see: '' },
+      { id: 'F1b', group: 'F1', do: 'Only when the package\'s dates are exactly a filed return\'s dates', see: '' },
+      { id: 'F2a', group: 'F2 · This walk\'s rows on dev (October 2026 filed twice, and the Walk test supplier expense). You ruled in §488 to remove them after the walk.', do: 'Remove them now (a dev-only clean-up with the admin login, I will say what it removed)', see: '' },
+      { id: 'F2b', group: 'F2', do: 'Keep them for now (say why in the notes)', see: '' },
+      { id: 'F3a', group: 'F3 · The backup now carries filings (format 4) but has never run against a real archive. It needs the backup passphrase set in your environment (BOOKKEEPING_BACKUP_PASSPHRASE); I have not seen it set. I would run create, verify and the restore drill BEFORE removing the rows, so the drill proves the two October filings.', do: 'I have set the passphrase: run the drill, then the clean-up', see: '' },
+      { id: 'F3b', group: 'F3', do: 'Not yet: clean up first, drill later', see: '' }
+    ]}
+  ];
+
+  var state = { ticks: {}, verdicts: {}, notes: {} };
+  try { var saved = JSON.parse(localStorage.getItem(KEY) || 'null'); if (saved) state = Object.assign(state, saved); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var all = [];
+  PARTS.forEach(function (p) { p.steps.forEach(function (s) { all.push(s.id); }); });
+  var root = document.getElementById('parts');
+
+  PARTS.forEach(function (p) {
+    var sec = document.createElement('section');
+    sec.className = 'card part';
+    var head = '<header><h2>' + p.id + ' · ' + p.title + '</h2><span class="count" id="pc-' + p.id + '"></span></header>';
+    var body = '';
+    var lastGroup = '';
+    p.steps.forEach(function (s) {
+      if (p.calls && s.group && s.group.indexOf('·') > 0 && s.group !== lastGroup) { body += '<p><b>' + s.group + '</b></p>'; }
+      lastGroup = s.group || '';
+      body += '<div class="step" id="row-' + s.id + '"><input type="checkbox" id="cb-' + s.id + '" data-id="' + s.id + '">' +
+        '<label for="cb-' + s.id + '">' + (s.who ? '<span class="who">' + s.who + '</span>' : '') +
+        '<span class="do">' + (p.calls ? '' : '<b>Do</b> ') + s.do + '</span>' +
+        (s.see ? '<span class="see"><b>You should see</b> ' + s.see + '</span>' : '') + '</label></div>';
+    });
+    var verdict = p.calls ? '' : '<div class="verdict" role="group" aria-label="Verdict for part ' + p.id + '">' +
+      ['pass', 'issue', 'call'].map(function (v) {
+        return '<button type="button" data-part="' + p.id + '" data-v="' + v + '" aria-pressed="false">' + ({ pass: 'Pass', issue: 'Issue', call: 'Needs a call' })[v] + '</button>';
+      }).join('') + '</div>';
+    var notes = '<label for="nt-' + p.id + '" class="status">Notes for part ' + p.id + '</label><textarea id="nt-' + p.id + '" data-part="' + p.id + '"></textarea>';
+    sec.innerHTML = head + '<div>' + body + '</div>' + verdict + notes;
+    root.appendChild(sec);
+  });
+
+  function render() {
+    var done = 0;
+    all.forEach(function (id) {
+      var on = !!state.ticks[id];
+      var cb = document.getElementById('cb-' + id);
+      cb.checked = on;
+      document.getElementById('row-' + id).classList.toggle('done', on);
+      if (on) done++;
+    });
+    PARTS.forEach(function (p) {
+      var n = p.steps.filter(function (s) { return state.ticks[s.id]; }).length;
+      document.getElementById('pc-' + p.id).textContent = n + ' of ' + p.steps.length;
+      document.querySelectorAll('.verdict button[data-part="' + p.id + '"]').forEach(function (b) { b.setAttribute('aria-pressed', String(state.verdicts[p.id] === b.dataset.v)); });
+      var t = document.getElementById('nt-' + p.id); if (document.activeElement !== t) t.value = state.notes[p.id] || '';
+    });
+    document.getElementById('count').textContent = done + ' of ' + all.length + ' checked';
+    document.getElementById('meter').style.width = (all.length ? (100 * done / all.length) : 0) + '%';
+  }
+
+  root.addEventListener('change', function (e) { if (e.target.dataset && e.target.dataset.id) { state.ticks[e.target.dataset.id] = e.target.checked; save(); render(); } });
+  root.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('.verdict button'); if (!b) return;
+    state.verdicts[b.dataset.part] = state.verdicts[b.dataset.part] === b.dataset.v ? undefined : b.dataset.v; save(); render();
+  });
+  root.addEventListener('input', function (e) { if (e.target.tagName === 'TEXTAREA') { state.notes[e.target.dataset.part] = e.target.value; save(); } });
+
+  function summary() {
+    var done = all.filter(function (id) { return state.ticks[id]; }).length;
+    var lines = ['§494 Accountant package walk (GST/HST Stage 4b Session D) · checked ' + done + ' of ' + all.length];
+    PARTS.forEach(function (p) {
+      var n = p.steps.filter(function (s) { return state.ticks[s.id]; }).length;
+      lines.push('');
+      lines.push(p.id + ' ' + p.title + (p.calls ? '' : ' [' + (state.verdicts[p.id] ? state.verdicts[p.id].toUpperCase() : 'NO VERDICT') + ']') + ' ' + n + '/' + p.steps.length);
+      p.steps.forEach(function (s) {
+        var tmp = document.createElement('div'); tmp.innerHTML = s.do;
+        lines.push('  ' + (state.ticks[s.id] ? '[x] ' : '[ ] ') + s.id + ' ' + (p.calls ? s.group.split(' · ')[0] + ': ' : '') + tmp.textContent);
+      });
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+  var out = document.getElementById('out');
+  document.getElementById('build').addEventListener('click', function () { out.hidden = false; out.textContent = summary(); });
+  document.getElementById('copy').addEventListener('click', function () {
+    var text = summary(); out.hidden = false; out.textContent = text;
+    var msg = document.getElementById('copyState');
+    try {
+      navigator.clipboard.writeText(text).then(function () { msg.textContent = 'Copied.'; }, function () { selectOut(); msg.textContent = 'Select the text above and copy it.'; });
+    } catch (e) { selectOut(); msg.textContent = 'Select the text above and copy it.'; }
+  });
+  function selectOut() { var r = document.createRange(); r.selectNodeContents(out); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); }
+  var resetArmed = false;
+  document.getElementById('reset').addEventListener('click', function (e) {
+    if (!resetArmed) { resetArmed = true; e.target.textContent = 'Press again to clear'; return; }
+    state = { ticks: {}, verdicts: {}, notes: {} }; save(); render(); resetArmed = false; e.target.textContent = 'Clear my ticks';
+  });
+  render();
+})();
+</script>

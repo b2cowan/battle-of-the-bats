@@ -395,10 +395,10 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     audiences: ['platform_admin'],
     includesSensitiveFields: true,
     sensitiveFieldPolicy: 'included_justified',
-    sensitiveFieldJustification: 'Only the named proprietor can reach this export after an exact-email platform-session check. The expense files name each supplier and keep receipts and correction reasons. The invoice file names the buying club for each invoice and credit note (an individual coach appears only as "Coach"), because the accountant checks the books and the GST/HST return against them. No person’s name, email, billing address or postal code is in it.',
+    sensitiveFieldJustification: 'Only the named proprietor can reach this export after an exact-email platform-session check. The expense files name each supplier and keep receipts and correction reasons. The invoice file names the buying club for each invoice and credit note (an individual coach appears only as "Coach"), because the accountant checks the books and the GST/HST return against them. The GST/HST files (worksheet, credits, and the returns marked filed) hold only the return\'s figures, invoice and credit note numbers, and supplier names. No person’s name, email, billing address or postal code is in it.',
     respectsCurrentFilters: true,
     serverSide: true,
-    helpSummary: 'Owner-only ZIP for the accountant: expenses with their receipts, owner transfers, and every invoice and credit note in the chosen dates with its sales and GST/HST figures in CAD, plus a note of what the package does and does not hold.',
+    helpSummary: 'Owner-only ZIP for the accountant: expenses with their receipts, owner transfers, and every invoice and credit note in the chosen dates with its sales and GST/HST figures in CAD, the GST/HST return worksheet for those dates with the credits behind line 106 and any return marked filed, plus a note of what the package does and does not hold.',
   },
   {
     // Plans & pricing Stage 2 Part 4 (owner rulings 2026-11-07); justification as /legal wrote it

@@ -8,7 +8,7 @@
  *   the build prompt's Progress record holds that. The drawings' "Adjustments that increase / decrease net tax" were paraphrases.
  * ⚖ Negative money is written in words ("refund", "you owe", "minus"), never with a sign. "Not available" is never $0.
  */
-import { formatCad } from './bookkeeping-gst';
+import { formatCad, type CreditState } from './bookkeeping-gst';
 import { provinceName } from './canadian-provinces';
 import { formatStoredDate } from './timezone';
 import { possessive } from './utils';
@@ -97,7 +97,7 @@ export function worksheetCsvRows(worksheet: Worksheet): string[][] {
     const notes = [
       figure == null ? `${NOT_AVAILABLE}: ${NOT_AVAILABLE_WHY[l.notAvailable ?? 'sales_unread']}` : '',
       plainWord(worksheet, line) ? (line === 109 ? (l.cents! < 0 ? 'Refund' : 'You owe') : 'Below zero') : '',
-      line === 101 ? 'Whole dollars' : '',
+      line === 101 && figure != null ? 'Whole dollars' : '',
       l.calculated ? 'Calculated' : '',
       l.partial ? 'Partial: the period starts before the sales record does' : '',
       line === 104 && figure != null ? LINE_104_UNTRACKED : '',
@@ -297,3 +297,34 @@ export const NOT_ON_RETURN_STEPS: readonly { key: NotOnReturnStep; label: string
   { key: 'notClaimed', label: 'Not claimed · “I can’t get the number”' },
   { key: 'typeNotSet', label: 'Tax type not set' },
 ];
+
+// ── The accountant package's GST/HST files (Session D) ─────────────────────────────────────────────────────────────────────
+
+/** A credit's state in words, for the package's credits and as-filed files (the credit rules are bookkeeping-gst.ts's). */
+export const CREDIT_STATE_WORDS: Record<CreditState, string> = {
+  counted: 'Counted on line 106',
+  held: 'Held: waiting for the supplier’s number',
+  not_claimed: 'Not claimed: “I can’t get the number”',
+  not_claimable: 'No credit: this supplier’s tax can’t be claimed',
+  before_registration: 'No credit counted: bought before the registration date (equipment, or prepaid time after it, may qualify: ask your accountant)',
+  no_credit: 'No credit: the business-use rule gives none',
+  type_not_set: 'Tax type not set',
+  no_tax: 'No tax',
+  not_gst_hst: 'Not GST/HST',
+};
+
+export const PACKAGE_FILES = {
+  worksheet: 'gst-hst-worksheet.csv',
+  credits: 'gst-hst-credits.csv',
+  asFiled: 'gst-hst-as-filed.csv',
+  /** Appended to the worksheet file when items under “Before you file” can still change a line. */
+  openItems: (n: number) => `${n} ${n === 1 ? 'item is' : 'items are'} still open under “Before you file” (Reports › GST/HST return, for these dates) and can change a line.`,
+  scope: {
+    worksheet: (p: WorksheetPeriod, openEnded = false) => `gst-hst-worksheet.csv: lines 101 to 109 of the GST/HST return for ${p.from} to ${p.to} (Ontario days), regular method, the same figures as Reports › GST/HST return. These are today’s figures; a return marked filed for the same dates keeps its own in gst-hst-as-filed.csv. A line that cannot be worked out reads “${NOT_AVAILABLE}” with its reason, never zero. It uses these dates only: the expense filters below do not narrow it.${openEnded ? ' No start or end was chosen, so this runs from the start of our sales record, or to today, which is not a reporting period: choose the return’s dates to match a return.' : ''} An aid, not the return: nothing is filed from FieldLogicHQ.`,
+    credits: 'gst-hst-credits.csv: each expense that feeds line 106 for those dates, with its credit and its state (counted, held for the supplier’s number, or no credit), and any credit carried from a return already marked filed. Supplier names only; the supplier’s GST/HST number is in expenses.csv. A credit that no longer counts after a return was filed is not listed here; Reports › GST/HST return › Changed since you filed lists it.',
+    asFiled: (n: number) => `gst-hst-as-filed.csv: ${n === 1 ? 'the return' : `the ${n} returns`} marked as filed inside those dates, every revision, with the lines and the invoices, credit notes and credits behind them exactly as they stood when filed. The latest revision is the one that counts.`,
+    noFiled: 'No return was marked as filed inside those dates, so there is no gst-hst-as-filed.csv.',
+    filingsUnread: 'Your filed periods could not be read just now, so there is no gst-hst-as-filed.csv and line 106 reads “Not available”.',
+    beforeRecord: 'The GST/HST files (gst-hst-worksheet.csv, gst-hst-credits.csv, gst-hst-as-filed.csv) are not included: the chosen dates end before our sales record starts.',
+  },
+} as const;
