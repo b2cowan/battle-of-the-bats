@@ -69,3 +69,5 @@ Broad reading and censuses go to a helper agent (CLAUDE.md). Check a helper's cl
 
 `/design` on the built desk and phone frames against the drawings, then offer `/simplify` (the helper is new) and `/review`. Help articles, `/docs` and the
 owner walks are WD3. Update the plan's status and the TODO.md line. **Do not commit without the owner's yes; stage explicit pathspecs only.**
+
+> WD1 committed `2a64a87d8` 2026-11-07 (after /simplify and /review; record in the plan §7).
