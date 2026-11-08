@@ -306,3 +306,5 @@ org-slug callers, CSS selector and export-catalog gates fail on other sessions' 
 the portal-tag census (`workspace-flip-guard`) flags `lib/console-money-sales-tax-wait.ts` for reading `team_workspaces`. That read is in
 `HEAD` (Stage 3, `visibleCustomers`), the one change here is the `export` keyword, so it fails on a clean checkout too; its fix is an
 entry on that test's list with a reason, which is the flip owner's call. Layout check still owed (above).
+
+**Session B: committed 035f5e965 2026-11-07** (the 14 files above plus the review fix). Review result is the paragraph above.
