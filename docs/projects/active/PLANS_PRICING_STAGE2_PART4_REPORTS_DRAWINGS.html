@@ -1,0 +1,527 @@
+<title>Owner reports drawings</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: a sticky drawing bar (tabs + Everything / Show only what differs) over true-size console screens, each with Before / After.
+   Single warm look on purpose: the console's default Warm palette, at its real values (app/globals.css). */
+:root{
+  --paper:#F8F4ED; --card:#FFFFFF; --ink:#241E15; --ink-soft:#4A4235; --dim:#615A54;
+  --line:rgba(70,55,30,.12); --line-strong:rgba(70,55,30,.20);
+  --olive:#57651E; --olive-soft:rgba(87,101,30,.10); --amber:#835006; --red:#B03A22; --blue:#134FD3;
+  --new:#134FD3; --new-soft:rgba(19,79,211,.07);
+  --body:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif; --data:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+  --t-figure:24px; --t-title:20px; --t-heading:16px; --t-body:14px; --t-support:12px; --t-label:11px; --t-token:10px;
+  color-scheme:light;
+}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:var(--t-body);line-height:1.45}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--card)}
+*{box-sizing:border-box}
+button{font-family:inherit}
+/* ── drawing chrome ── */
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--card);border-bottom:1px solid var(--line-strong);
+  padding-block:.55rem;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.barRow{display:flex;align-items:center;gap:.8rem;flex-wrap:wrap}
+.barTitle{font-weight:700;font-size:var(--t-heading);margin:0}
+.barSub{font-size:var(--t-support);color:var(--dim)}
+.tabs{display:flex;gap:2px;overflow-x:auto;margin-top:.45rem;scrollbar-width:thin}
+.tab{border:0;background:none;padding:.45rem .7rem;font-size:13px;font-weight:600;color:var(--ink-soft);border-bottom:2px solid transparent;white-space:nowrap;cursor:pointer}
+.tab[aria-selected=true]{color:var(--ink);border-bottom-color:var(--olive)}
+.tab:focus-visible,.vs button:focus-visible,.flag:focus-visible{outline:2px solid var(--olive);outline-offset:2px}
+.vs{display:inline-flex;gap:2px;padding:3px;border:1px solid var(--line-strong);border-radius:999px;background:var(--card)}
+.vs button{border:0;background:none;min-height:30px;padding:.25rem .7rem;border-radius:999px;font-size:13px;font-weight:600;color:var(--ink-soft);cursor:pointer}
+.vs button[aria-pressed=true]{background:var(--olive-soft);color:var(--olive)}
+.spacer{margin-left:auto}
+main{padding-block:1rem 3rem;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.panel{display:grid;gap:.9rem}
+.lede{max-width:72ch;margin:0;color:var(--ink-soft)}
+.lede strong{color:var(--ink)}
+.h2{font-size:var(--t-heading);font-weight:700;margin:0}
+.scroller{overflow-x:auto;border:1px solid var(--line-strong);border-radius:10px;background:var(--paper)}
+.legend{display:flex;gap:1rem;flex-wrap:wrap;font-size:var(--t-support);color:var(--dim)}
+.sw{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:.3rem}
+.sw.n{border:2px solid var(--new);background:var(--new-soft)} .sw.s{background:var(--line-strong)}
+/* the "what differs" marks */
+.new{outline:2px solid var(--new);outline-offset:2px;border-radius:6px;background-image:linear-gradient(var(--new-soft),var(--new-soft))}
+.differs .same{opacity:.16;filter:grayscale(1)}
+.flag{cursor:pointer}
+/* ── true-size console screen ── */
+.screen{width:1440px;min-height:640px;display:grid;grid-template-columns:240px 1fr;grid-template-rows:48px 1fr;background:var(--paper);
+  background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:40px 40px;background-position:-1px -1px}
+.strip{grid-column:1/3;display:flex;align-items:center;gap:.9rem;padding:0 1rem;background:var(--card);border-bottom:1px solid var(--line)}
+.brand{font-weight:700;letter-spacing:-.01em}
+.brand b{color:var(--olive)}
+.vr{width:1px;height:20px;background:var(--line-strong)}
+.portal{font-size:13px;color:var(--ink-soft)}
+.find{margin-left:auto;margin-right:auto;width:340px;height:32px;border:1px solid var(--line-strong);border-radius:999px;display:flex;align-items:center;padding:0 .8rem;color:var(--dim);font-size:13px;gap:.5rem}
+.kbd{font-family:var(--data);font-size:var(--t-token);border:1px solid var(--line-strong);border-radius:4px;padding:0 .3rem}
+.avatar{width:28px;height:28px;border-radius:50%;background:var(--olive-soft);color:var(--olive);display:grid;place-items:center;font-size:12px;font-weight:700}
+.side{background:var(--card);border-right:1px solid var(--line);padding:.7rem .55rem;font-size:13px;display:grid;align-content:start;gap:.1rem}
+.grp{font-family:var(--data);font-size:var(--t-label);font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);padding:.7rem .6rem .25rem}
+.item{padding:.38rem .6rem;border-radius:7px;color:var(--ink-soft);display:flex;align-items:center;gap:.4rem}
+.item.on{background:var(--olive-soft);color:var(--olive);font-weight:600}
+.content{padding:2rem;min-width:0}
+.col{max-width:1136px;display:grid;gap:1.1rem}
+.ph{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}
+.ph h1{font-size:var(--t-title);font-weight:700;margin:0}
+.cap{font-size:var(--t-support);color:var(--dim);margin:-.6rem 0 0}
+.chip{display:inline-flex;align-items:center;font-family:var(--data);font-size:var(--t-token);font-weight:700;letter-spacing:.04em;border-radius:999px;padding:.1rem .45rem;border:1px solid;white-space:nowrap}
+.cOk{color:var(--olive);background:rgba(87,101,30,.08);border-color:rgba(87,101,30,.3)}
+.cWarn{color:var(--amber);background:rgba(131,80,6,.08);border-color:rgba(131,80,6,.3)}
+.cBad{color:var(--red);background:rgba(176,58,34,.08);border-color:rgba(176,58,34,.3)}
+.cInfo{color:var(--ink-soft);background:rgba(70,55,30,.06);border-color:var(--line-strong)}
+.cBlue{color:var(--blue);background:rgba(19,79,211,.07);border-color:rgba(19,79,211,.3)}
+.band{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.bc{background:var(--card);padding:.85rem 1rem;display:grid;gap:.2rem;align-content:start;text-align:left;border:0;font:inherit;color:inherit}
+button.bc{cursor:pointer} button.bc:hover{background:var(--olive-soft)}
+.bc.on{background:var(--olive-soft)}
+.bl{font-family:var(--data);font-size:var(--t-label);font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--dim)}
+.bv{font-size:var(--t-figure);font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums}
+.bv.sm{font-size:var(--t-title)}
+.bn{font-size:var(--t-support);color:var(--dim)}
+.warnv .bv{color:var(--amber)}
+.toolbar{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}
+.dd{display:inline-flex;align-items:center;gap:.4rem;height:36px;padding:0 .8rem;border:1px solid var(--line-strong);border-radius:999px;background:var(--card);font-size:13px;white-space:nowrap}
+.dd.lead{border-color:rgba(87,101,30,.45)}
+.dd .k{color:var(--dim)}
+.dd .v{font-weight:600}
+.dd::after{content:"";width:6px;height:6px;border-right:1.5px solid var(--ink-soft);border-bottom:1.5px solid var(--ink-soft);transform:rotate(45deg) translateY(-2px);margin-left:.2rem}
+.sq{border-radius:7px}
+.btn{display:inline-flex;align-items:center;gap:.35rem;height:36px;padding:0 .85rem;border:1px solid var(--line-strong);border-radius:8px;background:var(--card);font-size:13px;font-weight:600;color:var(--ink);white-space:nowrap}
+.end{margin-left:auto;display:inline-flex;gap:.5rem}
+.door{color:var(--olive);font-weight:600;white-space:nowrap}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;min-width:0}
+.pad{padding:1rem 1.1rem}
+.sec{display:grid;gap:.6rem}
+table{border-collapse:collapse;width:100%;font-size:var(--t-body)}
+th{font-family:var(--data);font-size:var(--t-label);font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);text-align:left;padding:.55rem .85rem;border-bottom:1px solid var(--line-strong);white-space:nowrap}
+td{padding:.6rem .85rem;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tot td{border-top:2px solid var(--line-strong);font-weight:700;background:var(--paper)}
+.sub2{display:block;font-size:var(--t-support);color:var(--dim)}
+.muted{color:var(--dim)}
+.callout{display:flex;align-items:flex-start;gap:.75rem;flex-wrap:wrap;background:var(--card);border:1px solid var(--line);border-left:3px solid var(--olive);border-radius:8px;padding:.75rem 1rem;color:var(--ink-soft)}
+.callout.w{border-left-color:var(--amber)} .callout.b{border-left-color:var(--red)}
+.callout strong{color:var(--ink)}
+.caption{font-size:var(--t-support);color:var(--dim);margin:0}
+.strike{text-decoration:line-through;color:var(--dim)}
+/* ── asks ── */
+.points{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:.7rem}
+.pt{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:.8rem 1rem;display:grid;gap:.35rem;min-width:0}
+.pt h3{margin:0;font-size:14px;display:flex;gap:.5rem;align-items:center;flex-wrap:wrap}
+.pt p{margin:0;color:var(--ink-soft);font-size:13px}
+.ask{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:.85rem 1rem;display:grid;gap:.5rem;min-width:0}
+.ask legend{font-weight:700;padding:0;font-size:14px}
+.ask fieldset{border:0;margin:0;padding:0;display:grid;gap:.4rem}
+.opt{display:flex;gap:.55rem;align-items:flex-start;padding:.45rem .6rem;border:1px solid var(--line);border-radius:7px;cursor:pointer}
+.opt:has(input:checked){border-color:rgba(87,101,30,.5);background:var(--olive-soft)}
+.opt input{margin-top:.2rem;accent-color:var(--olive)}
+.opt span{min-width:0}
+.rec{font-family:var(--data);font-size:var(--t-token);font-weight:700;color:var(--olive);margin-left:.3rem}
+.why{font-size:13px;color:var(--dim);margin:0}
+textarea{width:100%;min-height:150px;font-family:var(--data);font-size:12px;border:1px solid var(--line-strong);border-radius:8px;padding:.6rem;background:var(--card);color:var(--ink)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:.9rem}
+.mini{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:.8rem 1rem;display:grid;gap:.5rem;align-content:start;min-width:0}
+.mini h4{margin:0;font-size:13px;display:flex;gap:.4rem;align-items:center;flex-wrap:wrap}
+.mini p{margin:0;font-size:13px;color:var(--ink-soft)}
+.cost{display:grid;grid-template-columns:auto 1fr;gap:.2rem .7rem;font-size:13px}
+.cost dt{color:var(--dim)} .cost dd{margin:0}
+/* note window */
+dialog{border:1px solid var(--line-strong);border-radius:10px;padding:0;max-width:min(520px,calc(100vw - 32px));background:var(--card);color:var(--ink)}
+dialog::backdrop{background:rgba(36,30,21,.25)}
+.dlg{padding:1rem 1.1rem;display:grid;gap:.6rem}
+.dlg h3{margin:0;font-size:var(--t-heading)}
+.dlg p{margin:0;color:var(--ink-soft);white-space:pre-line}
+.xx{justify-self:end}
+@media (prefers-reduced-motion:no-preference){.tab,.vs button{transition:color .15s,background .15s}}
+</style>
+
+<div class="bar">
+  <div class="barRow">
+    <p class="barTitle">Owner reports · drawings for Part 4</p>
+    <span class="barSub">Plans &amp; pricing Stage 2 · drawn 2026-11-07 · <span class="chip cOk">Ruled 2026-11-07: all ten asks as recommended</span> · not built yet</span>
+    <span class="spacer"></span>
+    <div class="vs" role="group" aria-label="What to show">
+      <button type="button" id="vEvery" aria-pressed="true">Everything</button>
+      <button type="button" id="vDiff" aria-pressed="false">Show only what differs</button>
+    </div>
+  </div>
+  <div class="tabs" role="tablist" aria-label="Drawings">
+    <button class="tab" role="tab" data-t="asks">Asks</button>
+    <button class="tab" role="tab" data-t="coming">Renewals · Coming up</button>
+    <button class="tab" role="tab" data-t="unpaid">Renewals · Unpaid bills</button>
+    <button class="tab" role="tab" data-t="sales">Sales by month</button>
+    <button class="tab" role="tab" data-t="fees">Stripe fees</button>
+    <button class="tab" role="tab" data-t="today">Today, “This month”, export</button>
+    <button class="tab" role="tab" data-t="states">States</button>
+    <button class="tab" role="tab" data-t="where">Where it lives</button>
+  </div>
+</div>
+
+<main>
+<!-- ═════════════ ASKS ═════════════ -->
+<section class="panel" data-p="asks">
+  <p class="lede"><strong>The five reports were asked for as one “Reports” page. The code says two of them already exist as data, and the other three belong in two different places.</strong>
+  Drawn here: two dated lists across clubs (a new <em>Renewals</em> page under Customers, for the staff who already see club billing), and one sales view in Bookkeeping, owner only, beside the GST/HST return. Nothing reads Stripe that the product does not already read, nothing is stored, nothing writes. Click any blue-outlined part or any chip in a drawing to read why it is there.</p>
+
+  <h2 class="h2">The six points in the brief, tested against the code</h2>
+  <div class="points">
+    <div class="pt"><h3>1 · Which are missing? <span class="chip cOk">Agree, wider</span></h3><p>Trials ending is a count on Today and a filter on Clubs &amp; portals; renewals sit on the club record. What is missing is one <b>dated</b> list. So renewals and trials become one list, “Coming up”. Two corrections: Founding clubs are stored as <b>active</b> with no subscription, not as trials, and the trial count also counts a trial whose end date has passed (finding F2).</p></div>
+    <div class="pt"><h3>2 · Revenue overlaps the return <span class="chip cWarn">Partly disagree</span></h3><p>Same records, different figure. The return is gross by tax period, keeps a bare void, leaves out sales before registration. <i>/accounting</i> ruled sales by month nets voids and credit notes, includes pre-registration sales, and shows collected and written off apart. So it is a second <b>view</b> on the same engine’s rows, with one sentence that reconciles it to line 101. The accountant package says today that Stripe income is NOT in it; the export answer is to add sales to that package.</p></div>
+    <div class="pt"><h3>3 · “Owner-only” is not a role <span class="chip cOk">Agree, re-framed</span></h3><p>Two audiences. The lists show a club’s next bill and unpaid bills, exactly what Online payments and the Money tab already show those staff one club at a time (Super admin, Billing, Support). The money totals are the owner’s books: Bookkeeping, by owner email. Three options drawn in “Where it lives”.</p></div>
+    <div class="pt"><h3>4 · “Stripe fees” means two things <span class="chip cOk">Agree</span></h3><p>Fees billed back to clubs exist (Online payments). Stripe’s fee on our own sales exists nowhere. <i>/accounting</i>: card-processing fees carry <b>no GST/HST</b>, Stripe’s Billing and Tax fees do (monthly tax invoice), and no rule needs them stored. One Bookkeeping expense a month covers the books. Storage is drawn as a choice with its cost.</p></div>
+    <div class="pt"><h3>5 · Failed payments are expensive <span class="chip cWarn">Disagree with the premise</span></h3><p>Our own invoice record holds every bill with its before-tax, tax, total, status and date, and Stripe’s paid, void and written-off updates keep it current. So an <b>unpaid-bills</b> list across clubs needs no Stripe call. Only the bank’s reason and the next try stay on the club’s Money tab, one door per row.</p></div>
+    <div class="pt"><h3>6 · Business numbers is not revenue <span class="chip cOk">Agree, plus a defect</span></h3><p>It is “about $X a month at list price, before tax” for active clubs right now. It also counts every Founding club at the Tournament Plus price while they pay $0 (finding F1). The sales view says so in a callout.</p></div>
+  </div>
+
+  <h2 class="h2">Found on the way (report only, nothing changed)</h2>
+  <div class="grid2">
+    <div class="mini"><h4><span class="chip cBad">F1</span> Business numbers counts Founding clubs</h4><p>Founding clubs are written as active Tournament Plus with no subscription, and the monthly figure adds the list price for every active club. Each Founding club adds $39 a month that nobody pays.</p></div>
+    <div class="mini"><h4><span class="chip cWarn">F2</span> “Trials ending” has no lower bound</h4><p>A club still marked as on trial after its end date counts as “ending soon” for ever, on Today and in the Clubs &amp; portals filter. Coming up shows it as its own amber state instead.</p></div>
+  </div>
+
+  <h2 class="h2">What the reviews said (2026-11-07)</h2>
+  <div class="grid2">
+    <div class="mini"><h4><span class="chip cInfo">/accounting</span> What the figures call revenue</h4><p>Sales are what was invoiced, by issue day, paid or not. A void and a credit note come off in their own month; a written-off bill is a bad debt, not less sales; tax is never revenue; CAD at the Bank of Canada rate for the invoice day (the record already does this); sales before registration count and are marked. Stripe’s card-processing fee carries no GST/HST; its Billing and Tax fees do. Nothing needs storing for the books. A yearly plan counts in the month billed; whether to hold part of it back at year end is the accountant’s call.</p></div>
+    <div class="mini"><h4><span class="chip cInfo">/legal</span> Who sees customers’ billing</h4><p>Need-to-know staff use for billing follow-up: our own purpose, no notice needed. An individual coach’s unpaid portal is that coach’s personal information, so the Renewals exports are “justified”, not “none”. Lists stay free of names, emails, addresses and cards. The accountant’s sales file has no address. Owner items for the privacy policy draft: “every <i>club or person</i> record they open is logged” (lists were never logged), and a row naming our accountant.</p></div>
+  </div>
+
+  <h2 class="h2">Asks (pick one each; the recommendation is marked)</h2>
+  <div class="grid2" id="asks"></div>
+  <div class="card pad sec">
+    <div class="toolbar"><strong>Your answers</strong><span class="end"><button class="btn" type="button" id="copy">Copy answers</button></span></div>
+    <textarea id="out" readonly aria-label="Your answers, to paste back"></textarea>
+    <p class="caption" id="copied" aria-live="polite">Paste them back into the session.</p>
+  </div>
+</section>
+
+<!-- ═════════════ COMING UP ═════════════ -->
+<section class="panel" data-p="coming" hidden>
+  <div class="toolbar"><p class="lede"><strong>One dated list of every plan that renews or ends.</strong> Read from the club records, the price on file and free time. No Stripe call, no total that mixes tax in.</p>
+    <span class="spacer"></span><div class="vs ba" role="group" aria-label="Before or after"><button type="button" data-ba="before">Before</button><button type="button" data-ba="after" aria-pressed="true">After</button></div></div>
+  <div class="scroller"><div class="screen" data-show="before">
+    <div class="strip"></div><nav class="side" data-on="Clubs &amp; portals"></nav>
+    <div class="content"><div class="col">
+      <div class="ph"><h1>Clubs &amp; portals</h1></div>
+      <div class="toolbar"><span class="dd lead"><span class="k">Show</span><span class="v">Trials ending soon</span></span><span class="dd sq">Plan</span><span class="dd sq">Status</span><span class="end"><span class="btn">Export</span></span></div>
+      <div class="card"><table><thead><tr><th>Club or portal</th><th>Plan</th><th>Status</th><th>Owner</th><th>Created</th></tr></thead><tbody>
+        <tr><td>Maple Ridge Ball Association</td><td>League Plus</td><td><span class="chip cInfo">Trial</span></td><td>Owner signed in 2 days ago</td><td>Oct 29, 2026</td></tr>
+        <tr><td>Fairview U11 Comets <span class="sub2">Coaches Portal</span></td><td>Premium Coaches Portal</td><td><span class="chip cInfo">Trial</span></td><td>Owner signed in 9 days ago</td><td>Oct 1, 2026</td></tr>
+      </tbody></table></div>
+      <p class="caption">Today’s answer: a filter with no dates on the rows, no price, nothing about renewals or free time ending, and it counts the Fairview trial whose end date passed on Oct 29.</p>
+    </div></div>
+  </div>
+  <div class="screen" data-show="after">
+    <div class="strip"></div><nav class="side" data-on="Renewals" data-new="1"></nav>
+    <div class="content"><div class="col">
+      <div class="ph new flag" data-note="A new page, Customers › Renewals|Two views of one question: what happens to our customers’ plans next. It reads our own club records, so it works when Stripe is slow and costs no Stripe calls. Read only: no button changes anything, so no role sees the eye."><h1>Renewals</h1><span class="chip cInfo flag" data-note="Test account|The page reads the site’s own Stripe mode only. On dev this chip reads Test account; on production Live account. A club is never counted from the other mode.">Live account</span></div>
+      <p class="cap same">Every plan that renews or ends in the dates you pick, from our records. Prices are the plan’s price on file, before tax and discounts.</p>
+      <div class="toolbar">
+        <div class="vs new flag" role="group" data-note="The view switch (shipped ViewSwitch, one white track)|Two views, so the switch, not a dropdown (the shipped rule: up to three views). Coming up first; Unpaid bills second."><button type="button" aria-pressed="true">Coming up</button><button type="button">Unpaid bills</button></div>
+        <span class="dd lead new flag" data-note="Dates|Forward-looking choices: This month (from today), Next month, Next 14 days, Next 30 days, Custom dates. Past days are not shown: a plan that already renewed has moved its date forward."><span class="k">Dates</span><span class="v">This month · Nov 7 to 30</span></span>
+        <span class="dd sq new flag" data-note="What happens|All, Renews, Trial ends, Free time ends, Founding Season ends. A square narrow, the toolbar rule.">What happens</span>
+        <span class="dd sq same">Plan</span>
+        <span class="end"><span class="btn new flag" data-note="Export (shipped ExportMenu)|Excel first, then CSV. The rows on screen, with the same columns. A new registry entry; no person names or emails in it.">⤓ Export</span></span>
+      </div>
+      <div class="band new flag" data-note="One joined band|Each tile opens its filter. The price tile is the price on file before tax, in the row’s own currency; a plan with no price on file is counted beside it, never at a guessed price.">
+        <button class="bc on"><span class="bl">Renewals</span><span class="bv">4</span><span class="bn">in these dates</span></button>
+        <button class="bc"><span class="bl">Trials ending</span><span class="bv">1</span><span class="bn">Stripe trials</span></button>
+        <button class="bc"><span class="bl">Free time ending</span><span class="bv">1</span><span class="bn">free time and Founding Season</span></button>
+        <div class="bc"><span class="bl">Price on file, before tax</span><span class="bv">$2,448.00</span><span class="bn">CAD · 3 renewals · 1 has no price on file</span></div>
+        <button class="bc warnv"><span class="bl">Still marked trial</span><span class="bv">1</span><span class="bn">its end date has passed</span></button>
+      </div>
+      <div class="card"><table><thead><tr><th>Date</th><th>What happens</th><th>Club or portal</th><th>Plan</th><th class="num">Price on file</th><th></th></tr></thead><tbody>
+        <tr class="warnrow"><td>Oct 29, 2026</td><td><span class="chip cWarn flag" data-note="Still marked trial (finding F2)|The trial’s end date has passed and the club still reads as on trial. Shown here once, in amber, whatever dates are picked (it has no date ahead), and no longer counted in Trials ending. The club’s Money tab says what Stripe holds.">Trial ended, still marked trial</span></td><td>Fairview U11 Comets <span class="sub2">Coaches Portal</span></td><td>Premium Coaches Portal</td><td class="num muted">—</td><td><span class="door">Money tab ›</span></td></tr>
+        <tr><td>Nov 9, 2026</td><td><span class="chip cOk">Renews</span></td><td>Northshore Minor Baseball</td><td>Club</td><td class="num">$219.00 a month</td><td><span class="door">Money tab ›</span></td></tr>
+        <tr><td>Nov 12, 2026</td><td><span class="chip cInfo flag" data-note="Trial ends (a Stripe trial)|Stripe’s trial, read from the club record. The price is what the plan will charge when the trial ends.">Trial ends</span></td><td>Maple Ridge Ball Association</td><td>League Plus</td><td class="num">$89.00 a month</td><td><span class="door">Money tab ›</span></td></tr>
+        <tr><td>Nov 14, 2026</td><td><span class="chip cInfo flag" data-note="Free time ends|Free time a staff member gave (or a Founding Season comp). There is no subscription, so no price: when it ends the club falls back to its plan’s free floor or pays. The door goes to Free time.">Free time ends</span></td><td>Hillcrest U13 Hawks <span class="sub2">Coaches Portal</span></td><td>Premium Coaches Portal</td><td class="num muted">no subscription</td><td><span class="door">Free time ›</span></td></tr>
+        <tr><td>Nov 18, 2026</td><td><span class="chip cOk">Renews</span></td><td>Brookside Softball</td><td>Tournament Plus</td><td class="num">$39.00 <span class="chip cInfo flag" data-note="Cycle not on file|Many Coaches Portal and older rows hold no billing cycle (the morning comparison flags 11 on dev). The price shows; the word a month or a year shows only when the record holds it. Never guessed from the amount.">cycle not on file</span></td><td><span class="door">Money tab ›</span></td></tr>
+        <tr><td>Nov 22, 2026</td><td><span class="chip cOk">Renews</span></td><td>Riverbend Fastpitch</td><td>Club</td><td class="num">$2,190.00 a year</td><td><span class="door">Money tab ›</span></td></tr>
+        <tr><td>Nov 30, 2026</td><td><span class="chip cOk">Renews</span></td><td>Pinecrest Baseball</td><td>League Plus</td><td class="num"><span class="chip cInfo flag" data-note="No price on file|The price on file fills in from Stripe’s next update for that subscription (no backfill was run). Until then the row says so and the band counts it apart. The list price is never shown in its place.">no price on file</span></td><td><span class="door">Money tab ›</span></td></tr>
+      </tbody></table></div>
+      <p class="caption same">Sorted by date. A past-due club is not listed here: it is on Unpaid bills. Sandbox clubs are left out, as on Business numbers.</p>
+    </div></div>
+  </div></div>
+</section>
+
+<!-- ═════════════ UNPAID ═════════════ -->
+<section class="panel" data-p="unpaid" hidden>
+  <div class="toolbar"><p class="lede"><strong>Every unpaid bill across clubs, with its amount and tax, from our own invoice record.</strong> The bank’s reason and the next try stay on the club’s Money tab (read live, one club at a time).</p>
+    <span class="spacer"></span><div class="vs ba" role="group" aria-label="Before or after"><button type="button" data-ba="before">Before</button><button type="button" data-ba="after" aria-pressed="true">After</button></div></div>
+  <div class="scroller"><div class="screen" data-show="before">
+    <div class="strip"></div><nav class="side" data-on="Clubs &amp; portals"></nav>
+    <div class="content"><div class="col">
+      <div class="ph"><h1>Clubs &amp; portals</h1></div>
+      <div class="toolbar"><span class="dd lead"><span class="k">Show</span><span class="v">All</span></span><span class="dd sq">Plan</span><span class="dd sq"><span class="k">Status</span>&nbsp;<span class="v">Past due</span></span><span class="end"><span class="btn">Export</span></span></div>
+      <div class="card"><table><thead><tr><th>Club or portal</th><th>Plan</th><th>Status</th><th>Owner</th><th>Created</th></tr></thead><tbody>
+        <tr><td>Lakeview Girls Softball</td><td>League Plus</td><td><span class="chip cWarn">Past due</span></td><td>Owner signed in today</td><td>May 4, 2026</td></tr>
+        <tr><td>Eastgate Rep Fastpitch</td><td>Club</td><td><span class="chip cWarn">Past due</span></td><td>Owner signed in 3 days ago</td><td>Jun 20, 2026</td></tr>
+        <tr><td>Cedar Park Softball</td><td>Tournament Plus</td><td><span class="chip cWarn">Past due</span></td><td>Owner signed in 12 days ago</td><td>May 12, 2026</td></tr>
+      </tbody></table></div>
+      <p class="caption">Today’s answer: a status filter. No amount, no since-when, and a bill left open after its plan ended does not appear at all (its club is no longer past due).</p>
+    </div></div>
+  </div>
+  <div class="screen" data-show="after">
+    <div class="strip"></div><nav class="side" data-on="Renewals" data-new="1"></nav>
+    <div class="content"><div class="col">
+      <div class="ph same"><h1>Renewals</h1><span class="chip cInfo">Live account</span></div>
+      <p class="cap new flag" data-note="Never “lost revenue”|A past-due club keeps working, and an unpaid bill is still a sale that owed its GST/HST when it was issued. The words never say lost, failed revenue or churn.">Bills a club has not paid, from our record of every bill since May 1, 2026. An unpaid bill is still a sale and still owes its tax.</p>
+      <div class="toolbar">
+        <div class="vs same" role="group"><button type="button">Coming up</button><button type="button" aria-pressed="true">Unpaid bills</button></div>
+        <span class="dd lead new flag" data-note="Show|Unpaid (open bills, the default), Written off (Stripe marked them uncollectible: a bad debt), All. A paid or voided bill is never on this list."><span class="k">Show</span><span class="v">Unpaid</span></span>
+        <span class="dd sq same">Plan</span>
+        <span class="end"><span class="btn same">⤓ Export</span></span>
+      </div>
+      <div class="band new flag" data-note="One joined band|Before tax and tax apart: a total that adds them is owed money, so the rows show it, but no tile adds a price to a tax. Written off this year is its own tile because it is a bad debt, not an unpaid bill.">
+        <div class="bc"><span class="bl">Unpaid bills</span><span class="bv">2</span><span class="bn">2 clubs</span></div>
+        <div class="bc"><span class="bl">Owed, before tax</span><span class="bv">$308.00</span><span class="bn">CAD</span></div>
+        <div class="bc"><span class="bl">Tax on them</span><span class="bv">$40.04</span><span class="bn">GST/HST, already reported</span></div>
+        <button class="bc warnv"><span class="bl">Past due, no bill here</span><span class="bv">1</span><span class="bn">see the Money tab</span></button>
+        <div class="bc"><span class="bl">Written off this year</span><span class="bv sm">$89.00</span><span class="bn">1 bill · before tax</span></div>
+      </div>
+      <div class="card"><table><thead><tr><th>Issued</th><th>Club or portal</th><th>Bill</th><th class="num">Before tax</th><th class="num">Tax</th><th class="num">Total</th><th>Club’s plan</th><th></th></tr></thead><tbody>
+        <tr><td>Oct 14, 2026</td><td>Lakeview Girls Softball</td><td>League Plus · <span class="muted">A1B2-0007</span></td><td class="num">$89.00</td><td class="num">$11.57</td><td class="num">$100.57</td><td><span class="chip cWarn flag" data-note="Past due since|The day the club went past due, from the event the billing update wrote. A club past due without that event (a staff grant) reads Past due, date not recorded.">Past due since Oct 14</span></td><td><span class="door flag" data-note="See the bill|Opens the club’s Money tab on this bill, where the Part 2 notice tells the story from Stripe live: tries made, the bank’s reason in fixed words, the next try.">See the bill ›</span></td></tr>
+        <tr><td>Nov 3, 2026</td><td>Eastgate Rep Fastpitch</td><td>Club · <span class="muted">C9D4-0011</span></td><td class="num">$219.00</td><td class="num">$28.47</td><td class="num">$247.47</td><td><span class="chip cWarn">Past due since Nov 3</span></td><td><span class="door">See the bill ›</span></td></tr>
+        <tr class="warnrow"><td class="muted">—</td><td>Cedar Park Softball</td><td><span class="chip cWarn flag" data-note="Past due, no bill in our record|The club reads past due but our record holds no open bill for it (a bill from before May 1, 2026, a bill whose record has not arrived, or a staff status). Never shown as nothing owed: the door reads Stripe for that one club.">No bill in our record</span></td><td class="num muted">—</td><td class="num muted">—</td><td class="num muted">—</td><td><span class="chip cWarn">Past due since Oct 30</span></td><td><span class="door">Money tab ›</span></td></tr>
+      </tbody></table></div>
+      <p class="caption same">A bill left open after its plan ended stays on this list until it is paid, voided or written off. Coaches Portals show the team’s name; no person’s name or email is shown.</p>
+    </div></div>
+  </div></div>
+</section>
+
+<!-- ═════════════ SALES ═════════════ -->
+<section class="panel" data-p="sales" hidden>
+  <div class="toolbar"><p class="lede"><strong>Sales by month, owner only, in Bookkeeping › Reports beside the GST/HST return.</strong> The figures follow <i>/accounting</i>’s ruling of 2026-11-07. Example figures, consistent with each other.</p>
+    <span class="spacer"></span><div class="vs ba" role="group" aria-label="Before or after"><button type="button" data-ba="before">Before</button><button type="button" data-ba="after" aria-pressed="true">After</button></div></div>
+  <div class="scroller"><div class="screen" data-show="before">
+    <div class="strip"></div><nav class="side" data-on="Bookkeeping"></nav>
+    <div class="content"><div class="col">
+      <div class="ph"><h1>Bookkeeping</h1></div>
+      <div class="toolbar"><span class="dd lead"><span class="k">View</span><span class="v">GST/HST return</span></span></div>
+      <div class="toolbar"><span class="dd lead"><span class="k">Period</span><span class="v">This year to date</span></span><span class="end"><span class="btn">Copy lines</span><span class="btn">Worksheet CSV</span></span></div>
+      <div class="card"><table><thead><tr><th>Line</th><th>What goes in it</th><th class="num">Amount</th></tr></thead><tbody>
+        <tr><td>101</td><td>Sales and other revenue <span class="sub2">by the date each invoice was issued, from the registration date</span></td><td class="num">$2,235</td></tr>
+        <tr><td>103</td><td>GST/HST collected or collectible</td><td class="num">$290.55</td></tr>
+        <tr><td>107</td><td>Adjustments (credit notes, bad debts)</td><td class="num">$5.79</td></tr>
+        <tr><td colspan="3" class="muted">… lines 104 to 109</td></tr>
+      </tbody></table></div>
+      <p class="caption">Today the View holds Spending and GST/HST return. There is no month-by-month sales figure anywhere, and the accountant package says Stripe income is not in it.</p>
+    </div></div>
+  </div>
+  <div class="screen" data-show="after">
+    <div class="strip"></div><nav class="side" data-on="Bookkeeping" data-new="1"></nav>
+    <div class="content"><div class="col">
+      <div class="ph same"><h1>Bookkeeping</h1></div>
+      <div class="toolbar"><span class="dd lead new flag" data-note="A third View: Sales|Spending, GST/HST return, Sales. The View dropdown is the page’s shipped control (D5: a one-of-several choice is a dropdown)."><span class="k">View</span><span class="v">Sales</span></span></div>
+      <div class="toolbar">
+        <span class="dd lead same"><span class="k">Period</span><span class="v">This year to date</span></span>
+        <span class="chip cInfo flag" data-note="Live sales only|A total never mixes test and live. On dev this reads Test sales: this site runs Stripe’s test account.">Live sales</span>
+        <span class="end"><span class="btn new flag" data-note="Sales CSV|One CSV for this screen: one row per month with every column. Owner only, like every Bookkeeping export. Its registry entry has no sensitive fields (totals only). The per-bill list goes in the accountant package.">Sales CSV</span><span class="btn same">Accountant package</span></span>
+      </div>
+      <div class="band new flag" data-note="One joined band for the period|Net sales and its tax apart; collected is money received (it includes tax, and says so); written off is a bad debt, outside net sales.">
+        <div class="bc"><span class="bl">Net sales, before tax</span><span class="bv">$5,497.50</span><span class="bn">invoiced Jan 1 to Nov 7, less voids and credit notes</span></div>
+        <div class="bc"><span class="bl">GST/HST on them</span><span class="bv">$279.69</span><span class="bn">held for CRA, not revenue</span></div>
+        <div class="bc"><span class="bl">Collected</span><span class="bv">$5,390.44</span><span class="bn">payments received, with tax</span></div>
+        <div class="bc"><span class="bl">Written off</span><span class="bv">$89.00</span><span class="bn">bad debt, before tax</span></div>
+      </div>
+      <div class="card"><table><thead><tr><th>Month</th><th class="num">Invoiced</th><th class="num">Voided</th><th class="num">Credit notes</th><th class="num">Net sales</th><th class="num">GST/HST</th><th class="num">Collected</th><th class="num">Written off</th></tr></thead><tbody>
+        <tr><td>Nov 2026 <span class="sub2">to Nov 7</span></td><td class="num">$545.00</td><td class="num">—</td><td class="num">—</td><td class="num">$545.00</td><td class="num">$70.85</td><td class="num">$368.38</td><td class="num">—</td></tr>
+        <tr><td>Oct 2026</td><td class="num">$1,392.00</td><td class="num">—</td><td class="num flag" data-note="Credit notes|In the month the note was issued, never re-dated to the bill’s month. Before tax here; its tax comes off the GST/HST column. A refund with no credit note is listed in the month’s window, never netted silently.">−$44.50</td><td class="num">$1,347.50</td><td class="num">$175.17</td><td class="num">$1,472.39</td><td class="num">—</td></tr>
+        <tr><td>Sep 2026 <span class="chip cBlue flag" data-note="Part before GST/HST registration|$980.00 of September was invoiced before Sep 26, the registration date on file. It is income and is counted here; it is outside the return. The date is read from Bookkeeping’s setting, so a granted backdate moves it.">part before registration</span></td><td class="num">$1,278.00</td><td class="num flag" data-note="Voided|A void reverses the sale for income tax, so it comes off net sales in the month it was voided. The return keeps a bare void on lines 101 and 103 (it needs a credit note to come off), which is one reason the two figures differ.">−$39.00</td><td class="num">—</td><td class="num">$1,239.00</td><td class="num">$33.67</td><td class="num">$1,272.67</td><td class="num flag" data-note="Written off|A bill Stripe marked uncollectible: a bad-debt expense in the month it was marked. The sale stays in its own month. Here an August bill, written off Sep 25, before registration, so no tax relief.">$89.00</td></tr>
+        <tr><td>Aug 2026 <span class="chip cBlue">before registration</span></td><td class="num">$940.00</td><td class="num">—</td><td class="num">—</td><td class="num">$940.00</td><td class="num">—</td><td class="num">$851.00</td><td class="num">—</td></tr>
+        <tr><td>Jul 2026 <span class="chip cBlue">before registration</span></td><td class="num">$646.00</td><td class="num">—</td><td class="num">—</td><td class="num">$646.00</td><td class="num">—</td><td class="num">$646.00</td><td class="num">—</td></tr>
+        <tr><td>Jun 2026 <span class="chip cBlue">before registration</span></td><td class="num">$468.00</td><td class="num">—</td><td class="num">—</td><td class="num">$468.00</td><td class="num">—</td><td class="num">$468.00</td><td class="num">—</td></tr>
+        <tr><td>May 2026 <span class="chip cBlue">before registration</span></td><td class="num">$312.00</td><td class="num">—</td><td class="num">—</td><td class="num">$312.00</td><td class="num">—</td><td class="num">$312.00</td><td class="num">—</td></tr>
+        <tr class="tot"><td>This year to date</td><td class="num">$5,581.00</td><td class="num">−$39.00</td><td class="num">−$44.50</td><td class="num">$5,497.50</td><td class="num">$279.69</td><td class="num">$5,390.44</td><td class="num">$89.00</td></tr>
+      </tbody></table></div>
+      <div class="callout new flag" data-note="The reconciling sentence|Computed from the same rows as the return, for the same dates. Line 101 = net sales + bare voids + credit notes − sales before registration: 5,497.50 + 39.00 + 44.50 − 3,346.00 = 2,235.00."><span><strong>Line 101 of the GST/HST return for these dates reads $2,235.</strong> It differs by: sales before registration −$3,346.00, voids it keeps +$39.00, credit notes it takes on line 107 +$44.50.</span></div>
+      <div class="callout w new flag" data-note="Not Business numbers (point 6, finding F1)|Business numbers is a point-in-time sum of list prices for active clubs: no history, no discounts, no yearly plans, before tax, and it counts Founding clubs that pay nothing."><span><strong>Not the figure on Business numbers.</strong> That one is “about $X a month at list price, before tax” for the clubs active today.</span></div>
+      <p class="caption same">A month opens a window with the split by kind (plans, Coach Premium, fees, one-off) and its bills. A yearly plan counts in the month it was billed. All amounts in CAD; a sale in another currency is valued at the Bank of Canada rate for its invoice day.</p>
+    </div></div>
+  </div></div>
+</section>
+
+<!-- ═════════════ FEES ═════════════ -->
+<section class="panel" data-p="fees" hidden>
+  <p class="lede"><strong>“Stripe fees” is two different figures, and one word for both will be misread.</strong> One is money clubs pay us (income). The other is what Stripe charges us (an expense). They are drawn apart and named apart.</p>
+  <div class="grid2">
+    <div class="mini same"><h4><span class="chip cOk">Exists</span> Fees billed back to clubs</h4><p>When a family’s online payment costs us a Stripe fee (a returned debit, a dispute, a foreign card), we bill it to the club, with tax on top. Shown today on <b>Health › Online payments</b> and the club’s Money tab. On Sales by month it is income: the “fees” kind in a month’s window when it was billed on its own bill; inside “plans” when it rode on the plan’s bill.</p><p class="caption">Name on screen: “Fees billed back to clubs”.</p></div>
+    <div class="mini new flag" data-note="Our cost: Stripe’s fee on our own sales|Stored nowhere and read nowhere today. /accounting (2026-11-07): Stripe’s card-processing fee carries no GST/HST, so no input tax credit; Stripe’s Billing and Tax fees carry GST/HST, listed on Stripe’s monthly tax invoice, and that invoice is what the credit needs."><h4><span class="chip cBad">Nowhere</span> Stripe’s fee on our own sales</h4><p>What Stripe keeps from each payment a club makes for its plan, plus Stripe’s Billing and Tax product fees. A business expense. The books need the month’s total and Stripe’s monthly tax invoice, not a per-payment copy.</p><p class="caption">Name on screen, if it is ever shown: “Stripe’s fees to us”.</p></div>
+  </div>
+  <h2 class="h2">Ask 4: how the owner gets “Stripe’s fees to us” (cost drawn)</h2>
+  <div class="grid2">
+    <div class="mini new"><h4><span class="chip cOk">A · recommended</span> One expense a month</h4><p>Each month, download Stripe’s statement and tax invoice and add one expense on Bookkeeping › Expenses: supplier Stripe, the month’s fees, GST/HST only on the Billing and Tax fees. It reaches the GST/HST return (line 106) and the accountant package like every other expense.</p>
+      <dl class="cost"><dt>Built</dt><dd>nothing</dd><dt>Stripe calls</dt><dd>none</dd><dt>Stored</dt><dd>one expense row a month, with its receipt</dd><dt>Owner time</dt><dd>a few minutes a month</dd></dl></div>
+    <div class="mini"><h4><span class="chip cInfo">B</span> Read Stripe live for one month</h4><p>A “Stripe’s fees to us” figure on the Sales view, read when you open it, for one chosen month only.</p>
+      <dl class="cost"><dt>Built</dt><dd>a read that pages through every payment of the month (100 per call)</dd><dt>Speed</dt><dd>seconds per month; a year is twelve reads</dd><dt>States</dt><dd>“Stripe didn’t answer just now” on every open</dd><dt>Books</dt><dd>still needs A for the tax invoice and the credit</dd></dl></div>
+    <div class="mini"><h4><span class="chip cInfo">C</span> Keep our own copy</h4><p>A stored row per payment’s fee, filled by a morning job and a backfill from May 1, 2026.</p>
+      <dl class="cost"><dt>Built</dt><dd>a new table, a migration (prod first), a daily job</dd><dt>Rules</dt><dd>the first stored Stripe facts (ruling 1); a daily job is watched automation, its own commit, your go in that session</dd><dt>Gain</dt><dd>a year view without waiting</dd><dt>Books</dt><dd>still needs A</dd></dl></div>
+  </div>
+</section>
+
+<!-- ═════════════ TODAY / THIS MONTH / EXPORT ═════════════ -->
+<section class="panel" data-p="today" hidden>
+  <p class="lede"><strong>The “This month” card from round 1 repeats what Today already counts.</strong> Recommended: do not build it. Today’s two existing rows open the dated lists instead, and the Renewals band is the month at a glance. “Export for the accountant” becomes the Bookkeeping accountant package, with sales added.</p>
+  <div class="grid2">
+    <div class="mini"><h4><span class="chip cInfo">Round 1 drawing</span> “This month” on the Stripe page</h4>
+      <p class="strike">Renewals: 14, $8,940.00 · Trials ending: 3 · Failed payments: 2 · Free time ending: 1 · Export for the accountant</p>
+      <p>Why not: the counts are already on Today; the dollar figure mixed plans’ list prices with no date range or currency; Health › Stripe is read by Product, who does not see club billing; and its export promised Stripe’s fees, which nothing reads.</p></div>
+    <div class="mini"><h4>Today, Customers queues</h4>
+      <table><thead><tr><th>Row</th><th>Count</th><th>Opens</th></tr></thead><tbody>
+        <tr><td>Past due</td><td class="num">3</td><td><span class="strike">Clubs &amp; portals · Past due</span><br><span class="door new flag" data-note="Today’s doors move|The count and its rule stay. The door opens the dated list, which holds the amounts. Clubs &amp; portals keeps its filters for anyone who uses them.">Renewals · Unpaid bills ›</span></td></tr>
+        <tr><td>Trials ending</td><td class="num">1</td><td><span class="strike">Clubs &amp; portals · Trials ending</span><br><span class="door new">Renewals · Coming up ›</span></td></tr>
+      </tbody></table>
+      <p class="caption new flag" data-note="Finding F2 on Today|With the fix, Trials ending counts only trials whose end date is from today to 14 days out. A trial past its date is counted on Renewals, “Still marked trial”, not here.">Trials ending stops counting a trial whose date has passed (F2).</p></div>
+  </div>
+  <h2 class="h2">The exports</h2>
+  <div class="grid2">
+    <div class="mini"><h4>Accountant package (Bookkeeping) <span class="chip cBlue flag" data-note="Coordinate with GST/HST Stage 4b Session D|Session D already plans the GST/HST CSVs for this package. Sales and credit notes are the same per-bill rows: one file, written once, not a second copy.">with Session D</span></h4>
+      <table><thead><tr><th>File</th><th>Today</th><th>After</th></tr></thead><tbody>
+        <tr class="same"><td>expenses.csv, receipts, receipt-index.csv</td><td>✓</td><td>✓</td></tr>
+        <tr class="same"><td>owner-transfers.csv</td><td>✓</td><td>✓</td></tr>
+        <tr class="new"><td>sales.csv <span class="sub2">one row per bill: issued, kind, buyer (a coach reads “Coach”), province taxed, before tax, tax, total, status, CAD and the Bank of Canada rate. No billing address or postal code.</span></td><td>—</td><td>✓</td></tr>
+        <tr class="new"><td>credit-notes.csv <span class="sub2">one row per note, its bill, its month</span></td><td>—</td><td>✓</td></tr>
+        <tr class="new"><td>package-scope.txt <span class="sub2">“Stripe’s fees to us and payouts are not in this package; sales and credit notes are.”</span></td><td>says Stripe income is not in it</td><td>reworded</td></tr>
+      </tbody></table></div>
+    <div class="mini"><h4>Export registry, three entries</h4>
+      <table><thead><tr><th>Entry</th><th>Who</th><th>Formats</th><th>Sensitive</th></tr></thead><tbody>
+        <tr class="new"><td>Renewals · Coming up</td><td>Renewals readers</td><td>Excel, CSV</td><td><span class="flag" data-note="Justified, not “none” (/legal 2026-11-07)|A Coaches Portal bought by one coach is that coach’s information: its team name with its plan, price and what it owes. The Privacy Commissioner’s bulletin: “a simple reference to an outstanding debt … is personal information.” Need-to-know staff use for billing follow-up; no name, email, address or card in the file; audited before it is sent.">Justified: a portal bought by one coach is that coach’s information</span></td></tr>
+        <tr class="new"><td>Renewals · Unpaid bills</td><td>Renewals readers</td><td>Excel, CSV</td><td>Justified: same reason; amounts owed</td></tr>
+        <tr class="new"><td>Sales by month</td><td>Owner (Bookkeeping)</td><td>CSV</td><td>No: totals only</td></tr>
+        <tr class="new"><td>Accountant package · sales.csv</td><td>Owner</td><td>CSV in the ZIP</td><td>Justified: names the buying club, a coach as “Coach” (the GST detail rule)</td></tr>
+      </tbody></table>
+      <p class="caption">Server exports at /api/platform-admin/renewals/export?view=…&amp;format=xlsx|csv, following the page’s filters, formula-safe, CAD beside the original currency, audited before the file is sent.</p></div>
+  </div>
+</section>
+
+<!-- ═════════════ STATES ═════════════ -->
+<section class="panel" data-p="states" hidden>
+  <p class="lede"><strong>Every state a reader can meet.</strong> “Could not read” is never “nothing wrong” (Stage 0 fix 3). Renewals and Sales read only our own records, so neither has a “Stripe not answering” state; only option B in Stripe fees would.</p>
+  <div class="grid2">
+    <div class="mini"><h4>Coming up · nothing in the dates</h4><div class="card pad"><p class="caption">Nothing renews or ends from Nov 7 to Nov 30. <span class="door">Next 30 days ›</span></p></div></div>
+    <div class="mini"><h4>Unpaid bills · none</h4><div class="card pad"><p class="caption">No unpaid bills in our record. It holds every bill since May 1, 2026.</p></div></div>
+    <div class="mini"><h4>Any view · could not read</h4><div class="callout b"><span>Could not read this just now. That is not the same as nothing being wrong. Reload to try again.</span></div><p class="caption">The band’s tiles read “—”, never 0.</p></div>
+    <div class="mini"><h4>Sales · a month with nothing invoiced</h4><div class="card"><table><tbody><tr><td>Apr 2026</td><td class="num muted">No sales invoiced</td></tr></tbody></table></div><p class="caption">Before May 1, 2026 the row reads “Before our record starts”, not $0.</p></div>
+    <div class="mini"><h4>Sales · not yet valued in CAD</h4><div class="callout w"><span><strong>1 sale in USD is not yet valued in CAD</strong> (its Bank of Canada rate has not been read). It is left out of the CAD totals and listed in its month.</span></div><p class="caption">Zero today: no US club. A US$ subtotal shows beside the CAD total, never added raw.</p></div>
+    <div class="mini"><h4>The mode line</h4><p><span class="chip cInfo">Live account</span> on production · <span class="chip cInfo">Test account</span> on dev</p><p class="caption">Each page reads the site’s own Stripe mode only. There is no switch to the other mode; a total never mixes them.</p></div>
+    <div class="mini"><h4>Coming up · the price cell</h4><p>$219.00 a month · $2,190.00 a year · $39.00 <span class="chip cInfo">cycle not on file</span> · <span class="chip cInfo">no price on file</span> · <span class="muted">no subscription</span></p></div>
+    <div class="mini"><h4>Unpaid · the plan cell</h4><p><span class="chip cWarn">Past due since Oct 14</span> · <span class="chip cWarn">Past due, date not recorded</span> · <span class="chip cInfo">Plan ended Oct 31</span> · <span class="chip cInfo">Active</span></p><p class="caption">“Plan ended” = a bill left open after the plan was cancelled.</p></div>
+    <div class="mini"><h4>Stripe fees option B only · Stripe not answering</h4><div class="callout w"><span>Stripe didn’t answer just now, so this month’s fees aren’t shown. Try again in a few minutes.</span></div></div>
+  </div>
+</section>
+
+<!-- ═════════════ WHERE ═════════════ -->
+<section class="panel" data-p="where" hidden>
+  <p class="lede"><strong>Ask 1 and Ask 2: where the reports live and who reads them.</strong> No page has a control that changes anything, so no role sees the eye on either.</p>
+  <div class="grid2">
+    <div class="mini new"><h4><span class="chip cOk">1A · recommended</span> Split by audience</h4><p><b>Customers › Renewals</b> (Coming up, Unpaid bills) for the staff who already see club billing. <b>Bookkeeping › Reports › Sales</b> for the owner. The money totals never reach a staff role.</p></div>
+    <div class="mini"><h4><span class="chip cInfo">1B</span> One “Reports” page</h4><p>All five under Records › Reports, Super admin only. Simple to find; but the lists are hidden from Billing and Support, who chase unpaid bills, and the sales figure sits outside the books it reconciles to.</p></div>
+    <div class="mini"><h4><span class="chip cInfo">1C</span> All in Bookkeeping</h4><p>Owner email only. The tightest; the owner is the only one who can follow up an unpaid bill.</p></div>
+  </div>
+  <div class="card"><table><thead><tr><th>Role</th><th>Renewals (2A · recommended)</th><th>2B</th><th>2C</th><th>Sales (Bookkeeping)</th></tr></thead><tbody>
+    <tr><td>Super admin</td><td>reads</td><td>reads</td><td>reads</td><td>owner email only</td></tr>
+    <tr><td>Billing</td><td>reads</td><td>—</td><td>reads</td><td>—</td></tr>
+    <tr><td>Support</td><td>reads</td><td>—</td><td>reads</td><td>—</td></tr>
+    <tr><td>Product</td><td>—</td><td>—</td><td>reads</td><td>—</td></tr>
+    <tr><td>Growth, Read only</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+  </tbody></table></div>
+  <p class="caption">2A = Online payments’ readers (the staff who already see Stripe money per club). 2B = Super admin only. 2C = Watching Stripe’s readers. A new area in the rulebook, not a reuse, as Watching Stripe did.</p>
+  <div class="scroller"><div class="screen" style="min-height:560px">
+    <div class="strip"></div><nav class="side" data-on="Renewals" data-new="1"></nav>
+    <div class="content"><div class="col"><div class="ph"><h1>Renewals</h1></div><p class="caption">The menu at 1A: Renewals sits in Customers after Free time; Bookkeeping stays last, under Private finance.</p></div></div>
+  </div></div>
+</section>
+</main>
+
+<dialog id="note"><div class="dlg"><h3 id="nt"></h3><p id="nb"></p><button class="btn xx" type="button" id="nx">Close</button></div></dialog>
+
+<script>
+(function(){
+  var MENU=[['','Today'],['Customers',['Clubs & portals','People','Free time','Renewals','Retention']],['Health',['Status','Errors','Feedback','Sent emails','Online payments','Stripe']],['Growth',['Leads','Campaigns','Pitch decks','Business numbers']],['Product',['Plans & pricing','Approval queue','Bulk changes','Email templates','Export registry']],['Records',['Staff','Audit log']],['Private finance',['Bookkeeping']]];
+  function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;')}
+  document.querySelectorAll('.strip').forEach(function(el){
+    el.innerHTML='<span class="brand">Field<b>Logic</b>HQ</span><span class="vr"></span><span class="portal">Support console</span><span class="find">Find a club, person or Stripe id <span class="kbd">/</span></span><span class="avatar">BC</span>';
+    el.classList.add('same');
+  });
+  document.querySelectorAll('nav.side').forEach(function(el){
+    var on=el.getAttribute('data-on').replace('&amp;','&'), showNew=el.getAttribute('data-new')==='1', h='';
+    MENU.forEach(function(g){
+      if(typeof g[1]==='string'){h+='<div class="item'+(g[1]===on?' on':'')+'">'+esc(g[1])+'</div>';return;}
+      h+='<div class="grp">'+esc(g[0])+'</div>';
+      g[1].forEach(function(n){
+        if(n==='Renewals'&&!showNew)return;
+        var cls='item'+(n===on?' on':'');
+        if(n==='Renewals')h+='<div class="'+cls+' new flag" tabindex="0" data-note="Customers › Renewals|A new menu entry after Free time. Shown to the roles in Ask 2; the menu drops it for everyone else. Read only, so no eye.">'+esc(n)+'</div>';
+        else h+='<div class="'+cls+'">'+esc(n)+'</div>';
+      });
+    });
+    el.innerHTML=h; if(!showNew||on!=='Renewals')el.classList.add('same');
+  });
+  /* tabs */
+  var tabs=[].slice.call(document.querySelectorAll('.tab')), panels=[].slice.call(document.querySelectorAll('[data-p]'));
+  function show(t){
+    if(!panels.some(function(p){return p.getAttribute('data-p')===t}))t='asks';
+    tabs.forEach(function(b){b.setAttribute('aria-selected',String(b.getAttribute('data-t')===t))});
+    panels.forEach(function(p){p.hidden=p.getAttribute('data-p')!==t});
+  }
+  tabs.forEach(function(b){b.addEventListener('click',function(){location.hash=b.getAttribute('data-t')})});
+  window.addEventListener('hashchange',function(){show(location.hash.slice(1))});
+  show(location.hash.slice(1));
+  /* before / after */
+  document.querySelectorAll('.ba').forEach(function(sw){
+    var panel=sw.closest('[data-p]');
+    function set(v){
+      sw.querySelectorAll('button').forEach(function(b){b.setAttribute('aria-pressed',String(b.getAttribute('data-ba')===v))});
+      panel.querySelectorAll('.screen[data-show]').forEach(function(s){s.hidden=s.getAttribute('data-show')!==v});
+    }
+    sw.querySelectorAll('button').forEach(function(b){b.addEventListener('click',function(){set(b.getAttribute('data-ba'))})});
+    set('after');
+  });
+  /* everything / differs */
+  var ve=document.getElementById('vEvery'), vd=document.getElementById('vDiff');
+  function diff(on){document.body.classList.toggle('differs',on);ve.setAttribute('aria-pressed',String(!on));vd.setAttribute('aria-pressed',String(on))}
+  ve.addEventListener('click',function(){diff(false)}); vd.addEventListener('click',function(){diff(true)});
+  /* notes */
+  var dlg=document.getElementById('note');
+  function openNote(el){var parts=(el.getAttribute('data-note')||'').split('|');document.getElementById('nt').textContent=parts[0];document.getElementById('nb').textContent=parts.slice(1).join('|');if(dlg.showModal)dlg.showModal();else dlg.setAttribute('open','')}
+  document.addEventListener('click',function(e){var el=e.target.closest('[data-note]');if(el){e.preventDefault();e.stopPropagation();openNote(el)}});
+  document.addEventListener('keydown',function(e){if((e.key==='Enter'||e.key===' ')&&e.target.matches&&e.target.matches('[data-note]')){e.preventDefault();openNote(e.target)}});
+  document.querySelectorAll('[data-note]').forEach(function(el){if(!el.hasAttribute('tabindex'))el.setAttribute('tabindex','0');el.setAttribute('role','button')});
+  document.getElementById('nx').addEventListener('click',function(){dlg.close()});
+  dlg.addEventListener('click',function(e){if(e.target===dlg)dlg.close()});
+  /* asks */
+  var ASKS=[
+    ['Where the reports live',['A · Split by audience: Customers › Renewals (two lists) + Bookkeeping › Reports › Sales','B · One Reports page under Records, Super admin only','C · Everything in Bookkeeping, owner email only'],0,'The lists are operational and are already shown to these staff one club at a time; the totals are the owner’s books and reconcile to the GST/HST return.'],
+    ['Who reads Renewals',['A · Super admin, Billing, Support (Online payments’ readers)','B · Super admin only','C · Super admin, Billing, Support, Product (Watching Stripe’s readers)'],0,'Billing and Support are the people who follow up an unpaid bill; Product does not see club billing anywhere else.'],
+    ['What “sales by month” counts',['A · Invoiced by issue month, less voids and credit notes; collected and written off as their own columns; tax apart','B · Money collected in the month (cash)','C · Invoiced and collected as two equal headline figures'],0,'/accounting: income is what was billed, on the day it was billed, paid or not; collected money is a different figure and keeps its own label.'],
+    ['Stripe’s fees to us',['A · No storage, no report: one Bookkeeping expense a month from Stripe’s statement and tax invoice','B · A live read for one chosen month on the Sales view','C · Store our own copy (table, migration, morning job, backfill)'],0,'The books need the month’s total and Stripe’s tax invoice, which A gives with nothing built; B and C still need A for the tax credit.'],
+    ['Fees billed back to clubs',['A · Stay on Health › Online payments; on Sales they are the “fees” kind in a month’s window','B · Their own report'],0,'They are already listed per club and across clubs; a second list would repeat it.'],
+    ['The “This month” card',['A · Do not build it; Today’s Past due and Trials ending rows open the dated lists','B · Build it on Health › Stripe as drawn in round 1'],0,'Its counts are already on Today; its dollar figure had no date range, no currency and mixed list prices.'],
+    ['Export for the accountant',['A · The Bookkeeping accountant package gains sales.csv and credit-notes.csv (with GST/HST Session D)','B · A separate export on the Sales view only'],0,'The package is what the accountant receives; it says today that Stripe income is missing.'],
+    ['Finding F1 (Founding clubs on Business numbers)',['A · Fix with Part 4: leave comped clubs out of the monthly figure and say how many were left out','B · Leave it'],0,'A figure that counts $0 clubs at list price overstates the business to its owner.'],
+    ['Finding F2 (trials past their date)',['A · Fix with Part 4: Trials ending counts today to 14 days; a passed date shows on Renewals as “Still marked trial”','B · Leave it'],0,'A count that never drains stops being read.'],
+    ['Unpaid bills: amounts from where',['A · From our own invoice record; the reason and the next try stay on the Money tab','B · Read Stripe for every past-due club when the list opens'],0,'A needs no Stripe call and shows a bill left open after its plan ended; B costs one Stripe read per club on every open.']
+  ];
+  var KEY='p4-asks', saved={}; try{saved=JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch(e){saved={}}
+  var host=document.getElementById('asks');
+  ASKS.forEach(function(a,i){
+    var d=document.createElement('div'); d.className='ask';
+    var h='<fieldset><legend>'+(i+1)+' · '+esc(a[0])+'</legend>';
+    a[1].forEach(function(o,j){var id='a'+i+'_'+j;h+='<label class="opt" for="'+id+'"><input type="radio" name="a'+i+'" id="'+id+'" value="'+j+'"'+(saved[i]===j?' checked':'')+'><span>'+esc(o)+(j===a[2]?'<span class="rec">RECOMMENDED</span>':'')+'</span></label>'});
+    h+='</fieldset><p class="why">'+esc(a[3])+'</p>'; d.innerHTML=h; host.appendChild(d);
+  });
+  var out=document.getElementById('out');
+  function render(){
+    var lines=['Part 4 reports drawing, answers:'];
+    ASKS.forEach(function(a,i){var c=document.querySelector('input[name=a'+i+']:checked');lines.push((i+1)+'. '+a[0]+': '+(c?a[1][+c.value]:'(not answered)'))});
+    out.value=lines.join('\n');
+  }
+  host.addEventListener('change',function(e){var m=/^a(\d+)$/.exec(e.target.name);if(m){saved[+m[1]]=+e.target.value;try{localStorage.setItem(KEY,JSON.stringify(saved))}catch(err){}}render()});
+  render();
+  document.getElementById('copy').addEventListener('click',function(){
+    var msg=document.getElementById('copied');
+    try{navigator.clipboard.writeText(out.value).then(function(){msg.textContent='Copied. Paste them back into the session.'},function(){out.select();msg.textContent='Selected. Press Ctrl+C to copy.'})}catch(e){out.select();msg.textContent='Selected. Press Ctrl+C to copy.'}
+  });
+})();
+</script>

@@ -1,0 +1,47 @@
+# What a platform-admin report calls "revenue" (sales by month, collected, voids, credits, write-offs, Stripe's own fees)
+**Last verified:** 2026-11-07
+**Re-verify by:** 2027-11-07; or the first yearly (annual-billed) plan is sold; or the first US club; or Bookkeeping starts recording Stripe income; or Stripe changes its Canadian fee-tax page
+**Depends on facts:** sole proprietor on T2125 (accrual, calendar year); registered for GST/HST, effective date changeable (ACCOUNTING_FACTS.md); sales are Stripe Billing invoices recorded per invoice in the charge tax record (one row per invoice, before-tax / tax / total / issue date / status / mode / CAD twins) and credit notes in their own record. Adds no facts to ACCOUNTING_FACTS.md.
+
+## Question(s) this answers
+- Plans & pricing Stage 2 Part 4 (owner reports): is "revenue by month" what was invoiced on the issue date, or what was paid?
+- How do a void, an uncollectible bill, a credit note and a refund show in a month's figure?
+- Tax apart from price; CAD and USD; fee rows vs subscription rows; sales before the GST/HST registration date.
+- Is "revenue by month" the same figure as the GST/HST return worksheet's line 101?
+- Stripe's processing fee on FieldLogicHQ's own sales: needed for the books? stored, or read live?
+
+## Finding
+1. **Income is the invoiced figure, dated by the issue day.** A sole proprietor's business income is computed on the accrual basis; an amount is income in the year it is billed/receivable (ITA 12(1)(b)), paid or not (UNPAID_SUBSCRIPTION_INVOICES.md). The GST/HST tax point is the same day (GST_HST_RETURN_LINES.md §6). So the primary monthly figure is **sales invoiced in the month, before tax**. What was **paid** in the month is a different figure (cash collected): useful, but it is not revenue and must carry its own label.
+2. **Each event, in the month it happens (never re-dated to the original invoice's month):**
+   - **Void** (no credit note): for income tax a voided invoice reverses the income (UNPAID §Finding, ITA). Show it as its own minus line "Voided" in the month it was voided. ⚠ The GST/HST return treats a bare void differently (it stays in 101 and 103, §8); the report and the return will differ by exactly the voided invoices, and the report should say so.
+   - **Credit note** (incl. a refund made through one): a reduction of the sale, in the month the note is issued, before-tax and tax apart (s.232; CREDIT_NOTES_ON_REFUNDS.md). Minus line "Credit notes".
+   - **Refund with no credit note**: still reduces income in the month refunded; it cannot reach line 107 (CREDIT_NOTES closeout). List it on its own; do not silently net it.
+   - **Uncollectible** (Stripe's mark = our write-off): NOT a reduction of sales. The sale stays; the write-off is a **bad-debt expense** (ITA 20(1)(p)) in the month marked, with its tax fraction on line 107 (s.231). Show it as a separate line "Written off (bad debt)", outside "net sales". A later payment is a recovery (income back; tax on 104).
+   - **Past due / open**: still a sale. Never "lost revenue".
+3. **Tax is never revenue.** GST/HST collected is held for CRA. Before-tax and tax are always separate columns; a total that adds them is a defect.
+4. **Currency.** Never add raw cents across currencies. The CAD figure for a USD invoice is the pre-tax amount at the **Bank of Canada daily rate for the invoice date** (prior business day if none), one method for the whole year (GST_HST_RETURN_LINES.md §5; income tax: Folio S5-F4-C1, BoC rate on the day the amount arises). The record's CAD twin is the right total **only if** it was converted that way; if it uses Stripe's rate or a payment-day rate, the report must say which. **Checked 2026-11-07:** the charge record's CAD columns carry a Bank of Canada rate and its date (or "same currency" for a CAD sale), and Stripe's own CAD figure is kept apart as a cross-check only, so the CAD twin is the right total. The CAD columns can be empty for a non-CAD sale whose rate was not read yet: the report must show that sale as "not yet valued in CAD" and leave it out of the CAD total with a count, never as $0. A CAD-valued total beside per-currency subtotals is the correct shape. Zero today (no US club).
+5. **Kinds of sale are separate lines.** Subscriptions; one-off charges; the online-payment (platform) fee; recovered Stripe fees. Recovered Stripe fees are consideration (income), not a pass-through (RECOVERED_STRIPE_FEES_TAX.md), so they ARE revenue, but on their own line so the owner can see subscription sales alone.
+6. **Before the registration date.** A sale invoiced before the GST/HST effective date is still income (income tax has no registration date); it is outside the return (§8). The report counts it and marks it "before GST/HST registration". The date is changeable (backdate pending), so this marker must read the stored setting, not a fixed date.
+7. **Yearly plans.** An annual plan invoiced in November is a November sale in this report. For income tax, the part covering services after December 31 may be held back through a reserve (ITA 12(1)(a)/20(1)(m)); that is a year-end accountant adjustment, not a monthly report figure. Say "counted in the month billed" wherever a yearly plan can appear.
+8. **Not the same figure as the return's line 101.** Line 101 is gross by tax period (whole dollars, CAD), keeps bare voids, excludes pre-registration sales, and takes credit notes on 107. "Sales by month" is net of voids and credit notes, includes pre-registration sales, and is monthly. They come from the same rows and differ by design. One reconciling sentence ("differs from line 101 by: voided invoices $X, credit notes $Y, sales before registration $Z") prevents a misread.
+9. **Stripe's own fees on our sales (CONFIRMED, Stripe support page "Taxes on Stripe fees for businesses based in Canada", accessed 2026-11-07):** "Payment processing fees charged to you by Stripe will be tax exempt"; Stripe's SaaS products (Billing, Radar, Tax, Sigma) carry GST/HST, listed on a **monthly tax invoice** in the Dashboard's Documents, which is the record an ITC needs. So: processing fees are a deductible business expense with **no GST/HST and no ITC**; Billing/Tax fees are an expense **with** an ITC from the monthly tax invoice. Stripe deducts fees before paying out, so bank deposits are net: sales must still be recorded **gross** and fees as an expense, never netted (this is also the bank-match point).
+10. **No tax or records rule requires storing per-charge Stripe fees.** The books need the month's fee total and the monthly tax invoice (kept six years, RECORDS_RETENTION_AND_LOCATION.md). Stripe's monthly statement/tax invoice entered as one Bookkeeping expense per month satisfies T2125 and the ITC. A stored per-invoice copy, or a live read that pages through Stripe, is a convenience for a report, not a compliance need.
+
+## Recommendation
+1. Call the figure **"Sales invoiced (before tax)"**, by issue month, never "revenue" alone, and never "income" for collected money. Put **"Collected"** (payments received in the month) in a separate, labelled column.
+2. Shape per month: Sales invoiced, minus Voided, minus Credit notes (and refunds without a note, listed) = **Net sales**; then, outside net sales, **Written off (bad debt)** and **Recovered**; tax in its own columns throughout; per currency, plus a CAD total valued per §4; live only (test never mixed in).
+3. Separate lines for subscriptions, one-off, payment fees, recovered Stripe fees.
+4. Mark pre-registration sales; mark yearly plans "counted in the month billed".
+5. Place it beside the GST/HST return view (same rows) with the one reconciling sentence; do not build a second engine.
+6. **Stripe fees, our cost:** do not store. Record Stripe's monthly fee total as a Bookkeeping expense from the monthly statement/tax invoice (processing fees: no tax; Billing/Tax fees: GST/HST with ITC). If the owner wants the figure on a report, a live read for one month is acceptable; it is not a compliance need.
+7. Never label the recovered-fees figure (club-caused fees billed back) and our own processing cost the same word: the first is income, the second an expense.
+
+## Sources
+- [Stripe support: Taxes on Stripe fees for businesses based in Canada](https://support.stripe.com/questions/taxes-on-stripe-fees-for-businesses-based-in-canada) — accessed 2026-11-07
+- [Stripe support: Download tax invoices for Stripe fees](https://support.stripe.com/questions/does-stripe-offer-invoices-for-value-added-tax-vat) — accessed 2026-11-07
+- [Income Tax Act s.12](https://laws-lois.justice.gc.ca/eng/acts/I-3.3/section-12.html) and [s.20](https://laws-lois.justice.gc.ca/eng/acts/I-3.3/section-20.html) — via UNPAID_SUBSCRIPTION_INVOICES.md (accessed 2026-11-05)
+- GST/HST Memo 3-6 and Folio S5-F4-C1 — via PLATFORM_REPORTING_AND_CURRENCY.md and GST_HST_RETURN_LINES.md §5
+- Context (not cited as the finding): Budget 2023 / CIBC v. The Queen (2021 FCA) on payment card clearing services; Stripe's statement governs what Stripe actually charges us.
+
+## Professional sign-off needed?
+Not for a display report. Yes, at year end: (a) whether to take the ITA 20(1)(m) reserve on yearly plans, (b) the income-tax treatment of a bare void where the service was in fact used (reversal vs bad debt), (c) confirm processing fees carry no GST/HST on the live account's monthly tax invoice.

@@ -113,6 +113,18 @@ that is the owner's dashboard work.
       "card reported lost/stolen" were already shown; `fraudulent`/`pickup_card` read as "declined by the bank"); viewing is NOT
       logged (the drawings do not ask for it). `/accounting`: nothing charged, recorded or invoiced changed; the notice says the
       amount owed and "It includes $X tax" only when the whole bill is owed.
-- [ ] Part 3 Watching Stripe · Part 4 reports (drawing session first) · Part 5 replay · Part 6 closeout
+- [ ] Part 4 reports: drawing session 2026-11-07, drawings https://claude.ai/artifact/PqUgoHqg57j1SGSo2YypjP
+      (`PLANS_PRICING_STAGE2_PART4_REPORTS_DRAWINGS.html`, PM brief `PLANS_PRICING_STAGE2_PART4_REPORTS_PM_BRIEF.md`). Re-framed:
+      Customers › Renewals (Coming up + Unpaid bills, from our own records, no Stripe call) + Bookkeeping › Reports › Sales;
+      no "This month" card; Stripe's fees to us = a monthly Bookkeeping expense. Reviews: `/accounting`
+      REVENUE_REPORT_DEFINITIONS.md, `/legal` STAFF_CROSS_CLUB_BILLING_LISTS.md. Findings F1 (Business numbers counts Founding
+      clubs at list price) and F2 (Trials ending has no lower bound). **Owner ruled all ten asks as recommended 2026-11-07**
+      (paste-back): two homes (Customers › Renewals for Super admin, Billing, Support; Bookkeeping › Reports › Sales, owner only);
+      sales = invoiced by issue month less voids and credit notes, collected and written off apart, tax apart; Stripe's fees to us =
+      a monthly Bookkeeping expense, nothing stored; fees billed back stay on Online payments; no "This month" card, Today's two
+      rows open the lists; the accountant package gains sales.csv + credit-notes.csv (with Session D); F1 and F2 fixed in Part 4;
+      unpaid bills from our own record. Build prompt: `PLANS_PRICING_STAGE2_PART4_BUILD_PROMPT.md` (two sessions; the Bookkeeping
+      half's wait is over: GST/HST Stage 4b Session B committed `035f5e965` 2026-11-07).
+- [ ] Part 5 replay · Part 6 closeout (Part 3 committed `514d3a2d0`, above)
 - Known red tests NOT from this work: `workspace-flip-guard` and `support-console-stage4b-inforce-guard` (an untracked file from another
   session and a committed one the allowlists do not list), `support-console-stage3-guard` (a modified bookkeeping window file).
