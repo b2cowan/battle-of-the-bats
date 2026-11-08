@@ -111,20 +111,32 @@ export async function readWorksheetExpenses(): Promise<ExpensesRead> {
   }
 }
 
-/** 4a's registration effective date, or null when it cannot be read (before migration 006, or the store failed). */
-export async function readWorksheetRegistrationDate(): Promise<string | null> {
+/**
+ * 4a's registration effective date, told apart three ways (Session B, review 2026-11-07: one null meant two things):
+ *   · `set`: the date every line reads;
+ *   · `unset`: the store answered and holds no date (migration 006, which seeds it, is not applied there yet);
+ *   · `failed`: the store did not answer, or answered with something that is not a date.
+ * The engine needs only the date; the screen words `unset` and `failed` differently.
+ */
+export type RegistrationRead = { state: 'set'; date: string } | { state: 'unset' } | { state: 'failed' };
+export async function readWorksheetRegistrationDate(): Promise<RegistrationRead> {
   try {
     const date = await gstRegistrationDate();
-    return date && isCalendarDate(date) ? date : null;
+    if (date == null) return { state: 'unset' };
+    return isCalendarDate(date) ? { state: 'set', date } : { state: 'failed' };
   } catch (err) {
     warn('registration date', err);
-    return null;
+    return { state: 'failed' };
   }
 }
 
-/** The worksheet for these Ontario days, inclusive. The caller has checked the platform-admin power. */
-export async function readGstReturnWorksheet(period: WorksheetPeriod): Promise<Worksheet> {
+/**
+ * The worksheet for these Ontario days, inclusive, and how the registration date read. The caller has checked the
+ * Bookkeeping gate (`requireBookkeepingApi`) BEFORE calling: this read is platform-wide, with the service role.
+ */
+export async function readGstReturnWorksheet(period: WorksheetPeriod): Promise<{ worksheet: Worksheet; registration: RegistrationRead['state'] }> {
   assertPeriod(period);
-  const [sales, expenses, registrationDate] = await Promise.all([readWorksheetSales(period), readWorksheetExpenses(), readWorksheetRegistrationDate()]);
-  return buildWorksheet({ period, registrationDate, sales, expenses });
+  const [sales, expenses, registration] = await Promise.all([readWorksheetSales(period), readWorksheetExpenses(), readWorksheetRegistrationDate()]);
+  const registrationDate = registration.state === 'set' ? registration.date : null;
+  return { worksheet: buildWorksheet({ period, registrationDate, sales, expenses }), registration: registration.state };
 }

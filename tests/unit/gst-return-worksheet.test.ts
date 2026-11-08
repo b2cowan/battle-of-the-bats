@@ -415,6 +415,26 @@ describe('Line 106 · 4a\'s credits, and the bridge from Reports\' tax paid', ()
     const out = b.simplified.cents + b.notRegistered.cents + b.beforeRegistration.cents + b.shareNotClaimable.cents + b.held.cents + b.notClaimed.cents + b.typeNotSet.cents;
     assert.equal(b.gstHstPaid.cents - out, w.lines[106].cents);
   });
+  it('Session B: each listed expense names the steps it sits in, and each step\'s total is the sum of its expenses (the window filters by it)', () => {
+    const b = w.parts[106].notOnReturn!;
+    for (const step of ['simplified', 'notRegistered', 'beforeRegistration', 'shareNotClaimable', 'held', 'notClaimed'] as const) {
+      const items = w.parts[106].credits.filter(c => c.notOnReturn[step] != null);
+      assert.equal(items.reduce((sum, c) => sum + c.notOnReturn[step]!, 0), b[step].cents, step);
+      assert.equal(items.length, b[step].count, `${step} count`);
+    }
+    assert.equal(w.parts[106].credits.filter(c => c.state === 'counted').reduce((sum, c) => sum + c.creditCents, 0), w.lines[106].cents);
+  });
+  it('Session B review: the "Tax type not set" step is the sum of the type-not-set items that carry bridgeCents (a pure unset expense carries none)', () => {
+    const mixed = expense(14, { supplier: 'Mixed', tax_cad_cents: 1_010, tax_lines: [{ type: 'hst13', cents: 910 }, { type: 'unset', cents: 100 }] });
+    const v = build({ sales: read([]), expenses: { state: 'read', revisions: [expense(7, { tax_answer: null, tax_lines: [], tax_cad_cents: 1_300, supplier_registration: null, purchase_kind: null }), mixed] } });
+    const items = v.unresolved.filter(u => u.kind === 'type_not_set');
+    assert.equal(items.length, 2);
+    const carrying = items.filter(u => u.bridgeCents != null);
+    const b = v.parts[106].notOnReturn!;
+    assert.equal(carrying.reduce((sum, u) => sum + u.bridgeCents!, 0), b.typeNotSet.cents);
+    assert.equal(carrying.length, b.typeNotSet.count);
+    assert.equal(b.typeNotSet.cents, 910);
+  });
 });
 
 describe('GUARD · what the worksheet reads', () => {

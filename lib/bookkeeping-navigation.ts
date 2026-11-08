@@ -10,9 +10,10 @@ export type BookkeepingForm = 'add' | 'correct' | 'void';
  * registry beside its component. The View pill exists only while two or more views are available
  * (`reportViewControl`), so with Spending alone Reports shows no choice.
  */
-export const REPORT_VIEWS = ['spending'] as const;
+export const REPORT_VIEWS = ['spending', 'gst_return'] as const;
 export type ReportView = typeof REPORT_VIEWS[number];
-export const REPORT_VIEW_LABELS: Record<ReportView, string> = { spending: 'Spending' };
+/** GST/HST Stage 4b Session B added the return (owner Ask 7: a Reports view, not a tab). */
+export const REPORT_VIEW_LABELS: Record<ReportView, string> = { spending: 'Spending', gst_return: 'GST/HST return' };
 
 /** The view in force and the pill's options; `options` is null — no pill — below two available views. */
 export function reportViewControl(requested: ReportView, views: readonly { key: ReportView; available: boolean }[]) {

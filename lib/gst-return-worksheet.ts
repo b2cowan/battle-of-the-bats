@@ -124,16 +124,21 @@ export type ReliefItem = {
   /** A write-off: the share of the invoice written off (invoice currency). */
   share?: { writtenOff: number; total: number };
 };
-export type WorksheetCreditItem = {
-  expenseId: string; revision: number; supplier: string; incurredOn: string; receiptCad: number;
-  taxTypes: TaxType[]; gstHstPaid: number; creditCents: number; state: CreditState; registrationUnchecked: boolean;
-};
 type Bucket = { cents: number; count: number };
 /** Line 106's bridge from Reports' GST/HST paid: paid − every bucket below = line 106 (drawing tab 5, "Not on the return"). */
 export type NotOnReturn = {
   gstHstPaid: Bucket;
   simplified: Bucket; notRegistered: Bucket; beforeRegistration: Bucket;
   shareNotClaimable: Bucket; held: Bucket; notClaimed: Bucket; typeNotSet: Bucket;
+};
+/** A step of the bridge below "GST/HST paid". */
+export type NotOnReturnStep = Exclude<keyof NotOnReturn, 'gstHstPaid'>;
+export type WorksheetCreditItem = {
+  expenseId: string; revision: number; supplier: string; incurredOn: string; receiptCad: number;
+  taxTypes: TaxType[]; gstHstPaid: number; creditCents: number; state: CreditState; registrationUnchecked: boolean;
+  /** What of this expense's GST/HST the bridge took off, by step: the same cents the step's total holds (Session B: the
+   *  window's steps filter the list by it, so the screen never sorts an expense into a step itself). */
+  notOnReturn: Partial<Record<NotOnReturnStep, number>>;
 };
 
 export type UnresolvedKind =
@@ -145,6 +150,8 @@ export type UnresolvedItem = {
   kind: UnresolvedKind; affects: LineNumber[]; on: string | null; cents: number | null;
   invoiceId?: string; invoiceNumber?: string | null; noteId?: string; noteNumber?: string | null;
   expenseId?: string; supplier?: string; why?: string | null;
+  /** type_not_set only: the GST/HST-typed tax on the same expense, which the bridge's "Tax type not set" step took off (absent when it took none). */
+  bridgeCents?: number;
 };
 
 export type Worksheet = {
@@ -399,29 +406,33 @@ function creditsSide(revisions: readonly ExpenseRevision[], period: WorksheetPer
     const gstHst = sumTaxLines(paid.filter(l => TAX_TYPES[l.type].gstHst));
     const credit = expenseCredit(row, registration)!;
     if (credit.state === 'type_not_set') {
-      unresolved.push({ kind: 'type_not_set', affects: [106], on, cents: sumTaxLines(paid.filter(l => l.type === 'unset')), ...ref });
+      unresolved.push({ kind: 'type_not_set', affects: [106], on, cents: sumTaxLines(paid.filter(l => l.type === 'unset')), ...ref, ...(gstHst ? { bridgeCents: gstHst } : {}) });
       if (gstHst) { add(b.gstHstPaid, gstHst); add(b.typeNotSet, gstHst); }
       continue;
     }
     if (!gstHst) continue;
     add(b.gstHstPaid, gstHst);
-    credits.push({
+    const item: WorksheetCreditItem = {
       ...ref, revision: row.revision, incurredOn: on, receiptCad: row.cad_cents, taxTypes: [...new Set(paid.map(l => l.type))],
       gstHstPaid: gstHst, creditCents: credit.countsOnReturn ? credit.creditCents : 0, state: credit.state, registrationUnchecked: credit.registrationUnchecked,
-    });
+      notOnReturn: {},
+    };
+    credits.push(item);
+    /** One step of the bridge: its total and this expense's part of it move together. */
+    const step = (key: NotOnReturnStep, cents: number) => { add(b[key], cents); item.notOnReturn[key] = cents; };
     switch (credit.state) {
-      case 'not_claimable': add(row.supplier_registration === 'simplified' ? b.simplified : b.notRegistered, gstHst); break;
-      case 'before_registration': add(b.beforeRegistration, gstHst); break;
-      case 'no_credit': add(b.shareNotClaimable, gstHst); break;
-      case 'not_claimed': add(b.notClaimed, gstHst); break;
+      case 'not_claimable': step(row.supplier_registration === 'simplified' ? 'simplified' : 'notRegistered', gstHst); break;
+      case 'before_registration': step('beforeRegistration', gstHst); break;
+      case 'no_credit': step('shareNotClaimable', gstHst); break;
+      case 'not_claimed': step('notClaimed', gstHst); break;
       case 'held':
-        add(b.held, credit.creditCents);
-        if (gstHst > credit.creditCents) add(b.shareNotClaimable, gstHst - credit.creditCents);
+        step('held', credit.creditCents);
+        if (gstHst > credit.creditCents) step('shareNotClaimable', gstHst - credit.creditCents);
         unresolved.push({ kind: 'credit_held', affects: [106], on, cents: credit.creditCents, ...ref });
         break;
       case 'counted':
         line106 += credit.creditCents;
-        if (gstHst > credit.creditCents) add(b.shareNotClaimable, gstHst - credit.creditCents);
+        if (gstHst > credit.creditCents) step('shareNotClaimable', gstHst - credit.creditCents);
         if (credit.registrationUnchecked) unresolved.push({ kind: 'registration_unchecked', affects: [106], on, cents: credit.creditCents, ...ref });
         break;
       default: break;

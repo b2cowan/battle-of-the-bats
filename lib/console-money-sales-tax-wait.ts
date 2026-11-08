@@ -31,8 +31,12 @@ const WAIT_COLUMNS = [
 
 type WaitRecord = NeedsLookRecord & { stripe_customer_id: string };
 
-/** Which organization shows each Stripe customer's sales: a customer that exactly one organization holds and no other club shares. */
-async function visibleCustomers(): Promise<Map<string, string>> {
+/**
+ * Which organization shows each Stripe customer's sales: a customer that exactly one organization holds and no other club shares.
+ * Also read by the GST/HST return's route (Stage 4b Session B) to say "on no club's list" for a shared customer's sale, so the
+ * worksheet and this count can never disagree on which sales a club shows.
+ */
+export async function visibleCustomers(): Promise<Map<string, string>> {
   const [orgs, workspaces] = await Promise.all([
     readAllPages<{ id: string; stripe_customer_id: string }>((from, to) =>
       supabaseAdmin.from('organizations').select('id, stripe_customer_id').not('stripe_customer_id', 'is', null)

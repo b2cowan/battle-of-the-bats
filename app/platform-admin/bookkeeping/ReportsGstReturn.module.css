@@ -1,0 +1,76 @@
+/* Reports › GST/HST return (GST/HST Stage 4b Session B; drawings tab 5 desktop, tab 9 phone). Tokens only, as the console kit.
+   The table is the statement (no figure band repeats it). A figure that opens a window wears a dotted underline; a calculated
+   line sits on the page ground and opens nothing; the net row is set apart by a rule, not by size. */
+
+.view { display: grid; min-width: 0; }
+.toolbar { gap: 0.5rem 0.65rem; }
+.dates { display: inline-flex; flex-wrap: wrap; gap: 0.5rem; }
+.dates label { display: inline-flex; align-items: center; gap: 0.4rem; font-size: var(--type-support); color: var(--text-secondary); }
+.body { display: grid; gap: 0.9rem; padding: 1rem 1.1rem 1.2rem; min-width: 0; }
+
+/* "Before you file": each count is a door to its list. */
+.beforeYouFile { display: grid; justify-items: start; gap: 0.35rem; }
+.beforeYouFile strong { color: var(--text-primary); }
+.items { line-height: 1.6; }
+.infoLabel { color: var(--text-tertiary); }
+.itemDoor { padding: 0; border: 0; background: none; font: inherit; color: var(--text-primary); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.itemDoor:hover { color: var(--home-olive); }
+.itemDoor:focus-visible, .figure:focus-visible, .fold:focus-visible, .stepDoor:focus-visible, .rowName:focus-visible, .cardDoor:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+
+/* The lines. */
+.frame { border: 1px solid var(--home-line); border-radius: 9px; background: var(--home-card); overflow: hidden; min-width: 0; }
+.lines { width: 100%; border-collapse: collapse; }
+.lines th, .lines td { padding: var(--table-pad-compact, 0.5rem) 0.85rem; font-size: var(--type-body); text-align: left; vertical-align: top; border-top: 1px solid var(--home-line); }
+.lines thead th { border-top: 0; }
+.lines td:last-child, .lines th:last-child { text-align: right; white-space: nowrap; }
+.ln { width: 3.5rem; font-variant-numeric: tabular-nums; color: var(--text-secondary); font-weight: 650; }
+.calc td { background: var(--home-paper); }
+.calcLabel { color: var(--text-secondary); }
+.net td { border-top: 2px solid var(--home-line-strong); font-weight: 700; }
+.sub td { padding-top: 0.3rem; padding-bottom: 0.3rem; border-top: 0; color: var(--text-secondary); }
+.sub td:nth-child(2) { padding-left: 2.2rem; }
+.fold { display: inline-flex; align-items: baseline; gap: 0.4rem; padding: 0; border: 0; background: none; font: inherit; color: var(--text-primary); cursor: pointer; text-align: left; }
+.fold span { width: 1rem; color: var(--home-olive); }
+.foldless { display: inline-block; padding-left: 1.4rem; }
+.untracked { display: block; padding-left: 1.4rem; font-size: var(--type-support); color: var(--text-tertiary); }
+.figure { padding: 0; border: 0; background: none; font: inherit; font-weight: 650; color: var(--text-primary); text-decoration: underline dotted; text-decoration-color: var(--home-olive); text-underline-offset: 4px; cursor: pointer; font-variant-numeric: tabular-nums; }
+.figure:hover { color: var(--home-olive); }
+.figureSub { font-weight: 500; }
+.na { color: var(--text-tertiary); font-style: italic; }
+
+/* Not on the return. */
+.lrow { display: flex; justify-content: space-between; gap: 1rem; padding: 0.55rem 0.85rem; font-size: var(--type-body); border-top: 1px solid var(--home-line); }
+.lrow:first-child { border-top: 0; }
+
+/* Windows: the figures frame over the list, its total bold over a rule. */
+.figures { display: grid; gap: 0; margin: 0 0 0.75rem; border: 1px solid var(--home-line); border-radius: 9px; overflow: hidden; }
+.figures > div { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 0.5rem 0.85rem; border-top: 1px solid var(--home-line); font-size: var(--type-body); }
+.figures > div:first-child { border-top: 0; }
+.figures dt { color: var(--text-secondary); margin: 0; }
+.figures dd { margin: 0; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.figures .total { border-top: 2px solid var(--home-line-strong); font-weight: 700; }
+.figures .total dt { color: var(--text-primary); }
+.stepDoor { padding: 0; border: 0; background: none; font: inherit; color: inherit; text-align: left; cursor: pointer; text-decoration: underline dotted; text-decoration-color: var(--home-olive); text-underline-offset: 4px; }
+.stepOn { color: var(--home-olive); text-decoration-style: solid; }
+.table { width: 100%; }
+.table th, .table td { padding: var(--table-pad-compact, 0.5rem) 0.75rem; font-size: var(--type-body); }
+.rowName { padding: 0; border: 0; background: none; font: inherit; font-weight: 600; color: var(--text-primary); text-align: left; cursor: pointer; text-decoration: underline; text-decoration-color: var(--home-line-strong); text-underline-offset: 3px; }
+
+/* Phone: line cards (drawing tab 9). */
+.phoneOnly { display: none; }
+.cards { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
+.card .cardDoor { background: var(--home-card); border: 1px solid var(--home-line); border-radius: 10px; }
+.cardCalc .cardDoor { background: transparent; border: 1px dashed var(--home-line); border-radius: 10px; }
+.cards .net .cardDoor { border-top: 2px solid var(--home-line-strong); }
+.cardDoor { display: grid; grid-template-columns: 2.6rem minmax(0, 1fr) auto 1rem; align-items: start; gap: 0.5rem; width: 100%; min-height: 44px; padding: 0.7rem 0.75rem; font: inherit; color: var(--text-primary); text-align: left; }
+button.cardDoor { cursor: pointer; }
+.cardText { display: grid; gap: 0.2rem; min-width: 0; font-size: var(--type-body); }
+.cardText small { font-size: var(--type-support); color: var(--text-tertiary); }
+.cardValue { font-weight: 650; font-variant-numeric: tabular-nums; white-space: nowrap; font-size: var(--type-body); }
+.chev { color: var(--home-olive); text-align: right; }
+
+@media (max-width: 640px) {
+  .deskOnly { display: none; }
+  .phoneOnly { display: grid; }
+  .body { padding: 0.85rem 1rem 1rem; }
+}

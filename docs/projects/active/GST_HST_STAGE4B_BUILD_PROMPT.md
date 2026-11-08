@@ -200,3 +200,109 @@ session touched.
   103" is listed. The two sentences disagree; ask `/accounting` or the accountant before the first such case.
 - **For Session B:** the route must call `requirePlatformPower` before `readGstReturnWorksheet` (the read is platform-wide, service role).
 - **For Session B:** the registration date reads null both when it is unset and when the store failed.
+
+### Session B: built 2026-11-07 (the view; no migration, no "Mark as filed", no package change). Uncommitted, awaiting the owner.
+
+**Files.** New: `app/platform-admin/bookkeeping/ReportsGstReturn.tsx` (the view, desktop table + phone cards),
+`GstReturnWindows.tsx` (the windows), `ReportsGstReturn.module.css`, `app/api/platform-admin/bookkeeping/gst-return/route.ts` (GET),
+`lib/gst-return-worksheet-text.ts` (the words: captions, money in words, "Copy lines", the Worksheet CSV rows; Session D's
+`gst-hst-worksheet.csv` should take `worksheetCsvRows` as is), `tests/unit/gst-return-view.test.ts` (15 tests). Changed:
+`lib/bookkeeping-navigation.ts` (`gst_return` in `REPORT_VIEWS`, label "GST/HST return"), `BookkeepingClient.tsx` (the registry entry),
+`lib/gst-return-worksheet.ts` (one additive field, below), `lib/gst-return-worksheet-read.ts` (the registration read, below),
+`lib/console-money-sales-tax-wait.ts` (`visibleCustomers` exported, unchanged), `lib/export/catalog.ts` (two entries, the gate asks for
+them), `tests/unit/gst-return-worksheet.test.ts` (+1 test).
+
+**Facts relied on.** [V] opened this session: the engine and reader as committed in 17bc1a746; `requireBookkeepingApi`
+(`lib/bookkeeping-access.ts:13`, confirmed staff session + owner allowlist) and that `PLATFORM_POWERS` has no Bookkeeping power
+(`lib/platform-areas.ts:102-128`); `gstRegistrationDate` returns null before migration 006 or with no revision, throws on a store
+failure (`lib/bookkeeping-store.ts:237`), and 006 seeds 2026-09-26 (`scripts/bookkeeping-aws/006_gst_tax_lines.sql:32-35`);
+`visibleCustomers` + `customerSharing` (`lib/console-money-sales-tax-wait.ts:35`, `lib/console-money-stripe.ts:166`); the
+`KitDialog` size ladder (520 / medium 640 / wide 800; `components/shared/KitDialog.tsx:242-246`); the Money tab opens a sale only by
+Stripe **charge** id (`?tab=money&charge=`), with `&show=needs_look` for the list (`ClubRecord.tsx:197-200`), and there is no invoice
+parameter. [H] from a helper, then checked by me: the CRA headings below.
+
+**Line captions: checked against CRA's own page, and they differ from the drawings.** Source: "Instructions for preparing a GST/HST
+return", canada.ca (`.../calculate-prepare-report/instructions-preparing-return.html`, page details 2021-04-27), opened 2026-11-07
+[V]. Its headings, used verbatim: 101 "Total sales and other revenues" (the heading reads "Total sales and other revenues (line
+101)"), 103 "GST/HST collected or collectible", 104 "Adjustments to be added to the net tax", 105 "Total GST/HST and adjustments for
+the period", 106 **"GST/HST paid or payable (ITCs)"**, 107 "Adjustments to be deducted when determining the net tax", 108 "Total
+ITCs and adjustments", 109 "Net tax". CRA's "GST/HST Return Working Copy" PDF prints 105, 108 and 109 as captions with the same
+words ("…for period"); the other lines there are prose only [H]. The drawings' "Adjustments that increase / decrease net tax" and the
+prompt's "Input tax credits" are not CRA's wording. **UNCONFIRMED: all eight against the filing screen itself** (My Business Account
+/ NETFILE) and the GST34 form, which could not be opened (the GST34 page returned 404). These are instruction-page headings, not
+the return's field labels. The drawing's plain-language hint follows each caption.
+
+**Session A's three items.**
+1. **The gate.** The route calls `requireBookkeepingApi()` and returns on refusal before any read (guard test). The review said
+   `requirePlatformPower`, but Bookkeeping holds no power in the table: its gate is the owner allowlist, which is stricter, and every
+   Bookkeeping route uses it.
+2. **Unset vs failed.** `readWorksheetRegistrationDate` now returns `set` / `unset` / `failed`, and `readGstReturnWorksheet` returns
+   `{ worksheet, registration }`. The engine is unchanged and still takes the date or null. The screen says "Your GST/HST registration
+   date isn't recorded yet… It is recorded once bookkeeping storage is updated" (unset can only mean 006 is not applied, because 006
+   seeds it), or "Your registration date couldn't be read… Try again". A malformed stored date reads as failed.
+3. **Shared customers: said.** The route reads Stage 3's own `visibleCustomers` and returns, per invoice in the period, the club
+   whose Money tab shows it, or null. A null reads "On no club's list (its Stripe customer is shared)" and has no link, because the
+   Money tab refuses a shared customer and a link there would dead-end. The read fails on its own: no links, no sentence, every
+   figure stands.
+
+**The one engine change (additive, no rule).** Each `WorksheetCreditItem` carries `notOnReturn`: the cents each bridge step took
+off it, written by the same `step()` that adds the step's total. The 106 window's steps filter its list by it, so the screen never
+sorts an expense into a step. Test: each step's total equals the sum of its expenses.
+
+**Design calls in this session (flag in the walk).**
+- **Invoice links open the club's Money tab, not the one sale.** The tab opens a sale by charge id, and an unpaid invoice has none. A
+  sale with no answer opens the tab's "needs a look" list. Opening one invoice there would be a Money-tab change (out of scope).
+- **State C's two answers are not built.** "No sales before…" and "Enter them yourself" save an answer to a period, which needs
+  storage (this session has no migration). The message shows alone. With the backfill marker it can appear only until the daily job
+  has run once on that environment. With no known start it reads "We can't yet tell where the sales record starts".
+- **"Before you file" also lists information.** The drawing's box held only what can change a line. The prompt adds the bare void,
+  pre-registration invoices and capped relief, so they sit in the same box after "For your information:". The bare void reads
+  "Voided, no credit note: its tax stays in line 103".
+- **The period.** The page's own period is shared with Spending. "All confirmed dates" is not offered (a return needs dates): while it
+  is in force the return reads this year to date without changing it, and a pick here moves the shared period. Presets: this year to
+  date, last calendar year, last quarter, last month, this month to date, custom.
+- **Windows, from the house ladder** (the drawings' 720 frame is not a house size): the invoice lists are `wide` (800), the rest
+  `medium` (640), and a phone fills the screen. Lines 101, 104 and 107 got windows on the drawn 103 pattern. Their figure opens one
+  only when something stands behind it, so a $0.00 with nothing behind it opens nothing.
+- **Desktop toolbar is two rows.** The View pill keeps its own bar (the view control's pinned structure), and the view's toolbar
+  holds Period, Expand all, Copy lines and Worksheet CSV. On a phone this is exactly the drawing: View, then Period + Copy lines.
+- **Buyer column privacy:** a club by name; an individual coach as "Coach" (Session D's default).
+- **Money in words:** net tax "$209.58 refund" / "$84.10 you owe". Any other line below zero reads "minus $x". "Copy lines" and the CSV
+  carry no sign: the word goes beside the figure, or in the Note column.
+
+**Checks.** `tsc --noEmit` clean (needs `NODE_OPTIONS=--max-old-space-size=8192`; the default heap runs out). Focused suites 149/149
+(view, worksheet, navigation, looks guard, bookkeeping GST reports, accountant fixes). Full `npm test`: 15,281 / 15,292. The 11
+failures name no file this session touched: the console window foot (ExpenseFormWindow), BILLING_TAX_WORDS, the portal-tag and
+workspace-status censuses, the team move's org_id, billing free time, practice plans on a phone, the schedule door, two walk pages.
+ESLint clean on every touched file. The spelling, export catalog, CSS selector, CSS purity, date and observability gates are clean for
+these files. The admin type, old-look and CSS selector gates fail on other sessions' files only.
+**LAYOUT: `check:layout --changed` NOT RUN (skipped, honestly).** Three reasons. (1) `--changed` widened to all 352 screens because
+another session's uncommitted shared stylesheet (`components/admin/kit/club/league/teams/Teams.module.css`) is in the tree, and a
+whole-product sweep never runs on the dev server (owner 2026-10-13). (2) The UAT fixture is unavailable (the free coach's team is linked
+to a paid workspace), and its repair is a seed that signs everyone out. (3) **No Bookkeeping screen is on the sweep's list**
+(`scripts/layout-screens.mjs`, itself modified by another session), so even a clean run would not measure this view. Owed: add a
+Bookkeeping › Reports › GST/HST return screen at desktop and 390 to the list (with an owner session as the fixture) once that file is
+free, then run `--changed`. Until then the 390 layout rests on the owner's browser check.
+Dev server restarted at hand-off: login page 200, the route answers a signed-out call 403.
+
+**Session B review (`/review`, 2026-11-07, high-risk tier; main-loop read of the route, engine hunks, text module and both components, no finder fan-out).**
+Checked and found as built: the route runs `requireBookkeepingApi` and returns on refusal before any read (guard test); the screen and
+windows add no tax rule (every figure, part, state and "Before you file" item is the engine's, and the text module only words them);
+`notOnReturn` changes no totals (`step()` adds the same cents to the same bucket it always did; the Session B test sums each step's items
+back to its total); "Not available" is never `$0` (`lineFigure` returns null, the screen words it); negative money is in words; a bare void
+sits under "For your information" and is not on line 107 (107's rows are credit notes and write-offs only); shared customers reuse
+`visibleCustomers()` unchanged; the registration date reads `set` / `unset` / `failed` and the two failures are worded apart.
+**One defect confirmed and fixed:** the line-106 "Tax type not set" step opened a list that did not match it. The step holds only the
+GST/HST-typed tax on an expense that also has an unset line (a pure unset expense adds nothing), but its window listed every type-not-set
+expense at its unset amount. Fix: one more additive engine field, `bridgeCents` on the `type_not_set` item (present only when the step took
+something off), the window lists only those at that amount; test added (sum and count equal the step). No rule, no totals moved. **This is a
+second additive engine field; the first (`notOnReturn`) is above.** Also: the route now logs a 500 (it swallowed the cause).
+**Gate:** focused suites 211/211 (worksheet, view, bookkeeping); `tsc` clean when the stale `.next/dev/types` (a half-written file from the
+running dev server, 100s of syntax errors that hide every real check) is left out of the project; ESLint clean on the 12 touched code files;
+spelling, contrast, date, observability, dictionary, snapshot, CSS purity, public tokens and root-file gates clean. Not ours, left alone:
+the full `npm test` still shows 11 failures (BILLING_TAX_WORDS, practice plans on a phone, billing free time, the Stage 6 walk summary, the
+coach form, ExpenseFormWindow's foot, the portal-liveness census, the team move, the portal-tag census) and the admin old-look, admin type,
+org-slug callers, CSS selector and export-catalog gates fail on other sessions' files. **One of the 11 names a file on this session's list:**
+the portal-tag census (`workspace-flip-guard`) flags `lib/console-money-sales-tax-wait.ts` for reading `team_workspaces`. That read is in
+`HEAD` (Stage 3, `visibleCustomers`), the one change here is the `export` keyword, so it fails on a clean checkout too; its fix is an
+entry on that test's list with a reason, which is the flip owner's call. Layout check still owed (above).

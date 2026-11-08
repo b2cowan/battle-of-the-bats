@@ -13,6 +13,7 @@ import GstRegistrationQuestion from './GstRegistrationQuestion';
 import { reportPeriodRange } from '@/lib/bookkeeping-export';
 import SingleSelectDropdown from '@/components/coaches/SingleSelectDropdown';
 import ReportsSpending, { type ReportDrilldown, type ReportPeriod } from './ReportsSpending';
+import ReportsGstReturn from './ReportsGstReturn';
 import type { OwnerMovementRevision } from '@/lib/bookkeeping-owner-movements';
 import { downloadCSVBlob } from '@/lib/export';
 import OwnerLedger from './OwnerLedger';
@@ -189,11 +190,19 @@ export default function BookkeepingClient({ initialExpenses, initialRevisions, i
       exporting={exporting} onExport={kind => exportExpenses(kind)} onOpenExpense={row => openRecord(row)}
       attentionCount={attention.length} onOpenAttention={() => setView('attention')}
       registrationDate={registrationDate} gstSchemaReady={gstSchemaReady} onChangeRegistration={() => setChangingRegistration(true)} /> },
+    // GST/HST Stage 4b Session B: the return's lines for the page's period. Its windows hand their own row list to openRecord.
+    // A return needs dates: while the shared period is "All confirmed dates" it reads this year to date (nothing is changed
+    // until the owner picks a period here, which then moves the shared one).
+    { key: 'gst_return', available: true, render: () => <ReportsGstReturn
+      reportPeriod={reportPeriod === 'all' ? 'year' : reportPeriod} onChooseReportPeriod={chooseReportPeriod} onCustomPeriod={() => setReportPeriod('custom')}
+      from={reportPeriod === 'all' ? reportPeriodRange('year', today()).from : from} to={reportPeriod === 'all' ? reportPeriodRange('year', today()).to : to}
+      onFrom={setFrom} onTo={setTo} invalidPeriod={invalidPeriod} expenses={expenses}
+      onOpenExpense={(row, list) => openRecord(row, list)}
+      onAddNumber={(row, list) => { setRecordIds(list.map(item => item.expense_id)); openForm(row, false, null, true); }} /> },
   ];
   const reportControl = reportViewControl(place.report, reportViews);
   /** Spending's drill-down and line list narrow the export and the record window only while Spending is the view on screen. */
   const spendingOpen = view === 'reports' && reportControl.current === 'spending';
-
   const registerFilter = expenseRegisterSelection(params, tournamentToday()).filters;
   const defaultRecordRows = view === 'expenses' && registerFilter ? currentExpenses(expenses).filter(row => matchesExpenseFilters(row, registerFilter, registrationDate))
     : spendingOpen ? reportRows : currentExpenses(expenses).filter(row => !row.void_reason);
