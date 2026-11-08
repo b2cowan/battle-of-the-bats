@@ -1,6 +1,6 @@
 # Bank check — work it down to zero (the working draft)
 
-**Status:** PLANNED 2026-11-07; **ALL SIX ASKS RULED 2026-11-07 (1A 2A 3A 4A 5A 6A, every recommendation taken: draft kept in this browser, "Started off by" shown, Add entry always there, 14-day expiry, restore at once, the words on a phone). WD1 committed `2a64a87d8` 2026-11-07 after /simplify and /review (see §7), owner walk owed. WD2 (the coach card) built 2026-11-07 after /design, /simplify and /review (see §8), commit on the owner's yes; WD3 next.** Drawings: `BANK_CHECK_WORKING_DRAFT_DRAWINGS.html`, published https://claude.ai/artifact/HpFPDfFUAPLLeRLZyvTHMT
+**Status:** PLANNED 2026-11-07; **ALL SIX ASKS RULED 2026-11-07 (1A 2A 3A 4A 5A 6A, every recommendation taken: draft kept in this browser, "Started off by" shown, Add entry always there, 14-day expiry, restore at once, the words on a phone). WD1 committed `2a64a87d8` 2026-11-07 after /simplify and /review (see §7), owner walk owed. WD2 (the coach card) committed `47bd64918` 2026-11-07 after /design, /simplify and /review (see §8), owner walk owed; WD3 next.** Drawings: `BANK_CHECK_WORKING_DRAFT_DRAWINGS.html`, published https://claude.ai/artifact/HpFPDfFUAPLLeRLZyvTHMT
 (round 2: button names and words settled with `/marketing`, see §4b). Asks in §5 ruled; build WD1 next. PM brief: `BANK_CHECK_WORKING_DRAFT_PM_BRIEF.md`.
 Parent: `BANK_RECONCILIATION_PLAN.md` (the balance check, BC1–BC9). This is a sequel to it, not a change to its sum.
 
@@ -182,7 +182,7 @@ Also: "Kept in this browser only…" shows only when this browser will hold a dr
 
 **/simplify + /review (2026-11-07), committed `2a64a87d8`:** Find and the draft helper now share one line-to-item conversion (`itemOfLine`; the coach card's own copy goes in WD2). One defect found and fixed: a date cleared from the calendar was stored as an empty date, which the reader refuses whole, so the typed balance went with it; the draft now keeps the balance and comes back on today. Looked at and left as built: a restored date the server now refuses (the sentence shows, the marks wait, Save is off until another day is picked); "Check this statement again" over a draft (starts fresh, the old draft stays until the first keystroke replaces it); the person arriving after mount (the form re-keys); a focus re-read while Add entry is open (the window keeps what it opened with); a failed Save (the draft is cleared only on success); blocked storage (every touch is wrapped). Checks: bank tests 420/420, spelling, focused lint clean, typecheck clean for WD1 (its only errors are two in `tests/unit/renewals.test.ts`, another session's; the dev server's generated `.next/dev/types/routes.d.ts` also has a syntax error that hides every other error from a plain `npm run typecheck`, so it was run with that folder excluded).
 
-## 8. WD2 build record (2026-11-07)
+## 8. WD2 build record (2026-11-07, committed `47bd64918`)
 
 Built as ruled, on the coach card (`CoachBankCheck`), through the WD1 helper: club = the org slug, account = the **team id**,
 person = the signed-in coach (`useOrg().user.id` in `CoachBankView`; the card is keyed on team + person, so it re-keys when the

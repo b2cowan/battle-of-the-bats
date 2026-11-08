@@ -3,6 +3,7 @@
 > One session, pasted into a fresh chat (`/clear` first). Written 2026-11-07 after WD1 was committed (`2a64a87d8`). Plan of record:
 > `docs/projects/active/BANK_CHECK_WORKING_DRAFT_PLAN.md` (§4 WD2, §4b words, §7 the WD1 build record). WD3 (help, `/docs`, the owner walks)
 > is a separate session. The owner walk of WD1 may still be open: if it has produced findings against the shared helper, fix those first.
+> **DONE: committed `47bd64918` 2026-11-07** (build record: the plan §8).
 
 ---
 

@@ -2,7 +2,7 @@
 
 **Plan:** `BANK_CHECK_WORKING_DRAFT_PLAN.md` · **Priority:** a follow-up to the bank balance check, after its owner walks (BC9). Not a launch gate.
 **Status (2026-11-07):** the club card committed `2a64a87d8`; the coach card (the same memory, with the cash not deposited yet, "+ Record"
-and "Record the missing amount") built and reviewed, commit on the owner's yes; help articles and the two short owner walks next (WD3).
+and "Record the missing amount") committed `47bd64918`; help articles and the two short owner walks next (WD3).
 
 ## The problem
 A treasurer sits down with the bank statement. Today they can type the statement balance and watch "Off by" — but if they
