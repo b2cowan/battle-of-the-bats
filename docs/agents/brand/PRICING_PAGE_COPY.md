@@ -691,7 +691,8 @@ Layout: four equal-width cards in a horizontal row. Club card is visually elevat
 
 **Feature List:**
 - Everything in League
-- Accounting — club ledger, budget vs. actual, and costs split across teams, with coach reminders *(was: "org ledger, invoicing, expense tracking, and payment reconciliation" — neither invoicing nor reconciliation exists; changed 2026-10-19, BUSINESS_DECISIONS "Marketing claims only what ships". Reconciliation returns when bank reconciliation ships.)*
+- Accounting — club ledger, budget vs. actual, and costs split across teams, with coach reminders *(was: "org ledger, invoicing, expense tracking, and payment reconciliation" — neither invoicing nor reconciliation exists; changed 2026-10-19, BUSINESS_DECISIONS "Marketing claims only what ships". Bank reconciliation returned 2026-11-07 after the BC9 walks (§481, §482) passed — see the next bullet.)*
+- Bank reconciliation — check each statement against your books and find what’s missing *(added 2026-11-07, `/marketing` BC9b R-c: the Club Bank tab does exactly this. The Club plan panel adds “Type in a bank statement’s balance and see whether your books agree; when they don’t, it helps you find the difference.”; the billing page’s Club “What’s included” list says “Bank statement checks against your books” (the published article variant is frozen by the 2026-10-28 owner baseline and is unchanged); the Accounting module-catalog line says “bank statement checks”; the onboarding accounting step no longer says “track invoices”. Ships in the same promote as the Bank tab’s migrations. Help articles keep “reconciliation” in search words only, never a heading.)*
 - Rep teams — tryouts, rosters, player documents, and season history
 - Premium Coaches Portal for your whole coaching staff — every team included, no per-team fee *(was: "3 team accounts; additional at $19/mo" — retired 2026-06-22)*
 

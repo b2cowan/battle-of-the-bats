@@ -180,6 +180,7 @@ const CLUB_BILLING = [
   'Rep teams: tryouts, rosters, player documents, season history',
   `A ${PLAN_CONFIG.team.label} for every team, with no per-team fee`,
   'Accounting: ledgers, the club budget, allocations to teams',
+  'Bank statement checks against your books',
   'Families: every household across your programs',
   'Your club’s public site',
   'House league and tournaments',

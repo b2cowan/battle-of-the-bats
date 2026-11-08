@@ -1589,7 +1589,7 @@ function OnboardingPageLegacy() {
               <div className={styles.stepBody}>
                 <div className={styles.stepTitle}>Review your accounting setup</div>
                 <div className={styles.stepDesc}>
-                  Your org ledger is ready. Set up team ledgers, add entries, and track invoices.
+                  Your org ledger is ready. Set up team ledgers and add entries. When a bank statement arrives, the Bank tab checks it against your books.
                 </div>
               </div>
             </div>

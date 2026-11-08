@@ -396,7 +396,7 @@ money table or a book line.** A guard test pins this: no bank code writes `accou
   TO CASH" (a true accounting bridge, another portal) and, later and as a plain-words fix rather than a collision fix,
   "reconcile the estimate" → "match the estimate to the itemized total" (coach Budget panel). Recommendation only: BC8's
   coach words pass rules it.
-- [ ] R-c marketing truth: "bank reconciliation" returns to Club copy only after BC9's walk (pricing, Club plan article,
+- [x] R-c marketing truth (applied 2026-11-07, BC9b `/marketing`, after the §481/§482 walks passed; owner: "apply 1-5"): "bank reconciliation" returns to Club copy only after BC9's walk (pricing, Club plan article,
   homepage, in-app plan list, `PRICING_PAGE_COPY.md`). The three overclaims (onboarding, email defaults, module catalog)
   are still routed to `/marketing`, open.
 
@@ -1257,7 +1257,7 @@ hand-off to `/release` for 447/449/450 with the code).
     7 walks, 44 steps). §461 marked superseded. Not walkable on dev: the fiscal-year close's bank row (no year to close).
   - Checks: the bank tests 393/393; typecheck clean; focused lint, spelling, tokens, CSS purity clean;
     `check:layout --only=admin-accounting-bank` clean at 361/390/768/1440.
-- [ ] **BC9b** — the walk's findings, `/marketing` puts "bank reconciliation" back (R-c) and settles the collisions;
+- [~] **BC9b** (R-c words APPLIED 2026-11-07: the Club pricing card gets a "Bank reconciliation" bullet, the Club plan panel one sentence, the billing page’s Club included list (the frozen article variant untouched) and the Accounting module line "bank statement checks", the onboarding step stops saying "track invoices"; the retired prospecting email left alone; the collisions were settled at BC8b. MUST ship in the same promote as migs 447/449/450. `/demos` and the `/release` hand-off still open) — the walk's findings, `/marketing` puts "bank reconciliation" back (R-c) and settles the collisions;
   `/demos` decides on sandbox seeds.
 
 ### Neighbours

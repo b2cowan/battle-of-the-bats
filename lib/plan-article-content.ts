@@ -291,8 +291,9 @@ export const PLAN_ARTICLE_CONTENT: Record<'tournament_plus' | 'league' | 'club' 
         num: '04',
         label: 'Accounting',
         title: 'Finances in one place — not three spreadsheets.',
-        // Says only what ships (BUSINESS_DECISIONS 2026-10-19): no invoicing or reconciliation until each exists.
-        body: 'One ledger for the club’s money, a budget checked against what was actually spent, and club costs split across teams, with a reminder to each head coach and a tick when the payment arrives. The treasurer stops living in spreadsheets.',
+        // Says only what ships (BUSINESS_DECISIONS 2026-10-19): no invoicing until it exists. The bank sentence returned
+        // after the BC9 walks passed 2026-11-07 (BANK_RECONCILIATION_PLAN R-c).
+        body: 'One ledger for the club’s money, a budget checked against what was actually spent, and club costs split across teams, with a reminder to each head coach and a tick when the payment arrives. Type in a bank statement’s balance and see whether your books agree; when they don’t, it helps you find the difference. The treasurer stops living in spreadsheets.',
       },
     ],
     featuresLabel: 'Included',

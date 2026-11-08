@@ -35,7 +35,7 @@ export const MODULE_CATALOG: { key: Capability; label: string; description: stri
   {
     key: 'module_accounting',
     label: 'Accounting',
-    description: 'Financial ledgers, budgets, expenses, dues, and reconciliation workflows.',
+    description: 'Financial ledgers, budgets, expenses, dues, and bank statement checks.',
   },
   {
     key: 'module_rep_teams',

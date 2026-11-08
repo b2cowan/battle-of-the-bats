@@ -144,8 +144,10 @@ const PLANS: Plan[] = [
     trialNote: clubTrialLine(),
     features: [
       'Everything in League Plus',
-      // Says only what ships (BUSINESS_DECISIONS 2026-10-19): no invoicing or reconciliation until each exists.
+      // Says only what ships (BUSINESS_DECISIONS 2026-10-19): no invoicing until it exists. Bank reconciliation returned
+      // after the BC9 walks passed 2026-11-07 (BANK_RECONCILIATION_PLAN R-c); it ships with the Bank tab's promote.
       'Accounting — club ledger, budget vs. actual, and costs split across teams, with coach reminders',
+      'Bank reconciliation — check each statement against your books and find what’s missing',
       'Rep teams — tryouts, rosters, player documents, and season history',
       'Premium Coaches Portal for your whole coaching staff — every team included, no per-team fee',
       'Up to 15 teams — or up to 30 on Club · Association',
