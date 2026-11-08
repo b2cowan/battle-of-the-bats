@@ -1,6 +1,6 @@
 # Bank check — work it down to zero (the working draft)
 
-**Status:** PLANNED 2026-11-07; **ALL SIX ASKS RULED 2026-11-07 (1A 2A 3A 4A 5A 6A, every recommendation taken: draft kept in this browser, "Started off by" shown, Add entry always there, 14-day expiry, restore at once, the words on a phone). WD1 committed `2a64a87d8` 2026-11-07 after /simplify and /review (see §7), owner walk owed. WD2 (the coach card) committed `47bd64918` 2026-11-07 after /design, /simplify and /review (see §8), owner walk owed. WD3 (words, help, the two walks) built 2026-11-07 (see §9), commit owed; walks §490 (club) and §491 (coach) owed. The project closes when both walks pass.** Drawings: `BANK_CHECK_WORKING_DRAFT_DRAWINGS.html`, published https://claude.ai/artifact/HpFPDfFUAPLLeRLZyvTHMT
+**Status:** PLANNED 2026-11-07; **ALL SIX ASKS RULED 2026-11-07 (1A 2A 3A 4A 5A 6A, every recommendation taken: draft kept in this browser, "Started off by" shown, Add entry always there, 14-day expiry, restore at once, the words on a phone). WD1 committed `2a64a87d8` 2026-11-07 after /simplify and /review (see §7), owner walk owed. WD2 (the coach card) committed `47bd64918` 2026-11-07 after /design, /simplify and /review (see §8), owner walk owed. WD3 (words, help, the two walks) committed `2bfb18af1` 2026-11-07 after /review (see §9); walks §490 (club) and §491 (coach) owed. The project closes when both walks pass.** Drawings: `BANK_CHECK_WORKING_DRAFT_DRAWINGS.html`, published https://claude.ai/artifact/HpFPDfFUAPLLeRLZyvTHMT
 (round 2: button names and words settled with `/marketing`, see §4b). Asks in §5 ruled; build WD1 next. PM brief: `BANK_CHECK_WORKING_DRAFT_PM_BRIEF.md`.
 Parent: `BANK_RECONCILIATION_PLAN.md` (the balance check, BC1–BC9). This is a sequel to it, not a change to its sum.
 
@@ -223,7 +223,7 @@ another session's files (a GST/HST words guard on `lib/console-money-sales-tax-w
 beside "+ Record". Recommendation: give the coach card its own verb ("…you haven't recorded"), a coach-only key in the words file,
 in WD3's `/marketing` pass, not widened here.
 
-## 9. WD3 build record (2026-11-07)
+## 9. WD3 build record (2026-11-07, committed `2bfb18af1`)
 
 **Owner call (§4b open item), ruled 2026-11-07 as recommended, widened by one:** the coach card's Find says "recorded" in all
 three sentences that said "entered": the two "…you haven't recorded" hints and the half-gap question "Was it recorded the wrong way
@@ -254,5 +254,8 @@ are), so leaving and coming back asks again, on both cards; the figure is the sa
 follow-up (§8), after the walks.
 
 Checks: bank + help tests 453/453; spelling; focused lint clean; typecheck clean (run without `next-env.d.ts`, because the dev
-server's generated route types have a syntax error: `.probe/tsconfig.wd3.json`). No `/simplify` (no new abstraction); `/review`
-offered (the words file and the coach Find changed).
+server's generated route types have a syntax error: `.probe/tsconfig.wd3.json`). No `/simplify` (no new abstraction). **/review** (standard tier; correctness + regression
+lenses; `check:layout --only=coach-ledger-bank` clean at every width): no Critical/High/Medium. Applied: a stale test comment.
+Left as Low/Advisory: the source guard catches the `W.` reads only; "each entry moves Off by" holds for an entry dated by the
+statement (the window opens on it); the `scope: local` sign-outs (demo doors) skip the clear, as §7 records (keyed by person).
+The data dictionary line still names "Add the missing line" (left: another session holds that file).
