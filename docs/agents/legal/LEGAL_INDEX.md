@@ -16,7 +16,7 @@ and a pointer here.
 | Privacy policy (FieldLogicHQ's own) | `drafts/PRIVACY_POLICY.md` | 0.1 | draft — owner items P1–P7 before publish; 9 product findings (2026-11-07: tax records never end, §9 note 6); the §3/§5/§6/§9 edits for Stage 14, tax records, staff lists and our bookkeeping are listed in the Stage 6 plan §2 (not yet applied) | 2026-11-07 |
 | Data-processing terms for clubs (FieldLogicHQ as service provider) | — | — | not started | — |
 | Subprocessor list | — | — | not started | — |
-| Guardian consent wording | product placeholder only | placeholder | not started | — |
+| Guardian consent wording (Signed-in family Stage 4: accept page, first-screen line, invitation fine print, Stop and Leave confirms) | `drafts/GUARDIAN_CONSENT_STAGE4.md` (product still holds the placeholder in `lib/family-guardian-consent.ts`) | 0.1 | draft — build conditions 1–6 in the file; owner call on Terms line; Parts 4–5 read against the shipped words 2026-11-08 (five answers in the file's closeout block): no word changed; **privacy policy page owed before the tier is on for real families**; R2 (record = words shown) to build first | 2026-11-08 |
 
 ## Topics researched
 

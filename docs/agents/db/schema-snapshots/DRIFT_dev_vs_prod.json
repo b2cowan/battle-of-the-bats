@@ -1,12 +1,12 @@
 {
-  "generated": "2026-11-08",
-  "total": 468,
+  "generated": "2026-11-09",
+  "total": 470,
   "counts": {
     "tables": 14,
-    "columns": 218,
+    "columns": 219,
     "indexes": 72,
     "constraints": 58,
-    "rls": 106
+    "rls": 107
   },
   "items": [
     {
@@ -75,6 +75,10 @@
     },
     {
       "key": "check:only-dev:family_links.family_links_made_on_entry_ck",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:org_public_site_content.org_public_site_content_mailing_address_check",
       "sig": ""
     },
     {
@@ -631,6 +635,10 @@
     },
     {
       "key": "column:only-dev:org_children.medical_notes",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_public_site_content.mailing_address",
       "sig": ""
     },
     {

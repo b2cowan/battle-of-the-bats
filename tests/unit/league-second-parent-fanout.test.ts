@@ -244,13 +244,14 @@ describe('the Stop button: every second-parent send path carries it, no first-pa
     assert.ok(!/second_parent_stops|supabase/.test(FOOTER));
   });
 
-  it('only these four files draw it: the shared module, the register route, the pay link and the sign-up-link notices', () => {
+  it('only these five files draw it: the shared module, the register route, the pay link, the sign-up-link notices and the placement re-send', () => {
     const users = [...filesUnder('lib', '.ts'), ...filesUnder('app', '.ts'), ...filesUnder('app', '.tsx'), ...filesUnder('components', '.tsx')]
       .filter(f => f !== 'lib/league-second-parent-footer.ts')
       .filter(f => /withSecondParentStop\(|secondParentStopFooterHtml\(/.test(readCode(f)))
       .sort();
     assert.deepEqual(users, [
       'app/api/league/[orgSlug]/[seasonSlug]/register/route.ts',
+      'lib/house-league-placement-mail.ts',
       'lib/league-second-parent-mail.ts',
       'lib/league-signup-link-mail.ts',
       'lib/online-payment-receipt.ts',
@@ -287,6 +288,14 @@ describe('the Stop button: every second-parent send path carries it, no first-pa
 
   it('bypass 3: the sign-up-link notices draw it on the second parent’s notice only', () => {
     assert.match(functionBody(LINKS, 'sendLinkNotice'), /const html = n\.secondParent \? withSecondParentStop\(built, org\.id, n\.to\) : built;/);
+  });
+
+  it('bypass 4 (Stage 4a): the placement re-send to ONE address draws it on the second parent’s form only', () => {
+    const R = functionBody(readCode('lib/house-league-placement-mail.ts'), 'resendPlacementInvitation');
+    assert.match(R, /role === 'first'\s*\? fillInvitationSlots\(html, await mailer\.firstFill\(email, asMail\)\)\s*: await mailer\.finishSecondCopy\(email, withSecondParentStop\(secondParentCopy\(html\), params\.orgId, email\)/);
+    // It sends to the one address it was asked for, never the household's other parent.
+    assert.match(R, /messages\.push\(\{\s*to: email,/);
+    assert.ok(!/readSecondParents|secondParentsOf|onEveryRegistration/.test(R));
   });
 
   it('"Email families" keeps its own per-address unsubscribe and takes none of this', () => {

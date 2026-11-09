@@ -541,6 +541,15 @@ country is NOT copied here: it is read live from `org_payment_accounts.country`.
 <!-- dict:col:org_public_site_content.contact_email -->
 **`contact_email`** (text, nullable) — the org's **public** contact email (gotchas 1–2); ≤254 chars, checked server-side since Stage 4c-1 (`checkEmail`: an address, and nothing a `mailto:` could carry as extra fields — `?`, `&`, `%`, spaces, angle brackets); a refused one is a 400, never saved.
 
+<!-- dict:col:org_public_site_content.mailing_address -->
+**`mailing_address`** (text, nullable; CHECK `org_public_site_content_mailing_address_check`: 1–300 characters after trim; mig 454,
+Signed-in family accounts Stage 4a, owner O3 2026-11-08) — the club's **mailing address**, typed on the public site's About row
+(the box shows only while the guardian tier is on). **Shown on no page.** Read only by `clubContactAndMailingAddress`
+([lib/club-email-context.ts](../../../lib/club-email-context.ts)) for the sender line of a family invitation (the second parent's
+copy of the placement email and the rep coach's invitation, /legal draft (c), the commercial-message standard). With the tier on,
+Publish and a club team's rep Send invitation refuse until the club has both this and `contact_email`. ⚠ **Never** filled from
+`billing_locations` (O3: that address was given to pay a plan, not to print in family emails).
+
 <!-- dict:col:org_public_site_content.social_instagram -->
 <!-- dict:col:org_public_site_content.social_facebook -->
 <!-- dict:col:org_public_site_content.social_x -->

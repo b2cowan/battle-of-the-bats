@@ -96,6 +96,8 @@ export interface PlacedSignup {
   dateOfBirth: string | null;
   firstEmail: string | null;
   secondEmail: string | null;
+  /** "Otters · U9 Rookie" — what the accept page shows beside the child (not used by any rule). */
+  teamLine?: string;
 }
 
 /** What is already true of this address and each child. */

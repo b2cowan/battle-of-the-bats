@@ -19,6 +19,11 @@ const ipLimiter = new FixedWindowRateLimiter(60 * MINUTE, 30);        // per sou
 const globalLimiter = new FixedWindowRateLimiter(5 * MINUTE, 150);    // ceiling across all callers
 const recipientLimiter = new FixedWindowRateLimiter(60 * MINUTE, 8);  // per guardian email — caps mail to one inbox
 
+// The invitation accept page's "type the email" check and its new-account submit send no email, so they do not spend the
+// per-address mail bucket (a stranger could otherwise burn a parent's registration budget with a made-up link). They are capped
+// per INVITATION instead: that is what stops a link holder guessing the invited address behind its masked form (Stage 4a S2 review).
+const invitationLimiter = new FixedWindowRateLimiter(60 * MINUTE, 10);
+
 /** The one refusal sentence every public form shows. Exported so a test can pin that no form words it differently. */
 export const TOO_MANY = 'Too many attempts. Please wait a few minutes and try again.';
 
@@ -72,6 +77,14 @@ export function throttleRegisterRecipient(email: string): NextResponse | null {
  */
 export function throttlePublicFormRecipient(email: string): NextResponse | null {
   if (!recipientLimiter.take(email.trim().toLowerCase())) {
+    return NextResponse.json({ error: TOO_MANY }, { status: 429 });
+  }
+  return null;
+}
+
+/** The accept page's address check and new-account submit: at most 10 tries an hour against one invitation link. */
+export function throttleInvitationAttempt(token: string): NextResponse | null {
+  if (!invitationLimiter.take(token)) {
     return NextResponse.json({ error: TOO_MANY }, { status: 429 });
   }
   return null;

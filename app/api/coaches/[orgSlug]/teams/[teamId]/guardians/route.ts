@@ -12,7 +12,8 @@ import {
   MAX_GUARDIANS_PER_PLAYER,
   getGuardiansByPlayer,
 } from '@/lib/family-guardian';
-import { FamilyInvitationRefusal, cancelRepInvitation, issueRepInvitation } from '@/lib/family-invitation';
+import { FamilyInvitationRefusal, accountNameOf, cancelRepInvitation } from '@/lib/family-invitation';
+import { sendRepInvitation } from '@/lib/family-invitation-mail';
 
 /**
  * Coach-side guardian management — the per-player "guardians" card (S5, bottom card).
@@ -54,8 +55,9 @@ export const GET = withObservability(async (_req: Request,
   });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/guardians' });
 
-/** Send invitation (Stage 4a ruling 4): an invitation for this player, to the address the coach typed. Nothing happens by itself
- *  at roster add. The email itself is sent from here once Stage 4a Part 5 lands; there is no link to copy. */
+/** Send invitation (Stage 4a ruling 4): an invitation for this player, to the address the coach typed, EMAILED (Part 5.3; there
+ *  is no link to copy). Nothing happens by itself at roster add. Refused in words for a club with no contact email or mailing
+ *  address (O1 = A, O3), and an invitation that did not send is cancelled again. */
 export const POST = withObservability(async (req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
@@ -74,12 +76,12 @@ export const POST = withObservability(async (req: Request,
   if (!playerId || !email) return NextResponse.json({ error: 'bad_request' }, { status: 400 });
 
   try {
-    const { invitationId } = await issueRepInvitation({
+    const { invitationId } = await sendRepInvitation({
       orgId: ctx.org.id,
       repTeamId: teamId,
       playerId,
       email,
-      sentByUserId: ctx.user.id,
+      coach: { id: ctx.user.id, email: ctx.user.email ?? null, name: accountNameOf(ctx.user.user_metadata) },
     });
     return NextResponse.json({ ok: true, invitationId });
   } catch (e) {

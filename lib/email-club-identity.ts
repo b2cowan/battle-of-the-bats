@@ -133,16 +133,34 @@ export const FAMILY_SENDER_CLUB_MAX = 48;
  * 48 characters, ending with an ellipsis if it was cut. A name with no letter or digit left falls back to FieldLogicHQ alone.
  */
 export function familySenderName(clubName: string | null | undefined): string {
-  const cleaned = (clubName ?? '')
+  const club = headerSafeName(clubName);
+  return club ? `${club} ${FAMILY_SENDER_SUFFIX}` : FAMILY_SENDER_FALLBACK;
+}
+
+/** Free text made safe for a mail header's display name (the cleaning `familySenderName` describes), capped at 48 characters
+ *  with an ellipsis; null when no letter or digit is left. */
+function headerSafeName(raw: string | null | undefined): string | null {
+  const cleaned = (raw ?? '')
     .replace(/\p{Cf}/gu, '')
     .replace(/[\p{Cc}\p{Zl}\p{Zp}]+/gu, ' ')
     .replace(/["<>@,;:\\]/g, '')
     .replace(/\s+/g, ' ')
     .trim();
-  if (!/[\p{L}\p{N}]/u.test(cleaned)) return FAMILY_SENDER_FALLBACK;
+  if (!/[\p{L}\p{N}]/u.test(cleaned)) return null;
   const chars = Array.from(cleaned);
-  const club = chars.length > FAMILY_SENDER_CLUB_MAX ? `${chars.slice(0, FAMILY_SENDER_CLUB_MAX - 1).join('').trimEnd()}…` : cleaned;
-  return `${club} ${FAMILY_SENDER_SUFFIX}`;
+  return chars.length > FAMILY_SENDER_CLUB_MAX ? `${chars.slice(0, FAMILY_SENDER_CLUB_MAX - 1).join('').trimEnd()}…` : cleaned;
+}
+
+/**
+ * A rep coach's invitation (Signed-in family accounts Stage 4a, drawing tab 1f): "Sam Ortiz via Riverdale Minor Ball League",
+ * or "Sam Ortiz via FieldLogicHQ" for a coach team with no club. Either name, cleaned as above; with no usable coach name it is
+ * the club's ordinary family sender name.
+ */
+export function coachInvitationSenderName(coachName: string | null | undefined, clubName: string | null): string {
+  const coach = headerSafeName(coachName);
+  const club = headerSafeName(clubName);
+  if (!coach) return familySenderName(clubName);
+  return `${coach} via ${club ?? FAMILY_SENDER_FALLBACK}`;
 }
 
 /** What the reply line says about where a reply goes, and which address that is. */

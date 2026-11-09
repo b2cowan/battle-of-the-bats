@@ -790,6 +790,9 @@ export interface OrgPublicSiteContent {
   tagline: string | null;
   description: string | null;
   contactEmail: string | null;
+  /** The club's mailing address, as typed on the About row (Signed-in family accounts Stage 4a, O3, mig 454): printed in the
+   *  sender line of a family invitation (/legal draft (c)). Never the billing address. */
+  mailingAddress: string | null;
   socialInstagram: string | null;
   socialFacebook: string | null;
   socialX: string | null;

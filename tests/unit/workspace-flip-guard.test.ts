@@ -504,6 +504,7 @@ const LIVE_ROW_FILES: string[] = [
   'lib/directory.ts',
   'lib/email-sender.ts',
   'lib/family-access.ts',
+  'lib/family-invitation.ts',
   'lib/founding-season-desk.ts',
   'lib/free-time.ts',
   // Plans & pricing Stage 2 Part 4: Renewals marks a row "Coaches Portal" from the org row it just read.

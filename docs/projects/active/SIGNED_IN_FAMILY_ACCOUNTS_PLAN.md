@@ -268,6 +268,14 @@ its division's teams are **published** (the draft board sets the team earlier); 
 (its registration statuses are live); the parent-typed "invite another adult" door (`inviteCoGuardian`) is removed (it broke "an invitation
 goes only to an address on the sign-up"); no date of birth = treated as a minor.
 
+**RULED 2026-11-08 (owner, build Session 2).** **O3 (raised by the build) = a new field, refuse until set:** /legal's second-parent and rep
+footers print the club's mailing address, and the product held none (the billing address is not used: it was given to pay a plan, possibly
+a volunteer's home). The club types a "Mailing address" on the public site's About row (mig 454; the box shows only with the tier on), and
+with the tier on, Publish and a club team's rep Send invitation refuse until the club has both the contact email and the mailing address.
+**O4 = the coach's own email:** a coach team with no club uses the inviting coach's sign-in email as the contact on its invitation; it has no
+mailing address to print (/legal re-reads in the closeout). Also found in Session 2: FieldLogicHQ has no privacy policy page in the product,
+so the accept page's "How we use your information" has nowhere to link; publishing it is owed before the tier goes on anywhere real.
+
 ### Stage 5 — Next season pre-filled for a signed-in parent · needs Stage 4
 
 A returning parent who is signed in gets next season's form filled in; the public form stays for everyone else. Never a sent

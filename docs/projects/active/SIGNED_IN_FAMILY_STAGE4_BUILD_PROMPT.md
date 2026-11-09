@@ -91,6 +91,17 @@ the second-parent copies ("has been sending sign-up emails to {email}… will st
 is the first parent (`guardian_email`) on a sign-up of that org**, and an acceptance connects such an address only to children it is the
 first parent of (the stop already cleared every `guardian_email_2` copy). `guardian_email_2` is refused for a stopped address as written.
 
+**O3 RULED 2026-11-08 (owner, Session 2, raised by the build): the club's mailing address is a new field, and Publish refuses until
+it is set.** /legal's second-parent and rep footers print "{club's mailing address}", and the product held none (the only street
+address on file is the billing address a club gave us to pay its plan, possibly a volunteer's home, never promised for family
+emails). So: a "Mailing address" box beside "Families' questions go to" on the public site's About row
+(`org_public_site_content.mailing_address`, mig 454), and **with the tier on**, Publish and the rep Send invitation refuse until the
+club has both the contact email and the mailing address, saying where to set them (O1 extended). Tier off = nothing changes.
+
+**O4 RULED 2026-11-08 (owner, Session 2): a coach team with no club uses the inviting coach's own email** as the contact (and
+reply-to) on the rep invitation. A club team still needs the club's contact email and mailing address (O1, O3). /legal re-reads the
+coach-team footer in Session 4 (it has no mailing address to print).
+
 ## What the code says today (read before Part 1)
 
 - `family_links` (`DATA_DICTIONARY.md` 5921–6014 [H]): `rep_team_id` **NOT NULL** (:5939); `player_id` **NOT NULL by CHECK**
@@ -366,6 +377,59 @@ existing dev tokens until Part 9 notes the drop.
     tests/unit/{children-duplicates,coach-call-ups-guard,roster-delete-guard,league-second-parent,team-move-coverage}.test.ts, this
     prompt, SIGNED_IN_FAMILY_ACCOUNTS_PLAN.md (the O1/O2 + build-decisions paragraph).
   - **Next: Session 2 = Parts 4–5** (the accept page to the drawing; the emails, with O1 = A). `/clear` first.
+- **Session 2 (2026-11-08): Parts 4–5 BUILT, not committed (the owner says when).** Short recap given before code; O3 (mailing
+  address = a new field, refuse until set) and O4 (a coach team's contact = the coach's own email) ruled by the owner (above).
+  - **Part 4 — the accept page** rebuilt to drawing tab 2 (`app/(consumer)/family/claim/[token]/` page + ClaimClient): email first
+    (masked hint) → "Choose a password" (new account, created confirmed and joined in ONE request, `acceptWithNewAccount`; the browser
+    then signs in with the password) or "Your password" + Forgot password (existing) → /legal (a) + the two boxes → Join; A (signed in
+    as the address) skips to the words; B lists siblings by team; C refuses with Sign out (names the coach on rep); D "Email me a new
+    invitation" (one answer always); E "Open {child}'s team"; F the club's contact, never why. Routes: the claim POST gained
+    `mode: 'new'`; new `.../claim/[token]/email` (match + has-an-account, only after a match) and `.../claim/[token]/resend`; both
+    throttled with the family form buckets. `inspectInvitation(token, user)` now returns the viewer (A/C), each child's team line and
+    the sender; E also covers "the invited address, signed in, already connected in this club" (an older or the next division's
+    invitation). After joining → `/family?joined=1` (**Part 6 builds `/family` and reads `joined`**; until then it 404s — tier off).
+  - **Part 5 — the emails.** Pure HTML in `lib/family-invitation-panel.ts`; sends in `lib/family-invitation-mail.ts`. The placement
+    and moved builders draw two invisible slots ONLY when asked (`invitationSlots`), and the sender asks only through
+    `placementInviteMailer`, which is null while the tier is off or the club cannot be named → tier off = today's email byte for byte.
+    Each copy fills its own slots: first parent = panel (/legal (c) verbatim) or "already in the app" line; second parent = who-added
+    line under the greeting, panel with the ignore line, the Stop footer, then the sender line with the mailing address (O3). One
+    invitation per address per send; an invitation failure never fails a placement email (falls back to today's). The moved email
+    carries the panel too (not drawn; the prompt says both). The rep coach's Send invitation now EMAILS ("Sam Ortiz via {club}",
+    wordmark for a coach team) with "Don't send me invitations" → `/invitation-stop` (confirm page, POST only, writes
+    `family_invite_stops` and cancels that address's open rep invitations); an invitation that did not send is cancelled again.
+    `resendPlacementInvitation` (house-league-placement-mail) = D, the club's Send again (Part 8, `reconnects`) and Part 6's way back:
+    one placement email per division the address has a placed child in, ONE fresh token, to that address only. Publish refuses (tier on
+    only) until contact + mailing address are set (`publishNeedsContact`). The unused `placedMail.button`/`movedMail.button` are gone.
+  - **Migration 454** `454_a_club_names_its_mailing_address.sql` (`org_public_site_content.mailing_address`, CHECK 1–300), applied to
+    DEV 2026-11-08; snapshots refreshed; dictionary; `MANUAL_PROD_STEPS` 454 = pending. The About row's "Mailing address" box shows only
+    while the tier is on (the editor's GET says `asksMailingAddress`).
+  - **Differs from the prompt / drawing, on purpose:** (1) the second parent's fine print drops /legal (c)'s first sentence ("{first
+    parent} added your email…") because the drawn who-added line right above says it — **/legal re-reads in Session 4**; (2) a coach
+    team's rep invitation prints no mailing address (none exists for it, O4) — **/legal re-reads**; (3) **FieldLogicHQ has no privacy
+    policy page in the product** (only the /legal draft), so "How we use your information" renders as no link
+    (`FIELDLOGICHQ_PRIVACY_POLICY_URL = null`): **publishing it is OWED before the tier goes on anywhere real**; the club's notice links
+    `organizations.privacy_policy_url` when set, else "Ask {club} for its privacy notice at {contact}" (condition 5); (4) the stop link
+    is signed on the invitation id (a fifth HMAC suffix), not the address; (5) placement mail is not customisable today (it never goes
+    through `sendTransactionalEmail`), so there is no `builtInOnly` case to handle; (6) a rep invitation is not sent (refused "didn't
+    send") where no `UNSUBSCRIBE_SECRET` can sign its stop link.
+  - **Tests:** new `tests/unit/family-invitation-mail.test.ts` 30/30 (the panel's /legal words over real output, promotes nothing, no
+    address in a link, siblings, escaping, the slots, the rep email club / coach team, the sender name, guard (a) tier off = today's
+    email, Publish's refusal gated by the tier, every new route 404 with the tier off, guard (f) no server sign-in on the token's path,
+    ruling 15's order of checks, D's one answer, the stop page writes nothing); `family-invitation-rules` 34/34; the second-parent
+    fan-out guard gained "bypass 4" (the re-send draws the Stop footer on the second-parent form only, to one address) 45/45.
+    `npx tsc --noEmit` clean for this work (two errors in `BankStatements.tsx`, another session's in-progress bank work).
+    `plan-reader-door-guard` gained `lib/family-invitation.ts` as an `identity` read (plan_id 'team' = a coach team, O4).
+    `verify:changed`: 15,657 tests, 15 failing, none this work's (billing replay log, billing tax words, practice-plan phone N1,
+    preview island, free time, a permits possessive, the stage 6 walk, series dates, console foot face, two workspace censuses,
+    team-move's `platform_charge_tax_looks`); the tail checks run by hand: spelling, dates, dictionary, manual-prod, demos,
+    observability, contrast, snapshot freshness clean; lint 0 errors in this work (the `children` prop renamed); the other
+    failing tail checks are other sessions' files (help/schedule/bank CSS, permits selectors, export catalog, org-slug callers,
+    index coverage, a stray root `debug.log`); schema parity lists 453/454 as dev-only (expected until prod).
+  - **For the walk (Session 4), the dev club needs:** the tier on in the owner's `.env.local` (ask first), `RESEND_API_KEY`,
+    `UNSUBSCRIBE_SECRET`, and the club's contact email and mailing address set on the public site.
+  - **First: the Session 2 closeout** (`SIGNED_IN_FAMILY_STAGE4_S2_CLOSEOUT_PROMPT.md`: /simplify → /review → /legal + the commit,
+    three chats). **Then: Session 3 = Parts 6–8** (the family pages incl. `/family` and the joined note, the calendar, the record window's statuses +
+    Send again → `resendPlacementInvitation({ reconnects: true })`, Remove a parent, the join window's names, the stop page's (d)). `/clear` first.
 - **Session 2 starts here (handed over by Session 1).** Paste: `execute Session 2 (Parts 4–5) of @docs/projects/active/SIGNED_IN_FAMILY_STAGE4_BUILD_PROMPT.md`.
   - The PM UX gate was met in Session 1 for the whole stage; present a short plain-language recap of what Parts 4–5 change before code.
   - **Build on what exists, do not re-make it:** `inspectInvitation`, `acceptInvitation`, `invitationEmailMatches`, `maskEmail`,

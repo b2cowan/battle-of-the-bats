@@ -154,3 +154,31 @@ export function buildSecondParentStopUrl(orgId: string, email: string): string |
   if (!token) return null;
   return `${base}/second-parent-stop?org=${encodeURIComponent(orgId)}&email=${encodeURIComponent(normalized)}&token=${encodeURIComponent(token)}`;
 }
+
+// ── "Don't send me invitations" on a rep coach's invitation (Signed-in family accounts Stage 4a, Part 5.3) ─────
+// A fifth distinct HMAC suffix, keyed on the INVITATION id (not the address): no address rides in this link (Stage 2 ruling 2),
+// and the page finds the club and the address from the invitation. Like the rest of the file it is deterministic and never
+// expires, and it can only ever STOP invitations reaching that address at that club — never start one or reveal the address
+// (the page shows it partly hidden). It opens a confirm page (/invitation-stop); only the POST behind that page writes.
+
+function inviteStopKey(invitationId: string): string {
+  return `${invitationId}:stop-family-invitations`;
+}
+
+export function generateInviteStopToken(invitationId: string): string | null {
+  return sign(inviteStopKey(invitationId));
+}
+
+export function verifyInviteStopToken(invitationId: string, token: string): boolean {
+  if (!invitationId || !token) return false;
+  return sameToken(generateInviteStopToken(invitationId), token);
+}
+
+/** The link in a rep coach's invitation email, or null when there is no secret (then the invitation is not sent: the
+ *  commercial-message standard needs a working way to refuse). */
+export function buildInviteStopUrl(invitationId: string): string | null {
+  const base = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.fieldlogichq.ca';
+  const token = generateInviteStopToken(invitationId);
+  if (!token) return null;
+  return `${base}/invitation-stop?i=${encodeURIComponent(invitationId)}&token=${encodeURIComponent(token)}`;
+}

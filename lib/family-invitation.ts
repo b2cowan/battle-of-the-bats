@@ -7,6 +7,11 @@ import { todayEastern } from './free-time';
 import { isLiveLeagueSeasonStatus } from './family-link-reach';
 import { stoppedSecondParentRefusal } from './league-second-parent-stop';
 import { assertGuardianTier, GUARDIAN_TIER_ENABLED, isGuardianCapViolation, MAX_GUARDIANS_PER_PLAYER } from './family-guardian';
+import { clubContactAndMailingAddress } from './club-email-context';
+import { isTeamWorkspaceOrg } from './team-workspace-kind';
+import { getOrgPrivacyPolicyHref } from './privacy-policy';
+import { authAccountExistsForEmail } from './auth-account-lookup';
+import { isPlatformAdminEmail } from './platform-auth';
 import { beforeYouJoinWords, guardianConsentText, GUARDIAN_CONSENT_VERSION } from './family-guardian-consent';
 import { FAMILY_INVITATION_WORDS } from './family-invitation-words';
 import {
@@ -114,11 +119,13 @@ type PlacedRow = {
   id: string; child_id: string; player_first_name: string; player_date_of_birth: string | null;
   guardian_email: string | null; guardian_email_2: string | null; team_id: string | null; status: string;
   league_seasons: { status: string } | { status: string }[] | null;
-  league_divisions: { teams_published_at: string | null } | { teams_published_at: string | null }[] | null;
+  league_divisions: { teams_published_at: string | null; name: string | null } | { teams_published_at: string | null; name: string | null }[] | null;
+  league_teams: { name: string | null } | { name: string | null }[] | null;
 };
+// ⚠ Three FKs reach league_teams from a registration (team, draft team, previous team): the team is named by its constraint.
 const PLACED_COLUMNS =
   'id, child_id, player_first_name, player_date_of_birth, guardian_email, guardian_email_2, team_id, status, ' +
-  'league_seasons(status), league_divisions(teams_published_at)';
+  'league_seasons(status), league_divisions(teams_published_at, name), league_teams!league_registrations_team_id_fkey(name)';
 const one = <X>(v: X | X[] | null): X | null => (Array.isArray(v) ? v[0] ?? null : v);
 
 /** Placed = accepted, on a team, the division's teams published, the season not closed: what reaches a team (family-link-reach). */
@@ -130,10 +137,11 @@ function isPlaced(r: PlacedRow): boolean {
 const toSignup = (r: PlacedRow): PlacedSignup => ({
   registrationId: r.id, childId: r.child_id, childFirstName: r.player_first_name, dateOfBirth: r.player_date_of_birth,
   firstEmail: r.guardian_email, secondEmail: r.guardian_email_2,
+  teamLine: [one(r.league_teams)?.name, one(r.league_divisions)?.name].filter(Boolean).join(' · '),
 });
 
 /** Every PLACED sign-up of the org that carries this address, as first or second parent. */
-async function placedSignupsOf(orgId: string, email: string): Promise<PlacedSignup[]> {
+export async function placedSignupsOf(orgId: string, email: string): Promise<PlacedSignup[]> {
   const [first, second] = await Promise.all(['guardian_email', 'guardian_email_2'].map(col =>
     supabaseAdmin.from('league_registrations').select(PLACED_COLUMNS).eq('org_id', orgId).eq(col, email)));
   if (first.error) throw first.error;
@@ -246,7 +254,11 @@ export interface AddressPlan {
  * First, a newly placed child of an address that ALREADY JOINED in this club is connected now, with no new invitation (ruling 3:
  * "now and as each is placed"); that address then reads "already connected".
  */
-export async function planPlacementInvitations(orgId: string, registrationIds: readonly string[]): Promise<Map<string, AddressPlan>> {
+export async function planPlacementInvitations(
+  orgId: string, registrationIds: readonly string[],
+  /** The club's Send again only (`family_invitations.reconnects`): an address that left or was removed is invited back. */
+  opts: { reconnects?: boolean } = {},
+): Promise<Map<string, AddressPlan>> {
   const plans = new Map<string, AddressPlan>();
   if (!GUARDIAN_TIER_ENABLED || registrationIds.length === 0) return plans;
 
@@ -270,7 +282,7 @@ export async function planPlacementInvitations(orgId: string, registrationIds: r
         tierOn: true,
         band: bandOf(r.player_date_of_birth),
         connected: st.liveStatus === 'verified',
-        endedBefore: st.endedBefore && !st.liveStatus,
+        endedBefore: st.endedBefore && !st.liveStatus && opts.reconnects !== true,
         otherLiveGuardians: st.otherLiveGuardians,
       });
       const plan = plans.get(email) ?? { email, decision: 'none' as PlacementDecision, children: [] };
@@ -342,7 +354,8 @@ export async function issuePlacementInvitation(params: {
 // ── Rep: the coach's Send invitation ──────────────────────────────────────────────────────────
 
 /** Ruling 4: the coach's Send invitation on the player's Guardians section. Nothing happens by itself at roster add. Throws a
- *  FamilyInvitationRefusal in words for every refusal. (Part 5 sends the email; O1's "no club contact" refusal lands there.) */
+ *  FamilyInvitationRefusal in words for every refusal. Called only through sendRepInvitation (lib/family-invitation-mail.ts),
+ *  which refuses first when the club cannot be named (O1 = A, O3) and emails the invitation. */
 export async function issueRepInvitation(params: {
   orgId: string; repTeamId: string; playerId: string; email: string; sentByUserId: string;
 }): Promise<{ token: string; invitationId: string }> {
@@ -436,12 +449,66 @@ export async function cancelRepInvitation(params: { invitationId: string; repTea
   if (updError) throw updError;
 }
 
-/** The club's name as the accept page shows it (the same read the page makes). */
+/** The club's name as the accept page and the consent record show it. */
 export async function clubNameOf(orgId: string): Promise<string> {
   const { data, error } = await supabaseAdmin.from('organizations').select('name').eq('id', orgId).maybeSingle();
   if (error) throw error;
   return (data as { name?: string } | null)?.name ?? 'the club';
 }
+
+// ── Who the invitation says it is from (O1 = A, O3, O4) ───────────────────────────────────────
+
+/** What an invitation names about its sender: /legal condition 2 ("a working {contact} always exists where the words say tell
+ *  the club") and draft (c)'s sender line. */
+export interface InvitationSender {
+  clubName: string;
+  /** A coach's own team with no club (O4): the contact is the inviting coach's email and there is no mailing address. */
+  teamWorkspace: boolean;
+  contact: string | null;
+  mailingAddress: string | null;
+  /** The club's privacy notice (/legal condition 5), http(s) only, or null. */
+  privacyNoticeUrl: string | null;
+  /** Every fact the invitation's words name exists. With the tier on, Publish and the rep Send invitation refuse otherwise. */
+  ready: boolean;
+}
+
+/** `coachEmail` is read only for a coach's own team (O4), so a caller may pass it lazily and spare the club case the lookup. */
+export async function invitationSenderOf(orgId: string, coachEmail?: string | null | (() => Promise<string | null>)): Promise<InvitationSender> {
+  const { data, error } = await supabaseAdmin
+    .from('organizations').select('name, account_kind, plan_id, privacy_policy_url').eq('id', orgId).maybeSingle();
+  if (error) throw error;
+  const org = data as { name: string | null; account_kind: string | null; plan_id: string | null; privacy_policy_url: string | null } | null;
+  const teamWorkspace = isTeamWorkspaceOrg({ accountKind: org?.account_kind, planId: org?.plan_id });
+  const { contact, mailingAddress } = teamWorkspace
+    ? { contact: normalizeGuardianEmail(typeof coachEmail === 'function' ? await coachEmail() : coachEmail) ?? null, mailingAddress: null }
+    : await clubContactAndMailingAddress(orgId);
+  return {
+    clubName: org?.name ?? 'the club',
+    teamWorkspace,
+    contact,
+    mailingAddress,
+    privacyNoticeUrl: getOrgPrivacyPolicyHref({ privacyPolicyUrl: org?.privacy_policy_url }),
+    ready: teamWorkspace ? !!contact : !!contact && !!mailingAddress,
+  };
+}
+
+/** An account's name as a page or an email shows it ("You're signed in as Priya Shah", "Sam Ortiz via …"), or null. */
+export function accountNameOf(meta: Record<string, unknown> | null | undefined): string | null {
+  const m = meta ?? {};
+  const pick = (k: string) => (typeof m[k] === 'string' ? (m[k] as string).trim() : '');
+  return pick('full_name') || pick('display_name') || [pick('first_name'), pick('last_name')].filter(Boolean).join(' ') || null;
+}
+
+/** A sign-in account as the invitation's pages and emails name it (the inviting coach: O4's contact, the re-send's sender), or null. */
+export async function authUserOf(userId: string | null): Promise<InvitationUser | null> {
+  if (!userId) return null;
+  const { data, error } = await supabaseAdmin.auth.admin.getUserById(userId);
+  if (error || !data.user) return null;
+  return { id: data.user.id, email: data.user.email ?? null, name: accountNameOf(data.user.user_metadata) };
+}
+
+/** Where a parent lands after joining (one home: lib/family-invitation-panel.ts). */
+export { FAMILY_HOME_PATH } from './family-invitation-panel';
 
 // ── The accept page ───────────────────────────────────────────────────────────────────────────
 
@@ -466,58 +533,124 @@ const asRow = (r: InvitationDbRow): InvitationRow => ({
   cancelledAt: r.cancelled_at, replacedBy: r.replaced_by,
 });
 
-/** What an acceptance of this invitation would connect, now. */
+/** What an acceptance of this invitation would connect, now, with each child's team line for the page. */
 async function connectablesOf(inv: InvitationDbRow) {
   const placed = await placedSignupsOf(inv.org_id, inv.email);
   let rep: { childId: string; firstName: string; entryId: string; dateOfBirth: string | null } | null = null;
+  let repLine = '';
   if (inv.source === 'rep_coach' && inv.rep_player_id && inv.child_id) {
     const { data, error } = await supabaseAdmin
-      .from('rep_roster_players').select('id, player_first_name, player_date_of_birth').eq('id', inv.rep_player_id)
+      .from('rep_roster_players').select('id, player_first_name, player_date_of_birth, rep_teams(name)').eq('id', inv.rep_player_id)
       .neq('status', 'callup').maybeSingle();
     if (error) throw error;
-    const e = data as { id: string; player_first_name: string; player_date_of_birth: string | null } | null;
-    if (e) rep = { childId: inv.child_id, firstName: e.player_first_name, entryId: e.id, dateOfBirth: e.player_date_of_birth };
+    const e = data as unknown as { id: string; player_first_name: string; player_date_of_birth: string | null; rep_teams: { name: string } | { name: string }[] | null } | null;
+    if (e) {
+      rep = { childId: inv.child_id, firstName: e.player_first_name, entryId: e.id, dateOfBirth: e.player_date_of_birth };
+      repLine = (Array.isArray(e.rep_teams) ? e.rep_teams[0] : e.rep_teams)?.name ?? '';
+    }
   }
   const childIds = [...placed.map(s => s.childId), ...(rep ? [rep.childId] : [])];
   const facts = await addressStates(childIds);
   const state = new Map(childIds.map(id => [id, facts.of(id, inv.email)]));
   const province = await orgProvince(inv.org_id);
+  const lines = new Map<string, Set<string>>();
+  const addLine = (childId: string, line: string) => lines.set(childId, (lines.get(childId) ?? new Set<string>()).add(line));
+  for (const s of placed) if (s.teamLine) addLine(s.childId, s.teamLine);
+  if (rep && repLine) addLine(rep.childId, repLine);
   return {
     province,
+    lines,
     ...connectables({ email: inv.email, placed, rep, state, bandOf: bandReader(province), reconnects: inv.reconnects }),
   };
 }
 
+/** One child the accept page lists: the first name and the team line(s) ("Otters · U9 Rookie"). Never another child's. */
+export interface InvitationChild { firstName: string; teamLine: string }
+
+/** Who is signed in, as the page may show it: never the full address of either account. */
+export type InvitationViewer =
+  | { kind: 'none' }
+  /** A: signed in as the invited address. */
+  | { kind: 'same'; name: string | null; maskedEmail: string }
+  /** C: signed in as another address (ruling 5: refused). */
+  | { kind: 'other'; maskedEmail: string };
+
 export interface InvitationView {
   state: InvitationState;
-  /** "p••••••@example.com" — the page never receives the full address. */
+  /** "p••••••@example.com" — the page never receives the full address. Open and expired states only. */
   maskedEmail: string | null;
-  orgId: string | null;
   source: 'placement' | 'rep_coach' | null;
-  /** First names of the children an acceptance connects (open state only). */
-  children: string[];
+  /** The children an acceptance connects (open state only). */
+  children: InvitationChild[];
+  viewer: InvitationViewer;
+  /** Who it is from, for the words (F's contact line, the privacy notice). Null when the token is unknown. */
+  sender: InvitationSender | null;
 }
 
-/** What the accept page may show for this token. A state other than `open` carries nothing about the children. */
-export async function inspectInvitation(token: string, userId: string | null): Promise<InvitationView> {
-  const empty: InvitationView = { state: 'no_longer_works', maskedEmail: null, orgId: null, source: null, children: [] };
-  if (!GUARDIAN_TIER_ENABLED) return empty;
-  const inv = await invitationByToken(token);
-  const state = invitationState(inv ? asRow(inv) : null, new Date().toISOString(), userId);
-  if (!inv) return empty;
-  const base = { state, maskedEmail: maskEmail(inv.email), orgId: inv.org_id, source: inv.source, children: [] as string[] };
-  if (state !== 'open') return { ...base, maskedEmail: state === 'expired_or_replaced' ? base.maskedEmail : null };
-  const { connect } = await connectablesOf(inv);
-  // An open invitation that connects nothing now (every child left the team, was removed, or turned 18) no longer works.
-  if (connect.length === 0) return { ...empty, orgId: inv.org_id, source: inv.source };
-  return { ...base, children: connect.map(c => c.firstName) };
+/** The signed-in account, as the accept page knows it. */
+export interface InvitationUser { id: string; email: string | null; name: string | null }
+
+/** This account holds a live verified link to a child in this org (E: "a signed-in parent who is already connected"). */
+async function holdsVerifiedLinkInOrg(userId: string, orgId: string): Promise<boolean> {
+  const { count, error } = await supabaseAdmin
+    .from('family_links').select('id', { count: 'exact', head: true })
+    .eq('user_id', userId).eq('org_id', orgId).eq('status', 'verified');
+  if (error) throw error;
+  return (count ?? 0) > 0;
 }
 
-/** The accept page's email-first step: does the typed address match? The answer is the only thing the page learns. */
-export async function invitationEmailMatches(token: string, typed: string): Promise<boolean> {
-  if (!GUARDIAN_TIER_ENABLED) return false;
+/**
+ * What the accept page may show for this token (drawing tab 2). A state other than `open` carries nothing about the children,
+ * and F never says why. E is this account's own used invitation, or — for the invited address signed in — any invitation of a
+ * club it is already connected in (an older one, the next division's).
+ */
+export async function inspectInvitation(token: string, user: InvitationUser | null): Promise<InvitationView> {
+  const unknown: InvitationView = { state: 'no_longer_works', maskedEmail: null, source: null, children: [], viewer: { kind: 'none' }, sender: null };
+  if (!GUARDIAN_TIER_ENABLED) return unknown;
   const inv = await invitationByToken(token);
-  return !!inv && emailMatches(inv.email, typed);
+  if (!inv) return unknown;
+
+  const sender = await invitationSenderOf(inv.org_id, inv.source === 'rep_coach' ? async () => (await authUserOf(inv.sent_by_user_id))?.email ?? null : null);
+  const viewer: InvitationViewer = !user?.email ? { kind: 'none' }
+    : emailMatches(inv.email, user.email) ? { kind: 'same', name: user.name, maskedEmail: maskEmail(inv.email) }
+      : { kind: 'other', maskedEmail: maskEmail(user.email) };
+  const base = { maskedEmail: null as string | null, source: inv.source, children: [] as InvitationChild[], viewer, sender };
+  const joinedHere = async () => viewer.kind === 'same' && !!user && await holdsVerifiedLinkInOrg(user.id, inv.org_id);
+
+  let state = invitationState(asRow(inv), new Date().toISOString(), user?.id ?? null);
+  if (state !== 'open' && state !== 'joined' && await joinedHere()) state = 'joined';
+  if (state === 'joined') return { ...base, state };
+  if (state === 'expired_or_replaced') return { ...base, state, maskedEmail: maskEmail(inv.email) };
+  if (state !== 'open') return { ...base, state };
+
+  const { connect, lines } = await connectablesOf(inv);
+  // An open invitation that connects nothing now: E for the parent already connected, F for everyone else (every child left the
+  // team, was removed, or turned 18 — never said which).
+  if (connect.length === 0) return { ...base, state: (await joinedHere()) ? 'joined' : 'no_longer_works' };
+  return {
+    ...base,
+    state,
+    maskedEmail: maskEmail(inv.email),
+    children: connect.map(c => ({ firstName: c.firstName, teamLine: [...(lines.get(c.childId) ?? [])].join(', ') })),
+  };
+}
+
+/**
+ * The accept page's email-first step: does the typed address match, and does it already have an account? The answer is all
+ * the page learns, and the second half only after the first: a person who typed the invited address, holding its invitation,
+ * learns whether to choose a password or enter one — nobody else learns anything.
+ */
+export async function invitationEmailCheck(token: string, typed: string): Promise<
+  { match: false } | { match: true; hasAccount: boolean }
+> {
+  if (!GUARDIAN_TIER_ENABLED) return { match: false };
+  const inv = await invitationByToken(token);
+  // Only an open invitation asks for an address (the page shows the step in A only): a used, cancelled or expired link answers
+  // nothing about the address it was for.
+  if (!inv || invitationState(asRow(inv), new Date().toISOString(), null) !== 'open') return { match: false };
+  if (!emailMatches(inv.email, typed)) return { match: false };
+  const hasAccount = (await isPlatformAdminEmail(inv.email)) || (await authAccountExistsForEmail(inv.email));
+  return { match: true, hasAccount };
 }
 
 export type AcceptResult =
@@ -555,19 +688,145 @@ export async function acceptInvitation(params: {
   if (!claimed) return { kind: 'state', state: 'no_longer_works' };
 
   // The exact words the page showed for these children (the page renders the same builder from `inspectInvitation`'s names).
-  const consentText = guardianConsentText(beforeYouJoinWords(await clubNameOf(inv.org_id), connect.map(c => c.firstName)));
   const childIds: string[] = [];
-  for (const c of connect) {
-    const linkId = await writeVerifiedLink({
-      orgId: inv.org_id, userId: params.userId, email: inv.email, consentIp: params.consentIp, c, viaRep: !!c.repEntryId,
-    });
-    if (!linkId) continue;
-    await recordConsent({
-      orgId: inv.org_id, userId: params.userId, email: inv.email, consentIp: params.consentIp, consentText, province, linkId,
-    });
-    childIds.push(c.childId);
+  try {
+    const consentText = guardianConsentText(beforeYouJoinWords(await clubNameOf(inv.org_id), connect.map(c => c.firstName)));
+    for (const c of connect) {
+      const linkId = await writeVerifiedLink({
+        orgId: inv.org_id, userId: params.userId, email: inv.email, consentIp: params.consentIp, c, viaRep: !!c.repEntryId,
+      });
+      if (!linkId) continue;
+      await recordConsent({
+        orgId: inv.org_id, userId: params.userId, email: inv.email, consentIp: params.consentIp, consentText, province, linkId,
+      });
+      childIds.push(c.childId);
+    }
+  } catch (e) {
+    // A write that failed after the claim gives the invitation back, so the parent's retry finds it open (not F). A child
+    // already written stays connected; the retry skips it and carries on with the rest.
+    await releaseClaim(inv.id, params.userId);
+    throw e;
   }
   return { kind: 'joined', orgId: inv.org_id, childIds };
+}
+
+/** Undo the claim of an acceptance that failed part-way — only while this account still holds it. Logged, never thrown: the
+ *  caller is already answering the original failure. */
+async function releaseClaim(invitationId: string, userId: string): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from('family_invitations').update({ used_at: null, used_by_user_id: null })
+    .eq('id', invitationId).eq('used_by_user_id', userId);
+  if (error) console.error('[family-invitation] a failed acceptance could not give its invitation back:', error.message);
+}
+
+/** Remove an account the new-account path made, when its acceptance did not go through. Logged, never thrown. */
+async function removeNewAccount(userId: string): Promise<void> {
+  const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
+  if (error) console.error('[family-invitation] a new account whose acceptance failed could not be removed:', error.message);
+}
+
+/** The first-parent name on one of the address's placed sign-ups, for a new account's name (the account menu shows it). */
+async function nameOnSignup(orgId: string, email: string): Promise<{ first: string; last: string } | null> {
+  const { data, error } = await supabaseAdmin
+    .from('league_registrations').select('guardian_first_name, guardian_last_name')
+    .eq('org_id', orgId).eq('guardian_email', email).not('guardian_first_name', 'is', null)
+    .order('created_at', { ascending: false }).limit(1).maybeSingle();
+  if (error) return null;
+  const r = data as { guardian_first_name: string | null; guardian_last_name: string | null } | null;
+  const first = r?.guardian_first_name?.trim() ?? '';
+  return first ? { first, last: r?.guardian_last_name?.trim() ?? '' } : null;
+}
+
+/** The shortest password a new account takes (the sign-up routes' rule). */
+export const NEW_ACCOUNT_PASSWORD_MIN = 8;
+
+/**
+ * Ruling 15, "trust the invitation": the accept page's NEW-account path. A new account made from a valid invitation, with the
+ * typed email matching, is created ALREADY CONFIRMED (no confirm email: the invitation went to that inbox), then accepted in the
+ * same request — the parent fills the page once. Everything that can refuse is checked BEFORE the account exists; if the
+ * acceptance still loses a race after it, the account is removed again (no orphan made by a refusal). The caller signs in.
+ * An address that already has an account (or is a staff address) is told to sign in instead.
+ */
+export async function acceptWithNewAccount(params: {
+  token: string; typedEmail: string; password: string; consentIp: string | null; guardianBox: boolean; consentBox: boolean;
+}): Promise<AcceptResult | { kind: 'account_exists' } | { kind: 'password_short' }> {
+  assertGuardianTier();
+  const inv = await invitationByToken(params.token);
+  const state = invitationState(inv ? asRow(inv) : null, new Date().toISOString(), null);
+  if (!inv || state !== 'open') return { kind: 'state', state: state === 'open' || state === 'joined' ? 'no_longer_works' : state };
+  if (!emailMatches(inv.email, params.typedEmail)) return { kind: 'mismatch', maskedEmail: maskEmail(inv.email) };
+  if (params.guardianBox !== true || params.consentBox !== true) return { kind: 'consent_required' };
+  if (params.password.length < NEW_ACCOUNT_PASSWORD_MIN) return { kind: 'password_short' };
+  if ((await isPlatformAdminEmail(inv.email)) || (await authAccountExistsForEmail(inv.email))) return { kind: 'account_exists' };
+  const { connect } = await connectablesOf(inv);
+  if (connect.length === 0) return { kind: 'state', state: 'no_longer_works' };
+
+  const name = await nameOnSignup(inv.org_id, inv.email);
+  const full = name ? `${name.first} ${name.last}`.trim() : null;
+  const { data, error } = await supabaseAdmin.auth.admin.createUser({
+    email: inv.email,
+    password: params.password,
+    email_confirm: true,
+    user_metadata: name ? { first_name: name.first, last_name: name.last, full_name: full, display_name: full } : {},
+  });
+  if (error || !data.user) {
+    // A second submit that raced past the check: the same answer as the check. Only the address-taken codes — Auth answers 422
+    // for a refused password too, and that is not "you already have an account".
+    if (error?.code === 'email_exists' || error?.code === 'user_already_exists') return { kind: 'account_exists' };
+    throw error ?? new Error('The account was not created.');
+  }
+  const userId = data.user.id;
+  try {
+    const result = await acceptInvitation({
+      token: params.token, userId, userEmail: inv.email, consentIp: params.consentIp,
+      guardianBox: params.guardianBox, consentBox: params.consentBox,
+    });
+    // Lost the claim to another request: nothing was written for this account, so it goes again.
+    if (result.kind !== 'joined') await removeNewAccount(userId);
+    return result;
+  } catch (e) {
+    // The acceptance failed part-way and gave its invitation back. An account that holds no connection yet is removed. One that
+    // already holds one is KEPT: removing it would leave that connection verified with no account behind it (the link's user is
+    // set null, not deleted), and the parent's retry signs in with the password just chosen and connects the rest.
+    const { count, error: countError } = await supabaseAdmin
+      .from('family_links').select('id', { count: 'exact', head: true }).eq('user_id', userId);
+    if (!countError && count === 0) await removeNewAccount(userId);
+    throw e;
+  }
+}
+
+/** The invitation behind an expired or replaced link (D's "Email me a new invitation"), or null for any other state: the
+ *  re-send never answers differently, so a null and a send look the same to the page. */
+export async function invitationToResend(token: string): Promise<{
+  orgId: string; email: string; source: 'placement' | 'rep_coach'; repPlayerId: string | null; sentByUserId: string | null;
+  reconnects: boolean;
+} | null> {
+  if (!GUARDIAN_TIER_ENABLED) return null;
+  const inv = await invitationByToken(token);
+  if (!inv || invitationState(asRow(inv), new Date().toISOString(), null) !== 'expired_or_replaced') return null;
+  // A replaced link re-sends only while the invitation that replaced it was not cancelled: the coach's Cancel (or a send that
+  // failed and was cancelled) marks the newest one only, and an older link must not undo it.
+  if (await replacementWasCancelled(inv.replaced_by)) return null;
+  return {
+    orgId: inv.org_id, email: inv.email, source: inv.source, repPlayerId: inv.rep_player_id, sentByUserId: inv.sent_by_user_id,
+    reconnects: inv.reconnects,
+  };
+}
+
+/** Follow `replaced_by` to the newest invitation; true when any one after this link was cancelled. Bounded: a chain is one row
+ *  per re-send. */
+async function replacementWasCancelled(replacedBy: string | null): Promise<boolean> {
+  let next = replacedBy;
+  for (let hops = 0; next && hops < 50; hops++) {
+    const { data, error } = await supabaseAdmin
+      .from('family_invitations').select('replaced_by, cancelled_at').eq('id', next).maybeSingle();
+    if (error) throw error;
+    const row = data as { replaced_by: string | null; cancelled_at: string | null } | null;
+    if (!row) return false;
+    if (row.cancelled_at) return true;
+    next = row.replaced_by;
+  }
+  return false;
 }
 
 // ── Leaving and removing (ruling 7) ───────────────────────────────────────────────────────────

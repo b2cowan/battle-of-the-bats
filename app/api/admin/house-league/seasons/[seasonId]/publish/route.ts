@@ -13,6 +13,9 @@ import { publishRefusal } from '@/lib/house-league-teams-words';
 import { formatTime } from '@/lib/utils';
 import { utcToZonedInputs } from '@/lib/timezone';
 import { withObservability } from '@/lib/observability';
+import { GUARDIAN_TIER_ENABLED } from '@/lib/family-guardian';
+import { invitationSenderOf } from '@/lib/family-invitation';
+import { FAMILY_INVITATION_WORDS } from '@/lib/family-invitation-words';
 
 /**
  * Publish one division's teams (Club Tier 9c, Part 4; rulings 9c·4, 9c·6, 9c·10). A fact first, an email second:
@@ -47,6 +50,12 @@ export const POST = withObservability(async (req: Request,
   }
 
   if (action === 'publish') {
+    // Signed-in family accounts Stage 4a (O1 = A + O3, 2026-11-08), only while the guardian tier is on: each family's email
+    // carries an invitation that names the club's contact email and mailing address (/legal condition 2), so Publish waits
+    // until both are set, and says where. Tier off = Publish exactly as before.
+    if (GUARDIAN_TIER_ENABLED && !(await invitationSenderOf(ctx!.org.id)).ready) {
+      return NextResponse.json({ error: FAMILY_INVITATION_WORDS.publishNeedsContact, code: 'needsContact' }, { status: 409 });
+    }
     const board = await readDivisionBoard(season, divisionId);
     if (!board) return NextResponse.json({ error: 'Division not found' }, { status: 404 });
     const division = board.division.name;

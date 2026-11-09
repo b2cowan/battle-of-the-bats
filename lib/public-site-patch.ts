@@ -57,7 +57,11 @@ export class Refused extends Error {
 }
 
 /** The typed fields the editor saves one at a time. */
-export type SiteTextField = 'tagline' | 'description' | 'contactEmail' | 'socialInstagram' | 'socialFacebook' | 'socialX' | 'socialWebsite';
+export type SiteTextField =
+  | 'tagline' | 'description' | 'contactEmail' | 'mailingAddress' | 'socialInstagram' | 'socialFacebook' | 'socialX' | 'socialWebsite';
+
+/** The club's mailing address (Signed-in family accounts Stage 4a, O3; mig 454's CHECK is the same number). */
+export const MAILING_ADDRESS_MAX = 300;
 
 /** Each social field and the network its refusal names. */
 export const SOCIAL_FIELD: Record<'socialInstagram' | 'socialFacebook' | 'socialX' | 'socialWebsite', SocialNetwork> = {
@@ -69,7 +73,7 @@ export const SOCIAL_FIELD: Record<'socialInstagram' | 'socialFacebook' | 'social
 
 /** Each typed field's longest value (the inputs' maxLength and the route's cut are the same number). */
 export const SITE_FIELD_MAX: Record<SiteTextField, number> = {
-  tagline: TAGLINE_MAX, description: ABOUT_MAX, contactEmail: EMAIL_MAX,
+  tagline: TAGLINE_MAX, description: ABOUT_MAX, contactEmail: EMAIL_MAX, mailingAddress: MAILING_ADDRESS_MAX,
   socialInstagram: LINK_MAX, socialFacebook: LINK_MAX, socialX: LINK_MAX, socialWebsite: LINK_MAX,
 };
 

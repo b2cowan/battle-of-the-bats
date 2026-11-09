@@ -6,11 +6,18 @@ import { supabaseAdmin } from './supabase-admin';
 import { chunked } from './supabase-paging';
 import { sendFamilyServiceBatch, type FamilyServiceMessage } from './family-email';
 import { leagueTeamMovedHtml, leagueTeamsPlacedHtml, type PlacedTeamLine } from './email';
-import { systemMailFace, type ClubEmailOrg } from './club-email-context';
+import { readClubEmailOrg, systemMailFace, type ClubEmailOrg } from './club-email-context';
 import { leaguePayUrl } from './league-pay-link';
 import { signupsOwingNow } from './league-pay-facts';
 import { movedMail, placedMail } from './house-league-teams-words';
 import { sendSecondParentServiceCopies } from './league-second-parent-mail';
+import { placementInviteMailer, placementMailerFor } from './family-invitation-mail';
+import { fillInvitationSlots, type MailChild } from './family-invitation-panel';
+import { invitationSenderOf, issuePlacementInvitation, placedSignupsOf, planPlacementInvitations } from './family-invitation';
+import { assertGuardianTier } from './family-guardian';
+import { normalizeGuardianEmail } from './guardian-email';
+import { secondParentCopy } from './league-second-parent';
+import { withSecondParentStop } from './league-second-parent-footer';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -38,7 +45,7 @@ interface EmailRow {
 }
 interface RegRow {
   id: string; player_first_name: string; player_last_name: string; guardian_first_name: string | null;
-  team_id: string | null; status: string; link_version: number;
+  guardian_last_name: string | null; team_id: string | null; status: string; link_version: number;
 }
 
 export interface SendOutcome { sent: number; failed: number; skipped: number }
@@ -142,7 +149,7 @@ async function sendClaimed(org: MailOrg, season: MailSeason, ids: readonly strin
   const regs = new Map<string, RegRow>();
   for (const chunk of chunked(regIds)) {
     const { data, error } = await supabaseAdmin.from('league_registrations')
-      .select('id, player_first_name, player_last_name, guardian_first_name, team_id, status, link_version')
+      .select('id, player_first_name, player_last_name, guardian_first_name, guardian_last_name, team_id, status, link_version')
       .in('id', chunk).eq('season_id', season.id);
     if (error) throw new Error(`Couldn't read the children for the email: ${error.message}`);
     for (const r of (data ?? []) as RegRow[]) regs.set(r.id, r);
@@ -157,26 +164,36 @@ async function sendClaimed(org: MailOrg, season: MailSeason, ids: readonly strin
   // Each message's link is its first named child's; ask once, for all of them, whether that sign-up owes.
   const anchors = rows.map(row => row.registration_ids.map(id => regs.get(id)).find(c => !!c && c.status === 'active' && !!c.team_id)?.id)
     .filter((id): id is string => !!id);
-  const [facts, face, toldLines, owing] = await Promise.all([
+  // Signed-in family accounts Stage 4a, Part 5: the invitation each address gets (null = none anywhere, today's email: the tier
+  // is off, or the club cannot yet be named). Asked once for every child this send names.
+  const named = rows.flatMap(row => row.registration_ids.map(id => regs.get(id)).filter((r): r is RegRow => !!r && r.status === 'active' && !!r.team_id));
+  const [facts, face, toldLines, owing, mailer] = await Promise.all([
     readTeamFacts(teamIds), systemMailFace(org), toldDateLines(org.id, movedTo),
     // A failed read sends the emails without the button (a missing link beats a missing placement).
     signupsOwingNow(org.id, season.id, anchors).catch(err => { console.error('[house-league-placement-mail] owing was not read:', err instanceof Error ? err.message : String(err)); return new Set<string>(); }),
+    placementInviteMailer(org.id, named.map(r => r.id)).catch(err => {
+      // A failed invitation read sends today's email: a missing panel beats a missing placement.
+      console.error('[house-league-placement-mail] the invitations were not read (the emails go without them):', err instanceof Error ? err.message : String(err));
+      return null;
+    }),
   ]);
 
   const messages: FamilyServiceMessage[] = [];
   const messageRows: string[] = [];
-  // Signed-in family accounts Stage 3: each message's household (its first address and the children it names), so the
-  // second parents' copies follow the first batch (lib/league-second-parent-mail.ts).
-  const households: { firstEmail: string; registrationIds: string[] }[] = [];
+  // Signed-in family accounts Stage 3: each message's household, so the second parents' copies follow the first batch
+  // (lib/league-second-parent-mail.ts): its first address and the children it names, plus what the invitation's second copy needs —
+  // the message as built before its first parent's slots were filled (the second parents fill their own), the children the
+  // message names, and the first parent's name for the who-added line.
+  const households: { firstEmail: string; registrationIds: string[]; unfilled: string; own: MailChild[]; firstParent: string }[] = [];
   const nothingToSay: string[] = [];
   for (const row of rows) {
     // Only children still accepted and on a team are named; a child moved off since is not news.
     const children = row.registration_ids.map(id => regs.get(id)).filter((r): r is RegRow => !!r && r.status === 'active' && !!r.team_id);
     if (children.length === 0) { nothingToSay.push(row.id); continue; }
-    households.push({ firstEmail: row.guardian_email, registrationIds: children.map(c => c.id) });
     const division = divisionName.get(row.division_id) ?? '';
     const guardianFirstName = children[0].guardian_first_name?.trim() || 'there';
     const url = signupUrl(org, season, children[0], owing);
+    const asMail = mailChildrenOf(children, facts.names);
     // A move stays a move email when its old team has since been deleted: the family reads "their old team", never
     // "The teams are set".
     if (row.kind === 'moved') {
@@ -189,6 +206,7 @@ async function sendClaimed(org: MailOrg, season: MailSeason, ids: readonly strin
           divisionName: division, clubName: org.name,
           fromTeam: (row.from_team_id && facts.names.get(row.from_team_id)) || 'their old team', toTeam: facts.names.get(child.team_id!) ?? '',
           coaches: facts.coaches.get(child.team_id!) ?? [], signupUrl: url, contactEmail: face?.contact ?? null, face,
+          invitationSlots: !!mailer,
           practices: toldLines.has(child.team_id!) ? {
             heading: PRACTICE_TELL_WORDS.firstOpening(child.player_first_name, facts.names.get(child.team_id!) ?? ''),
             lines: toldLines.get(child.team_id!)!, zone: timesInZoneSentence(),
@@ -206,10 +224,18 @@ async function sendClaimed(org: MailOrg, season: MailSeason, ids: readonly strin
         subject: placedMail.subject(season.name),
         html: leagueTeamsPlacedHtml({
           guardianFirstName, seasonName: season.name, divisionName: division, clubName: org.name, lines,
-          signupUrl: url, contactEmail: face?.contact ?? null, face,
+          signupUrl: url, contactEmail: face?.contact ?? null, face, invitationSlots: !!mailer,
         }),
       });
     }
+    // The first parent's own slots (the moved email names one child: the message's first).
+    const last = messages[messages.length - 1];
+    const own = row.kind === 'moved' ? asMail.slice(0, 1) : asMail;
+    households.push({
+      firstEmail: row.guardian_email, registrationIds: children.map(c => c.id),
+      unfilled: last.html, own, firstParent: guardianFullName(children[0]),
+    });
+    if (mailer) last.html = fillInvitationSlots(last.html, await mailer.firstFill(row.guardian_email, own));
     messageRows.push(row.id);
   }
 
@@ -230,9 +256,22 @@ async function sendClaimed(org: MailOrg, season: MailSeason, ids: readonly strin
   // After the households' rows are recorded: the second parents' copies never change an outcome or a count.
   await sendSecondParentServiceCopies({
     kind: 'house_league_placement', orgId: org.id, fromName: face?.sendOpts.fromName ?? null, replyTo: face?.sendOpts.replyTo ?? null,
-    households: households.map((h, i) => ({ ...h, message: messages[i] })), results,
+    households: households.map((h, i) => ({ firstEmail: h.firstEmail, registrationIds: h.registrationIds, message: { ...messages[i], html: h.unfilled } })), results,
+    // Each second parent's copy filled for their own address: the who-added line names the household's first parent.
+    finish: mailer ? (household: number, to: string, html: string) =>
+      mailer.finishSecondCopy(to, html, households[household]?.firstParent ?? 'A parent', households[household]?.own ?? []) : undefined,
   });
   return outcome;
+}
+
+/** The children an email names, as the invitation's slots take them. */
+function mailChildrenOf(children: readonly RegRow[], teamNames: ReadonlyMap<string, string>): MailChild[] {
+  return children.map(c => ({ registrationId: c.id, firstName: c.player_first_name, team: teamNames.get(c.team_id!) ?? '' }));
+}
+
+/** A sign-up's first parent as the second parent's who-added line names them. */
+function guardianFullName(r: Pick<RegRow, 'guardian_first_name' | 'guardian_last_name'>): string {
+  return [r.guardian_first_name?.trim(), r.guardian_last_name?.trim()].filter(Boolean).join(' ') || 'A parent';
 }
 
 /**
@@ -244,4 +283,91 @@ export async function unsentPlacementEmails(divisionId: string): Promise<string[
     .eq('division_id', divisionId).in('status', ['failed', 'pending', 'sending']);
   if (error) throw new Error(`Couldn't read the failed emails: ${error.message}`);
   return (data ?? []).map(r => r.id as string);
+}
+
+/**
+ * ══════════════════════════════════════════════════════════════════════════════════════════════
+ * THE PLACEMENT EMAIL AGAIN, FOR ONE ADDRESS, WITH A FRESH INVITATION (Signed-in family accounts Stage 4a, ruling 9). D's "Email
+ * me a new invitation" on the accept page, the club's Send again (Part 8, `reconnects`), and the emailed sign-up page's "Email me
+ * an invitation" (Part 6). Never a separate "create an account" email: it IS the placement email — one per division the address
+ * has a placed child in, each naming that address's children there — sent to THIS address only (never the household's other
+ * parent), and every copy carries the same one fresh invitation (issuing replaces the old one, so a second issue would kill the
+ * first email's button). The first-parent form where the address is the first parent on those sign-ups, the second parent's copy
+ * (greeting, Stop footer, who-added line, sender line) where it is the second. Nothing is written to the outbox and no count moves.
+ * Returns whether an email went; callers that answer a stranger (D, Part 6) answer the same either way.
+ * ══════════════════════════════════════════════════════════════════════════════════════════════
+ */
+export async function resendPlacementInvitation(params: {
+  orgId: string; email: string; sentByUserId: string | null; reconnects?: boolean;
+}): Promise<boolean> {
+  assertGuardianTier();
+  const email = normalizeGuardianEmail(params.email);
+  if (!email) return false;
+  // The placed rule has one home (lib/family-invitation.ts); the read below adds what the email needs.
+  const [sender, placed] = await Promise.all([invitationSenderOf(params.orgId), placedSignupsOf(params.orgId, email)]);
+  if (!sender.ready) return false;
+  const placedIds = new Set(placed.map(s => s.registrationId));
+  if (placedIds.size === 0) return false;
+  const { data: regData, error: regError } = await supabaseAdmin.from('league_registrations')
+    .select('id, season_id, division_id, guardian_email, guardian_email_2, player_first_name, player_last_name, guardian_first_name, guardian_last_name, team_id, status, link_version')
+    .in('id', [...placedIds]);
+  if (regError) throw new Error(`Couldn't read the sign-ups for the email: ${regError.message}`);
+  type ResendRow = RegRow & { season_id: string; division_id: string; guardian_email: string | null; guardian_email_2: string | null };
+  const regs = (regData ?? []) as ResendRow[];
+
+  const plans = await planPlacementInvitations(params.orgId, regs.map(r => r.id), { reconnects: params.reconnects === true });
+  if (!plans.get(email)?.children.some(c => c.decision === 'invite')) return false;
+  const issued = await issuePlacementInvitation({
+    orgId: params.orgId, email, sentByUserId: params.sentByUserId, reconnects: params.reconnects === true,
+  });
+  if (!issued) return false;
+  const mailer = placementMailerFor({ orgId: params.orgId, sender, plans, tokenFor: async () => issued.token });
+
+  const org: MailOrg = await readClubEmailOrg(params.orgId);
+
+  const seasonIds = [...new Set(regs.map(r => r.season_id))];
+  const divisionIds = [...new Set(regs.map(r => r.division_id))];
+  const [seasons, divisions, facts, face] = await Promise.all([
+    supabaseAdmin.from('league_seasons').select('id, name, slug').in('id', seasonIds),
+    supabaseAdmin.from('league_divisions').select('id, name').in('id', divisionIds),
+    readTeamFacts(regs.map(r => r.team_id).filter((t): t is string => !!t)),
+    systemMailFace(org),
+  ]);
+  if (seasons.error || divisions.error) throw new Error(`Couldn't read the season for the email: ${(seasons.error ?? divisions.error)!.message}`);
+  const seasonOf = new Map((seasons.data ?? []).map(s => [s.id as string, s as MailSeason]));
+  const divisionName = new Map((divisions.data ?? []).map(d => [d.id as string, d.name as string]));
+
+  const messages: FamilyServiceMessage[] = [];
+  for (const seasonId of seasonIds) {
+    const season = seasonOf.get(seasonId);
+    if (!season) continue;
+    const inSeason = regs.filter(r => r.season_id === seasonId);
+    const owing = await signupsOwingNow(params.orgId, seasonId, inSeason.map(r => r.id)).catch(() => new Set<string>());
+    for (const divisionId of [...new Set(inSeason.map(r => r.division_id))]) {
+      for (const role of ['first', 'second'] as const) {
+        const children = inSeason.filter(r => r.division_id === divisionId
+          && normalizeGuardianEmail(role === 'first' ? r.guardian_email : r.guardian_email_2) === email);
+        if (children.length === 0) continue;
+        const asMail = mailChildrenOf(children, facts.names);
+        const html = leagueTeamsPlacedHtml({
+          guardianFirstName: children[0].guardian_first_name?.trim() || 'there',
+          seasonName: season.name, divisionName: divisionName.get(divisionId) ?? '', clubName: org.name,
+          lines: children.map(c => ({ child: `${c.player_first_name} ${c.player_last_name}`, team: facts.names.get(c.team_id!) ?? '', coaches: facts.coaches.get(c.team_id!) ?? [] })),
+          signupUrl: signupUrl(org, season, children[0], owing), contactEmail: face?.contact ?? null, face, invitationSlots: true,
+        });
+        messages.push({
+          to: email,
+          subject: placedMail.subject(season.name),
+          html: role === 'first'
+            ? fillInvitationSlots(html, await mailer.firstFill(email, asMail))
+            : await mailer.finishSecondCopy(email, withSecondParentStop(secondParentCopy(html), params.orgId, email), guardianFullName(children[0]), asMail),
+        });
+      }
+    }
+  }
+  if (messages.length === 0) return false;
+  const results = await sendFamilyServiceBatch({
+    kind: 'house_league_placement', messages, fromName: face?.sendOpts.fromName ?? null, replyTo: face?.sendOpts.replyTo ?? null,
+  });
+  return results.some(r => r.status === 'sent' || r.status === 'skipped');
 }

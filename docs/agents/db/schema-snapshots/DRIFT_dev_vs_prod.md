@@ -1,16 +1,16 @@
 # Dev vs Prod — structural drift
 
-**Generated:** 2026-11-08 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
+**Generated:** 2026-11-09 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 468 divergence(s)** across dev/prod.
+**⚠️ 470 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 8 | 6 | — |
-| Columns | 158 | 59 | 1 |
+| Columns | 159 | 59 | 1 |
 | Indexes | 46 | 26 | 0 |
 | Constraints | 30 | 28 | — |
-| RLS / CHECK | 78 | 26 | 0 (RLS state) |
+| RLS / CHECK | 79 | 26 | 0 (RLS state) |
 
 ## Tables
 ### Only in DEV (8)
@@ -32,7 +32,7 @@
 - `bank_saved_lines`
 
 ## Columns
-### Only in DEV (158)
+### Only in DEV (159)
 - `bank_check_waiting.added_at`
 - `bank_check_waiting.added_by`
 - `bank_check_waiting.amount_cents`
@@ -82,6 +82,7 @@
 - `org_children.emergency_contact_name`
 - `org_children.emergency_contact_phone`
 - `org_children.medical_notes`
+- `org_public_site_content.mailing_address`
 - `platform_charge_tax_looks.after_id`
 - `platform_charge_tax_looks.id`
 - `platform_charge_tax_looks.livemode`
@@ -403,7 +404,7 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (78)
+### CHECK only in DEV (79)
 - `bank_check_waiting.bank_check_waiting_added_shape`
 - `bank_check_waiting.bank_check_waiting_amount_cents_check`
 - `bank_check_waiting.bank_check_waiting_direction_check`
@@ -419,6 +420,7 @@ _none_
 - `family_links.family_links_ended_by_check`
 - `family_links.family_links_invited_as_check`
 - `family_links.family_links_made_on_entry_ck`
+- `org_public_site_content.org_public_site_content_mailing_address_check`
 - `platform_charge_tax_looks.platform_charge_tax_looks_keys_shape`
 - `platform_charge_tax_looks.platform_charge_tax_looks_looked_by_check`
 - `platform_charge_tax_looks.platform_charge_tax_looks_not_itself`

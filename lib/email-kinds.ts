@@ -120,6 +120,8 @@ export const EMAIL_KINDS = {
   league_signup_link:                   { klass: 'family', label: 'League sign-up link' },
   // …and the club's "Send a new link" (the old one stopped for the whole sign-up).
   league_signup_link_replaced:          { klass: 'family', label: 'League sign-up link, replaced' },
+  // Signed-in family accounts Stage 4a: a rep coach's Send invitation (the placement invitation rides the placement email).
+  family_invitation:                    { klass: 'family', label: 'Family invitation' },
   league_payment_refund:                { klass: 'family', label: 'League refund' },
   league_bank_debit_started:            { klass: 'family', label: 'Bank debit started' },
   league_bank_debit_returned:           { klass: 'family', label: 'Bank debit returned' },

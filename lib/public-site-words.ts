@@ -145,6 +145,10 @@ export const PUBLIC_SITE_WORDS = {
   questionsGoTo: "Families' questions go to",
   questionsGoToPlaceholder: 'info@yourclub.ca',
   questionsGoToHint: 'Shown in your footer and on every team and tryout page.',
+  // Signed-in family accounts Stage 4a (O3, 2026-11-08): printed only in the sender line of a family invitation.
+  mailingAddress: 'Mailing address',
+  mailingAddressPlaceholder: '12 Park Rd, Riverdale ON A1A 1A1',
+  mailingAddressHint: 'Printed at the bottom of the invitations families get by email. Not shown on your site.',
 
   // Social links
   social: 'Social links',

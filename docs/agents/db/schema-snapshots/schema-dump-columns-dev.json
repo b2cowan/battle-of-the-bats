@@ -13887,6 +13887,15 @@
     "ordinal_position": 19
   },
   {
+    "table_name": "org_public_site_content",
+    "column_name": "mailing_address",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 20
+  },
+  {
     "table_name": "org_site_notices",
     "column_name": "id",
     "data_type": "uuid",

@@ -418,3 +418,97 @@
   padding: 1.5rem 0.5rem;
   line-height: 1.6;
 }
+
+/* ── The accept page (Signed-in family accounts Stage 4a, Part 4; drawing tab 2) ─────────────── */
+
+.acceptSub {
+  color: var(--home-ink-soft);
+  font-size: 0.9rem;
+  margin: 0 0 1rem;
+}
+
+.acceptHint {
+  color: var(--home-dim);
+  font-size: 0.8rem;
+  margin: 0.35rem 0 0;
+  line-height: 1.45;
+}
+
+.acceptStep {
+  margin-top: 1rem;
+}
+
+/* The "Before you join" block and the children list: a card on the card. */
+.acceptSection {
+  margin-top: 1rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--home-line);
+  border-radius: var(--home-radius-sm);
+  background: var(--home-card);
+}
+
+.acceptSection p,
+.acceptSection li {
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--home-ink-soft);
+}
+
+.acceptSection ul {
+  margin: 0.3rem 0 0.6rem;
+  padding-left: 1.1rem;
+}
+
+.acceptChild + .acceptChild {
+  border-top: 1px solid var(--home-line);
+  margin-top: 0.55rem;
+  padding-top: 0.55rem;
+}
+
+.acceptChildName {
+  font-weight: 700;
+  color: var(--home-ink);
+}
+
+.acceptChildLine {
+  font-size: 0.85rem;
+  color: var(--home-dim);
+}
+
+/* C: signed in as another email. The amber notice, as the drawing's warning card. */
+.acceptWarn {
+  padding: 0.8rem 0.9rem;
+  border-radius: var(--home-radius-sm);
+  background: rgba(var(--home-amber-rgb), 0.14);
+  border: 1px solid var(--home-line);
+}
+
+.acceptWarnTitle {
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--home-amber);
+}
+
+.acceptLink {
+  color: var(--home-olive);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+.acceptActions {
+  margin-top: 1rem;
+}
+
+.acceptActions .chip {
+  width: 100%;
+}

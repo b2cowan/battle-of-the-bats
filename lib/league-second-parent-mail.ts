@@ -114,15 +114,22 @@ export async function sendSecondParentServiceCopies(params: {
   households: readonly { firstEmail: string | null; registrationIds: readonly string[]; message: FamilyServiceMessage }[];
   /** The first batch's results, index-aligned with `households`. */
   results: readonly { status: string }[];
+  /** Signed-in family accounts Stage 4a (the placement email only): each copy finished for its own address after the greeting
+   *  swap and the Stop footer — its own invitation panel, the who-added line and the sender line. */
+  finish?: (household: number, to: string, html: string) => Promise<string>;
 }): Promise<{ household: number; to: string }[]> {
   try {
     const going = params.households.map((h, i) => ({ h, i })).filter(({ i }) => went(params.results[i]));
     if (going.length === 0) return [];
     const seconds = await readSecondParents(going.flatMap(({ h }) => h.registrationIds));
     if (seconds.size === 0) return [];
-    const copies = going.flatMap(({ h, i }) =>
+    const built = going.flatMap(({ h, i }) =>
       onEveryRegistration(h.firstEmail, h.registrationIds.map(id => seconds.get(id) ?? null))
         .map(to => ({ household: i, message: { to, subject: h.message.subject, html: secondCopyHtml(h.message.html, params.kind, params.orgId, to) } })));
+    const finish = params.finish;
+    const copies = finish
+      ? await Promise.all(built.map(async c => ({ ...c, message: { ...c.message, html: await finish(c.household, c.message.to, c.message.html) } })))
+      : built;
     if (copies.length === 0) return [];
     const results = await sendFamilyServiceBatch({
       kind: params.kind, messages: copies.map(c => c.message), fromName: params.fromName, replyTo: params.replyTo ?? null,

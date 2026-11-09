@@ -9,8 +9,9 @@ import { buildSecondParentStopUrl } from './unsubscribe-token';
  *   ONE footer builder for every path that sends a second parent a sign-up email, so they cannot drift:
  *     · the shared point — lib/league-second-parent-mail.ts (approve, waitlist, promote, decline, placement, schedule,
  *       practice times, practice changes);
- *     · the three that bypass it — the register route's confirmation, the pay link (lib/online-payment-receipt.ts) and the
- *       sign-up-link notices (lib/league-signup-link-mail.ts).
+ *     · the four that bypass it — the register route's confirmation, the pay link (lib/online-payment-receipt.ts), the
+ *       sign-up-link notices (lib/league-signup-link-mail.ts), and the placement email's re-send to ONE address with a fresh
+ *       invitation (lib/house-league-placement-mail.ts resendPlacementInvitation, Signed-in family accounts Stage 4a).
  *   tests/unit/league-second-parent-fanout.test.ts holds that every one of those calls this and no first-parent path does.
  *
  *   The link opens a confirm page (/second-parent-stop); nothing is written until its button is pressed. No link can be

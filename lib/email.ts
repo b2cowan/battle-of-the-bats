@@ -6,6 +6,7 @@ import { dollarsLine } from './house-league-season';
 import { methodInBrackets } from './house-league-money-words';
 import { LEAGUE_PAY_WORDS, SIGNUP_LINK_WORDS } from './league-pay-words';
 import { SECOND_PARENT_WORDS } from './league-second-parent';
+import { INVITE_PANEL_SLOT, INVITE_WHO_SLOT } from './family-invitation-panel';
 import { formatStoredDate } from './timezone';
 import { STAFF_KIND_COPY, staffKindCopyFor, type StaffKind } from '@/lib/coach-capabilities';
 import {
@@ -1283,8 +1284,11 @@ export function leagueTeamsPlacedHtml(input: {
   signupUrl: string | null;
   contactEmail?: string | null;
   face?: FamilyMailFace | null;
+  /** Draw the invitation's slots (Stage 4a; see INVITE_WHO_SLOT). Absent = today's email. */
+  invitationSlots?: boolean;
 }) {
   const p = escapeEmailFields(input);
+  const slot = (marker: string) => (input.invitationSlots ? marker : '');
   const coachClause = (names: readonly string[]) => names.length === 0
     ? 'coach to be announced'
     : `${names.length === 1 ? 'coach' : 'coaches'} ${escapeEmailHtml(joinWithAnd(names))}`;
@@ -1296,11 +1300,11 @@ export function leagueTeamsPlacedHtml(input: {
     : `<p>${teams.size > 1 ? 'Each coach will be in touch about getting started.' : 'The coach will be in touch about getting started.'}</p>`;
   return familyNotice(`
     <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">The teams are set</h2>
-    <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
+    <p>Hi <strong>${p.guardianFirstName}</strong>,</p>${slot(INVITE_WHO_SLOT)}
     <p>The ${p.divisionName} teams for ${p.seasonName} are set.</p>
     <ul style="margin:0.5rem 0 1rem;padding-left:1.2rem;color:${WARM_EMAIL.ink};">${rows}</ul>
     ${next}
-    ${signupButton(input.signupUrl)}
+    ${signupButton(input.signupUrl)}${slot(INVITE_PANEL_SLOT)}
     ${teamsContactLine(input.clubName, input.contactEmail)}
   `, input.face, `your family is registered for ${input.seasonName}`);
 }
@@ -1322,8 +1326,11 @@ export function leagueTeamMovedHtml(input: {
   /** House League 9d-3 Part 4: the new team's practice dates, when its families have been told them ("{First}'s
    *  practices with {team}:", a line a date, then the zone line). No second button or link. */
   practices?: { heading: string; lines: readonly string[]; zone: string } | null;
+  /** Draw the invitation's slots (Stage 4a; see INVITE_WHO_SLOT). Absent = today's email. */
+  invitationSlots?: boolean;
 }) {
   const p = escapeEmailFields(input);
+  const slot = (marker: string) => (input.invitationSlots ? marker : '');
   const first = input.childName.split(' ')[0] ?? input.childName;
   const practices = input.practices && input.practices.lines.length ? `
     <p style="margin:0 0 0.35rem;">${escapeEmailHtml(input.practices.heading)}</p>
@@ -1334,11 +1341,11 @@ export function leagueTeamMovedHtml(input: {
     : `${input.coaches.length === 1 ? 'Coach' : 'Coaches'}: ${escapeEmailHtml(joinWithAnd(input.coaches))}`;
   return familyNotice(`
     <h2 style="color:${WARM_EMAIL.ink};font-size:1.4rem;margin:0 0 1rem;">A new team for ${escapeEmailHtml(first)}</h2>
-    <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
+    <p>Hi <strong>${p.guardianFirstName}</strong>,</p>${slot(INVITE_WHO_SLOT)}
     <p>${p.childName} has moved from ${p.fromTeam} to ${p.toTeam} in ${p.divisionName}.</p>
     <p>${coach}</p>
     ${practices}
-    ${signupButton(input.signupUrl)}
+    ${signupButton(input.signupUrl)}${slot(INVITE_PANEL_SLOT)}
     ${teamsContactLine(input.clubName, input.contactEmail)}
   `, input.face, `${first} is registered for ${input.seasonName}`);
 }

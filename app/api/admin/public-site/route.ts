@@ -6,6 +6,7 @@ import { parsePublicSitePatch } from '@/lib/public-site-patch';
 import { withoutMissingLogos } from '@/lib/sponsor-logo-storage';
 import { PUBLIC_SITE_WORDS as W } from '@/lib/public-site-words';
 import { withObservability } from '@/lib/observability';
+import { GUARDIAN_TIER_ENABLED } from '@/lib/family-guardian';
 
 export const GET = withObservability(async (req: Request) => {
   const r = await publicSiteEditor(req, { write: false });
@@ -20,7 +21,9 @@ export const GET = withObservability(async (req: Request) => {
       publicSiteEditorFacts(org, contentRead),
       getLiveClubNotice(org.id),
     ]);
-    return NextResponse.json({ content: content ?? null, ...editor, notice });
+    // Signed-in family accounts Stage 4a (O3): the Mailing address box shows only while the guardian tier is on (tier off =
+    // nothing changes for anyone).
+    return NextResponse.json({ content: content ?? null, ...editor, notice, asksMailingAddress: GUARDIAN_TIER_ENABLED });
   }
   const content = await getOrgPublicSiteContent(org.id);
   return NextResponse.json(content ?? {});

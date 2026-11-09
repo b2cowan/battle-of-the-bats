@@ -169,6 +169,8 @@ export default function PublicSitePage() {
   const [facts, setFacts] = useState<SectionFacts | null>(null);
   const [carries, setCarries] = useState<SectionCarries | null>(null);
   const [notice, setNotice] = useState<ClubNotice | null>(null);
+  // Signed-in family accounts Stage 4a (O3): the Mailing address box, only while the guardian tier is on (the server says).
+  const [asksMailingAddress, setAsksMailingAddress] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [fetching, setFetching] = useState(true);
 
@@ -231,6 +233,7 @@ export default function PublicSitePage() {
       setFacts(data.facts);
       setCarries(data.carries);
       setNotice(data.notice ?? null);
+      setAsksMailingAddress(data.asksMailingAddress === true);
       setTyped(Object.fromEntries(TEXT_KEYS.map(k => [k, (c?.[k] as string | null) ?? ''])) as Record<TextKey, string>);
     } catch {
       setLoadError(true);
@@ -690,6 +693,7 @@ export default function PublicSitePage() {
             {textField('tagline', W.tagline, { placeholder: W.taglinePlaceholder, hint: W.taglineHint(typed.tagline.length, SITE_FIELD_MAX.tagline), pastYear: true })}
             {textField('description', W.about, { placeholder: W.aboutPlaceholder, hint: W.aboutHint(typed.description.length, SITE_FIELD_MAX.description), area: true, pastYear: true })}
             {textField('contactEmail', W.questionsGoTo, { placeholder: W.questionsGoToPlaceholder, hint: W.questionsGoToHint, inputType: 'email' })}
+            {asksMailingAddress && textField('mailingAddress', W.mailingAddress, { placeholder: W.mailingAddressPlaceholder, hint: W.mailingAddressHint })}
             <h3 className={styles.lookPartTitle} id="social">{W.social}</h3>
             {SOCIAL.map(s => <div key={s.key}>{textField(s.key, s.label, { placeholder: s.placeholder, inputType: 'url' })}</div>)}
           </BuilderRow>

@@ -1,16 +1,20 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { GUARDIAN_TIER_ENABLED } from '@/lib/family-guardian';
-import { clubNameOf, inspectInvitation } from '@/lib/family-invitation';
+import { accountNameOf, FAMILY_HOME_PATH, inspectInvitation } from '@/lib/family-invitation';
 import { createClient } from '@/lib/supabase-server';
 import ClaimClient from './ClaimClient';
 
 /**
- * /family/claim/[token] — the invitation's accept page (Signed-in family accounts Stage 4a).
+ * /family/claim/[token] — the invitation's accept page (Signed-in family accounts Stage 4a, Part 4; drawing tab 2).
  *
- * ⚠ INTERIM (build Session 1): the rules moved to lib/family-invitation.ts; Part 4 rebuilds this page to the drawing (email first,
- * new account / existing account / signed in, states A–F). Until then it shows the /legal words for a signed-in parent and one
- * plain line otherwise. While the guardian tier is off it answers 404.
+ * One page, filled once, whatever account the parent has: the email first (no address rides in the link), then a new password
+ * (a new account, created already confirmed: ruling 15) or the existing one's, or nothing at all when already signed in as the
+ * invited address (A); then /legal draft (a)'s "Before you join" and its two boxes. The failure states C–F as drawn. The page
+ * learns the invited address only partly hidden; the server decides every state (lib/family-invitation.ts inspectInvitation).
+ *
+ * ⚠ The token only opens this page. It never signs anyone in and never shows a team (Part 9 guard f).
+ * While the guardian tier is off it answers 404.
  */
 
 export const dynamic = 'force-dynamic';
@@ -25,7 +29,23 @@ export default async function FamilyClaimPage({ params }: { params: Promise<{ to
   const { token } = await params;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  const view = await inspectInvitation(token, user?.id ?? null);
-  const clubName = view.orgId ? await clubNameOf(view.orgId) : null;
-  return <ClaimClient token={token} open={view.state === 'open'} clubName={clubName} childNames={view.children} />;
+  const view = await inspectInvitation(token, user
+    ? { id: user.id, email: user.email ?? null, name: accountNameOf(user.user_metadata) }
+    : null);
+  return (
+    <ClaimClient
+      token={token}
+      state={view.state}
+      maskedEmail={view.maskedEmail}
+      from={view.source === 'rep_coach' ? 'coach' : 'club'}
+      kids={view.children}
+      viewer={view.viewer}
+      club={view.sender ? {
+        name: view.sender.clubName,
+        contact: view.sender.contact,
+        privacyNoticeUrl: view.sender.privacyNoticeUrl,
+      } : null}
+      homePath={FAMILY_HOME_PATH}
+    />
+  );
 }

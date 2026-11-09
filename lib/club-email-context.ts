@@ -117,6 +117,34 @@ export async function clubPublicContact(orgId: string): Promise<string | null> {
   }
 }
 
+/**
+ * The club's public contact AND its mailing address, from ONE read of the public-site row (the invitation's sender line needs
+ * both). The mailing address is as the club typed it on the public site's About row (Signed-in family accounts Stage 4a, owner
+ * O3 2026-11-08, mig 454) — printed in the sender line of the second parent's invitation and the rep coach's invitation (/legal
+ * draft (c), the commercial-message standard). Never the billing address. Each is null when none is set or the read fails.
+ */
+export async function clubContactAndMailingAddress(orgId: string): Promise<{ contact: string | null; mailingAddress: string | null }> {
+  try {
+    const row = await getOrgPublicSiteContent(orgId);
+    return {
+      contact: usableContactEmail(row?.contactEmail),
+      mailingAddress: row?.mailingAddress?.replace(/\s+/g, ' ').trim() || null,
+    };
+  } catch (err) {
+    console.error('[club-email-context] the public contact and mailing address could not be read:', err instanceof Error ? err.message : String(err));
+    return { contact: null, mailingAddress: null };
+  }
+}
+
+/** The club row a family email wears (name, logo, theme) plus its slug, in the shape `clubEmailFacts` takes. */
+export async function readClubEmailOrg(orgId: string): Promise<ClubEmailOrg & { slug: string }> {
+  const { data, error } = await supabaseAdmin
+    .from('organizations').select('id, name, slug, logo_url, theme_preset, theme_primary, theme_accent').eq('id', orgId).single();
+  if (error) throw new Error(`Couldn't read the club for the email: ${error.message}`);
+  const o = data as { id: string; name: string; slug: string; logo_url: string | null; theme_preset: string | null; theme_primary: string | null; theme_accent: string | null };
+  return { id: o.id, name: o.name, slug: o.slug, logoUrl: o.logo_url, themePreset: o.theme_preset, themePrimary: o.theme_primary, themeAccent: o.theme_accent };
+}
+
 /** The reply plan of system mail (a game-change notice, a dues reminder, a receipt): the club's contact if it has one. */
 export async function systemReplyPlan(org: { id: string; name: string }): Promise<FamilyReplyPlan> {
   return familyReplyPlan({ kind: 'system', clubName: org.name, clubContact: await clubPublicContact(org.id) });
