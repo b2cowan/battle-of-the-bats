@@ -6,26 +6,19 @@ import {
   isPlausibleNoLoginToken,
   tooManyRequests,
 } from '@/lib/no-login-token';
-import { GUARDIAN_AGE_BANDS, GUARDIAN_TIER_ENABLED, claimGuardianInvite } from '@/lib/family-guardian';
-import { FamilyLinkError } from '@/lib/family-access';
-import { followEntity } from '@/lib/fan-follows';
+import { GUARDIAN_TIER_ENABLED } from '@/lib/family-guardian';
+import { acceptInvitation } from '@/lib/family-invitation';
 import { clientIpFrom } from '@/lib/rate-limit';
 
 /**
- * Claim a coach-sent guardian invite.
+ * Accept an invitation to join a child's team (Signed-in family accounts Stage 4a; the rules are lib/family-invitation.ts).
  *
- * This is the on-ramp that carries the SAME trust as the platform's existing behaviour: the
- * coach chose the address, it was already on the player's roster row, and it already receives
- * team email. A claim from a session verified as that exact address therefore needs no second
- * approval — the invite was the approval (amended ruling #14).
- *
- * A claim from a DIFFERENT address does not fail; it becomes an ordinary queued request so a
- * parent who signed up with another email still gets in, with the coach's eyes on it.
- *
- * POST only — a link scanner following the URL from an email must not be able to claim
- * anything on the recipient's behalf.
+ * ⚠ Ruling 5: the signed-in account's email must equal the invited address — a different email is REFUSED (the coach's approval
+ * queue for a mismatched claim is gone). Both boxes are required (/legal draft a). There is no age question (ruling 12).
+ * ⚠ The token only opens this; it never signs anyone in (the session is the account's own) and never shows a team.
+ * POST only — a link scanner following the URL from an email must not be able to accept anything on the recipient's behalf.
+ * (Stage 4a Part 4 rebuilds the page and its sign-in-or-create step around this.)
  */
-
 export const POST = withObservability(async (req: Request,
   { params }: { params: Promise<{ token: string }> },) => {
   const { token } = await params;
@@ -44,45 +37,20 @@ export const POST = withObservability(async (req: Request,
   const { data: { user } } = await supabase.auth.getUser();
   if (!user?.email) return NextResponse.json({ error: 'sign_in_required' }, { status: 401 });
 
-  // Consent is collected HERE, on the claim, not at invite time — the coach sending an invite
-  // is not the parent agreeing to anything. Same two required consents and the same age band
-  // the request path asks for, so both on-ramps produce the same evidence.
   const body = await req.json().catch(() => ({}));
-  const ageBand = body?.ageBand;
-  if (!GUARDIAN_AGE_BANDS.includes(ageBand)) {
-    return NextResponse.json({ error: 'age_band_required' }, { status: 400 });
+  const outcome = await acceptInvitation({
+    token,
+    userId: user.id,
+    userEmail: user.email,
+    consentIp: clientIpFrom(req),
+    guardianBox: body?.guardianBox === true,
+    consentBox: body?.consentBox === true,
+  });
+  if (outcome.kind === 'consent_required') return NextResponse.json({ error: 'consent_required' }, { status: 400 });
+  if (outcome.kind === 'mismatch') {
+    return NextResponse.json({ error: 'another_email', maskedEmail: outcome.maskedEmail }, { status: 409 });
   }
-  if (body?.consentDataCollection !== true || body?.consentGuardian !== true) {
-    return NextResponse.json({ error: 'consent_required' }, { status: 400 });
-  }
-
-  try {
-    const outcome = await claimGuardianInvite({
-      token,
-      userId: user.id,
-      userEmail: user.email,
-      ageBand,
-      consentIp: clientIpFrom(req),
-    });
-    // One shape for expired / already-claimed / unknown — a holder of a dead link learns only
-    // that it is dead.
-    if (!outcome) return NextResponse.json({ error: 'invalid' }, { status: 404 });
-
-    // Plant the follow so the team appears where a consumer already looks. Presentation only:
-    // the verified LINK is the authorization, so a failure here costs a shortcut, not access.
-    try {
-      await followEntity({
-        userId: user.id, entityType: 'rep_team', entityId: outcome.repTeamId, source: 'manual',
-      });
-    } catch (e) {
-      console.error('[family-claim] follow plant failed (non-fatal):', e);
-    }
-
-    return NextResponse.json({ ok: true, status: outcome.status, repTeamId: outcome.repTeamId });
-  } catch (e) {
-    if (e instanceof FamilyLinkError) {
-      return NextResponse.json({ error: e.code, message: e.message }, { status: 409 });
-    }
-    throw e;
-  }
+  // One shape per drawn state; a dead invitation says only which of D / E / F it is, never why.
+  if (outcome.kind === 'state') return NextResponse.json({ error: outcome.state }, { status: 404 });
+  return NextResponse.json({ ok: true });
 }, { route: '/api/family/claim/[token]' });

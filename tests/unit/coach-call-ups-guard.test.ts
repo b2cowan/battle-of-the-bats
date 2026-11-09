@@ -112,7 +112,9 @@ describe('call-ups — the exclusion lives in the shared read', () => {
     { what: 'season-surplus adjustments', rel: 'app/api/coaches/[orgSlug]/teams/[teamId]/season-surplus/adjustments/route.ts' },
     { what: 'who fronted an expense', rel: 'app/api/coaches/[orgSlug]/teams/[teamId]/expenses/route.ts' },
     { what: 'the Families desk', rel: 'lib/families-read.ts' },
-    { what: 'the guardian-link writer', rel: 'lib/family-guardian.ts' },
+    // Stage 4a: the invitation (the guardian-link writer) moved to lib/family-invitation.ts; the coach's guardians card reads stay.
+    { what: 'the guardian-link writer', rel: 'lib/family-invitation.ts' },
+    { what: 'the coach’s guardians card', rel: 'lib/family-guardian.ts' },
     { what: 'the platform roster-size metric', rel: 'lib/founding-season-desk.ts' },
   ];
   for (const { what, rel } of RAW_QUERY_SURFACES) {

@@ -192,7 +192,7 @@ Also drawn: one address per sign-up (not per child); the same address as the fir
 
 **Stage 3b — a stop button on the second parent’s emails (BUILT 2026-11-06).** The `/legal` review found the gap (a stranger’s address typed by someone else, with no way off but writing to the club); plan [SIGNED_IN_FAMILY_STAGE3B_SECOND_PARENT_STOP_PLAN.md](SIGNED_IN_FAMILY_STAGE3B_SECOND_PARENT_STOP_PLAN.md), owner calls O1–O5 ruled as recommended. Every second-parent copy carries a quiet “Stop these emails” link from one footer builder; the link opens a confirm page (a GET writes nothing, one POST stops), the stop clears the address from every sign-up of that club and refuses it afterwards (family form and both registrar windows), the registrar sees “Stopped by the address owner, {date}” and cannot undo it, nobody is emailed, and the first parent’s mail is untouched. Session 1 committed `80c9bc430`; Session 2 committed 2026-11-06; mig 448 dev only (prod owed before the promote); walk §472 owed. Open flags for the owner (reply path with no club contact email, exact-address match, a millisecond race, a mixed address, two footnotes on the pay-link copy) are in `docs/agents/legal/CASL_SECOND_PARENT_EMAIL.md`.
 
-### Stage 4 — The invitation at team placement; "Your sign-up" inside the app · needs counsel AND Stage 14
+### Stage 4 — The invitation at team placement; "Your sign-up" inside the app · unblocked (drawn 2026-11-08; rulings owed)
 
 1. **Placing a child on a team invites the guardian(s)** — the placement email is the invitation; never a separate
    "create an account" email. Accepting signs the parent in (new or existing account) and links them to the child.
@@ -203,15 +203,70 @@ Also drawn: one address per sign-up (not per child); the same address as the fir
 4. Rewrite `COACH_AVAILABILITY_RSVP_PLAN.md` to the app channel (its emailed-link door is ruled out; banner added
    2026-10-31).
 
-**Blocked by:** the PIPEDA / CASL counsel review (the guardian tier, `GUARDIAN_TIER_ENABLED`, stays off until it clears) and
-**Stage 14** (one player across seasons): today the guardian link hangs on a per-season rep roster row (census §4), and house
-league has no child record at all. The parent account is a person, not an organization member (10-29 P3 — ruled yes 2026-11-04, below).
+**Blocked by: nothing (corrected 2026-11-08, drawing session).** Counsel stopped being a gate 2026-11-04: the guardian tier
+(`GUARDIAN_TIER_ENABLED`, `lib/family-guardian.ts:41`, off unless the env var is the literal `'true'`) stays off until the owner
+switches it on, after real consent wording (`/legal` draft `docs/agents/legal/drafts/GUARDIAN_CONSENT_STAGE4.md`). Stage 14 is closed
+(S6 `4b7341f08`, mig 445 dev only, prod owed). **What Stage 14 did NOT fix, and Stage 4's build owns (the drawing session read the
+code):** `family_links` still requires `rep_team_id` (NOT NULL) and `player_id` (a `rep_roster_players` row, strict CHECK
+`role='guardian' AND player_id IS NOT NULL`, DATA_DICTIONARY `family_links.player_id`), and its live-unique key is
+`(child_id, rep_team_id, invited_email, role)` (mig 445:64-66). So (1) a house-league child cannot be connected at all, and (2) a rep
+child who moves to another team loses the connection. The census's "house league has no child record" is stale since mig 435
+(`league_registrations.child_id`). Also found: no invitation email exists (`PlayerGuardiansCard` hands the coach a link, "Send this
+to them — it works once, and expires in 14 days"); chat is paused product-wide (`lib/chat-pause.ts:27`, ruling 2026-10-18) and no room
+a parent could join exists. The parent account is a person, not an organization member (10-29 P3 — ruled yes 2026-11-04, below).
 **Stage 14 DRAWN + RULED 2026-11-04, all 14 asks A** (`CLUB_TIER_PRODUCTION_READINESS_PLAN.md` Stage 14 note; page tab 7 is
 this stage's hand-off frame: the link points at the CHILD, and what a parent sees follows the child's live seasons — Ask 13).
 **10-29 P3 RULED 2026-11-04 (Stage 14 Ask 14 A): a parent account is a person, kept clear of the one-home-organization rules.**
 **Stage 3b note (2026-11-06): a stopped address must never be invited to sign in.** Stage 3 sends the team invitation to the second guardian’s address too. The stop clears the address from every sign-up of that club, so an invitation built from the sign-up columns cannot reach it, but Stage 14 and Stage 4 add new places an address can live (the child record, the person book). Any such copy of a second address must be cleared by the stop, or the invitation must check `second_parent_stops` (`lib/league-second-parent-stop.ts`) before sending, and an address typed into any new invitation path must be refused with the same words as the form (`SECOND_PARENT_WORDS.stoppedAddress`). The invitation itself needs its own Stop line like every other second-parent copy.
-Stage 4 is still blocked by counsel and by Stage 14's BUILD. The code read also found the guardian link is never moved at a roll and stays live and season-blind on last
-season's row (latent: the tier is off) — Stage 4 must not ship on today's link.
+~~Stage 4 is still blocked by counsel and by Stage 14's BUILD. The code read also found the guardian link is never moved at a roll and stays live and season-blind on last
+season's row (latent: the tier is off) — Stage 4 must not ship on today's link.~~ **Superseded 2026-11-08:** mig 445 (Stage 14 S6) put
+the link on the child and fixed the season-blind row; the remaining gap (per rep team, no house league) is in the "Blocked by" line above.
+
+**DRAWN 2026-11-08 (drawing session, `SIGNED_IN_FAMILY_STAGE4_DRAWING_PROMPT.md`).** Page https://claude.ai/artifact/M87dgZ1W4gEWxXvchoZA3M
+· source [SIGNED_IN_FAMILY_STAGE4_DRAWINGS.html](SIGNED_IN_FAMILY_STAGE4_DRAWINGS.html). /ux, /design and /legal ran before the publish and
+their findings were applied (version 1 is the reviewed one). Consent and privacy words: `/legal` draft 0.1,
+`docs/agents/legal/drafts/GUARDIAN_CONSENT_STAGE4.md`, with six build conditions the words rely on. **15 owner asks, not ruled**. Asks 1–3
+change the shape: (1) no team chat in Stage 4, because the 2026-10-18 ruling paused chat and sends families to the future Messages project
+(the 10-31 ruling put chat in the app; the two collide); (2) split into 4a (invitation, team page, sign-up inside, calendar, club status)
+and 4b (In / Out / Maybe + the coach headcount + the `COACH_AVAILABILITY_RSVP_PLAN.md` rewrite); (3) one connection reaches the child on
+every team in the club, and one acceptance covers every child on the parent's sign-ups. Recommendations and alternatives are on the page; do
+not build from them until the owner rules. Build guards found by the session (whatever the rulings): the Stage 14 join window must name the
+connected parents before a join; a Stop ends only a second-parent connection (CASL flag d); a left or removed parent is never re-invited
+automatically; CASL flags (a) and (c) are raised for the owner as "before the build". The built claim page's draft notice ("being confirmed
+with our privacy advisor") is false since 2026-11-04 and goes in the build. Next: the owner's rulings, then `SIGNED_IN_FAMILY_STAGE4_BUILD_PROMPT.md`.
+
+**RULED 2026-11-08 (owner, all 15 asks A, pasted from the page; no notes).** Where these differ from items 1–4 above, these win;
+build to the drawing.
+1. Stage 4 ships **without chat**. Rep coaches' updates keep their read-only card. Families get messaging when the Messages project
+   brings it back.
+2. **Two stages:** 4a = invitation, team page, sign-up inside, calendar, club status. 4b = In / Out / Maybe and the coach's headcount.
+3. The connection reaches **the child, on every team in this club** (house league and rep). One acceptance connects the parent to every
+   child on their sign-ups in the club, now and as each is placed; the accept page names each child.
+4. **Rep:** the coach's Send invitation button on the player's Guardians section sends the email. Nothing happens by itself at roster add.
+5. **Signed in with a different email:** refuse, name the invited address partly hidden, offer Sign out. The coach's approval queue goes.
+6. **Calendar:** one address per parent, covering every child's team, with Copy and Stop this calendar.
+7. **Neither parent removes the other.** Both see who's connected, each can leave, and the club removes.
+8. **A joined second parent's Stop:** the Stop line stays; stopping also removes them from the app (only their second-parent connection),
+   and the confirm page says so.
+9. **30 days.** The parent's "Email me a new invitation" and the club's "Send again" both re-send the placement email with a fresh
+   invitation.
+10. **Club:** a status per address on the registration record window, with Send again and Remove a parent. **Coach:** nothing new in 4a.
+11. A **"Your family" row in the shared account menu**, shown only to an account with a connected child.
+12. **No age question.** Work it out from the date of birth and the club's province; no invitation panel for a player 18 or older.
+13. Use the **/legal draft** (`docs/agents/legal/drafts/GUARDIAN_CONSENT_STAGE4.md` v0.1) as the wording the build ships with, switched off.
+14. **Keep the guardian box strict.** A non-guardian can't join; they still get the emails and can pay from the link.
+15. **Trust the invitation** (no extra confirm email), as with a password reset.
+
+Not ruled by these asks, and still open for the owner: CASL memo flag (a), whether Publish requires a club contact email or the line names
+the registrar (the build prompt carries it as an owner call before the email Part). Build prompt for 4a: `SIGNED_IN_FAMILY_STAGE4_BUILD_PROMPT.md`.
+
+**RULED 2026-11-08 (owner, build Session 1).** **O1 (CASL flag a) = A:** while the guardian tier is on, Publish and the rep Send invitation
+refuse until the club has a contact email, saying where to set it. **O2 (raised by the build) = second-parent only:** a stop refuses an
+invitation to that address unless it is the first parent on a sign-up of that club (the stop page promised to stop the second-parent copies,
+not the address's own child's emails). Also decided in the build, on the code (not owner asks): a house-league child reaches a team only once
+its division's teams are **published** (the draft board sets the team earlier); a house-league season is live until completed or archived
+(its registration statuses are live); the parent-typed "invite another adult" door (`inviteCoGuardian`) is removed (it broke "an invitation
+goes only to an address on the sign-up"); no date of birth = treated as a minor.
 
 ### Stage 5 — Next season pre-filled for a signed-in parent · needs Stage 4
 

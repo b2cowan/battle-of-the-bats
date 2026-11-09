@@ -1003,7 +1003,11 @@ export async function buildDuplicatePairs(orgId: string, preloaded?: World): Pro
     if (table === 'league_registrations') return leagueRegs.find((x: any) => x.id === id)?.player_first_name ?? null;
     if (table === 'family_links') {
       const l = world.links.find((x: any) => x.id === id);
-      return l?.player_id ? rosterRows.find((x: any) => x.id === l.player_id)?.player_first_name ?? null : null;
+      if (!l) return null;
+      // A house-league link has no roster entry (mig 453): name the child from its sign-up.
+      return l.player_id
+        ? rosterRows.find((x: any) => x.id === l.player_id)?.player_first_name ?? null
+        : leagueRegs.find((x: any) => x.child_id === l.child_id)?.player_first_name ?? null;
     }
     return null;
   };

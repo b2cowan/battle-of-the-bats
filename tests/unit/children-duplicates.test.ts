@@ -225,7 +225,10 @@ describe('the routes and screens', () => {
     assert.equal(SW.open, 'Split records');
   });
   it('a parent link is read through the child everywhere it used to be read through the entry', () => {
-    assert.match(readCode('lib/family-notify.ts'), /reachingLinks\(/);
+    // Stage 4a: the team side reads through the child too (verifiedLinksReachingRepTeam calls reachingLinks; never rep_team_id).
+    assert.match(readCode('lib/family-notify.ts'), /verifiedLinksReachingRepTeam</);
+    assert.doesNotMatch(readCode('lib/family-notify.ts'), /\.eq\('rep_team_id'/);
+    assert.match(readCode('lib/family-access.ts'), /return reachingLinks\(rows\.map/);
     assert.match(readCode('lib/family-engagement.ts'), /\.in\('child_id', childIds\)/);
     assert.doesNotMatch(readCode('lib/families-read.ts'), /linksByPlayer/);
     assert.match(readCode('lib/child-page.ts'), /\.eq\('child_id', childId\)/);

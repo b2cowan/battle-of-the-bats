@@ -31,7 +31,7 @@ whoever forwards it.
 1. Harden "Your sign-up" (no prerequisite).
 2. Tidy up tournament registration (no prerequisite).
 3. Second parent's email (no prerequisite).
-4. The invitation at team placement and the app's team space (waits on the privacy counsel review and Stage 14).
+4. The invitation at team placement and the app's team space (unblocked: counsel stopped being a gate 2026-11-04 and Stage 14 is closed; drawn and ruled 2026-11-08: built as 4a, the invitation, the family team page, the sign-up inside, one family calendar and the club's status, then 4b, In / Out / Maybe; no chat until the Messages project).
 5. Pre-filled next season (waits on 4).
 
 ## Success looks like

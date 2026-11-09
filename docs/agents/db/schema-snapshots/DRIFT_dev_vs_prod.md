@@ -1,20 +1,23 @@
 # Dev vs Prod — structural drift
 
-**Generated:** 2026-11-07 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
+**Generated:** 2026-11-08 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 402 divergence(s)** across dev/prod.
+**⚠️ 468 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
-| Tables | 5 | 6 | — |
-| Columns | 132 | 59 | 0 |
-| Indexes | 30 | 26 | 0 |
-| Constraints | 17 | 28 | — |
-| RLS / CHECK | 72 | 26 | 0 (RLS state) |
+| Tables | 8 | 6 | — |
+| Columns | 158 | 59 | 1 |
+| Indexes | 46 | 26 | 0 |
+| Constraints | 30 | 28 | — |
+| RLS / CHECK | 78 | 26 | 0 (RLS state) |
 
 ## Tables
-### Only in DEV (5)
+### Only in DEV (8)
 - `bank_check_waiting`
+- `family_calendar_feeds`
+- `family_invitations`
+- `family_invite_stops`
 - `platform_charge_tax_looks`
 - `platform_charge_tax_records`
 - `platform_credit_note_tax_records`
@@ -29,7 +32,7 @@
 - `bank_saved_lines`
 
 ## Columns
-### Only in DEV (132)
+### Only in DEV (158)
 - `bank_check_waiting.added_at`
 - `bank_check_waiting.added_by`
 - `bank_check_waiting.amount_cents`
@@ -49,7 +52,33 @@
 - `bank_checks.deleted_by`
 - `bank_checks.kind`
 - `bank_checks.on_its_way_cents`
+- `family_calendar_feeds.created_at`
+- `family_calendar_feeds.id`
+- `family_calendar_feeds.stopped_at`
+- `family_calendar_feeds.token_hash`
+- `family_calendar_feeds.user_id`
+- `family_invitations.cancelled_at`
+- `family_invitations.child_id`
+- `family_invitations.created_at`
+- `family_invitations.email`
+- `family_invitations.expires_at`
+- `family_invitations.id`
+- `family_invitations.org_id`
+- `family_invitations.reconnects`
+- `family_invitations.rep_player_id`
+- `family_invitations.replaced_by`
+- `family_invitations.sent_by_user_id`
+- `family_invitations.source`
+- `family_invitations.token_hash`
+- `family_invitations.used_at`
+- `family_invitations.used_by_user_id`
+- `family_invite_stops.created_at`
+- `family_invite_stops.email`
+- `family_invite_stops.id`
+- `family_invite_stops.org_id`
 - `family_links.child_id`
+- `family_links.ended_by`
+- `family_links.invited_as`
 - `org_children.emergency_contact_name`
 - `org_children.emergency_contact_phone`
 - `org_children.medical_notes`
@@ -224,11 +253,11 @@
 - `bank_saved_lines.saved_at`
 - `bank_saved_lines.saved_by`
 
-### Type/nullability/default changed (0)
-_none_
+### Type/nullability/default changed (1)
+- `family_links.rep_team_id` — dev: `uuid|uuid|YES|` | prod: `uuid|uuid|NO|`
 
 ## Indexes
-### Only in DEV (30)
+### Only in DEV (46)
 - `bank_check_waiting_added_by_idx`
 - `bank_check_waiting_once`
 - `bank_check_waiting_pkey`
@@ -237,6 +266,22 @@ _none_
 - `bank_checks_deleted_by_idx`
 - `bank_checks_one_live_per_date`
 - `bank_checks_one_live_start`
+- `family_calendar_feeds_live_user_uniq`
+- `family_calendar_feeds_pkey`
+- `family_calendar_feeds_token_hash_key`
+- `family_calendar_feeds_user_idx`
+- `family_invitations_child_idx`
+- `family_invitations_open_placement_uniq`
+- `family_invitations_open_rep_uniq`
+- `family_invitations_org_email_idx`
+- `family_invitations_pkey`
+- `family_invitations_rep_player_idx`
+- `family_invitations_replaced_by_idx`
+- `family_invitations_sent_by_idx`
+- `family_invitations_token_hash_key`
+- `family_invitations_used_by_idx`
+- `family_invite_stops_org_email_uniq`
+- `family_invite_stops_pkey`
 - `family_links_child_id_idx`
 - `family_links_live_child_uniq`
 - `platform_charge_tax_looks_chain_idx`
@@ -292,13 +337,26 @@ _none_
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (17)
+### Only in DEV (30)
 - `bank_check_waiting.bank_check_waiting_added_by_fkey`
 - `bank_check_waiting.bank_check_waiting_check_id_fkey`
 - `bank_check_waiting.bank_check_waiting_once`
 - `bank_check_waiting.bank_check_waiting_pkey`
 - `bank_checks.bank_checks_corrected_by_fkey`
 - `bank_checks.bank_checks_deleted_by_fkey`
+- `family_calendar_feeds.family_calendar_feeds_pkey`
+- `family_calendar_feeds.family_calendar_feeds_token_hash_key`
+- `family_calendar_feeds.family_calendar_feeds_user_id_fkey`
+- `family_invitations.family_invitations_child_id_fkey`
+- `family_invitations.family_invitations_org_id_fkey`
+- `family_invitations.family_invitations_pkey`
+- `family_invitations.family_invitations_rep_player_id_fkey`
+- `family_invitations.family_invitations_replaced_by_fkey`
+- `family_invitations.family_invitations_sent_by_user_id_fkey`
+- `family_invitations.family_invitations_token_hash_key`
+- `family_invitations.family_invitations_used_by_user_id_fkey`
+- `family_invite_stops.family_invite_stops_org_id_fkey`
+- `family_invite_stops.family_invite_stops_pkey`
 - `family_links.family_links_child_id_fkey`
 - `platform_charge_tax_looks.platform_charge_tax_looks_after_id_fkey`
 - `platform_charge_tax_looks.platform_charge_tax_looks_pkey`
@@ -345,7 +403,7 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (72)
+### CHECK only in DEV (78)
 - `bank_check_waiting.bank_check_waiting_added_shape`
 - `bank_check_waiting.bank_check_waiting_amount_cents_check`
 - `bank_check_waiting.bank_check_waiting_direction_check`
@@ -355,6 +413,12 @@ _none_
 - `bank_checks.bank_checks_corrected_shape`
 - `bank_checks.bank_checks_deleted_shape`
 - `bank_checks.bank_checks_kind`
+- `family_invitations.family_invitations_email_check`
+- `family_invitations.family_invitations_source_check`
+- `family_invite_stops.family_invite_stops_email_check`
+- `family_links.family_links_ended_by_check`
+- `family_links.family_links_invited_as_check`
+- `family_links.family_links_made_on_entry_ck`
 - `platform_charge_tax_looks.platform_charge_tax_looks_keys_shape`
 - `platform_charge_tax_looks.platform_charge_tax_looks_looked_by_check`
 - `platform_charge_tax_looks.platform_charge_tax_looks_not_itself`

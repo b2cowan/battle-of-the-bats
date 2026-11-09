@@ -36,9 +36,6 @@ interface GuardianRow {
   verifiedVia: string | null;
   createdAt: string;
   matchesRosterContact: boolean;
-  /** Set only when the person who claimed your invite holds a DIFFERENT address than the one
-   *  you invited — which is exactly why the row is waiting on you. */
-  claimedEmail: string | null;
 }
 
 export default function PlayerGuardiansCard({
@@ -57,7 +54,6 @@ export default function PlayerGuardiansCard({
   const [maxPerPlayer, setMaxPerPlayer] = useState(2);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [inviteUrl, setInviteUrl] = useState<string | null>(null);
   const [inviteEmail, setInviteEmail] = useState(rosterGuardianEmail ?? '');
   const [inviteOpen, setInviteOpen] = useState(false);
 
@@ -80,15 +76,13 @@ export default function PlayerGuardiansCard({
 
   useEffect(() => { load(); }, [load]);
 
-  async function decide(linkId: string, action: 'approve' | 'decline' | 'revoke') {
+  async function decide(linkId: string, action: 'decline' | 'revoke') {
     setBusy(linkId); setError(null);
     try {
       const res = await fetch(base, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        // The playerId travels from the COACH's screen — this is the attachment that turns a
-        // typed name into a real connection.
-        body: JSON.stringify({ linkId, action, playerId }),
+        body: JSON.stringify({ linkId, action }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.message ?? 'That didn’t go through.');
@@ -109,11 +103,13 @@ export default function PlayerGuardiansCard({
         body: JSON.stringify({ playerId, email: inviteEmail.trim() }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.message ?? 'Could not create that invite.');
-      setInviteUrl(data.url);
+      if (!res.ok) throw new Error(data.message ?? 'Could not send that invitation.');
+      // Stage 4a ruling 4: the invitation is EMAILED; there is no link to copy. The invited row appears below.
+      setInviteEmail('');
+      setInviteOpen(false);
       await load();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not create that invite.');
+      setError(e instanceof Error ? e.message : 'Could not send that invitation.');
     } finally {
       setBusy(null);
     }
@@ -125,18 +121,13 @@ export default function PlayerGuardiansCard({
   // An `invited` row is waiting on the PARENT, not on the coach — it gets a status line, not
   // an Approve button, because approving it would create a connection nobody can use.
   const invited = rows.filter(r => r.status === 'invited');
-  const waiting = rows.filter(r => r.status === 'pending_approval');
   const atCap = connected.length >= maxPerPlayer;
-  // Only a mismatched claim waits on the coach now — the ask-by-link request, which arrived
-  // with no child attached and appeared on every player's card, went with the family link.
-  const decidable = waiting;
-
   return (
     <CoachCollapseSection sectionId="guardians" title="Guardians" defaultOpen={false}>
     <div className={styles.panel}>
       {/* The profile page's collapse summary carries the visible "Guardians" title now; this h2
           stays for the DOCUMENT OUTLINE only (the 2026-07-31 staff lesson: the repeated-header
-          rule is about the visible header, never the outline). The count + waiting badge remain
+          rule is about the visible header, never the outline). The count remains
           visible below, wording unchanged. */}
       <h2
         className={styles.panelTitle}
@@ -146,7 +137,6 @@ export default function PlayerGuardiansCard({
       </h2>
       <p className={styles.rowSub} style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
         {connected.length} connected
-        {decidable.length > 0 && <span className={styles.badge}>{decidable.length} waiting</span>}
       </p>
       <p className={styles.rowSub} style={{ marginTop: 0 }}>
         The accountable adults for this player — up to {maxPerPlayer}, so a second household fits.
@@ -155,45 +145,6 @@ export default function PlayerGuardiansCard({
       {rows.length === 0 && (
         <p className={styles.muted}>Nobody is connected to this player yet.</p>
       )}
-
-      {decidable.map(r => (
-        <div key={r.id} className={styles.request}>
-          <span className={styles.requestWho}>
-            {/* When a claim came from a DIFFERENT address than the one invited, the person in
-                front of the coach is the CLAIMANT — so they are named first, and the invited
-                address is shown as the thing they don't match. Showing only the invited
-                address (the old behaviour) hid the single fact that sent this row to the
-                queue, and made the approval a guess. */}
-            {r.claimedEmail ?? r.email}
-            {r.relationship && <> · {r.relationship}</>}
-            {/* An assist, never authorization — it confirms the address, not the relationship. */}
-            {r.matchesRosterContact && !r.claimedEmail && (
-              <> · <strong>matches the guardian contact on this player</strong></>
-            )}
-            {r.claimedEmail && (
-              <span className={styles.mismatchNote}>
-                Accepted your invite to <strong>{r.email}</strong> while signed in as{' '}
-                <strong>{r.claimedEmail}</strong> — that mismatch is why it&rsquo;s waiting for you.
-                Approve only if you know this is the same person.
-              </span>
-            )}
-          </span>
-          <button
-            type="button"
-            className={`${styles.btn} ${styles.btnPrimary}`}
-            onClick={() => decide(r.id, 'approve')}
-            disabled={busy === r.id || atCap}
-            title={atCap ? `This player already has ${maxPerPlayer} connected guardians.` : undefined}
-          >
-            {/* Names the child explicitly: approving IS the coach asserting this adult belongs
-                to THIS player, and a bare "Approve" hides that decision. */}
-            Approve as {playerFirstName}
-          </button>
-          <button type="button" className={styles.linkBtn} onClick={() => decide(r.id, 'decline')} disabled={busy === r.id}>
-            Decline
-          </button>
-        </div>
-      ))}
 
       {invited.map(r => (
         <div key={r.id} className={styles.follower}>
@@ -229,14 +180,13 @@ export default function PlayerGuardiansCard({
           <div className={styles.divider} />
           {!inviteOpen ? (
             <button type="button" className={styles.btn} onClick={() => setInviteOpen(true)}>
-              <Users size={14} aria-hidden /> Invite a guardian directly
+              <Users size={14} aria-hidden /> Invite a guardian
             </button>
           ) : (
             <div className={styles.row}>
               <div className={styles.rowMain}>
                 <div className={styles.rowSub}>
-                  Sends to an address you choose. Because you chose it, a person signing in with
-                  that exact address is connected without a second approval.
+                  We’ll email them an invitation. It works for 30 days.
                 </div>
                 <input
                   className={styles.linkOut}
@@ -253,15 +203,9 @@ export default function PlayerGuardiansCard({
                 onClick={invite}
                 disabled={busy === 'invite' || !inviteEmail.trim()}
               >
-                {busy === 'invite' ? 'Working…' : 'Create invite'}
+                {busy === 'invite' ? 'Sending…' : 'Send invitation'}
               </button>
             </div>
-          )}
-          {inviteUrl && (
-            <>
-              <p className={styles.muted}>Send this to them — it works once, and expires in 14 days.</p>
-              <div className={styles.linkOut}>{inviteUrl}</div>
-            </>
           )}
         </>
       )}

@@ -39,12 +39,16 @@ export const GET = withObservability(async (req: Request,
 
   const link = isPlausibleNoLoginToken(token) ? await resolveLinkByCalendarToken(token) : null;
   if (!link) return refusedFeedResponse(req);
+  // (Stage 4a, mig 453) A link made with no rep team (a house-league parent) has nothing for THIS per-link feed: an empty calendar.
+  // The one-address-per-parent feed (Stage 4a Part 7) replaces this route's job; existing dev tokens keep answering until then.
+  const repTeamId = link.repTeamId;
+  if (!repTeamId) return calendarResponse({ calendarName: 'Team schedule', entries: [], cacheControl: PRIVATE_FEED_CACHE });
 
-  const org = await getEnabledFamilyOrg(link.orgId, link.repTeamId);
-  const view = org && link.reaches ? await getFamilyTeamView({ repTeamId: link.repTeamId, requireVisibility: 'families' }) : null;
+  const org = await getEnabledFamilyOrg(link.orgId, repTeamId);
+  const view = org && link.reaches ? await getFamilyTeamView({ repTeamId, requireVisibility: 'families' }) : null;
   if (!view) {
     // Stopped: the team's name is read only here — a good read names the calendar from its view.
-    const team = await getTeamFamilyAccess(link.repTeamId);
+    const team = await getTeamFamilyAccess(repTeamId);
     const calendarName = teamCalendarName(team?.teamName ?? 'Team schedule', org?.name);
     return calendarResponse({ calendarName, entries: [], cacheControl: PRIVATE_FEED_CACHE });
   }

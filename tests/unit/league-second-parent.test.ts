@@ -203,6 +203,18 @@ describe('the record window shows the stop (Stage 3b, O3, source guard)', () => 
 });
 
 describe('nothing that sends mail reads the stop table (Stage 3b: the stop IS the removal)', () => {
+  // Stage 4a (mig 453): this guard is over TypeScript. The database reads the table in exactly two triggers that close the race
+  // between a stop and a send (CASL flag c): a stopped address cannot be written into guardian_email_2, and cannot be given an
+  // invitation unless it is a first parent in the club (owner O2). Those are the only sanctioned SQL readers outside the stop.
+  it('mig 453: the stop ends only second-parent connections and the two race triggers read the table', () => {
+    const sql = readSource('supabase/migrations/453_a_family_joins_the_child_on_every_team.sql');
+    const stop = sql.slice(sql.indexOf('create or replace function public.second_parent_stop('));
+    const body = stop.slice(0, stop.indexOf('$function$;'));
+    assert.match(body, /update public\.family_links[\s\S]*?invited_as = 'second_parent'/);
+    assert.doesNotMatch(body, /invited_as (in|=) \(?'first_parent'/);
+    assert.match(sql, /create trigger league_registrations_second_parent_not_stopped/);
+    assert.match(sql, /create trigger family_invitations_not_stopped/);
+  });
   it('second_parent_stops appears only in the stop helper and the stop page', () => {
     const files = ['lib', 'app', 'components'].flatMap(d => [...filesUnder(d, '.ts'), ...filesUnder(d, '.tsx')]);
     const readers = files.filter(f => /second_parent_stops/.test(readCode(f))).sort();

@@ -107,45 +107,9 @@
   word-break: break-all;
 }
 
-/* Requests + connected rows (the `.follower` names date from the retired follower tier; they are
-   class identifiers, so they stay — the Guardians card draws its connected rows with them) */
-.request {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  flex-wrap: wrap;
-  padding: 0.55rem 0.7rem;
-  border-radius: 8px;
-  background: var(--white-5);
-  margin-top: 0.5rem;
-}
-
-.requestWho {
-  flex: 1;
-  min-width: 10rem;
-  font-size: var(--type-body);
-  color: var(--text-secondary);
-  overflow-wrap: anywhere;
-}
-
-/* Chunk D — the claimed-vs-invited mismatch on a waiting guardian row. Given its own block
-   below the address rather than appended inline: it is the reason the coach is being asked to
-   decide, and an inline clause on an already-busy line is the first thing a skim drops.
-   Warning-toned, not alarm-toned — a mismatch is an ordinary, expected outcome (a parent
-   signed up with their work email), not a security event. */
-.mismatchNote {
-  display: block;
-  margin-top: 0.3rem;
-  padding: 0.4rem 0.55rem;
-  border-radius: 6px;
-  background: rgba(var(--warning-rgb), 0.08);
-  border: 1px solid rgba(var(--warning-rgb), 0.25);
-  color: var(--text-secondary);
-  font-size: var(--type-support);
-  line-height: 1.5;
-  overflow-wrap: anywhere;
-}
-
+/* Connected and invited rows (the `.follower` names date from the retired follower tier; they are class identifiers, so they
+   stay — the Guardians card draws its rows with them). The waiting-request row and its mismatch note went with the coach's
+   approval queue (Signed-in family accounts Stage 4a, ruling 5). */
 .follower {
   display: flex;
   align-items: center;

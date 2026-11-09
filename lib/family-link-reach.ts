@@ -46,3 +46,65 @@ export const reachesLive = (entries: readonly ChildTeamEntry[]) => entries.some(
 
 /** `${childId}|${teamId}` — how entries are filed per child and team. */
 export const reachKey = (childId: string, teamId: string) => `${childId}|${teamId}`;
+
+// ── Every team the child is on (Signed-in family accounts Stage 4a, ruling 3, 2026-11-08) ─────────────────────────────────────
+//
+// A connection is to the CHILD on every team in the club, house league and rep (mig 453 made a link team-less). So a link reaches
+// each team the child is LIVE on:
+//   rep     — the child's non-call-up roster entry on the team's live season (draft/active), exactly `reachedEntry(…, 'live')`.
+//   league  — the child's ACCEPTED (`active`) house-league sign-up placed on the team, where
+//             · the division's teams are PUBLISHED (the draft board sets the team before Publish; a parent must not see a draft
+//               team before the families are told — found by the Stage 4a build, recorded in the plan), and
+//             · the season is not closed (`completed` / `archived`). A house-league season's registration statuses are live: teams are
+//               published exactly then (house-league seasons read in place, owner 2026-11-04; a parent sees only live ones in 4a).
+// The recap stays rep-only (`reachedEntry(…, 'recap')`).
+
+export type TeamKind = 'rep' | 'league';
+
+/** One of a child's entries on a team of either kind. `published` is the division's teams-published mark (always true for rep). */
+export interface TeamEntry extends ChildTeamEntry {
+  kind: TeamKind;
+  teamId: string;
+  published: boolean;
+}
+
+/** A team a link reaches now, and the entry (roster row or sign-up) it reaches it through. */
+export interface ReachedTeam {
+  kind: TeamKind;
+  teamId: string;
+  entryId: string;
+}
+
+/** A house-league season is live until it is completed or archived. */
+export function isLiveLeagueSeasonStatus(status: string | null | undefined): boolean {
+  return !!status && status !== 'completed' && status !== 'archived';
+}
+
+/** `${kind}:${teamId}` — the two kinds keep separate team id spaces. */
+export const teamKey = (kind: TeamKind, teamId: string) => `${kind}:${teamId}`;
+
+/** Every team one child's entries reach now, in a stable order (rep first, then by team id). */
+export function teamsReached(entries: readonly TeamEntry[]): ReachedTeam[] {
+  const byTeam = new Map<string, TeamEntry[]>();
+  for (const e of entries) {
+    const k = teamKey(e.kind, e.teamId);
+    const list = byTeam.get(k);
+    if (list) list.push(e); else byTeam.set(k, [e]);
+  }
+  const out: ReachedTeam[] = [];
+  for (const list of byTeam.values()) {
+    const { kind, teamId } = list[0];
+    let entry: ChildTeamEntry | null;
+    if (kind === 'rep') {
+      entry = reachedEntry(list, 'live');
+    } else {
+      entry = null;
+      for (const e of list) {
+        if (!e.published || !isLiveLeagueSeasonStatus(e.seasonStatus)) continue;
+        if (!entry || e.seasonCreatedAt > entry.seasonCreatedAt) entry = e;
+      }
+    }
+    if (entry) out.push({ kind, teamId, entryId: entry.id });
+  }
+  return out.sort((a, b) => (a.kind === b.kind ? a.teamId.localeCompare(b.teamId) : a.kind === 'rep' ? -1 : 1));
+}

@@ -5936,7 +5936,7 @@ the coach-sent invite to the address already on the roster row.
 
 <!-- dict:col:family_links.org_id -->
 <!-- dict:col:family_links.rep_team_id -->
-**`org_id` / `rep_team_id`** (uuid, NOT NULL, FK → `organizations` / `rep_teams`, both CASCADE) — tenancy + team scope. Every mutation filters on `rep_team_id` in the WHERE clause as well as the id, so a link id from another team can never be acted on by this team's coach.
+**`org_id` / `rep_team_id`** (uuid, FK → `organizations` / `rep_teams`, both CASCADE; `org_id` NOT NULL; **`rep_team_id` nullable since mig 453**, Signed-in family accounts Stage 4a) — tenancy, and **the rep team a coach's invitation was made on**. Since 453 it is NOT what the link reaches (that is every team the child is live on in the org, house league and rep — Stage 4 ruling 3) and it is NULL on a house-league link. A coach's mutation still filters on `rep_team_id` in the WHERE clause as well as the id, so a link id from another team can never be acted on by this team's coach.
 
 <!-- dict:col:family_links.role -->
 **`role`** (text, NOT NULL; CHECK `guardian` only since **mig 290** — was `guardian|follower`) — kept as a column, and as a named type in `lib/family-access.ts`, so a second tier would re-enter through one CHECK rather than as a bare string. See gotcha 2.
@@ -5946,15 +5946,18 @@ the coach-sent invite to the address already on the roster row.
 **`child_id`** (uuid → `org_children`, **NOT NULL**, ON DELETE CASCADE, DEFERRABLE INITIALLY DEFERRED; **mig 445**, Club Tier Stage 14 S6, Ask 13) — **the CHILD this guardian is the accountable adult for. This is what access reads.** What a connected parent reaches follows the child's LIVE seasons on `rep_team_id` (`lib/family-link-reach.ts` — the child holds a non-call-up entry on that team in a draft/active season; the end-of-season recap alone follows the newest CLOSED season): last season's team stops reaching the parent when it closes, and a roll changes nothing for them. Backfilled from each link's entry; a BEFORE INSERT trigger (`family_links_a_child_fills`, fires before the cap) fills it from `player_id` for a writer that sends only the entry, and refuses another organization's child. A join (`org_children_join`) moves the absorbed child's links to the kept one (a duplicate live address on one team ends the less-connected link); a split leaves the links with the record kept. Independent of any organization membership (Ask 14 / P3: a parent account is a person).
 
 <!-- dict:col:family_links.player_id -->
-**`player_id`** (uuid → `rep_roster_players`, **NOT NULL by CHECK** since mig 290, CASCADE) — **the roster entry this link was MADE on** (the coach chose it at invite/approve). Since mig 445 it is history, not access: readers get the entry a link reaches NOW from `reachingLinks` (which replaces it on the link they hold). Still the cascade the roster-delete guard relies on (deleting the entry a parent was connected on deletes the link — the guard refuses with "a linked family"). Before mig 445 nothing moved it at a roll (neither the season roll nor the continuity decide route touches `family_links`), so the link stayed on last season's row and stayed live, and a new invitation was refused by the old live-unique index ("That address already has a connection to this player."); both defects are what `child_id` fixes.
+**`player_id`** (uuid → `rep_roster_players`, CASCADE; NOT NULL by CHECK from mig 290 to mig 445; **nullable since mig 453** — NULL on a house-league link, required by `family_links_made_on_entry_ck` when `invited_as` is `rep_coach` or `requested`) — **the roster entry this link was MADE on** (the coach chose it at invite/approve). Since mig 445 it is history, not access: readers get the entry a link reaches NOW from `reachingLinks` (which replaces it on the link they hold). Still the cascade the roster-delete guard relies on (deleting the entry a parent was connected on deletes the link — the guard refuses with "a linked family"). Before mig 445 nothing moved it at a roll (neither the season roll nor the continuity decide route touches `family_links`), so the link stayed on last season's row and stayed live, and a new invitation was refused by the old live-unique index ("That address already has a connection to this player."); both defects are what `child_id` fixes.
 
-**⚠ CAP ENFORCED BY TRIGGER (mig 217, re-keyed by mig 445).** `family_links_guardian_cap` (`enforce_guardian_cap()`) refuses a third LIVE guardian on a **child on one team** (it counted per entry before mig 445). The app also checks — that is what produces the friendly message — but the app counts then inserts in two statements, so two coaches acting at once can both read the same count; the trigger is what makes the limit true (it first locks the child's `org_children` row, so an invite waits for a join in flight and two invites count one after the other). A join that would give one child a third live guardian on a team raises `guardian_cap_reached` and moves nothing (the Children queue says so in plain words).
+**⚠ CAP ENFORCED BY TRIGGER (mig 217, re-keyed by mig 445 and again by mig 453).** `family_links_guardian_cap` (`enforce_guardian_cap()`) refuses a third LIVE guardian on a **child, across every team** (since 453; per child per team in 445, per entry before). An UPDATE that leaves a row live on the same child takes no new seat (453), so a row of a child already over the cap from before 453 stays editable. The app also checks — that is what produces the friendly message — but the app counts then inserts in two statements, so two coaches acting at once can both read the same count; the trigger is what makes the limit true (it first locks the child's `org_children` row, so an invite waits for a join in flight and two invites count one after the other). A join that would give one child a third live guardian on a team raises `guardian_cap_reached` and moves nothing (the Children queue says so in plain words).
 
 **⚠ CHECK history: strict (215) → relaxed (216) → strict again (290).** Mig 216 relaxed `family_links_role_player_ck` to `status <> 'verified' OR player_id IS NOT NULL` for exactly one producer — the parent's ask-via-link request, a row written with a typed child's name and no player, attached by the coach at approval. That producer was the family link; mig 290 removed both and restored the strict form:
 
 ```
-role = 'guardian' AND player_id IS NOT NULL
+role = 'guardian' AND player_id IS NOT NULL      -- 290 to 452
+role = 'guardian' AND child_id IS NOT NULL       -- since mig 453 (same constraint name)
 ```
+
+**Mig 453:** the CHECK keeps its name and now requires the CHILD, because a house-league link has no roster entry. `family_links_made_on_entry_ck` (`invited_as IN ('first_parent','second_parent') OR player_id IS NOT NULL`) keeps every coach-made link on its entry and stops a house-league writer from silently taking the `rep_coach` default.
 
 A mismatched claim of a coach-sent invite (mig 220) still queues as `pending_approval`, but that row was born from the invite, which already carried the player — nothing that can still be written violates the strict form. `approveGuardianLink` continues to set `player_id` and `status='verified'` in one statement.
 
@@ -5975,7 +5978,7 @@ A mismatched claim of a coach-sent invite (mig 220) still queues as `pending_app
 **`relationship`** (text, nullable) — display label only ('Grandparent', 'Aunt'), capped at 40 chars. **Never used for authorization** and never matched against the roster.
 
 <!-- dict:col:family_links.status -->
-**`status`** (text, NOT NULL, default `'requested'`; CHECK `requested|invited|pending_approval|verified|declined|revoked`) — only `verified` grants anything. Partial UNIQUE `family_links_live_child_uniq` `(child_id, rep_team_id, invited_email, role) WHERE status NOT IN ('declined','revoked')` (mig 445; it was `(rep_team_id, invited_email, role)` before — which also refused a second child of the same address on one team) = one LIVE link per address per CHILD per team (`role` is still in the key though it now has one value — harmless, and a second tier would need it back). **`declined` and `revoked` are deliberately outside that index**: a coach who declines by mistake, or removes someone who later rejoins the family, must be able to let them back in. Re-request spam is handled by the rate limiter, not by a permanent lockout.
+**`status`** (text, NOT NULL, default `'requested'`; CHECK `requested|invited|pending_approval|verified|declined|revoked`) — only `verified` grants anything. Partial UNIQUE `family_links_live_child_uniq` **`(child_id, invited_email, role)`** `WHERE status NOT IN ('declined','revoked')` since **mig 453** (one live link per child per address, whatever the team; 453 ended any live duplicates across teams with `ended_by = 'merged'` — 0 on dev). Before 453 it was `(child_id, rep_team_id, invited_email, role)` (mig 445; it was `(rep_team_id, invited_email, role)` before — which also refused a second child of the same address on one team) = one LIVE link per address per CHILD per team (`role` is still in the key though it now has one value — harmless, and a second tier would need it back). **`declined` and `revoked` are deliberately outside that index**: a coach who declines by mistake, or removes someone who later rejoins the family, must be able to let them back in. Re-request spam is handled by the rate limiter, not by a permanent lockout.
 
 <!-- dict:col:family_links.verified_via -->
 **`verified_via`** (text, nullable; CHECK `email_match|coach_approved|registration_match`) — how the link was verified. Slice 1 writes only `coach_approved`; the other two are the Slice 2 on-ramps G3 granted.
@@ -6004,13 +6007,76 @@ A mismatched claim of a coach-sent invite (mig 220) still queues as `pending_app
 <!-- dict:col:family_links.person_id -->
 **`person_id`** (uuid, nullable, FK → `org_people` ON DELETE SET NULL; **mig 251**) — the person behind the link, resolved from `claimed_email` when there is one and `invited_email` otherwise.
 
-⚠ **`family_links` was NOT promoted into a general person↔child relationship table, and an early draft of the Families Book plan was wrong to propose it.** `rep_team_id` is **NOT NULL**, so this table is **rep-team-bound by construction** and cannot represent a house-league child's guardian at all — reusing it would have broken half the Club+League scope. It keeps its existing job (portal access for a rep team's guardians) and merely gains this column. It also covers only the 12 invited families against 70 named guardians; it was never going to be the spine.
+⚠ **Superseded by mig 453 (Stage 4a, 2026-11-08): `family_links` now holds a house-league child too** — `rep_team_id` and `player_id` are nullable and a link reaches the child on every team in the club. It is still a *parent's signed-in connection*, not the Families book's person↔child relationship (that stays `org_person_emails` / the sign-ups). The paragraph below is the pre-453 reasoning, kept for history. ⚠ **`family_links` was NOT promoted into a general person↔child relationship table, and an early draft of the Families Book plan was wrong to propose it.** `rep_team_id` was **NOT NULL**, so this table was **rep-team-bound by construction** and cannot represent a house-league child's guardian at all — reusing it would have broken half the Club+League scope. It keeps its existing job (portal access for a rep team's guardians) and merely gains this column. It also covers only the 12 invited families against 70 named guardians; it was never going to be the spine.
 
 **What it uniquely contributes:** this is the one source that can witness the SAME person under TWO addresses — a row whose `claimed_email` differs from its `invited_email` means the same human opened a signed invitation sent to A and signed in as B. That becomes a former-address row in `org_person_emails`. Ambiguous and chained hops are refused rather than resolved.
+
+<!-- dict:col:family_links.invited_as -->
+**`invited_as`** (text, NOT NULL, default `'rep_coach'`; CHECK `first_parent|second_parent|rep_coach|requested`; **mig 453**, Stage 4a) — **how the connection was made**: through the house-league placement invitation as the sign-up's first parent (`guardian_email`) or second parent (`guardian_email_2`), through a rep coach's Send invitation, or the old ask path (backfilled `requested` where no coach invite was on the row). Decided **per child** at acceptance (an address that is first parent on one sibling and second on another holds one of each). ⚠ **Only `second_parent` is ever ended by a second-parent stop** (Stage 4 ruling 8; CASL memo flag d — a stop never ends the connection of a parent who is the first parent on the child's own sign-up). The default exists for the older rep-side writers (UAT specs, seeds, `tests/sql/child-join-split-fixture.sql`), is the safe direction for flag d, and cannot be taken by a house-league link (`family_links_made_on_entry_ck`).
+
+<!-- dict:col:family_links.ended_by -->
+**`ended_by`** (text, nullable; CHECK `parent|club|coach|stop|merged`, and only on a `revoked`/`declined` row; **mig 453**) — who ended the link: the parent left, the club removed them (registration record window), a rep coach removed or declined them, the address's second-parent stop (`second_parent_stop()`), or a duplicate merged away (453's backfill, `org_children_join`). ⚠ **Any value but `merged` blocks the automatic house-league invitation** for that child and address (Stage 4: a parent who left or was removed is invited again only by the club's Send again). 453 backfilled `coach` on every row already revoked or declined.
 
 <!-- dict:col:family_links.created_at -->
 <!-- dict:col:family_links.updated_at -->
 **`created_at` / `updated_at`** (timestamptz, NOT NULL, default now()) — `created_at` doubles as "requested at".
+
+## `family_invitations`
+<!-- dict:table:family_invitations -->
+
+**Purpose (mig 453, Signed-in family accounts Stage 4a, plan `SIGNED_IN_FAMILY_ACCOUNTS_PLAN.md` Stage 4):** one invitation to join a child's team in the signed-in family app. One acceptance can connect **several children** (ruling 3), so the invitation is its own record, not a `family_links` row. **Service-role only** (RLS on, no policies; explicit `service_role` grant). Opened only by the accept page; the token **never signs anyone in and never shows a team**. Written only by `family_invitation_issue()` (and the stop / acceptance updating its stamps).
+
+<!-- dict:col:family_invitations.id -->
+<!-- dict:col:family_invitations.org_id -->
+<!-- dict:col:family_invitations.email -->
+**`id` / `org_id` / `email`** (uuid PK / uuid → `organizations` CASCADE / text, all NOT NULL) — the club, and the invited address, lowercased and trimmed (CHECK). **No address is ever in a link** (Stage 2 ruling 2): the accept page asks for it first and shows it partly hidden.
+
+<!-- dict:col:family_invitations.token_hash -->
+**`token_hash`** (text, NOT NULL, unique) — SHA-256 of the one-use token (`hashNoLoginToken`); the token itself is only in the email.
+
+<!-- dict:col:family_invitations.source -->
+<!-- dict:col:family_invitations.rep_player_id -->
+<!-- dict:col:family_invitations.child_id -->
+**`source` / `rep_player_id` / `child_id`** (text NOT NULL / uuid → `rep_roster_players` CASCADE / uuid → `org_children` CASCADE) — `placement`: the house-league placement (or moved) email and its second-parent copy, both ids NULL; **what it connects is worked out at acceptance** — every child in the org whose placed sign-up carries this address. `rep_coach`: a coach's Send invitation for one roster entry and its child (both NOT NULL). CHECK `family_invitations_source_check`. `org_children_join` moves `child_id` to the kept child.
+
+<!-- dict:col:family_invitations.sent_by_user_id -->
+<!-- dict:col:family_invitations.created_at -->
+<!-- dict:col:family_invitations.expires_at -->
+**`sent_by_user_id` / `created_at` / `expires_at`** (uuid → `auth.users` SET NULL / timestamptz NOT NULL ×2) — who pressed Publish, Send again or Send invitation (NULL for an automatic late placement or the parent's own "Email me a new invitation"); **30 days** (ruling 9).
+
+<!-- dict:col:family_invitations.used_at -->
+<!-- dict:col:family_invitations.used_by_user_id -->
+<!-- dict:col:family_invitations.cancelled_at -->
+<!-- dict:col:family_invitations.replaced_by -->
+**`used_at` / `used_by_user_id` / `cancelled_at` / `replaced_by`** (timestamptz / uuid → `auth.users` SET NULL / timestamptz / uuid → `family_invitations` SET NULL, DEFERRABLE INITIALLY DEFERRED) — the end of an invitation: accepted (by that account), cancelled (a rep coach's Cancel invite; a second-parent stop cancels an open **placement** invitation unless the address is a first parent on a sign-up of the org — owner O2 2026-11-08), or **replaced** by a newer one (Send again / Email me a new invitation, ruling 9; the old answers "expired, or replaced", drawing state D). **Open** = all four NULL; partial unique `family_invitations_open_placement_uniq (org_id, email)` and `family_invitations_open_rep_uniq (rep_player_id, email)` keep one open per address.
+
+<!-- dict:col:family_invitations.reconnects -->
+**`reconnects`** (boolean, NOT NULL, default false) — **true only for the club's Send again** (ruling 9). It is the one thing that lets an acceptance connect a child the address left, was removed from, or stopped (`family_links.ended_by` other than `merged`). Publish, a late placement and the parent's own "Email me a new invitation" leave it false.
+
+**Triggers / functions:** `family_invitations_not_stopped` (BEFORE INSERT) refuses an address in `second_parent_stops` for the org unless it is a first parent (`guardian_email`) on a sign-up there (O2), and a `rep_coach` invitation to an address in `family_invite_stops` — ⚠ with `league_registrations_second_parent_not_stopped` (below) these are **the one sanctioned database read of `second_parent_stops`** outside the stop (CASL flag c: the race between a stop and a send). `family_invitation_issue(org, email, source, rep_player, child, sent_by, token_hash, days, reconnects)` — advisory-locked per address, marks the open one `replaced_by` the new id and inserts it, in one statement.
+
+## `family_calendar_feeds`
+<!-- dict:table:family_calendar_feeds -->
+
+**Purpose (mig 453, Stage 4a ruling 6):** **one calendar address per parent**, minted signed-in from the family page (Make my link / Copy / Stop this calendar). It serves every team each of the parent's live links reaches, events titled by team, never by child. Service-role only. Replaces the per-link `family_links.calendar_token_hash`, which stays (unread once Stage 4a Part 7 lands) until a later drop.
+
+<!-- dict:col:family_calendar_feeds.id -->
+<!-- dict:col:family_calendar_feeds.user_id -->
+<!-- dict:col:family_calendar_feeds.token_hash -->
+<!-- dict:col:family_calendar_feeds.created_at -->
+<!-- dict:col:family_calendar_feeds.stopped_at -->
+**`id` / `user_id` / `token_hash` / `created_at` / `stopped_at`** (uuid PK / uuid → `auth.users` CASCADE / text unique / timestamptz ×2) — the parent's account, the hash of the feed token, and when they stopped it. Partial unique `family_calendar_feeds_live_user_uniq (user_id) WHERE stopped_at IS NULL`: one live address per parent. A leave, removal, stop, move or season close changes what it serves; nothing reached = an empty calendar, not an error.
+
+## `family_invite_stops`
+<!-- dict:table:family_invite_stops -->
+
+**Purpose (mig 453, Stage 4a, /legal draft c):** an address that pressed **Don't send me invitations** in a rep coach's invitation email. A rep coach's Send invitation to it is refused in words ("That address has asked not to get invitations from this club.") and by `family_invitations_not_stopped`. Placement invitations are unaffected (they ride the address's own sign-up email; its second-parent copies have `second_parent_stops`). **Not** `second_parent_stops`, **not** `family_email_optouts`. Service-role only.
+
+<!-- dict:col:family_invite_stops.id -->
+<!-- dict:col:family_invite_stops.org_id -->
+<!-- dict:col:family_invite_stops.email -->
+<!-- dict:col:family_invite_stops.created_at -->
+**`id` / `org_id` / `email` / `created_at`** (uuid PK / uuid → `organizations` CASCADE / text, lowercased and trimmed / timestamptz) — unique `(org_id, email)`. ⚠ Keyed by the org: a standalone coach team that later moves into a club leaves its stops behind (`team-move-coverage` STAYS) — see the Stage 4a build prompt's Progress note.
 
 ## `family_consents`
 <!-- dict:table:family_consents -->
@@ -6123,6 +6189,12 @@ emails** on a confirm page (no sign-in) and the address comes off the club's sig
 4. **Org-wide and permanent, by ruling.** Every season, until never (O1). There is no "allow again" (O2): an address that said
    stop stays stopped; the person can sign up themselves. Nobody is emailed when a stop happens (O3).
 5. **Service role only** (RLS on, no policies): it holds an address a person asked us to stop using.
+6. **Mig 453 (Stage 4a) extends the stop and adds two database readers.** In the same transaction, `second_parent_stop()` now also
+   cancels the address's open **placement** invitation in the org (unless the address is a first parent on a sign-up there — owner
+   O2 2026-11-08) and ends its `family_links` with `invited_as = 'second_parent'` in the org (`ended_by = 'stop'`; ruling 8). It
+   never ends a link the address holds as first parent, a rep coach's, or an old request (CASL flag d). Two triggers read this table
+   to close the stop race (CASL flag c): `league_registrations_second_parent_not_stopped` (a stopped address cannot be written into
+   `guardian_email_2`, insert or update) and `family_invitations_not_stopped`. Gotcha 2 (TypeScript readers) is unchanged.
 
 <!-- dict:col:second_parent_stops.id -->
 **`id`** (uuid, PK, default `gen_random_uuid()`).

@@ -76,7 +76,7 @@ export async function countRecapViewers(params: {
   const { data: links, error: linksError } = await supabaseAdmin
     .from('family_links')
     .select('id')
-    .eq('rep_team_id', params.repTeamId)
+    // (Stage 4a) Not filtered on rep_team_id: a link is the child's on every team, wherever it was made (mig 453).
     .eq('role', 'guardian')
     .eq('status', 'verified')
     .in('child_id', childIds);

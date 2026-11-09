@@ -1,17 +1,21 @@
 {
-  "generated": "2026-11-07",
-  "total": 402,
+  "generated": "2026-11-08",
+  "total": 468,
   "counts": {
-    "tables": 11,
-    "columns": 191,
-    "indexes": 56,
-    "constraints": 45,
-    "rls": 99
+    "tables": 14,
+    "columns": 218,
+    "indexes": 72,
+    "constraints": 58,
+    "rls": 106
   },
   "items": [
     {
       "key": "check:changed:child_match_rejections.child_match_rejections_door_check",
       "sig": "(door = ANY (ARRAY['single_add'::text, 'paste_list'::text, 'tryout_accept'::text, 'children_queue'::text, 'split'::text])) :: (door = ANY (ARRAY['single_add'::text, 'paste_list'::text, 'tryout_accept'::text]))"
+    },
+    {
+      "key": "check:changed:family_links.family_links_role_player_ck",
+      "sig": "((role = 'guardian'::text) AND (child_id IS NOT NULL)) :: ((role = 'guardian'::text) AND (player_id IS NOT NULL))"
     },
     {
       "key": "check:only-dev:bank_check_waiting.bank_check_waiting_added_shape",
@@ -47,6 +51,30 @@
     },
     {
       "key": "check:only-dev:bank_checks.bank_checks_kind",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:family_invitations.family_invitations_email_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:family_invitations.family_invitations_source_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:family_invite_stops.family_invite_stops_email_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:family_links.family_links_ended_by_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:family_links.family_links_invited_as_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:family_links.family_links_made_on_entry_ck",
       "sig": ""
     },
     {
@@ -406,6 +434,10 @@
       "sig": ""
     },
     {
+      "key": "column:changed:family_links.rep_team_id",
+      "sig": "uuid|uuid|YES| :: uuid|uuid|NO|"
+    },
+    {
       "key": "column:only-dev:bank_check_waiting.added_at",
       "sig": ""
     },
@@ -482,7 +514,111 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:family_calendar_feeds.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_calendar_feeds.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_calendar_feeds.stopped_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_calendar_feeds.token_hash",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_calendar_feeds.user_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_invitations.cancelled_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_invitations.child_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_invitations.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_invitations.email",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_invitations.expires_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_invitations.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_invitations.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_invitations.reconnects",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_invitations.rep_player_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_invitations.replaced_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_invitations.sent_by_user_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_invitations.source",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_invitations.token_hash",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_invitations.used_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_invitations.used_by_user_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_invite_stops.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_invite_stops.email",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_invite_stops.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_invite_stops.org_id",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:family_links.child_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_links.ended_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:family_links.invited_as",
       "sig": ""
     },
     {
@@ -1194,6 +1330,58 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:family_calendar_feeds.family_calendar_feeds_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:family_calendar_feeds.family_calendar_feeds_token_hash_key",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:family_calendar_feeds.family_calendar_feeds_user_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:family_invitations.family_invitations_child_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:family_invitations.family_invitations_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:family_invitations.family_invitations_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:family_invitations.family_invitations_rep_player_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:family_invitations.family_invitations_replaced_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:family_invitations.family_invitations_sent_by_user_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:family_invitations.family_invitations_token_hash_key",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:family_invitations.family_invitations_used_by_user_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:family_invite_stops.family_invite_stops_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:family_invite_stops.family_invite_stops_pkey",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:family_links.family_links_child_id_fkey",
       "sig": ""
     },
@@ -1379,6 +1567,70 @@
     },
     {
       "key": "index:only-dev:bank_checks_one_live_start",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:family_calendar_feeds_live_user_uniq",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:family_calendar_feeds_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:family_calendar_feeds_token_hash_key",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:family_calendar_feeds_user_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:family_invitations_child_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:family_invitations_open_placement_uniq",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:family_invitations_open_rep_uniq",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:family_invitations_org_email_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:family_invitations_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:family_invitations_rep_player_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:family_invitations_replaced_by_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:family_invitations_sent_by_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:family_invitations_token_hash_key",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:family_invitations_used_by_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:family_invite_stops_org_email_uniq",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:family_invite_stops_pkey",
       "sig": ""
     },
     {
@@ -1575,6 +1827,18 @@
     },
     {
       "key": "table:only-dev:bank_check_waiting",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:family_calendar_feeds",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:family_invitations",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:family_invite_stops",
       "sig": ""
     },
     {

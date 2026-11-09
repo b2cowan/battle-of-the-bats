@@ -1,0 +1,822 @@
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Team Placement Invitation Drawings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: the house review document (cool grey chrome, Plex) holding true-size specimens of the family email, the
+   accept page, the family team page and the club's record window. Sticky tabs (one scrolling row), one section at a
+   time, an Everything / Show only what differs switch on every tab that compares. Same kit as the Stage 3 drawings. */
+:root{
+  --bg:#E8EBEE; --surface:#FFFFFF; --surface-2:#F3F5F7; --ink:#1A1F24; --muted:#56606B; --line:#D2D7DD;
+  --accent:#24584B; --fix:#2B672A; --fix-soft:#DFEEDB; --flag:#A8361F; --flag-soft:#F7E2DC;
+  --t-new:#4B2E83; --t-res:#1D4A6E; --t-unc:#5E646B; --ask:#8A5A00; --ask-soft:#F6ECD6;
+  --shadow:0 1px 2px rgba(20,30,40,.06),0 6px 20px rgba(20,30,40,.07);
+  --f-doc:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --fix:#93CF8B; --fix-soft:#1E321F; --flag:#F0907A; --flag-soft:#3A221D;
+  --t-new:#BBA6EE; --t-res:#8FC2E7; --t-unc:#AAB0B7; --ask:#E8B75A; --ask-soft:#3A2E17;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121519; --surface:#1B1F24; --surface-2:#232930; --ink:#E5E9ED; --muted:#9BA5AF; --line:#313840;
+  --accent:#8CC5B3; --fix:#93CF8B; --fix-soft:#1E321F; --flag:#F0907A; --flag-soft:#3A221D;
+  --t-new:#BBA6EE; --t-res:#8FC2E7; --t-unc:#AAB0B7; --ask:#E8B75A; --ask-soft:#3A2E17;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3); color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--f-doc);margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.doc{max-width:1240px;margin:0 auto;padding-block:16px 90px}
+a{color:var(--accent)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+h1,h2,h3,h4{text-wrap:balance;line-height:1.2}
+.doc h1{font-size:30px;margin:6px 0 6px;letter-spacing:-.01em}
+.doc h2{font-size:22px;margin:6px 0 8px;letter-spacing:-.01em}
+.doc h3{font-size:17px;margin:18px 0 6px}
+.doc p,.doc li{max-width:82ch}
+.muted{color:var(--muted)}
+.eyebrow{font:600 11.5px/1.3 var(--f-mono);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.lede{font-size:16px;max-width:82ch}
+.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);display:flex;gap:4px;flex-wrap:nowrap;overflow-x:auto;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);margin:14px 0 8px;scrollbar-width:thin}
+.tabs button{flex:none;font:600 14px/1 var(--f-doc);min-height:44px;padding:0 12px;border-radius:8px;border:1px solid transparent;background:none;color:var(--muted);cursor:pointer;white-space:nowrap}
+.tabs button[aria-selected="true"]{background:var(--surface);border-color:var(--line);color:var(--ink);box-shadow:var(--shadow)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--bg)}
+section.pane[hidden]{display:none}
+.viewrow{display:flex;align-items:center;gap:10px;margin:8px 0 12px;flex-wrap:wrap}
+.viewrow .lab{font:600 11.5px/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.sw{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:3px;gap:2px}
+.sw button{font:600 13.5px/1 var(--f-doc);min-height:40px;padding:0 14px;border-radius:7px;border:0;background:none;color:var(--muted);cursor:pointer}
+.sw button[aria-pressed="true"]{background:var(--surface-2);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 18px;box-shadow:var(--shadow);margin:12px 0}
+.card h3{margin-top:0}
+.card ul,.card ol{margin:6px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.card.verdict{border-left:5px solid var(--fix);border-radius:0 12px 12px 0}
+.read{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:12px 0}
+@media (max-width:900px){.read{grid-template-columns:minmax(0,1fr)}}
+.read>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-width:0}
+.read h4{margin:0 0 6px;font:700 11.5px/1.3 var(--f-mono);letter-spacing:.08em;text-transform:uppercase}
+.read .w h4{color:var(--fix)} .read .g h4{color:var(--flag)} .read .c h4{color:var(--t-res)}
+.read ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:10px;margin:10px 0;background:var(--surface)}
+table.t{border-collapse:collapse;width:100%;font-size:14px;min-width:720px}
+table.t th{font:600 11px/1.3 var(--f-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+table.t td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+table.t tr:last-child td{border-bottom:0}
+.y{color:var(--fix);font-weight:700} .x{color:var(--flag);font-weight:700} .am{color:var(--ask);font-weight:700}
+.mk{font:700 10.5px/1 var(--f-mono);letter-spacing:.04em;border-radius:5px;padding:0 9px;cursor:pointer;border:1.5px solid currentColor;background:var(--surface);white-space:nowrap;min-height:32px}
+.mk.new{color:var(--t-new)} .mk.res{color:var(--t-res)} .mk.unc{color:var(--t-unc)}
+.cap{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 6px;font:600 12px/1.3 var(--f-mono);color:var(--muted)}
+.cap b{color:var(--ink)}
+.cap2{font:500 11.5px/1.3 var(--f-mono);color:var(--muted);margin:6px 0 0}
+.pair{display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start;margin:8px 0}
+.pair>div{min-width:0;max-width:100%}
+.fr{border-radius:12px;outline:1px solid var(--line);box-shadow:var(--shadow);overflow:hidden;max-width:100%}
+.w375{width:375px} .w390{width:390px} .w460{width:460px} .w540{width:540px}
+.samebar{display:none;border:1px dashed var(--line);border-radius:8px;padding:8px 12px;margin:10px 16px;font:600 12px/1.4 var(--f-mono);color:var(--muted);text-align:center}
+body[data-view="diff"] .same{display:none}
+body[data-view="diff"] .samebar{display:block}
+/* the family app (home tokens: paper, ink pill button, eyebrow card titles) and the club frame, for specimens */
+.ak{--paper:#F8F4ED;--card:#FFFFFF;--ink:#241E15;--on-ink:#F8F4ED;--soft:#4A4235;--dim:#615A54;--line:rgba(70,55,30,.12);--line2:rgba(70,55,30,.24);
+  --olive:#57651E;--olive-soft:rgba(87,101,30,.10);--red:#B03A22;--green:#2C6A2A;--green-soft:#E6F0E2;--amber:#8A5300;--amber-soft:#F6ECD6;--new:rgba(75,46,131,.09);
+  --club:#1E3A5F;--club-ink:#FFFFFF;--draft:rgba(87,101,30,.08);
+  background:var(--paper);color:var(--ink);font:14px/1.5 'Inter',system-ui,sans-serif;text-align:left}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ak{--paper:#1A1712;--card:#241F18;--ink:#F3EDE2;--on-ink:#1A1712;--soft:rgba(243,237,226,.78);--dim:rgba(243,237,226,.6);--line:rgba(255,255,255,.1);--line2:rgba(255,255,255,.2);--olive:#D9F99D;--olive-soft:rgba(217,249,157,.12);--red:#F08A74;--green:#9BD58C;--green-soft:rgba(155,213,140,.13);--amber:#E8B75A;--amber-soft:rgba(232,183,90,.14);--new:rgba(187,166,238,.14);--club:#2B4C75;--draft:rgba(217,249,157,.08)}}
+:root[data-theme="dark"] .ak{--paper:#1A1712;--card:#241F18;--ink:#F3EDE2;--on-ink:#1A1712;--soft:rgba(243,237,226,.78);--dim:rgba(243,237,226,.6);--line:rgba(255,255,255,.1);--line2:rgba(255,255,255,.2);--olive:#D9F99D;--olive-soft:rgba(217,249,157,.12);--red:#F08A74;--green:#9BD58C;--green-soft:rgba(155,213,140,.13);--amber:#E8B75A;--amber-soft:rgba(232,183,90,.14);--new:rgba(187,166,238,.14);--club:#2B4C75;--draft:rgba(217,249,157,.08)}
+.ak *{box-sizing:border-box}
+.ak .band{background:var(--club);color:var(--club-ink);display:flex;align-items:center;gap:10px;padding:12px 16px;font:700 15px/1.2 'Inter'}
+.ak .band i{width:32px;height:32px;border-radius:6px;background:#fff;color:#1E3A5F;display:grid;place-items:center;font:800 12px/1 'Inter';font-style:normal;flex:none}
+.ak .bd{padding:14px 16px;display:flex;flex-direction:column;gap:12px}
+.ak .sec{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.ak .ey{margin:0;font:700 11.2px/1.2 'Inter';letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+.ak h4.pg{margin:0;font:700 21.6px/1.2 'Inter';letter-spacing:-.01em}
+.ak h4.pg24{margin:0;font:700 24px/1.2 'Inter';letter-spacing:-.01em}
+.ak .sub{font-size:14px;color:var(--soft);margin:0}
+.ak .th{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.ak .th b{font:700 16.8px/1.2 'Inter'} .ak .th span{font-size:13px;color:var(--dim)}
+.ak .lbl{font:600 12px/1.3 'Inter';color:var(--soft);margin-bottom:4px;display:block}
+.ak .in{border:1px solid var(--line2);background:var(--paper);border-radius:7px;min-height:44px;padding:11px 10px;font-size:13.5px;line-height:1.3;color:var(--ink);min-width:0;overflow-wrap:anywhere}
+.ak .in.ph{color:var(--dim)}
+.ak .in.sel{display:flex;justify-content:space-between}
+.ak .in.url{font:11px/1.4 ui-monospace,Consolas,monospace;word-break:break-all;min-height:0;padding:8px 10px}
+.ak .hint{font-size:12.5px;line-height:1.45;color:var(--dim);margin:4px 0 0}
+.ak .soft{font-size:14px;line-height:1.45;color:var(--soft);margin:0}
+.ak .draft{font-style:italic;background:var(--draft);border-radius:8px;padding:8px 10px;font-size:12.5px;color:var(--olive)}
+.ak .chk{display:flex;gap:10px;font-size:13px;line-height:1.45;align-items:flex-start;min-height:44px}
+.ak .chk b{width:20px;height:20px;border:1.5px solid var(--line2);border-radius:4px;flex:none;margin-top:1px;background:var(--paper)}
+.ak .chk em{font-style:normal;font-weight:700}
+.ak .pill{background:var(--ink);color:var(--on-ink);border-radius:999px;min-height:44px;display:flex;align-items:center;justify-content:center;font:700 15px/1 'Inter';padding:0 18px}
+.ak .pill.off{opacity:.55}
+.ak .cbtn{background:var(--club);color:#fff;border:1.5px solid var(--club);border-radius:8px;min-height:44px;display:flex;align-items:center;justify-content:center;font:600 16px/1 'Inter';padding:0 16px}
+.ak .btn2{border:1px solid var(--line2);border-radius:999px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;padding:0 16px;font:600 14px/1 'Inter';color:var(--ink);background:var(--card)}
+.ak .btn2.sq{border-radius:8px}
+.ak .lk{color:var(--olive);font-weight:600;text-decoration:underline;text-underline-offset:2px;display:inline-flex;align-items:center;min-height:44px}
+.ak .newbox{background:var(--new);outline:2px solid var(--t-new);outline-offset:3px;border-radius:8px;cursor:pointer}
+.ak .resbox{outline:2px dashed var(--t-res);outline-offset:3px;border-radius:8px;cursor:pointer}
+.ak .list{border:1px solid var(--line);border-radius:8px;background:var(--card)}
+.ak .list .li{padding:10px 12px;display:flex;flex-direction:column;gap:4px}
+.ak .list .li+.li{border-top:1px solid var(--line)}
+.ak .lv{display:flex;justify-content:space-between;gap:12px;font-size:13.5px}
+.ak .lv span:first-child{color:var(--dim)}
+.ak .okc{background:var(--green-soft);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.ak .okc h5{margin:0 0 4px;font:700 15px/1.3 'Inter';color:var(--green)}
+.ak .okc p{margin:0;font-size:13.5px}
+.ak .warn{background:var(--amber-soft);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.ak .warn h5{margin:0 0 4px;font:700 15px/1.3 'Inter';color:var(--amber)}
+.ak .warn p{margin:0;font-size:13.5px}
+.ak .chip{display:inline-flex;align-items:center;border-radius:999px;padding:2px 9px;font:600 12px/1.6 'Inter';background:var(--line);color:var(--soft);white-space:nowrap}
+.ak .chip.ok{background:var(--green-soft);color:var(--green)} .ak .chip.due{background:var(--amber-soft);color:var(--amber)}
+.ak .row{display:flex;gap:10px;align-items:center;justify-content:space-between;min-height:44px}
+.ak .row .m{min-width:0;flex:1}
+.ak .row .t{font-weight:600;font-size:14px}
+.ak .row .s{font-size:12.5px;color:var(--dim)}
+.ak .dv{height:1px;background:var(--line);margin:0}
+.ak .up{border:1px solid var(--olive);background:var(--olive-soft);border-radius:10px;padding:10px 12px}
+.ak .up .ul{font:700 11px/1.2 'Inter';letter-spacing:.06em;text-transform:uppercase;color:var(--olive);margin-bottom:4px}
+.ak .ghost{border:1.5px dashed var(--t-new);border-radius:10px;padding:10px 12px;cursor:pointer;color:var(--soft);display:flex;justify-content:space-between;align-items:center;min-height:44px}
+.ak .mark{width:36px;height:36px;border-radius:50%;background:var(--olive-soft);color:var(--olive);display:grid;place-items:center;font:700 15px/1 'Inter';flex:none}
+.ak .sheet{background:var(--card);border-top-left-radius:16px;border-top-right-radius:16px;padding:8px 16px 16px;display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line2)}
+.ak .grab{width:40px;height:4px;border-radius:2px;background:var(--line2);margin:0 auto 4px}
+.ak .shd{display:flex;justify-content:space-between;align-items:flex-start}
+.ak .shd b{font:800 16px/1.3 'Inter'}
+.ak .x44{min-width:44px;min-height:44px;display:grid;place-items:center;font-size:20px;color:var(--dim)}
+.ak .choice{min-height:52px;border:1px solid var(--line2);border-radius:10px;display:flex;align-items:center;gap:10px;padding:0 14px;font:600 14px/1 'Inter'}
+.ak .choice i{width:18px;height:18px;border-radius:50%;border:2px solid currentColor;flex:none;font-style:normal}
+.ak .choice .tick{margin-left:auto;font-weight:800}
+.ak .choice.on{border-color:var(--olive);background:var(--olive-soft);color:var(--olive)}
+.ak .win{background:var(--card);border:1px solid var(--line2);border-radius:12px;overflow:hidden}
+.ak .win .wh{padding:12px 16px;border-bottom:1px solid var(--line)}
+.ak .win .wh .ey{margin-bottom:2px}
+.ak .win .wh .tt{display:flex;justify-content:space-between;align-items:center;font:700 17px/1.2 'Inter'}
+.ak .win .wb{padding:12px 16px;display:flex;flex-direction:column;gap:10px}
+.ak .drow{display:grid;grid-template-columns:110px 1fr;gap:4px 12px;font-size:13.5px;padding:8px 0;border-top:1px solid var(--line)}
+.ak .drow:first-child{border-top:0}
+.ak .drow>span:first-child{color:var(--dim)}
+.ak .act{border-top:1px solid var(--line);padding-top:8px;display:flex;flex-direction:column}
+.ak .act .r{min-height:44px;display:flex;align-items:center;justify-content:space-between;font-size:13.5px;border-top:1px solid var(--line)}
+.ak .act .r:first-of-type{border-top:0}
+/* the family email: no beige frame, white card, club band, footer inside the card (lib/email-envelope-warm.ts) */
+.em{background:#fff;padding:10px;font:16px/1.55 Arial,Helvetica,sans-serif;color:#211c15}
+.em .meta{font:12px/1.5 Arial,sans-serif;color:#665f57;border-bottom:1px solid #dad3c9;padding:0 2px 8px;margin-bottom:10px}
+.em .cb{background:#1E3A5F;color:#fff;border-radius:11px 11px 0 0;padding:12px 18px;display:flex;gap:12px;align-items:center;font:700 18px/1.2 Arial,sans-serif}
+.em .cb i{width:44px;height:44px;border-radius:10px;background:#fff;color:#1E3A5F;display:grid;place-items:center;font:700 16px/1 Arial;font-style:normal;flex:none}
+.em .cd{background:#fff;border:1px solid #c9c1b2;border-top:0;border-radius:0 0 12px 12px;padding:22px 18px;display:flex;flex-direction:column;gap:12px}
+.em h6{margin:0;font:700 22px/1.25 Arial,sans-serif;color:#211c15}
+.em p{margin:0}
+.em ul{margin:0;padding-left:20px}
+.em .eb{display:inline-block;background:#d9f99d;border:1px solid #55641c;border-radius:10px;padding:14px 26px;font:700 16px/1.2 Arial,sans-serif;color:#211c15}
+.em .pn{background:#f6f1ea;border:1px solid #dad3c9;border-radius:10px;padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+.em .pn b.h{font-size:16px}
+.em .sm{font-size:13px;color:#665f57}
+.em .fp{font-size:12px;color:#665f57;line-height:1.5;border-top:1px solid #dad3c9;padding-top:16px;margin-top:16px;display:flex;flex-direction:column;gap:6px}
+.em .newbox{outline:2px solid #4B2E83;outline-offset:3px;border-radius:10px;cursor:pointer}
+.em .lk{color:#55641c;text-decoration:underline}
+.em .wm{font:800 15px/1 Arial,sans-serif;color:#211c15;padding:6px 2px 10px}
+/* asks */
+.ask{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--t-res);border-radius:0 12px 12px 0;padding:14px 18px;margin:14px 0;box-shadow:var(--shadow)}
+.ask.shape{border-left-color:var(--ask)}
+.ask h3{margin:0 0 4px;font-size:17px}
+.ask h3 .no{font:700 13px/1 var(--f-mono);color:var(--muted);margin-right:8px}
+.ask .opts{display:flex;flex-direction:column;gap:4px;margin:10px 0}
+.ask .opts label{display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.45;padding:10px;border-radius:8px;min-height:44px;cursor:pointer;flex-wrap:wrap}
+.ask .opts label>span{flex:1;min-width:0}
+.ask .opts label:hover{background:var(--surface-2)}
+.ask .opts label.rec{background:var(--fix-soft)}
+.ask .opts label.rec::after{content:"Recommended";margin-left:auto;font:700 10.5px/1.6 var(--f-mono);color:var(--fix);white-space:nowrap;padding-left:8px}
+@media (max-width:600px){.ask .opts label.rec::after{flex-basis:100%;margin-left:30px;padding-left:0}}
+.ask .opts input{width:20px;height:20px;flex:none;margin:0;accent-color:var(--accent)}
+.ask .rides{font-size:13.5px;color:var(--muted);margin:4px 0}
+.ask .tag{font:700 10.5px/1 var(--f-mono);color:var(--ask);letter-spacing:.06em;text-transform:uppercase;margin-left:6px}
+.ask textarea,.paste textarea{width:100%;box-sizing:border-box;min-height:48px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:14px/1.45 var(--f-doc);background:var(--surface);color:var(--ink);resize:vertical}
+.paste{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow);margin-top:16px;display:flex;flex-direction:column;gap:8px}
+.paste textarea{min-height:260px;font:12.5px/1.5 var(--f-mono)}
+.btn-d{font:600 14px/1 var(--f-doc);min-height:44px;padding:0 14px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.btn-d.pri{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.rw{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+dialog.note{border:1px solid var(--line);border-radius:14px;padding:0;max-width:min(520px,calc(100vw - 32px));background:var(--surface);color:var(--ink);box-shadow:0 20px 60px rgba(0,0,0,.3)}
+dialog.note::backdrop{background:rgba(10,15,20,.45)}
+dialog.note .nh{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line)}
+dialog.note .nh h3{margin:0;font-size:16px;flex:1}
+dialog.note .nh button{font-size:22px;background:none;border:0;color:var(--muted);cursor:pointer;min-width:44px;min-height:44px}
+dialog.note .nb{padding:12px 16px 16px;font-size:14.5px}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+
+<div class="doc">
+<div class="eyebrow">Signed-in family accounts · Stage 4 · drawings</div>
+<h1>When a child is placed on a team, the parent is invited to sign in</h1>
+<p class="lede">The email that tells a family their child’s team becomes the invitation. Accepting it signs the parent in and connects them to the child. From then on the team’s schedule and the family’s sign-up are on one page in the app. This page draws the email, the accept page, the parent’s first screen, two parents, the calendar, and what the club and coach see. Everything is a proposal until you rule on the asks in the last tab; the three that change the shape of the stage come first. /ux, /design and /legal have been through it, and the consent and privacy words are /legal’s draft.</p>
+
+<div class="card verdict">
+  <h3>Is this stage unblocked? Yes, with one fix the build has to carry.</h3>
+  <ul>
+    <li><b>Counsel is not a gate</b> (your ruling of 2026-11-04). The guardian tier stays switched off until you turn it on, after the consent wording is real. /legal’s draft is placed on tabs 1, 2, 3 and 5.</li>
+    <li><b>Stage 14 did what it promised for rep teams.</b> A parent’s connection now hangs on the child, a season roll no longer strands it, and a finished season’s calendar shows an empty calendar.</li>
+    <li><b>Two gaps remain, and both are this stage’s job.</b> (1) A <b>house-league child cannot be connected at all</b>, because the connection still has to name a rep team and a rep roster entry. (2) A rep child who moves to another team next season <b>loses the parent</b>, because the connection is per team. Ask 3 decides how wide the fix is. It needs a database change.</li>
+    <li><b>Also found:</b> no invitation email exists today; a rep coach copies a link and sends it themselves. Team chat is paused across the whole product (2026-10-18), and no chat room exists that a parent could join (ask 1).</li>
+  </ul>
+</div>
+
+<div class="tabs" role="tablist" id="tabs">
+  <button role="tab" aria-selected="true" data-t="p1">1 · The email</button>
+  <button role="tab" aria-selected="false" data-t="p2">2 · Accepting</button>
+  <button role="tab" aria-selected="false" data-t="p3">3 · First screen</button>
+  <button role="tab" aria-selected="false" data-t="p4">4 · Your sign-up</button>
+  <button role="tab" aria-selected="false" data-t="p5">5 · Two parents</button>
+  <button role="tab" aria-selected="false" data-t="p6">6 · Calendar</button>
+  <button role="tab" aria-selected="false" data-t="p7">7 · Club and coach</button>
+  <button role="tab" aria-selected="false" data-t="p8">8 · When things change</button>
+  <button role="tab" aria-selected="false" data-t="p9">9 · Email law and open calls</button>
+  <button role="tab" aria-selected="false" data-t="p10">10 · Asks</button>
+</div>
+
+<!-- ============ 1 · THE EMAIL ============ -->
+<section class="pane" id="p1">
+  <h2>The placement email becomes the invitation</h2>
+  <p class="muted">Drawn at 375 px, the width a phone mail app shows. It is the email the club already sends when it publishes the teams, from the same button. One panel is added. No second email is sent.</p>
+  <div class="viewrow"><span class="lab">View</span>
+    <div class="sw" role="group" aria-label="View"><button data-v="all" aria-pressed="true">Everything</button><button data-v="diff" aria-pressed="false">Show only what differs</button></div></div>
+  <div class="pair">
+    <div><div class="cap"><b>Today</b> · first parent, nothing owed <button class="mk unc" data-note="The placement email as it ships today. The club’s Publish button on Teams and draft sends it, one per family per division. It is a service notice, so it reaches a family who unsubscribed from club news. The Your sign-up button appears only while money is owed.">UNCHANGED</button></div>
+      <div class="fr w375"><div class="em">
+        <div class="meta"><b>From</b> Riverdale Minor Ball League<br><b>To</b> priya.shah@example.com<br><b>Subject</b> The teams are set — House League 2027</div>
+        <div class="cb"><i>RMB</i>Riverdale Minor Ball League</div>
+        <div class="cd">
+          <h6>The teams are set</h6>
+          <p>Hi <b>Priya</b>,</p>
+          <p>The U9 Rookie teams for House League 2027 are set.</p>
+          <ul><li><b>Aarav Shah</b>: Otters, coach Sam Ortiz</li></ul>
+          <p>The coach will be in touch about getting started.</p>
+          <p class="sm">Questions? Contact Riverdale Minor Ball League at info@riverdaleminor.example.</p>
+          <div class="fp"><span>Sent by Riverdale Minor Ball League because your family is registered for House League 2027.</span><span>Sent through FieldLogicHQ, the software Riverdale Minor Ball League uses.</span></div>
+        </div>
+      </div></div>
+      <p class="cap2">Email shown light-only, as it is sent.</p></div>
+    <div><div class="cap"><b>Proposed</b> · the same email <button class="mk new" data-note="One panel is added under the team lines. Its button opens the accept page (tab 2). The link is an invitation for this address only: it works once and expires after 30 days (ask 9). It does not open the team or sign anyone in by itself.">NEW</button></div>
+      <div class="fr w375"><div class="em">
+        <div class="meta"><b>From</b> Riverdale Minor Ball League<br><b>To</b> priya.shah@example.com<br><b>Subject</b> The teams are set — House League 2027</div>
+        <div class="cb"><i>RMB</i>Riverdale Minor Ball League</div>
+        <div class="cd">
+          <h6>The teams are set</h6>
+          <p class="same">Hi <b>Priya</b>,</p>
+          <p class="same">The U9 Rookie teams for House League 2027 are set.</p>
+          <ul><li><b>Aarav Shah</b>: Otters, coach Sam Ortiz</li></ul>
+          <p class="same">The coach will be in touch about getting started.</p>
+          <div class="samebar">Greeting, lead and coach line · unchanged</div>
+          <div class="pn newbox" data-note="The invitation panel. It names what the parent gets and which address it is for. It promotes nothing (no plan, no price, no FieldLogicHQ pitch), which keeps the email a service notice (tab 9). The fine print is /legal’s draft.">
+            <b class="h">See Aarav’s team in the app</b>
+            <p>Practices, games and your sign-up in one place, and the schedule in your phone’s calendar.</p>
+            <p><span class="eb">Join Aarav’s team</span></p>
+            <p class="sm">This invitation is for priya.shah@example.com and works for 30 days. If you aren’t Aarav’s parent or guardian, ignore it and tell Riverdale Minor Ball League at info@riverdaleminor.example. Joining is your choice. You’ll get emails about Aarav’s team either way, and joining doesn’t add you to any newsletter.</p>
+          </div>
+          <p class="sm same">Questions? Contact Riverdale Minor Ball League at info@riverdaleminor.example.</p>
+          <div class="fp same"><span>Sent by Riverdale Minor Ball League because your family is registered for House League 2027.</span><span>Sent through FieldLogicHQ, the software Riverdale Minor Ball League uses.</span></div>
+          <div class="samebar">Contact line and footer · unchanged</div>
+        </div>
+      </div></div></div>
+    <div><div class="cap"><b>Proposed</b> · when money is owed <button class="mk new" data-note="The Stage 1 ruling keeps the Your sign-up button on every email while money is owed. With the invitation that makes two lime buttons. Drawn: paying stays in the body, where it is today; the invitation stays inside its own panel. If you would rather one button, say so in a note on ask 9.">NEW</button></div>
+      <div class="fr w375"><div class="em">
+        <div class="meta"><b>Subject</b> The teams are set — House League 2027</div>
+        <div class="cb"><i>RMB</i>Riverdale Minor Ball League</div>
+        <div class="cd">
+          <h6>The teams are set</h6>
+          <ul><li><b>Aarav Shah</b>: Otters, coach Sam Ortiz</li></ul>
+          <p><span class="eb">Your sign-up</span></p>
+          <div class="pn newbox" data-note="The same panel, below the pay button."><b class="h">See Aarav’s team in the app</b><p><span class="eb">Join Aarav’s team</span></p></div>
+        </div>
+      </div></div></div>
+  </div>
+
+  <h3>The same email in three other situations</h3>
+  <div class="pair">
+    <div><div class="cap"><b>Second parent’s copy</b> <button class="mk new" data-note="The second parent’s copy has the club band and contact line like every copy. It also carries the Stage 3 line saying who added the address, the same panel with the ignore line under the button, and the Stage 3b Stop footer. Pressing Stop cancels the invitation too. This copy goes only when the address is on the child’s own sign-up.">NEW</button></div>
+      <div class="fr w375"><div class="em">
+        <div class="meta"><b>To</b> dev.shah@example.com<br><b>Subject</b> The teams are set — House League 2027</div>
+        <div class="cb"><i>RMB</i>Riverdale Minor Ball League</div>
+        <div class="cd">
+          <p>Hi,</p>
+          <p class="sm">Priya Shah added your email to Aarav’s sign-up so you get the same updates.</p>
+          <ul><li><b>Aarav Shah</b>: Otters, coach Sam Ortiz</li></ul>
+          <div class="pn newbox" data-note="Accepting makes this address the second connected adult for Aarav. The limit is two per child. The fine print is /legal’s draft for a second parent.">
+            <b class="h">See Aarav’s team in the app</b>
+            <p><span class="eb">Join Aarav’s team</span></p>
+            <p class="sm">This invitation is for dev.shah@example.com and works for 30 days. If you aren’t Aarav’s parent or guardian, ignore it.</p>
+          </div>
+          <p class="sm">Questions? Contact Riverdale Minor Ball League at info@riverdaleminor.example.</p>
+          <div class="fp"><span>A parent added your email to this sign-up. Don’t want these? <span class="lk">Stop these emails</span></span><span>Sent by Riverdale Minor Ball League, 12 Park Rd, Riverdale ON, through FieldLogicHQ.</span></div>
+        </div>
+      </div></div></div>
+    <div><div class="cap"><b>Already in the app</b> <button class="mk new" data-note="A parent who already joined (for an older sibling, last season, or another team) gets no invitation. The panel becomes one line and a plain link to the family page, which asks for a sign-in like any page in the app. A parent who left, or whom the club removed, gets the email with no panel at all and is never invited again automatically (tab 5).">NEW</button></div>
+      <div class="fr w375"><div class="em">
+        <div class="meta"><b>To</b> priya.chen@example.com<br><b>Subject</b> The teams are set — House League 2027</div>
+        <div class="cb"><i>RMB</i>Riverdale Minor Ball League</div>
+        <div class="cd">
+          <p>Hi <b>Priya</b>,</p>
+          <ul><li><b>Leo Chen</b>: Otters, coach Sam Ortiz</li><li><b>Ava Chen</b>: Otters, coach Sam Ortiz</li></ul>
+          <div class="pn newbox" data-note="One sentence and a link to the family page. A signed-out parent is asked to sign in first.">
+            <p>Leo and Ava’s team is in your app. <span class="lk">Open it</span></p>
+          </div>
+        </div>
+      </div></div></div>
+    <div><div class="cap"><b>Rep: the coach’s invitation</b> <button class="mk new" data-note="A rep team has no placement email. The coach invites from the player’s Guardians card, as today, but the button now emails the invitation instead of handing the coach a link (ask 4). /legal: build it to the commercial-message standard, with the sender, a mailing address and a contact, and a link to refuse further invitations. A coach team with no club shows the FieldLogicHQ wordmark instead of a band, and names the coach and FieldLogicHQ as the senders.">NEW</button></div>
+      <div class="fr w375"><div class="em">
+        <div class="meta"><b>From</b> Sam Ortiz via Riverdale Minor Ball League<br><b>To</b> grace.chen@example.com<br><b>Subject</b> Join Maya’s team, the Riverdale Hawks U13</div>
+        <div class="cb"><i>RMB</i>Riverdale Minor Ball League</div>
+        <div class="cd">
+          <h6>Join Maya’s team</h6>
+          <p>Hi,</p>
+          <p>Sam Ortiz, coach of the Riverdale Hawks U13, invited this address to see Maya’s team in the app: practices, games and the coach’s updates.</p>
+          <p><span class="eb">Join Maya’s team</span></p>
+          <p class="sm">This invitation is for grace.chen@example.com and works for 30 days. If you aren’t Maya’s parent or guardian, ignore it.</p>
+          <div class="fp"><span>Don’t want invitations like this? <span class="lk">Don’t send me invitations</span></span><span>Sent by Sam Ortiz for Riverdale Minor Ball League, 12 Park Rd, Riverdale ON, through FieldLogicHQ. Contact: info@riverdaleminor.example.</span></div>
+        </div>
+      </div></div></div>
+  </div>
+  <div class="read">
+    <div class="w"><h4>What this does</h4><ul><li>One email at placement, as ruled. A family that never opens the app loses nothing: the email still names the team and the coach.</li><li>Siblings: one acceptance connects the parent to every child on their sign-ups in this club, now and as each is placed (ask 3). The next division’s email then says “in your app”.</li></ul></div>
+    <div class="g"><h4>Cost</h4><ul><li>Each division publishes separately, so a family with children in two divisions sees the panel twice if they don’t accept the first. Both lead to the same connection.</li><li>The rep coach’s invitation needs its own “don’t send me invitations” stop: new work.</li></ul></div>
+    <div class="c"><h4>Not drawn</h4><ul><li>No reminder for parents who never accept. The club’s “Send again” (tab 7) is the only nudge, which also keeps the second parent’s copies to what the anti-spam memo allows.</li></ul></div>
+  </div>
+</section>
+
+<!-- ============ 2 · ACCEPTING ============ -->
+<section class="pane" id="p2" hidden>
+  <h2>Accepting: one page, whatever account the parent has</h2>
+  <p class="muted">Phone, 390 px, in the family app’s look (paper ground, the dark pill button). The page asks for the email first, as the coach join page does since Stage 2, because no address rides in the link. The invitation went to that inbox, so a new account made from it needs no separate confirm email. If the parent forwards the invitation, whoever opens it first can join with it. It works once, so the parent would then see “no longer works” and ask the club (ask 15).</p>
+  <div class="viewrow"><span class="lab">View</span>
+    <div class="sw" role="group" aria-label="View"><button data-v="all" aria-pressed="true">Everything</button><button data-v="diff" aria-pressed="false">Show only what differs</button></div></div>
+  <div class="pair">
+    <div><div class="cap"><b>Today</b> · the rep claim page (switched off) <button class="mk unc" data-note="Today’s page asks the age band, shows a draft notice, and asks two consents. A signed-out parent who presses Connect is sent to sign in and then fills the form again. It reaches only rep teams. /legal: its draft notice says the words are being confirmed with a privacy advisor. That is no longer true since the counsel gate was removed, and the build replaces it.">UNCHANGED</button></div>
+      <div class="fr w390"><div class="ak"><div class="bd">
+        <h4 class="pg">Connect to your player</h4>
+        <p class="sub">Your coach invited you to follow your player’s team — their schedule, results and the coach’s updates.</p>
+        <div><span class="lbl">How old is your player?</span><div class="in sel"><span>Choose…</span><span>▾</span></div></div>
+        <div class="draft">Draft wording — being confirmed with our privacy advisor before this opens.</div>
+        <div class="chk"><b></b><span>I agree to Riverdale Minor Ball League collecting and using this player’s information to manage the team and keep coaching records. <em>Required</em></span></div>
+        <div class="chk"><b></b><span>I’m this player’s parent or legal guardian. <em>Required</em></span></div>
+        <div class="pill off">Connect</div>
+      </div></div></div></div>
+    <div><div class="cap"><b>Proposed</b> · signed out, new to FieldLogicHQ <button class="mk res" data-note="The same page, rebuilt around the child’s name. Step 1 is the email box. When the typed email matches the invitation, the password box appears for a new account (or the password sign-in for an existing one). The age question is gone (ask 12). The consent block and the button come last, and the parent fills the page once.">RESTYLED</button></div>
+      <div class="fr w390"><div class="ak"><div class="bd">
+        <h4 class="pg">Join Aarav’s team</h4>
+        <p class="sub">Otters · U9 Rookie · Riverdale Minor Ball League</p>
+        <div class="newbox" style="padding:8px" data-note="Email first. The page knows which address the invitation is for and shows it partly hidden. A different address gets state C below.">
+          <span class="lbl">Type the email this invitation was sent to</span><div class="in">priya.shah@example.com</div>
+          <p class="hint">This invitation is for p••••••@example.com.</p></div>
+        <div><span class="lbl">Choose a password</span><div class="in ph">At least 8 characters</div></div>
+        <div class="sec newbox" data-note="/legal’s draft (a). Two required boxes. The second agrees to the parent’s own account. The club already holds the child’s information, so agreeing to that would not be a real choice. The record keeps the exact words shown, the version, the time and the club.">
+          <p class="ey">Before you join</p>
+          <p class="soft">Riverdale Minor Ball League already has Aarav’s sign-up. Joining lets you see Aarav’s team, practices and games here, and your sign-up.</p>
+          <p class="soft"><b>Who sees what.</b> You see Aarav’s team, coach, practice and game times and places, and your sign-up, and nothing about other children. Aarav’s coaches and the club’s staff see the name, email and phone on Aarav’s sign-up, and the club can see that you joined. Other families can’t see you or Aarav here. FieldLogicHQ, the software the club uses, keeps your account. <span class="lk">How we use your information</span></p>
+          <p class="soft">Joining is your choice. It doesn’t put you on any newsletter.</p>
+          <div class="chk"><b></b><span>I’m Aarav’s parent or legal guardian. <em>Required</em></span></div>
+          <div class="chk"><b></b><span>I agree that FieldLogicHQ and Riverdale Minor Ball League may use my name, email and phone number to run my account and to email me about Aarav’s team, as the privacy policy and the club’s privacy notice describe. <em>Required</em></span></div>
+        </div>
+        <div class="pill">Join Aarav’s team</div>
+      </div></div></div></div>
+  </div>
+
+  <h3>The other ways in, and the ways it can fail</h3>
+  <div class="pair">
+    <div><div class="cap"><b>A</b> · signed in, same email <button class="mk new" data-note="A coach, an admin or a parent of another child who is already signed in as the invited address skips the email and password. One person, one login.">NEW</button></div>
+      <div class="fr w390"><div class="ak"><div class="bd">
+        <h4 class="pg">Join Aarav’s team</h4>
+        <p class="soft">You’re signed in as Priya Shah (p••••••@example.com).</p>
+        <div class="sec same"><p class="ey">Before you join</p><p class="soft">The same words and two boxes.</p></div>
+        <div class="samebar">Before you join · unchanged</div>
+        <div class="pill">Join Aarav’s team</div>
+      </div></div></div></div>
+    <div><div class="cap"><b>B</b> · siblings on one invitation <button class="mk new" data-note="With ask 3 A, one acceptance covers every child on the parent’s sign-ups in this club. The page lists them, and the guardian box names each child, so no child is connected without the parent attesting for that child.">NEW</button></div>
+      <div class="fr w390"><div class="ak"><div class="bd">
+        <h4 class="pg">Join your children’s teams</h4>
+        <div class="sec"><div class="row"><div class="m"><div class="t">Leo and Ava</div><div class="s">Otters · U9 Rookie</div></div></div><div class="dv"></div><div class="row"><div class="m"><div class="t">Maya</div><div class="s">Falcons · U11</div></div></div></div>
+        <div class="chk newbox" style="padding:6px" data-note="One box naming every child it covers."><b></b><span>I’m the parent or legal guardian of Leo, Ava and Maya. <em>Required</em></span></div>
+        <div class="pill">Join</div>
+      </div></div></div></div>
+    <div><div class="cap"><b>C</b> · signed in as someone else <button class="mk new" data-note="Today’s rep page lets a different address in and queues it for the coach to approve. Proposed: refuse, and say how to fix it (ask 5). Once every invitation arrives by email, a mismatch means another account, not a wrong address. On a rep team the line names the coach rather than the club.">NEW</button></div>
+      <div class="fr w390"><div class="ak"><div class="bd">
+        <div class="warn"><h5>This invitation is for another email</h5><p>It was sent to p••••••@example.com, and you’re signed in as d••••@example.com. Sign out and use that email, or ask the club to send it to the address you use.</p></div>
+        <div class="btn2">Sign out</div>
+      </div></div></div></div>
+    <div><div class="cap"><b>D</b> · expired, or replaced by a newer one <button class="mk new" data-note="After 30 days, or when the club pressed Send again and a newer invitation exists. The button sends a fresh one to the invited address only, and the page says the same thing whether or not one was sent, as Email me my link does since Stage 1 (ask 9).">NEW</button></div>
+      <div class="fr w390"><div class="ak"><div class="bd">
+        <h4 class="pg">This invitation has expired</h4>
+        <p class="soft">We can send a new one to the address it was for.</p>
+        <div class="pill">Email me a new invitation</div>
+      </div></div></div></div>
+    <div><div class="cap"><b>E</b> · already joined <button class="mk new" data-note="A signed-in parent who is already connected, opening an older invitation or the next division’s, goes straight to the team.">NEW</button></div>
+      <div class="fr w390"><div class="ak"><div class="bd">
+        <h4 class="pg">You’ve already joined</h4>
+        <div class="pill">Open Aarav’s team</div>
+      </div></div></div></div>
+    <div><div class="cap"><b>F</b> · no longer works <button class="mk new" data-note="Every other case: cancelled by the club, stopped by the address owner, or the child withdrawn before acceptance. It does not say which, so the page never tells a stranger why. No sign-in button: a signed-in connected parent would have seen E.">NEW</button></div>
+      <div class="fr w390"><div class="ak"><div class="bd">
+        <h4 class="pg">This invitation no longer works</h4>
+        <p class="soft">If you think that’s wrong, contact Riverdale Minor Ball League at info@riverdaleminor.example.</p>
+      </div></div></div></div>
+  </div>
+  <div class="tw"><table class="t"><thead><tr><th>Situation</th><th>What happens</th></tr></thead><tbody>
+    <tr><td>The same email is a coach, an admin, or a parent of another child</td><td>State A, or the password sign-in. One person, one login. The coach portal and the club admin are unchanged apart from one row in the shared account menu (ask 11).</td></tr>
+    <tr><td>The address has an account that belongs to a different person (a shared family inbox)</td><td>The product cannot tell two people apart by address, so whoever holds the password joins. The page names the account (“You’re signed in as …”) before anyone presses.</td></tr>
+    <tr><td>A child placed on two teams (house league and rep, or two divisions)</td><td>One connection to the child. The family list shows both teams (tab 3).</td></tr>
+    <tr><td>A stopped address (Stage 3b)</td><td>It never receives the invitation. The stop clears the address from every sign-up, and an open invitation to it is cancelled at the moment of the stop (state F).</td></tr>
+    <tr><td>The club changes the parent’s address after sending</td><td>The old invitation is cancelled, and “Send again” goes to the new address.</td></tr>
+    <tr><td>The player is 18 or older</td><td>No invitation panel. A parent cannot attest for an adult (/legal); the club decides how that player joins.</td></tr>
+  </tbody></table></div>
+</section>
+
+<!-- ============ 3 · FIRST SCREEN ============ -->
+<section class="pane" id="p3" hidden>
+  <h2>The parent’s first screen: the team page that already exists, widened to house league</h2>
+  <p class="muted">The smallest thing that meets the rulings is the family team page that is built and switched off today (rep only). It gains house-league teams, the sign-up row, the calendar row, the privacy line and the “connected” line. A family list appears when the parent has more than one team, or none right now.</p>
+  <div class="viewrow"><span class="lab">View</span>
+    <div class="sw" role="group" aria-label="View"><button data-v="all" aria-pressed="true">Everything</button><button data-v="diff" aria-pressed="false">Show only what differs</button></div></div>
+  <div class="pair">
+    <div><div class="cap"><b>Today</b> · the built rep page (switched off) <button class="mk unc" data-note="As built: team name and the record or year on one line; Your player; From the coach, when there are updates; Schedule with Up next, the list, and the calendar row. Card titles are small uppercase eyebrows.">UNCHANGED</button></div>
+      <div class="fr w390"><div class="ak"><div class="bd">
+        <div class="th"><b>Riverdale Hawks U13</b><span>2027</span></div>
+        <div class="sec"><p class="ey">Your player</p><div class="row"><span class="mark">M</span><div class="m"><div class="t">Maya · #7</div><div class="s">Shortstop · Mother</div></div></div></div>
+        <div class="sec"><p class="ey">From the coach</p><div class="t" style="font-weight:600">Tournament weekend</div><div class="s" style="font-size:12.5px;color:var(--dim)">Thu, Apr 15</div><p class="soft">Hotel block details are in your email.</p></div>
+        <div class="sec"><p class="ey">Schedule</p>
+          <div class="up"><div class="ul">Up next</div><div class="row"><div class="m"><div class="t">Practice</div><div class="s">Sat, Apr 17 · 11:00 a.m. · Riverdale Park, Diamond 4</div></div><span class="lk">Directions →</span></div></div>
+          <div class="dv"></div>
+          <div class="row"><div class="m"><div class="s">📅 Add this schedule to your calendar — it stays current automatically</div></div><span class="btn2">Subscribe</span></div>
+        </div>
+      </div></div></div></div>
+    <div><div class="cap"><b>Proposed</b> · one child, house league, after joining <button class="mk res" data-note="The built page with house-league teams. Kept: the team line, Your player, Up next, the schedule. New: the joined note, the sign-up row, Your calendar (the same row as tab 6), and the privacy and connected lines. A house-league team has no From the coach card, because house-league coaches post no updates in the product.">RESTYLED</button></div>
+      <div class="fr w390"><div class="ak"><div class="bd">
+        <div class="th"><b>Otters · U9 Rookie</b><span>House League 2027</span></div>
+        <div class="okc newbox" data-note="Shown once, right after joining.">
+          <h5>You’ve joined Aarav’s team</h5><p>This page is where Aarav’s practices and games appear.</p></div>
+        <div class="sec same"><p class="ey">Your player</p><div class="row"><span class="mark">A</span><div class="m"><div class="t">Aarav</div><div class="s">U9 Rookie</div></div></div></div>
+        <div class="samebar">Your player · unchanged</div>
+        <div class="sec"><p class="ey">Schedule</p>
+          <div class="up"><div class="ul">Up next</div><div class="row"><div class="m"><div class="t">Practice</div><div class="s">Sat, Apr 17 · 9:00 a.m. · Riverdale Park, Diamond 2</div></div><span class="lk">Directions →</span></div>
+            <div class="ghost" style="margin-top:8px" data-note="Ask 2: In / Out / Maybe arrives in Stage 4b. It is drawn here as a ghost so you can see where it will sit. It is not built in 4a."><span><b>Stage 4b</b> · Is Aarav coming?</span><span class="chip">Reply</span></div></div>
+          <div class="row same"><div class="m"><div class="t">Otters vs Herons</div><div class="s">Sat, Apr 24 · 10:30 a.m. · Riverdale Park, Diamond 1</div></div></div>
+          <div class="dv same"></div>
+          <div class="row same"><div class="m"><div class="t">Practice</div><div class="s">Tue, Apr 27 · 6:00 p.m. · Lakeview School field</div></div></div>
+        </div>
+        <div class="sec newbox" data-note="Your calendar: the same row as tab 6, one address for every team (ask 6). Before it is made it shows Make my calendar link."><p class="ey">Your calendar</p><div class="row"><div class="m"><div class="s">One address for every team your children are on. It updates itself.</div></div><span class="btn2">Make my link</span></div></div>
+        <div class="sec newbox" data-note="Opens the same Your sign-up page the email link opens (tab 4). The chip says Paid or the amount owed.">
+          <div class="row"><div class="m"><div class="t">Your sign-up</div><div class="s">House League 2027 · reference HL-4Q7M2K</div></div><span class="chip ok">Paid</span></div></div>
+        <div class="newbox" style="padding:8px" data-note="/legal’s draft (b), then who is connected to this child (tab 5). The second parent shows by address until they join, because the sign-up does not hold their name.">
+          <p class="hint" style="margin:0">Other families can’t see you or Aarav here. Aarav’s coaches and the club see the name, email and phone on the sign-up. <span class="lk">How your information is used</span></p>
+          <div class="row"><div class="m"><div class="s">Connected to Aarav: you, and dev.shah@example.com (invited)</div></div><span class="lk">Manage →</span></div></div>
+      </div></div></div></div>
+  </div>
+
+  <div class="pair">
+    <div><div class="cap"><b>Three children, two teams</b> · the family list <button class="mk new" data-note="Shown when the parent has more than one team. Siblings on one team share a card. One sign-up covers all three children, so it appears once. The calendar row lives here for a family, because it covers every team. Tapping a card opens that team’s page.">NEW</button></div>
+      <div class="fr w390"><div class="ak"><div class="bd">
+        <h4 class="pg">Your family</h4>
+        <p class="sub">Riverdale Minor Ball League</p>
+        <div class="sec"><div class="row"><div class="m"><div class="t">Otters · U9 Rookie</div><div class="s">Leo and Ava</div></div><span class="lk">Open →</span></div>
+          <div class="up"><div class="ul">Up next</div><div class="t" style="font-weight:600">Practice · Sat, Apr 17 · 9:00 a.m.</div><div class="s" style="font-size:12.5px;color:var(--dim)">Riverdale Park, Diamond 2</div></div></div>
+        <div class="sec"><div class="row"><div class="m"><div class="t">Falcons · U11</div><div class="s">Maya</div></div><span class="lk">Open →</span></div>
+          <div class="up"><div class="ul">Up next</div><div class="t" style="font-weight:600">Practice · Tue, Apr 20 · 6:30 p.m.</div><div class="s" style="font-size:12.5px;color:var(--dim)">Lakeview School field</div></div></div>
+        <div class="sec"><p class="ey">Your calendar</p><div class="row"><div class="m"><div class="s">One address for every team your children are on.</div></div><span class="btn2">Make my link</span></div></div>
+        <div class="sec"><div class="row"><div class="m"><div class="t">Your sign-up</div><div class="s">House League 2027 · 3 children</div></div><span class="chip due">$40.00 to pay</span></div></div>
+      </div></div></div></div>
+    <div><div class="cap"><b>No team right now</b> · withdrawn, or between seasons <button class="mk new" data-note="A parent who joined keeps a page even when no child is on a team: after a withdrawal, or after the season closes and before the next placement. The child row says why, and the sign-up row stays while the sign-up page is open (while money is owed, or for 30 days after the season is finished).">NEW</button></div>
+      <div class="fr w390"><div class="ak"><div class="bd">
+        <h4 class="pg">Your family</h4>
+        <p class="sub">Riverdale Minor Ball League</p>
+        <div class="sec"><div class="row"><span class="mark">A</span><div class="m"><div class="t">Aarav</div><div class="s">Not on a team right now. The club will email you when teams are set.</div></div></div></div>
+        <div class="sec"><div class="row"><div class="m"><div class="t">Your sign-up</div><div class="s">House League 2027 · Withdrawn</div></div><span class="lk">Open →</span></div></div>
+      </div></div></div></div>
+    <div><div class="cap"><b>In / Out / Maybe</b> · Stage 4b, drawn to judge <button class="mk new" data-note="If you split the stage (ask 2), this is 4b. It is the coach portal’s attendance sheet (grab line, Close, name, 52 px rows with icons, a tick on the selected one, a note) cut to three answers in your words. The answers go to a new reply record and never overwrite the coach’s own attendance. The coach’s headcount screen is part of 4b and is not drawn here.">NEW</button></div>
+      <div class="fr w390"><div class="ak" style="padding-top:110px">
+        <div class="sheet">
+          <div class="grab"></div>
+          <div class="shd"><div><b>Aarav</b><div class="s" style="font-size:12.5px;color:var(--dim)">Practice · Sat, Apr 17 · 9:00 a.m.</div></div><span class="x44">×</span></div>
+          <div class="choice on"><i></i>In<span class="tick">✓</span></div><div class="choice"><i></i>Out</div><div class="choice"><i></i>Maybe</div>
+          <div class="in ph">Note (e.g. leaving early)</div>
+          <p class="hint">The coach sees your answer and note.</p>
+        </div></div></div></div>
+  </div>
+  <div class="read">
+    <div class="w"><h4>Left out, so the app decision stays open</h4><ul><li>No bottom tab bar, no install prompt, no push notifications, and no settings beyond Sign out and Leave. These pages work in a browser, as an installed web app, or inside a native shell.</li><li>No chat (ask 1). A rep coach’s updates keep their read-only card.</li></ul></div>
+    <div class="g"><h4>What a parent never sees</h4><ul><li>Other children’s names, the roster, or other families’ contacts. The page shows their own child, the team’s times and places, and their own sign-up.</li></ul></div>
+    <div class="c"><h4>Desktop</h4><ul><li>The same single column, centred at 640 px. Nothing else differs, so it is not drawn twice.</li></ul></div>
+  </div>
+</section>
+
+<!-- ============ 4 · YOUR SIGN-UP ============ -->
+<section class="pane" id="p4" hidden>
+  <h2>“Your sign-up” inside the app is the same page</h2>
+  <p class="muted">A grandparent paying from the emailed link and a parent in the app see one page. Two lines differ. The emailed page also gains a way back to the app that does not make the link an account.</p>
+  <div class="viewrow"><span class="lab">View</span>
+    <div class="sw" role="group" aria-label="View"><button data-v="all" aria-pressed="true">Everything</button><button data-v="diff" aria-pressed="false">Show only what differs</button></div></div>
+  <div class="pair">
+    <div><div class="cap"><b>Opened from the email</b> <button class="mk res" data-note="The page as Stage 1 built it, in the club frame. One line is new: a link to the ordinary sign-in for a parent who joined, and for one who hasn’t, a way to get a fresh invitation (sent only to the address on the sign-up). The emailed link itself never signs anyone in.">RESTYLED</button></div>
+      <div class="fr w390"><div class="ak">
+        <div class="band"><i>RMB</i>Riverdale Minor Ball League</div>
+        <div class="bd">
+          <span class="s" style="font-size:13px;color:var(--dim)">← Back to House League 2027</span>
+          <h4 class="pg24">Your sign-up</h4>
+          <p class="sub">House League 2027</p>
+          <p class="soft same">Reference: HL-4Q7M2K · quote it if you contact the club</p>
+          <div class="list same"><div class="li"><div class="row" style="min-height:0"><b>Aarav</b><span class="chip ok">Accepted</span></div>
+            <div class="lv"><span>Division</span><span>U9 Rookie</span></div><div class="lv"><span>Team</span><span>Otters</span></div><div class="lv"><span>Coach</span><span>Sam Ortiz</span></div><div class="lv"><span>Fee</span><span>$120.00 · paid Mar 2</span></div></div></div>
+          <div class="samebar">Reference and child · unchanged</div>
+          <div class="newbox" style="padding:8px" data-note="The way back to the app. Shown only once a child on this sign-up is on a team. Both are ordinary links: one to sign in, one that emails a fresh invitation to the address on the sign-up and says the same thing either way."><p class="soft">Joined Aarav’s team? <span class="lk">Sign in to see it</span></p><p class="soft">Not yet? <span class="lk">Email me an invitation</span></p></div>
+          <p class="soft same">Everything is paid. Thank you.</p>
+          <div class="samebar">Paid line · unchanged</div>
+          <p class="hint" style="margin:0">Anyone with this link can open this page. If it has been shared, ask the club to send you a new one.</p>
+        </div></div></div></div>
+    <div><div class="cap"><b>Opened in the app</b> <button class="mk new" data-note="The same page inside the signed-in app, reached from the sign-up row. The back link goes to the team. The anyone-with-this-link line is gone, because no link is involved. Paying, the receipt field and Ask to withdraw work exactly as on the emailed page.">NEW</button></div>
+      <div class="fr w390"><div class="ak">
+        <div class="bd">
+          <span class="lk newbox" style="padding:0 4px" data-note="Back to the team page (or to the family list when there is more than one team).">← Otters</span>
+          <h4 class="pg24">Your sign-up</h4>
+          <p class="sub">House League 2027</p>
+          <p class="soft same">Reference: HL-4Q7M2K · quote it if you contact the club</p>
+          <div class="list same"><div class="li"><div class="row" style="min-height:0"><b>Aarav</b><span class="chip ok">Accepted</span></div>
+            <div class="lv"><span>Division</span><span>U9 Rookie</span></div><div class="lv"><span>Team</span><span>Otters</span></div><div class="lv"><span>Coach</span><span>Sam Ortiz</span></div><div class="lv"><span>Fee</span><span>$120.00 · paid Mar 2</span></div></div></div>
+          <div class="samebar">Reference and child · unchanged</div>
+          <p class="soft same">Everything is paid. Thank you.</p>
+          <div class="samebar">Paid line · unchanged</div>
+          <p class="hint newbox" style="padding:8px;margin:0" data-note="Replaces the anyone-with-this-link line.">You’re seeing this because you’re signed in as Aarav’s parent.</p>
+        </div></div></div></div>
+  </div>
+  <div class="read">
+    <div class="w"><h4>What this does</h4><ul><li>One page, two ways in, as ruled 2026-10-31. A grandparent who only has the forwarded link can still pay.</li><li>Inside the app the sign-up is found by who is signed in, not by the link, so resetting the family’s link (Stage 1) never signs anyone out.</li></ul></div>
+    <div class="c"><h4>Unchanged</h4><ul><li>The link still ends 30 days after the season is finished, or stays while money is owed. The club’s “Send a new link” is unchanged.</li><li>Either connected parent can ask to withdraw a child, as either address on the sign-up already can since Stage 3. It is a request; the club decides.</li></ul></div>
+  </div>
+</section>
+
+<!-- ============ 5 · TWO PARENTS ============ -->
+<section class="pane" id="p5" hidden>
+  <h2>Two parents, a stop, and a grandparent who pays</h2>
+  <p class="muted">Every frame on this tab is new, so it has no Everything / Show only what differs switch.</p>
+  <div class="pair">
+    <div><div class="cap"><b>Connected to Aarav</b> · under Manage <button class="mk new" data-note="Both parents see the same list. Neither can remove the other (ask 7). A parent removing the other parent is a custody question the club, not the product, should answer. Each can leave, and the club can remove either from the registration.">NEW</button></div>
+      <div class="fr w390"><div class="ak"><div class="bd">
+        <h4 class="pg">Connected to Aarav</h4>
+        <div class="sec">
+          <div class="row"><div class="m"><div class="t">Priya Shah (you)</div><div class="s">Joined Mar 29</div></div></div>
+          <div class="dv"></div>
+          <div class="row"><div class="m"><div class="t">dev.shah@example.com</div><div class="s">Invited Mar 28 · hasn’t joined yet</div></div></div>
+        </div>
+        <p class="soft">To change who’s connected, contact Riverdale Minor Ball League at info@riverdaleminor.example.</p>
+        <div class="btn2">Leave Aarav’s team</div>
+      </div></div></div></div>
+    <div><div class="cap"><b>Leaving</b> · first parent <button class="mk new" data-note="/legal’s draft (e). Leaving ends this person’s connection. A first parent keeps every service email, because the sign-up is theirs. They are never invited again automatically. A later placement email reaches them without the panel, and only the club’s Send again can invite them back. A second parent’s version says the club may still email them, and that Stop these emails ends that too.">NEW</button></div>
+      <div class="fr w390"><div class="ak"><div class="bd">
+        <div class="win"><div class="wh"><div class="tt">Leave Aarav’s team?</div></div><div class="wb">
+          <p class="soft">You’ll stop seeing the Otters here, and your calendar link stops showing their games. Riverdale Minor Ball League will still email you about Aarav’s sign-up. You can join again only if the club sends you a new invitation.</p>
+          <div class="rw" style="justify-content:flex-end"><span class="btn2">Cancel</span><span class="pill">Leave</span></div></div></div>
+      </div></div></div></div>
+    <div><div class="cap"><b>Removed by the club</b> · their next visit <button class="mk new" data-note="The club removes from the registration (tab 7). The parent gets no email. On their next visit the child is gone and one line says so, in words that take no side. The calendar link stops showing that child’s teams.">NEW</button></div>
+      <div class="fr w390"><div class="ak"><div class="bd">
+        <h4 class="pg">Your family</h4>
+        <div class="warn"><p>You’re no longer connected to Aarav. If you think that’s wrong, contact Riverdale Minor Ball League at info@riverdaleminor.example.</p></div>
+      </div></div></div></div>
+    <div><div class="cap"><b>Stop, after the second parent joined</b> <button class="mk new" data-note="Ask 8. The Stop line stays on the second parent’s emails after they join. Pressing it does what Stage 3b’s stop does and also ends their connection. The confirm page says so before the one press (/legal’s draft d). A Stop only ever ends a connection made through the second-parent invitation, never a person’s connection as the first parent on their own child’s sign-up.">NEW</button></div>
+      <div class="fr w390"><div class="ak"><div class="bd">
+        <h4 class="pg">Stop these emails?</h4>
+        <p class="soft">Riverdale Minor Ball League will stop emailing dev.shah@example.com about any sign-up.</p>
+        <p class="soft newbox" style="padding:8px" data-note="Shown only when the address has joined a child’s team.">You’ve joined Aarav’s team in the app. Stopping removes you from it and ends your calendar link. The club won’t email this address about any sign-up, and can’t add it again.</p>
+        <div class="pill">Stop these emails</div>
+      </div></div></div></div>
+  </div>
+  <div class="tw"><table class="t"><thead><tr><th>Person</th><th>What they get</th></tr></thead><tbody>
+    <tr><td>First parent (the address on the sign-up)</td><td>The invitation in the placement email. After joining: the team page, the sign-up, the calendar. Only the club removes a first parent.</td></tr>
+    <tr><td>Second parent (the Stage 3 address)</td><td>Their own copy of the same email, with the “who added you” line and the Stop line. After joining: the same page as the first parent. The limit is two connected adults per child.</td></tr>
+    <tr><td>A grandparent who pays</td><td>Nothing new. They pay from the “Your sign-up” link the family forwards, as today. If the family typed the grandparent’s address as the second parent, the grandparent gets the invitation but cannot truthfully tick “parent or legal guardian” (ask 14).</td></tr>
+    <tr><td>A stopped address</td><td>Never invited. The stop clears every copy of the address and cancels any open invitation. Typed anywhere afterwards, it is refused with the Stage 3b words: “That address has asked not to get these emails from this club. Enter a different one, or leave it empty.”</td></tr>
+    <tr><td>A parent who left or was removed</td><td>Never invited again automatically. Only the club’s “Send again” invites them back.</td></tr>
+  </tbody></table></div>
+</section>
+
+<!-- ============ 6 · CALENDAR ============ -->
+<section class="pane" id="p6" hidden>
+  <h2>The calendar feed, made inside the app</h2>
+  <p class="muted">The button already exists on the team page (switched off). It makes a private address the parent pastes into their calendar app. Ask 6 decides whether it is one address per team or one per parent that follows the children.</p>
+  <div class="viewrow"><span class="lab">View</span>
+    <div class="sw" role="group" aria-label="View"><button data-v="all" aria-pressed="true">Everything</button><button data-v="diff" aria-pressed="false">Show only what differs</button></div></div>
+  <div class="pair">
+    <div><div class="cap"><b>Today</b> · the built row, after Subscribe <button class="mk unc" data-note="As built: Subscribe makes the address, and New link replaces it. There is no Stop: the only way to end an address is to make a new one.">UNCHANGED</button></div>
+      <div class="fr w390"><div class="ak"><div class="bd"><div class="sec">
+        <div class="row"><div class="m"><div class="s">📅 Add this schedule to your calendar — it stays current automatically</div></div><span class="btn2">New link</span></div>
+        <p class="hint" style="margin:0">Copy this address into your calendar app’s “subscribe to calendar” option. Keep it private — anyone with it can see this team’s schedule.</p>
+        <div class="in url">https://fieldlogichq.com/api/family/calendar/k7QmT2x9…</div>
+      </div></div></div></div></div>
+    <div><div class="cap"><b>Proposed</b> · one address for the family <button class="mk res" data-note="One row for every child’s team. It sits on the family list, or on the team page for a parent with one team. Events are titled by team (Otters practice), never by child, so the feed carries no child’s name. Copy and Stop this calendar are added. The address stays an https address, as built.">RESTYLED</button></div>
+      <div class="fr w390"><div class="ak"><div class="bd"><div class="sec">
+        <p class="ey">Your calendar</p>
+        <p class="soft">One address for every team your children are on. It updates itself as teams change.</p>
+        <p class="hint same" style="margin:0">Copy this address into your calendar app’s “subscribe to calendar” option.</p>
+        <div class="samebar">Copy instruction · unchanged</div>
+        <div class="in url">https://fieldlogichq.com/api/family/calendar/k7QmT2x9…</div>
+        <div class="rw newbox" style="padding:6px" data-note="Copy, and a Stop that ends the address at once. Stop asks once before it acts. Making one later gives a new address."><span class="btn2">Copy</span><span class="btn2">Stop this calendar</span></div>
+        <p class="hint">Keep it private. Anyone with it can see your teams’ practice and game times.</p>
+      </div></div></div></div></div>
+  </div>
+  <div class="tw"><table class="t"><thead><tr><th>What happens</th><th>One address per family (recommended)</th><th>One address per team (as built)</th></tr></thead><tbody>
+    <tr><td>Season closes</td><td>That team’s events stay as past events; nothing new appears until the child is placed again, and then the new team appears by itself.</td><td>The address shows an empty calendar (Stage 14 S6). The parent must subscribe again to next year’s team.</td></tr>
+    <tr><td>Child moves team</td><td>The new team replaces the old one in the same calendar.</td><td>The old address goes empty, and the parent must subscribe to the new team.</td></tr>
+    <tr><td>Parent leaves one child, or is removed</td><td>That child’s teams drop off. The address goes empty when the last child goes.</td><td>That team’s address goes empty.</td></tr>
+    <tr><td>Stop this calendar</td><td>Ends the address. The calendar app shows nothing after its next refresh.</td><td>Not built (only “New link”).</td></tr>
+  </tbody></table></div>
+</section>
+
+<!-- ============ 7 · CLUB AND COACH ============ -->
+<section class="pane" id="p7" hidden>
+  <h2>What the club and the coach see</h2>
+  <p class="muted">The club sees each address’s status on the registration record window, where the second parent and the Stage 3b “Stopped” line already live. The Families book gets no new column. The house-league coach sees nothing new in Stage 4a. The rep coach’s Guardians card sends an email instead of a link.</p>
+  <div class="viewrow"><span class="lab">View</span>
+    <div class="sw" role="group" aria-label="View"><button data-v="all" aria-pressed="true">Everything</button><button data-v="diff" aria-pressed="false">Show only what differs</button></div></div>
+  <div class="pair">
+    <div><div class="cap"><b>Today</b> · club, registration record window <button class="mk unc" data-note="The details rows of the registration record window as Stage 3 and 3b built them.">UNCHANGED</button></div>
+      <div class="fr w540"><div class="ak"><div class="win"><div class="wh"><p class="ey">House League 2027 · U9 Rookie</p><div class="tt">Aarav Shah <span class="chip ok">Active</span></div></div><div class="wb">
+        <div>
+          <div class="drow"><span>Guardian</span><span>Priya Shah</span></div>
+          <div class="drow"><span>Email</span><span>priya.shah@example.com</span></div>
+          <div class="drow"><span>Second parent</span><span>dev.shah@example.com · <span class="lk" style="min-height:0">Change</span></span></div>
+          <div class="drow"><span>Phone</span><span>(416) 555-0142</span></div>
+        </div>
+        <div class="act same"><p class="ey">Actions</p><div class="r"><span>Send a new link</span><span>›</span></div></div>
+        <div class="samebar">Actions · unchanged</div>
+      </div></div></div></div></div>
+    <div><div class="cap"><b>Proposed</b> · the same window <button class="mk new" data-note="Each address gets one status under it: In the app since {date}; Invited {date} with Send again; Not invited yet (before the teams are published); or the Stage 3b Stopped line, which stays as built. Send again re-sends the placement email with a fresh invitation, so it is never a separate create-an-account email (ask 9). Anyone who can change registrations can use it.">NEW</button></div>
+      <div class="fr w540"><div class="ak"><div class="win"><div class="wh"><p class="ey">House League 2027 · U9 Rookie</p><div class="tt">Aarav Shah <span class="chip ok">Active</span></div></div><div class="wb">
+        <div>
+          <div class="drow same"><span>Guardian</span><span>Priya Shah</span></div>
+          <div class="drow"><span>Email</span><span>priya.shah@example.com<br><span class="chip ok newbox" data-note="Joined on this date.">In the app since Mar 29</span></span></div>
+          <div class="drow"><span>Second parent</span><span>dev.shah@example.com · <span class="lk" style="min-height:0">Change</span><br><span class="newbox" style="display:inline-flex;gap:8px;align-items:center;padding:0 4px" data-note="Invited, not yet joined. Send again re-sends the placement email to this address only."><span class="chip">Invited Mar 28</span><span class="lk">Send again</span></span></span></div>
+          <div class="drow same"><span>Phone</span><span>(416) 555-0142</span></div>
+        </div>
+        <div class="act"><p class="ey">Actions</p>
+          <div class="r same"><span>Send a new link</span><span>›</span></div>
+          <div class="r newbox" data-note="The club removes a connected parent here. Asks once. The parent gets no email; on their next visit their page says they’re no longer connected (tab 5)."><span>Remove a parent from Aarav’s team</span><span>›</span></div>
+          <p class="hint">Removing someone stops them seeing Aarav’s team. It doesn’t change the sign-up or who gets emails.</p></div>
+      </div></div></div></div></div>
+  </div>
+  <div class="pair">
+    <div><div class="cap"><b>Today</b> · rep coach, the player’s Guardians section <button class="mk unc" data-note="As built and switched off: a collapsed Guardians section with its count. Invite a guardian directly opens the field beside Create invite, which shows a link for the coach to send themselves. A mismatched claim waits in an approval queue here.">UNCHANGED</button></div>
+      <div class="fr w460"><div class="ak"><div class="bd"><div class="sec">
+        <div class="row"><b>Guardians</b><span class="s">0 connected</span></div>
+        <p class="hint same" style="margin:0">Send this to them — it works once, and expires in 14 days.</p>
+        <div class="rw"><div class="in" style="flex:1">grace.chen@example.com</div><span class="pill">Create invite</span></div>
+        <div class="row"><div class="m"><div class="s">grace.chen@example.com · invite sent — waiting for them to accept</div></div><span class="lk">Cancel invite</span></div>
+      </div></div></div></div></div>
+    <div><div class="cap"><b>Proposed</b> · the same section <button class="mk res" data-note="The button sends the invitation email (tab 1) to the typed address, and the invited row is the one the card already has. There is no link to copy. The label loses ‘directly’ (a copy change). The approval queue for mismatched claims goes (ask 5). Nothing else in the coach portal changes, and nothing happens by itself when a coach adds a child to the roster (ask 4).">RESTYLED</button></div>
+      <div class="fr w460"><div class="ak"><div class="bd"><div class="sec">
+        <div class="row same"><b>Guardians</b><span class="s">0 connected</span></div>
+        <div class="samebar">Guardians heading · unchanged</div>
+        <p class="hint resbox" style="margin:0;padding:4px" data-note="Replaces the send-this-to-them sentence.">We’ll email them an invitation. It works for 30 days.</p>
+        <div class="rw"><div class="in" style="flex:1">grace.chen@example.com</div><span class="pill resbox" data-note="Sends the email.">Send invitation</span></div>
+        <div class="row same"><div class="m"><div class="s">grace.chen@example.com · invite sent — waiting for them to accept</div></div><span class="lk">Cancel invite</span></div>
+      </div></div></div></div></div>
+  </div>
+  <div class="read">
+    <div class="w"><h4>What the coach sees</h4><ul><li>House league: nothing new in 4a. In 4b the headcount shows who hasn’t answered, and that is the place to show who is in the app.</li><li>Rep: the Guardians section, as built, with an email instead of a link.</li></ul></div>
+    <div class="c"><h4>Read before drawing, so nothing duplicates</h4><ul><li>The 3b “Stopped by the address owner, {date}” line stays in the record window, in place of the address, as built.</li><li>The Families book keeps Family · Children · Balance · Chased. Ask 10 offers a “Not in the app” filter there instead of a column.</li></ul></div>
+  </div>
+</section>
+
+<!-- ============ 8 · WHEN THINGS CHANGE ============ -->
+<section class="pane" id="p8" hidden>
+  <h2>When the child is withdrawn, moved, or the season rolls</h2>
+  <p class="muted">The connection is to the child, so none of these needs a new invitation.</p>
+  <div class="tw"><table class="t" style="min-width:600px"><thead><tr><th>What happens</th><th>What the parent sees</th></tr></thead><tbody>
+    <tr><td><b>Withdrawn</b></td><td>The team leaves the parent’s page the day the club accepts the withdrawal, and the calendar stops showing it. The page keeps a “not on a team right now” row and the sign-up row (tab 3). The connection to the child stays, so signing up again needs no new invitation.</td></tr>
+    <tr><td><b>Moved to another team</b></td><td>The new team replaces the old one on the page and in the calendar the moment the move is saved, and the existing “new team” email says it is in the app.</td></tr>
+    <tr><td><b>The season rolls</b></td><td>When the club closes the season the team leaves the page and the “not on a team right now” row takes its place. The next team appears when the child is placed, with an “already in the app” email instead of an invitation.</td></tr>
+    <tr><td>The club joins a child’s two records (Stage 14)</td><td>Both records’ parents become connected to the one child. ⚠ The join window (a club screen built in Stage 14) has to name the connected parents before the club confirms. Otherwise a join quietly gives a parent a second set of teams. This is a words-only change to that window, carried by the build.</td></tr>
+  </tbody></table></div>
+</section>
+
+<!-- ============ 9 · EMAIL LAW AND OPEN CALLS ============ -->
+<section class="pane" id="p9" hidden>
+  <h2>Email law, privacy, and what stays open</h2>
+  <h3>Which email is which (Canada’s anti-spam law), per /legal</h3>
+  <div class="tw"><table class="t"><thead><tr><th>Email</th><th>To</th><th>Class today</th><th>With the invitation</th></tr></thead><tbody>
+    <tr><td>Placement email</td><td>First parent</td><td>A service notice about their own sign-up (no unsubscribe, ruling 9c·4)</td><td>Stays a service notice <b>if the panel promotes nothing</b> and is not the email’s purpose: no plan, price, offer or FieldLogicHQ pitch.</td></tr>
+    <tr><td>Placement email</td><td>Second parent</td><td>Probably a service notice, but the “own transaction” exemption does not cleanly cover them (the anti-spam memo); carries the Stop line</td><td>Built to the commercial-message standard anyway (club name, mailing address and a contact, the Stop line). No automated reminders; only the club’s “Send again”.</td></tr>
+    <tr><td>Rep coach’s invitation</td><td>An address the coach typed</td><td>Not sent today (a pasted link)</td><td>Probably not commercial, because nothing is sold. Still a first message to an address someone else typed, so build it to the commercial-message standard: sender, mailing address and a contact, “ignore if not you”, and a stop for further invitations.</td></tr>
+    <tr><td>“Send again” and “Email me a new invitation”</td><td>The invited address only</td><td>—</td><td>The placement email again, so the same class as the first send.</td></tr>
+    <tr><td>Club news</td><td>Anyone who agreed</td><td>Marketing, with consent and unsubscribe</td><td>Unchanged. Joining the app never adds anyone to a marketing list.</td></tr>
+  </tbody></table></div>
+  <h3>Can a stranger be invited into another family’s child?</h3>
+  <ul>
+    <li><b>House league: accepting proves the inbox, not the parenthood.</b> The invitation goes only to an address on that child’s sign-up, so the person who joins holds that inbox (or was forwarded the email by whoever does). That closes the Stage 3 finding for anyone who did not type the address.</li>
+    <li><b>Rep is different.</b> The coach can type any address, and the email carries the child’s first name and the team. A mistyped address reaches a stranger, who could join and see the team’s times and places. The guardian box is the only check, and the coach sees who joined.</li>
+    <li><b>Someone signs up a child with their own address.</b> Stage 14 makes a new child record for every sign-up and never guesses a match, so they reach only the team of the child they signed up. What they gain over today’s email is the practice times and places, which the existing “new team” email already lists. /legal: the tick-box is enough while the page shows only that; it stops being enough the day the page shows attendance, notes or medical details, which then needs the club to verify the parent.</li>
+    <li><b>The join is the real risk</b> (tab 8): a club joining two records gives each record’s parents the other’s teams. The build guards it.</li>
+  </ul>
+  <h3>Open flags from the anti-spam memo (yours to decide)</h3>
+  <div class="tw"><table class="t"><thead><tr><th>Flag</th><th>Before the Stage 4 build? (/legal’s view)</th></tr></thead><tbody>
+    <tr><td>(a) A club with no contact email: “tell the club” has nobody to reach</td><td class="am">Yes. The invitation and the accept page both point at the club. /legal suggests Publish requires a contact email, or the line names the registrar. Either is a change to the club’s Publish step, so it is your call.</td></tr>
+    <tr><td>(c) The millisecond race that lets a stopped address be added back</td><td class="am">Yes. An invitation would turn that race into an account. The build closes it in the database.</td></tr>
+    <tr><td>(d) A person who is a first parent on one sign-up and a second parent on another</td><td class="am">Yes (raised by /legal from “can wait”). A Stop now also ends a connection, so it must end only connections made through the second-parent invitation, never the person’s own child’s.</td></tr>
+    <tr><td>(b) A +alias slips past the stop</td><td>Can wait. The invitation makes it no worse.</td></tr>
+    <tr><td>(e) Two footnotes on the pay-link copy</td><td>Can wait (wording only).</td></tr>
+  </tbody></table></div>
+  <h3>Other open calls around this stage</h3>
+  <ul>
+    <li><b>Native app or installed web app.</b> 2026-07-28 killed the native app and made the installed web app the mobile strategy. 2026-10-29 said “a mobile app”, read that as consistent with the installed web app, and still listed the question as open. On the record it is the installed web app; a native app needs a new decision. These screens hold either way.</li>
+    <li><b>P5</b> (installed web app first) and <b>P6</b> (a named end-state stage): neither is needed for this drawing.</li>
+    <li><b>Stage 3’s open questions:</b> Q5 (sign-ups that disagree on the second parent) is answered here by inviting per child. Q1, Q3 and Q6 can wait.</li>
+    <li><b>What the app shares with the public site, and which plan it belongs to:</b> open, and not needed here. The team page is signed in; the public team page is unchanged.</li>
+  </ul>
+</section>
+
+<!-- ============ 10 · ASKS ============ -->
+<section class="pane" id="p10" hidden>
+  <h2>Asks</h2>
+  <p class="muted">Pick one per ask. The green row is my recommendation. Notes are optional. Asks 1 to 3 change the shape of the stage; the rest are details inside it.</p>
+  <div id="asks"></div>
+  <div class="paste"><div class="rw"><button class="btn-d pri" id="mk">Make my answers</button><button class="btn-d" id="cp">Copy</button><span class="muted" id="cpmsg"></span></div>
+    <textarea id="out" readonly aria-label="Your answers" placeholder="Press “Make my answers”, then copy this text back into the chat."></textarea></div>
+</section>
+</div>
+
+<dialog class="note" id="nd"><div class="nh"><h3>About this</h3><button id="nx" aria-label="Close">×</button></div><div class="nb" id="nt"></div></dialog>
+
+<script>
+(function(){
+  var ASKS=[
+   {id:1,s:1,t:"Team chat: in Stage 4, or with the Messages project?",
+    r:"Tab 3. Your 2026-10-31 ruling puts team chat in the parent’s app. Your 2026-10-18 ruling paused chat everywhere and said families return only through “Messages” (announcements with replies, two adult staff in any family room, the club keeps the record), with its own decision entry. No room a parent could join exists today, so building one here would reverse 10-18 by accident.",
+    o:[["A","Stage 4 ships without chat. Rep coaches’ updates keep their read-only card. Families get messaging when the Messages project brings it back","rec"],["B","Stage 4 waits until Messages is built",""],["C","Build a family team room in Stage 4 (needs a new decision that reverses 10-18 for families)",""]]},
+   {id:2,s:1,t:"Split the stage: 4a (join and see), then 4b (In / Out / Maybe)?",
+    r:"Tab 3. Replies need the rewritten availability plan, a new reply record, and a headcount screen on both coach pages, which widens the coach portal. That is a second build. 4a alone gives every placed family the team on their phone.",
+    o:[["A","Two stages: 4a = invitation, team page, sign-up inside, calendar, club status. 4b = In / Out / Maybe and the coach’s headcount","rec"],["B","One stage with everything",""]]},
+   {id:3,s:1,t:"How far does one connection reach?",
+    r:"Tabs 1, 2 and 8. Today a connection names one rep team, so house league cannot connect at all, and a rep child who changes teams loses the parent. Your Stage 14 ruling said what a parent sees follows the child’s live seasons. Either way it needs a database change.",
+    o:[["A","The child, on every team in this club (house league and rep). One acceptance connects the parent to every child on their sign-ups in the club, now and as each is placed; the accept page names each child","rec"],["B","The child, on every team, but one acceptance per child",""],["C","Keep one connection per team, and add house league beside it",""]]},
+   {id:4,s:0,t:"Rep teams: where does the invitation start?",
+    r:"Tabs 1 and 7. The plan says a rep parent’s account comes from the existing guardian invite, which today hands the coach a link to paste. Either way the email needs a “don’t send me invitations” stop (/legal), which is new work.",
+    o:[["A","The coach’s Send invitation button on the player’s Guardians section sends the email. Nothing happens by itself at roster add","rec"],["B","Adding a child to the roster with a guardian email sends the invitation by itself",""]]},
+   {id:5,s:0,t:"Someone accepts while signed in with a different email",
+    r:"Tab 2, state C. Today’s rep page lets them in and queues them for the coach to approve. Once every invitation arrives by email, a mismatch means another account, not a wrong address.",
+    o:[["A","Refuse, name the invited address partly hidden, offer Sign out. The coach’s approval queue goes","rec"],["B","Refuse on house league; keep the coach’s approval queue on rep",""]]},
+   {id:6,s:0,t:"Calendar: one address per family, or one per team?",
+    r:"Tab 6. One per team (as built) goes empty at every move and every new season, so parents subscribe again each year. One per family follows the children and carries no child’s name.",
+    o:[["A","One address per parent, covering every child’s team, with Copy and Stop this calendar","rec"],["B","One per team, as built, with a Stop added",""]]},
+   {id:7,s:0,t:"Can one parent remove the other?",
+    r:"Tab 5. Separated parents are common in youth sport. A parent removing the other is a custody call the product should not make.",
+    o:[["A","No. Both see who’s connected, each can leave, and the club removes","rec"],["B","The first parent can remove the second parent they added",""]]},
+   {id:8,s:0,t:"A second parent who joined presses Stop on an email",
+    r:"Tab 5. Stage 3b made the stop the removal. Keeping the line after joining is the one way off email for an address someone else typed.",
+    o:[["A","The Stop line stays; stopping also removes them from the app (only their second-parent connection), and the confirm page says so","rec"],["B","After joining, their copies drop the Stop line; they leave from the app instead",""]]},
+   {id:9,s:0,t:"Expiry, and sending the invitation again",
+    r:"Tabs 1, 2 and 7. Your ruling: never a separate “create an account” email. A parent who left or was removed is never invited again automatically.",
+    o:[["A","30 days. The parent’s “Email me a new invitation” and the club’s “Send again” both re-send the placement email with a fresh invitation","rec"],["B","30 days, with a short invitation-only email for re-sends (a separate email, which needs your yes)",""],["C","14 days, as built for rep, and only the club re-sends",""]]},
+   {id:10,s:0,t:"Where the club and the coach see who joined",
+    r:"Tab 7. The record window already shows the second parent and the Stopped line.",
+    o:[["A","Club: a status per address on the registration record window, with Send again and Remove a parent. Coach: nothing new in 4a","rec"],["B","Also a “Not in the app” filter in the Families book",""],["C","Also an “In the app” marker on the house-league coach’s team page",""]]},
+   {id:11,s:0,t:"Where a coach or admin who is also a parent finds their family",
+    r:"Tab 2. One person, one login. The account menu is shared by both portals, so this one row is a change to both, and the only one.",
+    o:[["A","A “Your family” row in the shared account menu, shown only to an account with a connected child","rec"],["B","No new door. The family page is reached from the emails and its own address",""]]},
+   {id:12,s:0,t:"The age question on the accept page",
+    r:"Tab 2. Today’s page asks the age band. /legal: the parent consents on the child’s behalf in every case, so the band decides nothing the parent needs to answer. Use the date of birth the club holds and the club’s province, take the most protective path when it is missing, and never show the age.",
+    o:[["A","No age question. Work it out from the date of birth and the club’s province; no invitation panel for a player 18 or older","rec"],["B","Always ask, as built",""]]},
+   {id:13,s:0,t:"The consent and privacy words",
+    r:"Tabs 1, 2, 3 and 5. /legal drafted them for this stage (draft 0.1, with six build conditions the words rely on). Accepting them does not switch the guardian tier on; that stays your separate call.",
+    o:[["A","Use the /legal draft as the wording the build ships with, switched off","rec"],["B","Send it back to /legal with notes",""]]},
+   {id:14,s:0,t:"A second address that isn’t a parent or guardian (a grandparent)",
+    r:"Tabs 2 and 5. The Stage 3 box is called “Second parent’s email”, but a family may type a grandparent. The guardian box then can’t be ticked truthfully. Softening the box would let anyone the family names see the child’s team.",
+    o:[["A","Keep the box strict. A non-guardian can’t join; they still get the emails and can pay from the link","rec"],["B","Add a third wording for “someone the family asked to follow the team” (needs /legal again)",""]]},
+   {id:15,s:0,t:"A new account made from a forwarded invitation",
+    r:"Tab 2. The invitation works like a password-reset link: whoever opens it first can join. It works once and lasts 30 days, and the real parent then sees “no longer works”.",
+    o:[["A","Trust the invitation (no extra confirm email), as with a password reset","rec"],["B","A new account made from an invitation also confirms its email by a code",""]]}
+  ];
+  var host=document.getElementById('asks');
+  ASKS.forEach(function(a){
+    var d=document.createElement('div');d.className='ask'+(a.s?' shape':'');
+    var h='<h3><span class="no">Ask '+a.id+'</span>'+a.t+(a.s?'<span class="tag">changes the shape</span>':'')+'</h3><p class="rides">'+a.r+'</p><div class="opts">';
+    a.o.forEach(function(o){h+='<label class="'+o[2]+'"><input type="radio" name="a'+a.id+'" value="'+o[0]+'"'+(o[2]?' checked':'')+'><span><b>'+o[0]+'.</b> '+o[1]+'</span></label>';});
+    h+='</div><textarea id="n'+a.id+'" aria-label="Note for ask '+a.id+'" placeholder="Note (optional)"></textarea>';
+    d.innerHTML=h;host.appendChild(d);
+  });
+  var tabs=document.getElementById('tabs');
+  tabs.addEventListener('click',function(e){var b=e.target.closest('button[data-t]');if(!b)return;
+    [].forEach.call(tabs.querySelectorAll('button'),function(x){x.setAttribute('aria-selected',x===b?'true':'false')});
+    [].forEach.call(document.querySelectorAll('section.pane'),function(s){s.hidden=s.id!==b.getAttribute('data-t')});
+    var top=tabs.offsetTop;if(window.scrollY>top)window.scrollTo(0,top);});
+  [].forEach.call(document.querySelectorAll('[data-note]:not(button)'),function(el){el.setAttribute('role','button');el.setAttribute('tabindex','0');});
+  function openNote(el){document.getElementById('nt').textContent=el.getAttribute('data-note');var d=document.getElementById('nd');if(d.showModal)d.showModal();}
+  document.addEventListener('click',function(e){
+    var v=e.target.closest('.sw button');
+    if(v){var val=v.getAttribute('data-v');document.body.setAttribute('data-view',val);
+      [].forEach.call(document.querySelectorAll('.sw button'),function(x){x.setAttribute('aria-pressed',x.getAttribute('data-v')===val?'true':'false')});return;}
+    var m=e.target.closest('[data-note]');
+    if(m){openNote(m);}
+  });
+  document.addEventListener('keydown',function(e){if(e.key!=='Enter'&&e.key!==' ')return;var m=e.target.closest&&e.target.closest('[data-note]:not(button)');if(m){e.preventDefault();openNote(m);}});
+  document.getElementById('nx').onclick=function(){document.getElementById('nd').close()};
+  document.getElementById('mk').onclick=function(){
+    var L=['Signed-in family accounts Stage 4 drawings, my answers:'];
+    ASKS.forEach(function(a){var c=document.querySelector('input[name=a'+a.id+']:checked');var n=document.getElementById('n'+a.id).value.trim();
+      L.push('Ask '+a.id+': '+(c?c.value:'(none)')+(n?' — '+n:''));});
+    document.getElementById('out').value=L.join('\n');};
+  document.getElementById('cp').onclick=function(){
+    var t=document.getElementById('out');var msg=document.getElementById('cpmsg');
+    function sel(){t.select();msg.textContent='Selected. Press Ctrl+C.';}
+    if(navigator.clipboard&&t.value){navigator.clipboard.writeText(t.value).then(function(){msg.textContent='Copied.'},sel);}else{sel();}};
+})();
+</script>

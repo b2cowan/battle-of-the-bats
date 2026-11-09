@@ -6,7 +6,7 @@ import { getFamilySuppressionList, sendFamilyEmail } from './family-email';
 import { systemMailFace } from './club-email-context';
 import { formatInOrgZone } from './timezone';
 import { endSentence } from './utils';
-import { isVisibleToFamilies, reachingLinks } from './family-access';
+import { isVisibleToFamilies, verifiedLinksReachingRepTeam } from './family-access';
 
 /**
  * lib/family-notify.ts — telling connected families when their team's plan changes.
@@ -130,17 +130,10 @@ export async function notifyFamiliesOfGameUpdate(params: {
     // Verified links only. A pending, declined or revoked family is not a recipient — the
     // same rule that governs whether they can read the schedule governs whether we mail
     // them about it.
-    const { data: linkRows } = await supabaseAdmin
-      .from('family_links')
-      .select('user_id, invited_email, child_id')
-      .eq('rep_team_id', event.teamId)
-      .eq('status', 'verified');
     // ...and only a parent whose CHILD is on this team's live season (Stage 14 S6, Ask 13): last season's families are not told
-    // about this season's games.
-    const links = await reachingLinks(
-      ((linkRows ?? []) as { user_id: string | null; invited_email: string; child_id: string }[])
-        .map(l => ({ ...l, childId: l.child_id, repTeamId: event.teamId })),
-      'live',
+    // about this season's games. Wherever the link was made (Stage 4a: a house-league parent of a rep player is told too).
+    const links = await verifiedLinksReachingRepTeam<{ user_id: string | null; invited_email: string }>(
+      event.teamId, 'user_id, invited_email',
     );
     if (links.length === 0) return;
 

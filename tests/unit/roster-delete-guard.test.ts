@@ -108,6 +108,10 @@ describe('undo guard — completeness is acknowledged, not assumed', () => {
    * new child table cannot appear without somebody deciding which side it belongs on.
    */
   const cascadesNotGuarded: Record<string, string> = {
+    // CASCADE on purpose (mig 453).
+    family_invitations:    'a rep coach’s OPEN invitation for the entry (Stage 4a): it cascades away with the player on '
+      + 'purpose, because an invitation to see a team the child is no longer on must stop working. Nothing it holds is a '
+      + 'record: an accepted invitation’s connection is a family_links row on the CHILD, which the roster delete does not touch.',
     // SET NULL, not CASCADE — the row survives, it just loses a pointer.
     rep_team_game_moments: 'ON DELETE SET NULL by design — a player leaving must not erase the coach\'s memory of the night.',
     rep_team_expenses:     'paid_by_player_id is SET NULL — loses a provenance pointer, not the expense.',

@@ -990,6 +990,26 @@
     "indexdef": "CREATE INDEX idx_error_groups_status_severity ON public.error_groups USING btree (status, severity)"
   },
   {
+    "tablename": "family_calendar_feeds",
+    "indexname": "family_calendar_feeds_live_user_uniq",
+    "indexdef": "CREATE UNIQUE INDEX family_calendar_feeds_live_user_uniq ON public.family_calendar_feeds USING btree (user_id) WHERE (stopped_at IS NULL)"
+  },
+  {
+    "tablename": "family_calendar_feeds",
+    "indexname": "family_calendar_feeds_pkey",
+    "indexdef": "CREATE UNIQUE INDEX family_calendar_feeds_pkey ON public.family_calendar_feeds USING btree (id)"
+  },
+  {
+    "tablename": "family_calendar_feeds",
+    "indexname": "family_calendar_feeds_token_hash_key",
+    "indexdef": "CREATE UNIQUE INDEX family_calendar_feeds_token_hash_key ON public.family_calendar_feeds USING btree (token_hash)"
+  },
+  {
+    "tablename": "family_calendar_feeds",
+    "indexname": "family_calendar_feeds_user_idx",
+    "indexdef": "CREATE INDEX family_calendar_feeds_user_idx ON public.family_calendar_feeds USING btree (user_id)"
+  },
+  {
     "tablename": "family_coach_asks",
     "indexname": "family_coach_asks_org_sent_idx",
     "indexdef": "CREATE INDEX family_coach_asks_org_sent_idx ON public.family_coach_asks USING btree (org_id, sent_at DESC)"
@@ -1060,6 +1080,66 @@
     "indexdef": "CREATE INDEX family_email_sends_season_sent_idx ON public.family_email_sends USING btree (season_id, sent_at DESC) WHERE (season_id IS NOT NULL)"
   },
   {
+    "tablename": "family_invitations",
+    "indexname": "family_invitations_child_idx",
+    "indexdef": "CREATE INDEX family_invitations_child_idx ON public.family_invitations USING btree (child_id) WHERE (child_id IS NOT NULL)"
+  },
+  {
+    "tablename": "family_invitations",
+    "indexname": "family_invitations_open_placement_uniq",
+    "indexdef": "CREATE UNIQUE INDEX family_invitations_open_placement_uniq ON public.family_invitations USING btree (org_id, email) WHERE ((source = 'placement'::text) AND (used_at IS NULL) AND (cancelled_at IS NULL) AND (replaced_by IS NULL))"
+  },
+  {
+    "tablename": "family_invitations",
+    "indexname": "family_invitations_open_rep_uniq",
+    "indexdef": "CREATE UNIQUE INDEX family_invitations_open_rep_uniq ON public.family_invitations USING btree (rep_player_id, email) WHERE ((source = 'rep_coach'::text) AND (used_at IS NULL) AND (cancelled_at IS NULL) AND (replaced_by IS NULL))"
+  },
+  {
+    "tablename": "family_invitations",
+    "indexname": "family_invitations_org_email_idx",
+    "indexdef": "CREATE INDEX family_invitations_org_email_idx ON public.family_invitations USING btree (org_id, email)"
+  },
+  {
+    "tablename": "family_invitations",
+    "indexname": "family_invitations_pkey",
+    "indexdef": "CREATE UNIQUE INDEX family_invitations_pkey ON public.family_invitations USING btree (id)"
+  },
+  {
+    "tablename": "family_invitations",
+    "indexname": "family_invitations_rep_player_idx",
+    "indexdef": "CREATE INDEX family_invitations_rep_player_idx ON public.family_invitations USING btree (rep_player_id) WHERE (rep_player_id IS NOT NULL)"
+  },
+  {
+    "tablename": "family_invitations",
+    "indexname": "family_invitations_replaced_by_idx",
+    "indexdef": "CREATE INDEX family_invitations_replaced_by_idx ON public.family_invitations USING btree (replaced_by) WHERE (replaced_by IS NOT NULL)"
+  },
+  {
+    "tablename": "family_invitations",
+    "indexname": "family_invitations_sent_by_idx",
+    "indexdef": "CREATE INDEX family_invitations_sent_by_idx ON public.family_invitations USING btree (sent_by_user_id) WHERE (sent_by_user_id IS NOT NULL)"
+  },
+  {
+    "tablename": "family_invitations",
+    "indexname": "family_invitations_token_hash_key",
+    "indexdef": "CREATE UNIQUE INDEX family_invitations_token_hash_key ON public.family_invitations USING btree (token_hash)"
+  },
+  {
+    "tablename": "family_invitations",
+    "indexname": "family_invitations_used_by_idx",
+    "indexdef": "CREATE INDEX family_invitations_used_by_idx ON public.family_invitations USING btree (used_by_user_id) WHERE (used_by_user_id IS NOT NULL)"
+  },
+  {
+    "tablename": "family_invite_stops",
+    "indexname": "family_invite_stops_org_email_uniq",
+    "indexdef": "CREATE UNIQUE INDEX family_invite_stops_org_email_uniq ON public.family_invite_stops USING btree (org_id, email)"
+  },
+  {
+    "tablename": "family_invite_stops",
+    "indexname": "family_invite_stops_pkey",
+    "indexdef": "CREATE UNIQUE INDEX family_invite_stops_pkey ON public.family_invite_stops USING btree (id)"
+  },
+  {
     "tablename": "family_links",
     "indexname": "family_links_calendar_token_hash_key",
     "indexdef": "CREATE UNIQUE INDEX family_links_calendar_token_hash_key ON public.family_links USING btree (calendar_token_hash)"
@@ -1082,7 +1162,7 @@
   {
     "tablename": "family_links",
     "indexname": "family_links_live_child_uniq",
-    "indexdef": "CREATE UNIQUE INDEX family_links_live_child_uniq ON public.family_links USING btree (child_id, rep_team_id, invited_email, role) WHERE (status <> ALL (ARRAY['declined'::text, 'revoked'::text]))"
+    "indexdef": "CREATE UNIQUE INDEX family_links_live_child_uniq ON public.family_links USING btree (child_id, invited_email, role) WHERE (status <> ALL (ARRAY['declined'::text, 'revoked'::text]))"
   },
   {
     "tablename": "family_links",
