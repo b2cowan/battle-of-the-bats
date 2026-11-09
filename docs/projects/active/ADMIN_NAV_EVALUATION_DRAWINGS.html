@@ -1,0 +1,900 @@
+<title>Three Portals, One Navigation</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700&family=IBM+Plex+Mono:wght@400;500;600&family=Barlow+Condensed:wght@600;700&display=swap">
+<style>
+/* Layout: a document on a cool slate ground; product specimens are framed in the product's own warm skin, so they read
+   as specimens, not as the page. Sticky tab row, a View row under it when a tab compares, one section at a time. */
+:root {
+  --bg: #EEF1F4; --card: #FFFFFF; --fg: #17202B; --muted: #566273; --line: #D5DCE4; --accent: #1F5F6B;
+  --accent-soft: #DCEBEE; --mark: #B5470F; --mark-ink: #FFFFFF; --ok: #2E6B3A; --ok-soft: #E2F0E4; --warn: #8A5A00;
+  --warn-soft: #F7ECD4; --bad: #A2321F; --bad-soft: #F6E0DA;
+  --doc-sans: 'Inter', system-ui, sans-serif; --doc-display: 'Barlow Condensed', 'Inter', sans-serif;
+  --doc-mono: 'IBM Plex Mono', ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #11161C; --card: #1A2129; --fg: #E5EAF0; --muted: #9AA6B4; --line: #2C3642; --accent: #7FC4CF;
+  --accent-soft: #1D3337; --mark: #F08A4B; --mark-ink: #1A1206; --ok: #8FD19B; --ok-soft: #1C2E21; --warn: #E9B95A;
+  --warn-soft: #33290F; --bad: #F2937F; --bad-soft: #3A1E18; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #11161C; --card: #1A2129; --fg: #E5EAF0; --muted: #9AA6B4; --line: #2C3642; --accent: #7FC4CF;
+  --accent-soft: #1D3337; --mark: #F08A4B; --mark-ink: #1A1206; --ok: #8FD19B; --ok-soft: #1C2E21; --warn: #E9B95A;
+  --warn-soft: #33290F; --bad: #F2937F; --bad-soft: #3A1E18; color-scheme: dark; }
+body { background: var(--bg); color: var(--fg); font: 15px/1.55 var(--doc-sans); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--card); }
+.wrap { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 64px; max-width: 1520px; margin: 0 auto; }
+header.doc { padding-block: 22px 10px; }
+header.doc h1 { font: 700 30px/1.1 var(--doc-display); letter-spacing: .01em; margin: 0 0 6px; text-wrap: balance; }
+header.doc p { margin: 0; color: var(--muted); max-width: 78ch; }
+nav.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--card); border-bottom: 1px solid var(--line); margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px))); padding-inline: max(16px, env(safe-area-inset-left, 0px)); overflow-x: auto; white-space: nowrap; }
+nav.tabs button { font: 600 14px var(--doc-sans); color: var(--muted); background: none; border: 0; border-bottom: 2px solid transparent; padding: 13px 12px 11px; cursor: pointer; }
+nav.tabs button[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); }
+nav.tabs button:focus-visible, .seg button:focus-visible, .mk:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.viewrow { display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; padding-block: 12px; color: var(--muted); font-size: 13px; }
+.seg { display: inline-flex; background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 3px; gap: 2px; }
+.seg button { font: 600 12.5px var(--doc-sans); border: 0; background: none; color: var(--muted); padding: 6px 12px; border-radius: 999px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--fg); }
+section.panel { display: none; } section.panel.on { display: block; }
+h2 { font: 700 24px/1.15 var(--doc-display); margin: 18px 0 6px; letter-spacing: .01em; }
+h3 { font: 650 16px/1.3 var(--doc-sans); margin: 22px 0 6px; }
+p, li { max-width: 82ch; } .muted { color: var(--muted); }
+.lede { font-size: 16px; }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; min-width: 0; }
+.card h3 { margin-top: 0; }
+.tag { display: inline-block; font: 600 11px/1 var(--doc-mono); letter-spacing: .06em; text-transform: uppercase; padding: 4px 7px; border-radius: 5px; vertical-align: 2px; }
+.t-new { background: var(--accent-soft); color: var(--accent); } .t-chg { background: var(--warn-soft); color: var(--warn); } .t-same { background: var(--line); color: var(--muted); }
+.v-same { background: var(--ok-soft); color: var(--ok); } .v-just { background: var(--accent-soft); color: var(--accent); } .v-not { background: var(--bad-soft); color: var(--bad); }
+.tablewrap { overflow-x: auto; background: var(--card); border: 1px solid var(--line); border-radius: 10px; }
+table.cmp { border-collapse: collapse; width: 100%; min-width: 1100px; font-size: 13.5px; }
+table.cmp th { font: 700 12px var(--doc-display); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); background: var(--card); position: sticky; top: 0; }
+table.cmp td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+table.cmp td:first-child { font-weight: 650; width: 150px; }
+table.cmp td.v { width: 270px; }
+body.only-diff tr.same-row { display: none; }
+.spec { margin: 14px 0 26px; }
+.spec .cap { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: baseline; margin-bottom: 8px; }
+.spec .cap b { font: 650 14px var(--doc-sans); }
+.spec .cap span { color: var(--muted); font-size: 13px; }
+.stage { overflow: auto; background: repeating-linear-gradient(45deg, transparent 0 8px, rgba(127,127,127,.06) 8px 16px); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+.pair { display: flex; gap: 18px; align-items: flex-start; width: max-content; }
+.pair.stack { flex-direction: column; }
+.pair > div > .lbl { font: 700 11px var(--doc-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.pair > div > .lbl.after { color: var(--accent); }
+.fitwrap { transform-origin: 0 0; }
+.mk { position: absolute; z-index: 30; min-width: 22px; height: 22px; padding: 0 5px; border-radius: 11px; border: 2px solid #fff; background: var(--mark); color: var(--mark-ink); font: 700 11px/18px var(--doc-mono); text-align: center; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,.3); }
+.mk.inl { position: static; display: inline-block; border-color: transparent; vertical-align: 1px; margin-right: 4px; }
+.ask { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; margin: 12px 0; scroll-margin-top: 70px; }
+.ask.flash { outline: 3px solid var(--mark); }
+.ask h3 { margin: 0 0 6px; } .ask ol { margin: 6px 0 0; padding-left: 22px; } .ask li { margin: 3px 0; }
+.rec { font-weight: 650; color: var(--accent); }
+.flow { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+.flow .card ol { padding-left: 20px; margin: 4px 0 0; }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; font-size: 14px; }
+.kv dt { color: var(--muted); } .kv dd { margin: 0; }
+@media (prefers-reduced-motion: no-preference) { .ask { transition: outline-color .3s; } }
+
+/* ───────── PRODUCT SPECIMEN (the warm skin as shipped; fixed colours in both document themes) ───────── */
+.fr { --paper: #F8F4ED; --white: #FFFFFF; --ink: #241E15; --ink2: #4A4235; --ink3: #776D5D; --line: rgba(70,55,30,.12);
+  --line2: rgba(70,55,30,.20); --olive: #57651E; --olive-soft: rgba(87,101,30,.10); --lime: #DAF27C; --amber: #835006;
+  --amber-soft: #F4E7CF; --red: #B23A26; --red-soft: #F9E3DE; --tint: #ECEADF;
+  position: relative; overflow: hidden; background: var(--paper); color: var(--ink); font: 400 14px/1.4 'Inter', sans-serif;
+  border-radius: 6px; box-shadow: 0 0 0 1px rgba(0,0,0,.18), 0 6px 18px rgba(0,0,0,.12); flex: none; }
+.fr * { box-sizing: border-box; }
+.fr .grid { position: absolute; inset: 0; background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px); background-size: 40px 40px; opacity: .45; pointer-events: none; }
+.fr svg { flex: none; display: block; }
+/* strip */
+.strip { position: absolute; top: 0; left: 0; right: 0; height: 48px; background: var(--white); border-bottom: 1px solid var(--line2); display: flex; align-items: center; z-index: 3; }
+.strip .lcell { height: 100%; display: flex; align-items: center; gap: 12px; padding-left: 20px; border-right: 1px solid var(--line); flex: none; }
+.strip.unsplit .lcell { border-right: 0; }
+.wm { display: flex; align-items: center; gap: 6px; font: 700 15px 'Inter'; letter-spacing: -.01em; }
+.wm i { width: 15px; height: 17px; background: var(--olive); clip-path: polygon(0 0,100% 0,100% 28%,35% 28%,35% 45%,85% 45%,85% 70%,35% 70%,35% 100%,0 100%); }
+.wm em { font-style: normal; color: var(--olive); }
+.pword { font: 700 10px 'Inter'; letter-spacing: .1em; text-transform: uppercase; color: var(--ink2); padding-left: 12px; border-left: 1px solid var(--line2); line-height: 14px; }
+.place { display: flex; align-items: center; gap: 10px; padding-left: 32px; min-width: 0; flex: 1; }
+.place .nm { font: 700 16px 'Inter'; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.place .nm { flex: none; } .pfx { min-width: 0; overflow: hidden; flex-shrink: 1; }
+.place .fx { font: 500 12px 'Inter'; color: var(--ink2); white-space: nowrap; }
+.back { white-space: nowrap; flex: none; display: inline-flex; align-items: center; gap: 6px; font: 600 14px 'Inter'; color: var(--ink); padding-right: 12px; border-right: 1px solid var(--line2); height: 22px; }
+.chip { font: 600 10px 'IBM Plex Mono'; letter-spacing: .06em; text-transform: uppercase; padding: 3px 7px; border-radius: 999px; border: 1px solid; white-space: nowrap; }
+.chip.live { color: var(--red); background: var(--red-soft); border-color: rgba(178,58,38,.35); }
+.chip.live::before { content: "● "; }
+.chip.ok { color: var(--olive); background: var(--olive-soft); border-color: rgba(87,101,30,.3); }
+.rgroup { display: flex; align-items: center; gap: 10px; padding-right: 16px; margin-left: auto; flex: none; }
+.vsite { display: inline-flex; align-items: center; gap: 6px; font: 650 12px 'Inter'; padding: 5px 11px; border-radius: 999px; background: #F1EEE6; border: 1px solid var(--line2); }
+.ibtn { width: 34px; height: 34px; display: grid; place-items: center; color: var(--ink2); position: relative; }
+.badge { position: absolute; top: 2px; right: 0; background: var(--red); color: #fff; font: 700 9px/14px 'Inter'; padding: 0 4px; border-radius: 7px; }
+.wsp { display: inline-flex; align-items: center; gap: 5px; font: 650 12px 'Inter'; padding: 6px 10px; border-radius: 999px; border: 1.5px solid #9DBB3A; }
+.qhelp { width: 30px; height: 30px; display: grid; place-items: center; color: var(--ink2); border-radius: 8px; }
+/* sidebar */
+.side { position: absolute; top: 48px; left: 0; bottom: 0; background: var(--white); border-right: 1px solid var(--line2); display: flex; flex-direction: column; z-index: 2; }
+.cell { height: 45px; display: flex; align-items: center; gap: 10px; padding: 0 12px 0 20px; border-bottom: 1px solid var(--line2); flex: none; position: relative; }
+.tile { width: 24px; height: 24px; border-radius: 6px; background: var(--olive-soft); color: var(--olive); font: 700 10px 'Inter'; display: grid; place-items: center; flex: none; overflow: hidden; }
+.tile.logo { border-radius: 50%; background: #2F6B4F; color: #fff; }
+.tile.team { background: #2C6E49; color: #fff; }
+.cell .tx { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 1px; }
+.cell .tx b { font: 700 14px/17px 'Inter'; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cell .tx small { font: 400 11px/14px 'IBM Plex Mono'; color: var(--ink3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cell .tx small .dot { color: var(--red); }
+.chev { width: 16px; display: grid; place-items: center; color: var(--ink3); flex: none; }
+.cell.opener { cursor: pointer; }
+.cell.copen { background: rgba(70,55,30,.07); }
+.cell.copen .chev { color: var(--ink); }
+.chip.mini { font-size: 8.5px; padding: 0 5px; letter-spacing: .05em; line-height: 13px; }
+.hit { position: absolute; border: 1.5px dashed #B5470F; border-radius: 6px; pointer-events: none; z-index: 25; }
+.hit span { position: absolute; right: 4px; bottom: -8px; font: 600 9px "IBM Plex Mono"; color: #B5470F; background: #fff; padding: 0 3px; }
+.x44 { width: 44px; height: 44px; display: grid; place-items: center; margin: -10px -8px -10px auto; }
+.tip { position: absolute; z-index: 9; background: #241E15; color: #fff; font: 600 12px Inter; padding: 6px 9px; border-radius: 6px; line-height: 1.35; white-space: nowrap; }
+.rows { flex: 1; overflow: hidden; padding-top: 6px; display: flex; flex-direction: column; }
+.row { height: 38px; display: flex; align-items: center; gap: 8px; padding: 0 20px; color: var(--ink2); font: 400 14px 'Inter'; white-space: nowrap; flex: none; }
+.row.lit { background: var(--tint); color: var(--olive); font-weight: 600; }
+.row .cnt { margin-left: auto; font: 700 10px/18px 'Inter'; min-width: 18px; height: 18px; border-radius: 9px; background: var(--amber-soft); color: var(--amber); text-align: center; border: 1px solid rgba(131,80,6,.25); }
+.lab { font: 700 11px 'Inter'; letter-spacing: .1em; text-transform: uppercase; color: var(--ink3); padding: 12px 20px 6px; display: flex; align-items: center; flex: none; }
+.lab svg { margin-left: auto; color: var(--ink3); }
+.sel { margin: 4px 14px 6px; height: 34px; border: 1px solid var(--line2); border-radius: 7px; display: flex; align-items: center; padding: 0 8px 0 12px; font: 600 14px 'Inter'; justify-content: space-between; background: var(--white); flex: none; box-shadow: inset 0 -1px 0 rgba(0,0,0,.04); }
+.sel span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.foot { border-top: 1px solid var(--line2); padding: 6px 0; flex: none; }
+.foot .row { height: 34px; font-size: 12px; }
+/* collapsed */
+.side.col .cell { padding: 0; justify-content: center; }
+.tile40 { width: 40px; height: 40px; border-radius: 8px; font: 600 11px 'IBM Plex Mono'; background: var(--olive-soft); color: var(--olive); display: grid; place-items: center; position: relative; }
+.tile40.logo { border-radius: 50%; background: #8C2F39; color: #fff; font: 700 12px 'Inter'; }
+.tile40 .gd { position: absolute; right: -2px; top: -2px; width: 11px; height: 11px; border-radius: 50%; background: var(--red); border: 2px solid #fff; }
+.ico40 { width: 40px; height: 40px; border-radius: 8px; display: grid; place-items: center; color: var(--ink2); margin: 2px auto; }
+.ico40.lit { background: var(--tint); color: var(--olive); }
+.hair { height: 1px; background: var(--line2); margin: 13px 14px; }
+/* bands, masthead, page */
+.band { position: absolute; top: 48px; right: 0; height: 45px; background: var(--white); border-bottom: 1px solid var(--line2); display: flex; align-items: flex-end; padding-left: 18px; z-index: 2; }
+.tab { height: 44px; padding: 0 14px; display: flex; align-items: center; font: 600 14px 'Inter'; color: var(--ink2); border-bottom: 2px solid transparent; }
+.tab.on { color: var(--olive); border-bottom-color: var(--olive); }
+.mast { position: absolute; top: 48px; right: 0; height: 56px; background: var(--white); border-bottom: 1px solid var(--line2); display: flex; align-items: center; padding: 0 32px; z-index: 2; }
+.mast b { font: 700 16px 'Inter'; display: block; } .mast small { font: 400 11px 'IBM Plex Mono'; color: var(--ink3); }
+.mast .nx { margin-left: auto; text-align: right; font: 700 12px 'Inter'; } .mast .nx i { display: block; font: 700 9px 'Inter'; letter-spacing: .12em; color: var(--ink3); font-style: normal; }
+.pg { position: absolute; right: 0; bottom: 0; padding: 0 32px; }
+.ph { display: flex; align-items: center; gap: 12px; height: 34px; }
+.ph h4 { margin: 0; font: 700 20px 'Inter'; } .ph .it { width: 34px; height: 34px; border-radius: 9px; background: var(--olive-soft); border: 1px solid rgba(87,101,30,.25); display: grid; place-items: center; color: var(--olive); }
+.ph .act, .tb .act { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+.btn { height: 34px; display: inline-flex; align-items: center; gap: 6px; padding: 0 14px; border-radius: 6px; font: 600 14px 'Inter'; background: var(--white); border: 1px solid var(--line2); white-space: nowrap; }
+.btn.lime { background: var(--lime); border-color: transparent; }
+.btn.sq { width: 34px; padding: 0; justify-content: center; }
+.tb { display: flex; align-items: center; gap: 10px; height: 34px; }
+.vsw { display: inline-flex; background: var(--white); border: 1px solid var(--line2); border-radius: 999px; padding: 3px; }
+.vsw span { font: 600 12px 'Inter'; padding: 0 14px; height: 28px; display: flex; align-items: center; border-radius: 999px; color: var(--ink2); }
+.vsw span.on { background: var(--olive-soft); color: var(--ink); }
+.tbl { background: var(--white); border: 1px solid var(--line2); border-radius: 8px; margin-top: 12px; overflow: hidden; }
+.tbl .hd, .tbl .tr { display: grid; align-items: center; padding: 0 16px; gap: 10px; }
+.tbl .hd { height: 34px; font: 700 11px 'Barlow Condensed'; letter-spacing: .08em; text-transform: uppercase; color: var(--ink2); border-bottom: 1px solid var(--line2); }
+.tbl .tr { height: 40px; border-bottom: 1px solid var(--line); font-size: 14px; }
+.tbl .tr b { font-weight: 600; } .tbl .tr u { text-decoration-color: rgba(36,30,21,.35); text-underline-offset: 3px; font-weight: 600; text-decoration-thickness: 1px; }
+.note { font-size: 12px; color: var(--ink3); margin-top: 8px; }
+/* popover list (drawn from the shipped strip menu + the dropdown panel) */
+.pop { position: absolute; z-index: 20; width: 340px; background: var(--white); border: 1px solid var(--line2); border-radius: 8px; box-shadow: 0 10px 28px rgba(36,30,21,.22); padding: 6px; }
+.pop .ph2 { font: 700 11px 'Inter'; letter-spacing: .1em; text-transform: uppercase; color: var(--ink3); padding: 6px 10px 7px; }
+.pop .op { white-space: nowrap; display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 10px; border-radius: 6px; font: 400 14px 'Inter'; }
+.pop .op.on { font-weight: 600; background: rgba(70,55,30,.05); }
+.pop .op .st { margin-left: auto; font: 400 12px 'Inter'; color: var(--ink3); }
+.pop .op .ck { width: 16px; color: var(--olive); }
+.pop .sep { height: 1px; background: var(--line); margin: 5px 4px; }
+.pop .all { color: var(--olive); font-weight: 600; }
+/* phone */
+.pbar { position: absolute; top: 0; left: 0; right: 0; background: var(--white); border-bottom: 1px solid var(--line2); z-index: 3; }
+.pbar .r1 { display: flex; align-items: center; gap: 6px; padding: 7px 4px 7px 16px; min-height: 36px; }
+.pbar .r1 .t { min-width: 0; flex: 1; }
+.pbar .r1 .t b { display: block; font: 700 16px/19px 'Inter'; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pbar .r1 .t small { display: flex; align-items: center; gap: 4px; font: 400 11px/14px 'IBM Plex Mono'; color: var(--ink3); white-space: nowrap; }
+.pbar .r1 .t small .chip { font-size: 9px; padding: 1px 5px; }
+.pbar .g44 { width: 44px; height: 44px; display: grid; place-items: center; color: var(--ink2); flex: none; }
+.pbar .tabs { display: flex; overflow: hidden; padding-left: 6px; white-space: nowrap; }
+.pbar .tabs .tab { height: 44px; padding: 0 10px; font-size: 14px; }
+.bnav { position: absolute; left: 0; right: 0; bottom: 0; height: 72px; background: var(--white); border-top: 1px solid var(--line2); display: flex; z-index: 3; }
+.bnav .it { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 9px; gap: 5px; font: 700 10px 'Inter'; color: var(--ink2); position: relative; }
+.bnav .it .pill { width: 46px; height: 30px; border-radius: 15px; display: grid; place-items: center; }
+.bnav .it.on .pill { background: var(--olive-soft); } .bnav .it.on { color: var(--olive); }
+.bnav .it .cnt { position: absolute; top: 4px; left: calc(50% + 6px); font: 700 9px/15px 'Inter'; min-width: 15px; border-radius: 8px; background: var(--amber-soft); color: var(--amber); text-align: center; }
+.pbody { position: absolute; left: 0; right: 0; bottom: 72px; padding: 0 16px; overflow: hidden; }
+.pcard { background: var(--white); border: 1px solid var(--line2); border-radius: 8px; padding: 12px 14px; display: flex; align-items: center; margin-bottom: 8px; }
+.pcard .l b { display: block; font: 600 15px 'Inter'; } .pcard .l small { color: var(--ink3); font-size: 13px; }
+.pcard .r { margin-left: auto; display: flex; align-items: center; gap: 8px; font-size: 14px; }
+.sheet { position: absolute; left: 0; right: 0; bottom: 0; background: var(--white); border-radius: 18px 18px 0 0; box-shadow: 0 -8px 30px rgba(0,0,0,.25); z-index: 10; padding: 8px 14px 16px; }
+.sheet .grab { width: 36px; height: 4px; border-radius: 2px; background: var(--line2); margin: 2px auto 10px; }
+.sheet .sh { display: flex; align-items: center; font: 700 16px 'Inter'; padding: 4px 4px 10px; }
+.sheet .sh span { margin-left: auto; color: var(--ink3); }
+.sheet .op { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 6px; font: 600 16px 'Inter'; border-bottom: 1px solid var(--line); }
+.sheet .op .st { margin-left: auto; font: 400 13px 'Inter'; color: var(--ink3); }
+.sheet .grp { font: 700 11px 'Inter'; letter-spacing: .1em; text-transform: uppercase; color: var(--ink3); padding: 14px 6px 4px; }
+.scrim { position: absolute; inset: 0; background: rgba(20,16,10,.38); z-index: 9; }
+.sq { width: 12px; height: 12px; border-radius: 3px; flex: none; }
+.mselect { margin: 0 6px 8px; height: 44px; border: 1px solid var(--line2); border-radius: 7px; display: flex; align-items: center; justify-content: space-between; padding: 0 10px 0 12px; font: 600 14px 'Inter'; }
+.lt { flex: none; display: grid; place-items: center; background: #fff; box-shadow: inset 0 0 0 1px rgba(70,55,30,.22); overflow: hidden; }
+.lt svg { width: 82%; height: 82%; }
+.lt.r6 { border-radius: 6px; } .lt.r8 { border-radius: 8px; }
+.lgrid { display: grid; grid-template-columns: 150px repeat(3, max-content); gap: 14px 18px; align-items: center; }
+.lgrid .h { font: 700 11px "IBM Plex Mono"; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.lgrid .rl { font: 600 13px var(--doc-sans); }
+.lgrid .rl small { display: block; font-weight: 400; color: var(--muted); }
+.cell .tx b.two { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 16px; }
+.pfx { margin-left: auto; display: flex; align-items: center; gap: 8px; font: 500 12px "Inter"; color: var(--ink3); white-space: nowrap; padding: 0 16px; margin-right: 6px; border-right: 1px solid var(--line2); height: 22px; }
+.pfx i { font-style: normal; font: 700 9px "Inter"; letter-spacing: .12em; color: var(--ink3); }
+.door-sep { height: 1px; background: var(--line); margin: 4px 20px; }
+.am { position: absolute; z-index: 20; min-width: 240px; width: max-content; background: #fff; border: 1px solid var(--line2); border-radius: 10px; box-shadow: 0 12px 30px rgba(36,30,21,.22); padding: 6px; }
+.am-id { display: flex; gap: 10px; align-items: center; padding: 8px 10px; } .am-id small { display: block; font: 400 11px Inter; color: var(--ink3); } .am-id b { font: 600 13px Inter; }
+.am-av { width: 30px; height: 30px; border-radius: 50%; background: var(--olive-soft); color: var(--olive); font: 700 13px Inter; display: grid; place-items: center; flex: none; }
+.am-row { display: flex; align-items: center; gap: 10px; min-height: 36px; padding: 0 10px; border-radius: 6px; font: 400 14px Inter; color: var(--ink); }
+.am-row.chg { background: var(--olive-soft); font-weight: 600; } .am-new { margin-left: auto; font: 600 10px "IBM Plex Mono"; color: var(--olive); letter-spacing: .04em; }
+.am-theme { padding: 6px 10px 8px; } .am-theme small { display: block; font: 400 11px Inter; color: var(--ink3); margin-bottom: 5px; }
+.am-theme .vsw { display: flex; } .am-theme .vsw span { flex: 1; justify-content: center; height: 28px; }
+.am-sep { height: 1px; background: var(--line); margin: 5px 4px; } .am-legal { font: 400 11px Inter; color: var(--ink3); padding: 8px 10px 4px; }
+/* "Show only what differs": unchanged parts fade */
+body.only-diff .fr .same { opacity: .16; }
+body.only-diff .fr .grid { opacity: .15; }
+</style>
+
+<div class="wrap">
+  <header class="doc">
+    <h1>Three portals, one navigation</h1>
+    <p>An audit of how the club admin, the tournament admin and the Coaches Portal tell you where you are and let you move, measured on the dev server at 1440 and 390 wide, with your tournament idea tested and a standard proposed for all three. Every orange marker opens the ask it belongs to. <b>Round 3</b> (2026-11-09): Help moves to the account menu (E16). <b>Round 2</b> (your notes, 2026-11-09): the other portals as doors in the sidebar foot, no folding groups, one sidebar width, names on up to two lines, and the place’s dates and status at the right end of the top strip.</p>
+  </header>
+  <nav class="tabs" role="tablist" aria-label="Sections" id="tabs"></nav>
+  <div class="viewrow" id="viewrow">
+    <span>View</span>
+    <span class="seg" role="group" aria-label="View"><button type="button" id="v-all" aria-pressed="true">Everything</button><button type="button" id="v-diff" aria-pressed="false">Show only what differs</button></span>
+    <span>Size</span>
+    <span class="seg" role="group" aria-label="Size"><button type="button" id="s-true" aria-pressed="true">True size</button><button type="button" id="s-fit" aria-pressed="false">Fit to width</button></span>
+  </div>
+  <main id="panels"></main>
+</div>
+
+<script>
+(function () {
+'use strict';
+/* ── icons: lucide shapes at 24, stroked ─────────────────────────────────────────── */
+var P = {
+  grid: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>',
+  cal: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+  calclock: '<path d="M21 7.5V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3.5M16 2v4M8 2v4M3 10h5"/><circle cx="16" cy="16" r="6"/><path d="M16 14v2l1 1"/>',
+  filecheck: '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4M9 15l2 2 4-4"/>',
+  gantt: '<path d="M10 6h8M12 16h6M3 3v16a2 2 0 0 0 2 2h16M8 11h7"/>',
+  usersround: '<path d="M18 21a8 8 0 0 0-16 0"/><circle cx="10" cy="8" r="5"/><path d="M22 20c0-3.37-2-6.5-4-8a5 5 0 0 0-.45-8.3"/>',
+  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
+  house: '<path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .71-1.53l7-6a2 2 0 0 1 2.58 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+  trophy: '<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22M18 2H6v7a6 6 0 0 0 12 0V2Z"/>',
+  dollar: '<path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
+  idcard: '<rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="8" cy="12" r="2"/><path d="M13 10h5M13 14h3"/>',
+  globe: '<circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20M2 12h20"/>',
+  building: '<path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18ZM6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2M10 6h4M10 10h4M10 14h4M10 18h4"/>',
+  gauge: '<path d="m12 14 4-4M3.34 19a10 10 0 1 1 17.32 0"/>',
+  medal: '<path d="M7.2 15 2.7 7.1A2 2 0 0 1 2.9 5L4.4 3A2 2 0 0 1 6 2h12a2 2 0 0 1 1.6.8L21 5a2 2 0 0 1 .3 2.1L16.8 15M11 12 5.1 2.2M13 12l5.9-9.8M8 7h8"/><circle cx="12" cy="17" r="5"/>',
+  usercheck: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="m16 11 2 2 4-4"/>',
+  qr: '<rect x="3" y="3" width="5" height="5" rx="1"/><rect x="16" y="3" width="5" height="5" rx="1"/><rect x="3" y="16" width="5" height="5" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3M21 21v.01M12 7v3a2 2 0 0 1-2 2H7M3 12h.01M12 3h.01M12 16v.01M16 12h1M21 12v.01M12 21v-1"/>',
+  mail: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',
+  sliders: '<path d="M20 7h-9M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/>',
+  pin: '<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>',
+  tag: '<path d="M12.6 2.6A2 2 0 0 0 11.2 2H4a2 2 0 0 0-2 2v7.2a2 2 0 0 0 .6 1.4l8.7 8.7a2.4 2.4 0 0 0 3.4 0l6.6-6.6a2.4 2.4 0 0 0 0-3.4z"/><circle cx="7.5" cy="7.5" r=".5"/>',
+  book: '<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2zM22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>',
+  gear: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1"/>',
+  down: '<path d="m6 9 6 6 6-6"/>', right: '<path d="m9 18 6-6-6-6"/>', left: '<path d="m12 19-7-7 7-7M19 12H5"/>',
+  bell: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+  user: '<circle cx="12" cy="7" r="4"/><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>',
+  help: '<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/>',
+  card: '<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>',
+  panel: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/>',
+  notebook: '<path d="M13.4 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7.4M2 6h4M2 10h4M2 14h4M2 18h4M18.4 2.6a2.17 2.17 0 0 1 3 3L16 11l-4 1 1-4Z"/>',
+  listord: '<path d="M10 6h11M10 12h11M10 18h11M4 6h1v4M4 10h2M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"/>',
+  trend: '<path d="m22 7-8.5 8.5-5-5L2 17M16 7h6v6"/>',
+  bars: '<path d="M3 3v18h18M18 17V9M13 17V5M8 17v-3"/>',
+  clip: '<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2M12 11h4M12 16h4M8 11h.01M8 16h.01"/>',
+  usercog: '<circle cx="10" cy="7" r="4"/><path d="M10.3 15H7a4 4 0 0 0-4 4v2"/><circle cx="18" cy="18" r="3"/><path d="M18 14v1M18 21v1M21.5 18h-1M15.5 18h-1"/>',
+  file: '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4M16 13H8M16 17H8M10 9H8"/>',
+  archive: '<rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8M10 12h4"/>',
+  spark: '<path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/>',
+  logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>',
+  more: '<circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>',
+  plus: '<path d="M5 12h14M12 5v14"/>',
+  dl: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>',
+  ul: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>',
+  shield: '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>',
+  msg: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  check: '<path d="M20 6 9 17l-5-5"/>', x: '<path d="M18 6 6 18M6 6l12 12"/>', layers: '<path d="m12 2 10 5-10 5L2 7zM2 17l10 5 10-5M2 12l10 5 10-5"/>'
+};
+function I(n, s, w) { return '<svg width="' + (s || 14) + '" height="' + (s || 14) + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="' + (w || 2) + '" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + P[n] + '</svg>'; }
+function mk(id, x, y) { return '<button type="button" class="mk" data-go="' + id + '" style="left:' + x + 'px;top:' + y + 'px" aria-label="Open ask ' + id + '">' + id + '</button>'; }
+function esc(s) { return s; }
+
+/* ── the people and places (fiction) ─────────────────────────────────────────────── */
+var CLUB = 'Lakeshore Minor Baseball', CI = 'LM', EV = 'Lakeshore Fall Classic 2026', EVD = 'Nov 1–3, 2026', EVS = 'Nov 1–3';
+var TORG = 'Northbay Tournaments', TEV = 'Northbay Summer Showdown 2026', TEAM = '14U AA';
+
+/* ── desktop parts ─────────────────────────────────────────────────────────────────── */
+function strip(o) {
+  var l = o.rail < 100
+    ? '<div class="lcell" style="width:' + o.rail + 'px;padding-left:0;justify-content:center"><span class="wm"><i></i></span></div>'
+    : '<div class="lcell" style="' + (o.unsplit ? '' : 'width:' + o.rail + 'px') + '"><span class="wm"><i></i><span>FieldLogic<em>HQ</em></span></span><span class="pword">' + o.word + '</span></div>';
+  var pl = '';
+  if (o.place) {
+    pl = '<div class="place ' + (o.placeCls || '') + '">' + (o.place.back ? '<span class="back">' + I('left', 15) + o.place.back + '</span>' : '') +
+      '<span class="nm">' + o.place.name + '</span>' + (o.place.fx ? '<span class="fx">' + o.place.fx + '</span>' : '') +
+      (o.place.chip || '') + (o.place.help ? '<span class="qhelp">' + I('help', 18, 1.8) + '</span>' : '') + (o.place.pfx ? '<span class="pfx">' + o.place.pfx + '</span>' : '') + '</div>';
+  } else pl = '<div style="flex:1"></div>';
+  var r = '<div class="rgroup same">' + (o.site ? '<span class="vsite">' + I('globe', 15) + 'View site</span>' : '') +
+    '<span class="ibtn">' + I('bell', 16) + '<span class="badge">9+</span></span><span class="ibtn">' + I('user', 17) + '</span>' +
+    (o.ws ? '<span class="wsp">Workspaces ' + I('down', 13) + '</span>' : '') + '</div>';
+  return '<div class="strip' + (o.unsplit ? ' unsplit' : '') + '">' + l + pl + r + (o.marks || '') + '</div>';
+}
+function row(r) {
+  if (r.lab !== undefined) return '<div class="lab ' + (r.cls || 'same') + '">' + r.lab + (r.fold ? I(r.fold === 'open' ? 'down' : 'right', 12) : '') + '</div>';
+  if (r.sel) return '<div class="sel ' + (r.cls || '') + '"><span>' + r.sel + '</span>' + I('down', 14) + '</div>';
+  return '<div class="row ' + (r.lit ? 'lit ' : '') + (r.cls || 'same') + '">' + I(r.i, 14) + '<span>' + r.t + '</span>' + (r.n ? '<span class="cnt">' + r.n + '</span>' : '') + '</div>';
+}
+function cell(c) {
+  if (!c) return '';
+  var tile = c.lt ? c.lt : c.logo ? '<span class="tile logo">' + c.tile + '</span>' : c.team ? '<span class="tile team">' + c.tile + '</span>' : '<span class="tile">' + c.tile + '</span>';
+  return '<div class="cell ' + (c.cls || '') + (c.chev ? ' opener' : '') + (c.open ? ' copen' : '') + '">' + tile + '<span class="tx"><b' + (c.two ? ' class="two"' : '') + '>' + c.name + '</b>' + (c.sub ? '<small>' + c.sub + '</small>' : '') + '</span>' +
+    (c.chev ? '<span class="chev' + (c.open ? ' open' : '') + '">' + I('down', 16) + '</span>' : '') + (c.marks || '') + '</div>';
+}
+function sidebar(o) {
+  return '<div class="side" style="width:' + o.w + 'px">' + cell(o.cell) + '<div class="rows">' + o.rows.map(row).join('') + '</div>' +
+    '<div class="foot same">' + (o.foot || []).map(function (f) { if (f === 'sep') return '<div class="door-sep"></div>'; return '<div class="row same">' + I(f[0], 14) + '<span>' + f[1] + '</span>' + (f[2] ? '<span class="cnt">' + f[2] + '</span>' : '') + '</div>'; }).join('') + '</div>' +
+    '<div class="row same" style="height:38px;font-size:12px;border-top:1px solid var(--line2)">' + I('panel', 14) + '<span>Collapse sidebar</span></div>' + (o.marks || '') + '</div>';
+}
+function frame(w, h, inner, extra) { return '<div class="fr" style="width:' + w + 'px;height:' + h + 'px">' + '<div class="grid"></div>' + inner + (extra || '') + '</div>'; }
+function tblHTML(cols, head, rows) {
+  return '<div class="tbl same"><div class="hd" style="grid-template-columns:' + cols + '">' + head.map(function (x) { return '<span>' + x + '</span>'; }).join('') + '</div>' +
+    rows.map(function (r) { return '<div class="tr" style="grid-template-columns:' + cols + '">' + r.map(function (x) { return '<span>' + x + '</span>'; }).join('') + '</div>'; }).join('') + '</div>';
+}
+
+/* tournament sidebar rows */
+function tRows(lit, opts) {
+  opts = opts || {};
+  var r = [];
+  if (opts.club) r.push({ i: 'grid', t: 'Club overview', cls: opts.clubCls || 'same' });
+  if (opts.before) { if (opts.club) r.push({ lab: 'Tournament', cls: 'chgb' }); r.push({ sel: opts.before, cls: 'chgb' }); }
+  r.push({ lab: 'Operations', fold: opts.flat ? null : 'open' });
+  [['gauge', 'Dashboard'], ['users', 'Teams'], ['cal', 'Schedule'], ['medal', 'Results'], ['usercheck', 'Check-in'], ['qr', 'Staff kit'], ['mail', 'Communications']].forEach(function (x) { r.push({ i: x[0], t: x[1], lit: lit === x[1] }); });
+  r.push({ lab: 'Setup', fold: opts.flat ? null : 'open' });
+  [['sliders', 'Event settings'], ['pin', 'Venues & facilities'], ['tag', 'Divisions'], ['book', 'Rules & resources'], ['globe', 'Public site']].forEach(function (x) { r.push({ i: x[0], t: x[1], lit: lit === x[1] }); });
+  if (!opts.flat) r.push({ lab: 'Admin', fold: 'closed', cls: opts.adminCls || 'same' });
+  return r;
+}
+var aFoot = [['card', 'Plan & billing', 1], ['help', 'Help'], ['users', 'Coaches Portal']];
+var tFoot = [['card', 'Plan & billing'], ['help', 'Help']];
+
+/* club tournament Divisions page body */
+function divisionsBody(top, withTitle, mks) {
+  var head = withTitle
+    ? '<div class="ph same-not">' + '<h4>Divisions</h4><span class="act"><span class="btn">' + I('plus', 14) + 'Add division</span><span class="qhelp">' + I('help', 20, 1.8) + '</span></span></div>'
+    : '<div class="tb"><span class="act"><span class="btn">' + I('plus', 14) + 'Add division</span><span class="qhelp">' + I('help', 20, 1.8) + '</span></span></div>';
+  var t = tblHTML('1.2fr 1fr .8fr 1.3fr .6fr 24px', ['Division', 'Ages', 'Pools', 'Registration', 'Teams', ''],
+    [['<b>11U</b>', '10–11', '2', 'Open · full', '8 of 8', I('right', 14)], ['<b>13U</b>', '12–13', '2', 'Open', '6 of 8', I('right', 14)], ['<b>15U</b>', '14–15', '—', 'Open · full', '10 of 8', I('right', 14)]]);
+  return '<div class="pg" style="top:' + top + 'px;left:240px;padding-top:' + (withTitle ? 22 : 18) + 'px">' + head + t + '<div class="note same">24 of 24 spots taken</div>' + (mks || '') + '</div>';
+}
+
+/* ── logos ── */
+var LOGO = {
+  crest: '<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="19" fill="#1F4E79"/><circle cx="20" cy="20" r="15" fill="none" stroke="#F2C14E" stroke-width="2"/><path d="M13 27 27 13" stroke="#fff" stroke-width="3.2" stroke-linecap="round"/><circle cx="25.5" cy="25" r="3" fill="#fff"/></svg>',
+  wide: '<svg viewBox="0 0 120 30"><rect x="0" y="4" width="120" height="22" rx="3" fill="#8C2F39"/><text x="60" y="20" font-family="Arial Black, Arial, sans-serif" font-size="13" font-weight="900" fill="#fff" text-anchor="middle" letter-spacing="1">FALL CLASSIC</text></svg>',
+  light: '<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="18" fill="#FBF6DF"/><path d="M20 8l3.5 7.5 8 1-6 5.5 1.6 8L20 26l-7.1 4 1.6-8-6-5.5 8-1z" fill="#FFFFFF" stroke="#F3E9B8" stroke-width="1"/></svg>',
+  team: '<svg viewBox="0 0 40 40"><path d="M20 3 35 8v11c0 9-6.5 15-15 18C11.5 34 5 28 5 19V8z" fill="#2C6E49"/><text x="20" y="25" font-family="Arial Black, Arial, sans-serif" font-size="12" font-weight="900" fill="#fff" text-anchor="middle">14</text></svg>'
+};
+function lt(kind, size, r) { return '<span class="lt ' + (r || 'r6') + '" style="width:' + size + 'px;height:' + size + 'px">' + LOGO[kind] + '</span>'; }
+function init(txt, size, team) { return size > 30 ? '<span class="tile40" style="' + (team ? 'background:#2C6E49;color:#fff;' : '') + '">' + txt + '</span>' : '<span class="tile" style="' + (team ? 'background:#2C6E49;color:#fff;' : '') + '">' + txt + '</span>'; }
+
+/* ── specimens ─────────────────────────────────────────────────────────────────────── */
+var S = {};
+
+/* T1 — a club's tournament, Divisions, desktop, whole screen */
+S.tDeskBefore = frame(1440, 900,
+  strip({ rail: 240, word: 'Admin', place: { name: EV, fx: EVD, chip: '<span class="chip live">Game day</span>' }, site: 1, ws: 1, placeCls: 'chgb' }) +
+  sidebar({ w: 240, cell: { tile: CI, name: CLUB, cls: 'chgb' }, rows: tRows('Divisions', { club: 1, before: EV }), foot: aFoot }) +
+  divisionsBody(48, true));
+S.tDeskAfter = frame(1440, 900,
+  strip({ rail: 240, word: 'Admin', place: { name: 'Divisions' }, site: 1, ws: 1, marks: mk('E1', 360, 12) }) +
+  sidebar({ w: 240, cell: { tile: 'FC', logo: 1, name: EV, sub: EVS + ' · <span class="chip live mini">Game day</span>', chev: 1, marks: mk('E2', -2, 1) }, rows: tRows('Divisions', { club: 1, clubCls: 'same' }), foot: aFoot, marks: mk('E4', 150, 50) }) +
+  divisionsBody(48, false, mk('E11', 1150, 6)));
+
+/* T2 — the chevron list open (desktop) */
+function tDeskAt(w, h, noFx) {
+  return frame(w, h,
+    strip({ rail: 240, word: 'Events', place: { name: 'Divisions', pfx: noFx ? '' : evFx }, site: 1, ws: 1 }) +
+    sidebar({ w: 240, cell: { tile: 'FC', logo: 1, name: EV, two: 1, chev: 1 }, rows: tRows('Divisions', { flat: 1 }), foot: fTourn }) +
+    divisionsBody(48, false));
+}
+S.tList = frame(620, 360,
+  strip({ rail: 240, word: 'Admin', place: { name: 'Divisions' } }) +
+  sidebar({ w: 240, cell: { tile: 'FC', logo: 1, name: EV, sub: EVS + ' · <span class="chip live mini">Game day</span>', chev: 1, open: 1 }, rows: tRows('Divisions', { club: 1 }).slice(0, 6), foot: [] }),
+  '<div class="pop" style="left:208px;top:86px"><div class="ph2">Tournaments</div>' +
+  '<div class="op on"><span class="ck">' + I('check', 15) + '</span>' + EV + '<span class="st">Game day</span></div>' +
+  '<div class="op"><span class="ck"></span>Lakeshore Spring Opener 2027<span class="st">Draft</span></div>' +
+  '<div class="op"><span class="ck"></span>Lakeshore Summer Slam 2026<span class="st">Completed</span></div>' +
+  '<div class="sep"></div><div class="op all"><span class="ck">' + I('trophy', 14) + '</span>All tournaments</div></div>' + mk('E1', 470, 92));
+
+/* T3 — tournament-only org: an event page, and an org-wide page (Members), before / after */
+function membersBody(withTitle, left, tabs) {
+  var acts = '<span class="act"><span class="btn">' + I('file', 14) + 'Audit log</span><span class="btn">' + I('dl', 14) + 'Export</span><span class="btn lime">' + I('user', 14) + 'Invite</span><span class="qhelp">' + I('help', 20, 1.8) + '</span></span>';
+  var head = withTitle ? '<div style="font:600 11px IBM Plex Mono;letter-spacing:.08em;color:var(--ink3);text-transform:uppercase;margin-bottom:2px">Tournament settings</div><div class="ph"><h4>Members</h4>' + acts + '</div>'
+    : '<div class="tb">' + acts + '</div>';
+  return '<div class="pg" style="top:' + (tabs ? 93 : 48) + 'px;left:' + left + 'px;padding-top:18px">' + head +
+    '<div style="font:600 11px IBM Plex Mono;letter-spacing:.08em;color:var(--ink3);margin:16px 0 6px">THE BOARD · 2 PEOPLE</div>' +
+    tblHTML('1.4fr 1.6fr 24px', ['Name', 'Can open', ''], [['<b>Dana Okafor</b> <span class="chip ok" style="font-size:9px">You</span>', 'Owner · everything', I('right', 14)], ['<b>Sam Whitford</b>', 'Admin · every program', I('right', 14)]]) +
+    '<div class="tbl same" style="margin-top:10px"><div class="tr" style="grid-template-columns:1fr 24px;height:44px"><span><b>Volunteers · 1</b></span>' + I('right', 14) + '</div><div class="tr" style="grid-template-columns:1fr 24px;height:44px;border-bottom:0"><span><b>Coaching staff · 7</b></span>' + I('right', 14) + '</div></div></div>';
+}
+S.oMembersBefore = frame(1040, 420,
+  strip({ rail: 240, word: 'Admin', place: { name: TORG }, site: 1, ws: 1, placeCls: 'chgb' }) +
+  sidebar({ w: 240, cell: { tile: 'NT', name: TORG }, rows: [{ sel: TEV, cls: 'chgb' }].concat(tRows('').slice(0, 8)), foot: tFoot }) +
+  membersBody(true, 240));
+S.oMembersAfter = frame(1040, 420,
+  strip({ rail: 240, word: 'Events', place: { name: 'Settings & access' }, site: 1, ws: 1, marks: mk('E3', 440, 12) }) +
+  sidebar({ w: 240, cell: { tile: 'NT', logo: 1, name: TORG }, rows: [{ i: 'trophy', t: 'Tournaments', cls: 'chg' }, { i: 'gear', t: 'Settings & access', lit: true, cls: 'chg' }], foot: [['card', 'Plan & billing']], marks: mk('E3', 200, 6) }) +
+  '<div class="band" style="left:240px"><span class="tab on">Members</span><span class="tab">Payouts</span><span class="tab">PDF settings</span></div>' +
+  membersBody(false, 240, true));
+S.oEventBefore = frame(1040, 330,
+  strip({ rail: 240, word: 'Admin', place: { name: TEV, fx: 'Jul 10–12, 2026', chip: '<span class="chip ok">Open</span>' }, site: 1, ws: 1, placeCls: 'chgb' }) +
+  sidebar({ w: 240, cell: { tile: 'NT', name: TORG, cls: 'chgb' }, rows: [{ sel: TEV, cls: 'chgb' }].concat(tRows('Teams').slice(0, 5)), foot: [] }) +
+  '<div class="pg" style="top:48px;left:240px;padding-top:22px"><div class="ph"><h4>Teams</h4><span class="act"><span class="btn lime">' + I('plus', 14) + 'Add team</span></span></div></div>');
+S.oEventAfter = frame(1040, 330,
+  strip({ rail: 240, word: 'Admin', place: { name: 'Teams' }, site: 1, ws: 1 }) +
+  sidebar({ w: 240, cell: { tile: 'NS', logo: 1, name: TEV, sub: 'Jul 10–12 · Open', chev: 1 }, rows: tRows('Teams').slice(0, 6), foot: [], marks: mk('E1', 206, 8) }) +
+  '<div class="pg" style="top:48px;left:240px;padding-top:18px"><div class="tb"><span class="act"><span class="btn lime">' + I('plus', 14) + 'Add team</span><span class="qhelp">' + I('help', 20, 1.8) + '</span></span></div></div>');
+
+/* T3b — worst-case names in the cell */
+function miniCell(w, c, tip) { return frame(w + 300, 62, '<div class="side" style="top:0;width:' + w + 'px">' + cell(c) + '</div>' + (tip ? '<div class="tip" style="left:' + (w - 40) + 'px;top:24px">' + tip + '</div>' : '')); }
+S.worst = '<div class="pair stack">' +
+  '<div><div class="lbl">240px admin sidebar · a long event name, the full name on hover and in the list</div>' + miniCell(240, { tile: 'FC', logo: 1, name: 'Lakeshore Minor Baseball Fall Classic 2026', sub: 'Nov 28–Dec 1 · <span class="chip live mini">Game day</span>', chev: 1 }, 'Lakeshore Minor Baseball Fall Classic 2026') + '</div>' +
+  '<div><div class="lbl">220px coach sidebar · on game day the chip replaces the record (E7)</div>' + miniCell(220, { tile: '14', team: 1, name: '14U AA Lakeshore Storm', sub: '2026 · <span class="chip live mini">Game day</span>', chev: 1 }, '14U AA Lakeshore Storm') + '</div></div>';
+
+/* L — logos in the cell, open and collapsed */
+function lcell(w, c) { return frame(w + 8, 49, '<div class="side" style="top:0;width:' + w + 'px">' + cell(c) + '</div>'); }
+function lcol(t) { return frame(70, 60, '<div class="side col" style="top:0;width:64px"><div class="cell" style="padding:0;justify-content:center;height:58px">' + t + '</div></div>'); }
+var LROWS = [
+  ['Logo uploaded', 'a round crest', 'crest'],
+  ['Badly shaped', 'a wide wordmark, 4 : 1', 'wide'],
+  ['Very light', 'white art on cream', 'light'],
+  ['No logo', 'the initials, as today', null]
+];
+S.logoGrid = '<div class="lgrid"><span></span><span class="h">Club cell · 240</span><span class="h">Tournament cell · 240</span><span class="h">Team cell · 220</span>' +
+  LROWS.map(function (r) {
+    var k = r[2];
+    var club = lcell(240, { lt: k ? lt(k === 'wide' ? 'wide' : k, 24) : init(CI, 24), name: CLUB });
+    var ev = lcell(240, { lt: k ? lt(k, 24) : init('FC', 24), name: EV, sub: EVS + ' · <span class="chip live mini">Game day</span>', chev: 1 });
+    var tm = lcell(220, { lt: k ? lt(k === 'crest' ? 'team' : k, 24) : init('14', 24, true), name: TEAM, sub: '2026 · 3-2-1', chev: 1 });
+    return '<span class="rl">' + r[0] + '<small>' + r[1] + '</small></span>' + club + ev + tm;
+  }).join('') + '</div>';
+S.logoCol = '<div class="lgrid" style="grid-template-columns:150px repeat(3, 90px)"><span></span><span class="h">Club</span><span class="h">Event</span><span class="h">Team</span>' +
+  LROWS.map(function (r) {
+    var k = r[2];
+    return '<span class="rl">' + r[0] + '</span>' + lcol(k ? lt(k, 40, 'r8') : init(CI, 40)) + lcol(k ? lt(k, 40, 'r8') : init('FC', 40)) + lcol(k ? lt(k === 'crest' ? 'team' : k, 40, 'r8') : init('14', 40, true));
+  }).join('') + '</div>';
+S.logoPhone = function () { return frame(390, 520,
+  pbar({ name: 'Divisions', sub: EV + ' · <span class="chip live">Game day</span> ' + I('down', 14) }) + '<div class="pbody same" style="top:58px;padding-top:14px">' + divCards() + '</div>' + bnav(tBar, 'More') +
+  '<div class="scrim"></div><div class="sheet"><div class="grab"></div><div class="sh">Tournaments<span class="x44">' + I('x', 18) + '</span></div>' +
+  '<div class="op">' + lt('wide', 28) + EV + '<span class="st">Game day</span></div>' +
+  '<div class="op">' + lt('crest', 28) + 'Lakeshore Spring Opener 2027<span class="st">Draft</span></div>' +
+  '<div class="op">' + init('LS', 24).replace('class="tile"', 'class="tile" style="width:28px;height:28px"') + 'Lakeshore Summer Slam 2026<span class="st">Completed</span></div>' +
+  '<div class="op" style="color:#57651E;border-bottom:0"><span style="width:28px;display:grid;place-items:center">' + I('trophy', 16) + '</span>All tournaments</div></div>' + mk('E10', 340, 330)); };
+
+/* T4 — collapsed sidebar */
+function colSide(before) {
+  var tile = before ? '<span class="tile">' + CI + '</span>' : '<span class="tile40 logo">FC<span class="gd"></span></span>';
+  var inner = '<div class="side col" style="width:64px">' + '<div class="cell ' + (before ? 'chgb' : '') + '" style="padding:0;justify-content:center">' + tile + '</div>' +
+    '<div class="rows" style="padding-top:8px">' + '<div class="ico40 same">' + I('grid', 18) + '</div>' +
+    (before ? '<div class="hair"></div><div style="display:grid;place-items:center;margin:2px 0"><span class="tile40 chgb">LF</span></div>' : '') +
+    '<div class="hair same"></div><div class="ico40 same">' + I('gauge', 18) + '</div><div class="ico40 same">' + I('users', 18) + '</div><div class="ico40 same">' + I('cal', 18) + '</div><div class="hair same"></div><div class="ico40 same">' + I('sliders', 18) + '</div><div class="ico40 lit same">' + I('tag', 18) + '</div></div></div>';
+  return frame(330, 470, strip({ rail: 64, word: '', place: before ? { name: EV } : { name: 'Divisions' } }) + inner +
+    (before ? '' : '<div style="position:absolute;left:74px;top:56px;background:#241E15;color:#fff;font:600 12px Inter;padding:6px 9px;border-radius:6px;z-index:9;line-height:1.35">' + EV + '<br><span style="font:400 11px IBM Plex Mono;opacity:.8">' + EVS + ' · ● Game day</span></div>' + mk('E10', 46, 44)));
+}
+S.colBefore = colSide(true); S.colAfter = colSide(false);
+
+/* ── phone parts ───────────────────────────────────────────────────────────────────── */
+function pbar(o) {
+  return '<div class="pbar ' + (o.cls || '') + '"><div class="r1">' + (o.back ? '<span class="g44" style="margin-left:-12px">' + I('left', 18) + '</span>' : '') +
+    '<div class="t"><b' + (o.chevName ? ' style="display:flex;align-items:center;gap:4px"' : '') + '>' + o.name + (o.chevName ? I('down', 16) + (o.nameAfter || '') : '') + '</b>' + (o.sub ? '<small>' + o.sub + '</small>' : '') + '</div>' +
+    (o.right === 'none' ? '' : '<span class="g44">' + I(o.right || 'globe', o.right === 'help' ? 20 : 22, 1.8) + '</span>') + '</div>' + (o.tabs ? '<div class="tabs">' + o.tabs + '</div>' : '') + (o.marks || '') + '</div>';
+}
+function bnav(items, on) {
+  return '<div class="bnav same">' + items.map(function (x) { return '<div class="it' + (x[1] === on ? ' on' : '') + '"><span class="pill">' + I(x[0], 22, x[1] === on ? 2.5 : 1.8) + '</span>' + x[1] + (x[2] ? '<span class="cnt">' + x[2] + '</span>' : '') + '</div>'; }).join('') + '</div>';
+}
+var tBar = [['gauge', 'Dashboard'], ['medal', 'Results'], ['cal', 'Schedule'], ['mail', 'Messages'], ['more', 'More']];
+var cBar = [['grid', 'Overview'], ['cal', 'Schedule'], ['notebook', 'Practices'], ['users', 'Roster'], ['more', 'More']];
+function divCards() {
+  return [['11U', 'registration open · 2 pools', '8 of 8 · full'], ['13U', 'registration open · 2 pools', '6 of 8'], ['15U', 'registration open', '10 of 8 · full']]
+    .map(function (d) { return '<div class="pcard same"><span class="l"><b>' + d[0] + '</b><small>' + d[1] + '</small></span><span class="r">' + d[2] + I('right', 14) + '</span></div>'; }).join('') + '<div class="note same">24 of 24 spots taken</div>';
+}
+S.tPhoneBefore = frame(390, 844,
+  pbar({ name: EV, sub: EVD + ' · <span class="chip live">Game day</span>', cls: 'chgb' }) +
+  '<div class="pbody" style="top:53px;padding-top:18px"><div class="ph" style="margin-bottom:16px"><h4>Divisions</h4><span class="act"><span class="btn sq" style="width:44px;height:44px">' + I('plus', 18) + '</span><span class="qhelp" style="width:44px;height:44px">' + I('help', 20, 1.8) + '</span></span></div>' + divCards() + '</div>' +
+  bnav(tBar, 'More'));
+S.tPhoneAfter = frame(390, 844,
+  pbar({ name: 'Divisions', sub: EV + ' · <span class="chip live">Game day</span> ' + I('down', 14), right: 'globe', marks: mk('E5', 300, 10) }) +
+  '<div class="hit" style="left:8px;top:7px;width:300px;height:44px"><span>44px · opens the list</span></div>' +
+  '<div class="pbody" style="top:58px;padding-top:14px"><div class="tb" style="margin-bottom:14px;height:44px"><span class="act"><span class="btn sq" style="width:44px;height:44px">' + I('plus', 18) + '</span><span class="qhelp" style="width:44px;height:44px">' + I('help', 20, 1.8) + '</span></span></div>' + divCards() + '</div>' +
+  bnav(tBar, 'More'));
+S.tPhoneSheet = frame(390, 600,
+  pbar({ name: 'Divisions', sub: EV + ' · <span class="chip live">Game day</span> ' + I('down', 14) }) + '<div class="pbody same" style="top:58px;padding-top:14px">' + divCards() + '</div>' + bnav(tBar, 'More') +
+  '<div class="scrim"></div><div class="sheet"><div class="grab"></div><div class="sh">Tournaments<span class="x44">' + I('x', 18) + '</span></div>' +
+  '<div class="op"><span style="width:18px;color:#57651E">' + I('check', 16) + '</span>' + EV + '<span class="st">Game day</span></div>' +
+  '<div class="op"><span style="width:18px"></span>Lakeshore Spring Opener 2027<span class="st">Draft</span></div>' +
+  '<div class="op"><span style="width:18px"></span>Lakeshore Summer Slam 2026<span class="st">Completed</span></div>' +
+  '<div class="op" style="color:#57651E;border-bottom:0"><span style="width:18px">' + I('trophy', 16) + '</span>All tournaments</div></div>');
+function moreSheet(before) {
+  return frame(390, 470,
+    '<div class="pbody same" style="top:0;padding-top:14px">' + divCards() + '</div>' + bnav(tBar, 'More') + '<div class="scrim"></div>' +
+    '<div class="sheet" style="bottom:72px"><div class="grab"></div>' +
+    '<div class="op ' + (before ? '' : '') + '" style="font-size:16px">' + I('grid', 17) + 'Club overview</div>' +
+    (before ? '<div class="grp chgb">Current tournament</div><div class="mselect chgb"><span>' + EV + ' - Live</span>' + I('down', 14) + '</div>' : '') +
+    '<div class="op same">' + I('bell', 17) + 'Notifications</div>' +
+    '<div class="same" style="display:flex;gap:8px;padding:10px 0"><span class="pcard" style="flex:1;height:64px;justify-content:center;flex-direction:column;font:700 12px Inter;gap:4px">' + I('usercheck', 20) + 'Check-in</span><span class="pcard" style="flex:1;height:64px;justify-content:center;flex-direction:column;font:700 12px Inter;gap:4px">' + I('qr', 20) + 'Staff kit</span><span class="pcard" style="flex:1;height:64px;justify-content:center;flex-direction:column;font:700 12px Inter;gap:4px">' + I('users', 20) + 'Teams</span></div>' +
+    '<div class="grp same">Setup</div></div>' + (before ? '' : mk('E5', 330, 152)));
+}
+S.moreBefore = moreSheet(true); S.moreAfter = moreSheet(false);
+
+/* ── coaches portal ────────────────────────────────────────────────────────────────── */
+function cRows(lit, closed, flat) { var fo = flat ? null : 'open';
+  if (closed) return [{ i: 'archive', t: 'Season’s End', lit: true, cls: 'same' }];
+  var r = [{ i: 'grid', t: 'Overview', lit: lit === 'Overview' }, { lab: 'Season', fold: fo }];
+  [['cal', 'Schedule'], ['notebook', 'Practice plans'], ['listord', 'Lineups'], ['trophy', 'Tournaments']].forEach(function (x) { r.push({ i: x[0], t: x[1], lit: lit === x[1] }); });
+  r.push({ lab: 'Progress', fold: fo }); [['trend', 'Skills & goals'], ['bars', 'Insights']].forEach(function (x) { r.push({ i: x[0], t: x[1], lit: lit === x[1] }); });
+  r.push({ lab: 'Money', fold: fo }); r.push({ i: 'dollar', t: 'Money', lit: lit === 'Money' });
+  r.push({ lab: 'Communication', fold: fo }); r.push({ i: 'mail', t: 'Email families' });
+  r.push({ lab: 'Team', fold: fo }); [['users', 'Roster'], ['clip', 'Tryouts'], ['usercog', 'Staff'], ['file', 'Documents'], ['gear', 'Settings']].forEach(function (x) { r.push({ i: x[0], t: x[1], lit: lit === x[1] }); });
+  return r;
+}
+var cFoot = [['help', 'Help'], ['card', 'Plan & billing'], ['shield', 'Admin']];
+function rosterTable(left, top) {
+  var rows = [['1', '<u>Avery Brooks</u>', '<span class="chip ok" style="font-size:9px">Ace</span>', 'Jordan Brooks'], ['2', '<u>Blake Chen</u>', '2B / SS', 'Mei Chen'], ['3', '<u>Casey Diaz</u>', 'C', 'Luis Diaz'], ['4', '<u>Devon Ellis</u>', 'CF', 'Dana Ellis'], ['5', '<u>Emerson Fox</u>', '3B', '+ Add a contact'], ['6', '<u>Frankie Gill</u>', '1B', 'Ravi Gill'], ['7', '<u>Gray Hall</u>', 'LF', 'Kim Hall'], ['8', '<u>Harper Ito</u>', 'P', 'Ken Ito']];
+  return tblHTML('40px 1.2fr 1fr 1.2fr', ['#', 'Player', 'Positions', 'Family'], rows);
+}
+S.cDeskBefore = frame(1440, 900,
+  strip({ rail: 220, word: 'Coaches Portal', unsplit: 1, ws: 1 }) +
+  sidebar({ w: 220, cell: null, rows: [{ sel: TEAM, cls: 'chgb' }].concat(cRows('Roster')), foot: cFoot }).replace('<div class="rows">', '<div class="rows" style="padding-top:14px">') +
+  '<div class="mast chgb" style="left:220px"><div><b>' + TEAM + '</b><small>' + CLUB + ' · 2026 Season · 3-2-1</small></div><div class="nx"><i>NEXT</i>Sun 9:30 a.m. practice</div><span class="qhelp" style="margin-left:14px">' + I('help', 20, 1.8) + '</span></div>' +
+  '<div class="pg" style="top:104px;left:220px;padding-top:32px"><div class="ph chgb"><span class="it">' + I('users', 18) + '</span><h4>Roster</h4><span class="act"><span class="btn lime">' + I('plus', 14) + 'Add Player</span><span class="btn">' + I('ul', 14) + 'Import</span></span></div>' +
+  '<div class="tb same" style="margin-top:16px"><span class="vsw"><span class="on">List</span><span>Depth chart</span></span><span class="act"><span class="btn">' + I('dl', 14) + 'Export</span></span></div>' + rosterTable() + '</div>');
+S.cDeskAfter = frame(1440, 900,
+  strip({ rail: 220, word: 'Coach', place: { name: 'Roster' }, ws: 1, marks: mk('E6', 330, 12) + mk('E9', 194, 25) }) +
+  sidebar({ w: 220, cell: { tile: '14', team: 1, name: TEAM, sub: '2026 · 3-2-1', chev: 1, marks: mk('E7', -2, 1) }, rows: cRows('Roster'), foot: cFoot }) +
+  '<div class="pg" style="top:48px;left:220px;padding-top:18px"><div class="tb"><span class="vsw same"><span class="on">List</span><span>Depth chart</span></span><span class="act"><span class="btn lime">' + I('plus', 14) + 'Add Player</span><span class="btn">' + I('ul', 14) + 'Import</span><span class="btn">' + I('dl', 14) + 'Export</span><span class="qhelp">' + I('help', 20, 1.8) + '</span></span></div>' + rosterTable() + mk('E11', 1150, 12) + '</div>');
+
+/* C2 — one level down: a practice plan */
+S.cNestBefore = frame(1100, 230,
+  strip({ rail: 220, word: 'Coaches Portal', unsplit: 1, ws: 1 }) + sidebar({ w: 220, cell: null, rows: [{ sel: TEAM, cls: 'chgb' }].concat(cRows('Practice plans').slice(0, 4)), foot: [] }).replace('<div class="rows">', '<div class="rows" style="padding-top:14px">') +
+  '<div class="mast chgb" style="left:220px"><div><b>' + TEAM + '</b><small>' + CLUB + ' · 2026 Season · 3-2-1</small></div><div class="nx"><i>NEXT</i>Sun 9:30 a.m. practice</div></div>' +
+  '<div class="pg chgb" style="top:104px;left:220px;padding-top:24px"><div class="ph"><span class="back">' + I('left', 15) + 'Practice plans</span><h4 style="font-size:20px">Tuesday hitting</h4><span class="act"><span class="btn">Print</span><span class="btn lime">Save</span></span></div></div>');
+S.cNestAfter = frame(1440, 230,
+  strip({ rail: 220, word: 'Coach', place: { name: 'Tuesday hitting', back: 'Practice plans', fx: 'Nov 11 · 90 min' }, ws: 1, marks: mk('E6', 470, 12) }) +
+  sidebar({ w: 220, cell: { tile: '14', team: 1, name: TEAM, sub: '2026 · 3-2-1', chev: 1 }, rows: cRows('Practice plans').slice(0, 5), foot: [] }) +
+  '<div class="pg" style="top:48px;left:220px;padding-top:18px"><div class="tb"><span class="act"><span class="btn">Print</span><span class="btn lime">Save</span><span class="qhelp">' + I('help', 20, 1.8) + '</span></span></div></div>');
+
+/* C3 — the closed season keeps its one door */
+S.cClosedBefore = frame(1100, 300,
+  strip({ rail: 220, word: 'Coaches Portal', unsplit: 1, ws: 1 }) + sidebar({ w: 220, cell: null, rows: [{ sel: '16U AA', cls: 'chgb' }].concat(cRows('', true)), foot: [['help', 'Help']] }).replace('<div class="rows">', '<div class="rows" style="padding-top:14px">') +
+  '<div class="mast chgb" style="left:220px"><div><b>16U AA</b><small>' + CLUB + ' · 2025 Season · Closed</small></div></div>' +
+  '<div class="pg" style="top:104px;left:220px;padding-top:28px"><div class="ph chgb"><span class="it">' + I('archive', 18) + '</span><h4>2025 Season</h4></div><div class="note same" style="font-size:14px;color:var(--ink2)">Season Wrapped · results · roster · practices · money</div></div>');
+S.cClosedAfter = frame(1100, 300,
+  strip({ rail: 220, word: 'Coach', place: { name: '2025 Season' }, ws: 1 }) +
+  sidebar({ w: 220, cell: { tile: '16', team: 1, name: '16U AA', sub: 'No live season', chev: 1 }, rows: cRows('', true), foot: [['help', 'Help']], marks: mk('E6', 186, 50) }) +
+  '<div class="pg" style="top:48px;left:220px;padding-top:24px"><div class="note same" style="font-size:14px;color:var(--ink2)">Season Wrapped · results · roster · practices · money</div></div>');
+
+/* C4 — the team list open */
+S.cList = frame(560, 340,
+  strip({ rail: 220, word: 'Coach', place: { name: 'Roster' } }) +
+  sidebar({ w: 220, cell: { tile: '14', team: 1, name: TEAM, sub: '2026 · 3-2-1', chev: 1, open: 1 }, rows: cRows('Roster').slice(0, 6), foot: [] }),
+  '<div class="pop" style="left:190px;top:86px"><div class="ph2">Your teams</div>' +
+  '<div class="op on"><span class="sq" style="background:#2C6E49"></span>' + TEAM + '<span class="st">' + I('check', 15) + '</span></div>' +
+  '<div class="op"><span class="sq" style="background:#6E2C8C"></span>11U AA</div>' +
+  '<div class="sep"></div><div class="ph2">No live season</div><div class="op"><span class="sq" style="background:#8C2F39"></span>16U AA<span class="st">2025 Season</span></div></div>');
+
+/* C5 — phone */
+function phoneRoster(after) {
+  var rows = ['Avery Brooks', 'Blake Chen', 'Casey Diaz', 'Devon Ellis', 'Emerson Fox', 'Frankie Gill', 'Gray Hall', 'Harper Ito', 'Indigo Jay', 'Jules Kane', 'Kai Lowe', 'Logan Moss'];
+  var t = '<div class="tbl same"><div class="hd" style="grid-template-columns:40px 1fr 1fr"><span>#</span><span>Player</span><span>Positions</span></div>' + rows.map(function (n, i) { return '<div class="tr" style="grid-template-columns:40px 1fr 1fr;height:44px"><span>' + (i + 1) + '</span><span><u>' + n + '</u></span><span>—</span></div>'; }).join('') + '</div>';
+  if (!after) return frame(390, 844,
+    '<div class="pbar chgb"><div class="r1" style="min-height:36px;padding:0 4px 0 16px"><div class="t"><b style="display:flex;align-items:center;gap:4px;font-size:14px">' + TEAM + I('down', 16) + '<span style="font:400 11px IBM Plex Mono;color:#776D5D;margin-left:8px">3-2-1</span></b></div><span class="g44">' + I('help', 20, 1.8) + '</span></div></div>' +
+    '<div class="pbody" style="top:37px;padding-top:16px"><div class="ph chgb" style="margin-bottom:14px"><span class="it">' + I('users', 18) + '</span><h4>Roster</h4><span class="act"><span class="btn lime sq" style="width:44px;height:44px">' + I('plus', 18) + '</span></span></div>' +
+    '<div class="tb same" style="height:44px;margin-bottom:4px"><span class="vsw"><span class="on" style="height:38px">List</span><span style="height:38px">Depth chart</span></span><span class="act"><span class="btn sq" style="width:44px;height:44px">' + I('dl', 16) + '</span></span></div>' + t + '</div>' + bnav(cBar, 'Roster'));
+  return frame(390, 844,
+    pbar({ name: 'Roster', sub: TEAM + ' · 3-2-1 ' + I('down', 14), right: 'none', marks: mk('E8', 300, 10) }) +
+    '<div class="hit" style="left:8px;top:7px;width:200px;height:44px"><span>44px · opens Your teams</span></div>' +
+    '<div class="pbody" style="top:58px;padding-top:14px"><div class="tb same" style="height:44px;margin-bottom:4px"><span class="vsw"><span class="on" style="height:38px">List</span><span style="height:38px">Depth chart</span></span><span class="act"><span class="btn sq" style="width:44px;height:44px">' + I('dl', 16) + '</span><span class="btn lime sq" style="width:44px;height:44px">' + I('plus', 18) + '</span><span class="qhelp" style="width:44px;height:44px">' + I('help', 20, 1.8) + '</span></span></div>' + t + '</div>' + bnav(cBar, 'Roster'));
+}
+S.cPhoneBefore = phoneRoster(false); S.cPhoneAfter = phoneRoster(true);
+S.cPhoneClosed = frame(390, 600,
+  pbar({ name: '2025 Season', sub: '16U AA · No live season ' + I('down', 14), right: 'none' }) +
+  '<div class="pbody" style="top:58px;padding-top:16px"><div class="pcard same" style="height:120px;align-items:flex-start;flex-direction:column"><b style="font:700 16px Inter">Season Wrapped</b><small style="color:#776D5D">2025 · 14-9-2 · 3rd of 8</small></div>' +
+  ['Results', 'Roster', 'Practices', 'Money'].map(function (x) { return '<div class="pcard same"><span class="l"><b>' + x + '</b></span><span class="r">' + I('down', 14) + '</span></div>'; }).join('') + '</div>' +
+  bnav([['archive', 'Season’s End'], ['more', 'More']], 'Season’s End') + mk('E8', 300, 10));
+
+/* ── ROUND 2 (owner 2026-11-09) ─────────────────────────────────────────────────────── */
+var fAdmin = [['card', 'Plan & billing', 1], 'sep', ['trophy', 'Tournaments'], ['usersround', 'Coaches Portal']];
+var fTourn = [['card', 'Plan & billing', 1], 'sep', ['shield', 'Club'], ['usersround', 'Coaches Portal']];
+var fCoach = [['card', 'Plan & billing'], 'sep', ['shield', 'Club'], ['trophy', 'Tournaments you run']];
+var evFx = EVD + ' <span class="chip live">Game day</span>';
+var tmFx = '2026 Season · 3-2-1 <i>NEXT</i> Sun 9:30 a.m. practice';
+S.tDeskAfter = frame(1440, 900,
+  strip({ rail: 240, word: 'Events', place: { name: 'Divisions', pfx: evFx }, site: 1, ws: 1, marks: mk('E1', 360, 12) + mk('E2', 900, 12) }) +
+  sidebar({ w: 240, cell: { tile: 'FC', logo: 1, name: EV, two: 1, chev: 1 }, rows: tRows('Divisions', { flat: 1 }), foot: fTourn, marks: mk('E14', 150, 56) + mk('E4', 200, 745) }) +
+  divisionsBody(48, false, mk('E11', 1150, 6)));
+S.tList = frame(620, 360,
+  strip({ rail: 240, word: 'Events', place: { name: 'Divisions' } }) +
+  sidebar({ w: 240, cell: { tile: 'FC', logo: 1, name: EV, two: 1, chev: 1, open: 1 }, rows: tRows('Divisions', { flat: 1 }).slice(0, 6), foot: [] }),
+  '<div class="pop" style="left:208px;top:86px"><div class="ph2">Tournaments</div>' +
+  '<div class="op on"><span class="ck">' + I('check', 15) + '</span>' + EV + '<span class="st">Game day</span></div>' +
+  '<div class="op"><span class="ck"></span>Lakeshore Spring Opener 2027<span class="st">Draft</span></div>' +
+  '<div class="op"><span class="ck"></span>Lakeshore Summer Slam 2026<span class="st">Completed</span></div>' +
+  '<div class="sep"></div><div class="op all"><span class="ck">' + I('trophy', 14) + '</span>All tournaments</div></div>' + mk('E1', 470, 92));
+S.oEventAfter = frame(1040, 330,
+  strip({ rail: 240, word: 'Events', place: { name: 'Teams', pfx: 'Jul 10–12, 2026 <span class="chip ok">Open</span>' }, site: 1, ws: 1 }) +
+  sidebar({ w: 240, cell: { tile: 'NS', logo: 1, name: TEV, two: 1, chev: 1 }, rows: tRows('Teams', { flat: 1 }).slice(0, 6), foot: [], marks: mk('E1', 206, 8) }) +
+  '<div class="pg" style="top:48px;left:240px;padding-top:18px"><div class="tb"><span class="act"><span class="btn lime">' + I('plus', 14) + 'Add team</span><span class="qhelp">' + I('help', 20, 1.8) + '</span></span></div></div>');
+S.worst = '<div class="pair stack">' +
+  '<div><div class="lbl">240px · a long event name takes two lines, then truncates; the whole name on hover and in the list</div>' + miniCell(240, { tile: 'FC', logo: 1, name: 'Lakeshore Minor Baseball Fall Classic Invitational 2026', two: 1, chev: 1 }, 'Lakeshore Minor Baseball Fall Classic Invitational 2026') + '</div>' +
+  '<div><div class="lbl">240px · a long team name</div>' + miniCell(240, { tile: '14', team: 1, name: '14U AA Lakeshore Storm Black', two: 1, chev: 1 }) + '</div></div>';
+function coachPageAfter(top) { return '<div class="pg" style="top:48px;left:240px;padding-top:18px"><div class="tb"><span class="vsw same"><span class="on">List</span><span>Depth chart</span></span><span class="act"><span class="btn lime">' + I('plus', 14) + 'Add Player</span><span class="btn">' + I('ul', 14) + 'Import</span><span class="btn">' + I('dl', 14) + 'Export</span><span class="qhelp">' + I('help', 20, 1.8) + '</span></span></div>' + rosterTable() + mk('E11', 1130, 12) + '</div>'; }
+S.cDeskAfter = frame(1440, 900,
+  strip({ rail: 240, word: 'Coach', place: { name: 'Roster', pfx: tmFx }, ws: 1, marks: mk('E6', 350, 12) + mk('E9', 214, 25) + mk('E7', 880, 12) }) +
+  sidebar({ w: 240, cell: { tile: '14', team: 1, name: TEAM, two: 1, chev: 1 }, rows: cRows('Roster', false, true), foot: fCoach, marks: mk('E14', 150, 56) + mk('E4', 200, 745) }) +
+  coachPageAfter());
+S.cNestAfter = frame(1440, 230,
+  strip({ rail: 240, word: 'Coach', place: { name: 'Tuesday hitting', back: 'Practice plans', fx: 'Nov 11 · 90 min', pfx: tmFx }, ws: 1, marks: mk('E6', 650, 12) }) +
+  sidebar({ w: 240, cell: { tile: '14', team: 1, name: TEAM, two: 1, chev: 1 }, rows: cRows('Practice plans', false, true).slice(0, 5), foot: [] }) +
+  '<div class="pg" style="top:48px;left:240px;padding-top:18px"><div class="tb"><span class="act"><span class="btn">Print</span><span class="btn lime">Save</span><span class="qhelp">' + I('help', 20, 1.8) + '</span></span></div></div>');
+S.cClosedAfter = frame(1100, 360,
+  strip({ rail: 240, word: 'Coach', place: { name: '2025 Season', pfx: '16U AA · closed' }, ws: 1 }) +
+  sidebar({ w: 240, cell: { tile: '16', team: 1, name: '16U AA', two: 1, chev: 1 }, rows: cRows('', true), foot: [['shield', 'Club'], ['trophy', 'Tournaments you run']], marks: mk('E6', 186, 50) }) +
+  '<div class="pg" style="top:48px;left:240px;padding-top:24px"><div class="note same" style="font-size:14px;color:var(--ink2)">Season Wrapped · results · roster · practices · money</div></div>');
+S.cList = frame(580, 340,
+  strip({ rail: 240, word: 'Coach', place: { name: 'Roster' } }) +
+  sidebar({ w: 240, cell: { tile: '14', team: 1, name: TEAM, two: 1, chev: 1, open: 1 }, rows: cRows('Roster', false, true).slice(0, 6), foot: [] }),
+  '<div class="pop" style="left:208px;top:86px"><div class="ph2">Your teams</div>' +
+  '<div class="op on"><span class="sq" style="background:#2C6E49"></span>' + TEAM + '<span class="st">' + I('check', 15) + '</span></div>' +
+  '<div class="op"><span class="sq" style="background:#6E2C8C"></span>11U AA</div>' +
+  '<div class="sep"></div><div class="ph2">No live season</div><div class="op"><span class="sq" style="background:#8C2F39"></span>16U AA<span class="st">2025 Season</span></div></div>');
+/* the club: Tournaments leaves Programs and becomes a foot door */
+function clubRows(withT) {
+  var r = [{ i: 'grid', t: 'Overview' }, { i: 'calclock', t: 'Calendar' }, { i: 'filecheck', t: 'Permits', n: 8 }, { i: 'gantt', t: 'Schedules' }, { lab: 'Programs' }, { i: 'users', t: 'Rep teams', lit: 1 }, { i: 'cal', t: 'House league', n: 2 }];
+  if (withT) r.push({ i: 'trophy', t: 'Tournaments', cls: 'chgb' });
+  return r.concat([{ lab: 'Club' }, { i: 'dollar', t: 'Accounting', n: 9 }, { i: 'idcard', t: 'Families', n: 1 }, { i: 'globe', t: 'Public site' }, { i: 'building', t: 'Organization' }]);
+}
+function clubPage() {
+  return '<div class="band same" style="left:240px"><span class="tab on">Teams</span><span class="tab">Assistant coaches</span><span class="tab">Document templates</span><span class="tab">Past seasons</span></div>' +
+    '<div class="pg same" style="top:93px;left:240px;padding-top:18px"><div class="tb"><span class="note" style="margin:0">10 teams in 2 groups</span><span class="act"><span class="btn">' + I('layers', 14) + 'Team groups</span><span class="btn lime">' + I('plus', 14) + 'Add team</span></span></div>' +
+    tblHTML('1.3fr 1fr 1.2fr .6fr 24px', ['Team', 'Season', 'Head coach', 'Roster', ''], [['<b>14U AA</b>', '2026 · Live', 'Taylor Brooks', '12', I('right', 14)], ['<b>15U AA</b>', '2026 · Live', 'Sam Whitford', '12', I('right', 14)], ['<b>15U AAA</b>', '2026 · Live', 'Jordan Reyes', '12', I('right', 14)]]) + '</div>';
+}
+S.clubBefore = frame(1000, 900, strip({ rail: 240, word: 'Admin', place: { name: 'Rep teams' }, site: 1 }) + sidebar({ w: 240, cell: { tile: CI, name: CLUB }, rows: clubRows(true), foot: aFoot }) + clubPage());
+S.clubAfter = frame(1000, 900, strip({ rail: 240, word: 'Club', place: { name: 'Rep teams' }, site: 1 }) + sidebar({ w: 240, cell: { tile: CI, name: CLUB, two: 1 }, rows: clubRows(false), foot: fAdmin, marks: mk('E4', 200, 745) }) + clubPage());
+S.clubAfterTop = frame(1000, 300, strip({ rail: 240, word: 'Club', place: { name: 'Rep teams' }, site: 1, ws: 1 }) + sidebar({ w: 240, cell: { tile: CI, name: CLUB, two: 1 }, rows: clubRows(false).slice(0, 6), foot: [] }) + clubPage());
+function footOnly(foot) { return frame(250, 250, sidebar({ w: 240, cell: null, rows: [], foot: foot }).replace('class="side" style="', 'class="side" style="top:0;')); }
+S.foots = trio([['In the club admin', footOnly(fAdmin)], ['In a tournament', footOnly(fTourn)], ['In the Coaches Portal', footOnly(fCoach)]]);
+/* phone: the More sheet's You group carries the other portals, one order */
+function moreYou(kind) {
+  var doors = kind === 't' ? [['shield', 'Club'], ['usersround', 'Coaches Portal']] : [['shield', 'Club'], ['trophy', 'Tournaments you run']];
+  var you = [['user', 'Account'], ['bell', 'What’s new'], ['house', 'Home']].map(function (x) { return '<div class="op same" style="font-size:16px">' + I(x[0], 17) + x[1] + '</div>'; }).join('') +
+    doors.map(function (x) { return '<div class="op" style="font-size:16px">' + I(x[0], 17) + x[1] + '</div>'; }).join('') +
+    '<div class="op same" style="font-size:16px">' + I('card', 17) + 'Plan & billing</div>';
+  return frame(390, 700,
+    '<div class="pbody same" style="top:0;padding-top:14px">' + divCards() + '</div>' + bnav(kind === 't' ? tBar : cBar, 'More') + '<div class="scrim"></div>' +
+    '<div class="sheet" style="bottom:72px"><div class="grab"></div>' +
+    '<div class="op same" style="font-size:16px">' + I('bell', 17) + 'Notifications</div>' +
+    '<div class="note same" style="padding:10px 6px">… the tiles and the ' + (kind === 't' ? 'event’s' : 'team’s') + ' pages, unchanged …</div>' +
+    '<div class="grp">You</div>' + you +
+    '<div class="note same" style="padding:10px 6px">Help · Send feedback · Sign out</div></div>' + mk('E4', 340, 412));
+}
+S.moreAfter = moreYou('t'); S.coachMore = moreYou('c');
+/* logos in the two-line cell */
+S.logoGrid = '<div class="lgrid"><span></span><span class="h">Club cell · 240</span><span class="h">Tournament cell · 240</span><span class="h">Team cell · 240</span>' +
+  LROWS.map(function (r) {
+    var k = r[2];
+    var club = lcell(240, { lt: k ? lt(k, 24) : init(CI, 24), name: CLUB, two: 1 });
+    var ev = lcell(240, { lt: k ? lt(k, 24) : init('FC', 24), name: EV, two: 1, chev: 1 });
+    var tm = lcell(240, { lt: k ? lt(k === 'crest' ? 'team' : k, 24) : init('14', 24, true), name: TEAM, two: 1, chev: 1 });
+    return '<span class="rl">' + r[0] + '<small>' + r[1] + '</small></span>' + club + ev + tm;
+  }).join('') + '</div>';
+
+/* the account menu (round 3: Help joins What's new) */
+function acctMenu(withHelp) {
+  var row = function (ic, t, cls, extra) { return '<div class="am-row ' + (cls || 'same') + '">' + I(ic, 15) + '<span>' + t + '</span>' + (extra || '') + '</div>'; };
+  return frame(560, 470,
+    strip({ rail: 240, word: 'Club', place: { name: 'Rep teams' }, site: 1, ws: 1 }).replace('<span class="ibtn">' + I('user', 17) + '</span>', '<span class="ibtn" style="background:rgba(70,55,30,.08);border-radius:8px">' + I('user', 17) + '</span>'),
+    '<div class="am" style="right:16px;top:52px">' +
+    '<div class="am-id same"><span class="am-av">D</span><span><small>Signed in</small><b>dana@lakeshoreminor.ca</b></span></div>' +
+    '<div class="am-sep"></div><div class="am-theme same"><small>Appearance</small><span class="vsw"><span class="on">Warm</span><span>Dark</span></span></div>' +
+    row('spark', 'What’s new') + (withHelp ? row('help', 'Help', 'chg', '<span class="am-new">moved here</span>') : '') +
+    row('bell', 'Notification settings') + row('msg', 'Send feedback') + row('gear', 'Account settings') +
+    '<div class="am-sep"></div>' + '<div class="am-row same" style="color:#B23A26">' + I('logout', 15) + '<span>Sign out</span></div>' +
+    (withHelp ? mk('E16', -16, 150) : '') + '</div>');
+}
+S.acctBefore = acctMenu(false); S.acctAfter = acctMenu(true);
+
+/* ── today, side by side (cropped, true size) ─────────────────────────────────────── */
+S.todayClub = frame(1000, 300,
+  strip({ rail: 240, word: 'Admin', place: { name: 'Rep teams' }, site: 1, ws: 1 }) +
+  sidebar({ w: 240, cell: { tile: CI, name: CLUB }, rows: [{ i: 'grid', t: 'Overview' }, { i: 'calclock', t: 'Calendar' }, { i: 'filecheck', t: 'Permits', n: 8 }, { i: 'gantt', t: 'Schedules' }, { lab: 'Programs' }, { i: 'users', t: 'Rep teams', lit: 1 }], foot: [] }) +
+  '<div class="band" style="left:240px"><span class="tab on">Teams</span><span class="tab">Assistant coaches</span><span class="tab">Document templates</span><span class="tab">Past seasons</span></div>' +
+  '<div class="pg" style="top:93px;left:240px;padding-top:18px"><div class="tb"><span class="note" style="margin:0">10 teams in 2 groups</span><span class="act"><span class="btn">' + I('layers', 14) + 'Team groups</span><span class="btn lime">' + I('plus', 14) + 'Add team</span></span></div></div>');
+S.todayTourn = frame(1000, 300,
+  strip({ rail: 240, word: 'Admin', place: { name: EV, fx: EVD, chip: '<span class="chip live">Game day</span>' }, site: 1, ws: 1 }) +
+  sidebar({ w: 240, cell: { tile: CI, name: CLUB }, rows: tRows('Divisions', { club: 1, before: EV }).slice(0, 6), foot: [] }) + divisionsBody(48, true));
+S.todayCoach = frame(1000, 300,
+  strip({ rail: 220, word: 'Coaches Portal', unsplit: 1, ws: 1 }) + sidebar({ w: 220, cell: null, rows: [{ sel: TEAM }].concat(cRows('Roster').slice(0, 5)), foot: [] }).replace('<div class="rows">', '<div class="rows" style="padding-top:14px">') +
+  '<div class="mast" style="left:220px"><div><b>' + TEAM + '</b><small>' + CLUB + ' · 2026 Season · 3-2-1</small></div><div class="nx"><i>NEXT</i>Sun 9:30 a.m. practice</div></div>' +
+  '<div class="pg" style="top:104px;left:220px;padding-top:32px"><div class="ph"><span class="it">' + I('users', 18) + '</span><h4>Roster</h4><span class="act"><span class="btn lime">' + I('plus', 14) + 'Add Player</span></span></div></div>');
+
+/* ── page content ──────────────────────────────────────────────────────────────────── */
+function spec(title, note, html, opts) {
+  opts = opts || {};
+  return '<div class="spec"><div class="cap"><b>' + title + '</b><span>' + note + '</span></div><div class="stage"><div class="fitwrap">' + html + '</div></div></div>';
+}
+function pair(a, b, la, lb) { var wide = a.indexOf('width:1440px') > -1 || a.indexOf('width:1100px') > -1 || a.indexOf('width:1040px') > -1; return '<div class="pair' + (wide ? ' stack' : '') + '"><div><div class="lbl">' + (la || 'Today') + '</div>' + a + '</div><div><div class="lbl after">' + (lb || 'Proposed') + '</div>' + b + '</div></div>'; }
+function trio(list) { return '<div class="pair">' + list.map(function (x) { return '<div><div class="lbl">' + x[0] + '</div>' + x[1] + '</div>'; }).join('') + '</div>'; }
+
+var CMP = [
+  ['Who you’re in', 'The sidebar’s top cell names the club (14px bold, 45px tall, opens Overview).', 'The cell still names the club or org. The event is named in the top strip, with a plain form dropdown in the sidebar to switch.', 'No cell. A form dropdown heads the sidebar; the team is named in a second pinned bar (16px bold, a 56px band).', 'not', 'History. One rule fits all three: the cell names whose sidebar it is.', 'E1 E6'],
+  ['Page name', 'Pinned in the strip, 16px bold. The page draws no second title.', 'In the page, 20px bold; it scrolls away. The strip holds the event.', 'In the page, 20px bold, beside a 34px icon tile; it scrolls away.', 'not', 'The club’s reason (two titles; the pinned bar spent on the fact that never changes) applies word for word.', 'E1 E6'],
+  ['Pinned height, desktop', '93px with tabs, 48px without.', '48px. The page name sits 38px below it, unpinned.', '104px: the 48px strip plus the 56px team bar.', 'not', 'The coach loses 56px of list on every screen for a name that rarely changes.', 'E6'],
+  ['Phone bar', 'Names the place (16px bold); tabs pinned under it; 51px, 95px with tabs.', 'Names the event (16px bold) over a small mono line of dates and phase; 53px. The page’s 20px title follows below.', 'Names the team (14px bold) with a chevron and the record; 37px. The page’s 20px title, with its icon tile, follows below.', 'not', 'Two titles on every tournament and coach phone screen.', 'E5 E8'],
+  ['Switching (the place’s list)', 'Clubs: the Workspaces pill. A season: a quiet chevron in the bar.', 'A native form dropdown on desktop and in the More sheet; an initials tile when the sidebar is collapsed. Stays on the same page.', 'A native form dropdown on desktop; on a phone the team name plus a quiet chevron opens a “Your teams” sheet.', 'not', 'Three looks for one job. The coach phone already ships your quiet chevron.', 'E1'],
+  ['Sidebar rows', '14px text, 38px rows, 14px icons.', 'Same.', 'Same.', 'same', 'Written standard N1, N9.', ''],
+  ['Group headings', 'None that fold: the club sidebar lists places only.', '11px capitals that fold, with a chevron.', 'Same as the tournament.', 'not', 'Round 2: folding hides little (the coach opens every group but Team) and both sidebars scroll on a laptop either way. One behaviour across the three portals (the support console keeps its own), and a chevron that only ever means “switch”.', 'E14'],
+  ['Sidebar width', '240px.', '240px.', '220px.', 'not', 'Round 2: once the portal doors sit in the same foot, a 20px jump of the sidebar’s edge on every hop reads as two products. (Ruled 2026-10-17 because the portal’s layouts were tuned to 220.)', 'E9'],
+  ['Desktop strip', 'Split at the sidebar’s edge: “Admin” over the sidebar, the place over the page.', 'Same split; the event over the page.', 'Not split: “Coaches Portal” then nothing; the right-hand group.', 'not', 'The coach strip never took round 4.', 'E6 E9'],
+  ['Tabs', 'One tab component pinned in a 45px band.', 'None; pages are sidebar rows.', 'None; pages are sidebar rows; a page’s views are a switch in its toolbar.', 'just', 'Written exception: a tournament replaces the sidebar; the coach sidebar groups pages.', ''],
+  ['Phone bottom bar', '72px, 22px icons, 10px labels, five slots.', 'Same component; slots follow the event’s phase.', 'Same component; Overview · Schedule · Practices · Roster · More.', 'same', 'One component (N8, N10). The slot sets differ on purpose.', ''],
+  ['More sheet', 'One order: Notifications, tiles, places, You, foot.', 'Adds “Club overview” and a “Current tournament” form dropdown at the top.', 'Same order, the team’s groups.', 'not', 'The dropdown is a second switcher on a phone; the small line can be the only one.', 'E5'],
+  ['Account menu', 'The shared menu.', 'Same.', 'Same.', 'same', '', ''],
+  ['Other-portal doors', 'Sidebar foot: “Coaches Portal”. Tournaments is a Programs row, though clicking it swaps the whole sidebar.', '“Club overview” first in the sidebar; foot: “Coaches Portal”.', 'Sidebar foot: “Tournaments you run” and “Admin”, already both other portals.', 'not', 'Round 2: the coach foot already shows the other two; the admin’s does not, and the foot order differs (Plan & billing, Help… against Help, Plan & billing…).', 'E4'],
+  ['Workspaces pill', 'In the strip, with two or more workspaces.', 'Same.', 'Same.', 'same', 'Switches organizations; the foot doors switch portals.', ''],
+  ['Back arrow', 'In the strip: “← Teams │ 14U AA”, 14px, 15px arrow.', 'None: a team or game opens as a window.', 'In the page header’s leading corner; it scrolls.', 'not', 'Coach: history. Tournament windows: a real difference, kept.', 'E6'],
+  ['Page help (?)', 'None on a club place.', 'At the right of the page title; scrolls.', 'Pinned in the team bar’s right end.', 'not', 'Three places, measured.', 'E11'],
+  ['Icons', 'The one dictionary (N5), lucide.', 'Same.', 'Same.', 'same', '', ''],
+  ['Fonts', 'Inter 14/16; mono 11 for small lines; condensed table heads.', 'Same.', 'Same; the warm skin changes colour only.', 'same', '', ''],
+  ['Collapsed tile', '24px initials, the sidebar’s face.', '40px initials in mono, opens the list.', 'The team’s first word, opens the list.', 'not', 'Three tiles for one idea. A logo already exists for orgs, events and teams.', 'E10'],
+  ['Status of the place', 'A season’s chip beside its name.', 'The phase chip beside the event’s name.', '“Next” and “Game day” in the team bar.', 'not', 'Same idea, three places. Round 2: the place’s facts at the strip’s right end in all three.', 'E2 E7'],
+  ['First paint', 'The place is right on first paint.', 'The strip names the club until the event loads (several seconds on dev).', 'Right on first paint.', 'not', 'A defect. It decides the build’s first step.', 'E12']
+];
+function vpill(v) { return v === 'same' ? '<span class="tag v-same">Same</span>' : v === 'just' ? '<span class="tag v-just">Different, justified</span>' : '<span class="tag v-not">Different, not justified</span>'; }
+function mkInline(s) { return s ? s.split(' ').map(function (id) { return '<button type="button" class="mk inl" data-go="' + id + '">' + id + '</button>'; }).join('') : ''; }
+var cmpTable = '<div class="tablewrap"><table class="cmp"><thead><tr><th>Element</th><th>Club</th><th>Tournament admin</th><th>Coaches Portal</th><th>Verdict</th></tr></thead><tbody>' +
+  CMP.map(function (r) { return '<tr class="' + (r[4] === 'same' ? 'same-row' : '') + '"><td>' + r[0] + '</td><td>' + r[1] + '</td><td>' + r[2] + '</td><td>' + r[3] + '</td><td class="v">' + vpill(r[4]) + '<div style="margin-top:6px">' + r[5] + '</div><div style="margin-top:4px">' + mkInline(r[6]) + '</div></td></tr>'; }).join('') + '</tbody></table></div>';
+
+var ASKS = [
+  ['E1', 'Your tournament idea', 'The tournament takes the sidebar’s top cell (its name on up to two lines); the strip and the phone bar name the page. Where there is more than one tournament the whole cell opens the list, its chevron the sign; a club’s cell still opens Overview. Amends round 4’s “the cell opens Overview” for event and team cells. With folding gone (E14), a chevron in a sidebar only ever means “switch”.', ['<span class="rec">Yes, as drawn in round 2, with E3–E5.</span> Recommended. It is the club’s own rule applied faithfully: the cell names whose sidebar it is, the strip names the row you’re on.', 'Yes, exactly as first described: the event in the cell on every tournament screen, including Members and Plan & billing.', 'Keep today’s tournament as it is.']],
+  ['E2', 'The place’s facts on desktop', 'An event’s dates and phase (and, with E7, a team’s record and next event). Round 1 put them on the cell’s second line, where a long name truncated and a collapsed sidebar hid them.', ['<span class="rec">At the right end of the strip, before View site, away from the page’s name so they read as the place’s, not the page’s. The cell keeps the name alone, on up to two lines, the whole name on hover. Quiet ink behind a hairline, the chip the only colour; between 900 and about 1100 wide they give way first. A record page’s own facts sit beside its name (round 5 Q4), so the place’s stay put.</span> Recommended: they survive a collapsed sidebar, and the 2026-08-02 reasons hold (one copy, from the one phase rule, always on screen).', 'On the cell’s second line (round 1).']],
+  ['E3', 'A tournament’s org-wide screens', 'The Tournaments list and Settings & access with its Members, Payouts and PDF settings. Today they show the event’s sidebar and the event’s dropdown. ⚠ This restructures them: the organization becomes a place, “Settings & access”, whose pages are tabs (N11), and it reverses round 5’s “they keep their own heading” for these screens.', ['<span class="rec">The organization’s own short sidebar (Tournaments, Settings & access), the organization in the cell, no chevron.</span> Recommended: with the event heading the sidebar, “Settings & access” would read as the event’s, the misreading A10 exists to stop. Reached from the list’s “All tournaments”.', 'Keep the event’s sidebar there, with the event in the cell, and round 5’s headings.']],
+  ['E4', 'The other portals as doors in the sidebar foot (your round-2 idea)', 'Every foot lists the other portals the person holds, in one order: Plan & billing (the owner), a hairline, the portal doors, then Collapse sidebar (Help moves to the account menu, E16). “Club overview” leaves the tournament sidebar; Tournaments leaves the club’s Programs (a row that swaps the whole sidebar is a portal door). The coach foot already does this. On a phone the doors sit in the More sheet’s You group. In the Coaches Portal the door keeps its shipped words, “Tournaments you run”, so it never reads as the Season group’s Tournaments row. ⚠ N10: Tournaments leaves the phone bar and tile fill order, so a club whose bar used it gets its next program there. A club that has not run a tournament yet keeps today’s quiet “Also on your plan” row as its way in; the foot door appears once it hosts one. Rewrites N4 (“the other portal”, one row) and N7’s first item, and retires Ask A5 of 2026-10-17 (“Club overview”). The way back to the club becomes a quieter row at the foot, which fits: inside a tournament you mostly stay in it.', ['<span class="rec">Yes, as drawn: the doors read “Club”, “Tournaments” (“Tournaments you run” in the Coaches Portal) and “Coaches Portal”. Never “Organization”, which is already a club place.</span> Recommended.', 'Keep “Club overview” first in the tournament sidebar and Tournaments in the club’s Programs.']],
+  ['E5', 'A tournament on a phone', 'Phones have no sidebar, so the event cannot leave the screen. The tap target is the small line (44px, drawn); tapping near a page’s name to switch events is new, and the chevron is what says so. Rewrites N7’s first item.', ['<span class="rec">The bar names the page; the event and its phase chip ride the small line, which opens the list. The page’s own title goes; the More sheet’s “Current tournament” dropdown goes and its “Club overview” becomes the “Club” door in You.</span> Recommended: one switcher per width, as the coach phone does.', 'Keep the event in the bar and the page’s own title below it.']],
+  ['E6', 'The Coaches Portal on desktop', 'Lifts the rule the header-bar project kept away from the portal (“untouched”, scoped to that project). Reverses the 2026-08-25 identity-bar ruling on desktop and the 2026-08-26 “the way back sits in the page header” ruling; their reasons (identity, a findable way back) are kept, in the cell and the strip.', ['<span class="rec">Adopt it: the team in the cell, the strip split and naming the page (“← Practice plans │ name” one level down), the 56px team bar removed, the page’s buttons to its toolbar.</span> Recommended. A closed season keeps its one door: the cell plus Season’s End.', 'Keep the team bar and the in-page titles.']],
+  ['E7', 'A coach’s record, “Next” and “Game day” once the team bar goes', '', ['<span class="rec">At the strip’s right end on every screen (“2026 Season · 3-2-1 · NEXT Sun 9:30 a.m. practice”, the chip on game day), where the team bar showed them.</span> Recommended: nothing the coach sees today is lost.', 'On Overview only.']],
+  ['E8', 'The Coaches Portal on a phone', 'Reverses the 2026-08-25 ruling (“an identity bar whose identity gives way to a page name has stopped being an identity bar”). The risk it guarded: a coach with several teams editing the wrong one; the team stays on every screen, on the small line. The bar never shrinks on scroll (the admin rule), where today’s collapses to 36px.', ['<span class="rec">The bar names the page; the team and record ride the small line, which opens the existing “Your teams” sheet; the page’s own title and icon tile go.</span> Recommended: the same bar as the tournament and the club.', 'Keep the team in the bar.']],
+  ['E9', 'One sidebar width', 'Admin 240px, Premium coach 220px today (ruled 2026-10-17: the coach layouts were tuned to 220). The coach pages are centred at fixed widths, so on most screens the 20px comes out of margin; measure on a 1280px laptop at the build.', ['<span class="rec">240px in the admin and the Premium Coaches Portal (one setting in the coach portal; the free portal keeps 248, E13). The strip names the portal you are in with three distinct words, all ruled by you on 2026-11-09: “Club”, “Events” (a tournament, and a tournament-only organization’s screens; “Tournament” does not fit 240px) and “Coach”. “Admin Area” and “Coaches Portal” stay in the Workspaces list and everywhere with room. /marketing checks “Events” against the brand voice before the build.</span> Recommended: with the portal doors in one foot, a sidebar edge that jumps 20px on every hop reads as two products.', 'Keep 220px for the coach portal.']],
+  ['E10', 'The logo in the cell (your ask from walk §495)', 'An organization’s logo, a tournament’s own logo and a team’s crest all exist today; nothing new to upload or store (tab 10).', ['<span class="rec">Show it, open and collapsed: the club’s logo; an event’s own logo, then the organization’s; a team’s crest, then its colour; the initials when there is none, and when the logo is wider than 2 : 1 (a wordmark is a sliver at 24px). Contained on a white ground with a hairline ring, so a light logo keeps its edge. One 40px collapsed tile in every portal. On a phone, only in the switching sheet’s rows.</span> Recommended.', 'Initials only, one 40px collapsed tile.', 'Logo in the cell, but not in the phone’s switching sheet.']],
+  ['E11', 'Where a page’s help (?) sits', 'Measured: none on a club place, at the right of a tournament page’s title (scrolls), pinned in the coach team bar.', ['<span class="rec">One place in all three: the right end of the page’s top row, always last, on desktop and phone.</span> Recommended. It keeps the 2026-08-11 / 08-25 rule (top right, always last, one findable home, never the top strip) and gives the club’s places the help they lack.', 'Leave each as it is.']],
+  ['E12', 'Club and shared tidy-ups found by the audit', '(1) the back link hovers and divides differently in the bar and the strip; (2) the tournament list says “- Live” only on a phone and a status word only when collapsed; (3) a tournament page names the club until the event loads.', ['<span class="rec">Fix all three in the build, (3) first.</span> Recommended.', 'Leave them.']],
+  ['E13', 'The free Coaches Portal', 'Its own shell (248px sidebar, team header, tools as tiles), written as an exception on 2026-10-15.', ['<span class="rec">Out of this project; a separate look once the Premium portal has moved.</span> Recommended.', 'Include it now.']],
+  ['E15', 'A person whose whole job is tournaments', 'With Tournaments in the foot, a club member who only runs tournaments (a tournament director) would find their whole job in a 12px door at the bottom. The 2026-11-06 house-league exception (13a Ask 8) was ruled for exactly this: a person’s only program must not hide.', ['<span class="rec">The same exception: for a person whose only program is tournaments (decided by what they can open, never the role’s name), Tournaments leads their sidebar as a row, and the foot keeps the other doors.</span> Recommended.', 'No exception: everyone uses the foot door.', 'Keep Tournaments in Programs for everyone (E4 B for this part).']],
+  ['E16', 'Help and Plan & billing leave the growing foot? (your round-3 question)', 'Help opens the help centre, which people open far less than each page’s “?”. The 2026-09-01 rule kept Help out of the account menu for two reasons: no duplicate doors (a move keeps one door) and the new-release dot on the sidebar’s Help (removed 2026-11-07). Plan & billing carries the bill pill (an invoice to pay, overdue, a failed payment) and is the organization’s, while the account menu is the person’s, the same menu in every organization and on public pages.', ['<span class="rec">Help moves into the account menu, directly under What’s new; Plan & billing stays in the foot.</span> Recommended. The owner’s foot loses one row (about 34px back on a 1366 × 768 laptop); everyone else’s foot is the portal doors alone. ⚖ This supersedes the 2026-09-01 rule “Help stays out of the menu” (restated as unchanged on 2026-11-07) and rewrites N4’s foot order. Its edges: the row opens the help for the portal you are in, in a new tab; it shows on the desktop menu of the admin and the Coaches Portal only, never on public, family or marketing pages and never in the phone’s Account sheet (the phone keeps Help at the More sheet’s foot, N7 unchanged); the demo sandbox hides the account menu, so the demo’s sidebar foot keeps its Help row.', 'Both move; the profile icon carries a dot only while a bill needs action (departs from the 2026-11-07 “no dot on the avatar”, whose reason, an always-on What’s new, does not fit a bill).', 'Leave both in the foot.']],
+  ['E14', 'Folding group headings (your round-2 question)', 'Today the tournament and coach sidebars fold their groups and the club’s cannot (it lists places). Measured at 1440 × 900 the tournament sidebar is just over the height and the coach’s about 60px over, folding or not; the coach portal opens every group but Team.', ['<span class="rec">No folding in the tournament and coach sidebars: headings become labels, as in the club, and the list scrolls between the pinned cell and the foot.</span> Recommended: one behaviour across the three, and a chevron keeps one meaning (switch). The cost: on a short laptop the last coach rows (Documents, Settings) need a scroll; they are ordered by use.', 'Keep folding in the two page-listing sidebars (N3 then needs a written exception for the switcher’s chevron).']]
+];
+var askHTML = ASKS.map(function (a) {
+  return '<div class="ask" id="ask-' + a[0] + '"><h3><span class="mk inl" style="cursor:default">' + a[0] + '</span>' + a[1] + '</h3>' + (a[2] ? '<p class="muted" style="margin:0 0 4px">' + a[2] + '</p>' : '') +
+    '<ol type="A">' + a[3].map(function (o) { return '<li>' + o + '</li>'; }).join('') + '</ol></div>';
+}).join('');
+
+var SECTIONS = [
+  ['today', '1 · Today', true, function () {
+    return '<h2>What each portal does today</h2><p class="lede">The same person, one session, three answers to “where am I?”. Drawn from the shipped components and measured on the dev server at 1440 wide.</p>' +
+      '<div class="cols"><div class="card"><h3>Club (the standard)</h3><p>The sidebar’s top cell names the club. The strip names the place you’re on, its tabs pin in a band under it, and nothing else on the screen repeats either. 48px pinned on a place without tabs, 93px with them.</p></div>' +
+      '<div class="card"><h3>Tournament admin</h3><p>Inside an event the sidebar becomes the event’s 17 pages. The cell still names the club (or a tournament-only org). The event is in the strip with its dates and phase, a form dropdown under the cell switches it, and the page’s own 20px title sits in the page and scrolls away.</p></div>' +
+      '<div class="card"><h3>Coaches Portal</h3><p>No cell: a form dropdown heads the sidebar. The strip carries no place. A second pinned bar, 56px, names the team, its club, season and record and the next event. The page names itself at 20px beside an icon tile, and scrolls away. 104px pinned.</p></div></div>' +
+      spec('Club · Rep teams', 'true size, top of the screen', S.todayClub) + spec('Tournament admin · a club’s event, Divisions', 'true size', S.todayTourn) + spec('Coaches Portal · Roster', 'true size', S.todayCoach);
+  }],
+  ['table', '2 · Side by side', true, function () {
+    return '<h2>Every navigation element, three portals</h2><p class="lede">Measured at 1440 and 390. “Show only what differs” hides the rows that are already the same.</p>' + cmpTable;
+  }],
+  ['verdict', '3 · Your idea', false, function () {
+    return '<h2>Right, with three changes</h2>' +
+      '<p class="lede">Today the tournament breaks the club’s rule. In the club, the cell names whose sidebar it is and the strip names the row you’re on. In an event the sidebar is the event’s, but the strip names the event and the row you’re on is pushed into the page. Your swap puts each fact where the club puts it. It is a move and a restyle, not a new feature.</p>' +
+      '<div class="cols"><div class="card"><h3>Does it reverse A10?</h3><p>Its wording, not its reason. A10 exists so an event’s name never sits above Members or Plan & billing (Members grants access per tournament; billing is the organization’s). Under your idea those screens name themselves in the strip, and with E3 their sidebar is the organization’s, so the org is named in the cell.</p></div>' +
+      '<div class="card"><h3>The way back to the club (round 2)</h3><p>Your round-2 idea: every portal’s sidebar foot lists the other portals you hold, so the main sidebar is only ever the portal you are in. “Club overview” leaves the tournament sidebar and becomes the foot’s “Club” door; Tournaments leaves the club’s Programs, because a row that swaps the whole sidebar is a portal door (E4). The coach foot already works this way.</p></div>' +
+      '<div class="card"><h3>A tournament-only organization</h3><p>No club above it. Event pages: the event in the cell. Org-wide screens: the organization in the cell, with its own short sidebar (E3). Its foot shows the Coaches Portal only when the person coaches.</p></div>' +
+      '<div class="card"><h3>Phone vs desktop</h3><p>A phone has no sidebar, so the event cannot move there. The bar names the page and the event rides the small second line, which becomes the switcher (E5). The portal doors sit in the More sheet’s You group.</p></div>' +
+      '<div class="card"><h3>Where the real risk sits</h3><p>An event page does not know which event it shows until after it loads, because the choice lives in the browser and the address carries no event. On dev the strip named the club for several seconds first. In the cell that becomes a visible flicker from club to event. The build’s first step makes the chosen event known on first paint (E12).</p></div>' +
+      '<div class="card"><h3>Already in the product</h3><p>The coach phone switches teams with exactly your quiet chevron, and the coach sidebar’s foot already lists the other two portals. The desktop list is drawn from the collapsed sidebar’s existing menu, with a status word on each row.</p></div></div>';
+  }],
+  ['standard', '4 · The standard', true, function () {
+    return '<h2>One model for all three</h2>' +
+      '<div class="cols"><div class="card"><h3>1 · The sidebar’s top cell</h3><p>Names whose sidebar it is: the club, the event, the team, or the organization on a tournament org’s own screens. The name on up to two lines, nothing under it; the whole name on hover and in the list. A quiet chevron only when there is more than one to choose from, and then the whole cell opens the list; a cell without one (the club) opens its front page. Collapsed: one 40px tile with the logo.</p></div>' +
+      '<div class="card"><h3>2 · The sidebar</h3><p>240px in the admin and the Premium Coaches Portal (the free portal keeps its 248, E13). Headings are labels, never folds, so a chevron in these sidebars only ever means “switch”. The rows list the portal you are in and nothing else.</p></div>' +
+      '<div class="card"><h3>3 · The sidebar’s foot</h3><p>One order in every portal: Plan & billing (the owner, with its bill pill), a hairline, then the other portals you hold (Club, Tournaments, Coaches Portal, less the one you are in), then Collapse sidebar. Help lives in the account menu beside What’s new (E16). On a phone the same doors sit in the More sheet’s You group, and Help stays at the sheet’s foot.</p></div>' +
+      '<div class="card"><h3>4 · The desktop strip</h3><p>Split at the sidebar’s edge: the wordmark and the portal’s word (Club, Events, Coach) over the sidebar. Over the page: the back arrow one level down, the page’s name, a record’s own facts beside it; at its right end, in quiet ink behind a hairline, the place’s facts (an event’s dates and phase, a team’s record and next event), which give way first on a narrow screen; then View site, the bell, the account menu, Workspaces.</p></div>' +
+      '<div class="card"><h3>5 · The phone bar</h3><p>Names the page (or the place, in the club). The event or the team rides the small line and opens the list. One switcher per width; the More sheet keeps no second one.</p></div>' +
+      '<div class="card"><h3>6 · The page</h3><p>Draws no second title. Its buttons sit in its toolbar row, page help last at its right end. A place with several pages shows them as tabs pinned in the band.</p></div></div>' +
+      '<h3>Kept different on purpose</h3><ul><li>The club sidebar lists places; the tournament and coach sidebars list pages, under labels.</li><li>The tournament phone bar changes with the event’s phase; the club’s and the coach’s do not.</li><li>A tournament’s team or game opens as a window, not a page, so it has no back arrow.</li><li>A team with no live season has one door: the cell and Season’s End, decided before any live screen mounts. The foot’s portal doors stay.</li><li>The club’s name is left off the phone bar (A4); an event and a team are kept on it, because they can change under you.</li></ul>' +
+      spec('The sidebar’s foot, one order', 'proposed · an owner who holds all three portals sees the other two; someone who is not the owner sees only the doors', S.foots) +
+      spec('The account menu', 'Help joins What’s new; nothing else changes. The menu is the same in every portal.', pair(S.acctBefore, S.acctAfter)) +
+      spec('The club’s sidebar', 'Tournaments leaves Programs for the foot; whole screen height', pair(S.clubBefore, S.clubAfter));
+  }],
+  ['tdesk', '5 · Tournament · desktop', true, function () {
+    return '<h2>A club’s tournament on desktop</h2><p class="lede">Whole screen, true size, 1440 × 900. Round 2: the event’s name takes the cell (two lines), its dates and phase move to the strip’s right end, the groups stop folding, “Club overview” leaves for the foot as “Club”, the page’s second title goes.</p>' +
+      spec('Divisions, a club running a tournament', 'before / after · whole screen', pair(S.tDeskBefore, S.tDeskAfter)) +
+      spec('A 1366 × 768 laptop', 'the foot stays pinned; the rows scroll under it (Public site is one scroll away)', tDeskAt(1366, 768)) +
+      spec('1000px wide', 'between 900 and about 1100 the place’s facts give way first; the page’s name never truncates', tDeskAt(1000, 420, true)) +
+      spec('The quiet chevron, open', 'the list is the collapsed sidebar’s existing menu, with a status word on every row, and “All tournaments” at its foot', S.tList) +
+      spec('A tournament-only organization · an event page', 'top of the screen', pair(S.oEventBefore, S.oEventAfter)) +
+      spec('A tournament-only organization · Members (an org-wide screen)', 'E3: the organization’s own sidebar', pair(S.oMembersBefore, S.oMembersAfter)) +
+      spec('The worst case for the cell', 'a long name takes two lines, then truncates (today’s dropdown truncates at one); the whole name on hover and in the list', S.worst) +
+      spec('Collapsed sidebar', 'today: two tiles (the club’s 24px, the event’s 40px); proposed: one 40px tile with the event’s logo and the game-day dot, its name in the bubble', pair(S.colBefore, S.colAfter));
+  }],
+  ['tphone', '6 · Tournament · phone', true, function () {
+    return '<h2>A club’s tournament on a phone</h2><p class="lede">Whole screen, true size, 390 × 844. Open this page on a phone to judge the sizes.</p>' +
+      spec('Divisions', 'before / after · whole screen', pair(S.tPhoneBefore, S.tPhoneAfter)) +
+      spec('The small line, tapped', 'the same list as desktop, as a sheet', S.tPhoneSheet) +
+      spec('The More sheet', 'the second switcher goes; “Club overview” becomes the “Club” door in You, beside the Coaches Portal', pair(S.moreBefore, S.moreAfter));
+  }],
+  ['cdesk', '7 · Coaches · desktop', true, function () {
+    return '<h2>The Coaches Portal on desktop</h2><p class="lede">Whole screen, true size. Round 2: the sidebar widens to 240 like the admin’s and stops folding; the team takes the cell; the strip names the page and carries the team’s record and next event at its right end, where the 56px team bar showed them; the foot lists Club and Tournaments. Without folding, the last two rows (Documents, Settings) scroll on a 900px-tall screen, as drawn (E14).</p>' +
+      spec('Roster', 'before / after · whole screen', pair(S.cDeskBefore, S.cDeskAfter)) +
+      spec('One level down', 'the back arrow moves into the strip, as the club’s “← Teams │ 14U AA”', pair(S.cNestBefore, S.cNestAfter)) +
+      spec('A team with no live season', 'one door, unchanged in substance: the cell, Season’s End, Help. The page titles itself with the season’s name.', pair(S.cClosedBefore, S.cClosedAfter)) +
+      spec('The team list, open', 'the same live / no-live-season split the phone sheet already shows', S.cList);
+  }],
+  ['cphone', '8 · Coaches · phone', true, function () {
+    return '<h2>The Coaches Portal on a phone</h2><p class="lede">Whole screen, true size. The bar names the page; the team rides the small line and opens the existing “Your teams” sheet.</p>' + spec('Roster', 'before / after · whole screen', pair(S.cPhoneBefore, S.cPhoneAfter)) + spec('A team with no live season', 'proposed · the one door holds on a phone: Season’s End and More; the small line opens Your teams, whose closed teams open their season’s page', S.cPhoneClosed) + spec('The More sheet', 'proposed · the other two portals in You, the same order as the tournament’s', S.coachMore);
+  }],
+  ['journey', '9 · One owner, three portals', true, function () {
+    return '<h2>The same person, one session</h2><p class="lede">Dana owns Lakeshore Minor Baseball, runs its Fall Classic and coaches its 14U AA.</p>' +
+      '<div class="flow"><div class="card"><h3>Today · desktop</h3><ol><li>Overview: the cell says Lakeshore, the strip says Overview.</li><li>Sidebar → Tournaments (a Programs row) → the event. The cell still says Lakeshore; the strip now says the event; the page’s name drops into the page. A form dropdown appears.</li><li>Sidebar foot → Coaches Portal. The cell is gone; a form dropdown heads a narrower sidebar; a second bar says 14U AA; the strip says nothing about the page.</li><li>Back: sidebar foot → Admin, or Workspaces.</li></ol><p class="muted">Three places to look for “where am I”, three ways to move.</p></div>' +
+      '<div class="card"><h3>Proposed · desktop</h3><ol><li>The cell says Lakeshore; the strip says Overview. The foot: Tournaments, Coaches Portal.</li><li>Foot → Tournaments. The cell says Fall Classic; the strip says Divisions, with Nov 1–3 and Game day at its right end. The foot: Club, Coaches Portal.</li><li>Foot → Coaches Portal. Same width; the cell says 14U AA; the strip says Roster, with the record and next practice at its right end. The foot: Club, Tournaments.</li></ol><p class="muted">One place to look (cell, strip) and one place to move (the foot).</p></div>' +
+      '<div class="card"><h3>Today · phone</h3><ol><li>Bar: “Rep teams” with its tabs. Tournaments is in More’s Programs.</li><li>Bar: the event over its dates; “Divisions” again in the page. Switching is a form dropdown in More; “Club overview” is More’s first row.</li><li>More → You → Coaches Portal. Bar: “14U AA ⌄ 3-2-1”; “Roster” again in the page with an icon tile.</li></ol></div>' +
+      '<div class="card"><h3>Proposed · phone</h3><ol><li>Bar: “Rep teams” with its tabs (unchanged). More → You → Tournaments.</li><li>Bar: “Divisions”, the event on the small line; tap it to switch. More → You → Club or Coaches Portal.</li><li>Bar: “Roster”, the team on the small line; tap it to switch. More → You → Club or Tournaments.</li></ol></div></div>' +
+      spec('Desktop, today', 'the three screens she moves through, true size, top of the screen', trio([['Club', S.todayClub], ['Tournament', S.todayTourn], ['Coaches', S.todayCoach]])) +
+      spec('Desktop, proposed', 'the same three screens', trio([['Club', S.clubAfterTop], ['Tournament', S.tList.replace('class="pop"', 'class="pop" hidden')], ['Coaches', S.cList.replace('class="pop"', 'class="pop" hidden')]]));
+  }],
+  ['logo', '10 · Logo', true, function () {
+    return '<h2>The logo in the cell (your ask from walk §495)</h2>' +
+      '<div class="cols"><div class="card"><h3>What already exists (from the data dictionary)</h3><dl class="kv"><dt>An organization</dt><dd>One logo, uploaded or a made stock logo (white art on the club’s main colour). The public site and documents already use it.</dd><dt>A tournament</dt><dd>Its own logo, which overrides the organization’s on its pages.</dd><dt>A team</dt><dd>A crest, set by the head coach in “How your documents look”; otherwise the team’s colour.</dd></dl><p class="muted" style="margin-bottom:0">Nothing new to upload or store. The admin needs no upload of its own.</p></div>' +
+      '<div class="card"><h3>The treatment drawn</h3><p>The logo sits whole inside the tile on a white ground with a hairline ring: a wide logo shrinks to fit rather than being cropped, and a very light logo keeps an edge so it never disappears into the sidebar. No logo: the initials, as today. As drawn, a wide wordmark shrinks to an unreadable sliver at 24px, so a logo wider than 2 : 1 falls back to the initials too. On a phone there is no cell, so the bar stays the page’s name; the logo shows only in the switching sheet’s rows.</p></div></div>' +
+      spec('The open cell', 'true size · every portal · four kinds of logo', S.logoGrid) +
+      spec('Collapsed', 'one 40px tile everywhere (today the club’s is 24px and the event’s 40px)', S.logoCol) +
+      spec('On a phone', 'the switching sheet, with each tournament’s logo', S.logoPhone());
+  }],
+  ['asks', '11 · Asks', false, function () { return '<h2>Your calls</h2><p class="lede">Answer with letters (“E1 A, E2 A …”). Each recommendation is the first option.</p>' + askHTML; }]
+];
+
+/* ── wiring ─────────────────────────────────────────────────────────────────────────── */
+var tabs = document.getElementById('tabs'), panels = document.getElementById('panels'), viewrow = document.getElementById('viewrow');
+SECTIONS.forEach(function (s, i) {
+  var b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'tab'); b.id = 'tab-' + s[0]; b.textContent = s[1];
+  b.setAttribute('aria-selected', i === 0 ? 'true' : 'false'); b.addEventListener('click', function () { show(s[0]); }); tabs.appendChild(b);
+  var p = document.createElement('section'); p.className = 'panel'; p.id = 'p-' + s[0]; p.setAttribute('role', 'tabpanel'); p.innerHTML = s[3](); panels.appendChild(p);
+});
+function show(id, askId) {
+  SECTIONS.forEach(function (s) {
+    document.getElementById('tab-' + s[0]).setAttribute('aria-selected', s[0] === id ? 'true' : 'false');
+    document.getElementById('p-' + s[0]).classList.toggle('on', s[0] === id);
+  });
+  var sec = SECTIONS.filter(function (s) { return s[0] === id; })[0];
+  viewrow.style.visibility = sec && sec[2] ? 'visible' : 'hidden';
+  if (history.replaceState) { try { history.replaceState(null, '', '#' + id); } catch (e) {} }
+  fit();
+  if (askId) { var el = document.getElementById('ask-' + askId); if (el) { el.scrollIntoView({ block: 'start' }); el.classList.add('flash'); setTimeout(function () { el.classList.remove('flash'); }, 1600); } }
+  else window.scrollTo(0, 0);
+}
+document.addEventListener('click', function (e) { var m = e.target.closest && e.target.closest('[data-go]'); if (m) show('asks', m.getAttribute('data-go')); });
+function seg(a, b, on) { document.getElementById(a).setAttribute('aria-pressed', on ? 'true' : 'false'); document.getElementById(b).setAttribute('aria-pressed', on ? 'false' : 'true'); }
+document.getElementById('v-all').addEventListener('click', function () { document.body.classList.remove('only-diff'); seg('v-all', 'v-diff', true); });
+document.getElementById('v-diff').addEventListener('click', function () { document.body.classList.add('only-diff'); seg('v-all', 'v-diff', false); });
+var fitOn = false;
+document.getElementById('s-true').addEventListener('click', function () { fitOn = false; seg('s-true', 's-fit', true); fit(); });
+document.getElementById('s-fit').addEventListener('click', function () { fitOn = true; seg('s-true', 's-fit', false); fit(); });
+function fit() {
+  document.querySelectorAll('section.panel.on .stage').forEach(function (st) {
+    var w = st.querySelector('.fitwrap'); if (!w) return;
+    w.style.transform = ''; w.style.height = ''; w.style.width = '';
+    if (!fitOn) return;
+    var inner = w.scrollWidth, avail = st.clientWidth - 28;
+    if (inner > avail) { var k = avail / inner; w.style.transform = 'scale(' + k + ')'; w.style.width = inner + 'px'; w.style.height = (w.scrollHeight * k) + 'px'; }
+  });
+}
+window.addEventListener('resize', fit);
+var start = (location.hash || '').slice(1);
+show(SECTIONS.some(function (s) { return s[0] === start; }) ? start : 'today');
+})();
+</script>
