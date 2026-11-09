@@ -1,7 +1,7 @@
 # Bank check through a volunteer's eyes — plan of record
 
 **Status:** STARTED 2026-11-08. Every owner ask is ruled (§0). **S1 committed `bdb56dd2f` 2026-11-08** (§4; owner walk
-owed). **S1b built 2026-11-08** to the approved drawings (§4). Next: S1b's commit and owner walk, then S2. PM brief:
+owed). **S1b committed `4b9e9a655` 2026-11-08** (§4); owner walk §497 published, then S2. PM brief:
 `BANK_CHECK_NOVICE_UX_PM_BRIEF.md`.
 
 **Source:** the evaluation "The Volunteer's Bank Check" (2026-11-08), published at
@@ -186,7 +186,8 @@ sentence; the walked working-draft cards change shape and their walks are redone
   **Left for later stages (not misses):** the printed check's title and "Bank balance on the statement", and the coach's
   printed "What your books should say" / "Your books on" / "Books now say" (S4, the printed page as one unit); the
   Overview's "Bank:" line (S2); the start's refusals and names (S1b).
-- 2026-11-08 — **S1b built** (club only). Drawings https://claude.ai/artifact/4kgmUUsCHhU3jvbNgRuAKd (source
+- 2026-11-08 — **S1b built, committed `4b9e9a655`** (club only; the owner walk is Owner QA Ledger §497,
+  https://claude.ai/artifact/U5PnAXvGPbARrMxV4Xdo4H, fixture `.probe/bank-ux-s1b/walk-setup.mjs`). Drawings https://claude.ai/artifact/4kgmUUsCHhU3jvbNgRuAKd (source
   `BANK_CHECK_S1B_DRAWINGS.html`; `/design` before hand-off: two drawing bugs fixed, and the phone does NOT get the cursor
   in the date — a native picker can't be opened for them, so the line carries it). **Owner rulings 2026-11-08:** drawings
   approved; ask B — after a start the end date is EMPTY, never a guessed month-end; ask C — the banking-app hint waits

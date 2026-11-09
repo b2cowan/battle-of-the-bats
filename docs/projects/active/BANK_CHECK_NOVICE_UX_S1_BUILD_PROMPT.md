@@ -1,5 +1,5 @@
-**S1 done 2026-11-08, committed `bdb56dd2f`. S1b built 2026-11-08 to the approved drawings (plan §4 has the record);
-its commit and owner walk are next, then S2.**
+**S1 done 2026-11-08, committed `bdb56dd2f`. S1b done 2026-11-08, committed `4b9e9a655` (plan §4 has the record);
+owner walk §497 published. This prompt is finished; next is S2.**
 
 # Bank check through a volunteer's eyes — S1 (words) and S1b (the club's start) — build prompt, two sessions
 

@@ -1,0 +1,414 @@
+<title>The Club’s Starting Balance</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column; a walk index of cards, one walk open at a time; steps as Do / You should see rows with a tick. */
+:root {
+  --bg: #f4f6f5; --surface: #ffffff; --ink: #18211d; --muted: #5b6862; --line: #d5ddd9;
+  --accent: #1f6b4f; --accent-soft: #e2efe9; --warn: #9a5b00; --warn-soft: #fbefd9; --bad: #a3322b; --bad-soft: #f8e3e1;
+  --font-body: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font-body); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+.wrap { max-width: 860px; margin: 0 auto; display: grid; gap: 20px; }
+h1 { font-size: 30px; line-height: 1.15; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-size: 19px; margin: 0; text-wrap: balance; }
+h3 { font-size: 13px; margin: 0; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font: 600 12px/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.lead { color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 12px; min-width: 0; }
+.signin { border-color: var(--accent); }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+.amt { font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.note { background: var(--warn-soft); border-radius: 8px; padding: 10px 12px; }
+ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.index { display: grid; gap: 8px; }
+.wcard { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font: inherit; color: inherit; cursor: pointer; }
+.wcard[aria-expanded="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.wcard:focus-visible, button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wcard .t { font-weight: 600; }
+.wcard .j { grid-column: 1; color: var(--muted); font-size: 14px; }
+.chip { grid-row: 1 / span 2; grid-column: 2; font: 600 12px/1 var(--font-body); padding: 6px 9px; border-radius: 999px; background: var(--bg); color: var(--muted); border: 1px solid var(--line); white-space: nowrap; }
+.chip.prog { color: var(--accent); border-color: var(--accent); }
+.chip.pass { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.chip.issue { background: var(--bad-soft); color: var(--bad); border-color: transparent; }
+.chip.call, .chip.thin { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+.walk { display: grid; gap: 14px; }
+.meta { display: grid; gap: 10px; }
+.meta div { display: grid; gap: 2px; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.step { display: grid; grid-template-columns: 28px 1fr; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.step.done { border-color: var(--accent); background: var(--accent-soft); }
+.step.stop { border-style: dashed; border-color: var(--warn); }
+.step input[type="checkbox"] { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); }
+.step .body { display: grid; gap: 6px; min-width: 0; }
+.step .who { font: 600 11px/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.07em; color: var(--warn); }
+.step .lab { font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.opts { display: grid; gap: 6px; }
+.opts label { display: flex; gap: 8px; align-items: flex-start; }
+.verdict { display: flex; flex-wrap: wrap; gap: 8px; }
+.verdict button, .btn { font: 600 14px/1 var(--font-body); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.verdict button.on[data-v="pass"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+.verdict button.on[data-v="issue"] { background: var(--bad); color: var(--surface); border-color: var(--bad); }
+.verdict button.on[data-v="call"] { background: var(--warn); color: var(--surface); border-color: var(--warn); }
+textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5 var(--font-body); padding: 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.out { font: 13px/1.5 var(--font-mono); white-space: pre-wrap; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.progress { font-weight: 600; }
+@media (max-width: 520px) { .kv { grid-template-columns: 1fr; } .kv dt { margin-top: 6px; } h1 { font-size: 25px; } }
+@media (prefers-reduced-motion: no-preference) { .step { transition: background-color 0.15s, border-color 0.15s; } }
+</style>
+
+<div class="wrap">
+  <header class="card" style="gap:8px">
+    <span class="eyebrow">Bank check through a volunteer’s eyes · S1b · Owner QA Ledger §497</span>
+    <h1>The club starts from a statement’s opening balance</h1>
+    <p class="lead">One purpose: the club’s bank checking starts from the top of the first statement you want to check, and then checks that same statement. You start an account from Oct 1, check Oct 31 straight after, read the start’s new name everywhere it shows, delete it, and do the start again on a phone. About 20 minutes.</p>
+    <p class="lead">Written Nov 8, 2026 against the dev site. Every date and amount here is fixed: the walk account holds its own book with two lines and nothing else, so no figure moves with the calendar. One step uses <b>tomorrow</b> and one uses <b>today</b>, whatever day you walk.</p>
+    <p class="progress" id="progress">Checked 0 of 0</p>
+  </header>
+
+  <section class="card signin" aria-labelledby="signin-h">
+    <h2 id="signin-h">Sign in as</h2>
+    <dl class="kv">
+      <dt>Where</dt><dd><code>http://localhost:3000</code> (dev; the dev server must be running)</dd>
+      <dt>Account</dt><dd><code>uat-club-treasurer@uat-rep-club.local</code> · password <code>UATPassword2026!</code><br>Avery Chen, Treasurer of <b>UAT Rep Club</b> (moves the club’s money). Every part of this page uses this one account.</dd>
+      <dt>Bank tab</dt><dd><code>localhost:3000/uat-rep-club/admin/accounting/bank</code>, then pick <b>S1b walk chequing</b> in the <b>Account</b> pill.</dd>
+      <dt>Phone</dt><dd>Part 4 is a phone part: your desk browser’s device toolbar at <b>390 px</b> wide.</dd>
+    </dl>
+    <p class="lead">Dev-only sign-in. Keep this page private.</p>
+  </section>
+
+  <section class="card" aria-labelledby="before-h">
+    <h2 id="before-h">Before you start</h2>
+    <ul class="plain">
+      <li><b>I made the walk account for you</b> (checked Nov 8, 2026): <b>S1b walk chequing</b>, not started, holding one book, <b>S1b walk book</b>, with two lines: <b>Walk: Cheque 2001 · field paint</b>, <span class="amt">$10.00</span> out, Sep 25, 2026, and <b>Walk: Raffle deposit</b>, <span class="amt">$50.00</span> in, Oct 10, 2026.</li>
+      <li>The story: the account’s Oct 1–31 statement opens at <span class="amt">$1,000.00</span> and ends at <span class="amt">$1,040.00</span>. The Sep 25 cheque cleared in October, so the bank is $10.00 under your books, and the look-back finds it.</li>
+      <li>Leave the other accounts (Walk chequing, Gaming account) as they are; part 3 only looks at the Gaming account.</li>
+      <li><b>Walk the parts in order, 1 to 4.</b> Each opens with a stop check. I remove the walk account and its book when you’re done.</li>
+    </ul>
+  </section>
+
+  <section class="card" aria-labelledby="proved-h">
+    <h2 id="proved-h">Already proved by tests (don’t re-do these)</h2>
+    <ul class="plain">
+      <li>The card stores the day before the one you type, and every screen shows the day you typed: the list, the start’s window, Find, the look-back, the printed check and the band all pin it.</li>
+      <li>The fiscal-year close’s bank row counts a statement that starts on the 1st of the year’s last month as that month’s, and stays quiet about it.</li>
+      <li>The server’s date rules didn’t change; each refusal sentence was checked against the rule that sends it.</li>
+    </ul>
+    <p class="lead">Your time goes on judgment: does a volunteer treasurer know which statement to pick, and what to do the moment after?</p>
+  </section>
+
+  <section aria-labelledby="index-h" style="display:grid;gap:10px">
+    <h2 id="index-h">The walks</h2>
+    <div class="index" id="index"></div>
+  </section>
+
+  <section id="walkHost"></section>
+
+  <section class="card" aria-labelledby="sum-h">
+    <h2 id="sum-h">Paste-back (all walks)</h2>
+    <div class="row">
+      <button class="btn" type="button" id="copyAll">Copy the summary</button>
+      <button class="btn" type="button" id="reset">Clear my ticks</button>
+      <span class="lead" id="copied" aria-live="polite"></span>
+    </div>
+    <div class="card out" id="out" tabindex="0"></div>
+  </section>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var KEY = "s1b-start-walk-v1";
+  var PAGE = "Bank check through a volunteer’s eyes · S1b, the club’s start · Owner QA Ledger §497";
+  var WALKS = [
+ {
+  "id": "S1",
+  "title": "The start card",
+  "job": "S1b walk chequing · desk",
+  "forText": "The first thing a treasurer meets: the card asks for the first statement they want to check, from its top, and says where checking begins.",
+  "passes": "The card asks for “Statement starts on” and “Opening balance”, says nothing before that day is compared with the bank, refuses a statement that starts tomorrow, and saves Oct 1 at $1,000.00.",
+  "notIn": "What happens after Start here (part 2). The phone (part 4).",
+  "where": "Desk. Accounting → Bank, Account pill → S1b walk chequing.",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: open Accounting → Bank and pick <b>S1b walk chequing<\/b> in the Account pill. Its line under the name says <b>Not checked yet<\/b>.",
+    "s": "The card <b>Start checking S1b walk chequing<\/b>. If you see a check form instead, the account was started already: stop here and tell me."
+   },
+   {
+    "d": "Read the card’s lead.",
+    "s": "<b>Pick the first bank statement you want to check. Type the day it starts and its opening balance, both printed at the top. Nothing dated before that day is compared with the bank.<\/b> Books in this account: <b>S1b walk book<\/b> only."
+   },
+   {
+    "d": "Read the two fields under the books.",
+    "s": "<b>Statement starts on *<\/b> (a date) and <b>Opening balance *<\/b> (an amount). No “Statement date”, no “Bank balance on that date”."
+   },
+   {
+    "d": "Type <b>tomorrow’s date<\/b> in Statement starts on, <span class=\"amt\">$1,000.00<\/span> as the opening balance, and press <b>Start here<\/b>.",
+    "s": "The card stays, with <b>A statement can’t start after today.<\/b> (This sentence is new and skipped the words review: tell me if you’d word it differently.)"
+   },
+   {
+    "d": "Change the date to <b>Oct 1, 2026<\/b> and press <b>Start here<\/b>.",
+    "s": "The start card goes and the check form takes its place (part 2 looks at it closely)."
+   }
+  ]
+ },
+ {
+  "id": "S2",
+  "title": "Check that same statement",
+  "job": "S1b walk chequing · Oct 31, 2026 · desk",
+  "forText": "The point of the change: the moment after the start, the card asks for the end of the statement you’re holding, not today’s balance, and Find speaks of “checking started”.",
+  "passes": "The form opens with the date empty and the cursor in it, one line saying what to type, no banking-app hint; a day before checking started is refused in words; Oct 31 at $1,040.00 is off by $10.00 and the look-back names the Sep 25 cheque; after Save the line is gone.",
+  "notIn": "The start’s own window and the printed check (part 3).",
+  "where": "Desk. Accounting → Bank (S1b walk chequing), straight on from part 1.",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: the card is <b>Check your bank balance<\/b> on S1b walk chequing, and you haven’t typed or clicked anything since Start here.",
+    "s": "If you reloaded or left the page, the line below is gone by design: go to part 3’s last two steps to delete the start, then do part 1 again."
+   },
+   {
+    "d": "Look at the card before touching it.",
+    "s": "Under the purpose line: <b>Checking starts Oct 1, 2026. Now check that same statement: type its end date and ending balance.<\/b> The <b>Date<\/b> field is empty, with the cursor in it. <b>Save this check<\/b> and <b>+ Add entry<\/b> are greyed. No “Use the posted balance your banking app shows…” under the fields."
+   },
+   {
+    "d": "Look below the card, at <b>Balance checks<\/b>.",
+    "s": "One row: <b>Oct 1, 2026<\/b> · <span class=\"amt\">$1,000.00<\/span> · — · <b>Starting balance<\/b> · Avery Chen · today. Under it: <b>No balance checks yet.<\/b>"
+   },
+   {
+    "d": "In Date, pick <b>Sep 30, 2026<\/b>.",
+    "s": "In place of the band: <b>That day is before checking started. Pick a later day.<\/b>"
+   },
+   {
+    "d": "Change Date to <b>Oct 31, 2026<\/b> and type <span class=\"amt\">$1,040.00<\/span> as the bank balance.",
+    "s": "The band: The bank says <span class=\"amt\">$1,040.00<\/span>; Should be in the bank <span class=\"amt\">$1,050.00<\/span>, its caption <b>Starting balance plus every change in your books since Oct 1, 2026, adjusted for what hasn’t reached the bank yet<\/b>; Difference <b>Off by $10.00<\/b>, “The bank shows $10.00 less than your books.” The “Checking starts Oct 1, 2026…” line is still there."
+   },
+   {
+    "d": "Read Find, under the sums (press <b>Show them<\/b> if the lines are folded).",
+    "s": "The callout: <b>Walk: Cheque 2001 · field paint<\/b> (Sep 25) <b>is exactly $10.00 and dated before checking started. If it reached the bank after that, that’s the gap.<\/b> The lines: <b>Lines since checking started · Oct 1, 2026<\/b> with Walk: Raffle deposit (Oct 10, $50.00 in). Below: <b>Before checking started · Oct 1, 2026<\/b>, “If one of these was dated before checking started but reached the bank after it, mark it Waiting at the start.”, and the Sep 25 cheque with <b>Exactly $10.00<\/b>."
+   },
+   {
+    "d": "Don’t mark anything. Press <b>Save this check<\/b>.",
+    "s": "<b>Checked Oct 31, 2026. It saved as off by $10.00.<\/b> The “Checking starts…” line is gone, and the card is the ordinary one again (today’s date, the banking-app hint back). The list: <b>Oct 31, 2026<\/b> Off by $10.00 above the <b>Oct 1, 2026 · Starting balance<\/b> row."
+   }
+  ]
+ },
+ {
+  "id": "S3",
+  "title": "The start’s name everywhere, and deleting it",
+  "job": "S1b walk chequing · desk",
+  "forText": "Everywhere the start shows, it is the starting balance, dated the day checking starts: the printed check, the start’s window, its delete words. And the starts saved before this change now read a day later.",
+  "passes": "The printed check says “Your books when checking started Oct 1, 2026”; the start’s window is “Starting balance · Oct 1, 2026” and can’t be deleted while the Oct 31 check stands on it; once that check is deleted, the start deletes with its new words and the start card returns; the Gaming account’s start reads Nov 1, 2026.",
+  "notIn": "Waiting at the start (its words changed, its working didn’t; tests hold it).",
+  "where": "Desk. Accounting → Bank (S1b walk chequing), then the Gaming account.",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: Balance checks shows <b>Oct 31, 2026<\/b> (off by $10.00) and <b>Oct 1, 2026 · Starting balance<\/b>.",
+    "s": "If it doesn’t, part 2 isn’t finished: stop here."
+   },
+   {
+    "d": "Open <b>Oct 31, 2026<\/b> and press <b>Print this check<\/b>. Look at the print preview, then cancel it.",
+    "s": "Under “Your books on Oct 31, 2026”: <b>Your books when checking started Oct 1, 2026: $1,000.00 · change in the books since: + $50.00<\/b>, and $1,050.00 beside it. (The title’s “statement ending Oct 31, 2026” is the printed page’s own words, a later stage.)"
+   },
+   {
+    "d": "Close the window. Open the <b>Oct 1, 2026<\/b> row.",
+    "s": "Eyebrow <b>S1b walk chequing · starting balance<\/b>; title <b>Starting balance · Oct 1, 2026<\/b>; The bank said <span class=\"amt\">$1,000.00<\/span>; Checks start from this balance <span class=\"amt\">$1,000.00<\/span>; and <b>Later checks start from this balance, so it can’t be deleted. Delete them first.<\/b> No Delete button."
+   },
+   {
+    "d": "Close it. Open <b>Oct 31, 2026<\/b> again, press <b>Delete this check<\/b>, then <b>Delete<\/b>.",
+    "s": "<b>The check for Oct 31, 2026 is deleted.<\/b> The list is the start row and “No balance checks yet.”"
+   },
+   {
+    "d": "Open <b>Oct 1, 2026<\/b> and press <b>Delete the starting balance<\/b>.",
+    "s": "<b>Delete the starting balance?<\/b> · “Delete the starting balance for Oct 1, 2026? Checking this account starts again from a statement you pick. Who deleted it and when is kept.”"
+   },
+   {
+    "d": "Press <b>Delete<\/b>.",
+    "s": "<b>The starting balance for Oct 1, 2026 is deleted. Start again from a statement.<\/b> The card is <b>Start checking S1b walk chequing<\/b> again."
+   },
+   {
+    "d": "In the Account pill, pick <b>Gaming account<\/b> and look at the last row of Balance checks.",
+    "s": "<b>Nov 1, 2026<\/b> · <b>Starting balance<\/b>. It was saved under the old card as Oct 31, 2026, the statement’s end; it now reads as the day checking starts, which means the same thing. Change nothing here."
+   }
+  ]
+ },
+ {
+  "id": "S4",
+  "title": "The start on a phone",
+  "job": "S1b walk chequing · 390 px",
+  "forText": "The same start on a phone, where the date is the phone’s own picker: the card still says what to type next, and a balance typed before the date isn’t kept as today’s.",
+  "passes": "At 390 px the start card and the form read cleanly with nothing sideways; after Start here the date is empty but the cursor is NOT put in it, the line sits above the two fields; a balance typed with no date doesn’t come back after a reload; the start deletes.",
+  "notIn": "Checking the statement through (part 2 did it at a desk).",
+  "where": "Desk browser, device toolbar at 390 px wide. Accounting → Bank (S1b walk chequing).",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Stop check: S1b walk chequing shows <b>Start checking S1b walk chequing<\/b>.",
+    "s": "If it shows a check form, part 3 isn’t finished: stop here."
+   },
+   {
+    "d": "Set the browser to 390 px wide and reload; pick S1b walk chequing again if another account shows. Read the card.",
+    "s": "The same lead (four lines), <b>Statement starts on *<\/b> as the phone’s own date field, <b>Opening balance *<\/b> under it, a full-width <b>Start here<\/b>. Nothing scrolls sideways."
+   },
+   {
+    "d": "Statement starts on <b>Oct 1, 2026<\/b>, opening balance <span class=\"amt\">$1,000.00<\/span>, <b>Start here<\/b>.",
+    "s": "<b>Checking starts Oct 1, 2026. Now check that same statement: type its end date and ending balance.<\/b> above <b>Date *<\/b> and <b>Bank balance *<\/b> side by side; the date empty and NOT focused (no keyboard or picker pops up); a greyed full-width Save; the start’s card below: <b>Oct 1, 2026 · $1,000.00<\/b>, Starting balance; then “No balance checks yet.”"
+   },
+   {
+    "d": "Without picking a date, type <span class=\"amt\">$1,040.00<\/span> as the bank balance. Then reload.",
+    "s": "An ordinary card: today’s date, the balance <b>empty<\/b>, no “Picked up where you left off”, no “Checking starts…” line. (The balance was never kept, because it had no day.)"
+   },
+   {
+    "d": "Clean up: tap the <b>Oct 1, 2026<\/b> card, <b>Delete the starting balance<\/b>, <b>Delete<\/b>.",
+    "s": "<b>The starting balance for Oct 1, 2026 is deleted. Start again from a statement.<\/b> and the start card back. I remove the walk account afterwards."
+   }
+  ]
+ }
+];
+  var state = { ticks: {}, verdict: {}, notes: {}, open: "S1" };
+  try { var raw = localStorage.getItem(KEY); if (raw) { var got = JSON.parse(raw); state.ticks = got.ticks || {}; state.verdict = got.verdict || {}; state.notes = got.notes || {}; state.open = got.open || "S1"; } } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  function plain(html) { var d = document.createElement("div"); d.innerHTML = html; return d.textContent.replace(/\s+/g, " ").trim(); }
+  function sid(w, i) { return w.id + "." + (i + 1); }
+  function counts(w) { var n = 0; w.steps.forEach(function (s, i) { if (state.ticks[sid(w, i)]) n++; }); return { done: n, all: w.steps.length }; }
+  var VWORD = { pass: "Passed", issue: "Issue", call: "Needs a call" };
+  function chipOf(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    if (v === "pass" && c.done < c.all) return ["thin", "Passed · only " + c.done + " of " + c.all + " ticked"];
+    if (v) return [v, VWORD[v] + " · " + c.done + " of " + c.all];
+    if (c.done) return ["prog", "In progress · " + c.done + " of " + c.all];
+    return ["", "Not started · " + c.all + " steps"];
+  }
+
+  var index = document.getElementById("index"), host = document.getElementById("walkHost");
+  var cards = {};
+  WALKS.forEach(function (w, wi) {
+    var b = el("button", "wcard");
+    b.type = "button"; b.id = "card-" + w.id; b.setAttribute("aria-controls", "walk-" + w.id);
+    b.appendChild(el("span", "t", "Walk " + (wi + 1) + " of " + WALKS.length + " · " + w.title));
+    b.appendChild(el("span", "j", w.job));
+    var chip = el("span", "chip"); b.appendChild(chip);
+    b.addEventListener("click", function () { state.open = w.id; save(); render(); document.getElementById("walk-" + w.id).scrollIntoView({ block: "start" }); });
+    index.appendChild(b);
+    cards[w.id] = { b: b, chip: chip };
+  });
+
+  function render() {
+    host.innerHTML = "";
+    WALKS.forEach(function (w, wi) {
+      var open = state.open === w.id;
+      cards[w.id].b.setAttribute("aria-expanded", open ? "true" : "false");
+      var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1];
+      if (!open) return;
+      var sec = el("section", "card walk"); sec.id = "walk-" + w.id;
+      sec.appendChild(el("span", "eyebrow", "Walk " + (wi + 1) + " of " + WALKS.length + " · " + w.job));
+      sec.appendChild(el("h2", null, w.title));
+      var meta = el("div", "meta");
+      [["What this walk is for", w.forText], ["It passes when", w.passes], ["Not in this walk", w.notIn], ["Sign in as", w.who || "The treasurer (card at the top)."], ["Where and on what", w.where]].forEach(function (m) {
+        var d = el("div"); d.appendChild(el("h3", null, m[0])); d.appendChild(el("p", null, m[1])); meta.appendChild(d);
+      });
+      sec.appendChild(meta);
+      var ol = el("ol", "steps");
+      w.steps.forEach(function (s, i) {
+        var id = sid(w, i);
+        var li = el("li", "step" + (s.stop ? " stop" : "") + (state.ticks[id] ? " done" : ""));
+        var cb = el("input"); cb.type = "checkbox"; cb.id = "cb-" + id; cb.checked = !!state.ticks[id];
+        cb.setAttribute("aria-label", "Step " + (i + 1) + " done");
+        cb.addEventListener("change", function () { state.ticks[id] = cb.checked; save(); li.className = "step" + (s.stop ? " stop" : "") + (cb.checked ? " done" : ""); refresh(); });
+        li.appendChild(cb);
+        var body = el("div", "body");
+        if (s.stop) body.appendChild(el("span", "who", "Stop check"));
+        body.appendChild(el("span", "lab", (i + 1) + " · Do"));
+        body.appendChild(el("p", null, s.d));
+        body.appendChild(el("span", "lab", "You should see"));
+        body.appendChild(el("p", null, s.s));
+        li.appendChild(body);
+        ol.appendChild(li);
+      });
+      sec.appendChild(ol);
+      sec.appendChild(el("h3", null, "Your verdict on this walk"));
+      var vs = el("div", "verdict");
+      [["pass", "Pass"], ["issue", "Issue"], ["call", "Needs a call"]].forEach(function (v) {
+        var btn = el("button", state.verdict[w.id] === v[0] ? "on" : "", v[1]); btn.type = "button"; btn.setAttribute("data-v", v[0]);
+        btn.setAttribute("aria-pressed", state.verdict[w.id] === v[0] ? "true" : "false");
+        btn.addEventListener("click", function () { state.verdict[w.id] = state.verdict[w.id] === v[0] ? "" : v[0]; save(); render(); });
+        vs.appendChild(btn);
+      });
+      sec.appendChild(vs);
+      var lab = el("label", null, "<h3>Notes</h3>"); lab.setAttribute("for", "notes-" + w.id);
+      sec.appendChild(lab);
+      var ta = el("textarea"); ta.id = "notes-" + w.id; ta.value = state.notes[w.id] || "";
+      ta.placeholder = "What you saw, a word you would change, a question for me";
+      ta.addEventListener("input", function () { state.notes[w.id] = ta.value; save(); refresh(); });
+      sec.appendChild(ta);
+      var row = el("div", "row");
+      var cp = el("button", "btn", "Copy this walk’s summary"); cp.type = "button";
+      var msg = el("span", "lead"); msg.setAttribute("aria-live", "polite");
+      var out = el("div", "card out"); out.tabIndex = 0; out.textContent = walkSummary(w);
+      cp.addEventListener("click", function () { copy(walkSummary(w), out, msg); });
+      row.appendChild(cp);
+      if (wi + 1 < WALKS.length) {
+        var nx = el("button", "btn", "Next: walk " + (wi + 2)); nx.type = "button";
+        nx.addEventListener("click", function () { state.open = WALKS[wi + 1].id; save(); render(); document.getElementById("walk-" + WALKS[wi + 1].id).scrollIntoView({ block: "start" }); });
+        row.appendChild(nx);
+      }
+      row.appendChild(msg);
+      sec.appendChild(row);
+      sec.appendChild(out);
+      sec._out = out; sec._w = w;
+      host.appendChild(sec);
+    });
+    refresh();
+  }
+
+  function walkSummary(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    var lines = [w.id + " " + w.title + " · " + (v ? VWORD[v].toUpperCase() : "NO VERDICT") + " · " + c.done + " of " + c.all + " ticked"];
+    w.steps.forEach(function (s, i) { lines.push("  " + (state.ticks[sid(w, i)] ? "[x] " : "[ ] ") + (i + 1) + ". " + plain(s.d)); });
+    var n = (state.notes[w.id] || "").trim();
+    if (n) lines.push("  Notes: " + n.replace(/\n+/g, " / "));
+    return lines.join("\n");
+  }
+  function allSummary() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; });
+    return [PAGE, "Checked " + done + " of " + total, ""].concat(WALKS.map(walkSummary)).join("\n");
+  }
+  function refresh() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1]; });
+    document.getElementById("progress").textContent = "Checked " + done + " of " + total;
+    document.getElementById("out").textContent = allSummary();
+    var sec = host.querySelector(".walk"); if (sec && sec._out) sec._out.textContent = walkSummary(sec._w);
+  }
+  function copy(text, node, msg) {
+    function pick() { try { var r = document.createRange(); r.selectNodeContents(node); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); msg.textContent = "Selected: press Ctrl+C to copy."; } catch (e) {} }
+    try { navigator.clipboard.writeText(text).then(function () { msg.textContent = "Copied."; }, pick); } catch (e) { pick(); }
+  }
+  document.getElementById("copyAll").addEventListener("click", function () { copy(allSummary(), document.getElementById("out"), document.getElementById("copied")); });
+  var armed = false;
+  document.getElementById("reset").addEventListener("click", function () {
+    var b = document.getElementById("reset");
+    if (!armed) { armed = true; b.textContent = "Press again to clear every tick and note"; return; }
+    armed = false; b.textContent = "Clear my ticks";
+    state = { ticks: {}, verdict: {}, notes: {}, open: "S1" }; save(); render();
+  });
+  render();
+})();
+</script>
