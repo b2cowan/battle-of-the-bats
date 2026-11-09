@@ -32,7 +32,7 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import { Plus } from 'lucide-react';
-import { figureCheck, waitingOnCheck, type BankLine, type WaitingItem } from '@/lib/bank-check';
+import { checkingStartsOn, figureCheck, waitingOnCheck, type BankLine, type WaitingItem } from '@/lib/bank-check';
 import {
   anchorStarted, browserDraftStore, canKeepDrafts, clearDraft, draftKey, isWorthKeeping, keepOffered, offeredItems, readDraft, startedOffCents,
   sweepIdleDrafts, writeDraft, type DraftContent, type StartedAnchor,
@@ -43,6 +43,7 @@ import { BANK_REFUSAL } from '@/lib/bank-check-words';
 import { BANK_WORDS as W } from '@/lib/bank-tab-words';
 import { tournamentToday } from '@/lib/timezone';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
+import { useDeskPicker } from '@/lib/hooks/useDeskPicker';
 import { Callout, useLatestRead } from '../../RepKit';
 import { DayField, FormError } from '../MoneyKit';
 import BankMoneyField from './BankMoneyField';
@@ -58,8 +59,10 @@ import s from './Bank.module.css';
 const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
 const DEBOUNCE_MS = 350;
 const BALANCE_ID = 'bank-check-balance';
+const DATE_ID = 'bank-check-date';
+const AFTER_START_ID = 'bank-check-after-start';
 
-export default function BankCheckForm({ orgSlug, view, personId, onSaved, onChanged, onStale, againDate }: {
+export default function BankCheckForm({ orgSlug, view, personId, onSaved, onChanged, onStale, againDate, afterStart }: {
   orgSlug: string;
   view: AccountView;
   /** The signed-in person: the draft is theirs (null until it is known, and then no draft is read or kept). */
@@ -76,17 +79,27 @@ export default function BankCheckForm({ orgSlug, view, personId, onSaved, onChan
    * with it, so the form starts on that day with the balance empty, scrolled to and the cursor in the balance.
    */
   againDate?: string;
+  /**
+   * Just started (A17, owner 2026-11-08; drawing BANK_CHECK_S1B_DRAWINGS.html tab 2): the day checking starts. The start
+   * was the first statement's opening balance, so the form opens on that same statement: no draft, the date empty, and
+   * the line that says what to type. The tab drops it at the first save.
+   */
+  afterStart?: string;
 }) {
   const today = tournamentToday();
   // On a phone the date and the balance sit side by side (drawn; owner 2026-11-06, BC4b): the balance takes the short word.
   const isPhone = useIsPhone();
+  // Our calendar (a desk) or the device's own picker: only the desk field can take the cursor usefully (/design S1b).
+  const desk = useDeskPicker();
   const accountId = view.account.id;
   // The working draft (WD1): this browser's, this person's, this account's. "Check this statement again" starts that day
   // fresh instead (its first keystroke replaces the draft). The card mounts after the account is read, never on the server.
   const draftAt = personId ? draftKey({ club: orgSlug, account: accountId, person: personId }) : null;
-  const [restored] = useState(() => (draftAt && !againDate ? readDraft(browserDraftStore(), draftAt, Date.now()) : null));
-  const [date, setDate] = useState(againDate ?? restored?.date ?? today);
-  const [asOf, setAsOf] = useState(againDate ?? restored?.date ?? today); // the date the figure is read for: `date`, after it stops changing
+  const [restored] = useState(() => (draftAt && !againDate && !afterStart ? readDraft(browserDraftStore(), draftAt, Date.now()) : null));
+  // Owner ask B (S1b): after a start the end date is empty, never a guessed month-end (statements don't all run by month).
+  const opening = afterStart ? '' : againDate ?? restored?.date ?? today;
+  const [date, setDate] = useState(opening);
+  const [asOf, setAsOf] = useState(opening); // the date the figure is read for: `date`, after it stops changing
   const [balance, setBalance] = useState(restored?.balance ?? '');
   const [started, setStarted] = useState<StartedAnchor | null>(restored?.started ?? null);
   // "Picked up where you left off": the day the restored draft was last worked on (null when nothing was restored).
@@ -116,13 +129,21 @@ export default function BankCheckForm({ orgSlug, view, personId, onSaved, onChan
   const q = `orgSlug=${encodeURIComponent(orgSlug)}`;
   const words = useBudgetWords(q, adding !== null);
 
-  // Handed a date ("Check this statement again"): bring the form into view with the cursor in the balance.
+  // The form opened on purpose: bring it into view with the cursor where the next thing is typed, once per opening (a
+  // resize across the desk line never moves it again). Handed a date ("Check this date again") → the balance. Just started
+  // → the end date, at a desk only: a phone's own picker can't be opened for them and an iPhone ignores the focus, so the
+  // line above says it there (/design S1b).
+  const arrivedFor = useRef<string | null>(null);
   useEffect(() => {
-    if (!againDate) return;
-    const field = document.getElementById(BALANCE_ID);
+    const why = againDate ?? afterStart ?? null;
+    if (!why || arrivedFor.current === why) return;
+    arrivedFor.current = why;
+    const at = againDate ? BALANCE_ID : desk ? DATE_ID : null;
+    if (!at) return;
+    const field = document.getElementById(at);
     field?.scrollIntoView({ block: 'center' });
     field?.focus({ preventScroll: true });
-  }, [againDate]);
+  }, [againDate, afterStart, desk]);
 
   useEffect(() => {
     const t = window.setTimeout(() => setAsOf(date), DEBOUNCE_MS);
@@ -194,15 +215,21 @@ export default function BankCheckForm({ orgSlug, view, personId, onSaved, onChan
   // removed when the card is emptied. Restored marks still waiting on the figure are kept as they came.
   // A date cleared from the calendar is not a day a draft can come back to (it would be refused whole, balance and all):
   // it is kept as today until another is picked.
+  // ⚠ Just started (S1b /review): the date is empty ON PURPOSE (owner ask B), so nothing is kept until a day is picked (kept
+  // as today, a balance typed first would come back as a guessed date), and a draft from before the start goes.
+  const dateless = !!afterStart && !ISO_DAY.test(date);
   const draft: DraftContent = { date: ISO_DAY.test(date) ? date : today, balance, marked: pending ?? [...marked.keys()], started: anchor };
-  const worthKeeping = isWorthKeeping(draft);
+  const worthKeeping = !dateless && isWorthKeeping(draft);
   const draftText = JSON.stringify(draft);
   const lastKept = useRef(draftText);
   useEffect(() => {
-    if (!draftAt || draftText === lastKept.current) return;
+    if (!draftAt || dateless || draftText === lastKept.current) return;
     lastKept.current = draftText;
     writeDraft(browserDraftStore(), draftAt, JSON.parse(draftText) as DraftContent, today);
-  }, [draftAt, draftText, today]);
+  }, [draftAt, draftText, today, dateless]);
+  useEffect(() => {
+    if (afterStart && draftAt) clearDraft(browserDraftStore(), draftAt);
+  }, [afterStart, draftAt]);
   const hasDraft = canKeep && worthKeeping;
   // Emptied: what was picked up is gone, so the next thing typed is new work, not "where you left off".
   if (restoredOn && !worthKeeping) setRestoredOn(null);
@@ -288,7 +315,8 @@ export default function BankCheckForm({ orgSlug, view, personId, onSaved, onChan
   // a phone).
   const notes = [
     replaces ? W.replacesNote(dayYear(date)) : null,
-    typed === null ? W.balanceHint : null,
+    // Owner ask C (S1b): not while the after-start line shows (a statement's ending balance, not a banking app's).
+    typed === null && !afterStart ? W.balanceHint : null,
     band && band.result === 'off' && typed !== null ? W.saveOffNote : null,
     // The resting sentence while a draft exists (drawing tab 2, note 3): it is what says leaving is safe.
     hasDraft ? W.draftKept : null,
@@ -313,11 +341,14 @@ export default function BankCheckForm({ orgSlug, view, personId, onSaved, onChan
           <button type="button" className={s.link} onClick={startOver}>{W.startOver}</button>
         </p>
       )}
+      {/* Just started (A17): the restore line's place (a start never restores a draft), the card's status-line weight. */}
+      {afterStart && <p id={AFTER_START_ID} className={`${s.statusNote} ${s.afterStart}`} role="status">{W.afterStart(dayYear(afterStart))}</p>}
       {droppedMarks > 0 && <div className={s.droppedNote}><Callout tone="warn" role="status" flush>{W.draftDropped(droppedMarks)}</Callout></div>}
       {/* What went wrong sits by Save: at the card's top at a desk (Save is inline there), above Save on a phone (/review). */}
       {!isPhone && <FormError inPlace>{error}</FormError>}
       <div className={s.checkRow}>
-        <DayField id="bank-check-date" label={W.checkDate} value={date} onChange={pickDate} max={today} />
+        <DayField id={DATE_ID} label={W.checkDate} value={date} onChange={pickDate} max={today}
+          describedBy={afterStart ? AFTER_START_ID : undefined} />
         <BankMoneyField id={BALANCE_ID} label={isPhone ? W.checkBalancePhone : W.checkBalance} value={balance} onChange={v => { setBalance(v); setError(''); }} />
         {!isPhone && saveButton}
       </div>
@@ -327,7 +358,7 @@ export default function BankCheckForm({ orgSlug, view, personId, onSaved, onChan
 
       {fresh && fresh.booksCents !== null && band && (
         <>
-          <BankBand date={date} figure={band} typed={typed !== null} />
+          <BankBand date={date} figure={band} typed={typed !== null} startedOn={view.start ? checkingStartsOn(view.start.date) : undefined} />
           {startedOff !== null && <p className={`${ck.hint} ${s.hintLine}`}>{W.startedOffBy(cents(startedOff))}</p>}
           <BankSums date={date} bookNames={view.account.books.map(b => b.name)} booksCents={fresh.booksCents}
             shouldBeCents={band.shouldBeCents} onItsWay={fresh.onItsWay} payoutsHref={`/${orgSlug}/admin/accounting/payouts`}
@@ -368,7 +399,7 @@ function StatusLine({ figure, date, readError, fresh, onRetry }: {
       </p>
     );
   }
-  // A day the server won't take a check for (before the start, on the start's day, after today): its own sentence.
+  // A day the server won't take a check for (before checking started, after today): its own sentence.
   if (figure && figure.date === date && figure.refused) return <p className={s.statusNote} role="status">{BANK_REFUSAL[figure.refused]}</p>;
   return <p className={`${ck.hint} ${s.hintLine}`} role="status">{W.figuring}</p>;
 }

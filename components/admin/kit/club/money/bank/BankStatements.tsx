@@ -21,6 +21,7 @@ import { ClubRow, ClubRowList, RepChip, repKit } from '../../RepKit';
 import ck from '../../ClubKit.module.css';
 import { BANK_WORDS as W } from '@/lib/bank-tab-words';
 import { cents, dayYear, type AccountView, type SavedCheckView } from './BankShared';
+import { checkingStartsOn } from '@/lib/bank-check';
 import s from './Bank.module.css';
 
 export default function BankStatements({ view, accountLine, tools, form, onOpen }: {
@@ -75,7 +76,7 @@ export default function BankStatements({ view, accountLine, tools, form, onOpen 
           ))}
           {start && (
             <ClubRow key={start.id} as="button" chevron muted onClick={() => onOpen(start.id)}
-              title={W.cardTitle(dayYear(start.date), cents(start.bankCents))}
+              title={W.cardTitle(dayYear(checkingStartsOn(start.date)), cents(start.bankCents))}
               caption={<>
                 <span className={s.cardLine}>{startResult}</span>
                 <span className={s.cardLine}>{W.checkedCell(start.checkedBy, dayYear(start.checkedAt))}</span>
@@ -133,10 +134,12 @@ function opened(onOpen: (id: string) => void, id: string) {
 
 /** The row's keyboard door: its date, a button named for the check (or the starting statement) it opens. */
 function DateDoor({ c, isStart, onOpen }: { c: SavedCheckView; isStart?: boolean; onOpen: (id: string) => void }) {
+  // The start shows the day checking starts (owner 2026-11-08), never the stored day before it.
+  const shown = dayYear(isStart ? checkingStartsOn(c.date) : c.date);
   return (
-    <button type="button" className={`${repKit.nameButton} ${repKit.nameLink}`} aria-label={(isStart ? W.openStart : W.openCheck)(dayYear(c.date))}
+    <button type="button" className={`${repKit.nameButton} ${repKit.nameLink}`} aria-label={(isStart ? W.openStart : W.openCheck)(shown)}
       onClick={e => { e.stopPropagation(); onOpen(c.id); }}>
-      {dayYear(c.date)}
+      {shown}
     </button>
   );
 }

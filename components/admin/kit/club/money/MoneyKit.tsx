@@ -223,13 +223,15 @@ export function MethodField({ id, label, value, onChange, required = true, empty
 }
 
 /** A required day field (the club's day by default — never UTC). */
-export function DayField({ id, label, value, onChange, max }: {
+export function DayField({ id, label, value, onChange, max, describedBy }: {
   id: string; label: string; value: string; onChange: (v: string) => void; max?: string;
+  /** A line elsewhere on the card that says what this date is for (the bank check after a start). */
+  describedBy?: string;
 }) {
   return (
     <label className={ck.field} htmlFor={id}>
       <span className={ck.label}>{label}<span className={repKit.req} aria-hidden>*</span></span>
-      <DateInput id={id} className={ck.input} value={value} max={max} onChange={v => onChange(v)} />
+      <DateInput id={id} className={ck.input} value={value} max={max} onChange={v => onChange(v)} aria-describedby={describedBy} />
     </label>
   );
 }

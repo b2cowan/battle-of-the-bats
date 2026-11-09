@@ -89,9 +89,9 @@ describe('Not in the bank yet: figures from the books, never the request (ask 2,
     assert.equal((onStart(entry(7, { entry_date: '2026-09-12', ledger_id: 'elsewhere' })) as { code: string }).code, 'bad_item', "on the start, another account's book");
     // The start itself has no start before it: its own items (Q2) are never refused by this rule.
     assert.ok(plan({ bankCents: 1, waiting: [`entry:${U(9)}`] }, { booksCents: null, startDate: null }, [entry(9, { entry_date: '2026-09-12' })], 'start').ok);
-    assert.match(BANK_REFUSAL.bad_item, /after your starting statement/);
+    assert.match(BANK_REFUSAL.bad_item, /on or after the day checking started/);
     // Waiting at the start has the other date rule, so its own sentence (BC3b /marketing).
-    assert.match(BANK_REFUSAL.bad_start_item, /on or before your starting statement/);
+    assert.match(BANK_REFUSAL.bad_start_item, /dated before checking started/);
   });
   it('only entry:{uuid} keys are looked up, at most one past the cap', () => {
     assert.deepEqual(waitingIdsOf([`entry:${U(1)}`, 'entry:not-a-uuid', 7, `typed:${U(2)}`]), [U(1)]);
@@ -193,7 +193,10 @@ describe("the fiscal-year close’s bank row (BC5a, owner 2026-11-06 Close row)"
     assert.equal(bankCloseRow([], END), null);
     assert.equal(bankCloseRow([c('s2', 'start', '2026-08-15', 5, 5)], END), null);
     assert.equal(bankCloseRow([c('s3', 'start', '2026-09-30', 5, 5)], END), null);
-    assert.deepEqual(bankCloseRow([c('s4', 'start', '2026-07-31', 5, 5)], END), { kind: 'unchecked', lastChecked: null });
+    // S1b (A17): a start row holds the day BEFORE checking starts, so a statement starting Aug 1 (stored Jul 31) began in
+    // the last month: no row. One that started Jul 31 (stored Jul 30) is in reach.
+    assert.equal(bankCloseRow([c('s4', 'start', '2026-07-31', 5, 5)], END), null);
+    assert.deepEqual(bankCloseRow([c('s5', 'start', '2026-07-30', 5, 5)], END), { kind: 'unchecked', lastChecked: null });
   });
 });
 

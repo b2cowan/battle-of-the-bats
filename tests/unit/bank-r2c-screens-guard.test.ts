@@ -100,7 +100,7 @@ describe('5 · the check form: a balance, not a tick-off', () => {
     const fig = code('BankFigure.tsx');
     assert.match(fig, /import MoneySummaryBand/);
     assert.match(fig, /<MoneySummaryBand /);
-    assert.match(fig, /bankBandTiles\(\{ date, figure, typed, saved, isPhone \}\)/);
+    assert.match(fig, /bankBandTiles\(\{ date, figure, typed, saved, isPhone, shouldCaption \}\)/);
     assert.match(readCode(TILES), /key: 'bank'[\s\S]*key: 'should'[\s\S]*\bdiff,/, 'The bank says · Should be in the bank · Difference, in that order');
     assert.doesNotMatch(readSource(CSS), /\.(bandTile|moneyTile|bandCard)\b/, 'no second band in the sheet');
   });
@@ -120,7 +120,7 @@ describe('5 · the check form: a balance, not a tick-off', () => {
       assert.doesNotMatch(src, /[Cc]ents\s*[-+*/]\s*[A-Za-z0-9(]|[A-Za-z0-9)]\s*[-+*/]\s*[A-Za-z.]*[Cc]ents\b/, `${f}: arithmetic on cents`);
       assert.doesNotMatch(src, /\.reduce\(/, `${f}: a sum`);
     }
-    assert.match(code('BankCheckForm.tsx'), /import \{ figureCheck, waitingOnCheck, type BankLine, type WaitingItem \} from '@\/lib\/bank-check'/);
+    assert.match(code('BankCheckForm.tsx'), /import \{ checkingStartsOn, figureCheck, waitingOnCheck, type BankLine, type WaitingItem \} from '@\/lib\/bank-check'/);
     assert.match(code('BankCheckForm.tsx'), /figureCheck\(\{ bankCents: typed \?\? 0, booksCents: fresh\.booksCents, onItsWayCents: fresh\.onItsWay\.cents/);
   });
   it('words come from the words module only: no sentence typed into a new screen', () => {
@@ -364,7 +364,8 @@ describe('8 · a saved check, opened', () => {
     // Keyed by the signed-in person too (WD1: their working draft is read as the card mounts).
     assert.match(code('BankTab.tsx'), /<BankCheckForm key=\{`\$\{again\?\.n \?\? 0\}:\$\{personId \?\? ''\}`\} againDate=\{again\?\.date\}/);
     // The handed date wins over a working draft's (WD1), which wins over today.
-    assert.match(code('BankCheckForm.tsx'), /useState\(againDate \?\? restored\?\.date \?\? today\)/);
+    assert.match(code('BankCheckForm.tsx'), /const opening = afterStart \? '' : againDate \?\? restored\?\.date \?\? today;/);
+    assert.match(code('BankCheckForm.tsx'), /useState\(opening\)/);
     assert.match(code('BankCheckForm.tsx'), /field\?\.focus\(\{ preventScroll: true \}\)/);
   });
   it('the top line says "Checked through {date}" and an amber chip when the latest check is off (ask 4)', () => {
@@ -545,15 +546,40 @@ describe('13. BC5b: the printed report (ask 9, R0 tab 9; owner "Report door / bo
   });
 });
 
+describe('the start is a statement\'s opening balance (owner 2026-11-08)', () => {
+  it('the card asks for the day the statement starts and stores the day before', () => {
+    const setup = code('BankSetup.tsx');
+    assert.match(setup, /label=\{W\.statementStart\} value=\{firstDay\}/);
+    assert.match(setup, /const date = startDateFor\(firstDay\);/);
+  });
+  it('every screen that names the start shows the day checking starts, never the stored day', () => {
+    assert.match(code('BankStatements.tsx'), /dayYear\(checkingStartsOn\(start\.date\)\)/);
+    assert.match(code('BankStatements.tsx'), /const shown = dayYear\(isStart \? checkingStartsOn\(c\.date\) : c\.date\);/);
+    assert.match(code('BankCheckWindow.tsx'), /const when = dayYear\(start \? checkingStartsOn\(check\.date\) : check\.date\);/);
+    assert.match(code('BankCheckReport.tsx'), /W\.reportStartingPoint\(dayYear\(checkingStartsOn\(start\.date\)\)/);
+    const find = code('BankFind.tsx');
+    assert.match(find, /const sinceDay = suspects\.sinceMatch \? suspects\.since : checkingStartsOn\(suspects\.since\);/);
+    assert.match(find, /W\.beforeStartTitle\(dayYear\(checkingStartsOn\(figure\.beforeStart\.through\)\)\)/);
+  });
+  it('after a start the form opens on that same statement, and the line goes at the first save', () => {
+    const tab = code('BankTab.tsx');
+    assert.match(tab, /setAfterStart\(v\.start \? \{ account: v\.account\.id, day: checkingStartsOn\(v\.start\.date\) \} : null\)/);
+    assert.match(tab, /onSaved=\{\(v, text\) => \{ setView\(v\); setAfterStart\(null\);/);
+    assert.match(code('BankCheckForm.tsx'), /\{afterStart && <p [^>]*role="status">\{W\.afterStart\(dayYear\(afterStart\)\)\}<\/p>\}/);
+  });
+});
+
+
 describe('14. through a volunteer\'s eyes (Bank check novice UX S1, plan BANK_CHECK_NOVICE_UX_PLAN.md §2)', () => {
   const form = code('BankCheckForm.tsx');
   it('A1a + A4: the heading, the purpose line always (the club says "your books"), "Date"', () => {
     assert.match(form, /<p className=\{s\.checkPurpose\}>\{W\.checkPurpose\}<\/p>/);
     assert.match(BANK_WORDS.checkPurpose, /your books/);
-    assert.match(form, /<DayField id="bank-check-date" label=\{W\.checkDate\}/);
+    assert.match(form, /const DATE_ID = 'bank-check-date';/);
+    assert.match(form, /<DayField id=\{DATE_ID\} label=\{W\.checkDate\}/);
   });
   it('rows 6 + 10 + 21: one note line, where the notes always sat', () => {
-    assert.match(form, /typed === null \? W\.balanceHint : null,/);
+    assert.match(form, /typed === null && !afterStart \? W\.balanceHint : null,/);
     assert.match(form, /band && band\.result === 'off' && typed !== null \? W\.saveOffNote : null,/);
     assert.match(form, /replaces \? W\.replacesNote\(dayYear\(date\)\) : null,/);
     assert.match(form, /hasDraft \? W\.draftKept : null,/);
@@ -567,5 +593,53 @@ describe('14. through a volunteer\'s eyes (Bank check novice UX S1, plan BANK_CH
   it('row 22: the online payments keep their name; the date line is an estimate', () => {
     assert.equal(BANK_WORDS.sumOnItsWayNone, 'Online payments on their way to your bank');
     assert.equal(BANK_WORDS.sumPaysOut('Nov 12, 2026'), 'expected Nov 12, 2026');
+  });
+});
+
+describe('S1b: the start is a statement\'s opening balance, as drawn and ruled (BANK_CHECK_S1B_DRAWINGS.html)', () => {
+  const form = code('BankCheckForm.tsx');
+  it('the card\'s words: the first statement, its first day and opening balance, the boundary', () => {
+    assert.match(BANK_WORDS.setupLead, /first bank statement you want to check/);
+    assert.match(BANK_WORDS.setupLead, /Nothing dated before that day is compared with the bank\./);
+    assert.equal(BANK_WORDS.statementStart, 'Statement starts on');
+    assert.equal(BANK_WORDS.openingBalance, 'Opening balance');
+    assert.match(code('BankSetup.tsx'), /label=\{W\.openingBalance\}/);
+    assert.ok(!('statementDate' in BANK_WORDS), 'the start card was its last reader');
+  });
+  it('ask B: after a start the date is EMPTY, never a guessed month-end', () => {
+    assert.match(form, /const opening = afterStart \? '' : againDate \?\? restored\?\.date \?\? today;/);
+  });
+  it('ask C: the banking-app hint waits while the after-start line shows', () => {
+    assert.match(form, /typed === null && !afterStart \? W\.balanceHint : null,/);
+  });
+  it('/design: the cursor goes in the date at a desk only; the line describes the date for a screen reader', () => {
+    assert.match(form, /const at = againDate \? BALANCE_ID : desk \? DATE_ID : null;/);
+    // Once per opening (/simplify, /review): recorded before the desk test, so a resize never moves the cursor mid-typing.
+    assert.match(form, /if \(!why \|\| arrivedFor\.current === why\) return;\s*arrivedFor\.current = why;/);
+  });
+  it('/review: after a start nothing is kept as a draft until a day is picked, and an older draft goes', () => {
+    assert.match(form, /const dateless = !!afterStart && !ISO_DAY\.test\(date\);/);
+    assert.match(form, /const worthKeeping = !dateless && isWorthKeeping\(draft\);/);
+    assert.match(form, /if \(!draftAt \|\| dateless \|\| draftText === lastKept\.current\) return;/);
+    assert.match(form, /if \(afterStart && draftAt\) clearDraft\(browserDraftStore\(\), draftAt\);/);
+  });
+  it('/review: a statement can\'t start after today (the server sees the day before), and the line keeps to its account', () => {
+    assert.match(code('BankSetup.tsx'), /if \(firstDay > today\) \{ setError\(W\.startAfterToday\); return; \}/);
+    assert.match(code('BankTab.tsx'), /afterStart=\{afterStart\?\.account === view\.account\.id \? afterStart\.day : undefined\}/);
+    assert.match(form, /const desk = useDeskPicker\(\);/);
+    assert.match(form, /describedBy=\{afterStart \? AFTER_START_ID : undefined\}/);
+    assert.match(form, /<p id=\{AFTER_START_ID\} className=\{`\$\{s\.statusNote\} \$\{s\.afterStart\}`\} role="status">/);
+  });
+  it('row 9: the club\'s middle caption names the day checking started; a saved band and the coach\'s are unchanged', () => {
+    assert.match(form, /startedOn=\{view\.start \? checkingStartsOn\(view\.start\.date\) : undefined\}/);
+    assert.equal(BANK_WORDS.bandShouldCaption('Oct 1, 2026'), 'Starting balance plus every change in your books since Oct 1, 2026, adjusted for what hasn’t reached the bank yet');
+  });
+  it('the start\'s one name everywhere a treasurer reads it', () => {
+    assert.equal(BANK_WORDS.startingPoint, 'Starting balance');
+    assert.equal(BANK_WORDS.noChecksYet, 'No balance checks yet.');
+    assert.equal(BANK_WORDS.startTitle('Oct 1, 2026'), 'Starting balance · Oct 1, 2026');
+    assert.match(BANK_WORDS.reportStartingPoint('Oct 1, 2026', '$1.00', '+ $1.00'), /^Your books when checking started Oct 1, 2026: /);
+    const all = JSON.stringify(Object.fromEntries(Object.entries(BANK_WORDS).map(([k, v]) => [k, typeof v === 'function' ? String(v) : v])));
+    assert.doesNotMatch(all, /starting statement|starting point|Starting point/, 'no old name on a screen');
   });
 });

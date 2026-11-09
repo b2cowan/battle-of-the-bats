@@ -259,7 +259,8 @@ describe('9 · the club card wires it as ruled', () => {
   const form = readCode(FORM);
   it('the draft is this person\'s, and "Check this statement again" starts that day fresh', () => {
     assert.match(form, /draftKey\(\{ club: orgSlug, account: accountId, person: personId \}\)/);
-    assert.match(form, /draftAt && !againDate \? readDraft\(browserDraftStore\(\), draftAt, Date\.now\(\)\)/);
+    // Just started (owner 2026-11-08) is fresh too: the form opens on the start's own statement, never a draft.
+    assert.match(form, /draftAt && !againDate && !afterStart \? readDraft\(browserDraftStore\(\), draftAt, Date\.now\(\)\)/);
     assert.match(readCode('components/admin/kit/club/money/bank/BankTab.tsx'), /const personId = useOrg\(\)\.user\?\.id \?\? null;/);
   });
   it('figures are never restored: the band waits for the day, and marks come back only as the day offers them', () => {

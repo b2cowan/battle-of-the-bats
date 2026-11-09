@@ -29,7 +29,7 @@ import { useOrg } from '@/lib/org-context';
 import { formatTime } from '@/lib/utils';
 import { tournamentToday, utcToZonedInputs } from '@/lib/timezone';
 import { BANK_WORDS as W } from '@/lib/bank-tab-words';
-import { reportTerms, startingPoint, type SavedTerm } from '@/lib/bank-check';
+import { checkingStartsOn, reportTerms, startingPoint, type SavedTerm } from '@/lib/bank-check';
 import { cents, dayYear, moved, type AccountView, type SavedCheckView } from './BankShared';
 import r from './BankReport.module.css';
 
@@ -66,7 +66,7 @@ export default function BankCheckReport({ view, check }: { view: AccountView; ch
           })}
           <SumRow label={W.reportShould} amount={cents(totalCents)} total />
           <SumRow label={W.reportBooksOn(when)} amount={cents(check.booksCents)}
-            note={start ? W.reportStartingPoint(dayYear(start.date), cents(start.cents), moved(start.sinceCents)) : undefined} />
+            note={start ? W.reportStartingPoint(dayYear(checkingStartsOn(start.date)), cents(start.cents), moved(start.sinceCents)) : undefined} />
           <SumRow label={W.reportResult} amount={f.result === 'matches' ? W.matches : W.offBy(off)} result
             note={f.direction === 'bank_more' ? W.bandBankMore(off) : f.direction === 'bank_less' ? W.bandBankLess(off) : undefined} />
         </tbody>

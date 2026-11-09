@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
-  HINT_CAP, MAX_COMBOS, booksNowSay, closingDirection, closingDirectionAtStart, coachBooksOnDate, figureCheck, figureOfSaved,
+  HINT_CAP, MAX_COMBOS, booksNowSay, checkingStartsOn, startDateFor, closingDirection, closingDirectionAtStart, coachBooksOnDate, figureCheck, figureOfSaved,
   findHints, hintsFor, latestBefore, matchedWhenSaved, stillWaitingOn, onItsWayOnCheck, reportTerms, savedTerms, startBooks, startingPoint, suspectsSince, typedCents,
   waitingOnCheck, waitingOnStart,
   type BankLine, type SavedCheck, type WaitingItem,
@@ -498,5 +498,16 @@ describe('startingPoint — the report’s "Your books" line (BC5b, owner "Repor
     assert.equal(startingPoint(check, { ...start, date: '2026-10-31' }, false), null);
     assert.equal(startingPoint(check, start, true), null);
     assert.equal(startingPoint({ ...start }, start, false), null);
+  });
+});
+
+describe('the start is a statement\'s opening balance (owner 2026-11-08)', () => {
+  it('the card stores the day before the statement starts; every screen names the day checking starts', () => {
+    assert.equal(startDateFor('2026-08-01'), '2026-07-31');
+    assert.equal(startDateFor('2026-03-01'), '2026-02-28');
+    assert.equal(startDateFor('2026-01-01'), '2025-12-31');
+    assert.equal(checkingStartsOn('2026-07-31'), '2026-08-01');
+    assert.equal(checkingStartsOn('2028-02-28'), '2028-02-29');
+    for (const d of ['2026-08-01', '2026-03-01', '2028-02-29', '2027-01-01']) assert.equal(checkingStartsOn(startDateFor(d)), d);
   });
 });

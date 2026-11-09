@@ -16,22 +16,23 @@ export const BANK_REFUSAL = {
   team_book: 'A team’s book is kept by its coaches, so it can’t be in the club’s bank account.',
   bad_name: 'Name the account in 80 characters or fewer. A name only, never the account number.',
   name_taken: 'The club already has an account with that name.',
-  bad_figures: 'Enter the statement date and the bank balance on that date.',
+  bad_figures: 'Enter a date and a balance.',
   bad_kind: 'That kind of check can’t be saved here.',
   bad_amount: 'Enter the cash not deposited yet as an amount above $0.00, or leave it empty.',
-  bad_date: 'Enter the date as it reads on the statement.',
-  // M3 (owner 2026-11-06): after the starting statement too — the start already proved an earlier line was in the bank.
-  bad_item: 'A line marked Not in the bank yet has to be one of this account’s own lines, dated after your starting statement and on or before the statement you’re checking.',
+  bad_date: 'Enter the date as a day, month and year.',
+  // M3 (owner 2026-11-06): on or after the day checking started (strictly after the start row's day) — the start already proved an earlier line was in the bank.
+  bad_item: 'A line marked Not in the bank yet has to be one of this account’s own lines, dated on or after the day checking started and no later than the day you’re checking.',
   // Waiting at the start (Q2-A): the other date rule, so its own sentence (BC3b /marketing).
-  bad_start_item: 'To wait at the start, a line has to move money in or out of this account, be dated on or before your starting statement, and not be waiting there already. Online payments can’t wait at the start.',
+  bad_start_item: 'To wait at the start, a line has to move money in or out of this account, be dated before checking started, and not be waiting there already. Online payments can’t wait at the start.',
   // S1 (A1a): the check form asks for a day, not a statement's date.
   ends_in_future: 'A check can’t be dated after today.',
   changed: 'Something in this account changed while you were looking. Here it is again.',
-  start_exists: 'This account already starts from a statement on another date.',
-  start_after_checks: 'A later statement is already checked, so the start can’t move after it.',
-  no_start: 'Start checking this account from a statement first.',
-  before_start: 'This statement is on or before the one you started from. Check a later statement.',
-  start_has_checks: 'Later checks start from this statement, so it can’t be deleted. Delete them first.',
+  start_exists: 'This account already has a starting balance on another date.',
+  start_after_checks: 'A balance check is already saved before that day. Pick an earlier day.',
+  no_start: 'Give this account a starting balance first.',
+  // S1b: the check form asks for a day (S1, A1a); the start is named by the day checking starts.
+  before_start: 'That day is before checking started. Pick a later day.',
+  start_has_checks: 'Later checks start from this balance, so it can’t be deleted. Delete them first.',
   // Stripe failed between the screen's read and the save's own (warn, never block, decided by the server, BC2 review):
   // the screen shows the figure without online payments, and saving it is the treasurer's choice.
   // Settled, BC3b /marketing 2026-11-06. The screen reads the figure again without them, so the sentence says it does.

@@ -41,9 +41,11 @@ export const throughWords = (t: ThroughMark): string =>
  * `captionShort` in place of the caption (BC4b `/marketing`).
  * `coach`: the coach's card names the figure by its screen, "your Ledger" (Bank check novice UX S1, row 8); the club's
  * keeps "your books".
+ * `shouldCaption`: the club's middle caption, built by its caller (S1b row 9 names the day checking started; a team has
+ * no start, so the coach's is built here).
  */
-export function bankBandTiles({ date, figure, typed, saved = false, isPhone, coach = false }: {
-  date: string; figure: CheckFigure | null; typed: boolean; saved?: boolean; isPhone: boolean; coach?: boolean;
+export function bankBandTiles({ date, figure, typed, saved = false, isPhone, coach = false, shouldCaption }: {
+  date: string; figure: CheckFigure | null; typed: boolean; saved?: boolean; isPhone: boolean; coach?: boolean; shouldCaption?: string;
 }): { tiles: MoneyTile[]; ariaLabel: string } {
   const when = dayYear(date);
   const settled = figure !== null && typed;
@@ -63,7 +65,7 @@ export function bankBandTiles({ date, figure, typed, saved = false, isPhone, coa
       { key: 'bank', label: saved ? W.savedBank : W.bandBank, figure: settled ? cents(figure.bankCents) : '—',
         caption: saved ? undefined : W.bandBankCaption(when), captionShort: saved ? undefined : W.bandBankCaptionPhone(dayShort(date)) },
       { key: 'should', label: saved ? W.savedShould : isPhone ? W.bandShouldPhone : W.bandShould, figure: figure ? cents(figure.shouldBeCents) : '—',
-        caption: saved ? undefined : (coach ? W.coachBandShouldCaption : W.bandShouldCaption)(when),
+        caption: saved ? undefined : coach ? W.coachBandShouldCaption(when) : shouldCaption,
         captionShort: saved ? undefined : coach ? W.coachBandShouldCaptionPhone : W.bandShouldCaptionPhone },
       diff,
     ],

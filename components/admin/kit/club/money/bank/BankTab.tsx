@@ -32,6 +32,7 @@ import PageNotice, { useNotice } from '../../PageNotice';
 import { Callout, LoadFailed, useDeferredLoad, useLatestRead } from '../../RepKit';
 import { moneyFetch } from '../MoneyKit';
 import { BANK_WORDS as W } from '@/lib/bank-tab-words';
+import { checkingStartsOn } from '@/lib/bank-check';
 import { bankUrl, throughWords, type AccountView, type Overview } from './BankShared';
 import BankSetup from './BankSetup';
 import BankStatements from './BankStatements';
@@ -51,6 +52,14 @@ export default function BankTab({ orgSlug }: { orgSlug: string }) {
   const [win, setWin] = useState<Win>(null);
   // "Check this statement again": the date handed to the form, and a count that re-keys it (the same date twice re-keys too).
   const [again, setAgain] = useState<{ date: string; n: number } | null>(null);
+  // Just started (owner 2026-11-08): the day checking starts, so the form opens on that same statement. Gone at its save.
+  // Held with its account, so a tab that falls to another account (a stale re-read) never carries it there (S1b /review).
+  const [afterStart, setAfterStart] = useState<{ account: string; day: string } | null>(null);
+  /** A start saved: the account's view, and the form told to check that same statement next. */
+  const started = (v: AccountView) => {
+    setView(v);
+    setAfterStart(v.start ? { account: v.account.id, day: checkingStartsOn(v.start.date) } : null);
+  };
   const [notice, setNotice] = useNotice();
   const personId = useOrg().user?.id ?? null;
   // The door's account and check, as the address named them on arrival (read once; see the header).
@@ -153,7 +162,7 @@ export default function BankTab({ orgSlug }: { orgSlug: string }) {
               ...o, never: false, accounts: [{ id: v.account.id, name: v.account.name }],
               books: o.books.map(b => ({ ...b, accountId: b.accountId ?? v.account.id })),
             });
-            setAccountId(v.account.id); setView(v); void loadOverview(true);
+            setAccountId(v.account.id); started(v); void loadOverview(true);
           }} />
       </>
     );
@@ -163,7 +172,7 @@ export default function BankTab({ orgSlug }: { orgSlug: string }) {
   if (!view || view.account.id !== accountId) return <LoadingState label={W.loadingAccount} />;
 
   const accounts = view.accounts;
-  const pickAccount = (id: string) => { setWin(null); setAgain(null); setView(null); setAccountId(id); };
+  const pickAccount = (id: string) => { setWin(null); setAgain(null); setAfterStart(null); setView(null); setAccountId(id); };
 
   // The Account pill only at a second account, each option saying its latest check, "Add an account" at its foot as
   // "Add ledger" is on the Book pill. One account: its name in the line, and the door to add one.
@@ -189,7 +198,7 @@ export default function BankTab({ orgSlug }: { orgSlug: string }) {
     ? <>
         {accountLine && <div className={s.top}><div className={s.statusLine}>{accountLine}</div></div>}
         {canMove
-          ? <BankSetup key={view.account.id} orgSlug={orgSlug} account={view.account} books={overview.books} onSaved={setView}
+          ? <BankSetup key={view.account.id} orgSlug={orgSlug} account={view.account} books={overview.books} onSaved={started}
               onStale={t => void staleRefresh(t)} />
           : <Callout role="status">{W.setupReader}</Callout>}
       </>
@@ -198,9 +207,9 @@ export default function BankTab({ orgSlug }: { orgSlug: string }) {
         form={canMove ? (
           // Keyed by the person too: their working draft (WD1) is read when the card mounts, and the signed-in person
           // reaches the org context just after the page does.
-          <BankCheckForm key={`${again?.n ?? 0}:${personId ?? ''}`} againDate={again?.date} orgSlug={orgSlug} view={view} personId={personId}
+          <BankCheckForm key={`${again?.n ?? 0}:${personId ?? ''}`} againDate={again?.date} afterStart={afterStart?.account === view.account.id ? afterStart.day : undefined} orgSlug={orgSlug} view={view} personId={personId}
             onStale={t => void staleRefresh(t)}
-            onSaved={(v, text) => { setView(v); setNotice({ tone: 'good', text }); }}
+            onSaved={(v, text) => { setView(v); setAfterStart(null); setNotice({ tone: 'good', text }); }}
             // A line added through the Ledger's window (no account in hand: read it again) or the start corrected.
             onChanged={(v, text) => { if (v) setView(v); else void loadView(view.account.id); setNotice({ tone: 'good', text }); }} />
         ) : undefined} />;
@@ -218,8 +227,8 @@ export default function BankTab({ orgSlug }: { orgSlug: string }) {
         <BankCheckWindow orgSlug={orgSlug} view={view} check={opened} canMove={canMove}
           onClose={() => setWin(null)} onStale={t => void staleRefresh(t)}
           onChanged={(v, text) => { setView(v); setNotice({ tone: 'good', text }); }}
-          onAgain={date => { setWin(null); setAgain(a => ({ date, n: (a?.n ?? 0) + 1 })); }}
-          onDeleted={(v, text) => { setWin(null); setAgain(null); setView(v); setNotice({ tone: 'good', text }); }} />
+          onAgain={date => { setWin(null); setAfterStart(null); setAgain(a => ({ date, n: (a?.n ?? 0) + 1 })); }}
+          onDeleted={(v, text) => { setWin(null); setAgain(null); setAfterStart(null); setView(v); setNotice({ tone: 'good', text }); }} />
       )}
       {(win?.kind === 'addAccount' || win?.kind === 'editAccount') && (
         <AccountWindow orgSlug={orgSlug} books={overview.books} accounts={accounts}

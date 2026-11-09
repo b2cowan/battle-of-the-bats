@@ -28,8 +28,19 @@
  */
 
 import { cashOnHandCents, type CashMovement } from './coach-register';
+import { addCalendarDays } from './timezone';
 
 export type BankDirection = 'in' | 'out';
+
+/**
+ * ⚖ THE CLUB'S START IS A STATEMENT'S OPENING BALANCE (owner 2026-11-08). The treasurer types the FIRST statement they
+ * want to check: the day it starts and its opening balance, then checks that same statement. A start row still stores
+ * the day whose END its balance stood at (every rule here: the books move strictly after it), so the card stores the day
+ * before the one typed, and every screen that names the start shows the day checking starts. These two are the only
+ * place that day moves; no stored row changes meaning, so starts saved before the ruling read correctly too.
+ */
+export const startDateFor = (firstDay: string): string => addCalendarDays(firstDay, -1);
+export const checkingStartsOn = (startDate: string): string => addCalendarDays(startDate, 1);
 
 /** A book line as its source reads it now (posted / settled only: a pending or void line never reaches the engine). */
 export interface BankLine {

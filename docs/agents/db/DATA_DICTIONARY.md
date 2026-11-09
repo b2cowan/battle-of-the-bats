@@ -9246,7 +9246,12 @@ every book line on or before the date counts by itself.
 <!-- dict:col:bank_checks.statement_ending_balance_cents -->
 **`bank_account_id`** (FK CASCADE; non-partial index `bank_checks_account_idx (bank_account_id, statement_end_date)` covers
 the FK and history reads) / **`statement_end_date`** (date: the statement's date, D) / **`statement_ending_balance_cents`**
-(bigint, signed) — the bank says.
+(bigint, signed) — the bank says. ⚖ **On a `start` row (owner 2026-11-08)** both still mean "the balance at the END of
+D", but the treasurer no longer types D: the card asks for the FIRST statement to check — its first day and opening balance
+— and stores D = that day − 1 (`startDateFor`, [lib/bank-check.ts](../../../lib/bank-check.ts)); every screen names a
+start by D + 1, "the day checking starts" (`checkingStartsOn`). No row changed meaning, so starts saved before the ruling
+read correctly. Never show a start's raw D to a treasurer. Rules that ask when checking BEGAN use D + 1 too (the
+fiscal-year close's bank row, `bankCloseRow`: a statement starting on the 1st of the year's last month is that month's).
 
 <!-- dict:col:bank_checks.kind -->
 **`kind`** (text NOT NULL, default `check`, CHECK `bank_checks_kind` `start|check`) — `start` = the club account's starting

@@ -2,7 +2,9 @@
 /**
  * "START CHECKING {ACCOUNT}" — a club account's first check is a starting statement (Bank balance check BC1; ask 7,
  * drawing BANK_BALANCE_CHECK_DRAWINGS.html tab 6). On a first visit the tab's whole body is this one card: name the
- * account, the books whose money is in it, and a bank statement the treasurer already has — its date and ending balance.
+ * account, the books whose money is in it, and the FIRST statement the treasurer wants to check — the day it starts and its
+ * opening balance (owner 2026-11-08). The start row stores the day before (`startDateFor`: its balance stood at that day's
+ * end), and the tab then opens the check form on that same statement for its end date and ending balance.
  * No outstanding picker (ask 7): a line written before the start and cashed after it is found later, in Find, and marked
  * "Waiting at the start" (Q2, BC3). The same card starts a second account.
  *
@@ -22,6 +24,7 @@ import { Callout } from '../../RepKit';
 import { DayField, FormError, TextField } from '../MoneyKit';
 import BankMoneyField from './BankMoneyField';
 import { tournamentToday } from '@/lib/timezone';
+import { startDateFor } from '@/lib/bank-check';
 import { BANK_WORDS as W } from '@/lib/bank-tab-words';
 import { bankUrl, bankWrite, isStaleView, notCountedOf, parseCents, type AccountView, type Overview } from './BankShared';
 import s from './Bank.module.css';
@@ -39,7 +42,8 @@ export default function BankSetup({ orgSlug, account, books, onSaved, onStale }:
   const [accountId, setAccountId] = useState(account?.id ?? null);
   const [savedName, setSavedName] = useState(account?.name ?? '');
   const [name, setName] = useState(account?.name ?? '');
-  const [date, setDate] = useState('');
+  // The day the statement starts, as printed on it (the stored start is the day before).
+  const [firstDay, setFirstDay] = useState('');
   const [balance, setBalance] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -52,7 +56,10 @@ export default function BankSetup({ orgSlug, account, books, onSaved, onStale }:
   async function save(anyway = false) {
     if (busy) return;
     const c = parseCents(balance, { positive: false });
-    if (!name.trim() || !date || c === null) { setError(W.setupMissing); return; }
+    if (!name.trim() || !firstDay || c === null) { setError(W.setupMissing); return; }
+    // The field's own `max` only says so: the server sees the day BEFORE, so a statement starting tomorrow would pass it
+    // (S1b /review). The latest start is today, stored as yesterday, so today can always be checked.
+    if (firstDay > today) { setError(W.startAfterToday); return; }
     setBusy(true); setError('');
     const fail = (r: { code: string | null; error: string }) => {
       setBusy(false);
@@ -73,6 +80,7 @@ export default function BankSetup({ orgSlug, account, books, onSaved, onStale }:
     }
     // Is Stripe's money on its way countable on this day? The server reads it to save and, unless `anyway`, refuses a start
     // without it (`not_counted_*`): the start's books are worked from it, so the card says so first (`fail` → the notice).
+    const date = startDateFor(firstDay);
     const r = await bankWrite(bankUrl(orgSlug, `/accounts/${id}/setup`), 'PUT', { date, bankCents: c, anyway }, W.setupFailed);
     if (r.ok) { setNotCounted(null); onSaved(r.view); return; } // the card goes with the account's own view: it stays busy till then
     fail(r);
@@ -100,8 +108,8 @@ export default function BankSetup({ orgSlug, account, books, onSaved, onStale }:
         {(!account || account.isFirst) && <p className={ck.hint}>{W.booksHintFirst}</p>}
       </div>
       <div className={s.pair}>
-        <DayField id="bank-setup-date" label={W.statementDate} value={date} onChange={v => { setDate(v); setNotCounted(null); }} max={today} />
-        <BankMoneyField id="bank-setup-balance" label={W.statementBalance} value={balance} onChange={setBalance} />
+        <DayField id="bank-setup-date" label={W.statementStart} value={firstDay} onChange={v => { setFirstDay(v); setNotCounted(null); }} max={today} />
+        <BankMoneyField id="bank-setup-balance" label={W.openingBalance} value={balance} onChange={setBalance} />
       </div>
       {notCounted && (
         <Callout tone="warn" role="status" icon={<AlertTriangle size={16} aria-hidden />}>

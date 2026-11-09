@@ -12,7 +12,7 @@
  * ⚖ NO YEAR: nothing here reads or names a fiscal year or a season.
  */
 
-import { figureOfSaved, startBooks, typedCents, waitingOnStart, type CheckFigure, type SavedCheck, type WaitingItem } from './bank-check';
+import { checkingStartsOn, figureOfSaved, startBooks, typedCents, waitingOnStart, type CheckFigure, type SavedCheck, type WaitingItem } from './bank-check';
 import { directionOfEntry, entryIdOf, isOnlineEntry, type ClubSavedCheck, type EntryRow, type OnItsWay } from './bank-club-map';
 import { BANK_REFUSAL, type BankRefusalCode } from './bank-check-words';
 import { toCents } from './coach-register';
@@ -312,14 +312,15 @@ export type BankCloseRow =
 
 /**
  * The close row for one account and a year ending `lastDay` (a month's last day: a fiscal year runs whole months), or null
- * when nothing is open. ⚖ No row when the account's bank checking began in or after the year's last month (its start
- * dated then or later), or has no start: that year was never in the checks' reach, so a row would ask the impossible.
+ * when nothing is open. ⚖ No row when the account's bank checking began in or after the year's last month (the day
+ * checking starts, `checkingStartsOn`: the start row holds the day before, so a statement starting on the 1st is that
+ * month's — S1b /review), or has no start: that year was never in the checks' reach, so a row would ask the impossible.
  * Warns, never blocks (the close's own rule).
  */
 export function bankCloseRow(checks: readonly ClubSavedCheck[], lastDay: string): BankCloseRow | null {
   const lastMonth = `${lastDay.slice(0, 8)}01`;
   const start = checks.find(c => c.kind === 'start');
-  if (!start || start.date >= lastMonth) return null;
+  if (!start || checkingStartsOn(start.date) >= lastMonth) return null;
   const latest = checkedThrough(checks, lastDay);
   if (!latest || latest.date < lastMonth) return { kind: 'unchecked', lastChecked: latest?.date ?? null };
   return latest.result === 'off'

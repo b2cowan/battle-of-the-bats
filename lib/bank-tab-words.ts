@@ -24,21 +24,30 @@ export const BANK_WORDS = {
   loadFailed: 'The bank couldn’t be loaded.',
   connection: 'Check your connection and try again.',
 
-  // ── the first check: a starting statement (ask 7, tab 6) ─────────────────────────────────
+  // ── the first check: a starting balance (ask 7, tab 6) ─────────────────────────────────
+  // ⚖ Owner 2026-11-08: the card asks for the FIRST statement to check, its first day and opening balance (both printed at
+  // the top of a statement), and then checks that same statement. So the start is named a starting BALANCE everywhere a
+  // treasurer reads it, dated the day checking starts: "since your starting statement" read as "after it" and skipped it.
   setupTitle: 'Start checking the club’s bank account',
   setupTitleFor: (account: string) => `Start checking ${account}`,
-  setupLead: 'Pick a bank statement you already have and type its date and ending balance. Checks start from there.',
+  // Row 17 (A17; /marketing S1b): which statement, where its two figures are, and the boundary. It suggests no particular
+  // statement (owner: the year's first or the most recent, "fine either way"); help says the year's first checks the year.
+  setupLead: 'Pick the first bank statement you want to check. Type the day it starts and its opening balance, both printed at the top. Nothing dated before that day is compared with the bank.',
+  statementStart: 'Statement starts on',
+  // After the start: the check form opens on that same statement, the date empty (owner ask B: no guessed month-end), and
+  // this line where the restore line sits; the banking-app hint waits while it shows (ask C). Gone at the first save.
+  afterStart: (date: string) => `Checking starts ${date}. Now check that same statement: type its end date and ending balance.`,
   accountName: 'Account name',
   accountNamePlaceholder: 'For example: Club chequing',
   accountNameHint: 'A name only. Never the account number.',
   booksLabel: 'Books in this account',
   booksHintFirst: 'All of the club’s books, to start. You can add a second account later and move a book to it. Teams keep their own accounts.',
-  statementDate: 'Statement date',
-  statementBalance: 'Bank balance on that date',
+  openingBalance: 'Opening balance',
   startHere: 'Start here',
   saving: 'Saving…',
-  setupFailed: 'The starting statement couldn’t be saved.',
-  setupMissing: 'Enter the account name, the statement date and the bank balance on that date.',
+  setupFailed: 'The starting balance couldn’t be saved.',
+  setupMissing: 'Enter the account name, the day the statement starts and its opening balance.',
+  startAfterToday: 'A statement can’t start after today.',
 
   // The first check, when Stripe didn't answer: warn, never block (owner 2026-11-06, BC1 review M1). The saved start keeps
   // "not counted" so the checks after it can say why they may read off.
@@ -71,7 +80,7 @@ export const BANK_WORDS = {
   savedMatches: (date: string) => `Checked ${date}. The bank and your books agree.`,
   savedOff: (date: string, amount: string) => `Checked ${date}. It saved as off by ${amount}.`,
   saveFailed: 'The check couldn’t be saved.',
-  balanceMissing: 'Enter the bank balance on the statement date.',
+  balanceMissing: 'Enter the bank balance on that date.',
   // the band, and the sums under it (always open)
   bandBank: 'The bank says',
   bandShould: 'Should be in the bank',
@@ -84,7 +93,9 @@ export const BANK_WORDS = {
   bandDifference: 'Difference',
   // The typed field's own words (drawing D1, S1): no statement implied.
   bandBankCaption: (date: string) => `Bank balance on ${date}`,
-  bandShouldCaption: (date: string) => `Your books on ${date}, less what hasn’t reached the bank yet`,
+  // Row 9 (S1b /marketing): names where the figure starts, which is why it isn't the Overview's Cash on hand; "adjusted",
+  // since an uncashed cheque is added back. The day being checked is in the first tile's caption already.
+  bandShouldCaption: (started: string) => `Starting balance plus every change in your books since ${started}, adjusted for what hasn’t reached the bank yet`,
   bandNoBalance: 'Type the balance to see it',
   bandMatches: (date: string) => `The bank and your books agree on ${date}.`,
   bandBankMore: (amount: string) => `The bank shows ${amount} more than your books.`,
@@ -109,7 +120,7 @@ export const BANK_WORDS = {
   childFootNotYet: 'Stripe hasn’t put all of these in a payout yet',
   payoutsTab: 'Payouts tab',
   linesSinceMatch: (date: string, n: number) => `Lines since your last match (${date}): ${n}`,
-  linesSinceStart: (date: string, n: number) => `Lines since your starting statement (${date}): ${n}`,
+  linesSinceStart: (date: string, n: number) => `Lines since checking started (${date}): ${n}`,
 
   // ── Find (BC3a, drawing tab 3; the half, combination, bank-less and Still waiting sentences are NOT drawn): settled,
   // BC3b /marketing 2026-11-06. Amber, never red; a direction in words, never a minus sign.
@@ -141,10 +152,10 @@ export const BANK_WORDS = {
   noLinesMatch: 'No line matches that search.',
   // The lines (the suspects)
   findSinceMatch: (date: string) => `Lines since your last match · ${date}`,
-  findSinceStart: (date: string) => `Lines since your starting statement · ${date}`,
+  findSinceStart: (date: string) => `Lines since checking started · ${date}`,
   // The phone's group head over the cards (an uppercase band, BC4b `/marketing`): no "Lines", no year.
   findSinceMatchPhone: (date: string) => `Since your last match · ${date}`,
-  findSinceStartPhone: (date: string) => `Since your starting statement · ${date}`,
+  findSinceStartPhone: (date: string) => `Since checking started · ${date}`,
   findSearch: 'Find an amount or a name',
   findCol: { date: 'Date', what: 'What', book: 'Book', out: 'Money out', in: 'Money in', act: 'Action' },
   chipExact: (amount: string) => `Exactly ${amount}`,
@@ -192,23 +203,23 @@ export const BANK_WORDS = {
   draftDropped: (n: number) => (n === 1
     ? 'One line you marked isn’t in your books any more, so we took it off.'
     : `${n} lines you marked aren’t in your books any more, so we took them off.`),
-  // Q2-A "Waiting at the start": a line of the 60 days before the starting statement, on an off check within six months of it.
+  // Q2-A "Waiting at the start": a line of the 60 days before checking started, on an off check within six months of it.
   atStart: 'Waiting at the start',
   atStartLine: (what: string) => `Waiting at the start: ${what}`,
   // A condition, not a claim about every row under it (/design); either direction (a deposit can wait at the start too).
-  atStartWhy: 'If one of these was dated before your starting statement but reached the bank after it, mark it Waiting at the start.',
-  beforeStartTitle: (date: string) => `Before your starting statement · ${date}`,
-  hintAtStart: (amount: string) => `is exactly ${amount} and dated before your starting statement. If it reached the bank after that statement, that’s the gap.`,
+  atStartWhy: 'If one of these was dated before checking started but reached the bank after it, mark it Waiting at the start.',
+  beforeStartTitle: (date: string) => `Before checking started · ${date}`,
+  hintAtStart: (amount: string) => `is exactly ${amount} and dated before checking started. If it reached the bank after that, that’s the gap.`,
   atStartDone: (what: string) => `${what} is waiting at the start. Checks from now on start from the corrected balance.`,
-  atStartFailed: 'The starting statement couldn’t be corrected.',
+  atStartFailed: 'The starting balance couldn’t be corrected.',
   // The start's window: its items, who put each one there, and the way back.
   savedAtStart: (what: string) => `Waiting at the start · ${what}`,
   // Under the line's own row, so it doesn't repeat the line (/design); "Marked": they marked it, they didn't enter it.
   atStartAdded: (who: string | null, date: string) => (who ? `Marked by ${who} on ${date}.` : `Marked on ${date}.`),
   takeOff: 'Take it off',
-  takeOffLine: (what: string) => `Take ${what} off the starting statement`,
-  takenOff: (what: string) => `${what} is off the starting statement.`,
-  booksNowSayStartWhy: 'The starting statement was corrected after this check was saved. This check’s figures stay as they were.',
+  takeOffLine: (what: string) => `Take ${what} off the starting balance`,
+  takenOff: (what: string) => `${what} is off the starting balance.`,
+  booksNowSayStartWhy: 'The starting balance was corrected after this check was saved. This check’s figures stay as they were.',
 
   // ── the account line and the saved checks (asks 4 and 6, tab 5) ───────────────────────────
   accountPill: 'Account',
@@ -230,22 +241,23 @@ export const BANK_WORDS = {
   // Row 13 (A1b): the list drops "statement"; "Balance checks", not a bare "Checks" (it would read as cheques: A2's reason).
   listTitle: 'Balance checks',
   listCol: { date: 'Date', bankSaid: 'The bank said', shouldHave: 'Should have been', result: 'Result', checkedBy: 'Checked by', open: 'Open' },
-  startingPoint: 'Starting point',
+  // Row 14 (S1b): the start's row, dated the day checking starts.
+  startingPoint: 'Starting balance',
   checkedCell: (who: string | null, when: string) => (who ? `${who} · ${when}` : when),
   cardTitle: (date: string, balance: string) => `${date} · ${balance}`,
-  noChecksYet: 'No balance checks since the starting point yet.',
+  noChecksYet: 'No balance checks yet.',
   // A start saved while Stripe didn't answer (BC2a's "Start anyway"): its row says so, so a later "Off by" has a reason.
   startNotCounted: 'online payments on their way weren’t counted',
   openCheck: (date: string) => `Open the check for ${date}`,
-  openStart: (date: string) => `Open the starting statement for ${date}`,
+  openStart: (date: string) => `Open the starting balance for ${date}`,
   // The top line's chip is a door: its name keeps what it says (a label replaces a button's own text).
   openOffCheck: (amount: string, date: string) => `Off by ${amount}. Open the check for ${date}`,
 
   // ── a saved check, opened (ask 5, tab 5): a form window, 640 (the band) ──────────────────────────────
   savedEyebrow: (account: string) => `${account} · saved check`,
   savedTitle: (date: string) => `The check for ${date}`,
-  startEyebrow: (account: string) => `${account} · starting point`,
-  startTitle: (date: string) => `Starting statement · ${date}`,
+  startEyebrow: (account: string) => `${account} · starting balance`,
+  startTitle: (date: string) => `Starting balance · ${date}`,
   savedBank: 'The bank said',
   savedShould: 'Should have been',
   savedResult: 'Result',
@@ -263,17 +275,17 @@ export const BANK_WORDS = {
   booksNowSayWhy: (date: string) => `A line dated on or before ${date} changed after this check was saved. This check’s figures stay as they were.`,
   checkAgain: 'Check this date again',
   deleteCheck: 'Delete this check',
-  deleteStart: 'Delete the starting statement',
+  deleteStart: 'Delete the starting balance',
   deleteTitle: 'Delete this check?',
-  deleteStartTitle: 'Delete the starting statement?',
+  deleteStartTitle: 'Delete the starting balance?',
   deleteAsk: (date: string) => `Delete the check for ${date}? Its figures go; who deleted it and when is kept.`,
-  deleteStartAsk: (date: string) => `Delete the starting statement for ${date}? Checking this account starts again from a statement you pick. Who deleted it and when is kept.`,
+  deleteStartAsk: (date: string) => `Delete the starting balance for ${date}? Checking this account starts again from a statement you pick. Who deleted it and when is kept.`,
   deleteKeep: 'Keep it',
   deleteYes: 'Delete',
   deleting: 'Deleting…',
   deleteFailed: 'The check couldn’t be deleted.',
   deleted: (date: string) => `The check for ${date} is deleted.`,
-  deletedStart: (date: string) => `The starting statement for ${date} is deleted. Start again from a statement.`,
+  deletedStart: (date: string) => `The starting balance for ${date} is deleted. Start again from a statement.`,
 
   // ── the printed report (BC5b, ask 9, R0 tab 9; owner "Report door / order / extras"): one US Letter page from a saved
   // check, BANK FIRST as an association's monthly form runs. Opened from the check's window; a desk's door only. ────────
@@ -290,7 +302,9 @@ export const BANK_WORDS = {
   reportBooksOn: (date: string) => `Your books on ${date}`,
   // `since` is signed ("+ $3,722.00" / "− $410.00"): the change can run either way (BC5b /marketing: "change in the books",
   // not "book movement").
-  reportStartingPoint: (date: string, balance: string, since: string) => `Starting point ${date}: ${balance} · change in the books since: ${since}`,
+  // S1b /marketing: the BOOKS' figure at the start (it differs from the bank's opening balance when a line waits at the
+  // start), so not "starting balance" here.
+  reportStartingPoint: (date: string, balance: string, since: string) => `Your books when checking started ${date}: ${balance} · change in the books since: ${since}`,
   reportResult: 'Result',
   // No full stop of our own: the clock ends in one ("8:14 p.m.").
   reportCheckedBy: (who: string | null, role: string | null, date: string, time: string) =>
@@ -318,7 +332,7 @@ export const BANK_WORDS = {
   nameMissing: 'Enter the account name.',
   cancel: 'Cancel',
   save: 'Save',
-  added: (name: string) => `${name} is added. Start it from a statement.`,
+  added: (name: string) => `${name} is added. Start it from its first statement.`,
   saved: 'Saved.',
 
   // ── the COACH's Bank view, Money → Ledger → View: Bank (BC7a; drawing tab 2, the coach phone frame). Drafts for BC8's

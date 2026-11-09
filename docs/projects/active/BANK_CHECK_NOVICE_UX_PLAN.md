@@ -1,7 +1,7 @@
 # Bank check through a volunteer's eyes — plan of record
 
 **Status:** STARTED 2026-11-08. Every owner ask is ruled (§0). **S1 committed `bdb56dd2f` 2026-11-08** (§4; owner walk
-owed). Next: S1b (`BANK_CHECK_NOVICE_UX_S1_BUILD_PROMPT.md`, Session B). PM brief:
+owed). **S1b built 2026-11-08** to the approved drawings (§4). Next: S1b's commit and owner walk, then S2. PM brief:
 `BANK_CHECK_NOVICE_UX_PM_BRIEF.md`.
 
 **Source:** the evaluation "The Volunteer's Bank Check" (2026-11-08), published at
@@ -186,3 +186,25 @@ sentence; the walked working-draft cards change shape and their walks are redone
   **Left for later stages (not misses):** the printed check's title and "Bank balance on the statement", and the coach's
   printed "What your books should say" / "Your books on" / "Books now say" (S4, the printed page as one unit); the
   Overview's "Bank:" line (S2); the start's refusals and names (S1b).
+- 2026-11-08 — **S1b built** (club only). Drawings https://claude.ai/artifact/4kgmUUsCHhU3jvbNgRuAKd (source
+  `BANK_CHECK_S1B_DRAWINGS.html`; `/design` before hand-off: two drawing bugs fixed, and the phone does NOT get the cursor
+  in the date — a native picker can't be opened for them, so the line carries it). **Owner rulings 2026-11-08:** drawings
+  approved; ask B — after a start the end date is EMPTY, never a guessed month-end; ask C — the banking-app hint waits
+  while the after-start line shows. Built from the early patch's logic (applied clean but for `BankCheckForm.tsx` and the
+  help article, rewritten by hand on S1's card) and `/marketing`'s final read of 38 strings (34 kept; changed: row 9
+  "Starting balance plus every change in your books since {day}, adjusted for what hasn't reached the bank yet" — one
+  date, the day being checked is the first tile's; the printed line "Your books when checking started {day}: …" — the
+  BOOKS' figure, not the bank's opening balance; `start_after_checks`; `bad_date`). Row 14 "Starting balance"; empty
+  list "No balance checks yet."; `statementDate` deleted (no reader). `/simplify`: one focus effect, once per opening; the
+  shared band takes the club's caption whole (`shouldCaption`). `/review` (high, 4 lenses, 16 → 9 → 6 confirmed, all
+  fixed): an empty-date draft would have come back dated today (ask B's guess, by the back door) — nothing is kept until
+  a day is picked, and an older draft goes at the start; the fiscal-year close's bank row read the stored day (a start on
+  the 1st of the last month warned "unchecked") — it reads D + 1; a statement starting tomorrow passed the server (it
+  sees D) — the card refuses it ("A statement can't start after today.", new, not in the `/marketing` pass); the
+  after-start line is held with its account. Walk on dev (probe `.probe/bank-ux-s1b/walk.mjs`, its own book and
+  accounts, torn down clean): start Oct 1 stored Sep 30; desk cursor in the empty date, phone not; check Oct 31 off by
+  $10, Find "since checking started · Oct 1, 2026", the look-back finds the Sep 25 cheque as exactly the gap; printed
+  line; the start refuses delete while a check stands on it, then deletes. ⚠ The walk's first run hit a dev reload after
+  Start here and saved one check on the shared "Walk chequing" account; removed by id the same minute (the probe now
+  stops before any save off its own account). Starts saved before S1b now read one day later, as ruled ("Gaming
+  account": Nov 1). Bank + help tests 474/474; typecheck clean for the scope; lint, spelling, dictionary clean.

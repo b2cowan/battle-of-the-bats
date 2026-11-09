@@ -29,7 +29,7 @@ import tb from '@/components/admin/tournament/AdminToolbar.module.css';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { Callout, ClubRow, ClubRowBand, ClubRowList, RepChip, RowAction, repKit } from '../../RepKit';
 import { day } from '../MoneyKit';
-import { hintsFor, signed, type BankLine, type CheckFigure, type Hint, type WaitingItem } from '@/lib/bank-check';
+import { checkingStartsOn, hintsFor, signed, type BankLine, type CheckFigure, type Hint, type WaitingItem } from '@/lib/bank-check';
 import { itemOfLine } from '@/lib/bank-check-draft';
 import { lineMatches, pickerSearch } from '@/lib/bank-club-rules';
 import { BANK_WORDS as W } from '@/lib/bank-tab-words';
@@ -72,7 +72,9 @@ export default function BankFind({ figure, band, typed, marked, busy, onMark, on
   const suspects = figure.suspects;
   const off = typed && band.result === 'off';
   if (suspects.total === 0 && !off) return null;
-  const when = dayYear(suspects.since);
+  // Since the last match, or since checking started: the start is named by the day checking starts (owner 2026-11-08).
+  const sinceDay = suspects.sinceMatch ? suspects.since : checkingStartsOn(suspects.since);
+  const when = dayYear(sinceDay);
 
   // Online payments on their way are in the figure already: one greyed row, never a candidate.
   const onWay = figure.onItsWay.state === 'counted' ? figure.onItsWay.lines : [];
@@ -119,7 +121,7 @@ export default function BankFind({ figure, band, typed, marked, busy, onMark, on
   const sinceHint = (suspects.sinceMatch ? W.linesSinceMatch : W.linesSinceStart)(when, suspects.total);
   const sinceTitle = (suspects.sinceMatch ? W.findSinceMatch : W.findSinceStart)(when);
   // The phone's group head over the cards: shorter, no year (BC4b `/marketing`).
-  const sinceHead = (suspects.sinceMatch ? W.findSinceMatchPhone : W.findSinceStartPhone)(day(suspects.since));
+  const sinceHead = (suspects.sinceMatch ? W.findSinceMatchPhone : W.findSinceStartPhone)(day(sinceDay));
   const searchFor = (q: string) => { setQuery(q); setPages(1); setBeforePages(1); };
 
   // Each line once (only while the list is open), a table row at a desk and a row card on a phone, with the same action:
@@ -136,7 +138,7 @@ export default function BankFind({ figure, band, typed, marked, busy, onMark, on
       action={{ label: W.atStart, aria: W.atStartLine(nameOf(l)), onClick: () => onAtStart(l), disabled: busy }} />
   )) : null;
   // The look-back's heading and its why (BC3b), a group head over its cards on a phone, the kit's group row at a desk.
-  const lookBackTitle = figure.beforeStart ? W.beforeStartTitle(dayYear(figure.beforeStart.through)) : '';
+  const lookBackTitle = figure.beforeStart ? W.beforeStartTitle(dayYear(checkingStartsOn(figure.beforeStart.through))) : '';
 
   // ON A PHONE: the kit's white row cards in one list, never the table (drawing tab 3). A card is not a button: its one
   // action is its own 44px control; the amount at the right carries the line's own sign. Each group ends "Show N more".

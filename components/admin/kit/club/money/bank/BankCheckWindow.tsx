@@ -33,7 +33,7 @@ import { BANK_REFUSAL } from '@/lib/bank-check-words';
 import { BANK_WORDS as W } from '@/lib/bank-tab-words';
 import { BankBand, BankSavedSums, type SavedSumRow } from './BankFigure';
 import BankCheckReport from './BankCheckReport';
-import { savedTerms, type WaitingItem } from '@/lib/bank-check';
+import { checkingStartsOn, savedTerms, type WaitingItem } from '@/lib/bank-check';
 import { bankUrl, bankWrite, cents, dayYear, isStaleView, moved, patchStart, type AccountView, type SavedCheckView } from './BankShared';
 import s from './Bank.module.css';
 
@@ -90,7 +90,8 @@ export default function BankCheckWindow({ orgSlug, view, check, canMove, onClose
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const start = check.kind === 'start';
-  const when = dayYear(check.date);
+  // The start is named by the day checking starts (owner 2026-11-08), never the stored day before it.
+  const when = dayYear(start ? checkingStartsOn(check.date) : check.date);
   const at = utcToZonedInputs(check.checkedAt);
   const checkedLine = (start ? W.startedOn : W.checkedOn)(check.checkedBy, dayYear(at.date), formatTime(at.time));
   // The start can't go while a later check stands on it (`start_has_checks`): the screen says so before the tap.

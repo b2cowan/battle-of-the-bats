@@ -163,6 +163,8 @@ p.restoreLine { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25
 .checkSave { margin: 0 0 0.9rem; }
 .hintLine { margin: 0.5rem 0 0; }
 .statusNote { margin: 0.25rem 0 0; font-size: var(--type-support); color: var(--text-secondary); line-height: 1.45; }
+/* Just started (A17, S1b drawing tab 2): the status line in the restore line's place, with its rhythm under it. */
+p.afterStart { margin: 0 0 0.75rem; }
 .inlineLink { color: var(--home-olive); text-decoration: underline; text-underline-offset: 2px; }
 .inlineLink:hover { color: var(--text-primary); }
 .noticeSub { display: block; margin-top: 0.2rem; font-size: var(--type-support); font-weight: 400; color: var(--text-secondary); }

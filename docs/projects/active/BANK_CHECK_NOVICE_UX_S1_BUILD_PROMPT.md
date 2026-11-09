@@ -1,5 +1,5 @@
-**S1 done 2026-11-08, committed `bdb56dd2f` (plan §4 has the record and what S1 left for S4/S2/S1b). Next S1b — start
-at Session B; read its "S1 hand-over" first.**
+**S1 done 2026-11-08, committed `bdb56dd2f`. S1b built 2026-11-08 to the approved drawings (plan §4 has the record);
+its commit and owner walk are next, then S2.**
 
 # Bank check through a volunteer's eyes — S1 (words) and S1b (the club's start) — build prompt, two sessions
 

@@ -1,0 +1,420 @@
+<title>Bank Start Card Drawings</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: sticky numbered tabs → View row (Everything / only what differs · Desk / Phone) → one section at a time, true-size frames in their own scrollers. */
+:root {
+  --bg: #EEF0F2; --fg: #1B2229; --muted: #5A6570; --card: #FFFFFF; --line: #D3D9DF; --accent: #2D5B8A;
+  --new: #1F5FBF; --new-bg: #E7F0FC; --restyled: #8A5A00; --restyled-bg: #FFF4DC; --unchanged: #56606A; --unchanged-bg: #EEF1F4;
+  --shadow: 0 6px 24px rgba(20,30,40,.14);
+  --doc: "IBM Plex Sans", system-ui, sans-serif; --mono: "IBM Plex Mono", ui-monospace, monospace;
+  --sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  /* the product's own light theme, fixed in both page themes (the frames are specimens) */
+  --p-paper: #F8F4ED; --p-card: #FFFFFF; --p-ink: #241E15; --p-ink-soft: #4A4235; --p-dim: #615A54; --p-line: rgba(70,55,30,.12);
+  --p-olive: #57651E; --p-lime: #D9F285; --p-field: #F8F4ED; --p-ph: #8D857A; --p-side: #FFFFFF; --p-active: #EEEBE3;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #14191E; --fg: #E4E9EE; --muted: #9AA6B2; --card: #1D242B; --line: #323C46; --accent: #8FB8E3;
+  --new: #8FB8FF; --new-bg: #1A2A44; --restyled: #F0C674; --restyled-bg: #3A2E14; --unchanged: #A7B1BA; --unchanged-bg: #262E36;
+  --shadow: 0 6px 24px rgba(0,0,0,.5); color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #14191E; --fg: #E4E9EE; --muted: #9AA6B2; --card: #1D242B; --line: #323C46; --accent: #8FB8E3;
+  --new: #8FB8FF; --new-bg: #1A2A44; --restyled: #F0C674; --restyled-bg: #3A2E14; --unchanged: #A7B1BA; --unchanged-bg: #262E36;
+  --shadow: 0 6px 24px rgba(0,0,0,.5); color-scheme: dark; }
+body { background: var(--bg); color: var(--fg); font-family: var(--doc); font-size: 15px; line-height: 1.5; margin: 0; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--card); }
+.wrap { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 48px; max-width: 1520px; margin: 0 auto; }
+header.top { padding-block: 22px 6px; }
+header.top h1 { font-size: 22px; margin: 0 0 4px; text-wrap: balance; }
+header.top p { margin: 0; color: var(--muted); max-width: 900px; }
+nav.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--card); border-bottom: 1px solid var(--line); display: flex; gap: 2px; overflow-x: auto; margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px))); padding-inline: max(16px, env(safe-area-inset-left, 0px)); }
+nav.tabs button { font: 600 14px var(--doc); color: var(--muted); background: none; border: 0; border-bottom: 3px solid transparent; padding: 12px 14px 10px; cursor: pointer; white-space: nowrap; }
+nav.tabs button[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); }
+nav.tabs button:focus-visible, .seg button:focus-visible, .tag:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.viewrow { display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; padding-block: 14px; }
+.viewrow .lbl { font: 600 12px var(--doc); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.seg { display: inline-flex; background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 3px; gap: 2px; }
+.seg button { font: 500 13.5px var(--doc); border: 0; background: none; color: var(--muted); padding: 5px 12px; border-radius: 6px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--bg); color: var(--fg); font-weight: 600; }
+section.tab { display: none; } section.tab.on { display: block; }
+.explain { max-width: 980px; display: grid; gap: 8px; margin-bottom: 14px; }
+.explain h2 { font-size: 19px; margin: 0; text-wrap: balance; }
+.explain p { margin: 0; }
+.explain .small, .small { color: var(--muted); font-size: 14px; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 13px; color: var(--muted); }
+.spec { margin-block: 10px 26px; display: grid; gap: 6px; }
+.spec .cap { font: 700 12px var(--mono); letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+.spec .cap.after { color: var(--accent); }
+.scroller { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--card); max-width: 100%; }
+.phones { display: flex; flex-wrap: wrap; gap: 24px; }
+.phones .spec { margin-block: 10px 26px; }
+table.words { border-collapse: collapse; width: 100%; font-size: 14px; background: var(--card); }
+table.words th, table.words td { text-align: left; vertical-align: top; padding: 9px 12px; border-bottom: 1px solid var(--line); }
+table.words th { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+table.words td.old { color: var(--muted); }
+table.words td.where { font-weight: 600; white-space: nowrap; }
+.tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; }
+.asks { display: grid; gap: 14px; max-width: 980px; }
+.ask { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 6px; }
+.ask h3 { margin: 0; font-size: 16px; }
+.ask .rec { font-weight: 600; color: var(--accent); }
+.ask p { margin: 0; }
+/* tags */
+.tag { font: 700 10.5px var(--mono); letter-spacing: .04em; padding: 2px 6px; border-radius: 4px; border: 1px solid; cursor: pointer; line-height: 1.4; position: relative; vertical-align: middle; }
+.tag.new { color: var(--new); background: var(--new-bg); border-color: var(--new); }
+.tag.restyled { color: var(--restyled); background: var(--restyled-bg); border-color: var(--restyled); }
+.tag.unchanged { color: var(--unchanged); background: var(--unchanged-bg); border-color: var(--unchanged); }
+.frame .tag { position: absolute; z-index: 3; }
+.frame .tag.new { color: #1F5FBF; background: #E7F0FC; border-color: #1F5FBF; }
+.frame .tag.restyled { color: #6B4105; background: #FFF4DC; border-color: #6B4105; }
+.frame .tag.unchanged { color: #4A4235; background: #F1EEE8; border-color: #4A4235; }
+.tagnote { position: fixed; z-index: 20; max-width: min(320px, calc(100vw - 32px)); background: var(--card); color: var(--fg); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; font-size: 13.5px; line-height: 1.45; box-shadow: var(--shadow); }
+body[data-diff="only"] .frame .is-unchanged { opacity: .32; filter: grayscale(1); }
+body[data-diff="only"] .tag.unchanged { display: none; }
+body[data-w="desk"] .w390only { display: none; } body[data-w="phone"] .w1440only { display: none; }
+
+/* ── product frames (drawn from the shipped Bank tab) ── */
+.frame, .frame * { box-sizing: border-box; }
+.frame { position: relative; font-family: var(--sans); color: var(--p-ink); background: var(--p-paper); }
+.w1440 { width: 1440px; }
+.w390 { width: 390px; }
+.desk { display: grid; grid-template-columns: 240px 1fr; min-height: 760px; }
+.side { background: var(--p-side); border-right: 1px solid var(--p-line); display: flex; flex-direction: column; }
+.side .brand { height: 47px; display: flex; align-items: center; gap: 10px; padding: 0 20px; border-bottom: 1px solid var(--p-line); font-weight: 700; font-size: 15px; }
+.side .brand small { font-size: 11px; letter-spacing: .1em; color: var(--p-dim); font-weight: 600; border-left: 1px solid var(--p-line); padding-left: 10px; }
+.side .org { height: 44px; display: flex; align-items: center; gap: 10px; padding: 0 20px; border-bottom: 1px solid var(--p-line); font-weight: 600; font-size: 15px; }
+.side .org i { font-style: normal; font-size: 10px; font-weight: 700; background: var(--p-active); border-radius: 5px; padding: 3px 5px; color: var(--p-ink-soft); }
+.side nav { padding: 12px 0; display: grid; gap: 2px; font-size: 14.5px; }
+.side nav span { padding: 9px 20px; color: var(--p-ink-soft); }
+.side nav span.h { font-size: 11px; font-weight: 700; letter-spacing: .1em; color: var(--p-dim); padding-top: 14px; }
+.side nav span.on { background: var(--p-active); color: var(--p-olive); font-weight: 600; }
+.main { display: flex; flex-direction: column; min-width: 0; }
+.mtop { height: 47px; border-bottom: 1px solid var(--p-line); display: flex; align-items: center; padding: 0 32px; font-size: 17px; font-weight: 600; background: var(--p-side); }
+.mtabs { height: 44px; border-bottom: 1px solid var(--p-line); display: flex; gap: 30px; padding: 0 32px; font-size: 15px; color: var(--p-ink-soft); background: var(--p-side); align-items: stretch; }
+.mtabs span { display: flex; align-items: center; border-bottom: 2px solid transparent; }
+.mtabs span.on { color: var(--p-olive); border-bottom-color: var(--p-olive); font-weight: 600; }
+.mbody { padding: 22px 32px 32px; display: grid; gap: 16px; align-content: start; }
+.ptop { display: flex; gap: 12px; align-items: center; font-size: 15px; color: var(--p-ink-soft); }
+.pill { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border: 1px solid rgba(87,101,30,.35); border-radius: 15px; background: rgba(87,101,30,.10); font-size: 13px; color: var(--p-dim); white-space: nowrap; }
+.pill b { color: var(--p-ink); font-weight: 600; }
+.plink { color: var(--p-olive); text-decoration: underline; text-underline-offset: 2px; font-size: 13.5px; }
+.card { background: var(--p-card); border: 1px solid var(--p-line); border-radius: 12px; box-shadow: 0 1px 2px rgba(36,30,21,.04); padding: 20px 22px; display: grid; gap: 14px; position: relative; }
+.card h3 { margin: 0; font-size: 18px; font-weight: 600; line-height: 1.25; }
+.lead { font-size: 15px; line-height: 1.5; color: var(--p-ink-soft); margin: 0; }
+.purpose { font-size: 14.5px; line-height: 1.5; color: var(--p-ink-soft); margin: 0; max-width: 900px; }
+.lbl { font-size: 13px; font-weight: 600; color: var(--p-ink-soft); }
+.fld { background: var(--p-field); border: 1px solid var(--p-line); border-radius: 8px; height: 36px; padding: 0 12px; display: flex; align-items: center; justify-content: space-between; font-size: 15px; color: var(--p-ink); }
+.fld.empty { color: var(--p-ph); }
+.fld.focus { outline: 2px solid var(--p-olive); outline-offset: 1px; background: #fff; }
+.caret { display: inline-block; width: 1.5px; height: 18px; background: var(--p-ink); margin-right: 6px; vertical-align: middle; }
+.hint { font-size: 12.5px; color: var(--p-dim); line-height: 1.45; margin: 0; }
+.status { font-size: 13.5px; color: var(--p-ink-soft); line-height: 1.45; margin: 0; }
+.field { display: grid; gap: 6px; position: relative; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 36px; padding: 0 16px; border-radius: 8px; font-size: 15px; font-weight: 600; border: 1px solid var(--p-line); background: var(--p-card); color: var(--p-ink); white-space: nowrap; }
+.btn.lime { background: var(--p-lime); border-color: var(--p-lime); color: #1F2A0C; }
+.btn.dis { opacity: .5; }
+.books { border: 1px solid var(--p-line); border-radius: 8px; padding: 10px 14px; font-size: 15px; font-weight: 500; display: flex; gap: 12px; align-items: center; }
+.books b { color: var(--p-olive); font-weight: 700; }
+.row { display: flex; gap: 16px; align-items: flex-end; position: relative; }
+.band { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--p-line); border: 1px solid var(--p-line); border-radius: 10px; overflow: hidden; }
+.tile { background: var(--p-card); padding: 16px 16px 14px; display: grid; gap: 4px; align-content: start; min-width: 0; position: relative; }
+.tile .l { font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--p-dim); }
+.tile .f { font-size: 24px; font-weight: 700; line-height: 1.15; font-variant-numeric: tabular-nums; }
+.tile .c { font-size: 12.5px; line-height: 1.45; color: var(--p-dim); }
+.sums { border: 1px solid var(--p-line); border-radius: 10px; }
+.sums .r { display: flex; justify-content: space-between; gap: 12px; padding: 11px 15px; font-size: 15px; border-top: 1px solid var(--p-line); font-variant-numeric: tabular-nums; }
+.sums .r:first-child { border-top: 0; } .sums .r.t { font-weight: 700; } .sums .r small { color: var(--p-dim); font-size: 12.5px; }
+.list h4 { margin: 0 0 8px; font-size: 16px; font-weight: 600; }
+.tbl { border: 1px solid var(--p-line); border-radius: 10px; background: var(--p-card); overflow: hidden; }
+.tbl .tr { display: grid; grid-template-columns: 250px 180px 170px 1fr 260px 40px; align-items: center; padding: 0 16px; min-height: 44px; font-size: 15px; font-variant-numeric: tabular-nums; position: relative; }
+.tbl .tr.th { min-height: 34px; font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--p-ink-soft); border-bottom: 1px solid var(--p-line); }
+.tbl .tr .d { font-weight: 600; } .tbl .tr .n { text-align: right; padding-right: 24px; } .tbl .tr .q { color: var(--p-dim); font-size: 13px; }
+/* phone */
+.ph { min-height: 844px; display: flex; flex-direction: column; }
+.ph .ptopbar { height: 52px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; font-size: 17px; font-weight: 600; background: var(--p-side); }
+.ph .ptabs { height: 44px; display: flex; gap: 22px; padding: 0 16px; font-size: 15px; color: var(--p-ink-soft); background: var(--p-side); border-bottom: 1px solid var(--p-line); align-items: stretch; overflow: hidden; white-space: nowrap; }
+.ph .ptabs span { display: flex; align-items: center; border-bottom: 2px solid transparent; }
+.ph .ptabs span.on { color: var(--p-olive); border-bottom-color: var(--p-olive); font-weight: 600; }
+.ph .pbody { padding: 16px; display: grid; gap: 14px; align-content: start; flex: 1; }
+.ph .card { padding: 16px; gap: 12px; }
+.ph .card h3 { font-size: 17px; }
+.ph .lead, .ph .purpose { font-size: 14.5px; }
+.ph .fld { height: 44px; }
+.ph .btn { height: 44px; width: 100%; }
+.ph .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; position: relative; }
+.ph .pcard { background: var(--p-card); border: 1px solid var(--p-line); border-radius: 10px; padding: 12px 14px; display: grid; gap: 3px; font-size: 15px; position: relative; }
+.ph .pcard b { font-weight: 600; } .ph .pcard span { font-size: 13px; color: var(--p-dim); }
+.ph .pbar { height: 64px; border-top: 1px solid var(--p-line); background: var(--p-side); display: flex; justify-content: space-around; align-items: center; font-size: 12px; color: var(--p-dim); }
+.ph .pbar b { color: var(--p-olive); }
+@media (prefers-reduced-motion: no-preference) { .tagnote { animation: pop .12s ease-out; } @keyframes pop { from { opacity: 0; transform: translateY(3px); } } }
+</style>
+
+<div class="wrap">
+<header class="top">
+  <h1>The club’s start is a statement’s opening balance</h1>
+  <p>Bank check through a volunteer’s eyes, stage S1b (owner ruling A17). Drawn at true size from the shipped Bank tab and S1’s settled words. The desk frames are 1440 wide and scroll inside their box; open the page on a phone to judge the 390 frames. Tap any tag for what it changes.</p>
+</header>
+<nav class="tabs" role="tablist" aria-label="Sections">
+  <button role="tab" id="t1" aria-selected="true" data-tab="card">1 · The start card</button>
+  <button role="tab" id="t2" aria-selected="false" data-tab="after">2 · Right after Start here</button>
+  <button role="tab" id="t3" aria-selected="false" data-tab="names">3 · The start’s names</button>
+  <button role="tab" id="t4" aria-selected="false" data-tab="asks">4 · Asks</button>
+</nav>
+<div class="viewrow">
+  <span class="lbl">View</span>
+  <span class="seg" role="group" aria-label="Show"><button type="button" id="v-all" aria-pressed="true" data-diff="all">Everything</button><button type="button" id="v-diff" aria-pressed="false" data-diff="only">Show only what differs</button></span>
+  <span class="lbl">Width</span>
+  <span class="seg" role="group" aria-label="Width"><button type="button" id="w-desk" aria-pressed="true" data-w="desk">Desk 1440</button><button type="button" id="w-phone" aria-pressed="false" data-w="phone">Phone 390</button></span>
+  <span class="legend"><span class="tag new" tabindex="-1">NEW</span><span class="tag restyled" tabindex="-1">RESTYLED</span><span class="tag unchanged" tabindex="-1">UNCHANGED</span></span>
+</div>
+
+<!-- ═════════ 1 · THE START CARD ═════════ -->
+<section class="tab on" id="card" role="tabpanel" aria-labelledby="t1">
+  <div class="explain">
+    <h2>The card asks for the first statement you want to check, from its top</h2>
+    <p>Today the card asks for a statement’s date and ending balance. The owner read it as the statement he wanted to check, which would have left that statement’s own lines unchecked. After: the day the statement starts and its opening balance, both printed at the top of every statement, and one sentence that says nothing before that day is compared with the bank.</p>
+    <p class="small">Unchanged: the title, the account name, the books, Start here, and Stripe’s warn-never-block notice. The card saves the day before the one typed (the balance at the end of that day); no screen ever shows that stored day.</p>
+  </div>
+
+  <div class="w1440only">
+    <div class="spec"><div class="cap">Before · desk 1440 · shipped</div>
+      <div class="scroller"><div class="frame w1440 desk" style="min-height:640px">
+        <aside class="side"><div class="brand">FieldLogicHQ <small>ADMIN</small></div><div class="org"><i>UR</i>UAT Rep Club</div><nav><span>Overview</span><span class="h">CLUB</span><span class="on">Accounting</span><span>Organization</span></nav></aside>
+        <div class="main"><div class="mtop">Accounting</div><div class="mtabs"><span>Overview</span><span>Budget</span><span>Teams</span><span>Ledger</span><span class="on">Bank</span><span>Allocations</span><span>Payment requests</span><span>Budget vs. Actual</span><span>Payouts</span></div>
+          <div class="mbody"><div class="card" style="width:760px">
+            <h3>Start checking the club’s bank account</h3>
+            <p class="lead">Pick a bank statement you already have and type its date and ending balance. Checks start from there.</p>
+            <div class="field" style="width:360px"><span class="lbl">Account name *</span><div class="fld">Club chequing</div><p class="hint">A name only. Never the account number.</p></div>
+            <div class="field"><span class="lbl">Books in this account</span><div class="books"><b>✓</b>UAT Rep Club — General</div><p class="hint">All of the club’s books, to start. You can add a second account later and move a book to it. Teams keep their own accounts.</p></div>
+            <div class="row"><div class="field" style="width:252px"><span class="lbl">Statement date *</span><div class="fld">Oct 31, 2026 <span>▦</span></div></div><div class="field" style="width:252px"><span class="lbl">Bank balance on that date *</span><div class="fld">$11,873.20</div></div></div>
+            <div style="display:flex;justify-content:flex-end"><span class="btn lime">Start here</span></div>
+          </div></div></div>
+      </div></div>
+    </div>
+
+    <div class="spec"><div class="cap after">After · desk 1440</div>
+      <div class="scroller"><div class="frame w1440 desk" style="min-height:660px">
+        <aside class="side is-unchanged"><div class="brand">FieldLogicHQ <small>ADMIN</small></div><div class="org"><i>UR</i>UAT Rep Club</div><nav><span>Overview</span><span class="h">CLUB</span><span class="on">Accounting</span><span>Organization</span></nav></aside>
+        <div class="main"><div class="mtop is-unchanged">Accounting</div><div class="mtabs is-unchanged"><span>Overview</span><span>Budget</span><span>Teams</span><span>Ledger</span><span class="on">Bank</span><span>Allocations</span><span>Payment requests</span><span>Budget vs. Actual</span><span>Payouts</span></div>
+          <div class="mbody"><div class="card" style="width:760px">
+            <h3 class="is-unchanged">Start checking the club’s bank account</h3>
+            <div style="position:relative"><p class="lead" id="w-lead-d">Pick the first bank statement you want to check. Type the day it starts and its opening balance, both printed at the top. Nothing dated before that day is compared with the bank.</p><button class="tag restyled" style="right:-8px;top:-26px" data-note="RESTYLED · S1b · row 17, A17. Which statement (the first one you want to check), where its two figures are (the top of the statement), and the boundary (nothing before its first day is compared). It suggests no particular statement: the owner ruled the year’s first or the most recent ‘fine either way’; the help says the year’s first checks the whole year.">RESTYLED</button></div>
+            <div class="field is-unchanged" style="width:360px"><span class="lbl">Account name *</span><div class="fld">Club chequing</div><p class="hint">A name only. Never the account number.</p></div>
+            <div class="field is-unchanged"><span class="lbl">Books in this account</span><div class="books"><b>✓</b>UAT Rep Club — General</div><p class="hint">All of the club’s books, to start. You can add a second account later and move a book to it. Teams keep their own accounts.</p></div>
+            <div class="row"><div class="field" style="width:252px"><span class="lbl" id="w-start-d">Statement starts on *</span><div class="fld">Oct 1, 2026 <span>▦</span></div></div><div class="field" style="width:252px"><span class="lbl" id="w-open-d">Opening balance *</span><div class="fld">$12,400.00</div></div><button class="tag restyled" style="left:530px;top:0" data-note="RESTYLED · S1b · A17 (A1c folded in). The two labels name the figures as the statement prints them. The date picker still stops at today, so the latest start is yesterday: the check form can always be dated today (row 18’s same-day dead end is gone).">RESTYLED</button></div>
+            <div class="is-unchanged" style="display:flex;justify-content:flex-end"><span class="btn lime">Start here</span></div>
+          </div></div></div>
+      </div></div>
+    </div>
+  </div>
+
+  <div class="w390only phones">
+    <div class="spec"><div class="cap">Before · phone 390 · shipped</div>
+      <div class="scroller" style="width:max-content"><div class="frame w390 ph">
+        <div class="ptopbar">Accounting <span>◎</span></div><div class="ptabs"><span>‹ view</span><span>Budget</span><span>Teams</span><span>Ledger</span><span class="on">Bank</span><span>A ›</span></div>
+        <div class="pbody"><div class="card">
+          <h3>Start checking the club’s bank account</h3>
+          <p class="lead">Pick a bank statement you already have and type its date and ending balance. Checks start from there.</p>
+          <div class="field"><span class="lbl">Account name *</span><div class="fld">Club chequing</div><p class="hint">A name only. Never the account number.</p></div>
+          <div class="field"><span class="lbl">Books in this account</span><div class="books"><b>✓</b>UAT Rep Club — General</div></div>
+          <div class="field"><span class="lbl">Statement date *</span><div class="fld">2026-10-31 <span>▦</span></div></div>
+          <div class="field"><span class="lbl">Bank balance on that date *</span><div class="fld">$11,873.20</div></div>
+          <span class="btn lime">Start here</span>
+        </div></div>
+        <div class="pbar"><span>Overview</span><b>Accounting</b><span>More</span></div>
+      </div></div>
+    </div>
+    <div class="spec"><div class="cap after">After · phone 390</div>
+      <div class="scroller" style="width:max-content"><div class="frame w390 ph">
+        <div class="ptopbar is-unchanged">Accounting <span>◎</span></div><div class="ptabs is-unchanged"><span>‹ view</span><span>Budget</span><span>Teams</span><span>Ledger</span><span class="on">Bank</span><span>A ›</span></div>
+        <div class="pbody"><div class="card">
+          <h3 class="is-unchanged">Start checking the club’s bank account</h3>
+          <div style="position:relative"><p class="lead" id="w-lead-p">Pick the first bank statement you want to check. Type the day it starts and its opening balance, both printed at the top. Nothing dated before that day is compared with the bank.</p><button class="tag restyled" style="right:0;bottom:-22px" data-note="RESTYLED · S1b · row 17. The same lead on the phone: four lines, one longer than today’s.">RESTYLED</button></div>
+          <div class="field is-unchanged"><span class="lbl">Account name *</span><div class="fld">Club chequing</div><p class="hint">A name only. Never the account number.</p></div>
+          <div class="field is-unchanged"><span class="lbl">Books in this account</span><div class="books"><b>✓</b>UAT Rep Club — General</div></div>
+          <div class="field"><span class="lbl" id="w-start-p">Statement starts on *</span><div class="fld">2026-10-01 <span>▦</span></div><button class="tag restyled" style="right:0;top:-2px" data-note="RESTYLED · S1b. The phone’s own date picker, as today; only the label changes.">RESTYLED</button></div>
+          <div class="field"><span class="lbl" id="w-open-p">Opening balance *</span><div class="fld">$12,400.00</div></div>
+          <span class="btn lime is-unchanged">Start here</span>
+        </div></div>
+        <div class="pbar is-unchanged"><span>Overview</span><b>Accounting</b><span>More</span></div>
+      </div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════ 2 · RIGHT AFTER START HERE ═════════ -->
+<section class="tab" id="after" role="tabpanel" aria-labelledby="t2">
+  <div class="explain">
+    <h2>Start here opens the check on that same statement</h2>
+    <p>Today, Start here lands on the check form dated today, so the next thing a treasurer is asked is today’s balance, and the statement in their hand is never checked. After: the form opens with the date empty and the cursor in it, and one line says checking starts on the statement’s first day and to type its end date and ending balance. The line goes at the first save, or when another account or a saved check is opened.</p>
+    <p class="small">The form is S1’s shipped card. Nothing is guessed for the end date (see ask B). The saved list names the start by the day checking starts, Oct 1, never the stored Sep 30.</p>
+  </div>
+
+  <div class="w1440only">
+    <div class="spec"><div class="cap">Before · desk 1440 · shipped (S1) · after a start typed as Oct 31, $11,873.20</div>
+      <div class="scroller"><div class="frame w1440 desk">
+        <aside class="side"><div class="brand">FieldLogicHQ <small>ADMIN</small></div><div class="org"><i>UR</i>UAT Rep Club</div><nav><span>Overview</span><span class="h">CLUB</span><span class="on">Accounting</span><span>Organization</span></nav></aside>
+        <div class="main"><div class="mtop">Accounting</div><div class="mtabs"><span>Overview</span><span>Budget</span><span>Teams</span><span>Ledger</span><span class="on">Bank</span><span>Allocations</span><span>Payment requests</span><span>Budget vs. Actual</span><span>Payouts</span></div>
+          <div class="mbody">
+            <div class="ptop"><span class="pill">Account <b>Club chequing</b> ⌄</span>Not checked yet <span class="plink">Name and books</span></div>
+            <div class="card">
+              <div style="display:flex;justify-content:space-between;align-items:center"><h3>Check your bank balance</h3><span class="btn">＋ Add entry</span></div>
+              <p class="purpose">Type the balance your bank shows. If it matches your books, you’re in step with the bank. If not, we’ll help you look for the difference. It takes what’s in your books as correct.</p>
+              <div class="row"><div class="field" style="width:210px"><span class="lbl">Date *</span><div class="fld">Nov 8, 2026 <span>▦</span></div></div><div class="field" style="width:260px"><span class="lbl">Bank balance on that date *</span><div class="fld empty">$0.00</div></div><span class="btn lime">Save this check</span></div>
+              <p class="hint">Use the posted balance your banking app shows, with pending transactions left out.</p>
+              <div class="band"><div class="tile"><span class="l">The bank says</span><span class="f">—</span><span class="c">Bank balance on Nov 8, 2026</span></div><div class="tile"><span class="l">Should be in the bank</span><span class="f">$12,035.60</span><span class="c">Your books on Nov 8, 2026, less what hasn’t reached the bank yet</span></div><div class="tile"><span class="l">Difference</span><span class="f">—</span><span class="c">Type the balance to see it</span></div></div>
+              <div class="sums"><div class="r"><span>Your books on Nov 8, 2026 <small>· UAT Rep Club — General</small></span><span>$12,035.60</span></div><div class="r t"><span>Should be in the bank</span><span>$12,035.60</span></div></div>
+              <p class="hint">Lines since your starting statement (Oct 31, 2026): 14 · <span class="plink" style="font-size:12.5px">Show them</span></p>
+            </div>
+            <div class="list"><h4>Balance checks</h4><div class="tbl"><div class="tr th"><span>Date</span><span class="n">The bank said</span><span class="n">Should have been</span><span>Result</span><span>Checked by</span><span></span></div><div class="tr"><span class="d">Oct 31, 2026</span><span class="n">$11,873.20</span><span class="n">—</span><span>Starting point</span><span>Avery Chen · Nov 8, 2026</span><span>›</span></div></div><p class="hint" style="margin-top:8px">No balance checks since the starting point yet.</p></div>
+          </div></div>
+      </div></div>
+    </div>
+
+    <div class="spec"><div class="cap after">After · desk 1440 · after a start typed as Oct 1, $12,400.00</div>
+      <div class="scroller"><div class="frame w1440 desk">
+        <aside class="side is-unchanged"><div class="brand">FieldLogicHQ <small>ADMIN</small></div><div class="org"><i>UR</i>UAT Rep Club</div><nav><span>Overview</span><span class="h">CLUB</span><span class="on">Accounting</span><span>Organization</span></nav></aside>
+        <div class="main"><div class="mtop is-unchanged">Accounting</div><div class="mtabs is-unchanged"><span>Overview</span><span>Budget</span><span>Teams</span><span>Ledger</span><span class="on">Bank</span><span>Allocations</span><span>Payment requests</span><span>Budget vs. Actual</span><span>Payouts</span></div>
+          <div class="mbody">
+            <div class="ptop is-unchanged"><span class="pill">Account <b>Club chequing</b> ⌄</span>Not checked yet <span class="plink">Name and books</span></div>
+            <div class="card">
+              <div class="is-unchanged" style="display:flex;justify-content:space-between;align-items:center"><h3>Check your bank balance</h3><span class="btn dis">＋ Add entry</span></div>
+              <p class="purpose is-unchanged">Type the balance your bank shows. If it matches your books, you’re in step with the bank. If not, we’ll help you look for the difference. It takes what’s in your books as correct.</p>
+              <div style="position:relative"><p class="status" role="status" id="w-after-d">Checking starts Oct 1, 2026. Now check that same statement: type its end date and ending balance.</p><button class="tag new" style="left:640px;top:-2px" data-note="NEW · S1b · A17. Where ‘Picked up where you left off’ sits (the two never show together: a start never restores a draft). The card’s status-line style, one step darker than a hint, since it is the one thing to do next; no callout (amber is for problems). The date field points to it for a screen reader. Gone at the first save, or when another account or ‘Check this date again’ is opened. Not kept across a reload: the form is then today’s, as for any account.">NEW</button></div>
+              <div class="row"><div class="field" style="width:210px"><span class="lbl">Date *</span><div class="fld empty focus"><span><span class="caret"></span>Choose a date</span><span>▦</span></div></div><div class="field" style="width:260px"><span class="lbl">Bank balance on that date *</span><div class="fld empty">$0.00</div></div><span class="btn lime dis">Save this check</span><button class="tag restyled" style="left:640px;top:4px" data-note="RESTYLED · S1b. The date opens EMPTY with the cursor in it (today it opens on today). Save and Add entry stay disabled until there is a date, as they are today while a day is read. The labels are S1’s; the statement’s end date goes in Date and its ending balance beside it.">RESTYLED</button></div>
+              <div style="position:relative;height:6px"><button class="tag restyled" style="left:0;top:-10px" data-note="RESTYLED · S1b (ask C). The note line’s first sentence, ‘Use the posted balance your banking app shows…’, stays hidden while the line above shows: the treasurer is typing the statement’s ending balance, not an app’s. The line’s other notes (off, already checked) are unchanged.">RESTYLED</button></div>
+            </div>
+            <div class="list"><h4 class="is-unchanged">Balance checks</h4><div class="tbl"><div class="tr th is-unchanged"><span>Date</span><span class="n">The bank said</span><span class="n">Should have been</span><span>Result</span><span>Checked by</span><span></span></div><div class="tr"><span class="d">Oct 1, 2026</span><span class="n">$12,400.00</span><span class="n">—</span><span id="w-cell-d">Starting balance</span><span>Avery Chen · Nov 8, 2026</span><span>›</span><button class="tag restyled" style="left:640px;top:12px" data-note="RESTYLED · S1b · row 14. The start’s row is dated the day checking starts (Oct 1; stored Sep 30) and its Result cell names it the starting balance. The bank said = the opening balance typed.">RESTYLED</button></div></div><div style="position:relative"><p class="hint" style="margin-top:8px" id="w-empty-d">No balance checks yet.</p><button class="tag restyled" style="left:160px;top:-1px" data-note="RESTYLED · S1b. The empty line loses ‘the starting point’; the row above already names it.">RESTYLED</button></div></div>
+          </div></div>
+      </div></div>
+    </div>
+  </div>
+
+  <div class="w390only phones">
+    <div class="spec"><div class="cap">Before · phone 390 · shipped (S1)</div>
+      <div class="scroller" style="width:max-content"><div class="frame w390 ph">
+        <div class="ptopbar">Accounting <span>◎</span></div><div class="ptabs"><span>‹ view</span><span>Budget</span><span>Teams</span><span>Ledger</span><span class="on">Bank</span><span>A ›</span></div>
+        <div class="pbody">
+          <span class="pill" style="justify-self:start;height:44px;border-radius:22px">Account <b>Club chequing</b> ⌄</span>
+          <div class="card">
+            <h3>Check your bank balance</h3>
+            <p class="purpose">Type the balance your bank shows. If it matches your books, you’re in step with the bank. If not, we’ll help you look for the difference. It takes what’s in your books as correct.</p>
+            <div class="two"><div class="field"><span class="lbl">Date *</span><div class="fld">2026-11-08 <span>▦</span></div></div><div class="field"><span class="lbl">Bank balance *</span><div class="fld empty">$0.00</div></div></div>
+            <div class="band" style="grid-template-columns:1fr 1fr"><div class="tile" style="padding:11px 12px"><span class="l">The bank says</span><span class="f" style="font-size:20px">—</span><span class="c">On Nov 8</span></div><div class="tile" style="padding:11px 12px"><span class="l">Should be there</span><span class="f" style="font-size:20px">$12,035.60</span><span class="c">Your books, adjusted for what’s pending</span></div><div class="tile" style="padding:11px 12px;grid-column:1 / -1"><span class="l">Difference</span><span class="f" style="font-size:20px">—</span><span class="c">Type the balance to see it</span></div></div>
+            <p class="hint">…the sums, Find, then Save at the card’s end.</p>
+          </div>
+        </div>
+        <div class="pbar"><span>Overview</span><b>Accounting</b><span>More</span></div>
+      </div></div>
+    </div>
+    <div class="spec"><div class="cap after">After · phone 390</div>
+      <div class="scroller" style="width:max-content"><div class="frame w390 ph">
+        <div class="ptopbar is-unchanged">Accounting <span>◎</span></div><div class="ptabs is-unchanged"><span>‹ view</span><span>Budget</span><span>Teams</span><span>Ledger</span><span class="on">Bank</span><span>A ›</span></div>
+        <div class="pbody">
+          <span class="pill is-unchanged" style="justify-self:start;height:44px;border-radius:22px">Account <b>Club chequing</b> ⌄</span>
+          <div class="card">
+            <h3 class="is-unchanged">Check your bank balance</h3>
+            <p class="purpose is-unchanged">Type the balance your bank shows. If it matches your books, you’re in step with the bank. If not, we’ll help you look for the difference. It takes what’s in your books as correct.</p>
+            <div style="position:relative"><p class="status" id="w-after-p">Checking starts Oct 1, 2026. Now check that same statement: type its end date and ending balance.</p><button class="tag new" style="right:-6px;top:-22px" data-note="NEW · S1b. The same line on the phone, above the two fields.">NEW</button></div>
+            <div class="two"><div class="field"><span class="lbl">Date *</span><div class="fld empty focus"><span></span><span>▦</span></div></div><div class="field"><span class="lbl">Bank balance *</span><div class="fld empty">$0.00</div></div><button class="tag restyled" style="left:56px;top:-1px" data-note="RESTYLED · S1b. The date opens empty. On a phone the cursor is NOT put in it (/design): the phone’s own date picker can’t be opened for you, and on an iPhone focusing it does nothing, so the line above carries the instruction and the date field points to it for a screen reader. A tap opens the phone’s picker, as today.">RESTYLED</button></div>
+            <span class="btn lime dis is-unchanged">Save this check</span>
+          </div>
+          <div class="pcard"><b>Oct 1, 2026 · $12,400.00</b><span id="w-cell-p">Starting balance</span><span>Avery Chen · Nov 8, 2026</span><button class="tag restyled" style="right:8px;top:8px" data-note="RESTYLED · S1b · row 14. The start’s phone card: the day checking starts, and its name.">RESTYLED</button></div>
+          <p class="hint is-unchanged" id="w-empty-p">No balance checks yet.</p>
+        </div>
+        <div class="pbar is-unchanged"><span>Overview</span><b>Accounting</b><span>More</span></div>
+      </div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════ 3 · THE START'S NAMES ═════════ -->
+<section class="tab" id="names" role="tabpanel" aria-labelledby="t3">
+  <div class="explain">
+    <h2>One name for the start, dated the day checking starts</h2>
+    <p>Everywhere a treasurer reads the start it becomes a <b>starting balance</b>, and every date on it is the day checking starts (the stored day plus one). “Since your starting statement” read as “after that statement” and skipped it; “since checking started” says what is checked. Words below are <code>/marketing</code>’s final read.</p>
+  </div>
+  <div class="spec"><div class="cap after">Row 9 · the band’s middle caption, desk, after a balance is typed for Oct 31</div>
+    <div class="scroller"><div class="frame" style="width:1094px;padding:16px;background:var(--p-card)">
+      <div class="band"><div class="tile is-unchanged"><span class="l">The bank says</span><span class="f">$11,873.20</span><span class="c">Bank balance on Oct 31, 2026</span></div><div class="tile"><span class="l">Should be in the bank</span><span class="f">$11,873.20</span><span class="c" id="w-row9">Starting balance plus every change in your books since Oct 1, 2026, adjusted for what hasn’t reached the bank yet</span><button class="tag restyled" style="right:8px;top:8px" data-note="RESTYLED · S1b · row 9. Names where the figure starts, which is why it isn’t the Overview’s Cash on hand. ‘Adjusted’, since an uncashed cheque is added back. The day being checked is already in the first tile’s caption, so this one carries only the day checking started. The phone’s short caption is unchanged.">RESTYLED</button></div><div class="tile is-unchanged"><span class="l">Difference</span><span class="f" style="color:#2F6B2F">$0.00</span><span class="c">The bank and your books agree on Oct 31, 2026.</span></div></div>
+    </div></div>
+  </div>
+  <div class="tablewrap"><table class="words">
+    <thead><tr><th>Where</th><th>Today</th><th>After S1b</th></tr></thead>
+    <tbody id="names-body">
+      <tr><td class="where">Start card lead</td><td class="old">Pick a bank statement you already have and type its date and ending balance. Checks start from there.</td><td data-k="setupLead">Pick the first bank statement you want to check. Type the day it starts and its opening balance, both printed at the top. Nothing dated before that day is compared with the bank.</td></tr>
+      <tr><td class="where">Start card labels</td><td class="old">Statement date · Bank balance on that date</td><td data-k="labels">Statement starts on · Opening balance</td></tr>
+      <tr><td class="where">Start card, missing</td><td class="old">Enter the account name, the statement date and the bank balance on that date.</td><td data-k="setupMissing">Enter the account name, the day the statement starts and its opening balance.</td></tr>
+      <tr><td class="where">Form, after a start</td><td class="old">(none: the form opens on today)</td><td data-k="afterStart">Checking starts Oct 1, 2026. Now check that same statement: type its end date and ending balance.</td></tr>
+      <tr><td class="where">Form, no balance</td><td class="old">Enter the bank balance on the statement date.</td><td data-k="balanceMissing">Enter the bank balance on that date.</td></tr>
+      <tr><td class="where">Saved list, start row</td><td class="old">Oct 31, 2026 · Starting point</td><td data-k="cell">Oct 1, 2026 · Starting balance</td></tr>
+      <tr><td class="where">Saved list, empty</td><td class="old">No balance checks since the starting point yet.</td><td data-k="noChecksYet">No balance checks yet.</td></tr>
+      <tr><td class="where">The start’s window</td><td class="old">Club chequing · starting point / Starting statement · Oct 31, 2026</td><td data-k="window">Club chequing · starting balance / Starting balance · Oct 1, 2026</td></tr>
+      <tr><td class="where">Delete the start</td><td class="old">Delete the starting statement? · Delete the starting statement for Oct 31, 2026? Checking this account starts again from a statement you pick…</td><td data-k="delete">Delete the starting balance? · Delete the starting balance for Oct 1, 2026? Checking this account starts again from a statement you pick…</td></tr>
+      <tr><td class="where">Find’s heading</td><td class="old">Lines since your starting statement · Oct 31, 2026</td><td data-k="find">Lines since checking started · Oct 1, 2026</td></tr>
+      <tr><td class="where">The look-back</td><td class="old">Before your starting statement · Oct 31, 2026</td><td data-k="look">Before checking started · Oct 1, 2026</td></tr>
+      <tr><td class="where">Waiting at the start</td><td class="old">If one of these was dated before your starting statement but reached the bank after it…</td><td data-k="atStartWhy">If one of these was dated before checking started but reached the bank after it, mark it Waiting at the start.</td></tr>
+      <tr><td class="where">Printed check</td><td class="old">Starting point Oct 31, 2026: $11,873.20 · change in the books since: + $0.00</td><td data-k="report">Your books when checking started Oct 1, 2026: $12,400.00 · change in the books since: − $526.80</td></tr>
+      <tr><td class="where">Refusal, a day too early</td><td class="old">This statement is on or before the one you started from. Check a later statement.</td><td data-k="before_start">That day is before checking started. Pick a later day.</td></tr>
+      <tr><td class="where">Other refusals</td><td class="old">…dated after your starting statement… · This account already starts from a statement on another date. · Later checks start from this statement…</td><td data-k="refusals">…dated on or after the day checking started… · This account already has a starting balance on another date. · A balance check is already saved before that day. Pick an earlier day. · Later checks start from this balance, so it can’t be deleted… · Give this account a starting balance first. · Enter the date as a day, month and year.</td></tr>
+      <tr><td class="where">Help (club article)</td><td class="old">Checking starts from a bank statement you already have. Pick one, then type the Statement date and the Bank balance on that date.</td><td data-k="help">Checking starts at the beginning of the first statement you want to check… To check every line of the fiscal year, start from the year’s first statement.</td></tr>
+    </tbody>
+  </table></div>
+  <p class="small" style="margin-top:10px">Not here: how a team starts (a team starts from its season’s opening balance, unchanged), and the printed check’s title (“statement ending …”), which is S4’s.</p>
+</section>
+
+<!-- ═════════ 4 · ASKS ═════════ -->
+<section class="tab" id="asks" role="tabpanel" aria-labelledby="t4">
+  <div class="explain"><h2>What I need from you</h2><p class="small">A is the gate: nothing is built until you say yes. B and C are the two judgment calls inside the drawing; each has a recommendation.</p></div>
+  <div class="asks">
+    <div class="ask"><h3>A · Build to these drawings?</h3><p>The start card (tab 1), the form right after Start here (tab 2) and the start’s names (tab 3), desk and phone.</p><p class="rec">Recommend: yes.</p></div>
+    <div class="ask"><h3>B · After a start, the end date is empty, not guessed</h3><p>The form could fill the last day of the statement’s first month (Oct 31 for a start on Oct 1). Statements don’t all run by calendar month (many run the 15th to the 14th), and a wrong guess that reads as filled-in gets saved. Empty, with the cursor in it and the line saying what to type, costs one date pick.</p><p class="rec">Recommend: empty (as drawn).</p></div>
+    <div class="ask"><h3>C · The banking-app hint waits while the after-start line shows</h3><p>“Use the posted balance your banking app shows…” is the right advice for a check of today, and the wrong one for a paper statement’s ending balance. While the after-start line shows, the hint is hidden; from the first save on, the form is the ordinary one and the hint returns.</p><p class="rec">Recommend: hide it (as drawn).</p></div>
+  </div>
+</section>
+</div>
+
+<script>
+(function () {
+  var body = document.body;
+  body.setAttribute('data-w', 'desk'); body.setAttribute('data-diff', 'all');
+  var tabs = document.querySelectorAll('nav.tabs button');
+  function show(id) {
+    tabs.forEach(function (b) { b.setAttribute('aria-selected', String(b.dataset.tab === id)); });
+    document.querySelectorAll('section.tab').forEach(function (s) { s.classList.toggle('on', s.id === id); });
+    closeNote();
+  }
+  tabs.forEach(function (b) { b.addEventListener('click', function () { show(b.dataset.tab); try { history.replaceState(null, '', '#' + b.dataset.tab); } catch (e) {} }); });
+  var start = (location.hash || '').slice(1);
+  if (document.getElementById(start) && document.getElementById(start).classList.contains('tab')) show(start);
+  window.addEventListener('hashchange', function () { var h = location.hash.slice(1); if (document.getElementById(h)) show(h); });
+  document.querySelectorAll('.seg button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var key = b.dataset.diff ? 'diff' : 'w';
+      b.parentNode.querySelectorAll('button').forEach(function (o) { o.setAttribute('aria-pressed', String(o === b)); });
+      body.setAttribute('data-' + key, b.dataset[key]);
+      try { localStorage.setItem('s1b-' + key, b.dataset[key]); } catch (e) {}
+    });
+  });
+  try {
+    ['diff', 'w'].forEach(function (k) { var v = localStorage.getItem('s1b-' + k); if (v) { var b = document.querySelector('.seg button[data-' + k + '="' + v + '"]'); if (b) b.click(); } });
+  } catch (e) {}
+  if (window.innerWidth < 700 && !body.dataset.wset) { var p = document.getElementById('w-phone'); if (p) p.click(); }
+  var note = null;
+  function closeNote() { if (note) { note.remove(); note = null; } }
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest('.tag[data-note]');
+    if (!t) { if (!e.target.closest('.tagnote')) closeNote(); return; }
+    e.stopPropagation(); closeNote();
+    note = document.createElement('div'); note.className = 'tagnote'; note.setAttribute('role', 'note'); note.textContent = t.dataset.note;
+    document.body.appendChild(note);
+    var r = t.getBoundingClientRect(), w = note.offsetWidth, h = note.offsetHeight;
+    var left = Math.min(Math.max(16, r.left), window.innerWidth - w - 16);
+    var top = r.bottom + 8 + h > window.innerHeight ? r.top - h - 8 : r.bottom + 8;
+    note.style.left = left + 'px'; note.style.top = Math.max(8, top) + 'px';
+  });
+  window.addEventListener('scroll', closeNote, true);
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeNote(); });
+})();
+</script>

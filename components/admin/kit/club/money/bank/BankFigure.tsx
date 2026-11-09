@@ -24,13 +24,16 @@ import s from './Bank.module.css';
  * The three tiles. `figure` is null until there is a day's books; `typed` false until a balance is typed. `saved`: a saved
  * check's own band, opened (tab 5): The bank said · Should have been · Result, past tense, the direction its only caption.
  */
-export function BankBand({ date, figure, typed, saved = false }: {
+export function BankBand({ date, figure, typed, saved = false, startedOn }: {
   date: string; figure: CheckFigure | null; typed: boolean; saved?: boolean;
+  /** The day checking started (S1b row 9): the middle tile's caption names where the figure starts. */
+  startedOn?: string;
 }) {
   // On a phone the band is two-up (the shipped band's own ≤760 rule): the middle tile takes the phone's shorter word.
   const isPhone = useIsPhone();
   // The tiles are the shared, look-free reading of the engine's figure (lib/bank-screen.ts, BC7a: the coach's view too).
-  const { tiles, ariaLabel } = bankBandTiles({ date, figure, typed, saved, isPhone });
+  const shouldCaption = startedOn ? W.bandShouldCaption(dayYear(startedOn)) : undefined;
+  const { tiles, ariaLabel } = bankBandTiles({ date, figure, typed, saved, isPhone, shouldCaption });
   return (
     <div className={s.bandWrap} aria-live={saved ? undefined : 'polite'}>
       <MoneySummaryBand ariaLabel={ariaLabel} tiles={tiles} />
