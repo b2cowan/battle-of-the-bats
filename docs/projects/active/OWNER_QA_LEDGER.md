@@ -28095,4 +28095,5 @@ performed over the shared working tree. The original walk result is not claimed 
 **Proved before publishing:** one visible `<h1>` on every Phase 3 screen at 1440×760 and 390, the header's; pinned 48px at 1440 (unchanged), 51px or 53–54px at 390 (a record's second line); refusals keep the org's name; A10's four org screens name the organization and Event settings / Teams name the event; throttled first loads go placeholder → name with no org-name flash; the coaches portal's strip and tab row and the phone bar on every untouched screen node-for-node identical to Phase 2D's snapshot; `check:layout` on the 11 screens at 1440 and 390: no new findings (three at 390 re-key old ones whose text changed).
 
 **Calls the walk asks the owner (F):** F1 "Read-only archive" alone on a row on one past season; F2 the Calendar's phone View button keeps its shipped hairline border (round 3 drew it borderless).
+**Committed:** `4959122d2` 2026-11-09 (the Phase 3 build, simplified and reviewed).
 <!-- /§499 -->

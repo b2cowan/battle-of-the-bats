@@ -499,7 +499,7 @@ Round 4 (accepted with D1–D5, 2026-11-08; found by the round 4 /design pass):
 > renderings). Record pages put their name and back link in the strip on desktop; their buttons sit at the top right
 > of the page (A8). Nothing in Phase 3 adds a desktop small line.
 
-> **Built 2026-11-09** (one session, after round 5 was ruled the same night). Not committed; walk owed.
+> **Built 2026-11-09** (one session, after round 5 was ruled the same night). Committed `4959122d2` 2026-11-09; owner walk §499 owed.
 
 - [x] **The mechanism** (`lib/admin-kit-nav.ts`): `clubPlaceAt` names Phase 3's screens. A NAMED SCREEN (`namedScreen`: a
       title, no tabs) for Calendar, Schedules, Notifications, House league's Seasons (`facts: ['House league']`), the Public
@@ -592,8 +592,8 @@ Round 4 (accepted with D1–D5, 2026-11-08; found by the round 4 /design pass):
       way); (f) `clubPlaceAt` matches exact paths, so a trailing slash would name no place (Next serves none; `next.config`
       has no `trailingSlash`); (g) `MembersKit` no longer opens the invite window from `?invite=open` (the setup checklist's
       copy now sends people to read "What each role can open" first; another session's change, noted here)
-- [ ] Commit on the owner's yes (partial: the Calendar page, `TODO.md`, the ledger, the plan and `org.tsx` carry other
-      sessions' hunks)
+- [x] **Committed `4959122d2` 2026-11-09** (the owner said yes; 33 files, built in a private index: the plan, `TODO.md`, the
+      ledger, `design_decisions.md`, `org.tsx` and the Calendar page carry only this session's hunks)
 
 ### Phase 4 — Words, help, demos, verify
 
