@@ -16,7 +16,12 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
  * `replace`, never `push`: opening and closing a room must not stack history entries, and every
  * other param (`section`, `year`, a sibling lens) is preserved — the dues panel's own writer.
  */
-export function useRoomAddress(key: string): [string | null, (id: string | null) => void] {
+export function useRoomAddress(
+  key: string,
+  /** Keys a SET also removes (a lens that supersedes them: the Ledger's `view` press drops `filter` and `scheduled`, which would
+   *  force the timeline again on a reload). Pass a module constant so the callback stays stable. */
+  alsoClear?: readonly string[],
+): [string | null, (id: string | null) => void] {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -25,10 +30,11 @@ export function useRoomAddress(key: string): [string | null, (id: string | null)
     (id: string | null) => {
       const next = new URLSearchParams(searchParams.toString());
       if (id === null) next.delete(key); else next.set(key, id);
+      for (const k of alsoClear ?? []) next.delete(k);
       const qs = next.toString();
       router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
     },
-    [searchParams, router, pathname, key],
+    [searchParams, router, pathname, key, alsoClear],
   );
   return [value, set];
 }

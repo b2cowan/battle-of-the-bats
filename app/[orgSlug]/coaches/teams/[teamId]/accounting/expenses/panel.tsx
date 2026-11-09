@@ -369,6 +369,7 @@ const LEDGER_VIEW_LABEL: Record<LedgerView, string> = {
 /** The view is REMEMBERED per team on this device (fold decision 3, owner 2026-08-28) — exactly
  *  the Date preset's storage pattern: a treasurer-ish coach who lives in By bill lands there next
  *  visit, which is most of the answer to retiring the dedicated Payables tab. */
+const VIEW_PRESS_DROPS = ['filter', 'scheduled'] as const;
 const ledgerViewStorageKey = (teamId: string) => `flhq-coach-ledger-view:${teamId}`;
 function isLedgerView(v: string | null): v is LedgerView {
   return v === 'timeline' || v === 'bills' || v === 'due' || v === 'bank';
@@ -2738,6 +2739,10 @@ function MoneyRecordsPanel({
    * panel is ever mounted again, that hazard comes straight back — re-read Part B (2026-08-26).
    */
   const [focusBillId, setFocusBillId] = useRoomAddress('bill');
+  // The View pill's writer (`?view=`): the READ is `wantedView` below, so only the setter is used here.
+  // A view press also drops `?filter=` / `?scheduled=`: they name register controls and force the timeline on a reload
+  // (the effects below), so an address that kept them would name a view the screen does not show (/review S2).
+  const [, setViewInAddress] = useRoomAddress('view', VIEW_PRESS_DROPS);
   const drawerFor = focusBillId;
   const page = useCoachSeasonPage(orgSlug, teamId);
   const assignment = assignments.find(a => a.teamId === teamId);
@@ -7122,7 +7127,14 @@ function MoneyRecordsPanel({
       lead
       value={view}
       options={(['timeline', 'bills', 'due', 'bank'] as const).map(id => ({ id, label: LEDGER_VIEW_LABEL[id] }))}
-      onChange={next => setView(next as LedgerView)}
+      onChange={next => {
+        setView(next as LedgerView);
+        /* ⚖ THE CHOSEN VIEW RIDES THE ADDRESS (bank check S2, ask A16): reload it or share the link and you land on it.
+           Written from the PRESS only, and only while the Ledger is the tab on screen — this panel stays mounted when
+           hidden, and the effects above set the view themselves (the filter / scheduled links force the timeline), so a
+           write from a state change would loop. `view` is already read above; this is its one writer. */
+        if (tabActive && isLedgerView(next)) setViewInAddress(next);
+      }}
     />
   );
 

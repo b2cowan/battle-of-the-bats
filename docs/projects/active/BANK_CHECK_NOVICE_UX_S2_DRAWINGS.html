@@ -1,0 +1,301 @@
+<title>Bank Check Door Drawings</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: sticky tabs, a View row (device + Everything / Show only what differs), one specimen at true size, a note bar for the clicked tag. */
+:root {
+  --bg: #F6F3EC; --card: #FFFFFF; --fg: #241E15; --fg-soft: #4A4235; --muted: #615A54; --line: rgba(70,55,30,.14);
+  --accent: #57651E; --accent-soft: rgba(87,101,30,.12); --lime: #D9F285; --lime-ink: #2A3310;
+  --new: #1F5FBF; --new-bg: #E8F0FC; --restyled: #6B4105; --restyled-bg: #FBF1E1; --unchanged: #615A54; --unchanged-bg: #EEEAE2;
+  --stage: #E4DFD2;
+  --sans: 'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif; --mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
+  /* the portal's own values */
+  --p-paper: #F8F4ED; --p-card: #FFFFFF; --p-ink: #241E15; --p-ink-soft: #4A4235; --p-dim: #615A54; --p-faint: #615A54; --p-line: rgba(70,55,30,.12);
+  --p-olive: #57651E; --p-lime: #D9F285; --p-amber-ink: #6B4105; --p-amber-bg: #FBF4E8; --p-amber-line: #C99A3C; --p-good: #2F6B2F; --p-danger: #B33B23;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #1B1915; --card: #26231E; --fg: #EDE7DA; --fg-soft: #CFC7B8; --muted: #A49C8F; --line: rgba(255,255,255,.12);
+  --accent: #B5C45A; --accent-soft: rgba(181,196,90,.16); --lime: #B5C45A; --lime-ink: #1B1915;
+  --new: #8DB4F5; --new-bg: rgba(141,180,245,.16); --restyled: #E0B45B; --restyled-bg: rgba(224,180,91,.16); --unchanged: #A49C8F; --unchanged-bg: rgba(164,156,143,.18);
+  --stage: #11100D; color-scheme: dark;
+} }
+:root[data-theme="dark"] {
+  --bg: #1B1915; --card: #26231E; --fg: #EDE7DA; --fg-soft: #CFC7B8; --muted: #A49C8F; --line: rgba(255,255,255,.12);
+  --accent: #B5C45A; --accent-soft: rgba(181,196,90,.16); --lime: #B5C45A; --lime-ink: #1B1915;
+  --new: #8DB4F5; --new-bg: rgba(141,180,245,.16); --restyled: #E0B45B; --restyled-bg: rgba(224,180,91,.16); --unchanged: #A49C8F; --unchanged-bg: rgba(164,156,143,.18);
+  --stage: #11100D; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 15px; line-height: 1.5; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 20; background: var(--bg); }
+.wrap { max-width: 1240px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 48px; }
+h1, h2, h3 { text-wrap: balance; margin: 0; }
+h1 { font-size: 24px; font-weight: 700; letter-spacing: -.01em; padding-top: 20px; }
+.sub { color: var(--muted); margin: 4px 0 14px; max-width: 78ch; }
+.sticky { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 15; background: var(--bg); border-bottom: 1px solid var(--line); padding-top: 4px; }
+.tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+.tab { font: 600 14px var(--sans); color: var(--muted); background: none; border: 0; border-bottom: 3px solid transparent; padding: 10px 12px; cursor: pointer; min-height: 44px; }
+.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); }
+.tab:focus-visible, .seg button:focus-visible, .tag:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.viewrow { display: flex; gap: 18px; flex-wrap: wrap; align-items: center; padding: 8px 0; }
+.viewrow label { font: 700 11px var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin-right: 6px; }
+.seg { display: inline-flex; background: #fff; border: 1px solid rgba(70,55,30,.14); border-radius: 10px; padding: 3px; gap: 2px; }
+.seg button { font: 600 13px var(--sans); border: 0; background: none; color: #4A4235; padding: 6px 12px; border-radius: 7px; cursor: pointer; min-height: 32px; }
+.seg button[aria-pressed="true"] { background: rgba(87,101,30,.16); color: #2A3310; }
+.notebar { min-height: 44px; font-size: 13.5px; color: var(--fg-soft); padding: 6px 0 8px; }
+.notebar b { font-family: var(--mono); font-size: 11.5px; }
+section.panel[hidden] { display: none; }
+.lead { max-width: 80ch; color: var(--fg-soft); margin: 16px 0 6px; }
+.cap { font: 700 11px var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 22px 0 8px; }
+.scroller { overflow-x: auto; background: var(--stage); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+.legend { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0 0; font-size: 13px; color: var(--muted); align-items: center; }
+.tag { display: inline-block; font: 700 10.5px var(--mono); letter-spacing: .04em; padding: 2px 6px; border-radius: 4px; border: 1px solid; cursor: pointer; line-height: 1.4; background: none; vertical-align: middle; }
+.tag.new { color: var(--new); background: var(--new-bg); border-color: var(--new); }
+.tag.restyled { color: var(--restyled); background: var(--restyled-bg); border-color: var(--restyled); }
+.tag.unchanged { color: var(--unchanged); background: var(--unchanged-bg); border-color: var(--unchanged); }
+.mark { outline: 2px dashed var(--new); outline-offset: 3px; border-radius: 4px; }
+.mark.r { outline-color: var(--restyled); }
+body.differs .is-same { opacity: .22; }
+
+/* ── a portal frame (true size) ── */
+.frame { position: relative; background: var(--p-paper); color: var(--p-ink); border: 1px solid var(--p-line); font-size: 14px; line-height: 1.45; }
+.frame.d { width: 1440px; display: grid; grid-template-columns: 232px 1fr; }
+.frame.m { width: 390px; }
+.side { background: #EFE9DC; border-right: 1px solid var(--p-line); padding: 18px 14px; display: flex; flex-direction: column; gap: 6px; font-size: 14px; color: var(--p-dim); }
+.side b { color: var(--p-ink); padding: 8px 10px; background: rgba(87,101,30,.12); border-radius: 8px; font-weight: 600; }
+.side span { padding: 8px 10px; }
+.main { padding: 24px 32px 32px; min-width: 0; }
+.m .main { padding: 14px 16px 20px; }
+.topbar { height: 52px; background: #EFE9DC; border-bottom: 1px solid var(--p-line); display: flex; align-items: center; padding: 0 16px; font-weight: 600; justify-content: space-between; }
+.pg-h { font-size: 24px; font-weight: 700; margin: 0 0 4px; }
+.pg-s { color: var(--p-dim); margin: 0 0 14px; }
+.hubtabs { display: flex; gap: 2px; border-bottom: 1px solid var(--p-line); margin-bottom: 18px; overflow: hidden; }
+.hubtabs span { padding: 10px 14px; font-size: 14px; color: var(--p-dim); white-space: nowrap; }
+.hubtabs span.on { color: var(--p-ink); font-weight: 600; border-bottom: 2px solid var(--p-olive); }
+.m .hubtabs { margin-bottom: 14px; }
+.m .hubtabs span { padding: 10px 11px; }
+.card { background: var(--p-card); border: 1px solid var(--p-line); border-radius: 12px; padding: 18px 20px; box-shadow: 0 1px 2px rgba(36,30,21,.04); }
+.m .card { padding: 14px 16px; }
+.card.accent { border-left: 3px solid var(--p-olive); }
+.eyebrow { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; font-weight: 700; color: var(--p-dim); margin: 0 0 4px; }
+.headline { font-size: 20px; font-weight: 600; margin: 0 0 6px; }
+.meta { margin: 0 0 12px; color: var(--p-dim); max-width: 78ch; }
+.btn { display: inline-flex; align-items: center; height: 34px; padding: 0 14px; border-radius: 8px; font-weight: 600; font-size: 14px; background: var(--p-lime); color: #2A3310; }
+.m .btn { height: 44px; }
+.sec { color: var(--p-olive); font-size: 14px; margin-left: 14px; }
+.tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 16px 0; }
+.m .tiles { grid-template-columns: 1fr 1fr; gap: 8px; }
+.tile { background: var(--p-card); border: 1px solid var(--p-line); border-radius: 10px; padding: 12px 14px; }
+.tile i { display: block; font-style: normal; font-size: 12px; color: var(--p-dim); }
+.tile b { font-size: 20px; }
+
+/* the line, copied from the shipped .overviewMark / .overviewDoor (CoachBank.module.css): support size, secondary ink, 0.5rem above */
+.ln { display: flex; align-items: center; gap: .5rem; margin-top: .5rem; min-width: 0; }
+.ln .door { display: inline-flex; align-items: center; column-gap: .25rem; font-size: 12px; color: #4A4235; text-decoration: none; }
+.ln .door b { color: var(--p-ink); font-weight: 600; }
+.ln .door svg { color: #615A54; flex-shrink: 0; }
+.m .ln .door { min-height: 44px; }
+.ln-wrap { margin: 12px 0 14px; }
+.ln-wrap.stacked .ln { margin-top: 0; }
+.quiet { font-size: 12px; color: var(--p-faint); margin: -2px 0 0; padding-left: 0; }
+.m .quiet { margin-top: -10px; }
+.chip { display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 999px; font-size: 11.5px; font-weight: 600; background: var(--p-amber-bg); color: var(--p-amber-ink); border: 1px solid var(--p-amber-line); }
+
+.rail { display: grid; grid-template-columns: 1fr 1fr; gap: 0 28px; }
+.m .rail { grid-template-columns: 1fr; }
+.rg { break-inside: avoid; margin-bottom: 10px; }
+.rl { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; font-weight: 700; color: var(--p-dim); padding: 6px 0; border-bottom: 1px solid var(--p-line); }
+.rr { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--p-line); font-size: 14px; }
+.m .rr { min-height: 44px; align-items: center; }
+.rr span:last-child { color: var(--p-dim); }
+
+/* club heading row, from the shipped .overviewHead / .overviewMarks */
+.ovh { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 16px; }
+.ovh h3 { font-size: 20px; font-weight: 600; margin: 0 0 7px; color: var(--p-ink); }
+.ovh h3 small { font-size: 14px; font-weight: 400; color: var(--p-dim); }
+.ovm { display: flex; flex-direction: column; align-items: flex-end; margin: 0 0 7px auto; min-width: 0; }
+.m .ovm { margin-left: 0; width: 100%; align-items: stretch; }
+.ovm .quiet { margin: 0; text-align: right; }
+.m .ovm .quiet { text-align: left; margin-top: -10px; }
+.ovm .ln { margin-top: 0; justify-content: flex-end; }
+.m .ovm .ln { justify-content: flex-start; }
+.cash { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--p-line); border: 1px solid var(--p-line); border-radius: 10px; overflow: hidden; }
+.m .cash { grid-template-columns: 1fr 1fr; }
+.cash div { background: var(--p-card); padding: 12px 16px; }
+.cash i { display: block; font-style: normal; font-size: 12px; color: var(--p-dim); }
+.cash b { font-size: 20px; }
+.state { margin-bottom: 18px; }
+.state > .tag { margin-bottom: 6px; }
+.pair { display: flex; gap: 22px; flex-wrap: wrap; align-items: flex-start; }
+.ask { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; margin: 14px 0; max-width: 84ch; }
+.ask h3 { font-size: 16px; margin-bottom: 6px; }
+.ask ul { margin: 6px 0 0; padding-left: 20px; }
+.ask li { margin: 3px 0; }
+.ask li.rec { font-weight: 600; }
+.small { font-size: 13.5px; color: var(--muted); max-width: 80ch; }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<div class="wrap">
+  <h1>Bank Check Door Drawings</h1>
+  <p class="sub">Stage S2 of the volunteer's-eyes project. The Overview line becomes an invitation until the first check, in every season stage, in both portals. Frames are drawn at true size (1440 and 390). The line itself uses the shipped line's real type and spacing; the cards around it are outlines of the Money Overview, not captures.</p>
+
+  <div class="sticky">
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" aria-selected="true" data-tab="coach">1 · Coach · Plan and Collect</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="club">2 · Club · three states</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="asks">3 · Asks</button>
+    </div>
+    <div class="viewrow">
+      <span><label>Device</label><span class="seg" id="dev"><button type="button" aria-pressed="true" data-dev="d">Desktop 1440</button><button type="button" aria-pressed="false" data-dev="m">Phone 390</button></span></span>
+      <span><label>View</label><span class="seg" id="vw"><button type="button" aria-pressed="true" data-vw="all">Everything</button><button type="button" aria-pressed="false" data-vw="diff">Show only what differs</button></span></span>
+    </div>
+    <div class="notebar" id="notebar" aria-live="polite">Click any <span class="tag new">NEW</span> <span class="tag restyled">RESTYLED</span> <span class="tag unchanged">UNCHANGED</span> tag to read what it means.</div>
+  </div>
+
+  <!-- ============ 1 · COACH ============ -->
+  <section class="panel" id="p-coach">
+    <p class="lead">Today a coach in Plan or Collect sees no bank line at all: it exists only once the season is in Operate, inside the Cash on hand card. Setup has no Cash card, so the line sits on its own, directly above the rail, below the tiles and the payables panel.</p>
+
+    <div class="cap">Plan stage · nothing recorded yet · never checked</div>
+    <div class="scroller" data-dev="d"><div class="frame d">
+      <div class="side"><b>Money</b><span>Overview</span><span>Roster</span><span>Schedule</span><span>Settings</span></div>
+      <div class="main">
+        <h2 class="pg-h">Money</h2><p class="pg-s">2026 season</p>
+        <div class="hubtabs"><span class="on">Overview</span><span>Budget</span><span>Dues</span><span>Fundraising</span><span>Ledger</span><span>Budget vs. Actual</span></div>
+        <div class="is-same"><div class="card accent"><p class="eyebrow">Money · Getting started</p><p class="headline">Start with your season budget</p><p class="meta">Estimate the season's costs, turn them into player dues in one click, then track every dollar against the plan.</p><span class="btn">Build your budget →</span><span class="sec">Skip — set dues directly →</span></div></div>
+        <div class="ln-wrap"><div class="mark"><div class="ln"><a class="door">Check your bank balance <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></a> <button class="tag new" type="button" data-note="NEW · S2 · A3. Plan and Collect gain the bank line. Before the first check it is an invitation, 12px like the Operate line, with one quiet line saying what the check is for. It opens Ledger → View: Bank, as the Operate line does. A read that fails draws nothing.">NEW</button></div><p class="quiet">Type what the bank shows to see if you're in step.</p></div></div>
+        <div class="is-same"><div class="rail">
+          <div class="rg"><div class="rl">Plan</div><div class="rr"><span>Budget</span><span>Not started</span></div></div>
+          <div class="rg"><div class="rl">Collect</div><div class="rr"><span>Player dues</span><span>Not set</span></div><div class="rr"><span>Fundraisers</span><span>None yet · start one</span></div></div>
+          <div class="rg"><div class="rl">Spend</div><div class="rr"><span>Payables</span><span>Nothing due</span></div><div class="rr"><span>Ledger</span><span>$0.00 on hand</span></div></div>
+          <div class="rg"><div class="rl">Review</div><div class="rr"><span>Budget vs. Actual</span><span>—</span></div></div>
+        </div></div>
+        <div class="legend"><button class="tag unchanged" type="button" data-note="UNCHANGED · The anchor card and the rail are as they ship today.">UNCHANGED</button> anchor card and rail</div>
+      </div>
+    </div></div>
+
+    <div class="scroller" data-dev="m" hidden><div class="frame m">
+      <div class="topbar"><span>Money</span><span>☰</span></div>
+      <div class="main">
+        <div class="hubtabs"><span class="on">Overview</span><span>Budget</span><span>Dues</span><span>Ledger</span></div>
+        <div class="is-same"><div class="card accent"><p class="eyebrow">Money · Getting started</p><p class="headline">Start with your season budget</p><span class="btn">Build your budget →</span></div></div>
+        <div class="ln-wrap"><div class="mark"><div class="ln"><a class="door">Check your bank balance <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></a> <button class="tag new" type="button" data-note="NEW · S2 · A3. The same line on a phone: a 44px tap row, then the quiet line. The wide-screen paragraph in the anchor card is already trimmed on a phone, so the lime button stays above the fold.">NEW</button></div><p class="quiet">Type what the bank shows to see if you're in step.</p></div></div>
+        <div class="is-same"><div class="rail">
+          <div class="rg"><div class="rl">Plan</div><div class="rr"><span>Budget</span><span>Not started</span></div></div>
+          <div class="rg"><div class="rl">Collect</div><div class="rr"><span>Player dues</span><span>Not set</span></div></div>
+        </div></div>
+      </div>
+    </div></div>
+
+    <div class="cap">Collect stage · cash has moved · the tiles are back, the line stays above the rail</div>
+    <div class="scroller"><div class="frame d">
+      <div class="side"><b>Money</b><span>Overview</span><span>Roster</span><span>Schedule</span><span>Settings</span></div>
+      <div class="main">
+        <h2 class="pg-h">Money</h2><p class="pg-s">2026 season</p>
+        <div class="hubtabs"><span class="on">Overview</span><span>Budget</span><span>Dues</span><span>Fundraising</span><span>Ledger</span><span>Budget vs. Actual</span></div>
+        <div class="is-same"><div class="card accent"><p class="eyebrow">Budget ready</p><p class="headline">Turn your plan into player dues</p><p class="meta">$6,000.00 across 14 players ≈ $428.57 each. Generate every player's installment schedule in one click.</p><span class="btn">Set dues for all players →</span><span class="sec">Set dues manually →</span></div>
+        <div class="tiles"><div class="tile"><i>Money In</i><b>$1,200.00</b></div><div class="tile"><i>Money Out</i><b>$340.00</b></div><div class="tile"><i>On Hand</i><b>$860.00</b></div><div class="tile"><i>Budget Headroom</i><b>$5,660.00</b></div></div></div>
+        <div class="ln-wrap"><div class="mark"><div class="ln"><a class="door">Check your bank balance <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></a> <button class="tag new" type="button" data-note="NEW · S2 · A3. Same line, same place. Cash on hand is on screen here, so the invitation sits right under the figure it checks.">NEW</button></div><p class="quiet">Type what the bank shows to see if you're in step.</p></div></div>
+        <div class="is-same"><div class="rail"><div class="rg"><div class="rl">Plan</div><div class="rr"><span>Budget</span><span><b>$6,000.00</b> set</span></div></div><div class="rg"><div class="rl">Collect</div><div class="rr"><span>Player dues</span><span>Not set</span></div></div></div></div>
+      </div>
+    </div></div>
+
+    <div class="cap">After the first check · the line the team already has in Operate</div>
+    <div class="scroller"><div class="frame m" style="width:390px">
+      <div class="main" style="display:grid;gap:6px">
+        <div class="ln-wrap" style="margin:0"><div class="ln"><a class="door">Bank: checked through <b>Nov 8, 2026</b> <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></a><span class="chip">Off by $12.50</span> <button class="tag unchanged" type="button" data-note="UNCHANGED · Once a check exists the line reads exactly as in Operate today, with the amber chip (a door to that check) when it is off. The quiet second line goes away.">UNCHANGED</button></div></div>
+      </div>
+    </div></div>
+  </section>
+
+  <!-- ============ 2 · CLUB ============ -->
+  <section class="panel" id="p-club" hidden>
+    <p class="lead">The club line is one line, right of "Where the club stands" (ruled 2026-11-09). The invitation replaces only the not-checked states. Several accounts with some unchecked keeps its count, because "1 of 3 not checked yet" names something an invitation would hide. Checked states are unchanged.</p>
+
+    <div class="state"><div class="cap">A · One account, never checked</div>
+      <div class="scroller" data-dev="d"><div class="frame d"><div class="side"><b>Accounting</b><span>Overview</span><span>Budget</span><span>Bank</span></div><div class="main">
+        <div class="ovh"><h3>Where the club stands <small>· today</small></h3>
+          <div class="ovm"><div class="mark r"><div class="ln"><a class="door">Check your bank balance <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></a> <button class="tag restyled" type="button" data-note="RESTYLED · S2 · A3. Was “Bank: Operating · not checked yet ›”. The same words as the coach's line (one spelling for one state). It opens the Bank tab on that account, so the account's name is one tap away. The dashed box is the whole tap: both lines are one door.">RESTYLED</button></div><p class="quiet">Type what the bank shows to see if you're in step.</p></div></div></div>
+        <div class="is-same"><div class="cash"><div><i>Cash on hand</i><b>$18,420.00</b></div><div><i>Owed to you</i><b>$3,150.00</b></div><div><i>You owe</i><b>$940.00</b></div><div><i>Net</i><b>$20,630.00</b></div></div></div>
+      </div></div></div>
+      <div class="scroller" data-dev="m" hidden><div class="frame m"><div class="main">
+        <div class="ovh"><h3>Where the club stands <small>· today</small></h3>
+          <div class="ovm"><div class="mark r"><div class="ln"><a class="door">Check your bank balance <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></a> <button class="tag restyled" type="button" data-note="RESTYLED · S2 · A3. On a phone the line drops under the heading as a 44px row, with the quiet line under it.">RESTYLED</button></div><p class="quiet">Type what the bank shows to see if you're in step.</p></div></div></div>
+        <div class="is-same"><div class="cash"><div><i>Cash on hand</i><b>$18,420.00</b></div><div><i>Owed to you</i><b>$3,150.00</b></div></div></div>
+      </div></div></div>
+    </div>
+
+    <div class="state"><div class="cap">B · Several accounts, some never checked (keeps its count)</div>
+      <div class="scroller" data-dev="d"><div class="frame d"><div class="side"><b>Accounting</b><span>Overview</span><span>Budget</span><span>Bank</span></div><div class="main">
+        <div class="ovh"><h3>Where the club stands <small>· today</small></h3>
+          <div class="ovm"><div class="is-same"><div class="ln"><a class="door">Bank: <b>1 of 3 not checked yet</b> <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></a> <button class="tag unchanged" type="button" data-note="UNCHANGED · Ruled in the one-line decision. An invitation would hide how many accounts still need a first check. It opens the first unchecked account.">UNCHANGED</button></div></div></div></div>
+      </div></div></div>
+      <div class="scroller" data-dev="m" hidden><div class="frame m"><div class="main">
+        <div class="ovh"><h3>Where the club stands <small>· today</small></h3>
+          <div class="ovm"><div class="ln"><a class="door">Bank: <b>1 of 3 not checked yet</b> <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></a> <button class="tag unchanged" type="button" data-note="UNCHANGED · Same line on a phone.">UNCHANGED</button></div></div></div>
+      </div></div></div>
+    </div>
+
+    <div class="state"><div class="cap">C · No account yet (a writer only; a reader sees nothing)</div>
+      <div class="scroller" data-dev="d"><div class="frame d"><div class="side"><b>Accounting</b><span>Overview</span><span>Budget</span><span>Bank</span></div><div class="main">
+        <div class="ovh"><h3>Where the club stands <small>· today</small></h3>
+          <div class="ovm"><div class="mark r"><div class="ln"><a class="door">Check your bank balance <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></a> <button class="tag restyled" type="button" data-note="RESTYLED · S2 · A3. Was “Bank: not checked yet ›”. It opens the Bank tab's first-check card, where the treasurer adds the account.">RESTYLED</button></div><p class="quiet">Type what the bank shows to see if you're in step.</p></div></div></div>
+      </div></div></div>
+      <div class="scroller" data-dev="m" hidden><div class="frame m"><div class="main">
+        <div class="ovh"><h3>Where the club stands <small>· today</small></h3>
+          <div class="ovm"><div class="mark r"><div class="ln"><a class="door">Check your bank balance <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></a> <button class="tag restyled" type="button" data-note="RESTYLED · S2 · A3. Same on a phone.">RESTYLED</button></div><p class="quiet">Type what the bank shows to see if you're in step.</p></div></div></div>
+      </div></div></div>
+    </div>
+
+    <p class="small">After a check, every state reads as it does today: "Bank: Operating checked through Nov 8, 2026 ›", "Bank: oldest check Nov 5, 2026 ›", and the amber chip when a check is off.</p>
+  </section>
+
+  <!-- ============ 3 · ASKS ============ -->
+  <section class="panel" id="p-asks" hidden>
+    <p class="lead">Three calls were ruled before drawing (invitation replaces only the not-checked states; option A, one line, stays; the coach's setup line goes above the rail). One question comes out of drawing it.</p>
+    <div class="ask"><h3>1 · Does the club's invitation carry its quiet second line?</h3>
+      <p class="small">The one-line ruling exists so the heading row never grows. The quiet line makes the unchecked state about 18px taller on a desktop, and one 44px row plus the quiet line on a phone. It goes away at the first check, and the tiles are the only thing it moves.</p>
+      <ul><li class="rec">A · Yes, as drawn. Same words as the coach's line, and the second line is what tells a volunteer what the check is for.</li><li>B · No. The club shows "Check your bank balance ›" alone, so the heading row never grows. The purpose line stays on the coach's side and on the Bank tab's own card.</li></ul></div>
+    <div class="ask"><h3>2 · Anything else on the coach's setup Overview?</h3>
+      <p class="small">Plan and Collect show the line directly above the rail and below the tiles and the payables panel. If you would rather have it directly under the anchor card, say so and I will redraw that one frame.</p></div>
+    <div class="ask"><h3>Build notes from the design review</h3>
+      <ul>
+        <li>The quiet line is part of the door: one tap target covers both lines (44px floor on a phone). In the frames the dashed box is that target.</li>
+        <li>The quiet line and the chevron use the portal's tertiary text colour, which reads at about 6:1 on white.</li>
+        <li>While the bank read is out, the row holds the loaded invitation's full height on a phone, so the page below does not jump when it lands. A failed read still draws nothing.</li>
+        <li>On the coach's setup Overview the line has a small gap above and below (about 12px), its left edge on the card edge, no box of its own.</li>
+      </ul></div>
+    <div class="ask"><h3>Not drawn, and why</h3>
+      <p class="small">The "How the bank check works" link on the Bank view's head line was drawn in the evaluation page (words row 20) and ruled with it. The coach's View pill and the club's Account pill remembering their choice in the address change no pixels.</p></div>
+  </section>
+</div>
+
+<script>
+(function () {
+  var dev = 'd', vw = 'all';
+  function show() {
+    document.querySelectorAll('.scroller[data-dev]').forEach(function (s) { s.hidden = s.getAttribute('data-dev') !== dev; });
+    document.body.classList.toggle('differs', vw === 'diff');
+    document.querySelectorAll('#dev button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-dev') === dev)); });
+    document.querySelectorAll('#vw button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-vw') === vw)); });
+  }
+  document.querySelectorAll('#dev button').forEach(function (b) { b.addEventListener('click', function () { dev = b.getAttribute('data-dev'); show(); }); });
+  document.querySelectorAll('#vw button').forEach(function (b) { b.addEventListener('click', function () { vw = b.getAttribute('data-vw'); show(); }); });
+  document.querySelectorAll('.tab').forEach(function (t) {
+    t.addEventListener('click', function () {
+      document.querySelectorAll('.tab').forEach(function (x) { x.setAttribute('aria-selected', String(x === t)); });
+      ['coach', 'club', 'asks'].forEach(function (k) { document.getElementById('p-' + k).hidden = (t.getAttribute('data-tab') !== k); });
+    });
+  });
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest && e.target.closest('.tag[data-note]');
+    if (!t) return;
+    var n = t.getAttribute('data-note'), i = n.indexOf(' · ');
+    var bar = document.getElementById('notebar');
+    bar.textContent = '';
+    var b = document.createElement('b'); b.textContent = n.slice(0, i); bar.appendChild(b);
+    bar.appendChild(document.createTextNode(n.slice(i)));
+  });
+  show();
+})();
+</script>

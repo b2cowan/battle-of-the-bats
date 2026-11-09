@@ -15,6 +15,7 @@
  * ON A PHONE: the list is the kit's white row cards, each a button that opens the check.
  */
 import type { ReactNode } from 'react';
+import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { ClubRow, ClubRowList, RepChip, repKit } from '../../RepKit';
@@ -24,8 +25,10 @@ import { cents, dayYear, type AccountView, type SavedCheckView } from './BankSha
 import { checkingStartsOn } from '@/lib/bank-check';
 import s from './Bank.module.css';
 
-export default function BankStatements({ view, accountLine, tools, form, onOpen }: {
+export default function BankStatements({ view, accountLine, tools, helpHref, form, onOpen }: {
   view: AccountView;
+  /** The bank guide (bank check S2, row 20): "How the bank check works", a quiet link at the line's end, for every role. */
+  helpHref?: string;
   /** The check form, above the saved checks (ask 10): a writer's only. */
   form?: ReactNode;
   /** The account's own control in its line (the Account pill, at a second account); its name in bold otherwise. */
@@ -58,6 +61,7 @@ export default function BankStatements({ view, accountLine, tools, form, onOpen 
             </span>
           ) : <span>{W.notCheckedLead}</span>}
           {tools}
+          {helpHref && <Link href={helpHref} className={s.link}>{W.helpLink}</Link>}
         </div>
       </div>
 

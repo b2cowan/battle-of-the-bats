@@ -237,6 +237,14 @@ export const BANK_WORDS = {
   overviewThrough: 'checked through',
   overviewNotChecked: '· not checked yet',
   overviewNoAccount: 'not checked yet',
+  // Bank check novice UX S2 (A3, words row 2): until the first check the Overview line INVITES, in both portals (one spelling
+  // for one state, BC8b), and the quiet line under it says what the check is for. After the first check, the line above.
+  // Only for someone who can check: a reader keeps "Bank: not checked yet ›". Several accounts, some never checked, keep
+  // their count ("1 of 3 not checked yet"): an invitation would hide it.
+  inviteLead: 'Check your bank balance',
+  inviteNote: 'Type what the bank shows to see if you’re in step.',
+  // Row 20 (S2): a quiet link at the end of the Bank view's head line, both portals, opening the bank help article.
+  helpLink: 'How the bank check works',
   booksNowSay: (amount: string) => `Books now say ${amount}`,
   // Row 13 (A1b): the list drops "statement"; "Balance checks", not a bare "Checks" (it would read as cheques: A2's reason).
   listTitle: 'Balance checks',

@@ -28104,3 +28104,12 @@ performed over the shared working tree. The original walk result is not claimed 
 **Sign-in:** the UAT Rep Club owner and treasurer (`uat-club-*@uat-rep-club.local`), the tournament organization owner (`uat-owner@uat-test-org.local`).
 **Result:** owed.
 <!-- /§501 -->
+
+## §503 · Bank check through a volunteer's eyes · S2, the door — **a coach still planning is invited to check the bank (Plan stage, desk and phone), a team that has checked keeps its line and the Ledger's View choice now survives a reload and a shared link, a club with no account meets the same invitation, and a club with two accounts keeps the chosen account in the address; the new "How the bank check works" help link in both portals**
+<!-- §503 -->
+**Walk published 2026-11-09:** https://claude.ai/artifact/VQpZjGgcVWvw3s7AwKXfX4 (source `docs/projects/active/BANK_CHECK_S2_WALK.html`); 4 parts, 23 steps, nothing saved or deleted. Build: bank check novice UX S2, built to the approved drawings https://claude.ai/artifact/RUxWEgRgc8fLvAuLZeJF8e (plan `BANK_CHECK_NOVICE_UX_PLAN.md` §2 S2, §4).
+**Sign-in:** the 15U AAA coach (`uat-club-coach-15aaa@uat-rep-club.local`), the UAT Test Team coach (`uat-coach@uat-test-org.local`), the UAT Club Org admin (`uat-admin@uat-test-org.local`), the UAT Rep Club treasurer (`uat-club-treasurer@uat-rep-club.local`); all `UATPassword2026!`.
+**Calls in the walk:** whether the coach's invitation is noticed where it sits (above the list of Money pages, below the tiles and the Upcoming bills panel, which on 15U AAA puts it well below the first screen); whether the club's second line is worth the row growing a line until the first check (drawing ask 1, built as A, the second line kept).
+**Not walked (proved by tests and my own pass on temporary accounts, since removed):** a club with exactly one never-checked account; several accounts with some never checked ("1 of 3 not checked yet" keeps its count); a read-only coach keeps "Bank: not checked yet ›"; a made-up account in the address; a check opened from a door once; adding an account from the pill leaves the address on the new one.
+**Result:** owed. No fixture to tear down (every team and club in the walk already exists on dev).
+<!-- /§503 -->

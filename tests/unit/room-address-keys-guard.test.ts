@@ -30,7 +30,7 @@ const SCAN_DIRS = [
   join(ROOT, 'app', '[orgSlug]', 'coaches'),
   join(ROOT, 'components', 'coaches'),
 ];
-const CALL = /useRoomAddress\(\s*['"]([A-Za-z][A-Za-z0-9]*)['"]\s*\)/g;
+const CALL = /useRoomAddress\(\s*['"]([A-Za-z][A-Za-z0-9]*)['"]\s*[,)]/g;
 const SENTINEL = /\bsentinel=["']([a-z][a-z0-9-]*)["']/g;
 
 function walk(dir: string, out: string[] = []): string[] {

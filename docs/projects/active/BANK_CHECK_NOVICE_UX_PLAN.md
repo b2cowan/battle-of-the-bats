@@ -1,7 +1,7 @@
 # Bank check through a volunteer's eyes — plan of record
 
 **Status:** STARTED 2026-11-08. Every owner ask is ruled (§0). **S1 committed `bdb56dd2f` 2026-11-08** (§4; owner walk
-owed). **S1b committed `4b9e9a655` 2026-11-08** (§4); owner walk §497 published, then S2. PM brief:
+owed). **S1b committed `4b9e9a655` 2026-11-08** (§4); owner walk §497 PASSED 24/24 2026-11-09; S2 built 2026-11-09, uncommitted (§4; owner walk §503 owed); next S3 (S1 needs no walk, owner: "the words are good"). PM brief:
 `BANK_CHECK_NOVICE_UX_PM_BRIEF.md`.
 
 **Source:** the evaluation "The Volunteer's Bank Check" (2026-11-08), published at
@@ -209,3 +209,32 @@ sentence; the walked working-draft cards change shape and their walks are redone
   Start here and saved one check on the shared "Walk chequing" account; removed by id the same minute (the probe now
   stops before any save off its own account). Starts saved before S1b now read one day later, as ruled ("Gaming
   account": Nov 1). Bank + help tests 474/474; typecheck clean for the scope; lint, spelling, dictionary clean.
+- 2026-11-09 — **S2 built (the door), uncommitted; owner walk Owner QA Ledger §503** https://claude.ai/artifact/VQpZjGgcVWvw3s7AwKXfX4.
+  Drawings https://claude.ai/artifact/RUxWEgRgc8fLvAuLZeJF8e (source `BANK_CHECK_NOVICE_UX_S2_DRAWINGS.html`); `/design`
+  before hand-off: quiet line in the portal's own quiet grey (it had a lighter one that failed contrast), both lines ONE door,
+  the phone hold keeps the invitation's height. **Owner rulings 2026-11-09:** the club invitation replaces ONLY the
+  not-checked states a person can act on (one account never checked; no account yet, a writer) — "1 of 3 not checked yet"
+  keeps its count; the club's one-line Overview rule (option A) stands; the coach's setup line sits directly above the rail.
+  Built: (a) the line in Plan and Collect (`SetupOverview`, standalone) as well as Operate, "Check your bank balance ›" +
+  "Type what the bank shows to see if you're in step." until the first check, both lines one door, for someone who can
+  check (a view-only coach keeps "Bank: not checked yet ›"; a club reader at a club with no account sees nothing); the
+  club's line likewise. (b) "How the bank check works" ends the Bank view's head line in both portals (coach: Coaches help
+  `#premium-money-bank`; club: Accounting help `#bank-tab`); on a phone the coach's takes the last row to itself. (c) the
+  Ledger's View pill writes `?view=` from the press only while the Ledger is on screen, and the press drops `?filter=` /
+  `?scheduled=` (they force the timeline on a reload; `useRoomAddress` gained an `alsoClear` option, the room-key guard's
+  scanner now sees a second argument). (d) the club's Account pill: `account` stays in the address; `check` stays one-shot;
+  a made-up id is replaced by the real one; a club with no account forgets a stale key. `/marketing` final read (helper):
+  strings kept ("How the bank check works" kept as the owner approved it in the drawings; the helper suggested "balance
+  check" — an OWNER CALL, below), nine help sentences + keywords corrected (the Overview definitions said "one line per
+  bank account" and "Bank: checked through…" only). `/review` standard (2 lenses): 3 findings fixed — a View press left
+  `?filter=` in the address (a reload showed the timeline at a `view=bills` address); a Back step after an added account left
+  the address on the old account (the router drops a replace queued behind the traversal: the address is written directly
+  after the history moves); the fix for that first hijacked Back out of the Bank tab (it now acts only while on the page).
+  Not fixed, accepted: the phone hold now reserves the invitation's height for every state (a checked team's content moves
+  up ~18px when the read lands); a failed read in Plan/Collect collapses the held row. Walk on dev (probes
+  `.probe/bank-ux-s2/`, temporary accounts torn down clean): invitation Plan desk + phone, door, help links, View press write
+  / reload / drop on Overview, club none / one / several, Account pill write / reload / Back-Forward / bad id / add account,
+  the door's check opens once. Tests: bank + room-key guards 474/474; typecheck and spelling clean; `check:layout --changed`
+  SKIPPED (other sessions' shared-chrome edits widen it to the whole product). **Owner calls open:** (1) "How the bank check
+  works" vs "How the balance check works" (the view is named "Balance check"); (2) on 15U AAA the Upcoming bills panel pushes
+  the invitation well below the first screen — move it above the panel, or leave it (ruled: above the rail).

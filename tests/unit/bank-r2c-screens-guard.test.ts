@@ -478,16 +478,37 @@ describe('12. BC5a: the Overview line and the fiscal-year close row (ask 4, R0 t
   it('no account: a writer’s door to the first check; a reader sees no line', () => {
     assert.match(line, /marks\.accounts\.length === 0\s*\? \(marks\.canMove \? \[/);
   });
-  it('the Bank tab opens on the door’s account and check once, then drops them from the address', () => {
+  it('the Bank tab opens on the door’s account and check; `check` is read once and dropped, `account` STAYS in the address (S2, A16)', () => {
     const tab = readCode(`${DIR}/BankTab.tsx`);
     assert.match(tab, /if \(arrived\.current === null\) arrived\.current = \{ account: search\.get\('account'\), check: search\.get\('check'\) \};/);
     assert.match(tab, /arrived\.current = \{ account: null, check: null \};/);
-    assert.match(tab, /rest\.delete\('account'\); rest\.delete\('check'\);/);
+    // The old strip of BOTH keys is gone: `account` is written (the pick, the door's arrival, a bad id replaced by the real one).
+    assert.doesNotMatch(tab, /rest\.delete\('account'\); rest\.delete\('check'\);\s*const qs = rest\.toString\(\);\s*router\.replace\(qs \? `\$\{pathname\}\?\$\{qs\}` : pathname, \{ scroll: false \}\);\s*\}, \[view, router, pathname\]\);/);
+    assert.match(tab, /if \(rest\.get\('account'\) === view\.account\.id && !hadCheck\) return;\s*rest\.delete\('check'\);\s*rest\.set\('account', view\.account\.id\);\s*const next = `\$\{pathname\}\?\$\{rest\.toString\(\)\}`;[^]*?if \(moved > 0\) window\.history\.replaceState\(window\.history\.state, '', next\);\s*else router\.replace\(next, \{ scroll: false \}\);/);
+    // Written once the account's view has landed, so the address always says what is shown (and never loops: it is not a search dependency).
+    const writer = tab.slice(tab.indexOf('const pendingCheck = useRef'), tab.indexOf('}, [view, router, pathname, moved]);'));
+    assert.doesNotMatch(writer, /setWin\(/);
     // BC9a (owner "Club findings before the walk" 2026-11-07): the window opens only once the address no longer carries
-    // the keys — never in the effect that replaces it (Back after closing reopened the check on the coach side, BC8a).
-    const strip = tab.slice(tab.indexOf('const pendingCheck = useRef'), tab.indexOf('}, [view, router, pathname]);'));
-    assert.doesNotMatch(strip, /setWin\(/);
-    assert.match(tab, /if \(!id \|\| search\.has\('account'\) \|\| search\.has\('check'\)\) return;\s*pendingCheck\.current = null;\s*setWin\(\{ kind: 'check', id \}\);/);
+    // `check` — never in the effect that replaces it (Back after closing reopened the check on the coach side, BC8a).
+    assert.match(tab, /if \(!id \|\| search\.has\('check'\)\) return;\s*pendingCheck\.current = null;\s*setWin\(\{ kind: 'check', id \}\);/);
+    // A club with no account to show forgets a stale `account` / `check` (it names nothing here).
+    assert.match(tab, /if \(!overview \|\| accountId\) return;[\s\S]{0,200}rest\.delete\('account'\); rest\.delete\('check'\);/);
+    // A window's Back step lands after the writer (an added account): the address is made to say what is shown again.
+    // The writer runs AGAIN when the history moves (reading the address then), and never when Back has left the page (it
+    // would pull the person straight back in).
+    assert.match(tab, /const onMove = \(\) => \{ if \(window\.location\.pathname === pathname\) setMoved\(n => n \+ 1\); \};\s*window\.addEventListener\('popstate', onMove\);/);
+    assert.match(tab, /if \(!view \|\| window\.location\.pathname !== pathname\) return;/);
+    assert.match(tab, /\}, \[view, router, pathname, moved\]\);/);
+    // The pick itself changes the account; the writer above is what puts it in the address.
+    assert.match(tab, /const pickAccount = \(id: string\) => \{ setWin\(null\); setAgain\(null\); setAfterStart\(null\); setView\(null\); setAccountId\(id\); \};/);
+  });
+  it('S2 (row 20): "How the bank check works" ends the head line, for every role, and opens the club’s bank guide', () => {
+    const st = code('BankStatements.tsx');
+    assert.match(st, /\{tools\}\s*\{helpHref && <Link href=\{helpHref\} className=\{s\.link\}>\{W\.helpLink\}<\/Link>\}/);
+    assert.match(code('BankTab.tsx'), /helpHref=\{`\/\$\{orgSlug\}\/admin\/help\/accounting#bank-tab`\}/);
+    assert.equal(BANK_WORDS.helpLink, 'How the bank check works');
+    // The anchor exists: the guide has the article this link names.
+    assert.match(readCode('lib/help-content/accounting.tsx'), /id: 'bank-tab',/);
   });
   it('the printed check’s items row may break across sheets (a near-page list never jumps whole to sheet two)', () => {
     const css = readCode(`${DIR}/BankReport.module.css`);

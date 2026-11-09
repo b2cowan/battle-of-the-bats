@@ -15,6 +15,7 @@
  * in Money). The check's working draft is the signed-in coach's (WD2): the card re-keys when the person arrives.
  */
 import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import LoadingState from '@/components/shared/LoadingState';
 import CoachLoadError from '@/components/coaches/CoachLoadError';
@@ -122,6 +123,10 @@ export default function CoachBankView({ orgSlug, teamId, active = true, onAddLin
             )}
           </>
         ) : <DotPart lead><span>{W.notChecked}</span></DotPart>}
+        {/* A quiet link at the line's end opens the bank guide (bank check S2, row 20). The page's "?" opens the Ledger topic. */}
+        <DotPart help>
+          <Link href={`/${orgSlug}/coaches/help#premium-money-bank`} className={b.link}>{W.helpLink}</Link>
+        </DotPart>
       </p>
       {/* A re-read that failed once the view is up: say so above the figures it couldn't refresh (/review). */}
       {error && <CoachLoadError message={error} onRetry={load} />}

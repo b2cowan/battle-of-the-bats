@@ -22,6 +22,10 @@
 @media (max-width: 640px) {
   .head > b { flex-basis: 100%; }
   .headLead > .dot { display: none; }
+  /* The help link ends the line (bank check S2, row 20): on a phone it takes the line's last row to itself, so no dot is left
+     to start a row or to float between two phrases (/review S2). */
+  .headHelp > .dot { display: none; }
+  .headHelp { flex-basis: 100%; min-height: var(--tap-min, 44px); }
 }
 .notice { margin: 0 0 1rem; font-size: var(--type-body); color: var(--text-primary); }
 
@@ -55,10 +59,20 @@
 .overviewDoor:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
 .overviewMark > .overviewDoor { flex: 0 1 auto; }
 .overviewMark > .chipDoor { flex: none; }
+/* The invitation (bank check S2, A3): "Check your bank balance ›" and its quiet line are ONE door, the quiet line under the
+   words in the tertiary ink (the S2 drawings; /design: never a lighter grey than the portal's own). */
+.overviewInvite { flex-direction: column; flex-wrap: nowrap; align-items: flex-start; row-gap: 0; }
+.inviteMain { display: inline-flex; align-items: center; column-gap: 0.25rem; }
+.inviteNote { font-size: var(--type-support); color: var(--text-tertiary); }
+/* In the setup Overview (Plan and Collect) the line stands alone above the rail: a little air, no card around it. */
+.overviewStandalone { margin: 0.75rem 0 1rem; }
 /* A touch width: the door a full tap (the club's line scopes its floor the same way), and the row held while the read is
-   out so the card doesn't grow under the thumb when it lands (/design BC8a); a failed read still draws nothing. */
+   out so the card doesn't grow under the thumb when it lands (/design BC8a); a failed read still draws nothing. The hold
+   keeps the INVITATION's height (words row + the quiet line), the state most teams meet, so the page below it doesn't jump. */
 @media (max-width: 768px) {
-  .overviewDoor, .overviewHold { min-height: var(--tap-min, 44px); }
+  .overviewDoor { min-height: var(--tap-min, 44px); }
+  .overviewHold { min-height: calc(var(--tap-min, 44px) + 1.1rem); }
+  .overviewInvite { justify-content: center; }
 }
 
 /* A text button: underlined, olive ("Show them", "Undo", "Yes", "Try again"). */

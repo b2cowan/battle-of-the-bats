@@ -18,8 +18,10 @@
  * ⚖ Every figure is the server's (rule 6): each write answers with the account read again, and the screen draws it.
  * ⚖ A member who can open Accounting but not move club money (B7) reads the same tab with every write control absent.
  * ⚖ A door from elsewhere (BC5a: the Overview's bank line and the fiscal-year close's bank row) names `?account=` and, for an
- *   off check, `?check=`: read ONCE on arrival — the tab opens on that account and the check's window over it — then dropped
- *   from the address, so a reload or a later pick doesn't reopen it. An id that isn't there falls to the usual first account.
+ *   off check, `?check=`: the tab opens on that account and the check's window over it. `check` is read ONCE on arrival, then
+ *   dropped from the address, so a reload or a later pick doesn't reopen it. `account` STAYS (bank check S2, ask A16): the
+ *   Account pill writes the chosen account into the address, so a reload or a shared link opens on it. An id that isn't one
+ *   of this club's accounts falls to the usual first account, and the address is replaced with that one.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
@@ -116,31 +118,62 @@ export default function BankTab({ orgSlug }: { orgSlug: string }) {
   }, [accountId, heldAccountId, loadView]);
   useDeferredLoad(!!accountId, loadWanted);
 
-  // The door's check: once its account is on screen the address forgets both keys (header), and the window opens only
-  // when the address SAYS it forgot them (the search params without either). ⚠ Never in the same step (BC9a, owner
+  // The address says which account is on screen (A16, bank check S2): `account` is written whenever an account's view lands
+  // (a pick, or a door's arrival), so a reload or a shared link opens on it. An id that isn't one of this club's accounts
+  // fell to the first account above; the address is REPLACED with the real one rather than left stale. `check` is the
+  // opposite: a check is opened once, never remembered, so the door's `check` goes after the arrival read.
+  // The door's check: its window opens only when the address SAYS `check` is gone. ⚠ Never in the same step (BC9a, owner
   // "Club findings before the walk" 2026-11-07; the coach door's BC8a lesson): the window's Back step pushes its entry as
   // it opens, and a replace still in flight lands on that entry and leaves the key one Back away, so Back after closing
   // reopened the check.
   const pendingCheck = useRef<string | null>(null);
+  const [moved, setMoved] = useState(0);
   useEffect(() => {
+    if (!view || window.location.pathname !== pathname) return;
     const a = arrived.current;
-    if (!view || !a || (!a.account && !a.check)) return;
-    if (a.check && view.account.id === a.account && (view.start?.id === a.check || view.checks.some(c => c.id === a.check))) {
-      pendingCheck.current = a.check;
+    if (a && (a.account || a.check)) {
+      if (a.check && view.account.id === a.account && (view.start?.id === a.check || view.checks.some(c => c.id === a.check))) {
+        pendingCheck.current = a.check;
+      }
+      arrived.current = { account: null, check: null };
     }
-    arrived.current = { account: null, check: null };
-    // Only the door's two keys go; anything else in the address stays (/review BC5a).
+    // Only `account` and `check` are touched; anything else in the address stays (/review BC5a).
     const rest = new URLSearchParams(window.location.search);
-    rest.delete('account'); rest.delete('check');
-    const qs = rest.toString();
-    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
-  }, [view, router, pathname]);
+    const hadCheck = rest.has('check');
+    if (rest.get('account') === view.account.id && !hadCheck) return;
+    rest.delete('check');
+    rest.set('account', view.account.id);
+    const next = `${pathname}?${rest.toString()}`;
+    // After the history moved, the router is still settling that traversal and drops a `replace` queued behind it (traced on
+    // dev, /review S2); the address itself is written directly (Next keeps its own state in step with `replaceState`).
+    if (moved > 0) window.history.replaceState(window.history.state, '', next);
+    else router.replace(next, { scroll: false });
+  }, [view, router, pathname, moved]);
+  // A window's close releases its Back step with `history.back()`, which lands right AFTER the account's view does (an added
+  // account: the dialog closes as the new account's view lands) and restores the older entry, whose `account` is the old one,
+  // while the screen shows the new one: a reload would open the old (/review S2). So the writer above runs again whenever the
+  // history moves (`moved`), reading the address then. ⚠ Only while the history still sits on THIS page: Back out of the Bank
+  // tab fires the same event, and writing then would pull the person straight back in.
+  useEffect(() => {
+    const onMove = () => { if (window.location.pathname === pathname) setMoved(n => n + 1); };
+    window.addEventListener('popstate', onMove);
+    return () => window.removeEventListener('popstate', onMove);
+  }, [pathname]);
   useEffect(() => {
     const id = pendingCheck.current;
-    if (!id || search.has('account') || search.has('check')) return;
+    if (!id || search.has('check')) return;
     pendingCheck.current = null;
     setWin({ kind: 'check', id });
   }, [search, view]);
+  // No account to show (a club that hasn't started): an `account` or `check` left in the address names nothing here.
+  useEffect(() => {
+    if (!overview || accountId) return;
+    const rest = new URLSearchParams(window.location.search);
+    if (!rest.has('account') && !rest.has('check')) return;
+    rest.delete('account'); rest.delete('check');
+    const qs = rest.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  }, [overview, accountId, router, pathname]);
 
   if (failed) return <LoadFailed title={W.loadFailed} onRetry={() => void loadOverview()} />;
   if (!overview) return <LoadingState label={W.loading} />;
@@ -202,7 +235,7 @@ export default function BankTab({ orgSlug }: { orgSlug: string }) {
               onStale={t => void staleRefresh(t)} />
           : <Callout role="status">{W.setupReader}</Callout>}
       </>
-    : <BankStatements view={view} accountLine={accountLine} tools={accountTools || null}
+    : <BankStatements view={view} accountLine={accountLine} tools={accountTools || null} helpHref={`/${orgSlug}/admin/help/accounting#bank-tab`}
         onOpen={id => setWin({ kind: 'check', id })}
         form={canMove ? (
           // Keyed by the person too: their working draft (WD1) is read when the card mounts, and the signed-in person

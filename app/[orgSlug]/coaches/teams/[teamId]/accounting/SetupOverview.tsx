@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import UpcomingPayablesPanel from '@/components/accounting/UpcomingPayablesPanel';
 import { fmt, type MoneySummary, type DashboardHrefs } from '@/lib/coach-money-summary';
+import CoachBankOverviewLine from '@/components/coaches/bank/CoachBankOverviewLine';
 import MoneyRail from './MoneyRail';
 import styles from '../../../coaches.module.css';
 import { CoachCard } from '@/components/coaches/kit';
@@ -28,6 +29,8 @@ interface Props {
   /** Archived seasons: no forward-looking panel — same rule as the operate ledger. */
   showPayables: boolean;
   payablesApiUrl: string;
+  /** The team the bank line reads (bank check S2, A3: the line shows in every season stage, not only Operate). */
+  bank?: { orgSlug: string; teamId: string };
 }
 
 /** One "right now" card, one lime CTA max (earned-lime rule). The operate stage
@@ -110,7 +113,7 @@ function Anchor({ summary, hrefs, rosterHref, canWrite }: Pick<Props, 'summary' 
   );
 }
 
-export default function SetupOverview({ summary, hrefs, rosterHref, canWrite, showPayables, payablesApiUrl }: Props) {
+export default function SetupOverview({ summary, hrefs, rosterHref, canWrite, showPayables, payablesApiUrl, bank }: Props) {
   // Has any money actually moved? Until it has, the four headline tiles read
   // $0 · $0 · $0 · — , which is four cards restating what the anchor card directly
   // above them already says, and the cash-basis caveat qualifies numbers that don't
@@ -208,6 +211,11 @@ export default function SetupOverview({ summary, hrefs, rosterHref, canWrite, sh
           />
         </div>
       )}
+
+      {/* The bank line (bank check S2, ask A3): Plan and Collect have no Cash on hand card to hold it, so it stands on its own
+          directly above the rail — below the tiles and the payables panel, clear of the anchor card's one lime button. Until the
+          first check it is an invitation; a failed read draws nothing (the same line the Operate card holds). */}
+      {bank && <CoachBankOverviewLine orgSlug={bank.orgSlug} teamId={bank.teamId} href={hrefs.bankView} standalone />}
 
       {/* The season's four steps survive as ROW ORDER plus three quiet markers inside
           one index — not as four headed sections of drill-in cards that repeated the

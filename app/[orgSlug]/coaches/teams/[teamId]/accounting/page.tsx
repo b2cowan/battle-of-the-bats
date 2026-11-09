@@ -243,8 +243,9 @@ export default function CoachesAccountingPage({
      after they have moved on is a back arrow pointing at last week's journey — so it is one-shot
      exactly as the key it describes is. */
   /* ⚠ `view` joined the list with the fold (2026-08-28): it is the Ledger's own lens, exactly as
-     `duesView` is the Dues tab's — it means nothing off its tab, and the Ledger remembers it per
-     device anyway, so an address never needs to carry it anywhere else. `from` stays listed so
+     `duesView` is the Dues tab's — it means nothing off its tab, so no other tab's address carries it.
+     ⚠ Since bank check S2 (A16) the Ledger's View pill WRITES it, so a reload or a shared link lands on the view
+     (the device's memory still seeds a visit with no `view`). `from` stays listed so
      saved pre-fold URLs that carry it are still scrubbed, though nothing writes it any more. */
   /* ⚠ `clubBill` is the Club tab's ROOM (List · Room · Question, 2026-09-02) — which bill is open
      rides the URL exactly as `bill` and `fundraiser` do, and for the same reason it is scrubbed off
@@ -631,6 +632,7 @@ export default function CoachesAccountingPage({
               canWrite={canWrite}
               showPayables
               payablesApiUrl={`/api/coaches/${orgSlug}/teams/${teamId}/upcoming-payables`}
+              bank={{ orgSlug, teamId }}
             />
           )}
 

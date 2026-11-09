@@ -280,9 +280,9 @@ function LineAction({ name, onMark, undo, shown, quiet = false }: {
 /** "· {part}": a part of a line that keeps its dot, so a narrow screen wraps before both and never starts or ends a line
  *  on a lone "·" (the head line, "Lines since …: n · Show them"; /design BC7b). `lead`: a part whose dot a phone drops,
  *  because it starts its own line there (after the account name; the "Show them" door). */
-export function DotPart({ children, lead = false }: { children: ReactNode; lead?: boolean }) {
+export function DotPart({ children, lead = false, help = false }: { children: ReactNode; lead?: boolean; help?: boolean }) {
   return (
-    <span className={`${b.headPart}${lead ? ` ${b.headLead}` : ''}`}>
+    <span className={`${b.headPart}${lead ? ` ${b.headLead}` : ''}${help ? ` ${b.headHelp}` : ''}`}>
       <span aria-hidden className={b.dot}>·</span>
       {children}
     </span>

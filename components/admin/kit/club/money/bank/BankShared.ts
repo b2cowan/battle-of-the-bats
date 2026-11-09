@@ -21,7 +21,8 @@ export function bankUrl(orgSlug: string, path = '', params: Record<string, strin
 }
 
 /** The Bank TAB's address (a page, not a route), opened on an account and a check: the tab reads `account` and `check`
- *  once on arrival, then drops them (BC5a: the Overview's line, the fiscal-year close's row). */
+ *  on arrival (BC5a: the Overview's line, the fiscal-year close's row). `check` is dropped after that read; `account` STAYS
+ *  in the address, and the Account pill writes it (bank check S2, A16). */
 export const bankTabHref = (accountingBase: string, accountId?: string, checkId?: string): string => {
   const p = new URLSearchParams();
   if (accountId) p.set('account', accountId);

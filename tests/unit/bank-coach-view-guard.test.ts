@@ -298,3 +298,49 @@ describe('9 · through a volunteer\'s eyes (Bank check novice UX S1, plan BANK_C
     assert.match(code('CoachBankView.tsx'), /view\.canWrite \? W\.coachNoChecksYet : `\$\{W\.coachNoChecksYet\} \$\{W\.coachReaderCanCheck\}`/);
   });
 });
+
+describe('8 · S2, the door (bank check novice UX: asks A3 and A16, words rows 2 and 20)', () => {
+  const SETUP = readCode('app/[orgSlug]/coaches/teams/[teamId]/accounting/SetupOverview.tsx');
+  const HUB = readCode('app/[orgSlug]/coaches/teams/[teamId]/accounting/page.tsx');
+  const LINE = code('CoachBankOverviewLine.tsx');
+  const ledger = readCode(LEDGER);
+  it('A3: the line renders in EVERY season stage — Plan and Collect too, standing on its own above the rail', () => {
+    assert.match(SETUP, /\{bank && <CoachBankOverviewLine orgSlug=\{bank\.orgSlug\} teamId=\{bank\.teamId\} href=\{hrefs\.bankView\} standalone \/>\}\s*(?:\{ \}\s*)?<MoneyRail summary=\{summary\} hrefs=\{hrefs\} variant="index" \/>/);
+    // The hub hands the setup Overview the team, as it hands the operating one.
+    assert.match(HUB, /<SetupOverview[^]*?bank=\{\{ orgSlug, teamId \}\}\s*\/>/);
+    assert.match(HUB, /<OverviewDashboard[^]*?bank=\{\{ orgSlug, teamId \}\}\s*\/>/);
+  });
+  it('A3: until the first check it INVITES — one door, both lines — for someone who can check; a reader keeps "Bank: not checked yet"', () => {
+    assert.match(LINE, /if \(!t && view\.canWrite\) \{/);
+    assert.match(LINE, /<Link href=\{href\} className=\{`\$\{b\.overviewDoor\} \$\{b\.overviewInvite\}`\}>\s*<span className=\{b\.inviteMain\}>\{W\.inviteLead\}<ChevronRight size=\{14\} aria-hidden \/><\/span>\s*<span className=\{b\.inviteNote\}>\{W\.inviteNote\}<\/span>\s*<\/Link>/);
+    // The checked words and the chip are as they were.
+    assert.match(LINE, /\{W\.overviewLead\} \{W\.overviewThrough\} /);
+    assert.match(LINE, /<Link href=\{bankCheckHref\(href, t\.id\)\} className=\{b\.chipDoor\}/);
+    // One spelling for one state: the club's line uses these very words.
+    assert.equal(BANK_WORDS.inviteLead, 'Check your bank balance');
+    assert.equal(BANK_WORDS.inviteNote, 'Type what the bank shows to see if you’re in step.');
+  });
+  it('the hold keeps the invitation\'s height on a phone, so the page below it does not jump when the read lands', () => {
+    const css = readCode(`${DIR}/CoachBank.module.css`);
+    assert.match(css, /\.overviewHold \{ min-height: calc\(var\(--tap-min, 44px\) \+ 1\.1rem\); \}/);
+  });
+  it('row 20: "How the bank check works" ends the head line and opens the coach bank article, which exists', () => {
+    assert.match(code('CoachBankView.tsx'), /<DotPart help>\s*<Link href=\{`\/\$\{orgSlug\}\/coaches\/help#premium-money-bank`\} className=\{b\.link\}>\{W\.helpLink\}<\/Link>\s*<\/DotPart>/);
+    assert.equal(BANK_WORDS.helpLink, 'How the bank check works');
+    assert.match(readCode('lib/help-content/coaches.tsx'), /id: 'premium-money-bank',/);
+  });
+  it('A16: the View pill writes the chosen view into the address — from the press, only while the Ledger is on screen', () => {
+    assert.match(ledger, /const \[, setViewInAddress\] = useRoomAddress\('view', VIEW_PRESS_DROPS\);/);
+    // A press also drops `?filter=` / `?scheduled=`: left in the address they force the timeline again on a reload, so the
+    // address would name a view the screen does not show (/review S2).
+    assert.match(ledger, /const VIEW_PRESS_DROPS = \['filter', 'scheduled'\] as const;/);
+    assert.match(readCode('components/coaches/useRoomAddress.ts'), /for \(const k of alsoClear \?\? \[\]\) next\.delete\(k\);/);
+    assert.match(ledger, /onChange=\{next => \{\s*setView\(next as LedgerView\);[^]*?if \(tabActive && isLedgerView\(next\)\) setViewInAddress\(next\);\s*\}\}/);
+    // Never from an effect (the filter / scheduled links set the view themselves: a write there would loop), and `view` has ONE reader.
+    const reads = ledger.match(/seasonSearchParams\.get\('view'\)/g) ?? [];
+    assert.equal(reads.length, 1, 'the panel reads ?view= once');
+    assert.doesNotMatch(ledger, /useEffect\(\(\) => \{[^}]*setViewInAddress/);
+    // The hub scrubs `view` from the other tabs' links, as a room key must be.
+    assert.match(HUB, /const ONE_SHOT_KEYS = \[[^\]]*'view'/);
+  });
+});
