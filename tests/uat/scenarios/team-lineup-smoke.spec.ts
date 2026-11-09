@@ -1,3 +1,4 @@
+import { recordLegalAcceptance } from '../helpers/legal-acceptance' // GST/HST 6.3 A5
 import { expect, test } from '@playwright/test'
 
 import { supabaseAdmin } from '../../../lib/supabase-admin'
@@ -32,6 +33,7 @@ test.describe.serial('standalone Team lineup smoke', () => {
 
     if (coachUserError) throw coachUserError
     if (!coachUser.user?.id) throw new Error('Smoke coach user was not created.')
+    await recordLegalAcceptance(supabaseAdmin, coachUser.user)
 
     const teamName = `Team Lineup Smoke ${suffix}`
     const workspaceSlug = `team-lineup-smoke-${suffix}`

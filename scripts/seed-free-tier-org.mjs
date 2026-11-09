@@ -19,6 +19,7 @@
  */
 import { createClient } from '@supabase/supabase-js';
 import { randomUUID } from 'crypto';
+import { recordLegalAcceptance } from './lib/record-legal-acceptance.mjs';
 
 const db = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 
@@ -49,6 +50,7 @@ if (!owner) {
 } else {
   console.log(`auth user exists ${OWNER_EMAIL}`);
 }
+await recordLegalAcceptance(db, owner); // GST/HST 6.3 A5: a fixture never meets the Terms screen
 
 // ── 2. organization (FREE tier) ───────────────────────────────────────────────
 let org = (await db.from('organizations').select('*').eq('slug', ORG_SLUG).maybeSingle()).data;

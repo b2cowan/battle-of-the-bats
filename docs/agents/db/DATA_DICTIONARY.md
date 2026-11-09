@@ -687,6 +687,41 @@ Publish and a club team's rep Send invitation refuse until the club has both thi
 <!-- dict:col:org_custom_domains.updated_at -->
 **`created_by_user_id`** (uuid, nullable, no FK) / **`created_at`** / **`updated_at`** (timestamptz, NOT NULL, default now()) — who connected it and when; `updated_at` is written by the store on every change.
 
+## `legal_acceptances`
+<!-- dict:table:legal_acceptances -->
+
+**Purpose:** **one row per tick of the Terms box** (mig 455, GST/HST Stage 6 step 6.3, ruling R1 of 2026-11-09) — the record Terms §20 promises: "which version you accepted and when, for six years after your account closes". Written by `recordAcceptance` in `lib/legal-acceptance.ts` at every account door, the sign-in screen and the purchase window, and by the fixture helper `scripts/lib/record-legal-acceptance.mjs`. Read by `acceptanceState` (the latest row's `terms_version`) when the mirror below says "not yet". **A person's, not an organization's** — no `org_id`.
+
+**Gotchas (read first):**
+1. **Append-only.** Trigger `legal_acceptances_append_only` refuses every UPDATE except `user_id` → NULL with every other column unchanged (the FK's `ON DELETE SET NULL` when the account is deleted), and every DELETE; `legal_acceptances_no_truncate` refuses TRUNCATE. Proved by `scripts/legal-acceptances-lock-check.sql`. ⚠ The six-year end (Terms §20, `/legal` §20 (5f)) needs a **named exception** in that trigger, built with the tax-record step (first expiry after 2032).
+2. **`'draft'` is the dev preview's version.** A row recorded while `legalPagesMode()` is `preview` carries `'draft'`; it satisfies the check only while the mode is `preview` and **never** a dated version (`isAccepted` in `lib/legal-acceptance-rules.ts`). Production records nothing while the mode is `off`. At 6.7 every dev account accepts again.
+3. **The mirror.** The accepted Terms version is copied onto the auth user's `app_metadata.legal_terms_accepted` (service role only), written **after** the row, so a layout's `getUser()` answers without a query. The mirror can only ever say "not yet": when it does, the table is read and, if the table says accepted, the mirror is repaired. The table is the truth.
+4. **No IP address and no device, by design (R1).** The age promise is recorded by the sentence (`box_text`), not by a separate flag.
+5. **Only the Terms bring the screen back (R10).** `privacy_version` is what the person was shown; it never blocks.
+6. **Service role only.** RLS on, no policies; `anon`/`authenticated` hold no privilege (rule 7).
+
+**Fields** (`id` uuid, default `gen_random_uuid()`):
+
+<!-- dict:col:legal_acceptances.id -->
+<!-- dict:col:legal_acceptances.user_id -->
+**`user_id`** (uuid, nullable, FK `auth.users` **ON DELETE SET NULL**) — who ticked. Cleared when the account is deleted; the row stays.
+
+<!-- dict:col:legal_acceptances.user_email -->
+**`user_email`** (text, NOT NULL, 1–320 characters) — the account's email at the moment of the tick, kept as text so the record outlives the account (the payouts-terms shape).
+
+<!-- dict:col:legal_acceptances.terms_version -->
+<!-- dict:col:legal_acceptances.privacy_version -->
+**`terms_version`** / **`privacy_version`** (text, NOT NULL, CHECK `legal_acceptances_version_shape`: `'draft'` or `YYYY-MM-DD`) — the versions shown (`currentVersion()` in `lib/legal-documents.ts`). Only `terms_version` decides acceptance.
+
+<!-- dict:col:legal_acceptances.box_text -->
+**`box_text`** (text, NOT NULL, ≤ 1,000 characters) — **the exact sentence ticked**, both promises (`ACCEPTANCE_BOX_TEXT`, Terms §20 (1) with the link markup stripped), like the family consent record's `guardianConsentText`.
+
+<!-- dict:col:legal_acceptances.door -->
+**`door`** (text, NOT NULL, CHECK `legal_acceptances_door_check`) — where the tick happened: `signup`, `follow`, `coach_signup`, `registration`, `team_signup`, `assistant_invite`, `league_coach_invite`, `staff_invite`, `family_accept` (the account doors), `sign_in_screen`, `purchase_window`, `fixture` (scripts and dev seed routes). The list is `ACCEPTANCE_DOORS` in `lib/legal-acceptance-rules.ts`; `tests/unit/legal-acceptance.test.ts` fails when the two differ.
+
+<!-- dict:col:legal_acceptances.accepted_at -->
+**`accepted_at`** (timestamptz, NOT NULL, default now()) — when. Index `legal_acceptances_user_idx (user_id, accepted_at DESC)` reads a person's latest.
+
 ---
 
 *End of Org / Platform core domain. `organizations` carries the Stripe/billing **columns** documented here; the Stripe/Billing phase adds the `stripe_prices` table + the billing-flow narrative. `platform_audit_log` (where override + internal-note mutations are logged) and the `platform_*`/`plan_*` control plane are the Platform-admin phase. `rep_team_groups` (FK target of `org_member_rep_group_scopes.group_id`) is the Rep domain.*

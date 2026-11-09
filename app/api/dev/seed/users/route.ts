@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { requireDevToolPlatformAdmin } from '@/lib/platform-auth';
+import { recordFixtureAcceptance } from '@/lib/legal-acceptance';
 
 const DEV_PASSWORD = 'devpass123';
 
@@ -60,6 +61,7 @@ export async function POST() {
       authUser = data.user;
       log.push(`Created auth user: ${u.email}`);
     }
+    await recordFixtureAcceptance(authUser); // GST/HST 6.3 A5: a seed account never meets the Terms screen
 
     authUserIds[u.email] = authUser.id;
   }

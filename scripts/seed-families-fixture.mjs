@@ -85,6 +85,7 @@
  */
 import { createClient } from '@supabase/supabase-js';
 import { config } from 'dotenv';
+import { recordLegalAcceptance } from './lib/record-legal-acceptance.mjs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { allocateDuesPayments } from '../lib/dues-payments.ts';
@@ -141,6 +142,7 @@ if (owner) {
   if (r.error) die('owner createUser', r.error);
   owner = r.data.user;
 }
+await recordLegalAcceptance(db, owner); // GST/HST 6.3 A5: a fixture never meets the Terms screen
 {
   const { data: m } = await db.from('organization_members').select('id').eq('organization_id', org.id).eq('user_id', owner.id).maybeSingle();
   if (!m) {
@@ -473,6 +475,7 @@ async function ensureSignIn(email, fullName) {
     if (r.error) die(`createUser ${email}`, r.error);
     u = r.data.user;
   }
+  await recordLegalAcceptance(db, u);
   return u;
 }
 /** The org membership row, re-asserted (role, name, capabilities) so a tester's edit never leaves the walk card false. */

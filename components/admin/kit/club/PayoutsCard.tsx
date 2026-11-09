@@ -472,7 +472,8 @@ function BeforeWindow({ orgSlug, home, clubName, view, onClose }: { orgSlug: str
     setBusy(true);
     setError(null);
     try {
-      const { url } = await post(orgSlug, { action: 'connect', feePayer, agreeToTerms: true });
+      // The version this window showed: the server refuses the connect if the payments terms moved meanwhile (6.3 A6).
+      const { url } = await post(orgSlug, { action: 'connect', feePayer, agreeToTerms: true, termsVersion: PAYMENTS_TERMS_VERSION });
       if (url) window.location.assign(url);
       else window.location.reload();
     } catch (e) {

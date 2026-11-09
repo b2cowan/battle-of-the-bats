@@ -10307,6 +10307,78 @@
         "column_default": "now()"
       },
       {
+        "table_name": "legal_acceptances",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "legal_acceptances",
+        "pos": 2,
+        "column_name": "user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "legal_acceptances",
+        "pos": 3,
+        "column_name": "user_email",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "legal_acceptances",
+        "pos": 4,
+        "column_name": "terms_version",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "legal_acceptances",
+        "pos": 5,
+        "column_name": "privacy_version",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "legal_acceptances",
+        "pos": 6,
+        "column_name": "box_text",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "legal_acceptances",
+        "pos": 7,
+        "column_name": "door",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "legal_acceptances",
+        "pos": 8,
+        "column_name": "accepted_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "no_login_rate_limits",
         "pos": 1,
         "column_name": "rail",
@@ -32188,6 +32260,13 @@
         "constraint_name": "league_teams_season_id_fkey"
       },
       {
+        "table_name": "legal_acceptances",
+        "column_name": "user_id",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "legal_acceptances_user_id_fkey"
+      },
+      {
         "table_name": "notification_preferences",
         "column_name": "org_id",
         "foreign_table": "organizations",
@@ -38236,6 +38315,16 @@
         "indexdef": "CREATE INDEX league_teams_season_id_idx ON public.league_teams USING btree (season_id)"
       },
       {
+        "tablename": "legal_acceptances",
+        "indexname": "legal_acceptances_pkey",
+        "indexdef": "CREATE UNIQUE INDEX legal_acceptances_pkey ON public.legal_acceptances USING btree (id)"
+      },
+      {
+        "tablename": "legal_acceptances",
+        "indexname": "legal_acceptances_user_idx",
+        "indexdef": "CREATE INDEX legal_acceptances_user_idx ON public.legal_acceptances USING btree (user_id, accepted_at DESC)"
+      },
+      {
         "tablename": "no_login_rate_limits",
         "indexname": "no_login_rate_limits_pkey",
         "indexdef": "CREATE UNIQUE INDEX no_login_rate_limits_pkey ON public.no_login_rate_limits USING btree (rail, subject)"
@@ -44087,6 +44176,30 @@
       {
         "kind": "RLS",
         "table_name": "league_teams",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "legal_acceptances",
+        "detail": "legal_acceptances_door_check",
+        "check_clause": "(door = ANY (ARRAY['signup'::text, 'follow'::text, 'coach_signup'::text, 'registration'::text, 'team_signup'::text, 'assistant_invite'::text, 'league_coach_invite'::text, 'staff_invite'::text, 'family_accept'::text, 'sign_in_screen'::text, 'purchase_window'::text, 'fixture'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "legal_acceptances",
+        "detail": "legal_acceptances_text_shape",
+        "check_clause": "(((char_length(btrim(user_email)) >= 1) AND (char_length(btrim(user_email)) <= 320)) AND ((char_length(btrim(box_text)) >= 1) AND (char_length(btrim(box_text)) <= 1000)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "legal_acceptances",
+        "detail": "legal_acceptances_version_shape",
+        "check_clause": "(((terms_version = 'draft'::text) OR (terms_version ~ '^\\d{4}-\\d{2}-\\d{2}$'::text)) AND ((privacy_version = 'draft'::text) OR (privacy_version ~ '^\\d{4}-\\d{2}-\\d{2}$'::text)))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "legal_acceptances",
         "detail": "ENABLED",
         "check_clause": null
       },

@@ -31,6 +31,8 @@ export const dynamic = 'force-dynamic';
  */
 
 const refused = () => NextResponse.json({ error: ONLINE_PAYMENTS_OFF_ERROR }, { status: 404 });
+/** The payments terms moved while the window was open (/review of 12d-2): `connect` and `agree_terms` refuse alike. */
+const termsChanged = () => NextResponse.json({ error: TERMS_WORDS.refuseChanged, code: 'terms_changed' }, { status: 409 });
 
 type PayoutsContext = { ctx: NonNullable<Awaited<ReturnType<typeof getAuthContextWithRole>>>; isOwner: boolean; planOffers: boolean };
 
@@ -194,7 +196,10 @@ export const POST = withObservability(async (req: Request) => {
       // Setting up (or up again) is a NEW payment door: the plan must offer online payments (12d-2, ask 4).
       if (!c.planOffers) return refused();
       // "Before you set up payouts": the who-pays choice and the terms, recorded before Stripe (owner 2026-10-24).
-      if (body.agreeToTerms !== true) return NextResponse.json({ error: 'Agree to the payments terms first.' }, { status: 400 });
+      if (body.agreeToTerms !== true) return NextResponse.json({ error: TERMS_WORDS.refuseSetup }, { status: 400 });
+      // The version the window showed, as `agree_terms` checks it (GST/HST Stage 6 step 6.3 A6): terms published while the
+      // window was open are never agreed unread, and the row below stamps only the version the person read.
+      if (body.termsVersion !== PAYMENTS_TERMS_VERSION) return termsChanged();
       // GST/HST Stage 2 Part 2b (Ask 8): the club's billing address, before ANY Stripe call — a new account and a reconnect
       // alike. The club's Stripe fees are invoiced and taxed by it, and Stripe refuses a taxed invoice it cannot place. A
       // refusal (`billing_address_required`, or a held US address) creates and changes nothing; the card opens the window.
@@ -236,9 +241,7 @@ export const POST = withObservability(async (req: Request) => {
       if (body.agreeToTerms !== true) return NextResponse.json({ error: TERMS_WORDS.refuseSetup }, { status: 400 });
       if (!row) return NextResponse.json({ error: 'Set up payouts first.' }, { status: 409 });
       // The version the window showed (/review of 12d-2): terms published while it was open are never agreed unread.
-      if (body.termsVersion !== PAYMENTS_TERMS_VERSION) {
-        return NextResponse.json({ error: 'The payments terms changed while this window was open. Read them again.', code: 'terms_changed' }, { status: 409 });
-      }
+      if (body.termsVersion !== PAYMENTS_TERMS_VERSION) return termsChanged();
       const { error: agreeError } = await supabaseAdmin.from('org_payment_accounts').update({
         terms_version: PAYMENTS_TERMS_VERSION, terms_agreed_by: ctx.user.id, terms_agreed_by_email: ctx.user.email ?? 'unknown',
         terms_agreed_at: now, updated_at: now,

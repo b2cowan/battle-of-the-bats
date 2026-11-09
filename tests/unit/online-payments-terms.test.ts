@@ -110,11 +110,15 @@ describe('the daily job runs the owners’ two steps (owner ruling 4, its own co
 });
 
 describe('the /review of 12d-2 (the terms)', () => {
-  it('agreeing names the version the window showed; a change while it was open is refused', () => {
+  it('agreeing — and connecting (GST/HST 6.3 A6) — names the version the window showed; a change while it was open is refused', () => {
     const route = readCode('app/api/admin/payouts/route.ts');
-    assert.match(route, /if \(body\.termsVersion !== PAYMENTS_TERMS_VERSION\) \{/);
+    // Both doors refuse through the one helper: `connect` and `agree_terms`.
+    assert.equal(route.match(/if \(body\.termsVersion !== PAYMENTS_TERMS_VERSION\) return termsChanged\(\);/g)?.length, 2);
+    assert.match(route, /code: 'terms_changed' \}, \{ status: 409 \}/);
     assert.match(route, /if \(agreeError\) throw agreeError;/);
-    assert.match(readCode('components/admin/kit/club/PayoutsCard.tsx'), /action: 'agree_terms', agreeToTerms: true, termsVersion: PAYMENTS_TERMS_VERSION/);
+    const card = readCode('components/admin/kit/club/PayoutsCard.tsx');
+    assert.match(card, /action: 'agree_terms', agreeToTerms: true, termsVersion: PAYMENTS_TERMS_VERSION/);
+    assert.match(card, /action: 'connect', feePayer, agreeToTerms: true, termsVersion: PAYMENTS_TERMS_VERSION/);
   });
   it('an ending warning is claimed before it is sent, and compared as a moment', () => {
     const notices = readCode('lib/online-payment-owner-notices.ts');

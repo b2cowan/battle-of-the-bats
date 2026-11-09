@@ -1,3 +1,4 @@
+import { recordLegalAcceptance } from '../helpers/legal-acceptance'; // GST/HST 6.3 A5
 import { test, expect, type Page } from '@playwright/test';
 import { createClient } from '@supabase/supabase-js';
 import fs from 'fs';
@@ -135,6 +136,7 @@ async function makeAccount(email: string): Promise<string> {
     email, password: PASSWORD, email_confirm: true,
   });
   if (error) throw error;
+  await recordLegalAcceptance(admin, created.user);
   return created.user!.id;
 }
 

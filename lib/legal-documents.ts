@@ -23,7 +23,7 @@
  * No `server-only` import so the unit tests can load it; it reads no file itself.
  */
 
-import { legalPagesMode } from './legal-pages-switch';
+import { legalPagesMode } from './legal-pages-switch.ts'; // .ts: scripts import this module under plain Node
 
 export type LegalDocKey = 'terms' | 'privacy';
 export const LEGAL_DOC_KEYS: readonly LegalDocKey[] = ['terms', 'privacy'];

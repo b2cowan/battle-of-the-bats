@@ -84,6 +84,8 @@ export const TERMS_WORDS = {
   itemSettled: (name: string) => `Agreed by ${name}`,
   refuseFee: 'Agree to the new payments terms to change who pays the processing fee.',
   refuseSetup: 'Agree to the payments terms first.',
+  /** The version moved while the window was open — `connect` and `agree_terms` refuse alike (409 `terms_changed`). */
+  refuseChanged: 'The payments terms changed while this window was open. Read them again.',
   emailSubject: (clubName: string) => `New payments terms for ${clubName}`,
   emailLead: (dateLong: string, clubName: string) => `FieldLogicHQ’s payments terms changed on ${dateLong}. Online payments for ${clubName} stay on while you read them.`,
   emailBody: 'Please read and agree. You’ll need the new terms to set up payouts again, to reconnect, or to change who pays the processing fee.',

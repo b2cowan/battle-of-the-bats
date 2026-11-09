@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { afterEach, beforeEach, describe, it } from 'node:test';
 import * as React from 'react';
 import { billingTestLoader } from './_billing-test-loader.ts';
+import { PAYMENTS_TERMS_VERSION } from '../../lib/online-payment-words.ts';
 
 /**
  * GST/HST Stage 2 Part 2b (Ask 8): a club's billing address is asked for BEFORE the payouts connect touches Stripe.
@@ -105,7 +106,7 @@ function route() {
     writes: database.writes,
     connect: (extra: Row = {}) => handlers.POST(new Request('http://localhost/api/admin/payouts', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ orgSlug: 'falcons-club', action: 'connect', feePayer: 'club', agreeToTerms: true, ...extra }),
+      body: JSON.stringify({ orgSlug: 'falcons-club', action: 'connect', feePayer: 'club', agreeToTerms: true, termsVersion: PAYMENTS_TERMS_VERSION, ...extra }),
     })),
   };
 }
@@ -118,6 +119,21 @@ beforeEach(() => {
 });
 
 describe('payouts connect asks for the billing address before Stripe', () => {
+  it('a connect sent with another payments-terms version is refused 409 terms_changed before anything (6.3 A6)', async () => {
+    tables.billing_locations.push({ ...ADDRESS_ROW });
+    for (const termsVersion of ['an-older-version', undefined]) {
+      const api = route();
+      const res = await api.connect({ termsVersion });
+      assert.equal(res.status, 409);
+      const body = await res.json();
+      assert.equal(body.code, 'terms_changed');
+      assert.equal(body.error, 'The payments terms changed while this window was open. Read them again.');
+      assert.deepEqual(stripeCalls, []);
+      assert.deepEqual(accountWrites(api.writes), []);
+    }
+    assert.equal(tables.org_payment_accounts.length, 0);
+  });
+
   it('a club with no address is refused 409 billing_address_required: no Stripe account, no payout row, no audit', async () => {
     const api = route();
     const res = await api.connect();
@@ -352,7 +368,7 @@ describe('the Before window keeps the fee choice while the address window is ope
     assert.ok(put, 'the address was saved');
     const posts = connectRequests(h);
     assert.equal(posts.length, 1);
-    assert.deepEqual(posts[0].body, { orgSlug: 'falcons-club', action: 'connect', feePayer: 'club', agreeToTerms: true });
+    assert.deepEqual(posts[0].body, { orgSlug: 'falcons-club', action: 'connect', feePayer: 'club', agreeToTerms: true, termsVersion: PAYMENTS_TERMS_VERSION });
     assert.deepEqual(h.assigned, ['https://stripe.test/onboarding']);
   });
 

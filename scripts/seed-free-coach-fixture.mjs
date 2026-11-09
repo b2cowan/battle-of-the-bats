@@ -42,6 +42,7 @@
  */
 import { createClient } from '@supabase/supabase-js';
 import { config } from 'dotenv';
+import { recordLegalAcceptance } from './lib/record-legal-acceptance.mjs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -106,6 +107,8 @@ if (!user) {
   if (error) die('update user', error);
   ok(`auth user ${email} exists (${signInErr ? 'password reset' : 'password already works — left alone, sessions kept'}; name re-asserted)`);
 }
+
+await recordLegalAcceptance(db, user); // GST/HST 6.3 A5: a fixture never meets the Terms screen
 
 // ── the free team (found by THIS user's own membership, never by name) ───────
 const { data: memberships, error: mErr } = await db.from('basic_coach_team_users')

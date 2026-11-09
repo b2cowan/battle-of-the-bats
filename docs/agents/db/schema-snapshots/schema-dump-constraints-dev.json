@@ -4070,6 +4070,26 @@
     "update_rule": "NO ACTION"
   },
   {
+    "table_name": "legal_acceptances",
+    "constraint_name": "legal_acceptances_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "legal_acceptances",
+    "constraint_name": "legal_acceptances_user_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "user_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
     "table_name": "no_login_rate_limits",
     "constraint_name": "no_login_rate_limits_pkey",
     "constraint_type": "PRIMARY KEY",

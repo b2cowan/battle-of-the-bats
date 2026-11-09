@@ -1,12 +1,12 @@
 {
   "generated": "2026-11-09",
-  "total": 470,
+  "total": 486,
   "counts": {
-    "tables": 14,
-    "columns": 219,
-    "indexes": 72,
-    "constraints": 58,
-    "rls": 107
+    "tables": 15,
+    "columns": 227,
+    "indexes": 74,
+    "constraints": 60,
+    "rls": 110
   },
   "items": [
     {
@@ -75,6 +75,18 @@
     },
     {
       "key": "check:only-dev:family_links.family_links_made_on_entry_ck",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:legal_acceptances.legal_acceptances_door_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:legal_acceptances.legal_acceptances_text_shape",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:legal_acceptances.legal_acceptances_version_shape",
       "sig": ""
     },
     {
@@ -623,6 +635,38 @@
     },
     {
       "key": "column:only-dev:family_links.invited_as",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:legal_acceptances.accepted_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:legal_acceptances.box_text",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:legal_acceptances.door",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:legal_acceptances.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:legal_acceptances.privacy_version",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:legal_acceptances.terms_version",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:legal_acceptances.user_email",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:legal_acceptances.user_id",
       "sig": ""
     },
     {
@@ -1394,6 +1438,14 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:legal_acceptances.legal_acceptances_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:legal_acceptances.legal_acceptances_user_id_fkey",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:platform_charge_tax_looks.platform_charge_tax_looks_after_id_fkey",
       "sig": ""
     },
@@ -1650,6 +1702,14 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:legal_acceptances_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:legal_acceptances_user_idx",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:platform_charge_tax_looks_chain_idx",
       "sig": ""
     },
@@ -1847,6 +1907,10 @@
     },
     {
       "key": "table:only-dev:family_invite_stops",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:legal_acceptances",
       "sig": ""
     },
     {

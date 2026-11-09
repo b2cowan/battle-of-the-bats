@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireDevToolPlatformAdmin } from '@/lib/platform-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { recordFixtureAcceptance } from '@/lib/legal-acceptance';
 import { provisionStandaloneTeamWorkspace, TeamWorkspaceProvisioningError } from '@/lib/team-workspace-provisioning';
 
 const DEV_TEAM_WORKSPACE_SLUG = 'dev-standalone-team';
@@ -13,6 +14,7 @@ async function findOrCreateSeedOwner() {
   // Prefer coach@dev.local if the User Set has been seeded
   const coach = data?.users.find(u => u.email?.toLowerCase() === 'coach@dev.local');
   if (coach) {
+    await recordFixtureAcceptance(coach); // GST/HST 6.3 A5: a seed account never meets the Terms screen
     return { userId: coach.id, email: coach.email ?? STANDALONE_OWNER_EMAIL, source: 'coach@dev.local' };
   }
 
@@ -27,6 +29,7 @@ async function findOrCreateSeedOwner() {
     if (error) throw new Error(`Failed to create standalone owner: ${error.message}`);
     owner = created.user;
   }
+  await recordFixtureAcceptance(owner);
 
   return { userId: owner.id, email: STANDALONE_OWNER_EMAIL, source: STANDALONE_OWNER_EMAIL };
 }

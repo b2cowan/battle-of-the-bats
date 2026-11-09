@@ -1,3 +1,4 @@
+import { recordLegalAcceptance } from '../helpers/legal-acceptance'; // GST/HST 6.3 A5
 import { test, expect, type Page, type Locator } from '@playwright/test';
 import { createClient } from '@supabase/supabase-js';
 import fs from 'fs';
@@ -113,6 +114,7 @@ async function makeCoach(email: string): Promise<string> {
   });
   if (error) throw error;
   const id = created.user!.id;
+  await recordLegalAcceptance(admin, created.user);
   // getAuthContext requires the membership row or the portal bounces to /discover.
   const { error: memErr } = await admin.from('organization_members').insert({
     organization_id: orgId, user_id: id, role: 'coach',

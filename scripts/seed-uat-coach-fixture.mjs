@@ -47,6 +47,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { insertCommitmentWithRecords, paidOnce } from './lib/seed-commitment-records.mjs';
 import { fillPlayerRecord } from './lib/seed-filled-player.mjs';
+import { recordLegalAcceptance } from './lib/record-legal-acceptance.mjs';
 /* ⚠⚠ A SEEDED LINE'S KIND MUST AGREE WITH ITS WORD (mig 280).
    The add-a-line form stopped asking "is this a cost / expected fundraising / expected sponsorship /
    expected other income?" because the answer could contradict the item picked under it — a
@@ -145,6 +146,7 @@ const user = userPage.users.find(u => u.email?.toLowerCase() === coachEmail.toLo
 if (!user) { console.error(`✗ No auth user for ${coachEmail}. Run tests/uat/create-uat-accounts.sql first.`); process.exit(1); }
 ok(`auth user ${coachEmail} (${user.id})`);
 await ensureAccountName(user, COACH_ACCOUNT_NAME);
+await recordLegalAcceptance(db, user); // GST/HST 6.3 A5: the long-lived UAT coach never meets the Terms screen
 
 // ── 5. Org membership — THE FIRST MISSING PIECE ──────────────────────────────
 const { data: member } = await db.from('organization_members')
@@ -2932,6 +2934,7 @@ for (const person of QA_PEOPLE) {
     qaUser = created.data.user;
   }
   await ensureAccountName(qaUser, person.account);
+  await recordLegalAcceptance(db, qaUser); // GST/HST 6.3 A5: a fixture never meets the Terms screen
 
   const { data: orgRow } = await db.from('organization_members')
     .select('id, status').eq('organization_id', org.id).eq('user_id', qaUser.id).maybeSingle();

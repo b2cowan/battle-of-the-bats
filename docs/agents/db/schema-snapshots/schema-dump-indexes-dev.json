@@ -2035,6 +2035,16 @@
     "indexdef": "CREATE INDEX league_teams_season_id_idx ON public.league_teams USING btree (season_id)"
   },
   {
+    "tablename": "legal_acceptances",
+    "indexname": "legal_acceptances_pkey",
+    "indexdef": "CREATE UNIQUE INDEX legal_acceptances_pkey ON public.legal_acceptances USING btree (id)"
+  },
+  {
+    "tablename": "legal_acceptances",
+    "indexname": "legal_acceptances_user_idx",
+    "indexdef": "CREATE INDEX legal_acceptances_user_idx ON public.legal_acceptances USING btree (user_id, accepted_at DESC)"
+  },
+  {
     "tablename": "no_login_rate_limits",
     "indexname": "no_login_rate_limits_pkey",
     "indexdef": "CREATE UNIQUE INDEX no_login_rate_limits_pkey ON public.no_login_rate_limits USING btree (rail, subject)"

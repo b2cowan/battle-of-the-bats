@@ -5,6 +5,7 @@
  */
 import { createServerClient } from '@supabase/ssr';
 import { stripeKeyIsTest } from '../../lib/stripe-mode.ts';
+import { recordLegalAcceptance } from './record-legal-acceptance.mjs';
 
 // The dev project's ref, as `PROJECTS.dev` in scripts/lib/supabase-ops.mjs. NOT imported from there: that module fills any
 // unset variable from .env.local the moment it loads, so a guard importing it would turn "no key" into .env.local's key.
@@ -40,10 +41,12 @@ export async function ensureUser(db, { email, password, fullName }) {
   if (found) {
     const { error } = await db.auth.admin.updateUserById(found.id, { password });
     if (error) throw new Error(`password ${email}: ${error.message}`);
+    await recordLegalAcceptance(db, found); // GST/HST 6.3 A5: a fixture never meets the Terms screen
     return { user: found, created: false };
   }
   const { data, error } = await db.auth.admin.createUser({ email, password, email_confirm: true, user_metadata: { full_name: fullName } });
   if (error) throw new Error(`createUser ${email}: ${error.message}`);
+  await recordLegalAcceptance(db, data.user);
   return { user: data.user, created: true };
 }
 

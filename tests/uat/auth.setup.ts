@@ -13,6 +13,10 @@ import { test as setup, expect } from '@playwright/test';
 import path from 'path';
 import fs from 'fs';
 import { loadUATEnv } from './helpers/types';
+import { recordLegalAcceptance } from './helpers/legal-acceptance';
+import { supabaseAdmin } from '../../lib/supabase-admin';
+import { findAuthUserByEmail } from '../../lib/auth-account-lookup';
+import { currentVersion } from '../../lib/legal-documents';
 
 // Defer env validation to test runtime so `playwright --list` works without .env.local
 let _env: ReturnType<typeof loadUATEnv> | null = null;
@@ -32,6 +36,9 @@ async function loginOrgUser(
   password: string,
   savePath: string,
 ) {
+  // GST/HST 6.3 A5: a long-lived UAT role never meets the Terms screen (records nothing while the legal pages are off; the
+  // platform admin is staff, exempt, and signs in below without it). No account scan while the pages are off.
+  if (currentVersion('terms') !== null) await recordLegalAcceptance(supabaseAdmin, await findAuthUserByEmail(email));
   await page.goto('/auth/login');
   await page.locator('#login-email').fill(email);
   await page.locator('#login-password').fill(password);

@@ -43,6 +43,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { randomUUID } from 'crypto';
 import { insertCommitmentWithRecords, paidOnce } from './lib/seed-commitment-records.mjs';
+import { recordLegalAcceptance } from './lib/record-legal-acceptance.mjs';
 /* ⚠⚠ A SEEDED LINE'S KIND IS DERIVED FROM ITS WORD, NEVER TYPED BESIDE IT (mig 280).
    The form stopped asking "is this a cost / expected fundraising / expected sponsorship / expected
    other income?" because the answer could contradict the item picked under it — a sponsorship line
@@ -119,12 +120,13 @@ async function findUserByEmail(email) {
 
 async function ensureUser(email, password, fullName) {
   const existing = await findUserByEmail(email);
-  if (existing) { note(`auth user exists ${email}`); return existing; }
+  if (existing) { note(`auth user exists ${email}`); await recordLegalAcceptance(db, existing); return existing; }
   const { data, error } = await db.auth.admin.createUser({
     email, password, email_confirm: true, user_metadata: { full_name: fullName },
   });
   die(`createUser ${email}`, error);
   ok(`auth user created ${email} / ${password}`);
+  await recordLegalAcceptance(db, data.user); // GST/HST 6.3 A5: a fixture never meets the Terms screen
   return data.user;
 }
 

@@ -1,3 +1,4 @@
+import { recordLegalAcceptance } from '../helpers/legal-acceptance' // GST/HST 6.3 A5
 import { expect, test, type Page } from '@playwright/test'
 import { readdirSync, readFileSync } from 'fs'
 import path from 'path'
@@ -128,6 +129,7 @@ test.describe.serial('a coach’s own team moves into a club, whole', () => {
     })
     if (coachUserError) throw coachUserError
     const coachUserId = coachUser.user!.id
+    await recordLegalAcceptance(supabaseAdmin, coachUser.user)
 
     const teamName = `Team Move Smoke ${suffix}`
     const provisioned = await provisionWorkspace({ ownerUserId: coachUserId, teamName, slug: `team-move-smoke-${suffix}` })

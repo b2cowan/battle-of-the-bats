@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { requireDevToolPlatformAdmin } from '@/lib/platform-auth';
+import { recordFixtureAcceptance } from '@/lib/legal-acceptance';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import type { OrgPlan } from '@/lib/types';
 
@@ -96,6 +97,7 @@ export async function POST(req: Request) {
   } else {
     log.push(`Auth user already exists: ${OWNER_EMAIL}`);
   }
+  await recordFixtureAcceptance(authUser!); // GST/HST 6.3 A5: a seed account never meets the Terms screen
 
   // Org member
   const { data: existing } = await supabaseAdmin

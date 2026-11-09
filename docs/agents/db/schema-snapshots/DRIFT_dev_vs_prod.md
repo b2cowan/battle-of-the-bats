@@ -2,22 +2,23 @@
 
 **Generated:** 2026-11-09 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 470 divergence(s)** across dev/prod.
+**⚠️ 486 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
-| Tables | 8 | 6 | — |
-| Columns | 159 | 59 | 1 |
-| Indexes | 46 | 26 | 0 |
-| Constraints | 30 | 28 | — |
-| RLS / CHECK | 79 | 26 | 0 (RLS state) |
+| Tables | 9 | 6 | — |
+| Columns | 167 | 59 | 1 |
+| Indexes | 48 | 26 | 0 |
+| Constraints | 32 | 28 | — |
+| RLS / CHECK | 82 | 26 | 0 (RLS state) |
 
 ## Tables
-### Only in DEV (8)
+### Only in DEV (9)
 - `bank_check_waiting`
 - `family_calendar_feeds`
 - `family_invitations`
 - `family_invite_stops`
+- `legal_acceptances`
 - `platform_charge_tax_looks`
 - `platform_charge_tax_records`
 - `platform_credit_note_tax_records`
@@ -32,7 +33,7 @@
 - `bank_saved_lines`
 
 ## Columns
-### Only in DEV (159)
+### Only in DEV (167)
 - `bank_check_waiting.added_at`
 - `bank_check_waiting.added_by`
 - `bank_check_waiting.amount_cents`
@@ -79,6 +80,14 @@
 - `family_links.child_id`
 - `family_links.ended_by`
 - `family_links.invited_as`
+- `legal_acceptances.accepted_at`
+- `legal_acceptances.box_text`
+- `legal_acceptances.door`
+- `legal_acceptances.id`
+- `legal_acceptances.privacy_version`
+- `legal_acceptances.terms_version`
+- `legal_acceptances.user_email`
+- `legal_acceptances.user_id`
 - `org_children.emergency_contact_name`
 - `org_children.emergency_contact_phone`
 - `org_children.medical_notes`
@@ -258,7 +267,7 @@
 - `family_links.rep_team_id` — dev: `uuid|uuid|YES|` | prod: `uuid|uuid|NO|`
 
 ## Indexes
-### Only in DEV (46)
+### Only in DEV (48)
 - `bank_check_waiting_added_by_idx`
 - `bank_check_waiting_once`
 - `bank_check_waiting_pkey`
@@ -285,6 +294,8 @@
 - `family_invite_stops_pkey`
 - `family_links_child_id_idx`
 - `family_links_live_child_uniq`
+- `legal_acceptances_pkey`
+- `legal_acceptances_user_idx`
 - `platform_charge_tax_looks_chain_idx`
 - `platform_charge_tax_looks_invoice_idx`
 - `platform_charge_tax_looks_pkey`
@@ -338,7 +349,7 @@
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (30)
+### Only in DEV (32)
 - `bank_check_waiting.bank_check_waiting_added_by_fkey`
 - `bank_check_waiting.bank_check_waiting_check_id_fkey`
 - `bank_check_waiting.bank_check_waiting_once`
@@ -359,6 +370,8 @@ _none_
 - `family_invite_stops.family_invite_stops_org_id_fkey`
 - `family_invite_stops.family_invite_stops_pkey`
 - `family_links.family_links_child_id_fkey`
+- `legal_acceptances.legal_acceptances_pkey`
+- `legal_acceptances.legal_acceptances_user_id_fkey`
 - `platform_charge_tax_looks.platform_charge_tax_looks_after_id_fkey`
 - `platform_charge_tax_looks.platform_charge_tax_looks_pkey`
 - `platform_charge_tax_looks.platform_charge_tax_looks_put_back_of_fkey`
@@ -404,7 +417,7 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (79)
+### CHECK only in DEV (82)
 - `bank_check_waiting.bank_check_waiting_added_shape`
 - `bank_check_waiting.bank_check_waiting_amount_cents_check`
 - `bank_check_waiting.bank_check_waiting_direction_check`
@@ -420,6 +433,9 @@ _none_
 - `family_links.family_links_ended_by_check`
 - `family_links.family_links_invited_as_check`
 - `family_links.family_links_made_on_entry_ck`
+- `legal_acceptances.legal_acceptances_door_check`
+- `legal_acceptances.legal_acceptances_text_shape`
+- `legal_acceptances.legal_acceptances_version_shape`
 - `org_public_site_content.org_public_site_content_mailing_address_check`
 - `platform_charge_tax_looks.platform_charge_tax_looks_keys_shape`
 - `platform_charge_tax_looks.platform_charge_tax_looks_looked_by_check`

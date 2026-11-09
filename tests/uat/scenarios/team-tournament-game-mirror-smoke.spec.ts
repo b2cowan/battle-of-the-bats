@@ -1,3 +1,4 @@
+import { recordLegalAcceptance } from '../helpers/legal-acceptance'; // GST/HST 6.3 A5
 import { test, expect } from '@playwright/test';
 import { createClient } from '@supabase/supabase-js';
 import fs from 'fs';
@@ -108,6 +109,7 @@ test.beforeAll(async () => {
   });
   if (userErr) throw userErr;
   userId = created.user!.id;
+  await recordLegalAcceptance(admin, created.user);
 
   // getAuthContext requires the membership row or the portal bounces to /discover.
   await admin.from('organization_members').insert({

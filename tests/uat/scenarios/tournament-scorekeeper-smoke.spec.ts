@@ -1,3 +1,4 @@
+import { recordLegalAcceptance } from '../helpers/legal-acceptance' // GST/HST 6.3 A5
 import { expect, test } from '@playwright/test'
 import fs from 'node:fs/promises'
 import path from 'node:path'
@@ -208,6 +209,7 @@ test.describe.serial('Tournament scorekeeper UAT smoke', () => {
 
     if (scorekeeperUserError) throw scorekeeperUserError
     if (!scorekeeperUser.user?.id) throw new Error('Smoke scorekeeper user was not created.')
+    await recordLegalAcceptance(supabaseAdmin, scorekeeperUser.user)
 
     const { data: member, error: memberError } = await supabaseAdmin
       .from('organization_members')

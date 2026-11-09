@@ -1,3 +1,4 @@
+import { recordLegalAcceptance } from '../helpers/legal-acceptance' // GST/HST 6.3 A5
 import { expect, test, type Browser } from '@playwright/test'
 import path from 'path'
 
@@ -78,6 +79,7 @@ test.describe.serial('standalone Team direct checkout smoke', () => {
     if (coachUserError) throw coachUserError
     if (!coachUser.user?.id) throw new Error('Smoke coach user was not created.')
     createdCoachUserIds.add(coachUser.user.id)
+    await recordLegalAcceptance(supabaseAdmin, coachUser.user)
 
     // GST/HST Stage 1: a paid checkout refuses a buyer with no billing address on file, and the Premium buyer is the coach.
     // The row goes with the user (ON DELETE CASCADE).

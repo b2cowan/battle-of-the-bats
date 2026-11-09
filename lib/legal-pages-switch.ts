@@ -19,7 +19,7 @@
  * the answer from the provider, never from env.
  */
 
-import { stripeKeyIsTest } from './stripe-mode';
+import { stripeKeyIsTest } from './stripe-mode.ts'; // .ts: scripts import this module under plain Node (the fixture helper)
 
 export const LEGAL_PAGES_PUBLISHED: boolean = false;
 

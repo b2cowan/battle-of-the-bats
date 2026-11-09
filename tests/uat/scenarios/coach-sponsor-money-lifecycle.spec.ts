@@ -1,3 +1,4 @@
+import { recordLegalAcceptance } from '../helpers/legal-acceptance'; // GST/HST 6.3 A5
 import { test, expect, type Page } from '@playwright/test';
 import { createClient } from '@supabase/supabase-js';
 import fs from 'fs';
@@ -185,6 +186,7 @@ test.beforeAll(async () => {
   });
   if (userErr) throw userErr;
   headUserId = created.user!.id;
+  await recordLegalAcceptance(admin, created.user);
   await insert('organization_members', {
     organization_id: orgId, user_id: headUserId, role: 'coach',
     status: 'active', accepted_at: new Date().toISOString(),

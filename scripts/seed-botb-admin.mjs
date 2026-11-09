@@ -14,6 +14,7 @@
  */
 import { createClient } from '@supabase/supabase-js';
 import { readFileSync } from 'fs';
+import { recordLegalAcceptance } from './lib/record-legal-acceptance.mjs';
 
 const env = readFileSync('.env.local', 'utf8');
 const get = k => (env.match(new RegExp('^' + k + '=(.*)$', 'm')) || [])[1]?.trim().replace(/^["']|["']$/g, '');
@@ -49,6 +50,8 @@ async function main() {
   });
   if (uErr) throw uErr;
   const userId = created.user.id;
+  // GST/HST 6.3 A5: this script reads .env.local itself, so the switch's two values are handed over.
+  await recordLegalAcceptance(sb, created.user, { LEGAL_PAGES_PREVIEW: get('LEGAL_PAGES_PREVIEW'), STRIPE_SECRET_KEY: get('STRIPE_SECRET_KEY') });
 
   // ── Owner membership (full admin access) ──
   const { error: mErr } = await sb.from('organization_members').insert({

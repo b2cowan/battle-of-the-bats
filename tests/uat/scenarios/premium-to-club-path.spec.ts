@@ -36,6 +36,7 @@
  * check the charge"); the platform admin's free-time power; migration 414 applied (the flip).
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
+import { recordLegalAcceptance } from '../helpers/legal-acceptance'; // GST/HST 6.3 A5
 import { test, expect, type Browser, type BrowserContext, type Page } from '@playwright/test';
 import fs from 'fs';
 import path from 'path';
@@ -280,6 +281,7 @@ test.describe.serial('C · a coach on free time becomes the club (mock billing)'
     if (error || !user.user) throw error ?? new Error('no user');
     const partial: Partial<Made> = { userId: user.user.id, email };
     try {
+      await recordLegalAcceptance(supabaseAdmin, user.user);
       // GST/HST Stage 1: the Start my club window fills the club's billing address in from the coach's own home address, and a
       // checkout refuses without one. Give the new coach a home address (the row goes with the user, ON DELETE CASCADE).
       const { error: addressError } = await supabaseAdmin.from('billing_locations').insert({ user_id: user.user.id, ...HOME_ADDRESS });

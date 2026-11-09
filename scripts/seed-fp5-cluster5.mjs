@@ -34,6 +34,7 @@
  */
 import { createClient } from '@supabase/supabase-js';
 import { randomUUID } from 'crypto';
+import { recordLegalAcceptance } from './lib/record-legal-acceptance.mjs';
 
 const db = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 
@@ -71,6 +72,7 @@ if (!owner) {
 } else {
   console.log(`auth user exists ${OWNER_EMAIL}`);
 }
+await recordLegalAcceptance(db, owner); // GST/HST 6.3 A5: a fixture never meets the Terms screen
 
 // official auth user (so the invite has a real identity to attach to if accepted)
 let official = userList?.users.find(u => u.email === OFFICIAL_EMAIL);
@@ -81,6 +83,7 @@ if (!official) {
 } else {
   console.log(`auth user exists ${OFFICIAL_EMAIL}`);
 }
+await recordLegalAcceptance(db, official);
 
 // ── 2. org + owner membership ─────────────────────────────────────────────────
 let org = (await db.from('organizations').select('*').eq('slug', ORG.slug).maybeSingle()).data;
