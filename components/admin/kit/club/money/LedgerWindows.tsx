@@ -213,14 +213,20 @@ function DirectionField({ id, value, onChange }: { id: string; value: 'income' |
   );
 }
 
-function StatusField({ id, value, onChange }: { id: string; value: 'posted' | 'pending'; onChange: (v: 'posted' | 'pending') => void }) {
+function StatusField({ id, value, onChange, hint }: {
+  id: string; value: 'posted' | 'pending'; onChange: (v: 'posted' | 'pending') => void;
+  /** A sentence under the select (the Bank tab's: which status a bank fee takes, Bank check novice UX S1 row 19). */
+  hint?: string;
+}) {
   return (
     <label className={ck.field} htmlFor={id}>
       <span className={ck.label}>Status</span>
-      <select id={id} className={ck.select} value={value} onChange={e => onChange(e.target.value as 'posted' | 'pending')}>
+      <select id={id} className={ck.select} value={value} onChange={e => onChange(e.target.value as 'posted' | 'pending')}
+        aria-describedby={hint ? `${id}-hint` : undefined}>
         <option value="posted">Posted</option>
         <option value="pending">Pending — a cheque written and not yet cleared</option>
       </select>
+      {hint && <span id={`${id}-hint`} className={ck.hint}>{hint}</span>}
     </label>
   );
 }
@@ -246,7 +252,7 @@ function PayeeField({ id, q, value, onChange, onManage, label }: {
 
 // ── Add an entry ─────────────────────────────────────────────────────────────────────────────────
 
-export function AddEntryWindow({ book, q, orgSlug, words, fiscal = null, canMove = false, prefill, onAdded, onClose }: {
+export function AddEntryWindow({ book, q, orgSlug, words, fiscal = null, canMove = false, prefill, statusHint, onAdded, onClose }: {
   book: BookRef; q: string; orgSlug: string; words: WordList | null;
   /** The club's fiscal years (Stage 3c) — a date in a closed one is refused under the field. */
   fiscal?: FiscalSetting | null;
@@ -259,6 +265,8 @@ export function AddEntryWindow({ book, q, orgSlug, words, fiscal = null, canMove
    * window starts as it always has (money out, today, empty).
    */
   prefill?: { entryType?: 'income' | 'expense'; date?: string; amount?: string };
+  /** A sentence under Status (the Bank tab's, which status a bank fee takes); none from the Ledger itself. */
+  statusHint?: string;
   onAdded: (text: string) => void; onClose: () => void;
 }) {
   const [entryType, setEntryType] = useState<'income' | 'expense'>(prefill?.entryType ?? 'expense');
@@ -333,7 +341,7 @@ export function AddEntryWindow({ book, q, orgSlug, words, fiscal = null, canMove
         <MethodField id="ae-method" label="How it was paid" value={method} onChange={setMethod} required={false} />
         <TextField id="ae-ref" label="Reference" value={reference} onChange={setReference} placeholder="Cheque or E-Transfer number" />
       </div>
-      <StatusField id="ae-status" value={status} onChange={setStatus} />
+      <StatusField id="ae-status" value={status} onChange={setStatus} hint={statusHint} />
       <label className={ck.field} htmlFor="ae-notes">
         <span className={ck.label}>Notes</span>
         <textarea id="ae-notes" className={ck.textarea} rows={2} maxLength={2000} value={notes} onChange={e => setNotes(e.target.value)} />

@@ -10,11 +10,12 @@
  */
 import { pluralize as plural } from './utils';
 
-/** The season windows' verb and its reason (BC8a): Close the season starts no season, so its reason is its own. */
+/** The season windows' verb (BC8a; S1 rows 16 + A15). Both windows close this season, so the reason is one sentence. */
 const seasonVerb = {
-  start: 'start the new season: the new season’s Bank view starts from its own opening balance.',
-  close: 'close: a closed season has no Bank view.',
+  start: 'start the new season',
+  close: 'close the season',
 } as const;
+const seasonPrint = 'Print any check you want to keep first, from a computer: a closed season has no balance check.';
 
 export const BANK_WORDS = {
   loading: 'Loading the bank…',
@@ -48,13 +49,23 @@ export const BANK_WORDS = {
   startAnyway: 'Start anyway',
 
   // ── the check form (ask 10, tab 2): one card on the Bank tab, above the saved checks ──────
-  checkTitle: 'Check a statement',
+  // Bank check novice UX S1 (plan BANK_CHECK_NOVICE_UX_PLAN.md, `/marketing` 2026-11-08): a volunteer checks a banking app,
+  // not a paper statement, so the card asks for a day's balance (A1a; bends BC2a's "Check a statement", owner-ruled).
+  checkTitle: 'Check your bank balance',
+  // A4: what the card is for, always, under the heading. It promises no more than a balance check can do (two mistakes
+  // can cancel), so it says the Ledger / the books are taken as they are.
+  checkPurpose: 'Type the balance your bank shows. If it matches your books, you’re in step with the bank. If not, we’ll help you look for the difference. It takes what’s in your books as correct.',
+  checkDate: 'Date',
   checkBalance: 'Bank balance on that date',
   // On a phone the two fields sit side by side (drawn, owner 2026-11-06 BC4b): the short word.
   checkBalancePhone: 'Bank balance',
+  // Row 6: which of the app's balances, until one is typed. "Pending" is the bank's here; row 19 bridges the Ledger's.
+  balanceHint: 'Use the posted balance your banking app shows, with pending transactions left out.',
   saveCheck: 'Save this check',
-  saveOffNote: (amount: string) => `It saves as off by ${amount}. You can check this statement again later.`,
-  replacesNote: 'This statement is checked already. Saving replaces that check.',
+  // Row 10: no amount (the Difference tile above shows it); the draft's resting sentence follows it unchanged (S7's).
+  saveOffNote: 'You can save this check while it’s off and check again later. Saving changes nothing in your books.',
+  // Row 21: one neutral line, right after a save too (the notice already says "Checked {date}…").
+  replacesNote: (date: string) => `${date} is checked already. Saving again replaces that check.`,
   figuring: 'Figuring this day…',
   figureFailed: 'The figures for that day couldn’t be loaded.',
   savedMatches: (date: string) => `Checked ${date}. The bank and your books agree.`,
@@ -71,7 +82,8 @@ export const BANK_WORDS = {
   bandBankCaptionPhone: (date: string) => `On ${date}`,
   bandShouldCaptionPhone: 'Your books, adjusted for what’s pending',
   bandDifference: 'Difference',
-  bandBankCaption: (date: string) => `Statement balance on ${date}`,
+  // The typed field's own words (drawing D1, S1): no statement implied.
+  bandBankCaption: (date: string) => `Bank balance on ${date}`,
   bandShouldCaption: (date: string) => `Your books on ${date}, less what hasn’t reached the bank yet`,
   bandNoBalance: 'Type the balance to see it',
   bandMatches: (date: string) => `The bank and your books agree on ${date}.`,
@@ -80,7 +92,9 @@ export const BANK_WORDS = {
   sumsTitle: 'How “Should be in the bank” is worked out',
   sumBooks: (date: string) => `Your books on ${date}`,
   sumOnItsWay: (n: number) => `Online payments on their way to your bank · ${n}`,
-  sumPaysOut: (date: string) => `Stripe pays them out ${date}`,
+  // Row 22: the name stays (eight strings, two rails); only the date line loses "Stripe pays them out" (S1 `/marketing`:
+  // a payout date is an estimate, and "due" is the dues word).
+  sumPaysOut: (date: string) => `expected ${date}`,
   sumOnItsWayNone: 'Online payments on their way to your bank',
   railCard: 'card',
   railBank: 'bank',
@@ -91,7 +105,7 @@ export const BANK_WORDS = {
   notCountedDown: 'Couldn’t reach Stripe, so online payments on their way aren’t counted. Try again in a few minutes.',
   notCountedUnlisted: 'One of Stripe’s payouts doesn’t list what’s in it, so online payments on their way aren’t counted.',
   childOut: (amount: string) => `${amount} out`,
-  childFootPays: (date: string) => `Stripe pays these out on ${date}`,
+  childFootPays: (date: string) => `These are expected on ${date}`,
   childFootNotYet: 'Stripe hasn’t put all of these in a payout yet',
   payoutsTab: 'Payouts tab',
   linesSinceMatch: (date: string, n: number) => `Lines since your last match (${date}): ${n}`,
@@ -113,8 +127,9 @@ export const BANK_WORDS = {
   hintHalf: (lineAmount: string, amount: string) => `is ${lineAmount}, half of the ${amount} gap. Was it entered the wrong way round?`,
   // The coach card's own verb (owner 2026-11-07, Bank check WD3): the coach reads these beside "+ Record" and Money's
   // "Record money", so "recorded"; the club keeps its Ledger's "entered" in the three above.
-  coachHintOrMore: (amount: string, alone = false) => `${alone ? 'The' : 'Or the'} bank received ${amount} your books don’t have: a deposit or interest you haven’t recorded.`,
-  coachHintOrLess: (amount: string, alone = false) => `${alone ? 'The' : 'Or the'} bank took out ${amount} your books don’t have: a fee or a payment you haven’t recorded.`,
+  // S1 row 8: the coach card's one noun, "your Ledger".
+  coachHintOrMore: (amount: string, alone = false) => `${alone ? 'The' : 'Or the'} bank received ${amount} your Ledger doesn’t have: a deposit or interest you haven’t recorded.`,
+  coachHintOrLess: (amount: string, alone = false) => `${alone ? 'The' : 'Or the'} bank took out ${amount} your Ledger doesn’t have: a fee or a payment you haven’t recorded.`,
   coachHintHalf: (lineAmount: string, amount: string) => `is ${lineAmount}, half of the ${amount} gap. Was it recorded the wrong way round?`,
   hintCombo: (n: number, amount: string) => `These ${n} add up to ${amount}:`,
   hintComboOut: 'If the bank hasn’t cashed them yet, that’s the gap.',
@@ -164,6 +179,9 @@ export const BANK_WORDS = {
   recordMissingAmount: 'Record the missing amount',
   addEntry: 'Add entry',
   addMissingEntry: 'Add the missing entry',
+  // S1 row 19: under Status in the Ledger's Add an entry window, when the Bank tab opened it (only posted lines reach the
+  // check's figure; a bank fee left Pending would keep the check off).
+  addEntryStatusHint: 'Choose Posted for a fee the bank has already taken. Pending entries aren’t counted in a balance check.',
   draftPickedUp: 'Picked up where you left off',
   // Only when the draft is from an earlier day; the date through the shipped date helper.
   draftPickedUpOn: (date: string) => `Picked up where you left off · last worked on ${date}`,
@@ -209,12 +227,13 @@ export const BANK_WORDS = {
   overviewNotChecked: '· not checked yet',
   overviewNoAccount: 'not checked yet',
   booksNowSay: (amount: string) => `Books now say ${amount}`,
-  listTitle: 'Checked statements',
-  listCol: { date: 'Statement date', bankSaid: 'The bank said', shouldHave: 'Should have been', result: 'Result', checkedBy: 'Checked by', open: 'Open' },
+  // Row 13 (A1b): the list drops "statement"; "Balance checks", not a bare "Checks" (it would read as cheques: A2's reason).
+  listTitle: 'Balance checks',
+  listCol: { date: 'Date', bankSaid: 'The bank said', shouldHave: 'Should have been', result: 'Result', checkedBy: 'Checked by', open: 'Open' },
   startingPoint: 'Starting point',
   checkedCell: (who: string | null, when: string) => (who ? `${who} · ${when}` : when),
   cardTitle: (date: string, balance: string) => `${date} · ${balance}`,
-  noChecksYet: 'No statements checked since the starting point yet.',
+  noChecksYet: 'No balance checks since the starting point yet.',
   // A start saved while Stripe didn't answer (BC2a's "Start anyway"): its row says so, so a later "Off by" has a reason.
   startNotCounted: 'online payments on their way weren’t counted',
   openCheck: (date: string) => `Open the check for ${date}`,
@@ -224,7 +243,7 @@ export const BANK_WORDS = {
 
   // ── a saved check, opened (ask 5, tab 5): a form window, 640 (the band) ──────────────────────────────
   savedEyebrow: (account: string) => `${account} · saved check`,
-  savedTitle: (date: string) => `Statement ending ${date}`,
+  savedTitle: (date: string) => `The check for ${date}`,
   startEyebrow: (account: string) => `${account} · starting point`,
   startTitle: (date: string) => `Starting statement · ${date}`,
   savedBank: 'The bank said',
@@ -242,7 +261,7 @@ export const BANK_WORDS = {
   startedOn: (who: string | null, date: string, time: string) =>
     who ? `Started by ${who} on ${date} at ${time}` : `Started on ${date} at ${time}`,
   booksNowSayWhy: (date: string) => `A line dated on or before ${date} changed after this check was saved. This check’s figures stay as they were.`,
-  checkAgain: 'Check this statement again',
+  checkAgain: 'Check this date again',
   deleteCheck: 'Delete this check',
   deleteStart: 'Delete the starting statement',
   deleteTitle: 'Delete this check?',
@@ -259,7 +278,8 @@ export const BANK_WORDS = {
   // ── the printed report (BC5b, ask 9, R0 tab 9; owner "Report door / order / extras"): one US Letter page from a saved
   // check, BANK FIRST as an association's monthly form runs. Opened from the check's window; a desk's door only. ────────
   printCheck: 'Print this check',
-  reportEyebrow: (club: string) => `${club} · Bank check`,
+  // One name for the saved thing (S1 `/marketing`): "Balance check", as the coach's View option says it.
+  reportEyebrow: (club: string) => `${club} · Balance check`,
   reportTitle: (account: string, date: string) => `${account} · statement ending ${date}`,
   reportBooks: (names: readonly string[]) => `Books in this account: ${names.join(' · ')}`,
   reportBank: 'Bank balance on the statement',
@@ -304,8 +324,26 @@ export const BANK_WORDS = {
   // ── the COACH's Bank view, Money → Ledger → View: Bank (BC7a; drawing tab 2, the coach phone frame). Drafts for BC8's
   // `/marketing` (plan §5). A team has one account and no starting statement: its season's opening balance is the start. ──
   coachAccount: 'Team bank account',
-  // Under the statement date (drawn): the working season only (O5).
-  coachSince: (date: string) => `Statements from this season only, since ${date}.`,
+  // ── Bank check novice UX S1 (`/marketing` 2026-11-08): the coach card names the figure by its screen, "your Ledger"
+  // (row 8: the card used three names for it, and a coach doesn't keep "books"); the coach "records" (WD3). ──
+  coachCheckPurpose: 'Type the balance your bank shows. If it matches your Ledger, you’re in step with the bank. If not, we’ll help you look for the difference. It takes what’s in your Ledger as correct.',
+  // A11, now: neutral, until the team's first check (the position on a coach's own account is the owner's call).
+  coachTeamOnly: 'This check is for a bank account that holds only the team’s money.',
+  coachBandShouldCaption: (date: string) => `Your Ledger on ${date}, adjusted for what hasn’t reached the bank yet`,
+  coachBandShouldCaptionPhone: 'Your Ledger, adjusted for what’s pending',
+  coachBandBankMore: (amount: string) => `The bank shows ${amount} more than your Ledger.`,
+  coachBandBankLess: (amount: string) => `The bank shows ${amount} less than your Ledger.`,
+  coachBandMatches: (date: string) => `The bank and your Ledger agree on ${date}.`,
+  coachSavedMatches: (date: string) => `Checked ${date}. The bank and your Ledger agree.`,
+  coachSumBooks: (date: string) => `Your Ledger on ${date}`,
+  // A desk's quiet sub-line on that row (D1, question 10): the same figure the Money Overview calls Cash on hand.
+  coachSumBooksSub: 'the Overview’s Cash on hand that day',
+  coachNoLinesSince: 'No lines in your Ledger since then.',
+  coachSaveOffNote: 'You can save this check while it’s off and check again later. Saving changes nothing in your Ledger.',
+  // Under the date until a balance is typed (row 7, drawn): the working season only (O5), both ends said.
+  coachSince: (date: string) => `Any day this season, from ${date} to today.`,
+  // A8: the cash field waits behind this link (bends the 2026-11-05 replan's placement, not its rule).
+  coachCashOpen: 'Holding cash you haven’t deposited?',
   // The cash figure (ask 1, option C): one optional field, saved with this check only.
   coachCash: 'Cash not deposited yet',
   // Find's head when no check this season has matched: every line of the season counts.
@@ -313,13 +351,15 @@ export const BANK_WORDS = {
   coachFindSinceSeason: (date: string) => `Lines since the season started · ${date}`,
   // Q1-A: the divider above last season's lines (the season's own name, "2025 Season").
   coachLastSeason: (season: string) => `From the ${season}`,
-  coachNoChecksYet: 'No statements checked this season yet.',
+  coachNoChecksYet: 'No balance checks this season yet.',
+  // Row 25: money view-only sees no form, so the empty list also says who can ("record money" is money write's name).
+  coachReaderCanCheck: 'Anyone who can record money can check the bank here.',
   coachLoadFailed: 'The bank checks couldn’t be loaded.',
   coachLoading: 'Loading the bank checks…',
   // ── the coach's phone (BC7b; drawing tab 2). Drafts for BC8's `/marketing` too. ──
   // The band's middle tile on a phone when the cash is the only thing taken off (drawn "your books, less $180.00 cash");
   // with lines marked Not in the bank yet as well, the club's short caption says it.
-  coachShouldCashPhone: (amount: string) => `Your books, less ${amount} cash`,
+  coachShouldCashPhone: (amount: string) => `Your Ledger, less ${amount} not deposited`,
   // Find's group head over the cards when no check this season has matched (shorter, no year, as the club's phone).
   coachFindSinceSeasonPhone: (date: string) => `Since the season started · ${date}`,
   // The portal's record windows end on Close (the Ledger's own line window does).
@@ -334,13 +374,15 @@ export const BANK_WORDS = {
   // ⚖ Off or matching (owner "Season windows, off or matching", BC8b 2026-11-07): an OFF latest check says so, amber; a
   // MATCHING one is a plain line with no warning icon, outside Close the season's amber "Before you do" box. The off
   // sentence's subject is the coach's check, never "the bank" (BC8b `/marketing`: the books are what's off).
+  // S1 (rows 16 + A15, `/marketing` 2026-11-08): no "statement", and the print sentence the help already said. Start next
+  // season closes this season too, so one reason serves both windows, said once. "From a computer": printing is a desk's.
   coachSeasonOff: (amount: string, date: string, verb: 'start' | 'close') =>
-    `Your bank check was off by ${amount} on ${date}. Check the season’s last statement before you ${seasonVerb[verb]}`,
+    `Your balance check was off by ${amount} on ${date}. Before you ${seasonVerb[verb]}, check your bank balance for the season’s last day. ${seasonPrint}`,
   coachSeasonMatches: (date: string, verb: 'start' | 'close') =>
-    `The bank matches through ${date}. If you have a later statement, check it before you ${seasonVerb[verb]}`,
+    `The bank matches through ${date}. If you have a later balance, check it before you ${seasonVerb[verb]}. ${seasonPrint}`,
 
   // ── the team's printed check (BC8b; K8, R0 tab 9, the club's BC5b report rulings carried; owner "Team report sign lines
   // / role / start line" 2026-11-07). The eyebrow, title, sum and sign-off words are the club's settled report words above.
-  coachReportFoot: (date: string, team: string) => `Printed ${date} from FieldLogicHQ${team ? ` · ${team}` : ''} · Money → Ledger → Bank`,
-  coachReportEyebrowBare: 'Bank check',
+  coachReportFoot: (date: string, team: string) => `Printed ${date} from FieldLogicHQ${team ? ` · ${team}` : ''} · Money → Ledger → Balance check`,
+  coachReportEyebrowBare: 'Balance check',
 } as const;

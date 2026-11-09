@@ -282,14 +282,18 @@ export default function BankCheckForm({ orgSlug, view, personId, onSaved, onChan
       </button>
     </div>
   );
-  const saveNotes = (
-    <>
-      {band && band.result === 'off' && typed !== null && <p className={ck.hint}>{W.saveOffNote(cents(band.offByCents))}</p>}
-      {replaces && <p className={ck.hint}>{W.replacesNote}</p>}
-      {/* The resting sentence while a draft exists (drawing tab 2, note 3): it is what says leaving is safe. */}
-      {hasDraft && <p className={ck.hint}>{W.draftKept}</p>}
-    </>
-  );
+  // ONE note line (Bank check novice UX S1, row 10): which balance to type until one is typed; then that an off check
+  // saves and leaves the books alone, and the draft's resting sentence (S7 rewrites that one; it stays as WD1 wrote it).
+  // "{date} is checked already" (row 21) either way. Where it sits is unchanged (after the fields at a desk, under Save on
+  // a phone).
+  const notes = [
+    replaces ? W.replacesNote(dayYear(date)) : null,
+    typed === null ? W.balanceHint : null,
+    band && band.result === 'off' && typed !== null ? W.saveOffNote : null,
+    // The resting sentence while a draft exists (drawing tab 2, note 3): it is what says leaving is safe.
+    hasDraft ? W.draftKept : null,
+  ].filter((t): t is string => !!t);
+  const saveNotes = notes.length > 0 ? <p className={ck.hint}>{notes.join(' ')}</p> : null;
 
   return (
     <section className={s.checkCard} aria-labelledby="bank-check-title">
@@ -301,6 +305,8 @@ export default function BankCheckForm({ orgSlug, view, personId, onSaved, onChan
           <Plus size={15} aria-hidden />{W.addEntry}
         </button>
       </div>
+      {/* What the card is for (S1, A4), always. */}
+      <p className={s.checkPurpose}>{W.checkPurpose}</p>
       {restoredOn && hasDraft && (
         <p className={`${ck.hint} ${s.restoreLine}`} role="status">
           <span>{restoredOn < today ? W.draftPickedUpOn(dayYear(restoredOn)) : W.draftPickedUp}</span>
@@ -311,7 +317,7 @@ export default function BankCheckForm({ orgSlug, view, personId, onSaved, onChan
       {/* What went wrong sits by Save: at the card's top at a desk (Save is inline there), above Save on a phone (/review). */}
       {!isPhone && <FormError inPlace>{error}</FormError>}
       <div className={s.checkRow}>
-        <DayField id="bank-check-date" label={W.statementDate} value={date} onChange={pickDate} max={today} />
+        <DayField id="bank-check-date" label={W.checkDate} value={date} onChange={pickDate} max={today} />
         <BankMoneyField id={BALANCE_ID} label={isPhone ? W.checkBalancePhone : W.checkBalance} value={balance} onChange={v => { setBalance(v); setError(''); }} />
         {!isPhone && saveButton}
       </div>
@@ -342,7 +348,7 @@ export default function BankCheckForm({ orgSlug, view, personId, onSaved, onChan
       {adding && ownBook && (
         <AddEntryWindow book={{ id: ownBook.id, name: ownBook.name, kind: ownBook.kind as LedgerKind, entityId: ownBook.entityId }}
           // The club's fiscal years, as the Ledger hands them: a date in a closed year is said under the field (/review).
-          q={q} orgSlug={orgSlug} words={words} fiscal={view.fiscal} canMove prefill={adding}
+          q={q} orgSlug={orgSlug} words={words} fiscal={view.fiscal} canMove prefill={adding} statusHint={W.addEntryStatusHint}
           onClose={() => setAdding(null)}
           onAdded={text => { setAdding(null); setAgain(n => n + 1); onChanged(null, text); }} />
       )}

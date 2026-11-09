@@ -362,8 +362,9 @@ const LEDGER_VIEW_LABEL: Record<LedgerView, string> = {
   timeline: 'Timeline',
   bills: 'Bills',
   due: 'Payment schedule',
-  /* The fourth view (Bank balance check BC7a; B8 as approved): the team's bank account checked against this book. */
-  bank: 'Bank',
+  /* The fourth view (Bank balance check BC7a; B8 as approved): the team's bank account checked against this book. Named
+     for what it does, "Balance check" (Bank check novice UX S1, A2: "Bank" read as another way to arrange the Ledger). */
+  bank: 'Balance check',
 };
 /** The view is REMEMBERED per team on this device (fold decision 3, owner 2026-08-28) — exactly
  *  the Date preset's storage pattern: a treasurer-ish coach who lives in By bill lands there next

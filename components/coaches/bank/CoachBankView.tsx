@@ -138,7 +138,8 @@ export default function CoachBankView({ orgSlug, teamId, active = true, onAddLin
 
       <h3 className={`${styles.panelSubhead} ${b.listHead}`}>{W.listTitle}</h3>
       {view.checks.length === 0 ? (
-        <p className={`${styles.formHint} ${b.empty}`}>{W.coachNoChecksYet}</p>
+        // Money view-only sees no form: the empty list also says who can check (S1, row 25).
+        <p className={`${styles.formHint} ${b.empty}`}>{view.canWrite ? W.coachNoChecksYet : `${W.coachNoChecksYet} ${W.coachReaderCanCheck}`}</p>
       ) : isPhone ? (
         // On a phone each check is a row of the portal's framed list, the whole row its door (the club's BC4b cards):
         // "Oct 31, 2026 · $3,060.00", its result, who checked it and when.

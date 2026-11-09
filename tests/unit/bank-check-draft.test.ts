@@ -317,8 +317,9 @@ describe('11 · the words (plan §4b)', () => {
     assert.equal(W.hintOrMore('$40.00'), 'Or the bank received $40.00 your books don’t have: a deposit or interest you haven’t entered.');
     assert.equal(W.hintOrLess('$40.00', true), 'The bank took out $40.00 your books don’t have: a fee or a payment you haven’t entered.');
     assert.equal(W.hintHalf('$20.00', '$40.00'), 'is $20.00, half of the $40.00 gap. Was it entered the wrong way round?');
-    assert.equal(W.coachHintOrMore('$40.00'), 'Or the bank received $40.00 your books don’t have: a deposit or interest you haven’t recorded.');
-    assert.equal(W.coachHintOrLess('$40.00', true), 'The bank took out $40.00 your books don’t have: a fee or a payment you haven’t recorded.');
+    // The coach card's one noun is "your Ledger" (Bank check novice UX S1, row 8).
+    assert.equal(W.coachHintOrMore('$40.00'), 'Or the bank received $40.00 your Ledger doesn’t have: a deposit or interest you haven’t recorded.');
+    assert.equal(W.coachHintOrLess('$40.00', true), 'The bank took out $40.00 your Ledger doesn’t have: a fee or a payment you haven’t recorded.');
     assert.equal(W.coachHintHalf('$20.00', '$40.00'), 'is $20.00, half of the $40.00 gap. Was it recorded the wrong way round?');
   });
   it('each portal\'s Find reads its own three, never the other\'s', () => {
@@ -360,7 +361,9 @@ describe('12 · the coach card wires it as the club card does (WD2)', () => {
     assert.match(card, /keepOffered\(keys, offeredItems\(figure\)\)/, 'the shared helper, on the coach\'s own figure, no cast');
     assert.match(card, /<p className=\{`\$\{b\.callout\} \$\{b\.droppedNote\}`\} role="status">\{W\.draftDropped\(droppedMarks\)\}<\/p>/);
     assert.match(card, /const hasDraft = canKeep && worthKeeping;/);
-    assert.match(card, /\{hasDraft && <p className=\{`\$\{styles\.formHint\} \$\{b\.note\}`\}>\{W\.draftKept\}<\/p>\}/);
+    // S1 row 10: the resting sentence is one of the card's single note line's sentences, only while a draft exists.
+    assert.match(card, /hasDraft \? W\.draftKept : null,/);
+    assert.match(card, /<p className=\{`\$\{styles\.formHint\} \$\{b\.note\}`\}>\s*\{notes\.join\(' '\)\}/);
   });
   it('Save clears it only once the check saved; Start over clears it at once; the restore line names an earlier day', () => {
     const save = functionBody(card, 'save');

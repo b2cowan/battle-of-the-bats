@@ -438,7 +438,7 @@ describe('11 · the phone: Find as row cards, the callout\'s row, the two phone 
     assert.equal(BANK_WORDS.bandShouldCaptionPhone, 'Your books, adjusted for what’s pending');
     assert.equal(BANK_WORDS.findSinceMatchPhone('Sep 30'), 'Since your last match · Sep 30');
     assert.match(readCode(TILES), /captionShort: saved \? undefined : W\.bandBankCaptionPhone\(dayShort\(date\)\)/);
-    assert.match(readCode(TILES), /captionShort: saved \? undefined : W\.bandShouldCaptionPhone/);
+    assert.match(readCode(TILES), /captionShort: saved \? undefined : coach \? W\.coachBandShouldCaptionPhone : W\.bandShouldCaptionPhone/);
     assert.match(code('BankFind.tsx'), /<ClubRowBand>\{sinceHead\}<\/ClubRowBand>/);
     assert.match(code('BankCheckForm.tsx'), /label=\{isPhone \? W\.checkBalancePhone : W\.checkBalance\}/);
     const css = readSource(CSS);
@@ -539,8 +539,33 @@ describe('13. BC5b: the printed report (ask 9, R0 tab 9; owner "Report door / bo
   });
   it('the report\'s words', () => {
     assert.equal(BANK_WORDS.printCheck, 'Print this check');
-    assert.equal(BANK_WORDS.reportEyebrow('Lakeshore Lynx'), 'Lakeshore Lynx · Bank check');
+    assert.equal(BANK_WORDS.reportEyebrow('Lakeshore Lynx'), 'Lakeshore Lynx · Balance check');
     assert.equal(BANK_WORDS.reportCheckedBy('Priya Shah', 'Treasurer', 'Nov 3, 2026', '8:14 p.m.'), 'Checked by Priya Shah (Treasurer), Nov 3, 2026 at 8:14 p.m.');
     assert.equal(BANK_WORDS.reportFoot('Nov 4, 2026', 'Lakeshore Lynx'), 'Printed Nov 4, 2026 from FieldLogicHQ · Lakeshore Lynx · Accounting → Bank');
+  });
+});
+
+describe('14. through a volunteer\'s eyes (Bank check novice UX S1, plan BANK_CHECK_NOVICE_UX_PLAN.md §2)', () => {
+  const form = code('BankCheckForm.tsx');
+  it('A1a + A4: the heading, the purpose line always (the club says "your books"), "Date"', () => {
+    assert.match(form, /<p className=\{s\.checkPurpose\}>\{W\.checkPurpose\}<\/p>/);
+    assert.match(BANK_WORDS.checkPurpose, /your books/);
+    assert.match(form, /<DayField id="bank-check-date" label=\{W\.checkDate\}/);
+  });
+  it('rows 6 + 10 + 21: one note line, where the notes always sat', () => {
+    assert.match(form, /typed === null \? W\.balanceHint : null,/);
+    assert.match(form, /band && band\.result === 'off' && typed !== null \? W\.saveOffNote : null,/);
+    assert.match(form, /replaces \? W\.replacesNote\(dayYear\(date\)\) : null,/);
+    assert.match(form, /hasDraft \? W\.draftKept : null,/);
+    assert.equal(BANK_WORDS.saveOffNote, 'You can save this check while it’s off and check again later. Saving changes nothing in your books.');
+  });
+  it('row 19: the Add an entry window the Bank tab opens says which status a bank fee takes; the Ledger\'s own says nothing', () => {
+    assert.match(form, /statusHint=\{W\.addEntryStatusHint\}/);
+    assert.match(readCode('components/admin/kit/club/money/LedgerWindows.tsx'), /<StatusField id="ae-status" value=\{status\} onChange=\{setStatus\} hint=\{statusHint\} \/>/);
+    assert.doesNotMatch(readCode('app/[orgSlug]/admin/accounting/ledger/page.tsx'), /statusHint/);
+  });
+  it('row 22: the online payments keep their name; the date line is an estimate', () => {
+    assert.equal(BANK_WORDS.sumOnItsWayNone, 'Online payments on their way to your bank');
+    assert.equal(BANK_WORDS.sumPaysOut('Nov 12, 2026'), 'expected Nov 12, 2026');
   });
 });

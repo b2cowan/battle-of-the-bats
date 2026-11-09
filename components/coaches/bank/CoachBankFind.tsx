@@ -167,7 +167,7 @@ export default function CoachBankFind({ figure, band, typed, marked, onMark, onU
               <SearchField room="coach" value={query} onChange={searchFor} label={W.findSearch} />
             </div>
           )}
-          {suspects.lines.length === 0 && lastCount === 0 ? <p className={`${styles.formHint} ${b.hint}`}>{W.noLinesSince}</p>
+          {suspects.lines.length === 0 && lastCount === 0 ? <p className={`${styles.formHint} ${b.hint}`}>{W.coachNoLinesSince}</p>
             : searchedEmpty ? <p className={`${styles.formHint} ${b.hint}`}>{W.noLinesMatch}</p>
             : isPhone ? phoneList() : (
             <div className={styles.tableWrap}>

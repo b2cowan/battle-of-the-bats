@@ -27,6 +27,13 @@ the team's (the club does not see it: §0 "Teams column", 2026-11-06). This is t
 
 ## 0. What is ruled (do not reopen), recorded as ruled, nothing added
 
+> **Later owner rulings that bend two rows here (2026-11-08, `docs/projects/active/BANK_CHECK_NOVICE_UX_PLAN.md` §0;
+> built in its S1).** These are rulings, not drift. **A1a:** the card heading "Check a statement" (BC2a's `/marketing`
+> word) is now "Check your bank balance", and its date label is "Date": volunteers read a banking app, not a paper
+> statement. **A8:** the coach's cash field ("Cash not deposited yet", the 2026-11-05 replan's ask 1, option C) sits
+> behind a quiet link, "Holding cash you haven't deposited?". Its rule is unchanged: one optional figure, saved with that
+> check only.
+
 ### Standing rulings (still hold)
 
 | # | Ruling | Source |

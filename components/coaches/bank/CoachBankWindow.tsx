@@ -50,12 +50,13 @@ export default function CoachBankWindow({ orgSlug, teamId, accountName, check, c
   const [error, setError] = useState('');
   const when = dayYear(check.date);
   const at = utcToZonedInputs(check.checkedAt);
-  const band = bankBandTiles({ date: check.date, figure: check.figure, typed: true, saved: true, isPhone });
+  const band = bankBandTiles({ date: check.date, figure: check.figure, typed: true, saved: true, isPhone, coach: true });
   // The lines and their signs are the engine's; a team's check has no on-its-way line (none was ever counted).
   const { terms, totalCents } = savedTerms(check);
   const rows = terms.flatMap(t => {
     switch (t.kind) {
-      case 'base': return [{ key: t.key, label: W.sumBooks(when), amount: cents(t.cents) }];
+      // The coach's one noun, as the card said it before the save (S1 row 8, /review).
+      case 'base': return [{ key: t.key, label: W.coachSumBooks(when), amount: cents(t.cents) }];
       case 'waiting': return [{ key: t.key, label: W.savedWaiting(nameOf(t.item)), amount: moved(t.cents) }];
       case 'cash': return [{ key: t.key, label: W.savedCash, amount: moved(t.cents) }];
       default: return [];

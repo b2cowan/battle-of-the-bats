@@ -24,7 +24,8 @@ export const BANK_REFUSAL = {
   bad_item: 'A line marked Not in the bank yet has to be one of this account’s own lines, dated after your starting statement and on or before the statement you’re checking.',
   // Waiting at the start (Q2-A): the other date rule, so its own sentence (BC3b /marketing).
   bad_start_item: 'To wait at the start, a line has to move money in or out of this account, be dated on or before your starting statement, and not be waiting there already. Online payments can’t wait at the start.',
-  ends_in_future: 'A statement can’t be dated after today. Enter the date printed on it.',
+  // S1 (A1a): the check form asks for a day, not a statement's date.
+  ends_in_future: 'A check can’t be dated after today.',
   changed: 'Something in this account changed while you were looking. Here it is again.',
   start_exists: 'This account already starts from a statement on another date.',
   start_after_checks: 'A later statement is already checked, so the start can’t move after it.',
@@ -39,9 +40,9 @@ export const BANK_REFUSAL = {
   // ── a team's (BC6a, lib/bank-coach-rules.ts): drafts, settled by BC8's /marketing ──
   // O5: a coach's books start from the season's opening balance, so an earlier statement belongs to last season. ⚠ Not
   // "check it from last season": a closed season is one page and shows nothing of the bank (B9). The screen names the day
-  // ("Statements from this season only, since {date}.").
-  before_season: 'This statement is dated before the season started. Check a statement from this season.',
-  bad_team_item: 'A line marked Not in the bank yet has to be one of the team’s own money lines, dated on or before the statement you’re checking.',
+  // ("Any day this season, from {date} to today."; S1, A1a: a day, not a statement).
+  before_season: 'That day is before the season started. Pick a day from this season.',
+  bad_team_item: 'A line marked Not in the bank yet has to be one of the team’s own money lines, dated on or before the day you’re checking.',
 } as const;
 
 export type BankRefusalCode = keyof typeof BANK_REFUSAL;

@@ -40,7 +40,7 @@ const accountingHelp: HelpPageContent = {
             <HelpDef term="Overview">The board summary: where the club stands today, the year against the budget, how many teams need you, and the club’s books.</HelpDef>
             <HelpDef term="Teams">Every team’s money with the club for the year, and each team’s account inside it.</HelpDef>
             <HelpDef term="Ledger">One book at a time, read like a bank statement. The <strong>Book</strong> pill switches between the club’s books.</HelpDef>
-            <HelpDef term="Bank">The club’s bank statement checked against its books, statement by statement. See <a href="#bank-tab">Checking the bank statement</a>.</HelpDef>
+            <HelpDef term="Bank">The club’s bank balance checked against its books, a day at a time. See <a href="#bank-tab">Checking your bank balance</a>.</HelpDef>
             <HelpDef term="Allocations">What the club bills its teams, and what is coming due.</HelpDef>
             <HelpDef term="Payment requests">What the teams ask of the club, waiting for your answer.</HelpDef>
             <HelpDef term="Budget">The year’s plan, revenue first and then expenses, line by line.</HelpDef>
@@ -279,14 +279,14 @@ const accountingHelp: HelpPageContent = {
     {
       group: 'How accounting works',
       id: 'bank-tab',
-      heading: 'Checking the bank statement: the Bank tab',
-      summary: 'Type a statement’s date and balance; the Bank tab says whether the club’s books agree, and helps you find the difference when they don’t.',
-      keywords: ['bank', 'bank tab', 'bank statement', 'reconcile', 'reconciliation', 'bank reconciliation', 'check a statement', 'statement balance', 'starting statement', 'matches', 'off by', 'find the difference', 'not in the bank yet', 'still waiting', 'waiting at the start', 'outstanding cheque', 'deposit not in the bank', 'books now say', 'checked through', 'print this check', 'bank check report', 'second bank account', 'treasurer', 'work it down to zero', 'add entry', 'picked up where you left off', 'started off by', 'start over', 'draft'],
-      searchText: 'bank tab reconcile reconciliation bank reconciliation reconcile the bank statement check the bank statement against the books statement date bank balance on that date start here start checking the club’s bank account starting statement starting point checks start from this balance books in this account add an account name and books second account account pill move a book check a statement save this check the bank says should be in the bank difference matches off by the bank shows more less than your books how should be in the bank is worked out your books on online payments on their way to your bank stripe pays them out not counted stripe didn’t answer start anyway try again find the find an amount or a name lines since your last match exactly half of part of next possibility not in the bank yet outstanding cheque cheque not cashed deposit not landed add the missing entry bank fee interest work it down to zero add entry picked up where you left off started off by start over kept in this browser draft in progress shared computer sign out still waiting on yes no waiting at the start before your starting statement take it off checked statements the bank said should have been result checked by statement ending books now say figures stay as they were delete this check delete the starting statement later checks start from this statement check this statement again checked through off by chip overview line bank checked through not checked yet where the club stands fiscal year close still open not checked in the last month off by last checked print this check printed report one page letter association monthly form board signature prepared by reviewed by phone show 10 more read only',
+      heading: 'Checking your bank balance: the Bank tab',
+      summary: 'Type the bank’s balance for a day; the Bank tab says whether the club’s books agree, and helps you find the difference when they don’t.',
+      keywords: ['bank', 'bank tab', 'check your bank balance', 'balance check', 'balance checks', 'saved checks', 'banking app', 'posted balance', 'pending transactions', 'bank statement', 'reconcile', 'reconciliation', 'bank reconciliation', 'check a statement', 'statement balance', 'starting statement', 'matches', 'off by', 'find the difference', 'not in the bank yet', 'still waiting', 'waiting at the start', 'outstanding cheque', 'deposit not in the bank', 'books now say', 'checked through', 'the check for', 'check this date again', 'print this check', 'balance check report', 'bank check report', 'second bank account', 'treasurer', 'work it down to zero', 'add entry', 'picked up where you left off', 'started off by', 'start over', 'draft'],
+      searchText: 'bank tab check your bank balance balance check balance checks saved checks reconcile reconciliation bank reconciliation reconcile the bank statement check the bank balance against the books banking app posted balance pending transactions left out date bank balance on that date start here start checking the club’s bank account statement date starting statement starting point checks start from this balance books in this account add an account name and books second account account pill move a book check a statement save this check the bank says should be in the bank difference matches off by the bank shows more less than your books how should be in the bank is worked out your books on online payments on their way to your bank expected stripe pays them out not counted stripe didn’t answer start anyway try again you can save this check while it’s off saving changes nothing in your books is checked already saving again replaces that check find the find an amount or a name lines since your last match exactly half of part of next possibility not in the bank yet outstanding cheque cheque not cashed deposit not landed add the missing entry bank fee interest posted pending choose posted for a fee work it down to zero add entry picked up where you left off started off by start over kept in this browser draft in progress shared computer sign out still waiting on yes no waiting at the start before your starting statement take it off the bank said should have been result checked by the check for books now say figures stay as they were delete this check delete the starting statement later checks start from this statement check this date again checked through off by chip overview line bank checked through not checked yet where the club stands fiscal year close still open not checked in the last month off by last checked print this check balance check report printed report one page letter computer association monthly form board signature prepared by reviewed by phone show 10 more who can use it anyone who can open accounting',
       content: (
         <>
-          <p>The <strong>Bank</strong> tab checks the club’s bank statement against the club’s books. You type a statement’s date and its ending balance; the tab says whether the books agree, and when they don’t, it helps you find the difference. Every check you save stays, so the board can see which statements were checked and when.</p>
-          <p>Everyone who can open Accounting can open the Bank tab and its saved checks. Starting, checking, deleting and moving books are for someone who can move the club’s money; anyone else sees the same tab with those controls gone.</p>
+          <p>The <strong>Bank</strong> tab checks the club’s bank balance against the club’s books. You type the balance your bank shows for a day, from your banking app or a statement; the tab says whether the books agree, and when they don’t, it helps you find the difference. Every check you save stays, so the board can see which days were checked and when.</p>
+          <p>Anyone who can open Accounting can use the whole Bank tab: start checking an account, save and delete checks, and move books between accounts. Every check shows who saved it and when, and deleting one keeps a record of who deleted it.</p>
         </>
       ),
       subtopics: [
@@ -309,21 +309,21 @@ const accountingHelp: HelpPageContent = {
         },
         {
           id: 'bank-tab-check',
-          title: 'Check a statement',
+          title: 'Check your bank balance',
           content: (
             <>
               <HelpSteps>
-                <li>Under <strong>Check a statement</strong>, type the <strong>Statement date</strong> and the <strong>Bank balance on that date</strong>.</li>
+                <li>Under <strong>Check your bank balance</strong>, pick the <strong>Date</strong> and type the <strong>Bank balance on that date</strong>: the posted balance your banking app shows, with pending transactions left out, or a statement’s ending balance.</li>
                 <li>Read the three figures: <strong>The bank says</strong>, <strong>Should be in the bank</strong> (your books on that date, less what hasn’t reached the bank yet) and the <strong>Difference</strong>.</li>
-                <li>Press <strong>Save this check</strong>. It saves whether it matches or not.</li>
+                <li>Press <strong>Save this check</strong>. It saves whether it matches or not: you can save it while it’s off and check again later. Saving changes nothing in your books.</li>
               </HelpSteps>
               <HelpDefs>
                 <HelpDef term="Matches">The bank and your books agree on that date.</HelpDef>
                 <HelpDef term="Off by $X">They don’t, and a sentence says which way: <em>The bank shows $X more than your books</em>, or less. Shown in amber, never red: a gap is something to look into, not an error.</HelpDef>
               </HelpDefs>
-              <p><strong>How “Should be in the bank” is worked out</strong> sits under the figures, always open: your books on the date, minus <strong>Online payments on their way to your bank</strong> (card payments Stripe hasn’t paid out yet, with the date it will), plus or minus each line you marked <strong>Not in the bank yet</strong>.</p>
+              <p><strong>How “Should be in the bank” is worked out</strong> sits under the figures, always open: your books on the date, minus <strong>Online payments on their way to your bank</strong> (card payments Stripe hasn’t paid out yet, with the date they’re expected), plus or minus each line you marked <strong>Not in the bank yet</strong>.</p>
               <p>The next check asks about each line the last check marked <strong>Not in the bank yet</strong>: <em>Still waiting on {'{line}'}?</em> <strong>Yes</strong> keeps it waiting on this check too; <strong>No</strong> means it reached the bank, and it drops off.</p>
-              <HelpNote variant="info" title="Saving the same date again">A statement already checked is checked again by saving the same date: the new check replaces the old one. <strong>Check this statement again</strong>, in a saved check’s window, puts its date in the form for you.</HelpNote>
+              <HelpNote variant="info" title="Saving the same date again">A date already checked is checked again by saving it again: the new check replaces the old one, and the form says so (<em>{'{date}'} is checked already</em>). <strong>Check this date again</strong>, in a saved check’s window, puts its date in the form for you.</HelpNote>
             </>
           ),
         },
@@ -336,7 +336,7 @@ const accountingHelp: HelpPageContent = {
               <ul>
                 <li><strong>Hints</strong> point at the likely cause: a line that is exactly the difference, one that is half of it (entered the wrong way round?), or a few that add up to it. <strong>Next possibility</strong> moves to the next one.</li>
                 <li><strong>Not in the bank yet</strong> on a line (a cheque not cashed yet, a deposit that hasn’t landed) counts it in the sums; <strong>Undo</strong> takes it back out.</li>
-                <li><strong>Add the missing entry</strong> opens the Ledger’s <strong>Add an entry</strong> window with the difference, the date and the direction filled in, for a bank fee or interest your books don’t have yet.</li>
+                <li><strong>Add the missing entry</strong> opens the Ledger’s <strong>Add an entry</strong> window with the difference, the date and the direction filled in, for a bank fee or interest your books don’t have yet. Choose <strong>Posted</strong> for a fee the bank has already taken: a Pending entry isn’t counted in a balance check.</li>
                 <li>Online payments on their way show as one greyed row: they are already counted.</li>
               </ul>
               <p><strong>Waiting at the start.</strong> A cheque written before your starting statement can clear after it, and then every check is off by it. While a check is off, in the first months after the start, the lines dated just before the starting statement show under <strong>Before your starting statement</strong>. <strong>Waiting at the start</strong> on one corrects the starting statement, and checks from then on start from the corrected balance. Open the starting statement to see who marked each one, and <strong>Take it off</strong> to undo it.</p>
@@ -350,7 +350,7 @@ const accountingHelp: HelpPageContent = {
             <>
               <p>A check can take several sittings. The card keeps what you typed and marked until you save, so you can leave it, book entries in the Ledger and come back.</p>
               <ul>
-                <li><strong>What it keeps:</strong> the statement date, the balance you typed and the lines you marked <strong>Not in the bank yet</strong>, in this browser only. It won’t follow you to another device.</li>
+                <li><strong>What it keeps:</strong> the date, the balance you typed and the lines you marked <strong>Not in the bank yet</strong>, in this browser only. It won’t follow you to another device.</li>
                 <li><strong>Coming back:</strong> the card says <em>Picked up where you left off</em> (with the day you last worked on it, when that was earlier). A line you marked that is no longer in the books is taken off, with a note.</li>
                 <li><strong>+ Add entry</strong> opens the Ledger’s <strong>Add an entry</strong> window and leaves you on the card. Each entry moves <strong>Off by</strong>, and <em>Started off by $X</em> shows how far off you began once the number has moved.</li>
                 <li>Coming back to the browser tab reads the books again, so an entry booked in another tab shows up.</li>
@@ -367,10 +367,10 @@ const accountingHelp: HelpPageContent = {
           title: 'Saved checks, and what changed since',
           content: (
             <>
-              <p>The top of the tab says how far the account is checked: <strong>Checked through {'{date}'}</strong>, with an amber <strong>Off by $X</strong> chip that opens the latest check when it was off. Below the form, <strong>Checked statements</strong> lists every saved check (Statement date · The bank said · Should have been · Result · Checked by), down to the starting point. Click one to open it.</p>
+              <p>The top of the tab says how far the account is checked: <strong>Checked through {'{date}'}</strong>, with an amber <strong>Off by $X</strong> chip that opens the latest check when it was off. Below the form, <strong>Balance checks</strong> lists every saved check (Date · The bank said · Should have been · Result · Checked by), down to the starting point. Click one to open it: its window is <strong>The check for {'{date}'}</strong>.</p>
               <ul>
                 <li>An opened check shows its figures exactly as saved, and who checked it and when.</li>
-                <li><strong>Books now say $X</strong> appears when a line dated on or before the statement changed after the check was saved, or the starting statement was corrected. The check’s own figures stay as they were; check the statement again to bring it up to date.</li>
+                <li><strong>Books now say $X</strong> appears when a line dated on or before the statement changed after the check was saved, or the starting statement was corrected. The check’s own figures stay as they were; <strong>Check this date again</strong> to bring it up to date.</li>
                 <li><strong>Delete this check</strong> asks once. Its figures go; who deleted it and when is kept. The starting statement can be deleted only once no later check starts from it.</li>
               </ul>
             </>

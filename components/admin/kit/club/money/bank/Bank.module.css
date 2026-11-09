@@ -149,6 +149,9 @@ tr > td.nowrap { white-space: nowrap; }
 /* The card's heading row (WD1, drawing tabs 2 and 5): its title, and "+ Add entry" at the right, outline. */
 .checkHead { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem 0.75rem; flex-wrap: wrap; margin: 0 0 0.75rem; }
 .checkTitle { margin: 0; font-size: var(--type-heading); font-weight: 700; color: var(--text-primary); }
+/* What the card is for (Bank check novice UX S1, A4): the card's own sentence under the heading, body size, a reading
+   measure; the coach card's `.purpose` in the club kit. */
+p.checkPurpose { margin: 0 0 0.75rem; max-width: 56rem; font-size: var(--type-body); line-height: 1.5; color: var(--text-secondary); }
 .addEntry { flex: none; }
 /* "Picked up where you left off · Start over": one quiet hint line under the heading (WD1, tab 4); it wraps on a phone.
    Element-qualified (the kit's `p.noteAbove` idiom) so its margin wins over `.hint`'s whatever order the sheets load in. */

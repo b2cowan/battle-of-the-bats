@@ -39,19 +39,23 @@ export const throughWords = (t: ThroughMark): string =>
  * ⚖ "Matches" good-green, "Off by" AMBER, never red; a direction is said in words, never a minus sign.
  * `isPhone`: the middle tile takes the phone's shorter word (the shipped band is two-up ≤760), and the shipped band shows
  * `captionShort` in place of the caption (BC4b `/marketing`).
+ * `coach`: the coach's card names the figure by its screen, "your Ledger" (Bank check novice UX S1, row 8); the club's
+ * keeps "your books".
  */
-export function bankBandTiles({ date, figure, typed, saved = false, isPhone }: {
-  date: string; figure: CheckFigure | null; typed: boolean; saved?: boolean; isPhone: boolean;
+export function bankBandTiles({ date, figure, typed, saved = false, isPhone, coach = false }: {
+  date: string; figure: CheckFigure | null; typed: boolean; saved?: boolean; isPhone: boolean; coach?: boolean;
 }): { tiles: MoneyTile[]; ariaLabel: string } {
   const when = dayYear(date);
   const settled = figure !== null && typed;
+  const more = coach ? W.coachBandBankMore : W.bandBankMore;
+  const less = coach ? W.coachBandBankLess : W.bandBankLess;
   const direction = !settled || figure.direction === null ? null
-    : figure.direction === 'bank_more' ? W.bandBankMore(cents(figure.offByCents)) : W.bandBankLess(cents(figure.offByCents));
+    : figure.direction === 'bank_more' ? more(cents(figure.offByCents)) : less(cents(figure.offByCents));
   const diff: MoneyTile = {
     key: 'difference', label: saved ? W.savedResult : W.bandDifference,
     figure: !settled ? '—' : figure.result === 'matches' ? W.matches : W.offBy(cents(figure.offByCents)),
     tone: !settled ? 'plain' : figure.result === 'matches' ? 'good' : 'warn',
-    caption: saved ? direction ?? undefined : !settled ? W.bandNoBalance : direction ?? W.bandMatches(when),
+    caption: saved ? direction ?? undefined : !settled ? W.bandNoBalance : direction ?? (coach ? W.coachBandMatches : W.bandMatches)(when),
   };
   return {
     ariaLabel: saved ? W.savedTitle(when) : W.checkTitle,
@@ -59,7 +63,8 @@ export function bankBandTiles({ date, figure, typed, saved = false, isPhone }: {
       { key: 'bank', label: saved ? W.savedBank : W.bandBank, figure: settled ? cents(figure.bankCents) : '—',
         caption: saved ? undefined : W.bandBankCaption(when), captionShort: saved ? undefined : W.bandBankCaptionPhone(dayShort(date)) },
       { key: 'should', label: saved ? W.savedShould : isPhone ? W.bandShouldPhone : W.bandShould, figure: figure ? cents(figure.shouldBeCents) : '—',
-        caption: saved ? undefined : W.bandShouldCaption(when), captionShort: saved ? undefined : W.bandShouldCaptionPhone },
+        caption: saved ? undefined : (coach ? W.coachBandShouldCaption : W.bandShouldCaption)(when),
+        captionShort: saved ? undefined : coach ? W.coachBandShouldCaptionPhone : W.bandShouldCaptionPhone },
       diff,
     ],
   };

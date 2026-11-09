@@ -1,15 +1,17 @@
 'use client';
 /**
- * "CHECK A STATEMENT" — the coach's check, on the Bank view itself above the saved checks (Bank balance check BC7a; ask 10,
- * drawing BANK_BALANCE_CHECK_DRAWINGS.html tab 2, the coach phone frame; laid out as the club's desk form). The coach types a
- * statement's DATE and BALANCE, and the optional CASH NOT DEPOSITED YET (ask 1, option C: saved with this check only, so the
- * field starts empty after a save). Every settled cash-moving line of this season on or before the date counts by itself.
+ * "CHECK YOUR BANK BALANCE" — the coach's check, on the Ledger's Balance check view above the saved checks (Bank balance
+ * check BC7a; ask 10, drawing BANK_BALANCE_CHECK_DRAWINGS.html tab 2, the coach phone frame; laid out as the club's desk
+ * form; words and the cash link from Bank check novice UX S1, drawings D1/D2). The coach types a day's DATE and BALANCE,
+ * and the optional CASH NOT DEPOSITED YET behind "Holding cash you haven't deposited?" (ask 1, option C: saved with this
+ * check only, so the field starts empty and closed after a save; A8 moved it behind the link). Every settled cash-moving
+ * line of this season on or before the date counts by itself.
  * ⚖ RULE 6: the screen sends INTENT (the date, the balance, the cash, the marked lines' keys); Your books, Find and every
  *   saved figure are the server's (`GET …/bank?date=`, read as the date stops changing). Typing the balance or the cash
  *   re-figures at once with the engine's `figureCheck` (lib/bank-check.ts), no round trip, no arithmetic here.
  * ⚖ RULING 3: Save works whether the check matches or is off.
  * ⚖ A DAY THE SERVER WON'T TAKE (before the season started, after today) says its own sentence in place of the band (O5).
- *   "Statements from this season only, since {date}." stays under the fields.
+ *   "Any day this season, from {date} to today." sits under the fields until a balance is typed.
  * ⚖ "Still waiting on {line}?" (ask 2) asks once per item of the latest earlier check — across the rollover, last season's
  *   final check's ("Still waiting across the rollover"): Yes marks it, No drops it for this check. A new date clears both.
  * ⚖ "RECORD THE MISSING AMOUNT" opens the Ledger's own Record money window (`onAddLine`), filled with the gap, the
@@ -53,6 +55,7 @@ import b from './CoachBank.module.css';
 const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
 const DEBOUNCE_MS = 350;
 const BALANCE_ID = 'coach-bank-balance';
+const CASH_ID = 'coach-bank-cash';
 
 /** The line "Record the missing amount" opens the Ledger's Record money window with: the gap, the statement's day, the way it goes. */
 export type MissingLine = { direction: 'in' | 'out'; amount: string; date: string };
@@ -102,6 +105,10 @@ export default function CoachBankCheck({ orgSlug, teamId, view, personId, active
   const [again, setAgain] = useState(0); // "Try again" on a failed read; coming back to the browser tab
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  // The cash field waits behind "Holding cash you haven't deposited?" (S1, A8): open once asked for, or with cash in it.
+  // A restored draft with cash counts as asked, and so does typing: clearing the field never folds it away mid-edit (/review).
+  const [cashAsked, setCashAsked] = useState(() => !!restored?.cash);
+  const cashOpen = cashAsked || cash !== '';
   // Find: the lines marked Not in the bank yet (in the order marked), and the Still-waiting items answered No.
   const [marked, setMarked] = useState<ReadonlyMap<string, WaitingItem>>(new Map());
   const [dropped, setDropped] = useState<ReadonlySet<string>>(new Set());
@@ -184,7 +191,7 @@ export default function CoachBankCheck({ orgSlug, teamId, view, personId, active
   const band = fresh && fresh.booksCents !== null
     ? figureCheck({ bankCents: typed ?? 0, booksCents: fresh.booksCents, onItsWayCents: null, waiting: items, cashCents })
     : null;
-  const shared = band ? bankBandTiles({ date, figure: band, typed: typed !== null, isPhone }) : null;
+  const shared = band ? bankBandTiles({ date, figure: band, typed: typed !== null, isPhone, coach: true }) : null;
   // The coach's phone (drawn): "Your books, less $X cash" on the middle tile when the cash is all that is taken off; the
   // shared (club's, settled) short caption otherwise. Overridden here only, never in the shared tiles (BC7b).
   const cashOnly = cashCents !== null && items.length === 0;
@@ -226,7 +233,7 @@ export default function CoachBankCheck({ orgSlug, teamId, view, personId, active
    *  WITHOUT `touch()`: after a save it would clear the notice just given (/review). */
   function startOver() {
     if (draftAt) clearDraft(browserDraftStore(), draftAt);
-    setBalance(''); setCash(''); newDay(today); setAsOf(today); setStarted(null); setRestoredOn(null); setError('');
+    setBalance(''); setCash(''); setCashAsked(false); newDay(today); setAsOf(today); setStarted(null); setRestoredOn(null); setError('');
   }
 
   async function save() {
@@ -246,7 +253,7 @@ export default function CoachBankCheck({ orgSlug, teamId, view, personId, active
     }
     const saved = r.view.checks.find(c => c.date === date);
     onSaved(r.view, saved
-      ? saved.figure.result === 'matches' ? W.savedMatches(dayYear(date)) : W.savedOff(dayYear(date), cents(saved.figure.offByCents))
+      ? saved.figure.result === 'matches' ? W.coachSavedMatches(dayYear(date)) : W.savedOff(dayYear(date), cents(saved.figure.offByCents))
       : W.saved);
     // Saved: the check is the record now, so the draft goes (WD2).
     startOver();
@@ -264,15 +271,32 @@ export default function CoachBankCheck({ orgSlug, teamId, view, personId, active
       </button>
     </div>
   );
-  const saveNotes = (
-    <>
-      {error && <p className={`${styles.errorText} ${b.note}`} role="alert">{error}</p>}
-      {band && band.result === 'off' && typed !== null && <p className={`${styles.formHint} ${b.note}`}>{W.saveOffNote(cents(band.offByCents))}</p>}
-      {fresh?.replaces && <p className={`${styles.formHint} ${b.note}`}>{W.replacesNote}</p>}
-      {/* The resting sentence while a draft exists (drawing tab 2, note 3): it is what says leaving is safe. */}
-      {hasDraft && <p className={`${styles.formHint} ${b.note}`}>{W.draftKept}</p>}
-      <p className={`${styles.formHint} ${b.since}`}>{W.coachSince(dayYear(view.season.start))}</p>
-    </>
+  const errorLine = error ? <p className={`${styles.errorText} ${b.note}`} role="alert">{error}</p> : null;
+  // ONE note line under the fields (S1, row 10; drawings D1/D2), at a desk and on a phone. Before a balance is typed: the
+  // season's days and which balance to type. Once typed: that an off check saves and leaves the Ledger alone, and the
+  // draft's resting sentence (S7 rewrites that one; it stays as WD2 wrote it). "{date} is checked already" (row 21) either
+  // way (one neutral line: right after a save the notice says "Checked {date}…"), and the cash link at the end while the
+  // field is closed (A8).
+  const off = !!band && band.result === 'off' && typed !== null;
+  const notes = [
+    fresh?.replaces ? W.replacesNote(dayYear(date)) : null,
+    typed === null ? W.coachSince(dayYear(view.season.start)) : null,
+    typed === null ? W.balanceHint : null,
+    off ? W.coachSaveOffNote : null,
+    // The resting sentence while a draft exists (drawing tab 2, note 3): it is what says leaving is safe.
+    hasDraft ? W.draftKept : null,
+  ].filter((t): t is string => !!t);
+  // Nothing to say and the cash field open: no empty line (/review).
+  const noteLine = notes.length === 0 && cashOpen ? null : (
+    <p className={`${styles.formHint} ${b.note}`}>
+      {notes.join(' ')}
+      {!cashOpen && (<>{notes.length > 0 ? ' ' : null}
+        <button type="button" className={b.link} onClick={() => {
+          setCashAsked(true);
+          window.setTimeout(() => document.getElementById(CASH_ID)?.focus(), 0);
+        }}>{W.coachCashOpen}</button>
+      </>)}
+    </p>
   );
 
   return (
@@ -286,6 +310,11 @@ export default function CoachBankCheck({ orgSlug, teamId, view, personId, active
           <Plus size={15} aria-hidden />{W.record}
         </button>
       </div>
+      {/* What the card is for (S1, A4), always; which account it is for (A11), until the team's first check. */}
+      <div className={b.intro}>
+        <p className={b.purpose}>{W.coachCheckPurpose}</p>
+        {view.checks.length === 0 && <p className={styles.formHint}>{W.coachTeamOnly}</p>}
+      </div>
       {restoredOn && hasDraft && (
         <p className={`${styles.formHint} ${b.restoreLine}`} role="status">
           <span>{restoredOn < today ? W.draftPickedUpOn(dayYear(restoredOn)) : W.draftPickedUp}</span>
@@ -293,9 +322,9 @@ export default function CoachBankCheck({ orgSlug, teamId, view, personId, active
         </p>
       )}
       {droppedMarks > 0 && <p className={`${b.callout} ${b.droppedNote}`} role="status">{W.draftDropped(droppedMarks)}</p>}
-      <div className={b.fields}>
+      <div className={`${b.fields}${cashOpen ? ` ${b.fieldsCash}` : ''}`}>
         <div className={styles.field}>
-          <label className={styles.label} htmlFor="coach-bank-date">{W.statementDate} *</label>
+          <label className={styles.label} htmlFor="coach-bank-date">{W.checkDate} *</label>
           <DateInput id="coach-bank-date" className={styles.input} value={date} max={today} required onChange={pickDate} />
         </div>
         <div className={styles.field}>
@@ -303,17 +332,20 @@ export default function CoachBankCheck({ orgSlug, teamId, view, personId, active
           <input id={BALANCE_ID} className={styles.input} inputMode="decimal" autoComplete="off" placeholder="0.00" maxLength={16}
             value={balance} onChange={e => { setBalance(e.target.value); touch(); }} aria-required="true" />
         </div>
-        <div className={styles.field}>
-          <label className={styles.label} htmlFor="coach-bank-cash">{W.coachCash}</label>
-          <input id="coach-bank-cash" className={styles.input} inputMode="decimal" autoComplete="off" placeholder="0.00" maxLength={16}
-            value={cash} onChange={e => { setCash(e.target.value); touch(); }} aria-invalid={cashBad || undefined}
-            aria-describedby={cashBad ? 'coach-bank-cash-bad' : undefined} />
-          {/* Said under the field as it is typed, not only at Save: the band leaves an unreadable figure out (/review). */}
-          {cashBad && <p id="coach-bank-cash-bad" className={styles.errorText}>{BANK_REFUSAL.bad_amount}</p>}
-        </div>
+        {cashOpen && (
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor={CASH_ID}>{W.coachCash}</label>
+            <input id={CASH_ID} className={styles.input} inputMode="decimal" autoComplete="off" placeholder="0.00" maxLength={16}
+              value={cash} onChange={e => { setCash(e.target.value); setCashAsked(true); touch(); }} aria-invalid={cashBad || undefined}
+              aria-describedby={cashBad ? 'coach-bank-cash-bad' : undefined} />
+            {/* Said under the field as it is typed, not only at Save: the band leaves an unreadable figure out (/review). */}
+            {cashBad && <p id="coach-bank-cash-bad" className={styles.errorText}>{BANK_REFUSAL.bad_amount}</p>}
+          </div>
+        )}
         {!isPhone && saveButton}
       </div>
-      {!isPhone && saveNotes}
+      {!isPhone && errorLine}
+      {noteLine}
 
       <Status figure={figure} date={date} readError={readError} fresh={!!fresh} onRetry={() => setAgain(n => n + 1)} />
 
@@ -326,7 +358,11 @@ export default function CoachBankCheck({ orgSlug, teamId, view, personId, active
           {/* The sums that make "Should be in the bank", always open (drawn): Your books · each line not in the bank yet
               (with Undo) · Still waiting? · Cash not deposited yet · the total. Signs are the engine's. */}
           <div className={b.sums} role="group" aria-label={W.sumsTitle}>
-            <SumRow label={W.sumBooks(dayYear(date))} amount={cents(fresh.booksCents)} />
+            {/* "Your Ledger on {date}", tied quietly to the Overview's Cash on hand at a desk (S1, row 8; D1). */}
+            <SumRow amount={cents(fresh.booksCents)} label={<>
+              {W.coachSumBooks(dayYear(date))}
+              {!isPhone && <span className={b.sumQuiet}> · {W.coachSumBooksSub}</span>}
+            </>} />
             {items.map(w => (
               <SumRow key={w.key} amount={moved(waitingOnCheck(w))} label={<>
                 {W.savedWaiting(nameOf(w))}{' '}
@@ -356,8 +392,8 @@ export default function CoachBankCheck({ orgSlug, teamId, view, personId, active
             }) : undefined} />
         </>
       )}
+      {isPhone && errorLine}
       {isPhone && saveButton}
-      {isPhone && saveNotes}
     </section>
   );
 }

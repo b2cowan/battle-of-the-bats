@@ -24,7 +24,8 @@ describe('1 · the Ledger\'s fourth view, Bank (B8)', () => {
   const ledger = readCode(LEDGER);
   it('one more LedgerView value, its label, the View pill offers it, `?view=bank` and the memory accept it', () => {
     assert.match(ledger, /type LedgerView = 'timeline' \| 'bills' \| 'due' \| 'bank';/);
-    assert.match(ledger, /bank: 'Bank',/);
+    // Named for what it does (Bank check novice UX S1, A2).
+    assert.match(ledger, /bank: 'Balance check',/);
     assert.match(ledger, /return v === 'timeline' \|\| v === 'bills' \|\| v === 'due' \|\| v === 'bank';/);
     assert.match(ledger, /options=\{\(\['timeline', 'bills', 'due', 'bank'\] as const\)\.map\(/);
   });
@@ -83,7 +84,8 @@ describe('3 · rule 6: intent in, the server\'s numbers out', () => {
     // WD2: the fresh card is Start over's (it clears the draft too), and Start over never touches the notice.
     assert.match(functionBody(form, 'save'), /\n {4}startOver\(\);\n/);
     const fresh = functionBody(form, 'startOver');
-    assert.match(fresh, /setBalance\(''\); setCash\(''\); newDay\(today\); setAsOf\(today\);/);
+    // S1 (A8): the cash field closes behind its link again.
+    assert.match(fresh, /setBalance\(''\); setCash\(''\); setCashAsked\(false\); newDay\(today\); setAsOf\(today\);/);
     assert.match(form, /const newDay = \(v: string\) => \{ setDate\(v\); setMarked\(new Map\(\)\); setDropped\(new Set\(\)\);/);
     assert.doesNotMatch(fresh, /touch\(\)|onTouched|pickDate/);
     assert.doesNotMatch(form, /pickDate\(today\)/);
@@ -94,7 +96,7 @@ describe('3 · rule 6: intent in, the server\'s numbers out', () => {
   });
   it('the opened check draws the SAVED figure and the engine\'s saved terms; no on-its-way line for a team', () => {
     const win = code('CoachBankWindow.tsx');
-    assert.match(win, /bankBandTiles\(\{ date: check\.date, figure: check\.figure, typed: true, saved: true, isPhone \}\)/);
+    assert.match(win, /bankBandTiles\(\{ date: check\.date, figure: check\.figure, typed: true, saved: true, isPhone, coach: true \}\)/);
     assert.match(win, /savedTerms\(check\)/);
     assert.doesNotMatch(win, /case 'onItsWay'/);
   });
@@ -105,9 +107,9 @@ describe('3 · rule 6: intent in, the server\'s numbers out', () => {
 });
 
 describe('4 · the working season only', () => {
-  it('"Statements from this season only, since {date}." from the server\'s season start', () => {
+  it('"Any day this season, from {date} to today." from the server\'s season start (S1, row 7)', () => {
     assert.match(code('CoachBankCheck.tsx'), /W\.coachSince\(dayYear\(view\.season\.start\)\)/);
-    assert.equal(BANK_WORDS.coachSince('Sep 1, 2026'), 'Statements from this season only, since Sep 1, 2026.');
+    assert.equal(BANK_WORDS.coachSince('Sep 1, 2026'), 'Any day this season, from Sep 1, 2026 to today.');
   });
   it('Q1-A: last season\'s lines sit under "From the {season}" by the season\'s own name', () => {
     assert.match(code('CoachBankFind.tsx'), /W\.coachLastSeason\(last\.name\)/);
@@ -142,14 +144,14 @@ describe('5 · one look-free module shared, each portal its own look', () => {
 });
 
 describe('6 · the phone (BC7b: drawing tab 2, the club\'s BC4b recipe in the portal\'s own list)', () => {
-  it('Save is inline at a desk and the card\'s last thing on a phone, its notes and the season\'s line under it', () => {
+  it('Save is inline at a desk and the card\'s last thing on a phone; the one note line sits under the fields on both (S1, D1/D2)', () => {
     const check = code('CoachBankCheck.tsx');
-    assert.match(check, /\{!isPhone && saveButton\}\s*<\/div>\s*\{!isPhone && saveNotes\}/);
-    assert.match(check, /\{isPhone && saveButton\}\s*\{isPhone && saveNotes\}\s*<\/section>/);
-    assert.match(check, /const saveNotes = \([\s\S]*W\.coachSince\(dayYear\(view\.season\.start\)\)[\s\S]*?\);\n\n  return/);
+    assert.match(check, /\{!isPhone && saveButton\}\s*<\/div>\s*\{!isPhone && errorLine\}\s*\{noteLine\}/);
+    assert.match(check, /\{isPhone && errorLine\}\s*\{isPhone && saveButton\}\s*<\/section>/);
+    assert.match(check, /const notes = \[[\s\S]*?typed === null \? W\.coachSince\(dayYear\(view\.season\.start\)\) : null,/);
   });
-  it('the phone band says "Your books, less $X cash" when the cash is all that is taken off, in the coach view only', () => {
-    assert.equal(BANK_WORDS.coachShouldCashPhone('$180.00'), 'Your books, less $180.00 cash');
+  it('the phone band says "Your Ledger, less $X not deposited" when the cash is all that is taken off, in the coach view only', () => {
+    assert.equal(BANK_WORDS.coachShouldCashPhone('$180.00'), 'Your Ledger, less $180.00 not deposited');
     assert.match(code('CoachBankCheck.tsx'), /const cashOnly = cashCents !== null && items\.length === 0;/);
     assert.doesNotMatch(readCode('lib/bank-screen.ts'), /coachShouldCashPhone/, 'the shared (club) tiles keep their settled caption');
   });
@@ -216,10 +218,11 @@ describe('7 · the coach\'s touchpoints (BC8a: K6, K7, R0 tab 7; owner BC8a ruli
     assert.match(START, /\{bankNote && \(bankNote\.off \? \(\s*<div [\s\S]*?<AlertTriangle [\s\S]*?\) : \(\s*<p /);
     // Under the consequence it is about, never at the form's foot (/design BC8b: out of sight while Start was live).
     assert.ok(START.indexOf('{bankNote && (bankNote.off') < START.indexOf('{ROLL_QUESTION}'), 'above the roll question');
+    // S1 (row 16 + A15): no "statement", and the print sentence, said once (both windows close this season).
     assert.equal(BANK_WORDS.coachSeasonOff('$75.00', 'Oct 31, 2026', 'close'),
-      'Your bank check was off by $75.00 on Oct 31, 2026. Check the season’s last statement before you close: a closed season has no Bank view.');
+      'Your balance check was off by $75.00 on Oct 31, 2026. Before you close the season, check your bank balance for the season’s last day. Print any check you want to keep first, from a computer: a closed season has no balance check.');
     assert.equal(BANK_WORDS.coachSeasonMatches('Oct 31, 2026', 'start'),
-      'The bank matches through Oct 31, 2026. If you have a later statement, check it before you start the new season: the new season’s Bank view starts from its own opening balance.');
+      'The bank matches through Oct 31, 2026. If you have a later balance, check it before you start the new season. Print any check you want to keep first, from a computer: a closed season has no balance check.');
   });
   it('⚖ B (owner BC8a): the club\'s Teams tab shows no bank column — the coach\'s books stay the team\'s', () => {
     assert.doesNotMatch(readCode('components/admin/kit/club/money/TeamsTable.tsx'), /bank/i);
@@ -247,9 +250,51 @@ describe('8 · the team\'s printed check (BC8b: K8, R0 tab 9, the club\'s report
   });
   it('both signature lines stay (owner "Team report sign lines"), and the foot names the coach\'s path', () => {
     assert.match(rep, /\[W\.reportPrepared, W\.reportReviewed\]\.map\(/);
-    assert.equal(BANK_WORDS.coachReportFoot('Nov 7, 2026', 'U13 Raptors'), 'Printed Nov 7, 2026 from FieldLogicHQ · U13 Raptors · Money → Ledger → Bank');
+    assert.equal(BANK_WORDS.coachReportFoot('Nov 7, 2026', 'U13 Raptors'), 'Printed Nov 7, 2026 from FieldLogicHQ · U13 Raptors · Money → Ledger → Balance check');
   });
   it('⚠ BC5b\'s trap: printed th/td are put back to paper ink, whatever the coach\'s theme', () => {
     assert.match(css, /\.sums th, \.sums td \{[^}]*color: #1F1B14;[^}]*background: transparent;/);
+  });
+});
+
+describe('9 · through a volunteer\'s eyes (Bank check novice UX S1, plan BANK_CHECK_NOVICE_UX_PLAN.md §2)', () => {
+  const check = code('CoachBankCheck.tsx');
+  it('A1a + A4 + A11: the heading, the purpose line always, the team-only sentence until the first check, "Date"', () => {
+    assert.equal(BANK_WORDS.checkTitle, 'Check your bank balance');
+    assert.match(check, /<p className=\{b\.purpose\}>\{W\.coachCheckPurpose\}<\/p>/);
+    assert.match(check, /\{view\.checks\.length === 0 && <p className=\{styles\.formHint\}>\{W\.coachTeamOnly\}<\/p>\}/);
+    assert.match(BANK_WORDS.coachCheckPurpose, /your Ledger/);
+    assert.doesNotMatch(BANK_WORDS.coachCheckPurpose, /books/, 'the coach card\'s one noun');
+    assert.match(check, /\{W\.checkDate\} \*<\/label>/);
+    assert.doesNotMatch(check, /W\.statementDate/);
+  });
+  it('A8: the cash field waits behind "Holding cash you haven\'t deposited?"; open once asked for or with cash in it', () => {
+    assert.match(check, /const cashOpen = cashAsked \|\| cash !== '';/);
+    assert.match(check, /\{cashOpen && \(\s*<div className=\{styles\.field\}>\s*<label className=\{styles\.label\} htmlFor=\{CASH_ID\}>\{W\.coachCash\}<\/label>/);
+    assert.match(check, /\{!cashOpen && \([\s\S]*?\{W\.coachCashOpen\}<\/button>/);
+    assert.equal(BANK_WORDS.coachCashOpen, 'Holding cash you haven’t deposited?');
+  });
+  it('row 8: the coach card names the figure "your Ledger"; the club\'s shared words keep "your books"', () => {
+    assert.match(check, /bankBandTiles\(\{ date, figure: band, typed: typed !== null, isPhone, coach: true \}\)/);
+    assert.match(check, /W\.coachSumBooks\(dayYear\(date\)\)/);
+    assert.match(check, /W\.coachSavedMatches\(dayYear\(date\)\)/);
+    assert.match(code('CoachBankFind.tsx'), /W\.coachNoLinesSince/);
+    assert.equal(BANK_WORDS.coachBandShouldCaption('Nov 8, 2026'), 'Your Ledger on Nov 8, 2026, adjusted for what hasn’t reached the bank yet');
+    assert.equal(BANK_WORDS.coachBandBankLess('$4.50'), 'The bank shows $4.50 less than your Ledger.');
+    assert.equal(BANK_WORDS.bandBankLess('$4.50'), 'The bank shows $4.50 less than your books.');
+  });
+  it('rows 10 + 21 + 6: one note line; the balance hint and the season\'s days until a balance is typed', () => {
+    assert.match(check, /typed === null \? W\.balanceHint : null,/);
+    assert.match(check, /off \? W\.coachSaveOffNote : null,/);
+    assert.match(check, /fresh\?\.replaces \? W\.replacesNote\(dayYear\(date\)\) : null,/);
+    assert.equal(BANK_WORDS.replacesNote('Nov 8, 2026'), 'Nov 8, 2026 is checked already. Saving again replaces that check.');
+    // S7 replaces the draft's resting sentence; S1 leaves it exactly as WD2 wrote it.
+    assert.equal(BANK_WORDS.draftKept, 'Kept in this browser only, until you save this check or sign out.');
+  });
+  it('rows 13 + 25: the list\'s names, and a view-only coach is told who can check', () => {
+    assert.equal(BANK_WORDS.listTitle, 'Balance checks');
+    assert.equal(BANK_WORDS.savedTitle('Nov 8, 2026'), 'The check for Nov 8, 2026');
+    assert.equal(BANK_WORDS.checkAgain, 'Check this date again');
+    assert.match(code('CoachBankView.tsx'), /view\.canWrite \? W\.coachNoChecksYet : `\$\{W\.coachNoChecksYet\} \$\{W\.coachReaderCanCheck\}`/);
   });
 });
