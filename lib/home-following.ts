@@ -1,6 +1,6 @@
 import type { StartDoor } from './start-door';
 import type { FollowFeedEntry, FollowFeedGroup } from './follow-feed';
-import type { UserAccessContext, LapsedWorkspace } from './user-contexts';
+import type { UserAccessContext, LapsedWorkspace, HiddenWorkspace } from './user-contexts';
 
 /**
  * lib/home-following.ts — PURE (client-safe) presentation layer over the Following
@@ -179,6 +179,9 @@ export interface ConsumerHomePayload {
   workspaces: UserAccessContext[];
   /** Lapsed-subscription workspaces surfaced as explicit "reactivate" cards (never silent omission). */
   lapsed: LapsedWorkspace[];
+  /** Paused workspaces this person chose to hide from Home — shown only as a quiet "Hidden" line with a Show on each.
+   *  Optional so an older payload omits it. */
+  hiddenWorkspaces?: HiddenWorkspace[];
   /** Raw count of teams followed (post coach-dedupe), independent of feed-enrichment success — lets
    *  the client tell "follows nothing" from "follows teams whose game info is momentarily unavailable". */
   followCount: number;

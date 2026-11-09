@@ -13,7 +13,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
 import { withObservability } from '@/lib/observability';
-import { getUserAccessContexts, getLapsedWorkspacesForUser, filterWorkspaceContexts } from '@/lib/user-contexts';
+import { getUserAccessContexts, getLapsedWorkspacesForUser, getHiddenWorkspaces, filterWorkspaceContexts } from '@/lib/user-contexts';
 import { getFollowedTeamsForUser, getFollowedTournamentsForUser, getFollowedOrgsForUser } from '@/lib/fan-follows';
 import { getFollowFeed } from '@/lib/follow-feed';
 import { rollupFollowFeedByTournament, mergeWholeEventIntoRollup, type ConsumerHomePayload } from '@/lib/home-following';
@@ -31,6 +31,7 @@ const EMPTY: ConsumerHomePayload = {
   pendingInvites: [],
   workspaces: [],
   lapsed: [],
+  hiddenWorkspaces: [],
   followCount: 0,
   following: { current: [], past: [] },
   organizations: [],
@@ -46,7 +47,7 @@ export const GET = withObservability(async () => {
   // invite surfaces on Home (mirrors the retired /home launchpad). Idempotent — safe on load.
   await reconcilePendingInvitesForUser({ id: user.id, email: user.email, emailConfirmedAt: user.email_confirmed_at });
 
-  const [contexts, pendingInvites, coachInvites, follows, followedTournaments, followedOrgs, lapsed] = await Promise.all([
+  const [contexts, pendingInvites, coachInvites, follows, followedTournaments, followedOrgs, lapsed, hiddenWorkspaces] = await Promise.all([
     getUserAccessContexts({ id: user.id, email: user.email }),
     // The card names who is asking and what the role opens (specimen 6).
     listPendingInvitesForUser(user.id).then(withInvitationDetails),
@@ -60,6 +61,8 @@ export const GET = withObservability(async () => {
     getFollowedTournamentsForUser(user.id),
     getFollowedOrgsForUser(user.id),
     getLapsedWorkspacesForUser(user.id),
+    // The paused workspaces this person hid — a read that fails costs the "Hidden" line, never Home.
+    getHiddenWorkspaces(user.id).catch(() => []),
   ]);
 
   // Dedupe (§3c): a team you COACH must not also render as a fan "Following" card — role wins.
@@ -141,6 +144,7 @@ export const GET = withObservability(async () => {
     coachInvites,
     workspaces,
     lapsed,
+    hiddenWorkspaces,
     // Raw follow count (post coach-dedupe) — carried alongside the enriched cards so the client
     // can tell "follows nothing" apart from "follows teams whose game info dropped out" (a followed
     // team's tournament unpublished/canceled → getFollowFeed legitimately returns no card for it).

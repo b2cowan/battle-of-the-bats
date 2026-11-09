@@ -2,18 +2,18 @@
 
 **Generated:** 2026-11-09 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 486 divergence(s)** across dev/prod.
+**⚠️ 494 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
-| Tables | 9 | 6 | — |
-| Columns | 167 | 59 | 1 |
-| Indexes | 48 | 26 | 0 |
-| Constraints | 32 | 28 | — |
+| Tables | 10 | 6 | — |
+| Columns | 170 | 59 | 1 |
+| Indexes | 49 | 26 | 0 |
+| Constraints | 35 | 28 | — |
 | RLS / CHECK | 82 | 26 | 0 (RLS state) |
 
 ## Tables
-### Only in DEV (9)
+### Only in DEV (10)
 - `bank_check_waiting`
 - `family_calendar_feeds`
 - `family_invitations`
@@ -23,6 +23,7 @@
 - `platform_charge_tax_records`
 - `platform_credit_note_tax_records`
 - `second_parent_stops`
+- `user_hidden_workspaces`
 
 ### Only in PROD (6)
 - `bank_check_added_lines`
@@ -33,7 +34,7 @@
 - `bank_saved_lines`
 
 ## Columns
-### Only in DEV (167)
+### Only in DEV (170)
 - `bank_check_waiting.added_at`
 - `bank_check_waiting.added_by`
 - `bank_check_waiting.amount_cents`
@@ -201,6 +202,9 @@
 - `second_parent_stops.registration_ids`
 - `second_parent_stops.source`
 - `second_parent_stops.stopped_at`
+- `user_hidden_workspaces.hidden_at`
+- `user_hidden_workspaces.organization_id`
+- `user_hidden_workspaces.user_id`
 
 ### Only in PROD (59)
 - `bank_accounts.opening_balance_cents`
@@ -267,7 +271,7 @@
 - `family_links.rep_team_id` — dev: `uuid|uuid|YES|` | prod: `uuid|uuid|NO|`
 
 ## Indexes
-### Only in DEV (48)
+### Only in DEV (49)
 - `bank_check_waiting_added_by_idx`
 - `bank_check_waiting_once`
 - `bank_check_waiting_pkey`
@@ -316,6 +320,7 @@
 - `second_parent_stops_org_email_uniq`
 - `second_parent_stops_pkey`
 - `second_parent_stops_registration_ids_idx`
+- `user_hidden_workspaces_pkey`
 
 ### Only in PROD (26)
 - `bank_accounts_set_up_by_idx`
@@ -349,7 +354,7 @@
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (32)
+### Only in DEV (35)
 - `bank_check_waiting.bank_check_waiting_added_by_fkey`
 - `bank_check_waiting.bank_check_waiting_check_id_fkey`
 - `bank_check_waiting.bank_check_waiting_once`
@@ -382,6 +387,9 @@ _none_
 - `rep_roster_players.rep_roster_players_health_confirmed_by_fkey`
 - `second_parent_stops.second_parent_stops_org_id_fkey`
 - `second_parent_stops.second_parent_stops_pkey`
+- `user_hidden_workspaces.user_hidden_workspaces_organization_id_fkey`
+- `user_hidden_workspaces.user_hidden_workspaces_pkey`
+- `user_hidden_workspaces.user_hidden_workspaces_user_id_fkey`
 
 ### Only in PROD (28)
 - `bank_accounts.bank_accounts_set_up_by_fkey`

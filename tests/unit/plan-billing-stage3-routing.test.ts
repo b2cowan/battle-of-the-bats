@@ -114,6 +114,8 @@ function fixture(sample: Scenario) {
       },
     },
     './supabase-admin': { supabaseAdmin: { from: (table: string) => { assert.equal(table, 'organization_members'); return query(); } } },
+    // The hide-a-paused-workspace read (mig 456) — this person has hidden nothing.
+    './user-hidden-workspaces': { readHiddenOrgIds: async () => new Set<string>(), dropStaleHiddenWorkspaces: async () => {} },
     './entitlement-grants': { effectiveOrgFacts: async () => new Map() },
     './basic-coach-teams': { getBasicCoachTournamentSummary: async () => ({ teamCount: 0 }), countClaimableRegistrationsForUser: async () => 0 },
     './fan-follows': { getFanFollowSummary: async () => ({ followCount: 0 }) },

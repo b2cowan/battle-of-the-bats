@@ -1,11 +1,11 @@
 {
   "generated": "2026-11-09",
-  "total": 486,
+  "total": 494,
   "counts": {
-    "tables": 15,
-    "columns": 227,
-    "indexes": 74,
-    "constraints": 60,
+    "tables": 16,
+    "columns": 230,
+    "indexes": 75,
+    "constraints": 63,
     "rls": 110
   },
   "items": [
@@ -1122,6 +1122,18 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:user_hidden_workspaces.hidden_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:user_hidden_workspaces.organization_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:user_hidden_workspaces.user_id",
+      "sig": ""
+    },
+    {
       "key": "column:only-prod:bank_accounts.opening_balance_cents",
       "sig": ""
     },
@@ -1486,6 +1498,18 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:user_hidden_workspaces.user_hidden_workspaces_organization_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:user_hidden_workspaces.user_hidden_workspaces_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:user_hidden_workspaces.user_hidden_workspaces_user_id_fkey",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-prod:bank_accounts.bank_accounts_set_up_by_fkey",
       "sig": ""
     },
@@ -1790,6 +1814,10 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:user_hidden_workspaces_pkey",
+      "sig": ""
+    },
+    {
       "key": "index:only-prod:bank_accounts_set_up_by_idx",
       "sig": ""
     },
@@ -1927,6 +1955,10 @@
     },
     {
       "key": "table:only-dev:second_parent_stops",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:user_hidden_workspaces",
       "sig": ""
     },
     {

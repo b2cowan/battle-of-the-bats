@@ -103,6 +103,30 @@ export default function HomePersonalization() {
     return () => { cancelled = true; };
   }, []);
 
+  // Hide / Show a paused workspace (migration 456). HIDE, NOT LEAVE: it changes only this person's Home. The page then
+  // re-reads Home so what shows is what the server says, never a guess.
+  const [busyOrg, setBusyOrg] = useState<string | null>(null);
+  const [hideError, setHideError] = useState<string | null>(null);
+  async function setWorkspaceHidden(orgId: string, hidden: boolean) {
+    setBusyOrg(orgId);
+    setHideError(null);
+    try {
+      const res = await fetch('/api/consumer/hidden-workspaces', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orgId, hidden }),
+      });
+      if (!res.ok) throw new Error(String(res.status));
+      const home = await fetch('/api/consumer/home');
+      if (home.ok) setPayload(await home.json());
+      fireConsumerEvent('home_card_tapped', { kind: hidden ? 'workspace_hide' : 'workspace_show' });
+    } catch {
+      setHideError(hidden ? 'Couldn’t hide that just now. Try again.' : 'Couldn’t show that just now. Try again.');
+    } finally {
+      setBusyOrg(null);
+    }
+  }
+
   const signedIn = payload?.signedIn ?? false;
   const useDevice = loaded && !signedIn;
 
@@ -133,6 +157,7 @@ export default function HomePersonalization() {
 
   const workspaces = signedIn ? (payload?.workspaces ?? []) : [];
   const lapsed = signedIn ? (payload?.lapsed ?? []) : [];
+  const hiddenWorkspaces = signedIn ? (payload?.hiddenWorkspaces ?? []) : [];
   const invites = signedIn ? (payload?.pendingInvites ?? []) : [];
   const coachInvites = signedIn ? (payload?.coachInvites ?? []) : [];
 
@@ -165,7 +190,12 @@ export default function HomePersonalization() {
             <p className={styles.kicker}>Workspaces</p>
           </div>
           <div className={styles.cardList}>
-            {workspaces.map(ws => <WorkspaceCard key={ws.id} ctx={ws} />)}
+            {workspaces.map(ws => ws.paused && ws.orgId ? (
+              <div key={ws.id} className={styles.pausedItem}>
+                <WorkspaceCard ctx={ws} />
+                <HideRow name={ws.title} busy={busyOrg === ws.orgId} onHide={() => setWorkspaceHidden(ws.orgId!, true)} />
+              </div>
+            ) : <WorkspaceCard key={ws.id} ctx={ws} />)}
             {waiting && <WaitingWorkspaceCard door={waiting.door} />}
           </div>
         </section>
@@ -175,19 +205,21 @@ export default function HomePersonalization() {
         <section className={styles.section}>
           <div className={styles.cardList}>
             {lapsed.map(l => (
-              <Link
-                key={l.orgId}
-                href={l.destination}
-                className={styles.lapsedCard}
-                onClick={() => fireConsumerEvent('home_card_tapped', { kind: 'lapsed' })}
-              >
-                <span className={styles.lapsedIcon} aria-hidden><RotateCcw size={18} strokeWidth={1.9} /></span>
-                <span style={{ minWidth: 0 }}>
-                  <span className={styles.lapsedTitle} style={{ display: 'block' }}>{l.orgName}</span>
-                  <span className={styles.lapsedMeta}>{l.planLabel} · Subscription lapsed</span>
-                </span>
-                <span className={styles.lapsedCta}>Reactivate →</span>
-              </Link>
+              <div key={l.orgId} className={styles.pausedItem}>
+                <Link
+                  href={l.destination}
+                  className={styles.lapsedCard}
+                  onClick={() => fireConsumerEvent('home_card_tapped', { kind: 'lapsed' })}
+                >
+                  <span className={styles.lapsedIcon} aria-hidden><RotateCcw size={18} strokeWidth={1.9} /></span>
+                  <span style={{ minWidth: 0 }}>
+                    <span className={styles.lapsedTitle} style={{ display: 'block' }}>{l.orgName}</span>
+                    <span className={styles.lapsedMeta}>{l.planLabel} · Subscription lapsed</span>
+                  </span>
+                  <span className={styles.lapsedCta}>Reactivate →</span>
+                </Link>
+                <HideRow name={l.orgName} busy={busyOrg === l.orgId} onHide={() => setWorkspaceHidden(l.orgId, true)} />
+              </div>
             ))}
           </div>
         </section>
@@ -245,6 +277,49 @@ export default function HomePersonalization() {
           <Link href="/start" className={styles.startLine}>Want to run your own? Start a team or a tournament</Link>
         </>
       )}
+
+      {/* Paused workspaces this person hid — the quietest thing on Home, closed by default, at the very bottom. A Show
+          puts the card back. If the club comes back, the card returns by itself and this row disappears. */}
+      {hiddenWorkspaces.length > 0 && (
+        <details className={styles.pastGroup}>
+          <summary className={styles.pastSummary}>Hidden workspaces ({hiddenWorkspaces.length})</summary>
+          <div className={styles.pastList}>
+            {hiddenWorkspaces.map(h => (
+              <div key={h.orgId} className={styles.hiddenRow}>
+                <span className={styles.hiddenName}>{h.orgName}</span>
+                <button
+                  type="button"
+                  className={styles.hideBtn}
+                  disabled={busyOrg === h.orgId}
+                  aria-label={`Show ${h.orgName} on Home again`}
+                  onClick={() => setWorkspaceHidden(h.orgId, false)}
+                >
+                  Show
+                </button>
+              </div>
+            ))}
+          </div>
+        </details>
+      )}
+      {hideError && <p className={styles.hideError} role="status">{hideError}</p>}
+    </div>
+  );
+}
+
+/** The one quiet control under a paused card: it hides that workspace from THIS person's Home only. */
+function HideRow({ name, busy, onHide }: { name: string; busy: boolean; onHide: () => void }) {
+  return (
+    <div className={styles.hideRow}>
+      <button
+        type="button"
+        className={styles.hideBtn}
+        disabled={busy}
+        aria-label={`Hide ${name} from Home`}
+        title="Only hides it from your Home. Nothing changes for the club."
+        onClick={onHide}
+      >
+        Hide
+      </button>
     </div>
   );
 }
@@ -287,6 +362,7 @@ function WorkspaceCard({ ctx }: { ctx: UserAccessContext }) {
     <Link
       href={ctx.destination}
       className={styles.wsCard}
+      data-paused={ctx.paused ? 'true' : undefined}
       onClick={() => fireConsumerEvent('home_card_tapped', { kind: 'workspace', context: ctx.kind })}
     >
       <span className={styles.wsIcon} data-accent={accent} aria-hidden>
@@ -300,7 +376,7 @@ function WorkspaceCard({ ctx }: { ctx: UserAccessContext }) {
         <span className={styles.wsTitle}>{ctx.title}</span>
         <span className={styles.wsMeta}>
           <span>{ctx.subtitle}</span>
-          {ctx.detail && <span>{ctx.detail}</span>}
+          {ctx.detail && <span className={ctx.paused ? styles.wsMetaPaused : undefined}>{ctx.detail}</span>}
         </span>
       </span>
       <ChevronRight size={16} strokeWidth={2.2} className={styles.wsChevron} aria-hidden />

@@ -9,6 +9,8 @@ import { isTeamWorkspaceOrg } from './team-workspace-entitlements';
 import { isClubPlan, isTournamentOnlyWorkspace, type EntitlementOrg } from './module-entitlements';
 import { WORKSPACE_KIND_LABEL } from './workspace-labels';
 import { getBillingHref } from './billing-urls';
+import { orgPlanCarriesCoachesPortal } from './coach-portal-plan';
+import { readHiddenOrgIds, dropStaleHiddenWorkspaces } from './user-hidden-workspaces';
 import { hasBillingAccess } from './roles';
 import { getStandaloneAdminHref, getCoachPortalAssignments } from './coach-portal-request';
 import { programHomePath } from './member-home';
@@ -65,6 +67,9 @@ export type UserAccessContext = {
   /** A coaches_premium hat: true for a coach's OWN standalone portal (a Team workspace), false for a
    *  club's team. The club's season notices reach only the second (Club Tier Stage 2). */
   isTeamWorkspace?: boolean;
+  /** A coaches_premium card whose club's PLAN no longer carries the Coaches Portal: the card still shows (a coach must be
+   *  able to learn why), says so, and can be hidden by the person it belongs to. Never set on a working card. */
+  paused?: 'plan';
 };
 
 export type TournamentRegistrationSummary = {
@@ -134,6 +139,21 @@ function formatRole(role: string) {
 
 function formatPlan(planId: string | undefined) {
   return PLAN_LABELS[planId ?? ''] ?? (planId ? planId.toUpperCase() : 'Workspace');
+}
+
+/** The line a paused card carries in place of the coach's role. */
+const PAUSED_PLAN_DETAIL = 'Paused · not on the club’s plan';
+
+/** True when this club's plan no longer carries the Coaches Portal — the SAME question the portal's own gate asks
+ *  (`orgPlanCarriesCoachesPortal`), so the list can never offer a door the gate then shuts. */
+function planPausesPortal(org: NonNullable<OrgRelation>): boolean {
+  return !orgPlanCarriesCoachesPortal({
+    planId: org.plan_id ?? 'tournament',
+    subscriptionStatus: org.subscription_status as EntitlementOrg['subscriptionStatus'],
+    enabledAddons: org.enabled_addons ?? [],
+    freeFloor: org.free_floor as EntitlementOrg['freeFloor'],
+    accountKind: org.account_kind ?? 'organization',
+  });
 }
 
 function isMissingStartupTasksColumn(error: { code?: string; message?: string } | null) {
@@ -262,12 +282,14 @@ function buildMembershipContext(member: ActiveMemberRow): UserAccessContext | nu
 
   if (member.role === 'coach') {
     if (!subscriptionIsActive) return null;
+    const paused = !!org && planPausesPortal(org);
     return {
       id: `coach:${orgId}`,
       kind: 'coaches_premium',
       title: org?.name ?? 'Coaches Portal',
       subtitle: 'Coaches Portal',
-      detail: roleLabel,
+      detail: paused ? PAUSED_PLAN_DETAIL : roleLabel,
+      ...(paused ? { paused: 'plan' as const } : {}),
       badgeLabel: 'Coach',
       destination: `/${slug}/coaches`,
       sortOrder: 20,
@@ -307,9 +329,12 @@ function buildCoachAssignmentContext(params: {
   if (!slug || !orgId || params.assignmentCount === 0) return null;
   if (!isActiveSubscriptionStatus(org?.subscription_status)) return null;
 
-  const detail = params.assignmentCount === 1 && params.firstTeamName
-    ? params.firstTeamName
-    : `${params.assignmentCount} team assignments`;
+  const paused = !!org && planPausesPortal(org);
+  const detail = paused
+    ? PAUSED_PLAN_DETAIL
+    : params.assignmentCount === 1 && params.firstTeamName
+      ? params.firstTeamName
+      : `${params.assignmentCount} team assignments`;
 
   return {
     id: `coach:${orgId}`,
@@ -317,6 +342,7 @@ function buildCoachAssignmentContext(params: {
     title: org?.name ?? 'Coaches Portal',
     subtitle: 'Coaches Portal',
     detail,
+    ...(paused ? { paused: 'plan' as const } : {}),
     badgeLabel: 'Coach',
     destination: `/${slug}/coaches`,
     sortOrder: 20,
@@ -555,6 +581,68 @@ export async function findSuspendedMembershipOrg(userId: string): Promise<{ name
   return { name: org.name ?? null, slug: org.slug ?? null };
 }
 
+/**
+ * WHY A WORKSPACE IS PAUSED FOR THIS PERSON — the one place that says so (hide-a-paused-workspace, mig 456).
+ *   'lapsed' — the club's / portal's subscription lapsed (Home's "Reactivate" card);
+ *   'plan'   — the subscription is fine but the club's PLAN no longer carries the Coaches Portal (a paused coach card);
+ *   null     — working, or not a coaching place for this person (an admin who coaches nothing has no card to hide).
+ * Only a COACH'S places pause: a volunteer or an admin with no team is never "paused" by a plan that lacks the portal.
+ */
+async function pauseOfMember(member: ActiveMemberRow, userId: string): Promise<'lapsed' | 'plan' | null> {
+  const org = normalizeOrg(member);
+  if (!org || member.role === 'official') return null;
+  const teamWorkspace = isTeamWorkspaceOrg({ accountKind: org.account_kind, planId: org.plan_id ?? 'tournament' });
+  if (!isActiveSubscriptionStatus(org.subscription_status)) {
+    // The same two cases the "Reactivate" card exists for (see getLapsedWorkspacesForUser).
+    return teamWorkspace || member.role === 'coach' ? 'lapsed' : null;
+  }
+  if (!planPausesPortal(org)) return null;
+  const orgId = org.id ?? member.organization_id;
+  const coaches = member.role === 'coach' || (orgId ? (await getCoachingAssignmentsForUser(orgId, userId)).length > 0 : false);
+  return coaches ? 'plan' : null;
+}
+
+export interface HiddenWorkspace { orgId: string; orgName: string }
+
+/**
+ * The hides that APPLY right now, and the ones to show on Home's "Hidden" line. A hide applies only while the workspace is
+ * paused for the person; one that no longer does (the club came back, or they are no longer a coach there) is deleted, so a
+ * later pause is not hidden before they have seen it. Request-memoized, like the membership rows it reads.
+ */
+const getHiddenWorkspaceState = cache(async (userId: string): Promise<{ applying: Set<string>; list: HiddenWorkspace[] }> => {
+  const hiddenIds = await readHiddenOrgIds(userId);
+  const applying = new Set<string>();
+  const list: HiddenWorkspace[] = [];
+  if (hiddenIds.size === 0) return { applying, list };
+  const members = await getActiveMembershipRows(userId);
+  const stale: string[] = [];
+  for (const orgId of hiddenIds) {
+    const member = members.find(m => (normalizeOrg(m)?.id ?? m.organization_id) === orgId);
+    const org = member ? normalizeOrg(member) : null;
+    if (member && org && await pauseOfMember(member, userId)) {
+      applying.add(orgId);
+      list.push({ orgId, orgName: org.name ?? org.slug ?? 'Workspace' });
+    } else {
+      stale.push(orgId);
+    }
+  }
+  await dropStaleHiddenWorkspaces(userId, stale);
+  return { applying, list: list.sort((a, b) => a.orgName.localeCompare(b.orgName)) };
+});
+
+/** The workspaces this person has hidden that are still paused — Home's "Hidden" line, each with a Show. */
+export async function getHiddenWorkspaces(userId: string): Promise<HiddenWorkspace[]> {
+  return (await getHiddenWorkspaceState(userId)).list;
+}
+
+/** Whether this person may hide this workspace: only a PAUSED one (never a working workspace — a hide there would
+ *  silently remove a door they use). The hide route asks this before writing. */
+export async function canHideWorkspace(userId: string, orgId: string): Promise<boolean> {
+  const members = await getActiveMembershipRows(userId);
+  const member = members.find(m => (normalizeOrg(m)?.id ?? m.organization_id) === orgId);
+  return !!member && (await pauseOfMember(member, userId)) !== null;
+}
+
 /** A workspace whose subscription has lapsed and which therefore VANISHES from the active
  *  context list (team-workspace + coach-role memberships return null in buildMembershipContext
  *  when the subscription isn't active). Unified Home surfaces these as an explicit degraded
@@ -592,6 +680,8 @@ export async function getLapsedWorkspacesForUser(userId: string): Promise<Lapsed
   // The front door never fails on this read: without it the card simply shows as it did before.
   if (givenError) console.error('[user-contexts] could not tell which portals staff gave free time:', givenError.message);
   const staffGivenOrgIds = new Set((givenRows ?? []).map(r => r.workspace_org_id as string));
+  // A card this person hid stays out of the list; Home's "Hidden" line carries it, with a Show.
+  const { applying: hiddenOrgIds } = await getHiddenWorkspaceState(userId);
   for (const member of members) {
     const org = normalizeOrg(member);
     const slug = org?.slug;
@@ -600,6 +690,7 @@ export async function getLapsedWorkspacesForUser(userId: string): Promise<Lapsed
     // Still active → not lapsed (org-admin/official contexts also never vanish on lapse).
     if (isActiveSubscriptionStatus(org?.subscription_status)) continue;
     if (staffGivenOrgIds.has(orgId)) continue;
+    if (hiddenOrgIds.has(orgId)) continue;
     const planId = org?.plan_id ?? 'tournament';
     const accountKind = org?.account_kind ?? 'organization';
     // Only the contexts that actually disappear on lapse need the reactivate card.
@@ -619,13 +710,15 @@ export async function getUserAccessContexts(user: {
   id: string;
   email?: string | null;
 }): Promise<UserAccessContext[]> {
-  const [members, registrationSummary, fanSummary, leagueTeams] = await Promise.all([
+  const [members, registrationSummary, fanSummary, leagueTeams, hidden] = await Promise.all([
     getActiveMembershipRows(user.id),
     getBasicCoachTournamentSummary({ userId: user.id, email: user.email }),
     getFanFollowSummary(user.id),
     // Club Tier 9c: built from the coach's own rows (league_team_coaches), not a role, so a registrar who coaches a
     // team keeps their desk card and gains this one. A read that fails costs the card, never the sign-in.
     getCoachTeamCards(user.id).catch(() => []),
+    // The paused workspaces this person chose to hide (hide-a-paused-workspace, mig 456) — never fails the sign-in.
+    getHiddenWorkspaceState(user.id).catch(() => ({ applying: new Set<string>(), list: [] as HiddenWorkspace[] })),
   ]);
 
   const assignmentEntries = await Promise.all(
@@ -661,6 +754,13 @@ export async function getUserAccessContexts(user: {
       firstTeamName: assignments[0]?.teamName,
     });
     if (coachContext) contexts.push(coachContext);
+  }
+
+  // A paused card this person hid is not drawn (it comes back by itself when the club does). Only a PAUSED card is ever
+  // dropped here — a working workspace can never be hidden.
+  for (let i = contexts.length - 1; i >= 0; i--) {
+    const c = contexts[i];
+    if (c.paused && c.orgId && hidden.applying.has(c.orgId)) contexts.splice(i, 1);
   }
 
   for (const team of leagueTeams) {
@@ -782,7 +882,9 @@ export interface WorkspaceDoor {
 }
 
 export function workspaceDoorsFromContexts(contexts: UserAccessContext[]): WorkspaceDoor[] {
+  // The menu is the places you can GO. A paused workspace opens a wall, so it stays on Home (labelled, hideable) and is
+  // not a door here — the "All workspaces" row leads to it.
   return filterWorkspaceContexts(contexts)
-    .filter(c => c.destination)
+    .filter(c => c.destination && !c.paused)
     .map(c => ({ kind: c.kind, label: WORKSPACE_KIND_LABEL[c.kind], title: c.title, href: c.destination }));
 }

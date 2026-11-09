@@ -30053,6 +30053,33 @@
         "column_default": null
       },
       {
+        "table_name": "user_hidden_workspaces",
+        "pos": 1,
+        "column_name": "user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "user_hidden_workspaces",
+        "pos": 2,
+        "column_name": "organization_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "user_hidden_workspaces",
+        "pos": 3,
+        "column_name": "hidden_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "user_marketing_opt_outs",
         "pos": 1,
         "column_name": "user_id",
@@ -36236,6 +36263,20 @@
         "constraint_name": "tournaments_org_id_fkey"
       },
       {
+        "table_name": "user_hidden_workspaces",
+        "column_name": "organization_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "user_hidden_workspaces_organization_id_fkey"
+      },
+      {
+        "table_name": "user_hidden_workspaces",
+        "column_name": "user_id",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "user_hidden_workspaces_user_id_fkey"
+      },
+      {
         "table_name": "user_marketing_opt_outs",
         "column_name": "user_id",
         "foreign_table": null,
@@ -42295,6 +42336,11 @@
         "indexdef": "CREATE UNIQUE INDEX tournaments_pkey ON public.tournaments USING btree (id)"
       },
       {
+        "tablename": "user_hidden_workspaces",
+        "indexname": "user_hidden_workspaces_pkey",
+        "indexdef": "CREATE UNIQUE INDEX user_hidden_workspaces_pkey ON public.user_hidden_workspaces USING btree (user_id, organization_id)"
+      },
+      {
         "tablename": "user_marketing_opt_outs",
         "indexname": "user_marketing_opt_outs_pkey",
         "indexdef": "CREATE UNIQUE INDEX user_marketing_opt_outs_pkey ON public.user_marketing_opt_outs USING btree (user_id)"
@@ -48046,6 +48092,12 @@
       {
         "kind": "RLS",
         "table_name": "tournaments",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "RLS",
+        "table_name": "user_hidden_workspaces",
         "detail": "ENABLED",
         "check_clause": null
       },

@@ -6015,6 +6015,11 @@
     "indexdef": "CREATE UNIQUE INDEX tournaments_pkey ON public.tournaments USING btree (id)"
   },
   {
+    "tablename": "user_hidden_workspaces",
+    "indexname": "user_hidden_workspaces_pkey",
+    "indexdef": "CREATE UNIQUE INDEX user_hidden_workspaces_pkey ON public.user_hidden_workspaces USING btree (user_id, organization_id)"
+  },
+  {
     "tablename": "user_marketing_opt_outs",
     "indexname": "user_marketing_opt_outs_pkey",
     "indexdef": "CREATE UNIQUE INDEX user_marketing_opt_outs_pkey ON public.user_marketing_opt_outs USING btree (user_id)"

@@ -11510,6 +11510,26 @@ Account-level notification settings keyed by `user_id` (the "Pause notifications
 <!-- dict:col:user_preferences.updated_at -->
 **`updated_at`** (tstz, NN, DEFAULT now()) — bumped on upsert; code-maintained.
 
+### `user_hidden_workspaces`
+<!-- dict:table:user_hidden_workspaces -->
+
+**Added by migration 456 (2026-11-09 — applied to DEV; prod rides the next promote).** The workspaces a person chose to **hide from their own Home** while they are **paused** (the club's plan no longer carries the Coaches Portal, or its subscription lapsed). One row per (person, organization). **Hide, not leave:** this changes only what that person sees — the club's roster, the team's records and the coach's assignment are untouched and the club is never told. Service-role only (RLS enabled, zero policies), via `lib/user-hidden-workspaces.ts`.
+
+**Gotchas (read first):**
+1. **A row only APPLIES while the workspace is paused for that person.** The app filters on "hidden AND paused now", so a club that resubscribes brings the card back by itself; the app then deletes the stale row (also when the person stops being a coach there) so a later pause is not hidden before they have seen it.
+2. **Never a membership or access record.** Nothing reads this table to decide whether someone may open a portal — only whether a card is drawn on Home.
+
+**Fields:**
+
+<!-- dict:col:user_hidden_workspaces.user_id -->
+**`user_id`** (uuid, NN, PK part; FK→`auth.users(id)` ON DELETE CASCADE) — the person who hid it.
+
+<!-- dict:col:user_hidden_workspaces.organization_id -->
+**`organization_id`** (uuid, NN, PK part; FK→`organizations(id)` ON DELETE CASCADE) — the workspace hidden (a club, or a coach's own portal workspace).
+
+<!-- dict:col:user_hidden_workspaces.hidden_at -->
+**`hidden_at`** (tstz, NN, DEFAULT now()) — when they hid it; audit only.
+
 ### Functions & mechanics (not tables — not coverage-checked, documented for completeness)
 
 - **`notify()`** ([lib/notify.ts:87](../../../lib/notify.ts#L87)) — the fan-out hub: resolve recipients (all org members, or an explicit `userIds` list forced to `role='member'`) → **Layer 2** tournament opt-out (only if `tournamentId` passed) → **Layer 1** global channel prefs (falling back to `systemDefaults`) → write bell row (`channel_bell`) → fan Web Push (`channel_push` → `push_subscriptions` → `sendWebPush`, 410-delete) → send email (`channel_email` → `notificationEmailHtml` → `sendEmail`). Fire-and-forget; the whole body never throws to the caller.

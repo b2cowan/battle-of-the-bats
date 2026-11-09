@@ -12470,6 +12470,46 @@
     "update_rule": null
   },
   {
+    "table_name": "user_hidden_workspaces",
+    "constraint_name": "user_hidden_workspaces_organization_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "organization_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "user_hidden_workspaces",
+    "constraint_name": "user_hidden_workspaces_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "user_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "user_hidden_workspaces",
+    "constraint_name": "user_hidden_workspaces_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "organization_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "user_hidden_workspaces",
+    "constraint_name": "user_hidden_workspaces_user_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "user_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
     "table_name": "user_marketing_opt_outs",
     "constraint_name": "user_marketing_opt_outs_pkey",
     "constraint_type": "PRIMARY KEY",

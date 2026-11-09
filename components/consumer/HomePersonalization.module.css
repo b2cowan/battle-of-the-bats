@@ -187,6 +187,45 @@
   flex-shrink: 0;
 }
 
+/* ── A paused workspace, and the one quiet "Hide" under it (hide-a-paused-workspace, 2026-11-09) ─────────────────────
+   A paused card is the lapsed card's neighbour: the same dashed edge and amber word, so "this is not working right now"
+   reads the same on both. The Hide button is a sibling under the card, never inside it (a button inside a link is two
+   controls fighting for one tap), a 44px row, right-aligned and quiet. */
+.wsCard[data-paused='true'] { border-style: dashed; border-color: var(--home-line-strong); box-shadow: none; }
+.wsCard[data-paused='true']:hover { border-color: var(--home-amber); transform: none; box-shadow: none; }
+.wsMetaPaused { color: var(--home-amber); text-transform: uppercase; letter-spacing: 0.04em; }
+.pausedItem { display: flex; flex-direction: column; }
+.hideRow { display: flex; justify-content: flex-end; }
+.hideBtn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 0.4rem;
+  background: none;
+  border: 0;
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--home-dim);
+  cursor: pointer;
+}
+.hideBtn:hover:not(:disabled) { color: var(--home-ink); text-decoration: underline; }
+.hideBtn:disabled { opacity: 0.55; cursor: default; }
+.hiddenRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  padding: 0 0.2rem;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 0.85rem;
+  color: var(--home-dim);
+}
+.hiddenName { min-width: 0; overflow-wrap: anywhere; }
+.hideError { font-family: var(--font-sans, system-ui, sans-serif); font-size: 0.8rem; color: var(--home-amber); padding: 0.3rem 0.2rem 0; }
+
 /* ── Following (tournament-first) card ───────────────────────────────────── */
 .followCard {
   position: relative;
