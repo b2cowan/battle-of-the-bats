@@ -20,6 +20,7 @@
   is "we will try", and the export sentence is cut (no export covers everything). §16: the purchase email waits on 6.4. §17:
   not offered in Québec (O4). New §20 **"How you accept these Terms"** with the exact words the product shows (O8). Every
   stale note struck (production cancel; business-name registration).
+- 0.2 · 2026-11-08 · Page words for the legal pages (Stage 6 step 6.2 drawing round).
 
 > **How to read this draft.** `[square brackets]` = a fact the owner must supply (only the phone and mailing address are left
 > — no personal name, by ruling O1′ — and the one Stripe choice in §6). A `> NOTE` block is for the owner and is deleted before publication.
@@ -419,6 +420,47 @@ plan move and next-season choice). A line, not a second box — the account alre
 
 For a plan with a trial, add before it:
 > Your trial ends on the date shown at checkout, and your card is charged then unless you cancel.
+
+**(4) Page words — the legal pages themselves, and the links to them** (Stage 6 step 6.2; rulings Q1–Q6 of 2026-11-08 stand).
+Above the text a page shows only its title and one line below it. Dates are written with `formatStoredDate(..., { longMonth: true })`
+("November 8, 2026"): a legal page is a document people print and quote, and the full month cannot be misread.
+
+- **(4a) Effective-date line**, under the page title, on `/legal/terms` and `/legal/privacy`:
+  > Effective November 8, 2026
+- **(4b) Earlier-version line**, in the same place on a version that is no longer current (replaces 4a). The link is the words
+  "Read the current version" and opens the current page:
+  > This is an earlier version, in effect from March 1, 2027 to August 31, 2027. [Read the current version.]
+- **(4c) Draft banner**, dev preview only, above the title, one line:
+  > Draft — not published. The text can change before it goes live.
+- **(4d) A fact still blank** in the preview, in place of `[phone]` and `[mailing address]`. The mark keeps the fact's name so a
+  reader knows what is missing:
+  > [phone — to be filled]  ·  [mailing address — to be filled]
+
+  With no effective date yet, the preview's line 4a reads: `Effective [date — to be filled]`.
+- **(4e) Link labels.** Full forms everywhere a link has room (footer, sign-in and sign-up cards, the tick-box and purchase
+  line above, the 6.4 purchase email's body — no email footer, Q6): **Terms of Service** and **Privacy Policy**. Short forms **Terms** and **Privacy** only
+  where there is no room: the small line under Sign out in the account menu, written `Terms · Privacy`.
+- **(4f) The account page** (`app/(consumer)/account/page.tsx`, the row the code reserves): two rows, **Terms of Service** and
+  **Privacy Policy**, each opening its page. No chooser, no combined label.
+
+> NOTES on (4) —
+> 1. **Short forms and the one-spelling rule.** The rule governs how a word is spelled, not how long a label is. "Terms" is
+>    already this document's own short name for itself ("these Terms"), and "Privacy" is the document's subject, so neither
+>    is a second spelling of anything and `check:spelling` has nothing to catch. They are acceptable in a menu line sitting
+>    beside the full forms. Keep the capital T and the order (Terms before Privacy); do not write "T&Cs", "Terms & Privacy" or
+>    "Privacy policy". Give each short link the full title as its accessible name (`aria-label`) so a screen reader hears
+>    "Terms of Service", not "Terms".
+> 2. **Why two rows, not one.** A single "Terms and privacy" row would need a chooser and a third label; two rows reuse the two
+>    titles already settled. An installed-app user has no other path to either page (the account page's own comment).
+> 3. **Flag — the end date of an earlier version.** The ruling gave "in effect from {date} to {date}" without saying whether
+>    the second date is the last day the version applied or the day the next one took effect. Recommend the **last day it
+>    applied** (the day before the next version's effective date), so no day shows two versions. The build should compute it
+>    that way.
+> 4. **Flag — a draft with no effective date.** The ruling's preview shows blank facts with a mark but did not say what the
+>    date line shows before publication; 4d supplies it. No new surface.
+> 5. **Flag — the banner is dev-only by construction.** It must be impossible for it to render on production (it would tell
+>    customers the published terms are a draft). The build should key it off the draft-file source, not off an environment
+>    name.
 
 > NOTES —
 > 1. The age is in the same box as the agreement on purpose: O8 ruled "one tick", and O5 ruled every account holder confirms

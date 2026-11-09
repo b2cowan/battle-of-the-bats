@@ -1,0 +1,1182 @@
+<title>Legal Pages Drawings</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700&family=IBM+Plex+Mono:wght@500;700&family=Inter:wght@400;500;600;650;700&display=swap">
+<style>
+/* Layout: a cool slate drawing board (sticky tabs, a View row, one decision per tab) holding warm product specimens
+   drawn at true size. The board follows the viewer's theme; the specimens are always warm, because the marketing
+   pages, the sign-in column and the account menus they show are warm in every setting. */
+:root {
+  --bg: #E6EAEE; --panel: #FFFFFF; --fg: #1B2228; --muted: #56616B; --line: #CDD4DB;
+  --accent: #2F55A4; --accent-ink: #FFFFFF; --new: #2C7338; --same: #6E7882; --restyled: #8A5A00; --ask: #9C4A12;
+  --track: #FFFFFF; --track-on: #DCE5F5;
+  --f-display: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  --f-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --f-data: 'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace;
+  /* Product tokens (the warm --home-* set, app/consumer/warmTheme.module.css). Fixed in both board themes. */
+  --h-paper: #F8F4ED; --h-card: #FFFFFF; --h-ink: #241E15; --h-ink-soft: #4A4235; --h-dim: #615A54;
+  --h-line: rgba(70,55,30,.12); --h-line-strong: rgba(70,55,30,.20); --h-olive: #57651E; --h-olive-soft: rgba(87,101,30,.10);
+  --h-live: #B03A22; --h-amber: #835006; --h-notice-amber: #B7791F; --h-lime: #D9F99D; --h-lime-ink: #241E15;
+  --h-fill: rgba(70,55,30,.08); --h-shadow: 0 1px 2px rgba(70,55,30,.05), 0 6px 18px rgba(70,55,30,.07);
+  --h-shadow-sm: 0 1px 2px rgba(70,55,30,.06); --h-dimmer: rgba(36,30,21,.28);
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #13171C; --panel: #1C2229; --fg: #E5E9ED; --muted: #9AA4AE; --line: #2F3843;
+  --accent: #8EAEFF; --accent-ink: #0E1420; --new: #7CCB88; --same: #9AA4AE; --restyled: #E7B45C; --ask: #F2A46E;
+  --track: #232A32; --track-on: #33405A; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #13171C; --panel: #1C2229; --fg: #E5E9ED; --muted: #9AA4AE; --line: #2F3843;
+  --accent: #8EAEFF; --accent-ink: #0E1420; --new: #7CCB88; --same: #9AA4AE; --restyled: #E7B45C; --ask: #F2A46E;
+  --track: #232A32; --track-on: #33405A; color-scheme: dark; }
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: 15px; line-height: 1.55; margin: 0; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--panel); }
+.wrap { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+header.top { padding-block: 22px 14px; max-width: 1240px; margin: 0 auto; }
+header.top h1 { font-family: var(--f-display); font-size: 34px; line-height: 1.05; margin: 0 0 6px; text-wrap: balance; }
+header.top p { margin: 0; color: var(--muted); max-width: 78ch; }
+header.top .meta { font-family: var(--f-data); font-size: 12px; color: var(--muted); margin-top: 8px; }
+
+.sticky { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--panel); border-bottom: 1px solid var(--line); }
+.tabs { display: flex; gap: 2px; overflow-x: auto; max-width: 1240px; margin: 0 auto; padding-block: 6px 0; scrollbar-width: thin; }
+.tabs button { flex: none; border: 0; background: none; color: var(--muted); font: 600 14px var(--f-body); padding: 10px 12px 11px; border-bottom: 3px solid transparent; cursor: pointer; white-space: nowrap; }
+.tabs button[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); }
+.tabs button:focus-visible, .seg button:focus-visible, .pin:focus-visible, .mk:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.viewrow { display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; max-width: 1240px; margin: 0 auto; padding-block: 8px 10px; border-top: 1px solid var(--line); }
+.viewrow .lbl { font: 600 12px var(--f-body); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.vgroup { display: flex; align-items: center; gap: 8px; }
+/* The view switch is ONE white track with the chosen option shaded (the shipped ViewSwitch look). */
+.seg { display: inline-flex; background: var(--track); border: 1px solid var(--line); border-radius: 10px; padding: 2px; }
+.seg button { border: 0; background: none; color: var(--muted); font: 600 13px var(--f-body); padding: 6px 12px; border-radius: 8px; cursor: pointer; min-height: 32px; }
+.seg button[aria-pressed="true"] { background: var(--track-on); color: var(--fg); }
+
+main { max-width: 1240px; margin: 0 auto; padding-block: 22px 60px; }
+.panel[hidden] { display: none; }
+.intro { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 360px); gap: 18px 32px; margin-bottom: 18px; }
+@media (max-width: 900px) { .intro { grid-template-columns: minmax(0, 1fr); } }
+.intro h2 { font-family: var(--f-display); font-size: 28px; line-height: 1.1; margin: 0 0 8px; text-wrap: balance; }
+.intro p { margin: 0 0 10px; max-width: 70ch; }
+.box { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; min-width: 0; }
+.box h3 { margin: 0 0 8px; font: 700 12px var(--f-body); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.box ol, .box ul { margin: 0; padding-left: 20px; }
+.box li { margin-bottom: 6px; }
+.box code, .intro code { font-family: var(--f-data); font-size: 12.5px; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px; margin: 2px 0 14px; align-items: center; font-size: 13px; color: var(--muted); }
+
+/* Annotations: every highlight is a button that opens its explanation. */
+.mk { display: inline-flex; align-items: center; font: 700 10.5px var(--f-data); letter-spacing: .06em; text-transform: uppercase; padding: 3px 7px; border-radius: 999px; border: 1px solid currentColor; background: var(--panel); cursor: pointer; vertical-align: middle; line-height: 1.2; }
+.mk.new { color: var(--new); } .mk.same { color: var(--same); } .mk.restyled { color: var(--restyled); } .mk.ask { color: var(--ask); } .mk.ex { color: var(--muted); border-style: dashed; }
+.pin { position: absolute; z-index: 5; width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--panel); background: var(--accent); color: var(--accent-ink); font: 700 12px var(--f-body); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,.25); padding: 0; }
+.anch { position: relative; }
+.tagrow { display: flex; gap: 6px; flex-wrap: wrap; margin: 0 0 8px; }
+
+.specs { display: flex; flex-wrap: wrap; gap: 26px; align-items: flex-start; }
+.spec { min-width: 0; max-width: 100%; }
+.spec-cap { font: 600 12px var(--f-data); color: var(--muted); margin: 0 0 6px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.scroller { overflow-x: auto; max-width: 100%; border-radius: 10px; }
+.frame { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--h-paper); }
+.frame.desk { width: 1200px; }
+.frame.crop { width: 820px; }
+.frame.phone { width: 390px; border-radius: 22px; }
+.phone .vp { height: 760px; overflow-y: auto; position: relative; display: flex; flex-direction: column; }
+@media (max-width: 430px) {
+  .phwrap { margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px))); }
+  .frame.phone { border-radius: 0; border-left: 0; border-right: 0; }
+}
+body[data-dev="desktop"] .ph { display: none !important; }
+body[data-dev="phone"] .dk { display: none !important; }
+body.differs .same-el { opacity: .2; filter: grayscale(1); }
+body.differs .same-el .pin, body.differs .same-el .mk { opacity: 1; }
+
+.break { text-align: center; font: 600 12px var(--f-data); color: var(--h-dim); padding: 18px 0; border-top: 1px dashed var(--h-line-strong); border-bottom: 1px dashed var(--h-line-strong); background: repeating-linear-gradient(-45deg, transparent 0 8px, var(--h-fill) 8px 9px); }
+
+/* ═══ SPECIMEN: product vocabulary, written from the shipped modules ═══ */
+.w { font-family: var(--f-body); color: var(--h-ink); background: var(--h-paper); -webkit-font-smoothing: antialiased; }
+.w a { text-decoration: none; color: inherit; }
+.w button { font: inherit; }
+.ic { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+/* BrandLockup */
+.lk { display: inline-flex; align-items: center; gap: .4em; font-weight: 700; font-size: 17px; letter-spacing: -.01em; color: var(--h-ink); white-space: nowrap; }
+.lk svg { width: 1.15em; height: 1.15em; fill: var(--h-olive); }
+.lk .hq { color: var(--h-olive); font-weight: 600; }
+/* Navbar (marketing bar) */
+.mbar { height: 64px; background: var(--h-card); border-bottom: 1px solid var(--h-line); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; flex: none; }
+.phone .mbar { padding: 0 24px; position: sticky; top: 0; z-index: 3; }
+.mlinks { display: flex; gap: 24px; }
+.mlinks a { font-size: 14px; font-weight: 600; color: var(--h-ink-soft); display: inline-flex; align-items: center; min-height: 32px; }
+.mact { display: flex; align-items: center; gap: 24px; }
+.phone .mact { gap: 8px; }
+.phone .lk { font-size: 16px; }
+.quiet { font-size: 14px; font-weight: 600; color: var(--h-ink-soft); display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding-inline: 4px; }
+.phone .quiet { min-height: 44px; }
+.btn2 { min-height: 44px; padding: 0 16px; border: 1px solid var(--h-line-strong); border-radius: 10px; background: var(--h-card); font-size: 14px; font-weight: 700; color: var(--h-ink); display: inline-flex; align-items: center; white-space: nowrap; }
+.phone .btn2 { padding-inline: 12px; }
+.bnav { display: flex; background: var(--h-card); border-top: 1px solid var(--h-line); position: sticky; bottom: 0; z-index: 3; margin-top: auto; flex: none; }
+.bnav a { flex: 1 1 auto; min-height: 48px; display: flex; align-items: center; justify-content: center; padding: 0 4px; font-size: 14px; font-weight: 600; color: var(--h-ink-soft); border-top: 2px solid transparent; white-space: nowrap; }
+/* The legal page (NEW) — the marketing kit's own type: kit.heading, kit.small, kit.title, kit.subhead, kit.body */
+.lp { display: flex; gap: 64px; padding: 72px 24px 56px; max-width: 1200px; margin: 0 auto; align-items: flex-start; }
+.phone .lp { display: block; padding: 36px 24px 36px; }
+.prose { width: 720px; min-width: 0; }
+.phone .prose { width: auto; }
+.w h1.t { font-family: var(--f-display); font-weight: 700; font-size: 32px; line-height: 1.1; margin: 0 0 6px; color: var(--h-ink); text-wrap: balance; }
+.eff { font-size: 14px; line-height: 1.5; color: var(--h-dim); margin: 0 0 28px; padding-bottom: 20px; border-bottom: 1px solid var(--h-line); }
+.head-block { margin: 0 0 28px; padding-bottom: 20px; border-bottom: 1px solid var(--h-line); }
+.head-block .eff { margin: 0; padding: 0; border: 0; }
+.w h2.s { font-family: var(--f-body); font-size: 20px; font-weight: 700; line-height: 1.3; margin: 40px 0 12px; color: var(--h-ink); scroll-margin-top: 88px; }
+.w h2.s.first { margin-top: 0; }
+.w h3.ss { font-family: var(--f-body); font-size: 16px; font-weight: 700; line-height: 1.35; margin: 28px 0 8px; color: var(--h-ink); }
+.w .prose p { font-size: 16px; line-height: 1.6; color: var(--h-ink-soft); margin: 0 0 14px; }
+.w .prose ul { margin: 0 0 14px; padding-left: 22px; }
+.w .prose li { font-size: 16px; line-height: 1.6; color: var(--h-ink-soft); margin-bottom: 6px; }
+.w .prose li::marker { color: var(--h-olive); }
+.w .prose b { color: var(--h-ink); font-weight: 600; }
+.w a.l { color: var(--h-olive); font-weight: 600; }
+.w a.l:hover { text-decoration: underline; text-underline-offset: 3px; }
+.rail { width: 240px; flex: none; position: sticky; top: 88px; max-height: calc(100vh - 112px); overflow-y: auto; }
+.rcap { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--h-dim); margin: 0 0 10px; }
+.rail ol { list-style: none; margin: 0; padding: 0; border-left: 1px solid var(--h-line); }
+.rail li a { display: flex; gap: 8px; padding: 4px 0 4px 12px; margin-left: -1px; border-left: 2px solid transparent; font-size: 14px; line-height: 1.35; color: var(--h-ink-soft); }
+.rail li a .n { color: var(--h-dim); font-variant-numeric: tabular-nums; min-width: 18px; flex: none; }
+.rail li.on a { color: var(--h-ink); font-weight: 600; border-left-color: var(--h-olive); }
+/* Table (Privacy Policy §6) */
+.tbl { width: 100%; border-collapse: collapse; margin: 4px 0 20px; }
+.tbl th { text-align: left; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--h-dim); padding: 0 14px 10px 0; border-bottom: 1px solid var(--h-line-strong); vertical-align: bottom; line-height: 1.3; }
+.tbl td { padding: 12px 14px 12px 0; border-bottom: 1px solid var(--h-line); vertical-align: top; font-size: 14px; line-height: 1.5; color: var(--h-ink-soft); }
+.tbl td:first-child { color: var(--h-ink); font-weight: 600; }
+.pcards { display: flex; flex-direction: column; gap: 10px; margin: 4px 0 20px; }
+.pcard { background: var(--h-card); border: 1px solid var(--h-line); border-radius: 14px; padding: 16px; }
+.pcard h4 { font-size: 16px; font-weight: 700; margin: 0 0 4px; color: var(--h-ink); }
+.pcard dl { margin: 0; }
+.pcard dt { font-size: 12px; font-weight: 600; color: var(--h-dim); margin-top: 10px; }
+.pcard dd { margin: 2px 0 0; font-size: 14px; line-height: 1.5; color: var(--h-ink-soft); }
+/* Callouts: the white callout with a coloured edge (kit.cardEdge; the amber edge is AccountForm's noticeWarn) */
+.co { background: var(--h-card); border: 1px solid var(--h-line); border-left: 3px solid var(--h-olive); border-radius: 8px; padding: 12px 14px; font-size: 14px; line-height: 1.5; color: var(--h-ink); margin: 0 0 18px; }
+.co.amber { border-left-color: var(--h-notice-amber); }
+.co b { font-weight: 700; }
+.co .ttl { display: block; font-size: 16px; line-height: 1.3; margin-bottom: 2px; }
+.co .blk { display: inline-flex; align-items: center; min-height: 44px; }
+.tbf { color: var(--h-amber); background: var(--h-fill); border-bottom: 1px dashed var(--h-notice-amber); padding: 0 4px; border-radius: 3px; font-weight: 600; }
+/* Footer (components/Footer.module.css) */
+.ft { background: var(--h-paper); border-top: 1px solid var(--h-line); color: var(--h-ink-soft); }
+.ft-in { max-width: 1200px; margin: 0 auto; padding: 48px 24px 28px; }
+.ft-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 32px; margin-bottom: 48px; }
+.ft-brand { grid-column: span 4; } .ft-col { grid-column: span 2; } .ft-qr { grid-column: span 4; }
+.phone .ft-in { padding: 48px 24px 28px; }
+.phone .ft-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+.phone .ft-brand, .phone .ft-qr { grid-column: span 2; } .phone .ft-col { grid-column: span 1; }
+.ft-blurb { font-size: 14px; line-height: 1.6; max-width: 34ch; margin: 12px 0 0; }
+.ft-head { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--h-dim); margin: 0 0 12px; }
+.ft-links { display: flex; flex-direction: column; gap: 8px; }
+.ft-links a { font-size: 14px; color: var(--h-ink-soft); display: inline-flex; align-items: center; }
+.phone .ft-links { gap: 0; } .phone .ft-links a { min-height: 44px; }
+.qr { display: flex; gap: 14px; align-items: flex-start; }
+.qr .code { width: 76px; height: 76px; flex: none; border-radius: 6px; background: conic-gradient(var(--h-ink) 25%, transparent 0 50%, var(--h-ink) 0 75%, transparent 0) 0 0/12px 12px, var(--h-card); border: 5px solid var(--h-card); outline: 1px solid var(--h-line); }
+.qr b { display: block; font-size: 14px; color: var(--h-ink); }
+.qr span { font-size: 12px; color: var(--h-dim); }
+.ft-base { border-top: 1px solid var(--h-line); padding-top: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px 24px; }
+.copy { font-size: 12px; color: var(--h-dim); }
+.ft-legal { display: flex; gap: 20px; }
+.ft-legal a { font-size: 12px; color: var(--h-ink-soft); }
+.ft-legal a:hover { color: var(--h-olive); }
+.phone .ft-base { flex-direction: column; align-items: flex-start; gap: 4px; }
+.phone .ft-legal { gap: 20px; } .phone .ft-legal a { min-height: 44px; display: inline-flex; align-items: center; }
+/* AccountMenu — warm skin (components/shared/AccountMenu.module.css .warm) */
+.menu-stage { background: var(--h-paper); padding: 0 24px 28px; }
+.menu-bar { height: 64px; display: flex; align-items: center; justify-content: flex-end; gap: 24px; background: var(--h-card); border-bottom: 1px solid var(--h-line); margin: 0 -24px 8px; padding: 0 24px; }
+.menu-anchor { display: flex; justify-content: flex-end; }
+.pop { width: 264px; background: var(--h-card); border: 1px solid var(--h-line-strong); border-radius: 10px; box-shadow: var(--h-shadow); padding: 4.8px; display: flex; flex-direction: column; gap: 1.6px; }
+.idn { display: flex; gap: 9.6px; align-items: center; padding: 8px 10.4px 8.8px; border-bottom: 1px solid var(--h-line-strong); margin-bottom: 2.4px; }
+.av { width: 30px; height: 30px; flex: none; border-radius: 8px; background: var(--h-olive-soft); font: 700 12.8px var(--f-data); display: flex; align-items: center; justify-content: center; color: var(--h-ink); }
+.cap { font: 700 11px var(--f-data); letter-spacing: .09em; text-transform: uppercase; color: var(--h-dim); display: block; }
+.em { font: 500 11.8px var(--f-data); color: var(--h-ink); display: block; }
+.mrow { display: flex; align-items: center; gap: 8.8px; padding: 7.2px 10.4px; border-radius: 7px; font-size: 14px; font-weight: 650; color: var(--h-ink); line-height: 1.25; }
+.mrow .ic { color: var(--h-dim); }
+.mrow.so, .mrow.so .ic { color: var(--h-live); }
+.msep { height: 1px; background: var(--h-line-strong); margin: 2.4px 0; }
+.mlegal { display: flex; align-items: center; gap: 6px; min-height: 28px; padding: 0 10.4px 0 calc(10.4px + 15px + 8.8px); font-size: 12px; color: var(--h-dim); }
+.mlegal a { color: var(--h-dim); font-weight: 500; text-decoration: underline; text-underline-offset: 2px; }
+.mlegal a:hover { color: var(--h-ink); text-decoration: underline; }
+/* BottomSheet, warm-remapped by the menu (sheetHost) */
+.sheet-vp { height: 760px; position: relative; overflow: hidden; background: var(--h-paper); }
+.sheet-ghost { padding: 0; opacity: .9; }
+.dim { position: absolute; inset: 0; background: var(--h-dimmer); display: flex; align-items: flex-end; }
+.sheet { width: 100%; background: var(--h-card); border: 1px solid var(--h-line-strong); border-bottom: 0; border-radius: 18px 18px 0 0; padding-bottom: 16px; }
+.handle { width: 38px; height: 4px; border-radius: 2px; margin: 10px auto 0; background: var(--h-line-strong); }
+.sh-head { display: flex; align-items: flex-start; gap: 8px; padding: 8px 6px 12px 20px; border-bottom: 1px solid rgba(87,101,30,.18); }
+.sh-text { flex: 1; min-width: 0; padding-top: 9px; }
+.sh-title { display: block; font-size: 16px; font-weight: 700; line-height: 1.3; color: var(--h-ink); }
+.sh-sub { display: block; margin-top: 3px; font: 500 12px var(--f-data); color: var(--h-dim); }
+.sh-x { width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; color: var(--h-dim); flex: none; }
+.sh-x .ic { width: 20px; height: 20px; }
+.sh-body { padding: 12px 20px; }
+.sh-list { display: flex; flex-direction: column; margin: -6px -12px -12px; }
+.sh-list .mrow { min-height: 48px; padding: 0 12px; gap: 14px; border-radius: 10px; }
+.sh-list .mrow .ic { width: 18px; height: 18px; }
+.sh-list .msep { margin: 6px 12px; }
+.sh-list .mlegal { min-height: 44px; padding: 0 12px 0 44px; gap: 2px; }
+.sh-list .mlegal a { min-height: 44px; display: inline-flex; align-items: center; padding: 0 6px; }
+.sh-list .mlegal a:first-child { margin-left: -6px; }
+/* The one account step (components/auth/AccountForm.module.css) */
+.sc-page { display: flex; justify-content: center; padding: 28px 16px 40px; }
+.phone .sc-page { padding: 12px 16px 20px; }
+.sc-col { width: 100%; max-width: 420px; padding-top: 4px; }
+.sc-head { text-align: center; margin-bottom: 18px; padding-bottom: 16px; border-bottom: 1px solid var(--h-line); }
+.phone .sc-head { margin-bottom: 16px; padding-bottom: 14px; }
+.sc-title { margin: 4px 0 8px; font-family: var(--f-display); font-weight: 700; font-size: 32px; line-height: 1.05; color: var(--h-ink); }
+.sc-sub { margin: 0; font-size: 16px; line-height: 1.45; color: var(--h-dim); }
+.sc-form { display: flex; flex-direction: column; gap: 14px; }
+.sc-field { display: flex; flex-direction: column; gap: 6px; }
+.sc-label { font-size: 14px; font-weight: 600; line-height: 1.3; color: var(--h-ink-soft); }
+.sc-input { height: 48px; padding: 0 14px; background: var(--h-card); border: 1px solid var(--h-line-strong); border-radius: 10px; font-size: 16px; color: var(--h-dim); display: flex; align-items: center; justify-content: space-between; }
+.sc-input .ic { width: 20px; height: 20px; color: var(--h-dim); }
+.sc-forgot { display: flex; justify-content: flex-end; margin-top: -6px; }
+.sc-forgot a, .sc-foot a.fl { color: var(--h-olive); font-weight: 600; font-size: 14px; min-height: 44px; display: inline-flex; align-items: center; }
+.sc-primary { min-height: 48px; margin-top: 4px; border-radius: 10px; background: var(--h-lime); color: var(--h-lime-ink); font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+.sc-foot { margin-top: 18px; padding-top: 4px; border-top: 1px solid var(--h-line); display: flex; flex-wrap: wrap; justify-content: center; gap: 0 18px; font-size: 14px; color: var(--h-dim); }
+.sc-foot > * { display: inline-flex; align-items: center; gap: .3em; min-height: 44px; margin: 0; }
+.sc-legal { display: flex; justify-content: center; align-items: center; gap: 2px; font-size: 14px; color: var(--h-dim); }
+.sc-legal a { min-height: 44px; display: inline-flex; align-items: center; padding: 0 8px; color: var(--h-dim); text-decoration: underline; text-underline-offset: 2px; }
+/* Support console sign-in (app/platform-admin/login/platform-login.module.css) */
+.pa-page { display: flex; align-items: center; justify-content: center; padding: 40px 24px; background-color: var(--h-paper); background-image: linear-gradient(to right, rgba(87,101,30,.07) 1px, transparent 1px), linear-gradient(to bottom, rgba(87,101,30,.07) 1px, transparent 1px); background-size: 40px 40px; min-height: 620px; }
+.pa-card { width: 100%; max-width: 400px; background: var(--h-card); border: 1px solid var(--h-line); border-radius: 12px; padding: 32px 40px 28px; }
+.phone .pa-card { padding: 28px 24px 24px; }
+.pa-head { text-align: center; margin-bottom: 24px; }
+.pa-head .lk { margin-bottom: 16px; }
+.pa-title { font-size: 20px; font-weight: 700; line-height: 1.3; margin: 0 0 4px; color: var(--h-ink); }
+.pa-sub { font-size: 12px; color: var(--h-dim); margin: 0; }
+.pa-form { display: flex; flex-direction: column; gap: 17.6px; }
+.pa-field { display: flex; flex-direction: column; gap: 6.4px; }
+.pa-lrow { display: flex; justify-content: space-between; align-items: baseline; }
+.pa-label { font-size: 12px; font-weight: 650; color: var(--h-ink-soft); }
+.pa-forgot { font-size: 12px; font-weight: 650; color: var(--h-olive); }
+.pa-input { min-height: 38px; padding: 8px 12px; background: var(--h-card); border: 1px solid var(--h-line-strong); border-radius: 6px; font-size: 14px; color: var(--h-dim); display: flex; justify-content: space-between; align-items: center; }
+.pa-btn { min-height: 42px; border-radius: 8px; background: var(--h-lime); color: var(--h-lime-ink); font-size: 14px; font-weight: 650; display: flex; align-items: center; justify-content: center; margin-top: 4px; }
+.pa-legal { margin-top: 20px; padding-top: 12px; border-top: 1px solid var(--h-line); display: flex; justify-content: center; align-items: center; gap: 2px; font-size: 12px; color: var(--h-dim); }
+.pa-legal a { color: var(--h-dim); text-decoration: underline; text-underline-offset: 2px; padding: 4px 6px; }
+/* Consumer account page (app/(consumer)/account/account.module.css) */
+.ac-page { padding: 20px 16px 24px; display: flex; flex-direction: column; flex: 1 0 auto; }
+.ac-title { font-size: 24px; font-weight: 700; letter-spacing: -.01em; margin: 0 0 17.6px; color: var(--h-ink); }
+.ac-surface { background: var(--h-card); border: 1px solid var(--h-line); border-radius: 14px; box-shadow: var(--h-shadow-sm); }
+.ac-id { display: flex; align-items: center; gap: 13.6px; padding: 16px; }
+.ac-av { width: 46px; height: 46px; border-radius: 50%; background: var(--h-olive-soft); color: var(--h-olive); font: 700 18.4px var(--f-data); display: flex; align-items: center; justify-content: center; flex: none; }
+.ac-cap { display: block; font: 700 9.6px var(--f-data); letter-spacing: .12em; text-transform: uppercase; color: var(--h-dim); }
+.ac-val { display: block; font-size: 15.2px; font-weight: 600; color: var(--h-ink); }
+.ac-app { margin-top: 17.6px; padding: 14px 16px; }
+.ac-app h5 { margin: 0 0 10px; font-size: 15px; font-weight: 700; color: var(--h-ink); }
+.ac-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.ac-opt { border: 1px solid var(--h-line-strong); border-radius: 10px; padding: 10px 12px; font-size: 14px; font-weight: 600; display: flex; justify-content: space-between; color: var(--h-ink); }
+.ac-opt.on { border-color: var(--h-olive); box-shadow: 0 0 0 1px var(--h-olive) inset; }
+.ac-rows { display: flex; flex-direction: column; gap: 9.6px; margin-top: 17.6px; }
+.ac-row { display: flex; align-items: center; gap: 12.8px; min-height: 52px; padding: 13.6px 16px; }
+.ac-row .ic { width: 19px; height: 19px; color: var(--h-olive); }
+.ac-row .lbl { flex: 1; font-size: 15.2px; font-weight: 600; color: var(--h-ink); }
+.ac-row .chev { width: 18px; height: 18px; color: var(--h-dim); }
+.ac-row.out { margin-top: 14.4px; } .ac-row.out .ic { color: var(--h-dim); }
+.ac-legal { display: flex; justify-content: center; align-items: center; gap: 2px; margin-top: 6px; font-size: 14px; color: var(--h-dim); }
+.ac-legal a { min-height: 44px; display: inline-flex; align-items: center; padding: 0 8px; color: var(--h-dim); text-decoration: underline; text-underline-offset: 2px; }
+.ac-pin { margin-top: auto; padding-top: 24px; font: 500 12px/1.6 var(--f-data); color: var(--h-dim); }
+.ac-pin a { color: var(--h-olive); font-weight: 700; }
+.cnav { display: flex; background: var(--h-card); border-top: 1px solid var(--h-line); position: sticky; bottom: 0; flex: none; }
+.cnav a { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-height: 56px; font-size: 11px; font-weight: 600; color: var(--h-dim); }
+.cnav a .ic { width: 20px; height: 20px; }
+.cnav a.on { color: var(--h-olive); }
+
+/* Words + asks */
+.words { width: 100%; border-collapse: collapse; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.words th, .words td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; font-size: 14px; }
+.words th { font: 700 12px var(--f-body); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.words td.q { font-weight: 600; }
+.words tr:last-child td { border-bottom: 0; }
+.asks { display: grid; gap: 14px; }
+.ask { background: var(--panel); border: 1px solid var(--line); border-left: 4px solid var(--ask); border-radius: 10px; padding: 14px 16px; }
+.ask h3 { margin: 0 0 6px; font-size: 16px; line-height: 1.35; }
+.ask p { margin: 0 0 8px; max-width: 80ch; }
+.ask ul { margin: 0 0 4px; padding-left: 20px; }
+.ask li { margin-bottom: 4px; }
+.rec { color: var(--new); font-weight: 700; }
+
+dialog { border: 1px solid var(--line); border-radius: 12px; background: var(--panel); color: var(--fg); max-width: min(560px, calc(100vw - 32px)); padding: 18px 20px 16px; box-shadow: 0 20px 60px rgba(0,0,0,.35); }
+dialog::backdrop { background: rgba(10,14,20,.45); }
+dialog h3 { margin: 0 0 4px; font-size: 17px; }
+dialog .kind { font: 700 11px var(--f-data); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 10px; }
+dialog p { margin: 0 0 14px; white-space: pre-line; }
+dialog button { font: 600 14px var(--f-body); border: 1px solid var(--line); background: var(--track); color: var(--fg); border-radius: 8px; padding: 8px 14px; cursor: pointer; min-height: 40px; }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; } }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-mark" viewBox="10 10 44 44"><path d="M24 12H45a3 3 0 0 1 3 3V19a3 3 0 0 1-3 3H24a2 2 0 0 0-2 2V26a2 2 0 0 0 2 2H37a3 3 0 0 1 3 3V40a2 2 0 0 0 2 2H49a3 3 0 0 1 3 3V49a3 3 0 0 1-3 3H33a3 3 0 0 1-3-3V40a2 2 0 0 0-2-2H24a2 2 0 0 0-2 2V49a3 3 0 0 1-3 3H15a3 3 0 0 1-3-3V24a12 12 0 0 1 12-12Z"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></symbol>
+  <symbol id="i-out" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></symbol>
+  <symbol id="i-msg" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><line x1="12" y1="7" x2="12" y2="13"/><line x1="9" y1="10" x2="15" y2="10"/></symbol>
+  <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3l1.9 5.8L20 11l-6.1 2.2L12 19l-1.9-5.8L4 11l6.1-2.2z"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-buoy" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><line x1="4.93" y1="4.93" x2="9.17" y2="9.17"/><line x1="14.83" y1="14.83" x2="19.07" y2="19.07"/><line x1="14.83" y1="9.17" x2="19.07" y2="4.93"/><line x1="4.93" y1="19.07" x2="9.17" y2="14.83"/></symbol>
+  <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></symbol>
+  <symbol id="i-radio" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49"/><path d="M7.76 16.24a6 6 0 0 1 0-8.49"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M4.93 19.07a10 10 0 0 1 0-14.14"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></symbol>
+</svg>
+
+<div class="sticky wrap">
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button role="tab" data-tab="reading">1 · Reading page</button>
+    <button role="tab" data-tab="earlier">2 · Earlier version</button>
+    <button role="tab" data-tab="preview">3 · Dev preview</button>
+    <button role="tab" data-tab="menu">4 · Account menu</button>
+    <button role="tab" data-tab="signin">5 · Sign-in forms</button>
+    <button role="tab" data-tab="footer">6 · Footer</button>
+    <button role="tab" data-tab="account">7 · Account page</button>
+    <button role="tab" data-tab="words">8 · Words</button>
+    <button role="tab" data-tab="asks">9 · Asks</button>
+  </nav>
+  <div class="viewrow">
+    <div class="vgroup"><span class="lbl">Device</span>
+      <div class="seg" role="group" aria-label="Device">
+        <button type="button" id="dev-desktop" data-dev="desktop" aria-pressed="true">Desktop</button>
+        <button type="button" id="dev-phone" data-dev="phone" aria-pressed="false">Phone</button>
+      </div>
+    </div>
+    <div class="vgroup"><span class="lbl">View</span>
+      <div class="seg" role="group" aria-label="View">
+        <button type="button" id="view-all" data-view="all" aria-pressed="true">Everything</button>
+        <button type="button" id="view-diff" data-view="diff" aria-pressed="false">Show only what differs</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+<header class="top">
+  <h1>Legal pages · step 6.2 drawings</h1>
+  <p>The Terms of Service and Privacy Policy pages, and the links to them, drawn before the build. Everything here stays switched off on production until step 6.7 publishes the text. Every coloured tag, numbered pin and ask opens its explanation when you click it.</p>
+  <div class="meta">GST/HST Stage 6 · step 6.2 · drawing round · 2026-11-08 · words from /legal (Terms draft §20, item 4) · round 2, after the /design review (tab 9 lists what it changed) · APPROVED by the owner 2026-11-09, all asks as recommended</div>
+</header>
+
+<main>
+
+<!-- ═════════════ 1 · READING PAGE ═════════════ -->
+<section class="panel" id="p-reading" data-panel="reading">
+  <div class="intro">
+    <div>
+      <h2>The reading page: Terms of Service, current version</h2>
+      <p>FieldLogicHQ's own page, so it wears the marketing frame: the white top bar, and the footer at the bottom. Above the text sit the title and one date line, nothing else, as ruled. The body is the Terms draft as the page will show it, with the owner notes taken out. The frame stops after §3. The Privacy Policy's table (§6) is drawn under it.</p>
+      <div class="legend"><button class="mk new" data-title="New" data-note="Nothing on this page exists today. The whole page is new, built in step 6.2 and kept switched off until step 6.7.">New</button> <button class="mk same" data-title="Unchanged" data-note="The marketing bar and the footer columns ship today and are not changed. Their one change, the two links in the footer's bottom row, is tab 6.">Unchanged</button> <button class="mk ask" data-title="Ask 1, contents" data-note="The contents list beside the text is my recommendation, not a ruling. Tab 9, Ask 1 has the options.">Ask 1</button> <button class="mk ex" data-title="Example values" data-note="The telephone number, mailing address and effective date are made up for the drawing. The real ones go in at step 6.7, never in this repo (Terms §1 note).">Example</button></div>
+    </div>
+    <div class="box">
+      <h3>The pins</h3>
+      <ol>
+        <li>Title, in the marketing kit's section-heading face (32 px).</li>
+        <li>The date line: "Effective November 8, 2026" style, full month.</li>
+        <li>Contents beside the text on desktop (Ask 1).</li>
+        <li>Section references inside the text link to their section.</li>
+        <li>Sections at 20 px, subsections at 16 px; nothing smaller.</li>
+        <li>The Privacy Policy table; on a phone each row becomes a card.</li>
+      </ol>
+    </div>
+  </div>
+  <div class="box" style="margin-bottom:18px">
+    <h3>Borrowed from the public page layout standard (by choice)</h3>
+    <p style="margin:0 0 6px">That standard covers tournament and club pages, so it doesn't bind this page. I borrowed two of its rules. <b>R1:</b> prose holds to 720 px. <b>R4:</b> three heading levels and no others (here the page title, the numbered section and the subsection). I didn't borrow R1's 960 px column or its 16 px phone sides (a legal page lives in the marketing container, with its 24 px sides at every width), R2's "no page title" (a document needs one, and Q5 rules it in), R3's 24 px rhythm (long prose needs 40 px above a section), or R4's sizes (the marketing kit's 20 / 16 px are used). The space under the bar follows the marketing kit's one rule: 72 px on desktop, 36 px on a phone.</p>
+  </div>
+
+  <div class="specs">
+    <div class="spec dk">
+      <p class="spec-cap">Marketing page · desktop · 1200 px · true size — MARKETING FRAME</p>
+      <div class="scroller"><div class="frame desk w">
+        <div class="mbar same-el">
+          <span class="lk"><svg><use href="#i-mark"/></svg>FieldLogic<span class="hq">HQ</span></span>
+          <div class="mlinks"><a>Tournaments</a><a>Coaches</a><a>Leagues</a><a>Clubs</a><a>Pricing</a></div>
+          <div class="mact"><a class="quiet">Sign in</a><a class="btn2">Get started</a></div>
+        </div>
+        <div class="lp">
+          <article class="prose">
+            <div class="head-block">
+              <span class="anch" style="display:inline-block"><h1 class="t">Terms of Service</h1><button class="pin" style="top:-6px;right:-30px" data-title="1 · The title" data-note="The page's one heading, in the marketing kit's section-heading face (Barlow Condensed 700, 32 px; kit.heading). It isn't the 64 px marketing headline: a document isn't a poster, and the headline is kept for one poster line per page.">1</button></span>
+              <span class="anch" style="display:block"><p class="eff">Effective March 1, 2027</p><button class="pin" style="top:-4px;left:180px" data-title="2 · The effective-date line" data-note="/legal's words (4a): “Effective {date}”, with the full month, because people print and quote a legal page. 14 px in the dim ink (kit.small). Nothing else sits above the text: no “last updated” and no list of versions (ruled Q5). A hairline closes the top, the way the sign-in column closes its heading.">2</button></span>
+            </div>
+            <span class="anch" style="display:block"><h2 class="s first" id="t1">1. Who we are and what these terms cover</h2><button class="pin" style="top:-2px;right:-30px" data-title="5 · Heading levels" data-note="A numbered section is Inter 700 at 20 px (kit.title), 40 px of air above it. A subsection (### in the draft) is Inter 700 at 16 px (kit.subhead). Those are the page's only levels below the title, which is R4's rule borrowed: three levels, no others. The section numbers come from the draft and stay in the heading text, because the text refers to them (“§8 applies”).">5</button></span>
+            <p><b>FieldLogicHQ</b> is a business name registered in Ontario, Canada, by its owner, a sole proprietor (“FieldLogicHQ”, “we”, “us”). You can reach us at:</p>
+            <ul>
+              <li>Email: <b>support@fieldlogichq.ca</b></li>
+              <li>Telephone: <b>1-555-010-0199</b> <button class="mk ex" data-title="Example telephone" data-note="Made up for the drawing. The real line is owed by the owner before publication (Terms §1 note) and goes into the product at 6.7, never into this repo.">Example</button></li>
+              <li>Mail: <b>100 Sample Road, Unit 5, Anytown, Ontario</b> <button class="mk ex" data-title="Example address" data-note="Made up for the drawing. The real mail-service address is owed by the owner before publication.">Example</button></li>
+            </ul>
+            <p>These Terms of Service (“Terms”) are the agreement between us and you when you create an account, use FieldLogicHQ, or buy a plan. “You” means the person accepting these Terms and, if you accept them for a club, league, association or other organization, that organization too. If you accept for an organization, you confirm you are allowed to bind it.</p>
+            <p>Our <a class="l">Privacy Policy</a> explains how we handle personal information.</p>
+            <h2 class="s">2. What FieldLogicHQ is</h2>
+            <p>FieldLogicHQ is online software for running sports organizations and teams: tournaments, house leagues, rep and competitive teams, registrations and tryouts, schedules, rosters, communications, team money and, where switched on, online payments. What each plan includes is shown on our <a class="l">pricing page</a>. We may improve, change or retire features over time; if we remove a core feature of a paid plan you are part-way through, <span class="anch"><a class="l">§8</a><button class="pin" style="top:-20px;left:14px" data-title="4 · Section references link" data-note="Every “§N” in the text links to that section's heading, and each heading carries an anchor, so a billing page, an email or the tick box (step 6.3) can open the page at the right place. The draft's own links point at /privacy and /pricing. The build sends /privacy to /legal/privacy (the redirect page in the build prompt, 2a).">4</button></span> applies.</p>
+            <p>You need a current web browser and an internet connection to use FieldLogicHQ.</p>
+            <h2 class="s">3. Accounts</h2>
+            <ul>
+              <li><b>Age.</b> You must be <b>18 or older, or the age of majority where you live</b>, to hold a FieldLogicHQ account. You confirm this when you create your account.</li>
+              <li><b>Be accurate.</b> Give us true information when you sign up and keep it up to date.</li>
+              <li><b>Keep your sign-in safe.</b> You are responsible for what happens under your account. Tell us straight away at support@fieldlogichq.ca if you think someone else has used it.</li>
+              <li><b>People you invite.</b> An organization's owner and administrators can invite other people (coaches, staff, officials, treasurers, volunteers, parents and others) and decide what they can see and do. The organization is responsible for the people it invites and for removing access when someone leaves.</li>
+              <li><b>The owner controls billing.</b> Only an organization's or portal's owner can buy, change or cancel its plan.</li>
+            </ul>
+            <h3 class="ss">If you joined through an organization</h3>
+            <p>If a club, league, tournament or team gave you access — as an administrator, coach, staff member, official, volunteer, or a parent or guardian — these Terms apply to you too, with these differences:</p>
+            <ul>
+              <li><b>The organization decides your access.</b> It chooses what you can see and do, and can change or remove your access at any time. Questions about your access go to the organization.</li>
+              <li><b>You pay us nothing.</b> The sections on plans, prices, trials, renewal and what happens when a plan ends (<a class="l">§6</a> to <a class="l">§9</a>) are between us and the organization's owner, not you. If the organization's plan ends, your access to its space can end with it.</li>
+              <li><b>Acceptable use applies to you in full</b> (<a class="l">§5</a>), and so does keeping your sign-in safe (above).</li>
+              <li><b>What you enter is the organization's.</b> Information you put into the organization's space is its Customer Data (<a class="l">§4</a>). Your own account details are covered by our Privacy Policy.</li>
+              <li><a class="l">§15</a> (organizations covering our costs) does not apply to you personally.</li>
+            </ul>
+            <p>If you also buy a plan yourself, the billing sections apply to that purchase.</p>
+          </article>
+          <aside class="rail anch">
+            <button class="pin" style="top:-8px;right:-8px" data-title="3 · Contents beside the text (Ask 1)" data-note="Twenty sections make a long page, about ten desktop screens. The list sits BESIDE the text, so the rule that nothing goes above the text (Q5) still holds. It sticks 24 px under the fixed bar (and under the Founding Season strip while that strip is open), and it scrolls on its own when it is taller than the window, as it would be on a 768 px-tall laptop. It lights the section you're reading with an olive edge. It shows only at 1080 px and wider, where 720 + 64 + 240 fits inside the container. Narrower windows and phones get no list; the numbered headings and the linked § references do that job. Recommended, not ruled: tab 9, Ask 1.">3</button>
+            <p class="rcap">Contents</p>
+            <ol>
+              <li class="on"><a><span class="n">1</span>Who we are and what these terms cover</a></li>
+              <li><a><span class="n">2</span>What FieldLogicHQ is</a></li>
+              <li><a><span class="n">3</span>Accounts</a></li>
+              <li><a><span class="n">4</span>Your organization's information</a></li>
+              <li><a><span class="n">5</span>Acceptable use</a></li>
+              <li><a><span class="n">6</span>Plans, prices and taxes</a></li>
+              <li><a><span class="n">7</span>Free trials</a></li>
+              <li><a><span class="n">8</span>Renewal, cancelling and changing plans</a></li>
+              <li><a><span class="n">9</span>What happens to your information when a plan ends</a></li>
+              <li><a><span class="n">10</span>Our intellectual property</a></li>
+              <li><a><span class="n">11</span>Suspension and ending your account</a></li>
+              <li><a><span class="n">12</span>Availability and support</a></li>
+              <li><a><span class="n">13</span>Other companies' services</a></li>
+              <li><a><span class="n">14</span>Disclaimers and limits on our responsibility</a></li>
+              <li><a><span class="n">15</span>Your responsibility to us (organizations)</a></li>
+              <li><a><span class="n">16</span>If you are buying as an individual (consumers)</a></li>
+              <li><a><span class="n">17</span>Where you are</a></li>
+              <li><a><span class="n">18</span>Changes to these Terms</a></li>
+              <li><a><span class="n">19</span>Legal matters</a></li>
+              <li><a><span class="n">20</span>How you accept these Terms</a></li>
+            </ol>
+          </aside>
+        </div>
+        <div class="break">§4 to §20 continue in the same type · the footer follows (tab 6)</div>
+      </div></div>
+    </div>
+
+    <div class="spec ph phwrap">
+      <p class="spec-cap">Marketing page · phone · 390 px · true size — scroll inside the frame</p>
+      <div class="scroller"><div class="frame phone w"><div class="vp">
+        <div class="mbar same-el">
+          <span class="lk"><svg><use href="#i-mark"/></svg>FieldLogic<span class="hq">HQ</span></span>
+          <div class="mact"><a class="quiet">Sign in</a><a class="btn2">Get started</a></div>
+        </div>
+        <div class="lp">
+          <article class="prose">
+            <div class="head-block">
+              <span class="anch" style="display:inline-block"><h1 class="t">Terms of Service</h1><button class="pin" style="top:-6px;right:-30px" data-title="1 · The title" data-note="The same 32 px heading as on desktop. Content starts 36 px under the bar on a phone and 72 px on desktop, the marketing kit's one clearance rule, with the container's 24 px sides.">1</button></span>
+              <p class="eff">Effective March 1, 2027</p>
+            </div>
+            <span class="anch" style="display:block"><h2 class="s first">1. Who we are and what these terms cover</h2><button class="pin" style="top:-14px;right:-8px" data-title="3 · No contents list on a phone" data-note="A phone gets no contents list: a list of twenty would push the first sentence off the first screen, and Q5 keeps the top to the title and the date. The numbered headings and the linked § references let a reader find their place. Tab 9, Ask 1.">3</button></span>
+            <p><b>FieldLogicHQ</b> is a business name registered in Ontario, Canada, by its owner, a sole proprietor (“FieldLogicHQ”, “we”, “us”). You can reach us at:</p>
+            <ul>
+              <li>Email: <b>support@fieldlogichq.ca</b></li>
+              <li>Telephone: <b>1-555-010-0199</b></li>
+              <li>Mail: <b>100 Sample Road, Unit 5, Anytown, Ontario</b></li>
+            </ul>
+            <p>These Terms of Service (“Terms”) are the agreement between us and you when you create an account, use FieldLogicHQ, or buy a plan. “You” means the person accepting these Terms and, if you accept them for a club, league, association or other organization, that organization too.</p>
+            <p>Our <a class="l">Privacy Policy</a> explains how we handle personal information.</p>
+            <h2 class="s">2. What FieldLogicHQ is</h2>
+            <p>FieldLogicHQ is online software for running sports organizations and teams… if we remove a core feature of a paid plan you are part-way through, <a class="l">§8</a> applies.</p>
+            <h2 class="s">3. Accounts</h2>
+            <ul>
+              <li><b>Age.</b> You must be <b>18 or older, or the age of majority where you live</b>, to hold a FieldLogicHQ account.</li>
+              <li><b>Be accurate.</b> Give us true information when you sign up and keep it up to date.</li>
+            </ul>
+            <h3 class="ss">If you joined through an organization</h3>
+            <p>If a club, league, tournament or team gave you access, these Terms apply to you too, with these differences:</p>
+          </article>
+        </div>
+        <div class="break">§4 to §20 · then the footer (tab 6)</div>
+        <nav class="bnav same-el"><a>Tournaments</a><a>Coaches</a><a>Leagues</a><a>Clubs</a><a>Pricing</a></nav>
+      </div></div></div>
+    </div>
+  </div>
+
+  <h2 style="font-family:var(--f-display);font-size:24px;margin:30px 0 8px">The Privacy Policy's table (§6, who we share with)</h2>
+  <p style="margin:0 0 14px;max-width:80ch;color:var(--muted)">The same page frame, scrolled to §6. Only the text column is drawn; the bar, the contents list and the footer are as above.</p>
+  <div class="specs">
+    <div class="spec dk">
+      <p class="spec-cap">Privacy Policy §6 · desktop · the 720 px column, cropped</p>
+      <div class="scroller"><div class="frame crop w"><div style="padding:32px 50px 12px"><article class="prose">
+        <h2 class="s first">6. Who we share personal information with</h2>
+        <p>We share personal information only with the companies that run parts of FieldLogicHQ for us, and only what each one needs. We do not sell personal information, and we do not share it with advertisers.</p>
+        <div class="anch"><button class="pin" style="top:-12px;right:-36px" data-title="6 · The table" data-note="On desktop the table stays inside the 720 px text column, so the page keeps one right edge. The column headings use the marketing set's eyebrow line (12 px, letter-spaced, dim ink, the footer's column heads). Cells are 14 px; the company name is the row's bold ink lead. There are no lines between columns, only a hairline between rows. On a phone the four columns can't be read side by side, so each row becomes a white card with its three facts labelled (switch Device to Phone). That follows the portal rule that a list too wide for a phone becomes cards.">6</button>
+        <table class="tbl">
+          <colgroup><col style="width:20%"><col style="width:26%"><col style="width:34%"><col style="width:20%"></colgroup>
+          <thead><tr><th>Company</th><th>What it does for us</th><th>What it receives</th><th>Where it processes data</th></tr></thead>
+          <tbody>
+            <tr><td>Supabase</td><td>Database, sign-in and file storage</td><td>Everything stored in FieldLogicHQ</td><td>United States (Ohio)</td></tr>
+            <tr><td>Amazon Web Services (AWS)</td><td>Hosts the website; holds our own business records (expenses and receipts, tax returns)</td><td>Everything that passes through the website. Our business records hold no customer's name or address</td><td>United States (Ohio)</td></tr>
+            <tr><td>Resend</td><td>Sends our emails, and the emails clubs send through FieldLogicHQ</td><td>Recipient's name and email address, and the message</td><td>United States</td></tr>
+            <tr><td>Stripe</td><td>Card payments for our plans and our invoices for Stripe fees; and, when a club takes payments online, the club's own payment account</td><td>For our plans and invoices: the owner's email, the billing name and address, and the card. For club payments: the payer's email, card, what is being paid for and the player names on the payment</td><td>Canada, the United States and other countries</td></tr>
+            <tr><td>Google (a Gmail account)</td><td>Our business email inbox — the addresses on this page arrive there</td><td>Messages people send us, which can include contact details</td><td>The United States and other countries</td></tr>
+            <tr><td>Your browser's push service (for example Google, Apple or Mozilla)</td><td>Delivers notifications you turn on</td><td>A notification address and the alert text — no name or email</td><td>Varies</td></tr>
+          </tbody>
+        </table></div>
+        <p><b>How we hold them to it.</b> Supabase, AWS, Resend and Stripe each protect the personal information they handle for us under their standard data-processing terms, which form part of our agreement with each of them.</p>
+      </article></div></div></div>
+    </div>
+    <div class="spec ph phwrap">
+      <p class="spec-cap">Privacy Policy §6 · phone · 390 px — each row is a card</p>
+      <div class="scroller"><div class="frame phone w"><div class="vp" style="height:auto">
+        <div class="lp" style="padding-top:20px"><article class="prose">
+          <h2 class="s first">6. Who we share personal information with</h2>
+          <p>We share personal information only with the companies that run parts of FieldLogicHQ for us, and only what each one needs. We do not sell personal information, and we do not share it with advertisers.</p>
+          <div class="pcards anch"><button class="pin" style="top:-12px;right:-8px" data-title="6 · Table rows as cards" data-note="Each company is a white card (14 px corners, no shadow, 16 px padding), its name at 16 px bold, and the three facts under it with the table's column heading as a small dim label. The cards keep the table's order. The build renders one table markup and restyles it below 640 px, so there is still only one copy of the text.">6</button>
+            <div class="pcard"><h4>Supabase</h4><dl><dt>What it does for us</dt><dd>Database, sign-in and file storage</dd><dt>What it receives</dt><dd>Everything stored in FieldLogicHQ</dd><dt>Where it processes data</dt><dd>United States (Ohio)</dd></dl></div>
+            <div class="pcard"><h4>Amazon Web Services (AWS)</h4><dl><dt>What it does for us</dt><dd>Hosts the website; holds our own business records (expenses and receipts, tax returns)</dd><dt>What it receives</dt><dd>Everything that passes through the website. Our business records hold no customer's name or address</dd><dt>Where it processes data</dt><dd>United States (Ohio)</dd></dl></div>
+            <div class="pcard"><h4>Resend</h4><dl><dt>What it does for us</dt><dd>Sends our emails, and the emails clubs send through FieldLogicHQ</dd><dt>What it receives</dt><dd>Recipient's name and email address, and the message</dd><dt>Where it processes data</dt><dd>United States</dd></dl></div>
+          </div>
+          <p style="font-size:13px;color:var(--h-dim)">…Stripe, Google and the push service follow in the same form.</p>
+        </article></div>
+      </div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════════ 2 · EARLIER VERSION ═════════════ -->
+<section class="panel" id="p-earlier" data-panel="earlier" hidden>
+  <div class="intro">
+    <div>
+      <h2>The same page, an earlier version</h2>
+      <p>When a second version exists, the first stays readable at its own address (it's what someone agreed to). It shows the same page with one change: the date line becomes the earlier-version line, and that line links to the current version. Only the top of the page is drawn. Switch the View to "Show only what differs" and only the change stays lit.</p>
+      <div class="legend"><button class="mk new" data-title="New" data-note="The earlier-version line is the only difference from tab 1.">New</button> <button class="mk ask" data-title="Ask 5" data-note="Whether the line sits in a callout (drawn) or as a plain line like the date. Tab 9, Ask 5.">Ask 5</button></div>
+    </div>
+    <div class="box">
+      <h3>The pins</h3>
+      <ol>
+        <li>The earlier-version line, in a white callout with the olive edge.</li>
+        <li>The link is the words “Read the current version.”</li>
+      </ol>
+      <p style="margin:10px 0 0;font-size:13px;color:var(--muted)">This page appears only after publication (step 6.7). The dev preview has no earlier versions (build prompt 2a).</p>
+    </div>
+  </div>
+  <div class="specs">
+    <div class="spec dk">
+      <p class="spec-cap">/legal/terms/2027-03-01 · desktop · 1200 px · the top of the page</p>
+      <div class="scroller"><div class="frame desk w">
+        <div class="mbar same-el"><span class="lk"><svg><use href="#i-mark"/></svg>FieldLogic<span class="hq">HQ</span></span><div class="mlinks"><a>Tournaments</a><a>Coaches</a><a>Leagues</a><a>Clubs</a><a>Pricing</a></div><div class="mact"><a class="quiet">Sign in</a><a class="btn2">Get started</a></div></div>
+        <div class="lp">
+          <article class="prose">
+            <div class="head-block">
+              <h1 class="t same-el">Terms of Service</h1>
+              <div class="anch co" style="margin:8px 0 0">This is an earlier version, in effect from March 1, 2027 to August 31, 2027.<br><a class="l blk">Read the current version.</a>
+                <button class="pin" style="top:-12px;right:-12px" data-title="1 · The earlier-version line" data-note="/legal's words (4b), the shape ruled in Q5. It takes the date line's place, and the end date is the last day the version applied (the day before the next one took effect, /legal's recommendation), so no day shows two versions. It sits in the sign-in screens' white callout with the olive edge (8 px corners, 12 / 14 px padding), reused on this page. The marketing kit's edged card is a 14 px content card, too heavy for one line. Someone arriving from an old acceptance record must notice they aren't reading today's terms; a dim line like the date is easy to miss. Olive is the neutral notice: nothing has gone wrong. Tab 9, Ask 5.">1</button>
+                <button class="pin" style="bottom:4px;left:200px" data-title="2 · The link" data-note="The words “Read the current version.” are the link (/legal 4b), on their own line so they are a 44 px tap target. It's the page's one way back to today's text. It opens /legal/terms, the current version. The earlier page is noindex, so search engines show only the current one.">2</button>
+              </div>
+            </div>
+            <div class="same-el">
+              <h2 class="s first">1. Who we are and what these terms cover</h2>
+              <p><b>FieldLogicHQ</b> is a business name registered in Ontario, Canada, by its owner, a sole proprietor (“FieldLogicHQ”, “we”, “us”). You can reach us at:</p>
+            </div>
+          </article>
+          <aside class="rail same-el"><p class="rcap">Contents</p><ol><li class="on"><a><span class="n">1</span>Who we are and what these terms cover</a></li><li><a><span class="n">2</span>What FieldLogicHQ is</a></li><li><a><span class="n">3</span>Accounts</a></li><li><a><span class="n">4</span>Your organization's information</a></li><li><a><span class="n">5</span>Acceptable use</a></li></ol></aside>
+        </div>
+      </div></div>
+    </div>
+    <div class="spec ph phwrap">
+      <p class="spec-cap">/legal/terms/2027-03-01 · phone · 390 px</p>
+      <div class="scroller"><div class="frame phone w"><div class="vp" style="height:560px">
+        <div class="mbar same-el"><span class="lk"><svg><use href="#i-mark"/></svg>FieldLogic<span class="hq">HQ</span></span><div class="mact"><a class="quiet">Sign in</a><a class="btn2">Get started</a></div></div>
+        <div class="lp"><article class="prose">
+          <div class="head-block">
+            <h1 class="t same-el">Terms of Service</h1>
+            <div class="anch co" style="margin:8px 0 0">This is an earlier version, in effect from March 1, 2027 to August 31, 2027.<br><a class="l blk">Read the current version.</a>
+              <button class="pin" style="top:-12px;right:-8px" data-title="1 · The earlier-version line" data-note="The same callout at full width. The sentence wraps to two lines and the link keeps its own 44 px line.">1</button>
+            </div>
+          </div>
+          <div class="same-el"><h2 class="s first">1. Who we are and what these terms cover</h2><p><b>FieldLogicHQ</b> is a business name registered in Ontario, Canada…</p></div>
+        </article></div>
+        <nav class="bnav same-el"><a>Tournaments</a><a>Coaches</a><a>Leagues</a><a>Clubs</a><a>Pricing</a></nav>
+      </div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════════ 3 · DEV PREVIEW ═════════════ -->
+<section class="panel" id="p-preview" data-panel="preview" hidden>
+  <div class="intro">
+    <div>
+      <h2>The dev preview</h2>
+      <p>Before publication the page reads the draft file itself, with the owner notes, the change log, the publishing checklist and §20's product words taken out (ruled Q1). It only ever shows on dev. A banner says it's a draft, and every fact still blank shows a "to be filled" mark in place of the bracket. Today that's the telephone line, the mailing address and the date.</p>
+      <div class="legend"><button class="mk new" data-title="New" data-note="The banner and the marks are new. They are dev-only and can never show on production: the build ties them to the draft-file source, not to an environment name (/legal's flag 5).">New</button> <button class="mk ask" data-title="Ask 6" data-note="Where the banner sits: in the column above the title (drawn) or as a strip under the bar. Tab 9, Ask 6.">Ask 6</button></div>
+    </div>
+    <div class="box">
+      <h3>The pins</h3>
+      <ol>
+        <li>The draft banner: a white callout with the amber edge.</li>
+        <li>The date line before there is a date.</li>
+        <li>A blank fact, marked so it can be found.</li>
+      </ol>
+    </div>
+  </div>
+  <div class="specs">
+    <div class="spec dk">
+      <p class="spec-cap">/legal/terms on dev · desktop · 1200 px · the top of the page</p>
+      <div class="scroller"><div class="frame desk w">
+        <div class="mbar same-el"><span class="lk"><svg><use href="#i-mark"/></svg>FieldLogic<span class="hq">HQ</span></span><div class="mlinks"><a>Tournaments</a><a>Coaches</a><a>Leagues</a><a>Clubs</a><a>Pricing</a></div><div class="mact"><a class="quiet">Sign in</a><a class="btn2">Get started</a></div></div>
+        <div class="lp">
+          <article class="prose">
+            <div class="anch co amber"><b class="ttl">Draft — not published.</b>The text can change before it goes live.
+              <button class="pin" style="top:-12px;right:-12px" data-title="1 · The draft banner" data-note="/legal's words (4c). It's the sign-in screens' amber notice, reused: a white callout with the AMBER edge, which those screens use for “a wait, nobody's mistake” (the --home-notice-amber token). As in that notice, the bold first phrase is a 16 px title on its own line, with the sentence under it. It sits in the text column above the title, so it reads as part of this document, not as site chrome. It's dev-only, and no new token is needed. Tab 9, Ask 6.">1</button>
+            </div>
+            <div class="head-block">
+              <h1 class="t same-el">Terms of Service</h1>
+              <span class="anch" style="display:block"><p class="eff">Effective <span class="tbf">[date — to be filled]</span></p><button class="pin" style="top:-6px;left:270px" data-title="2 · The date before there is one" data-note="/legal's words (4d): with no effective date yet, the line reads “Effective [date — to be filled]”. The date is set at publication, when the version becomes that date.">2</button></span>
+            </div>
+            <h2 class="s first same-el">1. Who we are and what these terms cover</h2>
+            <p class="same-el"><b>FieldLogicHQ</b> is a business name registered in Ontario, Canada, by its owner, a sole proprietor (“FieldLogicHQ”, “we”, “us”). You can reach us at:</p>
+            <ul>
+              <li class="same-el">Email: <b>support@fieldlogichq.ca</b></li>
+              <li><span class="anch">Telephone: <span class="tbf">[phone — to be filled]</span><button class="pin" style="top:-16px;right:-30px" data-title="3 · A blank fact" data-note="/legal's words (4d). The mark keeps the fact's name, so a reader knows what's missing: “[phone — to be filled]”. It's drawn in the amber ink on a faint fill with a dashed amber underline, so it's easy to spot when skimming. That style is dev-only and never reaches a customer. The preview replaces each [bracket] it finds; a fact the owner fills in the draft simply stops being marked.">3</button></span></li>
+              <li>Mail: <span class="tbf">[mailing address — to be filled]</span></li>
+            </ul>
+            <p class="same-el">These Terms of Service (“Terms”) are the agreement between us and you when you create an account, use FieldLogicHQ, or buy a plan…</p>
+          </article>
+          <aside class="rail same-el"><p class="rcap">Contents</p><ol><li class="on"><a><span class="n">1</span>Who we are and what these terms cover</a></li><li><a><span class="n">2</span>What FieldLogicHQ is</a></li><li><a><span class="n">3</span>Accounts</a></li><li><a><span class="n">4</span>Your organization's information</a></li></ol></aside>
+        </div>
+      </div></div>
+    </div>
+    <div class="spec ph phwrap">
+      <p class="spec-cap">/legal/terms on dev · phone · 390 px</p>
+      <div class="scroller"><div class="frame phone w"><div class="vp" style="height:640px">
+        <div class="mbar same-el"><span class="lk"><svg><use href="#i-mark"/></svg>FieldLogic<span class="hq">HQ</span></span><div class="mact"><a class="quiet">Sign in</a><a class="btn2">Get started</a></div></div>
+        <div class="lp"><article class="prose">
+          <div class="co amber"><b class="ttl">Draft — not published.</b>The text can change before it goes live.</div>
+          <div class="head-block"><h1 class="t same-el">Terms of Service</h1><p class="eff">Effective <span class="tbf">[date — to be filled]</span></p></div>
+          <h2 class="s first same-el">1. Who we are and what these terms cover</h2>
+          <ul>
+            <li class="same-el">Email: <b>support@fieldlogichq.ca</b></li>
+            <li>Telephone: <span class="tbf">[phone — to be filled]</span></li>
+            <li>Mail: <span class="tbf">[mailing address — to be filled]</span></li>
+          </ul>
+        </article></div>
+        <nav class="bnav same-el"><a>Tournaments</a><a>Coaches</a><a>Leagues</a><a>Clubs</a><a>Pricing</a></nav>
+      </div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════════ 4 · ACCOUNT MENU ═════════════ -->
+<section class="panel" id="p-menu" data-panel="menu" hidden>
+  <div class="intro">
+    <div>
+      <h2>The account menu: one change reaches seven portals</h2>
+      <p>The shared account menu opens from the admin, coach, consumer, tournament, club and marketing bars and from the support console. A desk opens a popover; a phone opens a bottom sheet. The rows and their words are copied from the component. The lead option, which you endorsed, adds one small "Terms · Privacy" line under Sign out. The alternative adds two full rows. Both are drawn, plus the support console's shorter menu.</p>
+      <div class="legend"><button class="mk new" data-title="New" data-note="Only the legal line (lead) or the two legal rows (alternative) are new. Every other row is the shipped menu.">New</button> <button class="mk same" data-title="Unchanged" data-note="Rows, words, icons, the red Sign out and the warm skin are copied from components/shared/AccountMenu.tsx and its module. Drawn in the warm skin, which the marketing bar and the warm portals wear. The dark admin strip is the same rows in its own colours.">Unchanged</button> <button class="mk ask" data-title="Ask 2" data-note="Lead option or alternative. Tab 9, Ask 2.">Ask 2</button></div>
+    </div>
+    <div class="box">
+      <h3>The pins</h3>
+      <ol>
+        <li>The legal line: its own hairline, then “Terms · Privacy” in 12 px dim, lined up with the row words.</li>
+        <li>The alternative: two full rows at the end of the settings group.</li>
+        <li>The support console: no Notification settings, Send feedback or Account settings. A double hairline ships there today.</li>
+        <li>On a phone the legal line keeps a 44 px tap height.</li>
+      </ol>
+    </div>
+  </div>
+  <div class="specs dk">
+    <div class="spec">
+      <p class="spec-cap">A · lead option · desktop popover <button class="mk new" data-title="Lead option" data-note="One extra line, not two extra rows. The menu stays a list of things you do, and the documents sit at its foot, where people look for small print.">New</button></p>
+      <div class="frame w" style="width:340px"><div class="menu-stage">
+        <div class="menu-bar same-el"><a class="quiet"><svg class="ic" style="width:20px;height:20px"><use href="#i-user"/></svg>Account</a><a class="btn2">Open app</a></div>
+        <div class="menu-anchor"><div class="pop">
+          <div class="idn same-el"><span class="av">J</span><span><span class="cap">Signed in</span><span class="em">jordan.lee@example.com</span></span></div>
+          <div class="same-el">
+            <a class="mrow"><svg class="ic"><use href="#i-spark"/></svg>What’s new</a>
+            <a class="mrow"><svg class="ic"><use href="#i-users"/></svg>Your family</a>
+            <a class="mrow"><svg class="ic"><use href="#i-bell"/></svg>Notification settings</a>
+            <a class="mrow"><svg class="ic"><use href="#i-msg"/></svg>Send feedback</a>
+            <a class="mrow"><svg class="ic"><use href="#i-gear"/></svg>Account settings</a>
+          </div>
+          <div class="msep same-el"></div>
+          <a class="mrow so same-el"><svg class="ic"><use href="#i-out"/></svg>Sign out</a>
+          <div class="msep"></div>
+          <div class="mlegal anch"><a>Terms</a><span aria-hidden="true">·</span><a>Privacy</a>
+            <button class="pin" style="top:-4px;right:-6px" data-title="1 · The legal line" data-note="/legal's short forms (4e): “Terms · Privacy”. It's 12 px in the dim ink, underlined like every other legal line, on a 28 px row lined up with the row words rather than the icons. Each link is a menu item (so arrow keys reach it) whose accessible name is the full title (“Terms of Service”). It gets its OWN hairline, so Sign out stands alone between two rules. Sign out has no confirm step, and a link sitting straight under it would invite a mis-tap. Each link opens the page in the same tab, as Account settings does. Ask 2.">1</button>
+          </div>
+        </div></div>
+      </div></div>
+    </div>
+    <div class="spec">
+      <p class="spec-cap">B · alternative · desktop popover <button class="mk new" data-title="Alternative" data-note="Two more full rows, using the documents' full titles. Shown for comparison.">New</button></p>
+      <div class="frame w" style="width:340px"><div class="menu-stage">
+        <div class="menu-bar same-el"><a class="quiet"><svg class="ic" style="width:20px;height:20px"><use href="#i-user"/></svg>Account</a><a class="btn2">Open app</a></div>
+        <div class="menu-anchor"><div class="pop">
+          <div class="idn same-el"><span class="av">J</span><span><span class="cap">Signed in</span><span class="em">jordan.lee@example.com</span></span></div>
+          <div class="same-el">
+            <a class="mrow"><svg class="ic"><use href="#i-spark"/></svg>What’s new</a>
+            <a class="mrow"><svg class="ic"><use href="#i-users"/></svg>Your family</a>
+            <a class="mrow"><svg class="ic"><use href="#i-bell"/></svg>Notification settings</a>
+            <a class="mrow"><svg class="ic"><use href="#i-msg"/></svg>Send feedback</a>
+            <a class="mrow"><svg class="ic"><use href="#i-gear"/></svg>Account settings</a>
+          </div>
+          <div class="anch">
+            <a class="mrow"><svg class="ic"><use href="#i-file"/></svg>Terms of Service</a>
+            <a class="mrow"><svg class="ic"><use href="#i-shield"/></svg>Privacy Policy</a>
+            <button class="pin" style="top:6px;right:-6px" data-title="2 · Two full rows" data-note="The full titles as rows, at the end of the settings group. Every row in this menu is something you do or change. Two documents make the menu seven rows tall on a coach's strip (eight with the Appearance block), on every screen the menu opens from. Fine, but heavier for links few people use. Ask 2.">2</button>
+          </div>
+          <div class="msep same-el"></div>
+          <a class="mrow so same-el"><svg class="ic"><use href="#i-out"/></svg>Sign out</a>
+        </div></div>
+      </div></div>
+    </div>
+    <div class="spec">
+      <p class="spec-cap">C · support console · desktop popover (lead option)</p>
+      <div class="frame w" style="width:340px"><div class="menu-stage">
+        <div class="menu-bar same-el"><a class="quiet"><svg class="ic" style="width:20px;height:20px"><use href="#i-user"/></svg></a></div>
+        <div class="menu-anchor"><div class="pop anch">
+          <button class="pin" style="top:30px;left:-30px" data-title="3 · The support console's menu" data-note="The console hides Notification settings and Account settings (they open the CUSTOMER account area) and Send feedback (it would write to our own inbox). So its settings group is empty, and the identity's own hairline and the separator draw TWO rules a few pixels apart. That ships today; look closely under the address. The lead option adds the legal line under Sign out. I recommend the build drop the separator when the group above it is empty. It's one condition in the same component the build is already touching. Ask 4. (Staff are exempt from accepting the Terms, but the links help them read what customers agreed to.)">3</button>
+          <div class="idn same-el"><span class="av">B</span><span><span class="cap">Signed in</span><span class="em">staff@fieldlogichq.ca</span></span></div>
+          <div class="msep same-el"></div>
+          <a class="mrow so same-el"><svg class="ic"><use href="#i-out"/></svg>Sign out</a>
+          <div class="msep"></div>
+          <div class="mlegal"><a>Terms</a><span aria-hidden="true">·</span><a>Privacy</a></div>
+        </div></div>
+      </div></div>
+    </div>
+  </div>
+
+  <div class="specs ph">
+    <div class="spec phwrap">
+      <p class="spec-cap">A · lead option · phone sheet · 390 px · true size</p>
+      <div class="scroller"><div class="frame phone w"><div class="sheet-vp">
+        <div class="mbar"><span class="lk"><svg><use href="#i-mark"/></svg>FieldLogic<span class="hq">HQ</span></span><div class="mact"><a class="quiet">Account</a><a class="btn2">Open app</a></div></div>
+        <div class="dim"><div class="sheet">
+          <div class="handle"></div>
+          <div class="sh-head same-el"><div class="sh-text"><span class="sh-title">Account</span><span class="sh-sub">jordan.lee@example.com</span></div><span class="sh-x"><svg class="ic"><use href="#i-x"/></svg></span></div>
+          <div class="sh-body"><div class="sh-list">
+            <div class="same-el" style="display:flex;flex-direction:column">
+              <a class="mrow"><svg class="ic"><use href="#i-spark"/></svg>What’s new</a>
+              <a class="mrow"><svg class="ic"><use href="#i-users"/></svg>Your family</a>
+              <a class="mrow"><svg class="ic"><use href="#i-bell"/></svg>Notification settings</a>
+              <a class="mrow"><svg class="ic"><use href="#i-msg"/></svg>Send feedback</a>
+              <a class="mrow"><svg class="ic"><use href="#i-gear"/></svg>Account settings</a>
+            </div>
+            <div class="msep same-el"></div>
+            <a class="mrow so same-el"><svg class="ic"><use href="#i-out"/></svg>Sign out</a>
+            <div class="msep"></div>
+            <div class="mlegal anch"><a>Terms</a><span aria-hidden="true">·</span><a>Privacy</a>
+              <button class="pin" style="top:10px;right:6px" data-title="4 · The legal line on a phone" data-note="The same line, sized for a thumb: 44 px tall, and each word padded so its tap area is about 44 px wide. It lines up with the row words (44 px in, past the 18 px icons). The sheet's rows stay 48 px.">4</button>
+            </div>
+          </div></div>
+        </div></div>
+      </div></div></div>
+    </div>
+    <div class="spec phwrap">
+      <p class="spec-cap">B · alternative · phone sheet · 390 px</p>
+      <div class="scroller"><div class="frame phone w"><div class="sheet-vp">
+        <div class="mbar"><span class="lk"><svg><use href="#i-mark"/></svg>FieldLogic<span class="hq">HQ</span></span><div class="mact"><a class="quiet">Account</a><a class="btn2">Open app</a></div></div>
+        <div class="dim"><div class="sheet">
+          <div class="handle"></div>
+          <div class="sh-head same-el"><div class="sh-text"><span class="sh-title">Account</span><span class="sh-sub">jordan.lee@example.com</span></div><span class="sh-x"><svg class="ic"><use href="#i-x"/></svg></span></div>
+          <div class="sh-body"><div class="sh-list">
+            <div class="same-el" style="display:flex;flex-direction:column">
+              <a class="mrow"><svg class="ic"><use href="#i-spark"/></svg>What’s new</a>
+              <a class="mrow"><svg class="ic"><use href="#i-users"/></svg>Your family</a>
+              <a class="mrow"><svg class="ic"><use href="#i-bell"/></svg>Notification settings</a>
+              <a class="mrow"><svg class="ic"><use href="#i-msg"/></svg>Send feedback</a>
+              <a class="mrow"><svg class="ic"><use href="#i-gear"/></svg>Account settings</a>
+            </div>
+            <a class="mrow"><svg class="ic"><use href="#i-file"/></svg>Terms of Service</a>
+            <a class="mrow"><svg class="ic"><use href="#i-shield"/></svg>Privacy Policy</a>
+            <div class="msep same-el"></div>
+            <a class="mrow so same-el"><svg class="ic"><use href="#i-out"/></svg>Sign out</a>
+          </div></div>
+        </div></div>
+      </div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════════ 5 · SIGN-IN FORMS ═════════════ -->
+<section class="panel" id="p-signin" data-panel="signin" hidden>
+  <div class="intro">
+    <div>
+      <h2>Under a sign-in form</h2>
+      <p>The sign-in and sign-up pages hide the footer on purpose, so the links go inside the form's column, on one shared line under the existing foot row. The same line goes on every door the build prompt lists (sign-in, every sign-up, the invitation steps, password reset and the confirmation screens). The support console's sign-in is its own card, so it gets the same words at the card's foot.</p>
+      <div class="legend"><button class="mk new" data-title="New" data-note="The legal line under the foot row, and the legal line at the foot of the console card.">New</button> <button class="mk same" data-title="Unchanged" data-note="The heading, fields, Forgot your password?, the lime Sign in and the “New here? Get started” foot row ship today and are copied from the sign-in page and the one account step's module.">Unchanged</button> <button class="mk ask" data-title="Ask 7" data-note="On a sign-up door, step 6.3 will add the tick box with the same two links. Tab 9, Ask 7.">Ask 7</button></div>
+    </div>
+    <div class="box">
+      <h3>The pins</h3>
+      <ol>
+        <li>The shared legal line: the kit's quiet text button (14 px, dim, underlined), under the foot row, no second hairline.</li>
+        <li>The console card: the same words at 12 px under a hairline, the card's own small size.</li>
+      </ol>
+    </div>
+  </div>
+  <div class="specs">
+    <div class="spec phwrap">
+      <p class="spec-cap"><span class="dk">Sign in · drawn at 390 px (wider screens show the same column, capped at 420 px)</span><span class="ph">Sign in · phone · 390 px · true size</span></p>
+      <div class="scroller"><div class="frame phone w" style="border-radius:14px"><div class="vp" style="height:auto">
+        <div class="sc-page"><div class="sc-col">
+          <div class="same-el">
+            <div class="sc-head"><h1 class="sc-title">Sign in</h1><p class="sc-sub">Welcome back.</p></div>
+            <div class="sc-form">
+              <div class="sc-field"><span class="sc-label">Email</span><span class="sc-input">you@example.com</span></div>
+              <div class="sc-field"><span class="sc-label">Password</span><span class="sc-input"><span></span><svg class="ic"><use href="#i-eye"/></svg></span></div>
+              <div class="sc-forgot"><a>Forgot your password?</a></div>
+              <div class="sc-primary">Sign in</div>
+            </div>
+            <div class="sc-foot"><p>New here? <a class="fl">Get started</a></p></div>
+          </div>
+          <div class="sc-legal anch"><a>Terms of Service</a><span aria-hidden="true">·</span><a>Privacy Policy</a>
+            <button class="pin" style="top:8px;right:-6px" data-title="1 · The shared legal line" data-note="One shared piece the build adds beside the foot row (the build prompt calls it LegalFootLinks) and puts on every door. It's the one account step's quiet text button: 14 px, the dim ink, underlined, each link a 44 px row. It sits straight under the foot row with no second hairline, so it reads as part of the foot, quieter than Get started's olive. The full titles are used here (/legal 4e). 14 px, not 12: that module's rule is that fine print and foot links sit at the body step. Each opens in the same tab. If someone is part-way through a sign-up, Back returns them to the form.">1</button>
+          </div>
+        </div></div>
+      </div></div></div>
+    </div>
+    <div class="spec phwrap">
+      <p class="spec-cap"><span class="dk">Support console sign-in · desktop</span><span class="ph">Support console sign-in · phone · 390 px</span></p>
+      <div class="scroller"><div class="frame w" style="width:520px" data-pa>
+        <div class="pa-page"><div class="pa-card">
+          <div class="same-el">
+            <div class="pa-head"><span class="lk"><svg><use href="#i-mark"/></svg>FieldLogic<span class="hq">HQ</span></span><h1 class="pa-title">Staff access</h1><p class="pa-sub">Internal platform — authorized personnel only</p></div>
+            <div class="pa-form">
+              <div class="pa-field"><span class="pa-label">Email</span><span class="pa-input">you@fieldlogichq.ca</span></div>
+              <div class="pa-field"><span class="pa-lrow"><span class="pa-label">Password</span><span class="pa-forgot">Forgot password?</span></span><span class="pa-input">Enter password<svg class="ic"><use href="#i-eye"/></svg></span></div>
+              <div class="pa-btn">Sign in</div>
+            </div>
+          </div>
+          <div class="pa-legal anch"><a>Terms of Service</a><span aria-hidden="true">·</span><a>Privacy Policy</a>
+            <button class="pin" style="top:2px;right:-30px" data-title="2 · The console card's foot" data-note="The console sign-in is its own card (it isn't the shared column), so it gets its own line: a hairline across the card's foot, then the two full titles at 12 px, the card's own small size (its sub line is 12 px). Dim and underlined like the column's line. It's a staff page used at a desk, so the 44 px tap rows aren't needed here.">2</button>
+          </div>
+        </div></div>
+      </div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════════ 6 · FOOTER ═════════════ -->
+<section class="panel" id="p-footer" data-panel="footer" hidden>
+  <div class="intro">
+    <div>
+      <h2>The marketing footer's bottom row</h2>
+      <p>The footer on every marketing page, and under the consumer app's screens on a desktop. Its bottom row today holds only "© 2026 FieldLogicHQ. All rights reserved." The two links go beside it: at the right end on a desktop, on their own line under it on a phone. The legal pages get this same footer.</p>
+      <div class="legend"><button class="mk new" data-title="New" data-note="The two links in the bottom row. Nothing else in the footer changes.">New</button> <button class="mk same" data-title="Unchanged" data-note="The brand column, the Product and Get started columns, the QR block and the copyright line are copied from components/Footer.tsx. Live demos is left out because it shows only while the demo doors are open.">Unchanged</button></div>
+    </div>
+    <div class="box">
+      <h3>The pins</h3>
+      <ol>
+        <li>Desktop: the links at the row's right end, 12 px, a shade stronger than the copyright.</li>
+        <li>Phone: under the copyright, each a 44 px row.</li>
+      </ol>
+    </div>
+  </div>
+  <div class="specs">
+    <div class="spec dk">
+      <p class="spec-cap">Marketing footer · desktop · 1200 px · true size</p>
+      <div class="scroller"><div class="frame desk w"><footer class="ft"><div class="ft-in">
+        <div class="ft-grid same-el">
+          <div class="ft-brand"><span class="lk"><svg><use href="#i-mark"/></svg>FieldLogic<span class="hq">HQ</span></span><p class="ft-blurb">From first registration to final standings — built for the people running community sport.</p></div>
+          <div class="ft-col"><p class="ft-head">Product</p><div class="ft-links"><a>Discover</a><a>Pricing</a><a>What’s new</a></div></div>
+          <div class="ft-col"><p class="ft-head">Get started</p><div class="ft-links"><a>Start free</a><a>Coaches</a><a>Sign in</a></div></div>
+          <div class="ft-qr"><div class="qr"><span class="code"></span><span><b>Also on your phone</b><span>Scan with your phone's camera.</span></span></div></div>
+        </div>
+        <div class="ft-base">
+          <span class="copy same-el">© 2026 FieldLogicHQ. All rights reserved.</span>
+          <span class="ft-legal anch"><a>Terms of Service</a><a>Privacy Policy</a>
+            <button class="pin" style="top:-20px;right:-6px" data-title="1 · The bottom row's links" data-note="The two full titles at the right end of the bottom row, which becomes a space-between row. They're 12 px like the copyright but in the soft ink rather than the dim one, so they read as links, and they turn olive on hover like the footer's other links. 20 px apart, with no dot between them: the footer's links never use separators. The QR block's sub line is drawn approximately.">1</button>
+          </span>
+        </div>
+      </div></footer></div></div>
+    </div>
+    <div class="spec ph phwrap">
+      <p class="spec-cap">Marketing footer · phone · 390 px · true size</p>
+      <div class="scroller"><div class="frame phone w"><div class="vp" style="height:auto">
+        <footer class="ft"><div class="ft-in">
+          <div class="ft-grid same-el">
+            <div class="ft-brand"><span class="lk"><svg><use href="#i-mark"/></svg>FieldLogic<span class="hq">HQ</span></span><p class="ft-blurb">From first registration to final standings — built for the people running community sport.</p></div>
+            <div class="ft-col"><p class="ft-head">Product</p><div class="ft-links"><a>Discover</a><a>Pricing</a><a>What’s new</a></div></div>
+            <div class="ft-col"><p class="ft-head">Get started</p><div class="ft-links"><a>Start free</a><a>Coaches</a><a>Sign in</a></div></div>
+            <div class="ft-qr"><div class="qr"><span class="code"></span><span><b>Also on your phone</b><span>Scan with your phone's camera.</span></span></div></div>
+          </div>
+          <div class="ft-base">
+            <span class="copy same-el">© 2026 FieldLogicHQ. All rights reserved.</span>
+            <span class="ft-legal anch"><a>Terms of Service</a><a>Privacy Policy</a>
+              <button class="pin" style="top:6px;right:-8px" data-title="2 · The links on a phone" data-note="The row stacks: the copyright, then the two links on one line under it, each a 44 px row (the footer's phone rule for every link it carries). The QR block stays above, as it does today on every page but the account page.">2</button>
+            </span>
+          </div>
+        </div></footer>
+        <nav class="bnav same-el"><a>Tournaments</a><a>Coaches</a><a>Leagues</a><a>Clubs</a><a>Pricing</a></nav>
+      </div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════════ 7 · ACCOUNT PAGE ═════════════ -->
+<section class="panel" id="p-account" data-panel="account" hidden>
+  <div class="intro">
+    <div>
+      <h2>The account page's reserved row</h2>
+      <p>A comment in the account page holds a place for the legal links. Someone using the installed app has no footer and no other way to reach them. /legal and the design review both recommend two rows titled with the documents' names (A). A quiet line under Sign out (B), matching the account menu's lead option, is drawn for comparison. Both use the full titles, so neither needs a chooser. This is the phone and tablet view. On a desktop the account area has its own layout, and the footer under it already carries the links (tab 6).</p>
+      <div class="legend"><button class="mk new" data-title="New" data-note="The two rows (A) or the quiet line (B).">New</button> <button class="mk same" data-title="Unchanged" data-note="The title, the identity card, Appearance, every row, the organizer note and the tab bar ship today. The Appearance card and the tab bar are drawn approximately.">Unchanged</button> <button class="mk ask" data-title="Ask 3" data-note="A or B. Tab 9, Ask 3.">Ask 3</button></div>
+    </div>
+    <div class="box">
+      <h3>The pins</h3>
+      <ol>
+        <li>A: two settings rows, olive icon, chevron, just above Sign out.</li>
+        <li>B: one quiet line under the Sign out card, the sign-in forms' voice.</li>
+      </ol>
+      <p style="margin:10px 0 0;font-size:13px;color:var(--muted)">Drawn for a coach (Coaches Portal help and Send feedback show only for coaches). This screen is drawn on a phone in both device views.</p>
+    </div>
+  </div>
+  <div class="specs">
+    <div class="spec phwrap">
+      <p class="spec-cap">A · two rows · phone · 390 px <button class="mk ask" data-title="The recommendation" data-note="Recommended by /legal (4f) and by the design review. The account page is built out of rows: every way off it is a white row with an icon and a chevron, so the documents read as two more places to go. A quiet line (B) would stack a second line of small print beside the organizer note. On a 667 px phone neither option is on the first screen, so B's lightness buys no extra visibility. Ask 3.">Recommended</button></p>
+      <div class="scroller"><div class="frame phone w"><div class="vp">
+        <div class="ac-page">
+          <div class="same-el">
+            <h1 class="ac-title">Account</h1>
+            <div class="ac-surface ac-id"><span class="ac-av">J</span><span><span class="ac-cap">Signed in</span><span class="ac-val">jordan.lee@example.com</span></span></div>
+            <div class="ac-surface ac-app"><h5>Appearance</h5><div class="ac-opts"><span class="ac-opt on">Warm ✓</span><span class="ac-opt">Dark</span></div></div>
+          </div>
+          <div class="ac-rows">
+            <div class="same-el" style="display:flex;flex-direction:column;gap:9.6px">
+              <a class="ac-surface ac-row"><svg class="ic"><use href="#i-bell"/></svg><span class="lbl">Notification settings</span><svg class="ic chev"><use href="#i-chev"/></svg></a>
+              <a class="ac-surface ac-row"><svg class="ic"><use href="#i-phone"/></svg><span class="lbl">Install app</span><svg class="ic chev"><use href="#i-chev"/></svg></a>
+              <a class="ac-surface ac-row"><svg class="ic"><use href="#i-help"/></svg><span class="lbl">Coaches Portal help</span><svg class="ic chev"><use href="#i-chev"/></svg></a>
+              <a class="ac-surface ac-row"><svg class="ic"><use href="#i-msg"/></svg><span class="lbl">Send feedback</span><svg class="ic chev"><use href="#i-chev"/></svg></a>
+              <a class="ac-surface ac-row"><svg class="ic"><use href="#i-buoy"/></svg><span class="lbl">Help &amp; support</span><svg class="ic chev"><use href="#i-chev"/></svg></a>
+            </div>
+            <div class="anch" style="display:flex;flex-direction:column;gap:9.6px">
+              <a class="ac-surface ac-row"><svg class="ic"><use href="#i-file"/></svg><span class="lbl">Terms of Service</span><svg class="ic chev"><use href="#i-chev"/></svg></a>
+              <a class="ac-surface ac-row"><svg class="ic"><use href="#i-shield"/></svg><span class="lbl">Privacy Policy</span><svg class="ic chev"><use href="#i-chev"/></svg></a>
+              <button class="pin" style="top:-10px;right:-8px" data-title="1 · Two rows (A)" data-note="/legal's 4f: two rows, “Terms of Service” and “Privacy Policy”, each opening its page, in the page's own row recipe (a white 14 px card, olive icon, chevron). They sit after Help &amp; support and before the set-apart Sign out. The stack grows from six cards to eight, and the organizer note moves further down. Ask 3.">1</button>
+            </div>
+            <a class="ac-surface ac-row out same-el"><svg class="ic"><use href="#i-out"/></svg><span class="lbl">Sign out</span></a>
+          </div>
+          <p class="ac-pin same-el">Run your own event? <a>Start a tournament →</a></p>
+        </div>
+        <nav class="cnav same-el"><a><svg class="ic"><use href="#i-home"/></svg>Home</a><a><svg class="ic"><use href="#i-radio"/></svg>Scores</a><a><svg class="ic"><use href="#i-chat"/></svg>Chat</a><a class="on"><svg class="ic"><use href="#i-user"/></svg>Account</a></nav>
+      </div></div></div>
+    </div>
+    <div class="spec phwrap">
+      <p class="spec-cap">B · a quiet line · phone · 390 px <button class="mk ask" data-title="The alternative" data-note="Round 1 recommended this, because it matches the account menu's lead option and keeps the stack to settings. The design review showed that on a 667 px phone the line falls below the first screen anyway, and that it would sit as a second small-print line beside the organizer note. The recommendation moved to A. Ask 3.">Alternative</button></p>
+      <div class="scroller"><div class="frame phone w"><div class="vp">
+        <div class="ac-page">
+          <div class="same-el">
+            <h1 class="ac-title">Account</h1>
+            <div class="ac-surface ac-id"><span class="ac-av">J</span><span><span class="ac-cap">Signed in</span><span class="ac-val">jordan.lee@example.com</span></span></div>
+            <div class="ac-surface ac-app"><h5>Appearance</h5><div class="ac-opts"><span class="ac-opt on">Warm ✓</span><span class="ac-opt">Dark</span></div></div>
+          </div>
+          <div class="ac-rows">
+            <div class="same-el" style="display:flex;flex-direction:column;gap:9.6px">
+              <a class="ac-surface ac-row"><svg class="ic"><use href="#i-bell"/></svg><span class="lbl">Notification settings</span><svg class="ic chev"><use href="#i-chev"/></svg></a>
+              <a class="ac-surface ac-row"><svg class="ic"><use href="#i-phone"/></svg><span class="lbl">Install app</span><svg class="ic chev"><use href="#i-chev"/></svg></a>
+              <a class="ac-surface ac-row"><svg class="ic"><use href="#i-help"/></svg><span class="lbl">Coaches Portal help</span><svg class="ic chev"><use href="#i-chev"/></svg></a>
+              <a class="ac-surface ac-row"><svg class="ic"><use href="#i-msg"/></svg><span class="lbl">Send feedback</span><svg class="ic chev"><use href="#i-chev"/></svg></a>
+              <a class="ac-surface ac-row"><svg class="ic"><use href="#i-buoy"/></svg><span class="lbl">Help &amp; support</span><svg class="ic chev"><use href="#i-chev"/></svg></a>
+            </div>
+            <a class="ac-surface ac-row out same-el"><svg class="ic"><use href="#i-out"/></svg><span class="lbl">Sign out</span></a>
+          </div>
+          <div class="ac-legal anch"><a>Terms of Service</a><span aria-hidden="true">·</span><a>Privacy Policy</a>
+            <button class="pin" style="top:8px;right:-8px" data-title="2 · A quiet line (B)" data-note="The sign-in forms' legal line (tab 5), reused: 14 px, the dim ink, underlined, each link a 44 px row, centred under the Sign out card. It's the same component as on the sign-in doors, so the build makes one piece, not two. The organizer note stays pinned at the foot. Ask 3.">2</button>
+          </div>
+          <p class="ac-pin same-el">Run your own event? <a>Start a tournament →</a></p>
+        </div>
+        <nav class="cnav same-el"><a><svg class="ic"><use href="#i-home"/></svg>Home</a><a><svg class="ic"><use href="#i-radio"/></svg>Scores</a><a><svg class="ic"><use href="#i-chat"/></svg>Chat</a><a class="on"><svg class="ic"><use href="#i-user"/></svg>Account</a></nav>
+      </div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════════ 8 · WORDS ═════════════ -->
+<section class="panel" id="p-words" data-panel="words" hidden>
+  <div class="intro">
+    <div>
+      <h2>The words, from /legal</h2>
+      <p>/legal drafted these before the drawing and added them to the Terms draft, §20 "The words the product shows", item 4 (4a to 4f). That part is never shown on the page. The build copies them exactly. Every frame on this page uses them.</p>
+    </div>
+    <div class="box">
+      <h3>/legal's flags, carried here</h3>
+      <ul>
+        <li>An earlier version's end date is the last day it applied (recommended).</li>
+        <li>The date line in a draft reads "Effective [date — to be filled]".</li>
+        <li>The draft banner must be impossible on production: tie it to the draft source, not an environment name.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="scroller"><table class="words">
+    <thead><tr><th>#</th><th>Where it shows</th><th>The words</th><th>Tab</th></tr></thead>
+    <tbody>
+      <tr><td>4a</td><td>Under the title of each current page</td><td class="q">Effective November 8, 2026</td><td>1</td></tr>
+      <tr><td>4b</td><td>In its place on an earlier version (the last phrase is the link)</td><td class="q">This is an earlier version, in effect from {date} to {date}. Read the current version.</td><td>2</td></tr>
+      <tr><td>4c</td><td>The dev preview, above the title</td><td class="q">Draft — not published. The text can change before it goes live.</td><td>3</td></tr>
+      <tr><td>4d</td><td>A blank fact in the preview; the date before there is one</td><td class="q">[phone — to be filled] · [mailing address — to be filled] · Effective [date — to be filled]</td><td>3</td></tr>
+      <tr><td>4e</td><td>Links with room (footer, sign-in and sign-up, the tick box, the purchase email's body)</td><td class="q">Terms of Service · Privacy Policy</td><td>5, 6</td></tr>
+      <tr><td>4e</td><td>The account menu's line under Sign out (each link's spoken name is the full title)</td><td class="q">Terms · Privacy</td><td>4</td></tr>
+      <tr><td>4f</td><td>The account page</td><td class="q">Terms of Service · Privacy Policy (two rows, or one line if Ask 3 goes to B)</td><td>7</td></tr>
+    </tbody>
+  </table></div>
+  <p style="margin:12px 0 0;color:var(--muted);font-size:13px">Dates use the long month ("November 8, 2026"), the product's printed-page form. The frames use example dates (March 1, 2027 and so on); the real one is set at publication. One correction made in this session: /legal's 4e listed "our account emails" among the places the links appear. That's narrowed to the purchase email's body, since Q6 ruled no email footer.</p>
+</section>
+
+<!-- ═════════════ 9 · ASKS ═════════════ -->
+<section class="panel" id="p-asks" data-panel="asks" hidden>
+  <div class="intro">
+    <div>
+      <h2>What I need you to rule</h2>
+      <p>Seven asks. Each one has a recommendation. Rulings Q1 to Q6 are not re-opened. Ask 1 is built so that it doesn't touch Q5. Once you've ruled, the build's Chunk 2 starts from these drawings.</p>
+    </div>
+    <div class="box" style="border-color:var(--new)"><h3 style="color:var(--new)">Approved 2026-11-09</h3><p style="margin:0">Owner: "i agree with your recommendations, go ahead". All seven as recommended: 1A, 2A, 3A, 4A, 5A, 6A, 7A, including the signed-out account page's two rows (Ask 3). The build's Chunk 2 is built to this page.</p></div>
+  </div>
+  <div class="asks">
+    <div class="ask"><h3>Ask 1 · A contents list for a 20-section page?</h3>
+      <ul>
+        <li><span class="rec">A (recommended)</span> — at 1080 px and wider, a contents list BESIDE the text that sticks under the bar while you scroll, scrolls on its own if it is taller than the window, and lights the current section. Narrower windows and phones get no list. On both, every "§N" in the text links to its section, and every heading carries an anchor so a billing page or email can link straight to §8.</li>
+        <li>B — no list anywhere. Section links and anchors only.</li>
+        <li>C — a list above the text. This would amend Q5 (title and date only above the text), so I don't recommend it.</li>
+      </ul>
+      <p>Why A: the Terms run about ten desktop screens, and people come to them with one question ("how do I cancel?"). Beside the text, the list doesn't push the first sentence down, so Q5 holds. On a phone, a list of twenty would fill the first screen.</p></div>
+    <div class="ask"><h3>Ask 2 · The account menu: a line or two rows?</h3>
+      <ul>
+        <li><span class="rec">A (recommended, your lead option)</span> — a small "Terms · Privacy" line under Sign out, with its own hairline so Sign out (which has no confirm step) isn't right on top of a link.</li>
+        <li>B — two full rows, "Terms of Service" and "Privacy Policy", at the end of the settings group.</li>
+      </ul></div>
+    <div class="ask"><h3>Ask 3 · The account page: two rows or a quiet line?</h3>
+      <ul>
+        <li><span class="rec">A (recommended)</span> — two rows, "Terms of Service" and "Privacy Policy", in the page's own row recipe, just above Sign out.</li>
+        <li>B — one quiet line under the Sign out card, the same piece as the sign-in forms' line.</li>
+      </ul>
+      <p>Round 1 recommended B, to match the menu. The design review changed my mind. The account page is built out of rows. On a small phone (667 px), B's line is below the first screen too, so its lightness buys nothing. And B would put a second line of small print beside the organizer note. /legal also recommended rows. Not drawn: the signed-out account page (Sign in / Create free account). I recommend the same two rows under its two buttons, because a signed-out fan in the installed app also has no other path.</p></div>
+    <div class="ask"><h3>Ask 4 · The support console's double hairline</h3>
+      <ul>
+        <li><span class="rec">A (recommended)</span> — fix it in this build: the menu draws its separator only when a row sits above it. It's one condition in the component Chunk 2 already changes, and it shows on no other portal.</li>
+        <li>B — leave it, and record it as found.</li>
+      </ul></div>
+    <div class="ask"><h3>Ask 5 · The earlier-version line's look</h3>
+      <ul>
+        <li><span class="rec">A (recommended)</span> — the white callout with the olive edge, in the date line's place.</li>
+        <li>B — a plain dim line, exactly like the date line.</li>
+      </ul>
+      <p>Someone opening an old version from an acceptance record must notice it's not today's text. The words are ruled either way; only the look is asked.</p></div>
+    <div class="ask"><h3>Ask 6 · Where the draft banner sits</h3>
+      <ul>
+        <li><span class="rec">A (recommended)</span> — in the text column above the title, a white callout with the amber edge.</li>
+        <li>B — a full-width strip under the top bar.</li>
+      </ul>
+      <p>It's dev-only either way. A keeps it with the document it describes and needs no new piece of chrome.</p></div>
+    <div class="ask"><h3>Ask 7 · Sign-up doors will show the links twice after 6.3</h3>
+      <ul>
+        <li><span class="rec">A (recommended)</span> — keep the foot line on every door. The tick box (6.3) is a sentence you agree to; the foot line is where people look for the documents later. Sixteen doors, one piece, one rule.</li>
+        <li>B — drop the foot line on doors that carry the tick box.</li>
+      </ul></div>
+  </div>
+  <div class="box" style="margin-top:18px">
+    <h3>Build notes for Chunk 2 (the build prompt points here)</h3>
+    <ul>
+      <li><b>Page:</b> the marketing kit's own classes: page, the section heading for the title (32 px), small for the date line, title and subhead for the two heading levels, body and link. The 720 px column, the 240 px contents list and the 64 px gap sit in the marketing container (24 px sides at every width). Content starts at the kit's clearance: the bar plus 72 px, or 36 px on a phone.</li>
+      <li><b>Callouts:</b> the one account step's callout (olive edge) for the earlier-version line and its amber notice (a 16 px title line) for the draft banner. Same tokens and shape, used on the legal page. The earlier-version link sits on its own 44 px line.</li>
+      <li><b>Contents list:</b> shown at 1080 px and wider only. It sticks at the bar's height plus the Founding Season strip's height plus 24 px, and its height is capped to the window, scrolling on its own. Headings use the same offset as their scroll margin.</li>
+      <li><b>Tables:</b> one table markup; below 640 px each row is restyled as a labelled card.</li>
+      <li><b>Account menu:</b> the change lives in the shared AccountMenu (popover and sheet). One legal line after the sign-out row, behind its own separator. Short labels, with the full titles as their accessible names. Hosts don't change.</li>
+      <li><b>Sign-in doors and account page:</b> one shared legal-links piece in the one account step's quiet text-button style. The console card gets its own 12 px line.</li>
+      <li><b>Footer:</b> the bottom row becomes a space-between row with the two links; on a phone it stacks, with 44 px rows.</li>
+      <li><b>Everything renders only while the switch is on.</b> Nothing here changes what production shows today.</li>
+    </ul>
+  </div>
+  <div class="box" style="margin-top:14px">
+    <h3>What the /design review changed (round 2, 2026-11-09)</h3>
+    <ul>
+      <li>The contents list sticks under the fixed bar, not under the page top. It's capped to the window and shown only at 1080 px and wider (it had no breakpoint).</li>
+      <li>Phone sides went from 16 to 24 px on the bar, the page and the footer, the marketing container's real gutter.</li>
+      <li>The phone footer gains its QR block. My note said it was hidden on a phone; it isn't.</li>
+      <li>Callouts are named for their true source (the sign-in screens' callout and notice). The draft banner's title is now a 16 px line of its own.</li>
+      <li>"Read the current version." sits on its own 44 px line. It was a 21 px inline link and the page's only way back.</li>
+      <li>The account menu's line is underlined like the other legal lines, a 28 px row, with each link a menu item.</li>
+      <li>Content starts at the kit's clearance (72 / 36 px) instead of 48 / 28.</li>
+      <li>The "to be filled" mark wraps instead of running off a phone screen.</li>
+      <li>Ask 3's recommendation moved from B to A (above).</li>
+    </ul>
+    <p style="margin:8px 0 0;font-size:13px;color:var(--muted)">Kept as drawn: the table headings and "Contents" in capitals and dim ink. They follow the footer's own column heads.</p>
+  </div>
+</section>
+
+</main>
+</div>
+
+<dialog id="note" aria-labelledby="note-title">
+  <h3 id="note-title"></h3>
+  <p class="kind" id="note-kind"></p>
+  <p id="note-body"></p>
+  <form method="dialog"><button type="submit" id="note-close">Close</button></form>
+</dialog>
+
+<script>
+(function () {
+  var body = document.body;
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('.tabs [data-tab]'));
+  var panels = Array.prototype.slice.call(document.querySelectorAll('[data-panel]'));
+  var names = tabs.map(function (t) { return t.getAttribute('data-tab'); });
+  function show(name) {
+    if (names.indexOf(name) < 0) name = 'reading';
+    tabs.forEach(function (t) { t.setAttribute('aria-selected', t.getAttribute('data-tab') === name ? 'true' : 'false'); });
+    panels.forEach(function (p) { p.hidden = p.getAttribute('data-panel') !== name; });
+  }
+  tabs.forEach(function (t) {
+    t.addEventListener('click', function () {
+      var n = t.getAttribute('data-tab');
+      if (location.hash !== '#' + n) location.hash = n; else show(n);
+      window.scrollTo({ top: 0 });
+    });
+  });
+  window.addEventListener('hashchange', function () { show(location.hash.slice(1)); });
+  show(location.hash.slice(1));
+
+  function setDev(d) {
+    body.setAttribute('data-dev', d);
+    document.querySelectorAll('[data-dev]').forEach(function (b) { if (b.tagName === 'BUTTON') b.setAttribute('aria-pressed', b.getAttribute('data-dev') === d ? 'true' : 'false'); });
+    try { localStorage.setItem('lp-dev', d); } catch (e) {}
+  }
+  var saved = null; try { saved = localStorage.getItem('lp-dev'); } catch (e) {}
+  setDev(saved || (window.matchMedia('(max-width: 700px)').matches ? 'phone' : 'desktop'));
+  document.getElementById('dev-desktop').addEventListener('click', function () { setDev('desktop'); });
+  document.getElementById('dev-phone').addEventListener('click', function () { setDev('phone'); });
+  function setView(v) {
+    body.classList.toggle('differs', v === 'diff');
+    document.getElementById('view-all').setAttribute('aria-pressed', v === 'all' ? 'true' : 'false');
+    document.getElementById('view-diff').setAttribute('aria-pressed', v === 'diff' ? 'true' : 'false');
+  }
+  document.getElementById('view-all').addEventListener('click', function () { setView('all'); });
+  document.getElementById('view-diff').addEventListener('click', function () { setView('diff'); });
+
+  var dlg = document.getElementById('note');
+  var kinds = { 'new': 'New — not in the product today', same: 'Unchanged — drawn from the shipped component', restyled: 'Restyled', ask: 'An ask for the owner', ex: 'Example value — made up for the drawing' };
+  document.addEventListener('click', function (e) {
+    var el = e.target.closest('[data-note]');
+    if (el) {
+      e.preventDefault(); e.stopPropagation();
+      document.getElementById('note-title').textContent = el.getAttribute('data-title') || el.textContent.trim();
+      var k = '';
+      if (el.classList.contains('pin')) k = 'Pin ' + el.textContent.trim();
+      else Object.keys(kinds).forEach(function (c) { if (el.classList.contains(c)) k = kinds[c]; });
+      document.getElementById('note-kind').textContent = k;
+      document.getElementById('note-body').textContent = el.getAttribute('data-note');
+      if (dlg.showModal) { try { dlg.showModal(); } catch (err) { dlg.setAttribute('open', ''); } } else dlg.setAttribute('open', '');
+      return;
+    }
+    if (e.target.closest('.w a')) e.preventDefault();
+  });
+  dlg.addEventListener('click', function (e) { if (e.target === dlg) dlg.close(); });
+
+  // The support console frame: a phone width in the Phone view.
+  var pa = document.querySelector('[data-pa]');
+  function paSize() { pa.style.width = body.getAttribute('data-dev') === 'phone' ? '390px' : '520px'; pa.style.borderRadius = body.getAttribute('data-dev') === 'phone' ? '22px' : '10px'; }
+  new MutationObserver(paSize).observe(body, { attributes: true, attributeFilter: ['data-dev'] }); paSize();
+})();
+</script>

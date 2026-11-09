@@ -7,6 +7,27 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-11-09 — FIELDLOGICHQ'S LEGAL PAGES READ AS A DOCUMENT ON THE MARKETING FRAME; THE LINKS TO THEM ARE A QUIET LINE, EXCEPT ON THE ACCOUNT PAGE, WHERE THEY ARE ROWS (owner, GST/HST Stage 6 step 6.2 drawing round, all seven asks as recommended: *"i agree with your recommendations, go ahead"*; drawings https://claude.ai/artifact/MWPQ7ZMos5js7gBCdrkjxr v3)
+
+**Decision (as ruled, 1A–7A):** the Terms of Service and Privacy Policy pages wear the marketing frame (bar + footer), the
+marketing container's 24 px sides and the kit's 72 / 36 px clearance; a 720 px prose column; the title in the kit's 32 px
+section-heading face, one dim "Effective {date}" line and a hairline, then sections at 20 px and subsections at 16 px (no
+fourth level). A contents list sits BESIDE the text at ≥1080 px only (sticky under the bar, height-capped), none narrower;
+every "§N" links to its anchored section. A document table stays in the 720 column and becomes labelled cards below 640 px.
+The earlier-version line and the dev draft banner are the one account step's callout (olive edge) and amber notice, reused.
+Links: the account menu gets a 12 px underlined "Terms · Privacy" line under Sign out behind its own separator (Sign out has
+no confirm, so no link sits flush under it); the sign-in doors share one 14 px dim underlined line under the foot row, on
+every door; the console card a 12 px line at its foot; the footer's bottom row the two full titles at its right end; the
+consumer account page two rows in its own row recipe (signed in and signed out). The menu draws a separator only when a row
+sits above it.
+**Rationale:** a legal page is read and quoted, not sold — so the marketing headline, eyebrow and hero air are not borrowed,
+while the frame and the kit are. The contents list beside the text keeps Q5 ("title and date only above the text"). Quiet
+links where the surface's grammar is small print; rows where its grammar is rows (the account page — /legal and the /design
+review both said so; round 1's quiet line fell below the first screen on a 667 px phone anyway).
+**Applies to:** `/legal/*` pages, `AccountMenu`, the sign-in doors' shared foot, the support-console sign-in, `Footer`'s
+bottom row, the consumer account page. Plan: `docs/projects/active/GST_HST_STAGE6_TERMS_PLAN.md` §5 6.2; build prompt
+`GST_HST_STAGE6_2_BUILD_PROMPT.md`.
+
 ### 2026-11-08 — ON DESKTOP THE PLACE NAMES ITSELF IN THE TOP STRIP; THE CLUB HEADS THE SIDEBAR IN A CELL LINED UP WITH THE TAB BAND; THE PHONE BAR IS UNCHANGED (owner, round 4 of the admin header, option B: *"could you line up the border of the org name with the header border? then the side nav also starts below the whole header"*, then *"I like it"*; drawings https://claude.ai/artifact/A1W443obR8aJd8PjUZEgUx v2)
 
 **Decision (as ruled, D1–D5):** above 900px the admin's white bar loses its name row and small line. The top strip

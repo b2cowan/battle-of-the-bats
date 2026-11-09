@@ -7,7 +7,8 @@
 > Marks: **[V]** = opened this session (2026-11-08); **[H]** = handed over (a helper's report, a memory note or an earlier doc), not re-opened.
 
 **Status:** PLAN WRITTEN 2026-11-08; owner sheet §3 RULED 2026-11-08; **6.1 drafts v0.2 written 2026-11-08** (progress line in
-§5 6.1); next 6.2 (route to `/plan`), 6.5 in parallel; nothing built. No release timing in this plan (house rule): the
+§5 6.1); **6.2 PLANNED 2026-11-08, six rulings (§5 6.2 RULED block); next the 6.2 drawing round + build Chunk 1**, 6.5 in
+parallel; nothing built. No release timing in this plan (house rule): the
 order below is by dependency and rework risk.
 
 ---
@@ -291,6 +292,42 @@ all thirteen ruled as recommended; L-a, L-b and G13(b) read — see §3. Left fr
   re-bumping versions.
 
 ### 6.2 — Legal pages, versioning and links, built dark (build session, Sonnet; route to `/plan` for the build prompt)
+**Kickoff prompt (for `/plan`):** [GST_HST_STAGE6_2_KICKOFF_PROMPT.md](GST_HST_STAGE6_2_KICKOFF_PROMPT.md) (written 2026-11-08) —
+it raises two questions this section leaves open: where the page's words live without a second copy before 6.7, and how one
+switch can be on in dev while production stays off.
+**Build prompt:** [GST_HST_STAGE6_2_BUILD_PROMPT.md](GST_HST_STAGE6_2_BUILD_PROMPT.md) (two chunks, Sonnet) · **drawing round:**
+[GST_HST_STAGE6_2_DRAWING_PROMPT.md](GST_HST_STAGE6_2_DRAWING_PROMPT.md) (`/legal` page words, then `/design`).
+
+> **⚖ RULED 2026-11-08 (owner, "agree as recommended", the 6.2 `/plan` session) — six rulings; they amend the bullets below.**
+> - **Q1 — the words' one home:** the drafts stay the one home until 6.7; the dev preview **reads the draft file itself**,
+>   filtering out the owner parts (notes, change log, "before publishing", §20's product words; a blank `[fact]` shows a
+>   "to be filled" mark), under a "Draft" banner. At 6.7 the approved text is written once as that date's frozen version file
+>   and the draft is deleted. A published file is frozen by the build (content hash recorded). Neither a placeholder (no
+>   walkable text) nor moving the text now (notes split from the sentences they qualify).
+> - **Q2 — the switch:** two locks. Env `LEGAL_PAGES_PREVIEW` opens a preview only where the Stripe key is a test key (the
+>   payments switch's production identity); code constant `LEGAL_PAGES_PUBLISHED` (false) is publication, flipped in its own
+>   commit at 6.7, which fails the build unless both documents have a dated version.
+> - **Q3 — contact:** one constant for the product's contact address; it stays **hello@** (support@ receives no mail yet).
+>   At 6.7, once the owner confirms support@ works, support@ becomes the one public address (reply-to included); hello@ keeps
+>   forwarding. The org-closed email's support@ (the only use, a dead mailbox today) moves to the constant in 6.2.
+> - **Q4 — drawn first:** a short `/design` round (reading page, earlier version, preview, account menu, sign-in foot row,
+>   footer, account row); the build's Chunk 2 waits on it. The kickoff's pointer to the public-page layout standard is to a
+>   standard scoped to tournament and club pages: these are marketing-frame pages, borrowing its prose width and heading
+>   levels by choice.
+> - **Q5 — above the text:** title and "Effective {date}" only; no "last updated"; no "earlier versions" list until a second
+>   version exists; an earlier version carries "in effect from {date} to {date}" and a link to the current one.
+> - **Q6 — no link in our own emails:** the platform envelope keeps no footer (owner 2026-10-20); the 6.4 purchase email
+>   carries the version link in its body. The "platform email envelope" bullet below is **struck**.
+> - Also settled in the session: "Privacy Policy" is one constant, no spelling-gate rule (no ruling to widen it); the guardian
+>   consent box's lowercase "the privacy policy" goes to `/legal` with closeout item 3(d) at 6.7; the `/docs` help line is
+>   written at 6.7, not in 6.2 (help must not point at pages that are "not found" on production); for `/legal` at 6.6: the
+>   pricing page's "No contracts — cancel anytime" beside a published Terms of Service.
+>
+> **Progress — 6.2 PLANNED 2026-11-08** (build prompt + drawing prompt written). **Drawing round done 2026-11-09:** `/legal`'s
+> page words in the Terms draft §20 item (4); drawings round 2 (after `/design` review) at
+> https://claude.ai/artifact/MWPQ7ZMos5js7gBCdrkjxr (source `GST_HST_STAGE6_2_DRAWINGS.html`). **⚖ Drawings APPROVED
+> 2026-11-09, all seven asks as recommended (1A–7A; the rulings are written in the build prompt's Drawings line).** Next: the
+> build, Chunk 1 then Chunk 2, as a Sonnet session from the build prompt. Nothing built.
 - **Pages:** `/legal/terms`, `/legal/privacy` (later `/legal/payments`), with `/terms` and `/privacy` redirecting. Each **published
   version stays readable at its own address** (`/legal/terms/<version>`): an acceptance record points at a version, so we must be
   able to show what someone agreed to.
@@ -306,7 +343,7 @@ all thirteen ruled as recommended; L-a, L-b and G13(b) read — see §3. Left fr
   - the account page row the 2026-07-20 comment reserves ([V] `app/(consumer)/account/page.tsx:68–72`) — installed-app users have
     no other path;
   - **inside the sign-in and sign-up cards** (those pages hide the footer on purpose);
-  - the **platform email envelope's** own footer, for FieldLogicHQ's own account emails only.
+  - ~~the **platform email envelope's** own footer, for FieldLogicHQ's own account emails only.~~ **Struck by Q6 (2026-11-08).**
   - **Not** on club and tournament public sites (they are the club's pages, and the club's own privacy link is a separate thing),
     except where a page creates a FieldLogicHQ account (the registration form, the follow nudge) — there the acceptance line
     carries the links.
