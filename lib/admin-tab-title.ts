@@ -49,7 +49,7 @@ function adminRouteLabel(pathname: string): string {
 }
 
 /** A tournament's own pages: `/{org}/admin/tournaments` and everything under it — never the club's other areas. */
-const isTournamentRoute = (pathname: string) => /\/admin\/tournaments(?:\/|$)/.test(pathname);
+export const isTournamentRoute = (pathname: string) => /\/admin\/tournaments(?:\/|$)/.test(pathname);
 
 export function adminTabTitle(p: {
   pathname: string;

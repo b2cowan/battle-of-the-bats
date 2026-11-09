@@ -42,6 +42,12 @@ export async function proxy(request: NextRequest) {
   // so Server Components can read them via headers() without re-parsing the URL.
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-pathname', pathname);
+  // The address's query, for a layout (layouts are not handed searchParams): the admin layout reads `?tournamentId` /
+  // `?tournamentSlug` from it so a linked event is named on the first paint (Navigation Phase 0). Forwarded on an org's
+  // admin pages only (no other reader, and a query can carry a token elsewhere) and DELETED everywhere else, so a
+  // browser-sent value never survives. A preference only: the layout looks it up in the scoped list.
+  if (segments[1] === 'admin') requestHeaders.set('x-search', request.nextUrl.search);
+  else requestHeaders.delete('x-search');
   if (segments.length >= 1) {
     requestHeaders.set('x-org-slug', segments[0]);
   }

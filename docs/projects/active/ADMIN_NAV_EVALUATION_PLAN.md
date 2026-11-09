@@ -181,6 +181,54 @@ Logo facts for E10 (from `docs/agents/db/DATA_DICTIONARY.md`): `organizations.lo
   or the address) so the cell and the strip paint right the first time. Everything after reads it; building the cell
   first would ship a flicker and rework it. Also decide here whether an event earns an address (out of scope unless the
   owner asks; record the question).
+  - **✅ BUILT 2026-11-09.** The choice is also kept in a
+    cookie per organization (`flhq_admin_event_<org>`, path `/<org>/admin`, a year, not HttpOnly: the browser writes
+    it, and it is a preference the server only looks up in the scoped list), written wherever `localStorage` is (the
+    switcher, a caller's pick, the address, and a saved choice that predates the cookie). ONE rule picks the event on
+    both sides (`lib/admin-event-choice.ts` `chooseTournament`: pick → `?tournamentId` → `?tournamentSlug` → saved
+    (cookie, then `localStorage`) → active → first). ONE read lists the events
+    (`lib/admin-tournament-list.ts`, shared with `GET /api/admin/tournaments`, same `getAuthContextWithScope` call, so
+    the org filter and the assignment scope are the route's). On a **tournament page's full load only**, the admin
+    layout hands the provider the list, the cookie and the address (the proxy forwards the query as `x-search`). The
+    provider starts from them, and its mount read is quiet behind a seed (no `loading` flip) and keeps the objects
+    when nothing changed. Club pages are unchanged (no seed; the browser's read is the only one, as before). The tab
+    title: `AdminTitleManager` now puts its title back when the route's metadata title replaces it, **on tournament
+    routes only**. Before Phase 0 that title was correct only because the late list re-ran the effect; the seed
+    removed the re-run, and the first build left the tab stuck on "Admin | {org}". Club pages keep their own
+    `usePageTitle` names.
+  - **Measured 2026-11-09** (`.probe/nav-phase0/firstpaint.mjs`: JavaScript OFF = the server's paint; ON = every name
+    the visible header showed; `before.json` / `after.json`). Divisions and Teams, the club's event (UAT Rep Club
+    Invitational 2026) and a tournament-only org's (UAT Import Smoke Tournament), 1440 and 390. **Before:** the server
+    painted the org's name, the event arrived 1.5–3.5 s later (2 names). **After:** the event on the server's paint,
+    the only name seen, identical after load; the sidebar list 5 / 2 options from the first paint; the tab ends on
+    "Divisions - {event} - {org} - FieldLogicHQ" as before. A stale cookie (a deleted id) and a foreign one (the other
+    org's event) → the active event, the cookie left alone. A saved non-active choice → named on the first paint. An
+    address choice (`?tournamentId`, `?tournamentSlug`) → named on the first paint and remembered. Controls unchanged:
+    the club's Overview and Rep teams (1440 + 390) and a coach team page.
+  - **Known and kept:** two tabs on two events — the last choice wins on the next load in both (as before). A choice
+    saved only in `localStorage` before this build is named after one swap on the first load, then from the cookie.
+    Event settings paints its blank form until its own read fills it (as before, now a moment earlier). A load within
+    about a second of Toronto midnight, on a day an event's phase changes, can hydrate with a different phase chip
+    (the chip reads today's date). The odds are about one in a day's seconds; recorded, not guarded. Staff kit's
+    printed date has the same shape. Safari caps a script-written cookie at 7 days, so a person away longer on Safari
+    gets the one-swap case again (the browser's copy wins and re-writes the cookie).
+  - **`/review` 2026-11-09 (high-risk tier; four lenses: security & tenancy, correctness, concurrency & hydration,
+    regression).** Security found no path to another organization's event or one outside a person's assignments (the
+    seed uses the route's auth call and read). **Applied:**
+    - **High:** the tab-title re-assert compared with the raw title, but `document.title` reads back collapsed
+      whitespace, so a name with a double or trailing space would loop and freeze the tab. It now compares with the
+      read-back form.
+    - **Medium:** a failed quiet read emptied a good seed. It now keeps it.
+    - **Low:** a switch made while the quiet read was in flight could be put back by the address's event (a deep
+      link, or the sandbox dock). A switch now wins.
+    - **Advisory:** `x-search` is forwarded on `/{org}/admin` only and deleted elsewhere. A cancelled organization's
+      expected refusal is not logged as a failure. Cookie and address keys are capped at 200 characters.
+    
+    **Recorded:** the seed's second auth read costs about 3 database round-trips per tournament-page full load (it
+    reuses the route's call on purpose, so the two can't drift). The re-assert overrides any FUTURE per-page dynamic
+    title on a tournament route; Phase 2, which renames the strip, should know. `/legal`: the new cookie holds an
+    event id only (a functional preference, nothing about a person). The privacy draft's "cookies needed to run
+    FieldLogicHQ… a choice such as" covers it; offered, not run. Verify reds from other sessions' work were left alone.
 - **Phase 1 · The shared cell and its list.** One cell component (name on up to two lines, chevron, tile with logo) and the one sidebar foot (Plan & billing, Help, the portal doors, Collapse) and one list
   (popover / sheet), drawn from the shipped `SidebarStripMenu` rows and the `SingleSelectDropdown` chevron face. Club
   cell swaps in first (pixel-identical except the 40px collapsed tile, E10) so the club walks pass unchanged.
@@ -222,3 +270,11 @@ Logo facts for E10 (from `docs/agents/db/DATA_DICTIONARY.md`): `organizations.lo
 ## 7. Not done here
 No code. No `/strategy` entry (no business decision). The coach strip word is ruled ("Coach"); the club door's word ("Club", E4) goes to `/marketing` before the build; no plan gate
 changes, so no `/billing`. The free Coaches Portal is out unless E13 = B.
+
+**Recorded, not built (Phase 0, 2026-11-09): does an event earn its own address?** Today `/{org}/admin/tournaments/<page>`
+carries no event; the choice is remembered (cookie + `localStorage`) and an address can name one only through
+`?tournamentId`/`?tournamentSlug`. An address per event (`/{org}/admin/tournaments/{slug}/<page>`) would make links
+exact, let two tabs hold two events across reloads and remove the remembered choice, at the cost of every tournament
+route, link, help article and demo tour anchor moving, and of switching an event becoming a navigation (today it keeps
+you on the page). Phase 0 made the remembered choice paint correctly, which removed the reason the question was urgent.
+It is the owner's call whether to open it.

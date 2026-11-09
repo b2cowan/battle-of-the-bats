@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
+import { headers } from 'next/headers';
+import { readAdminTournamentSeed } from '@/lib/admin-tournament-list';
 import { getAuthContextWithRole } from '@/lib/api-auth';
 import { getAuthUserCached } from '@/lib/supabase-server';
 import { getAuthDestination } from '@/lib/auth-destination';
@@ -97,8 +99,21 @@ export default async function AdminLayout({
   // only for someone who can open Accounting, so the pinned bar names the exact tab row on its first paint (Admin header
   // bar Phase 2). The Payouts page itself still asks the server (`notFound` without it). A failed read is "no Payouts tab",
   // never a broken shell: this layout is every admin page's.
-  const hasPayouts = canOpenModule(authCtx, authCtx.org, 'module_accounting')
-    && await clubHasPayouts(authCtx.org.id).catch(() => false);
+  //
+  // The chosen tournament (Navigation Phase 0): a tournament has no address, so on a tournament page's full load the
+  // server reads the remembered choice (a cookie per organization) and the address's `?tournamentId`/`?tournamentSlug`
+  // (forwarded by the proxy as `x-search`), with the list this person may open, and the provider starts from them — the
+  // strip, the phone bar and the sidebar name the event on the first paint instead of the club's name and a swap. Only
+  // on tournament pages: everywhere else nothing names the event, and the browser's read stays the only one, as before.
+  // This layout is already dynamic per request (it reads the session), so the cookie read costs no caching.
+  const requestHeaders = await headers();
+  const onTournamentPage = /^\/[^/]+\/admin\/tournaments(?:\/|$)/.test(requestHeaders.get('x-pathname') ?? '');
+  const [hasPayouts, tournamentSeed] = await Promise.all([
+    canOpenModule(authCtx, authCtx.org, 'module_accounting')
+      ? clubHasPayouts(authCtx.org.id).catch(() => false)
+      : Promise.resolve(false),
+    onTournamentPage ? readAdminTournamentSeed(orgSlug, requestHeaders.get('x-search')) : Promise.resolve(undefined),
+  ]);
 
   const shell = (
     <OrgProvider
@@ -108,7 +123,7 @@ export default async function AdminLayout({
       clubHasPayouts={hasPayouts}
       limitedToTeamGroups={!!authCtx.repGroupIds}
     >
-      <TournamentProvider orgSlug={orgSlug}>
+      <TournamentProvider orgSlug={orgSlug} seed={tournamentSeed}>
         <AdminChrome>
           <HelpDrawerProvider>
             {children}

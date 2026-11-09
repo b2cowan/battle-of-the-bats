@@ -7,8 +7,8 @@ import {
 } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import type { TournamentStatus } from '@/lib/types';
-import { TOURNAMENT_FORMAT_VALUES, hasFirstGameStarted, type GameStartFact } from '@/lib/tournament-phase';
-import { tournamentNow } from '@/lib/timezone';
+import { TOURNAMENT_FORMAT_VALUES } from '@/lib/tournament-phase';
+import { readAdminTournamentRows, type AdminTournamentRow } from '@/lib/admin-tournament-list';
 import { supabaseAdmin, getOrgOwnerEmail } from '@/lib/supabase-admin';
 import { resolveTournamentContactEmail } from '@/lib/db';
 import { hasPlanFeature } from '@/lib/plan-features';
@@ -274,43 +274,13 @@ export const GET = withObservability(async (req: Request) => {
   const ctx = await getAuthContextWithScope({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
 
-  let query = supabaseAdmin
-    .from('tournaments')
-    .select('*')
-    .eq('org_id', ctx.org.id)
-    .order('year', { ascending: false });
-
-  if (ctx.assignedTournamentIds !== null) {
-    query = query.in('id', ctx.assignedTournamentIds);
-  }
-
-  const { data, error } = await query;
-  if (error) {
-    return Response.json({ error: error.message }, { status: 500 });
-  }
-
-  // The event header's chip follows the board's game-day rule (Tournament admin redesign G1): the
-  // dates, OR the first game having started. The second half needs games, so it is read here, once,
-  // for the ACTIVE events only (the only status the phase splits) — a few rows, never the org's history.
-  const rows = (data ?? []) as Array<{ id: string; status?: string | null }>;
-  const activeIds = rows.filter(r => r.status === 'active').map(r => r.id);
-  const started = new Set<string>();
-  if (activeIds.length > 0) {
-    const { data: games } = await supabaseAdmin
-      .from('games')
-      .select('tournament_id, status, game_date, game_time')
-      .in('tournament_id', activeIds)
-      .neq('status', 'cancelled');
-    const now = tournamentNow();
-    const byTournament = new Map<string, GameStartFact[]>();
-    for (const g of (games ?? []) as Array<{ tournament_id: string; status: string | null; game_date: string | null; game_time: string | null }>) {
-      const list = byTournament.get(g.tournament_id) ?? [];
-      list.push({ status: g.status, date: g.game_date, time: g.game_time });
-      byTournament.set(g.tournament_id, list);
-    }
-    for (const [id, list] of byTournament) {
-      if (hasFirstGameStarted(list, now)) started.add(id);
-    }
+  // ONE read with the admin layout's first paint (Navigation Phase 0): the org filter, the assignment scope and the
+  // game-day rule's "first game started" half all live in `readAdminTournamentRows`.
+  let rows: AdminTournamentRow[];
+  try {
+    rows = await readAdminTournamentRows(ctx.org.id, ctx.assignedTournamentIds);
+  } catch (failed) {
+    return Response.json({ error: failed instanceof Error ? failed.message : 'Couldn’t read the tournaments.' }, { status: 500 });
   }
 
   // ?counts=1 — the Tournaments list and Past tournaments (Tournament admin redesign Stage 4): each event's
@@ -353,7 +323,6 @@ export const GET = withObservability(async (req: Request) => {
       const played = playedCounts(gamesBy.get(r.id) ?? []);
       return {
         ...r,
-        first_game_started: started.has(r.id),
         accepted_teams: accepted.get(r.id) ?? 0,
         division_count: divisionCounts.get(r.id) ?? 0,
         teams_played: played.teamsPlayed,
@@ -362,7 +331,7 @@ export const GET = withObservability(async (req: Request) => {
     }));
   }
 
-  return Response.json(rows.map(r => ({ ...r, first_game_started: started.has(r.id) })));
+  return Response.json(rows);
 }, { route: '/api/admin/tournaments' });
 
 export const POST = withObservability(async (req: Request) => {
