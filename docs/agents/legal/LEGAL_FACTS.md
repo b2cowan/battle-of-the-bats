@@ -1,6 +1,7 @@
 # FieldLogicHQ — Legal Facts
-**Last updated:** 2026-11-04 (seeded from a repo census the day the agent was built — each fact carries
-its source; re-open the source before a draft rests on it)
+**Last updated:** 2026-11-08 (supplier data-processing mechanisms, Supabase encryption wording, breach procedure; GST/HST
+Stage 6 step 6.1). Seeded 2026-11-04 from a repo census — each fact carries its source; re-open the source before a draft
+rests on it.
 
 The facts the Legal Agent (`/legal`) reasons from. About **FieldLogicHQ the business** and what the
 product actually does, not about any club's own obligations. Update the moment one changes, and name the
@@ -57,8 +58,25 @@ registered with ServiceOntario 2026-11-06** (renewal date still to be read off t
   created on the first live open). No MFA exists. No automatic purge at the end of a retention window; org delete
   does not touch file storage. Full list: `drafts/PRIVACY_POLICY.md` § Product findings.
 - **Stripe:** a data-processing addendum is in place (`FACILITATED_PAYMENTS_COUNSEL_BRIEF.md` ~L37).
-  *(Unconfirmed: Supabase, AWS and the email provider's DPA status — establish before a subprocessor list
-  is published.)*
+- **Data-processing terms — how each supplier's are accepted** (read on each supplier's own site 2026-11-08; owner P3 ruled
+  "accept each supplier's standard terms"). All three are **part of the service terms, accepted with them — no request or
+  signature needed**:
+  - **Supabase** — its DPA "supplements and forms part of the Supabase Terms of Service" ([supabase.com/legal/dpa](https://supabase.com/legal/dpa));
+    "acceptance of the Agreement shall have the same effect as signing the SCCs" (cl. 12.2). Plan tier not mentioned (we are on
+    Pro). A separately signed agreement on the same subject would replace it. Subprocessors: supabase.com/legal/subprocessors.
+  - **AWS** — "These Service Terms incorporate the AWS Data Processing Addendum … when you use AWS Services to process Customer
+    Data" ([aws.amazon.com/service-terms](https://aws.amazon.com/service-terms/) §1.14.1).
+  - **Resend** — "This Addendum shall become legally binding upon Customer entering into the Agreement or upon execution of this
+    Addendum"; the signature blocks are "for reference purposes only"; an executed copy is in the Resend dashboard
+    ([resend.com/legal/dpa](https://resend.com/legal/dpa)). Subprocessors: resend.com/legal/subprocessors.
+  - **Dates accepted** (owner records each — the date the account accepted the supplier's terms, or the day the owner reads and
+    accepts the current DPA): Supabase **[date]** · AWS **[date]** · Resend **[date]**. Stripe: in place.
+  - **Google (the business Gmail):** a free consumer account; Google's business data-processing terms do not cover it. Listed
+    honestly in the privacy policy §6 (P4).
+- **Supabase encryption** (its own security page, [supabase.com/security](https://supabase.com/security), read 2026-11-08): "All
+  customer data is encrypted at rest with AES-256 and in transit via TLS." Used in the privacy policy §10.
+- **Breach procedure and record:** `BREACH_PROCEDURE.md` v0.1 (2026-11-08, draft, owner approval owed). Where the record lives:
+  **[owner to choose — record the place here, never its contents]**.
 - **Payments:** Stripe Connect direct charges; **the club is the merchant of record**; no card data stored.
   The fee is legally FieldLogicHQ's charge to the club (`BUSINESS_DECISIONS.md` T3, ~L243).
 
@@ -75,9 +93,9 @@ registered with ServiceOntario 2026-11-06** (renewal date still to be read off t
   settled before one is sent (`BUSINESS_DECISIONS.md` ~L3537).
 
 ## What does NOT exist
-- No **published** FieldLogicHQ Terms of Service, privacy policy, cookie notice or subprocessor list (drafts v0.1 of the
-  Terms and the privacy policy exist from 2026-11-05 — see the index; the privacy draft's §6 doubles as the first
-  subprocessor list).
+- No **published** FieldLogicHQ Terms of Service, privacy policy, cookie notice or subprocessor list (drafts of the
+  Terms and the privacy policy exist — v0.1 2026-11-05, **v0.2 2026-11-08** with the owner's Stage 6 rulings — see the index; the
+  privacy draft's §6 doubles as the first subprocessor list).
 - No legal links in the site footer; the account page leaves Terms and Privacy out on purpose (owner
   2026-07-20: omit rather than link a page that 404s).
 - No "I agree" at account or organization signup. **Census 2026-11-08** (Stage 6 plan §7): accounts are created at about eight

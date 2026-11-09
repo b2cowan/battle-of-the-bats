@@ -6,7 +6,8 @@
 > **Not legal advice; not reviewed by a lawyer.** No lawyer gate (owner 2026-11-04): `/legal` flags, the owner decides when.
 > Marks: **[V]** = opened this session (2026-11-08); **[H]** = handed over (a helper's report, a memory note or an earlier doc), not re-opened.
 
-**Status:** PLAN WRITTEN 2026-11-08 — owner decision sheet §3 owed; nothing built. No release timing in this plan (house rule): the
+**Status:** PLAN WRITTEN 2026-11-08; owner sheet §3 RULED 2026-11-08; **6.1 drafts v0.2 written 2026-11-08** (progress line in
+§5 6.1); next 6.2 (route to `/plan`), 6.5 in parallel; nothing built. No release timing in this plan (house rule): the
 order below is by dependency and rework risk.
 
 ---
@@ -133,7 +134,17 @@ Each has a recommendation; "as recommended" answers all. Facts the audit could n
 questions.
 
 > **⚖ RULED 2026-11-08 (owner, the sheet's paste-back) — all thirteen as recommended (option A each).**
-> - **O1** A — and the owner asked two things, answered in the session: (1) **the legal name is the owner's personal legal name.**
+> - **⚠ CORRECTION 2026-11-08 (owner, after the 6.1 pass): O1 did NOT rule that the owner's personal name or any home address goes
+>   in the Terms.** The owner asked what the seller section requires, and asked for an explanation of a virtual address; the
+>   answers below are those explanations, not a ruling, and 6.1 wrongly drafted them in. The owner would rather publish neither
+>   his personal name nor his home address. **⚖ O1′ RULED 2026-11-08 (owner): option 2 — the owner's name appears nowhere** (not
+>   in the Terms, the checkout or the purchase email). Accepted cost, in his words: "we can deal with a coach demanding a
+>   refund … if it means leaving my name out of it. its a small cost and an expectedly very rare occurance". The real remedy is
+>   a consumer's cancel until 7 days after the copy, refunding that whole purchase (a yearly plan in full). Options and the
+>   rule's text: `docs/agents/legal/ONTARIO_CONSUMER_INTERNET_AGREEMENTS.md` § "The seller's identity without personal details". What O1 did
+>   rule stands: a domain contact address, a phone line that need not be personal, and no home address published.
+> - **O1** A — and the owner asked two things, answered in the session (explanations, not rulings — see the correction above):
+>   (1) **the legal name of a sole proprietor is the owner's personal legal name.**
 >   A sole proprietorship has no separate legal name; "FieldLogicHQ" is the registered business name, so §1 reads
 >   "<owner's full legal name>, carrying on business as FieldLogicHQ" (the Ontario internet-agreement rules ask for the
 >   supplier's name *and* the name it trades under, `ONTARIO_CONSUMER_INTERNET_AGREEMENTS.md` §Finding 1). (2) **A virtual
@@ -251,6 +262,23 @@ all thirteen ruled as recommended; L-a, L-b and G13(b) read — see §3. Left fr
 
 ### 6.1 — Refresh both drafts to v0.2 (`/legal` session, Opus)
 **Kickoff prompt:** [GST_HST_STAGE6_1_LEGAL_PASS_PROMPT.md](GST_HST_STAGE6_1_LEGAL_PASS_PROMPT.md) (written 2026-11-08).
+
+> **Progress — 6.1 DRAFTED 2026-11-08 (`/legal`, Opus; drafts, not owner-approved).** Terms and privacy policy both at **v0.2**
+> with O1–O8 and P1–P7 applied; the Terms gained §3 "If you joined through an organization" and §20 "How you accept these Terms"
+> (the build's exact words: one sign-up box carrying the age line, the "We've published our Terms" sign-in screen and its
+> "updated" variant, the purchase line). `/accounting` read Terms §6–§8 and §16: its wording applied (tax as its own line, "plus
+> applicable taxes" on trial, yearly reminder and upgrade, the O3 refund includes tax with a credit note) and the list the
+> **6.4 purchase email** must show is in the Terms draft; its owner questions A–D are there. `BREACH_PROCEDURE.md` v0.1 written
+> (owner approval and the record's home owed). Supplier data-processing terms: Supabase, AWS and Resend are all part of their
+> service terms, no signature — recorded in `LEGAL_FACTS.md`; the owner records each date. The guardian draft's parked Terms
+> line is written. **Re-checked against the code, changing the plan's §2:** a club-wide "same child" queue also suggests and
+> joins (Families access), not only the head coach; each season's roster keeps its own medical copy; the bookkeeping backups
+> are a local file, not AWS; the accountant file is `invoices-and-credit-notes.csv`; **new finding 10 — the staff page-visit
+> trail (every platform-admin page, staff email + address) has no end date** (→ `/plan`, prune at 90 days). The failed-payment
+> paragraph is written to hold whatever the live retry setting is (a failed payment keeps the plan working and tells the
+> owners; only Stripe giving up ends it). **Left for the owner before 6.7:** the phone and mailing address (O1/P1 — no personal name anywhere, O1′ ruled 2026-11-08); the
+> one Stripe choice (customer emails); F2; support@ and privacy@ on fieldlogichq.ca (and hello@, which the product already
+> uses as its reply-to). Next: 6.2 via `/plan`; 6.5 can start any time.
 - Apply §1's truth table and §2's edits; strike every stale note (production cancel; L13).
 - Apply O1–O8 and P1–P7. Add the **"If you joined through an organization"** section (O7). Add the **acceptance wording** as a
   short section of the Terms draft (the tick-box line, the sign-in screen's two sentences, the purchase-line), so the build copies
