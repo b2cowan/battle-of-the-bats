@@ -429,7 +429,7 @@ existing dev tokens until Part 9 notes the drop.
     `UNSUBSCRIBE_SECRET`, and the club's contact email and mailing address set on the public site.
   - **The Session 2 closeout is DONE** (`SIGNED_IN_FAMILY_STAGE4_S2_CLOSEOUT_PROMPT.md`; commit `5ca68c786`). **Next: Session 3 = Parts 6–8** (the family pages incl. `/family` and the joined note, the calendar, the record window's statuses +
     Send again → `resendPlacementInvitation({ reconnects: true })`, Remove a parent, the join window's names, the stop page's (d)). `/clear` first.
-- **Session 3 (2026-11-08): Parts 6–8 BUILT, NOT committed (commit when the owner says).** Short PM recap given before code; no new
+- **Session 3 (2026-11-08): Parts 6–8 BUILT, committed `db96afd5a` 2026-11-08 (owner said to commit; 44 files, this scope only, via a temp index — another session's staged bank-archive moves left staged).** Short PM recap given before code; no new
   owner ruling. No migration (453/454 already hold every table this needed).
   - **Part 6 — the family pages.** One reader, `lib/family-home.ts` (`readFamilyHome` / `readFamilyTeam` / `readConnectedAdults` /
     `connectedLines` / `familySignupFor` / `placedOnSignup`), over `getFamilyReach`; words `lib/family-home-words.ts`; a team's
@@ -482,13 +482,37 @@ existing dev tokens until Part 9 notes the drop.
     preview + stage 6 walk, the bank S1b drawing guard). A later `tsc` shows errors only in another session's new
     `tests/unit/club-stage13c-b-guard.test.ts`.
   - **For Part 9 (Session 4):** the UAT specs `family-access-boundary` (line ~313 POSTs the removed per-link mint: now 405) and
-    `family-guardian-tier-boundary`; a migration to drop `family_links.calendar_token_hash` and the per-link feed branch; /simplify
+    `family-guardian-tier-boundary`; RECORD (do not build) the later drop of `family_links.calendar_token_hash` and the per-link feed branch; /simplify
     then /review over Sessions 3's scope; /legal over (b)(d)(e) as rendered and items (1)–(4) above; /marketing over every new
     line; the help docs; the walk. Restart the dev server before any browser check (new files, shared modules).
   - **Owner calls still open from Session 2:** R1 (left as built: a parent's own re-send keeps a Send again's reconnect), R2, R3.
   - **At commit:** `docs/agents/db/DATA_DICTIONARY.md` also holds ANOTHER session's bank hunk (~:9249, `statement_end_date`):
     stage only this session's two hunks (`family_links.calendar_token_hash` ~:6004, `family_calendar_feeds` ~:6070). Every other
     file in the scope was checked: only this session's hunks.
+- **Session 4 starts here (handed over by Session 3).** Paste: `execute Session 4 (Part 9) of @docs/projects/active/SIGNED_IN_FAMILY_STAGE4_BUILD_PROMPT.md`.
+  - **Scope = Part 9 over the WHOLE of Stage 4a** (Sessions 1–3: `7823c406c`, `5ca68c786`, `db96afd5a`); Sessions 1–2 already had
+    their /simplify, /review and /legal passes, so the code passes (steps 1–2) look hardest at Session 3's files (its Progress bullet
+    lists them) and at how the three sessions meet.
+  - **Order:** (1) `/simplify` on Session 3 (`lib/family-home.ts` is the big one: the per-child adults read runs once per child, the
+    club-name fallback is written three ways, `readFamilyHome` is called again by Manage / the sign-up page / Leave). (2) `/review`
+    (`.claude/commands/review.md`); hold against the code: tier off = every new page and route 404s and every read attaches nothing;
+    a parent reaches a team only through `getFamilyReach`; no payload carries a teammate; Leave ends only the account's own link;
+    Remove ends only a verified link of that registration's child (`ended_by 'club'`); Send again goes to ONE address; the in-app
+    sign-up opens only for an address ON the sign-up; the way back emails the first address only, one answer always; the calendar
+    names no child and a stopped address stays empty; no send path reads `second_parent_stops`. (3) `npm run verify:changed` +
+    `npx tsc --noEmit` (8 GB heap) + the Part 9.1 suites; update the two UAT specs. (4) Part 9.2's guards (a)–(g): most exist
+    (`family-home.test.ts`, `family-invitation-*.test.ts`, `league-second-parent.test.ts`) — add what is missing, don't duplicate.
+    (5) `/legal` (9.3) over the rendered words: (b), (d), (e), Session 3's "Differs" items (1)–(4) and (8), the consent-record
+    sentence for a sibling connected later (Session 1's open item 2), R2's status. (6) `/marketing` (9.4) over every new line in
+    `lib/family-home-words.ts` and the undrawn ones (Left / Removed statuses, the remove confirm, the Stop-this-calendar ask, the
+    join-window line). (7) `/docs` (9.5). (8) Rewrite `COACH_AVAILABILITY_RSVP_PLAN.md` (9.6, docs only). (9) The walk (9.7): ASK
+    the owner first to set `GUARDIAN_TIER_ENABLED=true` in his `.env.local` (never Amplify); dev needs `RESEND_API_KEY`,
+    `UNSUBSCRIBE_SECRET`, `CALENDAR_LINK_SECRET` and the club's contact email + mailing address on its public site; restart the dev
+    server first (stop, delete `.next`, `npm run dev`). Add to the walk: paying from the in-app sign-up (Stripe returns to the
+    EMAILED page's address), a house-league past game (no score in 4a), a club-removed parent's next visit, the join window with
+    connected parents, the stop page for a joined second parent. (10) Records (9.8), then commit only when the owner says.
+  - **Owner calls still open:** R1–R3 (Session 2 closeout), and the FieldLogicHQ privacy policy page (a blocker before the tier is on
+    for real families, not for the walk).
 - **Session 2 starts here (handed over by Session 1).** Paste: `execute Session 2 (Parts 4–5) of @docs/projects/active/SIGNED_IN_FAMILY_STAGE4_BUILD_PROMPT.md`.
   - The PM UX gate was met in Session 1 for the whole stage; present a short plain-language recap of what Parts 4–5 change before code.
   - **Build on what exists, do not re-make it:** `inspectInvitation`, `acceptInvitation`, `invitationEmailMatches`, `maskEmail`,
