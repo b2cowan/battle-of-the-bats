@@ -302,7 +302,7 @@ the end** (the walk's accounts and their rows).
 ## Progress
 - [x] Drawing round ([GST_HST_STAGE6_3_DRAWING_PROMPT.md](GST_HST_STAGE6_3_DRAWING_PROMPT.md)) — `/legal` words written
   2026-11-09; drawings **approved 2026-11-09, all ten asks as recommended** (https://claude.ai/artifact/FmTh8vmm39qY4N9Z6TAj7c)
-- [x] Chunk A — engine, BUILT 2026-11-09 (commit owed). Migration 455 applied to DEV (lock probe
+- [x] Chunk A — engine, BUILT 2026-11-09, reviewed (no confirmed defects) and committed ec90b1197 2026-11-09. Migration 455 applied to DEV (lock probe
   `scripts/legal-acceptances-lock-check.sql` 9/9; prod apply rides 6.7, `MANUAL_PROD_STEPS.json`); dictionary + snapshots;
   `lib/legal-acceptance{,-rules,-exempt}.ts`; fixtures record through `scripts/lib/record-legal-acceptance.mjs` (13 scripts),
   `recordFixtureAcceptance` (3 dev seed routes) and `tests/uat/helpers/legal-acceptance.ts` (18 specs + every long-lived role
@@ -332,4 +332,5 @@ the end** (the walk's accounts and their rows).
   import through `team-workspace-provisioning` → `coach-membership`, with no legal file in the chain.
 - [ ] Chunk B — account doors + sign-in screen
 - [ ] Chunk C — organization and plan gates, line, window, census
+  - Owner-logged 2026-11-09 (from the Chunk A simplify follow-up): build ONE shared fixture-account creator (`ensureFixtureUser` for scripts, `createFixtureUser` for UAT) so a new seed cannot skip acceptance silently before 6.7; replaces the ~32 hand-placed calls.
 - [ ] `/legal` review before hand-off · walk · ledger entry
