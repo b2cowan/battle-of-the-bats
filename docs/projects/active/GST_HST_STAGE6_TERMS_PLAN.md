@@ -327,7 +327,7 @@ switch can be on in dev while production stays off.
 > page words in the Terms draft §20 item (4); drawings round 2 (after `/design` review) at
 > https://claude.ai/artifact/MWPQ7ZMos5js7gBCdrkjxr (source `GST_HST_STAGE6_2_DRAWINGS.html`). **⚖ Drawings APPROVED
 > 2026-11-09, all seven asks as recommended (1A–7A; the rulings are written in the build prompt's Drawings line).** Next: the
-> build, Chunk 1 then Chunk 2, as a Sonnet session from the build prompt. Nothing built.
+> build, Chunk 1 then Chunk 2, as a Sonnet session from the build prompt. **BUILT 2026-11-09, dark:** Chunk 1 `9f27c527d`, Chunk 2 `5f6cc1b8f`; owner walk https://claude.ai/artifact/FAR1R1TUATP26Sipu7VdHb owed.
 - **Pages:** `/legal/terms`, `/legal/privacy` (later `/legal/payments`), with `/terms` and `/privacy` redirecting. Each **published
   version stays readable at its own address** (`/legal/terms/<version>`): an acceptance record points at a version, so we must be
   able to show what someone agreed to.
