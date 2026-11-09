@@ -350,6 +350,43 @@ switch can be on in dev while production stays off.
 - **Done when:** with the switch on in dev, every surface above links the pages; with it off, nothing renders.
 
 ### 6.3 — Acceptance at every door (build session; needs 6.2; split into two chunks if heavy)
+**Kickoff prompt (for `/plan`):** [GST_HST_STAGE6_3_KICKOFF_PROMPT.md](GST_HST_STAGE6_3_KICKOFF_PROMPT.md) (written 2026-11-09, after the 6.2 walk passed) —
+it raises eight questions this section leaves open, chiefly the record's shape, how the dev preview's `draft` version behaves, and the
+required screen on an installed phone app.
+**Build prompt:** [GST_HST_STAGE6_3_BUILD_PROMPT.md](GST_HST_STAGE6_3_BUILD_PROMPT.md) (three chunks, Sonnet) · **drawing round:**
+[GST_HST_STAGE6_3_DRAWING_PROMPT.md](GST_HST_STAGE6_3_DRAWING_PROMPT.md) (`/legal` words, then `/design`). The build prompt's
+census (B1, C1) **supersedes §7's 6.3 lines** — several §7 line numbers had moved, and it adds doors §7 lacked.
+
+> **⚖ RULED 2026-11-09 (owner, "as recommended", the 6.3 `/plan` session) — ten rulings; they amend the bullets below.**
+> - **R1 — the record:** one append-only table, one row per tick — person (link cleared on account deletion), email as text,
+>   Terms version, Privacy Policy version, **the exact sentence ticked** (the family consent record's pattern), door, time. No
+>   IP, no device; no separate age flag (the sentence records both promises). The Terms version is mirrored onto the auth
+>   user's server-only metadata (the Founding Season lock's precedent) — **verified:** every layout already calls `getUser()`,
+>   which returns it fresh, so the check costs no query. The table is the truth; the mirror is a cache.
+> - **R2 — dev preview:** `'draft'` satisfies the check only in the preview and never a dated version; at 6.7 every dev account
+>   accepts again. Production records nothing while off.
+> - **R3 — the screen replaces the signed-in shell at the same address** (no redirect, no nav); Saving… / failed save keeps the
+>   tick / "terms changed" un-ticks; Sign out always present.
+> - **R4 — exempt:** exactly staff and the two demo accounts, one home, a test pins the list. Fixtures record, not exempt.
+> - **R5 — every page where a person sets a password carries the box** (the four invitation doors included); no-person accounts
+>   are recorded by their scripts, exempt, or caught by the screen.
+> - **R6 — the paid-button line is 6.3's**; a stopped purchase opens a window and resumes with the same choices after one tick.
+> - **R7 — three chunks:** A engine (invisible, fixtures ride here), B account doors + the screen, C organization/plan gates, the
+>   line, the window, the full census.
+> - **R8 — `/legal` words** (failed save, refusals, the window's title, a cancel door on the screen, retention) — drawing round.
+> - **R9 — drawn first:** B and C wait on the round; A does not.
+> - **R10 — only a Terms change brings the screen back;** the Privacy Policy version is recorded, never blocks.
+> - **Disagreements with this section, argued from the code (accepted with the rulings):** (1) **six** signed-in shells — the
+>   scorekeeper and check-in layouts were missing — and platform admin is exempt, not checked; (2) a layout check runs on a full
+>   page load only (Next 16 partial rendering), so an app left open across the flip sees the screen at its next load — accepted,
+>   because the organization and purchase routes check for themselves; (3) **cancel, downgrade, keep-my-plan and the billing
+>   portal are never gated** (§18), and the census lists them so; (4) the staff invitation sets its password in the browser, so
+>   the server refuses the join, and the screen catches anyone around it; (5) the risk sits where a person may never open a
+>   signed-in shell (the follow nudge, the registration that makes an account) and at the organization/plan routes — every
+>   other missed account door is caught by the screen.
+>
+> **Progress — 6.3 PLANNED 2026-11-09** (build prompt + drawing prompt written). Next: the drawing round and Chunk A, in either
+> order or together; then B, then C; `/legal` review before C's hand-off; then the walk.
 - **The record:** an append-only acceptance log per person — document, version, user, email kept as text (outlives a deleted
   user, the payouts shape [V]), time, and **which door** (sign-up, invite, registration, sign-in screen, checkout). **No IP
   address** (data minimisation; the account and time are the evidence) — `/legal` to confirm in 6.6. The accepted version is

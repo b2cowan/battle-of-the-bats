@@ -16,6 +16,21 @@ Plan: [GST_HST_STAGE6_TERMS_PLAN.md](GST_HST_STAGE6_TERMS_PLAN.md) · Written 20
 - If ruled: **a reminder email 30 days before a yearly plan renews**, and **checkout politely declines a Québec address** until a
   French version exists.
 
+## Step 6.3 — "I agree" at every door, built dark (planned 2026-11-09)
+- **Ruled (all as recommended):** one box at every door that makes an account, nine doors in all, including the four
+  invitations and the family accept page (there it is a third box, shown only to someone who hasn't agreed yet). Everyone
+  else meets one full screen before their portal opens, in six places: the family app, the club and tournament admin, both
+  coach portals, and the scorekeeper and check-in screens. FieldLogicHQ staff and the two demo accounts never see it.
+- **Nobody starts an organization or a paid plan without agreeing.** If the Terms changed while a purchase page was open, a
+  small window asks for the tick and the purchase carries on with the same choices. **Cancelling is never blocked.**
+- **What we keep:** who, their email, which versions, the exact sentence they ticked, which door, when. No IP address.
+- **Known limit, accepted:** a phone app left open across the switch-over shows the screen at its next full load, not
+  mid-use. Purchases and new organizations check for themselves, so nobody becomes a customer in that gap.
+- Order: a short drawing round (with `/legal`'s few extra lines), then three builds. The first build has no visible change
+  and can start now. Then the walk.
+- Success: the build fails if a new account, organization or plan door is added without the check; with the switch off,
+  nothing changes anywhere.
+
 ## Why it matters
 - Today the Terms bind nobody: nothing records that anyone agreed to them, and they aren't published.
 - A coach buying a yearly Coaches Portal is a consumer under Ontario law, which requires a copy of the agreement within 15 days.

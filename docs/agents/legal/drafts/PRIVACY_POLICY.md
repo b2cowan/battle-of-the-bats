@@ -5,7 +5,7 @@
 | **Version** | 0.2 (draft) |
 | **Status** | draft — not owner-approved, not published, **not reviewed by a lawyer** |
 | **Effective date** | — (set on publication; the version then becomes that date, `YYYY-MM-DD`) |
-| **Last reviewed** | 2026-11-08 |
+| **Last reviewed** | 2026-11-09 |
 | **Backlog** | L2 (with L9 findings); children's consent wording (L5) and CASL lawful basis (L6) are referenced, not settled |
 
 **Change log**
@@ -23,6 +23,8 @@
   period; a child's record is not deleted by the club; deleting an organization removes its files (P7, needs 6.5); the staff
   page trail has no end date. §10: Supabase's own encryption wording; the breach procedure exists (P6). §14: not offered in
   Québec. New finding 10.
+- 0.2 · 2026-11-09 · §3 and §9: the Terms acceptance record is kept for six years after the account closes (Stage 6 step 6.3
+  drawing round; Terms §20 (5f)). Nothing deletes it automatically yet — finding 1 covers it.
 
 > **How to read this draft.** `[square brackets]` = a fact the owner fills in (only the mailing address is
 > left, and that one is optional — §2 note). `> NOTE` blocks are for the owner and are deleted before publication. The law this is written to is **PIPEDA**
@@ -74,7 +76,7 @@ officials, treasurers, volunteers), and people who buy a plan. Everyone who hold
 | What we collect | Why |
 |---|---|
 | Name, email address and password | To create your account, sign you in and contact you about it. Your password is stored by our sign-in provider in a protected (hashed) form; we never see it. |
-| Which version of our Terms of Service and this policy you accepted, when, and where (for example at sign-up or at checkout) | To show what you agreed to. We don't record your internet (IP) address for this. |
+| Which version of our Terms of Service and this policy you accepted, when, and where (for example at sign-up or at checkout) | To show what you agreed to. We keep it for six years after your account closes (§9). We don't record your internet (IP) address for this. |
 | The organizations and teams you belong to, your role and title | To show you the right screens and let the club control who sees what. |
 | For the account owner who buys a plan, or who turns on online payments for a club: the billing address, and (when a card is used) the card's brand, last four digits and country | To bill you — for your plan, and for the Stripe fees a club's online payments cause — to work out the sales tax that applies, and to show you which card is on file. Your full card number goes to Stripe, never to us. |
 | **For each sale, our tax record of it:** the name on the invoice, the full billing address it was taxed on (including the postal code — **for a coach buying as a person, that is usually a home address**), the card's country, the country of a club's payout account, and, where a buyer declares where they are, which version of that declaration they gave and when | The tax law requires us to keep evidence of where each sale was taxed. It is kept apart from your account, so closing the account does not remove it (§9). Our staff can see it to answer tax questions, and can add a note to a sale that needs a second look. |
@@ -283,6 +285,9 @@ and email addresses.
   after the end of the tax year they relate to. They include, for each sale, the name, billing address and card country it
   was taxed on. Closing your account, deleting an organization, or asking us to delete your information does not remove
   these records before that period ends.
+- **The record of which version of our Terms of Service you accepted** (§3) is kept for **six years** after your account
+  closes, so we can show what was agreed if a question about it comes up later. It keeps the email address you used at the
+  time; closing your account does not remove it before that period ends.
 - **Information a club keeps** stays while its organization exists; the club decides how long to keep its members'
   information. A club can remove a player from a team, but a child's record (§5) is kept until we delete it at the club's
   or a parent's request, or the organization is deleted. **When an organization is deleted, its information and the files

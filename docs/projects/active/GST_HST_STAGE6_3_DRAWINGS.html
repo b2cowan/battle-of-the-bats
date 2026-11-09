@@ -1,0 +1,975 @@
+<title>Terms Acceptance Drawings</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800&family=IBM+Plex+Mono:wght@500;700&family=Inter:wght@400;500;600;650;700;750&display=swap">
+<style>
+/* Layout: the 6.2 drawing board (cool slate, sticky tabs, a View row, one decision per tab) holding product specimens
+   at true size. The board follows the viewer's theme; the specimens follow the "Product theme" switch, because the
+   product's own Warm and Dark are what is being judged. Two specimens stay warm in both: the follow nudge (the club
+   frame ignores Dark) and the family accept page (it wraps in plain warm) — both as shipped. */
+:root {
+  --bg: #E6EAEE; --panel: #FFFFFF; --fg: #1B2228; --muted: #56616B; --line: #CDD4DB;
+  --accent: #2F55A4; --accent-ink: #FFFFFF; --new: #2C7338; --same: #6E7882; --restyled: #8A5A00; --ask: #9C4A12;
+  --track: #FFFFFF; --track-on: #DCE5F5;
+  --f-display: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  --f-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --f-data: 'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace;
+  /* Product tokens: consumer warm (components/consumer/warmTheme.module.css .warmVars) */
+  --h-paper: #F8F4ED; --h-card: #FFFFFF; --h-ink: #241E15; --h-ink-soft: #4A4235; --h-dim: #615A54;
+  --h-line: rgba(70,55,30,.12); --h-line-strong: rgba(70,55,30,.20); --h-edge: rgba(70,55,30,.20); --h-fill: rgba(70,55,30,.08);
+  --h-olive: #57651E; --h-olive-soft: rgba(87,101,30,.10); --h-live: #B03A22; --h-amber: #B7791F;
+  --h-lime: #D9F99D; --h-lime-ink: #241E15; --h-nav: #FFFFFF; --h-mark: #57651E; --h-hq-op: 1;
+  /* Product tokens: the admin kit / coaches portal (app/globals.css [data-coach-warm-enabled]) */
+  --k-paper: #F8F4ED; --k-card: #FFFFFF; --k-t1: #241E15; --k-t2: #4A4235; --k-t3: #615A54;
+  --k-line: rgba(70,55,30,.12); --k-line-strong: rgba(70,55,30,.20); --k-border: rgba(87,101,30,.30);
+  --k-scrim: rgba(36,30,21,.34); --k-lime-ink: #241E15; --k-olive: #57651E; --k-olive-soft: rgba(87,101,30,.10);
+  --k-live: #B03A22;
+  /* The house checkbox (globals.css "Branded Checkbox") */
+  --cb-tick: #0F1123;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #13171C; --panel: #1C2229; --fg: #E5E9ED; --muted: #9AA4AE; --line: #2F3843;
+  --accent: #8EAEFF; --accent-ink: #0E1420; --new: #7CCB88; --same: #9AA4AE; --restyled: #E7B45C; --ask: #F2A46E;
+  --track: #232A32; --track-on: #33405A; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #13171C; --panel: #1C2229; --fg: #E5E9ED; --muted: #9AA4AE; --line: #2F3843;
+  --accent: #8EAEFF; --accent-ink: #0E1420; --new: #7CCB88; --same: #9AA4AE; --restyled: #E7B45C; --ask: #F2A46E;
+  --track: #232A32; --track-on: #33405A; color-scheme: dark; }
+/* The product's Dark, picked by the switch (warmTheme .warmTab dark; globals.css html[data-user-theme="dark"]) */
+body[data-spec="dark"] .w:not(.fixed) {
+  --h-paper: #0A0A0A; --h-card: #111827; --h-ink: #FFFFFF; --h-ink-soft: rgba(255,255,255,.85); --h-dim: rgba(255,255,255,.60);
+  --h-line: rgba(255,255,255,.10); --h-line-strong: rgba(255,255,255,.20); --h-edge: rgba(255,255,255,.40); --h-fill: rgba(255,255,255,.05);
+  --h-olive: #D9F99D; --h-olive-soft: rgba(217,249,157,.12); --h-live: #EF4444; --h-amber: #F59E0B;
+  --h-nav: rgba(13,11,20,.97); --h-mark: #FFFFFF; --h-hq-op: .78;
+  --k-paper: #0A0A0A; --k-card: #111827; --k-t1: rgba(255,255,255,.9); --k-t2: rgba(255,255,255,.7); --k-t3: #94A3B8;
+  --k-line: rgba(255,255,255,.08); --k-line-strong: rgba(30,58,138,.25); --k-border: rgba(30,58,138,.30);
+  --k-scrim: rgba(13,17,26,.55); --k-lime-ink: #0F1123; --k-olive: #D9F99D; --k-olive-soft: rgba(30,58,138,.18);
+  --k-live: #EF4444;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: 15px; line-height: 1.55; margin: 0; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--panel); }
+.wrap { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+header.top { padding-block: 22px 14px; max-width: 1240px; margin: 0 auto; }
+header.top h1 { font-family: var(--f-display); font-size: 34px; line-height: 1.05; margin: 0 0 6px; text-wrap: balance; }
+header.top p { margin: 0; color: var(--muted); max-width: 80ch; }
+header.top .meta { font-family: var(--f-data); font-size: 12px; color: var(--muted); margin-top: 8px; }
+
+.sticky { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--panel); border-bottom: 1px solid var(--line); }
+.tabs { display: flex; gap: 2px; overflow-x: auto; max-width: 1240px; margin: 0 auto; padding-block: 6px 0; scrollbar-width: thin; }
+.tabs button { flex: none; border: 0; background: none; color: var(--muted); font: 600 14px var(--f-body); padding: 10px 12px 11px; border-bottom: 3px solid transparent; cursor: pointer; white-space: nowrap; }
+.tabs button[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); }
+.tabs button:focus-visible, .seg button:focus-visible, .pin:focus-visible, .mk:focus-visible, .cb:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.viewrow { display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; max-width: 1240px; margin: 0 auto; padding-block: 8px 10px; border-top: 1px solid var(--line); }
+.lbl { font: 600 12px var(--f-body); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.vgroup { display: flex; align-items: center; gap: 8px; }
+.seg { display: inline-flex; flex-wrap: wrap; background: var(--track); border: 1px solid var(--line); border-radius: 10px; padding: 2px; }
+.seg button { border: 0; background: none; color: var(--muted); font: 600 13px var(--f-body); padding: 6px 12px; border-radius: 8px; cursor: pointer; min-height: 32px; }
+.seg button[aria-pressed="true"] { background: var(--track-on); color: var(--fg); }
+
+main { max-width: 1240px; margin: 0 auto; padding-block: 22px 60px; }
+.panel[hidden] { display: none; }
+.intro { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 380px); gap: 18px 32px; margin-bottom: 18px; }
+@media (max-width: 900px) { .intro { grid-template-columns: minmax(0, 1fr); } }
+.intro h2 { font-family: var(--f-display); font-size: 28px; line-height: 1.1; margin: 0 0 8px; text-wrap: balance; }
+.intro p { margin: 0 0 10px; max-width: 70ch; }
+.box { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; min-width: 0; }
+.box h3 { margin: 0 0 8px; font: 700 12px var(--f-body); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.box ol, .box ul { margin: 0; padding-left: 20px; }
+.box li { margin-bottom: 6px; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px; margin: 2px 0 14px; align-items: center; font-size: 13px; color: var(--muted); }
+.stateline { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; margin: 0 0 14px; }
+
+.mk { display: inline-flex; align-items: center; font: 700 10.5px var(--f-data); letter-spacing: .06em; text-transform: uppercase; padding: 3px 7px; border-radius: 999px; border: 1px solid currentColor; background: var(--panel); cursor: pointer; vertical-align: middle; line-height: 1.2; }
+.mk.new { color: var(--new); } .mk.same { color: var(--same); } .mk.restyled { color: var(--restyled); } .mk.ask { color: var(--ask); } .mk.ex { color: var(--muted); border-style: dashed; }
+.pin { position: absolute; z-index: 5; width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--panel); background: var(--accent); color: var(--accent-ink); font: 700 12px var(--f-body); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,.25); padding: 0; }
+.anch { position: relative; }
+
+.specs { display: flex; flex-wrap: wrap; gap: 26px; align-items: flex-start; }
+.spec { min-width: 0; max-width: 100%; }
+.spec-cap { font: 600 12px var(--f-data); color: var(--muted); margin: 0 0 6px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.scroller { overflow-x: auto; max-width: 100%; border-radius: 10px; }
+.frame { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--h-paper); position: relative; }
+.frame.sw { width: 820px; }
+.frame.desk { width: 1040px; }
+.frame.sw-n { width: 460px; }
+body[data-dev="phone"] .frame.sw-n { width: 390px; border-radius: 22px; }
+.frame.ph390, body[data-dev="phone"] .frame.sw, body[data-dev="phone"] .frame.desk { width: 390px; border-radius: 22px; }
+.frame.kit { background: var(--k-paper); }
+@media (max-width: 430px) {
+  .phwrap { margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px))); }
+  .phwrap .frame { border-radius: 0 !important; border-left: 0; border-right: 0; }
+}
+body[data-dev="desktop"] .ph { display: none !important; }
+body[data-dev="phone"] .dk { display: none !important; }
+body.differs .same-el { opacity: .2; filter: grayscale(1); }
+body.differs .same-el .pin, body.differs .same-el .mk { opacity: 1; }
+.devnote { font-size: 13px; color: var(--muted); margin: -6px 0 14px; }
+
+/* ═══ SPECIMENS — written from the shipped modules ═══ */
+.w { font-family: var(--f-body); color: var(--h-ink); background: var(--h-paper); -webkit-font-smoothing: antialiased; }
+.w a { text-decoration: none; color: inherit; }
+.w button { font: inherit; }
+.ic { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+/* BrandLockup */
+.lk { display: inline-flex; align-items: center; gap: .45em; font-weight: 700; font-size: 17px; letter-spacing: -.018em; color: var(--h-ink); white-space: nowrap; }
+.lk svg { width: 1.1em; height: 1.1em; fill: var(--h-mark); }
+.lk .hq { color: var(--h-mark); font-weight: 600; opacity: var(--h-hq-op); }
+/* ConsumerNav (warm skin) */
+.cbar { height: 48px; background: var(--h-nav); border-bottom: 1px solid var(--h-line); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; }
+.cbar .quiet { font-size: 14px; font-weight: 600; color: var(--h-ink-soft); }
+
+/* The one account step (components/auth/AccountForm.module.css) */
+.sc-page { display: flex; justify-content: center; padding: 28px 16px 40px; }
+body[data-dev="phone"] .sw .sc-page, .ph390 .sc-page { padding: 12px 16px 20px; }
+.sc-col { width: 100%; max-width: 420px; }
+.sc-head { text-align: center; margin-bottom: 18px; padding-bottom: 16px; border-bottom: 1px solid var(--h-line); }
+.sc-title { margin: 4px 0 8px; font-family: var(--f-display); font-weight: 700; font-size: 32px; line-height: 1.05; color: var(--h-ink); text-wrap: balance; }
+.sc-sub { margin: 0; font-size: 16px; line-height: 1.45; color: var(--h-dim); }
+.sc-sub a, .sc-tick a, .sc-inline a { color: var(--h-olive); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+.steps { display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 14px; font: 700 12px var(--f-body); letter-spacing: .05em; text-transform: uppercase; color: var(--h-dim); }
+.steps .st { display: inline-flex; align-items: center; gap: 6px; }
+.steps .num { width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--h-line-strong); display: inline-flex; align-items: center; justify-content: center; font-size: 12px; letter-spacing: 0; }
+.steps .cur { color: var(--h-ink); } .steps .cur .num { background: var(--h-ink); color: var(--h-paper); border-color: var(--h-ink); }
+.steps .rule { width: 18px; height: 1px; background: var(--h-line-strong); }
+.sc-form { display: flex; flex-direction: column; gap: 14px; }
+.sc-two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.sc-field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.sc-label { font-size: 14px; font-weight: 600; line-height: 1.3; color: var(--h-ink-soft); }
+.sc-input { height: 48px; padding: 0 14px; background: var(--h-card); border: 1px solid var(--h-edge); border-radius: 10px; font-size: 16px; color: var(--h-ink); display: flex; align-items: center; justify-content: space-between; min-width: 0; overflow: hidden; white-space: nowrap; }
+.sc-input.ph-t { color: var(--h-dim); }
+.sc-input .ic { width: 20px; height: 20px; color: var(--h-dim); }
+.sc-hint { font-size: 14px; line-height: 1.45; color: var(--h-dim); margin: -2px 0 0; }
+.sc-primary { min-height: 48px; margin-top: 4px; border-radius: 10px; background: var(--h-lime); color: var(--h-lime-ink); font-size: 16px; font-weight: 700; line-height: 1.2; display: flex; align-items: center; justify-content: center; border: 0; width: 100%; padding: 8px 16px; }
+.sc-primary.off { opacity: .5; }
+.sc-call { padding: 12px 14px; border: 1px solid var(--h-line); border-left: 3px solid var(--h-olive); border-radius: 8px; background: var(--h-card); font-size: 14px; line-height: 1.5; color: var(--h-ink); }
+.sc-call.err { border-left-color: var(--h-live); }
+.sc-call.warn { border-left-color: var(--h-amber); }
+.sc-fine { font-size: 14px; line-height: 1.45; color: var(--h-dim); text-align: center; margin: 0; }
+.sc-foot { margin-top: 18px; padding-top: 4px; border-top: 1px solid var(--h-line); display: flex; flex-wrap: wrap; justify-content: center; gap: 0 18px; font-size: 14px; color: var(--h-dim); }
+.sc-foot > * { display: inline-flex; align-items: center; gap: .3em; min-height: 44px; margin: 0; }
+.sc-foot a.fl { color: var(--h-olive); font-weight: 600; }
+.sc-legal { display: flex; justify-content: center; align-items: center; gap: 2px; font-size: 14px; color: var(--h-dim); }
+.sc-legal a { min-height: 44px; display: inline-flex; align-items: center; padding: 0 8px; color: var(--h-dim); text-decoration: underline; text-underline-offset: 2px; }
+.sc-inline { font-size: 14px; line-height: 1.5; color: var(--h-dim); margin: 0; }
+/* /design round 1: a link inside a sentence gets a 44 px tall hit area without moving the line (inline padding). */
+.sc-inline.door a { padding-block: 12px; }
+body[data-dev="phone"] .pin[style*="right:-30px"], body[data-dev="phone"] .pin[style*="right:-14px"] { right: -2px !important; }
+
+/* The tick row — the house checkbox in a label row (family .check; BillingAddress) */
+.sc-tick { display: flex; align-items: flex-start; gap: 9.6px; min-height: 44px; font-size: 14px; line-height: 1.5; color: var(--h-ink); cursor: pointer; }
+.cb { flex: none; width: 18px; height: 18px; margin-top: 2px; border-radius: 3px; border: 1.5px solid color-mix(in srgb, currentColor 58%, transparent); background: color-mix(in srgb, currentColor 6%, transparent); position: relative; cursor: pointer; padding: 0; }
+.cb.on { background: #D9F99D; border-color: var(--cb-tick); }
+.cb.on::after { content: ""; position: absolute; left: 5px; top: 1.5px; width: 4px; height: 8px; border: solid var(--cb-tick); border-width: 0 2px 2px 0; transform: rotate(45deg); }
+
+/* Follow nudge — BottomSheet in the club frame, always light (FollowAccountNudge.module.css; BottomSheet.module.css) */
+.pub { background: #F5F2EC; height: 760px; position: relative; overflow: hidden; font-family: var(--f-body); }
+.pub-ghost { padding: 16px; opacity: .85; }
+.pub-ghost .g { height: 14px; border-radius: 4px; background: #E4E0D8; margin-bottom: 10px; }
+.pub-dim { position: absolute; inset: 0; background: rgba(36,30,21,.34); display: flex; align-items: flex-end; }
+.nsheet { width: 100%; background: #FFFFFF; border: 1px solid #D6D0C4; border-bottom: 0; border-radius: 18px 18px 0 0; padding: 0 20px 18px; color: #1F1B16; }
+.nsheet .handle { width: 38px; height: 4px; border-radius: 2px; margin: 10px auto 12px; background: #D6D0C4; }
+.n-top { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 12px; }
+.n-star { width: 38px; height: 38px; border-radius: 10px; background: rgba(29,78,137,.10); color: #1D4E89; display: flex; align-items: center; justify-content: center; flex: none; }
+.n-star .ic { width: 18px; height: 18px; fill: currentColor; }
+.n-title { font-size: 15.7px; font-weight: 700; margin: 0 0 2px; }
+.n-sub { font-size: 12.5px; line-height: 1.5; color: #6F675B; margin: 0; }
+.n-form { display: flex; flex-direction: column; gap: 11px; }
+.n-two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.n-lab { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #6F675B; display: block; margin-bottom: 4px; }
+.n-in { padding: 9.6px 12px; border: 1px solid #E4E0D8; border-radius: 8px; background: #FFFFFF; font-size: 13.6px; color: #1F1B16; min-height: 38px; }
+.n-in.ph-t { color: #8F877B; }
+.n-tick { display: flex; gap: 9px; align-items: flex-start; min-height: 44px; font-size: 13.6px; line-height: 1.5; color: #1F1B16; cursor: pointer; }
+.n-tick .cb { color: #1F1B16; margin-top: 1px; }
+.n-tick a { color: #1D4E89; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+.n-err { font-size: 11.8px; color: #B03A22; margin: -4px 0 0; }
+.cbtn { font-family: var(--f-display); font-size: 16px; font-weight: 700; letter-spacing: .04em; border-radius: 6px; padding: 10px 20px; min-height: 44px; display: flex; align-items: center; justify-content: center; width: 100%; border: 1px solid transparent; }
+.cbtn.fill { background: #1D4E89; color: #FFFFFF; }
+.cbtn.ghost { background: #FFFFFF; border-color: #D6D0C4; color: #1F1B16; }
+.n-or { display: flex; align-items: center; gap: 10px; font-size: 11px; color: #8F877B; }
+.n-or::before, .n-or::after { content: ""; flex: 1; height: 1px; background: #E4E0D8; }
+.n-fine { font-size: 10.9px; text-align: center; color: #6F675B; margin: 0; }
+.n-fine a { color: #1D4E89; font-weight: 600; }
+
+/* Family accept page (app/(consumer)/family/family.module.css) — plain warm, never Dark */
+.fam { padding: 20px 16px 48px; display: flex; justify-content: center; }
+.fam-in { width: 100%; max-width: 560px; }
+.fam-card { background: var(--h-card); border: 1px solid var(--h-line); border-radius: 14px; padding: 16px; box-shadow: 0 1px 2px rgba(70,55,30,.06); }
+.fam-title { font-family: var(--f-display); font-weight: 800; font-size: 21.6px; line-height: 1.2; margin: 0 0 2px; color: var(--h-ink); }
+.fam-subl { font-size: 14.4px; color: var(--h-ink-soft); margin: 0 0 14px; }
+.fam-lab { font-size: 12.8px; color: var(--h-dim); display: block; margin-bottom: 4px; }
+.fam-in-f { min-height: 44px; border: 1.5px solid var(--h-line-strong); border-radius: 9px; padding: 9.6px 12px; background: var(--h-paper); font-size: 15px; color: var(--h-ink); margin-bottom: 4px; }
+.fam-ro { font-size: 14px; color: var(--h-ink); margin: 0; }
+.fam-link { color: var(--h-olive); text-decoration: underline; text-underline-offset: 2px; display: inline-flex; align-items: center; min-height: 44px; font-size: 14px; }
+.fam-sec { margin-top: 12px; padding: 12px 14.4px; border: 1px solid var(--h-line); border-radius: 9px; background: var(--h-card); font-size: 14px; line-height: 1.5; color: var(--h-ink-soft); }
+.fam-ct { font: 700 11.2px var(--f-data); letter-spacing: .1em; text-transform: uppercase; color: var(--h-dim); margin: 0 0 8px; }
+.fam-draft { background: var(--h-olive-soft); border-radius: 9px; padding: 8px 10.4px; font-size: 12.2px; font-style: italic; margin: 0 0 10px; color: var(--h-ink-soft); }
+.fam-sec p { margin: 0 0 8px; } .fam-sec ul { margin: 0 0 8px; padding-left: 18px; } .fam-sec li { margin-bottom: 4px; }
+.fam-sec a { color: var(--h-olive); text-decoration: underline; text-underline-offset: 2px; }
+.check { display: flex; align-items: flex-start; gap: 9.6px; font-size: 13.6px; line-height: 1.5; color: var(--h-ink); margin: 8.8px 0; min-height: 44px; cursor: pointer; }
+.check .cb { margin-top: 1px; }
+.check a { color: var(--h-olive); text-decoration: underline; text-underline-offset: 2px; }
+.check.newbox { position: relative; }
+.chip { margin-top: 12px; min-height: 44px; border-radius: 999px; padding: 10.4px 22.4px; font-size: 15.2px; font-weight: 700; background: var(--h-ink); color: var(--h-paper); display: flex; align-items: center; justify-content: center; }
+.chip.off { opacity: .55; }
+
+/* The admin kit and its window (components/shared/KitDialog.module.css; globals.css .btn in the kit) */
+.kb { font: 650 14px/1.25 var(--f-body); border-radius: 6px; padding: 7.2px 14.4px; min-height: 34px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid transparent; white-space: nowrap; }
+.kb.lime { background: #D9F99D; color: var(--k-lime-ink); }
+.kb.out { background: var(--k-card); color: var(--k-t2); border-color: var(--k-line-strong); }
+.kb.off { opacity: .5; }
+body[data-dev="phone"] .kd-foot .kb { min-height: 44px; }
+.kd-stage { position: relative; background: var(--k-paper); overflow: hidden; }
+.kd-scrim { position: absolute; inset: 0; background: var(--k-scrim); }
+.kd-center { position: relative; display: flex; align-items: center; justify-content: center; padding: 20px; min-height: 100%; }
+.kd { background: var(--k-card); border: 1px solid var(--k-border); border-radius: 12px; width: 416px; max-width: 100%; color: var(--k-t1); font-family: var(--f-body); }
+.kd.form { width: 520px; }
+.kd-head { padding: 17.6px 24px 6.4px; }
+body[data-dev="phone"] .kd-head, body[data-dev="phone"] .kd-body, body[data-dev="phone"] .kd-foot { padding-left: 20px; padding-right: 20px; }
+.kd-title { font-size: 16px; font-weight: 700; line-height: 1.25; margin: 0; color: var(--k-t1); }
+.kd-body { padding: 9.6px 24px 16px; font-size: 14px; line-height: 1.5; color: var(--k-t2); }
+.kd-body p { margin: 0 0 12px; }
+.kd-body a { color: var(--k-olive); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+.kd-foot { padding: 13.6px 24px; border-top: 1px solid var(--k-line); display: flex; align-items: center; gap: 9.6px; }
+.kd-foot .fs { flex: 1; min-width: 0; font-size: 12px; line-height: 1.4; color: var(--k-t3); }
+.kd-foot .fs.err { color: var(--k-live); font-weight: 600; }
+.kd-foot .fe { display: flex; gap: 8px; margin-left: auto; }
+.kd-tick { display: flex; align-items: flex-start; gap: 9.6px; min-height: 44px; font-size: 14px; line-height: 1.5; color: var(--k-t1); cursor: pointer; margin: 4px 0 0; }
+.kd-tick a { color: var(--k-olive); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+.fig { border: 1px solid var(--k-line); border-radius: 8px; margin: 0 0 12px; }
+.fig div { display: flex; justify-content: space-between; gap: 12px; padding: 8.8px 11.2px; border-top: 1px solid var(--k-line); }
+.fig div:first-child { border-top: 0; }
+.fig dt { font-size: 12px; color: var(--k-t2); } .fig dd { margin: 0; font-size: 14px; font-weight: 700; color: var(--k-t1); text-align: right; white-space: nowrap; }
+.fig small { display: block; font-size: 12px; font-weight: 400; color: var(--k-t3); }
+.k-hint { font-size: 12px; line-height: 1.45; color: var(--k-t3); margin: 0 0 12px; }
+.k-line { font-size: 12px; line-height: 1.45; color: var(--k-t3); margin: 0; max-width: 64ch; }
+.k-line a { color: var(--k-olive); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+.k-line.newl { color: var(--k-t2); }
+/* Billing page (Billing.module.css, in the club admin kit) */
+.bl { padding: 24px; }
+body[data-dev="phone"] .bl { padding: 16px; }
+.bl-h { font-size: 20px; font-weight: 700; margin: 0 0 14px; color: var(--k-t1); }
+.cc { background: var(--k-card); border: 1px solid var(--k-line); border-radius: 8px; padding: 17.6px 20px; margin-bottom: 14px; }
+.cc-name { font-size: 20px; font-weight: 750; line-height: 1.15; margin: 0 0 4px; color: var(--k-t1); }
+.cc-price { font-size: 14px; color: var(--k-t2); margin: 0; } .cc-price span { color: var(--k-t3); }
+.cc-t { font-size: 16px; font-weight: 700; margin: 0 0 10px; color: var(--k-t1); }
+.ptab { width: 100%; border-collapse: collapse; margin: 0 0 10px; }
+.ptab th { text-align: left; font-size: 12px; font-weight: 650; color: var(--k-t3); padding: 0 10px 8px 0; border-bottom: 1px solid var(--k-line-strong); }
+.ptab td { padding: 10px 10px 10px 0; border-bottom: 1px solid var(--k-line); font-size: 14px; color: var(--k-t2); vertical-align: middle; }
+.ptab td:first-child { color: var(--k-t1); font-weight: 650; }
+.ptab td:last-child { text-align: right; padding-right: 0; }
+.yp { display: inline-flex; font-size: 12px; font-weight: 650; padding: 3px 9px; border-radius: 999px; background: var(--k-olive-soft); color: var(--k-t1); }
+body[data-dev="phone"] .ptab .wide { display: none; }
+
+/* Words + asks */
+.words { width: 100%; border-collapse: collapse; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.words th, .words td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; font-size: 14px; }
+.words th { font: 700 12px var(--f-body); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.words td.q { font-weight: 600; }
+.words td.src { font-family: var(--f-data); font-size: 12px; color: var(--muted); white-space: nowrap; }
+.words tr:last-child td { border-bottom: 0; }
+.asks { display: grid; gap: 14px; }
+.ask { background: var(--panel); border: 1px solid var(--line); border-left: 4px solid var(--ask); border-radius: 10px; padding: 14px 16px; }
+.ask h3 { margin: 0 0 6px; font-size: 16px; line-height: 1.35; }
+.ask p { margin: 0 0 8px; max-width: 80ch; }
+.ask ul { margin: 0 0 4px; padding-left: 20px; }
+.ask li { margin-bottom: 4px; }
+.rec { color: var(--new); font-weight: 700; }
+
+dialog { border: 1px solid var(--line); border-radius: 12px; background: var(--panel); color: var(--fg); max-width: min(560px, calc(100vw - 32px)); padding: 18px 20px 16px; box-shadow: 0 20px 60px rgba(0,0,0,.35); }
+dialog::backdrop { background: rgba(10,14,20,.45); }
+dialog h3 { margin: 0 0 4px; font-size: 17px; }
+dialog .kind { font: 700 11px var(--f-data); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 10px; }
+dialog p { margin: 0 0 14px; white-space: pre-line; }
+dialog button { font: 600 14px var(--f-body); border: 1px solid var(--line); background: var(--track); color: var(--fg); border-radius: 8px; padding: 8px 14px; cursor: pointer; min-height: 40px; }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; } }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-mark" viewBox="10 10 44 44"><path d="M24 12H45a3 3 0 0 1 3 3V19a3 3 0 0 1-3 3H24a2 2 0 0 0-2 2V26a2 2 0 0 0 2 2H37a3 3 0 0 1 3 3V40a2 2 0 0 0 2 2H49a3 3 0 0 1 3 3V49a3 3 0 0 1-3 3H33a3 3 0 0 1-3-3V40a2 2 0 0 0-2-2H24a2 2 0 0 0-2 2V49a3 3 0 0 1-3 3H15a3 3 0 0 1-3-3V24a12 12 0 0 1 12-12Z"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/></symbol>
+</svg>
+
+<div class="sticky wrap">
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button role="tab" data-tab="card">1 · Sign-up card</button>
+    <button role="tab" data-tab="nudge">2 · Follow nudge</button>
+    <button role="tab" data-tab="family">3 · Family page</button>
+    <button role="tab" data-tab="screen">4 · Sign-in screen</button>
+    <button role="tab" data-tab="paid">5 · Paid buttons</button>
+    <button role="tab" data-tab="window">6 · Purchase window</button>
+    <button role="tab" data-tab="words">7 · Words</button>
+    <button role="tab" data-tab="asks">8 · Asks</button>
+  </nav>
+  <div class="viewrow">
+    <div class="vgroup"><span class="lbl">Device</span>
+      <div class="seg" role="group" aria-label="Device">
+        <button type="button" id="dev-desktop" data-dev="desktop" aria-pressed="true">Desktop</button>
+        <button type="button" id="dev-phone" data-dev="phone" aria-pressed="false">Phone</button>
+      </div>
+    </div>
+    <div class="vgroup"><span class="lbl">Product theme</span>
+      <div class="seg" role="group" aria-label="Product theme">
+        <button type="button" id="spec-warm" data-spec="warm" aria-pressed="true">Warm</button>
+        <button type="button" id="spec-dark" data-spec="dark" aria-pressed="false">Dark</button>
+      </div>
+    </div>
+    <div class="vgroup"><span class="lbl">View</span>
+      <div class="seg" role="group" aria-label="View">
+        <button type="button" id="view-all" aria-pressed="true">Everything</button>
+        <button type="button" id="view-diff" aria-pressed="false">Show only what differs</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+<header class="top">
+  <h1>Terms acceptance · step 6.3 drawings</h1>
+  <p>The tick box at every door that makes an account, the one screen existing accounts meet, the line beside every paid button, and the small window that stops a purchase until the Terms are agreed. Nothing here shows on production until step 6.7 publishes the Terms. Tick the boxes: they work. Every coloured tag, numbered pin and ask opens its explanation.</p>
+  <div class="meta">GST/HST Stage 6 · step 6.3 · drawing round · 2026-11-09 · words from /legal (Terms draft §20, items 1–3 and the new item 5) · round 1, after the /design review (tab 8 lists what it changed) · APPROVED by the owner 2026-11-09, all ten asks as recommended</div>
+</header>
+
+<main>
+
+<!-- ═════════════ 1 · SIGN-UP CARD ═════════════ -->
+<section class="panel" data-panel="card">
+  <div class="intro">
+    <div>
+      <h2>The box on a sign-up card</h2>
+      <p>Drawn on the organization door ("Run a tournament"). Every account door that uses the one account step (the team and league doors, the coach join, the invitation steps, the account-only sign-up) gets the same piece in the same place: after the last field, straight above the main button. The legal foot line under the card stays (6.2's Ask 7A).</p>
+      <div class="legend"><button class="mk new" data-title="New" data-note="The tick row, and the refusal line when someone presses Create account without ticking it.">New</button> <button class="mk same" data-title="Unchanged" data-note="Heading, sub line, step line, fields, password hint, Create account, the foot row and the legal foot line ship today (StartDoorForm, the one account step's module). Drawn from those files.">Unchanged</button> <button class="mk ask" data-title="Asks 1 and 2" data-note="Ask 1: where the box sits. Ask 2: whether the button stays on and explains, or goes off until the box is ticked. Tab 8.">Asks 1 · 2</button> <button class="mk ex" data-title="Example values" data-note="The name and email are made up for the drawing.">Example</button></div>
+    </div>
+    <div class="box">
+      <h3>The pins</h3>
+      <ol>
+        <li>The tick row: the house checkbox in an 18 px label row, the sentence at body size, both links underlined.</li>
+        <li>Pressed without the tick: the form's own error callout, above the button, and nothing is sent.</li>
+        <li>The legal foot line stays under the foot row.</li>
+      </ol>
+    </div>
+  </div>
+  <div class="specs">
+    <div class="spec phwrap">
+      <p class="spec-cap"><span class="dk">Run a tournament · desktop · the 420 px column on the paper</span><span class="ph">Run a tournament · phone · 390 px · true size</span></p>
+      <div class="scroller"><div class="frame sw w">
+        <div class="cbar same-el"><span class="lk"><svg><use href="#i-mark"/></svg>FieldLogic<span class="hq">HQ</span></span><span class="quiet">Sign in</span></div>
+        <div class="sc-page"><div class="sc-col">
+          <div class="same-el">
+            <div class="sc-head"><h1 class="sc-title">Run a tournament</h1><p class="sc-sub">Free to start. You'll name your organization next.</p>
+              <div class="steps"><span class="st cur"><span class="num">1</span>Account</span><span class="rule"></span><span class="st"><span class="num">2</span>Organization</span><span class="rule"></span><span class="st"><span class="num">3</span>Plan</span></div></div>
+          </div>
+          <div class="sc-form">
+            <div class="same-el sc-form">
+              <div class="sc-two"><div class="sc-field"><span class="sc-label">First name</span><span class="sc-input">Jordan</span></div><div class="sc-field"><span class="sc-label">Last name</span><span class="sc-input">Lee</span></div></div>
+              <div class="sc-field"><span class="sc-label">Email</span><span class="sc-input">jordan@example.com</span></div>
+              <div class="sc-field"><span class="sc-label">Password</span><span class="sc-input">••••••••••<svg class="ic"><use href="#i-eye"/></svg></span><p class="sc-hint">At least 8 characters.</p></div>
+            </div>
+            <label class="sc-tick anch" data-gate="g1"><button type="button" class="cb" role="checkbox" aria-checked="false" aria-label="Agree"></button><span>I'm 18 or older (or the age of majority where I live). I agree to the <a>Terms of Service</a> and have read the <a>Privacy Policy</a>.</span>
+              <button class="pin" style="top:-4px;right:-30px" data-title="1 · The tick row" data-note="§20 (1), word for word. The house checkbox (the global branded box: 1.5 px edge, lime when ticked) in the label row the family page and the billing address already use: 18 px box, 9.6 px gap, a 44 px row so the whole sentence is the tap target. The sentence is body text, 14 px ink, so it reads as part of the form and not as small print. The two links are olive and underlined, because they sit inside a sentence (colour alone isn't enough there). They open the page in a new tab so the form keeps what was typed. Not pre-ticked. No 'Required' tag: the one account step marks nothing required, and the button says what's missing (pin 2).">1</button></label>
+            <div class="sc-primary same-el">Create account</div>
+          </div>
+          <div class="sc-foot same-el"><p>Already have an account? <a class="fl">Sign in</a></p></div>
+          <div class="sc-legal anch same-el"><a>Terms of Service</a><span aria-hidden="true">·</span><a>Privacy Policy</a>
+            <button class="pin" style="top:8px;right:-6px" data-title="3 · The foot line stays" data-note="6.2's legal foot line, unchanged (Ask 7A, ruled 2026-11-09): the box is the sentence you agree to; the foot line is where people look for the documents later. Every door, one rule.">3</button></div>
+        </div></div>
+      </div></div>
+    </div>
+    <div class="spec phwrap">
+      <p class="spec-cap">Pressed Create account without ticking · the part that changes</p>
+      <div class="scroller"><div class="frame w" style="width:420px;max-width:100%"><div style="padding:16px">
+        <div class="sc-form">
+          <label class="sc-tick" data-gate="g1b"><button type="button" class="cb" role="checkbox" aria-checked="false" aria-label="Agree"></button><span>I'm 18 or older (or the age of majority where I live). I agree to the <a>Terms of Service</a> and have read the <a>Privacy Policy</a>.</span></label>
+          <div class="sc-call err anch">Tick the box to confirm you're 18 or older and agree to the Terms of Service.
+            <button class="pin" style="top:-10px;right:-10px" data-title="2 · The refusal" data-note="/legal §20 (5b). The form's own error callout (the red-edged callout the one account step already uses), in the error slot above the button. The form checks the box itself before it sends anything, so this shows at once; the server refuses with the same words if anything gets round the form. When the person ticks the box, the callout goes. If the Terms changed while the page was open, the same callout reads: 'The terms changed while this page was open. Read them again and tick the box.' and the box un-ticks.">2</button></div>
+          <div class="sc-primary">Create account</div>
+        </div>
+      </div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════════ 2 · FOLLOW NUDGE ═════════════ -->
+<section class="panel" data-panel="nudge" hidden>
+  <div class="intro">
+    <div>
+      <h2>The box on the follow nudge</h2>
+      <p>The tightest door: a sheet a signed-out fan sees in the installed app right after following a team. Its type is small (12.5 px sub line, 10 px labels), but the box is a sentence someone agrees to, so it is drawn at the size of what they type (13.6 px), with both links. The sheet is the club's light frame in every theme, as it ships.</p>
+      <div class="legend"><button class="mk new" data-title="New" data-note="The tick row between Password and Create free account, and its refusal line.">New</button> <button class="mk same" data-title="Unchanged" data-note="The star tile, Following line, sub line, the four fields, the two buttons and the fine print ship today (FollowAccountNudge, in a BottomSheet in the club frame).">Unchanged</button> <button class="mk ask" data-title="Ask 10" data-note="The box's type size on the nudge. Tab 8.">Ask 10</button> <button class="mk ex" data-title="Example values" data-note="The team name and the club colour (a blue) are made up; the real sheet takes the club's own colour.">Example</button></div>
+    </div>
+    <div class="box">
+      <h3>The pins</h3>
+      <ol>
+        <li>The tick row at the nudge's input size, 44 px tall, links in the club's colour, underlined.</li>
+        <li>"Just follow on this device" makes no account, so it needs no box and stays as it is.</li>
+      </ol>
+    </div>
+  </div>
+  <p class="devnote">Phone only: the nudge shows only in the installed public app.</p>
+  <div class="specs">
+    <div class="spec phwrap">
+      <p class="spec-cap">Public tournament page · installed app · 390 px · true size · light in every theme</p>
+      <div class="scroller"><div class="frame ph390 w fixed"><div class="pub">
+        <div class="pub-ghost"><div class="g" style="width:60%"></div><div class="g" style="width:90%"></div><div class="g" style="width:80%"></div><div class="g" style="width:70%"></div></div>
+        <div class="pub-dim"><div class="nsheet">
+          <div class="handle"></div>
+          <div class="n-top same-el"><span class="n-star"><svg class="ic"><use href="#i-star"/></svg></span><div><p class="n-title">Following U13 Ridge Hawks</p><p class="n-sub">Create a free account to get <b>score alerts</b> — a push when your teams’ games go live — and keep your follows on every device.</p></div></div>
+          <div class="n-form">
+            <div class="n-two same-el"><div><span class="n-lab">First Name</span><div class="n-in">Sam</div></div><div><span class="n-lab">Last Name</span><div class="n-in">Ortiz</div></div></div>
+            <div class="same-el"><span class="n-lab">Email</span><div class="n-in">sam@example.com</div></div>
+            <div class="same-el"><span class="n-lab">Password</span><div class="n-in">••••••••</div></div>
+            <label class="n-tick anch" data-gate="g2"><button type="button" class="cb" role="checkbox" aria-checked="false" aria-label="Agree"></button><span>I'm 18 or older (or the age of majority where I live). I agree to the <a>Terms of Service</a> and have read the <a>Privacy Policy</a>.</span>
+              <button class="pin" style="top:-6px;right:-14px" data-title="1 · The tick row on the nudge" data-note="§20 (1), the whole sentence, both links. The nudge's other type is small, but this is the sentence that makes the agreement, so it is drawn at 13.6 px, the size of the inputs above it, and given a 44 px row. The links take the club's link colour (the sheet's 'Sign in' link already does) and are underlined. Pressing Create free account without it shows §20 (5b) in the nudge's own error line (11.8 px, red), above the button: 'Tick the box to confirm you're 18 or older and agree to the Terms of Service.' The age line matters most here: a teenage player can reach this door.">1</button></label>
+            <div class="cbtn fill same-el">Create free account</div>
+            <div class="n-or same-el">or</div>
+            <div class="cbtn ghost anch same-el">Just follow on this device
+              <button class="pin" style="top:-10px;right:-10px" data-title="2 · No box on 'Just follow'" data-note="Following on the device makes no account, so there is nothing to agree to. It stays exactly as it is.">2</button></div>
+            <p class="n-fine same-el">No role questions. Browsing never needs an account. Already have one? <a>Sign in</a>.</p>
+          </div>
+        </div></div>
+      </div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════════ 3 · FAMILY PAGE ═════════════ -->
+<section class="panel" data-panel="family" hidden>
+  <div class="intro">
+    <div>
+      <h2>The family accept page: a third box</h2>
+      <p>A parent joining their child's team from the club's invitation. The guardian box and the consent box, their words and their record do not change. The Terms box comes third, under them, and shows only to someone who hasn't agreed yet (a new account, or an existing account that still needs to). The page is warm in every theme, as it ships.</p>
+      <div class="legend"><button class="mk new" data-title="New" data-note="The third box. The Join button now waits for all three.">New</button> <button class="mk same" data-title="Unchanged" data-note="Everything else on the page ships today (ClaimClient, the family module, the guardian draft's words).">Unchanged</button> <button class="mk ex" data-title="Example values" data-note="Ava, U11 Hawks and Riverdale Minor Ball are made up for the drawing.">Example</button></div>
+    </div>
+    <div class="box">
+      <h3>The pins</h3>
+      <ol>
+        <li>The Terms box, in the page's own check row, with the page's "Required".</li>
+        <li>Two spellings of one document on one page. Not changed here: the 6.7 closeout owns it.</li>
+      </ol>
+    </div>
+  </div>
+  <div class="specs">
+    <div class="spec phwrap">
+      <p class="spec-cap"><span class="dk">Join a team · desktop · the 560 px page</span><span class="ph">Join a team · phone · 390 px · true size</span></p>
+      <div class="scroller"><div class="frame sw w fixed"><div class="fam"><div class="fam-in"><div class="fam-card">
+        <div class="same-el">
+          <h1 class="fam-title">Join Ava’s team</h1>
+          <p class="fam-subl">U11 Hawks · Riverdale Minor Ball</p>
+          <span class="fam-lab">Email</span><p class="fam-ro">sam@example.com</p><a class="fam-link">Use another email</a>
+          <span class="fam-lab">Password</span><div class="fam-in-f">••••••••</div>
+        </div>
+        <div class="fam-sec">
+          <div class="same-el">
+            <p class="fam-ct">Before you join</p>
+            <p class="fam-draft">Draft wording — not final.</p>
+            <p>Riverdale Minor Ball already has Ava’s sign-up. Joining lets you see Ava’s team, practices and games here, and your sign-up.</p>
+            <ul>
+              <li>You see Ava’s team, coach, practice and game times and places, and your sign-up. Nothing about other children.</li>
+              <li>Ava’s coaches and Riverdale Minor Ball’s staff see the name, email and phone number on Ava’s sign-up. Riverdale Minor Ball can also see that you joined, and can remove you.</li>
+              <li>Other families can’t see you or Ava here.</li>
+              <li>FieldLogicHQ, the software Riverdale Minor Ball uses, keeps your account (your email and password). It opens Riverdale Minor Ball’s records only to support the club. <a>How we use your information</a> <a>Riverdale Minor Ball’s privacy notice</a></li>
+            </ul>
+            <p>Joining is your choice. It doesn’t put you on any newsletter.</p>
+            <label class="check" data-gate="g3"><button type="button" class="cb on" role="checkbox" aria-checked="true" aria-label="Guardian"></button><span>I’m Ava’s parent or legal guardian. <strong>Required</strong></span></label>
+            <label class="check anch" data-gate="g3"><button type="button" class="cb on" role="checkbox" aria-checked="true" aria-label="Consent"></button><span>I agree that FieldLogicHQ and Riverdale Minor Ball may use my name, email and phone number to run my account and to email me about Ava’s team, as the privacy policy and Riverdale Minor Ball’s privacy notice describe. <strong>Required</strong></span>
+              <button class="pin" style="top:-6px;right:-14px" data-title="2 · 'privacy policy' and 'Privacy Policy'" data-note="The consent box writes 'the privacy policy' in lowercase; the new Terms box writes 'Privacy Policy'. Same document, two spellings, one page. /legal §20 (5h) found no conflict in meaning (one is consent to a use, the other an agreement and a read). The capital belongs to the 6.7 closeout's item 3(d), so it is left as it ships here. The family tier is off for real families until then.">2</button></label>
+          </div>
+          <label class="check newbox anch" data-gate="g3"><button type="button" class="cb" role="checkbox" aria-checked="false" aria-label="Terms"></button><span>I'm 18 or older (or the age of majority where I live). I agree to the <a>Terms of Service</a> and have read the <a>Privacy Policy</a>. <strong>Required</strong></span>
+            <button class="pin" style="top:-6px;right:-14px" data-title="1 · The Terms box, third" data-note="§20 (1), word for word, in the page's own check row (13.6 px, an 18 px box, a 44 px row) with the page's bold 'Required', so the three boxes read as one set. It comes last: the first two are about the child and the club; this one is the person's own account with FieldLogicHQ. It shows only when the person hasn't agreed yet. A parent who agreed at another door sees the page exactly as today, with two boxes. Join stays off until every box shown is ticked (the page's rule today). Without it, the server refuses with §20 (5b). A parent under 18 can't finish here: the age line (O5) is ruled; /legal noted it.">1</button></label>
+        </div>
+        <div class="chip off" data-gate-btn="g3">Join Ava’s team</div>
+      </div></div></div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════════ 4 · SIGN-IN SCREEN ═════════════ -->
+<section class="panel" data-panel="screen" hidden>
+  <div class="intro">
+    <div>
+      <h2>The sign-in screen</h2>
+      <p>Everyone who already has an account meets this once, before their portal opens. It replaces the whole signed-in page at the same address: no nav, no sidebar, the portal's own Warm or Dark. It is the one account step's column, so it looks like the sign-in page the person just came from. Drawn on the installed family app (phone) and the club admin (desktop). The coach portal, scorekeeper and check-in show the same screen.</p>
+      <div class="legend"><button class="mk new" data-title="New" data-note="The whole screen is new. Every piece is a shipped piece: the column, the title, the callouts, the lime button, the foot row.">New</button> <button class="mk ask" data-title="Asks 3, 7, 8, 9" data-note="Ask 3: the mark at the top. Ask 7: where Sign out sits. Ask 8: when the cancel door is built. Ask 9: no legal foot line here. Tab 8.">Asks 3 · 7 · 8 · 9</button> <button class="mk ex" data-title="Example values" data-note="The email is made up.">Example</button></div>
+    </div>
+    <div class="box">
+      <h3>The pins</h3>
+      <ol>
+        <li>FieldLogicHQ's mark: the Terms are ours, not the club's.</li>
+        <li>The title and line change between first publication and a later change.</li>
+        <li>The box. Continue stays off until it's ticked (§20, ruled).</li>
+        <li>The state line: a failed save, or the Terms changed while it was open.</li>
+        <li>The cancel door: only on "updated", only for someone who pays for a plan.</li>
+        <li>Sign out, always, with the account it signs out of.</li>
+      </ol>
+    </div>
+  </div>
+  <div class="stateline"><span class="lbl">State</span>
+    <div class="seg" role="group" aria-label="Screen state" data-stateseg="scr">
+      <button type="button" data-state="pub" aria-pressed="true">First publication</button>
+      <button type="button" data-state="upd" aria-pressed="false">Updated · pays for a plan</button>
+      <button type="button" data-state="saving" aria-pressed="false">Saving…</button>
+      <button type="button" data-state="failed" aria-pressed="false">Couldn't save</button>
+      <button type="button" data-state="changed" aria-pressed="false">Terms changed while open</button>
+    </div>
+  </div>
+  <div class="specs">
+    <div class="spec phwrap">
+      <p class="spec-cap"><span class="dk">Club admin · desktop · the whole page (the sidebar and header are not drawn because they aren't there)</span><span class="ph">Family app · installed · phone · 390 px · true size</span></p>
+      <div class="scroller"><div class="frame desk w" data-statebox="scr">
+        <div class="sc-page" style="min-height:640px;align-items:flex-start;padding-top:56px"><div class="sc-col">
+          <div class="anch" style="display:flex;justify-content:center;margin-bottom:18px"><span class="lk"><svg><use href="#i-mark"/></svg>FieldLogic<span class="hq">HQ</span></span>
+            <button class="pin" style="top:-4px;right:calc(50% - 110px)" data-title="1 · Whose mark" data-note="FieldLogicHQ's lockup, the size the consumer bar shows it (17 px). With the nav gone, it is the only thing that says whose page this is, and the agreement is with FieldLogicHQ, not with the club. A parent who sees the club's crest above 'We've published our Terms' could fairly think they're the club's terms. Every sign-in page already shows our mark (there is no club sign-in page), so this is the mark the person saw thirty seconds ago. The colours stay the portal's own (Warm or Dark). Ask 3.">1</button></div>
+          <div class="sc-head anch">
+            <h1 class="sc-title" data-show="pub saving failed changed">We've published our Terms</h1>
+            <h1 class="sc-title" data-show="upd" hidden>We've updated our Terms</h1>
+            <p class="sc-sub" data-show="pub saving failed changed">FieldLogicHQ now has <a>Terms of Service</a> and a <a>Privacy Policy</a>. Please read them and tick the box to keep using your account.</p>
+            <p class="sc-sub" data-show="upd" hidden>We've changed our <a>Terms of Service</a> since you last agreed to them. Please read them and tick the box to keep using your account.</p>
+            <button class="pin" style="top:0;right:-30px" data-title="2 · Two openings" data-note="§20 (2), word for word. 'We've published our Terms' when the person has never agreed to any version; 'We've updated our Terms' when they agreed to an earlier one. The one account step's head: the 32 px display title, the 16 px dim line, the hairline under it. Links open the page in a new tab, so the screen is still here when they come back. The drawing shows the first-publication words on the Saving, failed and changed states; the 'updated' words behave the same way.">2</button>
+          </div>
+          <div class="sc-form">
+            <label class="sc-tick anch" data-gate="scr"><button type="button" class="cb" role="checkbox" aria-checked="false" aria-label="Agree" data-on-in="saving failed"></button><span>I'm 18 or older (or the age of majority where I live). I agree to the <a>Terms of Service</a> and have read the <a>Privacy Policy</a>.</span>
+              <button class="pin" style="top:-4px;right:-30px" data-title="3 · The box" data-note="The same tick row as every sign-up card (tab 1). Not pre-ticked. Continue stays off until it is ticked: §20 (2) rules it, and on a screen with one thing to do, an off button is clear. Ticking it is all the screen asks. Try it.">3</button></label>
+            <div class="anch" data-show="failed changed" hidden>
+              <div class="sc-call err" data-show="failed" hidden>Couldn't save your agreement. Check your connection and try again.</div>
+              <div class="sc-call warn" data-show="changed" hidden>The terms changed while this window was open. Read them again.</div>
+              <button class="pin" style="top:-10px;right:-10px" data-title="4 · The state line" data-note="Couldn't save: /legal §20 (5a), in the red-edged error callout above the button. The box stays ticked, Continue comes back, one press tries again. Terms changed: §20 (2)'s line in the amber-edged notice; the box un-ticks and the two links now open the new version. Both use the one account step's own callouts, so neither is a new piece.">4</button>
+            </div>
+            <p class="sc-inline door anch" data-show="upd" hidden>Don't agree? You can <a>cancel your plan</a> instead. It runs to the end of the period you've paid for.
+              <button class="pin" style="top:-6px;right:-30px" data-title="5 · The cancel door" data-note="/legal §20 (5e). Only on 'We've updated our Terms', and only for someone who owns a paid plan. Without it, this screen hides the billing page, and §18's promise ('If you do not agree, you can cancel') can't be kept. The link opens a cancel that works without agreeing (cancelling is never gated). Someone who owns several plans gets a short list of them. Quiet on purpose: 14 px dim, the link olive and underlined, so it is findable but Continue stays the main road. Not on the first-publication screen: nothing was sold before the Terms existed. When it is built is Ask 8.">5</button></p>
+            <button type="button" class="sc-primary off" data-gate-btn="scr" data-label-saving="Saving…">Continue</button>
+          </div>
+          <div class="sc-foot anch"><p>Signed in as <b style="color:var(--h-ink-soft);font-weight:600">jordan@example.com</b></p><p><a class="fl">Sign out</a></p>
+            <button class="pin" style="top:10px;right:-30px" data-title="6 · Sign out" data-note="Always on the screen (R3). In the one account step's foot row, where 'Sign in' and 'Get started' sit on the pages before this one, with the account's email beside it. Someone who has two accounts (a coach and a parent) can see which one is agreeing, and anyone who won't agree has an obvious way out. Sign out stays on while saving. No legal foot line here (Ask 9): the line above already links both documents twice.">6</button></div>
+        </div></div>
+      </div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════════ 5 · PAID BUTTONS ═════════════ -->
+<section class="panel" data-panel="paid" hidden>
+  <div class="intro">
+    <div>
+      <h2>The line beside a paid button</h2>
+      <p>§20 (3) beside every button that starts, renews into or changes a paid plan, in the house's 12 px small print, read before the button: at the end of a window's body (just above Cancel and the main button), and under the table where each row has its own button. Where a trial applies, its sentence comes first. A button with no price (a comp, the Founding Season) carries no line.</p>
+      <div class="legend"><button class="mk new" data-title="New" data-note="The line, in four places.">New</button> <button class="mk same" data-title="Unchanged" data-note="The billing page's plan card and table, the move window and the club upgrade window, and the Coaches Portal start ship today (BillingBody, PlanMoveDialog, TeamSignupClient).">Unchanged</button> <button class="mk ask" data-title="Ask 6" data-note="Where the line sits. Tab 8.">Ask 6</button> <button class="mk ex" data-title="Example values" data-note="Plan names and list prices are read from the plan settings (2026-11-09). The prorated amount, dates, team counts and the club name are examples. The real figures come from the plan settings and Stripe.">Example</button></div>
+    </div>
+    <div class="box">
+      <h3>The pins</h3>
+      <ol>
+        <li>Billing page: one line under the table, after "Prices are plus applicable taxes."</li>
+        <li>The move window: the line ends the body, above the foot.</li>
+        <li>The club upgrade: the trial sentence, then the line.</li>
+        <li>The Coaches Portal start: the line above Continue to checkout.</li>
+      </ol>
+    </div>
+  </div>
+  <div class="specs">
+    <div class="spec phwrap">
+      <p class="spec-cap"><span class="dk">Club admin · Billing · desktop crop</span><span class="ph">Club admin · Billing · phone · 390 px</span></p>
+      <div class="scroller"><div class="frame sw w kit"><div class="bl">
+        <div class="same-el">
+          <h2 class="bl-h">Billing</h2>
+          <div class="cc"><p class="cc-name">League Plus</p><p class="cc-price">$89 CAD / month <span>plus applicable taxes</span></p></div>
+        </div>
+        <div class="cc">
+          <div class="same-el">
+            <p class="cc-t">Change plan</p>
+            <table class="ptab"><thead><tr><th>Plan</th><th class="wide">Price</th><th></th></tr></thead><tbody>
+              <tr><td>Tournament Plus</td><td class="wide">$39 CAD / month</td><td><span class="kb out">Downgrade to Tournament Plus</span></td></tr>
+              <tr><td>League Plus</td><td class="wide">$89 CAD / month</td><td><span class="yp">Your plan</span></td></tr>
+              <tr><td>Club</td><td class="wide">$219 CAD / month</td><td><span class="kb out">Upgrade to Club</span></td></tr>
+            </tbody></table>
+            <p class="k-line" style="margin-bottom:6px">Prices are plus applicable taxes.</p>
+          </div>
+          <p class="k-line newl anch">Your plan renews automatically until you cancel. You can cancel any time from your billing page, and your plan runs to the end of the period you've paid for. By continuing, you agree to the <a>Terms of Service</a>.
+            <button class="pin" style="top:-8px;right:-14px" data-title="1 · Under the table" data-note="The table's buttons each sit in a row, so one line under the table serves them all, straight after the tax line (the same 12 px small print, the table's own lede). It is a shade darker than the tax line (secondary ink, not tertiary) because it is the one people are agreeing to. The downgrade row is never gated (§18), but the line covers it harmlessly: it describes renewing and cancelling, which stay true. The next-season choice and the Reactivate card take the same line, under their buttons, in the same place as their own tax line.">1</button></p>
+        </div>
+      </div></div></div>
+    </div>
+    <div class="spec phwrap">
+      <p class="spec-cap">The move window · a question window, 416 px</p>
+      <div class="scroller"><div class="frame w kit" style="width:480px;max-width:100%"><div class="kd-stage" style="height:auto"><div class="kd-scrim"></div><div class="kd-center">
+        <div class="kd">
+          <div class="kd-head same-el"><h2 class="kd-title">Move to Club?</h2></div>
+          <div class="kd-body">
+            <div class="same-el">
+              <p>Riverdale Minor Ball moves to Club today and can hold up to 40 teams.</p>
+              <dl class="fig"><div><dt>Today, for the rest of this billing period</dt><dd>$43.20 CAD</dd></div><div><dt>From December 1, 2026</dt><dd>$219 CAD / month<small>plus applicable taxes</small></dd></div></dl>
+              <p class="k-hint">Same subscription and payment method, with no second checkout. The prorated amount and its tax come from Stripe before you confirm.</p>
+            </div>
+            <p class="k-line newl anch">Your plan renews automatically until you cancel. You can cancel any time from your billing page, and your plan runs to the end of the period you've paid for. By continuing, you agree to the <a>Terms of Service</a>.
+              <button class="pin" style="top:-8px;right:-14px" data-title="2 · The end of the body" data-note="The line ends the window's body, so it is the last thing read before the buttons. Not in the foot: the foot's left slot holds one short sentence (the house rule), and this is three. It is a shade darker than the hint above it because it is the agreement.">2</button></p>
+          </div>
+          <div class="kd-foot same-el"><span class="fs"></span><span class="fe"><span class="kb out">Cancel</span><span class="kb lime">Move to Club</span></span></div>
+        </div>
+      </div></div></div></div>
+    </div>
+    <div class="spec phwrap">
+      <p class="spec-cap">The club upgrade · a form window, 520 px · with a trial</p>
+      <div class="scroller"><div class="frame w kit" style="width:580px;max-width:100%"><div class="kd-stage" style="height:auto"><div class="kd-scrim"></div><div class="kd-center">
+        <div class="kd form">
+          <div class="kd-head same-el"><h2 class="kd-title">Start your club</h2></div>
+          <div class="kd-body">
+            <div class="same-el">
+              <p>Riverdale Minor Ball moves from League Plus to Club, with every team, family and record kept.</p>
+              <p class="k-hint">30-day trial — you add a payment method at checkout, and you're first charged when the trial ends.</p>
+            </div>
+            <p class="k-line newl anch">Your trial ends on the date shown at checkout, and your card is charged then unless you cancel. Your plan renews automatically until you cancel. You can cancel any time from your billing page, and your plan runs to the end of the period you've paid for. By continuing, you agree to the <a>Terms of Service</a>.
+              <button class="pin" style="top:-8px;right:-14px" data-title="3 · With a trial" data-note="§20 (3) with its trial sentence first, as one paragraph. It sits under the window's own trial hint; the two overlap a little (both say when you're charged), which /legal accepted: the hint is the product explaining, the line is the agreement. If the overlap reads badly in the walk, the hint is the one to trim, not the line.">3</button></p>
+          </div>
+          <div class="kd-foot same-el"><span class="fs">Next, you add a payment method on our secure payment page.</span><span class="fe"><span class="kb out">Cancel</span><span class="kb lime">Start my club</span></span></div>
+        </div>
+      </div></div></div></div>
+    </div>
+    <div class="spec phwrap">
+      <p class="spec-cap"><span class="dk">Coaches Portal start · step 2 · the 420 px column</span><span class="ph">Coaches Portal start · step 2 · phone · 390 px</span></p>
+      <div class="scroller"><div class="frame sw-n w"><div class="sc-page"><div class="sc-col">
+        <div class="same-el">
+          <div class="sc-head"><h1 class="sc-title">Coach a team</h1><p class="sc-sub">Premium Coaches Portal. $29/month or $290/year plus applicable taxes.</p>
+            <div class="steps"><span class="st"><span class="num">1</span>Account</span><span class="rule"></span><span class="st cur"><span class="num">2</span>Team</span></div></div>
+        </div>
+        <div class="sc-form">
+          <div class="same-el sc-form">
+            <div class="sc-field"><span class="sc-label">Team name</span><span class="sc-input">Ridge Hawks U13</span></div>
+            <div class="sc-field"><span class="sc-label">Billing</span><div class="sc-two"><span class="sc-input" style="height:44px;border-radius:8px;font-size:14px;font-weight:600;border:2px solid var(--h-olive)">$29/month</span><span class="sc-input" style="height:44px;border-radius:8px;font-size:14px;font-weight:600">$290/year</span></div></div>
+          </div>
+          <p class="sc-inline anch" style="font-size:14px">Your plan renews automatically until you cancel. You can cancel any time from your billing page, and your plan runs to the end of the period you've paid for. By continuing, you agree to the <a>Terms of Service</a>.
+            <button class="pin" style="top:-8px;right:-14px" data-title="4 · Above the button" data-note="On the account column the line uses the column's own fine-print size (14 px dim, the size of 'No credit card.'), left-aligned because it is three sentences, and sits above Continue to checkout so it is read first. No trial sentence: the Coaches Portal has no trial. The Founding Season version of this page shows no price today, so it carries no line (the offer is closed).">4</button></p>
+          <div class="sc-primary same-el">Continue to checkout</div>
+        </div>
+        <div class="sc-foot same-el"><p><a class="fl">Not now, go to Home</a></p></div>
+      </div></div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════════ 6 · PURCHASE WINDOW ═════════════ -->
+<section class="panel" data-panel="window" hidden>
+  <div class="intro">
+    <div>
+      <h2>The purchase window</h2>
+      <p>Someone who hasn't agreed yet presses a paid button (most often because their app was open when the Terms went live, so the screen in tab 4 hasn't shown yet). A small window opens over what they were doing. After one tick and Continue, it closes and <b>the purchase carries on by itself, with the same choices</b>. Cancel leaves everything as it was. The same window stops an organization create.</p>
+      <div class="legend"><button class="mk new" data-title="New" data-note="The window, and the move window carrying on by itself afterwards.">New</button> <button class="mk same" data-title="Unchanged" data-note="The move window underneath, and the one window piece (the question window: title, body, foot with Cancel and the main button at the right).">Unchanged</button> <button class="mk ask" data-title="Asks 4 and 5" data-note="Ask 4: the window's title. Ask 5: does it open over the move window, or replace it. Tab 8.">Asks 4 · 5</button></div>
+    </div>
+    <div class="box">
+      <h3>The pins</h3>
+      <ol>
+        <li>Over the move window, which stays where it was.</li>
+        <li>Its own title and first line (/legal 5d), the same box.</li>
+        <li>The refusal slot at the foot's left: a failed save, or the Terms changed.</li>
+        <li>Afterwards: the move window says "Moving…" without being pressed again.</li>
+      </ol>
+    </div>
+  </div>
+  <div class="stateline"><span class="lbl">State</span>
+    <div class="seg" role="group" aria-label="Window state" data-stateseg="win">
+      <button type="button" data-state="pub" aria-pressed="true">Never agreed</button>
+      <button type="button" data-state="upd" aria-pressed="false">Agreed to an earlier version</button>
+      <button type="button" data-state="saving" aria-pressed="false">Saving…</button>
+      <button type="button" data-state="failed" aria-pressed="false">Couldn't save</button>
+      <button type="button" data-state="changed" aria-pressed="false">Terms changed while open</button>
+    </div>
+  </div>
+  <div class="specs">
+    <div class="spec phwrap">
+      <p class="spec-cap"><span class="dk">Club admin · Billing · desktop · the window over the move window</span><span class="ph">Phone · 390 px · a question window stays a centred card</span></p>
+      <div class="scroller"><div class="frame desk w kit" data-statebox="win"><div class="kd-stage" style="min-height:620px">
+        <div class="bl" style="opacity:.9"><h2 class="bl-h">Billing</h2><div class="cc"><p class="cc-name">League Plus</p><p class="cc-price">$89 CAD / month <span>plus applicable taxes</span></p></div></div>
+        <div class="kd-scrim"></div>
+        <div class="kd-center" style="position:absolute;inset:0">
+          <div class="kd same-el anch" style="position:absolute;transform:translate(-26px,-40px);opacity:.75">
+            <div class="kd-head"><h2 class="kd-title">Move to Club?</h2></div>
+            <div class="kd-body"><p>Riverdale Minor Ball moves to Club today and can hold up to 40 teams.</p><p class="k-hint">Same subscription and payment method, with no second checkout.</p></div>
+            <div class="kd-foot"><span class="fs"></span><span class="fe"><span class="kb out">Cancel</span><span class="kb lime">Move to Club</span></span></div>
+            <button class="pin" style="top:-10px;left:-10px" data-title="1 · Over the move window" data-note="The window opens over the window the person was using, with a second dim between them (the house rule: a small task on a record opens over it). The move window keeps its figures and its choice underneath. Cancel on the new window closes only the new window; the move window is still there, untouched. Ask 5.">1</button>
+          </div>
+          <div class="kd" style="position:relative;box-shadow:0 0 0 9999px var(--k-scrim)">
+            <div class="kd-head anch"><h2 class="kd-title">Before you continue</h2>
+              <button class="pin" style="top:10px;right:10px" data-title="2 · Its own words" data-note="/legal §20 (5d). 'Before you continue' because the person was in the middle of something: 'We've published our Terms' would read like an announcement, and 'to keep using your account' isn't true here. The first line changes with the person's history (the State switch: never agreed, or agreed to an earlier version) and ends 'we'll carry on where you left off', which fits a purchase and an organization create alike. Below it, the same box as everywhere. A question window: title, body, foot; no × (the house question window has none); on a phone it stays a centred card. Ask 4.">2</button></div>
+            <div class="kd-body">
+              <p data-show="pub saving failed changed">FieldLogicHQ now has <a>Terms of Service</a> and a <a>Privacy Policy</a>. Please read them and tick the box, and we'll carry on where you left off.</p>
+              <p data-show="upd" hidden>We've changed our <a>Terms of Service</a> since you last agreed to them. Please read them and tick the box, and we'll carry on where you left off.</p>
+              <label class="kd-tick" data-gate="win"><button type="button" class="cb" role="checkbox" aria-checked="false" aria-label="Agree" data-on-in="saving failed"></button><span>I'm 18 or older (or the age of majority where I live). I agree to the <a>Terms of Service</a> and have read the <a>Privacy Policy</a>.</span></label>
+            </div>
+            <div class="kd-foot anch">
+              <span class="fs err" data-show="failed" hidden>Couldn't save your agreement. Check your connection and try again.</span>
+              <span class="fs err" data-show="changed" hidden>The terms changed while this window was open. Read them again.</span>
+              <span class="fs" data-show="pub upd saving"></span>
+              <span class="fe"><span class="kb out">Cancel</span><button type="button" class="kb lime off" data-gate-btn="win" data-label-saving="Saving…">Continue</button></span>
+              <button class="pin" style="top:-12px;left:10px" data-title="3 · The refusal slot" data-note="The window's own refusal line (every window has one, at the foot's left, beside the buttons). Couldn't save: /legal §20 (5a); the box stays ticked and Continue comes back. Terms changed: §20 (2)'s line; the box un-ticks and the links open the new version. Continue is off until the box is ticked, as on the screen. While saving, Continue reads 'Saving…' and both buttons wait.">3</button>
+            </div>
+          </div>
+        </div>
+      </div></div></div>
+    </div>
+    <div class="spec phwrap">
+      <p class="spec-cap">After Continue · the window closes and the move carries on</p>
+      <div class="scroller"><div class="frame w kit" style="width:480px;max-width:100%"><div class="kd-stage"><div class="kd-scrim"></div><div class="kd-center">
+        <div class="kd anch">
+          <div class="kd-head"><h2 class="kd-title">Move to Club?</h2></div>
+          <div class="kd-body"><p>Riverdale Minor Ball moves to Club today and can hold up to 40 teams.</p><p class="k-hint">Same subscription and payment method, with no second checkout.</p></div>
+          <div class="kd-foot"><span class="fs"></span><span class="fe"><span class="kb out off">Cancel</span><span class="kb lime off">Moving…</span></span></div>
+          <button class="pin" style="top:-10px;right:-10px" data-title="4 · It carries on" data-note="R6: the agreement is saved, the small window closes, and the move window sends the same move again by itself. It shows its own 'Moving…', the word it already uses, and ends the way a move always ends. Nothing is chosen twice. A purchase that goes to Stripe's checkout carries on to the checkout page the same way. If the window can't open at all, the form shows /legal §20 (5c) instead: 'Before you continue, you need to agree to our current Terms of Service. Reload this page to see them.'">4</button>
+        </div>
+      </div></div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════════ 7 · WORDS ═════════════ -->
+<section class="panel" data-panel="words" hidden>
+  <div class="intro">
+    <div>
+      <h2>Every word on these drawings</h2>
+      <p>Customer words come from the Terms draft's §20 and nowhere else: items (1) to (3) from the 6.1 pass, item (5) written by /legal in this round. The build copies them exactly. "Continue", "Sign out", "Saving…" and "Cancel" are the house's own.</p>
+    </div>
+  </div>
+  <div class="scroller"><table class="words">
+    <thead><tr><th>Where</th><th>Words</th><th>From</th></tr></thead>
+    <tbody>
+      <tr><td class="q">The box, every door</td><td>I'm 18 or older (or the age of majority where I live). I agree to the [Terms of Service] and have read the [Privacy Policy].</td><td class="src">§20 (1)</td></tr>
+      <tr><td class="q">A sign-up pressed without the box</td><td>Tick the box to confirm you're 18 or older and agree to the Terms of Service.</td><td class="src">§20 (5b)</td></tr>
+      <tr><td class="q">A sign-up whose Terms moved</td><td>The terms changed while this page was open. Read them again and tick the box.</td><td class="src">§20 (5b)</td></tr>
+      <tr><td class="q">Screen · first publication</td><td><b>We've published our Terms</b> — FieldLogicHQ now has [Terms of Service] and a [Privacy Policy]. Please read them and tick the box to keep using your account.</td><td class="src">§20 (2)</td></tr>
+      <tr><td class="q">Screen · after a change</td><td><b>We've updated our Terms</b> — We've changed our [Terms of Service] since you last agreed to them. Please read them and tick the box to keep using your account.</td><td class="src">§20 (2)</td></tr>
+      <tr><td class="q">Screen and window · failed save</td><td>Couldn't save your agreement. Check your connection and try again.</td><td class="src">§20 (5a)</td></tr>
+      <tr><td class="q">Screen and window · Terms moved</td><td>The terms changed while this window was open. Read them again.</td><td class="src">§20 (2)</td></tr>
+      <tr><td class="q">Screen · cancel door</td><td>Don't agree? You can [cancel your plan] instead. It runs to the end of the period you've paid for.</td><td class="src">§20 (5e)</td></tr>
+      <tr><td class="q">Window · title</td><td>Before you continue</td><td class="src">§20 (5d)</td></tr>
+      <tr><td class="q">Window · never agreed</td><td>FieldLogicHQ now has [Terms of Service] and a [Privacy Policy]. Please read them and tick the box, and we'll carry on where you left off.</td><td class="src">§20 (5d)</td></tr>
+      <tr><td class="q">Window · agreed before</td><td>We've changed our [Terms of Service] since you last agreed to them. Please read them and tick the box, and we'll carry on where you left off.</td><td class="src">§20 (5d)</td></tr>
+      <tr><td class="q">No window possible</td><td>Before you continue, you need to agree to our current Terms of Service. Reload this page to see them.</td><td class="src">§20 (5c)</td></tr>
+      <tr><td class="q">Beside a paid button</td><td>Your plan renews automatically until you cancel. You can cancel any time from your billing page, and your plan runs to the end of the period you've paid for. By continuing, you agree to the [Terms of Service].</td><td class="src">§20 (3)</td></tr>
+      <tr><td class="q">…with a trial, first</td><td>Your trial ends on the date shown at checkout, and your card is charged then unless you cancel.</td><td class="src">§20 (3)</td></tr>
+      <tr><td class="q">House words</td><td>Continue · Sign out · Saving… · Cancel · Signed in as {email}</td><td class="src">house</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ═════════════ 8 · ASKS ═════════════ -->
+<section class="panel" data-panel="asks" hidden>
+  <div class="intro">
+    <div>
+      <h2>What I need you to rule</h2>
+      <p>Ten asks, each with a recommendation; "as recommended" answers them all. Rulings R1 to R10 and the §20 words are not re-opened. Once you've ruled, Chunks B and C are built to these drawings.</p>
+    </div>
+    <div class="box" style="border-color:var(--new)"><h3 style="color:var(--new)">Approved 2026-11-09</h3><p style="margin:0">Owner: "looks good, i agree with your recommendations". All ten as recommended: 1A, 2A, 3A, 4A, 5A, 6A, 7A, 8A, 9A, 10A. Chunks B and C are built to this page.</p></div>
+  </div>
+  <div class="asks">
+    <div class="ask"><h3>Ask 1 · Where the box sits on a sign-up card</h3>
+      <ul>
+        <li><span class="rec">A (recommended)</span> — after the last field, straight above the main button.</li>
+        <li>B — under the main button, with the small print.</li>
+        <li>C — at the top of the form.</li>
+      </ul>
+      <p>Why A: you agree before you act, and the box is the last thing your eye crosses on the way to the button. Under the button it reads as small print, which is what courts dislike. At the top, it is agreed to before the person knows what they're signing up for.</p></div>
+    <div class="ask"><h3>Ask 2 · A sign-up card's button before the box is ticked</h3>
+      <ul>
+        <li><span class="rec">A (recommended)</span> — the button stays on; pressing it without the tick shows the refusal line and sends nothing.</li>
+        <li>B — the button is off until the box is ticked, as on the sign-in screen.</li>
+      </ul>
+      <p>Why A: a sign-up card has five things to complete, and an off button doesn't say which one is missing (the house rule fades a disabled button and explains nothing). The sign-in screen has one thing to do, so off-until-ticked is clear there, and §20 rules it. The family page already keeps its button off until its boxes are ticked, and stays as it is.</p></div>
+    <div class="ask"><h3>Ask 3 · The mark on the sign-in screen</h3>
+      <ul>
+        <li><span class="rec">A (recommended)</span> — FieldLogicHQ's lockup, in the portal's own colours.</li>
+        <li>B — the club's or league's name and crest.</li>
+        <li>C — no mark.</li>
+      </ul>
+      <p>Why A: the agreement is with FieldLogicHQ. A club crest above "We've published our Terms" says the club wrote them. Every sign-in page already shows our mark, so it's the one the person just saw. With the nav gone, C leaves nothing that says whose page it is.</p></div>
+    <div class="ask"><h3>Ask 4 · The purchase window's title</h3>
+      <ul>
+        <li><span class="rec">A (recommended)</span> — "Before you continue" (/legal's 5d).</li>
+        <li>B — the screen's own "We've published our Terms" / "We've updated our Terms".</li>
+        <li>C — "Agree to our Terms to continue".</li>
+      </ul>
+      <p>Why A: the person was in the middle of a purchase; the title names the pause, and the first line says why and promises to carry on. B reads as an announcement in the middle of a purchase. C is the box's job, said twice.</p></div>
+    <div class="ask"><h3>Ask 5 · Does the window open over the move window, or replace it?</h3>
+      <ul>
+        <li><span class="rec">A (recommended)</span> — over it, with the move window kept underneath.</li>
+        <li>B — the move window turns into the agreement step, then turns back.</li>
+      </ul>
+      <p>Why A: the same window stops paid buttons that aren't in a window (the billing table's Upgrade, the organization create, the Coaches Portal start), so one window that opens over whatever is there works everywhere. Cancel then truly leaves things as they were. B would need each window to learn a new step.</p></div>
+    <div class="ask"><h3>Ask 6 · Where the paid-button line sits</h3>
+      <ul>
+        <li><span class="rec">A (recommended)</span> — read before the button: at the end of a window's body, above the button on the account column, and under the table where each row has its own button.</li>
+        <li>B — under the button everywhere.</li>
+        <li>C — in a window's foot, at the left.</li>
+      </ul>
+      <p>Why A: "By continuing, you agree" should be read before continuing. A window's foot holds one short sentence by the house rule; this is three.</p></div>
+    <div class="ask"><h3>Ask 7 · Sign out on the sign-in screen</h3>
+      <ul>
+        <li><span class="rec">A (recommended)</span> — in the foot row under Continue, with "Signed in as {email}".</li>
+        <li>B — a text button in the top right corner.</li>
+      </ul>
+      <p>Why A: it is where the column's foot links always are, and the email shows which account is agreeing, which matters for someone with a coach account and a parent account.</p></div>
+    <div class="ask"><h3>Ask 8 · When the cancel door is built</h3>
+      <ul>
+        <li><span class="rec">A (recommended)</span> — in Chunk B, with the "We've updated our Terms" screen it belongs to. It shows nowhere until the Terms have a significant change.</li>
+        <li>B — later, before the first significant change.</li>
+      </ul>
+      <p>Why A: it isn't needed at first publication, but the day the screen can say "updated", it hides the billing page, and §18's "if you do not agree, you can cancel" can't be kept without it. Built with its screen, it can't be forgotten. (/legal §20 (5e), note 3.)</p></div>
+    <div class="ask"><h3>Ask 9 · The legal foot line on the sign-in screen</h3>
+      <ul>
+        <li><span class="rec">A (recommended)</span> — leave it off this screen.</li>
+        <li>B — keep it, as on every sign-in door.</li>
+      </ul>
+      <p>Why A: the screen's line and its box already link both documents. A third pair under Sign out is noise on a screen that exists to be read.</p></div>
+    <div class="ask"><h3>Ask 10 · The box's size on the follow nudge</h3>
+      <ul>
+        <li><span class="rec">A (recommended)</span> — 13.6 px, the size of the nudge's inputs, in a 44 px row.</li>
+        <li>B — 12.5 px, the size of the nudge's sub line.</li>
+      </ul>
+      <p>Why A: it is the sentence that makes the agreement, and it holds the age line a teenage player has to read. It should not be the smallest text on the sheet.</p></div>
+  </div>
+  <div class="box" style="margin-top:18px">
+    <h3>Build notes for Chunks B and C (the build prompt points here)</h3>
+    <ul>
+      <li><b>One tick row:</b> a shared piece built on the house checkbox in the label row the family page and billing address use (18 px box, 9.6 px gap, 44 px row), the sentence at the host's body size, links underlined, opening in a new tab. The family page uses its own check row and its "Required".</li>
+      <li><b>Sign-up cards:</b> the row after the last field, above the main button; the form checks the box before it sends, and shows (5b) in the one account step's error callout.</li>
+      <li><b>The screen:</b> the one account step's column, centred on the portal's paper, FieldLogicHQ's lockup above the head, no nav. Its callouts are the one account step's error and amber notice. Sign out and the email in the foot row. No legal foot line.</li>
+      <li><b>The window:</b> the house question window (416 px, no ×), opened over whatever is there; its refusal line in the foot's left slot; Continue off until ticked; on success it closes and the original request is sent again unchanged.</li>
+      <li><b>The paid line:</b> one piece. In a window, the end of the body; on a column, above the button at the column's fine-print size, left-aligned; on the billing page, under the table after the tax line, in secondary ink.</li>
+      <li><b>Everything renders only while the switch is on.</b> Nothing here changes what production shows today.</li>
+    </ul>
+  </div>
+  <div class="box" style="margin-top:14px" id="review-box">
+    <h3>What the /design review changed (round 1)</h3>
+    <ul>
+      <li>The cancel door's link sits in the middle of a sentence, so on a phone it was a 21 px tap. It now has a 44 px tall hit area without moving the line (the build should do the same).</li>
+      <li>Pins that hung off the column's right edge were clipped at phone width; they now sit just inside it.</li>
+      <li>The billing figures were made up in the first draft; the plan names and list prices are now read from the plan settings, and only the prorated amount, dates and team counts are examples.</li>
+      <li>The Coaches Portal start frame now switches to 390 px with the Device switch, like the others.</li>
+    </ul>
+    <p style="margin:8px 0 0;font-size:13px;color:var(--muted)">Checked and kept: the sentence links are underlined (colour alone fails inside running text); the paid line is a shade darker than the tax line beside it; contrast of the 12 px small print is above 6:1 in Warm and Dark; every row with a box is 44 px tall; the follow nudge and family page stay warm in Dark because that is how they ship (the family page's own code comment says otherwise — a finding for the build, not this round).</p>
+  </div>
+</section>
+
+</main>
+</div>
+
+<dialog id="note" aria-labelledby="note-title">
+  <h3 id="note-title"></h3>
+  <p class="kind" id="note-kind"></p>
+  <p id="note-body"></p>
+  <form method="dialog"><button type="submit" id="note-close">Close</button></form>
+</dialog>
+
+<script>
+(function () {
+  var body = document.body;
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('.tabs [data-tab]'));
+  var panels = Array.prototype.slice.call(document.querySelectorAll('[data-panel]'));
+  var names = tabs.map(function (t) { return t.getAttribute('data-tab'); });
+  function show(name) {
+    if (names.indexOf(name) < 0) name = 'card';
+    tabs.forEach(function (t) { t.setAttribute('aria-selected', t.getAttribute('data-tab') === name ? 'true' : 'false'); });
+    panels.forEach(function (p) { p.hidden = p.getAttribute('data-panel') !== name; });
+  }
+  tabs.forEach(function (t) {
+    t.addEventListener('click', function () {
+      var n = t.getAttribute('data-tab');
+      if (location.hash !== '#' + n) location.hash = n; else show(n);
+      window.scrollTo({ top: 0 });
+    });
+  });
+  window.addEventListener('hashchange', function () { show(location.hash.slice(1)); });
+  show(location.hash.slice(1));
+
+  function store(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  function read(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function setDev(d) {
+    body.setAttribute('data-dev', d);
+    ['desktop', 'phone'].forEach(function (x) { document.getElementById('dev-' + x).setAttribute('aria-pressed', x === d ? 'true' : 'false'); });
+    store('ta-dev', d);
+  }
+  setDev(read('ta-dev') || (window.matchMedia('(max-width: 700px)').matches ? 'phone' : 'desktop'));
+  document.getElementById('dev-desktop').addEventListener('click', function () { setDev('desktop'); });
+  document.getElementById('dev-phone').addEventListener('click', function () { setDev('phone'); });
+  function setSpec(s) {
+    body.setAttribute('data-spec', s);
+    ['warm', 'dark'].forEach(function (x) { document.getElementById('spec-' + x).setAttribute('aria-pressed', x === s ? 'true' : 'false'); });
+    store('ta-spec', s);
+  }
+  setSpec(read('ta-spec') || 'warm');
+  document.getElementById('spec-warm').addEventListener('click', function () { setSpec('warm'); });
+  document.getElementById('spec-dark').addEventListener('click', function () { setSpec('dark'); });
+  function setView(v) {
+    body.classList.toggle('differs', v === 'diff');
+    document.getElementById('view-all').setAttribute('aria-pressed', v === 'all' ? 'true' : 'false');
+    document.getElementById('view-diff').setAttribute('aria-pressed', v === 'diff' ? 'true' : 'false');
+  }
+  document.getElementById('view-all').addEventListener('click', function () { setView('all'); });
+  document.getElementById('view-diff').addEventListener('click', function () { setView('diff'); });
+
+  // Gates: a button with data-gate-btn="g" is on only when every box in rows data-gate="g" is ticked.
+  function refreshGate(g) {
+    var boxes = document.querySelectorAll('[data-gate="' + g + '"] .cb');
+    var all = boxes.length > 0;
+    boxes.forEach(function (b) { if (!b.classList.contains('on')) all = false; });
+    document.querySelectorAll('[data-gate-btn="' + g + '"]').forEach(function (btn) {
+      if (btn.getAttribute('data-saving') === '1') return;
+      btn.classList.toggle('off', !all);
+    });
+  }
+  function setBox(b, on) { b.classList.toggle('on', on); b.setAttribute('aria-checked', on ? 'true' : 'false'); }
+  document.querySelectorAll('.cb').forEach(function (b) {
+    b.addEventListener('click', function (e) {
+      e.preventDefault(); e.stopPropagation();
+      setBox(b, !b.classList.contains('on'));
+      var row = b.closest('[data-gate]'); if (row) refreshGate(row.getAttribute('data-gate'));
+    });
+  });
+  document.querySelectorAll('[data-gate]').forEach(function (row) {
+    row.addEventListener('click', function (e) {
+      if (e.target.closest('a, .pin, .cb')) return;
+      var b = row.querySelector('.cb'); if (!b) return;
+      e.preventDefault(); setBox(b, !b.classList.contains('on')); refreshGate(row.getAttribute('data-gate'));
+    });
+  });
+  ['g1', 'g1b', 'g2', 'g3', 'scr', 'win'].forEach(refreshGate);
+
+  // State switches for the screen and the window.
+  document.querySelectorAll('[data-stateseg]').forEach(function (seg) {
+    var key = seg.getAttribute('data-stateseg');
+    var boxEl = document.querySelector('[data-statebox="' + key + '"]');
+    function setState(s) {
+      seg.querySelectorAll('button').forEach(function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-state') === s ? 'true' : 'false'); });
+      boxEl.querySelectorAll('[data-show]').forEach(function (el) { el.hidden = el.getAttribute('data-show').split(' ').indexOf(s) < 0; });
+      boxEl.querySelectorAll('[data-on-in]').forEach(function (b) { setBox(b, b.getAttribute('data-on-in').split(' ').indexOf(s) >= 0); });
+      boxEl.querySelectorAll('[data-gate-btn]').forEach(function (btn) {
+        if (!btn.hasAttribute('data-label')) btn.setAttribute('data-label', btn.textContent);
+        var saving = s === 'saving';
+        btn.setAttribute('data-saving', saving ? '1' : '0');
+        btn.textContent = saving ? btn.getAttribute('data-label-saving') : btn.getAttribute('data-label');
+        if (saving) btn.classList.add('off');
+      });
+      refreshGate(key);
+    }
+    seg.querySelectorAll('button').forEach(function (b) { b.addEventListener('click', function () { setState(b.getAttribute('data-state')); }); });
+    setState('pub');
+  });
+
+  var dlg = document.getElementById('note');
+  var kinds = { 'new': 'New — not in the product today', same: 'Unchanged — drawn from the shipped component', restyled: 'Restyled', ask: 'An ask for the owner', ex: 'Example value — made up for the drawing' };
+  document.addEventListener('click', function (e) {
+    var el = e.target.closest('[data-note]');
+    if (el) {
+      e.preventDefault(); e.stopPropagation();
+      document.getElementById('note-title').textContent = el.getAttribute('data-title') || el.textContent.trim();
+      var k = '';
+      if (el.classList.contains('pin')) k = 'Pin ' + el.textContent.trim();
+      else Object.keys(kinds).forEach(function (c) { if (el.classList.contains(c)) k = kinds[c]; });
+      document.getElementById('note-kind').textContent = k;
+      document.getElementById('note-body').textContent = el.getAttribute('data-note');
+      if (dlg.showModal) { try { dlg.showModal(); } catch (err) { dlg.setAttribute('open', ''); } } else dlg.setAttribute('open', '');
+      return;
+    }
+    if (e.target.closest('.w a')) e.preventDefault();
+  });
+  dlg.addEventListener('click', function (e) { if (e.target === dlg) dlg.close(); });
+})();
+</script>

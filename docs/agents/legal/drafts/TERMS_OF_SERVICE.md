@@ -5,7 +5,7 @@
 | **Version** | 0.2 (draft) |
 | **Status** | draft — not owner-approved, not published, **not reviewed by a lawyer** |
 | **Effective date** | — (set on publication; the version then becomes that date, `YYYY-MM-DD`) |
-| **Last reviewed** | 2026-11-08 |
+| **Last reviewed** | 2026-11-09 |
 | **Backlog** | L1 (with L8 and L12 folded in); Québec (L7) answered by not selling there (§17); payments terms (L3) left out until written |
 
 **Change log**
@@ -21,6 +21,9 @@
   not offered in Québec (O4). New §20 **"How you accept these Terms"** with the exact words the product shows (O8). Every
   stale note struck (production cancel; business-name registration).
 - 0.2 · 2026-11-08 · Page words for the legal pages (Stage 6 step 6.2 drawing round).
+- 0.2 · 2026-11-09 · §20 item (5), the accept step's other lines (Stage 6 step 6.3 drawing round): failed save, refusals, the
+  purchase window's own title, the cancel door on the "updated" screen, the six-year keep, R10 confirmed, the family page's
+  third box. §20's record sentence gains "for six years after your account closes".
 
 > **How to read this draft.** `[square brackets]` = a fact the owner must supply (only the phone and mailing address are left
 > — no personal name, by ruling O1′ — and the one Stripe choice in §6). A `> NOTE` block is for the owner and is deleted before publication.
@@ -374,7 +377,7 @@ post them.
 You accept these Terms by ticking the box when you create your account. If you already had an account when we published
 these Terms, or when we make a change under §18 that needs your agreement, we ask you once, the next time you sign in.
 Before you start or change a plan, we check that you have accepted the current version. We keep a record of which version
-you accepted and when.
+you accepted and when, for six years after your account closes.
 
 ### The words the product shows
 
@@ -471,6 +474,78 @@ Above the text a page shows only its title and one line below it. Dates are writ
 > 4. Platform-admin staff accounts are exempt (they are us); demo sandbox users never see (2) (Stage 6 plan §5.3).
 > 5. What the record keeps (document, version, person, email as text, time, door — no IP address) is Stage 6 plan §5.3; the
 >    Privacy Policy §3 names it.
+
+**(5) The accept step's other lines** (Stage 6 step 6.3 drawing round, 2026-11-09; the build copies these exactly). Reused
+without change: **Continue**, **Sign out**, **Saving…** (the house pattern), and (2)'s "The terms changed while this window was
+open. Read them again."
+
+- **(5a) Failed save** — on the sign-in screen and in the window. The box stays ticked; the line sits above the button; the
+  button comes back as Continue:
+  > Couldn't save your agreement. Check your connection and try again.
+- **(5b) The server refusal at an account door** — the box was not ticked (a form shows it under the box):
+  > Tick the box to confirm you're 18 or older and agree to the Terms of Service.
+
+  And when the version moved while a sign-up page was open (the box un-ticks; the links now open the current version):
+  > The terms changed while this page was open. Read them again and tick the box.
+- **(5c) The refusal when an organization create or a purchase is stopped and the window cannot open** (the fallback text a
+  form shows instead of the window):
+  > Before you continue, you need to agree to our current Terms of Service. Reload this page to see them.
+- **(5d) The purchase window has its own title and first line.** (2)'s words do not fit it: "We've published our Terms" reads
+  as an announcement interrupting the purchase, and "to keep using your account" is untrue there — the account is open; only
+  the purchase waits. The box, Continue, (5a) and the terms-changed line are (2)'s.
+  > **Before you continue**
+  >
+  > FieldLogicHQ now has [Terms of Service] and a [Privacy Policy]. Please read them and tick the box, and we'll carry on where
+  > you left off.
+  >
+  > ☐ (the box from (1)) · [Cancel] [Continue]
+
+  When the person had agreed to an earlier version, the first line is:
+  > We've changed our [Terms of Service] since you last agreed to them. Please read them and tick the box, and we'll carry on
+  > where you left off.
+
+  The window opens over an organization create as well as a purchase; "carry on where you left off" fits both, so there is one
+  set of words.
+- **(5e) The cancel door on the sign-in screen** — only on "We've updated our Terms", only for a person who owns a paid plan,
+  one line under the box, above Continue and Sign out. The link reaches a cancel that works without agreeing:
+  > Don't agree? You can [cancel your plan] instead. It runs to the end of the period you've paid for.
+
+  Not on "We've published our Terms": nothing was sold before the Terms existed, and first publication is not a §18 change.
+  Sign out is the way out for everyone else.
+- **(5f) How long the acceptance record is kept** — the §20 sentence above ends "…which version you accepted and when, for six
+  years after your account closes." The Privacy Policy says the same in its §3 row and §9 (both written 2026-11-09).
+- **(5g) A Privacy Policy change never brings the screen back** (R10, confirmed). The Privacy Policy is a notice, not a
+  contract: "have read" records what the person was shown, and the version is kept with every tick. Where a change needs fresh
+  consent (Privacy Policy §13: a new use, a new kind of company), that consent is asked for **at that use, as its own
+  question** — never by making people re-accept the policy, which would bundle consent into an agreement (the thing PIPEDA's
+  meaningful-consent guidance warns against).
+- **(5h) The family accept page — the Terms box is the third box, under the guardian and consent boxes**, shown only when the
+  person has not agreed yet. No conflict in meaning: the consent box is consent to a use ("as the privacy policy … describe"),
+  the Terms box is an agreement plus a read ("have read the Privacy Policy"); both point at the same document. The join button
+  stays off until all three are ticked; (5b) is the server's refusal there too.
+
+> NOTES on (5) —
+> 1. **(5d) needs the window's two cases.** The window must know whether the person has any earlier row (the screen already
+>    does — B2's "published" vs "updated"); the same rule picks the window's first line.
+> 2. **(5c) is true only if every page that can call a gated route sits inside a shell that mounts the screen** — then a reload
+>    shows it. The build's C4 census should name each caller page's shell; a caller outside one needs a different line here.
+> 3. **(5e) build timing — owner ask.** The door is not needed at first publication but is needed the day the screen can first
+>    say "updated": without it the screen hides the billing page, and §18's "If you do not agree, you can cancel" cannot be
+>    kept. **Recommended: build it in Chunk B**, with the "updated" variant it belongs to, so it cannot be forgotten. Cancel is
+>    already never gated (C1); the door only has to reach it. A person who owns several paid plans: the link opens a list of
+>    them (the build decides the shape; the words do not change).
+> 4. **(5f) six years, and why.** It matches the billing and tax records' period (Privacy Policy §9), so one written step can
+>    end both; it comfortably covers Ontario's basic two-year limitation period for a contract claim, which runs from when a
+>    problem is discovered (Limitations Act, 2002, s. 4 — **from memory, not re-read this session**: ontario.ca and CanLII would
+>    not load). **Nothing deletes it automatically yet** (Privacy Policy finding 1), and the planned table refuses DELETE
+>    (build prompt A1). → `/plan`: the six-year end joins the tax-record step (finding 4); the append-only rule will need a
+>    named exception for it then. No row reaches six years after an account closes before 2032, so it is not urgent.
+> 5. **(5h) a parent under 18 cannot join.** The Terms box asks for 18 or the age of majority (O5, ruled), so a teenage parent
+>    cannot finish the family page. Their child's sign-up is unaffected (the club holds it). A consequence of O5, recorded so
+>    nobody is surprised by it — not a recommendation to change O5.
+> 6. **(5h) one page, two spellings.** The consent box writes "the privacy policy" (lowercase) beside the Terms box's "Privacy
+>    Policy" — a visible inconsistency on one page. It is closeout 3(d)'s to fix at 6.7, not here; the family tier is off for
+>    real families until then.
 
 ---
 
