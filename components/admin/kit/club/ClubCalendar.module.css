@@ -49,6 +49,14 @@
 .outsideLink:hover { text-decoration: underline; }
 .outsideGlyph { display: inline-flex; vertical-align: -2px; margin-left: 0.3rem; color: var(--home-amber); }
 .pdayHead .outsideMark { margin-left: 0.6rem; }
+/* A Week column (140 px at tablet widths) is narrower than the chip and its door: the mark takes its own line under the
+   date and its words may wrap, so the column never spills (check:layout @768). */
+.dayHead .outsideMark { flex-basis: 100%; min-width: 0; }
+.dayHead .outsideMark > * { max-width: 100%; white-space: normal; }
+/* Touch widths: the door is a full tap target (the 44 px floor), as every other door on a tablet or phone is. */
+@media (max-width: 1100px) {
+  .outsideLink { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); }
+}
 .dayEmpty { font-size: var(--type-support); color: var(--text-tertiary); padding: 0.25rem 0.1rem; }
 
 .card {

@@ -121,7 +121,7 @@ someone who can open it. Adding a date off now says what is already booked that 
 used to leave its bookings standing with no word to anyone. **Success:** after a date comes off, the person who pulled it can see every
 booking it left standing and reach the place to move it in two clicks; nobody sees a door they can't open; nothing is moved or blocked.
 
-**13c Session B, telling people away from the permit (built 2026-11-08, awaiting the owner's yes to commit).** The owner and admins
+**13c Session B, telling people away from the permit (committed `13e5f6085` 2026-11-09).** The owner and admins
 see "Outside the permit · 8" under This morning on the Overview, and the same 8 on Permits in the sidebar and the phone's More
 sheet, only while something sits on a permit's date off; it opens that permit. The Calendar marks such a day "Outside the permit",
 with "See the permit ›" and a warning beside each booking still standing. A house-league season's Schedule health names each game on

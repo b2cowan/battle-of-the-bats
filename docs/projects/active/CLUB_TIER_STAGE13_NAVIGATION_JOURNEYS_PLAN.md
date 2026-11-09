@@ -640,9 +640,8 @@ ahead of the owner's rulings.
   it; (f) the form's one-request-per-date-off cost; (g) stale "Venue library" words in the not-found errors and the schedule
   words, and no Help-hub link to the new Permits article (the /marketing pass); (h) "The date off is saved" in the form's failure
   line is said while a held save has not run. **Next:** commit on the owner's yes, then Session B.
-
-- 2026-11-08 — **13c Session B BUILT** (telling people away from the permit, C3 + F-XR-6); the commit hash goes here when it
-  lands. **Owner rulings in the session:** (d) a booking that has already ENDED is never counted, on every surface (the rule
+- 2026-11-08 — **13c Session B BUILT** (telling people away from the permit, C3 + F-XR-6); committed `13e5f6085` 2026-11-09.
+  **Owner rulings in the session:** (d) a booking that has already ENDED is never counted, on every surface (the rule
   sits in `datesOffTaken`, so the notice, the flag, the form's count, the card, the Calendar and house league all follow it);
   the measured gate, the count is its OWN read asked after the brief has answered (owner and an unscoped admin only), never
   inside the brief. **Measured** on the fixture: no permit date off ahead → 1 request, ~40 ms; with one → 23 requests,
@@ -671,14 +670,16 @@ ahead of the owner's rulings.
   re-runnable; "Saturday diamonds, December", Kinsmen Park, Sat 9:00 a.m.–3:00 p.m., the first Saturday ≥ 3 weeks out and
   the next off — on 2026-11-08, Dec 5 and Dec 12; 6 practices, 2 house-league games, 1 postponed game not counted; Hawks and
   Owls stay in U9 Rookie); screens `admin-hub-outside-permit`, `admin-calendar-dates-off(-list)`, `admin-calendar-empty-week`,
-  `admin-hl-schedule-health` (context `clubDatesOffDay`). **Not run:** `check:layout` (the machine had 49 MB free; the run
-  is end-of-13c anyway). **Simplified and reviewed 2026-11-08** (standard, three lenses; 0 Critical/High; fixed: schedule
+  `admin-hl-schedule-health` (context `clubDatesOffDay`). **Layout:** one screen run after the dev server restart freed memory
+  (2026-11-09): two findings, the door under the tap floor and the chip spilling a 768 px Week column, fixed in the
+  hash-record commit; the Calendar's own filter checkbox recorded as admin-calendar's is. The whole run stays end-of-13c. **Simplified and reviewed 2026-11-08** (standard, three lenses; 0 Critical/High; fixed: schedule
   dates off excluded, the pill re-read on leaving Permits, filtered day marks, the hub screen's ready, the phone's "Nothing
   in the next six weeks", the Month help sentence). **Left for later:** a scoped admin's count request is a silent 403
   each brief; an admin with narrowed program capabilities still gets the club-wide count (numbers and days only); the
   Calendar reads bookings twice when a date off is in range. **Next:** commit on the owner's yes, then Session C (sequence
   against Header Phase 3, which is mid-build on the Calendar page in the shared tree).
 ## 11. The external review, cross-checked (2026-11-07)
+
 
 Source: `CLUB_TIER_PRODUCT_IA_REVIEW.md` (an outside reviewer's first look; its IDs are written **R-F-nn** here so they
 never collide with the hub's F-IDs). Each claim was read against the cited code, this plan, the hub, the readiness plan, the

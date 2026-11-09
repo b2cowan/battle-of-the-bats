@@ -41,6 +41,14 @@
       "reason": "The shared filter pill's option checkbox — the whole row is its tap target (the club and coach Ledgers carry the same entry). Club Tier Stage 6b, the club calendar's Venue · Program · Team pills, 2026-10-09.",
       "detail": "16px tall (floor 44)"
     },
+    "admin-calendar-dates-off|768|tap-floor|input·<input>": {
+      "reason": "The same Calendar filter pill's option checkbox as admin-calendar's entry — the whole row is its tap target. Club Tier 13c Session B's screen of the fixture's date-off week (--club-dates-off), 2026-11-09.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-calendar-dates-off-list|768|tap-floor|input·<input>": {
+      "reason": "The same Calendar filter pill's option checkbox as admin-calendar-list's entry — the whole row is its tap target. Club Tier 13c Session B's screen of the fixture's date-off week in List, 2026-11-09.",
+      "detail": "16px tall (floor 44)"
+    },
     "admin-calendar-month|768|tap-floor|input·<input>": {
       "reason": "The shared filter pill's option checkbox — the whole row is its tap target (the club and coach Ledgers carry the same entry). Club Tier Stage 6b, the club calendar's Venue · Program · Team pills, 2026-10-09.",
       "detail": "16px tall (floor 44)"
