@@ -22,6 +22,7 @@ import { createClient } from '@supabase/supabase-js';
 import { config } from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { DATES_OFF_MARK } from './lib/club-fixture-marks.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 config({ path: path.join(here, '..', '.env.local'), quiet: true });
@@ -569,6 +570,14 @@ export async function resolveAdminContext() {
      *  builds it. Never thrown, so the rest of the admin sweep runs without one; its entries wait for the schedule
      *  page's own switch, so a club with none is reported as unmeasured rather than measured on a "not found". */
     clubScheduleId: (await db.from('club_schedules').select('id').eq('org_id', club.id).order('created_at', { ascending: false }).limit(1).maybeSingle()).data?.id ?? null,
+    /** The first date off of the 13c fixture permit ("Saturday diamonds", `--club-dates-off`) — the day its bookings stand
+     *  on, where the Calendar's day mark is drawn. Null until that step has run: never thrown, as the schedule above. */
+    clubDatesOffDay: await (async () => {
+      const permit = (await db.from('org_permits').select('id').eq('org_id', club.id)
+        .eq('notes', DATES_OFF_MARK).maybeSingle()).data;
+      if (!permit) return null;
+      return (await db.from('org_time_dates_off').select('day').eq('permit_id', permit.id).order('day').limit(1).maybeSingle()).data?.day ?? null;
+    })(),
     onboardingOrgSlug,
     tournOrgSlug,
     tournamentId: tournament.id,

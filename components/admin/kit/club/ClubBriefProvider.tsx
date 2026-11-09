@@ -19,6 +19,8 @@ import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
 import { isTournamentOnlyWorkspace } from '@/lib/module-entitlements';
 import { hasBillingAccess } from '@/lib/roles';
+import { hasOrgVenueLibrary } from '@/lib/plan-features';
+import type { ClubTaken } from '@/lib/permit-dates-off-view';
 import type { FeesOwed } from '@/lib/fee-invoice-alert';
 import { isAdminProgramKey, repTeamsTabs, type AdminProgramKey, type ClubShape } from '@/lib/admin-kit-nav';
 
@@ -50,6 +52,13 @@ type ClubBriefValue = {
   brief: ClubBrief | null;
   /** What the club runs — the brief's answer, or the org's own facts until it arrives. */
   shape: ClubShape;
+  /**
+   * "Outside the permit · N" (Club Tier 13c Session B, C3 = A): the bookings the club's permits' dates off took, each once.
+   * Null when nothing is outside a permit, before it is read, when it fails, and for anyone but the owner and an unscoped
+   * club admin. ⚖ ITS OWN READ, asked only after the brief has answered (owner 2026-11-08, the measured gate: it costs one
+   * small read for a club with no date off ahead, about sixteen for one with) — so it never holds up the brief's counts.
+   */
+  outside: ClubTaken | null;
   reload: () => void;
 };
 
@@ -93,6 +102,33 @@ export function ClubBriefProvider({ children }: { children: ReactNode }) {
   }, [enabled, orgSlug, hubArrivals, nonce]);
 
   const current = state.orgSlug === orgSlug ? state : { orgSlug, status: 'loading' as const, brief: null };
+
+  // The permits' count rides behind the brief: each new answer of the brief (mount, a return to the hub, Try again) asks
+  // again. Owner and admin on a plan with permits only — the route refuses a scoped admin, which reads as "no count".
+  const asksOutside = enabled && !!currentOrg && (userRole === 'owner' || userRole === 'admin')
+    && hasOrgVenueLibrary(currentOrg.planId) && !isTournamentOnlyWorkspace(currentOrg);
+  // …and on LEAVING Permits, where a date off is added or a booking's permit changes: the pill follows the change on the
+  // way out instead of waiting for the next return to the hub (/review 13c B). Leaving, not every visit, as the hub counts.
+  const onPermits = !!base && (pathname === `${base}/permits` || pathname.startsWith(`${base}/permits/`));
+  const [wasOnPermits, setWasOnPermits] = useState(onPermits);
+  const [permitsLeft, setPermitsLeft] = useState(0);
+  if (onPermits !== wasOnPermits) {
+    setWasOnPermits(onPermits);
+    if (!onPermits) setPermitsLeft(n => n + 1);
+  }
+  const [outside, setOutside] = useState<{ orgSlug: string | null; value: ClubTaken | null }>({ orgSlug: null, value: null });
+  const briefAnswer = current.brief;
+  useEffect(() => {
+    if (!asksOutside || !orgSlug || !briefAnswer) return;
+    let stale = false;
+    fetch(`/api/admin/org/permits?orgSlug=${encodeURIComponent(orgSlug)}&outside=1`, { cache: 'no-store' })
+      .then(r => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+      .then((r: { outside: ClubTaken | null }) => { if (!stale) setOutside({ orgSlug, value: r.outside ?? null }); })
+      // A failed count draws nothing (never a wrong one): the Overview's card and the pill simply wait for the next read.
+      .catch(() => { if (!stale) setOutside({ orgSlug, value: null }); });
+    return () => { stale = true; };
+  }, [asksOutside, orgSlug, briefAnswer, permitsLeft]);
+  const outsideNow = asksOutside && outside.orgSlug === orgSlug ? outside.value : null;
   const fallbackShape = useMemo<ClubShape>(() => ({
     runsHouseLeague: currentOrg?.planId === 'league' || currentOrg?.freeFloor === 'league_starter',
     hostsTournaments: tournaments.some(t => t.status !== 'archived'),
@@ -102,8 +138,9 @@ export function ClubBriefProvider({ children }: { children: ReactNode }) {
     status: current.status,
     brief: current.brief,
     shape: current.brief?.shape ?? fallbackShape,
+    outside: outsideNow,
     reload,
-  }), [current.status, current.brief, fallbackShape, reload]);
+  }), [current.status, current.brief, fallbackShape, outsideNow, reload]);
 
   return <ClubBriefContext.Provider value={value}>{children}</ClubBriefContext.Provider>;
 }
@@ -117,6 +154,7 @@ export function useClubBrief(): ClubBriefValue {
     status: 'loading',
     brief: null,
     shape: { runsHouseLeague: false, hostsTournaments: false },
+    outside: null,
     reload: () => {},
   };
 }

@@ -113,10 +113,20 @@ name. Both ways in now land a person where their work starts (a treasurer in Acc
 treasurer couldn't tell from the email what this was, and the two arrival paths disagreed. **Success:** no one is invited with the wrong
 role by default; an invitee knows what they are joining before they click; every role's first screen is their own.
 
-**13c Session A, the permit (built 2026-11-08, awaiting the owner's yes to commit).** Permits is its own row in the sidebar, between
+**13c Session A, the permit (committed `27e958f1a` 2026-11-08).** Permits is its own row in the sidebar, between
 Calendar and Schedules, for everyone who could read permits before (owner, admin, league admin, registrar, treasurer, and staff), and the
 a row in the phone's More sheet; Venue library keeps the venues. A permit whose dates off still have bookings on them says so on its
 row ("2 dates off · 8 bookings on them") and, when opened, lists them by day with a door to where each is fixed, each door only for
 someone who can open it. Adding a date off now says what is already booked that day as you pick it. **Why:** pulling a date off a permit
 used to leave its bookings standing with no word to anyone. **Success:** after a date comes off, the person who pulled it can see every
 booking it left standing and reach the place to move it in two clicks; nobody sees a door they can't open; nothing is moved or blocked.
+
+**13c Session B, telling people away from the permit (built 2026-11-08, awaiting the owner's yes to commit).** The owner and admins
+see "Outside the permit · 8" under This morning on the Overview, and the same 8 on Permits in the sidebar and the phone's More
+sheet, only while something sits on a permit's date off; it opens that permit. The Calendar marks such a day "Outside the permit",
+with "See the permit ›" and a warning beside each booking still standing. A house-league season's Schedule health names each game on
+the day with "Give it a new date". An empty Calendar week now names the next event and jumps to it. A booking that has already ended
+no longer counts, and a booking two permits both took counts once. **Why:** the people who must act on a pulled date (the owner,
+the league admin) were not the ones who pulled it, and nothing told them. **Success:** after a date comes off, the owner sees it on
+the Overview without opening Permits, the league admin sees their games in Schedule health, and the count costs a club with no
+date off ahead one small read; nothing is moved, blocked or sent to anyone.

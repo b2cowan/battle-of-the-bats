@@ -605,7 +605,7 @@ ahead of the owner's rulings.
   Session C shares the Schedules page with Header Phase 3 (do not run side by side). Three owner decisions in the prompt (the form's
   placeholder; the registrar's day mark only if the census finds a gap; any role beyond the five that reads permits today).
   **Next:** Session A.
-- 2026-11-08 — **13c Session A BUILT** (the permit, C1 + C2); its commit hash is recorded here when it lands. **Owner
+- 2026-11-08 — **13c Session A BUILT** (the permit, C1 + C2); committed `27e958f1a` 2026-11-08. **Owner
   rulings in the session:** decision 3, the census found tournament **staff** read the permit list today (the permits route refuses
   only a coach; the Venue library row had no role gate), so **staff get the read-only Permits row too (A)**; decision 1, the
   placeholder becomes "e.g. a city event" (A). Decision 2 did not arise (the registrar's Calendar shows house league's venues).
@@ -641,6 +641,43 @@ ahead of the owner's rulings.
   words, and no Help-hub link to the new Permits article (the /marketing pass); (h) "The date off is saved" in the form's failure
   line is said while a held save has not run. **Next:** commit on the owner's yes, then Session B.
 
+- 2026-11-08 — **13c Session B BUILT** (telling people away from the permit, C3 + F-XR-6); the commit hash goes here when it
+  lands. **Owner rulings in the session:** (d) a booking that has already ENDED is never counted, on every surface (the rule
+  sits in `datesOffTaken`, so the notice, the flag, the form's count, the card, the Calendar and house league all follow it);
+  the measured gate, the count is its OWN read asked after the brief has answered (owner and an unscoped admin only), never
+  inside the brief. **Measured** on the fixture: no permit date off ahead → 1 request, ~40 ms; with one → 23 requests,
+  ~0.25–0.32 s, off the brief's path (it was ~0.4 s before the reads were overlapped in /simplify). **Built:** the shared
+  answer counts a booking ONCE across permits (`takenOnce`; Session A item e) and reads only a permit's own dates off
+  (`readDatesOffAhead`, never a schedule's). **B1** "Outside the permit" card on This morning (owner, admin), only while
+  true, its door that permit or Permits (`permitDoor`); the same N on the Permits row and the More sheet's row; re-read with
+  the brief and on leaving Permits. **B2** the Calendar (List, Week, Month, phone): the day chip "Outside the permit" with
+  "See the permit ›" for whoever can open Permits, and a 14 px warning beside each booking still standing, its words the
+  booking window's own sentence; computed by the Calendar route from the shared answer over the range on screen, found
+  through the Calendar read's own key map (`calendarKeyOf`, so a tournament day is marked too; Session A's notice uses the
+  same map now), a day marked only while a drawn booking is (filters); the marks ride a context, so the season page's
+  `WeekView` and every view's props are unchanged. **B4** an empty week (and an empty List) says "Nothing is booked this
+  week. Next: {day} · {who}" with "Go to that week ›" (phone: one row), the next MATCHING event with filters on, "Nothing in
+  the next six weeks" otherwise; the band's reader moved to `readComingBookings` in lib/club-calendar.ts and both call it.
+  **B3** house league's Schedule health: one line per game on a pulled date ("Hawks vs Owls, Sat, Dec 5, 11:00 a.m. ·
+  Diamond A: the club's permit no longer holds Kinsmen Park that day.", "Give it a new date" into the game's new-date form,
+  "Show it" for a reader), not in the score. **Departures from the prompt, said here:** (1) the health line ships WITHOUT
+  the drawing's small "· draft" line (no fact behind it, as Session A) and without "· on house league's time, which the club
+  takes back when it sends its changes" (that needs unsent schedule changes, which only Session C's "Take … off" makes —
+  Session C adds it if the fact exists then); (2) health lines are for whoever RUNS the season (the season page's permit
+  line's own rule), so the registrar does not get them; (3) `WeekView` gained no prop — the day mark is a context the
+  Calendar page provides (disagreement 7 kept in letter and intent); (4) the Calendar's per-booking window sentence is
+  unchanged and can still read wider than the mark (the old rule); (5) the Month cell on a phone carries the glyph without
+  the words (no room). **Fixture:** `node --env-file=.env.local scripts/seed-club-fixture.mjs --club-dates-off` (additive,
+  re-runnable; "Saturday diamonds, December", Kinsmen Park, Sat 9:00 a.m.–3:00 p.m., the first Saturday ≥ 3 weeks out and
+  the next off — on 2026-11-08, Dec 5 and Dec 12; 6 practices, 2 house-league games, 1 postponed game not counted; Hawks and
+  Owls stay in U9 Rookie); screens `admin-hub-outside-permit`, `admin-calendar-dates-off(-list)`, `admin-calendar-empty-week`,
+  `admin-hl-schedule-health` (context `clubDatesOffDay`). **Not run:** `check:layout` (the machine had 49 MB free; the run
+  is end-of-13c anyway). **Simplified and reviewed 2026-11-08** (standard, three lenses; 0 Critical/High; fixed: schedule
+  dates off excluded, the pill re-read on leaving Permits, filtered day marks, the hub screen's ready, the phone's "Nothing
+  in the next six weeks", the Month help sentence). **Left for later:** a scoped admin's count request is a silent 403
+  each brief; an admin with narrowed program capabilities still gets the club-wide count (numbers and days only); the
+  Calendar reads bookings twice when a date off is in range. **Next:** commit on the owner's yes, then Session C (sequence
+  against Header Phase 3, which is mid-build on the Calendar page in the shared tree).
 ## 11. The external review, cross-checked (2026-11-07)
 
 Source: `CLUB_TIER_PRODUCT_IA_REVIEW.md` (an outside reviewer's first look; its IDs are written **R-F-nn** here so they

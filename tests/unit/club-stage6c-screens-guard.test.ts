@@ -164,7 +164,8 @@ describe('7. today said in words; a season list’s now line (C7)', () => {
     assert.match(coach, /<CoachRowBand>\{dayHeading\(selectedDay, today\)\}<\/CoachRowBand>/);
     const club = readCode(CLUB_VIEWS);
     assert.match(club, /<span className=\{cal\.dayName\}>\{dayHeading\(d, today\)\}<\/span>/);
-    assert.match(club, /<h3 className=\{cal\.pdayHead\}>\{dayHeading\(g\.key, today\)\}<\/h3>/);
+    // (13c Session B: the day's "Outside the permit" mark follows the heading, drawn only on the club Calendar.)
+    assert.match(club, /<h3 className=\{cal\.pdayHead\}>\{dayHeading\(g\.key, today\)\}<DayMark day=\{g\.key\} drawn=\{map\.get\(g\.key\)\} \/><\/h3>/);
   });
   it('the now line: before the next row; closing the earlier month; after the last; none in an empty list', () => {
     const items: SeasonListItem[] = [

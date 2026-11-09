@@ -37,11 +37,18 @@
 .week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0.5rem; }
 .day { background: var(--card-bg); border: 1px solid var(--home-line); border-radius: 8px; min-height: 420px; display: flex; flex-direction: column; min-width: 0; }
 .dayToday { border-color: var(--home-olive); box-shadow: inset 0 2px 0 var(--home-olive); }
-.dayHead { display: flex; align-items: baseline; gap: 0.4rem; padding: 0.55rem 0.6rem 0.45rem; border-bottom: 1px solid var(--home-line); }
+.dayHead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.4rem; padding: 0.55rem 0.6rem 0.45rem; border-bottom: 1px solid var(--home-line); }
 /* "Tue, Oct 20" — the one day spelling in the display face, in capitals (C8); today's reads "Today · Sat, Oct 10" (C7). */
 .dayName { font-family: var(--font-display); font-size: var(--type-body); font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-secondary); }
 .dayToday .dayName { color: var(--home-olive); }
 .dayBody { display: flex; flex-direction: column; gap: 0.4rem; padding: 0.5rem; }
+/* What a permit's date off took (Club Tier 13c Session B, B2): the day's chip in the permit's one word with its door, and
+   the 14 px warning beside each booking still standing — the clash mark's amber. Drawn only on the club Calendar. */
+.outsideMark { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; text-transform: none; letter-spacing: 0; font-family: var(--font-sans); font-weight: 400; }
+.outsideLink { font-size: var(--type-support); font-weight: 650; color: var(--home-olive); text-decoration: none; }
+.outsideLink:hover { text-decoration: underline; }
+.outsideGlyph { display: inline-flex; vertical-align: -2px; margin-left: 0.3rem; color: var(--home-amber); }
+.pdayHead .outsideMark { margin-left: 0.6rem; }
 .dayEmpty { font-size: var(--type-support); color: var(--text-tertiary); padding: 0.25rem 0.1rem; }
 
 .card {
@@ -163,6 +170,21 @@
 .pquietToday { border-color: var(--home-olive); color: var(--home-olive); }
 .pquietToday b { font-weight: 700; margin-right: 0.25rem; }
 
+/* An empty week names the next thing (13c Session B, B4 — F-XR-6): one quiet line above the days in body text, never a
+   card; on a phone one 44 px row below the "nothing scheduled" lines, jumping to that week. */
+.nextLine { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem 0.5rem; margin: 0 0 0.75rem; font-size: var(--type-body); color: var(--text-secondary); }
+.nextLine b { color: var(--text-primary); font-weight: 650; }
+.nextGo { padding: 0; border: 0; background: none; font: inherit; font-weight: 650; color: var(--home-olive); cursor: pointer; }
+.nextGo:hover { text-decoration: underline; }
+.nextRow {
+  display: none; align-items: center; gap: 0.5rem; width: 100%; min-height: var(--tap-min, 44px); margin-top: 0.6rem; padding: 0 0.85rem;
+  border: 1px solid var(--home-line); border-radius: 10px; background: var(--card-bg); text-align: left; cursor: pointer;
+  font: inherit; font-size: var(--type-support); color: var(--text-secondary);
+}
+.nextRow b { color: var(--text-primary); font-weight: 650; }
+.nextRow span { flex: 1; }
+.nextRow svg { color: var(--text-tertiary); }
+
 @media (max-width: 1100px) {
   .week { overflow-x: auto; grid-template-columns: repeat(7, minmax(140px, 1fr)); }
 }
@@ -172,6 +194,8 @@
   .viewDesk { display: none; }
   .deskOnly { display: none; }
   .stack { display: flex; }
+  .nextLine { display: none; }
+  .nextRow { display: flex; }
   /* Month on a phone: a day says its count and its clashes as numbers — the words don't fit a seventh of 390px. */
   .monthCell { min-width: 0; min-height: 64px; padding: 0.35rem 0.3rem; overflow: hidden; }
   .monthPad { min-height: 64px; }

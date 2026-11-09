@@ -101,6 +101,10 @@ export function leagueHealthPracticeOf(p: LeaguePractice): Required<LeagueHealth
   };
 }
 
+/** The season's games a club permit's date off took, by game id, with the day and the place (13c Session B, B3) — the
+ *  season schedule read's `outsidePermit`, and Schedule health's input. */
+export type LeagueOutsidePermit = Record<string, { day: string; venue: string | null; facility: string | null }>;
+
 /** The season's rules (frame d3, mig 412). */
 export interface LeagueHealthRules {
   twiceInADayAllowed: boolean;
@@ -143,6 +147,9 @@ export type LeagueHealthIssue =
   /** A division with teams and no game at all, in a season that has games elsewhere: not on plan, and it says so. */
   | { kind: 'no_games'; divisionId: string; teams: number }
   | { kind: 'postponed'; gameId: string; homeTeamId: string; awayTeamId: string; day: string | null }
+  /** A game a club permit's date off took (Club Tier 13c Session B, B3): the club no longer holds the park that day. Read
+   *  from what is BOOKED at the park (the permit's one rule, server-side), never from what a schedule handed out. */
+  | { kind: 'outside_permit'; gameId: string; homeTeamId: string; awayTeamId: string; day: string; startMs: number; venue: string | null; facility: string | null }
   | { kind: 'clash'; keys: [string, string]; venueId: string; facilityId: string | null; day: string; startMs: number }
   | { kind: 'twice_in_a_day'; teamId: string; day: string }
   | { kind: 'byes_back_to_back'; teamId: string; weeks: [string, string] }
@@ -202,6 +209,9 @@ export function buildLeagueScheduleHealth(input: {
   practices: readonly LeagueHealthPractice[];
   teams: readonly LeagueHealthTeam[];
   rules?: LeagueHealthRules;
+  /** The season's games a permit's date off took (the schedule read's `outsidePermit`). A game since moved off that day
+   *  drops out here at once, before the next read. */
+  outsidePermit?: LeagueOutsidePermit;
 }): LeagueScheduleHealth {
   const rules = input.rules ?? DEFAULT_LEAGUE_HEALTH_RULES;
   const teams = input.teams;
@@ -239,6 +249,13 @@ export function buildLeagueScheduleHealth(input: {
   // Postponed (and undated) games first: each says so, with its date.
   for (const g of input.games.filter(x => x.status === 'postponed' || (x.status === 'scheduled' && !x.scheduledAt))) {
     issues.push({ kind: 'postponed', gameId: g.id, homeTeamId: g.homeTeamId, awayTeamId: g.awayTeamId, day: g.scheduledAt ? orgDayKey(g.scheduledAt) : null });
+  }
+  // Then each game on a date a club permit took off (13c Session B, B3): warns, never blocks; not in the score (the
+  // schedule is not wrong, the club's time changed under it). Only while the game still sits on that day.
+  for (const g of onGames) {
+    const o = input.outsidePermit?.[g.id];
+    if (!o || orgDayKey(g.scheduledAt!) !== o.day) continue;
+    issues.push({ kind: 'outside_permit', gameId: g.id, homeTeamId: g.homeTeamId, awayTeamId: g.awayTeamId, day: o.day, startMs: Date.parse(g.scheduledAt!), venue: o.venue, facility: o.facility });
   }
   // A cancelled game whose two teams are short: one issue naming the game. Any other short team: one issue each, unless
   // its postponed games already explain it (that issue is said above).
@@ -382,7 +399,8 @@ export function buildLeagueScheduleHealth(input: {
 }
 
 /** The window's order: what a family would notice first. */
-const ORDER: Record<LeagueHealthIssue['kind'], number> = { short: 0, no_games: 0, postponed: 1, clash: 2, twice_in_a_day: 3, byes_back_to_back: 4, home_away: 5, unchecked: 6 };
+// A game on a pulled date sits with the postponed ones (the drawing: right after "…still needs a new date"), in push order.
+const ORDER: Record<LeagueHealthIssue['kind'], number> = { short: 0, no_games: 0, postponed: 1, outside_permit: 1, clash: 2, twice_in_a_day: 3, byes_back_to_back: 4, home_away: 5, unchecked: 6 };
 const orderIssues = (list: LeagueHealthIssue[]) => list.map((x, i) => ({ x, i })).sort((a, b) => ORDER[a.x.kind] - ORDER[b.x.kind] || a.i - b.i).map(e => e.x);
 
 // ── THE WINDOW'S WORDS (copy file "Stage 9d-2a" d; [build] = chosen by the build, not settled by /marketing) ──────────
@@ -437,6 +455,9 @@ export const LEAGUE_HEALTH_WORDS = {
   rulesFailed: 'The rules didn’t save. Try again.',
 } as const;
 
+/** An instant on the club's clock, "11:00 a.m." */
+const clockAt = (ms: number) => formatTime(utcToZonedInputs(new Date(ms).toISOString()).time);
+
 /** What an issue's one door does: show its bookings in the schedule, open the postponed game, or open team detail. */
 export type LeagueIssueDoor = 'show' | 'showIt' | 'date' | 'teams' | 'none';
 
@@ -465,10 +486,14 @@ export function leagueIssueWords(issue: LeagueHealthIssue, ctx: {
       // [build] a game saved with no date at all is not postponed (the public page's "Date to come"): it needs a date.
       return { text: issue.day ? `${match} was postponed from ${day(issue.day)} and still needs a new date.` : `${match} still needs a date.`, door: 'date', tone: 'warning' };
     }
+    case 'outside_permit': {
+      // "Hawks vs Owls, Sat, Dec 5, 11:00 a.m. · Diamond A: the club’s permit no longer holds Kinsmen Park that day."
+      const at = [`${ctx.team(issue.homeTeamId)} vs ${ctx.team(issue.awayTeamId)}, ${dayWords(issue.day)}, ${clockAt(issue.startMs)}`, issue.facility].filter(Boolean).join(' · ');
+      return { text: `${at}: the club’s permit no longer holds ${issue.venue ?? 'the park'} that day.`, door: 'date', tone: 'warning' };
+    }
     case 'clash': {
-      const clock = formatTime(utcToZonedInputs(new Date(issue.startMs).toISOString()).time);
       return {
-        text: `${ctx.place(issue.venueId, issue.facilityId)} is booked twice on ${dayWords(issue.day)} at ${clock}: ${ctx.label(issue.keys[0])} and ${ctx.label(issue.keys[1])}.`,
+        text: `${ctx.place(issue.venueId, issue.facilityId)} is booked twice on ${dayWords(issue.day)} at ${clockAt(issue.startMs)}: ${ctx.label(issue.keys[0])} and ${ctx.label(issue.keys[1])}.`,
         door: 'show', tone: 'error',
       };
     }

@@ -98,6 +98,7 @@
 import crypto from 'node:crypto';
 import { createClient } from '@supabase/supabase-js';
 import { insertCommitmentWithRecords, paidOnce } from './lib/seed-commitment-records.mjs';
+import { DATES_OFF_MARK } from './lib/club-fixture-marks.mjs';
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -236,6 +237,8 @@ let sixaDates = null;
 const PERMIT_MARK = 'Seeded for the Stage 10a walks (scripts/seed-club-fixture.mjs --club-permits).';
 /** Filled by addClubPermits, read by printClubPermits. */
 let permitNotes = null;
+// Club Tier Stage 13c (`--club-dates-off`) — the step itself is `addClubDatesOff`, at the end of this file; its marker
+// (DATES_OFF_MARK, on every row it writes) is shared with the sweep's context in scripts/lib/club-fixture-marks.mjs.
 
 /** The 9U AA head-coach invitation's raw token — set when the fixture is BUILT (printed once, at the end). */
 let inviteToken = null;
@@ -334,6 +337,16 @@ if (process.argv.includes('--club-permits')) {
   await addClubPermits();
   head('Done');
   printClubPermits();
+  process.exit(0);
+}
+
+// ── Club Tier Stage 13c — `--club-dates-off`: ADD a permit whose dates off took bookings, and stop ──────────────
+// Additive, never a reset; needs `--club-venues` (Kinsmen Park) and the house-league season. Re-running replaces exactly
+// what this step wrote (rows marked DATES_OFF_MARK).
+if (process.argv.includes('--club-dates-off')) {
+  head(`Club Tier Stage 13c — a permit's dates off and what they took, for ${ORG_NAME} (added; nothing rebuilt)`);
+  await addClubDatesOff();
+  head('Done');
   process.exit(0);
 }
 
@@ -1391,6 +1404,92 @@ async function addClubPermits() {
   ok(`Fall diamonds ${fallYear}: ${fallStart} – ${fallEnd} · Lions Park D2 Tue/Thu 5:30–9:00 · Kinsmen D-B Tue 6:00–9:00 · $3,200.00${diamondLine?.line ? ' on "Diamond permits — city fields"' : ' (no Diamond Permits line on the open year)'}`);
   ok(`Winter dome ${CUR.name}: ${domeStart} – ${domeEnd}, ${domeOff} off · Lakeshore Dome Fields 1–6 (5–6 half) Sun 8:00–11:00 · $27,000.00${domeLine?.line ? ' on Dome Time' : ' (no Dome Time word in the library)'}`);
   ok('bookings contacts: Lions Park parks.permits@milton.example · Lakeshore Dome bookings@lakeshore-dome.example');
+}
+
+/**
+ * Club Tier Stage 13c (the club's time in one place, 2026-11-08) — the drawing's case, floating: "Saturday diamonds" holds
+ * Kinsmen Park, every facility, Saturdays 9:00 a.m.–3:00 p.m., four Saturdays from the first Saturday at least three weeks
+ * out less a week; its 2nd and 3rd Saturdays come OFF (on 2026-11-08: Nov 28 – Dec 19, Dec 5 and Dec 12 off). On them
+ * stand 6 practices (14U AA and 15U AA 1:00–2:00 p.m. on Diamonds A and B, 13U AAA 2:00–3:00 p.m. on A, both Saturdays)
+ * and 2 house-league games on the first (Hawks vs Owls 11:00 a.m. Diamond A, Reds vs Blues 12:00 p.m. Diamond B, U9
+ * Rookie) — 8 bookings outside the permit — and a third game, postponed (Reds vs Blues 10:00 a.m. Diamond B), which holds
+ * no time and must NOT be counted. Used by the Permits row's flag and notice, the Overview's "Outside the permit · 8",
+ * the Calendar's day mark and house league's Schedule health (13c Session B), and the end-of-13c layout run.
+ */
+async function addClubDatesOff() {
+  const org = await one('find org', db.from('organizations').select('id').eq('slug', ORG_SLUG).single());
+  const orgId = org.id;
+  const kinsmen = await one('Kinsmen Park', db.from('org_venues').select('id').eq('org_id', orgId).eq('name', 'Kinsmen Park').maybeSingle());
+  if (!kinsmen) { console.error('✗ Kinsmen Park is not in the library — run --club-venues first.'); process.exit(1); }
+  const facs = await one('Kinsmen facilities', db.from('org_venue_facilities').select('id, name').eq('org_venue_id', kinsmen.id));
+  const fac = Object.fromEntries((facs ?? []).map(f => [f.name, f.id]));
+  if (!fac['Diamond A'] || !fac['Diamond B']) { console.error('✗ Kinsmen Park has no Diamonds A and B — run --club-venues first.'); process.exit(1); }
+  const season = await one('house league season', db.from('league_seasons').select('id, name').eq('org_id', orgId).eq('slug', `${Y}-fall-house-league`).maybeSingle());
+  const div = season ? await one('U9 Rookie', db.from('league_divisions').select('id').eq('season_id', season.id).eq('name', 'U9 Rookie').maybeSingle()) : null;
+  if (!season || !div) { console.error('✗ No house-league season with U9 Rookie — build the fixture and run --club-venues first.'); process.exit(1); }
+
+  // The days: the first Saturday at least three weeks out is the first date off.
+  const off1 = onOrAfter(addDays(TODAY, 21), 6);
+  const off2 = addDays(off1, 7);
+  const startsOn = addDays(off1, -7);
+  const endsOn = addDays(off1, 14);
+
+  // 1. The earlier run's rows go: the permit (its blocks and dates off with it), the practices, the games.
+  die('clear earlier 13c permit', (await db.from('org_permits').delete().eq('org_id', orgId).eq('notes', DATES_OFF_MARK)).error);
+  die('clear earlier 13c practices', (await db.from('rep_team_events').delete().eq('org_id', orgId).eq('description', DATES_OFF_MARK)).error);
+  die('clear earlier 13c games', (await db.from('league_games').delete().eq('season_id', season.id).eq('notes', DATES_OFF_MARK)).error);
+
+  // 2. The permit, through the save every form uses.
+  const permitYear = off1.slice(0, 4);
+  const monthName = new Date(`${off1}T12:00:00Z`).toLocaleString('en-CA', { month: 'long', timeZone: 'UTC' });
+  await one('Saturday diamonds', db.rpc('org_permit_save', { p_org: orgId, p_permit: null, p_actor: null, p_data: {
+    notes: DATES_OFF_MARK, name: `Saturday diamonds, ${monthName} ${permitYear}`, issuerName: 'Town of Milton', heldFor: 'club',
+    startsOn, endsOn, cost: null, budgetLineId: null,
+    blocks: [{ venueId: kinsmen.id, facilityIds: [], weekdays: [6], startTime: '09:00', endTime: '15:00' }],
+    datesOff: [{ day: off1, note: 'a city event' }, { day: off2, note: 'a city event' }],
+  } }));
+
+  // 3. The six practices — the live seasons of 14U AA, 15U AA and 13U AAA, both Saturdays.
+  const SLOTS = [['14U AA', '13:00', '14:00', 'Diamond A'], ['15U AA', '13:00', '14:00', 'Diamond B'], ['13U AAA', '14:00', '15:00', 'Diamond A']];
+  const teams = await one('teams', db.from('rep_teams').select('id, name').eq('org_id', orgId));
+  const live = Object.fromEntries(await Promise.all(SLOTS.map(async ([name]) => {
+    const t = (teams ?? []).find(x => x.name === name);
+    if (!t) { console.error(`✗ ${name} is not in ${ORG_NAME}.`); process.exit(1); }
+    const py = await one(`live season ${name}`, db.from('rep_program_years').select('id').eq('team_id', t.id).eq('status', 'active').maybeSingle());
+    if (!py) { console.error(`✗ ${name} has no live season.`); process.exit(1); }
+    return [name, { teamId: t.id, programYearId: py.id }];
+  })));
+  const rows = [off1, off2].flatMap(day => SLOTS.map(([name, from, to, diamond]) => ({
+    program_year_id: live[name].programYearId, team_id: live[name].teamId, org_id: orgId, event_type: 'practice', name: 'Practice',
+    description: DATES_OFF_MARK, status: 'scheduled', starts_at: torontoInstant(day, from), ends_at: torontoInstant(day, to),
+    location: 'Kinsmen Park', location_address: '200 Kinsmen Way', field_number: diamond, place_id: null,
+    org_venue_id: kinsmen.id, org_venue_facility_id: fac[diamond],
+  })));
+  die('13c practices', (await db.from('rep_team_events').insert(rows)).error);
+
+  // 4. House league: Hawks and Owls join U9 Rookie beside Reds and Blues; two games stand on the first date off, a third
+  //    is postponed (it holds no time, so it is never counted). ⚠ The two teams STAY (league_teams has no mark to clear
+  //    them by): after this step U9 Rookie has four teams, and its Schedule health counts them.
+  const lt = {};
+  for (const [i, name] of ['Reds', 'Blues', 'Hawks', 'Owls'].entries()) {
+    let row = await one(`league team ${name}`, db.from('league_teams').select('id').eq('season_id', season.id).eq('name', name).maybeSingle());
+    if (!row) row = await one(`add league team ${name}`, db.from('league_teams').insert({ season_id: season.id, division_id: div.id, name, sort_order: i }).select('id').single());
+    lt[name] = row.id;
+  }
+  const game = (home, away, from, to, diamond, status = 'scheduled') => ({
+    org_id: orgId, season_id: season.id, division_id: div.id, home_team_id: lt[home], away_team_id: lt[away],
+    scheduled_at: torontoInstant(off1, from), ends_at: torontoInstant(off1, to), status,
+    org_venue_id: kinsmen.id, org_venue_facility_id: fac[diamond], location: `Kinsmen Park — ${diamond}`, notes: DATES_OFF_MARK,
+  });
+  die('13c games', (await db.from('league_games').insert([
+    game('Reds', 'Blues', '10:00', '11:00', 'Diamond B', 'postponed'),
+    game('Hawks', 'Owls', '11:00', '12:00', 'Diamond A'),
+    game('Reds', 'Blues', '12:00', '13:00', 'Diamond B'),
+  ])).error);
+
+  ok(`Saturday diamonds, ${monthName} ${permitYear}: ${startsOn} – ${endsOn} · Kinsmen Park, every facility, Sat 9:00 a.m.–3:00 p.m. · ${off1} and ${off2} off`);
+  ok(`on them: 6 practices (14U AA, 15U AA, 13U AAA, both Saturdays) and 2 house-league games on ${off1} (Hawks vs Owls, Reds vs Blues) — 8 outside the permit`);
+  ok(`not counted: Reds vs Blues ${off1} 10:00 a.m., postponed · the Calendar's day mark is on ?day=${off1}`);
 }
 
 function printClubPermits() {

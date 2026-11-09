@@ -14,6 +14,7 @@ import { readClubPlaces, readPermitTimes } from '@/lib/permit-lookup';
 import { readLinePermits, readPermitWindow, readPermitsYear, schedulesHandingOut } from '@/lib/permit-server';
 import { blockFilled, permitPayload, readBlockDrafts, readPermitBody, toBlock, type PermitDraft } from '@/lib/permit-form';
 import { describeDatesOffTaken, readDatesOffTaken, readDayTaken, takenTotals } from '@/lib/permit-dates-off';
+import { clubTaken } from '@/lib/permit-dates-off-view';
 import { PERMIT_WORDS as W, renewedName } from '@/lib/permit-words';
 
 // ---------------------------------------------------------------------------
@@ -26,6 +27,7 @@ import { PERMIT_WORDS as W, renewedName } from '@/lib/permit-words';
 // GET  ?orgSlug=&lines=<day>       — the cost lines of the fiscal year that day falls in: Add permit's Budget line.
 // GET  ?orgSlug=&teams=1           — the club's teams, for "For: One team".
 // GET  ?orgSlug=&taken=<permit>    — what that permit's dates off took, as the reader's Calendar names it (13c).
+// GET  ?orgSlug=&outside=1         — the club's "Outside the permit · N", each booking once (13c Session B; owner, admin).
 // POST ?orgSlug=  { action, … }    — add-permit · update-permit (the whole record, autosaved) · renew-permit ·
 //                                    delete-permit · booked-that-day (the form's count under a date off; writes nothing).
 //
@@ -90,12 +92,20 @@ export const GET = withObservability(async (req: Request) => {
     const takenId = params.get('taken');
     if (takenId) {
       if (!isUuid(takenId)) return NextResponse.json({ notice: null });
-      const { taken, times } = await readDatesOffTaken(orgId, { today, permitIds: [takenId] });
+      const { taken, times } = await readDatesOffTaken(orgId, { from: today, nowMs: Date.now(), permitIds: [takenId] });
       const notice = await describeDatesOffTaken(
         { org: ctx.org, member: { role: ctx.role, capabilities: ctx.capabilities }, userId: ctx.user.id, assignedTournamentIds: ctx.assignedTournamentIds },
         taken.get(takenId) ?? [], times,
       );
       return NextResponse.json({ notice });
+    }
+    // The club's count, "Outside the permit · N" (13c Session B, C3 = A): the Overview's card and the Permits row's pill.
+    // ⚖ OWN READ, never inside the brief (owner 2026-11-08, the measured gate): the provider asks for it after the brief has
+    // answered. Owner and an UNSCOPED club admin only — a scoped reader never gets a count (Session A review item a).
+    if (params.get('outside') === '1') {
+      if ((ctx.role !== 'owner' && ctx.role !== 'admin') || ctx.assignedTournamentIds !== null) return forbidden();
+      const { taken, times } = await readDatesOffTaken(orgId, { from: today, nowMs: Date.now() });
+      return NextResponse.json({ outside: clubTaken(taken, times.venueName) }, { headers: { 'Cache-Control': 'no-store' } });
     }
     const setting = await loadFiscalSetting(orgId);
     const linesDay = params.get('lines');
@@ -123,7 +133,7 @@ export const GET = withObservability(async (req: Request) => {
     // a failed list.
     const [list, taken] = await Promise.all([
       readPermitsYear(orgId, { year, setting, today, canSave, canMoney }),
-      readDatesOffTaken(orgId, { today }).then(r => r.taken).catch(e => { console.error('[permits] the dates-off read failed (no flags):', e); return null; }),
+      readDatesOffTaken(orgId, { from: today, nowMs: Date.now() }).then(r => r.taken).catch(e => { console.error('[permits] the dates-off read failed (no flags):', e); return null; }),
     ]);
     if (taken) list.taken = Object.fromEntries([...taken].map(([pid, days]) => [pid, takenTotals(days)]));
     return NextResponse.json(list);
@@ -228,7 +238,7 @@ export const POST = withObservability(async (req: Request) => {
       });
       const permitId = isUuid(body.id) ? body.id : null;
       const bookings = await readDayTaken(orgId, {
-        today: tournamentToday(), day, permitId, places,
+        today: tournamentToday(), nowMs: Date.now(), day, permitId, places,
         permit: { id: permitId ?? 'draft', startsOn: d.startsOn, endsOn: d.endsOn, blocks, datesOff: [] },
       });
       return NextResponse.json({ bookings });

@@ -500,17 +500,20 @@ export function tookByDateOff(
 }
 
 /** A permit's dates off from `from` on (or the `days` asked about), each with the bookings it took, in day order. A day
- *  that took nothing is listed with none (the form says "Nothing booked that day"); a past day is never asked. */
+ *  that took nothing is listed with none (the form says "Nothing booked that day"); a past day is never asked, and a
+ *  booking that has already ENDED (`nowMs`) is never counted — on a date off of today, the morning's finished games have
+ *  nothing left to move (owner 2026-11-08, 13c Session B, item d). `through` bounds the days (the Calendar's range). */
 export function datesOffTaken<B extends BookingPlace>(
   permit: PermitTime, bookings: readonly B[], others: readonly PermitTime[], venueFacilities: VenueFacilities,
-  opts: { from: string; days?: readonly string[] },
+  opts: { from: string; nowMs: number; days?: readonly string[]; through?: string },
 ): { day: string; bookings: B[] }[] {
-  const days = [...new Set(opts.days ?? permit.datesOff.map(d => d.day))].filter(d => d >= opts.from).sort();
+  const standing = bookings.filter(b => b.endMs > opts.nowMs);
+  const days = [...new Set(opts.days ?? permit.datesOff.map(d => d.day))].filter(d => d >= opts.from && (!opts.through || d <= opts.through)).sort();
   // In time order; at one time, in the club's facility order (Diamond A before Diamond B), as the drawing lists them.
   const place = (b: B) => (b.venueId && b.facilityId ? (venueFacilities.get(b.venueId) ?? []).indexOf(b.facilityId) : -1);
   return days.map(day => ({
     day,
-    bookings: bookings.filter(b => tookByDateOff(permit, day, b, others, venueFacilities)).sort((a, z) => a.startMs - z.startMs || place(a) - place(z)),
+    bookings: standing.filter(b => tookByDateOff(permit, day, b, others, venueFacilities)).sort((a, z) => a.startMs - z.startMs || place(a) - place(z)),
   }));
 }
 

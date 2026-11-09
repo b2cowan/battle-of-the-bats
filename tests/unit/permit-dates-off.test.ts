@@ -2,10 +2,10 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
 import { datesOffTaken, tookByDateOff, type PermitTime, type VenueFacilities } from '../../lib/permit-time.ts';
-import { bookedThatDayWords, dayWithWeekday, takenCountWords, takenFlag, takenHeading, PERMIT_WORDS as W } from '../../lib/permit-words.ts';
+import { bookedThatDayWords, dayWithWeekday, outsideCardWords, takenCountWords, takenFlag, takenHeading, PERMIT_WORDS as W } from '../../lib/permit-words.ts';
 import { leagueBooking, repEventBooking, type ClubBooking } from '../../lib/venue-clash.ts';
 import { zonedWallClockToUtc } from '../../lib/timezone.ts';
-import { buildDatesOffNotice } from '../../lib/permit-dates-off-view.ts';
+import { buildDatesOffNotice, clubTaken } from '../../lib/permit-dates-off-view.ts';
 import { kitCalendarLink } from '../../lib/admin-kit-nav.ts';
 import { canOpenClubSchedules } from '../../lib/club-schedule-gate.ts';
 import { hasCapability } from '../../lib/roles.ts';
@@ -38,6 +38,7 @@ const game = (day: string, from: string, to: string, facility: string, status = 
   leagueBooking({ id: `g${++n}`, kind: 'game', scheduled_at: iso(day, from), ends_at: iso(day, to), status, org_venue_id: KINSMEN, org_venue_facility_id: facility }, { season: '2026 Fall House League' });
 
 const DEC5 = '2026-12-05', DEC12 = '2026-12-12';
+const NOW = Date.parse(iso('2026-11-08', '12:00'));
 const drawn: ClubBooking[] = [
   game(DEC5, '11:00', '12:00', DA)!, game(DEC5, '12:00', '13:00', DB)!,
   practice('14U AA', DEC5, '13:00', '14:00', DA), practice('15U AA', DEC5, '13:00', '14:00', DB), practice('13U AAA', DEC5, '14:00', '15:00', DA),
@@ -46,7 +47,7 @@ const drawn: ClubBooking[] = [
 const postponed = game(DEC5, '10:00', '11:00', DB, 'postponed');
 
 const take = (bookings: readonly ClubBooking[], from = '2026-11-08', others: PermitTime[] = [december]) =>
-  datesOffTaken(december, bookings, others, venues, { from });
+  datesOffTaken(december, bookings, others, venues, { from, nowMs: NOW });
 
 describe('what the dates off took — the drawing\'s case', () => {
   it('Dec 5 and Dec 12 took 8 bookings: 6 practices and 2 house-league games', () => {
@@ -96,10 +97,60 @@ describe('what the dates off took — the drawing\'s case', () => {
 
   it('the form asks about a day before it is stored, and a day that took nothing says so', () => {
     const notYetOff: PermitTime = { ...december, datesOff: [] };
-    const [d5] = datesOffTaken(notYetOff, drawn, [notYetOff], venues, { from: '2026-11-08', days: [DEC5] });
+    const [d5] = datesOffTaken(notYetOff, drawn, [notYetOff], venues, { from: '2026-11-08', nowMs: NOW, days: [DEC5] });
     assert.equal(d5.bookings.length, 5);
-    const [d19] = datesOffTaken(notYetOff, drawn, [notYetOff], venues, { from: '2026-11-08', days: ['2026-12-19'] });
+    const [d19] = datesOffTaken(notYetOff, drawn, [notYetOff], venues, { from: '2026-11-08', nowMs: NOW, days: ['2026-12-19'] });
     assert.deepEqual(d19, { day: '2026-12-19', bookings: [] });
+  });
+});
+
+describe('Session B: the shared answer, before any surface uses it', () => {
+  it('(d) a booking that has already ended is not counted: on a date off of today, the morning\'s games are over', () => {
+    // 12:30 p.m. on Dec 5: the 11:00 game has ended, the 12:00 game is still on, the practices are still to come.
+    const midday = Date.parse(iso(DEC5, '12:30'));
+    const [dec5, dec12] = datesOffTaken(december, drawn, [december], venues, { from: DEC5, nowMs: midday });
+    assert.equal(dec5.bookings.length, 4, 'the 11:00–12:00 game is gone');
+    assert.equal(dec12.bookings.length, 3);
+    const evening = Date.parse(iso(DEC5, '16:00'));
+    assert.deepEqual(datesOffTaken(december, drawn, [december], venues, { from: DEC5, nowMs: evening }).map(d => d.bookings.length), [0, 3]);
+  });
+
+  it('`through` bounds the days (the Calendar\'s range): a week of Nov 30 – Dec 6 asks only Dec 5', () => {
+    assert.deepEqual(datesOffTaken(december, drawn, [december], venues, { from: '2026-11-30', nowMs: NOW, through: '2026-12-06' }).map(d => d.day), [DEC5]);
+  });
+
+  it('(e) the club\'s count names a booking ONCE when two permits\' dates off both took it', () => {
+    // A second permit holding the same Saturday hours at Kinsmen, with the same two days off: each permit took all 8.
+    const twin: PermitTime = { ...december, id: 'p-twin' };
+    const both = [december, twin];
+    const a = datesOffTaken(december, drawn, both, venues, { from: '2026-11-08', nowMs: NOW });
+    const b = datesOffTaken(twin, drawn, both, venues, { from: '2026-11-08', nowMs: NOW });
+    assert.equal(a.flatMap(d => d.bookings).length, 8, 'each permit\'s own list is right to name them');
+    assert.equal(b.flatMap(d => d.bookings).length, 8);
+    const club = clubTaken(new Map([[december.id, a], [twin.id, b]]), new Map([[KINSMEN, 'Kinsmen Park']]))!;
+    assert.equal(club.count, 8, 'never 16');
+    assert.deepEqual(club.days, [DEC5, DEC12]);
+    assert.deepEqual(club.venues, ['Kinsmen Park']);
+    assert.deepEqual(club.permitIds, ['p-dec', 'p-twin'], 'two permits: the card opens Permits');
+    assert.equal(outsideCardWords(club.count, club.days, club.venues), 'bookings on Sat, Dec 5 and Sat, Dec 12 · Kinsmen Park');
+  });
+
+  it('nothing outside a permit is null: the card and the pill show only while it is true', () => {
+    assert.equal(clubTaken(new Map(), new Map()), null);
+    assert.equal(clubTaken(new Map([['p', [{ day: DEC5, bookings: [] }]]]), new Map()), null);
+  });
+
+  it('the card\'s words: one booking; three days are counted, not named', () => {
+    assert.equal(outsideCardWords(1, [DEC5], ['Kinsmen Park']), 'booking on Sat, Dec 5 · Kinsmen Park');
+    assert.equal(outsideCardWords(9, [DEC5, DEC12, '2026-12-19'], ['Kinsmen Park', 'Lions Park']), 'bookings on 3 dates off · Kinsmen Park and Lions Park');
+  });
+
+  it('the shared reader is measured: one small read of which permits have a date off ahead, before anything else', () => {
+    const src = readFileSync('lib/permit-dates-off.ts', 'utf8');
+    const body = src.slice(src.indexOf('export async function readDatesOffTaken'), src.indexOf('export const takenTotals'));
+    assert.ok(body.indexOf('readDatesOffAhead(') < body.indexOf('readPermitTimes('), 'the cheap read first');
+    assert.match(body, /if \(!ahead\.length\) return/, 'a club with no date off ahead stops after one read');
+    assert.match(body, /await Promise\.all\(\[\s*readPermitTimes\(/, 'then the permits and the bookings, together');
   });
 });
 
@@ -226,8 +277,9 @@ describe('one answer, no query of its own', () => {
   });
   it('the route\'s list flag, the notice and the form count all call the shared reader', () => {
     const route = readFileSync('app/api/admin/org/permits/route.ts', 'utf8');
-    assert.match(route, /readDatesOffTaken\(orgId, \{ today \}\)/, 'the list\'s flags');
-    assert.match(route, /readDatesOffTaken\(orgId, \{ today, permitIds: \[takenId\] \}\)/, 'the notice');
+    assert.match(route, /readDatesOffTaken\(orgId, \{ from: today, nowMs: Date\.now\(\) \}\)\.then/, 'the list\'s flags');
+    assert.match(route, /readDatesOffTaken\(orgId, \{ from: today, nowMs: Date\.now\(\), permitIds: \[takenId\] \}\)/, 'the notice');
+    assert.match(route, /outside: clubTaken\(taken, times\.venueName\)/, 'the club\'s count (Session B)');
     assert.match(route, /readDayTaken\(orgId,/, 'the form');
   });
 });

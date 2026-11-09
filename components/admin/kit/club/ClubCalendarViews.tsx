@@ -27,6 +27,7 @@
  * ⚖ NOTHING HIDDEN (6c Ask 9, C9): a cancelled booking and a postponed league game are drawn struck through and dimmed,
  * with their word ("Cancelled"; "Postponed" in amber); never flagged as a clash.
  */
+import { createContext, useContext } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AlertTriangle, ChevronRight } from 'lucide-react';
@@ -45,9 +46,51 @@ import {
 } from '@/lib/club-calendar-view';
 import cal from './ClubCalendar.module.css';
 import { WhereLine } from '@/components/venue/WhereField';
-import { permitCalendarLine } from '@/lib/permit-words';
+import { PERMIT_WORDS as PW, permitCalendarLine } from '@/lib/permit-words';
 
 type Open = (b: CalendarBooking) => void;
+
+/**
+ * WHAT THE PERMITS' DATES OFF TOOK, as this Calendar shows it (Club Tier 13c Session B, B2): the bookings marked (by their
+ * Calendar key; a called-off one never is — the route's rule) and each day they sit on, with its "See the permit ›" door
+ * — null where the reader cannot open Permits (a door they cannot open is absent, never greyed). The one rule is the
+ * permit's (`readDatesOffTaken`): a booking its own hours would hold, that no other permit covers — never "everything on
+ * a date off". ⚖ A CONTEXT the club Calendar page provides: the house-league season's schedule page draws these views
+ * without it, so that page is unchanged (every view's props are as they were).
+ */
+export interface OutsideMarks { keys: ReadonlySet<string>; days: Readonly<Record<string, string | null>> }
+export const OutsideMarksContext = createContext<OutsideMarks | null>(null);
+
+function useMarked(b: CalendarBooking): boolean {
+  return !!useContext(OutsideMarksContext)?.keys.has(b.key);
+}
+
+/** The booking's own sentence, said where the glyph is: "Outside Kinsmen Park's permit: Sat, Dec 5 is a date off." */
+const outsideWords = (b: CalendarBooking) => (b.permit ? permitCalendarLine(b.permit, b.sport) : PW.outside);
+
+/** The 14 px warning beside a booking a date off took — the Week card's clash mark, in the permit's word. */
+function OutsideGlyph({ b }: { b: CalendarBooking }) {
+  const words = outsideWords(b);
+  return <span className={cal.outsideGlyph} title={words}><AlertTriangle size={14} aria-label={words} /></span>;
+}
+
+/** Does the day hold a marked booking among those DRAWN (the page's filters applied)? A day whose marked bookings the
+ *  filters hide carries no mark, so a chip never stands over nothing (/review 13c B). */
+const dayMarked = (outside: OutsideMarks | null, day: string, drawn: readonly CalendarBooking[] | undefined) =>
+  !!outside && day in outside.days && !!drawn?.some(b => outside.keys.has(b.key));
+
+/** The day's mark: the chip in the permit's one word, then "See the permit ›" for a reader who can open Permits. */
+function DayMark({ day, drawn }: { day: string; drawn: readonly CalendarBooking[] | undefined }) {
+  const outside = useContext(OutsideMarksContext);
+  if (!dayMarked(outside, day, drawn)) return null;
+  const href = outside!.days[day];
+  return (
+    <span className={cal.outsideMark}>
+      <RepChip tone="warn">{PW.outside}</RepChip>
+      {href && <Link href={href} className={cal.outsideLink}>{PW.seeThePermit} ›</Link>}
+    </span>
+  );
+}
 
 const edge = (b: CalendarBooking) => ({ '--tc': b.colour ?? undefined }) as React.CSSProperties;
 
@@ -86,14 +129,15 @@ export function ClashLine({ b, size }: { b: CalendarBooking; size: number }) {
 
 /** One booking in a Week column — the calendar recipe's one chip (C6): the range, who and what, where. */
 function BookingCard({ b, onOpen, multiProgram }: { b: CalendarBooking; onOpen: Open; multiProgram: boolean }) {
+  const marked = useMarked(b);
   const cls = `${cal.card}${b.state ? ` ${cal.cardOff}` : b.clash === 'booked_by' ? ` ${cal.cardClash}` : b.clash === 'busy_then' ? ` ${cal.cardBusy}` : ''}`;
   const where = [multiProgram ? PROGRAM_TAG[b.program] : null, b.state ? STATE_WORDS[b.state] : whereWords(b)].filter(Boolean).join(' · ');
   return (
     <button type="button" className={cls} style={edge(b)} onClick={() => onOpen(b)} aria-haspopup="dialog"
-      aria-label={`${bookingTitle(b)}, ${timeWords(b)}${b.state ? `, ${STATE_WORDS[b.state]}` : b.clash === 'booked_by' ? ', clashes' : b.clash === 'busy_then' ? ', may clash' : ''}`}>
+      aria-label={`${bookingTitle(b)}, ${timeWords(b)}${b.state ? `, ${STATE_WORDS[b.state]}` : b.clash === 'booked_by' ? ', clashes' : b.clash === 'busy_then' ? ', may clash' : ''}${marked ? `, ${outsideWords(b)}` : ''}`}>
       {b.clash === 'booked_by' && !b.state && <AlertTriangle size={14} className={cal.flag} aria-hidden />}
       <span className={cal.cardTime}>{timeWords(b)}</span>
-      <span className={cal.cardWho}>{bookingTitle(b)}</span>
+      <span className={cal.cardWho}>{bookingTitle(b)}{marked && <OutsideGlyph b={b} />}</span>
       {where && <span className={cal.cardWhere}>{where}</span>}
     </button>
   );
@@ -101,11 +145,12 @@ function BookingCard({ b, onOpen, multiProgram }: { b: CalendarBooking; onOpen: 
 
 /** One booking as a phone row inside its day's frame: the range, who and what, where, its clash in words, a chevron. */
 function PhoneRow({ b, onOpen, multiProgram }: { b: CalendarBooking; onOpen: Open; multiProgram: boolean }) {
+  const marked = useMarked(b);
   const caption = bookingCaption(b, multiProgram);
   return (
     <button type="button" className={`${cal.prow}${b.state ? ` ${cal.prowOff}` : ''}`} style={edge(b)} onClick={() => onOpen(b)} aria-haspopup="dialog">
       <span className={cal.prowTime}>{timeWords(b)}<StateChip b={b} /></span>
-      <span className={cal.prowWho}>{bookingTitle(b)}</span>
+      <span className={cal.prowWho}>{bookingTitle(b)}{marked && <OutsideGlyph b={b} />}</span>
       {caption && <span className={cal.prowWhere}>{caption}</span>}
       <ClashLine b={b} size={14} />
       <ChevronRight size={16} className={cal.prowChevron} aria-hidden />
@@ -124,7 +169,7 @@ export function WeekView({ cursor, bookings, onOpen, multiProgram }: { cursor: s
         {days.map(d => (
           <section key={d} className={`${cal.day}${d === today ? ` ${cal.dayToday}` : ''}`} aria-label={dayLong(d)}>
             {/* "Tue, Oct 20" in the display face, in capitals; today's says so in words (C7, C8). */}
-            <div className={cal.dayHead}><span className={cal.dayName}>{dayHeading(d, today)}</span></div>
+            <div className={cal.dayHead}><span className={cal.dayName}>{dayHeading(d, today)}</span><DayMark day={d} drawn={map.get(d)} /></div>
             <div className={cal.dayBody}>
               {(map.get(d) ?? []).length === 0
                 ? <span className={cal.dayEmpty}>—</span>
@@ -136,7 +181,7 @@ export function WeekView({ cursor, bookings, onOpen, multiProgram }: { cursor: s
       <div className={cal.stack}>
         {groups.map(g => g.kind === 'day' ? (
           <section key={g.key} id={`cal-day-${g.key}`} className={`${cal.pday} ${cal.jumpTarget}${g.key === today ? ` ${cal.pdayToday}` : ''}`} aria-label={dayLong(g.key)}>
-            <h3 className={cal.pdayHead}>{dayHeading(g.key, today)}</h3>
+            <h3 className={cal.pdayHead}>{dayHeading(g.key, today)}<DayMark day={g.key} drawn={map.get(g.key)} /></h3>
             {map.get(g.key)!.map(b => <PhoneRow key={b.key} b={b} onOpen={onOpen} multiProgram={multiProgram} />)}
           </section>
         ) : g.today
@@ -147,13 +192,19 @@ export function WeekView({ cursor, bookings, onOpen, multiProgram }: { cursor: s
   );
 }
 
+/** The List row's title, with the date-off mark where the Calendar's marks name it. */
+function ListTitle({ b }: { b: CalendarBooking }) {
+  const marked = useMarked(b);
+  return <><span className={b.state ? cal.struck : undefined}>{bookingTitle(b)}</span>{marked && <OutsideGlyph b={b} />}</>;
+}
+
 export function ListView({ bookings, onOpen, multiProgram }: { bookings: readonly CalendarBooking[]; onOpen: Open; multiProgram: boolean }) {
   const map = byDay(bookings);
   const today = tournamentToday();
   return (
     <ClubRowList label="Bookings">
       {[...map].flatMap(([day, list]) => [
-        <ClubRowBand key={`band-${day}`} id={`cal-band-${day}`} className={cal.jumpTarget}>{dayHeading(day, today)}</ClubRowBand>,
+        <ClubRowBand key={`band-${day}`} id={`cal-band-${day}`} className={cal.jumpTarget}>{dayHeading(day, today)}<DayMark day={day} drawn={list} /></ClubRowBand>,
         ...list.map(b => {
           const caption = bookingCaption(b, multiProgram);
           return (
@@ -165,7 +216,7 @@ export function ListView({ bookings, onOpen, multiProgram }: { bookings: readonl
             muted={!!b.state}
             mark={<span className={cal.swatch} style={edge(b)} />}
             lead={<span className={cal.timeCell}>{timeWords(b)}</span>}
-            title={<span className={b.state ? cal.struck : undefined}>{bookingTitle(b)}</span>}
+            title={<ListTitle b={b} />}
             caption={caption || b.clash ? <>{caption}<ClashLine b={b} size={13} /></> : undefined}
             trail={b.state ? <StateChip b={b} /> : undefined}
             chevron
@@ -177,8 +228,19 @@ export function ListView({ bookings, onOpen, multiProgram }: { bookings: readonl
   );
 }
 
+/** A Month cell's amber flag: a glyph and its words (the number alone on a phone, where the words don't fit). */
+function MonthFlag({ wide, narrow }: { wide: string; narrow?: number }) {
+  return (
+    <span className={cal.monthClash} aria-hidden>
+      <AlertTriangle size={12} />
+      <span className={cal.wide}>{wide}</span>{narrow != null && <span className={cal.narrow}>{narrow}</span>}
+    </span>
+  );
+}
+
 export function MonthView({ cursor, bookings, onDay }: { cursor: string; bookings: readonly CalendarBooking[]; onDay: (day: string) => void }) {
   const map = byDay(bookings);
+  const outside = useContext(OutsideMarksContext);
   const today = tournamentToday();
   return (
     <div className={cal.month} role="grid" aria-label={monthWords(cursor)}>
@@ -188,21 +250,18 @@ export function MonthView({ cursor, bookings, onDay }: { cursor: string; booking
         // A called-off booking is shown on its day's List and Week, never in a count (C9).
         const list = (map.get(d) ?? []).filter(b => !b.state);
         const clashes = clashPairCount(list);
+        const taken = dayMarked(outside, d, list);
         return (
           <button key={d} type="button" className={`${cal.monthCell}${d === today ? ` ${cal.monthToday}` : ''}`} role="gridcell"
-            onClick={() => onDay(d)} aria-label={`${d === today ? 'Today, ' : ''}${dayLong(d)}${list.length ? `, ${pluralize(list.length, 'booking')}` : ''}${clashes ? `, ${W.clashes(clashes)}` : ''}`}>
+            onClick={() => onDay(d)} aria-label={`${d === today ? 'Today, ' : ''}${dayLong(d)}${list.length ? `, ${pluralize(list.length, 'booking')}` : ''}${clashes ? `, ${W.clashes(clashes)}` : ''}${taken ? `, ${PW.outside}` : ''}`}>
             <span className={cal.monthNum}>{dayOfMonth(d)}</span>
             {list.length > 0 && (
               <span className={cal.monthCount} aria-hidden>
                 <span className={cal.wide}>{pluralize(list.length, 'booking')}</span><span className={cal.narrow}>{list.length}</span>
               </span>
             )}
-            {clashes > 0 && (
-              <span className={cal.monthClash} aria-hidden>
-                <AlertTriangle size={12} />
-                <span className={cal.wide}>{W.clashes(clashes)}</span><span className={cal.narrow}>{clashes}</span>
-              </span>
-            )}
+            {taken && <MonthFlag wide={PW.outside} />}
+            {clashes > 0 && <MonthFlag wide={W.clashes(clashes)} narrow={clashes} />}
           </button>
         );
       })}

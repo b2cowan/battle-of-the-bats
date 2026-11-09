@@ -89,7 +89,7 @@ export default function LeagueHealthWindow({
     if (dirty && x.door !== 'teams') return null;
     switch (x.door) {
       case 'date': {
-        const id = x.issue.kind === 'postponed' ? x.issue.gameId : null;
+        const id = x.issue.kind === 'postponed' || x.issue.kind === 'outside_permit' ? x.issue.gameId : null;
         return id ? { label: canRun ? H.giveDate : H.showIt, onClick: () => onOpenGame(id) } : null;
       }
       case 'teams': return { label: H.show, onClick: () => { setTeamsOpen(true); setScrollTeams(n => n + 1); } };

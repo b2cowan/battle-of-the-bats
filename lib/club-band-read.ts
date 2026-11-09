@@ -14,7 +14,7 @@ import { seasonMoney } from './league-money';
 import { loadSeasonMoneyLines } from './league-money-read';
 import { loadRegistrationDebits } from './league-pay-facts';
 import { liveLeagueSeasons } from './house-league-season';
-import { calendarPrograms, readClubCalendar } from './club-calendar';
+import { calendarPrograms, readComingBookings } from './club-calendar';
 import { listTeamsWithActiveHeadCoach } from './coach-membership';
 import { clubFormsMissing } from './families-read';
 import { addCalendarDays, tournamentToday } from './timezone';
@@ -30,7 +30,7 @@ import type { ClubBand, ClubBandPart } from './club-band-view';
  *   Owed · teams      `owedByTheTeams` over the same allocations the summary reads (`allocationsOf`), the reader's team groups only.
  *   Owed · league     `seasonMoney(...).owing` for each LIVE season, exactly as the season's Money page reads it (clearing included),
  *                     summed. There is no org-wide house-league total anywhere else; this is the sum of per-season figures.
- *   This week         `readClubCalendar` over the next six weeks; the earliest booking that is on (state null).
+ *   This week         `readComingBookings` (the Calendar's own read) over the next six weeks; the earliest booking that is on.
  *   Needs someone     teams with no active head coach (`listTeamsWithActiveHeadCoach`, the setup checklist's own rule), the
  *                     house-league owing PLAYERS, and the club's missing forms (the Families list's rule, once per roster row).
  *
@@ -93,13 +93,10 @@ export async function readClubBand(ctx: AuthContextWithRole, assignedTournamentI
     }) : undefined,
     wantsLeagueMoney ? settle('owed', failed, () => leagueOwing(ctx)) : undefined,
     seesCalendar ? settle('week', failed, async () => {
-      const read = await readClubCalendar(
-        { org, member: { role: ctx.role, capabilities: ctx.capabilities }, userId: ctx.user.id, assignedTournamentIds },
-        today, addCalendarDays(today, 41), // six weeks, the calendar's own cap
+      // Still to come or under way, over six weeks (the Calendar's empty week reads the same: `readComingBookings`).
+      const on = await readComingBookings(
+        { org, member: { role: ctx.role, capabilities: ctx.capabilities }, userId: ctx.user.id, assignedTournamentIds }, today,
       );
-      // Still to come or under way: a practice that ended this morning is not "Next" (and not "on") for an evening reader.
-      const now = Date.now();
-      const on = read.bookings.filter(b => b.state === null && b.day >= today && b.endMs > now).sort((a, b) => a.startMs - b.startMs);
       const weekEnd = addCalendarDays(today, 6);
       const next = on[0];
       return {

@@ -98,7 +98,7 @@ describe('1 · the Schedules row is there only where time can be handed out', ()
     // The phone: a lone sheet row after the tiles and Schedules' row, before the groups — never a tile, and the club bar
     // only (the tournament bar's sheet lists the tournament's groups).
     const bar = readCode(BAR);
-    assert.match(bar, /\{club\.schedulesRow && row\(club\.schedulesRow\)\}[\s\S]*?\{permitsLink && row\(permitsLink\)\}[\s\S]*?\{sheetGroups\.map\(group\)\}/);
+    assert.match(bar, /\{club\.schedulesRow && row\(club\.schedulesRow\)\}[\s\S]*?\{permitsLink && row\(permitsLink, permitsCount\)\}[\s\S]*?\{sheetGroups\.map\(group\)\}/);
     assert.doesNotMatch(bar, /clubPhoneNav(<\w+>)?\(\{[^}]*permits/, 'Permits never fills a tab or a tile');
   });
 });

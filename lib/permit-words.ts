@@ -450,7 +450,20 @@ export const PERMIT_WORDS = {
   nothingThatDay: 'Nothing booked that day.',
   bookedThatDayLabel: 'Booked that day:',
   dayCheckFailed: (saved: boolean) => `What’s booked that day couldn’t be checked.${saved ? ' The date off is saved.' : ''}`,
+
+  // ── Telling people away from the permit (13c Session B, C3 = A; the drawing's words, /marketing pass owed) ──
+  /** The one word, everywhere: the Overview's card, the Calendar's day chip, the schedule's warning. */
+  outside: 'Outside the permit',
+  /** The Permits row's count, read aloud. */
+  outsideCountLabel: (n: number) => `${pluralize(n, 'booking')} outside a permit`,
 } as const;
+
+/** The card's line: "bookings on Sat, Dec 5 and Sat, Dec 12 · Kinsmen Park". Two days are named; more are counted. */
+export function outsideCardWords(count: number, days: readonly string[], venues: readonly string[]): string {
+  const when = days.length <= 2 ? joinWithAnd(days.map(dayWithWeekday)) : `${days.length} dates off`;
+  const where = venues.length <= 2 ? joinWithAnd([...venues]) : `${venues.length} venues`;
+  return [`${count === 1 ? 'booking' : 'bookings'} on ${when}`, where].filter(Boolean).join(' · ');
+}
 
 /** "Sat, Dec 5" — a club day with its weekday, the house formatter's date (no year: the notice speaks of days ahead). */
 export function dayWithWeekday(day: string): string {

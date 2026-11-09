@@ -90,7 +90,8 @@ describe('2. the coach schedule’s toolbar', () => {
     assert.match(code, /\{PHONE_VIEWS\.map\(v =>/);
     assert.match(code, /const shownView: CalendarView = phone && view === 'list' \? 'week' : view;/);
     assert.match(code, /setView\(phone \? 'week' : 'list'\)/);
-    assert.match(code, /\) : shownView === 'week' \? \(\s*<WeekView/, 'the body draws shownView, never the raw choice');
+    // (13c Session B: the empty week's "Next:" line sits above the Week, inside the same branch.)
+    assert.match(code, /\) : shownView === 'week' \? \(\s*<>\s*\{emptyWeek && emptyLine\}\s*<WeekView/, 'the body draws shownView, never the raw choice');
     assert.match(code, /\) : shownView === 'month' \? \(\s*<MonthView/);
     const views = readCode(CAL_VIEWS);
     const list = views.slice(views.indexOf('export function ListView'), views.indexOf('export function MonthView'));

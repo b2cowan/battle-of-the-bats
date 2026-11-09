@@ -61,7 +61,7 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
   const nav = useAdminKitNav();
   const {
     base, programs, alsoOnPlan, brief, placeGroups, litPlace, tournamentOnly, onTournaments, isCanceled, coachDoor, tournamentGroups,
-    calendarLink, permitsLink, schedulesLink, billingLink, helpHref, isSandbox,
+    calendarLink, permitsLink, permitsCount, schedulesLink, billingLink, helpHref, isSandbox,
   } = nav;
   const { currentOrg } = useOrg();
   const { tournaments, currentTournament, setCurrentTournament } = useTournament();
@@ -326,7 +326,7 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
                   {club.schedulesRow && row(club.schedulesRow)}
                   {/* Permits (Club Tier 13c, C1 = A): the sidebar's unheaded place, so the sheet's lone row at the top of its
                       list — above the owner's Tournaments, the treasurer's Organization. A row, never a fourth tile (N8). */}
-                  {permitsLink && row(permitsLink)}
+                  {permitsLink && row(permitsLink, permitsCount)}
                   {/* The sidebar's places, under its headings (Programs · Also on your plan · Club), in its order. */}
                   {sheetGroups.map(group)}
                 </>

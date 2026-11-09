@@ -51,7 +51,7 @@ import { GAME_DAY_WORDS } from '@/lib/game-day-words';
 import { SCHEDULE_DAY_WORDS } from '@/lib/schedule-words';
 import {
   buildLeagueScheduleHealth, LEAGUE_HEALTH_WORDS, leagueHealthGameOf, leagueHealthPracticeOf, leagueHealthRulesOf,
-  type LeagueHealthIssue, type LeagueHealthRules,
+  type LeagueHealthIssue, type LeagueHealthRules, type LeagueOutsidePermit,
 } from '@/lib/league-schedule-health';
 import { clubSchedulerOn } from '@/lib/club-schedule-gate';
 import type { Through } from '@/lib/league-game-generator';
@@ -661,6 +661,8 @@ export default function SchedulePage() {
   const [gameSlots, setGameSlots] = useState<SeasonGameSlot[]>([]);
   /** Each game's permit answer, by booking key (step 7) — the server sends it only to someone who runs the season. */
   const [gamePermits, setGamePermits] = useState<Record<string, PermitOutside>>({});
+  /** The season's games a club permit's date off took (13c Session B, B3): Schedule health's "no longer holds" lines. */
+  const [outsidePermit, setOutsidePermit] = useState<LeagueOutsidePermit>({});
   /** "See the permit" (step 7): the permit's window, raised over the game window or Generate's check that opened it. */
   const [permitOpen, setPermitOpen] = useState<string | null>(null);
   const [scheduleRead, setScheduleRead] = useState<'loading' | 'ok' | 'failed'>('loading');
@@ -797,6 +799,7 @@ export default function SchedulePage() {
     setGames(g.games ?? []);
     setGameSlots(g.gameSlots ?? []);
     setGamePermits(g.permits ?? {});
+    setOutsidePermit(g.outsidePermit ?? {});
     setPublishing(g.publishing ?? {});
     setChanges(g.changes ?? {});
     setScoreRecords(new Map(Object.entries((g.scores ?? {}) as Record<string, GameScoreRecord>)));
@@ -910,7 +913,8 @@ export default function SchedulePage() {
     practices: practices.map(leagueHealthPracticeOf),
     teams: teams.map(t => ({ id: t.id, name: t.name, divisionId: t.divisionId })),
     rules,
-  }), [games, practices, teams]);
+    outsidePermit,
+  }), [games, practices, teams, outsidePermit]);
   const health = useMemo(() => rescoreHealth(healthRules), [rescoreHealth, healthRules]);
   /** Adjust the rules' Save (d3): null when saved (the season reads again, so the score follows), else what to say. */
   const saveHealthRules = async (rules: LeagueHealthRules): Promise<string | null> => {

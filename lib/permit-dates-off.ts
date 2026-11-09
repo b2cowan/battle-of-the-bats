@@ -17,7 +17,7 @@
  * The callers gate the plan (permits ride the Venue library: `hasOrgVenueLibrary`) and the reader; nothing here writes.
  */
 import { addCalendarDays, daysBetweenDateStrings, zonedWallClockToUtc } from './timezone';
-import { readPermitTimes, type ClubPlaces, type PermitTimes } from './permit-lookup';
+import { readDatesOffAhead, readPermitTimes, type ClubPlaces, type PermitTimes } from './permit-lookup';
 import { readClubBookings } from './venue-clash-lookup';
 import { calendarPrograms, readClubCalendar, MAX_CALENDAR_DAYS, type CalendarReader } from './club-calendar';
 import { datesOffTaken, type PermitTime, type VenueFacilities } from './permit-time';
@@ -59,20 +59,27 @@ async function bookingsOnDays(orgId: string, days: readonly string[]): Promise<C
 /** Per permit: its dates off from today on that took something, in day order. A permit whose dates off took nothing is absent. */
 type TakenByPermit = Map<string, TakenDay[]>;
 
+const NO_TIMES = (): PermitTimes => ({ permits: [], venueFacilities: new Map(), venueName: new Map(), facilityName: new Map() });
+
 /**
- * The club's permits (or the ones asked for) and what each one's dates off from `today` on took. One read of the permits
- * still running, then — only when one of them has a date off ahead — the bookings on those days.
+ * The club's permits (or the ones asked for) and what each one's dates off from `from` (today, or a later range start) to
+ * `through` (when asked) took. MEASURED (13c Session B): one small read of the dates off in range — a club with none stops
+ * there — then, together, the permits still running (every one: another permit may still cover the day) and the bookings
+ * on those days only. A booking that has ended (`nowMs`) is not counted (owner 2026-11-08, item d).
  */
-export async function readDatesOffTaken(orgId: string, opts: { today: string; permitIds?: readonly string[] }): Promise<{ taken: TakenByPermit; times: PermitTimes }> {
-  const times = await readPermitTimes(orgId, { fromDay: opts.today });
-  const wanted = opts.permitIds ? new Set(opts.permitIds) : null;
-  const targets = times.permits.filter(p => (!wanted || wanted.has(p.id)) && p.datesOff.some(d => d.day >= opts.today));
+export async function readDatesOffTaken(orgId: string, opts: { from: string; nowMs: number; permitIds?: readonly string[]; through?: string }): Promise<{ taken: TakenByPermit; times: PermitTimes }> {
   const taken: TakenByPermit = new Map();
-  if (!targets.length) return { taken, times };
-  const days = targets.flatMap(p => p.datesOff.map(d => d.day).filter(d => d >= opts.today));
-  const pool = await bookingsOnDays(orgId, days);
-  for (const p of targets) {
-    const hit = datesOffTaken(p, pool, times.permits, times.venueFacilities as VenueFacilities, { from: opts.today }).filter(d => d.bookings.length);
+  const ahead = await readDatesOffAhead(orgId, { fromDay: opts.from, toDay: opts.through, permitIds: opts.permitIds });
+  if (!ahead.length) return { taken, times: NO_TIMES() };
+  const wanted = new Set(ahead.map(d => d.permitId));
+  const [times, pool] = await Promise.all([
+    readPermitTimes(orgId, { fromDay: opts.from }),
+    bookingsOnDays(orgId, ahead.map(d => d.day)),
+  ]);
+  for (const p of times.permits) {
+    if (!wanted.has(p.id)) continue;
+    const hit = datesOffTaken(p, pool, times.permits, times.venueFacilities as VenueFacilities, { from: opts.from, nowMs: opts.nowMs, through: opts.through })
+      .filter(d => d.bookings.length);
     if (hit.length) taken.set(p.id, hit);
   }
   return { taken, times };
@@ -87,7 +94,7 @@ export const takenTotals = (days: readonly TakenDay[]) => ({ dates: days.length,
  * is not "another permit" covering the day), or null in Add permit. A past day is never counted (null). `places` is the
  * club's venues and facilities the caller already read (the route reads them to check the form's blocks).
  */
-export async function readDayTaken(orgId: string, opts: { today: string; day: string; permit: PermitTime; permitId: string | null; places: ClubPlaces }): Promise<TakenKind[] | null> {
+export async function readDayTaken(orgId: string, opts: { today: string; nowMs: number; day: string; permit: PermitTime; permitId: string | null; places: ClubPlaces }): Promise<TakenKind[] | null> {
   if (opts.day < opts.today) return null;
   const venueIds = [...new Set(opts.permit.blocks.map(b => b.venueId))];
   if (!venueIds.length) return [];
@@ -96,7 +103,7 @@ export async function readDayTaken(orgId: string, opts: { today: string; day: st
     bookingsOnDays(orgId, [opts.day]),
   ]);
   const others = times.permits.filter(p => p.id !== opts.permitId);
-  const [day] = datesOffTaken({ ...opts.permit, id: opts.permitId ?? 'draft' }, pool, others, opts.places.byVenue, { from: opts.today, days: [opts.day] });
+  const [day] = datesOffTaken({ ...opts.permit, id: opts.permitId ?? 'draft' }, pool, others, opts.places.byVenue, { from: opts.today, nowMs: opts.nowMs, days: [opts.day] });
   return (day?.bookings ?? []).map(kindOf);
 }
 
@@ -114,7 +121,11 @@ export async function describeDatesOffTaken(reader: CalendarReader, days: readon
   const shown = new Map<string, CalendarBooking>();
   if (seesCalendar) {
     const reads = await Promise.all(dayRuns(days.map(d => d.day), MAX_CALENDAR_DAYS).map(r => readClubCalendar(reader, r.from, r.to)));
-    for (const read of reads) for (const b of read.bookings) shown.set(b.key, b);
+    // By the pool's key, found the Calendar's way (a tournament game is its day's booking, or a team's mirrored copy).
+    for (const read of reads) {
+      const byKey = new Map(read.bookings.map(b => [b.key, b]));
+      for (const [poolKey, calendarKey] of read.calendarKeyOf) { const c = byKey.get(calendarKey); if (c) shown.set(poolKey, c); }
+    }
   }
   return buildDatesOffNotice(days, shown, {
     slug: reader.org.slug,

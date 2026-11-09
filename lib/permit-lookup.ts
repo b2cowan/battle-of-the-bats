@@ -97,6 +97,23 @@ export async function readClubPlaces(orgId: string): Promise<ClubPlaces> {
 }
 
 /**
+ * The club's dates off in [fromDay, toDay] (of `permitIds` alone, when given) — ONE small read, so a club with no date off
+ * ahead pays one query for "Outside the permit" (13c Session B, the measured gate), and the days are known before the
+ * permits are read, so the permits and the bookings on those days can be read together.
+ */
+export async function readDatesOffAhead(orgId: string, opts: { fromDay: string; toDay?: string; permitIds?: readonly string[] }): Promise<{ permitId: string; day: string }[]> {
+  const rows = await fetchAll<{ permit_id: string; day: string }>((a, b) => {
+    // A PERMIT's dates off only: since mig 326 a schedule owns its own (`schedule_id`, `permit_id` null), and those took
+    // nothing from a permit — counting them would read the bookings pool for a club with no permit date off at all.
+    let q = supabaseAdmin.from('org_time_dates_off').select('permit_id, day').eq('org_id', orgId).not('permit_id', 'is', null).gte('day', opts.fromDay);
+    if (opts.toDay) q = q.lte('day', opts.toDay);
+    if (opts.permitIds) q = q.in('permit_id', [...opts.permitIds]);
+    return q.order('id').range(a, b);
+  });
+  return rows.map(r => ({ permitId: r.permit_id, day: r.day }));
+}
+
+/**
  * The club's permits — by the venues they hold time at and the days they cover (`venueIds`, `fromDay`, `toDay`), or by
  * id (`ids`), or every permit starting in a span (`startsFrom`/`startsTo`, the Permits view's year). A failed read THROWS:
  * a check route catches it and says nothing (never a line that isn't true); a page says it couldn't load.

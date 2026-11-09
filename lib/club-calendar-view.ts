@@ -97,9 +97,10 @@ export interface CalendarBooking {
    *  a house-league game's alone (the only program with the state). */
   state: 'cancelled' | 'postponed' | null;
   /**
-   * OUTSIDE A PERMIT THE CLUB HOLDS there (Club Tier Stage 10a, Ask 3): said ONCE, in the read window, after "Clashes
-   * with" / "Busy then" — never on a row, never in the clash pill or "Clashes only" (it is not a clash). Absent/null:
-   * inside, no permit there, or not one of the club's venues.
+   * OUTSIDE A PERMIT THE CLUB HOLDS there (Club Tier Stage 10a, Ask 3): said in the read window, after "Clashes
+   * with" / "Busy then" — never in the clash pill or "Clashes only" (it is not a clash). Absent/null: inside, no permit
+   * there, or not one of the club's venues. ⚖ 13c Session B: a booking a permit's DATE OFF took (the read's `outside`, the
+   * permit's narrower rule) also carries the 14 px mark on its row, this sentence as its words.
    */
   permit?: PermitOutside | null;
   /**
@@ -125,6 +126,10 @@ export interface CalendarRead {
   bookings: CalendarBooking[];
   /** The club's venues by their CURRENT names — the Venue filter's rows (a booking's own words may be older). */
   venues: { id: string; name: string }[];
+  /** What the permits' dates off took in this range, as this reader's Calendar shows it (13c Session B, B2): the marked
+   *  bookings' keys and each day's "See the permit ›" door (null: the reader cannot open Permits). Null: nothing taken, or
+   *  the permit read failed (no marks, never a failed calendar). Set by the route, not `readClubCalendar`. */
+  outside?: { keys: string[]; days: Record<string, string | null> } | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -150,6 +155,9 @@ export const CALENDAR_WORDS = {
   loadFailed: 'We couldn’t load the club’s calendar.',
   nothingThisWeek: 'Nothing is booked this week.',
   nothingMatches: 'Nothing here matches the filters.',
+  /** An empty week's next event (13c Session B, B4): "Next: Mon, Nov 16 · Harbourtown Invitational" — the band's words. */
+  nextLabel: 'Next:',
+  goToWeek: 'Go to that week',
   noPrograms: 'The calendar shows the programs you can open, and your role opens none of them.',
   clashesWithHeading: 'Clashes with',
   mayClashHeading: 'Busy then',
@@ -215,6 +223,21 @@ export function matchesFilters(b: CalendarBooking, f: CalendarFilters): boolean 
   if (f.teams.size && !(b.teamId && f.teams.has(b.teamId)) && !(b.sharedWith ?? []).some(t => f.teams.has(t.teamId))) return false;
   if (f.clashesOnly && b.clash !== 'booked_by') return false;
   return true;
+}
+
+/** The filters as the empty week's "Next:" asks them (13c Session B, B4): the next MATCHING event, said by the server. */
+export function filtersQuery(f: CalendarFilters): string {
+  const list = (k: string, s: ReadonlySet<string>) => (s.size ? `&${k}=${[...s].map(encodeURIComponent).join(',')}` : '');
+  return `${list('venues', f.venues)}${list('programs', f.programs)}${list('teams', f.teams)}${f.clashesOnly ? '&clashes=1' : ''}`;
+}
+export function readFiltersQuery(params: URLSearchParams): CalendarFilters {
+  const set = (k: string) => new Set((params.get(k) ?? '').split(',').map(x => x.trim()).filter(Boolean));
+  return {
+    venues: set('venues'),
+    programs: new Set([...set('programs')].filter((p): p is CalendarProgram => p in PROGRAM_WORD)),
+    teams: set('teams'),
+    clashesOnly: params.get('clashes') === '1',
+  };
 }
 
 /** Each choice's count, at its row's end (the 2026-10-05 rule): the bookings in the range it would show, alone. */

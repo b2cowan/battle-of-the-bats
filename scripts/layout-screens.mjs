@@ -113,6 +113,9 @@ async function openMoreSheet(page) {
   await page.waitForTimeout(300);
 }
 
+// The platform's one day arithmetic (the 13c fixture's dates float with the day it was seeded).
+import { addCalendarDays } from '../lib/timezone.ts';
+
 /**
  * Wait until no visible line reads "Loading…" or "Loading members…" (admin slice 0, 2026-09-25). The admin draws its
  * loading state as a plain text line — often UNDER the page heading (tournament Registrations draws
@@ -1488,6 +1491,11 @@ export const SCREENS = [
   // The same hub for the other two admin roles — the frame and the hub's doors differ by role, and
   // Club Stage 1 (D8) changes what each role is shown.
   { id: 'admin-hub-admin',     area: 'hub', session: 'repClubAdmin',  ready: '[data-club-hub]', path: (c) => `/${c.clubSlug}/admin` },
+  // Club Tier 13c Session B: This morning's fifth card, "Outside the permit · 8", which wraps to a second row. It is asked
+  // after the brief answers, so the screen waits a while for the card's own door — and measures the Overview as it stands
+  // when the fixture lacks --club-dates-off (no card), rather than timing out.
+  { id: 'admin-hub-outside-permit', area: 'hub', session: 'repClubOwner', ready: '[data-club-hub]', path: (c) => `/${c.clubSlug}/admin`,
+    interact: async (page) => { await page.locator('[data-club-hub] a[href*="/admin/permits"]').first().waitFor({ state: 'visible', timeout: 15_000 }).catch(() => {}); } },
   // The wizard exists only for an org that has NOT finished onboarding — the rep club has, so it is
   // redirected to the hub; the plain Club-plan org has not (its owner is the org-owner login). It
   // opens on the house-league step by itself, reading only.
@@ -1554,6 +1562,15 @@ export const SCREENS = [
       }
       await openKitDialogBy(page, booking);
     }, scope: '[data-kit-dialog]' },
+  // Club Tier 13c Session B: the fixture's first date off (--club-dates-off) — its day chip "Outside the permit" with "See
+  // the permit ›", and the warning beside each booking still standing (Week, then List); and three weeks past the permit's
+  // end, an empty week naming the next event ("Nothing is booked this week. Next: …"). `clubDatesOffDay` is null until
+  // that step has run, and the Calendar then opens on today's week.
+  { id: 'admin-calendar-dates-off',    area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/calendar?day=${c.clubDatesOffDay}` },
+  { id: 'admin-calendar-dates-off-list', area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/calendar?day=${c.clubDatesOffDay}`,
+    interact: async (page) => { const b = page.locator('[aria-label="Show the calendar as"] button:has-text("List"):visible').first(); if (await b.count()) { await b.click(); await page.waitForTimeout(600); } } },
+  { id: 'admin-calendar-empty-week',   area: 'org', session: 'repClubOwner', ready: 'h1',
+    path: (c) => `/${c.clubSlug}/admin/calendar${c.clubDatesOffDay ? `?day=${addCalendarDays(c.clubDatesOffDay, 21)}` : ''}` },
   { id: 'admin-calendar-list',         area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/calendar`,
     interact: async (page) => { const b = page.locator('[aria-label="Show the calendar as"] button:has-text("List"):visible').first(); if (await b.count()) { await b.click(); await page.waitForTimeout(600); } } },
   { id: 'admin-calendar-month',        area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/calendar`,
@@ -1736,6 +1753,17 @@ export const SCREENS = [
   { id: 'admin-hl-registrations',      area: 'house-league', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/house-league/seasons/${c.clubSeasonId}/registrations` },
   { id: 'admin-hl-registrations-registrar', area: 'house-league', session: 'repClubRegistrar', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/house-league/seasons/${c.clubSeasonId}/registrations` },
   { id: 'admin-hl-schedule',           area: 'house-league', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/house-league/seasons/${c.clubSeasonId}/schedule` },
+  // Club Tier 13c Session B — Schedule health with a line per game on a pulled date ("the club's permit no longer holds
+  // Kinsmen Park that day", "Give it a new date"). Fixture: --club-dates-off.
+  { id: 'admin-hl-schedule-health',    area: 'house-league', session: 'repClubOwner', ready: '[data-place-frame]', scope: '[role="dialog"]',
+    path: (c) => `/${c.clubSlug}/admin/house-league/seasons/${c.clubSeasonId}/schedule`,
+    interact: async (page) => {
+      const door = page.locator('button[aria-label^="Schedule health"]:visible').first();
+      if (!(await door.count())) return;
+      await door.click();
+      await page.locator('[role="dialog"]').first().waitFor({ state: 'attached', timeout: 15_000 });
+      await page.waitForTimeout(300);
+    } },
   // Club Tier Stage 6a — the Add Game window: the Venue field on house league's old look, and where its line sits.
   { id: 'admin-hl-schedule-add-game', area: 'house-league', session: 'repClubOwner', ready: '[data-place-frame]', scope: '[role="dialog"][aria-modal="true"]',
     path: (c) => `/${c.clubSlug}/admin/house-league/seasons/${c.clubSeasonId}/schedule`, interact: openLeagueAddGame },

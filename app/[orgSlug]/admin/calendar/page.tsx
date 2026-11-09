@@ -32,11 +32,12 @@
  * ⚠ NOTHING HERE WRITES (D3): no Add, no drag, no pencil. The coach keeps the schedule.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AlertTriangle, CalendarDays, CalendarRange, List } from 'lucide-react';
+import { AlertTriangle, CalendarDays, CalendarRange, ChevronRight, List } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
-import { isCalendarDate, tournamentToday } from '@/lib/timezone';
+import { formatShortWeekdayDate, isCalendarDate, tournamentToday } from '@/lib/timezone';
+import { CLUB_BAND_WORDS } from '@/lib/club-band-view';
 import { useSearchParams } from 'next/navigation';
 import { moneyFetch, refusalText } from '@/lib/money-fetch';
 import { buildFilename, downloadCSVBlob, downloadICSFromInstants, downloadXLSX, generateCSV } from '@/lib/export';
@@ -48,12 +49,12 @@ import MultiSelectDropdown from '@/components/coaches/MultiSelectDropdown';
 import FilterGroup from '@/components/coaches/FilterGroup';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import { EmptyCard, LoadFailed, useDeferredLoad, useLatestRead } from '@/components/admin/kit/club/RepKit';
-import { BookingWindow, ListView, MonthView, WeekView } from '@/components/admin/kit/club/ClubCalendarViews';
+import { BookingWindow, ListView, MonthView, OutsideMarksContext, WeekView, type OutsideMarks } from '@/components/admin/kit/club/ClubCalendarViews';
 import { CalendarViewSwitch, ScheduleDateNav } from '@/components/coaches/ScheduleCalendarViews';
 import cal from '@/components/admin/kit/club/ClubCalendar.module.css';
 import coach from '@/app/[orgSlug]/coaches/coaches.module.css';
 import {
-  CALENDAR_WORDS as W, EXPORT_COLUMNS, PROGRAM_WORD, clashPairCount, exportRows, filterOptions, icsEntries, matchesFilters,
+  CALENDAR_WORDS as W, EXPORT_COLUMNS, PROGRAM_WORD, clashPairCount, exportRows, filterOptions, filtersQuery, icsEntries, matchesFilters,
   ELSEWHERE, rangeFor, rangeWords, stepCursor,
   type CalendarBooking, type CalendarFilters, type CalendarProgram, type CalendarRead, type CalendarView,
 } from '@/lib/club-calendar-view';
@@ -142,6 +143,41 @@ export default function ClubCalendarPage() {
     };
   }, [all, current, read, venues, programs, teams, seenTeams]);
   const readerPrograms = current?.programs ?? read?.programs ?? [];
+
+  // What the permits' dates off took in this range (13c Session B, B2): the day's chip and each booking's mark — the
+  // route's answer, in the permit's one rule; nothing when it is absent.
+  const outside = useMemo<OutsideMarks | null>(() => (current?.outside
+    ? { keys: new Set(current.outside.keys), days: current.outside.days }
+    : null), [current]);
+
+  // An empty week names the next thing (13c Session B, B4 — F-XR-6): the Overview band's own reader, asked only while the
+  // week (or the List) shows nothing; with filters on, the next MATCHING event. Never before today.
+  const emptyWeek = !!current && shownView !== 'month' && shown.length === 0;
+  const nextKey = emptyWeek ? `${range.from}${filtersQuery(filters)}` : null;
+  type Next = { day: string; who: string } | null;
+  const [asked, setAsked] = useState<{ key: string; next: Next } | null>(null);
+  useEffect(() => {
+    if (!nextKey) return;
+    let stale = false;
+    // org-slug-ok: `q` is built from the org context's slug above
+    moneyFetch<{ next: Next }>(`/api/admin/club-calendar?${q}&next=${nextKey}`)
+      .then(r => { if (!stale && r.ok) setAsked({ key: nextKey, next: r.data.next }); })
+      .catch(() => {}); // a failed "Next:" says nothing more than the week does
+    return () => { stale = true; };
+  }, [nextKey, q]);
+  const answered = asked?.key === nextKey ? asked : null;
+  const next = answered?.next ?? null;
+  const goToNext = () => { if (next) { jumpTo.current = next.day; setCursor(next.day); } };
+  const nextWords = answered ? (next
+    ? <>{W.nextLabel} <b>{formatShortWeekdayDate(next.day)} · {next.who}</b></>
+    : CLUB_BAND_WORDS.week.nothingSoon) : null;
+  const emptyLine = (
+    <p className={cal.nextLine}>
+      {all.length === 0 ? W.nothingThisWeek : W.nothingMatches}
+      {nextWords && <span>{nextWords}</span>}
+      {next && <button type="button" className={cal.nextGo} onClick={goToNext}>{W.goToWeek} ›</button>}
+    </p>
+  );
 
   useEffect(() => {
     const day = jumpTo.current;
@@ -254,19 +290,30 @@ export default function ClubCalendarPage() {
         {clashPill && <span className={cal.pillPhone}>{clashPill}</span>}
       </div>
 
+      <OutsideMarksContext.Provider value={outside}>
       {failed ? (
         <LoadFailed title={failed.text} onRetry={() => void load()} />
       ) : !current ? (
         <LoadingState label="Loading the club’s calendar…" />
       ) : shownView === 'week' ? (
-        <WeekView cursor={cursor} bookings={shown} onOpen={setOpen} multiProgram={multiProgram} />
+        <>
+          {emptyWeek && emptyLine}
+          <WeekView cursor={cursor} bookings={shown} onOpen={setOpen} multiProgram={multiProgram} />
+          {/* The phone's one row under the quiet lines (WeekView itself is shared with the season page, so it stays there). */}
+          {emptyWeek && answered && (next ? (
+            <button type="button" className={cal.nextRow} onClick={goToNext}>
+              <span>{nextWords}</span><ChevronRight size={16} aria-hidden />
+            </button>
+          ) : <p className={cal.nextRow}>{nextWords}</p>)}
+        </>
       ) : shownView === 'month' ? (
         <MonthView cursor={cursor} bookings={shown} onDay={d => { jumpTo.current = d; setCursor(d); setView(phone ? 'week' : 'list'); }} />
-      ) : shown.length === 0 ? (
-        <p className={ck.hint}>{all.length === 0 ? W.nothingThisWeek : W.nothingMatches}</p>
+      ) : emptyWeek ? (
+        emptyLine
       ) : (
         <ListView bookings={shown} onOpen={setOpen} multiProgram={multiProgram} />
       )}
+      </OutsideMarksContext.Provider>
 
       {open && <BookingWindow b={open} onClose={() => setOpen(null)} />}
     </div>

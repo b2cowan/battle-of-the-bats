@@ -16,6 +16,11 @@ import { placeGame } from '@/lib/league-game-place';
 import { asLastSent, heldChangesOf, heldGamesOf, isShownHeld, type HeldGameOf } from '@/lib/league-game-changes-server';
 import type { ChangeKind } from '@/lib/league-game-changes';
 import { readSeasonScoreRecords } from '@/lib/league-coach-scores-server';
+import { readDatesOffTaken } from '@/lib/permit-dates-off';
+import { takenOnce } from '@/lib/permit-dates-off-view';
+import type { LeagueOutsidePermit } from '@/lib/league-schedule-health';
+import { hasOrgVenueLibrary } from '@/lib/plan-features';
+import { tournamentToday } from '@/lib/timezone';
 
 function mapGame(row: any) {
   return {
@@ -77,10 +82,19 @@ export const GET = withObservability(async (req: Request,
   // Who entered each score (9e-3, mig 428): the window's "Coach entered" / "Reported" and the "Scores to check" fold —
   // staff only (this read is the 'read' gate), never on a public read. Decoration, as the permit line is: a failed read
   // leaves the schedule loading, with no tags.
-  const [{ data, error }, gameSlots, held, heldRows, scoreRecords] = await Promise.all([
+  // What the club's permits' dates off took (Club Tier 13c Session B, B3 — Schedule health's "the club's permit no longer
+  // holds Kinsmen Park that day"): the permit's one rule over what is BOOKED at the park, from today on, a booking that has
+  // ended never counted. For whoever runs the season, as the permit line is, and decoration as it is: a failed read says
+  // nothing.
+  const takenRead = runs && hasOrgVenueLibrary(ctx!.org.planId)
+    ? readDatesOffTaken(ctx!.org.id, { from: tournamentToday(), nowMs: Date.now() }).then(r => r.taken)
+      .catch(e => { console.error('[league-schedule] the dates-off read failed (no health lines):', e); return null; })
+    : Promise.resolve(null);
+  const [{ data, error }, gameSlots, held, heldRows, scoreRecords, taken] = await Promise.all([
     q, runs ? seasonGameSlots(ctx!.org.id, seasonId).catch(() => []) : Promise.resolve([]),
     heldRowsRead.then(rows => heldGamesOf(seasonId, undefined, rows)), heldRowsRead,
     readSeasonScoreRecords(ctx!.org.id, seasonId).catch(() => []),
+    takenRead,
   ]);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   // ⚖ Whoever runs the season reads the games as they are, each held change marked (`changes`); a reader (the registrar)
@@ -101,8 +115,16 @@ export const GET = withObservability(async (req: Request,
 
   const scores = Object.fromEntries(scoreRecords.map(r => [r.gameId, r]));
 
+  // This season's games among them, by game id, each once (`takenOnce`, whichever permit took it).
+  const outsidePermit: LeagueOutsidePermit = {};
+  const byKey = new Map(games.map(g => [bookingOfLeagueRow(g, 'game', season.name)?.key, g.id]));
+  for (const { booking: b, day } of taken ? takenOnce(taken).values() : []) {
+    const gameId = byKey.get(b.key);
+    if (gameId) outsidePermit[gameId] = { day, venue: b.venueName, facility: b.facilityName };
+  }
+
   // The season's game time (9d-2a step 4): the game window's "Time from {schedule}" matches a game to it.
-  return NextResponse.json({ games, gameSlots, permits, publishing, changes, scores });
+  return NextResponse.json({ games, gameSlots, permits, publishing, changes, scores, outsidePermit });
 }, { route: '/api/admin/house-league/seasons/[seasonId]/schedule' });
 
 /**

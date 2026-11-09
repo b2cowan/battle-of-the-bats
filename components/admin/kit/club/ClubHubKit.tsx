@@ -57,6 +57,8 @@ import { useBoardPeople } from '@/lib/use-board-people';
 import { boardOwnerName, seasonStarterShort } from '@/lib/board-people';
 import { NOT_YOURS_WORDS } from '@/lib/not-yours-words';
 import { LEAGUE_RUNNER_ROLES } from '@/lib/house-league-access';
+import { PERMIT_WORDS as PW, outsideCardWords } from '@/lib/permit-words';
+import { permitDoor } from '@/lib/permit-dates-off-view';
 
 /** The org's own word for itself on its hub: a Club is a club; a League Plus org, a league. */
 function orgNoun(planId: string | undefined): string {
@@ -146,8 +148,8 @@ export default function ClubHubKit() {
   const [arrivedFromUpgrade] = useState(() => isInPlaceReturn(params));
   const { currentOrg, userRole, userCapabilities, canOpen, loading } = useOrg();
   usePageTitle('Overview');
-  const { base, programs, alsoOnPlan } = useAdminKitNav();
-  const { status, brief, reload } = useClubBrief();
+  const { base, programs, alsoOnPlan, permitsLink } = useAdminKitNav();
+  const { status, brief, reload, outside } = useClubBrief();
   // The locked-programs note says which plans are closed from the LIVE gate (BUSINESS_DECISIONS 2026-09-28).
   const gating = usePlanGating();
   const closedPlansLine = gating ? closedProgramPlansSentence(gating) : null;
@@ -258,6 +260,15 @@ export default function ClubHubKit() {
     extraCards.push({
       key: 'tournament', label: 'Tournament registrations', n: attention.pendingTournamentCount, sub: 'waiting for review',
       href: `${base}/tournaments/registrations`,
+    });
+  }
+  // "Outside the permit" (Club Tier 13c Session B, C3 = A): only while true, after the cards that exist (a fifth wraps).
+  // Owner and admin only — the provider asks for no one else. Its door is a door only for someone who can open Permits:
+  // one permit → that permit with its notice; two or more → Permits, whose flagged rows say which.
+  if (outside && outside.count > 0 && permitsLink) {
+    extraCards.push({
+      key: 'outside-permit', label: PW.outside, n: outside.count, sub: outsideCardWords(outside.count, outside.days, outside.venues),
+      href: permitDoor(permitsLink.href, outside.permitIds),
     });
   }
   const anythingWaits = briefCards.some(c => (brief?.counts[c.key] ?? 0) > 0) || extraCards.length > 0;

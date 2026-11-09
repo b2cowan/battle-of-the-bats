@@ -150,6 +150,9 @@ export function useAdminKitNav() {
     billingLink,
     calendarLink,
     permitsLink,
+    /** The Permits row's amber count (13c Session B, C3 = A): "Outside the permit · N", the Overview card's own N. Owner and
+     *  admin only — 0 for everyone else (the provider never asks for them). */
+    permitsCount: club.outside?.count ?? 0,
     schedulesLink,
     coachDoor,
     tournamentGroups,

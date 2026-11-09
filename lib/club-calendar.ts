@@ -120,11 +120,16 @@ function repWhat(r: RepRow): string {
 const repKind = (t: string): CalendarBooking['kind'] =>
   t === 'practice' ? 'practice' : t === 'team_event' ? 'team_event' : 'game';
 
-export async function readClubCalendar(reader: CalendarReader, from: string, to: string): Promise<CalendarRead> {
+/**
+ * `calendarKeyOf` (server-side, never sent): each underlying booking's key → the Calendar booking it is drawn as (a tournament
+ * game's is its day's, or a club team's mirrored copy) — so a caller that knows bookings by the pool's keys (the permit's
+ * dates off, 13c Session B) finds them on the Calendar the way the permit line below does.
+ */
+export async function readClubCalendar(reader: CalendarReader, from: string, to: string): Promise<CalendarRead & { calendarKeyOf: ReadonlyMap<string, string> }> {
   const programs = calendarPrograms(reader.member, reader.org);
   const orgId = reader.org.id;
   const slug = reader.org.slug;
-  const empty: CalendarRead = { from, to, programs, bookings: [], venues: [] };
+  const empty = { from, to, programs, bookings: [], venues: [], calendarKeyOf: new Map<string, string>() };
   if (!programs.length) return empty;
 
   const startIso = zonedWallClockToUtc(from, '00:00')!;
@@ -435,6 +440,7 @@ export async function readClubCalendar(reader: CalendarReader, from: string, to:
     from, to, programs,
     bookings: oneBookingPerSharedSlot(bookings).sort((a, b) => a.startMs - b.startMs),
     venues: libVenues.map(v => ({ id: v.id, name: v.name })).sort((a, b) => a.name.localeCompare(b.name, 'en-CA', { numeric: true })),
+    calendarKeyOf,
   };
 }
 
@@ -463,4 +469,15 @@ export function oneBookingPerSharedSlot(bookings: CalendarBooking[]): CalendarBo
     first.headCoach = null;
   }
   return out;
+}
+
+/**
+ * WHAT IS STILL TO COME, over the six weeks from `from` (the calendar's own cap), in time order: the bookings that are on
+ * (state null) and have not ended — a practice that ended this morning is not "Next". ONE reader, two places: the Overview
+ * band's This week (13b) and the Calendar's empty week, "Next: Mon, Nov 16 · Harbourtown Invitational" (13c Session B, B4).
+ */
+export async function readComingBookings(reader: CalendarReader, from: string): Promise<CalendarBooking[]> {
+  const read = await readClubCalendar(reader, from, addCalendarDays(from, MAX_CALENDAR_DAYS - 1));
+  const now = Date.now();
+  return read.bookings.filter(b => b.state === null && b.day >= from && b.endMs > now).sort((a, b) => a.startMs - b.startMs);
 }
