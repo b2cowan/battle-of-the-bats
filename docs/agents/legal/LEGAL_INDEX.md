@@ -19,6 +19,32 @@ and a pointer here.
 | Subprocessor list | — | — | not started | — |
 | Guardian consent wording (Signed-in family Stage 4: accept page, first-screen line, invitation fine print, Stop and Leave confirms) | `drafts/GUARDIAN_CONSENT_STAGE4.md` (product still holds the placeholder in `lib/family-guardian-consent.ts`) | 0.1 | draft — build conditions 1–6 in the file; the Terms line is written (2026-11-08, after Terms v0.2's O7: a statement under the Join button, not a box); Parts 4–5 read against the shipped words 2026-11-08 (five answers in the file's closeout block): no word changed; **privacy policy page owed before the tier is on for real families**; R2 (record = words shown) to build first | 2026-11-08 |
 
+### Drafts the dev preview reads
+
+Until step 6.7 of the GST/HST Stage 6 plan, the product's dev preview of the legal pages reads the **Terms** and **Privacy Policy**
+drafts themselves (`lib/legal-draft-preview.ts`, filter in `lib/legal-draft-filter.ts`) and filters out everything that is not
+customer text. Keep this shape in both drafts, word for word, or the preview shows an owner note (a unit test runs the filter on
+the real drafts and fails if an owner marker gets through — the fix is an edit to the draft, not a wider filter):
+
+1. Everything before the **first line that is exactly `---`** is owner material (the DRAFT title, header table, change log, the
+   "How to read" block) and is dropped. The page title comes from the product, never from the draft's `#`.
+2. Every blockquote block (contiguous `>` lines) whose first line starts `> NOTE` or `> NOTES` is dropped. Owner notes go in such a
+   block and nowhere else. Customer text does not use blockquotes.
+3. The subsection `### The words the product shows` is dropped, up to the next `## ` heading or `---` line (it is product copy, not page text).
+4. From the first `## Before this can be published` heading to the end of the file is dropped (the owner lists and "For a
+   lawyer's eye"); a trailing `---` is trimmed.
+5. A `[text]` that is **not** a link (not followed by `(`) is a still-blank fact and renders as "[text — to be filled]". So a
+   blank is written `[phone]` or `[mailing address]`, and nothing else in the customer text uses square brackets on their own
+   (no `[V]`, `[H]`, no instructions to the owner in brackets).
+6. None of these may appear in customer text: `> NOTE`, `NOTE —`, `[V`, `[H`, `` `/legal` ``, `Stage 6`, `RULED`, `O1′`, `DRAFT`.
+   ("owner" is allowed: §18 says "account owner".)
+
+At 6.7 the approved text is written once as that date's frozen version file and the draft is deleted.
+
+**Open for the next draft pass:** Terms §6 carries `**[STRIPE CHOICE — keep one line, delete the other]**` with both lines (A and B)
+under it. The preview shows both lines under the mark "STRIPE CHOICE — keep one line, delete the other — to be filled". It is an
+owner decision, not a blank fact; resolve it (or word it as a single blank fact) before the preview is shown to anyone but the owner.
+
 ## Topics researched
 
 | Topic | File | Last verified | Re-verify trigger |

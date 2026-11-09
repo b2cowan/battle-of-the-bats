@@ -5,6 +5,7 @@ import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { sendEmail, orgClosedHtml } from '@/lib/email';
 import { stripe } from '@/lib/stripe';
 import { PLAN_CONFIG } from '@/lib/plan-config';
+import { FIELDLOGICHQ_CONTACT_EMAIL } from '@/lib/fieldlogichq-contact';
 import type { OrgPlan } from '@/lib/types';
 import { withObservability, captureError } from '@/lib/observability';
 import { stopClubDomain } from '@/lib/club-domain-service';
@@ -169,7 +170,7 @@ export const DELETE = withObservability(async (req: NextRequest,
       await sendEmail(
         ownerEmail,
         `Your ${org.name} account has been closed`,
-        orgClosedHtml({ orgName: org.name, planLabel, contactEmail: 'support@fieldlogichq.ca' }),
+        orgClosedHtml({ orgName: org.name, planLabel, contactEmail: FIELDLOGICHQ_CONTACT_EMAIL }),
         { kind: 'org_closed', orgId: id, askedBy: auth.user.id },
       );
     }

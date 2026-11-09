@@ -5,6 +5,8 @@ import SiteChrome from '@/components/SiteChrome';
 import Footer from '@/components/Footer';
 import ConsumerNav from '@/components/consumer/ConsumerNav';
 import { OrgNavProvider } from '@/components/OrgNavContext';
+import { LegalLinksProvider } from '@/components/legal/LegalLinksProvider';
+import { resolveLegalLinks } from '@/lib/legal-links';
 import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration';
 import ViewportKeyboardVars from '@/components/ViewportKeyboardVars';
 import RefTagCapture from '@/components/RefTagCapture';
@@ -100,6 +102,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <NoFlashRestore />
         {/* Signed out is warm: flips the theme when a session starts or ends without a page load. */}
         <ThemeSessionWatch />
+        {/* The legal-pages switch for client components (GST/HST Stage 6.2): null while the pages are off, so no link renders. */}
+        <LegalLinksProvider links={resolveLegalLinks()}>
         <OrgNavProvider>
           <a href="#main-content" className="skip-link">Skip to content</a>
           <SiteChrome />
@@ -111,6 +115,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               /{orgSlug}/{tournamentSlug}/* — the bottom bar ≤900px, a slim top strip >900px. */}
           <ConsumerNav variant="tournament" />
         </OrgNavProvider>
+        </LegalLinksProvider>
         {/* Install prompts are mounted per-context, not globally: the fan prompt on
             tournament pages and the member prompt in authenticated shells. The
             marketing root no longer shows an install banner. */}

@@ -18,6 +18,7 @@
  */
 
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { FIELDLOGICHQ_CONTACT_EMAIL } from '@/lib/fieldlogichq-contact';
 import { buildUnsubscribeUrl, buildUserUnsubscribeUrl } from '@/lib/unsubscribe-token';
 import { FOUNDING_SEASON_COMP_EXPIRIES } from '@/lib/plan-config';
 import { MARKETING_EMAIL_AUDIENCE, type MarketingAudience } from '@/lib/marketing-email-defaults';
@@ -191,7 +192,7 @@ export async function sendMarketingEmail(opts: SendEmailOptions): Promise<SendRe
         subject,
         html: htmlWithFooter,
         text: htmlToText(htmlWithFooter),
-        reply_to: 'hello@fieldlogichq.ca',
+        reply_to: FIELDLOGICHQ_CONTACT_EMAIL,
         ...(scheduledAt ? { scheduled_at: scheduledAt } : {}),
       }),
     });
