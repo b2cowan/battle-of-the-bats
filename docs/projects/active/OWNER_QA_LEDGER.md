@@ -28097,3 +28097,10 @@ performed over the shared working tree. The original walk result is not claimed 
 **Calls the walk asks the owner (F):** F1 "Read-only archive" alone on a row on one past season; F2 the Calendar's phone View button keeps its shipped hairline border (round 3 drew it borderless).
 **Committed:** `4959122d2` 2026-11-09 (the Phase 3 build, simplified and reviewed).
 <!-- /§499 -->
+
+## §501 · Admin header bar · Phase 4 closing owner walk (the bar on every screen type) — **a short sample of each kind of screen on a computer (Overview, a tab place and its pinned tabs, a team, Accounting with a team's account keeping its tabs, a child from Families, a past season, a tournament organization and its tournament, a screen refused to a treasurer, a cancelled club's one page if one is on hand) and on a phone; the two corrected help sentences (a record page's back arrow in the header; the live-site button reads View site)**
+<!-- §501 -->
+**Walk published 2026-11-09:** https://claude.ai/artifact/AuvY9SdtZ6bjhtrNhRVFsV (source `docs/projects/active/ADMIN_HEADER_BAR_PHASE4_WALK.html`). Build: Admin header bar Phase 4 (words, help, demos, verify); no screen changed, two help sentences corrected (plan `ADMIN_HEADER_BAR_PLAN.md` § Phase 4).
+**Sign-in:** the UAT Rep Club owner and treasurer (`uat-club-*@uat-rep-club.local`), the tournament organization owner (`uat-owner@uat-test-org.local`).
+**Result:** owed.
+<!-- /§501 -->

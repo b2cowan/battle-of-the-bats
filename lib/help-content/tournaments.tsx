@@ -2429,7 +2429,7 @@ const tournamentsHelp: HelpPageContent = {
       ],
       content: (
         <>
-          <p>Use the flip pill in the top-right corner of any tournament admin screen — labeled <strong>Preview site</strong> on a draft and <strong>Public site</strong> once the tournament is live — to open the matching public (or preview) page in the same tab and inspect the public tournament experience before or after activation.</p>
+          <p>Use the flip pill in the top-right corner of any tournament admin screen — labeled <strong>Preview site</strong> on a draft and <strong>View site</strong> once the tournament is live (a globe on a phone) — to open the matching public (or preview) page in the same tab and inspect the public tournament experience before or after activation.</p>
           <p>The public tournament site can include registration, schedule, standings, results, teams, rules, resources, and news depending on tournament setup and status. Preview is always available to admins regardless of tournament status — share the preview link internally to review the public experience before you activate.</p>
         </>
       ),

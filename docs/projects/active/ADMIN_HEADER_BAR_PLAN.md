@@ -597,14 +597,28 @@ Round 4 (accepted with D1–D5, 2026-11-08; found by the round 4 /design pass):
 
 ### Phase 4 — Words, help, demos, verify
 
-- [ ] `/docs`: help articles that describe the header, the Overview heading or "scroll back up to the tabs"
+**As built 2026-11-09 (swept, fixed, closing walk §501 published; owner walk and commit owed).** NO screen changed.
+`/docs` sweep (helper-found, each cited line opened): FIXED `org.tsx` "places-and-tabs" (a team's account is NOT a
+tab-less record page — it stays inside Accounting's Teams tab; the example is now a child's page / a team's past season, the
+back arrow "in the header", View site "a globe on a phone", searchText matched) and `tournaments.tsx` (Preview site article:
+the live label is "View site", not "Public site"). VERIFIED still true: the overdue-fee line (draws above the header and
+scrolls away), the Calendar View and Public site chip sentences, the Seasons/Teams back arrows, house-league and accounting
+tab sentences. No help text describes the old two-title look, the Overview heading, a club name above a title, or
+"Read-only archive". Demo tours: no sentence describes the header; `check:demos` passes. `check:spelling` passes.
+Phase 3 Lows (a)–(f) stay RECORDED (each honest, none a one-line fix); (g) CLOSED: nothing links with `?invite=open`
+(only a guard test asserts its absence). `typecheck` clean; the unit tests that read the two help files pass (205/205).
+`verify:changed` is red on ~30 tests in OTHER sessions' uncommitted work (billing/tax words, workspace flip census,
+permits layout rail guard, coach tests): none touch this phase's files. `check:layout --changed` skipped: only two
+help sentences changed, no screen. No `/review` (no code changed).
+
+- [x] `/docs`: help articles that describe the header, the Overview heading or "scroll back up to the tabs"
       (`lib/help-content/*.tsx`), incl. `keywords` / `searchText`
-- [ ] Demo tours: `npm run check:demos` (a tour anchor on a removed paper heading fails the build; move the anchor)
-- [ ] `npm run check:spelling`, `npm run verify:changed`, `npm run typecheck` (shared module + shell change)
-- [ ] `npm run check:layout --changed` on the touched screens (dev server); the whole-product layout sweep runs as
+- [x] Demo tours: `npm run check:demos` (a tour anchor on a removed paper heading fails the build; move the anchor)
+- [x] `npm run check:spelling`, `npm run verify:changed`, `npm run typecheck` (shared module + shell change)
+- [x] (skipped, no screen changed) `npm run check:layout --changed` on the touched screens (dev server); the whole-product layout sweep runs as
       the release step on staging (`/release` §1d-5), not on the dev server
 - [ ] /design pass on the built screens against the drawings; /review
-- [ ] Owner walk as a checkable Artifact (QA ledger §), phone + desktop, one purpose: the bar on every screen type
+- [x] PUBLISHED (§501, https://claude.ai/artifact/AuvY9SdtZ6bjhtrNhRVFsV; owner result owed) Owner walk as a checkable Artifact (QA ledger §), phone + desktop, one purpose: the bar on every screen type
 
 ## Architectural Decisions
 
