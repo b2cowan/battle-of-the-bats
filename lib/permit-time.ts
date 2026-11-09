@@ -316,7 +316,8 @@ export function fieldPrices(permit: PermitTime, venueFacilities: VenueFacilities
 // ⚖ No "Outside it" (owner 2026-10-11): which of the club's bookings no permit covers is a question about the park, not a
 // property of one permit — listed on a permit, it fell on whichever permit's dates spanned it, on every one that did, and
 // read longest for a club that had not entered all its permits. A booking says it once, where it is made (`permitAnswer`
-// → the quiet line) and in the calendar's read window; a permit never lists them.
+// → the quiet line) and in the calendar's read window; a permit never lists them. (What a permit's OWN dates off took is
+// a different question, about that permit's own change — §4, Club Tier 13c.)
 
 /** A booking as the use reads it (the clash pool's `ClubBooking` fits): its place, its time, who holds it. */
 export interface UseBooking extends BookingPlace {
@@ -477,6 +478,40 @@ export function permitUse(
     days: [...byDay.values()].sort((a, z) => a.day.localeCompare(z.day)),
     totals: { heldMinutes, bookedMinutes, unusedMinutes: Math.max(0, heldMinutes - bookedMinutes) },
   };
+}
+
+// ── 4. What a permit's dates off took (Club Tier Stage 13c, C2 = A — owner 2026-11-08) ────────────────────
+// ⚖ NOT the removed "Outside it" (§3 above): a permit lists only the bookings ITS OWN dates off took — a booking its own
+// hours would hold that day were the day not off, and that no other permit of the club still covers. A 7:00 p.m. booking
+// on a date off of a 9:00 a.m.–3:00 p.m. permit was never inside it, so this permit never lists it. Said through
+// `permitAnswer` twice — the day off, and the day on — so there is no second definition of "on a date off".
+
+/** Did this permit's date off on `day` take this booking? (The day need not be stored yet: the form asks as it is picked.) */
+export function tookByDateOff(
+  permit: PermitTime, day: string, b: BookingPlace, others: readonly PermitTime[], venueFacilities: VenueFacilities,
+): boolean {
+  if (!b.venueId || !Number.isFinite(b.startMs) || clubDayOf(b.startMs) !== day) return false;
+  if (!permit.blocks.some(x => x.venueId === b.venueId)) return false;
+  const rest = others.filter(p => p.id !== permit.id);
+  const off: PermitTime = { ...permit, datesOff: permit.datesOff.some(d => d.day === day) ? permit.datesOff : [...permit.datesOff, { day, note: null }] };
+  const on: PermitTime = { ...permit, datesOff: permit.datesOff.filter(d => d.day !== day) };
+  return permitAnswer(b, [...rest, off], venueFacilities).kind === 'outside'
+    && permitAnswer(b, [...rest, on], venueFacilities).kind === 'inside';
+}
+
+/** A permit's dates off from `from` on (or the `days` asked about), each with the bookings it took, in day order. A day
+ *  that took nothing is listed with none (the form says "Nothing booked that day"); a past day is never asked. */
+export function datesOffTaken<B extends BookingPlace>(
+  permit: PermitTime, bookings: readonly B[], others: readonly PermitTime[], venueFacilities: VenueFacilities,
+  opts: { from: string; days?: readonly string[] },
+): { day: string; bookings: B[] }[] {
+  const days = [...new Set(opts.days ?? permit.datesOff.map(d => d.day))].filter(d => d >= opts.from).sort();
+  // In time order; at one time, in the club's facility order (Diamond A before Diamond B), as the drawing lists them.
+  const place = (b: B) => (b.venueId && b.facilityId ? (venueFacilities.get(b.venueId) ?? []).indexOf(b.facilityId) : -1);
+  return days.map(day => ({
+    day,
+    bookings: bookings.filter(b => tookByDateOff(permit, day, b, others, venueFacilities)).sort((a, z) => a.startMs - z.startMs || place(a) - place(z)),
+  }));
 }
 
 // ── The record's own checks (the form holds, the route refuses — one rule) ───────────────────────────

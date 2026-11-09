@@ -69,7 +69,10 @@ export const shareStores = (s: number) => {
   return r > 0 && r < 1;
 };
 
-const toBlock = (b: PermitBlockDraft): TimeBlock => ({
+/** A block with a venue, a weekday and two clock times — the least a block needs to hold any time. */
+export const blockFilled = (b: PermitBlockDraft) => !!b.venueId && b.weekdays.length > 0 && CLOCK.test(b.startTime) && CLOCK.test(b.endTime);
+
+export const toBlock = (b: PermitBlockDraft): TimeBlock => ({
   id: b.id ?? b.key, venueId: b.venueId, facilityIds: b.facilityIds, weekdays: b.weekdays,
   startTime: b.startTime, endTime: b.endTime, fromDate: null, untilDate: null,
 });
@@ -82,7 +85,7 @@ export function permitHeldReason(d: PermitDraft, venueFacilities: VenueFacilitie
   if (!d.name.trim()) return W.nameHeld;
   if (!isCalendarDate(d.startsOn) || !isCalendarDate(d.endsOn)) return W.datesHeld;
   if (d.endsOn < d.startsOn) return W.datesOrderHeld;
-  if (d.blocks.some(b => !b.venueId || !b.weekdays.length || !CLOCK.test(b.startTime) || !CLOCK.test(b.endTime))) return W.blockHeld;
+  if (!d.blocks.every(blockFilled)) return W.blockHeld;
   if (d.blocks.some(b => b.endTime <= b.startTime)) return W.blockHoursHeld;
   if (overlappingBlocks({ blocks: d.blocks.map(toBlock) }, venueFacilities)) return W.blocksOverlapHeld;
   if (money && Number.isNaN(parseCost(d.cost) as number)) return W.costHeld;
@@ -119,9 +122,9 @@ export type PermitBody = { ok: true; draft: PermitDraft } | { ok: false; code: s
 const str = (v: unknown, max: number) => (typeof v === 'string' ? v.slice(0, max) : '');
 const idOrNull = (v: unknown) => (isUuid(v) ? v : null);
 
-export function readPermitBody(raw: unknown, venueFacilities: VenueFacilities, money: boolean): PermitBody {
-  const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
-  const blocks = (Array.isArray(r.blocks) ? r.blocks : []).slice(0, 60).map((b, i): PermitBlockDraft => {
+/** A request's time blocks, checked field by field — the one reader of the shape (the save and the form's count both use it). */
+export function readBlockDrafts(raw: unknown): PermitBlockDraft[] {
+  return (Array.isArray(raw) ? raw : []).slice(0, 60).map((b, i): PermitBlockDraft => {
     const x = (b && typeof b === 'object' ? b : {}) as Record<string, unknown>;
     return {
       key: `b${i}`,
@@ -133,6 +136,11 @@ export function readPermitBody(raw: unknown, venueFacilities: VenueFacilities, m
       endTime: str(x.endTime, 5),
     };
   });
+}
+
+export function readPermitBody(raw: unknown, venueFacilities: VenueFacilities, money: boolean): PermitBody {
+  const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
+  const blocks = readBlockDrafts(r.blocks);
   const shares: Record<string, number> = {};
   for (const s of Array.isArray(r.shares) ? r.shares.slice(0, 200) : []) {
     const x = (s && typeof s === 'object' ? s : {}) as Record<string, unknown>;

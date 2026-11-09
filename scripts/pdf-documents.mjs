@@ -1532,8 +1532,12 @@ export const NO_PDF_SCREENS = [
     reason: 'The club\'s plan exports as xlsx/csv only — a dataset in the coach\'s Budget shape (Club Tier 3b); the club\'s documents are Budget vs. Actual and the board report.',
   },
   {
+    file: 'app/[orgSlug]/admin/permits/page.tsx',
+    reason: 'The Permits list exports as xlsx only (Club Tier 10a; its own place since 13c); it reaches the renderers only through clubWorkbookBrand, the club workbook\'s letterhead, which lives beside the schedule\'s exporter (11a part B).',
+  },
+  {
     file: 'app/[orgSlug]/admin/org/venues/page.tsx',
-    reason: 'The Permits list exports as xlsx only (Club Tier 10a); it reaches the renderers only through clubWorkbookBrand, the club workbook\'s letterhead, which lives beside the schedule\'s exporter (11a part B).',
+    reason: 'The Venue library opens a permit\'s window from a venue\'s Permits section (Club Tier 10a); a permit\'s use workbook is xlsx only, so the page reaches the renderers only through clubWorkbookBrand (11a part B).',
   },
   {
     file: 'components/admin/kit/club/PermitWindows.tsx',

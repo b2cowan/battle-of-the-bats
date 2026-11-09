@@ -53,6 +53,9 @@ export interface PermitsYearRead {
   canSave: boolean;
   canMoney: boolean;
   permits: PermitListRow[];
+  /** Per permit whose dates off from today on took bookings (Club Tier 13c, the row's flag — lib/permit-dates-off.ts):
+   *  how many dates off, how many bookings. Absent when that read failed (no flag, never a failed list). */
+  taken?: Record<string, { dates: number; bookings: number }>;
 }
 
 export interface PermitBlockView {

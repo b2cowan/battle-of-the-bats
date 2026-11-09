@@ -985,11 +985,12 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     helpSummary: 'Export the member change history log — invites, role changes, suspensions, and removals. Visible to org owners only.',
   },
   {
+    // The id is the entry's key and keeps its name; the list moved to the Permits place (Club Tier 13c, C1 = A).
     id: 'org-venues',
-    label: 'Venue library — Permits',
+    label: 'Permits',
     module: 'org',
-    page: 'Venue library',
-    file: 'app/[orgSlug]/admin/org/venues/page.tsx',
+    page: 'Permits',
+    file: 'app/[orgSlug]/admin/permits/page.tsx',
     formats: ['xlsx'],
     defaultFormat: 'xlsx',
     minPlan: 'league',
@@ -997,8 +998,8 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     includesSensitiveFields: false,
     respectsCurrentFilters: true,
     serverSide: false,
-    // ⚖ Club Tier Stage 10a (hub Stages 10 + 11, specimen 1): the Venues view still has no Export (its venues are
-    // configuration; their bookings export from the club calendar); the PERMITS view exports the permits that start in the
+    // ⚖ Club Tier Stage 10a (hub Stages 10 + 11, specimen 1): the Venue library still has no Export (its venues are
+    // configuration; their bookings export from the club calendar); the PERMITS list exports the permits that start in the
     // fiscal year on screen, in the house format (Ask 26). The Cost column is there only for a reader who holds the club's
     // Accounting (owner, 10a build — a permit's money is Accounting's).
     helpSummary: 'Export the club’s permits for the fiscal year on screen — where each holds time, its dates, the hours it holds a week and in all, how much is booked, and (for those who hold the club’s accounting) its cost.',
@@ -1007,7 +1008,7 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     id: 'permit-use',
     label: 'A permit’s use',
     module: 'org',
-    page: 'Venue library — a permit’s window',
+    page: 'Permits — a permit’s window',
     file: 'components/admin/kit/club/PermitWindows.tsx',
     formats: ['xlsx'],
     defaultFormat: 'xlsx',

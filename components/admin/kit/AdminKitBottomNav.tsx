@@ -61,7 +61,7 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
   const nav = useAdminKitNav();
   const {
     base, programs, alsoOnPlan, brief, placeGroups, litPlace, tournamentOnly, onTournaments, isCanceled, coachDoor, tournamentGroups,
-    calendarLink, schedulesLink, billingLink, helpHref, isSandbox,
+    calendarLink, permitsLink, schedulesLink, billingLink, helpHref, isSandbox,
   } = nav;
   const { currentOrg } = useOrg();
   const { tournaments, currentTournament, setCurrentTournament } = useTournament();
@@ -158,7 +158,7 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
 
   const moreLinks: KitLink[] = tournamentBar
     ? tourMoreGroups.flatMap(g => g.places)
-    : [...(club.schedulesRow ? [club.schedulesRow] : []), ...(club.tiles ?? []), ...sheetGroups.flatMap(g => g.places)];
+    : [...(club.schedulesRow ? [club.schedulesRow] : []), ...(club.tiles ?? []), ...(permitsLink ? [permitsLink] : []), ...sheetGroups.flatMap(g => g.places)];
   // More is lit on any page it holds a row for: its places, Notifications, and Plan & billing (its You row).
   const moreActive = moreLinks.some(doorActive)
     || (!tournamentBar && !!billingLink && isKitLinkActive(pathname, billingLink))
@@ -324,6 +324,9 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
                       program, so it belongs to no group. The calendar is a tab on the bar. */}
                   {club.tiles && <MoreSheetTiles tiles={club.tiles.map(sheetTile)} onPick={close} />}
                   {club.schedulesRow && row(club.schedulesRow)}
+                  {/* Permits (Club Tier 13c, C1 = A): the sidebar's unheaded place, so the sheet's lone row at the top of its
+                      list — above the owner's Tournaments, the treasurer's Organization. A row, never a fourth tile (N8). */}
+                  {permitsLink && row(permitsLink)}
                   {/* The sidebar's places, under its headings (Programs · Also on your plan · Club), in its order. */}
                   {sheetGroups.map(group)}
                 </>

@@ -90,6 +90,17 @@ describe('1 · the Schedules row is there only where time can be handed out', ()
     assert.match(bar, /clubPhoneNav(<\w+>)?\(\{\s*calendar: calendarLink, schedules: schedulesLink,/);
     assert.match(bar, /club\.schedulesRow && row\(club\.schedulesRow/);
   });
+  it('⚖ 13c (C1 = A): Permits sits between Calendar and Schedules, and inside a tournament it does not show either', () => {
+    const rail = readCode(RAIL);
+    assert.match(rail, /permitsLink && !tournamentOnly && !onTournaments/);
+    assert.ok(rail.indexOf('calendarLink.href') < rail.indexOf('permitsLink.href'), 'Permits under Calendar');
+    assert.ok(rail.indexOf('permitsLink.href') < rail.indexOf('schedulesLink.href'), 'Schedules under Permits');
+    // The phone: a lone sheet row after the tiles and Schedules' row, before the groups — never a tile, and the club bar
+    // only (the tournament bar's sheet lists the tournament's groups).
+    const bar = readCode(BAR);
+    assert.match(bar, /\{club\.schedulesRow && row\(club\.schedulesRow\)\}[\s\S]*?\{permitsLink && row\(permitsLink\)\}[\s\S]*?\{sheetGroups\.map\(group\)\}/);
+    assert.doesNotMatch(bar, /clubPhoneNav(<\w+>)?\(\{[^}]*permits/, 'Permits never fills a tab or a tile');
+  });
 });
 
 describe('2 · the phone reads; the desk changes (P11-10)', () => {

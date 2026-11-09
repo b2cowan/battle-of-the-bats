@@ -16,7 +16,7 @@ import { hasOrgVenueLibrary } from '@/lib/plan-features';
 import { isTournamentTier } from '@/lib/billing-urls';
 import { useCurrentOrgCoachAccess, coachDoorFor } from '@/lib/use-current-org-coach-access';
 import { useIsSandbox } from '@/components/sandbox/SandboxProvider';
-import { kitPrograms, kitOrgLinks, kitBillingLink, activeKitSection, clubProgramOrder, personClubShape, kitCalendarLink, kitSchedulesLink, kitOrgPlace, litClubPlace, clubPlaceGroups, orgTabs, showsOrgBoard, type KitLink } from '@/lib/admin-kit-nav';
+import { kitPrograms, kitOrgLinks, kitBillingLink, activeKitSection, clubProgramOrder, personClubShape, kitCalendarLink, kitSchedulesLink, kitPermitsLink, kitOrgPlace, litClubPlace, clubPlaceGroups, orgTabs, showsOrgBoard, type KitLink } from '@/lib/admin-kit-nav';
 import { kitTournamentGroups } from './kit-tournament-groups';
 import { useClubBrief } from './club/ClubBriefProvider';
 
@@ -59,6 +59,15 @@ export function useOrgTabs() {
   return { tabs, isTeamWorkspace };
 }
 
+/** The Permits row (Club Tier 13c, C1) or null — the rail, the More sheet and the bar's place all read this one answer. */
+export function usePermitsLink() {
+  const { currentOrg, userRole } = useOrg();
+  const { base, isCanceled } = useOrgLinks();
+  return kitPermitsLink({
+    base, role: userRole, isCanceled, tournamentTier: isTournamentTier(currentOrg?.planId), hasVenueLibrary: hasOrgVenueLibrary(currentOrg?.planId),
+  });
+}
+
 export function useAdminKitNav() {
   const pathname = usePathname();
   const { currentOrg, userRole, userCapabilities, canOpen } = useOrg();
@@ -90,6 +99,8 @@ export function useAdminKitNav() {
   const schedulesLink = kitSchedulesLink({
     base, canUse, isCanceled, role: userRole, planId: currentOrg?.planId,
   });
+  // The club's permits (Club Tier 13c, C1): between Calendar and Schedules in the rail, the More sheet's lone row — one gate.
+  const permitsLink = usePermitsLink();
   const billingLink = kitBillingLink({ orgSlug, planId: currentOrg?.planId, accountKind: currentOrg?.accountKind, role: userRole, capabilities: userCapabilities, isSandbox });
   // The person's own Coaches Portal door — the rail's foot and the More sheet's "You" both show it.
   const coachAccess = useCurrentOrgCoachAccess(currentOrg?.slug, !isCanceled);
@@ -138,6 +149,7 @@ export function useAdminKitNav() {
     litPlace,
     billingLink,
     calendarLink,
+    permitsLink,
     schedulesLink,
     coachDoor,
     tournamentGroups,

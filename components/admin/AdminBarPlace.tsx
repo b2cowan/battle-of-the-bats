@@ -23,7 +23,7 @@ import { useOrg } from '@/lib/org-context';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { clubPlaceAt, type ClubPlaceAt, type PlaceTab } from '@/lib/admin-kit-nav';
 import { useHouseLeagueAccess } from '@/components/admin/kit/useHouseLeagueSeasons';
-import { useOrgTabs } from '@/components/admin/kit/useAdminKitNav';
+import { useOrgTabs, usePermitsLink } from '@/components/admin/kit/useAdminKitNav';
 
 /** What the address says (`ClubPlaceAt`: key, title, way up, facts, tabs, lit tab, label) plus the live parts only a frame has.
  *  Both of the admin's headers draw it (`useAdminPlace`): the phone bar and, above 900px, the top strip. */
@@ -44,6 +44,7 @@ export function useClubPlaceAt(): ClubPlaceAt | null {
   const { currentOrg, canOpen, clubHasPayouts, limitedToTeamGroups } = useOrg();
   const seasonAccess = useHouseLeagueAccess(null);
   const { tabs: orgTabs, isTeamWorkspace } = useOrgTabs();
+  const permitsLink = usePermitsLink();
   if (!currentOrg) return null;
   return clubPlaceAt(pathname, `/${currentOrg.slug}/admin`, {
     canUse: canOpen,
@@ -54,6 +55,8 @@ export function useClubPlaceAt(): ClubPlaceAt | null {
     hasPayouts: clubHasPayouts,
     // The Families layout's own gate (`canOpenFamilies`): the module AND never a member limited to some team groups.
     opensFamilies: canOpen('module_families') && !limitedToTeamGroups,
+    // The rail row's own gate (`kitPermitsLink`, Club Tier 13c), so the bar names Permits exactly where the sidebar lists it.
+    opensPermits: !!permitsLink,
   });
 }
 

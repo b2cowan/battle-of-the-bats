@@ -116,7 +116,7 @@ describe('a club place names itself in the bar, and its tabs pin inside it', () 
     const frameFn = frame.slice(frame.indexOf('export default function PlaceFrame'), frame.indexOf('export function TabActions'));
     assert.match(frameFn, /useHandBarPlace\(place\);/);
     assert.doesNotMatch(frame, /HubTabBar|PaperPlaceFrame|header: ReactNode|\{header\}/, 'no paper tab row or heading mode');
-    for (const f of ['RepTeamsFrame', 'SeasonFrame', 'TeamFrame', 'money/AccountingFrame', 'families/FamiliesFrame', 'OrgFrame']) {
+    for (const f of ['RepTeamsFrame', 'SeasonFrame', 'TeamFrame', 'money/AccountingFrame', 'families/FamiliesFrame', 'OrgFrame', 'PermitsFrame']) {
       const code = readCode(`components/admin/kit/club/${f}.tsx`);
       assert.match(code, /<PlaceFrame place=\{/, `${f} hands its parts to the bar`);
       assert.match(code, /useClubPlaceAt\(\)/, `${f} asks the bar's own question`);

@@ -12,12 +12,13 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
-  Gauge, Medal, Globe, Trophy, ChartGantt, IdCard, CalendarClock, Calendar, DollarSign, Megaphone, UserCheck,
+  Gauge, Medal, Globe, Trophy, ChartGantt, IdCard, CalendarClock, Calendar, DollarSign, Megaphone, UserCheck, FileCheck,
+  FileText, MapPin,
 } from 'lucide-react';
 import { TOUR_GROUPS } from '../../components/admin/admin-nav-config.ts';
 import { kitTournamentGroups } from '../../components/admin/kit/kit-tournament-groups.ts';
 import {
-  kitPrograms, kitOrgLinks, kitCalendarLink, kitSchedulesLink, clubProgramOrder, personClubShape, clubSheetGroups, orgTabs,
+  kitPrograms, kitOrgLinks, kitCalendarLink, kitSchedulesLink, kitPermitsLink, clubProgramOrder, personClubShape, clubSheetGroups, orgTabs,
   placeGroupHeading, showsOrgBoard,
 } from '../../lib/admin-kit-nav.ts';
 import { CLUB_BASE, CLUB_PEOPLE, clubNavFor, RUNS_BOTH, RUNS_NEITHER } from './_club-people.ts';
@@ -53,6 +54,12 @@ describe('N5 · the icon dictionary', () => {
     const canUse = () => true;
     assert.equal(kitCalendarLink({ base: '/o/admin', canUse, isCanceled: false, tournamentTier: false })?.icon, CalendarClock);
     assert.equal(kitSchedulesLink({ base: '/o/admin', canUse, isCanceled: false, role: 'owner', planId: 'club' })?.icon, ChartGantt);
+    // Permits (13c, N5): a document with a check — never Venue library's pin nor PDF settings' plain document.
+    const permits = kitPermitsLink({ base: '/o/admin', role: 'owner', isCanceled: false, tournamentTier: false, hasVenueLibrary: true })?.icon;
+    assert.equal(permits, FileCheck);
+    const org = kitOrgLinks({ base: '/o/admin', role: 'owner', isCanceled: false, canSeeMembers: true, hasVenueLibrary: true });
+    assert.equal(org.find(l => l.key === 'org/venues')?.icon, MapPin);
+    assert.equal(org.find(l => l.key === 'org/pdf')?.icon, FileText);
     const members = kitOrgLinks({ base: '/o/admin', role: 'owner', isCanceled: false, canSeeMembers: true, hasVenueLibrary: true })
       .find(l => l.key === 'org/members');
     assert.equal(members?.icon, IdCard);
@@ -451,6 +458,8 @@ describe('13i · places in the sidebar, pages on the page', () => {
         assert.deepEqual({ bar, tiles }, BEFORE[who], `${who}: the bar or the tiles moved`);
         const sheet = [
           ...(n.phone.schedulesRow ? [n.phone.schedulesRow.key] : []),
+          // Permits (13c C1 = A): the sidebar's unheaded place, the sheet's lone row above its groups — never a tile.
+          ...(n.permits ? [n.permits.key] : []),
           ...clubSheetGroups(n.groups, n.phone).flatMap(g => g.places.map(p => p.key)),
         ];
         const phone = ['overview', ...bar, ...(tiles ?? []), ...sheet];

@@ -6,7 +6,7 @@
 import { hasCapability, type Capability } from '../../lib/roles.ts';
 import type { OrgRole } from '../../lib/types.ts';
 import {
-  clubPlaceGroups, clubProgramOrder, kitCalendarLink, kitOrgLinks, kitOrgPlace, kitPrograms, kitSchedulesLink,
+  clubPlaceGroups, clubProgramOrder, kitCalendarLink, kitOrgLinks, kitOrgPlace, kitPermitsLink, kitPrograms, kitSchedulesLink,
   personClubShape, type ClubShape, type KitLink,
 } from '../../lib/admin-kit-nav.ts';
 import { clubPhoneNav } from '../../lib/nav-tiles.ts';
@@ -28,6 +28,7 @@ export function clubNavFor(role: OrgRole, shape: ClubShape, extra: Record<string
   const alsoOnPlan = kitPrograms({ base: CLUB_BASE, canUse, order: order.also });
   const calendar = kitCalendarLink({ base: CLUB_BASE, canUse, isCanceled: false, tournamentTier: false });
   const schedules = kitSchedulesLink({ base: CLUB_BASE, canUse, isCanceled: false, role, planId: 'club' });
+  const permits = kitPermitsLink({ base: CLUB_BASE, role, isCanceled: false, tournamentTier: false, hasVenueLibrary: true });
   const orgLinks = kitOrgLinks({
     base: CLUB_BASE, role, isCanceled: false,
     canSeeMembers: role === 'owner' || hasCapability(role, extra, 'module_members'),
@@ -35,8 +36,8 @@ export function clubNavFor(role: OrgRole, shape: ClubShape, extra: Record<string
   });
   const orgPlace = kitOrgPlace({ base: CLUB_BASE, orgLinks, tournamentOnly: false });
   const groups = clubPlaceGroups<KitLink>({ programs, alsoOnPlan, organization: orgPlace });
-  // The sidebar's rows, top to bottom: Overview, Calendar, Schedules (each unheaded), then every group's places.
-  const sidebarRows = ['overview', ...(calendar ? ['calendar'] : []), ...(schedules ? ['schedules'] : []), ...groups.flatMap(g => g.places.map(p => p.key))];
+  // The sidebar's rows, top to bottom: Overview, Calendar, Permits, Schedules (each unheaded — 13c C1), then every group's places.
+  const sidebarRows = ['overview', ...(calendar ? ['calendar'] : []), ...(permits ? ['permits'] : []), ...(schedules ? ['schedules'] : []), ...groups.flatMap(g => g.places.map(p => p.key))];
   const phone = clubPhoneNav<KitLink>({ calendar, schedules, programs, alsoOnPlan });
-  return { programs, alsoOnPlan, orgLinks, orgPlace, groups, sidebarRows, phone };
+  return { programs, alsoOnPlan, orgLinks, orgPlace, groups, sidebarRows, phone, permits };
 }

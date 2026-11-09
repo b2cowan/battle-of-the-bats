@@ -85,7 +85,7 @@ export default function AdminKitRail() {
   const nav = useAdminKitNav();
   const {
     base, brief, orgLinks, placeGroups, litPlace, tournamentOnly, isCanceled,
-    onTournaments, coachDoor, calendarLink, schedulesLink, billingLink, helpHref,
+    onTournaments, coachDoor, calendarLink, permitsLink, schedulesLink, billingLink, helpHref,
   } = nav;
   const feeAlert = useFeeAlert();
   const clubName = useOrg().currentOrg?.name ?? null;
@@ -133,6 +133,11 @@ export default function AdminKitRail() {
             bar never carried either. Schedules, below, follows the same rule. */}
         {calendarLink && !tournamentOnly && !onTournaments && (
           <RailRow href={calendarLink.href} label={calendarLink.label} active={isKitLinkActive(pathname, calendarLink)} icon={calendarLink.icon} />
+        )}
+        {/* The club's permits (Club Tier 13c, C1 = A): between Calendar and Schedules — the time the club holds, then where
+            it hands it out. A place, unheaded like its neighbours (N2). `kitPermitsLink` holds its gate. */}
+        {permitsLink && !tournamentOnly && !onTournaments && (
+          <RailRow href={permitsLink.href} label={permitsLink.label} active={isKitLinkActive(pathname, permitsLink)} icon={permitsLink.icon} />
         )}
         {/* The club scheduler (Club Tier 11a): directly under Calendar — Calendar reads what is booked, Schedules hands the
             club's time out. `kitSchedulesLink` holds its gate (owner or admin, the plan's key, rep teams to hand time to). */}

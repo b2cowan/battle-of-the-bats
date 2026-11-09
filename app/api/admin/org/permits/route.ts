@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth';
+import { getAuthContextWithRole, getAuthContextWithScope, unauthorized, forbidden } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability, captureAndJson } from '@/lib/observability';
 import { hasOrgVenueLibrary } from '@/lib/plan-features';
@@ -12,7 +12,8 @@ import { isClosedYearError, loadFiscalSetting, refuseIfClosed } from '@/lib/club
 import { moveRefused } from '@/lib/club-money-route';
 import { readClubPlaces, readPermitTimes } from '@/lib/permit-lookup';
 import { readLinePermits, readPermitWindow, readPermitsYear, schedulesHandingOut } from '@/lib/permit-server';
-import { permitPayload, readPermitBody, type PermitDraft } from '@/lib/permit-form';
+import { blockFilled, permitPayload, readBlockDrafts, readPermitBody, toBlock, type PermitDraft } from '@/lib/permit-form';
+import { describeDatesOffTaken, readDatesOffTaken, readDayTaken, takenTotals } from '@/lib/permit-dates-off';
 import { PERMIT_WORDS as W, renewedName } from '@/lib/permit-words';
 
 // ---------------------------------------------------------------------------
@@ -24,8 +25,9 @@ import { PERMIT_WORDS as W, renewedName } from '@/lib/permit-words';
 // GET  ?orgSlug=&line=<line>       — a budget line's "Pays for" (Accounting only).
 // GET  ?orgSlug=&lines=<day>       — the cost lines of the fiscal year that day falls in: Add permit's Budget line.
 // GET  ?orgSlug=&teams=1           — the club's teams, for "For: One team".
+// GET  ?orgSlug=&taken=<permit>    — what that permit's dates off took, as the reader's Calendar names it (13c).
 // POST ?orgSlug=  { action, … }    — add-permit · update-permit (the whole record, autosaved) · renew-permit ·
-//                                    delete-permit.
+//                                    delete-permit · booked-that-day (the form's count under a date off; writes nothing).
 //
 // ⚖ WHO (owner 2026-10-11, plan §6 Ask 1): a permit's TIME reads to everyone who opens the Venue library (a coach never
 // does: refused here, as the library is); its MONEY (cost, an hour held, the budget line) reads and writes only for those
@@ -59,7 +61,9 @@ function floorRefusal(e: unknown): Response | null {
 
 export const GET = withObservability(async (req: Request) => {
   const params = new URL(req.url).searchParams;
-  const ctx = await getAuthContextWithRole({ orgSlug: params.get('orgSlug') ?? undefined, requireOrgSlug: true });
+  // The scoped read (role + capabilities + tournament assignments): the window's notice needs the reader's assignments to
+  // name bookings as their Calendar does, and nothing here reads a rep-group scope — so one sign-in read serves every branch.
+  const ctx = await getAuthContextWithScope({ orgSlug: params.get('orgSlug') ?? undefined, requireOrgSlug: true });
   if (!ctx) return unauthorized();
   if (!hasOrgVenueLibrary(ctx.org.planId)) return refusal(403, 'plan_lacks_permits', W.planLocked);
   // A coaching-staff login opens nothing of the club's (the library's own rule): a coach never reads a permit.
@@ -80,6 +84,18 @@ export const GET = withObservability(async (req: Request) => {
       const { data, error } = await supabaseAdmin.from('rep_teams').select('id, name').eq('org_id', orgId).eq('is_archived', false).order('name');
       if (error) throw error;
       return NextResponse.json({ teams: (data ?? []).map(t => ({ id: t.id, name: t.name })) });
+    }
+    // What this permit's dates off took (Club Tier Stage 13c, C2 = A): the window's notice, named as this reader's Calendar
+    // names it, each door only where the reader can go. Its own read, so a failure is the notice's alone.
+    const takenId = params.get('taken');
+    if (takenId) {
+      if (!isUuid(takenId)) return NextResponse.json({ notice: null });
+      const { taken, times } = await readDatesOffTaken(orgId, { today, permitIds: [takenId] });
+      const notice = await describeDatesOffTaken(
+        { org: ctx.org, member: { role: ctx.role, capabilities: ctx.capabilities }, userId: ctx.user.id, assignedTournamentIds: ctx.assignedTournamentIds },
+        taken.get(takenId) ?? [], times,
+      );
+      return NextResponse.json({ notice });
     }
     const setting = await loadFiscalSetting(orgId);
     const linesDay = params.get('lines');
@@ -103,7 +119,14 @@ export const GET = withObservability(async (req: Request) => {
       return NextResponse.json(read);
     }
     const year = readFiscalYearParam(params.get('year'), setting) ?? fiscalYearOf(today, setting);
-    return NextResponse.json(await readPermitsYear(orgId, { year, setting, today, canSave, canMoney }));
+    // The rows' flag ("2 dates off · 8 bookings on them") — one answer with the notice; a failed read draws no flag, never
+    // a failed list.
+    const [list, taken] = await Promise.all([
+      readPermitsYear(orgId, { year, setting, today, canSave, canMoney }),
+      readDatesOffTaken(orgId, { today }).then(r => r.taken).catch(e => { console.error('[permits] the dates-off read failed (no flags):', e); return null; }),
+    ]);
+    if (taken) list.taken = Object.fromEntries([...taken].map(([pid, days]) => [pid, takenTotals(days)]));
+    return NextResponse.json(list);
   } catch (err) {
     return captureAndJson(err, { error: W.loadFailed, code: 'load_failed' }, 500);
   }
@@ -183,6 +206,32 @@ export const POST = withObservability(async (req: Request) => {
       const id = await save(null, read.draft, null);
       if (id instanceof Response) return id;
       return NextResponse.json({ success: true, id });
+    }
+
+    // -- booked-that-day: the form's count under a date off, as it is picked (Club Tier Stage 13c) -------------
+    // The form's own time, saved or not (Add permit has no id yet); the bookings already on the books that this time would
+    // hold that day. Warns, never blocks: it writes nothing.
+    if (action === 'booked-that-day') {
+      const d = (body.data ?? {}) as { day?: unknown; startsOn?: unknown; endsOn?: unknown; blocks?: unknown };
+      const day = typeof d.day === 'string' && isCalendarDate(d.day) ? d.day : null;
+      if (!day || typeof d.startsOn !== 'string' || !isCalendarDate(d.startsOn) || typeof d.endsOn !== 'string' || !isCalendarDate(d.endsOn)) {
+        return NextResponse.json({ bookings: null });
+      }
+      const places = await readClubPlaces(orgId);
+      // The form's blocks as the save reads them; a half-filled block holds no time yet, and only the club's own venues and
+      // facilities count (the bookings are the club's alone anyway: `orgId` scopes the pool).
+      // A block naming only facilities the club no longer has holds nothing (an emptied list would read as "every facility").
+      const blocks = readBlockDrafts(d.blocks).flatMap(b => {
+        if (!blockFilled(b) || b.endTime <= b.startTime || !places.venueName.has(b.venueId)) return [];
+        const facilityIds = b.facilityIds.filter(f => places.byVenue.get(b.venueId)?.includes(f));
+        return b.facilityIds.length && !facilityIds.length ? [] : [toBlock({ ...b, facilityIds })];
+      });
+      const permitId = isUuid(body.id) ? body.id : null;
+      const bookings = await readDayTaken(orgId, {
+        today: tournamentToday(), day, permitId, places,
+        permit: { id: permitId ?? 'draft', startsOn: d.startsOn, endsOn: d.endsOn, blocks, datesOff: [] },
+      });
+      return NextResponse.json({ bookings });
     }
 
     const permit = await stored(body.id);

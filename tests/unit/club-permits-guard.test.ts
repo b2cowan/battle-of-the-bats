@@ -178,7 +178,8 @@ describe('the house format reaches the club\'s Excel reports (Ask 26)', () => {
     // …and all three workbooks wear all three.
     for (const [f, call] of [
       ['components/admin/kit/club/PermitWindows.tsx', /const brand = await clubWorkbookBrand\(q\);/],
-      ['app/[orgSlug]/admin/org/venues/page.tsx', /const brand = await clubWorkbookBrand\(q\);/],
+      // The Permits list moved to its own place (Club Tier 13c, C1 = A) and took its workbook with it.
+      ['app/[orgSlug]/admin/permits/page.tsx', /const brand = await clubWorkbookBrand\(q\);/],
       ['lib/export/club-schedule-export.ts', /const brand = await clubWorkbookBrand\(input\.q\);/],
     ] as const) {
       const code = readCode(f);

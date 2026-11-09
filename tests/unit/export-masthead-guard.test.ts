@@ -37,8 +37,9 @@ const ALLOWED = new Map([
   /* ⚰ The shared-payee report PAGE (Club Tier 3b) left this list with its Export: Stage 3c moved the report into the
      payee's window and dropped the file (Ask 7 — one payee's team records are read there). */
   // Club Tier Stage 10a (Ask 26, the house format): two reports a club reads and sends on — nothing imports either back.
-  ['app/[orgSlug]/admin/org/venues/page.tsx',
-    'the Permits list (Venue library › Permits): the club\'s permits for a fiscal year, a report; no permit importer exists'],
+  // Club Tier Stage 13c (C1 = A): the list moved out of the Venue library to the Permits place, and its workbook with it.
+  ['app/[orgSlug]/admin/permits/page.tsx',
+    'the Permits list (the Permits place): the club\'s permits for a fiscal year, a report; no permit importer exists'],
   ['components/admin/kit/club/PermitWindows.tsx',
     'a permit\'s use, for the town or the dome at renewal: held, booked, unused by field; nothing imports it'],
   // Club Tier Stage 11a part B (Ask 26): a club schedule's workbook — the schedule a row per slot, By team, By field — for

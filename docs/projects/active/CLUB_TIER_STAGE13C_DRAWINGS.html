@@ -1,0 +1,1061 @@
+<title>The Club’s Time</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: a drawings sheet in the house layout. Sticky numbered section tabs, one View row of switches, then a product
+   frame drawn at true size from the shipped warm theme, with its numbered notes. Cool slate chrome so the warm frames
+   read as specimens, not as the page. */
+:root {
+  --bg: #E7EAEE;
+  --surface: #FFFFFF;
+  --fg: #1A1F25;
+  --muted: #56606B;
+  --rule: #D0D6DC;
+  --accent: #2D5B86;
+  --accent-soft: rgba(45, 91, 134, 0.10);
+  --new: #2D5B86;
+  --re: #7A4E12;
+  --same: #6B7480;
+  --shadow: 0 1px 2px rgba(20, 30, 40, 0.08), 0 10px 28px rgba(20, 30, 40, 0.12);
+  --doc-font: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --doc-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+  /* the product's shipped warm tokens (fixed: a specimen looks the same in either theme) */
+  --p-paper: #F8F4ED;
+  --p-card: #FFFFFF;
+  --p-ink: #241E15;
+  --p-ink2: #4A4235;
+  --p-dim: #615A54;
+  --p-line: rgba(70, 55, 30, 0.12);
+  --p-line2: rgba(70, 55, 30, 0.20);
+  --p-fill: rgba(70, 55, 30, 0.08);
+  --p-olive: #57651E;
+  --p-olive-soft: rgba(87, 101, 30, 0.10);
+  --p-lime: #D9F99D;
+  --p-amber: #835006;
+  --p-amber-soft: rgba(131, 80, 6, 0.08);
+  --p-amber-line: rgba(131, 80, 6, 0.32);
+  --p-red: #B03A22;
+  --p-good: #2A5222;
+  --p-sans: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --p-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14171A; --surface: #1D2126; --fg: #E6E9EC; --muted: #9AA4AE; --rule: #2F353C;
+    --accent: #8EB9E2; --accent-soft: rgba(142, 185, 226, 0.14); --new: #8EB9E2; --re: #E2B36E; --same: #9AA4AE;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 28px rgba(0, 0, 0, 0.4);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #14171A; --surface: #1D2126; --fg: #E6E9EC; --muted: #9AA4AE; --rule: #2F353C;
+  --accent: #8EB9E2; --accent-soft: rgba(142, 185, 226, 0.14); --new: #8EB9E2; --re: #E2B36E; --same: #9AA4AE;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 28px rgba(0, 0, 0, 0.4);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font: 15px/1.55 var(--doc-font); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.doc { max-width: 1490px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 48px; }
+.dochead { display: grid; gap: 4px; margin-bottom: 14px; }
+.dochead .eyebrow { font: 600 11px/1.3 var(--doc-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.dochead h1 { margin: 0; font-size: 24px; line-height: 1.2; text-wrap: balance; }
+.dochead p { margin: 0; color: var(--muted); max-width: 80ch; }
+
+.stabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 9; background: var(--bg); border-bottom: 1px solid var(--rule);
+  display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none;
+  margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px))); padding-inline: max(16px, env(safe-area-inset-left, 0px)); }
+.stabs::-webkit-scrollbar { display: none; }
+.stabs button { border: 0; background: none; color: var(--muted); cursor: pointer; white-space: nowrap; font: 600 14px/1 var(--doc-font); padding: 14px 12px 12px; border-bottom: 2px solid transparent; }
+.stabs button:hover { color: var(--fg); }
+.stabs button[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); }
+button:focus-visible, .ask input:focus-visible + span, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.viewrow { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; padding: 12px 0 16px; }
+.vgroup { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.vgroup > span { font: 600 11px/1 var(--doc-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.seg { display: inline-flex; flex-wrap: wrap; background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 2px; }
+.seg button { border: 0; background: none; color: var(--muted); cursor: pointer; font: 600 13px/1 var(--doc-font); padding: 8px 11px; border-radius: 6px; }
+.seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); }
+
+.lede { margin: 0 0 14px; max-width: 86ch; }
+.lede b { color: var(--fg); }
+.stage { display: grid; grid-template-columns: minmax(0, auto) minmax(300px, 1fr); gap: 28px; align-items: start; }
+.stage.desk { grid-template-columns: minmax(0, 1fr); }
+.fcol { min-width: 0; display: grid; gap: 8px; justify-items: start; }
+.fcap { font-size: 13px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; }
+.fcap b { color: var(--fg); font-weight: 600; }
+.fscroll { width: 100%; max-width: 100%; }
+.fscroll.actual { overflow-x: auto; }
+.fwrap { position: relative; }
+.fwrap > .fr { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+.notes { min-width: 0; display: grid; gap: 8px; align-content: start; }
+.stage.desk .notes { grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); }
+.nt { text-align: left; border: 1px solid var(--rule); background: var(--surface); color: var(--fg); border-radius: 10px; padding: 10px 12px; cursor: pointer; display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; font: 14px/1.5 var(--doc-font); }
+.nt:hover { border-color: var(--accent); }
+.nt.flash { box-shadow: 0 0 0 3px var(--accent-soft); border-color: var(--accent); }
+.nt .nn { grid-row: span 3; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font: 700 12px/1 var(--doc-mono); color: #fff; background: var(--same); }
+.nt.new .nn { background: var(--new); }
+.nt.re .nn { background: var(--re); }
+.nt b { font-weight: 600; }
+.nt .tx { color: var(--muted); font-size: 13.5px; }
+.tag { justify-self: start; font: 600 10.5px/1.3 var(--doc-mono); letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 6px; border-radius: 4px; border: 1px solid var(--rule); color: var(--same); }
+.nt.new .tag { color: var(--new); border-color: var(--new); }
+.nt.re .tag { color: var(--re); border-color: var(--re); }
+.prose { max-width: 92ch; }
+.prose h2 { margin: 18px 0 6px; font-size: 19px; line-height: 1.25; }
+.prose h2:first-child { margin-top: 0; }
+.prose h3 { margin: 14px 0 4px; font-size: 15px; }
+.prose p { margin: 0 0 10px; }
+.prose ul { margin: 0 0 12px; padding-left: 20px; }
+.prose li { margin-bottom: 5px; }
+.prose code { font: 12.5px var(--doc-mono); background: var(--surface); border: 1px solid var(--rule); border-radius: 4px; padding: 0 4px; }
+.mk { font: 700 11px/1 var(--doc-mono); padding: 2px 5px; border-radius: 4px; border: 1px solid var(--rule); color: var(--muted); margin-right: 4px; }
+.mk.v { color: var(--new); border-color: var(--new); }
+.tblwrap { overflow-x: auto; max-width: 100%; margin-bottom: 16px; }
+.who { border-collapse: collapse; background: var(--surface); border: 1px solid var(--rule); font-size: 14px; min-width: 860px; }
+.who th, .who td { border-bottom: 1px solid var(--rule); padding: 9px 12px; text-align: left; vertical-align: top; }
+.who th { font: 600 11px/1.3 var(--doc-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.who td:first-child { font-weight: 600; white-space: nowrap; }
+.who .no { color: var(--muted); }
+.who .nw { color: var(--new); font-weight: 600; }
+.callout { border-left: 3px solid var(--accent); background: var(--surface); padding: 10px 14px; border-radius: 0 8px 8px 0; margin: 0 0 14px; max-width: 92ch; }
+
+/* asks */
+.asks { display: grid; gap: 14px; max-width: 900px; }
+.ask { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 16px 18px; display: grid; gap: 8px; }
+.ask h3 { margin: 0; font-size: 16px; display: flex; gap: 10px; align-items: baseline; }
+.ask h3 .n { font: 700 12px/1 var(--doc-mono); color: var(--accent); }
+.ask p { margin: 0; color: var(--muted); }
+.ask .opts { display: grid; gap: 8px; }
+.ask label { display: flex; cursor: pointer; position: relative; }
+.ask input { position: absolute; opacity: 0; pointer-events: none; }
+.ask label span { flex: 1; border: 1px solid var(--rule); border-radius: 8px; padding: 9px 12px; font-size: 14px; background: var(--bg); }
+.ask label span b { font-weight: 600; }
+.ask input:checked + span { border-color: var(--accent); background: var(--accent-soft); }
+.ask .gol { font-size: 13px; color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; justify-self: start; font-weight: 600; }
+.answers { display: grid; gap: 8px; max-width: 900px; margin-top: 16px; }
+.answers textarea { width: 100%; min-height: 120px; font: 13px/1.5 var(--doc-mono); background: var(--surface); color: var(--fg); border: 1px solid var(--rule); border-radius: 8px; padding: 10px; }
+.copyrow { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.copyrow button { border: 1px solid var(--accent); background: var(--accent-soft); color: var(--accent); border-radius: 8px; padding: 8px 12px; font: 600 13px/1 var(--doc-font); cursor: pointer; }
+.copyrow span { color: var(--muted); font-size: 13px; }
+
+@media (max-width: 980px) { .stage { grid-template-columns: minmax(0, 1fr); } }
+
+/* ═════════════ PRODUCT SPECIMEN (shipped warm-theme values) ═════════════ */
+.fr { background: var(--p-paper); color: var(--p-ink); font: 14px/1.4 var(--p-sans); overflow: hidden; box-shadow: var(--shadow); border-radius: 10px; font-variant-numeric: tabular-nums; position: relative; }
+.fr * { box-sizing: border-box; }
+.fr.ph { border-radius: 26px; border: 6px solid #2A2D31; }
+.fr.crop { border-radius: 10px; }
+.ground { background-color: var(--p-paper); background-image: linear-gradient(rgba(87,101,30,0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(87,101,30,0.07) 1px, transparent 1px); background-size: 40px 40px; }
+.fr .sc { overflow-y: auto; overflow-x: hidden; position: relative; min-height: 0; scrollbar-width: thin; }
+.fr.desk { display: grid; grid-template-rows: 48px minmax(0, 1fr); }
+.fr.desk .dbody { display: grid; grid-template-columns: 240px minmax(0, 1fr); min-height: 0; }
+.differs .fr [data-same] { opacity: 0.2; filter: grayscale(1); }
+
+/* top strip (Phase 2D, as ruled) */
+.strip { display: grid; grid-template-columns: 240px minmax(0, 1fr); background: var(--p-card); border-bottom: 1px solid var(--p-line); position: relative; z-index: 6; min-width: 0; }
+.strip .lcell { display: flex; align-items: center; padding: 0 1.25rem; border-right: 1px solid var(--p-line); gap: 0.6rem; }
+.strip .rcell { display: flex; align-items: center; gap: 0.9rem; padding: 0 1rem 0 2rem; min-width: 0; }
+.brand { display: inline-flex; align-items: center; gap: 6px; font: 700 15px/1 var(--p-sans); letter-spacing: -0.018em; }
+.sdiv { width: 1px; height: 12px; background: var(--p-line2); }
+.area { font: 700 10px/1 var(--p-sans); letter-spacing: 0.1em; text-transform: uppercase; color: var(--p-dim); }
+.place { display: flex; align-items: center; gap: 0.6rem; min-width: 0; flex: 1; }
+.pn { font: 700 16px/1.2 var(--p-sans); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.back { display: inline-flex; align-items: center; gap: 0.3rem; color: var(--p-ink2); font: 600 14px/1 var(--p-sans); flex: none; }
+.vr { width: 1px; height: 22px; background: var(--p-line); flex: none; }
+.doors { margin-left: auto; display: flex; gap: 0.65rem; align-items: center; flex: none; }
+.door { width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; color: var(--p-dim); }
+.pill { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.32rem 0.72rem; border: 1px solid var(--p-line); border-radius: 999px; background: rgba(36,30,21,0.05); font: 650 12px/1.1 var(--p-sans); white-space: nowrap; }
+.chip { display: inline-flex; align-items: center; font: 700 10px/1.4 var(--p-mono); letter-spacing: 0.06em; text-transform: uppercase; padding: 0.14rem 0.5rem; border-radius: 999px; white-space: nowrap; flex: none; }
+.chip.pend { color: var(--p-amber); background: var(--p-amber-soft); border: 1px solid var(--p-amber-line); }
+.chip.good { color: var(--p-good); background: rgba(52,102,42,0.08); border: 1px solid rgba(52,102,42,0.28); }
+.chip.neutral { color: var(--p-ink2); background: var(--p-olive-soft); border: 1px solid var(--p-line2); }
+
+/* sidebar (13i shape, club cell on top per 2D) */
+.rail { background: var(--p-card); border-right: 1px solid var(--p-line); display: flex; flex-direction: column; overflow: hidden; }
+.rail .clubhead { height: 45px; flex: none; padding: 0 1.25rem; border-bottom: 1px solid var(--p-line); font: 700 14px/1.25 var(--p-sans); display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; }
+.rail .clubhead svg { color: var(--p-olive); }
+.rail .sec { font: 700 11px/1 var(--p-sans); letter-spacing: 0.1em; text-transform: uppercase; color: var(--p-dim); padding: 0.85rem 1.25rem 0.35rem; min-height: 1.6rem; }
+.rail .it { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1.25rem; color: var(--p-dim); font-size: 14px; position: relative; }
+.rail .it.on { background: var(--p-olive-soft); color: var(--p-olive); font-weight: 600; }
+.rail .foot { margin-top: auto; border-top: 1px solid var(--p-line); padding-top: 0.4rem; padding-bottom: 0.5rem; }
+.rail .foot .it { font-size: 12px; padding-block: 0.4rem; }
+.cnt { margin-left: auto; min-width: 1.15rem; height: 1.15rem; padding: 0 0.3rem; border-radius: 999px; display: inline-grid; place-items: center; font: 700 10px/1 var(--p-mono); color: var(--p-amber); background: rgba(131,80,6,0.11); border: 1px solid var(--p-amber-line); }
+
+/* tab band under the strip */
+.tb { position: sticky; top: 0; z-index: 5; background: var(--p-card); border-bottom: 1px solid var(--p-line); padding: 0 2rem; }
+.tabrow { display: flex; gap: 0.15rem; margin: 0 -0.85rem; }
+.tab { display: inline-flex; align-items: center; min-height: 44px; padding: 0.55rem 0.85rem; font: 600 14px/1 var(--p-sans); color: var(--p-dim); border-bottom: 2px solid transparent; white-space: nowrap; }
+.tab.on { color: var(--p-olive); border-bottom-color: var(--p-olive); }
+
+/* page */
+.pad { padding: 1.5rem 2rem 3rem; }
+.meta { font-size: 13px; color: var(--p-dim); margin: 0 0 0.75rem; }
+.tbar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-bottom: 0.85rem; }
+.tbar .sp { flex: 1; }
+.btn { display: inline-flex; align-items: center; gap: 0.4rem; min-height: 38px; padding: 0 0.85rem; border-radius: 8px; background: var(--p-fill); border: 1px solid var(--p-line); font: 600 14px/1 var(--p-sans); color: var(--p-ink); white-space: nowrap; }
+.btn.pri { background: var(--p-lime); border-color: transparent; }
+.btn.out { background: var(--p-card); border-color: var(--p-line2); }
+.btn.dis { opacity: 0.45; }
+.btn.sm { min-height: 32px; font-size: 13px; padding: 0 0.7rem; }
+.sel { display: inline-flex; align-items: center; gap: 0.5rem; min-height: 38px; padding: 0 0.7rem; border-radius: 8px; background: var(--p-card); border: 1px solid var(--p-line2); font-size: 14px; white-space: nowrap; color: var(--p-ink); }
+.vpill { display: inline-flex; align-items: center; gap: 0.35rem; min-height: 34px; padding: 0 0.75rem; border-radius: 999px; background: var(--p-olive-soft); border: 1px solid rgba(87,101,30,0.35); font-size: 13px; color: var(--p-olive); }
+.vpill b { color: var(--p-ink); font-weight: 600; }
+.yp { display: inline-flex; align-items: center; gap: 0.45rem; min-height: 34px; padding: 0 0.7rem; border-radius: 999px; background: rgba(87,101,30,0.08); border: 1px solid rgba(87,101,30,0.35); font-size: 13px; white-space: nowrap; }
+.yp .k { color: var(--p-dim); }
+.yp .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--p-olive); }
+.vsw { display: inline-flex; background: var(--p-card); border: 1px solid var(--p-line2); border-radius: 999px; padding: 3px; }
+.vsw span { padding: 0.45rem 0.85rem; border-radius: 999px; font: 600 13px/1 var(--p-sans); color: var(--p-ink2); }
+.vsw span.on { background: var(--p-olive-soft); color: var(--p-ink); }
+.card { background: var(--p-card); border: 1px solid var(--p-line); border-radius: 10px; }
+.mono { font: 700 11px/1.2 var(--p-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--p-ink2); }
+.fr small { font-size: 12px; color: var(--p-dim); }
+.fr a, .lk { color: var(--p-olive); font-weight: 600; text-decoration: none; }
+.amb { color: var(--p-amber); }
+
+/* schedule page */
+.na { padding: 0; margin-bottom: 1rem; }
+.na .h { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; border-bottom: 1px solid var(--p-line); }
+.na .h b { font-size: 16px; }
+.na .row { display: grid; grid-template-columns: 130px minmax(0, 1fr) auto; gap: 0.75rem; padding: 0.85rem 1rem; align-items: start; border-bottom: 1px solid var(--p-line); }
+.na .row:last-child { border-bottom: 0; }
+.na .row .t { font-weight: 600; }
+.na .row p { margin: 0.15rem 0 0; font-size: 13px; color: var(--p-ink2); }
+.tiles { display: inline-grid; grid-template-columns: repeat(4, 144px); background: var(--p-card); border: 1px solid var(--p-line); border-radius: 10px; overflow: hidden; margin-bottom: 1rem; }
+.tile { padding: 12px 14px; border-right: 1px solid var(--p-line); display: flex; flex-direction: column; gap: 4px; }
+.tile:last-child { border-right: 0; }
+.tv { font: 700 18px/1.2 var(--p-sans); }
+.tile small { line-height: 1.3; }
+.rs { padding: 1rem; }
+.rs h3 { margin: 0; font-size: 16px; }
+.warns { display: grid; gap: 0.45rem; margin: 0.9rem 0; font-size: 13px; }
+.warns div { display: flex; gap: 0.45rem; align-items: center; }
+.split2 { display: grid; grid-template-columns: minmax(0, 1.85fr) minmax(0, 1fr); gap: 1rem; }
+.lt .lh { display: flex; justify-content: space-between; padding: 0.7rem 0.85rem; border-bottom: 1px solid var(--p-line); font-weight: 700; }
+.lt .lh small { font-weight: 400; }
+.lt .lr { display: grid; grid-template-columns: 140px 190px 1fr auto; gap: 0.5rem; padding: 0.55rem 0.85rem; border-bottom: 1px solid var(--p-line); align-items: center; font-size: 13px; }
+.lt .lr:last-child { border-bottom: 0; }
+.lt .lr .f b { display: block; font-size: 13px; }
+.cnt2 { font: 600 11px/1 var(--p-sans); padding: 0.25rem 0.45rem; border-radius: 999px; background: var(--p-olive-soft); color: var(--p-olive); }
+.cnt2.a { background: var(--p-amber-soft); color: var(--p-amber); }
+.dd .dr { padding: 0.7rem 0.85rem; border-bottom: 1px solid var(--p-line); font-size: 13px; display: grid; gap: 2px; }
+.dd .dr:last-child { border-bottom: 0; }
+.dd .dr b { font-size: 13px; }
+/* the path line (new) */
+.path { display: flex; align-items: stretch; gap: 0; background: var(--p-card); border: 1px solid var(--p-line); border-radius: 10px; margin: 0 0 1rem; overflow: hidden; }
+.path .st { flex: 1; min-width: 0; padding: 0.6rem 0.9rem; display: grid; gap: 2px; border-right: 1px solid var(--p-line); position: relative; }
+.path .st:last-child { border-right: 0; }
+.path .st .k { font: 700 10.5px/1.2 var(--p-mono); letter-spacing: 0.07em; text-transform: uppercase; color: var(--p-dim); }
+.path .st .v { font-weight: 600; font-size: 13.5px; color: var(--p-olive); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.path .st .s { font-size: 12px; color: var(--p-dim); }
+.path .st .s.amb { color: var(--p-amber); font-weight: 600; }
+.path .st.here { background: var(--p-olive-soft); box-shadow: inset 0 -2px 0 var(--p-olive); }
+.path .st.here .v { color: var(--p-ink); }
+.path .arr { position: absolute; right: -7px; top: 50%; transform: translateY(-50%); width: 13px; height: 13px; background: var(--p-card); border-top: 1px solid var(--p-line); border-right: 1px solid var(--p-line); rotate: 45deg; z-index: 1; }
+.path .st.here .arr { background: #EEF0E4; }
+
+/* dialogs over a frame */
+.scrim { position: absolute; inset: 48px 0 0 0; background: rgba(36,30,21,0.32); z-index: 7; }
+.dlg { position: absolute; z-index: 8; left: 50%; transform: translateX(-50%); top: 68px; bottom: 20px; width: 640px; background: var(--p-card); border-radius: 12px; box-shadow: 0 20px 50px rgba(0,0,0,0.25); display: grid; grid-template-rows: auto minmax(0, 1fr) auto; overflow: hidden; }
+.dlg .dh { display: flex; align-items: flex-start; gap: 0.75rem; padding: 1.1rem 1.5rem 0.9rem; border-bottom: 1px solid var(--p-line); }
+.dlg .dh .tt { flex: 1; display: grid; gap: 4px; }
+.dlg .dh .tt b { font-size: 17px; }
+.dlg .db { padding: 1rem 1.5rem 1.5rem; display: grid; gap: 1rem; align-content: start; }
+.dlg .df { display: grid; grid-template-columns: 1fr auto 1fr; gap: 0.5rem; padding: 0.75rem 1.5rem; border-top: 1px solid var(--p-line); align-items: center; font-size: 13px; }
+.dlg .df .pn2 { border: 1px solid var(--p-line2); border-radius: 8px; padding: 0.4rem 0.7rem; display: grid; font-size: 12px; }
+.dlg .df .pn2 b { font-size: 13px; }
+.kv { display: grid; grid-template-columns: 150px 1fr; gap: 0.35rem 1rem; font-size: 14px; }
+.kv .k { color: var(--p-ink2); }
+.kv b { font-weight: 600; }
+.box { border: 1px solid var(--p-line2); border-radius: 10px; padding: 0.75rem 0.85rem; display: flex; justify-content: space-between; gap: 1rem; align-items: center; }
+.box b { display: block; }
+.band3 { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--p-line2); border-radius: 10px; overflow: hidden; }
+.band3 > div { padding: 0.75rem 0.9rem; border-right: 1px solid var(--p-line); display: grid; gap: 3px; }
+.band3 > div:last-child { border-right: 0; }
+.band2 { display: grid; grid-template-columns: repeat(2, 1fr); border: 1px solid var(--p-line2); border-radius: 10px; overflow: hidden; }
+.band2 > div { padding: 0.75rem 0.9rem; border-right: 1px solid var(--p-line); display: grid; gap: 3px; }
+.band2 > div:last-child { border-right: 0; }
+.big { font: 700 22px/1.15 var(--p-sans); }
+.secl { display: flex; justify-content: space-between; font: 700 11px/1 var(--p-mono); letter-spacing: 0.09em; text-transform: uppercase; color: var(--p-ink2); }
+.secl span { font-weight: 500; letter-spacing: 0.02em; }
+/* the pulled-dates notice (new) */
+.notice { border: 1px solid var(--p-line); border-left: 3px solid var(--p-amber); background: var(--p-card); border-radius: 8px; padding: 0.85rem 0.95rem; display: grid; gap: 0.55rem; }
+.notice .nh { display: flex; gap: 0.5rem; align-items: flex-start; color: var(--p-amber); }
+.notice .nh b { color: var(--p-ink); font-size: 14px; }
+.notice .nh p { margin: 2px 0 0; font-size: 12px; color: var(--p-ink2); }
+.notice .nday { font: 700 11px/1 var(--p-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--p-ink2); margin-top: 0.15rem; }
+.notice ul { list-style: none; margin: 0; padding: 0; border: 1px solid var(--p-line); border-radius: 8px; background: var(--p-card); }
+.notice li { display: grid; grid-template-columns: 76px minmax(0, 1fr) auto 16px; gap: 0.5rem; padding: 0.45rem 0.65rem; border-bottom: 1px solid var(--p-line); font-size: 14px; align-items: center; min-height: 44px; }
+.notice li:last-child { border-bottom: 0; }
+.notice li > span:first-child { font-size: 12px; color: var(--p-ink2); }
+.notice li .w small { display: block; }
+.notice li .chv { color: var(--p-dim); }
+.notice .ndoors { display: grid; gap: 0.35rem; }
+.notice .ndoors a { font-size: 14px; }
+.notice .fine { font-size: 12px; color: var(--p-dim); margin: 0; }
+.notice .fold { display: flex; align-items: center; justify-content: space-between; min-height: 44px; border: 1px solid var(--p-line); border-radius: 8px; padding: 0 0.75rem; font-size: 14px; font-weight: 600; }
+/* the permit form */
+.fg { display: grid; gap: 0.3rem; }
+.fg label { font-size: 13px; font-weight: 600; }
+.inp { min-height: 38px; border: 1px solid var(--p-line2); border-radius: 7px; background: rgba(70,55,30,0.05); padding: 0 0.7rem; display: flex; align-items: center; justify-content: space-between; font-size: 14px; color: var(--p-ink); }
+.inp.ph2 { color: var(--p-dim); }
+.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+.g3 { display: grid; grid-template-columns: 180px 1fr 36px; gap: 0.6rem; align-items: center; }
+.xb { width: 36px; height: 36px; display: grid; place-items: center; color: var(--p-dim); }
+.offnote { grid-column: 1 / -1; display: flex; gap: 7px; font-size: 12px; line-height: 1.4; color: var(--p-amber); margin: -0.2rem 0 0.2rem; align-items: flex-start; }
+.offnote b { color: var(--p-amber); font-weight: 650; }
+.saved { position: absolute; right: 1.2rem; bottom: 4.6rem; z-index: 9; background: var(--p-card); border: 1px solid var(--p-line2); border-radius: 999px; padding: 0.35rem 0.8rem; font-size: 13px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); display: flex; gap: 0.35rem; align-items: center; color: var(--p-good); }
+/* lists */
+.ptbl .hd, .ptbl .r { display: grid; grid-template-columns: 1.35fr 1.4fr 1.2fr 0.55fr 0.75fr 0.8fr 24px; gap: 0 12px; align-items: center; padding: 0 16px; }
+.ptbl .hd { min-height: 40px; font: 700 11px/1 var(--p-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--p-ink2); border-bottom: 1px solid var(--p-line); }
+.ptbl .gp { padding: 9px 16px; font: 700 11px/1 var(--p-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--p-ink2); background: var(--p-paper); border-bottom: 1px solid var(--p-line); }
+.ptbl .r { min-height: 66px; border-bottom: 1px solid var(--p-line); padding-block: 10px; }
+.ptbl .r:last-child { border-bottom: 0; }
+.ptbl .r > span { display: grid; gap: 2px; min-width: 0; }
+.ptbl .r .rt { text-align: right; justify-items: end; }
+.ptbl .r b { font-weight: 700; }
+.flag { display: inline-flex; gap: 0.3rem; align-items: center; font: 600 12px/1.2 var(--p-sans); color: var(--p-amber); }
+/* overview */
+.eye { font: 700 11px/1 var(--p-mono); letter-spacing: 0.09em; text-transform: uppercase; color: var(--p-ink2); margin: 1.5rem 0 0.6rem; }
+.eye:first-child { margin-top: 0; }
+.brief { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.75rem; }
+.bcard { background: var(--p-card); border: 1px solid var(--p-line); border-radius: 8px; padding: 0.95rem 1.05rem; display: flex; flex-direction: column; gap: 0.35rem; min-height: 118px; }
+.bcard .tl { display: flex; justify-content: space-between; font: 700 11px/1.2 var(--p-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--p-ink2); }
+.bcard .n { font: 800 24px/1.1 var(--p-sans); }
+.bcard .n.amb { color: var(--p-amber); }
+.bcard p { margin: 0; font-size: 13px; color: var(--p-ink2); }
+.cband { display: grid; grid-template-columns: repeat(4, 1fr); background: var(--p-card); border: 1px solid var(--p-line); border-radius: 10px; overflow: hidden; }
+.cband > div { padding: 0.8rem 1rem; border-right: 1px solid var(--p-line); display: grid; gap: 4px; }
+.cband > div:last-child { border-right: 0; }
+.hatch { height: 22px; border-radius: 4px; background: repeating-linear-gradient(135deg, rgba(70,55,30,0.08) 0 6px, transparent 6px 12px); width: 70%; }
+.progs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }
+.pcard { background: var(--p-card); border: 1px solid var(--p-line); border-radius: 8px; padding: 0.9rem 1rem; display: grid; gap: 0.3rem; font-size: 13px; color: var(--p-ink2); }
+.pcard .tl { font: 700 11px/1.2 var(--p-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--p-ink); display: flex; gap: 0.4rem; align-items: center; }
+/* calendar */
+/* the shipped ViewSwitch: one white track, 999px, 3px padding, 2px gap; the chosen view olive-soft, 34px high */
+.segc { display: inline-flex; gap: 2px; background: var(--p-card); border: 1px solid var(--p-line2); border-radius: 999px; padding: 3px; }
+.segc span { display: inline-flex; align-items: center; min-height: 34px; padding: 0 0.95rem; border-radius: 999px; color: var(--p-ink2); font: 600 14px/1 var(--p-sans); }
+.segc span.on { background: var(--p-olive-soft); color: var(--p-olive); }
+.dnav { display: inline-flex; align-items: center; gap: 0.25rem; }
+.dnav .ar { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 8px; border: 1px solid var(--p-line2); background: var(--p-card); color: var(--p-ink2); }
+.dnav b { font: 600 14px/1 var(--p-sans); padding: 0 0.45rem; white-space: nowrap; }
+.week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0.5rem; }
+.day { min-height: 470px; border-radius: 8px; border: 1px solid var(--p-line); background: var(--p-card); padding: 0.5rem; display: flex; flex-direction: column; gap: 0.4rem; }
+.day.today { border-color: var(--p-olive); box-shadow: inset 0 2px 0 var(--p-olive); }
+.dh2 { font: 700 11px/1.25 var(--p-sans); letter-spacing: 0.04em; text-transform: uppercase; color: var(--p-ink2); padding: 0.15rem 0.1rem 0.25rem; }
+.day.today .dh2 { color: var(--p-olive); }
+.day .none { color: var(--p-dim); padding: 0 0.1rem; }
+.nextln { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; margin: 0 0 0.75rem; font-size: 14px; color: var(--p-ink2); }
+.nextln b { color: var(--p-ink); }
+.clist .dayh { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; padding: 0.65rem 0.95rem; border-bottom: 1px solid var(--p-line); font: 700 11px/1.25 var(--p-sans); letter-spacing: 0.04em; text-transform: uppercase; color: var(--p-ink2); background: var(--p-paper); }
+.clist .cr { display: grid; grid-template-columns: 150px minmax(0, 1fr) auto; gap: 0.75rem; padding: 0.65rem 0.95rem; border-bottom: 1px solid var(--p-line); font-size: 14px; align-items: center; }
+.clist .cr:last-child { border-bottom: 0; }
+.clist .cr .wg { color: var(--p-amber); display: inline-flex; vertical-align: -2px; margin-left: 0.35rem; }
+.clist .cr b { font-weight: 650; }
+.clist .cr small { display: block; }
+/* season health crop */
+.hl-card { padding: 1rem 1.1rem; display: grid; gap: 0.6rem; }
+.hl-row { display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; gap: 0.6rem; font-size: 13.5px; align-items: start; padding: 0.55rem 0; border-top: 1px solid var(--p-line); }
+/* new schedule crop */
+.ftbl { border: 1px solid var(--p-line); border-radius: 10px; overflow: hidden; background: var(--p-card); }
+.ftbl .r { display: grid; grid-template-columns: minmax(0, 1fr) 150px; gap: 0.75rem; padding: 0 0.85rem; min-height: 38px; align-items: center; border-bottom: 1px solid var(--p-line); font-size: 13.5px; }
+.ftbl .r.g { background: var(--p-paper); }
+.ftbl .r.hd { font: 700 12px/1 var(--p-sans); letter-spacing: 0.05em; text-transform: uppercase; color: var(--p-ink2); min-height: 34px; }
+.ftbl .r .c { text-align: right; font-weight: 400; }
+.ftbl .r .c small { font-weight: 400; }
+.ftbl .r .nm { display: flex; gap: 0.55rem; align-items: center; }
+.ftbl .r .nm.in { padding-left: 1.4rem; }
+.ftbl .r.tot { font-weight: 700; border-top: 1px solid var(--p-line2); }
+.ftbl .note { padding: 0.5rem 0.85rem; font-size: 12.5px; color: var(--p-ink2); }
+/* a native 18px checkbox with accent-color olive */
+.ck { width: 18px; height: 18px; border-radius: 3px; background: var(--p-olive); display: grid; place-items: center; color: #fff; flex: none; }
+.ck.off { background: var(--p-card); border: 1.5px solid #767676; }
+.ck.part { background: var(--p-lime); }
+.hint { font-size: 12.5px; color: var(--p-dim); }
+
+/* phone */
+.fr.ph { display: grid; grid-template-rows: minmax(0, 1fr); }
+.ph .pbar { position: sticky; top: 0; z-index: 5; background: var(--p-card); border-bottom: 1px solid var(--p-line); padding: 0.45rem 0.75rem; display: flex; align-items: center; gap: 0.5rem; min-height: 52px; }
+.ph .pbar .nm { font: 700 16px/1.2 var(--p-sans); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ph .gl { width: 44px; height: 44px; display: grid; place-items: center; color: var(--p-ink2); flex: none; margin-block: -4px; }
+.ph .ppad { padding: 0.9rem 1rem 100px; display: grid; gap: 0.75rem; align-content: start; }
+.bnav { position: absolute; left: 0; right: 0; bottom: 0; min-height: 72px; padding: 0.4rem 0 0.6rem; display: flex; justify-content: space-around; background: rgba(248,244,237,0.96); border-top: 1px solid var(--p-line); z-index: 7; }
+.bt { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0.2rem; padding: 0.25rem; color: var(--p-dim); }
+.bt .w { width: 46px; height: 30px; border-radius: 999px; display: grid; place-items: center; }
+.bt.on { color: var(--p-olive); }
+.bt.on .w { background: var(--p-olive-soft); }
+.bt .lb { font: 700 10px/1 var(--p-sans); }
+.sheet { position: absolute; left: 0; right: 0; bottom: 72px; top: 92px; background: var(--p-card); border-radius: 16px 16px 0 0; box-shadow: 0 -10px 30px rgba(0,0,0,0.18); z-index: 6; overflow: hidden; display: grid; grid-template-rows: auto minmax(0, 1fr); }
+.sheet .hdl { width: 40px; height: 4px; border-radius: 4px; background: var(--p-line2); margin: 8px auto 4px; }
+.sheet .sb { padding: 0.25rem 0 1rem; overflow: hidden; }
+.sheet .sg { font: 700 11px/1 var(--p-sans); letter-spacing: 0.1em; text-transform: uppercase; color: var(--p-dim); padding: 0.85rem 1.1rem 0.35rem; min-height: 1.5rem; }
+.sheet .sr { display: flex; align-items: center; gap: 0.75rem; min-height: 46px; padding: 0 1.1rem; font-size: 15px; border-bottom: 1px solid var(--p-line); position: relative; }
+.sheet .sr .cv { margin-left: auto; color: var(--p-dim); }
+.sheet .tiles3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; padding: 0.5rem 1rem 0.25rem; }
+.sheet .tl3 { border: 1px solid var(--p-line); border-radius: 10px; padding: 0.7rem 0.4rem; display: grid; justify-items: center; gap: 0.35rem; font: 600 12.5px/1.2 var(--p-sans); text-align: center; color: var(--p-ink); }
+.sheet .tl3 svg { color: var(--p-olive); }
+.pdlg { position: absolute; inset: 0 0 0 0; background: var(--p-card); z-index: 8; display: grid; grid-template-rows: auto minmax(0, 1fr); }
+.pdlg .dh { display: flex; gap: 0.5rem; align-items: flex-start; padding: 0.6rem 0.5rem 0.6rem 1rem; border-bottom: 1px solid var(--p-line); }
+.pdlg .dh .tt { flex: 1; display: grid; gap: 3px; padding-top: 0.45rem; }
+.pdlg .dh .tt b { font-size: 16px; }
+.pdlg .db { padding: 0.9rem 1rem 1.5rem; display: grid; gap: 0.85rem; align-content: start; }
+.ph .notice li { grid-template-columns: 64px minmax(0, 1fr); }
+.ph .notice li .st2 { grid-column: 2; }
+.ph .notice .ndoors a { display: flex; align-items: center; min-height: 44px; border-top: 1px solid var(--p-line); justify-content: space-between; }
+.prow { display: flex; align-items: center; gap: 0.6rem; min-height: 44px; border: 1px solid var(--p-line); border-radius: 10px; background: var(--p-card); padding: 0.55rem 0.85rem; font-size: 14px; }
+.pgrp { display: grid; gap: 2px; font-size: 14px; color: var(--p-dim); padding: 0.35rem 0.1rem; }
+.pgrp.today { color: var(--p-ink); font-weight: 700; }
+.ptool { display: flex; gap: 0.4rem; align-items: center; }
+.ptool .ib { width: 44px; height: 44px; border-radius: 8px; display: grid; place-items: center; border: 1px solid var(--p-line2); background: var(--p-card); color: var(--p-ink2); flex: none; }
+.ptool .ib.dis { opacity: 0.45; }
+
+/* highlights and pins */
+.hl { position: relative; border-radius: 8px; }
+.hl.new { box-shadow: 0 0 0 2px var(--new); }
+.hl.re { box-shadow: 0 0 0 2px var(--re); }
+.hl.same { box-shadow: 0 0 0 1.5px dashed var(--same); outline: 1.5px dashed var(--same); outline-offset: 2px; box-shadow: none; }
+.hl.flash { animation: flash 1.2s ease-out 1; }
+@keyframes flash { 0%, 60% { background-color: rgba(45, 91, 134, 0.18); } 100% { background-color: transparent; } }
+.pin { position: absolute; top: -11px; left: -11px; z-index: 4; width: 22px; height: 22px; border-radius: 50%; border: 2px solid #fff; display: grid; place-items: center; font: 700 11px/1 var(--doc-mono); color: #fff; background: var(--same); cursor: pointer; padding: 0; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+.pin.new { background: #2D5B86; }
+.pin.re { background: #9A6418; }
+.pin.same { background: #6B7480; }
+span.hl { display: inline-flex; }
+.rail .pin, .sheet .pin, .clist .pin, .tiles .pin, .ptbl .pin, .lt .pin, .ftbl .pin { top: 2px; left: 2px; }
+@media (prefers-reduced-motion: reduce) { .hl.flash { animation: none; outline: 3px solid var(--accent); } * { scroll-behavior: auto !important; } }
+</style>
+
+<div class="doc">
+  <header class="dochead">
+    <span class="eyebrow">Club Tier · Stage 13c · drawing round, 2026-11-08</span>
+    <h1>The club’s time in one place</h1>
+    <p>Permit → Schedule → Fair shares and the bill → Send, as one path a person can see, and a change at one end that tells the other. Drawn on today’s frame (13a, 13i, 13b, the header bar as ruled). Desktop frames are a 1440 × 900 laptop window; phone frames are 390 × 844. Every number comes from the walk captures or the code.</p>
+  </header>
+  <nav class="stabs" role="tablist" aria-label="Sections" id="stabs"></nav>
+  <div class="viewrow" id="viewrow"></div>
+  <main id="main"></main>
+</div>
+
+<script>
+(function () {
+  var KEY = 'stage13cDrawings1';
+  var S = { tab: 'path', mode: 'after', view: 'all', size: 'fit', scr: {} };
+  try { var saved = JSON.parse(localStorage.getItem(KEY) || '{}'); for (var k in saved) if (k in S) S[k] = saved[k]; } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+
+  var TABS = [['path', '1 · The path'], ['pull', '2 · Dates pulled off'], ['told', '3 · Who is told'], ['door', '4 · The Permits door'],
+    ['week', '5 · An empty week'], ['slots', '6 · Slots and the league line'], ['phone', '7 · On a phone'], ['scope', '8 · Facts and scope'], ['asks', '9 · Asks']];
+
+  var P = {
+    arrowL: '<path d="M19 12H5"/><path d="m12 19-7-7 7-7"/>',
+    chevD: '<path d="m6 9 6 6 6-6"/>', chevR: '<path d="m9 18 6-6-6-6"/>', chevL: '<path d="m15 18-6-6 6-6"/>',
+    globe: '<circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>',
+    bell: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+    user: '<circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/>',
+    grid: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
+    cal: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+    list: '<path d="M3 3v18h18"/><path d="M7 15h4M7 11h8M7 7h11"/>',
+    permit: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="m9 15 2 2 4-4"/>',
+    users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
+    trophy: '<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M18 2H6v7a6 6 0 0 0 12 0V2z"/><path d="M12 15v4"/>',
+    dollar: '<path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
+    family: '<circle cx="9" cy="7" r="3"/><circle cx="17" cy="9" r="2"/><path d="M3 21v-1a5 5 0 0 1 10 0v1M14 21v-1a3 3 0 0 1 6 0v1"/>',
+    building: '<rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4M8 6h.01M12 6h.01M16 6h.01M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h.01"/>',
+    house: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>', card: '<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>',
+    help: '<circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01"/>',
+    panel: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/>',
+    dots: '<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>',
+    check: '<path d="M20 6 9 17l-5-5"/>', x: '<path d="M18 6 6 18M6 6l12 12"/>',
+    warn: '<path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/>',
+    pencil: '<path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/>', down: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5M12 15V3"/>',
+    clock: '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>', more: '<circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>',
+    refresh: '<path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/>', filter: '<path d="M22 3H2l8 9.46V19l4 2v-8.54z"/>',
+    calClock: '<path d="M21 7.5V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3.5"/><path d="M16 2v4M8 2v4M3 10h5"/><circle cx="16" cy="16" r="6"/><path d="M16 14v2l1 1"/>',
+    calDays: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/>',
+    arrowR: '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>'
+  };
+  function ic(n, size, sw) { size = size || 16; sw = sw || 1.8;
+    return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="' + sw + '" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + P[n] + '</svg>'; }
+  var LOGO = '<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h14v4H9.5v3H17v4H9.5v7H5z" fill="#57651E"/></svg>';
+  var CLUB = 'Harbourtown Minor Ball';
+  var A = S.mode === 'after';
+
+  /* ── highlight helpers ── */
+  function hl(n, kind, html, tag, extra) { tag = tag || 'div';
+    return '<' + tag + ' class="hl ' + kind + (extra ? ' ' + extra : '') + '" data-k="' + n + '"><button type="button" class="pin ' + kind + '" data-pin="' + n + '" aria-label="Note ' + n + '">' + n + '</button>' + html + '</' + tag + '>'; }
+  function same(html) { return '<div data-same>' + html + '</div>'; }
+
+  /* ── desktop chrome ── */
+  function strip(o) {
+    var name = (o.back ? '<span class="back">' + ic('arrowL', 15) + o.back + '</span><i class="vr"></i>' : '') + '<span class="pn">' + o.name + '</span>' + (o.chip || '');
+    return '<div class="strip"' + (o.hlStrip ? '' : ' data-same') + '><span class="lcell"><span class="brand">' + LOGO + 'FieldLogicHQ</span><i class="sdiv"></i><span class="area">Admin</span></span>' +
+      '<span class="rcell"><span class="place">' + (o.hlStrip ? hl(o.hlStrip, 'new', name, 'span') : name) + '</span><span class="doors"><span class="pill">' + ic('globe', 15) + 'View site</span><span class="door">' + ic('bell', 16) + '</span><span class="door">' + ic('user', 17) + '</span></span></span></div>';
+  }
+  function railRows(role, on, permits, pinN) {
+    function it(key, icon, label, cnt) {
+      var cls = 'it' + (on === key ? ' on' : '');
+      var inner = ic(icon, 14) + label + (cnt ? '<span class="cnt">' + cnt + '</span>' : '');
+      if (key === 'permits' && permits === 'new') return hl(pinN || 1, 'new', '<div class="' + cls + '">' + inner + '</div>');
+      return '<div class="' + cls + '" data-same>' + inner + '</div>';
+    }
+    var withP = permits === 'new' || permits === 'plain';
+    var pc = (role === 'owner' || role === 'admin') ? '8' : null;
+    var r = [];
+    if (role === 'owner' || role === 'admin') {
+      r.push(it('overview', 'grid', 'Overview'), it('calendar', 'calClock', 'Calendar'));
+      if (withP) r.push(it('permits', 'permit', 'Permits', pc));
+      r.push(it('schedules', 'list', 'Schedules'));
+      r.push('<div class="sec" data-same>Programs</div>', it('rep', 'users', 'Rep teams'), it('hl', 'calDays', 'House league'), it('tour', 'trophy', 'Tournaments'));
+      r.push('<div class="sec" data-same>Club</div>', it('acc', 'dollar', 'Accounting', '3'));
+      if (role === 'owner') r.push(it('fam', 'family', 'Families'));
+      r.push(it('pub', 'globe', 'Public site'), it('org', 'building', 'Organization'));
+    } else if (role === 'treasurer') {
+      r.push(it('overview', 'grid', 'Overview'));
+      if (withP) r.push(it('permits', 'permit', 'Permits'));
+      r.push('<div class="sec" data-same>Club</div>', it('acc', 'dollar', 'Accounting', '3'), it('org', 'building', 'Organization'));
+    } else if (role === 'league') {
+      r.push(it('overview', 'grid', 'Overview'), it('calendar', 'calClock', 'Calendar'));
+      if (withP) r.push(it('permits', 'permit', 'Permits'));
+      r.push('<div class="sec" data-same></div>', it('hl', 'calDays', 'House league'), '<div class="sec" data-same></div>', it('org', 'building', 'Organization'));
+    }
+    var foot = '<div class="foot" data-same>' + (role === 'owner' ? '<div class="it">' + ic('card', 14) + 'Plan &amp; billing</div>' : '') + '<div class="it">' + ic('help', 14) + 'Help</div><div class="it">' + ic('panel', 14) + 'Collapse sidebar</div></div>';
+    return '<aside class="rail"><div class="clubhead" data-same>' + ic('building', 16) + '<span>' + CLUB + '</span></div>' + r.join('') + foot + '</aside>';
+  }
+  function desk(o) {
+    return '<div class="fr desk" style="width:1440px;height:' + (o.h || 900) + 'px">' + strip(o.strip) +
+      '<div class="dbody">' + railRows(o.role, o.on, o.permits, o.railPin) + '<div class="sc ground">' + (o.band || '') + '<div class="pad">' + o.body + '</div></div></div>' +
+      (o.overlay ? '<div class="scrim"></div>' + o.overlay : '') + (o.extra || '') + '</div>';
+  }
+  function band(tabs, onKey, pinN, kind) {
+    var row = '<div class="tabrow">' + tabs.map(function (t) { return '<span class="tab' + (t === onKey ? ' on' : '') + '">' + t + '</span>'; }).join('') + '</div>';
+    return '<div class="tb">' + (pinN ? hl(pinN, kind || 'new', row) : '<div data-same>' + row + '</div>') + '</div>';
+  }
+
+  /* ── phone chrome ── */
+  function phone(o) {
+    var bar = o.role === 'treasurer' ? [['grid', 'Overview'], ['dollar', 'Accounting'], ['more', 'More']] :
+      o.role === 'league' ? [['grid', 'Overview'], ['cal', 'Calendar'], ['house', 'House league'], ['more', 'More']] :
+      [['grid', 'Overview'], ['cal', 'Calendar'], ['users', 'Rep teams'], ['dollar', 'Accounting'], ['more', 'More']];
+    var nav = '<nav class="bnav" data-same>' + bar.map(function (b) { return '<span class="bt' + (b[1] === o.on ? ' on' : '') + '"><span class="w">' + ic(b[0], 19) + '</span><span class="lb">' + b[1] + '</span></span>'; }).join('') + '</nav>';
+    return '<div class="fr ph" style="width:390px;height:844px"><div class="sc ground"><div class="pbar" data-same>' + (o.back ? '<span class="gl">' + ic('arrowL', 18) + '</span>' : '') + '<span class="nm">' + o.name + '</span><span class="gl">' + ic('bell', 18) + '</span></div><div class="ppad">' + o.body + '</div></div>' + (o.overlay || '') + nav + '</div>';
+  }
+
+  /* ════════════ SCREENS ════════════ */
+  var SCR = {};
+
+  /* ── the club schedule page (Saturdays at Kinsmen, December 2026), A4-14 + this change ── */
+  function schedulePage(after, withPath) {
+    var p = '';
+    var metaRest = 'Kinsmen Park · Diamond A, Diamond B · Saturdays, Nov 28 – Dec 19, 2026 · sent Nov 6 by Dana Kowalski';
+    if (after && !withPath) p += hl(1, 're', '<p class="meta" style="margin:0">From the permit <a>Saturday diamonds, December 2026 ›</a> · ' + metaRest + '</p>') + '<div style="height:0.75rem"></div>';
+    else p += '<p class="meta" data-same>' + metaRest + '</p>';
+    if (after && withPath) p += hl(1, 'new', '<nav class="path" aria-label="This schedule’s path">' +
+      '<span class="st"><span class="k">1 · Permit</span><span class="v">Saturday diamonds, December 2026 ›</span><span class="s">2 dates off</span><i class="arr"></i></span>' +
+      '<span class="st here"><span class="k">2 · Schedule</span><span class="v">This page</span><span class="s">35 of 46 handed out</span><i class="arr"></i></span>' +
+      '<span class="st"><span class="k">3 · Fair shares and the bill</span><span class="v">Fair shares ›</span><span class="s">The bill $366.67</span><i class="arr"></i></span>' +
+      '<span class="st"><span class="k">4 · Send</span><span class="v">Send the changes ›</span><span class="s">1 change waiting</span></span></nav>');
+    var na = '<div class="card na"><div class="h"><b>Needs attention</b><small>' + (after ? '2 items' : '1 item') + '</small></div>';
+    if (after) na += hl(2, 'new', '<div class="row"><span class="chip pend">Outside the permit</span><div><div class="t">Sat, Dec 5 and Sat, Dec 12 are dates off on the permit</div><p>6 practices on this schedule sit on those days: 14U AA, 15U AA and 13U AAA, both Saturdays. The teams still have them.</p><p>The bill went from $200.00 to $366.67: the permit now holds 24 hours for the same $800.00.</p><p>2 house-league games on Dec 5 are for the league admins to move. <a>See them ›</a></p></div><span class="btn pri">Take Dec 5 and Dec 12 off</span></div>');
+    na += '<div class="row" data-same><span class="chip pend">Unsent change</span><div><div class="t">1 change since you sent it on Nov 6</div><p>14U AA · no longer Sat, Dec 5, 1:00 p.m. · Diamond A</p><p>The teams still have what you sent them. Send the changes to put these on their schedules and tell their coaches.</p></div>' + (after ? hl(7, 're', '<span class="btn out">Send the changes</span>', 'span') : '<span class="btn pri">Send the changes</span>') + '</div></div>';
+    p += na;
+    var bill = '<div class="tile"><span class="mono">The bill' + (after ? ' <span style="color:var(--p-olive);opacity:0.45;vertical-align:-2px">' + ic('arrowR', 13) + '</span>' : '') + '</span><span class="tv">$366.67</span>' + (after ? '<small>was $200.00</small>' : '') + '</div>';
+    p += '<div class="tiles"><div class="tile" data-same><span class="mono">Handed out</span><span class="tv">35 of 46</span></div>' + (after ? hl(3, 'new', bill) : bill) +
+      '<div class="tile" data-same><span class="mono">Short</span><span class="tv">1</span></div><div class="tile" data-same><span class="mono">Clashes</span><span class="tv">2</span></div></div>';
+    var rs = '<div class="card rs"><div data-same><h3>Read the schedule</h3><small>Start with the repeating pattern; open Grid for a date or an edit.</small></div>';
+    rs += '<div class="tbar" style="margin-top:0.75rem">' + (after ? hl(4, 're', '<span class="vpill">View <b>Overview</b>' + ic('chevD', 13) + '</span>', 'span') : '<span class="vpill" data-same>View <b>Overview</b>' + ic('chevD', 13) + '</span>') +
+      '<span style="margin-left:4rem;font-weight:700;font-size:16px" data-same>Nov 28 – Dec 19, 2026</span><span class="sp"></span><span class="btn out" data-same>' + ic('dots', 15) + 'Tools' + ic('chevD', 13) + '</span><span class="btn out" data-same>' + ic('down', 15) + 'Export</span></div>';
+    rs += '<div class="warns">';
+    if (after) rs += hl(5, 'new', '<div class="amb">' + ic('warn', 14) + '<span><b style="color:var(--p-ink)">Outside the permit: Sat, Dec 5 and Sat, Dec 12 are dates off</b> on Saturday diamonds, December 2026.</span></div>');
+    rs += '<div data-same>' + ic('warn', 14) + 'Sat, Dec 5 · 11:00 a.m. · Diamond A: Game · 2026 Fall House League holds it.</div><div data-same>' + ic('warn', 14) + 'Sat, Dec 5 · 12:00 p.m. · Diamond B: Game · 2026 Fall House League holds it.</div><div data-same>' + ic('warn', 14) + '14U AA is 1 short these Saturdays.</div></div>';
+    var rows = [['Diamond A', '9:00–10:00 a.m.', 'Open', '4 of 4'], ['Diamond A', '10:00–11:00 a.m.', 'Open', '4 of 4'], ['Diamond A', '11:00 a.m.–12:00 p.m.', 'House league', '3 of 4', 1], ['Diamond A', '12:00–1:00 p.m.', 'House league', '4 of 4'], ['Diamond A', '1:00–2:00 p.m.', '14U AA', '2 of 4', 1], ['Diamond A', '2:00–3:00 p.m.', '13U AAA', '4 of 4'], ['Diamond B', '9:00–10:00 a.m.', 'Open', '4 of 4']];
+    var lt = '<div class="card lt" data-same><div class="lh">Typical Saturdays<small>12 time rows</small></div>' + rows.map(function (r) { return '<div class="lr"><span class="f"><b>' + r[0] + '</b><small>Kinsmen Park</small></span><span>' + r[1] + '</span><b>' + r[2] + '</b><span class="cnt2' + (r[4] ? ' a' : '') + '">' + r[3] + '</span></div>'; }).join('') + '</div>';
+    var dd = '<div class="card lt dd"><div class="lh" data-same>Different on a date<small>' + (after ? '6 differences' : '4 differences') + '</small></div>';
+    if (after) dd += hl(6, 'new', '<div class="dr"><b>Sat, Dec 5 · every facility</b><span class="amb">Outside the permit · 5 slots still on it</span></div><div class="dr"><b>Sat, Dec 12 · every facility</b><span class="amb">Outside the permit · 3 slots still on it</span></div>');
+    dd += '<div data-same><div class="dr"><b>Sat, Dec 5 · Diamond A</b><span>11:00 a.m.–12:00 p.m. · House league</span><small>Clash</small></div><div class="dr"><b>Sat, Dec 5 · Diamond A</b><span>1:00–2:00 p.m. · Open</span><small>Locked · Moved by hand</small></div><div class="dr"><b>Sat, Dec 5 · Diamond B</b><span>12:00–1:00 p.m. · House league</span><small>Clash</small></div><div class="dr"><b>Sat, Dec 12 · Diamond A</b><span>1:00–2:00 p.m. · 14U AA</span><small>Locked · Moved by hand</small></div></div></div>';
+    rs += '<div class="split2">' + lt + dd + '</div></div>';
+    p += rs;
+    return desk({ role: 'owner', on: 'schedules', permits: after ? 'plain' : 'none', strip: { back: 'Schedules', name: 'Saturdays at Kinsmen, December 2026', chip: '<span class="chip pend">Changed since sent</span>' }, body: p });
+  }
+  var NOTES_SCHED_A = [
+    [1, 're', 'The path starts here: the way back to the permit', 'The top line opens with “From the permit Saturday diamonds, December 2026 ›”. The path is the page itself, read down: the permit (this line), the schedule, Fair shares and the bill (the Bill tile), Send (in Needs attention). Each is now a door; nothing new is added to say it twice (Ask C4: a path line is the alternative).'],
+    [2, 'new', 'The permit’s change, where the repair happens', '“Take Dec 5 and Dec 12 off” adds both days to this schedule’s own Dates off and opens today’s Regenerate confirm, which already says what goes and that the change waits until you send it. It also says why the bill moved. Warns, never blocks: nothing moves until the admin presses it, and the teams keep their practices until the changes are sent.'],
+    [3, 'new', 'The Bill tile opens Fair shares and the bill', 'Today it opens nothing (O2 walk). It carries the shipped door arrow and “was $200.00”; the reason is in Needs attention. The permit now holds 24 hours for the same $800.00, so each hour costs $33.33 instead of $16.67.'],
+    [4, 're', 'Fair shares leaves the View menu', 'The menu keeps Overview, Grid, By team and By group. Fair shares and the bill is reached from the Bill tile, not as a way of looking at the grid (O2 walk: “a menu item called Fair shares plus a small link”).'],
+    [5, 'new', 'The dates off head the warnings', 'One line, in the permit’s one word: “Outside the permit”. The two old clash lines below stay as they are; today they are the only warnings, and they name neither the permit nor its dates off.'],
+    [6, 'new', 'Dec 5 and Dec 12 marked in “Different on a date”', 'The days still show their slots until the admin takes them off, but they are no longer drawn as normal Saturdays.'],
+    [7, 're', 'Send steps down to outline while there is a question first', 'The shipped rule for this box: the first ask takes the lime, Send is outline. Pressing Take them off first, then Send, is the order that works.'],
+    [0, 'same', 'Unchanged', 'The header (as the header plan rules it), the unsent change, Handed out, Short, Clashes, the Typical Saturdays table and the old clash rows.']
+  ];
+  var NOTES_SCHED_PATH = [
+    [1, 'new', 'Ask C4, option B: a path line', 'Four doors in the order the club’s time moves, each with where it stands. Not recommended: three of its four statuses repeat the tiles and Needs attention right below it, and a row of doors under the title is a second navigation row, which the nav standard keeps out (a place’s pages are its tabs). It also needs its own phone shape, not drawn.'],
+    [0, 'same', 'Otherwise', 'The same as the recommended page.']
+  ];
+  var NOTES_SCHED_T = [
+    [0, 'same', 'Today: the schedule carries on', 'Dec 5 and Dec 12 read as normal Saturdays (“35 of 46 handed out”). The bill moved from $200.00 to $366.67 with no reason. The only warnings are two old clash rows that name neither the permit nor its dates off (A4-14).'],
+    [0, 'same', 'Today: no way back to the permit', 'Nothing on this page opens the permit it hands out. The permit names the schedule only as plain text. The way in is Organization › Venue library › Permits › the permit › “Hand out this time in a schedule ›”.'],
+    [0, 'same', 'Today: the bill hides under View', 'Fair shares is the fifth choice of the View menu; the bill is a small link inside it. The Bill tile opens nothing.']
+  ];
+
+  /* ── the Permits list (place, after) or Venue library (today) ── */
+  function permitsTable(after, flagPin, canAdd) {
+    var flag = '<span class="flag">' + ic('warn', 13) + '2 dates off · 8 bookings on them</span>';
+    return '<div class="card ptbl"><div class="hd"><span>Permit</span><span>Where</span><span>Dates</span><span style="text-align:right">A week</span><span style="text-align:right">Used</span><span style="text-align:right">Cost</span><span></span></div>' +
+      '<div class="gp">In use now</div>' +
+      '<div class="r"><span><b>Winter dome 2026–27</b><small>Lakeshore Dome · W26-118</small></span><span>Lakeshore Dome · Fields 1–6</span><span>Oct 4, 2026 – Mar 28, 2027</span><span class="rt">18 h</span><span class="rt">0%<small>0 of 450 h</small></span><span class="rt">$27,000.00</span><span>' + ic('chevR', 15) + '</span></div>' +
+      '<div class="r"><span><b>Fall diamonds 2026</b><small>Town of Milton · P-2026-1187</small></span><span>Lions Park · Diamond 2<small>Kinsmen Park · Diamond B</small></span><span>Oct 27 – Dec 17, 2026</span><span class="rt">10 h</span><span class="rt">9%<small>7.5 of 80 h</small></span><span class="rt">$3,200.00</span><span>' + ic('chevR', 15) + '</span></div>' +
+      '<div class="gp">Starts later</div>' +
+      '<div class="r"><span><b>Saturday diamonds, December 2026</b><small>Town of Milton · P-2026-1301</small>' + (after ? (flagPin ? hl(flagPin, 'new', flag, 'span') : flag) : '') + '</span><span>Kinsmen Park · every facility</span><span>Nov 28 – Dec 19, 2026</span><span class="rt">12 h</span><span class="rt">25%<small>6 of 24 h</small></span><span class="rt">$800.00</span><span>' + ic('chevR', 15) + '</span></div>' +
+      '<div class="r"><span><b>Summer fields 2027</b><small>Town of Milton · P-2027-2210</small></span><span>Lions Park · Diamond 1 and Diamond 3<small>Kinsmen Park · Diamond A and Diamond B</small></span><span>May 3 – Aug 26, 2027</span><span class="rt">36 h</span><span class="rt">3%<small>18 of 600 h</small></span><span class="rt">$4,800.00</span><span>' + ic('chevR', 15) + '</span></div></div>';
+  }
+  function permitsToolbar(withSwitch, canAdd) {
+    return '<div class="tbar">' + (withSwitch ? '<span class="vsw"><span>Venues</span><span class="on">Permits</span></span>' : '') + '<span class="yp"><span class="k">Fiscal year</span><b>2026–27</b><i class="dot"></i>' + ic('chevD', 13) + '</span><span class="sp"></span><span class="btn out">' + ic('down', 15) + 'Export</span>' + (canAdd ? '<span class="btn pri">' + ic('plus', 15) + 'Add permit</span>' : '') + '</div>';
+  }
+  function orgTabsFor(role) { return role === 'treasurer' ? ['Members', 'Venue library'] : role === 'league' ? ['Members', 'Venue library'] : ['Members', 'Audit log', 'Settings', 'Venue library', 'PDF settings']; }
+
+  /* the permit window (A4-10), with the notice when after */
+  function permitWindow(after, role) {
+    var canFix = role === 'owner' || role === 'admin';
+    var b = '';
+    if (after) {
+      var notice = '<div class="notice"><div class="nh">' + ic('warn', 17) + '<div><b>8 bookings are outside this permit now: Dec 5 and Dec 12 are dates off.</b><p>They stay booked until someone moves them.</p></div></div>' +
+        '<span class="nday">Sat, Dec 5 · Kinsmen Park</span><ul>' +
+        '<li><span>11:00 a.m.</span><span class="w">Hawks vs Owls · Diamond A<small>House league · U11 Pinto · draft</small></span><span class="chip neutral st2">Game</span></li>' +
+        '<li><span>12:00 p.m.</span><span class="w">Reds vs Blues · Diamond B<small>House league · U9 Rookie · draft</small></span><span class="chip neutral st2">Game</span></li>' +
+        '<li><span>1:00 p.m.</span><span class="w">14U AA · Diamond A<small>Saturdays at Kinsmen, December 2026</small></span><span class="chip neutral st2">Practice</span></li>' +
+        '<li><span>1:00 p.m.</span><span class="w">15U AA · Diamond B<small>Saturdays at Kinsmen, December 2026</small></span><span class="chip neutral st2">Practice</span></li>' +
+        '<li><span>2:00 p.m.</span><span class="w">13U AAA · Diamond A<small>Saturdays at Kinsmen, December 2026</small></span><span class="chip neutral st2">Practice</span></li></ul>' +
+        '<span class="nday">Sat, Dec 12 · Kinsmen Park</span><ul>' +
+        '<li><span>1:00 p.m.</span><span class="w">14U AA · Diamond A</span><span class="chip neutral st2">Practice</span></li>' +
+        '<li><span>1:00 p.m.</span><span class="w">15U AA · Diamond B</span><span class="chip neutral st2">Practice</span></li>' +
+        '<li><span>2:00 p.m.</span><span class="w">13U AAA · Diamond A</span><span class="chip neutral st2">Practice</span></li></ul>' +
+        '<div class="ndoors">' + (canFix ? '<a>Fix the 6 practices in Saturdays at Kinsmen, December 2026 ›</a>' : '') + (canFix || role === 'league' ? '<a>Open 2026 Fall House League’s schedule ›</a>' : '') + (role !== 'treasurer' ? '<a>See Sat, Dec 5 on the Calendar ›</a>' : '') + '</div>' +
+        '<p class="fine">Only what this permit’s own dates off took. The list goes when nothing is left on those days.</p></div>';
+      notice = notice.replace(/<\/li>/g, '<span class="chv">' + ic('chevR', 14) + '</span></li>');
+      b += hl(1, 'new', notice);
+    }
+    b += '<div data-same><div class="secl" style="margin-bottom:0.6rem">The permit<span></span></div><div class="kv"><span class="k">Issuer</span><b>Town of Milton</b><span class="k">Reference</span><b>P-2026-1301</b><span class="k">For</span><b>The club</b><span class="k">Dates</span><span><b>Nov 28 – Dec 19, 2026</b> <small>· 3 weeks · 2 Saturdays</small></span><span class="k">Document</span><small>No document</small></div></div>';
+    b += '<div data-same><div class="secl" style="margin-bottom:0.5rem">The time<span>24 h held</span></div><div class="box"><span><b>Kinsmen Park · every facility</b><small>Sat · 9:00 a.m.–3:00 p.m.</small></span><span>24 h</span></div><small style="display:block;margin-top:0.35rem">Dates off: Dec 5, Dec 12.</small></div>';
+    if (role !== 'league') b += '<div data-same><div class="secl" style="margin-bottom:0.5rem">Cost<span></span></div><div class="band2"><div><span class="mono">Cost</span><span class="big">$800.00</span></div><div><span class="mono">An hour held</span><span class="big">$33.33</span></div></div></div>';
+    b += '<div data-same><div class="secl" style="margin-bottom:0.5rem">Use<span></span></div><div class="band3"><div><span class="mono">Held</span><span class="big">24 h</span></div><div><span class="mono">Booked</span><span class="big">6 h</span><small>25%</small></div><div><span class="mono">Unused</span><span class="big">18 h</span></div></div>' +
+      '<div class="box" style="margin-top:0.6rem"><span><b>Kinsmen Park · every facility</b><small>13U AAA · 14U AA · 15U AA</small></span><span>6 of 24 h · 25%</span></div>' + (canFix ? '<a style="display:block;margin-top:0.4rem;font-size:13px">Hand out this time in a schedule ›</a>' : '') + '</div>';
+    var hands = after ? '<p style="margin:0;font-size:13px;color:var(--p-ink2)"><a>Saturdays at Kinsmen, December 2026 ›</a> hands this time out, so the permit stays.</p>' : '<p style="margin:0;font-size:13px;color:var(--p-ink2)">“Saturdays at Kinsmen, December 2026” hands this time out, so the permit stays.</p>';
+    b += after ? hl(2, 're', hands) : same(hands);
+    var head = '<div class="dh" data-same><span class="tt"><span class="mono">Permit · 2026-27</span><b>Saturday diamonds, December 2026</b></span>' + (canFix || role === 'league' ? '<span class="door">' + ic('pencil', 17) + '</span>' : '') + '<span class="door">' + ic('x', 18) + '</span></div>';
+    return '<div class="dlg">' + head + '<div class="sc db">' + b + '</div><div class="df" data-same><span class="pn2"><small>‹ Previous</small><b>Fall diamonds 2026</b></span><span>3 of 4</span><span class="pn2" style="text-align:right"><small>Next ›</small><b>Summer fields 2027</b></span></div></div>';
+  }
+  function permitsPlace(role, after, overlay, opt) {
+    var canAdd = role !== 'treasurer';
+    if (!after) {
+      return desk({ role: role, on: 'org', permits: 'none', strip: { name: 'Organization' }, band: band(orgTabsFor(role), 'Venue library'),
+        body: '<div data-same>' + permitsToolbar(true, canAdd) + permitsTable(false, 0, canAdd) + '</div>', overlay: overlay });
+    }
+    if (opt === 'b') {
+      return desk({ role: role, on: 'schedules', permits: 'none', strip: { name: 'Schedules', hlStrip: 0 }, band: band(['Schedules', 'Permits'], 'Permits', 1, 'new'),
+        body: '<div data-same>' + permitsToolbar(false, canAdd) + permitsTable(true, 0, canAdd) + '</div>', overlay: overlay });
+    }
+    return desk({ role: role, on: 'permits', permits: overlay ? 'plain' : 'new', strip: { name: 'Permits' },
+      body: (overlay ? '<div data-same>' : '') + permitsToolbar(false, canAdd) + permitsTable(true, overlay ? 0 : 2, canAdd) + (overlay ? '</div>' : ''), overlay: overlay });
+  }
+  var NOTES_PERMIT_A = [
+    [1, 'new', 'The notice: what this change left standing', 'It lists the 8 bookings at the permit’s own park on its own pulled days, grouped by day, with a door to where each is fixed. It is not the “Outside it” list the owner removed on Oct 11 (a standing list of everything at the park that no permit covers). This one appears because of a change, names only what that change took, and goes when nothing is left on those days or once the days have passed. Doors show only where the reader can go: the treasurer gets the list alone. If the list cannot be read: “What’s booked on the dates off couldn’t be read. Try again.”'],
+    [2, 're', 'The schedule’s name is a door', 'Today it is quoted text. It opens the schedule, where the same change waits in Needs attention.'],
+    [0, 'same', 'Unchanged', 'The permit’s facts, The time with “Dates off: Dec 5, Dec 12.”, Cost, Use (Held 24 h · Booked 6 h · Unused 18 h), Renew for next year, Previous and Next.']
+  ];
+  var NOTES_PERMIT_T = [
+    [0, 'same', 'Today: the permit says nothing about what it left behind', 'After Dec 5 and Dec 12 come off, the only trace is Booked falling from 14 h to 6 h, and “2026 Fall House League” dropping out of who uses it. Nothing says that 8 bookings still sit on those Saturdays (A4-10).'],
+    [0, 'same', 'Today: it lives two levels down', 'Organization › Venue library, behind the Venues | Permits switch (A4-02).']
+  ];
+
+  /* ── the permit form, dates off (A4-09) ── */
+  function permitForm(after) {
+    var b = '<div data-same class="fg"><label>Name *</label><span class="inp">Saturday diamonds, December 2026</span></div>' +
+      '<div class="g2" data-same><div class="fg"><label>Issuer</label><span class="inp" style="background:var(--p-card)">Town of Milton<span>' + ic('x', 14) + '</span></span></div><div class="fg"><label>Reference</label><span class="inp">P-2026-1301</span></div></div>' +
+      '<div class="g2" data-same><div class="fg"><label>From *</label><span class="inp">Nov 28, 2026' + ic('cal', 15) + '</span></div><div class="fg"><label>To *</label><span class="inp">Dec 19, 2026' + ic('cal', 15) + '</span></div></div>' +
+      '<div data-same><div class="secl" style="margin-bottom:0.5rem">The time<span></span></div><div class="card" style="padding:0.85rem;display:grid;gap:0.6rem"><div class="g2"><div class="fg"><label>Venue *</label><span class="inp" style="background:var(--p-card)">Kinsmen Park' + ic('chevD', 14) + '</span></div><div class="fg"><label>Facilities</label><span class="inp" style="background:var(--p-card)">Every facility' + ic('chevD', 14) + '</span></div></div><div style="display:grid;grid-template-columns:1fr 1fr 1fr 30px;gap:0.6rem"><div class="fg"><label>Days *</label><span class="inp" style="background:var(--p-card)">Sat' + ic('chevD', 14) + '</span></div><div class="fg"><label>From *</label><span class="inp">9:00 a.m.' + ic('clock', 14) + '</span></div><div class="fg"><label>Until *</label><span class="inp">3:00 p.m.' + ic('clock', 14) + '</span></div><span class="xb" style="align-self:end">' + ic('x', 14) + '</span></div></div></div>';
+    var r1 = '<div class="g3"><div class="fg"><label>Date off</label><span class="inp">Dec 5, 2026' + ic('cal', 15) + '</span></div><div class="fg"><label>Why (optional)</label><span class="inp ph2">' + (after ? 'e.g. a city event' : 'The dome is closed') + '</span></div><span class="xb" style="align-self:end">' + ic('x', 15) + '</span>';
+    var n1 = '<div class="offnote">' + ic('warn', 15) + '<span><b>Booked that day:</b> 3 practices and 2 house-league games. They stay booked until moved.</span></div>';
+    var r2 = '<div class="g3"><div class="fg"><label>Date off</label><span class="inp">Dec 12, 2026' + ic('cal', 15) + '</span></div><div class="fg"><label>Why (optional)</label><span class="inp ph2">' + (after ? 'e.g. a city event' : 'The dome is closed') + '</span></div><span class="xb" style="align-self:end">' + ic('x', 15) + '</span>';
+    var n2 = '<div class="offnote">' + ic('warn', 15) + '<span><b>Booked that day:</b> 3 practices. They stay booked until moved.</span></div>';
+    if (after) { b += hl(1, 'new', r1 + n1 + '</div>'); b += hl(2, 'new', r2 + n2 + '</div>'); }
+    else { b += '<div data-same>' + r1 + '</div></div>'; b += '<div data-same>' + r2 + '</div></div>'; }
+    b += '<div data-same style="display:flex;gap:1.2rem;font-size:14px"><a>' + ic('plus', 14) + ' Add a block</a><a>' + ic('plus', 14) + ' Add a date off</a></div><p data-same style="margin:0;font-size:13px;font-weight:600">1 block · 3 weeks · 24 h held</p>';
+    if (after) b = b.replace(/e\.g\. a city event/, 'e.g. a city event').replace('<span class="inp ph2">e.g. a city event</span>', hl(3, 're', '<span class="inp ph2" style="width:100%">e.g. a city event</span>', 'span'));
+    var dlg = '<div class="dlg"><div class="dh" data-same><span class="tt"><span class="mono">Permit · 2026-27</span><b>Saturday diamonds, December 2026</b></span><span class="door">' + ic('check', 18) + '</span><span class="door">' + ic('x', 18) + '</span></div><div class="sc db">' + b + '</div><div class="df" data-same><span class="pn2"><small>‹ Previous</small><b>Fall diamonds 2026</b></span><span>3 of 4</span><span class="pn2" style="text-align:right"><small>Next ›</small><b>Summer fields 2027</b></span></div></div>';
+    return desk({ role: 'owner', on: after ? 'permits' : 'org', permits: after ? 'plain' : 'none', strip: { name: after ? 'Permits' : 'Organization' }, band: after ? '' : band(orgTabsFor('owner'), 'Venue library'),
+      body: '<div data-same>' + permitsToolbar(!after, true) + permitsTable(after, 0, true) + '</div>', overlay: dlg, extra: '<span class="saved" data-same>' + ic('check', 14) + 'Saved</span>' });
+  }
+  var NOTES_FORM_A = [
+    [1, 'new', 'The form says what sits on the day, as you add it', 'The form saves itself, so there is no single “save” moment to warn at. The line appears under each date off as it is picked, counted from the bookings already on the books at the permit’s park that day: “3 practices and 2 house-league games.” A day with nothing on it says “Nothing booked that day.” out loud, because silence is today’s failure. While it counts: “Checking what’s booked…”. If the count fails: “What’s booked that day couldn’t be checked. The date off is saved.”'],
+    [2, 'new', 'Each date says its own count', 'Dec 12 holds only the 3 practices.'],
+    [3, 're', 'The “Why” example fits any permit', 'Today it reads “The dome is closed” on a diamond permit (A4 walk). A one-line copy fix carried with 13c because it is on this form; /design would leave the shipped words, so it is the owner’s call in the build.'],
+    [0, 'same', 'Unchanged', 'Autosave and its “Saved” toast, the hold line (“1 block · 3 weeks · 24 h held”), every other field. Warns, never blocks: the date off saves whatever is booked.']
+  ];
+  var NOTES_FORM_T = [[0, 'same', 'Today: “Saved”, and nothing else', 'The hold line drops from 48 h to 24 h and the rate doubles. Nothing says what is booked on the two Saturdays (A4-08, A4-09).']];
+
+  /* ── Overview (owner), This morning gains a card while bookings sit on pulled dates ── */
+  var AR = '<span style="color:var(--p-olive);opacity:0.45">' + ic('arrowR', 13) + '</span>';
+  function overview(after) {
+    var b = '<div data-same><div class="eye">The club today</div><div class="cband">' + ['Cash on hand', 'Owed to the club', 'This week', 'Needs someone'].map(function (l) { return '<div><span class="mono">' + l + '</span><span class="hatch"></span></div>'; }).join('') + '</div></div>';
+    b += '<div class="eye" data-same>This morning</div><div class="brief">' +
+      '<div class="bcard" data-same><span class="tl">Tryout applications' + AR + '</span><span class="n">0</span><p>nothing waiting</p></div>' +
+      '<div class="bcard" data-same><span class="tl">Payment requests' + AR + '</span><span class="n">3</span><p>oldest waiting 86 days · 3 holding up a payout</p></div>' +
+      '<div class="bcard" data-same><span class="tl">Installments due' + AR + '</span><span class="n">12</span><p>in the next 14 days · 7 overdue</p></div>' +
+      '<div class="bcard" data-same><span class="tl">Assistant coaches' + AR + '</span><span class="n">0</span><p>nothing waiting</p></div>' +
+      (after ? hl(1, 'new', '<div class="bcard" style="height:100%"><span class="tl">Outside the permit' + AR + '</span><span class="n">8</span><p>bookings on Sat, Dec 5 and Sat, Dec 12 · Kinsmen Park</p></div>') : '') + '</div>';
+    b += '<div data-same><div class="eye">Your programs</div><div class="progs"><div class="pcard"><span class="tl">' + ic('users', 14) + 'Rep teams</span>8 teams in 2 groups · tryouts, rosters and coaches</div><div class="pcard"><span class="tl">' + ic('house', 14) + 'House league</span>Seasons, registrations, the draft, schedules and standings</div></div></div>';
+    return desk({ role: 'owner', on: 'overview', permits: after ? 'plain' : 'none', strip: { name: 'Overview' }, body: '<div style="max-width:960px;margin:0 auto">' + b + '</div>' });
+  }
+  var NOTES_OV_A = [
+    [1, 'new', 'A This morning card, only while it is true', 'For the owner and the admin, labelled in the permit’s one word, “Outside the permit”, with the shipped door arrow every card here carries; the count is in ink like the others. It opens the permit with its notice. It follows the house-league registrations card, which also appears only while something waits; when the last booking is moved, or the days pass, it goes. One permit: it opens that permit. Two or more: it opens Permits, where the flagged rows say which. A fifth card wraps to a second row, as that one does today.'],
+    [0, 'same', 'Unchanged', 'The club today band (13b; its figures were not captured for this club, so they are hatched here), the four counts (A4-12), Your programs. Still to do stays the owner’s setup steps; a permit problem is not a setup step.']
+  ];
+  var NOTES_OV_T = [[0, 'same', 'Today: the Overview is silent', 'After Dec 5 and Dec 12 come off the permit, nothing here changes (A4-12).']];
+
+  /* ── Calendar, list, Sat Dec 5 ── */
+  function calDay(after) {
+    var tb = '<div class="tbar" data-same><span class="segc"><span class="on">List</span><span>Week</span><span>Month</span></span><span class="dnav" style="margin-left:0.5rem"><span class="ar">' + ic('chevL', 16) + '</span><b>Nov 30 – Dec 6, 2026</b><span class="ar">' + ic('chevR', 16) + '</span></span><span class="sp"></span><span class="sel">Venue' + ic('chevD', 13) + '</span><span class="sel">Program' + ic('chevD', 13) + '</span><span class="sel">Team' + ic('chevD', 13) + '</span><span class="btn out">' + ic('down', 15) + 'Export</span></div>';
+    var rows = [['10:00–11:00 a.m.', 'Reds vs Blues', 'House league · U9 Rookie · Kinsmen Park · Diamond A', '<span class="chip neutral">Postponed</span>', 0],
+      ['11:00 a.m.–12:00 p.m.', 'Hawks vs Owls', 'House league · U11 Pinto · Kinsmen Park · Diamond A', '<span class="chip neutral">Draft</span>', 1],
+      ['12:00–1:00 p.m.', 'Reds vs Blues', 'House league · U9 Rookie · Kinsmen Park · Diamond B', '<span class="chip neutral">Draft</span>', 1],
+      ['1:00–2:00 p.m.', '14U AA · Practice', 'Rep teams · Kinsmen Park · Diamond A', '', 1],
+      ['1:00–2:00 p.m.', '15U AA · Practice', 'Rep teams · Kinsmen Park · Diamond B', '', 1],
+      ['2:00–3:00 p.m.', '13U AAA · Practice', 'Rep teams · Kinsmen Park · Diamond A', '', 1]];
+    var head = '<div class="dayh">Saturday, Dec 5' + (after ? hl(1, 'new', '<span style="display:inline-flex;gap:0.5rem;align-items:center"><span class="chip pend">Outside the permit</span><a style="text-transform:none;letter-spacing:0;font-size:12px">See the permit ›</a></span>', 'span') : '') + '</div>';
+    var list = rows.map(function (r) { var mark = after && r[4] ? '<span class="wg" title="Outside the permit: Sat, Dec 5 is a date off">' + ic('warn', 14) + '</span>' : ''; return '<div class="cr"' + (mark ? '' : ' data-same') + '><span>' + r[0] + '</span><span><b>' + r[1] + '</b>' + mark + '<small>' + r[2] + '</small></span><span>' + r[3] + '</span></div>'; }).join('');
+    var b = tb + '<div class="card clist" style="overflow:hidden">' + head + (after ? hl(2, 'new', list) : list) + '</div>';
+    return desk({ role: 'owner', on: 'calendar', permits: after ? 'plain' : 'none', strip: { name: 'Calendar' }, body: b });
+  }
+  var NOTES_CAL_A = [
+    [1, 'new', 'The day says the city took it', 'This is the screen F-A4-4 found missing: the one that says the club no longer holds the park that day. A short chip in the permit’s one word, “Outside the permit”, and “See the permit ›”, which opens it with its notice.'],
+    [2, 'new', 'What sits on it is marked', 'The 14 px warning glyph beside each booking still standing on the day, as the Week card already marks a clash: 5 here. The row’s own lead mark stays the team swatch. The postponed game holds no time, so it is not marked. Each row opens its own home, as today, and its window says the shipped sentence: “Outside …: Sat, Dec 5 is a date off.”'],
+    [0, 'same', 'Unchanged', 'The toolbar, the List · Week · Month switch, the filters, Export, and Week and Month (they take the same day mark).']
+  ];
+  var NOTES_CAL_T = [[0, 'same', 'Today: six items, no word', 'Dec 5 still reads 6 items and Dec 12 “3 bookings”, with no mark that the club does not hold the field those days (A4-15). A booking says “Outside …: Sat, Dec 5 is a date off” only when it is opened.']];
+
+  /* ── house-league season, Schedule health (league admin) — a crop ── */
+  function seasonHealth(after) {
+    var b = '<div style="padding:1.25rem;width:900px"><div class="card hl-card"><div style="display:flex;justify-content:space-between" data-same><b style="font-size:16px">Schedule health</b><small>2026 Fall House League</small></div>' +
+      '<div class="hl-row" data-same><span class="amb">' + ic('warn', 15) + '</span><span><b>Reds vs Blues was postponed from Dec 5 and still needs a new date.</b><small style="display:block">U9 Rookie</small></span><a>Give it a new date</a></div>';
+    var add = '<div class="hl-row"><span class="amb">' + ic('warn', 15) + '</span><span><b>Hawks vs Owls, Sat, Dec 5, 11:00 a.m. · Diamond A: the club’s permit no longer holds Kinsmen Park that day.</b><small style="display:block">U11 Pinto · draft</small></span><a>Give it a new date</a></div>' +
+      '<div class="hl-row"><span class="amb">' + ic('warn', 15) + '</span><span><b>Reds vs Blues, Sat, Dec 5, 12:00 p.m. · Diamond B: the club’s permit no longer holds Kinsmen Park that day.</b><small style="display:block">U9 Rookie · draft · on house league’s time, which the club takes back when it sends its changes</small></span><a>Give it a new date</a></div>';
+    b += (after ? hl(1, 'new', add) : '') + '<div class="hl-row" data-same><span style="color:var(--p-good)">' + ic('check', 15) + '</span><span>0 clashes</span><span></span></div></div></div>';
+    return '<div class="fr crop ground" style="width:940px;height:' + (after ? 380 : 230) + 'px">' + b + '</div>';
+  }
+  var NOTES_SEASON_A = [
+    [1, 'new', 'The league admin hears it on their own season', 'They cannot open Schedules, so the notice reaches them here, in the season’s Schedule health they already read. Two games: Hawks vs Owls is the one F-A4-6 found invisible to every check, because it sits outside any time the club handed out. The check reads “what is booked at this park on this day”, not “what the schedule gave out”, so it catches both.'],
+    [0, 'same', 'A crop, true size', 'Only the Schedule health card of the season’s Schedule page is drawn. Unchanged: the postponed line and the clash count.']
+  ];
+  var NOTES_SEASON_T = [[0, 'same', 'Today: 0 clashes', 'The season reads 0 clashes after the permit change (A4-19). Hawks vs Owls is named nowhere; the send dialog later names only the U9 game, as “time taken back” (A4-25).']];
+
+  /* ── the empty Calendar week (O6-15) ── */
+  function emptyWeek(after) {
+    var tb = '<div class="tbar" data-same><span class="segc"><span>List</span><span class="on">Week</span><span>Month</span></span><span class="dnav" style="margin-left:0.5rem"><span class="ar">' + ic('chevL', 16) + '</span><b>Nov 2 – 8, 2026</b><span class="ar">' + ic('chevR', 16) + '</span></span><span class="sp"></span><span class="sel">Venue' + ic('chevD', 13) + '</span><span class="sel">Program' + ic('chevD', 13) + '</span><span class="sel">Team' + ic('chevD', 13) + '</span><span class="btn out dis">' + ic('down', 15) + 'Export</span></div>';
+    var next = '<p class="nextln">Nothing is booked this week. <span>Next: <b>Mon, Nov 16 · Harbourtown Invitational</b></span><a>Go to that week ›</a></p>';
+    var days = ['Mon, Nov 2', 'Tue, Nov 3', 'Wed, Nov 4', 'Thu, Nov 5', 'Fri, Nov 6', 'Sat, Nov 7', 'Sun, Nov 8'];
+    var wk = '<div class="week" data-same>' + days.map(function (d, i) { return '<div class="day' + (i === 4 ? ' today' : '') + '"><span class="dh2">' + d + '</span><span class="none">—</span></div>'; }).join('') + '</div>';
+    return desk({ role: 'owner', on: 'calendar', permits: after ? 'plain' : 'none', strip: { name: 'Calendar' }, body: tb + (after ? hl(1, 'new', next) : '') + wk });
+  }
+  var NOTES_WEEK_A = [
+    [1, 'new', 'An empty week names the next thing', 'One quiet line above the days, in body text, not a card: the List view’s shipped “Nothing is booked this week.” followed by the same “Next:” words as the Overview’s This week tile (13b), so the club reads one sentence in both places. “Go to that week ›” jumps the Calendar to Nov 16. The List view’s “Nothing is booked this week.” gains the same “Next:” after it. With nothing in the next six weeks it says “Nothing in the next six weeks”, the band’s own words. With filters on, the next event is the next one that matches them.'],
+    [0, 'same', 'Unchanged', 'Seven days with a dash, today outlined, Export disabled while there is nothing to export.']
+  ];
+  var NOTES_WEEK_T = [[0, 'same', 'Today: seven dashes', 'Week of Nov 2–8: every day “—” and a disabled Export (O6-15). The next event is two weeks out and nothing says so here.']];
+
+  /* ── New schedule, “Who, and how much”, Winter dome at 1 a day (O2-08) — a crop ── */
+  function slotsCrop(after) {
+    function row(nm, cur, t, g, cls) { var c = after ? '<b>' + cur + '</b> <small>of ' + t + '</small>' : String(t);
+      return '<div class="r' + (g ? ' g' : '') + '"><span class="nm' + (g ? '' : ' in') + '"><span class="ck">' + ic('check', 11, 3) + '</span>' + nm + '</span><span class="c">' + c + '</span></div>'; }
+    var rows = row('<b style="font:700 11px var(--p-mono);letter-spacing:0.06em">SENIOR</b> <small>· 3 teams</small>', 75, 193, 1) +
+      row('<b>14U AA</b> <small>2027 Season</small>', 25, 65) + row('<b>15U AA</b> <small>2026 Season</small>', 25, 64) + row('<b>15U AAA</b> <small>2026 Season</small>', 25, 64) +
+      row('<b style="font:700 11px var(--p-mono);letter-spacing:0.06em">JUNIOR</b> <small>· 4 teams</small>', 100, 257, 1) +
+      row('<b>9U AA</b> <small>2027 Season</small>', 25, 65) + row('<b>11U AA</b> <small>2026 Season</small>', 25, 64) + row('<b>12U AA</b> <small>2026 Season</small>', 25, 64) + row('<b>13U AAA</b> <small>2026 Season</small>', 25, 64);
+    var tbl = '<div class="ftbl"><div class="r hd"><span>Team <a style="font:600 12px var(--p-sans);text-transform:none;letter-spacing:0">All · None</a></span><span class="c">Slots</span></div>' + rows +
+      '<div class="r g" data-same><span class="nm"><span class="ck off"></span><b style="font:700 11px var(--p-mono);letter-spacing:0.06em">PROGRAMS</b> <small>· 1 team</small></span><span></span></div>' +
+      '<div class="r tot"><span>7 teams</span><span class="c">' + (after ? '175 <small>of 450</small>' : '450') + '</span></div><div class="note">275 slots left open at 1 practice a day.</div></div>';
+    var b = '<div style="padding:1.25rem 1.5rem;width:748px;display:grid;gap:0.75rem;background:var(--p-card)"><b style="font-size:16px" data-same>Who, and how much</b>' +
+      '<div class="fg" data-same><label>Practices per team, per day</label><span class="inp" style="background:var(--p-card);width:430px">1 practice' + ic('chevD', 14) + '</span><span class="hint">One prevents back-to-back sessions in generated drafts. At 1 a day, 7 teams can use 175 of the 450 slots.</span></div>' +
+      (after ? hl(1, 'new', tbl) : tbl) + '</div>';
+    return '<div class="fr crop" style="width:748px;height:640px;background:var(--p-card)">' + b + '</div>';
+  }
+  var NOTES_SLOTS_A = [
+    [1, 'new', 'Each team’s Slots say what it can get at this setting', '25 Sundays at 1 practice a day is at most 25 a team, so each cell reads “25 of 65” and the total “175 of 450”. Today the column still adds up to 450 while the hint beside the setting and the closing line both say 175 can be used. The column now agrees with them. With “No daily limit”, or when the setting limits nothing, the cell is the plain share as today.'],
+    [0, 'same', 'Unchanged', 'The setting and its fix-now hint, the closing note (“275 slots left open at 1 practice a day.”), the groups and ticks. The drafts’ “7 teams short” warning gets the same “why” and a door back to this setting; it is drawn by the hub (tab 13) and left for the build.']
+  ];
+  var NOTES_SLOTS_T = [[0, 'same', 'Today: the column and the sentence disagree', 'Each team shows its full share (65 or 64), adding to 450, while the hint says 175 can be used at 1 a day. The O2 walk generated 47 of 450 and scored 64/100 from these settings.']];
+
+  function leagueLine(after) {
+    var s = after ? 'The club hasn’t given house league any time yet. An owner or an admin gives it.' : 'The club hasn’t given house league any time yet. An owner or an admin gives it, in Schedules.';
+    var b = '<div style="padding:1.25rem 1.5rem;width:560px;display:grid;gap:0.6rem;background:var(--p-card)"><div style="display:flex;justify-content:space-between" data-same><b style="font-size:17px">House league’s time</b><span class="door">' + ic('x', 18) + '</span></div><small data-same>2026 Fall House League</small>' +
+      (after ? hl(1, 're', '<p style="margin:0;font-size:14px">' + s + '</p>') : '<p style="margin:0;font-size:14px" data-same>' + s + '</p>') + '<div style="display:flex;justify-content:flex-end" data-same><span class="btn out">Close</span></div></div>';
+    return '<div class="fr crop" style="width:560px;height:200px;background:var(--p-card)">' + b + '</div>';
+  }
+  var NOTES_LEAGUE_A = [
+    [1, 're', '“in Schedules” comes off for those who cannot open it', 'A league admin or a registrar has no Schedules row; the sentence pointed at a place they cannot reach. The person who can open Schedules keeps today’s sentence and its door. 13d then adds “Ask for time”, which lands on the owner’s and admins’ This morning.'],
+    [0, 'same', 'A crop, true size', 'The house league time window, as a league admin sees it when the club has given nothing. The same sentence is used by the generate-games window.']
+  ];
+  var NOTES_LEAGUE_T = [[0, 'same', 'Today: a door they do not have', '“An owner or an admin gives it, in Schedules.” The league admin cannot open Schedules.']];
+
+  /* ── phone frames ── */
+  function moreSheet(role, after) {
+    var rows = '';
+    function sr(icon, label, isNew, n) { var cnt = isNew && role === 'owner' ? '<span class="cnt" style="margin-left:auto">8</span>' : ''; var r = '<div class="sr">' + ic(icon, 18) + label + cnt + '<span class="cv"' + (cnt ? ' style="margin-left:0.5rem"' : '') + '>' + ic('chevR', 16) + '</span></div>'; return isNew ? hl(n, 'new', r) : '<div data-same>' + r + '</div>'; }
+    rows += sr('bell', 'Notifications');
+    if (role === 'owner') rows += '<div class="tiles3" data-same><span class="tl3">' + ic('list', 20) + 'Schedules</span><span class="tl3">' + ic('house', 20) + 'House league</span><span class="tl3">' + ic('family', 20) + 'Families</span></div>';
+    if (after) rows += '<div class="sg" data-same></div>' + sr('permit', 'Permits', true, 1);
+    if (role === 'owner') rows += '<div class="sg" data-same></div>' + sr('trophy', 'Tournaments') + '<div class="sg" data-same>Club</div>' + sr('globe', 'Public site') + sr('building', 'Organization');
+    else rows += '<div class="sg" data-same></div>' + sr('building', 'Organization');
+    rows += '<div class="sg" data-same>You</div>' + sr('user', 'Account') + (role === 'owner' ? sr('card', 'Plan &amp; billing') : '') + sr('help', 'Help');
+    var sheet = '<div class="sheet"><div class="hdl"></div><div class="sb">' + rows + '</div></div>';
+    var under = '<div class="eye" style="margin:0" data-same>This morning</div><div class="prow" data-same>Payment requests · 3</div>';
+    return phone({ role: role, name: 'Overview', on: 'More', body: under, overlay: '<div style="position:absolute;inset:0;background:rgba(36,30,21,0.3);z-index:5"></div>' + sheet });
+  }
+  var NOTES_SHEET_OWNER_A = [
+    [1, 'new', 'Permits, one row in the More sheet', 'The sheet lists the sidebar’s places in the sidebar’s order, less what the bar and the tiles show. Permits sits at the top of the list, as it does in the sidebar. More, then Permits: 2 taps, where today it is More › Organization › Venue library › the Permits switch: 4 taps (O6-p06). Not a fourth tile (N8: a fourth tile is a design decision, and permits are not a daily door).'],
+    [0, 'same', 'Unchanged', 'The bar (Overview · Calendar · Rep teams · Accounting · More), the three tiles, Tournaments, Club, You.']
+  ];
+  var NOTES_SHEET_TR_A = [
+    [1, 'new', 'The one who sees the least still has one door', 'The treasurer’s bar is Overview · Accounting · More. Permits joins the sheet above Organization. They read every permit with its cost (they hold Accounting), never the Add or the pencil. A notice on a permit shows them its list only: the repair doors and the Calendar open places they do not have.'],
+    [0, 'same', 'Unchanged', 'Bar, Organization, You.']
+  ];
+  var NOTES_SHEET_T = [[0, 'same', 'Today: 4 taps, through Organization', 'More › Organization › Venue library › the Permits switch.']];
+  function phonePermit(after) {
+    if (!after) {
+      var lst = '<div class="prow" data-same><span style="flex:1"><b>Saturday diamonds, December 2026</b><br><small>Nov 28 – Dec 19 · 25% · $800.00</small></span>' + ic('chevR', 16) + '</div>';
+      return phone({ role: 'owner', name: 'Organization', on: 'More', body: '<span class="vsw" data-same style="justify-self:start"><span>Venues</span><span class="on">Permits</span></span>' + lst });
+    }
+    var notice = '<div class="notice"><div class="nh">' + ic('warn', 17) + '<div><b>8 bookings are outside this permit now: Dec 5 and Dec 12 are dates off.</b><p>They stay booked until someone moves them.</p></div></div>' +
+      '<span class="fold">All 8 bookings' + ic('chevD', 16) + '</span>' +
+      '<div class="ndoors"><a>Fix the 6 practices' + ic('chevR', 16) + '</a><a>Open the house league schedule' + ic('chevR', 16) + '</a><a>See Sat, Dec 5 on the Calendar' + ic('chevR', 16) + '</a></div></div>';
+    var dlg = '<div class="pdlg"><div class="dh" data-same><span class="tt"><span class="mono">Permit · 2026-27</span><b>Saturday diamonds, December 2026</b></span><span class="gl">' + ic('x', 20) + '</span></div><div class="sc db">' + hl(1, 'new', notice) +
+      '<div data-same><div class="band3"><div><span class="mono">Held</span><span class="big">24 h</span></div><div><span class="mono">Booked</span><span class="big">6 h</span></div><div><span class="mono">Unused</span><span class="big">18 h</span></div></div></div></div></div>';
+    return phone({ role: 'owner', name: 'Permits', on: 'More', body: '', overlay: dlg });
+  }
+  var NOTES_PPERMIT_A = [
+    [1, 'new', 'The same notice, a phone’s shape', 'The window opens full screen, as permit windows do on a phone. The 8 bookings fold under “All 8 bookings”, as the schedule’s Needs attention folds its detail, so the doors and the permit’s Use stay on the first screen. Each door is a 44-pixel row.'],
+    [0, 'same', 'Unchanged', 'The full-screen window and the Use band.']
+  ];
+  var NOTES_PPERMIT_T = [[0, 'same', 'Today', 'The permit list on a phone, one line a permit, behind the Venues | Permits switch (O6-p06). Nothing on a permit names what its dates off left behind.']];
+  function phoneWeek(after) {
+    var tool = '<div class="ptool" data-same><span class="sel" style="min-height:44px">Week' + ic('chevD', 13) + '</span><span class="ib">' + ic('chevL', 16) + '</span><b style="font-size:14px">Nov 2 – 8</b><span class="ib">' + ic('chevR', 16) + '</span><span style="flex:1"></span><span class="ib">' + ic('filter', 16) + '</span><span class="ib dis">' + ic('down', 16) + '</span></div>';
+    var grp = '<div data-same style="display:grid;gap:0.5rem"><div class="pgrp">Mon, Nov 2 – Thu, Nov 5 · nothing scheduled</div><div class="pgrp today">Fri, Nov 6 · today · nothing scheduled</div><div class="pgrp">Sat, Nov 7 – Sun, Nov 8 · nothing scheduled</div></div>';
+    var nx = '<div class="prow"><span style="flex:1">Next: <b>Mon, Nov 16 · Harbourtown Invitational</b></span>' + ic('chevR', 16) + '</div>';
+    return phone({ role: 'owner', name: 'Calendar', on: 'Calendar', body: tool + grp + (after ? hl(1, 'new', nx) : '') });
+  }
+  var NOTES_PWEEK_A = [[1, 'new', 'The next event, one row, one tap', 'Below the quiet “nothing scheduled” lines. The row jumps to that week.'], [0, 'same', 'Unchanged', 'The phone toolbar (view menu first, as the header plan’s A7 ruled) and the grouped quiet lines.']];
+  var NOTES_PWEEK_T = [[0, 'same', 'Today', '“Mon, Nov 2 – Thu, Nov 5 · nothing scheduled” and nothing after it (O6-p05).']];
+
+  /* ── registry ── */
+  SCR.path = [
+    { key: 'sched', label: 'The schedule page', kind: 'desk', cap: 'Owner · Schedules › Saturdays at Kinsmen, December 2026 · A4-14 plus this change', r: function (a) { return schedulePage(a, false); }, n: [NOTES_SCHED_T, NOTES_SCHED_A] },
+    { key: 'sched-b', label: 'C4 option B · a path line', kind: 'desk', cap: 'Not recommended · the same page with a four-door path line under the title', r: function (a) { return schedulePage(a, true); }, n: [NOTES_SCHED_T, [NOTES_SCHED_PATH[0]].concat(NOTES_SCHED_A.slice(1, 7), [NOTES_SCHED_PATH[1]])] },
+    { key: 'permit', label: 'The permit', kind: 'desk', cap: 'Owner · Permits › Saturday diamonds, December 2026 · A4-10 plus this change', r: function (a) { return permitsPlace('owner', a, permitWindow(a, 'owner')); }, n: [NOTES_PERMIT_T, NOTES_PERMIT_A] }
+  ];
+  SCR.pull = [
+    { key: 'form', label: '1 · The form', kind: 'desk', cap: 'Owner edits the permit and adds Dec 5 and Dec 12 as dates off · A4-09', r: permitForm, n: [NOTES_FORM_T, NOTES_FORM_A] },
+    { key: 'permit', label: '2 · The permit after', kind: 'desk', cap: 'The window once the form closes · A4-10', r: function (a) { return permitsPlace('owner', a, permitWindow(a, 'owner')); }, n: [NOTES_PERMIT_T, NOTES_PERMIT_A] },
+    { key: 'ov', label: '3 · Overview', kind: 'desk', cap: 'Owner or admin · Overview · A4-12', r: overview, n: [NOTES_OV_T, NOTES_OV_A] },
+    { key: 'sched', label: '4 · The schedule', kind: 'desk', cap: 'Owner or admin · the schedule that hands the permit out · A4-14', r: function (a) { return schedulePage(a, false); }, n: [NOTES_SCHED_T, NOTES_SCHED_A] },
+    { key: 'cal', label: '5 · Calendar', kind: 'desk', cap: 'Everyone with a Calendar · List, Sat Dec 5 · A4-15, A4-16', r: calDay, n: [NOTES_CAL_T, NOTES_CAL_A] },
+    { key: 'season', label: '6 · The season (league admin)', kind: 'crop', cap: 'League admin · 2026 Fall House League › Schedule › Schedule health · crop · A4-19', r: seasonHealth, n: [NOTES_SEASON_T, NOTES_SEASON_A] }
+  ];
+  SCR.door = [
+    { key: 'a-owner', label: 'A · Its own place · owner', kind: 'desk', cap: 'Recommended (Ask 1, ruled A): Permits between Calendar and Schedules', r: function (a) { return permitsPlace('owner', a, null, 'a'); }, n: [[[0, 'same', 'Today: two levels down', 'Organization › Venue library, then the Venues | Permits switch (O6-03, O6-04). The header bar names Organization and lights Venue library; nothing says “permits” until the switch.']], [
+      [1, 'new', 'Permits, a place in the rail', 'Between Calendar and Schedules: the order the club’s time moves (permit, then schedule). It has its own front door, its own list, year, Export and Add, and people who never open Schedules read it. That is 13i’s test for a rail row: a place, not one of another place’s pages. Its count pill (8, the bookings outside a permit) shows to the owner and the admin, who can fix them (N9). The glyph is a document with a check; it joins the icon dictionary (N5) and is checked at 14 px beside Calendar’s and Schedules’.'],
+      [2, 'new', 'The list flags a permit with bookings on its pulled dates', 'The row opens the permit with its notice.'],
+      [0, 'same', 'What moves', 'Venue library (Organization) keeps the venues; the Venues | Permits switch goes. The header bar names “Permits”; a place with one page draws no tab band. The row’s icon is checked at 14 px beside Calendar and Schedules (N5).']]] },
+    { key: 'a-tr', label: 'A · Its own place · treasurer', kind: 'desk', cap: 'The person who sees the least: Overview · Permits · Accounting · Organization', r: function (a) { return permitsPlace('treasurer', a, null, 'a'); }, n: [[[0, 'same', 'Today', 'The treasurer reads permits through Organization › Venue library › Permits; they hold Accounting, so they see each permit’s cost. They cannot save one.']], [
+      [1, 'new', 'The treasurer keeps permits, one row up', 'If the Venues | Permits switch goes and only schedule-holders get the row, the treasurer loses the list (Ask C1). Their rail grows from 3 rows to 4.'],
+      [2, 'new', 'The flag, without the doors', 'They see what is booked on the pulled dates; the repair doors open places they do not have, so they are not drawn.'],
+      [0, 'same', 'Unchanged', 'No Add permit, no pencil: a treasurer reads.']]] },
+    { key: 'b-owner', label: 'B · A tab inside Schedules', kind: 'desk', cap: 'Not recommended: Schedules becomes a place with two pages, Schedules · Permits', r: function (a) { return permitsPlace('owner', a, null, 'b'); }, n: [[[0, 'same', 'Today', 'Organization › Venue library › Permits.']], [
+      [1, 'new', 'Permits as Schedules’ second page', 'For the owner and the admin this reads well: the time and its schedules in one place, no new rail row. But Schedules opens only for the owner and the admin. The league admin (who can save a permit), the registrar and the treasurer have no Schedules, so for them permits would stay in Organization › Venue library: two homes for one list, which 13i was built to end. Recommend A.'],
+      [0, 'same', 'Unchanged', 'The rail.']]] }
+  ];
+  SCR.week = [{ key: 'cal', label: 'The Calendar, an empty week', kind: 'desk', cap: 'Owner · Calendar · Week of Nov 2–8, 2026, today Fri Nov 6 · O6-15', r: emptyWeek, n: [NOTES_WEEK_T, NOTES_WEEK_A] }];
+  SCR.slots = [
+    { key: 'slots', label: 'Slots at 1 a day', kind: 'crop', cap: 'Owner · New schedule · Winter dome 2026–27 · Who, and how much · crop · O2-08 with fix-now 3’s hint', r: slotsCrop, n: [NOTES_SLOTS_T, NOTES_SLOTS_A] },
+    { key: 'league', label: 'The league admin’s sentence', kind: 'crop', cap: 'League admin · House league’s time · crop', r: leagueLine, n: [NOTES_LEAGUE_T, NOTES_LEAGUE_A] }
+  ];
+  SCR.phone = [
+    { key: 'owner', label: 'Owner · More', kind: 'phone', cap: 'Owner · 390 × 844 · More sheet', r: function (a) { return moreSheet('owner', a); }, n: [NOTES_SHEET_T, NOTES_SHEET_OWNER_A] },
+    { key: 'tr', label: 'Treasurer · More', kind: 'phone', cap: 'Treasurer · 390 × 844 · More sheet', r: function (a) { return moreSheet('treasurer', a); }, n: [NOTES_SHEET_T, NOTES_SHEET_TR_A] },
+    { key: 'permit', label: 'A permit that lost dates', kind: 'phone', cap: 'Owner · Permits › Saturday diamonds, December 2026', r: phonePermit, n: [NOTES_PPERMIT_T, NOTES_PPERMIT_A] },
+    { key: 'week', label: 'An empty week', kind: 'phone', cap: 'Owner · Calendar · Nov 2–8 · O6-p05', r: phoneWeek, n: [NOTES_PWEEK_T, NOTES_PWEEK_A] }
+  ];
+
+  var LEDE = {
+    path: 'Today the path runs one way and is hidden: a permit can start a schedule, but nothing leads back, and the bill is the fifth choice of a View menu. After: every step is a door on the page it already sits on (permit, schedule, bill, send), and a change at the permit end arrives on the schedule.',
+    pull: 'Walk 4 pulled Dec 5 and Dec 12 off “Saturday diamonds, December 2026”. <b>8 bookings</b> still sat on those days: 14U AA, 15U AA and 13U AAA practices on both Saturdays, and 2 house-league games on Dec 5 (a third Dec 5 game was postponed and holds no time). The permit’s Booked fell from 14 h to 6 h, the same 8 hours. Today nothing anywhere says so. Step through who sees it, in order.',
+    door: 'Ask 1 was ruled A: a Permits row beside Calendar and Schedules. Drawn both ways, as asked, against 13i’s rule (places in the rail, pages on the page). A holds. B works for the owner but strands three of the five people who read permits.',
+    week: 'Half of F-O6-12 shipped in 13b: the Overview’s This week tile names the next event. The other half is the Calendar itself.',
+    slots: 'Two leftovers from the fix-now sessions.',
+    phone: 'Every new thing at 390, with the bottom bar and the More sheet. The path fits a phone as one thing: the notice is one scrolling list with full-width doors; Permits is one sheet row.'
+  };
+
+  /* ════════════ rendering ════════════ */
+  var main = document.getElementById('main');
+  function seg(name, items, cur, attr) {
+    return '<div class="vgroup"><span>' + name + '</span><div class="seg">' + items.map(function (i) { return '<button type="button" data-' + attr + '="' + i[0] + '" aria-pressed="' + (i[0] === cur) + '">' + i[1] + '</button>'; }).join('') + '</div></div>';
+  }
+  function renderTabs() {
+    document.getElementById('stabs').innerHTML = TABS.map(function (t) { return '<button type="button" role="tab" data-tab="' + t[0] + '" aria-selected="' + (t[0] === S.tab) + '">' + t[1] + '</button>'; }).join('');
+  }
+  function renderView() {
+    var list = SCR[S.tab];
+    var v = document.getElementById('viewrow');
+    if (!list) { v.innerHTML = ''; return; }
+    var cur = S.scr[S.tab] || list[0].key;
+    var html = (list.length > 1 ? seg('Screen', list.map(function (s) { return [s.key, s.label]; }), cur, 'scr') : '') +
+      seg('Show', [['today', 'Today'], ['after', 'After 13c']], S.mode, 'mode') +
+      seg('Highlight', [['all', 'Everything'], ['diff', 'Show only what differs']], S.view, 'view');
+    var sc = list.filter(function (s) { return s.key === cur; })[0] || list[0];
+    if (sc.kind === 'desk') html += seg('Size', [['fit', 'Fit'], ['actual', 'True size']], S.size, 'size');
+    v.innerHTML = html;
+  }
+  function noteHtml(n) {
+    var kind = n[1], lab = kind === 'new' ? 'New' : kind === 're' ? 'Restyled' : 'Unchanged';
+    return '<button type="button" class="nt ' + kind + '" data-note="' + n[0] + '"><span class="nn">' + (n[0] || '·') + '</span><span class="tag">' + lab + '</span><b>' + n[2] + '</b><span class="tx">' + n[3] + '</span></button>';
+  }
+  function renderMain() {
+    var list = SCR[S.tab];
+    document.body.classList.toggle('differs', S.view === 'diff' && S.mode === 'after');
+    if (!list) { main.innerHTML = STATIC[S.tab](); wireStatic(); return; }
+    var cur = S.scr[S.tab] || list[0].key;
+    var sc = list.filter(function (s) { return s.key === cur; })[0] || list[0];
+    var after = S.mode === 'after';
+    var frame = sc.r(after);
+    var notes = (after ? sc.n[1] : sc.n[0]).map(noteHtml).join('');
+    var desk = sc.kind === 'desk';
+    main.innerHTML = (LEDE[S.tab] ? '<p class="lede">' + LEDE[S.tab] + '</p>' : '') +
+      '<div class="stage' + (desk ? ' desk' : '') + '"><div class="fcol"><div class="fcap"><b>' + (after ? 'After 13c' : 'Today') + '</b><span>' + sc.cap + '</span></div>' +
+      '<div class="fscroll' + (desk && S.size === 'actual' ? ' actual' : '') + '"><div class="fwrap" id="fwrap">' + frame + '</div></div></div><div class="notes" id="notes">' + notes + '</div></div>';
+    fit();
+  }
+  function fit() {
+    var w = document.getElementById('fwrap'); if (!w) return;
+    var fr = w.firstElementChild; if (!fr) return;
+    var fw = fr.offsetWidth, fh = fr.offsetHeight;
+    var avail = w.parentElement.clientWidth;
+    var s = (S.size === 'actual' && fw === 1440) ? 1 : Math.min(1, avail / fw);
+    fr.style.transform = 'scale(' + s + ')';
+    w.style.width = (fw * s) + 'px'; w.style.height = (fh * s) + 'px';
+  }
+  function flashFrame(n) {
+    var els = main.querySelectorAll('.hl[data-k="' + n + '"]');
+    els.forEach(function (el) { el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); try { el.scrollIntoView({ block: 'nearest', inline: 'nearest' }); } catch (e) {} });
+    var w = document.getElementById('fwrap'); if (w) { try { w.scrollIntoView({ block: 'nearest' }); } catch (e) {} }
+  }
+  function flashNote(n) {
+    var el = main.querySelector('.nt[data-note="' + n + '"]'); if (!el) return;
+    el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
+    try { el.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch (e) { el.scrollIntoView(); }
+    setTimeout(function () { el.classList.remove('flash'); }, 1600);
+  }
+  function render() { renderTabs(); renderView(); renderMain(); }
+
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest('[data-tab],[data-scr],[data-mode],[data-view],[data-size],[data-pin],[data-note],[data-goask]');
+    if (!t) return;
+    if (t.dataset.tab) { S.tab = t.dataset.tab; save(); render(); window.scrollTo(0, 0); return; }
+    if (t.dataset.scr) { S.scr[S.tab] = t.dataset.scr; save(); renderView(); renderMain(); return; }
+    if (t.dataset.mode) { S.mode = t.dataset.mode; save(); renderView(); renderMain(); return; }
+    if (t.dataset.view) { S.view = t.dataset.view; save(); renderView(); renderMain(); return; }
+    if (t.dataset.size) { S.size = t.dataset.size; save(); renderView(); renderMain(); return; }
+    if (t.dataset.pin) { flashNote(t.dataset.pin); return; }
+    if (t.dataset.note) { if (t.dataset.note !== '0') flashFrame(t.dataset.note); return; }
+    if (t.dataset.goask) { var g = t.dataset.goask.split(':'); S.tab = g[0]; S.scr[g[0]] = g[1]; S.mode = 'after'; save(); render(); window.scrollTo(0, 0); }
+  });
+  window.addEventListener('resize', fit);
+
+  /* ════════════ the text tabs ════════════ */
+  var ASKS = [
+    { id: 'C1', t: 'Who gets the Permits row?', ctx: 'Ask 1 (ruled A) said “for the people who hold schedules”. In the code, all five roles can open permits today: the owner, the admin and the league admin can save one; the registrar and the treasurer read them (the treasurer with costs). The Venues | Permits switch goes, so anyone without the row loses the list.', go: 'door:a-tr',
+      o: [['A', 'Everyone who can open permits today gets the row (owner, admin, league admin, registrar, treasurer).', 'Nobody loses the list; the treasurer, who sees what permits cost, keeps it one row up. The registrar’s rail grows to 5 rows, the treasurer’s to 4.'], ['B', 'Only the people who can save a permit (owner, admin, league admin).', 'The registrar and the treasurer open a permit only from where it touches them: the budget line already opens it, and so does a season’s “See the permit”.']] },
+    { id: 'C2', t: 'How far does the permit’s list go?', ctx: 'Ask 13 ruled that the permit lists what is booked on the removed dates. On Oct 11 you removed “Outside it” (a standing list of everything at the park that no permit covers), asking “do we really need to show a list of everything happening at that diamond outside of the permit?”. The drawn notice is narrower, and the two rulings can both hold, but only if it stays narrow.', go: 'pull:permit',
+      o: [['A', 'Only the bookings this permit’s own dates off took, shown while they stand, gone when they are moved.', 'Drawn: 8 rows grouped by day, with doors.'], ['B', 'The permit shows the count and the doors only; the names live on the schedule and the season.', '“8 bookings sit on Dec 5 and Dec 12” with the three doors, no rows.']] },
+    { id: 'C3', t: 'Where are the owner and the admin told, away from the permit?', ctx: 'The prompt suggested Still to do. In the code that is the owner’s five setup steps, shown read-only to an admin; a permit problem is not a setup step.', go: 'pull:ov',
+      o: [['A', 'A This morning card, “Outside the permit · 8”, only while it is true, and the same 8 on the Permits row.', 'Same rule as the house-league registrations card. Plus the schedule’s Needs attention.'], ['B', 'No Overview card or count; the schedule’s Needs attention and the Calendar day only.', 'Quieter, but an owner who does not open that schedule is not told.']] },
+    { id: 'C4', t: 'How does the schedule show its path?', ctx: 'The hub drew a numbered stepper: Permit · Rules · Drafts · Fair shares and the bill · Send. I first drew a four-door path line; /design found it repeats the tiles and Needs attention right below it and adds a second navigation row. A schedule lives for months and is sent more than once, which a wizard does not suit.', go: 'path:sched',
+      o: [['A', 'The page is the path: the permit becomes a door in the top line, the Bill tile opens Fair shares and the bill (which leaves the View menu), Send stays in Needs attention.', 'Drawn on “The schedule page”. Nothing said twice.'], ['B', 'A four-door path line under the title, each step with where it stands.', 'Drawn as “C4 option B”. The order is spelled out, at the cost of repeating three figures.']] },
+    { id: 'C5', t: 'The Slots column at 1 practice a day', ctx: 'Today each team shows its full share (65), adding to 450, beside a sentence that says 175 can be used.', go: 'slots:slots',
+      o: [['A', '“25 of 65” per team, “175 of 450” in total.', 'The share stays visible, so changing the setting reads as getting the share back.'], ['B', 'Only what the team can get: “25”, total “175”.', 'Shorter; the share is gone from this column.']] },
+    { id: 'C6', t: 'The league admin’s “… in Schedules.”', ctx: 'A league admin cannot open Schedules. 13d adds “Ask for time”, which reaches the owner and the admins.', go: 'slots:league',
+      o: [['A', 'Drop “in Schedules” for anyone who cannot open it, now; 13d adds the button.', 'Drawn.'], ['B', 'Name the people: “Ask Dana Kowalski or another admin.”', 'Warmer, but a list of names that goes stale when the board changes.']] },
+    { id: 'C7', t: 'A tournament’s new venue outside the club’s venue book (R-F-05)', ctx: 'Checked in the code: it is a finding, but a deliberate and labelled one (“A venue that isn’t the club’s · Added to this tournament only”). The risk is a typed “Lions Park” that duplicates the club’s own: it sits outside every clash and permit check, with no warning.', go: '',
+      o: [['A', 'Its own small item on the tournament side: when a typed name matches a venue in the club’s book, say so and offer the club’s.', 'Keeps 13c off the tournament admin, which shares neither the Calendar nor Schedules with the club.'], ['B', 'Fold it into 13c.', 'Widens 13c to the tournament admin.']] }
+  ];
+  function asksHtml() {
+    var ans = {}; try { ans = JSON.parse(localStorage.getItem(KEY + 'a') || '{}'); } catch (e) {}
+    var h = '<p class="lede">Ruled already, not asked again: <b>Ask 1</b> A (a Permits row beside Calendar and Schedules; the drawing confirms it on 13i’s rule), <b>Ask 12</b> A (cancelling a day across programs gets its own plan; not drawn), <b>Ask 13</b> A (the permit lists what sits on the removed dates and opens the repair; one shared dates-off list is its own club-schedules item). Each ask below has a recommendation first and the alternative.</p><div class="asks">';
+    ASKS.forEach(function (a) {
+      h += '<section class="ask"><h3><span class="n">' + a.id + '</span>' + a.t + '</h3><p>' + a.ctx + '</p><div class="opts">' + a.o.map(function (o, i) {
+        var id = a.id + '-' + o[0];
+        return '<label for="' + id + '"><input type="radio" id="' + id + '" name="' + a.id + '" value="' + o[0] + '"' + (ans[a.id] === o[0] ? ' checked' : '') + '><span><b>' + o[0] + (i === 0 ? ' (recommended)' : '') + ' · ' + o[1] + '</b><br>' + o[2] + '</span></label>';
+      }).join('') + '</div>' + (a.go ? '<button type="button" class="gol" data-goask="' + a.go + '">See it drawn ›</button>' : '') + '</section>';
+    });
+    h += '</div><div class="answers"><b>Paste this back into the chat</b><textarea id="pasteback" readonly></textarea><div class="copyrow"><button type="button" id="copyans">Copy</button><span id="copymsg">Pick an answer above, or leave one blank to take the recommendation.</span></div></div>';
+    return h;
+  }
+  function pasteText() {
+    var ans = {}; try { ans = JSON.parse(localStorage.getItem(KEY + 'a') || '{}'); } catch (e) {}
+    return '13c drawing asks: ' + ASKS.map(function (a) { return a.id + ' ' + (ans[a.id] || 'A (rec)'); }).join(', ');
+  }
+  function whoHtml() {
+    return '<p class="lede">The change is made by one person on one screen. These are the people who are not on it. “Warns, never blocks” holds everywhere: no screen refuses a date off, and nothing moves until someone moves it.</p>' +
+      '<div class="tblwrap"><table class="who"><thead><tr><th>Person</th><th>Permit form and window</th><th>Overview</th><th>The club schedule</th><th>Calendar</th><th>House league season</th></tr></thead><tbody>' +
+      '<tr><td>Owner</td><td class="nw">Count as they type; the list and all three doors</td><td class="nw">This morning card while it is true (C3)</td><td class="nw">Needs attention: “Take Dec 5 and Dec 12 off” with the bill’s reason; the warnings’ first line; the Permits row’s count</td><td class="nw">The day is marked</td><td class="nw">Schedule health lines</td></tr>' +
+      '<tr><td>Club admin</td><td class="nw">Same as the owner</td><td class="nw">Same card</td><td class="nw">Same</td><td class="nw">Same</td><td class="nw">Same</td></tr>' +
+      '<tr><td>League admin</td><td class="nw">The list; the season and Calendar doors (no Schedules)</td><td class="no">Nothing new</td><td class="no">Cannot open it</td><td class="nw">The day is marked</td><td class="nw">Schedule health: a line per game on a pulled day, “Give it a new date”</td></tr>' +
+      '<tr><td>Registrar</td><td class="nw">The list and the Calendar door (reads only)</td><td class="no">Nothing new</td><td class="no">Cannot open it</td><td class="nw">The day is marked</td><td class="no">Reads the season; no new line for them to act on</td></tr>' +
+      '<tr><td>Treasurer</td><td class="nw">The list, with costs (reads only)</td><td class="no">Nothing new</td><td class="no">Cannot open it; the bill reaches them in 13d</td><td class="no">No Calendar</td><td class="no">—</td></tr>' +
+      '<tr><td>Coaches, families</td><td class="no" colspan="5">Unchanged. Coaches are told when the admin sends the schedule’s changes (“No longer Sat, Dec 5 …”, A4-25); families hear about game changes when a league admin sends them. Nothing in 13c reaches the coaches portal.</td></tr>' +
+      '</tbody></table></div>' +
+      '<div class="callout"><b>Why the check is “what is booked at this park on this day”.</b> The Hawks vs Owls game sits outside any time the club gave house league, so a check built on “what the schedule handed out” never sees it (F-A4-6). The permit already counts every club booking at its park for its Booked figure; the notice and the marks read the same bookings.</div>' +
+      '<div class="callout"><b>The risk this leaves.</b> The warning reaches the people who can fix it, not the people who would turn up. If no owner, admin or league admin acts, the 14U AA coach still arrives at Kinsmen Park on Dec 5. The This morning card stays until it is fixed or the day passes. Telling coaches directly would reach into the coaches portal, which 13c does not; it is named here so it is a choice, not a gap.</div>';
+  }
+  function scopeHtml() {
+    return '<div class="prose">' +
+      '<h2>Already delivered, so dropped from 13c</h2><ul><li><b>The Overview’s “this week / what’s next”</b> (half of F-O6-12): 13b’s band carries a This week tile with “Next: Mon, Nov 16 · …”. 13c keeps its words for the Calendar.</li><li><b>13i did not add a Permits row</b> (its prompt listed “a Permits place (13c)” as not to do), so 13c adds it.</li><li>The header bar is drawn as ruled (Phase 2D: place in the strip, club cell atop the sidebar; Phase 3: Calendar and Schedules name themselves in the bar). 13c changes nothing in it. Phase 2D and Phase 3 are not built yet.</li></ul>' +
+      '<h2>Out of scope, and where each attaches</h2><ul><li><b>Cancel this day across programs</b> (F-XR-5, Ask 12): its own plan, not yet written. It would attach in two places this drawing creates: the Calendar’s marked day header, and the permit’s notice (a fourth door, “Cancel what’s on these days”, beside the three per-program doors). 13c draws neither.</li><li><b>One shared dates-off list</b> (Ask 13): its own club-schedules item. Until then, “Take Dec 5 and Dec 12 off” on the schedule is the bridge.</li><li><b>Free time by week across permits</b> (F-O6-4): a product gap, not navigation. 13c leaves room for it: the Permits place can later carry a “By week” choice in its toolbar. Not drawn, and not recommended now; it belongs with the summary-layer plan.</li><li><b>The tournament admin and the coaches portal</b>: neither imports the club Calendar or Schedules (they share only coach-side pieces and words). 13c touches neither. R-F-05 is Ask C7.</li><li><b>The drafts’ “7 teams short” with its why</b> (left for 13c by fix-now): drawn by the hub (tab 13) and unchanged here; it goes in the build with the Slots column.</li></ul>' +
+      '<h2>Facts settled from the code and the captures</h2><p><span class="mk v">V</span> opened this session · <span class="mk">H</span> from the read-outs, not opened by me.</p><ul>' +
+      '<li><span class="mk v">V</span>Saving a permit returns only “saved”: no list, no warning (<code>app/api/admin/org/permits/route.ts:192-204</code>).</li>' +
+      '<li><span class="mk v">V</span>“Outside it” removed by the owner 2026-10-11, and why (<code>CLUB_PERMITS_AND_SCHEDULER_PLAN.md:44-52</code>; <code>lib/permit-words.ts:140-150</code>).</li>' +
+      '<li><span class="mk v">V</span>The permit window offers “Hand out this time in a schedule ›” and names the schedule as plain text (<code>components/admin/kit/club/PermitWindows.tsx:850-859</code>).</li>' +
+      '<li><span class="mk v">V</span>Each team’s Slots cell is its share target; the per-day hint and the closing note say 175 (<code>NewScheduleWindow.tsx:713-722, 840-872</code>; <code>app/api/admin/schedules/generate/route.ts:44-56</code>; <code>lib/club-schedule-view.ts:280-287</code>).</li>' +
+      '<li><span class="mk v">V</span>The league-admin sentence (<code>lib/league-time.ts:523</code>).</li>' +
+      '<li><span class="mk v">V</span>The tournament’s “A venue that isn’t the club’s · Added to this tournament only” (<code>lib/tournament-setup-words.ts:114-115</code>).</li>' +
+      '<li><span class="mk v">V</span>The More sheet lists the sidebar’s place groups less the bar and tiles; Overview, Calendar and Schedules are not in those groups, so a Permits place at the top needs the sheet to learn a top group (<code>lib/admin-kit-nav.ts:386-425</code>).</li>' +
+      '<li><span class="mk v">V</span>This morning’s extra cards appear only while their count is above zero (<code>components/admin/kit/club/ClubHubKit.tsx:248-262</code>).</li>' +
+      '<li><span class="mk v">V</span>The schedule page’s View lenses include Fair shares (<code>app/[orgSlug]/admin/schedules/[scheduleId]/page.tsx:75, 544</code>).</li>' +
+      '<li><span class="mk v">V</span>Header Phase 3 plans Calendar and Schedules naming themselves in the bar (<code>ADMIN_HEADER_BAR_PLAN.md:446-454</code>).</li>' +
+      '<li><span class="mk v">V</span>The help article says a schedule started from a permit “stays linked to it” (<code>lib/help-content/org.tsx:780</code>). True for prices; not for dates off added later. The build must word it truly.</li>' +
+      '<li><span class="mk v">V</span>Captures opened: A4-02, A4-09, A4-10, A4-12, A4-14, A4-22, O2-08, O2-14. Walk notes: <code>A4.md:17, 33-34, 43-44, 50, 55-56</code>; <code>A2.md:10-12</code>. The 8 bookings: Dec 5 holds 3 practices and 3 games, one postponed (holds no time); Dec 12 holds 3 practices; Booked fell 14 h → 6 h.</li>' +
+      '<li><span class="mk">H</span>Rails and phone bars by role; Permits readable by all five roles, savable by the owner, the admin and the league admin; Schedules only the owner and the admin; no Calendar for the treasurer.</li>' +
+      '<li><span class="mk">H</span>A schedule’s Dates off are its own rows, copied from the permit once, at the start; the clash check’s pool leaves out draft club slots; an unlinked tournament venue is never checked for clashes or permits.</li>' +
+      '<li><span class="mk">H</span>The empty week draws “—” in seven columns with Export disabled; the next-event words come from 13b’s band reader.</li>' +
+      '<li><span class="mk">H</span>“Next: Mon, Nov 16 · Harbourtown Invitational” is the O6 walk’s own sentence (F-O6-12); recompute from the seed in the build.</li></ul>' +
+      '<h2>Not captured fresh</h2><p>No local production build was taken this session: the machine had about 1.9 GB free with another session’s dev server and test runs going, and a build needs up to 6 GB. The frames are drawn from the walk captures (taken before 13i, 13b and the header bar) re-laid in today’s frame from the code. The build’s QA walk captures the real thing.</p></div>';
+  }
+  var STATIC = { told: whoHtml, scope: scopeHtml, asks: asksHtml };
+  function wireStatic() {
+    var ta = document.getElementById('pasteback'); if (!ta) return;
+    ta.value = pasteText();
+    main.querySelectorAll('.ask input').forEach(function (inp) { inp.addEventListener('change', function () {
+      var ans = {}; try { ans = JSON.parse(localStorage.getItem(KEY + 'a') || '{}'); } catch (e) {}
+      ans[inp.name] = inp.value; try { localStorage.setItem(KEY + 'a', JSON.stringify(ans)); } catch (e) {}
+      ta.value = pasteText(); }); });
+    document.getElementById('copyans').addEventListener('click', function () {
+      var msg = document.getElementById('copymsg');
+      try { navigator.clipboard.writeText(ta.value).then(function () { msg.textContent = 'Copied.'; }, function () { ta.select(); msg.textContent = 'Selected: press Ctrl+C or ⌘C.'; }); }
+      catch (e) { ta.select(); msg.textContent = 'Selected: press Ctrl+C or ⌘C.'; }
+    });
+  }
+
+  render();
+})();
+</script>

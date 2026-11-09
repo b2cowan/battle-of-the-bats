@@ -13,7 +13,7 @@
  * Copy status: drafted to the hub's drawings, then signed off by /marketing 2026-10-11 (four changed, each noted where it
  * lives: the quiet line's "Outside", the empty year, Delete's body, the bookings contact's hint). No tag is left open.
  */
-import { formatTimeRange, joinWithAnd, pluralize } from './utils.ts';
+import { formatTimeRange, joinWithAnd, pluralize, possessive } from './utils.ts';
 import { daysBetweenDateStrings, formatStoredDate } from './timezone.ts';
 import { facilityWords } from './venue-clash-words.ts';
 import { fmt } from './coach-money-summary.ts';
@@ -335,9 +335,6 @@ export const PERMIT_WORDS = {
   handOut: 'Hand out this time in a schedule',
   /** [marketing] While a schedule hands the permit's time out, Delete is absent and this says why. */
   handedOutBy: (names: readonly string[]) => `${joinWithAnd(names.map(n => `“${n}”`))} ${names.length === 1 ? 'hands' : 'hand'} this time out, so the permit stays.`,
-  /** The Venue library's view switch (the olive switch chooses what is read). */
-  viewVenues: 'Venues',
-  viewPermits: 'Permits',
   /** An empty year. Said to every reader (most can't add one, and the door is at the top for those who can), so it
    *  explains rather than instructs; sport-neutral ("a field permit", never "a diamond permit") — /marketing 2026-10-11. */
   emptyTitle: 'No permits for this year',
@@ -436,7 +433,68 @@ export const PERMIT_WORDS = {
   moneyLocked: (year: string) => `${year} is closed, so this permit’s cost and budget line can’t change. Its time can.`,
   /** The plan gate (Ask 4: League Plus and both Club bands, as the Venue library). */
   planLocked: 'Permits come with League Plus and Club.',
+
+  // ── What a permit's dates off took (Club Tier Stage 13c, C2 = A; the drawing's words, /marketing pass owed) ──
+  /** The Permits place's header bar and its page title. */
+  placeTitle: 'Permits',
+  datesOffWhy: 'e.g. a city event',
+  takenSub: (n: number) => (n === 1 ? 'It stays booked until someone moves it.' : 'They stay booked until someone moves them.'),
+  takenFine: 'Only what this permit’s own dates off took. The list goes when nothing is left on those days.',
+  takenFailed: 'What’s booked on the dates off couldn’t be read. Try again.',
+  takenAll: (n: number) => `All ${pluralize(n, 'booking')}`,
+  doorFix: (n: number, schedule: string | null) => `Fix the ${pluralize(n, 'practice')}${schedule ? ` in ${schedule}` : ''}`,
+  doorSeason: (season: string | null) => (season ? `Open ${possessive(season)} schedule` : 'Open the house league schedule'),
+  doorCalendar: (day: string) => `See ${dayWithWeekday(day)} on the Calendar`,
+  handedOutDoor: (n: number) => (n === 1 ? 'hands this time out, so the permit stays.' : 'hand this time out, so the permit stays.'),
+  checkingDay: 'Checking what’s booked…',
+  nothingThatDay: 'Nothing booked that day.',
+  bookedThatDayLabel: 'Booked that day:',
+  dayCheckFailed: (saved: boolean) => `What’s booked that day couldn’t be checked.${saved ? ' The date off is saved.' : ''}`,
 } as const;
+
+/** "Sat, Dec 5" — a club day with its weekday, the house formatter's date (no year: the notice speaks of days ahead). */
+export function dayWithWeekday(day: string): string {
+  return `${dayShort(weekdayOf(day))}, ${formatStoredDate(day, { withYear: false })}`;
+}
+
+/** A booking a date off took, as the notice and the form count it: its program and kind. */
+export interface TakenKind { program: 'rep' | 'league' | 'tournament'; kind: 'practice' | 'game' | 'tryout' | 'team_event' }
+
+/** The chip on a notice row: Game, Practice, Tryout or Team event. */
+export const takenChip = (k: TakenKind['kind']) => ({ practice: 'Practice', game: 'Game', tryout: 'Tryout', team_event: 'Team event' })[k];
+
+const TAKEN_ORDER: [string, string, (b: TakenKind) => boolean][] = [
+  ['practice', 'practices', b => b.kind === 'practice' && b.program !== 'league'],
+  ['house-league practice', 'house-league practices', b => b.kind === 'practice' && b.program === 'league'],
+  ['house-league game', 'house-league games', b => b.kind === 'game' && b.program === 'league'],
+  ['game', 'games', b => b.kind === 'game' && b.program === 'rep'],
+  ['tournament game', 'tournament games', b => b.kind === 'game' && b.program === 'tournament'],
+  ['tryout', 'tryouts', b => b.kind === 'tryout'],
+  ['team event', 'team events', b => b.kind === 'team_event'],
+];
+
+/** "3 practices and 2 house-league games" — what a day holds, by kind, in `TAKEN_ORDER`: practices, house-league practices
+ *  and games, games, tournament games, then tryouts and team events. */
+export function takenCountWords(bookings: readonly TakenKind[]): string {
+  return joinWithAnd(TAKEN_ORDER.map(([one, many, is]) => ({ n: bookings.filter(is).length, one, many }))
+    .filter(x => x.n > 0).map(x => pluralize(x.n, x.one, x.many)));
+}
+
+/** "Booked that day: 3 practices and 2 house-league games. They stay booked until moved." — the form, under a date off. */
+export function bookedThatDayWords(bookings: readonly TakenKind[]): string {
+  return `${takenCountWords(bookings)}. ${bookings.length === 1 ? 'It stays' : 'They stay'} booked until moved.`;
+}
+
+/** "8 bookings are outside this permit now: Dec 5 and Dec 12 are dates off." */
+export function takenHeading(count: number, days: readonly string[]): string {
+  const named = joinWithAnd(days.map(d => dayWords(d)));
+  return `${pluralize(count, 'booking')} ${count === 1 ? 'is' : 'are'} outside this permit now: ${named} ${days.length === 1 ? 'is a date off' : 'are dates off'}.`;
+}
+
+/** The Permits row's flag: "2 dates off · 8 bookings on them". */
+export function takenFlag(dates: number, bookings: number): string {
+  return `${pluralize(dates, 'date off', 'dates off')} · ${pluralize(bookings, 'booking')} on ${dates === 1 ? 'it' : 'them'}`;
+}
 
 /**
  * Renew's name for the copy a year on: a year in the name moves with it ("Fall diamonds 2026" → "Fall diamonds 2027",

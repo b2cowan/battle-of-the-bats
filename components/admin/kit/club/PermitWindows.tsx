@@ -26,8 +26,8 @@
  * schedule started from this permit. While a schedule hands the permit's time out, Delete is absent and one quiet line
  * names the schedules (the route refuses the delete anyway — "only when no schedule hands it out").
  */
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Check, ChevronDown, Download, FileText, Plus, RotateCw, Upload, X } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from 'react';
+import { AlertTriangle, Check, ChevronDown, ChevronRight, Download, FileText, Plus, RotateCw, Upload, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import KitDialog, { type KitStep } from './KitDialog';
 import { useOrg } from '@/lib/org-context';
@@ -46,17 +46,21 @@ import { formatTimeRange, pluralize } from '@/lib/utils';
 import { facilityWords } from '@/lib/venue-clash-words';
 import { fieldPrices, heldTime, type PermitTime, type VenueFacilities } from '@/lib/permit-time';
 import {
-  EMPTY_PERMIT_DRAFT, parseCost, permitHeldReason, permitPayload, shareStores, type PermitBlockDraft, type PermitDraft,
+  EMPTY_PERMIT_DRAFT, blockFilled, parseCost, permitHeldReason, permitPayload, shareStores, type PermitBlockDraft, type PermitDraft,
 } from '@/lib/permit-form';
 import {
   HELD_FOR_OPTIONS, PERMIT_WORDS as W, WEEKDAY_OPTIONS, facilityListWords, fieldHourSentence, fieldPricesSentence, fileSizeWords,
-  heldForWords, hoursWords, permitMoney, priceGroups, sharePercent, spanWords, usedOfWords, usedPercent, weekdaysShort,
-  type PermitHeldFor,
+  heldForWords, hoursWords, permitMoney, priceGroups, sharePercent, spanWords, takenHeading, usedOfWords, usedPercent, weekdaysShort,
+  bookedThatDayWords, type PermitHeldFor, type TakenKind,
 } from '@/lib/permit-words';
 import { permitUseSheets } from '@/lib/permit-use-workbook';
 import { buildFilename, downloadXLSX } from '@/lib/export';
 import { clubWorkbookBrand } from '@/lib/export/club-schedule-export';
 import type { PermitView, PermitWindowRead } from '@/lib/permit-server';
+import type { DatesOffNotice } from '@/lib/permit-dates-off-view';
+import { clockOf } from '@/lib/club-calendar-view';
+import { useIsPhone } from '@/lib/hooks/useIsPhone';
+import { kit } from '@/components/coaches/kit';
 import type { LibraryVenue } from '@/lib/venue-library';
 import own from './Permits.module.css';
 import vl from './VenueLibrary.module.css';
@@ -186,8 +190,65 @@ function followIssuer(d: PermitDraft, change: PayeeChange): PermitDraft {
     : d;
 }
 
-function PermitFields({ idPrefix, q, draft, onChange, venues, money, moneyLocked = null, document, onManagePayees }: {
+/**
+ * "Booked that day" under a date off, AS IT IS PICKED (Club Tier Stage 13c, drawing the form): the form saves itself, so
+ * there is no single save moment to warn at. Counted by the one answer (`lib/permit-dates-off.ts`) from the form's own
+ * time, saved or not. Silence is today's failure, so a day with nothing says so. Debounced, and a superseded read is
+ * cancelled (the scheduler's preview's lesson). ⚖ Warns, never blocks: the date off saves whatever is booked.
+ */
+function DayBookedNote({ q, permitId, day, draft, saves }: {
+  q: string;
+  permitId: string | null;
+  day: string;
+  draft: PermitDraft;
+  /** The form autosaves (a stored permit): a failure says the date off is saved anyway. */
+  saves: boolean;
+}) {
+  // Only what the count reads — the day, the dates and the blocks — as one key, so a note typed beside it never asks again.
+  const key = JSON.stringify({
+    day, startsOn: draft.startsOn, endsOn: draft.endsOn,
+    blocks: draft.blocks.map(b => ({ venueId: b.venueId, facilityIds: b.facilityIds, weekdays: b.weekdays, startTime: b.startTime, endTime: b.endTime })),
+  });
+  // A past day is never counted (nothing on it can still be moved), nor a form with no hours yet (the route holds no time
+  // for a half-filled block, so "nothing booked" would be said of nothing).
+  const asks = isCalendarDate(day) && day >= tournamentToday() && draft.blocks.some(b => blockFilled(b) && b.endTime > b.startTime);
+  /** The answer for one key: "Checking…" is any key the answer is not for yet. */
+  const [answer, setAnswer] = useState<{ key: string; bookings: TakenKind[] | null; failed: boolean } | null>(null);
+  useEffect(() => {
+    if (!asks) return;
+    const ctl = new AbortController();
+    const wait = window.setTimeout(async () => {
+      const done = (bookings: TakenKind[] | null, failed: boolean) => { if (!ctl.signal.aborted) setAnswer({ key, bookings, failed }); };
+      try {
+        // org-slug-ok: `q` is the host page's "orgSlug=…" query
+        const res = await fetch(`/api/admin/org/permits?${q}`, { ...jsonInit('POST', { action: 'booked-that-day', id: permitId, data: JSON.parse(key) }), signal: ctl.signal });
+        const data = await res.json().catch(() => null) as { bookings?: TakenKind[] | null } | null;
+        if (!res.ok || !data) done(null, true); else done(data.bookings ?? null, false);
+      } catch {
+        done(null, true);
+      }
+    }, 400);
+    return () => { ctl.abort(); window.clearTimeout(wait); };
+  }, [q, permitId, key, asks]);
+
+  if (!asks) return null;
+  if (answer?.key !== key) return <p className={`${own.offNote} ${own.offNoteQuiet}`} role="status">{W.checkingDay}</p>;
+  if (answer.failed) return <p className={own.offNote} role="status"><AlertTriangle size={15} aria-hidden /><span>{W.dayCheckFailed(saves)}</span></p>;
+  const booked = answer.bookings;
+  if (!booked) return null;
+  if (!booked.length) return <p className={`${own.offNote} ${own.offNoteQuiet}`} role="status"><Check size={15} aria-hidden /><span>{W.nothingThatDay}</span></p>;
+  return (
+    <p className={own.offNote} role="status">
+      <AlertTriangle size={15} aria-hidden />
+      <span><b>{W.bookedThatDayLabel}</b> {bookedThatDayWords(booked)}</span>
+    </p>
+  );
+}
+
+function PermitFields({ idPrefix, q, permitId = null, draft, onChange, venues, money, moneyLocked = null, document, onManagePayees }: {
   idPrefix: string;
+  /** The stored permit the form edits (it autosaves), or null in Add permit — the dates-off count asks with it. */
+  permitId?: string | null;
   /** The permit starts in a CLOSED fiscal year: its cost and budget line read, locked, with the money windows' line. */
   moneyLocked?: string | null;
   q: string;
@@ -352,13 +413,15 @@ function PermitFields({ idPrefix, q, draft, onChange, venues, money, moneyLocked
           </label>
           <label className={ck.field} htmlFor={`${idPrefix}-offn${i}`}>
             <span className={ck.label}>Why (optional)</span>
-            <input id={`${idPrefix}-offn${i}`} className={ck.input} value={o.note} maxLength={120} placeholder="The dome is closed"
+            {/* Owner decision 1 (13c, 2026-11-08): a date off is the city's, so the example fits any permit. */}
+            <input id={`${idPrefix}-offn${i}`} className={ck.input} value={o.note} maxLength={120} placeholder={W.datesOffWhy}
               onChange={e => set({ datesOff: draft.datesOff.map(x => (x.key === o.key ? { ...x, note: e.target.value } : x)) })} />
           </label>
           <button type="button" className={own.blockRemove} style={{ alignSelf: 'end' }} aria-label={`Remove the date off ${o.day || i + 1}`}
             onClick={() => set({ datesOff: draft.datesOff.filter(x => x.key !== o.key) })}>
             <X size={15} aria-hidden />
           </button>
+          <DayBookedNote q={q} permitId={permitId} day={o.day} draft={draft} saves={permitId != null} />
         </div>
       ))}
       <div className={own.adds}>
@@ -745,7 +808,7 @@ export function PermitWindow({
         busy={busy}
       >
         {editing ? (
-          <PermitFields idPrefix="permit" q={q} draft={draft} onChange={change} venues={formVenues} money={money}
+          <PermitFields idPrefix="permit" q={q} permitId={view.id} draft={draft} onChange={change} venues={formVenues} money={money}
             moneyLocked={view.year.locked ? W.moneyLocked(view.year.name) : null} onManagePayees={() => setManaging(true)}
             document={(
               <div className={ck.field}>
@@ -760,6 +823,8 @@ export function PermitWindow({
             )} />
         ) : (
           <>
+            {/* Keyed on the record's last change: a save reads the notice again with the window. */}
+            <DatesOffNoticeBlock key={view.updatedAt} q={q} permitId={view.id} onGo={href => void leave(() => router.push(href))} />
             {/* ⚖ Export heads the window (owner 2026-10-11, Ask 1): its workbook summarises the WHOLE permit — reference,
                 place, days, hours, dates, cost, prices, use — and an Export sits above what it exports, on the right
                 (2026-10-09). On a phone the word hides and the 44px icon stays (the mobile admin rule). */}
@@ -858,7 +923,19 @@ export function PermitWindow({
             </button>
           </p>
         )}
-        {!editing && handedOut.length > 0 && <p className={own.under}>{W.handedOutBy(handedOut.map(h => h.name))}</p>}
+        {/* ⚖ RESTYLED (13c): for the people who build schedules, the schedule's name is a door to it — where the same change
+            waits in Needs attention; for everyone else it stays quoted text (a door they cannot open is absent). */}
+        {!editing && handedOut.length > 0 && (canBuild ? (
+          <p className={own.under}>
+            {handedOut.map((h, i) => (
+              <span key={h.id}>
+                {i > 0 && (i === handedOut.length - 1 ? ' and ' : ', ')}
+                <a className={own.handedDoor} href={`/${orgSlug}/admin/schedules/${h.id}`}
+                  onClick={e => { e.preventDefault(); void leave(() => router.push(`/${orgSlug}/admin/schedules/${h.id}`)); }}>{h.name} ›</a>
+              </span>
+            ))}{' '}{W.handedOutDoor(handedOut.length)}
+          </p>
+        ) : <p className={own.under}>{W.handedOutBy(handedOut.map(h => h.name))}</p>)}
         {canSave && !editing && (
           <div className={vl.recordEnd}>
             <RecordAction icon={<RotateCw size={13} aria-hidden />} onClick={() => void renew()} disabled={busy}>{W.renew}</RecordAction>
@@ -879,6 +956,102 @@ export function PermitWindow({
   );
 }
 
+
+/**
+ * ⚖ WHAT THIS PERMIT'S DATES OFF TOOK (Club Tier Stage 13c, C2 = A — owner 2026-11-08; drawing, the permit window): the
+ * notice heading the window while bookings stand on its dates off from today on, and gone when nothing is left on those days
+ * or the days have passed. ONLY what this permit's own dates off took — never everything at the park (the "Outside it" the
+ * owner removed on Oct 11). The rows are named as the reader's Calendar names them; each door is drawn only where the reader
+ * can go (absent, never greyed) — the treasurer reads the list alone. Its own read, so a failure is the notice's alone.
+ * Phone: the rows fold under "All 8 bookings ▾" (the schedule's Needs attention folds the same way), the doors stay.
+ */
+function DatesOffNoticeBlock({ q, permitId, onGo }: {
+  q: string;
+  permitId: string;
+  /** Follow a door — the window settles its form first. */
+  onGo: (href: string) => void;
+}) {
+  const isPhone = useIsPhone();
+  const [notice, setNotice] = useState<DatesOffNotice | null>(null);
+  const [failed, setFailed] = useState(false);
+  const [open, setOpen] = useState(false);
+  const beginRead = useLatestRead();
+  const load = useCallback(async () => {
+    const current = beginRead();
+    // org-slug-ok: `q` is the host page's "orgSlug=…" query
+    const r = await moneyFetch<{ notice: DatesOffNotice | null }>(`/api/admin/org/permits?${q}&taken=${encodeURIComponent(permitId)}`).catch(() => null);
+    if (!current()) return;
+    if (!r?.ok) { setFailed(true); return; }
+    setFailed(false);
+    setNotice(r.data.notice);
+  }, [q, permitId, beginRead]);
+  useDeferredLoad(true, load);
+
+  if (failed) {
+    return (
+      <div className={own.notice} role="status">
+        <div className={own.noticeHead}>
+          <AlertTriangle size={17} aria-hidden />
+          <div>
+            <span className={own.noticeTitle}>{W.takenFailed}</span>
+            <button type="button" className={`${own.bandDoor} tap-target`} onClick={() => void load()}>Try again</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  if (!notice || !notice.count) return null;
+  const go = (href: string) => (e: MouseEvent) => { e.preventDefault(); onGo(href); };
+  const rows = (
+    notice.groups.map(g => (
+      <div key={`${g.day}-${g.heading}`}>
+        <span className={own.noticeDay}>{g.heading}</span>
+        <div className={own.noticeRows}>
+          {g.rows.map(r => {
+            const inner = (
+              <>
+                <span className={own.noticeTime}>{clockOf(r.startMs)}</span>
+                <span className={own.noticeWhat}>{r.title}{r.line && <span className={own.noticeLine}>{r.line}</span>}</span>
+                <span className={kit.chip}>{r.chip}</span>
+                <span className={own.noticeChev} aria-hidden>{r.door && <ChevronRight size={14} />}</span>
+              </>
+            );
+            return r.door
+              ? <a key={r.key} className={own.noticeRow} href={r.door.href} onClick={go(r.door.href)} aria-label={`${r.title}, ${clockOf(r.startMs)}: ${r.door.label}`}>{inner}</a>
+              : <div key={r.key} className={own.noticeRow}>{inner}</div>;
+          })}
+        </div>
+      </div>
+    ))
+  );
+  return (
+    <section className={own.notice} aria-label="Bookings on the dates off">
+      <div className={own.noticeHead}>
+        <AlertTriangle size={17} aria-hidden />
+        <div>
+          <span className={own.noticeTitle}>{takenHeading(notice.count, notice.days)}</span>
+          <p className={own.noticeSub}>{W.takenSub(notice.count)}</p>
+        </div>
+      </div>
+      {isPhone ? (
+        <>
+          <button type="button" className={own.noticeFold} aria-expanded={open} onClick={() => setOpen(o => !o)}>
+            {W.takenAll(notice.count)}<ChevronDown size={16} aria-hidden />
+          </button>
+          {open && rows}
+        </>
+      ) : rows}
+      {notice.doors.length > 0 && (
+        <div className={own.noticeDoors}>
+          {notice.doors.map(d => (
+            <a key={d.href} className={own.noticeDoor} href={d.href} onClick={go(d.href)}>{d.label}<ChevronRight size={isPhone ? 16 : 14} aria-hidden /></a>
+          ))}
+        </div>
+      )}
+      <p className={own.noticeFine}>{W.takenFine}</p>
+    </section>
+  );
+}
 
 /** Sends the issuer's document for a saved permit (PDF, JPG or PNG; the route holds the rules). */
 async function postPermitDocument(q: string, permitId: string, file: File): Promise<{ ok: boolean; data: unknown }> {
@@ -941,7 +1114,7 @@ export function AddPermitWindow({ q, venues, money, startVenueId, onAdded, onClo
     <KitDialog
       kind="form"
       size="medium"
-      eyebrow="Venue library · Permits"
+      eyebrow="Permits"
       title={W.addTitle}
       onClose={onClose}
       busy={busy}

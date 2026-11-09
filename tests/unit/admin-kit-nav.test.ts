@@ -6,7 +6,7 @@ import {
   kitPrograms, kitOrgLinks, kitBillingLink, isKitLinkActive, isKitLinkActiveAmong, activeKitSection,
   clubProgramOrder, INTERIM_PROGRAM_ORDER, PROGRAM_CAPABILITY, accountingTabs, accountingTabFor, tournamentBarKeys,
   familiesTabs, familiesTabFor, familiesChildHref, isFamiliesChildPage, kitOrgPlace, litClubPlace, orgTabs, placeGroupHeading,
-  clubPlaceAt, showsOrgBoard, type ClubPlaceAccess,
+  clubPlaceAt, showsOrgBoard, kitPermitsLink, type ClubPlaceAccess,
 } from '../../lib/admin-kit-nav.ts';
 import { clubNavFor, CLUB_BASE, RUNS_BOTH, RUNS_NEITHER } from './_club-people.ts';
 import { hasCapability, type Capability } from '../../lib/roles.ts';
@@ -393,12 +393,37 @@ describe('the admin kit nav — one model, two navs', () => {
 describe('13i · the club sidebar lists places only', () => {
   const rows = (role: OrgRole, shape = RUNS_BOTH) => clubNavFor(role, shape).sidebarRows;
 
-  it('the place lists and their gates: owner 10, admin 9, league admin 4, registrar 4, treasurer 3', () => {
-    assert.deepEqual(rows('owner'), ['overview', 'calendar', 'schedules', 'rep-teams', 'house-league', 'tournaments', 'accounting', 'families', 'public-site', 'org']);
-    assert.deepEqual(rows('admin'), ['overview', 'calendar', 'schedules', 'rep-teams', 'house-league', 'tournaments', 'accounting', 'public-site', 'org'], 'no Families: an explicit grant only');
-    assert.deepEqual(rows('league_admin'), ['overview', 'calendar', 'house-league', 'org']);
-    assert.deepEqual(rows('league_registrar'), ['overview', 'calendar', 'house-league', 'org']);
-    assert.deepEqual(rows('treasurer'), ['overview', 'accounting', 'org']);
+  // ⚖ 13c C1 = A (owner 2026-11-08): Permits is a place between Calendar and Schedules for every role that opened the permit
+  // list before — owner 10 → 11, admin 9 → 10, league admin 4 → 5, registrar 4 → 5, treasurer 3 → 4 (and staff, the same day).
+  it('the place lists and their gates: owner 11, admin 10, league admin 5, registrar 5, treasurer 4', () => {
+    assert.deepEqual(rows('owner'), ['overview', 'calendar', 'permits', 'schedules', 'rep-teams', 'house-league', 'tournaments', 'accounting', 'families', 'public-site', 'org']);
+    assert.deepEqual(rows('admin'), ['overview', 'calendar', 'permits', 'schedules', 'rep-teams', 'house-league', 'tournaments', 'accounting', 'public-site', 'org'], 'no Families: an explicit grant only');
+    assert.deepEqual(rows('league_admin'), ['overview', 'calendar', 'permits', 'house-league', 'org']);
+    assert.deepEqual(rows('league_registrar'), ['overview', 'calendar', 'permits', 'house-league', 'org']);
+    assert.deepEqual(rows('treasurer'), ['overview', 'permits', 'accounting', 'org']);
+  });
+
+  it('13c · Permits: every role that read the permit list before keeps it (staff = A, owner 2026-11-08); never a coach or a volunteer', () => {
+    const permitsFor = (role: OrgRole, o: Partial<Parameters<typeof kitPermitsLink>[0]> = {}) =>
+      kitPermitsLink({ base: '/o/admin', role, isCanceled: false, tournamentTier: false, hasVenueLibrary: true, ...o });
+    for (const role of ['owner', 'admin', 'league_admin', 'league_registrar', 'treasurer', 'staff'] as OrgRole[]) {
+      assert.equal(permitsFor(role)?.href, '/o/admin/permits', role);
+    }
+    assert.equal(permitsFor('coach'), null, 'the permits route refuses a coach');
+    assert.equal(permitsFor('official'), null, 'a volunteer never reaches the admin');
+    assert.equal(permitsFor('owner', { hasVenueLibrary: false }), null, 'permits ride the Venue library’s plans (Ask 4)');
+    assert.equal(permitsFor('owner', { tournamentTier: true }), null, 'a Tournament plan has no club side');
+    assert.equal(permitsFor('owner', { isCanceled: true }), null);
+  });
+
+  it('13c · the bar names Permits where the rail lists it — a one-page place, so no tab row', () => {
+    const access = { canUse: () => true, seasonAccess: null, orgTabs: null, runsRepTeams: true, hasPayouts: false, opensFamilies: true };
+    const place = clubPlaceAt('/o/admin/permits', '/o/admin', { ...access, opensPermits: true });
+    assert.equal(place?.key, 'permits');
+    assert.equal(place?.title, 'Permits');
+    assert.equal(place?.tabs.length, 1, 'a row of one tab is no row (HubTabBar)');
+    assert.equal(clubPlaceAt('/o/admin/permits', '/o/admin', access), null, 'not for someone the rail does not list it for');
+    assert.equal(clubPlaceAt('/o/admin/permitsx', '/o/admin', { ...access, opensPermits: true }), null, 'never a sibling address');
   });
 
   it('the groups: Programs (Rep teams, House league, Tournaments), then Also on your plan, then Club with Organization last', () => {

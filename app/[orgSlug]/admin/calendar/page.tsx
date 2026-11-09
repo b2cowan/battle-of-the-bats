@@ -36,7 +36,8 @@ import { AlertTriangle, CalendarDays, CalendarRange, List } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
-import { tournamentToday } from '@/lib/timezone';
+import { isCalendarDate, tournamentToday } from '@/lib/timezone';
+import { useSearchParams } from 'next/navigation';
 import { moneyFetch, refusalText } from '@/lib/money-fetch';
 import { buildFilename, downloadCSVBlob, downloadICSFromInstants, downloadXLSX, generateCSV } from '@/lib/export';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
@@ -76,7 +77,9 @@ export default function ClubCalendarPage() {
   // window widened back to a computer returns to the List it left.
   const phone = useIsPhone();
   const shownView: CalendarView = phone && view === 'list' ? 'week' : view;
-  const [cursor, setCursor] = useState(() => tournamentToday());
+  // `?day=YYYY-MM-DD` opens the week holding that day (Club Tier 13c: a permit's notice, "See Sat, Dec 5 on the Calendar").
+  const askedDay = useSearchParams().get('day');
+  const [cursor, setCursor] = useState(() => (askedDay && isCalendarDate(askedDay) ? askedDay : tournamentToday()));
   // Filters are not remembered between visits (the 2026-10-01 toolbar ruling): plain state, fresh on every open.
   const [venues, setVenues] = useState<Set<string>>(() => new Set());
   const [programs, setPrograms] = useState<Set<string>>(() => new Set());

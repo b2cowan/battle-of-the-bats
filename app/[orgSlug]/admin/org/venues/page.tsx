@@ -9,18 +9,13 @@
  *                address under it) · Facilities (by name, in the club's order) · Booked by this season (by program, in
  *                words) · one chevron; the whole row opens. A quiet "N archived venues" line opens them. On a phone the
  *                table is the kit's white rows with a chevron.
- *   a venue    — the read-first window (`VenueWindow`): it reads, the pencil edits it whole, saving as you go.
+ *   a venue    — the read-first window (`VenueWindow`): it reads, the pencil edits it whole, saving as you go. Its Permits
+ *                section lists the permits holding time there, each opening its window over the venue's.
  *   archive    — a venue anything books (past included) offers Archive; one nothing books offers Delete (red, asks).
  *
- * ⚖ PERMITS — THE TIME THE CLUB HOLDS (Club Tier Stage 10a; hub Stages 10 + 11, specimens 1, 2; Asks 1, 2, 4 ratified
- * 2026-10-11). The library is the club's venues AND the time it holds at them: one page, two views of one book, chosen by
- * the olive switch (Venues · Permits; the address keeps it, `?view=permits`). Permits is a table — Permit (issuer ·
- * reference under it) · Where · Dates · A week · Used (a percentage, "51.5 of 80 h" under it) · Cost · chevron — in band
- * rows In use now · Starts later · Ended, scoped by the fiscal-year pill (the year a permit STARTS in, Ask 2). Export
- * above it (Excel, the house format); Add permit the one lime, for savers. A permit opens its window (`PermitWindow`); a
- * venue's window lists the permits holding time there. ⚖ A permit's MONEY reads only to those who hold the club's
- * Accounting (owner, 10a build): for anyone else the Cost column is absent. Windows open over each other as LEVELS — a
- * venue's permit, a permit's budget line, the line's permits — each × going back one (3d's door rule).
+ * ⚖ PERMITS ARE A PLACE OF THEIR OWN (Club Tier Stage 13c — Ask 1 A, C1 = A, owner 2026-11-08): the club's permits list
+ * moved to Permits (`/admin/permits`, the rail between Calendar and Schedules), and the Venues | Permits switch went with
+ * it. The old address keeps working: `?view=permits` lands on Permits (bookmarks, help links, exported links).
  *
  * ⚖ WHO SAVES (Ask 9): the owner, an admin, a league admin, and anyone granted the tournament permission. Everyone else
  * who can open Organization READS it — no Add venue, no pencil, no Archive or Delete. A refused save says why in the
@@ -29,40 +24,31 @@
  * read invited the club to add its venues twice).
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { ChevronDown, ChevronRight, Download, FileClock, MapPin, Plus } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { ChevronDown, ChevronRight, MapPin, Plus } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { hasOrgVenueLibrary } from '@/lib/plan-features';
 import { jsonInit, moneyFetch, refusalText } from '@/lib/money-fetch';
-import { formatEventDateRange, formatStoredDate, tournamentToday } from '@/lib/timezone';
 // ⚖ Inside Organization (Club Tier Stage 13i, A5) the place names this tab, so only its actions remain (TabPageHeader).
 import { TabPageHeader } from '@/components/admin/kit/club/PlaceFrame';
 import { CoachListToolbar, kit } from '@/components/coaches/kit';
-import { ViewSwitch } from '@/components/coaches/kit';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import {
-  ClubRow, ClubRowBand, ClubRowFrame, ClubRowList, EmptyCard, LoadFailed, NoticePill, PageLoading, repKit, useDeferredLoad, useLatestRead,
+  ClubRow, ClubRowFrame, ClubRowList, EmptyCard, LoadFailed, NoticePill, PageLoading, repKit, useDeferredLoad, useLatestRead,
 } from '@/components/admin/kit/club/RepKit';
 import { AddVenueWindow, VenueQuestion, VenueWindow } from '@/components/admin/kit/club/VenueLibraryWindows';
-import { AddPermitWindow, PermitWindow } from '@/components/admin/kit/club/PermitWindows';
-import { clubWorkbookBrand } from '@/lib/export/club-schedule-export';
+import { PermitWindow } from '@/components/admin/kit/club/PermitWindows';
 import { BudgetLineHandOff } from '@/components/admin/kit/club/money/BudgetWindows';
-import YearPill from '@/components/admin/kit/club/money/YearPill';
 import own from '@/components/admin/kit/club/VenueLibrary.module.css';
-import pm from '@/components/admin/kit/club/Permits.module.css';
 import { NO_USAGE, VENUE_LIBRARY_WORDS as W, bookedBySummary, type LibraryVenue, type VenueUsage } from '@/lib/venue-library';
-import {
-  PERMIT_WORDS as PW, facilityListWords, hoursNumber, hoursWords, permitMoney, usedOfWords, usedPercent, usedRatio,
-} from '@/lib/permit-words';
-import { buildFilename, downloadXLSX } from '@/lib/export';
-import type { PermitListRow, PermitsYearRead, VenuePermitRow } from '@/lib/permit-server';
+import { PERMIT_WORDS as PW } from '@/lib/permit-words';
+import type { VenuePermitRow } from '@/lib/permit-server';
 import LoadingState from '@/components/shared/LoadingState';
 
 interface LibraryRead { venues: LibraryVenue[]; usage: Record<string, VenueUsage>; permits?: Record<string, VenuePermitRow[]>; canSave: boolean }
 
-type View = 'venues' | 'permits';
 /** A window over the page, and the windows opened from it (3d's door rule: each × goes back one level). */
 type Level =
   | { kind: 'venue'; id: string }
@@ -72,36 +58,25 @@ type Level =
 const facilitiesWords = (v: LibraryVenue) =>
   [...v.facilities].sort((a, b) => a.displayOrder - b.displayOrder).map(f => f.name).join(' · ');
 
-/** "Lions Park · Diamond 2" — where a permit holds time, a line per venue. */
-const whereLines = (p: PermitListRow) => p.where.map(w => `${w.venueName} · ${w.facilities ? facilityListWords(w.facilities) : PW.everyFacility.toLowerCase()}`);
-
-/** The state of a permit on the day, said once as a band. */
-function bandOf(p: PermitListRow, today: string): 'now' | 'later' | 'ended' {
-  if (p.startsOn > today) return 'later';
-  if (p.endsOn < today) return 'ended';
-  return 'now';
-}
-const BANDS: { id: 'now' | 'later' | 'ended'; label: string }[] = [
-  { id: 'now', label: PW.bandNow }, { id: 'later', label: PW.bandLater }, { id: 'ended', label: PW.bandEnded },
-];
-
 export default function VenueLibraryPage() {
   const { currentOrg, loading: orgLoading } = useOrg();
   usePageTitle('Venue library');
   const isPhone = useIsPhone();
   const router = useRouter();
-  const pathname = usePathname();
   const search = useSearchParams();
   const slug = currentOrg?.slug ?? '';
   const q = `orgSlug=${encodeURIComponent(slug)}`;
   const planAllowed = hasOrgVenueLibrary(currentOrg?.planId);
-  const view: View = search.get('view') === 'permits' ? 'permits' : 'venues';
-  const setView = (next: View) => router.replace(next === 'permits' ? `${pathname}?view=permits` : pathname, { scroll: false });
+  // The old address of the permits list (Club Tier 10a's switch): it lands on the Permits place (13c).
+  const oldPermitsAddress = search.get('view') === 'permits';
+  useEffect(() => {
+    if (oldPermitsAddress && slug) router.replace(`/${slug}/admin/permits`);
+  }, [oldPermitsAddress, slug, router]);
 
   const [read, setRead] = useState<LibraryRead | null>(null);
   const [failed, setFailed] = useState(false);
   const [stack, setStack] = useState<Level[]>([]);
-  const [asking, setAsking] = useState<'add' | 'archive' | 'delete' | 'add-permit' | null>(null);
+  const [asking, setAsking] = useState<'add' | 'archive' | 'delete' | null>(null);
   const [showArchived, setShowArchived] = useState(false);
   const [said, setSaid] = useState<string | null>(null);
   /** Why Bring back didn't go through — said beside its button, in the window. */
@@ -110,7 +85,7 @@ export default function VenueLibraryPage() {
 
   const beginRead = useLatestRead();
   const load = useCallback(async () => {
-    if (!slug || !planAllowed) return;
+    if (!slug || !planAllowed || oldPermitsAddress) return;
     const current = beginRead();
     // org-slug-ok: `q` is built from the org context's slug above
     const r = await moneyFetch<LibraryRead>(`/api/admin/org/venues?${q}&library=1`).catch(() => null);
@@ -118,36 +93,12 @@ export default function VenueLibraryPage() {
     if (!r?.ok) { setFailed(true); return; }
     setFailed(false);
     setRead(r.data);
-  }, [slug, planAllowed, q, beginRead]);
+  }, [slug, planAllowed, oldPermitsAddress, q, beginRead]);
   useDeferredLoad(!orgLoading && !!slug, load);
-
-  // ── Permits (Club Tier 10a) ──
-  const [permits, setPermits] = useState<PermitsYearRead | null>(null);
-  const [permitsFailed, setPermitsFailed] = useState(false);
-  const [year, setYear] = useState<string | null>(null);
-  const beginPermitsRead = useLatestRead();
-  const loadPermits = useCallback(async () => {
-    if (!slug || !planAllowed) return;
-    const current = beginPermitsRead();
-    // org-slug-ok: `q` is built from the org context's slug above
-    const r = await moneyFetch<PermitsYearRead>(`/api/admin/org/permits?${q}${year ? `&year=${encodeURIComponent(year)}` : ''}`).catch(() => null);
-    if (!current()) return;
-    if (!r?.ok) { setPermitsFailed(true); return; }
-    setPermitsFailed(false);
-    setPermits(r.data);
-  }, [slug, planAllowed, q, year, beginPermitsRead]);
-  useEffect(() => { if (view === 'permits' && !orgLoading) void loadPermits(); }, [view, orgLoading, loadPermits]);
-  /** A permit changed: the list, the venues' Permits sections, both read again. */
-  const permitChanged = useCallback(() => { void loadPermits(); void load(); }, [loadPermits, load]);
 
   const active = useMemo(() => (read?.venues ?? []).filter(v => v.isActive), [read]);
   const archived = useMemo(() => (read?.venues ?? []).filter(v => !v.isActive), [read]);
   const canSave = !!read?.canSave;
-  const today = tournamentToday();
-  const permitList = useMemo(() => {
-    const rows = permits?.permits ?? [];
-    return BANDS.flatMap(b => rows.filter(p => bandOf(p, today) === b.id));
-  }, [permits, today]);
   /* Stable across renders: the window's autosave rebuilds its save from it, and a fresh one every page render would
      restart the autosave's wait (/review 6b). */
   const replaceVenue = useCallback((v: LibraryVenue) => setRead(r => r && { ...r, venues: r.venues.map(x => (x.id === v.id ? v : x)) }), []);
@@ -161,41 +112,21 @@ export default function VenueLibraryPage() {
   const openFromPage = (l: Level) => { setSaid(null); setActionError(''); setStack([l]); };
   const close = () => setStack([]);
 
-  // The Permits view's two doors: at a desk they end the toolbar line (specimen 1); on a phone they are the head's two
-  // icons beside the title, never a row of their own (specimen 13 — /design 10a).
-  // A year with no permits has nothing to export, so Export is absent there, never a dead button (§296 W1, 2026-10-11:
-  // a disabled Export read as one that did nothing).
-  const permitDoors = (
-    <>
-      {permitList.length > 0 && (
-        <button type="button" className={`btn btn-outline${isPhone ? ` ${ck.iconOnlyPhone}` : ''}`} onClick={() => void exportPermits()}
-          aria-label="Export">
-          <Download size={15} aria-hidden /><span className={ck.btnWord}>Export</span>
-        </button>
-      )}
-      {!!permits?.canSave && (
-        <button type="button" className={`btn btn-lime${isPhone ? ` ${ck.iconOnlyPhone}` : ''}`} onClick={() => { setSaid(null); setAsking('add-permit'); }}
-          aria-label={PW.addButton} id="org-permit-add-btn">
-          <Plus size={15} aria-hidden /><span className={ck.btnWord}>{PW.addButton}</span>
-        </button>
-      )}
-    </>
-  );
   const header = (
     <TabPageHeader
       eyebrow="Organization"
       title="Venue library"
       inlineActions
-      actions={!planAllowed ? undefined : view === 'venues' ? (canSave ? (
+      actions={planAllowed && canSave ? (
         <button type="button" className={`btn btn-lime${isPhone ? ` ${ck.iconOnlyPhone}` : ''}`} onClick={() => { setSaid(null); setAsking('add'); }}
           aria-label="Add venue" id="org-venue-add-btn">
           <Plus size={15} aria-hidden /><span className={ck.btnWord}>Add venue</span>
         </button>
-      ) : undefined) : isPhone && permits ? permitDoors : undefined}
+      ) : undefined}
     />
   );
 
-  if (orgLoading) return <PageLoading header={header} label="Loading the Venue library…" />;
+  if (orgLoading || oldPermitsAddress) return <PageLoading header={header} label="Loading the Venue library…" />;
   if (!planAllowed) {
     return (
       <div className={ck.pageWide}>
@@ -267,125 +198,6 @@ export default function VenueLibraryPage() {
     </>
   );
 
-  // ── The Permits view ──
-  const money = !!permits?.canMoney;
-  async function exportPermits() {
-    if (!permits) return;
-    try {
-      const headers = ['Permit', 'Issuer', 'Reference', 'Where', 'From', 'To', 'A week (h)', 'Held (h)', 'Booked (h)', 'Used', ...(money ? ['Cost'] : [])];
-      const rows = permitList.map(p => [
-        p.name, p.issuer ?? '', p.reference ?? '', whereLines(p).join('; '), p.startsOn, p.endsOn,
-        hoursNumber(p.weekMinutes), hoursNumber(p.heldMinutes), hoursNumber(p.bookedMinutes),
-        usedRatio(p.bookedMinutes, p.heldMinutes),
-        ...(money ? [p.cost ?? null] : []),
-      ]);
-      const brand = await clubWorkbookBrand(q);
-      await downloadXLSX(buildFilename({ org: slug, dataset: 'permits', scope: permits.year.name }, 'xlsx'), headers, rows, 'Permits', {
-        columnNumFmts: headers.map(h => (h.endsWith('(h)') ? '0.0#' : h === 'Used' ? '0%' : h === 'Cost' ? '$#,##0.00' : undefined)),
-        masthead: {
-          title: `${currentOrg?.name ?? ''} · Permits`,
-          subtitle: `The permits that start in ${permits.year.name} · ${permitList.length} permit${permitList.length === 1 ? '' : 's'}`,
-          meta: `As at ${formatStoredDate(today, { longMonth: true })}`,
-          logoDataUrl: brand.logoDataUrl,
-        },
-        notes: [{ runs: [
-          { text: 'A week', bold: true }, { text: ': the hours held in one week. ' },
-          { text: 'Held', bold: true }, { text: ': over the permit’s dates, less its dates off. ' },
-          { text: 'Booked', bold: true }, { text: ': every program’s bookings inside the permit’s hours, each hour counted once.' },
-        ] }],
-        footer: brand.footer,
-        print: brand.print,
-      });
-    } catch {
-      setSaid('The file couldn’t be made. Please try again.');
-    }
-  }
-
-  const permitsTable = permits && (
-    <>
-      <div className={`${repKit.tableFrame} ${repKit.deskOnly}`}>
-        <table className={repKit.table} aria-label="Permits">
-          <thead>
-            <tr>
-              <th scope="col">{PW.colPermit}</th>
-              <th scope="col">{PW.colWhere}</th>
-              <th scope="col">{PW.colDates}</th>
-              <th scope="col" className={repKit.num}>{PW.colWeek}</th>
-              <th scope="col" className={repKit.num}>{PW.colUsed}</th>
-              {money && <th scope="col" className={repKit.num}>{PW.colCost}</th>}
-              <th scope="col" className={repKit.go}><span className={repKit.srOnly}>Open</span></th>
-            </tr>
-          </thead>
-          <tbody>
-            {BANDS.map(b => {
-              const rows = permitList.filter(p => bandOf(p, today) === b.id);
-              if (!rows.length) return null;
-              return [
-                <tr key={`band-${b.id}`} className={repKit.band}><td colSpan={money ? 7 : 6}>{b.label}</td></tr>,
-                ...rows.map(p => {
-                  const where = whereLines(p);
-                  return (
-                    <tr key={p.id} className={repKit.rowOpens} onClick={() => { if (window.getSelection()?.toString()) return; openFromPage({ kind: 'permit', id: p.id }); }}>
-                      <td>
-                        <button type="button" className={`${repKit.nameButton} ${repKit.nameLink}`} onClick={e => { e.stopPropagation(); openFromPage({ kind: 'permit', id: p.id }); }}>{p.name}</button>
-                        {(p.issuer || p.reference) && <span className={repKit.cellSub}>{[p.issuer, p.reference].filter(Boolean).join(' · ')}</span>}
-                      </td>
-                      <td>{where[0]}{where.slice(1).map(w => <span key={w} className={repKit.cellSub}>{w}</span>)}</td>
-                      <td>{formatEventDateRange(p.startsOn, p.endsOn, true)}</td>
-                      <td className={repKit.num}>{hoursWords(p.weekMinutes)}</td>
-                      <td className={repKit.num}>{usedPercent(p.bookedMinutes, p.heldMinutes)}<span className={repKit.cellSub}>{usedOfWords(p.bookedMinutes, p.heldMinutes)}</span></td>
-                      {money && <td className={`${repKit.num}${p.cost == null ? ` ${repKit.dim}` : ''}`}>{p.cost == null ? '—' : permitMoney(p.cost)}</td>}
-                      <td className={repKit.go}><span className={repKit.goLink} aria-hidden><ChevronRight size={16} /></span></td>
-                    </tr>
-                  );
-                }),
-              ];
-            })}
-          </tbody>
-        </table>
-      </div>
-      <div className={repKit.phoneOnly}>
-        <ClubRowFrame>
-          {BANDS.map(b => {
-            const rows = permitList.filter(p => bandOf(p, today) === b.id);
-            if (!rows.length) return null;
-            return (
-              <ClubRowList key={b.id} inset label={b.label}>
-                <ClubRowBand>{b.label}</ClubRowBand>
-                {rows.map(p => (
-                  <ClubRow key={p.id} as="button" aria-haspopup="dialog" onClick={() => openFromPage({ kind: 'permit', id: p.id })} title={p.name} chevron
-                    caption={(
-                      <>
-                        {(p.issuer || p.reference) && <span className={pm.capLine}>{[p.issuer, p.reference].filter(Boolean).join(' · ')}</span>}
-                        <span className={pm.capLine}>
-                          {[formatEventDateRange(p.startsOn, p.endsOn, true), `${hoursWords(p.weekMinutes)} a week`,
-                            p.startsOn <= today ? `${usedPercent(p.bookedMinutes, p.heldMinutes)} used` : '', money && p.cost != null ? permitMoney(p.cost) : '']
-                            .filter(Boolean).join(' · ')}
-                        </span>
-                      </>
-                    )} />
-                ))}
-              </ClubRowList>
-            );
-          })}
-        </ClubRowFrame>
-      </div>
-    </>
-  );
-
-  const viewSwitch = (
-    <ViewSwitch views={[{ id: 'venues', label: PW.viewVenues }, { id: 'permits', label: PW.viewPermits }]} value={view}
-      onChange={next => { setStack([]); setView(next); }} label="Show the library’s" />
-  );
-
-  // ── The windows, a level at a time ──
-  const permitSteps = (id: string) => {
-    if (stack.length !== 1) return undefined;
-    const at = permitList.findIndex(p => p.id === id);
-    if (at < 0 || permitList.length < 2) return undefined;
-    const stepTo = (p: PermitListRow | undefined) => (p ? { name: p.name, onStep: () => swapTop({ kind: 'permit', id: p.id }) } : null);
-    return { prev: stepTo(permitList[at - 1]), next: stepTo(permitList[at + 1]), position: `${at + 1} of ${permitList.length}`, noun: 'permit' };
-  };
   const venueOf = (id: string) => read?.venues.find(v => v.id === id) ?? null;
   const topVenue = top?.kind === 'venue' ? venueOf(top.id) : null;
   const below = stack[stack.length - 2] ?? null;
@@ -393,30 +205,11 @@ export default function VenueLibraryPage() {
   return (
     <div className={ck.pageWide}>
       {header}
-      {view === 'venues' ? (
-        <CoachListToolbar>
-          {viewSwitch}
-          <p className={kit.toolbarLede}>{W.lede}</p>
-        </CoachListToolbar>
-      ) : (
-        <CoachListToolbar actions={isPhone ? undefined : permitDoors}>
-          {viewSwitch}
-          {permits && <YearPill year={permits.year.key} years={permits.years} onChange={y => { setStack([]); setYear(y); }} />}
-        </CoachListToolbar>
-      )}
+      <CoachListToolbar>
+        <p className={kit.toolbarLede}>{W.lede}</p>
+      </CoachListToolbar>
 
-      {view === 'permits' ? (
-        permitsFailed ? (
-          <LoadFailed title={PW.loadFailed} onRetry={() => void loadPermits()} />
-        ) : !permits ? (
-          <LoadingState label="Loading the club’s permits…" />
-        ) : permitList.length === 0 ? (
-          // No door of its own: Add permit is the screen's one lime, at the top (/design 10a).
-          <EmptyCard icon={<FileClock size={28} aria-hidden />} title={PW.emptyTitle}>
-            {PW.emptyBody}
-          </EmptyCard>
-        ) : permitsTable
-      ) : failed ? (
+      {failed ? (
         <LoadFailed title={W.loadFailed} onRetry={() => void load()} />
       ) : !read ? (
         <LoadingState label="Loading the Venue library…" />
@@ -465,18 +258,17 @@ export default function VenueLibraryPage() {
           orgName={currentOrg?.name ?? ''}
           permitId={top.id}
           venues={read?.venues}
-          steps={permitSteps(top.id)}
           startEditing={!!top.edit}
           said={top.said ?? null}
           onSaidDone={() => setStack(s => s.map((l, i) => (i === s.length - 1 && l.kind === 'permit' ? { ...l, said: null } : l)))}
           fromLine={below?.kind === 'line'}
           onOpenLine={(lineId, yearKey) => push({ kind: 'line', lineId, yearKey })}
-          onChanged={permitChanged}
+          onChanged={() => void load()}
           onRenewed={(id, name) => {
-            permitChanged();
+            void load();
             swapTop({ kind: 'permit', id, edit: true, said: PW.renewed(name) });
           }}
-          onDeleted={name => { setStack([]); setSaid(PW.deleted(name)); permitChanged(); }}
+          onDeleted={name => { setStack([]); setSaid(PW.deleted(name)); void load(); }}
           onClose={stack.length > 1 ? pop : close}
         />
       )}
@@ -496,19 +288,6 @@ export default function VenueLibraryPage() {
           venues: [...r.venues, v].sort((a, b) => a.name.localeCompare(b.name, 'en-CA', { numeric: true })),
           usage: { ...r.usage, [v.id]: NO_USAGE },
         }))} />
-      )}
-      {asking === 'add-permit' && read && (
-        <AddPermitWindow q={q} venues={read.venues} money={money}
-          onClose={() => setAsking(null)}
-          onAdded={(id, name, startsOn, note) => {
-            setAsking(null);
-            setSaid(PW.added(name));
-            // The new permit may start in another fiscal year: the list follows it to the year it starts in.
-            const yearOf = [...(permits?.years ?? [])].map(y => y.key).filter(k => k <= startsOn).sort().pop() ?? null;
-            if (yearOf && yearOf !== permits?.year.key) setYear(yearOf); else permitChanged();
-            void load();
-            openFromPage({ kind: 'permit', id, said: note ?? null });
-          }} />
       )}
       {said && <NoticePill key={said} message={said} onDone={() => setSaid(null)} />}
     </div>

@@ -29,7 +29,7 @@
  */
 import {
   Users, DollarSign, Contact, Globe, CalendarDays, CalendarClock, Trophy, Building2, IdCard, CreditCard, Settings,
-  MapPin, FileText, ScrollText, ChartGantt,
+  MapPin, FileText, ScrollText, ChartGantt, FileCheck,
   type LucideIcon,
 } from 'lucide-react';
 import type { Capability } from '@/lib/roles';
@@ -274,6 +274,28 @@ export function kitSchedulesLink({ base, canUse, isCanceled, role, planId }: {
 }): KitLink | null {
   if (isCanceled || !canOpenClubSchedules({ planId, role })) return null;
   return canUse('module_rep_teams') || canUse('module_house_league') ? { key: 'schedules', label: 'Schedules', href: `${base}/schedules`, icon: ChartGantt } : null;
+}
+
+/**
+ * ⚖ THE CLUB'S PERMITS ARE A PLACE (Club Tier Stage 13c — Ask 1 A, C1 = A, owner 2026-11-08; staff = A the same day):
+ * "Permits", DIRECTLY UNDER Calendar and above Schedules in the rail, unheaded like its neighbours, and on a phone the More
+ * sheet's lone row above its groups. Out of Organization › Venue library, whose Venues | Permits switch is gone. It shows
+ * to everyone who could open the permit list before (the permits route refuses only a coach; a volunteer never reaches the
+ * admin): the owner, an admin, a league admin, a registrar, a treasurer, and a club's staff — nobody loses the list. Its
+ * glyph is a document with a check (N5: `MapPin` stays Venue library's, `FileText` PDF settings'). On a plan carrying the
+ * Venue library only (permits ride it, Ask 4), never cancelled, never a Tournament plan. Not inside a tournament (the rail's
+ * rule for Calendar and Schedules).
+ */
+export function kitPermitsLink({ base, role, isCanceled, tournamentTier, hasVenueLibrary }: {
+  base: string;
+  role: string | null | undefined;
+  isCanceled: boolean;
+  tournamentTier: boolean;
+  hasVenueLibrary: boolean;
+}): KitLink | null {
+  if (isCanceled || tournamentTier || !hasVenueLibrary) return null;
+  if (!role || role === 'coach' || role === 'official') return null;
+  return { key: 'permits', label: 'Permits', href: `${base}/permits`, icon: FileCheck };
 }
 
 /** Organization's icon (its sidebar row and its More sheet row share it). */
@@ -620,7 +642,7 @@ const EVERY_SEASON_PAGE = { read: true, readMoney: true, email: true } as const;
  * club's name never shows and swaps. The frame asks this too, so the bar and the frame cannot disagree about whether an
  * address is a place, which tab it is, or who may open it — every gate is in ONE object (`ClubPlaceAccess`), which the bar
  * and every frame build the same way (`useClubPlaceAt`, `components/admin/AdminBarPlace.tsx`).
- * The six places: Rep teams, a team, a season, Accounting, Families, Organization. A record page one level down (Rename
+ * The seven places: Rep teams, a team, a season, Accounting, Families, Organization, Permits (13c). A record page one level down (Rename
  * team URLs, a team's History, a club schedule read from a season, a child's page) is null: the bar keeps the club's name
  * there and the page keeps its own heading (Phase 3 moves those).
  * ⚠ Every place added here is a place the bar titles, so its frame must hand the bar its parts (`PlaceFrame`'s `place`).
@@ -654,6 +676,8 @@ export type ClubPlaceAccess = {
   hasPayouts: boolean;
   /** The Families layout's gate (`canOpenFamilies`): the module, and never a member limited to some team groups. */
   opensFamilies: boolean;
+  /** The Permits place (Club Tier 13c, C1): `kitPermitsLink`'s gate answered — the rail row and the bar agree. Absent = no. */
+  opensPermits?: boolean;
 };
 
 /** Is this address the place's own, or under it (never a sibling that merely starts with the same letters)? */
@@ -663,7 +687,12 @@ const isAtOrUnder = (pathname: string, href: string) => pathname === href || pat
 const flatPlace = (key: string, title: string, tabs: readonly PlaceTab[], activeId: string | null): ClubPlaceAt | null =>
   activeId ? { key, title, facts: [], tabs, activeId, ariaLabel: title } : null;
 
-export function clubPlaceAt(pathname: string, base: string, { canUse, seasonAccess, orgTabs, runsRepTeams, hasPayouts, opensFamilies }: ClubPlaceAccess): ClubPlaceAt | null {
+export function clubPlaceAt(pathname: string, base: string, { canUse, seasonAccess, orgTabs, runsRepTeams, hasPayouts, opensFamilies, opensPermits = false }: ClubPlaceAccess): ClubPlaceAt | null {
+  // Permits (Club Tier 13c, C1 = A): a one-page place — the bar names it, and one tab draws no row.
+  const permits = `${base}/permits`;
+  if (isAtOrUnder(pathname, permits)) {
+    return opensPermits ? flatPlace('permits', 'Permits', [{ id: 'permits', label: 'Permits', href: permits }], 'permits') : null;
+  }
   // A team is a place of its own inside Rep teams (its five tabs, "← Teams"), so it is asked before Rep teams. Rep teams'
   // own gate (its layout's): someone who cannot open Rep teams sees the refusal there, under the club's name.
   const teams = `${base}/rep-teams/teams/`;

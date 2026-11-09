@@ -568,6 +568,78 @@ ahead of the owner's rulings.
   default role, what each email says, where each role lands). Guard: `tests/unit/club-stage13b-arrival-guard.test.ts`.
   **Walk B: §489** (37 steps; dev copies `navj-club-s13bb` and `navj-club-s13bb-fresh`; fixtures `.probe/stage13b-b/`; sends
   real email to `fieldlogichq+s13bb-*@gmail.com`). No migration, no column; no `NAV_STANDARD` change.
+- 2026-11-08 — **13c drawing round PUBLISHED** (the club's time in one place): https://claude.ai/artifact/1zgUwZhAAFEr4yZ1UNYQCJ
+  (source [CLUB_TIER_STAGE13C_DRAWINGS.html](CLUB_TIER_STAGE13C_DRAWINGS.html); prompt
+  [CLUB_TIER_STAGE13C_DRAWING_PROMPT.md](CLUB_TIER_STAGE13C_DRAWING_PROMPT.md)). No product code changed. `/ux` and `/design` run
+  before publishing. **Settled from the code:** a permit's save returns only "saved"; a schedule copies the permit's dates off
+  once, at the start; nothing lists bookings on a pulled date. **The A4 count is 8, not the hub's 6:** Dec 5 holds 3 practices
+  and 3 games (one postponed, holding no time), Dec 12 holds 3 practices; Booked fell 14 h → 6 h. **Ask 1 holds on 13i's rule**:
+  a Permits place between Calendar and Schedules (B, a tab inside Schedules, drawn; it strands the league admin, registrar and
+  treasurer, who read permits but have no Schedules). **The Oct 11 "Outside it" removal is respected:** the permit's notice lists
+  only what its own dates off took, while it stands (Ask C2). **Already delivered:** the Overview's next event (13b's This week
+  tile), so 13c draws only the empty Calendar week. **R-F-05 is a finding**, deliberate and labelled ("A venue that isn't the
+  club's · Added to this tournament only"); recommended as its own tournament-side item (C7). /design replaced the drawn
+  four-door path line with doors on the page itself (C4 B keeps the line as the alternative). Owner asks C1–C7 open (who gets
+  the row; how far the permit's list goes; the Overview card; the path; Slots "25 of 65"; the league-admin sentence; R-F-05).
+  Named risk, not proposed: coaches are not told directly if no admin acts. Not captured fresh: no local production build
+  (the machine was short of memory); the frames re-lay the walk captures in today's frame. Next: the owner's rulings, then
+  `CLUB_TIER_STAGE13C_BUILD_PROMPT.md`.
+- 2026-11-08 — **13c drawing asks RULED, all seven A (owner, from the drawing page's paste-back).** **C1** every role that can open
+  permits today gets the Permits row (owner, admin, league admin, registrar, treasurer; registrar's rail grows to 5 rows, the
+  treasurer's to 4) — nobody loses the list when the Venues | Permits switch goes. **C2** the permit lists only the bookings its own
+  dates off took, grouped by day with doors, shown while they stand and gone when moved (the Oct 11 "Outside it" removal stays
+  respected — the list must not widen to everything at the park). **C3** a This-morning Overview card "Outside the permit · N", only
+  while true, with the same N on the Permits row, plus the schedule's Needs attention. **C4** the page is the path: the permit becomes
+  a door in the top line, the Bill tile opens Fair shares and the bill (which leaves the View menu), Send stays in Needs attention;
+  no path line. **C5** the Slots column reads "25 of 65" per team and "175 of 450" in total. **C6** drop "in Schedules" for anyone who
+  cannot open it now; 13d adds the "Ask for time" button (no names listed). **C7** the tournament-side venue-match (typed name matches
+  a club venue → say so, offer the club's) is its own small item, not folded into 13c. Recorded as ruled, nothing added.
+  **Next:** `CLUB_TIER_STAGE13C_BUILD_PROMPT.md`.
+- 2026-11-08 — **13c build prompt WRITTEN**: [CLUB_TIER_STAGE13C_BUILD_PROMPT.md](CLUB_TIER_STAGE13C_BUILD_PROMPT.md), three sessions
+  (A the permit: Permits place + the notice + the form's live count; B telling people away from it: the Overview card and row count,
+  the Calendar day mark, the league admin's Schedule health, the empty week's "Next:"; C the schedule page is the path: top-line
+  door, Needs attention row, Bill tile, View menu without Fair shares, Slots "25 of 65", the C6 sentence). No product code changed.
+  **Found from the code:** nothing computes the bookings a permit's dates off took (the save returns only "saved"), so Session A
+  writes one function on the existing bookings reader and the permit answer that every surface calls; the count rides on the brief
+  (every club screen), so it is measured with a stop-and-report; the bill's "was" shows only where an earlier figure is stored;
+  Session C shares the Schedules page with Header Phase 3 (do not run side by side). Three owner decisions in the prompt (the form's
+  placeholder; the registrar's day mark only if the census finds a gap; any role beyond the five that reads permits today).
+  **Next:** Session A.
+- 2026-11-08 — **13c Session A BUILT** (the permit, C1 + C2); its commit hash is recorded here when it lands. **Owner
+  rulings in the session:** decision 3, the census found tournament **staff** read the permit list today (the permits route refuses
+  only a coach; the Venue library row had no role gate), so **staff get the read-only Permits row too (A)**; decision 1, the
+  placeholder becomes "e.g. a city event" (A). Decision 2 did not arise (the registrar's Calendar shows house league's venues).
+  **Built:** Permits is a place between Calendar and Schedules for owner, admin, league admin, registrar, treasurer and staff
+  (never a coach or a volunteer), on the Venue library's plans, hidden inside a tournament; the More sheet's lone row above its
+  groups; the bar names it with no tab row (a one-page place, added to `clubPlaceAt`); glyph `FileCheck` (N5 row 19). The list
+  MOVED to `/admin/permits` (Export, Add permit, the bands, `?permit=<id>` opens one); Venue library keeps its venues, loses the
+  switch, and `?view=permits` lands on Permits; catalog, pdf-documents and layout-screens re-pathed. **One answer** for "what a
+  permit's dates off took": `tookByDateOff` / `datesOffTaken` (lib/permit-time.ts §4) ask `permitAnswer` twice — outside with the day
+  off, inside with it on — so a booking another permit still covers, a booking outside the permit's own hours, a moved booking and a
+  past day all drop out; `lib/permit-dates-off.ts` reads through `readPermitTimes` + `readClubBookings` + `readClubCalendar` with no
+  query of its own (guarded). The row flag, the window's notice (the drawing's words; rows named the Calendar's way, doors only
+  where the reader can go, the treasurer's list by the pool's words with no doors; phone folds "All 8 bookings ▾") and the form's
+  live "Booked that day" all call it. The schedule a permit started is a door for schedule builders. The Calendar reads `?day=`.
+  **Departures from the prompt, said here:** (1) the definition is NARROWER than the Calendar's booking window, which calls any
+  booking on a date off "a date off": the permit lists only what its own hours would have held — Session B's day mark should match
+  this, not the old wording; (2) the house-league rows read "House league · {division}" — the drawing's "· draft" has no fact behind
+  it; (3) the registrar gets "Open {season}'s schedule" (the drawing showed it for the league admin only) because the registrar can
+  open that page, and the rule is "a door for whoever can open it"; (4) the Calendar door shows only when the reader's own Calendar
+  shows one of the bookings (staff, whose Calendar is tournaments, get none); (5) the form's count also works in Add permit, from the
+  form's unsaved time. **Not measured yet:** the brief's count (Session B's item).
+  **Simplified and reviewed 2026-11-08** (high effort, five lenses). Fixed: the Permits layout now opens for a cancelled club like
+  every peer layout (it would have shown an error page, not the Plan & billing redirect); one sign-in read serves the whole permits
+  route; the form's count reads the club's places once and drops a block whose facilities are all gone; the "Nothing booked that
+  day" line waits for a block with days and times; Add permit waits for the venue list; one shared reader for a permit's blocks;
+  one hook for the Permits row (rail, sheet and bar cannot drift); the PDF coverage entry for the Venue library page kept; the
+  icon dictionary's row number and two help sentences corrected. **Left for the owner or a later pass:** (a) the notice names
+  every booking on the date off to anyone who opens the permit, including a scoped reader's other tournaments (the brief's
+  "treasurer reads the list" rule; the Calendar shows less); (b) the nav hides Permits from an official but the permits route does
+  not refuse one (an official never reaches the admin shell); (c) a booking with no facility counts against any facility block;
+  (d) a date off of today still lists today's finished bookings; (e) **Session B must count a booking once** when two permits cover
+  it; (f) the form's one-request-per-date-off cost; (g) stale "Venue library" words in the not-found errors and the schedule
+  words, and no Help-hub link to the new Permits article (the /marketing pass); (h) "The date off is saved" in the form's failure
+  line is said while a held save has not run. **Next:** commit on the owner's yes, then Session B.
 
 ## 11. The external review, cross-checked (2026-11-07)
 

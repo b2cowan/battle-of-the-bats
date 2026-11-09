@@ -700,7 +700,7 @@ const accountingHelp: HelpPageContent = {
             <>
               <p>Open a cost line and its <strong>Allocated to teams</strong> section lists every allocation drawn from it. When part of the line is not allocated yet, <strong>Allocate $X</strong> turns the line’s window into <a href="#allocations-create">New allocation</a>, filled in from the line; the amount can be up to what is left on it.</p>
               <p><strong>Bill</strong> (the button names the teams and the amount) brings the window back to the line, with the new allocation listed and Allocated updated. <strong>Cancel</strong> brings it back with nothing made. There is no separate page.</p>
-              <p>A line the club&rsquo;s permits are paid from also shows <strong>Pays for</strong>: each permit that names the line, with its cost (a row opens the permit; &times; comes back). When the permits cost more than the line plans, a sentence under them says so. Allocating a permit&rsquo;s cost to the teams is this line&rsquo;s <strong>Allocate</strong>; paying the town is an ordinary Ledger expense under the line&rsquo;s word. Permits live in Organization &rsaquo; Venue library.</p>
+              <p>A line the club&rsquo;s permits are paid from also shows <strong>Pays for</strong>: each permit that names the line, with its cost (a row opens the permit; &times; comes back). When the permits cost more than the line plans, a sentence under them says so. Allocating a permit&rsquo;s cost to the teams is this line&rsquo;s <strong>Allocate</strong>; paying the town is an ordinary Ledger expense under the line&rsquo;s word. Permits have their own place, Permits, in the sidebar.</p>
             </>
           ),
         },
