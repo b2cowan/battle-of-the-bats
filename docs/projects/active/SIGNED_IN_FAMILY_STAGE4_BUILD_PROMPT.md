@@ -312,7 +312,7 @@ existing dev tokens until Part 9 notes the drop.
 ## ▶ Progress (read first when resuming)
 
 - Fill in per Part: date, commit hash (when the owner says to commit), tests run, anything done differently and why.
-- **Session 1 (2026-11-08): Parts 1–3 BUILT, not committed (the owner has not said to commit).** PM UX plan presented; O1 = A and
+- **Session 1 (2026-11-08): Parts 1–3 BUILT, committed `7823c406c` 2026-11-08 (owner said to commit).** PM UX plan presented; O1 = A and
   O2 = second-parent only ruled (above, and in the plan).
   - **Part 1 — migration 453** `453_a_family_joins_the_child_on_every_team.sql`, applied to DEV 2026-11-08 (pre-check: 14 links, all
     live, 0 colliding, 0 over the cap; re-applied twice, re-runnable). Proved by `tests/sql/family-invitation-fixture.sql` (S4A FIXTURE OK
@@ -366,3 +366,16 @@ existing dev tokens until Part 9 notes the drop.
     tests/unit/{children-duplicates,coach-call-ups-guard,roster-delete-guard,league-second-parent,team-move-coverage}.test.ts, this
     prompt, SIGNED_IN_FAMILY_ACCOUNTS_PLAN.md (the O1/O2 + build-decisions paragraph).
   - **Next: Session 2 = Parts 4–5** (the accept page to the drawing; the emails, with O1 = A). `/clear` first.
+- **Session 2 starts here (handed over by Session 1).** Paste: `execute Session 2 (Parts 4–5) of @docs/projects/active/SIGNED_IN_FAMILY_STAGE4_BUILD_PROMPT.md`.
+  - The PM UX gate was met in Session 1 for the whole stage; present a short plain-language recap of what Parts 4–5 change before code.
+  - **Build on what exists, do not re-make it:** `inspectInvitation`, `acceptInvitation`, `invitationEmailMatches`, `maskEmail`,
+    `issuePlacementInvitation` (returns null when the stop refuses), `issueRepInvitation`, `planPlacementInvitations` (Part 3's
+    invite / already connected / none, per address) in `lib/family-invitation.ts` + `lib/family-invitation-rules.ts`; the consent words
+    in `lib/family-guardian-consent.ts`; the rep refusal words in `lib/family-invitation-words.ts` (add the email words to that module).
+  - **The interim accept page** (`app/(consumer)/family/claim/[token]/`) is the thing Part 4 replaces. The claim route already returns
+    `consent_required` (400), `another_email` + `maskedEmail` (409) and a state (404); extend, don't fork.
+  - **Owed by Part 5 before the tier can go on:** the rep Send invitation issues a token and **sends nothing yet** — Part 5.3 sends it;
+    O1 = A's no-contact refusal (Publish and the rep Send invitation, tier on only) lands here, with words saying where to set the contact.
+  - Where the placement email is assembled and how Stage 3 handled `builtInOnly`: not yet read this stage — locate it with a helper first.
+  - Tier stays OFF everywhere shared; dev browser checks need the owner's `.env.local` (ask first). Restart the dev server before any
+    browser check (Session 1 added and deleted files and changed shared modules).
