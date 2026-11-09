@@ -17,6 +17,14 @@ export const WORKSPACE_KIND_LABEL: Record<UserAccessContextKind, string> = {
 };
 
 /**
+ * The admin's portal word in its top strip (Admin header bar round 4, D4, owner 2026-11-08): the short form of
+ * `WORKSPACE_KIND_LABEL.organization`, because the strip's left cell is the sidebar's width (240, 64 collapsed). The
+ * Workspaces list, Home's cards, the account pages' way back and the coaches portal's door keep "Admin Area" (they have
+ * the room; the owner's gate answer, 2026-11-08). Both words live here, beside each other, so neither is retyped.
+ */
+export const ADMIN_STRIP_LABEL = 'Admin';
+
+/**
  * The platform admin's portal name (owner 2026-10-24, Support console Stage 1, Ask 1): the strip, the browser tab
  * and the sign-in page read this one word. It is not a `UserAccessContextKind` (staff hold no workspace), so it
  * lives beside the kinds instead of in the record.

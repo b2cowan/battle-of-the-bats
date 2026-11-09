@@ -41,6 +41,8 @@ import {
 } from '@/components/shared/SidebarStrip';
 import strip from '@/components/shared/SidebarStrip.module.css';
 import { useTournament } from '@/lib/tournament-context';
+import { useOrg } from '@/lib/org-context';
+import { stripTileText } from '@/lib/team-color';
 import { useAdminWorklist } from '@/lib/admin-worklist';
 import { useChatUnread } from '@/lib/use-chat-unread';
 import { TOUR_GROUPS } from '@/components/admin/admin-nav-config';
@@ -86,6 +88,7 @@ export default function AdminKitRail() {
     onTournaments, coachDoor, calendarLink, schedulesLink, billingLink, helpHref,
   } = nav;
   const feeAlert = useFeeAlert();
+  const clubName = useOrg().currentOrg?.name ?? null;
   // The rail the strip's name bubble hangs beside.
   const railRef = useRef<HTMLElement>(null);
 
@@ -108,6 +111,17 @@ export default function AdminKitRail() {
   return (
     <>
     <aside className={`${styles.rail} ${strip.stripLayer}`} ref={railRef}>
+      {/* ⚖ THE CLUB HEADS THE SIDEBAR (Admin header bar round 4, option B, owner 2026-11-08, D1 and D5). The club's name,
+          a link to Overview (switching clubs stays in the strip's Workspaces pill). Its height is the desktop tab band's
+          (`--admin-band-h`, one variable both read), so its bottom rule and the band's are one line; it keeps that height
+          on a screen with no tabs, so the navigation below never moves. Collapsed: the club's initials, its name in the
+          bubble. A tournament-only organization's cell names the organization; inside a club's tournament, the club. */}
+      {clubName && (
+        <Link href={base} className={styles.clubCell}>
+          <span className={styles.clubTile} aria-hidden>{stripTileText(clubName)}</span>
+          <span className={`${strip.rowLabel} ${styles.clubName}`}>{clubName}</span>
+        </Link>
+      )}
       <nav className={styles.railScroll} aria-label="Admin navigation">
         {!tournamentOnly && !isCanceled && (
           // Inside a tournament this row is the one way back to the club, so it says so — as the phone's More sheet does.

@@ -7,8 +7,17 @@
  * now, not in the sidebar), and the person's own doors sit in the top-right corner every
  * other surface uses (Zone 3): notifications · account · the Workspaces popover.
  * Desktop only (>900px) — phones keep the bottom nav + More sheet, which already carry
- * these doors. The ⇄ flip pill deliberately stays in AdminEventHeader: the strip is the
- * frame's doors; the flip belongs to the place identity it flips.
+ * these doors.
+ *
+ * ⚖ ROUND 4 (Admin header bar, option B, owner 2026-11-08, D1–D5): THE STRIP NAMES WHERE YOU ARE. It splits on
+ * the sidebar's edge: over the sidebar, the wordmark and "Admin" (D4, `ADMIN_STRIP_LABEL`), the mark alone when
+ * the sidebar is collapsed; over the page, the place — its way up, its name, its switcher, its chip, from the ONE
+ * model the phone bar reads (`useAdminPlace`) — then View site beside the bell (it moved up from the bar; the
+ * phone keeps its globe in the bar), the account menu and Workspaces. The place's name starts at the page
+ * column's padding, where the bar's name sat. Which header names the place is CSS at 900/901px, never a width
+ * read in script, so the server's first paint is already right; the copy not shown is `display: none`, so the
+ * page keeps one `<h1>`. Overview says "Overview" here (D2): the club heads the sidebar (`AdminKitRail`).
+ * A cancelled account's one page keeps the strip as it was: no sidebar to split on, and its bar names the org.
  *
  * NO CHAT DOOR (owner ruling 2026-07-31, generalized from the coach strip — logged in
  * memory/design_decisions.md; do NOT re-add it from the earlier mockup): a /chat door here
@@ -27,6 +36,8 @@
  */
 
 import { type Dispatch, type SetStateAction } from 'react';
+import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
 import NotificationBell from '@/components/notifications/NotificationBell';
 import { orgBell } from '@/lib/notification-bell-scope';
 import AccountMenu from '@/components/shared/AccountMenu';
@@ -36,8 +47,41 @@ import { useRoleSummary } from '@/lib/use-role-summary';
 import { useOrg } from '@/lib/org-context';
 import { useIsSandbox } from '@/components/sandbox/SandboxProvider';
 import { getNotificationSettingsHref } from '@/lib/billing-urls';
-import { WORKSPACE_KIND_LABEL } from '@/lib/workspace-labels';
+import FlipPill from '@/components/shared/FlipPill';
+import { useAdminFlip } from '@/lib/use-admin-flip';
+import { ADMIN_STRIP_LABEL, WORKSPACE_KIND_LABEL } from '@/lib/workspace-labels';
+import { useAdminPlace } from './useAdminPlace';
 import styles from '@/components/coaches/CoachTopStrip.module.css';
+import own from './AdminTopStrip.module.css';
+
+/** The place, drawn for the strip (desktop). The phone's rendering of the same model is `AdminEventHeader`. */
+function StripPlace() {
+  const { title, titleHref, isPageTitle, onOverview, place, dates, phaseChip } = useAdminPlace(false);
+  // D2: on the club's Overview the strip says "Overview" (the club already heads the sidebar). The phone's Overview bar
+  // still names the club (A3).
+  const text = onOverview ? 'Overview' : title;
+  const name = isPageTitle ? <h1 className={own.name}>{text}</h1> : <span className={own.name}>{text}</span>;
+  return (
+    <div className={own.place}>
+      {place?.back && (
+        <>
+          <Link href={place.back.href} className={own.back} aria-label={`Back to ${place.back.label}`}>
+            <ArrowLeft size={15} aria-hidden />
+            <span>{place.back.label}</span>
+          </Link>
+          <span className={own.backRule} aria-hidden />
+        </>
+      )}
+      {titleHref
+        ? <Link href={titleHref} className={own.nameLink} title={`${title} — open dashboard`}>{name}</Link>
+        : name}
+      {place?.switcher && <span className={own.switcher}>{place.switcher}</span>}
+      {dates && <span className={own.dates}>{dates}</span>}
+      {phaseChip && <span className={own.chip}>{phaseChip}</span>}
+      {place?.chip && <span className={own.chip}>{place.chip}</span>}
+    </div>
+  );
+}
 
 export default function AdminTopStrip({ notifCount, onNotifCountChange, suspended = false }: {
   /** Hoisted unread count from the admin shell — see the header comment. */
@@ -56,20 +100,29 @@ export default function AdminTopStrip({ notifCount, onNotifCountChange, suspende
    *  binding sandbox rule is hide the entry point, never let it dead-end. The wordmark beside it
    *  goes inert for the same reason (BrandLockup). False for every real org. */
   const inSandbox = useIsSandbox();
+  const flip = useAdminFlip();
   // Admin Design Continuity — the strip wears the COACHES PORTAL'S strip, stylesheet and all (one
   // stylesheet is the only way two strips cannot drift), its doors take their warm skins, and the
   // account menu offers the Appearance choice: the admin follows the account theme, so the old "a
   // toggle that visibly does nothing reads as broken" reason for hiding it no longer holds.
 
-  return (
-    <header className={suspended ? `${styles.strip} ${styles.stripAlways}` : styles.strip}>
-      <BrandLockup tone="follow" size={15} />
+  const split = !suspended;
+  // The portal word: in the split strip, the short form for the sidebar-width cell (D4), which a collapsed sidebar hides
+  // with the wordmark's name. A cancelled account's one page keeps its strip exactly as it was (no sidebar, no cell; on
+  // a phone too): the full word, never hidden by a sidebar preference it has no sidebar for (/review, 2026-11-08).
+  const wordClass = split ? ` ${own.lcellWord}` : '';
+  const word = (
+    <>
       {/* ⚖ The strip names its portal (the nav standard's N6, Ask A6, 2026-10-17), as the coach strip says "Coaches
-          Portal": someone with both hats flips between two shells that look alike. The word is this workspace's name
-          in the Workspaces list beside it — read from there, never retyped. */}
-      <span className={styles.stripDivider} aria-hidden />
-      <span className={styles.stripLabel}>{WORKSPACE_KIND_LABEL.organization}</span>
+          Portal": someone with both hats flips between two shells that look alike. */}
+      <span className={`${styles.stripDivider}${wordClass}`} aria-hidden />
+      <span className={`${styles.stripLabel}${wordClass}`}>{split ? ADMIN_STRIP_LABEL : WORKSPACE_KIND_LABEL.organization}</span>
+    </>
+  );
+  const doors = (
       <div className={styles.doors}>
+        {/* View site, beside the bell (D1). Not on a cancelled account's one page: its public site is suspended. */}
+        {flip && !suspended && <FlipPill resolution={flip} variant="inline" className={own.pill} />}
         {currentOrg?.id && !suspended && (
           <NotificationBell
             bell={orgBell(currentOrg.id)!}
@@ -96,6 +149,28 @@ export default function AdminTopStrip({ notifCount, onNotifCountChange, suspende
         )}
         <WorkspacesPill workspaces={roleSummary?.workspaces ?? []} className={styles.pill} warm />
       </div>
+  );
+
+  return (
+    <header className={`${styles.strip}${suspended ? ` ${styles.stripAlways}` : ''}${split ? ` ${styles.stripSplit}` : ''}`}>
+      {split ? (
+        <>
+          <div className={own.lcell}>
+            <BrandLockup tone="follow" size={15} className={own.lcellBrand} />
+            {word}
+          </div>
+          <div className={own.rcell}>
+            <StripPlace />
+            {doors}
+          </div>
+        </>
+      ) : (
+        <>
+          <BrandLockup tone="follow" size={15} />
+          {word}
+          {doors}
+        </>
+      )}
     </header>
   );
 }

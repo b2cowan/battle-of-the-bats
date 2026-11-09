@@ -25,10 +25,9 @@ import { clubPlaceAt, type ClubPlaceAt, type PlaceTab } from '@/lib/admin-kit-na
 import { useHouseLeagueAccess } from '@/components/admin/kit/useHouseLeagueSeasons';
 import { useOrgTabs } from '@/components/admin/kit/useAdminKitNav';
 
-/** What the address says (`ClubPlaceAt`: key, title, way up, facts, tabs, lit tab, label) plus the live parts only a frame has. */
+/** What the address says (`ClubPlaceAt`: key, title, way up, facts, tabs, lit tab, label) plus the live parts only a frame has.
+ *  Both of the admin's headers draw it (`useAdminPlace`): the phone bar and, above 900px, the top strip. */
 export type AdminBarPlace = Omit<ClubPlaceAt, 'tabs'> & {
-  /** The small line's words a desk shows and a phone leaves off, after `facts` (a team's group). */
-  deskFacts?: readonly string[];
   /** The place's status chip, last on the small line (a season's "Registration open"). */
   chip?: ReactNode;
   /** Beside the name: the control that switches it (a season's chevron). */

@@ -1,0 +1,925 @@
+<title>Desktop admin header</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: a drawings sheet. Sticky section tabs, a View row of switches, then notes beside one live,
+   scrollable product frame drawn at true size from the shipped warm-theme values.
+   Doc chrome = cool slate ground so the warm product frames read as specimens, not as the page. */
+:root {
+  /* document chrome (theme-aware) */
+  --bg: #E7EAEE;
+  --surface: #FFFFFF;
+  --fg: #1A1F25;
+  --muted: #56606B;
+  --rule: #D0D6DC;
+  --accent: #2D5B86;
+  --accent-soft: rgba(45, 91, 134, 0.10);
+  --shadow: 0 1px 2px rgba(20, 30, 40, 0.08), 0 10px 28px rgba(20, 30, 40, 0.12);
+  --doc-font: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --doc-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+  /* the product's shipped warm tokens (fixed: a specimen looks the same in either theme) */
+  --p-paper: #F8F4ED;
+  --p-card: #FFFFFF;
+  --p-ink: #241E15;
+  --p-ink2: #4A4235;
+  --p-dim: #615A54;
+  --p-line: rgba(70, 55, 30, 0.12);
+  --p-line2: rgba(70, 55, 30, 0.20);
+  --p-fill: rgba(70, 55, 30, 0.08);
+  --p-olive: #57651E;
+  --p-olive-soft: rgba(87, 101, 30, 0.10);
+  --p-lime: #D9F99D;
+  --p-amber: #835006;
+  --p-red: #B03A22;
+  --p-good: #2A5222;
+  --p-sans: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --p-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14171A; --surface: #1D2126; --fg: #E6E9EC; --muted: #9AA4AE; --rule: #2F353C;
+    --accent: #8EB9E2; --accent-soft: rgba(142, 185, 226, 0.14);
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 28px rgba(0, 0, 0, 0.4);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #14171A; --surface: #1D2126; --fg: #E6E9EC; --muted: #9AA4AE; --rule: #2F353C;
+  --accent: #8EB9E2; --accent-soft: rgba(142, 185, 226, 0.14);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 28px rgba(0, 0, 0, 0.4);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font: 15px/1.55 var(--doc-font);
+}
+body::before {
+  content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px);
+  z-index: 10; background: var(--bg);
+}
+.doc { max-width: 1360px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 48px; }
+.dochead { display: grid; gap: 4px; margin-bottom: 14px; }
+.dochead .eyebrow { font: 600 11px/1.3 var(--doc-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.dochead h1 { margin: 0; font-size: 24px; line-height: 1.2; text-wrap: balance; }
+.dochead p { margin: 0; color: var(--muted); max-width: 72ch; }
+
+/* sticky section tabs */
+.stabs {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 9;
+  background: var(--bg); border-bottom: 1px solid var(--rule);
+  display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none;
+  margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px)));
+  padding-inline: max(16px, env(safe-area-inset-left, 0px));
+}
+.stabs::-webkit-scrollbar { display: none; }
+.stabs button {
+  border: 0; background: none; color: var(--muted); cursor: pointer; white-space: nowrap;
+  font: 600 14px/1 var(--doc-font); padding: 14px 12px 12px; border-bottom: 2px solid transparent;
+}
+.stabs button:hover { color: var(--fg); }
+.stabs button[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); }
+.stabs button:focus-visible, .seg button:focus-visible, .btnlink:focus-visible, .ask input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* View row: one white track per switch */
+.viewrow { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; padding: 12px 0 16px; }
+.vgroup { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.vgroup > span { font: 600 11px/1 var(--doc-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.seg { display: inline-flex; flex-wrap: wrap; background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 2px; }
+.seg button { border: 0; background: none; color: var(--muted); cursor: pointer; font: 600 13px/1 var(--doc-font); padding: 8px 11px; border-radius: 6px; }
+.seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); }
+
+/* section layout */
+.stage { display: grid; grid-template-columns: minmax(0, 1fr) 402px; gap: 28px; align-items: start; }
+.stage.desk { grid-template-columns: minmax(0, 1fr); }
+.notes { min-width: 0; max-width: 66ch; }
+.stage.desk .notes { max-width: none; columns: 2 380px; column-gap: 32px; }
+.notes h2 { margin: 0 0 6px; font-size: 20px; line-height: 1.25; text-wrap: balance; }
+.notes h3 { margin: 14px 0 6px; font-size: 15px; break-after: avoid; }
+.notes p { margin: 0 0 10px; }
+.notes ul { margin: 0 0 12px; padding-left: 18px; }
+.notes li { margin-bottom: 6px; }
+.notes .small, .small { color: var(--muted); font-size: 13px; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 12px; }
+.tag { font: 600 11px/1.3 var(--doc-mono); letter-spacing: 0.06em; text-transform: uppercase; padding: 5px 7px; border-radius: 4px; border: 1px solid var(--rule); background: var(--surface); color: var(--muted); }
+.tag.new { color: var(--accent); border-color: var(--accent); }
+.tag.re { color: var(--fg); }
+.cost { border-left: 3px solid var(--rule); padding: 2px 0 2px 12px; color: var(--muted); break-inside: avoid; }
+.cost b { color: var(--fg); }
+.cost ul { margin-bottom: 0; }
+
+.fcol { min-width: 0; display: grid; gap: 8px; justify-items: start; }
+.fcap { display: grid; gap: 2px; font-size: 13px; color: var(--muted); max-width: 100%; }
+.fcap b { color: var(--fg); font-weight: 600; }
+.fcap .m { font-variant-numeric: tabular-nums; }
+.fcap .m strong { color: var(--fg); }
+.fscroll { width: 100%; max-width: 100%; }
+.fscroll.actual { overflow-x: auto; }
+.fwrap { position: relative; }
+.fwrap > .fr { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+.btnlink { border: 1px solid var(--rule); background: var(--surface); color: var(--fg); border-radius: 6px; padding: 5px 9px; font: 600 12px/1 var(--doc-font); cursor: pointer; }
+
+.trio { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; max-width: 900px; }
+.trio.deskmode { grid-template-columns: repeat(auto-fit, minmax(440px, 1fr)); max-width: none; }
+.trio h3 { margin: 0; font-size: 15px; }
+.intro { margin: 0 0 16px; color: var(--muted); max-width: 80ch; }
+.barcmp { display: grid; gap: 10px; margin-bottom: 28px; max-width: 1200px; }
+.barcmp h3 { margin: 0; font-size: 15px; }
+.bcrow { display: grid; gap: 4px; min-width: 0; }
+.bclab { font: 600 11px/1.3 var(--doc-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.fr.barspec { width: 100%; max-width: 1200px; border-radius: 8px; }
+.fr.barspec.ph { width: 390px; max-width: 100%; border: 0; border-radius: 8px; }
+.fr.barspec .hb { position: static; }
+
+/* asks */
+.asks { display: grid; gap: 16px; max-width: 860px; }
+.ask { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 16px 18px; display: grid; gap: 10px; }
+.ask h3 { margin: 0; font-size: 16px; display: flex; gap: 10px; align-items: baseline; }
+.ask h3 .n { font: 700 12px/1 var(--doc-mono); color: var(--accent); }
+.ask p { margin: 0; color: var(--muted); }
+.ask .rec { color: var(--fg); }
+.ask .opts { display: flex; flex-wrap: wrap; gap: 8px; }
+.ask label { display: inline-flex; cursor: pointer; }
+.ask input { position: absolute; opacity: 0; pointer-events: none; }
+.ask label span { border: 1px solid var(--rule); border-radius: 8px; padding: 8px 12px; font-weight: 600; font-size: 14px; background: var(--bg); }
+.ask input:checked + span { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.answers { display: grid; gap: 8px; }
+.answers textarea { width: 100%; min-height: 110px; font: 13px/1.5 var(--doc-mono); background: var(--surface); color: var(--fg); border: 1px solid var(--rule); border-radius: 8px; padding: 10px; }
+
+@media (max-width: 900px) {
+  .stage { grid-template-columns: minmax(0, 1fr); }
+  .stage .fcol { justify-items: stretch; }
+}
+
+/* ═════════════ PRODUCT SPECIMEN (shipped warm-theme values) ═════════════ */
+.fr {
+  background: var(--p-paper); color: var(--p-ink); font: 14px/1.4 var(--p-sans);
+  overflow: hidden; box-shadow: var(--shadow); border-radius: 10px;
+  font-variant-numeric: tabular-nums;
+}
+.fr.ph { border-radius: 26px; border: 6px solid #2A2D31; }
+.fr * { box-sizing: border-box; }
+.ground {
+  background-color: var(--p-paper);
+  background-image: linear-gradient(rgba(87,101,30,0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(87,101,30,0.07) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+.fr .sc { overflow-y: auto; overflow-x: hidden; position: relative; min-height: 0; scrollbar-width: thin; }
+.fr.desk { display: grid; grid-template-rows: 48px minmax(0, 1fr); }
+.fr.desk .dbody { display: grid; grid-template-columns: 240px minmax(0, 1fr); min-height: 0; }
+.fr.ph .sc { height: 100%; }
+.differs .fr [data-same] { opacity: 0.18; filter: grayscale(1); }
+
+/* top strip */
+.strip { display: flex; align-items: center; gap: 0.9rem; padding: 0 1rem 0 1.25rem; background: var(--p-card); border-bottom: 1px solid var(--p-line); position: relative; z-index: 6; }
+.brand { display: inline-flex; align-items: center; gap: 6px; font: 700 15px/1 var(--p-sans); letter-spacing: -0.018em; }
+.brand span { font-weight: 600; }
+.sdiv { width: 1px; height: 14px; background: var(--p-line2); }
+.area { font: 700 10px/1 var(--p-sans); letter-spacing: 0.1em; text-transform: uppercase; color: var(--p-dim); }
+.doors { margin-left: auto; display: flex; gap: 0.65rem; }
+.door { width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; color: var(--p-dim); }
+
+/* sidebar */
+.rail { background: var(--p-card); border-right: 1px solid var(--p-line); padding: 0.75rem 0 1rem; display: flex; flex-direction: column; overflow: hidden; }
+.rail .sec { font: 700 11px/1 var(--p-sans); letter-spacing: 0.1em; text-transform: uppercase; color: var(--p-dim); padding: 0.75rem 1.25rem 0.35rem; }
+.rail .it { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1.25rem; color: var(--p-dim); font-size: 14px; }
+.rail .it.on { background: var(--p-olive-soft); color: var(--p-olive); font-weight: 600; }
+.rail .grh { display: flex; align-items: center; justify-content: space-between; padding: 0.55rem 1.25rem 0.3rem; font: 600 12px/1 var(--p-sans); color: var(--p-ink2); }
+.rail .tsel { margin: 0.1rem 1.25rem 0.4rem; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; border: 1px solid var(--p-line2); border-radius: 8px; padding: 0.45rem 0.6rem; font-weight: 600; font-size: 13px; }
+.rail .foot { margin-top: auto; border-top: 1px solid var(--p-line); padding-top: 0.4rem; }
+.rail .foot .it { font-size: 12px; padding-block: 0.4rem; }
+.cnt { margin-left: auto; min-width: 1.15rem; height: 1.15rem; padding: 0 0.3rem; border-radius: 999px; display: inline-grid; place-items: center; font: 700 10px/1 var(--p-mono); color: var(--p-amber); background: rgba(131,80,6,0.11); border: 1px solid rgba(131,80,6,0.32); }
+.tab .cnt, .btn .cnt { margin-left: 0; }
+
+/* the pinned white bar */
+.hb { position: sticky; top: 0; z-index: 5; background: var(--p-card); border-bottom: 1px solid var(--p-line); padding: 0.7rem 2rem; }
+.ph .hb { padding: 0.7rem 1rem; }
+.hb .row { display: flex; align-items: center; gap: 0.75rem; }
+.hb .id { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.15rem; }
+.nm { font: 700 20px/1.2 var(--p-sans); color: var(--p-ink); min-width: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.ph .nm { font-size: 16px; }
+.hb .tr .nm { -webkit-line-clamp: 1; }
+.collapsed { padding-top: 0.5rem !important; padding-bottom: 0.5rem !important; }
+.collapsed .nm { -webkit-line-clamp: 1; }
+.tr { display: flex; align-items: center; gap: 0.25rem; min-width: 0; }
+/* today's tournament eyebrow (above the name); folds away on a phone scroll, the chip then jumps beside the name */
+.eb2 { display: flex; align-items: center; gap: 0.5rem; font: 700 11px/1.3 var(--p-mono); letter-spacing: 0.09em; text-transform: uppercase; color: var(--p-dim); white-space: nowrap; overflow: hidden; }
+.collapsed .eb2 { display: none; }
+.chipc { display: none; margin-left: 0.4rem; }
+.collapsed .chipc { display: inline-flex; }
+/* option 4's small line UNDER the name: the coaches portal's meta voice */
+.meta { display: flex; align-items: center; gap: 0.5rem; font: 400 11px/1.3 var(--p-mono); letter-spacing: 0; margin-top: 0.12rem; color: var(--p-dim); white-space: nowrap; min-width: 0; }
+.meta > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.meta > span + span:not(.chipwrap)::before { content: "·"; margin-right: 0.5rem; opacity: 0.45; }
+.meta > .chipwrap { flex: none; overflow: visible; }
+.pill { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.32rem 0.72rem; border: 1px solid var(--p-line); border-radius: 999px; background: rgba(36,30,21,0.05); font: 650 12px/1.1 var(--p-sans); color: var(--p-ink); white-space: nowrap; flex: none; }
+.pill svg { color: var(--p-dim); }
+.gl { width: 44px; height: 44px; border-radius: 10px; display: grid; place-items: center; color: var(--p-ink); flex: none; }
+.chev { width: 44px; height: 44px; border-radius: 8px; display: grid; place-items: center; color: var(--p-ink2); flex: none; }
+.back { display: inline-flex; align-items: center; gap: 0.3rem; color: var(--p-ink2); font: 600 14px/1 var(--p-sans); padding: 0.4rem 0.5rem; margin-left: -0.5rem; border-radius: 6px; flex: none; }
+.back.sq { width: 44px; height: 44px; justify-content: center; padding: 0; }
+.vr { width: 1px; align-self: stretch; background: var(--p-line); margin: 0.15rem 0; flex: none; }
+/* option 4's bar: the portal's masthead recipe (0.5rem / 0.45rem padding, 4px tap overhang, never shrinks) */
+.hb.quiet { padding-block: 0.5rem; }
+.ph .hb.quiet { padding-block: 0.45rem; }
+.ph .hb.quiet .row { min-height: 36px; }
+.hb.quiet .gl, .hb.quiet .back.sq, .hb.quiet .chev { margin-block: -4px; }
+.hb.quiet.withtabs { padding-bottom: 0; }
+/* the switcher keeps its 44px tap box by overhanging the name's line, so the line does not grow */
+.hb.quiet .tr .chev { margin-block: -12px; }
+.meta .chip, .tr .chip { line-height: 1; padding-block: 0.05rem; }
+.tr .chip { flex: none; }
+.chip { display: inline-flex; align-items: center; font: 700 10px/1.4 var(--p-mono); letter-spacing: 0.06em; text-transform: uppercase; padding: 0.14rem 0.5rem; border-radius: 999px; white-space: nowrap; }
+.chip.good { color: var(--p-good); background: rgba(52,102,42,0.08); border: 1px solid rgba(52,102,42,0.28); }
+.chip.pend { color: var(--p-amber); background: rgba(131,80,6,0.08); border: 1px solid rgba(131,80,6,0.28); }
+.chip.neutral { color: var(--p-ink2); background: var(--p-olive-soft); border: 1px solid var(--p-line2); }
+
+/* the place / page header on the paper */
+.pad { padding: 2rem; }
+.ph .pad { padding: 0.5rem 1rem 96px; }
+.pad.under { padding-top: 1.4rem; }
+.ph .pad.under { padding-top: 1rem; }
+.ph1 { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+.ph .ph1 { gap: 0.6rem; }
+.ph1 h1 { margin: 0; font: 700 20px/1.1 var(--p-sans); color: var(--p-ink); }
+.ph1 .id { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
+.ph1 .eb { font: 700 11px/1.3 var(--p-mono); letter-spacing: 0.09em; text-transform: uppercase; color: var(--p-dim); display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.ph1 .tr { flex-wrap: wrap; gap: 0.5rem; }
+.ph1 .acts { margin-left: auto; display: flex; align-items: center; gap: 0.5rem; }
+.ph .ph1 .acts { gap: 0.3rem; }
+
+/* tabs (HubTabBar) */
+.tabs { position: relative; margin: 0.9rem 0 1.4rem; }
+.tabrow { display: flex; gap: 0.15rem; border-bottom: 1px solid rgba(87,101,30,0.15); overflow: hidden; }
+.tab { display: inline-flex; align-items: center; gap: 0.35rem; min-height: 44px; padding: 0.55rem 0.85rem; font: 600 14px/1 var(--p-sans); color: var(--p-dim); border-bottom: 2px solid transparent; white-space: nowrap; flex: none; }
+.ph .tab { padding: 0.5rem 0.6rem; }
+.tab.on { color: var(--p-olive); border-bottom-color: var(--p-olive); }
+.tabs .more { position: absolute; right: 0; top: 0; bottom: 0; width: 44px; display: grid; place-items: center; color: var(--p-olive); background: linear-gradient(to left, var(--p-paper) 55%, transparent); }
+.tabs.inbar { margin: 0.45rem -0.85rem 0; }
+.ph .tabs.inbar { margin-inline: -0.6rem; }
+.tabs.inbar .tabrow { border-bottom: 0; }
+.tabs.inbar .more { background: linear-gradient(to left, var(--p-card) 55%, transparent); }
+
+/* page bodies */
+.tbar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-bottom: 0.85rem; }
+.tbar .sp { flex: 1; }
+.metaline { font-size: 12px; color: var(--p-dim); }
+.btn { display: inline-flex; align-items: center; gap: 0.4rem; min-height: 38px; padding: 0 0.85rem; border-radius: 8px; background: var(--p-fill); border: 1px solid var(--p-line); font: 600 14px/1 var(--p-sans); color: var(--p-ink); white-space: nowrap; }
+.btn.pri { background: var(--p-lime); border-color: transparent; }
+.btn.out { background: var(--p-card); border-color: var(--p-line2); }
+.btn .score { color: var(--p-good); font-weight: 700; }
+.sel { display: inline-flex; align-items: center; gap: 0.5rem; min-height: 38px; padding: 0 0.7rem; border-radius: 8px; background: var(--p-card); border: 1px solid var(--p-line2); font-size: 14px; white-space: nowrap; }
+.search { display: inline-flex; align-items: center; gap: 0.5rem; min-height: 38px; padding: 0 0.7rem; border-radius: 8px; background: var(--p-card); border: 1px solid var(--p-line2); font-size: 14px; color: var(--p-dim); min-width: 240px; }
+.regchip { display: inline-flex; align-items: center; gap: 0.4rem; min-height: 38px; padding: 0 0.75rem; border-radius: 999px; background: rgba(52,102,42,0.08); border: 1px solid rgba(52,102,42,0.28); color: var(--p-good); font: 600 13px/1 var(--p-sans); white-space: nowrap; }
+.regchip i { width: 7px; height: 7px; border-radius: 50%; background: currentColor; display: inline-block; }
+.tbl { background: var(--p-card); border: 1px solid var(--p-line); border-radius: 10px; overflow: hidden; }
+.thead, .trow { display: grid; grid-template-columns: 1.15fr 1.1fr 1.35fr 0.6fr 1.25fr 0.8fr 1.15fr 28px; gap: 0 12px; align-items: center; padding: 0 16px; }
+.thead { min-height: 40px; font: 700 11px/1 var(--p-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--p-ink2); border-bottom: 1px solid var(--p-line); }
+.grp { padding: 10px 16px; font: 700 11px/1 var(--p-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--p-ink2); background: var(--p-paper); border-bottom: 1px solid var(--p-line); }
+.trow { min-height: 66px; border-bottom: 1px solid var(--p-line); }
+.trow:last-child { border-bottom: 0; }
+.trow > span { display: flex; flex-direction: column; gap: 3px; align-items: flex-start; min-width: 0; }
+.trow .r, .thead .r { text-align: right; align-items: flex-end; }
+.tn { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; }
+.tn i { width: 9px; height: 9px; border-radius: 2px; display: inline-block; }
+.fr small { font-size: 12px; color: var(--p-dim); }
+.fr small.red { color: var(--p-red); font-weight: 600; }
+.cv { color: var(--p-dim); }
+.tact { display: flex; justify-content: flex-end; margin-bottom: 0.85rem; }
+.ibtn { width: 44px; height: 44px; border-radius: 8px; display: grid; place-items: center; background: var(--p-card); border: 1px solid var(--p-line); color: var(--p-ink2); flex: none; }
+.ibtn.pri { background: var(--p-lime); border-color: transparent; color: var(--p-ink); }
+.ibtn.bare { background: none; border-color: transparent; }
+.lede { margin: 0 0 0.6rem; font-size: 14px; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.note { margin: 0 0 1rem; font-size: 14px; color: var(--p-ink2); }
+.band { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); background: var(--p-card); border: 1px solid var(--p-line); border-radius: 10px; overflow: hidden; }
+.ph .band { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.tile { padding: 14px 16px; border-right: 1px solid var(--p-line); border-bottom: 1px solid var(--p-line); display: flex; flex-direction: column; gap: 4px; margin: 0 -1px -1px 0; }
+.tl { font: 700 11px/1.2 var(--p-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--p-ink2); }
+.tv { font: 700 24px/1.15 var(--p-sans); }
+.tv.amber { color: var(--p-amber); }
+.sh { margin: 1.6rem 0 0.6rem; font: 700 16px/1.2 var(--p-sans); }
+.secl { margin: 0 0 0.6rem; font: 700 11px/1 var(--p-mono); letter-spacing: 0.09em; text-transform: uppercase; color: var(--p-ink2); }
+.secl.gap { margin-top: 1.6rem; }
+.list { background: var(--p-card); border: 1px solid var(--p-line); border-radius: 10px; overflow: hidden; }
+.lrow { display: grid; grid-template-columns: minmax(0, 1.4fr) 0.6fr 0.8fr auto; gap: 12px; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--p-line); }
+.ph .lrow { grid-template-columns: minmax(0, 1fr) auto; }
+.lrow:last-child { border-bottom: 0; }
+.lrow b { font-weight: 600; }
+.cards { background: var(--p-card); border: 1px solid var(--p-line); border-radius: 10px; overflow: hidden; }
+.crow { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--p-line); }
+.crow:last-child { border-bottom: 0; }
+.crow .l { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.crow .r { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; font-weight: 600; }
+.cgrp { padding: 9px 14px; font: 700 11px/1 var(--p-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--p-ink2); background: var(--p-paper); border-bottom: 1px solid var(--p-line); }
+/* club Overview */
+.brief { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.75rem; }
+.ph .brief { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.bcard { background: var(--p-card); border: 1px solid var(--p-line); border-radius: 8px; padding: 0.95rem 1.05rem; display: flex; flex-direction: column; gap: 0.35rem; }
+.bcard .tl { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.progs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }
+.ph .progs { grid-template-columns: minmax(0, 1fr); }
+.pcard { background: var(--p-card); border: 1px solid var(--p-line); border-radius: 8px; padding: 0.95rem 1.05rem; display: flex; flex-direction: column; gap: 0.35rem; }
+.pcard .tl { display: flex; align-items: center; gap: 0.45rem; }
+.pcard .pi { color: var(--p-olive); display: inline-flex; }
+.pcard .end { margin-left: auto; display: inline-flex; align-items: center; gap: 0.4rem; color: var(--p-dim); }
+.qrows { margin-top: 1rem; padding-top: 0.85rem; border-top: 1px solid var(--p-line); display: grid; gap: 0.5rem; font-size: 13px; color: var(--p-ink2); }
+.qrows a { color: var(--p-olive); text-decoration: underline; text-underline-offset: 3px; }
+/* tournament Teams */
+.payline { font-size: 13px; color: var(--p-ink2); margin: 0 0 1rem; }
+.payline b { color: var(--p-ink); }
+.trows .lrow { grid-template-columns: minmax(0, 1.4fr) 1fr 0.9fr auto; }
+.ph .trows .lrow { grid-template-columns: minmax(0, 1fr) auto; }
+
+/* phone bottom bar */
+.bnav { position: absolute; left: 0; right: 0; bottom: 0; min-height: 72px; padding: 0.4rem 0; display: flex; justify-content: space-around; background: rgba(248,244,237,0.92); border-top: 1px solid var(--p-line); backdrop-filter: blur(20px); z-index: 7; }
+.bt { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0.2rem; padding: 0.25rem; color: var(--p-dim); position: relative; }
+.bt .w { width: 46px; height: 30px; border-radius: 999px; display: grid; place-items: center; position: relative; }
+.bt.on { color: var(--p-olive); }
+.bt.on .w { background: var(--p-olive-soft); }
+.bt .lb { font: 700 10px/1 var(--p-sans); letter-spacing: 0.01em; }
+.bt .bc { position: absolute; top: -2px; right: 2px; min-width: 14px; height: 14px; padding: 0 4px; border-radius: 999px; background: var(--p-olive); color: var(--p-paper); font: 700 10px/14px var(--p-sans); text-align: center; }
+
+/* ── round 3 ── */
+.vgroup.r3 > span { color: var(--accent); }
+/* AdminPageHeader at ≤640: one column, its actions on their own row */
+.ph .ph1.stack { flex-wrap: wrap; row-gap: 0.75rem; }
+.ph .ph1.stack .acts { margin-left: 0; flex-basis: 100%; }
+/* a page's own buttons, on the paper (PlaceFrame's TabActions: right-aligned, 0.5rem gap, 0 0 0.85rem) */
+.tact { gap: 0.5rem; }
+.ph .tact .btn.io { width: 44px; min-height: 44px; padding: 0; justify-content: center; }
+.ph .tact .btn.io .w { display: none; }
+/* section heads (RepKit: 16px/700 title, 11px mono meta) */
+.sech { display: flex; align-items: center; flex-wrap: wrap; gap: 0.35rem 0.75rem; margin: 1.6rem 0 0.6rem; }
+.sech.first { margin-top: 0; }
+.sech h2 { margin: 0; font: 700 16px/1.2 var(--p-sans); }
+.sech .mm { font: 600 11px/1 var(--p-mono); color: var(--p-dim); }
+.sech .end { margin-left: auto; }
+/* team page */
+.cards4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.75rem; }
+.ph .cards4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.bcard .tv { font-weight: 800; }
+.bcard .tv.w { font-size: 16px; font-weight: 700; color: var(--p-dim); }
+.see { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.75rem; }
+.ph .see { grid-template-columns: minmax(0, 1fr); }
+.see ul { margin: 0.35rem 0 0; padding-left: 1.05rem; font-size: 13px; color: var(--p-ink2); }
+.see li { margin-bottom: 0.3rem; }
+.pline { background: var(--p-card); border: 1px solid var(--p-line); border-radius: 10px; padding: 12px 16px; display: grid; gap: 3px; }
+/* money summary */
+.band.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.ph .band.three { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.mt { background: var(--p-card); border: 1px solid var(--p-line); border-radius: 10px; overflow: hidden; }
+.mrow { display: grid; grid-template-columns: minmax(0, 1fr) 150px 150px; gap: 12px; padding: 10px 16px; border-bottom: 1px solid var(--p-line); align-items: center; }
+.mrow.four { grid-template-columns: minmax(0, 1fr) 160px 150px 28px; }
+.mrow:last-child { border-bottom: 0; }
+.mrow.h { min-height: 40px; font: 700 11px/1 var(--p-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--p-ink2); }
+.mrow .r { text-align: right; }
+.mrow.sub > span:first-child { padding-left: 1rem; color: var(--p-ink2); }
+.mrow.tot { font-weight: 700; background: var(--p-paper); }
+.mfoot { padding: 10px 16px; font-size: 13px; color: var(--p-ink2); display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: center; border-top: 1px solid var(--p-line); }
+.mfoot a { margin-left: auto; color: var(--p-olive); font-weight: 600; }
+.link1 { background: var(--p-card); border: 1px solid var(--p-line); border-radius: 10px; padding: 12px 14px; display: flex; align-items: center; gap: 10px; }
+.link1 .l { flex: 1; min-width: 0; display: grid; gap: 3px; }
+.yp { display: inline-flex; align-items: center; gap: 0.45rem; min-height: 38px; padding: 0 0.7rem; border-radius: 8px; background: var(--p-card); border: 1px solid var(--p-line2); font-size: 14px; white-space: nowrap; }
+.yp .k { color: var(--p-dim); }
+.yp .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--p-olive); }
+/* calendar toolbar: the shipped segmented control (.segChoice: one 1px track, 7px radius, lime when chosen) */
+.segc { display: inline-grid; grid-auto-flow: column; grid-auto-columns: 1fr; border: 1px solid var(--p-line2); border-radius: 7px; overflow: hidden; }
+.segc span { padding: 0.42rem 1rem; background: rgba(70,55,30,0.05); border-right: 1px solid var(--p-line); color: var(--p-dim); font: 600 14px/1.4 var(--p-sans); text-align: center; }
+.segc span:last-child { border-right: 0; }
+.segc span.on { background: var(--p-lime); color: var(--p-ink); }
+.dnav { display: inline-flex; align-items: center; gap: 0.25rem; }
+.dnav .ar { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 8px; border: 1px solid var(--p-line2); background: var(--p-card); color: var(--p-ink2); }
+.ph .dnav .ar { width: 44px; height: 44px; }
+.dnav b { font: 600 14px/1 var(--p-sans); padding: 0 0.45rem; white-space: nowrap; }
+.clash { display: inline-flex; align-items: center; gap: 0.3rem; min-height: 28px; padding: 0 0.6rem; border-radius: 999px; font: 700 10px/1 var(--p-sans); color: var(--p-amber); background: rgba(131,80,6,0.11); border: 1px solid rgba(131,80,6,0.32); white-space: nowrap; }
+.ph .clash { min-height: 44px; padding: 0 0.85rem; }
+.daterow { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem 0.75rem; margin: 0 0 0.9rem; }
+.ph .tbar .ibtn.out, .tbar .ibtn.out { background: var(--p-card); border-color: var(--p-line2); }
+.week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0.5rem; }
+.day { min-height: 420px; border-radius: 8px; border: 1px solid var(--p-line); background: var(--p-card); padding: 0.5rem; display: flex; flex-direction: column; gap: 0.4rem; }
+.day.today { border-color: var(--p-olive); box-shadow: inset 0 2px 0 var(--p-olive); }
+.dh { font: 700 11px/1.25 var(--p-sans); letter-spacing: 0.04em; text-transform: uppercase; color: var(--p-ink2); padding: 0.15rem 0.1rem 0.25rem; }
+.day.today .dh { color: var(--p-olive); }
+.day .none { color: var(--p-dim); padding: 0 0.1rem; }
+.bk { border-left: 3px solid var(--tc); border-radius: 6px; padding: 0.4rem 0.5rem 0.45rem; background: rgba(70,55,30,0.045); font-size: 12px; display: flex; flex-direction: column; gap: 2px; position: relative; }
+.bk b { font-weight: 700; }
+.bk .t { font-weight: 650; color: var(--p-ink); }
+.bk small { font-size: 11px !important; }
+.bk.cl { box-shadow: inset 0 0 0 1px rgba(131,80,6,0.6); }
+.bk.cl .fl { position: absolute; top: 4px; right: 4px; color: var(--p-amber); }
+.dstack { display: grid; gap: 0.6rem; }
+.dfr { background: var(--p-card); border: 1px solid var(--p-line); border-radius: 10px; overflow: hidden; }
+.dfr.today { border-color: var(--p-olive); }
+.dfr h3 { margin: 0; padding: 0.6rem 0.9rem 0.55rem; font: 700 11px/1.25 var(--p-sans); letter-spacing: 0.04em; text-transform: uppercase; color: var(--p-ink2); border-bottom: 1px solid var(--p-line); }
+.dfr.today h3 { color: var(--p-olive); }
+.brow { position: relative; min-height: 44px; padding: 0.55rem 2.2rem 0.6rem 0.9rem; border-left: 3px solid var(--tc); border-bottom: 1px solid var(--p-line); display: flex; flex-direction: column; gap: 2px; font-size: 13px; }
+.brow:last-child { border-bottom: 0; }
+.brow .cv { position: absolute; right: 0.7rem; top: 50%; transform: translateY(-50%); }
+.brow .amb { color: var(--p-amber); font-weight: 600; font-size: 12px; }
+.qline { border: 1px dashed var(--p-line2); border-radius: 10px; padding: 0.6rem 0.9rem; font-size: 13px; color: var(--p-dim); }
+/* child page */
+.ctbl .mrow { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) 40px 110px minmax(0, 1.1fr); }
+.twocol { display: grid; grid-template-columns: 3fr 2fr; gap: 0 1.25rem; }
+.ph .twocol { grid-template-columns: minmax(0, 1fr); }
+.kv { background: var(--p-card); border: 1px solid var(--p-line); border-radius: 10px; overflow: hidden; }
+.kv > div { display: grid; gap: 3px; padding: 11px 16px; border-bottom: 1px solid var(--p-line); }
+.kv > div:last-child { border-bottom: 0; }
+.kv .k { font: 700 11px/1.2 var(--p-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--p-ink2); }
+.blk { padding: 9px 16px; font: 700 11px/1 var(--p-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--p-ink2); background: var(--p-paper); border-bottom: 1px solid var(--p-line); }
+/* tournaments list */
+.bandh { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.3rem 0.6rem; margin: 1.4rem 0 0.5rem; }
+.bandh.first { margin-top: 0.4rem; }
+.bandh b { font: 700 11px/1 var(--p-mono); letter-spacing: 0.09em; text-transform: uppercase; color: var(--p-ink2); }
+.tlist .lrow { grid-template-columns: minmax(0, 1.5fr) 1fr 0.6fr 110px 20px; }
+.ph .tlist .lrow { grid-template-columns: minmax(0, 1fr) auto 20px; }
+.lrow .lk { color: var(--p-olive); font-weight: 600; font-size: 13px; }
+
+/* ═════════════ this sheet: the place moves into the top strip (desktop only) ═════════════ */
+.doc { max-width: 1490px; }
+.fr.desk { grid-template-columns: minmax(0, 1fr); }
+.fr.desk.tall { grid-template-rows: 56px minmax(0, 1fr); }
+.strip { min-width: 0; }
+.strip .club { font: 600 13px/1.2 var(--p-sans); color: var(--p-ink2); white-space: nowrap; flex: none; }
+.strip .sdiv.tall { height: 22px; flex: none; }
+.strip .place { display: flex; align-items: center; gap: 0.6rem; min-width: 0; flex: 1; }
+.strip .pn { font: 700 16px/1.2 var(--p-sans); color: var(--p-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.strip .pn.big { font-size: 20px; }
+.strip .pmeta { font: 500 13px/1 var(--p-sans); color: var(--p-dim); white-space: nowrap; flex: none; }
+.strip .chip { flex: none; }
+.strip .vr { align-self: center; height: 22px; margin: 0; }
+.strip .doors { align-items: center; flex: none; }
+/* split on the sidebar's edge */
+.strip.split { padding: 0; gap: 0; display: grid; grid-template-columns: 240px minmax(0, 1fr); align-items: stretch; }
+.strip.split .lcell { display: flex; align-items: center; padding: 0 1.25rem; border-right: 1px solid var(--p-line); min-width: 0; }
+.strip.split .rcell { display: flex; align-items: center; gap: 0.9rem; padding: 0 1rem 0 2rem; min-width: 0; }
+.lstack { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.lstack .clubn { font: 600 12px/1.2 var(--p-sans); color: var(--p-ink2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* B: the club heads the sidebar */
+.rail .rin { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+/* round 2: the club cell is exactly the tab band's height (44px tabs + 1px rule), so the two rules meet in one line */
+.rail .clubhead { box-sizing: border-box; height: 45px; flex: none; margin: -0.75rem 0 0.75rem; padding: 0 1.25rem; border-bottom: 1px solid var(--p-line); font: 700 14px/1.25 var(--p-sans); color: var(--p-ink); display: flex; align-items: center; gap: 0.5rem; }
+.rail .clubhead svg { color: var(--p-olive); flex: none; }
+.rail .tsel span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rail .tsel svg { flex: none; }
+/* the tab band, pinned under the strip */
+.tb { position: sticky; top: 0; z-index: 5; background: var(--p-card); border-bottom: 1px solid var(--p-line); padding: 0 2rem; }
+.tb .tabs { margin: 0 -0.85rem; }
+.tb .tabrow { border-bottom: 0; }
+/* sheet bits */
+.optlab { font: 600 13px/1.3 var(--doc-font); color: var(--fg); display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; }
+.optlab .m { color: var(--muted); font-weight: 400; font-variant-numeric: tabular-nums; }
+.optlab .m strong { color: var(--fg); }
+.rec-tag { font: 600 11px/1.3 var(--doc-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); }
+.tops { display: grid; gap: 22px; }
+.copyrow { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.copyrow button { border: 1px solid var(--accent); background: var(--accent-soft); color: var(--accent); border-radius: 8px; padding: 8px 12px; font: 600 13px/1 var(--doc-font); cursor: pointer; }
+.copyrow span { color: var(--muted); font-size: 13px; }
+/* round 1 · design pass */
+.wsp { display: inline-flex; align-items: center; gap: 0.3rem; height: 30px; padding: 0 0.7rem; border-radius: 999px; border: 1px solid rgba(87,101,30,0.45); background: rgba(217,249,157,0.45); font: 600 13px/1 var(--p-sans); color: var(--p-ink); white-space: nowrap; }
+.lrow1 { display: flex; align-items: center; gap: 0.6rem; }
+.lrow1 .sdiv { height: 12px; }
+.ini { width: 24px; height: 24px; border-radius: 6px; display: inline-grid; place-items: center; background: var(--p-olive-soft); color: var(--p-olive); font: 700 10px/1 var(--p-sans); flex: none; }
+.fr.col .dbody { grid-template-columns: 64px minmax(0, 1fr); }
+.fr.col .strip.split { grid-template-columns: 64px minmax(0, 1fr); }
+.fr.col .strip.split .lcell { padding: 0; justify-content: center; }
+.fr.col .rail { align-items: stretch; }
+.fr.col .rail .it { justify-content: center; padding: 0.6rem 0; font-size: 0; gap: 0; }
+.fr.col .rail .it svg { width: 18px; height: 18px; }
+.fr.col .rail .cnt, .fr.col .rail .sec, .fr.col .rail .grh, .fr.col .rail .tsel { display: none; }
+.fr.col .rail .clubhead { justify-content: center; padding-inline: 0; }
+.fr.col .rail .clubhead .cn { display: none; }
+.fr.col .rail .foot { padding-top: 0.4rem; }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<div class="doc">
+  <header class="dochead">
+    <span class="eyebrow">Admin header · desktop · round 2</span>
+    <h1>Put the place’s name in the top strip</h1>
+    <p>Three ways to drop the white bar on desktop and keep “← Teams │ 14U AA” as it is, with no trail of titles. The phone keeps today’s bar. Each frame is a 1440 × 760 laptop window drawn from the shipped warm theme, and you can scroll inside it.</p>
+  </header>
+  <nav class="stabs" role="tablist" aria-label="Sections" id="stabs"></nav>
+  <div class="viewrow" id="viewrow"></div>
+  <main id="main"></main>
+</div>
+
+<script>
+(function () {
+  var KEY = 'adminTopnavDrawings1';
+  var S = { tab: 'draw', opt: 'b', screen: 'team', scroll: 'rest', view: 'all', size: 'fit', rail: 'open', ws: 'on' };
+  try { var saved = JSON.parse(localStorage.getItem(KEY) || '{}'); for (var k in saved) if (k in S) S[k] = saved[k]; } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+  var answers = {};
+  try { answers = JSON.parse(localStorage.getItem(KEY + 'a') || '{}'); } catch (e) {}
+
+  var TABS = [['draw', '1 · Each option, whole screen'], ['top', '2 · Just the top, side by side'], ['asks', '3 · Asks']];
+  var OPTS = [['today', 'Today'], ['a', 'A · One strip'], ['b', 'B · Club on the sidebar'], ['c', 'C · Split at the sidebar line']];
+  var SCREENS = [['ov', 'Overview'], ['rep', 'Rep teams'], ['team', 'A team'], ['tour', 'A long tournament name']];
+
+  var P = {
+    arrowL: '<path d="M19 12H5"/><path d="m12 19-7-7 7-7"/>',
+    chevD: '<path d="m6 9 6 6 6-6"/>',
+    chevR: '<path d="m9 18 6-6-6-6"/>',
+    globe: '<circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>',
+    bell: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+    user: '<circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/>',
+    grid: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
+    cal: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+    list: '<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',
+    users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
+    userplus: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/>',
+    home: '<path d="m3 10 9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+    trophy: '<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M18 2H6v7a6 6 0 0 0 12 0V2z"/><path d="M12 15v4"/>',
+    dollar: '<path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
+    family: '<circle cx="9" cy="7" r="3"/><circle cx="17" cy="9" r="2"/><path d="M3 21v-1a5 5 0 0 1 10 0v1M14 21v-1a3 3 0 0 1 6 0v1"/>',
+    building: '<rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4M8 6h.01M12 6h.01M16 6h.01M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h.01"/>',
+    layers: '<path d="m12 2 10 5-10 5L2 7z"/><path d="m2 17 10 5 10-5M2 12l10 5 10-5"/>',
+    link: '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>',
+    card: '<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>',
+    help: '<circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01"/>',
+    swap: '<path d="m16 3 4 4-4 4M20 7H4M8 21l-4-4 4-4M4 17h16"/>',
+    panel: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/>',
+    activity: '<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>',
+    search: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
+    filter: '<path d="M22 3H2l8 9.46V19l4 2v-8.54z"/>',
+    dots: '<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>',
+    check: '<path d="M20 6 9 17l-5-5"/>',
+    mail: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 5L2 7"/>',
+    brief: '<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>',
+    calCheck: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="m9 16 2 2 4-4"/>',
+    calPlus: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M12 14v6M9 17h6"/>',
+    calClock: '<path d="M21 7.5V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3.5"/><path d="M16 2v4M8 2v4M3 10h5"/><circle cx="16" cy="16" r="6"/><path d="M16 14v2l1 1"/>',
+    book: '<path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>',
+    lock: '<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>'
+  };
+  function ic(n, size, sw) {
+    size = size || 16; sw = sw || 1.8;
+    return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="' + sw + '" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + P[n] + '</svg>';
+  }
+  var LOGO = '<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h14v4H9.5v3H17v4H9.5v7H5z" fill="#57651E"/></svg>';
+
+  var CLUB = 'Harbourtown Minor Ball';
+  var EVENT = '2026 Harbourtown Minor Ball Fall Invitational Championship Series presented by Northshore Ford Lincoln';
+  var DATES = 'Nov 28–29, 2026';
+  var TEAM = { name: '14U AA', group: 'Senior', chip: '2026 Season · Live' };
+  var TEAMS = [
+    { g: 'Senior · 4 teams' },
+    { n: '14U AA', a: '14U', c: '#1F6B4F', s: '2026', coach: 'Taylor Brooks', r: 12, ev: ['Tue, Nov 17', 'Practice · 5:30 p.m.'], d: '0 of 12', o: '$600.00', od: '$600.00 overdue' },
+    { n: '15U AA', a: '15U', c: '#1F7A70', s: '2026', coach: 'Sam Whitford', r: 12, ev: null, d: '0 of 12', o: '$900.00', od: '$450.00 overdue' },
+    { n: '15U AAA', a: '15U', c: '#2B3F7A', s: '2026', coach: 'Jordan Reyes', r: 12, ev: null, d: '9 of 12', o: '$1,350.00', od: '' },
+    { n: '16U AA', a: '16U', c: '#8A2B3A', s: '2026', coach: 'Priya Natarajan', r: 13, ev: ['Thu, Nov 19', 'Practice · 6:00 p.m.'], d: '4 of 13', o: '$0.00', od: '' },
+    { g: 'Junior · 4 teams' },
+    { n: '11U AA', a: '11U', c: '#7A5A1F', s: '2026', coach: 'Marcus Bell', r: 11, ev: ['Sat, Nov 21', 'Game · 10:00 a.m.'], d: '11 of 11', o: '$220.00', od: '' },
+    { n: '12U AA', a: '12U', c: '#5A3F7A', s: '2026', coach: 'Dana Okafor', r: 12, ev: null, d: '6 of 12', o: '$480.00', od: '$240.00 overdue' },
+    { n: '12U AAA', a: '12U', c: '#3F6B7A', s: '2026', coach: 'Chris Lavoie', r: 12, ev: ['Wed, Nov 18', 'Practice · 7:00 p.m.'], d: '12 of 12', o: '$0.00', od: '' },
+    { n: '13U AA', a: '13U', c: '#6B4F1F', s: '2026', coach: 'Alex Moreau', r: 12, ev: null, d: '2 of 12', o: '$720.00', od: '' }
+  ];
+  var openChip = '<span class="chip good">Open</span>';
+  var teamChip = '<span class="chip good">' + TEAM.chip + '</span>';
+
+  /* ── chrome ── */
+  function brand() { return '<span class="brand" data-same>' + LOGO + '<span style="font-weight:700">FieldLogic<span>HQ</span></span></span>'; }
+  function pill(screen) { return '<span class="pill">' + ic('globe', 15) + (screen === 'tour' ? 'Public site' : 'View site') + '</span>'; }
+  function doors(screen, withPill) {
+    return '<span class="doors">' + (withPill ? pill(screen) : '') + '<span class="door" data-same>' + ic('bell', 16) + '</span><span class="door" data-same>' + ic('user', 17) + '</span>' +
+      (S.ws === 'on' ? '<span class="wsp" data-same>Workspaces ' + ic('chevD', 13) + '</span>' : '') + '</span>';
+  }
+  function place(screen, big) {
+    var nm = '<span class="pn' + (big ? ' big' : '') + '"' + (screen === 'tour' ? ' title="' + EVENT + '"' : '') + '>';
+    if (screen === 'ov') return '<span class="place">' + nm + 'Overview</span></span>';
+    if (screen === 'rep') return '<span class="place">' + nm + 'Rep teams</span></span>';
+    if (screen === 'team') return '<span class="place"><span class="back">' + ic('arrowL', 15) + 'Teams</span><i class="vr"></i>' + nm + TEAM.name + '</span>' + teamChip + '</span>';
+    return '<span class="place">' + nm + EVENT + '</span><span class="pmeta">' + DATES + '</span>' + openChip + '</span>';
+  }
+  function strip(opt, screen) {
+    if (opt === 'today') return '<div class="strip">' + brand() + '<i class="sdiv" data-same></i><span class="area" data-same>Admin area</span>' + doors(screen, false) + '</div>';
+    var word = '<i class="sdiv" data-same></i><span class="area" data-same>Admin</span>';
+    var col = S.rail === 'col';
+    if (opt === 'a') return '<div class="strip">' + brand() + word + '<span class="club">' + CLUB + '</span><i class="sdiv tall"></i>' + place(screen, false) + doors(screen, true) + '</div>';
+    if (opt === 'b') return '<div class="strip split"><span class="lcell">' + (col ? LOGO : '<span class="lrow1">' + brand() + word + '</span>') + '</span><span class="rcell">' + place(screen, false) + doors(screen, true) + '</span></div>';
+    return '<div class="strip split"><span class="lcell"' + (col ? ' title="' + CLUB + '"' : '') + '>' + (col ? LOGO : '<span class="lstack"><span class="lrow1">' + brand() + word + '</span><span class="clubn">' + CLUB + '</span></span>') + '</span><span class="rcell">' + place(screen, true) + doors(screen, true) + '</span></div>';
+  }
+  function it(icon, label, on, cnt) {
+    return '<div class="it' + (on ? ' on' : '') + '">' + ic(icon, 14) + label + (cnt ? '<span class="cnt">' + cnt + '</span>' : '') + '</div>';
+  }
+  var FOOT = '<div class="foot">' + it('card', 'Plan & billing') + it('help', 'Help') + it('swap', 'Coaches Portal') + it('panel', 'Collapse sidebar') + '</div>';
+  function rail(screen, opt) {
+    var head = opt === 'b' ? '<div class="clubhead"><span class="ini">HM</span><span class="cn">' + CLUB + '</span></div>' : '';
+    var lit = screen === 'ov' ? 'Overview' : 'Rep teams';
+    var inner;
+    if (screen === 'tour') {
+      inner = it('grid', 'Club overview') + '<div class="sec">Tournament</div><div class="tsel"><span>' + EVENT + '</span>' + ic('chevD', 14) + '</div>' +
+        '<div class="grh">Operations ' + ic('chevD', 14) + '</div>' +
+        it('grid', 'Dashboard') + it('users', 'Teams', true, 2) + it('cal', 'Schedule') + it('trophy', 'Results') + it('check', 'Check-in') + it('brief', 'Staff kit') + it('mail', 'Communications') +
+        '<div class="grh">Setup ' + ic('chevR', 14) + '</div><div class="grh">Admin ' + ic('chevR', 14) + '</div>';
+    } else {
+      inner = it('grid', 'Overview', lit === 'Overview') + it('calClock', 'Calendar') + it('list', 'Schedules') +
+        '<div class="sec">Programs</div>' + it('users', 'Rep teams', lit === 'Rep teams') + it('home', 'House league', false, 12) + it('trophy', 'Tournaments') +
+        '<div class="sec">Club</div>' + it('dollar', 'Accounting', false, 3) + it('family', 'Families', false, 1) + it('globe', 'Public site') + it('building', 'Organization');
+    }
+    return '<aside class="rail">' + head + '<div class="rin" data-same>' + inner + FOOT + '</div></aside>';
+  }
+  function tabsRow(screen) {
+    var list = screen === 'rep'
+      ? ['Teams', 'Assistant coaches', 'Document templates', 'Shared library', 'Past seasons', 'Bring in a coach’s team']
+      : ['Team page', 'Roster', 'Schedule', 'Tryouts', 'Coaches'];
+    return '<div class="tabs inbar"><div class="tabrow">' + list.map(function (t, i) { return '<span class="tab' + (i === 0 ? ' on' : '') + '">' + t + '</span>'; }).join('') + '</div></div>';
+  }
+  /* what sits pinned at the top of the page, under the strip */
+  function header(opt, screen) {
+    var tabs = (screen === 'tour' || screen === 'ov') ? '' : tabsRow(screen);
+    if (opt !== 'today') return tabs ? '<div class="tb" data-pin>' + tabs + '</div>' : '';
+    if (screen === 'ov') return '<div class="hb quiet" data-pin><div class="row"><div class="id"><div class="tr"><span class="nm">' + CLUB + '</span></div></div>' + pill(screen) + '</div></div>';
+    var lead = '', meta = [CLUB], title;
+    if (screen === 'rep') title = 'Rep teams';
+    else if (screen === 'team') { title = TEAM.name; lead = '<span class="back">' + ic('arrowL', 15) + 'Teams</span><i class="vr"></i>'; meta.push('Rep teams', TEAM.group, 'CHIP' + teamChip); }
+    else { title = EVENT; meta.push(DATES, 'CHIP' + openChip); }
+    var metaH = '<div class="meta">' + meta.map(function (b) {
+      return b.indexOf('CHIP') === 0 ? '<span class="chipwrap">' + b.slice(4) + '</span>' : '<span>' + b + '</span>';
+    }).join('') + '</div>';
+    return '<div class="hb quiet' + (tabs ? ' withtabs' : '') + '" data-pin><div class="row">' + lead + '<div class="id"><div class="tr"><span class="nm"' + (screen === 'tour' ? ' title="' + EVENT + '"' : '') + '>' + title + '</span></div>' + metaH + '</div>' + pill(screen) + '</div>' + tabs + '</div>';
+  }
+
+  /* ── page bodies (desktop, as shipped) ── */
+  function ovBody() {
+    var firstB = true;
+    function b(label, fig, sub) {
+      var r = '<div class="bcard"' + (firstB ? ' data-firstrow' : '') + '><span class="tl">' + label + ic('chevR', 14) + '</span><b class="tv">' + fig + '</b><small>' + sub + '</small></div>';
+      firstB = false; return r;
+    }
+    function p(icon, label, line, cnt, chip) {
+      return '<div class="pcard"><span class="tl"><span class="pi">' + ic(icon, 14) + '</span>' + label + '<span class="end">' + (cnt ? '<span class="cnt">' + cnt + '</span>' : '') + (chip || '') + ic('chevR', 14) + '</span></span><small>' + line + '</small></div>';
+    }
+    var h = '<div class="content" data-same>';
+    h += '<p class="secl">This morning</p><div class="brief">' +
+      b('Tryout applications', '3', 'waiting on a decision · 2 teams') + b('Payment requests', '2', 'oldest waiting 3 days') +
+      b('Installments due', '5', 'in the next 14 days · 2 overdue') + b('League registrations', '12', 'waiting for review') + '</div>';
+    h += '<p class="secl gap">Your programs</p><div class="progs">' +
+      p('users', 'Rep teams', '8 teams in 2 groups · tryouts, rosters and coaches') +
+      p('home', 'House league', 'Seasons, registrations, the draft, schedules and standings', 12) +
+      p('dollar', 'Accounting', 'Budget · Teams · Ledger · Bank · Allocations · Payment requests · Budget vs. Actual', 3) +
+      p('family', 'Families', 'Every household on your rosters: who owes, who is missing forms, who cannot be reached', 1) +
+      p('globe', 'Public site', 'Your club’s page: tagline, contact and links', 0, '<span class="chip good">Online</span>') +
+      p('trophy', 'Tournaments', 'Schedules, results, registrations and game day') + '</div>';
+    return h + '</div>';
+  }
+  function repBody() {
+    var h = '<div class="content" data-same>';
+    h += '<div class="tbar"><span class="metaline">8 teams in 2 groups · 8 of 15 on your plan</span><span class="sp"></span><span class="btn">' + ic('layers', 15) + 'Team groups</span><span class="btn">' + ic('link', 15) + 'Rename team URLs</span><span class="sel">All groups ' + ic('chevD', 14) + '</span><span class="btn pri">' + ic('plus', 15) + 'Add team</span></div>';
+    h += '<div class="tbl"><div class="thead"><span>Team</span><span>Season</span><span>Head coach</span><span class="r">Roster</span><span>Next event</span><span class="r">Documents</span><span class="r">Outstanding</span><span></span></div>';
+    var first = true;
+    TEAMS.forEach(function (t) {
+      if (t.g) { h += '<div class="grp">' + t.g + '</div>'; return; }
+      h += '<div class="trow"' + (first ? ' data-firstrow' : '') + '><span><b class="tn"><i style="background:' + t.c + '"></i>' + t.n + '</b><small>' + t.a + '</small></span>' +
+        '<span><span class="chip good">' + t.s + ' · Live</span><small>No games yet</small></span>' +
+        '<span>' + t.coach + '</span><span class="r">' + t.r + '</span>' +
+        '<span>' + (t.ev ? t.ev[0] + '<small>' + t.ev[1] + '</small>' : '—') + '</span>' +
+        '<span class="r">' + t.d + '</span>' +
+        '<span class="r">' + t.o + (t.od ? '<small class="red">' + t.od + '</small>' : '') + '</span>' +
+        '<span class="cv">' + ic('chevR', 16) + '</span></div>';
+      first = false;
+    });
+    return h + '</div></div>';
+  }
+  function sech(title, meta) {
+    return '<div class="sech"><h2>' + title + '</h2>' + (meta ? '<span class="mm">' + meta + '</span>' : '') + '</div>';
+  }
+  function crow(l, sub, r) {
+    return '<div class="crow"><div class="l"><b>' + l + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</div>' + (r || '') + '<span class="cv">' + ic('chevR', 16) + '</span></div>';
+  }
+  function teamBody() {
+    function card(eb, fig, sub, door, words, day, first) {
+      return '<div class="bcard"' + (first ? ' data-firstrow' : '') + '><span class="tl">' + eb + (door ? ic('chevR', 13) : '') + '</span><b class="tv' + (words ? ' w' : '') + '"' + (day ? ' style="font-size:18px"' : '') + '>' + fig + '</b><small>' + sub + '</small></div>';
+    }
+    function col(icon, title, items) {
+      return '<div class="bcard"><span class="tl" style="justify-content:flex-start;gap:0.4rem">' + ic(icon, 14) + title + '</span><ul>' + items.map(function (x) { return '<li>' + x + '</li>'; }).join('') + '</ul></div>';
+    }
+    var h = '<div class="content" data-same>';
+    h += '<div class="tact"><span class="btn out">' + ic('calCheck', 15) + 'Close the season</span><span class="btn pri">' + ic('calPlus', 15) + 'Start next season</span></div>';
+    h += '<div class="cards4">' + card('Record', 'No games yet', 'League and tournament games', false, true, false, true) + card('Roster', '12', 'players', true) +
+      card('Next event', 'Tue, Nov 17', 'Practice · 5:30 p.m.', true, false, true) + card('Tryouts', 'Closed', 'Opens on the next season', true, true) + '</div>';
+    h += sech('With the club') + '<div class="pline"><b>$600.00 outstanding · next $300.00 on Dec 1</b><small>$300.00 overdue · no request waiting</small></div>';
+    h += sech('Coaches', '2 people') + '<div class="cards">' +
+      crow('Taylor Brooks', 'Head coach · taylor.brooks@example.com') +
+      crow('r.ellis@example.com', 'Assistant coach · invited Nov 3', '<span class="chip pend">Invited</span>') + '</div>';
+    h += sech('What the club sees') + '<div class="see">' +
+      col('building', 'Yours to run', ['The team’s name, division, colour and group', 'Its seasons: start, close, reopen', 'Its coaches', 'Tryout sign-ups', 'The documents families sign']) +
+      col('book', 'The coach’s, and you can read it', ['The roster', 'The schedule and results', 'Payment requests', 'The team’s cash on hand (one figure)']) +
+      col('lock', 'The coach’s alone', ['Attendance', 'Lineups', 'Awards', 'Practice plans']) + '</div>';
+    h += sech('Team details') + '<div class="kv"><div><span class="k">Name</span>14U AA</div><div><span class="k">Group</span>Senior</div><div><span class="k">Division</span>14U</div></div>';
+    return h + '</div>';
+  }
+  function tourTitle() {
+    return '<div class="ph1" data-same><h1>Teams</h1><div class="acts"><span class="btn">' + ic('activity', 15) + '<span class="score">86</span>Registration health<span class="cnt">2</span></span><span class="btn">Export ' + ic('chevD', 14) + '</span><span class="btn out">Add our teams</span><span class="btn pri">' + ic('plus', 15) + 'Add team</span><span class="ibtn bare">' + ic('help', 18) + '</span></div></div>';
+  }
+  function tourBody() {
+    var h = '<div class="content" data-same>';
+    h += '<div class="tbar"><span class="sel">U11 ' + ic('chevD', 14) + '</span><span class="regchip"><i></i>Registration open · 5 of 8 spots ' + ic('chevD', 14) + '</span><span class="sp"></span><span class="search">' + ic('search', 15) + 'Search teams or coaches</span><span class="btn">' + ic('filter', 15) + 'Filter</span><span class="ibtn">' + ic('dots', 18) + '</span></div>';
+    h += '<p class="payline"><b>Payments</b> · $1,200 of $2,400 in</p>';
+    var first = true;
+    function row(team, coach, when, right) {
+      var r = '<div class="lrow"' + (first ? ' data-firstrow' : '') + '><b>' + team + '</b><span>' + coach + '</span><small>' + when + '</small>' + right + '</div>';
+      first = false; return r;
+    }
+    var accept = '<span class="btn pri">' + ic('check', 15) + 'Accept</span>';
+    h += '<p class="secl">To review · 2</p><div class="list trows">' + row('Lakeshore Lynx', 'Morgan Ellis', 'registered Nov 6', accept) + row('Pine Valley Pirates', 'Jamie Fortin', 'registered Nov 5', accept) + '</div>';
+    h += '<p class="secl gap">Waitlist · 1</p><div class="list trows">' + row('Silver Creek Sharks', 'Robin Haas', 'registered Nov 2', '<span class="chip neutral">Waitlist</span>') + '</div>';
+    h += '<p class="secl gap">Accepted · 5</p><div class="list trows">' +
+      row('Riverdale Rapids', 'Casey Nguyen', 'registered Oct 21', '<span class="chip good">Paid</span>') +
+      row('Cedar Hollow Cyclones', 'Lee Sandhu', 'registered Oct 22', '<span class="chip good">Paid</span>') +
+      row('Maple Ridge Marauders', 'Pat Gagnon', 'registered Oct 24', '<span class="chip pend">$300.00 owing</span>') +
+      row('Riverdale Thunder', 'Kim Walsh', 'registered Oct 27', '<span class="chip good">Paid</span>') +
+      row('Harbourtown Hawks', 'Taylor Brooks', 'registered Oct 30', '<span class="chip pend">$300.00 owing</span>') + '</div>';
+    return h + '</div>';
+  }
+
+  /* ── one frame ── */
+  var W = 1440, H = 760, uid = 0;
+  function frame(opt, screen, h) {
+    var id = 'f' + (++uid);
+    var body = screen === 'ov' ? ovBody() : screen === 'rep' ? repBody() : screen === 'team' ? teamBody() : tourBody();
+    var page = header(opt, screen) + '<div class="pad' + (screen === 'rep' || screen === 'team' ? ' under' : '') + '">' + (screen === 'tour' ? tourTitle() : '') + body + '</div>';
+    var fr = '<div class="fr desk' + (S.rail === 'col' ? ' col' : '') + '" id="' + id + '" style="width:' + W + 'px;height:' + h + 'px">' + strip(opt, screen) +
+      '<div class="dbody">' + rail(screen, opt) + '<div class="sc ground">' + page + '</div></div></div>';
+    return { id: id, html: '<div class="fscroll" data-fs="' + id + '"><div class="fwrap" data-h="' + h + '">' + fr + '</div></div>' };
+  }
+  function within(el, anc) { var y = 0; while (el && el !== anc) { y += el.offsetTop; el = el.offsetParent; } return y; }
+  function measure(id) {
+    var fr = document.getElementById(id); if (!fr) return '';
+    var sc = fr.querySelector('.sc');
+    var stripH = fr.querySelector('.strip').offsetHeight;
+    var pin = sc.querySelector('[data-pin]');
+    var pinned = stripH + (pin ? pin.offsetHeight : 0);
+    var first = sc.querySelector('[data-firstrow]');
+    var y = first ? stripH + within(first, sc) : 0;
+    var out = 'Pinned at the top: <strong>' + pinned + 'px</strong>';
+    var screen = fr.getAttribute('data-screen');
+    if (fr.querySelector('.trow')) {
+      var n = 0;
+      fr.querySelectorAll('.trow').forEach(function (r) { if (stripH + within(r, sc) + r.offsetHeight <= H) n++; });
+      out += ' · team rows on screen before you scroll: <strong>' + n + ' of 8</strong>';
+    } else if (fr.querySelector('.brief')) {
+      out += ' · the first morning card starts <strong>' + y + 'px</strong> down';
+    } else if (fr.querySelector('.cards4')) {
+      out += ' · the first summary card starts <strong>' + y + 'px</strong> down';
+    } else {
+      out += ' · the first team to review starts <strong>' + y + 'px</strong> down';
+    }
+    return out;
+  }
+  function fit() {
+    document.querySelectorAll('[data-fs]').forEach(function (fs) {
+      var wrap = fs.firstChild, fr = wrap.firstChild, h = +wrap.getAttribute('data-h');
+      var avail = fs.clientWidth;
+      var actual = S.size === 'actual';
+      var k = actual ? 1 : Math.min(1, avail / W);
+      fs.classList.toggle('actual', actual && avail < W);
+      wrap.style.width = (W * k) + 'px'; wrap.style.height = (h * k) + 'px';
+      fr.style.transform = k < 1 ? 'scale(' + k + ')' : '';
+      var lab = document.querySelector('[data-scale="' + fs.getAttribute('data-fs') + '"]');
+      if (lab) lab.textContent = k < 1 ? 'Shown at ' + Math.round(k * 100) + '% to fit your window. Pick “Actual size” to see it 1:1.' : (avail < W ? 'Actual size: scroll sideways to see the right edge.' : 'Shown at actual size.');
+    });
+  }
+  function applyScroll() {
+    document.querySelectorAll('.fr .sc').forEach(function (sc) { sc.scrollTop = S.scroll === 'scrolled' ? 360 : 0; });
+  }
+
+  /* ── notes ── */
+  var NOTE = {
+    today: '<h2>Today</h2><div class="tags"><span class="tag">As shipped 11-08</span></div>' +
+      '<p>Three bands stay pinned at the top: the top strip, the white bar with the place’s name, the club and View site, and the tabs inside that bar.</p>' +
+      '<ul><li>On desktop the sidebar already names the place, so “Rep teams” is said three times: the sidebar, the title and the lit tab.</li><li>“Admin area” takes the strip’s best spot and tells you nothing you didn’t already know.</li></ul>',
+    a: '<h2>A · One strip</h2><div class="tags"><span class="tag new">Strip carries the club + the place</span><span class="tag re">View site moves beside the bell</span><span class="tag">White bar removed</span></div>' +
+      '<p>Your option 2 as you described it. The strip reads left to right: FieldLogicHQ, “Admin”, the club, then the place. Only the tabs stay pinned under the strip. Collapsing the sidebar changes nothing up here.</p>' +
+      '<div class="cost"><b>What it costs</b><ul><li>Logo, Admin, the club and the place sit in a row with dividers between them, so the strip reads as the trail you asked to avoid.</li><li>The name drops from 20px to 16px, and it starts wherever the club’s name happens to end, lined up with nothing on the page.</li></ul></div>',
+    b: '<h2>B · Club on the sidebar</h2><div class="tags"><span class="rec-tag">Your pick · round 2</span><span class="tag new">Club cell lines up with the tabs</span><span class="tag new">Name lines up with the page</span><span class="tag">White bar removed</span></div>' +
+      '<p>The strip holds the logo, “Admin” and the place. The club sits in a cell at the top of the sidebar, exactly as tall as the tab band beside it, so the two bottom lines meet in one line. That reads as one two-row header across the whole width: logo and place on top, club and tabs under it. The sidebar’s navigation starts below the whole header.</p>' +
+      '<p><b>Round 2 change.</b> The club cell was 46px with its own padding, so its line sat 1px off the tabs’ line and the Overview row floated close under it. It is now fixed at the tab band’s 45px, with the sidebar’s usual 12px of space before Overview.</p>' +
+      '<div class="cost"><b>What it costs</b><ul><li>On a screen without tabs (Overview, a tournament, Calendar) there is no tab band, so the club cell’s line runs to the sidebar’s edge and stops. It keeps the same height there, so the navigation never jumps up or down between screens. Switch Screen to Overview to see it.</li><li>With the sidebar collapsed, the club shrinks to its initials.</li><li>The name is 16px, smaller than a page heading.</li><li>The club cell is the first thing in the sidebar that isn’t a link unless we make it one (Ask 7).</li></ul></div>',
+    c: '<h2>C · Split at the sidebar line</h2><div class="tags"><span class="tag">Round 1 recommendation</span><span class="tag new">Club under the wordmark</span><span class="tag new">Name lines up with the page</span><span class="tag">White bar removed</span></div>' +
+      '<p>The strip splits on the sidebar’s edge. Over the sidebar: FieldLogicHQ · Admin, with the club under it. Over the page: the place, at today’s heading size (20px), lined up with the tabs and the page below. The strip stays 48px, the same height as the coaches portal’s strip.</p>' +
+      '<p><b>Why this one.</b> The sidebar’s own line separates the club from the place, so the strip reads as two things, not a trail. The name keeps today’s size, so it still reads as the page’s heading. It saves as much space as A and B.</p>' +
+      '<div class="cost"><b>What it costs</b><ul><li>With the sidebar collapsed, the left cell shrinks to the logo and you see the club only when you hover the logo. Switch “Sidebar” to Collapsed to see it.</li><li>The wordmark shares its cell with the club’s name, in 12px type.</li><li>On a screen wider than about 1600px the page’s content is centred, so the name lines up with the tabs but no longer with the content. That is the wide-desktop problem already open in part G of walk §492, and this option does not fix it.</li></ul></div>'
+  };
+  var SNOTE = {
+    ov: '<h3>On Overview</h3><p>Today Overview’s bar names the club. In A, B and C the club already has its own spot, so the strip says “Overview”, like every other screen naming itself. Otherwise the club would show twice (Ask 4).</p>',
+    rep: '<h3>On Rep teams</h3><p>No back link here, so the strip shows only the name. The page’s toolbar (Team groups, Rename team URLs, the group filter, Add team) stays on the page, unchanged.</p>',
+    team: '<h3>On a team</h3><p>“← Teams │ 14U AA” keeps the shape it has today, with the season chip beside the name. Today’s small line “Rep teams · Senior” is dropped: the sidebar already says Rep teams, and the group is in Team details. The phone still shows “Rep teams”, so desktop would show less than the phone here (Ask 5). Close the season and Start next season stay at the top right of the Team page tab (Ask 2).</p>',
+    tour: '<h3>On a long tournament name</h3><p>Drawn with a 102-character name to test the worst case. The name gives way first: it cuts to one line with “…”, and the dates and the Open chip are never cut. Hover the name to read all of it. “Teams” keeps its own title and buttons on the page, as today, because a tournament’s pages come from the sidebar, not from tabs.</p>'
+  };
+
+  /* ── asks ── */
+  var ASKS = [
+    { id: 'q1', n: '1', title: 'Which header on desktop?', body: 'The phone keeps today’s bar in every case.', rec: 'Your pick in round 2: B, with the club cell lined up with the tabs. With that change I agree: the header reads as one grid, and the club stays visible (as initials) when the sidebar is collapsed, which C can’t do.', opts: ['Today', 'A · One strip', 'B · Club on the sidebar', 'C · Split at the sidebar line'] },
+    { id: 'q2', n: '2', title: 'Where does a page’s own button go?', body: 'Close the season and Start next season on a team, and Split records on a child’s page.', rec: 'Recommended: keep them at the top right of the page, as today. They are rare and consequential, and pinning them in the tab row would show them on every tab. Pages without tabs would still need the page spot.', opts: ['Top right of the page, as today', 'At the end of the tab row'] },
+    { id: 'q3', n: '3', title: 'A name too long for the strip', body: 'It cuts to one line with “…”, the dates and status chip are never cut, and hovering shows the full name.', rec: 'Recommended: yes. Wrapping would make the strip taller on exactly the screens with long names.', opts: ['Yes, one line with “…”', 'Let it wrap to two lines'] },
+    { id: 'q4', n: '4', title: 'What the strip says on Overview', body: 'Today Overview’s bar names the club. In A, B and C the club already has its own spot, so naming it again would show the club twice.', rec: 'Recommended: “Overview”, like every other screen naming itself.', opts: ['“Overview”', 'The club’s name'] },
+    { id: 'q5', n: '5', title: 'A team’s group on desktop', body: 'Today’s small line reads “Harbourtown Minor Ball · Rep teams · Senior” beside the season chip. The strip has room for the name and the chip, not for a second line.', rec: 'Recommended: drop it. The sidebar says Rep teams and Team details shows the group. If you want it, it goes after the chip as quiet grey text, “Senior”.', opts: ['Drop it', 'Keep “Senior” after the chip'] },
+    { id: 'q6', n: '6', title: 'The portal word', body: 'The strip says “Admin area” today so someone who is also a coach can tell this shell from the coaches portal. A, B and C keep it as the shorter “Admin” so it fits the sidebar-width cell.', rec: 'Recommended: “Admin”.', opts: ['“Admin”', 'Keep “Admin area”', 'Drop it'] },
+    { id: 'q7', n: '7', title: 'What clicking the club cell does (B)', body: 'Everything else in the sidebar is a link. A name that does nothing when clicked looks broken. Switching clubs already lives in the Workspaces pill.', rec: 'Recommended: it opens Overview, the club’s front page. Most products send you home when you click the workspace name.', opts: ['Opens Overview', 'Opens the Workspaces list', 'Nothing'] }
+  ];
+  function answerText() {
+    return 'Desktop admin header, round 1: answers\n' + ASKS.map(function (q) { return q.n + '. ' + q.title + ' → ' + (answers[q.id] || '(no answer)'); }).join('\n') + (answers.notes ? '\nNotes: ' + answers.notes : '');
+  }
+  function asksHtml() {
+    var h = '<div class="asks">';
+    ASKS.forEach(function (q) {
+      h += '<section class="ask"><h3><span class="n">' + q.n + '</span>' + q.title + '</h3><p>' + q.body + '</p><p class="rec">' + q.rec + '</p><div class="opts">';
+      q.opts.forEach(function (o, j) {
+        var id = q.id + '_' + j;
+        h += '<label for="' + id + '"><input type="radio" id="' + id + '" name="' + q.id + '" value="' + o.replace(/"/g, '&quot;') + '"' + (answers[q.id] === o ? ' checked' : '') + '><span>' + o + '</span></label>';
+      });
+      h += '</div></section>';
+    });
+    h += '<section class="ask"><h3>Anything else</h3><textarea id="notes" rows="3" style="width:100%;font:14px/1.5 var(--doc-font);background:var(--bg);color:var(--fg);border:1px solid var(--rule);border-radius:8px;padding:8px">' + (answers.notes || '').replace(/</g, '&lt;') + '</textarea></section>';
+    h += '<div class="answers"><div class="copyrow"><button type="button" id="copy">Copy my answers</button><span id="copied">Paste them back into the chat.</span></div><textarea id="out" readonly>' + answerText() + '</textarea></div></div>';
+    return h;
+  }
+
+  /* ── render ── */
+  function seg(key, label, opts) {
+    var h = '<div class="vgroup"><span>' + label + '</span><div class="seg" role="group" aria-label="' + label + '">';
+    opts.forEach(function (o) { h += '<button type="button" data-k="' + key + '" data-v="' + o[0] + '" aria-pressed="' + (S[key] === o[0]) + '">' + o[1] + '</button>'; });
+    return h + '</div></div>';
+  }
+  var VIEW = [['all', 'Everything'], ['diff', 'Show only what differs']];
+  var SCROLL = [['rest', 'At rest'], ['scrolled', 'Scrolled down']];
+  var SIZE = [['fit', 'Fit my window'], ['actual', 'Actual size']];
+  var RAIL = [['open', 'Open'], ['col', 'Collapsed']];
+  var WS = [['on', 'Shown'], ['off', 'Not shown']];
+  function render() {
+    uid = 0;
+    document.getElementById('stabs').innerHTML = TABS.map(function (t) {
+      return '<button type="button" role="tab" data-tab="' + t[0] + '" aria-selected="' + (S.tab === t[0]) + '">' + t[1] + '</button>';
+    }).join('');
+    var vr = '';
+    var more = seg('rail', 'Sidebar', RAIL) + seg('ws', 'Workspaces pill', WS) + seg('scroll', 'Scroll', SCROLL) + seg('view', 'View', VIEW) + seg('size', 'Size', SIZE);
+    if (S.tab === 'draw') vr = seg('opt', 'Option', OPTS) + seg('screen', 'Screen', SCREENS) + more;
+    else if (S.tab === 'top') vr = seg('screen', 'Screen', SCREENS) + more;
+    var vrow = document.getElementById('viewrow');
+    vrow.innerHTML = vr; vrow.hidden = !vr;
+    var main = document.getElementById('main');
+    main.className = S.view === 'diff' && S.tab !== 'asks' ? 'differs' : '';
+    var ids = [];
+    if (S.tab === 'draw') {
+      var f = frame(S.opt, S.screen, H); ids.push(f.id);
+      var lab = OPTS.filter(function (o) { return o[0] === S.opt; })[0][1];
+      main.innerHTML = '<div class="stage desk"><div class="notes">' + NOTE[S.opt] + SNOTE[S.screen] + '</div>' +
+        '<div class="fcol"><div class="fcap"><b>' + lab + ' · ' + SCREENS.filter(function (s) { return s[0] === S.screen; })[0][1] + ' · desktop, 1440 × 760</b><span class="m" data-m="' + f.id + '"></span><span data-scale="' + f.id + '"></span></div>' + f.html + '</div></div>';
+    } else if (S.tab === 'top') {
+      var h = '<p class="intro">The top 300px of each option on the same screen, so you can compare the strips without switching. The numbers are measured for a full 1440 × 760 window.</p><div class="tops">';
+      OPTS.forEach(function (o) {
+        var fr = frame(o[0], S.screen, 300); ids.push(fr.id);
+        h += '<div class="bcrow"><div class="optlab">' + o[1] + (o[0] === 'b' ? ' <span class="rec-tag">Your pick</span>' : '') + '<span class="m" data-m="' + fr.id + '"></span></div><span class="small" data-scale="' + fr.id + '"></span>' + fr.html + '</div>';
+      });
+      main.innerHTML = h + '</div>';
+    } else {
+      main.innerHTML = '<p class="intro">Pick one per question, then copy your answers back into the chat.</p>' + asksHtml();
+    }
+    fit();
+    ids.forEach(function (id) {
+      var m = document.querySelector('[data-m="' + id + '"]');
+      if (m) m.innerHTML = measure(id);
+    });
+    applyScroll();
+    save();
+  }
+
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest('[data-tab]');
+    if (t) { S.tab = t.getAttribute('data-tab'); render(); return; }
+    var b = e.target.closest('[data-k]');
+    if (b) { S[b.getAttribute('data-k')] = b.getAttribute('data-v'); render(); return; }
+    if (e.target.id === 'copy') {
+      var out = document.getElementById('out');
+      var done = function () { document.getElementById('copied').textContent = 'Copied. Paste them back into the chat.'; };
+      try {
+        navigator.clipboard.writeText(out.value).then(done, function () { out.select(); });
+      } catch (err) { out.select(); }
+    }
+  });
+  document.addEventListener('change', function (e) {
+    if (e.target.type === 'radio') {
+      answers[e.target.name] = e.target.value;
+      try { localStorage.setItem(KEY + 'a', JSON.stringify(answers)); } catch (err) {}
+      var out = document.getElementById('out'); if (out) out.value = answerText();
+    }
+  });
+  document.addEventListener('input', function (e) {
+    if (e.target.id === 'notes') {
+      answers.notes = e.target.value;
+      try { localStorage.setItem(KEY + 'a', JSON.stringify(answers)); } catch (err) {}
+      var out = document.getElementById('out'); if (out) out.value = answerText();
+    }
+  });
+  var rt;
+  window.addEventListener('resize', function () { clearTimeout(rt); rt = setTimeout(fit, 120); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { render(); });
+  render();
+})();
+</script>

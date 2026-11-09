@@ -678,8 +678,8 @@ export function clubPlaceAt(pathname: string, base: string, { canUse, seasonAcce
       key: `team:${teamId}`,
       title: 'Team',
       back: { href: `${base}/rep-teams`, label: 'Teams' },
-      // The group rides the desk line only and comes from the frame's read (`deskFacts`): on a phone "Rep teams · group"
-      // plus the chip measured too long (the drawing).
+      // No group on this line: on a phone "Rep teams · group" plus the chip measured too long (the drawing), and the desktop
+      // has no small line at all since round 4 (D3, 2026-11-08) — the group stays in Team details.
       facts: ['Rep teams'],
       tabs,
       activeId: tab,

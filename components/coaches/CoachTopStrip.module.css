@@ -128,3 +128,12 @@
 .stripAlways {
   display: flex;
 }
+
+/* ⚠ OPT-IN, the admin strip's only (round 4, D1, owner 2026-11-08): the strip splits on the sidebar's edge into two
+   cells that carry their own padding (`components/admin/AdminTopStrip.module.css`). The coaches portal never sets it, so
+   none of this reaches the portal. After `.strip`, equal weight: the later rule wins. */
+.stripSplit {
+  padding: 0;
+  gap: 0;
+  align-items: stretch;
+}

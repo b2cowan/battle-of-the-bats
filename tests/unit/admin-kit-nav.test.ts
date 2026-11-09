@@ -539,6 +539,7 @@ describe('the place an address is in (the pinned bar, Phase 2)', () => {
   it('a one-tab person gets a place with ONE tab (the bar then draws no row)', () => {
     const one = clubPlaceAt(`${B}/org/venues`, B, { ...owner, orgTabs: [{ id: 'org/venues', label: 'Venue library', href: `${B}/org/venues` }] });
     assert.equal(one?.tabs.length, 1);
-    assert.match(readCode('components/admin/AdminEventHeader.tsx'), /const tabbed = place && place\.tabs\.length > 1 \? place : null;/);
+    // Round 4 (2026-11-08): the one place model both headers read decides it.
+    assert.match(readCode('components/admin/useAdminPlace.tsx'), /tabbed: place && place\.tabs\.length > 1 \? place : null,/);
   });
 });

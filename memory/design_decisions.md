@@ -7,6 +7,22 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-11-08 — ON DESKTOP THE PLACE NAMES ITSELF IN THE TOP STRIP; THE CLUB HEADS THE SIDEBAR IN A CELL LINED UP WITH THE TAB BAND; THE PHONE BAR IS UNCHANGED (owner, round 4 of the admin header, option B: *"could you line up the border of the org name with the header border? then the side nav also starts below the whole header"*, then *"I like it"*; drawings https://claude.ai/artifact/A1W443obR8aJd8PjUZEgUx v2)
+
+**Decision (as ruled, D1–D5):** above 900px the admin's white bar loses its name row and small line. The top strip
+splits on the sidebar's edge: over the sidebar the wordmark and "Admin" (was "Admin Area"); over the page the place, in
+the "← Teams │ 14U AA" shape with its status chip (never a trail of titles), then View site, the bell, the account menu
+and the Workspaces pill. The place's tabs are a pinned band under the strip. The club's name moves into a cell at the
+top of the sidebar, exactly the tab band's height so the two bottom rules form one line, and the sidebar's links start
+below the whole header; the cell keeps that height on screens without tabs, opens Overview when clicked, and shows
+initials when the sidebar is collapsed. Overview's strip says "Overview". A team's group is no longer in the desktop
+header. The phone bar and the coaches portal do not change.
+**Rationale:** on desktop the sidebar already names the place, so the bar's name row was a third statement of it and
+held about 151px of a 1440 × 760 window pinned (93px after). A breadcrumb was rejected by the owner; option A (club and
+place side by side in the strip) read as one anyway, and option C (club under the wordmark) loses the club when the
+sidebar collapses. Supersedes the desktop half of 2026-11-07 ruling 1 / A4 (club on the small line).
+**Applies to:** the club and tournament admin, desktop. Plan: `docs/projects/active/ADMIN_HEADER_BAR_PLAN.md` (round 4, Phase 2D).
+
 ### 2026-11-07 — THE ADMIN'S PINNED BAR NAMES WHERE YOU ARE; A PLACE'S TABS PIN INSIDE IT; IT NEVER SHRINKS (owner, option 4 from drawings round 1; then A2–A10 *"proceed with your recommendations"* after round 3)
 
 **Decision (as ruled):** drawings https://claude.ai/artifact/DXmtj9E1SxcuyfyrcUnsuC (`docs/projects/active/ADMIN_HEADER_ROWS_DRAWINGS.html`, v4 = round 3); plan `docs/projects/active/ADMIN_HEADER_BAR_PLAN.md`. (1) The club admin's pinned white bar names where you are: Overview → the club's name; a place with tabs → the place's name, and its tab row pins INSIDE the bar on every place (all or none); inside a tournament → the event, as before. The bar never shrinks on scroll, tournaments included. "Overview" keeps its name. (2) A small line UNDER the name carries the facts in the coaches portal's meta voice (data face, label size, normal weight): on desktop it starts with the club (A4); the status rides it as a chip. (3) A2: on a phone a second bar line carries the section and the status ("House league · Registration open"; a team: "Rep teams" + its season chip; a record: its facts + chip). (4) A3: Overview's "Overview" heading on the paper goes. (5) A5: Accounting's nine tabs keep the sideways row on a phone, pinned. (6) A6: the fiscal year stays in the Year pill, never the bar (only four of nine tabs read a year). (7) A7: Calendar's phone view menu goes first in the toolbar, keeping its ghost-glyph look. (8) A8: a record page one level down (a child's page, a team's History, one past season) puts its back link and its name in the bar; facts (a date of birth) become words on the small line, the status stays a chip; its buttons go to the top-right row of the page. NOT a team's account in Accounting (a view of Teams, 2026-10-16). (9) A9: Rename team URLs gets "← Rep teams" in the bar. (10) A10: a tournament-only org's org-wide screens (the Tournaments list, Settings & access, Members, Plan & billing) name the ORGANIZATION; its event pages name the event. The owner asked first why not the event: answered that Members grants access per tournament and Plan & billing is the organization's, so an event name above them misreads; the sidebar picker keeps the selected event on screen.

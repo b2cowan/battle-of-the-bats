@@ -1,0 +1,433 @@
+<title>Desktop Strip Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box (the house walk frame). */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .facts { grid-template-columns: 1fr; } .facts dd { margin-bottom: 6px; } }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.call { font-size: 13px; color: var(--warn); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+.opts { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; }
+.opt { display: flex; gap: 8px; align-items: flex-start; font-size: 0.95em; }
+.opt input { margin-top: 3px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · Admin header bar · Phase 2D · §495</span>
+    <h1>On a computer, the place names itself in the top strip and the club heads the sidebar</h1>
+    <p class="sub">Written 2026-11-08. One purpose: the desktop strip (round 4, option B). A short phone check at the end proves the phone did not change.</p>
+  </header>
+  <section class="card"><h2>What this walk is for</h2><p>On a computer the white bar under the dark strip is gone. The place you are in now names itself in the dark strip (“← Teams │ 15U AAA” and its season chip), View site sits beside the bell, and the place’s tabs are one white band pinned under the strip. The club’s name moved to the top of the sidebar, in a cell exactly as tall as the tab band, so the sidebar’s line and the band’s line run as one line across the screen. On Rep teams and a team the pinned header went from 151px to 93px; inside a tournament from 108px to the 48px strip. Phones keep today’s bar exactly.</p></section>
+  <section class="card"><h2>It passes when</h2><ul>
+    <li>Above 900px there is no white name bar: the place’s name is in the dark strip, where the bar’s name used to start.</li>
+    <li>Overview’s strip says <strong>Overview</strong>; a team shows <strong>← Teams │ 15U AAA</strong> with its season chip and no group; a tournament shows its name, dates and chip, and a long name is cut with “…” before the dates or chip ever are.</li>
+    <li>The club cell’s bottom line and the tab band’s bottom line are one line, with the sidebar open and collapsed.</li>
+    <li>The sidebar’s rows never move up or down between screens with tabs and without.</li>
+    <li>Clicking the club cell opens Overview.</li>
+    <li>On a phone, nothing changed.</li>
+  </ul></section>
+  <section class="card"><h2>Not in this walk</h2><ul>
+    <li><strong>Calendar, Schedules and record pages</strong> (a team’s History, a child’s page, Plan &amp; billing). Their strip still shows the club’s name, as their bar did; Phase 3 gives each its own name. Part E only checks they are not broken.</li>
+    <li><strong>The coaches portal.</strong> Measured identical before and after (its strip and its tab row, on a computer and a phone).</li>
+    <li><strong>A cancelled account’s one page.</strong> It has no sidebar to split the strip on, so it keeps today’s strip (“Admin Area”) and its white bar with the club’s name.</li>
+  </ul></section>
+  <section class="card"><h2>Known before the walk</h2><ul>
+    <li>The strip’s portal word is the short <strong>Admin</strong> (your D4). The Workspaces list, Home, the account pages’ way back and the coaches portal’s door keep <strong>Admin Area</strong> (your answer at this session’s gate).</li>
+    <li>A team’s group (“Senior”) no longer shows on a computer (your D3). It stays in Team details, and the phone’s second line never had it.</li>
+    <li>The test season has one season, so the season switcher beside its name does not show. It renders in the strip from the same piece the phone bar uses.</li>
+    <li>Measured before publishing: one page heading per screen at each width; the two bottom lines meet on the same pixel at 1440 and 1280, open and collapsed; at 901px a long tournament name gives way and its dates, chip, View site, bell, account and Workspaces stay whole; every in-page pinned part (the draft board’s pool) sits just under the new header.</li>
+  </ul></section>
+  <section class="card"><h2>Sign in as</h2><dl class="facts">
+    <dt>The club’s owner</dt><dd><code>uat-club-owner@uat-rep-club.local</code>, password <code>UAT_REP_CLUB_OWNER_PASSWORD</code> in <code>.env.local</code>.</dd>
+    <dt>A tournament organization’s owner</dt><dd><code>uat-owner@uat-test-org.local</code>, password <code>UAT_ORG_OWNER_PASSWORD</code> (opens <strong>UAT Plus Org</strong>, a tournament-only organization).</dd>
+    <dt>Sign-in page</dt><dd><code>http://localhost:3000/login</code>. Use a private window for the second person, or sign out between them.</dd>
+    <dt>Keep it private</dt><dd>Dev-only accounts on the dev database. Never production accounts.</dd>
+  </dl></section>
+  <section class="card"><h2>Where and on what</h2><dl class="facts">
+    <dt>The club</dt><dd><strong>UAT Rep Club</strong>: <code>http://localhost:3000/uat-rep-club/admin</code></dd>
+    <dt>The team</dt><dd><strong>15U AAA</strong> (2026 Season · Live): <code>http://localhost:3000/uat-rep-club/admin/rep-teams/teams/638ac88f-e941-41e7-ad3e-50869b7cb379</code></dd>
+    <dt>The season</dt><dd><strong>2026 Fall House League</strong> (Registration open): <code>http://localhost:3000/uat-rep-club/admin/house-league/seasons/0e94976d-4f01-4f5f-b18c-3c4d8b10bb77</code></dd>
+    <dt>The club’s tournament</dt><dd><strong>UAT Rep Club Invitational 2026</strong>: <code>http://localhost:3000/uat-rep-club/admin/tournaments/teams?tournamentId=366fd333-e21e-42ac-a905-556362513665</code></dd>
+    <dt>The tournament organization</dt><dd><strong>UAT Phase 2C Plus Championship 2026</strong>: <code>http://localhost:3000/uat-plus-org/admin/tournaments/teams?tournamentId=ef6f88c9-e702-4464-9669-8584d5f7250c</code></dd>
+    <dt>Screens</dt><dd>Your local server, restarted for this change on 2026-11-08. If a page shows “We can’t find that page” in the first minute, reload it once: that is the page compiling.</dd>
+    <dt>Computer</dt><dd>A browser window wider than 900px; Part D asks you to narrow it to just over 900px.</dd>
+    <dt>Phone</dt><dd>A real phone on your network, or the browser’s device view at about 390px wide.</dd>
+  </dl></section>
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy walk summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+</main>
+
+<script>
+(function () {
+  var KEY = "admin-header-bar-phase2d-walk-v1";
+  var TITLE = "Admin header bar · Phase 2D walk §495 · The desktop strip (2026-11-08)";
+  var PARTS = [
+ {
+  "id": "A",
+  "title": "The place in the strip, on a computer",
+  "steps": [
+   {
+    "who": "Club owner · computer",
+    "do": "Open the club (<code>/uat-rep-club/admin</code>).",
+    "see": "The dark strip: over the sidebar, the FieldLogicHQ wordmark, a short divider and <strong>ADMIN</strong>; over the page, <strong>Overview</strong> in bold, then <strong>View site</strong>, the bell and the person icon at the right. No white bar under the strip: the page starts with “The club today”.",
+    "options": [
+     "As described",
+     "A white bar still shows under the strip",
+     "The strip names the club instead of Overview",
+     "Something else (notes)"
+    ]
+   },
+   {
+    "who": "Club owner · computer",
+    "do": "Click <strong>Rep teams</strong> in the sidebar.",
+    "see": "The strip says <strong>Rep teams</strong>. Under the strip, one white band holds the six tabs, <strong>Teams</strong> underlined. Nothing else between the strip and the page."
+   },
+   {
+    "who": "Club owner · computer",
+    "do": "Open <strong>15U AAA</strong> (or the team link above).",
+    "see": "The strip reads <strong>← Teams │ 15U AAA</strong> with the <strong>2026 SEASON · LIVE</strong> chip beside the name. No “Senior” anywhere in the header. The team’s five tabs are in the white band.",
+    "options": [
+     "As described",
+     "The group (Senior) still shows",
+     "The name or tabs also show on the page",
+     "Something else (notes)"
+    ]
+   },
+   {
+    "who": "Club owner · computer",
+    "do": "Open the season (link above), then <strong>Accounting</strong>, <strong>Families</strong> and <strong>Organization</strong> from the sidebar.",
+    "see": "The season: <strong>← Seasons │ 2026 Fall House League</strong> and its <strong>REGISTRATION OPEN</strong> chip, seven tabs in the band. Accounting, Families and Organization each name themselves in the strip with their tabs in the band."
+   },
+   {
+    "who": "Club owner · computer",
+    "do": "On any of them, click <strong>View site</strong> in the strip.",
+    "see": "The club’s live site opens, as the bar’s View site did."
+   }
+  ]
+ },
+ {
+  "id": "B",
+  "title": "The club cell and the one line",
+  "steps": [
+   {
+    "who": "Club owner · computer",
+    "do": "Look at the top of the sidebar on a team page.",
+    "see": "A cell with a small <strong>UR</strong> tile and <strong>UAT Rep Club</strong> in bold. Its bottom line and the tab band’s bottom line run as <strong>one straight line</strong> across the screen. Overview is the first row under it, with the sidebar’s usual space above it.",
+    "options": [
+     "One straight line",
+     "The two lines are off by a step (notes)",
+     "Something else (notes)"
+    ]
+   },
+   {
+    "who": "Club owner · computer",
+    "do": "Watch the sidebar’s rows while you click between <strong>Overview</strong> (no tabs) and <strong>Rep teams</strong> (tabs) a few times.",
+    "see": "The sidebar’s rows never move up or down. On Overview the club cell keeps its height and its line stops at the sidebar’s edge.",
+    "options": [
+     "Nothing moves",
+     "The rows jump between screens",
+     "Something else (notes)"
+    ]
+   },
+   {
+    "who": "Club owner · computer",
+    "do": "From any page, click the club cell.",
+    "see": "Overview opens."
+   }
+  ]
+ },
+ {
+  "id": "C",
+  "title": "The sidebar collapsed",
+  "steps": [
+   {
+    "who": "Club owner · computer",
+    "do": "On the team page, click <strong>Collapse sidebar</strong> at the foot of the sidebar.",
+    "see": "The strip’s left cell narrows to the sidebar’s width and shows the green mark alone (no wordmark name, no ADMIN). The club cell shows the <strong>UR</strong> tile alone. The two bottom lines are still one line. The team’s name in the strip moves left with the page.",
+    "options": [
+     "As described",
+     "The lines no longer meet",
+     "Something else (notes)"
+    ]
+   },
+   {
+    "who": "Club owner · computer",
+    "do": "Point at the <strong>UR</strong> tile, then click it.",
+    "see": "A bubble says <strong>UAT Rep Club</strong>; the click opens Overview. Then expand the sidebar again from its foot."
+   }
+  ]
+ },
+ {
+  "id": "D",
+  "title": "Tournaments",
+  "steps": [
+   {
+    "who": "Club owner · computer",
+    "do": "Open the club’s tournament (link above).",
+    "see": "The strip: <strong>UAT Rep Club Invitational 2026</strong>, then its dates <strong>Nov 1–3, 2026</strong> and the red <strong>GAME DAY</strong> chip. No white bar: the page’s own <strong>Teams</strong> title is the first thing under the strip. The club cell still says <strong>UAT Rep Club</strong>."
+   },
+   {
+    "who": "Club owner · computer",
+    "do": "Click the tournament’s name in the strip.",
+    "see": "The tournament’s dashboard opens."
+   },
+   {
+    "who": "Tournament organization owner · computer",
+    "do": "Sign in as the tournament organization’s owner and open its tournament (link above).",
+    "see": "The club cell names the organization, <strong>UAT Plus Org</strong>. The strip names the event, its dates and its chip, then View site, the bell, the person icon and <strong>Workspaces</strong>."
+   },
+   {
+    "who": "Tournament organization owner · computer",
+    "do": "Narrow the browser window slowly until it is just over 900px wide (the sidebar is still showing).",
+    "see": "The event’s name gives way first and ends in “…”. The dates, the chip, View site, the bell, the person icon and Workspaces stay whole and never overlap. Below 900px the phone layout takes over.",
+    "options": [
+     "The name gives way, everything else whole",
+     "The dates or chip get cut",
+     "Something overlaps (notes)"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "E",
+  "title": "Scrolling, and the screens Phase 3 moves",
+  "steps": [
+   {
+    "who": "Club owner · computer",
+    "do": "On the team’s <strong>Roster</strong>, scroll to the bottom, then click <strong>Schedule</strong> in the band.",
+    "see": "The strip and the band stay at the top the whole time; Schedule opens underlined."
+   },
+   {
+    "who": "Club owner · computer",
+    "do": "On the season’s <strong>Teams &amp; draft</strong>, scroll down the draft board.",
+    "see": "The player pool sticks just under the tab band, never under it."
+   },
+   {
+    "who": "Club owner · computer",
+    "do": "Open <strong>Calendar</strong>, then 15U AAA’s <strong>History</strong>.",
+    "see": "Each keeps its own heading on the page; the strip shows the club’s name for now (Phase 3 names these screens). Nothing slides under the strip."
+   }
+  ]
+ },
+ {
+  "id": "F",
+  "title": "The phone did not change",
+  "steps": [
+   {
+    "who": "Club owner · phone",
+    "do": "Open Overview, then Rep teams, then 15U AAA.",
+    "see": "Exactly as before: no dark strip. Overview’s bar names <strong>UAT Rep Club</strong> with the globe at the right; Rep teams one line with its tabs; the team a square <strong>←</strong>, <strong>15U AAA</strong> and a second line <strong>Rep teams · 2026 Season · Live</strong>.",
+    "options": [
+     "As before",
+     "Something looks different (notes)"
+    ]
+   },
+   {
+    "who": "Club owner · phone",
+    "do": "Open the club’s tournament.",
+    "see": "As before: the event’s name, a second line with its dates and the GAME DAY chip, and the globe."
+   }
+  ]
+ },
+ {
+  "id": "G",
+  "title": "Your calls",
+  "steps": [
+   {
+    "who": "You",
+    "do": "With the sidebar <strong>collapsed</strong> inside the tournament organization’s tournament, the club cell’s <strong>UP</strong> tile sits just above the tournament picker’s <strong>UP</strong> tile (the event shares the organization’s initials). The two tiles look different (a small filled tile, then a larger outlined box) but read alike.",
+    "see": "Pick one. The build ships the first.",
+    "options": [
+     "Keep it as built",
+     "Set them apart (notes: how)",
+     "Something else (notes)"
+    ]
+   },
+   {
+    "who": "You",
+    "do": "When a club owner has an overdue fee invoice, its red line opens every page above the header and scrolls away. Until it scrolls off, the tab band sits one banner lower than the club cell, so the two bottom lines do not meet. (The test club has no overdue invoice, so this is described, not shown.)",
+    "see": "Pick one. The build ships the first.",
+    "options": [
+     "Keep it: the lines meet once the banner scrolls away",
+     "Move the overdue line under the tab band",
+     "Something else (notes)"
+    ]
+   },
+   {
+    "who": "You",
+    "do": "Inside a tournament, the event’s name in the strip starts where the bar’s name used to (your call G), and the tournament page’s own title (“Teams”) starts about 18px further right.",
+    "see": "Pick one. The build ships the first.",
+    "options": [
+     "Keep it as built",
+     "Line the strip’s name up with the page title on tournament pages",
+     "Something else (notes)"
+    ]
+   }
+  ]
+ }
+];
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var steps = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+      if (s.call) t.appendChild(el('span', 'call', s.call));
+      var rec = { part: p.id, step: id, boxes: [], options: s.options || null };
+      if (s.options) {
+        // One box per answer: the tick IS the answer, and the summary prints which one.
+        var opts = el('span', 'opts');
+        s.options.forEach(function (label, k) {
+          var oid = id + String.fromCharCode(97 + k);
+          var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + oid; cb.checked = !!state.ticks[oid];
+          cb.addEventListener('change', function () { state.ticks[oid] = cb.checked; save(); refresh(); });
+          rec.boxes.push({ cb: cb, label: label });
+          var o = el('label', 'opt'); o.appendChild(cb); o.appendChild(el('span', null, label)); opts.appendChild(o);
+        });
+        t.appendChild(opts);
+        var row = el('div', 'step'); row.appendChild(el('span', null, '')); row.appendChild(t); body.appendChild(row);
+      } else {
+        var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+        cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+        rec.boxes.push({ cb: cb, label: null });
+        var row2 = el('label', 'step'); row2.appendChild(cb); row2.appendChild(t); body.appendChild(row2);
+      }
+      steps.push(rec);
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function isDone(r) { return r.boxes.some(function (b) { return b.cb.checked; }); }
+  function doneSteps(partId) { return steps.filter(function (r) { return (!partId || r.part === partId) && isDone(r); }); }
+  var totalSteps = steps.length;
+
+  function refresh() {
+    PARTS.forEach(function (p) {
+      var n = doneSteps(p.id).length;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + p.steps.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    var done = doneSteps(null).length;
+    document.getElementById('total').textContent = done + ' of ' + totalSteps + ' checked';
+    document.getElementById('barfill').style.width = (totalSteps ? Math.round(done * 100 / totalSteps) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [TITLE, 'Checked ' + doneSteps(null).length + ' of ' + totalSteps + ' steps'];
+    PARTS.forEach(function (p) {
+      var ticked = doneSteps(p.id);
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + p.steps.length
+        + (ticked.length ? ' (' + ticked.map(function (r) { return r.step; }).join(', ') + ')' : ''));
+      ticked.filter(function (r) { return r.options; }).forEach(function (r) {
+        lines.push('  ' + r.step + ': ' + r.boxes.filter(function (b) { return b.cb.checked; }).map(function (b) { return b.label; }).join(' + '));
+      });
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    steps.forEach(function (r) { r.boxes.forEach(function (b) { b.cb.checked = false; }); });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

@@ -101,8 +101,17 @@ describe('N6 · a door is named by where it goes', () => {
     assert.equal(kitPrograms({ base: '/o/admin', canUse: () => true }).find(p => p.key === 'rep-teams')?.label, 'Rep teams');
   });
 
-  it('the admin top strip names its portal from the Workspaces list’s own word', () => {
-    assert.match(readCode('components/admin/AdminTopStrip.tsx'), /\{WORKSPACE_KIND_LABEL\.organization\}/);
+  // Round 4 (D4, owner 2026-11-08): the strip's left cell is the sidebar's width, so it says the short form, "Admin". The
+  // gate answer: the Workspaces list, Home, the account pages' way back and the portal's door keep "Admin Area". Both words
+  // live in ONE file, beside each other, so neither is retyped.
+  it('the admin top strip names its portal with the short form of the Workspaces list’s word', () => {
+    const strip = readCode('components/admin/AdminTopStrip.tsx');
+    // The split strip says the short form; a cancelled account's unsplit strip keeps the full word, as it was.
+    assert.match(strip, /\{split \? ADMIN_STRIP_LABEL : WORKSPACE_KIND_LABEL\.organization\}/);
+    assert.doesNotMatch(strip, /'Admin( Area)?'/, 'never typed in the strip');
+    const words = readCode('lib/workspace-labels.ts');
+    assert.match(words, /organization: 'Admin Area',/);
+    assert.match(words, /export const ADMIN_STRIP_LABEL = 'Admin';/);
   });
 });
 

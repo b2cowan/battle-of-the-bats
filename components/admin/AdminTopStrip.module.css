@@ -1,0 +1,109 @@
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════
+   The admin strip, SPLIT ON THE SIDEBAR'S EDGE (Admin header bar round 4, option B, owner 2026-11-08; drawings
+   `docs/projects/active/ADMIN_HEADER_DESKTOP_STRIP_DRAWINGS.html` v2). Desktop only: the strip itself is zeroed at
+   900px and below (`CoachTopStrip.module.css`), where the bar is the phone's only header.
+   · Left cell: exactly the sidebar's width (`--admin-rail-w`: 240, 64 collapsed), the wordmark and "Admin".
+     Collapsed, the mark alone.
+   · Right cell: the place (its way up, its name, its switcher, its chip), then View site and the person's doors.
+     The name starts at the page column's padding (2rem), where the bar's name sat (walk §492 call G).
+   The strip's own skin (ground, rule, height, the doors) is the shared `CoachTopStrip.module.css`'s; this sheet adds
+   only the two cells and the place. Tokens only.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+.lcell {
+  flex: none;
+  width: var(--admin-rail-w);
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  /* The strip's own spacing between the wordmark, its divider and the portal word (`.strip`'s gap). */
+  gap: 0.9rem;
+  padding: 0 1.25rem;
+  border-right: 1px solid var(--home-line);
+}
+
+.rcell {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0 1rem 0 2rem;
+}
+
+/* ── The place ── the name gives way first; the way up, the switcher, the dates and the chips never do. */
+.place {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+/* The way up, named by where it goes: the bar's `.back`, in the strip. */
+.back {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.4rem 0.5rem;
+  margin-left: -0.5rem;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: var(--type-body);
+  font-weight: 600;
+  line-height: 1;
+  text-decoration: none;
+}
+.back:hover { color: var(--text-primary); background: var(--home-olive-soft); }
+.backRule { flex: none; width: 1px; height: 22px; background: var(--home-line-strong); }
+
+/* The name: 16px bold, one line, "…" (walk §486 E). On Overview and a club place it is the page's `<h1>`, so the heading's
+   own margins are zeroed. */
+.name {
+  margin: 0;
+  min-width: 0;
+  flex: 0 1 auto;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-family: var(--font-sans);
+  font-size: var(--type-heading);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-primary);
+}
+/* A tournament's name is the door to its dashboard: the name's own ink until hovered. */
+.nameLink { min-width: 0; display: flex; color: inherit; text-decoration: none; }
+.nameLink:hover .name { color: var(--home-olive); }
+
+/* The strip is a fixed-height row with the place centred, so unlike the phone bar's switcher it needs no overhang margin. */
+.switcher { flex: none; display: inline-flex; }
+.dates {
+  flex: none;
+  font-size: var(--type-support);
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--text-tertiary);
+}
+.chip { flex: none; display: inline-flex; }
+
+/* The doors: View site first, beside the bell (D1). */
+.pill { flex-shrink: 0; }
+
+/* The cancelled account's one page keeps the strip as it was (no sidebar to split on, no place): none of the above. On a
+   phone the strip shows there too, and never carries a place — the bar is the phone's header. */
+@media (max-width: 900px) {
+  .place { display: none; }
+}
+
+/* ── Collapsed sidebar (64px): the mark alone, centred in the cell. ── */
+@media (min-width: 901px) {
+  :global(html[data-sidebar='strip']) .lcell { padding: 0; justify-content: center; }
+  :global(html[data-sidebar='strip']) .lcellWord { display: none; }
+  /* The wordmark's name (the lockup's spans after its mark); the mark stays. */
+  :global(html[data-sidebar='strip']) .lcellBrand > span { display: none; }
+}

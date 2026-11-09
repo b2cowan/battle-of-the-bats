@@ -243,7 +243,10 @@ describe('a page title carries no club name above it', () => {
     const bar = readCode('components/admin/AdminEventHeader.tsx');
     // Widened in Admin header bar Phase 2 (2026-11-07): the bar's name is the page's one <h1> on the Overview AND on every
     // club place that hands it a name (that place's paper heading is gone); a <span> everywhere else.
-    assert.match(bar, /const isPageTitle = onOverview \|\| !!place;/);
+    // Round 4 (2026-11-08): the rule lives in the one place model both headers read; the desktop strip draws the same
+    // <h1>/<span>, and each header's copy is display: none at the other's width, so the page has one <h1> at every width.
+    assert.match(readCode('components/admin/useAdminPlace.tsx'), /isPageTitle: onOverview \|\| !!place,/);
+    assert.match(readCode('components/admin/AdminTopStrip.tsx'), /isPageTitle \? <h1 className=\{own\.name\}>\{text\}<\/h1> : <span className=\{own\.name\}>\{text\}<\/span>/);
     assert.match(bar, /isPageTitle\s*\n?\s*\? <h1 className=\{styles\.name\}>\{title\}<\/h1>\s*\n?\s*: <span className=\{styles\.name\}>\{title\}<\/span>/,
       'the bar’s name is an <h1> where it is the page’s title, a <span> where the page draws its own heading');
   });

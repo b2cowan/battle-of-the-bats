@@ -39,5 +39,13 @@ test('the strip is the only chrome left: shown on a phone, without the bell', ()
 
 test('the header names the org and offers no door to the suspended public site', () => {
   assert.match(header, /!suspended && <FlipPill/);
-  assert.match(header, /const onTournament =\s*!suspended &&/);
+  // Round 4 (2026-11-08): View site also sits in the desktop strip, beside the bell — and the same rule holds there.
+  assert.match(strip, /flip && !suspended && <FlipPill/);
+  // The one place model both headers read: a cancelled account is never "in" a tournament or a place.
+  const model = readFileSync('components/admin/useAdminPlace.tsx', 'utf8');
+  assert.match(model, /const onTournament =\s*!suspended &&/);
+  assert.match(model, /const routePlace = !suspended && !onTournament \? addressPlace : null;/);
+  // Its page keeps the strip as it was (no sidebar to split on) and the bar keeps naming the organization on desktop.
+  assert.match(strip, /const split = !suspended;/);
+  assert.match(header, /const deskClass = suspended \? '' :/);
 });

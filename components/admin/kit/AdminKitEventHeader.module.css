@@ -74,14 +74,6 @@
   color: inherit;
   opacity: 0.45;
 }
-/* The club is the desk bar's only (A4): a phone's line is the dates and the chip. So is a team's group (Phase 2: on a
-   phone "Rep teams · group" plus the chip measured too long). A desk word in the MIDDLE hides its own dot with it; only
-   the first one (the club) leaves the next word holding a dot with nothing before it. */
-@media (max-width: 900px) {
-  .metaDesk { display: none; }
-  /* The same weight as the separator rule above (and later), so it wins: no dot stranded before the dates. */
-  .meta > span.metaDesk:first-child + span:not(.chip)::before { content: none; }
-}
 
 /* ── A CLUB PLACE IN THE BAR (Phase 2, 2026-11-07): the way up, the switcher, the chip and the tab row ── */
 
@@ -152,8 +144,6 @@
   .backLabel { display: none; }
   /* The phone name's line is 19.2px (16px × 1.2): the switcher overhangs a hair more so it never grows it. */
   .switcher { margin-block: -13px; }
-  /* A line of desk words alone (Rep teams, Accounting: the club): the phone leaves them off, so it leaves the line off too. */
-  .metaDeskOnly { display: none; }
 }
 
 @media (min-width: 901px) {
@@ -162,4 +152,18 @@
     padding: 0.5rem 2rem;
   }
   .header .name { font-size: var(--type-title); }
+}
+
+/* ⚖ ROUND 4 (owner 2026-11-08, D1): ABOVE 900px THE BAR IS THE TAB BAND ALONE, a white band pinned under the strip. The
+   name row is the phone's (the strip names the place up there, `AdminTopStrip`), so it is `display: none` here, out of
+   the accessibility tree with its `<h1>`. The band's height is `--admin-band-h` (admin.module.css, ONE declaration), which
+   the club cell atop the sidebar reads too (`AdminKitFrame.module.css` `.clubCell`), so the two bottom rules are one line
+   — never two numbers that happen to match. A place without tabs draws no desktop bar at all, and the bar then publishes
+   0 for `--admin-header-h`. A cancelled account's one page sets neither class and keeps the rule above. */
+@media (min-width: 901px) {
+  .header.deskBand { height: var(--admin-band-h); padding-block: 0; }
+  .header.deskBand .row { display: none; }
+  /* The tab row sits flush on the band's bottom rule: the row above it is gone, so is the gap it kept from it. */
+  .header.deskBand > :last-child { margin-top: 0; }
+  .header.deskNone { display: none; }
 }

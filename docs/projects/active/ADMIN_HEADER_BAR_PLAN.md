@@ -1,12 +1,15 @@
 # Admin header: the bar names where you are — Implementation Plan
 
-> **Status:** Phase 0 complete (option 4 + asks A2–A10 ruled 2026-11-07); **Phase 1 built 2026-11-07, walk §486 PASSED 12/12 2026-11-07, name clamped to one line per the owner's call**, committed `5451558f9` 2026-11-07; **Phase 2 session A built, simplified and re-reviewed, committed `860ae5b23` 2026-11-07** (the hand-off, `HubTabBar inBar`, Rep teams and a season); **Phase 2 session B built 2026-11-07** (a team, Accounting, Families, Organization; the paper mode deleted; the layout checker reads the locked phone shell), /design + /simplify + /review applied; **walk §492 owed** (the whole phase, with the wide-desktop call); Phase 3 next
+> **Status:** Phase 0 complete (option 4 + asks A2–A10 ruled 2026-11-07); **Phase 1 built 2026-11-07, walk §486 PASSED 12/12 2026-11-07, name clamped to one line per the owner's call**, committed `5451558f9` 2026-11-07; **Phase 2 session A built, simplified and re-reviewed, committed `860ae5b23` 2026-11-07** (the hand-off, `HubTabBar inBar`, Rep teams and a season); **Phase 2 session B built 2026-11-07** (a team, Accounting, Families, Organization; the paper mode deleted; the layout checker reads the locked phone shell), /design + /simplify + /review applied, committed `43ece64bf` 2026-11-08; **walk §492 PASSED 25/25 2026-11-07** (call G ruled: keep the full-width bar). **Round 4, the desktop strip, RULED 2026-11-08** (option B, club cell aligned with the tab band; D1–D5 below); **Phase 2D (the desktop strip) is next, then Phase 3** — build prompt `ADMIN_HEADER_BAR_PHASE2D_BUILD_PROMPT.md`
 > **Created:** 2026-11-07
 > **Branch:** dev
 > **PM brief:** [ADMIN_HEADER_BAR_PM_BRIEF.md](ADMIN_HEADER_BAR_PM_BRIEF.md)
 > **Drawings:** [ADMIN_HEADER_ROWS_DRAWINGS.html](ADMIN_HEADER_ROWS_DRAWINGS.html) · artifact https://claude.ai/artifact/DXmtj9E1SxcuyfyrcUnsuC
 > (v1 = round 1, four options; v2–v3 = round 2, option 4 on Overview, Rep teams, a season and a tournament;
 > v4 = round 3, a team, Accounting, Calendar, a child's page, a tournament-only org)
+> **Round 4 drawings (desktop strip):** [ADMIN_HEADER_DESKTOP_STRIP_DRAWINGS.html](ADMIN_HEADER_DESKTOP_STRIP_DRAWINGS.html) ·
+> artifact https://claude.ai/artifact/A1W443obR8aJd8PjUZEgUx (v1 = options A/B/C after the /design pass; v2 = B with the
+> club cell lined up with the tab band, the owner's pick)
 
 ## Goal
 
@@ -16,6 +19,12 @@ tabs (Rep teams, a house-league season, a team, Accounting, Families, Organizati
 place's tab row pins **inside** the bar. Inside a tournament it is the event, as today. A small line under the
 name carries the facts (the club on desktop, the section, dates, status). The bar never shrinks on scroll. The
 place's heading on the paper goes, so each screen has one title instead of two.
+
+**Round 4 (2026-11-08) changes the desktop half only.** On desktop the sidebar already names the place, so the white
+bar's row was a third statement of it and kept ~151px of a 1440 × 760 window pinned. Above 900px the bar's row goes:
+the place's name moves into the top strip over the page column, the club's name moves into a cell at the top of the
+sidebar (the same height as the tab band, so the two rules meet in one line), View site moves beside the bell, and
+the tab row is its own pinned band under the strip (measured in the drawing: 93px pinned). The phone bar is unchanged.
 
 ## PM Brief
 
@@ -46,7 +55,8 @@ recommended form; nothing added.
   Knowingly departs from the 2026-09-21 one-line phone masthead ruling (coaches portal) if (a).
 - [x] **A3 · Overview's "Overview" heading on the paper goes** (the bar names the club). Recommended yes.
 - [x] **A4 · Desktop: the club's name on the small line under every place.** Recommended yes. Phones leave it
-  off, so on a phone the club's name shows only on Overview.
+  off, so on a phone the club's name shows only on Overview. **→ Superseded on desktop by D1 (2026-11-08):** the
+  desktop small line goes; the club lives in the sidebar's club cell. Phones are unchanged.
 
 From Phase 0 round 3 (2026-11-07):
 
@@ -71,6 +81,41 @@ From Phase 0 round 3 (2026-11-07):
   tournaments or on Notifications. In a club the Tournaments list is a club place and follows the club rule
   ("Tournaments", club under it on desktop).
 
+## Round 4 · the desktop strip — RULED 2026-11-08
+
+Owner, after the walk passed, on desktop space: asked to think fresh about the bar's top row and offered two ways
+(scroll it away, or move it into the top nav). Answered: move it into the strip, keeping "← Teams │ 14U AA" rather than a
+trail of titles. Drawn as A (one strip), B (club on the sidebar), C (split at the sidebar line), /design pass applied.
+Owner: *"I think I like B the best, but could you line up the border of the org name with the header border? then the
+side nav also starts below the whole header which I also think looks cleaner"*; on v2: *"I like it"*. The four asks
+below were answered by the owner in this session, each as recommended. Recorded as ruled; nothing added.
+
+- [x] **D1 · Desktop (above 900px) is option B with the club cell aligned.** The top strip splits on the sidebar's
+  edge. Over the sidebar: the wordmark and the portal word. Over the page: the place's name, starting at the page
+  column's left edge, with its back link and status chip ("← Teams │ 14U AA · 2026 Season · Live"), then View site,
+  the bell, the account menu and the Workspaces pill at the right. The club's name moves into a cell at the top of the
+  sidebar, **exactly the tab band's height, so its bottom rule and the tab band's are one line**; the sidebar's
+  navigation starts below the whole header. The place's tabs are their own pinned band under the strip. The white
+  bar's desktop row and its small line are gone. Collapsed sidebar: the club cell shows the club's initials. Screens
+  without tabs keep the club cell at the same height (its rule ends at the sidebar's edge), so the navigation never
+  moves between screens. **The phone keeps today's bar exactly.**
+- [x] **D2 · Overview's strip says "Overview"** (the club already has its cell). Desktop only; the phone's Overview bar
+  still names the club (A3).
+- [x] **D3 · A team's group is dropped on desktop.** "Rep teams · Senior" goes with the small line; the group stays in
+  Team details. (Desktop now shows less than the phone here, knowingly.)
+- [x] **D4 · The portal word in the strip is "Admin"** (today "Admin Area"), short enough for the sidebar-width cell.
+- [x] **D5 · Clicking the club cell opens Overview.** Switching clubs stays in the Workspaces pill.
+
+Carried from earlier rulings, not re-asked: a page's own buttons stay at the top right of the page (A8); a long name
+is cut to one line with "…", its dates and chip never cut (walk §486 E).
+
+**To settle at the Phase 2D gate (implementation, recommendation given):** "Admin" and the Workspaces list.
+`WORKSPACE_KIND_LABEL.organization` ("Admin Area") is the one word the strip, the Workspaces list, the account return bar
+and Home share, and `nav-standard-guard` pins the strip to it. Recommended: the strip gets the short form as a named
+constant beside it in `lib/workspace-labels.ts` (one home, both words), the guard pins that constant, and the
+Workspaces list keeps "Admin Area" (it has the room, and "Back to Admin" reads worse). The alternative, renaming the
+kind everywhere to "Admin", keeps one word; ask the owner at the gate.
+
 ## Rulings this knowingly departs from (reference, decided on merit 2026-11-07)
 
 - **2026-08-25, "the phone title band stays"** (`memory/design_decisions.md`): the coaches portal kept the page
@@ -93,6 +138,21 @@ Found by the round 3 /design pass (not named in round 2; accepted with the asks 
   it (the portal's masthead meta voice, normal weight). A14 must class it as the eyebrow.
 - **2026-08-11 (coaches portal), actions sit right of the title.** With the title in the bar, a record page's
   buttons move to the top-right row of the page, the admin tabs' existing `TabActions` place.
+
+Round 4 (accepted with D1–D5, 2026-11-08; found by the round 4 /design pass):
+
+- **2026-11-07 ruling 1 and A4, the club on the desktop small line.** Its reason was one orienting bar on phone and
+  desktop. On desktop the sidebar already names the place and the club cell names the club, so the small line said
+  things twice. Phone unchanged.
+- **2026-10-17, one nav standard (N6/A6): the strip says "Admin Area"**, so someone who is also a coach can tell the
+  two shells apart. D4 keeps a portal word, shortened to fit.
+- **2026-08-17, the coach strip owns identity, the sidebar owns navigation.** The club's name now sits at the top of
+  the admin sidebar. It is also navigation (D5 opens Overview), and the coaches portal is untouched.
+- **2026-07-31 / 2026-10-17, one strip shared with the coaches portal.** The admin strip gains a split layout. It stays
+  48px (`--chrome-bar-h`), so someone with both roles never sees the bar change height; the coaches portal must stay
+  pixel-identical.
+- **2026-10-12, the sidebar collapses to a 64px icon strip.** D1 covers it: the left cell and the club cell narrow with
+  the sidebar (initials).
 
 ## Phases
 
@@ -340,7 +400,68 @@ Found by the round 3 /design pass (not named in round 2; accepted with the asks 
   `HubTabBar`'s overflow arrows can stay stale when a waiting count widens the row after first paint;
   `tests/uat/scenarios/plan-gating.spec.ts` looks for an "Accounting Overview" `<h1>` that never existed.
 
+### Phase 2D — The desktop strip (round 4, D1–D5, ruled 2026-11-08)
+
+> Built before Phase 3 because every Phase 3 screen names itself; built after, each would land in the white bar's
+> desktop row first and move again. One session. Build prompt: `ADMIN_HEADER_BAR_PHASE2D_BUILD_PROMPT.md`.
+> Above 900px only (the sidebar's own breakpoint, CSS today: `AdminKitFrame.module.css`, `admin.module.css`). At 900px
+> and below nothing changes: the strip is zeroed there and the bar is the phone bar.
+
+> **Built 2026-11-08** (one session). Gate answer the same day: the strip says the short form, `ADMIN_STRIP_LABEL =
+> 'Admin'` beside `WORKSPACE_KIND_LABEL` in `lib/workspace-labels.ts`; the Workspaces list, Home, the account way back
+> and the portal door keep "Admin Area". Owner walk §495 (https://claude.ai/artifact/8XSzVFVFnsbCDAiR5uszyo).
+
+- [x] **The strip splits on the sidebar's edge** (`AdminTopStrip` + its own `AdminTopStrip.module.css`): left cell
+      `width: var(--admin-rail-w)` (240 / 64), wordmark + divider + "Admin"; collapsed, the mark alone. Right cell
+      `padding: 0 1rem 0 2rem`: the name at x=272 open (the bar's old spot), 96 collapsed. 48px. The shared sheet gained
+      one opt-in class (`.stripSplit`, after `.strip`). **Measured:** the coaches portal's strip and tab row identical,
+      node for node, at 1280 and 390 on three pages. **As built:** a cancelled account's one page keeps the unsplit strip
+      and "Admin Area" (it has no sidebar to split on) and its white bar names the org (/review, 2026-11-08)
+- [x] **The place in the strip:** one place model, `components/admin/useAdminPlace.tsx` (address first, then the
+      frame's hand-off), read by both headers. Club place: back link + divider, name (16px bold, one line, "…"),
+      switcher, chip; tournament: the name as a link to its dashboard, dates (`--type-support`, the drawing's 13px is
+      off the ladder), chip; Overview says "Overview" (D2). Every other screen: the org's name, as the bar did
+- [x] **One `<h1>` per width.** The bar's name row is `display: none` above 900px and the strip's place is
+      `display: none` at 900 and below. **Measured:** one visible `<h1>` on every screen at 1440 and 390
+- [x] **View site in the strip** beside the bell (`flip && !suspended && <FlipPill`); the phone keeps its globe
+- [x] **The tab band:** `.deskBand` (height `var(--admin-band-h)`, the name row hidden) or `.deskNone` (no tabs: no
+      bar). `--admin-header-h` publishes 45 / 0. **Measured** at 1440×760: Rep teams 93, a team 93, a season /
+      Accounting 93, a tournament 48, Overview 48 (before 151 / 152 / 152 / 151 / 108 / 92; drawing 93 / 93 / 48).
+      Sticky census on ten screens: the draft pool sticks at 105 (strip + band + 12); nothing under, no gap
+- [x] **The club cell** (`AdminKitRail`, `.clubCell`): a link to Overview, the `stripTileText` initials tile + the
+      club's name (`strip.rowLabel`, so the collapsed bubble names it), `height: var(--admin-band-h)` — ONE declaration in
+      `admin.module.css` (45px) that the band reads too. A tournament-only org's cell names the org. **Measured:** the
+      cell's rule and the band's rule both at y=92, at 1440 and 1280, open and collapsed; Overview's row at y=105 on
+      every screen (the navigation never moves)
+- [x] **The small line goes on desktop** (D1, D3): the desk-only words left the markup (`.metaDesk`, `deskFacts`, the
+      team frame's `groupName`); the phone's visible bar is node-for-node identical on eight screens
+- [x] Guards rewritten: `admin-header-bar-guard` (the model, the order, no desk-only words, plus a round-4 block: CSS
+      split at 900/901, one `<h1>` per width, the opt-in split, View site by the bell, **the club cell and the band read
+      one variable declared once**), `nav-standard-guard` (short form in the split strip, full word when cancelled),
+      `club-stage1-screens-guard` (`isPageTitle` in the model, the strip's `<h1>`/span), `admin-kit-nav.test` (`tabbed` in
+      the model), `admin-cancelled-one-page-guard` (View site in the strip, the model, the unsplit strip).
+      `club-stage13i-places-guard`, `fee-overdue-banner`, `sidebar-strip-guard` pass unchanged (no new 240/64)
+- [x] Layout: the entries already wait for body markers (the strip's `<h1>` appears exactly where the bar's did).
+      `check:layout` on the six screens at 361/390/768/1440, collapsed at 1440, and at 901: no new findings from this
+      change (9 phone tap-floor findings on Overview's "Needs someone" links belong to the in-flight hub work). 901px: a
+      long tournament name keeps 97px and is cut; dates, chip and the four doors whole
+- [x] Help: both lines still read true on desktop (View site is still top right; the tabs are still under the title).
+      Optional `/docs`: mention that the club's name atop the sidebar opens Overview
+- [x] /design (matches option B, no fixes; four nits → walk calls); /review (standard, 3 lenses): fixed the cancelled
+      strip losing its word to a collapsed-sidebar preference and a stale `deskFacts` comment; recorded fractional widths
+      900–901px (both copies show; the shell-wide 900/901 convention), a switcher left open across a resize, the
+      overdue line above the band (walk G2). /simplify (2026-11-08): the place is drawn twice on purpose (the guards pin
+      both renderings' markup, so one shared name/back component was left alone); dropped the unread `onTournament` from
+      the model, the strip switcher's phone-only overhang margin and a stale comment; re-measured identical. /review
+      re-review of those three hunks: no findings
+- [x] Owner walk §495 published 2026-11-08, desktop-first with a phone spot-check; three calls (G1 look-alike tiles
+      collapsed in a tournament, G2 the overdue line above the band, G3 a tournament name 18px left of its page title)
+
 ### Phase 3 — Screens with no place of their own
+
+> **After Phase 2D:** every screen below names itself in the desktop strip and in the phone bar (one source, two
+> renderings). Record pages put their name and back link in the strip on desktop; their buttons sit at the top right
+> of the page (A8). Nothing in Phase 3 adds a desktop small line.
 
 - [ ] Calendar (`app/[orgSlug]/admin/calendar/page.tsx`), Schedules (`schedules/page.tsx`, `schedules/[scheduleId]/page.tsx`):
       the bar names the screen; the paper heading goes; the heading's actions (Calendar's phone view menu,
@@ -393,6 +514,15 @@ Found by the round 3 /design pass (not named in round 2; accepted with the asks 
   the bar (no node on the server's first paint, so it flashes the same way), and reordering the tree so the page renders
   before the bar (it breaks reading and focus order).
 
+- **Decision (round 4, 2026-11-08): one place, two renderings, split by CSS at the sidebar's breakpoint (900/901px).**
+  The place model (`clubPlaceAt` + the frame's hand-off) stays the one source. The phone bar and the desktop strip
+  render it; the width decides which is shown, in CSS, as the bar, strip and rail already do (no `matchMedia`).
+  **Rationale:** a JS width switch would paint the wrong one on the server's first paint and swap (the flash Phase 2
+  removed); the hidden copy is `display: none`, so the page still has one `<h1>` in the accessibility tree.
+- **Decision (round 4): the club cell's height IS the tab band's height** (one variable both read). **Rationale:** the
+  owner's ask is that the two rules form one line; two numbers that match today drift the first time the tab row's
+  padding changes.
+
 ## Plan tier
 
 No gate. The bar is chrome on every admin screen of every plan that has the admin (club places need the Club
@@ -405,13 +535,17 @@ plan's programs; tournament screens follow the Tournament / Tournament Plus plan
 - [ ] None new expected: the bar reuses shipped words ("Rep teams", "House league", season names, status chips,
       dates, "View site" / "Public site"). Phase 0 round 3 added none: the tournament-only org's bar is the org's
       own name, record pages reuse their shipped back-link labels and chips, and A9's "← Rep teams" is the rail's word.
+- [ ] Round 4: the strip's portal word "Admin" (D4), the short form of "Admin Area". No other new words: "Overview"
+      is the rail's word, the club's name is the club's.
 
 ## Open Questions
 
 - [x] ~~A2–A10~~ ruled 2026-11-07 as recommended
 - [x] ~~Phase 0's screens raise their own asks~~ → A5–A10 (round 3, 2026-11-07)
 - [x] ~~Accounting's nine tabs on a phone~~ → drawn: the sideways row still serves (A5)
-- [ ] **Owner call (from the session A /design pass, 2026-11-07): a wide desktop** — asked as walk §492 part G. The bar runs the full width of the
+- [x] ~~**Owner call (from the session A /design pass, 2026-11-07): a wide desktop**~~ — **RULED on walk §492 part G
+      (2026-11-07): (a) keep it, the bar spans the full width as built.** Phase 2D keeps that: the strip's name starts
+      at the same left edge. Original question, kept for the record: asked as walk §492 part G. The bar runs the full width of the
       page column with its name and tabs at the left edge (as Phase 1 built it and the walk passed on Overview); a place's
       content is a centred column capped at 1200px. At 1280 they line up exactly; at 1920 the name and the tab row start
       208px left of the content they navigate (measured: tabs at 272px, content at 480px; View site at 1888, content ends

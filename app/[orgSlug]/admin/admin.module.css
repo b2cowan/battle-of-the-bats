@@ -10,6 +10,10 @@
      rail's edge reads it too. The strip's 64 when the person collapsed the sidebar (below; Sidebar Strip &
      Grid Width, Stage 2). */
   --admin-rail-w: 240px;
+  /* The desktop tab band's height (round 4, D1, owner 2026-11-08): the pinned bar's tab row plus its bottom rule
+     (`AdminKitEventHeader.module.css` `.deskBand`), and the club cell atop the sidebar (`AdminKitFrame.module.css`
+     `.clubCell`) — ONE declaration both read, so their bottom rules are one line across the screen. */
+  --admin-band-h: 45px;
   display: flex;
   min-height: 100vh;
   padding-top: var(--admin-topstrip-h);

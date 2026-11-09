@@ -3,11 +3,21 @@
 > Plan: [ADMIN_HEADER_BAR_PLAN.md](ADMIN_HEADER_BAR_PLAN.md) · Drawings: https://claude.ai/artifact/DXmtj9E1SxcuyfyrcUnsuC
 > Ruled 2026-11-07 (option 4), and every follow-up ask the same day, all as recommended (see the plan). Drawings
 > cover every kind of admin screen. Phase 1 (the bar's shape) walked and passed 2026-11-07. Phase 2 (all six club places
-> name themselves in the bar, tabs pinned) built 2026-11-07; its owner walk is §492. Phase 3 (Calendar, Schedules,
-> record pages) next.
+> name themselves in the bar, tabs pinned) walked and passed 2026-11-07 (§492). Round 4 (the desktop strip) ruled
+> 2026-11-08 from drawings https://claude.ai/artifact/A1W443obR8aJd8PjUZEgUx; Phase 2D built it 2026-11-08 (93px
+> pinned on a place with tabs, 48px in a tournament; the strip says "Admin", the Workspaces list keeps "Admin Area"),
+> owner walk §495 https://claude.ai/artifact/8XSzVFVFnsbCDAiR5uszyo; then Phase 3 (Calendar, Schedules, record pages).
+
+**Desktop, round 4 (2026-11-08):** on a computer the sidebar already says where you are, so the white bar's name row
+was saying it a third time and kept about a fifth of a laptop screen pinned. On desktop the place's name moves up into
+the top strip ("← Teams │ 14U AA"), View site moves beside the bell, the tabs are one pinned band under the strip,
+and the club's name heads the sidebar in a cell lined up with the tab band, so the header reads as one block and the
+sidebar's links start below it. Clicking the club's name opens Overview, whose strip now just says "Overview". The
+strip's portal word becomes "Admin". A team's group ("Senior") is no longer repeated in the header. Pinned space on a
+laptop drops from about 151px to 93px on a place with tabs. **Phones do not change.**
 
 **Settled details:** on a phone, a season's or team's status rides a second line in the bar. Overview loses its
-"Overview" heading, so the club's name heads it. On desktop the club's name sits under every place's name.
+"Overview" heading, so the club's name heads it on a phone. On desktop the club's name sits in the sidebar's top cell.
 Accounting keeps its sideways tab row, pinned. A record one level down (a child's page) puts its name and its
 way back in the bar. A tournament-only organization's bar names the event inside an event, and the organization
 on its organization-wide screens (the list, Members, Plan & billing).
@@ -43,5 +53,6 @@ every admin screen, so it goes in phases with a walk after each.
 - In any place with tabs, you can switch tabs from the bottom of a long list without scrolling up.
 - The bar doesn't change height when you scroll, on phone or desktop.
 - On a phone, a place with tabs keeps no more than about a quarter of the screen pinned.
+- On a 1440 × 760 laptop window, a place with tabs keeps no more than about 95px pinned (151px before round 4).
 - The coaches portal looks exactly as it did.
 - The owner walk passes on phone and desktop.

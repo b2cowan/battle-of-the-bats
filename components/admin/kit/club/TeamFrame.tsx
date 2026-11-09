@@ -28,12 +28,13 @@ import type { RepProgramYear, RepTeam } from '@/lib/types';
 import PlaceFrame from './PlaceFrame';
 import { RepChip } from './RepKit';
 
-/** What the team's header says: its name, its group, and its season chip. */
-export type TeamHead = { name: string; groupName: string | null; chip: { label: string; live: boolean } | null };
+/** What the team's header says: its name and its season chip. (Its group left with the desktop small line, round 4 D3,
+ *  2026-11-08: it stays in Team details.) */
+export type TeamHead = { name: string; chip: { label: string; live: boolean } | null };
 
 /** The header's words from a team read — the chip the Team page itself drew: Archived, the live season, or the last closed. */
 export function teamHeadOf(
-  team: Pick<RepTeam, 'name' | 'isArchived'> & { groupName?: string | null },
+  team: Pick<RepTeam, 'name' | 'isArchived'>,
   seasons: readonly Pick<RepProgramYear, 'name' | 'status' | 'year' | 'createdAt'>[],
 ): TeamHead {
   const live = liveSeasonOf(seasons);
@@ -42,7 +43,7 @@ export function teamHeadOf(
     : live ? { label: `${live.name} · Live`, live: true }
     : closed ? { label: `${closed.name} · Closed`, live: false }
     : null;
-  return { name: team.name, groupName: team.groupName ?? null, chip };
+  return { name: team.name, chip };
 }
 
 // One shared answer for the team on screen: the frame's own read, replaced by a page's newer one.
@@ -104,7 +105,6 @@ export default function TeamFrame({ children }: { children: ReactNode }) {
     <PlaceFrame place={{
       ...place,
       title: head?.name ?? place.title,
-      deskFacts: head?.groupName ? [head.groupName] : undefined,
       chip: head?.chip ? <RepChip tone={head.chip.live ? 'good' : 'neutral'}>{head.chip.label}</RepChip> : undefined,
     }}>
       {children}
