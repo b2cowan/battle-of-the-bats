@@ -3,7 +3,9 @@
  * test (run on both real drafts) and the frozen-version test (run on every published file). "owner" is NOT on the list — the
  * Terms say "account owner". This file is `_legal-markers.ts` so the runner's test-file glob does not run it.
  */
-export const OWNER_NOTE_MARKERS = ['> NOTE', 'NOTE —', '[V', '[H', '`/legal`', 'Stage 6', 'RULED', 'O1′', 'DRAFT'] as const;
+export const OWNER_NOTE_MARKERS = ['> NOTE', 'NOTE —', '[V', '[H', '`/legal`', 'Stage 6', 'RULED', 'O1′', 'DRAFT', '<!--', '[^'] as const;
+// '<!--' and '[^': the page renders raw HTML and footnote text as visible words (no `rehype-raw`; the filter has no rule for
+// either), so a comment or a footnote in a draft would reach the page. A draft that trips them gets a `/legal` edit.
 
 /** Which markers a text carries (empty is clean). */
 export const filterMarkers = (text: string): string[] => OWNER_NOTE_MARKERS.filter(m => text.includes(m));

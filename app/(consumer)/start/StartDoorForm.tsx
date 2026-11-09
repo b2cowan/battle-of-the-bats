@@ -6,7 +6,6 @@ import { Tag } from 'lucide-react';
 import VerifyEmailSent from '@/components/auth/VerifyEmailSent';
 import StartSteps from '@/components/auth/StartSteps';
 import { AccountFields, Field, StartColumn, StartFoot, StartHead, accountForm, hintId, type AccountValues } from '@/components/auth/AccountForm';
-import LegalFootLinks from '@/components/legal/LegalFootLinks';
 import { accountExistsSignInHref } from '@/lib/auth-errors';
 import { pickedPlanLabel } from '@/lib/plan-config';
 import { RUN_A_TOURNAMENT_STEPS, START_DOOR_PATH, runATournamentPick, startDoorLinkPath, startPricingParams, withStartPricing, type StartPricing, type StartStepViewer } from '@/lib/start-door';
@@ -250,13 +249,12 @@ function StartAccountStep({ door, pricing }: { door: FormDoor; pricing: StartPri
             {copy.accountSmallPrint && <p className={accountForm.fine}>{copy.accountSmallPrint}</p>}
           </form>
 
-          <StartFoot>
+          <StartFoot legal>
             <p>
               Already have an account?{' '}
               <Link href={`/auth/login?next=${encodeURIComponent(nextStep)}`} className={accountForm.footLink}>Sign in</Link>
             </p>
           </StartFoot>
-          <LegalFootLinks />
         </>
       )}
     </StartColumn>
@@ -322,13 +320,12 @@ function InvitedInstead({ email, orgName, onUseDifferentEmail }: { email: string
         )}
       </div>
 
-      <StartFoot>
+      <StartFoot legal>
         <p>
           Already have an account?{' '}
           <Link href="/auth/login" className={accountForm.footLink}>Sign in</Link>
         </p>
       </StartFoot>
-      <LegalFootLinks />
     </StartColumn>
   );
 }
@@ -403,14 +400,13 @@ function NameStep({ door, viewer, initialName, confirmed, create, help }: {
         {copy.nameSmallPrint && <p className={accountForm.fine}>{copy.nameSmallPrint}</p>}
       </form>
 
-      <StartFoot>
+      <StartFoot legal>
         <p>
           <Link href="/discover" className={accountForm.footLink}>
             {viewer.firstRun ? 'Not now, go to Home' : '← Back to your workspaces'}
           </Link>
         </p>
       </StartFoot>
-      <LegalFootLinks />
     </StartColumn>
   );
 }

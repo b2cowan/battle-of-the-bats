@@ -7,7 +7,6 @@
  */
 import { formatStoredDate, utcToZonedInputs } from './timezone';
 import { formatTime, pluralize, possessive } from './utils';
-import { FIELDLOGICHQ_CONTACT_EMAIL } from './fieldlogichq-contact';
 
 /** "$1,234.50" — online payments always show cents (a receipt is exact). */
 export function money(dollars: number): string {
@@ -1125,9 +1124,6 @@ export const isFeeCredit = (kind: string) => kind === 'dispute_answer_returned';
  *  and platform admin's Money tab know one. Here, not in the server module, so the Money tab's pure reader can use it. */
 export const FEE_INVOICE_META = 'fieldlogichq_fee_invoice_id';
 
-/** The platform's club-facing address on FieldLogicHQ's own invoice and its email (`{supportEmail}`, words §1.7): the
- *  reply-to every FieldLogicHQ email already carries. */
-export const PLATFORM_CONTACT_EMAIL = FIELDLOGICHQ_CONTACT_EMAIL;
 
 /**
  * EVERY STRIPE FEE A CLUB IS BILLED (12d-1 Part 4; words CLUB_TIER_STAGE12D_COPY.md §1.7, §3.4, §6.1). A comp covers the

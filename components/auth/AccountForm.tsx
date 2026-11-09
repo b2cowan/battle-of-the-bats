@@ -1,6 +1,7 @@
 'use client';
 import { useState, type ReactNode } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
+import LegalFootLinks from '@/components/legal/LegalFootLinks';
 import styles from './AccountForm.module.css';
 
 /** The one account step's classes (buttons, callout, foot row, hint), for the few lines a door adds of its own. */
@@ -21,9 +22,18 @@ export function StartColumn({ children }: { children: ReactNode }) {
   );
 }
 
-/** The foot row under the form, every link a 44px row (D6); `split` puts two ways out at either end of one row. */
-export function StartFoot({ children, split = false }: { children: ReactNode; split?: boolean }) {
-  return <div className={split ? styles.footSplit : styles.foot}>{children}</div>;
+/**
+ * The foot row under the form, every link a 44px row (D6); `split` puts two ways out at either end of one row. `legal` adds the
+ * Terms / Privacy line under it (GST/HST Stage 6 step 6.2) — opt-in, because the census of doors that carry it is deliberate
+ * (the onboarding steps wear a StartFoot without it). The line renders nothing while the legal pages are off.
+ */
+export function StartFoot({ children, split = false, legal = false }: { children: ReactNode; split?: boolean; legal?: boolean }) {
+  return (
+    <>
+      <div className={split ? styles.footSplit : styles.foot}>{children}</div>
+      {legal && <LegalFootLinks />}
+    </>
+  );
 }
 
 /** The id of a field's hint line, for the input's aria-describedby (the hint is read with the field). */

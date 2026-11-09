@@ -9,9 +9,10 @@ import { sendEmail, escapeHtml } from './email';
 import { stripeKeyIsLive } from './stripe-mode';
 import { FEE_INVOICE_OWED_STATUS, httpsOnly } from './fee-invoice-alert';
 import { warmEmailButton, warmEmailDocument, warmEmailParagraph, warmEmailSmall } from './email-envelope-warm';
+import { FIELDLOGICHQ_CONTACT_EMAIL } from './fieldlogichq-contact';
 import { emailFactsPanel } from './online-refund-block';
 import {
-  FEE_INVOICE_META, ONLINE_EMAIL_WORDS as E, PLATFORM_CONTACT_EMAIL, STRIPE_FEE_WORDS as W, isFeeCredit, money, type StripeFeeKind,
+  FEE_INVOICE_META, ONLINE_EMAIL_WORDS as E, STRIPE_FEE_WORDS as W, isFeeCredit, money, type StripeFeeKind,
 } from './online-payment-words';
 import { addCalendarMonths, formatStoredDate, orgMonthKey, zonedWallClockToUtc } from './timezone';
 import { AUTOMATIC_TAX, RECOVERED_FEE_TAX, namedTaxLines } from './billing-tax';
@@ -485,7 +486,7 @@ async function invoiceOneClub(orgId: string, candidates: FeeRow[], periodStart: 
     const inv = found ?? await stripe.invoices.create({
       customer: row.stripe_customer_id, collection_method: 'send_invoice', days_until_due: FEE_INVOICE_DAYS_DUE, auto_advance: false,
       pending_invoice_items_behavior: 'exclude', currency: 'cad', automatic_tax: AUTOMATIC_TAX,
-      description: W.memo(org.name as string), footer: W.footer(PLATFORM_CONTACT_EMAIL),
+      description: W.memo(org.name as string), footer: W.footer(FIELDLOGICHQ_CONTACT_EMAIL),
       metadata: { [FEE_INVOICE_META]: row.id, org_id: orgId },
     }, { idempotencyKey: `fee-invoice:${row.id}` });
     await supabaseAdmin.from('platform_fee_invoices').update({ stripe_invoice_id: inv.id!, updated_at: new Date().toISOString() }).eq('id', row.id);
@@ -664,7 +665,7 @@ async function emailFeeInvoice(rowId: string): Promise<void> {
       warmEmailParagraph(escapeHtml(W.emailWhy([...new Set(lines.map(l => l.kind))]))),
       warmEmailButton(W.emailButton, row.hosted_invoice_url),
       warmEmailSmall(escapeHtml(W.emailSecure)),
-      warmEmailSmall(escapeHtml(W.emailQuestions(PLATFORM_CONTACT_EMAIL))),
+      warmEmailSmall(escapeHtml(W.emailQuestions(FIELDLOGICHQ_CONTACT_EMAIL))),
       test ? warmEmailSmall(escapeHtml(E.testNote)) : '',
     ].filter(Boolean).join('\n'));
     const sent = await sendEmail(to, subject, html, { kind: 'stripe_fee_invoice', orgId: row.org_id, idempotencyKey: `fee-invoice-email:${row.id}` });
@@ -691,7 +692,7 @@ export async function remindUnpaidFeeInvoices(now: Date = new Date()): Promise<n
       const html = warmEmailDocument([
         warmEmailParagraph(escapeHtml(W.reminderLead(row.invoice_number ?? '', amount, formatStoredDate(row.due_at, { withYear: true })))),
         warmEmailButton(W.emailButton, row.hosted_invoice_url),
-        warmEmailSmall(escapeHtml(W.emailQuestions(PLATFORM_CONTACT_EMAIL))),
+        warmEmailSmall(escapeHtml(W.emailQuestions(FIELDLOGICHQ_CONTACT_EMAIL))),
         test ? warmEmailSmall(escapeHtml(E.testNote)) : '',
       ].filter(Boolean).join('\n'));
       const sent = await sendEmail(to, `${test ? E.testPrefix : ''}${W.reminderSubject(row.invoice_number ?? '')}`, html,

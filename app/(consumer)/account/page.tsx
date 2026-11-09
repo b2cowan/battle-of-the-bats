@@ -11,7 +11,7 @@ import AccountGetAppCard from './AccountGetAppCard';
 import { SUPPORT_MAILTO } from './support';
 import { legalPageHref } from '@/lib/legal-links';
 import { legalPagesOn } from '@/lib/legal-pages-switch';
-import { LEGAL_ACCOUNT_ROW_LABELS } from '@/lib/legal-words';
+import { LEGAL_TITLES } from '@/lib/legal-words';
 import styles from './account.module.css';
 
 // Reflects sign-in state — dynamic and not for indexing.
@@ -60,7 +60,7 @@ export default async function AccountPage() {
     ? (['terms', 'privacy'] as const).map(doc => (
         <a key={doc} href={legalPageHref(doc)} className={styles.row}>
           <span className={styles.rowIcon}><FileText size={19} aria-hidden /></span>
-          <span className={styles.rowLabel}>{LEGAL_ACCOUNT_ROW_LABELS[doc]}</span>
+          <span className={styles.rowLabel}>{LEGAL_TITLES[doc]}</span>
           <ChevronRight size={18} className={styles.rowChevron} aria-hidden />
         </a>
       ))

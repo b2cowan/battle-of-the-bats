@@ -6,7 +6,7 @@ import {
   type ReviewReason,
   type StoredBillingLocation,
 } from './billing-location';
-import { PLATFORM_CONTACT_EMAIL } from './online-payment-words';
+import { FIELDLOGICHQ_CONTACT_EMAIL } from './fieldlogichq-contact';
 
 /**
  * HOW A BUYER IS TAXED (GST/HST Stage 2; build prompt docs/projects/active/GST_HST_STAGE2_BUILD_PROMPT.md, owner rulings
@@ -141,7 +141,7 @@ export const BILLING_REVIEW_HOLD = 'billing_review_hold';
 
 export const BILLING_TAX_WORDS = {
   /** Ask 1's hold. No claim that anyone was told: nothing emails (Stage 1 ruling). */
-  held: `We need to look at your account before you can pay. Email us at ${PLATFORM_CONTACT_EMAIL} and we’ll sort it out.`,
+  held: `We need to look at your account before you can pay. Email us at ${FIELDLOGICHQ_CONTACT_EMAIL} and we’ll sort it out.`,
   /** A quote Stripe could not place (the address did not reach it, or it could not use it). Names no place: it shows in the
    *  "Start your club" window (the address is right above it) and in the move window alike (drawing tab 3, frame 5). */
   notWorkedOut: 'We couldn’t work out the tax for this billing address. Check the address and try again.',

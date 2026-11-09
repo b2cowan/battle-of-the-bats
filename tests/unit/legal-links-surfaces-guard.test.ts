@@ -28,12 +28,27 @@ const FOOT_DOORS: Array<[string, number]> = [
 
 describe('the sign-in and sign-up doors carry the legal line', () => {
   for (const [file, count] of FOOT_DOORS) {
-    it(`${file} renders LegalFootLinks ${count} time(s)`, () => {
+    it(`${file} renders the legal line ${count} time(s)`, () => {
       const code = readCode(file);
-      assert.equal((code.match(/<LegalFootLinks\b/g) ?? []).length, count);
-      assert.match(code, /import LegalFootLinks from '@\/components\/legal\/LegalFootLinks'/);
+      // A line is `<StartFoot legal>` (StartFoot draws it) or a direct `<LegalFootLinks>` (a door with no StartFoot under the form).
+      const direct = (code.match(/<LegalFootLinks\b/g) ?? []).length;
+      assert.equal(direct + (code.match(/<StartFoot\b[^>]*\blegal\b/g) ?? []).length, count);
+      if (direct) assert.match(code, /import LegalFootLinks from '@\/components\/legal\/LegalFootLinks'/);
     });
   }
+
+  it('no file outside the census opts a StartFoot into the legal line (the onboarding steps stay without)', () => {
+    const listed = new Set(FOOT_DOORS.map(([f]) => f));
+    const optedIn = [...filesUnder('app', '.tsx'), ...filesUnder('components', '.tsx')]
+      .filter(f => /<StartFoot\b[^>]*\blegal\b/.test(readCode(f)));
+    assert.deepEqual(optedIn.filter(f => !listed.has(f)), []);
+  });
+
+  it('StartFoot draws the legal line only when a door opts in with `legal`', () => {
+    const code = readCode('components/auth/AccountForm.tsx');
+    assert.match(code, /legal = false/);
+    assert.match(code, /\{legal && <LegalFootLinks \/>\}/);
+  });
 
   it('the platform-admin login uses the console card’s 12px line', () => {
     assert.match(readCode('app/platform-admin/login/page.tsx'), /<LegalFootLinks console \/>/);
@@ -82,12 +97,13 @@ describe('the other surfaces follow the switch', () => {
   });
 
   it('the legal routes answer "not found" while the switch is off', () => {
-    for (const f of ['app/terms/page.tsx', 'app/privacy/page.tsx', 'app/legal/page.tsx']) {
-      const code = readCode(f);
-      assert.match(code, /if \(!legalPagesOn\(\)\) notFound\(\)/, f);
-      assert.match(code, /redirect\(legalPagePath\(/, f);
+    for (const [f, doc] of [['app/terms/page.tsx', 'terms'], ['app/privacy/page.tsx', 'privacy'], ['app/legal/page.tsx', 'terms']]) {
+      assert.match(readCode(f), new RegExp(`redirectToLegalDoc\\('${doc}'\\)`), f);
     }
-    assert.match(readCode('components/legal/LegalDocRoute.tsx'), /if \(!data\) notFound\(\)/);
+    const route = readCode('components/legal/LegalDocRoute.tsx');
+    assert.match(route, /if \(!legalPagesOn\(\)\) notFound\(\)/);
+    assert.match(route, /redirect\(legalPagePath\(/);
+    assert.match(route, /if \(!data\) notFound\(\)/);
   });
 
   it('the redirects are page-level — next.config.ts announces no legal address', () => {

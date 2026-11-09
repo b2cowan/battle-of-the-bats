@@ -5,7 +5,6 @@ import Link from 'next/link';
 import LoadingState from '@/components/shared/LoadingState';
 import ChoicePair from '@/components/shared/ChoicePair';
 import { AccountFields, EmailField, StartColumn, StartFoot, StartHead, accountForm, type AccountValues } from '@/components/auth/AccountForm';
-import LegalFootLinks from '@/components/legal/LegalFootLinks';
 import {
   COACHES_TOURNAMENTS_PATH,
   normalizeCoachPortalNext,
@@ -364,10 +363,9 @@ function JoinForm() {
             next={verifyReturnPath()}
             classes={{ button: accountForm.secondary, sent: accountForm.sentAgain, error: accountForm.errorText }}
           />
-          <StartFoot>
+          <StartFoot legal>
             <p>Already confirmed? <Link href={waitingLoginHref} className={accountForm.footLink}>Sign in</Link></p>
           </StartFoot>
-          <LegalFootLinks />
         </div>
       </StartColumn>
     );
@@ -387,7 +385,7 @@ function JoinForm() {
             : <>Your Coaches Portal account is ready. Sign in to see your team and track its status.</>}
         />
         <Link href={existingLoginHref} className={accountForm.primary}>Sign in to your Coaches Portal</Link>
-        <StartFoot>
+        <StartFoot legal>
           <p>
             Not you, or need a different account?{' '}
             <button type="button" className={accountForm.footLink} onClick={() => { setExistingAccount(null); setStartingFresh(true); }}>
@@ -395,7 +393,6 @@ function JoinForm() {
             </button>
           </p>
         </StartFoot>
-        <LegalFootLinks />
       </StartColumn>
     );
   }
@@ -421,12 +418,11 @@ function JoinForm() {
         <button type="button" className={accountForm.primary} onClick={handleSwitchAccount}>
           Sign out &amp; use a different account
         </button>
-        <StartFoot>
+        <StartFoot legal>
           <p>
             <Link href={nextParam} className={accountForm.footLink}>Stay signed in as {signedInEmail}</Link>
           </p>
         </StartFoot>
-        <LegalFootLinks />
       </StartColumn>
     );
   }
@@ -574,13 +570,12 @@ function JoinForm() {
             </button>
           </form>
 
-          <StartFoot>
+          <StartFoot legal>
             <p>
               Already have an account?{' '}
               <Link href={loginHref} className={accountForm.footLink}>Sign in</Link>
             </p>
           </StartFoot>
-          <LegalFootLinks />
         </>
       )}
     </StartColumn>

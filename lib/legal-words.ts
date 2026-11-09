@@ -14,10 +14,10 @@ export const TERMS_TITLE = 'Terms of Service';
 export const PRIVACY_TITLE = 'Privacy Policy';
 
 export const LEGAL_TITLES: Record<LegalDocKey, string> = { terms: TERMS_TITLE, privacy: PRIVACY_TITLE };
-export const legalTitle = (doc: LegalDocKey): string => LEGAL_TITLES[doc];
 
 /** (4a) Under the page title on a current version. `dateText` is the long-month date. */
-export const legalEffectiveLine = (dateText: string): string => `Effective ${dateText}`;
+export const LEGAL_EFFECTIVE_PREFIX = 'Effective';
+export const legalEffectiveLine = (dateText: string): string => `${LEGAL_EFFECTIVE_PREFIX} ${dateText}`;
 
 /** (4b) Under the page title on a version that is no longer current (replaces 4a). The last words are the link to the current page. */
 export const legalEarlierVersionLine = (fromText: string, toText: string): string =>
@@ -27,7 +27,6 @@ export const LEGAL_READ_CURRENT = 'Read the current version.';
 /** (4c) The draft banner — the dev preview only, above the title, one line. */
 export const LEGAL_DRAFT_BANNER_TITLE = 'Draft — not published.';
 export const LEGAL_DRAFT_BANNER_BODY = 'The text can change before it goes live.';
-export const LEGAL_DRAFT_BANNER = `${LEGAL_DRAFT_BANNER_TITLE} ${LEGAL_DRAFT_BANNER_BODY}`;
 
 /** The label over the contents list that sits beside the text on a wide screen (drawing tab 1). */
 export const LEGAL_CONTENTS_LABEL = 'Contents';
@@ -37,11 +36,10 @@ export const legalToBeFilled = (fact: string): string => `[${fact} — to be fil
 /** With no effective date yet, (4a) reads `Effective [date — to be filled]`. */
 export const LEGAL_EFFECTIVE_BLANK_FACT = 'date';
 
-/** (4e) Full forms wherever a link has room; the short forms only in the account menu's small line under Sign out. */
+/**
+ * (4e) Full forms wherever a link has room; the short forms only in the account menu's small line under Sign out, written
+ * `Terms · Privacy` (each short link carries its full title as its accessible name — note 1 on item 4).
+ * (4f) The account page's two rows use the full titles (`LEGAL_TITLES`): no chooser, no combined label.
+ */
 export const LEGAL_SHORT_LABELS: Record<LegalDocKey, string> = { terms: 'Terms', privacy: 'Privacy' };
 export const LEGAL_SHORT_SEPARATOR = ' · ';
-/** The menu line is written `Terms · Privacy`; each short link carries its full title as its accessible name (note 1 on item 4). */
-export const LEGAL_MENU_LINE_TEXT = `${LEGAL_SHORT_LABELS.terms}${LEGAL_SHORT_SEPARATOR}${LEGAL_SHORT_LABELS.privacy}`;
-
-/** (4f) The account page: two rows, each opening its page. No chooser, no combined label. */
-export const LEGAL_ACCOUNT_ROW_LABELS: Record<LegalDocKey, string> = LEGAL_TITLES;

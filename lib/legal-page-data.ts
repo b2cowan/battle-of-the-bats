@@ -2,16 +2,15 @@ import 'server-only';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import type { Metadata } from 'next';
+import { cache } from 'react';
 import { formatStoredDate } from './timezone';
 import {
   LEGAL_DOCUMENTS, isPublishedVersion, publishedFilePath, versionSpan, type LegalDocKey,
 } from './legal-documents';
 import { readDraftForPreview } from './legal-draft-preview';
-import { legalPagePath } from './legal-links';
+import { legalPagePath } from './legal-paths';
 import { legalPagesMode } from './legal-pages-switch';
-import {
-  LEGAL_EFFECTIVE_BLANK_FACT, legalEarlierVersionLine, legalEffectiveLine, legalTitle, legalToBeFilled,
-} from './legal-words';
+import { LEGAL_TITLES, legalEarlierVersionLine } from './legal-words';
 import { marketingMetadata } from './marketing-metadata';
 
 /**
@@ -63,15 +62,17 @@ export function loadLegalPage(doc: LegalDocKey, version?: string, env: Record<st
   };
 }
 
-/** The date line's words: (4a), or (4a) with the blank-date mark while there is no effective date yet. */
-export const effectiveLineText = (data: LegalPageData): string =>
-  data.effectiveText !== null ? legalEffectiveLine(data.effectiveText) : legalEffectiveLine(legalToBeFilled(LEGAL_EFFECTIVE_BLANK_FACT));
+/**
+ * `loadLegalPage` once per request: the route's `generateMetadata` and its body both ask, and each ask reads the file (and, in the
+ * preview, filters the draft). `cache` dedupes within one render, so the switch is still read at request time.
+ */
+export const loadLegalPageOnce = cache((doc: LegalDocKey, version?: string) => loadLegalPage(doc, version));
 
 /** Title and address through the marketing helper; the preview and earlier versions are `noindex`. */
 export function legalPageMetadata(doc: LegalDocKey, version?: string): Metadata {
-  const data = loadLegalPage(doc, version);
+  const data = loadLegalPageOnce(doc, version);
   return marketingMetadata({
-    title: legalTitle(doc),
+    title: LEGAL_TITLES[doc],
     path: legalPagePath(doc, version),
     noindex: data === null || data.noindex,
   });

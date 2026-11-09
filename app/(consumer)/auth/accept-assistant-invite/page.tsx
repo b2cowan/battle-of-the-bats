@@ -4,7 +4,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import LoadingState from '@/components/shared/LoadingState';
 import { AccountFields, StartColumn, StartFoot, StartHead, accountForm, type AccountValues } from '@/components/auth/AccountForm';
-import LegalFootLinks from '@/components/legal/LegalFootLinks';
 import { STAFF_KIND_COPY, type StaffKind } from '@/lib/coach-capabilities';
 import { accountExistsSignInHref } from '@/lib/auth-errors';
 
@@ -266,13 +265,12 @@ function AcceptForm() {
           {busy ? 'Setting up…' : 'Create account and join'}
         </button>
       </form>
-      <StartFoot>
+      <StartFoot legal>
         <p>
           Already have an account?{' '}
           <Link href={loginHref} className={accountForm.footLink}>Sign in</Link>
         </p>
       </StartFoot>
-      <LegalFootLinks />
     </StartColumn>
   );
 }

@@ -49,7 +49,7 @@ export default function LegalPage({
             )}
           </header>
           <div className={styles.text}>
-            <LegalDocumentBody markdown={markdown} otherTitle={otherTitle} />
+            <LegalDocumentBody markdown={markdown} sections={sections} otherTitle={otherTitle} />
           </div>
         </article>
         {sections.length > 0 && (

@@ -5,7 +5,6 @@ import { useSearchParams } from 'next/navigation';
 import { registrationReturnPath, signInHrefFor } from '@/lib/consumer-routes';
 import { SIGN_IN_REASON } from '@/lib/auth-errors';
 import { EmailField, StartColumn, StartFoot, StartHead, accountForm } from '@/components/auth/AccountForm';
-import LegalFootLinks from '@/components/legal/LegalFootLinks';
 import LoadingState from '@/components/shared/LoadingState';
 
 /** The one loading line while the URL is read. */
@@ -113,13 +112,12 @@ function ForgotPasswordForm() {
         </button>
       </form>
 
-      <StartFoot>
+      <StartFoot legal>
         <p>
           Remembered it?{' '}
           <Link href={signInHref} className={accountForm.footLink}>Sign in</Link>
         </p>
       </StartFoot>
-      <LegalFootLinks />
     </StartColumn>
   );
 }

@@ -2,7 +2,7 @@ import 'server-only';
 import { canonicalAppOrigin } from './app-origin';
 import type { LegalDocKey } from './legal-documents';
 import { legalPagePath } from './legal-paths';
-import { legalPagesMode, type LegalPagesMode } from './legal-pages-switch';
+import { legalPagesOn } from './legal-pages-switch';
 
 /**
  * EVERY LINK TO A LEGAL PAGE IS BUILT HERE (GST/HST Stage 6 step 6.2, Chunk 1h) — a server component asks `legalPageHref`, a
@@ -13,20 +13,16 @@ import { legalPagesMode, type LegalPagesMode } from './legal-pages-switch';
  * the account menu also renders on club and tournament sites, so a relative link would dead-end there.
  */
 
-export { legalPagePath };
-
 /** The absolute address of a legal page (server only). */
 export const legalPageHref = (doc: LegalDocKey, version?: string): string => `${canonicalAppOrigin()}${legalPagePath(doc, version)}`;
 
 /** What the provider hands client components: null when the pages are off, so a link simply does not render. */
 export interface LegalLinks {
-  mode: Exclude<LegalPagesMode, 'off'>;
   termsHref: string;
   privacyHref: string;
 }
 
 export function resolveLegalLinks(env: Record<string, string | undefined> = process.env): LegalLinks | null {
-  const mode = legalPagesMode(env);
-  if (mode === 'off') return null;
-  return { mode, termsHref: legalPageHref('terms'), privacyHref: legalPageHref('privacy') };
+  if (!legalPagesOn(env)) return null;
+  return { termsHref: legalPageHref('terms'), privacyHref: legalPageHref('privacy') };
 }

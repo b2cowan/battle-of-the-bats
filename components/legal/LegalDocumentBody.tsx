@@ -2,7 +2,7 @@ import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { ReactNode } from 'react';
 import { TO_BE_FILLED_HREF } from '@/lib/legal-draft-filter';
-import { legalSections, linkSectionReferences, sectionAnchor, slugify } from '@/lib/legal-sections';
+import { linkSectionReferences, sectionAnchor, slugify, type LegalSection } from '@/lib/legal-sections';
 
 /**
  * The one place a legal document's markdown becomes a page (GST/HST Stage 6 step 6.2, Chunk 1g). A server component. Raw HTML in
@@ -40,37 +40,40 @@ function remarkCellLabels() {
   };
 }
 
-const flatText = (node: ReactNode): string =>
-  typeof node === 'string' || typeof node === 'number'
-    ? String(node)
-    : Array.isArray(node)
-      ? node.map(flatText).join('')
-      : node && typeof node === 'object' && 'props' in node
-        ? flatText((node as { props: { children?: ReactNode } }).props.children)
-        : '';
-
-export default function LegalDocumentBody({ markdown, otherTitle }: { markdown: string; otherTitle?: string }) {
-  const sections = legalSections(markdown);
-  const source = linkSectionReferences(markdown, sections, otherTitle);
-  const used = new Map<string, number>();
-  const idFor = (text: string, level: number) => {
-    const m = level === 2 ? /^(\d+)\.\s/.exec(text) : null;
-    if (m) return sectionAnchor(Number(m[1]));
-    const base = slugify(text);
-    const n = used.get(base) ?? 0;
-    used.set(base, n + 1);
-    return n ? `${base}-${n + 1}` : base;
+/** Gives every `##` and `###` heading its anchor: `section-N` for a numbered section, else its words as a slug (repeats numbered). */
+function remarkHeadingIds() {
+  return (tree: MdNode & { depth?: number }) => {
+    const used = new Map<string, number>();
+    const walk = (n: MdNode & { depth?: number }) => {
+      if (n.type === 'heading' && (n.depth === 2 || n.depth === 3)) {
+        const text = textOf(n);
+        const numbered = n.depth === 2 ? /^(\d+)\.\s/.exec(text) : null;
+        let id: string;
+        if (numbered) id = sectionAnchor(Number(numbered[1]));
+        else {
+          const base = slugify(text);
+          const seen = used.get(base) ?? 0;
+          used.set(base, seen + 1);
+          id = seen ? `${base}-${seen + 1}` : base;
+        }
+        n.data = { ...n.data, hProperties: { ...n.data?.hProperties, id } };
+      }
+      n.children?.forEach(walk);
+    };
+    walk(tree);
   };
+}
+
+export default function LegalDocumentBody({ markdown, sections, otherTitle }: { markdown: string; sections: LegalSection[]; otherTitle?: string }) {
+  const source = linkSectionReferences(markdown, sections, otherTitle);
   return (
     <Markdown
-      remarkPlugins={[remarkGfm, remarkCellLabels]}
+      remarkPlugins={[remarkGfm, remarkCellLabels, remarkHeadingIds]}
       components={{
         a({ href, children }) {
           if (href === TO_BE_FILLED_HREF) return <ToBeFilledMark>{children}</ToBeFilledMark>;
           return <a href={href}>{children}</a>;
         },
-        h2: ({ children }) => <h2 id={idFor(flatText(children), 2)}>{children}</h2>,
-        h3: ({ children }) => <h3 id={idFor(flatText(children), 3)}>{children}</h3>,
       }}
     >
       {source}

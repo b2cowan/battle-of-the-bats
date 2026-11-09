@@ -24,7 +24,7 @@ export const GUARDIAN_CONSENT_VERSION = 'GUARDIAN_CONSENT_STAGE4 v0.1';
  *  "being confirmed with our privacy advisor", was false from 2026-11-04). */
 export const GUARDIAN_CONSENT_DRAFT_NOTICE = 'Draft wording — not final.';
 
-/**
+/*
  * FieldLogicHQ's own privacy policy is linked as "How we use your information" (/legal condition 5) through the legal-pages switch
  * (GST/HST Stage 6 step 6.2): a client component reads `useLegalLinks()`, a server component `legalPageHref('privacy')`. The link
  * is absent while the pages are off. Publishing the policy (step 6.7) is still OWED before the guardian tier goes on anywhere real.

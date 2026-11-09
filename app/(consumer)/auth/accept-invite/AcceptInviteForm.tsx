@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase-browser';
 import LoadingState from '@/components/shared/LoadingState';
 import { AccountFields, StartColumn, StartFoot, StartHead, accountForm, type AccountValues } from '@/components/auth/AccountForm';
-import LegalFootLinks from '@/components/legal/LegalFootLinks';
 
 type PageState = 'waiting' | 'ready' | 'submitting' | 'joinFailed' | 'retrying' | 'joinRefused' | 'expired';
 type JoinOutcome = 'joined' | 'failed' | 'refused';
@@ -166,13 +165,12 @@ export default function AcceptInviteForm({
           </p>
           <Link href="/auth/forgot-password" className={accountForm.primary}>Set a password</Link>
         </div>
-        <StartFoot>
+        <StartFoot legal>
           <p>
             I have a password ·{' '}
             <Link href="/auth/login" className={accountForm.footLink}>Sign in</Link>
           </p>
         </StartFoot>
-        <LegalFootLinks />
       </StartColumn>
     );
   }

@@ -10,7 +10,6 @@ import { safeNextPath } from '@/lib/safe-redirect';
 import { SIGN_IN_REASON, signInErrorCopy } from '@/lib/auth-errors';
 import ResendLink from '@/components/auth/ResendLink';
 import { EmailField, PasswordField, StartColumn, StartFoot, StartHead, accountForm } from '@/components/auth/AccountForm';
-import LegalFootLinks from '@/components/legal/LegalFootLinks';
 import LoadingState from '@/components/shared/LoadingState';
 
 /**
@@ -250,13 +249,12 @@ function LoginForm() {
         )}
       </form>
 
-      <StartFoot>
+      <StartFoot legal>
         <p>
           New here?{' '}
           <Link href={getStartedHref} className={accountForm.footLink}>Get started</Link>
         </p>
       </StartFoot>
-      <LegalFootLinks />
     </StartColumn>
   );
 }

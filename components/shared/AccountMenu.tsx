@@ -145,9 +145,11 @@ export default function AccountMenu({
   // Live, so rotating or resizing across 900 px while open swaps popover and sheet cleanly.
   const isPhone = useIsPhoneNav();
   const legal = useLegalLinks();
-  // The rule above Sign out is drawn only when a row sits above it (GST/HST Stage 6 step 6.2, Ask 4 A): the support console's menu
-  // has none of these, and its rule used to sit double against the identity block's own. The phone sheet's "Go to" block counts in the sheet.
-  const rowAboveSignOut = showTheme || (teams?.length ?? 0) > 0 || showWhatsNew || showAccount || showFeedback;
+  // The rule above Sign out is drawn only when a row sits above it (GST/HST Stage 6 step 6.2, Ask 4 A). The support console's menu
+  // shows only the Appearance strip, and in the popover that strip already ends in its own rule — a second one doubled it. So the
+  // strip does not count here; in the phone sheet it has no rule of its own, so the sheet adds it back (`showTheme`). The sheet's
+  // "Go to" block ends in its own rule, so a door needs no extra one.
+  const rowAboveSignOut = (teams?.length ?? 0) > 0 || showWhatsNew || showAccount || showFeedback;
   // The sheet brings its own dim, ×, and Esc; the popover's click-away boundary would only fight them.
   useDismissable(open && !isPhone, wrapRef, () => setOpen(false));
   // Closing from the sheet's own controls hands focus back to the trigger (the sheet moved it inside).
@@ -411,7 +413,7 @@ export default function AccountMenu({
             {teamRows(true)}
             {themeBlock()}
             {settingRows(true)}
-            {(rowAboveSignOut || !!door) && <div className={styles.sep} aria-hidden />}
+            {(rowAboveSignOut || showTheme) && <div className={styles.sep} aria-hidden />}
             {signOutRow(true)}
             {legalLine(true)}
           </div>
