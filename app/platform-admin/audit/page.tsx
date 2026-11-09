@@ -61,6 +61,8 @@ const ACTION_LABELS: Record<string, string> = {
   // Plans & pricing Stage 2 Part 5 (drawings tab 3): a replay, and the row that says it failed.
   replay_billing_event: 'Replayed a Stripe update',
   replay_billing_event_failed: 'Replay failed',
+  // Session 2 (owner call 2026-11-08): written after the run, the club's billing record before and after.
+  replay_billing_event_result: 'Replay result',
   sale_look_mark: 'Marked a sale as looked at',
   sale_look_put_back: 'Put a sale back on the list',
   revoke_override: 'Revoke override',

@@ -4,13 +4,17 @@ import { getStripe } from './stripe';
 import { stripeEnvironment } from './stripe-mode';
 import { differenceWords, type Difference } from './billing-drift';
 import { auditPortal } from '../scripts/lib/stripe-portal-audit.mjs';
+import { FAILED_SUFFIX, withoutFailedChanges } from './platform-audit';
+import { REPLAY_ACTION } from './billing-event-replay';
+import { tournamentToday, zonedWallClockToUtc } from './timezone';
 import {
   DRIFT_LINE_CAP, FAILURE_LINE_CAP,
-  type DriftRead, type FeedRead, type SettingRow, type WatchingStripeRead,
+  replayedCandidates, type DriftRead, type FeedRead, type ReplayedLine, type SettingRow, type WatchingStripeRead,
 } from './watching-stripe-words';
 
 /**
- * WATCHING STRIPE, READ ONLY (Plans & pricing Stage 2 Part 3; owner go 2026-11-07). Four reads, none of which writes a thing
+ * WATCHING STRIPE, READ ONLY (Plans & pricing Stage 2 Part 3; owner go 2026-11-07; Part 5 adds the read of today's replays,
+ * `readReplayedToday`, at the bottom; the replay itself is `billing-event-replay-run.ts`). Four reads, none of which writes a thing
  * or asks Stripe to change anything:
  *   · the plan-billing feed (`stripe_billing_events`) and the family-payments feed (`stripe_connect_events`);
  *   · the last morning comparison (`stripe_billing_drift_checks`), shown as stored, never re-run here;
@@ -131,4 +135,35 @@ export async function readWatchingStripe(now: Date = new Date()): Promise<Watchi
     settled(readSettings),
   ]);
   return { billing, connect, drift, settings, mode: stripeEnvironment() };
+}
+
+/** A day's replays are a handful; the cap only bounds the read of a log that never shrinks. */
+const REPLAYED_READ_CAP = 200;
+
+/** An update a Super admin replayed today, and who (Plans & pricing Stage 2 Part 5, Session 2; drawings tab 4). */
+export type { ReplayedLine };
+
+/**
+ * Today's replays, from the change log's own first rows (`replay_billing_event`), for the line that stays on the page "for the
+ * rest of the day" (in the platform's day). A replay whose run then failed, or never ran (`_failed` names it), is left out, and
+ * so is any update that is NOT finished in the event log now (a lost `_failed` row, a run that could not be marked): "Replayed"
+ * is only said of an update that left the failing list. The newest replay of each update. Throws when either log cannot be
+ * read; the page says so rather than show nothing.
+ */
+export async function readReplayedToday(now: Date = new Date()): Promise<ReplayedLine[]> {
+  // The platform's midnight, as an instant. A `_failed` row is written after the row it names, so this bound keeps both.
+  const since = zonedWallClockToUtc(tournamentToday(now), '00:00') ?? now.toISOString();
+  const { data, error } = await supabaseAdmin.from('platform_audit_log').select('id, actor_email, action, new_value, created_at')
+    .in('action', [REPLAY_ACTION, `${REPLAY_ACTION}${FAILED_SUFFIX}`]).gte('created_at', since)
+    .order('created_at', { ascending: false }).limit(REPLAYED_READ_CAP);
+  if (error) throw new Error(`Couldn't read today's replays: ${error.message}`);
+  const rows = (data ?? []) as Array<{ id: string; actor_email: string | null; action: string; new_value: unknown; created_at: string }>;
+  // The Story's own rule: a first row whose change failed, and the row saying so, are both left out.
+  const candidates = replayedCandidates(withoutFailedChanges(rows));
+  if (!candidates.length) return [];
+  const finished = await supabaseAdmin.from('stripe_billing_events').select('id')
+    .in('id', candidates.map(c => c.eventId)).not('processed_at', 'is', null);
+  if (finished.error) throw new Error(`Couldn't read today's replays: ${finished.error.message}`);
+  const done = new Set(((finished.data ?? []) as Array<{ id: string }>).map(r => r.id));
+  return candidates.filter(c => done.has(c.eventId));
 }

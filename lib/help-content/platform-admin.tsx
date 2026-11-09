@@ -143,7 +143,8 @@ const platformAdminHelp: HelpPageContent = {
             <HelpDef term="Leads, Campaigns, Pitch decks (every write)">Super admin, Product and Growth.</HelpDef>
             <HelpDef term="Staff and roles, and Records opened in the Audit log">Super admin only.</HelpDef>
             <HelpDef term="Find&rsquo;s Stripe numbers">Super admin, Billing and Support.</HelpDef>
-            <HelpDef term="Health &rsaquo; Stripe">Super admin, Billing, Support and Product. Growth and Read only do not see the entry. It changes nothing for any role, so Billing, Support and Product see the read-only marker.</HelpDef>
+            <HelpDef term="Health &rsaquo; Stripe">Super admin, Billing, Support and Product. Growth and Read only do not see the entry. Only Super admin can replay a failed plan-billing update from it; Billing, Support and Product see the read-only marker.</HelpDef>
+            <HelpDef term="Replay a failed Stripe update">Super admin only.</HelpDef>
             <HelpDef term="Customers &rsaquo; Renewals and its export">Super admin, Billing and Support. Product, Growth and Read only see no entry. It changes nothing for any role, so there is no write.</HelpDef>
             <HelpDef term="A club&rsquo;s Online payments tab and Health &rsaquo; Online payments">Super admin, Billing and Support. Both are read only for every role.</HelpDef>
           </HelpDefs>
@@ -1194,7 +1195,7 @@ const platformAdminHelp: HelpPageContent = {
       group: 'Support SOP',
       heading: 'How to read the Stripe page',
       summary: 'Health › Stripe tells you when Stripe and the product stop agreeing: failing updates, the morning comparison, and the settings held in Stripe.',
-      keywords: ['stripe', 'stripe page', 'webhook', 'updates from stripe', 'still failing', 'set aside', 'wrong mode', 'morning check', 'morning comparison', 'records disagree', 'stripe settings', 'billing page settings', 'failed payment try', 'cannot be read from here', 'all clear', 'need a look', 'plan billing', 'family payments'],
+      keywords: ['stripe', 'stripe page', 'webhook', 'updates from stripe', 'still failing', 'set aside', 'wrong mode', 'morning check', 'morning comparison', 'records disagree', 'stripe settings', 'billing page settings', 'failed payment try', 'cannot be read from here', 'all clear', 'need a look', 'plan billing', 'family payments', 'replay'],
       searchText: 'how do i read the stripe page health stripe super admin billing support product read only eye no check now no send again chip all clear n need a look four figures last update from stripe updates still failing records that disagree settings to check updates from stripe plan billing family payments last received still failing set aside not ours no customer wrong mode seven days what failed our records against stripe morning comparison checked stale thirty six hours stripe settings billing page the same audit cannot be read from here what happens after the last failed payment try check it in stripe could not read is not nothing wrong reload',
       links: [
         { label: 'Stripe', href: '/platform-admin/watching-stripe' },
@@ -1202,12 +1203,43 @@ const platformAdminHelp: HelpPageContent = {
       ],
       content: (
         <>
-          <p><strong>Health &rsaquo; Stripe</strong> tells you when Stripe and the product stop agreeing, so you open Stripe&rsquo;s dashboard only to fix a setting. It reads and reports; it never repairs anything, and it has no <em>Check now</em> or <em>Send again</em>. Super admin, Billing, Support and Product can open it.</p>
+          <p><strong>Health &rsaquo; Stripe</strong> tells you when Stripe and the product stop agreeing, so you open Stripe&rsquo;s dashboard only to fix a setting. It reads and reports. It has no <em>Check now</em> and no <em>Send again</em>, and nothing on it asks Stripe to change anything. The one thing it can do is let a Super admin replay a failed plan-billing update (see <strong>How to replay a Stripe update</strong>); for Billing, Support and Product the page is read only. Super admin, Billing, Support and Product can open it.</p>
           <HelpDefs>
             <HelpDef term="The chip and the four figures">The chip reads <em>All clear</em> or <em>N need a look</em>. The figures are the last update from Stripe, updates still failing, records that disagree and settings to check. A dash means that part could not be read, which is not the same as nothing being wrong: reload to try again.</HelpDef>
             <HelpDef term="Updates from Stripe">Two rows, <strong>Plan billing</strong> and <strong>Family payments</strong>: when the last update arrived, how many are still failing (never processed, however old), and how many were set aside or arrived in the wrong mode in the last 7 days. Updates that are <em>not ours</em> are normal. A short list under the table says what failed and when.</HelpDef>
             <HelpDef term="Our records against Stripe">The last result of the morning comparison of each club&rsquo;s plan against what Stripe holds, as it was stored. This page cannot run it again. A result older than 36 hours shows a warning, because the check should run every morning.</HelpDef>
             <HelpDef term="Stripe settings">What our billing page offers customers in Stripe, checked by the same audit the scripts run. The last row, <strong>what happens after the last failed payment try</strong>, always reads <em>Cannot be read from here</em>: Stripe does not let the product read it, so open the link and check it in Stripe.</HelpDef>
+          </HelpDefs>
+        </>
+      ),
+    },
+    {
+      id: 'replay-stripe-update',
+      group: 'Support SOP',
+      heading: 'How to replay a Stripe update',
+      summary: 'Super admin can run a plan-billing update that did not finish through the product again, with a reason, and see what it did to the club’s record.',
+      keywords: ['replay', 'replay a stripe update', 'replay an update by its id', 'rerun', 're-run', 'run again', 'stripe update failed', 'update stripe gave up', 'evt id', 'event id', 'replayed a stripe update', 'replay result', 'replay failed', 'before and after'],
+      searchText: 'how do i replay a stripe update super admin only replay door still failing list plan billing replay an update by its id find update evt 30 days stripe keeps an update this update already finished refused kinds subscription changes checkout card added stripe fees bill later bill set aside not ours wrong account other stripe account no charge no refund no change in stripe no message to the customer needs attention notice not added change log reason replayed a stripe update replay failed replay result before after nothing changed story line fixed our own fault',
+      links: [
+        { label: 'Stripe', href: '/platform-admin/watching-stripe' },
+        { label: 'Audit log', href: '/platform-admin/audit' },
+      ],
+      content: (
+        <>
+          <p>A replay runs a plan-billing update that did not finish through the product again, using what Stripe holds for it now. Only a <strong>Super admin</strong> sees the buttons; every other role reads the page as before, and the server refuses them if they try.</p>
+          <HelpSteps>
+            <li>Open <strong>Health &rsaquo; Stripe</strong>. Under <strong>What failed in Plan billing</strong>, click <strong>Replay</strong> on the line. For an update that is not in the list (the list shows five), type its id (it starts <em>evt_</em>) into <strong>Replay an update by its id</strong> and click <strong>Find update</strong>.</li>
+            <li>The window shows the update, when it arrived, the club and its last result. If the update cannot be replayed, the window says why and offers only <strong>Close</strong>; no reason is asked.</li>
+            <li>Say what you are fixing in <strong>Why</strong> (required), then click <strong>Replay</strong>.</li>
+            <li>The window turns into the answer. When the club&rsquo;s record was compared you see <strong>Before</strong> and <strong>After</strong> for its status, plan, paid through date, billing cycle and plan end, or <em>Nothing changed</em>. Click <strong>Done</strong>.</li>
+            <li>The update leaves the failing list and the <em>updates still failing</em> figure drops. Its line stays on the page for the rest of the day as <em>Replayed</em>, with who and when.</li>
+          </HelpSteps>
+          <HelpDefs>
+            <HelpDef term="When to use it">An update Stripe gave up on, or a re-run after we fixed our own fault. If the update already finished, the window says so: nothing is waiting to be redone.</HelpDef>
+            <HelpDef term="What it never does">It does not charge, refund or change anything in Stripe, and it sends no message to the customer. A replayed failed payment also does not put its notice on the owners&rsquo; <em>Needs attention</em> list, because that notice is what feeds the list.</HelpDef>
+            <HelpDef term="What it refuses">Only the safe kinds run again: bills and payments, credit notes, disputes and refunds, a card removed, and the trial-ending reminder. A subscription created, changed or ended, a checkout, a card added and a club&rsquo;s Stripe-fees bill are refused, because running Stripe&rsquo;s old copy could write over what has changed since. A bill that is no longer the plan&rsquo;s latest, an update that names no customer, a charge that paid no plan bill, an update from the other Stripe account and a family payment are refused too. Each refusal says why.</HelpDef>
+            <HelpDef term="How long it works">Stripe keeps an update for 30 days. After that the window says Stripe no longer has it, because the product stores no copy.</HelpDef>
+            <HelpDef term="Where it is recorded">The <strong>Audit log</strong> keeps <em>Replayed a Stripe update</em> (your name and reason, written before the run), <em>Replay failed</em> if it could not run, and <em>Replay result</em> (the club&rsquo;s record before and after, written after the run). Open a result entry to see the old and new values; its <strong>Open Stripe</strong> link returns to the page. Super admin, Billing and Support also see a line on the club&rsquo;s <strong>Story</strong>, such as <em>Replayed a Stripe update</em> with the change, for example <em>Status: Past due &rarr; Active</em>. The reason is never shown to other roles.</HelpDef>
           </HelpDefs>
         </>
       ),
@@ -1472,7 +1504,7 @@ const platformAdminHelp: HelpPageContent = {
       heading: 'How to investigate account changes',
       summary: 'Use a record\'s Story and the global audit log to answer who changed what and when.',
       keywords: ['audit', 'audit log', 'investigate', 'actor', 'before after', 'json', 'filter', 'story', 'records opened', 'who opened', 'trail'],
-      searchText: 'investigate account changes club record story when what happened who why search the story type dropdown audit log search org or email action from to dates old value new value export adds reason table timestamp superuser org action reason entry window field not recorded refunded a charge refund refused by stripe refund no answer from stripe refund checked with stripe shown to super admin billing and support lead details are shown to the roles that work leads early access lead edit field names and the step records opened trail of club and person records staff opened super admin only how found from find from a list or a link 90 days never on a customers story',
+      searchText: 'investigate account changes club record story when what happened who why search the story type dropdown audit log search org or email action from to dates old value new value export adds reason table timestamp superuser org action reason entry window field not recorded refunded a charge refund refused by stripe refund no answer from stripe refund checked with stripe shown to super admin billing and support lead details are shown to the roles that work leads early access lead edit field names and the step records opened trail of club and person records staff opened super admin only how found from find from a list or a link 90 days never on a customers story replayed a stripe update replay failed replay result stripe replay before after',
       links: [
         { label: 'Audit log', href: '/platform-admin/audit' },
       ],
@@ -1502,7 +1534,7 @@ const platformAdminHelp: HelpPageContent = {
                 <li>The table reads <strong>Timestamp</strong>, <strong>Superuser</strong>, <strong>Org</strong>, <strong>Action</strong>, <strong>Reason</strong> and a <strong>&rsaquo;</strong>. Open a row to see its entry window, which holds the <strong>Field</strong>, <strong>Old value</strong> and <strong>New value</strong> (the full JSON when you need before/after details for plan changes, extra features, catalog applications, or bulk changes) and the Reason.</li>
                 <li>Export the result if you need to attach a concise account history to an internal ticket. The export keeps every column and adds Reason.</li>
               </HelpSteps>
-              <p>A staff change made without a reason reads <em>Not recorded</em>; the product&rsquo;s own jobs and work tools (notes, decks, triage) show &ldquo;-&rdquo;. Refund entries (<em>Refunded a charge</em>, <em>Refund refused by Stripe</em>, <em>Refund: no answer from Stripe</em>, <em>Refund checked with Stripe</em>) show their reason only to Super admin, Billing and Support; other roles see <em>Shown to Super admin, Billing and Support</em>. A lead edit records which fields changed and the step, never the lead&rsquo;s words; its details are shown only to Super admin, Product and Growth, and other roles see <em>Lead details are shown to the roles that work leads.</em></p>
+              <p>A staff change made without a reason reads <em>Not recorded</em>; the product&rsquo;s own jobs and work tools (notes, decks, triage) show &ldquo;-&rdquo;. Refund entries (<em>Refunded a charge</em>, <em>Refund refused by Stripe</em>, <em>Refund: no answer from Stripe</em>, <em>Refund checked with Stripe</em>) show their reason only to Super admin, Billing and Support; other roles see <em>Shown to Super admin, Billing and Support</em>. A lead edit records which fields changed and the step, never the lead&rsquo;s words; its details are shown only to Super admin, Product and Growth, and other roles see <em>Lead details are shown to the roles that work leads.</em> A replay of a Stripe update leaves up to three entries: <em>Replayed a Stripe update</em>, <em>Replay failed</em> and <em>Replay result</em> (the club&rsquo;s billing record before and after). Like refund entries, they show their reason and details only to Super admin, Billing and Support.</p>
               <p>The log records platform-admin actions such as password reset emails, overrides, plan and limit changes, section changes, notes, staff changes, pricing and config changes, and bulk change runs.</p>
             </>
           ),

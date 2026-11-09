@@ -33,11 +33,13 @@ const NO_REASON = new Set([
 ]);
 
 /**
- * A refund's entries (Stage 3), and a sale's "looked at" marks (GST/HST Stage 3 Part 3b; the why can name a buyer): money, so their reason and details are read only by the roles that read Stripe (A2:
- * Super admin, Billing, Support). The typed reason can hold a customer's details. Every other role sees that one was made.
+ * A refund's entries (Stage 3), a sale's "looked at" marks (GST/HST Stage 3 Part 3b; the why can name a buyer) and a Stripe
+ * update's replay (Plans & pricing Stage 2 Part 5, the reason names what was fixed and for whom): money, so their reason and
+ * details are read only by the roles that read Stripe (A2: Super admin, Billing, Support). The typed reason can hold a
+ * customer's details. Every other role sees that one was made.
  */
 export function isMoneyEntry(action: string): boolean {
-  return action.startsWith('refund_charge') || action.startsWith('sale_look_');
+  return action.startsWith('refund_charge') || action.startsWith('sale_look_') || action.startsWith('replay_billing_event');
 }
 export const MONEY_ENTRY_HIDDEN = 'Shown to Super admin, Billing and Support';
 

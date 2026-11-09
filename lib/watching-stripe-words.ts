@@ -203,3 +203,25 @@ export function settingPassWords(key: string): string {
     default: return 'As expected.';
   }
 }
+
+/** An update a Super admin replayed today, and who (Plans & pricing Stage 2 Part 5, Session 2; drawings tab 4). */
+export type ReplayedLine = { eventId: string; type: string; at: string; who: string };
+
+/**
+ * The replays the change log names, newest first, one line per update (its newest replay). The caller has already left out the
+ * rows whose run failed (`withoutFailedChanges`); a row that names no update id is skipped. Pure: the page then keeps only the
+ * updates the event log shows as finished.
+ */
+export function replayedCandidates(
+  rows: ReadonlyArray<{ actor_email: string | null; new_value: unknown; created_at: string }>,
+): ReplayedLine[] {
+  const seen = new Set<string>();
+  const lines: ReplayedLine[] = [];
+  for (const r of rows) {
+    const v = (r.new_value ?? {}) as { eventId?: unknown; type?: unknown };
+    if (typeof v.eventId !== 'string' || seen.has(v.eventId)) continue;
+    seen.add(v.eventId);
+    lines.push({ eventId: v.eventId, type: typeof v.type === 'string' ? v.type : '', at: r.created_at, who: r.actor_email ?? 'Staff' });
+  }
+  return lines;
+}

@@ -23,6 +23,7 @@ type Target = AuditDoor & { area: PlatformArea };
 
 const FEEDBACK: Target = { label: 'Open Feedback', href: '/platform-admin/feedback', area: 'feedback' };
 const LEADS: Target = { label: 'Open Leads', href: '/platform-admin/early-access', area: 'early_access' };
+const STRIPE_PAGE: Target = { label: 'Open Stripe', href: '/platform-admin/watching-stripe', area: 'watching_stripe' };
 const PLANS: Target = { label: 'Open Plans & pricing', href: '/platform-admin/plans-pricing', area: 'plans_pricing' };
 const APPROVALS: Target = { label: 'Open Approval queue', href: '/platform-admin/change-requests', area: 'change_requests' };
 const STAFF: Target = { label: 'Open Staff', href: '/platform-admin/users', area: 'platform_users' };
@@ -48,7 +49,8 @@ const TARGET_BY_ACTION: Record<string, Target> = {
   export_early_access_leads: LEADS,
   export_renewals: { label: 'Open Renewals', href: '/platform-admin/renewals', area: 'renewals' },
   // Plans & pricing Stage 2 Part 5: a replay of a Stripe update goes back to the page it is made from (the menu's "Stripe").
-  replay_billing_event: { label: 'Open Stripe', href: '/platform-admin/watching-stripe', area: 'watching_stripe' },
+  replay_billing_event: STRIPE_PAGE,
+  replay_billing_event_result: STRIPE_PAGE,
   update_plan_gating: PLANS,
   update_stripe_price_id: PLANS,
   update_plan_config_override: PLANS,

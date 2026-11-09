@@ -115,7 +115,7 @@ the owner's yes. Start Part 6.
 8. **Verify:** `npm run verify:changed`; `npm run typecheck` (shared handler change); the Stage 0 event-log suites stay green. Run
    `/review` at high on the diff before reporting. Do not commit; report what to commit.
 
-## Session 2 · the screen (Session 1 committed `3817838e8` 2026-11-08)
+## Session 2 · the screen (Session 1 committed `3817838e8` 2026-11-08; Session 2 BUILT 2026-11-08, walk C = Owner QA Ledger §496, owed; what it changed from this section, its review fixes and its accepted notes are in the stage prompt's Part 5 Progress block)
 
 **Read first, and argue from the code, not from this list:** the Part 5 block of `PLANS_PRICING_STAGE2_BUILD_PROMPT.md` (the
 audit, owner rulings **A1/A2** of 2026-11-08, "Session 1 BUILT", "Session 2 must change from the drawings"); then

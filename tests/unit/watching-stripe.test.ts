@@ -3,13 +3,13 @@ import { describe, it } from 'node:test';
 import { readCode } from './_source-code.ts';
 import { canViewPlatformArea, isPlatformAreaReadOnly } from '../../lib/platform-areas.ts';
 import {
-  WS, checkIsStale, figureBand, needsALook, settingsToCheck, shownError, settingChip, settingPassWords, STALE_CHECK_HOURS,
+  WS, checkIsStale, figureBand, replayedCandidates, needsALook, settingsToCheck, shownError, settingChip, settingPassWords, STALE_CHECK_HOURS,
   type FeedRead, type WatchingStripeRead,
 } from '../../lib/watching-stripe-words.ts';
 
 /**
  * PLANS & PRICING STAGE 2 PART 3: WATCHING STRIPE (drawings tab 10; owner go 2026-11-07). Read only. The page shows the last
- * morning comparison and cannot run it, has no "Send again" (replay is Part 5), says the failed-try outcome cannot be read
+ * morning comparison and cannot run it, has no "Send again" (Part 5's replay re-runs OUR handler, Super admin only, from `ReplayDoors.tsx`), says the failed-try outcome cannot be read
  * rather than drawing a pass or a fail, and never lets a read that failed look like nothing wrong.
  */
 const NOW = new Date('2026-11-07T15:00:00Z');
@@ -30,7 +30,7 @@ describe('who sees it', () => {
     for (const role of ['super_admin', 'billing', 'support', 'product'] as const) assert.equal(canViewPlatformArea(role, 'watching_stripe'), true, role);
     for (const role of ['growth', 'read_only'] as const) assert.equal(canViewPlatformArea(role, 'watching_stripe'), false, role);
   });
-  it('everyone but Super admin sees the eye (replay is Super admin’s, and is not on this page yet)', () => {
+  it('everyone but Super admin sees the eye (replay is Super admin’s: Part 5 Session 2)', () => {
     assert.equal(isPlatformAreaReadOnly('super_admin', 'watching_stripe'), false);
     for (const role of ['billing', 'support', 'product'] as const) assert.equal(isPlatformAreaReadOnly(role, 'watching_stripe'), true, role);
   });
@@ -41,14 +41,14 @@ describe('who sees it', () => {
 });
 
 describe('read only', () => {
-  it('the reader and the page write nothing and call Stripe only to list', () => {
+  it('the reader and the page write nothing and call Stripe only to list (the replay is its own client file, below)', () => {
     const lib = readCode('lib/watching-stripe.ts');
     assert.doesNotMatch(lib, /\.(insert|update|upsert|delete|rpc)\(/);
     assert.doesNotMatch(lib, /\.(create|update|del|cancel|retry|pay)\(/);
     const page = readCode('app/platform-admin/watching-stripe/page.tsx');
     assert.doesNotMatch(page, /'use client'|<form|<button|method: '(POST|PATCH|PUT|DELETE)'|fetch\(/);
   });
-  it('no "Check now" and no "Send again" (owner go 2026-11-07; replay is Part 5)', () => {
+  it('no "Check now" and no "Send again" (owner go 2026-11-07; Part 5 replays through our handler, never Stripe’s resend)', () => {
     const shown = readCode('app/platform-admin/watching-stripe/page.tsx') + JSON.stringify(WS);
     assert.doesNotMatch(shown, /Check now|Send again|Resend/i);
   });
@@ -179,5 +179,66 @@ describe('words', () => {
     assert.equal(WS.feeds.ignoredWords({ notOurs: 0, noCustomer: 0 }), 'None');
     assert.equal(WS.drift.counted(1, 5), '1 difference across 5 records compared');
     assert.equal(WS.drift.counted(11, 22), '11 differences across 22 records compared');
+  });
+});
+
+describe('replay on this page (Part 5 Session 2): Super admin only, plan billing only', () => {
+  const page = () => readCode('app/platform-admin/watching-stripe/page.tsx');
+  it('the doors are drawn only behind the replay power, which only Super admin holds', async () => {
+    const { hasPlatformPower } = await import('../../lib/platform-areas.ts');
+    assert.equal(hasPlatformPower('super_admin', 'replay_events'), true);
+    for (const role of ['billing', 'support', 'product', 'growth', 'read_only'] as const) assert.equal(hasPlatformPower(role, 'replay_events'), false, role);
+    assert.match(page(), /const canReplay = hasPlatformPower\(auth\.role, 'replay_events'\)/);
+    assert.match(page(), /\{canReplay && feed\.key === 'plan_billing' && <ReplayDoor /);
+    assert.match(page(), /\{canReplay && <FindUpdate \/>\}/);
+    assert.equal((page().match(/<ReplayDoor |<FindUpdate /g) ?? []).length, 2, 'no other door to the replay on the page');
+  });
+  it('the GET and the POST both ask the replay power first', () => {
+    const route = readCode('app/api/platform-admin/watching-stripe/replay/route.ts');
+    assert.equal((route.match(/requirePlatformPower\('replay_events'\)/g) ?? []).length, 2);
+    assert.match(route, /export const GET = withObservability\(async \(req: Request\) => \{\s*const auth = await requirePlatformPower\('replay_events'\);\s*if \(auth\.response\) return auth\.response;/);
+  });
+  it('the window writes only through the replay route, and the door has no arrow', () => {
+    const doors = readCode('app/platform-admin/watching-stripe/ReplayDoors.tsx');
+    assert.deepEqual([...doors.matchAll(/sendJson\(([^,]+),\s*'(GET|POST)'/g)].map(m => m[2]).sort(), ['GET', 'POST']);
+    assert.doesNotMatch(doors, /›/);
+    assert.doesNotMatch(doors, /fetch\(/);
+  });
+  it('a look-up that finishes after the window was closed is dropped, never re-opened; a failed one is a refusal, not a stuck door', () => {
+    const doors = readCode('app/platform-admin/watching-stripe/ReplayDoors.tsx');
+    assert.match(doors, /const mine = \+\+generation\.current;/);
+    assert.match(doors, /if \(mine === generation\.current\) setStage\(next\);/);
+    assert.match(doors, /const change = \(next: Stage \| null\) => \{ generation\.current \+= 1; setStage\(next\); \};/);
+    assert.match(doors, /catch \{\s*next = \{ kind: 'refused', refusal: replayRefusal\('record_unread'\) \};/);
+  });
+});
+
+describe('"Replayed" lines (Part 5 Session 2): only an update that left the failing list', () => {
+  const row = (eventId: unknown, at: string, who: string | null = 'owner@example.com', type: unknown = 'invoice.payment_succeeded') =>
+    ({ actor_email: who, new_value: { eventId, type }, created_at: at });
+  it('one line per update, its newest replay first; a row with no update id is skipped; no actor reads "Staff"', () => {
+    const lines = replayedCandidates([
+      row('evt_b', '2026-11-08T15:00:00Z'),
+      row('evt_a', '2026-11-08T14:00:00Z', null),
+      row('evt_b', '2026-11-08T13:00:00Z', 'other@example.com'),
+      row(undefined, '2026-11-08T12:00:00Z'),
+      { actor_email: 'x@example.com', new_value: null, created_at: '2026-11-08T11:00:00Z' },
+    ]);
+    assert.deepEqual(lines, [
+      { eventId: 'evt_b', type: 'invoice.payment_succeeded', at: '2026-11-08T15:00:00Z', who: 'owner@example.com' },
+      { eventId: 'evt_a', type: 'invoice.payment_succeeded', at: '2026-11-08T14:00:00Z', who: 'Staff' },
+    ]);
+  });
+  it('the reader keeps the first rows of today only, drops a run that failed, and says "Replayed" only of an update the event log shows finished', () => {
+    const lib = readCode('lib/watching-stripe.ts');
+    assert.match(lib, /\.in\('action', \[REPLAY_ACTION, `\$\{REPLAY_ACTION\}\$\{FAILED_SUFFIX\}`\]\)\.gte\('created_at', since\)/);
+    assert.match(lib, /replayedCandidates\(withoutFailedChanges\(rows\)\)/);
+    assert.match(lib, /from\('stripe_billing_events'\)\.select\('id'\)\s*\.in\('id', candidates\.map\(c => c\.eventId\)\)\.not\('processed_at', 'is', null\)/);
+    assert.match(lib, /candidates\.filter\(c => done\.has\(c\.eventId\)\)/);
+  });
+  it('a failed read of the replays is told once on the page, even when no plan-billing line is drawn', () => {
+    const page = readCode('app/platform-admin/watching-stripe/page.tsx');
+    assert.equal((page.match(/REPLAY_WINDOW\.replayedUnread/g) ?? []).length, 1);
+    assert.match(page, /\{replayed === null && <p className=\{kit\.caption\} role="alert">\{REPLAY_WINDOW\.replayedUnread\}<\/p>\}\s*\{canReplay && <FindUpdate \/>\}/);
   });
 });

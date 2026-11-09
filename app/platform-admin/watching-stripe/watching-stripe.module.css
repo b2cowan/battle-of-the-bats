@@ -22,3 +22,28 @@
 .failures { display: grid; gap: 0.35rem; }
 /* Same face and size as a table cell (14px, primary colour); the event name stays in the data face, as a code does. */
 .failureList { margin: 0; padding: 0; list-style: none; display: grid; gap: 0.4rem; font-size: var(--type-body); line-height: 1.4; color: var(--text-primary); }
+
+/* ── Replay (Plans & pricing Stage 2 Part 5, Session 2; Super admin only) ─────────────────────────────────────────────
+   The row's door is the word "Replay" in the line (no "›"); the find card under the failures; the window's facts and its
+   Before / After. Tokens only. */
+.failureLine { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0 0.5rem; }
+.replayDoor { white-space: nowrap; }
+@media (max-width: 768px) {
+  .replayDoor { min-height: var(--tap-min, 44px); }
+}
+.replayedChip { margin-right: 0.35rem; }
+
+.find { display: grid; gap: 0.5rem; justify-items: start; }
+.findRow { display: flex; flex-wrap: wrap; gap: 0.5rem; width: 100%; }
+.findField { flex: 1 1 18rem; max-width: 28rem; min-width: 0; }
+
+/* The window's facts: the name in the kit eyebrow at the left, the value at the right (the Money tab's `lines`). */
+.facts { display: grid; grid-template-columns: minmax(7rem, max-content) minmax(0, 1fr); gap: 0.55rem 1.25rem; margin: 0; }
+.facts dt { padding-top: 0.15rem; }
+.facts dd { margin: 0; color: var(--text-primary); overflow-wrap: anywhere; }
+
+.answerSentence { margin: 0; color: var(--text-primary); line-height: 1.45; }
+.beforeAfter { width: 100%; }
+/* An unchanged row reads quiet; a changed value reads strong, and says so in words for a screen reader. */
+.sameRow td { color: var(--text-tertiary); }
+.changedCell { color: var(--text-primary); font-weight: 650; }

@@ -2,7 +2,10 @@
 
 > 2026-11-08 · Drawings: https://claude.ai/artifact/Chw946z38BkoFa91XafRGh
 > (`PLANS_PRICING_STAGE2_PART5_REPLAY_DRAWINGS.html`) · Stage prompt: `PLANS_PRICING_STAGE2_BUILD_PROMPT.md` · Status: **drawn,
-> six asks ruled as recommended 2026-11-08; nothing built.**
+> six asks ruled as recommended 2026-11-08; engine (Session 1) committed `3817838e8` 2026-11-08; the screen (Session 2) built
+> 2026-11-08, walk C = Owner QA Ledger §496 (https://claude.ai/artifact/2iYbKwN8fgEJHeCNhkyYTM) owed.** Owner call 2026-11-08: the
+> change log also keeps what each replay changed (a "Replay result" line with the club's record before and after); replay entries
+> show their reason only to Super admin, Billing and Support, like refunds.
 
 ## What changes for staff
 

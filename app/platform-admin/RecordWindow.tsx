@@ -11,9 +11,22 @@ import KitDialog, { DialogCancel } from '@/components/admin/kit/club/KitDialog';
 import kit from './console.module.css';
 import styles from './record.module.css';
 
+/**
+ * The window turned into its answer (Plans & pricing Stage 2 Part 5, the replay's result and its refusals; drawings tabs 2–3):
+ * the same window stays open with the answer's title, its body, at most ONE lime main action and Close when `closeLabel` is
+ * given (a refusal is Close alone). No Why, no error line, nothing left to discard. Every other window passes none and is unchanged.
+ */
+export type RecordWindowAnswer = {
+  title: string;
+  body: ReactNode;
+  footNote?: ReactNode;
+  main?: { label: string; onClick: () => void };
+  closeLabel?: string;
+};
+
 export default function RecordWindow({
   title, sentence, sentenceAfter = false, children, footNote, cancelLabel = 'Cancel', confirmLabel, danger = false, askWhy = true,
-  whyPlaceholder, whyMax = 1000, confirmBlocked = false, confirmHidden = false, onConfirm, onClose,
+  whyPlaceholder, whyMax = 1000, confirmBlocked = false, confirmHidden = false, onConfirm, onClose, answer,
 }: {
   title: string;
   sentence: ReactNode;
@@ -37,11 +50,33 @@ export default function RecordWindow({
   /** Resolves to an error sentence to show, or null when done (the caller closes the window). */
   onConfirm: (reason: string) => Promise<string | null>;
   onClose: () => void;
+  /** The answer, once there is one: the window stays open and shows it in place of the question. */
+  answer?: RecordWindowAnswer | null;
 }) {
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const ready = (!askWhy || reason.trim().length > 0) && !confirmBlocked;
+
+  if (answer) {
+    return (
+      <KitDialog
+        kind="form"
+        title={answer.title}
+        levelKey="answer" // the question's inputs are gone: re-seat the keyboard in the window rather than on the page behind
+        onClose={onClose}
+        footerStart={answer.footNote ? <span className={styles.footNote}>{answer.footNote}</span> : undefined}
+        footer={(
+          <>
+            {answer.closeLabel && <DialogCancel className="btn btn-secondary">{answer.closeLabel}</DialogCancel>}
+            {answer.main && <button type="button" className="btn btn-primary" onClick={answer.main.onClick}>{answer.main.label}</button>}
+          </>
+        )}
+      >
+        <div className={styles.windowBody}>{answer.body}</div>
+      </KitDialog>
+    );
+  }
 
   async function confirm() {
     if (!ready || busy) return;

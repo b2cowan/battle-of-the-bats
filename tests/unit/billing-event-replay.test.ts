@@ -2,16 +2,18 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import type Stripe from 'stripe';
 import {
-  REPLAYABLE_TYPES, REPLAY_REFUSED_TYPES, STRIPE_EVENT_RETENTION_DAYS, recordRows, replayResultWords, replayRowRefusal,
+  REPLAYABLE_TYPES, REPLAY_REFUSED_TYPES, REPLAY_RESULT_ACTION, REPLAY_WINDOW, STRIPE_EVENT_RETENTION_DAYS, lastResultWords, recordRows,
+  replayResultWords, replayRowRefusal, resultRowStory,
   type BillingRecord, type ReplayRow,
 } from '../../lib/billing-event-replay.ts';
-import { fetchedEventFacts, replayBillingEvent, type ReplayDeps } from '../../lib/billing-event-replay-run.ts';
+import { fetchedEventFacts, lookupReplayUpdate, replayBillingEvent, type ReplayDeps } from '../../lib/billing-event-replay-run.ts';
 import { customerSenders } from '../../lib/billing-event-customer-messages.ts';
 import { receiveBillingEvent, type BillingEventClaim, type BillingEventOutcome, type BillingEventStore } from '../../lib/stripe-billing-events.ts';
 import { AuditFirstError } from '../../lib/platform-audit.ts';
+import { isMoneyEntry } from '../../lib/platform-audit-reason.ts';
 import { STRIPE_API_VERSION } from '../../lib/stripe.ts';
 import { FEE_INVOICE_META } from '../../lib/online-payment-words.ts';
-import { functionBody, readCode } from './_source-code.ts';
+import { filesUnder, functionBody, readCode } from './_source-code.ts';
 
 /**
  * Plans & pricing Stage 2 Part 5, Session 1: THE GATE ("prove it harmless the second time before it is built", owner ruling
@@ -32,6 +34,8 @@ function world() {
   const rows = new Map<string, Row>();
   const writes: string[] = [];
   const audit: Array<{ action: string; reason: string | null }> = [];
+  /** The companion rows (Session 2), kept apart from `writes` so the gate's order assertions stay as Session 1 wrote them. */
+  const results: Array<{ orgId: string; reason: string; oldValue: Record<string, string>; newValue: Record<string, string> }> = [];
   const club: BillingRecord = { status: 'past_due', plan: 'league', paidThrough: '2026-11-08T00:00:00.000Z', cycle: 'monthly', planEnds: null };
   const events = new Map<string, Stripe.Event>();
   const stripeSub = { status: 'active', latestInvoice: 'in_2' as string | null, periodEnd: '2026-12-08T00:00:00.000Z' };
@@ -40,7 +44,7 @@ function world() {
   let failNextRun: Error | null = null;
   let hold: Promise<void> | null = null;
   let beforeAudit: (() => Promise<void>) | null = null;
-  const faults = { recordReads: [] as boolean[], noClub: false, doneFails: false };
+  const faults = { recordReads: [] as boolean[], noClub: false, doneFails: false, resultFails: false };
 
   const store: BillingEventStore = {
     async ignore(facts, reason) {
@@ -107,6 +111,7 @@ function world() {
     done: async (id, o) => { if (faults.doneFails) throw new Error('mark failed'); return store.done(id, o); },
     fail: (id, m) => store.fail(id, m),
     run,
+    async recordResult(entry) { if (faults.resultFails) throw new Error('log down'); results.push(entry); },
     report: () => {},
   };
 
@@ -136,7 +141,7 @@ function world() {
     replayBillingEvent({ eventId: id, actorEmail: 'super@fieldlogichq.ca', reason }, deps);
 
   return {
-    rows, writes, audit, club, events, stripeSub, runs, store, deps, run, stored, replay, faults,
+    rows, writes, audit, results, club, events, stripeSub, runs, store, deps, run, stored, replay, faults,
     breakAudit() { auditBroken = true; },
     failRunOnce(e: Error) { failNextRun = e; },
     holdRuns() { let release!: () => void; hold = new Promise(r => { release = r; }); return () => { hold = null; release(); }; },
@@ -493,5 +498,174 @@ describe('the audit, held by the build', () => {
     const a: BillingRecord = { status: 'active', plan: 'league', paidThrough: '2026-12-08T00:00:00+00:00', cycle: 'monthly', planEnds: null };
     const b: BillingRecord = { ...a, paidThrough: '2026-12-08T00:00:00.000Z' };
     assert.ok(recordRows(a, b).every(r => !r.changed));
+  });
+});
+
+// ── Session 2 · the screen ─────────────────────────────────────────────────────────────────────────────────────────────
+
+describe('S2 · the change log keeps what a replay changed (owner call 2026-11-08: a companion row after the run)', () => {
+  it('a replay that changed the record writes one companion row: the record before and after, in words, with the same reason', async () => {
+    const w = world();
+    w.stored('evt_paid', 'invoice.payment_succeeded');
+    const answer = await w.replay('evt_paid');
+    assert.equal(answer.ok && answer.result.kind, 'changed');
+    assert.equal(w.results.length, 1);
+    const [r] = w.results;
+    assert.equal(r.orgId, 'org_1');
+    assert.equal(r.reason, 'The club still shows Past due after they paid.');
+    assert.equal(r.oldValue.Update, 'invoice.payment_succeeded · evt_paid');
+    assert.equal(r.oldValue.Status, 'Past due');
+    assert.equal(r.newValue.Status, 'Active');
+    assert.equal(r.newValue.Run, undefined);
+    const story = resultRowStory(r.oldValue, r.newValue);
+    assert.equal(story.title, 'Replayed a Stripe update');
+    assert.match(story.sub, /^Status: Past due → Active · Paid through: /);
+  });
+  it('"Nothing changed" is kept too: the Story says so', async () => {
+    const w = world();
+    w.stored('evt_paid', 'invoice.payment_succeeded');
+    w.club.status = 'active';
+    w.club.paidThrough = '2026-12-08T00:00:00.000Z';
+    const answer = await w.replay('evt_paid');
+    assert.equal(answer.ok && answer.result.kind, 'unchanged');
+    assert.equal(w.results.length, 1);
+    assert.equal(resultRowStory(w.results[0].oldValue, w.results[0].newValue).sub, 'Nothing changed');
+  });
+  it('no companion row when nothing was compared (a dispute names no club) or a failed run changed nothing', async () => {
+    const dispute = world();
+    dispute.faults.noClub = true;
+    dispute.stored('evt_dsp', 'charge.dispute.created');
+    assert.equal((await dispute.replay('evt_dsp')).ok, true);
+    assert.equal(dispute.results.length, 0);
+
+    const failed = world();
+    failed.stored('evt_paid', 'invoice.payment_succeeded');
+    failed.failRunOnce(new Error('Stripe did not answer in time'));
+    const answer = await failed.replay('evt_paid');
+    assert.equal(answer.ok && answer.result.kind, 'failed');
+    assert.equal(failed.results.length, 0, 'its _failed row already says so');
+  });
+  it('a run the handler set aside (not ours) is no replay of the club’s record: no companion row, and no "Nothing changed" on its Story', async () => {
+    const w = world();
+    w.stored('evt_paid', 'invoice.payment_succeeded');
+    w.deps.run = async () => 'not_ours';
+    const answer = await w.replay('evt_paid');
+    assert.equal(answer.ok && answer.result.kind, 'set_aside');
+    assert.equal(w.results.length, 0);
+  });
+  it('a lost report of a lost companion row cannot break the answer either', async () => {
+    const w = world();
+    w.faults.resultFails = true;
+    w.deps.report = async () => { throw new Error('observability down'); };
+    w.stored('evt_paid', 'invoice.payment_succeeded');
+    const answer = await w.replay('evt_paid');
+    assert.equal(answer.ok && answer.result.kind, 'changed');
+  });
+  it('a replay’s entries are money entries: the reason and details are read only by the roles that read Stripe, and the Story line is theirs alone', () => {
+    for (const a of ['replay_billing_event', 'replay_billing_event_failed', 'replay_billing_event_result']) assert.equal(isMoneyEntry(a), true, a);
+    assert.match(readCode('lib/platform-story.ts'), /r\.action === REPLAY_RESULT_ACTION && opts\.money/);
+  });
+  it('a run that failed partway is kept, and says it failed partway', async () => {
+    const w = world();
+    w.stored('evt_paid', 'invoice.payment_succeeded');
+    w.deps.run = async () => { w.club.status = 'active'; throw new Error('timed out after the status was saved'); };
+    const answer = await w.replay('evt_paid');
+    assert.equal(answer.ok && answer.result.kind, 'failed');
+    assert.equal(w.results.length, 1);
+    assert.equal(w.results[0].newValue.Run, 'Failed partway');
+    assert.equal(resultRowStory(w.results[0].oldValue, w.results[0].newValue).title, 'Replay of a Stripe update failed partway');
+  });
+  it('a companion row that cannot be written changes nothing about the answer (best-effort: the change already happened)', async () => {
+    const w = world();
+    w.faults.resultFails = true;
+    w.stored('evt_paid', 'invoice.payment_succeeded');
+    const answer = await w.replay('evt_paid');
+    assert.equal(answer.ok && answer.result.kind, 'changed');
+    assert.equal(answer.ok && answer.result.marked, true);
+  });
+  it('not audit-first (written after the change), with the reason, a label, a door and a Story line', () => {
+    const engine = readCode('lib/billing-event-replay-run.ts');
+    // The Strict write throws on a rejected insert, so the engine's `.catch` really reports a lost companion row.
+    assert.match(engine, /writePlatformAuditLogStrict\(actorEmail, orgId, REPLAY_RESULT_ACTION, 'billing_record', oldValue, newValue, \{ reason \}\)/);
+    assert.ok(engine.indexOf('deps.recordResult(') > engine.indexOf('deps.done(eventId, ran)'), 'after the outcome');
+    assert.equal(REPLAY_RESULT_ACTION, 'replay_billing_event_result');
+    assert.match(readCode('app/platform-admin/audit/page.tsx'), /replay_billing_event_result: 'Replay result'/);
+    const doors = readCode('lib/platform-audit-doors.ts');
+    assert.match(doors, /const STRIPE_PAGE: Target = \{ label: 'Open Stripe', href: '\/platform-admin\/watching-stripe'/);
+    assert.match(doors, /replay_billing_event: STRIPE_PAGE,\s*replay_billing_event_result: STRIPE_PAGE,/);
+    assert.match(readCode('lib/platform-story.ts'), /r\.action === REPLAY_RESULT_ACTION/);
+  });
+});
+
+describe('S2 · the window’s read before the click (GET): our row’s facts, read-only', () => {
+  it('a failed row: its facts, the club, its last result, and no refusal; nothing written, nothing run', async () => {
+    const w = world();
+    w.stored('evt_paid', 'invoice.payment_succeeded');
+    const a = await lookupReplayUpdate('evt_paid', w.deps);
+    assert.equal(a.ok, true);
+    if (!a.ok) return;
+    assert.equal(a.refusal, null);
+    assert.deepEqual(a.update, {
+      eventId: 'evt_paid', eventType: 'invoice.payment_succeeded', receivedAt: daysAgo(2),
+      clubName: 'Maple Ridge Ball Association', lastResult: 'Failed: Stripe did not answer in time',
+    });
+    assert.deepEqual(w.writes, []);
+    assert.deepEqual(w.results, []);
+    assert.equal(w.runs.length, 0);
+  });
+  it('the row’s own refusals are told before a reason is asked (finished, not replayable, set aside, the other account)', async () => {
+    const w = world();
+    w.stored('evt_done', 'invoice.payment_succeeded', { processedAt: daysAgo(1), error: null });
+    w.stored('evt_sub', 'customer.subscription.updated');
+    w.stored('evt_aside', 'invoice.payment_failed', { ignoredReason: 'no_customer', error: null });
+    w.stored('evt_live', 'invoice.payment_failed', { livemode: true });
+    const key = async (id: string) => { const a = await lookupReplayUpdate(id, w.deps); return a.ok ? a.refusal?.key : `status:${a.status}`; };
+    assert.deepEqual(await Promise.all(['evt_done', 'evt_sub', 'evt_aside', 'evt_live'].map(key)), ['finished', 'not_replayable', 'set_aside', 'other_account']);
+    assert.deepEqual(w.writes, []);
+  });
+  it('an unknown or malformed id is 404 "No update with that id"; a record that cannot be read is 503', async () => {
+    const w = world();
+    for (const id of ['evt_nope', 'in_123', '', null]) {
+      const a = await lookupReplayUpdate(id, w.deps);
+      assert.equal(!a.ok && a.status, 404, String(id));
+      assert.equal(!a.ok && a.refusal.key, 'unknown');
+    }
+    const a = await lookupReplayUpdate('evt_x', { ...w.deps, readRow: async () => { throw new Error('timeout'); } });
+    assert.equal(!a.ok && a.status, 503);
+  });
+  it('a club that cannot be read just now is no refusal: the window shows no name', async () => {
+    const w = world();
+    w.stored('evt_paid', 'invoice.payment_succeeded');
+    const a = await lookupReplayUpdate('evt_paid', { ...w.deps, findClub: async () => { throw new Error('timeout'); } });
+    assert.equal(a.ok && a.refusal, null);
+    assert.equal(a.ok && a.update.clubName, null);
+  });
+  it('last result reads our row in words, and a stored key is never printed', () => {
+    const r = (over: Partial<ReplayRow>): ReplayRow => ({
+      id: 'evt_1', type: 't', livemode: false, customerId: null, subscriptionId: null, objectId: null, receivedAt: daysAgo(1),
+      claimedAt: null, processedAt: null, error: null, ignoredReason: null, ...over,
+    });
+    assert.equal(lastResultWords(r({ error: 'Invalid API Key provided: sk_test_abcd' })), 'Failed: Invalid API Key provided: a Stripe key');
+    assert.equal(lastResultWords(r({ claimedAt: daysAgo(1) })), 'Taken but never finished');
+    assert.equal(lastResultWords(r({ ignoredReason: 'no_customer' })), 'Set aside when it arrived');
+    assert.match(lastResultWords(r({ processedAt: daysAgo(1) })), /^Finished /);
+  });
+});
+
+describe('S2 · the screen’s words and the shared window', () => {
+  it('Stripe keeps an update for 30 days (not "about"); the window’s fact is Messages, not only emails', () => {
+    assert.equal(REPLAY_WINDOW.find.caption, 'Stripe keeps an update for 30 days.');
+    assert.equal(REPLAY_WINDOW.facts.messages, 'Messages');
+    assert.equal(REPLAY_WINDOW.messages, 'No message is sent to the customer by a replay');
+    assert.doesNotMatch(JSON.stringify(REPLAY_WINDOW), /about 30|Set aside again|Send again/);
+  });
+  it('the window’s answer state is the replay’s alone: every other caller of RecordWindow passes none', () => {
+    // Each `<RecordWindow …` opening tag, to the line that closes it (`/>` or `>` on its own line, the house JSX layout).
+    const tags = (code: string) => [...code.matchAll(/<RecordWindow\b([\s\S]*?)\n\s*\/?>/g)].map(m => m[1]);
+    const withAnswer = [...filesUnder('app', '.tsx'), ...filesUnder('components', '.tsx')]
+      .filter(f => tags(readCode(f)).some(t => /\banswer=\{/.test(t)));
+    assert.deepEqual(withAnswer, ['app/platform-admin/watching-stripe/ReplayDoors.tsx']);
+    // A refusal, before or after the click, is the answer state (no Why, nothing to discard), never a hidden-Why question.
+    assert.doesNotMatch(readCode('app/platform-admin/watching-stripe/ReplayDoors.tsx'), /confirmHidden|askWhy=\{false\}/);
   });
 });

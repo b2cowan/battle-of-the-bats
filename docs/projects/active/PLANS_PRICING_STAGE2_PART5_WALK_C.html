@@ -1,0 +1,229 @@
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Stripe Replay Walk</title><style>
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+
+.stop { border-left: 4px solid var(--warn); }
+.step.opt { flex-direction: column; gap: 4px; }
+.step .optrow { display: flex; gap: 10px; align-items: flex-start; }
+.step .txt span { white-space: pre-wrap; overflow-wrap: anywhere; }
+</style>
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · Plans &amp; pricing Stage 2 · Part 5 · Walk C</span>
+    <h1>Replay a Stripe update</h1>
+    <p class="sub">Written 2026-11-08. One purpose: a Super admin can run a Stripe update that did not finish through the product again, see what it did to the club's plan record, and find it recorded; every other role cannot. Writes to dev data only, and the last part puts it back.</p>
+  </header>
+
+  <section class="card">
+    <h2>What this walk is for</h2>
+<p>Before this, a Stripe update the product failed to process stayed on <strong>Health › Stripe</strong> as a line you could read and nothing more. Now a Super admin sees the word <strong>Replay</strong> on each failed line, and a card, <strong>Replay an update by its id</strong>, for any other update. A window says what will run and for which club, asks you to say why, runs it, and turns into the answer: the club's plan record <strong>before and after</strong>. A replay never charges, refunds, changes anything in Stripe or messages the customer.</p>
+<p>Two updates were planted on dev for you: a paid bill (so the club's status changes from Past due to Active) and a subscription change (a kind that is refused). You will replay the first, try to replay it again, meet the refusals, find the change-log entries and the club's Story line, then see the page as Billing and Product.</p>
+<div><strong>It passes when</strong></div>
+<ul>
+  <li>The window names the update, the club and the last result, asks Why, and says no message is sent.</li>
+  <li>The answer shows Past due → Active, the update leaves the failing list, and the page says Replayed with who and when.</li>
+  <li>A second replay of the same update, a subscription change and a made-up id are each refused in words, with no reason asked.</li>
+  <li>The Audit log and the club's Story keep what the replay changed; Billing sees the page without any door, and Product does not see the reason.</li>
+</ul>
+  </section>
+
+  <section class="card">
+    <h2>Sign in as</h2>
+    <dl class="facts">
+      <dt>Where</dt><dd><strong>http://localhost:3000/platform-admin/login</strong> (dev server restarted 2026-11-08 for this walk). Dev only; keep these private.</dd>
+      <dt>Super admin</dt><dd><code>uat-platform@fieldlogichq.ca</code> · <code>UATPassword2026!</code> (Parts A to D)</dd>
+      <dt>Billing</dt><dd><code>billing@dev.local</code> · <code>devpass123</code> (Part E, first half)</dd>
+      <dt>Product</dt><dd><code>product@dev.local</code> · <code>devpass123</code> (Part E, second half)</dd>
+      <dt>Tip</dt><dd>Use a private window for Billing and Product so you do not sign the Super admin out. Each part says who.</dd>
+      <dt>The club</dt><dd><strong>Dunning Walk Org 2</strong>, an ordinary dev club on the Tournament Plus plan. Its record: <code>http://localhost:3000/platform-admin/orgs/5d871a72-77a3-4440-8f7e-111a704d702e</code></dd>
+      <dt>Time</dt><dd>About 20 minutes. Computer only.</dd>
+    </dl>
+  </section>
+
+  <section class="card stop">
+    <h2>Stop check</h2>
+    <p>Before Part B, <strong>Health › Stripe</strong> must list two failing Plan billing lines that end <em>Planted for walk C</em>. If it does not (another walk used them), plant them again from a terminal in the project folder, then reload:</p>
+    <pre>node scripts/db-query.mjs --dev -q "update stripe_billing_events set processed_at = null, error = 'Planted for walk C', claimed_at = null where id in ('evt_1UZDRrFuSuNtbvsQc91NBTer','evt_1UZDRsFuSuNtbvsQkqMnCcIY') returning id, error"
+node scripts/db-query.mjs --dev -q "update organizations set subscription_status = 'past_due' where id = '5d871a72-77a3-4440-8f7e-111a704d702e' returning name, subscription_status"</pre>
+    <p>Part B writes to dev (it finishes one update, sets one club's status to Active, and adds two change-log entries). Part F puts the rest back. If you stop partway, run Part F's commands before anything else.</p>
+  </section>
+
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy build summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+
+  <section class="card">
+    <h2>Not in this walk</h2>
+<ul>
+  <li><strong>A replay that fails (“The replay failed”, then “Replay again”), an update that names no one club (a dispute: “Replayed.” with no Before and After), an update Stripe no longer holds (older than 30 days), an update being delivered right now, and a change log that cannot be written.</strong> Dev cannot be made to fail on cue; the automatic tests cover each (the replay, Stripe-page and audit suites).</li>
+  <li><strong>Subscription changes, checkouts, a card added, Stripe-fees bills.</strong> These are refused on purpose (the safe list only). Part C shows one; making them replayable is its own later item.</li>
+  <li><strong>Family payments.</strong> Never replayable and never given a door. Dev has none failing to show it on.</li>
+  <li><strong>The owners' Needs attention list.</strong> A replayed failed payment does not add a notice there (nothing to see; the help article says so).</li>
+  <li><strong>A phone.</strong> The Support console is a computer screen.</li>
+  <li><strong>The help article</strong> "How to replay a Stripe update" in the platform-admin guide. Read it when you like.</li>
+</ul>
+  </section>
+</main>
+<script>
+(function () {
+  var DATA = {"key":"plans-pricing-stage2-part5-walk-c-v1","title":"Plans & pricing Stage 2 Part 5 Walk C: replay a Stripe update","parts":[{"id":"A","title":"The door and the find card (Super admin)","steps":[{"who":"Super admin · http://localhost:3000/platform-admin/watching-stripe","do":"Sign in as the Super admin and open Health › Stripe. Look under “Updates from Stripe”.","see":"A list headed “What failed in Plan billing” holds two lines, each ending “Planted for walk C” and then the word Replay: “customer.subscription.updated · Nov 7, 12:30 p.m.” and “invoice.payment_succeeded · Nov 7, 12:30 p.m.”. Plan billing's Still failing figure counts them (it can be higher if dev has other failures; use these two lines). Note the figure now: ____.","options":["Both lines, each with Replay","Something differs. Say what"]},{"who":"Super admin · the card under the list","do":"Look at the card below the failing list.","see":"A card headed “Replay an update by its id” with a text field showing “evt_…”, a Find update button that stays dim until you type, and the caption “Stripe keeps an update for 30 days.”","options":["As described","Something differs. Say what"]}]},{"id":"B","title":"Replay the paid bill (writes dev data)","steps":[{"who":"Super admin · Health › Stripe","do":"Press Replay on the invoice.payment_succeeded line.","see":"A window “Replay this update?” opens. It says: “Runs Stripe’s update through the product again, using what Stripe holds for it now. It does not charge, refund or change anything in Stripe.” Then Update: invoice.payment_succeeded with its id evt_1UZDRrFuSuNtbvsQc91NBTer · Received: Nov 7, 12:30 p.m. · Club: Dunning Walk Org 2 · Last result: Failed: Planted for walk C · Messages: No message is sent to the customer by a replay. Below that a Why * box (“Say what you are fixing, for the change log.”), the foot “Goes in the change log with your name and your reason.”, and the buttons Cancel and Replay.","options":["As described","Something differs. Say what"]},{"who":"Super admin · the window","do":"Before typing anything, look at the Replay button.","see":"It is dim and cannot be pressed until the Why box has words in it.","options":["Dim until there is a reason","I could press it with no reason. Say what happened"]},{"who":"Super admin · the window","do":"Type “Walk C: the club still shows Past due after its paid bill.” in Why and press Replay. Wait a few seconds (it asks Stripe for the update again).","see":"The same window turns into the answer. Title “Replayed. The club’s record changed.” and the sentence “invoice.payment_succeeded for Dunning Walk Org 2 was processed.” A table headed Billing record, Before, After with five rows: Status, Plan, Paid through, Billing cycle, Plan ends. Status reads Past due before and Active after, and that After cell is tinted; rows that did not change are dimmed. (Paid through may also move, and is tinted if it does.) A note says “No message was sent to the customer. Bill and charge records the run keeps are not shown here.” At the foot, “Logged in the change log.” and one main button, Done.","options":["Status Past due → Active, as described","It differs. Say what the table shows"]},{"who":"Super admin · press Done","do":"Press Done.","see":"The window closes and the page reloads its figures. The invoice.payment_succeeded line is gone from the failing list, and Plan billing's Still failing is one lower than the figure you noted in A1. A line reads “invoice.payment_succeeded · Replayed”, then the time you pressed Replay and “by uat-platform@fieldlogichq.ca”.","options":["Gone from the failing list, the figure one lower, and the Replayed line is there","Something differs. Say what"]},{"who":"Super admin · the id card","do":"Replay it again by its id: type evt_1UZDRrFuSuNtbvsQc91NBTer in “Replay an update by its id” and press Find update.","see":"A window titled “This update already finished”: “It was processed on Nov 8, … Nothing is waiting to be redone. If the club’s plan looks wrong, the morning check against Stripe lists it on this page.” Only a Close button: no Why box, and nothing ran. Press Close.","options":["Refused in those words, Close only","It let me replay again, or asked for a reason. Say what"]}]},{"id":"C","title":"Replays that are refused","steps":[{"who":"Super admin · Health › Stripe","do":"Press Replay on the customer.subscription.updated line.","see":"A window titled “This kind of update is not replayed”: “A replay runs Stripe’s copy of a customer.subscription.updated update as it was when Stripe sent it, and this kind would write that old copy over what has changed since. If the club’s plan looks wrong, the morning check against Stripe lists it on this page.” Close only; no reason asked. Press Close.","options":["Refused in those words, Close only","Something differs. Say what"]},{"who":"Super admin · Health › Stripe","do":"After closing, look at the failing list.","see":"The customer.subscription.updated line is still there with its Replay word, and Plan billing's Still failing is unchanged by that refusal (nothing ran).","options":["Still listed, nothing changed","It changed. Say what"]},{"who":"Super admin · the id card","do":"Type hello in “Replay an update by its id” and press Find update.","see":"A window titled “No update with that id”: “The product has no record of an update with this id. Check that you copied all of it, from the Events page in Stripe’s dashboard, in the same account this site reads.” Close only. Press Close.","options":["As described","Something differs. Say what"]}]},{"id":"D","title":"Where it is recorded (Super admin)","steps":[{"who":"Super admin · http://localhost:3000/platform-admin/audit","do":"Open the Audit log and search “Dunning Walk”.","see":"Two new entries at the top, newest first: “Replay result” and “Replayed a Stripe update”. Both show Superuser uat-platform@fieldlogichq.ca and the org Dunning Walk Org 2, and the Reason is the sentence you typed in B3. There is no entry for the refusals in B5 and C (nothing ran).","options":["Both entries, with your reason","Something differs. Say what"]},{"who":"Super admin · the Replay result entry","do":"Open the “Replay result” entry.","see":"A window with Old value and New value in full. Old value lists Update (invoice.payment_succeeded · evt_1UZDRrFuSuNtbvsQc91NBTer), Status Past due, Plan, Paid through, Billing cycle and Plan ends. New value lists the same with Status Active. The lines that differ are tinted, under the legend “Tinted lines are the ones that differ.” The entry has a door, Open Stripe, back to Health › Stripe.","options":["As described","Something differs. Say what"]},{"who":"Super admin · the club's record","do":"Open http://localhost:3000/platform-admin/orgs/5d871a72-77a3-4440-8f7e-111a704d702e and read its Story tab.","see":"A line “Replayed a Stripe update” with “Status: Past due → Active” under it (plus any other field that changed, joined by “·”), who and when, and your reason. It is a record of what happened, not something with a Put it back.","options":["The Story line is there","It is missing or differs. Say what"]}]},{"id":"E","title":"Other roles (Billing, then Product)","steps":[{"who":"Billing · private window · http://localhost:3000/platform-admin/watching-stripe","do":"Sign in as Billing and open Health › Stripe.","see":"The page reads as before: the failing list still shows the customer.subscription.updated line and the Replayed line for invoice.payment_succeeded, but there is no Replay word on any line and no “Replay an update by its id” card.","options":["No door and no card","A Replay word or the card shows. Say where"]},{"who":"Product · private window · http://localhost:3000/platform-admin/audit","do":"Sign in as Product, open the Audit log and search “Dunning Walk”.","see":"The entries “Replayed a Stripe update” and “Replay result” are there, but where the Reason (and, in the window, the old and new values) would be, it reads “Shown to Super admin, Billing and Support”. Your typed sentence is not shown.","options":["The reason is hidden","Product can read the reason. Say where"]},{"who":"Product · the club's Story","do":"Open the club's record (the link in Sign in as) and read its Story tab.","see":"No “Replayed a Stripe update” line. Product reads the club, but not the billing money lines.","options":["No replay line","The line shows. Say what"]}]},{"id":"F","title":"Put it back","steps":[{"who":"A terminal in the project folder · finish the refused update","do":"The subscription-change update was planted failing and a replay cannot finish it. Mark it finished so the page is quiet again:\nnode scripts/db-query.mjs --dev -q \"update stripe_billing_events set processed_at = now(), error = null where id = 'evt_1UZDRsFuSuNtbvsQkqMnCcIY' returning id, processed_at, error\"","see":"The command prints the id with a processed_at time and error null. Reload Health › Stripe: Plan billing's Still failing is back to what it was before the planting (the two planted lines are gone, the Replayed line stays for today).","options":["Put back","Skipped it"]},{"who":"A terminal · only if you stopped before B3","do":"If you did not finish Part B, put the paid bill and the club back instead:\nnode scripts/db-query.mjs --dev -q \"update stripe_billing_events set processed_at = now(), error = null where id = 'evt_1UZDRrFuSuNtbvsQc91NBTer' returning id\"\nnode scripts/db-query.mjs --dev -q \"update organizations set subscription_status = 'active' where id = '5d871a72-77a3-4440-8f7e-111a704d702e' returning name, subscription_status\"","see":"Both commands print a row; the club's status reads active. (If you finished B3 the replay already did this, so tick Not needed.)","options":["Ran them","Not needed, Part B finished"]}]}]};
+  var KEY = DATA.key, PARTS = DATA.parts;
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var boxes = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  function txt(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; n.textContent = text; return n; }
+  function box(id, partId, label) {
+    var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+    cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+    boxes.push({ part: partId, id: id, cb: cb, label: label });
+    return cb;
+  }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(txt('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(txt('span', 'who', id + ' · ' + s.who));
+      t.appendChild(txt('span', null, s['do']));
+      t.appendChild(txt('span', 'see', 'You should see: ' + s.see));
+      if (s.options && s.options.length) {
+        var wrap = el('div', 'step opt'); wrap.appendChild(t);
+        s.options.forEach(function (o, k) {
+          var row = el('label', 'optrow'); var cb = box(id + '-' + (k + 1), p.id, id + ' = ' + o);
+          row.appendChild(cb); row.appendChild(txt('span', null, o)); wrap.appendChild(row);
+        });
+        body.appendChild(wrap);
+      } else {
+        var row2 = el('label', 'step'); var cb2 = box(id, p.id, id);
+        row2.appendChild(cb2); row2.appendChild(t); body.appendChild(row2);
+      }
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function refresh() {
+    var done = 0;
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var n = mine.filter(function (b) { return b.cb.checked; }).length;
+      done += n;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + mine.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    document.getElementById('total').textContent = done + ' of ' + boxes.length + ' checked';
+    document.getElementById('barfill').style.width = (boxes.length ? Math.round(done * 100 / boxes.length) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [DATA.title + ' (written 2026-11-08)'];
+    var done = boxes.filter(function (b) { return b.cb.checked; }).length;
+    lines.push('Checked ' + done + ' of ' + boxes.length + ' (a step with options counts one box per option)');
+    PARTS.forEach(function (p) {
+      var mine = boxes.filter(function (b) { return b.part === p.id; });
+      var ticked = mine.filter(function (b) { return b.cb.checked; }).map(function (b) { return b.label; });
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + mine.length + (ticked.length ? ' (' + ticked.join('; ') + ')' : ''));
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    boxes.forEach(function (b) { b.cb.checked = false; });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

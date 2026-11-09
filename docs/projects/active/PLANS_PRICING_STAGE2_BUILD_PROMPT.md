@@ -132,7 +132,7 @@ that is the owner's dashboard work.
       reason, plan-reader door, portal tag, the free-time-portal churn rule). Signed-in probe on dev: Billing, Support 200; Product,
       Growth, Read only 307 / export 403. Built beyond the drawing (recorded in ledger §487): "Plan ends" for a waiting cancellation or a waiting move to the free plan,
       two extra What happens entries for the band figures, the Bill cell as the bill's kind, "A club no longer on file" / "Not matched
-      to a club". Walk A §487 published https://claude.ai/artifact/4aJRpreh7LuKj2frekaHH5. `/simplify`, `/review` and `/docs` DONE
+      to a club". Walk A §487 published https://claude.ai/artifact/4aJRpreh7LuKj2frekaHH5, **walked ✅ 2026-11-08, all six parts passed**. `/simplify`, `/review` and `/docs` DONE
       2026-11-07 (help entry "How to read Renewals" in the platform-admin guide, with the /legal staff note). Review changed:
       the price tile reads "—" when no row has a price on file (was "$0.00"); a Plan pick the rows no longer offer reads as All
       plans; a waiting move to the free plan counts as "Plan ends"; F1 now needs a running comp AND no Stripe subscription (a
@@ -260,6 +260,32 @@ that is the owner's dashboard work.
       notice on the owners' Needs attention list (ruling 1 silences the notice that feeds it); the window's facts (Received, Last
       result) need a read of the row, which the POST does not offer (add a GET lookup); the drawings' audit line "Status: Past due →
       Active" is not stored (the first row is written before the run): show it from a companion row or drop it.
+      **Session 2 BUILT 2026-11-08 (the screen); walk C = Owner QA Ledger §496 (https://claude.ai/artifact/2iYbKwN8fgEJHeCNhkyYTM), owed.**
+      Health › Stripe: the word Replay on each "What failed in Plan billing" line (a refused kind's too) and the card "Replay an update by
+      its id", both Super admin only (`replay_events`, server-checked on the new GET and the POST); one window that asks (the update,
+      Received, Club, Last result, Messages, Why *) and turns into the answer (Before/After; refusals are Close alone, no reason asked);
+      a "Replayed <when> by <who>" line for the rest of the day, shown only for an update the event log shows finished. **Owner call
+      2026-11-08:** the change log keeps what a replay changed: a companion row `replay_billing_event_result` written AFTER the run
+      (best-effort, not audit-first, same reason), old/new = the five billing fields in words plus "Update" (+ "Run" when it failed
+      partway), only when a comparison was made (not a dispute, not a failed run that changed nothing, not a set-aside run). Code vs
+      the build prompt: `RecordWindow` never closed itself (the caller does); the Audit log shows old/new in the entry window with the
+      differing lines tinted (not a table sub-line); "Show only what differs" was the drawing's toggle, not built; the Story only shows
+      actions it names, so a Story branch was added. `/review` (high): no Critical/High; fixed after it: a set-aside run writes no
+      companion row; a lost companion write is reported (Strict write); replay entries and the Story line are money entries (reason and
+      details for Super admin, Billing, Support only); "Replayed" confirmed against the event log; a stale "Replay again" look-up
+      cannot re-open a closed window; the look-up cannot leave the door stuck; focus re-seated on the answer; the unread-replays line is
+      told even with no failing line. Accepted: "Replay again" keeps the typed reason; an expired session reads "no answer came back";
+      focus is on the page after Done; two row doors can look up at once; no companion row when the after-read fails. `/simplify`
+      skips: linking the result row to the first by id (shared audit infra); an (action, created_at) index (needs a migration);
+      `after()` for the companion write (drops on Amplify); moving the facts style into record.module.css (touches MoneyTab's CSS);
+      merging the per-row doors; folding the page's feed-key checks. `/legal` quick pass: nothing new collected or promised; L16
+      recorded (staff reasons are free text on a permanent log). `/accounting`: not required. `/docs`: "How to replay a Stripe update"
+      (platform-admin guide) and the roles/Stripe/audit sections updated. No migration. Proved: signed-in probe on dev (Super admin:
+      door and id card, GET 200, bad id 404; Billing: no door, GET and POST 403), 232 tests green across the replay, Stripe-page and
+      audit suites, typecheck clean, the page measured at 1440 and 1280 (no sideways scroll). `check:layout --changed` widened to the
+      whole product and stopped at its fixture check (the Stripe page is not in the sweep's screen list): not run. `verify:changed`
+      reds that remain are other sessions' work (listed in §496). Next: the follow-up stage item (subscription changes replayable,
+      drawn first), then Part 6.
 - [ ] Part 6 closeout (Part 3 committed `514d3a2d0`, above)
 - Known red tests NOT from this work: `workspace-flip-guard` and `support-console-stage4b-inforce-guard` (an untracked file from another
   session and a committed one the allowlists do not list), `support-console-stage3-guard` (a modified bookkeeping window file).

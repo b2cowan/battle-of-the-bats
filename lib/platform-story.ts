@@ -31,6 +31,7 @@ import { disputeReasonWords, disputeStatusWords } from './stripe-subscription-ch
 import { hasPlatformPower } from './platform-areas';
 import { LEAD_ACTIONS } from './platform-audit-reason';
 import { withoutFailedChanges } from './platform-audit';
+import { REPLAY_RESULT_ACTION, resultRowStory } from './billing-event-replay';
 import type { PlatformRole } from './platform-auth';
 import { listSentEmails } from './sent-log';
 import { SENT_STATES } from './sent-log-words';
@@ -349,6 +350,14 @@ export async function buildClubStory(orgId: string, opts: { money?: boolean; lea
     if (r.action === 'extend_billing_retention') {
       const days = obj(r.new_value)?.days;
       entries.push({ key, at: r.created_at, kind: 'staff', title: `Retention extended${typeof days === 'number' ? ` by ${days} days` : ''}`, who, ...whyFields(r, true) });
+      continue;
+    }
+    // Plans & pricing Stage 2 Part 5 (owner call 2026-11-08): what a replay of a Stripe update changed on the club's record. The
+    // replay's first row (written before it ran) is not told: this one, written after, says what it did. A fact, never Put it back.
+    // Money, like a refund: its reason can name a customer, so only the roles that read Stripe see the line (`isMoneyEntry`).
+    if (r.action === REPLAY_RESULT_ACTION && opts.money) {
+      const { title, sub } = resultRowStory(r.old_value, r.new_value);
+      entries.push({ key, at: r.created_at, kind: 'staff', title, sub, who, ...whyFields(r, true) });
       continue;
     }
   }

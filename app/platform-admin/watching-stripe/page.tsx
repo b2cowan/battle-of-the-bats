@@ -2,8 +2,10 @@ import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
-import { requirePlatformAreaView } from '@/lib/platform-auth';
-import { readWatchingStripe } from '@/lib/watching-stripe';
+import { hasPlatformPower, requirePlatformAreaView } from '@/lib/platform-auth';
+import { readReplayedToday, readWatchingStripe, type ReplayedLine } from '@/lib/watching-stripe';
+import { REPLAY_WINDOW } from '@/lib/billing-event-replay';
+import { FindUpdate, ReplayDoor } from './ReplayDoors';
 import {
   WS, checkIsStale, figureBand, needsALook, settingChip, settingPassWords, shownError,
   type DriftRead, type FeedRead, type SettingRow,
@@ -18,8 +20,11 @@ export const dynamic = 'force-dynamic';
 
 /**
  * HEALTH › STRIPE (Plans & pricing Stage 2 Part 3; drawings tab 10; owner go 2026-11-07). Super admin, Billing, Support and
- * Product read it; Part 5's replay is the page's only write and is not here. ⚠ NOTHING on this page writes, and nothing on
- * it asks Stripe to change anything. A part that could not be read says so; it never reads as "nothing to see".
+ * Product read it. ⚠ The page's ONE write is Part 5's replay (Session 2; `ReplayDoors.tsx`), drawn for Super admin only (the
+ * `replay_events` power): the word "Replay" on each line of "What failed in Plan billing" and the "Replay an update by its id"
+ * card. Every other role reads the page as before, and the server refuses them. A replay never asks Stripe to change anything.
+ * Family payments are never replayed (ruling 5): their failing lines carry no door. A part that could not be read says so; it
+ * never reads as "nothing to see".
  */
 
 const TONE = { ok: kit.chipOk, warn: kit.chipWarn, bad: kit.chipBad };
@@ -48,8 +53,14 @@ const FeedRow = ({ feed }: { feed: FeedRead }) => (
   </tr>
 );
 
-function Feeds({ billing, connect }: { billing: FeedRead | null; connect: FeedRead | null }) {
-  const withFailures = [billing, connect].filter((f): f is FeedRead => !!f && f.failures.length > 0);
+function Feeds({ billing, connect, canReplay, replayed }: {
+  billing: FeedRead | null; connect: FeedRead | null; canReplay: boolean; replayed: ReplayedLine[] | null;
+}) {
+  // A replayed update leaves the failing list; its line stays for the rest of the day (unless it is failing again).
+  const failingIds = new Set(billing?.failures.map(f => f.id) ?? []);
+  const replayedLines = (replayed ?? []).filter(r => !failingIds.has(r.eventId));
+  const hasLines = (f: FeedRead) => f.failures.length > 0 || (f.key === 'plan_billing' && replayedLines.length > 0);
+  const withFailures = [billing, connect].filter((f): f is FeedRead => !!f && hasLines(f));
   return (
     <>
       <h2 className={kit.sectionTitle}>{WS.feeds.title}</h2>
@@ -80,8 +91,18 @@ function Feeds({ billing, connect }: { billing: FeedRead | null; connect: FeedRe
           <h3 className={kit.label}>{WS.feeds.failuresTitle(WS.feeds.name[feed.key])}</h3>
           <ul className={styles.failureList}>
             {feed.failures.map(f => (
-              <li key={f.id}>
-                <span className={kit.code}>{f.type}</span> · {consoleWhen(f.receivedAt)} · {shownError(f.error)}
+              <li key={f.id} className={styles.failureLine}>
+                <span><span className={kit.code}>{f.type}</span> · {consoleWhen(f.receivedAt)} · {shownError(f.error)}</span>
+                {canReplay && feed.key === 'plan_billing' && <ReplayDoor eventId={f.id} eventType={f.type} />}
+              </li>
+            ))}
+            {feed.key === 'plan_billing' && replayedLines.map(r => (
+              <li key={`replayed:${r.eventId}`} className={styles.failureLine}>
+                <span>
+                  <span className={kit.code}>{r.type}</span> ·{' '}
+                  <span className={`${kit.chip} ${kit.chipOk} ${styles.replayedChip}`}>{REPLAY_WINDOW.replayed}</span>
+                  {REPLAY_WINDOW.replayedBy(consoleWhen(r.at), r.who)}
+                </span>
               </li>
             ))}
           </ul>
@@ -89,6 +110,9 @@ function Feeds({ billing, connect }: { billing: FeedRead | null; connect: FeedRe
         </div>
       ))}
       </div>
+      {/* Said once, here, so it shows even when the plan-billing list above is empty (a failed read is never "no replays today"). */}
+      {replayed === null && <p className={kit.caption} role="alert">{REPLAY_WINDOW.replayedUnread}</p>}
+      {canReplay && <FindUpdate />}
     </>
   );
 }
@@ -198,8 +222,9 @@ function Settings({ settings }: { settings: SettingRow[] | null }) {
 }
 
 export default async function WatchingStripePage() {
-  await requirePlatformAreaView('watching_stripe');
-  const read = await readWatchingStripe();
+  const auth = await requirePlatformAreaView('watching_stripe');
+  const canReplay = hasPlatformPower(auth.role, 'replay_events');
+  const [read, replayed] = await Promise.all([readWatchingStripe(), readReplayedToday().catch(() => null)]);
   const now = new Date();
   const need = needsALook(read, now);
   const fig = figureBand(read);
@@ -220,7 +245,7 @@ export default async function WatchingStripePage() {
         <Tile label={WS.tiles.settings} value={fig.settingsToCheck ?? dash} warn={(fig.settingsToCheck ?? 0) > 0} />
       </section>
 
-      <section className={styles.section}><Feeds billing={read.billing} connect={read.connect} /></section>
+      <section className={styles.section}><Feeds billing={read.billing} connect={read.connect} canReplay={canReplay} replayed={replayed} /></section>
       <section className={styles.section}><Drift drift={read.drift} now={now} /></section>
       <section className={styles.section}><Settings settings={read.settings} /></section>
     </div>

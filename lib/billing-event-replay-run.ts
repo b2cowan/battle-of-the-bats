@@ -6,8 +6,9 @@ import { FEE_INVOICE_META } from './online-payment-words';
 import { AuditFirstError, writeAuditBeforeChange } from './platform-audit';
 import type { RunOptions } from './billing-event-customer-messages';
 import {
-  REPLAY_ACTION, paidInvoiceRefusal, recordRows, replayEventRefusal, replayReason, replayRefusal, replayRowRefusal, resultKind,
-  type BillingRecord, type FetchedEventFacts, type ReplayRefusal, type ReplayRefusalKey, type ReplayResult, type ReplayRow,
+  REPLAY_ACTION, REPLAY_RESULT_ACTION, lastResultWords, paidInvoiceRefusal, recordRows, replayEventRefusal, replayReason, replayRefusal,
+  replayRowRefusal, resultKind, resultRowValue,
+  type BillingRecord, type FetchedEventFacts, type ReplayLookup, type ReplayRefusal, type ReplayRefusalKey, type ReplayResult, type ReplayRow,
 } from './billing-event-replay';
 
 /**
@@ -24,7 +25,10 @@ import {
  *   5. the SAME atomic claim a live delivery takes (`stripe_billing_event_claim`, mig 416): a failed or stuck row answers `retry`,
  *      and a live delivery running it now answers `busy`, so a replay and Stripe's own retry can never both run it;
  *   6. the club's billing record (before), the run with `{ replay: true }` (no customer message), the record again (after);
- *   7. the outcome exactly as the receiver writes it: `done`, or the error stored with the claim cleared (and `<action>_failed`).
+ *   7. the outcome exactly as the receiver writes it: `done`, or the error stored with the claim cleared (and `<action>_failed`);
+ *   8. (Session 2, owner call 2026-11-08) the companion change-log row `replay_billing_event_result`: the club's record before
+ *      and after, best-effort, written only when the two reads were compared (not for a dispute; not for a failed run that
+ *      changed nothing, whose `_failed` row already says so).
  *
  * A run that throws is not retried and Stripe is not told; the update stays in the failing list.
  */
@@ -49,19 +53,22 @@ export type ReplayDeps = {
   done: (id: string, outcome: BillingEventOutcome) => Promise<void>;
   fail: (id: string, message: string) => Promise<void>;
   run: (event: Stripe.Event, customerId: string | null, opts: RunOptions) => Promise<BillingEventOutcome>;
+  /** The companion row after the run (step 8). Best-effort: a failure is reported, never the replay's answer. */
+  recordResult: (entry: { actorEmail: string; orgId: string; reason: string; oldValue: Record<string, string>; newValue: Record<string, string> }) => Promise<void>;
   report: (error: unknown) => Promise<void> | void;
 };
 
 export type ReplayInput = { eventId: unknown; actorEmail: string; reason: unknown };
 
 export type ReplayAnswer =
-  | { ok: false; status: number; refusal: ReplayRefusal }
+  | Refused
   | { ok: true; result: ReplayResult };
 
 const STATUS: Partial<Record<ReplayRefusalKey, number>> = {
   unknown: 404, reason: 400, change_log: 503, stripe_unread: 503, not_claimed: 503, record_unread: 503, too_old: 410,
 };
-const refuse = (refusal: ReplayRefusal): ReplayAnswer => ({ ok: false, status: STATUS[refusal.key] ?? 409, refusal });
+export type Refused = { ok: false; status: number; refusal: ReplayRefusal };
+const refuse = (refusal: ReplayRefusal): Refused => ({ ok: false, status: STATUS[refusal.key] ?? 409, refusal });
 const messageOf = (e: unknown) => (e instanceof Error ? e.message : String(e));
 const idOf = (v: unknown): string | null =>
   typeof v === 'string' ? v : ((v as { id?: unknown } | null | undefined)?.id as string | undefined) ?? null;
@@ -88,24 +95,32 @@ const rowFacts = (row: ReplayRow): BillingEventFacts => ({
   id: row.id, type: row.type, livemode: row.livemode, customerId: row.customerId, subscriptionId: row.subscriptionId, objectId: row.objectId,
 });
 
-export async function replayBillingEvent(input: ReplayInput, deps: ReplayDeps = serverReplayDeps()): Promise<ReplayAnswer> {
-  // 1 · the reason.
-  const reason = replayReason(input.reason);
-  if (!reason) return refuse(replayRefusal('reason'));
-  const eventId = typeof input.eventId === 'string' ? input.eventId.trim() : '';
-  if (!/^evt_[A-Za-z0-9]+$/.test(eventId)) return refuse(replayRefusal('unknown'));
+type RowRead = { eventId: string; live: boolean; row: ReplayRow | null; refusal: ReplayRefusal | null };
 
-  // 2 · our own row.
+/** The id, our own row and the refusal that row alone decides: shared by the replay (step 2) and the window's GET. */
+async function readReplayRow(input: unknown, deps: Pick<ReplayDeps, 'live' | 'now' | 'readRow'>): Promise<RowRead> {
+  const eventId = typeof input === 'string' ? input.trim() : '';
+  if (!/^evt_[A-Za-z0-9]+$/.test(eventId)) return { eventId, live: false, row: null, refusal: replayRefusal('unknown') };
   const live = deps.live();
   const now = deps.now();
   let row: ReplayRow | null;
   try {
     row = await deps.readRow(eventId);
   } catch {
-    return refuse(replayRefusal('record_unread'));
+    return { eventId, live, row: null, refusal: replayRefusal('record_unread') };
   }
-  const rowRefusal = replayRowRefusal(row, { live, now });
-  if (rowRefusal || !row) return refuse(rowRefusal ?? replayRefusal('unknown'));
+  return { eventId, live, row, refusal: replayRowRefusal(row, { live, now }) };
+}
+
+export async function replayBillingEvent(input: ReplayInput, deps: ReplayDeps = serverReplayDeps()): Promise<ReplayAnswer> {
+  // 1 · the reason.
+  const reason = replayReason(input.reason);
+  if (!reason) return refuse(replayRefusal('reason'));
+
+  // 2 · our own row (the same read the window's GET makes, so the window never promises what the click refuses).
+  const read = await readReplayRow(input.eventId, deps);
+  if (read.refusal || !read.row) return refuse(read.refusal ?? replayRefusal('unknown'));
+  const { eventId, row, live } = read;
 
   // 3 · Stripe's copy, by id.
   let event: Stripe.Event | null;
@@ -208,9 +223,43 @@ export async function replayBillingEvent(input: ReplayInput, deps: ReplayDeps = 
     await deps.done(eventId, ran).catch(async e => { marked = false; await deps.report(e); });
   }
   const rows = recordRead ? recordRows(before, after) : [];
+  // 8 · what changed, kept: only when a comparison was made, and for a failed run only when part of it was saved.
+  // A run that finished (`processed`) is kept even when nothing changed ("Nothing changed" is an answer). One set aside (no
+  // customer, not ours) is not a replay of the club's record, so it is kept only if it somehow changed something.
+  if (club && rows.length && (outcome === 'processed' || rows.some(r => r.changed))) {
+    await deps.recordResult({
+      actorEmail: input.actorEmail, orgId: club.orgId, reason,
+      oldValue: resultRowValue(row.type, eventId, before),
+      newValue: resultRowValue(row.type, eventId, after, outcome === 'failed'),
+    }).catch(async e => { await Promise.resolve(deps.report(e)).catch(() => {}); });
+  }
   return {
     ok: true,
     result: { kind: resultKind(outcome, rows), eventId, eventType: row.type, clubName: club?.name ?? null, rows, error, recordRead, marked },
+  };
+}
+
+export type LookupAnswer =
+  | Refused
+  | { ok: true; update: ReplayLookup; refusal: ReplayRefusal | null };
+
+/**
+ * What the window shows before the click (Session 2's GET): our own row's facts, the club's name and the refusal the row alone
+ * already decides (`replayRowRefusal`). Read-only: no Stripe call, no claim, no write. The refusals that need Stripe's copy
+ * (a later bill, a fee bill, the format) are met at the click, after the reason, as the POST answers them.
+ */
+export async function lookupReplayUpdate(
+  eventIdInput: unknown,
+  deps: Pick<ReplayDeps, 'live' | 'now' | 'readRow' | 'findClub'> = serverReplayDeps(),
+): Promise<LookupAnswer> {
+  const { row, refusal } = await readReplayRow(eventIdInput, deps);
+  if (!row) return refuse(refusal ?? replayRefusal('unknown'));
+  // A club that cannot be read just now is not a refusal before the click: the window shows no name, and the POST reads it again.
+  const club = refusal ? null : await deps.findClub(row).catch(() => null);
+  return {
+    ok: true,
+    refusal,
+    update: { eventId: row.id, eventType: row.type, receivedAt: row.receivedAt, clubName: club?.name ?? null, lastResult: lastResultWords(row) },
   };
 }
 
@@ -273,6 +322,11 @@ export function serverReplayDeps(): ReplayDeps {
     done: (id, outcome) => billingEventStore.done(id, outcome),
     fail: (id, message) => billingEventStore.fail(id, message),
     run: async (event, customerId, opts) => (await import('./billing-webhook-handler')).runVerifiedBillingEvent(event, customerId, opts),
+    async recordResult({ actorEmail, orgId, reason, oldValue, newValue }) {
+      // The Strict write throws on a rejected insert, so the caller's `.catch` reports it (the plain write only logs to the console).
+      const { writePlatformAuditLogStrict } = await import('./platform-audit');
+      await writePlatformAuditLogStrict(actorEmail, orgId, REPLAY_RESULT_ACTION, 'billing_record', oldValue, newValue, { reason });
+    },
     report: async error => (await import('./observability')).captureError(error, { route: '/api/platform-admin/watching-stripe/replay', method: 'POST' }),
   };
 }

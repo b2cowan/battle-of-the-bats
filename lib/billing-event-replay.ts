@@ -14,6 +14,8 @@
  */
 import { consoleDate, consoleWhen } from './console-dates';
 import { planLabel, subscriptionStatusLabel } from './platform-labels';
+import { shownError } from './watching-stripe-words';
+import { obj } from './platform-story-view';
 
 /** The change-log action a replay writes first (its failure is `replay_billing_event_failed`). */
 export const REPLAY_ACTION = 'replay_billing_event';
@@ -278,6 +280,93 @@ export function replayResultWords(r: ReplayResult): { title: string; sentence: s
       };
   }
 }
+
+// ── Session 2 · the screen (Health › Stripe) ──────────────────────────────────────────────────────────────────────────
+
+/**
+ * The companion change-log row written AFTER a run (owner call 2026-11-08: the log keeps what a replay changed). The first row
+ * (`REPLAY_ACTION`) is written before the run and the log cannot be edited (mig 429), so what changed goes in a second row.
+ * Best-effort, NOT audit-first: the change already happened, and the window has shown it.
+ */
+export const REPLAY_RESULT_ACTION = 'replay_billing_event_result';
+
+/** The key the companion row adds when the run failed partway (part of it was saved). */
+const RUN_KEY = 'Run';
+const UPDATE_KEY = 'Update';
+
+/** The club's record as the companion row keeps it: the words staff read, keyed by the window's labels, after the update's name. */
+export function resultRowValue(eventType: string, eventId: string, record: BillingRecord | null, failedPartway = false): Record<string, string> {
+  const value: Record<string, string> = { [UPDATE_KEY]: `${eventType} · ${eventId}` };
+  for (const f of FIELDS) value[f.label] = f.word(record?.[f.key] ?? null);
+  if (failedPartway) value[RUN_KEY] = 'Failed partway';
+  return value;
+}
+
+/** The Story's line for a companion row: "Status: Past due → Active · Paid through: Nov 8, 2026 → Dec 8, 2026", or "Nothing changed". */
+export function resultRowStory(oldValue: unknown, newValue: unknown): { title: string; sub: string } {
+  const o = obj(oldValue) ?? {};
+  const n = obj(newValue) ?? {};
+  const changes = FIELDS.map(f => f.label)
+    .filter(label => typeof n[label] === 'string' && o[label] !== n[label])
+    .map(label => `${label}: ${typeof o[label] === 'string' ? o[label] : '—'} → ${n[label]}`);
+  return {
+    title: n[RUN_KEY] ? 'Replay of a Stripe update failed partway' : 'Replayed a Stripe update',
+    sub: changes.length ? changes.join(' · ') : 'Nothing changed',
+  };
+}
+
+/** What the window shows before the click (the GET's answer). Never the payload: our own row's facts and the club's name. */
+export type ReplayLookup = {
+  eventId: string;
+  eventType: string;
+  receivedAt: string;
+  clubName: string | null;
+  lastResult: string;
+};
+
+/** "Last result" in the window, from our own row; a stored error through the Stripe page's own cut (no key is printed). */
+export function lastResultWords(row: ReplayRow): string {
+  if (row.processedAt) return `Finished ${consoleWhen(row.processedAt)}`;
+  if (row.ignoredReason) return 'Set aside when it arrived';
+  if (row.error) return `Failed: ${shownError(row.error)}`;
+  if (row.claimedAt) return 'Taken but never finished';
+  return 'Not run yet';
+}
+
+/** The window's words (drawings tab 2, as Session 1's rulings narrowed them). */
+export const REPLAY_WINDOW = {
+  door: 'Replay',
+  opening: 'Opening…',
+  title: 'Replay this update?',
+  sentence: 'Runs Stripe’s update through the product again, using what Stripe holds for it now. It does not charge, refund or change anything in Stripe.',
+  facts: { update: 'Update', received: 'Received', club: 'Club', lastResult: 'Last result', messages: 'Messages' },
+  noClub: 'Not one club’s (for example a dispute)',
+  messages: 'No message is sent to the customer by a replay',
+  whyPlaceholder: 'Say what you are fixing, for the change log.',
+  foot: 'Goes in the change log with your name and your reason.',
+  confirm: 'Replay',
+  close: 'Close',
+  done: 'Done',
+  again: 'Replay again',
+  table: { head: 'Billing record', before: 'Before', after: 'After', both: 'Before and after', changed: 'changed' },
+  logged: 'Logged in the change log.',
+  attemptLogged: 'The attempt is in the change log.',
+  find: {
+    title: 'Replay an update by its id',
+    label: 'Update id',
+    placeholder: 'evt_…',
+    button: 'Find update',
+    finding: 'Finding…',
+    caption: `Stripe keeps an update for ${STRIPE_EVENT_RETENTION_DAYS} days.`,
+  },
+  replayed: 'Replayed',
+  replayedBy: (when: string, who: string) => `${when} by ${who}`,
+  replayedUnread: 'Today’s replays could not be read just now.',
+  // A lost answer may have followed a run (the refund window's rule): never "nothing happened".
+  noAnswer: 'No answer came back, so it is not known whether the replay ran. Reload the page: an update that ran has left the failing list.',
+} as const;
+
+export type ReplayResultWords = ReturnType<typeof replayResultWords>;
 
 /** The answer's kind from what the run came to and the two reads. */
 export function resultKind(outcome: 'processed' | 'no_customer' | 'not_ours' | 'failed', rows: RecordRow[]): ReplayResultKind {
