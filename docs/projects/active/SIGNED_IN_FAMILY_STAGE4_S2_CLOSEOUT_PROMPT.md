@@ -150,7 +150,8 @@ Records: `DATA_DICTIONARY.md` (the `mailing_address` entry ONLY), the schema sna
   ONE address; with the tier off every new route 404s and every email, the record window, the coach card and the public site's
   About row are unchanged; no send path reads `second_parent_stops`; the stop page writes nothing on GET; the rep invitation is
   cancelled when its email fails; Publish refuses only with the tier on. Apply what is real; record what is the owner's.
-- [x] **Step 3 · /legal, then the commit — DONE 2026-11-08** (hashes recorded at the foot of this block).
+- [x] **Step 3 · /legal, then the commit — DONE 2026-11-08.** **Committed `5ca68c786`** (48 files, only this scope; the other
+  session's staged bank-archive moves were left staged, untouched); the record edits follow as a second commit. Not pushed.
   **/legal's five answers** (full text in the closeout block of `drafts/GUARDIAN_CONSENT_STAGE4.md`; no shipped word changed):
   (i) the second parent's fine print without draft (c)'s first sentence: acceptable, because the who-added line says it in the
   same email; restore the sentence if that line is ever removed. (ii) a coach team's rep invitation with no mailing address (O4):

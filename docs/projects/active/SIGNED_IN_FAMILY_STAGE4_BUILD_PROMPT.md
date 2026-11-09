@@ -377,7 +377,7 @@ existing dev tokens until Part 9 notes the drop.
     tests/unit/{children-duplicates,coach-call-ups-guard,roster-delete-guard,league-second-parent,team-move-coverage}.test.ts, this
     prompt, SIGNED_IN_FAMILY_ACCOUNTS_PLAN.md (the O1/O2 + build-decisions paragraph).
   - **Next: Session 2 = Parts 4–5** (the accept page to the drawing; the emails, with O1 = A). `/clear` first.
-- **Session 2 (2026-11-08): Parts 4–5 BUILT, not committed (the owner says when).** Short recap given before code; O3 (mailing
+- **Session 2 (2026-11-08): Parts 4–5 BUILT; simplify, review and /legal done in the closeout; committed `5ca68c786` 2026-11-08** (not pushed; the closeout's Progress block holds the review's fixes and owner questions R1–R3). Short recap given before code; O3 (mailing
   address = a new field, refuse until set) and O4 (a coach team's contact = the coach's own email) ruled by the owner (above).
   - **Part 4 — the accept page** rebuilt to drawing tab 2 (`app/(consumer)/family/claim/[token]/` page + ClaimClient): email first
     (masked hint) → "Choose a password" (new account, created confirmed and joined in ONE request, `acceptWithNewAccount`; the browser
@@ -427,8 +427,7 @@ existing dev tokens until Part 9 notes the drop.
     index coverage, a stray root `debug.log`); schema parity lists 453/454 as dev-only (expected until prod).
   - **For the walk (Session 4), the dev club needs:** the tier on in the owner's `.env.local` (ask first), `RESEND_API_KEY`,
     `UNSUBSCRIBE_SECRET`, and the club's contact email and mailing address set on the public site.
-  - **First: the Session 2 closeout** (`SIGNED_IN_FAMILY_STAGE4_S2_CLOSEOUT_PROMPT.md`: /simplify → /review → /legal + the commit,
-    three chats). **Then: Session 3 = Parts 6–8** (the family pages incl. `/family` and the joined note, the calendar, the record window's statuses +
+  - **The Session 2 closeout is DONE** (`SIGNED_IN_FAMILY_STAGE4_S2_CLOSEOUT_PROMPT.md`; commit `5ca68c786`). **Next: Session 3 = Parts 6–8** (the family pages incl. `/family` and the joined note, the calendar, the record window's statuses +
     Send again → `resendPlacementInvitation({ reconnects: true })`, Remove a parent, the join window's names, the stop page's (d)). `/clear` first.
 - **Session 2 starts here (handed over by Session 1).** Paste: `execute Session 2 (Parts 4–5) of @docs/projects/active/SIGNED_IN_FAMILY_STAGE4_BUILD_PROMPT.md`.
   - The PM UX gate was met in Session 1 for the whole stage; present a short plain-language recap of what Parts 4–5 change before code.
