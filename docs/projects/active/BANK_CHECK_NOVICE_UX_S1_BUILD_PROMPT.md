@@ -1,6 +1,5 @@
-**S1 done 2026-11-08 (built, reviewed; plan §4 has the record and what S1 left for S4/S2/S1b), next S1b — start at
-Session B. S1's settled words are in `lib/bank-tab-words.ts` (coach keys `coachCheckPurpose` onward); the start card
-still says "Statement date" / "Pick a bank statement…", which is S1b's to replace.**
+**S1 done 2026-11-08, committed `bdb56dd2f` (plan §4 has the record and what S1 left for S4/S2/S1b). Next S1b — start
+at Session B; read its "S1 hand-over" first.**
 
 # Bank check through a volunteer's eyes — S1 (words) and S1b (the club's start) — build prompt, two sessions
 
@@ -66,6 +65,29 @@ printed check's starting-point line, refusals `bad_item` / `bad_start_item` / `b
 dead end once the latest start is yesterday). No migration: the start row keeps meaning "the balance at the end of day D";
 the card stores the day before the one typed; every screen shows D + 1. Data dictionary note on
 `bank_checks.statement_end_date` for a `start` row.
+
+**S1 hand-over (what S1 settled that S1b builds on, `bdb56dd2f`):**
+- The check form is "Check your bank balance" + a purpose line (club: "your books") + **Date** (`checkDate`) + one note
+  line (`balanceHint` until a balance is typed, `saveOffNote`, `replacesNote(date)`, `draftKept`). Draw the form-after-a-
+  start FROM this shipped card (its purpose line and note line exist now), not from D-drawings.
+- `statementDate` ("Statement date") and `setupLead` are now used ONLY by the start card — S1b replaces them; delete
+  `statementDate` if nothing else reads it after.
+- The list is **"Balance checks"**, its column **"Date"**, a window **"The check for {date}"**, **"Check this date
+  again"**; empty club list "No balance checks since the starting point yet." — row 14's start cell and the "starting
+  point" words are yours to rename with the start's names.
+- The club band's middle caption (`bandShouldCaption`) still says "Your books on {date}, less what hasn't reached the
+  bank yet" — row 9 is yours ("…since checking started {D+1}, adjusted for…": "adjusted", since an uncashed cheque is
+  added). The first tile's caption is now "Bank balance on {date}".
+- Refusals S1 reworded (do not undo): `ends_in_future`, `before_season`, `bad_team_item`. Yours: `bad_item`,
+  `bad_start_item`, `before_start`, `start_exists`, `start_after_checks`, `start_has_checks`, `no_start`, and
+  `bad_figures` / `bad_date` (both still say "statement").
+- The early A17 patch predates all of this: expect conflicts in `bank-tab-words.ts`, `BankCheckForm.tsx`, the help
+  article and the bank tests (S1 added pins in `bank-r2c-screens-guard` §14 and `bank-coach-view-guard` §9).
+- Still uncommitted from ANOTHER session in the same files: the Account pill sub-line (`throughResult`,
+  `notCheckedLine` in the words; `throughWords` in `bank-screen.ts`; `BankTab.tsx`) and a permits sentence in
+  `accounting.tsx` (~line 703). Commit around them (S1 did it with `.probe/bank-ux-s1/commit.cjs` — temp index, the
+  other session's edits put back to HEAD's text, hook run on the index, compare-and-swap).
+- The printed check's title/"statement" words are S4's, but the starting-point line on it is yours (§1).
 
 **Steps:**
 1. **Redraw** the start card (D4) and the check form as it opens right after a start, as a Claude Artifact at true size

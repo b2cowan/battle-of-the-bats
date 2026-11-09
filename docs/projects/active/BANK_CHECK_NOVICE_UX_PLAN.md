@@ -1,7 +1,7 @@
 # Bank check through a volunteer's eyes — plan of record
 
-**Status:** STARTED 2026-11-08. Every owner ask is ruled (§0). **S1 built 2026-11-08** (§4; commit hash goes in §4
-when committed; owner walk owed). Next: S1b (`BANK_CHECK_NOVICE_UX_S1_BUILD_PROMPT.md`, Session B). PM brief:
+**Status:** STARTED 2026-11-08. Every owner ask is ruled (§0). **S1 committed `bdb56dd2f` 2026-11-08** (§4; owner walk
+owed). Next: S1b (`BANK_CHECK_NOVICE_UX_S1_BUILD_PROMPT.md`, Session B). PM brief:
 `BANK_CHECK_NOVICE_UX_PM_BRIEF.md`.
 
 **Source:** the evaluation "The Volunteer's Bank Check" (2026-11-08), published at
@@ -165,7 +165,7 @@ sentence; the walked working-draft cards change shape and their walks are redone
 - 2026-11-08 — Project started. All asks ruled (§0). Plan, PM brief and the S1/S1b build prompt written. The early A17
   build was saved as a patch and taken out of the working copy (only its own hunks; another session's Account-pill and
   help hunks in the same files left in place); bank tests back to 434/434.
-- 2026-11-08 — **S1 built** (both portals). Rows 1, 3, 4, 5 (form), 6, 7, 8, 10 (the draft's own sentence left for S7),
+- 2026-11-08 — **S1 built, committed `bdb56dd2f`** (both portals). Rows 1, 3, 4, 5 (form), 6, 7, 8, 10 (the draft's own sentence left for S7),
   11, 13, 16 + A15, 19, 21, 22, 23, 25; the band's first caption ("Bank balance on {date}", drawn in D1); the help
   (club article's read-only paragraph made true; both articles' words, keywords and searchText; the coach Ledger
   article's "fourth view"). `/marketing` final read (helper) changed the page's proposals in five places: list
