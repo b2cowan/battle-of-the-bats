@@ -1,7 +1,7 @@
 # Bank check through a volunteer's eyes — plan of record
 
 **Status:** STARTED 2026-11-08. Every owner ask is ruled (§0). **S1 committed `bdb56dd2f` 2026-11-08** (§4; owner walk
-owed). **S1b committed `4b9e9a655` 2026-11-08** (§4); owner walk §497 PASSED 24/24 2026-11-09; S2 built 2026-11-09, uncommitted (§4; owner walk §503 owed); next S3 (S1 needs no walk, owner: "the words are good"). PM brief:
+owed). **S1b committed `4b9e9a655` 2026-11-08** (§4); owner walk §497 PASSED 24/24 2026-11-09; S2 committed `0147063c5` 2026-11-09 (§4; owner walk §503 owed); next S3 (S1 needs no walk, owner: "the words are good"). PM brief:
 `BANK_CHECK_NOVICE_UX_PM_BRIEF.md`.
 
 **Source:** the evaluation "The Volunteer's Bank Check" (2026-11-08), published at
@@ -209,7 +209,7 @@ sentence; the walked working-draft cards change shape and their walks are redone
   Start here and saved one check on the shared "Walk chequing" account; removed by id the same minute (the probe now
   stops before any save off its own account). Starts saved before S1b now read one day later, as ruled ("Gaming
   account": Nov 1). Bank + help tests 474/474; typecheck clean for the scope; lint, spelling, dictionary clean.
-- 2026-11-09 — **S2 built (the door), uncommitted; owner walk Owner QA Ledger §503** https://claude.ai/artifact/VQpZjGgcVWvw3s7AwKXfX4.
+- 2026-11-09 — **S2 built (the door), committed `0147063c5`; owner walk Owner QA Ledger §503** https://claude.ai/artifact/VQpZjGgcVWvw3s7AwKXfX4.
   Drawings https://claude.ai/artifact/RUxWEgRgc8fLvAuLZeJF8e (source `BANK_CHECK_NOVICE_UX_S2_DRAWINGS.html`); `/design`
   before hand-off: quiet line in the portal's own quiet grey (it had a lighter one that failed contrast), both lines ONE door,
   the phone hold keeps the invitation's height. **Owner rulings 2026-11-09:** the club invitation replaces ONLY the
@@ -238,3 +238,7 @@ sentence; the walked working-draft cards change shape and their walks are redone
   SKIPPED (other sessions' shared-chrome edits widen it to the whole product). **Owner calls open:** (1) "How the bank check
   works" vs "How the balance check works" (the view is named "Balance check"); (2) on 15U AAA the Upcoming bills panel pushes
   the invitation well below the first screen — move it above the panel, or leave it (ruled: above the rail).
+  **Commit split (2026-11-09):** `0147063c5` holds everything except the club Overview line's invitation code
+  (`BankOverviewLine.tsx`, the `.overviewInvite` styles in `Bank.module.css`, two club-line pins in `bank-r2c-screens-guard`),
+  which sits inside another session's uncommitted one-line Overview rewrite and rides with that commit; the club Overview keeps
+  today's wording until it lands. Clean-checkout proof: typecheck clean, bank + room-key + help guards 528/528.
