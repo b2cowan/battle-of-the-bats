@@ -49,7 +49,7 @@ Every outstanding piece of work in this plan has a home in one of these stages. 
 - **Stage 5 — The online-payment fee:** NOT STARTED — tax on the fee, monthly statement per club. (Its address step is
   done: brought forward as Stage 2 Part 2b, committed `947fd8192` 2026-11-05.) Depends on Club Stage 12,
   T2/T3, and **closes with Club Stage 12** (a required stage, not a trigger).
-- **Stage 6 — Terms:** NOT STARTED — Terms of Service, signup acceptance, payments terms, Québec review, privacy policy.
+- **Stage 6 — Terms:** PLANNED 2026-11-08 → [GST_HST_STAGE6_TERMS_PLAN.md](GST_HST_STAGE6_TERMS_PLAN.md) (+ PM brief); owner decision sheet (O1–O8, P1–P7 + three lookups) owed. Drafts v0.1 under `docs/agents/legal/drafts/`, not approved, not published. The renewal-date cancel is on production since the 2026-11-05 release (`d10261fdd`); what is left is in the plan's §5 (refresh, pages + links, acceptance at every door, the purchase email, the org-delete files fix, reviews, publication). Payments terms (L3) need no work until payments are switched on. Kickoff: [GST_HST_STAGE6_KICKOFF_PROMPT.md](GST_HST_STAGE6_KICKOFF_PROMPT.md).
   `/legal` drafts it, the owner approves it (no lawyer gate, owner 2026-11-04); gates the first paid subscription of any plan not yet on sale.
 - **Stage 7 — Provincial registrations as they come due:** NOT STARTED — **STANDING TRIGGER** (BC $10,000, Québec $30,000,
   first Saskatchewan or Manitoba sale).

@@ -8,6 +8,34 @@
 
 ---
 
+### 2026-11-08 — Not offered in Québec for now; checkout declines a Québec billing address (Decided)
+**Status:** **Decided** (owner, 2026-11-08, GST/HST Stage 6 owner sheet, O4 = A, as recommended).
+**Decision:** FieldLogicHQ is **not currently offered to customers in Québec**. The Terms of Service say so, and the product
+makes it true: **checkout declines a Québec billing address** with a plain line. Any existing Québec account (none known) is left
+alone. Canada outside Québec stays the market; the US stays as already logged (once the US work is done).
+**Rationale:** Québec's Law 25 (privacy) and its French-language rules for standard-form contracts apply from the **first** Québec
+customer — French Terms, privacy policy and checkout, plus Law 25's own duties. No Québec customer is on record, and nothing has
+been sold anywhere. Saying "not offered" in the Terms while checkout still accepts a Québec address would be a policy the product
+does not keep, so the refusal is part of the decision, not a follow-up. Full reasoning: `docs/projects/active/GST_HST_STAGE6_TERMS_PLAN.md`
+§3 (ruled block) and backlog L7 in `docs/agents/legal/LEGAL_INDEX.md`.
+**Revisit when:** a Québec club or coach asks to buy — that is the trigger to scope L7 (French documents, Law 25) as its own
+project, not a reason to sell quietly before it is done.
+**Affects:** Terms §1/§2 wording · checkout (the billing-address step) · any sales or demo conversation with a Québec prospect.
+Not pricing, plans or gates.
+**Handoff:**
+```
+HANDOFF → /legal
+- Stage 6 step 6.1: Terms v0.2 states "not currently offered in Québec" (O4).
+HANDOFF → /plan (already in the plan)
+- Stage 6 step 6.4: checkout declines a Québec billing address, with a plain line.
+HANDOFF → /marketing
+- No customer copy promises "across Canada" today (checked 2026-11-08). When marketing next writes a coverage line, it
+  must not claim Québec; no rewrite owed now.
+```
+**Supersedes:** nothing.
+
+---
+
 ### 2026-11-06 — Club's headline promise to a president: ONE PLACE THAT PULLS THE WHOLE CLUB TOGETHER; it FOLLOWS the Club release, League Plus carries it too, and the coach's books stay the team's (all Decided)
 **Status:** **Decided** for the direction (owner, 2026-11-06, Club Tier Stage 13 expanded: "yes that should be our direction,
 record it"). **Open questions 1–3 below RULED by the owner the same day** (see "Ruled"). One item still open: each team's

@@ -11,9 +11,9 @@ and a pointer here.
 
 | Document | Home | Version | Status | Last reviewed |
 |---|---|---|---|---|
-| Terms of Service (subscriptions) | `drafts/TERMS_OF_SERVICE.md` | 0.1 | draft — owner decisions O1–O6 + 4 product items before publish | 2026-11-05 |
+| Terms of Service (subscriptions) | `drafts/TERMS_OF_SERVICE.md` | 0.1 | draft — Stage 6 plan 2026-11-08 (`docs/projects/active/GST_HST_STAGE6_TERMS_PLAN.md`): owner sheet O1–O8, truth table §1; the renewal-date cancel is on prod since 2026-11-05 | 2026-11-08 (notes) |
 | Payments terms (clubs taking online payments) | product placeholder only | placeholder | not started | — |
-| Privacy policy (FieldLogicHQ's own) | `drafts/PRIVACY_POLICY.md` | 0.1 | draft — owner items P1–P6 before publish; 9 product findings (2026-11-07: tax records never end, §9 note 6) | 2026-11-07 |
+| Privacy policy (FieldLogicHQ's own) | `drafts/PRIVACY_POLICY.md` | 0.1 | draft — owner items P1–P7 before publish; 9 product findings (2026-11-07: tax records never end, §9 note 6); the §3/§5/§6/§9 edits for Stage 14, tax records, staff lists and our bookkeeping are listed in the Stage 6 plan §2 (not yet applied) | 2026-11-07 |
 | Data-processing terms for clubs (FieldLogicHQ as service provider) | — | — | not started | — |
 | Subprocessor list | — | — | not started | — |
 | Guardian consent wording | product placeholder only | placeholder | not started | — |

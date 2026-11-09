@@ -11,6 +11,8 @@
 **Change log**
 - 0.1 · 2026-11-05 · First draft by `/legal`, written against the product as ruled on 2026-11-05 (see "Before this can be
   published" at the bottom — three things the product must do first).
+- 0.1 · 2026-11-08 · Owner notes only (customer text unchanged): the renewal-date cancel is on production; the Stage 6 plan
+  (`docs/projects/active/GST_HST_STAGE6_TERMS_PLAN.md`) holds the truth table and the refresh list for v0.2.
 
 > **How to read this draft.** Text in `[SQUARE BRACKETS]` is a fact the owner must fill in. Text in a `> NOTE` block is
 > for the owner and is deleted before publication. Everything else is the customer-facing text, written in plain
@@ -166,9 +168,10 @@ owner at least 30 days' email notice. If we end your plan for a reason that is n
 part of the period you paid for.
 
 > NOTES for the owner —
-> 1. **The cancel paragraph describes the 2026-10-31 ruling** (plan ends at the renewal date). It is built on dev, **not
->    on production**: production still ends access the moment you cancel. These Terms cannot be published until the
->    renewal-date behaviour ships — otherwise they promise time the product takes away.
+> 1. **The cancel paragraph describes the 2026-10-31 ruling** (plan ends at the renewal date). **Corrected 2026-11-08: it is on
+>    production** since the 2026-11-05 release (`d10261fdd`). Stripe's customer portal opens with our own configuration, built
+>    from code with cancel at the period end and no refund (G13(b), 2026-11-08), so it holds on every door. Still to read in the live Stripe dashboard before publishing: the retry setting
+>    (F2) and the customer emails — Stage 6 plan §3.
 > 2. **The yearly-renewal reminder is a recommendation, and nothing sends it today** (finding). Why I recommend it: a coach
 >    buying Premium is an individual consumer; a silent yearly renewal is the single most-complained-about subscription
 >    practice, it is what card disputes cite, and Ontario's new Consumer Protection Act, 2023 (passed, **not confirmed
@@ -316,7 +319,8 @@ change, we may ask you to accept the new Terms when you next sign in.
 ## Before this can be published (owner — delete this section on publication)
 
 **Product must do first** (findings, routed to `/plan`):
-1. **Ship the renewal-date cancel** (2026-10-31 ruling) to production — §8 describes it; production still ends at once.
+1. ~~Ship the renewal-date cancel to production~~ — **done, on production since 2026-11-05**; the portal door is answered
+   (our own settings, from code); the live retry setting and customer emails are still to read (Stage 6 plan §3).
 2. **Signup acceptance**: a required "I agree to the Terms of Service and Privacy Policy" at account and organization
    signup and at checkout, recording the **version, the person, and the time** — reuse the payout set-up's shape (it
    already records version, user, email, time, and refuses a version that changed mid-window). Existing accounts accept

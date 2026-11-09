@@ -172,7 +172,8 @@ safety; or as part of selling or transferring FieldLogicHQ's business, in which 
 as this policy says, and we will tell account holders.
 
 > NOTES — must be closed before publishing:
-> 1. **Supabase region**: unknown from the code. Check the project settings in the Supabase dashboard and fill it in.
+> 1. **Supabase region — answered 2026-11-08:** the production project is in AWS us-east-2 (Ohio, United States), on the Pro
+>    plan (Supabase Management API). Fill §6's row with "United States" in v0.2 (Stage 6 step 6.1).
 > 2. **Contracts (data-processing terms)**: Stripe's is in place. **Supabase, AWS and Resend are unconfirmed.** All three
 >    offer standard data-processing terms (AWS's is part of its service terms; Supabase and Resend publish theirs). Confirm
 >    each — the "by contract" sentence must be true. (PIPEDA principle 4.1.3: we stay responsible for information a

@@ -50,8 +50,11 @@ registered with ServiceOntario 2026-11-06** (renewal date still to be read off t
   (`docs/agents/accounting/RECORDS_RETENTION_AND_LOCATION.md` ~L8, ~L42).
 - **Confirmed by code census 2026-11-05:** email goes through **Resend** (`lib/email.ts:31`); **no third-party analytics,
   error monitoring, advertising cookies, AI/LLM service or SMS**; fonts are served from our own site; web push uses the
-  browser's push service. The business inbox that receives org-deletion requests is a **free Gmail account**. *(Unconfirmed:
-  the Supabase region — not in the code.)* No MFA exists. No automatic purge at the end of a retention window; org delete
+  browser's push service. The business inbox that receives org-deletion requests is a **free Gmail account**. **Supabase
+  production project: AWS us-east-2 (USA), Pro plan** (read from the Supabase Management API 2026-11-08; the dev project is
+  ca-central-1 and is not what any policy describes). Stripe's customer portal is always opened with our own configuration,
+  built from code: cancel at the period end, no refund, no plan switches (production code, read 2026-11-08; the live copy is
+  created on the first live open). No MFA exists. No automatic purge at the end of a retention window; org delete
   does not touch file storage. Full list: `drafts/PRIVACY_POLICY.md` § Product findings.
 - **Stripe:** a data-processing addendum is in place (`FACILITATED_PAYMENTS_COUNSEL_BRIEF.md` ~L37).
   *(Unconfirmed: Supabase, AWS and the email provider's DPA status — establish before a subprocessor list
@@ -77,7 +80,10 @@ registered with ServiceOntario 2026-11-06** (renewal date still to be read off t
   subprocessor list).
 - No legal links in the site footer; the account page leaves Terms and Privacy out on purpose (owner
   2026-07-20: omit rather than link a page that 404s).
-- No "I agree" at account or organization signup.
+- No "I agree" at account or organization signup. **Census 2026-11-08** (Stage 6 plan §7): accounts are created at about eight
+  doors, two with no sign-up page (the account a tournament registration makes for the registering coach; the "follow this
+  tournament" nudge, which lets anyone — possibly a teenage player — make an account). Organizations at four routes; plans at
+  about six.
 
 ## Professional review — no gates
 - Not gates: an accountant; a US lawyer (owner 2026-10-31); **Canadian counsel for online payments in

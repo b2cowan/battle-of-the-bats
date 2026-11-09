@@ -1,0 +1,487 @@
+<title>Stage 6 Terms Decisions</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one 880px reading column; a sticky header carries the progress and the tabs; one tab open at a time, minimal scroll. */
+:root {
+  --bg: #f4f6f8; --surface: #ffffff; --ink: #18212c; --muted: #586474; --line: #dbe1e8;
+  --accent: #2c5b88; --accent-ink: #ffffff; --accent-soft: #e5eef7;
+  --good: #24704a; --good-soft: #e3f2ea; --warn: #985f0c; --warn-soft: #fbf0dc; --bad: #a83535; --bad-soft: #f8e4e4;
+  --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0f141a; --surface: #171f28; --ink: #e4e9ef; --muted: #9ba7b6; --line: #29333f;
+  --accent: #82b3e0; --accent-ink: #0f141a; --accent-soft: #1b2b3b;
+  --good: #63c391; --good-soft: #15281f; --warn: #e2a64c; --warn-soft: #2c2213; --bad: #e57a7a; --bad-soft: #2d1a1a;
+  color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0f141a; --surface: #171f28; --ink: #e4e9ef; --muted: #9ba7b6; --line: #29333f;
+  --accent: #82b3e0; --accent-ink: #0f141a; --accent-soft: #1b2b3b;
+  --good: #63c391; --good-soft: #15281f; --warn: #e2a64c; --warn-soft: #2c2213; --bad: #e57a7a; --bad-soft: #2d1a1a;
+  color-scheme: dark; }
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 15px; line-height: 1.55; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--surface); }
+.wrap { max-width: 880px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+
+header.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--surface); border-bottom: 1px solid var(--line); }
+.top .wrap { padding-block: 14px 0; display: grid; gap: 10px; }
+.titlerow { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px; }
+h1 { font-size: 20px; line-height: 1.25; margin: 0; font-weight: 700; text-wrap: balance; }
+.stamp { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.progress { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 13px; color: var(--muted); align-items: center; }
+.progress b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.bar { flex: 1 1 160px; height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; min-width: 120px; }
+.bar i { display: block; height: 100%; background: var(--accent); width: 0; transition: width .25s; }
+nav.tabs { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; margin-inline: -4px; }
+nav.tabs::-webkit-scrollbar { display: none; }
+.tab { flex: 0 0 auto; border: 0; background: none; font: inherit; font-size: 14px; color: var(--muted); padding: 9px 12px 10px; cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; }
+.tab:hover { color: var(--ink); }
+.tab[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+.tab .n { font-family: var(--mono); font-size: 11px; margin-left: 6px; padding: 1px 6px; border-radius: 9px; background: var(--accent-soft); color: var(--accent); }
+.tab .n.done { background: var(--good-soft); color: var(--good); }
+.tab:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible, label.opt:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+main .wrap { padding-block: 22px 60px; display: grid; gap: 18px; }
+section.panel { display: grid; gap: 16px; }
+h2 { font-size: 17px; margin: 0; text-wrap: balance; }
+h3 { font-size: 15px; margin: 0; text-wrap: balance; }
+p { margin: 0; max-width: 68ch; }
+.lede { color: var(--muted); }
+.eyebrow { font-family: var(--mono); font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+
+.findings { display: grid; gap: 10px; }
+.finding { display: grid; grid-template-columns: 6px 1fr; gap: 0 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px 14px 0; overflow: hidden; }
+.finding::before { content: ""; grid-row: 1 / span 2; border-radius: 0 3px 3px 0; background: var(--muted); }
+.finding.good::before { background: var(--good); } .finding.warn::before { background: var(--warn); } .finding.bad::before { background: var(--bad); }
+.finding h3 { margin-bottom: 4px; }
+.finding p { color: var(--muted); font-size: 14px; }
+
+ol.steps { margin: 0; padding: 0; list-style: none; counter-reset: s; display: grid; gap: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+ol.steps li { counter-increment: s; display: grid; grid-template-columns: 34px 1fr; gap: 10px; padding: 11px 14px; border-top: 1px solid var(--line); }
+ol.steps li:first-child { border-top: 0; }
+ol.steps li::before { content: counter(s); font-family: var(--mono); font-size: 12px; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); }
+ol.steps li.here::before { background: var(--accent); color: var(--accent-ink); }
+ol.steps b { display: block; font-weight: 600; }
+ol.steps span { color: var(--muted); font-size: 14px; }
+
+.twocol { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+.box { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; display: grid; gap: 8px; min-width: 0; }
+.box ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 14px; }
+
+.toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+.btn { font: inherit; font-size: 14px; font-weight: 600; border-radius: 6px; padding: 8px 14px; cursor: pointer; border: 1px solid var(--accent); background: var(--accent); color: var(--accent-ink); }
+.btn.quiet { background: var(--surface); color: var(--accent); }
+.btn:disabled { opacity: .5; cursor: default; }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; display: grid; gap: 12px; padding: 16px 18px 18px; }
+.card.answered { border-color: color-mix(in srgb, var(--good) 45%, var(--line)); }
+.cardhead { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: baseline; justify-content: space-between; }
+.cardhead h3 { font-size: 16px; }
+.code { font-family: var(--mono); font-size: 12px; color: var(--accent); background: var(--accent-soft); padding: 2px 7px; border-radius: 4px; margin-right: 8px; }
+.clause { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.chip { font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 10px; background: var(--line); color: var(--muted); }
+.chip.ok { background: var(--good-soft); color: var(--good); }
+.chip.new { background: var(--warn-soft); color: var(--warn); }
+.why { color: var(--muted); font-size: 14px; }
+.opts { display: grid; gap: 8px; }
+label.opt { display: grid; grid-template-columns: 20px 1fr; gap: 10px; align-items: start; border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; cursor: pointer; background: var(--bg); }
+label.opt:hover { border-color: var(--accent); }
+label.opt.on { border-color: var(--accent); background: var(--accent-soft); }
+label.opt input { margin: 3px 0 0; width: 16px; height: 16px; accent-color: var(--accent); }
+.optlabel { display: block; font-weight: 500; }
+.optnote { display: block; color: var(--muted); font-size: 13.5px; margin-top: 2px; }
+.rec { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--good); margin-left: 8px; }
+textarea, input[type="text"] { width: 100%; font: inherit; font-size: 14px; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; }
+textarea { min-height: 52px; resize: vertical; }
+.notelabel { font-size: 12.5px; color: var(--muted); display: grid; gap: 4px; }
+.need { color: var(--warn); font-size: 13px; }
+
+.where { font-size: 13.5px; background: var(--bg); border: 1px dashed var(--line); border-radius: 6px; padding: 8px 10px; color: var(--muted); }
+.where b { color: var(--ink); font-weight: 600; }
+
+.tablewrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 620px; }
+th, td { text-align: left; padding: 9px 12px; border-top: 1px solid var(--line); vertical-align: top; }
+thead th { border-top: 0; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); font-weight: 600; background: var(--bg); }
+td.ref { font-family: var(--mono); font-size: 12px; color: var(--muted); white-space: nowrap; }
+.st { font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 10px; white-space: nowrap; display: inline-block; }
+.st.y { background: var(--good-soft); color: var(--good); }
+.st.p { background: var(--warn-soft); color: var(--warn); }
+.st.n { background: var(--bad-soft); color: var(--bad); }
+td small { color: var(--muted); display: block; margin-top: 2px; font-size: 13px; }
+
+pre.out { white-space: pre-wrap; word-break: break-word; font-family: var(--mono); font-size: 12.5px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px; margin: 0; max-height: 52vh; overflow: auto; }
+.toast { font-size: 13px; color: var(--good); }
+@media (prefers-reduced-motion: reduce) { .bar i { transition: none; } }
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <div class="titlerow">
+      <h1>Stage 6: Terms, privacy policy and “I agree”</h1>
+      <span class="stamp">Decision sheet · 2026-11-08 · drafts v0.1</span>
+    </div>
+    <div class="progress" aria-live="polite">
+      <span><b id="pDec">0</b> of <b id="pDecT">13</b> decided</span>
+      <span><b id="pLook">0</b> of <b>3</b> lookups</span>
+      <div class="bar" aria-hidden="true"><i id="pBar"></i></div>
+    </div>
+    <nav class="tabs" role="tablist" aria-label="Sections">
+      <button class="tab" role="tab" id="t-overview" data-tab="overview">Overview</button>
+      <button class="tab" role="tab" id="t-terms" data-tab="terms">Terms decisions<span class="n" id="nTerms">0/8</span></button>
+      <button class="tab" role="tab" id="t-privacy" data-tab="privacy">Privacy decisions<span class="n" id="nPrivacy">0/5</span></button>
+      <button class="tab" role="tab" id="t-lookups" data-tab="lookups">Lookups<span class="n" id="nLook">0/3</span></button>
+      <button class="tab" role="tab" id="t-truth" data-tab="truth">What’s true today</button>
+      <button class="tab" role="tab" id="t-send" data-tab="send">Send answers</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+
+    <!-- OVERVIEW -->
+    <section class="panel" id="overview" role="tabpanel" aria-labelledby="t-overview">
+      <div style="display:grid;gap:8px">
+        <span class="eyebrow">What this sitting is for</span>
+        <p>Thirteen decisions and three lookups, all in one sitting. Each card carries my recommendation. When you’re done, <b>Send answers</b> builds a block of text to paste back into the chat. A <code>/legal</code> session then brings both drafts up to version 0.2 from your answers. Nothing is published or built until you approve the final text.</p>
+        <p class="lede">You can press <b>Use the recommendations</b> on a tab to fill in every card you haven’t touched, then change only the ones you disagree with.</p>
+      </div>
+
+      <h2>What the audit found</h2>
+      <div class="findings">
+        <div class="finding good"><div></div><div><h3>Cancelling already keeps the plan to the renewal date, live</h3>
+          <p>It went out in the November 5 release, so the Terms’ biggest promise is already true. The kickoff and the draft both said otherwise; the draft’s notes are corrected. Three live Stripe settings still need reading (Lookups tab).</p></div></div>
+        <div class="finding warn"><div></div><div><h3>“I agree” has about eight doors, not one</h3>
+          <p>Accounts are made by the club sign-up, the coach sign-up, the team sign-up, a staff invitation, the account a <b>tournament registration</b> makes for the coach, and the <b>“follow this tournament”</b> account. The last two never show a sign-up page. And the Terms only talk to people who buy plans. Invited coaches, volunteers and parents hold accounts but appear nowhere. That is decisions O5, O7 and O8.</p></div></div>
+        <div class="finding warn"><div></div><div><h3>The privacy policy is mostly true, and four sections need new sentences</h3>
+          <p>New since the draft: one record per child across seasons, the full billing address kept on every tax record, the staff billing lists, and our own bookkeeping in AWS.</p></div></div>
+        <div class="finding bad"><div></div><div><h3>Deleting an organization leaves its uploaded files behind</h3>
+          <p>That includes signed medical and waiver forms. I checked this one myself. Decision P7.</p></div></div>
+        <div class="finding bad"><div></div><div><h3>The biggest legal risk: no purchase-confirmation email</h3>
+          <p>Ontario law says a coach buying a yearly plan must get a copy of the agreement within 15 days. If they don’t, they can cancel within 30 days. No email does this today. It’s step 5 of the work.</p></div></div>
+        <div class="finding"><div></div><div><h3>The payments terms can wait</h3>
+          <p>Online payments are locked off in production twice, so no club can reach the placeholder text. They get written before you switch payments on.</p></div></div>
+      </div>
+
+      <h2>The work, in order</h2>
+      <ol class="steps">
+        <li class="here"><div><b>Your decisions and the lookups</b><span>This sheet.</span></div></li>
+        <li><div><b>Bring both drafts up to date (version 0.2)</b><span>Correct everything that’s no longer true, apply your answers, add a section for people who joined through a club, write the “I agree” wording and the breach one-pager. <code>/accounting</code> reads the price, tax and refund parts.</span></div></li>
+        <li><div><b>Build the Terms and Privacy pages and their links, hidden</b><span>One switch keeps everything invisible until you approve. Every version we publish stays readable at its own address, so we can always show what someone agreed to.</span></div></li>
+        <li><div><b>“I agree” at every door</b><span>Every door that creates an account, an organization or a plan. People who already have accounts see a one-tick screen on their next sign-in. The demos are exempt. The build fails if someone adds a new door without it.</span></div></li>
+        <li><div><b>The purchase-confirmation email</b><span>Plus the yearly-renewal reminder and the Québec checkout refusal, if you rule for them.</span></div></li>
+        <li><div><b>Fix: deleting an organization removes its files</b><span>Can run in parallel with steps 3–5.</span></div></li>
+        <li><div><b>Reviews</b><span><code>/legal</code> on the final texts and the “I agree” step, <code>/accounting</code> on prices, tax and refunds, <code>/docs</code> for the help articles, and the demo tour check.</span></div></li>
+        <li><div><b>Publish</b><span>You approve the final text. It goes out in the same release that adds tax to checkout, because the Terms say tax is shown before you pay.</span></div></li>
+      </ol>
+
+      <div class="twocol">
+        <div class="box"><h3>What customers will see</h3><ul>
+          <li>One tick at sign-up: “I agree to the Terms of Service and have read the Privacy policy.”</li>
+          <li>A one-tick screen on their next sign-in, for people who already have accounts.</li>
+          <li>Terms and Privacy links in the site footer, in every portal’s account menu, on the account page and in our own emails.</li>
+          <li>A confirmation email for every purchase, with a copy of the Terms.</li>
+        </ul></div>
+        <div class="box"><h3>Stage 9 (help, demos, release)</h3><ul>
+          <li><b>Can start now:</b> everything about the tax itself, including the address step, the tax lines, the demo check and the test-mode walk.</li>
+          <li><b>Can’t finish yet:</b> any help line that quotes the Terms (refunds, cancelling, “what you agreed to”), and the first paid sale of a plan not yet on sale.</li>
+        </ul></div>
+      </div>
+    </section>
+
+    <!-- TERMS -->
+    <section class="panel" id="terms" role="tabpanel" aria-labelledby="t-terms" hidden>
+      <div class="toolbar"><p class="lede">Eight decisions about the Terms of Service. Two of them are new from the audit (O7, O8).</p>
+        <button class="btn quiet" type="button" data-fill="terms">Use the recommendations</button></div>
+      <div class="cards" id="cards-terms" style="display:grid;gap:14px"></div>
+    </section>
+
+    <!-- PRIVACY -->
+    <section class="panel" id="privacy" role="tabpanel" aria-labelledby="t-privacy" hidden>
+      <div class="toolbar"><p class="lede">Five decisions about the privacy policy. P2 and P5 became lookups, because they’re facts and not choices.</p>
+        <button class="btn quiet" type="button" data-fill="privacy">Use the recommendations</button></div>
+      <div class="cards" id="cards-privacy" style="display:grid;gap:14px"></div>
+    </section>
+
+    <!-- LOOKUPS -->
+    <section class="panel" id="lookups" role="tabpanel" aria-labelledby="t-lookups" hidden>
+      <p class="lede">These are facts to read, not choices to make. For each one, either read it yourself (the card says where) or let Claude do a read-only check. The Stripe settings are also owed by the plans-end-at-renewal project, so one answer covers both.</p>
+      <div class="cards" id="cards-lookups" style="display:grid;gap:14px"></div>
+    </section>
+
+    <!-- TRUTH -->
+    <section class="panel" id="truth" role="tabpanel" aria-labelledby="t-truth" hidden>
+      <p class="lede">Each promise in the Terms draft, checked against the product on November 8. “Live” is production; “Dev” is what’s built but not released. Reference only, nothing to tick.</p>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Terms</th><th>The draft promises</th><th>Dev</th><th>Live</th></tr></thead>
+        <tbody>
+          <tr><td class="ref">§8</td><td>Cancel any time; the plan runs to the end of the paid period; one click to keep it<small>Not yet confirmed through Stripe’s own billing portal (Lookup L-c).</small></td><td><span class="st y">Yes</span></td><td><span class="st y">Yes</span></td></tr>
+          <tr><td class="ref">§8</td><td>Upgrade at once and pay the difference; downgrade at the renewal date</td><td><span class="st y">Yes</span></td><td><span class="st y">Yes</span></td></tr>
+          <tr><td class="ref">§3</td><td>Only the owner buys, changes or cancels</td><td><span class="st y">Yes</span></td><td><span class="st y">Yes</span></td></tr>
+          <tr><td class="ref">§7</td><td>Trial length shown at checkout; one trial per organization</td><td><span class="st y">Yes</span></td><td><span class="st y">Yes</span></td></tr>
+          <tr><td class="ref">§9</td><td>Kept 365 days after a Coaches Portal ends, 90 days for others; we “may” delete after</td><td><span class="st y">Yes</span></td><td><span class="st y">Yes</span></td></tr>
+          <tr><td class="ref">§6</td><td>Tax added from your billing address and shown before you pay</td><td><span class="st y">Yes</span></td><td><span class="st n">No</span></td></tr>
+          <tr><td class="ref">§6</td><td>Receipts and invoices emailed to the owner<small>Only Stripe sends them, and only if that setting is on in live (Lookup L-c).</small></td><td><span class="st p">Partly</span></td><td><span class="st p">Partly</span></td></tr>
+          <tr><td class="ref">§8</td><td>When a payment fails, Stripe retries and emails, then the plan ends<small>Depends on Stripe’s live retry setting.</small></td><td><span class="st p">Partly</span></td><td><span class="st p">Partly</span></td></tr>
+          <tr><td class="ref">§9</td><td>A warning email before your kept data runs out<small>Sent only when staff press a button in platform admin.</small></td><td><span class="st p">Partly</span></td><td><span class="st p">Partly</span></td></tr>
+          <tr><td class="ref">§9</td><td>Download your records before the plan ends<small>Members list only; the club export is incomplete, and a Coaches Portal has none by ruling.</small></td><td><span class="st p">Partly</span></td><td><span class="st p">Partly</span></td></tr>
+          <tr><td class="ref">§16</td><td>A purchase email with a copy of the Terms and the purchase details</td><td><span class="st n">No</span></td><td><span class="st n">No</span></td></tr>
+          <tr><td class="ref">§8</td><td>A reminder before a yearly plan renews (O2)</td><td><span class="st n">No</span></td><td><span class="st n">No</span></td></tr>
+          <tr><td class="ref">§8</td><td>30 days’ email before a price rise<small>Can be sent by hand; a written procedure is enough.</small></td><td><span class="st n">No</span></td><td><span class="st n">No</span></td></tr>
+          <tr><td class="ref">§8</td><td>30 days’ notice and a refund if we end your plan (O3)<small>Done by hand at our size.</small></td><td><span class="st n">No</span></td><td><span class="st n">No</span></td></tr>
+          <tr><td class="ref">§1</td><td>Links to the Privacy Policy and the Payments Terms<small>No legal pages exist yet. The Payments Terms sentence comes out until those terms are written.</small></td><td><span class="st n">No</span></td><td><span class="st n">No</span></td></tr>
+          <tr><td class="ref">§3</td><td>18 or older (O5)</td><td><span class="st n">No check</span></td><td><span class="st n">No check</span></td></tr>
+          <tr><td class="ref">§18</td><td>Email before a change that reduces your rights; accept again on next sign-in</td><td><span class="st n">No</span></td><td><span class="st n">No</span></td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- SEND -->
+    <section class="panel" id="send" role="tabpanel" aria-labelledby="t-send" hidden>
+      <div class="toolbar">
+        <p class="lede" id="sendState">Paste this back into the chat. Answers are saved in this browser until you clear them.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn" type="button" id="copyBtn">Copy answers</button>
+          <button class="btn quiet" type="button" id="clearBtn">Clear all answers</button>
+        </div>
+      </div>
+      <div id="confirmClear" class="box" hidden><p>Clear every answer and note on this sheet? This can’t be undone.</p>
+        <div style="display:flex;gap:8px"><button class="btn" type="button" id="clearYes">Clear them</button><button class="btn quiet" type="button" id="clearNo">Keep them</button></div></div>
+      <span class="toast" id="toast" hidden>Copied.</span>
+      <pre class="out" id="out" tabindex="0"></pre>
+    </section>
+
+  </div>
+</main>
+
+<script>
+(function () {
+  var KEY = "stage6-decisions-v1";
+  var DECISIONS = [
+    { g: "terms", id: "O1", title: "Who the seller is", clause: "Terms §1", why: "Ontario’s consumer law asks the Terms to name the seller with a telephone number and a mailing address. Once published, they’re public, so a home address would be too. The business name registration is done.",
+      opts: [
+        { k: "A", rec: true, label: "Your legal name, a contact email on our own domain, a business or internet phone line, and a PO box or virtual address in Ontario", note: "You give the actual details in the drafting session, not on this page." },
+        { k: "B", label: "Your legal name, the current Gmail, your own phone and your home address" },
+        { k: "X", label: "Something else (say what in the note)" } ] },
+    { g: "terms", id: "O2", title: "A reminder before a yearly plan renews", clause: "Terms §8", why: "A silent yearly renewal is what card disputes most often cite. Ontario’s new consumer law (passed, not yet confirmed in force) and Québec both move toward requiring a reminder. It’s one email, sent 30 days before, by the same daily job that already sends the ending reminders.",
+      opts: [
+        { k: "A", rec: true, label: "Build it: one email 30 days before a yearly plan renews" },
+        { k: "B", label: "Don’t build it, and delete the paragraph from the Terms", note: "We must never publish a promise the product doesn’t keep." },
+        { k: "X", label: "Something else (say what in the note)" } ] },
+    { g: "terms", id: "O3", title: "A refund when we end a plan", clause: "Terms §8", why: "The Terms say no refund when a customer cancels. A refund for the unused part when we end a plan through no fault of the customer is the fair mirror of that, and it makes the no-refund rule much easier to defend. At our size it’s done by hand.",
+      opts: [
+        { k: "A", rec: true, label: "Yes: refund the unused part, by hand" },
+        { k: "B", label: "No: delete that sentence" },
+        { k: "X", label: "Something else (say what in the note)" } ] },
+    { g: "terms", id: "O4", title: "Québec", clause: "Terms §17", why: "Selling in Québec needs a French version of the Terms first, and Québec’s consumer law limits several clauses (the liability cap, the renewal wording). There’s no Québec customer on record. The checkout already knows the province from the billing address, so refusing a Québec address is a small change. This is also a market decision, so /strategy logs it.",
+      opts: [
+        { k: "A", rec: true, label: "Not offered in Québec for now, and checkout declines a Québec billing address" },
+        { k: "B", label: "Not offered in Québec, wording only (checkout doesn’t block)", note: "The Terms would say one thing while the checkout does another." },
+        { k: "C", label: "Do the Québec work first (French version and review), then sell there" },
+        { k: "X", label: "Something else (say what in the note)" } ] },
+    { g: "terms", id: "O5", title: "Minimum age", clause: "Terms §3", badge: "widened", why: "The draft asks for 18 or older only from people who run an organization or buy a plan. But the “follow this tournament” account lets anyone sign up, including a teenage player, and the family-consent draft promises “no child holds a login”.",
+      opts: [
+        { k: "A", rec: true, label: "18 or older (or the age of majority) for everyone who holds an account, ticked at sign-up" },
+        { k: "B", label: "18 for people who run an organization or buy; 13 or older for a follow-only account", note: "The privacy policy then needs a young-people section, and the family-consent wording changes." },
+        { k: "C", label: "18 only for people who run an organization or buy, as drafted (no line for anyone else)" },
+        { k: "X", label: "Something else (say what in the note)" } ] },
+    { g: "terms", id: "O6", title: "The cap on what we can owe", clause: "Terms §14", why: "As a sole proprietor you’re personally liable, so this clause protects your own assets. It can’t take away a consumer’s legal rights, and the Terms say so.",
+      opts: [
+        { k: "A", rec: true, label: "What the customer paid in the 12 months before the claim, or $100 if they paid nothing" },
+        { k: "X", label: "Something else (say what in the note)" } ] },
+    { g: "terms", id: "O7", title: "Who agrees to the Terms", clause: "new", badge: "new", why: "The Terms are written for people who buy plans. Invited coaches, volunteers, treasurers and parents also hold accounts. If they never agree to anything, the acceptable-use rules don’t bind them and a parent never sees any FieldLogicHQ terms at all.",
+      opts: [
+        { k: "A", rec: true, label: "Everyone with an account agrees to one set of Terms, with a short section for people who joined through a club", note: "That section says the club controls your access, the acceptable-use rules apply, you pay nothing, and the billing sections don’t apply to you." },
+        { k: "B", label: "Only people who buy a plan or own an organization agree" },
+        { k: "X", label: "Something else (say what in the note)" } ] },
+    { g: "terms", id: "O8", title: "People who already have accounts", clause: "new", badge: "new", why: "Nothing has been sold yet, so there are few of them. But the same screen is what a later significant change to the Terms needs anyway (§18: accept again on next sign-in), so it gets built once either way.",
+      opts: [
+        { k: "A", rec: true, label: "A one-tick “We’ve published our Terms” screen on their next sign-in, required, for everyone" },
+        { k: "B", label: "Only owners and people who buy see the screen" },
+        { k: "C", label: "No screen: the Terms apply from the day they’re published", note: "Weak: nobody agreed to anything." },
+        { k: "X", label: "Something else (say what in the note)" } ] },
+
+    { g: "privacy", id: "P1", title: "Who is responsible for privacy", clause: "Privacy §11", why: "Canada’s privacy law needs a named accountable person, by name or by title, with an address people can write to.",
+      opts: [
+        { k: "A", rec: true, label: "“Privacy Officer, FieldLogicHQ”, with a privacy@ address on our domain and the mailing address from O1" },
+        { k: "B", label: "Your own name instead of the title" },
+        { k: "X", label: "Something else (say what in the note)" } ] },
+    { g: "privacy", id: "P3", title: "Data-processing agreements with Supabase, AWS and Resend", clause: "Privacy §6", why: "Each supplier offers standard data-processing terms (Stripe’s is already in place). This doesn’t hold up publishing, as long as the policy names the suppliers honestly. It does hold up the supplier list and the data-processing terms we’ll offer clubs.",
+      opts: [
+        { k: "A", rec: true, label: "Accept each supplier’s standard terms and record the date of each", note: "/legal confirms how each supplier does it when you go to accept them." },
+        { k: "B", label: "Leave it until later" },
+        { k: "X", label: "Something else (say what in the note)" } ] },
+    { g: "privacy", id: "P4", title: "The business inbox (a free Gmail)", clause: "Privacy §6", why: "Requests to delete an organization arrive there, so it holds personal information. A free Gmail has no data-processing agreement. Your standing ruling is that the admin inbox is that Gmail.",
+      opts: [
+        { k: "A", rec: true, label: "Name it in the policy now; move to a business mailbox later", note: "The public contact address in O1 is a separate address on our domain either way." },
+        { k: "B", label: "Move to a business mailbox before publishing" },
+        { k: "X", label: "Something else (say what in the note)" } ] },
+    { g: "privacy", id: "P6", title: "A breach procedure and record", clause: "Privacy §10", why: "Required by law, not optional. We must keep a record of every security breach for 24 months. Where there’s a real risk of significant harm, we must report it to the Privacy Commissioner and tell the people affected. The only question is who writes it.",
+      opts: [
+        { k: "A", rec: true, label: "/legal drafts a one-page procedure and the shape of the record; I approve it" },
+        { k: "X", label: "Something else (say what in the note)" } ] },
+    { g: "privacy", id: "P7", title: "Files left after an organization is deleted", clause: "Privacy §9", badge: "new", why: "Deleting an organization removes its records but leaves every uploaded file, including signed medical and waiver forms. Published as it stands, the policy would have to admit we keep children’s medical files after the club is gone. The automatic purge after the retention period can wait: the policy already says “may delete”.",
+      opts: [
+        { k: "A", rec: true, label: "Fix it before publishing: deleting an organization removes its files too" },
+        { k: "B", label: "Publish first and fix it after; the policy says files may remain" },
+        { k: "X", label: "Something else (say what in the note)" } ] }
+  ];
+  var LOOKUPS = [
+    { id: "L-a", title: "Where our Supabase database is", why: "The privacy policy must say which country our data is held in. AWS is in Ohio; the Supabase region isn’t recorded anywhere in the repo.",
+      where: "<b>Supabase dashboard</b> → our project → <b>Project Settings</b> → <b>General</b> → Region.", field: "Region (e.g. a US or Canada region)" },
+    { id: "L-b", title: "Which Supabase plan we’re on", why: "/legal reads the plan’s encryption-at-rest promise from Supabase’s security page, so the policy’s security section can say it truthfully.",
+      where: "<b>Supabase dashboard</b> → our organization → <b>Billing</b> → the plan name.", field: "Plan (Free, Pro, Team…)" },
+    { id: "L-c", title: "Three live Stripe settings", why: "The Terms promise each of these. (1) Does Stripe’s own billing portal let a customer cancel, and does it cancel at once or at the end of the period? On November 5 our portal set-up didn’t exist in live mode yet. (2) How long Stripe retries a failed payment before it stops. In test mode, the retries ended a plan four weeks before the date we told the customer. (3) Whether Stripe emails a receipt for each payment.",
+      where: "<b>Stripe dashboard, live mode</b> → <b>Settings</b> → <b>Billing</b>: <b>Customer portal</b> (cancellations) and <b>Subscriptions and emails</b> (failed-payment retries); <b>Settings</b> → <b>Customer emails</b> (successful payments).", field: "What each of the three says" }
+  ];
+
+  var state = load();
+  function load() { try { var s = JSON.parse(localStorage.getItem(KEY) || "{}"); return (s && typeof s === "object") ? s : {}; } catch (e) { return {}; } }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  function rec(id) { state[id] = state[id] || {}; return state[id]; }
+  function esc(t) { return String(t).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+
+  function decisionCard(d) {
+    var r = state[d.id] || {};
+    var badge = d.badge === "new" ? '<span class="chip new">New from the audit</span>' : d.badge === "widened" ? '<span class="chip new">Widened by the audit</span>' : "";
+    var html = '<article class="card" id="card-' + d.id + '"><div class="cardhead"><h3><span class="code">' + d.id + '</span>' + esc(d.title) + '</h3>' +
+      '<span style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">' + badge + '<span class="clause">' + esc(d.clause) + '</span><span class="chip" id="chip-' + d.id + '">Open</span></span></div>' +
+      '<p class="why">' + esc(d.why) + '</p><div class="opts" role="radiogroup" aria-label="' + esc(d.id + " " + d.title) + '">';
+    d.opts.forEach(function (o) {
+      var oid = "opt-" + d.id + "-" + o.k;
+      html += '<label class="opt" for="' + oid + '"><input type="radio" name="r-' + d.id + '" id="' + oid + '" value="' + o.k + '"' + (r.choice === o.k ? " checked" : "") + '>' +
+        '<span><span class="optlabel">' + esc(o.label) + (o.rec ? '<span class="rec">Recommended</span>' : "") + '</span>' + (o.note ? '<span class="optnote">' + esc(o.note) + '</span>' : "") + '</span></label>';
+    });
+    html += '</div><label class="notelabel" for="note-' + d.id + '">Note (why, or what “something else” means)<textarea id="note-' + d.id + '">' + esc(r.note || "") + '</textarea></label>' +
+      '<span class="need" id="need-' + d.id + '" hidden>“Something else” needs a note saying what.</span></article>';
+    return html;
+  }
+  function lookupCard(l) {
+    var r = state[l.id] || {};
+    var html = '<article class="card" id="card-' + l.id + '"><div class="cardhead"><h3><span class="code">' + l.id + '</span>' + esc(l.title) + '</h3><span class="chip" id="chip-' + l.id + '">Open</span></div>' +
+      '<p class="why">' + esc(l.why) + '</p><div class="where">' + l.where + '</div><div class="opts" role="radiogroup" aria-label="' + esc(l.id) + '">' +
+      '<label class="opt" for="opt-' + l.id + '-C"><input type="radio" name="r-' + l.id + '" id="opt-' + l.id + '-C" value="C"' + (r.choice === "C" ? " checked" : "") + '><span><span class="optlabel">Claude does a read-only check<span class="rec">Easiest</span></span><span class="optnote">Reads the setting, changes nothing, and reports back.</span></span></label>' +
+      '<label class="opt" for="opt-' + l.id + '-M"><input type="radio" name="r-' + l.id + '" id="opt-' + l.id + '-M" value="M"' + (r.choice === "M" ? " checked" : "") + '><span><span class="optlabel">I read it myself</span><span class="optnote">Type what you see below.</span></span></label></div>' +
+      '<label class="notelabel" for="note-' + l.id + '">' + esc(l.field) + '<input type="text" id="note-' + l.id + '" value="' + esc(r.note || "") + '"></label>' +
+      '<span class="need" id="need-' + l.id + '" hidden>Type what you read, or pick the read-only check.</span></article>';
+    return html;
+  }
+
+  document.getElementById("cards-terms").innerHTML = DECISIONS.filter(function (d) { return d.g === "terms"; }).map(decisionCard).join("");
+  document.getElementById("cards-privacy").innerHTML = DECISIONS.filter(function (d) { return d.g === "privacy"; }).map(decisionCard).join("");
+  document.getElementById("cards-lookups").innerHTML = LOOKUPS.map(lookupCard).join("");
+
+  function isDone(id, isLookup) {
+    var r = state[id] || {};
+    if (!r.choice) return false;
+    if (!isLookup && r.choice === "X") return !!(r.note && r.note.trim());
+    if (isLookup && r.choice === "M") return !!(r.note && r.note.trim());
+    return true;
+  }
+  function refresh() {
+    var dDone = 0, tDone = 0, pDone = 0, lDone = 0;
+    DECISIONS.forEach(function (d) {
+      var ok = isDone(d.id, false), r = state[d.id] || {};
+      if (ok) { dDone++; if (d.g === "terms") tDone++; else pDone++; }
+      paint(d.id, ok, r, d.opts);
+    });
+    LOOKUPS.forEach(function (l) { var ok = isDone(l.id, true); if (ok) lDone++; paint(l.id, ok, state[l.id] || {}, null); });
+    document.getElementById("pDec").textContent = dDone;
+    document.getElementById("pDecT").textContent = DECISIONS.length;
+    document.getElementById("pLook").textContent = lDone;
+    document.getElementById("pBar").style.width = Math.round(100 * (dDone + lDone) / (DECISIONS.length + LOOKUPS.length)) + "%";
+    setN("nTerms", tDone, 8); setN("nPrivacy", pDone, 5); setN("nLook", lDone, 3);
+    document.getElementById("out").textContent = summary();
+    document.getElementById("sendState").textContent = (dDone === DECISIONS.length && lDone === LOOKUPS.length)
+      ? "Everything is answered. Copy this and paste it back into the chat."
+      : "Not finished yet: " + (DECISIONS.length - dDone) + " decision(s) and " + (LOOKUPS.length - lDone) + " lookup(s) open. You can still send what you have.";
+  }
+  function setN(id, n, t) { var el = document.getElementById(id); el.textContent = n + "/" + t; el.classList.toggle("done", n === t); }
+  function paint(id, ok, r, opts) {
+    var card = document.getElementById("card-" + id), chip = document.getElementById("chip-" + id), need = document.getElementById("need-" + id);
+    card.classList.toggle("answered", ok);
+    chip.textContent = ok ? "Answered" : (r.choice ? "Needs a note" : "Open");
+    chip.className = "chip" + (ok ? " ok" : "");
+    need.hidden = !(r.choice && !ok);
+    card.querySelectorAll("label.opt").forEach(function (lab) { var inp = lab.querySelector("input"); lab.classList.toggle("on", inp.checked); });
+  }
+  function optText(d, k) { var o = d.opts.filter(function (x) { return x.k === k; })[0]; return o ? (o.k + (o.rec ? " (recommended)" : "") + ": " + o.label) : "-"; }
+  function summary() {
+    var lines = ["GST/HST Stage 6: owner decisions (sheet of 2026-11-08; plan GST_HST_STAGE6_TERMS_PLAN.md §3)"];
+    var dDone = DECISIONS.filter(function (d) { return isDone(d.id, false); }).length;
+    var lDone = LOOKUPS.filter(function (l) { return isDone(l.id, true); }).length;
+    lines.push("Decided " + dDone + " of " + DECISIONS.length + " · Lookups " + lDone + " of " + LOOKUPS.length, "");
+    [["terms", "TERMS"], ["privacy", "PRIVACY"]].forEach(function (g) {
+      lines.push(g[1]);
+      DECISIONS.filter(function (d) { return d.g === g[0]; }).forEach(function (d) {
+        var r = state[d.id] || {};
+        lines.push(d.id + " " + d.title + " - " + (r.choice ? optText(d, r.choice) : "NOT ANSWERED"));
+        if (r.note && r.note.trim()) lines.push("   Note: " + r.note.trim().replace(/\n+/g, " / "));
+      });
+      lines.push("");
+    });
+    lines.push("LOOKUPS");
+    LOOKUPS.forEach(function (l) {
+      var r = state[l.id] || {};
+      var c = r.choice === "C" ? "Claude does a read-only check" : r.choice === "M" ? "I read it" : "NOT ANSWERED";
+      lines.push(l.id + " " + l.title + " - " + c + (r.note && r.note.trim() ? ": " + r.note.trim().replace(/\n+/g, " / ") : ""));
+    });
+    return lines.join("\n");
+  }
+
+  document.addEventListener("change", function (e) {
+    var t = e.target;
+    if (t.type === "radio" && t.name.indexOf("r-") === 0) { rec(t.name.slice(2)).choice = t.value; save(); refresh(); }
+  });
+  document.addEventListener("input", function (e) {
+    var t = e.target;
+    if (t.id && t.id.indexOf("note-") === 0) { rec(t.id.slice(5)).note = t.value; save(); refresh(); }
+  });
+  document.querySelectorAll("[data-fill]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      DECISIONS.filter(function (d) { return d.g === b.getAttribute("data-fill"); }).forEach(function (d) {
+        var r = rec(d.id);
+        if (!r.choice) { var o = d.opts.filter(function (x) { return x.rec; })[0]; r.choice = o.k; var inp = document.getElementById("opt-" + d.id + "-" + o.k); if (inp) inp.checked = true; }
+      });
+      save(); refresh();
+    });
+  });
+
+  var tabs = document.querySelectorAll(".tab");
+  function show(name) {
+    tabs.forEach(function (t) { var on = t.getAttribute("data-tab") === name; t.setAttribute("aria-selected", on ? "true" : "false"); t.tabIndex = on ? 0 : -1; });
+    document.querySelectorAll("section.panel").forEach(function (p) { p.hidden = p.id !== name; });
+    try { localStorage.setItem(KEY + "-tab", name); } catch (e) {}
+  }
+  tabs.forEach(function (t) { t.addEventListener("click", function () { show(t.getAttribute("data-tab")); window.scrollTo(0, 0); }); });
+
+  var copyBtn = document.getElementById("copyBtn"), toast = document.getElementById("toast"), out = document.getElementById("out");
+  function selectOut() { var range = document.createRange(); range.selectNodeContents(out); var s = window.getSelection(); s.removeAllRanges(); s.addRange(range); }
+  copyBtn.addEventListener("click", function () {
+    var text = summary();
+    function fallback() { selectOut(); toast.textContent = "Selected. Press Ctrl+C (or Cmd+C) to copy."; toast.hidden = false; }
+    try {
+      navigator.clipboard.writeText(text).then(function () { toast.textContent = "Copied."; toast.hidden = false; setTimeout(function () { toast.hidden = true; }, 2500); }, fallback);
+    } catch (e) { fallback(); }
+  });
+  var confirmBox = document.getElementById("confirmClear");
+  document.getElementById("clearBtn").addEventListener("click", function () { confirmBox.hidden = false; });
+  document.getElementById("clearNo").addEventListener("click", function () { confirmBox.hidden = true; });
+  document.getElementById("clearYes").addEventListener("click", function () {
+    state = {}; save();
+    document.querySelectorAll('input[type="radio"]').forEach(function (i) { i.checked = false; });
+    document.querySelectorAll('textarea, input[type="text"]').forEach(function (i) { i.value = ""; });
+    confirmBox.hidden = true; refresh();
+  });
+
+  var start = "overview";
+  try { var saved = localStorage.getItem(KEY + "-tab"); if (saved && document.getElementById(saved)) start = saved; } catch (e) {}
+  show(start);
+  refresh();
+})();
+</script>
