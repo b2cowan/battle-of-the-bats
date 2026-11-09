@@ -22,7 +22,7 @@
  */
 import { createContext, useContext, type ComponentProps, type ReactNode } from 'react';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
-import { useHandBarPlace, type AdminBarPlace } from '@/components/admin/AdminBarPlace';
+import { useHandBarPlace, useNamedInBar, type AdminBarPlace } from '@/components/admin/AdminBarPlace';
 import { repKit } from './RepKit';
 import css from './PlaceFrame.module.css';
 
@@ -64,9 +64,15 @@ export function TabActions({ lede, children }: { lede?: ReactNode; children?: Re
  * side re-exports). Outside a place frame (the same page reached from the tournament side, or before a place frames
  * it) it is the page's ordinary `AdminPageHeader`. Inside one, the place has already named the page, so the title, the
  * eyebrow, the chips and the back link go, and only the page's actions remain, as its action row.
+ *
+ * ⚖ PHASE 3 (round 5, 2026-11-08): the same for a screen the header names with no frame at all (Calendar, Schedules, a
+ * schedule, Notifications, the Seasons list, the Public site, Plan & billing, the record pages): `useNamedInBar` asks the ONE
+ * question the header asks (`clubPlaceAt`, gates included), so the paper title goes exactly where the header's name is the
+ * `<h1>`, and stays wherever the header keeps the club's name (a refusal, Q5; a tournament-only org's billing, Q6).
  */
 export function TabPageHeader(props: ComponentProps<typeof AdminPageHeader>) {
   const inPlace = useInPlaceFrame();
-  if (!inPlace) return <AdminPageHeader {...props} />;
+  const named = useNamedInBar();
+  if (!inPlace && !named) return <AdminPageHeader {...props} />;
   return <TabActions>{props.actions}</TabActions>;
 }

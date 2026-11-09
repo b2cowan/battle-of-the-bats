@@ -10,6 +10,8 @@
 > **Round 4 drawings (desktop strip):** [ADMIN_HEADER_DESKTOP_STRIP_DRAWINGS.html](ADMIN_HEADER_DESKTOP_STRIP_DRAWINGS.html) ·
 > artifact https://claude.ai/artifact/A1W443obR8aJd8PjUZEgUx (v1 = options A/B/C after the /design pass; v2 = B with the
 > club cell lined up with the tab band, the owner's pick)
+> **Round 5 drawings (Phase 3, the screens with no place of their own):** [ADMIN_HEADER_PHASE3_DRAWINGS.html](ADMIN_HEADER_PHASE3_DRAWINGS.html) ·
+> artifact https://claude.ai/artifact/NNn3tmZaFqW5GqE9ADRGjV (v1, /design pass applied)
 
 ## Goal
 
@@ -115,6 +117,35 @@ and Home share, and `nav-standard-guard` pins the strip to it. Recommended: the 
 constant beside it in `lib/workspace-labels.ts` (one home, both words), the guard pins that constant, and the
 Workspaces list keeps "Admin Area" (it has the room, and "Back to Admin" reads worse). The alternative, renaming the
 kind everywhere to "Admin", keeps one word; ask the owner at the gate.
+
+## Round 5 · the screens with no place of their own — RULED 2026-11-08
+
+Drawn for Phase 3 (Schedules, a schedule, a team's History, one past season, Notifications, House league's Seasons list, a
+club schedule inside a season, the Public site, Plan & billing), desktop strip + phone bar, today beside proposed. The
+owner answered all six by paste-back, each as recommended. Recorded as ruled; nothing added.
+
+- [x] **Q1 · Plan & billing names itself; Club setup keeps its own heading** and stays out of Phase 3 (a one-time page whose
+  title is a sentence about the club).
+- [x] **Q2 · House league's Seasons list is a flat place "Seasons"** ("House league" on the phone's small line); Create season
+  stays at the page's top right; no club name on desktop.
+- [x] **Q3 · Public site:** the Online / Offline chip moves beside the name; the "Families see it at" row with Copy link and
+  Open stays on the page as its first line.
+- [x] **Q4 · A record's facts on desktop are quiet words beside the name**, the way a tournament's dates sit, then the status
+  chip ("← History │ 2025 Season  14U AA  Completed"; a child: "Born Mar 14, 2015"). On a phone they ride the small line
+  (A8, unchanged).
+- [x] **Q5 · A page that refuses you keeps the org's name in the header**; the refusal keeps its own heading.
+- [x] **Q6 · One rule for both kinds of organization:** the org-wide tournament screens (the Tournaments list, Settings &
+  access, Members, Plan & billing, Payouts, PDF settings) name the organization and keep their own heading on the page.
+  Event pages keep naming the event.
+
+Found while checking A10 (no ruling needed; it applies A10's own rule): two pages under `/admin/tournaments/settings` are
+EVENT pages, `settings/event` (Event settings, reads `currentTournament`) and `settings/notifications` (mutes "this
+tournament"), plus `settings/registration-fields` (a redirect into Event settings). So the org screens are listed one by
+one: `manage`, `archives`, the `settings` hub itself, `settings/members(/audit)`, `settings/subscription(/…)`,
+`settings/payouts`, `settings/pdf`. Also found: a CLUB reaches its Tournaments list at `/admin/tournaments/manage` too (the
+tournament rail's "Tournaments" row); `/admin/org/tournaments` exists but nothing links to it, which A10's club half assumed
+(Q6 settles it). From the /design pass, for the walk: "Read-only archive" sits alone on a row on one past season (A8 as
+ruled); Public site's View site and Open open the same site (true today).
 
 ## Rulings this knowingly departs from (reference, decided on merit 2026-11-07)
 
@@ -459,20 +490,110 @@ Round 4 (accepted with D1–D5, 2026-11-08; found by the round 4 /design pass):
 
 ### Phase 3 — Screens with no place of their own
 
+> **Build prompt written 2026-11-08:** `docs/projects/active/ADMIN_HEADER_BAR_PHASE3_BUILD_PROMPT.md`. Its census found
+> screens this checklist lacks (House league's Seasons list, a club schedule inside a season, the Public site, Plan &
+> billing, Club setup) and that Schedules, History, Notifications and those were never drawn: the session opens with a
+> short drawing round (round 5) and five owner questions before building.
+
 > **After Phase 2D:** every screen below names itself in the desktop strip and in the phone bar (one source, two
 > renderings). Record pages put their name and back link in the strip on desktop; their buttons sit at the top right
 > of the page (A8). Nothing in Phase 3 adds a desktop small line.
 
-- [ ] Calendar (`app/[orgSlug]/admin/calendar/page.tsx`), Schedules (`schedules/page.tsx`, `schedules/[scheduleId]/page.tsx`):
-      the bar names the screen; the paper heading goes; the heading's actions (Calendar's phone view menu,
-      Schedules' own) move to the page's toolbar per the Phase 0 drawing
-- [ ] Record pages with their own back link (`rep-teams/rename-slugs` per A9, `rep-teams/teams/[teamId]/history` and
-      `history/[yearId]`, `families/ChildPage.tsx`): per A8 and the Phase 0 drawing. NOT `accounting/teams/[teamId]`:
-      it is a view of Accounting › Teams (ruled 2026-10-16) and keeps Accounting's bar and tab row
-- [ ] Notifications and the other admin pages that call `AdminPageHeader` outside a frame (census from the grep of
-      `AdminPageHeader` under `app/[orgSlug]/admin/**` minus the tournament tree)
-- [ ] Tournament-only orgs, per A10: the bar names the org on `/admin/tournaments/manage` and `/settings/*` (not the
-      auto-picked event); a club's Tournaments list follows the club rule
+> **Built 2026-11-09** (one session, after round 5 was ruled the same night). Not committed; walk owed.
+
+- [x] **The mechanism** (`lib/admin-kit-nav.ts`): `clubPlaceAt` names Phase 3's screens. A NAMED SCREEN (`namedScreen`: a
+      title, no tabs) for Calendar, Schedules, Notifications, House league's Seasons (`facts: ['House league']`), the Public
+      site, Plan & billing; a RECORD with its way back and a placeholder for a schedule ("Schedule", "← Schedules"), a team's
+      History ("← Team" until the team arrives, the phone's line "Rep teams"), one past season ("Season", "← History"), a
+      club schedule ("Schedule", "← House league's time", "The club's schedule"), Rename team URLs ("← Rep teams", A9), a
+      child ("Child", "← Families"). Each carries ITS PAGE'S refusal rule in `ClubPlaceAccess` (`opensCalendar` = the
+      API's `calendarPrograms` on a club-side plan; `opensSchedules` = `canOpenClubSchedules`; `opensPublicSite` = plan +
+      capability; `opensBilling` = owner; the Seasons list and the club schedule = the house league's `read`; History /
+      past season / Rename = Rep teams' gate; a child = the Families layout's gate). New `detail` on a place: a record's own
+      fact, quiet words beside the name in the strip (the tournament dates' class, Q4) and on the phone's line. Every frame
+      already stepped aside by its own key, so none drew over a record page (checked: Families, Team, Season, Rep teams, Org)
+- [x] **The page side** (`components/admin/AdminBarPlace.tsx`, `PlaceFrame.tsx`): `useHandNamedPlace` (renamed from
+      `useHandRecordPlace` by `/simplify`: the Public site hands its chip through it and is not a record; the address's place +
+      the page's live parts, nothing while loading), `useNamedInBar` (the header's own question). `TabPageHeader` now drops
+      the paper title wherever the header names the page, not only inside a frame, so the paper heading stays exactly where
+      the header keeps the org's name (a refusal, Q5; the tournament side's copy of billing / Members, Q6)
+- [x] **The screens:** Calendar (A7: the phone's View menu is the toolbar's first slot; its look is the shipped trigger's,
+      a hairline border and no fill — the round 3 drawing drew it borderless, the shipped control never was), Schedules,
+      a schedule (its one state chip, only where it says something), Notifications (an empty action row is not drawn),
+      the Seasons list, the Public site (its Online chip handed to the header), Plan & billing, Rename team URLs, History,
+      one past season ("Read-only archive" keeps the top right), a club schedule, a child's page (its `?from=` household,
+      Born, the season chip)
+- [x] **A10 + Q6** (`useAdminPlace`, `isTournamentOrgScreen`): `manage`, `archives`, the `settings` hub, `settings/members`,
+      `settings/subscription`, `settings/payouts`, `settings/pdf` name the organization in both kinds of org; Event settings,
+      the event's Notifications and every event page name the event
+- [x] **Guards** rewritten to the new rule: `admin-kit-nav.test` (record pages are places; a Phase 3 block: names, gates,
+      placeholders, way back, A10 list), `admin-header-bar-guard` (the hand-off's null, plus a Phase 3 block: no
+      `AdminPageHeader` on a named screen, exactly one on Club setup / the tournament list / Settings & access, the hand-off,
+      `detail` in both renderings, A7's first slot), `child-page.test` (a child is its own record place), `club-stage13i-places-guard`
+      (the record pages' way back is the header's), `plan-billing-admin-host` + `plan-billing-stage3-admin-doors` (a
+      stand-in for the model that answers what the real one does for their fixtures). The layout sweep's `ready: 'h1'`
+      waits still hold: each of these pages draws a "Loading…" line until its body arrives, and the sweep waits for it
+- [x] **Checks:** typecheck clean; `check:spelling`, `check:demos`, date correctness, org-context pass; the named guards and
+      the model tests pass (191 + the guard files). Failing in the shared tree and NOT this change: `plan-billing-usage` (the
+      free-time route, committed code), `club-stage6c-screens-guard` + the calendar day views, `kit-dialog-floor-guard`, the
+      tax console, workspace flip, bank and permits suites, and `check:org-slug-callers` / `check:css-selectors` /
+      `check:admin-old-look` / `check:admin-type` on other sessions' files
+- [x] **Measured** (dev server, `.probe/p3-measure.mjs`, 2026-11-09): every Phase 3 screen at 1440×760 pins 48 (the strip
+      alone, as before) with ONE visible `<h1>`, the header's; at 390 the bar is 51 (one line) or 53–54 (a record's second
+      line), one `<h1>`, the header's; no screen scrolls sideways. Refusals (treasurer on Seasons, registrar on Schedules, an
+      admin on Plan & billing): the org's name in the header, the refusal's own `<h1>`. A10: the tournament-only org's list,
+      Settings & access, Members and Plan & billing name the organization with the page's own `<h1>`; Event settings and Teams
+      name the event. Throttled first loads: placeholder then name ("Child" → the child, "← Team" → "← 15U AAA"), never the
+      org's name. The phone bar on the screens Phase 3 did not touch (Overview, Rep teams, a team, a season, Accounting, a
+      tournament): node-for-node identical to Phase 2D's snapshot; desktop pinned heights unchanged (48 / 93). The coaches
+      portal's strip and tab row (accounting, lineups, practice at 1280 and 390): node-for-node identical
+- [x] **Layout** (`check:layout --only=` the 11 Phase 3 screens, dev server, 1440 + 390): no new findings at 1440. At 390,
+      three "NEW" that are old findings re-keyed: "Save all renames" 38px and the past season's own tab row spilling 27px
+      (another session's sentence-case sweep changed the text the baseline keys on, "Save All Renames" / "Schedule &
+      Results"), and the past season's page-wide 11px spill (keyed before on its old heading text, now on "Read-only
+      archive"; the spill is its own tab row's). The paper path's undersized "Rep teams" / "15U AAA" links are gone with it.
+      Left for the release sweep's `--prune` (no baseline rewrite from a partial run)
+- [x] **Help** (`lib/help-content/org.tsx`, `/docs` 2026-11-09): the club calendar's "the view switch is the icon beside the
+      title" now says the **View** button is the first button in the phone's toolbar row (A7; `searchText` matched), and the
+      Public site's "The top of the page shows an Online or Offline chip" now says the chip sits beside Public site in the
+      header and "Families see it at" is the page's first line (Q3). Everything else checked still true
+- [x] **Owner walk §499** published 2026-11-09: https://claude.ai/artifact/6zhDUJu3TFMjxCvhKBW4kC (source
+      `ADMIN_HEADER_BAR_PHASE3_WALK.html`), computer first then a phone pass; calls F1 ("Read-only archive" alone on a row)
+      and F2 (the Calendar's phone View button keeps its shipped hairline border)
+- [x] **`/simplify` (2026-11-09):** four angles. APPLIED: the hand-off hook renamed `useHandNamedPlace` / `NamedPlaceParts`
+      (its doc comment now covers a fixed-name screen's chip); the Calendar's gate is ONE function, `canOpenCalendar`, asked
+      by the rail row (`kitCalendarLink`) and by the header (`opensCalendar`); the Public site's gate is `canOpen('module_public_site')`
+      (the same pair the page asks), dropping a re-typed copy. MEASURED, LEFT: `useClubPlaceAt()` runs 3-4 times per page
+      (bar, strip, `TabPageHeader`, the hand-off, a frame): every gate is a context read plus pure functions, no fetch or
+      subscription; about 0.04 ms per pass, so a context would add a memo-correctness risk on a gate that deliberately has one
+      source (and `canOpen` is a new closure each render, so a memo could never key on it). SKIPPED on purpose: `opensSchedules`
+      stays `canOpenClubSchedules` (the page's own refusal; `kitSchedulesLink` also needs a program, which the page does not);
+      a route table in place of the `clubPlaceAt` if-chain (a rewrite of existing code); one `oneSegmentUnder` helper for the
+      five hand-rolled one-segment tests; `TabPageHeader` doing the hand-off itself from its own props (removes the "forgot
+      one of the two calls" mode, but touches every page again; a follow-up); `scheduleStateChipShown` shared with
+      `ScheduleStateChip`; a bail-out when a hand-off has not changed (each page render re-renders the bar and strip once;
+      microseconds). The duplicated markup between the two renderings was left, as ruled
+- [x] **`/review` (2026-11-09):** three lenses (gates against each page's refusal; hooks order and one `<h1>`; path matching
+      and the A10 list), all read from the code. **FIXED (High, found independently by two lenses):** a CANCELLED club owner's
+      one page, Plan & billing, had NO heading and no `<h1>`: `useClubPlaceAt` knew nothing of `suspended`, so
+      `TabPageHeader` dropped the paper title while the bar (suspended: the org's name as a span) and the strip (no place
+      drawn) did not name it. `useClubPlaceAt` now answers null for a cancelled account, and a guard pins it. Hooks order:
+      every `useHandNamedPlace` sits before its page's first early return. Gates: Calendar, Schedules list, Public site,
+      Billing, Seasons list, club schedule, History, Rename, Notifications, a child all equal their page's refusal; the A10 list
+      matches the real routes under `tournaments/` (nothing missed, no event page included). RECORDED, NOT CHANGED (all
+      Low): (a) a schedule the API refuses per record (an admin with Rep teams switched off opening a schedule that hands
+      time to rep teams, or a deleted schedule) is named "Schedule" over its refusal text, still ONE `<h1>`, the header's;
+      only a record-level hand-off could mirror it; (b) the History / Year / Child not-found branches show their placeholder
+      name ("History", "Season", "Child") over a "not found" body, one `<h1>`; (c) two refusals that already had no `<h1>`
+      (Public site `noSite`, the club schedule's `return null`) are unchanged by this work; (d) the flip pill and the context
+      strip still key on `/admin/tournaments`, so on an org-wide screen the header names the organization beside an event's
+      flip pill (the sidebar picker keeps the event on screen, A10; deliberate); (e) `org/billing` opened directly by a
+      tournament-tier owner names "Plan & billing" while `settings/subscription` names the organization (one `<h1>` either
+      way); (f) `clubPlaceAt` matches exact paths, so a trailing slash would name no place (Next serves none; `next.config`
+      has no `trailingSlash`); (g) `MembersKit` no longer opens the invite window from `?invite=open` (the setup checklist's
+      copy now sends people to read "What each role can open" first; another session's change, noted here)
+- [ ] Commit on the owner's yes (partial: the Calendar page, `TODO.md`, the ledger, the plan and `org.tsx` carry other
+      sessions' hunks)
 
 ### Phase 4 — Words, help, demos, verify
 

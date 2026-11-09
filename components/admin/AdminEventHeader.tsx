@@ -98,7 +98,7 @@ export default function AdminEventHeader({ suspended = false }: {
   // The phone's small line: the section, a tournament's dates, the status chip. ⚖ Round 4 (D1, D3, 2026-11-08): the
   // desktop has no small line at all (the club heads the sidebar, the place names itself in the strip), so the words
   // only a desk showed — the club, a team's group — are gone with it. The phone's line is unchanged.
-  const hasMeta = Boolean(facts.length || dates || phaseChip || place?.chip);
+  const hasMeta = Boolean(facts.length || place?.detail || dates || phaseChip || place?.chip);
   // ⚖ ON DESKTOP THE BAR IS THE TAB BAND ALONE (round 4, D1): the name row is the phone's (the strip names the place
   // above 900px), and a place without tabs draws no desktop bar at all. A cancelled account's one page keeps its row:
   // it has no sidebar to split the strip on, so its strip stays as it was and this bar keeps naming the organization.
@@ -126,6 +126,8 @@ export default function AdminEventHeader({ suspended = false }: {
             // missing fact never strands a dot.
             <div className={styles.meta}>
               {facts.map(f => <span key={f}>{f}</span>)}
+              {/* A record's own fact (round 5, Q4): "Born Mar 14, 2015", a past season's team. */}
+              {place?.detail && <span>{place.detail}</span>}
               {dates && <span>{dates}</span>}
               {phaseChip}
               {place?.chip && <span className={`${styles.chip} ${styles.metaChip}`}>{place.chip}</span>}

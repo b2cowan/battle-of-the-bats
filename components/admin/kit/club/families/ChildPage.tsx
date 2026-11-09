@@ -6,8 +6,8 @@
  * roster (the live roster and a past season's record), and from Families' "No family on file" list. It READS — the
  * club admin has no add-player door (Ask 8). Its one action is SPLIT RECORDS (Stage 14 S6), shown when the child has two or more
  * seasons — it parts seasons typed as one child, or undoes a join (nothing was ever deleted):
- *   the header — the child's name; Born {date} and where the child plays now as chips; back to the household it was
- *                opened from (`?from=`), else to Families.
+ *   the header — the child's name; Born {date} and where the child plays now; back to the household it was opened from
+ *                (`?from=`), else to Families. In the admin's header since Phase 3 (A8): Born as quiet words, the season a chip.
  *   Seasons    — every season, newest first, rep and house league together; each season's fees read from its own book.
  *   Documents  — per team, the coach's rule and count ("2 to sign"), never pooled; on a phone one sentence per team.
  *                Last signed (owner 2026-11-05, drawing 58oV67ka48y4yCFPqWneya): ONE value a row, the newest copy by date
@@ -19,7 +19,8 @@
 import { useCallback, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { TabPageHeader } from '../PlaceFrame';
+import { useHandNamedPlace } from '@/components/admin/AdminBarPlace';
 import KitDialog from '../KitDialog';
 import SplitRecordsWindow from './SplitRecordsWindow';
 import {
@@ -94,9 +95,19 @@ export default function ChildPage({ orgSlug, childId }: { orgSlug: string; child
   const household = from && read ? read.parents.find(p => p.personId === from) ?? null : null;
   const familiesHref = `${base}/families`;
   const householdHref = household?.personId ? `${base}/families/${encodeURIComponent(household.personId)}` : null;
+  const backTo = householdHref ? { href: householdHref, label: household!.name } : { href: familiesHref, label: W.families };
+  // ⚖ Admin header Phase 3 (A8, round 5 Q4): the header names the child, back to the household it was opened from (the
+  // `?from=` the paper's way back read) or to Families; "Born {date}" as quiet words beside the name on desktop and on the
+  // phone's line, the season the child plays in now as the chip. The address said "Child" and "← Families" at once.
+  useHandNamedPlace(read ? {
+    title: read.child.name,
+    back: backTo,
+    detail: read.child.dateOfBirth ? W.born(read.child.dateOfBirth) : undefined,
+    chip: read.currentChip ? <RepChip tone="good">{read.currentChip}</RepChip> : undefined,
+  } : null);
   const header = (
-    <AdminPageHeader
-      backTo={householdHref ? { href: householdHref, label: household!.name } : { href: familiesHref, label: W.families }}
+    <TabPageHeader
+      backTo={backTo}
       title={read?.child.name ?? W.families}
       actions={read && read.seasons.length >= 2 ? (
         <button type="button" className="btn btn-outline" aria-haspopup="dialog" onClick={() => setSplitting(true)}>{SW.open}</button>

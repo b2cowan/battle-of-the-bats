@@ -27,7 +27,8 @@ import { Check, ChevronDown, Copy, Eye, ExternalLink, Globe } from 'lucide-react
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
 import { isClubPlan, hasModuleEntitlement } from '@/lib/module-entitlements';
-import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { TabPageHeader } from '@/components/admin/kit/club/PlaceFrame';
+import { useHandNamedPlace } from '@/components/admin/AdminBarPlace';
 import { ClubRow, ClubRowList, EmptyCard, LoadFailed, NoticePill, RepChip, SavePill, repKit } from '@/components/admin/kit/club/RepKit';
 import { NotYours } from '@/components/admin/kit/club/NotYours';
 import KitDialog from '@/components/admin/kit/club/KitDialog';
@@ -440,6 +441,13 @@ export default function PublicSitePage() {
   const ownerName = ((user?.user_metadata?.full_name ?? user?.user_metadata?.name) as string | undefined)?.trim() || null;
   const look = useMemo(() => currentOrg ? lookWords({ preset: currentOrg.themePreset, primary: currentOrg.themePrimary, accent: currentOrg.themeAccent, font: currentOrg.themeFont }) : null, [currentOrg]);
 
+  // ⚖ Admin header Phase 3 (round 5, Q3): the header names the Public site with its Online / Offline chip beside the name;
+  // the "Families see it at" row stays the page's first line. Handed only where the header names the page (its gate).
+  const siteChip = currentOrg
+    ? <span className={`${ck.chip} ${currentOrg.isPublic ? ck.chipGood : ck.chipWarn}`}>{currentOrg.isPublic ? W.online : W.offline}</span>
+    : null;
+  useHandNamedPlace(siteChip ? { title: W.title, chip: siteChip } : null);
+
   if (loading) return <LoadingState label={W.loading} />;
   // The capability AND the plan (Public tournament pages 1a): an owner who types the address on a plan without the site
   // reads that the plan has none, not a page that fails to load (the API refuses without the entitlement).
@@ -458,10 +466,7 @@ export default function PublicSitePage() {
 
   const header = (
     <>
-      <AdminPageHeader
-        title={W.title}
-        titleChips={<span className={`${ck.chip} ${on ? ck.chipGood : ck.chipWarn}`}>{on ? W.online : W.offline}</span>}
-      />
+      <TabPageHeader title={W.title} titleChips={siteChip} />
       <div className={styles.siteHead}>
         <div className={styles.addressRow}>
           <span className={styles.addressLabel}>{W.familiesSeeItAt}</span>

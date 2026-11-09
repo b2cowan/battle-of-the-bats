@@ -21,6 +21,10 @@ describe('one admin billing host for every plan', () => {
       '@/lib/org-context': { useOrg: () => ({ currentOrg: { slug: 'falcons', planId } }) },
       '@/lib/usePageTitle': { usePageTitle() {} },
       '@/components/admin/AdminPageHeader': { __esModule: true, default: ({ eyebrow, title }: { eyebrow?: string; title: string }) => createElement('header', null, eyebrow && createElement('p', null, eyebrow), createElement('h1', null, title)) },
+      // Admin header Phase 3 (round 5 Q1): the header names a club owner's Plan & billing and the paper title goes. This
+      // fixture has no role (and the tournament tiers' copy names the organization, Q6), so the header names no place and
+      // the paper heading stays — what the real model answers here (`clubPlaceAt`'s `opensBilling`, tested in admin-kit-nav).
+      '@/components/admin/AdminBarPlace': { useNamedInBar: () => false, useHandBarPlace() {} },
       '@/components/billing/BillingBody': { __esModule: true, default: ({ billingBase, teamsHref }: { billingBase: string; teamsHref: string }) => createElement('div', { 'data-billing': billingBase, 'data-teams': teamsHref }) },
     });
     for (const path of ['app/[orgSlug]/admin/org/billing/page.tsx', 'app/[orgSlug]/admin/tournaments/settings/subscription/page.tsx']) {

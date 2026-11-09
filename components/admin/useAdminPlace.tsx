@@ -18,6 +18,7 @@ import { useTournament } from '@/lib/tournament-context';
 import { resolveEventPhase, PHASE_LABEL } from '@/lib/tournament-phase';
 import { formatEventDateRange } from '@/lib/timezone';
 import { isTournamentOnlyWorkspace } from '@/lib/module-entitlements';
+import { isTournamentOrgScreen } from '@/lib/admin-kit-nav';
 import { kit as coachKit } from '@/components/coaches/kit';
 import { useClubPlaceAt, useHandedBarPlace, type AdminBarPlace } from './AdminBarPlace';
 import styles from './kit/AdminKitEventHeader.module.css';
@@ -27,7 +28,8 @@ export type AdminPlaceView = {
   title: string;
   /** The tournament's name is the door to its dashboard. */
   titleHref: string | null;
-  /** The name is the page's `<h1>` (the club's Overview and every club place); elsewhere the paper keeps its own. */
+  /** The name is the page's `<h1>` (the club's Overview, every club place and Phase 3's named screens); elsewhere the paper
+   *  keeps its own (`TabPageHeader` asks the same question, `useNamedInBar`). */
   isPageTitle: boolean;
   onOverview: boolean;
   /** The club place on screen, hand-off included, or null. */
@@ -47,10 +49,14 @@ export function useAdminPlace(suspended: boolean): AdminPlaceView {
   const addressPlace = useClubPlaceAt();
   const handed = useHandedBarPlace();
 
+  // ⚖ A10 + round 5 Q6: the org-wide tournament screens (the list, Settings & access, Members, Plan & billing, Payouts, PDF
+  // settings) name the ORGANIZATION, never the event the tournament context auto-picked; the sidebar's picker keeps the
+  // event on screen. Event pages, Event settings and the event's Notifications included, name the event.
   const onTournament =
     !suspended &&
     pathname.includes('/admin/tournaments') &&
     !pathname.includes('/admin/tournaments/preview') &&
+    !(currentOrg && isTournamentOrgScreen(pathname.replace(/\/+$/, ''), `/${currentOrg.slug}/admin`)) &&
     !!currentTournament?.slug;
 
   // The club's Overview (A3): its paper heading is gone, so the name is the page's one `<h1>`. A tournament-only workspace

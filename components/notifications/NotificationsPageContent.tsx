@@ -9,7 +9,7 @@ import { useNotificationFeed } from './useNotificationFeed';
 import { orgBell } from '@/lib/notification-bell-scope';
 import NotificationFeedBody from './NotificationFeedBody';
 import NotificationReader from './NotificationReader';
-import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { TabPageHeader } from '@/components/admin/kit/club/PlaceFrame';
 import styles from './notifications-page.module.css';
 
 /**
@@ -47,7 +47,8 @@ export default function NotificationsPageContent({ settingsHref }: { settingsHre
     void feed.markSeen(entryMembers(entry));
   }
 
-  const headerActions = (
+  // Nothing to act on draws no action row (the header names the page; `TabActions` renders only what is there).
+  const headerActions = !settingsHref && !feed.anyUnread ? undefined : (
     <>
       {settingsHref && (
         <Link href={settingsHref} className={styles.markAllBtn}>
@@ -66,8 +67,9 @@ export default function NotificationsPageContent({ settingsHref }: { settingsHre
     <div className={styles.page}>
       {/* The header (F3): the old line "Everything from this organization, newest first." was not
           re-homed — it described the list rather than stating a fact on it, and the eyebrow names the
-          organization's scope. */}
-      <AdminPageHeader
+          organization's scope. ⚖ Admin header Phase 3 (round 5): the admin's header names Notifications,
+          so the paper title and its eyebrow go and Mark all read keeps the page's top right. */}
+      <TabPageHeader
         eyebrow="Organization"
         title="Notifications"
         actions={headerActions}

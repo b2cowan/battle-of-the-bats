@@ -14,7 +14,7 @@ import { useRouter } from 'next/navigation';
 import { ChevronRight, Plus, Users } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { LeagueCapUpgradeModal } from '@/components/admin/LeagueCapUpgrade';
-import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { TabPageHeader } from '@/components/admin/kit/club/PlaceFrame';
 import { ClubRow, ClubRowList, ClubSection, EmptyCard, LoadFailed, PageLoading, repKit, useDeferredLoad } from '@/components/admin/kit/club/RepKit';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import frame from '@/components/admin/kit/AdminKitFrame.module.css';
@@ -64,8 +64,10 @@ export default function HouseLeagueHome() {
   const canRun = !!access?.run;
   // The board by name, read only where a sentence names who starts a season (the empty state, for a non-runner).
   const board = useBoardPeople(!!access?.read && !canRun && !loading && summaries.length === 0);
+  // ⚖ Admin header Phase 3 (round 5, Q2): the header names "Seasons" ("House league" on the phone's line), so the paper
+  // title goes and Create season keeps the page's top right.
   const header = (
-    <AdminPageHeader
+    <TabPageHeader
       eyebrow="House league"
       title="Seasons"
       inlineActions

@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useOrg } from '@/lib/org-context';
 import KitDialog from '@/components/admin/kit/club/KitDialog';
 import { NoticePill } from '@/components/admin/kit/club/RepKit';
-import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { TabPageHeader } from '@/components/admin/kit/club/PlaceFrame';
 import styles from '../rep-teams.module.css';
 import type { RepTeam } from '@/lib/types';
 import LoadingState from '@/components/shared/LoadingState';
@@ -138,9 +138,9 @@ export default function RenameSlugPage() {
 
   return (
     <div className={styles.page}>
-      {/* Header — the way back is the eyebrow's "Rep Teams" (the same door), with the organization's name
-          beside it (F3). */}
-      <AdminPageHeader
+      {/* Header — ⚖ Admin header Phase 3 (A9): the header names the page with "← Rep teams", its way back (it had none but
+          the eyebrow's link), so the paper title and its path go wherever the header names the page. */}
+      <TabPageHeader
         crumbs={[{ href: `${base}/rep-teams`, label: 'Rep teams' }, { label: currentOrg?.name ?? '' }]}
         title="Rename team URLs"
       />

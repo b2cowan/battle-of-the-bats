@@ -3,7 +3,8 @@ import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
 import { Archive } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
-import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { TabPageHeader } from '@/components/admin/kit/club/PlaceFrame';
+import { useHandNamedPlace } from '@/components/admin/AdminBarPlace';
 import styles from '../../../rep-teams.module.css';
 import type { RepTeam, RepTeamHistoryYear } from '@/lib/types';
 import LoadingState from '@/components/shared/LoadingState';
@@ -49,6 +50,12 @@ export default function TeamHistoryPage({
 
   useEffect(() => { if (currentOrg) load(); }, [currentOrg, load]);
 
+  // ⚖ Admin header Phase 3 (A8): the header names the page, "← {team} │ History"; on a phone (the arrow alone) the team
+  // rides the small line. The address said "← Team" until the team arrives.
+  useHandNamedPlace(team ? {
+    title: 'History', back: { href: `${base}/rep-teams/teams/${params.teamId}`, label: team.name }, facts: [team.name],
+  } : null);
+
   if (loading || fetching) return <LoadingState label="Loading this team’s history…" />;
 
   if (!team) return <p className={styles.muted}>Team not found.</p>;
@@ -57,8 +64,8 @@ export default function TeamHistoryPage({
     <div className={styles.page}>
       {/* Header — the team is the way up (backTo) and "Rep Teams" the eyebrow. The old subtitle "Completed
           and archived program years" described the list and was not re-homed — each season's chip says
-          which it is (F3). */}
-      <AdminPageHeader
+          which it is (F3). Only where the header keeps the club's name (Phase 3: it names this page otherwise). */}
+      <TabPageHeader
         crumbs={[{ href: `${base}/rep-teams`, label: 'Rep teams' }, { label: currentOrg?.name ?? '' }]}
         title="History"
         backTo={{ href: `${base}/rep-teams/teams/${params.teamId}`, label: team.name }}

@@ -73,7 +73,7 @@ describe('2 · each place draws THE shared tab row, from the model', () => {
     const nav = readCode('lib/admin-kit-nav.ts');
     const at = nav.slice(nav.indexOf('export function clubPlaceAt('));
     assert.match(at, /repTeamsTabs\(base\)/);
-    assert.match(at, /teamTabs\(`\$\{teams\}\$\{teamId\}`\)/);
+    assert.match(at, /teamTabs\(teamPath\)/);
     assert.match(at, /seasonTabs\(seasonPath, seasonAccess\)/);
     assert.match(at, /placeTabFor\(orgTabs, pathname\)/);
     assert.match(at, /placeTabFor\(/);
@@ -130,12 +130,25 @@ describe('3 · a page its tab row reaches has no title or back link of its own',
       assert.doesNotMatch(code, /<AdminPageHeader\b/, f);
     }
     const frame = readCode('components/admin/kit/club/PlaceFrame.tsx');
-    assert.match(frame, /if \(!inPlace\) return <AdminPageHeader \{\.\.\.props\} \/>;/, 'outside a place it is the full header');
+    // Outside a place frame AND not named by the header (Admin header Phase 3), it is the full header.
+    assert.match(frame, /if \(!inPlace && !named\) return <AdminPageHeader \{\.\.\.props\} \/>;/, 'outside a place it is the full header');
   });
-  it('the record pages keep their own back arrow', () => {
-    assert.match(readCode(`${A}/rep-teams/teams/[teamId]/history/page.tsx`), /backTo=/);
-    assert.match(readCode(`${A}/rep-teams/rename-slugs/page.tsx`), /<AdminPageHeader\b/);
-    assert.match(readCode(`${A}/house-league/seasons/[seasonId]/club-schedule/[scheduleId]/page.tsx`), /backTo=/);
+  // ⚖ Admin header Phase 3 (A8, A9; round 5): the record pages' way back moved INTO the header ("← Schedules", "← {team}",
+  // "← History", "← House league's time", "← Rep teams", "← {household}"), from the address and the page's hand-off. The
+  // paper's back arrow stays only where the header keeps the club's name (a refusal), through `TabPageHeader`.
+  it('the record pages’ way back is the header’s; the paper keeps it only where the header names no place', () => {
+    const nav = readCode('lib/admin-kit-nav.ts');
+    for (const back of [
+      /back: \{ href: schedules, label: 'Schedules' \}/, /back: \{ href: teamPath, label: 'Team' \}/,
+      /back: \{ href: `\$\{teamPath\}\/history`, label: 'History' \}/, /back: \{ href: `\$\{seasonPath\}\/schedule\?time=1`, label: LEAGUE_TIME_WORDS\.club\.back \}/,
+      /back: \{ href: `\$\{base\}\/rep-teams`, label: 'Rep teams' \}/, /back: \{ href: `\$\{base\}\/families`, label: 'Families' \}/,
+    ]) assert.match(nav, back);
+    for (const f of [`${A}/rep-teams/teams/[teamId]/history/page.tsx`, `${A}/rep-teams/teams/[teamId]/history/[yearId]/page.tsx`,
+      `${A}/house-league/seasons/[seasonId]/club-schedule/[scheduleId]/page.tsx`, `${A}/schedules/[scheduleId]/page.tsx`]) {
+      const code = readCode(f);
+      assert.match(code, /<TabPageHeader\b[\s\S]{0,400}backTo=/, `${f}: the paper's way back, for a refusal only`);
+      assert.match(code, /useHandNamedPlace\(/, `${f} hands the header its record`);
+    }
   });
   it('a create sits in its tab’s toolbar: Add team at the Teams toolbar’s end, Add registration at Registrations’', () => {
     const teams = readCode(`${A}/rep-teams/page.tsx`);

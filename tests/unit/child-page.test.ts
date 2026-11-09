@@ -239,9 +239,16 @@ describe('the page and its doors (source guards)', () => {
     // A child's page is no place (the bar's own answer), so the frame steps aside and sets no title over it.
     assert.match(frame, /const tab = place\?\.key === 'families' \? place\.activeId : null;/);
     assert.match(frame, /if \(!place \|\| !tab\) return <>\{children\}<\/>;/);
-    // The bar asks the same address question, and a child's page is no place there either (Phase 3 gives it its own bar).
-    assert.match(src('lib/admin-kit-nav.ts'), /if \(!opensFamilies \|\| isFamiliesChildPage\(pathname, base\)\) return null;/);
+    // The bar asks the same address question: a child's page is its OWN record place (Admin header Phase 3, A8) — keyed
+    // `child:`, never 'families' — behind the Families layout's gate, so a group-limited member never sees it named.
+    const nav = src('lib/admin-kit-nav.ts');
+    assert.match(nav, /if \(!opensFamilies\) return null;\s*\/\/[^\n]*\n[\s\S]{0,400}if \(isFamiliesChildPage\(pathname, base\)\) \{/);
+    assert.match(nav, /namedScreen\(`child:\$\{childId\}`, 'Child', \{ back: \{ href: `\$\{base\}\/families`, label: 'Families' \} \}\)/);
     assert.match(frame, /usePageTitle\(!tab \? null :/);
+    // The page hands over its name, the `?from=` household way back (the one the paper read), Born and the season chip.
+    const page = src('components/admin/kit/club/families/ChildPage.tsx');
+    assert.match(page, /useHandNamedPlace\(read \? \{\s*title: read\.child\.name,\s*back: backTo,/);
+    assert.match(page, /<TabPageHeader\s+backTo=\{backTo\}/);
   });
 
   it('the doors: the household line, a rep roster name (live and past) for Families access only, the no-family rows', () => {

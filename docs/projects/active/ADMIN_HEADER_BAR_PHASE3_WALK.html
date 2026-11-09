@@ -1,0 +1,314 @@
+<title>Admin header Phase 3 walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one narrow reading column; parts as folds, each with steps, a verdict row and a notes box (the house walk frame). */
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --fg: #23251f;
+  --muted: #666a5d;
+  --line: #dcdacf;
+  --accent: #4d5c1a;
+  --accent-fg: #ffffff;
+  --good: #2f6b2f;
+  --warn: #8a5a00;
+  --bad: #a3321f;
+  --chip: #ecebe3;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+    --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15170f; --panel: #1e2016; --fg: #ebeadf; --muted: #a2a591; --line: #34372a;
+  --accent: #b5c95a; --accent-fg: #15170f; --good: #8fcf8f; --warn: #e0b254; --bad: #f08a76; --chip: #2a2c20;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.sub { color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .facts { grid-template-columns: 1fr; } .facts dd { margin-bottom: 6px; } }
+.label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent); }
+details.part { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.part > summary { cursor: pointer; list-style: none; padding: 14px 16px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+details.part > summary::-webkit-details-marker { display: none; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip.pass { color: var(--good); } .chip.issue { color: var(--bad); } .chip.call { color: var(--warn); }
+.body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.step { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; border-top: 1px solid var(--line); }
+.step input { margin-top: 4px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.step .txt { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.who { font-size: 12px; font-weight: 600; color: var(--accent); }
+.see { color: var(--muted); }
+.call { font-size: 13px; color: var(--warn); }
+.verdicts { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button:focus-visible, summary:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+textarea { width: 100%; min-height: 60px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--chip); padding: 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; max-height: 320px; overflow: auto; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+.opts { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; }
+.opt { display: flex; gap: 8px; align-items: flex-start; font-size: 0.95em; }
+.opt input { margin-top: 3px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<main>
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="label">Owner QA walk · Admin header bar · Phase 3 · §499</span>
+    <h1>The screens with no place of their own name themselves in the header</h1>
+    <p class="sub">Written 2026-11-09. One purpose: the header on the Phase 3 screens. Computer first, then a phone pass.</p>
+  </header>
+  <section class="card"><h2>What this walk is for</h2><p>Until now, Calendar, Schedules, Notifications, House league’s Seasons, the Public site, Plan &amp; billing and the record pages one level down (a schedule, a team’s History, one past season, a child, Rename team URLs, a club schedule read from a season) showed the club’s name in the header and their own title on the page. Now the header names the screen, the record pages put their way back there too, and the title on the page is gone. The page’s own buttons stay at its top right. A tournament-only organization’s list and settings now name the organization instead of whichever event was picked last. Built to round 5 (your Q1–Q6, all as recommended).</p></section>
+  <section class="card"><h2>It passes when</h2><ul>
+    <li>Each screen in parts A and B shows its name once, in the dark strip on a computer and in the white bar on a phone, and has no title of its own on the page.</li>
+    <li>A record page shows its way back (“← Schedules”, “← 15U AAA”, “← History”…) beside its name, and its chip; a past season also shows its team as quiet grey words beside the name.</li>
+    <li>While a record loads you see a placeholder (“Schedule”, “Child”) and its way back, then the name. Never the club’s name first.</li>
+    <li>Someone a screen refuses sees the club’s name in the header and the refusal’s own heading.</li>
+    <li>The tournament organization’s list, Settings &amp; access, Members and Plan &amp; billing name the organization; an event’s pages, Event settings included, name the event.</li>
+    <li>The Calendar’s phone View menu is the first thing in its toolbar row.</li>
+  </ul></section>
+  <section class="card"><h2>Not in this walk</h2><ul>
+    <li><strong>Club setup</strong> (“Get your club ready for the season”) keeps its own heading (your Q1).</li>
+    <li><strong>Places with tabs</strong> (Rep teams, a team, a season, Accounting, Families, Organization) and the <strong>coaches portal</strong>: measured identical before and after, node for node, on a computer and a phone.</li>
+    <li><strong>A team’s account in Accounting</strong>: still a view of Accounting’s Teams tab (2026-10-16), unchanged.</li>
+  </ul></section>
+  <section class="card"><h2>Known before the walk</h2><ul>
+    <li><strong>Measured before publishing</strong> (1440 × 760 and 390 wide): one page heading on every screen, the header’s; nothing pinned grew on a computer (the strip alone, 48px); on a phone a record’s bar is two lines (53–54px), as a team’s and a season’s already are; nothing scrolls sideways; a slowed-down first load goes from the placeholder to the name with no club name in between.</li>
+    <li><strong>The test club’s schedule is not one its house-league season holds time in</strong>, so the club-schedule page (B6) shows its own “couldn’t load” line under the header’s placeholder <strong>Schedule</strong>. The header’s shape is still checkable there.</li>
+    <li><strong>The test child has no date of birth on file</strong>, so “Born …” does not show on B4. It sits beside the name the way the past season’s team does (B3).</li>
+    <li><strong>The Calendar’s phone View button keeps its shipped hairline border</strong> (A7 said keep the shipped look). The round 3 drawing drew it borderless; the shipped control never was.</li>
+    <li><strong>Two help sentences now read wrong</strong> (the Calendar’s “icon beside the title”, the Public site’s “top of the page shows an Online chip”): offered to the help agent, not changed here.</li>
+  </ul></section>
+  <section class="card"><h2>Sign in as</h2><dl class="facts">
+    <dt>The club’s owner</dt><dd><code>uat-club-owner@uat-rep-club.local</code>, password <code>UAT_REP_CLUB_OWNER_PASSWORD</code> in <code>.env.local</code>.</dd>
+    <dt>The club’s treasurer</dt><dd><code>uat-club-treasurer@uat-rep-club.local</code>, password <code>UAT_REP_CLUB_TREASURER_PASSWORD</code> (part D).</dd>
+    <dt>The club’s registrar</dt><dd><code>uat-club-registrar@uat-rep-club.local</code>, password <code>UAT_REP_CLUB_REGISTRAR_PASSWORD</code> (part D).</dd>
+    <dt>The club’s admin</dt><dd><code>uat-club-admin@uat-rep-club.local</code>, password <code>UAT_REP_CLUB_ADMIN_PASSWORD</code> (part D).</dd>
+    <dt>A tournament organization’s owner</dt><dd><code>uat-owner@uat-test-org.local</code>, password <code>UAT_ORG_OWNER_PASSWORD</code> (opens <strong>UAT Plus Org</strong>, part E).</dd>
+    <dt>Sign-in page</dt><dd><code>http://localhost:3000/login</code>. Use a private window for each other person, or sign out between them.</dd>
+    <dt>Keep it private</dt><dd>Dev-only accounts on the dev database. Never production accounts.</dd>
+  </dl></section>
+  <section class="card"><h2>Where and on what</h2><dl class="facts">
+    <dt>The club</dt><dd><strong>UAT Rep Club</strong>: <code>http://localhost:3000/uat-rep-club/admin</code></dd>
+    <dt>A schedule</dt><dd><strong>Winter dome 2026–27</strong> (In review): <code>http://localhost:3000/uat-rep-club/admin/schedules/0cc941d4-8ea9-4235-b8c3-86b20e74fb7b</code></dd>
+    <dt>The team’s History</dt><dd><strong>15U AAA</strong>: <code>http://localhost:3000/uat-rep-club/admin/rep-teams/teams/638ac88f-e941-41e7-ad3e-50869b7cb379/history</code></dd>
+    <dt>One past season</dt><dd><strong>2025 Season</strong> of 15U AAA: <code>http://localhost:3000/uat-rep-club/admin/rep-teams/teams/638ac88f-e941-41e7-ad3e-50869b7cb379/history/dd3623eb-c618-47ad-ab86-5688a210bb51</code></dd>
+    <dt>A child, opened from a family</dt><dd><strong>Emeka Okafor</strong>: <code>http://localhost:3000/uat-rep-club/admin/families/children/83c90d69-6719-4cdc-9ae2-5cc492a65351?from=f5275a8f-2def-4153-8150-630350442583</code></dd>
+    <dt>A club schedule from the season</dt><dd><code>http://localhost:3000/uat-rep-club/admin/house-league/seasons/0e94976d-4f01-4f5f-b18c-3c4d8b10bb77/club-schedule/0cc941d4-8ea9-4235-b8c3-86b20e74fb7b</code></dd>
+    <dt>The tournament organization</dt><dd><strong>UAT Plus Org</strong>: <code>http://localhost:3000/uat-plus-org/admin/tournaments/manage</code></dd>
+    <dt>Screens</dt><dd>Your local server, restarted for this change on 2026-11-09. If a page shows “We can’t find that page” in the first minute, reload it once: that is the page compiling.</dd>
+    <dt>Computer</dt><dd>A browser window wider than 900px.</dd>
+    <dt>Phone</dt><dd>A real phone on your network, or the browser’s device view at about 390px wide.</dd>
+  </dl></section>
+  <section class="card">
+    <div class="top"><h2>Progress</h2><span class="count" id="total">0 of 0 checked</span></div>
+    <div class="bar"><i id="barfill"></i></div>
+    <div class="verdicts"><button class="primary" id="copyAll" type="button">Copy walk summary</button><button id="reset" type="button">Clear all ticks</button></div>
+    <pre id="out" hidden></pre>
+  </section>
+  <div id="parts" style="display:flex;flex-direction:column;gap:12px"></div>
+</main>
+
+<script>
+(function () {
+  var KEY = "admin-header-bar-phase3-walk-v1";
+  var TITLE = "Admin header bar · Phase 3 walk §499 · The screens with no place of their own (2026-11-09)";
+  var PARTS = [
+ { "id": "A", "title": "Screens with a fixed name, on a computer", "steps": [
+   { "who": "Club owner · computer", "do": "Click <strong>Calendar</strong> in the sidebar.",
+     "see": "The dark strip says <strong>Calendar</strong> where it said the club’s name. The page starts with the toolbar (List · Week · Month, the dates, the filters, Export): no “Calendar” title above it.",
+     "options": ["As described", "The strip still says the club’s name", "A “Calendar” title still shows on the page", "Something else (notes)"] },
+   { "who": "Club owner · computer", "do": "Click <strong>Schedules</strong>.",
+     "see": "The strip says <strong>Schedules</strong>. The page starts with “The club’s time, handed out to its teams…” and <strong>New schedule</strong> at its right." },
+   { "who": "Club owner · computer", "do": "Open <code>/uat-rep-club/admin/notifications</code>.",
+     "see": "The strip says <strong>Notifications</strong>; no “Organization” word and no title on the page. If anything is unread, <strong>Mark all read</strong> sits at the page’s top right; if nothing is, no empty row is left there." },
+   { "who": "Club owner · computer", "do": "Click <strong>House league</strong>.",
+     "see": "The strip says <strong>Seasons</strong>. <strong>Create season</strong> (lime) at the page’s top right; no “House league / Seasons” title on the page (your Q2)." },
+   { "who": "Club owner · computer", "do": "Click <strong>Public site</strong>.",
+     "see": "The strip says <strong>Public site</strong> with the <strong>ONLINE</strong> (or OFFLINE) chip beside it. The page’s first line is “Families see it at” with the address, <strong>Copy link</strong> and <strong>Open</strong> (your Q3).",
+     "options": ["As described", "The chip is still on the page, not in the strip", "The address row moved or is gone", "Something else (notes)"] },
+   { "who": "Club owner · computer", "do": "Click <strong>Plan &amp; billing</strong> in the sidebar’s foot.",
+     "see": "The strip says <strong>Plan &amp; billing</strong>; no “Organization” eyebrow and no title on the page (your Q1)." }
+ ] },
+ { "id": "B", "title": "Record pages: their name and way back, on a computer", "steps": [
+   { "who": "Club owner · computer", "do": "Open the schedule (link above), or click it from Schedules.",
+     "see": "The strip reads <strong>← Schedules │ Winter dome 2026–27</strong> with the <strong>IN REVIEW</strong> chip. Clicking <strong>← Schedules</strong> goes back to the list. The page starts with the schedule’s line of facts.",
+     "options": ["As described", "The name or chip also shows on the page", "No way back in the strip", "Something else (notes)"] },
+   { "who": "Club owner · computer", "do": "Open the team’s History (link above).",
+     "see": "The strip reads <strong>← 15U AAA │ History</strong>; the past seasons are the first thing on the page. No “Rep teams · UAT Rep Club” line above them." },
+   { "who": "Club owner · computer", "do": "Click <strong>View →</strong> on the <strong>2025 Season</strong>.",
+     "see": "The strip reads <strong>← History │ 2025 Season</strong>, then <strong>15U AAA</strong> in quiet grey, then the <strong>COMPLETED</strong> chip (your Q4). “Read-only archive” stays at the page’s top right; the page’s own tabs (Roster · Schedule &amp; results · Coaches · Documents) stay on the page.",
+     "options": ["As described", "The team is missing from the strip", "The page’s tabs moved into the header", "Something else (notes)"] },
+   { "who": "Club owner · computer", "do": "Open the child from the family (link above, with its <code>?from=</code>).",
+     "see": "The strip reads <strong>← {the parent’s name} │ Emeka Okafor</strong> and the <strong>13U AAA · 2026</strong> chip. The back link returns to that family. <strong>Split records</strong>, if shown, sits at the page’s top right." },
+   { "who": "Club owner · computer", "do": "Open the same child without the <code>?from=…</code> part of the address.",
+     "see": "The back link reads <strong>← Families</strong> and goes to Families." },
+   { "who": "Club owner · computer", "do": "From <strong>Rep teams</strong>, click <strong>Rename team URLs</strong>.",
+     "see": "The strip reads <strong>← Rep teams │ Rename team URLs</strong> (your A9). The page starts with its explanation; no “Rep teams · UAT Rep Club” line." },
+   { "who": "Club owner · computer", "do": "Open the club schedule read from the season (link above).",
+     "see": "The strip reads <strong>← House league’s time │ Schedule</strong> (the test data has no schedule the season holds time in, so the name stays the placeholder and the page says it couldn’t load). Clicking the back link opens the season’s Schedule with the House league’s time window.",
+     "options": ["As described", "The strip shows the club’s name", "Something else (notes)"] }
+ ] },
+ { "id": "C", "title": "The same screens on a phone", "steps": [
+   { "who": "Club owner · phone", "do": "Open <strong>Calendar</strong> from the bottom bar.",
+     "see": "The white bar says <strong>Calendar</strong> and the globe. The first thing in the toolbar row is the <strong>View</strong> button (a calendar glyph), then Filter, then Export at the right (your A7). Tapping it opens Week and Month.",
+     "options": ["As described", "The View button is not first in the row", "It does not open Week / Month", "Something else (notes)"] },
+   { "who": "Club owner · phone", "do": "Open the 2025 Season (link above).",
+     "see": "The bar shows the back arrow, <strong>2025 Season</strong>, and on the line under it <strong>15U AAA</strong> and the <strong>COMPLETED</strong> chip. One heading, in the bar." },
+   { "who": "Club owner · phone", "do": "Open the child (link above).",
+     "see": "The back arrow, <strong>Emeka Okafor</strong>, and the season chip on the line under it. The arrow returns to the family." },
+   { "who": "Club owner · phone", "do": "Open <strong>House league</strong> from More.",
+     "see": "The bar says <strong>Seasons</strong>, with <strong>House league</strong> on the line under it; the lime <strong>+</strong> at the page’s top right." },
+   { "who": "Club owner · phone", "do": "Open <strong>Public site</strong> from More.",
+     "see": "The bar says <strong>Public site</strong> with the <strong>ONLINE</strong> chip on the line under it; the address row is the page’s first line." },
+   { "who": "Club owner · phone", "do": "Open a team (Rep teams → 15U AAA) and a season (More → House league → the season).",
+     "see": "Exactly as before: name, way back, chip, the tabs pinned in the bar. Nothing on these changed." }
+ ] },
+ { "id": "D", "title": "A screen that refuses you keeps the club’s name (Q5)", "steps": [
+   { "who": "Treasurer · computer", "do": "Open <code>/uat-rep-club/admin/house-league</code>.",
+     "see": "The strip shows <strong>UAT Rep Club</strong>, not “Seasons”, and the page says <strong>House league isn’t one of your pages</strong> as its heading.",
+     "options": ["As described", "The strip says Seasons over the refusal", "Something else (notes)"] },
+   { "who": "Registrar · computer", "do": "Open <code>/uat-rep-club/admin/schedules</code>.",
+     "see": "The strip shows <strong>UAT Rep Club</strong>; the page says <strong>Schedules isn’t one of your pages</strong>." },
+   { "who": "Club admin · computer", "do": "Open <code>/uat-rep-club/admin/org/billing</code>.",
+     "see": "The strip shows <strong>UAT Rep Club</strong>; the page says <strong>Plan &amp; billing isn’t one of your pages</strong> (the owner’s only)." }
+ ] },
+ { "id": "E", "title": "A tournament organization names itself on its own screens (A10, Q6)", "steps": [
+   { "who": "Tournament org owner · computer", "do": "Open <code>/uat-plus-org/admin/tournaments/manage</code> (the sidebar’s <strong>Tournaments</strong>).",
+     "see": "The strip shows <strong>UAT Plus Org</strong>, not an event’s name. The page keeps its own <strong>Tournaments</strong> title. The sidebar still shows the selected event in its picker.",
+     "options": ["As described", "The strip shows an event’s name", "Something else (notes)"] },
+   { "who": "Tournament org owner · computer", "do": "Open <strong>Settings &amp; access</strong>, then <strong>Staff &amp; access</strong> (Members), then Plan &amp; billing from there.",
+     "see": "Each shows <strong>UAT Plus Org</strong> in the strip and its own title on the page." },
+   { "who": "Tournament org owner · computer", "do": "Open the event’s <strong>Teams</strong>, then its <strong>Event settings</strong> (sidebar, Setup group).",
+     "see": "Both show the event’s name, dates and status chip in the strip, as before. Event settings is about one event, so it names the event." },
+   { "who": "Club owner · computer", "do": "In the club, click <strong>Tournaments</strong>, then the sidebar’s <strong>Tournaments</strong> row in its Admin group (the list).",
+     "see": "The list shows <strong>UAT Rep Club</strong> in the strip and its own Tournaments title (your Q6: one rule for both kinds of organization)." }
+ ] },
+ { "id": "F", "title": "Your calls", "steps": [
+   { "who": "You", "do": "On one past season (B3) <strong>Read-only archive</strong> sits alone on a row at the page’s top right (about 45px of grey note above the season’s figures). It is the page’s own item, kept where A8 puts a page’s own items.",
+     "see": "Pick one. The build ships the first.",
+     "options": ["Keep it as built", "Move it beside the figures, on their row", "Drop it: the COMPLETED chip says it", "Something else (notes)"] },
+   { "who": "You", "do": "On the Calendar’s phone toolbar the View button keeps its shipped hairline border (A7), next to Filter (a bordered pill) and Export (a bordered square).",
+     "see": "Pick one. The build ships the first.",
+     "options": ["Keep it as built", "Make it borderless, as round 3 drew it", "Something else (notes)"] }
+ ] }
+];
+  var state = { ticks: {}, verdict: {}, notes: {} };
+  try { var raw = localStorage.getItem(KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var host = document.getElementById('parts');
+  var steps = [];
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+
+  PARTS.forEach(function (p) {
+    var d = el('details', 'part'); d.open = true;
+    var sum = el('summary'); sum.appendChild(el('strong', null, p.id + ' · ' + p.title));
+    var chip = el('span', 'chip', ''); sum.appendChild(chip); d.appendChild(sum);
+    var body = el('div', 'body'); d.appendChild(body);
+    p.steps.forEach(function (s, i) {
+      var id = p.id + (i + 1);
+      var t = el('span', 'txt');
+      t.appendChild(el('span', 'who', id + ' · ' + s.who));
+      t.appendChild(el('span', null, s.do));
+      t.appendChild(el('span', 'see', 'You should see: ' + s.see));
+      if (s.call) t.appendChild(el('span', 'call', s.call));
+      var rec = { part: p.id, step: id, boxes: [], options: s.options || null };
+      if (s.options) {
+        // One box per answer: the tick IS the answer, and the summary prints which one.
+        var opts = el('span', 'opts');
+        s.options.forEach(function (label, k) {
+          var oid = id + String.fromCharCode(97 + k);
+          var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + oid; cb.checked = !!state.ticks[oid];
+          cb.addEventListener('change', function () { state.ticks[oid] = cb.checked; save(); refresh(); });
+          rec.boxes.push({ cb: cb, label: label });
+          var o = el('label', 'opt'); o.appendChild(cb); o.appendChild(el('span', null, label)); opts.appendChild(o);
+        });
+        t.appendChild(opts);
+        var row = el('div', 'step'); row.appendChild(el('span', null, '')); row.appendChild(t); body.appendChild(row);
+      } else {
+        var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'cb-' + id; cb.checked = !!state.ticks[id];
+        cb.addEventListener('change', function () { state.ticks[id] = cb.checked; save(); refresh(); });
+        rec.boxes.push({ cb: cb, label: null });
+        var row2 = el('label', 'step'); row2.appendChild(cb); row2.appendChild(t); body.appendChild(row2);
+      }
+      steps.push(rec);
+    });
+    var vs = el('div', 'verdicts');
+    [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']].forEach(function (v) {
+      var b = el('button', null, v[1]); b.type = 'button';
+      b.addEventListener('click', function () { state.verdict[p.id] = state.verdict[p.id] === v[0] ? '' : v[0]; save(); refresh(); });
+      b.setAttribute('data-v', v[0]); vs.appendChild(b);
+    });
+    body.appendChild(vs);
+    var ta = document.createElement('textarea'); ta.id = 'notes-' + p.id; ta.placeholder = 'Notes for part ' + p.id; ta.value = state.notes[p.id] || '';
+    ta.addEventListener('input', function () { state.notes[p.id] = ta.value; save(); });
+    body.appendChild(ta);
+    p.chip = chip; p.vs = vs; host.appendChild(d);
+  });
+
+  function isDone(r) { return r.boxes.some(function (b) { return b.cb.checked; }); }
+  function doneSteps(partId) { return steps.filter(function (r) { return (!partId || r.part === partId) && isDone(r); }); }
+  var totalSteps = steps.length;
+
+  function refresh() {
+    PARTS.forEach(function (p) {
+      var n = doneSteps(p.id).length;
+      var v = state.verdict[p.id] || '';
+      p.chip.className = 'chip ' + v;
+      p.chip.textContent = (v ? { pass: 'Pass', issue: 'Issue', call: 'Needs a call' }[v] + ' · ' : '') + n + ' of ' + p.steps.length;
+      Array.prototype.forEach.call(p.vs.children, function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    });
+    var done = doneSteps(null).length;
+    document.getElementById('total').textContent = done + ' of ' + totalSteps + ' checked';
+    document.getElementById('barfill').style.width = (totalSteps ? Math.round(done * 100 / totalSteps) : 0) + '%';
+  }
+
+  function summary() {
+    var lines = [TITLE, 'Checked ' + doneSteps(null).length + ' of ' + totalSteps + ' steps'];
+    PARTS.forEach(function (p) {
+      var ticked = doneSteps(p.id);
+      lines.push(p.id + ' ' + p.title + ' [' + (state.verdict[p.id] || 'no verdict') + '] ' + ticked.length + '/' + p.steps.length
+        + (ticked.length ? ' (' + ticked.map(function (r) { return r.step; }).join(', ') + ')' : ''));
+      ticked.filter(function (r) { return r.options; }).forEach(function (r) {
+        lines.push('  ' + r.step + ': ' + r.boxes.filter(function (b) { return b.cb.checked; }).map(function (b) { return b.label; }).join(' + '));
+      });
+      if (state.notes[p.id]) lines.push('  Notes: ' + state.notes[p.id]);
+    });
+    return lines.join('\n');
+  }
+
+  document.getElementById('copyAll').addEventListener('click', function () {
+    var text = summary(); var out = document.getElementById('out'); out.hidden = false; out.textContent = text;
+    try { navigator.clipboard.writeText(text).catch(function () { var r = document.createRange(); r.selectNodeContents(out); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }); } catch (e) {}
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = { ticks: {}, verdict: {}, notes: {} }; save();
+    steps.forEach(function (r) { r.boxes.forEach(function (b) { b.cb.checked = false; }); });
+    PARTS.forEach(function (p) { document.getElementById('notes-' + p.id).value = ''; });
+    refresh();
+  });
+  refresh();
+})();
+</script>

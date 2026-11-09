@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useOrg } from '@/lib/org-context';
 import { useHouseLeagueAccess, useSeasonAccess } from '@/components/admin/kit/useHouseLeagueSeasons';
-import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { TabPageHeader } from '@/components/admin/kit/club/PlaceFrame';
+import { useHandNamedPlace } from '@/components/admin/AdminBarPlace';
 import KitDialog from '@/components/admin/kit/club/KitDialog';
 import { SavePill, useDeferredLoad } from '@/components/admin/kit/club/RepKit';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
@@ -87,6 +88,9 @@ export default function LeagueClubSchedulePage() {
   const divisionName = useMemo(() => new Map((read?.divisions ?? []).map(d => [d.id, d.name])), [read]);
   const today = tournamentToday();
   const open = read?.slots.find(x => x.id === openId) ?? null;
+  // ⚖ Admin header Phase 3 (A8): "← House league's time │ {schedule}", "The club's schedule" on the phone's line. The
+  // address said "Schedule" and the way back at once (the title used to be blank until the read landed).
+  useHandNamedPlace(read ? { title: read.schedule.name } : null);
 
   if (!hasAccess && currentOrg) return null;
 
@@ -115,7 +119,7 @@ export default function LeagueClubSchedulePage() {
 
   return (
     <div className={s.clubPage}>
-      <AdminPageHeader eyebrow={W.club.eyebrow} title={read?.schedule.name ?? ''} backTo={{ href: backHref, label: W.club.back }} />
+      <TabPageHeader eyebrow={W.club.eyebrow} title={read?.schedule.name ?? ''} backTo={{ href: backHref, label: W.club.back }} />
       {!read && !failed && <LoadingState label="Loading the club’s schedule…" />}
       {failed && <p className={`${ck.notice} ${ck.noticeBad}`} role="alert">{failed}</p>}
       {read && columns && (

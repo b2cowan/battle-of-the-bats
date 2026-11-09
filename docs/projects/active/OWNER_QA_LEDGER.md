@@ -28085,3 +28085,14 @@ performed over the shared working tree. The original walk result is not claimed 
 
 **Calls the walk does not ask (built, for the owner to see):** the new sentence "A statement can't start after today." skipped the `/marketing` pass (step S1.4 invites a rewording); the after-start line is not kept across a reload (as drawn).
 <!-- /§497 -->
+
+## §499 · Admin header bar · Phase 3 owner walk (the screens with no place of their own) — **Calendar, Schedules, Notifications, House league's Seasons, the Public site (its Online chip beside the name) and Plan & billing name themselves in the strip on a computer and the bar on a phone, their paper title gone and their buttons at the page's top right; a schedule, a team's History, one past season (its team as quiet words beside the name), a child (back to the household it came from, or Families), Rename team URLs ("← Rep teams") and a club schedule show their way back and name, a placeholder first and never the club's name; the Calendar's phone View menu leads its toolbar; a treasurer, a registrar and an admin refused a screen see the club's name over the refusal; a tournament organization's list, Settings & access, Members and Plan & billing name the organization while its event pages (Event settings included) name the event; two calls**
+<!-- §499 -->
+**Walk published 2026-11-09:** https://claude.ai/artifact/6zhDUJu3TFMjxCvhKBW4kC (source `docs/projects/active/ADMIN_HEADER_BAR_PHASE3_WALK.html`). Build: Admin header bar Phase 3, built 2026-11-09 to round 5 (drawings https://claude.ai/artifact/NNn3tmZaFqW5GqE9ADRGjV, Q1–Q6 ruled 2026-11-08; plan `docs/projects/active/ADMIN_HEADER_BAR_PLAN.md` § Round 5 and § Phase 3; prompt `ADMIN_HEADER_BAR_PHASE3_BUILD_PROMPT.md`).
+
+**Sign-in:** the UAT Rep Club owner, treasurer, registrar and admin (`uat-club-*@uat-rep-club.local`, the matching `UAT_REP_CLUB_*_PASSWORD`) and the tournament organization owner (`uat-owner@uat-test-org.local`, `UAT_ORG_OWNER_PASSWORD`, UAT Plus Org).
+
+**Proved before publishing:** one visible `<h1>` on every Phase 3 screen at 1440×760 and 390, the header's; pinned 48px at 1440 (unchanged), 51px or 53–54px at 390 (a record's second line); refusals keep the org's name; A10's four org screens name the organization and Event settings / Teams name the event; throttled first loads go placeholder → name with no org-name flash; the coaches portal's strip and tab row and the phone bar on every untouched screen node-for-node identical to Phase 2D's snapshot; `check:layout` on the 11 screens at 1440 and 390: no new findings (three at 390 re-key old ones whose text changed).
+
+**Calls the walk asks the owner (F):** F1 "Read-only archive" alone on a row on one past season; F2 the Calendar's phone View button keeps its shipped hairline border (round 3 drew it borderless).
+<!-- /§499 -->

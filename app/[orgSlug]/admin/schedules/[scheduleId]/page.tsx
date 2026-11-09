@@ -16,7 +16,8 @@ import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { jsonInit, moneyFetch, refusalText } from '@/lib/money-fetch';
 import { formatStoredDate, formatShortWeekdayDate, tournamentToday } from '@/lib/timezone';
 import { formatTime, joinWithAnd, pluralize } from '@/lib/utils';
-import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { TabPageHeader } from '@/components/admin/kit/club/PlaceFrame';
+import { useHandNamedPlace } from '@/components/admin/AdminBarPlace';
 import ExportMenu from '@/components/admin/ExportMenu';
 import { CoachListToolbar } from '@/components/coaches/kit';
 import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
@@ -95,6 +96,12 @@ export default function SchedulePage() {
   const [read, setRead] = useState<PageRead | null>(null);
   const [failed, setFailed] = useState<{ notFound: boolean; text: string } | null>(null);
   usePageTitle(read?.schedule.name ?? W.title);
+  // The ONE state chip, only where it says something (a sent schedule with nothing waiting says nothing more).
+  const stateChip = read && (read.schedule.state !== 'final' || read.schedule.changedSinceSent)
+    ? <ScheduleStateChip state={read.schedule.state} changed={read.schedule.changedSinceSent} /> : undefined;
+  // ⚖ Admin header Phase 3 (A8, round 5): the header names the schedule ("← Schedules │ name", its chip); the address gave
+  // "Schedule" and the way back at once, this hands over the name once the schedule has loaded.
+  useHandNamedPlace(read ? { title: read.schedule.name, chip: stateChip } : null);
   const [lens, setLens] = useState<Lens>('grid');
   const initializedSchedule = useRef<string | null>(null);
   const [cursor, setCursor] = useState<string | null>(null);
@@ -261,11 +268,12 @@ export default function SchedulePage() {
     router.push(`/${slug}/admin/schedules`);
   }
 
+  // The paper header shows only where the header keeps the club's name (someone the schedules refuse).
   const header = (
-    <AdminPageHeader
+    <TabPageHeader
       backTo={{ href: `/${slug}/admin/schedules`, label: W.back }}
       title={read?.schedule.name ?? W.title}
-      titleChips={read ? <ScheduleStateChip state={read.schedule.state} changed={read.schedule.changedSinceSent} /> : undefined}
+      titleChips={stateChip}
       inlineActions
     />
   );

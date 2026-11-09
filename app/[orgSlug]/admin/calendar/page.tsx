@@ -16,7 +16,7 @@
  *                 readers are the club's own admins and the times are already the club's; the exports keep it.
  *   the date row— at 900 px and narrower the dates take their own row; on a phone the pill joins them.
  *   the views   — `ClubCalendarViews.tsx`. A booking opens a read window with both sides of its clash.
- *   the phone   — the coach schedule's: the View drawer in the title row, the stacked week — offering WEEK and MONTH only
+ *   the phone   — the coach schedule's: the View drawer first in the toolbar (A7), the stacked week — offering WEEK and MONTH only
  *                 (owner 2026-10-09, §288 W4): List and Week both read one week, and a phone draws both as the same
  *                 stack of day cards, so List would repeat Week. (The coach's List is the whole season, which is why its
  *                 phone keeps three.) A page left on List shows Week at phone width; Month's day opens the Week there,
@@ -41,7 +41,7 @@ import { CLUB_BAND_WORDS } from '@/lib/club-band-view';
 import { useSearchParams } from 'next/navigation';
 import { moneyFetch, refusalText } from '@/lib/money-fetch';
 import { buildFilename, downloadCSVBlob, downloadICSFromInstants, downloadXLSX, generateCSV } from '@/lib/export';
-import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { TabPageHeader } from '@/components/admin/kit/club/PlaceFrame';
 import ExportMenu from '@/components/admin/ExportMenu';
 import { CoachListToolbar } from '@/components/coaches/kit';
 import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
@@ -226,23 +226,21 @@ export default function ClubCalendarPage() {
   ) : null;
 
   const ViewGlyph = VIEW_GLYPH[shownView];
-  const header = (
-    <AdminPageHeader
-      title={W.title}
-      inlineActions
-      actions={
-        // THE VIEW MENU on a phone (the coach schedule's, stage 2 · C1): the current view's glyph opening Week and Month
-        // in a drawer titled View — no List (see the header). Hidden above 640, where the toolbar's switch leads instead.
-        <span className={cal.viewPhone}>
-          <CoachToolbarMenu label={`Change view · ${VIEW_WORD[shownView]}`} icon={<ViewGlyph size={20} aria-hidden />} variant="glyph" drawerOnPhone drawerTitle="View">
-            {PHONE_VIEWS.map(v => {
-              const Glyph = VIEW_GLYPH[v];
-              return <CoachToolbarMenuItem key={v} icon={<Glyph size={16} aria-hidden />} label={VIEW_WORD[v]} checked={shownView === v} onSelect={() => pickView(v)} />;
-            })}
-          </CoachToolbarMenu>
-        </span>
-      }
-    />
+  // ⚖ Admin header Phase 3 (round 5): the header names the Calendar, so the paper title goes (`TabPageHeader`); it stays
+  // only where the header keeps the club's name (a refusal).
+  const header = <TabPageHeader title={W.title} />;
+  // THE VIEW MENU on a phone (the coach schedule's, stage 2 · C1): the current view's glyph opening Week and Month in a
+  // drawer titled View — no List (see the header). ⚖ A7 (owner 2026-11-07): it is the toolbar's FIRST slot, where the
+  // desktop's List · Week · Month switch sits, keeping its ghost-glyph look. Hidden above 640, where that switch leads.
+  const viewMenu = (
+    <span className={cal.viewPhone}>
+      <CoachToolbarMenu label={`Change view · ${VIEW_WORD[shownView]}`} icon={<ViewGlyph size={20} aria-hidden />} variant="glyph" drawerOnPhone drawerTitle="View">
+        {PHONE_VIEWS.map(v => {
+          const Glyph = VIEW_GLYPH[v];
+          return <CoachToolbarMenuItem key={v} icon={<Glyph size={16} aria-hidden />} label={VIEW_WORD[v]} checked={shownView === v} onSelect={() => pickView(v)} />;
+        })}
+      </CoachToolbarMenu>
+    </span>
   );
 
   // ⚖ Ask 6 = A (Club Tier Stage 13a, F-NAV-12): a person who opens none of the calendar's programs gets the ONE "not yours"
@@ -276,7 +274,9 @@ export default function ClubCalendarPage() {
           </>
         )}
       >
-        {/* The switch hides on a phone through its wrapper: the kit's `.toolbar .toolbarView` outranks a class on the switch itself. */}
+        {/* The phone's View menu first (A7), then the switch, which hides on a phone through its wrapper: the kit's
+            `.toolbar .toolbarView` outranks a class on the switch itself. Each shows at its own width only. */}
+        {viewMenu}
         <span className={cal.viewDesk}>
           <CalendarViewSwitch views={VIEWS} value={view} onChange={pickView} label="Show the calendar as" />
         </span>

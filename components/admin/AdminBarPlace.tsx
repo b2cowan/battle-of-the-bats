@@ -21,7 +21,9 @@ import { usePathname } from 'next/navigation';
 import type { HubTab } from '@/components/shared/HubTabBar';
 import { useOrg } from '@/lib/org-context';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
-import { clubPlaceAt, type ClubPlaceAt, type PlaceTab } from '@/lib/admin-kit-nav';
+import { isTournamentTier } from '@/lib/billing-urls';
+import { canOpenClubSchedules } from '@/lib/club-schedule-gate';
+import { canOpenCalendar, clubPlaceAt, type ClubPlaceAt, type PlaceTab } from '@/lib/admin-kit-nav';
 import { useHouseLeagueAccess } from '@/components/admin/kit/useHouseLeagueSeasons';
 import { useOrgTabs, usePermitsLink } from '@/components/admin/kit/useAdminKitNav';
 
@@ -41,11 +43,13 @@ export type AdminBarPlace = Omit<ClubPlaceAt, 'tabs'> & {
  */
 export function useClubPlaceAt(): ClubPlaceAt | null {
   const pathname = usePathname();
-  const { currentOrg, canOpen, clubHasPayouts, limitedToTeamGroups } = useOrg();
+  const { currentOrg, userRole, canOpen, clubHasPayouts, limitedToTeamGroups } = useOrg();
   const seasonAccess = useHouseLeagueAccess(null);
   const { tabs: orgTabs, isTeamWorkspace } = useOrgTabs();
   const permitsLink = usePermitsLink();
-  if (!currentOrg) return null;
+  // A cancelled account has one page and no place (`AdminChrome`'s `suspended`): its bar names the organization and its strip
+  // draws no place, so nothing but the page itself can supply the `<h1>`. Answering null keeps Plan & billing's paper title.
+  if (!currentOrg || currentOrg.subscriptionStatus === 'canceled') return null;
   return clubPlaceAt(pathname, `/${currentOrg.slug}/admin`, {
     canUse: canOpen,
     seasonAccess,
@@ -57,7 +61,32 @@ export function useClubPlaceAt(): ClubPlaceAt | null {
     opensFamilies: canOpen('module_families') && !limitedToTeamGroups,
     // The rail row's own gate (`kitPermitsLink`, Club Tier 13c), so the bar names Permits exactly where the sidebar lists it.
     opensPermits: !!permitsLink,
+    // Phase 3 (round 5): each named screen's OWN refusal rule, so the header never names a screen over its refusal (Q5).
+    // Calendar: the API's `calendarPrograms` (a program the reader opens) on a club-side plan.
+    opensCalendar: canOpenCalendar({ canUse: canOpen, tournamentTier: isTournamentTier(currentOrg.planId) }),
+    opensSchedules: canOpenClubSchedules({ planId: currentOrg.planId, role: userRole }),
+    opensPublicSite: canOpen('module_public_site'),
+    opensBilling: userRole === 'owner',
   });
+}
+
+/** What a record page knows once its data arrives: its name, and the live parts the address could not know. */
+export type NamedPlaceParts = Pick<AdminBarPlace, 'title'> & Partial<Pick<AdminBarPlace, 'back' | 'facts' | 'detail' | 'chip'>>;
+
+/**
+ * A NAMED SCREEN'S HAND-OFF (Phase 3, round 5): a record page (a schedule, a team's History, one past season, a club
+ * schedule, a child) hands over its live name, facts and chip; a fixed-name screen (the Public site) hands over only its chip.
+ * The address already named it with a placeholder and its way back (`clubPlaceAt`). Nothing while the page loads (`parts`
+ * null), and nothing where the address names no place (someone the page refuses keeps the club's name, Q5).
+ */
+export function useHandNamedPlace(parts: NamedPlaceParts | null) {
+  const at = useClubPlaceAt();
+  useHandBarPlace(at && parts ? { ...at, ...parts } : null);
+}
+
+/** Does the header name THIS page (a place's tab, or one of Phase 3's named screens)? Then the page drops its paper title. */
+export function useNamedInBar(): boolean {
+  return useClubPlaceAt() !== null;
 }
 
 /** A place's tabs with a mark (a waiting count) on the ones that carry one; a tab with no mark is passed through. */
@@ -87,9 +116,10 @@ export function useHandedBarPlace(): AdminBarPlace | null {
 
 /** A place frame's hand-off: on every render (the frame's live parts change with its data), withdrawn on unmount — and
  *  only if the bar still holds THIS frame's place, so a frame leaving in a later commit can never wipe its successor's. */
-export function useHandBarPlace(place: AdminBarPlace) {
+export function useHandBarPlace(place: AdminBarPlace | null) {
   const hand = useContext(HandPlace);
-  const mine = useRef(place.key);
-  useLayoutEffect(() => { mine.current = place.key; hand?.(place); });
+  const mine = useRef(place?.key ?? null);
+  // Null hands nothing (a record page still loading): the bar keeps the address's placeholder.
+  useLayoutEffect(() => { if (!place) return; mine.current = place.key; hand?.(place); });
   useLayoutEffect(() => () => hand?.(held => (held?.key === mine.current ? null : held)), [hand]);
 }

@@ -43,6 +43,7 @@ import type { OrgRole } from './types';
 import { PLAN_BILLING_TITLE } from './plan-billing-title';
 import { seasonPageHref, seasonPagesFor, type SeasonPageKey } from './house-league-season';
 import type { HouseLeagueAccess } from './house-league-access';
+import { LEAGUE_TIME_WORDS } from './league-time';
 
 export type AdminProgramKey =
   | 'rep-teams'
@@ -243,15 +244,22 @@ export function kitPrograms({
  * same role + plan pair the page's route asks, `calendarPrograms`), and never on a Tournament plan (no club side) or a
  * cancelled one. Each reader sees only the programs they can open; the page says so by what it shows.
  */
+/** The Calendar's one gate, asked by its rail row (`kitCalendarLink`) and by the header that names it (`opensCalendar`). */
+export function canOpenCalendar({ canUse, tournamentTier }: {
+  canUse: (capability: Capability) => boolean;
+  tournamentTier: boolean;
+}): boolean {
+  return !tournamentTier && (canUse('module_rep_teams') || canUse('module_house_league') || canUse('module_tournaments'));
+}
+
 export function kitCalendarLink({ base, canUse, isCanceled, tournamentTier }: {
   base: string;
   canUse: (capability: Capability) => boolean;
   isCanceled: boolean;
   tournamentTier: boolean;
 }): KitLink | null {
-  if (isCanceled || tournamentTier) return null;
-  const reads = canUse('module_rep_teams') || canUse('module_house_league') || canUse('module_tournaments');
-  return reads ? { key: 'calendar', label: 'Calendar', href: `${base}/calendar`, exact: true, icon: CalendarClock } : null;
+  if (isCanceled) return null;
+  return canOpenCalendar({ canUse, tournamentTier }) ? { key: 'calendar', label: 'Calendar', href: `${base}/calendar`, exact: true, icon: CalendarClock } : null;
 }
 
 /**
@@ -642,10 +650,18 @@ const EVERY_SEASON_PAGE = { read: true, readMoney: true, email: true } as const;
  * club's name never shows and swaps. The frame asks this too, so the bar and the frame cannot disagree about whether an
  * address is a place, which tab it is, or who may open it — every gate is in ONE object (`ClubPlaceAccess`), which the bar
  * and every frame build the same way (`useClubPlaceAt`, `components/admin/AdminBarPlace.tsx`).
- * The seven places: Rep teams, a team, a season, Accounting, Families, Organization, Permits (13c). A record page one level down (Rename
- * team URLs, a team's History, a club schedule read from a season, a child's page) is null: the bar keeps the club's name
- * there and the page keeps its own heading (Phase 3 moves those).
+ * The seven places: Rep teams, a team, a season, Accounting, Families, Organization, Permits (13c).
  * ⚠ Every place added here is a place the bar titles, so its frame must hand the bar its parts (`PlaceFrame`'s `place`).
+ *
+ * ⚖ PHASE 3 (round 5, owner 2026-11-08, Q1–Q6 as recommended): THE SCREENS WITH NO PLACE OF THEIR OWN name themselves too.
+ * A screen with a fixed name (Calendar, Schedules, Notifications, House league's Seasons, the Public site, Plan & billing) is
+ * a NAMED SCREEN: a title, no tabs, nothing to hand off. A RECORD PAGE one level down (a schedule, a team's History, one past
+ * season, a club schedule read from a season, Rename team URLs, a child's page) is one too, with its way back; the address
+ * gives a placeholder ("Schedule", "Child") and the page hands over its live name, facts and chip (`useHandNamedPlace`).
+ * Each carries ITS PAGE'S OWN REFUSAL RULE in `ClubPlaceAccess`: someone the page refuses keeps the club's name over the
+ * refusal (Q5), and the page keeps its paper heading wherever this answers null (`TabPageHeader`). Not here: Club setup (Q1,
+ * keeps its heading), a team's account in Accounting (a view of Teams, 2026-10-16), the org-wide tournament screens (they
+ * name the organization, Q6: `isTournamentOrgScreen`).
  */
 export type ClubPlaceAt = {
   /** Which place, and which one of them (`season:{id}`): the frame's hand-off counts only for the same key. */
@@ -654,8 +670,11 @@ export type ClubPlaceAt = {
   title: string;
   /** The way up, named by where it goes. */
   back?: { href: string; label: string };
-  /** The small line's words after the club (the club itself is the bar's, desktop only, A4). */
+  /** The phone's small line: the section a place sits in ("House league"). Desktop has no small line (round 4, D1/D3). */
   facts: readonly string[];
+  /** A RECORD's own fact ("Born Mar 14, 2015", a past season's team): on BOTH widths — quiet words beside the name in the
+   *  desktop strip, the way a tournament's dates sit (round 5, Q4), and on the phone's small line. */
+  detail?: string;
   tabs: readonly PlaceTab[];
   activeId: string;
   /** Names the tab row for a screen reader. */
@@ -678,7 +697,20 @@ export type ClubPlaceAccess = {
   opensFamilies: boolean;
   /** The Permits place (Club Tier 13c, C1): `kitPermitsLink`'s gate answered — the rail row and the bar agree. Absent = no. */
   opensPermits?: boolean;
+  /* Phase 3's named screens, each its page's own refusal rule (absent = no, so the screen keeps the club's name): */
+  /** Calendar: not a Tournament-tier org, and at least one of its programs is this person's (`calendarPrograms`, the API's). */
+  opensCalendar?: boolean;
+  /** Schedules and a schedule: the plan carries the scheduler AND an owner or admin (`canOpenClubSchedules`, the API's). */
+  opensSchedules?: boolean;
+  /** The Public site: the plan carries the site AND the capability (the page's `noSite` card and its "not yours"). */
+  opensPublicSite?: boolean;
+  /** Plan & billing: the owner (BillingKit's "not yours"; the route sends a team workspace away). */
+  opensBilling?: boolean;
 };
+
+/** One of Phase 3's screens: a name and, for a record, its way back — no tab row (round 5). */
+const namedScreen = (key: string, title: string, more: Partial<ClubPlaceAt> = {}): ClubPlaceAt =>
+  ({ key, title, facts: [], tabs: [], activeId: '', ariaLabel: title, ...more });
 
 /** Is this address the place's own, or under it (never a sibling that merely starts with the same letters)? */
 const isAtOrUnder = (pathname: string, href: string) => pathname === href || pathname.startsWith(`${href}/`);
@@ -687,11 +719,29 @@ const isAtOrUnder = (pathname: string, href: string) => pathname === href || pat
 const flatPlace = (key: string, title: string, tabs: readonly PlaceTab[], activeId: string | null): ClubPlaceAt | null =>
   activeId ? { key, title, facts: [], tabs, activeId, ariaLabel: title } : null;
 
-export function clubPlaceAt(pathname: string, base: string, { canUse, seasonAccess, orgTabs, runsRepTeams, hasPayouts, opensFamilies, opensPermits = false }: ClubPlaceAccess): ClubPlaceAt | null {
+export function clubPlaceAt(pathname: string, base: string, {
+  canUse, seasonAccess, orgTabs, runsRepTeams, hasPayouts, opensFamilies, opensPermits = false,
+  opensCalendar = false, opensSchedules = false, opensPublicSite = false, opensBilling = false,
+}: ClubPlaceAccess): ClubPlaceAt | null {
   // Permits (Club Tier 13c, C1 = A): a one-page place — the bar names it, and one tab draws no row.
   const permits = `${base}/permits`;
   if (isAtOrUnder(pathname, permits)) {
     return opensPermits ? flatPlace('permits', 'Permits', [{ id: 'permits', label: 'Permits', href: permits }], 'permits') : null;
+  }
+  // ── Phase 3's named screens (round 5): one address each, the page's own gate. ──
+  if (pathname === `${base}/calendar`) return opensCalendar ? namedScreen('calendar', 'Calendar') : null;
+  if (pathname === `${base}/notifications`) return namedScreen('notifications', 'Notifications');
+  if (pathname === `${base}/public-site`) return opensPublicSite ? namedScreen('public-site', 'Public site') : null;
+  if (pathname === `${base}/org/billing`) return opensBilling ? namedScreen('billing', PLAN_BILLING_TITLE) : null;
+  const schedules = `${base}/schedules`;
+  if (isAtOrUnder(pathname, schedules)) {
+    if (!opensSchedules) return null;
+    if (pathname === schedules) return namedScreen('schedules', 'Schedules');
+    const scheduleId = pathname.slice(schedules.length + 1);
+    // A schedule: the record, "← Schedules"; its name and state chip come from the page (`useHandNamedPlace`).
+    return /^[^/]+$/.test(scheduleId)
+      ? namedScreen(`schedule:${scheduleId}`, 'Schedule', { back: { href: schedules, label: 'Schedules' } })
+      : null;
   }
   // A team is a place of its own inside Rep teams (its five tabs, "← Teams"), so it is asked before Rep teams. Rep teams'
   // own gate (its layout's): someone who cannot open Rep teams sees the refusal there, under the club's name.
@@ -699,10 +749,21 @@ export function clubPlaceAt(pathname: string, base: string, { canUse, seasonAcce
   if (pathname.startsWith(teams)) {
     const teamId = pathname.slice(teams.length).split('/')[0];
     if (!teamId || !canUse(PROGRAM_CAPABILITY['rep-teams'])) return null;
-    const tabs = teamTabs(`${teams}${teamId}`);
+    const teamPath = `${teams}${teamId}`;
+    const tabs = teamTabs(teamPath);
     const tab = placeTabFor(tabs, pathname);
-    // The team's History and one past season are record pages: no tab, so no place.
-    if (!tab) return null;
+    // The team's History and one past season are record pages (A8): no tab row, their own way back. The team's name comes
+    // from the page; until it does, "Team" (the team place's own placeholder) and, on the phone's line, "Rep teams".
+    if (!tab) {
+      const rest = pathname.slice(teamPath.length);
+      if (rest === '/history') {
+        return namedScreen(`team-history:${teamId}`, 'History', { back: { href: teamPath, label: 'Team' }, facts: ['Rep teams'] });
+      }
+      const year = /^\/history\/([^/]+)$/.exec(rest)?.[1];
+      return year
+        ? namedScreen(`team-year:${year}`, 'Season', { back: { href: `${teamPath}/history`, label: 'History' }, facts: ['Rep teams'] })
+        : null;
+    }
     return {
       key: `team:${teamId}`,
       title: 'Team',
@@ -717,6 +778,10 @@ export function clubPlaceAt(pathname: string, base: string, { canUse, seasonAcce
   }
   if (isAtOrUnder(pathname, `${base}/rep-teams`)) {
     if (!canUse(PROGRAM_CAPABILITY['rep-teams'])) return null;
+    // Rename team URLs (A9): a page of Rep teams that is no tab, with "← Rep teams" (its only way back was the eyebrow).
+    if (pathname === `${base}/rep-teams/rename-slugs`) {
+      return namedScreen('rep-rename-slugs', 'Rename team URLs', { back: { href: `${base}/rep-teams`, label: 'Rep teams' } });
+    }
     const tabs = repTeamsTabs(base);
     return flatPlace('rep-teams', 'Rep teams', tabs, placeTabFor(tabs, pathname));
   }
@@ -729,6 +794,17 @@ export function clubPlaceAt(pathname: string, base: string, { canUse, seasonAcce
     const seasonId = pathname.slice(`${league}/seasons/`.length).split('/')[0];
     if (!seasonId) return null;
     const seasonPath = `${league}/seasons/${seasonId}`;
+    // The club's schedule read from a season: a record page under the season's Schedule tab (the season frame steps aside
+    // for it), back to "House league's time"; its own gate is the house league's read (the page's `hasAccess`).
+    const clubSchedule = /^\/club-schedule\/([^/]+)$/.exec(pathname.slice(seasonPath.length))?.[1];
+    if (clubSchedule) {
+      return seasonAccess.read
+        ? namedScreen(`club-schedule:${clubSchedule}`, 'Schedule', {
+          back: { href: `${seasonPath}/schedule?time=1`, label: LEAGUE_TIME_WORDS.club.back },
+          facts: [LEAGUE_TIME_WORDS.club.eyebrow],
+        })
+        : null;
+    }
     const tab = placeTabFor(seasonTabs(seasonPath, EVERY_SEASON_PAGE), pathname);
     if (!tab) return null;
     return {
@@ -743,6 +819,8 @@ export function clubPlaceAt(pathname: string, base: string, { canUse, seasonAcce
       ariaLabel: 'Season pages',
     };
   }
+  // House league's Seasons list (round 5, Q2): its page's gate is the house league's read (`NotYours page="houseLeague"`).
+  if (pathname === league) return seasonAccess?.read ? namedScreen('hl-seasons', 'Seasons', { facts: ['House league'] }) : null;
   if (isAtOrUnder(pathname, `${base}/accounting`)) {
     // The Accounting layout's gate (`canOpenModule`, capability AND plan): someone refused sees the refusal, not the tabs.
     // No fiscal year in the bar (A6): the Year pill in each tab's toolbar keeps it.
@@ -752,9 +830,14 @@ export function clubPlaceAt(pathname: string, base: string, { canUse, seasonAcce
     return flatPlace('accounting', 'Accounting', tabs, placeTabFor(tabs, pathname));
   }
   if (isAtOrUnder(pathname, `${base}/families`)) {
-    // A child's page (Stage 14 S5) is a record page with its own header and way back (Phase 3).
     // Its layout's gate: someone refused (incl. a member limited to some team groups) sees the refusal under the club's name.
-    if (!opensFamilies || isFamiliesChildPage(pathname, base)) return null;
+    if (!opensFamilies) return null;
+    // A child's page (Stage 14 S5) is a record page (A8): "← Families" from the address; the page hands over the child's
+    // name, the household it was opened from (`?from=`, data, not the address), the date of birth and the season chip.
+    if (isFamiliesChildPage(pathname, base)) {
+      const childId = pathname.slice(`${base}/families/children/`.length);
+      return namedScreen(`child:${childId}`, 'Child', { back: { href: `${base}/families`, label: 'Families' } });
+    }
     // A family's address lights Families (a record OVER the tab, `views`); any other address under it lights Families too.
     // The name is the place's own (the frame hands it on unchanged): `FAMILY_LIST_WORDS.title`, spelled here so the nav
     // module does not load the Families word book for one word.
@@ -767,6 +850,20 @@ export function clubPlaceAt(pathname: string, base: string, { canUse, seasonAcce
     return flatPlace('org', 'Organization', orgTabs, placeTabFor(orgTabs, pathname));
   }
   return null;
+}
+
+/**
+ * ⚖ A10 + ROUND 5 Q6 (owner 2026-11-07 / 2026-11-08): THE ORG-WIDE TOURNAMENT SCREENS NAME THE ORGANIZATION, in a club and a
+ * tournament-only organization alike, never the event the tournament context happened to pick. Event pages name the event.
+ * Listed one by one, because `settings/` is not all the organization's: Event settings (`settings/event`), the event's own
+ * Notifications (`settings/notifications`, "mute this tournament") and `settings/registration-fields` (a redirect into Event
+ * settings) are the EVENT's. The list, archives, the Settings & access hub, Members, Plan & billing, Payouts, PDF settings
+ * are the organization's.
+ */
+const TOURNAMENT_ORG_SCREENS = ['manage', 'archives', 'settings/members', 'settings/subscription', 'settings/payouts', 'settings/pdf'] as const;
+export function isTournamentOrgScreen(pathname: string, base: string): boolean {
+  const t = `${base}/tournaments`;
+  return pathname === `${t}/settings` || TOURNAMENT_ORG_SCREENS.some(s => isAtOrUnder(pathname, `${t}/${s}`));
 }
 
 /** The Organization tab a person without Members reads in its place: who runs the club, names and roles only (13a R1). */

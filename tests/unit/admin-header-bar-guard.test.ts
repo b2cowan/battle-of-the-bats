@@ -104,7 +104,8 @@ describe('a club place names itself in the bar, and its tabs pin inside it', () 
     assert.match(hand, /return clubPlaceAt\(pathname, `\/\$\{currentOrg\.slug\}\/admin`, \{\s*canUse: canOpen,\s*seasonAccess,/);
     assert.match(model, /handed\?\.key === routePlace\.key \? \{ \.\.\.handed, activeId: routePlace\.activeId \} : routePlace/);
     // A layout effect, so a client navigation redraws the bar before the browser paints.
-    assert.match(hand, /useLayoutEffect\(\(\) => \{ mine\.current = place\.key; hand\?\.\(place\); \}\);/);
+    // Phase 3: a record page hands nothing while it loads (null), so the bar keeps the address's placeholder meanwhile.
+    assert.match(hand, /useLayoutEffect\(\(\) => \{ if \(!place\) return; mine\.current = place\.key; hand\?\.\(place\); \}\);/);
     // Withdrawn on unmount only if the bar still holds THIS frame's place (/review, session B): a frame leaving in a later
     // commit than its successor mounted must never wipe the successor's.
     assert.match(hand, /useLayoutEffect\(\(\) => \(\) => hand\?\.\(held => \(held\?\.key === mine\.current \? null : held\)\), \[hand\]\);/);
@@ -232,5 +233,54 @@ describe('desktop: the place in the strip, the bar is the tab band, the club cel
     const rail = readCode('components/admin/kit/AdminKitRail.tsx');
     assert.match(rail, /<Link href=\{base\} className=\{styles\.clubCell\}>/);
     assert.match(rail, /stripTileText\(clubName\)/);
+  });
+});
+
+// ⚖ Phase 3 (round 5, owner 2026-11-08, Q1–Q6): THE SCREENS WITH NO PLACE OF THEIR OWN name themselves in the header, so the
+// header's name is their one `<h1>` and the paper title goes. `TabPageHeader` keeps the paper heading exactly where the header
+// names no place (a refusal, Q5; the tournament side's copy of a page, Q6), because it asks the header's own question.
+describe('Phase 3 · one title per screen: a screen the header names has no paper title; one it does not keeps exactly one', () => {
+  const A = 'app/[orgSlug]/admin';
+  const named = [
+    `${A}/calendar/page.tsx`, `${A}/schedules/page.tsx`, `${A}/schedules/[scheduleId]/page.tsx`,
+    'components/notifications/NotificationsPageContent.tsx', `${A}/house-league/page.tsx`, `${A}/public-site/page.tsx`,
+    'components/admin/kit/club/BillingKit.tsx', `${A}/rep-teams/rename-slugs/page.tsx`, `${A}/rep-teams/teams/[teamId]/history/page.tsx`,
+    `${A}/rep-teams/teams/[teamId]/history/[yearId]/page.tsx`, `${A}/house-league/seasons/[seasonId]/club-schedule/[scheduleId]/page.tsx`,
+    'components/admin/kit/club/families/ChildPage.tsx',
+  ];
+  it('every Phase 3 screen draws its title through TabPageHeader, never AdminPageHeader', () => {
+    for (const f of named) {
+      const code = readCode(f);
+      assert.doesNotMatch(code, /<AdminPageHeader\b|import AdminPageHeader/, `${f} draws a paper title the header already says`);
+      assert.match(code, /<TabPageHeader\b/, `${f} keeps its title for the screens the header does not name`);
+    }
+    const frame = readCode('components/admin/kit/club/PlaceFrame.tsx');
+    assert.match(frame, /const named = useNamedInBar\(\);\s*if \(!inPlace && !named\) return <AdminPageHeader \{\.\.\.props\} \/>;/);
+    // The page and the header ask ONE question: is this address a place (gates included)?
+    assert.match(readCode('components/admin/AdminBarPlace.tsx'), /export function useNamedInBar\(\): boolean \{\s*return useClubPlaceAt\(\) !== null;/);
+  });
+  it('a cancelled account names no place: its one page (Plan & billing) keeps its paper title, the only <h1> it has (/review 2026-11-09)', () => {
+    // The bar is `suspended` (names the organization as a span) and the strip draws no place, so a page that dropped its
+    // paper title because the ADDRESS names it would be left with no heading at all.
+    assert.match(readCode('components/admin/AdminBarPlace.tsx'), /if \(!currentOrg \|\| currentOrg\.subscriptionStatus === 'canceled'\) return null;\s*return clubPlaceAt\(/);
+  });
+  it('a screen the header does NOT name keeps exactly one paper title (Club setup, Q1; the org-wide tournament screens, Q6)', () => {
+    for (const f of ['components/admin/kit/club/ClubSetupKit.tsx', `${A}/org/tournaments/page.tsx`, `${A}/tournaments/settings/page.tsx`]) {
+      assert.equal((readCode(f).match(/<AdminPageHeader\b/g) ?? []).length, 1, f);
+    }
+  });
+  it('a record names itself through the hand-off, for the address’s key only; its own fact sits beside the name (Q4)', () => {
+    const hand = readCode('components/admin/AdminBarPlace.tsx');
+    assert.match(hand, /export function useHandNamedPlace\(parts: NamedPlaceParts \| null\) \{\s*const at = useClubPlaceAt\(\);\s*useHandBarPlace\(at && parts \? \{ \.\.\.at, \.\.\.parts \} : null\);/);
+    // Both renderings draw the record's fact: the strip as quiet words (the tournament's dates' class), the phone on its line.
+    assert.match(strip, /\{place\?\.detail && <span className=\{own\.dates\}>\{place\.detail\}<\/span>\}/);
+    assert.match(bar, /\{place\?\.detail && <span>\{place\.detail\}<\/span>\}/);
+  });
+  it('A7: the Calendar’s phone View menu is the toolbar’s first slot, before the desktop switch', () => {
+    const cal = readCode(`${A}/calendar/page.tsx`);
+    const bar = cal.slice(cal.indexOf('<CoachListToolbar'), cal.indexOf('</CoachListToolbar>'));
+    // The first child after the toolbar's props (`readCode` drops comments, which may leave an empty `{}`).
+    assert.match(bar, /\)\}\s*>\s*(?:\{\s*\}\s*)?\{viewMenu\}\s*<span className=\{cal\.viewDesk\}>/);
+    assert.match(cal, /const viewMenu = \(\s*<span className=\{cal\.viewPhone\}>/);
   });
 });

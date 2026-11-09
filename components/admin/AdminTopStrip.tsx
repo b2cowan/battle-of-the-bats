@@ -76,6 +76,8 @@ function StripPlace() {
         ? <Link href={titleHref} className={own.nameLink} title={`${title} — open dashboard`}>{name}</Link>
         : name}
       {place?.switcher && <span className={own.switcher}>{place.switcher}</span>}
+      {/* A record's own fact sits beside its name as quiet words, the way a tournament's dates do (round 5, Q4). */}
+      {place?.detail && <span className={own.dates}>{place.detail}</span>}
       {dates && <span className={own.dates}>{dates}</span>}
       {phaseChip && <span className={own.chip}>{phaseChip}</span>}
       {place?.chip && <span className={own.chip}>{place.chip}</span>}

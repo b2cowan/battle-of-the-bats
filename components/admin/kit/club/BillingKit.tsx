@@ -4,7 +4,7 @@ import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { useClubBrief } from './ClubBriefProvider';
 import { overdueBannerFor } from '@/lib/fee-invoice-line';
-import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { TabPageHeader } from './PlaceFrame';
 import BillingBody from '@/components/billing/BillingBody';
 import { PLAN_BILLING_WORDS as W } from '@/lib/plan-billing-words';
 import { getBillingHref, isTournamentTier } from '@/lib/billing-urls';
@@ -27,7 +27,9 @@ export default function BillingKit() {
   // the page. The body's own locked card stays for the Coaches Portal's billing, which shares it.
   if (currentOrg && userRole && userRole !== 'owner') return <NotYours page="billing" />;
   return <div className={ck.page}>
-    <AdminPageHeader eyebrow={eyebrow} title={W.page.title} />
+    {/* ⚖ Admin header Phase 3 (round 5, Q1): a club's header names Plan & billing, so the paper title goes; a tournament-only
+        organization's copy (under Settings & access) keeps it, its header naming the organization (Q6). */}
+    <TabPageHeader eyebrow={eyebrow} title={W.page.title} />
     <BillingBody billingBase={getBillingHref({ slug, planId: currentOrg?.planId }, { host: 'admin' })} teamsHref={`/${slug}/admin/rep-teams`} onFeesMayHaveChanged={reload} bannerCoversOverdue={bannerCoversOverdue} />
   </div>;
 }

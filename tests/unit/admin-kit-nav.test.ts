@@ -6,7 +6,7 @@ import {
   kitPrograms, kitOrgLinks, kitBillingLink, isKitLinkActive, isKitLinkActiveAmong, activeKitSection,
   clubProgramOrder, INTERIM_PROGRAM_ORDER, PROGRAM_CAPABILITY, accountingTabs, accountingTabFor, tournamentBarKeys,
   familiesTabs, familiesTabFor, familiesChildHref, isFamiliesChildPage, kitOrgPlace, litClubPlace, orgTabs, placeGroupHeading,
-  clubPlaceAt, showsOrgBoard, kitPermitsLink, type ClubPlaceAccess,
+  clubPlaceAt, showsOrgBoard, kitPermitsLink, isTournamentOrgScreen, type ClubPlaceAccess,
 } from '../../lib/admin-kit-nav.ts';
 import { clubNavFor, CLUB_BASE, RUNS_BOTH, RUNS_NEITHER } from './_club-people.ts';
 import { hasCapability, type Capability } from '../../lib/roles.ts';
@@ -516,7 +516,10 @@ describe('the place an address is in (the pinned bar, Phase 2)', () => {
     assert.deepEqual(p?.facts, ['Rep teams']);
     assert.deepEqual(p?.tabs.map(t => t.label), ['Team page', 'Roster', 'Schedule', 'Tryouts', 'Coaches']);
     assert.equal(p?.activeId, 'roster');
-    assert.equal(clubPlaceAt(`${B}/rep-teams/teams/t1/history`, B, owner), null, 'History is a record page');
+    // Phase 3 (A8): History is a record page — its own key, no tab row, back to the team (named once the page has it).
+    const history = clubPlaceAt(`${B}/rep-teams/teams/t1/history`, B, owner);
+    assert.equal(history?.key, 'team-history:t1', 'History is a record page of its own, never the team place');
+    assert.deepEqual(history?.tabs, []);
     assert.equal(clubPlaceAt(`${B}/rep-teams`, B, owner)?.key, 'rep-teams', 'the Teams tab is still Rep teams');
     assert.equal(clubPlaceAt(`${B}/rep-teams/teams/t1`, B, { ...owner, canUse: () => false }), null, 'refused: the club’s name');
   });
@@ -545,7 +548,10 @@ describe('the place an address is in (the pinned bar, Phase 2)', () => {
     assert.deepEqual(p?.tabs.map(t => t.id), ['families', 'duplicates', 'emails']);
     assert.equal(p?.activeId, 'duplicates');
     assert.equal(clubPlaceAt(`${B}/families/p1`, B, accessFor('owner', { opensFamilies: true }))?.activeId, 'families');
-    assert.equal(clubPlaceAt(familiesChildHref(B, 'c1'), B, accessFor('owner', { opensFamilies: true })), null);
+    // Phase 3 (A8): a child's page is a record page — "← Families" from the address, never the Families tab row.
+    const child = clubPlaceAt(familiesChildHref(B, 'c1'), B, accessFor('owner', { opensFamilies: true }));
+    assert.equal(child?.key, 'child:c1');
+    assert.deepEqual(child?.tabs, []);
     assert.equal(clubPlaceAt(`${B}/families`, B, { ...owner, opensFamilies: false }), null, 'refused (or limited to some team groups): the club’s name');
   });
 
@@ -554,7 +560,8 @@ describe('the place an address is in (the pinned bar, Phase 2)', () => {
     assert.equal(p?.key, 'org');
     assert.equal(p?.title, 'Organization');
     assert.ok(!p?.tabs.some(t => t.href.includes('/org/billing')));
-    assert.equal(clubPlaceAt(`${B}/org/billing`, B, owner), null, 'Plan & billing is no tab: its own header');
+    assert.equal(clubPlaceAt(`${B}/org/billing`, B, owner), null, 'Plan & billing is no tab (and without its gate, no name)');
+    assert.equal(clubPlaceAt(`${B}/org/billing`, B, { ...owner, opensBilling: true })?.key, 'billing', 'round 5 Q1: it names itself, no tab');
     const registrar = clubPlaceAt(`${B}/org/board`, B, accessFor('league_registrar'));
     assert.equal(registrar?.tabs[0]?.label, 'The board');
     assert.equal(clubPlaceAt(`${B}/org/members`, B, accessFor('league_registrar')), null, 'not their tab: no place');
@@ -566,5 +573,88 @@ describe('the place an address is in (the pinned bar, Phase 2)', () => {
     assert.equal(one?.tabs.length, 1);
     // Round 4 (2026-11-08): the one place model both headers read decides it.
     assert.match(readCode('components/admin/useAdminPlace.tsx'), /tabbed: place && place\.tabs\.length > 1 \? place : null,/);
+  });
+
+  // ⚖ Phase 3 (round 5, owner 2026-11-08, Q1–Q6): the screens with no place of their own name themselves, each with its
+  // page's own refusal rule, so the header never names a screen over its refusal (Q5).
+  describe('Phase 3 · the screens with no place of their own', () => {
+    const open = { ...owner, opensCalendar: true, opensSchedules: true, opensPublicSite: true, opensBilling: true,
+      seasonAccess: { read: true, readMoney: true, email: true } };
+    const named = (path: string, access: ClubPlaceAccess = open) => clubPlaceAt(path, B, access);
+
+    it('each fixed-name screen is a name with no tab row and no way back', () => {
+      for (const [path, key, title] of [
+        [`${B}/calendar`, 'calendar', 'Calendar'], [`${B}/schedules`, 'schedules', 'Schedules'],
+        [`${B}/notifications`, 'notifications', 'Notifications'], [`${B}/house-league`, 'hl-seasons', 'Seasons'],
+        [`${B}/public-site`, 'public-site', 'Public site'], [`${B}/org/billing`, 'billing', 'Plan & billing'],
+      ] as const) {
+        const p = named(path);
+        assert.equal(p?.key, key, path);
+        assert.equal(p?.title, title, path);
+        assert.deepEqual(p?.tabs, [], `${path}: no tab row`);
+        assert.equal(p?.back, undefined, `${path}: no way back`);
+      }
+      assert.deepEqual(named(`${B}/house-league`)?.facts, ['House league'], 'Q2: the phone line says the section');
+    });
+
+    it('each screen refuses exactly where its page does: the club’s name, never the screen’s (Q5)', () => {
+      assert.equal(named(`${B}/calendar`, { ...open, opensCalendar: false }), null);
+      assert.equal(named(`${B}/schedules`, { ...open, opensSchedules: false }), null);
+      assert.equal(named(`${B}/schedules/s1`, { ...open, opensSchedules: false }), null);
+      assert.equal(named(`${B}/public-site`, { ...open, opensPublicSite: false }), null);
+      assert.equal(named(`${B}/org/billing`, { ...open, opensBilling: false }), null);
+      assert.equal(named(`${B}/house-league`, { ...open, seasonAccess: { read: false, readMoney: true, email: false } }), null,
+        'a treasurer who reads a season’s money but not the house league: refused on Seasons, as the page refuses');
+      assert.equal(named(`${B}/house-league`, { ...open, seasonAccess: null }), null, 'before the member is known: no place');
+      const club = `${B}/house-league/seasons/se1/club-schedule/cs1`;
+      assert.equal(named(club, { ...open, seasonAccess: { read: false, readMoney: true, email: false } }), null);
+      assert.equal(named(`${B}/rep-teams/rename-slugs`, { ...open, canUse: () => false }), null);
+      assert.equal(named(`${B}/rep-teams/teams/t1/history`, { ...open, canUse: () => false }), null);
+      assert.equal(named(familiesChildHref(B, 'c1'), { ...open, opensFamilies: false }), null, 'a group-limited member: refused');
+      assert.equal(named(`${B}/notifications`, accessFor('league_registrar'))?.key, 'notifications', 'Notifications is everyone’s');
+    });
+
+    it('record pages: a placeholder name, the way back, and their own key (the hand-off counts only for it)', () => {
+      const sch = named(`${B}/schedules/s1`);
+      assert.equal(sch?.key, 'schedule:s1');
+      assert.equal(sch?.title, 'Schedule');
+      assert.deepEqual(sch?.back, { href: `${B}/schedules`, label: 'Schedules' });
+      const hist = named(`${B}/rep-teams/teams/t1/history`);
+      assert.equal(hist?.title, 'History');
+      assert.deepEqual(hist?.back, { href: `${B}/rep-teams/teams/t1`, label: 'Team' });
+      const year = named(`${B}/rep-teams/teams/t1/history/y1`);
+      assert.equal(year?.key, 'team-year:y1');
+      assert.deepEqual(year?.back, { href: `${B}/rep-teams/teams/t1/history`, label: 'History' });
+      const rename = named(`${B}/rep-teams/rename-slugs`);
+      assert.deepEqual(rename?.back, { href: `${B}/rep-teams`, label: 'Rep teams' }, 'A9: "← Rep teams"');
+      const club = named(`${B}/house-league/seasons/se1/club-schedule/cs1`);
+      assert.equal(club?.key, 'club-schedule:cs1');
+      assert.deepEqual(club?.back, { href: `${B}/house-league/seasons/se1/schedule?time=1`, label: 'House league’s time' });
+      assert.deepEqual(club?.facts, ['The club’s schedule']);
+      const child = named(familiesChildHref(B, 'c1'));
+      assert.deepEqual(child?.back, { href: `${B}/families`, label: 'Families' });
+      // Never a deeper or sibling address.
+      assert.equal(named(`${B}/schedules/s1/x`), null);
+      assert.equal(named(`${B}/rep-teams/teams/t1/history/y1/x`), null);
+      assert.equal(named(`${B}/calendarx`), null);
+      assert.equal(named(`${B}/house-league/new`), null);
+    });
+
+    it('not Phase 3: a team’s account in Accounting stays a view of Teams; Club setup keeps its heading (Q1)', () => {
+      assert.equal(named(`${B}/accounting/teams/t1`)?.key, 'accounting');
+      assert.equal(named(`${B}/onboarding`), null);
+    });
+
+    it('A10 + Q6: the org-wide tournament screens are the organization’s; event pages stay the event’s', () => {
+      for (const p of ['manage', 'archives', 'settings', 'settings/members', 'settings/members/audit', 'settings/subscription',
+        'settings/subscription/mock-portal', 'settings/payouts', 'settings/pdf']) {
+        assert.ok(isTournamentOrgScreen(`${B}/tournaments/${p}`, B), `${p} names the organization`);
+      }
+      for (const p of ['dashboard', 'registrations', 'schedule', 'settings/event', 'settings/notifications',
+        'settings/registration-fields', 'branding', 'managex', 'settings/eventx']) {
+        assert.ok(!isTournamentOrgScreen(`${B}/tournaments/${p}`, B), `${p} is the event's`);
+      }
+      assert.match(readCode('components/admin/useAdminPlace.tsx'), /!\(currentOrg && isTournamentOrgScreen\(/, 'the model asks it');
+    });
   });
 });

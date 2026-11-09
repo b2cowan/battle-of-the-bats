@@ -28,6 +28,20 @@ review both said so; round 1's quiet line fell below the first screen on a 667 p
 bottom row, the consumer account page. Plan: `docs/projects/active/GST_HST_STAGE6_TERMS_PLAN.md` §5 6.2; build prompt
 `GST_HST_STAGE6_2_BUILD_PROMPT.md`.
 
+### 2026-11-08 — THE SCREENS WITH NO PLACE OF THEIR OWN NAME THEMSELVES IN THE HEADER; A RECORD'S FACTS SIT BESIDE ITS NAME ON DESKTOP; A REFUSAL KEEPS THE ORG'S NAME (owner, admin header round 5, Q1–Q6 all as recommended by paste-back; drawings https://claude.ai/artifact/NNn3tmZaFqW5GqE9ADRGjV)
+
+**Decision (as ruled):** Schedules, Notifications, House league's Seasons list, the Public site and Plan & billing name
+themselves in the desktop strip and the phone bar, and their paper title goes; their buttons stay at the page's top right.
+A schedule, a team's History, one past season and a club schedule show "← way back │ name" with their chip. On desktop a
+record's own facts (a date of birth, a past season's team) are quiet words beside the name, as a tournament's dates are;
+on a phone they ride the small line. The Public site's Online chip sits beside its name; its address row stays on the page.
+Club setup keeps its own heading. A refused page keeps the org's name in the header. The org-wide tournament screens (list,
+Settings & access, Members, Plan & billing, Payouts, PDF settings) name the organization in a club and a tournament-only org
+alike, and keep their own heading; event pages (Event settings and the event's Notifications included) name the event.
+**Rationale:** one title per screen; the desktop strip has no second line (round 4), and the tournament's dates already set
+the pattern for a fact beside a name; a place that never opened is not where you are.
+**Applies to:** the admin header (strip and phone bar) on the Phase 3 screens. Plan: `docs/projects/active/ADMIN_HEADER_BAR_PLAN.md` (Round 5, Phase 3).
+
 ### 2026-11-08 — ON DESKTOP THE PLACE NAMES ITSELF IN THE TOP STRIP; THE CLUB HEADS THE SIDEBAR IN A CELL LINED UP WITH THE TAB BAND; THE PHONE BAR IS UNCHANGED (owner, round 4 of the admin header, option B: *"could you line up the border of the org name with the header border? then the side nav also starts below the whole header"*, then *"I like it"*; drawings https://claude.ai/artifact/A1W443obR8aJd8PjUZEgUx v2)
 
 **Decision (as ruled, D1–D5):** above 900px the admin's white bar loses its name row and small line. The top strip

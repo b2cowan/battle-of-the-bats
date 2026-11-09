@@ -29,7 +29,7 @@ import { usePageTitle } from '@/lib/usePageTitle';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { moneyFetch, refusalText } from '@/lib/money-fetch';
 import { formatStoredDate } from '@/lib/timezone';
-import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { TabPageHeader } from '@/components/admin/kit/club/PlaceFrame';
 import { CoachListToolbar, kit } from '@/components/coaches/kit';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import {
@@ -94,7 +94,9 @@ export default function SchedulesPage() {
       <Plus size={15} aria-hidden />{W.newButton}
     </button>
   ) : undefined;
-  const header = <AdminPageHeader title={W.title} inlineActions />;
+  // ⚖ Admin header Phase 3 (round 5): the header names Schedules, so the paper title goes; it stays where the header keeps
+  // the club's name (a plan without the scheduler, whose card reads under it).
+  const header = <TabPageHeader title={W.title} inlineActions />;
 
   if (orgLoading || (!read && !failed)) return <PageLoading header={header} label="Loading the schedules…" />;
   // ⚖ Ask 6 = A (Club Tier Stage 13a, F-NAV-12): a person who doesn't build schedules gets the ONE "not yours" screen; a plan

@@ -104,6 +104,9 @@ function membersFixture(org: Organization) {
       return React.useState<T>(stateCalls === 1 ? staff as T : initial);
     } },
     'next/navigation': { useSearchParams: () => new URLSearchParams() },
+    // The staff page outside the Organization frame (a tournament plan's Settings & access, a one-team workspace): the header
+    // names no place there, so its own heading stays (Admin header Phase 3; the model is tested in admin-kit-nav).
+    '@/components/admin/AdminBarPlace': { useNamedInBar: () => false, useHandBarPlace() {} },
     '@/lib/org-context': { useOrg: () => ({
       currentOrg: org, userRole: 'owner', userCapabilities: null,
       user: { id: 'owner-a' }, loading: false, canOpen: () => true,

@@ -5,7 +5,8 @@ import { useOrg } from '@/lib/org-context';
 import { hasDecidedGames, rosterCountOf, seasonRecordOf } from '@/lib/team-season-figures';
 import { SCRIMMAGE_LABEL } from '@/lib/coach-schedule-vocab';
 import { resolveCoachCapabilities, staffKindWord, type AssistantCapabilityGrants } from '@/lib/coach-capabilities';
-import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { TabPageHeader } from '@/components/admin/kit/club/PlaceFrame';
+import { useHandNamedPlace } from '@/components/admin/AdminBarPlace';
 import styles from '../../../../rep-teams.module.css';
 import type { RepTeam, RepProgramYear, RepRosterPlayer, RepTeamEvent } from '@/lib/types';
 import LoadingState from '@/components/shared/LoadingState';
@@ -113,6 +114,19 @@ export default function PastYearDetailPage({
 
   useEffect(() => { if (currentOrg) load(); }, [currentOrg, load]);
 
+  // The status chip, and the year where the season's name does not already carry it (F3).
+  const yearChips = programYear ? <>
+    <span className={`${styles.badge} ${STATUS_CSS[programYear.status] ?? ''}`}>
+      {STATUS_LABEL[programYear.status] ?? programYear.status}
+    </span>
+    {!programYear.name.includes(String(programYear.year)) && (
+      <span className={`${styles.badge} ${styles.badgeDraft}`}>{programYear.year}</span>
+    )}
+  </> : null;
+  // ⚖ Admin header Phase 3 (A8, round 5 Q4): "← History │ 2025 Season  14U AA  Completed" — the team as quiet words beside
+  // the name on desktop, on the small line on a phone (the eyebrow's path used to say it). The address said "Season".
+  useHandNamedPlace(team && programYear ? { title: programYear.name, facts: [], detail: team.name, chip: yearChips } : null);
+
   if (loading || fetching) return <LoadingState label="Loading the season…" />;
 
   if (!team || !programYear) return <p className={styles.muted}>Program year not found.</p>;
@@ -145,18 +159,12 @@ export default function PastYearDetailPage({
     <div className={styles.page}>
       {/* Header — the way up is the team's History; the eyebrow names the team, the status is a chip
           beside the title, and the year is a chip only where the season's name does not already carry it
-          (F3). "Read-only archive" stays at the header's end. */}
-      <AdminPageHeader
+          (F3). "Read-only archive" stays at the header's end — the page's top right once the header names the page
+          (Phase 3, A8), where only it remains. */}
+      <TabPageHeader
         crumbs={[{ href: `${base}/rep-teams`, label: 'Rep teams' }, { href: `${base}/rep-teams/teams/${params.teamId}`, label: team.name }]}
         title={programYear.name}
-        titleChips={<>
-          <span className={`${styles.badge} ${STATUS_CSS[programYear.status] ?? ''}`}>
-            {STATUS_LABEL[programYear.status] ?? programYear.status}
-          </span>
-          {!programYear.name.includes(String(programYear.year)) && (
-            <span className={`${styles.badge} ${styles.badgeDraft}`}>{programYear.year}</span>
-          )}
-        </>}
+        titleChips={yearChips}
         backTo={{ href: `${base}/rep-teams/teams/${params.teamId}/history`, label: 'History' }}
         actions={readOnlyNote}
       />
