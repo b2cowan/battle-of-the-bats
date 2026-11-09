@@ -407,7 +407,7 @@ Round 4 (accepted with D1–D5, 2026-11-08; found by the round 4 /design pass):
 > Above 900px only (the sidebar's own breakpoint, CSS today: `AdminKitFrame.module.css`, `admin.module.css`). At 900px
 > and below nothing changes: the strip is zeroed there and the bar is the phone bar.
 
-> **Built 2026-11-08** (one session). Gate answer the same day: the strip says the short form, `ADMIN_STRIP_LABEL =
+> **Built 2026-11-08** (one session), committed `135f4652c` 2026-11-08. Gate answer the same day: the strip says the short form, `ADMIN_STRIP_LABEL =
 > 'Admin'` beside `WORKSPACE_KIND_LABEL` in `lib/workspace-labels.ts`; the Workspaces list, Home, the account way back
 > and the portal door keep "Admin Area". Owner walk §495 (https://claude.ai/artifact/8XSzVFVFnsbCDAiR5uszyo).
 

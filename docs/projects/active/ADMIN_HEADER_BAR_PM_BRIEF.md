@@ -4,7 +4,7 @@
 > Ruled 2026-11-07 (option 4), and every follow-up ask the same day, all as recommended (see the plan). Drawings
 > cover every kind of admin screen. Phase 1 (the bar's shape) walked and passed 2026-11-07. Phase 2 (all six club places
 > name themselves in the bar, tabs pinned) walked and passed 2026-11-07 (§492). Round 4 (the desktop strip) ruled
-> 2026-11-08 from drawings https://claude.ai/artifact/A1W443obR8aJd8PjUZEgUx; Phase 2D built it 2026-11-08 (93px
+> 2026-11-08 from drawings https://claude.ai/artifact/A1W443obR8aJd8PjUZEgUx; Phase 2D built it 2026-11-08, committed `135f4652c` (93px
 > pinned on a place with tabs, 48px in a tournament; the strip says "Admin", the Workspaces list keeps "Admin Area"),
 > owner walk §495 https://claude.ai/artifact/8XSzVFVFnsbCDAiR5uszyo; then Phase 3 (Calendar, Schedules, record pages).
 
