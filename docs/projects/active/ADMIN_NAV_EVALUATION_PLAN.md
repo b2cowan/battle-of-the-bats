@@ -181,7 +181,7 @@ Logo facts for E10 (from `docs/agents/db/DATA_DICTIONARY.md`): `organizations.lo
   or the address) so the cell and the strip paint right the first time. Everything after reads it; building the cell
   first would ship a flicker and rework it. Also decide here whether an event earns an address (out of scope unless the
   owner asks; record the question).
-  - **✅ BUILT 2026-11-09.** The choice is also kept in a
+  - **✅ BUILT 2026-11-09, committed `fd857b765` 2026-11-09.** The choice is also kept in a
     cookie per organization (`flhq_admin_event_<org>`, path `/<org>/admin`, a year, not HttpOnly: the browser writes
     it, and it is a preference the server only looks up in the scoped list), written wherever `localStorage` is (the
     switcher, a caller's pick, the address, and a saved choice that predates the cookie). ONE rule picks the event on

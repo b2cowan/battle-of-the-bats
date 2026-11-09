@@ -5,6 +5,24 @@
 > the strip-word ruling, §4, §5). Index: `ADMIN_NAV_BUILD_PROMPTS_INDEX.md`. If the session runs deep, stop after
 > **Part A** (the foot, Help, the portal word, Tournaments leaving Programs), write the hand-off, and do Part B
 > (the cell and tile, the back link) in a second session.
+>
+> **Refreshed 2026-11-09 from what Phase 0 shipped** (committed `fd857b765`; plan Phase 0 section). Read the section
+> below before the rest; nothing in the rulings changed.
+
+## What Phase 0 shipped that this phase stands on
+- **A tournament page knows its event on the server's first paint.** The admin layout seeds the tournament provider
+  (the list this person may open + the chosen event, from a per-organization cookie and the address) on tournament
+  pages' full loads. Anything this phase adds that names or depends on the event — the tournament rail's foot "Club"
+  door, the tournament More sheet, "Events" in the strip — reads the provider's current event, never a fetch of its
+  own, so it is right on the first paint too. **A new swap on first paint is a regression of Phase 0**, not polish.
+- **"Club" / "Events" is decided from the address, on the server.** The strip word must be right in the server's HTML,
+  the way the event name now is; a word picked after mount recreates the flash Phase 0 removed.
+- **The tab title is re-asserted on tournament pages** (the admin title manager watches the head there, because Next's
+  metadata title lands after hydration). If this phase touches any title or the strip label feeds one, measure the
+  final tab title on a club page and a tournament page; club pages still title themselves.
+- **The measuring tool exists:** `.probe/nav-phase0/firstpaint.mjs` reads the server's paint (scripts off) and every
+  change after load (scripts on), at any width, for both org kinds. Reuse it for step 3 (refresh saved sign-ins first):
+  the foot, the strip word and the cell on the first paint, and that nothing swaps after load.
 
 ---
 
@@ -83,6 +101,15 @@ team bar. Coach changes here are the foot and Help only.
   rows scroll (drawing tab 5).
 - The More sheet order is N7's; rewrite N7 in `NAV_STANDARD.md` in this phase (its You group and item 1), and N4.
 - Spelling gate: "Club", "Events", "Tournaments you run", "Coaches Portal" — `npm run check:spelling`.
+- **Other sessions' uncommitted edits sit in this phase's files (seen 2026-11-09).** Check `git diff` on each file
+  before editing, build on top, and commit only your own hunks (private index, exact hunks):
+  - the rail, the More sheet and the club nav model carry a 2026-11-09 owner ruling — every More-sheet group with a row
+    wears its heading, a one-row group too. Build the You group to that rule;
+  - the account menu and its stylesheet show the legal line under Sign out (GST/HST Stage 6 step 6.2, committed) as
+    **removed** in the working copy. Find out from the owner whether that is wanted before adding Help to the same
+    menu; do not restore it or discard it yourself.
+- `nav-standard-guard` pins the strip word as "Admin": change that expectation deliberately, in the open, with the
+  "Club" / "Events" rule.
 
 ## Steps
 1. Gate items 1–3.
