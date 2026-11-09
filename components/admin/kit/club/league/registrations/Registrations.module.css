@@ -320,3 +320,6 @@
   .doRow { min-height: var(--tap-min, 44px); justify-content: center; }
   .historyRow { grid-template-columns: 4.5rem minmax(0, 1fr); }
 }
+
+/* ── Signed-in family accounts Stage 4a (Part 8.1): one status under each address, on its own line ── */
+.familyStatus { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.5rem; margin-top: 0.3rem; }

@@ -2,7 +2,7 @@ import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
 import { effectiveOrgFactsOf } from './entitlement-grants';
 import { DOOR_COLUMNS, type DoorRow } from './free-time';
-import { generateNoLoginToken, hashNoLoginToken } from './no-login-token';
+import { hashNoLoginToken } from './no-login-token';
 import { normalizeGuardianEmail } from './guardian-email';
 import { getTeamScopedRepTeamAccess, isTeamWorkspaceOrg } from './team-workspace-entitlements';
 import { isOrgBillingSuspended } from './org-billing-access';
@@ -528,19 +528,6 @@ async function readChildTeamEntries(childIds: readonly string[]): Promise<Map<st
     });
   }
   return out;
-}
-
-/** Mint this family's own calendar token. Per family, not per team, so revoking one
- *  household's access does not disturb anyone else's calendar. */
-export async function ensureFamilyCalendarToken(linkId: string): Promise<string> {
-  const token = generateNoLoginToken();
-  const { error } = await supabaseAdmin
-    .from('family_links')
-    .update({ calendar_token_hash: hashNoLoginToken(token), updated_at: new Date().toISOString() })
-    .eq('id', linkId)
-    .eq('status', 'verified');
-  if (error) throw error;
-  return token;
 }
 
 /** A good token still names its link after the child's season on the team has closed: `reaches` says whether the feed has

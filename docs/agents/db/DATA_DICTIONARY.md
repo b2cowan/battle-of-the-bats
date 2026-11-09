@@ -6001,7 +6001,7 @@ A mismatched claim of a coach-sent invite (mig 220) still queues as `pending_app
 **`claim_token_hash` / `claim_expires_at` / `invited_by_user_id`** (text unique / timestamptz / uuid → `auth.users`, nullable; **Slice 2**) — the coach-sent DIRECT invite (the secondary on-ramp). Hash-only, same no-login token posture. Unused in Slice 1.
 
 <!-- dict:col:family_links.calendar_token_hash -->
-**`calendar_token_hash`** (text, nullable, unique) — this family's own ICS feed token, minted on demand from the family view. Per family, not per team, so revoking one household's access does not disturb anyone else's calendar. **Nulled on revoke** — a removed guardian whose phone kept refreshing a feed would be a revocation in name only.
+**`calendar_token_hash`** (text, nullable, unique) — ⚠ **RETIRING (Stage 4a Session 3, 2026-11-08): no longer minted** — the per-link mint (`ensureFamilyCalendarToken`, the POST on `/api/family/teams/[teamId]`) is gone; a parent has ONE address in `family_calendar_feeds`. The feed route still ANSWERS an existing per-link token (dev only; prod has no family links) until a later migration drops the column. Was: this family's own ICS feed token, minted on demand from the family view. Per family, not per team, so revoking one household's access does not disturb anyone else's calendar. **Nulled on revoke** — a removed guardian whose phone kept refreshing a feed would be a revocation in name only.
 
 <!-- dict:col:family_links.consent_recorded_at -->
 <!-- dict:col:family_links.consent_ip -->
@@ -6067,7 +6067,7 @@ A mismatched claim of a coach-sent invite (mig 220) still queues as `pending_app
 ## `family_calendar_feeds`
 <!-- dict:table:family_calendar_feeds -->
 
-**Purpose (mig 453, Stage 4a ruling 6):** **one calendar address per parent**, minted signed-in from the family page (Make my link / Copy / Stop this calendar). It serves every team each of the parent's live links reaches, events titled by team, never by child. Service-role only. Replaces the per-link `family_links.calendar_token_hash`, which stays (unread once Stage 4a Part 7 lands) until a later drop.
+**Purpose (mig 453, Stage 4a ruling 6):** **one calendar address per parent**, minted signed-in from the family page (Make my link / Copy / Stop this calendar). It serves every team each of the parent's live links reaches, events titled by team, never by child. Service-role only. Replaces the per-link `family_links.calendar_token_hash`, which stays until a later drop. **In use since Stage 4a Session 3 (2026-11-08):** `lib/family-calendar.ts` (mint `makeFamilyFeed`, `stopFamilyFeed`, the feed `readFamilyFeed` at `/api/family/calendar/{token}.ics`). The address is SIGNED (the coach link's recipe, `lib/coach-calendar-link.ts`, domain `family-calendar`: the row's `id` at generation 0 + an HMAC under `CALENDAR_LINK_SECRET`), so the page shows it again on every visit; `token_hash` holds its fingerprint and nothing reads the address back from it. Stop sets `stopped_at`; making one again inserts a NEW row (a new address); a stopped address answers an empty calendar for ever.
 
 <!-- dict:col:family_calendar_feeds.id -->
 <!-- dict:col:family_calendar_feeds.user_id -->

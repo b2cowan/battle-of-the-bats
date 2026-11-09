@@ -26,13 +26,16 @@ import { resolveCoachCapabilities, type AssistantCapabilityGrants } from './coac
  * (`league_team_coaches`, mig 420). Each signs in a domain of its own, so a token of one can never verify as the other,
  * even were two ids ever equal. The rep domain is the default and its tokens are unchanged.
  */
-export type CoachCalendarDomain = 'coach-calendar' | 'league-coach-calendar';
+export type CoachCalendarDomain = 'coach-calendar' | 'league-coach-calendar' | 'family-calendar';
 
 /** Where each feed is served. One home for the paths — the routes live at `app/api/calendar/coach/[token]` and
  *  `app/api/calendar/league-coach/[token]`. */
 const FEED_PATH: Record<CoachCalendarDomain, string> = {
   'coach-calendar': '/api/calendar/coach',
   'league-coach-calendar': '/api/calendar/league-coach',
+  // A PARENT's one calendar address (Signed-in family accounts Stage 4a, Part 7, ruling 6): a `family_calendar_feeds` row at
+  // generation 0. Stop ends the row; making one again makes a new row, so a new address. Same secret, its own domain.
+  'family-calendar': '/api/family/calendar',
 };
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

@@ -48,6 +48,8 @@ export interface ChildSide {
   seasons: string[];
   parentLine: string | null;
   detailLine: string | null;
+  /** Stage 4a (Part 8.3): the adults connected to this record in the family app (set by the read only while the tier is on). */
+  connectedParents?: string[];
 }
 
 export interface ChildProposal {

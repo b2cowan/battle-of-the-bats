@@ -16,6 +16,8 @@ import { pairKey } from './families-duplicates';
 import { proposeChildDuplicates, type ChildProposal, type ChildRecordIn } from './children-duplicates';
 import { CHILD_JOIN_WORDS as W, CHILD_SPLIT_WORDS as SW } from './child-join-words';
 import { storeNotSameChild } from './past-players';
+import { GUARDIAN_TIER_ENABLED } from './family-guardian';
+import { personDisplayName } from './families-read';
 
 const one = <T>(v: T | T[] | null | undefined): T | null => (Array.isArray(v) ? v[0] ?? null : v ?? null);
 const fullName = (first: string | null | undefined, last: string | null | undefined) => `${first ?? ''} ${last ?? ''}`.trim();
@@ -131,7 +133,41 @@ export async function buildChildProposals(orgId: string, { detail = true }: { de
   }
 
   const rejected = await readRejectedPairs(records.map(r => r.id));
-  return proposeChildDuplicates({ children: records, rejected });
+  return withConnectedParents(orgId, proposeChildDuplicates({ children: records, rejected }));
+}
+
+/**
+ * Name each side's CONNECTED parents (Signed-in family accounts Stage 4a, Part 8.3; drawing tab 8): a join gives every parent of
+ * both records the one child's teams, so the confirm names them before the club presses. A verified connection only (a name
+ * from the Families book, else the address). Nothing while the guardian tier is off: the window reads as before.
+ */
+async function withConnectedParents(orgId: string, proposals: ChildProposal[]): Promise<ChildProposal[]> {
+  if (!GUARDIAN_TIER_ENABLED || proposals.length === 0) return proposals;
+  const ids = [...new Set(proposals.flatMap(p => p.sides.map(s => s.childId)))];
+  const links = await fetchAllIn<{ id: string; child_id: string; person_id: string | null; invited_email: string }>(
+    ids,
+    (chunk, from, to) => supabaseAdmin.from('family_links').select('id, child_id, person_id, invited_email')
+      .eq('org_id', orgId).eq('status', 'verified').in('child_id', chunk).order('id').range(from, to),
+  );
+  if (links.length === 0) return proposals;
+  const personIds = [...new Set(links.map(l => l.person_id).filter((x): x is string => !!x))];
+  const names = new Map<string, string>();
+  if (personIds.length) {
+    const { data, error } = await supabaseAdmin.from('org_people').select('id, first_name, last_name, email_normalized')
+      .eq('org_id', orgId).in('id', personIds);
+    if (error) throw error;
+    for (const p of (data ?? []) as { id: string; first_name: string | null; last_name: string | null; email_normalized: string | null }[]) {
+      names.set(p.id, personDisplayName(p));
+    }
+  }
+  const byChild = new Map<string, string[]>();
+  for (const l of links) {
+    const label = (l.person_id ? names.get(l.person_id) : null) || l.invited_email;
+    const list = byChild.get(l.child_id) ?? [];
+    if (!list.includes(label)) list.push(label);
+    byChild.set(l.child_id, list);
+  }
+  return proposals.map(p => ({ ...p, sides: p.sides.map(s => ({ ...s, connectedParents: (byChild.get(s.childId) ?? []).sort((a, b) => a.localeCompare(b)) })) }));
 }
 
 export type ChildActionResult = { ok: true; joined?: number } | { ok: false; status: number; error: string; code?: string; joined?: number };

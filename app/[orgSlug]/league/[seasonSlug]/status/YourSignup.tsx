@@ -91,6 +91,8 @@ export default function YourSignup({
   emailShown,
   returnedSession = null,
   left = false,
+  footLine = SW.foot,
+  wayBack = null,
 }: {
   orgSlug: string;
   seasonSlug: string;
@@ -105,6 +107,11 @@ export default function YourSignup({
   returnedSession?: string | null;
   /** Left Stripe's page before paying (`?left=1`). */
   left?: boolean;
+  /** The foot line: "Anyone with this link…" on the emailed page; inside the signed-in app (Signed-in family accounts Stage 4a,
+   *  Part 6.5, drawing 4.2) "You're seeing this because you're signed in as {child}'s parent." — no link is involved there. */
+  footLine?: string;
+  /** The emailed page's way back to the app (Stage 4a, Part 6.6, drawing 4.1), once a child on it is on a team. */
+  wayBack?: React.ReactNode;
 }) {
   // "Ask to withdraw a child" (9b-2): the link is the possession proof (Stage 1: the only one).
   const [asked, setAsked] = useState<string | null>(null);
@@ -208,6 +215,8 @@ export default function YourSignup({
           })}
           </ul>
 
+          {wayBack}
+
           {pay && payBlockOwns ? (
             <LeaguePayBlock pay={pay} returnedSession={returnedSession} left={left} />
           ) : toPay > 0 ? (
@@ -282,7 +291,7 @@ export default function YourSignup({
             </div>
           )}
 
-          <p style={{ ...soft, borderTop: '1px solid var(--club-line)', paddingTop: '0.75rem' }}>{SW.foot}</p>
+          <p style={{ ...soft, borderTop: '1px solid var(--club-line)', paddingTop: '0.75rem' }}>{footLine}</p>
         </>
       )}
     </>

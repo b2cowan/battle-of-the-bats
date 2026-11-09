@@ -12,6 +12,8 @@ import { SIGNUP_LINK_WORDS as SW } from '@/lib/league-pay-words';
 import { maskEmail } from '@/lib/utils';
 import YourSignup from '../YourSignup';
 import EmailMyLinkForm from '../EmailMyLinkForm';
+import WayBack from '../WayBack';
+import { placedOnSignup } from '@/lib/family-home';
 import PublicPage from '@/components/public/PublicPage';
 import kit from '@/components/public/ClubKit.module.css';
 import card from '../EmailMyLinkForm.module.css';
@@ -56,6 +58,8 @@ export default async function YourSignupPage({
   const [found, pay] = link.ok
     ? await Promise.all([buildSignupStatus(season, org.name, link.rows), buildLeaguePayView(link.registrationId, contactEmail)])
     : [null, null];
+  // Signed-in family accounts Stage 4a, Part 6.6: the way back to the app, once a child on this sign-up is on a team (tier on only).
+  const placed = link.ok ? await placedOnSignup(link.rows, season.status) : [];
 
   // A club form in the club page column (club round C2): 640 on the logo edge (it was 560). The back link opens the title
   // block; every state below renders in the same column.
@@ -80,6 +84,7 @@ export default async function YourSignupPage({
           emailShown={link.rows[0]?.guardian_email ? maskEmail(link.rows[0].guardian_email) : null}
           returnedSession={paid ?? null}
           left={left === '1'}
+          wayBack={placed.length > 0 ? <WayBack token={token} kids={placed} /> : null}
         />
       ) : !link.ok && link.ended === 'finished' ? (
         <div className={kit.card}>

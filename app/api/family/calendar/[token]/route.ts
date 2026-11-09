@@ -8,6 +8,7 @@ import {
 import { getFamilyTeamView } from '@/lib/family-view';
 import { teamCalendarName, teamFeedEntries } from '@/lib/export/team-feed-words';
 import { PRIVATE_FEED_CACHE, refusedFeedResponse, calendarResponse } from '@/lib/calendar-feed-response';
+import { isFamilyFeedToken, readFamilyFeed } from '@/lib/family-calendar';
 
 /**
  * A CONNECTED FAMILY'S CALENDAR FEED — one per family, minted from the family view, valid while their link is verified.
@@ -37,7 +38,15 @@ export const GET = withObservability(async (req: Request,
   { params }: { params: Promise<{ token: string }> },) => {
   const { token } = await params;
 
-  const link = isPlausibleNoLoginToken(token) ? await resolveLinkByCalendarToken(token) : null;
+  // A parent's ONE calendar address (Stage 4a Part 7, ruling 6): every team their connections reach, titled by team. An address
+  // of that shape we never issued falls through to the one "never issued" answer below (a per-link lookup finds nothing for it).
+  const feed = isFamilyFeedToken(token) ? await readFamilyFeed(token) : null;
+  if (feed?.kind === 'calendar') {
+    return calendarResponse({ calendarName: feed.calendarName, entries: feed.entries, cacheControl: PRIVATE_FEED_CACHE });
+  }
+
+  // An older PER-LINK token (before Stage 4a): still answered for the existing dev tokens; noted for a drop in the closeout.
+  const link = !feed && isPlausibleNoLoginToken(token) ? await resolveLinkByCalendarToken(token) : null;
   if (!link) return refusedFeedResponse(req);
   // (Stage 4a, mig 453) A link made with no rep team (a house-league parent) has nothing for THIS per-link feed: an empty calendar.
   // The one-address-per-parent feed (Stage 4a Part 7) replaces this route's job; existing dev tokens keep answering until then.

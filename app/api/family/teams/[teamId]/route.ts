@@ -1,16 +1,9 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
 import { withObservability } from '@/lib/observability';
-import {
-  ensureFamilyCalendarToken,
-  getEnabledFamilyOrg,
-  getTeamFamilyAccess,
-  getVerifiedLinkForUserTeam,
-  isVisibleToFamilies,
-} from '@/lib/family-access';
+import { getEnabledFamilyOrg, getVerifiedLinkForUserTeam } from '@/lib/family-access';
 import { getFamilyTeamView } from '@/lib/family-view';
 import { resolveGuardianPayloadForLink } from '@/lib/family-guardian-view';
-import { resolveTrustedAppOrigin } from '@/lib/app-origin';
 
 /**
  * A connected family's view of one team.
@@ -64,31 +57,5 @@ export const GET = withObservability(async (req: Request,
   return NextResponse.json({ ok: true, state: 'open', view, role: link.role, guardian });
 }, { route: '/api/family/teams/[teamId]' });
 
-/** Mint this family's own calendar subscription URL. */
-export const POST = withObservability(async (req: Request,
-  { params }: { params: Promise<{ teamId: string }> },) => {
-  const { teamId } = await params;
-
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
-
-  const link = await getVerifiedLinkForUserTeam(user.id, teamId);
-  if (!link) return NextResponse.json({ error: 'not_found' }, { status: 404 });
-
-  const org = await getEnabledFamilyOrg(link.orgId, teamId);
-  if (!org) return NextResponse.json({ error: 'not_found' }, { status: 404 });
-
-  // A team closed to staff has no schedule to subscribe to; refuse rather than hand out a
-  // token that would resolve to an empty calendar and look broken. One team row answers
-  // that — building the whole schedule just to test it for null was loading every event of
-  // the season and throwing it away.
-  const access = await getTeamFamilyAccess(teamId);
-  if (!access || !isVisibleToFamilies(access.scheduleVisibility)) {
-    return NextResponse.json({ error: 'not_found' }, { status: 404 });
-  }
-
-  const token = await ensureFamilyCalendarToken(link.id);
-  const origin = resolveTrustedAppOrigin(req);
-  return NextResponse.json({ ok: true, url: `${origin}/api/family/calendar/${token}` });
-}, { route: '/api/family/teams/[teamId]' });
+/* (Stage 4a Part 7, ruling 6) The per-link calendar mint that lived here (POST) is gone: a parent has ONE calendar address,
+   made on the family page (app/api/family/calendar). Existing per-link tokens still answer at /api/family/calendar/[token]. */

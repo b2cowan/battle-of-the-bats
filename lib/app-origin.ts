@@ -13,8 +13,14 @@ import 'server-only';
  * Legitimate browser requests always send an on-domain `Origin`, so this preserves the existing
  * "return to the host I started on" behavior (dev vs prod) while closing the redirect-host hole.
  */
+/** Our canonical app address: what a link shown on a page with no request at hand is built on (a family's calendar address
+ *  on its signed-in page, Stage 4a Part 7). */
+export function canonicalAppOrigin(): string {
+  return process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.fieldlogichq.ca';
+}
+
 export function resolveTrustedAppOrigin(req: Request): string {
-  const fallback = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.fieldlogichq.ca';
+  const fallback = canonicalAppOrigin();
   const origin = req.headers.get('origin');
   if (origin && isTrustedAppOrigin(origin)) return origin;
   return fallback;

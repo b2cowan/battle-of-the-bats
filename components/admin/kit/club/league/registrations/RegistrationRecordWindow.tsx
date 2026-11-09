@@ -24,6 +24,7 @@ import css from './Registrations.module.css';
 import { repKit } from '../../RepKit';
 import { SECOND_PARENT_WORDS } from '@/lib/league-second-parent';
 import { formatStoredDate } from '@/lib/timezone';
+import { FamilyAppStatusLine, RemoveParentAction, type FamilyAppActions } from './FamilyAppStatus';
 
 const SP = SECOND_PARENT_WORDS.staff;
 
@@ -32,7 +33,12 @@ const SP = SECOND_PARENT_WORDS.staff;
  * Add / Change opening a box in place. The record still reads first; this one fact is typed because ask 6 ruled it
  * editable here, and nothing else on the record became so. Saving applies to the whole sign-up and sends nothing.
  */
-function SecondParentFact({ reg, onSave }: { reg: LeagueRegistration; onSave: ((value: string) => Promise<string | null>) | null }) {
+function SecondParentFact({ reg, onSave, status }: {
+  reg: LeagueRegistration;
+  onSave: ((value: string) => Promise<string | null>) | null;
+  /** Stage 4a (Part 8.1): the address's place in the app, under it (absent while the guardian tier is off). */
+  status?: React.ReactNode;
+}) {
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState('');
   const [saving, setSaving] = useState(false);
@@ -60,6 +66,7 @@ function SecondParentFact({ reg, onSave }: { reg: LeagueRegistration; onSave: ((
             {reg.guardianEmail2 ? SP.change : SP.add}
           </button>
         )}
+        {reg.guardianEmail2 && status}
       </>
     );
   }
@@ -80,7 +87,7 @@ function SecondParentFact({ reg, onSave }: { reg: LeagueRegistration; onSave: ((
 
 export default function RegistrationRecordWindow({
   model, season, seasonName, teamName, lines, changes, today, showFee, statusWord, steps, onPick, onNote, onClose,
-  cardRefunds = [], dispute = null, orgSlug = '', canDesk = false, isPhone = false, focus = null, onAnotherWay, onSecondEmail = null,
+  cardRefunds = [], dispute = null, orgSlug = '', canDesk = false, isPhone = false, focus = null, onAnotherWay, onSecondEmail = null, onFamily = null,
 }: {
   model: RegRowModel;
   season: RegsSeason;
@@ -111,6 +118,8 @@ export default function RegistrationRecordWindow({
   onAnotherWay?: (refundId: string) => void;
   /** The desk may add or change the second parent's email (null when this reader may not): resolves to a refusal or null. */
   onSecondEmail?: ((value: string) => Promise<string | null>) | null;
+  /** Stage 4a (Part 8.1): Send again and Remove a parent, for anyone who can change registrations (null otherwise). */
+  onFamily?: FamilyAppActions | null;
 }) {
   const reg: LeagueRegistration = model.reg;
   const got = receivedOf(lines);
@@ -126,9 +135,12 @@ export default function RegistrationRecordWindow({
     isOpenReg(reg) && model.division ? [F.team, teamName ?? REGS_WORDS.notPlaced] as const : null,
     reg.status === 'waitlisted' && reg.waitlistPosition != null ? [F.position, REGS_WORDS.waitingPosition(reg.waitlistPosition)] as const : null,
     [F.guardian, model.guardian] as const,
-    [F.email, reg.guardianEmail.trim() ? reg.guardianEmail : REGS_WORDS.noEmail] as const,
+    [F.email, reg.guardianEmail.trim()
+      ? <>{reg.guardianEmail}<FamilyAppStatusLine status={reg.familyApp?.first} which="first" today={today} actions={onFamily} /></>
+      : REGS_WORDS.noEmail] as const,
     // Signed-in family accounts Stage 3 (ask 6): under Email, a dash when none; the desk adds or changes it here.
-    [SP.row, <SecondParentFact key="second" reg={reg} onSave={onSecondEmail} />] as const,
+    [SP.row, <SecondParentFact key="second" reg={reg} onSave={onSecondEmail}
+      status={<FamilyAppStatusLine status={reg.familyApp?.second} which="second" today={today} actions={onFamily} />} />] as const,
     reg.guardianPhone ? [F.phone, reg.guardianPhone] as const : null,
     reg.playerDateOfBirth ? [F.born, regDay(reg.playerDateOfBirth, today)] as const : null,
     [reg.source === 'admin_manual' ? F.addedByHand : F.signedUp, regDay(reg.registeredAt, today)] as const,
@@ -199,7 +211,7 @@ export default function RegistrationRecordWindow({
         )}
       </section>
 
-      {actions.length > 0 && (
+      {(actions.length > 0 || (onFamily && (reg.familyApp?.connected.length ?? 0) > 0)) && (
         <section className={css.recordSection}>
           <h3 className={css.recordHead}>{W.actions}</h3>
           <ul className={css.doList}>
@@ -211,6 +223,8 @@ export default function RegistrationRecordWindow({
                 </button>
               </li>
             ))}
+            {/* Stage 4a (Part 8.1): the club removes a connected parent here (asks once; nobody is emailed). */}
+            <RemoveParentAction child={reg.playerFirstName} facts={reg.familyApp} actions={onFamily} />
           </ul>
         </section>
       )}

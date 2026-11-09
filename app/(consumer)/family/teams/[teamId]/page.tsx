@@ -1,26 +1,36 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase-server';
 import warm from '@/components/consumer/warmTheme.module.css';
 import styles from '../../family.module.css';
 import FamilyTeamClient from './FamilyTeamClient';
-import {
-  getOrgForGate,
-  getVerifiedLinkForUserTeam,
-  isFamilyLayerEnabled,
-} from '@/lib/family-access';
-import { getFamilyTeamView } from '@/lib/family-view';
+import { GUARDIAN_TIER_ENABLED } from '@/lib/family-guardian';
+import { getOrgForGate, getVerifiedLinkForUserTeam } from '@/lib/family-access';
 import { resolveGuardianPayloadForLink } from '@/lib/family-guardian-view';
 import { resolveFamilyRecapAvailability } from '@/lib/family-recap';
+import { connectedLines, familyChildHref, readFamilyTeam } from '@/lib/family-home';
+import { HIDDEN } from '@/lib/family-team-schedule';
+import { familyFeedUrl } from '@/lib/family-calendar';
+import { canonicalAppOrigin } from '@/lib/app-origin';
+import { FAMILY_HOME_PATH } from '@/lib/family-invitation-panel';
+import { FAMILY_HOME_WORDS as W } from '@/lib/family-home-words';
+import FamilyCalendarCard from '../../_parts/FamilyCalendarCard';
+import { FamilyFoot, SignupRow } from '../../_parts/FamilyRows';
 
 /**
- * /family/teams/[teamId] — a connected family's view of their team.
+ * /family/teams/[teamId] — a connected parent's view of one of their children's teams, either kind (Signed-in family accounts
+ * Stage 4a, Part 6; drawing tab 3). One id space: the team is found among the teams THIS ACCOUNT reaches now
+ * (`getFamilyReach`, lib/family-home.ts), so the id in the URL selects a team and never stands in for a connection. The rep
+ * route of before keeps working for existing links (a rep team's id is the same id).
  *
- * Authorization is resolved here, server-side, from the session: no verified link, no
- * page. The teamId in the URL selects WHICH link to look for; it never stands in for one.
+ * The page: the team line; the one-time "You've joined" note (`?joined=1`); Your player; From the coach (rep only); the
+ * schedule with Up next; Your calendar (here only when the parent has ONE team — otherwise it lives on the family list); Your
+ * sign-up; /legal draft (b) and "Connected to {child}" with Manage. A parent who reaches no such team now is told so quietly;
+ * a rep team whose season has CLOSED still opens its recap door.
  *
- * Never indexed, never cached (the route is in the service worker's NEVER_CACHE list too
- * — see public/sw.js; the /coaches PII-leak lesson applies to every new authed route).
+ * ⚠ 404 while the guardian tier is off (every family page). Never indexed, never cached (the route is in the service worker's
+ * NEVER_CACHE list — see public/sw.js; the /coaches PII-leak lesson applies to every authed route).
  */
 
 export const dynamic = 'force-dynamic';
@@ -33,123 +43,115 @@ export const metadata: Metadata = {
 function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div className={warm.warm}>
-      <div className={styles.page}>
-        <div className={styles.card}>{children}</div>
-      </div>
+      <div className={styles.page}>{children}</div>
     </div>
   );
 }
 
-export default async function FamilyTeamPage({ params }: { params: Promise<{ teamId: string }> }) {
-  const { teamId } = await params;
+function Quiet({ title, body, action }: { title: string; body: string; action: { href: string; label: string } }) {
+  return (
+    <Shell>
+      <div className={styles.card}>
+        <h1 className={styles.joinTitle}>{title}</h1>
+        <p className={styles.joinLede}>{body}</p>
+        <div className={styles.actions}>
+          <Link href={action.href} className={styles.chip}>{action.label}</Link>
+        </div>
+      </div>
+    </Shell>
+  );
+}
+
+export default async function FamilyTeamPage({ params, searchParams }: {
+  params: Promise<{ teamId: string }>;
+  searchParams: Promise<{ joined?: string }>;
+}) {
+  if (!GUARDIAN_TIER_ENABLED) notFound();
+  const [{ teamId }, { joined }] = await Promise.all([params, searchParams]);
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-
   if (!user) {
     return (
-      <Shell>
-        <h1 className={styles.joinTitle}>Sign in to see this team</h1>
-        <p className={styles.joinLede}>
-          Your team’s schedule is here once you’re signed in with the account the coach approved.
-        </p>
-        <div className={styles.actions}>
-          <Link href={`/auth/login?next=${encodeURIComponent(`/family/teams/${teamId}`)}`} className={styles.chip}>
-            Sign in
-          </Link>
-        </div>
-      </Shell>
+      <Quiet
+        title={W.family.signInTitle}
+        body={W.family.signInBody}
+        action={{ href: `/auth/login?next=${encodeURIComponent(`/family/teams/${teamId}`)}`, label: W.family.signIn }}
+      />
     );
   }
 
-  // A link follows the CHILD (Stage 14 S6): `liveLink` reaches the team's live season, `recapLink` its newest finished one (or the
-  // live one when there is none). A parent whose child's season has closed has no live link — but is still connected, and the
-  // recap is the whole point of this page for them. The schedule and the child's payload below are served on `liveLink` ONLY.
-  const [liveLink, recapLink] = await Promise.all([
-    getVerifiedLinkForUserTeam(user.id, teamId),
-    getVerifiedLinkForUserTeam(user.id, teamId, 'recap'),
+  const found = await readFamilyTeam(user.id, teamId);
+  if (!found) {
+    // A rep team whose season has CLOSED reaches nothing live, and its recap is the whole point of this page for the parent
+    // (Chunk D 3.2): the recap door stays, rep-only and unchanged.
+    const recapLink = await getVerifiedLinkForUserTeam(user.id, teamId, 'recap');
+    if (recapLink) {
+      const recap = await resolveFamilyRecapAvailability({ link: recapLink, repTeamId: teamId });
+      if (recap.status === 'ready') {
+        return (
+          <Quiet
+            title="The season has finished"
+            body="There’s no live schedule for this team right now — but your player’s season recap is here to keep."
+            action={{ href: `/family/teams/${teamId}/recap`, label: 'Read the season recap' }}
+          />
+        );
+      }
+    }
+    return <Quiet title={W.team.notConnectedTitle} body={W.team.notConnectedBody} action={{ href: FAMILY_HOME_PATH, label: W.team.notConnectedButton }} />;
+  }
+
+  const { home, team, schedule } = found;
+  const shown = schedule === HIDDEN ? null : schedule;
+  const childrenHere = home.children.filter(c => team.childIds.includes(c.childId));
+  const onlyTeam = home.teams.length === 1;
+
+  // The rep half: the guardian payload (the tier boundary's one resolver) and the recap door, exactly as the rep page read them.
+  let guardian = null;
+  let recapDoor: { href: string } | { comingAfter: string } | null = null;
+  if (team.kind === 'rep' && shown) {
+    const link = await getVerifiedLinkForUserTeam(user.id, teamId);
+    if (link) {
+      guardian = await resolveGuardianPayloadForLink(link, teamId);
+      const recapLink = await getVerifiedLinkForUserTeam(user.id, teamId, 'recap');
+      const org = await getOrgForGate(link.orgId);
+      const recap = await resolveFamilyRecapAvailability({ link: recapLink ?? link, repTeamId: teamId, org });
+      recapDoor = recap.status === 'ready' ? { href: `/family/teams/${teamId}/recap` }
+        : recap.status === 'season_open' ? { comingAfter: recap.seasonName } : null;
+    }
+  }
+
+  const [calendarUrl, connected] = await Promise.all([
+    onlyTeam ? familyFeedUrl(user.id, canonicalAppOrigin()) : Promise.resolve(null),
+    connectedLines(user.id, childrenHere),
   ]);
-  const link = liveLink ?? recapLink;
-  if (!link) {
-    // Covers waiting, declined, revoked and "not your team" alike. A waiting family is
-    // told the truthful, un-alarming version rather than a 404 they'd read as a bug.
-    return (
-      <Shell>
-        <h1 className={styles.joinTitle}>Not connected yet</h1>
-        <p className={styles.joinLede}>
-          The coach hasn’t approved a connection for this account. Once they do, the team’s
-          schedule appears here.
-        </p>
-        <div className={styles.actions}>
-          <Link href="/following" className={styles.chip}>Back to Following</Link>
-        </div>
-      </Shell>
-    );
-  }
+  const signups = home.signups.filter(s => s.childIds.some(id => team.childIds.includes(id)));
 
-  const org = await getOrgForGate(link.orgId);
-  const enabled = org ? await isFamilyLayerEnabled({ org, repTeamId: teamId }) : false;
-  const view = enabled && liveLink ? await getFamilyTeamView({ repTeamId: teamId, requireVisibility: 'families' }) : null;
-
-  // Chunk D 3.2 — does this family have a season recap waiting? Resolved through the shared
-  // gate rather than re-checked here, and asked even when the schedule is gone: a season that
-  // has CLOSED serves no schedule, which is exactly when the recap is the whole point.
-  // The link and the premium gate are handed over rather than re-derived — this request has
-  // already paid for both.
-  const recap = await resolveFamilyRecapAvailability({
-    link: recapLink ?? link,
-    repTeamId: teamId,
-    org: enabled ? org : undefined,
-  });
-
-  if (!view) {
-    // The season has ended, the coach set the schedule to staff only, or the team's premium
-    // access lapsed. A quiet state, never an error — and never a dead end when the family's
-    // own artifact is sitting behind it.
-    return (
-      <Shell>
-        {recap.status === 'ready' ? (
-          <>
-            <h1 className={styles.joinTitle}>The season has finished</h1>
-            <p className={styles.joinLede}>
-              There’s no live schedule for this team right now — but your player’s season recap
-              is here to keep.
-            </p>
-            <div className={styles.actions}>
-              <Link href={`/family/teams/${teamId}/recap`} className={styles.chip}>
-                Read the season recap
-              </Link>
-            </div>
-          </>
-        ) : (
-          <>
-            <h1 className={styles.joinTitle}>Schedule not available</h1>
-            <p className={styles.joinLede}>
-              This team’s schedule isn’t being shared with families right now. Your connection is
-              still active — check back, or ask the coach.
-            </p>
-            <div className={styles.actions}>
-              <Link href="/following" className={styles.chip}>Back to Following</Link>
-            </div>
-          </>
-        )}
-      </Shell>
-    );
-  }
-
-  // The guardian half. ONE shared resolver with the API route — this condition is the tier
-  // boundary and must not exist in two files.
-  const guardian = await resolveGuardianPayloadForLink(link, teamId);
+  const teamLine = team.kind === 'league' && team.divisionName ? `${team.teamName} · ${team.divisionName}` : team.teamName;
+  const metaLine = shown?.record
+    ? `${shown.record.wins}–${shown.record.losses}–${shown.record.ties}`
+    : team.seasonLine;
 
   return (
-    <FamilyTeamClient
-      view={view}
-      guardian={guardian}
-      recap={
-        recap.status === 'ready' ? { href: `/family/teams/${teamId}/recap` }
-          : recap.status === 'season_open' ? { comingAfter: recap.seasonName }
-            : null
-      }
-    />
+    <Shell>
+      <FamilyTeamClient
+        teamName={teamLine}
+        metaLine={metaLine}
+        backHref={onlyTeam ? null : FAMILY_HOME_PATH}
+        joined={joined === '1' ? team.children : null}
+        guardian={guardian}
+        leaguePlayers={team.kind === 'league' ? team.children.map(firstName => ({ firstName, division: team.divisionName })) : null}
+        recap={recapDoor}
+        entries={shown ? shown.entries : null}
+      >
+        {onlyTeam && <FamilyCalendarCard initialUrl={calendarUrl} />}
+        {signups.map(s => <SignupRow key={s.registrationId} row={s} />)}
+        <FamilyFoot
+          kids={team.children}
+          club={home.clubs.find(c => c.orgId === team.orgId)?.name ?? (shown?.orgName ?? '')}
+          connected={connected.map(c => ({ child: c.child, others: c.others, href: familyChildHref(c.childId) }))}
+        />
+      </FamilyTeamClient>
+    </Shell>
   );
 }

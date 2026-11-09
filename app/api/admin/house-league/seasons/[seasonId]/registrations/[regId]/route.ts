@@ -40,6 +40,9 @@ import { onlinePaymentsOn } from '@/lib/online-payments-switch';
 import { writeOrgAudit } from '@/lib/org-audit';
 import { readSecondParentEmail, secondParentRefusalWords, SECOND_PARENT_WORDS } from '@/lib/league-second-parent';
 import { stoppedSecondParentRefusal, withSecondParentStops } from '@/lib/league-second-parent-stop';
+import { removeFamilyParent, sendFamilyInvitationAgain, withFamilyAppStatuses } from '@/lib/family-registration-status';
+import { GUARDIAN_TIER_ENABLED } from '@/lib/family-guardian';
+import { FAMILY_HOME_WORDS } from '@/lib/family-home-words';
 import { sendSecondParentTransactional, sendTransactionalToBothParents, went } from '@/lib/league-second-parent-mail';
 import { isSendableGuardianEmail, normalizeGuardianEmail } from '@/lib/guardian-email';
 
@@ -53,7 +56,7 @@ async function fetchReg(regId: string, seasonId: string) {
     .single();
   if (!data) return null;
   // Stage 3b: the record window's "Stopped by the address owner" line travels with the row it redraws from.
-  return (await withSecondParentStops(data.org_id, [mapLeagueRegistration(data)]))[0];
+  return (await withFamilyAppStatuses(data.org_id, await withSecondParentStops(data.org_id, [mapLeagueRegistration(data)])))[0];
 }
 
 /** The waitlist moved up (inside the same locked database step that freed the spot, mig 362): tell that family. */
@@ -305,6 +308,30 @@ export const PATCH = withObservability(async (req: Request,
       return NextResponse.json({ error, code: 'new_link' }, { status: out.error === 'not_found' ? 404 : 409 });
     }
     await writeOrgAudit(ctx!.org.id, ctx!.user.id, regId, 'league_signup_link_replaced', { seasonId });
+    return NextResponse.json({ registration: await fetchReg(regId, seasonId), sentTo: out.sentTo });
+  }
+
+  // ── The family app (Signed-in family accounts Stage 4a, Part 8.1; rulings 7, 9, 10) ──────────────────────────────
+  // Send again: the placement email to ONE address on this sign-up, with a fresh invitation that may bring back a parent who
+  // left or was removed (ruling 9: never a separate create-an-account email). Remove a parent: ends a verified connection to
+  // this child (ended_by 'club'); the parent is not emailed. Anyone who can change registrations, as "Send a new link".
+  // While the guardian tier is off neither exists (404).
+  if (body.familySendAgain === 'first' || body.familySendAgain === 'second' || typeof body.familyRemove === 'string') {
+    if (!GUARDIAN_TIER_ENABLED) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    const refused = houseLeagueRefusal(ctx, 'register', season);
+    if (refused) return refused;
+    const FW = FAMILY_HOME_WORDS.club;
+    if (typeof body.familyRemove === 'string') {
+      const ok = await removeFamilyParent({ orgId: ctx!.org.id, registrationId: regId, linkId: body.familyRemove });
+      if (!ok) return NextResponse.json({ error: FW.removeNone, code: 'family_remove' }, { status: 409 });
+      await writeOrgAudit(ctx!.org.id, ctx!.user.id, regId, 'family_parent_removed', { seasonId, linkId: body.familyRemove });
+      return NextResponse.json({ registration: await fetchReg(regId, seasonId) });
+    }
+    const out = await sendFamilyInvitationAgain({
+      orgId: ctx!.org.id, registration: reg, which: body.familySendAgain as 'first' | 'second', sentByUserId: ctx!.user.id,
+    });
+    if ('error' in out) return NextResponse.json({ error: FW.notSent, code: 'family_send_again' }, { status: 409 });
+    await writeOrgAudit(ctx!.org.id, ctx!.user.id, regId, 'family_invitation_sent_again', { seasonId, which: body.familySendAgain });
     return NextResponse.json({ registration: await fetchReg(regId, seasonId), sentTo: out.sentTo });
   }
 

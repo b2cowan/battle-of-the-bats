@@ -1015,6 +1015,20 @@ export interface LeagueTeam {
   createdAt: string;
 }
 
+/** One address's status in the family app, as the club's registration record window shows it (Stage 4a, Part 8.1). */
+export type FamilyAddressStatus =
+  | { kind: 'joined'; at: string }
+  | { kind: 'invited'; at: string; canSend: boolean }
+  | { kind: 'notInvited'; canSend: boolean }
+  | { kind: 'left' | 'removed'; at: string; canSend: boolean };
+
+export interface FamilyAppFacts {
+  first: FamilyAddressStatus | null;
+  second: FamilyAddressStatus | null;
+  /** The verified connections to this registration's child (Remove a parent), by address. */
+  connected: { linkId: string; email: string }[];
+}
+
 export interface LeagueRegistration {
   id: string;
   seasonId: string;
@@ -1034,6 +1048,9 @@ export interface LeagueRegistration {
   /** Stage 3b (mig 448): when the second parent's own "stop these emails" cleared this sign-up's second address; set only by the
    *  club's registrations reads (lib/league-second-parent-stop.ts), only while the sign-up has no second address, else absent. */
   secondParentStoppedAt?: string | null;
+  /** Signed-in family accounts Stage 4a (Part 8.1): each address's place in the app, set only by the club's registrations reads
+   *  (lib/family-registration-status.ts) and only while the guardian tier is on, else absent. */
+  familyApp?: FamilyAppFacts;
   guardianPhone: string | null;
   status: LeagueRegistrationStatus;
   waitlistPosition: number | null;

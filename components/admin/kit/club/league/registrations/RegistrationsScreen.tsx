@@ -793,6 +793,21 @@ export default function RegistrationsScreen() {
             await load({ season: false, teams: false });
             return null;
           } : null}
+          // Signed-in family accounts Stage 4a (Part 8.1): Send again / Remove a parent, the same right as "Send a new link".
+          onFamily={rights.register ? {
+            sendAgain: async which => {
+              const r = await patchRegistration(orgQuery, seasonId, openReg.id, { familySendAgain: which });
+              if (!r.ok) return { error: r.error };
+              await load({ season: false, teams: false });
+              return { sentTo: (which === 'first' ? openReg.guardianEmail : openReg.guardianEmail2) ?? '' };
+            },
+            remove: async linkId => {
+              const r = await patchRegistration(orgQuery, seasonId, openReg.id, { familyRemove: linkId });
+              if (!r.ok) return r.error;
+              await load({ season: false, teams: false });
+              return null;
+            },
+          } : null}
         />
       )}
 

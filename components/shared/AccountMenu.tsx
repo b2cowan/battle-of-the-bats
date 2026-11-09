@@ -55,7 +55,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePublicPathname } from '@/lib/use-public-pathname';
-import { User, Shirt, Bell, Settings, MessageSquarePlus, LogOut, Check, Building2, Globe, Sparkles } from 'lucide-react';
+import { User, Shirt, Bell, Settings, MessageSquarePlus, LogOut, Check, Building2, Globe, Sparkles, Users } from 'lucide-react';
 import { markReleasesSeen, useReleaseUnread } from '@/components/whats-new/release-seen';
 import { getSession, signOut } from '@/lib/auth';
 import { useDismissable } from '@/lib/overlay-hooks';
@@ -128,6 +128,11 @@ export default function AccountMenu({
 }) {
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState<string | null>(null);
+  // "Your family" (Signed-in family accounts Stage 4a, Part 6.7; ruling 11): only for an account with a connected child, and only
+  // while the guardian tier is on. Asked once, when the menu first opens; the route answers 404 otherwise, so the menu renders
+  // exactly as before (Part 9 guard a).
+  const [familyHref, setFamilyHref] = useState<string | null>(null);
+  const familyAsked = useRef(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const releaseUnread = useReleaseUnread();
@@ -186,6 +191,13 @@ export default function AccountMenu({
     // and a session with no email (resolved null) shouldn't refetch forever.
     if (next && email === null) {
       getSession().then(s => setEmail(s?.user?.email ?? null)).catch(() => {});
+    }
+    if (next && showAccount && !familyAsked.current) {
+      familyAsked.current = true;
+      fetch('/api/family/me', { cache: 'no-store' })
+        .then(r => (r.ok ? r.json() : null))
+        .then((d: { href?: unknown } | null) => { if (d && typeof d.href === 'string') setFamilyHref(d.href); })
+        .catch(() => {});
     }
   }
 
@@ -274,6 +286,12 @@ export default function AccountMenu({
             <Sparkles size={15} aria-hidden />
             What’s new
             {releaseUnread && <span className={styles.newTag}>New</span>}
+          </Link>
+        )}
+        {showAccount && familyHref && (
+          <Link href={familyHref} className={rowClass()} role={itemRole(inSheet)} onClick={() => setOpen(false)}>
+            <Users size={15} aria-hidden />
+            Your family
           </Link>
         )}
         {showAccount && (

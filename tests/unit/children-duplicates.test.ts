@@ -107,10 +107,12 @@ describe('a record with no birth date cannot bridge two children whose dates dis
 
 describe('a finished season is not "Not connected" (review 2026-11-05)', () => {
   it('the family team page keeps a parent whose child season closed, and serves the schedule on the live link only', () => {
+    // Stage 4a (Part 6): the page reads the team through the account's LIVE reach (`readFamilyTeam`, every team the child is
+    // live on); a parent whose child's rep season closed reaches nothing live there, and still gets the recap door.
     const page = readCode('app/(consumer)/family/teams/[teamId]/page.tsx');
-    assert.match(page, /getVerifiedLinkForUserTeam\(user\.id, teamId, 'recap'\)/);
-    assert.match(page, /const link = liveLink \?\? recapLink/);
-    assert.match(page, /enabled && liveLink \? await getFamilyTeamView/);
+    assert.match(page, /const found = await readFamilyTeam\(user\.id, teamId\);/);
+    assert.match(page, /const recapLink = await getVerifiedLinkForUserTeam\(user\.id, teamId, 'recap'\);/);
+    assert.match(page, /if \(recap\.status === 'ready'\)/);
   });
   it('a closed season\'s calendar token is an empty feed, not a refusal that counts against the shared abuse ceiling', () => {
     assert.match(readCode('lib/family-access.ts'), /reaches: !!reached/);

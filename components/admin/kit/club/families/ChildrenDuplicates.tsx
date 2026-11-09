@@ -17,6 +17,7 @@ import { jsonInit, moneyFetch, refusalText } from '../money/MoneyKit';
 import LoadingState from '@/components/shared/LoadingState';
 import { useOrg } from '@/lib/org-context';
 import { CHILD_JOIN_WORDS as W } from '@/lib/child-join-words';
+import { FAMILY_HOME_WORDS } from '@/lib/family-home-words';
 import { formatStoredDate } from '@/lib/timezone';
 import type { ChildProposal, ChildSide } from '@/lib/children-duplicates';
 import fam from './Families.module.css';
@@ -126,6 +127,12 @@ export default function ChildrenDuplicates() {
           )}
         >
           <p>{W.confirmBody(sideOf(confirming, keeperOf(confirming)).name.split(' ')[0], confirming.seasonCount)}</p>
+          {/* Signed-in family accounts Stage 4a (Part 8.3; drawing tab 8): a join gives every connected parent of both records the
+              one child's teams, so they are named before the club confirms (the read sets them only while the tier is on). */}
+          {(() => {
+            const line = FAMILY_HOME_WORDS.join.parents(confirming.sides.map(sd => ({ child: sd.name, parents: sd.connectedParents ?? [] })));
+            return line ? <p>{line}</p> : null;
+          })()}
         </KitDialog>
       )}
     </>

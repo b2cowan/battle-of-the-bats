@@ -429,6 +429,66 @@ existing dev tokens until Part 9 notes the drop.
     `UNSUBSCRIBE_SECRET`, and the club's contact email and mailing address set on the public site.
   - **The Session 2 closeout is DONE** (`SIGNED_IN_FAMILY_STAGE4_S2_CLOSEOUT_PROMPT.md`; commit `5ca68c786`). **Next: Session 3 = Parts 6–8** (the family pages incl. `/family` and the joined note, the calendar, the record window's statuses +
     Send again → `resendPlacementInvitation({ reconnects: true })`, Remove a parent, the join window's names, the stop page's (d)). `/clear` first.
+- **Session 3 (2026-11-08): Parts 6–8 BUILT, NOT committed (commit when the owner says).** Short PM recap given before code; no new
+  owner ruling. No migration (453/454 already hold every table this needed).
+  - **Part 6 — the family pages.** One reader, `lib/family-home.ts` (`readFamilyHome` / `readFamilyTeam` / `readConnectedAdults` /
+    `connectedLines` / `familySignupFor` / `placedOnSignup`), over `getFamilyReach`; words `lib/family-home-words.ts`; a team's
+    schedule either kind `lib/family-team-schedule.ts` (rep = the unchanged family view + premium gate; house league = the coach
+    calendar's reader `readCoachFeedEvents`, games as SENT once published + practices; pure mapper `lib/family-league-entries.ts`).
+    **Route shape = one id space:** `/family/teams/[teamId]` finds the id among the teams the account reaches (rep ids unchanged).
+    `/family` (Your family: removed lines, a card per team with Up next, no-team children, calendar, sign-up rows; exactly one team
+    and nothing else → redirects to it, carrying `?joined=1`), `/family/children/[childId]` (Manage: Connected to {child}, the
+    club's contact line, Leave with /legal (e) first/second variant in a native `<dialog>` that asks once),
+    `/family/signup/[registrationId]` (the in-app Your sign-up = `YourSignup` itself, the club's colours on ClubFrame's `.tokens`
+    without its bar, back link to the team or the list, `footLine` = "You're seeing this because…"). The emailed page gained the
+    way back (`status/WayBack.tsx`, only once a child is placed, tier on). Account menu: "Your family" row, asked from
+    `/api/family/me` when the menu first opens (`showAccount` menus only). New routes: `/api/family/me`,
+    `/api/family/children/[childId]/leave`, `/api/family/signup-invitation`.
+  - **Part 7 — the calendar.** `lib/family-calendar.ts`: the address is SIGNED (coach link recipe, new domain `family-calendar` in
+    `lib/coach-calendar-link.ts`), so it is shown again on every visit; Make my link / Copy / Stop this calendar
+    (`FamilyCalendarCard`, `/api/family/calendar`); the feed route answers a parent's address first (every team reached now, titled
+    by team) and still answers old per-link dev tokens. The per-link mint is GONE (`ensureFamilyCalendarToken` and the POST on
+    `/api/family/teams/[teamId]`); `canonicalAppOrigin()` added to `lib/app-origin.ts` (the page has no request origin).
+  - **Part 8 — club and coach.** Record window: `lib/family-registration-status.ts` attaches `familyApp` (types in `lib/types.ts`)
+    on the registrations list and single-row reads; `FamilyAppStatus.tsx` draws the chip under Email / Second parent with Send again,
+    and the Actions row Remove a parent (KitDialog question; picks which when two). PATCH branches `familySendAgain` /
+    `familyRemove` on the registration route (the `register` right, 404 with the tier off, org-audited
+    `family_invitation_sent_again` / `family_parent_removed`). Join window: `withConnectedParents` in `children-duplicates-read.ts`
+    names verified connections per side; `FAMILY_HOME_WORDS.join.parents` under the confirm body. Stop page: /legal (d) as the first
+    note when the address holds a verified `second_parent` link. Rep Guardians card: already done in Session 1 (re-checked). House-
+    league coach: nothing new (its page reads `guardian_email(_2)` only, confirmed).
+  - **Differs from the prompt / drawing, on purpose (for /legal and /marketing in Session 4):** (1) /legal (b) ships with the club's
+    NAME for {club} (the drawing's specimen wrote "the club"); (2) the record window adds two undrawn statuses, "Left the app {date}"
+    and "Removed {date}", each with Send again (the only way back); the remove confirm and the Stop-this-calendar ask are undrawn
+    words; (3) "Email me an invitation" on the emailed page sends to the FIRST address on the sign-up only; (4) the "removed by the
+    club" line stays until the parent is connected to that child again; (5) with the tier off EVERY family page 404s, including the
+    rep team page that used to render a schedule for a verified link (none exist on prod); (6) house-league past games show no score
+    (the sent-games reader keeps scores, the feed shape doesn't) — 4b or later; (7) paying from the in-app sign-up returns from
+    Stripe to the EMAILED page's address (the pay block builds its return URL from the link) — a walk check; (8) "How your
+    information is used" renders as no link until `FIELDLOGICHQ_PRIVACY_POLICY_URL` is set (the S2 /legal blocker).
+  - **Tests:** new `tests/unit/family-home.test.ts` 37/37 (house-league entries, /legal (b)(d)(e) verbatim, the calendar's domain and
+    empty-when-stopped, guard (a) every new page/route 404s first + every read attaches nothing with the tier off, guard (g) the
+    payload allow-lists and no roster read, ruling 7 leave/remove scoping, guard (e) club remove = `ended_by 'club'`, guard (f));
+    updated `children-duplicates` (the team page's closed-season recap) and the feed route kept ONE refusal
+    (`club-stage6d-feeds-guard` 18/18). `family-invitation-rules`, `family-invitation-mail`, `league-second-parent`,
+    `coach-call-ups-guard`, `one-window-stage2-guard` pass. Failing and NOT this work: `team-move-coverage`
+    (`platform_charge_tax_looks`), `workspace-flip-guard` (`lib/console-money-sales-tax-wait.ts`), `check:tokens`
+    (`components/help/help.module.css`). `npx tsc --noEmit` clean (8 GB); eslint 0 errors on every touched file; spelling, dates,
+    dictionary coverage clean. Dictionary: `family_calendar_feeds` in use, `family_links.calendar_token_hash` retiring.
+    `verify:changed` 2026-11-08: 15,761 tests, 34 failing; ONE was this work (`league-signup-link`: every sign-up link must be minted
+    with the anchor's current version in a recognised shape → both mints now go through `currentSignupToken`, fixed, 107/107 on the
+    re-run). The other 33 are other sessions' (permits layout on the billing rail, admin header tab rows, billing tax words / free
+    time / plan host, console foot faces, workspace census, team-move, practice plans phone, series dates, public tournament
+    preview + stage 6 walk, the bank S1b drawing guard). A later `tsc` shows errors only in another session's new
+    `tests/unit/club-stage13c-b-guard.test.ts`.
+  - **For Part 9 (Session 4):** the UAT specs `family-access-boundary` (line ~313 POSTs the removed per-link mint: now 405) and
+    `family-guardian-tier-boundary`; a migration to drop `family_links.calendar_token_hash` and the per-link feed branch; /simplify
+    then /review over Sessions 3's scope; /legal over (b)(d)(e) as rendered and items (1)–(4) above; /marketing over every new
+    line; the help docs; the walk. Restart the dev server before any browser check (new files, shared modules).
+  - **Owner calls still open from Session 2:** R1 (left as built: a parent's own re-send keeps a Send again's reconnect), R2, R3.
+  - **At commit:** `docs/agents/db/DATA_DICTIONARY.md` also holds ANOTHER session's bank hunk (~:9249, `statement_end_date`):
+    stage only this session's two hunks (`family_links.calendar_token_hash` ~:6004, `family_calendar_feeds` ~:6070). Every other
+    file in the scope was checked: only this session's hunks.
 - **Session 2 starts here (handed over by Session 1).** Paste: `execute Session 2 (Parts 4–5) of @docs/projects/active/SIGNED_IN_FAMILY_STAGE4_BUILD_PROMPT.md`.
   - The PM UX gate was met in Session 1 for the whole stage; present a short plain-language recap of what Parts 4–5 change before code.
   - **Build on what exists, do not re-make it:** `inspectInvitation`, `acceptInvitation`, `invitationEmailMatches`, `maskEmail`,
