@@ -7,6 +7,7 @@ import { signInErrorCopy } from '@/lib/auth-errors';
 import { safeNextPath } from '@/lib/safe-redirect';
 import VerifyEmailSent from '@/components/auth/VerifyEmailSent';
 import { AccountFields, StartColumn, StartFoot, StartHead, accountForm, type AccountValues } from '@/components/auth/AccountForm';
+import LegalFootLinks from '@/components/legal/LegalFootLinks';
 
 /**
  * The account-only sign-up (`/auth/signup?account=1`: fans, the follow nudge, "I was invited") — the one account step
@@ -148,6 +149,7 @@ function AccountOnlyForm() {
               <Link href={loginHref} className={accountForm.footLink}>Sign in</Link>
             </p>
           </StartFoot>
+          <LegalFootLinks />
         </>
       )}
     </StartColumn>

@@ -1,0 +1,23 @@
+/* The legal line under a sign-in or sign-up form (GST/HST Stage 6 step 6.2, drawn): "Terms of Service · Privacy Policy", centred, 14px dim,
+   underlined, every link a 44px row. The support console's card gets its own 12px line (`.console`). */
+.line {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.125rem;
+  font-family: var(--font-sans);
+  font-size: var(--type-body);
+  color: var(--home-dim);
+}
+.link {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap-min, 44px);
+  padding: 0 0.5rem;
+  color: var(--home-dim);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.link:hover { color: var(--home-ink); }
+.link:focus-visible { outline: 3px solid var(--home-olive); outline-offset: 2px; border-radius: 4px; }
+.console { font-size: var(--type-support); }

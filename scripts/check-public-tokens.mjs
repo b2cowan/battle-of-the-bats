@@ -161,7 +161,8 @@ const SCOPES = {
     // guarded from the moment it exists.
     // app/see-it-live is the sandbox door's confirm screen — a funnel surface between the
     // marketing site and the demo, wearing the marketing ground.
-    dirs: ['app/for-*', 'app/pricing', 'app/changelog', 'app/demos', 'components/marketing', 'app/see-it-live'],
+    // components/legal: the Terms and Privacy pages (marketing ground) and the legal line under the sign-in forms (GST/HST Stage 6.2).
+    dirs: ['app/for-*', 'app/pricing', 'app/changelog', 'app/demos', 'components/marketing', 'app/see-it-live', 'components/legal'],
     files: [
       'app/page.module.css',
       'components/PricingSection.module.css',

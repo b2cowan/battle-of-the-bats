@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase-browser';
 import { RESET_RETURN_KEY, readResetReturn } from '@/lib/consumer-routes';
 import { expiredResetLinkHref } from '@/lib/auth-errors';
 import { PasswordField, StartColumn, StartHead, accountForm } from '@/components/auth/AccountForm';
+import LegalFootLinks from '@/components/legal/LegalFootLinks';
 import LoadingState from '@/components/shared/LoadingState';
 
 // A fifth state, 'error', was declared and never set; a save the provider refuses is the ready form with its notice
@@ -176,6 +177,7 @@ export default function ResetPasswordPage() {
           {loading ? 'Saving…' : 'Save password'}
         </button>
       </form>
+      <LegalFootLinks />
     </StartColumn>
   );
 }

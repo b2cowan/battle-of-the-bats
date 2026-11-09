@@ -3,6 +3,7 @@ import { useEffect, useRef, type ReactNode } from 'react';
 import Link from 'next/link';
 import ResendLink from './ResendLink';
 import { StartFoot, accountForm } from './AccountForm';
+import LegalFootLinks from '@/components/legal/LegalFootLinks';
 import styles from './VerifyEmailSent.module.css';
 
 export { requestVerificationLink } from './ResendLink';
@@ -60,6 +61,7 @@ export default function VerifyEmailSent(props: {
             {signInHref && <span>Already confirmed? <Link href={signInHref} className={accountForm.footLink}>Sign in</Link></span>}
           </StartFoot>
         )}
+        <LegalFootLinks />
       </div>
     );
   }

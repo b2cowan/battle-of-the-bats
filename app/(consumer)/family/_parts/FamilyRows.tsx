@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import styles from '../family.module.css';
 import { FAMILY_HOME_WORDS as W } from '@/lib/family-home-words';
-import { FIELDLOGICHQ_PRIVACY_POLICY_URL } from '@/lib/family-guardian-consent';
+import { legalPageHref } from '@/lib/legal-links';
+import { legalPagesOn } from '@/lib/legal-pages-switch';
 import type { FamilySignupRow } from '@/lib/family-home';
 
 /**
@@ -33,14 +34,14 @@ export interface ConnectedLine { child: string; others: string[]; href: string }
 
 /** /legal draft (b), then who is connected to each child (the second parent by address until they join). */
 export function FamilyFoot({ kids, club, connected }: { kids: string[]; club: string; connected: ConnectedLine[] }) {
+  // The link follows the legal-pages switch (GST/HST Stage 6 step 6.2): none while the pages are off, never a link to nowhere.
+  const privacyHref = legalPagesOn() ? legalPageHref('privacy') : null;
   return (
     <div className={styles.familyFoot}>
       <p>
         {W.team.privacy(kids, club)}
-        {/* The FieldLogicHQ privacy policy has no page yet (/legal, Session 2 closeout item 3: owed before the tier goes on for
-            real families). Until its address is set the line carries no link rather than a link to nowhere. */}
-        {FIELDLOGICHQ_PRIVACY_POLICY_URL && (
-          <> <a className={styles.rowLink} href={FIELDLOGICHQ_PRIVACY_POLICY_URL}>{W.team.privacyLink}</a></>
+        {privacyHref && (
+          <> <a className={styles.rowLink} href={privacyHref}>{W.team.privacyLink}</a></>
         )}
       </p>
       {connected.map(c => (

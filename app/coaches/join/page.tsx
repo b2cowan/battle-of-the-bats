@@ -5,6 +5,7 @@ import Link from 'next/link';
 import LoadingState from '@/components/shared/LoadingState';
 import ChoicePair from '@/components/shared/ChoicePair';
 import { AccountFields, EmailField, StartColumn, StartFoot, StartHead, accountForm, type AccountValues } from '@/components/auth/AccountForm';
+import LegalFootLinks from '@/components/legal/LegalFootLinks';
 import {
   COACHES_TOURNAMENTS_PATH,
   normalizeCoachPortalNext,
@@ -366,6 +367,7 @@ function JoinForm() {
           <StartFoot>
             <p>Already confirmed? <Link href={waitingLoginHref} className={accountForm.footLink}>Sign in</Link></p>
           </StartFoot>
+          <LegalFootLinks />
         </div>
       </StartColumn>
     );
@@ -393,6 +395,7 @@ function JoinForm() {
             </button>
           </p>
         </StartFoot>
+        <LegalFootLinks />
       </StartColumn>
     );
   }
@@ -423,6 +426,7 @@ function JoinForm() {
             <Link href={nextParam} className={accountForm.footLink}>Stay signed in as {signedInEmail}</Link>
           </p>
         </StartFoot>
+        <LegalFootLinks />
       </StartColumn>
     );
   }
@@ -576,6 +580,7 @@ function JoinForm() {
               <Link href={loginHref} className={accountForm.footLink}>Sign in</Link>
             </p>
           </StartFoot>
+          <LegalFootLinks />
         </>
       )}
     </StartColumn>

@@ -1,0 +1,178 @@
+/* THE LEGAL PAGES (GST/HST Stage 6 step 6.2, drawn 2026-11-08/09 "round 2"). The marketing kit's own type and ground: `.page` is
+   MarketingKit's (the warm tokens), the title is its `.heading`, the date line its `.small`, the section heads its `.title` and
+   `.subhead`, the text its `.body`. A page's own module holds only layout, so this file declares no colour of its own: every one
+   is a warm token. 720px text column, 240px contents list, 64px gap, 24px sides at every width. */
+
+.wrap {
+  /* Clears the fixed bar by its token and then the kit's 72px of air (36px on a phone), as `.hero` does. */
+  padding: calc(var(--marketing-bar-h) + 4.5rem) 0 3.5rem;
+}
+@media (max-width: 600px) {
+  .wrap { padding: calc(var(--marketing-bar-h) + 2.25rem) 0 2.25rem; }
+}
+
+.layout {
+  display: flex;
+  align-items: flex-start;
+  gap: 4rem;
+}
+.prose { width: 100%; max-width: 720px; min-width: 0; }
+
+/* The page head: the title and one line, ruled off from the text (Q5: nothing else above the text). */
+.head {
+  margin: 0 0 1.75rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--home-line);
+}
+.title { margin: 0 0 0.375rem; }
+
+/* The sign-in screens' callout (olive edge) and notice (amber edge, a 16px title on its own line), reused on this page. */
+.earlier {
+  composes: callout from '../auth/AccountForm.module.css';
+  margin: 0 0 1.125rem;
+}
+.draft {
+  composes: noticeWarn from '../auth/AccountForm.module.css';
+  margin: 0 0 1.5rem;
+}
+/* "Read the current version." stands on its own 44px line: it is the page's only way back. */
+.currentLink {
+  display: flex;
+  align-items: center;
+  min-height: var(--tap-min, 44px);
+  color: var(--home-olive);
+  font-weight: 600;
+}
+.currentLink:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+/* The contents list: a wide screen only (1080px and up), under the fixed bar, capped to the window, scrolling on its own. */
+.rail { display: none; }
+@media (min-width: 1080px) {
+  .rail {
+    display: block;
+    width: 240px;
+    flex: none;
+    position: sticky;
+    top: calc(var(--marketing-bar-h) + var(--offer-bar-h, 0px) + 1.5rem);
+    max-height: calc(100vh - var(--marketing-bar-h) - var(--offer-bar-h, 0px) - 3rem);
+    overflow-y: auto;
+  }
+}
+.railCap {
+  margin: 0 0 0.625rem;
+  font-size: var(--type-support);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase; /* type-ok: the footer's own column heads */
+  color: var(--home-dim);
+}
+.railList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-left: 1px solid var(--home-line);
+}
+.railLink {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.25rem 0 0.25rem 0.75rem;
+  margin-left: -1px;
+  border-left: 2px solid transparent;
+  font-size: var(--type-body);
+  line-height: 1.35;
+  color: var(--home-ink-soft);
+}
+.railLink:hover { color: var(--home-ink); border-left-color: var(--home-olive); }
+.railNum { flex: none; min-width: 1.125rem; color: var(--home-dim); font-variant-numeric: tabular-nums; }
+
+/* The text. Elements are styled from the wrapper because the markdown renders plain tags. */
+.text h2 {
+  font-family: var(--font-sans), system-ui, sans-serif;
+  letter-spacing: normal;
+  font-size: var(--type-title);
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--home-ink);
+  margin: 2.5rem 0 0.75rem;
+  scroll-margin-top: calc(var(--marketing-bar-h) + var(--offer-bar-h, 0px) + 1.5rem);
+}
+.text h2:first-child { margin-top: 0; }
+.text h3 {
+  font-family: var(--font-sans), system-ui, sans-serif;
+  letter-spacing: normal;
+  font-size: var(--type-heading);
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--home-ink);
+  margin: 1.75rem 0 0.5rem;
+  scroll-margin-top: calc(var(--marketing-bar-h) + var(--offer-bar-h, 0px) + 1.5rem);
+}
+.text p, .text li {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--home-ink-soft);
+}
+.text p { margin: 0 0 0.875rem; }
+.text ul, .text ol { margin: 0 0 0.875rem; padding-left: 1.375rem; }
+.text li { margin-bottom: 0.375rem; }
+.text li::marker { color: var(--home-olive); }
+.text strong { color: var(--home-ink); font-weight: 600; }
+.text a { color: var(--home-olive); font-weight: 600; overflow-wrap: anywhere; }
+.text a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.text a:focus-visible { outline: 3px solid var(--home-olive); outline-offset: 2px; border-radius: 4px; }
+
+/* A fact still blank in the dev preview. It wraps rather than running off a phone screen. */
+.prose mark {
+  background: var(--home-fill);
+  color: var(--home-amber);
+  border-bottom: 1px dashed var(--home-notice-amber);
+  padding: 0 0.25rem;
+  border-radius: 3px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+/* Tables: one markup. Below 640px each row is a labelled card (the cells carry their column's name in data-label). */
+.text table { width: 100%; border-collapse: collapse; margin: 0.25rem 0 1.25rem; }
+.text th {
+  text-align: left;
+  vertical-align: bottom;
+  padding: 0 0.875rem 0.625rem 0;
+  border-bottom: 1px solid var(--home-line-strong);
+  font-size: var(--type-support);
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: 0.06em;
+  text-transform: uppercase; /* type-ok: the footer's own column heads */
+  color: var(--home-dim);
+}
+.text td {
+  vertical-align: top;
+  padding: 0.75rem 0.875rem 0.75rem 0;
+  border-bottom: 1px solid var(--home-line);
+  font-size: var(--type-body);
+  line-height: 1.5;
+  color: var(--home-ink-soft);
+}
+.text td:first-child { color: var(--home-ink); font-weight: 600; }
+@media (max-width: 639px) {
+  .text table, .text tbody, .text tr, .text td { display: block; width: 100%; }
+  /* The head row is replaced by each cell's own label (data-label), so it is not drawn. */
+  .text thead { display: none; }
+  .text tr {
+    margin-bottom: 0.625rem;
+    padding: 1rem;
+    background: var(--home-card);
+    border: 1px solid var(--home-line);
+    border-radius: var(--home-radius);
+  }
+  .text td { padding: 0; border: 0; }
+  .text td + td { margin-top: 0.625rem; }
+  .text td::before {
+    content: attr(data-label);
+    display: block;
+    font-size: var(--type-support);
+    font-weight: 600;
+    color: var(--home-dim);
+  }
+}

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { RESET_RETURN_KEY, registrationReturnPath, signInHrefFor, stampResetReturn } from '@/lib/consumer-routes';
 import { expiredResetLinkHref } from '@/lib/auth-errors';
 import { StartColumn, StartFoot, StartHead, accountForm } from '@/components/auth/AccountForm';
+import LegalFootLinks from '@/components/legal/LegalFootLinks';
 import LoadingState from '@/components/shared/LoadingState';
 
 /**
@@ -72,6 +73,7 @@ function ResetConfirmInner() {
           <Link href={signInHrefFor(returnTo ?? '')} className={accountForm.footLink}>Back to sign in</Link>
         </p>
       </StartFoot>
+      <LegalFootLinks />
     </StartColumn>
   );
 }

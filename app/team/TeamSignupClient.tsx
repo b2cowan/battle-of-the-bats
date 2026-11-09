@@ -22,6 +22,7 @@ import {
   accountForm,
   type AccountValues,
 } from '@/components/auth/AccountForm';
+import LegalFootLinks from '@/components/legal/LegalFootLinks';
 import ChoicePair from '@/components/shared/ChoicePair';
 import { KEEP_PREMIUM_LINE } from '@/lib/portal-free-time';
 import { BILLING_TAX_WORDS } from '@/lib/billing-tax';
@@ -450,6 +451,7 @@ export default function TeamSignupClient({
             </form>
 
             {(authMode === 'signup' || !isReactivation) && (
+            <>
             <StartFoot>
               {authMode === 'signup' ? (
                 <p>
@@ -463,6 +465,8 @@ export default function TeamSignupClient({
                 </p>
               )}
             </StartFoot>
+            <LegalFootLinks />
+            </>
             )}
           </>
         )
@@ -486,6 +490,7 @@ export default function TeamSignupClient({
               <button type="button" className={accountForm.footLink} onClick={() => { setError(''); setAddressStep(false); }} disabled={busy}>Back</button>
             </p>
           </StartFoot>
+          <LegalFootLinks />
         </>
       ) : (
         <>
@@ -559,6 +564,7 @@ export default function TeamSignupClient({
               <Link href="/discover" className={accountForm.footLink}>Not now, go to Home</Link>
             </p>
           </StartFoot>
+          <LegalFootLinks />
         </>
       )}
     </StartColumn>

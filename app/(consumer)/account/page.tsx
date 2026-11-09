@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { User, Bell, LifeBuoy, ChevronRight, HelpCircle } from 'lucide-react';
+import { User, Bell, LifeBuoy, ChevronRight, HelpCircle, FileText } from 'lucide-react';
 import { getAuthUserCached } from '@/lib/supabase-server';
 import { getUserAccessContextsCached, hasCoachAccess } from '@/lib/user-contexts';
 import AccountSignOutButton from '@/components/consumer/AccountSignOutButton';
@@ -9,6 +9,9 @@ import AccountFeedbackRow from '@/components/consumer/AccountFeedbackRow';
 import AccountInstallRow from './AccountInstallRow';
 import AccountGetAppCard from './AccountGetAppCard';
 import { SUPPORT_MAILTO } from './support';
+import { legalPageHref } from '@/lib/legal-links';
+import { legalPagesOn } from '@/lib/legal-pages-switch';
+import { LEGAL_ACCOUNT_ROW_LABELS } from '@/lib/legal-words';
 import styles from './account.module.css';
 
 // Reflects sign-in state — dynamic and not for indexing.
@@ -51,6 +54,18 @@ export default async function AccountPage() {
     </div>
   );
 
+  // The Terms of Service and Privacy Policy rows (GST/HST Stage 6 step 6.2): two rows, each opening its page, absolute platform links so
+  // they work from the installed app too. They exist only while the legal pages are on.
+  const legalRows = legalPagesOn()
+    ? (['terms', 'privacy'] as const).map(doc => (
+        <a key={doc} href={legalPageHref(doc)} className={styles.row}>
+          <span className={styles.rowIcon}><FileText size={19} aria-hidden /></span>
+          <span className={styles.rowLabel}>{LEGAL_ACCOUNT_ROW_LABELS[doc]}</span>
+          <ChevronRight size={18} className={styles.rowChevron} aria-hidden />
+        </a>
+      ))
+    : null;
+
   // Two presentations, one route (Desktop Phase 2). The stacked page below is the phone/
   // tablet experience, byte-identical to what always shipped; the Profile pane renders only
   // inside the desktop settings shell (≥1024px, provided by ../account/layout.tsx — which
@@ -66,10 +81,9 @@ export default async function AccountPage() {
         {signedIn ? (
           <>
             {/* Settings rows (§3g). "Your FieldLogicHQ →" is gone — Home carries the
-                workspaces list now. Legal (Terms/Privacy) is intentionally omitted: no
-                platform legal pages exist yet (owner call 2026-07-20 to omit rather than
-                link a 404); add the row here once those documents ship — installed-PWA
-                users have no other path to them. */}
+                workspaces list now. The Terms of Service and Privacy Policy rows (legalRows) follow the legal-pages switch:
+                they render only while it is on, so installed-PWA users have a path to the documents the day they publish
+                and the page never links a 404 before (owner call 2026-07-20; built GST/HST Stage 6 step 6.2). */}
             <div className={styles.rows}>
               <Link href="/account/notifications" className={styles.row}>
                 <span className={styles.rowIcon}><Bell size={19} aria-hidden /></span>
@@ -96,6 +110,8 @@ export default async function AccountPage() {
                 <ChevronRight size={18} className={styles.rowChevron} aria-hidden />
               </a>
 
+              {legalRows}
+
               <AccountSignOutButton />
             </div>
 
@@ -111,6 +127,7 @@ export default async function AccountPage() {
               <Link href="/auth/login" className={styles.ctaPrimary}>Sign in</Link>
               <Link href="/auth/signup?account=1&next=/discover" className={styles.ctaGhost}>Create free account</Link>
             </div>
+            {legalRows && <div className={styles.rows}>{legalRows}</div>}
             {/* Quiet pinned notes: device-vs-account, plus the organizer door. The door is
                 deliberately a text link, not a third button — it leads into org creation, a
                 far heavier commitment than the account CTA above, and the signed-out surface

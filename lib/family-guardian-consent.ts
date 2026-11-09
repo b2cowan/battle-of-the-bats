@@ -25,12 +25,10 @@ export const GUARDIAN_CONSENT_VERSION = 'GUARDIAN_CONSENT_STAGE4 v0.1';
 export const GUARDIAN_CONSENT_DRAFT_NOTICE = 'Draft wording — not final.';
 
 /**
- * FieldLogicHQ's own privacy policy, linked as "How we use your information" (/legal condition 5). ⚠ NULL TODAY: the policy is
- * still a /legal draft (docs/agents/legal/drafts/PRIVACY_POLICY.md) with no page in the product, so the accept page shows the
- * words without a link rather than a dead one. Publishing the policy is OWED before the guardian tier goes on anywhere real
- * (Stage 4a Session 4, /legal). Set it here and every consent surface links it.
+ * FieldLogicHQ's own privacy policy is linked as "How we use your information" (/legal condition 5) through the legal-pages switch
+ * (GST/HST Stage 6 step 6.2): a client component reads `useLegalLinks()`, a server component `legalPageHref('privacy')`. The link
+ * is absent while the pages are off. Publishing the policy (step 6.7) is still OWED before the guardian tier goes on anywhere real.
  */
-export const FIELDLOGICHQ_PRIVACY_POLICY_URL: string | null = null;
 
 /** "Leo", "Leo and Ava", "Leo, Ava and Maya". */
 export function namesList(names: readonly string[]): string {

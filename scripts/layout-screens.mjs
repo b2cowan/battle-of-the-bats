@@ -1910,6 +1910,12 @@ export const SCREENS = [
   { id: 'mkt-demos',             session: 'anon', path: () => '/demos',                              ready: 'h1', widths: ['320'] },
   { id: 'mkt-walkthrough-coach', session: 'anon', path: () => '/for-coaches/walkthrough',            ready: 'h1', widths: ['320'] },
   { id: 'mkt-walkthrough-tourn', session: 'anon', path: () => '/for-tournament-organizers/walkthrough', ready: 'h1', widths: ['320'] },
+  // The legal pages (GST/HST Stage 6 step 6.2): marketing ground, dark until step 6.7 — measured only where LEGAL_PAGES_PREVIEW is on (dev);
+  // anywhere else the route answers 'not found' and the entry measures that screen instead.
+  { id: 'mkt-legal-terms',       session: 'anon', path: () => '/legal/terms',                        ready: 'h1', widths: ['320'], route: 'app/legal/terms/page',
+    skip: ['tap-floor'], note: 'Long-form prose: its inline links (a section number, an address) sit in running sentences, which WCAG 2.5.8 exempts from the target size. The footer rows and the sign-in line are 44px and are held by legal-links-surfaces-guard.' },
+  { id: 'mkt-legal-privacy',     session: 'anon', path: () => '/legal/privacy',                      ready: 'h1', widths: ['320'], route: 'app/legal/privacy/page',
+    skip: ['tap-floor'], note: 'Long-form prose: same reason as the Terms page.' },
 
   /*
    * ══════════════════════════════════════════════════════════════════════════════════════════

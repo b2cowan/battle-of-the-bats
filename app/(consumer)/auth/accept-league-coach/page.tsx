@@ -10,6 +10,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import LoadingState from '@/components/shared/LoadingState';
 import { AccountFields, StartColumn, StartFoot, StartHead, accountForm, type AccountValues } from '@/components/auth/AccountForm';
+import LegalFootLinks from '@/components/legal/LegalFootLinks';
 import { accountExistsSignInHref } from '@/lib/auth-errors';
 
 interface InviteInfo {
@@ -202,6 +203,7 @@ function AcceptForm() {
       <StartFoot>
         <p>Already have an account?{' '}<Link href={loginHref} className={accountForm.footLink}>Sign in</Link></p>
       </StartFoot>
+      <LegalFootLinks />
     </StartColumn>
   );
 }

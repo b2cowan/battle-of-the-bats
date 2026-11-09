@@ -7,6 +7,8 @@ import { DEMOS_PATH, sandboxDoorsVisible } from '@/lib/sandbox-door';
 import GetAppQr from './shared/GetAppQr';
 import styles from './Footer.module.css';
 import BrandLockup from '@/components/shared/BrandLockup';
+import { useLegalLinks } from '@/components/legal/LegalLinksProvider';
+import { PRIVACY_TITLE, TERMS_TITLE } from '@/lib/legal-words';
 
 // Static top-level routes that live outside the org-slug space and should show the footer.
 // (Consumer-shell routes like /discover are handled earlier via isConsumerShellPath.)
@@ -20,6 +22,8 @@ const STATIC_ROOTS = new Set([
   // The demo chooser — a shared outbound link, so it is the one page a stranger is most
   // likely to arrive on cold, and the least able to afford having no way onward.
   'demos',
+  // The legal pages (GST/HST Stage 6.2): marketing ground, "not found" while they are off.
+  'legal',
 ]);
 
 // Footer link columns. Each group renders as a labelled column; the link for the
@@ -103,6 +107,7 @@ function resolveSurface(pathname: string): 'marketing' | 'warm' | null {
 
 export default function Footer() {
   const pathname = usePublicPathname();
+  const legal = useLegalLinks();
   const surface = resolveSurface(pathname);
   if (!surface) return null;
 
@@ -157,10 +162,17 @@ export default function Footer() {
           )}
         </div>
 
-        <div className={styles.baseline}>
+        <div className={`${styles.baseline} ${legal ? styles.baselineRow : ''}`}>
           <div className={styles.copyright}>
             &copy; {new Date().getFullYear()} FieldLogicHQ. All rights reserved.
           </div>
+          {/* Rendered only while the legal pages are on (the provider hands null otherwise). */}
+          {legal && (
+            <div className={styles.legal}>
+              <a href={legal.termsHref} className={styles.legalLink}>{TERMS_TITLE}</a>
+              <a href={legal.privacyHref} className={styles.legalLink}>{PRIVACY_TITLE}</a>
+            </div>
+          )}
         </div>
       </div>
     </footer>

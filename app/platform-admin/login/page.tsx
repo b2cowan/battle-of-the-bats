@@ -6,6 +6,7 @@ import { signIn } from '@/lib/auth';
 import { signInErrorCopy } from '@/lib/auth-errors';
 import styles from './platform-login.module.css';
 import BrandLockup from '@/components/shared/BrandLockup';
+import LegalFootLinks from '@/components/legal/LegalFootLinks';
 import { clearConsoleRecent } from '@/lib/console-recent';
 
 
@@ -179,6 +180,8 @@ function LoginForm() {
           {loading ? 'Authenticating…' : 'Sign in'}
         </button>
       </form>
+      {/* The legal line at the foot of the console card (GST/HST Stage 6.2): nothing while the legal pages are off. */}
+      <LegalFootLinks console />
     </div>
   );
 }

@@ -9,6 +9,7 @@ import AccountMenu from '@/components/shared/AccountMenu';
 import CoachThemeColor from '@/components/coaches/CoachThemeColor';
 import BrandLockup from '@/components/shared/BrandLockup';
 import { DEMOS_PATH } from '@/lib/sandbox-door';
+import { isLegalPath } from '@/lib/legal-paths';
 import styles from './Navbar.module.css';
 
 // Live products lead (owner-ratified 2026-08-08): the two purchasable doors sit adjacent and
@@ -35,6 +36,7 @@ function isMarketingPath(pathname: string) {
     pathname.startsWith('/coaches') ||
     pathname.startsWith('/pricing') ||
     pathname.startsWith('/changelog') ||
+    isLegalPath(pathname) ||
     pathname.startsWith(DEMOS_PATH) ||
     pathname.startsWith('/my')
   );

@@ -6,9 +6,10 @@ import styles from '../../family.module.css';
 import { signIn, signOut } from '@/lib/auth';
 import { signInErrorCopy } from '@/lib/auth-errors';
 import {
-  FIELDLOGICHQ_PRIVACY_POLICY_URL, GUARDIAN_CONSENT_DRAFT_NOTICE, beforeYouJoinWords, namesList,
+  GUARDIAN_CONSENT_DRAFT_NOTICE, beforeYouJoinWords, namesList,
 } from '@/lib/family-guardian-consent';
 import { FAMILY_INVITATION_WORDS } from '@/lib/family-invitation-words';
+import { useLegalLinks } from '@/components/legal/LegalLinksProvider';
 import type { InvitationChild, InvitationViewer } from '@/lib/family-invitation';
 import type { InvitationState } from '@/lib/family-invitation-rules';
 
@@ -119,6 +120,8 @@ function Accept({ token, maskedEmail, kids, viewer, club }: {
   club: { name: string; contact: string | null; privacyNoticeUrl: string | null };
 }) {
   const signedIn = viewer.kind === 'same';
+  // FieldLogicHQ's own privacy policy: linked only while the legal pages are on (GST/HST Stage 6 step 6.2).
+  const legal = useLegalLinks();
   const [step, setStep] = useState<Step>('email');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -259,8 +262,8 @@ function Accept({ token, maskedEmail, kids, viewer, club }: {
             <li>{words.who.others}</li>
             <li>
               {words.who.us}{' '}
-              {FIELDLOGICHQ_PRIVACY_POLICY_URL
-                ? <a className={styles.acceptLink} href={FIELDLOGICHQ_PRIVACY_POLICY_URL} target="_blank" rel="noopener noreferrer">{words.policyLink}</a>
+              {legal
+                ? <a className={styles.acceptLink} href={legal.privacyHref} target="_blank" rel="noopener noreferrer">{words.policyLink}</a>
                 : null}{' '}
               {club.privacyNoticeUrl
                 ? <a className={styles.acceptLink} href={club.privacyNoticeUrl} target="_blank" rel="noopener noreferrer">{words.clubNoticeLink}</a>

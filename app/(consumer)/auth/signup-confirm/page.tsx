@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { expiredLinkSignInHref } from '@/lib/auth-errors';
 import { StartColumn, StartFoot, StartHead, accountForm } from '@/components/auth/AccountForm';
+import LegalFootLinks from '@/components/legal/LegalFootLinks';
 import LoadingState from '@/components/shared/LoadingState';
 
 // Every sign-up's email lands here, so the page follows only a link to our own Supabase project's verify step —
@@ -58,6 +59,7 @@ function SignupConfirmInner() {
           <Link href="/auth/login" className={accountForm.footLink}>Sign in</Link>
         </p>
       </StartFoot>
+      <LegalFootLinks />
     </StartColumn>
   );
 }
