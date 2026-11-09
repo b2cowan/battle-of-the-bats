@@ -1,6 +1,7 @@
 'use client';
 /** Shared schedule state, team swatch, summary band, and statement components. */
 import type { CSSProperties, ReactNode } from 'react';
+import { ArrowRight } from 'lucide-react';
 import { RepChip } from '../RepKit';
 import { SCHEDULE_WORDS } from '@/lib/club-schedule-words';
 import sch from './Schedules.module.css';
@@ -30,15 +31,23 @@ export function Statement({ lead, rest, bullets }: { lead: ReactNode; rest?: Rea
 
 /** The joined band: tiles CONNECTED, never cards with gaps (2026-10-08) — Fair shares' four figures. `across`: one row of
  *  four, above the toolbar (Fair shares B); otherwise two by two. */
-export function JoinedBand({ tiles, label, across = false }: { label: string; across?: boolean; tiles: { key: string; label: string; value: ReactNode; amber?: boolean }[] }) {
+export function JoinedBand({ tiles, label, across = false }: {
+  label: string; across?: boolean;
+  /** `onOpen`: the tile is a door (13c Session C, C4 — the Bill tile opens Fair shares and the bill), its label wearing
+   *  the shipped door arrow. */
+  tiles: { key: string; label: string; value: ReactNode; amber?: boolean; onOpen?: () => void }[];
+}) {
   return (
     <div className={`${sch.band}${across ? ` ${sch.bandAcross}` : ''}`} role="group" aria-label={label}>
-      {tiles.map(t => (
-        <div key={t.key} className={sch.bandTile}>
-          <span className={sch.bandLabel}>{t.label}</span>
+      {tiles.map(t => {
+        const inner = <>
+          <span className={sch.bandLabel}>{t.label}{t.onOpen && <ArrowRight size={13} aria-hidden className={sch.bandArrow} />}</span>
           <span className={`${sch.bandValue}${t.amber ? ` ${sch.amber}` : ''}`}>{t.value}</span>
-        </div>
-      ))}
+        </>;
+        return t.onOpen
+          ? <button key={t.key} type="button" className={`${sch.bandTile} ${sch.bandDoor}`} onClick={t.onOpen}>{inner}</button>
+          : <div key={t.key} className={sch.bandTile}>{inner}</div>;
+      })}
     </div>
   );
 }

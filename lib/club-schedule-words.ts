@@ -13,7 +13,7 @@
 import { formatTime, formatTimeRange, joinWithAnd, pluralize, possessive } from './utils';
 import { formatShortWeekdayDate, formatStoredDate, formatWeekRange } from './timezone';
 import { fmt } from './coach-money-summary';
-import { weekdayCount, weekdayPlural } from './permit-words';
+import { PERMIT_WORDS, weekdayCount, weekdayOne, weekdayPlural } from './permit-words';
 import type { DraftMeasure, DraftStrategy, ShareWarning, SlotPattern } from './club-schedule-engine';
 import type { ClosingRow, Installment } from './club-schedule-bill';
 import { HAND_BACK_WORDS, type CreditMove } from './club-hand-back-words';
@@ -112,6 +112,13 @@ export const SCHEDULE_REFUSALS = {
   /** Stage 11d: a practice already in an ask waiting for the club. */
   handBackAsked: 'This practice is in an ask waiting for the club. Withdraw the ask first.',
 } as const;
+
+// ── The permit's pulled dates, said one way (13c Session C — the schedule page's row, its warning and Take … off) ──
+/** "Sat, Dec 5 and Sat, Dec 12 are dates off". */
+const datesOffClause = (days: readonly string[]) => `${joinWithAnd(days.map(formatShortWeekdayDate))} ${days.length === 1 ? 'is a date off' : 'are dates off'}`;
+/** "Dec 5 and Dec 12". */
+const shortDays = (days: readonly string[]) => joinWithAnd(days.map(d => formatStoredDate(d, { withYear: false })));
+const thoseDays = (n: number) => (n === 1 ? 'that day' : 'those days');
 
 // ── A draft's measures (specimen 5) ──────────────────────────────────────────────────────────────
 
@@ -641,7 +648,6 @@ export const SCHEDULE_SCREEN_WORDS = {
   viewGrid: 'Grid',
   viewTeam: 'By team',
   viewGroup: 'By group',
-  viewFairShares: 'Fair shares',
   facilityPill: 'Facility',
   groupPill: 'Group',
   teamPill: 'Team',
@@ -717,6 +723,42 @@ export const SCHEDULE_SCREEN_WORDS = {
   shortLine: (team: string, n: number, scope: string) => `${team} is ${n} short ${scope}.`,
   billDoor: (payments: number) => `The bill · ${pluralize(payments, 'payment')}`,
   billTeamsDoor: 'Bill the teams',
+
+  // ── The page is the path (Club Tier 13c Session C, C4 = A; drawing CLUB_TIER_STAGE13C_DRAWINGS.html, the schedule page) ──
+  /** [marketing] The top line's door: "From the permit {name} ›" before the place, the dates and who sent it. */
+  metaFrom: 'From the permit',
+  /** [marketing] The drafts step, only while a draft is short and the per-day setting is why (hub tab 13, Change 3 — the
+   *  safety net beside fix-now 3's hint): "7 teams short: 47 of 450 slots handed out. The rules allow 1 practice a team a
+   *  day, and Lakeshore Dome has 18 places a Sunday for 7 teams." Then a door back to the setting. */
+  draftsShortWhy: (short: number, handed: number, seats: number, perDay: number, place: string, perWeek: number, weekday: number | null, teams: number) =>
+    `${pluralize(short, 'team')} short: ${handed} of ${seats} slots handed out. The rules allow ${pluralize(perDay, 'practice')} a team a day, and ${place} has ${pluralize(perWeek, 'place')} a ${weekday ? weekdayOne(weekday) : 'week'} for ${pluralize(teams, 'team')}.`,
+  draftsShortDoor: 'Change the rules',
+  /** The place in that sentence when the form has no venue name to give. */
+  thisPlace: 'this time',
+  /** The Bill tile opens Fair shares and the bill — the window's title; "Fair shares" for a reader without the bill. */
+  fairBillTitle: 'Fair shares and the bill',
+  /** [marketing] Needs attention's row while the permit's dates off still hold this schedule's slots (C2 = A). */
+  outsideChip: PERMIT_WORDS.outside,
+  outsideHead: (days: readonly string[]) => `${datesOffClause(days)} on the permit`,
+  /** "6 practices on this schedule sit on those days: 14U AA, 15U AA and 13U AAA, both Saturdays." `when` is said only
+   *  when every team named is on every one of two or more days of one weekday ("both Saturdays", "all 3 Saturdays"). */
+  outsidePractices: (n: number, teams: readonly string[], days: number, when: string | null) =>
+    `${pluralize(n, 'practice')} on this schedule ${n === 1 ? 'sits' : 'sit'} on ${thoseDays(days)}: ${joinWithAnd([...teams])}${when ? `, ${when}` : ''}.`,
+  outsideSlots: (n: number, days: number) => `${pluralize(n, 'slot')} of this schedule ${n === 1 ? 'is' : 'are'} on ${thoseDays(days)}.`,
+  outsideBoth: (weekday: number, days: number) => `${days === 2 ? 'both' : `all ${days}`} ${weekdayPlural(weekday)}`,
+  outsideTeamsHave: (one: boolean) => (one ? 'The team still has it.' : 'The teams still have them.'),
+  /** "2 house-league games on Dec 5 are for the league admins to move." */
+  outsideLeague: (what: string, many: boolean, days: readonly string[]) =>
+    `${what} on ${shortDays(days)} ${many ? 'are' : 'is'} for the league admins to move.`,
+  outsideSeeThem: 'See them',
+  /** The row's one ask: the days into the schedule's own Dates off, then today's Regenerate. */
+  takeDaysOff: (days: readonly string[]) => `Take ${shortDays(days)} off`,
+  /** The warnings' first line, its lead in bold. */
+  outsideWarnLead: (days: readonly string[]) => `${PERMIT_WORDS.outside}: ${datesOffClause(days)}`,
+  outsideWarnTail: (permit: string) => ` on ${permit}.`,
+  /** "Different on a date": a pulled day's own row. */
+  outsideDayPlace: 'every facility',
+  outsideDayLine: (n: number) => `${PERMIT_WORDS.outside} · ${pluralize(n, 'slot')} still on it`,
   whichWeeks: (team: string, from: string, to: string) => `Move ${possessive(team)} ${from} slot to ${to}:`,
   swapWeeks: (team: string, from: string, other: string) => `Swap ${possessive(team)} ${from} slot with ${possessive(other)}:`,
   thisWeek: 'This week only',

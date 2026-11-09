@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
-  ageOf, apportionByGroup, cutSlots, generateDrafts, heldSlots, makeDraft, matchPool, planMove, shareTargets, slotPatterns, slotsTeamsCanHold, teamResults,
+  ageOf, apportionByGroup, cutSlots, generateDrafts, heldSlots, makeDraft, matchPool, planMove, shareTargets, slotPatterns, slotsTeamsCanHold, teamsCanHold, teamResults,
   teamTwice, type DraftMeasure, type EngineInput, type EngineTeam, type PoolBooking, type Slot,
 } from '../../lib/club-schedule-engine.ts';
 import { defaultSettings, readScheduleSettings, rulesOn, sharingInSeason, sharingPools, slotRoom, type ScheduleSettings } from '../../lib/club-schedule-settings.ts';
@@ -625,6 +625,12 @@ describe('Stage 13 fix-now 3 · Evenly is even, whatever the per-day limit', () 
     assert.equal(slotsTeamsCanHold(input(), 1), 175);
     assert.equal(slotsTeamsCanHold(input(), 3), 450);
     assert.equal(slotsTeamsCanHold(input(), null), 450);
+  });
+  it('13c C5: each team’s own ceiling at 1 a day is 25 — the Slots column’s "25 of 65", adding to the hint’s 175', () => {
+    const held = teamsCanHold(input(), 1)!;
+    assert.equal(held.total, 175);
+    for (const t of SEVEN) assert.equal(held.each.get(t.id), 25, t.name);
+    assert.equal(teamsCanHold({ ...input(), teams: [{ ...SEVEN[0], many: true }, ...SEVEN.slice(1)] }, 1), null, 'null where the count is');
   });
   it('a team off a Sunday gives that Sunday to the others, never a quota nobody can place', () => {
     const off = input({ rules: { maxPerDay: 1, daysOff: [{ teamId: SEVEN[0].id, date: '2026-10-04', weekday: null, note: null }] } });

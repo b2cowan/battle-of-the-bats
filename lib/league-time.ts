@@ -519,8 +519,9 @@ export const LEAGUE_TIME_WORDS = {
   foot: 'Only an owner or an admin changes how much time house league has.',
   done: 'Done',
   close: 'Close',
-  /** k4, adapted to this window (owner 2026-10-27): a league admin when the club gave nothing — no link. */
-  noneGivenLeagueAdmin: 'The club hasn’t given house league any time yet. An owner or an admin gives it, in Schedules.',
+  /** k4, adapted to this window (owner 2026-10-27): a league admin when the club gave nothing — no link. ⚖ 13c C6 = A
+   *  (owner 2026-11-08): no "in Schedules" — shown only to a reader who cannot open Schedules; 13d adds "Ask for time". */
+  noneGivenLeagueAdmin: 'The club hasn’t given house league any time yet. An owner or an admin gives it.',
   /** k4's owner-or-admin sentence and door, where they are true here: everything divided (the door ends the body). */
   noneLeftClub: 'House league has no time left to give.',
   giveMore: 'Give house league more time',

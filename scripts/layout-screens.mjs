@@ -1596,7 +1596,17 @@ export const SCREENS = [
   { id: 'admin-schedule-slot',         area: 'org', session: 'repClubOwner', ready: '[aria-label="Read the schedule"], #read-schedule-title', path: (c) => `/${c.clubSlug}/admin/schedules/${c.clubScheduleId ?? 'none-yet'}`,
     interact: (page) => openKitDialogBy(page, page.locator('main [data-slot-chip]:visible')), scope: '[data-kit-dialog]' },
   { id: 'admin-schedule-bill',         area: 'org', session: 'repClubOwner', ready: '[aria-label="Read the schedule"], #read-schedule-title', path: (c) => `/${c.clubSlug}/admin/schedules/${c.clubScheduleId ?? 'none-yet'}`,
-    interact: (page) => openKitDialogBy(page, page.locator('main button:visible:has-text("Bill the teams")')), scope: '[data-kit-dialog]' },
+    // 13c Session C (C4 = A): Fair shares and the bill opens from the band's Bill tile (Fair shares left the View menu).
+    interact: (page) => openKitDialogBy(page, page.locator('main [role="group"][aria-label="Fair shares"] button:visible')), scope: '[data-kit-dialog]' },
+  // Bill the teams (or The bill · N payments), now one step inside Fair shares and the bill (13c Session C, C4).
+  { id: 'admin-schedule-bill-window',  area: 'org', session: 'repClubOwner', ready: '[aria-label="Read the schedule"], #read-schedule-title', path: (c) => `/${c.clubSlug}/admin/schedules/${c.clubScheduleId ?? 'none-yet'}`,
+    interact: async (page) => {
+      await openKitDialogBy(page, page.locator('main [role="group"][aria-label="Fair shares"] button:visible'));
+      await openKitDialogBy(page, page.locator('[data-kit-dialog] button:visible:has-text("Bill the teams"), [data-kit-dialog] button:visible:has-text("The bill ·")'));
+    }, scope: '[data-kit-dialog]' },
+  // 13c Session C (C2, C4): the schedule built from the 13c fixture permit (`--club-dates-off`) — the top line's permit door
+  // and Needs attention's "Outside the permit" row with "Take … off". Null until that step has run (reported unmeasured).
+  { id: 'admin-schedule-dates-off',    area: 'org', session: 'repClubOwner', ready: '[data-outside-permit]', path: (c) => `/${c.clubSlug}/admin/schedules/${c.clubDatesOffScheduleId ?? 'none-yet'}` },
   { id: 'admin-schedule-send',         area: 'org', session: 'repClubOwner', ready: '[aria-label="Read the schedule"], #read-schedule-title', path: (c) => `/${c.clubSlug}/admin/schedules/${c.clubScheduleId ?? 'none-yet'}`,
     interact: (page) => openKitDialogBy(page, page.locator('main button.btn-lime:visible:has-text("Send")')), scope: '[data-kit-dialog]' },
   { id: 'admin-org-coach-links',       area: 'org', session: 'repClubOwner', ready: '[data-place-frame]', path: (c) => `/${c.clubSlug}/admin/rep-teams/bring-in` },

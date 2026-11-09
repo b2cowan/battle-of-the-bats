@@ -20,9 +20,9 @@ import { addCalendarDays, daysBetweenDateStrings, zonedWallClockToUtc } from './
 import { readDatesOffAhead, readPermitTimes, type ClubPlaces, type PermitTimes } from './permit-lookup';
 import { readClubBookings } from './venue-clash-lookup';
 import { calendarPrograms, readClubCalendar, MAX_CALENDAR_DAYS, type CalendarReader } from './club-calendar';
-import { datesOffTaken, type PermitTime, type VenueFacilities } from './permit-time';
+import { clubDayOf, datesOffTaken, type BookingPlace, type PermitTime, type VenueFacilities } from './permit-time';
 import type { TakenKind } from './permit-words';
-import { buildDatesOffNotice, type DatesOffNotice, type TakenDay } from './permit-dates-off-view';
+import { buildDatesOffNotice, type DatesOffNotice, type ScheduleOutside, type TakenDay } from './permit-dates-off-view';
 import { canOpenClubSchedules } from './club-schedule-gate';
 import type { ClubBooking } from './venue-clash';
 import type { CalendarBooking } from './club-calendar-view';
@@ -108,6 +108,51 @@ export async function readDayTaken(orgId: string, opts: { today: string; nowMs: 
 }
 
 const kindOf = (b: ClubBooking): TakenKind => ({ program: b.program, kind: b.kind });
+
+// ── A schedule's Needs attention (13c Session C, C2): its permit's dates off that still hold its slots ──────────────
+
+/** A schedule's slot as the rule asks about it: its place and time, and who holds it (a team, or a program holder). */
+export interface ScheduleSlotPlace extends BookingPlace { key: string; teamIds: readonly string[] }
+
+/**
+ * THE SCHEDULE'S ROW (drawing, the schedule page, note 2): the slots of THIS schedule its permit's own dates off took — the
+ * one rule (`datesOffTaken`) asked of the schedule's held slots instead of the club's bookings, so a draft that has sent
+ * nothing is answered too, and a slot another permit still covers, or one already over, is not. Then house league's own
+ * bookings on those days (the league admins move them), with a door only where the reader's Calendar opens the season.
+ * Null when nothing of the schedule is left on a date off. ⚠ The reader is used for house league's door alone (its
+ * tournament scope never matters here: only house league's bookings are described).
+ */
+export async function readScheduleOutside(reader: CalendarReader, opts: {
+  permitId: string; slots: readonly ScheduleSlotPlace[]; today: string; nowMs: number;
+}): Promise<ScheduleOutside | null> {
+  // Bounded by the schedule's own held days: a permit whose dates off fall outside them stops at the first small read.
+  const held = opts.slots.filter(s => s.teamIds.length > 0 && s.endMs > opts.nowMs);
+  if (!held.length) return null;
+  const days = held.map(s => clubDayOf(s.startMs)).sort();
+  const from = days[0] > opts.today ? days[0] : opts.today;
+  const { taken, times } = await readDatesOffTaken(reader.org.id, { from, through: days[days.length - 1], nowMs: opts.nowMs, permitIds: [opts.permitId] });
+  const permit = times.permits.find(p => p.id === opts.permitId);
+  if (!permit) return null;
+  const hit = datesOffTaken(permit, held, times.permits, times.venueFacilities as VenueFacilities, { from, through: days[days.length - 1], nowMs: opts.nowMs })
+    .filter(d => d.bookings.length);
+  if (!hit.length) return null;
+  const pulled = new Set(hit.map(d => d.day));
+  const leagueDays: TakenDay[] = (taken.get(opts.permitId) ?? [])
+    .filter(d => pulled.has(d.day))
+    .map(d => ({ day: d.day, bookings: d.bookings.filter(b => b.program === 'league') }))
+    .filter(d => d.bookings.length);
+  // House league's door as the permit's own notice draws it: the season's schedule, else that day on the Calendar.
+  const notice = leagueDays.length ? await describeDatesOffTaken(reader, leagueDays, times) : null;
+  const door = notice?.doors.find(d => d.kind === 'season') ?? notice?.doors.find(d => d.kind === 'calendar') ?? null;
+  const noteOf = new Map(permit.datesOff.map(d => [d.day, d.note]));
+  return {
+    permitName: permit.name,
+    days: hit.map(d => ({ day: d.day, note: noteOf.get(d.day) ?? null, slotKeys: d.bookings.map(s => s.key) })),
+    league: leagueDays.flatMap(d => d.bookings.map(kindOf)),
+    leagueDays: leagueDays.map(d => d.day),
+    leagueHref: door?.href ?? null,
+  };
+}
 
 // ── The permit window's notice (drawing, the permit) — its words and doors are `buildDatesOffNotice`'s (pure) ─────────
 

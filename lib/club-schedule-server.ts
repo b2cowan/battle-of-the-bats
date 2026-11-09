@@ -530,6 +530,9 @@ export interface ScheduleView {
    * and its budget line. MONEY: null unless `canMoney` (as `bill` is), and null without a permit.
    */
   pricing: { permitId: string; permitName: string | null; fullHour: number | null; permitCost: number | null; lineId: string | null } | null;
+  /** The permit this schedule was started from, while it is still the club's — the top line's door (13c Session C, C4 =
+   *  A: "From the permit {name} ›"). Its name only, never its money; null for a schedule not started from a permit. */
+  fromPermit: { id: string; name: string } | null;
   /** The club's team order — the order every bill shares its rounding cents in (`computeBill`, the send); a screen that
    *  works a bill out passes it, so its table and what Finalize bills agree to the cent. */
   teamOrder: string[];
@@ -610,7 +613,9 @@ export async function scheduleView(orgId: string, loaded: LoadedSchedule, canMon
   // Once the schedule made its bill, a money reader reads the money side — what each team pays and the bill as Finalize
   // made it, in one read — and the plain hand-backs that leave a bill as it was (Stage 11d part B — S11D-05's two numbers).
   const billed = canMoney && row.state === 'final' && !!row.allocation_id;
-  const [teams, ctx, nameOf, waiting, money, plainBacks] = await Promise.all([
+  // The permit it started from (13c C4, the top line's door): the one the prices read, unless a bill is priced from another.
+  const startedFrom = row.started_from_permit_id;
+  const [teams, ctx, nameOf, waiting, money, plainBacks, otherStart] = await Promise.all([
     // House league is always named when a slot holds it, whether or not the club still has house league.
     readClubTeams(orgId, { houseLeague: true }),
     engineContext(orgId, { slotIds: loaded.slots.map(s => s.id), teamIds: [], fromMs, toMs, permitId }),
@@ -618,6 +623,7 @@ export async function scheduleView(orgId: string, loaded: LoadedSchedule, canMon
     row.state === 'final' ? waitingAsksOfSchedule(orgId, row.id) : Promise.resolve([]),
     billed ? scheduleMoney(orgId, row.id, row.allocation_id!) : Promise.resolve(null),
     billed ? keptHandBacks(orgId, row.id, new Map(live.map(s => [s.id, s.teamIds]))) : Promise.resolve([]),
+    startedFrom && startedFrom !== permitId ? readPrices(orgId, startedFrom) : Promise.resolve(null),
   ]);
   const { slots, assignments, stored } = liveSlots(loaded, ctx.prices.weightOf);
   const held = heldSlots(slots, ctx.pool);
@@ -638,6 +644,7 @@ export async function scheduleView(orgId: string, loaded: LoadedSchedule, canMon
   const handedOut = stored.filter(s => s.teamIds.length > 0).length;
   const clashes = slots.filter(s => held.has(s.key) && (assignments.get(s.key) ?? []).length).length;
   const placeIds = [...new Set(loaded.time.blocks.map(b => b.venueId))];
+  const fromPrices = otherStart ?? ctx.prices;
   return {
     schedule: {
       id: row.id, name: row.name, state: row.state, startsOn: row.starts_on, endsOn: row.ends_on, version: row.version,
@@ -680,6 +687,7 @@ export async function scheduleView(orgId: string, loaded: LoadedSchedule, canMon
     pricing: canMoney && permitId && ctx.prices.found
       ? { permitId, permitName: ctx.prices.permitName, fullHour: ctx.prices.fullHour, permitCost: ctx.prices.permitCost, lineId: ctx.prices.lineId }
       : null,
+    fromPermit: startedFrom && fromPrices.found ? { id: startedFrom, name: fromPrices.permitName ?? '' } : null,
     canMoney,
     houseLeague: !!opts.houseLeague,
     // An ask with no Sunday left to count (every one started, or came back to the team) lapses at the next sweep, and

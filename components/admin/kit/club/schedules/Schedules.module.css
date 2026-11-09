@@ -56,6 +56,17 @@
 .bandAcross { display: inline-grid; grid-template-columns: repeat(4, auto); }
 .bandAcross .bandTile { min-width: 9rem; padding: 0.5rem 1rem 0.5rem 0.75rem; border-bottom: 0; border-right: 1px solid var(--home-line); }
 .bandAcross .bandTile:last-child { border-right: 0; }
+/* The top line's permit door (C4): the shipped .door, inline in the line — it keeps the line's size on a computer; on a
+   touch screen .door's own tap floor applies (the layout check found 15px before). */
+@media (min-width: 769px) { .door.metaDoor { display: inline; min-height: 0; font-size: inherit; } }
+.door.metaDoor { text-decoration: none; }
+.door.metaDoor:hover { text-decoration: underline; }
+/* 13c Session C (C4): a tile that is a door — the Bill tile opens Fair shares and the bill. The tile keeps its look; the
+   label wears the shipped door arrow (olive, quiet), and the whole tile is the press. */
+.bandDoor { font: inherit; text-align: left; background: transparent; border-top: 0; border-left: 0; cursor: pointer; color: inherit; }
+.bandDoor:hover { background: var(--home-olive-soft); }
+.bandDoor:focus-visible { outline: 2px solid var(--home-olive); outline-offset: -2px; }
+.bandArrow { margin-left: 0.3rem; vertical-align: -2px; color: var(--home-olive); opacity: 0.55; }
 
 /* ── New schedule's opening screen (owner, 2026-10-13): Copy a schedule, or start blank — New tournament's opening
    screen worn here (its sentence, the rows, the "or" leading to the foot's lime). Our own copy of the "or": nothing in
@@ -290,6 +301,8 @@
 .overviewException b, .overviewException span, .overviewException small { display: block; }
 .overviewException span { margin-top: 0.15rem; color: var(--text-secondary); }
 .overviewException small { margin-top: 0.15rem; color: var(--badge-warning-ink); }
+/* 13c Session C (C2): a pulled date's row — its line in the amber the warnings wear. */
+.overviewException span.overviewOutside { color: var(--badge-warning-ink); font-weight: 650; }
 .overviewQuiet { margin: 0; padding: 0.85rem; font-size: var(--type-support); color: var(--text-tertiary); }
 .overviewMore { display: block; width: 100%; padding: 0.55rem 0.7rem; border: 0; border-top: 1px solid var(--home-line); background: var(--surface-2); text-align: left; font: inherit; font-size: var(--type-support); font-weight: 700; color: var(--home-olive); cursor: pointer; }
 .amberPill {

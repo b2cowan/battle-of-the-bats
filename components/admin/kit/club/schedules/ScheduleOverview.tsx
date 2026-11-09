@@ -11,13 +11,17 @@ import sch from './Schedules.module.css';
 
 const FIRST_EXCEPTIONS = 5;
 
-export default function ScheduleOverview({ rows, days, slots, askedIds, nameOf, onOpenGrid }: {
+export default function ScheduleOverview({ rows, days, slots, askedIds, nameOf, onOpenGrid, outsideDays = [] }: {
   rows: readonly PlaceRow[];
   days: readonly string[];
   slots: readonly SlotView[];
   askedIds: ReadonlySet<string>;
   nameOf: (id: string) => string;
-  onOpenGrid: (rowKey: string, day: string) => void;
+  /** A row’s facility and day; a pulled date opens its whole day (rowKey null). */
+  onOpenGrid: (rowKey: string | null, day: string) => void;
+  /** 13c Session C (C2): the permit’s pulled dates, each with the slots of this schedule still on it — listed first, a
+   *  whole day each (“every facility”), so they no longer read as normal days. */
+  outsideDays?: readonly { day: string; slotKeys: readonly string[] }[];
 }) {
   const [allExceptions, setAllExceptions] = useState(false);
   const patterns = useMemo(() => scheduleOverview(rows, days, slots, askedIds), [rows, days, slots, askedIds]);
@@ -54,7 +58,13 @@ export default function ScheduleOverview({ rows, days, slots, askedIds, nameOf, 
           ))}
         </section>
         <section className={sch.overviewPanel} aria-labelledby="schedule-exceptions-title">
-          <div className={sch.overviewPanelHead}><h2 id="schedule-exceptions-title">Different on a date</h2><span>{pluralize(exceptions.length, 'difference')}</span></div>
+          <div className={sch.overviewPanelHead}><h2 id="schedule-exceptions-title">Different on a date</h2><span>{pluralize(exceptions.length + outsideDays.length, 'difference')}</span></div>
+          {outsideDays.map(o => (
+            <button key={`outside|${o.day}`} type="button" className={sch.overviewException} data-outside-permit onClick={() => onOpenGrid(null, o.day)}>
+              <b>{formatShortWeekdayDate(o.day)} · {W.outsideDayPlace}</b>
+              <span className={sch.overviewOutside}>{W.outsideDayLine(o.slotKeys.length)}</span>
+            </button>
+          ))}
           {exceptions.length ? shown.map(({ pattern, read }) => (
             <button key={`${pattern.key}|${read.day}`} type="button" className={sch.overviewException}
               onClick={() => onOpenGrid(pattern.place.key, read.day)}>
@@ -62,7 +72,7 @@ export default function ScheduleOverview({ rows, days, slots, askedIds, nameOf, 
               <span>{slotTime(pattern.usual[0])} · {who(read.slots)}</span>
               {marks(read.slots).length > 0 && <small>{marks(read.slots).join(' · ')}</small>}
             </button>
-          )) : <p className={sch.overviewQuiet}>The assignments match on every date shown.</p>}
+          )) : outsideDays.length ? null : <p className={sch.overviewQuiet}>The assignments match on every date shown.</p>}
           {exceptions.length > FIRST_EXCEPTIONS && <button type="button" className={sch.overviewMore}
             onClick={() => setAllExceptions(open => !open)} aria-expanded={allExceptions}>
             {allExceptions ? 'Show fewer differences' : `Show ${exceptions.length - FIRST_EXCEPTIONS} more differences`}

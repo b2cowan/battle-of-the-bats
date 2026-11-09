@@ -1,6 +1,10 @@
 /** A read-only summary of the dates already shown by the club schedule's grid. */
 import { utcToZonedInputs } from './timezone';
 import { placeKey, type PlaceRow, type ScheduleAsk, type SlotView } from './club-schedule-view';
+import { SCHEDULE_SCREEN_WORDS as W } from './club-schedule-words';
+import { takenCountWords } from './permit-words';
+import { isProgramHolder } from './club-schedule-holders';
+import type { ScheduleOutside } from './permit-dates-off-view';
 
 export interface OverviewDate {
   day: string;
@@ -93,4 +97,49 @@ export function matchesScheduleTeamFilter(
 ): boolean {
   if (!groups.size && !teams.size) return true;
   return teamIds.some(id => (!groups.size || groups.has(groupOf(id))) && (!teams.size || teams.has(id)));
+}
+
+// ── The permit's pulled dates on the schedule's page (Club Tier 13c Session C, C2 = A — drawing, the schedule page, notes
+//    2, 5, 6) ────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+/** Needs attention's "Outside the permit" row in words, the warnings' first line and "Different on a date"'s rows. The
+ *  page adds the one action (Take {day} off), a computer's only. A "was" figure for the bill is never here: the product
+ *  stores no earlier bill to say it from (13c disagreement 5) — a sent bill never moves on a date off, and a draft's is
+ *  worked out fresh. */
+export interface ScheduleOutsideWords {
+  head: string;
+  /** The practices still on those days and their teams ("… both Saturdays. The teams still have them."), or null. */
+  line: string | null;
+  league: { line: string; door: { label: string; href: string } | null } | null;
+  lead: { bold: string; rest: string };
+  days: string[];
+}
+
+export function scheduleOutsideWords(
+  outside: ScheduleOutside,
+  view: { slots: readonly Pick<SlotView, 'key' | 'day' | 'weekday' | 'teamIds'>[]; teams: readonly { id: string }[] },
+  opts: { draft: boolean; nameOf: (teamId: string) => string },
+): ScheduleOutsideWords {
+  const days = outside.days.map(d => d.day);
+  const keys = new Set(outside.days.flatMap(d => d.slotKeys));
+  const onDays = view.slots.filter(x => keys.has(x.key));
+  const practices = onDays.flatMap(x => x.teamIds.filter(t => !isProgramHolder(t)).map(t => `${t}|${x.day}`));
+  const on = new Set(practices);
+  const teamIds = view.teams.map(t => t.id).filter(id => days.some(d => on.has(`${id}|${d}`)));
+  const everyDay = teamIds.every(t => days.every(d => on.has(`${t}|${d}`)));
+  const weekdays = new Set(onDays.map(x => x.weekday));
+  const when = everyDay && days.length > 1 && weekdays.size === 1 ? W.outsideBoth([...weekdays][0], days.length) : null;
+  const line = practices.length
+    ? [W.outsidePractices(practices.length, teamIds.map(opts.nameOf), days.length, when), opts.draft ? null : W.outsideTeamsHave(practices.length === 1)].filter(Boolean).join(' ')
+    : outside.league.length ? null : W.outsideSlots(onDays.length, days.length);
+  return {
+    head: W.outsideHead(days),
+    line,
+    league: outside.league.length ? {
+      line: W.outsideLeague(takenCountWords(outside.league), outside.league.length > 1, outside.leagueDays),
+      door: outside.leagueHref ? { label: W.outsideSeeThem, href: outside.leagueHref } : null,
+    } : null,
+    lead: { bold: W.outsideWarnLead(days), rest: W.outsideWarnTail(outside.permitName) },
+    days,
+  };
 }

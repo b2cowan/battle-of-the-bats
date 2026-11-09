@@ -8,6 +8,7 @@
  */
 
 import { useCallback, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { AlertTriangle, ChevronRight, MoreHorizontal, Undo2 } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
@@ -44,12 +45,15 @@ import sch from '@/components/admin/kit/club/schedules/Schedules.module.css';
 import { exportScheduleFile } from '@/lib/export/club-schedule-export';
 import { planMove, type WeeksScope } from '@/lib/club-schedule-engine';
 import { sharingPools } from '@/lib/club-schedule-settings';
-import { matchesScheduleTeamFilter } from '@/lib/club-schedule-overview';
+import { matchesScheduleTeamFilter, scheduleOutsideWords } from '@/lib/club-schedule-overview';
 import { SCHEDULE_REFUSALS as R, SCHEDULE_SCREEN_WORDS as W } from '@/lib/club-schedule-words';
 import { HAND_BACK_WORDS as H } from '@/lib/club-hand-back-words';
 import { isProgramHolder } from '@/lib/club-schedule-holders';
 import { fetchDoorNote } from '@/lib/needs-attention-door';
 import { facilityListWords, weekdayPlural } from '@/lib/permit-words';
+import { permitDoor, type ScheduleOutside } from '@/lib/permit-dates-off-view';
+import { usePermitsLink } from '@/components/admin/kit/useAdminKitNav';
+import type { DateOff } from '@/lib/permit-time';
 import {
   NO_GROUP, askedSlots, dropLanding, engineSlotsOf, firstCursor, gridColumns, nightsWords, oneWeekdayOf, openingDay, pct, perWeek, placeName, placeRows, scheduleDates,
   slotDays, slotTime, stepGrid, teamColour, weekCounts, weeksOnScreen, type ScheduleView, type SlotView,
@@ -64,7 +68,8 @@ interface PageRead extends ScheduleView {
 type Win =
   | { kind: 'slot'; key: string }
   | { kind: 'swap'; key: string }
-  | { kind: 'settings'; regenerate?: boolean }
+  | { kind: 'settings'; regenerate?: boolean; addDatesOff?: DateOff[] }
+  | { kind: 'fair' }
   | { kind: 'bill' }
   | { kind: 'send'; start: 'draft' | 'final' | 'changes' }
   | { kind: 'log' }
@@ -73,7 +78,8 @@ type Win =
   | { kind: 'delete' }
   | { kind: 'answer'; id: string };
 
-type Lens = 'overview' | 'grid' | 'team' | 'group' | 'fair';
+// ⚖ 13c Session C (C4 = A): Fair shares left the View menu — the band's Bill tile opens it, as Fair shares and the bill.
+type Lens = 'overview' | 'grid' | 'team' | 'group';
 
 /** One slot as it was before a change — what Undo puts back exactly. */
 interface Before { slotId: string; teamIds: string[]; locked: boolean; movedByHand: boolean }
@@ -156,6 +162,24 @@ export default function SchedulePage() {
     }
   }, [slug, scheduleId, q, beginRead, today, router]);
   useDeferredLoad(!orgLoading && !!slug, load);
+
+  // ⚖ 13c Session C (C2): what the permit's dates off took of this schedule — its OWN read, after the page has read and
+  // again whenever the schedule's version moves (a regenerate), so the page never waits on it; a failure only hides the row.
+  // The answer is kept with the version it was read for, so another version's is never shown.
+  const [outsideRead, setOutsideRead] = useState<{ version: number; outside: ScheduleOutside | null } | null>(null);
+  const permitsLink = usePermitsLink();
+  const outsideVersion = read?.fromPermit && permitsLink ? read.schedule.version : null;
+  const outside = outsideVersion != null && outsideRead?.version === outsideVersion ? outsideRead.outside : null;
+  const beginOutside = useLatestRead();
+  const loadOutside = useCallback(async () => {
+    if (outsideVersion == null) return;
+    const current = beginOutside();
+    // org-slug-ok: `q` is built from the org context's slug above
+    const r = await moneyFetch<{ outside: ScheduleOutside | null; version: number }>(`/api/admin/schedules/${encodeURIComponent(scheduleId)}?${q}&outside=1`).catch(() => null);
+    // Tagged with the version the SERVER read, so a change by someone else in between is never laid over this read.
+    if (current()) setOutsideRead({ version: r?.ok ? r.data.version : outsideVersion, outside: r?.ok ? r.data.outside : null });
+  }, [outsideVersion, scheduleId, q, beginOutside]);
+  useDeferredLoad(outsideVersion != null, loadOutside);
 
   // ── Names, colours, places — looked up by id, once per read ──
   const teamById = useMemo(() => new Map((read?.teams ?? []).map(t => [t.id, t])), [read]);
@@ -322,6 +346,15 @@ export default function SchedulePage() {
     </div>
   );
   const changeLines = v.changes.teams.flatMap(t => t.lines.map(l => W.changeTeamLine(t.teamName, lowerFirst(l))));
+
+  // ── The permit's pulled dates (13c Session C, C2 = A): the words are scheduleOutsideWords'; the page adds the one ask,
+  // a computer's only (as Regenerate is). The days go into the schedule's OWN Dates off, in today's Regenerate; nothing is
+  // written until the admin keeps a draft there. No sync from the permit (13c adds none).
+  const outsideWords = outside ? scheduleOutsideWords(outside, v, { draft, nameOf }) : null;
+  const outsideRow = outsideWords && outside ? {
+    ...outsideWords,
+    action: canChange ? { label: W.takeDaysOff(outsideWords.days), onClick: () => setWin({ kind: 'settings', regenerate: true, addDatesOff: outside.days.map(d => ({ day: d.day, note: d.note })) }) } : null,
+  } : null;
 
   // ── Export ──
   const exportInput = () => ({
@@ -543,16 +576,19 @@ export default function SchedulePage() {
   const slotWin = win?.kind === 'slot' || win?.kind === 'swap' ? slotOfKey(win.key) : null;
   const slotAsk = slotWin ? asked.get(slotWin.id) ?? null : null;
 
-  // Fair shares' figures answer for the whole schedule; its team detail has a visible view beside Grid.
+  // Fair shares' figures answer for the whole schedule; its team detail opens from the band's Bill tile (13c C4).
   const fair = cols ? fairShares({ view: v, week: cols.days, weeks: weeksShown, scope: weekScope, nameOf, placeOf: (a, b) => placeName(v.places, a, b) }) : null;
   const canOverview = final && oneWeekday != null && days.length > 1;
+  /** The bill's door — a money reader, while there is a bill or one can still be made. */
+  const billOpen = v.canMoney && (!!v.bill || !final);
   const desktopViews: { id: Lens; label: string }[] = [
     ...(canOverview ? [{ id: 'overview' as const, label: W.viewOverview }] : []),
     { id: 'grid', label: W.viewGrid }, { id: 'team', label: W.viewTeam },
-    { id: 'group', label: W.viewGroup }, { id: 'fair', label: W.viewFairShares },
+    { id: 'group', label: W.viewGroup },
   ];
-  const openOverviewDate = (rowKey: string, day: string) => {
-    setFacilityFilter(new Set([rowKey]));
+  /** An Overview row opens the Grid on its day — its facility, or every facility for a pulled date (13c, rowKey null). */
+  const openOverviewDate = (rowKey: string | null, day: string) => {
+    setFacilityFilter(new Set(rowKey ? [rowKey] : []));
     setGroupFilter(new Set());
     setTeamFilter(new Set());
     setClashesOnly(false);
@@ -563,14 +599,18 @@ export default function SchedulePage() {
   return (
     <div className={ck.pageWide}>
       {header}
-      <p className={sch.meta}>{meta}</p>
+      {/* ⚖ 13c Session C (C4 = A): the page is the path — the permit it started from is a door in the top line. No path line. */}
+      <p className={sch.meta}>
+        {v.fromPermit && permitsLink && <>{W.metaFrom} <Link href={permitDoor(permitsLink.href, [v.fromPermit.id])} className={`${sch.door} ${sch.metaDoor}`} data-permit-door>{v.fromPermit.name} ›</Link> · </>}
+        {meta}
+      </p>
       {failed && <LoadFailed title={failed.text} onRetry={() => void load()} />}
       {reviewCallout}
       <ScheduleAttention asks={v.asks} slots={v.slots} places={v.places} canMoney={v.canMoney}
         changed={final && s.changedSinceSent} sentOn={formatStoredDate(s.sent?.at ?? '', { withYear: false })}
-        changeLines={changeLines} onAnswer={id => setWin({ kind: 'answer', id })}
+        changeLines={changeLines} outside={outsideRow} onAnswer={id => setWin({ kind: 'answer', id })}
         onSend={() => setWin({ kind: 'send', start: 'changes' })} />
-      {!isPhone && fair && <FairSharesBand model={fair} />}
+      {!isPhone && fair && <FairSharesBand model={fair} onOpen={() => setWin({ kind: 'fair' })} />}
 
       {isPhone ? (
         <>
@@ -618,13 +658,13 @@ export default function SchedulePage() {
           </CoachListToolbar>
           <p className={repKit.srOnly} role="status" aria-live="polite">{refused}</p>
           {lens === 'overview' && cols && <>
-            {fair && <FairSharesLines model={fair} />}
+            {fair && <FairSharesLines model={fair} lead={outsideWords?.lead} />}
             <ScheduleOverview rows={allRows} days={cols.days} slots={v.slots} askedIds={askedIds}
-              nameOf={nameOf} onOpenGrid={openOverviewDate} />
+              nameOf={nameOf} onOpenGrid={openOverviewDate} outsideDays={outside?.days ?? []} />
           </>}
           {lens === 'grid' && cols ? (
             <>
-              {fair && <FairSharesLines model={fair} />}
+              {fair && <FairSharesLines model={fair} lead={outsideWords?.lead} />}
               <ScheduleGrid
                 view={v} days={cols.days} rows={rows} canDrag={canChange && !busy} dim={dim} moved={moved} asked={asked} today={today}
                 nameOf={nameOf} colourOf={colourOf} groupOf={groupOf} sharing={sharing}
@@ -633,10 +673,7 @@ export default function SchedulePage() {
                 onRefused={reason => { setRefused(reason); say(reason); }}
               />
             </>
-          ) : lens === 'team' ? byTeamTable : lens === 'group' ? byGroupTable : lens === 'fair' && fair ? (
-            <FairSharesTeams model={fair} nameOf={nameOf} colourOf={colourOf}
-              onBill={v.canMoney && (v.bill || !final) ? () => setWin({ kind: 'bill' }) : undefined} />
-          ) : null}
+          ) : lens === 'team' ? byTeamTable : lens === 'group' ? byGroupTable : null}
         </section>
         </div>
       )}
@@ -661,9 +698,16 @@ export default function SchedulePage() {
       {win?.kind === 'settings' && (
         <NewScheduleWindow q={q} orgSlug={slug} orgName={currentOrg?.name} onCancel={() => setWin(null)}
           settingsOf={{
-            view: v, regenerate: win.regenerate, onStale: () => void load(),
+            view: v, regenerate: win.regenerate, addDatesOff: win.addDatesOff, onStale: () => void load(),
             onKept: (_version, renamed) => { setWin(null); setMoved(new Set()); say(renamed ? W.regenerated(s.name) : W.regeneratedNotRenamed(s.name)); void load(); },
           }} />
+      )}
+      {/* ⚖ 13c Session C (C4 = A): Fair shares and the bill, in a window — the team table and its bill door. A reader
+          without the club's money reads Fair shares alone (the window is titled so), and nobody lost the view. */}
+      {win?.kind === 'fair' && fair && (
+        <KitDialog kind="form" size="wide" eyebrow={s.name} title={billOpen || fair.tiles.some(t => t.key === 'bill') ? W.fairBillTitle : W.fairTitle} onClose={() => setWin(null)}>
+          <FairSharesTeams model={fair} nameOf={nameOf} colourOf={colourOf} onBill={billOpen ? () => setWin({ kind: 'bill' }) : undefined} />
+        </KitDialog>
       )}
       {win?.kind === 'bill' && (
         <BillWindow q={q} view={v} nameOf={nameOf} onClose={() => setWin(null)} onStale={() => void load()} onSaved={text => { setWin(null); say(text); void load(); }} />

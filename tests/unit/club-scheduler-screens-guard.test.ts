@@ -32,6 +32,7 @@ import { describe, it } from 'node:test';
 import { readCode } from './_source-code.ts';
 import { kitSchedulesLink } from '../../lib/admin-kit-nav.ts';
 import { SCHEDULE_COACH_WORDS, SCHEDULE_SCREEN_WORDS } from '../../lib/club-schedule-words.ts';
+import { scheduleOutsideWords } from '../../lib/club-schedule-overview.ts';
 
 const LIST = 'app/[orgSlug]/admin/schedules/page.tsx';
 const PAGE = 'app/[orgSlug]/admin/schedules/[scheduleId]/page.tsx';
@@ -362,8 +363,9 @@ describe('13 · the ask on the schedule’s page; Fair shares B (Stage 11d part 
     assert.match(attention, /orderScheduleAsks\(asks, slots\)/);
     assert.match(attention, /ordered\.slice\(0, FIRST_ASKS\)/);
     assert.match(attention, /Show \$\{ordered\.length - FIRST_ASKS\} more hand-back asks/);
-    assert.match(attention, /index === 0 \? 'btn-lime' : 'btn-outline'/);
-    assert.match(attention, /canMoney && ordered\.length \? 'btn-outline' : 'btn-lime'/);
+    // The first ask takes the lime — 13c Session C put the permit's "Take … off" first (section 13 pins that row).
+    assert.match(attention, /index === 0 && !outside\?\.action \? 'btn-lime' : 'btn-outline'/);
+    assert.match(attention, /\(canMoney && ordered\.length\) \|\| outside\?\.action \? 'btn-outline' : 'btn-lime'/);
     assert.match(attention, /onClick=\{\(\) => onAnswer\(ask\.id\)\}/);
     assert.match(attention, /H\.calloutTailLate\(ask, canMoney\) : H\.calloutTail\(ask, canMoney\)/);
     assert.match(attention, /\{canMoney && <button/, 'Answer only for someone who moves club money');
@@ -387,14 +389,118 @@ describe('13 · the ask on the schedule’s page; Fair shares B (Stage 11d part 
     assert.match(page, /if \(!r\.data\.asks\.some\(a => a\.id === asked\)\) \{\s*void fetchDoorNote\(\{ handBackId: asked \}\)\.then\(note => setNotice\(\{ id: \+\+noticeSeq\.current, text: note \?\? H\.doorStale \}\)\);\s*\} else if \(r\.data\.canMoney\) setWin\(\{ kind: 'answer', id: asked \}\);/);
     assert.match(page, /<AnswerWindow q=\{q\} handBackId=\{win\.id\}/);
   });
-  it('Fair shares keeps its totals above the views and its team detail in a dedicated tab', () => {
+  // ⚖ Re-pinned 13c Session C (C4 = A, owner 2026-11-08; supersedes CLUB_SCHEDULE_LANDING_UX_PLAN's "Fair shares as a View
+  // tab"): Fair shares LEFT the View menu — the band's Bill tile opens Fair shares and the bill, in a window.
+  it('Fair shares keeps its totals above the views; its team detail opens from the band’s Bill tile, never the View menu', () => {
     const at = (s: string) => { const i = page.indexOf(s); assert.ok(i > 0, s); return i; };
     assert.ok(at('<FairSharesBand model={fair}') < at('<CoachListToolbar'), 'the totals above the workspace toolbar');
     assert.match(page, /\{lens === 'grid' && cols \? \(/);
-    assert.match(page, /lens === 'fair' && fair \? \(/);
-    assert.match(page, /<FairSharesTeams model=\{fair\}/);
-    assert.match(page, /\{ id: 'fair', label: W\.viewFairShares \}/);
+    assert.match(page, /type Lens = 'overview' \| 'grid' \| 'team' \| 'group';/, 'no fair lens');
+    assert.doesNotMatch(page, /id: 'fair'|lens === 'fair'/, 'the View menu holds Overview, Grid, By team and By group');
+    assert.match(page, /<FairSharesBand model=\{fair\} onOpen=\{\(\) => setWin\(\{ kind: 'fair' \}\)\} \/>/, 'the band’s tile opens the window');
+    assert.match(page, /\{win\?\.kind === 'fair' && fair && \(\s*<KitDialog [^>]*title=\{billOpen \|\| fair\.tiles\.some\(t => t\.key === 'bill'\) \? W\.fairBillTitle : W\.fairTitle\}/, 'titled for whether the bill is in it — the bill door, or the tile that opened it');
+    assert.match(page, /<FairSharesTeams model=\{fair\} nameOf=\{nameOf\} colourOf=\{colourOf\} onBill=\{billOpen \? \(\) => setWin\(\{ kind: 'bill' \}\) : undefined\} \/>/);
     assert.doesNotMatch(readCode(`${KIT}/FairShares.tsx`), /onTeams/, 'no redundant Fair shares link beside the tab');
     assert.doesNotMatch(css, /\.body \{ display: grid; grid-template-columns: minmax\(0, 1fr\) 300px/, 'no 300 column beside the grid');
+  });
+});
+
+describe('13 · the schedule page is the path (Club Tier 13c Session C — C4, C5, C6)', () => {
+  const page = readCode(PAGE);
+  const fair = readCode(`${KIT}/FairShares.tsx`);
+  const parts = readCode(`${KIT}/ScheduleParts.tsx`);
+  const attention = readCode(`${KIT}/ScheduleAttention.tsx`);
+  const overview = readCode(`${KIT}/ScheduleOverview.tsx`);
+  const form = readCode(`${KIT}/NewScheduleWindow.tsx`);
+  const route = readCode('app/api/admin/schedules/[scheduleId]/route.ts');
+  const genRoute = readCode('app/api/admin/schedules/generate/route.ts');
+  const server = readCode('lib/club-schedule-server.ts');
+  const outside = readCode('lib/permit-dates-off.ts');
+  it('the top line opens the permit the schedule started from — a door, no path line (C4 = A)', () => {
+    // The Permits place's own gate and link (the rail's row), and its one-permit door — absent where Permits is.
+    assert.match(page, /\{v\.fromPermit && permitsLink && <>\{W\.metaFrom\} <Link href=\{permitDoor\(permitsLink\.href, \[v\.fromPermit\.id\]\)\}/);
+    assert.match(page, /const permitsLink = usePermitsLink\(\);/);
+    assert.match(server, /fromPermit: startedFrom && fromPrices\.found \? \{ id: startedFrom, name: fromPrices\.permitName \?\? '' \} : null,/, 'its name, never its money');
+    assert.doesNotMatch(page, /aria-label="This schedule’s path"|className=\{sch\.path\}/, 'no path line (option B was not ruled)');
+  });
+  it('the band’s door is the Bill tile for a money reader and the Open tile for anyone else — nobody loses Fair shares', () => {
+    assert.match(fair, /\{ \.\.\.\(showBill \? \{ key: 'bill', label: W\.tileBill, value: money\(billTotal\) \} : \{ key: 'open', label: W\.tileOpen, value: String\(t\.open\) \}\), door: true \}/);
+    assert.match(fair, /'door' in t && t\.door && onOpen \? \{ \.\.\.t, onOpen \} : t/);
+    assert.match(parts, /<button key=\{t\.key\} type="button" className=\{`\$\{sch\.bandTile\} \$\{sch\.bandDoor\}`\} onClick=\{t\.onOpen\}>/);
+    assert.match(page, /const billOpen = v\.canMoney && \(!!v\.bill \|\| !final\);/, 'the bill door only for a money reader');
+    assert.match(page, /\{!isPhone && fair && <FairSharesBand/, 'the phone keeps no band (unchanged)');
+  });
+  it('Needs attention’s "Outside the permit" row comes from the ONE rule, its own read, after the page has read (C2)', () => {
+    assert.match(route, /searchParams\.get\('outside'\) === '1'/);
+    assert.match(route, /readScheduleOutside\(/);
+    assert.match(outside, /const hit = datesOffTaken\(permit, held, times\.permits, times\.venueFacilities as VenueFacilities, \{ from, through: days\[days\.length - 1\], nowMs: opts\.nowMs \}\)/,
+      'the schedule’s slots are asked the shared question — no second "on a date off"');
+    assert.match(page, /moneyFetch<\{ outside: ScheduleOutside \| null; version: number \}>\(`\/api\/admin\/schedules\/\$\{encodeURIComponent\(scheduleId\)\}\?\$\{q\}&outside=1`\)/);
+    assert.match(page, /setOutsideRead\(\{ version: r\?\.ok \? r\.data\.version : outsideVersion,/, 'tagged with the version the server read');
+    assert.match(page, /useDeferredLoad\(outsideVersion != null, loadOutside\);/, 'after the page has read, the kit’s read pattern');
+    assert.match(outside, /notice\?\.doors\.find\(d => d\.kind === 'season'\) \?\? notice\?\.doors\.find\(d => d\.kind === 'calendar'\)/, 'a door by its kind, never its address');
+    assert.match(attention, /const count = ordered\.length \+ \(changed \? 1 : 0\) \+ \(outside \? 1 : 0\);/, 'the heading counts it');
+  });
+  it('"Take {day} off" writes ONLY the schedule’s own Dates off, through today’s Regenerate — no sync, nothing else (C2)', () => {
+    assert.match(page, /action: canChange \? \{ label: W\.takeDaysOff\(outsideWords\.days\), onClick: \(\) => setWin\(\{ kind: 'settings', regenerate: true, addDatesOff: outside\.days\.map\(d => \(\{ day: d\.day, note: d\.note \}\)\) \}\) \} : null,/);
+    assert.match(form, /\.\.\.\(settingsOf\?\.addDatesOff \?\? \[\]\)\.filter\(a => !editing\.time\.datesOff\.some\(d => d\.day === a\.day\)\),/, 'added to the form’s Dates off, saved only by Keep');
+    assert.doesNotMatch(page, /action: 'datesOff'|action: 'syncPermit'/, 'no write of its own');
+    // The first ask takes the lime: Send the changes and a hand-back ask step down while the row's button shows.
+    assert.match(attention, /\(canMoney && ordered\.length\) \|\| outside\?\.action \? 'btn-outline' : 'btn-lime'/);
+    assert.match(attention, /index === 0 && !outside\?\.action \? 'btn-lime' : 'btn-outline'/);
+  });
+  it('the row says the drawing’s words on the drawing’s case: 6 practices, both Saturdays, 2 house-league games', () => {
+    const TEAMS = ['t14', 't15', 't13'];
+    const slot = (key: string, day: string, teamIds: string[]) => ({ key, day, weekday: 6, teamIds });
+    const slots = ['2026-12-05', '2026-12-12'].flatMap(d => [
+      slot(`${d}|a13`, d, ['t14']), slot(`${d}|b13`, d, ['t15']), slot(`${d}|a14`, d, ['t13']), slot(`${d}|a11`, d, ['house_league']),
+    ]);
+    const outsideRead = {
+      permitName: 'Saturday diamonds, December 2026',
+      days: ['2026-12-05', '2026-12-12'].map(d => ({ day: d, note: null, slotKeys: slots.filter(x => x.day === d).map(x => x.key) })),
+      league: [{ program: 'league' as const, kind: 'game' as const }, { program: 'league' as const, kind: 'game' as const }],
+      leagueDays: ['2026-12-05'], leagueHref: '/c/admin/house-league/seasons/s/schedule',
+    };
+    const names: Record<string, string> = { t14: '14U AA', t15: '15U AA', t13: '13U AAA' };
+    const w = scheduleOutsideWords(outsideRead, { slots, teams: TEAMS.map(id => ({ id })) }, { draft: false, nameOf: id => names[id] });
+    assert.equal(w.head, 'Sat, Dec 5 and Sat, Dec 12 are dates off on the permit');
+    assert.equal(w.line, '6 practices on this schedule sit on those days: 14U AA, 15U AA and 13U AAA, both Saturdays. The teams still have them.');
+    assert.equal(w.league?.line, '2 house-league games on Dec 5 are for the league admins to move.');
+    assert.deepEqual(w.league?.door, { label: 'See them', href: '/c/admin/house-league/seasons/s/schedule' });
+    assert.equal(`${w.lead.bold}${w.lead.rest}`, 'Outside the permit: Sat, Dec 5 and Sat, Dec 12 are dates off on Saturday diamonds, December 2026.');
+    assert.equal(SCHEDULE_SCREEN_WORDS.takeDaysOff(w.days), 'Take Dec 5 and Dec 12 off');
+    // A draft has sent nothing: its teams don't have them yet.
+    assert.equal(scheduleOutsideWords(outsideRead, { slots, teams: TEAMS.map(id => ({ id })) }, { draft: true, nameOf: id => names[id] }).line,
+      '6 practices on this schedule sit on those days: 14U AA, 15U AA and 13U AAA, both Saturdays.');
+  });
+  it('no "was" figure is worked out for the bill (disagreement 5: no earlier bill is stored)', () => {
+    assert.doesNotMatch(page, /W\.billWas|was \$\{|billWent/);
+  });
+  it('the dates off head the warnings and mark "Different on a date" (C2, the drawing’s notes 5 and 6)', () => {
+    assert.match(page, /<FairSharesLines model=\{fair\} lead=\{outsideWords\?\.lead\} \/>/);
+    assert.match(overview, /\{outsideDays\.map\(o => \(/);
+    assert.match(overview, /pluralize\(exceptions\.length \+ outsideDays\.length, 'difference'\)/);
+  });
+  it('Slots reads "25 of 65" while the per-day setting limits the teams, the plain share otherwise (C5 = A)', () => {
+    assert.match(genRoute, /const held = teamsCanHold\(input, perDay\);\s*const canHold = held\?\.total \?\? null;/, 'one walk: the hint and the column read the same ceilings');
+    assert.match(genRoute, /const alone = dayLimit \? held!\.each : null;/);
+    assert.match(form, /dayLimit && got != null \? W\.ofSlots\(got, share\) : String\(share\)/);
+    assert.match(form, /slots: limitedWords\(dayLimit\?\.canUse \?\? null, practicesShown\),/, 'the total agrees with the setting’s hint');
+  });
+  it('the league admin’s sentence names no door they cannot open; whoever opens Schedules keeps theirs (C6 = A)', () => {
+    const time = readCode('lib/league-time.ts');
+    const gen = readCode('lib/league-game-generator.ts');
+    assert.match(time, /noneGivenLeagueAdmin: 'The club hasn’t given house league any time yet\. An owner or an admin gives it\.',/);
+    assert.match(gen, /noneLeftLeagueAdmin: 'House league has no time left to give\. An owner or an admin gives house league its time\.',/);
+    assert.doesNotMatch(time + gen, /LeagueAdmin: '[^']*in Schedules/);
+    const timeWin = readCode('components/admin/kit/club/league/time/HouseLeagueTimeWindow.tsx');
+    const genWin = readCode('components/admin/kit/club/league/schedule/GenerateGamesWindow.tsx');
+    assert.match(timeWin, /\{empty && \(schedulesHref\s*\? <div className=\{s\.empty\}><p className=\{s\.emptyNote\}>\{W\.noneGivenClub\}/, 'a reader who opens Schedules keeps today’s sentence and door');
+    assert.match(genWin, /\{schedulesHref\s*\? <><p className=\{s\.emptyNote\}>\{noneGiven \? LEAGUE_TIME_WORDS\.noneGivenClub/);
+    assert.doesNotMatch(timeWin + genWin, /Ask for time/, 'no Ask for time button (13d)');
+  });
+  it('the drafts’ short warning says why and goes back to the setting, only when the setting is why (hub tab 13)', () => {
+    assert.match(form, /const shortWhy = pick && gen\?\.summary\.dayLimit && pickShort\?\.kind === 'shares' && pickShort\.short\.length/);
+    assert.match(form, /document\.getElementById\('ns-max-per-day'\)\?\.focus\(\)/);
   });
 });

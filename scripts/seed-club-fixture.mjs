@@ -99,6 +99,7 @@ import crypto from 'node:crypto';
 import { createClient } from '@supabase/supabase-js';
 import { insertCommitmentWithRecords, paidOnce } from './lib/seed-commitment-records.mjs';
 import { DATES_OFF_MARK } from './lib/club-fixture-marks.mjs';
+import { recordLegalAcceptance } from './lib/record-legal-acceptance.mjs';
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -311,11 +312,13 @@ async function ensureUser(email, password, fullName) {
   if (existing) {
     // Re-assert the password so the walk card is always true (a tester may have changed it).
     die(`reset password ${email}`, (await db.auth.admin.updateUserById(existing.id, { password })).error);
+    await recordLegalAcceptance(db, existing); // GST/HST 6.3 A5: a fixture never meets the Terms screen
     return existing;
   }
   const { data, error } = await db.auth.admin.createUser({ email, password, email_confirm: true, user_metadata: { full_name: fullName } });
   die(`createUser ${email}`, error);
   ok(`sign-in created ${email}`);
+  await recordLegalAcceptance(db, data.user);
   return data.user;
 }
 
@@ -1434,22 +1437,36 @@ async function addClubDatesOff() {
   const startsOn = addDays(off1, -7);
   const endsOn = addDays(off1, 14);
 
-  // 1. The earlier run's rows go: the permit (its blocks and dates off with it), the practices, the games.
-  die('clear earlier 13c permit', (await db.from('org_permits').delete().eq('org_id', orgId).eq('notes', DATES_OFF_MARK)).error);
+  // 1. The earlier run's rows go: the practices, the games, the schedule built from the permit (13c Session C; its
+  //    blocks, slots and house league's uses with it), then the permit (its blocks and dates off with it).
   die('clear earlier 13c practices', (await db.from('rep_team_events').delete().eq('org_id', orgId).eq('description', DATES_OFF_MARK)).error);
   die('clear earlier 13c games', (await db.from('league_games').delete().eq('season_id', season.id).eq('notes', DATES_OFF_MARK)).error);
+  const oldPermits = await one('earlier 13c permit', db.from('org_permits').select('id').eq('org_id', orgId).eq('notes', DATES_OFF_MARK));
+  for (const p of oldPermits ?? []) {
+    const olds = await one('earlier 13c schedule', db.from('club_schedules').select('id').eq('org_id', orgId).eq('started_from_permit_id', p.id));
+    for (const s of olds ?? []) {
+      die('clear earlier 13c schedule blocks', (await db.from('org_time_blocks').delete().eq('org_id', orgId).eq('schedule_id', s.id)).error);
+      die('clear earlier 13c schedule', (await db.from('club_schedules').delete().eq('id', s.id)).error);
+    }
+  }
+  die('clear earlier 13c permit', (await db.from('org_permits').delete().eq('org_id', orgId).eq('notes', DATES_OFF_MARK)).error);
 
   // 2. The permit, through the save every form uses.
   const permitYear = off1.slice(0, 4);
   const monthName = new Date(`${off1}T12:00:00Z`).toLocaleString('en-CA', { month: 'long', timeZone: 'UTC' });
   await one('Saturday diamonds', db.rpc('org_permit_save', { p_org: orgId, p_permit: null, p_actor: null, p_data: {
     notes: DATES_OFF_MARK, name: `Saturday diamonds, ${monthName} ${permitYear}`, issuerName: 'Town of Milton', heldFor: 'club',
-    startsOn, endsOn, cost: null, budgetLineId: null,
+    startsOn, endsOn, cost: 800, budgetLineId: null, // the drawing's $800.00 — the band's Bill tile shows (13c Session C)
     blocks: [{ venueId: kinsmen.id, facilityIds: [], weekdays: [6], startTime: '09:00', endTime: '15:00' }],
     datesOff: [{ day: off1, note: 'a city event' }, { day: off2, note: 'a city event' }],
   } }));
 
-  // 3. The six practices — the live seasons of 14U AA, 15U AA and 13U AAA, both Saturdays.
+  const permit = await one('the 13c permit', db.from('org_permits').select('id').eq('org_id', orgId).eq('notes', DATES_OFF_MARK).single());
+
+  // 3. The six practices — the live seasons of 14U AA, 15U AA and 13U AAA, both Saturdays. ⚖ 13c Session C: they are a
+  //    SENT schedule's ("Saturdays at Kinsmen, {month}", started from the permit before its dates were pulled — so its own
+  //    Dates off are empty), each practice on its slot, as Finalize writes them; house league holds 11:00 a.m. on
+  //    Diamond A and 12:00 p.m. on Diamond B, and the two games stand on those slots.
   const SLOTS = [['14U AA', '13:00', '14:00', 'Diamond A'], ['15U AA', '13:00', '14:00', 'Diamond B'], ['13U AAA', '14:00', '15:00', 'Diamond A']];
   const teams = await one('teams', db.from('rep_teams').select('id, name').eq('org_id', orgId));
   const live = Object.fromEntries(await Promise.all(SLOTS.map(async ([name]) => {
@@ -1459,11 +1476,44 @@ async function addClubDatesOff() {
     if (!py) { console.error(`✗ ${name} has no live season.`); process.exit(1); }
     return [name, { teamId: t.id, programYearId: py.id }];
   })));
-  const rows = [off1, off2].flatMap(day => SLOTS.map(([name, from, to, diamond]) => ({
+  // The schedule: every Saturday of the permit, 9:00 a.m.–3:00 p.m. on both diamonds, an hour a slot.
+  const saturdays = [startsOn, off1, off2, endsOn];
+  const sched = await one('13c schedule', db.from('club_schedules').insert({
+    org_id: orgId, name: `Saturdays at Kinsmen, ${monthName} ${permitYear}`, starts_on: startsOn, ends_on: endsOn, state: 'final',
+    started_from_permit_id: permit.id, sent_at: nowIso, finalized_at: nowIso,
+    settings: {
+      v: 2, slotMinutes: 60, changeoverMinutes: 0, teamsAtOnce: 1, teamIds: [...SLOTS.map(([n]) => live[n].teamId), 'house_league'],
+      split: { method: 'even', values: {} }, timeMode: 'same', prime: null,
+      rules: { windows: [], maxPerDay: null, maxPerWeek: null, avoidGameDays: true, avoidBookings: true, noBackToBack: false, daysOff: [], fieldsBy: [], sharing: [] },
+    },
+  }).select('id').single());
+  const block = await one('13c schedule block', db.from('org_time_blocks').insert({
+    org_id: orgId, schedule_id: sched.id, org_venue_id: kinsmen.id, weekdays: [6], start_time: '09:00', end_time: '15:00', sort_order: 0,
+  }).select('id').single());
+  die('13c schedule block facilities', (await db.from('org_time_block_facilities').insert(
+    ['Diamond A', 'Diamond B'].map(d => ({ org_id: orgId, block_id: block.id, facility_id: fac[d] })))).error);
+  const HOURS = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00'];
+  const toHour = (h) => `${String(Number(h.slice(0, 2)) + 1).padStart(2, '0')}:00`;
+  const slotRows = await one('13c schedule slots', db.from('club_schedule_slots').insert(saturdays.flatMap(day => HOURS.flatMap(h => ['Diamond A', 'Diamond B'].map(d => ({
+    org_id: orgId, schedule_id: sched.id, org_venue_id: kinsmen.id, facility_id: fac[d], block_id: block.id,
+    starts_at: torontoInstant(day, h), ends_at: torontoInstant(day, toHour(h)),
+  }))))).select('id, starts_at, facility_id'));
+  const slotAt = (day, h, d) => slotRows.find(s => Date.parse(s.starts_at) === Date.parse(torontoInstant(day, h)) && s.facility_id === fac[d]).id;
+  die('13c slot teams', (await db.from('club_schedule_slot_teams').insert(saturdays.flatMap(day => SLOTS.map(([name, from, , diamond]) => ({
+    org_id: orgId, slot_id: slotAt(day, from, diamond), team_id: live[name].teamId,
+  }))))).error);
+  const LEAGUE_SLOTS = [['11:00', 'Diamond A'], ['12:00', 'Diamond B']];
+  const leagueSlotIds = saturdays.flatMap(day => LEAGUE_SLOTS.map(([h, d]) => slotAt(day, h, d)));
+  die('13c house league slots', (await db.from('club_schedule_slot_programs').insert(leagueSlotIds.map(id => ({ org_id: orgId, slot_id: id, program: 'house_league' })))).error);
+  die('13c house league uses', (await db.from('league_slot_uses').insert(leagueSlotIds.map(id => ({
+    org_id: orgId, slot_id: id, season_id: season.id, division_id: div.id, kind: 'games',
+  })))).error);
+
+  const rows = saturdays.flatMap(day => SLOTS.map(([name, from, to, diamond]) => ({
     program_year_id: live[name].programYearId, team_id: live[name].teamId, org_id: orgId, event_type: 'practice', name: 'Practice',
     description: DATES_OFF_MARK, status: 'scheduled', starts_at: torontoInstant(day, from), ends_at: torontoInstant(day, to),
     location: 'Kinsmen Park', location_address: '200 Kinsmen Way', field_number: diamond, place_id: null,
-    org_venue_id: kinsmen.id, org_venue_facility_id: fac[diamond],
+    org_venue_id: kinsmen.id, org_venue_facility_id: fac[diamond], club_schedule_slot_id: slotAt(day, from, diamond),
   })));
   die('13c practices', (await db.from('rep_team_events').insert(rows)).error);
 
@@ -1480,6 +1530,8 @@ async function addClubDatesOff() {
     org_id: orgId, season_id: season.id, division_id: div.id, home_team_id: lt[home], away_team_id: lt[away],
     scheduled_at: torontoInstant(off1, from), ends_at: torontoInstant(off1, to), status,
     org_venue_id: kinsmen.id, org_venue_facility_id: fac[diamond], location: `Kinsmen Park — ${diamond}`, notes: DATES_OFF_MARK,
+    // On house league's slot of the schedule where it has one (the postponed 10:00 a.m. game has none).
+    slot_use_id: LEAGUE_SLOTS.some(([h, d]) => h === from && d === diamond) ? slotAt(off1, from, diamond) : null,
   });
   die('13c games', (await db.from('league_games').insert([
     game('Reds', 'Blues', '10:00', '11:00', 'Diamond B', 'postponed'),
@@ -1489,6 +1541,7 @@ async function addClubDatesOff() {
 
   ok(`Saturday diamonds, ${monthName} ${permitYear}: ${startsOn} – ${endsOn} · Kinsmen Park, every facility, Sat 9:00 a.m.–3:00 p.m. · ${off1} and ${off2} off`);
   ok(`on them: 6 practices (14U AA, 15U AA, 13U AAA, both Saturdays) and 2 house-league games on ${off1} (Hawks vs Owls, Reds vs Blues) — 8 outside the permit`);
+  ok(`the schedule: Saturdays at Kinsmen, ${monthName} ${permitYear} (sent; started from the permit; its own Dates off empty) · /admin/schedules/${sched.id}`);
   ok(`not counted: Reds vs Blues ${off1} 10:00 a.m., postponed · the Calendar's day mark is on ?day=${off1}`);
 }
 

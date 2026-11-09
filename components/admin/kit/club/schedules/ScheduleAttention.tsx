@@ -1,5 +1,7 @@
 'use client';
 import { useMemo, useState } from 'react';
+import Link from 'next/link';
+import { ChevronRight } from 'lucide-react';
 import { formatStoredDate } from '@/lib/timezone';
 import { pluralize } from '@/lib/utils';
 import { HAND_BACK_WORDS as H } from '@/lib/club-hand-back-words';
@@ -9,9 +11,18 @@ import { orderScheduleAsks } from '@/lib/club-schedule-overview';
 import { askSundayLine, type ScheduleAsk, type SchedulePlace, type SlotView } from '@/lib/club-schedule-view';
 import sch from './Schedules.module.css';
 
+/** 13c Session C (C2 = A): the row while the permit's dates off still hold this schedule's slots — built by the page, so
+ *  this stays words and doors. `action` (Take {day} off) is a computer's only: Regenerate is. */
+export interface OutsideRow {
+  head: string;
+  line: string | null;
+  league?: { line: string; door: { label: string; href: string } | null } | null;
+  action?: { label: string; onClick: () => void } | null;
+}
+
 const FIRST_ASKS = 3;
 
-export default function ScheduleAttention({ asks, slots, places, canMoney, changed, sentOn, changeLines, onAnswer, onSend }: {
+export default function ScheduleAttention({ asks, slots, places, canMoney, changed, sentOn, changeLines, outside = null, onAnswer, onSend }: {
   asks: readonly ScheduleAsk[];
   slots: readonly SlotView[];
   places: readonly SchedulePlace[];
@@ -19,18 +30,30 @@ export default function ScheduleAttention({ asks, slots, places, canMoney, chang
   changed: boolean;
   sentOn: string;
   changeLines: readonly string[];
+  /** The permit's pulled dates (C2), first; null while there are none. */
+  outside?: OutsideRow | null;
   onAnswer: (id: string) => void;
   onSend: () => void;
 }) {
   const [showAll, setShowAll] = useState(false);
   const ordered = useMemo(() => orderScheduleAsks(asks, slots), [asks, slots]);
   const shown = showAll ? ordered : ordered.slice(0, FIRST_ASKS);
-  const count = ordered.length + (changed ? 1 : 0);
+  const count = ordered.length + (changed ? 1 : 0) + (outside ? 1 : 0);
   if (!count) return null;
 
   return (
     <section className={sch.attention} aria-labelledby="schedule-attention-title">
       <div className={sch.attentionHead}><h2 id="schedule-attention-title">Needs attention</h2><small>{pluralize(count, 'item')}</small></div>
+      {/* 13c Session C (C2): the permit's pulled dates first — the first ask takes the lime (the drawing's note 7). */}
+      {outside && <div className={sch.attentionRow} data-outside-permit>
+        <span className={sch.attentionKind}>{W.outsideChip}</span>
+        <div className={sch.attentionBody}>
+          <b>{outside.head}</b>
+          {outside.line && <small>{outside.line}</small>}
+          {outside.league && <small>{outside.league.line}{outside.league.door && <> <Link href={outside.league.door.href} className={sch.door}>{outside.league.door.label}<ChevronRight size={14} aria-hidden /></Link></>}</small>}
+        </div>
+        {outside.action && <button type="button" className="btn btn-lime" onClick={outside.action.onClick}>{outside.action.label}</button>}
+      </div>}
       {ordered.length > FIRST_ASKS && <div className={sch.attentionGroup}>
         Hand-back asks <span className={sch.attentionCount}>{ordered.length}</span>
         <small>Soonest affected day first · {showAll ? 'all shown' : 'first three shown'}</small>
@@ -48,7 +71,7 @@ export default function ScheduleAttention({ asks, slots, places, canMoney, chang
               <ul>{sundays.map((line, i) => <li key={`${line}|${i}`}>{line}</li>)}</ul>
             </details>}
           </div>
-          {canMoney && <button type="button" className={`btn ${index === 0 ? 'btn-lime' : 'btn-outline'}`} onClick={() => onAnswer(ask.id)}>{H.answer}</button>}
+          {canMoney && <button type="button" className={`btn ${index === 0 && !outside?.action ? 'btn-lime' : 'btn-outline'}`} onClick={() => onAnswer(ask.id)}>{H.answer}</button>}
         </div>;
       })}
       {ordered.length > FIRST_ASKS && <button type="button" className={sch.attentionMore}
@@ -68,7 +91,7 @@ export default function ScheduleAttention({ asks, slots, places, canMoney, chang
             </details>}
             {changeLines.length > 0 && <small>{W.changesTail}</small>}
           </div>
-          {changeLines.length > 0 && <button type="button" className={`btn ${canMoney && ordered.length ? 'btn-outline' : 'btn-lime'}`} onClick={onSend}>{W.sendChanges}</button>}
+          {changeLines.length > 0 && <button type="button" className={`btn ${(canMoney && ordered.length) || outside?.action ? 'btn-outline' : 'btn-lime'}`} onClick={onSend}>{W.sendChanges}</button>}
         </div>
       </>}
     </section>

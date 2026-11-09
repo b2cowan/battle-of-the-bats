@@ -130,3 +130,15 @@ no longer counts, and a booking two permits both took counts once. **Why:** the 
 the league admin) were not the ones who pulled it, and nothing told them. **Success:** after a date comes off, the owner sees it on
 the Overview without opening Permits, the league admin sees their games in Schedule health, and the count costs a club with no
 date off ahead one small read; nothing is moved, blocked or sent to anyone.
+
+**13c Session C, the schedule page is the path (built 2026-11-09; commit owed).** A schedule's top line opens the permit it
+came from ("From the permit Saturday diamonds, December 2026 ›"). While that permit's dates off still hold the schedule's slots,
+Needs attention says so first. It names the practices and teams on those days and any house-league games there (for the league
+admins, "See them ›"). Its **Take Dec 5 and Dec 12 off** opens today's Regenerate with the days added; nothing changes until the
+admin keeps a draft. The band's Bill tile ("Open" for someone without the club's money) opens **Fair shares and the bill** in a
+window, and Fair shares left the View menu. In New schedule, at one practice a day, each team's Slots read "25 of 65", and a short
+draft says why, with a way back to the setting. A league admin is no longer pointed "in Schedules", which they cannot open. There is
+no "was" bill figure: the product keeps no earlier bill to quote, and a sent bill never moves when a date comes off. The phone,
+coaches and families are unchanged. **Why:** the permit, the schedule and its bill were three places that did not point at each
+other, so a pulled date reached the schedule only if someone remembered it. **Success:** from a schedule, one click reaches its
+permit, its pulled dates and their fix, and its bill; nothing is moved or sent until the admin chooses.

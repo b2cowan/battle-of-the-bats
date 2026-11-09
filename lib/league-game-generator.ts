@@ -443,8 +443,9 @@ export const GENERATE_WORDS = {
   divideFirst: 'Divide it in House league’s time first',
   givenFoot: (division: string) => `Given to ${division} as its game time. The rest stays not given.`,
   giving: 'Giving…',
-  // Nothing to give (k4); the club's own sentences are LEAGUE_TIME_WORDS'.
-  noneLeftLeagueAdmin: 'House league has no time left to give. An owner or an admin gives house league its time, in Schedules.',
+  // Nothing to give (k4); the club's own sentences are LEAGUE_TIME_WORDS'. ⚖ 13c C6 = A: no "in Schedules" (a door the
+  // reader of this sentence cannot open).
+  noneLeftLeagueAdmin: 'House league has no time left to give. An owner or an admin gives house league its time.',
   takeBack: 'Take time back from another division',
   noneLeftClubHint: 'Give it more from one of the club’s permits, then come back here.',
   nothingSaved: 'Nothing is saved.',

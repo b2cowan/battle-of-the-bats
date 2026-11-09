@@ -681,12 +681,23 @@ function placeableCount(slots: readonly Slot[], usable: (s: Slot) => boolean, ma
  * shared slot holds two teams, which this count does not model — the sentence is never said on a guess).
  */
 export function slotsTeamsCanHold(input: EngineInput, limit: number | null): number | null {
+  return teamsCanHold(input, limit)?.total ?? null;
+}
+
+/**
+ * The same count, and what EACH team could hold at the limit on its own (Club Tier 13c Session C, C5 = A: the Slots column
+ * reads "25 of 65") — the team's own ceiling the flow starts from (placeableCount, the week's cap), before the teams
+ * compete for slots, so a team's figure can be more than its part of the total when teams want the same slots. One walk for
+ * both, so the column and the setting's hint can never disagree about a team's ceiling. Null where the count is.
+ */
+export function teamsCanHold(input: EngineInput, limit: number | null): { total: number; each: Map<string, number> } | null {
   const { settings, teams, fixed } = input;
   if (teams.some(t => t.many) || sharingPools(settings.rules.sharing, teams).pools.length > 0) return null;
   const maxPerDay = limit ?? 99;
   const rules = buildRules(input);
   const { weeks, seatsByWeek } = prepare(input);
   let total = 0;
+  const each = new Map(teams.map(t => [t.id, 0]));
   for (const week of weeks) {
     const slots = seatsByWeek.get(week)!.map(x => x.slot);
     const usable = (t: EngineTeam) => (s: Slot) => (fixed.has(s.key) ? (fixed.get(s.key) ?? []).includes(t.id) : rules.eligible(t, s));
@@ -698,8 +709,10 @@ export function slotsTeamsCanHold(input: EngineInput, limit: number | null): num
       const mine = slots.filter(usable(t));
       const cap = placeableCount(mine, () => true, maxPerDay, settings.rules.noBackToBack);
       if (cap <= 0) continue;
+      const ceiling = Math.min(cap, settings.rules.maxPerWeek ?? Infinity);
+      each.set(t.id, each.get(t.id)! + ceiling);
       const teamNode = n++;
-      edges.push([0, teamNode, Math.min(cap, settings.rules.maxPerWeek ?? Infinity)]);
+      edges.push([0, teamNode, ceiling]);
       const dayNode = new Map<string, number>();
       for (const s of mine) {
         if (!dayNode.has(s.day)) { dayNode.set(s.day, n++); edges.push([teamNode, dayNode.get(s.day)!, maxPerDay]); }
@@ -710,7 +723,7 @@ export function slotsTeamsCanHold(input: EngineInput, limit: number | null): num
     for (const [u, v, cap] of edges) flow.addEdge(u, v, cap, 0);
     total += flow.run(0, 1);
   }
-  return total;
+  return { total, each };
 }
 
 const STRATEGIES_SAME: DraftStrategy[] = ['best', 'mix', 'youngest'];

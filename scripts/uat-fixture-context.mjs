@@ -578,6 +578,13 @@ export async function resolveAdminContext() {
       if (!permit) return null;
       return (await db.from('org_time_dates_off').select('day').eq('permit_id', permit.id).order('day').limit(1).maybeSingle()).data?.day ?? null;
     })(),
+    /** The schedule started from that permit (13c Session C — its top line's door and the "Outside the permit" row). Null
+     *  until `--club-dates-off` has run: never thrown. */
+    clubDatesOffScheduleId: await (async () => {
+      const permit = (await db.from('org_permits').select('id').eq('org_id', club.id).eq('notes', DATES_OFF_MARK).maybeSingle()).data;
+      if (!permit) return null;
+      return (await db.from('club_schedules').select('id').eq('org_id', club.id).eq('started_from_permit_id', permit.id).limit(1).maybeSingle()).data?.id ?? null;
+    })(),
     onboardingOrgSlug,
     tournOrgSlug,
     tournamentId: tournament.id,

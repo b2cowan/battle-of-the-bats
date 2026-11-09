@@ -231,7 +231,7 @@ export interface GenerateSummary {
   /** Who holds them and with what ("13U AAA" · tryout). */
   heldWhat: { name: string; kind: string | null }[];
   /** Each team's practices its share comes to (Stage 11c: a team that shares holds more of them for the same share). */
-  targets: { teamId: string; slots: number; prime: number }[];
+  targets: { teamId: string; slots: number; prime: number; /** 13c Session C (C5): what it can get at the per-day limit — set only while `dayLimit` is. */ canGet?: number }[];
   /** The slots the shares fill — a shared slot once (fewer than the practices `targets` add up to, when teams share). */
   handedOut: number;
   open: number;

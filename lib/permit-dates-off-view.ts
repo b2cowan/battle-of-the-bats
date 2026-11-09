@@ -10,7 +10,7 @@
  * who opens none of those programs, reads the list alone, each booking by the pool's own words — the team or season and the
  * facility, which the permit's Use already names to every reader.
  */
-import { PERMIT_WORDS as W, dayWithWeekday, takenChip } from './permit-words.ts';
+import { PERMIT_WORDS as W, dayWithWeekday, takenChip, type TakenKind } from './permit-words.ts';
 import type { ClubBooking } from './venue-clash.ts';
 import type { CalendarBooking, CalendarRead } from './club-calendar-view.ts';
 
@@ -28,7 +28,8 @@ export interface TakenRowView {
   door: { label: string; href: string } | null;
 }
 export interface TakenGroupView { day: string; heading: string; rows: TakenRowView[] }
-export interface TakenDoorView { label: string; href: string }
+/** `kind`: which of the three doors it is — a caller picking one (the schedule page's house-league door) reads it, never the address. */
+export interface TakenDoorView { label: string; href: string; kind: 'schedule' | 'season' | 'calendar' }
 export interface DatesOffNotice {
   /** The dates off that took something, in order. */
   days: string[];
@@ -53,6 +54,19 @@ export function takenOnce(taken: ReadonlyMap<string, readonly TakenDay[]>): Map<
     }
   }
   return out;
+}
+
+/** A schedule's Needs attention row (13c Session C, C2), as `readScheduleOutside` answers it — here, so the page reads
+ *  the type without the server module. */
+export interface ScheduleOutside {
+  permitName: string;
+  /** Each date off from today on that still holds slots of this schedule, in day order, with the permit's own note. */
+  days: { day: string; note: string | null; slotKeys: string[] }[];
+  /** What else this permit's dates off took on those days that is HOUSE LEAGUE's (the pool's own bookings — its games and
+   *  practices; a postponed game holds no time, so it is never here), and the one door to it. */
+  league: TakenKind[];
+  leagueDays: string[];
+  leagueHref: string | null;
 }
 
 /** "See the permit ›" and the Overview card's door: one permit → that permit with its notice; more → Permits. */
@@ -183,9 +197,9 @@ export function buildDatesOffNotice(
   // tournaments alone, and a door onto a day that shows none of them is the 404's politer face. The first such day.
   const firstShown = gates.seesCalendar ? days.find(d => d.bookings.some(b => shown.has(b.key)))?.day ?? null : null;
   const doors: TakenDoorView[] = [
-    ...[...schedules.entries()].map(([id, s]) => ({ label: W.doorFix(s.n, s.name), href: `/${gates.slug}/admin/schedules/${id}` })),
-    ...[...seasons.values()].map(s => ({ label: W.doorSeason(s.name), href: s.href })),
-    ...(firstShown ? [{ label: W.doorCalendar(firstShown), href: `/${gates.slug}/admin/calendar?day=${firstShown}` }] : []),
+    ...[...schedules.entries()].map(([id, s]) => ({ label: W.doorFix(s.n, s.name), href: `/${gates.slug}/admin/schedules/${id}`, kind: 'schedule' as const })),
+    ...[...seasons.values()].map(s => ({ label: W.doorSeason(s.name), href: s.href, kind: 'season' as const })),
+    ...(firstShown ? [{ label: W.doorCalendar(firstShown), href: `/${gates.slug}/admin/calendar?day=${firstShown}`, kind: 'calendar' as const }] : []),
   ];
   return { days: days.map(d => d.day), count: days.reduce((n, d) => n + d.bookings.length, 0), groups, doors };
 }

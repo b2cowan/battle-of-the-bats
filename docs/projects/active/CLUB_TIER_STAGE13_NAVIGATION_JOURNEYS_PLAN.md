@@ -678,8 +678,49 @@ ahead of the owner's rulings.
   each brief; an admin with narrowed program capabilities still gets the club-wide count (numbers and days only); the
   Calendar reads bookings twice when a date off is in range. **Next:** commit on the owner's yes, then Session C (sequence
   against Header Phase 3, which is mid-build on the Calendar page in the shared tree).
-## 11. The external review, cross-checked (2026-11-07)
+- 2026-11-09 — **13c Session C BUILT** (the schedule page is the path, C4 + C5 + C6); commit owed. Header Phase 3's diff read first
+  (it moved only the schedule's name and chip into the bar; nothing where the permit door or the Bill tile go); Header Phase 4 had
+  already committed (`e3c825ece`); 11b re-confirmed complete (scheduler plan ~1491). **Built:** (C1) the top line "From the permit
+  {name} ›" (the permit the schedule was STARTED from, `fromPermit` on the view: its name only), through the Permits place's own
+  gate and link (`usePermitsLink` + `permitDoor`). (C2) Needs attention's "Outside the permit" row, first: the shared rule
+  (`datesOffTaken`) asked of the schedule's OWN held slots (`readScheduleOutside`, lib/permit-dates-off.ts, no query of its own,
+  bounded to the schedule's held days), so a draft is answered too; its own read (`?outside=1`, after the page has read, tagged
+  with the version the server read); the words (`scheduleOutsideWords`, pure, tested on the drawing's case) name the practices
+  and teams ("…both Saturdays. The teams still have them.") and house league's games on those days for the league admins, "See
+  them ›" (the notice's season door, picked by the door's new `kind`); "Take Dec 5 and Dec 12 off" opens today's Regenerate with
+  those days merged into the schedule's own Dates off (written only if the admin keeps a draft; no sync); the first ask takes the
+  lime (Send and a hand-back ask step down); the warnings' first line and the Overview's "Different on a date" rows ("every
+  facility · Outside the permit · 5 slots still on it"). (C3) the band's second tile is a door ("The bill →" for a money reader,
+  "Open →" otherwise) to **Fair shares and the bill** in a window (the team table + its bill door); the `fair` lens left the View
+  menu; phone unchanged (no band). (C4) Slots in New schedule: "{can get} of {share}" per team, group and total while the per-day
+  setting is what limits (`teamsCanHold`, one walk with the hint's count), the plain share otherwise; the hub's tab-13 drafts
+  warning ("7 teams short: … The rules allow 1 practice a team a day, and {venue} has 18 places a Sunday for 7 teams." + "Change
+  the rules ›" back to the setting). (C5) both league-admin sentences without "in Schedules" (shown only to readers without
+  Schedules; no Ask for time, no names). Help: `club-schedules` (the link holds for prices, not later dates off),
+  `-t-who` (Slots), `-t-page` (the top line, View, the row, phone), `-t-fair`, `-t-bill`, search words; house league's
+  `house-league-time-t-given`. `CLUB_SCHEDULE_LANDING_UX_PLAN.md` task 3 marked superseded. **Departures, said here:** (1) **no
+  "was" bill figure anywhere** (disagreement 5): before Finalize the bill is worked out fresh from the permit's hourly price and no
+  earlier figure is kept; after, the bill is stored and a date off never moves it — so the drawing's "$200.00 → $366.67" has no
+  honest source; (2) a team's Slots figure is what it could get ON ITS OWN at the limit, the total what all can use together (it
+  agrees with the hint); when teams compete for the same slots the rows can add to more than the total; (3) "See them ›" opens the
+  season's schedule (the notice's door), else that day on the Calendar; (4) the row counts slots of THIS schedule; house league's
+  games come from the permit's own answer for those days; (5) "Bill vs The bill" (scheduler plan ~1116) is LEFT open — the two
+  figures now share one window, the natural home for /marketing's one line, still unruled. **Fixture:** `--club-dates-off` now
+  builds a SENT schedule from the December permit ("Saturdays at Kinsmen, {month} {year}", its own Dates off empty), the 6
+  practices on its slots, house league holding 11:00 a.m. Diamond A and 12:00 p.m. Diamond B with the 2 games on them; the permit
+  costs $800.00 so the Bill tile shows. Layout: `admin-schedule-bill` re-pathed to the Bill tile; new `admin-schedule-dates-off`
+  (context `clubDatesOffScheduleId`) and `admin-schedule-bill-window`; one-screen checks clean at 361/390/768/1440 (the top
+  line's door was under the tap floor; fixed). **Simplified and reviewed 2026-11-09** (standard, three lenses; 0
+  Critical/High). Fixed in review: the window's title follows the tile that opened it; the outside answer carries the server's
+  version. **Left for the owner:** (a) **the View menu now holds 3 views on most schedules** (Grid, By team, By group; Overview
+  only on a sent one-weekday schedule) and the 6c rule says a switch for up to three, the pill for four — kept the pill as drawn,
+  ruling owed; (b) the `?outside=1` read builds its Calendar reader without a tournament scope (only house league's bookings are
+  described through it, and only counts and kinds come back; the permits route's count refuses a scoped admin); (c) Session A's
+  Permits layout opts out of the billing rail but is not on `org-billing-access-guard`'s list (the build is red on it today —
+  the decision point that test names). **Next:** commit on the owner's yes; then the end-of-13c walk (one walk, next free ledger
+  §) and the staging layout sweep.
 
+## 11. The external review, cross-checked (2026-11-07)
 
 Source: `CLUB_TIER_PRODUCT_IA_REVIEW.md` (an outside reviewer's first look; its IDs are written **R-F-nn** here so they
 never collide with the hub's F-IDs). Each claim was read against the cited code, this plan, the hub, the readiness plan, the

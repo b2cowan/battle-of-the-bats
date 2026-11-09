@@ -1,8 +1,9 @@
 'use client';
 /**
  * Fair shares on the club schedule page. The joined four-figure band describes the whole schedule,
- * and the week-specific shortfall and clash lines sit above Grid. Team figures live in the visible
- * Fair shares view; the Bill door is beside that card's title.
+ * and the week-specific shortfall and clash lines sit above Grid. Team figures live in Fair shares
+ * and the bill, the window the band's Bill tile opens (13c Session C, C4); the Bill door is beside
+ * that card's title.
  *
  * Once a bill exists, each team's Bill is what it pays for its time: billed less credited, plus
  * corrections, less money given back. It agrees with Money > Club. Before final send, it is the
@@ -25,8 +26,6 @@ interface Column { head: string; cell: (r: TeamResult) => ReactNode; group: (rs:
 /** Up to this many of a week's clashes read one by one, with their date and place. */
 const CLASH_LINES_EACH = 3;
 const CLASH_KIND_ORDER = ['tryout', 'game', 'practice'];
-/** The card's id — a stable anchor for its card. */
-export const FAIR_TEAMS_ID = 'fair-shares-by-team';
 
 /** A week's clashes by the kind of booking holding them — tryout days, games, practices, then any other booking — each
  *  with who holds them, in the order the week meets them. */
@@ -113,7 +112,8 @@ export function fairShares({ view, week, weeks = 1, scope = W.scopeWeek, nameOf,
   const t = fairness.totals;
   const tiles = [
     { key: 'handed', label: W.tileHandedOut, value: W.ofSlots(t.handedOut, t.seats) },
-    showBill ? { key: 'bill', label: W.tileBill, value: money(billTotal) } : { key: 'open', label: W.tileOpen, value: String(t.open) },
+    // The door to Fair shares and the bill (13c C4): The bill for a money reader, Open for anyone else.
+    { ...(showBill ? { key: 'bill', label: W.tileBill, value: money(billTotal) } : { key: 'open', label: W.tileOpen, value: String(t.open) }), door: true },
     { key: 'short', label: W.tileShort, value: String(t.short), amber: t.short > 0 },
     { key: 'clashes', label: W.tileClashes, value: String(t.clashes), amber: t.clashes > 0 },
   ];
@@ -138,20 +138,27 @@ export function fairShares({ view, week, weeks = 1, scope = W.scopeWeek, nameOf,
   return { results, shorts, columns, groupsOf, withGroups, tiles, lines: [...clashLines, ...shortLines], kept, notes, billDoor };
 }
 
-/** THE BAND, above the views: four whole-schedule figures. Fair shares now has its own visible view. */
-export function FairSharesBand({ model }: { model: FairModel }) {
+/**
+ * THE BAND, above the views: four whole-schedule figures. ⚖ 13c Session C (C4 = A, "the page is the path"): the second
+ * tile is the door to Fair shares and the bill — "The bill →" for a money reader, "Open →" for anyone else, who reaches
+ * Fair shares' team detail the same way without the bill (nobody loses the view the View menu used to hold).
+ */
+export function FairSharesBand({ model, onOpen }: { model: FairModel; onOpen?: () => void }) {
+  const tiles = model.tiles.map(t => ('door' in t && t.door && onOpen ? { ...t, onOpen } : t));
   return (
     <div className={sch.fairAbove}>
-      <JoinedBand label={W.fairTitle} tiles={model.tiles} across />
+      <JoinedBand label={W.fairTitle} tiles={tiles} across />
     </div>
   );
 }
 
-/** THE WEEK'S LINES, under the toolbar and above the grid: its clashes, and who is short. */
-export function FairSharesLines({ model }: { model: FairModel }) {
-  if (!model.lines.length) return null;
+/** THE WEEK'S LINES, under the toolbar and above the grid: its clashes, and who is short. `lead` (13c Session C, C2): the
+ *  permit's pulled dates, said first — its first words in bold. */
+export function FairSharesLines({ model, lead }: { model: FairModel; lead?: { bold: string; rest: string } | null }) {
+  if (!model.lines.length && !lead) return null;
   return (
     <div className={sch.fairLines}>
+      {lead && <span className={sch.fairLine}><AlertTriangle size={13} aria-hidden /><span><b>{lead.bold}</b>{lead.rest}</span></span>}
       {model.lines.map(line => <span key={line} className={sch.fairLine}><AlertTriangle size={13} aria-hidden />{line}</span>)}
     </div>
   );
@@ -184,7 +191,7 @@ export function FairSharesTeams({ model, nameOf, colourOf, onBill }: {
     );
   };
   return (
-    <section id={FAIR_TEAMS_ID} className={sch.fairCard} aria-labelledby="fair-teams-title" tabIndex={-1}>
+    <section className={sch.fairCard} aria-labelledby="fair-teams-title">
       <div className={sch.fairHead}>
         <h3 id="fair-teams-title" className={sch.fairTitle}>{W.fairTeamsTitle}</h3>
         {onBill && (

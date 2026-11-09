@@ -9,6 +9,9 @@ import {
 import { changesSummary, sendLog } from '@/lib/club-schedule-send';
 import { scheduleReplies } from '@/lib/club-schedule-coach';
 import { SCHEDULE_REFUSALS as R } from '@/lib/club-schedule-words';
+import { readScheduleOutside } from '@/lib/permit-dates-off';
+import { hasOrgVenueLibrary } from '@/lib/plan-features';
+import { tournamentToday } from '@/lib/timezone';
 
 // ---------------------------------------------------------------------------
 // ONE SCHEDULE (Club Tier Stage 11a, part A — hub K4MPu4ni53Ct7yrDcmWJd9 → Stages 10 + 11, specimens 6–10, 14).
@@ -42,6 +45,24 @@ export const GET = withObservability(async (req: Request, { params }: Params) =>
   if (!loaded) return schedulerRefusal(404, 'not_found', R.notFound);
   const closed = repTeamsRefusal(r, loaded);
   if (closed) return closed;
+  // ⚖ 13c Session C (C2): what the permit's own dates off took of THIS schedule — Needs attention's "Outside the permit"
+  // row. Its OWN read, asked after the page has read (the measured-gate rule of Session B), so the page never waits on it
+  // and a failure is the row's alone. Permits ride the Venue library's plans.
+  if (new URL(req.url).searchParams.get('outside') === '1') {
+    const permitId = loaded.row.started_from_permit_id;
+    const noStore = { headers: { 'Cache-Control': 'no-store' } };
+    if (!permitId || !hasOrgVenueLibrary(r.ctx.org.planId)) return NextResponse.json({ outside: null, version: loaded.row.version }, noStore);
+    const outside = await readScheduleOutside(
+      { org: r.ctx.org, member: { role: r.ctx.role, capabilities: r.ctx.capabilities }, userId: r.ctx.user.id, assignedTournamentIds: null },
+      {
+        permitId, today: tournamentToday(), nowMs: Date.now(),
+        slots: loaded.slots.filter(s => !s.removed).map(s => ({
+          key: s.key, venueId: s.venueId, facilityId: s.facilityId, startMs: Date.parse(s.startsAt), endMs: Date.parse(s.endsAt), teamIds: s.teamIds,
+        })),
+      },
+    );
+    return NextResponse.json({ outside, version: loaded.row.version }, noStore);
+  }
   const [view, replies, log, changes] = await Promise.all([
     scheduleView(r.ctx.org.id, loaded, r.canMoney, { houseLeague: r.houseLeague }),
     scheduleReplies(r.ctx.org.id, scheduleId),

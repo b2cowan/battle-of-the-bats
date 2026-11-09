@@ -44,7 +44,7 @@
  * `previewOnly` answer, debounced as the form changes. The client never re-decides a largest-remainder share.
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { AlertTriangle, Check, ChevronDown, Download, Pencil, Plus, Trash2, X } from 'lucide-react';
+import { AlertTriangle, Check, ChevronDown, ChevronRight, Download, Pencil, Plus, Trash2, X } from 'lucide-react';
 import KitDialog from '../KitDialog';
 import ck from '../ClubKit.module.css';
 import { ClubRow, ClubRowList, RecordAction, repKit } from '../RepKit';
@@ -202,6 +202,9 @@ export interface SettingsOf {
   /** The schedule changed under the window: the page re-reads it, so a retry sends the version it now holds. */
   onStale?: () => void;
   regenerate?: boolean;
+  /** 13c Session C (C2): “Take {day} and {day} off” — the permit’s pulled dates, added to the schedule’s OWN Dates off for
+   *  this regenerate. Saved only if the admin keeps a draft (the regenerate’s one write); nothing else changes. */
+  addDatesOff?: readonly DateOff[];
 }
 
 export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId = null, settingsOf, onCancel, onSaved }: {
@@ -255,7 +258,10 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
           ...EMPTY, ...settingsDraftOf(editing.schedule.settings, running),
           name: editing.schedule.name, startsOn: editing.schedule.startsOn, endsOn: editing.schedule.endsOn,
           ...timeFromBlocks(editing.time.blocks, r.data.places),
-          datesOff: offRows(editing.time.datesOff),
+          datesOff: offRows([
+            ...editing.time.datesOff,
+            ...(settingsOf?.addDatesOff ?? []).filter(a => !editing.time.datesOff.some(d => d.day === a.day)),
+          ].sort((a, b) => a.day.localeCompare(b.day))),
         });
         return;
       }
@@ -390,7 +396,9 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
   const oneWeekday = draft.rows.length && draft.rows.every(r => r.weekdays.length === 1 && r.weekdays[0] === draft.rows[0].weekdays[0])
     ? draft.rows[0].weekdays[0] : null;
   const noun = facilityNoun(allNames.length ? allNames : [venue?.venueName ?? ''], shown?.facilities ?? 0);
-  const targetOf = (teamId: string) => shown?.targets.find(x => x.teamId === teamId)?.slots ?? null;
+  // Each team's figures from the preview, looked up once (13c: the share, and what the per-day limit lets it get).
+  const targetById = useMemo(() => new Map((shown?.targets ?? []).map(x => [x.teamId, x])), [shown]);
+  const targetOf = (teamId: string) => targetById.get(teamId)?.slots ?? null;
   const tickedWithFigure = inOrder.filter(t => figureOf(t.id) != null);
 
   /** Why Generate can't go yet, in words — or null. */
@@ -710,7 +718,12 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
     return figureInput(shown2, W.groupFigure(groupLabel(key), draft.method === 'percentage' ? 'share' : 'slots a week, each'),
       text => setGroupFigure(key, text), unit ?? W.each);
   };
-  const slotsWords = (n: number | null) => (n == null ? '—' : String(n));
+  // ⚖ 13c Session C (C5 = A): while the per-day setting is what leaves slots open, Slots reads what each team can get at it
+  // OF its share ("25 of 65", groups "75 of 193", the total "175 of 450") — the share stays in sight, so changing the
+  // setting reads as getting it back. No daily limit, or one that limits nothing: the plain share, as before.
+  const dayLimit = shown?.dayLimit ?? null;
+  const canGetOf = (teamId: string) => targetById.get(teamId)?.canGet ?? null;
+  const limitedWords = (got: number | null, share: number | null) => (share == null ? '—' : dayLimit && got != null ? W.ofSlots(got, share) : String(share));
   const rows: FormTableRow[] = running.map(t => {
     const isIn = tickedSet.has(t.id);
     const slots = isIn ? targetOf(t.id) : null;
@@ -719,21 +732,22 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
     return {
       key: t.id, name: t.name, group: groupKeys.length ? groupKeyOf(t) : undefined, nameNote: note,
       ticked: isIn, tickLabel: W.tick(t.name), onTick: next => tickTo(next ? [...draft.ticked, t.id] : draft.ticked.filter(x => x !== t.id)),
-      cells: { figure: isIn && !wholeHouseLeague ? figureCell(t) : '', slots: isIn ? slotsWords(slots) : '' },
+      cells: { figure: isIn && !wholeHouseLeague ? figureCell(t) : '', slots: isIn ? limitedWords(canGetOf(t.id), slots) : '' },
       phoneLine: note,
-      phoneFigure: isIn ? (draft.method === 'even' ? slotsWords(slots) : figureCell(t)) : undefined,
+      phoneFigure: isIn ? (draft.method === 'even' ? limitedWords(canGetOf(t.id), slots) : figureCell(t)) : undefined,
     };
   });
   const groups: FormTableGroup[] = groupKeys.map(key => {
     const members = membersOf(key);
     const on = members.filter(t => tickedSet.has(t.id));
     const slots = on.length && shown ? on.reduce((s, t) => s + (targetOf(t.id) ?? 0), 0) : null;
+    const got = on.length && dayLimit ? on.reduce((s, t) => s + (canGetOf(t.id) ?? targetOf(t.id) ?? 0), 0) : null;
     return {
       key, label: groupLabel(key), count: W.teamsCount(members.length),
       state: on.length === 0 ? 'none' : on.length === members.length ? 'all' : 'some',
       onTick: next => tickTo(next ? [...new Set([...draft.ticked, ...members.map(m => m.id)])] : draft.ticked.filter(x => !members.some(m => m.id === x))),
       tickLabel: W.tickGroup(groupLabel(key)),
-      cells: { figure: groupFigureCell(key), slots: on.length ? slotsWords(slots) : '' },
+      cells: { figure: groupFigureCell(key), slots: on.length ? limitedWords(got, slots) : '' },
       phoneFigure: groupFigureCell(key) || undefined,
     };
   });
@@ -866,9 +880,9 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
             label: W.teamsCount(inOrder.length),
             cells: {
               figure: draft.method === 'percentage' ? `${percentHundredths / 100}%` : draft.method === 'weekly' ? W.aWeek(weeklySum) : '',
-              slots: practicesShown != null ? String(practicesShown) : '—',
+              slots: limitedWords(dayLimit?.canUse ?? null, practicesShown),
             },
-            phone: `${W.teamsCount(inOrder.length)}${practicesShown != null ? ` · ${pluralize(practicesShown, 'slot')}` : ''}`,
+            phone: `${W.teamsCount(inOrder.length)}${practicesShown != null ? ` · ${dayLimit ? `${W.ofSlots(dayLimit.canUse, practicesShown)} slots` : pluralize(practicesShown, 'slot')}` : ''}`,
             note: note?.words, noteBad: note?.over, noteRow: true,
           }}
         />
@@ -1160,8 +1174,27 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
     </div>
   );
   const teamRows = pick ? running.filter(t => pick.teams.some(r => r.teamId === t.id)).map(t => ({ t, r: pick.teams.find(x => x.teamId === t.id)! })) : [];
+  // ⚖ 13c Session C (hub tab 13, Change 3): the drafts' "7 teams short", with why and a door back — only while the draft
+  // picked is short AND the per-day setting is what leaves the slots open (the count the setting's own hint reads).
+  const pickShort = pick?.measures.find(m => m.kind === 'shares');
+  const shortWhy = pick && gen?.summary.dayLimit && pickShort?.kind === 'shares' && pickShort.short.length
+    ? W.draftsShortWhy(pickShort.short.length, pick.totals.handedOut, pick.totals.seats, gen.summary.dayLimit.perDay,
+      venue?.venueName ?? W.thisPlace, gen.summary.perWeek, oneWeekday, gen.summary.targets.length)
+    : null;
+  const backToTheSetting = () => {
+    setStep('settings');
+    window.setTimeout(() => document.getElementById('ns-max-per-day')?.focus(), 0);
+  };
   const draftsBody = gen && pick && (
     <div className={sch.drafts}>
+      {shortWhy && (
+        <p className={`${ck.notice} ${ck.noticeWarn}`} role="status" data-drafts-short>
+          <AlertTriangle size={14} aria-hidden />
+          <span className={ck.noticeBody}>{shortWhy}{' '}
+            <button type="button" className={sch.door} onClick={backToTheSetting}>{W.draftsShortDoor}<ChevronRight size={14} aria-hidden /></button>
+          </span>
+        </p>
+      )}
       <div className={sch.cards} role="group" aria-label="Drafts">
         {gen.drafts.map((d, i) => (
           <button key={`${d.strategy}-${d.round}`} type="button" className={sch.card} aria-pressed={chosen === i} onClick={() => setChosen(i)}>
