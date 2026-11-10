@@ -120,7 +120,9 @@ describe('the route: entry, organizer, account, then the coach', () => {
     assert.ok(account < at(route, 'planCoachRegistrationEmails({'), 'then the coach’s emails');
   });
   it('runs the account step only for a signed-out coach who sent a password, on the live site', () => {
-    assert.match(route, /const accountPassword = typeof body\.password === 'string' \? body\.password : '';\s*const withAccount = !!accountPassword && !signedInCoach && shouldRequireEmailVerification\(\);/);
+    // The rule is named once, before the entry is filed, so the Terms refusal (GST/HST 6.3) asks only a registration that makes an account.
+    assert.match(route, /const makesAccount = typeof body\.password === 'string' && !!body\.password && !signedInCoach && shouldRequireEmailVerification\(\);/);
+    assert.match(route, /const accountPassword = typeof body\.password === 'string' \? body\.password : '';\s*const withAccount = makesAccount && !!accountPassword;/);
     assert.match(route, /const account = withAccount\s*\? await openRegistrationAccount\(\{\s*ip: clientIpFrom\(req\), email, password: accountPassword,/);
     assert.match(route, /next: portalNext,/);
     assert.match(route, /const portalNext = registrationPortalPath\(data\.id\);/);
@@ -152,7 +154,7 @@ describe('the route: entry, organizer, account, then the coach', () => {
 describe('the form: one post, no second email', () => {
   const form = readCode('components/public/RegisterContent.tsx');
   it('sends the account with the entry only when asked, and never calls the sign-up on the live-site path', () => {
-    assert.match(form, /if \(withAccount\) \{\s*payload\.append\('password', form\.password\);\s*payload\.append\('firstName', form\.firstName\.trim\(\)\);\s*payload\.append\('lastName', form\.lastName\.trim\(\)\);\s*\}/);
+    assert.match(form, /if \(withAccount\) \{\s*payload\.append\('password', form\.password\);\s*payload\.append\('firstName', form\.firstName\.trim\(\)\);\s*payload\.append\('lastName', form\.lastName\.trim\(\)\);(?:\s*\/\/[^\n]*)?\s*if \(terms\.on\) \{\s*payload\.append\('acceptTerms', String\(terms\.ticked\)\);\s*payload\.append\('termsVersion', terms\.fields\.termsVersion \?\? ''\);\s*\}\s*\}/);
     const branch = form.slice(at(form, 'if (!signedIn && verifies) {'), at(form, 'if (!signedIn) {'));
     assert.doesNotMatch(branch, /coach-signup|requestVerificationLink/);
     assert.match(branch, /showVerifySuccess\(registered, registrationPortalPath\(registered\.id\), signedOutFinish\(registered, emailNorm\)\);/);

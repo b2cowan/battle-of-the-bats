@@ -9,6 +9,7 @@ import { FixedWindowRateLimiter, clientIpFrom } from '@/lib/rate-limit';
 import { sendSignupVerificationEmail, shouldRequireEmailVerification, verificationRedirect } from '@/lib/signup-verification';
 import { parseStartBilling, parseStartDoor, startDoorLinkPath } from '@/lib/start-door';
 import { lockStartDoorOrUndo } from '@/lib/founding-season';
+import { accountDoorRefusal, recordDoorAcceptance } from '@/lib/legal-acceptance';
 
 // The verification rule is shared by every sign-up (lib/signup-verification.ts, 2026-10-16).
 
@@ -40,7 +41,8 @@ export const POST = withObservability(async (req: Request) => {
   let userId: string | null = null;
 
   try {
-    const { email, password, next, firstName, lastName, startDoor, billing, claim } = await req.json();
+    const body = await req.json();
+    const { email, password, next, firstName, lastName, startDoor, billing, claim } = body;
     const normalizedEmail = String(email ?? '').trim().toLowerCase();
     const normalizedPassword = String(password ?? '');
     // The account remembers Coach Premium's door with the billing from the pricing page. A claim sign-up remembers no
@@ -72,6 +74,9 @@ export const POST = withObservability(async (req: Request) => {
     if (normalizedPassword.length < 8) {
       return NextResponse.json({ error: 'Password must be at least 8 characters.' }, { status: 400 });
     }
+    // The Terms box (GST/HST Stage 6 step 6.3, §20 (1)): refused BEFORE anything is created. Null while the legal pages are off.
+    const termsRefusal = accountDoorRefusal(body);
+    if (termsRefusal) return termsRefusal;
     // A FieldLogicHQ staff email is never a customer account (as the coach sign-up refuses it, 2026-10-16): with verification
     // off, an unclaimed staff address could otherwise be registered by anyone, and platform roles follow the email.
     if (await isPlatformAdminEmail(normalizedEmail)) {
@@ -147,6 +152,8 @@ export const POST = withObservability(async (req: Request) => {
       userId = null;
       return NextResponse.json({ error: 'Account could not be created. Please try again.' }, { status: 500 });
     }
+    // The tick, recorded now the account exists (never fails the sign-up: a tick that did not save meets the sign-in screen).
+    await recordDoorAcceptance({ id: userId, email: normalizedEmail }, 'team_signup', body);
 
     if (requireVerification) {
       if (!actionLink) {

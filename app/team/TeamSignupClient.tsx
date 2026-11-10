@@ -29,6 +29,7 @@ import { BILLING_ADDRESS_FORM_WORDS, BILLING_LOCATION_WORDS, formatBilledTo } fr
 import BillingAddressFields, { useAddressDraft } from '@/components/billing/BillingAddressFields';
 import { addressOnFile, isAddressRefusal, saveBillingAddress, useBillingAddressGate } from '@/components/billing/BillingAddressDialog';
 import addressStyles from '@/components/billing/BillingAddress.module.css';
+import TermsTickRow, { useTermsTick } from '@/components/legal/TermsTickRow';
 
 /** The checkout found no home address on file: the page shows the Address step instead of an error. */
 class AddressNeededError extends Error {}
@@ -142,6 +143,8 @@ export default function TeamSignupClient({
   const [startedSignedOut] = useState(!signedInEmail);
   const [busyLabel, setBusyLabel] = useState('');
   const [error, setError] = useState('');
+  // The Terms box (step 6.3, §20 (1)), on the sign-up form only: nothing while the legal pages are off.
+  const terms = useTermsTick();
   const [verificationEmail, setVerificationEmail] = useState('');
   // Back from "Use a different email", or switched between the account form and the sign-in: the cursor goes to the email.
   const [focusEmail, setFocusEmail] = useState(false);
@@ -240,6 +243,11 @@ export default function TeamSignupClient({
       setError(validationError);
       return;
     }
+    // Ask 2A: the button stays on; without the tick the form says (5b) and sends nothing.
+    if (authMode === 'signup' && terms.missing) {
+      setError(terms.missing);
+      return;
+    }
     setBusyLabel(authMode === 'signup' ? 'Creating…' : 'Signing in…');
     try {
       if (authMode === 'signup') {
@@ -251,9 +259,13 @@ export default function TeamSignupClient({
             next: linkPath,
             // A reactivation is a returning coach, not a start: it keeps no remembered door.
             ...(isReactivation ? {} : { startDoor: 'premium', billing: billingCycle }),
+            ...terms.fields,
           }),
         });
         const signupPayload = await readJson(signupRes);
+        // The Terms refusal first: its "the terms changed" twin is a 409 too, and is not "this email has an account".
+        const termsLine = terms.refusal(signupPayload);
+        if (termsLine) throw new Error(termsLine);
         if (!signupRes.ok) {
           if (signupRes.status === 409) {
             setAuthMode('signin');
@@ -442,6 +454,7 @@ export default function TeamSignupClient({
                 </>
               )}
 
+              {authMode === 'signup' && <TermsTickRow tick={terms} id="premium-terms" disabled={busy} />}
               {notices}
               <button type="submit" className={accountForm.primary} disabled={busy || teamIsGated}>
                 {busyLabel || (authMode === 'signup' ? 'Create account' : 'Sign in')}

@@ -7,6 +7,7 @@ import VerifyEmailSent from '@/components/auth/VerifyEmailSent';
 import StartSteps from '@/components/auth/StartSteps';
 import { AccountFields, Field, StartColumn, StartFoot, StartHead, accountForm, hintId, type AccountValues } from '@/components/auth/AccountForm';
 import { accountExistsSignInHref } from '@/lib/auth-errors';
+import TermsTickRow, { useTermsTick } from '@/components/legal/TermsTickRow';
 import { pickedPlanLabel } from '@/lib/plan-config';
 import { RUN_A_TOURNAMENT_STEPS, START_DOOR_PATH, runATournamentPick, startDoorLinkPath, startPricingParams, withStartPricing, type StartPricing, type StartStepViewer } from '@/lib/start-door';
 
@@ -122,6 +123,8 @@ function StartAccountStep({ door, pricing }: { door: FormDoor; pricing: StartPri
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  // The Terms box (step 6.3, §20 (1)): nothing while the legal pages are off.
+  const terms = useTermsTick();
   const nextStep = stepHref(door, pricing);
   // Only a pick this door can sell is named (F08): the plan step would drop any other.
   const shownPick = runATournamentPick(pricing);
@@ -134,6 +137,11 @@ function StartAccountStep({ door, pricing }: { door: FormDoor; pricing: StartPri
     setError('');
     if (!firstName.trim() || !lastName.trim()) {
       setError('Enter your first and last name.');
+      return;
+    }
+    // Ask 2A: the button stays on; without the tick the form says (5b) and sends nothing.
+    if (terms.missing) {
+      setError(terms.missing);
       return;
     }
     setLoading(true);
@@ -149,6 +157,7 @@ function StartAccountStep({ door, pricing }: { door: FormDoor; pricing: StartPri
           // The account remembers its door; the server points the link at that door's step 2.
           startDoor: door,
           ...(pricing ? startPricingParams(pricing) : {}),
+          ...terms.fields,
         }),
       });
     } catch {
@@ -160,6 +169,13 @@ function StartAccountStep({ door, pricing }: { door: FormDoor; pricing: StartPri
     const created = await signupRes.json().catch(() => ({})) as {
       error?: string; requiresEmailVerification?: boolean; inviteBranch?: 'invited'; orgName?: string | null;
     };
+    // Read the Terms refusal first: its "the terms changed" twin is a 409 too, and is not "this email has an account".
+    const termsLine = terms.refusal(created);
+    if (termsLine) {
+      setError(termsLine);
+      setLoading(false);
+      return;
+    }
     if (signupRes.status === 409) {
       // Email already has an account — sign in, then name the thing (the page's signed-in step takes over).
       router.push(accountExistsSignInHref(nextStep, emailNorm));
@@ -239,6 +255,7 @@ function StartAccountStep({ door, pricing }: { door: FormDoor; pricing: StartPri
               onChange={(field, value) => setField[field](value)}
               autoFocus={changingEmail ? 'email' : undefined}
             />
+            <TermsTickRow tick={terms} id={`${door}-terms`} />
 
             {error && <p className={accountForm.error} role="alert">{error}</p>}
 

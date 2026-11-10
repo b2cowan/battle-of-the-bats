@@ -17,6 +17,7 @@ import { getUserDisplayName } from '@/lib/user-display';
 import { GuestKitRoot } from '@/components/admin/AdminKitProvider';
 import shell from '@/components/volunteer/DayOfShell.module.css';
 import BrandLockup from '@/components/shared/BrandLockup';
+import TermsAcceptGate from '@/components/legal/TermsAcceptGate';
 
 export async function generateMetadata({
   params,
@@ -92,6 +93,9 @@ export default async function CheckInVolunteerLayout({
 
   return (
     <GuestKitRoot>
+    {/* The sign-in screen (GST/HST Stage 6 step 6.3) replaces the working shell for someone who still needs to agree to the
+        Terms — Warm, as this portal is in every theme. The walls above are dead ends with a way out, and stay as they are. */}
+    <TermsAcceptGate user={authCtx.user} fixedWarm>
     {/* Day-of volunteer shell — a RULED EXCEPTION to the nav grammar (top-nav audit §3):
        the wordmark is deliberately INERT text, not a door. Do not "unify" this header into a
        platform strip.
@@ -159,6 +163,7 @@ export default async function CheckInVolunteerLayout({
         orgName={authCtx.org.name}
       />
     </div>
+    </TermsAcceptGate>
     </GuestKitRoot>
   );
 }

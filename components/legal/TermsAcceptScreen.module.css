@@ -1,0 +1,84 @@
+/* THE SIGN-IN SCREEN (GST/HST Stage 6 step 6.3, Chunk B; drawings tab 4 + build notes): the one account step's column,
+   centred on the portal's paper, FieldLogicHQ's lockup above the head. Every colour is the warm --home-* vocabulary.
+
+   `.paper` FOLLOWS THE SETTING, as the account step does (`warmTab`: Dark under an explicit Dark choice, Warm otherwise);
+   `.paperWarm` is Warm in every theme, for the two portals that are (the scorekeeper and check-in, GuestKitRoot). Each lists
+   every class it composes because Turbopack's `composes` is not transitive. */
+.paper { composes: warm warmVars warmTab from '../consumer/warmTheme.module.css'; }
+.paperWarm { composes: warm warmVars from '../consumer/warmTheme.module.css'; }
+.paper, .paperWarm {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 3.5rem 1rem 2.5rem;
+}
+
+/* Ask 3A: FieldLogicHQ's mark, centred above the head. */
+.mark {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.125rem;
+  color: var(--home-ink);
+}
+
+/* The links inside the sub line: underlined (colour alone fails inside running text), opening in a new tab. */
+.inlineLink {
+  color: var(--home-ink);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.inlineLink:hover { color: var(--home-olive); }
+
+/* (5e) the cancel door: one line under the box, above Continue. The link sits mid-sentence, so it gets a 44px tall hit
+   area without moving the line (the /design review, round 1). */
+.door { display: flex; flex-direction: column; gap: 0.25rem; }
+.doorLine {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--type-body);
+  line-height: 1.5;
+  color: var(--home-dim);
+}
+.doorLink {
+  position: relative;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  color: var(--home-olive);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.doorLink::after {
+  content: '';
+  position: absolute;
+  left: -4px;
+  right: -4px;
+  top: 50%;
+  height: 44px;
+  transform: translateY(-50%);
+}
+.doorLink:focus-visible { outline: 3px solid var(--home-olive); outline-offset: 2px; border-radius: 4px; }
+.doorList {
+  margin: 0;
+  padding: 0 0 0 1.25rem;
+  font-family: var(--font-sans);
+  font-size: var(--type-body);
+  line-height: 2.75; /* 44px rows at the body step */
+}
+
+/* 7A: the account the screen signs out of, in the foot row beside Sign out. */
+.email {
+  color: var(--home-ink-soft);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 640px) {
+  .paper, .paperWarm { padding: 1.5rem 1rem 1.25rem; }
+}

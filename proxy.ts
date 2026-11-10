@@ -120,6 +120,16 @@ export async function proxy(request: NextRequest) {
     return coachesRes;
   }
 
+  // ── The family join page: the headers, and nothing else (GST/HST Stage 6 step 6.3, owner yes 2026-11-09) ──────────────
+  // Matched ONLY so `x-pathname` is the proxy's: the consumer shell lets its own account doors render instead of the Terms
+  // sign-in screen (lib/legal-acceptance-rules.ts CONSUMER_SHELL_DOORS), and this page — with its own third Terms box — is
+  // the one such door the matcher did not already reach (`/auth/*` is matched below). No session round-trip.
+  if (segments[0] === 'family' && segments[1] === 'claim') {
+    const claimRes = NextResponse.next({ request: { headers: requestHeaders } });
+    claimRes.headers.set('x-request-id', requestId);
+    return claimRes;
+  }
+
   // Redirect legacy /[orgSlug]/admin/tournaments/teams → /[orgSlug]/admin/tournaments/registrations
   if (segments.length >= 4 && segments[1] === 'admin' && segments[2] === 'tournaments' && segments[3] === 'teams') {
     const url = request.nextUrl.clone();
@@ -345,6 +355,8 @@ export const config = {
     // A club's Coaches Portal: so `x-pathname` is ours (the early return above sets the headers and stops).
     '/:slug/coaches',
     '/:slug/coaches/:path*',
+    // The family join page: so `x-pathname` is ours (the early return above, step 6.3).
+    '/family/claim/:path*',
     // ── Every route in the app, for a browser that has been through a demo door ────────────
     // The leave-the-demo rule (lib/sandbox-exit.ts) is dead code on a route the proxy never sees,
     // and the entries above are an allow-list — which is exactly HOW a demo session came to be

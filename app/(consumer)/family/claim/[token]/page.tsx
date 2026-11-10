@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { GUARDIAN_TIER_ENABLED } from '@/lib/family-guardian';
 import { accountNameOf, FAMILY_HOME_PATH, inspectInvitation } from '@/lib/family-invitation';
 import { createClient } from '@/lib/supabase-server';
+import { checkAcceptance } from '@/lib/legal-acceptance';
 import ClaimClient from './ClaimClient';
 
 /**
@@ -29,9 +30,13 @@ export default async function FamilyClaimPage({ params }: { params: Promise<{ to
   const { token } = await params;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  const view = await inspectInvitation(token, user
-    ? { id: user.id, email: user.email ?? null, name: accountNameOf(user.user_metadata) }
-    : null);
+  const [view, acceptance] = await Promise.all([
+    inspectInvitation(token, user
+      ? { id: user.id, email: user.email ?? null, name: accountNameOf(user.user_metadata) }
+      : null),
+    // The third box (GST/HST Stage 6 step 6.3, §20 (5h)) shows to a signed-in viewer only while they still need to agree.
+    user ? checkAcceptance(user) : null,
+  ]);
   return (
     <ClaimClient
       token={token}
@@ -46,6 +51,7 @@ export default async function FamilyClaimPage({ params }: { params: Promise<{ to
         privacyNoticeUrl: view.sender.privacyNoticeUrl,
       } : null}
       homePath={FAMILY_HOME_PATH}
+      signedInNeedsTerms={acceptance?.state === 'needed'}
     />
   );
 }

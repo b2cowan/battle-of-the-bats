@@ -1,0 +1,43 @@
+/* The tick row (GST/HST Stage 6 step 6.3, Chunk B; drawings build notes): the house checkbox in the label row the family page
+   and the billing address use — an 18px box, a 9.6px gap, a 44px row — the sentence at the host's body size, the links
+   underlined (colour alone fails inside running text). The warm --home-* vocabulary, so it follows whatever ground its host gives. */
+.row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  min-height: 44px;
+  font-family: var(--font-sans);
+  font-size: var(--type-body);
+  line-height: 1.5;
+  color: var(--home-ink, inherit); /* a host off the warm vocabulary (the registration page's club frame) keeps its own ink */
+  cursor: pointer;
+  text-align: left;
+}
+/* The follow nudge (Ask 10A): 13.6px, the size of the sheet's inputs, in the sheet's own face and ink (it is not on the warm
+   vocabulary: FollowAccountNudge.module.css). */
+.nudge {
+  font-size: 0.85rem;
+  font-family: var(--font-data);
+  color: var(--fl-text);
+}
+.nudge .box { accent-color: var(--primary-light); }
+.nudge .link:hover { color: var(--primary-light); }
+
+.box {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin: 0.2rem 0 0;
+  accent-color: var(--home-olive, var(--primary, auto));
+  cursor: pointer;
+}
+.box:disabled { cursor: not-allowed; }
+
+.link {
+  color: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.link:hover { color: var(--home-olive, inherit); }
+.link:focus-visible { outline: 3px solid var(--home-olive, currentColor); outline-offset: 2px; border-radius: 4px; }

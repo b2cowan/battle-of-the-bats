@@ -654,7 +654,8 @@ export async function invitationEmailCheck(token: string, typed: string): Promis
 }
 
 export type AcceptResult =
-  | { kind: 'joined'; orgId: string; childIds: string[] }
+  /** `userId`: set by the new-account path only — the account it made, so the route records its Terms tick (step 6.3). */
+  | { kind: 'joined'; orgId: string; childIds: string[]; userId?: string }
   | { kind: 'mismatch'; maskedEmail: string }
   | { kind: 'consent_required' }
   | { kind: 'state'; state: Exclude<InvitationState, 'open'> };
@@ -783,7 +784,7 @@ export async function acceptWithNewAccount(params: {
     });
     // Lost the claim to another request: nothing was written for this account, so it goes again.
     if (result.kind !== 'joined') await removeNewAccount(userId);
-    return result;
+    return result.kind === 'joined' ? { ...result, userId } : result;
   } catch (e) {
     // The acceptance failed part-way and gave its invitation back. An account that holds no connection yet is removed. One that
     // already holds one is KEPT: removing it would leave that connection verified with no account behind it (the link's user is

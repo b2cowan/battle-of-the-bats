@@ -10,6 +10,7 @@ import {
 } from '@/lib/family-guardian-consent';
 import { FAMILY_INVITATION_WORDS } from '@/lib/family-invitation-words';
 import { useLegalLinks } from '@/components/legal/LegalLinksProvider';
+import { TermsSentence, useTermsTick } from '@/components/legal/TermsTickRow';
 import type { InvitationChild, InvitationViewer } from '@/lib/family-invitation';
 import type { InvitationState } from '@/lib/family-invitation-rules';
 
@@ -29,7 +30,7 @@ const W = FAMILY_INVITATION_WORDS.accept;
 
 type Step = 'email' | 'new' | 'existing';
 
-export default function ClaimClient({ token, state, maskedEmail, from, kids, viewer, club, homePath }: {
+export default function ClaimClient({ token, state, maskedEmail, from, kids, viewer, club, homePath, signedInNeedsTerms = false }: {
   token: string;
   state: InvitationState;
   maskedEmail: string | null;
@@ -38,6 +39,8 @@ export default function ClaimClient({ token, state, maskedEmail, from, kids, vie
   viewer: InvitationViewer;
   club: { name: string; contact: string | null; privacyNoticeUrl: string | null } | null;
   homePath: string;
+  /** A signed-in viewer who has not agreed to the current Terms yet: the third box shows (step 6.3, §20 (5h)). */
+  signedInNeedsTerms?: boolean;
 }) {
   const shell = (inner: React.ReactNode) => (
     <div className={warm.warm}>
@@ -77,7 +80,7 @@ export default function ClaimClient({ token, state, maskedEmail, from, kids, vie
       </div>
     </>);
   }
-  return shell(<Accept token={token} maskedEmail={maskedEmail} kids={kids} viewer={viewer} club={club} />);
+  return shell(<Accept token={token} maskedEmail={maskedEmail} kids={kids} viewer={viewer} club={club} signedInNeedsTerms={signedInNeedsTerms} />);
 }
 
 /** D: one answer whether or not anything was sent (ask 9). */
@@ -112,12 +115,13 @@ function Expired({ token }: { token: string }) {
 }
 
 /** The open invitation: A (signed in as the address) or the email-first form. */
-function Accept({ token, maskedEmail, kids, viewer, club }: {
+function Accept({ token, maskedEmail, kids, viewer, club, signedInNeedsTerms }: {
   token: string;
   maskedEmail: string;
   kids: InvitationChild[];
   viewer: Exclude<InvitationViewer, { kind: 'other' }>;
   club: { name: string; contact: string | null; privacyNoticeUrl: string | null };
+  signedInNeedsTerms: boolean;
 }) {
   const signedIn = viewer.kind === 'same';
   // FieldLogicHQ's own privacy policy: linked only while the legal pages are on (GST/HST Stage 6 step 6.2).
@@ -129,6 +133,13 @@ function Accept({ token, maskedEmail, kids, viewer, club }: {
   const [consentBox, setConsentBox] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // THE THIRD BOX (GST/HST Stage 6 step 6.3, §20 (5h)): the Terms box, under the guardian and consent boxes, only for someone
+  // who has not agreed yet — a new account always; a signed-in viewer when the server said so; an existing account signing in
+  // here once the join answers that it needs to (nobody knows before it signs in). The two boxes above and their consent
+  // record are unchanged. Nothing while the legal pages are off.
+  const terms = useTermsTick();
+  const [termsAsked, setTermsAsked] = useState(false);
+  const showTerms = terms.on && ((signedIn && signedInNeedsTerms) || (!signedIn && step === 'new') || termsAsked);
 
   const names = kids.map(c => c.firstName);
   const words = beforeYouJoinWords(club.name, names);
@@ -145,6 +156,8 @@ function Accept({ token, maskedEmail, kids, viewer, club }: {
 
   /** A refusal from the join, in the page's words; a dead invitation reloads into its D / E / F state. */
   function refused(status: number, data: Record<string, unknown>): void {
+    const termsLine = terms.refusal(data);
+    if (termsLine) { setTermsAsked(true); return setError(termsLine); }
     if (status === 429) return setError(W.tooMany);
     if (data.error === 'consent_required') return setError(W.boxesRequired);
     if (data.error === 'password_short') return setError(W.passwordTooShort);
@@ -175,11 +188,12 @@ function Accept({ token, maskedEmail, kids, viewer, club }: {
     e.preventDefault();
     if (busy) return;
     if (!guardianBox || !consentBox) return setError(W.boxesRequired);
+    if (showTerms && terms.missing) return setError(terms.missing);
     setBusy(true); setError(null);
     try {
       if (!signedIn && step === 'new') {
         if (password.length < 8) return setError(W.passwordTooShort);
-        const { res, data } = await post(`/api/family/claim/${token}`, { mode: 'new', email, password, guardianBox, consentBox });
+        const { res, data } = await post(`/api/family/claim/${token}`, { mode: 'new', email, password, guardianBox, consentBox, ...terms.fields });
         if (!res.ok) return refused(res.status, data);
         // The account exists and has joined; this signs the browser in to it, then opens the family page.
         await signIn(email, password);
@@ -190,7 +204,7 @@ function Accept({ token, maskedEmail, kids, viewer, club }: {
         const { error: signInError } = await signIn(email, password);
         if (signInError) return setError(signInErrorCopy(signInError));
       }
-      const { res, data } = await post(`/api/family/claim/${token}`, { guardianBox, consentBox });
+      const { res, data } = await post(`/api/family/claim/${token}`, { guardianBox, consentBox, ...(showTerms ? terms.fields : {}) });
       if (!res.ok) return refused(res.status, data);
       window.location.href = String(data.next ?? '/family');
     } catch {
@@ -279,11 +293,17 @@ function Accept({ token, maskedEmail, kids, viewer, club }: {
             <input type="checkbox" checked={consentBox} onChange={e => setConsentBox(e.target.checked)} />
             <span>{words.consentBox} <strong>{W.required}</strong></span>
           </label>
+          {showTerms && (
+            <label className={styles.check}>
+              <input type="checkbox" checked={terms.ticked} onChange={e => terms.setTicked(e.target.checked)} />
+              <span><TermsSentence /> <strong>{W.required}</strong></span>
+            </label>
+          )}
         </div>
 
         {error && <p className={styles.error} role="alert">{error}</p>}
         <div className={styles.acceptActions}>
-          <button type="submit" className={styles.chip} disabled={busy || !guardianBox || !consentBox || (!signedIn && !password)}>
+          <button type="submit" className={styles.chip} disabled={busy || !guardianBox || !consentBox || (showTerms && !terms.ticked) || (!signedIn && !password)}>
             {busy ? W.joining : words.button}
           </button>
         </div>

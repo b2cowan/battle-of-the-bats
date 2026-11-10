@@ -12,6 +12,11 @@ import {
 } from '@/lib/signup-verification';
 import { parseStartDoor } from '@/lib/start-door';
 import { lockStartDoorOrUndo } from '@/lib/founding-season';
+import { accountDoorRefusal, recordDoorAcceptance } from '@/lib/legal-acceptance';
+import { termsDoorFrom, type AcceptanceDoor } from '@/lib/legal-acceptance-rules';
+
+/** The census doors this route serves (step 6.3 B1); a form names its own, anything else is the coach sign-up. */
+const COACH_SIGNUP_DOORS: readonly AcceptanceDoor[] = ['coach_signup', 'registration', 'assistant_invite', 'league_coach_invite'];
 
 function json(data: unknown, status = 200) {
   return NextResponse.json(data, { status });
@@ -51,6 +56,9 @@ export const POST = withObservability(async (req: NextRequest) => {
     continueName?: unknown;
     inviteToken?: unknown;
     startDoor?: unknown;
+    acceptTerms?: unknown;
+    termsVersion?: unknown;
+    termsDoor?: unknown;
   };
 
   const email     = typeof body.email     === 'string' ? body.email.trim().toLowerCase() : '';
@@ -75,6 +83,10 @@ export const POST = withObservability(async (req: NextRequest) => {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return json({ error: 'Please enter a valid email address.' }, 400);
   }
+  // The Terms box (GST/HST Stage 6 step 6.3, §20 (1)): refused BEFORE anything is created. Null while the legal pages are off.
+  const termsRefusal = accountDoorRefusal(body);
+  if (termsRefusal) return termsRefusal;
+  const termsDoor = termsDoorFrom(body.termsDoor, COACH_SIGNUP_DOORS, 'coach_signup');
   // Only a well-formed request spends budget.
   const ip = clientIpFrom(req);
   if (!takeCoachSignupBudget(ip, email)) {
@@ -128,6 +140,7 @@ export const POST = withObservability(async (req: NextRequest) => {
     if (linkData.user && !(await lockStartDoorOrUndo(linkData.user.id, startDoor))) {
       return json({ error: 'Account could not be created. Please try again.' }, 500);
     }
+    if (linkData.user) await recordDoorAcceptance({ id: linkData.user.id, email }, termsDoor, body);
     await sendSignupVerificationEmail({
       // Only the tournament registration form sends a team name (`continueName`): that is a registration.
       to: email, origin, actionLink: linkData.properties.action_link, next, door: startDoor, registration: !!continueName,
@@ -174,5 +187,6 @@ export const POST = withObservability(async (req: NextRequest) => {
   if (created.user && !(await lockStartDoorOrUndo(created.user.id, startDoor))) {
     return json({ error: 'Account could not be created. Please try again.' }, 500);
   }
+  if (created.user) await recordDoorAcceptance({ id: created.user.id, email }, termsDoor, body);
   return json({ ok: true, requiresEmailVerification: false });
 }, { route: '/api/auth/coach-signup' });

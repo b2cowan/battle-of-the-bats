@@ -10,6 +10,7 @@ import { throttleInvitationAttempt } from '@/lib/public-form-throttle';
 import { GUARDIAN_TIER_ENABLED } from '@/lib/family-guardian';
 import { acceptInvitation, acceptWithNewAccount, FAMILY_HOME_PATH, type AcceptResult } from '@/lib/family-invitation';
 import { clientIpFrom } from '@/lib/rate-limit';
+import { accountDoorRefusal, checkAcceptance, recordDoorAcceptance } from '@/lib/legal-acceptance';
 
 /**
  * Accept an invitation to join a child's team (Signed-in family accounts Stage 4a, Part 4; the rules are lib/family-invitation.ts).
@@ -47,7 +48,13 @@ export const POST = withObservability(async (req: Request,
     const password = typeof body?.password === 'string' ? body.password : '';
     const limited = throttleInvitationAttempt(token);
     if (limited) return limited;
+    // The third box (GST/HST Stage 6 step 6.3, §20 (5h)): a new account always ticks it — refused BEFORE the account is made.
+    const termsRefusal = accountDoorRefusal(body);
+    if (termsRefusal) return termsRefusal;
     const outcome = await acceptWithNewAccount({ token, typedEmail: email, password, consentIp, ...boxes });
+    if (outcome.kind === 'joined' && outcome.userId) {
+      await recordDoorAcceptance({ id: outcome.userId, email }, 'family_accept', body);
+    }
     if (outcome.kind === 'account_exists') return NextResponse.json({ error: 'account_exists' }, { status: 409 });
     if (outcome.kind === 'password_short') return NextResponse.json({ error: 'password_short' }, { status: 400 });
     if (outcome.kind === 'mismatch') return NextResponse.json({ error: 'email_mismatch', maskedEmail: outcome.maskedEmail }, { status: 409 });
@@ -57,6 +64,13 @@ export const POST = withObservability(async (req: Request,
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user?.email) return NextResponse.json({ error: 'sign_in_required' }, { status: 401 });
+  // The third box for an account that has not agreed yet (5h). An account that has, sends none and is never asked; one signed
+  // in on this page with its password learns it here, and the page then shows the box. Off while the legal pages are off.
+  if ((await checkAcceptance(user)).state === 'needed') {
+    const termsRefusal = accountDoorRefusal(body);
+    if (termsRefusal) return termsRefusal;
+    await recordDoorAcceptance(user, 'family_accept', body);
+  }
   const outcome = await acceptInvitation({ token, userId: user.id, userEmail: user.email, consentIp, ...boxes });
   if (outcome.kind === 'mismatch') {
     return NextResponse.json({ error: 'another_email', maskedEmail: outcome.maskedEmail }, { status: 409 });

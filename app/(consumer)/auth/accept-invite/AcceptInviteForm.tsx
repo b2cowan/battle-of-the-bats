@@ -4,10 +4,12 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase-browser';
 import LoadingState from '@/components/shared/LoadingState';
+import TermsTickRow, { useTermsTick } from '@/components/legal/TermsTickRow';
 import { AccountFields, StartColumn, StartFoot, StartHead, accountForm, type AccountValues } from '@/components/auth/AccountForm';
 
 type PageState = 'waiting' | 'ready' | 'submitting' | 'joinFailed' | 'retrying' | 'joinRefused' | 'expired';
-type JoinOutcome = 'joined' | 'failed' | 'refused';
+/** `terms`: the join refused the Terms box (step 6.3) — back to the form, with the line, to tick it again. */
+type JoinOutcome = 'joined' | 'failed' | 'refused' | 'terms';
 
 type InviteContext = {
   orgSlug: string | null;
@@ -49,6 +51,11 @@ export default function AcceptInviteForm({
   const [lastName, setLastName] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [invite, setInvite] = useState<InviteContext | null>(null);
+  // The Terms box (step 6.3, §20 (1)): nothing while the legal pages are off. The server refuses the JOIN without it (the
+  // password is set in the browser before the server sees anything, so the form checks the box before it does either).
+  const terms = useTermsTick();
+  const { refusal: termsRefusal } = terms;
+  const termsFields = terms.fields;
 
   const orgName = invite?.orgName ?? linkOrgName;
   const roleName = invite?.roleLabel ?? linkRoleLabel;
@@ -93,9 +100,14 @@ export default function AcceptInviteForm({
       const res = await fetch('/api/auth/accept-invite', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ firstName: firstName.trim(), lastName: lastName.trim(), orgSlug }),
+        body: JSON.stringify({ firstName: firstName.trim(), lastName: lastName.trim(), orgSlug, ...termsFields }),
       });
       const data = await res.json().catch(() => ({}));
+      const termsLine = termsRefusal(data);
+      if (termsLine) {
+        setErrorMsg(termsLine);
+        return 'terms';
+      }
       if (!res.ok) {
         setErrorMsg(typeof data?.error === 'string' ? data.error : '');
         // A policy refusal (a scorekeeper keeps one home organization) will not change on a retry;
@@ -111,11 +123,12 @@ export default function AcceptInviteForm({
       setErrorMsg('');
       return 'failed';
     }
-  }, [firstName, lastName, orgSlug, router]);
+  }, [firstName, lastName, orgSlug, router, termsFields, termsRefusal]);
 
   function settle(outcome: JoinOutcome) {
     if (outcome === 'failed') setPageState('joinFailed');
     if (outcome === 'refused') setPageState('joinRefused');
+    if (outcome === 'terms') setPageState('ready');
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -126,6 +139,11 @@ export default function AcceptInviteForm({
     }
     if (password.length < 8) {
       setErrorMsg('Password must be at least 8 characters.');
+      return;
+    }
+    // Ask 2A: the button stays on; without the tick the form says (5b), and neither the password nor the join is sent.
+    if (terms.missing) {
+      setErrorMsg(terms.missing);
       return;
     }
     setPageState('submitting');
@@ -221,6 +239,7 @@ export default function AcceptInviteForm({
               email={false}
               autoFocus="firstName"
             />
+            <TermsTickRow tick={terms} id="accept-terms" />
 
             {errorMsg && <p className={accountForm.error} role="alert">{errorMsg}</p>}
 

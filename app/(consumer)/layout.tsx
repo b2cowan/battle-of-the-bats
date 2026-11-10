@@ -8,6 +8,8 @@ import { getUserAccessContextsCached, hasCoachAccess, getPrimaryOrgDestination, 
 import { getUserTheme } from '@/lib/user-preferences';
 import { getStartMenuConfig } from '@/lib/start-menu';
 import type { UserTheme } from '@/lib/user-theme';
+import TermsAcceptGate from '@/components/legal/TermsAcceptGate';
+import { CONSUMER_SHELL_DOORS } from '@/lib/legal-acceptance-rules';
 
 /**
  * Consumer shell layout (unified-app Phase 1). Wraps the logged-out front door —
@@ -67,9 +69,13 @@ export default async function ConsumerLayout({ children }: { children: React.Rea
   }
   const startMenu = await startMenuPromise;
 
+  // The sign-in screen (GST/HST Stage 6 step 6.3): a signed-in person who still needs to agree to the Terms gets it INSTEAD
+  // of this shell — except at the shell's own account doors (the sign-in area and the family join page, which every emailed
+  // link reaches signed in). A visitor is never asked. Nothing while the legal pages are off.
   return (
-    // data-consumer-shell: this shell reserves its own room for the phone tab bar, so the root
-    // <main>'s generic reserve stands down under it (globals.css, the ≤900px responsive block).
+    <TermsAcceptGate user={user} doors={CONSUMER_SHELL_DOORS}>
+    {/* data-consumer-shell: this shell reserves its own room for the phone tab bar, so the root
+        <main>'s generic reserve stands down under it (globals.css, the ≤900px responsive block). */}
     <div className={styles.shell} data-consumer-shell>
       <ConsumerThemeManager accountTheme={accountTheme} />
       <ConsumerNav signedIn={!!user?.email} isCoach={isCoach} adminHref={adminHref} workspaces={workspaces} startMenu={startMenu} />
@@ -79,5 +85,6 @@ export default async function ConsumerLayout({ children }: { children: React.Rea
         subtitle="Follow your teams and get live scores — add it to your home screen."
       />
     </div>
+    </TermsAcceptGate>
   );
 }

@@ -121,6 +121,8 @@ async function layoutFixture({ role = 'owner', org = workspace, pathname = '/fal
     '@/components/coaches/CoachWallSignOut': { __esModule: true, default: nothing },
     '@/components/coaches/CoachPlanWall': { __esModule: true, default: () => createElement('h2', null, 'Plan wall') },
     '@/components/InstallAppPrompt': { __esModule: true, default: nothing },
+    // The Terms sign-in screen (step 6.3) is its own census's (tests/unit/legal-acceptance-doors.test.ts); here, nobody needs it.
+    '@/components/legal/TermsAcceptGate': { termsGateFor: async () => null },
   });
   const Layout = (load('app/[orgSlug]/coaches/layout.tsx') as { default: (props: { params: Promise<{ orgSlug: string }>; children: ReactNode }) => Promise<ReactNode> }).default;
   const Page = renderBilling ? (load('app/[orgSlug]/coaches/billing/page.tsx') as { default: ComponentType }).default : null;

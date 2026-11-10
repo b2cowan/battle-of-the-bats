@@ -15,6 +15,7 @@ import { readFollowedTeam, syncFollowToAccount, type FollowedTeam } from '@/lib/
 import { getSession, signIn } from '@/lib/auth';
 import BottomSheet from '@/components/admin/BottomSheet';
 import PasswordInput from '@/components/auth/PasswordInput';
+import TermsTickRow, { useTermsTick } from '@/components/legal/TermsTickRow';
 import styles from './FollowAccountNudge.module.css';
 
 import { hideOnClubOwnHost } from '@/components/public/hideOnClubOwnHost';
@@ -55,6 +56,8 @@ function FollowAccountNudge({ orgSlug, tournamentSlug }: Props) {
   const [stage, setStage] = useState<'form' | 'check-email'>('form');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // The Terms box (step 6.3, §20 (1)): nothing while the legal pages are off.
+  const terms = useTermsTick();
 
   useEffect(() => {
     let cancelled = false;
@@ -110,6 +113,8 @@ function FollowAccountNudge({ orgSlug, tournamentSlug }: Props) {
     if (busy) return;
     setError(null);
     if (password.length < 8) { setError('Use a password of at least 8 characters.'); return; }
+    // Ask 2A: the button stays on; without the tick the sheet says (5b) and sends nothing.
+    if (terms.missing) { setError(terms.missing); return; }
     setBusy(true);
     try {
       const next = returnPath();
@@ -123,9 +128,13 @@ function FollowAccountNudge({ orgSlug, tournamentSlug }: Props) {
           firstName: firstName.trim(),
           lastName: lastName.trim(),
           next,
+          // The census's `follow` door (step 6.3): the same sign-up route, recorded as this sheet.
+          ...(terms.on ? { ...terms.fields, termsDoor: 'follow' } : {}),
         }),
       });
       const data = await res.json().catch(() => ({}));
+      const termsLine = terms.refusal(data);
+      if (termsLine) { setError(termsLine); return; }
       if (!res.ok) { setError(data.error ?? 'Could not create your account. Please try again.'); return; }
       if (data.requiresEmailVerification) { setStage('check-email'); return; }
       // Dev / no-verification: the account exists but the browser has no session yet — sign in,
@@ -195,6 +204,7 @@ function FollowAccountNudge({ orgSlug, tournamentSlug }: Props) {
               <PasswordInput id="follow-account-password" className={styles.input} value={password} onChange={e => setPassword(e.target.value)}
                 autoComplete="new-password" minLength={8} required />
             </div>
+            <TermsTickRow tick={terms} id="follow-account-terms" size="nudge" />
 
             {error && <p className={styles.error} role="alert">{error}</p>}
 

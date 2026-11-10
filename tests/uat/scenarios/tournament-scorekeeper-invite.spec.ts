@@ -242,6 +242,9 @@ test.describe.serial('Tournament scorekeeper invite UAT', () => {
     await page.locator('#accept-first-name').fill('Invite Smoke')
     await page.locator('#accept-last-name').fill('Scorekeeper')
     await page.locator('#accept-password').fill(SCOREKEEPER_PASSWORD)
+    // The Terms box (GST/HST Stage 6 step 6.3, the staff invitation door): there only while the legal pages are on.
+    const termsBox = page.locator('#accept-terms')
+    if (await termsBox.count()) await termsBox.check()
     await page.getByRole('button', { name: 'Create Password & Open Scorekeeper' }).click()
 
     await expect(page).toHaveURL(new RegExp(`/${smoke.orgSlug}/scorekeeper`), { timeout: 45_000 })

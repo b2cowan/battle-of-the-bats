@@ -38,6 +38,7 @@ import { orgPlanCarriesCoachesPortal } from '@/lib/coach-portal-plan';
 import { orgOwnerDisplayName } from '@/lib/member-names';
 import CoachThemeColor from '@/components/coaches/CoachThemeColor';
 import styles from './coaches.module.css';
+import { termsGateFor } from '@/components/legal/TermsAcceptGate';
 
 export const metadata: Metadata = {
   manifest: '/manifest.json',
@@ -51,7 +52,7 @@ export const metadata: Metadata = {
 
 export default async function CoachesLayout({
   params,
-  children,
+  children: page,
 }: {
   params: Promise<{ orgSlug: string }>;
   children: React.ReactNode;
@@ -62,6 +63,15 @@ export default async function CoachesLayout({
   // the same assignments and the same public-site door to build the masthead's feed, and on a hard
   // load both layouts render in ONE request — so the pair now costs one read, not two.
   const authCtx = await getCoachPortalAuth(orgSlug);
+
+  // The sign-in screen (GST/HST Stage 6 step 6.3) replaces this whole portal — every wall below included — for someone who
+  // still needs to agree to the Terms; a signed-in viewer with no membership here is asked through the session user.
+  // Nothing while the legal pages are off. A page it lets through (a paid owner's billing page, the cancel door) carries the
+  // watch beside it, so a tap away from it asks again.
+  const terms = await termsGateFor(authCtx?.user ?? await getAuthenticatedUser());
+  if (terms?.screen) return terms.screen;
+  const children = terms?.watch ? <>{terms.watch}{page}</> : page;
+
   if (!authCtx) {
     // Two very different failures share this null: no session at all, and a session with no
     // membership in THIS org. Only the first is fixed by signing in — bouncing the second to

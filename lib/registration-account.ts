@@ -24,6 +24,8 @@ export type RegistrationAccount = {
   outcome: Exclude<RegistrationAccountOutcome, 'none'>;
   /** The Supabase action link the coach's email confirms with, when one was made. */
   actionLink: string | null;
+  /** The account this step made (`created` only) — the registration records its Terms tick against it (step 6.3). */
+  userId?: string | null;
 };
 
 const FAILED: RegistrationAccount = { outcome: 'failed', actionLink: null };
@@ -87,7 +89,7 @@ export async function openRegistrationAccount(p: {
       });
       return FAILED;
     }
-    return { outcome: 'created', actionLink: data.properties.action_link };
+    return { outcome: 'created', actionLink: data.properties.action_link, userId: data.user?.id ?? null };
   } catch (err) {
     await captureError(err, { statusCode: 500, user: { email: p.email }, requestContext: { operation: 'register account step' } });
     return FAILED;

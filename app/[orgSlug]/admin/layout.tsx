@@ -16,6 +16,7 @@ import HelpDrawerProvider from '@/components/help/HelpDrawerProvider';
 import PlanPanelHost from '@/components/billing/PlanPanelHost';
 import { AdminKitProvider } from '@/components/admin/AdminKitProvider';
 import CoachThemeColor from '@/components/coaches/CoachThemeColor';
+import TermsAcceptGate from '@/components/legal/TermsAcceptGate';
 import { adminKitAttr } from '@/lib/admin-kit-marker';
 import AdminChrome from './AdminChrome';
 
@@ -145,7 +146,8 @@ export default async function AdminLayout({
     <AdminKitProvider on>
       <div style={{ display: 'contents' }} {...adminKitAttr}>
         <CoachThemeColor />
-        {shell}
+        {/* The sign-in screen (GST/HST Stage 6 step 6.3) replaces the shell for someone who still needs to agree to the Terms. */}
+        <TermsAcceptGate user={authCtx.user}>{shell}</TermsAcceptGate>
       </div>
     </AdminKitProvider>
   );

@@ -18,6 +18,7 @@ import { getUserDisplayName } from '@/lib/user-display';
 import { GuestKitRoot } from '@/components/admin/AdminKitProvider';
 import shell from '@/components/volunteer/DayOfShell.module.css';
 import BrandLockup from '@/components/shared/BrandLockup';
+import TermsAcceptGate from '@/components/legal/TermsAcceptGate';
 
 export async function generateMetadata({
   params,
@@ -100,6 +101,9 @@ export default async function ScorekeeperLayout({
 
   return (
     <GuestKitRoot>
+    {/* The sign-in screen (GST/HST Stage 6 step 6.3) replaces the working shell for someone who still needs to agree to the
+        Terms — Warm, as this portal is in every theme. The walls above are dead ends with a way out, and stay as they are. */}
+    <TermsAcceptGate user={authCtx.user} fixedWarm>
     {/* "The Flip" P3: the provider bridges the page's score fetch (which knows the day's
         tournaments) to the header pill — see components/volunteer/ScorekeeperFlip.tsx. */}
     <ScorekeeperFlipProvider>
@@ -170,6 +174,7 @@ export default async function ScorekeeperLayout({
       />
     </div>
     </ScorekeeperFlipProvider>
+    </TermsAcceptGate>
     </GuestKitRoot>
   );
 }

@@ -10,6 +10,8 @@ import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { sendSignupVerificationEmail, shouldRequireEmailVerification, verificationRedirect } from '@/lib/signup-verification';
 import { parseStartDoor, parseStartPricing, startDoorLinkPath } from '@/lib/start-door';
 import { lockStartDoorOrUndo } from '@/lib/founding-season';
+import { accountDoorRefusal, recordDoorAcceptance } from '@/lib/legal-acceptance';
+import { termsDoorFrom } from '@/lib/legal-acceptance-rules';
 
 // Abuse controls: signup is unauthenticated and fires Supabase admin calls + a Resend
 // email per attempt; Supabase's built-in auth limits DON'T cover admin-API calls, so this
@@ -52,7 +54,10 @@ export const POST = withObservability(async (req: Request) => {
   let userId: string | null = null;
 
   try {
-    const { email, password, orgName, firstName, lastName, next, startDoor, plan, billing } = await req.json();
+    const body = await req.json();
+    const { email, password, orgName, firstName, lastName, next, startDoor, plan, billing } = body;
+    // The two doors this route serves (the census, step 6.3 B1): the follow nudge says so; every other form is `signup`.
+    const termsDoor = termsDoorFrom(body?.termsDoor, ['follow'], 'signup');
 
     const organizationDoor = parseStartDoor(startDoor, ['organization'] as const) !== null
       || (orgName !== undefined && orgName !== null);
@@ -75,6 +80,9 @@ export const POST = withObservability(async (req: Request) => {
     if (!normalizedEmail || !normalizedFirstName || !normalizedLastName) {
       return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 });
     }
+    // The Terms box (GST/HST Stage 6 step 6.3, §20 (1)): refused BEFORE anything is created. Null while the legal pages are off.
+    const termsRefusal = accountDoorRefusal(body);
+    if (termsRefusal) return termsRefusal;
     // A FieldLogicHQ staff email is never a customer account (as the coach sign-up refuses it, 2026-10-16): with verification
     // off, an unclaimed staff address could otherwise be registered by anyone, and platform roles follow the email.
     if (await isPlatformAdminEmail(normalizedEmail)) {
@@ -196,6 +204,9 @@ export const POST = withObservability(async (req: Request) => {
       userId = null;
       return NextResponse.json({ error: 'Account could not be created. Please try again.' }, { status: 500 });
     }
+
+    // The tick, recorded now the account exists (never fails the sign-up: a tick that did not save meets the sign-in screen).
+    await recordDoorAcceptance({ id: userId, email: normalizedEmail }, termsDoor, body);
 
     if (actionLink) {
       // No name yet (it is asked on step 2), so the email reads "finish creating your account".

@@ -83,6 +83,7 @@ const ALLOWED: Record<string, [Klass, string]> = {
   'lib/platform-events.ts': ['writer', 'event rows carry the plan and status columns'],
   // ── stored on purpose ──
   'lib/platform-metrics.ts': ['stored', 'revenue and customer counts: free time is never revenue (/billing 2026-10-25)'],
+  'lib/legal-acceptance-plans.ts': ['stored', "the Terms screen's cancel door (6.3, §20 (5e)) names the plans a person PAYS Stripe for — free time has nothing to cancel"],
   // Plans & pricing Stage 2 Part 4: Renewals lists what renews or ends from the club's OWN record (status, period end, price
   // on file); free time and Founding are read from their own grants, never as the plan in force. Read only.
   'lib/renewals.ts': ['stored', 'Renewals: a renewal and a trial end are the subscription the club HOLDS; free time is its own row, never a renewal'],

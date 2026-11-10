@@ -20,6 +20,7 @@ import { isValidEmail, signInErrorCopy } from '@/lib/auth-errors';
 import { COACHES_TOURNAMENTS_PATH, registrationPortalPath } from '@/lib/coaches-portal-routes';
 import VerifyEmailSent from '@/components/auth/VerifyEmailSent';
 import PasswordInput from '@/components/auth/PasswordInput';
+import TermsTickRow, { useTermsTick } from '@/components/legal/TermsTickRow';
 import { PAY_WORDS } from '@/lib/online-payment-words';
 import type { PublicTournamentPageData } from '@/lib/public-tournament-data';
 import PublicPage from '@/components/public/PublicPage';
@@ -315,6 +316,8 @@ export default function RegisterContent({ isPreview = false, initialData = null 
   const [waitingEmail, setWaitingEmail] = useState<string | null>(null);
   // Captured once (lazy init keeps render pure) — gates the success-screen countdown banner.
   const [mountedAtMs] = useState(() => Date.now());
+  // The Terms box (step 6.3, §20 (1)) — a new coach's account is made by this form: nothing while the legal pages are off.
+  const terms = useTermsTick();
   // Bumped by "Not you?": a team load that started before the sign-out is dropped when it lands.
   const sessionGeneration = useRef(0);
 
@@ -571,6 +574,8 @@ export default function RegisterContent({ isPreview = false, initialData = null 
     if (!signedIn && form.password.length < 8) {
       throw new Error('Create a password (at least 8 characters) to set up your Coaches Portal.');
     }
+    // Ask 2A: the Review button stays on; without the tick the form says (5b) and nothing is sent.
+    if (!signedIn && terms.missing) throw new Error(terms.missing);
 
     const count = stats[selectedGroup.id] || 0;
     const isWaitlist = Boolean(selectedGroup.capacity && count >= selectedGroup.capacity);
@@ -620,6 +625,11 @@ export default function RegisterContent({ isPreview = false, initialData = null 
           payload.append('password', form.password);
           payload.append('firstName', form.firstName.trim());
           payload.append('lastName', form.lastName.trim());
+          // The account's Terms box (step 6.3): the server refuses the registration before filing it without the tick.
+          if (terms.on) {
+            payload.append('acceptTerms', String(terms.ticked));
+            payload.append('termsVersion', terms.fields.termsVersion ?? '');
+          }
         }
         // The name this team goes by in THIS tournament (A2) — for a chosen team, the coach may have
         // changed it from the team's own name; the team's own name never changes here.
@@ -658,7 +668,10 @@ export default function RegisterContent({ isPreview = false, initialData = null 
         });
 
         if (!res.ok) {
-          const { error, code } = await res.json() as { error?: string; code?: string };
+          const { error, code, termsVersion } = await res.json() as { error?: string; code?: string; termsVersion?: string };
+          // The Terms refusal: the box un-ticks when the Terms moved, and the next tick sends the version now current.
+          const termsLine = terms.refusal({ code, termsVersion });
+          if (termsLine) throw new Error(termsLine);
           // The team got in while this form was open: reload the cards, so Try Again shows it as already
           // registered instead of offering it again — with nothing chosen, and without the name and head
           // coach picked for that team. Kept, that name would follow the coach onto "A different team" and
@@ -731,8 +744,16 @@ export default function RegisterContent({ isPreview = false, initialData = null 
             password: form.password,
             firstName: form.firstName.trim(),
             lastName: form.lastName.trim(),
+            ...(terms.on ? { ...terms.fields, termsDoor: 'registration' } : {}),
           }),
         });
+        // The Terms refusal first: its "the terms changed" twin is a 409 too, and is not "this email has an account".
+        const termsLine = terms.refusal(await signupRes.clone().json().catch(() => ({})));
+        if (termsLine) {
+          setErrorMsg(termsLine);
+          setStep('error');
+          return;
+        }
 
         if (signupRes.status === 409) {
           // An account exists after all (made between Step 1 and Submit, or Step 1's answer was
@@ -1241,6 +1262,9 @@ export default function RegisterContent({ isPreview = false, initialData = null 
           ))}
         </div>
       )}
+
+      {/* The account's Terms box, after the last field and above the main button (1A) — only a new coach makes one here. */}
+      {!signedIn && terms.on && <div style={{ marginBottom: '1rem' }}><TermsTickRow tick={terms} id="reg-terms" /></div>}
 
       <button
         type="submit"

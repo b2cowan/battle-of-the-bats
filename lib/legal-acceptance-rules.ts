@@ -40,6 +40,14 @@ export const isAcceptanceDoor = (v: unknown): v is AcceptanceDoor =>
   typeof v === 'string' && (ACCEPTANCE_DOORS as readonly string[]).includes(v);
 
 /**
+ * The door a shared sign-up route records, as the form named it (`termsDoor`): one of the doors that route serves, else its own
+ * default. A route serves several census doors through one endpoint (the follow nudge posts to sign-up; the registration and
+ * both coach invitations post to coach sign-up); anything the form sends outside that list is the default, never a free label.
+ */
+export const termsDoorFrom = (v: unknown, served: readonly AcceptanceDoor[], fallback: AcceptanceDoor): AcceptanceDoor =>
+  served.includes(v as AcceptanceDoor) ? (v as AcceptanceDoor) : fallback;
+
+/**
  * §20 (1): the one box, at every door. `terms` and `privacy` are the two link labels (Chunk B renders them as links); the
  * stored sentence is the parts joined, with no link markup.
  */
@@ -66,6 +74,73 @@ export const ACCEPTANCE_WORDS = {
   /** (5c) An organization create or a purchase was stopped and the window could not open. */
   refuseStopped: 'Before you continue, you need to agree to our current Terms of Service. Reload this page to see them.',
 } as const;
+
+/**
+ * The sign-in screen's words (§20 (2), (5a), (5e); Chunk B). Each line with a link is split into parts so the screen renders the
+ * links and the test can read the sentence back. "Continue", "Sign out" and "Saving…" are §20's / the house pattern's.
+ */
+export const SCREEN_WORDS = {
+  published: {
+    title: 'We’ve published our Terms',
+    line: ['FieldLogicHQ now has ', TERMS_TITLE, ' and a ', PRIVACY_TITLE, '. Please read them and tick the box to keep using your account.'],
+  },
+  updated: {
+    title: 'We’ve updated our Terms',
+    line: ['We’ve changed our ', TERMS_TITLE, ' since you last agreed to them. Please read them and tick the box to keep using your account.'],
+  },
+  /** (5a) */
+  saveFailed: 'Couldn’t save your agreement. Check your connection and try again.',
+  /** (5e) — only on "updated", only for a person who owns a paid plan. The middle part is the link. */
+  cancelDoor: ['Don’t agree? You can ', 'cancel your plan', ' instead. It runs to the end of the period you’ve paid for.'],
+  continue: 'Continue',
+  saving: 'Saving…',
+  signOut: 'Sign out',
+  signedInAs: 'Signed in as',
+} as const;
+
+/**
+ * WHERE THE SIGN-IN SCREEN DOES NOT TAKE OVER (Chunk B, owner yes 2026-11-09 — disagreements 1 and 3 with the build prompt).
+ *
+ * The consumer shell wraps more than the family app: the whole sign-in area (`/auth/*`) and the family join page sit under
+ * it too. Every emailed link (an invitation, a password reset, a verification) lands in `/auth/*` SIGNED IN, before the
+ * person has a password or has finished — the screen there would say "keep using your account" to someone who has none
+ * yet, hide the staff invitation's own box, and stand between a person and their password reset. The family join page has
+ * its own third box (§20 (5h)). Each page behind these addresses mounts the screen, so nobody walks past it.
+ */
+export const CONSUMER_SHELL_DOORS = ['/auth/', '/family/claim/'] as const;
+
+const underPath = (pathname: string, prefix: string): boolean =>
+  prefix.endsWith('/') ? pathname.startsWith(prefix) : pathname === prefix || pathname.startsWith(`${prefix}/`);
+
+/**
+ * Does the shell render its page instead of the screen? `doors`: the shell's own account doors (the consumer shell passes
+ * `CONSUMER_SHELL_DOORS`). `billingHrefs`: the cancel door's destinations (§20 (5e)) — a paid-plan owner on "updated" is let
+ * through to their own billing page, where cancelling works without agreeing; only ever non-empty on "updated".
+ */
+export function screenPassesThrough(
+  pathname: string | null | undefined,
+  { doors = [], billingHrefs = [] }: { doors?: readonly string[]; billingHrefs?: readonly string[] },
+): boolean {
+  if (!pathname) return false;
+  return doors.some(d => underPath(pathname, d)) || billingHrefs.some(h => underPath(pathname, h));
+}
+
+/** The fields every account-door form sends (Chunk B): the tick, and the Terms version the form showed (`LegalLinks.termsVersion`). */
+export interface DoorTermsFields {
+  acceptTerms?: unknown;
+  termsVersion?: unknown;
+}
+
+/**
+ * An account door's verdict on its body, BEFORE it creates anything: null → go on (the pages are off, or ticked against the
+ * current version); `unticked` → (5b); `changed` → (5b)'s twin, the version moved while the page was open.
+ */
+export function doorTermsVerdict(body: DoorTermsFields | null | undefined, current: string | null): null | 'unticked' | 'changed' {
+  if (current === null) return null;
+  if (body?.acceptTerms !== true) return 'unticked';
+  if (body.termsVersion !== current) return 'changed';
+  return null;
+}
 
 /**
  * The mirror of the accepted Terms version on the auth user's `app_metadata` (service role only — the Founding Season start-door

@@ -385,6 +385,7 @@ const LIVE = 'reads the organization row fresh on each request (or a row the cal
 const SPECIAL: Record<string, [Klass, string]> = {
   'lib/team-workspace-kind.ts': ['definition', 'the one definition of the portal test'],
   'lib/team-workspace-entitlements.ts': ['live-row', 'the entitlement mapper; re-exports the one definition'],
+  'lib/legal-acceptance-plans.ts': ['live-row', "the Terms screen's cancel door (6.3): reads the row fresh and hands the tag to getBillingHref, so a flipped club's door is its club billing page"],
   'lib/team-workspace-provisioning.ts': ['portal-only', 'CREATES a workspace organization (account_kind team_workspace, status active); a club is never created here'],
   'lib/team-checkout.ts': ['tombstone-aware', 'portal checkout and syncTeamWorkspaceSubscription, which excludes a tombstone (this build); the reactivation guard rejects a flipped org'],
   'lib/team-org-billing.ts': ['portal-only', 'the org_team_addon billing mode (a club adding a team); keyed on the workspace, never on a club that was one'],

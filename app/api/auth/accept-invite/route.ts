@@ -7,6 +7,7 @@ import { roleLabel, memberOpensSentence } from '@/lib/member-access';
 import { invitationSender } from '@/lib/member-names';
 import { destinationAfterAccept } from '@/lib/invite-acceptance';
 import { withObservability, captureAndJson } from '@/lib/observability';
+import { accountDoorRefusal, checkAcceptance, recordDoorAcceptance } from '@/lib/legal-acceptance';
 
 async function getAuthenticatedUser() {
   const cookieStore = await cookies();
@@ -84,6 +85,17 @@ export const POST = withObservability(async (req: Request) => {
   }
 
   const body = await req.json().catch(() => ({}));
+
+  // The Terms box (GST/HST Stage 6 step 6.3, §20 (1), the census's `staff_invite`): the invitation made the account, and the
+  // page set its password in the browser before this request, so the refusal sits on the JOIN — asked only while the person
+  // still needs to agree (an account that already has stays as it was). Anyone who goes around it meets the sign-in screen.
+  // Off while the legal pages are off: `checkAcceptance` answers `off` and nothing is read.
+  if ((await checkAcceptance(user)).state === 'needed') {
+    const termsRefusal = accountDoorRefusal(body);
+    if (termsRefusal) return termsRefusal;
+    await recordDoorAcceptance(user, 'staff_invite', body);
+  }
+
   const firstName = typeof body.firstName === 'string' ? body.firstName.trim().slice(0, 60) : '';
   const lastName  = typeof body.lastName  === 'string' ? body.lastName.trim().slice(0, 60)  : '';
   const fullName  = `${firstName} ${lastName}`.trim();

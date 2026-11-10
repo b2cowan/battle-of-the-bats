@@ -146,7 +146,7 @@ describe('the screens', () => {
     assert.doesNotMatch(src, /setVerifyEmail|setSuccessNote/, 'no separate verify/note state');
   });
   it('the assistant-invite page sends its invitation as the proof', () => {
-    assert.match(readCode('app/(consumer)/auth/accept-assistant-invite/page.tsx'), /inviteToken: token \}\)/);
+    assert.match(readCode('app/(consumer)/auth/accept-assistant-invite/page.tsx'), /inviteToken: token,/);
   });
   it('the tournament form: the registration goes FIRST, then the waiting account (V2); the card says check your email', () => {
     const src = readCode('components/public/RegisterContent.tsx');

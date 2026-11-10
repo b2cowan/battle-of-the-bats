@@ -9,6 +9,7 @@ import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import LoadingState from '@/components/shared/LoadingState';
+import TermsTickRow, { useTermsTick } from '@/components/legal/TermsTickRow';
 import { AccountFields, StartColumn, StartFoot, StartHead, accountForm, type AccountValues } from '@/components/auth/AccountForm';
 import { accountExistsSignInHref } from '@/lib/auth-errors';
 
@@ -34,6 +35,8 @@ function AcceptForm() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [password, setPassword] = useState('');
+  // The Terms box (step 6.3, §20 (1)): nothing while the legal pages are off.
+  const terms = useTermsTick();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -80,13 +83,22 @@ function AcceptForm() {
   async function createAccountAndAccept(e: React.FormEvent) {
     e.preventDefault();
     if (!firstName.trim() || !lastName.trim()) { setError('Enter your first and last name.'); return; }
+    // Ask 2A: the button stays on; without the tick the form says (5b) and sends nothing.
+    if (terms.missing) { setError(terms.missing); return; }
     setBusy(true); setError('');
     const email = invite?.invitedEmail ?? '';
     // The invite was emailed to this address, so it proves the inbox (the coach sign-up checks it is live first).
     const signup = await fetch('/api/auth/coach-signup', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, firstName: firstName.trim(), lastName: lastName.trim(), inviteToken: token }),
+      body: JSON.stringify({
+        email, password, firstName: firstName.trim(), lastName: lastName.trim(), inviteToken: token,
+        ...(terms.on ? { ...terms.fields, termsDoor: 'league_coach_invite' } : {}),
+      }),
     });
+    const signupData = await signup.clone().json().catch(() => ({}));
+    // The Terms refusal first: its "the terms changed" twin is a 409 too, and is not "this email has an account".
+    const termsLine = terms.refusal(signupData);
+    if (termsLine) { setError(termsLine); setBusy(false); return; }
     if (signup.status === 409) {
       router.push(accountExistsSignInHref(`/auth/accept-league-coach?token=${encodeURIComponent(token)}`, email));
       return;
@@ -194,6 +206,7 @@ function AcceptForm() {
           onChange={(field, value) => setField[field](value)}
           email={false}
         />
+        <TermsTickRow tick={terms} id="lc-terms" />
         {error && <p className={accountForm.error} role="alert">{error}</p>}
         <button type="submit" className={accountForm.primary} disabled={busy}>
           {busy ? 'Setting up…' : 'Create account and open your team'}

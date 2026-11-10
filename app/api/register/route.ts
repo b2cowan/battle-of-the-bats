@@ -4,6 +4,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { sendEmail, registrationConfirmationHtml, waitlistConfirmationHtml, adminNotificationHtml, ADMIN_EMAIL, coachEmailEnabled } from '@/lib/email';
 import { isPlatformTemplateCustomised, sendTransactionalEmail } from '@/lib/platform-email-templates';
 import { openRegistrationAccount } from '@/lib/registration-account';
+import { accountDoorRefusal, recordDoorAcceptance } from '@/lib/legal-acceptance';
 import { planCoachRegistrationEmails, registrationEmailSubject } from '@/lib/registration-email-plan';
 import { sendSignupVerificationEmail, shouldRequireEmailVerification, signupConfirmUrl } from '@/lib/signup-verification';
 import { registrationPortalPath } from '@/lib/coaches-portal-routes';
@@ -57,6 +58,9 @@ type RegistrationRequestBody = {
   password?: unknown;
   firstName?: unknown;
   lastName?: unknown;
+  /** The account's Terms box (GST/HST Stage 6 step 6.3): the tick and the version the form showed. */
+  acceptTerms?: unknown;
+  termsVersion?: unknown;
 };
 
 type TournamentRow = {
@@ -164,6 +168,8 @@ async function parseRegistrationRequest(req: NextRequest) {
         password: formData.get('password'),
         firstName: formData.get('firstName'),
         lastName: formData.get('lastName'),
+        acceptTerms: formData.get('acceptTerms') === 'true',
+        termsVersion: formData.get('termsVersion'),
       } satisfies RegistrationRequestBody,
       formData,
     };
@@ -263,6 +269,14 @@ export const POST = withObservability(async (req: NextRequest) => {
     const { data: { user } } = await supabase.auth.getUser();
     if (user?.id && user.email) {
       signedInCoach = { id: user.id, email: user.email.toLowerCase() };
+    }
+    // The Terms box (step 6.3, §20 (1)): a registration that will also MAKE an account is refused BEFORE the entry is filed
+    // when the box is unticked or the version moved — the one census door whose coach may never open a signed-in page. A
+    // registration that makes no account is never asked. Null while the legal pages are off.
+    const makesAccount = typeof body.password === 'string' && !!body.password && !signedInCoach && shouldRequireEmailVerification();
+    if (makesAccount) {
+      const termsRefusal = accountDoorRefusal(body);
+      if (termsRefusal) return termsRefusal;
     }
 
     // WHO REGISTERED (Stage 1b, C3): a signed-in person is their account — the form shows them no name
@@ -661,7 +675,7 @@ export const POST = withObservability(async (req: NextRequest) => {
     const portalNext = registrationPortalPath(data.id);
     const accountFirstName = cleanString(body.firstName);
     const accountPassword = typeof body.password === 'string' ? body.password : '';
-    const withAccount = !!accountPassword && !signedInCoach && shouldRequireEmailVerification();
+    const withAccount = makesAccount && !!accountPassword;
 
     // The coach's emails (lib/registration-email-plan.ts): the confirmation respects the per-tournament "automatic coach
     // emails" switch (Settings → Notifications & Contact); a confirm link that was made always goes out in one of them.
@@ -678,6 +692,10 @@ export const POST = withObservability(async (req: NextRequest) => {
         origin, next: portalNext,
       })
       : null;
+    // The tick, recorded only for an account this request MADE (an address that already had one ticked nothing for it).
+    if (account?.outcome === 'created' && account.userId) {
+      await recordDoorAcceptance({ id: account.userId, email }, 'registration', body);
+    }
     const actionLink = account?.actionLink ?? null;
     const coachEmails = planCoachRegistrationEmails({
       confirmationOn,

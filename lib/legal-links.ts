@@ -1,6 +1,6 @@
 import 'server-only';
 import { canonicalAppOrigin } from './app-origin';
-import type { LegalDocKey } from './legal-documents';
+import { currentVersion, type LegalDocKey } from './legal-documents';
 import { legalPagePath } from './legal-paths';
 import { legalPagesOn } from './legal-pages-switch';
 
@@ -20,9 +20,13 @@ export const legalPageHref = (doc: LegalDocKey, version?: string): string => `${
 export interface LegalLinks {
   termsHref: string;
   privacyHref: string;
+  /** The Terms version these links open — what an account door's tick box sends back as `termsVersion` (step 6.3, Chunk B), so
+   *  the server refuses a tick given to words that changed while the page was open. `'draft'` in the preview. */
+  termsVersion: string;
 }
 
 export function resolveLegalLinks(env: Record<string, string | undefined> = process.env): LegalLinks | null {
-  if (!legalPagesOn(env)) return null;
-  return { termsHref: legalPageHref('terms'), privacyHref: legalPageHref('privacy') };
+  const termsVersion = currentVersion('terms', env);
+  if (!legalPagesOn(env) || termsVersion === null) return null;
+  return { termsHref: legalPageHref('terms'), privacyHref: legalPageHref('privacy'), termsVersion };
 }

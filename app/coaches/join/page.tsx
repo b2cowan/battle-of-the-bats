@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import LoadingState from '@/components/shared/LoadingState';
 import ChoicePair from '@/components/shared/ChoicePair';
+import TermsTickRow, { useTermsTick } from '@/components/legal/TermsTickRow';
 import { AccountFields, EmailField, StartColumn, StartFoot, StartHead, accountForm, type AccountValues } from '@/components/auth/AccountForm';
 import {
   COACHES_TOURNAMENTS_PATH,
@@ -55,6 +56,8 @@ function JoinForm() {
 
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
+  // The Terms box (step 6.3, §20 (1)): nothing while the legal pages are off.
+  const terms = useTermsTick();
   const [firstName, setFirstName] = useState(firstNameInit);
   const [lastName, setLastName]   = useState(lastNameInit);
   // Back from "Use a different email": the form opens with the cursor in the email field.
@@ -228,6 +231,11 @@ function JoinForm() {
       setError('Enter your first and last name.');
       return;
     }
+    // Ask 2A: the button stays on; without the tick the form says (5b) and sends nothing.
+    if (terms.missing) {
+      setError(terms.missing);
+      return;
+    }
 
     setLoading(true);
 
@@ -241,9 +249,18 @@ function JoinForm() {
         lastName: lastName.trim(),
         // Where the verification link returns: this page, signed in, which links the registration.
         next: verifyReturnPath(),
+        ...terms.fields,
       }),
     });
+    const data = await res.json().catch(() => ({})) as { error?: string; requiresEmailVerification?: boolean };
 
+    // The Terms refusal first: its "the terms changed" twin is a 409 too, and is not "this email has an account".
+    const termsLine = terms.refusal(data);
+    if (termsLine) {
+      setError(termsLine);
+      setLoading(false);
+      return;
+    }
     if (res.status === 409) {
       const nextAfterLogin = registrationId
         ? `/coaches/join?registered=1&registrationId=${encodeURIComponent(registrationId)}&next=${encodeURIComponent(nextParam)}`
@@ -253,13 +270,11 @@ function JoinForm() {
     }
 
     if (!res.ok) {
-      const data = await res.json().catch(() => ({})) as { error?: string };
       setError(data.error ?? 'Account could not be created. Please try again.');
       setLoading(false);
       return;
     }
-    const created = await res.json().catch(() => ({})) as { requiresEmailVerification?: boolean };
-    if (created.requiresEmailVerification) {
+    if (data.requiresEmailVerification) {
       setPassword('');
       setVerifyEmail(email.trim().toLowerCase());
       setLoading(false);
@@ -562,6 +577,7 @@ function JoinForm() {
               onChange={(field, value) => setField[field](value)}
               autoFocus={changingEmail ? 'email' : startingFresh ? 'firstName' : undefined}
             />
+            <TermsTickRow tick={terms} id="join-terms" />
 
             {error && <p className={accountForm.error} role="alert">{error}</p>}
 

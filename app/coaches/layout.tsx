@@ -5,6 +5,7 @@ import { CoachesOverlayProvider } from '@/lib/coaches-overlay';
 import { getAuthUserCached } from '@/lib/supabase-server';
 import { getUserAccessContextsCached, hasCoachAccess, getPrimaryOrgDestination, workspaceDoorsFromContexts, type WorkspaceDoor } from '@/lib/user-contexts';
 import { getStartMenuConfig } from '@/lib/start-menu';
+import TermsAcceptGate from '@/components/legal/TermsAcceptGate';
 
 /**
  * Wraps every /coaches route. The shell renders the portal chrome (A2 consumer chrome:
@@ -46,7 +47,10 @@ export default async function CoachesPortalLayout({ children }: { children: Reac
   }
   const startMenu = await startMenuPromise;
 
+  // The sign-in screen (GST/HST Stage 6 step 6.3) replaces the portal for someone who still needs to agree to the Terms; a
+  // signed-out visitor on the warm journey is never asked. Nothing while the legal pages are off.
   return (
+    <TermsAcceptGate user={user}>
     <HelpDrawerProvider warm>
       <CoachesOverlayProvider>
         <CoachPortalShell signedIn={!!user?.email} isCoach={isCoach} adminHref={adminHref} workspaces={workspaces} startMenu={startMenu}>
@@ -54,5 +58,6 @@ export default async function CoachesPortalLayout({ children }: { children: Reac
         </CoachPortalShell>
       </CoachesOverlayProvider>
     </HelpDrawerProvider>
+    </TermsAcceptGate>
   );
 }

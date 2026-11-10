@@ -26,6 +26,8 @@ import { acceptanceExemption } from './legal-acceptance-exempt';
 import {
   ACCEPTANCE_WORDS,
   acceptanceRow,
+  doorTermsVerdict,
+  type DoorTermsFields,
   TERMS_ACCEPTED_KEY,
   hadEarlierPublishedAcceptance,
   isAccepted,
@@ -141,6 +143,33 @@ export async function recordFixtureAcceptance(user: AcceptanceUser, env: Env = p
   if (terms === null || mirroredTermsVersion(user.app_metadata) === terms) return;
   const result = await recordAcceptance({ user, door: 'fixture', shownTermsVersion: terms }, env);
   if (!result.ok) console.error(`[legal-acceptance] fixture acceptance not recorded for ${user.email ?? user.id}: ${result.code}`);
+}
+
+/**
+ * An account door's refusal (Chunk B, the B1 census) — asked BEFORE the door creates anything. Null when the pages are off (the
+ * production path, unchanged: the body's fields are never read) or the box was ticked against the current version.
+ *   · 400 `terms_unticked` — (5b) "Tick the box…";
+ *   · 409 `terms_changed`  — (5b)'s twin, carrying the version now current so the form's next tick sends it.
+ */
+export function accountDoorRefusal(body: DoorTermsFields | null | undefined, env: Env = process.env): NextResponse | null {
+  const current = currentVersion('terms', env);
+  const verdict = doorTermsVerdict(body, current);
+  if (verdict === null) return null;
+  return verdict === 'unticked'
+    ? NextResponse.json({ error: ACCEPTANCE_WORDS.refuseUnticked, code: 'terms_unticked' }, { status: 400 })
+    : NextResponse.json({ error: ACCEPTANCE_WORDS.refuseChangedPage, code: 'terms_changed', termsVersion: current }, { status: 409 });
+}
+
+/**
+ * Record an account door's tick AFTER the account exists. Never fails the door: the account is made, and a tick that did not
+ * save (a write failure, or the version moving in the instant since `accountDoorRefusal`) means the person meets the sign-in
+ * screen at their first signed-in page — the screen is the backstop.
+ */
+export async function recordDoorAcceptance(
+  user: AcceptanceUser, door: AcceptanceDoor, body: DoorTermsFields | null | undefined, env: Env = process.env,
+): Promise<void> {
+  const result = await recordAcceptance({ user, door, shownTermsVersion: body?.termsVersion }, env);
+  if (!result.ok) console.error(`[legal-acceptance] ${door} acceptance not recorded for ${user.email ?? user.id}: ${result.code}`);
 }
 
 /**
