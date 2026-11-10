@@ -47,6 +47,8 @@ export const FAMILY_HOME_WORDS = {
     emptySchedule: 'Nothing on the schedule yet. This is where games and practices will appear.',
     directions: 'Directions →',
     cancelled: 'Cancelled',
+    /** A rained-out house-league game, kept on its old day until it has a new one (Prospect Demo P2b, owner 2026-11-10). */
+    postponed: 'Postponed · new date to come',
     practice: 'Practice',
     backToFamily: '← Your family',
     /** /legal draft (b), verbatim, with the club's name for {club} (the drawing's specimen wrote "the club"; the /legal words ship,

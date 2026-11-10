@@ -45,7 +45,8 @@ export interface FamilyScheduleEntry {
   teamScore: number | null;
   opponentScore: number | null;
   result: 'win' | 'loss' | 'tie' | null;
-  status: 'scheduled' | 'cancelled';
+  /** 'postponed' only on a house-league game (lib/family-league-entries.ts); a rep team's list has no such state. */
+  status: 'scheduled' | 'cancelled' | 'postponed';
   /**
    * Is this game OVER? Computed once, server-side, and carried on the DTO so no surface can
    * hold a second opinion. Two client-side definitions of "completed" previously disagreed:

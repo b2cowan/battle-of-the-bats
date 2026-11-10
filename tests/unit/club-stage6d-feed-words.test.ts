@@ -96,6 +96,17 @@ describe('F2 · a cancelled event is kept and marked', () => {
   });
 });
 
+describe('F3 · a postponed house-league game is kept and marked (owner 2026-11-10, Prospect Demo P2b)', () => {
+  const [entry] = teamFeedEntries({ teamName: TEAM, sport: 'softball', reader: 'family', events: [ev({ id: 'rained', status: 'postponed' })] });
+  it('"Postponed · " leads the title, on the day it had', () => {
+    assert.equal(entry.title, `Postponed · ${TEAM} vs Oakridge Hawks`);
+    assert.equal(entry.startsAtIso, '2026-10-15T22:30:00.000Z');
+  });
+  it('shown as free time, like a cancelled one', () => {
+    assert.equal(entry.cancelled, true);
+  });
+});
+
 describe('F4 · when', () => {
   it('no end entered: a game two hours, a practice an hour and a half', async () => {
     const ics = await compose(teamFeedEntries({ teamName: TEAM, sport: 'baseball', reader: 'family', events: SEASON }));

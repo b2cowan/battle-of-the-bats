@@ -114,7 +114,7 @@ go-live list; P6 is the payments exploration and gates nothing above.
       review queue, received vs still owing, this season against last at the same date. Every figure opens its existing
       screen (no new screens). Option, ruled at the drawing: a weekly summary email to Owner/Admin (staff mail,
       not family mail). Plan gate: wherever the club home's house-league program card shows today.
-- [ ] **P2b · The postponed game says so.** The family team page and the family calendar keep a postponed game with
+- [x] **P2b · The postponed game says so.** (built 2026-11-10; calendars keep it marked "Postponed ·" as free time — owner ruling 2026-11-10, recipe F3 amended) The family team page and the family calendar keep a postponed game with
       "Postponed · new date to come" instead of dropping it (house-league coach view checked for the same gap). Small;
       it is the parent half of the rainout walk.
 - [ ] **P2c · The get-the-app QR follows the host.** Generate the QR from the app origin instead of the static

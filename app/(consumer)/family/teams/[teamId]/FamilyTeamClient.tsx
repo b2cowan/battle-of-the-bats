@@ -180,16 +180,19 @@ export default function FamilyTeamClient({ teamName, metaLine, backHref, joined,
           entries.map((entry, index) => {
             const completed = isScheduleEntryCompleted(entry);
             const cancelled = entry.status === 'cancelled';
+            // A rained-out game keeps its day (not its time, which no longer holds) and says it will move.
+            const postponed = entry.status === 'postponed';
             const body = (
               <div className={styles.rowMain}>
                 <div className={`${styles.rowTitle} ${cancelled ? styles.rowCancelled : ''}`}>
                   {scheduleRowTitle(entry, teamName)}
                 </div>
                 <div className={styles.rowSub}>
-                  {[scheduleDayLabel(entry.startsAt), completed ? null : scheduleTimeLabel(entry.startsAt), placeLabel(entry)]
+                  {[scheduleDayLabel(entry.startsAt), completed || postponed ? null : scheduleTimeLabel(entry.startsAt), postponed ? null : placeLabel(entry)]
                     .filter(Boolean)
                     .join(' · ')}
                   {cancelled && ` · ${W.team.cancelled}`}
+                  {postponed && ` · ${W.team.postponed}`}
                 </div>
               </div>
             );

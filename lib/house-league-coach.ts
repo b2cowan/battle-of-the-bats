@@ -382,7 +382,9 @@ async function readGamesAsSent(orgId: string, seasonId: string, divisionId: stri
  * THE COACH'S CALENDAR (House League 9d-3 Part 6, 9d3·5): the team's whole season as the feed's entries — the games as
  * last SENT once the division's schedule is published (a held change is never in a feed), and every practice, a cancelled
  * one marked. The whole season, not "from today": a subscribed calendar that drops last week reads as lost. A postponed
- * game, or one with no date, is left out until it has one (the recipe has no word for "postponed").
+ * game is KEPT on the day it had, marked 'postponed' (recipe F3, owner 2026-11-10 — Prospect Demo P2b), so the family page
+ * says "Postponed · new date to come" and a calendar shows it as free time instead of losing it; it moves when it is
+ * re-dated. A game with no date at all is still left out until it has one.
  */
 export async function readCoachFeedEvents(p: {
   orgId: string; seasonId: string; divisionId: string | null; schedulePublished: boolean; teamId: string;
@@ -395,13 +397,14 @@ export async function readCoachFeedEvents(p: {
   ]);
   const blank = { arrivalTime: null, locationAddress: null, fieldNumber: null } as const;
   const games: FeedTeamEvent[] = (sent?.games ?? [])
-    .filter(g => g.status !== 'postponed' && g.scheduledAt)
+    .filter(g => g.scheduledAt)
     .map(g => {
       const home = g.homeTeamId === p.teamId;
       const opponent = sent!.name(home ? g.awayTeamId : g.homeTeamId);
       return {
         id: g.id, name: opponent, eventType: 'league_game', opponent, homeAway: home ? 'home' : 'away',
-        startsAt: g.scheduledAt, endsAt: g.endsAt, location: sent!.placeOf(g), status: g.status === 'cancelled' ? 'cancelled' : 'scheduled', ...blank,
+        startsAt: g.scheduledAt, endsAt: g.endsAt, location: sent!.placeOf(g),
+        status: g.status === 'cancelled' ? 'cancelled' : g.status === 'postponed' ? 'postponed' : 'scheduled', ...blank,
       };
     });
   return [

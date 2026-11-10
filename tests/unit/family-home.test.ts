@@ -44,6 +44,25 @@ describe('Part 6 — a house-league team’s schedule as the family reads it', (
   });
 });
 
+describe('Prospect Demo P2b — a rained-out game says so instead of vanishing', () => {
+  const NOW = Date.parse('2027-04-16T12:00:00Z');
+  const list = leagueEntries([
+    ev({ id: 'past', startsAt: '2027-04-10T14:00:00Z', eventType: 'league_game', name: 'Owls', opponent: 'Owls', homeAway: 'home', status: 'postponed' }),
+    ev({ id: 'soon', startsAt: '2027-04-17T14:00:00Z', eventType: 'league_game', name: 'Herons', opponent: 'Herons', homeAway: 'away', status: 'postponed' }),
+    ev({ id: 'later', startsAt: '2027-04-24T14:00:00Z', eventType: 'league_game', name: 'Owls', opponent: 'Owls', homeAway: 'away' }),
+  ], NOW);
+  it('a postponed game is kept on its day and marked postponed', () => {
+    assert.deepEqual(list.map(e => [e.id, e.status]), [['past', 'postponed'], ['soon', 'postponed'], ['later', 'scheduled']]);
+  });
+  it('is never "up next" and never reads as done, even once its old day has passed', () => {
+    assert.deepEqual(list.filter(e => e.isNextUp).map(e => e.id), ['later']);
+    assert.equal(list.find(e => e.id === 'past')!.completed, false);
+  });
+  it('the page says it in one line', () => {
+    assert.equal(W.team.postponed, 'Postponed · new date to come');
+  });
+});
+
 describe('Part 6 — the /legal words, verbatim (draft b, d, e)', () => {
   it('(b) the privacy line', () => {
     assert.equal(W.team.privacy(['Aarav'], 'Riverdale Minor Ball League'),

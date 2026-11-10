@@ -13,8 +13,10 @@
  *   F1  the team leads the title: "13U AAA · Practice", "13U AAA vs Oakridge Hawks", "13U AAA @ Ridgeview Owls"
  *       (`sideWord`: away → "@"; home, neutral, unknown → "vs"), "13U AAA · {the event's name}", "13U AAA · Tryouts";
  *   F2  a cancelled entry is KEPT: "Cancelled · " leads its title, it is marked cancelled and shown as free time;
- *   F3  postponed — a team's schedule has no such state (scheduled or cancelled); an organizer's game is never
- *       written at a time it won't be played (the deferred club feed carries the rule for league games);
+ *   F3  postponed — a house-league game postponed by a rainout is KEPT like F2 (owner 2026-11-10, Prospect Demo P2b):
+ *       "Postponed · " leads its title and it is shown as free time, on the day it had, until it is re-dated — so a
+ *       parent's calendar says so instead of losing the game. An organizer's tournament game marked postponed is still
+ *       left out (unchanged), and the club's own calendar keeps its rule;
  *   F4  the instant; no end → a game two hours, a practice an hour and a half; an outside tournament ALL DAY;
  *   F5  "Kinsmen Park · Diamond 2, 15 Main St";
  *   F6  "Arrive by 5:30 p.m. (Eastern time)", either stored clock form; a coach's adds uniform and notes;
@@ -102,6 +104,8 @@ export interface TeamFeedInput {
 
 /** F2's leading word. A /marketing word (6d, B5): the title must say it because Google draws no strike. */
 export const CANCELLED_LEAD = 'Cancelled · ';
+/** F3's leading word, for the same reason. */
+export const POSTPONED_LEAD = 'Postponed · ';
 
 /** F4 — the length of an entry with no end entered: one default per kind (the download wrote two hours for all). */
 const GAME_HOURS = 2;
@@ -146,7 +150,7 @@ function eventTitle(teamName: string, e: FeedTeamEvent): string {
     : isGameKind(e.eventType) && opponent
       ? `${teamName} ${matchup(e.homeAway, opponent)}`
       : `${teamName} · ${e.name}`;
-  return e.status === 'cancelled' ? `${CANCELLED_LEAD}${body}` : body;
+  return e.status === 'cancelled' ? `${CANCELLED_LEAD}${body}` : e.status === 'postponed' ? `${POSTPONED_LEAD}${body}` : body;
 }
 
 /**
@@ -209,7 +213,8 @@ export function teamFeedEntries(input: TeamFeedInput): ICSInstantEventInput[] {
       location: feedPlace(e.location, e.fieldNumber, e.locationAddress, sport),
       description: eventNotes(e, reader, timeZone),
       url: link('event', e.id),
-      cancelled: e.status === 'cancelled',
+      // F3: a postponed game won't be played at this time either — free time, like a cancelled one.
+      cancelled: e.status === 'cancelled' || e.status === 'postponed',
     });
   }
 
